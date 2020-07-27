@@ -79,6 +79,8 @@ namespace Tensile
 
         std::string getMetric() const;
 
+        bool getBenchmark() const;
+
         int getSolutionIndex() const;
 
         int getGridbasedTopSols() const;
@@ -94,6 +96,7 @@ namespace Tensile
         int         m_solution_index      = -1;
         std::string m_metric              = "";
         int         m_gridbasedTopSols    = 1;
+        bool        m_benchmark           = false;
 
         Debug();
     };

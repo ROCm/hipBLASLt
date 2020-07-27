@@ -143,6 +143,11 @@ namespace Tensile
         return m_metric;
     }
 
+    bool Debug::getBenchmark() const
+    {
+        return m_benchmark;
+    }
+
     int Debug::getSolutionIndex() const
     {
         return m_solution_index;
@@ -188,6 +193,10 @@ namespace Tensile
         const char* gridbasedTopSols = std::getenv("GRIDBASED_TOPSOLS");
         if(gridbasedTopSols)
             m_gridbasedTopSols = strtol(gridbasedTopSols, nullptr, 0);
+
+        const char* tensile_benchmark = std::getenv("TENSILE_BENCHMARK");
+        if(tensile_benchmark)
+            m_benchmark = strtol(tensile_benchmark, nullptr, 0) != 0;
     }
 
 } // namespace Tensile
