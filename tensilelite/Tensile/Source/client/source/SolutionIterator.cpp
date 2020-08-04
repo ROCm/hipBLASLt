@@ -222,6 +222,10 @@ namespace Tensile
         {
             SolutionIterator::preProblem(problem);
             m_currentSolution     = m_library->findBestSolution(m_problem, *m_hardware);
+            if (m_currentSolution == nullptr)
+            {
+                m_currentSolution = m_library->solutions.find(0)->second;
+            }
             m_usedCurrentSolution = false;
         }
 
