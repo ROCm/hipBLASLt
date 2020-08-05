@@ -156,14 +156,13 @@ namespace Tensile
                 bool first = true;
                 for(auto const& term : value)
                 {
-                    if((*term)(obj))
-                        continue;
-
-                    if(!first)
-                        stream << ", ";
-                    first = false;
-
-                    term->debugEval(obj, stream);
+                    if(!(*term)(obj))
+                    {
+                        if(!first)
+                            stream << ", ";
+                        first = false;
+                        term->debugEval(obj, stream);
+                    }
                 }
 
                 stream << "): " << rv << std::endl;

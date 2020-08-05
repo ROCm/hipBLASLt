@@ -58,6 +58,8 @@ namespace Tensile
                 setValueForKey(key, boost::lexical_cast<std::string>(value));
             }
 
+            std::string readValueFromKey(std::string const& key);
+
             void push();
             void pop();
 

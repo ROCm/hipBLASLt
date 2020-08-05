@@ -191,5 +191,10 @@ namespace Tensile
             ss << std::setprecision(6) << value;
             setValueForKey(key, ss.str());
         }
+
+        std::string CSVStackFile::readValueFromKey(std::string const& key)
+        {
+            return m_currentRow[key];
+        }
     } // namespace Client
 } // namespace Tensile
