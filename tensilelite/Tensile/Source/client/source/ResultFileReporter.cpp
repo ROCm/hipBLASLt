@@ -85,6 +85,11 @@ namespace Tensile
                     if(m_fasterTimeUS < 0 || m_fasterTimeUS > timeUS)
                     {
                         m_fasterTimeUS = timeUS;
+                        if(m_extraCol)
+                        {
+                            m_fastestTilesPerCu = std::stod(m_output.readValueFromKey(ResultKey::TilesPerCu));
+                            m_fastestTotalGranularity = std::stod(m_output.readValueFromKey(ResultKey::TotalGranularity));
+                        }
                     }
                 }
             }
@@ -154,6 +159,8 @@ namespace Tensile
                 m_output.setHeaderForKey(ResultKey::TotalFlops, "TotalFlops");
                 if(m_extraCol)
                 {
+                    m_output.setHeaderForKey(ResultKey::TilesPerCu, "TilesPerCu");
+                    m_output.setHeaderForKey(ResultKey::TotalGranularity, "TotalGranularity");
                     m_output.setHeaderForKey(ResultKey::FastestGFlops, "WinnerGFlops");
                     m_output.setHeaderForKey(ResultKey::TimeUS, "WinnerTimeUS");
                     m_output.setHeaderForKey(ResultKey::SolutionWinnerIdx, "WinnerIdx");
@@ -195,6 +202,8 @@ namespace Tensile
                         oldRow[ResultKey::TimeUS]            = newRow[ResultKey::TimeUS];
                         oldRow[ResultKey::SolutionWinnerIdx] = newRow[ResultKey::SolutionWinnerIdx];
                         oldRow[ResultKey::SolutionWinner]    = newRow[ResultKey::SolutionWinner];
+                        oldRow[ResultKey::TilesPerCu]        = newRow[ResultKey::TilesPerCu];
+                        oldRow[ResultKey::TotalGranularity]  = newRow[ResultKey::TotalGranularity];
                     }
                 }
                 else if(key.compare(ResultKey::TimeUS) == 0
@@ -224,6 +233,8 @@ namespace Tensile
             if(m_extraCol)
             {
                 // update winner
+                m_output.setValueForKey(ResultKey::TilesPerCu, m_fastestTilesPerCu);
+                m_output.setValueForKey(ResultKey::TotalGranularity, m_fastestTotalGranularity);
                 m_output.setValueForKey(ResultKey::FastestGFlops, m_fastestGflops);
                 m_output.setValueForKey(ResultKey::TimeUS, m_fasterTimeUS);
                 m_output.setValueForKey(ResultKey::SolutionWinnerIdx, m_winnerSolutionIdx);
@@ -235,6 +246,8 @@ namespace Tensile
             m_winnerSolutionIdx = -1;
             m_fastestGflops     = -1.0;
             m_fasterTimeUS      = -1.0;
+            m_fastestTilesPerCu = -1.0;
+            m_fastestTotalGranularity  = -1.0;
 
             if(!m_mergeSameProblems)
             {

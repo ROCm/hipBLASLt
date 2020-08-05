@@ -430,9 +430,9 @@ class LogicAnalyzer:
     csvHasWinner = "_CSVWinner" in dataFileName
     if csvHasWinner:
       # the column of the two are fixed (GFlops, SizeI/J/K/L, LDD/C/A/B, TotalFlops, WinnerGFlops, WinnerTimeUs, WinnerIdx, WinnerName)
-      # the order are implemented in ResultFileReporter.cpp
-      columnOfWinnerGFlops = 10
-      columnOfWinnerIdx = 12
+      # the order are implemented in ResultFileReporter.cpp (NewClient) and Client.h (OldClient)
+      columnOfWinnerGFlops = 12
+      columnOfWinnerIdx = 14
 
     # iterate over rows
     rowIdx = 0

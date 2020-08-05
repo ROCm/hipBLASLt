@@ -174,6 +174,7 @@ namespace Tensile
                 ("perf-ops-per-cycle",       po::value<int>()->default_value(64), "Ops per cycle")
                 ("csv-export-extra-cols",    po::value<bool>()->default_value(false), "CSV exports winner information")
                 ("csv-merge-same-problems",  po::value<bool>()->default_value(false), "CSV merge rows of same problem id")
+                ("PrintWinnersOnly",         po::value<bool>()->default_value(false), "PrintWinnersOnly")
 
                 ("problem-size,p",           vector_default_empty<std::string>(), "Specify a problem size.  Comma-separated list of "
                                                                                   "sizes, in the order of the Einstein notation.")
