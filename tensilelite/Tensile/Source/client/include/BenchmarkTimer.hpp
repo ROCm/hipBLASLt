@@ -90,6 +90,7 @@ namespace Tensile
             const int    m_numWarmups;
             const int    m_numBenchmarks;
             const int    m_numEnqueuesPerSync;
+            const int    m_maxEnqueuesPerSync;
             const int    m_numSyncsPerBenchmark;
             const int    m_numEnqueuesPerSolution;
             const size_t m_minFlopsPerSync = 0;
