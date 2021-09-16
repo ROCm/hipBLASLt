@@ -59,6 +59,7 @@ namespace Tensile
             gfx906  = 906,
             gfx908  = 908,
             gfx90a  = 910,
+            gfx940  = 940,
             gfx1010 = 1010,
             gfx1011 = 1011,
             gfx1012 = 1012,
@@ -82,6 +83,8 @@ namespace Tensile
                 return "gfx908";
             case AMDGPU::Processor::gfx90a:
                 return "gfx90a";
+            case AMDGPU::Processor::gfx940:
+                return "gfx940";
             case AMDGPU::Processor::gfx1010:
                 return "gfx1010";
             case AMDGPU::Processor::gfx1011:

@@ -912,7 +912,7 @@ class GlobalWriteBatchWriter:
                          vgpr(addrCalc.addrDVgpr,1), \
                          sgpr("SrdD", 4), \
                          0,
-                         MUBUFModifiers(offen=True, offset12=addrCalc.globalOffset),
+                         MUBUFModifiers(offen=True, offset12=addrCalc.globalOffset, memoryModifierFormat=self.kernel["MemoryModifierFormat"]),
                          "attempt write avi=%u" % (avi)))
           else:
             pass # TODO:
@@ -979,7 +979,7 @@ class GlobalWriteBatchWriter:
                               vgpr(addrCalc.addrDVgpr,1), \
                               sgpr("SrdD", 4),  \
                               0,
-                              MUBUFModifiers(offen=True, offset12=addrCalc.globalOffset, glc=True),
+                              MUBUFModifiers(offen=True, offset12=addrCalc.globalOffset, glc=True, memoryModifierFormat=self.kernel["MemoryModifierFormat"]),
                               "attempt write avi=%u"%(avi)))
             else:
             # use cmpswap for SGEMM in CAS loop
@@ -987,13 +987,13 @@ class GlobalWriteBatchWriter:
                            vgpr(addrCalc.addrDVgpr,1), \
                            sgpr("SrdD", 4), \
                            0, \
-                           MUBUFModifiers(offen=True, offset12=addrCalc.globalOffset, glc=True), \
+                           MUBUFModifiers(offen=True, offset12=addrCalc.globalOffset, glc=True, memoryModifierFormat=self.kernel["MemoryModifierFormat"]), \
                            "attempt write avi=%u"%(avi)))
           else:
             module.add(FlatAtomicCmpswapB32(vgpr(atomicDestVgpr), \
                                             vgpr(addrCalc.addrDVgpr,2), \
                                             vgpr(dataV,2),
-                                            FLATModifiers(glc=True),
+                                            FLATModifiers(glc=True, memoryModifierFormat=self.kernel["MemoryModifierFormat"]),
                                             "attempt write"))
         else:
             # Fake successful CAS swap
@@ -1099,7 +1099,7 @@ class GlobalWriteBatchWriter:
                           vgpr(addr,1), \
                           sgpr("SrdD", 4), \
                           0,
-                          MUBUFModifiers(offen=True, offset12=addrCalc.globalOffset, glc=True),
+                          MUBUFModifiers(offen=True, offset12=addrCalc.globalOffset, glc=True, memoryModifierFormat=self.kernel["MemoryModifierFormat"]),
                           "try again"))
             else:
               module.add(BufferAtomicCmpswapB32(
@@ -1107,13 +1107,13 @@ class GlobalWriteBatchWriter:
                           vgpr(addr,1), \
                           sgpr("SrdD", 4), \
                           0,
-                          MUBUFModifiers(offen=True, offset12=addrCalc.globalOffset, glc=True),
+                          MUBUFModifiers(offen=True, offset12=addrCalc.globalOffset, glc=True, memoryModifierFormat=self.kernel["MemoryModifierFormat"]),
                           "try again"))
           else:
             module.add(FlatAtomicCmpswapB32(vgpr(atomicDestVgpr), \
                                             vgpr(addr,2), \
                                             vgpr(dataV,2), \
-                                            FLATModifiers(glc=True), \
+                                            FLATModifiers(glc=True, memoryModifierFormat=self.kernel["MemoryModifierFormat"]), \
                                             "try again"))
 
     # wait for batched write

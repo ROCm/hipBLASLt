@@ -22,6 +22,7 @@
 
 from .Base import Item
 from .Enums import SelectBit, UnusedBit
+from . import getGlcBitName, getSlcBitName
 
 from copy import deepcopy
 from dataclasses import dataclass
@@ -66,6 +67,7 @@ class FLATModifiers(Container):
     glc:      bool = False
     slc:      bool = False
     lds:      bool = False
+    memoryModifierFormat: str = ""
 
     def __post_init__(self):
         super().__init__()
@@ -79,9 +81,9 @@ class FLATModifiers(Container):
         if self.offset12 != 0:
             kStr += " offset:%u"%self.offset12
         if self.glc:
-            kStr += " glc"
+            kStr += " " + getGlcBitName(self.memoryModifierFormat)
         if self.slc:
-            kStr += " slc"
+            kStr += " " + getSlcBitName(self.memoryModifierFormat)
         if self.lds:
             kStr += " lds"
         return kStr
@@ -93,7 +95,7 @@ class MUBUFModifiers(Container):
     glc:      bool = False
     slc:      bool = False
     lds:      bool = False
-
+    memoryModifierFormat: str = ""
     def __post_init__(self):
         super().__init__()
 
@@ -108,9 +110,9 @@ class MUBUFModifiers(Container):
         if (self.glc or self.slc or self.lds):
             kStr += ","
         if self.glc:
-            kStr += " glc"
+            kStr += " " + getGlcBitName(self.memoryModifierFormat)
         if self.slc:
-            kStr += " slc"
+            kStr += " " + getSlcBitName(self.memoryModifierFormat)
         if self.lds:
             kStr += " lds"
         return kStr
@@ -121,6 +123,7 @@ class SMEMModifiers(Container):
     nv:       bool = False
     dlc:      bool = False
     offset: int    = 0 # 20u 21s shaes the same
+    memoryModifierFormat: str = ""
 
     def __post_init__(self):
         super().__init__()
@@ -132,7 +135,7 @@ class SMEMModifiers(Container):
     def __str__(self) -> str:
         kStr = ""
         if self.glc:
-            kStr += " glc"
+            kStr += " " + getGlcBitName(self.memoryModifierFormat)
         if self.nv:
             kStr += " nv"
         if self.dlc:

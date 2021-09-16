@@ -33,7 +33,7 @@ from .TensileInstructions import KernelBody, Label, Macro, Module, RegSet, SrdUp
                           scalarStaticMultiply, MacroVMagicDiv, MacroVDynamicScalarDiv, \
                           RegisterPool, allocTmpGpr, RegisterPoolResource, Holder, \
                           vgpr, sgpr, accvgpr, mgpr, log2, ceilDivide, DataType, \
-                          dataTypeToMfmaInstTypePair
+                          dataTypeToMfmaInstTypePair, getGlcBitName, getSlcBitName
 from .TensileInstructions.Instructions import *
 from .TensilePass import getActivationFunctionModuleName, getActivationBranchModuleName
 from .Common import globalParameters, print2, printExit, printWarning, roundUp
@@ -3659,6 +3659,8 @@ class KernelWriterAssembly(KernelWriter):
               if inst is not None:
                 imod.add(inst)
             variant = [kernel["MatrixInstM"], kernel["MatrixInstN"], kernel["MatrixInstK"]]
+            if self.states.version in [(9,4,0)]:
+              variant.append(kernel["MatrixInstB"])
             imod.add(MFMAInstruction(instType=miInInstType, accType=miOutInstType, variant=variant, mfma1k=False, \
                      acc=gprfunc(accStart, (accEnd-accStart+1)), a=src0, b=src1, acc2=gprfunc(accStartSrc1, (accEndSrc1-accStartSrc1+1)), \
                      comment="Cr += Ar*Br"))
@@ -3685,6 +3687,8 @@ class KernelWriterAssembly(KernelWriter):
               src0 = Str0
               src1 = Str1
             variant = [kernel["MatrixInstM"], kernel["MatrixInstN"], kernel["MatrixInstK"]]
+            if (not mfma_1k) and self.states.version in [(9,4,0)]:
+              variant.append(kernel["MatrixInstB"])
             imod.add(MFMAInstruction(instType=miInInstType, accType=miOutInstType, variant=variant, mfma1k=mfma_1k, \
                                      acc=gprfunc((accStart+accStoreCIdx), (accEnd-accStart+1)), \
                                      a=src0, b=src1, acc2=gprfunc(accStartSrc1, (accEndSrc1-accStartSrc1+1)), \
@@ -4324,6 +4328,7 @@ class KernelWriterAssembly(KernelWriter):
                           addr0=vgpr(offsetVgpr), addr1=sgpr("Srd%s"%tc, 4), \
                           soffset=soffset, offset=offset, \
                           glc=isGlc, slc=isSlc, lds=isLds, \
+                          memoryModifierFormat=kernel["MemoryModifierFormat"], \
                           hi16=hi16, \
                           comment=comment))
 
@@ -4350,6 +4355,7 @@ class KernelWriterAssembly(KernelWriter):
                           addr0=vgpr("GlobalReadAddr%s+%u"%(tc,graIdx),2), addr1="", \
                           soffset=0, offset=0, \
                           glc=isGlc, slc=isSlc, lds=isLds, \
+                          memoryModifierFormat=kernel["MemoryModifierFormat"], \
                           hi16=hi16, \
                           comment="load one flat value"))
 
@@ -4621,6 +4627,7 @@ class KernelWriterAssembly(KernelWriter):
                         addr0=vgpr(offsetVgpr), addr1=sgpr("Srd%s"%tc, 4), \
                         soffset=soffset, offset=instOffset, \
                         glc=isGlc, slc=isSlc, lds=isLds, \
+                        memoryModifierFormat=kernel["MemoryModifierFormat"], \
                         hi16=(kernel["ProblemType"]["DataType"].isHalf() or kernel["ProblemType"]["DataType"].isBFloat16()) and loopCnt%2==1, \
                         comment="G -> Reg %u_%u_%u_%u"%(para, sPara, perp, sPerp)))
 
@@ -4646,6 +4653,7 @@ class KernelWriterAssembly(KernelWriter):
                         addr0=vgpr("GlobalReadAddr%s+%u"%(tc,graIdx),2), addr1="", \
                         soffset=0, offset=0, \
                         glc=isGlc, slc=isSlc, lds=isLds, \
+                        memoryModifierFormat=kernel["MemoryModifierFormat"], \
                         hi16=(kernel["ProblemType"]["DataType"].isHalf() or kernel["ProblemType"]["DataType"].isBFloat16()) and loopCnt%2==1, \
                         comment="G -> Reg %u_%u_%u_%u"%(para, sPara, perp, sPerp )))
 
@@ -5979,9 +5987,9 @@ class KernelWriterAssembly(KernelWriter):
     if kernel.enabledSetPrioSplitLDS:
       module.add(SSetPrior(prior=1))
     if kernel["NonTemporalD"]%2==1:
-      ntStr += " glc"
+      ntStr += " " + getGlcBitName(kernel["MemoryModifierFormat"])
     if kernel["NonTemporalD"]//2==1:
-      ntStr += " slc"
+      ntStr += " " + getSlcBitName(kernel["MemoryModifierFormat"])
 
     addr1 = sgpr("SrdD", 4)
     packedD1 = kernel["PackedC1IndicesX"]
@@ -6964,13 +6972,15 @@ class KernelWriterAssembly(KernelWriter):
   ##############################################################################
   def chooseGlobalRead(self, useBuffer, bpl, destVgpr, \
                        addr0, addr1, soffset, offset, \
-                       glc=False, slc=False, lds=False, hi16=0, comment="load C"):
+                       glc=False, slc=False, lds=False, \
+                       memoryModifierFormat = "", \
+                       hi16=0, comment="load C"):
   # rpv = regs per vector
     rpv = bpl/4.0
 
     if useBuffer:
       rv = Module("Global Read")
-      mubuf = MUBUFModifiers(offen=True, offset12=offset, glc=glc, slc=slc, lds=lds)
+      mubuf = MUBUFModifiers(offen=True, offset12=offset, glc=glc, slc=slc, lds=lds, memoryModifierFormat=memoryModifierFormat)
 
       # Nested buffer load implementation function for easy branching for soffset
       def bufferLoadImpl(soffset):
@@ -7031,7 +7041,7 @@ class KernelWriterAssembly(KernelWriter):
         bufferLoadImpl(soffset)
       return rv
     else:
-      flat = FLATModifiers(glc=glc, slc=slc, lds=lds)
+      flat = FLATModifiers(glc=glc, slc=slc, lds=lds, memoryModifierFormat=memoryModifierFormat)
       if bpl==2 and hi16:
         return FlatLoadD16HIB16(dst=vgpr(destVgpr, rpv*2), vaddr=addr0, flat=flat, comment=comment)
       elif bpl==2 and not hi16:
@@ -7047,7 +7057,7 @@ class KernelWriterAssembly(KernelWriter):
 
   ##############################################################################
   def chooseGlobalWrite(self, useBuffer, bps, srcVgpr, rpv, \
-                        addr0, addr1, offset, glc=False, slc=False, hi16=0, comment="store"):
+                        addr0, addr1, offset, glc=False, slc=False, memoryModifierFormat="", hi16=0, comment="store"):
     """
     create the store instruction for requested vector width and other parms
     rpv = regs per vector
@@ -7088,7 +7098,7 @@ class KernelWriterAssembly(KernelWriter):
         assert 0, "bad bps"
 
     if useBuffer:
-      mubuf = MUBUFModifiers(offen=True, offset12=offset, glc=glc, slc=slc)
+      mubuf = MUBUFModifiers(offen=True, offset12=offset, glc=glc, slc=slc, memoryModifierFormat=memoryModifierFormat)
       # buffer_load offset field is 12-bit.
       # if offset >= 4096, use soffset instead
       if offset >= 4096:
@@ -7102,7 +7112,7 @@ class KernelWriterAssembly(KernelWriter):
         bufferStoreImpl(0, mubuf)
 
     else:
-      flat = FLATModifiers(glc=glc, slc=slc)
+      flat = FLATModifiers(glc=glc, slc=slc, memoryModifierFormat=memoryModifierFormat)
       if bps==2 and hi16:
         module.add(FlatStoreD16HIB16(vaddr=addr0, src=vgpr(srcVgpr*2), flat=flat, comment=comment))
       elif bps==2 and not hi16:
@@ -7256,27 +7266,27 @@ class KernelWriterAssembly(KernelWriter):
         if not kernel["ProblemType"]["HighPrecisionAccumulate"]:
           # (H,H,H,H,H,H), internal H
           module.add(self.chooseGlobalWrite(useBuffer, bps, sumIdx//2, rpv, \
-                           addr0, addr1, globalOffset, isGlc, isSlc, hi16=sumIdx%2, comment=comment))
+                           addr0, addr1, globalOffset, isGlc, isSlc, kernel["MemoryModifierFormat"], hi16=sumIdx%2, comment=comment))
         else:
           # (B,B,B,B,S,S), internal S
           # (H,H,H,H,H,H), internal S
           # (H,H,H,H,S,S), internal S
           module.add(self.chooseGlobalWrite(useBuffer, bps, sumIdx, rpv, \
-                         addr0, addr1, globalOffset, isGlc, isSlc, hi16=0, comment=comment))
+                         addr0, addr1, globalOffset, isGlc, isSlc, kernel["MemoryModifierFormat"], hi16=0, comment=comment))
       elif dataType.isInt32() or dataType.isSingle():
         module.add(self.chooseGlobalWrite(useBuffer, bps, sumIdx, rpv, \
-                       addr0, addr1, globalOffset, isGlc, isSlc, comment=comment))
+                       addr0, addr1, globalOffset, isGlc, isSlc, kernel["MemoryModifierFormat"], comment=comment))
       elif dataType.isDouble() or dataType.isSingleComplex():
         module.add(self.chooseGlobalWrite(useBuffer, bps, sumIdx*2, rpv, \
-                       addr0, addr1, globalOffset, isGlc, isSlc, comment=comment))
+                       addr0, addr1, globalOffset, isGlc, isSlc, kernel["MemoryModifierFormat"], comment=comment))
       elif dataType.isDoubleComplex():
         rps = dataType.numRegisters()
         module.add(self.chooseGlobalWrite(useBuffer, bps, sumIdx*rps, rpv, \
-                       addr0, addr1, globalOffset, isGlc, isSlc, comment=comment))
+                       addr0, addr1, globalOffset, isGlc, isSlc, kernel["MemoryModifierFormat"], comment=comment))
       elif dataType.isInt8():
         if kernel["ProblemType"]["HighPrecisionAccumulate"]:
           module.add(self.chooseGlobalWrite(useBuffer, bps, sumIdx, rpv, \
-                         addr0, addr1, globalOffset, isGlc, isSlc, comment=comment))
+                         addr0, addr1, globalOffset, isGlc, isSlc, kernel["MemoryModifierFormat"], comment=comment))
     return module
 
   ##############################################################################
@@ -7310,13 +7320,16 @@ class KernelWriterAssembly(KernelWriter):
     if dataType.isHalf():
       module.add(self.chooseGlobalRead(useBuffer, bps, data, \
                 addr0, addr1, soffset=0, offset=globalOffset, \
-                glc=isGlc, slc=isSlc, lds=False, hi16=vc0 % 2,
+                glc=isGlc, slc=isSlc, lds=False, 
+                memoryModifierFormat=kernel["MemoryModifierFormat"], \
+                hi16=vc0 % 2,
                 comment="load %s"%tc))
     elif dataType.isInt8():
      module.add(self.chooseGlobalRead(useBuffer, bps, data, \
                 addr0, addr1, soffset=0, offset=globalOffset, \
                 glc=isGlc, slc=isSlc, lds=False, \
                 #hi16=vc0 % 4,
+                memoryModifierFormat=kernel["MemoryModifierFormat"], \
                 comment="load %s"%tc))
     elif dataType.isBFloat16() or \
          dataType.isInt32() or \
@@ -7327,6 +7340,7 @@ class KernelWriterAssembly(KernelWriter):
       module.add(self.chooseGlobalRead(useBuffer, bps, data, \
                 addr0, addr1, soffset=0, offset=globalOffset, \
                 glc=isGlc, slc=isSlc, lds=False, \
+                memoryModifierFormat=kernel["MemoryModifierFormat"], \
                 comment="load %s"%tc))
 
     return module

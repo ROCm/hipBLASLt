@@ -166,6 +166,16 @@ def getGfxName(arch: Tuple[int, int, int]) -> str:
     name = str(arch[0]) + str(arch[1]) + ('%x' % arch[2])
     return 'gfx' + ''.join(map(str,name))
 
+def getGlcBitName(memoryModifierFormat):
+  if memoryModifierFormat == "GLC":
+    return "glc"
+  return "sc0"
+
+def getSlcBitName(memoryModifierFormat):
+  if memoryModifierFormat == "GLC":
+    return "slc"
+  return "sc1"
+
 def _removeIdent(isaDict) -> list:
     ids = [th.ident for th in threading.enumerate()]
     isaDict = [id for id in isaDict if id in ids]
@@ -221,8 +231,8 @@ def _initAsmCaps(isaVersion, assemblerPath, isDebug) -> dict:
     rv["HasSMulHi"]         = _tryAssembler(isaVersion, assemblerPath, "s_mul_hi_u32 s47, s36, s34", isDebug)
     rv["HasCodeObjectV3"]   = _tryAssembler(isaVersion, assemblerPath, "", isDebug, "-mcode-object-version=2")
 
-    rv["HasMFMA"]           = _tryAssembler(isaVersion, assemblerPath, "v_mfma_f32_32x32x2bf16 a[0:31], v32, v33, a[0:31]", isDebug)
-    rv["HasMFMA_f64"]       = _tryAssembler(isaVersion, assemblerPath, "v_mfma_f64_16x16x4f64 v[0:7], v[32:33], v[36:37], v[0:7]", isDebug)
+    rv["HasMFMA"]           = _tryAssembler(isaVersion, assemblerPath, "v_mfma_f32_32x32x2bf16 a[0:31], v32, v33, a[0:31]", isDebug) or _tryAssembler(isaVersion, assemblerPath, "v_mfma_f32_32x32x1_2b_f32 a[0:31], v0, v1, a[0:31]", isDebug)
+    rv["HasMFMA_f64"]       = _tryAssembler(isaVersion, assemblerPath, "v_mfma_f64_16x16x4f64 v[0:7], v[32:33], v[36:37], v[0:7]", isDebug) or _tryAssembler(isaVersion, assemblerPath, "v_mfma_f64_16x16x4_f64 v[0:7], v[32:33], v[36:37], v[0:7]", isDebug)
     rv["HasMFMA_bf16_1k"]   = _tryAssembler(isaVersion, assemblerPath, "v_mfma_f32_32x32x4bf16_1k a[0:31], v[32:33], v[36:37], a[0:31]", isDebug)
 
     rv["v_mac_f16"]         = _tryAssembler(isaVersion, assemblerPath, "v_mac_f16 v47, v36, v34", isDebug)
@@ -254,6 +264,7 @@ def _initAsmCaps(isaVersion, assemblerPath, isDebug) -> dict:
 
     rv["HasAtomicAdd"]      = _tryAssembler(isaVersion, assemblerPath, "buffer_atomic_add_f32 v0, v1, s[0:3], 0 offen offset:0", isDebug)
 
+    rv["HasGLCModifier"]    = _tryAssembler(isaVersion, assemblerPath, "buffer_load_dwordx4 v[10:13], v[0], s[0:3], 0, offen offset:0, glc", isDebug)
 
     if _tryAssembler(isaVersion, assemblerPath, "s_waitcnt vmcnt(63)", isDebug):
         rv["MaxVmcnt"] = 63
@@ -271,13 +282,13 @@ def _initAsmCaps(isaVersion, assemblerPath, isDebug) -> dict:
 
 def _initArchCaps(isaVersion) -> dict:
     rv = {}
-    rv["HasEccHalf"]         = (isaVersion==(9,0,6) or isaVersion==(9,0,8) or isaVersion==(9,0,10))
-    rv["Waitcnt0Disabled"]   = (isaVersion == (9,0,8) or isaVersion==(9,0,10))
+    rv["HasEccHalf"]         = (isaVersion==(9,0,6) or isaVersion==(9,0,8) or isaVersion==(9,0,10) or isaVersion==(9,4,0))
+    rv["Waitcnt0Disabled"]   = (isaVersion == (9,0,8) or isaVersion==(9,0,10) or isaVersion==(9,4,0))
     rv["SeparateVscnt"]      = isaVersion[0] in (10, 11)
     rv["CMPXWritesSGPR"]     = isaVersion[0] not in (10, 11)
     rv["HasWave32"]          = isaVersion[0] in (10, 11)
-    rv["HasAccCD"]           = (isaVersion==(9,0,10))
-    rv["ArchAccUnifiedRegs"] = (isaVersion==(9,0,10))
+    rv["HasAccCD"]           = (isaVersion==(9,0,10) or isaVersion==(9,4,0))
+    rv["ArchAccUnifiedRegs"] = (isaVersion==(9,0,10) or isaVersion==(9,4,0))
 
     return rv
 
