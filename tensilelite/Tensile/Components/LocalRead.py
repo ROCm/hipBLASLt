@@ -55,11 +55,12 @@ class LocalReadMFMA(LocalRead):
         MIWaveGroupShape = [ kernel["MatrixInstM"] * kernel["MatrixInstBM"] * kernel["MIWaveGroup"][0] * vectorWidth, \
                              kernel["MatrixInstN"] * kernel["MatrixInstBN"] * kernel["MIWaveGroup"][1] * vwB]
 
+        depthULds        = kernel["_DepthULds%s"%tc]
         LdsPad           = kernel["LdsPad%s"%tc] if kernel["LdsBlockSizePerPad%s"%tc] == 0 else 0
         tileStride       = 1
         UnrollStride     = kernel["MacroTile%s" % tP["tensorChar"]] + LdsPad
         if kernel["UnrollMajorLDS%s" % tP["tensorChar"]]:
-            tileStride   = kernel["_DepthULds"] + LdsPad
+            tileStride   = depthULds + LdsPad
             UnrollStride = 1
 
         numReadPerTileVector = vectorWidth if (tile01 == 0) else 1

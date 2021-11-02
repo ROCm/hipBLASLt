@@ -103,6 +103,20 @@ namespace Tensile
         std::ostream& operator<<(std::ostream& stream, BoundsCheckMode const& mode);
         std::istream& operator>>(std::istream& stream, BoundsCheckMode& mode);
 
+        enum class PruneSparseMode
+        {
+            PruneRandom = 0, // random
+            PruneXX00,       // XX00  0x4
+            PruneX0X0,       // X0X0  0x8
+            Prune0XX0,       // 0XX0  0x9
+            PruneX00X,       // X00X  0xc
+            Prune0X0X,       // 0X0X  0xd
+            Prune00XX,       // 00XX  0xe
+            MaxPruneMode
+        };
+
+        std::ostream& operator<<(std::ostream& stream, PruneSparseMode const& mode);
+        std::istream& operator>>(std::istream& stream, PruneSparseMode& mode);
         class DataInitialization : public RunListener
         {
         public:
@@ -531,6 +545,26 @@ namespace Tensile
                 }
             }
 
+            template <>
+            void initArraySerialDim<Half>(Half* array, int dim, TensorDescriptor const& tensor)
+            {
+                union
+                {
+                    uint16_t bits;
+                    Half     value;
+                } x;
+
+                auto const&         sizes = tensor.sizes();
+                auto                count = CoordCount(sizes.begin(), sizes.end());
+                std::vector<size_t> coord(tensor.dimensions(), 0);
+                for(size_t idx = 0; idx < count; idx++)
+                {
+                    CoordNumbered(idx, coord.begin(), coord.end(), sizes.begin(), sizes.end());
+                    x.bits = static_cast<uint16_t>(coord[dim]);
+                    array[tensor.index(coord)] = x.value;
+                }
+            }
+
             template <typename T>
             void initArrayIdentity(T* array, TensorDescriptor const& tensor)
             {
@@ -554,6 +588,73 @@ namespace Tensile
                 {
                     CoordNumbered(idx, coord.begin(), coord.end(), sizes.begin(), sizes.end());
                     array[tensor.index(coord)] = getTrigValue<T>(idx, useCos, useAbs);
+                }
+            }
+
+            template <typename T>
+            void pruneSparseArray(T* array, TensorDescriptor const& tensor, size_t pruneDim)
+            {
+                auto const& sizes        = tensor.sizes();
+                auto        count        = CoordCount(sizes.begin(), sizes.end());
+                size_t      pruneDimSize = sizes[pruneDim];
+                size_t      loop_count   = count / pruneDimSize;
+
+                if(pruneDimSize % 4 != 0)
+                    throw std::runtime_error("prune dimension size must be multiple of 4.");
+
+                auto getPruneIndex = [](PruneSparseMode pruneMode, size_t* index1, size_t* index2) {
+                    if(pruneMode == PruneSparseMode::PruneRandom)
+                        pruneMode = static_cast<PruneSparseMode>(
+                            rand() % (static_cast<int>(PruneSparseMode::MaxPruneMode) - 1) + 1);
+
+                    switch(pruneMode)
+                    {
+                    case PruneSparseMode::PruneXX00:
+                        *index1 = 2;
+                        *index2 = 3;
+                        break;
+                    case PruneSparseMode::PruneX0X0:
+                        *index1 = 1;
+                        *index2 = 3;
+                        break;
+                    case PruneSparseMode::Prune0XX0:
+                        *index1 = 0;
+                        *index2 = 3;
+                        break;
+                    case PruneSparseMode::PruneX00X:
+                        *index1 = 1;
+                        *index2 = 2;
+                        break;
+                    case PruneSparseMode::Prune0X0X:
+                        *index1 = 0;
+                        *index2 = 2;
+                        break;
+                    case PruneSparseMode::Prune00XX:
+                        *index1 = 0;
+                        *index2 = 1;
+                        break;
+                    default:
+                        throw std::runtime_error("prune mode is not allowed.");
+                        break;
+                    }
+                };
+
+                #pragma omp parallel for
+                for(size_t loop = 0; loop < loop_count; loop++)
+                {
+                    std::vector<size_t> coord(tensor.dimensions(), 0);
+                    CoordNumberedExclude(
+                        loop, coord.begin(), coord.end(), sizes.begin(), sizes.end(), pruneDim);
+                    for(size_t pruneDimIdx = 0; pruneDimIdx < pruneDimSize;
+                        pruneDimIdx += 4) //traverse along pruneDim
+                    {
+                        size_t pruneIdx1, pruneIdx2;
+                        getPruneIndex(m_pruneMode, &pruneIdx1, &pruneIdx2);
+                        coord[pruneDim]            = pruneDimIdx + pruneIdx1;
+                        array[tensor.index(coord)] = static_cast<T>(0);
+                        coord[pruneDim]            = pruneDimIdx + pruneIdx2;
+                        array[tensor.index(coord)] = static_cast<T>(0);
+                    }
                 }
             }
 
@@ -734,6 +835,9 @@ namespace Tensile
 
             bool m_stridedBatched;
 
+            bool m_aSparse;
+            size_t m_aMaxLogicalElements; //for sparse
+
             bool m_cEqualsD;
 
             ActivationType m_activationType;
@@ -760,6 +864,7 @@ namespace Tensile
             int             m_numRunsPerSolution = 0;
             int             m_numRunsInSolution  = 0;
 
+            PruneSparseMode m_pruneMode          = PruneSparseMode::PruneRandom;
             /// If true, the data is dependent on the problem size (e.g. serial)
             /// and must be reinitialized for each problem. Pristine copy on GPU
             /// cannot be used with problem dependent data.

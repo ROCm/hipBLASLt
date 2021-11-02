@@ -499,13 +499,15 @@ namespace Tensile
     ContractionProblemGemm ContractionProblemGemm::GetDummy()
     {
         ContractionProblemGemm gemm;
-        gemm.m_tensors[ContractionProblemGemm::TENSOR::A]         = TensorDescriptor("a");
-        gemm.m_tensors[ContractionProblemGemm::TENSOR::B]         = TensorDescriptor("b");
-        gemm.m_tensors[ContractionProblemGemm::TENSOR::C]         = TensorDescriptor("c");
-        gemm.m_tensors[ContractionProblemGemm::TENSOR::D]         = TensorDescriptor("d");
-        gemm.m_tensors[ContractionProblemGemm::TENSOR::E]         = TensorDescriptor("e");
-        gemm.m_tensors[ContractionProblemGemm::TENSOR::BIAS]      = TensorDescriptor("bias");
-        gemm.m_tensors[ContractionProblemGemm::TENSOR::SCALEDVEC] = TensorDescriptor("scaleDVec");
+        gemm.m_tensors[ContractionProblemGemm::TENSOR::A]          = TensorDescriptor("a");
+        gemm.m_tensors[ContractionProblemGemm::TENSOR::B]          = TensorDescriptor("b");
+        gemm.m_tensors[ContractionProblemGemm::TENSOR::C]          = TensorDescriptor("c");
+        gemm.m_tensors[ContractionProblemGemm::TENSOR::D]          = TensorDescriptor("d");
+        gemm.m_tensors[ContractionProblemGemm::TENSOR::E]          = TensorDescriptor("e");
+        gemm.m_tensors[ContractionProblemGemm::TENSOR::BIAS]       = TensorDescriptor("bias");
+        gemm.m_tensors[ContractionProblemGemm::TENSOR::SCALEDVEC]  = TensorDescriptor("scaleDVec");
+        gemm.m_tensors[ContractionProblemGemm::TENSOR::COMPRESSED] = TensorDescriptor("compressed");
+        gemm.m_tensors[ContractionProblemGemm::TENSOR::METADATA]   = TensorDescriptor("metadata");
         return gemm;
     }
 
@@ -761,6 +763,73 @@ namespace Tensile
                                          [](const ContractionProblemGemm::FreeIndex& fi) {
                                              return fi.c == 0 /*idx0*/;
                                          });
+    }
+
+    void ContractionProblemGemm::normalizeSparseA()
+    {
+        if(m_aSparse)
+        {
+            auto& aTensor    = m_tensors[ContractionProblemGemm::TENSOR::A];
+            auto ca_sizes         = aTensor.sizes();
+            auto ca_strides       = aTensor.strides();
+            auto metadata_sizes   = ca_sizes;
+            auto metadata_strides = ca_strides;
+            if(m_freeIndices[0].i) // transpose
+            {
+                ca_sizes[0] /= 2;
+                ca_strides[1] = ca_sizes[0];
+
+                metadata_sizes[0]   = ca_sizes[0] / 4;
+                metadata_strides[1] = metadata_sizes[0];
+            }
+            else
+            {
+                ca_sizes[1] /= 2;
+                metadata_sizes[1]   = ca_sizes[0];
+                metadata_sizes[0]   = ca_sizes[1] / 4;
+                metadata_strides[1] = metadata_sizes[0];
+            }
+            for(int i = 2; i < ca_sizes.size(); i++)
+            {
+                ca_strides[i]       = ca_strides[i - 1] * ca_sizes[i - 1];
+                metadata_strides[i] = metadata_strides[i - 1] * metadata_sizes[i - 1];
+            }
+            m_tensors[ContractionProblemGemm::TENSOR::COMPRESSED] = TensorDescriptor(
+                                                                        "compressed",
+                                                                        aTensor.dataType(),
+                                                                        ca_sizes.begin(),
+                                                                        ca_sizes.end(),
+                                                                        ca_strides.begin(),
+                                                                        ca_strides.end());
+                                                            
+            m_tensors[ContractionProblemGemm::TENSOR::METADATA] = TensorDescriptor(
+                                                                        "metadata",
+                                                                        DataType::Int8,
+                                                                        metadata_sizes.begin(),
+                                                                        metadata_sizes.end(),
+                                                                        metadata_strides.begin(),
+                                                                        metadata_strides.end());
+
+            auto& caTensor =  m_tensors[ContractionProblemGemm::TENSOR::COMPRESSED];
+            m_allocatedElementsNonBatchCompressedA = 1;
+            for(int idx = 0; idx < compressed().dimensions(); idx++)
+            {
+                bool isBatch = m_batchIndices.end()
+                               != std::find_if(m_batchIndices.begin(),
+                                               m_batchIndices.end(),
+                                               [idx](const ContractionProblemGemm::BatchIndex& bi) {
+                                                   return bi.a == idx;
+                                               });
+                if(!isBatch)
+                    m_allocatedElementsNonBatchCompressedA += caTensor.strides()[idx] * (caTensor.sizes()[idx] - 1);
+            }
+        }
+        else
+        {
+            m_tensors[ContractionProblemGemm::TENSOR::COMPRESSED] = TensorDescriptor("compressed");
+            m_tensors[ContractionProblemGemm::TENSOR::METADATA] = TensorDescriptor("metadata");
+            m_allocatedElementsNonBatchCompressedA = 0;
+        }
     }
 
     void ContractionProblemGemm::consistencyCheck() const
@@ -1109,17 +1178,19 @@ namespace Tensile
     ContractionInputs::ContractionInputs()      = default;
     ContractionInputs::~ContractionInputs()     = default;
 
-    ContractionInputs::ContractionInputs(void const*        _a,
-                                         void const*        _b,
-                                         void const*        _c,
-                                         void*              _d,
-                                         void const* const* _batchA,
-                                         void const* const* _batchB,
-                                         void const* const* _batchC,
-                                         void* const*       _batchD,
-                                         void const*        _bias,
-                                         void const*        _scaleDVec,
-                                         void*              _ws)
+    ContractionInputs::ContractionInputs(void const*          _a,
+                                         void const*          _b,
+                                         void const*          _c,
+                                         void*                _d,
+                                         void const* const*   _batchA,
+                                         void const* const*   _batchB,
+                                         void const* const*   _batchC,
+                                         void* const*         _batchD,
+                                         void const*          _bias,
+                                         void const*          _scaleDVec,
+                                         void*                _ws,
+                                         void const*          _compressed,
+                                         unsigned char const* _metadata)
         : a(_a)
         , b(_b)
         , c(_c)
@@ -1131,6 +1202,8 @@ namespace Tensile
         , bias(_bias)
         , scaleDVec(_scaleDVec)
         , ws(_ws)
+        , compressed(_compressed)
+        , metadata(_metadata)
     {
     }
 } // namespace Tensile

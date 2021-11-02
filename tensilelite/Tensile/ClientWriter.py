@@ -464,6 +464,14 @@ def boundsCheckName(mode):
     if mode == 3: return 'GuardPageBack'
     if mode == 4: return 'GuardPageAll'
 
+def pruneModeName(mode):
+    if mode == 0: return 'PruneRandom'
+    if mode == 1: return 'PruneXX00'
+    if mode == 2: return 'PruneX0X0'
+    if mode == 3: return 'Prune0XX0'
+    if mode == 4: return 'PruneX00X'
+    if mode == 5: return 'Prune0X0X'
+    if mode == 6: return 'Prune00XX'
 
 def writeClientConfigIni(problemSizes, biasTypeArgs, activationArgs, problemType, sourceDir, codeObjectFiles, resultsFileName, parametersFilePath, libraryFile=None):
 
@@ -500,7 +508,7 @@ def writeClientConfigIni(problemSizes, biasTypeArgs, activationArgs, problemType
         if biasTypeArgs:
           for btype in biasTypeArgs.biasTypes:
             param('bias-type-args',  btype.toEnum())
-
+        param('sparse-a',   problemType.sparseA)
         param('high-precision-accumulate', problemType.highPrecisionAccumulate)
         param('strided-batched', problemType.stridedBatched)
         param('grouped-gemm', problemType.groupedGemm)
@@ -542,6 +550,7 @@ def writeClientConfigIni(problemSizes, biasTypeArgs, activationArgs, problemType
         if globalParameters["ExitOnFails"] > 1:
           param("exit-on-error", 1)
 
+        param('prune-mode',               pruneModeName(int(globalParameters["PruneSparseMode"])))
         param("bounds-check",             boundsCheckName(int(globalParameters["BoundsCheck"])))
         param("print-valids",             globalParameters["ValidationPrintValids"])
         param("print-max",                globalParameters["ValidationMaxToPrint"])
