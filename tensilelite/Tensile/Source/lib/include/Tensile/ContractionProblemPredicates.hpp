@@ -1836,6 +1836,33 @@ namespace Tensile
                     return std::string("The supported bias source are: " + biasString);
                 }
             };
+
+            struct SparseA
+                : public Predicate_CRTP<SparseA, ContractionProblemGemm>
+            {
+                enum
+                {
+                    HasIndex = false,
+                    HasValue = true
+                };
+                bool value;
+
+                SparseA() = default;
+                SparseA(bool value)
+                    : value(value)
+                {
+                }
+
+                static std::string Type()
+                {
+                    return "SparseA";
+                }
+
+                virtual bool operator()(ContractionProblemGemm const& problem) const override
+                {
+                    return problem.sparseA() == value;
+                }
+            };
         } // namespace Contraction
 
         /**

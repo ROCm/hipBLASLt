@@ -128,13 +128,15 @@ namespace Tensile
     public:
         enum TENSOR : int
         {
-            A         = 0,
-            B         = 1,
-            C         = 2,
-            D         = 3,
-            E         = 4,
-            BIAS      = 5,
-            SCALEDVEC = 6,
+            A          = 0,
+            B          = 1,
+            C          = 2,
+            D          = 3,
+            E          = 4,
+            BIAS       = 5,
+            SCALEDVEC  = 6,
+            COMPRESSED = 7,
+            METADATA   = 8,
             TENSOR_COUNT
         };
 
@@ -585,6 +587,17 @@ namespace Tensile
             return m_highPrecisionAccumulate;
         }
 
+        void setSparseA(bool value)
+        {
+            m_aSparse = value;
+            normalizeSparseA();
+        }
+
+        bool sparseA() const
+        {
+            return m_aSparse;
+        }
+
         void setKernelLanguage(KernelLanguage value)
         {
             m_kernelLanguage = value;
@@ -691,6 +704,10 @@ namespace Tensile
         {
             return m_allocatedElementsNonBatchB;
         }
+        size_t allocatedElementsNonBatchCompressedA() const
+        {
+            return m_allocatedElementsNonBatchCompressedA;
+        }
 
         size_t flopsPerMac() const;
         size_t flopCount() const;
@@ -710,6 +727,14 @@ namespace Tensile
         TensorDescriptor const& d() const
         {
             return m_tensors[ContractionProblemGemm::TENSOR::D];
+        }
+        TensorDescriptor const& compressed() const
+        {
+            return m_tensors[ContractionProblemGemm::TENSOR::COMPRESSED];
+        }
+        TensorDescriptor const& metadata() const
+        {
+            return m_tensors[ContractionProblemGemm::TENSOR::METADATA];
         }
 
         FreeIndices const& freeIndicesA() const
@@ -841,6 +866,8 @@ namespace Tensile
         ActivationType    m_activationEnumArg       = ActivationType::None;
         bool              m_activationHPA           = false;
         bool              m_activationNoGuard       = false;
+        bool              m_aSparse                 = false;
+
         KernelLanguage    m_kernelLanguage          = KernelLanguage::Any;
         PerformanceMetric m_performanceMetric       = PerformanceMetric::DeviceEfficiency;
 
@@ -875,8 +902,11 @@ namespace Tensile
 
         size_t m_allocatedElementsNonBatchA;
         size_t m_allocatedElementsNonBatchB;
+        size_t m_allocatedElementsNonBatchCompressedA;
 
         void normalize();
+        void normalizeSparseA();
+
         void consistencyCheck() const;
 
         void getIndexNames(std::string& aNames,
@@ -910,17 +940,19 @@ namespace Tensile
         ContractionInputs();
         virtual ~ContractionInputs();
 
-        ContractionInputs(void const*        _a,
-                          void const*        _b,
-                          void const*        _c,
-                          void*              _d,
-                          void const* const* _batchA,
-                          void const* const* _batchB,
-                          void const* const* _batchC,
-                          void* const*       _batchD,
-                          void const*        _bias,
-                          void const*        _scaleDVec,
-                          void*              _ws);
+        ContractionInputs(void const*          _a,
+                          void const*          _b,
+                          void const*          _c,
+                          void*                _d,
+                          void const* const*   _batchA,
+                          void const* const*   _batchB,
+                          void const* const*   _batchC,
+                          void* const*         _batchD,
+                          void const*          _bias,
+                          void const*          _scaleDVec,
+                          void*                _ws,
+                          void const*          _compressed,
+                          unsigned char const* _metadata);
 
         // TODO: Remove this
         void const* a = nullptr;
@@ -944,6 +976,8 @@ namespace Tensile
 
         // Workspace
         void* ws = nullptr;
+        void const* compressed = nullptr;
+        unsigned char const* metadata = nullptr;
 
         std::vector<size_t> maxElements;
         size_t              workspaceSize;
