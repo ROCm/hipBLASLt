@@ -314,6 +314,57 @@ class MFMAInstruction(Instruction):
         kStr = self.instStr + " " + self.getArgStr()
         return self.formatWithComment(kStr)
 
+class SMFMAInstruction(Instruction):
+    def __init__(self, instType: InstType, accType: InstType, variant: List[int], mfma1k, \
+                 acc, a, b, metadata, comment="") -> None:
+        super().__init__(instType, comment)
+        self.accType  = accType
+        self.variant  = variant
+        self.mfma1k   = mfma1k
+        self.acc      = acc
+        self.a        = a
+        self.b        = b
+        self.metadata = metadata
+
+    def typeConvert(self, iType) -> str:
+        if iType == InstType.INST_F16:
+            kStr = "f16"
+        elif iType == InstType.INST_F32:
+            kStr = "f32"
+        elif iType == InstType.INST_BF16:
+            kStr = "bf16"
+        elif iType == InstType.INST_I8:
+            kStr = "i8"
+        elif iType == InstType.INST_I32:
+            kStr = "i32"
+        else:
+            printExit("Type %s not found"%str(iType))
+        return kStr
+
+    def getParams(self) -> list:
+        return [self.acc, self.a, self.b, self.metadata]
+
+    def preStr(self) -> None:
+        if len(self.variant) == 4:
+            variantStr = "{}x{}x{}".format(*self.variant)
+            strB = "%ub_" % self.variant[3] if self.variant[3] > 1 else ""
+            self.setInst("v_smfmac_%s_%s_%s%s"%(self.typeConvert(self.accType), variantStr, \
+                strB, self.typeConvert(self.instType)))
+        else:
+            assert("Currently only support smfma variant 4" and 0)
+
+    def getArgStr(self) -> str:
+        return str(self.acc) + ", " + str(self.a) + ", " + str(self.b) + ", " + str(self.metadata)
+
+    def toList(self) -> list:
+        self.preStr()
+        return [self.instStr, self.acc, self.a, self.b, self.metadata, self.comment]
+
+    def __str__(self) -> str:
+        self.preStr()
+        kStr = self.instStr + " " + self.getArgStr()
+        return self.formatWithComment(kStr)
+
 class MacroInstruction(Instruction):
     def __init__(self, name: str, args: list, comment="") -> None:
         super().__init__(InstType.INST_MACRO, comment)

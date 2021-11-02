@@ -344,6 +344,7 @@ namespace Tensile
             bool                  activationNoGuard       = false;
             std::vector<int>      biasSrcWhiteList;
             std::vector<DataType> biasDataTypeWhiteList;
+            bool                  sparseA                 = false;
         };
 
         struct LinearModel

@@ -107,6 +107,7 @@ namespace Tensile
                     Base::template Pair<Predicates::Contraction::BiasDataTypeWhiteList>(),
                     Base::template Pair<Predicates::Contraction::BiasSrcWhiteList>(),
                     Base::template Pair<Predicates::Contraction::SizeInRange>(),
+                    Base::template Pair<Predicates::Contraction::SparseA>(),
                 });
 
                 auto gmap = Generic::GetSubclasses();
@@ -441,6 +442,12 @@ namespace Tensile
         template <typename IO>
         struct MappingTraits<Predicates::Contraction::SizeInRange, IO>
             : public AutoMappingTraits<Predicates::Contraction::SizeInRange, IO>
+        {
+        };
+
+        template <typename IO>
+        struct MappingTraits<Predicates::Contraction::SparseA, IO>
+            : public AutoMappingTraits<Predicates::Contraction::SparseA, IO>
         {
         };
     } // namespace Serialization

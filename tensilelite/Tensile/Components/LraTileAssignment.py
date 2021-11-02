@@ -62,6 +62,10 @@ class LraTileAssignmentMFMA(LraTileAssignment):
         tile01           = tP["tile01Idx"]
         waveWidth        = writer.states.kernel["WavefrontSize"]
         inputPerThread   = max(writer.states.lrvwA,writer.states.lrvwB)
+        
+        if kernel["ProblemType"]["SparseA"] and tP["isA"]:
+          inputPerThread = inputPerThread//2
+
         if kernel["DirectToVgprA"]:
           # DirectToVgprA case, ignore lrvwA
           inputPerThread = writer.states.lrvwB
@@ -69,6 +73,7 @@ class LraTileAssignmentMFMA(LraTileAssignment):
           # DirectToVgprB case, ignore lrvwB
           inputPerThread = writer.states.lrvwA
         LdsPad           = kernel["LdsPad%s" % tc] if kernel["LdsBlockSizePerPad%s" % tc] == 0 else 0
+        depthULds        = kernel["_DepthULds%s" % tc]
 
         # parameter for get each type index
         dividendForKId   = kernel["MatrixInstM"] * kernel["MatrixInstB"]
@@ -97,7 +102,7 @@ class LraTileAssignmentMFMA(LraTileAssignment):
         # strider for each type of index
         umlds            = kernel["UnrollMajorLDS%s" % tc]
         mt               = kernel["MacroTile%u" % tile01]
-        strideTile       = kernel["_DepthULds"] + LdsPad if umlds else 1
+        strideTile       = depthULds + LdsPad if umlds else 1
         strideK          = inputPerThread if umlds else (mt + LdsPad) * inputPerThread
         strideBlock      = kernel["MatrixInstM"] * strideTile
         strideWave       = kernel["MatrixInstM"] * num1DBlocks * strideTile * vectorWidth
