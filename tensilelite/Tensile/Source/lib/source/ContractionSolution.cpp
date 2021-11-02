@@ -264,11 +264,13 @@ namespace Tensile
             args.appendUnbound<unsigned int*>("debugBuffer");
         }
 
-        TensorDescriptor const& a = problem.a();
-        TensorDescriptor const& b = problem.b();
-        TensorDescriptor const& c = problem.c();
-        TensorDescriptor const& d = problem.d();
-        TensorDescriptor const& e = problem.tensor(ContractionProblemGemm::TENSOR::E);
+        TensorDescriptor const& a        = problem.a();
+        TensorDescriptor const& b        = problem.b();
+        TensorDescriptor const& c        = problem.c();
+        TensorDescriptor const& d        = problem.d();
+        TensorDescriptor const& e        = problem.tensor(ContractionProblemGemm::TENSOR::E);
+        TensorDescriptor const& ca       = problem.compressed();
+        TensorDescriptor const& metadata = problem.metadata();
 
         if(sizeMapping.globalAccumulation)
         {
@@ -288,7 +290,10 @@ namespace Tensile
 
         if(problemType.stridedBatched)
         {
-            args.append<void const*>("a", inputs.a);
+            if(problem.sparseA())
+                args.append<void const*>("a", inputs.compressed);
+            else
+                args.append<void const*>("a", inputs.a);
             args.append<void const*>("b", inputs.b);
         }
         else
@@ -296,6 +301,9 @@ namespace Tensile
             args.append<void const* const*>("batchA", inputs.batchA);
             args.append<void const* const*>("batchB", inputs.batchB);
         }
+
+        if(problemType.sparseA)
+            args.append<unsigned char const*>("metadata", inputs.metadata);
 
         args.append("alpha", inputs.alpha, problem.alphaType());
         if(problem.alphaType() == DataType::Half)
@@ -342,10 +350,20 @@ namespace Tensile
         }
 
         for(size_t i = startStrideAB; i < a.dimensions(); i++)
-            args.append<uint32_t>(concatenate_if<T_Debug>("strideA", i), a.strides()[i]);
+        {
+            auto stride_a = problemType.sparseA ? ca.strides()[i] : a.strides()[i];
+            args.append<uint32_t>(concatenate_if<T_Debug>("strideA", i), stride_a);
+        }
 
         for(size_t i = startStrideAB; i < b.dimensions(); i++)
             args.append<uint32_t>(concatenate_if<T_Debug>("strideB", i), b.strides()[i]);
+
+
+        if(problemType.sparseA)
+        {
+            for(size_t i = startStrideAB; i < a.dimensions(); i++)
+                args.append<uint32_t>(concatenate_if<T_Debug>("strideMetadata", i), metadata.strides()[i]);
+        }
 
         {
             int idx = 0;

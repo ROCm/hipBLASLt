@@ -82,6 +82,12 @@ class ABMatrixInfo(MatrixInfo):
 
   numSgprGlobalReadIncs: int     = -1
 
+  #sparse
+  numVgprValuMetadata: int               = -1
+  startVgprValuMetadata: int             = -1
+  numGlobalReadOffsetsMetadata: int      = -1
+  startVgprGlobalReadOffsetMetadata: int = -1
+
 # States
 @dataclass
 class StateValues:
@@ -175,6 +181,7 @@ class StateValues:
   d: MatrixInfo = MatrixInfo()
   e: MatrixInfo = MatrixInfo()
   bias: MatrixInfo = MatrixInfo()
+  m: ABMatrixInfo = ABMatrixInfo()       # For Sparse Metadata
   totalAgprs: int                        = 0
   totalVgprs: int                        = 0
   totalSgprs: int                        = 0
@@ -1542,7 +1549,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
            setId = 1 - setId
         # use second set for DirectToVGPR
         vregSetIdxMFMA = setId # use first set for NGLL, second set for other cases
-        macIterCode.add(self.mfmaIter(kernel, tensorParametersA, tensorParametersB, u, kernel["InnerUnroll"], vregSetIdxMFMA))
+        macIterCode.add(self.mfmaIter(kernel, tensorParametersA, tensorParametersB, u, kernel["InnerUnroll"], vregSetIdxMFMA, False, unrollIdx=u*kernel["DepthULdsDivisor"]+uDu))
       else:
         printExit("TensileLite does not support MAC instructions.")
       if kernel["ProblemType"]["Gradient"] and kernel["ProblemType"]["UseBias"] and (kernel["ProblemType"]["BiasSrc"] == "A" or kernel["ProblemType"]["BiasSrc"] == "B"):
@@ -2612,10 +2619,10 @@ class KernelWriter(metaclass=abc.ABCMeta):
         # DirectToVgpr + TLU=False case, ignore LocalReadVectorWidth and use GlobalLoadVectorWidth instead.
         self.states.lrvwA = vwa
       else:
-        self.states.lrvwA = kernel["LocalReadVectorWidth"]
+        self.states.lrvwA = kernel["LocalReadVectorWidth"] if not kernel["ProblemType"]["SparseA"] else kernel["LocalReadVectorWidth"]//2
     else:
       if kernel["EnableMatrixInstruction"]:
-        self.states.lrvwA = kernel["MIInputPerThread"]
+        self.states.lrvwA = kernel["MIInputPerThreadA"]
       else:
         self.states.lrvwA = 1
     if not kernel["ProblemType"]["TLUB"] or MergeRead or kernel["allowLRVWforTLUandMI"]:
@@ -2626,7 +2633,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
         self.states.lrvwB = kernel["LocalReadVectorWidth"]
     else:
       if kernel["EnableMatrixInstruction"]:
-        self.states.lrvwB = kernel["MIInputPerThread"]
+        self.states.lrvwB = kernel["MIInputPerThreadB"]
       else:
         self.states.lrvwB = 1
 
@@ -2649,8 +2656,8 @@ class KernelWriter(metaclass=abc.ABCMeta):
 
     # Wider LocalRead
     if kernel["EnableMatrixInstruction"]:
-      self.states.numReadsIterCoalescedA = self.states.lrvwA // kernel["MIInputPerThread"]
-      self.states.numReadsIterCoalescedB = self.states.lrvwB // kernel["MIInputPerThread"]
+      self.states.numReadsIterCoalescedA = self.states.lrvwA // kernel["MIInputPerThreadA"]
+      self.states.numReadsIterCoalescedB = self.states.lrvwB // kernel["MIInputPerThreadB"]
       if kernel["allowLRVWforTLUandMI"]:
         self.states.numReadsIterCoalescedA = 1
         self.states.numReadsIterCoalescedB = 1
@@ -2965,8 +2972,8 @@ class KernelWriter(metaclass=abc.ABCMeta):
     if self.states.vgprValuDouble:
       valuBlocks *= 2
     if kernel["EnableMatrixInstruction"]:
-      self.states.a.numVgprValuPerBlock = kernel["MIWaveTileA"] * kernel["MIInputPerThread"] * tensorParametersA["bpe"] // self.states.bpr
-      self.states.b.numVgprValuPerBlock = kernel["MIWaveTileB"] * kernel["MIInputPerThread"] * tensorParametersB["bpe"] // self.states.bpr
+      self.states.a.numVgprValuPerBlock = kernel["MIWaveTileA"] * kernel["MIInputPerThreadA"] * tensorParametersA["bpe"] // self.states.bpr
+      self.states.b.numVgprValuPerBlock = kernel["MIWaveTileB"] * kernel["MIInputPerThreadB"] * tensorParametersB["bpe"] // self.states.bpr
     else:
       printExit("TensileLite does not support non MFMA.")
 
@@ -2978,6 +2985,9 @@ class KernelWriter(metaclass=abc.ABCMeta):
     if kernel["DirectToVgprB"]:
       self.states.b.numVgprValuPerBlock = 0
     self.states.b.numVgprValu = self.states.b.numVgprValuPerBlock * valuBlocks
+
+    if kernel["ProblemType"]["SparseA"]:
+      self.states.a.numVgprValuMetadata = kernel["MIWaveTileA"] * kernel["LoopIters"] * kernel["DepthULdsDivisor"] #every 8bit need 1 register
 
     ####################################
     # num vgprs: global -> local elements
@@ -3075,6 +3085,10 @@ class KernelWriter(metaclass=abc.ABCMeta):
       numVgprGlobalReadIncsB = 0
 
     numVgprAddressDbg = self.states.rpga if globalParameters["DebugKernel"] else 0
+  
+    # num registers for metadtaGlobalRead
+    if kernel["ProblemType"]["SparseA"]:
+      self.states.a.numGlobalReadOffsetsMetadata = kernel["MIWaveTileA"]-1
 
     ####################################
     # num vgprs: c write address
@@ -3146,6 +3160,9 @@ class KernelWriter(metaclass=abc.ABCMeta):
       self.states.bias.numVgprValu = 0
     self.states.bias.startVgprValu = vgprIdx
     vgprIdx += self.states.bias.numVgprValu
+    if kernel["ProblemType"]["SparseA"]:
+      self.states.a.startVgprValuMetadata = vgprIdx
+      vgprIdx += self.states.a.numVgprValuMetadata
 
     # Registers allocated above this point can be used as temps during setup
     # Registers above here are reserved in initC, near the end of the setup
@@ -3188,6 +3205,9 @@ class KernelWriter(metaclass=abc.ABCMeta):
       vgprIdx += 1 if kernel["_UseSgprForGRO"] else self.states.a.numVgprGlobalReadOffsets
       self.startVgprGlobalReadOffsetB = vgprIdx
       vgprIdx += 1 if kernel["_UseSgprForGRO"] else self.states.b.numVgprGlobalReadOffsets
+      if kernel["ProblemType"]["SparseA"]:
+        self.startVgprGlobalReadOffsetMetadata = vgprIdx
+        vgprIdx += 1
     else:
       # TODO: alignment hack, figure out a better solution
       vgprIdx = ((vgprIdx+1)//2)*2
@@ -3262,6 +3282,9 @@ class KernelWriter(metaclass=abc.ABCMeta):
     numSgprAddressC = self.states.rpga # til end
     numSgprAddressA = self.states.rpga # til read offsets
     numSgprAddressB = self.states.rpga # til read offsets
+
+    numSgprAddressMetadata = self.states.rpga if kernel["ProblemType"]["SparseA"] else 0
+
     # would not less than 1 reg,
     # since even if ComputeType = H, we still pass the arg as a 32-bit (concate two 16-bit)
     numSgprAlpha = max(1,int(self.states.bpeCinternal/4))
@@ -3278,6 +3301,12 @@ class KernelWriter(metaclass=abc.ABCMeta):
     if not kernel["ProblemType"]["UseInitialStridesAB"]:
       self.states.a.numSgprStrides -= 1
       self.states.b.numSgprStrides -= 1
+    if kernel["ProblemType"]["SparseA"]:
+      self.states.m.numSgprStrides = len(kernel["ProblemType"]["IndexAssignmentsMetadata"])
+      if not kernel["ProblemType"]["UseInitialStridesAB"]:
+        self.states.m.numSgprStrides -= 1
+    else:
+      self.states.m.numSgprStrides = 0
     self.states.numSgprSizesSum = kernel["ProblemType"]["NumIndicesSummation"]
     self.states.numSgprSizesFree = kernel["ProblemType"]["NumIndicesC"]
     self.states.numActivationTypeArgSize = 0 # Will change to 1 if activationType == All
@@ -3369,10 +3398,11 @@ class KernelWriter(metaclass=abc.ABCMeta):
         self.sgprPool.checkIn(tempSgpr)
         break
       SgprSlot.append(tempSgpr)
-
     self.defineSgpr("AddressC", numSgprAddressC)
     self.defineSgpr("AddressA", numSgprAddressA)
     self.defineSgpr("AddressB", numSgprAddressB)
+    if kernel["ProblemType"]["SparseA"]:
+      self.defineSgpr("AddressMetadata", numSgprAddressMetadata)
     self.defineSgpr("Alpha", numSgprAlpha, numSgprAlpha)
     if kernel["ProblemType"]["UseBeta"]:
       self.defineSgpr("Beta", numSgprBeta, numSgprBeta)
@@ -3385,6 +3415,8 @@ class KernelWriter(metaclass=abc.ABCMeta):
     self.defineSgpr("StridesC", self.states.c.numSgprStrides)
     self.defineSgpr("StridesA", self.states.a.numSgprStrides)
     self.defineSgpr("StridesB", self.states.b.numSgprStrides)
+    if kernel["ProblemType"]["SparseA"]:
+        self.defineSgpr("StridesMetadata", self.states.m.numSgprStrides)
     self.defineSgpr("SizesFree", self.states.numSgprSizesFree)
     self.defineSgpr("SizesSum", self.states.numSgprSizesSum)
 
@@ -3417,9 +3449,9 @@ class KernelWriter(metaclass=abc.ABCMeta):
       self.defineSgpr("SmallMagicNumberDivWg0", 1)
       self.defineSgpr("SmallMagicNumberDivWg01", 1)
 
-    self.states.numSgprToLoad = numSgprAddressD + numSgprAddressC + numSgprAddressA + numSgprAddressB + numSgprAddressScaleDVec + numSgprAlpha + \
+    self.states.numSgprToLoad = numSgprAddressD + numSgprAddressC + numSgprAddressA + numSgprAddressB + numSgprAddressScaleDVec + numSgprAlpha + numSgprAddressMetadata + \
       (numSgprBeta if kernel["ProblemType"]["UseBeta"] else 0) + self.states.d.numSgprStrides + self.states.c.numSgprStrides + self.states.a.numSgprStrides + \
-      self.states.b.numSgprStrides + self.states.numSgprSizesFree + self.states.numSgprSizesSum + \
+      self.states.b.numSgprStrides + self.states.m.numSgprStrides + self.states.numSgprSizesFree + self.states.numSgprSizesSum + \
       len(kernel["PackedC0IdxChars"][:-1])*2 + len(kernel["PackedC1IdxChars"][:-1])*2 + \
       1 + \
       2 + \

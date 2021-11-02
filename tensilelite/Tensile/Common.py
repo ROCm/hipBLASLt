@@ -159,6 +159,7 @@ globalParameters["CEqualD"] = False               # Set to true if testing for t
 # When this parameter is set to 0, the Tensile client will use srand(time(NULL)).
 # If not 0 the Tensile client will use srand(seed).
 globalParameters["DataInitSeed"] = 0
+globalParameters["PruneSparseMode"] = 0           # Prune mode for Sparse Matrix: 0=random, 1=XX00, 2=X0X0, 3=0XX0, 4=X00X, 5=0X0X, 6=00XX
 
 # build parameters
 globalParameters["CMakeCXXFlags"] = ""            # pass flags to cmake
@@ -340,6 +341,23 @@ for MFMA in [validMFMA["H"], validMFMA["S"], validMFMA["B"], validMFMA["D"]]:
               validMFMA["_format9"].append([MI[0],MI[1],MI[2],MI[3],2**bm,tt0,tt1,2**wave_m, 2**wave_n])
 validMatrixInstructions = [[], [-1]] + validMFMA["H"] + validMFMA["S"] + validMFMA["B"] + validMFMA["D"] + validMFMA["B1k"]
 validMatrixInstructions = validMatrixInstructions + validMFMA["_format9"]
+
+validSMFMA = {}
+validSMFMA["H"] = [[32,32,16,1], [16,16,32,1]]
+validSMFMA["B"] = [[32,32,16,1], [16,16,32,1]]
+validSMFMA["_format9"] = []
+for SMFMA in [validSMFMA["H"], validSMFMA["B"]]:
+  for MI in SMFMA:
+    for bm in range(int(math.log(MI[3],2))+1):
+      for tt0 in range(1,validTT+1):
+        for tt1 in range(1,validTT+1):
+          for wave_m in range (3):
+            for wave_n in range(3):
+              validSMFMA["_format9"].append([MI[0],MI[1],MI[2],MI[3],2**bm,tt0,tt1,2**wave_m, 2**wave_n])
+validSparseMatrixInstructions = validSMFMA["H"] + validSMFMA["B"]
+validMatrixInstructions = validMatrixInstructions + validSparseMatrixInstructions + validSMFMA["_format9"]
+
+
 
 # The supported typed GEMM, each entry is (Ti, To, Tc).
 # DataType (Ti)        = The data-type of the input matrices: A/B
@@ -1073,6 +1091,8 @@ defaultProblemType = {
     "UseScaleDVec":                False,            # =True use scaleD vector
     "HighPrecisionAccumulate":  False,            # f32 += f16*f16
     "SilentHighPrecisionAccumulate": False,       # Keep kernel names the same for HPA mode.  Useful for testing.
+
+    "SparseA":                  False,            # 4:2 Structured Sparse A Matrix
 
     "ComplexConjugateA":        False,            # complex data should be conjugated for "C" transpose case
     "ComplexConjugateB":        False,

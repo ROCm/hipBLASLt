@@ -80,6 +80,8 @@ class SignatureCOV3(Signature):
         signature.addArg(    "A", SVK.SIG_GLOBALBUFFER, srcValueType, "generic")
         signature.addArg(    "B", SVK.SIG_GLOBALBUFFER, srcValueType, "generic")
 
+        if kernel["ProblemType"]["SparseA"]:
+            signature.addArg("MetaData", SVK.SIG_GLOBALBUFFER, srcValueType, "generic")
         # Note: We use packed f16 if alpha and beta are f16
         if kernel["ProblemType"]["ComputeDataType"].isHalf():
             cptValueType = 'pkf16'
@@ -99,6 +101,10 @@ class SignatureCOV3(Signature):
 
         for i in range(0, writer.states.b.numSgprStrides):
             signature.addArg(              "strideB%u"%i, SVK.SIG_VALUE,               "u32")
+
+        if kernel["ProblemType"]["SparseA"]:
+            for i in range(0, writer.states.m.numSgprStrides):
+                signature.addArg(   "strideMetadata%u"%i, SVK.SIG_VALUE,               "u32")
 
         for i in range(0, writer.states.numSgprSizesFree):
             signature.addArg(            "SizesFree%u"%i, SVK.SIG_VALUE,               "u32")
