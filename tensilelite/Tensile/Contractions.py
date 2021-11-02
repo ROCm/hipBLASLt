@@ -67,7 +67,7 @@ class ProblemType:
     StateKeys = ['operationIdentifier', 'aType', 'bType', 'cType', 'dType', 'eType',
                  'useBeta', 'useBias', 'biasSrcWhiteList', 'useE', 'useScaleDVec', 'biasDataTypeWhiteList', 'highPrecisionAccumulate',
                  'useInitialStridesAB', 'useInitialStridesCD', 'stridedBatched', 'groupedGemm',
-                 'useGradient', 'activationType', 'activationHPA', 'activationNoGuard']
+                 'useGradient', 'activationType', 'activationHPA', 'activationNoGuard', 'sparseA']
     @classmethod
     def FromOriginalState(cls, d):
         indices = [None]*d['TotalIndices']
@@ -210,6 +210,7 @@ class ProblemType:
         else:
             rv.activationComputeDataType = DataType(d['ComputeDataType'] if rv.activationHPA else \
                                                     d['DestDataType'])
+        rv.sparseA = d['SparseA']
 
         return rv
 
@@ -321,6 +322,7 @@ class ProblemType:
             predicates.append(ProblemPredicate("StridedBatched", value=self.stridedBatched))
             predicates.append(ProblemPredicate("GroupedGemm", value=self.groupedGemm))
             predicates.append(ProblemPredicate("UseScaleDVec", value=self.useScaleDVec))
+            predicates.append(ProblemPredicate("SparseA", value=self.sparseA))
 
         return predicates
 

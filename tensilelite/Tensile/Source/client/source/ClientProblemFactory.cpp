@@ -37,6 +37,7 @@ namespace Tensile
             : m_problemSizes(args["problem-size"].as<std::vector<std::vector<size_t>>>())
             , m_stridedBatched(args["strided-batched"].as<bool>())
             , m_groupedGemm(args["grouped-gemm"].as<bool>())
+            , m_aSparse(args["sparse-a"].as<bool>())
             , m_highPrecisionAccumulate(args["high-precision-accumulate"].as<bool>())
             , m_kernelLanguage(args["kernel-language"].as<KernelLanguage>())
             , m_performanceMetric(args["performance-metric"].as<PerformanceMetric>())
@@ -259,6 +260,7 @@ namespace Tensile
                         rv.back().setKernelLanguage(m_kernelLanguage);
                         rv.back().setPerformanceMetric(m_performanceMetric);
                         rv.back().setDeterministicMode(m_deterministicMode);
+                        rv.back().setSparseA(m_aSparse);
                         rv.back().setFp16AltImpl(m_fp16AltImpl);
                         rv.back().setActivationType(m_activationType);
                         rv.back().setWorkspaceSize(m_maxWorkspaceSize);

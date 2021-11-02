@@ -110,6 +110,7 @@ namespace Tensile
                 ("alpha-type",               po::value<DataType>()->default_value(DataType::None), "alpha data type")
                 ("beta-type",                po::value<DataType>()->default_value(DataType::None), "beta data type")
                 ("high-precision-accumulate", po::value<bool>()->default_value(false), "Use high-precision accumulate.")
+                ("sparse-a",                 po::value<bool>()->default_value(false), "A matrix is sparse matrix.")
                 ("strided-batched",          po::value<bool>()->default_value(true), "Use strided-batched or general batched")
                 ("grouped-gemm",             po::value<bool>()->default_value(false), "Use grouped gemm")
                 ("kernel-language",          po::value<KernelLanguage>()->default_value(KernelLanguage::Any), "Select kernel language.")
@@ -141,6 +142,7 @@ namespace Tensile
                 "2:Memory bound check by front guard page"
                 "3:Memory bound check by back guard page"
                 "4:Memory bound check by both side guard page")
+                ("prune-mode",               po::value<PruneSparseMode>()->default_value(PruneSparseMode::PruneRandom), "prune Sparse mode")
 
                 ("print-tensor-a",           po::value<bool>()->default_value(false), "Print tensor A.")
                 ("print-tensor-b",           po::value<bool>()->default_value(false), "Print tensor B.")
