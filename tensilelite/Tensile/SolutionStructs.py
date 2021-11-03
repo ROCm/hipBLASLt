@@ -1959,6 +1959,8 @@ class Solution(collections.abc.Mapping):
         reject(state, "For non-MI Kernel, if sizeof(ComputeDataType) > sizeof(DataType), " + \
          "Please add the following config:" + \
          "\n - HighPrecisionAccumulate: True")
+      if state["ProblemType"]["SparseA"]:
+        reject(state, "Sparse A problem is only supported by SMFMA MI kernel.")
 
       if state["ThreadTile0"] > 16 or state["ThreadTile1"] > 16:
         reject(state, "Invalid value for ThreadTile")
@@ -2844,6 +2846,33 @@ class Solution(collections.abc.Mapping):
       if state["StoreRemapVectorWidth"]:
         reject(state, "SourceSwap not compatible with StoreRemap")
         return
+
+    # SparseA problem
+    if state["ProblemType"]["SparseA"]:
+      if state["StaggerU"]:
+        reject(state, "Sparse A kernel does not support StaggerU yet.")
+        return
+      if state["PrefetchGlobalRead"]:
+        reject(state, "Sparse A kernel does not support PGR yet.")
+        return
+      if state["MIArchVgpr"]:
+        reject(state, "Sparse A kernel does not support MIArchVgpr yet.")
+        return
+      if state["GlobalSplitU"] > 1:
+        reject(state, "Sparse A kernel does not support GlobalSplitU yet.")
+        return
+      if state["DepthULdsDivisor"] > 1:
+        reject(state, "Sparse A kernel does not support SplitLDS yet.")
+        return
+      # Not Support Feature
+      if state["SourceSwap"]:
+        reject(state, "Sparse A kernel cannot support SourceSwap.")
+        return
+      # NOT support edge and tailing loop yet
+      # Force overriding ASEM, AF0EM, AF1EM for now
+      state["AssertSummationElementMultiple"] = state["DepthU"]
+      state["AssertFree0ElementMultiple"]     = state["MacroTile0"]
+      state["AssertFree1ElementMultiple"]     = state["MacroTile1"]
 
     # check if need to use lds init Acc vgprs
     state["LdsInitCVgprs"] = False
