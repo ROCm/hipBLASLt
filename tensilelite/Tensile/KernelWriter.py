@@ -2828,6 +2828,9 @@ class KernelWriter(metaclass=abc.ABCMeta):
       if kernel["ProblemType"]["Fp16AltImpl"] and not self.states.asmCaps["HasMFMA_bf16_1k"]:
         raise RuntimeError("Fp16AltImpl not supported for {0}".format(self.states.version))
 
+      if kernel["ProblemType"]["SparseA"] and not self.states.asmCaps["HasSMFMA"]:
+        raise RuntimeError("Sparse MatrixInstruction not supported for {0}".format(self.states.version))
+
     if not self.states.asmCaps["HasDirectToLds"]:
       kernel["DirectToLdsA"] = False
       kernel["DirectToLdsB"] = False
