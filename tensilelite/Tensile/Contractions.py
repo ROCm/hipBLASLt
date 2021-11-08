@@ -210,7 +210,9 @@ class ProblemType:
         else:
             rv.activationComputeDataType = DataType(d['ComputeDataType'] if rv.activationHPA else \
                                                     d['DestDataType'])
-        rv.sparseA = d['SparseA']
+        rv.sparseA = False
+        if 'SparseA' in d:
+            rv.sparseA = d['SparseA']
 
         return rv
 
