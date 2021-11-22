@@ -3406,6 +3406,16 @@ class KernelWriterAssembly(KernelWriter):
 
     return module
 
+  def mfmaIter_waitCount(self, kernel):
+    if self.states.version in [(9,4,0)]:
+      dataType = kernel["ProblemType"]["DataType"]
+      miM = kernel["MatrixInstM"]
+      miN = kernel["MatrixInstN"]
+      if dataType.isSingle() or dataType.isHalf() or dataType.isBFloat16():
+          if miM == 4 and miN == 4:
+              return 2
+    return 0
+
   ##############################################################################
   # MFMA Iteration
   ##############################################################################
@@ -3528,6 +3538,7 @@ class KernelWriterAssembly(KernelWriter):
     if s_nop != 0:
       imod.add(SNop(waitState=(s_nop - 1), comment=""))
 
+    prevAccIdx = -1
     for iui in range(0, innerUnroll):
       iuiA_new = (iui//self.states.numReadsIterCoalescedA)*self.states.numReadsIterCoalescedA
       iuiA_new_offset = iui%self.states.numReadsIterCoalescedA*vgprPerInput
@@ -3689,10 +3700,14 @@ class KernelWriterAssembly(KernelWriter):
             variant = [kernel["MatrixInstM"], kernel["MatrixInstN"], kernel["MatrixInstK"]]
             if (not mfma_1k) and self.states.version in [(9,4,0)]:
               variant.append(kernel["MatrixInstB"])
+            waits = self.mfmaIter_waitCount(kernel)
+            if waits > 0 and prevAccIdx == accIdx:
+              imod.add(SNop(waits - 1, "Wait for C"))
             imod.add(MFMAInstruction(instType=miInInstType, accType=miOutInstType, variant=variant, mfma1k=mfma_1k, \
                                      acc=gprfunc((accStart+accStoreCIdx), (accEnd-accStart+1)), \
                                      a=src0, b=src1, acc2=gprfunc(accStartSrc1, (accEndSrc1-accStartSrc1+1)), \
                                      comment="left value = %s[%u+%u:%u+%u]" % (accumRegType, accStart, accStoreCIdx, accEnd, accStoreCIdx)))
+            prevAccIdx = accIdx
 
     # release register
     if kReg is not None: self.vgprPool.checkIn(kReg)
