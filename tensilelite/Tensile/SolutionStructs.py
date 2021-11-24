@@ -2027,7 +2027,21 @@ class Solution(collections.abc.Mapping):
 
     # Default GlobalReadVectorWidth
     if state["GlobalReadVectorWidth"] == -1:
-      state["GlobalReadVectorWidth"] = state["VectorWidth"]
+      if state["EnableMatrixInstruction"]:
+        curGRVW = 1/state["ProblemType"]["DataType"].numRegisters()
+        state["GlobalReadVectorWidth"] = int(curGRVW)
+        wlrMultiple = state["LocalReadVectorWidth"] // state["MIInputPerThread"]
+        if state["DepthU"] // state["MatrixInstK"] == wlrMultiple:
+          optGRVW = 2
+          state["LocalReadVectorWidth"] //= 2
+        else:
+          optGRVW = 4
+        while (curGRVW * state["ProblemType"]["DataType"].numRegisters() < optGRVW):
+          curGRVW *= 2
+          if (state["MacroTile0"]*state["DepthU"]//state["NumThreads"]) % curGRVW == 0 and (state["MacroTile1"]*state["DepthU"]//state["NumThreads"]) % curGRVW == 0:
+            state["GlobalReadVectorWidth"] = int(curGRVW)
+      else:
+        state["GlobalReadVectorWidth"] = state["VectorWidth"]
 
     # Default GlobalStoreVectorWidth
     if state["StoreVectorWidth"] == -1:
@@ -2560,13 +2574,12 @@ class Solution(collections.abc.Mapping):
 
     if state["UnrollMajorLDSA"]:
       ldsNumElementsA = (state["_DepthULds"] + state["LdsPadA"]) * state["MacroTileA"]
-      padInterval = state["LdsBlockSizePerPadA"] // bpeAB
-      if padInterval != 0:
-        ldsNumElementsA = int((state["_DepthULds"] * state["MacroTileA"]) / padInterval * (padInterval + state["LdsPadA"]))
-      ldsNumElementsAlignedA = roundUpToNearestMultiple(ldsNumElementsA, ldsAlign)
     else:
       ldsNumElementsA = state["_DepthULds"] * (state["MacroTileA"] + state["LdsPadA"])
-      ldsNumElementsAlignedA = roundUpToNearestMultiple(ldsNumElementsA, ldsAlign)
+    padInterval = state["LdsBlockSizePerPadA"] // bpeAB
+    if padInterval != 0:
+      ldsNumElementsA = int((state["_DepthULds"] * state["MacroTileA"]) / padInterval * (padInterval + state["LdsPadA"]))
+    ldsNumElementsAlignedA = roundUpToNearestMultiple(ldsNumElementsA, ldsAlign)
     if state["DirectToVgprA"]:
       # DirectToVgpr does not use LDS. Set to 0.
       ldsNumElementsA = 0
@@ -2574,13 +2587,12 @@ class Solution(collections.abc.Mapping):
 
     if state["UnrollMajorLDSB"]:
       ldsNumElementsB = (state["_DepthULds"] + state["LdsPadB"]) * state["MacroTileB"]
-      padInterval = state["LdsBlockSizePerPadB"] // bpeAB
-      if padInterval != 0:
-        ldsNumElementsB = int((state["_DepthULds"] * state["MacroTileB"]) / padInterval * (padInterval + state["LdsPadB"]))
-      ldsNumElementsAlignedB = roundUpToNearestMultiple(ldsNumElementsB, ldsAlign)
     else:
       ldsNumElementsB = state["_DepthULds"] * (state["MacroTileB"] + state["LdsPadB"])
-      ldsNumElementsAlignedB = roundUpToNearestMultiple(ldsNumElementsB, ldsAlign)
+    padInterval = state["LdsBlockSizePerPadB"] // bpeAB
+    if padInterval != 0:
+      ldsNumElementsB = int((state["_DepthULds"] * state["MacroTileB"]) / padInterval * (padInterval + state["LdsPadB"]))
+    ldsNumElementsAlignedB = roundUpToNearestMultiple(ldsNumElementsB, ldsAlign)
     if state["DirectToVgprB"]:
       # DirectToVgpr does not use LDS. Set to 0.
       ldsNumElementsB = 0
@@ -2621,10 +2633,13 @@ class Solution(collections.abc.Mapping):
         reject(state, "1LDSBuffer must be 0 for directToLds")
 
     if state["1LDSBuffer"] == -1:
-      if ldsNumElementsAB * state["ProblemType"]["DataType"].numBytes() > globalParameters["MaxLDS"]:
-        state["1LDSBuffer"] = 1
-      else:
+      if state["MIWaveTile"][0] == 1 and state["MIWaveTile"][1] == 1 or \
+          ldsNumElementsAB * state["ProblemType"]["DataType"].numBytes() <= max(ldsSizeOccupancy,32768) or \
+          (state["ProblemType"]["ComputeDataType"].numBytes() * state["MacroTile0"] * state["MacroTile1"] > 32768*4 and \
+            not (ldsNumElementsAB * state["ProblemType"]["DataType"].numBytes() > globalParameters["DeviceLDS"])):
         state["1LDSBuffer"] = 0
+      else:
+        state["1LDSBuffer"] = 1
 
     if state["1LDSBuffer"]:
       if not state["PrefetchGlobalRead"]:
@@ -2637,6 +2652,16 @@ class Solution(collections.abc.Mapping):
 
     # lds size is the greater of the two
     ldsNumElements = max(ldsNumElementsAB, ldsNumElementsReduction, ldsNumElementsOccupancy)
+
+    if state["NumElementsPerBatchStore"] == -1:
+      if ldsNumElements * state["ProblemType"]["DataType"].numBytes() > 32768 or \
+          state["ProblemType"]["ComputeDataType"].numBytes() * state["MacroTile0"] * state["MacroTile1"] > 32768*4:
+        state["NumElementsPerBatchStore"] = 0
+        state["StorePriorityOpt"] = 0
+        state["StoreSyncOpt"] = 0
+        state["GroupLoadStore"] = 0
+      else:
+        state["NumElementsPerBatchStore"] = 2 if not state["ProblemType"]["DataType"].numBytes() == 8 else 1
 
     if state["StoreRemapVectorWidth"] == -1:
       # use de_read_b64 as default in storeRemap to avoid bank conflict

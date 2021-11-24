@@ -773,7 +773,7 @@ validParameters = {
     #
     # If we issue store in short period of time, kernel will become from compute bound to memory bound
     # 0 means issue instructions as many as possible if VGPR available
-    "NumElementsPerBatchStore":   list(range(0, 256)),
+    "NumElementsPerBatchStore":   list(range(-1, 256)),
     #
     # add sync after per batch store in order to store contiguous elements
     # add sleep after per batch store in order to distribute store over whole loops
