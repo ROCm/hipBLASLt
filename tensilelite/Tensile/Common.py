@@ -905,6 +905,8 @@ validParameters = {
 
     # add gls or slc after global memory read/writes to change cacheing, not cacheing the writes is promising and improved performance a tiny bit
     # 1: glc, 2: slc, 3: glc+slc
+    # For gfx940, sets sc0/sc1 bits
+    # 0: none, 1: sc0, 2: sc1, 3: sc0 sc1
     "NonTemporalE":               list(range(0,4)),
     "NonTemporalD":               list(range(0,4)),
     "NonTemporalC":               list(range(0,4)),
