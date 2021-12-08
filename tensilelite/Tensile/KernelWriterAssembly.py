@@ -3624,12 +3624,12 @@ class KernelWriterAssembly(KernelWriter):
     dividerFortidInK = kernel["MatrixInstN"] * kernel["MatrixInstB"]
     numMIInputA      = kernel["MIInputPerThreadA"]
     numMIInputB      = kernel["MIInputPerThreadB"]
-    numMIInput       = numMIInputA # TODO: remove numMIInput when tail case is handled
+    numMIInput       = max(numMIInputA,numMIInputB)
     miInInstType, miOutInstType = dataTypeToMfmaInstTypePair(kernel["ProblemType"]["DataType"], \
       kernel["ProblemType"]["Fp16AltImpl"])
     vgprPerInputA    = int(numMIInputA * numRegistersIn)
     vgprPerInputB    = int(numMIInputB * numRegistersIn)
-    vgprPerInput     = vgprPerInputA # TODO: remove vgprPerInput when tail case is handled
+    vgprPerInput     = max(vgprPerInputA,vgprPerInputB)
     shiftPerElement  = int(numRegistersIn * 32)
     s_nop            = 0
     gprfunc          = accvgpr if not kernel["MIArchVgpr"] else vgpr
@@ -3667,25 +3667,56 @@ class KernelWriterAssembly(KernelWriter):
       with self.allocTmpSgpr(1) as tmpSgprInfo:
         shiftK.add(vectorStaticRemainder(dummy, kReg, "Serial", self.states.kernel["WavefrontSize"], tmpVgpr, tmpSgprInfo))
         shiftK.add(vectorStaticDivide(kReg, kReg, dividerFortidInK, tmpVgpr))
-        shiftK.add(staticMultiply(vgpr(kReg), vgpr(kReg), numMIInput, tmpSgprInfo))
 
       with self.allocTmpSgpr(3) as tmpSgprInfo:
         tmpSgpr = tmpSgprInfo.idx
         # replace 0 for differnet thread
-        shiftK.add(VCmpGEI32(dst=sgpr(tmpSgpr, 2), src0=vgpr(kReg), src1=sgpr(loopCounterName), comment="check K index >= Size L"))
-        for bk in range(0, vgprPerInput):
-          for a in range(0, kernel["MIWaveTileA"]):
-            for iui in range(0, innerUnroll):
-              aStr = vgpr("ValuA_X%u_I%u+%u+%u" % (m, iui, a*vgprPerInput, bk), 1)
-              shiftK.add(VCndMaskB32(dst=aStr, src0=aStr, src1=hex(0), src2=sgpr(tmpSgpr, 2), comment="set 0 if K_idx >= sizeL"))
-        for bk in range(0, vgprPerInput):
-          for b in range(0, kernel["MIWaveTileB"]):
-            for iui in range(0, innerUnroll):
-              bStr = vgpr("ValuB_X%u_I%u+%u+%u" % (m, iui, b*vgprPerInput, bk), 1)
-              shiftK.add(VCndMaskB32(dst=bStr, src0=bStr, src1=hex(0), src2=sgpr(tmpSgpr, 2), comment="set 0 if K_idx >= sizeL"))
+        if kernel["ProblemType"]["SparseA"] and numMIInput//8 >= 1:
+          vgprPerSet0Group = 1
+        elif vgprPerInputA <= 2:
+          shiftK.add(staticMultiply(vgpr(kReg), vgpr(kReg), numMIInput, tmpSgprInfo))
+          shiftK.add(VCmpGEI32(dst=sgpr(tmpSgpr, 2), src0=vgpr(kReg), src1=sgpr(loopCounterName), comment="check K index >= Size L"))
+          vgprPerSet0Group = vgprPerInputA
+        else:
+          vgprPerSet0Group = 2
+        numSet0GroupA = vgprPerInputA//vgprPerSet0Group
+        for group in range(0, numSet0GroupA):
+          if numSet0GroupA > 1:
+            if group == 0:
+              shiftK.add(staticMultiply(vgpr(kReg), vgpr(kReg), numMIInput, tmpSgprInfo))
+            else:
+              shiftK.add(VAddU32(vgpr(kReg), vgpr(kReg), numMIInput//numSet0GroupA, "add part of K"))
+            shiftK.add(VCmpGEI32(dst=sgpr(tmpSgpr, 2), src0=vgpr(kReg), src1=sgpr(loopCounterName), comment="check K index >= Size L"))
+          for bk in range(0, vgprPerSet0Group):
+            for a in range(0, kernel["MIWaveTileA"]):
+              for iui in range(0, innerUnroll):
+                aStr = vgpr("ValuA_X%u_I%u+%u+%u" % (m, iui, a*vgprPerInputA, bk + group * vgprPerSet0Group), 1)
+                shiftK.add(VCndMaskB32(dst=aStr, src0=aStr, src1=hex(0), src2=sgpr(tmpSgpr, 2), comment="set 0 if K_idx >= sizeL"))
 
+        if vgprPerInputB <= 2:
+          vgprPerSet0Group = vgprPerInputB
+        else:
+          shiftK.add(vectorStaticRemainder(dummy, kReg, "Serial", kernel["WavefrontSize"], tmpVgpr, tmpSgprInfo))
+          shiftK.add(vectorStaticDivide(kReg, kReg, dividerFortidInK, tmpVgpr))
+          vgprPerSet0Group = 2
+
+        numSet0GroupB = vgprPerInputB//vgprPerSet0Group
+        for group in range(0, numSet0GroupB):
+          if numSet0GroupB > 1:
+            if group == 0:
+              shiftK.add(staticMultiply(vgpr(kReg), vgpr(kReg), numMIInput, tmpSgprInfo))
+            else:
+              shiftK.add(VAddU32(vgpr(kReg), vgpr(kReg), numMIInput//numSet0GroupB, "add part of K"))
+            # replace 0 for differnet thread
+            shiftK.add(VCmpGEI32(dst=sgpr(tmpSgpr, 2), src0=vgpr(kReg), src1=sgpr(loopCounterName), comment="check K index >= Size L"))
+          for bk in range(0, vgprPerSet0Group):
+            for b in range(0, kernel["MIWaveTileB"]):
+              for iui in range(0, innerUnroll):
+                bStr = vgpr("ValuB_X%u_I%u+%u+%u" % (m, iui, b*vgprPerInputB, bk + group*vgprPerSet0Group), 1)
+                shiftK.add(VCndMaskB32(dst=bStr, src0=bStr, src1=hex(0), src2=sgpr(tmpSgpr, 2), comment="set 0 if K_idx >= sizeL"))
+  
         # replace 0 for same thread
-        if numMIInput > 1:
+        if numMIInput > 1 and kernel["AssertSummationElementMultiple"] < 8:
           abRegSize = max(vgprPerInput,vgprPerInput)
           abReg   = self.vgprPool.checkOutAligned(abRegSize, 2 if abRegSize>1 else 1, "abReg")
           tmpVgpr = self.vgprPool.checkOutAligned(2,2,"tmpVgpr")
@@ -4649,6 +4680,38 @@ class KernelWriterAssembly(KernelWriter):
               self.vgprPool.checkIn(destVgprHi - int8TempVgpr)
               destVgprHi = None
 
+    if kernel["ProblemType"]["SparseA"] and tP["isA"]:
+      for wtIdx in range(0, kernel["MIWaveTileA"]):
+        offsetSgpr = sgpr("ScalarGlobalReadOffsetMetadata+%u"%(wtIdx-1)) if wtIdx != 0 else 0
+        for unrollIdx in range(0, kernel["LoopIters"]):
+          bpl = kernel["MIInputPerThread"]//8 # bytes per load: 1 byte for fp16,bf16, 2 bytes for int8
+          constOffset = unrollIdx * kernel["MatrixInstK"] * kernel["DepthULdsDivisor"] // 8
+          offsetVgpr= "GlobalReadOffsetMetadata"
+          for uDuIdx in range(0, kernel["DepthULdsDivisor"]):
+            for byteIdx in range(0, bpl):
+              constOffset += (uDuIdx * kernel["MatrixInstK"] // kernel["DepthULdsDivisor"] // 8 + byteIdx)
+              if byteIdx == 0:
+                destVgprLow="ValuMetadata+%u"%((wtIdx*kernel["LoopIters"]+unrollIdx)*kernel["DepthULdsDivisor"] + uDuIdx )
+                destVgpr=destVgprLow
+              else:
+                destVgprHi = self.vgprPool.checkOut(1, 'destVgprHi')
+                destVgpr=destVgprHi
+              module.add(self.chooseGlobalRead(kernel["BufferLoad"], \
+                         1, \
+                         destVgpr=destVgpr, \
+                         addr0=vgpr(offsetVgpr), addr1=sgpr("SrdMetadata",4), \
+                         soffset=0, offset=constOffset, \
+                         glc=isGlc, slc=isSlc, lds=isLds, \
+                         memoryModifierFormat=kernel["MemoryModifierFormat"], \
+                         hi16=0, \
+                         comment="G -> Reg ValuMetadata"))
+            if bpl == 2: #pack 2bytes
+              module.add(SWaitCnt(vmcnt=0))
+              module.add(VLShiftLeftB32(dst=vgpr(destVgprHi), shiftHex="0x8", src=vgpr(destVgprHi), comment="shift left to higher 8 bits"))
+              module.add(VOrB32(dst=vgpr(destVgprLow), src0=vgpr(destVgprLow), src1=vgpr(destVgprHi), comment="pack 2 bytes"))
+              self.vgprPool.checkIn(destVgprHi)
+              destVgprHi = None
+
     if self.db["ConservativeWaitCnt"] & 0x1:
         module.add(SBarrier(comment="debug"))
         module.add(SWaitCnt(lgkmcnt=0, vmcnt=0, vscnt=0, comment=""))
@@ -5465,7 +5528,7 @@ class KernelWriterAssembly(KernelWriter):
             inc = kernel["LocalSplitU"] * tP["bpe"]
             comment = " (LSU*bpe)"
         inc *= matrixInstK
-
+        inc //= 2 if kernel["ProblemType"]["SparseA"] and tc == "A" else 1
       with self.allocTmpSgpr(1) as tmpSgprInfo:
         tmpSgpr = tmpSgprInfo.idx
         module.add(SMovB32(dst=sgpr(tmpSgpr), src=hex(inc), comment="inc"))
