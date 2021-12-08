@@ -2868,11 +2868,10 @@ class Solution(collections.abc.Mapping):
       if state["SourceSwap"]:
         reject(state, "Sparse A kernel cannot support SourceSwap.")
         return
-      # NOT support edge and tailing loop yet
-      # Force overriding ASEM, AF0EM, AF1EM for now
-      state["AssertSummationElementMultiple"] = state["DepthU"]
+      state["AssertSummationElementMultiple"] = 8
+      # NOT support edge M when NT case
+      # Force overriding AF0EM for now
       state["AssertFree0ElementMultiple"]     = state["MacroTile0"]
-      state["AssertFree1ElementMultiple"]     = state["MacroTile1"]
 
     # check if need to use lds init Acc vgprs
     state["LdsInitCVgprs"] = False
