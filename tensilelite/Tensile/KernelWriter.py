@@ -2346,7 +2346,9 @@ class KernelWriter(metaclass=abc.ABCMeta):
           tailLoopInnerUnroll = kernel["InnerUnroll"]
         # need to unroll tail loop for the following cases
         mEnd = 1
-        if kernel["DirectToVgprA"] or kernel["DirectToVgprB"]:
+        if kernel["ProblemType"]["SparseA"]:
+          mEnd = kernel["LoopIters"]
+        elif kernel["DirectToVgprA"] or kernel["DirectToVgprB"]:
           mEnd = kernel["DepthU"]//KinInnerUnroll
         elif kernel["DirectToLds"] and kernel["EnableMatrixInstruction"] and kernel["InnerUnroll"] == 1 and\
              (kernel["GlobalLoadVectorWidthA"] * self.states.bpeAB > 4 or kernel["GlobalLoadVectorWidthB"] * self.states.bpeAB > 4) and \
@@ -2370,7 +2372,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
               module.add(localReadCodeB)
               pack[0].add(packCodeB)
             # adjustment for DirectToLds case
-            iuiParam = iui + tailLoopInnerUnroll * mValue
+            iuiParam = iui if kernel["ProblemType"]["SparseA"] else iui + tailLoopInnerUnroll * mValue 
             if doReadA:
               module.addComment1("local read inc a")
               module.add(self.localReadInc(kernel, iuiParam, tensorParametersA))
@@ -2391,7 +2393,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
           if kernel["EnableMatrixInstruction"]:
             # DirectToVgpr is not applicable for tail loop
             vregSetIdxMFMA = 0
-            module.add(self.mfmaIter(kernel, tensorParametersA, tensorParametersB, 0, tailLoopInnerUnroll, vregSetIdxMFMA, True))
+            module.add(self.mfmaIter(kernel, tensorParametersA, tensorParametersB, 0, tailLoopInnerUnroll, vregSetIdxMFMA, True, unrollIdx=mValue*kernel["DepthULdsDivisor"]+uDu))
           else:
             printExit("TensileLite does not support MAC instructions.")
           if kernel["ProblemType"]["Gradient"] and kernel["ProblemType"]["UseBias"] and (kernel["ProblemType"]["BiasSrc"] == "A" or kernel["ProblemType"]["BiasSrc"] == "B"):
