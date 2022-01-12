@@ -85,7 +85,6 @@ class ABMatrixInfo(MatrixInfo):
   #sparse
   numVgprValuMetadata: int               = -1
   startVgprValuMetadata: int             = -1
-  numGlobalReadOffsetsMetadata: int      = -1
   startVgprGlobalReadOffsetMetadata: int = -1
 
 # States
@@ -3090,10 +3089,6 @@ class KernelWriter(metaclass=abc.ABCMeta):
       numVgprGlobalReadIncsB = 0
 
     numVgprAddressDbg = self.states.rpga if globalParameters["DebugKernel"] else 0
-  
-    # num registers for metadtaGlobalRead
-    if kernel["ProblemType"]["SparseA"]:
-      self.states.a.numGlobalReadOffsetsMetadata = kernel["MIWaveTileA"]-1
 
     ####################################
     # num vgprs: c write address
@@ -3212,7 +3207,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
       vgprIdx += 1 if kernel["_UseSgprForGRO"] else self.states.b.numVgprGlobalReadOffsets
       if kernel["ProblemType"]["SparseA"]:
         self.startVgprGlobalReadOffsetMetadata = vgprIdx
-        vgprIdx += 1
+        vgprIdx += kernel["MIWaveTileA"]
     else:
       # TODO: alignment hack, figure out a better solution
       vgprIdx = ((vgprIdx+1)//2)*2
