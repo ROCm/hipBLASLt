@@ -1514,6 +1514,38 @@ class KernelWriterAssembly(KernelWriter):
   # See if the load (including vw) will extend past the 'free' dim of the
   # tensor.  If so clip to the last legal value which is inside the array
   ##############################################################################
+  def graMetadataShift(self, kernel, tP):
+    module = Module("graMetadataShift")
+    tc = tP["tensorChar"]
+    margin = tP["glvw"] if tP["rtv"] else 1
+
+    # Subtract the static component from SizesFree:
+    with self.allocTmpSgpr(2+self.states.laneSGPRCount) as tmpSgprInfo:
+      edgeSgpr = tmpSgprInfo.idx
+      shiftSgpr    = edgeSgpr+1
+      laneMaskSgpr = edgeSgpr+2
+      module.add(SMulI32(dst=sgpr(edgeSgpr), src0=sgpr(tP["wg"]), src1=kernel[tP["mt"]], comment="WorkGroup[01] * MT"))
+      module.add(SSubI32(dst=sgpr(edgeSgpr), src0=self.sizeRef(tP["idx"]), src1=sgpr(edgeSgpr), comment="edge = Size%s - WG*MT"%(tP["tileChar"])))
+      module.add(SAndB32(dst=sgpr(shiftSgpr), src0=sgpr(edgeSgpr), src1=hex(margin-1), comment="edge size & (glvw-1)"))
+      module.add(SSubU32(dst=sgpr(shiftSgpr), src0=hex(margin), src1=sgpr(shiftSgpr), comment="shift size = glvw - (edge size & (glvw-1))"))
+      module.add(SAndN2B32(dst=sgpr(edgeSgpr), src0=sgpr(edgeSgpr), src1=hex(margin-1), comment="edgeCoord = edge & !(glvw-1)"))
+  
+      # apply shiftPointer into vgpr offset
+      shiftedCoord = self.vgprPool.checkOut(1, "shiftedCoord", self.states.preventVgprOverflowDuringNewTile)
+      for graIdx in range (0, kernel["MIWaveTile"][0]):
+        vgprGro = "GlobalReadOffsetMetadata+%u"%(graIdx)
+        # check if in shift area
+        module.add(VCmpLeI32(dst=sgpr(laneMaskSgpr,self.states.laneSGPRCount), src0=sgpr(edgeSgpr), src1=vgpr(vgprGro), comment="edgeCoord <= coord"))
+        # calculate shifted coord
+        module.add(VSubI32(dst=vgpr(shiftedCoord), src0=vgpr(vgprGro), src1=sgpr(shiftSgpr), comment="shiftedCoord = coord - shift size"))
+        # apply shift if condition is true
+        module.add(VCndMaskB32(dst=vgpr(vgprGro), src0=vgpr(vgprGro), src1=vgpr(shiftedCoord), src2=sgpr(laneMaskSgpr,self.states.laneSGPRCount),
+                     comment="coord =  (cond) ? shifted coord : ori coord"))
+      self.vgprPool.checkIn(shiftedCoord)
+
+    return module
+
+  ##############################################################################
   def graShift(self, kernel, tP):
     # graShift requires a vgpr for each address component (so each component
     # can be examined and shifted if necessary) - therefore does not work
@@ -1568,7 +1600,9 @@ class KernelWriterAssembly(KernelWriter):
           module.add(VCndMaskB32(dst=vgpr(vDst+l), src0=vgpr(edge), src1=vgpr(vSrc+l), src2=sgpr(tmpSgpr,self.states.laneSGPRCount),
                       comment="offset = (%s) ? offset(v%u) : edge(v%u)"%(cmpCommentText, vSrc+l, edge)))
     self.vgprPool.checkIn(edge)
-
+  
+    if kernel["ProblemType"]["SparseA"] and tP["isA"]:
+      module.add(self.graMetadataShift(kernel, tP))
     return module
 
   ##############################################################################

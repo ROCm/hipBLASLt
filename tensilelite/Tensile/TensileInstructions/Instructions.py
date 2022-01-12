@@ -1161,6 +1161,11 @@ class SAndB64(CommonInstruction):
         super().__init__(InstType.INST_B64, dst, [src0, src1], None, None, comment)
         self.setInst("s_and_b64")
 
+class SAndN2B32(CommonInstruction):
+    def __init__(self, dst, src0, src1, comment="") -> None:
+        super().__init__(InstType.INST_B32, dst, [src0, src1], None, None, comment)
+        self.setInst("s_andn2_b32")
+
 class SOrB32(CommonInstruction):
     def __init__(self, dst, src0, src1, comment="") -> None:
         super().__init__(InstType.INST_B32, dst, [src0, src1], None, None, comment)
@@ -1885,6 +1890,11 @@ class VCmpLeU32(VCmpInstruction):
     def __init__(self, dst, src0, src1, sdwa: Optional[SDWAModifiers] = None, comment="") -> None:
         super().__init__(InstType.INST_U32, dst, src0, src1, sdwa, comment)
         self.setInst("v_cmp_le_u32")
+
+class VCmpLeI32(VCmpInstruction):
+    def __init__(self, dst, src0, src1, sdwa: Optional[SDWAModifiers] = None, comment="") -> None:
+        super().__init__(InstType.INST_I32, dst, src0, src1, sdwa, comment)
+        self.setInst("v_cmp_le_i32")
 
 class VCmpLtI32(VCmpInstruction):
     def __init__(self, dst, src0, src1, sdwa: Optional[SDWAModifiers] = None, comment="") -> None:
