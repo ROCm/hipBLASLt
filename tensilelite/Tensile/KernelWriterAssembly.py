@@ -394,9 +394,6 @@ class KernelWriterAssembly(KernelWriter):
       numberOfSgpr = self.states.b.numVgprGlobalReadOffsets if needFirstSgprOffset else (self.states.b.numVgprGlobalReadOffsets-1)
       self.defineSgpr("ScalarGlobalReadOffsetB", numberOfSgpr)
 
-    if kernel["ProblemType"]["SparseA"]:
-      self.defineSgpr("ScalarGlobalReadOffsetMetadata", self.states.a.numGlobalReadOffsetsMetadata)
-
     # debug flag to allocate dummy / unused sgpr
     # useful when comparing code that adds new kernel arguments to see what
     # was actually changed
@@ -1276,7 +1273,6 @@ class KernelWriterAssembly(KernelWriter):
     # alloc vgpr
     wReg    = self.vgprPool.checkOut(1,"wReg") # quotient
     tReg    = self.vgprPool.checkOut(1,"tReg") # remainder
-    kReg    = self.vgprPool.checkOut(1,"kReg") # remainder
     tmpVgpr = self.vgprPool.checkOutAligned(2,2,"tmpVgpr")
     dummy   = self.vgprPool.checkOut(1,"dummy")
 
@@ -1305,55 +1301,35 @@ class KernelWriterAssembly(KernelWriter):
 
     with self.allocTmpSgpr(1) as tmpSgprInfo:
       # tile offset
-      module.add(vectorStaticRemainder(dummy, kReg, "Serial", waveWidth, tmpVgprRes, tmpSgprInfo, \
+      module.add(vectorStaticRemainder(dummy, tReg, "Serial", waveWidth, tmpVgprRes, tmpSgprInfo, \
           comment="0. thread id in wave: wtid = tid %% wavelength(%u)" % waveWidth))
-      module.add(vectorStaticRemainder(dummy, tReg, kReg, kernel["MatrixInstN"], tmpVgprRes, tmpSgprInfo, \
-          comment="1. N offset: nIdx = wtid %% MI_N(%u)" % kernel["MatrixInstN"]))
-      module.add(VMulLOU32(dst=vgpr(tReg), src0=vgpr(tReg), src1=strideTile, comment="1. N offset: nOffset = nIdx * nStride(sizeL)"))
-  
-      # block offset
-      #TODO: remove if multiblock not support
-      if kernel["MatrixInstB"] > 1:
-        module.add(vectorStaticDivide(wReg, kReg, dividedForBlkId, tmpVgprRes, \
-            comment="2. block offset: bnIdx = wtid / dividedForBlkId(%u)" % dividedForBlkId))
-        module.add(vectorStaticRemainder(dummy, wReg, wReg, num1DBlocks, tmpVgprRes, tmpSgprInfo, \
-            comment="2. block offset: bnIdx = bnIdx %% num1DBlocks(%u)" % num1DBlocks))
-        module.add(staticMultiply(vgpr(wReg), vgpr(wReg), offsetBlock, tmpSgprInfo, \
-            comment="2. block offset: bnOffset = bnIdx * offsetBlock(%u)" % offsetBlock))
-        module.add(VMulLOU32(dst=vgpr(wReg), src0=vgpr(wReg), src1=strideTile, \
-            comment="2. block offset: bnOffset = bnIdx * sizeL"))
-        module.add(VAddU32(dst=vgpr(tReg), src0=vgpr(wReg), src1=vgpr(tReg), \
-            comment="3. add N and block offset: bnOffset = block add N offset"))
-  
-      # unroll offset
-      module.add(vectorStaticDivide(kReg, kReg, dividendForKId, tmpVgprRes, \
-          comment="4. K offset: kIdx = wtid / (MIN(%u) * MIBB(%u))" % (kernel["MatrixInstN"], kernel["MatrixInstB"])))
-      module.add(staticMultiply(vgpr(kReg), vgpr(kReg), strideK, tmpSgprInfo, \
-          comment="4. K offset: grKOffset = kIdx * mStride(%u)" % strideK))
-      module.add(VAddU32(dst=vgpr("GlobalReadOffsetMetadata"), src0=vgpr(kReg), src1=vgpr(tReg),
-          comment="5. offset in wave: grOffset = nOffset + grKOffset"))
+      module.add(vectorStaticRemainder(dummy, tReg, tReg, kernel["MatrixInstM"], tmpVgprRes, tmpSgprInfo, \
+          comment="1. tile offset: nIdx = wtid %% MI_N(%u)" % kernel["MatrixInstM"]))
   
       # wave offset
       if num1DWaves > 1:
         module.add(vectorStaticDivide(wReg, "Serial", dividedForWaveId, tmpVgprRes, \
-            "6. wave offset in N dimen: wtid = tid / dividedForWaveId(%u)" % dividedForWaveId))
+            "2. wave offset in N dimen: wtid = tid / dividedForWaveId(%u)" % dividedForWaveId))
         module.add(vectorStaticRemainder(dummy, wReg, wReg, num1DWaves, tmpVgprRes, tmpSgprInfo, \
-            "6. wave offset in M dimen: wtid0 = wtid / num1DWaves(%u)" % num1DWaves))
+            "2. wave offset in M dimen: wtid0 = wtid / num1DWaves(%u)" % num1DWaves))
         module.add(staticMultiply(vgpr(wReg), vgpr(wReg), offsetWave, tmpSgprInfo, \
-            "6. wave offset in M dimen: wOffset = wtid0 * W0 offset(%u)" % offsetWave))
-        module.add(VMulLOU32(dst=vgpr(wReg), src0=vgpr(wReg), src1=strideTile, \
-            comment="6. wave offset in M dimen: wOffset = wOffset0 * sizeL"))
-        module.add(VAddU32(dst=vgpr("GlobalReadOffsetMetadata"), src0=vgpr("GlobalReadOffsetMetadata"), src1=vgpr(wReg), \
-            comment="7. final global read offset: fgrOffset = grOffset + WOffset"))
-  
-      # elements to bytes
-      module.add(vectorStaticDivide("GlobalReadOffsetMetadata", "GlobalReadOffsetMetadata", 8, tmpVgprRes, \
-          comment="8. bytes offset : bnIdx = global read elememt offset / 8"))
+            "2. wave offset in M dimen: wOffset = wtid0 * W0 offset(%u)" % offsetWave))
+        module.add(VAddU32(vgpr("GlobalReadOffsetMetadata"), vgpr(wReg), vgpr(tReg),
+            "2. tile coord = tileOffset + wOffset"))
+      else:
+        module.add(VMovB32(vgpr("GlobalReadOffsetMetadata"), vgpr(tReg), \
+            "2. tile coord = tileOffset"))
+
+      for graIdx in range (1, kernel["MIWaveTile"][0]):
+        MIWaveGroup0ShapeSize = kernel["MatrixInstM"] * kernel["MatrixInstBM"] * kernel["MIWaveGroup"][0]
+        vgprGro = "GlobalReadOffsetMetadata+%u"%(graIdx)
+        module.add(VMovB32(vgpr(vgprGro), hex(MIWaveGroup0ShapeSize*graIdx), "7. coord offset of WaveTile %u"%graIdx))
+        module.add(VAddU32(vgpr(vgprGro), vgpr(vgprGro), vgpr("GlobalReadOffsetMetadata"), \
+            "3. final coord0: tile coord + waveTile coord"))
 
     # release register
     self.vgprPool.checkIn(tReg)
     self.vgprPool.checkIn(wReg)
-    self.vgprPool.checkIn(kReg)
     self.vgprPool.checkIn(tmpVgpr)
     self.vgprPool.checkIn(dummy)
     return module
@@ -1389,7 +1365,7 @@ class KernelWriterAssembly(KernelWriter):
         self.vgprPool.checkIn(tmpVgpr)
 
     tP["gpr"]["tReg"] = tReg2
- 
+    # calculate tile assignment and store into each vgprGlobalReadOffsetMetadata
     if kernel["ProblemType"]["SparseA"] and tP["isA"]:
       module.add(self.graMetadataTileAssignment(kernel, tP))
 
@@ -1596,6 +1572,66 @@ class KernelWriterAssembly(KernelWriter):
     return module
 
   ##############################################################################
+  # Global Read Addresses: Final Offsets metadata
+  ##############################################################################
+  def graMetadataFinalOffsets(self, kernel, tP):
+    module = Module("graMetadataFinalOffsets")
+    module.addComment1("calculate metadata gra final offset")
+
+    tc = tP["tensorChar"]
+
+    # alloc vgpr
+    kReg    = self.vgprPool.checkOut(1,"kReg") # remainder
+    tmpVgpr = self.vgprPool.checkOutAligned(2,2,"tmpVgpr")
+    dummy   = self.vgprPool.checkOut(1,"dummy")
+
+    tmpVgprRes = RegisterPoolResource(tmpVgpr, 2)
+
+    # get constant parameter
+    tc               = tP["tensorChar"]
+    tile01           = tP["tile01Idx"]
+    waveWidth        = kernel["WavefrontSize"]
+    inputPerThread   = kernel["MIInputPerThread"]
+
+    # parameter for get each type index
+    dividendForKId   = kernel["MatrixInstM"]
+    unrollSummation = [ i for i in tP["ia"] if i in kernel["ProblemType"]["IndicesSummation"] ]
+
+    # strider for each type of index
+    mt               = kernel["MacroTile%u" % tile01]
+    strideTile       = self.sizeRef(unrollSummation[-1])
+    strideK          = inputPerThread
+
+    with self.allocTmpSgpr(1) as tmpSgprInfo:
+      # unroll offset
+      module.add(vectorStaticRemainder(dummy, kReg, "Serial", waveWidth, tmpVgprRes, tmpSgprInfo, \
+          "0. thread id in wave: wtid = tid %% wavelength(%u)" % waveWidth))
+      module.add(vectorStaticDivide(kReg, kReg, dividendForKId, tmpVgprRes, \
+          "1. unroll offset: kIdx = wtid / (MIN(%u) )" % (kernel["MatrixInstN"])))
+      module.add(staticMultiply(vgpr(kReg), vgpr(kReg), strideK, tmpSgprInfo, \
+          "1. unroll offset: grKOffset = kIdx * mStride(%u)" % strideK))
+
+    # Calculate final element offset
+    for graIdx in range (0, kernel["MIWaveTile"][0]):
+      vgprGro = "GlobalReadOffsetMetadata+%u"%(graIdx)
+      module.add(VMulLOU32(vgpr(vgprGro), vgpr(vgprGro), strideTile, \
+          "2. tile offset: tile coord * sizeL"))
+      module.add(VAddU32(vgpr(vgprGro), vgpr(vgprGro), vgpr(kReg), \
+          "2. final global read offset: fgrOffset = tile Offset + unroll Offset"))
+      # elements to bytes
+      module.add(vectorStaticDivide(vgprGro, vgprGro, 8, tmpVgprRes, \
+        "  3. bytes offset : bnIdx = global read elememt offset / 8"))
+
+    module.add(Label("graFinalMeta", ""))
+  
+    # release register
+    self.vgprPool.checkIn(kReg)
+    self.vgprPool.checkIn(tmpVgpr)
+    self.vgprPool.checkIn(dummy)
+
+    return module
+
+  ##############################################################################
   # Global Read Addresses: Final Offsets A/B
   ##############################################################################
   def graFinalOffsets(self, kernel, tP):
@@ -1637,15 +1673,9 @@ class KernelWriterAssembly(KernelWriter):
         self.vgprPool.checkIn(tP["gpr"]["subIterReg"])
       tP["gpr"]["subIterReg"] = None
 
-    # Scalar GRO for metadata
-    if kernel["ProblemType"]["SparseA"] and tP["isA"] and kernel["MIWaveTile"][0] > 1:
-      MIWaveGroup0ShapeSize = kernel["MatrixInstM"] * kernel["MatrixInstBM"] * kernel["MIWaveGroup"][0]
-      unrollSummation       = [ i for i in tP["ia"] if i in kernel["ProblemType"]["IndicesSummation"] ]
-      strideTile            = self.sizeRef(unrollSummation[-1])
-      for graIdx in range (1, kernel["MIWaveTile"][0]):
-        scalarGro = "ScalarGlobalReadOffsetMetadata+%u"%(graIdx-1)
-        module.add(SMulI32(sgpr(scalarGro), strideTile, MIWaveGroup0ShapeSize*graIdx//8, \
-                             "compute offset diff (scaled tileDim byte offset)"))
+    # calculate final offset
+    if kernel["ProblemType"]["SparseA"] and tP["isA"]:
+      module.add(self.graMetadataFinalOffsets(kernel, tP))
 
     if tP["vgprTileOffsetsCheckOut"]:
       self.vgprPool.checkIn(tP["vgprTileOffsets"])
@@ -4187,8 +4217,33 @@ class KernelWriterAssembly(KernelWriter):
                        comment="limit -= inc)" ))
 
     if isSparseA:
-      imod.add(VAddU32(dst=vgpr("GlobalReadOffsetMetadata"), src0=vgpr("GlobalReadOffsetMetadata"), src1=hex(incSparse), \
-                       comment="metadata graOffset += inc"))
+      imod.add(SAddU32(sgpr("SrdMetadata+0"), \
+                       sgpr("SrdMetadata+0"), \
+                       hex(incSparse), \
+                       "gra SRD += incSparse" ))
+      imod.add(SAddCU32(sgpr("SrdMetadata+1"), \
+                        sgpr("SrdMetadata+1"), \
+                        0, \
+                        "gra SRD += 0" ))
+
+      # also have to move the boundary since we change the base
+      # so less buffers to the edge:
+      if self.states.use64bShadowLimit:
+        imod.add(SSubU32(sgpr("ShadowLimitMetadata+0"), \
+                         sgpr("ShadowLimitMetadata+0"), \
+                         hex(incSparse), \
+                         "limit -= inc)"))
+        imod.add(SSubBU32(sgpr("ShadowLimitMetadata+1"), \
+                          sgpr("ShadowLimitMetadata+1"), \
+                          0, \
+                         "limit -= inc)" ))
+        imod.add(SCmpEQU32(sgpr("ShadowLimitMetadata+1"), 0, "are we within 2^32?"))
+        imod.add(SCMovB32(sgpr("SrdMetadata+2"), sgpr("ShadowLimitMetadata+0"), "Move shadow to real if we are within 2^32"))
+      else:
+        imod.addInst(SSubU32(sgpr("SrdMetadata+2"), \
+                             sgpr("SrdMetadata+2"), \
+                             hex(incSparse), \
+                             "limit -= inc)" ))
     return imod
 
   ##############################################################################
@@ -4682,11 +4737,10 @@ class KernelWriterAssembly(KernelWriter):
 
     if kernel["ProblemType"]["SparseA"] and tP["isA"]:
       for wtIdx in range(0, kernel["MIWaveTileA"]):
-        offsetSgpr = sgpr("ScalarGlobalReadOffsetMetadata+%u"%(wtIdx-1)) if wtIdx != 0 else 0
+        offsetVgpr= "GlobalReadOffsetMetadata+%u"%wtIdx
         for unrollIdx in range(0, kernel["LoopIters"]):
           bpl = kernel["MIInputPerThread"]//8 # bytes per load: 1 byte for fp16,bf16, 2 bytes for int8
           constOffset = unrollIdx * kernel["MatrixInstK"] * kernel["DepthULdsDivisor"] // 8
-          offsetVgpr= "GlobalReadOffsetMetadata"
           for uDuIdx in range(0, kernel["DepthULdsDivisor"]):
             for byteIdx in range(0, bpl):
               constOffset += (uDuIdx * kernel["MatrixInstK"] // kernel["DepthULdsDivisor"] // 8 + byteIdx)
@@ -4947,18 +5001,17 @@ class KernelWriterAssembly(KernelWriter):
 
     if kernel["ProblemType"]["SparseA"] and tP["isA"]:
       for wtIdx in range(0, kernel["MIWaveTileA"]):
-        offsetSgpr = sgpr("ScalarGlobalReadOffsetMetadata+%u"%(wtIdx-1)) if wtIdx != 0 else 0
+        offsetVgpr= "GlobalReadOffsetMetadata+%u"%wtIdx
         for unrollIdx in range(0, kernel["LoopIters"]):
           bpl = kernel["MIInputPerThread"]//8 # bytes per load: 1 byte for fp16,bf16, 2 bytes for int8
           constOffset = unrollIdx * kernel["MatrixInstK"] * kernel["DepthULdsDivisor"] // 8
-          offsetVgpr= "GlobalReadOffsetMetadata"
           for uDuIdx in range(0, kernel["DepthULdsDivisor"]):
             constOffset += uDuIdx * kernel["MatrixInstK"] // kernel["DepthULdsDivisor"] // 8
             loadModule.add( self.chooseGlobalRead(kernel["BufferLoad"], \
                       bpl, \
                       destVgpr="ValuMetadata+%u"%((wtIdx*kernel["LoopIters"]+unrollIdx)*kernel["DepthULdsDivisor"] + uDuIdx ), \
                       addr0=vgpr(offsetVgpr), addr1=sgpr("SrdMetadata",4), \
-                      soffset=offsetSgpr, offset=constOffset, \
+                      soffset=0, offset=constOffset, \
                       glc=isGlc, slc=isSlc, lds=isLds, \
                       memoryModifierFormat=kernel["MemoryModifierFormat"], \
                       hi16=0, \
