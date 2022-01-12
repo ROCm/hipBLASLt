@@ -2869,9 +2869,6 @@ class Solution(collections.abc.Mapping):
         reject(state, "Sparse A kernel cannot support SourceSwap.")
         return
       state["AssertSummationElementMultiple"] = 8
-      # NOT support edge M when NT case
-      # Force overriding AF0EM for now
-      state["AssertFree0ElementMultiple"]     = state["MacroTile0"]
 
     # check if need to use lds init Acc vgprs
     state["LdsInitCVgprs"] = False
