@@ -730,7 +730,8 @@ class KernelWriter(metaclass=abc.ABCMeta):
       # INT8        : each packCode is for one 32-bit regs, 3 packing inst: byte-to-half x2 + half-to-single x1
       ####
       instPerRegPack = 1 / kernel["ProblemType"]["DataType"].numRegisters() - 1
-      instPerPack    = int(kernel["MIInputPerThread"] * kernel["ProblemType"]["DataType"].numRegisters() * instPerRegPack)
+      instPerPackA    = int(kernel["MIInputPerThreadA"] * kernel["ProblemType"]["DataType"].numRegisters() * instPerRegPack)
+      instPerPackB    = int(kernel["MIInputPerThreadB"] * kernel["ProblemType"]["DataType"].numRegisters() * instPerRegPack)
       packItems = []
       for iui in range(kernel["InnerUnroll"]):
         packINtems = [ [] for j in range(max(self.states.numReadsIterCoalescedA,self.states.numReadsIterCoalescedB)) ]
@@ -747,19 +748,19 @@ class KernelWriter(metaclass=abc.ABCMeta):
         packBItems = packB.flatitems()
         if packAItems:
           for j in range(self.states.numReadsIterCoalescedA):
-            for n in range(instPerPack):
+            for n in range(instPerPackA):
               packINtems[j].append(packAItems.pop(0))
         if packBItems:
           for j in range(self.states.numReadsIterCoalescedB):
-            for n in range(instPerPack):
+            for n in range(instPerPackB):
               packINtems[j].append(packBItems.pop(0))
         while packAItems:
           for j in range(self.states.numReadsIterCoalescedA):
-            for n in range(instPerPack):
+            for n in range(instPerPackA):
               packINtems[j].append(packAItems.pop(0))
         while packBItems:
           for j in range(self.states.numReadsIterCoalescedB):
-            for n in range(instPerPack):
+            for n in range(instPerPackB):
               packINtems[j].append(packBItems.pop(0))
         for j in range(max(self.states.numReadsIterCoalescedA,self.states.numReadsIterCoalescedB)):
           packItems += packINtems.pop(0)
@@ -1018,29 +1019,28 @@ class KernelWriter(metaclass=abc.ABCMeta):
           # calculate the data index of this mfma used for A and B
           # if i // kernel["MIWaveTile"][0]==0, mfma will use new A (need to take iu into account)
           # if i % kernel["MIWaveTile"][0]==0, mfma will use new B
-          packAIdx += instPerPack if i//(kernel["MIWaveTileA"]+kernel["MIWaveTileA"]*kernel["MIWaveTileB"]*(i//(kernel["MIWaveTileA"]*kernel["MIWaveTileB"]))) == 0 else 0
-          packBIdx += instPerPack if i % kernel["MIWaveTileA"] == 0 else 0
+          packAIdx += instPerPackA if i//(kernel["MIWaveTileA"]+kernel["MIWaveTileA"]*kernel["MIWaveTileB"]*(i//(kernel["MIWaveTileA"]*kernel["MIWaveTileB"]))) == 0 else 0
+          packBIdx += instPerPackB if i % kernel["MIWaveTileA"] == 0 else 0
           # blockWidth < 1, means 0.5 or 0.25 (BF,H,Int8)
           packAIdx = packAIdx if tPA["localReadInstruction"].blockWidth < 1 else 0
           packBIdx = packBIdx if tPB["localReadInstruction"].blockWidth < 1 else 0
           numPack = (packAIdx + packBIdx)
           iterCode.addComment0("pack scheduling: packAIdx:%u, packBIdx:%u" %(packAIdx,packBIdx))
           # we put 2 pack in each mfma
-          if packItems:
-            for j in range(instPerPack):
+          for j in range(instPerPackA):
+            if packItems:
               iterCode.add(packItems.pop(0))
               curPackIdx += 1
-          if packItems:
-            for j in range(instPerPack):
+          for j in range(instPerPackB):
+            if packItems:
               iterCode.add(packItems.pop(0))
               curPackIdx += 1
           # since packed register need to wait 2 quad cycle to finish packing
           # we insert pack instruction if we can, or s_nop
           while curPackIdx < numPack+2:
             if packItems:
-              for j in range(instPerPack):
-                iterCode.add(packItems.pop(0))
-                curPackIdx += 1
+              iterCode.add(packItems.pop(0))
+              curPackIdx += 1
             else:
               iterCode.add(SNop(waitState=0, comment="VALU packing writes to be consumed by matrix instruction"))
               curPackIdx += 1
