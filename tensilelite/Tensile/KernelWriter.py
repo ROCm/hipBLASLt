@@ -1693,12 +1693,12 @@ class KernelWriter(metaclass=abc.ABCMeta):
     if (kernel["DirectToVgpr%s"%tc1]):
       vregSetIdxGR = (kernel["PrefetchGlobalRead"] + lc ) % 2 # toggle vreg set for DirectToVgpr.
     self.codes.dtlsM0UpdateA = self.directToLdsM0Update(kernel, 1, tensorParameters1st, usePlaceHolder=True)
-    self.codes.globalReadA  = self.globalReadDo(kernel, 1, tensorParameters1st, vregSetIdxGR)
+    self.codes.globalReadA  = self.globalReadDo(kernel, 1, tensorParameters1st, vregSetIdxGR, lc)
     vregSetIdxGR = 0
     if (kernel["DirectToVgpr%s"%tc2]):
       vregSetIdxGR = (kernel["PrefetchGlobalRead"] + lc ) % 2 # toggle vreg set for DirectToVgpr.
     self.codes.dtlsM0UpdateB = self.directToLdsM0Update(kernel, 1, tensorParameters2nd, usePlaceHolder=True)
-    self.codes.globalReadB = self.globalReadDo(kernel, 1, tensorParameters2nd, vregSetIdxGR)
+    self.codes.globalReadB = self.globalReadDo(kernel, 1, tensorParameters2nd, vregSetIdxGR, lc)
 
     # unrolled loop: increment global read addresses
     self.codes.globalReadIncrements = self.globalReadIncrementAB(kernel, tensorParametersA, tensorParametersB, self.states.unrollIdx, 0)
@@ -1952,7 +1952,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
       luIdx = (u) % (self.states.numVgprBuffer+1) # local to use for MACs
       if kernel["EnableMatrixInstruction"]:
         vregSetIdxMFMA = lc
-        macIterCode.add(self.mfmaIter(kernel, tensorParametersA, tensorParametersB, u, kernel["InnerUnroll"], vregSetIdxMFMA))
+        macIterCode.add(self.mfmaIter(kernel, tensorParametersA, tensorParametersB, u, kernel["InnerUnroll"], vregSetIdxMFMA, False, unrollIdx=u*kernel["DepthULdsDivisor"]+uDu, unrollLoopIdx=lc))
       else:
         printExit("TensileLite does not support MAC instructions.")
       if kernel["ProblemType"]["Gradient"] and kernel["ProblemType"]["UseBias"] and (kernel["ProblemType"]["BiasSrc"] == "A" or kernel["ProblemType"]["BiasSrc"] == "B"):
@@ -2991,7 +2991,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
     self.states.b.numVgprValu = self.states.b.numVgprValuPerBlock * valuBlocks
 
     if kernel["ProblemType"]["SparseA"]:
-      self.states.a.numVgprValuMetadata = kernel["MIWaveTileA"] * kernel["LoopIters"] * kernel["DepthULdsDivisor"] #every 8bit need 1 register
+      self.states.a.numVgprValuMetadata = kernel["MIWaveTileA"] * kernel["LoopIters"] * kernel["DepthULdsDivisor"] * (kernel["PrefetchGlobalRead"] + 1) #every 8bit need 1 register
 
     ####################################
     # num vgprs: global -> local elements
