@@ -2852,8 +2852,11 @@ class Solution(collections.abc.Mapping):
       if state["StaggerU"]:
         reject(state, "Sparse A kernel does not support StaggerU yet.")
         return
-      if state["PrefetchGlobalRead"]:
-        reject(state, "Sparse A kernel does not support PGR yet.")
+      if state["PrefetchGlobalRead"] > 1:
+        reject(state, "Sparse A kernel does not support PGR2 yet.")
+        return
+      if state["PrefetchGlobalRead"] and not state["ExpandPointerSwap"]:
+        reject(state, "Sparse A kernel only support PGR with EPS=1.")
         return
       if state["MIArchVgpr"]:
         reject(state, "Sparse A kernel does not support MIArchVgpr yet.")
