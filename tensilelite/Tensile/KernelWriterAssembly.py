@@ -3421,6 +3421,12 @@ class KernelWriterAssembly(KernelWriter):
           if not kernel["DirectToVgprB"]:
             oddIterCode.add(self.localReadSwapOffsets(kernel, False, tPB))
 
+          if kernel["ProblemType"]["SparseA"]:
+            numVgprPerBlk = kernel["MIWaveTileA"] * kernel["LoopIters"] * kernel["DepthULdsDivisor"]
+            for i in range(0, numVgprPerBlk):
+              oddIterCode.add(VMovB32(vgpr("ValuMetadata+%u"%i), vgpr("ValuMetadata+%u+%u"%(numVgprPerBlk, i)), \
+                                       "copy ValuMetadata blk1 to blk0"))
+
           evenIterPreCode.add(loopLabelEndEvenExit)
           # generate even code here (so far, for PrefetchGlobalRead=2 only)
           if kernel["PrefetchGlobalRead"]==2:
@@ -3674,7 +3680,7 @@ class KernelWriterAssembly(KernelWriter):
   ##############################################################################
   # MFMA Iteration
   ##############################################################################
-  def mfmaIter(self, kernel, tPA, tPB, u, innerUnroll, vregSetIdx, tail=False, firstIter=False, unrollIdx = 0):
+  def mfmaIter(self, kernel, tPA, tPB, u, innerUnroll, vregSetIdx, tail=False, firstIter=False, unrollIdx = 0, unrollLoopIdx = 0):
     imod = Module("mi")
     shiftK = Module("shiftK")
     m = (u) % (self.states.numVgprBuffer+1) # local to use for MACs
@@ -3999,7 +4005,7 @@ class KernelWriterAssembly(KernelWriter):
             if waits > 0 and prevAccIdx == accIdx:
               imod.add(SNop(waits - 1, "Wait for C"))
             if(kernel["ProblemType"]["SparseA"]):
-              accInStart = idx0*kernel["LoopIters"]*kernel["DepthULdsDivisor"]+unrollIdx
+              accInStart = kernel["MIWaveTileA"]*kernel["LoopIters"]*kernel["DepthULdsDivisor"]*unrollLoopIdx + idx0*kernel["LoopIters"]*kernel["DepthULdsDivisor"]+unrollIdx
               imod.add(SMFMAInstruction(instType=miInInstType, accType=miOutInstType, variant=variant, mfma1k=mfma_1k, \
                                       acc=gprfunc((accStart+accStoreCIdx), (accEnd-accStart+1)), \
                                       a=src0, b=src1, metadata=vgpr("ValuMetadata+%u"%(accInStart)), \
@@ -4855,7 +4861,7 @@ class KernelWriterAssembly(KernelWriter):
   ##############################################################################
   # Global Read: Do It A/B
   ##############################################################################
-  def globalReadDo(self, kernel, mode, tP, vregSetIdx=0):
+  def globalReadDo(self, kernel, mode, tP, vregSetIdx=0, unrollLoopIdx=-1):
     tc = tP["tensorChar"]
     problemType = self.states.kernel["ProblemType"]
     imod = StructuredModule("globalReadDo%s_%u"%(tc,mode))
@@ -5034,6 +5040,10 @@ class KernelWriterAssembly(KernelWriter):
                         comment="G -> Reg %u_%u_%u_%u"%(para, sPara, perp, sPerp )))
 
     if kernel["ProblemType"]["SparseA"] and tP["isA"]:
+      if kernel["PrefetchGlobalRead"] and unrollLoopIdx % 2 == 0:
+        offsetBlk = kernel["MIWaveTileA"] * kernel["LoopIters"] * kernel["DepthULdsDivisor"]
+      else:
+        offsetBlk = 0
       for wtIdx in range(0, kernel["MIWaveTileA"]):
         offsetVgpr= "GlobalReadOffsetMetadata+%u"%wtIdx
         for unrollIdx in range(0, kernel["LoopIters"]):
@@ -5043,7 +5053,7 @@ class KernelWriterAssembly(KernelWriter):
             constOffset += uDuIdx * kernel["MatrixInstK"] // kernel["DepthULdsDivisor"] // 8
             loadModule.add( self.chooseGlobalRead(kernel["BufferLoad"], \
                       bpl, \
-                      destVgpr="ValuMetadata+%u"%((wtIdx*kernel["LoopIters"]+unrollIdx)*kernel["DepthULdsDivisor"] + uDuIdx ), \
+                      destVgpr="ValuMetadata+%u+%u"%(offsetBlk, (wtIdx*kernel["LoopIters"]+unrollIdx)*kernel["DepthULdsDivisor"] + uDuIdx), \
                       addr0=vgpr(offsetVgpr), addr1=sgpr("SrdMetadata",4), \
                       soffset=0, offset=constOffset, \
                       glc=isGlc, slc=isSlc, lds=isLds, \
