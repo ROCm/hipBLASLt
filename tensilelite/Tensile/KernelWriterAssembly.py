@@ -1911,7 +1911,9 @@ class KernelWriterAssembly(KernelWriter):
       tensorSize = stmp
       tileStart = stmp+2
       blockOffset = stmp+4
-  
+      actualBatchSize = stmp+5 #for broadcast
+      actualBatchIndex = stmp+5 #for broadcast
+
       module.addModuleAsFlatItems(self.s_mul_u64_u32(sgpr(tileStart+0), sgpr(tileStart+1), sgpr(tP["wg"]), kernel[tP["mt"]], "WorkGroup[01] * MT"))
      
       unrollSummation = [ i for i in tP["ia"] if i in kernel["ProblemType"]["IndicesSummation"] ]
@@ -1923,8 +1925,11 @@ class KernelWriterAssembly(KernelWriter):
       module.addModuleAsFlatItems(self.s_mul_u64_u32(sgpr(blockOffset), sgpr(blockOffset+1), self.sizeRef(sizeIndex[0]), self.sizeRef(sizeIndex[1]), \
                                 "calculate metadata tensor size"))
       for dim in sizeIndex[2:]:
-        module.addModuleAsFlatItems(self.s_mul_u64_u32(sgpr(tensorSize), sgpr(tensorSize+1), sgpr(blockOffset), self.sizeRef(sizeIndex[dim]), \
+        module.add(SCmpEQU32(src0=sgpr("Stride%s%s"%(tc,self.states.indexChars[tP['ia'][dim]])), src1=0, comment="broadcast A?"))
+        module.add(SCSelectB32(dst=sgpr(actualBatchSize), src0=hex(1) , src1=self.sizeRef(sizeIndex[dim]), comment="set batchSize as 1 for boardcast A"))
+        module.addModuleAsFlatItems(self.s_mul_u64_u32(sgpr(tensorSize), sgpr(tensorSize+1), sgpr(blockOffset), sgpr(actualBatchSize), \
                                 "calculate metadata tensor size"))
+        module.add(SCSelectB32(dst=sgpr(actualBatchIndex), src0=hex(0) , src1=sgpr("WorkGroup2"), comment="set batchIndex as 0 for boardcast A"))
   
       if self.states.use64bShadowLimit:
         limitTmp0 = "ShadowLimitMetadata"
@@ -1956,7 +1961,7 @@ class KernelWriterAssembly(KernelWriter):
             module.addModuleAsFlatItems(self.s_mul_u64_u32(sgpr(tileStart+0), sgpr(tileStart+1), sgpr(blockOffset), sgpr("WorkGroup2"), "block offset*WG"))
             wroteTileStart = True
           else:
-            module.addModuleAsFlatItems(self.s_mul_u64_u32(sgpr(stmp+0), sgpr(stmp+1), sgpr(blockOffset), sgpr("WorkGroup2"), "block offset*WG"))
+            module.addModuleAsFlatItems(self.s_mul_u64_u32(sgpr(stmp+0), sgpr(stmp+1), sgpr(blockOffset), sgpr(actualBatchIndex), "block offset*WG"))
             module.add(SAddU32(sgpr(tileStart+0), sgpr(tileStart+0), sgpr(stmp+0), "accum wg term to tilestart"))
             module.add(SAddCU32(sgpr(tileStart+1), sgpr(tileStart+1), sgpr(stmp+1), "accum wg term to tilestart"))
   
