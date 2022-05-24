@@ -1861,20 +1861,40 @@ class VCmpGEF16(VCmpInstruction):
         super().__init__(InstType.INST_F16, dst, src0, src1, sdwa, comment)
         self.setInst("v_cmp_ge_f16")
 
+class VCmpGTF16(VCmpInstruction):
+    def __init__(self, dst, src0, src1, sdwa: Optional[SDWAModifiers] = None, comment="") -> None:
+        super().__init__(InstType.INST_F16, dst, src0, src1, sdwa, comment)
+        self.setInst("v_cmp_gt_f16")
+
 class VCmpGEF32(VCmpInstruction):
     def __init__(self, dst, src0, src1, sdwa: Optional[SDWAModifiers] = None, comment="") -> None:
         super().__init__(InstType.INST_F32, dst, src0, src1, sdwa, comment)
         self.setInst("v_cmp_ge_f32")
+
+class VCmpGTF32(VCmpInstruction):
+    def __init__(self, dst, src0, src1, sdwa: Optional[SDWAModifiers] = None, comment="") -> None:
+        super().__init__(InstType.INST_F32, dst, src0, src1, sdwa, comment)
+        self.setInst("v_cmp_gt_f32")
 
 class VCmpGEF64(VCmpInstruction):
     def __init__(self, dst, src0, src1, sdwa: Optional[SDWAModifiers] = None, comment="") -> None:
         super().__init__(InstType.INST_F64, dst, src0, src1, sdwa, comment)
         self.setInst("v_cmp_ge_f64")
 
+class VCmpGTF64(VCmpInstruction):
+    def __init__(self, dst, src0, src1, sdwa: Optional[SDWAModifiers] = None, comment="") -> None:
+        super().__init__(InstType.INST_F64, dst, src0, src1, sdwa, comment)
+        self.setInst("v_cmp_gt_f64")
+
 class VCmpGEI32(VCmpInstruction):
     def __init__(self, dst, src0, src1, sdwa: Optional[SDWAModifiers] = None, comment="") -> None:
         super().__init__(InstType.INST_I32, dst, src0, src1, sdwa, comment)
         self.setInst("v_cmp_ge_i32")
+
+class VCmpGTI32(VCmpInstruction):
+    def __init__(self, dst, src0, src1, sdwa: Optional[SDWAModifiers] = None, comment="") -> None:
+        super().__init__(InstType.INST_I32, dst, src0, src1, sdwa, comment)
+        self.setInst("v_cmp_gt_i32")
 
 class VCmpGEU32(VCmpInstruction):
     def __init__(self, dst, src0, src1, sdwa: Optional[SDWAModifiers] = None, comment="") -> None:
