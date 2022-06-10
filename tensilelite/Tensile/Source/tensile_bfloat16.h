@@ -1,4 +1,5 @@
-/**
+/*******************************************************************************
+ *
  * MIT License
  *
  * Copyright (C) 2022 Advanced Micro Devices, Inc. All rights reserved.
@@ -20,7 +21,8 @@
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
- */
+ *
+ *******************************************************************************/
 
 /*!\file
  * \brief tensile_bfloat16.h provides struct for tensile_bfloat16 typedef
