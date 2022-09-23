@@ -67,7 +67,7 @@ template <typename T> inline bool AlmostEqual(T a, T b) {
     return a == b;
   }
   T absDiff = (a - b > 0) ? a - b : b - a;
-  return absDiff / (absA + absB + 1) < 0.01;
+  return absDiff / (absA + absB + 1) < 0.001;
 }
 
 template <typename T>
@@ -97,7 +97,7 @@ template <typename Ti, typename To, typename Tc>
 void mat_mat_mult(Tc alpha, Tc beta, int M, int N, int K, int batch_count,
                   const Ti *A, int As1, int As2, int As3, const Ti *B, int Bs1,
                   int Bs2, int Bs3, const To *C, int Cs1, int Cs2, int Cs3,
-                  To *D, int Ds1, int Ds2, int Ds3) {
+                  To *D, int Ds1, int Ds2, int Ds3, To *bias) {
   for (int batch = 0; batch < batch_count; batch++) {
     for (int i1 = 0; i1 < M; i1++) {
       for (int i2 = 0; i2 < N; i2++) {
@@ -106,9 +106,11 @@ void mat_mat_mult(Tc alpha, Tc beta, int M, int N, int K, int batch_count,
           t += static_cast<Tc>(A[i1 * As1 + i3 * As2 + batch * As3]) *
                static_cast<Tc>(B[i3 * Bs1 + i2 * Bs2 + batch * Bs3]);
         }
-        D[i1 * Ds1 + i2 * Ds2 + batch * Ds3] = static_cast<To>(
-            beta * static_cast<Tc>(C[i1 * Cs1 + i2 * Cs2 + batch * Cs3]) +
-            alpha * t);
+        D[i1 * Ds1 + i2 * Ds2 + batch * Ds3] =
+            static_cast<To>(
+                beta * static_cast<Tc>(C[i1 * Cs1 + i2 * Cs2 + batch * Cs3]) +
+                alpha * t) +
+            (bias == nullptr ? 0 : bias[i1]);
       }
     }
   }
@@ -138,6 +140,8 @@ static void show_usage(char *argv[]) {
             << "\t--stride_c \t\tstride_d \tGEMM_STRIDED argument stride_c\n"
             << "\t--alpha \t\talpha \t\tGEMM_STRIDED argument alpha\n"
             << "\t--beta \t\t\tbeta \t\tGEMM_STRIDED argument beta\n"
+            << "\t--bias \t\t\tbias \t\tGEMM_STRIDED enable bias: 0 or 1 "
+               "(default is 0)\n"
             << "\t--header \t\theader \t\tPrint header for output (default is "
                "enabled)\n"
             << "\t--timing \t\ttiming \t\tBechmark GPU kernel performance:0 or "
@@ -152,8 +156,9 @@ static int parse_arguments(int argc, char *argv[], hipDataType &in_out_datatype,
                            int64_t &stride_c, int64_t &stride_d,
                            int &batch_count, float &alpha, float &beta,
                            rocblaslt_operation &trans_a,
-                           rocblaslt_operation &trans_b, bool &header,
-                           bool &verbose, bool &validate, bool &timing) {
+                           rocblaslt_operation &trans_b, bool &enable_bias,
+                           bool &header, bool &verbose, bool &validate,
+                           bool &timing) {
   if (argc >= 2) {
     for (int i = 1; i < argc; ++i) {
       std::string arg = argv[i];
@@ -198,6 +203,8 @@ static int parse_arguments(int argc, char *argv[], hipDataType &in_out_datatype,
           alpha = atof(argv[++i]);
         } else if ((arg == "--beta") && (i + 1 < argc)) {
           beta = atof(argv[++i]);
+        } else if ((arg == "--bias") && (i + 1 < argc)) {
+          enable_bias = atoi(argv[++i]);
         } else if ((arg == "--trans_a") && (i + 1 < argc)) {
           ++i;
           if (strncmp(argv[i], "N", 1) == 0 || strncmp(argv[i], "n", 1) == 0) {
@@ -303,8 +310,10 @@ bool bad_argument(rocblaslt_operation trans_a, rocblaslt_operation trans_b,
 }
 
 template <typename T>
-void initialize_a_b_c(std::vector<T> &ha, int64_t size_a, std::vector<T> &hb,
-                      int64_t size_b, std::vector<T> &hc, int64_t size_c) {
+void initialize_a_b_c_bias(std::vector<T> &ha, int64_t size_a,
+                           std::vector<T> &hb, int64_t size_b,
+                           std::vector<T> &hc, int64_t size_c,
+                           std::vector<T> &h_bias, int64_t size_bias) {
   srand(1);
   for (int i = 0; i < size_a; ++i) {
     ha[i] = static_cast<T>((rand() % 7) - 3);
@@ -315,6 +324,9 @@ void initialize_a_b_c(std::vector<T> &ha, int64_t size_a, std::vector<T> &hb,
   for (int i = 0; i < size_c; ++i) {
     hc[i] = static_cast<T>((rand() % 7) - 3);
   }
+  for (int i = 0; i < size_bias; ++i) {
+    h_bias[i] = static_cast<T>((rand() % 7) - 3);
+  }
 }
 
 template <typename T>
@@ -323,8 +335,8 @@ void test_rocblaslt(hipDataType in_out_datatype, rocblaslt_operation trans_a,
                     int64_t k, int64_t lda, int64_t ldb, int64_t ldc,
                     int64_t ldd, int64_t stride_a, int64_t stride_b,
                     int64_t stride_c, int64_t stride_d, int64_t batch_count,
-                    float alpha, float beta, bool validate, bool verbose,
-                    bool timing) {
+                    float alpha, float beta, bool enable_bias, bool validate,
+                    bool verbose, bool timing) {
   int64_t a_stride_1, a_stride_2, b_stride_1, b_stride_2;
   int64_t row_a, col_a, row_b, col_b, row_c, col_c;
   int size_a1, size_b1, size_c1 = ldc * n;
@@ -368,6 +380,7 @@ void test_rocblaslt(hipDataType in_out_datatype, rocblaslt_operation trans_a,
   int size_c =
       batch_count == 0 ? size_c1 : size_c1 + stride_c * (batch_count - 1);
   int size_d = size_c;
+  int size_bias = enable_bias ? m : 0;
 
   // Naming: da is in GPU (device) memory. ha is in CPU (host) memory
   std::vector<T> ha(size_a);
@@ -375,12 +388,13 @@ void test_rocblaslt(hipDataType in_out_datatype, rocblaslt_operation trans_a,
   std::vector<T> hc(size_c);
   std::vector<T> hd(size_c);
   std::vector<T> hd_gold(size_d);
+  std::vector<T> h_bias(size_bias);
 
   // initial data on host
-  initialize_a_b_c(ha, size_a, hb, size_b, hc, size_c);
+  initialize_a_b_c_bias(ha, size_a, hb, size_b, hc, size_c, h_bias, size_bias);
 
   // allocate memory on device
-  void *da, *db, *dc, *dd;
+  void *da, *db, *dc, *dd, *d_bias;
   int num_streams = 1;
   hipStream_t stream = nullptr;
 
@@ -388,6 +402,8 @@ void test_rocblaslt(hipDataType in_out_datatype, rocblaslt_operation trans_a,
   CHECK_HIP_ERROR(hipMalloc(&db, size_b * sizeof(T)));
   CHECK_HIP_ERROR(hipMalloc(&dc, size_c * sizeof(T)));
   CHECK_HIP_ERROR(hipMalloc(&dd, size_d * sizeof(T)));
+  if (enable_bias)
+    CHECK_HIP_ERROR(hipMalloc(&d_bias, size_bias * sizeof(T)));
   // copy matrices from host to device
   CHECK_HIP_ERROR(
       hipMemcpy(da, ha.data(), sizeof(T) * size_a, hipMemcpyHostToDevice));
@@ -395,6 +411,9 @@ void test_rocblaslt(hipDataType in_out_datatype, rocblaslt_operation trans_a,
       hipMemcpy(db, hb.data(), sizeof(T) * size_b, hipMemcpyHostToDevice));
   CHECK_HIP_ERROR(
       hipMemcpy(dc, hc.data(), sizeof(T) * size_c, hipMemcpyHostToDevice));
+  if (enable_bias)
+    CHECK_HIP_ERROR(hipMemcpy(d_bias, h_bias.data(), sizeof(T) * size_bias,
+                              hipMemcpyHostToDevice));
 
   rocblaslt_handle handle;
   rocblaslt_matrix_layout matA, matB, matC, matD;
@@ -423,9 +442,13 @@ void test_rocblaslt(hipDataType in_out_datatype, rocblaslt_operation trans_a,
   CHECK_ROCBLASLT_ERROR(rocblaslt_matmul_desc_set_attribute(
       matmul, ROCBLASLT_MATMUL_DESC_TRANSB, &trans_b, sizeof(int32_t)));
 
-  rocblaslt_epilogue epilogue = ROCBLASLT_EPILOGUE_DEFAULT;
+  rocblaslt_epilogue epilogue =
+      enable_bias ? ROCBLASLT_EPILOGUE_BIAS : ROCBLASLT_EPILOGUE_DEFAULT;
   CHECK_ROCBLASLT_ERROR(rocblaslt_matmul_desc_set_attribute(
       matmul, ROCBLASLT_MATMUL_DESC_EPILOGUE, &epilogue, sizeof(epilogue)));
+  if (enable_bias)
+    CHECK_ROCBLASLT_ERROR(rocblaslt_matmul_desc_set_attribute(
+        matmul, ROCBLASLT_MATMUL_DESC_BIAS_POINTER, &d_bias, sizeof(void *)));
 
   // Set User Preference attributes
   CHECK_ROCBLASLT_ERROR(rocblaslt_matmul_preference_create(&pref));
@@ -487,10 +510,15 @@ void test_rocblaslt(hipDataType in_out_datatype, rocblaslt_operation trans_a,
     auto *b_ptr = &hb[0];
     auto *c_ptr = &hc[0];
     auto *d_ptr = &hd_gold[0];
+    T *bias_ptr;
+    if (enable_bias)
+      bias_ptr = &h_bias[0];
+    else
+      bias_ptr = nullptr;
     mat_mat_mult<T, T, float>(alpha, beta, m, n, k, batch_count, a_ptr,
                               a_stride_1, a_stride_2, stride_a, b_ptr,
                               b_stride_1, b_stride_2, stride_b, c_ptr, 1, ldc,
-                              stride_c, d_ptr, 1, ldd, stride_d);
+                              stride_c, d_ptr, 1, ldd, stride_d, bias_ptr);
     bool passed = true;
     for (int i = 0; i < size_c; i++) {
       if (!AlmostEqual(hd_gold[i], hd[i])) {
@@ -524,7 +552,8 @@ void test_rocblaslt(hipDataType in_out_datatype, rocblaslt_operation trans_a,
     }
     print_strided_batched("hc initial", &hc[0], m, n, batch_count, 1, ldc,
                           stride_c);
-
+    if (enable_bias)
+      print_strided_batched("h_bias", &h_bias[0], m, 1, batch_count, 1, m, 0);
     print_strided_batched("hd_gold", &hd_gold[0], m, n, batch_count, 1, ldc,
                           stride_c);
     print_strided_batched("hd device", &hd[0], m, n, batch_count, 1, ldc,
@@ -536,6 +565,8 @@ void test_rocblaslt(hipDataType in_out_datatype, rocblaslt_operation trans_a,
   CHECK_HIP_ERROR(hipFree(dc));
   CHECK_HIP_ERROR(hipFree(dd));
   CHECK_HIP_ERROR(hipFree(d_worksapce));
+  if (enable_bias)
+    CHECK_HIP_ERROR(hipFree(d_bias));
   CHECK_ROCBLASLT_ERROR(rocblaslt_matmul_preference_destroy(pref));
   CHECK_ROCBLASLT_ERROR(rocblaslt_matmul_desc_destroy(matmul));
   CHECK_ROCBLASLT_ERROR(rocblaslt_matrix_layout_destory(matA));
@@ -568,6 +599,7 @@ int main(int argc, char *argv[]) {
 
   float alpha = ALPHA;
   float beta = BETA;
+  bool enable_bias = false;
 
   bool verbose = false;
   bool header = true;
@@ -576,8 +608,8 @@ int main(int argc, char *argv[]) {
 
   if (parse_arguments(argc, argv, in_out_datatype, m, n, k, lda, ldb, ldc, ldd,
                       stride_a, stride_b, stride_c, stride_d, batch_count,
-                      alpha, beta, trans_a, trans_b, header, verbose, validate,
-                      timing)) {
+                      alpha, beta, trans_a, trans_b, enable_bias, header,
+                      verbose, validate, timing)) {
     show_usage(argv);
     return EXIT_FAILURE;
   }
@@ -620,22 +652,22 @@ int main(int argc, char *argv[]) {
 
   if (header) {
     std::cout << "transAB, M, N, K, lda, ldb, ldc, stride_a, stride_b, "
-                 "stride_c, batch_count, alpha, beta";
+                 "stride_c, batch_count, alpha, beta, bias";
     if (timing)
       std::cout << ", ms, tflops";
     std::cout << std::endl;
   }
 
   if (in_out_datatype == HIP_R_32F)
-    test_rocblaslt<rocblaslt_float>(in_out_datatype, trans_a, trans_b, m, n, k,
-                                    lda, ldb, ldc, ldd, stride_a, stride_b,
-                                    stride_c, stride_d, batch_count, alpha,
-                                    beta, validate, verbose, timing);
+    test_rocblaslt<rocblaslt_float>(
+        in_out_datatype, trans_a, trans_b, m, n, k, lda, ldb, ldc, ldd,
+        stride_a, stride_b, stride_c, stride_d, batch_count, alpha, beta,
+        enable_bias, validate, verbose, timing);
   else if (in_out_datatype == HIP_R_16F)
     test_rocblaslt<rocblaslt_half>(in_out_datatype, trans_a, trans_b, m, n, k,
                                    lda, ldb, ldc, ldd, stride_a, stride_b,
                                    stride_c, stride_d, batch_count, alpha, beta,
-                                   validate, verbose, timing);
+                                   enable_bias, validate, verbose, timing);
 
   return EXIT_SUCCESS;
 }

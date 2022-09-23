@@ -283,6 +283,16 @@ inline bool rocblaslt_enum_utils::is_invalid(
   }
 };
 
+inline bool is_bias_enabled(rocblaslt_epilogue value_) {
+  switch (value_) {
+  case ROCBLASLT_EPILOGUE_BIAS:
+  case ROCBLASLT_EPILOGUE_GELU_BIAS:
+  case ROCBLASLT_EPILOGUE_RELU_BIAS:
+    return true;
+  default:
+    return false;
+  }
+};
 template <typename T> struct floating_traits { using data_t = T; };
 
 template <typename T>
