@@ -240,7 +240,13 @@ auto ConstructTensileProblem(
   // Add problem predicates for CEqualsD
   tensileProblem.setCEqualsD(prob.C == prob.D);
 
-  // set preference here
+  // set bias mode
+  tensileProblem.setUseBias(true);
+
+  // set Actvation
+  tensileProblem.setActivationType(Tensile::ActivationType::All);
+  tensileProblem.setActivationHPA(false);
+  tensileProblem.setActivationEnumArg(Tensile::ActivationType::None);
 
   return tensileProblem;
 }
@@ -286,6 +292,13 @@ auto GetTensileInputs(const RocblasltContractionProblem<Ti, To, Tc> &prob) {
 
   // Set the GSU workspace
   inputs.ws = prob.workspace;
+
+  // set bias vector
+  inputs.bias = prob.bias;
+
+  // push 2 activation arguments
+  inputs.activationArgs.push_back(0);
+  inputs.activationArgs.push_back(0);
 
   // alpha and beta are stored by value in Tensile::TypedContractionInputs
   // alpha and beta are copied from host to Tensile::TypedContractionInputs

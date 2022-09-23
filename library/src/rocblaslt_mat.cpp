@@ -46,6 +46,9 @@ rocblaslt_status rocblaslt_matmul_impl(
   rocblaslt_operation opA = matmul_descr->op_A;
   rocblaslt_operation opB = matmul_descr->op_B;
   rocblaslt_compute_type compute_type = matmul_descr->compute_type;
+  const void *bias = nullptr;
+  if (is_bias_enabled(matmul_descr->epilogue))
+    bias = matmul_descr->bias;
 
   // matrix A
   int64_t num_rows_a = matA->m;
@@ -97,7 +100,7 @@ rocblaslt_status rocblaslt_matmul_impl(
   handle, opA, opB, m, n, k, alpha, A, type_a, lda, batch_stride_a, 0, B,      \
       type_b, ldb, batch_stride_b, 0, beta, C, type_c, ldc, batch_stride_c, 0, \
       D, type_d, ldd, batch_stride_d, 0, num_batches_a, true, compute_type,    \
-      workspace, workspaceSizeInBytes, stream
+      workspace, workspaceSizeInBytes, bias, stream
 
   return rocblaslt_matmul_template(EX_PARM);
 }
