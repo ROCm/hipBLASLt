@@ -75,6 +75,7 @@ struct RocblasltContractionProblem {
   bool strided_batch;
 
   const To *bias;
+  rocblaslt_epilogue epilogue;
   void *workspace;
   size_t workspaceSize;
 
@@ -92,7 +93,8 @@ struct RocblasltContractionProblem {
       int64_t ld_c, int64_t batch_stride_c, int64_t offset_c, To *D,
       To *const *batch_D, int64_t ld_d, int64_t batch_stride_d,
       int64_t offset_d, int64_t batch_count, bool strided_batch,
-      void *workspace, size_t workspaceSize, const To *bias, hipStream_t stream)
+      void *workspace, size_t workspaceSize, const To *bias,
+      rocblaslt_epilogue epilogue, hipStream_t stream)
       : handle(handle), trans_a(trans_a), trans_b(trans_b), m(m), n(n), k(k),
         alpha(alpha), A(A), batch_A(batch_A), row_stride_a(1),
         col_stride_a(ld_a), batch_stride_a(batch_stride_a),
@@ -104,7 +106,8 @@ struct RocblasltContractionProblem {
         col_stride_d(ld_d), batch_stride_d(batch_stride_d),
         buffer_offset_d(offset_d), batch_count(batch_count),
         strided_batch(strided_batch), workspace(workspace),
-        workspaceSize(workspaceSize), bias(bias), stream(stream) {}
+        workspaceSize(workspaceSize), bias(bias), epilogue(epilogue),
+        stream(stream) {}
 };
 
 /*******************************************************************************
