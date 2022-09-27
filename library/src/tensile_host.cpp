@@ -246,7 +246,18 @@ auto ConstructTensileProblem(
   // set Actvation
   tensileProblem.setActivationType(Tensile::ActivationType::All);
   tensileProblem.setActivationHPA(false);
-  tensileProblem.setActivationEnumArg(Tensile::ActivationType::None);
+  Tensile::ActivationType tensileAct = Tensile::ActivationType::None;
+  switch (prob.epilogue) {
+  case ROCBLASLT_EPILOGUE_RELU:
+  case ROCBLASLT_EPILOGUE_RELU_BIAS:
+    tensileAct = Tensile::ActivationType::Relu;
+    break;
+  case ROCBLASLT_EPILOGUE_GELU:
+  case ROCBLASLT_EPILOGUE_GELU_BIAS:
+    tensileAct = Tensile::ActivationType::Gelu;
+    break;
+  }
+  tensileProblem.setActivationEnumArg(tensileAct);
 
   return tensileProblem;
 }

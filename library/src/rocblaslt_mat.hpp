@@ -40,7 +40,7 @@ rocblaslt_status rocblaslt_batched_template(
     int64_t batch_stride_c, int64_t offset_c, To *d, int64_t ld_d,
     int64_t batch_stride_d, int64_t offset_d, int64_t batch_count,
     bool strided_batch, void *workspace, size_t workspaceSizeInBytes,
-    const To *bias, hipStream_t stream) {
+    const To *bias, rocblaslt_epilogue epilogue, hipStream_t stream) {
   RocblasltContractionProblem<Ti, To, Tc> problem{handle,
                                                   trans_a,
                                                   trans_b,
@@ -74,6 +74,7 @@ rocblaslt_status rocblaslt_batched_template(
                                                   workspace,
                                                   workspaceSizeInBytes,
                                                   bias,
+                                                  epilogue,
                                                   stream};
   return runContractionProblem(problem);
 }
@@ -88,7 +89,7 @@ rocblaslt_status rocblaslt_matmul_typecasting(
     int64_t batch_stride_c, int64_t offset_c, void *d, int64_t ld_d,
     int64_t batch_stride_d, int64_t offset_d, int64_t batch_count,
     bool strided_batch, void *workspace, size_t workspaceSizeInBytes,
-    const void *bias, hipStream_t stream) {
+    const void *bias, rocblaslt_epilogue epilogue, hipStream_t stream) {
   // check alignment of pointers before casting
   if (!isAligned(a, sizeof(Ti)) || !isAligned(b, sizeof(Ti)) ||
       !isAligned(c, sizeof(Ti)) || !isAligned(d, sizeof(To))) {
@@ -102,7 +103,7 @@ rocblaslt_status rocblaslt_matmul_typecasting(
       reinterpret_cast<const Tc *>(beta), reinterpret_cast<const To *>(c), ld_c,
       batch_stride_c, offset_c, (To *)d, ld_d, batch_stride_d, offset_d,
       batch_count, strided_batch, workspace, workspaceSizeInBytes,
-      reinterpret_cast<const To *>(bias), stream);
+      reinterpret_cast<const To *>(bias), epilogue, stream);
 }
 
 inline rocblaslt_status rocblaslt_matmul_template(
@@ -115,14 +116,15 @@ inline rocblaslt_status rocblaslt_matmul_template(
     int64_t offset_c, void *d, hipDataType d_type, int64_t ld_d,
     int64_t batch_stride_d, int64_t offset_d, int64_t batch_count,
     bool strided_batch, rocblaslt_compute_type compute_type, void *workspace,
-    size_t workspaceSizeInBytes, const void *bias, hipStream_t stream) {
+    size_t workspaceSizeInBytes, const void *bias, rocblaslt_epilogue epilogue,
+    hipStream_t stream) {
   rocblaslt_status rs_status = rocblaslt_status_not_implemented;
 
 #define EX_TYPECASTING_PARM                                                    \
   handle, trans_a, trans_b, m, n, k, alpha, a, ld_a, batch_stride_a, offset_a, \
       b, ld_b, batch_stride_b, offset_b, beta, c, ld_c, batch_stride_c,        \
       offset_c, d, ld_d, batch_stride_d, offset_d, batch_count, strided_batch, \
-      workspace, workspaceSizeInBytes, bias, stream
+      workspace, workspaceSizeInBytes, bias, epilogue, stream
 
   if (a_type == HIP_R_32F && b_type == HIP_R_32F) {
     if (c_type == HIP_R_32F && d_type == HIP_R_32F) {

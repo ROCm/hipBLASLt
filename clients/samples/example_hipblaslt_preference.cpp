@@ -5,6 +5,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <functional>
 #include <hip/hip_runtime.h>
 #include <iostream>
 #include <limits>
@@ -51,6 +52,61 @@
 #define BETA 3
 #define BENCH_LOOP_COUNT 3
 
+typedef enum _ActivationType {
+  NONE = 0,
+  RELU = 1,
+  GELU = 2,
+} ActivationType;
+
+inline const char *ToString(ActivationType act) {
+  switch (act) {
+  case NONE:
+    return "none";
+  case RELU:
+    return "relu";
+  case GELU:
+    return "gelu";
+  default:
+    return "[Unknown Activation Type]";
+  }
+}
+
+auto _relu = [](auto in) -> decltype(in) {
+  return static_cast<decltype(in)>(std::max(static_cast<decltype(in)>(0), in));
+};
+
+auto _gelu = [](auto in) -> decltype(in) {
+  using Tc = float;
+
+  constexpr auto k0 = static_cast<Tc>(0.7978845608028654);
+  constexpr auto k1 = static_cast<Tc>(0.044715);
+  Tc in_Tc = static_cast<Tc>(in);
+
+  return static_cast<decltype(in)>(
+      0.5f *
+      (in_Tc * (1.f + std::tanh(k0 * (in_Tc * (1.f + k1 * (in_Tc * in_Tc)))))));
+};
+
+template <typename T>
+void activation(int64_t m, int64_t n, int64_t ld, T *addr,
+                ActivationType actType) {
+  auto saturate = [](T val) { return static_cast<T>(val); };
+  std::function<T(T)> actFunc;
+  if (actType == ActivationType::RELU)
+    actFunc = _relu;
+  else if (actType == ActivationType::GELU)
+    actFunc = _gelu;
+
+  for (int i = 0; i < m; i++) {
+#pragma omp parallel for
+    for (int j = 0; j < n; j++) {
+      auto pos = j * ld + i;
+      auto data = static_cast<T>(*(addr + pos));
+      *(addr + pos) = saturate(actFunc(data));
+    }
+  }
+}
+
 template <typename T> inline bool AlmostEqual(T a, T b) {
   T absA = (a > 0) ? a : -a;
   T absB = (b > 0) ? b : -b;
@@ -83,7 +139,7 @@ void print_strided_batched(const char *name, T *A, int64_t n1, int64_t n2,
   for (int i3 = 0; i3 < n3 && i3 < max_size; i3++) {
     for (int i1 = 0; i1 < n1 && i1 < max_size; i1++) {
       for (int i2 = 0; i2 < n2 && i2 < max_size; i2++) {
-        printf("[%ld]\t%8.1f\t", (i1 * s1) + (i2 * s2) + (i3 * s3),
+        printf("[%ld]\t%8.3f\t", (i1 * s1) + (i2 * s2) + (i3 * s3),
                static_cast<float>(A[(i1 * s1) + (i2 * s2) + (i3 * s3)]));
       }
       printf("\n");
@@ -140,6 +196,8 @@ static void show_usage(char *argv[]) {
             << "\t--stride_c \t\tstride_d \tGEMM_STRIDED argument stride_c\n"
             << "\t--alpha \t\talpha \t\tGEMM_STRIDED argument alpha\n"
             << "\t--beta \t\t\tbeta \t\tGEMM_STRIDED argument beta\n"
+            << "\t--act \t\t\tact \t\tGEMM_STRIDED set activation type: relu "
+               "or gelu\n"
             << "\t--bias \t\t\tbias \t\tGEMM_STRIDED enable bias: 0 or 1 "
                "(default is 0)\n"
             << "\t--header \t\theader \t\tPrint header for output (default is "
@@ -157,8 +215,8 @@ static int parse_arguments(int argc, char *argv[], hipDataType &in_out_datatype,
                            int &batch_count, float &alpha, float &beta,
                            rocblaslt_operation &trans_a,
                            rocblaslt_operation &trans_b, bool &enable_bias,
-                           bool &header, bool &verbose, bool &validate,
-                           bool &timing) {
+                           ActivationType &actType, bool &header, bool &verbose,
+                           bool &validate, bool &timing) {
   if (argc >= 2) {
     for (int i = 1; i < argc; ++i) {
       std::string arg = argv[i];
@@ -205,6 +263,17 @@ static int parse_arguments(int argc, char *argv[], hipDataType &in_out_datatype,
           beta = atof(argv[++i]);
         } else if ((arg == "--bias") && (i + 1 < argc)) {
           enable_bias = atoi(argv[++i]);
+        } else if ((arg == "--act") && (i + 1 < argc)) {
+          ++i;
+          if (strncmp(argv[i], "relu", 4) == 0)
+            actType = ActivationType::RELU;
+          else if (strncmp(argv[i], "gelu", 4) == 0)
+            actType = ActivationType::GELU;
+          else {
+            std::cerr << "error with " << arg << std::endl;
+            std::cerr << "do not recognize value " << argv[i];
+            return EXIT_FAILURE;
+          }
         } else if ((arg == "--trans_a") && (i + 1 < argc)) {
           ++i;
           if (strncmp(argv[i], "N", 1) == 0 || strncmp(argv[i], "n", 1) == 0) {
@@ -335,8 +404,9 @@ void test_rocblaslt(hipDataType in_out_datatype, rocblaslt_operation trans_a,
                     int64_t k, int64_t lda, int64_t ldb, int64_t ldc,
                     int64_t ldd, int64_t stride_a, int64_t stride_b,
                     int64_t stride_c, int64_t stride_d, int64_t batch_count,
-                    float alpha, float beta, bool enable_bias, bool validate,
-                    bool verbose, bool timing) {
+                    float alpha, float beta, bool enable_bias,
+                    ActivationType actType, bool validate, bool verbose,
+                    bool timing) {
   int64_t a_stride_1, a_stride_2, b_stride_1, b_stride_2;
   int64_t row_a, col_a, row_b, col_b, row_c, col_c;
   int size_a1, size_b1, size_c1 = ldc * n;
@@ -442,8 +512,19 @@ void test_rocblaslt(hipDataType in_out_datatype, rocblaslt_operation trans_a,
   CHECK_ROCBLASLT_ERROR(rocblaslt_matmul_desc_set_attribute(
       matmul, ROCBLASLT_MATMUL_DESC_TRANSB, &trans_b, sizeof(int32_t)));
 
-  rocblaslt_epilogue epilogue =
-      enable_bias ? ROCBLASLT_EPILOGUE_BIAS : ROCBLASLT_EPILOGUE_DEFAULT;
+  rocblaslt_epilogue epilogue;
+  if (enable_bias && actType == ActivationType::NONE)
+    epilogue = ROCBLASLT_EPILOGUE_BIAS;
+  else if (enable_bias && actType == ActivationType::RELU)
+    epilogue = ROCBLASLT_EPILOGUE_RELU_BIAS;
+  else if (enable_bias && actType == ActivationType::GELU)
+    epilogue = ROCBLASLT_EPILOGUE_GELU_BIAS;
+  else if (!enable_bias && actType == ActivationType::NONE)
+    epilogue = ROCBLASLT_EPILOGUE_DEFAULT;
+  else if (!enable_bias && actType == ActivationType::RELU)
+    epilogue = ROCBLASLT_EPILOGUE_RELU;
+  else if (!enable_bias && actType == ActivationType::GELU)
+    epilogue = ROCBLASLT_EPILOGUE_GELU;
   CHECK_ROCBLASLT_ERROR(rocblaslt_matmul_desc_set_attribute(
       matmul, ROCBLASLT_MATMUL_DESC_EPILOGUE, &epilogue, sizeof(epilogue)));
   if (enable_bias)
@@ -473,6 +554,10 @@ void test_rocblaslt(hipDataType in_out_datatype, rocblaslt_operation trans_a,
   CHECK_HIP_ERROR(
       hipMemcpy(hd.data(), dd, sizeof(T) * size_c, hipMemcpyDeviceToHost));
 
+  std::cout << m << ", " << n << ", " << k << ", " << lda << ", " << ldb << ", "
+            << ldc << ", " << stride_a << ", " << stride_b << ", " << stride_c
+            << ", " << batch_count << ", " << alpha << ", " << beta << ", "
+            << enable_bias << ", " << ToString(actType);
   if (timing) {
     hipEvent_t start, stop;
     hipEventCreate(&start);
@@ -492,16 +577,8 @@ void test_rocblaslt(hipDataType in_out_datatype, rocblaslt_operation trans_a,
     eventMs /= BENCH_LOOP_COUNT;
     double flops = 2 * m * n * k * batch_count;
     double tflops = flops / eventMs / 1000000000;
-    std::cout << m << ", " << n << ", " << k << ", " << lda << ", " << ldb
-              << ", " << ldc << ", " << stride_a << ", " << stride_b << ", "
-              << stride_c << ", " << batch_count << ", " << alpha << ", "
-              << beta;
     std::cout << ", " << eventMs << ", " << tflops;
-  } else
-    std::cout << m << ", " << n << ", " << k << ", " << lda << ", " << ldb
-              << ", " << ldc << ", " << stride_a << ", " << stride_b << ", "
-              << stride_c << ", " << batch_count << ", " << alpha << ", "
-              << beta;
+  }
   std::cout << std::endl;
 
   // calculate golden or correct result
@@ -519,6 +596,9 @@ void test_rocblaslt(hipDataType in_out_datatype, rocblaslt_operation trans_a,
                               a_stride_1, a_stride_2, stride_a, b_ptr,
                               b_stride_1, b_stride_2, stride_b, c_ptr, 1, ldc,
                               stride_c, d_ptr, 1, ldd, stride_d, bias_ptr);
+    if (actType != ActivationType::NONE)
+      activation(m, n, ldd, d_ptr, actType);
+
     bool passed = true;
     for (int i = 0; i < size_c; i++) {
       if (!AlmostEqual(hd_gold[i], hd[i])) {
@@ -600,6 +680,7 @@ int main(int argc, char *argv[]) {
   float alpha = ALPHA;
   float beta = BETA;
   bool enable_bias = false;
+  ActivationType actType = ActivationType::NONE;
 
   bool verbose = false;
   bool header = true;
@@ -608,8 +689,8 @@ int main(int argc, char *argv[]) {
 
   if (parse_arguments(argc, argv, in_out_datatype, m, n, k, lda, ldb, ldc, ldd,
                       stride_a, stride_b, stride_c, stride_d, batch_count,
-                      alpha, beta, trans_a, trans_b, enable_bias, header,
-                      verbose, validate, timing)) {
+                      alpha, beta, trans_a, trans_b, enable_bias, actType,
+                      header, verbose, validate, timing)) {
     show_usage(argv);
     return EXIT_FAILURE;
   }
@@ -652,7 +733,7 @@ int main(int argc, char *argv[]) {
 
   if (header) {
     std::cout << "transAB, M, N, K, lda, ldb, ldc, stride_a, stride_b, "
-                 "stride_c, batch_count, alpha, beta, bias";
+                 "stride_c, batch_count, alpha, beta, bias, activationType";
     if (timing)
       std::cout << ", ms, tflops";
     std::cout << std::endl;
@@ -662,12 +743,12 @@ int main(int argc, char *argv[]) {
     test_rocblaslt<rocblaslt_float>(
         in_out_datatype, trans_a, trans_b, m, n, k, lda, ldb, ldc, ldd,
         stride_a, stride_b, stride_c, stride_d, batch_count, alpha, beta,
-        enable_bias, validate, verbose, timing);
+        enable_bias, actType, validate, verbose, timing);
   else if (in_out_datatype == HIP_R_16F)
-    test_rocblaslt<rocblaslt_half>(in_out_datatype, trans_a, trans_b, m, n, k,
-                                   lda, ldb, ldc, ldd, stride_a, stride_b,
-                                   stride_c, stride_d, batch_count, alpha, beta,
-                                   enable_bias, validate, verbose, timing);
+    test_rocblaslt<rocblaslt_half>(
+        in_out_datatype, trans_a, trans_b, m, n, k, lda, ldb, ldc, ldd,
+        stride_a, stride_b, stride_c, stride_d, batch_count, alpha, beta,
+        enable_bias, actType, validate, verbose, timing);
 
   return EXIT_SUCCESS;
 }
