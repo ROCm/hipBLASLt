@@ -22,18 +22,14 @@
  * ************************************************************************ */
 
 /*!\file
- * \brief rocblaslt-version.h provides the configured version and settings
+ * \brief rocblaslt.h includes other *.h and exposes a common interface
  */
 
 #pragma once
-#ifndef _ROCBLASLT_VERSION_H_
-#define _ROCBLASLT_VERSION_H_
+#ifndef _ROCBLASLT_H_
+#define _ROCBLASLT_H_
 
-/* clang-format off */
-#define ROCBLASLT_VERSION_MAJOR     @rocblaslt_VERSION_MAJOR@
-#define ROCBLASLT_VERSION_MINOR     @rocblaslt_VERSION_MINOR@
-#define ROCBLASLT_VERSION_PATCH     @rocblaslt_VERSION_PATCH@
-#define ROCBLASLT_VERSION_TWEAK     @rocblaslt_VERSION_TWEAK@
-/* clang-format on */
+#include "rocblaslt-auxiliary.h"
+#include "rocblaslt-functions.h"
 
-#endif /* _ROCBLASLT_VERSION_H_ */
+#endif /* _ROCBLASLT_H_ */

@@ -21,13 +21,5 @@
 #
 # ########################################################################
 
-if(NOT BUILD_CUDA)
-  # hipBLASLt source
-  include(src/amd_detail/rocblaslt/CMakeLists.txt)
-  set(hipblaslt_source src/amd_detail/hipblaslt.cpp
-                         ${rocblaslt_source})
-else()
-  # hipBLASLt CUDA source
-  # TODO
-  #set(hipblaslt_source src/nvcc_detail/hipblaslt.cpp)
-endif()
+# Include sources
+include(src/amd_detail/rocblaslt/src/CMakeLists.txt)

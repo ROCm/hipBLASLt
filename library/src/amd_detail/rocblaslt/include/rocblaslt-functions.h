@@ -30,7 +30,6 @@
 #ifndef _ROCBLASLT_FUNCTIONS_H_
 #define _ROCBLASLT_FUNCTIONS_H_
 
-#include "rocblaslt-export.h"
 #include "rocblaslt-types.h"
 
 #ifdef __cplusplus
@@ -94,7 +93,7 @@ extern "C" {
  *  \retval     rocblaslt_status_arch_mismatch the device is not supported.
  *  \retval     rocblaslt_status_not_implemented
  */
-ROCBLASLT_EXPORT
+
 rocblaslt_status
 rocblaslt_matmul(rocblaslt_handle handle, rocblaslt_matmul_desc matmul_descr,
                  const void *alpha, const void *A, rocblaslt_matrix_layout matA,

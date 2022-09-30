@@ -31,7 +31,6 @@
 
 #include <stdint.h>
 
-#include "rocblaslt-export.h"
 #include "rocblaslt-types.h"
 
 #include <hip/hip_runtime.h>
@@ -56,7 +55,6 @@ extern "C" {
  *  \retval rocblaslt_status_invalid_handle \p handle pointer is invalid.
  *  \retval rocblaslt_status_internal_error an internal error occurred.
  */
-ROCBLASLT_EXPORT
 rocblaslt_status rocblaslt_create(rocblaslt_handle *handle);
 
 /*! \ingroup aux_module
@@ -73,7 +71,6 @@ rocblaslt_status rocblaslt_create(rocblaslt_handle *handle);
  *  \retval rocblaslt_status_invalid_handle \p handle is invalid.
  *  \retval rocblaslt_status_internal_error an internal error occurred.
  */
-ROCBLASLT_EXPORT
 rocblaslt_status rocblaslt_destroy(const rocblaslt_handle handle);
 
 /*! \ingroup aux_module
@@ -89,7 +86,6 @@ rocblaslt_status rocblaslt_destroy(const rocblaslt_handle handle);
  *  \retval rocblaslt_status_invalid_pointer \p descr pointer is invalid.
  *  \retval rocblaslt_status_invalid_value
  */
-ROCBLASLT_EXPORT
 rocblaslt_status
 rocblaslt_matrix_layout_create(rocblaslt_matrix_layout *matDescr,
                                hipDataType valueType, uint64_t rows,
@@ -108,7 +104,6 @@ rocblaslt_matrix_layout_create(rocblaslt_matrix_layout *matDescr,
  *  \retval rocblaslt_status_success the operation completed successfully.
  *  \retval rocblaslt_status_invalid_pointer \p descr is invalid.
  */
-ROCBLASLT_EXPORT
 rocblaslt_status
 rocblaslt_matrix_layout_destory(const rocblaslt_matrix_layout descr);
 
@@ -135,7 +130,6 @@ rocblaslt_matrix_layout_destory(const rocblaslt_matrix_layout descr);
  *  \retval rocblaslt_status_invalid_value \p rocblaslt_matrix_layout_attribute
  * is invalid.
  */
-ROCBLASLT_EXPORT
 rocblaslt_status
 rocblaslt_matmul_desc_create(rocblaslt_matmul_desc *matmulDesc,
                              rocblaslt_compute_type computeType,
@@ -153,7 +147,6 @@ rocblaslt_matmul_desc_create(rocblaslt_matmul_desc *matmulDesc,
  *  \retval rocblaslt_status_success the operation completed successfully.
  *  \retval rocblaslt_status_invalid_value \p descr is invalid.
  */
-ROCBLASLT_EXPORT
 rocblaslt_status
 rocblaslt_matmul_desc_destroy(const rocblaslt_matmul_desc descr);
 
@@ -178,7 +171,6 @@ rocblaslt_matmul_desc_destroy(const rocblaslt_matmul_desc descr);
  * invalid. \retval rocblaslt_status_invalid_value \p
  * rocblaslt_matmul_desc_attributes is invalid.
  */
-ROCBLASLT_EXPORT
 rocblaslt_status
 rocblaslt_matmul_desc_set_attribute(rocblaslt_matmul_desc matmulDesc,
                                     rocblaslt_matmul_desc_attributes matmulAttr,
@@ -204,7 +196,6 @@ rocblaslt_matmul_desc_set_attribute(rocblaslt_matmul_desc matmulDesc,
  * invalid. \retval rocblaslt_status_invalid_value \p
  * rocblaslt_matmul_desc_attributes is invalid.
  */
-ROCBLASLT_EXPORT
 rocblaslt_status
 rocblaslt_matmul_desc_get_attribute(rocblaslt_matmul_desc matmulDesc,
                                     rocblaslt_matmul_desc_attributes matmulAttr,
@@ -225,7 +216,6 @@ rocblaslt_matmul_desc_get_attribute(rocblaslt_matmul_desc matmulDesc,
  *  \retval rocblaslt_status_invalid_pointer \p pref pointer is invalid.
  *  \retval rocblaslt_status_invalid_value
  */
-ROCBLASLT_EXPORT
 rocblaslt_status
 rocblaslt_matmul_preference_create(rocblaslt_matmul_preference *pref);
 /*! \ingroup aux_module
@@ -241,7 +231,6 @@ rocblaslt_matmul_preference_create(rocblaslt_matmul_preference *pref);
  *  \retval rocblaslt_status_success the operation completed successfully.
  *  \retval rocblaslt_status_invalid_pointer \p pref is invalid.
  */
-ROCBLASLT_EXPORT
 rocblaslt_status
 rocblaslt_matmul_preference_destroy(const rocblaslt_matmul_preference pref);
 
@@ -266,7 +255,6 @@ rocblaslt_matmul_preference_destroy(const rocblaslt_matmul_preference pref);
  * invalid. \retval rocblaslt_status_invalid_value \p
  * rocblaslt_matmul_preference_attributes is invalid.
  */
-ROCBLASLT_EXPORT
 rocblaslt_status rocblaslt_matmul_preference_set_attribute(
     rocblaslt_matmul_preference pref,
     rocblaslt_matmul_preference_attributes attribute, const void *data,
@@ -294,7 +282,6 @@ rocblaslt_status rocblaslt_matmul_preference_set_attribute(
  * invalid. \retval rocblaslt_status_invalid_value \p
  * rocblaslt_matmul_preference_attributes is invalid.
  */
-ROCBLASLT_EXPORT
 rocblaslt_status rocblaslt_matmul_preference_get_attribute(
     rocblaslt_matmul_preference pref,
     rocblaslt_matmul_preference_attributes attribute, void *data,
@@ -321,7 +308,6 @@ rocblaslt_status rocblaslt_matmul_preference_get_attribute(
  *  \retval rocblaslt_status_invalid_handle \p handle or \p pref pointer
  * is invalid.
  */
-ROCBLASLT_EXPORT
 rocblaslt_status rocblaslt_matmul_algo_get_heuristic(
     rocblaslt_handle handle, rocblaslt_matmul_desc matmulDesc,
     rocblaslt_matrix_layout Adesc, rocblaslt_matrix_layout Bdesc,

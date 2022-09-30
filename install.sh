@@ -270,7 +270,7 @@ build_hip_clang=true
 build_static=false
 build_release_debug=false
 build_codecoverage=false
-install_prefix=rocblaslt-install
+install_prefix=hipblaslt-install
 rocm_path=/opt/rocm
 build_relocatable=false
 build_address_sanitizer=false
@@ -623,16 +623,16 @@ pushd .
 
     case "${ID}" in
       ubuntu)
-        elevate_if_not_root dpkg -i rocblaslt[-\_]*.deb
+        elevate_if_not_root dpkg -i hipblaslt[-\_]*.deb
       ;;
       centos|rhel)
-        elevate_if_not_root yum -y localinstall rocblaslt-*.rpm
+        elevate_if_not_root yum -y localinstall hipblaslt-*.rpm
       ;;
       fedora)
-        elevate_if_not_root dnf install rocblaslt-*.rpm
+        elevate_if_not_root dnf install hipblaslt-*.rpm
       ;;
       sles|opensuse-leap)
-        elevate_if_not_root zypper -n --no-gpg-checks install rocblaslt-*.rpm
+        elevate_if_not_root zypper -n --no-gpg-checks install hipblaslt-*.rpm
       ;;
     esac
 

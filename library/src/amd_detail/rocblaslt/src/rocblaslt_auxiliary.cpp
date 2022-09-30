@@ -396,46 +396,6 @@ rocblaslt_status rocblaslt_matmul_algo_get_heuristic(
   }
   return rocblaslt_status_success;
 }
-/********************************************************************************
- * \brief Get rocBLASLt version
- * version % 100        = patch level
- * version / 100 % 1000 = minor version
- * version / 100000     = major version
- *******************************************************************************/
-rocblaslt_status rocblaslt_get_version(rocblaslt_handle handle, int *version) {
-  // Check if handle is valid
-  if (handle == nullptr) {
-    return rocblaslt_status_invalid_handle;
-  }
-  *version = ROCBLASLT_VERSION_MAJOR * 100000 + ROCBLASLT_VERSION_MINOR * 100 +
-             ROCBLASLT_VERSION_PATCH;
-
-  log_trace(handle, "rocblaslt_get_version", *version);
-
-  return rocblaslt_status_success;
-}
-
-/********************************************************************************
- * \brief Get rocBLASLt git revision
- *******************************************************************************/
-rocblaslt_status rocblaslt_get_git_rev(rocblaslt_handle handle, char *rev) {
-  // Check if handle is valid
-  if (handle == nullptr) {
-    return rocblaslt_status_invalid_handle;
-  }
-
-  if (rev == nullptr) {
-    return rocblaslt_status_invalid_pointer;
-  }
-
-  static constexpr char v[] = TO_STR(ROCBLASLT_VERSION_TWEAK);
-
-  memcpy(rev, v, sizeof(v));
-
-  log_trace(handle, "rocblaslt_get_git_rev", rev);
-
-  return rocblaslt_status_success;
-}
 
 #ifdef __cplusplus
 }

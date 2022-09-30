@@ -1,7 +1,7 @@
 /* ************************************************************************
  * Copyright (c) 2022 Advanced Micro Devices, Inc.
  * ************************************************************************ */
-#include "rocblaslt.h"
+#include "hipblaslt.h"
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -21,23 +21,11 @@
   }
 #endif
 
-#ifndef CHECK_ROCBLASLT_ERROR
-#define CHECK_ROCBLASLT_ERROR(error)                                           \
-  if (error != rocblaslt_status_success) {                                     \
-    fprintf(stderr, "rocBLASLt error(Err=%d) at %s:%d\n", error, __FILE__,     \
+#ifndef CHECK_HIPBLASLT_ERROR
+#define CHECK_HIPBLASLT_ERROR(error)                                           \
+  if (error != HIPBLASLT_STATUS_SUCCESS) {                                     \
+    fprintf(stderr, "hipBLASLt error(Err=%d) at %s:%d\n", error, __FILE__,     \
             __LINE__);                                                         \
-    if (error == rocblaslt_status_invalid_handle)                              \
-      fprintf(stderr, "rocblaslt_status_invalid_handle");                      \
-    if (error == rocblaslt_status_not_implemented)                             \
-      fprintf(stderr, " rocblaslt_status_not_implemented");                    \
-    if (error == rocblaslt_status_invalid_pointer)                             \
-      fprintf(stderr, "rocblaslt_status_invalid_pointer");                     \
-    if (error == rocblaslt_status_invalid_size)                                \
-      fprintf(stderr, "rocblaslt_status_invalid_size");                        \
-    if (error == rocblaslt_status_memory_error)                                \
-      fprintf(stderr, "rocblaslt_status_memory_error");                        \
-    if (error == rocblaslt_status_internal_error)                              \
-      fprintf(stderr, "rocblaslt_status_internal_error");                      \
     fprintf(stderr, "\n");                                                     \
     exit(EXIT_FAILURE);                                                        \
   }
@@ -185,7 +173,7 @@ static void show_usage(char *argv[]) {
             << "\t--lda \t\t\tlda \t\tGEMM_STRIDED argument lda\n"
             << "\t--ldb \t\t\tldb \t\tGEMM_STRIDED argument ldb\n"
             << "\t--ldc \t\t\tldc \t\tGEMM_STRIDED argument ldc\n"
-            << "\t--ldd \t\t\tldd \t\tGEMM_STRIDED argument ldc\n"
+            << "\t--ldd \t\t\tldd \t\tGEMM_STRIDED argument ldd\n"
             << "\t--trans_a \t\ttrans_a \tGEMM_STRIDED argument trans_a\n"
             << "\t--trans_b \t\ttrans_b \tGEMM_STRIDED argument trans_b\n"
             << "\t--datatype \t\tdatatype \tGEMM_STRIDED argument in out "
@@ -193,7 +181,7 @@ static void show_usage(char *argv[]) {
             << "\t--stride_a \t\tstride_a \tGEMM_STRIDED argument stride_a\n"
             << "\t--stride_b \t\tstride_b \tGEMM_STRIDED argument stride_b\n"
             << "\t--stride_c \t\tstride_c \tGEMM_STRIDED argument stride_c\n"
-            << "\t--stride_c \t\tstride_d \tGEMM_STRIDED argument stride_c\n"
+            << "\t--stride_d \t\tstride_d \tGEMM_STRIDED argument stride_d\n"
             << "\t--alpha \t\talpha \t\tGEMM_STRIDED argument alpha\n"
             << "\t--beta \t\t\tbeta \t\tGEMM_STRIDED argument beta\n"
             << "\t--act \t\t\tact \t\tGEMM_STRIDED set activation type: relu "
@@ -213,8 +201,8 @@ static int parse_arguments(int argc, char *argv[], hipDataType &in_out_datatype,
                            int64_t &stride_a, int64_t &stride_b,
                            int64_t &stride_c, int64_t &stride_d,
                            int &batch_count, float &alpha, float &beta,
-                           rocblaslt_operation &trans_a,
-                           rocblaslt_operation &trans_b, bool &enable_bias,
+                           hipblasLtOperation_t &trans_a,
+                           hipblasLtOperation_t &trans_b, bool &enable_bias,
                            ActivationType &actType, bool &header, bool &verbose,
                            bool &validate, bool &timing) {
   if (argc >= 2) {
@@ -277,10 +265,10 @@ static int parse_arguments(int argc, char *argv[], hipDataType &in_out_datatype,
         } else if ((arg == "--trans_a") && (i + 1 < argc)) {
           ++i;
           if (strncmp(argv[i], "N", 1) == 0 || strncmp(argv[i], "n", 1) == 0) {
-            trans_a = ROCBLASLT_OP_N;
+            trans_a = HIPBLASLT_OP_N;
           } else if (strncmp(argv[i], "T", 1) == 0 ||
                      strncmp(argv[i], "t", 1) == 0) {
-            trans_a = ROCBLASLT_OP_T;
+            trans_a = HIPBLASLT_OP_T;
           } else {
             std::cerr << "error with " << arg << std::endl;
             std::cerr << "do not recognize value " << argv[i];
@@ -289,10 +277,10 @@ static int parse_arguments(int argc, char *argv[], hipDataType &in_out_datatype,
         } else if ((arg == "--trans_b") && (i + 1 < argc)) {
           ++i;
           if (strncmp(argv[i], "N", 1) == 0 || strncmp(argv[i], "n", 1) == 0) {
-            trans_b = ROCBLASLT_OP_N;
+            trans_b = HIPBLASLT_OP_N;
           } else if (strncmp(argv[i], "T", 1) == 0 ||
                      strncmp(argv[i], "t", 1) == 0) {
-            trans_b = ROCBLASLT_OP_T;
+            trans_b = HIPBLASLT_OP_T;
           } else {
             std::cerr << "error with " << arg << std::endl;
             std::cerr << "do not recognize value " << argv[i];
@@ -322,24 +310,24 @@ static int parse_arguments(int argc, char *argv[], hipDataType &in_out_datatype,
   return EXIT_SUCCESS;
 }
 
-bool bad_argument(rocblaslt_operation trans_a, rocblaslt_operation trans_b,
+bool bad_argument(hipblasLtOperation_t trans_a, hipblasLtOperation_t trans_b,
                   int64_t m, int64_t n, int64_t k, int64_t lda, int64_t ldb,
                   int64_t ldc, int64_t ldd, int64_t stride_a, int64_t stride_b,
                   int64_t stride_c, int64_t stride_d, int64_t batch_count) {
   bool argument_error = false;
-  if ((trans_a == ROCBLASLT_OP_N) && (lda < m)) {
+  if ((trans_a == HIPBLASLT_OP_N) && (lda < m)) {
     argument_error = true;
     std::cerr << "ERROR: bad argument lda = " << lda << " < " << m << std::endl;
   }
-  if ((trans_a == ROCBLASLT_OP_T) && (lda < k)) {
+  if ((trans_a == HIPBLASLT_OP_T) && (lda < k)) {
     argument_error = true;
     std::cerr << "ERROR: bad argument lda = " << lda << " < " << k << std::endl;
   }
-  if ((trans_b == ROCBLASLT_OP_N) && (ldb < k)) {
+  if ((trans_b == HIPBLASLT_OP_N) && (ldb < k)) {
     argument_error = true;
     std::cerr << "ERROR: bad argument ldb = " << ldb << " < " << k << std::endl;
   }
-  if ((trans_b == ROCBLASLT_OP_T) && (ldb < n)) {
+  if ((trans_b == HIPBLASLT_OP_T) && (ldb < n)) {
     argument_error = true;
     std::cerr << "ERROR: bad argument ldb = " << ldb << " < " << n << std::endl;
   }
@@ -399,8 +387,8 @@ void initialize_a_b_c_bias(std::vector<T> &ha, int64_t size_a,
 }
 
 template <typename T>
-void test_rocblaslt(hipDataType in_out_datatype, rocblaslt_operation trans_a,
-                    rocblaslt_operation trans_b, int64_t m, int64_t n,
+void test_hipblaslt(hipDataType in_out_datatype, hipblasLtOperation_t trans_a,
+                    hipblasLtOperation_t trans_b, int64_t m, int64_t n,
                     int64_t k, int64_t lda, int64_t ldb, int64_t ldc,
                     int64_t ldd, int64_t stride_a, int64_t stride_b,
                     int64_t stride_c, int64_t stride_d, int64_t batch_count,
@@ -410,7 +398,7 @@ void test_rocblaslt(hipDataType in_out_datatype, rocblaslt_operation trans_a,
   int64_t a_stride_1, a_stride_2, b_stride_1, b_stride_2;
   int64_t row_a, col_a, row_b, col_b, row_c, col_c;
   int size_a1, size_b1, size_c1 = ldc * n;
-  if (trans_a == ROCBLASLT_OP_N) {
+  if (trans_a == HIPBLASLT_OP_N) {
     std::cout << "N";
     row_a = m;
     col_a = k;
@@ -425,7 +413,7 @@ void test_rocblaslt(hipDataType in_out_datatype, rocblaslt_operation trans_a,
     a_stride_2 = 1;
     size_a1 = lda * m;
   }
-  if (trans_b == ROCBLASLT_OP_N) {
+  if (trans_b == HIPBLASLT_OP_N) {
     std::cout << "N, ";
     row_b = k;
     col_b = n;
@@ -485,67 +473,67 @@ void test_rocblaslt(hipDataType in_out_datatype, rocblaslt_operation trans_a,
     CHECK_HIP_ERROR(hipMemcpy(d_bias, h_bias.data(), sizeof(T) * size_bias,
                               hipMemcpyHostToDevice));
 
-  rocblaslt_handle handle;
-  rocblaslt_matrix_layout matA, matB, matC, matD;
-  rocblaslt_matmul_desc matmul;
-  rocblaslt_matmul_preference pref;
+  hipblasLtHandle_t handle;
+  hipblasLtMatrixLayout_t matA, matB, matC, matD;
+  hipblasLtMatmulDesc_t matmul;
+  hipblasLtMatmulPreference_t pref;
   uint64_t workspace_size = 1024 * 1024;
   void *d_worksapce;
   CHECK_HIP_ERROR(hipMalloc(&d_worksapce, workspace_size));
 
-  CHECK_ROCBLASLT_ERROR(rocblaslt_create(&handle));
+  CHECK_HIPBLASLT_ERROR(hipblasLtCreate(&handle));
 
-  CHECK_ROCBLASLT_ERROR(rocblaslt_matrix_layout_create(&matA, in_out_datatype,
-                                                       row_a, col_a, lda));
-  CHECK_ROCBLASLT_ERROR(rocblaslt_matrix_layout_create(&matB, in_out_datatype,
-                                                       row_b, col_b, ldb));
-  CHECK_ROCBLASLT_ERROR(rocblaslt_matrix_layout_create(&matC, in_out_datatype,
-                                                       row_c, col_c, ldc));
-  CHECK_ROCBLASLT_ERROR(rocblaslt_matrix_layout_create(&matD, in_out_datatype,
-                                                       row_c, col_c, ldd));
+  CHECK_HIPBLASLT_ERROR(
+      hipblasLtMatrixLayoutCreate(&matA, in_out_datatype, row_a, col_a, lda));
+  CHECK_HIPBLASLT_ERROR(
+      hipblasLtMatrixLayoutCreate(&matB, in_out_datatype, row_b, col_b, ldb));
+  CHECK_HIPBLASLT_ERROR(
+      hipblasLtMatrixLayoutCreate(&matC, in_out_datatype, row_c, col_c, ldc));
+  CHECK_HIPBLASLT_ERROR(
+      hipblasLtMatrixLayoutCreate(&matD, in_out_datatype, row_c, col_c, ldd));
 
-  CHECK_ROCBLASLT_ERROR(
-      rocblaslt_matmul_desc_create(&matmul, rocblaslt_compute_f32, HIP_R_32F));
+  CHECK_HIPBLASLT_ERROR(
+      hipblasLtMatmulDescCreate(&matmul, HIPBLASLT_COMPUTE_F32, HIP_R_32F));
 
-  CHECK_ROCBLASLT_ERROR(rocblaslt_matmul_desc_set_attribute(
-      matmul, ROCBLASLT_MATMUL_DESC_TRANSA, &trans_a, sizeof(int32_t)));
-  CHECK_ROCBLASLT_ERROR(rocblaslt_matmul_desc_set_attribute(
-      matmul, ROCBLASLT_MATMUL_DESC_TRANSB, &trans_b, sizeof(int32_t)));
+  CHECK_HIPBLASLT_ERROR(hipblasLtMatmulDescSetAttribute(
+      matmul, HIPBLASLT_MATMUL_DESC_TRANSA, &trans_a, sizeof(int32_t)));
+  CHECK_HIPBLASLT_ERROR(hipblasLtMatmulDescSetAttribute(
+      matmul, HIPBLASLT_MATMUL_DESC_TRANSB, &trans_b, sizeof(int32_t)));
 
-  rocblaslt_epilogue epilogue;
+  hipblasLtEpilogue_t epilogue;
   if (enable_bias && actType == ActivationType::NONE)
-    epilogue = ROCBLASLT_EPILOGUE_BIAS;
+    epilogue = HIPBLASLT_EPILOGUE_BIAS;
   else if (enable_bias && actType == ActivationType::RELU)
-    epilogue = ROCBLASLT_EPILOGUE_RELU_BIAS;
+    epilogue = HIPBLASLT_EPILOGUE_RELU_BIAS;
   else if (enable_bias && actType == ActivationType::GELU)
-    epilogue = ROCBLASLT_EPILOGUE_GELU_BIAS;
+    epilogue = HIPBLASLT_EPILOGUE_GELU_BIAS;
   else if (!enable_bias && actType == ActivationType::NONE)
-    epilogue = ROCBLASLT_EPILOGUE_DEFAULT;
+    epilogue = HIPBLASLT_EPILOGUE_DEFAULT;
   else if (!enable_bias && actType == ActivationType::RELU)
-    epilogue = ROCBLASLT_EPILOGUE_RELU;
+    epilogue = HIPBLASLT_EPILOGUE_RELU;
   else if (!enable_bias && actType == ActivationType::GELU)
-    epilogue = ROCBLASLT_EPILOGUE_GELU;
-  CHECK_ROCBLASLT_ERROR(rocblaslt_matmul_desc_set_attribute(
-      matmul, ROCBLASLT_MATMUL_DESC_EPILOGUE, &epilogue, sizeof(epilogue)));
+    epilogue = HIPBLASLT_EPILOGUE_GELU;
+  CHECK_HIPBLASLT_ERROR(hipblasLtMatmulDescSetAttribute(
+      matmul, HIPBLASLT_MATMUL_DESC_EPILOGUE, &epilogue, sizeof(epilogue)));
   if (enable_bias)
-    CHECK_ROCBLASLT_ERROR(rocblaslt_matmul_desc_set_attribute(
-        matmul, ROCBLASLT_MATMUL_DESC_BIAS_POINTER, &d_bias, sizeof(void *)));
+    CHECK_HIPBLASLT_ERROR(hipblasLtMatmulDescSetAttribute(
+        matmul, HIPBLASLT_MATMUL_DESC_BIAS_POINTER, &d_bias, sizeof(void *)));
 
   // Set User Preference attributes
-  CHECK_ROCBLASLT_ERROR(rocblaslt_matmul_preference_create(&pref));
-  CHECK_ROCBLASLT_ERROR(rocblaslt_matmul_preference_set_attribute(
-      pref, ROCBLASLT_MATMUL_PREF_MAX_WORKSPACE_BYTES, &workspace_size,
+  CHECK_HIPBLASLT_ERROR(hipblasLtMatmulPreferenceCreate(&pref));
+  CHECK_HIPBLASLT_ERROR(hipblasLtMatmulPreferenceSetAttribute(
+      pref, HIPBLASLT_MATMUL_PREF_MAX_WORKSPACE_BYTES, &workspace_size,
       sizeof(workspace_size)));
 
   // Get Heuristic results
-  rocblaslt_matmul_heuristic_result heuristicResult[3] = {0};
+  hipblasLtMatmulHeuristicResult_t heuristicResult[3] = {0};
   int returnedAlgoCount = 0;
-  CHECK_ROCBLASLT_ERROR(rocblaslt_matmul_algo_get_heuristic(
+  CHECK_HIPBLASLT_ERROR(hipblasLtMatmulAlgoGetHeuristic(
       handle, matmul, matA, matB, matC, matD, pref, 3, heuristicResult,
       &returnedAlgoCount));
 
   // Solve problem
-  CHECK_ROCBLASLT_ERROR(rocblaslt_matmul(
+  CHECK_HIPBLASLT_ERROR(hipblasLtMatmul(
       handle, matmul, &alpha, da, matA, db, matB, &beta, dc, matC, dd, matD,
       &heuristicResult[0].algo, d_worksapce, workspace_size, stream));
 
@@ -565,7 +553,7 @@ void test_rocblaslt(hipDataType in_out_datatype, rocblaslt_operation trans_a,
     float eventMs = 1.0f;
     hipEventRecord(start, stream);
     for (int loop = 0; loop < BENCH_LOOP_COUNT; loop++) {
-      CHECK_ROCBLASLT_ERROR(rocblaslt_matmul(
+      CHECK_HIPBLASLT_ERROR(hipblasLtMatmul(
           handle, matmul, &alpha, da, matA, db, matB, &beta, dc, matC, dd, matD,
           &heuristicResult[0].algo, d_worksapce, workspace_size, stream));
     }
@@ -616,14 +604,14 @@ void test_rocblaslt(hipDataType in_out_datatype, rocblaslt_operation trans_a,
 
   if (verbose) {
     printf("\n");
-    if (trans_a == ROCBLASLT_OP_N) {
+    if (trans_a == HIPBLASLT_OP_N) {
       print_strided_batched("ha initial", &ha[0], m, k, batch_count, 1, lda,
                             stride_a);
     } else {
       print_strided_batched("ha initial", &ha[0], m, k, batch_count, lda, 1,
                             stride_a);
     }
-    if (trans_b == ROCBLASLT_OP_N) {
+    if (trans_b == HIPBLASLT_OP_N) {
       print_strided_batched("hb initial", &hb[0], k, n, batch_count, 1, ldb,
                             stride_b);
     } else {
@@ -647,24 +635,23 @@ void test_rocblaslt(hipDataType in_out_datatype, rocblaslt_operation trans_a,
   CHECK_HIP_ERROR(hipFree(d_worksapce));
   if (enable_bias)
     CHECK_HIP_ERROR(hipFree(d_bias));
-  CHECK_ROCBLASLT_ERROR(rocblaslt_matmul_preference_destroy(pref));
-  CHECK_ROCBLASLT_ERROR(rocblaslt_matmul_desc_destroy(matmul));
-  CHECK_ROCBLASLT_ERROR(rocblaslt_matrix_layout_destory(matA));
-  CHECK_ROCBLASLT_ERROR(rocblaslt_matrix_layout_destory(matB));
-  CHECK_ROCBLASLT_ERROR(rocblaslt_matrix_layout_destory(matC));
-  CHECK_ROCBLASLT_ERROR(rocblaslt_matrix_layout_destory(matD));
-  CHECK_ROCBLASLT_ERROR(rocblaslt_destroy(handle));
+  CHECK_HIPBLASLT_ERROR(hipblasLtMatmulPreferenceDestroy(pref));
+  CHECK_HIPBLASLT_ERROR(hipblasLtMatmulDescDestroy(matmul));
+  CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutDestory(matA));
+  CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutDestory(matB));
+  CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutDestory(matC));
+  CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutDestory(matD));
+  CHECK_HIPBLASLT_ERROR(hipblasLtDestroy(handle));
 
   return;
 }
 
 int main(int argc, char *argv[]) {
   // initialize parameters with default values
-  rocblaslt_operation trans_a = ROCBLASLT_OP_N;
-  rocblaslt_operation trans_b = ROCBLASLT_OP_N;
+  hipblasLtOperation_t trans_a = HIPBLASLT_OP_N;
+  hipblasLtOperation_t trans_b = HIPBLASLT_OP_N;
   hipDataType in_out_datatype = HIP_R_32F;
 
-  // invalid int and float for rocblaslt spmm int and float arguments
   int64_t invalid_int = std::numeric_limits<int64_t>::min() + 1;
   float invalid_float = std::numeric_limits<float>::quiet_NaN();
 
@@ -703,17 +690,17 @@ int main(int argc, char *argv[]) {
   if (k == invalid_int)
     k = DIM3;
   if (lda == invalid_int)
-    lda = trans_a == ROCBLASLT_OP_N ? m : k;
+    lda = trans_a == HIPBLASLT_OP_N ? m : k;
   if (ldb == invalid_int)
-    ldb = trans_b == ROCBLASLT_OP_N ? k : n;
+    ldb = trans_b == HIPBLASLT_OP_N ? k : n;
   if (ldc == invalid_int)
     ldc = m;
   if (ldd == invalid_int)
     ldd = m;
   if (stride_a == invalid_int)
-    stride_a = trans_a == ROCBLASLT_OP_N ? lda * k : lda * m;
+    stride_a = trans_a == HIPBLASLT_OP_N ? lda * k : lda * m;
   if (stride_b == invalid_int)
-    stride_b = trans_b == ROCBLASLT_OP_N ? ldb * n : ldb * k;
+    stride_b = trans_b == HIPBLASLT_OP_N ? ldb * n : ldb * k;
   if (stride_c == invalid_int)
     stride_c = ldc * n;
   if (stride_d == invalid_int)
@@ -740,12 +727,12 @@ int main(int argc, char *argv[]) {
   }
 
   if (in_out_datatype == HIP_R_32F)
-    test_rocblaslt<rocblaslt_float>(
+    test_hipblaslt<hipblasLtFloat>(
         in_out_datatype, trans_a, trans_b, m, n, k, lda, ldb, ldc, ldd,
         stride_a, stride_b, stride_c, stride_d, batch_count, alpha, beta,
         enable_bias, actType, validate, verbose, timing);
   else if (in_out_datatype == HIP_R_16F)
-    test_rocblaslt<rocblaslt_half>(
+    test_hipblaslt<hipblasLtHalf>(
         in_out_datatype, trans_a, trans_b, m, n, k, lda, ldb, ldc, ldd,
         stride_a, stride_b, stride_c, stride_d, batch_count, alpha, beta,
         enable_bias, actType, validate, verbose, timing);
