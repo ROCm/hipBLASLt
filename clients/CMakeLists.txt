@@ -4,7 +4,7 @@
 
 cmake_minimum_required( VERSION 3.16.8 )
 
-#add_definitions(-D_ROCBLASLT_INTERNAL_BFLOAT16_)
+#add_definitions(-D_HIPBLASLT_INTERNAL_BFLOAT16_)
 
 # This has to be initialized before the project() command appears
 # Set the default of CMAKE_BUILD_TYPE to be release, unless user specifies with -D.  MSVC_IDE does not use CMAKE_BUILD_TYPE
@@ -12,12 +12,12 @@ if( NOT DEFINED CMAKE_CONFIGURATION_TYPES AND NOT DEFINED CMAKE_BUILD_TYPE )
   set( CMAKE_BUILD_TYPE Release CACHE STRING "Choose the type of build, options are: None Debug Release RelWithDebInfo MinSizeRel." )
 endif()
 
-project( rocblaslt-clients LANGUAGES CXX C  )
+project( hipblaslt-clients LANGUAGES CXX C  )
 
 
 if( SKIP_LIBRARY )
-  include_directories(${ROCBLASLT_LIBRARY_DIR}/include)
-  include_directories(${ROCBLASLT_LIBRARY_DIR}/include/internal)
+  include_directories(${HIPBLASLT_LIBRARY_DIR}/include)
+  include_directories(${HIPBLASLT_LIBRARY_DIR}/include/internal)
 else()
   include_directories(${CMAKE_BINARY_DIR}/include)
   include_directories(${CMAKE_BINARY_DIR}/include/internal)
@@ -50,8 +50,8 @@ list( APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake )
 # This tells cmake to create a compile_commands.json file that can be used with clang tooling or vim
 set( CMAKE_EXPORT_COMPILE_COMMANDS ON )
 
-if( NOT TARGET rocblaslt )
-  find_package( rocblaslt REQUIRED CONFIG PATHS ${ROCM_PATH}/rocblaslt /opt/rocm/rocblaslt ${ROCBLASLT_LIBRARY_DIR})
+if( NOT TARGET hipblaslt )
+  find_package( hipblaslt REQUIRED CONFIG PATHS ${ROCM_PATH}/hipblaslt /opt/rocm/hipblaslt ${HIPBLASLT_LIBRARY_DIR})
 endif( )
 
 # Hip headers required of all clients; clients use hip to allocate device memory

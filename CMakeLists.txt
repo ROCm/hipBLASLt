@@ -1,5 +1,5 @@
 # ########################################################################
-# Copyright (c) 2021-2022 Advanced Micro Devices, Inc.
+# Copyright (c) 2022 Advanced Micro Devices, Inc.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -24,6 +24,12 @@
 # The ROCm platform requires at least Ubuntu 16.04 or Fedora 24, which have cmake 3.5
 cmake_minimum_required(VERSION 3.5 FATAL_ERROR)
 
+# This will add compile option: -std=c++17
+set(CMAKE_CXX_STANDARD 17 )
+# Without this line, it will add -std=gnu++17 instead, which may have issues.
+set(CMAKE_CXX_EXTENSIONS OFF )
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
 # Consider removing this in the future
 # This should appear before the project command, because it does not use FORCE
 if(WIN32)
@@ -32,11 +38,20 @@ else()
   set(CMAKE_INSTALL_PREFIX "/opt/rocm" CACHE PATH "Install path prefix, prepended onto install directories")
 endif()
 
+if(NOT BUILD_CUDA)
 # Adding CMAKE_PREFIX_PATH, needed for static builds
 list( APPEND CMAKE_PREFIX_PATH /opt/rocm/llvm /opt/rocm )
+endif()
 
-# CMake modules
-list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake /opt/rocm/hip/cmake)
+if( NOT DEFINED ENV{HIP_PATH})
+    set( HIP_PATH "/opt/rocm/hip" )
+else( )
+    set (HIP_PATH $ENV{HIP_PATH} )
+endif( )
+
+# Append our library helper cmake path and the cmake path for hip (for convenience)
+# Users may override HIP path by specifying their own in CMAKE_MODULE_PATH
+list( APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake  ${ROCM_PATH}/lib/cmake/hip /opt/rocm/lib/cmake/hip ${HIP_PATH}/cmake )
 
 # Set a default build type if none was specified
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
@@ -50,185 +65,190 @@ if(POLICY CMP0066)
   cmake_policy(SET CMP0066 NEW)
 endif()
 
-# rocBLASLt project
-project(rocblaslt LANGUAGES CXX Fortran)
-
-# Determine if CXX Compiler is hip-clang
-if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
-  message(STATUS "Using hip-clang to build for amdgpu backend")
-  set ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D__HIP_HCC_COMPAT_MODE__=1" )
-  if ( CMAKE_BUILD_TYPE MATCHES "Debug" AND NOT WIN32)
-    set ( CMAKE_CXX_FLAGS_DEBUG "-O1 ${CMAKE_CXX_FLAGS_DEBUG} -gsplit-dwarf -ggdb" )
-  endif()
-else()
-  message(FATAL_ERROR "'hipcc' compiler required to compile for ROCm platform.")
-endif()
+# hipBLASLt project
+project(hipblaslt LANGUAGES CXX)
 
 # Force library install path to lib (CentOS 7 defaults to lib64)
 set(CMAKE_INSTALL_LIBDIR "lib" CACHE INTERNAL "Installation directory for libraries" FORCE)
 
-# Build flags
-set(CMAKE_CXX_STANDARD 14)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_EXTENSIONS OFF)
 
 # Build options
-option(BUILD_SHARED_LIBS "Build rocBLASLt as a shared library" ON)
+option(BUILD_SHARED_LIBS "Build hipBLASLt as a shared library" ON)
 option(BUILD_CLIENTS_TESTS "Build tests (requires googletest)" OFF)
 option(BUILD_CLIENTS_BENCHMARKS "Build benchmarks" OFF)
 option(BUILD_CLIENTS_SAMPLES "Build examples" ON)
 option(BUILD_VERBOSE "Output additional build information" OFF)
-option(BUILD_CODE_COVERAGE "Build rocBLASLt with code coverage enabled" OFF)
-option(BUILD_ADDRESS_SANITIZER "Build rocBLASLt with address sanitizer enabled" OFF)
+option(BUILD_CODE_COVERAGE "Build hipBLASLt with code coverage enabled" OFF)
+option(BUILD_ADDRESS_SANITIZER "Build hipBLASLt with address sanitizer enabled" OFF)
+# Find CUDA if the user wants a CUDA version.
+option(USE_CUDA "Look for CUDA and use that as a backend if found" OFF)
 
-#
 if(BUILD_CODE_COVERAGE)
   add_compile_options(-fprofile-arcs -ftest-coverage)
   add_link_options(--coverage -lgcov)
 endif()
 
 if(BUILD_ADDRESS_SANITIZER)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address -shared-libasan")
-  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsanitize=address -shared-libasan")
-  add_link_options(-fuse-ld=lld)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address -shared-libasan")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsanitize=address -shared-libasan")
+    add_link_options(-fuse-ld=lld)
 endif()
 
+if(NOT BUILD_CUDA)
+    # Determine if CXX Compiler is hip-clang
+    if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+        message(STATUS "Using hip-clang to build for amdgpu backend")
+        set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D__HIP_HCC_COMPAT_MODE__=1" )
+        if (CMAKE_BUILD_TYPE MATCHES "Debug" AND NOT WIN32)
+            set (CMAKE_CXX_FLAGS_DEBUG "-O1 ${CMAKE_CXX_FLAGS_DEBUG} -gsplit-dwarf -ggdb" )
+        endif()
+    else()
+        message(FATAL_ERROR "'hipcc' compiler required to compile for ROCm platform.")
+    endif()
+endif()
 # Dependencies
 include(cmake/Dependencies.cmake)
 
-# Detect compiler support for target ID
-if(CMAKE_CXX_COMPILER MATCHES ".*/hipcc$")
-  execute_process(COMMAND ${CMAKE_CXX_COMPILER} "--help"
-    OUTPUT_VARIABLE CXX_OUTPUT
-    OUTPUT_STRIP_TRAILING_WHITESPACE
-    ERROR_STRIP_TRAILING_WHITESPACE)
-  string(REGEX MATCH ".mcode\-object\-version" TARGET_ID_SUPPORT ${CXX_OUTPUT})
-endif()
+if (USE_CUDA)
+	find_package( CUDA REQUIRED )
+    # Hip headers required of all clients; clients use hip to allocate device memory
+    find_package( HIP MODULE REQUIRED )
+    list( APPEND HIP_INCLUDE_DIRS "${HIP_ROOT_DIR}/include" )
+else()
 
-# Detect compiler support for target ID
-# This section is deprecated. Please use rocm_check_target_ids for future use.
-if( CMAKE_CXX_COMPILER MATCHES ".*/hipcc$" )
-    execute_process(COMMAND ${CMAKE_CXX_COMPILER} "--help"
-        OUTPUT_VARIABLE CXX_OUTPUT
-        OUTPUT_STRIP_TRAILING_WHITESPACE
-        ERROR_STRIP_TRAILING_WHITESPACE)
-    string(REGEX MATCH ".mcode\-object\-version" TARGET_ID_SUPPORT ${CXX_OUTPUT})
-endif()
 
-#Set the AMDGPU_TARGETS with backward compatiblity
- if(COMMAND rocm_check_target_ids)
+    #Set the AMDGPU_TARGETS with backward compatiblity
     rocm_check_target_ids(DEFAULT_AMDGPU_TARGETS
         TARGETS "gfx908:xnack-;gfx90a:xnack+;gfx90a:xnack-"
-   )
-else()
-    # Use target ID syntax if supported for AMDGPU_TARGETS
-    if(TARGET_ID_SUPPORT)
-        set(DEFAULT_AMDGPU_TARGETS "gfx908:xnack-")
+    )
+
+    if (AMDGPU_TARGETS)
+        set(TMPAMDGPU_TARGETS "${AMDGPU_TARGETS}")
+        if(TMPAMDGPU_TARGETS STREQUAL "all" )
+            set(AMDGPU_TARGETS "${DEFAULT_AMDGPU_TARGETS}" CACHE STRING "List of specific machine types for library to target" FORCE)
+        else()
+            set(AMDGPU_TARGETS "${TMPAMDGPU_TARGETS}" CACHE STRING "AMD GPU targets to compile for" FORCE)
+        endif()
     else()
-        set(DEFAULT_AMDGPU_TARGETS "gfx908")
+        set(AMDGPU_TARGETS "${DEFAULT_AMDGPU_TARGETS}" CACHE STRING "List of specific machine types for library to target")
     endif()
-endif()
 
-if (AMDGPU_TARGETS)
-  set(TMPAMDGPU_TARGETS "${AMDGPU_TARGETS}")
-  if(TMPAMDGPU_TARGETS STREQUAL "all" )
-    set(AMDGPU_TARGETS "${DEFAULT_AMDGPU_TARGETS}" CACHE STRING "List of specific machine types for library to target" FORCE)
-  else()
-    set(AMDGPU_TARGETS "${TMPAMDGPU_TARGETS}" CACHE STRING "AMD GPU targets to compile for" FORCE)
-  endif()
-else()
-  set(AMDGPU_TARGETS "${DEFAULT_AMDGPU_TARGETS}" CACHE STRING "List of specific machine types for library to target")
-endif()
+    message(STATUS "AMDGPU_TARGETS: ${AMDGPU_TARGETS}")
 
-message(STATUS "AMDGPU_TARGETS: ${AMDGPU_TARGETS}")
+    if( CMAKE_CXX_COMPILER_ID MATCHES "Clang" )
+        find_package( hip REQUIRED CONFIG PATHS ${HIP_DIR} ${ROCM_PATH} /opt/rocm )
+    endif( )
 
-if( CMAKE_CXX_COMPILER_ID MATCHES "Clang" )
-  find_package( hip REQUIRED CONFIG PATHS ${HIP_DIR} ${ROCM_PATH} /opt/rocm )
-endif( )
+    option( BUILD_WITH_TENSILE "Build full functionality which requires tensile?" ON )
 
-option( BUILD_WITH_TENSILE "Build full functionality which requires tensile?" ON )
+    if( BUILD_WITH_TENSILE )
+    # we will have expanded "all" for tensile to ensure consistency as we have local rules
+    set( Tensile_ARCHITECTURE "${AMDGPU_TARGETS}" CACHE STRING "Tensile to use which architecture?" FORCE)
 
-if( BUILD_WITH_TENSILE )
-# we will have expanded "all" for tensile to ensure consistency as we have local rules
-set( Tensile_ARCHITECTURE "${AMDGPU_TARGETS}" CACHE STRING "Tensile to use which architecture?" FORCE)
+    set( Tensile_LOGIC "asm_full" CACHE STRING "Tensile to use which logic?")
+    set( Tensile_CODE_OBJECT_VERSION "V2" CACHE STRING "Tensile code_object_version")
+    set( Tensile_COMPILER "hipcc" CACHE STRING "Tensile compiler")
+    set( Tensile_LIBRARY_FORMAT "msgpack" CACHE STRING "Tensile library format")
+    set( Tensile_CPU_THREADS "" CACHE STRING "Number of threads for Tensile parallel build")
 
-set( Tensile_LOGIC "asm_full" CACHE STRING "Tensile to use which logic?")
-set( Tensile_CODE_OBJECT_VERSION "V2" CACHE STRING "Tensile code_object_version")
-set( Tensile_COMPILER "hipcc" CACHE STRING "Tensile compiler")
-set( Tensile_LIBRARY_FORMAT "msgpack" CACHE STRING "Tensile library format")
-set( Tensile_CPU_THREADS "" CACHE STRING "Number of threads for Tensile parallel build")
+    option( Tensile_MERGE_FILES "Tensile to merge kernels and solutions files?" ON )
+    option( Tensile_SHORT_FILENAMES "Tensile to use short file names? Use if compiler complains they're too long." OFF )
+    option( Tensile_PRINT_DEBUG "Tensile to print runtime debug info?" OFF )
 
-option( Tensile_MERGE_FILES "Tensile to merge kernels and solutions files?" ON )
-option( Tensile_SHORT_FILENAMES "Tensile to use short file names? Use if compiler complains they're too long." OFF )
-option( Tensile_PRINT_DEBUG "Tensile to print runtime debug info?" OFF )
+    set( Tensile_TEST_LOCAL_PATH "" CACHE PATH "Use local Tensile directory instead of fetching a GitHub branch" )
 
-set( Tensile_TEST_LOCAL_PATH "" CACHE PATH "Use local Tensile directory instead of fetching a GitHub branch" )
+    set_property( CACHE Tensile_LOGIC PROPERTY STRINGS aldebaran asm_full asm_lite asm_miopen hip_lite other )
+    set_property( CACHE Tensile_CODE_OBJECT_VERSION PROPERTY STRINGS V2 V3 )
+    set_property( CACHE Tensile_COMPILER PROPERTY STRINGS hcc hipcc)
+    set_property( CACHE Tensile_LIBRARY_FORMAT PROPERTY STRINGS msgpack yaml)
 
-set_property( CACHE Tensile_LOGIC PROPERTY STRINGS aldebaran asm_full asm_lite asm_miopen hip_lite other )
-set_property( CACHE Tensile_CODE_OBJECT_VERSION PROPERTY STRINGS V2 V3 )
-set_property( CACHE Tensile_COMPILER PROPERTY STRINGS hcc hipcc)
-set_property( CACHE Tensile_LIBRARY_FORMAT PROPERTY STRINGS msgpack yaml)
+    if(Tensile_LIBRARY_FORMAT MATCHES "yaml")
+      option(TENSILE_USE_LLVM      "Use LLVM for parsing config files." ON)
+      option(TENSILE_USE_MSGPACK   "Use msgpack for parsing config files." OFF)
+    else()
+      option(TENSILE_USE_LLVM      "Use LLVM for parsing config files." OFF)
+      option(TENSILE_USE_MSGPACK   "Use msgpack for parsing config files." ON)
+    endif()
 
-if(Tensile_LIBRARY_FORMAT MATCHES "yaml")
-  option(TENSILE_USE_LLVM      "Use LLVM for parsing config files." ON)
-  option(TENSILE_USE_MSGPACK   "Use msgpack for parsing config files." OFF)
-else()
-  option(TENSILE_USE_LLVM      "Use LLVM for parsing config files." OFF)
-  option(TENSILE_USE_MSGPACK   "Use msgpack for parsing config files." ON)
-endif()
+    if (WIN32)
+      set( Tensile_ROOT "${CMAKE_BINARY_DIR}/virtualenv/Lib/site-packages/Tensile" )
+    endif()
 
-if (WIN32)
-  set( Tensile_ROOT "${CMAKE_BINARY_DIR}/virtualenv/Lib/site-packages/Tensile" )
-endif()
+    include(virtualenv)
+    if (Tensile_TEST_LOCAL_PATH)
+      virtualenv_install(${Tensile_TEST_LOCAL_PATH})
+      message (STATUS "using local Tensile from ${Tensile_TEST_LOCAL_PATH}, copied to ${Tensile_ROOT}")
+    else()
+      # Use the virtual-env setup and download package from specified repot:
+      set( tensile_fork "ROCmSoftwarePlatform" CACHE STRING "Tensile fork to use" )
+      file (STRINGS "tensile_tag.txt" read_tensile_tag)
+      set( tensile_tag ${read_tensile_tag} CACHE STRING "Tensile tag to download" )
+      virtualenv_install("git+https://0bc76d8e6e65884fc3a460ac56890a96f88006a8@github.amd.com/${tensile_fork}/Tensile.git@${tensile_tag}")
+      message (STATUS "using GIT Tensile fork=${tensile_fork} from branch=${tensile_tag}")
+    endif()
+    message(STATUS "Adding ${VIRTUALENV_HOME_DIR} to CMAKE_PREFIX_PATH")
+    list(APPEND CMAKE_PREFIX_PATH ${VIRTUALENV_HOME_DIR})
+    if (TENSILE_VERSION)
+      find_package(Tensile ${TENSILE_VERSION} EXACT REQUIRED HIP LLVM OpenMP PATHS "${INSTALLED_TENSILE_PATH}")
+    else()
+      find_package(Tensile 4.33.0 EXACT REQUIRED HIP LLVM OpenMP PATHS "${INSTALLED_TENSILE_PATH}")
+    endif()
+    endif()
 
-include(virtualenv)
-if (Tensile_TEST_LOCAL_PATH)
-  virtualenv_install(${Tensile_TEST_LOCAL_PATH})
-  message (STATUS "using local Tensile from ${Tensile_TEST_LOCAL_PATH}, copied to ${Tensile_ROOT}")
-else()
-  # Use the virtual-env setup and download package from specified repot:
-  set( tensile_fork "ROCmSoftwarePlatform" CACHE STRING "Tensile fork to use" )
-  file (STRINGS "tensile_tag.txt" read_tensile_tag)
-  set( tensile_tag ${read_tensile_tag} CACHE STRING "Tensile tag to download" )
-  virtualenv_install("git+https://0bc76d8e6e65884fc3a460ac56890a96f88006a8@github.amd.com/${tensile_fork}/Tensile.git@${tensile_tag}")
-  message (STATUS "using GIT Tensile fork=${tensile_fork} from branch=${tensile_tag}")
-endif()
-message(STATUS "Adding ${VIRTUALENV_HOME_DIR} to CMAKE_PREFIX_PATH")
-list(APPEND CMAKE_PREFIX_PATH ${VIRTUALENV_HOME_DIR})
-if (TENSILE_VERSION)
-  find_package(Tensile ${TENSILE_VERSION} EXACT REQUIRED HIP LLVM OpenMP PATHS "${INSTALLED_TENSILE_PATH}")
-else()
-  find_package(Tensile 4.33.0 EXACT REQUIRED HIP LLVM OpenMP PATHS "${INSTALLED_TENSILE_PATH}")
-endif()
+    # setup hipblaslt defines used for both the library and clients
+    if( BUILD_WITH_TENSILE )
+        list(APPEND TENSILE_DEFINES BUILD_WITH_TENSILE=1)
+    else()
+        list(APPEND TENSILE_DEFINES BUILD_WITH_TENSILE=0)
+    endif()
 endif()
 
 # Setup version
 set(VERSION_STRING "0.0.1")
 rocm_setup_version(VERSION ${VERSION_STRING})
-set(rocblaslt_SOVERSION 0.1)
-
-# setup rocblas defines used for both the library and clients
-if( BUILD_WITH_TENSILE )
-    list(APPEND TENSILE_DEFINES BUILD_WITH_TENSILE=1)
-else()
-    list(APPEND TENSILE_DEFINES BUILD_WITH_TENSILE=0)
-endif()
+set(hipblaslt_SOVERSION 0.1)
 
 
 if( BUILD_CLIENTS_SAMPLES OR BUILD_CLIENTS_TESTS OR BUILD_CLIENTS_BENCHMARKS )
   set( BUILD_CLIENTS ON )
 endif()
 
-# rocBLASLt library
-add_subdirectory(library)
+# hipBLASLt library
+add_subdirectory( library )
 
 # Trigger client builds if selected
 if(BUILD_CLIENTS)
   add_subdirectory(clients)
 endif()
 
+# Package specific CPACK vars
+set( CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/LICENSE.md" )
+set( CPACK_RPM_PACKAGE_LICENSE "MIT")
+
+if( NOT CPACK_PACKAGING_INSTALL_PREFIX )
+    set( CPACK_PACKAGING_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}" )
+endif()
+
+set( CPACK_RPM_EXCLUDE_FROM_AUTO_FILELIST_ADDITION "\${CPACK_PACKAGING_INSTALL_PREFIX}" "\${CPACK_PACKAGING_INSTALL_PREFIX}/include" "\${CPACK_PACKAGING_INSTALL_PREFIX}/lib" )
+
+# Give hipblaslt compiled for CUDA backend a different name
+if( NOT USE_CUDA )
+    set( package_name hipblaslt )
+else( )
+    set( package_name hipblaslt-alt )
+endif( )
+
+set( HIPBLASLT_CONFIG_DIR "\${CPACK_PACKAGING_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}" CACHE PATH "Path placed into ldconfig file" )
+
+rocm_create_package(
+    NAME ${package_name}
+    DESCRIPTION "Radeon Open Compute BLAS marshalling library"
+    MAINTAINER "hipBLASLt Maintainer <hipblaslt-maintainer@amd.com>"
+    LDCONFIG
+    LDCONFIG_DIR ${HIPBLASLT_CONFIG_DIR}
+)
+
 #[[ TODO
-#
 # ADDITIONAL TARGETS FOR CODE COVERAGE
 #
 if(BUILD_CODE_COVERAGE)
@@ -245,11 +265,11 @@ if(BUILD_CODE_COVERAGE)
   #
   add_custom_target(coverage_analysis
     COMMAND echo Coverage GTEST_FILTER=\${GTEST_FILTER}
-    COMMAND ./clients/staging/rocblaslt-test --gtest_filter=\"\${GTEST_FILTER}\"
+    COMMAND ./clients/staging/hipblaslt-test --gtest_filter=\"\${GTEST_FILTER}\"
     WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
     )
 
-  add_dependencies(coverage_analysis rocblaslt)
+  add_dependencies(coverage_analysis hipblaslt)
 
   #
   # Prepare coverage output

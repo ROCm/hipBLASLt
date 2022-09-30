@@ -10,7 +10,7 @@ set( sample_list_all ${sample_list_tensile})
 set( sample_list_hip_device ${sample_list_tensile} )
 
 foreach( exe ${sample_list_all} )
-  target_link_libraries( ${exe} PRIVATE roc::rocblaslt )
+  target_link_libraries( ${exe} PRIVATE roc::hipblaslt )
 
   set_target_properties( ${exe} PROPERTIES
     CXX_STANDARD 14

@@ -40,18 +40,18 @@
 #include <link.h>
 #include <unistd.h>
 
-#define ROCBLASLT_LIB_PATH "/opt/rocm/rocblaslt/lib"
+#define HIPBLASLT_LIB_PATH "/opt/rocm/hipblaslt/lib"
 
 namespace {
 #ifndef WIN32
-std::string rocblaslt_so_path;
+std::string hipblaslt_so_path;
 
-int rocblaslt_dl_iterate_phdr_callback(struct dl_phdr_info *hdr_info,
+int hipblaslt_dl_iterate_phdr_callback(struct dl_phdr_info *hdr_info,
                                        size_t size, void *data) {
   // uncomment to see all dependent .so files
-  // fprintf(stderr, "rocblaslt so file: %s\n", hdr_info->dlpi_name);
-  if (hdr_info->dlpi_name && strstr(hdr_info->dlpi_name, "rocblaslt.")) {
-    rocblaslt_so_path = hdr_info->dlpi_name;
+  // fprintf(stderr, "hipblaslt so file: %s\n", hdr_info->dlpi_name);
+  if (hdr_info->dlpi_name && strstr(hdr_info->dlpi_name, "hipblaslt.")) {
+    hipblaslt_so_path = hdr_info->dlpi_name;
   }
   return 0;
 }
@@ -402,20 +402,20 @@ public:
     // The name of the current GPU platform
     std::string processor = rocblaslt_internal_get_arch_name();
 
-    const char *env = getenv("ROCBLASLT_TENSILE_LIBPATH");
+    const char *env = getenv("HIPBLASLT_TENSILE_LIBPATH");
     if (env) {
       path = env;
     } else {
-      path = ROCBLASLT_LIB_PATH;
+      path = HIPBLASLT_LIB_PATH;
 
       // Find the location of librocblaslt.so
       // Fall back on hard-coded path if static library or not found
 
-#ifndef rocblaslt_STATIC_LIB
-      dl_iterate_phdr(rocblaslt_dl_iterate_phdr_callback, NULL);
-      if (rocblaslt_so_path.size())
-        path = std::string{dirname(&rocblaslt_so_path[0])};
-#endif // ifndef rocblaslt_STATIC_LIB
+#ifndef HIPBLASLT_STATIC_LIB
+      dl_iterate_phdr(hipblaslt_dl_iterate_phdr_callback, NULL);
+      if (hipblaslt_so_path.size())
+        path = std::string{dirname(&hipblaslt_so_path[0])};
+#endif // ifndef HIPBLASLT_STATIC_LIB
 
       // Find the location of the libraries
       if (TestPath(path + "/../Tensile/library"))
@@ -471,7 +471,7 @@ public:
       //    = rocblaslt_cerr
       std::cerr
           << "\nrocblaslt warning: No paths matched " << dir
-          << ". Make sure that ROCBLASLT_TENSILE_LIBPATH is set correctly."
+          << ". Make sure that HIPBLASLT_TENSILE_LIBPATH is set correctly."
           << std::endl;
     }
 

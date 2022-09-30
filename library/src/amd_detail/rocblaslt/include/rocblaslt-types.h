@@ -52,17 +52,6 @@ typedef struct ihipStream_t *hipStream_t;
  *
  *  \details
  *  The rocBLASLt handle is a structure holding the rocBLASLt library context.
- * It must be initialized using rocblaslt_create_handle() and the returned
- * handle must be passed to all subsequent library function calls. It should be
- * destroyed at the end using rocblaslt_destroy_handle().
- */
-typedef struct _rocblaslt_handle *rocblaslt_handle;
-
-/*! \ingroup types_module
- *  \brief Handle to the rocBLASLt library context queue.
- *
- *  \details
- *  The rocBLASLt handle is a structure holding the rocBLASLt library context.
  * It must be initialized using \ref rocblaslt_create_handle and the returned
  * handle must be passed to all subsequent library function calls. It should be
  * destroyed at the end using \ref rocblaslt_destroy_handle.
