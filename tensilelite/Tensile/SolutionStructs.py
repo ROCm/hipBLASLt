@@ -1978,12 +1978,23 @@ class Solution(collections.abc.Mapping):
     #print "staggerStrideShift=", staggerStrideShift, "depthu=", state["DepthU"]
     state["_staggerStrideShift"] = staggerStrideShift
 
+    state["UnrollMajorLDSA"]     = state["TransposeLDS"] and (not state["ProblemType"]["TLUA"])
+    state["UnrollMajorLDSB"]     = state["TransposeLDS"] and (not state["ProblemType"]["TLUB"])
+
     # VectorWidth default handling
     if state["VectorWidth"] < 1:
       if state["EnableMatrixInstruction"]:
         regPerElem = state["ProblemType"]["DataType"].numRegisters()
-        # half: regPE=0.5, vw=2 / int8: regPE=0.25, vw=4
-        state["VectorWidth"] = int(1//regPerElem) if (regPerElem < 1) else 1
+        if state["SourceSwap"] and not state["UnrollMajorLDSA"]:
+          optVW = int(4 // regPerElem)
+          while 1:
+            if state["MIWaveTile"][0] % optVW == 0:
+              state["VectorWidth"] = optVW
+              break
+            else:
+              optVW //= 2
+        else:
+          state["VectorWidth"] = 1
       else:
         state["VectorWidth"] = int(4 / state["ProblemType"]["DataType"].numRegisters())
         while state["ThreadTile0"] % state["VectorWidth"] != 0 \
@@ -2439,8 +2450,6 @@ class Solution(collections.abc.Mapping):
     ########################################
     # LDS
     ########################################
-    state["UnrollMajorLDSA"]     = state["TransposeLDS"] and (not state["ProblemType"]["TLUA"])
-    state["UnrollMajorLDSB"]     = state["TransposeLDS"] and (not state["ProblemType"]["TLUB"])
 
     if state["LdsBlockSizePerPad"] == -1:
       if state["MatrixInstruction"] and state["TransposeLDS"]:
