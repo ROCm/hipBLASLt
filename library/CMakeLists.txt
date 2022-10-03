@@ -174,6 +174,19 @@ rocm_install_targets(TARGETS hipblaslt
                      PREFIX hipblaslt
 )
 
+
+if ( NOT BUILD_CUDA )
+    if (WIN32)
+      set( HIPBLASLT_TENSILE_LIBRARY_DIR "\${CPACK_PACKAGING_INSTALL_PREFIX}hipblaslt/bin" CACHE PATH "path to tensile library" )
+    else()
+      set( HIPBLASLT_TENSILE_LIBRARY_DIR "\${CPACK_PACKAGING_INSTALL_PREFIX}hipblaslt/lib" CACHE PATH "path to tensile library" )
+    endif()
+    rocm_install(
+      DIRECTORY ${CMAKE_BINARY_DIR}/Tensile/library
+      DESTINATION ${HIPBLASLT_TENSILE_LIBRARY_DIR}
+      COMPONENT ${CMAKE_INSTALL_DEFAULT_COMPONENT})
+endif()
+
 # Export targets
 if(NOT BUILD_CUDA)
   rocm_export_targets(TARGETS roc::hipblaslt
