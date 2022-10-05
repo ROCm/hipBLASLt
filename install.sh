@@ -132,17 +132,40 @@ install_packages( )
   fi
 
   # dependencies needed for library and clients to build
-  local library_dependencies_ubuntu=( "gfortran" "make" "pkg-config" "libnuma1" )
+  local library_dependencies_ubuntu=( "gfortran" "make" "pkg-config" "libnuma1" "git")
   local library_dependencies_centos=( "devtoolset-7-gcc-gfortran" "epel-release" "make" "cmake3" "gcc-c++" "rpm-build" )
   local library_dependencies_centos8=( "gcc-gfortran" "epel-release" "make" "cmake3" "gcc-c++" "rpm-build" "numactl-libs" )
   local library_dependencies_fedora=( "gcc-gfortran" "make" "cmake" "gcc-c++" "libcxx-devel" "rpm-build" "numactl-libs" )
   local library_dependencies_sles=( "gcc-fortran" "make" "cmake" "gcc-c++" "libcxxtools9" "rpm-build" )
 
-  local client_dependencies_ubuntu=( "python3" "python3-yaml" )
+  local client_dependencies_ubuntu=( "python3" "python3-yaml" "python3.7" "python3.7-venv")
   local client_dependencies_centos=( "python36" "python3-pip" )
   local client_dependencies_centos8=( "python36" "python3-pip" )
   local client_dependencies_fedora=( "python36" "PyYAML" "python3-pip" )
   local client_dependencies_sles=( "pkg-config" "dpkg" "python3-pip" )
+
+  if [[ "${tensile_msgpack_backend}" == true ]]; then
+    library_dependencies_ubuntu+=("libmsgpack-dev")
+    library_dependencies_fedora+=("msgpack-devel")
+  fi
+
+  # wget is needed for msgpack in this case
+  if [[ ("${ID}" == "ubuntu") && ("${VERSION_ID}" == "16.04") && "${tensile_msgpack_backend}" == true ]]; then
+    if ! $(dpkg -s "libmsgpackc2" &> /dev/null) || $(dpkg --compare-versions $(dpkg-query -f='${Version}' --show libmsgpackc2) lt 2.1.5-1); then
+      library_dependencies_ubuntu+=("wget")
+    fi
+  fi
+
+  # wget and openssl are needed for cmake
+  if [ -z "$CMAKE_VERSION" ] || $(dpkg --compare-versions $CMAKE_VERSION lt 3.16.8); then
+    if $update_cmake == true; then
+      library_dependencies_ubuntu+=("wget" "libssl-dev")
+      library_dependencies_centos+=("wget" "openssl-devel")
+      library_dependencies_centos8+=("wget" "openssl-devel")
+      library_dependencies_fedora+=("wget")
+      library_dependencies_sles+=("wget" "libopenssl-devel")
+    fi
+  fi
 
   if [[ ( "${ID}" == "centos" ) || ( "${ID}" == "rhel" ) ]]; then
     if [[ "${VERSION_ID}" == "6" ]]; then
@@ -165,6 +188,9 @@ install_packages( )
       if [[ "${build_clients}" == true ]]; then
         install_apt_packages "${client_dependencies_ubuntu[@]}"
       fi
+      rm /usr/bin/python3
+      ln -s python3.7 /usr/bin/python3
+      pip3 install wheel
       ;;
 
     centos|rhel)
@@ -286,6 +312,7 @@ tensile_test_local_path=
 tensile_version=
 build_tensile=true
 tensile_msgpack_backend=true
+update_cmake=true
 
 # #################################################
 # Parameter parsing
@@ -383,6 +410,9 @@ while true; do
         --no-msgpack)
             tensile_msgpack_backend=false
             shift ;;
+        --cmake_install)
+            update_cmake=true
+            shift ;;
         --) shift ; break ;;
         *)  echo "Unexpected command line parameter received: '${1}'; aborting";
             exit 1
@@ -422,7 +452,7 @@ if ! [[ "${matrices_dir}" == "" ]];then
     cmake -DCMAKE_MATRICES_DIR=${matrices_dir} -P ./cmake/ClientMatrices.cmake
 fi
 
-build_dir=./build
+build_dir=$(readlink -m ./build)
 printf "\033[32mCreating project build directory in: \033[33m${build_dir}\033[0m\n"
 
 # #################################################
@@ -456,8 +486,28 @@ fi
 # dependencies
 # #################################################
 if [[ "${install_dependencies}" == true ]]; then
-
   install_packages
+
+  CMAKE_VERSION=$(cmake --version | grep -oP '(?<=version )[^ ]*' )
+  if [ -z "$CMAKE_VERSION" ] || $(dpkg --compare-versions $CMAKE_VERSION lt 3.16.8); then
+      if $update_cmake == true; then
+        pushd
+        printf "\033[32mBuilding \033[33mcmake\033[32m from source; installing into \033[33m/usr/local\033[0m\n"
+        CMAKE_REPO="https://github.com/Kitware/CMake/releases/download/v3.16.8/"
+        mkdir -p ${build_dir}/deps && cd ${build_dir}/deps
+        wget -nv ${CMAKE_REPO}/cmake-3.16.8.tar.gz
+        tar -xvf cmake-3.16.8.tar.gz
+        rm cmake-3.16.8.tar.gz
+        cd cmake-3.16.8
+        ./bootstrap --no-system-curl --parallel=16
+        make -j16
+        sudo make install
+        popd
+      else
+          echo "hipBLASLt requires CMake version >= 3.16.8 and CMake version ${CMAKE_VERSION} is installed. Run install.sh again with --cmake_install flag and CMake version 3.16.8 will be installed to /usr/local"
+          exit 2
+      fi
+  fi
 
   # cmake is needed to install msgpack
   case "${ID}" in
