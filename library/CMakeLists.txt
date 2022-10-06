@@ -32,13 +32,17 @@ endif()
 
 # Configure a header file to pass the hipBLASLt version
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/include/hipblaslt-version.h.in"
-               "${PROJECT_BINARY_DIR}/include/hipblaslt-version.h"
+               "${PROJECT_BINARY_DIR}/include/hipblaslt/hipblaslt-version.h"
 )
+
+# Copy Public Headers to Build Dir
+configure_file( "${CMAKE_CURRENT_SOURCE_DIR}/include/hipblaslt.h" "${PROJECT_BINARY_DIR}/include/hipblaslt/hipblaslt.h" COPYONLY)
+configure_file( "${CMAKE_CURRENT_SOURCE_DIR}/include/hipblaslt-types.h" "${PROJECT_BINARY_DIR}/include/hipblaslt/hipblaslt-types.h" COPYONLY)
 
 # Public hipBLAS headers
 set(hipblaslt_headers_public
   include/hipblaslt.h
-  ${PROJECT_BINARY_DIR}/include/hipblaslt-version.h
+  ${PROJECT_BINARY_DIR}/include/hipblaslt/hipblaslt-version.h
 )
 
 if(NOT BUILD_CUDA)
@@ -164,22 +168,27 @@ endif()
 
 # Generate export header
 include(GenerateExportHeader)
-generate_export_header(hipblaslt EXPORT_FILE_NAME ${PROJECT_BINARY_DIR}/include/hipblaslt-export.h)
+generate_export_header(hipblaslt EXPORT_FILE_NAME ${PROJECT_BINARY_DIR}/include/hipblaslt/hipblaslt-export.h)
+
+if (BUILD_FILE_REORG_BACKWARD_COMPATIBILITY)
+  rocm_wrap_header_file(
+    hipblaslt-version.h hipblaslt-export.h
+    GUARDS SYMLINK WRAPPER
+    WRAPPER_LOCATIONS include hipblaslt/include
+  )
+endif( )
 
 # Install targets
 rocm_install_targets(TARGETS hipblaslt
                      INCLUDE
-                       ${CMAKE_SOURCE_DIR}/library/include
                        ${CMAKE_BINARY_DIR}/include
-                     PREFIX hipblaslt
 )
-
 
 if ( NOT BUILD_CUDA )
     if (WIN32)
       set( HIPBLASLT_TENSILE_LIBRARY_DIR "\${CPACK_PACKAGING_INSTALL_PREFIX}hipblaslt/bin" CACHE PATH "path to tensile library" )
     else()
-      set( HIPBLASLT_TENSILE_LIBRARY_DIR "\${CPACK_PACKAGING_INSTALL_PREFIX}hipblaslt/lib" CACHE PATH "path to tensile library" )
+      set( HIPBLASLT_TENSILE_LIBRARY_DIR "\${CPACK_PACKAGING_INSTALL_PREFIX}${CMAKE_INSTALL_LIBDIR}/hipblaslt" CACHE PATH "path to tensile library" )
     endif()
     rocm_install(
       DIRECTORY ${CMAKE_BINARY_DIR}/Tensile/library
@@ -199,35 +208,11 @@ else()
                       NAMESPACE roc::)
 endif()
 
-# Symbolic links
-rocm_install_symlink_subdir(hipblaslt)
 
-if(NOT BUILD_CUDA)
-  set(CPACK_DEBIAN_PACKAGE_DEPENDS "hip-rocclr (>= 3.5.0)")
-  set(CPACK_RPM_PACKAGE_REQUIRES "hip-rocclr >= 3.5.0")
+if(BUILD_FILE_REORG_BACKWARD_COMPATIBILITY)
+  rocm_install(
+    DIRECTORY
+       "${PROJECT_BINARY_DIR}/hipblaslt"
+        DESTINATION "." )
+  message( STATUS "Backward Compatible Sym Link Created for include directories" )
 endif()
-
-# Package specific CPACK vars
-set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/../LICENSE.md")
-
-if(NOT CPACK_PACKAGING_INSTALL_PREFIX)
-  set(CPACK_PACKAGING_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}")
-endif()
-
-set(CPACK_RPM_EXCLUDE_FROM_AUTO_FILELIST_ADDITION "\${CPACK_PACKAGING_INSTALL_PREFIX}" "\${CPACK_PACKAGING_INSTALL_PREFIX}/include")
-
-if(NOT BUILD_CUDA)
-  set(package_name hipblaslt)
-else()
-  set(package_name hipblaslt-alt)
-endif()
-
-set(HIPBLASLT_CONFIG_DIR "\${CPACK_PACKAGING_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}" CACHE PATH "Path placed into ldconfig file")
-
-rocm_create_package(
-  NAME ${package_name}
-  DESCRIPTION "Radeon Open Compute BLASLt library"
-  MAINTAINER "hipBLASLt Maintainer"
-  LDCONFIG
-  LDCONFIG_DIR ${HIPBLASLT_CONFIG_DIR}
-)

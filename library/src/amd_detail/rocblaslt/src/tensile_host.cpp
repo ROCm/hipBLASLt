@@ -420,8 +420,10 @@ public:
       // Find the location of the libraries
       if (TestPath(path + "/../Tensile/library"))
         path += "/../Tensile/library";
-      else
+      else if(TestPath(path + "library"))
         path += "/library";
+      else
+        path += "/hipblaslt/library";
 
       if (TestPath(path + "/" + processor))
         path += "/" + processor;
