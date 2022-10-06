@@ -60,8 +60,9 @@ inline rocblaslt_status validateMatmulDescrArgs(
     int64_t num_rows_a, int64_t num_cols_a, int64_t lda, int64_t num_rows_b,
     int64_t num_cols_b, int64_t ldb, int64_t num_rows_c, int64_t num_cols_c,
     int64_t ldc, int64_t num_rows_d, int64_t num_cols_d, int64_t ldd,
-    hipDataType type_a, hipDataType type_b, hipDataType type_c,
-    hipDataType type_d, rocblaslt_compute_type compute_type) {
+    hipblasDatatype_t type_a, hipblasDatatype_t type_b,
+    hipblasDatatype_t type_c, hipblasDatatype_t type_d,
+    rocblaslt_compute_type compute_type) {
   // handle must be valid
   if (!handle)
     return rocblaslt_status_invalid_handle;
@@ -87,7 +88,7 @@ inline rocblaslt_status validateMatmulDescrArgs(
     return rocblaslt_status_invalid_value;
 
   switch (type_a) {
-  case HIP_R_32F:
+  case HIPBLAS_R_32F:
     if (compute_type != rocblaslt_compute_f32)
       return rocblaslt_status_invalid_value;
     break;

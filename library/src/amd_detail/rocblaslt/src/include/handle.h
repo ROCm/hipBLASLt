@@ -111,7 +111,7 @@ struct _rocblaslt_matrix_layout {
   // leading dimension
   int64_t ld = 0;
   // data type of the matrix
-  hipDataType type;
+  hipblasDatatype_t type;
 };
 
 /********************************************************************************
@@ -136,7 +136,7 @@ struct _rocblaslt_matmul_desc {
   void *bias = nullptr;
   //
   rocblaslt_compute_type compute_type;
-  hipDataType scale_type;
+  hipblasDatatype_t scale_type;
 };
 
 /********************************************************************************

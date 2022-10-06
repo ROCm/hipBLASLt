@@ -109,13 +109,14 @@ rocblaslt_status rocblaslt_matmul_typecasting(
 inline rocblaslt_status rocblaslt_matmul_template(
     rocblaslt_handle handle, rocblaslt_operation trans_a,
     rocblaslt_operation trans_b, int64_t m, int64_t n, int64_t k,
-    const void *alpha, const void *a, hipDataType a_type, int64_t ld_a,
-    int64_t batch_stride_a, int64_t offset_a, const void *b, hipDataType b_type,
-    int64_t ld_b, int64_t batch_stride_b, int64_t offset_b, const void *beta,
-    const void *c, hipDataType c_type, int64_t ld_c, int64_t batch_stride_c,
-    int64_t offset_c, void *d, hipDataType d_type, int64_t ld_d,
-    int64_t batch_stride_d, int64_t offset_d, int64_t batch_count,
-    bool strided_batch, rocblaslt_compute_type compute_type, void *workspace,
+    const void *alpha, const void *a, hipblasDatatype_t a_type, int64_t ld_a,
+    int64_t batch_stride_a, int64_t offset_a, const void *b,
+    hipblasDatatype_t b_type, int64_t ld_b, int64_t batch_stride_b,
+    int64_t offset_b, const void *beta, const void *c, hipblasDatatype_t c_type,
+    int64_t ld_c, int64_t batch_stride_c, int64_t offset_c, void *d,
+    hipblasDatatype_t d_type, int64_t ld_d, int64_t batch_stride_d,
+    int64_t offset_d, int64_t batch_count, bool strided_batch,
+    rocblaslt_compute_type compute_type, void *workspace,
     size_t workspaceSizeInBytes, const void *bias, rocblaslt_epilogue epilogue,
     hipStream_t stream) {
   rocblaslt_status rs_status = rocblaslt_status_not_implemented;
@@ -126,15 +127,15 @@ inline rocblaslt_status rocblaslt_matmul_template(
       offset_c, d, ld_d, batch_stride_d, offset_d, batch_count, strided_batch, \
       workspace, workspaceSizeInBytes, bias, epilogue, stream
 
-  if (a_type == HIP_R_32F && b_type == HIP_R_32F) {
-    if (c_type == HIP_R_32F && d_type == HIP_R_32F) {
+  if (a_type == HIPBLAS_R_32F && b_type == HIPBLAS_R_32F) {
+    if (c_type == HIPBLAS_R_32F && d_type == HIPBLAS_R_32F) {
       if (compute_type == rocblaslt_compute_f32) {
         rs_status = rocblaslt_matmul_typecasting<float, float, float>(
             EX_TYPECASTING_PARM);
       }
     }
-  } else if (a_type == HIP_R_16F && b_type == HIP_R_16F) {
-    if (c_type == HIP_R_16F && d_type == HIP_R_16F) {
+  } else if (a_type == HIPBLAS_R_16F && b_type == HIPBLAS_R_16F) {
+    if (c_type == HIPBLAS_R_16F && d_type == HIPBLAS_R_16F) {
       if (compute_type == rocblaslt_compute_f32) {
         rs_status =
             rocblaslt_matmul_typecasting<rocblaslt_half, rocblaslt_half, float>(

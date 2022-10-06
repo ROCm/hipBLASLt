@@ -41,6 +41,7 @@
 
 #include "hipblaslt-export.h"
 #include "hipblaslt-version.h"
+#include <hipblas.h>
 
 #include <hip/hip_complex.h>
 #include <hip/hip_runtime.h>
@@ -49,32 +50,6 @@
 #if defined(__HIP_PLATFORM_HCC__)
 #include "hipblaslt-types.h"
 #endif
-
-/* hipblasLt status types */
-typedef enum {
-  HIPBLASLT_STATUS_SUCCESS = 0, /**< Function succeeds */
-  HIPBLASLT_STATUS_NOT_INITIALIZED =
-      1,                             /**< hipBLASLt library not initialized */
-  HIPBLASLT_STATUS_ALLOC_FAILED = 2, /**< resource allocation failed */
-  HIPBLASLT_STATUS_INVALID_VALUE =
-      3, /**< unsupported numerical value was passed to function */
-  HIPBLASLT_STATUS_MAPPING_ERROR = 4, /**< access to GPU memory space failed */
-  HIPBLASLT_STATUS_EXECUTION_FAILED = 5, /**< GPU program failed to execute */
-  HIPBLASLT_STATUS_INTERNAL_ERROR =
-      6, /**< an internal HIPBLAS operation failed */
-  HIPBLASLT_STATUS_NOT_SUPPORTED = 7, /**< function not implemented */
-  HIPBLASLT_STATUS_ARCH_MISMATCH = 8, /**< architecture mismatch */
-  HIPBLASLT_STATUS_INVALID_ENUM =
-      10, /**<  unsupported enum value was passed to function */
-  HIPBLASLT_STATUS_UNKNOWN =
-      11, /**<  back-end returned an unsupported status code */
-} hipblasLtStatus_t;
-
-typedef enum {
-  HIPBLASLT_OP_N = 0,
-  HIPBLASLT_OP_T = 1,
-  HIPBLASLT_OP_C = 2
-} hipblasLtOperation_t;
 
 typedef enum {
   HIPBLASLT_EPILOGUE_DEFAULT = 1,
@@ -124,7 +99,7 @@ typedef struct _hipblasLtMatmulAlgo_t{
 typedef struct _hipblasLtMatmulHeuristicResult_t{
   hipblasLtMatmulAlgo_t algo;
   size_t workspaceSize = 0;
-  hipblasLtStatus_t state = HIPBLASLT_STATUS_SUCCESS;
+  hipblasStatus_t state = HIPBLAS_STATUS_SUCCESS;
   float wavesCount = 1.0;
   int reserved[4];
 } hipblasLtMatmulHeuristicResult_t;
@@ -137,64 +112,64 @@ extern "C" {
 #endif
 
 HIPBLASLT_EXPORT
-hipblasLtStatus_t hipblasLtCreate(hipblasLtHandle_t *handle);
+hipblasStatus_t hipblasLtCreate(hipblasLtHandle_t *handle);
 
 HIPBLASLT_EXPORT
-hipblasLtStatus_t hipblasLtDestroy(const hipblasLtHandle_t handle);
+hipblasStatus_t hipblasLtDestroy(const hipblasLtHandle_t handle);
 
 HIPBLASLT_EXPORT
-hipblasLtStatus_t hipblasLtMatrixLayoutCreate(hipblasLtMatrixLayout_t *matDescr,
-                                              hipDataType valueType,
-                                              uint64_t rows, uint64_t cols,
-                                              int64_t ld);
+hipblasStatus_t hipblasLtMatrixLayoutCreate(hipblasLtMatrixLayout_t *matDescr,
+                                            hipblasDatatype_t valueType,
+                                            uint64_t rows, uint64_t cols,
+                                            int64_t ld);
 
 HIPBLASLT_EXPORT
-hipblasLtStatus_t
+hipblasStatus_t
 hipblasLtMatrixLayoutDestory(const hipblasLtMatrixLayout_t descr);
 
 HIPBLASLT_EXPORT
-hipblasLtStatus_t hipblasLtMatmulDescCreate(hipblasLtMatmulDesc_t *matmulDesc,
-                                            hipblasLtComputeType_t computeType,
-                                            hipDataType scaleType);
+hipblasStatus_t hipblasLtMatmulDescCreate(hipblasLtMatmulDesc_t *matmulDesc,
+                                          hipblasLtComputeType_t computeType,
+                                          hipblasDatatype_t scaleType);
 
 HIPBLASLT_EXPORT
-hipblasLtStatus_t hipblasLtMatmulDescDestroy(const hipblasLtMatmulDesc_t descr);
+hipblasStatus_t hipblasLtMatmulDescDestroy(const hipblasLtMatmulDesc_t descr);
 
 HIPBLASLT_EXPORT
-hipblasLtStatus_t
+hipblasStatus_t
 hipblasLtMatmulDescSetAttribute(hipblasLtMatmulDesc_t matmulDesc,
                                 hipblasLtMatmulDescAttributes_t matmulAttr,
                                 const void *buf, size_t sizeInBytes);
 
 HIPBLASLT_EXPORT
-hipblasLtStatus_t
+hipblasStatus_t
 hipblasLtMatmulDescGetAttribute(hipblasLtMatmulDesc_t matmulDesc,
                                 hipblasLtMatmulDescAttributes_t matmulAttr,
                                 void *buf, size_t sizeInBytes,
                                 size_t *sizeWritten);
 
 HIPBLASLT_EXPORT
-hipblasLtStatus_t
+hipblasStatus_t
 hipblasLtMatmulPreferenceCreate(hipblasLtMatmulPreference_t *pref);
 
 HIPBLASLT_EXPORT
-hipblasLtStatus_t
+hipblasStatus_t
 hipblasLtMatmulPreferenceDestroy(const hipblasLtMatmulPreference_t pref);
 
 HIPBLASLT_EXPORT
-hipblasLtStatus_t hipblasLtMatmulPreferenceSetAttribute(
+hipblasStatus_t hipblasLtMatmulPreferenceSetAttribute(
     hipblasLtMatmulPreference_t pref,
     hipblasLtMatmulPreferenceAttributes_t attribute, const void *data,
     size_t dataSize);
 
 HIPBLASLT_EXPORT
-hipblasLtStatus_t hipblasLtMatmulPreferenceGetAttribute(
+hipblasStatus_t hipblasLtMatmulPreferenceGetAttribute(
     hipblasLtMatmulPreference_t pref,
     hipblasLtMatmulPreferenceAttributes_t attribute, void *data,
     size_t dataSize);
 
 HIPBLASLT_EXPORT
-hipblasLtStatus_t hipblasLtMatmulAlgoGetHeuristic(
+hipblasStatus_t hipblasLtMatmulAlgoGetHeuristic(
     hipblasLtHandle_t handle, hipblasLtMatmulDesc_t matmulDesc,
     hipblasLtMatrixLayout_t Adesc, hipblasLtMatrixLayout_t Bdesc,
     hipblasLtMatrixLayout_t Cdesc, hipblasLtMatrixLayout_t Ddesc,
@@ -203,7 +178,7 @@ hipblasLtStatus_t hipblasLtMatmulAlgoGetHeuristic(
     int *returnAlgoCount);
 
 HIPBLASLT_EXPORT
-hipblasLtStatus_t
+hipblasStatus_t
 hipblasLtMatmul(hipblasLtHandle_t handle, hipblasLtMatmulDesc_t matmul_descr,
                 const void *alpha, const void *A, hipblasLtMatrixLayout_t matA,
                 const void *B, hipblasLtMatrixLayout_t matB, const void *beta,

@@ -88,7 +88,7 @@ rocblaslt_status rocblaslt_destroy(const rocblaslt_handle handle);
  */
 rocblaslt_status
 rocblaslt_matrix_layout_create(rocblaslt_matrix_layout *matDescr,
-                               hipDataType valueType, uint64_t rows,
+                               hipblasDatatype_t valueType, uint64_t rows,
                                uint64_t cols, int64_t ld);
 
 /*! \ingroup aux_module
@@ -133,7 +133,7 @@ rocblaslt_matrix_layout_destory(const rocblaslt_matrix_layout descr);
 rocblaslt_status
 rocblaslt_matmul_desc_create(rocblaslt_matmul_desc *matmulDesc,
                              rocblaslt_compute_type computeType,
-                             hipDataType scaleType);
+                             hipblasDatatype_t scaleType);
 
 /*! \ingroup aux_module
  *  \brief Destroy a matrix multiplication descriptor
