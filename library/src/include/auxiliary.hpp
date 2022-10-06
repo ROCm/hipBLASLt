@@ -29,53 +29,52 @@
 #include <hipblaslt.h>
 
 HIPBLASLT_EXPORT
-constexpr const char *hipblaslt_status_to_string(hipblasLtStatus_t status) {
+constexpr const char *HIPBLAS_STATUS_to_string(hipblasStatus_t status) {
 #define CASE(x)                                                                \
   case x:                                                                      \
     return #x
   switch (status) {
-    CASE(HIPBLASLT_STATUS_SUCCESS);
-    CASE(HIPBLASLT_STATUS_NOT_INITIALIZED);
-    CASE(HIPBLASLT_STATUS_ALLOC_FAILED);
-    CASE(HIPBLASLT_STATUS_INVALID_VALUE);
-    CASE(HIPBLASLT_STATUS_MAPPING_ERROR);
-    CASE(HIPBLASLT_STATUS_EXECUTION_FAILED);
-    CASE(HIPBLASLT_STATUS_INTERNAL_ERROR);
-    CASE(HIPBLASLT_STATUS_NOT_SUPPORTED);
-    CASE(HIPBLASLT_STATUS_ARCH_MISMATCH);
-    CASE(HIPBLASLT_STATUS_INVALID_ENUM);
-    CASE(HIPBLASLT_STATUS_UNKNOWN);
+    CASE(HIPBLAS_STATUS_SUCCESS);
+    CASE(HIPBLAS_STATUS_NOT_INITIALIZED);
+    CASE(HIPBLAS_STATUS_ALLOC_FAILED);
+    CASE(HIPBLAS_STATUS_INVALID_VALUE);
+    CASE(HIPBLAS_STATUS_MAPPING_ERROR);
+    CASE(HIPBLAS_STATUS_EXECUTION_FAILED);
+    CASE(HIPBLAS_STATUS_INTERNAL_ERROR);
+    CASE(HIPBLAS_STATUS_NOT_SUPPORTED);
+    CASE(HIPBLAS_STATUS_ARCH_MISMATCH);
+    CASE(HIPBLAS_STATUS_INVALID_ENUM);
+    CASE(HIPBLAS_STATUS_UNKNOWN);
   }
 #undef CASE
   // We don't use default: so that the compiler warns us if any valid enums are
-  // missing from our switch. If the value is not a valid hipblasLtStatus_t, we
+  // missing from our switch. If the value is not a valid hipblasStatus_t, we
   // return this string.
-  return "<undefined hipblasLtStatus_t value>";
+  return "<undefined hipblasStatus_t value>";
 }
 
 HIPBLASLT_EXPORT
-constexpr const char *
-hipblaslt_operation_to_string(hipblasLtOperation_t value) {
+constexpr const char *HIPBLAS_OPeration_to_string(hipblasOperation_t value) {
   switch (value) {
-  case HIPBLASLT_OPERATION_NON_TRANSPOSE:
+  case HIPBLAS_OPERATION_NON_TRANSPOSE:
     return "N";
-  case HIPBLASLT_OPERATION_TRANSPOSE:
+  case HIPBLAS_OPERATION_TRANSPOSE:
     return "T";
   }
   return "invalid";
 }
 
 HIPBLASLT_EXPORT
-constexpr hipblasLtOperation_t char_to_hipblaslt_operation(char value) {
+constexpr hipblasOperation_t char_to_hipblas_operation(char value) {
   switch (value) {
   case 'N':
   case 'n':
-    return HIPBLASLT_OPERATION_NON_TRANSPOSE;
+    return HIPBLAS_OPERATION_NON_TRANSPOSE;
   case 'T':
   case 't':
-    return HIPBLASLT_OPERATION_TRANSPOSE;
+    return HIPBLAS_OPERATION_TRANSPOSE;
   default:
-    return static_cast<hipblasLtOperation_t>(-1);
+    return static_cast<hipblasOperation_t>(-1);
   }
 }
 

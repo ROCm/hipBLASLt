@@ -23,7 +23,7 @@
 
 #ifndef CHECK_HIPBLASLT_ERROR
 #define CHECK_HIPBLASLT_ERROR(error)                                           \
-  if (error != HIPBLASLT_STATUS_SUCCESS) {                                     \
+  if (error != HIPBLAS_STATUS_SUCCESS) {                                       \
     fprintf(stderr, "hipBLASLt error(Err=%d) at %s:%d\n", error, __FILE__,     \
             __LINE__);                                                         \
     fprintf(stderr, "\n");                                                     \
@@ -195,14 +195,14 @@ static void show_usage(char *argv[]) {
             << std::endl;
 }
 
-static int parse_arguments(int argc, char *argv[], hipDataType &in_out_datatype,
-                           int64_t &m, int64_t &n, int64_t &k, int64_t &lda,
-                           int64_t &ldb, int64_t &ldc, int64_t &ldd,
-                           int64_t &stride_a, int64_t &stride_b,
-                           int64_t &stride_c, int64_t &stride_d,
-                           int &batch_count, float &alpha, float &beta,
-                           hipblasLtOperation_t &trans_a,
-                           hipblasLtOperation_t &trans_b, bool &enable_bias,
+static int parse_arguments(int argc, char *argv[],
+                           hipblasDatatype_t &in_out_datatype, int64_t &m,
+                           int64_t &n, int64_t &k, int64_t &lda, int64_t &ldb,
+                           int64_t &ldc, int64_t &ldd, int64_t &stride_a,
+                           int64_t &stride_b, int64_t &stride_c,
+                           int64_t &stride_d, int &batch_count, float &alpha,
+                           float &beta, hipblasOperation_t &trans_a,
+                           hipblasOperation_t &trans_b, bool &enable_bias,
                            ActivationType &actType, bool &header, bool &verbose,
                            bool &validate, bool &timing) {
   if (argc >= 2) {
@@ -265,10 +265,10 @@ static int parse_arguments(int argc, char *argv[], hipDataType &in_out_datatype,
         } else if ((arg == "--trans_a") && (i + 1 < argc)) {
           ++i;
           if (strncmp(argv[i], "N", 1) == 0 || strncmp(argv[i], "n", 1) == 0) {
-            trans_a = HIPBLASLT_OP_N;
+            trans_a = HIPBLAS_OP_N;
           } else if (strncmp(argv[i], "T", 1) == 0 ||
                      strncmp(argv[i], "t", 1) == 0) {
-            trans_a = HIPBLASLT_OP_T;
+            trans_a = HIPBLAS_OP_T;
           } else {
             std::cerr << "error with " << arg << std::endl;
             std::cerr << "do not recognize value " << argv[i];
@@ -277,10 +277,10 @@ static int parse_arguments(int argc, char *argv[], hipDataType &in_out_datatype,
         } else if ((arg == "--trans_b") && (i + 1 < argc)) {
           ++i;
           if (strncmp(argv[i], "N", 1) == 0 || strncmp(argv[i], "n", 1) == 0) {
-            trans_b = HIPBLASLT_OP_N;
+            trans_b = HIPBLAS_OP_N;
           } else if (strncmp(argv[i], "T", 1) == 0 ||
                      strncmp(argv[i], "t", 1) == 0) {
-            trans_b = HIPBLASLT_OP_T;
+            trans_b = HIPBLAS_OP_T;
           } else {
             std::cerr << "error with " << arg << std::endl;
             std::cerr << "do not recognize value " << argv[i];
@@ -289,7 +289,7 @@ static int parse_arguments(int argc, char *argv[], hipDataType &in_out_datatype,
         } else if ((arg == "--datatype") && (i + 1 < argc)) {
           ++i;
           if (strncmp(argv[i], "fp32", 4) == 0) {
-            in_out_datatype = HIP_R_32F;
+            in_out_datatype = HIPBLAS_R_32F;
           } else {
             std::cerr << "error with " << arg << std::endl;
             std::cerr << "do not recognize value " << argv[i];
@@ -310,24 +310,24 @@ static int parse_arguments(int argc, char *argv[], hipDataType &in_out_datatype,
   return EXIT_SUCCESS;
 }
 
-bool bad_argument(hipblasLtOperation_t trans_a, hipblasLtOperation_t trans_b,
+bool bad_argument(hipblasOperation_t trans_a, hipblasOperation_t trans_b,
                   int64_t m, int64_t n, int64_t k, int64_t lda, int64_t ldb,
                   int64_t ldc, int64_t ldd, int64_t stride_a, int64_t stride_b,
                   int64_t stride_c, int64_t stride_d, int64_t batch_count) {
   bool argument_error = false;
-  if ((trans_a == HIPBLASLT_OP_N) && (lda < m)) {
+  if ((trans_a == HIPBLAS_OP_N) && (lda < m)) {
     argument_error = true;
     std::cerr << "ERROR: bad argument lda = " << lda << " < " << m << std::endl;
   }
-  if ((trans_a == HIPBLASLT_OP_T) && (lda < k)) {
+  if ((trans_a == HIPBLAS_OP_T) && (lda < k)) {
     argument_error = true;
     std::cerr << "ERROR: bad argument lda = " << lda << " < " << k << std::endl;
   }
-  if ((trans_b == HIPBLASLT_OP_N) && (ldb < k)) {
+  if ((trans_b == HIPBLAS_OP_N) && (ldb < k)) {
     argument_error = true;
     std::cerr << "ERROR: bad argument ldb = " << ldb << " < " << k << std::endl;
   }
-  if ((trans_b == HIPBLASLT_OP_T) && (ldb < n)) {
+  if ((trans_b == HIPBLAS_OP_T) && (ldb < n)) {
     argument_error = true;
     std::cerr << "ERROR: bad argument ldb = " << ldb << " < " << n << std::endl;
   }
@@ -387,18 +387,18 @@ void initialize_a_b_c_bias(std::vector<T> &ha, int64_t size_a,
 }
 
 template <typename T>
-void test_hipblaslt(hipDataType in_out_datatype, hipblasLtOperation_t trans_a,
-                    hipblasLtOperation_t trans_b, int64_t m, int64_t n,
-                    int64_t k, int64_t lda, int64_t ldb, int64_t ldc,
-                    int64_t ldd, int64_t stride_a, int64_t stride_b,
-                    int64_t stride_c, int64_t stride_d, int64_t batch_count,
-                    float alpha, float beta, bool enable_bias,
-                    ActivationType actType, bool validate, bool verbose,
-                    bool timing) {
+void test_hipblaslt(hipblasDatatype_t in_out_datatype,
+                    hipblasOperation_t trans_a, hipblasOperation_t trans_b,
+                    int64_t m, int64_t n, int64_t k, int64_t lda, int64_t ldb,
+                    int64_t ldc, int64_t ldd, int64_t stride_a,
+                    int64_t stride_b, int64_t stride_c, int64_t stride_d,
+                    int64_t batch_count, float alpha, float beta,
+                    bool enable_bias, ActivationType actType, bool validate,
+                    bool verbose, bool timing) {
   int64_t a_stride_1, a_stride_2, b_stride_1, b_stride_2;
   int64_t row_a, col_a, row_b, col_b, row_c, col_c;
   int size_a1, size_b1, size_c1 = ldc * n;
-  if (trans_a == HIPBLASLT_OP_N) {
+  if (trans_a == HIPBLAS_OP_N) {
     std::cout << "N";
     row_a = m;
     col_a = k;
@@ -413,7 +413,7 @@ void test_hipblaslt(hipDataType in_out_datatype, hipblasLtOperation_t trans_a,
     a_stride_2 = 1;
     size_a1 = lda * m;
   }
-  if (trans_b == HIPBLASLT_OP_N) {
+  if (trans_b == HIPBLAS_OP_N) {
     std::cout << "N, ";
     row_b = k;
     col_b = n;
@@ -493,7 +493,7 @@ void test_hipblaslt(hipDataType in_out_datatype, hipblasLtOperation_t trans_a,
       hipblasLtMatrixLayoutCreate(&matD, in_out_datatype, row_c, col_c, ldd));
 
   CHECK_HIPBLASLT_ERROR(
-      hipblasLtMatmulDescCreate(&matmul, HIPBLASLT_COMPUTE_F32, HIP_R_32F));
+      hipblasLtMatmulDescCreate(&matmul, HIPBLASLT_COMPUTE_F32, HIPBLAS_R_32F));
 
   CHECK_HIPBLASLT_ERROR(hipblasLtMatmulDescSetAttribute(
       matmul, HIPBLASLT_MATMUL_DESC_TRANSA, &trans_a, sizeof(int32_t)));
@@ -604,14 +604,14 @@ void test_hipblaslt(hipDataType in_out_datatype, hipblasLtOperation_t trans_a,
 
   if (verbose) {
     printf("\n");
-    if (trans_a == HIPBLASLT_OP_N) {
+    if (trans_a == HIPBLAS_OP_N) {
       print_strided_batched("ha initial", &ha[0], m, k, batch_count, 1, lda,
                             stride_a);
     } else {
       print_strided_batched("ha initial", &ha[0], m, k, batch_count, lda, 1,
                             stride_a);
     }
-    if (trans_b == HIPBLASLT_OP_N) {
+    if (trans_b == HIPBLAS_OP_N) {
       print_strided_batched("hb initial", &hb[0], k, n, batch_count, 1, ldb,
                             stride_b);
     } else {
@@ -648,9 +648,9 @@ void test_hipblaslt(hipDataType in_out_datatype, hipblasLtOperation_t trans_a,
 
 int main(int argc, char *argv[]) {
   // initialize parameters with default values
-  hipblasLtOperation_t trans_a = HIPBLASLT_OP_N;
-  hipblasLtOperation_t trans_b = HIPBLASLT_OP_N;
-  hipDataType in_out_datatype = HIP_R_32F;
+  hipblasOperation_t trans_a = HIPBLAS_OP_N;
+  hipblasOperation_t trans_b = HIPBLAS_OP_N;
+  hipblasDatatype_t in_out_datatype = HIPBLAS_R_32F;
 
   int64_t invalid_int = std::numeric_limits<int64_t>::min() + 1;
   float invalid_float = std::numeric_limits<float>::quiet_NaN();
@@ -690,17 +690,17 @@ int main(int argc, char *argv[]) {
   if (k == invalid_int)
     k = DIM3;
   if (lda == invalid_int)
-    lda = trans_a == HIPBLASLT_OP_N ? m : k;
+    lda = trans_a == HIPBLAS_OP_N ? m : k;
   if (ldb == invalid_int)
-    ldb = trans_b == HIPBLASLT_OP_N ? k : n;
+    ldb = trans_b == HIPBLAS_OP_N ? k : n;
   if (ldc == invalid_int)
     ldc = m;
   if (ldd == invalid_int)
     ldd = m;
   if (stride_a == invalid_int)
-    stride_a = trans_a == HIPBLASLT_OP_N ? lda * k : lda * m;
+    stride_a = trans_a == HIPBLAS_OP_N ? lda * k : lda * m;
   if (stride_b == invalid_int)
-    stride_b = trans_b == HIPBLASLT_OP_N ? ldb * n : ldb * k;
+    stride_b = trans_b == HIPBLAS_OP_N ? ldb * n : ldb * k;
   if (stride_c == invalid_int)
     stride_c = ldc * n;
   if (stride_d == invalid_int)
@@ -726,12 +726,12 @@ int main(int argc, char *argv[]) {
     std::cout << std::endl;
   }
 
-  if (in_out_datatype == HIP_R_32F)
+  if (in_out_datatype == HIPBLAS_R_32F)
     test_hipblaslt<hipblasLtFloat>(
         in_out_datatype, trans_a, trans_b, m, n, k, lda, ldb, ldc, ldd,
         stride_a, stride_b, stride_c, stride_d, batch_count, alpha, beta,
         enable_bias, actType, validate, verbose, timing);
-  else if (in_out_datatype == HIP_R_16F)
+  else if (in_out_datatype == HIPBLAS_R_16F)
     test_hipblaslt<hipblasLtHalf>(
         in_out_datatype, trans_a, trans_b, m, n, k, lda, ldb, ldc, ldd,
         stride_a, stride_b, stride_c, stride_d, batch_count, alpha, beta,

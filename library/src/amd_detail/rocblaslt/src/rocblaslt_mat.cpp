@@ -57,7 +57,7 @@ rocblaslt_status rocblaslt_matmul_impl(
   int64_t lda = matA->ld;
   int64_t batch_stride_a = 0;
   int num_batches_a = 1;
-  hipDataType type_a = matA->type;
+  hipblasDatatype_t type_a = matA->type;
 
   // matrix B
   // int64_t num_rows_b = matB->m;
@@ -65,7 +65,7 @@ rocblaslt_status rocblaslt_matmul_impl(
   int64_t ldb = matB->ld;
   int64_t batch_stride_b = 0;
   int num_batches_b = 1;
-  hipDataType type_b = matB->type;
+  hipblasDatatype_t type_b = matB->type;
 
   // matrix C
   // int64_t num_rows_c = matC->m;
@@ -73,7 +73,7 @@ rocblaslt_status rocblaslt_matmul_impl(
   int64_t ldc = matC->ld;
   int64_t batch_stride_c = 0;
   int num_batches_c = 1;
-  hipDataType type_c = matC->type;
+  hipblasDatatype_t type_c = matC->type;
 
   // matrix D
   int64_t num_rows_d = matD->m;
@@ -81,7 +81,7 @@ rocblaslt_status rocblaslt_matmul_impl(
   int64_t ldd = matD->ld;
   int64_t batch_stride_d = 0;
   int num_batches_d = 1;
-  hipDataType type_d = matD->type;
+  hipblasDatatype_t type_d = matD->type;
 
   int64_t m = num_rows_d;
   int64_t n = num_cols_d;

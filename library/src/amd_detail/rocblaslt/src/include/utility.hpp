@@ -38,11 +38,11 @@ inline bool isAligned(const void *pointer, size_t byte_count) {
 }
 
 // return precision string for rocblaslt_datatype
-constexpr const char *rocblaslt_datatype_string(hipDataType type) {
+constexpr const char *rocblaslt_datatype_string(hipblasDatatype_t type) {
   switch (type) {
-  case HIP_R_16F:
+  case HIPBLAS_R_16F:
     return "f16_r";
-  case HIP_R_32F:
+  case HIPBLAS_R_32F:
     return "f32_r";
   default:
     return "invalidType";

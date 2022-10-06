@@ -82,7 +82,7 @@ rocblaslt_status rocblaslt_destroy(const rocblaslt_handle handle) {
  *******************************************************************************/
 rocblaslt_status
 rocblaslt_matrix_layout_create(rocblaslt_matrix_layout *matDescr,
-                               hipDataType valueType, uint64_t rows,
+                               hipblasDatatype_t valueType, uint64_t rows,
                                uint64_t cols, int64_t ld) {
   // Check if matDescr is valid
   if (matDescr == nullptr) {
@@ -125,7 +125,7 @@ rocblaslt_matrix_layout_destory(const rocblaslt_matrix_layout matDescr) {
 rocblaslt_status
 rocblaslt_matmul_desc_create(rocblaslt_matmul_desc *matmulDesc,
                              rocblaslt_compute_type computeType,
-                             hipDataType scaleType) {
+                             hipblasDatatype_t scaleType) {
   // Check if matmulDesc is valid
   if (matmulDesc == nullptr) {
     return rocblaslt_status_invalid_pointer;
@@ -136,7 +136,7 @@ rocblaslt_matmul_desc_create(rocblaslt_matmul_desc *matmulDesc,
       if (computeType != rocblaslt_compute_f32)
         throw rocblaslt_status_invalid_value;
 
-      if (scaleType != HIP_R_32F)
+      if (scaleType != HIPBLAS_R_32F)
         throw rocblaslt_status_invalid_value;
 
       *matmulDesc = new _rocblaslt_matmul_desc();

@@ -203,8 +203,10 @@ else()
     endif()
 endif()
 
+find_package( hipblas 0.50.0 REQUIRED CONFIG PATHS ${HIP_DIR} ${ROCM_PATH} /opt/rocm)
+
 # Setup version
-set(VERSION_STRING "0.0.1")
+set(VERSION_STRING "0.0.2")
 rocm_setup_version(VERSION ${VERSION_STRING})
 set(hipblaslt_SOVERSION 0.1)
 
@@ -220,6 +222,10 @@ add_subdirectory( library )
 if(BUILD_CLIENTS)
   add_subdirectory(clients)
 endif()
+
+if( NOT BUILD_CUDA )
+  rocm_package_add_dependencies(DEPENDS "hipblas >= 0.50.0")
+endif( )
 
 # Package specific CPACK vars
 set( CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/LICENSE.md" )
