@@ -88,10 +88,19 @@ typedef enum {
 // clang-format off
 
 #if defined(__HIP_PLATFORM_HCC__)
+typedef struct {
+  uint64_t data[4];
+} hipblasLtMatmulDescOpaque_t;
+typedef struct {
+  uint64_t data[4];
+} hipblasLtMatrixLayoutOpaque_t;
+typedef struct {
+  uint64_t data[5];
+} hipblasLtMatmulPreferenceOpaque_t;
 typedef void* hipblasLtHandle_t;
-typedef void* hipblasLtMatmulDesc_t;
-typedef void* hipblasLtMatrixLayout_t;
-typedef void* hipblasLtMatmulPreference_t;
+typedef hipblasLtMatmulDescOpaque_t* hipblasLtMatmulDesc_t;
+typedef hipblasLtMatrixLayoutOpaque_t* hipblasLtMatrixLayout_t;
+typedef hipblasLtMatmulPreferenceOpaque_t* hipblasLtMatmulPreference_t;
 typedef struct _hipblasLtMatmulAlgo_t{
   uint32_t solutionIdx = 0;
   size_t max_workspace_bytes = 0;
