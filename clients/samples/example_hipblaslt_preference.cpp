@@ -1,12 +1,12 @@
 /* ************************************************************************
  * Copyright (c) 2022 Advanced Micro Devices, Inc.
  * ************************************************************************ */
-#include "hipblaslt.h"
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
 #include <functional>
 #include <hip/hip_runtime.h>
+#include <hipblaslt/hipblaslt.h>
 #include <iostream>
 #include <limits>
 #include <string>
