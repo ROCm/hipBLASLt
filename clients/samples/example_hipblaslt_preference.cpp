@@ -177,7 +177,7 @@ static void show_usage(char *argv[]) {
             << "\t--trans_a \t\ttrans_a \tGEMM_STRIDED argument trans_a\n"
             << "\t--trans_b \t\ttrans_b \tGEMM_STRIDED argument trans_b\n"
             << "\t--datatype \t\tdatatype \tGEMM_STRIDED argument in out "
-               "datatype:fp32\n"
+               "datatype:fp32,fp16\n"
             << "\t--stride_a \t\tstride_a \tGEMM_STRIDED argument stride_a\n"
             << "\t--stride_b \t\tstride_b \tGEMM_STRIDED argument stride_b\n"
             << "\t--stride_c \t\tstride_c \tGEMM_STRIDED argument stride_c\n"
@@ -290,6 +290,8 @@ static int parse_arguments(int argc, char *argv[],
           ++i;
           if (strncmp(argv[i], "fp32", 4) == 0) {
             in_out_datatype = HIPBLAS_R_32F;
+          } else if (strncmp(argv[i], "fp16", 4) == 0) {
+            in_out_datatype = HIPBLAS_R_16F;
           } else {
             std::cerr << "error with " << arg << std::endl;
             std::cerr << "do not recognize value " << argv[i];
