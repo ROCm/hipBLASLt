@@ -245,7 +245,7 @@ auto ConstructTensileProblem(
 
   // set Actvation
   tensileProblem.setActivationType(Tensile::ActivationType::All);
-  tensileProblem.setActivationHPA(false);
+  tensileProblem.setActivationHPA(sizeof(Tc) > sizeof(Ti));
   Tensile::ActivationType tensileAct = Tensile::ActivationType::None;
   switch (prob.epilogue) {
   case ROCBLASLT_EPILOGUE_RELU:
@@ -420,7 +420,7 @@ public:
       // Find the location of the libraries
       if (TestPath(path + "/../Tensile/library"))
         path += "/../Tensile/library";
-      else if(TestPath(path + "library"))
+      else if (TestPath(path + "library"))
         path += "/library";
       else
         path += "/hipblaslt/library";
