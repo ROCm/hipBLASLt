@@ -43,8 +43,8 @@ rocblaslt_status rocblaslt_matmul_impl(
     rocblaslt_matrix_layout matC, rocblaslt_matrix_layout matD,
     const void *alpha, const void *beta, void *workspace,
     size_t workspaceSizeInBytes, hipStream_t stream) {
-  rocblaslt_operation opA = matmul_descr->op_A;
-  rocblaslt_operation opB = matmul_descr->op_B;
+  hipblasOperation_t opA = matmul_descr->op_A;
+  hipblasOperation_t opB = matmul_descr->op_B;
   rocblaslt_compute_type compute_type = matmul_descr->compute_type;
   const void *bias = nullptr;
   rocblaslt_epilogue epilogue = matmul_descr->epilogue;
@@ -85,7 +85,7 @@ rocblaslt_status rocblaslt_matmul_impl(
 
   int64_t m = num_rows_d;
   int64_t n = num_cols_d;
-  int64_t k = (opA == ROCBLASLT_OP_N) ? num_cols_a : num_rows_a;
+  int64_t k = (opA == HIPBLAS_OP_N) ? num_cols_a : num_rows_a;
 
   auto validArgs = validateMatmulArgs(
       handle, m, n, k, alpha, A, B, beta, C, D, num_batches_a, num_batches_b,

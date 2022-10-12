@@ -131,7 +131,7 @@ auto ConstructTensileProblem(
   // clang-format off
 
         // If A is transposed, swap the free and bound dimensions and their ranks
-        if(prob.trans_a != ROCBLASLT_OP_N)
+        if(prob.trans_a != HIPBLAS_OP_N)
         {
             a = {
                     Tensile_Ti,
@@ -155,7 +155,7 @@ auto ConstructTensileProblem(
         }
 
         // If B is transposed, swap the free and bound dimensions and their ranks
-        if(prob.trans_b != ROCBLASLT_OP_N)
+        if(prob.trans_b != HIPBLAS_OP_N)
         {
             b = {
                     Tensile_Ti,

@@ -122,19 +122,6 @@ typedef struct rocblaslt_half {
 #endif
 
 /*! \ingroup types_module
- *  \brief Specify whether the matrix is to be transposed or not.
- *
- *  \details
- *  The \ref rocblaslt_operation indicates the operation performed with the
- * given matrix.
- */
-typedef enum rocblaslt_operation_ {
-  ROCBLASLT_OP_N = 0,
-  ROCBLASLT_OP_T = 1,
-  ROCBLASLT_OP_C = 2
-} rocblaslt_operation;
-
-/*! \ingroup types_module
  *  \brief Specify the postprocessing options for the epilogue
  *
  *  \details

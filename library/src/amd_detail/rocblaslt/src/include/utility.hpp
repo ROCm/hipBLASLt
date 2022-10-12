@@ -60,11 +60,11 @@ rocblaslt_compute_type_string(rocblaslt_compute_type type) {
   }
 }
 
-constexpr const char *rocblaslt_transpose_letter(rocblaslt_operation op) {
+constexpr const char *rocblaslt_transpose_letter(hipblasOperation_t op) {
   switch (op) {
-  case ROCBLASLT_OP_N:
+  case HIPBLAS_OP_N:
     return "N";
-  case ROCBLASLT_OP_T:
+  case HIPBLAS_OP_T:
     return "T";
   default:
     return "invalidTranspose";

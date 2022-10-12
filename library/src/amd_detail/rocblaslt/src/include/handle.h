@@ -127,9 +127,9 @@ struct _rocblaslt_matmul_desc {
   ~_rocblaslt_matmul_desc(){};
 
   // operation applied to the matrix A
-  rocblaslt_operation op_A = ROCBLASLT_OP_N;
+  hipblasOperation_t op_A = HIPBLAS_OP_N;
   // operation applied to the matrix B
-  rocblaslt_operation op_B = ROCBLASLT_OP_N;
+  hipblasOperation_t op_B = HIPBLAS_OP_N;
   // epilogue operation
   rocblaslt_epilogue epilogue = ROCBLASLT_EPILOGUE_DEFAULT;
   // bias vector pointer
