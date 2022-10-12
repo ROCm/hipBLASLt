@@ -4,6 +4,7 @@
 - [Device 0050, Device 0051, Device 0052, Device 0054, Device 0062, Device 7400, Device
     740c]
 - Activation: true
+  ActivationComputeDataType: 0
   ActivationHPA: false
   ActivationType: all
   AllowNoFreeDims: false
@@ -15,6 +16,7 @@
   ComputeDataType: 0
   DataType: 0
   DestDataType: 0
+  Fp16AltImpl: false
   HighPrecisionAccumulate: false
   Index0: 0
   Index01A: 0
@@ -57,7 +59,7 @@
   UseInitialStridesCD: false
 - - 1LDSBuffer: 0
     ActivationFused: true
-    AssertFree0ElementMultiple: 8
+    AssertFree0ElementMultiple: 1
     AssertFree1ElementMultiple: 1
     AssertSummationElementMultiple: 1
     AssignedDerivedParameters: true
@@ -169,6 +171,7 @@
     PrefetchLocalRead: 0
     ProblemType:
       Activation: true
+      ActivationComputeDataType: 0
       ActivationHPA: false
       ActivationType: all
       AllowNoFreeDims: false
@@ -180,6 +183,7 @@
       ComputeDataType: 0
       DataType: 0
       DestDataType: 0
+      Fp16AltImpl: false
       HighPrecisionAccumulate: false
       Index0: 0
       Index01A: 0
@@ -224,7 +228,7 @@
     ScheduleIterAlg: 1
     ScheduleLocalWrite: 1
     SolutionIndex: 0
-    SolutionNameMin: Cijk_Alik_Bljk_SBBias_A_MT64x64x32_MI16x16x1x4_SN_
+    SolutionNameMin: Cijk_Alik_Bljk_SBBias_A_MT64x64x32_MI16x16x1x4_SN_MIWT2_2
     SourceSwap: false
     StaggerU: 32
     StaggerUMapping: 0
@@ -238,7 +242,7 @@
     SubGroupA: 4
     SubGroupB: 16
     SuppressNoLoadLoop: false
-    ThreadTile: [2, 32]
+    ThreadTile: [1, 1]
     ThreadTile0: 16
     ThreadTile1: 4
     ThreadTileA: 16
@@ -266,9 +270,9 @@
     allowLRVWforTLUandMI: false
 - [2, 3, 0, 1]
 - - - [128, 120, 1, 512, 128, 128, 512, 512]
-    - [0, 446.836]
+    - [0, 427.409]
   - - [8192, 7840, 1, 512, 8192, 8192, 512, 512]
-    - [0, 117273.0]
+    - [0, 123251.0]
 - null
 - null
 - DeviceEfficiency
