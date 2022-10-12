@@ -32,8 +32,8 @@
 
 template <typename Ti, typename To, typename Tc>
 rocblaslt_status rocblaslt_batched_template(
-    rocblaslt_handle handle, rocblaslt_operation trans_a,
-    rocblaslt_operation trans_b, int64_t m, int64_t n, int64_t k,
+    rocblaslt_handle handle, hipblasOperation_t trans_a,
+    hipblasOperation_t trans_b, int64_t m, int64_t n, int64_t k,
     const Tc *alpha, const Ti *a, int64_t ld_a, int64_t batch_stride_a,
     int64_t offset_a, const Ti *b, int64_t ld_b, int64_t batch_stride_b,
     int64_t offset_b, const Tc *beta, const To *c, int64_t ld_c,
@@ -81,8 +81,8 @@ rocblaslt_status rocblaslt_batched_template(
 
 template <typename Ti, typename To = Ti, typename Tc = To>
 rocblaslt_status rocblaslt_matmul_typecasting(
-    rocblaslt_handle handle, rocblaslt_operation trans_a,
-    rocblaslt_operation trans_b, int64_t m, int64_t n, int64_t k,
+    rocblaslt_handle handle, hipblasOperation_t trans_a,
+    hipblasOperation_t trans_b, int64_t m, int64_t n, int64_t k,
     const void *alpha, const void *a, int64_t ld_a, int64_t batch_stride_a,
     int64_t offset_a, const void *b, int64_t ld_b, int64_t batch_stride_b,
     int64_t offset_b, const void *beta, const void *c, int64_t ld_c,
@@ -107,8 +107,8 @@ rocblaslt_status rocblaslt_matmul_typecasting(
 }
 
 inline rocblaslt_status rocblaslt_matmul_template(
-    rocblaslt_handle handle, rocblaslt_operation trans_a,
-    rocblaslt_operation trans_b, int64_t m, int64_t n, int64_t k,
+    rocblaslt_handle handle, hipblasOperation_t trans_a,
+    hipblasOperation_t trans_b, int64_t m, int64_t n, int64_t k,
     const void *alpha, const void *a, hipblasDatatype_t a_type, int64_t ld_a,
     int64_t batch_stride_a, int64_t offset_a, const void *b,
     hipblasDatatype_t b_type, int64_t ld_b, int64_t batch_stride_b,

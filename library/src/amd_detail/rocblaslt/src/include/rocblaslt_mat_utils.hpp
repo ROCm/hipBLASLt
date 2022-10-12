@@ -26,19 +26,19 @@
 #define ROCBLASLT_UTILS_HPP
 #include "handle.h"
 
-inline rocblaslt_status getOriginalSizes(rocblaslt_operation opA,
-                                         rocblaslt_operation opB,
+inline rocblaslt_status getOriginalSizes(hipblasOperation_t opA,
+                                         hipblasOperation_t opB,
                                          int64_t num_rows_a, int64_t num_cols_a,
                                          int64_t num_rows_b, int64_t num_cols_b,
                                          int64_t &m, int64_t &n, int64_t &k) {
   // values of num_* are values after been transposed, redirect to before which
   // been transposed. initialized m,n,k by NN.
   m = num_rows_a, n = num_cols_b, k = num_cols_a;
-  if (opA == ROCBLASLT_OP_T) {
+  if (opA == HIPBLAS_OP_T) {
     m = num_cols_a;
     k = num_rows_a;
   }
-  if (opB == ROCBLASLT_OP_T) {
+  if (opB == HIPBLAS_OP_T) {
     n = num_rows_b;
     if (k != num_cols_b) {
       std::cerr << "A, B matrix size are not matched" << std::endl;
@@ -56,7 +56,7 @@ inline rocblaslt_status getOriginalSizes(rocblaslt_operation opA,
  * Validate Matmul Descr. init Arguments - matrix init.
  ******************************************************************************/
 inline rocblaslt_status validateMatmulDescrArgs(
-    rocblaslt_handle handle, rocblaslt_operation opA, rocblaslt_operation opB,
+    rocblaslt_handle handle, hipblasOperation_t opA, hipblasOperation_t opB,
     int64_t num_rows_a, int64_t num_cols_a, int64_t lda, int64_t num_rows_b,
     int64_t num_cols_b, int64_t ldb, int64_t num_rows_c, int64_t num_cols_c,
     int64_t ldc, int64_t num_rows_d, int64_t num_cols_d, int64_t ldd,
@@ -148,8 +148,8 @@ validateMatmulArgs(rocblaslt_handle handle, int64_t m, int64_t n, int64_t k,
 }
 
 template <typename Ti, typename To, typename Tc>
-inline int rocblaslt_get_matmul_alg_config_max_id(rocblaslt_operation opA,
-                                                  rocblaslt_operation opB) {
+inline int rocblaslt_get_matmul_alg_config_max_id(hipblasOperation_t opA,
+                                                  hipblasOperation_t opB) {
   // TODO
   return true;
 }
