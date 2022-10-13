@@ -1908,6 +1908,7 @@ class KernelWriterAssembly(KernelWriter):
     wroteTileStart = True
     with self.allocTmpSgpr(2 + 2 + 2) as tmpSgprInfo:
       stmp = tmpSgprInfo.idx
+      gsuoffset = stmp
       tensorSize = stmp
       tileStart = stmp+2
       blockOffset = stmp+4
@@ -1920,6 +1921,11 @@ class KernelWriterAssembly(KernelWriter):
       module.addModuleAsFlatItems(self.s_mul_u64_u32(sgpr(tileStart), sgpr(tileStart+1), sgpr(tileStart+0), self.sizeRef(unrollSummation[-1]), \
                                 "scaled tile-offset by Summation size"))
   
+      if kernel["GlobalSplitU"] > 1:
+        module.addModuleAsFlatItems(self.s_mul_u64_u32(sgpr(stmp+0), sgpr(stmp+1), kernel["DepthU"], sgpr("GSUSumIdx"), "gsuOffset = DepthU*bpe*GSUSumIdx"))
+        module.add(SAddU32(dst=sgpr(tileStart+0), src0=sgpr(tileStart+0), src1=sgpr(stmp+0), comment="accum GsuOffet term to tilestart"))
+        module.add(SAddCU32(dst=sgpr(tileStart+1), src0=sgpr(tileStart+1), src1=sgpr(stmp+1), comment="accum GsuOffet term to tilestart"))
+
       sizeIndex = [ dim for dim in tP["ia"] ]
       assert(len(sizeIndex) >= 2)
       module.addModuleAsFlatItems(self.s_mul_u64_u32(sgpr(blockOffset), sgpr(blockOffset+1), self.sizeRef(sizeIndex[0]), self.sizeRef(sizeIndex[1]), \
@@ -2010,7 +2016,13 @@ class KernelWriterAssembly(KernelWriter):
                     strideF, "tlu=0, scaled tile-offset by stride"))
 
         if kernel["GlobalSplitU"] > 1:
-          module.addModuleAsFlatItems(self.s_mul_u64_u32(sgpr(stmp+0), sgpr(stmp+1), kernel["DepthU"], sgpr("GSUSumIdx"), "gsuOffset = DepthU*bpe*GSUSumIdx"))
+          depthU = kernel["DepthU"]
+          gsuOffset_str = "gsuOffset = DepthU*bpe*GSUSumIdx"
+          if kernel["ProblemType"]["SparseA"] and tP["isA"]:
+            depthU = depthU // 2
+            gsuOffset_str = "gsuOffset = DepthU/2*bpe*GSUSumIdx"
+          module.addModuleAsFlatItems(self.s_mul_u64_u32(sgpr(stmp+0), sgpr(stmp+1), depthU, sgpr("GSUSumIdx"), gsuOffset_str))
+
           unrollSummation = [ i for i in tP["ia"] if i in kernel["ProblemType"]["IndicesSummation"] ]
           stride = self.strideRef(tc,unrollSummation[-1])
           if tP["tlu"] and not self.isConstUnitStride(stride):
@@ -2937,7 +2949,7 @@ class KernelWriterAssembly(KernelWriter):
                   src1=sgpr("WrapU%s+1"%tc), \
                   comment="remove one iteration"))
 
-        imod.add(self.incrementSrd(tP, sgpr(staggerTmp), sgpr(staggerTmp+1), kernel["DepthU"]//8, isSparseA=kernel["ProblemType"]["SparseA"]and tP["isA"]))
+        imod.add(self.incrementSrd(tP, sgpr(staggerTmp), sgpr(staggerTmp+1), kernel["DepthU"]//8, kernel["GlobalSplitU"], isSparseA=kernel["ProblemType"]["SparseA"]and tP["isA"]))
 
       if tP["isB"]:
         # Convert passed in S' to S for easy loop comparison.  S=S-(PGR-1)'
@@ -2987,7 +2999,7 @@ class KernelWriterAssembly(KernelWriter):
         imod.add(SSubU32(dst=sgpr(tmp), src0=sgpr(tmp), src1=sgpr("WrapU%s"%tc), comment="S - WrapU"))
         imod.add(SSubBU32(dst=sgpr(tmp+1), src0=sgpr(tmp+1), src1=sgpr("WrapU%s+1"%(tc)), comment="S - WrapU"))
 
-        imod.add(self.incrementSrd(tP, sgpr(tmp), sgpr(tmp+1), kernel["DepthU"]//8, isSparseA=kernel["ProblemType"]["SparseA"]and tP["isA"]))
+        imod.add(self.incrementSrd(tP, sgpr(tmp), sgpr(tmp+1), kernel["DepthU"]//8, kernel["GlobalSplitU"], isSparseA=kernel["ProblemType"]["SparseA"]and tP["isA"]))
 
     return imod
 
@@ -4225,7 +4237,7 @@ class KernelWriterAssembly(KernelWriter):
 
   ##############################################################################
   # incLower must be constant or SGPR unsigned value
-  def incrementSrd(self, tP, incLower, incUpper, incSparse, isSparseA=False):
+  def incrementSrd(self, tP, incLower, incUpper, incSparse, gsu, isSparseA=False):
     imod = Module("incrementSrd")
     tc = tP["tensorChar"]
 
@@ -4262,10 +4274,15 @@ class KernelWriterAssembly(KernelWriter):
                        comment="limit -= inc)" ))
 
     if isSparseA:
+      incSparse_str = "gra SRD += DepthU/8"
+      if gsu > 1:
+        incSparse_str = "gra SRD += DepthU*GSU/8"
+        incSparse = hex(incSparse * gsu)
+
       imod.add(SAddU32(sgpr("SrdMetadata+0"), \
                        sgpr("SrdMetadata+0"), \
                        hex(incSparse), \
-                       "gra SRD += incSparse" ))
+                       incSparse_str))
       imod.add(SAddCU32(sgpr("SrdMetadata+1"), \
                         sgpr("SrdMetadata+1"), \
                         0, \
@@ -4363,7 +4380,7 @@ class KernelWriterAssembly(KernelWriter):
                       comment="incLower <- ?"))
           imod.add(SCSelectB32(dst=sgpr(incUpper), src0=sgpr("WrapU%s+1"%tc), src1=0,
                       comment="incUpper <- ?"))
-          imod.add(self.incrementSrd(tP, sgpr(incLower), sgpr(incUpper), kernel["DepthU"]//8, isSparseA=kernel["ProblemType"]["SparseA"]and tP["isA"]))
+          imod.add(self.incrementSrd(tP, sgpr(incLower), sgpr(incUpper), kernel["DepthU"]//8, kernel["GlobalSplitU"], isSparseA=kernel["ProblemType"]["SparseA"]and tP["isA"]))
       else:
         if loopIdx != self.states.unrollIdx or (tc in ('A', 'B') and kernel["ProblemType"]["IndicesSummation"][self.states.unrollIdx] in kernel["ProblemType"]["MirrorDims%s"%tc]):
           with self.allocTmpSgpr(1) as tmpSgprInfo:
@@ -4372,7 +4389,7 @@ class KernelWriterAssembly(KernelWriter):
             imod.add(SAShiftRightI32(dst=sgpr(incUpper), shiftHex=31, src=sgpr("GlobalReadIncs%s+%u"%(tc,loopIdx)), comment="sign-extend"))
         else:
           incUpper = 0 # GRO is positive for loop unroll
-        imod.add( self.incrementSrd(tP, sgpr("GlobalReadIncs%s+%u"%(tc,loopIdx)), incUpper, kernel["DepthU"]//8, isSparseA=kernel["ProblemType"]["SparseA"]and tP["isA"]))
+        imod.add( self.incrementSrd(tP, sgpr("GlobalReadIncs%s+%u"%(tc,loopIdx)), incUpper, kernel["DepthU"]//8, kernel["GlobalSplitU"], isSparseA=kernel["ProblemType"]["SparseA"]and tP["isA"]))
     else:
       graIdx = 0
       for _ in range(0, tP["nrp"]):
