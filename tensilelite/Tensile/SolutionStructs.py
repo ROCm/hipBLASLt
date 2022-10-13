@@ -2861,9 +2861,6 @@ class Solution(collections.abc.Mapping):
       if state["MIArchVgpr"]:
         reject(state, "Sparse A kernel does not support MIArchVgpr yet.")
         return
-      if state["GlobalSplitU"] > 1:
-        reject(state, "Sparse A kernel does not support GlobalSplitU yet.")
-        return
       if state["DepthULdsDivisor"] > 1:
         reject(state, "Sparse A kernel does not support SplitLDS yet.")
         return
