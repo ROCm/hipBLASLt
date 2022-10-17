@@ -29,6 +29,7 @@
 #ifndef _ROCBLASLT_TYPES_H_
 #define _ROCBLASLT_TYPES_H_
 
+#include <hip/hip_bfloat16.h>
 #include <hipblas.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -111,6 +112,8 @@ extern "C" {
 
 /*! \brief Single precision floating point type */
 typedef float rocblaslt_float;
+
+typedef hip_bfloat16 rocblaslt_bfloat16;
 
 #ifdef ROCM_USE_FLOAT16
 typedef _Float16 rocblaslt_half;

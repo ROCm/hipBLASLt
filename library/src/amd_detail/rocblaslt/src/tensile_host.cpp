@@ -68,6 +68,10 @@ template <> struct rocblaslt_to_tensile_type<rocblaslt_half> {
   using tensile_type = Tensile::Half;
 };
 
+template <> struct rocblaslt_to_tensile_type<rocblaslt_bfloat16> {
+  using tensile_type = Tensile::BFloat16;
+};
+
 /********************************************************************
  * Variable template to map a rocblaslt type into a Tensile::DataType *
  ********************************************************************/
@@ -77,6 +81,10 @@ template <>
 constexpr auto tensile_datatype<rocblaslt_half> = Tensile::DataType::Half;
 
 template <> constexpr auto tensile_datatype<float> = Tensile::DataType::Float;
+
+template <>
+constexpr auto tensile_datatype<rocblaslt_bfloat16> =
+    Tensile::DataType::BFloat16;
 
 /*************************************************************************
  * Class for converting alpha and beta between rocblaslt and Tensile types *
@@ -305,11 +313,11 @@ auto GetTensileInputs(const RocblasltContractionProblem<Ti, To, Tc> &prob) {
   inputs.ws = prob.workspace;
 
   // set bias vector
-  inputs.bias = prob.bias;
+  inputs.bias = reinterpret_cast<const Tensile_To *>(prob.bias);
 
   // push 2 activation arguments
-  inputs.activationArgs.push_back(0);
-  inputs.activationArgs.push_back(0);
+  inputs.activationArgs.push_back(static_cast<Tensile_To>(0.0f));
+  inputs.activationArgs.push_back(static_cast<Tensile_To>(0.0f));
 
   // alpha and beta are stored by value in Tensile::TypedContractionInputs
   // alpha and beta are copied from host to Tensile::TypedContractionInputs
@@ -664,6 +672,9 @@ template rocblaslt_status
 runContractionProblem(const RocblasltContractionProblem<float, float, float> &);
 template rocblaslt_status runContractionProblem(
     const RocblasltContractionProblem<rocblaslt_half, rocblaslt_half, float> &);
+template rocblaslt_status runContractionProblem(
+    const RocblasltContractionProblem<rocblaslt_bfloat16, rocblaslt_bfloat16,
+                                      float> &);
 
 /***********************************************************************************
  * Whether Tensile has been initialized for at least one device (used for

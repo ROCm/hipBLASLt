@@ -75,26 +75,6 @@ auto _gelu = [](auto in) -> decltype(in) {
       (in_Tc * (1.f + std::tanh(k0 * (in_Tc * (1.f + k1 * (in_Tc * in_Tc)))))));
 };
 
-template <typename T>
-void activation(int64_t m, int64_t n, int64_t ld, T *addr,
-                ActivationType actType) {
-  auto saturate = [](T val) { return static_cast<T>(val); };
-  std::function<T(T)> actFunc;
-  if (actType == ActivationType::RELU)
-    actFunc = _relu;
-  else if (actType == ActivationType::GELU)
-    actFunc = _gelu;
-
-  for (int i = 0; i < m; i++) {
-#pragma omp parallel for
-    for (int j = 0; j < n; j++) {
-      auto pos = j * ld + i;
-      auto data = static_cast<T>(*(addr + pos));
-      *(addr + pos) = saturate(actFunc(data));
-    }
-  }
-}
-
 template <typename T> inline bool AlmostEqual(T a, T b) {
   T absA = (a > 0) ? a : -a;
   T absB = (b > 0) ? b : -b;
@@ -138,10 +118,18 @@ void print_strided_batched(const char *name, T *A, int64_t n1, int64_t n2,
 }
 
 template <typename Ti, typename To, typename Tc>
-void mat_mat_mult(Tc alpha, Tc beta, int M, int N, int K, int batch_count,
-                  const Ti *A, int As1, int As2, int As3, const Ti *B, int Bs1,
-                  int Bs2, int Bs3, const To *C, int Cs1, int Cs2, int Cs3,
-                  To *D, int Ds1, int Ds2, int Ds3, To *bias) {
+void mat_mul_bias_activation(Tc alpha, Tc beta, int M, int N, int K,
+                             int batch_count, const Ti *A, int As1, int As2,
+                             int As3, const Ti *B, int Bs1, int Bs2, int Bs3,
+                             const To *C, int Cs1, int Cs2, int Cs3, To *D,
+                             int Ds1, int Ds2, int Ds3, To *bias,
+                             ActivationType actType) {
+  std::function<Tc(Tc)> actFunc;
+  if (actType == ActivationType::RELU)
+    actFunc = _relu;
+  else if (actType == ActivationType::GELU)
+    actFunc = _gelu;
+
   for (int batch = 0; batch < batch_count; batch++) {
     for (int i1 = 0; i1 < M; i1++) {
       for (int i2 = 0; i2 < N; i2++) {
@@ -150,11 +138,11 @@ void mat_mat_mult(Tc alpha, Tc beta, int M, int N, int K, int batch_count,
           t += static_cast<Tc>(A[i1 * As1 + i3 * As2 + batch * As3]) *
                static_cast<Tc>(B[i3 * Bs1 + i2 * Bs2 + batch * Bs3]);
         }
-        D[i1 * Ds1 + i2 * Ds2 + batch * Ds3] =
-            static_cast<To>(
-                beta * static_cast<Tc>(C[i1 * Cs1 + i2 * Cs2 + batch * Cs3]) +
-                alpha * t) +
-            (bias == nullptr ? 0 : bias[i1]);
+        t = beta * static_cast<Tc>(C[i1 * Cs1 + i2 * Cs2 + batch * Cs3]) +
+            alpha * t + (bias == nullptr ? 0 : bias[i1]);
+        if (actType != ActivationType::NONE)
+          t = actFunc(t);
+        D[i1 * Ds1 + i2 * Ds2 + batch * Ds3] = static_cast<To>(t);
       }
     }
   }
@@ -177,7 +165,7 @@ static void show_usage(char *argv[]) {
             << "\t--trans_a \t\ttrans_a \tGEMM_STRIDED argument trans_a\n"
             << "\t--trans_b \t\ttrans_b \tGEMM_STRIDED argument trans_b\n"
             << "\t--datatype \t\tdatatype \tGEMM_STRIDED argument in out "
-               "datatype:fp32,fp16\n"
+               "datatype:fp32,fp16,bf16\n"
             << "\t--stride_a \t\tstride_a \tGEMM_STRIDED argument stride_a\n"
             << "\t--stride_b \t\tstride_b \tGEMM_STRIDED argument stride_b\n"
             << "\t--stride_c \t\tstride_c \tGEMM_STRIDED argument stride_c\n"
@@ -292,6 +280,8 @@ static int parse_arguments(int argc, char *argv[],
             in_out_datatype = HIPBLAS_R_32F;
           } else if (strncmp(argv[i], "fp16", 4) == 0) {
             in_out_datatype = HIPBLAS_R_16F;
+          } else if (strncmp(argv[i], "bf16", 4) == 0) {
+            in_out_datatype = HIPBLAS_R_16B;
           } else {
             std::cerr << "error with " << arg << std::endl;
             std::cerr << "do not recognize value " << argv[i];
@@ -582,12 +572,10 @@ void test_hipblaslt(hipblasDatatype_t in_out_datatype,
       bias_ptr = &h_bias[0];
     else
       bias_ptr = nullptr;
-    mat_mat_mult<T, T, float>(alpha, beta, m, n, k, batch_count, a_ptr,
-                              a_stride_1, a_stride_2, stride_a, b_ptr,
-                              b_stride_1, b_stride_2, stride_b, c_ptr, 1, ldc,
-                              stride_c, d_ptr, 1, ldd, stride_d, bias_ptr);
-    if (actType != ActivationType::NONE)
-      activation(m, n, ldd, d_ptr, actType);
+    mat_mul_bias_activation<T, T, float>(
+        alpha, beta, m, n, k, batch_count, a_ptr, a_stride_1, a_stride_2,
+        stride_a, b_ptr, b_stride_1, b_stride_2, stride_b, c_ptr, 1, ldc,
+        stride_c, d_ptr, 1, ldd, stride_d, bias_ptr, actType);
 
     bool passed = true;
     for (int i = 0; i < size_c; i++) {
@@ -735,6 +723,11 @@ int main(int argc, char *argv[]) {
         enable_bias, actType, validate, verbose, timing);
   else if (in_out_datatype == HIPBLAS_R_16F)
     test_hipblaslt<hipblasLtHalf>(
+        in_out_datatype, trans_a, trans_b, m, n, k, lda, ldb, ldc, ldd,
+        stride_a, stride_b, stride_c, stride_d, batch_count, alpha, beta,
+        enable_bias, actType, validate, verbose, timing);
+  else if (in_out_datatype == HIPBLAS_R_16B)
+    test_hipblaslt<hipblasLtBfloat16>(
         in_out_datatype, trans_a, trans_b, m, n, k, lda, ldb, ldc, ldd,
         stride_a, stride_b, stride_c, stride_d, batch_count, alpha, beta,
         enable_bias, actType, validate, verbose, timing);
