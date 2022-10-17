@@ -142,6 +142,14 @@ inline rocblaslt_status rocblaslt_matmul_template(
                 EX_TYPECASTING_PARM);
       }
     }
+  } else if (a_type == HIPBLAS_R_16B && b_type == HIPBLAS_R_16B) {
+    if (c_type == HIPBLAS_R_16B && d_type == HIPBLAS_R_16B) {
+      if (compute_type == rocblaslt_compute_f32) {
+        rs_status =
+            rocblaslt_matmul_typecasting<rocblaslt_bfloat16, rocblaslt_bfloat16,
+                                         float>(EX_TYPECASTING_PARM);
+      }
+    }
   } else {
     rs_status = rocblaslt_status_not_implemented;
   }

@@ -52,6 +52,8 @@ typedef struct _hipblasLtHalf {
 } hipblasLtHalf;
 #endif
 
+typedef hip_bfloat16 hipblasLtBfloat16;
+
 #ifdef __cplusplus
 }
 #endif

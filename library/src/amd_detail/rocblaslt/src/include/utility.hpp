@@ -44,6 +44,8 @@ constexpr const char *rocblaslt_datatype_string(hipblasDatatype_t type) {
     return "f16_r";
   case HIPBLAS_R_32F:
     return "f32_r";
+  case HIPBLAS_R_16B:
+    return "b16_r";
   default:
     return "invalidType";
   }
@@ -99,8 +101,9 @@ constexpr const char *rocblaslt_status_to_string(rocblaslt_status status) {
 }
 template <typename>
 static constexpr char rocblaslt_precision_string[] = "invalid";
-// template <> constexpr char rocblaslt_precision_string<rocblaslt_bfloat16 >[]
-// = "bf16_r";
+template <>
+static constexpr char rocblaslt_precision_string<rocblaslt_bfloat16>[] =
+    "bf16_r";
 template <>
 static constexpr char rocblaslt_precision_string<rocblaslt_half>[] = "f16_r";
 template <> static constexpr char rocblaslt_precision_string<float>[] = "f32_r";

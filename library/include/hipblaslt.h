@@ -43,6 +43,7 @@
 #include "hipblaslt-version.h"
 #include <hipblas.h>
 
+#include <hip/hip_bfloat16.h>
 #include <hip/hip_complex.h>
 #include <hip/hip_runtime.h>
 #include <hip/hip_runtime_api.h>
