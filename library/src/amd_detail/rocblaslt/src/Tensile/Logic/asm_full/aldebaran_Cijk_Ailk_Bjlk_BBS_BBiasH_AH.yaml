@@ -4,6 +4,7 @@
 - [Device 0050, Device 0051, Device 0052, Device 0054, Device 0062, Device 7400, Device
     740c]
 - Activation: true
+  ActivationComputeDataType: 0
   ActivationHPA: true
   ActivationType: all
   AllowNoFreeDims: false
@@ -15,6 +16,7 @@
   ComputeDataType: 0
   DataType: 8
   DestDataType: 8
+  Fp16AltImpl: false
   HighPrecisionAccumulate: true
   Index0: 0
   Index01A: 0
@@ -57,10 +59,10 @@
   UseInitialStridesCD: false
 - - 1LDSBuffer: 0
     ActivationFused: true
-    AssertFree0ElementMultiple: 8
+    AssertFree0ElementMultiple: 1
     AssertFree1ElementMultiple: 1
     AssertSummationElementMultiple: 1
-    AssignedDerivedParameters: false
+    AssignedDerivedParameters: true
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
@@ -74,7 +76,7 @@
     DirectToVgprA: false
     DirectToVgprB: false
     EdgeType: ShiftPtr
-    EnableMatrixInstruction: false
+    EnableMatrixInstruction: true
     ExpandPointerSwap: true
     GlobalLoadVectorWidthA: 4
     GlobalLoadVectorWidthB: 4
@@ -84,7 +86,7 @@
     GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 4
     GroupLoadStore: false
-    GuaranteeNoPartialA: true
+    GuaranteeNoPartialA: false
     GuaranteeNoPartialB: false
     ISA: [9, 0, 10]
     InnerUnroll: 1
@@ -116,7 +118,7 @@
     LocalWritePerMfma: -1
     LocalWriteUseSgprA: false
     LocalWriteUseSgprB: false
-    LoopIters: 32
+    LoopIters: 16
     LoopUnroll: 32
     MFMA_BF16_1K: false
     MIArchVgpr: false
@@ -128,10 +130,10 @@
     MIWaveTile: [2, 2]
     MIWaveTileA: 2
     MIWaveTileB: 2
-    MacroTile0: 32
-    MacroTile1: 2
-    MacroTileA: 32
-    MacroTileB: 2
+    MacroTile0: 64
+    MacroTile1: 64
+    MacroTileA: 64
+    MacroTileB: 64
     MagicDivAlg: 2
     MatrixInstB: 4
     MatrixInstBM: 2
@@ -169,6 +171,7 @@
     PrefetchLocalRead: 0
     ProblemType:
       Activation: true
+      ActivationComputeDataType: 0
       ActivationHPA: true
       ActivationType: all
       AllowNoFreeDims: false
@@ -180,6 +183,7 @@
       ComputeDataType: 0
       DataType: 8
       DestDataType: 8
+      Fp16AltImpl: false
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -224,7 +228,7 @@
     ScheduleIterAlg: 1
     ScheduleLocalWrite: 1
     SolutionIndex: 0
-    SolutionNameMin: Cijk_Ailk_Bjlk_BBS_BBiasH_AH_MT32x2x32_MI16x16x2x4_SN_GSU1_MIWT2_2
+    SolutionNameMin: Cijk_Ailk_Bjlk_BBS_BBiasH_AH_MT64x64x32_MI16x16x2x4_SN_GSU1_MIWT2_2
     SourceSwap: false
     StaggerU: 32
     StaggerUMapping: 0
@@ -233,23 +237,23 @@
     StoreRemapVectorWidth: 0
     StoreSyncOpt: 0
     StoreVectorWidth: 4
-    SubGroup0: 32
-    SubGroup1: 2
-    SubGroupA: 32
-    SubGroupB: 2
+    SubGroup0: 4
+    SubGroup1: 16
+    SubGroupA: 4
+    SubGroupB: 16
     SuppressNoLoadLoop: false
     ThreadTile: [1, 1]
-    ThreadTile0: 1
-    ThreadTile1: 1
-    ThreadTileA: 1
-    ThreadTileB: 1
+    ThreadTile0: 16
+    ThreadTile1: 4
+    ThreadTileA: 16
+    ThreadTileB: 4
     TransposeLDS: 0
     UnrollMajorLDSA: 0
     UnrollMajorLDSB: 0
     Use64bShadowLimit: 1
     UseInstOffsetForGRO: 0
     UseSgprForGRO: -1
-    Valid: false
+    Valid: true
     VectorStore: -1
     VectorWidth: 4
     WaveSeparateGlobalReadA: 0
@@ -259,16 +263,16 @@
     WorkGroupMapping: 1
     _DepthULds: 32
     _GlobalAccumulation: null
-    _UseSgprForGRO: -1
+    _UseSgprForGRO: false
     _VectorStore: 1
     _WorkspaceSizePerElemC: 0
     _staggerStrideShift: 2
     allowLRVWforTLUandMI: false
 - [2, 3, 0, 1]
 - - - [128, 120, 1, 512, 128, 128, 128, 120]
-    - [0, 414.785]
+    - [0, 342.523]
   - - [8192, 8192, 1, 512, 8192, 8192, 8192, 8192]
-    - [0, 148821.0]
+    - [0, 152792.0]
 - null
 - null
 - DeviceEfficiency
