@@ -2849,9 +2849,6 @@ class Solution(collections.abc.Mapping):
 
     # SparseA problem
     if state["ProblemType"]["SparseA"]:
-      if state["StaggerU"]:
-        reject(state, "Sparse A kernel does not support StaggerU yet.")
-        return
       if state["PrefetchGlobalRead"] > 1:
         reject(state, "Sparse A kernel does not support PGR2 yet.")
         return

@@ -376,6 +376,8 @@ class KernelWriterAssembly(KernelWriter):
       self.defineSgpr("StaggerUIter", 1)  # stagger loop iterations, used for various iter counts in the code
       self.defineSgpr("WrapUA", 2)  # Bytes to add to SrdA to reset address from N-1 iter to AddressA
       self.defineSgpr("WrapUB", 2)  # Bytes to add to SrdB to reset address from N-1 iter to AddressB
+      if kernel["ProblemType"]["SparseA"]:
+        self.defineSgpr("WrapUM", 2)  # Bytes to add to SrdMetadata to reset address from N-1 iter to AddressMetadata
 
     self.defineSgpr("GlobalReadIncsA", self.states.a.numSgprGlobalReadIncs)
     self.defineSgpr("GlobalReadIncsB", self.states.b.numSgprGlobalReadIncs)
@@ -2949,7 +2951,31 @@ class KernelWriterAssembly(KernelWriter):
                   src1=sgpr("WrapU%s+1"%tc), \
                   comment="remove one iteration"))
 
-        imod.add(self.incrementSrd(tP, sgpr(staggerTmp), sgpr(staggerTmp+1), kernel["DepthU"]//8, kernel["GlobalSplitU"], isSparseA=kernel["ProblemType"]["SparseA"]and tP["isA"]))
+        imod.add(self.incrementSrd(tP, sgpr(staggerTmp), sgpr(staggerTmp+1)))
+
+        if kernel["ProblemType"]["SparseA"] and tP["isA"]:
+          imod.addComment1("SRDs += (StaggerUIter) * GlobalReadIncsMetadata")
+
+          tc = "M"
+          gsu = 1
+          incSparse = hex(kernel["DepthU"] // 8)
+          if kernel["GlobalSplitU"] > 1:
+            gsu = kernel["GlobalSplitU"]
+            incSparse = hex(kernel["DepthU"] * gsu // 8)
+          imod.addModuleAsFlatItems(self.s_mul_i64_i32( \
+                          sgpr(staggerTmp), sgpr(staggerTmp+1), \
+                          sgpr("StaggerUIter"), incSparse, " stagger byte offset of metadata"))
+          # Amount of bytes to add to get back to start.
+          # on the llop iteration which matches StaggerUIter, this offset added instead of GlobalReadInc
+          imod.addModuleAsFlatItems(self.s_mul_i64_i32( \
+                    sgpr("WrapU%s+0"%tc), sgpr("WrapU%s+1"%tc), \
+                    self.loopCounter(kernel, self.states.unrollIdx), incSparse, \
+                    "Number of bytes accessed by the unroll loop"))
+  
+          imod.add(SSubU32(sgpr("WrapU%s+0"%tc), incSparse, sgpr("WrapU%s+0"%tc), " remove one iteration"))
+          imod.add(SSubBU32(sgpr("WrapU%s+1"%tc), 0, sgpr("WrapU%s+1"%tc), " remove one iteration"))
+  
+          imod.add(self.incrementMetadataSrd(sgpr(staggerTmp), sgpr(staggerTmp+1)))
 
       if tP["isB"]:
         # Convert passed in S' to S for easy loop comparison.  S=S-(PGR-1)'
@@ -2999,7 +3025,20 @@ class KernelWriterAssembly(KernelWriter):
         imod.add(SSubU32(dst=sgpr(tmp), src0=sgpr(tmp), src1=sgpr("WrapU%s"%tc), comment="S - WrapU"))
         imod.add(SSubBU32(dst=sgpr(tmp+1), src0=sgpr(tmp+1), src1=sgpr("WrapU%s+1"%(tc)), comment="S - WrapU"))
 
-        imod.add(self.incrementSrd(tP, sgpr(tmp), sgpr(tmp+1), kernel["DepthU"]//8, kernel["GlobalSplitU"], isSparseA=kernel["ProblemType"]["SparseA"]and tP["isA"]))
+        imod.add(self.incrementSrd(tP, sgpr(tmp), sgpr(tmp+1)))
+
+        if kernel["ProblemType"]["SparseA"] and tP["isA"]:
+          tc = "M"
+          incSparse = self.calculateIncrementMetadata(kernel)
+          # might be able to refactor this to eliminate signed math
+          imod.add(SSubI32(dst=sgpr(tmp), src0=3 if kernel["PrefetchGlobalRead"] else 2, \
+                  src1=sgpr("StaggerUIter")))
+          imod.addModuleAsFlatItems(self.s_mul_i64_i32(sgpr(tmp), sgpr(tmp+1), \
+                      sgpr(tmp), incSparse, \
+                       "start offset S in bytes"))
+          imod.add(SSubU32(sgpr(tmp), sgpr(tmp), sgpr("WrapU%s"%tc), "S - WrapU"))
+          imod.add(SSubBU32(sgpr(tmp+1), sgpr(tmp+1), sgpr("WrapU%s+1"%(tc)), "S - WrapU"))
+          imod.add(self.incrementMetadataSrd(sgpr(tmp), sgpr(tmp+1)))
 
     return imod
 
@@ -3155,6 +3194,16 @@ class KernelWriterAssembly(KernelWriter):
                 comment="init loop counter"))
 
     return module
+
+  ##############################################################################
+  # Calculate Metadata offset
+  ##############################################################################
+  def calculateIncrementMetadata(self, kernel):
+    inc = hex(kernel["DepthU"] // 8)
+    if kernel["GlobalSplitU"] > 1:
+      inc = hex(kernel["DepthU"] * kernel["GlobalSplitU"] // 8)
+
+    return inc
 
   ##############################################################################
   # Open Loop
@@ -4237,7 +4286,7 @@ class KernelWriterAssembly(KernelWriter):
 
   ##############################################################################
   # incLower must be constant or SGPR unsigned value
-  def incrementSrd(self, tP, incLower, incUpper, incSparse, gsu, isSparseA=False):
+  def incrementSrd(self, tP, incLower, incUpper):
     imod = Module("incrementSrd")
     tc = tP["tensorChar"]
 
@@ -4272,40 +4321,42 @@ class KernelWriterAssembly(KernelWriter):
                        src0=sgpr("Srd%s+2"%(tc)), \
                        src1=incLower, \
                        comment="limit -= inc)" ))
+    return imod
 
-    if isSparseA:
-      incSparse_str = "gra SRD += DepthU/8"
-      if gsu > 1:
-        incSparse_str = "gra SRD += DepthU*GSU/8"
-        incSparse = hex(incSparse * gsu)
-
-      imod.add(SAddU32(sgpr("SrdMetadata+0"), \
-                       sgpr("SrdMetadata+0"), \
-                       hex(incSparse), \
-                       incSparse_str))
-      imod.add(SAddCU32(sgpr("SrdMetadata+1"), \
-                        sgpr("SrdMetadata+1"), \
-                        0, \
-                        "gra SRD += 0" ))
-
-      # also have to move the boundary since we change the base
-      # so less buffers to the edge:
-      if self.states.use64bShadowLimit:
-        imod.add(SSubU32(sgpr("ShadowLimitMetadata+0"), \
-                         sgpr("ShadowLimitMetadata+0"), \
-                         hex(incSparse), \
-                         "limit -= inc)"))
-        imod.add(SSubBU32(sgpr("ShadowLimitMetadata+1"), \
-                          sgpr("ShadowLimitMetadata+1"), \
-                          0, \
-                         "limit -= inc)" ))
-        imod.add(SCmpEQU32(sgpr("ShadowLimitMetadata+1"), 0, "are we within 2^32?"))
-        imod.add(SCMovB32(sgpr("SrdMetadata+2"), sgpr("ShadowLimitMetadata+0"), "Move shadow to real if we are within 2^32"))
+  def incrementMetadataSrd(self, incSparseLower, incSparseUpper):
+    imod = Module("incrementMetadataSrd")
+  
+    imod.add(SAddU32(sgpr("SrdMetadata+0"), \
+                     sgpr("SrdMetadata+0"), \
+                     incSparseLower, \
+                     "gra SRD += incSparse(lower)"))
+    imod.add(SAddCU32(sgpr("SrdMetadata+1"), \
+                      sgpr("SrdMetadata+1"), \
+                      incSparseUpper, \
+                      "gra SRD += incSparse(uppper)" ))
+  
+    # also have to move the boundary since we change the base
+    # so less buffers to the edge:
+    if self.states.use64bShadowLimit:
+      imod.add(SSubU32(sgpr("ShadowLimitMetadata+0"), \
+                       sgpr("ShadowLimitMetadata+0"), \
+                       incSparseLower, \
+                       "limit -= incSparse(lower)"))
+      imod.add(SSubBU32(sgpr("ShadowLimitMetadata+1"), \
+                        sgpr("ShadowLimitMetadata+1"), \
+                        incSparseUpper, \
+                       "limit -= incSparse(uppper)" ))
+      imod.add(SCmpEQU32(sgpr("ShadowLimitMetadata+1"), 0, "are we within 2^32?"))
+      if self.states.staggerU:
+        # staggerU case, need to restore BufferLimit when ShadowLimit goes to negative value
+        imod.add(SCSelectB32(dst=sgpr("SrdMetadata+2"), src0=sgpr("ShadowLimitMetadata+0"), src1="BufferLimit", comment="Move shadow to real if we are within 2^32"))
       else:
-        imod.addInst(SSubU32(sgpr("SrdMetadata+2"), \
-                             sgpr("SrdMetadata+2"), \
-                             hex(incSparse), \
-                             "limit -= inc)" ))
+        imod.add(SCMovB32(sgpr("SrdMetadata+2"), sgpr("ShadowLimitMetadata+0"), "Move shadow to real if we are within 2^32"))
+    else:
+      imod.addInst(SSubU32(sgpr("SrdMetadata+2"), \
+                           sgpr("SrdMetadata+2"), \
+                           incSparseLower, \
+                           "limit -= inc)" ))
     return imod
 
   ##############################################################################
@@ -4380,7 +4431,22 @@ class KernelWriterAssembly(KernelWriter):
                       comment="incLower <- ?"))
           imod.add(SCSelectB32(dst=sgpr(incUpper), src0=sgpr("WrapU%s+1"%tc), src1=0,
                       comment="incUpper <- ?"))
-          imod.add(self.incrementSrd(tP, sgpr(incLower), sgpr(incUpper), kernel["DepthU"]//8, kernel["GlobalSplitU"], isSparseA=kernel["ProblemType"]["SparseA"]and tP["isA"]))
+          imod.add(self.incrementSrd(tP, sgpr(incLower), sgpr(incUpper)))
+
+          if kernel["ProblemType"]["SparseA"] and tP["isA"]:
+            tc = "M"
+            incSparse = self.calculateIncrementMetadata(kernel)
+            if prefetchIndex:
+              imod.add(SCmpEQU32(src0=sgpr("StaggerUIter"), src1=sgpr(tmpS), comment="Is this wrapIter? (pf)"))
+            else:
+              imod.add(SCmpEQU32(src0=self.loopCounter(kernel, self.states.unrollIdx), \
+                      src1=sgpr("StaggerUIter"), comment="Is this the wrapIter?"))
+            imod.add(SCSelectB32(dst=sgpr(incLower), src0=sgpr("WrapU%s+0"%tc), src1=incSparse, \
+                        comment="incLower <- ?"))
+            imod.add(SCSelectB32(dst=sgpr(incUpper), src0=sgpr("WrapU%s+1"%tc), src1=0,
+                        comment="incUpper <- ?"))
+            imod.add(self.incrementMetadataSrd(sgpr(incLower), sgpr(incUpper)))
+
       else:
         if loopIdx != self.states.unrollIdx or (tc in ('A', 'B') and kernel["ProblemType"]["IndicesSummation"][self.states.unrollIdx] in kernel["ProblemType"]["MirrorDims%s"%tc]):
           with self.allocTmpSgpr(1) as tmpSgprInfo:
@@ -4389,7 +4455,10 @@ class KernelWriterAssembly(KernelWriter):
             imod.add(SAShiftRightI32(dst=sgpr(incUpper), shiftHex=31, src=sgpr("GlobalReadIncs%s+%u"%(tc,loopIdx)), comment="sign-extend"))
         else:
           incUpper = 0 # GRO is positive for loop unroll
-        imod.add( self.incrementSrd(tP, sgpr("GlobalReadIncs%s+%u"%(tc,loopIdx)), incUpper, kernel["DepthU"]//8, kernel["GlobalSplitU"], isSparseA=kernel["ProblemType"]["SparseA"]and tP["isA"]))
+        imod.add( self.incrementSrd(tP, sgpr("GlobalReadIncs%s+%u"%(tc,loopIdx)), incUpper))
+        if kernel["ProblemType"]["SparseA"] and tP["isA"]:
+          incSparse = self.calculateIncrementMetadata(kernel)
+          imod.add(self.incrementMetadataSrd(incSparse, hex(0)))
     else:
       graIdx = 0
       for _ in range(0, tP["nrp"]):
