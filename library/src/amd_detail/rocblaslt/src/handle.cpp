@@ -58,11 +58,6 @@ _rocblaslt_handle::_rocblaslt_handle() {
   if (layer_mode & rocblaslt_layer_mode_log_trace) {
     open_log_stream(&log_trace_os, &log_trace_ofs, "ROCBLASLT_LOG_TRACE_PATH");
   }
-
-  // Open log_bench file
-  if (layer_mode & rocblaslt_layer_mode_log_bench) {
-    open_log_stream(&log_bench_os, &log_bench_ofs, "ROCBLASLT_LOG_BENCH_PATH");
-  }
 }
 
 /*******************************************************************************

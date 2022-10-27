@@ -390,15 +390,16 @@ void test_hipblaslt(hipblasDatatype_t in_out_datatype,
   int64_t a_stride_1, a_stride_2, b_stride_1, b_stride_2;
   int64_t row_a, col_a, row_b, col_b, row_c, col_c;
   int size_a1, size_b1, size_c1 = ldc * n;
+  std::string trans_string;
   if (trans_a == HIPBLAS_OP_N) {
-    std::cout << "N";
+    trans_string += "N";
     row_a = m;
     col_a = k;
     a_stride_1 = 1;
     a_stride_2 = lda;
     size_a1 = lda * k;
   } else {
-    std::cout << "T";
+    trans_string += "T";
     row_a = k;
     col_a = m;
     a_stride_1 = lda;
@@ -406,14 +407,14 @@ void test_hipblaslt(hipblasDatatype_t in_out_datatype,
     size_a1 = lda * m;
   }
   if (trans_b == HIPBLAS_OP_N) {
-    std::cout << "N, ";
+    trans_string += "N, ";
     row_b = k;
     col_b = n;
     b_stride_1 = 1;
     b_stride_2 = ldb;
     size_b1 = ldb * n;
   } else {
-    std::cout << "T, ";
+    trans_string += "T, ";
     row_b = n;
     col_b = k;
     b_stride_1 = ldb;
@@ -534,10 +535,7 @@ void test_hipblaslt(hipblasDatatype_t in_out_datatype,
   CHECK_HIP_ERROR(
       hipMemcpy(hd.data(), dd, sizeof(T) * size_c, hipMemcpyDeviceToHost));
 
-  std::cout << m << ", " << n << ", " << k << ", " << lda << ", " << ldb << ", "
-            << ldc << ", " << stride_a << ", " << stride_b << ", " << stride_c
-            << ", " << batch_count << ", " << alpha << ", " << beta << ", "
-            << enable_bias << ", " << ToString(actType);
+  std::string timing_string;
   if (timing) {
     hipEvent_t start, stop;
     hipEventCreate(&start);
@@ -557,9 +555,14 @@ void test_hipblaslt(hipblasDatatype_t in_out_datatype,
     eventMs /= BENCH_LOOP_COUNT;
     double flops = 2 * m * n * k * batch_count;
     double tflops = flops / eventMs / 1000000000;
-    std::cout << ", " << eventMs << ", " << tflops;
+    timing_string = timing_string + ", " + std::to_string(eventMs) + ", " +
+                    std::to_string(tflops);
   }
-  std::cout << std::endl;
+  std::cout << trans_string << m << ", " << n << ", " << k << ", " << lda
+            << ", " << ldb << ", " << ldc << ", " << stride_a << ", "
+            << stride_b << ", " << stride_c << ", " << batch_count << ", "
+            << alpha << ", " << beta << ", " << enable_bias << ", "
+            << ToString(actType) << timing_string << std::endl;
 
   // calculate golden or correct result
   if (validate) {

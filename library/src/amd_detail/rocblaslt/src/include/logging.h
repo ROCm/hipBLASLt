@@ -1,6 +1,9 @@
 /*! \file */
-/* ************************************************************************
- * Copyright (c) 2021-2022 Advanced Micro Devices, Inc.
+/*******************************************************************************
+ *
+ * MIT License
+ *
+ * Copyright (c) 2022 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -17,10 +20,10 @@
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
  * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- * THE SOFTWARE.
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
  *
- * ************************************************************************ */
+ *******************************************************************************/
 
 #pragma once
 #ifndef LOGGING_H
@@ -28,6 +31,8 @@
 
 #include <fstream>
 #include <string>
+#include <sys/types.h>
+#include <unistd.h>
 
 /**
  *  @brief Logging function
@@ -67,12 +72,23 @@ inline void open_log_stream(std::ostream **log_os, std::ofstream *log_ofs,
     // if environment variable is set, open file at logfile_pathname contained
     // in the environment variable
     std::string logfile_pathname = (std::string)environment_variable_value;
-    log_ofs->open(logfile_pathname);
 
-    // if log_ofs is open, then stream to log_ofs, else log_os is already
-    // set equal to std::cerr
-    if (log_ofs->is_open() == true) {
-      *log_os = log_ofs;
+    log_ofs->exceptions(std::ofstream::failbit | std::ofstream::badbit);
+    try {
+      size_t pos = logfile_pathname.find("%i");
+      if (pos != std::string::npos)
+        logfile_pathname.replace(pos, 2, std::to_string(getpid()));
+      log_ofs->open(logfile_pathname);
+
+      // if log_ofs is open, then stream to log_ofs, else log_os is already
+      // set equal to std::cerr
+      if (log_ofs->is_open() == true) {
+        *log_os = log_ofs;
+      }
+    } catch (std::ofstream::failure &e) {
+      std::cerr << "exception occured when writing to file: "
+                << logfile_pathname << "\n"
+                << e.what() << std::endl;
     }
   }
 }
@@ -150,13 +166,44 @@ private:
  *                 parameter pack is logged, and it is preceded by
  *                 separator.
  */
-template <typename H, typename... Ts>
-void log_arguments(std::ostream &os, std::string &separator, H head,
-                   Ts &&...xs) {
-  os << "\n" << head;
-  each_args(log_arg{os, separator}, std::forward<Ts>(xs)...);
-}
 
+template <typename T, typename... Ts>
+inline void log_arg_data(std::ostream &os, std::string &separator, T &x,
+                         Ts &&...xs);
+template <typename T, typename... Ts>
+inline void log_arg_head(std::ostream &os, std::string &separator, T &x,
+                         Ts &&...xs);
+
+inline void log_arg_data(std::ostream &os, std::string &separator) {}
+inline void log_arg_head(std::ostream &os, std::string &separator) {}
+
+template <typename T>
+inline void log_arg_head(std::ostream &os, std::string &separator, T &x) {
+  os << x;
+}
+template <typename T>
+inline void log_arg_data(std::ostream &os, std::string &separator, T &x) {
+  os << "=" << x << separator;
+}
+template <typename T, typename... Ts>
+inline void log_arg_head(std::ostream &os, std::string &separator, T &x,
+                         Ts &&...xs) {
+  os << x;
+  log_arg_data(os, separator, xs...);
+}
+template <typename T, typename... Ts>
+inline void log_arg_data(std::ostream &os, std::string &separator, T &x,
+                         Ts &&...xs) {
+  os << "=" << x << separator;
+  log_arg_head(os, separator, xs...);
+}
+template <typename H, typename... Ts>
+void log_arguments(std::ostream &os, std::string &separator,
+                   std::string &prefix, H head, Ts &&...xs) {
+  os << prefix << " " << head;
+  log_arg_data(os, separator, xs...);
+  os << "\n";
+}
 /**
  * @brief Logging function
  *

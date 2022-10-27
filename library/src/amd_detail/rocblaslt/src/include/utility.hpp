@@ -1,6 +1,9 @@
 /*! \file */
-/* ************************************************************************
- * Copyright (c) 2021-2022 Advanced Micro Devices, Inc.
+/*******************************************************************************
+ *
+ * MIT License
+ *
+ * Copyright (c) 2022 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -17,10 +20,10 @@
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
  * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- * THE SOFTWARE.
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
  *
- * ************************************************************************ */
+ *******************************************************************************/
 
 #pragma once
 #ifndef UTILITY_HPP
@@ -117,6 +120,25 @@ static constexpr char rocblaslt_precision_string<int32_t>[] = "i32_r";
 template <>
 static constexpr char rocblaslt_precision_string<uint32_t>[] = "u32_r";
 
+std::string prefix(const char *layer, const char *caller);
+
+const char *hipblasDatatype_to_string(hipblasDatatype_t type);
+
+const char *rocblaslt_compute_type_to_string(rocblaslt_compute_type type);
+
+const char *rocblaslt_matmul_desc_attributes_to_string(
+    rocblaslt_matmul_desc_attributes type);
+
+const char *hipblasOperation_to_string(hipblasOperation_t op);
+
+const char *rocblaslt_layer_mode2string(rocblaslt_layer_mode layer_mode);
+
+const char *rocblaslt_epilogue_to_string(rocblaslt_epilogue epilogue);
+
+std::string rocblaslt_matrix_layout_to_string(rocblaslt_matrix_layout mat);
+
+std::string rocblaslt_matmul_desc_to_string(rocblaslt_matmul_desc matmul_desc);
+
 // Return the leftmost significant bit position
 #if defined(rocblaslt_ILP64)
 static inline rocblaslt_int rocblaslt_clz(rocblaslt_int n) {
@@ -127,6 +149,61 @@ static inline rocblaslt_int rocblaslt_clz(rocblaslt_int n) {
   return 32 - __builtin_clz(n);
 }
 #endif
+// if trace logging is turned on with
+// (handle->layer_mode & rocblaslt_layer_mode_log_trace) == true
+// then
+// log_function will call log_arguments to log function
+// arguments with a comma separator
+template <typename H, typename... Ts>
+void log_base(rocblaslt_layer_mode layer_mode, const char *func, H head,
+              Ts &&...xs) {
+  char *str_layer_mode;
+  int env_layer_mode = rocblaslt_layer_mode_none;
+  if ((str_layer_mode = getenv("HIPBLASLT_LOG_LEVEL")) == NULL) {
+    if ((str_layer_mode = getenv("HIPBLASLT_LOG_MASK")) != NULL) {
+      env_layer_mode = strtol(str_layer_mode, nullptr, 0);
+    }
+  } else {
+    switch (atoi(str_layer_mode)) {
+    case rocblaslt_layer_level_log_api:
+      env_layer_mode |= rocblaslt_layer_mode_log_api;
+    case rocblaslt_layer_level_log_info:
+      env_layer_mode |= rocblaslt_layer_mode_log_info;
+    case rocblaslt_layer_level_log_hints:
+      env_layer_mode |= rocblaslt_layer_mode_log_hints;
+    case rocblaslt_layer_level_log_trace:
+      env_layer_mode |= rocblaslt_layer_mode_log_trace;
+    case rocblaslt_layer_level_log_error:
+      env_layer_mode |= rocblaslt_layer_mode_log_error;
+      break;
+    default:
+      env_layer_mode = rocblaslt_layer_mode_none;
+      break;
+    }
+  }
+
+  if (env_layer_mode & layer_mode) {
+    std::string comma_separator = " ";
+
+    std::ostream *os = &std::cerr;
+
+    std::string prefix_str =
+        prefix(rocblaslt_layer_mode2string(layer_mode), func);
+
+    log_arguments(*os, comma_separator, prefix_str, head,
+                  std::forward<Ts>(xs)...);
+  }
+}
+
+// if trace logging is turned on with
+// (handle->layer_mode & rocblaslt_layer_mode_log_error) == true
+// then
+// log_function will call log_arguments to log function
+// arguments with a comma separator
+template <typename H, typename... Ts>
+void log_error(const char *func, H head, Ts &&...xs) {
+  log_base(rocblaslt_layer_mode_log_error, func, head, std::forward<Ts>(xs)...);
+}
 
 // if trace logging is turned on with
 // (handle->layer_mode & rocblaslt_layer_mode_log_trace) == true
@@ -134,15 +211,38 @@ static inline rocblaslt_int rocblaslt_clz(rocblaslt_int n) {
 // log_function will call log_arguments to log function
 // arguments with a comma separator
 template <typename H, typename... Ts>
-void log_trace(rocblaslt_handle handle, H head, Ts &&...xs) {
-  if (nullptr != handle) {
-    if (handle->layer_mode & rocblaslt_layer_mode_log_trace) {
-      std::string comma_separator = ",";
+void log_trace(const char *func, H head, Ts &&...xs) {
+  log_base(rocblaslt_layer_mode_log_trace, func, head, std::forward<Ts>(xs)...);
+}
 
-      std::ostream *os = handle->log_trace_os;
-      log_arguments(*os, comma_separator, head, std::forward<Ts>(xs)...);
-    }
-  }
+// if trace logging is turned on with
+// (handle->layer_mode & rocblaslt_layer_mode_log_hints) == true
+// then
+// log_function will call log_arguments to log function
+// arguments with a comma separator
+template <typename H, typename... Ts>
+void log_hints(const char *func, H head, Ts &&...xs) {
+  log_base(rocblaslt_layer_mode_log_hints, func, head, std::forward<Ts>(xs)...);
+}
+
+// if trace logging is turned on with
+// (handle->layer_mode & rocblaslt_layer_mode_log_info) == true
+// then
+// log_function will call log_arguments to log function
+// arguments with a comma separator
+template <typename H, typename... Ts>
+void log_info(const char *func, H head, Ts &&...xs) {
+  log_base(rocblaslt_layer_mode_log_info, func, head, std::forward<Ts>(xs)...);
+}
+
+// if trace logging is turned on with
+// (handle->layer_mode & rocblaslt_layer_mode_log_api) == true
+// then
+// log_function will call log_arguments to log function
+// arguments with a comma separator
+template <typename H, typename... Ts>
+void log_api(const char *func, H head, Ts &&...xs) {
+  log_base(rocblaslt_layer_mode_log_api, func, head, std::forward<Ts>(xs)...);
 }
 
 // if bench logging is turned on with
@@ -151,71 +251,23 @@ void log_trace(rocblaslt_handle handle, H head, Ts &&...xs) {
 // log_bench will call log_arguments to log a string that
 // can be input to the executable rocblaslt-bench.
 template <typename H, typename... Ts>
-void log_bench(rocblaslt_handle handle, H head, std::string precision,
-               Ts &&...xs) {
-  if (nullptr != handle) {
-    if (handle->layer_mode & rocblaslt_layer_mode_log_bench) {
-      std::string space_separator = " ";
+void log_bench(const char *func, H head, std::string precision, Ts &&...xs) {
+  // TODO
+  // if(nullptr != handle && nullptr != handle->log_bench_os)
+  //{
+  //    if(handle->log_bench)
+  //    {
+  //        std::string comma_separator = " ";
 
-      std::ostream *os = handle->log_bench_os;
-      log_arguments(*os, space_separator, head, precision,
-                    std::forward<Ts>(xs)...);
-    }
-  }
+  //        std::ostream* os = handle->log_bench_os;
+
+  //        std::string prefix_str = prefix("Bench", func);
+
+  //        log_arguments(*os, comma_separator, prefix_str, head,
+  //        std::forward<Ts>(xs)...);
+  //    }
+  //}
 }
-
-// Trace log scalar values pointed to by pointer
-template <typename T> T log_trace_scalar_value(const T *value) {
-  return value ? *value : std::numeric_limits<T>::quiet_NaN();
-}
-
-template <typename T>
-T log_trace_scalar_value(rocblaslt_handle handle, const T *value) {
-  T host;
-  if (value && handle->pointer_mode == rocblaslt_pointer_mode_device) {
-    hipMemcpy(&host, value, sizeof(host), hipMemcpyDeviceToHost);
-    value = &host;
-  }
-  return log_trace_scalar_value(value);
-}
-
-#define LOG_TRACE_SCALAR_VALUE(handle, value)                                  \
-  log_trace_scalar_value(handle, value)
-
-// Bench log scalar values pointed to by pointer
-template <typename T> T log_bench_scalar_value(const T *value) {
-  return (value ? *value : std::numeric_limits<T>::quiet_NaN());
-}
-
-template <typename T>
-T log_bench_scalar_value(rocblaslt_handle handle, const T *value) {
-  T host;
-  if (value && handle->pointer_mode == rocblaslt_pointer_mode_device) {
-    hipMemcpy(&host, value, sizeof(host), hipMemcpyDeviceToHost);
-    value = &host;
-  }
-  return log_bench_scalar_value(value);
-}
-
-#define LOG_BENCH_SCALAR_VALUE(handle, name)                                   \
-  log_bench_scalar_value(handle, name)
-
-// replaces X in string with s, d, c, z or h depending on typename T
-template <typename T> std::string replaceX(std::string input_string) {
-  if (std::is_same<T, float>::value) {
-    std::replace(input_string.begin(), input_string.end(), 'X', 's');
-  } else if (std::is_same<T, double>::value) {
-    std::replace(input_string.begin(), input_string.end(), 'X', 'd');
-  }
-  return input_string;
-}
-
-//
-// These macros can be redefined if the developer includes src/include/debug.h
-//
-#define ROCBLASLT_DEBUG_VERBOSE(msg__) (void)0
-#define ROCBLASLT_RETURN_STATUS(token__) return rocblaslt_status_##token__
-
 // Convert the current C++ exception to rocblaslt_status
 // This allows extern "C" functions to return this function in a catch(...)
 // block while converting all C++ exceptions to an equivalent rocblaslt_status
