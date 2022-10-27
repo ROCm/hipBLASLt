@@ -109,5 +109,6 @@ set(rocblaslt_source
   src/amd_detail/rocblaslt/src/status.cpp
   src/amd_detail/rocblaslt/src/rocblaslt_auxiliary.cpp
   src/amd_detail/rocblaslt/src/rocblaslt_mat.cpp
+  src/amd_detail/rocblaslt/src/utility.cpp
   ${Tensile_SRC}
 )

@@ -45,13 +45,14 @@ extern "C" {
 rocblaslt_status rocblaslt_create(rocblaslt_handle *handle) {
   // Check if handle is valid
   if (handle == nullptr) {
+    log_error(__func__, "invalid handle pointer", handle);
     return rocblaslt_status_invalid_handle;
   } else {
     *handle = nullptr;
     // Allocate
     try {
       *handle = new _rocblaslt_handle();
-      log_trace(*handle, "rocblaslt_create");
+      log_api(__func__, "handle[out]", *handle);
     } catch (const rocblaslt_status &status) {
       return status;
     }
@@ -63,7 +64,11 @@ rocblaslt_status rocblaslt_create(rocblaslt_handle *handle) {
  * \brief destroy handle
  *******************************************************************************/
 rocblaslt_status rocblaslt_destroy(const rocblaslt_handle handle) {
-  log_trace(handle, "rocblaslt_destroy");
+  if (handle == nullptr) {
+    log_error(__func__, "handle", handle);
+    return rocblaslt_status_invalid_handle;
+  }
+  log_api(__func__, "handle", handle);
   // Destruct
   try {
     delete handle;
@@ -86,6 +91,7 @@ rocblaslt_matrix_layout_create(rocblaslt_matrix_layout *matDescr,
                                uint64_t cols, int64_t ld) {
   // Check if matDescr is valid
   if (matDescr == nullptr) {
+    log_error(__func__, "invalid matDescr pointer", matDescr);
     return rocblaslt_status_invalid_pointer;
   } else {
     *matDescr = nullptr;
@@ -96,6 +102,9 @@ rocblaslt_matrix_layout_create(rocblaslt_matrix_layout *matDescr,
       (*matDescr)->n = cols;
       (*matDescr)->ld = ld;
       (*matDescr)->type = valueType;
+      log_api(__func__, "matLayout[out]", matDescr, "type",
+              hipblasDatatype_to_string(valueType), "rows", rows, "cols", cols,
+              "ld", ld);
     } catch (const rocblaslt_status &status) {
       return status;
     }
@@ -108,8 +117,11 @@ rocblaslt_matrix_layout_create(rocblaslt_matrix_layout *matDescr,
  *******************************************************************************/
 rocblaslt_status
 rocblaslt_matrix_layout_destory(const rocblaslt_matrix_layout matDescr) {
-  if (matDescr == nullptr)
+  if (matDescr == nullptr) {
+    log_error(__func__, "matDescr", matDescr);
     return rocblaslt_status_invalid_pointer;
+  }
+  log_api(__func__, "matLayout", matDescr);
   // Destruct
   try {
     delete matDescr;
@@ -128,20 +140,28 @@ rocblaslt_matmul_desc_create(rocblaslt_matmul_desc *matmulDesc,
                              hipblasDatatype_t scaleType) {
   // Check if matmulDesc is valid
   if (matmulDesc == nullptr) {
+    log_error(__func__, "invalid matmulDescr pointer", matmulDesc);
     return rocblaslt_status_invalid_pointer;
   } else {
     *matmulDesc = nullptr;
     // Allocate
     try {
-      if (computeType != rocblaslt_compute_f32)
+      if (computeType != rocblaslt_compute_f32) {
+        log_error(__func__, "invalid compute type", computeType);
         throw rocblaslt_status_invalid_value;
+      }
 
-      if (scaleType != HIPBLAS_R_32F)
+      if (scaleType != HIPBLAS_R_32F) {
+        log_error(__func__, "invalid scale type", scaleType);
         throw rocblaslt_status_invalid_value;
+      }
 
       *matmulDesc = new _rocblaslt_matmul_desc();
       (*matmulDesc)->compute_type = computeType;
       (*matmulDesc)->scale_type = scaleType;
+      log_api(__func__, "matmulDesc[out]", matmulDesc, "computeType",
+              rocblaslt_compute_type_to_string(computeType), "scaleType",
+              hipblasDatatype_to_string(scaleType));
     } catch (const rocblaslt_status &status) {
       return status;
     }
@@ -156,8 +176,10 @@ rocblaslt_matmul_desc_create(rocblaslt_matmul_desc *matmulDesc,
 rocblaslt_status
 rocblaslt_matmul_desc_destroy(const rocblaslt_matmul_desc matmulDesc) {
   if (matmulDesc == nullptr) {
+    log_error(__func__, "invalid matmulDescr pointer", matmulDesc);
     return rocblaslt_status_invalid_pointer;
   }
+  log_api(__func__, "matmulDesc", matmulDesc);
 
   // Destruct
   try {
@@ -178,10 +200,13 @@ rocblaslt_matmul_desc_set_attribute(rocblaslt_matmul_desc matmulDesc,
                                     const void *buf, size_t sizeInBytes) {
   // Check if matmulDesc is valid
   if (matmulDesc == nullptr) {
+    log_error(__func__, "invalid matmulDescr pointer", matmulDesc);
     return rocblaslt_status_invalid_handle;
   } else if (buf == nullptr) {
+    log_error(__func__, "invalid buf pointer", buf);
     return rocblaslt_status_invalid_pointer;
   } else if (sizeInBytes <= 0) {
+    log_error(__func__, "invalid buf size", sizeInBytes);
     return rocblaslt_status_invalid_value;
   } else {
     // Allocate
@@ -190,30 +215,43 @@ rocblaslt_matmul_desc_set_attribute(rocblaslt_matmul_desc matmulDesc,
       case ROCBLASLT_MATMUL_DESC_TRANSA:
         if (sizeof(int32_t) <= sizeInBytes)
           memcpy(&matmulDesc->op_A, buf, sizeof(int32_t));
-        else
+        else {
+          log_error(__func__, "invalid buf size", sizeInBytes);
           return rocblaslt_status_invalid_value;
+        }
         break;
       case ROCBLASLT_MATMUL_DESC_TRANSB:
         if (sizeof(int32_t) <= sizeInBytes)
           memcpy(&matmulDesc->op_B, buf, sizeof(int32_t));
-        else
+        else {
+          log_error(__func__, "invalid buf size", sizeInBytes);
           return rocblaslt_status_invalid_value;
+        }
         break;
       case ROCBLASLT_MATMUL_DESC_EPILOGUE:
         if (sizeof(int32_t) <= sizeInBytes)
           memcpy(&matmulDesc->epilogue, buf, sizeof(int32_t));
-        else
+        else {
+          log_error(__func__, "invalid buf size", sizeInBytes);
           return rocblaslt_status_invalid_value;
+        }
         break;
       case ROCBLASLT_MATMUL_DESC_BIAS_POINTER:
         if (sizeof(void *) <= sizeInBytes)
           memcpy(&matmulDesc->bias, buf, sizeof(void *));
-        else
+        else {
+          log_error(__func__, "invalid buf size", sizeInBytes);
           return rocblaslt_status_invalid_value;
+        }
         break;
       default:
+        log_error(__func__, "invalid attribute", matmulAttr);
         return rocblaslt_status_invalid_value;
       }
+      log_api(__func__, "matmulDesc", matmulDesc, "attr",
+              rocblaslt_matmul_desc_attributes_to_string(matmulAttr), "buf",
+              buf, "sizeInBytes", sizeInBytes, "bufData",
+              (void *)(*(uint32_t *)buf));
     } catch (const rocblaslt_status &status) {
       return status;
     }
@@ -234,39 +272,55 @@ rocblaslt_matmul_desc_get_attribute(rocblaslt_matmul_desc matmulDesc,
 {
   // Check if matmulDesc is valid
   if (matmulDesc == nullptr) {
+    log_error(__func__, "invalid matmulDescr pointer", matmulDesc);
     return rocblaslt_status_invalid_handle;
   } else if (buf == nullptr or sizeWritten == nullptr) {
+    log_error(__func__, "invalid pointer: buf", buf, "sizeWritten",
+              sizeWritten);
     return rocblaslt_status_invalid_pointer;
   } else {
     try {
       switch (matmulAttr) {
       case ROCBLASLT_MATMUL_DESC_TRANSA:
         *sizeWritten = sizeof(int32_t);
-        if (sizeInBytes < sizeof(int32_t))
+        if (sizeInBytes < sizeof(int32_t)) {
+          log_error(__func__, "invalid buf size", sizeInBytes);
           return rocblaslt_status_invalid_value;
+        }
         memcpy(buf, &matmulDesc->op_A, sizeof(int32_t));
         break;
       case ROCBLASLT_MATMUL_DESC_TRANSB:
         *sizeWritten = sizeof(int32_t);
-        if (sizeInBytes < sizeof(int32_t))
+        if (sizeInBytes < sizeof(int32_t)) {
+          log_error(__func__, "invalid buf size", sizeInBytes);
           return rocblaslt_status_invalid_value;
+        }
         memcpy(buf, &matmulDesc->op_B, sizeof(int32_t));
         break;
       case ROCBLASLT_MATMUL_DESC_EPILOGUE:
         *sizeWritten = sizeof(int32_t);
-        if (sizeInBytes < sizeof(int32_t))
+        if (sizeInBytes < sizeof(int32_t)) {
+          log_error(__func__, "invalid buf size", sizeInBytes);
           return rocblaslt_status_invalid_value;
+        }
         memcpy(buf, &matmulDesc->epilogue, sizeof(int32_t));
         break;
       case ROCBLASLT_MATMUL_DESC_BIAS_POINTER:
         *sizeWritten = sizeof(void *);
-        if (sizeInBytes < sizeof(void *))
+        if (sizeInBytes < sizeof(void *)) {
+          log_error(__func__, "invalid buf size", sizeInBytes);
           return rocblaslt_status_invalid_value;
+        }
         memcpy(buf, &matmulDesc->bias, sizeof(void *));
         break;
       default:
+        log_error(__func__, "invalid attribute", matmulAttr);
         return rocblaslt_status_invalid_value;
       }
+      log_api(__func__, "matmulDesc", matmulDesc, "attr",
+              rocblaslt_matmul_desc_attributes_to_string(matmulAttr), "buf",
+              buf, "sizeInBytes", sizeInBytes, "bufData[out]",
+              (void *)(*(uint32_t *)buf));
     } catch (const rocblaslt_status &status) {
       return status;
     }
@@ -280,10 +334,15 @@ rocblaslt_matmul_desc_get_attribute(rocblaslt_matmul_desc matmulDesc,
 rocblaslt_status
 rocblaslt_matmul_preference_create(rocblaslt_matmul_preference *pref) {
   // Check if pref is valid
+  if (pref == nullptr) {
+    log_error(__func__, "invalid pointer", pref);
+    return rocblaslt_status_invalid_handle;
+  }
   *pref = nullptr;
   // Allocate
   try {
     *pref = new _rocblaslt_matmul_preference();
+    log_api(__func__, "matmulPref[out]", *pref);
   } catch (const rocblaslt_status &status) {
     return status;
   }
@@ -296,9 +355,11 @@ rocblaslt_matmul_preference_create(rocblaslt_matmul_preference *pref) {
 rocblaslt_status
 rocblaslt_matmul_preference_destroy(const rocblaslt_matmul_preference pref) {
   if (pref == nullptr) {
+    log_error(__func__, "invalid pointer", pref);
     return rocblaslt_status_invalid_pointer;
   }
 
+  log_api(__func__, "matmulPref", pref);
   // Destruct
   try {
     delete pref;
@@ -317,18 +378,25 @@ rocblaslt_status rocblaslt_matmul_preference_set_attribute(
     size_t dataSize) {
   // Check if pref is valid
   if (data == nullptr || pref == nullptr) {
+    log_error(__func__, "invalid pointer: data", data, "pref", pref);
     return rocblaslt_status_invalid_pointer;
   } else if (dataSize <= 0) {
+    log_error(__func__, "invalid data size", dataSize);
     return rocblaslt_status_invalid_value;
   } else {
     switch (attribute) {
     case ROCBLASLT_MATMUL_PREF_SEARCH_MODE:
       pref->search_mode = *(uint32_t *)data;
+      log_api(__func__, "matmulPref", pref, "attr", attribute, "buf", data,
+              "sizeInBytes", dataSize, "data", pref->search_mode);
       break;
     case ROCBLASLT_MATMUL_PREF_MAX_WORKSPACE_BYTES:
       pref->max_workspace_bytes = *(uint64_t *)data;
+      log_api(__func__, "matmulPref", pref, "attr", attribute, "buf", data,
+              "sizeInBytes", dataSize, "data", pref->max_workspace_bytes);
       break;
     default:
+      log_error(__func__, "invalid attribute", attribute);
       return rocblaslt_status_invalid_value;
       break;
     }
@@ -347,16 +415,22 @@ rocblaslt_status rocblaslt_matmul_preference_get_attribute(
 {
   // Check if matmulDesc is valid
   if (data == nullptr || pref == nullptr) {
+    log_error(__func__, "invalid pointer: data", data, "pref", pref);
     return rocblaslt_status_invalid_pointer;
   } else if (dataSize <= 0) {
+    log_error(__func__, "invalid data size", dataSize);
     return rocblaslt_status_invalid_value;
   } else {
     switch (attribute) {
     case ROCBLASLT_MATMUL_PREF_SEARCH_MODE:
       *(uint32_t *)data = pref->search_mode;
+      log_api(__func__, "matmulPref", pref, "attr", attribute, "buf", data,
+              "sizeInBytes", dataSize, "data[out]", pref->search_mode);
       break;
     case ROCBLASLT_MATMUL_PREF_MAX_WORKSPACE_BYTES:
       *(uint64_t *)data = pref->max_workspace_bytes;
+      log_api(__func__, "matmulPref", pref, "attr", attribute, "buf", data,
+              "sizeInBytes", dataSize, "data[out]", pref->max_workspace_bytes);
       break;
     default:
       return rocblaslt_status_invalid_value;
@@ -380,16 +454,19 @@ rocblaslt_status rocblaslt_matmul_algo_get_heuristic(
   if (handle == nullptr || matmul_desc == nullptr || pref == nullptr ||
       matA == nullptr || matB == nullptr || matC == nullptr ||
       matD == nullptr) {
+    log_error(__func__, "invalid pointer");
     return rocblaslt_status_invalid_handle;
   }
 
-  if (requestedAlgoCount < 1)
+  if (requestedAlgoCount < 1) {
+    log_error(__func__, "invalid requested count", requestedAlgoCount);
     return rocblaslt_status_invalid_value;
-
+  }
   try {
     *returnAlgoCount = 1;
     heuristicResultsArray[0].algo.max_workspace_bytes =
         pref->max_workspace_bytes;
+    log_api(__func__, "returnAlogCount", *returnAlgoCount);
     heuristicResultsArray[0].state = rocblaslt_status_success;
   } catch (const rocblaslt_status &status) {
     return status;

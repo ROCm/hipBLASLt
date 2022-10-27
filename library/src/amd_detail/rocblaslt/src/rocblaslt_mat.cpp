@@ -122,22 +122,40 @@ rocblaslt_matmul(rocblaslt_handle handle, rocblaslt_matmul_desc matmul_descr,
   // Check if handle is valid
   if (handle == nullptr || matmul_descr == nullptr || matA == nullptr ||
       matB == nullptr || matC == nullptr || matD == nullptr) {
+    log_error(__func__, "invalid handle pointer");
     return rocblaslt_status_invalid_handle;
   }
 
   // Check if pointer is valid
   if (alpha == nullptr || beta == nullptr || A == nullptr || B == nullptr ||
       C == nullptr || D == nullptr) {
+    log_error(__func__, "invalid data pointer");
     return rocblaslt_status_invalid_pointer;
   }
   if (workspace == nullptr && workspaceSizeInBytes > 0) {
+    log_error(__func__, "invalid workspace pointer");
     return rocblaslt_status_invalid_pointer;
   }
 
   if (matA->type != matB->type || matA->type != matC->type ||
-      matA->type != matD->type)
+      matA->type != matD->type) {
+    log_error(__func__, "invalid  matrix datatype");
     return rocblaslt_status_type_mismatch;
+  }
 
+  log_api(__func__, "A", A, "Adesc", matA, "B", B, "Bdesc", matB, "C", C,
+          "Cdesc", matC, "D", D, "Ddesc", matD, "computeDesc", matmul_descr,
+          "algo", algo, "workSpace", workspace, "workSpaceSizeInBytes",
+          workspaceSizeInBytes, "stream", stream);
+
+  log_trace(__func__, "A", A, "Adesc", rocblaslt_matrix_layout_to_string(matA),
+            "B", B, "Bdesc", rocblaslt_matrix_layout_to_string(matB), "C", C,
+            "Cdesc", rocblaslt_matrix_layout_to_string(matC), "D", D, "Ddesc",
+            rocblaslt_matrix_layout_to_string(matD), "computeDesc",
+            rocblaslt_matmul_desc_to_string(matmul_descr), "workSpace",
+            workspace, "workSpaceSizeInBytes", workspaceSizeInBytes, "alpha",
+            *(reinterpret_cast<const float *>(alpha)), "beta",
+            *(reinterpret_cast<const float *>(beta)), "stream", stream);
   return rocblaslt_matmul_impl(
       handle, matmul_descr, A, B, C, D, matA, matB, matC, matD, alpha, beta,
       workspace, min(workspaceSizeInBytes, algo->max_workspace_bytes), stream);

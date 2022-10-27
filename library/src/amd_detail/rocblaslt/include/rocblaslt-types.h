@@ -162,10 +162,29 @@ typedef enum rocblaslt_pointer_mode_ {
  * characteristics.
  */
 typedef enum rocblaslt_layer_mode {
-  rocblaslt_layer_mode_none = 0x0,      /**< layer is not active. */
-  rocblaslt_layer_mode_log_trace = 0x1, /**< layer is in logging mode. */
-  rocblaslt_layer_mode_log_bench = 0x2  /**< layer is in benchmarking mode. */
+  rocblaslt_layer_mode_none = 0,      /**< layer is not active. */
+  rocblaslt_layer_mode_log_error = 1, /**< layer is in error mode. */
+  rocblaslt_layer_mode_log_trace = 2, /**< layer is in trace mode. */
+  rocblaslt_layer_mode_log_hints = 4, /**< layer is in hints mode. */
+  rocblaslt_layer_mode_log_info = 8,  /**< layer is in info mode. */
+  rocblaslt_layer_mode_log_api = 16,  /**< layer is in api mode. */
 } rocblaslt_layer_mode;
+
+/*! \ingroup types_module
+ *  \brief Indicates if layer is active with level.
+ *
+ *  \details
+ *  The \ref rocblaslt_layer_level number indicates the logging characteristics.
+ *  A higher log level will show logs including the lower log level.
+ */
+typedef enum rocblaslt_layer_level {
+  rocblaslt_layer_level_none = 0,      /**< layer is not active. */
+  rocblaslt_layer_level_log_error = 1, /**< layer is in error mode. */
+  rocblaslt_layer_level_log_trace = 2, /**< layer is in trace mode. */
+  rocblaslt_layer_level_log_hints = 3, /**< layer is in hints mode. */
+  rocblaslt_layer_level_log_info = 4,  /**< layer is in info mode. */
+  rocblaslt_layer_level_log_api = 5,   /**< layer is in api mode. */
+} rocblaslt_layer_level;
 
 /*! \ingroup types_module
  *  \brief List of rocblaslt status codes definition.
