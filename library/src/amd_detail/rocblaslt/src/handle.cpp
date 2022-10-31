@@ -46,33 +46,11 @@ _rocblaslt_handle::_rocblaslt_handle() {
 #else
   asic_rev = 0;
 #endif
-  // Layer mode
-  char *str_layer_mode;
-  if ((str_layer_mode = getenv("ROCBLASLT_LAYER")) == NULL) {
-    layer_mode = rocblaslt_layer_mode_none;
-  } else {
-    layer_mode = (rocblaslt_layer_mode)(atoi(str_layer_mode));
-  }
-
-  // Open log file
-  if (layer_mode & rocblaslt_layer_mode_log_trace) {
-    open_log_stream(&log_trace_os, &log_trace_ofs, "ROCBLASLT_LOG_TRACE_PATH");
-  }
 }
 
 /*******************************************************************************
  * destructor
  ******************************************************************************/
-_rocblaslt_handle::~_rocblaslt_handle() {
-  // Close log files
-  if (log_trace_ofs.is_open()) {
-    log_trace_ofs.close();
-  }
-  if (log_bench_ofs.is_open()) {
-    log_bench_ofs.close();
-  }
-}
-
 _rocblaslt_attribute::~_rocblaslt_attribute() { clear(); }
 
 void _rocblaslt_attribute::clear() { set(nullptr, 0); }

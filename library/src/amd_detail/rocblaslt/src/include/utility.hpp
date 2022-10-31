@@ -149,43 +149,16 @@ static inline rocblaslt_int rocblaslt_clz(rocblaslt_int n) {
   return 32 - __builtin_clz(n);
 }
 #endif
-// if trace logging is turned on with
-// (handle->layer_mode & rocblaslt_layer_mode_log_trace) == true
-// then
-// log_function will call log_arguments to log function
-// arguments with a comma separator
+std::ostream *get_logger_os();
+uint32_t get_logger_layer_mode();
+
 template <typename H, typename... Ts>
 void log_base(rocblaslt_layer_mode layer_mode, const char *func, H head,
               Ts &&...xs) {
-  char *str_layer_mode;
-  int env_layer_mode = rocblaslt_layer_mode_none;
-  if ((str_layer_mode = getenv("HIPBLASLT_LOG_LEVEL")) == NULL) {
-    if ((str_layer_mode = getenv("HIPBLASLT_LOG_MASK")) != NULL) {
-      env_layer_mode = strtol(str_layer_mode, nullptr, 0);
-    }
-  } else {
-    switch (atoi(str_layer_mode)) {
-    case rocblaslt_layer_level_log_api:
-      env_layer_mode |= rocblaslt_layer_mode_log_api;
-    case rocblaslt_layer_level_log_info:
-      env_layer_mode |= rocblaslt_layer_mode_log_info;
-    case rocblaslt_layer_level_log_hints:
-      env_layer_mode |= rocblaslt_layer_mode_log_hints;
-    case rocblaslt_layer_level_log_trace:
-      env_layer_mode |= rocblaslt_layer_mode_log_trace;
-    case rocblaslt_layer_level_log_error:
-      env_layer_mode |= rocblaslt_layer_mode_log_error;
-      break;
-    default:
-      env_layer_mode = rocblaslt_layer_mode_none;
-      break;
-    }
-  }
-
-  if (env_layer_mode & layer_mode) {
+  if (get_logger_layer_mode() & layer_mode) {
     std::string comma_separator = " ";
 
-    std::ostream *os = &std::cerr;
+    std::ostream *os = get_logger_os();
 
     std::string prefix_str =
         prefix(rocblaslt_layer_mode2string(layer_mode), func);
@@ -195,11 +168,6 @@ void log_base(rocblaslt_layer_mode layer_mode, const char *func, H head,
   }
 }
 
-// if trace logging is turned on with
-// (handle->layer_mode & rocblaslt_layer_mode_log_error) == true
-// then
-// log_function will call log_arguments to log function
-// arguments with a comma separator
 template <typename H, typename... Ts>
 void log_error(const char *func, H head, Ts &&...xs) {
   log_base(rocblaslt_layer_mode_log_error, func, head, std::forward<Ts>(xs)...);
@@ -244,7 +212,6 @@ template <typename H, typename... Ts>
 void log_api(const char *func, H head, Ts &&...xs) {
   log_base(rocblaslt_layer_mode_log_api, func, head, std::forward<Ts>(xs)...);
 }
-
 // if bench logging is turned on with
 // (handle->layer_mode & rocblaslt_layer_mode_log_bench) == true
 // then
