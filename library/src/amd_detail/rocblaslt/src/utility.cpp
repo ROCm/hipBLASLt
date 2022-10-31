@@ -26,6 +26,17 @@
 #include "utility.hpp"
 #include <sys/types.h>
 #include <unistd.h>
+LoggerSingleton LoggerSingleton::gInstance;
+std::ostream *get_logger_os() {
+  LoggerSingleton &s = LoggerSingleton::getInstance();
+  return s.log_os;
+}
+
+uint32_t get_logger_layer_mode() {
+  LoggerSingleton &s = LoggerSingleton::getInstance();
+  return s.env_layer_mode;
+}
+
 std::string prefix(const char *layer, const char *caller) {
   time_t now = time(0);
   tm *local = localtime(&now);

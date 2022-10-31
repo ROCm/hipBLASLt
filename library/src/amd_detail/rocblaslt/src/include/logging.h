@@ -93,6 +93,61 @@ inline void open_log_stream(std::ostream **log_os, std::ofstream *log_ofs,
   }
 }
 
+class LoggerSingleton {
+public:
+  std::ostream *log_os = nullptr;
+  uint32_t env_layer_mode = 0;
+  static LoggerSingleton &getInstance() { return gInstance; }
+
+  // copy contructor
+  LoggerSingleton(const LoggerSingleton &) = delete;
+  // assignment operator
+  LoggerSingleton &operator=(const LoggerSingleton &) = delete;
+
+private:
+  static LoggerSingleton gInstance;
+
+  // logging streams
+  std::ofstream log_file_ofs;
+
+  LoggerSingleton() {
+    // Get Layer mode
+    char *str_layer_mode;
+    if ((str_layer_mode = getenv("HIPBLASLT_LOG_LEVEL")) == NULL) {
+      if ((str_layer_mode = getenv("HIPBLASLT_LOG_MASK")) != NULL) {
+        env_layer_mode = strtol(str_layer_mode, nullptr, 0);
+      }
+    } else {
+      switch (atoi(str_layer_mode)) {
+      case rocblaslt_layer_level_log_api:
+        env_layer_mode |= rocblaslt_layer_mode_log_api;
+      case rocblaslt_layer_level_log_info:
+        env_layer_mode |= rocblaslt_layer_mode_log_info;
+      case rocblaslt_layer_level_log_hints:
+        env_layer_mode |= rocblaslt_layer_mode_log_hints;
+      case rocblaslt_layer_level_log_trace:
+        env_layer_mode |= rocblaslt_layer_mode_log_trace;
+      case rocblaslt_layer_level_log_error:
+        env_layer_mode |= rocblaslt_layer_mode_log_error;
+        break;
+      default:
+        env_layer_mode = rocblaslt_layer_mode_none;
+        break;
+      }
+    }
+
+    // Open log file
+    if (env_layer_mode != rocblaslt_layer_mode_none) {
+      open_log_stream(&log_os, &log_file_ofs, "HIPBLASLT_LOG_FILE");
+    }
+  }
+
+  ~LoggerSingleton() {
+    if (log_file_ofs.is_open()) {
+      log_file_ofs.close();
+    }
+  }
+};
 /**
  * @brief Invoke functor for each argument in variadic parameter pack.
  * @detail

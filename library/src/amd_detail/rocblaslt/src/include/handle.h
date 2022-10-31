@@ -68,7 +68,7 @@ struct _rocblaslt_handle {
   // constructor
   _rocblaslt_handle();
   // destructor
-  ~_rocblaslt_handle();
+  ~_rocblaslt_handle() = default;
 
   // device id
   int device;
@@ -81,14 +81,6 @@ struct _rocblaslt_handle {
 
   // pointer mode ; default mode is host
   rocblaslt_pointer_mode pointer_mode = rocblaslt_pointer_mode_host;
-  // logging mode
-  rocblaslt_layer_mode layer_mode;
-
-  // logging streams
-  std::ofstream log_trace_ofs;
-  std::ofstream log_bench_ofs;
-  std::ostream *log_trace_os = nullptr;
-  std::ostream *log_bench_os = nullptr;
 };
 
 /********************************************************************************
