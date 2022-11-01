@@ -50,7 +50,7 @@ int hipblaslt_dl_iterate_phdr_callback(struct dl_phdr_info *hdr_info,
                                        size_t size, void *data) {
   // uncomment to see all dependent .so files
   // fprintf(stderr, "hipblaslt so file: %s\n", hdr_info->dlpi_name);
-  if (hdr_info->dlpi_name && strstr(hdr_info->dlpi_name, "hipblaslt.")) {
+  if (hdr_info->dlpi_name && strstr(hdr_info->dlpi_name, "libhipblaslt")) {
     hipblaslt_so_path = hdr_info->dlpi_name;
   }
   return 0;
