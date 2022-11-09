@@ -653,10 +653,10 @@ void test_hipblaslt(hipblasDatatype_t in_out_datatype,
     CHECK_HIP_ERROR(hipFree(d_bias));
   CHECK_HIPBLASLT_ERROR(hipblasLtMatmulPreferenceDestroy(pref));
   CHECK_HIPBLASLT_ERROR(hipblasLtMatmulDescDestroy(matmul));
-  CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutDestory(matA));
-  CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutDestory(matB));
-  CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutDestory(matC));
-  CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutDestory(matD));
+  CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutDestroy(matA));
+  CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutDestroy(matB));
+  CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutDestroy(matC));
+  CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutDestroy(matD));
   CHECK_HIPBLASLT_ERROR(hipblasLtDestroy(handle));
 
   return;
