@@ -288,7 +288,7 @@ rocblaslt_status rocblaslt_matmul_preference_set_attribute(
 rocblaslt_status rocblaslt_matmul_preference_get_attribute(
     rocblaslt_matmul_preference pref,
     rocblaslt_matmul_preference_attributes attribute, void *data,
-    size_t dataSize);
+    size_t sizeInBytes, size_t *sizeWritten);
 
 /*! \ingroup aux_module
  *  \brief Get the specific algorithm attribute from algorithm selection

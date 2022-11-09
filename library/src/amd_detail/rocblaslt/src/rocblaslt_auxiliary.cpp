@@ -413,27 +413,28 @@ rocblaslt_status rocblaslt_matmul_preference_set_attribute(
 rocblaslt_status rocblaslt_matmul_preference_get_attribute(
     rocblaslt_matmul_preference pref,
     rocblaslt_matmul_preference_attributes attribute, void *data,
-    size_t dataSize)
-
-{
+    size_t sizeInBytes, size_t *sizeWritten) {
   // Check if matmulDesc is valid
   if (data == nullptr || pref == nullptr) {
     log_error(__func__, "invalid pointer: data", data, "pref", pref);
     return rocblaslt_status_invalid_pointer;
-  } else if (dataSize <= 0) {
-    log_error(__func__, "invalid data size", dataSize);
+  } else if (sizeInBytes <= 0) {
+    log_error(__func__, "invalid data size", sizeInBytes);
     return rocblaslt_status_invalid_value;
   } else {
     switch (attribute) {
     case ROCBLASLT_MATMUL_PREF_SEARCH_MODE:
+      *sizeWritten = sizeof(uint32_t);
       *(uint32_t *)data = pref->search_mode;
       log_api(__func__, "matmulPref", pref, "attr", attribute, "buf", data,
-              "sizeInBytes", dataSize, "data[out]", pref->search_mode);
+              "sizeInBytes", sizeInBytes, "data[out]", pref->search_mode);
       break;
     case ROCBLASLT_MATMUL_PREF_MAX_WORKSPACE_BYTES:
+      *sizeWritten = sizeof(uint64_t);
       *(uint64_t *)data = pref->max_workspace_bytes;
       log_api(__func__, "matmulPref", pref, "attr", attribute, "buf", data,
-              "sizeInBytes", dataSize, "data[out]", pref->max_workspace_bytes);
+              "sizeInBytes", sizeInBytes, "data[out]",
+              pref->max_workspace_bytes);
       break;
     default:
       return rocblaslt_status_invalid_value;
