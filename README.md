@@ -28,8 +28,7 @@ cd hipBLASLt
 #   -d|--dependencies - install build dependencies
 #   -c|--clients      - build library clients too (combines with -i & -d)
 #   -g|--debug        - build with debug flag
-#   -t|--test_local_path - build with local tensile codebase
-./install.sh -dc -t <local tensile codebase>
+./install.sh -dc
 ```
 
 #### CMake
