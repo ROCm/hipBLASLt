@@ -126,6 +126,9 @@ const char *hipblasDatatype_to_string(hipblasDatatype_t type);
 
 const char *rocblaslt_compute_type_to_string(rocblaslt_compute_type type);
 
+const char *rocblaslt_matrix_layout_attributes_to_string(
+    rocblaslt_matrix_layout_attribute_ type);
+
 const char *rocblaslt_matmul_desc_attributes_to_string(
     rocblaslt_matmul_desc_attributes type);
 

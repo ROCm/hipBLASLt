@@ -158,6 +158,27 @@ hipblasStatus_t hipblasLtMatmulDescCreate(hipblasLtMatmulDesc_t *matmulDesc,
 }
 
 hipblasStatus_t
+hipblasLtMatrixLayoutSetAttribute(hipblasLtMatrixLayout_t matLayout,
+                                  hipblasLtMatrixLayoutAttribute_t attr,
+                                  const void *buf, size_t sizeInBytes) try {
+  return RocBlasLtStatusToHIPStatus(rocblaslt_matrix_layout_set_attribute(
+      (rocblaslt_matrix_layout)matLayout,
+      (rocblaslt_matrix_layout_attribute)attr, buf, sizeInBytes));
+} catch (...) {
+  return exception_to_hipblas_status();
+}
+
+hipblasStatus_t hipblasLtMatrixLayoutGetAttribute(
+    hipblasLtMatrixLayout_t matLayout, hipblasLtMatrixLayoutAttribute_t attr,
+    void *buf, size_t sizeInBytes, size_t *sizeWritten) try {
+  return RocBlasLtStatusToHIPStatus(rocblaslt_matrix_layout_get_attribute(
+      (rocblaslt_matrix_layout)matLayout,
+      (rocblaslt_matrix_layout_attribute)attr, buf, sizeInBytes, sizeWritten));
+} catch (...) {
+  return exception_to_hipblas_status();
+}
+
+hipblasStatus_t
 hipblasLtMatmulDescDestroy(const hipblasLtMatmulDesc_t descr) try {
   return RocBlasLtStatusToHIPStatus(
       rocblaslt_matmul_desc_destroy((const rocblaslt_matmul_desc)descr));

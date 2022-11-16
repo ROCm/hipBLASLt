@@ -62,6 +62,14 @@ hipblasLtMatrixLayoutDestroy()
 ------------------------------------------
 .. doxygenfunction:: hipblasLtMatrixLayoutDestroy
 
+hipblasLtMatrixLayoutSetAttribute()
+------------------------------------------
+.. doxygenfunction:: hipblasLtMatrixLayoutSetAttribute
+
+hipblasLtMatrixLayoutGetAttribute()
+------------------------------------------
+.. doxygenfunction:: hipblasLtMatrixLayoutGetAttribute
+
 hipblasLtMatmulDescCreate()
 ------------------------------------------
 .. doxygenfunction:: hipblasLtMatmulDescCreate
@@ -69,6 +77,14 @@ hipblasLtMatmulDescCreate()
 hipblasLtMatmulDescDestroy()
 ------------------------------------------
 .. doxygenfunction:: hipblasLtMatmulDescDestroy
+
+hipblasLtMatmulDescSetAttribute()
+------------------------------------------
+.. doxygenfunction:: hipblasLtMatmulDescSetAttribute
+
+hipblasLtMatmulDescGetAttribute()
+------------------------------------------
+.. doxygenfunction:: hipblasLtMatmulDescGetAttribute
 
 hipblasLtMatmulPreferenceCreate()
 ------------------------------------------

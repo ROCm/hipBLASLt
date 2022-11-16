@@ -122,9 +122,9 @@ void print_strided_batched(const char *name, T *A, int64_t n1, int64_t n2,
                            int64_t n3, int64_t s1, int64_t s2, int64_t s3) {
   // n1, n2, n3 are matrix dimensions, sometimes called m, n, batch_count
   // s1, s1, s3 are matrix strides, sometimes called 1, lda, stride_a
-  printf("---------- %s (MxN=%ldx%ld,batch=%ld,stride0=%ld, "
-         "stride1=%ld)----------\n",
-         name, n1, n2, n3, s1, s2);
+  printf("---------- %s (MxN=%ldx%ld, batch=%ld, stride=%ld"
+         ", batch stride=%ld)----------\n",
+         name, n1, n2, n3, s2, s3);
   int max_size = 128;
 
   for (int i3 = 0; i3 < n3 && i3 < max_size; i3++) {
@@ -372,7 +372,7 @@ bool bad_argument(hipblasOperation_t trans_a, hipblasOperation_t trans_b,
     std::cerr << "ERROR: bad argument stride_c = " << stride_d << " < "
               << n * ldd << std::endl;
   }
-  if (batch_count != 1) {
+  if (batch_count == 0) {
     argument_error = true;
     std::cerr << "ERROR: bad argument batch_count = " << batch_count
               << std::endl;
@@ -412,7 +412,7 @@ void test_hipblaslt(hipblasDatatype_t in_out_datatype,
                     bool verbose, bool timing) {
   int64_t a_stride_1, a_stride_2, b_stride_1, b_stride_2;
   int64_t row_a, col_a, row_b, col_b, row_c, col_c;
-  int size_a1, size_b1, size_c1 = ldc * n;
+  int size_a1, size_b1, size_c1 = ldc * n, size_d1 = ldd * n;
   std::string trans_string;
   if (trans_a == HIPBLAS_OP_N) {
     trans_string += "N";
@@ -453,7 +453,8 @@ void test_hipblaslt(hipblasDatatype_t in_out_datatype,
       batch_count == 0 ? size_b1 : size_b1 + stride_b * (batch_count - 1);
   int size_c =
       batch_count == 0 ? size_c1 : size_c1 + stride_c * (batch_count - 1);
-  int size_d = size_c;
+  int size_d =
+      batch_count == 0 ? size_d1 : size_d1 + stride_d * (batch_count - 1);
   int size_bias = enable_bias ? m : 0;
 
   // Naming: da is in GPU (device) memory. ha is in CPU (host) memory
@@ -507,6 +508,32 @@ void test_hipblaslt(hipblasDatatype_t in_out_datatype,
       hipblasLtMatrixLayoutCreate(&matC, in_out_datatype, row_c, col_c, ldc));
   CHECK_HIPBLASLT_ERROR(
       hipblasLtMatrixLayoutCreate(&matD, in_out_datatype, row_c, col_c, ldd));
+  if (batch_count > 1) {
+    CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutSetAttribute(
+        matA, HIPBLASLT_MATRIX_LAYOUT_BATCH_COUNT, &batch_count,
+        sizeof(batch_count)));
+    CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutSetAttribute(
+        matA, HIPBLASLT_MATRIX_LAYOUT_STRIDED_BATCH_OFFSET, &stride_a,
+        sizeof(stride_a)));
+    CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutSetAttribute(
+        matB, HIPBLASLT_MATRIX_LAYOUT_BATCH_COUNT, &batch_count,
+        sizeof(batch_count)));
+    CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutSetAttribute(
+        matB, HIPBLASLT_MATRIX_LAYOUT_STRIDED_BATCH_OFFSET, &stride_b,
+        sizeof(stride_b)));
+    CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutSetAttribute(
+        matC, HIPBLASLT_MATRIX_LAYOUT_BATCH_COUNT, &batch_count,
+        sizeof(batch_count)));
+    CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutSetAttribute(
+        matC, HIPBLASLT_MATRIX_LAYOUT_STRIDED_BATCH_OFFSET, &stride_c,
+        sizeof(stride_c)));
+    CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutSetAttribute(
+        matD, HIPBLASLT_MATRIX_LAYOUT_BATCH_COUNT, &batch_count,
+        sizeof(batch_count)));
+    CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutSetAttribute(
+        matD, HIPBLASLT_MATRIX_LAYOUT_STRIDED_BATCH_OFFSET, &stride_d,
+        sizeof(stride_d)));
+  }
 
   CHECK_HIPBLASLT_ERROR(
       hipblasLtMatmulDescCreate(&matmul, HIPBLASLT_COMPUTE_F32, HIPBLAS_R_32F));
@@ -637,7 +664,7 @@ void test_hipblaslt(hipblasDatatype_t in_out_datatype,
     print_strided_batched("hc initial", &hc[0], m, n, batch_count, 1, ldc,
                           stride_c);
     if (enable_bias)
-      print_strided_batched("h_bias", &h_bias[0], m, 1, batch_count, 1, m, 0);
+      print_strided_batched("h_bias", &h_bias[0], m, 1, 1, 1, m, 0);
     print_strided_batched("hd_gold", &hd_gold[0], m, n, batch_count, 1, ldc,
                           stride_c);
     print_strided_batched("hd device", &hd[0], m, n, batch_count, 1, ldc,

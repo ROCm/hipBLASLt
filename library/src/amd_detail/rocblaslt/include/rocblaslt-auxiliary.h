@@ -110,6 +110,13 @@ rocblaslt_matrix_layout_create(rocblaslt_matrix_layout *matDescr,
 rocblaslt_status
 rocblaslt_matrix_layout_destory(const rocblaslt_matrix_layout descr);
 
+rocblaslt_status
+rocblaslt_matrix_layout_set_attribute(rocblaslt_matrix_layout matLayout,
+                                      rocblaslt_matrix_layout_attribute attr,
+                                      const void *buf, size_t sizeInBytes);
+rocblaslt_status rocblaslt_matrix_layout_get_attribute(
+    rocblaslt_matrix_layout matLayout, rocblaslt_matrix_layout_attribute attr,
+    void *buf, size_t sizeInBytes, size_t *sizeWritten);
 /*! \ingroup aux_module
  *  \brief Specify the matrix attribute of a matrix descriptor
  *

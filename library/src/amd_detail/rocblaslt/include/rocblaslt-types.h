@@ -235,11 +235,12 @@ typedef enum rocblaslt_compute_type_ {
  * rocblaslt_matrix_layout_get_attribute functions
  */
 typedef enum rocblaslt_matrix_layout_attribute_ {
-  rocblaslt_mat_num_batches = 0, /**< number of matrices in a batch. */
-  rocblaslt_mat_batch_stride =
+  ROCBLASLT_MATRIX_LAYOUT_BATCH_COUNT =
+      0, /**< number of matrices in a batch. */
+  ROCBLASLT_MATRIX_LAYOUT_STRIDED_BATCH_OFFSET =
       1, /**< stride between consecutive matrices in a batch expressed in terms
             of matrix elements. */
-  rocblaslt_mat_attribute_max = 2
+  ROCBLASLT_MATRIX_LAYOUT_MAX = 2
 } rocblaslt_matrix_layout_attribute;
 
 /*! \ingroup types_module

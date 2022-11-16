@@ -80,12 +80,11 @@ typedef enum {
 } hipblasLtComputeType_t;
 
 /*! \ingroup types_module
- *  \brief Specify the attributes that define the details of the matrix operation.
+ *  \brief Specify the attributes that define the details of the matrix.
  */
 typedef enum {
-  HIPBLASLT_MATRIX_LAYOUT_TYPE = 0,                /**<Specifies the data precision type. See \p hipblasDataType_t. Data Type: uint32_t*/
-  HIPBLASLT_MATRIX_LAYOUT_BATCH_COUNT = 1,         /**<Number of matmul operations to perform in the batch. Default value is 1. Data Type: int32_t*/
-  HIPBLASLT_MATRIX_LAYOUT_STRIDED_BATCH_OFFSET = 2 /**<Stride (in elements) to the next matrix for the strided batch operation. Default value is 0. Data Type: int64_t*/
+  HIPBLASLT_MATRIX_LAYOUT_BATCH_COUNT = 0,         /**<Number of batch of this matrix. Default value is 1. Data Type: int32_t*/
+  HIPBLASLT_MATRIX_LAYOUT_STRIDED_BATCH_OFFSET = 1 /**<Stride (in elements) to the next matrix for the strided batch operation. Default value is 0. Data Type: int64_t*/
 } hipblasLtMatrixLayoutAttribute_t;
 
 /*! \ingroup types_module
@@ -285,6 +284,71 @@ hipblasStatus_t hipblasLtMatrixLayoutCreate(hipblasLtMatrixLayout_t *matLayout,
 HIPBLASLT_EXPORT
 hipblasStatus_t
 hipblasLtMatrixLayoutDestroy(const hipblasLtMatrixLayout_t matLayout);
+
+/*! \ingroup library_module
+ *  \brief  Set attribute to a matrix descriptor
+ *
+ *  \details
+ *  This function sets the value of the specified attribute belonging to a
+ * previously created matrix descriptor.
+ *
+ *  @param[in]
+ *  matLayout  Pointer to the previously created structure holding the matrix
+ * mdescriptor queried by this function. See \ref hipblasLtMatrixLayout_t
+ * .
+ *  @param[in]
+ *  attr  	The attribute that will be set by this function. See \ref
+ * hipblasLtMatrixLayoutAttribute_t.
+ *  @param[in]
+ *  buf  The value to which the specified attribute should be set.
+ *  @param[in]
+ *  sizeInBytes Size of buf buffer (in bytes) for verification.
+ *
+ *  \retval HIPBLAS_STATUS_SUCCESS If the attribute was set successfully..
+ *  \retval HIPBLAS_STATUS_INVALID_VALUE If \p buf is NULL or \p sizeInBytes
+ * doesn't match the size of the internal storage for the selected attribute.
+ */
+HIPBLASLT_EXPORT
+hipblasStatus_t
+hipblasLtMatrixLayoutSetAttribute(hipblasLtMatrixLayout_t matLayout,
+                                  hipblasLtMatrixLayoutAttribute_t attr,
+                                  const void *buf, size_t sizeInBytes);
+
+/*! \ingroup library_module
+ *  \brief Query attribute from a matrix descriptor
+ *
+ *  \details
+ *  This function returns the value of the queried attribute belonging to a
+ * previously created matrix descriptor.
+ *
+ *  @param[in]
+ *  matLayout  Pointer to the previously created structure holding the matrix
+ * descriptor queried by this function. See \ref hipblasLtMatrixLayout_t
+ * .
+ *  @param[in]
+ *  attr  	    The attribute that will be retrieved by this function. See
+ * \ref hipblasLtMatrixLayoutAttribute_t.
+ *  @param[out]
+ *  buf         Memory address containing the attribute value retrieved by this
+ * function.
+ *  @param[in]
+ *  sizeInBytes Size of \p buf buffer (in bytes) for verification.
+ *  @param[out]
+ *  sizeWritten Valid only when the return value is HIPBLAS_STATUS_SUCCESS. If
+ * sizeInBytes is non-zero: then sizeWritten is the number of bytes actually
+ * written; if sizeInBytes is 0: then sizeWritten is the number of bytes needed
+ * to write full contents.
+ *
+ *  \retval HIPBLAS_STATUS_SUCCESS       If attribute's value was successfully
+ * written to user memory. \retval HIPBLAS_STATUS_INVALID_VALUE If \p
+ * sizeInBytes is 0 and \p sizeWritten is NULL, or if \p sizeInBytes is non-zero
+ * and \p buf is NULL, or \p sizeInBytes doesn't match size of internal storage
+ * for the selected attribute.
+ */
+HIPBLASLT_EXPORT
+hipblasStatus_t hipblasLtMatrixLayoutGetAttribute(
+    hipblasLtMatrixLayout_t matLayout, hipblasLtMatrixLayoutAttribute_t attr,
+    void *buf, size_t sizeInBytes, size_t *sizeWritten);
 
 /*! \ingroup library_module
  *  \brief Create a matrix multiply descriptor
