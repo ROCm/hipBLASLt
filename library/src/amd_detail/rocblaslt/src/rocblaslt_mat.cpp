@@ -58,32 +58,32 @@ rocblaslt_status rocblaslt_matmul_impl(
   int64_t num_rows_a = matA->m;
   int64_t num_cols_a = matA->n;
   int64_t lda = matA->ld;
-  int64_t batch_stride_a = 0;
-  int num_batches_a = 1;
+  int64_t batch_stride_a = matA->batch_stride;
+  int num_batches_a = matA->batch_count;
   hipblasDatatype_t type_a = matA->type;
 
   // matrix B
   // int64_t num_rows_b = matB->m;
   // int64_t num_cols_b = matB->n;
   int64_t ldb = matB->ld;
-  int64_t batch_stride_b = 0;
-  int num_batches_b = 1;
+  int64_t batch_stride_b = matB->batch_stride;
+  int num_batches_b = matB->batch_count;
   hipblasDatatype_t type_b = matB->type;
 
   // matrix C
   // int64_t num_rows_c = matC->m;
   // int64_t num_cols_c = matC->n;
   int64_t ldc = matC->ld;
-  int64_t batch_stride_c = 0;
-  int num_batches_c = 1;
+  int64_t batch_stride_c = matC->batch_stride;
+  int num_batches_c = matC->batch_count;
   hipblasDatatype_t type_c = matC->type;
 
   // matrix D
   int64_t num_rows_d = matD->m;
   int64_t num_cols_d = matD->n;
   int64_t ldd = matD->ld;
-  int64_t batch_stride_d = 0;
-  int num_batches_d = 1;
+  int64_t batch_stride_d = matD->batch_stride;
+  int num_batches_d = matD->batch_count;
   hipblasDatatype_t type_d = matD->type;
 
   int64_t m = num_rows_d;

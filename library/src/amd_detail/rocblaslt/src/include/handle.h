@@ -107,6 +107,8 @@ struct _rocblaslt_matrix_layout {
   int64_t ld = 0;
   // data type of the matrix
   hipblasDatatype_t type;
+  int32_t batch_count = 1;
+  int64_t batch_stride = 0;
 };
 
 /********************************************************************************

@@ -135,6 +135,108 @@ rocblaslt_matrix_layout_destory(const rocblaslt_matrix_layout matDescr) {
 }
 
 /********************************************************************************
+ * \brief sets the value of the specified attribute belonging to matrix
+ *descriptor.
+ *******************************************************************************/
+rocblaslt_status
+rocblaslt_matrix_layout_set_attribute(rocblaslt_matrix_layout matLayout,
+                                      rocblaslt_matrix_layout_attribute attr,
+                                      const void *buf, size_t sizeInBytes) {
+  // Check if matLayout is valid
+  if (matLayout == nullptr) {
+    log_error(__func__, "invalid matLayout pointer", matLayout);
+    return rocblaslt_status_invalid_handle;
+  } else if (buf == nullptr) {
+    log_error(__func__, "invalid buf pointer", buf);
+    return rocblaslt_status_invalid_pointer;
+  } else if (sizeInBytes <= 0) {
+    log_error(__func__, "invalid buf size", sizeInBytes);
+    return rocblaslt_status_invalid_value;
+  } else {
+    // Allocate
+    try {
+      switch (attr) {
+      case ROCBLASLT_MATRIX_LAYOUT_BATCH_COUNT:
+        if (sizeof(int32_t) <= sizeInBytes)
+          memcpy(&matLayout->batch_count, buf, sizeof(int32_t));
+        else {
+          log_error(__func__, "invalid buf size", sizeInBytes);
+          return rocblaslt_status_invalid_value;
+        }
+        break;
+      case ROCBLASLT_MATRIX_LAYOUT_STRIDED_BATCH_OFFSET:
+        if (sizeof(void *) <= sizeInBytes)
+          memcpy(&matLayout->batch_stride, buf, sizeof(int64_t));
+        else {
+          log_error(__func__, "invalid buf size", sizeInBytes);
+          return rocblaslt_status_invalid_value;
+        }
+        break;
+      default:
+        log_error(__func__, "invalid attribute", attr);
+        return rocblaslt_status_invalid_value;
+      }
+      log_api(__func__, "matLayout", matLayout, "attr",
+              rocblaslt_matrix_layout_attributes_to_string(attr), "buf", buf,
+              "sizeInBytes", sizeInBytes, "bufData", (void *)(*(int32_t *)buf));
+    } catch (const rocblaslt_status &status) {
+      return status;
+    }
+    return rocblaslt_status_success;
+  }
+}
+
+/********************************************************************************
+ * \brief Get the value of the specified attribute belonging to matrix
+ *descriptor such as number of batches and their stride.
+ *******************************************************************************/
+rocblaslt_status rocblaslt_matrix_layout_get_attribute(
+    rocblaslt_matrix_layout matLayout, rocblaslt_matrix_layout_attribute attr,
+    void *buf, size_t sizeInBytes, size_t *sizeWritten)
+
+{
+  if (matLayout == nullptr) {
+    log_error(__func__, "invalid matLayout pointer", matLayout);
+    return rocblaslt_status_invalid_handle;
+  } else if (buf == nullptr or sizeWritten == nullptr) {
+    log_error(__func__, "invalid pointer: buf", buf, "sizeWritten",
+              sizeWritten);
+    return rocblaslt_status_invalid_pointer;
+  } else {
+    try {
+      switch (attr) {
+      case ROCBLASLT_MATRIX_LAYOUT_BATCH_COUNT:
+        *sizeWritten = sizeof(int32_t);
+        if (sizeInBytes < sizeof(int32_t)) {
+          log_error(__func__, "invalid buf size", sizeInBytes);
+          return rocblaslt_status_invalid_value;
+        }
+        memcpy(buf, &matLayout->batch_count, sizeof(int32_t));
+        break;
+      case ROCBLASLT_MATRIX_LAYOUT_STRIDED_BATCH_OFFSET:
+        *sizeWritten = sizeof(int64_t);
+        if (sizeInBytes < sizeof(int64_t)) {
+          log_error(__func__, "invalid buf size", sizeInBytes);
+          return rocblaslt_status_invalid_value;
+        }
+        memcpy(buf, &matLayout->batch_stride, sizeof(int64_t));
+        break;
+      default:
+        log_error(__func__, "invalid attribute", attr);
+        return rocblaslt_status_invalid_value;
+      }
+      log_api(__func__, "matLayout", matLayout, "attr",
+              rocblaslt_matrix_layout_attributes_to_string(attr), "buf", buf,
+              "sizeInBytes", sizeInBytes, "bufData[out]",
+              (void *)(*(int32_t *)buf));
+    } catch (const rocblaslt_status &status) {
+      return status;
+    }
+    return rocblaslt_status_success;
+  }
+}
+
+/********************************************************************************
  * \brief
  *******************************************************************************/
 rocblaslt_status

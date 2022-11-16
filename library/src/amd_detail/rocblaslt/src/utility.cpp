@@ -72,6 +72,18 @@ const char *rocblaslt_compute_type_to_string(rocblaslt_compute_type type) {
   }
 }
 
+const char *rocblaslt_matrix_layout_attributes_to_string(
+    rocblaslt_matrix_layout_attribute_ type) {
+  switch (type) {
+  case ROCBLASLT_MATRIX_LAYOUT_BATCH_COUNT:
+    return "MATRIX_LAYOUT_BATCH_COUNT";
+  case ROCBLASLT_MATRIX_LAYOUT_STRIDED_BATCH_OFFSET:
+    return "MATRIX_LAYOUT_STRIDED_BATCH_OFFSET";
+  default:
+    return "Invalid";
+  }
+}
+
 const char *rocblaslt_matmul_desc_attributes_to_string(
     rocblaslt_matmul_desc_attributes type) {
   switch (type) {
@@ -139,10 +151,18 @@ const char *rocblaslt_epilogue_to_string(rocblaslt_epilogue epilogue) {
 }
 
 std::string rocblaslt_matrix_layout_to_string(rocblaslt_matrix_layout mat) {
-  std::string format = "[type=%s rows=%d cols=%d ld=%d]\0";
+  std::string format =
+      mat->batch_count <= 1
+          ? "[type=%s rows=%d cols=%d ld=%d]\0"
+          : "[type=%s rows=%d cols=%d ld=%d batch_count=%d batch_stride=%d]\0";
   std::unique_ptr<char[]> buf(new char[255]);
-  std::sprintf(buf.get(), format.c_str(), hipblasDatatype_to_string(mat->type),
-               mat->m, mat->n, mat->ld);
+  if (mat->batch_count <= 1)
+    std::sprintf(buf.get(), format.c_str(),
+                 hipblasDatatype_to_string(mat->type), mat->m, mat->n, mat->ld);
+  else
+    std::sprintf(buf.get(), format.c_str(),
+                 hipblasDatatype_to_string(mat->type), mat->m, mat->n, mat->ld,
+                 mat->batch_count, mat->batch_stride);
   return std::string(buf.get());
 }
 std::string rocblaslt_matmul_desc_to_string(rocblaslt_matmul_desc matmul_desc) {
