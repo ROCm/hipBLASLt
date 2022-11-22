@@ -159,7 +159,7 @@ install_packages( )
   local library_dependencies_fedora=( "gcc-gfortran" "make" "cmake" "gcc-c++" "libcxx-devel" "rpm-build" "numactl-libs" )
   local library_dependencies_sles=( "gcc-fortran" "make" "cmake" "gcc-c++" "libcxxtools9" "rpm-build" )
 
-  local client_dependencies_ubuntu=( "python3" "python3-yaml" "python3.7" "python3.7-venv")
+  local client_dependencies_ubuntu=( "python3" "python3-yaml")
   local client_dependencies_centos=( "python36" "python3-pip" )
   local client_dependencies_centos8=( "python36" "python3-pip" )
   local client_dependencies_fedora=( "python36" "PyYAML" "python3-pip" )
@@ -209,8 +209,6 @@ install_packages( )
       if [[ "${build_clients}" == true ]]; then
         install_apt_packages "${client_dependencies_ubuntu[@]}"
       fi
-      rm /usr/bin/python3
-      ln -s python3.7 /usr/bin/python3
       pip3 install wheel
       ;;
 

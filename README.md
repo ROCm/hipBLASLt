@@ -7,7 +7,9 @@ TBD
 
 ## Requirements
 * Git
-* CMake (3.5 or later)
+* CMake 3.16.8 or later
+* python3.7 or later
+* python3.7-venv or later
 * AMD [ROCm] 5.5 platform or later
 
 ## Quickstart hipBLASLt build and install
