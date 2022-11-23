@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright 2021 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright 2022 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -32,9 +32,9 @@ class FMA_I8_HPA(MAC):
     }
 
     def __call__(self, writer, m, innerUnroll):
-        kernel      = writer.kernel
+        kernel      = writer.states.kernel
         priority    = Component.Priority.find(writer)
-        spacePerReg = writer.bpr // writer.bpeAB
+        spacePerReg = writer.states.bpr // writer.states.bpeAB
         elemPerReg  = min(kernel['VectorWidth'], spacePerReg)
 
         module = Module("FMA_I8_HPA")

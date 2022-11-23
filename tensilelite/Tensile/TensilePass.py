@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright 2016-2022 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright 2022 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -19,9 +19,8 @@
 # CTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ################################################################################
 
-from .TensileInstructions import Module, SAddI32, SEndpgm
+from .TensileInstructions import Module, SAddI32, SEndpgm, fastdeepcopy
 
-from copy import deepcopy
 from dataclasses import dataclass, field
 
 #######################################
@@ -90,7 +89,7 @@ def _removeDuplicatedActivationFunctions(module):
     moduleLast = Module("AddToLast")
     for _, mlist in modFunc.items():
         if len(mlist) > 1:
-            moduleLast.add(deepcopy(mlist[0]))
+            moduleLast.add(fastdeepcopy(mlist[0]))
             labels = []
             for ml in mlist:
                 labelName = ml.items()[0].items()[0].getLabelName()

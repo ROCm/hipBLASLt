@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright 2020 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright 2022 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -33,18 +33,18 @@ class MAC_F32_Plain(MAC):
     kernel = {"ProblemType": {"DataType": DataType(DataType.single)}}
 
     def __call__(self, writer, m, innerUnroll):
-        kernel = writer.kernel
+        kernel = writer.states.kernel
 
-        if writer.asmCaps["v_fmac_f32"]:
+        if writer.states.asmCaps["v_fmac_f32"]:
             instruction = "v_fmac_f32"
-        elif writer.asmCaps["v_fma_f32"]:
+        elif writer.states.asmCaps["v_fma_f32"]:
             instruction = "v_fma_f32"
-        elif writer.asmCaps["v_mac_f32"]:
+        elif writer.states.asmCaps["v_mac_f32"]:
             instruction = "v_mac_f32"
         else:
             raise RuntimeError("FMA and MAC instructions are not supported on {}".format(kernel["ISA"]))
 
-        if not writer.asmCaps[instruction]:
+        if not writer.states.asmCaps[instruction]:
             raise RuntimeError("{} instruction specified but not supported on {}".format(instruction, kernel["ISA"]))
 
         module = Module("MAC_F32_Plain")

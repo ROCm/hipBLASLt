@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright 2021-2022 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright 2022 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -30,6 +30,7 @@ from ..TensileInstructions import Label, Module, VCC, DSModifiers, \
                                 RegisterPoolResource, staticMultiply, vectorStaticDivide, \
                                 vectorStaticRemainder, vgpr, sgpr, accvgpr, log2
 from ..Component import ShiftVectorComponents
+from ..KernelWriterModules import *
 
 class ShiftVectorComponentsMFMA(ShiftVectorComponents):
     kernel = {"EnableMatrixInstruction": True}
@@ -67,8 +68,8 @@ class ShiftVectorComponentsMFMA(ShiftVectorComponents):
         # common parameter
         regPerElem      = kernel["MIRegPerOut"]
         glvw            = tP["glvw"]
-        numThreadInWave = writer.kernel["WavefrontSize"]
-        accImOffset     = writer.AccVgprImagNumOffset(kernel)
+        numThreadInWave = writer.states.kernel["WavefrontSize"]
+        accImOffset     = accVgprImagNumOffset(kernel, writer.states.lrvwB)
         vectorWidth     = kernel["VectorWidth"] if (kernel["SourceSwap"] and tP["isA"]) else 1
 
         # use to handle MatrixInst 4x4
@@ -136,7 +137,7 @@ class ShiftVectorComponentsMFMA(ShiftVectorComponents):
             MBblockLabels.append(subMBLabels)
             VWBlockLabels.append(subVWBlockLabels)
 
-        with writer.allocTmpSgpr(writer.laneSGPRCount) as tmpSgprInfo:
+        with writer.allocTmpSgpr(writer.states.laneSGPRCount) as tmpSgprInfo:
             # wgMT value
             tmpSgpr = tmpSgprInfo.idx
             tmpVgpr = writer.vgprPool.checkOutAligned(2,2)
@@ -153,8 +154,8 @@ class ShiftVectorComponentsMFMA(ShiftVectorComponents):
             module.add(VMulI32I24(dst=vgpr(wgMT), src0=hex(-kernel[tP["mt"]]), src1=vgpr(wgMT), comment="wg*MT"))
             module.add(VAddCOU32(dst=vgpr(wgMT), dst1=VCC(), src0=sgpr("SizesFree+%u"%tP["idx"]), src1=vgpr(wgMT), comment="wgMT = Size - wg*MT"))
             module.add(VMovB32(dst=vgpr(mtReg), src=hex(kernel[tP["mt"]]), comment="MT"))
-            module.add(VCmpLtU32(dst=sgpr(tmpSgpr,writer.laneSGPRCount), src0=vgpr(wgMT), src1=vgpr(mtReg), comment="wgMT < MT"))
-            module.add(VCndMaskB32(dst=vgpr(wgMT), src0=vgpr(mtReg), src1=vgpr(wgMT), src2=sgpr(tmpSgpr,writer.laneSGPRCount), comment="wgMT = (wgMT < MT) ? wgMT : MT" ))
+            module.add(VCmpLtU32(dst=sgpr(tmpSgpr,writer.states.laneSGPRCount), src0=vgpr(wgMT), src1=vgpr(mtReg), comment="wgMT < MT"))
+            module.add(VCndMaskB32(dst=vgpr(wgMT), src0=vgpr(mtReg), src1=vgpr(wgMT), src2=sgpr(tmpSgpr,writer.states.laneSGPRCount), comment="wgMT = (wgMT < MT) ? wgMT : MT" ))
 
             # identify which wave have to process
             wReg = writer.vgprPool.checkOut(1)
@@ -163,8 +164,8 @@ class ShiftVectorComponentsMFMA(ShiftVectorComponents):
             module.add(vectorStaticRemainder(dummy, wReg, wReg, miWaveGroupCoal, tmpVgprRes, tmpSgprInfo))
             module.add(vectorStaticDivide(sReg, wgMT, MIBShapeCoal, tmpVgprRes))
             module.add(vectorStaticRemainder(dummy, sReg, sReg, miWaveGroupCoal, tmpVgprRes, tmpSgprInfo))
-            module.add(VCmpEQU32(dst=sgpr(tmpSgpr,writer.laneSGPRCount), src0=vgpr(sReg), src1=vgpr(wReg), comment="wave_id == block_belong_to_wave?" ))
-            module.add(VCndMaskB32(dst=vgpr(wgMT), src0=vgpr(mtReg), src1=vgpr(wgMT), src2=sgpr(tmpSgpr,writer.laneSGPRCount), comment="wgMT = (wgMT < MT) ? wgMT : MT" ))
+            module.add(VCmpEQU32(dst=sgpr(tmpSgpr,writer.states.laneSGPRCount), src0=vgpr(sReg), src1=vgpr(wReg), comment="wave_id == block_belong_to_wave?" ))
+            module.add(VCndMaskB32(dst=vgpr(wgMT), src0=vgpr(mtReg), src1=vgpr(wgMT), src2=sgpr(tmpSgpr,writer.states.laneSGPRCount), comment="wgMT = (wgMT < MT) ? wgMT : MT" ))
             writer.vgprPool.checkIn(mtReg)
             writer.vgprPool.checkIn(sReg)
 
@@ -212,7 +213,7 @@ class ShiftVectorComponentsMFMA(ShiftVectorComponents):
             module.add(SBranch(labelName=glvwLabels[glvw-1].getLabelName(), comment="no shifting" ))
             writer.vgprPool.checkIn(rReg)
 
-            _, arch2acc = writer.AccToArchMapper(kernel)
+            _, arch2acc = accToArchMapper(kernel, writer.states.lrvwB)
 
             # blocks for handle M_size % vector width
             for r in range(1, glvw):
@@ -247,9 +248,9 @@ class ShiftVectorComponentsMFMA(ShiftVectorComponents):
                                 VWBlockLabels[r-1][mb][vw].comment = "r%u mb%u vw%u"%(r, mb, vw)
                                 module.add(VWBlockLabels[r-1][mb][vw])
                                 module.add(SMovB32(dst=sgpr(tmpSgpr), src=(((ob*subMBShapeCoal + bm*MBShapeCoal + tt*WGShapeCoal) // glvw) + vw)))
-                                module.add(VCmpXEqU32(dst=sgpr(tmpSgpr, writer.laneSGPRCount), src0=vgpr(gbReg), src1=sgpr(tmpSgpr), comment="is thread in edge glvw region" ))
+                                module.add(VCmpXEqU32(dst=sgpr(tmpSgpr, writer.states.laneSGPRCount), src0=vgpr(gbReg), src1=sgpr(tmpSgpr), comment="is thread in edge glvw region" ))
                                 module.add(VAndB32(dst=vgpr(tmpVgpr), src0=kernel["WavefrontSize"]-1, src1=vgpr("Serial"), comment="permute register between threads"))
-                                module.add(VLShiftLeftB32(dst=vgpr(tmpVgpr), shiftHex=log2(writer.bpr), src=vgpr(tmpVgpr), comment="permute register between threads"))
+                                module.add(VLShiftLeftB32(dst=vgpr(tmpVgpr), shiftHex=log2(writer.states.bpr), src=vgpr(tmpVgpr), comment="permute register between threads"))
 
                                 for ot in range(numOutputsPrep):
                                     for c  in range(complexMultiplier):
@@ -290,8 +291,8 @@ class ShiftVectorComponentsMFMA(ShiftVectorComponents):
                                 all1mask = "0xFFFFFFFF" if (kernel["WavefrontSize"] == 32) else "0xFFFFFFFFFFFFFFFF"
                                 SMovBX = SMovB64 if kernel["WavefrontSize"] == 64 else SMovB32
                                 SOrSaveExecBX = SOrSaveExecB64 if kernel["WavefrontSize"] == 64 else SOrSaveExecB32
-                                module.add(SMovBX(dst=sgpr(tmpSgpr, writer.laneSGPRCount), src=all1mask, comment="to restore all threads active"))
-                                module.add(SOrSaveExecBX(dst=VCC(), src=sgpr(tmpSgpr,writer.laneSGPRCount), comment="all threads active"))
+                                module.add(SMovBX(dst=sgpr(tmpSgpr, writer.states.laneSGPRCount), src=all1mask, comment="to restore all threads active"))
+                                module.add(SOrSaveExecBX(dst=VCC(), src=sgpr(tmpSgpr,writer.states.laneSGPRCount), comment="all threads active"))
                                 module.add(SBranch(labelName=glvwLabels[glvw-1].getLabelName(), comment="done shifting" ))
                                 module.addSpaceLine()
 

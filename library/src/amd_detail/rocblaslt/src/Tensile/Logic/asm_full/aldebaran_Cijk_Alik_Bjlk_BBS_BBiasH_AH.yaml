@@ -14,8 +14,8 @@
   ComplexConjugateA: false
   ComplexConjugateB: false
   ComputeDataType: 0
-  DataType: 8
-  DestDataType: 8
+  DataType: 7
+  DestDataType: 7
   Fp16AltImpl: false
   HighPrecisionAccumulate: true
   Index0: 0
@@ -181,8 +181,8 @@
       ComplexConjugateA: false
       ComplexConjugateB: false
       ComputeDataType: 0
-      DataType: 8
-      DestDataType: 8
+      DataType: 7
+      DestDataType: 7
       Fp16AltImpl: false
       HighPrecisionAccumulate: true
       Index0: 0
@@ -392,8 +392,8 @@
       ComplexConjugateA: false
       ComplexConjugateB: false
       ComputeDataType: 0
-      DataType: 8
-      DestDataType: 8
+      DataType: 7
+      DestDataType: 7
       Fp16AltImpl: false
       HighPrecisionAccumulate: true
       Index0: 0

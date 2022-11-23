@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright 2021-2022 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright 2022 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -37,18 +37,18 @@ class LocalReadMFMA(LocalRead):
 
         tc               = tP["tensorChar"]
         if tc == "A":
-            lrvw = writer.lrvwA
-            writer.localReadDoCntA += 1
+            lrvw = writer.states.lrvwA
+            writer.states.localReadDoCntA += 1
         else:
-            lrvw = writer.lrvwB
-            writer.localReadDoCntB += 1
+            lrvw = writer.states.lrvwB
+            writer.states.localReadDoCntB += 1
         tile01           = tP["tile01Idx"]
         instruction      = tP["localReadInstruction"]
 
         numOffsets       = instruction.numOffsets
         blockWidth       = instruction.blockWidth
         vectorWidth      = kernel["VectorWidth"] if kernel["SourceSwap"] else 1 # TODO: nonSwap VectorWidth
-        vwB              = writer.lrvwB if kernel["allowLRVWforTLUandMI"] else 1
+        vwB              = writer.states.lrvwB if kernel["allowLRVWforTLUandMI"] else 1
         MIWaveGroupShape = [ kernel["MatrixInstM"] * kernel["MatrixInstBM"] * kernel["MIWaveGroup"][0] * vectorWidth, \
                              kernel["MatrixInstN"] * kernel["MatrixInstBN"] * kernel["MIWaveGroup"][1] * vwB]
 
@@ -69,9 +69,9 @@ class LocalReadMFMA(LocalRead):
         # fp64 TLU=1 reading 0.5element/lane/read..
         # for TLU=0 case, blockWidth and LRVW should match
         if tc == "A":
-            numReadsPerUnroll = tP["bpe"] * writer.lrvwA // int(blockWidth * 4) # bytes/register
+            numReadsPerUnroll = tP["bpe"] * writer.states.lrvwA // int(blockWidth * 4) # bytes/register
         else:
-            numReadsPerUnroll = tP["bpe"] * writer.lrvwB // int(blockWidth * 4) # bytes/register
+            numReadsPerUnroll = tP["bpe"] * writer.states.lrvwB // int(blockWidth * 4) # bytes/register
         numVgpr  = int(ceil(blockWidth))
 
         # pack register
@@ -79,8 +79,8 @@ class LocalReadMFMA(LocalRead):
         pack     = Module("pack%s_I%s"%(tc,iui))
         if needPack:
             packTimesPerVgpr = int(1/blockWidth) - 1 # 0.5->pack once (16->32) / 0.25->pack three times (8->16, 8->16, 16->32)
-            tmpVgprIdx = writer.vgprPool.checkOut(writer.numVgprValuAPerBlock*writer.numReadsIterCoalescedA*packTimesPerVgpr if tc == 'A' \
-                else writer.numVgprValuBPerBlock*writer.numReadsIterCoalescedB*packTimesPerVgpr)
+            tmpVgprIdx = writer.vgprPool.checkOut(writer.states.a.numVgprValuPerBlock*writer.states.numReadsIterCoalescedA*packTimesPerVgpr if tc == 'A' \
+                else writer.states.b.numVgprValuPerBlock*writer.states.numReadsIterCoalescedB*packTimesPerVgpr)
             pack.addTempVgpr(tmpVgprIdx) # important, add to pack Module for later CheckIn
 
         valufIdx = 0
@@ -131,7 +131,7 @@ class LocalReadMFMA(LocalRead):
                           rIdxMod = rIdx % divVal
                           rIdxDiv = rIdx // divVal
                           offset_val = (eIdx + (vIdx * numOffsets+oIdx) * MIWaveGroupShape[tile01]) * tileStride
-                          offset_val = (rIdxDiv * UnrollStride + offset_val + tP["localReadOffset"]) * tP["bpe"]  + rIdxMod * writer.bpr
+                          offset_val = (rIdxDiv * UnrollStride + offset_val + tP["localReadOffset"]) * tP["bpe"]  + rIdxMod * writer.states.bpr
                         else:
                           # normal case
                           offset_val = (eIdx + (vIdx * numOffsets+oIdx) * MIWaveGroupShape[tile01]) * tileStride

@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright 2016-2020 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright 2022 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -97,7 +97,7 @@ function(TensileCreateLibraryCmake
   set(Tensile_CREATE_COMMAND ${Tensile_CREATE_COMMAND} "--cxx-compiler=${Tensile_COMPILER}")
   set(Tensile_CREATE_COMMAND ${Tensile_CREATE_COMMAND} "--library-format=${Tensile_LIBRARY_FORMAT}")
   set(Tensile_CREATE_COMMAND ${Tensile_CREATE_COMMAND} "--jobs=${Tensile_CPU_THREADS}")
-  
+
   # TensileLibraryWriter positional arguments
   set(Tensile_CREATE_COMMAND ${Tensile_CREATE_COMMAND}
     ${Tensile_LOGIC_PATH}

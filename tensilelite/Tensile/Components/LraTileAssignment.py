@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright 2021-2022 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright 2022 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -46,14 +46,14 @@ class LraTileAssignmentMFMA(LraTileAssignment):
         # get constant parameter
         tc               = tP["tensorChar"]
         tile01           = tP["tile01Idx"]
-        waveWidth        = writer.kernel["WavefrontSize"]
-        inputPerThread   = max(writer.lrvwA,writer.lrvwB)
+        waveWidth        = writer.states.kernel["WavefrontSize"]
+        inputPerThread   = max(writer.states.lrvwA,writer.states.lrvwB)
         if kernel["DirectToVgprA"]:
           # DirectToVgprA case, ignore lrvwA
-          inputPerThread = writer.lrvwB
+          inputPerThread = writer.states.lrvwB
         elif kernel["DirectToVgprB"]:
           # DirectToVgprB case, ignore lrvwB
-          inputPerThread = writer.lrvwA
+          inputPerThread = writer.states.lrvwA
         LdsPad           = kernel["LdsPad%s" % tc] if kernel["LdsBlockSizePerPad%s" % tc] == 0 else 0
 
         # parameter for get each type index
@@ -67,7 +67,7 @@ class LraTileAssignmentMFMA(LraTileAssignment):
         dividedForWaveId = waveWidth if (tile01 == 0) else (waveWidth * kernel["MIWaveGroup"][0])
         vectorWidth      = kernel["VectorWidth"] if ((tile01 == 0) and kernel["SourceSwap"]) else 1 # TODO: nonSwap VectorWidth
         if kernel["allowLRVWforTLUandMI"]:
-          lrvw = writer.lrvwA if tP["isA"] else writer.lrvwB
+          lrvw = writer.states.lrvwA if tP["isA"] else writer.states.lrvwB
           if lrvw > 1:
             vectorWidth = lrvw
           inputPerThread = 1

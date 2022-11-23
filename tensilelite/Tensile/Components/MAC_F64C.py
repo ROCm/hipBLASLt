@@ -27,7 +27,7 @@ class FMA_F64C_Plain(MAC):
     kernel = {"ProblemType": {"DataType": DataType(DataType.complexDouble)}}
 
     def __call__(self, writer, m, innerUnroll):
-        kernel = writer.kernel
+        kernel = writer.states.kernel
         module = Module("FMA_F64C_Plain")
         module.addComment(self.commentHeader())
         priority = Component.Priority.find(writer)

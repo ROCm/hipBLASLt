@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright 2019-2020 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright 2022 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -138,21 +138,6 @@ class DataType:
             'packing': 1
         },
         {
-            'char': 'I64',
-            'name': 'int64',
-            'nameAbbrev': 'i64',
-            'miOutTypeNameAbbrev': 'NONE', # not supported for MI
-            'enum': 'Int64',
-            'reg': 1,
-            'ocl': 'ERROR',
-            'hip': 'int64_t',
-            'libType': 'TensileInt64',
-            'libEnum': 'tensileDataTypeInt64',
-            'isIntegral': True,
-            'isComplex': False,
-            'packing': 1
-        },
-        {
             'char': 'B',
             'name': 'bfloat16',
             'nameAbbrev': 'bf16',
@@ -178,6 +163,21 @@ class DataType:
             'hip': 'int8_t',
             'libType': 'TensileInt8',           # old client
             'libEnum': 'tensileDataTypeInt8',   # old client
+            'isIntegral': True,
+            'isComplex': False,
+            'packing': 1
+        },
+        {
+            'char': 'I64',
+            'name': 'int64',
+            'nameAbbrev': 'i64',
+            'miOutTypeNameAbbrev': 'NONE', # not supported for MI
+            'enum': 'Int64',
+            'reg': 1,
+            'ocl': 'ERROR',
+            'hip': 'int64_t',
+            'libType': 'TensileInt64',
+            'libEnum': 'tensileDataTypeInt64',
             'isIntegral': True,
             'isComplex': False,
             'packing': 1

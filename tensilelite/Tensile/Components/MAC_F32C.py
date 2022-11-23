@@ -26,7 +26,7 @@ class MAC_F32C_Plain(MAC):
     kernel = {"ProblemType": {"DataType": DataType(DataType.complexSingle)}}
 
     def __call__(self, writer, m, innerUnroll):
-        kernel = writer.kernel
+        kernel = writer.states.kernel
         module = Module("MAC_F32C_Plain")
         module.addComment(self.commentHeader())
         priority = Component.Priority.find(writer)

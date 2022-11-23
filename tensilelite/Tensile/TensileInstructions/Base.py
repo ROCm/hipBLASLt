@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright 2016-2020 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright 2022 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -24,8 +24,13 @@ from .Formatting import __TI_DEBUG_LEVEL__, printExit
 from dataclasses import dataclass
 from typing import Tuple
 
+import pickle
 import subprocess
 import threading
+
+def fastdeepcopy(x):
+    # Note: Some object can't be pickled
+    return pickle.loads(pickle.dumps(x))
 
 class TensileInstructions:
 

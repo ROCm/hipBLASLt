@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright 2016-2022 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright 2022 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -45,20 +45,20 @@ class StoreState:
                 # - need 0 additional vgpr per element.
                 self.numVgprsPerAddr = 0
             else:
-                self.numVgprsPerAddr = kernelWriter.rpgo if kernel["BufferStore"] else kernelWriter.rpga
+                self.numVgprsPerAddr = kernelWriter.states.rpgo if kernel["BufferStore"] else kernelWriter.states.rpga
 
             if ss.optSGPRUsage == 'BufferLoad_Mask':
                 self.numMaskSgprPerElement = 0
                 self.numMaskSgprPerBatch   = 0
-                self.numTempSgprPerBatch   = kernelWriter.laneSGPRCount
+                self.numTempSgprPerBatch   = kernelWriter.states.laneSGPRCount
             elif ss.optSGPRUsage == 'BufferLoad_Edge_Mask':
                 self.numMaskSgprPerElement = 0
-                self.numMaskSgprPerBatch   = kernelWriter.laneSGPRCount
-                self.numTempSgprPerBatch   = 2 * kernelWriter.laneSGPRCount
+                self.numMaskSgprPerBatch   = kernelWriter.states.laneSGPRCount
+                self.numTempSgprPerBatch   = 2 * kernelWriter.states.laneSGPRCount
             else:
-                self.numMaskSgprPerElement = kernelWriter.laneSGPRCount
+                self.numMaskSgprPerElement = kernelWriter.states.laneSGPRCount
                 self.numMaskSgprPerBatch   = 0
-                self.numTempSgprPerBatch   = 2 * kernelWriter.laneSGPRCount
+                self.numTempSgprPerBatch   = 2 * kernelWriter.states.laneSGPRCount
 
             if self.numMaskSgprPerElement:
                 numSgprAvailable = kernelWriter.maxSgprs - kernelWriter.sgprPool.size() + kernelWriter.sgprPool.availableBlockAtEnd()
@@ -78,15 +78,15 @@ class StoreState:
                 regsPerElement = 2 if kernel["BufferStore"] else (3 + 1) # + 1 for alignment
                 # The atomic loop processes multiple elements in single instruction
                 # so will use VGPR from consec elements? TODO
-                self.numVgprsPerDataPerVI = (1.0 * regsPerElement * kernelWriter.bpeCexternal) / kernelWriter.bpr
+                self.numVgprsPerDataPerVI = (1.0 * regsPerElement * kernelWriter.states.bpeCexternal) / kernelWriter.states.bpr
             elif beta:
-                self.numVgprsPerDataPerVI = (1.0 * kernelWriter.bpeCexternal) / kernelWriter.bpr
+                self.numVgprsPerDataPerVI = (1.0 * kernelWriter.states.bpeCexternal) / kernelWriter.states.bpr
             else:
                 self.numVgprsPerDataPerVI = 0.0
 
-            if kernelWriter.serializedStore:
+            if kernelWriter.states.serializedStore:
                 #self.numVgprPerValuC = kernel["MIRegPerOut"]
-                self.numVgprPerValuC = kernelWriter.bpeCinternal//kernelWriter.bpr # vgpr needed from register pool
+                self.numVgprPerValuC = kernelWriter.states.bpeCinternal//kernelWriter.states.bpr # vgpr needed from register pool
             else:
                 self.numVgprPerValuC = 0 # null since they are already declared in macro part of assembly kernel
 
@@ -95,7 +95,7 @@ class StoreState:
             # Really only used if gwvw=1 - edge cases
             # exception: data vgpr cannot be shared if UseInitialStridesCD is enabled and card enable EccHalf,
             #            since each buffer_load_short would overwrite undefined 16bit as zero.
-            self.halfDataRegPerVI = gwvw*self.numVgprsPerDataPerVI < 1.0 and not (kernel["ProblemType"]["UseInitialStridesCD"] and kernelWriter.archCaps["HasEccHalf"])
+            self.halfDataRegPerVI = gwvw*self.numVgprsPerDataPerVI < 1.0 and not (kernel["ProblemType"]["UseInitialStridesCD"] and kernelWriter.states.archCaps["HasEccHalf"])
 
     # StoreState constructor:
     def __init__(self, kernelWriter, kernel, gwvw, edge, beta, atomic, elements):
@@ -408,7 +408,7 @@ class StoreState:
             #print "Edge=", edge, element
             sumIdx = 0
             if kernel["LocalSplitU"] > 1:
-                sumIdx = kw.startVgprValuC + vc0 + d1*kernel["VectorWidth"]
+                sumIdx = kw.states.c.startVgprValu + vc0 + d1*kernel["VectorWidth"]
             else:
                 bestVw                  = kernel["VectorWidth"]
                 elementsLoadedPerVw     = kernel["NumThreads"] * bestVw
@@ -421,12 +421,12 @@ class StoreState:
                     alignment = self.cfg.numVgprPerValuC * self.cfg.gwvw
                     sumIdx    = kw.vgprPool.checkOutAligned(self.cfg.numVgprPerValuC*self.cfg.gwvw, alignment, "vgprValuC") // self.cfg.numVgprPerValuC
                 else:
-                    sumIdx = kw.startVgprValuC + vc0 + d0*kernel["VectorWidth"] + vc1*kernel["ThreadTile0"] + d1*kernel["VectorWidth"]*kernel["ThreadTile0"]
+                    sumIdx = kw.states.c.startVgprValu + vc0 + d0*kernel["VectorWidth"] + vc1*kernel["ThreadTile0"] + d1*kernel["VectorWidth"]*kernel["ThreadTile0"]
             self.elementSumIdx.append(sumIdx) # sumIdx is an element idx, need to div/2 for half
             self.lastCoordOffset1 = coordOffset1
 
     def checkInTempVgprC(self):
-        if self.kernelWriter.serializedStore is False:
+        if self.kernelWriter.states.serializedStore is False:
             return # early exit; currently only serializedStore==True checks out C-tile from register pool
 
         if len(self.elementSumIdx) > 0:

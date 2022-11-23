@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright 2019-2022 Advanced Micro Devices, Inc.
+ * Copyright 2022 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -1656,19 +1656,15 @@ namespace Tensile
         }
 
         template <>
-        inline std::complex<float>
-            DataInitialization::ConvertTo<std::complex<float>>(size_t i)
+        inline std::complex<float> DataInitialization::ConvertTo<std::complex<float>>(size_t i)
         {
-            return std::complex<float>(static_cast<float>(i),
-                                       static_cast<float>(i));
+            return std::complex<float>(static_cast<float>(i), static_cast<float>(i));
         }
 
         template <>
-        inline std::complex<double>
-            DataInitialization::ConvertTo<std::complex<double>>(size_t i)
+        inline std::complex<double> DataInitialization::ConvertTo<std::complex<double>>(size_t i)
         {
-            return std::complex<double>(static_cast<double>(i),
-                                        static_cast<double>(i));
+            return std::complex<double>(static_cast<double>(i), static_cast<double>(i));
         }
 
         template <>

@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright 2020 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright 2022 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -30,7 +30,7 @@ class FMA_F16_HPA_MAD_MIX(MAC):
              }
 
     def __call__(self, writer, m, innerUnroll):
-        kernel = writer.kernel
+        kernel = writer.states.kernel
 
         module = Module("FMA_F16_HPA_MAD_MIX")
         module.addComment(self.commentHeader())
@@ -38,7 +38,7 @@ class FMA_F16_HPA_MAD_MIX(MAC):
 
         vars = {}
 
-        if writer.asmCaps["v_fma_mix_f32"]:
+        if writer.states.asmCaps["v_fma_mix_f32"]:
             instruction = "v_fma_mix_f32"
         else:
             instruction = "v_mad_mix_f32"

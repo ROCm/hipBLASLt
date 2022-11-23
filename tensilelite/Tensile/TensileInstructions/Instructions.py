@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright 2016-2020 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright 2022 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -1351,7 +1351,9 @@ class SWaitCnt(CompositeInstruction):
             vscnt   = self.vscnt
             comment = self.comment
 
+        maxVmcnt = self.asmCaps["MaxVmcnt"]
         if self.archCaps["SeparateVscnt"]:
+            vmcnt = min(vmcnt, maxVmcnt)
             self.instructions = [_SWaitCnt(lgkmcnt, vmcnt, comment),
                                  _SWaitCntVscnt(vscnt, comment)]
         else:
@@ -1360,6 +1362,7 @@ class SWaitCnt(CompositeInstruction):
                 vmvscnt = vscnt
             if vmcnt != -1:
                 vmvscnt = vmcnt + (vmvscnt if vmvscnt != -1 else 0)
+            vmvscnt = min(vmvscnt, maxVmcnt)
             self.instructions = [_SWaitCnt(lgkmcnt, vmvscnt, comment)]
 
 # S Load

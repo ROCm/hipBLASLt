@@ -80,17 +80,12 @@ class GlobalWriteBatchWriter:
     self.storesIssued = 0
 
   @property
-  def useAtomicAdd(self) -> bool:
-    return self.parentWriter.asmCaps["HasAtomicAdd"] and self.kernel["ProblemType"]["ComputeDataType"].isSingle() and \
-           self.kernel["_GlobalAccumulation"] == "SingleBuffer"
-
-  @property
   def wavelen(self) -> int:
     return self.kernel["WavefrontSize"]
 
   @property
   def laneSGPRC(self) -> int:
-    return self.parentWriter.laneSGPRCount
+    return self.parentWriter.states.laneSGPRCount
 
   @property
   def tmpS01(self):
@@ -103,10 +98,6 @@ class GlobalWriteBatchWriter:
   @property
   def debugConfig(self):
     return self.parentWriter.db
-
-  @property
-  def archCaps(self):
-    return self.parentWriter.archCaps
 
   @property
   def computeDataType(self) -> DataType:
@@ -153,9 +144,9 @@ class GlobalWriteBatchWriter:
       if kernel["_GlobalAccumulation"]:
         module.add(VAddF32(dst, src0, src1, comment=comment))
       elif kernel["ProblemType"]["HighPrecisionAccumulate"]:
-        if self.parentWriter.asmCaps["v_fma_mix_f32"]:
+        if self.parentWriter.states.asmCaps["v_fma_mix_f32"]:
           module.add(VFmaMixF32(dst, src0, 1, src1, comment=comment))
-        elif self.parentWriter.asmCaps["v_mad_mix_f32"]:
+        elif self.parentWriter.states.asmCaps["v_mad_mix_f32"]:
           module.add(VMadMixF32(dst, src0, 1, src1, comment=comment))
         else:
           assert False, "No valid v_mad_mix_f32 equivalent"
@@ -194,7 +185,7 @@ class GlobalWriteBatchWriter:
     module.addComment2(commentStr)
 
     self.ss.setupStoreElementsForBatch(self.kernel, self.gwvw, self.batchElements, self.batchElementSgprs, isOptNLL=False, \
-                                  allowLRVWforTLUandMI=self.kernel["allowLRVWforTLUandMI"], lrvwB=self.parentWriter.lrvwB)
+                                  allowLRVWforTLUandMI=self.kernel["allowLRVWforTLUandMI"], lrvwB=self.parentWriter.states.lrvwB)
 
     self.loadsIssued = 0
     self.storesIssued = 0
@@ -209,7 +200,7 @@ class GlobalWriteBatchWriter:
     if self.debugConfig["ConservativeWaitCnt"] & 0x10:
       module.add(SBarrier("debug"))
       module.add(SWaitCnt(vmcnt=0, comment="ConservativeWaitCnt"))
-      if self.archCaps["SeparateVscnt"]:
+      if self.parentWriter.states.archCaps["SeparateVscnt"]:
         module.add(SWaitCnt(vscnt=0, comment="writes"))
       module.add(SBarrier("debug"))
     if not self.edge and self.debugConfig["ForceEdgeStores"] >= 2:
@@ -225,7 +216,7 @@ class GlobalWriteBatchWriter:
         for elementIdx in range(len(self.batchElements)):
           module.add(self._applyAlpha(self.kernel, self.gwvw, self.ss.elementSumIdx, elementIdx, self.tmpS01))
       else:
-          regsPerScalar = self.parentWriter.bpeCinternal // self.parentWriter.bpr # register per scalar
+          regsPerScalar = self.parentWriter.states.bpeCinternal // self.parentWriter.states.bpr # register per scalar
           for elementIdx in range(len(self.batchElements)):
             for vi in range(self.gwvw):
               module.add(replaceHolder(self.codeMulAlpha.items().pop(0), self.ss.elementSumIdx[elementIdx]*regsPerScalar + regsPerScalar*vi))
@@ -275,7 +266,7 @@ class GlobalWriteBatchWriter:
 
       module.add(addrCalc.emitLdChange(self.kernel, self.ss, 'D', self.edge, self.beta, mask, (elementIdx == len(self.batchElements) - 1), self.tmpVgpr, addrDVgpr, self.addrD))
 
-      if self.atomic and (not self.useAtomicAdd):
+      if self.atomic and (not self.parentWriter.states.useAtomicAdd):
         # load c into data+1 because of CAS structure
         # TODO - Fix for double here, would need bigger load
         # FIXME
@@ -283,7 +274,7 @@ class GlobalWriteBatchWriter:
         # iterate over number of atomic operations to perform, each of width atomicW
         for avi in range(self.gwvw // self.atomicW):
           dataV = self.ss.elementData[elementIdx] + int(avi*self.ss.cfg.numVgprsPerDataPerVI)
-          bpm = self.parentWriter.bpeCexternal * self.atomicW
+          bpm = self.parentWriter.states.bpeCexternal * self.atomicW
           useBuffer = self.kernel["BufferStore"]
           if self.kernel["BufferStore"]: # yes, BufferStore here - use same addressing regs for this load
             addr0 = vgpr(addrDVgpr)
@@ -329,14 +320,14 @@ class GlobalWriteBatchWriter:
     if self.kernel.enabledSetPrioSplitLDS:
       module.add(SSetPrior(0))
     if self.codeAccVgprRead is not None:
-      regsPerScalar = self.parentWriter.bpeCinternal // self.parentWriter.bpr # register per scalar
+      regsPerScalar = self.parentWriter.states.bpeCinternal // self.parentWriter.states.bpr # register per scalar
       # loop over store instructions within one batch
       for elementIdx in range(len(self.batchElements)):
         # loop over scalars within one store instruction
         for vi in range(self.gwvw):
           # loop over registers within one scalar
           for rIdx in range(0, regsPerScalar):
-            module.add(replaceHolder(self.codeAccVgprRead.items().pop(0), self.ss.elementSumIdx[elementIdx]*regsPerScalar + regsPerScalar*vi + rIdx - self.parentWriter.startVgprValuC))
+            module.add(replaceHolder(self.codeAccVgprRead.items().pop(0), self.ss.elementSumIdx[elementIdx]*regsPerScalar + regsPerScalar*vi + rIdx - self.parentWriter.states.c.startVgprValu))
 
       if not self.kernel["MIArchVgpr"]:
         module.add(SNop(1, "2 wait states required before reading vgpr"))
@@ -349,10 +340,10 @@ class GlobalWriteBatchWriter:
         for elementIdx in range(len(self.batchElements)):
           module.add(self._applyAlpha(self.kernel, self.gwvw, self.ss.elementSumIdx, elementIdx, self.tmpS01))
       else:
-          regsPerScalar = self.parentWriter.bpeCinternal // self.parentWriter.bpr # register per scalar
+          regsPerScalar = self.parentWriter.states.bpeCinternal // self.parentWriter.states.bpr # register per scalar
           for elementIdx in range(len(self.batchElements)):
             for vi in range(self.gwvw):
-              module.add(replaceHolder(self.codeMulAlpha.items().pop(0), self.ss.elementSumIdx[elementIdx]*regsPerScalar + regsPerScalar*vi - self.parentWriter.startVgprValuC ))
+              module.add(replaceHolder(self.codeMulAlpha.items().pop(0), self.ss.elementSumIdx[elementIdx]*regsPerScalar + regsPerScalar*vi - self.parentWriter.states.c.startVgprValu ))
 
   def _epilog(self, module: Module):
     # return registers to pool:
@@ -394,13 +385,13 @@ class GlobalWriteBatchWriter:
         module.add(storeModule)
         self.storesIssued += numNewStores
 
-    if self.parentWriter.serializedStore:
+    if self.parentWriter.states.serializedStore:
       module.add(SNop(0, "1 wait state required when next inst writes vgprs held by previous dwordx4 store inst"))
 
   def _emitAdd(self, module: Module):
     if self.atomic:
       del self.tmpVgpr # catch bugs
-      if self.useAtomicAdd:
+      if self.parentWriter.states.useAtomicAdd:
         self._emitAtomicAdd(module)
       else:
         self._emitCasAdd(module)
@@ -412,12 +403,12 @@ class GlobalWriteBatchWriter:
     # Not Atomic
     ########################################
     # edge has v_cndmask so loads or stores may not issue, hard to track vmcnt:
-    interleaveStoreVmcnt = self.parentWriter.interleaveStoreVmcnt and not self.edge
+    interleaveStoreVmcnt = self.parentWriter.states.interleaveStoreVmcnt and not self.edge
 
     for elementIdx in range(len(self.batchElements)):
       for vi in range(self.gwvw):
         sumIdxV = self.ss.elementSumIdx[elementIdx] + vi
-        newSumIdxV = sumIdxV - self.parentWriter.startVgprValuC
+        newSumIdxV = sumIdxV - self.parentWriter.states.c.startVgprValu
         # covers sgemm, gemm_ex(HHS/HSS/BBS/BSS (HPA=T)), int8 (int8x4?)
         if self.kernel["ProblemType"]["ComputeDataType"].isInt32() or \
             self.kernel["ProblemType"]["ComputeDataType"].isSingle(): # covers sgemm/gemm_ex(HHS/HSS/BBS/BSS)
@@ -431,7 +422,7 @@ class GlobalWriteBatchWriter:
 
     ########################################
     # wait for batched load
-    if self.beta and not interleaveStoreVmcnt:
+    if (self.beta or self.kernel["ProblemType"]["UseBias"]) and not interleaveStoreVmcnt:
       module.add(SWaitCnt(vmcnt=0, vscnt=0, comment="writes & wait C"))
 
     module.addComment1("apply mask, calc new C and issue writes")
@@ -513,15 +504,13 @@ class GlobalWriteBatchWriter:
           if self.beta: waitLoadCnt = elementIdx
           if self.kernel["ProblemType"]["UseBias"]: waitLoadCnt += self.biasLoadIssued[elementIdx]
           vmcnt = self.loadsIssued - waitLoadCnt - 1
-          if self.parentWriter.archCaps["SeparateVscnt"]:
+          if self.parentWriter.states.archCaps["SeparateVscnt"]:
             waitStoreCnt = 0
             vmComment = "{} = {} - {} - 1".format(vmcnt, self.loadsIssued, waitLoadCnt)
           else:
             waitStoreCnt = self.storesIssued if not self.kernel["GroupLoadStore"] else 0
             vmComment = "{} = {} - {} + {} - 1".format(vmcnt + waitStoreCnt, self.loadsIssued, waitLoadCnt, waitStoreCnt)
 
-          maxVmcnt = globalParameters["AsmCaps"][self.parentWriter.version]["MaxVmcnt"]
-          vmcnt = min(vmcnt, maxVmcnt)
           #print "wmvcnt=", vmcnt
           module.addSpaceLine()
           module.add(SWaitCnt(lgkmcnt=-1, vmcnt=vmcnt, vscnt=waitStoreCnt, comment="wait C (interleaved) " + vmComment))
@@ -532,7 +521,8 @@ class GlobalWriteBatchWriter:
         # Add bias
         mergeActFuncCall = False
         if self.kernel["ProblemType"]["UseBias"] and (self.kernel["GlobalSplitU"] == 1):
-          mergeActFuncCall = True
+          if activationCDataType == self.kernel["ProblemType"]["ComputeDataType"] and self.kernel["ActivationFuncCall"]:
+            mergeActFuncCall = True
           for vi in range(0, self.gwvw):
             numVgprs  = int(ceil(self.kernel["ProblemType"]["DataType"].numRegisters() * self.ss.cfg.gwvw))
             reg = self.kernel["ProblemType"]["DataType"].numRegisters() if self.kernel["ProblemType"]["DataType"].numRegisters() >= 1 else 1
@@ -540,8 +530,8 @@ class GlobalWriteBatchWriter:
             inputVgpr = dataBias + vi
             sumIdxV   = self.ss.elementSumIdx[elementIdx] + vi
             if self.kernel["ProblemType"]["ComputeDataType"].isSingle():
-              vgprIdx = sumIdxV - self.parentWriter.startVgprValuC
-              vgprDst = (self.activationSetPCStruct.vgprActCopy + vi) if self.kernel["ActivationFuncCall"] else "ValuC+%d"%vgprIdx
+              vgprIdx = sumIdxV - self.parentWriter.states.c.startVgprValu
+              vgprDst = (self.activationSetPCStruct.vgprActCopy + vi) if mergeActFuncCall else "ValuC+%d"%vgprIdx
               # Generate single f32 code if edge is detected.
               if ((vi + 1) == self.gwvw) and ((self.gwvw % 2) == 1):
                 if inputVgpr not in cvtDataBias:
@@ -580,16 +570,17 @@ class GlobalWriteBatchWriter:
         activationModule = None
         isActivationInsertAfter = False
         if self.kernel["ActivationFuncCall"]:
+          if (activationCDataType == self.kernel["ProblemType"]["DestDataType"]) and \
+            (activationCDataType != self.kernel["ProblemType"]["ComputeDataType"]):
+            isActivationInsertAfter = True
           activationModule = Module("ActivationFuncCall")
-          if not mergeActFuncCall:
-            for vi in range(0, self.gwvw):
-              sumIdxV = self.ss.elementSumIdx[elementIdx] + vi
-              activationModule.add(VMovB32(dst=vgpr(self.activationSetPCStruct.vgprActCopy + vi), src=vgpr(sumIdxV)))
+          if (not mergeActFuncCall) and (not isActivationInsertAfter):
+            activationModule.appendModule (copyData(activationCDataType, self.ss.elementSumIdx[elementIdx], self.gwvw, \
+              self.activationSetPCStruct.vgprActCopy))
           activationModule.add(SSwapPCB64(dst=sgpr(self.activationSetPCStruct.sgprOffsetBack, 2), \
             src=sgpr(self.activationSetPCStruct.sgprOffsetActivation, 2)))
-          for vi in range(0, self.gwvw):
-            sumIdxV = self.ss.elementSumIdx[elementIdx] + vi
-            activationModule.add(VMovB32(dst=vgpr(sumIdxV), src=vgpr(self.activationSetPCStruct.vgprActCopy + vi)))
+          activationModule.appendModule (copyData(activationCDataType, self.ss.elementSumIdx[elementIdx], self.gwvw, \
+            self.activationSetPCStruct.vgprActCopy, 1))
         elif self.parentWriter.insertActivationAfterPacked(self.kernel, activationTypeStr):
           isActivationInsertAfter = True
           activationModule = self.parentWriter.getActivationDestDataType(self.kernel, self.activation, \
@@ -606,14 +597,18 @@ class GlobalWriteBatchWriter:
         # pack stores, beta and non-beta reach here:
         packModule = Module("Empty pack module")
         if self.kernel["ProblemType"]["HighPrecisionAccumulate"] and (self.kernel["_GlobalAccumulation"] != 'MultipleBuffer'):
+          if self.kernel["ActivationFuncCall"] and activationCDataType == self.kernel["ProblemType"]["DestDataType"]:
+            destIdx = self.activationSetPCStruct.vgprActCopy
+          else:
+            destIdx = self.ss.elementSumIdx[elementIdx]
           if self.kernel["ProblemType"]["DestDataType"].isHalf():
-            packModule = self.packdata(self.gwvw, self.ss.elementSumIdx[elementIdx], inputPrefix="ValuC+", prefixOffset=self.parentWriter.startVgprValuC)
+            packModule = self.packdata(self.gwvw, destIdx, self.ss.elementSumIdx[elementIdx], inputPrefix="ValuC+", prefixOffset=self.parentWriter.states.c.startVgprValu)
           elif self.kernel["ProblemType"]["DestDataType"].isBFloat16():
-            packModule = self.packdata(self.gwvw, self.ss.elementSumIdx[elementIdx], bf16CVTVgprStruct=self.bf16CVTVgprStruct,
-                                       tmpS01=self.tmpS01, laneSGPRC=self.laneSGPRC, inputPrefix="ValuC+", prefixOffset=self.parentWriter.startVgprValuC)
+            packModule = self.packdata(self.gwvw, destIdx, self.ss.elementSumIdx[elementIdx], bf16CVTVgprStruct=self.bf16CVTVgprStruct,
+                                       tmpS01=self.tmpS01, laneSGPRC=self.laneSGPRC, inputPrefix="ValuC+", prefixOffset=self.parentWriter.states.c.startVgprValu)
           elif self.kernel["ProblemType"]["DestDataType"].isInt8():
-            packModule = self.packdata(self.gwvw, self.ss.elementSumIdx[elementIdx], self.tmpVgpr, self.tmpS01,
-                                       SaturateTypeInt8=SaturateTypeInt8, inputPrefix="ValuC+", prefixOffset=self.parentWriter.startVgprValuC)
+            packModule = self.packdata(self.gwvw, destIdx, self.ss.elementSumIdx[elementIdx], self.tmpVgpr, self.tmpS01,
+                                       SaturateTypeInt8=SaturateTypeInt8, inputPrefix="ValuC+", prefixOffset=self.parentWriter.states.c.startVgprValu)
 
         if isActivationInsertAfter:
           module.add(packModule)
@@ -631,7 +626,7 @@ class GlobalWriteBatchWriter:
           self.storesIssued += 1
 
         else:
-          rpe = self.parentWriter.bpeCinternal // self.parentWriter.bpr
+          rpe = self.parentWriter.states.bpeCinternal // self.parentWriter.states.bpr
           module.add(self.parentWriter.storeRemapAddLocalWrite(self.ss, addrCalc, sumIdx*rpe))
           # Column Block Shape has been written to LDS
           # Now read back and write out to global memory
@@ -711,7 +706,7 @@ class GlobalWriteBatchWriter:
 
       for avi in range(0, self.gwvw // self.atomicW):
         sumIdxV = self.ss.elementSumIdx[elementIdx] + avi
-        newSumIdxV = sumIdxV - self.parentWriter.startVgprValuC
+        newSumIdxV = sumIdxV - self.parentWriter.states.c.startVgprValu
         if self.parentWriter.do["GlobalWrite"]:
           if self.kernel["BufferStore"]:
             module.add(BufferAtomicAddF32(vgpr("ValuC+%u"%newSumIdxV), \
@@ -755,7 +750,7 @@ class GlobalWriteBatchWriter:
 
       # apply in-bounds exec mask
       if self.edge:
-        module.add(self.getEdgeMovInstType()(EXEC(), sgpr(mask, self.parentWriter.laneSGPRCount), "sgprs -> exec (before atomic)"))
+        module.add(self.getEdgeMovInstType()(EXEC(), sgpr(mask, self.parentWriter.states.laneSGPRCount), "sgprs -> exec (before atomic)"))
 
       for avi in range(0, self.gwvw//self.atomicW):
         dataV = self.ss.elementData[elementIdx] + int(avi*self.ss.cfg.numVgprsPerDataPerVI)
@@ -765,8 +760,8 @@ class GlobalWriteBatchWriter:
         if self.kernel["ProblemType"]["DestDataType"].numRegisters() < 1 and not self.kernel["_GlobalAccumulation"]:
           sumIdxV //= 2
         if self.kernel["ProblemType"]["DestDataType"].isDouble(): sumIdxV = sumIdxV * 2
-        newSumIdxV = sumIdxV - self.parentWriter.startVgprValuC
-        bpm = self.parentWriter.bpeCexternal * self.atomicW
+        newSumIdxV = sumIdxV - self.parentWriter.states.c.startVgprValu
+        bpm = self.parentWriter.states.bpeCexternal * self.atomicW
         # Calculate vgpr Index for 32-bit/64-bit instruction
         # DGEMM use SRCS[2] register
         vgprIdx = 1*(bpm//4)
@@ -872,7 +867,7 @@ class GlobalWriteBatchWriter:
       addr = addrCalc.addrDVgpr
       mask = self.ss.elementMask[elementIdx]
       vgprCnt = 2 if self.kernel["ProblemType"]["DestDataType"].isDouble() else 1   # number of registers for f32/f64
-      bpm = self.parentWriter.bpeCexternal * self.atomicW
+      bpm = self.parentWriter.states.bpeCexternal * self.atomicW
       vgprIdx = 1*(bpm//4)   # index register
 
       for avi in range(0, self.gwvw//self.atomicW):
@@ -883,7 +878,7 @@ class GlobalWriteBatchWriter:
           sumIdxV //= 2
         if self.kernel["ProblemType"]["DestDataType"].isDouble():
           sumIdxV =  sumIdxV * 2
-        newSumIdxV = sumIdxV - self.parentWriter.startVgprValuC
+        newSumIdxV = sumIdxV - self.parentWriter.states.c.startVgprValu
 
         # apply mask for element
         module.add(self.getEdgeMovInstType()(EXEC(), sgpr(mask,self.laneSGPRC), "must try again"))
@@ -987,12 +982,12 @@ class GlobalWriteBatchWriter:
         if kernel["ProblemType"]["ComputeDataType"].isHalf() and not kernel["ProblemType"]["HighPrecisionAccumulate"]:
           # (h,h,h,h,h,h), internal alpha is f16 (2-16bits)
           if sumIdxV%2:
-            newSumIdx = sumIdxV // 2 - self.parentWriter.startVgprValuC
+            newSumIdx = sumIdxV // 2 - self.parentWriter.states.c.startVgprValu
             module.add(VMulPKF16(dst=vgpr("ValuC+%u"%(newSumIdx)), src0=sgpr("Alpha"), src1=vgpr("ValuC+%u"%(newSumIdx)), comment="*= alpha sumIdx=%u vi=%u"%(elementSumIdx[elementIdx], vi)))
 
         # Int8 (TODO- Int8x4 not checked, but should be OK)
         elif kernel["ProblemType"]["ComputeDataType"].isInt32():
-          newSumIdx = sumIdxV - self.parentWriter.startVgprValuC
+          newSumIdx = sumIdxV - self.parentWriter.states.c.startVgprValu
           # below assume we use v_mul_lo_u32. Could also use v_mul_i32_i24.
           # module.add(VMulI32I24(dst=vgpr("ValuC+%u"%newSumIdx), src0=sgpr("Alpha"), src1=vgpr("ValuC+%u"%newSumIdx), comment="*= alpha" )_
           module.add(VMulLOU32(dst=vgpr("ValuC+%u"%newSumIdx), src0=sgpr("Alpha"), src1=vgpr("ValuC+%u"%newSumIdx), comment="*= alpha" ))
@@ -1005,7 +1000,7 @@ class GlobalWriteBatchWriter:
         # sgemm, HPA-bfgemm(b,b,b,b,s,s), and HPA-hgemm(h,h,h,h,s,s)
         # (h,h,h,h,h,h) + HPA (will be converted to (h,h,h,h,s,s)), internal alpha is single
         elif kernel["ProblemType"]["ComputeDataType"].isSingle() or (kernel["ProblemType"]["ComputeDataType"].isHalf() and kernel["ProblemType"]["HighPrecisionAccumulate"]):
-          newSumIdx = sumIdxV - self.parentWriter.startVgprValuC
+          newSumIdx = sumIdxV - self.parentWriter.states.c.startVgprValu
           module.add(VMulF32(dst=vgpr("ValuC+%u"%newSumIdx), src0=sgpr("Alpha"), src1=vgpr("ValuC+%u"%newSumIdx), comment="*= alpha" ))
           if self.parentWriter.db["ForceExpectedValue"]:
             module.add(VMovB32(dst=vgpr("ValuC+%u"%newSumIdx), src=self.parentWriter.db["ValueCExpectedValue"], comment="force expected value" ))
@@ -1017,12 +1012,12 @@ class GlobalWriteBatchWriter:
 
         # dgemm
         elif kernel["ProblemType"]["ComputeDataType"].isDouble():
-          newSumIdx = sumIdxV * 2 - self.parentWriter.startVgprValuC
+          newSumIdx = sumIdxV * 2 - self.parentWriter.states.c.startVgprValu
           module.add(VMulF64(dst=vgpr("ValuC+%u"%(newSumIdx),2), src0=sgpr("Alpha",2), src1=vgpr("ValuC+%u"%(newSumIdx),2), comment="*= alpha"))
 
         # single precision complex
         elif kernel["ProblemType"]["ComputeDataType"].isSingleComplex():
-          newSumIdx = sumIdxV * 2 - self.parentWriter.startVgprValuC
+          newSumIdx = sumIdxV * 2 - self.parentWriter.states.c.startVgprValu
           tmpVgpr = self.parentWriter.vgprPool.checkOut(1)
           module.add(VMovB32(dst=vgpr(tmpVgpr), src=vgpr("ValuC+%u"%(newSumIdx)), comment="store Cr"))
           module.add(VMulF32(dst=vgpr("ValuC+%u"%(newSumIdx)), src0=sgpr("Alpha"), src1=vgpr("ValuC+%u"%(newSumIdx)), comment="*= alpha ( Cr = Ar * Cr)"))
@@ -1033,7 +1028,7 @@ class GlobalWriteBatchWriter:
 
         # double precision complex
         elif kernel["ProblemType"]["ComputeDataType"].isDoubleComplex():
-          newSumIdx = sumIdxV * 4 - self.parentWriter.startVgprValuC
+          newSumIdx = sumIdxV * 4 - self.parentWriter.states.c.startVgprValu
           vtmp1 = self.parentWriter.vgprPool.checkOutAligned(2, 2)
           vtmp2 = self.parentWriter.vgprPool.checkOutAligned(2, 2)
           # tmp1 = a.real * b.real
@@ -1056,7 +1051,7 @@ class GlobalWriteBatchWriter:
       if kernel["ProblemType"]["DestDataType"].isHalf():
         if not kernel["ProblemType"]["HighPrecisionAccumulate"]:
           if sumIdxV%2==0 or (not ss.cfg.halfDataRegPerVI and gwvw==1):
-            newSumIdxV = sumIdxV // 2 - self.parentWriter.startVgprValuC
+            newSumIdxV = sumIdxV // 2 - self.parentWriter.states.c.startVgprValu
             # dataV+0 = new c = old c*beta
             module.add(VMulPKF16(dst=vgpr(dataV), src0=sgpr("Beta"), src1=vgpr(dataV+0), \
                 comment="%s = C*beta ei=%u vi=%u"%(vgpr(dataV),elementIdx, vi)))
@@ -1066,14 +1061,14 @@ class GlobalWriteBatchWriter:
           else:
             pass # add will have been done previously
         else: # HPA
-          newSumIdxV = sumIdxV - self.parentWriter.startVgprValuC
+          newSumIdxV = sumIdxV - self.parentWriter.states.c.startVgprValu
           # dataV+0 = new c = old c*beta + rC
           # src0 = beta = f32 = opsel 00
           # src1 = dataV = f16.lo = opsel 10 or 11 depending on even/odd
           # src2 = sumIdxV = f32 = opsel 00
           dataCExternal = ss.elementData[elementIdx] + vi//2
           hi16 = (vi + gwvw*vc0) % 2
-          module.add(self.parentWriter.mixinst(dst=vgpr("ValuC+%u"%newSumIdxV), src0=sgpr("Beta"), \
+          module.add(self.parentWriter.states.mixinst(dst=vgpr("ValuC+%u"%newSumIdxV), src0=sgpr("Beta"), \
               src1=vgpr(dataCExternal), src2=vgpr("ValuC+%u"%newSumIdxV), \
               vop3=VOP3PModifiers(op_sel=[0,hi16,0], op_sel_hi=[0,1,0]),
               comment="//C*=beta"))
@@ -1089,11 +1084,11 @@ class GlobalWriteBatchWriter:
             module.add(VAndB32(dst=vgpr(tmpVgpr), src0=vgpr(dataCExternal), src1=vgpr(bf16CVTVgprStruct.vgprBf16Mask), comment="convert bf16 to fp32"))
           else:
             module.add(VLShiftLeftB32(dst=vgpr(tmpVgpr), shiftHex=16, src=vgpr(dataCExternal), comment="convert bf16 to fp32" ))
-          newSumIdxV = sumIdxV - self.parentWriter.startVgprValuC
+          newSumIdxV = sumIdxV - self.parentWriter.states.c.startVgprValu
           module.add(VMacF32(dst=vgpr("ValuC+%u"%newSumIdxV), src0=vgpr(tmpVgpr), src1=sgpr("Beta"), \
               comment="finalSum = sum*alpha + C*beta"))
       elif kernel["ProblemType"]["DestDataType"].isSingle():
-        newSumIdxV = sumIdxV - self.parentWriter.startVgprValuC
+        newSumIdxV = sumIdxV - self.parentWriter.states.c.startVgprValu
         module.add(VMacF32(dst=vgpr("ValuC+%u"%newSumIdxV), src0=vgpr(dataV+0), src1=sgpr("Beta"), \
             comment="finalSum = sum*alpha + C*beta"))
 
@@ -1106,7 +1101,7 @@ class GlobalWriteBatchWriter:
           else:
             tmpC = dataV+0
             module.add(VAShiftRightI32(dst=vgpr(dataV+0), shiftHex=24, src=vgpr(dataV+0), comment="int8 to int32"))
-          newSumIdxV = sumIdxV - self.parentWriter.startVgprValuC
+          newSumIdxV = sumIdxV - self.parentWriter.states.c.startVgprValu
           module.add(VMulLOU32(dst=vgpr(tmpC), src0=sgpr("Beta"), src1=vgpr(tmpC), comment="C = C*beta"))
           module.add(VAddU32(dst=vgpr("ValuC+%u"%newSumIdxV), src0=vgpr(tmpC), src1=vgpr("ValuC+%u"%newSumIdxV), comment="finalSum = sum*alpha + C*beta"))
 
@@ -1115,19 +1110,19 @@ class GlobalWriteBatchWriter:
         # v_mad_i32_i24
         # module.add(VMadI32I24(dst=vgpr("ValuC+%u"%sumIdxV), src0=vgpr(dataV+0), src1=sgpr("Beta"), src2=vgpr("ValuC+%u"%sumIdxV), \
         #     comment="finalSum = sum*alpha + C*beta"))
-        newSumIdxV = sumIdxV - self.parentWriter.startVgprValuC
+        newSumIdxV = sumIdxV - self.parentWriter.states.c.startVgprValu
         module.add(VMulLOU32(dst=vgpr(dataV+0), src0=sgpr("Beta"), src1=vgpr(dataV+0), comment="C = C*beta"))
         module.add(VAddU32(dst=vgpr("ValuC+%u"%newSumIdxV), src0=vgpr(dataV+0), src1=vgpr("ValuC+%u"%newSumIdxV), comment="finalSum = sum*alpha + C*beta"))
 
       elif kernel["ProblemType"]["DestDataType"].isDouble():
-        newSumIdxV = sumIdxV * 2 - self.parentWriter.startVgprValuC
+        newSumIdxV = sumIdxV * 2 - self.parentWriter.states.c.startVgprValu
         # dataV+0 = new c = old c*beta
         module.add(VFmaF64(dst=vgpr("ValuC+%u"%(newSumIdxV),2), src0=vgpr(dataV+0,2), src1=sgpr("Beta",2), src2=vgpr("ValuC+%u"%(newSumIdxV),2), \
             comment="finalSum = sum*alpha + C*beta"))
 
       # single precision complex
       elif kernel["ProblemType"]["DestDataType"].isSingleComplex():
-        newSumIdxV = sumIdxV * 2 - self.parentWriter.startVgprValuC
+        newSumIdxV = sumIdxV * 2 - self.parentWriter.states.c.startVgprValu
         module.add(VMacF32(dst=vgpr("ValuC+%u"%(newSumIdxV)), src0=vgpr(dataV+0), src1=sgpr("Beta"), comment="finalSum Cr += old Cr * Br"))
         module.add(VMacF32(dst=vgpr("ValuC+%u"%(newSumIdxV)), src0=vgpr(dataV+1), src1=sgpr("Beta+1").getMinus(), comment="finalSum Cr += old Ci * -Bi"))
         module.add(VMacF32(dst=vgpr("ValuC+%u"%(newSumIdxV+1)), src0=vgpr(dataV+1), src1=sgpr("Beta"), comment="finalSum Ci += old Ci * Br"))
@@ -1135,9 +1130,38 @@ class GlobalWriteBatchWriter:
 
       # double precision complex
       elif kernel["ProblemType"]["DestDataType"].isDoubleComplex():
-        newSumIdxV = sumIdxV * 4 - self.parentWriter.startVgprValuC
+        newSumIdxV = sumIdxV * 4 - self.parentWriter.states.c.startVgprValu
         module.add(VFmaF64(dst=vgpr("ValuC+%u"%(newSumIdxV+0),2), src0=vgpr(dataV+0,2), src1=sgpr("Beta+0",2), src2=vgpr("ValuC+%u"%(newSumIdxV+0),2), comment="c.real += a.real * b.real"))
         module.add(VFmaF64(dst=vgpr("ValuC+%u"%(newSumIdxV+0),2), src0=vgpr(dataV+2,2), src1=sgpr("Beta+2",2), src2=vgpr("ValuC+%u"%(newSumIdxV+0),2), comment="c.real -= a.imag * b.imag"))
         module.add(VFmaF64(dst=vgpr("ValuC+%u"%(newSumIdxV+2),2), src0=vgpr(dataV+0,2), src1=sgpr("Beta+2",2), src2=vgpr("ValuC+%u"%(newSumIdxV+2),2), comment="c.imag += a.real * b.imag"))
         module.add(VFmaF64(dst=vgpr("ValuC+%u"%(newSumIdxV+2),2), src0=vgpr(dataV+2,2), src1=sgpr("Beta+0",2), src2=vgpr("ValuC+%u"%(newSumIdxV+2),2), comment="c.imag += a.imag * b.real"))
     return module
+
+def copyData(computeDataType, elementSumIdx, gwvw, vgprStart, direction=0):
+  module = Module("Copy Data")
+  for vi in range(0, gwvw):
+    sumIdxV = elementSumIdx + vi
+    if computeDataType.isHalf() or computeDataType.isBFloat16():
+      if (sumIdxV % 2 != 0):
+        continue
+      vgprIdx = elementSumIdx + vi // 2
+      module.add(VMovB32(dst=vgpr(vgprStart + (vi // 2)), src=vgpr(vgprIdx)))
+    elif computeDataType.isSingle():
+      vgprIdx = sumIdxV
+      module.add(VMovB32(dst=vgpr(vgprStart + vi), src=vgpr(vgprIdx)))
+    elif computeDataType.isDouble():
+      vgprIdx = elementSumIdx + vi * 2
+      module.add(VMovB32(dst=vgpr(vgprStart + vi * 2), src=vgpr(vgprIdx)))
+      module.add(VMovB32(dst=vgpr(vgprStart + vi * 2 + 1), src=vgpr(vgprIdx+1)))
+    elif computeDataType.isInt32():
+      vgprIdx = sumIdxV
+      module.add(VMovB32(dst=vgpr(vgprStart + vi), src=vgpr(vgprIdx)))
+    else:
+      assert 0
+
+  if direction == 1:
+    for i in module.items():
+      tmp = i.src[0]
+      i.src[0] = i.dst
+      i.dst = tmp
+  return module
