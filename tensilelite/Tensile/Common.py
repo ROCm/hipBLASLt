@@ -1260,7 +1260,8 @@ def detectGlobalCurrentISA():
           if arch in globalParameters["SupportedISA"]:
             print1("# Detected local GPU with ISA: " + getGfxName(arch))
             archList.append(arch)
-      globalParameters["CurrentISA"] = archList[globalParameters["Device"]]
+      if len(archList) > 0:
+        globalParameters["CurrentISA"] = archList[globalParameters["Device"]]
     if (process.returncode):
       printWarning("%s exited with code %u" % (globalParameters["ROCmAgentEnumeratorPath"], process.returncode))
     return process.returncode
