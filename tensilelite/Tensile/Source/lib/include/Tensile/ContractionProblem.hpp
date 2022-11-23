@@ -1,7 +1,7 @@
 /**
  * MIT License
  *
- * Copyright 2019-2022 Advanced Micro Devices, Inc. All rights reserved.
+ * Copyright 2022 Advanced Micro Devices, Inc. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -940,7 +940,7 @@ namespace Tensile
                                Alpha    _alpha,
                                Beta     _beta,
                                A const* _bias = nullptr,
-                               void*    _ws = nullptr)
+                               void*    _ws   = nullptr)
             : TypedContractionInputs(
                 _a, _b, _c, _d, nullptr, nullptr, nullptr, nullptr, _alpha, _beta){};
 

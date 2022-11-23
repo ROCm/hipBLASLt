@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright 2020 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright 2022 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -34,7 +34,7 @@ class MAC_F16_Plain(MAC):
                               "HighPrecisionAccumulate": False}}
 
     def __call__(self, writer, m, innerUnroll):
-        kernel = writer.kernel
+        kernel = writer.states.kernel
 
         module = Module("MAC_F16_Plain")
         module.addComment(self.commentHeader())
@@ -79,7 +79,7 @@ class FMA_F16_NonPacked(MAC):
                               "HighPrecisionAccumulate": False}}
 
     def __call__(self, writer, m, innerUnroll):
-        kernel = writer.kernel
+        kernel = writer.states.kernel
 
         module = Module("FMA_F16_NonPacked")
         module.addComment(self.commentHeader())
@@ -130,7 +130,7 @@ class FMA_F16_Packed(MAC):
                               "HighPrecisionAccumulate": False}}
 
     def __call__(self, writer, m, innerUnroll):
-        kernel = writer.kernel
+        kernel = writer.states.kernel
 
         module = Module("FMA_F16_Packed")
         module.addComment(self.commentHeader())

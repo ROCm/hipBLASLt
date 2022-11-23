@@ -28,7 +28,7 @@ class FMA_BF16_HPA(MAC):
                               "HighPrecisionAccumulate": True}}
 
     def __call__(self, writer, m, innerUnroll):
-        kernel = writer.kernel
+        kernel = writer.states.kernel
         module = Module("FMA_BF16_HPA")
         module.addComment(self.commentHeader())
         priority = Component.Priority.find(writer)
