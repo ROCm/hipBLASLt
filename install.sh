@@ -316,7 +316,6 @@ build_static=false
 build_release_debug=false
 build_codecoverage=false
 install_prefix=hipblaslt-install
-rocm_path=/opt/rocm
 build_relocatable=false
 build_address_sanitizer=false
 matrices_dir=
@@ -332,6 +331,11 @@ tensile_version=
 build_tensile=true
 tensile_msgpack_backend=true
 update_cmake=true
+
+rocm_path=/opt/rocm
+if ! [ -z ${ROCM_PATH+x} ]; then
+    rocm_path=${ROCM_PATH}
+fi
 
 # #################################################
 # Parameter parsing
