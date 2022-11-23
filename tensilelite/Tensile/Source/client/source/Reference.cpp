@@ -1,7 +1,7 @@
 /**
  * MIT License
  *
- * Copyright 2019-2022 Advanced Micro Devices, Inc. All rights reserved.
+ * Copyright 2022 Advanced Micro Devices, Inc. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -131,665 +131,652 @@ namespace Tensile
             return static_cast<T>(val);
         }
 
-            template <typename T>
-            typename std::enable_if<std::is_same<float, T>::value || std::is_same<Half, T>::value
-                                        || std::is_same<BFloat16, T>::value,
-                                    T>::type
-                Activation(ActivationType activationType,
-                           T              val,
-                           ActivationType activationType2,
-                           std::vector<T> args)
+        template <typename T>
+        typename std::enable_if<std::is_same<float, T>::value || std::is_same<Half, T>::value
+                                    || std::is_same<BFloat16, T>::value,
+                                T>::type
+            Activation(ActivationType activationType,
+                       T              val,
+                       ActivationType activationType2,
+                       std::vector<T> args)
+        {
+            // Only cast to float in BFloat16
+            constexpr bool needCast = std::is_same<BFloat16, T>();
+            using castT             = std::conditional_t<needCast, float, T>;
+            auto new_type
+                = activationType == ActivationType::All ? activationType2 : activationType;
+            if(new_type == ActivationType::Abs)
             {
-                // Only cast to float in BFloat16
-                constexpr bool needCast = std::is_same<BFloat16, T>();
-                using castT             = std::conditional_t<needCast, float, T>;
-                auto new_type
-                    = activationType == ActivationType::All ? activationType2 : activationType;
-                if(new_type == ActivationType::Abs)
-                {
+                return static_cast<T>(std::max(static_cast<castT>(val), -static_cast<castT>(val)));
+            }
+            else if(new_type == ActivationType::Clippedrelu)
+            {
+                if(val >= args[0])
                     return static_cast<T>(
-                        std::max(static_cast<castT>(val), -static_cast<castT>(val)));
-                }
-                else if(new_type == ActivationType::Clippedrelu)
-                {
-                    if(val >= args[0])
-                        return static_cast<T>(
-                            std::min(static_cast<castT>(val), static_cast<castT>(args[1])));
-                    return static_cast<T>(0.0);
-                }
-                else if(new_type == ActivationType::Exp)
-                {
-                    return static_cast<T>(exp(static_cast<castT>(val)));
-                }
-                else if(new_type == ActivationType::Gelu)
-                {
-                    auto castedVal = static_cast<castT>(val);
-                    auto k0        = static_cast<castT>(0.7978845608028654);
-                    auto k1        = static_cast<castT>(0.044715);
-                    // float(0.5 * x * (1 + tanh(k0 * x * (1 + k1 * x * x))));
-                    auto tmp = (static_cast<castT>(1)
-                                + multiply<castT>(k1, multiply<castT>(castedVal, castedVal)));
-                    tmp      = multiply<castT>(k0, multiply<castT>(castedVal, tmp));
-                    tmp      = static_cast<castT>(1) + static_cast<castT>(tanh(tmp));
-                    tmp      = multiply<castT>(static_cast<castT>(0.5f),
-                                          multiply<castT>(castedVal, tmp));
-                    return static_cast<T>(tmp);
-                }
-                else if(new_type == ActivationType::Leakyrelu)
-                {
-                    assert((args.size() == getAdditionalArgNum(activationType)));
-                    auto tmp = static_cast<castT>(val);
-                    tmp      = tmp > static_cast<castT>(0.f) ? tmp : multiply<castT>(tmp, args[0]);
-                    return (T)(tmp);
-                }
-                else if(new_type == ActivationType::Relu)
-                {
-                    return (T)(std::max(0.f, static_cast<float>(val)));
-                }
-                else if(new_type == ActivationType::Sigmoid)
-                {
-                    return static_cast<T>(
-                        1.f / (1.f + static_cast<castT>(exp(-static_cast<castT>(val)))));
-                }
-                else if(new_type == ActivationType::Tanh)
-                {
-                    return multiply<T>(
-                        tanh(multiply<castT>(static_cast<castT>(val), static_cast<castT>(args[0]))),
-                        static_cast<castT>(args[1]));
-                }
+                        std::min(static_cast<castT>(val), static_cast<castT>(args[1])));
+                return static_cast<T>(0.0);
+            }
+            else if(new_type == ActivationType::Exp)
+            {
+                return static_cast<T>(exp(static_cast<castT>(val)));
+            }
+            else if(new_type == ActivationType::Gelu)
+            {
+                auto castedVal = static_cast<castT>(val);
+                auto k0        = static_cast<castT>(0.7978845608028654);
+                auto k1        = static_cast<castT>(0.044715);
+                // float(0.5 * x * (1 + tanh(k0 * x * (1 + k1 * x * x))));
+                auto tmp = (static_cast<castT>(1)
+                            + multiply<castT>(k1, multiply<castT>(castedVal, castedVal)));
+                tmp      = multiply<castT>(k0, multiply<castT>(castedVal, tmp));
+                tmp      = static_cast<castT>(1) + static_cast<castT>(tanh(tmp));
+                tmp = multiply<castT>(static_cast<castT>(0.5f), multiply<castT>(castedVal, tmp));
+                return static_cast<T>(tmp);
+            }
+            else if(new_type == ActivationType::Leakyrelu)
+            {
+                assert((args.size() == getAdditionalArgNum(activationType)));
+                auto tmp = static_cast<castT>(val);
+                tmp      = tmp > static_cast<castT>(0.f) ? tmp : multiply<castT>(tmp, args[0]);
+                return (T)(tmp);
+            }
+            else if(new_type == ActivationType::Relu)
+            {
+                return (T)(std::max(0.f, static_cast<float>(val)));
+            }
+            else if(new_type == ActivationType::Sigmoid)
+            {
+                return static_cast<T>(1.f
+                                      / (1.f + static_cast<castT>(exp(-static_cast<castT>(val)))));
+            }
+            else if(new_type == ActivationType::Tanh)
+            {
+                return multiply<T>(
+                    tanh(multiply<castT>(static_cast<castT>(val), static_cast<castT>(args[0]))),
+                    static_cast<castT>(args[1]));
+            }
+            return val;
+        }
+
+        template <typename T>
+        typename std::enable_if<std::is_same<double, T>::value || std::is_same<int32_t, T>::value,
+                                T>::type
+            Activation(ActivationType activationType,
+                       T              val,
+                       ActivationType activationType2,
+                       std::vector<T> args)
+        {
+            auto new_type
+                = activationType == ActivationType::All ? activationType2 : activationType;
+            if(new_type == ActivationType::Abs)
+            {
+                return static_cast<T>(std::abs(val));
+            }
+            else if(new_type == ActivationType::Clippedrelu)
+            {
+                if(val >= args[0])
+                    return static_cast<T>(std::min(val, args[1]));
+                return static_cast<T>(0);
+            }
+            else if(new_type == ActivationType::Relu)
+            {
+                return static_cast<T>(std::max(static_cast<T>(0.0), val));
+            }
+            else if(new_type == ActivationType::Leakyrelu)
+            {
+                assert((args.size() == getAdditionalArgNum(activationType)));
+                val = val > 0 ? val : val * args[0];
                 return val;
             }
+            return val;
+        }
 
-            template <typename T>
-            typename std::enable_if<std::is_same<double, T>::value
-                                        || std::is_same<int32_t, T>::value,
-                                    T>::type
-                Activation(ActivationType activationType,
-                           T              val,
-                           ActivationType activationType2,
-                           std::vector<T> args)
+        template <typename T>
+        typename std::enable_if<!std::is_same<Half, T>::value && !std::is_same<float, T>::value
+                                    && !std::is_same<double, T>::value
+                                    && !std::is_same<BFloat16, T>::value
+                                    && !std::is_same<int32_t, T>::value,
+                                T>::type
+            Activation(ActivationType activationType,
+                       T              val,
+                       ActivationType activationType2,
+                       std::vector<T> args)
+        {
+            return val;
+        }
+
+        template <typename Inputs, typename Accumulator>
+        void ReferenceSolution<Inputs, Accumulator>::SolveCPU(ContractionProblem const& problem,
+                                                              Inputs const&             inputs,
+                                                              size_t validationStride)
+        {
+            auto const& freeIndicesA = problem.freeIndicesA();
+            auto const& freeIndicesB = problem.freeIndicesB();
+            auto const& batchIndices = problem.batchIndices();
+            auto const& boundIndices = problem.boundIndices();
+
+            auto const& a = problem.a();
+            auto const& b = problem.b();
+            auto const& c = problem.c();
+            auto const& d = problem.d();
+
+            bool aConjugate = false;
+            bool bConjugate = false;
+
+            for(auto const& op : problem.aOps())
+                if(op.type == TensorOp::Type::ComplexConjugate)
+                    aConjugate = true;
+
+            for(auto const& op : problem.bOps())
+                if(op.type == TensorOp::Type::ComplexConjugate)
+                    bConjugate = true;
+
+            std::vector<size_t> freeASize(freeIndicesA.size());
+            std::vector<size_t> freeBSize(freeIndicesB.size());
+            std::vector<size_t> batchSize(batchIndices.size());
+            std::vector<size_t> boundSize(boundIndices.size());
+
+            for(int i = 0; i < freeASize.size(); i++)
+                freeASize[i] = problem.freeSizeA(i);
+            for(int i = 0; i < freeBSize.size(); i++)
+                freeBSize[i] = problem.freeSizeB(i);
+            for(int i = 0; i < batchSize.size(); i++)
+                batchSize[i] = problem.batchSize(i);
+            for(int i = 0; i < boundSize.size(); i++)
+                boundSize[i] = problem.boundSize(i);
+
+            auto boundCount = CoordCount(boundSize.begin() + 1, boundSize.end());
+
+            if(inputs.alpha != static_cast<typename Inputs::AlphaType>(0))
             {
-                auto new_type
-                    = activationType == ActivationType::All ? activationType2 : activationType;
-                if(new_type == ActivationType::Abs)
+                if(inputs.a == nullptr || inputs.b == nullptr)
                 {
-                    return static_cast<T>(std::abs(val));
+                    std::ostringstream msg;
+                    msg << "Unsupported nullptr for";
+                    if(!inputs.a)
+                        msg << " A";
+                    if(!inputs.b)
+                        msg << " B";
+                    msg << " when Alpha !=0";
+
+                    throw std::runtime_error(msg.str());
                 }
-                else if(new_type == ActivationType::Clippedrelu)
-                {
-                    if(val >= args[0])
-                        return static_cast<T>(std::min(val, args[1]));
-                    return static_cast<T>(0);
-                }
-                else if(new_type == ActivationType::Relu)
-                {
-                    return static_cast<T>(std::max(static_cast<T>(0.0), val));
-                }
-                else if(new_type == ActivationType::Leakyrelu)
-                {
-                    assert((args.size() == getAdditionalArgNum(activationType)));
-                    val = val > 0 ? val : val * args[0];
-                    return val;
-                }
-                return val;
             }
-
-            template <typename T>
-            typename std::enable_if<!std::is_same<Half, T>::value && !std::is_same<float, T>::value
-                                        && !std::is_same<double, T>::value
-                                        && !std::is_same<BFloat16, T>::value
-                                        && !std::is_same<int32_t, T>::value,
-                                    T>::type
-                Activation(ActivationType activationType,
-                           T              val,
-                           ActivationType activationType2,
-                           std::vector<T> args)
-            {
-                return val;
-            }
-
-            template <typename Inputs, typename Accumulator>
-            void ReferenceSolution<Inputs, Accumulator>::SolveCPU(
-                ContractionProblem const& problem, Inputs const& inputs, size_t validationStride)
-            {
-                auto const& freeIndicesA = problem.freeIndicesA();
-                auto const& freeIndicesB = problem.freeIndicesB();
-                auto const& batchIndices = problem.batchIndices();
-                auto const& boundIndices = problem.boundIndices();
-
-                auto const& a = problem.a();
-                auto const& b = problem.b();
-                auto const& c = problem.c();
-                auto const& d = problem.d();
-
-                bool aConjugate = false;
-                bool bConjugate = false;
-
-                for(auto const& op : problem.aOps())
-                    if(op.type == TensorOp::Type::ComplexConjugate)
-                        aConjugate = true;
-
-                for(auto const& op : problem.bOps())
-                    if(op.type == TensorOp::Type::ComplexConjugate)
-                        bConjugate = true;
-
-                std::vector<size_t> freeASize(freeIndicesA.size());
-                std::vector<size_t> freeBSize(freeIndicesB.size());
-                std::vector<size_t> batchSize(batchIndices.size());
-                std::vector<size_t> boundSize(boundIndices.size());
-
-                for(int i = 0; i < freeASize.size(); i++)
-                    freeASize[i] = problem.freeSizeA(i);
-                for(int i = 0; i < freeBSize.size(); i++)
-                    freeBSize[i] = problem.freeSizeB(i);
-                for(int i = 0; i < batchSize.size(); i++)
-                    batchSize[i] = problem.batchSize(i);
-                for(int i = 0; i < boundSize.size(); i++)
-                    boundSize[i] = problem.boundSize(i);
-
-                auto boundCount = CoordCount(boundSize.begin() + 1, boundSize.end());
-
-                if(inputs.alpha != static_cast<typename Inputs::AlphaType>(0))
-                {
-                    if(inputs.a == nullptr || inputs.b == nullptr)
-                    {
-                        std::ostringstream msg;
-                        msg << "Unsupported nullptr for";
-                        if(!inputs.a)
-                            msg << " A";
-                        if(!inputs.b)
-                            msg << " B";
-                        msg << " when Alpha !=0";
-
-                        throw std::runtime_error(msg.str());
-                    }
-                }
 
 #pragma omp parallel for
-                for(size_t dNum = 0; dNum < d.totalLogicalElements(); dNum += validationStride)
+            for(size_t dNum = 0; dNum < d.totalLogicalElements(); dNum += validationStride)
+            {
+                std::vector<int64_t> aCoord(a.dimensions());
+                std::vector<int64_t> bCoord(b.dimensions());
+                std::vector<int64_t> cCoord(c.dimensions());
+                std::vector<int64_t> dCoord(d.dimensions());
+
+                CoordNumbered(
+                    dNum, dCoord.begin(), dCoord.end(), d.sizes().begin(), d.sizes().end());
+
+                for(size_t i = 0; i < problem.batchIndices().size(); i++)
                 {
-                    std::vector<int64_t> aCoord(a.dimensions());
-                    std::vector<int64_t> bCoord(b.dimensions());
-                    std::vector<int64_t> cCoord(c.dimensions());
-                    std::vector<int64_t> dCoord(d.dimensions());
+                    auto const& idx   = problem.batchIndices()[i];
+                    size_t      coord = dCoord[idx.d];
 
-                    CoordNumbered(
-                        dNum, dCoord.begin(), dCoord.end(), d.sizes().begin(), d.sizes().end());
+                    aCoord[idx.a] = coord;
+                    bCoord[idx.b] = coord;
+                    cCoord[idx.c] = coord;
+                }
 
-                    for(size_t i = 0; i < problem.batchIndices().size(); i++)
+                for(size_t i = 0; i < problem.freeIndices().size(); i++)
+                {
+                    auto const& idx   = problem.freeIndices()[i];
+                    size_t      coord = dCoord[idx.d];
+
+                    cCoord[idx.c] = coord;
+
+                    if(idx.isA)
+                        aCoord[idx.i] = coord;
+                    else
+                        bCoord[idx.i] = coord;
+                }
+
+                Accumulator value(0);
+
+                // Check short-circuit for alpha = 0
+                if(inputs.alpha != static_cast<typename Inputs::AlphaType>(0))
+                {
+                    for(size_t boundNum = 0; boundNum < boundCount; boundNum++)
                     {
-                        auto const& idx   = problem.batchIndices()[i];
-                        size_t      coord = dCoord[idx.d];
+                        std::vector<int64_t> bound(problem.boundIndices().size());
+                        CoordNumbered(boundNum,
+                                      bound.begin() + 1,
+                                      bound.end(),
+                                      boundSize.begin() + 1,
+                                      boundSize.end());
+                        bool aInZeroPad = false;
+                        bool bInZeroPad = false;
 
-                        aCoord[idx.a] = coord;
-                        bCoord[idx.b] = coord;
-                        cCoord[idx.c] = coord;
-                    }
-
-                    for(size_t i = 0; i < problem.freeIndices().size(); i++)
-                    {
-                        auto const& idx   = problem.freeIndices()[i];
-                        size_t      coord = dCoord[idx.d];
-
-                        cCoord[idx.c] = coord;
-
-                        if(idx.isA)
-                            aCoord[idx.i] = coord;
-                        else
-                            bCoord[idx.i] = coord;
-                    }
-
-                    Accumulator value(0);
-
-                    // Check short-circuit for alpha = 0
-                    if(inputs.alpha != static_cast<typename Inputs::AlphaType>(0))
-                    {
-                        for(size_t boundNum = 0; boundNum < boundCount; boundNum++)
+                        for(int i = 1; i < bound.size(); i++)
                         {
-                            std::vector<int64_t> bound(problem.boundIndices().size());
-                            CoordNumbered(boundNum,
-                                          bound.begin() + 1,
-                                          bound.end(),
-                                          boundSize.begin() + 1,
-                                          boundSize.end());
-                            bool aInZeroPad = false;
-                            bool bInZeroPad = false;
+                            auto const& zpA           = problem.boundIndices()[i].aZeroPad;
+                            auto const& zpB           = problem.boundIndices()[i].bZeroPad;
+                            aCoord[boundIndices[i].a] = bound[i];
+                            bCoord[boundIndices[i].b] = bound[i];
 
-                            for(int i = 1; i < bound.size(); i++)
+                            if(problem.boundIndices()[i].aMirror)
+                                aCoord[boundIndices[i].a]
+                                    = boundSize[i] - aCoord[boundIndices[i].a] - 1;
+                            if(problem.boundIndices()[i].bMirror)
+                                bCoord[boundIndices[i].b]
+                                    = boundSize[i] - bCoord[boundIndices[i].b] - 1;
+
+                            if(zpA.valid())
                             {
-                                auto const& zpA           = problem.boundIndices()[i].aZeroPad;
-                                auto const& zpB           = problem.boundIndices()[i].bZeroPad;
-                                aCoord[boundIndices[i].a] = bound[i];
-                                bCoord[boundIndices[i].b] = bound[i];
-
+                                auto sumCoord = bound.at(problem.toBoundsPos(zpA.boundIndex));
                                 if(problem.boundIndices()[i].aMirror)
-                                    aCoord[boundIndices[i].a]
-                                        = boundSize[i] - aCoord[boundIndices[i].a] - 1;
+                                    sumCoord = boundSize[i] - sumCoord - 1;
+
+                                if(inZeroPad(problem, zpA, a, aCoord, sumCoord))
+                                    aInZeroPad = true;
+                            }
+                            if(zpB.valid())
+                            {
+                                auto sumCoord = bound.at(problem.toBoundsPos(zpB.boundIndex));
                                 if(problem.boundIndices()[i].bMirror)
-                                    bCoord[boundIndices[i].b]
-                                        = boundSize[i] - bCoord[boundIndices[i].b] - 1;
-
-                                if(zpA.valid())
-                                {
-                                    auto sumCoord = bound.at(problem.toBoundsPos(zpA.boundIndex));
-                                    if(problem.boundIndices()[i].aMirror)
-                                        sumCoord = boundSize[i] - sumCoord - 1;
-
-                                    if(inZeroPad(problem, zpA, a, aCoord, sumCoord))
-                                        aInZeroPad = true;
-                                }
-                                if(zpB.valid())
-                                {
-                                    auto sumCoord = bound.at(problem.toBoundsPos(zpB.boundIndex));
-                                    if(problem.boundIndices()[i].bMirror)
-                                        sumCoord = boundSize[i] - sumCoord - 1;
-                                    if(inZeroPad(problem, zpB, b, bCoord, sumCoord))
-                                        bInZeroPad = true;
-                                }
-                            }
-
-                            size_t aIndex = a.index(aCoord);
-                            size_t bIndex = b.index(bCoord);
-                            for(int i = 1; i < bound.size(); i++)
-                            {
-                                auto const& zpA = problem.boundIndices()[i].aZeroPad;
-                                auto const& zpB = problem.boundIndices()[i].bZeroPad;
-
-                                aIndex -= zpA.padStart;
-                                bIndex -= zpB.padStart;
-                            }
-
-                            auto aStride = problem.a().strides()[boundIndices[0].a];
-                            auto bStride = problem.b().strides()[boundIndices[0].b];
-
-                            // innermost bound calculation:
-                            for(size_t i = 0; i < boundSize[0]; i++)
-                            {
-                                auto const& zpA = problem.boundIndices()[0].aZeroPad;
-                                auto const& zpB = problem.boundIndices()[0].bZeroPad;
-                                size_t      aI  = problem.boundIndices()[0].aMirror
-                                                      ? (boundSize[0] - i - 1)
-                                                      : i;
-                                size_t      bI  = problem.boundIndices()[0].bMirror
-                                                      ? (boundSize[0] - i - 1)
-                                                      : i;
-
-                                typename Inputs::AType aVal(0);
-                                typename Inputs::BType bVal(0);
-                                if(!aInZeroPad && !inZeroPad(problem, zpA, a, aCoord, aI))
-                                    aVal = Transform<typename Inputs::AType>::Input(
-                                        inputs.a[aIndex + (aI * aStride) - zpA.padStart],
-                                        aConjugate);
-                                if(!bInZeroPad && !inZeroPad(problem, zpB, b, bCoord, bI))
-                                    bVal = Transform<typename Inputs::BType>::Input(
-                                        inputs.b[bIndex + (bI * bStride) - zpB.padStart],
-                                        bConjugate);
-
-                                value += multiply<Accumulator>(aVal, bVal);
-
-                                if(0)
-                                {
-                                    std::cout << " bound=" << bound[0] << "," << bound[1]
-                                              << " dNum=" << dNum << " value=" << value
-                                              << " aInZeroPad=" << aInZeroPad
-                                              << " aindex=" << aIndex << " +offset="
-                                              << (int64_t)(i * aStride) - zpA.padStart
-                                              //<< " aVal=" << aVal // disable int8
-                                              << "\n";
-                                }
+                                    sumCoord = boundSize[i] - sumCoord - 1;
+                                if(inZeroPad(problem, zpB, b, bCoord, sumCoord))
+                                    bInZeroPad = true;
                             }
                         }
-                    }
 
-                    auto cIndex = c.index(cCoord);
-                    auto dIndex = d.index(dCoord);
-
-                    // Ensure zero*nan returns zero
-                    auto beta = inputs.beta;
-                    auto zero = static_cast<typename Inputs::BetaType>(0);
-
-                    auto resultD = multiply<Accumulator>(inputs.alpha, value)
-                                + ((beta == zero) ? static_cast<Accumulator>(zero)
-                                                    : multiply<Accumulator>(beta, inputs.c[cIndex]));
-                    // bias
-                    if (problem.useBias())
-                    {
-                        int pos = int(dNum % problem.d().sizes()[0]);
-                        auto bias = multiply<Accumulator>(Transform<typename Inputs::AType>::Input(inputs.bias[pos], aConjugate), 1);
-                        resultD += bias;
-                    }
-                    // Activation adds here
-                    std::vector<Accumulator> actArgs;
-                    for(int i = 0; i < inputs.activationArgs.size(); i++)
-                        actArgs.push_back(static_cast<Accumulator>(inputs.activationArgs[i]));
-                    resultD = Activation(
-                        problem.activationType(), resultD, problem.activationEnumArg(), actArgs);
-                    inputs.d[dIndex] = SaturateCast<typename Inputs::DType>(resultD);
-                }
-            }
-
-            void SolveCPU(ContractionProblem const& problem,
-                          ContractionInputs const&  inputs,
-                          size_t                    validationStride)
-            {
-                // retreive alpha/beta type set via setAlpha/BetaType()
-                auto alphaType = problem.alphaType();
-                auto betaType  = problem.betaType();
-
-                // Backward-compatible: when setAlpha/BetaType() wasn't called, use the old way
-                // Could remove after rocBLAS is updated
-                if(alphaType == DataType::None)
-                {
-                    alphaType = problem.a().dataType() == DataType::BFloat16
-                                    ? DataType::Float
-                                    : problem.d().dataType();
-                }
-                if(betaType == DataType::None)
-                {
-                    betaType = alphaType;
-                }
-
-                auto contractionInputsTypeId = ContractionInputs::TypeId(problem.a().dataType(),
-                                                                         problem.b().dataType(),
-                                                                         problem.c().dataType(),
-                                                                         problem.d().dataType(),
-                                                                         alphaType,
-                                                                         betaType);
-
-                switch(contractionInputsTypeId)
-                {
-                case ContractionInputs_S_S_S::TypeId():
-                {
-                    auto const& typedInputs = dynamic_cast<ContractionInputs_S_S_S const&>(inputs);
-                    return ReferenceSolution<ContractionInputs_S_S_S>::SolveCPU(
-                        problem, typedInputs, validationStride);
-                }
-                case ContractionInputs_D_D_D::TypeId():
-                {
-                    auto const& typedInputs = dynamic_cast<ContractionInputs_D_D_D const&>(inputs);
-                    return ReferenceSolution<ContractionInputs_D_D_D>::SolveCPU(
-                        problem, typedInputs, validationStride);
-                }
-                case ContractionInputs_C_C_C::TypeId():
-                {
-                    auto const& typedInputs = dynamic_cast<ContractionInputs_C_C_C const&>(inputs);
-                    return ReferenceSolution<ContractionInputs_C_C_C>::SolveCPU(
-                        problem, typedInputs, validationStride);
-                }
-                case ContractionInputs_Z_Z_Z::TypeId():
-                {
-                    auto const& typedInputs = dynamic_cast<ContractionInputs_Z_Z_Z const&>(inputs);
-                    return ReferenceSolution<ContractionInputs_Z_Z_Z>::SolveCPU(
-                        problem, typedInputs, validationStride);
-                }
-#ifdef TENSILE_USE_HALF
-                case ContractionInputs_H_H_H::TypeId():
-                {
-                    auto const& typedInputs = dynamic_cast<ContractionInputs_H_H_H const&>(inputs);
-
-                    if(problem.highPrecisionAccumulate())
-                    {
-                        return ReferenceSolution<ContractionInputs_H_H_H, float>::SolveCPU(
-                            problem, typedInputs, validationStride);
-                    }
-                    else
-                    {
-                        return ReferenceSolution<ContractionInputs_H_H_H>::SolveCPU(
-                            problem, typedInputs, validationStride);
-                    }
-                }
-                case ContractionInputs_H_S_S::TypeId():
-                {
-                    auto const& typedInputs = dynamic_cast<ContractionInputs_H_S_S const&>(inputs);
-                    return ReferenceSolution<ContractionInputs_H_S_S>::SolveCPU(
-                        problem, typedInputs, validationStride);
-                }
-                case ContractionInputs_H_H_S::TypeId():
-                {
-                    auto const& typedInputs = dynamic_cast<ContractionInputs_H_H_S const&>(inputs);
-                    return ReferenceSolution<ContractionInputs_H_H_S, float>::SolveCPU(
-                        problem, typedInputs, validationStride);
-                }
-#endif // TENSILE_USE_HALF
-                case ContractionInputs_I8x4_I32_I32::TypeId():
-                {
-                    auto const& typedInputs
-                        = dynamic_cast<ContractionInputs_I8x4_I32_I32 const&>(inputs);
-                    return ReferenceSolution<ContractionInputs_I8x4_I32_I32>::SolveCPU(
-                        problem, typedInputs, validationStride);
-                }
-                case ContractionInputs_I32_I32_I32::TypeId():
-                {
-                    auto const& typedInputs
-                        = dynamic_cast<ContractionInputs_I32_I32_I32 const&>(inputs);
-                    return ReferenceSolution<ContractionInputs_I32_I32_I32>::SolveCPU(
-                        problem, typedInputs, validationStride);
-                }
-                case ContractionInputs_I8_I8_I32::TypeId():
-                {
-                    auto const& typedInputs
-                        = dynamic_cast<ContractionInputs_I8_I8_I32 const&>(inputs);
-                    return ReferenceSolution<ContractionInputs_I8_I8_I32, int32_t>::SolveCPU(
-                        problem, typedInputs, validationStride);
-                }
-                case ContractionInputs_I8_I32_I32::TypeId():
-                {
-                    auto const& typedInputs
-                        = dynamic_cast<ContractionInputs_I8_I32_I32 const&>(inputs);
-                    return ReferenceSolution<ContractionInputs_I8_I32_I32>::SolveCPU(
-                        problem, typedInputs, validationStride);
-                }
-#ifdef TENSILE_USE_BF16
-                case ContractionInputs_B_B_S::TypeId():
-                {
-                    auto const& typedInputs = dynamic_cast<ContractionInputs_B_B_S const&>(inputs);
-
-                    if(problem.highPrecisionAccumulate())
-                    {
-                        return ReferenceSolution<ContractionInputs_B_B_S, float>::SolveCPU(
-                            problem, typedInputs, validationStride);
-                    }
-                    else
-                    {
-                        return ReferenceSolution<ContractionInputs_B_B_S>::SolveCPU(
-                            problem, typedInputs, validationStride);
-                    }
-                }
-                case ContractionInputs_B_S_S::TypeId():
-                {
-                    auto const& typedInputs = dynamic_cast<ContractionInputs_B_S_S const&>(inputs);
-                    return ReferenceSolution<ContractionInputs_B_S_S>::SolveCPU(
-                        problem, typedInputs, validationStride);
-                }
-#endif // TENSILE_USE_BF16
-
-                default:;
-                }
-
-                throw std::runtime_error("Data type not implemented.");
-            }
-
-            // A is activation, B is weights
-            // Assume packed.
-            template <typename Inputs, typename Accumulator>
-            void ReferenceSolution<Inputs, Accumulator>::SolveCPUConvolution(
-                ConvolutionProblem const& convProblem,
-                ContractionProblem const& problem,
-                Inputs const&             inputs)
-            {
-                const bool db1 = Debug::Instance().printConvolutionReference1();
-                const bool db2 = Debug::Instance().printConvolutionReference2();
-
-                if(static_cast<typename Inputs::DType>(inputs.beta)
-                   != static_cast<typename Inputs::DType>(0.0))
-                    throw std::runtime_error("convolution requires beta==0");
-
-                ConvolutionProblem::LoopCounts counts;
-                counts.setupForData(convProblem, problem);
-
-                convProblem.validate(problem, counts);
-
-                TensorDescriptor activationTensor
-                    = convProblem.setupDataActivation(counts, problem);
-                TensorDescriptor weightTensor = convProblem.setupForwardWeights(counts, problem);
-                TensorDescriptor outputTensor = convProblem.setupDataOutput(counts, problem);
-
-                auto formatA = counts.formatA();
-                auto formatB = counts.formatB();
-                auto formatD = counts.formatD();
-
-                size_t padShift
-                    = std::accumulate(problem.aZeroPad().begin(),
-                                      problem.aZeroPad().end(),
-                                      0,
-                                      [](size_t sum, const ContractionProblem::ZeroPad& zp) {
-                                          return sum + zp.padStart;
-                                      });
-                if(db1)
-                {
-                    std::cout << "SolveCPUConvolution:\n";
-                    std::cout << "  activationTensor=" << activationTensor << "\n";
-                    std::cout << "counts:" << std::endl << counts.description() << "\n";
-                }
-
-                // Loops always traverse in same order but addressing in memory can be flexible to support different activation
-                // and filter formats
-                size_t spatialCoordCount = CoordCount(counts.scount.begin(), counts.scount.end());
-#pragma omp parallel for collapse(3)
-                for(size_t cout = 0; cout < counts.coutCount; cout++)
-                    for(size_t spatialIndex = 0; spatialIndex < spatialCoordCount; spatialIndex++)
-                        for(size_t n = 0; n < counts.batchCount; n++)
+                        size_t aIndex = a.index(aCoord);
+                        size_t bIndex = b.index(bCoord);
+                        for(int i = 1; i < bound.size(); i++)
                         {
-                            std::vector<size_t> spatialCoord(ConvolutionProblem::MaxNumSpatialDims,
-                                                             0);
+                            auto const& zpA = problem.boundIndices()[i].aZeroPad;
+                            auto const& zpB = problem.boundIndices()[i].bZeroPad;
 
-                            CoordNumbered(spatialIndex,
-                                          spatialCoord.begin(),
-                                          spatialCoord.end(),
-                                          counts.scount.begin(),
-                                          counts.scount.end());
-
-                            Accumulator value(0);
-                            size_t      filterCoordCount
-                                = CoordCount(counts.filterCount.begin(), counts.filterCount.end());
-                            for(size_t cin = 0; cin < counts.cinCount; cin++)
-                                for(size_t filterIndex = 0; filterIndex < filterCoordCount;
-                                    filterIndex++)
-                                {
-
-                                    std::vector<size_t> filterCoord(counts.filterCount.size(), 0);
-                                    CoordNumbered(filterIndex,
-                                                  filterCoord.begin(),
-                                                  filterCoord.end(),
-                                                  counts.filterCount.begin(),
-                                                  counts.filterCount.end());
-
-                                    // Save coordinates from the looop and compute memeory index
-                                    // Each component stores in appropriate memory order
-                                    std::vector<int64_t> aCoord(activationTensor.dimensions(), 0);
-                                    std::vector<int64_t> bCoord(weightTensor.dimensions(), 0);
-
-                                    aCoord[formatA.batchPosition()]   = n;
-                                    aCoord[formatA.channelPosition()] = cin;
-                                    for(auto i = 0; i < formatA.spatialPositions().size(); i++)
-                                        aCoord[formatA.spatialPositions()[i]] = spatialCoord[i];
-
-                                    // add filters to address calc, if they have non-unit strides:
-                                    for(int fi = 0; fi < counts.filterCount.size(); fi++)
-                                    {
-                                        auto fp = formatA.filterPositions()[fi];
-                                        if(fp != ConvolutionProblem::InvalidPos)
-                                            aCoord[fp] = filterCoord[fi];
-                                    }
-
-                                    bCoord[formatB.weights().coutPosition()] = cout;
-                                    bCoord[formatB.weights().cinPosition()]  = cin;
-                                    for(int fi = 0; fi < counts.filterCount.size(); fi++)
-                                    {
-                                        auto fp = formatB.weights().filterPositions()[fi];
-                                        if(fp != ConvolutionProblem::InvalidPos)
-                                            bCoord[fp] = filterCoord[fi];
-                                    }
-
-                                    auto aIndex     = activationTensor.index(aCoord) - padShift;
-                                    bool inZeroPads = std::accumulate(
-                                        problem.aZeroPad().begin(),
-                                        problem.aZeroPad().end(),
-                                        false,
-                                        [&](bool ret, const ContractionProblem::ZeroPad& zp) {
-                                            return ret
-                                                   || inZeroPad(problem,
-                                                                zp,
-                                                                activationTensor,
-                                                                aCoord,
-                                                                aCoord[zp.boundPos]);
-                                        });
-
-                                    auto aVal = inZeroPads
-                                                    ? static_cast<typename Inputs::AType>(0.0)
-                                                    : Transform<typename Inputs::AType>::Input(
-                                                        inputs.a[aIndex], false);
-
-                                    auto bIndex = weightTensor.index(bCoord);
-                                    auto bVal   = Transform<typename Inputs::BType>::Input(
-                                        inputs.b[bIndex], false);
-
-                                    if(db2)
-                                    {
-                                        std::cout << "  n,cin,spatialCoord,cout=" << n << "," << cin
-                                                  << ","
-                                                  << "," << cout << ","
-                                                  << " spatialCoord[2,1,0]=" << spatialCoord[2]
-                                                  << "," << spatialCoord[1] << ","
-                                                  << spatialCoord[0]
-                                                  << " filterCoord[2,1,0]=" << filterCoord[2] << ","
-                                                  << filterCoord[1] << "," << filterCoord[0]
-                                                  << " aIndex=" << aIndex << " bIndex=" << bIndex
-                                                  << " aVal=" << aVal << " bVal=" << bVal << "\n";
-                                    }
-                                    value += multiply<Accumulator>(aVal, bVal);
-                                }
-                            std::vector<size_t> dCoord(outputTensor.dimensions(), 0);
-                            dCoord[formatD.activation().batchPosition()]   = n;
-                            dCoord[formatD.activation().channelPosition()] = cout;
-                            for(auto i = 0; i < formatD.activation().spatialPositions().size(); i++)
-                                dCoord[formatD.activation().spatialPositions()[i]]
-                                    = spatialCoord[i];
-
-                            auto dIndex = outputTensor.index(dCoord);
-                            if(db1)
-                            {
-                                std::cout << "output: [n,spatialCoord,cout=" << n << ","
-                                          << "," << cout << "]"
-                                          << " spatialCoord[2,1,0]=" << spatialCoord[2] << ","
-                                          << spatialCoord[1] << "," << spatialCoord[0]
-                                          << " dIndex=" << dIndex << " value=" << value << "\n";
-                            }
-                            inputs.d[dIndex] = static_cast<typename Inputs::DType>(
-                                multiply<Accumulator>(inputs.alpha, value));
+                            aIndex -= zpA.padStart;
+                            bIndex -= zpB.padStart;
                         }
+
+                        auto aStride = problem.a().strides()[boundIndices[0].a];
+                        auto bStride = problem.b().strides()[boundIndices[0].b];
+
+                        // innermost bound calculation:
+                        for(size_t i = 0; i < boundSize[0]; i++)
+                        {
+                            auto const& zpA = problem.boundIndices()[0].aZeroPad;
+                            auto const& zpB = problem.boundIndices()[0].bZeroPad;
+                            size_t      aI
+                                = problem.boundIndices()[0].aMirror ? (boundSize[0] - i - 1) : i;
+                            size_t bI
+                                = problem.boundIndices()[0].bMirror ? (boundSize[0] - i - 1) : i;
+
+                            typename Inputs::AType aVal(0);
+                            typename Inputs::BType bVal(0);
+                            if(!aInZeroPad && !inZeroPad(problem, zpA, a, aCoord, aI))
+                                aVal = Transform<typename Inputs::AType>::Input(
+                                    inputs.a[aIndex + (aI * aStride) - zpA.padStart], aConjugate);
+                            if(!bInZeroPad && !inZeroPad(problem, zpB, b, bCoord, bI))
+                                bVal = Transform<typename Inputs::BType>::Input(
+                                    inputs.b[bIndex + (bI * bStride) - zpB.padStart], bConjugate);
+
+                            value += multiply<Accumulator>(aVal, bVal);
+
+                            if(0)
+                            {
+                                std::cout << " bound=" << bound[0] << "," << bound[1]
+                                          << " dNum=" << dNum << " value=" << value
+                                          << " aInZeroPad=" << aInZeroPad << " aindex=" << aIndex
+                                          << " +offset="
+                                          << (int64_t)(i * aStride) - zpA.padStart
+                                          //<< " aVal=" << aVal // disable int8
+                                          << "\n";
+                            }
+                        }
+                    }
+                }
+
+                auto cIndex = c.index(cCoord);
+                auto dIndex = d.index(dCoord);
+
+                // Ensure zero*nan returns zero
+                auto beta = inputs.beta;
+                auto zero = static_cast<typename Inputs::BetaType>(0);
+
+                auto resultD = multiply<Accumulator>(inputs.alpha, value)
+                               + ((beta == zero) ? static_cast<Accumulator>(zero)
+                                                 : multiply<Accumulator>(beta, inputs.c[cIndex]));
+                // bias
+                if(problem.useBias())
+                {
+                    int  pos  = int(dNum % problem.d().sizes()[0]);
+                    auto bias = multiply<Accumulator>(
+                        Transform<typename Inputs::AType>::Input(inputs.bias[pos], aConjugate), 1);
+                    resultD += bias;
+                }
+                // Activation adds here
+                std::vector<Accumulator> actArgs;
+                for(int i = 0; i < inputs.activationArgs.size(); i++)
+                    actArgs.push_back(static_cast<Accumulator>(inputs.activationArgs[i]));
+                resultD = Activation(
+                    problem.activationType(), resultD, problem.activationEnumArg(), actArgs);
+                inputs.d[dIndex] = SaturateCast<typename Inputs::DType>(resultD);
+            }
+        }
+
+        void SolveCPU(ContractionProblem const& problem,
+                      ContractionInputs const&  inputs,
+                      size_t                    validationStride)
+        {
+            // retreive alpha/beta type set via setAlpha/BetaType()
+            auto alphaType = problem.alphaType();
+            auto betaType  = problem.betaType();
+
+            // Backward-compatible: when setAlpha/BetaType() wasn't called, use the old way
+            // Could remove after rocBLAS is updated
+            if(alphaType == DataType::None)
+            {
+                alphaType = problem.a().dataType() == DataType::BFloat16 ? DataType::Float
+                                                                         : problem.d().dataType();
+            }
+            if(betaType == DataType::None)
+            {
+                betaType = alphaType;
             }
 
-            void SolveCPUConvolution(ConvolutionProblem const& convProblem,
-                                     ContractionProblem const& problem,
-                                     ContractionInputs&        inputs)
-            {
-                // std::cout << "SolveCPUConvolution:" << convProblem << " (vs " << problem <<
-                // ")\n";
+            auto contractionInputsTypeId = ContractionInputs::TypeId(problem.a().dataType(),
+                                                                     problem.b().dataType(),
+                                                                     problem.c().dataType(),
+                                                                     problem.d().dataType(),
+                                                                     alphaType,
+                                                                     betaType);
 
-                if(problem.a().dataType() == DataType::Float
-                   && problem.b().dataType() == DataType::Float
-                   && problem.c().dataType() == DataType::Float
-                   && problem.d().dataType() == DataType::Float)
+            switch(contractionInputsTypeId)
+            {
+            case ContractionInputs_S_S_S::TypeId():
+            {
+                auto const& typedInputs = dynamic_cast<ContractionInputs_S_S_S const&>(inputs);
+                return ReferenceSolution<ContractionInputs_S_S_S>::SolveCPU(
+                    problem, typedInputs, validationStride);
+            }
+            case ContractionInputs_D_D_D::TypeId():
+            {
+                auto const& typedInputs = dynamic_cast<ContractionInputs_D_D_D const&>(inputs);
+                return ReferenceSolution<ContractionInputs_D_D_D>::SolveCPU(
+                    problem, typedInputs, validationStride);
+            }
+            case ContractionInputs_C_C_C::TypeId():
+            {
+                auto const& typedInputs = dynamic_cast<ContractionInputs_C_C_C const&>(inputs);
+                return ReferenceSolution<ContractionInputs_C_C_C>::SolveCPU(
+                    problem, typedInputs, validationStride);
+            }
+            case ContractionInputs_Z_Z_Z::TypeId():
+            {
+                auto const& typedInputs = dynamic_cast<ContractionInputs_Z_Z_Z const&>(inputs);
+                return ReferenceSolution<ContractionInputs_Z_Z_Z>::SolveCPU(
+                    problem, typedInputs, validationStride);
+            }
+#ifdef TENSILE_USE_HALF
+            case ContractionInputs_H_H_H::TypeId():
+            {
+                auto const& typedInputs = dynamic_cast<ContractionInputs_H_H_H const&>(inputs);
+
+                if(problem.highPrecisionAccumulate())
                 {
-                    auto& typedInputs = dynamic_cast<TypedContractionInputs<float>&>(inputs);
-                    return ReferenceSolution<TypedContractionInputs<float>>::SolveCPUConvolution(
-                        convProblem, problem, typedInputs);
+                    return ReferenceSolution<ContractionInputs_H_H_H, float>::SolveCPU(
+                        problem, typedInputs, validationStride);
                 }
                 else
                 {
-                    throw std::runtime_error("Data type not implemented for conv-vs-contract.");
+                    return ReferenceSolution<ContractionInputs_H_H_H>::SolveCPU(
+                        problem, typedInputs, validationStride);
                 }
             }
-        } // namespace Client
-    } // namespace Tensile
+            case ContractionInputs_H_S_S::TypeId():
+            {
+                auto const& typedInputs = dynamic_cast<ContractionInputs_H_S_S const&>(inputs);
+                return ReferenceSolution<ContractionInputs_H_S_S>::SolveCPU(
+                    problem, typedInputs, validationStride);
+            }
+            case ContractionInputs_H_H_S::TypeId():
+            {
+                auto const& typedInputs = dynamic_cast<ContractionInputs_H_H_S const&>(inputs);
+                return ReferenceSolution<ContractionInputs_H_H_S, float>::SolveCPU(
+                    problem, typedInputs, validationStride);
+            }
+#endif // TENSILE_USE_HALF
+            case ContractionInputs_I8x4_I32_I32::TypeId():
+            {
+                auto const& typedInputs
+                    = dynamic_cast<ContractionInputs_I8x4_I32_I32 const&>(inputs);
+                return ReferenceSolution<ContractionInputs_I8x4_I32_I32>::SolveCPU(
+                    problem, typedInputs, validationStride);
+            }
+            case ContractionInputs_I32_I32_I32::TypeId():
+            {
+                auto const& typedInputs
+                    = dynamic_cast<ContractionInputs_I32_I32_I32 const&>(inputs);
+                return ReferenceSolution<ContractionInputs_I32_I32_I32>::SolveCPU(
+                    problem, typedInputs, validationStride);
+            }
+            case ContractionInputs_I8_I8_I32::TypeId():
+            {
+                auto const& typedInputs = dynamic_cast<ContractionInputs_I8_I8_I32 const&>(inputs);
+                return ReferenceSolution<ContractionInputs_I8_I8_I32, int32_t>::SolveCPU(
+                    problem, typedInputs, validationStride);
+            }
+            case ContractionInputs_I8_I32_I32::TypeId():
+            {
+                auto const& typedInputs = dynamic_cast<ContractionInputs_I8_I32_I32 const&>(inputs);
+                return ReferenceSolution<ContractionInputs_I8_I32_I32>::SolveCPU(
+                    problem, typedInputs, validationStride);
+            }
+#ifdef TENSILE_USE_BF16
+            case ContractionInputs_B_B_S::TypeId():
+            {
+                auto const& typedInputs = dynamic_cast<ContractionInputs_B_B_S const&>(inputs);
+
+                if(problem.highPrecisionAccumulate())
+                {
+                    return ReferenceSolution<ContractionInputs_B_B_S, float>::SolveCPU(
+                        problem, typedInputs, validationStride);
+                }
+                else
+                {
+                    return ReferenceSolution<ContractionInputs_B_B_S>::SolveCPU(
+                        problem, typedInputs, validationStride);
+                }
+            }
+            case ContractionInputs_B_S_S::TypeId():
+            {
+                auto const& typedInputs = dynamic_cast<ContractionInputs_B_S_S const&>(inputs);
+                return ReferenceSolution<ContractionInputs_B_S_S>::SolveCPU(
+                    problem, typedInputs, validationStride);
+            }
+#endif // TENSILE_USE_BF16
+
+            default:;
+            }
+
+            throw std::runtime_error("Data type not implemented.");
+        }
+
+        // A is activation, B is weights
+        // Assume packed.
+        template <typename Inputs, typename Accumulator>
+        void ReferenceSolution<Inputs, Accumulator>::SolveCPUConvolution(
+            ConvolutionProblem const& convProblem,
+            ContractionProblem const& problem,
+            Inputs const&             inputs)
+        {
+            const bool db1 = Debug::Instance().printConvolutionReference1();
+            const bool db2 = Debug::Instance().printConvolutionReference2();
+
+            if(static_cast<typename Inputs::DType>(inputs.beta)
+               != static_cast<typename Inputs::DType>(0.0))
+                throw std::runtime_error("convolution requires beta==0");
+
+            ConvolutionProblem::LoopCounts counts;
+            counts.setupForData(convProblem, problem);
+
+            convProblem.validate(problem, counts);
+
+            TensorDescriptor activationTensor = convProblem.setupDataActivation(counts, problem);
+            TensorDescriptor weightTensor     = convProblem.setupForwardWeights(counts, problem);
+            TensorDescriptor outputTensor     = convProblem.setupDataOutput(counts, problem);
+
+            auto formatA = counts.formatA();
+            auto formatB = counts.formatB();
+            auto formatD = counts.formatD();
+
+            size_t padShift
+                = std::accumulate(problem.aZeroPad().begin(),
+                                  problem.aZeroPad().end(),
+                                  0,
+                                  [](size_t sum, const ContractionProblem::ZeroPad& zp) {
+                                      return sum + zp.padStart;
+                                  });
+            if(db1)
+            {
+                std::cout << "SolveCPUConvolution:\n";
+                std::cout << "  activationTensor=" << activationTensor << "\n";
+                std::cout << "counts:" << std::endl << counts.description() << "\n";
+            }
+
+            // Loops always traverse in same order but addressing in memory can be flexible to support different activation
+            // and filter formats
+            size_t spatialCoordCount = CoordCount(counts.scount.begin(), counts.scount.end());
+#pragma omp parallel for collapse(3)
+            for(size_t cout = 0; cout < counts.coutCount; cout++)
+                for(size_t spatialIndex = 0; spatialIndex < spatialCoordCount; spatialIndex++)
+                    for(size_t n = 0; n < counts.batchCount; n++)
+                    {
+                        std::vector<size_t> spatialCoord(ConvolutionProblem::MaxNumSpatialDims, 0);
+
+                        CoordNumbered(spatialIndex,
+                                      spatialCoord.begin(),
+                                      spatialCoord.end(),
+                                      counts.scount.begin(),
+                                      counts.scount.end());
+
+                        Accumulator value(0);
+                        size_t      filterCoordCount
+                            = CoordCount(counts.filterCount.begin(), counts.filterCount.end());
+                        for(size_t cin = 0; cin < counts.cinCount; cin++)
+                            for(size_t filterIndex = 0; filterIndex < filterCoordCount;
+                                filterIndex++)
+                            {
+
+                                std::vector<size_t> filterCoord(counts.filterCount.size(), 0);
+                                CoordNumbered(filterIndex,
+                                              filterCoord.begin(),
+                                              filterCoord.end(),
+                                              counts.filterCount.begin(),
+                                              counts.filterCount.end());
+
+                                // Save coordinates from the looop and compute memeory index
+                                // Each component stores in appropriate memory order
+                                std::vector<int64_t> aCoord(activationTensor.dimensions(), 0);
+                                std::vector<int64_t> bCoord(weightTensor.dimensions(), 0);
+
+                                aCoord[formatA.batchPosition()]   = n;
+                                aCoord[formatA.channelPosition()] = cin;
+                                for(auto i = 0; i < formatA.spatialPositions().size(); i++)
+                                    aCoord[formatA.spatialPositions()[i]] = spatialCoord[i];
+
+                                // add filters to address calc, if they have non-unit strides:
+                                for(int fi = 0; fi < counts.filterCount.size(); fi++)
+                                {
+                                    auto fp = formatA.filterPositions()[fi];
+                                    if(fp != ConvolutionProblem::InvalidPos)
+                                        aCoord[fp] = filterCoord[fi];
+                                }
+
+                                bCoord[formatB.weights().coutPosition()] = cout;
+                                bCoord[formatB.weights().cinPosition()]  = cin;
+                                for(int fi = 0; fi < counts.filterCount.size(); fi++)
+                                {
+                                    auto fp = formatB.weights().filterPositions()[fi];
+                                    if(fp != ConvolutionProblem::InvalidPos)
+                                        bCoord[fp] = filterCoord[fi];
+                                }
+
+                                auto aIndex     = activationTensor.index(aCoord) - padShift;
+                                bool inZeroPads = std::accumulate(
+                                    problem.aZeroPad().begin(),
+                                    problem.aZeroPad().end(),
+                                    false,
+                                    [&](bool ret, const ContractionProblem::ZeroPad& zp) {
+                                        return ret
+                                               || inZeroPad(problem,
+                                                            zp,
+                                                            activationTensor,
+                                                            aCoord,
+                                                            aCoord[zp.boundPos]);
+                                    });
+
+                                auto aVal = inZeroPads ? static_cast<typename Inputs::AType>(0.0)
+                                                       : Transform<typename Inputs::AType>::Input(
+                                                           inputs.a[aIndex], false);
+
+                                auto bIndex = weightTensor.index(bCoord);
+                                auto bVal   = Transform<typename Inputs::BType>::Input(
+                                    inputs.b[bIndex], false);
+
+                                if(db2)
+                                {
+                                    std::cout << "  n,cin,spatialCoord,cout=" << n << "," << cin
+                                              << ","
+                                              << "," << cout << ","
+                                              << " spatialCoord[2,1,0]=" << spatialCoord[2] << ","
+                                              << spatialCoord[1] << "," << spatialCoord[0]
+                                              << " filterCoord[2,1,0]=" << filterCoord[2] << ","
+                                              << filterCoord[1] << "," << filterCoord[0]
+                                              << " aIndex=" << aIndex << " bIndex=" << bIndex
+                                              << " aVal=" << aVal << " bVal=" << bVal << "\n";
+                                }
+                                value += multiply<Accumulator>(aVal, bVal);
+                            }
+                        std::vector<size_t> dCoord(outputTensor.dimensions(), 0);
+                        dCoord[formatD.activation().batchPosition()]   = n;
+                        dCoord[formatD.activation().channelPosition()] = cout;
+                        for(auto i = 0; i < formatD.activation().spatialPositions().size(); i++)
+                            dCoord[formatD.activation().spatialPositions()[i]] = spatialCoord[i];
+
+                        auto dIndex = outputTensor.index(dCoord);
+                        if(db1)
+                        {
+                            std::cout << "output: [n,spatialCoord,cout=" << n << ","
+                                      << "," << cout << "]"
+                                      << " spatialCoord[2,1,0]=" << spatialCoord[2] << ","
+                                      << spatialCoord[1] << "," << spatialCoord[0]
+                                      << " dIndex=" << dIndex << " value=" << value << "\n";
+                        }
+                        inputs.d[dIndex] = static_cast<typename Inputs::DType>(
+                            multiply<Accumulator>(inputs.alpha, value));
+                    }
+        }
+
+        void SolveCPUConvolution(ConvolutionProblem const& convProblem,
+                                 ContractionProblem const& problem,
+                                 ContractionInputs&        inputs)
+        {
+            // std::cout << "SolveCPUConvolution:" << convProblem << " (vs " << problem <<
+            // ")\n";
+
+            if(problem.a().dataType() == DataType::Float
+               && problem.b().dataType() == DataType::Float
+               && problem.c().dataType() == DataType::Float
+               && problem.d().dataType() == DataType::Float)
+            {
+                auto& typedInputs = dynamic_cast<TypedContractionInputs<float>&>(inputs);
+                return ReferenceSolution<TypedContractionInputs<float>>::SolveCPUConvolution(
+                    convProblem, problem, typedInputs);
+            }
+            else
+            {
+                throw std::runtime_error("Data type not implemented for conv-vs-contract.");
+            }
+        }
+    } // namespace Client
+} // namespace Tensile

@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright 2019-2021 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright 2022 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -51,8 +51,8 @@ class AddrCalculation:
 
         if ss.optSingleColVgpr:
             # optimized stores use the load offset for coordOffset0 calculations.
-            self.biasOffset   = coordOffset0 * kernelWriter.bpeAB
-            self.globalOffset = coordOffset0 * kernelWriter.bpeCexternal
+            self.biasOffset   = coordOffset0 * kernelWriter.states.bpeAB
+            self.globalOffset = coordOffset0 * kernelWriter.states.bpeCexternal
         else:
             # else non-opt stores include the coord0 offset into VGPR address calcs
             self.biasOffset   = 0
@@ -178,7 +178,7 @@ class AddrCalculation:
             module.add(VAddLShiftLeftU32(dst=vgpr(addrVgpr), \
                       src0=vgpr(rowPtr), \
                       src1=vgpr(addrVgpr), \
-                      shiftHex=hex(log2(kw.bpeCexternal)), \
+                      shiftHex=hex(log2(kw.states.bpeCexternal)), \
                       comment="packed: add rowPtr and scaleToBpe"))
 
         return module
@@ -220,7 +220,7 @@ class AddrCalculation:
                 if not singleColAddrUpdated or not ss.optSrdIncForRow:
                     if tc == 'Bias' and kernel["ProblemType"]["UseBias"] and (kernel["GlobalSplitU"] == 1):
                         module.add(VLShiftLeftB32(dst=vgpr(self.addrBiasVgpr), \
-                                                 shiftHex=hex(log2(kw.bpeAB)), \
+                                                 shiftHex=hex(log2(kw.states.bpeAB)), \
                                                  src=vgpr(self.coord0Vgpr), \
                                                  comment="Bias address scaled by BPE"))
                         return module
@@ -231,13 +231,13 @@ class AddrCalculation:
                     module.add(VAddLShiftLeftU32(dst=vgpr(addrVgpr), \
                       src0=vgpr(rowPtr), \
                       src1=vgpr(elementVgpr), \
-                      shiftHex=hex(log2(kw.bpeCexternal)), \
+                      shiftHex=hex(log2(kw.states.bpeCexternal)), \
                       comment="optSingleColVgpr scaleToBpe: sharedAddrVgpr <- cinRowPtr + coord0, scaled by BPE. BSHERE:coord0=%d, coord0Vgpr=%d"%(kw.vgprs.coord0, self.coord0Vgpr)))
         elif ss.optSharedColVgpr:
             # Need an address calculation for the first address in each row:
             if d1==0 and vc1==0:
                 if tc == 'Bias' and kernel["ProblemType"]["UseBias"] and (kernel["GlobalSplitU"] == 1):
-                    module.add(VLShiftLeftB32(dst=vgpr(self.addrBiasVgpr), shiftHex=hex(log2(kw.bpeAB)), src=vgpr(self.coord0Vgpr), \
+                    module.add(VLShiftLeftB32(dst=vgpr(self.addrBiasVgpr), shiftHex=hex(log2(kw.states.bpeAB)), src=vgpr(self.coord0Vgpr), \
                                comment="Bias address scaled by BPE"))
                     return module
                 packedIndices = kernel["PackedC0IndicesX"]
@@ -249,7 +249,7 @@ class AddrCalculation:
                     module.add(VAddLShiftLeftU32(dst=vgpr(addrVgpr), \
                       src0=vgpr(rowPtr), \
                       src1=vgpr(elementVgpr), \
-                      shiftHex=hex(log2(kw.bpeCexternal)), \
+                      shiftHex=hex(log2(kw.states.bpeCexternal)), \
                       comment="optSharedColVgpr scaleToBpe for first row: col addr <- cinRowPtr + coord0, scaled by BPE"))
         else:
             # Generate final address calculation (to bytes) for each element
@@ -257,7 +257,7 @@ class AddrCalculation:
             # each col has same offset so could create a class to hold column-specific state including
             # the byte address offset for that col and the mask in/out.
             if tc == 'Bias' and kernel["ProblemType"]["UseBias"] and (kernel["GlobalSplitU"] == 1):
-                module.add(VLShiftLeftB32(dst=vgpr(self.addrBiasVgpr), shiftHex=hex(log2(kw.bpeAB)), src=vgpr(self.coord0Vgpr), \
+                module.add(VLShiftLeftB32(dst=vgpr(self.addrBiasVgpr), shiftHex=hex(log2(kw.states.bpeAB)), src=vgpr(self.coord0Vgpr), \
                             comment="Bias address scaled by BPE"))
                 return module
             packedIndices = kernel["PackedC0IndicesX"]
@@ -269,7 +269,7 @@ class AddrCalculation:
                 module.add(VAddLShiftLeftU32(dst=vgpr(addrVgpr), \
                     src0=vgpr(rowPtr), \
                     src1=vgpr(elementVgpr), \
-                    shiftHex=hex(log2(kw.bpeCexternal)), \
+                    shiftHex=hex(log2(kw.states.bpeCexternal)), \
                     comment="scaleToBpe: accumulate d0 lower and *= bpe into Cin addr"))
 
         # if not optSrdIncForRow then we may have moved the row pointer
@@ -279,7 +279,7 @@ class AddrCalculation:
             module.add(VAddLShiftLeftU32(dst=vgpr(addrVgpr), \
               src0=vgpr(rowPtr), \
               src1=vgpr(kw.vgprs.coord0), \
-              shiftHex=hex(log2(kw.bpeCexternal)), \
+              shiftHex=hex(log2(kw.states.bpeCexternal)), \
               comment="scaleToBpe: Update address with new rowPtr"))
 
         return module
@@ -292,9 +292,9 @@ class AddrCalculation:
         module = Module("edgeProtectCode")
         kw = self.kernelWriter
         tmpS01 = tmpSgpr
-        tmpS23 = tmpSgpr+self.kernelWriter.laneSGPRCount
+        tmpS23 = tmpSgpr+self.kernelWriter.states.laneSGPRCount
 
-        laneSGPRCount = self.kernelWriter.laneSGPRCount
+        laneSGPRCount = self.kernelWriter.states.laneSGPRCount
         wavefrontSize = kernel["WavefrontSize"]
 
         # Now do the edge check and compute the address in bytes:
@@ -371,7 +371,7 @@ class AddrCalculation:
                 module.addComment1("Fix for UseInitialStridesCD, emitAddressSetupCode")
 
                 if len(kernel["PackedC1IndicesX"]) == 1:
-                    strideChar = self.kernelWriter.indexChars[kernel["PackedC1IndicesX"][0]]
+                    strideChar = self.kernelWriter.states.indexChars[kernel["PackedC1IndicesX"][0]]
                     module.add(self.addScaled(vgpr(kw.vgprs.cinRowPtr),  vgpr(kw.vgprs.cinRowPtr),  \
                               sgpr("StrideC%s"%strideChar), self.rowInc, tmpS01, "ROWINC- Move cinRowPtr to next row"))
                     module.add(self.addScaled(vgpr(kw.vgprs.coutRowPtr), vgpr(kw.vgprs.coutRowPtr), \
@@ -386,11 +386,11 @@ class AddrCalculation:
         if (not kernel["SourceSwap"]) and (not kernel["GuaranteeNoPartialB"]) and tPB["rtv"] and kernel["EnableMatrixInstruction"] and edge:
             (d1,d0,vc1,vc0) = self.element
             if (d1 == vc1 == d0 == vc0 == 0) or self.newCoord1:
-                sgprCnt = self.kernelWriter.laneSGPRCount
+                sgprCnt = self.kernelWriter.states.laneSGPRCount
                 waveSize = kernel["WavefrontSize"]
                 packedC1 = kernel["PackedC1IndicesX"]
-                strideC1 = "StrideC%s" % (kw.indexChars[packedC1[0]])
-                strideD1 = "StrideD%s" % (kw.indexChars[packedC1[0]])
+                strideC1 = "StrideC%s" % (kw.states.indexChars[packedC1[0]])
+                strideD1 = "StrideD%s" % (kw.states.indexChars[packedC1[0]])
 
                 module.addComment1("shift vector components d1")
                 vw = kernel["GlobalLoadVectorWidthB"]
@@ -424,7 +424,7 @@ class AddrCalculation:
 
                 if kernel["StoreRemapVectorWidth"]:
                     ldsPad = max(kernel["StoreRemapVectorWidth"],kernel["MIOutputVectorWidth"])
-                    module.add(VMovB32(dst=vgpr(vTmp1), src=hex((kernel["MacroTile0"]+ldsPad)*kw.bpeCexternal), \
+                    module.add(VMovB32(dst=vgpr(vTmp1), src=hex((kernel["MacroTile0"]+ldsPad)*kw.states.bpeCexternal), \
                                 comment="lds byte stride = (MT0 + PAD) * bpe"))
                     module.add(VMadI32I24(dst=vgpr(vTmp1), src0=vgpr(vTmp1), src1=vgpr(vTmp2), src2=vgpr(kw.vgprs.storeRemapLW), \
                                 comment="new lds write address += shift column * Lds byte Stride"))
@@ -440,7 +440,7 @@ class AddrCalculation:
         Generate code for final C read/D write address
         """
 
-        laneSGPRCount = self.kernelWriter.laneSGPRCount
+        laneSGPRCount = self.kernelWriter.states.laneSGPRCount
 
         module = Module("emitLdChange")
         if kernel["BufferStore"]:
@@ -451,7 +451,7 @@ class AddrCalculation:
                                src2=sgpr(mask,laneSGPRCount), comment="LD%s clip if OOB. offset" % tc ))
         else:
             if tc == 'Bias' and kernel["ProblemType"]["UseBias"] and (kernel["GlobalSplitU"] == 1):
-                module.add(VLShiftLeftB32(dst=vgpr(self.addrBiasVgpr+0), shiftHex=hex(log2(self.kernelWriter.bpeAB)), src=vgpr(self.coord0Vgpr), \
+                module.add(VLShiftLeftB32(dst=vgpr(self.addrBiasVgpr+0), shiftHex=hex(log2(self.kernelWriter.states.bpeAB)), src=vgpr(self.coord0Vgpr), \
                                comment="Bias address scaled by BPE"))
             else:
                 # store a copy of the offset in 2 of the tmpVgpr for D
@@ -470,12 +470,12 @@ class AddrCalculation:
 
         module = Module("incrementToNextRow")
         numRows = self.rowInc
-        tmpBpe = self.kernelWriter.bpeCexternal
+        tmpBpe = self.kernelWriter.states.bpeCexternal
         if ss.optSrdIncForRow:
             if numRows:
                 packedC1 = kernel["PackedC1IndicesX"]
                 assert(len(packedC1) == 1)  # would need to extract each dim and scale
-                strideCD1 = "Stride%s%s"%(tc,self.kernelWriter.indexChars[packedC1[0]])
+                strideCD1 = "Stride%s%s"%(tc,self.kernelWriter.states.indexChars[packedC1[0]])
                 if numRows > 1:
                     module.add(SMulI32(dst=sgpr(stmp), \
                                 src0=sgpr(strideCD1), \

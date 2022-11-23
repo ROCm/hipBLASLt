@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright 2020-2022 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright 2022 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -30,14 +30,14 @@ class SignatureCOV3(Signature):
     kernel = {"CodeObjectVersion": "V3"}
 
     def __call__(self, writer) -> SignatureBase:
-        kernel = writer.kernel
+        kernel = writer.states.kernel
 
         # kern arg size
         kernArgReg = 0
-        kernArgReg += 3*writer.rpga
-        kernArgReg += max(1,int(writer.bpeAB/4)) # alpha
+        kernArgReg += 3*writer.states.rpga
+        kernArgReg += max(1,int(writer.states.bpeAB/4)) # alpha
         if kernel["ProblemType"]["UseBeta"]:
-            kernArgReg += max(1,int(writer.bpeCexternal/4)) # beta
+            kernArgReg += max(1,int(writer.states.bpeCexternal/4)) # beta
         kernArgReg += kernel["ProblemType"]["NumIndicesC"] # strides
         kernArgReg += kernel["ProblemType"]["NumIndicesC"] # strides
         kernArgReg += len(kernel["ProblemType"]["IndexAssignmentsA"]) # strides
@@ -49,13 +49,13 @@ class SignatureCOV3(Signature):
         kernArgReg += kernel["ProblemType"]["NumIndicesSummation"]
         kernArgReg += kernel["ProblemType"]["NumIndicesC"]
         if globalParameters["DebugKernel"]:
-            kernArgReg += writer.rpga # debug buffer
+            kernArgReg += writer.states.rpga # debug buffer
         # kernArgBytes = kernArgReg * 4 # bytes/reg
 
-        group_segment_size = kernel["LdsNumElements"] * writer.bpeAB
+        group_segment_size = kernel["LdsNumElements"] * writer.states.bpeAB
 
         sgprWgZ = 1 if kernel["ProblemType"]["NumIndicesC"] > 2 else 0
-        signature = SignatureBase(kernelName=writer.kernelName,
+        signature = SignatureBase(kernelName=writer.states.kernelName,
                                     codeObjectVersion="v3",
                                     groupSegmentSize=group_segment_size,
                                     sgprWorkGroup=[1, 1, sgprWgZ],
@@ -95,22 +95,22 @@ class SignatureCOV3(Signature):
             if kernel["ProblemType"]["ActivationType"] == 'all':
                 signature.addArg(       "activationType", SVK.SIG_VALUE,               "u32")
 
-        for i in range(0, writer.numSgprStridesD):
+        for i in range(0, writer.states.d.numSgprStrides):
             signature.addArg(              "strideD%u"%i, SVK.SIG_VALUE,               "u32")
 
-        for i in range(0, writer.numSgprStridesC):
+        for i in range(0, writer.states.c.numSgprStrides):
             signature.addArg(              "strideC%u"%i, SVK.SIG_VALUE,               "u32")
 
-        for i in range(0, writer.numSgprStridesA):
+        for i in range(0, writer.states.a.numSgprStrides):
             signature.addArg(              "strideA%u"%i, SVK.SIG_VALUE,               "u32")
 
-        for i in range(0, writer.numSgprStridesB):
+        for i in range(0, writer.states.b.numSgprStrides):
             signature.addArg(              "strideB%u"%i, SVK.SIG_VALUE,               "u32")
 
-        for i in range(0, writer.numSgprSizesFree):
+        for i in range(0, writer.states.numSgprSizesFree):
             signature.addArg(            "SizesFree%u"%i, SVK.SIG_VALUE,               "u32")
 
-        for i in range(0, writer.numSgprSizesSum):
+        for i in range(0, writer.states.numSgprSizesSum):
             signature.addArg(             "SizesSum%u"%i, SVK.SIG_VALUE,               "u32")
 
         for idxChar in kernel["PackedC0IdxChars"][:-1]:

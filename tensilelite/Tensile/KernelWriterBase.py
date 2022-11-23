@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright 2020-2021 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright 2022 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -46,22 +46,6 @@ class KernelWriterBase(ABC):
     self.atomicCasStr = "atomicCAS"
     self.volatileStr = ""
     self.deviceFunctionStr = "__device__ "
-
-
-  def extractIndices(self, extractFrom, varPrefix, indices):
-    kStr = ""
-    for (i, index) in enumerate(indices):
-      kStr += "  unsigned int " + varPrefix + self.indexChars[index] + " = ( " + extractFrom
-      for j in reversed(list(range(i+1, len(indices)))):
-        index2 = indices[j]
-        kStr += " / size" + self.indexChars[index2]
-      kStr += ")"
-
-      if len(indices) > 1:
-        kStr += " % size" + self.indexChars[index]
-      kStr += ";" + self.endLine
-
-    return kStr
 
 
   @abstractmethod

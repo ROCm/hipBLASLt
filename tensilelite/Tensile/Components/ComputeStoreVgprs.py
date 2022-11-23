@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright 2021-2022 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright 2022 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -70,7 +70,7 @@ class ComputeStoreVgprsMFMA(ComputeStoreVgprs):
             module = Module("ComputeStoreVgprsMFMA")
 
             # coord 1 : wave part
-            module.add(vectorStaticDivide(wave_id, "Serial", writer.kernel["WavefrontSize"], tmpVgpr1Res))
+            module.add(vectorStaticDivide(wave_id, "Serial", writer.states.kernel["WavefrontSize"], tmpVgpr1Res))
             module.add(vectorStaticDivide(tid1, wave_id, kernel["MIWaveGroup"][0], tmpVgpr1Res))
             module.add(VMulLOU32(dst=vgpr(tid1), src0=hex(MIBShape1), src1=vgpr(tid1), comment="wave coordination offset 1"))
 
@@ -80,8 +80,8 @@ class ComputeStoreVgprsMFMA(ComputeStoreVgprs):
 
             # coord 1 : offset part
             packedC1 = kernel["PackedC1IndicesX"]
-            strideC1 = "StrideC%s" % (writer.indexChars[packedC1[0]])
-            strideD1 = "StrideD%s" % (writer.indexChars[packedC1[0]])
+            strideC1 = "StrideC%s" % (writer.states.indexChars[packedC1[0]])
+            strideD1 = "StrideD%s" % (writer.states.indexChars[packedC1[0]])
             module.add(VMulLOU32(dst=vgpr(writer.vgprs.cinRowPtr), src0=vgpr(tid1), src1=sgpr(strideC1), comment=" offset 1"))
             module.add(VMulLOU32(dst=vgpr(writer.vgprs.coutRowPtr), src0=vgpr(tid1), src1=sgpr(strideD1), comment=" offset 1"))
 
@@ -90,7 +90,7 @@ class ComputeStoreVgprsMFMA(ComputeStoreVgprs):
             module.add(VMulLOU32(dst=vgpr(tmpVgpr0), src0=hex(MIBShape0), src1=vgpr(tmpVgpr0), comment="wave coordination offset 0"))
 
             # coord 0 : thread part
-            module.add(vectorStaticRemainder(dummy, tid0, "Serial", writer.kernel["WavefrontSize"], tmpVgpr1Res, tmpSgprInfo))
+            module.add(vectorStaticRemainder(dummy, tid0, "Serial", writer.states.kernel["WavefrontSize"], tmpVgpr1Res, tmpSgprInfo))
             module.add(vectorStaticDivide(tid0, tid0, matrixInstN, tmpVgpr1Res))
             module.add(staticMultiply(vgpr(tid0), vgpr(tid0), kernel["MIOutputVectorWidth"], tmpSgprInfo, "thread0 * continuous_output"))
             module.add(VAddU32(dst=vgpr(tid0), src0=vgpr(tmpVgpr0), src1=vgpr(tid0), comment="coordination 0 = wave_id0 + tid0"))
@@ -172,24 +172,24 @@ class ComputeStoreVgprsMFMASwap(ComputeStoreVgprs):
 
             module = Module("ComputeStoreVgprsMFMASwap")
 
-            module.add(vectorStaticDivide(wave_id, "Serial", writer.kernel["WavefrontSize"], tmpVgpr1Res))
+            module.add(vectorStaticDivide(wave_id, "Serial", writer.states.kernel["WavefrontSize"], tmpVgpr1Res))
 
             # coord 1 : wave part
             module.add(vectorStaticDivide(tmpVgpr0, wave_id, kernel["MIWaveGroup"][0], tmpVgpr1Res))
             module.add(VMulLOU32(dst=vgpr(tmpVgpr0), src0=hex(MIBShape1), src1=vgpr(tmpVgpr0), comment="wave coordination offset 1"))
 
             # coord 1 : thread part
-            module.add(vectorStaticRemainder(dummy, tid1, "Serial", writer.kernel["WavefrontSize"], tmpVgpr1Res, tmpSgprInfo))
+            module.add(vectorStaticRemainder(dummy, tid1, "Serial", writer.states.kernel["WavefrontSize"], tmpVgpr1Res, tmpSgprInfo))
             module.add(vectorStaticDivide(tid1, tid1, matrixInstM, tmpVgpr1Res))
             module.add(staticMultiply(vgpr(tid1), vgpr(tid1), kernel["MIOutputVectorWidth"], tmpSgprInfo, "thread0 * continuous_output"))
             module.add(VAddU32(dst=vgpr(tid1), src0=vgpr(tmpVgpr0), src1=vgpr(tid1), comment="coordination 1 = wave_id1 + tid1"))
-            if kernel["allowLRVWforTLUandMI"] and writer.lrvwB > 1:
-                module.add(staticMultiply(vgpr(tid1), vgpr(tid1), writer.lrvwB, tmpSgprInfo, "coordination 1 *= lrvwB"))
+            if kernel["allowLRVWforTLUandMI"] and writer.states.lrvwB > 1:
+                module.add(staticMultiply(vgpr(tid1), vgpr(tid1), writer.states.lrvwB, tmpSgprInfo, "coordination 1 *= lrvwB"))
 
             # coord 1 : offset part
             packedC1 = kernel["PackedC1IndicesX"]
-            strideC1 = "StrideC%s" % (writer.indexChars[packedC1[0]])
-            strideD1 = "StrideD%s" % (writer.indexChars[packedC1[0]])
+            strideC1 = "StrideC%s" % (writer.states.indexChars[packedC1[0]])
+            strideD1 = "StrideD%s" % (writer.states.indexChars[packedC1[0]])
             module.add(VMulLOU32(dst=vgpr(writer.vgprs.cinRowPtr), src0=vgpr(tid1), src1=sgpr(strideC1), comment=" offset 1"))
             module.add(VMulLOU32(dst=vgpr(writer.vgprs.coutRowPtr), src0=vgpr(tid1), src1=sgpr(strideD1), comment=" offset 1"))
 

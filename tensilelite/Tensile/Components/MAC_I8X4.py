@@ -27,7 +27,7 @@ class MAC_I8X4_Plain(MAC):
     kernel = {"ProblemType": {"DataType": DataType(DataType.int8x4)}}
 
     def __call__(self, writer, m, innerUnroll):
-        kernel = writer.kernel
+        kernel = writer.states.kernel
         module = Module("MAC_I8X4_Plain")
         module.addComment(self.commentHeader())
         priority = Component.Priority.find(writer)

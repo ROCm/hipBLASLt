@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright 2020-2022 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright 2022 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -37,13 +37,13 @@ class KernelWriterActivationOnly(KernelWriterBase):
     self.kernelName = self.getKernelName()
 
     # determine chars for fast access
-    self.indexChars = []
+    self.states.indexChars = []
     for i in range(0, len(globalParameters["IndexChars"])):
-      self.indexChars.append(globalParameters["IndexChars"][i])
-    self.indexChars[self.state["ProblemType"]["Index0"]] = "0" + self.indexChars[self.state["ProblemType"]["Index0"]]
-    self.indexChars[self.state["ProblemType"]["Index1"]] = "1" + self.indexChars[self.state["ProblemType"]["Index1"]]
-    self.tileChar0 = self.indexChars[self.state["ProblemType"]["Index0"]]
-    self.tileChar1 = self.indexChars[self.state["ProblemType"]["Index1"]]
+      self.states.indexChars.append(globalParameters["IndexChars"][i])
+    self.states.indexChars[self.state["ProblemType"]["Index0"]] = "0" + self.states.indexChars[self.state["ProblemType"]["Index0"]]
+    self.states.indexChars[self.state["ProblemType"]["Index1"]] = "1" + self.states.indexChars[self.state["ProblemType"]["Index1"]]
+    self.tileChar0 = self.states.indexChars[self.state["ProblemType"]["Index0"]]
+    self.tileChar1 = self.states.indexChars[self.state["ProblemType"]["Index1"]]
 
 
   def functionSignature(self):
@@ -82,11 +82,11 @@ class KernelWriterActivationOnly(KernelWriterBase):
       firstStrideCD = 0
     lastStrideC = self.state["ProblemType"]["NumIndicesC"]
     for i in range(firstStrideCD, lastStrideC):
-      kStr += "  unsigned int const strideD%s,%s" % (self.indexChars[i], self.endLine)
+      kStr += "  unsigned int const strideD%s,%s" % (self.states.indexChars[i], self.endLine)
 
     # sizes
     for i in range(0, self.state["ProblemType"]["NumIndicesC"]):
-      kStr += "  unsigned int const size%s,%s" % (self.indexChars[i], self.endLine)
+      kStr += "  unsigned int const size%s,%s" % (self.states.indexChars[i], self.endLine)
 
     # offset
     kStr += "  unsigned int offsetD)%s" % self.endLine
@@ -115,27 +115,27 @@ class KernelWriterActivationOnly(KernelWriterBase):
       kStr += "/* hard-coded initial strides */%s" % self.endLine
       lastStrideC = 1
     for i in range(firstStride, lastStrideC):
-      kStr += "#define strideD" + self.indexChars[i] + " 1" + self.endLine
+      kStr += "#define strideD" + self.states.indexChars[i] + " 1" + self.endLine
 
     ########################################
     # GLOBAL_D()
-    kStr += "#define GLOBAL_D(IDX%s" % self.indexChars[0]
+    kStr += "#define GLOBAL_D(IDX%s" % self.states.indexChars[0]
     for i in range(1, problemType["NumIndicesC"]):
-      kStr += ", IDX%s" % self.indexChars[i]
-    indexChar = self.indexChars[0]
+      kStr += ", IDX%s" % self.states.indexChars[i]
+    indexChar = self.states.indexChars[0]
     kStr += ") (( (IDX%s)*strideD%s" % (indexChar, indexChar)
     for i in range(1, problemType["NumIndicesC"]):
-      indexChar = self.indexChars[i]
+      indexChar = self.states.indexChars[i]
       kStr += " + (IDX%s)*strideD%s" % (indexChar, indexChar)
     kStr += " ))" + self.endLine
 
     ########################################
     # multi buffers GSU: Accumulate all GSU buffer
-    indexChar = self.indexChars[0]
+    indexChar = self.states.indexChars[0]
     kStr += "  uint64_t id = %s(0);%s" % (self.getGlobalIdStr, self.endLine)
-    kStr += "  if (id >= (size%s" % self.indexChars[0]
+    kStr += "  if (id >= (size%s" % self.states.indexChars[0]
     for i in range(1, problemType["NumIndicesC"]):
-      kStr += "*size%s" % self.indexChars[i]
+      kStr += "*size%s" % self.states.indexChars[i]
     kStr += "))%s" % self.endLine
     kStr += "    return;%s" % self.endLine
 
@@ -146,8 +146,8 @@ class KernelWriterActivationOnly(KernelWriterBase):
     kStr += ";%s" % self.endLine
 
     for i in range(0, problemType["NumIndicesC"]):
-      kStr += "  id%d = id %% size%s;%s" % (i, self.indexChars[i], self.endLine)
-      kStr += "  id  = id / size%s;%s" % (self.indexChars[i], self.endLine)
+      kStr += "  id%d = id %% size%s;%s" % (i, self.states.indexChars[i], self.endLine)
+      kStr += "  id  = id / size%s;%s" % (self.states.indexChars[i], self.endLine)
 
     nonTileFreeIndices = []
 
@@ -162,7 +162,7 @@ class KernelWriterActivationOnly(KernelWriterBase):
       batchStride = "1"
       for i in nonTileFreeIndices:
         kStr += " + id%d * %s " % (i, batchStride)
-        batchStride += " * size%s" % self.indexChars[i]
+        batchStride += " * size%s" % self.states.indexChars[i]
       kStr += ";" + self.endLine
 
       ptrStr = self.state["ProblemType"]["DestDataType"].toDevice(self.language)
@@ -209,7 +209,7 @@ class KernelWriterActivationOnly(KernelWriterBase):
     # end
     kStr += "}%s" % self.endLine
     for i in range(firstStride, lastStrideC):
-      kStr += "#undef strideD" + self.indexChars[i] + self.endLine
+      kStr += "#undef strideD" + self.states.indexChars[i] + self.endLine
     kStr += "#undef GLOBAL_D%s" % (self.endLine)
 
     return kStr

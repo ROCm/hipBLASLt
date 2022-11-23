@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright 2019-2022 Advanced Micro Devices, Inc.
+ * Copyright 2022 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -465,8 +465,8 @@ namespace Tensile
                 else
                 {
                     bias = std::shared_ptr<AType>(
-                            (AType*)std::malloc(TypeInfo<AType>::ElementSize * m_dMaxElements),
-                            std::free);
+                        (AType*)std::malloc(TypeInfo<AType>::ElementSize * m_dMaxElements),
+                        std::free);
                     if(bias == nullptr)
                         throw std::runtime_error("out of host memory allocating d");
                 }
@@ -625,7 +625,7 @@ namespace Tensile
                 else
                 {
                     bias = allocNewGPUBuffer<AType>("bias",
-                                            TypeInfo<AType>::ElementSize * m_dMaxElements);
+                                                    TypeInfo<AType>::ElementSize * m_dMaxElements);
                 }
                 auto rv = std::make_shared<ManagedInputs>(a,
                                                           b,
@@ -852,7 +852,9 @@ namespace Tensile
                     if(!m_cEqualsD)
                         Tensile::hip::CopyTensor(dst->d, src->d, problem.d(), kind);
 
-                    memcpy(const_cast<AType*>(dst->bias), src->bias, problem.d().sizes()[0] * TypeInfo<AType>::ElementSize);
+                    memcpy(const_cast<AType*>(dst->bias),
+                           src->bias,
+                           problem.d().sizes()[0] * TypeInfo<AType>::ElementSize);
 
                     dst->alpha = src->alpha;
                     dst->beta  = src->beta;
@@ -905,8 +907,7 @@ namespace Tensile
 
                     HIP_CHECK_EXC(hipMemcpy(const_cast<AType*>(dst->bias),
                                             src->bias,
-                                            TypeInfo<AType>::ElementSize
-                                                * problem.d().sizes()[0],
+                                            TypeInfo<AType>::ElementSize * problem.d().sizes()[0],
                                             kind));
 
                     dst->alpha = src->alpha;
