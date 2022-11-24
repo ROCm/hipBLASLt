@@ -266,6 +266,10 @@ namespace Tensile
         {
             SolutionIterator::preProblem(problem);
             m_solutions = m_library->findTopSolutions(m_problem, *m_hardware, m_numSolutions);
+            if (m_solutions.size() == 0)
+            {
+                m_solutions.push_back(m_library->solutions.find(0)->second);
+            }
             m_currentSolutionIdx = 0;
         }
 
