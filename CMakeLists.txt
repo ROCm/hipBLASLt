@@ -201,7 +201,7 @@ endif()
 find_package( hipblas 0.50.0 REQUIRED CONFIG PATHS ${HIP_DIR} ${ROCM_PATH} /opt/rocm)
 
 # Setup version
-set(VERSION_STRING "0.0.6")
+set(VERSION_STRING "0.0.7")
 rocm_setup_version(VERSION ${VERSION_STRING})
 set(hipblaslt_SOVERSION 0.1)
 
