@@ -632,6 +632,7 @@ rocblaslt_status
 runContractionProblem(const RocblasltContractionProblem<Ti, To, Tc> &prob) {
   rocblaslt_status status = rocblaslt_status_internal_error;
   std::shared_ptr<Tensile::ContractionSolution> solution;
+  std::vector<std::shared_ptr<Tensile::ContractionSolution>> solutions;
 
   try {
     std::shared_ptr<Tensile::MasterSolutionLibrary<Tensile::ContractionProblem>>
@@ -646,15 +647,16 @@ runContractionProblem(const RocblasltContractionProblem<Ti, To, Tc> &prob) {
     auto tensile_prob = ConstructTensileProblem(prob);
     auto handle = prob.handle;
 
-    solution = library->findBestSolution(tensile_prob, *hardware);
+    solutions = library->findTopSolutions(tensile_prob, *hardware, 1);
 
-    if (!solution) {
+    if (solutions.size() == 0) {
 #if 0
             std::ostream msg;
             print_once(msg << "\nrocblaslt error: No Tensile solution found for " << prob);
 #endif
       status = rocblaslt_status_not_implemented;
     } else {
+      solution = solutions[0];
       adapter.launchKernels(
           solution->solve(tensile_prob, GetTensileInputs(prob), *hardware),
           prob.stream, nullptr, nullptr);
