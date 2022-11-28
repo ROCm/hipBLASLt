@@ -541,7 +541,7 @@ if [[ "${install_dependencies}" == true ]]; then
       ;;
   esac
 
-  # The following builds googletest from source, installs into cmake default /usr/local
+  # The following builds googletest & lapack from source, installs into cmake default /usr/local
   pushd .
     printf "\033[32mBuilding \033[33mgoogletest\033[32m from source; installing into \033[33m/usr/local\033[0m\n"
     mkdir -p ${build_dir}/deps && cd ${build_dir}/deps
