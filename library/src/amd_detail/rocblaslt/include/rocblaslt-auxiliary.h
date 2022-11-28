@@ -58,7 +58,7 @@ extern "C" {
  *  \retval rocblaslt_status_invalid_handle \p handle pointer is invalid.
  *  \retval rocblaslt_status_internal_error an internal error occurred.
  */
-rocblaslt_status rocblaslt_create(rocblaslt_handle *handle);
+rocblaslt_status rocblaslt_create(rocblaslt_handle* handle);
 
 /*! \ingroup aux_module
  *  \brief Destroy a rocblaslt handle
@@ -89,10 +89,11 @@ rocblaslt_status rocblaslt_destroy(const rocblaslt_handle handle);
  *  \retval rocblaslt_status_invalid_pointer \p descr pointer is invalid.
  *  \retval rocblaslt_status_invalid_value
  */
-rocblaslt_status
-rocblaslt_matrix_layout_create(rocblaslt_matrix_layout *matDescr,
-                               hipblasDatatype_t valueType, uint64_t rows,
-                               uint64_t cols, int64_t ld);
+rocblaslt_status rocblaslt_matrix_layout_create(rocblaslt_matrix_layout* matDescr,
+                                                hipblasDatatype_t        valueType,
+                                                uint64_t                 rows,
+                                                uint64_t                 cols,
+                                                int64_t                  ld);
 
 /*! \ingroup aux_module
  *  \brief Destroy a matrix descriptor
@@ -107,16 +108,17 @@ rocblaslt_matrix_layout_create(rocblaslt_matrix_layout *matDescr,
  *  \retval rocblaslt_status_success the operation completed successfully.
  *  \retval rocblaslt_status_invalid_pointer \p descr is invalid.
  */
-rocblaslt_status
-rocblaslt_matrix_layout_destory(const rocblaslt_matrix_layout descr);
+rocblaslt_status rocblaslt_matrix_layout_destory(const rocblaslt_matrix_layout descr);
 
-rocblaslt_status
-rocblaslt_matrix_layout_set_attribute(rocblaslt_matrix_layout matLayout,
-                                      rocblaslt_matrix_layout_attribute attr,
-                                      const void *buf, size_t sizeInBytes);
-rocblaslt_status rocblaslt_matrix_layout_get_attribute(
-    rocblaslt_matrix_layout matLayout, rocblaslt_matrix_layout_attribute attr,
-    void *buf, size_t sizeInBytes, size_t *sizeWritten);
+rocblaslt_status rocblaslt_matrix_layout_set_attribute(rocblaslt_matrix_layout           matLayout,
+                                                       rocblaslt_matrix_layout_attribute attr,
+                                                       const void*                       buf,
+                                                       size_t sizeInBytes);
+rocblaslt_status rocblaslt_matrix_layout_get_attribute(rocblaslt_matrix_layout           matLayout,
+                                                       rocblaslt_matrix_layout_attribute attr,
+                                                       void*                             buf,
+                                                       size_t  sizeInBytes,
+                                                       size_t* sizeWritten);
 /*! \ingroup aux_module
  *  \brief Specify the matrix attribute of a matrix descriptor
  *
@@ -140,10 +142,9 @@ rocblaslt_status rocblaslt_matrix_layout_get_attribute(
  *  \retval rocblaslt_status_invalid_value \p rocblaslt_matrix_layout_attribute
  * is invalid.
  */
-rocblaslt_status
-rocblaslt_matmul_desc_create(rocblaslt_matmul_desc *matmulDesc,
-                             rocblaslt_compute_type computeType,
-                             hipblasDatatype_t scaleType);
+rocblaslt_status rocblaslt_matmul_desc_create(rocblaslt_matmul_desc* matmulDesc,
+                                              rocblaslt_compute_type computeType,
+                                              hipblasDatatype_t      scaleType);
 
 /*! \ingroup aux_module
  *  \brief Destroy a matrix multiplication descriptor
@@ -157,8 +158,7 @@ rocblaslt_matmul_desc_create(rocblaslt_matmul_desc *matmulDesc,
  *  \retval rocblaslt_status_success the operation completed successfully.
  *  \retval rocblaslt_status_invalid_value \p descr is invalid.
  */
-rocblaslt_status
-rocblaslt_matmul_desc_destroy(const rocblaslt_matmul_desc descr);
+rocblaslt_status rocblaslt_matmul_desc_destroy(const rocblaslt_matmul_desc descr);
 
 /*! \ingroup aux_module
  *  \brief Specify the attribute of a matrix multiplication descriptor
@@ -181,10 +181,10 @@ rocblaslt_matmul_desc_destroy(const rocblaslt_matmul_desc descr);
  * invalid. \retval rocblaslt_status_invalid_value \p
  * rocblaslt_matmul_desc_attributes is invalid.
  */
-rocblaslt_status
-rocblaslt_matmul_desc_set_attribute(rocblaslt_matmul_desc matmulDesc,
-                                    rocblaslt_matmul_desc_attributes matmulAttr,
-                                    const void *buf, size_t sizeInBytes);
+rocblaslt_status rocblaslt_matmul_desc_set_attribute(rocblaslt_matmul_desc            matmulDesc,
+                                                     rocblaslt_matmul_desc_attributes matmulAttr,
+                                                     const void*                      buf,
+                                                     size_t                           sizeInBytes);
 /*! \ingroup aux_module
  *  \brief Get the specific attribute from matrix multiplication descriptor
  *
@@ -206,11 +206,11 @@ rocblaslt_matmul_desc_set_attribute(rocblaslt_matmul_desc matmulDesc,
  * invalid. \retval rocblaslt_status_invalid_value \p
  * rocblaslt_matmul_desc_attributes is invalid.
  */
-rocblaslt_status
-rocblaslt_matmul_desc_get_attribute(rocblaslt_matmul_desc matmulDesc,
-                                    rocblaslt_matmul_desc_attributes matmulAttr,
-                                    void *buf, size_t sizeInBytes,
-                                    size_t *sizeWritten);
+rocblaslt_status rocblaslt_matmul_desc_get_attribute(rocblaslt_matmul_desc            matmulDesc,
+                                                     rocblaslt_matmul_desc_attributes matmulAttr,
+                                                     void*                            buf,
+                                                     size_t                           sizeInBytes,
+                                                     size_t*                          sizeWritten);
 
 /*! \ingroup aux_module
  *  \brief Initializes the algorithm selection descriptor
@@ -226,8 +226,7 @@ rocblaslt_matmul_desc_get_attribute(rocblaslt_matmul_desc matmulDesc,
  *  \retval rocblaslt_status_invalid_pointer \p pref pointer is invalid.
  *  \retval rocblaslt_status_invalid_value
  */
-rocblaslt_status
-rocblaslt_matmul_preference_create(rocblaslt_matmul_preference *pref);
+rocblaslt_status rocblaslt_matmul_preference_create(rocblaslt_matmul_preference* pref);
 /*! \ingroup aux_module
  *  \brief Destroy a algorithm selection descriptor
  *
@@ -241,8 +240,7 @@ rocblaslt_matmul_preference_create(rocblaslt_matmul_preference *pref);
  *  \retval rocblaslt_status_success the operation completed successfully.
  *  \retval rocblaslt_status_invalid_pointer \p pref is invalid.
  */
-rocblaslt_status
-rocblaslt_matmul_preference_destroy(const rocblaslt_matmul_preference pref);
+rocblaslt_status rocblaslt_matmul_preference_destroy(const rocblaslt_matmul_preference pref);
 
 /*! \ingroup aux_module
  *  \brief Specify the algorithm attribute of a algorithm selection descriptor
@@ -265,10 +263,11 @@ rocblaslt_matmul_preference_destroy(const rocblaslt_matmul_preference pref);
  * invalid. \retval rocblaslt_status_invalid_value \p
  * rocblaslt_matmul_preference_attributes is invalid.
  */
-rocblaslt_status rocblaslt_matmul_preference_set_attribute(
-    rocblaslt_matmul_preference pref,
-    rocblaslt_matmul_preference_attributes attribute, const void *data,
-    size_t dataSize);
+rocblaslt_status
+    rocblaslt_matmul_preference_set_attribute(rocblaslt_matmul_preference            pref,
+                                              rocblaslt_matmul_preference_attributes attribute,
+                                              const void*                            data,
+                                              size_t                                 dataSize);
 
 /*! \ingroup aux_module
  *  \brief Get the specific algorithm attribute from algorithm selection
@@ -292,10 +291,12 @@ rocblaslt_status rocblaslt_matmul_preference_set_attribute(
  * invalid. \retval rocblaslt_status_invalid_value \p
  * rocblaslt_matmul_preference_attributes is invalid.
  */
-rocblaslt_status rocblaslt_matmul_preference_get_attribute(
-    rocblaslt_matmul_preference pref,
-    rocblaslt_matmul_preference_attributes attribute, void *data,
-    size_t sizeInBytes, size_t *sizeWritten);
+rocblaslt_status
+    rocblaslt_matmul_preference_get_attribute(rocblaslt_matmul_preference            pref,
+                                              rocblaslt_matmul_preference_attributes attribute,
+                                              void*                                  data,
+                                              size_t                                 sizeInBytes,
+                                              size_t*                                sizeWritten);
 
 /*! \ingroup aux_module
  *  \brief Get the specific algorithm attribute from algorithm selection
@@ -318,14 +319,20 @@ rocblaslt_status rocblaslt_matmul_preference_get_attribute(
  *  \retval rocblaslt_status_invalid_handle \p handle or \p pref pointer
  * is invalid.
  */
-rocblaslt_status rocblaslt_matmul_algo_get_heuristic(
-    rocblaslt_handle handle, rocblaslt_matmul_desc matmulDesc,
-    rocblaslt_matrix_layout Adesc, rocblaslt_matrix_layout Bdesc,
-    rocblaslt_matrix_layout Cdesc, rocblaslt_matrix_layout Ddesc,
-    rocblaslt_matmul_preference pref, int requestedAlgoCount,
-    rocblaslt_matmul_heuristic_result heuristicResultsArray[],
-    int *returnAlgoCount);
+rocblaslt_status
+    rocblaslt_matmul_algo_get_heuristic(rocblaslt_handle                  handle,
+                                        rocblaslt_matmul_desc             matmulDesc,
+                                        rocblaslt_matrix_layout           Adesc,
+                                        rocblaslt_matrix_layout           Bdesc,
+                                        rocblaslt_matrix_layout           Cdesc,
+                                        rocblaslt_matrix_layout           Ddesc,
+                                        rocblaslt_matmul_preference       pref,
+                                        int                               requestedAlgoCount,
+                                        rocblaslt_matmul_heuristic_result heuristicResultsArray[],
+                                        int*                              returnAlgoCount);
 
+// for internal use during testing, fetch arch name
+std::string rocblaslt_internal_get_arch_name();
 #ifdef __cplusplus
 }
 #endif

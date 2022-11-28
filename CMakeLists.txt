@@ -260,7 +260,8 @@ rocm_create_package(
     LDCONFIG_DIR ${HIPBLASLT_CONFIG_DIR}
 )
 
-#[[ TODO
+
+#
 # ADDITIONAL TARGETS FOR CODE COVERAGE
 #
 if(BUILD_CODE_COVERAGE)
@@ -275,6 +276,8 @@ if(BUILD_CODE_COVERAGE)
   #
   # Run coverage analysis
   #
+  set(coverage_test ./clients/staging/hipblaslt-test)
+
   add_custom_target(coverage_analysis
     COMMAND echo Coverage GTEST_FILTER=\${GTEST_FILTER}
     COMMAND ./clients/staging/hipblaslt-test --gtest_filter=\"\${GTEST_FILTER}\"
@@ -315,4 +318,3 @@ if(BUILD_CODE_COVERAGE)
     WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
     )
 endif()
-]]

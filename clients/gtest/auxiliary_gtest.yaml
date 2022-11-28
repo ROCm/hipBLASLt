@@ -1,0 +1,102 @@
+---
+include: hipblaslt_common.yaml
+include: known_bugs.yaml
+include: matmul_common.yaml
+
+Tests:
+- name: aux_handle_init_bad_arg
+  category: pre_checkin
+  function:
+    - aux_handle_init_bad_arg: *hpa_half_precision
+
+- name: aux_handle_destroy_bad_arg
+  category: pre_checkin
+  function:
+    - aux_handle_destroy_bad_arg: *hpa_half_precision
+
+- name: aux_handle
+  category: pre_checkin
+  function:
+    - aux_handle: *hpa_half_precision
+
+- name: aux_mat_init_bad_arg
+  category: pre_checkin
+  function:
+    - aux_mat_init_bad_arg: *real_precisions
+
+- name: aux_mat_destroy_bad_arg
+  category: pre_checkin
+  function:
+    - aux_mat_destroy_bad_arg: *real_precisions
+
+- name: aux_mat_set_attr_bad_arg
+  category: pre_checkin
+  function:
+    - aux_mat_set_attr_bad_arg: *real_precisions
+
+- name: aux_mat_get_attr_bad_arg
+  category: pre_checkin
+  function:
+    - aux_mat_get_attr_bad_arg: *real_precisions
+
+- name: aux_mat_set_get_attr
+  category: pre_checkin
+  function:
+    - aux_mat_set_get_attr: *real_precisions
+
+- name: aux_matmul_init_bad_arg
+  category: pre_checkin
+  function:
+    - aux_matmul_init_bad_arg: *real_precisions
+
+- name: aux_matmul_init
+  category: pre_checkin
+  function:
+    - aux_matmul_init: *real_precisions
+
+- name: aux_matmul_set_attr_bad_arg
+  category: pre_checkin
+  function:
+    - aux_matmul_set_attr_bad_arg: *real_precisions
+
+- name: aux_matmul_get_attr_bad_arg
+  category: pre_checkin
+  function:
+    - aux_matmul_get_attr_bad_arg: *real_precisions
+
+- name: aux_matmul_set_get_attr
+  category: pre_checkin
+  function:
+    - aux_matmul_set_get_attr: *real_precisions
+
+- name: aux_matmul_alg_init_bad_arg
+  category: pre_checkin
+  function:
+    - aux_matmul_alg_init_bad_arg: *real_precisions
+
+- name: aux_matmul_alg_init
+  category: pre_checkin
+  function:
+    - aux_matmul_alg_init: *real_precisions
+
+- name: aux_matmul_alg_set_attr_bad_arg
+  category: pre_checkin
+  function:
+    - aux_matmul_alg_set_attr_bad_arg: *real_precisions
+
+- name: aux_matmul_alg_get_attr_bad_arg
+  category: pre_checkin
+  function:
+    - aux_matmul_alg_get_attr_bad_arg: *real_precisions
+
+- name: aux_matmul_pref_init_bad_arg
+  category: pre_checkin
+  function:
+    - aux_matmul_pref_init_bad_arg: *real_precisions
+
+- name: aux_matmul_pref_init
+  category: pre_checkin
+  function:
+    - aux_matmul_pref_init: *real_precisions
+
+...

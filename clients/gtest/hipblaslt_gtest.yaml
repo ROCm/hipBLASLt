@@ -1,0 +1,2 @@
+include: matmul_gtest.yaml
+include: auxiliary_gtest.yaml

@@ -26,121 +26,119 @@
 
 #pragma once
 
-#include <hipblaslt.h>
+#include <hipblaslt/hipblaslt.h>
 
 HIPBLASLT_EXPORT
-constexpr const char *HIPBLAS_STATUS_to_string(hipblasStatus_t status) {
-#define CASE(x)                                                                \
-  case x:                                                                      \
-    return #x
-  switch (status) {
-    CASE(HIPBLAS_STATUS_SUCCESS);
-    CASE(HIPBLAS_STATUS_NOT_INITIALIZED);
-    CASE(HIPBLAS_STATUS_ALLOC_FAILED);
-    CASE(HIPBLAS_STATUS_INVALID_VALUE);
-    CASE(HIPBLAS_STATUS_MAPPING_ERROR);
-    CASE(HIPBLAS_STATUS_EXECUTION_FAILED);
-    CASE(HIPBLAS_STATUS_INTERNAL_ERROR);
-    CASE(HIPBLAS_STATUS_NOT_SUPPORTED);
-    CASE(HIPBLAS_STATUS_ARCH_MISMATCH);
-    CASE(HIPBLAS_STATUS_INVALID_ENUM);
-    CASE(HIPBLAS_STATUS_UNKNOWN);
-  }
+constexpr const char* hipblas_status_to_string(hipblasStatus_t status)
+{
+#define CASE(x) \
+    case x:     \
+        return #x
+    switch(status)
+    {
+        CASE(HIPBLAS_STATUS_SUCCESS);
+        CASE(HIPBLAS_STATUS_NOT_INITIALIZED);
+        CASE(HIPBLAS_STATUS_ALLOC_FAILED);
+        CASE(HIPBLAS_STATUS_INVALID_VALUE);
+        CASE(HIPBLAS_STATUS_MAPPING_ERROR);
+        CASE(HIPBLAS_STATUS_EXECUTION_FAILED);
+        CASE(HIPBLAS_STATUS_INTERNAL_ERROR);
+        CASE(HIPBLAS_STATUS_NOT_SUPPORTED);
+        CASE(HIPBLAS_STATUS_ARCH_MISMATCH);
+        CASE(HIPBLAS_STATUS_INVALID_ENUM);
+        CASE(HIPBLAS_STATUS_UNKNOWN);
+        CASE(HIPBLAS_STATUS_HANDLE_IS_NULLPTR);
+    }
 #undef CASE
-  // We don't use default: so that the compiler warns us if any valid enums are
-  // missing from our switch. If the value is not a valid hipblasStatus_t, we
-  // return this string.
-  return "<undefined hipblasStatus_t value>";
+    // We don't use default: so that the compiler warns us if any valid enums are
+    // missing from our switch. If the value is not a valid hipblasStatus_t, we
+    // return this string.
+    return "<undefined hipblasStatus_t value>";
 }
 
 HIPBLASLT_EXPORT
-constexpr const char *HIPBLAS_OPeration_to_string(hipblasOperation_t value) {
-  switch (value) {
-  case HIPBLAS_OPERATION_NON_TRANSPOSE:
-    return "N";
-  case HIPBLAS_OPERATION_TRANSPOSE:
-    return "T";
-  }
-  return "invalid";
+constexpr const char* hipblas_operation_to_string(hipblasOperation_t value)
+{
+    switch(value)
+    {
+    case HIPBLAS_OP_N:
+        return "N";
+    case HIPBLAS_OP_T:
+        return "T";
+    case HIPBLAS_OP_C:
+        return "C";
+    }
+    return "invalid";
 }
 
 HIPBLASLT_EXPORT
-constexpr hipblasOperation_t char_to_hipblas_operation(char value) {
-  switch (value) {
-  case 'N':
-  case 'n':
-    return HIPBLAS_OPERATION_NON_TRANSPOSE;
-  case 'T':
-  case 't':
-    return HIPBLAS_OPERATION_TRANSPOSE;
-  default:
-    return static_cast<hipblasOperation_t>(-1);
-  }
+constexpr hipblasOperation_t char_to_hipblas_operation(char value)
+{
+    switch(value)
+    {
+    case 'N':
+    case 'n':
+        return HIPBLAS_OP_N;
+    case 'T':
+    case 't':
+        return HIPBLAS_OP_T;
+    case 'C':
+    case 'c':
+        return HIPBLAS_OP_C;
+    default:
+        return static_cast<hipblasOperation_t>(-1);
+    }
 }
 
-// return precision string for hipblasLtDatatype_t
+// return precision string for hipblasDatatype_t
 HIPBLASLT_EXPORT
-constexpr const char *hipblaslt_datatype_to_string(hipblasLtDatatype_t type) {
-  switch (type) {
-  case HIPBLASLT_R_32F:
-    return "f32_r";
-  case HIPBLASLT_R_16F:
-    return "f16_r";
-  case HIPBLASLT_R_16BF:
-    return "bf16_r";
-  case HIPBLASLT_R_8I:
-    return "i8_r";
-  case HIPBLASLT_R_8F:
-    return "f8_r";
-  case HIPBLASLT_R_8BF:
-    return "bf8_r";
-  }
-  return "invalid";
+constexpr const char* hipblas_datatype_to_string(hipblasDatatype_t type)
+{
+    switch(type)
+    {
+    case HIPBLAS_R_32F:
+        return "f32_r";
+    case HIPBLAS_R_16F:
+        return "f16_r";
+    case HIPBLAS_R_16B:
+        return "bf16_r";
+    case HIPBLAS_R_8I:
+        return "i8_r";
+    default:
+        return "non-supported type";
+    }
+    return "invalid";
 }
 
-// return precision string for hipblasLtDatatype_t
+// return precision string for hipblasDatatype_t
 HIPBLASLT_EXPORT
-constexpr const char *
-hipblaslt_computetype_to_string(hipblasLtComputetype_t type) {
-  switch (type) {
-  case HIPBLASLT_COMPUTE_16F:
-    return "f16_r";
-  case HIPBLASLT_COMPUTE_32I:
-    return "i32_r";
-  case HIPBLASLT_COMPUTE_32F:
-    return "f32_r";
-  case HIPBLASLT_COMPUTE_TF32:
-    return "tf32_r";
-  case HIPBLASLT_COMPUTE_TF32_FAST:
-    return "tf32f_r";
-  }
-  return "invalid";
+constexpr const char* hipblaslt_computetype_to_string(hipblasLtComputeType_t type)
+{
+    switch(type)
+    {
+    case HIPBLASLT_COMPUTE_F32:
+        return "f32_r";
+    }
+    return "invalid";
 }
 
 // clang-format off
 HIPBLASLT_EXPORT
-constexpr hipblasLtDatatype_t string_to_hipblaslt_datatype(const std::string& value)
+constexpr hipblasDatatype_t string_to_hipblas_datatype(const std::string& value)
 {
     return
-        value == "f32_r" || value == "s" ? HIPBLASLT_R_32F  :
-        value == "f16_r" || value == "h" ? HIPBLASLT_R_16F  :
-        value == "bf16_r"                ? HIPBLASLT_R_16BF  :
-        value == "i8_r"                  ? HIPBLASLT_R_8I   :
-        value == "f8_r"                  ? HIPBLASLT_R_8F   :
-        value == "bf8_r"                 ? HIPBLASLT_R_8BF   :
-        static_cast<hipblasLtDatatype_t>(-1);
+        value == "f32_r" || value == "s" ? HIPBLAS_R_32F  :
+        value == "f16_r" || value == "h" ? HIPBLAS_R_16F  :
+        value == "bf16_r"                ? HIPBLAS_R_16B  :
+        static_cast<hipblasDatatype_t>(-1);
 }
 
 HIPBLASLT_EXPORT
-constexpr hipblasLtComputetype_t string_to_hipblaslt_computetype(const std::string& value)
+constexpr hipblasLtComputeType_t string_to_hipblaslt_computetype(const std::string& value)
 {
     return
-        value == "f32_r" || value == "s" ? HIPBLASLT_COMPUTE_32F  :
-        value == "i32_r"                 ? HIPBLASLT_COMPUTE_32I  :
-        value == "f16_r" || value == "h" ? HIPBLASLT_COMPUTE_16F  :
-        value == "tf32_r"                ? HIPBLASLT_COMPUTE_TF32  :
-        value == "tf32f_r"               ? HIPBLASLT_COMPUTE_TF32_FAST  :
-        static_cast<hipblasLtComputetype_t>(-1);
+        value == "f32_r" || value == "s" ? HIPBLASLT_COMPUTE_F32  :
+        static_cast<hipblasLtComputeType_t>(-1);
 }
 // clang-format on
 
@@ -148,36 +146,41 @@ constexpr hipblasLtComputetype_t string_to_hipblaslt_computetype(const std::stri
  * \brief The main structure for Numerical checking to detect numerical
  *abnormalities such as NaN/zero/Inf
  *********************************************************************************************************/
-typedef struct hipblaslt_check_numerics_s {
-  // Set to true if there is a NaN in the vector/matrix
-  bool has_NaN = false;
+typedef struct hipblaslt_check_numerics_s
+{
+    // Set to true if there is a NaN in the vector/matrix
+    bool has_NaN = false;
 
-  // Set to true if there is a zero in the vector/matrix
-  bool has_zero = false;
+    // Set to true if there is a zero in the vector/matrix
+    bool has_zero = false;
 
-  // Set to true if there is an Infinity in the vector/matrix
-  bool has_Inf = false;
+    // Set to true if there is an Infinity in the vector/matrix
+    bool has_Inf = false;
 } hipblaslt_check_numerics_t;
 
 /*******************************************************************************
  * \brief  returns true if arg is NaN
  ********************************************************************************/
 template <typename T, std::enable_if_t<std::is_integral<T>{}, int> = 0>
-__host__ __device__ inline bool hipblaslt_isnan(T) {
-  return false;
+__host__ __device__ inline bool hipblaslt_isnan(T)
+{
+    return false;
 }
 
 template <typename T, std::enable_if_t<!std::is_integral<T>{}, int> = 0>
-__host__ __device__ inline bool hipblaslt_isnan(T arg) {
-  return std::isnan(arg);
+__host__ __device__ inline bool hipblaslt_isnan(T arg)
+{
+    return std::isnan(arg);
 }
 
-__host__ __device__ inline bool hipblaslt_isnan(hipblasLtHalf arg) {
-  union {
-    hipblasLtHalf fp;
-    uint16_t data;
-  } x = {arg};
-  return (~x.data & 0x7c00) == 0 && (x.data & 0x3ff) != 0;
+__host__ __device__ inline bool hipblaslt_isnan(hipblasLtHalf arg)
+{
+    union
+    {
+        hipblasLtHalf fp;
+        uint16_t      data;
+    } x = {arg};
+    return (~x.data & 0x7c00) == 0 && (x.data & 0x3ff) != 0;
 }
 
 /*******************************************************************************
@@ -185,27 +188,33 @@ __host__ __device__ inline bool hipblaslt_isnan(hipblasLtHalf arg) {
  ********************************************************************************/
 
 template <typename T, std::enable_if_t<std::is_integral<T>{}, int> = 0>
-__host__ __device__ inline bool hipblaslt_isinf(T) {
-  return false;
+__host__ __device__ inline bool hipblaslt_isinf(T)
+{
+    return false;
 }
 
 template <typename T, std::enable_if_t<!std::is_integral<T>{}, int> = 0>
-__host__ __device__ inline bool hipblaslt_isinf(T arg) {
-  return std::isinf(arg);
+__host__ __device__ inline bool hipblaslt_isinf(T arg)
+{
+    return std::isinf(arg);
 }
 
-__host__ __device__ inline bool hipblaslt_isinf(hipblasLtHalf arg) {
-  union {
-    hipblasLtHalf fp;
-    uint16_t data;
-  } x = {arg};
-  return (~x.data & 0x7c00) == 0 && (x.data & 0x3ff) == 0;
+__host__ __device__ inline bool hipblaslt_isinf(hipblasLtHalf arg)
+{
+    union
+    {
+        hipblasLtHalf fp;
+        uint16_t      data;
+    } x = {arg};
+    return (~x.data & 0x7c00) == 0 && (x.data & 0x3ff) == 0;
 }
 
 /*******************************************************************************
  * \brief  returns true if arg is zero
  ********************************************************************************/
 
-template <typename T> __host__ __device__ inline bool hipblaslt_iszero(T arg) {
-  return arg == 0;
+template <typename T>
+__host__ __device__ inline bool hipblaslt_iszero(T arg)
+{
+    return arg == 0;
 }
