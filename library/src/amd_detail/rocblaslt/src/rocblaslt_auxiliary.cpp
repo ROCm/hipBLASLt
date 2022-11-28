@@ -27,6 +27,7 @@
 #include "definitions.h"
 #include "handle.h"
 #include "rocblaslt.h"
+#include "tensile_host.hpp"
 #include "utility.hpp"
 
 #include <hip/hip_runtime_api.h>
@@ -568,12 +569,60 @@ rocblaslt_status rocblaslt_matmul_algo_get_heuristic(
     log_error(__func__, "invalid requested count", requestedAlgoCount);
     return rocblaslt_status_invalid_value;
   }
+  rocblaslt_status status = rocblaslt_status_success;
   try {
-    *returnAlgoCount = 1;
-    heuristicResultsArray[0].algo.max_workspace_bytes =
-        pref->max_workspace_bytes;
+    hipblasDatatype_t a_type = matA->type;
+    hipblasDatatype_t b_type = matB->type;
+    hipblasDatatype_t c_type = matC->type;
+    hipblasDatatype_t d_type = matD->type;
+    rocblaslt_compute_type compute_type = matmul_desc->compute_type;
+    if (a_type == HIPBLAS_R_32F && b_type == HIPBLAS_R_32F) {
+      if (c_type == HIPBLAS_R_32F && d_type == HIPBLAS_R_32F) {
+        if (compute_type == rocblaslt_compute_f32) {
+          float alpha = 1.0;
+          float beta = 1.0;
+          auto prob = ConstructRocblasltProblem<float, float, float>(
+              handle, matmul_desc, matA, matB, matC, matD, &alpha, &beta);
+          status = getBestSolutions<float, float, float>(
+              prob, requestedAlgoCount, heuristicResultsArray, returnAlgoCount,
+              pref->max_workspace_bytes);
+        }
+      }
+    } else if (a_type == HIPBLAS_R_16F && b_type == HIPBLAS_R_16F) {
+      if (c_type == HIPBLAS_R_16F && d_type == HIPBLAS_R_16F) {
+        if (compute_type == rocblaslt_compute_f32) {
+          float alpha = 1.0;
+          float beta = 1.0;
+          auto prob =
+              ConstructRocblasltProblem<rocblaslt_half, rocblaslt_half, float>(
+                  handle, matmul_desc, matA, matB, matC, matD, &alpha, &beta);
+          status = getBestSolutions<rocblaslt_half, rocblaslt_half, float>(
+              prob, requestedAlgoCount, heuristicResultsArray, returnAlgoCount,
+              pref->max_workspace_bytes);
+        }
+      }
+    } else if (a_type == HIPBLAS_R_16B && b_type == HIPBLAS_R_16B) {
+      if (c_type == HIPBLAS_R_16B && d_type == HIPBLAS_R_16B) {
+        if (compute_type == rocblaslt_compute_f32) {
+          float alpha = 1.0;
+          float beta = 1.0;
+          auto prob = ConstructRocblasltProblem<rocblaslt_bfloat16,
+                                                rocblaslt_bfloat16, float>(
+              handle, matmul_desc, matA, matB, matC, matD, &alpha, &beta);
+          status =
+              getBestSolutions<rocblaslt_bfloat16, rocblaslt_bfloat16, float>(
+                  prob, requestedAlgoCount, heuristicResultsArray,
+                  returnAlgoCount, pref->max_workspace_bytes);
+        }
+      }
+    } else {
+      status = rocblaslt_status_not_implemented;
+    }
+
     log_api(__func__, "returnAlogCount", *returnAlgoCount);
-    heuristicResultsArray[0].state = rocblaslt_status_success;
+    if (status != rocblaslt_status_success) {
+      throw status;
+    }
   } catch (const rocblaslt_status &status) {
     return status;
   }
