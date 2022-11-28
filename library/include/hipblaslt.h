@@ -196,6 +196,13 @@ typedef struct _hipblasLtMatmulHeuristicResult_t{
 extern "C" {
 #endif
 
+HIPBLASLT_EXPORT
+hipblasStatus_t hipblasLtGetVersion(hipblasLtHandle_t handle, int* version);
+HIPBLASLT_EXPORT
+hipblasStatus_t hipblasLtGetGitRevision(hipblasLtHandle_t handle, char* rev);
+
+HIPBLASLT_EXPORT
+hipblasStatus_t hipblasLtGetArchName(char** archName);
 /*! \ingroup library_module
  *  \brief Create a hipblaslt handle
  *
@@ -215,7 +222,7 @@ extern "C" {
  *  \retval HIPBLAS_STATUS_INVALID_VALUE \p handle == NULL.
  */
 HIPBLASLT_EXPORT
-hipblasStatus_t hipblasLtCreate(hipblasLtHandle_t *handle);
+hipblasStatus_t hipblasLtCreate(hipblasLtHandle_t* handle);
 
 /*! \ingroup library_module
  *  \brief Destory a hipblaslt handle
@@ -264,10 +271,11 @@ hipblasStatus_t hipblasLtDestroy(const hipblasLtHandle_t handle);
  *  \retval HIPBLAS_STATUS_ALLOC_FAILED If the memory could not be allocated.
  */
 HIPBLASLT_EXPORT
-hipblasStatus_t hipblasLtMatrixLayoutCreate(hipblasLtMatrixLayout_t *matLayout,
-                                            hipblasDatatype_t type,
-                                            uint64_t rows, uint64_t cols,
-                                            int64_t ld);
+hipblasStatus_t hipblasLtMatrixLayoutCreate(hipblasLtMatrixLayout_t* matLayout,
+                                            hipblasDatatype_t        type,
+                                            uint64_t                 rows,
+                                            uint64_t                 cols,
+                                            int64_t                  ld);
 
 /*! \ingroup library_module
  *  \brief Destory a matrix layout descriptor
@@ -282,8 +290,7 @@ hipblasStatus_t hipblasLtMatrixLayoutCreate(hipblasLtMatrixLayout_t *matLayout,
  *  \retval HIPBLAS_STATUS_SUCCESS If the operation was successful.
  */
 HIPBLASLT_EXPORT
-hipblasStatus_t
-hipblasLtMatrixLayoutDestroy(const hipblasLtMatrixLayout_t matLayout);
+hipblasStatus_t hipblasLtMatrixLayoutDestroy(const hipblasLtMatrixLayout_t matLayout);
 
 /*! \ingroup library_module
  *  \brief  Set attribute to a matrix descriptor
@@ -309,10 +316,10 @@ hipblasLtMatrixLayoutDestroy(const hipblasLtMatrixLayout_t matLayout);
  * doesn't match the size of the internal storage for the selected attribute.
  */
 HIPBLASLT_EXPORT
-hipblasStatus_t
-hipblasLtMatrixLayoutSetAttribute(hipblasLtMatrixLayout_t matLayout,
-                                  hipblasLtMatrixLayoutAttribute_t attr,
-                                  const void *buf, size_t sizeInBytes);
+hipblasStatus_t hipblasLtMatrixLayoutSetAttribute(hipblasLtMatrixLayout_t          matLayout,
+                                                  hipblasLtMatrixLayoutAttribute_t attr,
+                                                  const void*                      buf,
+                                                  size_t                           sizeInBytes);
 
 /*! \ingroup library_module
  *  \brief Query attribute from a matrix descriptor
@@ -346,9 +353,11 @@ hipblasLtMatrixLayoutSetAttribute(hipblasLtMatrixLayout_t matLayout,
  * for the selected attribute.
  */
 HIPBLASLT_EXPORT
-hipblasStatus_t hipblasLtMatrixLayoutGetAttribute(
-    hipblasLtMatrixLayout_t matLayout, hipblasLtMatrixLayoutAttribute_t attr,
-    void *buf, size_t sizeInBytes, size_t *sizeWritten);
+hipblasStatus_t hipblasLtMatrixLayoutGetAttribute(hipblasLtMatrixLayout_t          matLayout,
+                                                  hipblasLtMatrixLayoutAttribute_t attr,
+                                                  void*                            buf,
+                                                  size_t                           sizeInBytes,
+                                                  size_t*                          sizeWritten);
 
 /*! \ingroup library_module
  *  \brief Create a matrix multiply descriptor
@@ -371,9 +380,9 @@ hipblasStatus_t hipblasLtMatrixLayoutGetAttribute(
  *  \retval HIPBLAS_STATUS_ALLOC_FAILED If the memory could not be allocated.
  */
 HIPBLASLT_EXPORT
-hipblasStatus_t hipblasLtMatmulDescCreate(hipblasLtMatmulDesc_t *matmulDesc,
+hipblasStatus_t hipblasLtMatmulDescCreate(hipblasLtMatmulDesc_t* matmulDesc,
                                           hipblasLtComputeType_t computeType,
-                                          hipblasDatatype_t scaleType);
+                                          hipblasDatatype_t      scaleType);
 
 /*! \ingroup library_module
  *  \brief Destory a matrix multiply descriptor
@@ -389,8 +398,7 @@ hipblasStatus_t hipblasLtMatmulDescCreate(hipblasLtMatmulDesc_t *matmulDesc,
  *  \retval HIPBLAS_STATUS_SUCCESS If operation was successful.
  */
 HIPBLASLT_EXPORT
-hipblasStatus_t
-hipblasLtMatmulDescDestroy(const hipblasLtMatmulDesc_t matmulDesc);
+hipblasStatus_t hipblasLtMatmulDescDestroy(const hipblasLtMatmulDesc_t matmulDesc);
 
 /*! \ingroup library_module
  *  \brief  Set attribute to a matrix multiply descriptor
@@ -416,10 +424,10 @@ hipblasLtMatmulDescDestroy(const hipblasLtMatmulDesc_t matmulDesc);
  * doesn't match the size of the internal storage for the selected attribute.
  */
 HIPBLASLT_EXPORT
-hipblasStatus_t
-hipblasLtMatmulDescSetAttribute(hipblasLtMatmulDesc_t matmulDesc,
-                                hipblasLtMatmulDescAttributes_t attr,
-                                const void *buf, size_t sizeInBytes);
+hipblasStatus_t hipblasLtMatmulDescSetAttribute(hipblasLtMatmulDesc_t           matmulDesc,
+                                                hipblasLtMatmulDescAttributes_t attr,
+                                                const void*                     buf,
+                                                size_t                          sizeInBytes);
 
 /*! \ingroup library_module
  *  \brief Query attribute from a matrix multiply descriptor
@@ -453,10 +461,11 @@ hipblasLtMatmulDescSetAttribute(hipblasLtMatmulDesc_t matmulDesc,
  * for the selected attribute.
  */
 HIPBLASLT_EXPORT
-hipblasStatus_t
-hipblasLtMatmulDescGetAttribute(hipblasLtMatmulDesc_t matmulDesc,
-                                hipblasLtMatmulDescAttributes_t attr, void *buf,
-                                size_t sizeInBytes, size_t *sizeWritten);
+hipblasStatus_t hipblasLtMatmulDescGetAttribute(hipblasLtMatmulDesc_t           matmulDesc,
+                                                hipblasLtMatmulDescAttributes_t attr,
+                                                void*                           buf,
+                                                size_t                          sizeInBytes,
+                                                size_t*                         sizeWritten);
 
 /*! \ingroup library_module
  *  \brief Create a preference descriptor
@@ -474,8 +483,7 @@ hipblasLtMatmulDescGetAttribute(hipblasLtMatmulDesc_t matmulDesc,
  * allocated.
  */
 HIPBLASLT_EXPORT
-hipblasStatus_t
-hipblasLtMatmulPreferenceCreate(hipblasLtMatmulPreference_t *pref);
+hipblasStatus_t hipblasLtMatmulPreferenceCreate(hipblasLtMatmulPreference_t* pref);
 
 /*! \ingroup library_module
  *  \brief Destory a preferences descriptor
@@ -492,8 +500,7 @@ hipblasLtMatmulPreferenceCreate(hipblasLtMatmulPreference_t *pref);
  *  \retval HIPBLAS_STATUS_SUCCESS If operation was successful.
  */
 HIPBLASLT_EXPORT
-hipblasStatus_t
-hipblasLtMatmulPreferenceDestroy(const hipblasLtMatmulPreference_t pref);
+hipblasStatus_t hipblasLtMatmulPreferenceDestroy(const hipblasLtMatmulPreference_t pref);
 
 /*! \ingroup library_module
  *  \brief Set attribute to a preference descriptor
@@ -519,10 +526,10 @@ hipblasLtMatmulPreferenceDestroy(const hipblasLtMatmulPreference_t pref);
  * doesn't match the size of the internal storage for the selected attribute.
  */
 HIPBLASLT_EXPORT
-hipblasStatus_t hipblasLtMatmulPreferenceSetAttribute(
-    hipblasLtMatmulPreference_t pref,
-    hipblasLtMatmulPreferenceAttributes_t attr, const void *buf,
-    size_t sizeInBytes);
+hipblasStatus_t hipblasLtMatmulPreferenceSetAttribute(hipblasLtMatmulPreference_t           pref,
+                                                      hipblasLtMatmulPreferenceAttributes_t attr,
+                                                      const void*                           buf,
+                                                      size_t sizeInBytes);
 
 /*! \ingroup library_module
  *  \brief Query attribute from a preference descriptor
@@ -556,10 +563,11 @@ hipblasStatus_t hipblasLtMatmulPreferenceSetAttribute(
  * for the selected attribute.
  */
 HIPBLASLT_EXPORT
-hipblasStatus_t hipblasLtMatmulPreferenceGetAttribute(
-    hipblasLtMatmulPreference_t pref,
-    hipblasLtMatmulPreferenceAttributes_t attr, void *buf, size_t sizeInBytes,
-    size_t *sizeWritten);
+hipblasStatus_t hipblasLtMatmulPreferenceGetAttribute(hipblasLtMatmulPreference_t           pref,
+                                                      hipblasLtMatmulPreferenceAttributes_t attr,
+                                                      void*                                 buf,
+                                                      size_t  sizeInBytes,
+                                                      size_t* sizeWritten);
 
 /*! \ingroup library_module
  *  \brief Retrieve the possible algorithms
@@ -600,13 +608,17 @@ hipblasStatus_t hipblasLtMatmulPreferenceGetAttribute(
  * \p requestedAlgoCount is less or equal to zero.
  */
 HIPBLASLT_EXPORT
-hipblasStatus_t hipblasLtMatmulAlgoGetHeuristic(
-    hipblasLtHandle_t handle, hipblasLtMatmulDesc_t matmulDesc,
-    hipblasLtMatrixLayout_t Adesc, hipblasLtMatrixLayout_t Bdesc,
-    hipblasLtMatrixLayout_t Cdesc, hipblasLtMatrixLayout_t Ddesc,
-    hipblasLtMatmulPreference_t pref, int requestedAlgoCount,
-    hipblasLtMatmulHeuristicResult_t heuristicResultsArray[],
-    int *returnAlgoCount);
+hipblasStatus_t
+    hipblasLtMatmulAlgoGetHeuristic(hipblasLtHandle_t                handle,
+                                    hipblasLtMatmulDesc_t            matmulDesc,
+                                    hipblasLtMatrixLayout_t          Adesc,
+                                    hipblasLtMatrixLayout_t          Bdesc,
+                                    hipblasLtMatrixLayout_t          Cdesc,
+                                    hipblasLtMatrixLayout_t          Ddesc,
+                                    hipblasLtMatmulPreference_t      pref,
+                                    int                              requestedAlgoCount,
+                                    hipblasLtMatmulHeuristicResult_t heuristicResultsArray[],
+                                    int*                             returnAlgoCount);
 
 /*! \ingroup library_module
  *  \brief Retrieve the possible algorithms
@@ -669,14 +681,22 @@ hipblasStatus_t hipblasLtMatmulAlgoGetHeuristic(
  * initialized.
  */
 HIPBLASLT_EXPORT
-hipblasStatus_t
-hipblasLtMatmul(hipblasLtHandle_t handle, hipblasLtMatmulDesc_t matmulDesc,
-                const void *alpha, const void *A, hipblasLtMatrixLayout_t Adesc,
-                const void *B, hipblasLtMatrixLayout_t Bdesc, const void *beta,
-                const void *C, hipblasLtMatrixLayout_t Cdesc, void *D,
-                hipblasLtMatrixLayout_t Ddesc,
-                const hipblasLtMatmulAlgo_t *algo, void *workspace,
-                size_t workspaceSizeInBytes, hipStream_t stream);
+hipblasStatus_t hipblasLtMatmul(hipblasLtHandle_t            handle,
+                                hipblasLtMatmulDesc_t        matmulDesc,
+                                const void*                  alpha,
+                                const void*                  A,
+                                hipblasLtMatrixLayout_t      Adesc,
+                                const void*                  B,
+                                hipblasLtMatrixLayout_t      Bdesc,
+                                const void*                  beta,
+                                const void*                  C,
+                                hipblasLtMatrixLayout_t      Cdesc,
+                                void*                        D,
+                                hipblasLtMatrixLayout_t      Ddesc,
+                                const hipblasLtMatmulAlgo_t* algo,
+                                void*                        workspace,
+                                size_t                       workspaceSizeInBytes,
+                                hipStream_t                  stream);
 
 #ifdef __cplusplus
 }

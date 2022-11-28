@@ -21,10 +21,13 @@
 #
 # ########################################################################
 
+set(hipblaslt_source_common  src/hipblaslt_ostream.cpp)
+
 if(NOT BUILD_CUDA)
   # hipBLASLt source
   include(src/amd_detail/rocblaslt/CMakeLists.txt)
   set(hipblaslt_source src/amd_detail/hipblaslt.cpp
+                         ${hipblaslt_source_common}
                          ${rocblaslt_source})
 else()
   # hipBLASLt CUDA source

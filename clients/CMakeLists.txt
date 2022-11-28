@@ -36,10 +36,8 @@ project( hipblaslt-clients LANGUAGES CXX C  )
 
 if( SKIP_LIBRARY )
   include_directories(${HIPBLASLT_LIBRARY_DIR}/include)
-  include_directories(${HIPBLASLT_LIBRARY_DIR}/include/internal)
 else()
   include_directories(${CMAKE_BINARY_DIR}/include)
-  include_directories(${CMAKE_BINARY_DIR}/include/internal)
 endif()
 
 set(THREADS_PREFER_PTHREAD_FLAG ON)
@@ -83,3 +81,58 @@ endif( )
 if( BUILD_CLIENTS_SAMPLES )
   add_subdirectory( samples )
 endif( )
+
+if( BUILD_CLIENTS_BENCHMARKS OR BUILD_CLIENTS_TESTS)
+
+  # Linking lapack library requires fortran flags
+  find_package( cblas REQUIRED CONFIG )
+  if (LINK_BLIS)
+    set( BLIS_INCLUDE_DIR ${BUILD_DIR}/deps/blis/include/blis )
+    set( BLIS_CPP ../common/blis_interface.cpp )
+    set( BLAS_LIBRARY ${BUILD_DIR}/deps/blis/lib/libblis.so )
+  else()
+    set( BLAS_LIBRARY "blas" )
+  endif()
+
+  # common source files used in subdirectories benchmarks and gtest thus ../common
+  set( hipblaslt_test_bench_common
+      ../common/singletons.cpp
+      ../common/utility.cpp
+      ../common/cblas_interface.cpp
+      ../common/argument_model.cpp
+      ../common/hipblaslt_parse_data.cpp
+      ../common/hipblaslt_arguments.cpp
+      ../common/hipblaslt_random.cpp
+      ${BLIS_CPP}
+    )
+
+  if( BUILD_CLIENTS_BENCHMARKS )
+    add_subdirectory( benchmarks )
+  endif( )
+
+  if( BUILD_CLIENTS_TESTS )
+    add_subdirectory( gtest )
+  endif( )
+
+endif()
+
+
+set( HIPBLASLT_COMMON "${PROJECT_BINARY_DIR}/staging/hipblaslt_common.yaml")
+add_custom_command( OUTPUT "${HIPBLASLT_COMMON}"
+                    COMMAND ${CMAKE_COMMAND} -E copy include/hipblaslt_common.yaml "${HIPBLASLT_COMMON}"
+                    DEPENDS include/hipblaslt_common.yaml
+                    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}" )
+
+set( HIPBLASLT_TEMPLATE "${PROJECT_BINARY_DIR}/staging/hipblaslt_template.yaml")
+add_custom_command( OUTPUT "${HIPBLASLT_TEMPLATE}"
+                    COMMAND ${CMAKE_COMMAND} -E copy include/hipblaslt_template.yaml "${HIPBLASLT_TEMPLATE}"
+                    DEPENDS include/hipblaslt_template.yaml
+                    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}" )
+
+set( HIPBLASLT_GENTEST "${PROJECT_BINARY_DIR}/staging/hipblaslt_gentest.py")
+add_custom_command( OUTPUT "${HIPBLASLT_GENTEST}"
+                    COMMAND ${CMAKE_COMMAND} -E copy common/hipblaslt_gentest.py "${HIPBLASLT_GENTEST}"
+                    DEPENDS common/hipblaslt_gentest.py
+                    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}" )
+
+add_custom_target( hipblaslt-common DEPENDS "${HIPBLASLT_COMMON}" "${HIPBLASLT_TEMPLATE}" "${HIPBLASLT_GENTEST}" )
