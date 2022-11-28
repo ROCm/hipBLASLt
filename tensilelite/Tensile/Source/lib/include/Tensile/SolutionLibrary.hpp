@@ -28,6 +28,7 @@
 
 #include <memory>
 #include <set>
+#include <vector>
 #include <string>
 
 #include <Tensile/Tensile.hpp>
@@ -43,6 +44,8 @@ namespace Tensile
 
     template <typename MySolution>
     using SolutionSet = std::set<std::shared_ptr<MySolution>>;
+    template <typename MySolution>
+    using SolutionVector = std::vector<std::shared_ptr<MySolution>>;
 
     /**
  * \ingroup SolutionLibrary
@@ -95,6 +98,19 @@ namespace Tensile
 
         virtual std::string type() const        = 0;
         virtual std::string description() const = 0;
+
+        /**
+   * Returns the multiple `Solution` object that best solves this
+   * particular `problem` on this particular piece of `hardware`.
+   *
+   * May return `nullptr` if no such object exists.
+   */
+        virtual SolutionVector<MySolution> findTopSolutions(MyProblem const& problem,
+                                                            Hardware const&  hardware,
+                                                            int              numSolutions) const
+        {
+          return SolutionVector<MySolution>();
+        }
     };
 
 } // namespace Tensile

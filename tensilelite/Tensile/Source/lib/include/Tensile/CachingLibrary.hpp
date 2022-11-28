@@ -157,11 +157,13 @@ namespace Tensile
     {
     public:
         using Library = SolutionLibrary<MyProblem, MySolution>;
-        using Cache = CacheMap<std::tuple<std::shared_ptr<MySolution>, double>, AMDGPU, MyProblem>;
+        using Cache   = CacheMap<std::tuple<std::shared_ptr<MySolution>, double>, AMDGPU, MyProblem>;
+        using Caches  = CacheMap<SolutionVector<MySolution>, AMDGPU, MyProblem>;
 
         CachingLibrary(std::shared_ptr<Library> subLibrary)
             : m_subLibrary(subLibrary)
             , m_cache(std::make_tuple(nullptr, std::numeric_limits<double>::max()))
+            , m_caches(SolutionVector<MySolution>{})
         {
         }
 
@@ -222,9 +224,36 @@ namespace Tensile
             return m_subLibrary;
         }
 
+        virtual SolutionVector<MySolution> findTopSolutions(MyProblem const& problem,
+                                                            Hardware  const& hardware,
+                                                            int              numSolutions) const override
+        {
+            try
+            {
+                auto const& amdgpu = dynamic_cast<AMDGPU const&>(hardware);
+                SolutionVector<MySolution> solutions;
+                solutions = m_caches.find(problem, amdgpu);
+
+                if(solutions.size() != 0)
+                    return solutions;
+
+                solutions = m_subLibrary->findTopSolutions(problem, hardware, numSolutions);
+                if(solutions.size() != 0)
+                    m_caches.add(solutions, problem, amdgpu);
+
+                return solutions;
+            }
+            catch(std::bad_cast const& exc)
+            {
+                return m_subLibrary->findTopSolutions(problem, hardware, numSolutions);
+            }
+            return m_subLibrary->findTopSolutions(problem, hardware, numSolutions);
+        }
+
     private:
         std::shared_ptr<Library> m_subLibrary;
         mutable Cache            m_cache;
+        mutable Caches           m_caches;
     };
 
 #if 0

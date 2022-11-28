@@ -242,6 +242,20 @@ class ProblemType:
                          'C' + cNames,
                          'D' + dNames])
 
+    def placeholderStr(self, includeBatch=False, includeOperation=False, includeType=False):
+        ret = ""
+        if includeOperation:
+            ret = self.operationIdentifier
+            if not self.useBeta:
+                ret += "_Beta0"
+            ret += "_StridedBatched{}".format(int(self.stridedBatched))
+        if includeType:
+            ret += "_Type_{}{}".format(DataType(self.aType).toChar(), DataType(self.cType).toChar())
+            if self.highPrecisionAccumulate:
+                ret += "_HPA"
+
+        return ret
+
     def predicates(self, includeBatch=False, includeOperation=False, includeType=False):
         predicates = []
 
@@ -384,7 +398,8 @@ class ProblemPredicate(Properties.Predicate):
         compoundPreds = cls.CompoundPredicates(d, problemType)
         extraPreds = problemTypePreds + compoundPreds + morePreds
 
-        return super().FromOriginalState(d, extraPreds)
+        predicates = [p for p in map(cls.FromOriginalKeyPair, d.items()) if p is not None] + extraPreds
+        return cls.And(predicates)
 
 class SizeMapping:
     StateKeys = ['workGroup',
@@ -444,14 +459,14 @@ class Solution:
                 'problemPredicate',
                 'sizeMapping',
                 'debugKernel',
-                'info',
+                'libraryLogicIndex',
                 'index',
                 'ideals',
                 'linearModel']
     HiddenKeys = ['originalSolution']
 
     @classmethod
-    def FromSolutionStruct(cls, solution, deviceInfo=None):
+    def FromSolutionStruct(cls, solution):
         return cls.FromOriginalState(solution._state)
 
     @classmethod
@@ -472,7 +487,8 @@ class Solution:
         if 'SolutionIndex' in d:
             rv.index = d['SolutionIndex']
 
-        rv.info = cls.ReadOriginalInfo(d)
+        info = cls.ReadOriginalInfo(d)
+        rv.libraryLogicIndex = int(info.get("SolutionIndex", -1))
 
         rv.sizeMapping = SizeMapping.FromOriginalState(d)
         if 'Ideals' in d:
@@ -506,7 +522,7 @@ class Solution:
         self.problemPredicate = ProblemPredicate('TruePred')
         self.sizeMapping = None
         self.debugKernel = False
-        self.info = {}
+        self.libraryLogicIndex = {}
         self.index = None
         self.ideals = {}
 

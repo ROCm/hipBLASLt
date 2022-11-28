@@ -27,6 +27,7 @@
 #include "SolutionIterator.hpp"
 
 #include "ResultReporter.hpp"
+#include <Tensile/Debug.hpp>
 
 namespace Tensile
 {
@@ -38,10 +39,11 @@ namespace Tensile
             po::variables_map const&                                   args)
         {
             bool bestSolution = args["best-solution"].as<bool>();
+            int gridbasedTopSols = Debug::Instance().getGridbasedTopSols();
 
             if(bestSolution)
             {
-                return std::make_shared<BestSolutionIterator>(library, hardware);
+                return std::make_shared<TopSolutionIterator>(library, hardware, gridbasedTopSols);
             }
             else
             {
@@ -169,13 +171,7 @@ namespace Tensile
 
         void AllSolutionsIterator::preSolution(ContractionSolution const& solution)
         {
-            {
-                std::string idx  = "-1";
-                auto        iter = solution.info.find("SolutionIndex");
-                if(iter != solution.info.end())
-                    idx = iter->second;
-                m_reporter->report(ResultKey::SolutionLibraryIndex, idx);
-            }
+            m_reporter->report(ResultKey::SolutionLibraryIndex, solution.libraryLogicIndex);
             m_reporter->report(ResultKey::SolutionIndex, m_currentSolutionIdx);
             m_reporter->report(ResultKey::SolutionProgress,
                                concatenate(m_currentSolutionIdx, "/", m_lastSolutionIdx));
@@ -225,7 +221,6 @@ namespace Tensile
         void BestSolutionIterator::preProblem(ContractionProblem const& problem)
         {
             SolutionIterator::preProblem(problem);
-
             m_currentSolution     = m_library->findBestSolution(m_problem, *m_hardware);
             m_usedCurrentSolution = false;
         }
@@ -234,14 +229,7 @@ namespace Tensile
 
         void BestSolutionIterator::preSolution(ContractionSolution const& solution)
         {
-            {
-                std::string idx  = "-1";
-                auto        iter = solution.info.find("SolutionIndex");
-                if(iter != solution.info.end())
-                    idx = iter->second;
-                m_reporter->report(ResultKey::SolutionLibraryIndex, idx);
-            }
-
+            m_reporter->report(ResultKey::SolutionLibraryIndex, solution.libraryLogicIndex);
             m_reporter->report(ResultKey::SolutionIndex, 0);
             m_reporter->report(ResultKey::SolutionProgress, "1/1");
         }
@@ -259,6 +247,47 @@ namespace Tensile
         std::shared_ptr<ContractionSolution> BestSolutionIterator::getSolution()
         {
             return m_currentSolution;
+        }
+
+        TopSolutionIterator::TopSolutionIterator(
+            std::shared_ptr<MasterSolutionLibrary<ContractionProblem>> library,
+            std::shared_ptr<Hardware>                                  hardware,
+            int                                                        numSolutions)
+            : SolutionIterator(library, hardware)
+            , m_numSolutions(numSolutions)
+        {
+        }
+
+        void TopSolutionIterator::preProblem(ContractionProblem const& problem)
+        {
+            SolutionIterator::preProblem(problem);
+            m_solutions = m_library->findTopSolutions(m_problem, *m_hardware, m_numSolutions);
+            m_currentSolutionIdx = 0;
+        }
+
+        void TopSolutionIterator::postProblem() {}
+
+        void TopSolutionIterator::preSolution(ContractionSolution const& solution)
+        {
+            m_reporter->report(ResultKey::SolutionLibraryIndex, solution.libraryLogicIndex);
+            m_reporter->report(ResultKey::SolutionIndex, m_currentSolutionIdx);
+            m_reporter->report(ResultKey::SolutionProgress,
+                                            concatenate(m_currentSolutionIdx, "/", m_solutions.size()));
+        }
+
+        void TopSolutionIterator::postSolution()
+        {
+            m_currentSolutionIdx++;
+        }
+
+        bool TopSolutionIterator::moreSolutionsInProblem() const
+        {
+            return m_currentSolutionIdx < m_solutions.size();
+        }
+
+        std::shared_ptr<ContractionSolution> TopSolutionIterator::getSolution()
+        {
+            return m_solutions[m_currentSolutionIdx];
         }
     } // namespace Client
 } // namespace Tensile
