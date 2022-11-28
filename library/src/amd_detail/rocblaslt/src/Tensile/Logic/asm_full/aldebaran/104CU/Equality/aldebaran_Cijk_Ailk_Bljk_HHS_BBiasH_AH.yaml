@@ -1,6 +1,6 @@
 - {MinimumRequiredVersion: 4.33.0}
 - aldebaran
-- gfx90a
+- {Architecture: gfx90a, CUCount: 104}
 - [Device 0050, Device 0051, Device 0052, Device 0054, Device 0062, Device 7400, Device
     740c]
 - Activation: true
@@ -14,8 +14,8 @@
   ComplexConjugateA: false
   ComplexConjugateB: false
   ComputeDataType: 0
-  DataType: 7
-  DestDataType: 7
+  DataType: 4
+  DestDataType: 4
   Fp16AltImpl: false
   HighPrecisionAccumulate: true
   Index0: 0
@@ -113,17 +113,17 @@
     LdsOffsetB_Blk: 6144
     LdsPadA: 0
     LdsPadB: 0
-    LocalReadVectorWidth: 2
+    LocalReadVectorWidth: 4
     LocalSplitU: 1
     LocalWritePerMfma: -1
     LocalWriteUseSgprA: false
     LocalWriteUseSgprB: false
-    LoopIters: 16
+    LoopIters: 8
     LoopUnroll: 32
     MFMA_BF16_1K: false
     MIArchVgpr: false
-    MIBlock: [16, 16, 2, 4, 2, 2]
-    MIInputPerThread: 2
+    MIBlock: [16, 16, 4, 4, 2, 2]
+    MIInputPerThread: 4
     MIOutputVectorWidth: 4
     MIRegPerOut: 1
     MIWaveGroup: [1, 1]
@@ -138,10 +138,10 @@
     MatrixInstB: 4
     MatrixInstBM: 2
     MatrixInstBN: 2
-    MatrixInstK: 2
+    MatrixInstK: 4
     MatrixInstM: 16
     MatrixInstN: 16
-    MatrixInstruction: [16, 16, 2, 4]
+    MatrixInstruction: [16, 16, 4, 4]
     MaxOccupancy: 40
     MaxVgprNumber: 256
     MinVgprNumber: 0
@@ -181,8 +181,8 @@
       ComplexConjugateA: false
       ComplexConjugateB: false
       ComputeDataType: 0
-      DataType: 7
-      DestDataType: 7
+      DataType: 4
+      DestDataType: 4
       Fp16AltImpl: false
       HighPrecisionAccumulate: true
       Index0: 0
@@ -228,7 +228,7 @@
     ScheduleIterAlg: 1
     ScheduleLocalWrite: 1
     SolutionIndex: 0
-    SolutionNameMin: Cijk_Ailk_Bljk_BBS_BBiasH_AH_MT64x64x32_MI16x16x2x4_SN_GSU1_MIWT2_2
+    SolutionNameMin: Cijk_Ailk_Bljk_HHS_BBiasH_AH_MT64x64x32_MI16x16x4x4_SN_GSU1_MIWT2_2
     SourceSwap: false
     StaggerU: 32
     StaggerUMapping: 0
@@ -324,17 +324,17 @@
     LdsOffsetB_Blk: 6144
     LdsPadA: 0
     LdsPadB: 0
-    LocalReadVectorWidth: 2
+    LocalReadVectorWidth: 4
     LocalSplitU: 1
     LocalWritePerMfma: -1
     LocalWriteUseSgprA: false
     LocalWriteUseSgprB: false
-    LoopIters: 16
+    LoopIters: 8
     LoopUnroll: 32
     MFMA_BF16_1K: false
     MIArchVgpr: false
-    MIBlock: [16, 16, 2, 4, 2, 2]
-    MIInputPerThread: 2
+    MIBlock: [16, 16, 4, 4, 2, 2]
+    MIInputPerThread: 4
     MIOutputVectorWidth: 4
     MIRegPerOut: 1
     MIWaveGroup: [1, 1]
@@ -349,10 +349,10 @@
     MatrixInstB: 4
     MatrixInstBM: 2
     MatrixInstBN: 2
-    MatrixInstK: 2
+    MatrixInstK: 4
     MatrixInstM: 16
     MatrixInstN: 16
-    MatrixInstruction: [16, 16, 2, 4]
+    MatrixInstruction: [16, 16, 4, 4]
     MaxOccupancy: 40
     MaxVgprNumber: 256
     MinVgprNumber: 0
@@ -392,8 +392,8 @@
       ComplexConjugateA: false
       ComplexConjugateB: false
       ComputeDataType: 0
-      DataType: 7
-      DestDataType: 7
+      DataType: 4
+      DestDataType: 4
       Fp16AltImpl: false
       HighPrecisionAccumulate: true
       Index0: 0
@@ -439,7 +439,7 @@
     ScheduleIterAlg: 1
     ScheduleLocalWrite: 1
     SolutionIndex: 1
-    SolutionNameMin: Cijk_Ailk_Bljk_BBS_BBiasH_AH_MT64x64x32_MI16x16x2x4_SN_GSU2_MIWT2_2
+    SolutionNameMin: Cijk_Ailk_Bljk_HHS_BBiasH_AH_MT64x64x32_MI16x16x4x4_SN_GSU2_MIWT2_2
     SourceSwap: false
     StaggerU: 32
     StaggerUMapping: 0
@@ -481,9 +481,11 @@
     allowLRVWforTLUandMI: false
 - [2, 3, 0, 1]
 - - - [128, 120, 1, 512, 128, 128, 128, 512]
-    - [1, 369.564]
-  - - [8192, 8192, 1, 512, 8192, 8192, 8192, 512]
-    - [0, 152413.0]
+    - [1, 406.215]
+  - - [8192, 7840, 1, 512, 8192, 8192, 8192, 512]
+    - [0, 158155.0]
 - null
 - null
 - DeviceEfficiency
+- null
+- Equality
