@@ -44,8 +44,8 @@ rocblaslt_status rocblaslt_matmul_impl(
     const void *A, const void *B, const void *C, void *D,
     rocblaslt_matrix_layout matA, rocblaslt_matrix_layout matB,
     rocblaslt_matrix_layout matC, rocblaslt_matrix_layout matD,
-    const void *alpha, const void *beta, void *workspace,
-    size_t workspaceSizeInBytes, hipStream_t stream) {
+    const void *alpha, const void *beta, const rocblaslt_matmul_algo *algo,
+    void *workspace, size_t workspaceSizeInBytes, hipStream_t stream) {
   hipblasOperation_t opA = matmul_descr->op_A;
   hipblasOperation_t opB = matmul_descr->op_B;
   rocblaslt_compute_type compute_type = matmul_descr->compute_type;
@@ -104,7 +104,7 @@ rocblaslt_status rocblaslt_matmul_impl(
   handle, opA, opB, m, n, k, alpha, A, type_a, lda, batch_stride_a, 0, B,      \
       type_b, ldb, batch_stride_b, 0, beta, C, type_c, ldc, batch_stride_c, 0, \
       D, type_d, ldd, batch_stride_d, 0, num_batches_a, true, compute_type,    \
-      workspace, workspaceSizeInBytes, bias, epilogue, stream
+      algo, workspace, workspaceSizeInBytes, bias, epilogue, stream
 
   return rocblaslt_matmul_template(EX_PARM);
 }
@@ -161,7 +161,7 @@ rocblaslt_matmul(rocblaslt_handle handle, rocblaslt_matmul_desc matmul_descr,
             *(reinterpret_cast<const float *>(beta)), "stream", stream);
   return rocblaslt_matmul_impl(
       handle, matmul_descr, A, B, C, D, matA, matB, matC, matD, alpha, beta,
-      workspace, min(workspaceSizeInBytes, algo->max_workspace_bytes), stream);
+      algo, workspace, workspaceSizeInBytes, stream);
 }
 
 #ifdef __cplusplus
