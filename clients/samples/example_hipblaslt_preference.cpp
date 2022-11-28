@@ -61,7 +61,6 @@
 #define BATCH_COUNT 1
 #define ALPHA 2
 #define BETA 3
-#define BENCH_LOOP_COUNT 3
 
 typedef enum _ActivationType {
   NONE = 0,
@@ -215,7 +214,7 @@ static int parse_arguments(int argc, char *argv[],
                            float &beta, hipblasOperation_t &trans_a,
                            hipblasOperation_t &trans_b, bool &enable_bias,
                            ActivationType &actType, bool &header, bool &verbose,
-                           bool &validate, bool &timing) {
+                           bool &validate, bool &timing, int &requestedAlgoCount, int &repeatCount) {
   if (argc >= 2) {
     for (int i = 1; i < argc; ++i) {
       std::string arg = argv[i];
@@ -260,6 +259,10 @@ static int parse_arguments(int argc, char *argv[],
           alpha = atof(argv[++i]);
         } else if ((arg == "--beta") && (i + 1 < argc)) {
           beta = atof(argv[++i]);
+        } else if ((arg == "--requestedAlgoCount") && (i + 1 < argc)) {
+          requestedAlgoCount = atoi(argv[++i]);
+        } else if ((arg == "--repeatCount") && (i + 1 < argc)) {
+          repeatCount = atoi(argv[++i]);
         } else if ((arg == "--bias") && (i + 1 < argc)) {
           enable_bias = atoi(argv[++i]);
         } else if ((arg == "--act") && (i + 1 < argc)) {
@@ -328,7 +331,8 @@ static int parse_arguments(int argc, char *argv[],
 bool bad_argument(hipblasOperation_t trans_a, hipblasOperation_t trans_b,
                   int64_t m, int64_t n, int64_t k, int64_t lda, int64_t ldb,
                   int64_t ldc, int64_t ldd, int64_t stride_a, int64_t stride_b,
-                  int64_t stride_c, int64_t stride_d, int64_t batch_count) {
+                  int64_t stride_c, int64_t stride_d, int64_t batch_count,
+                  int64_t requestedAlgoCount, int64_t repeatCount) {
   bool argument_error = false;
   if ((trans_a == HIPBLAS_OP_N) && (lda < m)) {
     argument_error = true;
@@ -377,6 +381,16 @@ bool bad_argument(hipblasOperation_t trans_a, hipblasOperation_t trans_b,
     std::cerr << "ERROR: bad argument batch_count = " << batch_count
               << std::endl;
   }
+  if (requestedAlgoCount < 1) {
+    argument_error = true;
+    std::cerr << "ERROR: bad argument requestedAlgoCount = " << requestedAlgoCount
+              << std::endl;
+  }
+  if (repeatCount < 1) {
+    argument_error = true;
+    std::cerr << "ERROR: bad argument repeatCount = " << repeatCount
+              << std::endl;
+  }
 
   return argument_error;
 }
@@ -409,7 +423,7 @@ void test_hipblaslt(hipblasDatatype_t in_out_datatype,
                     int64_t stride_b, int64_t stride_c, int64_t stride_d,
                     int64_t batch_count, float alpha, float beta,
                     bool enable_bias, ActivationType actType, bool validate,
-                    bool verbose, bool timing) {
+                    bool verbose, bool timing, int requestedAlgoCount, int repeatCount) {
   int64_t a_stride_1, a_stride_2, b_stride_1, b_stride_2;
   int64_t row_a, col_a, row_b, col_b, row_c, col_c;
   int size_a1, size_b1, size_c1 = ldc * n, size_d1 = ldd * n;
@@ -569,79 +583,83 @@ void test_hipblaslt(hipblasDatatype_t in_out_datatype,
       sizeof(workspace_size)));
 
   // Get Heuristic results
-  hipblasLtMatmulHeuristicResult_t heuristicResult[3] = {0};
+  hipblasLtMatmulHeuristicResult_t *heuristicResult = new hipblasLtMatmulHeuristicResult_t[requestedAlgoCount]{0};
   int returnedAlgoCount = 0;
   CHECK_HIPBLASLT_ERROR(hipblasLtMatmulAlgoGetHeuristic(
-      handle, matmul, matA, matB, matC, matD, pref, 3, heuristicResult,
+      handle, matmul, matA, matB, matC, matD, pref, requestedAlgoCount, heuristicResult,
       &returnedAlgoCount));
 
-  // Solve problem
-  CHECK_HIPBLASLT_ERROR(hipblasLtMatmul(
-      handle, matmul, &alpha, da, matA, db, matB, &beta, dc, matC, dd, matD,
-      &heuristicResult[0].algo, d_worksapce, workspace_size, stream));
-
-  hipStreamSynchronize(stream);
-  // copy output from device to CPU
-  CHECK_HIP_ERROR(
-      hipMemcpy(hd.data(), dd, sizeof(T) * size_c, hipMemcpyDeviceToHost));
-
   std::string timing_string;
-  if (timing) {
-    hipEvent_t start, stop;
-    hipEventCreate(&start);
-    hipEventCreate(&stop);
-    float eventMs = 1.0f;
-    hipEventRecord(start, stream);
-    for (int loop = 0; loop < BENCH_LOOP_COUNT; loop++) {
-      CHECK_HIPBLASLT_ERROR(hipblasLtMatmul(
-          handle, matmul, &alpha, da, matA, db, matB, &beta, dc, matC, dd, matD,
-          &heuristicResult[0].algo, d_worksapce, workspace_size, stream));
-    }
-    hipEventRecord(stop, stream);
-    hipEventSynchronize(stop);
-    hipEventElapsedTime(&eventMs, start, stop);
-    hipEventDestroy(start);
-    hipEventDestroy(stop);
-    eventMs /= BENCH_LOOP_COUNT;
-    double flops = 2 * m * n * k * batch_count;
-    double tflops = flops / eventMs / 1000000000;
-    timing_string = timing_string + ", " + std::to_string(eventMs) + ", " +
-                    std::to_string(tflops);
-  }
-  std::cout << trans_string << m << ", " << n << ", " << k << ", " << lda
-            << ", " << ldb << ", " << ldc << ", " << stride_a << ", "
+
+  std::cout << trans_string << m << ", " << n << ", " << k << ", "
+            << lda << ", " << ldb << ", " << ldc << ", " << stride_a << ", "
             << stride_b << ", " << stride_c << ", " << batch_count << ", "
             << alpha << ", " << beta << ", " << enable_bias << ", "
-            << ToString(actType) << timing_string << std::endl;
+            << ToString(actType) << std::endl;
 
-  // calculate golden or correct result
-  if (validate) {
-    auto *a_ptr = &ha[0];
-    auto *b_ptr = &hb[0];
-    auto *c_ptr = &hc[0];
-    auto *d_ptr = &hd_gold[0];
-    T *bias_ptr;
-    if (enable_bias)
-      bias_ptr = &h_bias[0];
-    else
-      bias_ptr = nullptr;
-    mat_mul_bias_activation<T, T, float>(
-        alpha, beta, m, n, k, batch_count, a_ptr, a_stride_1, a_stride_2,
-        stride_a, b_ptr, b_stride_1, b_stride_2, stride_b, c_ptr, 1, ldc,
-        stride_c, d_ptr, 1, ldd, stride_d, bias_ptr, actType);
-
-    bool passed = true;
-    for (int i = 0; i < size_c; i++) {
-      if (!AlmostEqual(hd_gold[i], hd[i])) {
-        printf("Err: Index %d: %f vs %f\n", i, static_cast<float>(hd_gold[i]),
-               static_cast<float>(hd[i]));
-        passed = false;
+  for (int curAlgo = 0; curAlgo < returnedAlgoCount; curAlgo++) {
+    if (timing) {
+      hipEvent_t start, stop;
+      hipEventCreate(&start);
+      hipEventCreate(&stop);
+      float eventMs = 1.0f;
+      hipEventRecord(start, stream);
+      for (int loop = 0; loop < repeatCount; loop++) {
+        CHECK_HIPBLASLT_ERROR(hipblasLtMatmul(
+            handle, matmul, &alpha, da, matA, db, matB, &beta, dc, matC, dd, matD,
+            &heuristicResult[curAlgo].algo, d_worksapce, workspace_size, stream));
       }
-    }
-    if (!passed) {
-      std::cout << "FAIL" << std::endl;
+      hipEventRecord(stop, stream);
+      hipEventSynchronize(stop);
+      hipEventElapsedTime(&eventMs, start, stop);
+      hipEventDestroy(start);
+      hipEventDestroy(stop);
+      eventMs /= repeatCount;
+      double flops = 2 * m * n * k * batch_count;
+      double tflops = flops / eventMs / 1000000000;
+      timing_string = std::to_string(eventMs) + ", " + std::to_string(tflops);
     } else {
-      std::cout << "PASS" << std::endl;
+      // Solve problem
+      CHECK_HIPBLASLT_ERROR(hipblasLtMatmul(
+          handle, matmul, &alpha, da, matA, db, matB, &beta, dc, matC, dd, matD,
+          &heuristicResult[curAlgo].algo, d_worksapce, workspace_size, stream));
+
+      hipStreamSynchronize(stream);
+    }
+    std::cout << curAlgo << ": " << timing_string << std::endl;
+
+    // calculate golden or correct result
+    if (validate) {
+      // copy output from device to CPU
+      CHECK_HIP_ERROR(
+          hipMemcpy(hd.data(), dd, sizeof(T) * size_c, hipMemcpyDeviceToHost));
+      auto *a_ptr = &ha[0];
+      auto *b_ptr = &hb[0];
+      auto *c_ptr = &hc[0];
+      auto *d_ptr = &hd_gold[0];
+      T *bias_ptr;
+      if (enable_bias)
+        bias_ptr = &h_bias[0];
+      else
+        bias_ptr = nullptr;
+      mat_mul_bias_activation<T, T, float>(
+          alpha, beta, m, n, k, batch_count, a_ptr, a_stride_1, a_stride_2,
+          stride_a, b_ptr, b_stride_1, b_stride_2, stride_b, c_ptr, 1, ldc,
+          stride_c, d_ptr, 1, ldd, stride_d, bias_ptr, actType);
+
+      bool passed = true;
+      for (int i = 0; i < size_c; i++) {
+        if (!AlmostEqual(hd_gold[i], hd[i])) {
+          printf("Err: Index %d: %f vs %f\n", i, static_cast<float>(hd_gold[i]),
+                static_cast<float>(hd[i]));
+          passed = false;
+        }
+      }
+      if (!passed) {
+        std::cout << "FAIL" << std::endl;
+      } else {
+        std::cout << "PASS" << std::endl;
+      }
     }
   }
 
@@ -706,6 +724,8 @@ int main(int argc, char *argv[]) {
   int64_t ldd = invalid_int, stride_d = invalid_int;
 
   int batch_count = BATCH_COUNT;
+  int requestedAlgoCount = 1;
+  int repeatCount = 1;
 
   float alpha = ALPHA;
   float beta = BETA;
@@ -720,7 +740,7 @@ int main(int argc, char *argv[]) {
   if (parse_arguments(argc, argv, in_out_datatype, m, n, k, lda, ldb, ldc, ldd,
                       stride_a, stride_b, stride_c, stride_d, batch_count,
                       alpha, beta, trans_a, trans_b, enable_bias, actType,
-                      header, verbose, validate, timing)) {
+                      header, verbose, validate, timing, requestedAlgoCount, repeatCount)) {
     show_usage(argv);
     return EXIT_FAILURE;
   }
@@ -754,18 +774,23 @@ int main(int argc, char *argv[]) {
     beta = BETA; // check for beta == invalid_float == NaN
   if (batch_count == invalid_int)
     batch_count = BATCH_COUNT;
+  if (requestedAlgoCount == invalid_int)
+    requestedAlgoCount = 1;
+  if (repeatCount == invalid_int)
+    repeatCount = 1;
 
   if (bad_argument(trans_a, trans_b, m, n, k, lda, ldb, ldc, ldd, stride_a,
-                   stride_b, stride_c, stride_d, batch_count)) {
+                   stride_b, stride_c, stride_d, batch_count, requestedAlgoCount, repeatCount)) {
     show_usage(argv);
     return EXIT_FAILURE;
   }
 
   if (header) {
     std::cout << "transAB, M, N, K, lda, ldb, ldc, stride_a, stride_b, "
-                 "stride_c, batch_count, alpha, beta, bias, activationType";
+                 "stride_c, batch_count, alpha, beta, bias, activationType" << std::endl;
+    std::cout << "algo, ";
     if (timing)
-      std::cout << ", ms, tflops";
+      std::cout << "ms, tflops";
     std::cout << std::endl;
   }
 
@@ -773,17 +798,17 @@ int main(int argc, char *argv[]) {
     test_hipblaslt<hipblasLtFloat>(
         in_out_datatype, trans_a, trans_b, m, n, k, lda, ldb, ldc, ldd,
         stride_a, stride_b, stride_c, stride_d, batch_count, alpha, beta,
-        enable_bias, actType, validate, verbose, timing);
+        enable_bias, actType, validate, verbose, timing, requestedAlgoCount, repeatCount);
   else if (in_out_datatype == HIPBLAS_R_16F)
     test_hipblaslt<hipblasLtHalf>(
         in_out_datatype, trans_a, trans_b, m, n, k, lda, ldb, ldc, ldd,
         stride_a, stride_b, stride_c, stride_d, batch_count, alpha, beta,
-        enable_bias, actType, validate, verbose, timing);
+        enable_bias, actType, validate, verbose, timing, requestedAlgoCount, repeatCount);
   else if (in_out_datatype == HIPBLAS_R_16B)
     test_hipblaslt<hipblasLtBfloat16>(
         in_out_datatype, trans_a, trans_b, m, n, k, lda, ldb, ldc, ldd,
         stride_a, stride_b, stride_c, stride_d, batch_count, alpha, beta,
-        enable_bias, actType, validate, verbose, timing);
+        enable_bias, actType, validate, verbose, timing, requestedAlgoCount, repeatCount);
 
   return EXIT_SUCCESS;
 }
