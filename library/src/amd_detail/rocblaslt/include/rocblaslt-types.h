@@ -280,7 +280,10 @@ typedef enum rocblaslt_matmul_preference_attributes_ {
  * multiplication algorithm.
  *******************************************************************************/
 typedef struct _rocblaslt_matmul_algo {
-  std::shared_ptr<void> data;
+  union u {
+    std::shared_ptr<void> ptr;
+    uint8_t data[48];
+  } data;
   size_t max_workspace_bytes = 0;
 } rocblaslt_matmul_algo;
 
