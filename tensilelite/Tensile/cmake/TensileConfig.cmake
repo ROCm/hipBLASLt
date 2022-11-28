@@ -107,6 +107,7 @@ function(TensileCreateLibraryFiles
        PRINT_DEBUG
        GENERATE_PACKAGE
        SEPARATE_ARCHITECTURES
+       LAZY_LIBRARY_LOADING
        )
 
   # Single value settings
@@ -158,6 +159,10 @@ function(TensileCreateLibraryFiles
 
   if(Tensile_SEPARATE_ARCHITECTURES)
     set(Options ${Options} "--separate-architectures")
+  endif()
+
+  if(Tensile_LAZY_LIBRARY_LOADING)
+    set(Options ${Options} "--lazy-library-loading")
   endif()
 
   if(Tensile_GENERATE_PACKAGE)

@@ -2170,19 +2170,17 @@ class Solution(collections.abc.Mapping):
             if not Solution.setGlobalLoadVectorWidth(state, "B", tvb, glvwBlimit):
               validDepthU = False
 
-      if validDepthU and state["KernelLanguage"] == "Assembly" \
-        and (state["ProblemType"]["DataType"].isHalf() \
-              or state["ProblemType"]["DataType"].isBFloat16()):
+      if validDepthU and state["KernelLanguage"] == "Assembly":
         if globalParameters["ArchCaps"][globalParameters["CurrentISA"]]["HasEccHalf"]:
-          if state["GlobalLoadVectorWidthA"] == 1 or state["GlobalLoadVectorWidthB"] == 1:
-            reject(state, "HalfEcc requires GLVWA > 1")
-
-      # TODO- Need this restrict ?
-      if validDepthU and state["KernelLanguage"] == "Assembly" and state["ProblemType"]["DataType"].isInt8():
-        if state["GlobalLoadVectorWidthA"] < 4:
-          reject(state, "Int8 requires GLVWA >= 4, current is %u"%state["GlobalLoadVectorWidthA"])
-        if state["GlobalLoadVectorWidthB"] < 4:
-          reject(state, "Int8 requires GLVWB >= 4, current is %u"%state["GlobalLoadVectorWidthB"])
+          if state["ProblemType"]["DataType"].numRegisters() == 0.5 and (not state["ProblemType"]["HighPrecisionAccumulate"]):
+              if state["GlobalLoadVectorWidthA"] == 1 or state["GlobalLoadVectorWidthB"] == 1:
+                reject(state, "HalfEcc requires HPA if glvw = 1")
+        # FIXME: a transpose, b non-transpose local write, c load not supported
+        if state["ProblemType"]["DataType"].numRegisters() == 0.25:
+          if state["GlobalLoadVectorWidthA"] < 4:
+            reject(state, "Int8 requires GLVWA >= 4, current is %u"%state["GlobalLoadVectorWidthA"])
+          if state["GlobalLoadVectorWidthB"] < 4:
+            reject(state, "Int8 requires GLVWB >= 4, current is %u"%state["GlobalLoadVectorWidthB"])
 
 
       # Now convert elements to vectors based on GlobalReadVectorWidth
@@ -3173,7 +3171,7 @@ class Solution(collections.abc.Mapping):
     return deepcopy(self._state)
 
   def __hash__(self):
-    return hash(str(self))
+    return hash(str(self) + self._state.get("codeObjectFile", ""))
     #return hash(self.getAttributes())
 
   def __eq__(self, other):

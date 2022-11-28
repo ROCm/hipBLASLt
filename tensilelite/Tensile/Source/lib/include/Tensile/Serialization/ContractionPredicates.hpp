@@ -99,6 +99,7 @@ namespace Tensile
                     Base::template Pair<Predicates::Contraction::ActivationHPAEqual>(),
                     Base::template Pair<Predicates::Contraction::ActivationEnumWhiteList>(),
                     Base::template Pair<Predicates::Contraction::UseBiasEqual>(),
+                    Base::template Pair<Predicates::Contraction::SizeInRange>(),
                 });
 
                 auto gmap = Generic::GetSubclasses();
@@ -372,6 +373,25 @@ namespace Tensile
         template <typename IO>
         struct MappingTraits<Predicates::Contraction::UseBiasEqual, IO>
             : public AutoMappingTraits<Predicates::Contraction::UseBiasEqual, IO>
+        {
+        };
+
+        template <typename IO>
+        struct MappingTraits<Predicates::Contraction::Range, IO>
+        {
+            using iot = IOTraits<IO>;
+            static void mapping(IO& io, Predicates::Contraction::Range& range)
+            {
+                iot::mapOptional(io, "min", range.min);
+                iot::mapOptional(io, "max", range.max);
+            }
+
+            const static bool flow = false;
+        };
+
+        template <typename IO>
+        struct MappingTraits<Predicates::Contraction::SizeInRange, IO>
+            : public AutoMappingTraits<Predicates::Contraction::SizeInRange, IO>
         {
         };
     } // namespace Serialization

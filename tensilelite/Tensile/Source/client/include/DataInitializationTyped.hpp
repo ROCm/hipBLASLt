@@ -678,8 +678,8 @@ namespace Tensile
 
                     if(problem.useBias())
                     {
-                        auto size = problem.d().sizes()[0];
-                        initArray(m_biasInit, inputs.managedBias.get(), size);
+                        // FIXME: Use mbiasMaxElements
+                        initArray(m_biasInit, inputs.managedBias.get(), m_dMaxElements);
                     }
 
                     for(int i = 0; i < getAdditionalArgNum(problem.activationType()); i++)

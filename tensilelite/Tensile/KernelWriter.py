@@ -66,6 +66,7 @@ class MatrixInfo:
 class ABMatrixInfo(MatrixInfo):
   numVgprValuPerBlock: int       = -1
   numVgprG2L: int                = -1
+  numVgprG2LAllocated: int       = -1
   startVgprG2L: Optional[int]    = None
   numVgprLocalReadAddr:int       = -1
   startVgprLocalReadAddr: int    = -1
@@ -2918,23 +2919,35 @@ class KernelWriter(metaclass=abc.ABCMeta):
     if not kernel["DirectToLdsA"] or self.do["KeepDirectToLdsAlloc"]:
       self.states.a.numVgprG2L = roundUp((kernel["NumLoadsCoalescedA"] * kernel["NumLoadsPerpendicularA"] * \
         kernel["GlobalLoadVectorWidthA"] * tensorParametersA["bpe"]) / (float)(self.states.bpr))
+      if self.states.archCaps["HasEccHalf"]:
+        tpA = self.states.bpr if tensorParametersA["bpe"] * vwa < self.states.bpr else tensorParametersA["bpe"] * vwa
+        self.states.a.numVgprG2LAllocated = roundUp((kernel["NumLoadsCoalescedA"] * kernel["NumLoadsPerpendicularA"] * \
+          tpA) / (float)(self.states.bpr))
     # using _ds_store_b8: need one more vgpr space to do lshr
     if tensorParametersA["localWriteInstruction"].blockWidth == 0.25:
       self.states.a.numVgprG2L = self.states.a.numVgprG2L * 2
+      self.states.a.numVgprG2LAllocated = self.states.a.numVgprG2LAllocated * 2
     # double numVgprG2LA if DirectToVgpr is enabled
     if kernel["DirectToVgprA"]:
       self.states.a.numVgprG2L = self.states.a.numVgprG2L * 2
+      self.states.a.numVgprG2LAllocated = self.states.a.numVgprG2LAllocated * 2
 
     self.states.b.numVgprG2L = 0
     if not kernel["DirectToLdsB"] or self.do["KeepDirectToLdsAlloc"]:
       self.states.b.numVgprG2L = roundUp((kernel["NumLoadsCoalescedB"] * kernel["NumLoadsPerpendicularB"] * \
         kernel["GlobalLoadVectorWidthB"] * tensorParametersB["bpe"]) / (float)(self.states.bpr))
+      if self.states.archCaps["HasEccHalf"]:
+        tpB = self.states.bpr if tensorParametersB["bpe"] * vwb < self.states.bpr else tensorParametersB["bpe"] * vwb
+        self.states.b.numVgprG2LAllocated = roundUp((kernel["NumLoadsCoalescedB"] * kernel["NumLoadsPerpendicularB"] * \
+          tpB) / (float)(self.states.bpr))
     # using _ds_store_b8: need one more vgpr space to do lshr
     if tensorParametersB["localWriteInstruction"].blockWidth == 0.25:
       self.states.b.numVgprG2L = self.states.b.numVgprG2L * 2
+      self.states.b.numVgprG2LAllocated = self.states.b.numVgprG2LAllocated * 2
     # double numVgprG2LB if DirectToVgpr is enabled
     if kernel["DirectToVgprB"]:
       self.states.b.numVgprG2L = self.states.b.numVgprG2L * 2
+      self.states.b.numVgprG2LAllocated = self.states.b.numVgprG2LAllocated * 2
 
     ####################################
     # num vgprs: local read addresses
@@ -3041,7 +3054,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
       if not kernel["PrefetchGlobalRead"] and not kernel.enabledSplitLDS: # g2l can overlap valu
         self.states.a.startVgprG2L = self.states.a.startVgprValu
         vgprIdx = self.states.a.startVgprValu  \
-            + max(self.states.a.numVgprValuPerBlock*valuBlocks, self.states.a.numVgprG2L)
+            + max(self.states.a.numVgprValu, self.states.a.numVgprG2LAllocated)
 
     # TODO: alignment hack, figure out a better solution
     vgprIdx = ((vgprIdx+1)//2)*2
@@ -3053,7 +3066,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
       if not kernel["PrefetchGlobalRead"] and not kernel.enabledSplitLDS: # g2l can overlap valu
         self.states.b.startVgprG2L = self.states.b.startVgprValu
         vgprIdx = self.states.b.startVgprValu \
-            + max(self.states.b.numVgprValuPerBlock*valuBlocks, self.states.b.numVgprG2L)
+            + max(self.states.b.numVgprValu, self.states.b.numVgprG2LAllocated)
 
     # Registers allocated above this point can be used as temps during setup
     # Registers above here are reserved in initC, near the end of the setup
@@ -3113,12 +3126,12 @@ class KernelWriter(metaclass=abc.ABCMeta):
     if self.states.a.startVgprG2L is None:
       # TODO: alignment hack, figure out a better solution
       vgprIdx = ((vgprIdx+1)//2)*2
-      self.states.a.startVgprG2L = vgprIdx; vgprIdx += self.states.a.numVgprG2L
+      self.states.a.startVgprG2L = vgprIdx; vgprIdx += self.states.a.numVgprG2LAllocated
 
     if self.states.b.startVgprG2L is None:
       # TODO: alignment hack, figure out a better solution
       vgprIdx = ((vgprIdx+1)//2)*2
-      self.states.b.startVgprG2L = vgprIdx; vgprIdx += self.states.b.numVgprG2L
+      self.states.b.startVgprG2L = vgprIdx; vgprIdx += self.states.b.numVgprG2LAllocated
 
     # GlobalRead, LocalWrite, LocalRead, G2L can be reclaimed, extend the "lastVgprForReads" value
     self.states.lastVgprForReads = vgprIdx
@@ -4262,6 +4275,11 @@ for codeObjectFileName in codeObjectFileNames:
         # asmPath = self.getAssemblyDirectory()
         # kernelName = self.getKernelName(kernel)
 
+        # Skip if .o files will have already been built for this file
+        # @TODO remove need for this with better code organization
+        if kernel.duplicate:
+          self.language = "ASM"
+          return (0, "")
         if globalParameters["GenerateSourcesAndExit"]:
           # only create the assembly file.
           self._getKernelObjectAssemblyFile(kernel)

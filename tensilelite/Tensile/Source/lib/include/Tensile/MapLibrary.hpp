@@ -130,5 +130,17 @@ namespace Tensile
 
         std::shared_ptr<Property<MyProblem, Key>> property;
         LibraryMap<MyProblem, MySolution, Key>    map;
+
+        virtual SolutionVector<MySolution> findTopSolutions(MyProblem const& problem,
+                                                            Hardware  const& hardware,
+                                                            int              numSolutions) const override
+        {
+            auto library = lookup(problem, hardware);
+
+            if(library == nullptr)
+                return SolutionVector<MySolution>();
+
+            return library->findTopSolutions(problem, hardware, numSolutions);
+        }
     };
 } // namespace Tensile

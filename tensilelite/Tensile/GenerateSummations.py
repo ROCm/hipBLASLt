@@ -111,9 +111,6 @@ def GenerateSummations(userArgs):
             solutionStatesR, indexOrderR, exactLogicR, rangeLogicR, otherFieldsR) =\
             rawLogic
 
-        (_, _, problemType, solutionsForSchedule, \
-           _, _, _, _, _) = logic
-
         copyfile(logicFileName, localLogicFilePath)
         createLibraryForBenchmark(localLogicPath, libPath, currentPath)
 
@@ -127,7 +124,7 @@ def GenerateSummations(userArgs):
 
         libraryPath = libPath
         clientBuildDir = os.path.join(outputPath, "client")
-        problemTypeObj = problemType.state
+        problemTypeObj = logic.problemType.state
 
         problemSizes = ProblemSizes(problemTypeObj, exactList)
         dataPath = ensurePath(os.path.join(outputPath, logicFileStem, "data"))

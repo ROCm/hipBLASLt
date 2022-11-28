@@ -34,6 +34,7 @@
 #include <Tensile/ContractionProblem_fwd.hpp>
 #include <Tensile/DataTypes.hpp>
 #include <Tensile/Predicates.hpp>
+#include <Tensile/Utils.hpp>
 
 namespace Tensile
 {
@@ -298,10 +299,11 @@ namespace Tensile
             double max       = 1000.0;
         };
 
-        int         index = 0;
-        std::string kernelName;
-        bool        debugKernel   = false;
-        bool        kernelArgsLog = false;
+        int                          index = 0;
+        std::string                  kernelName;
+        ThreadSafeValue<std::string> codeObjectFilename;
+        bool                         debugKernel   = false;
+        bool                         kernelArgsLog = false;
 
         std::shared_ptr<Predicates::Predicate<Problem>> problemPredicate
             = std::make_shared<Predicates::True<Problem>>();
@@ -314,9 +316,9 @@ namespace Tensile
 
         /// Debugging purposes.  Shouldn't contain any vital information that isn't
         /// somewhere else.
-        std::map<std::string, std::string> info;
-        std::map<int, double>              ideals;
-        LinearModel                        linearModel;
+        int32_t               libraryLogicIndex = -1;
+        std::map<int, double> ideals;
+        LinearModel           linearModel;
 
         int32_t staggerUIter(Problem const&  problem,
                              Inputs const&   inputs,

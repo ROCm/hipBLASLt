@@ -63,6 +63,8 @@ namespace Tensile
 
         bool printSolutionSelectionTime() const;
 
+        bool printLibraryLogicIndex() const;
+
         bool naivePropertySearch() const;
 
         bool skipKernelLaunch() const;
@@ -73,6 +75,8 @@ namespace Tensile
 
         int getSolutionIndex() const;
 
+        int getGridbasedTopSols() const;
+
     private:
         friend LazySingleton<Debug>;
 
@@ -82,6 +86,7 @@ namespace Tensile
         bool        m_debugSelection      = false;
         int         m_solution_index      = -1;
         std::string m_metric              = "";
+        int         m_gridbasedTopSols    = 1;
 
         Debug();
     };

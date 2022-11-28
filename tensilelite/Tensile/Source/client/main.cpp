@@ -477,6 +477,8 @@ namespace Tensile
                 while(solutionIterator->moreSolutionsInProblem())
                 {
                     auto solution = solutionIterator->getSolution();
+                    if(solution == nullptr)
+                        throw std::runtime_error("Could not find a solution");
 
                     listeners.preSolution(*solution);
 
@@ -516,6 +518,17 @@ int main(int argc, const char* argv[])
     auto                          library = LoadSolutionLibrary(args);
     Tensile::hip::SolutionAdapter adapter;
     LoadCodeObjects(args, adapter);
+
+    auto filename = args["library-file"].as<std::string>();
+
+    size_t      directoryPos     = filename.rfind('/');
+    std::string libraryDirectory = filename;
+    if(directoryPos != std::string::npos)
+        libraryDirectory.resize(directoryPos + 1);
+    else
+        libraryDirectory = '.';
+
+    adapter.initializeLazyLoading(hardware->archName(), libraryDirectory);
 
     auto problems        = problemFactory.problems();
     int  firstProblemIdx = args["problem-start-idx"].as<int>();
@@ -608,6 +621,8 @@ int main(int argc, const char* argv[])
             while(solutionIterator->moreSolutionsInProblem())
             {
                 auto solution = solutionIterator->getSolution();
+                if(solution == nullptr)
+                    throw std::runtime_error("Could not find a solution");
 
                 listeners.preSolution(*solution);
 

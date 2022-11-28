@@ -109,6 +109,11 @@ namespace Tensile
         return m_value & 0x10000;
     }
 
+    bool Debug::printLibraryLogicIndex() const
+    {
+        return m_value & 0x20000;
+    }
+
     bool Debug::naivePropertySearch() const
     {
         return m_naivePropertySearch;
@@ -132,6 +137,11 @@ namespace Tensile
     int Debug::getSolutionIndex() const
     {
         return m_solution_index;
+    }
+
+    int Debug::getGridbasedTopSols() const
+    {
+        return m_gridbasedTopSols;
     }
 
     Debug::Debug()
@@ -161,6 +171,10 @@ namespace Tensile
         const char* tensile_metric = std::getenv("TENSILE_METRIC");
         if(tensile_metric)
             m_metric = tensile_metric;
+
+        const char* gridbasedTopSols = std::getenv("GRIDBASED_TOPSOLS");
+        if(gridbasedTopSols)
+            m_gridbasedTopSols = strtol(gridbasedTopSols, nullptr, 0);
     }
 
 } // namespace Tensile

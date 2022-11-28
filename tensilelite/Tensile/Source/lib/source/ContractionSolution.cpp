@@ -631,6 +631,8 @@ namespace Tensile
             rv.args.append<uint32_t>("pad", 0);
         }
 
+        rv.codeObjectFile = codeObjectFilename.load();
+
         return rv;
     }
 
@@ -726,6 +728,9 @@ namespace Tensile
         rv.args.append<uint32_t>("offsetC", c.offset());
 
         rv.args.append<typename TypedInputs::BetaType>("beta", inputs.beta);
+
+        //Pass along code object dependency
+        rv.codeObjectFile = codeObjectFilename.load();
 
         return rv;
     }
@@ -873,6 +878,9 @@ namespace Tensile
             rv.args.append<uint32_t>("gsu", 1);
         else
             rv.args.append<uint32_t>("gsu", sizeMapping.globalSplitU);
+
+        //@TODO determine if this is needed, may not end up in the same code object file
+        rv.codeObjectFile = codeObjectFilename.load();
 
         return rv;
     }

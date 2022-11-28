@@ -43,6 +43,16 @@ namespace Tensile
     template <typename MySolution>
     using SolutionMap = std::map<int, std::shared_ptr<MySolution>>;
 
+    template <typename MySolution>
+    struct LibraryIOContext
+    {
+        std::string                  filename;
+        std::vector<LazyLoadingInit> preloaded;
+        // If lazy loading is used, this may be updated in const functions
+        SolutionMap<MySolution>* solutions;
+        std::mutex*              solutionsGuard;
+    };
+
     /**
  * \ingroup SolutionLibrary
  *
@@ -77,6 +87,7 @@ namespace Tensile
         std::shared_ptr<SolutionLibrary<MyProblem, MySolution>> library;
         SolutionMap<MySolution>                                 solutions;
         std::string                                             version;
+        mutable std::mutex                                      solutionsGuard;
 
         MasterSolutionLibrary() = default;
 
@@ -106,7 +117,8 @@ namespace Tensile
                                                             Hardware const&  hardware,
                                                             double* fitness = nullptr) const
         {
-            const int solution_index = Debug::Instance().getSolutionIndex();
+            const int                   solution_index = Debug::Instance().getSolutionIndex();
+            std::shared_ptr<MySolution> rv;
 
             if(solution_index >= 0)
             {
@@ -117,23 +129,41 @@ namespace Tensile
                 std::cout << "Set TENSILE_SOLUTION_INDEX to a negative number to restore the "
                              "default behavior."
                           << std::endl;
+                {
+                    std::lock_guard<std::mutex> guard(solutionsGuard);
+                    auto                        selected_solution = solutions.at(solution_index);
 
-                auto selected_solution = solutions.at(solution_index);
-
-                if((*selected_solution->problemPredicate)(problem)
-                   && (*selected_solution->hardwarePredicate)(hardware))
-                    return selected_solution;
-                else
-                    return nullptr;
+                    if((*selected_solution->problemPredicate)(problem)
+                       && (*selected_solution->hardwarePredicate)(hardware))
+                        rv = selected_solution;
+                    else
+                        return nullptr;
+                }
             }
             else
-                return library->findBestSolution(problem, hardware, fitness);
-        }
+                rv = library->findBestSolution(problem, hardware, fitness);
 
+            if(Debug::Instance().printLibraryLogicIndex())
+            {
+                if(rv)
+                    std::cout << "Library logic solution index of winning solution: "
+                              << rv->libraryLogicIndex << std::endl;
+                else
+                    std::cout << "No solution found" << std::endl;
+            }
+            return rv;
+        }
         virtual SolutionSet<MySolution> findAllSolutions(MyProblem const& problem,
                                                          Hardware const&  hardware) const override
         {
             return library->findAllSolutions(problem, hardware);
+        }
+
+        virtual SolutionVector<MySolution> findTopSolutions(MyProblem const& problem,
+                                                            Hardware  const& hardware,
+                                                            int              numSolutions) const override
+        {
+            return library->findTopSolutions(problem, hardware, numSolutions);
         }
     };
 
