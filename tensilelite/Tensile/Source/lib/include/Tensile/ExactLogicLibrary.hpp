@@ -107,6 +107,26 @@ namespace Tensile
         {
             return concatenate(this->type(), " library (", rows.size(), " rows)");
         }
+
+        virtual SolutionVector<MySolution> findTopSolutions(MyProblem const& problem,
+                                                            Hardware  const& hardware,
+                                                            int              numSolutions) const override
+        {
+            SolutionVector<MySolution> rv, solutions;
+
+            for(auto const& row : rows)
+            {
+                if(row.first(problem, hardware))
+                {
+                    solutions = row.second->findTopSolutions(problem, hardware, numSolutions - rv.size());
+                    rv.insert(std::end(rv), std::begin(solutions), std::end(solutions));
+                    if(rv.size() == numSolutions)
+                        return rv;
+                }
+            }
+
+            return rv;
+        }
     };
 
     struct HardwarePredicate

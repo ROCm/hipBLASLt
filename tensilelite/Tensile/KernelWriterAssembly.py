@@ -3941,6 +3941,7 @@ class KernelWriterAssembly(KernelWriter):
             destVgprHi = None
             dataIsI8 = False
             packInt8Code = None
+            eccOffset = 0
 
             instOffsetInc = 0 # increment value for instOffset. Need to apply after r loop
 
@@ -3980,7 +3981,13 @@ class KernelWriterAssembly(KernelWriter):
                   # In some cards, loading half types into register will zero out
                   # the other half. Therefore we need to load into a separate register
                   # then pack 2 registers into one
-                  destVgprHi = self.vgprPool.checkOut(1, 'destVgprHi')
+                  if tP["localWriteInstruction"].blockWidth == 0.5:
+                    numVgprG2L = self.states.a.numVgprG2L if tc == 'A' else self.states.b.numVgprG2L
+                    eccOffset = _getEccOffset(tP["globalReadInstruction"].totalWidth, bpr=self.states.bpr, bpe=tP["bpe"], \
+                      glvw=tP["glvw"], idx=loopCnt, numVgprG2L=numVgprG2L)
+                  else:
+                    destVgprHi = self.vgprPool.checkOut(1, 'destVgprHi')
+
                 regIdx = r // 2
               elif kernel["ProblemType"]["DataType"].isInt8x4() or \
                    kernel["ProblemType"]["DataType"].isSingle():
@@ -4070,7 +4077,7 @@ class KernelWriterAssembly(KernelWriter):
                   idx = g2lIdx + vregSetIdx * numVgprPerBlock
                   destVgpr="G2L%s+%u+%u"%(tc, idx, regIdx)
                 else:
-                  destVgpr="G2L%s+%u+%u"%(tc, g2lIdx, regIdx)
+                  destVgpr="G2L%s+%u+%u"%(tc, g2lIdx, regIdx+eccOffset)
 
                 offset = r * tP["bpe"] + instOffset
                 hi8 = 0
@@ -4328,6 +4335,13 @@ class KernelWriterAssembly(KernelWriter):
             loadModule = Module("load%u"%loopCnt)
             imod.middle.add(loadModule)
 
+            if self.states.archCaps["HasEccHalf"]:
+              numVgprG2L = self.states.a.numVgprG2L if tc == 'A' else self.states.b.numVgprG2L
+              eccOffset = _getEccOffset(loadWidth, bpr=self.states.bpr, bpe=tP["bpe"], \
+                glvw=tP["glvw"], idx=i, numVgprG2L=numVgprG2L)
+            else:
+              eccOffset = 0
+
             if kernel["BufferLoad"]:
               if kernel["_UseSgprForGRO"]:
                 offsetVgpr= "GlobalReadOffset%s+0"%(tc)
@@ -4390,7 +4404,7 @@ class KernelWriterAssembly(KernelWriter):
                 # DirectToVgpr case. Need to toggle destination vreg set and adjust instOffset
                 destVgpr="G2L%s%u+%u"%(tc, vregSetIdx, g2lIdx)
               else:
-                destVgpr="G2L%s+%u"%(tc, g2lIdx)
+                destVgpr="G2L%s+%u"%(tc, (g2lIdx+eccOffset))
 
               # TODO: is it possible to load only hi16 when no in tail? (need to check INT8 too)
               loadModule.add( self.chooseGlobalRead(kernel["BufferLoad"], \
@@ -4782,6 +4796,13 @@ class KernelWriterAssembly(KernelWriter):
                 localWriteCode.add(VMovB32(dst=vgpr(dst), src=vgpr(src), comment="another VGPR storing lshr 8-bit value"))
                 localWriteCode.add(VLShiftRightB32(dst=vgpr(dst), shiftHex=hex(0x8), src=vgpr(dst), comment="G2L Vpgr >> 8"))
 
+            if self.states.archCaps["HasEccHalf"]:
+              numVgprG2L = self.states.a.numVgprG2L if tc == 'A' else self.states.b.numVgprG2L
+              eccOffset = _getEccOffset(tP["globalReadInstruction"].totalWidth, bpr=self.states.bpr, bpe=tP["bpe"], \
+                glvw=tP["glvw"], idx=instructionCnt, numVgprG2L=numVgprG2L)
+            else:
+              eccOffset = 0
+
             paramList = []
             for _ in range(0, numBlocks):
               if blockWidth == 1:
@@ -4789,7 +4810,7 @@ class KernelWriterAssembly(KernelWriter):
               elif blockWidth == 0.25 and ((s % 2) == 1): # Int8, s = 1 or 3 (high8Bits)
                 paramList.append(vgpr("G2L%s+%u+%u"%(tc, tmpVgprOffset, g2lIdx)))
               else:
-                paramList.append(vgpr("G2L%s+%u"%(tP["tensorChar"], g2lIdx), blockWidth))
+                paramList.append(vgpr("G2L%s+%u"%(tP["tensorChar"], g2lIdx + eccOffset), blockWidth))
               if self.db["ForceInputValue%s"%tc]:
                 localWriteCode.add(VMovB32(dst=vgpr("G2L%s+%u"%(tc, g2lIdx)), src=self.db["ForceValue%s"%tc], comment="ForceInputValue"))
               if kernel["ProblemType"]["Fp16AltImpl"]:
@@ -7076,6 +7097,14 @@ class KernelWriterAssembly(KernelWriter):
       self.labels.getUniqueName())
     self.vgprPool.checkIn(tmp.idx)
     return module
+
+def _getEccOffset(totalWidth, bpr, bpe, glvw, idx, numVgprG2L):
+  if totalWidth < 1: # Need extra offset if global read < 1
+    modVal = int(bpr / (bpe * glvw))
+    left = idx % modVal
+    return numVgprG2L * left
+  else:
+    return 0
 
 def _growPool(pool: RegisterPool, rangeStart: int, rangeEnd: int, checkOutSize: int, comment: str=""):
   tl = []

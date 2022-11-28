@@ -26,7 +26,7 @@ if __name__ == "__main__":
 import os
 import sys
 import argparse
-from .Common import globalParameters, print1, printExit, ensurePath, \
+from .Common import globalParameters, print1, printExit, printWarning, ensurePath, \
     assignGlobalParameters, restoreDefaultGlobalParameters, HR
 from . import BenchmarkProblems
 from . import ClientWriter
@@ -281,9 +281,22 @@ def Tensile(userArgs):
         print("Overriding {0}={1}".format(key, value))
         globalParameters[key] = value
 
+    # Enable profiler
+    profiler = None
+    if globalParameters["Profiler"] == 1:
+        printWarning("cProfiler is enabled. CpuThreads will be set to 1.")
+        globalParameters["CpuThreads"] = 1
+        import cProfile
+        profiler = cProfile.Profile()
+        profiler.enable()
+
     # Execute Steps in the config script
     executeStepsInConfig(config)
 
+    if profiler:
+        profiler.disable()
+        filename = globalParameters["OutputPath"] + "/tensile.stats"
+        profiler.dump_stats(filename)
 
 def TensileConfigPath(*args):
     return os.path.join(os.path.dirname(os.path.realpath(__file__)), "Configs", *args)

@@ -181,5 +181,27 @@ namespace Tensile
             std::shared_ptr<ContractionSolution> m_currentSolution;
             bool                                 m_usedCurrentSolution = false;
         };
+
+        class TopSolutionIterator : public SolutionIterator
+        {
+        public:
+            TopSolutionIterator(std::shared_ptr<MasterSolutionLibrary<ContractionProblem>> library,
+                                std::shared_ptr<Hardware> hardware,
+                                int numSolutions);
+
+            virtual void preProblem(ContractionProblem const& problem) override;
+            virtual void postProblem() override;
+
+            virtual void preSolution(ContractionSolution const& solution) override;
+            virtual void postSolution() override;
+
+            virtual bool                                 moreSolutionsInProblem() const override;
+            virtual std::shared_ptr<ContractionSolution> getSolution() override;
+
+        private:
+            std::vector<std::shared_ptr<ContractionSolution>>     m_solutions;
+            int                                                   m_numSolutions = 1;
+            int                                                   m_currentSolutionIdx = 0;
+        };
     } // namespace Client
 } // namespace Tensile

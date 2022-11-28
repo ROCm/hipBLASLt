@@ -38,14 +38,14 @@ class SIA3(SIA):
     def schedIntoIteration(self, writer, kernel, tensorParametersA, tensorParametersB, localWriteEndIter, uDu, firstIter, lastLoop, lastLc, maxVmcnt, globalReadIncACode, globalReadIncBCode):
         # Get schedule information
         if kernel["EnableMatrixInstruction"]:
-            numMfmaBetweenLWandBarrier = getLocalWriteMFMAEnd(writer, kernel, tensorParametersA, tensorParametersB)
+            numMfmaBetweenLWandBarrier, latencyLeft = getLocalWriteMFMAEnd(writer, kernel, tensorParametersA, tensorParametersB)
             #########
             # Internally assign an optimized LWPM value for PGR2
             #########
             # strategy is to distribute LW/GR as wide as possible to avoid hitting vmem FIFO
             # LWPM = (LW_End - LW_Start) / numLW
             if kernel["LocalWritePerMfma"] == -1:
-                lwStartMfmaIndex = getLocalWriteMFMAStart(writer, kernel, tensorParametersA, tensorParametersB)
+                lwStartMfmaIndex = getLocalWriteMFMAStart(writer, kernel, tensorParametersA, tensorParametersB, latencyLeft)
                 numLocalWriteModPerMfma = getNumLocalWritePerMfma(writer, kernel, lwStartMfmaIndex)
             else:
                 numLocalWriteModPerMfma = roundUp(kernel["LocalWritePerMfma"]*PRECISION)
@@ -218,9 +218,9 @@ def getLocalWriteMFMAEnd(writer, kernel, tensorParametersA, tensorParametersB):
         lrEnd = min(writer.states.barrierMfmaIndex - 1, writer.states.numMfmaForLR * (kernel["LoopIters"] - writer.states.numItersPLR))
         if writer.states.lwEndMfmaIndex < lrEnd:
             writer.states.lwEndMfmaIndex = lrEnd
-    return numMfmaBetweenLWandBarrier
+    return numMfmaBetweenLWandBarrier, latencyLeft
 
-def getLocalWriteMFMAStart(writer, kernel, tensorParametersA, tensorParametersB):
+def getLocalWriteMFMAStart(writer, kernel, tensorParametersA, tensorParametersB, latencyLeft):
     numMfmaPerIter = writer.states.numMfmaPerIter
     #########
     # Get localWriteStart
