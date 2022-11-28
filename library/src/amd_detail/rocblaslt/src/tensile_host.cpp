@@ -649,7 +649,7 @@ runContractionProblem(const rocblaslt_matmul_algo *algo,
     auto tensile_prob = ConstructTensileProblem(prob);
 
     std::shared_ptr<Tensile::ContractionSolution> solution =
-        std::static_pointer_cast<Tensile::ContractionSolution>(algo->data);
+        std::static_pointer_cast<Tensile::ContractionSolution>(algo->data.ptr);
 
     if (!solution) {
 #if 0
@@ -801,7 +801,7 @@ getBestSolutions(RocblasltContractionProblem<Ti, To, Tc> prob,
   *returnAlgoCount = std::max((int)solutions.size(), requestedAlgoCount);
   for (size_t i = 0; i < *returnAlgoCount; i++) {
     auto solution = solutions[i];
-    heuristicResultsArray[i].algo.data =
+    heuristicResultsArray[i].algo.data.ptr =
         std::static_pointer_cast<void>(solution);
     heuristicResultsArray[i].algo.max_workspace_bytes = maxWorkSpaceBytes;
     heuristicResultsArray[i].state = rocblaslt_status_success;
