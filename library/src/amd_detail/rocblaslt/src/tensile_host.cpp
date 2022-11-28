@@ -34,6 +34,7 @@
  *****************************************************************************/
 
 #include "rocblaslt-types.h"
+#include "rocblaslt_mat_utils.hpp"
 #include "tensile_host.hpp"
 //#include "utility.hpp"
 
@@ -285,6 +286,9 @@ auto ConstructTensileProblem(
   case ROCBLASLT_EPILOGUE_GELU:
   case ROCBLASLT_EPILOGUE_GELU_BIAS:
     tensileAct = Tensile::ActivationType::Gelu;
+    break;
+  case ROCBLASLT_EPILOGUE_BIAS:
+  case ROCBLASLT_EPILOGUE_DEFAULT:
     break;
   }
   tensileProblem.setActivationEnumArg(tensileAct);
@@ -629,10 +633,9 @@ auto &get_library_and_adapter(
  ******************************************************************************/
 template <typename Ti, typename To, typename Tc>
 rocblaslt_status
-runContractionProblem(const RocblasltContractionProblem<Ti, To, Tc> &prob) {
+runContractionProblem(const rocblaslt_matmul_algo *algo,
+                      const RocblasltContractionProblem<Ti, To, Tc> &prob) {
   rocblaslt_status status = rocblaslt_status_internal_error;
-  std::shared_ptr<Tensile::ContractionSolution> solution;
-
   try {
     std::shared_ptr<Tensile::MasterSolutionLibrary<Tensile::ContractionProblem>>
         library;
@@ -644,9 +647,9 @@ runContractionProblem(const RocblasltContractionProblem<Ti, To, Tc> &prob) {
 
     hardware = Tensile::hip::GetDevice(*deviceProp);
     auto tensile_prob = ConstructTensileProblem(prob);
-    auto handle = prob.handle;
 
-    solution = library->findBestSolution(tensile_prob, *hardware);
+    std::shared_ptr<Tensile::ContractionSolution> solution =
+        std::static_pointer_cast<Tensile::ContractionSolution>(algo->data);
 
     if (!solution) {
 #if 0
@@ -677,6 +680,139 @@ runContractionProblem(const RocblasltContractionProblem<Ti, To, Tc> &prob) {
   return status;
 }
 
+/******************************************************************************
+ * ConstructRocblasltProblem creates RocblasltContractionProblem from mat     *
+ * layout and descriptor for Tensile's findTopSolutions.                      *
+ ******************************************************************************/
+template <typename Ti, typename To, typename Tc>
+RocblasltContractionProblem<Ti, To, Tc> ConstructRocblasltProblem(
+    const rocblaslt_handle handle, const rocblaslt_matmul_desc matmul_descr,
+    rocblaslt_matrix_layout matA, rocblaslt_matrix_layout matB,
+    rocblaslt_matrix_layout matC, rocblaslt_matrix_layout matD, const Tc *alpha,
+    const Tc *beta) {
+  hipblasOperation_t opA = matmul_descr->op_A;
+  hipblasOperation_t opB = matmul_descr->op_B;
+  const To *bias = nullptr;
+  rocblaslt_epilogue epilogue = matmul_descr->epilogue;
+  if (is_bias_enabled(epilogue))
+    bias = (const To *)matmul_descr->bias;
+
+  // matrix A
+  int64_t num_rows_a = matA->m;
+  int64_t num_cols_a = matA->n;
+  int64_t lda = matA->ld;
+  int64_t batch_stride_a = matA->batch_stride;
+  int num_batches_a = matA->batch_count;
+
+  // matrix B
+  int64_t ldb = matB->ld;
+  int64_t batch_stride_b = matB->batch_stride;
+  int num_batches_b = matB->batch_count;
+
+  // matrix C
+  int64_t ldc = matC->ld;
+  int64_t batch_stride_c = matC->batch_stride;
+  int num_batches_c = matC->batch_count;
+
+  // matrix D
+  int64_t num_rows_d = matD->m;
+  int64_t num_cols_d = matD->n;
+  int64_t ldd = matD->ld;
+  int64_t batch_stride_d = matD->batch_stride;
+  int num_batches_d = matD->batch_count;
+
+  int64_t m = num_rows_d;
+  int64_t n = num_cols_d;
+  int64_t k = (opA == HIPBLAS_OP_N) ? num_cols_a : num_rows_a;
+
+  int8_t dummy;
+  const void *dummy_ptr = &dummy;
+  auto validArgs = validateMatmulArgs(
+      handle, m, n, k, dummy_ptr, dummy_ptr, dummy_ptr, dummy_ptr, dummy_ptr,
+      dummy_ptr, num_batches_a, num_batches_b, num_batches_c, num_batches_d,
+      batch_stride_a, batch_stride_b, batch_stride_c, batch_stride_d);
+  if (validArgs != rocblaslt_status_continue) {
+    m = 0;
+    n = 0;
+    k = 0;
+  }
+  RocblasltContractionProblem<Ti, To, Tc> problem{handle,
+                                                  opA,
+                                                  opB,
+                                                  m,
+                                                  n,
+                                                  k,
+                                                  alpha,
+                                                  nullptr,
+                                                  nullptr,
+                                                  lda,
+                                                  batch_stride_a,
+                                                  0,
+                                                  nullptr,
+                                                  nullptr,
+                                                  ldb,
+                                                  batch_stride_b,
+                                                  0,
+                                                  beta,
+                                                  nullptr,
+                                                  nullptr,
+                                                  ldc,
+                                                  batch_stride_c,
+                                                  0,
+                                                  nullptr,
+                                                  nullptr,
+                                                  ldd,
+                                                  batch_stride_d,
+                                                  0,
+                                                  num_batches_a,
+                                                  true,
+                                                  bias,
+                                                  epilogue,
+                                                  nullptr,
+                                                  100000,
+                                                  nullptr};
+  return problem;
+}
+
+/******************************************************************************
+ * getBestSolutions calls Tensile's findTopSolutions and converts to          *
+ * rocblaslt_matmul_heuristic_result.                                         *
+ ******************************************************************************/
+template <typename Ti, typename To, typename Tc>
+rocblaslt_status
+getBestSolutions(RocblasltContractionProblem<Ti, To, Tc> prob,
+                 int requestedAlgoCount,
+                 rocblaslt_matmul_heuristic_result heuristicResultsArray[],
+                 int *returnAlgoCount, size_t maxWorkSpaceBytes) {
+  std::shared_ptr<Tensile::MasterSolutionLibrary<Tensile::ContractionProblem>>
+      library;
+  std::shared_ptr<hipDeviceProp_t> deviceProp;
+  std::shared_ptr<Tensile::Hardware> hardware;
+
+  // auto &adapter =
+  get_library_and_adapter(&library, &deviceProp, prob.handle->device);
+
+  hardware = Tensile::hip::GetDevice(*deviceProp);
+  auto tensile_prob = ConstructTensileProblem(prob);
+  // auto handle = prob.handle;
+
+  auto solutions =
+      library->findTopSolutions(tensile_prob, *hardware, requestedAlgoCount);
+  *returnAlgoCount = std::max((int)solutions.size(), requestedAlgoCount);
+  for (size_t i = 0; i < *returnAlgoCount; i++) {
+    auto solution = solutions[i];
+    heuristicResultsArray[i].algo.data =
+        std::static_pointer_cast<void>(solution);
+    heuristicResultsArray[i].algo.max_workspace_bytes = maxWorkSpaceBytes;
+    heuristicResultsArray[i].state = rocblaslt_status_success;
+  }
+  for (size_t i = *returnAlgoCount; i < requestedAlgoCount; i++) {
+    heuristicResultsArray[i].state = rocblaslt_status_invalid_value;
+  }
+
+  return rocblaslt_status_success;
+}
+
 /***************************************************************
  * ! \brief  Initialize rocblaslt for the current HIP device, to *
  * avoid costly startup time at the first call on that device. *
@@ -690,13 +826,24 @@ extern "C" void rocblaslt_createialize() { get_library_and_adapter(); }
  ******************************************************************************/
 
 // types
-template rocblaslt_status
-runContractionProblem(const RocblasltContractionProblem<float, float, float> &);
-template rocblaslt_status runContractionProblem(
-    const RocblasltContractionProblem<rocblaslt_half, rocblaslt_half, float> &);
-template rocblaslt_status runContractionProblem(
-    const RocblasltContractionProblem<rocblaslt_bfloat16, rocblaslt_bfloat16,
-                                      float> &);
+#define CREATEFUNCTION(Ti, To, Tc)                                             \
+  template rocblaslt_status runContractionProblem<Ti, To, Tc>(                 \
+      const rocblaslt_matmul_algo *algo,                                       \
+      const RocblasltContractionProblem<Ti, To, Tc> &);                        \
+  template RocblasltContractionProblem<Ti, To, Tc>                             \
+  ConstructRocblasltProblem<Ti, To, Tc>(                                       \
+      const rocblaslt_handle handle, const rocblaslt_matmul_desc matmul_descr, \
+      rocblaslt_matrix_layout matA, rocblaslt_matrix_layout matB,              \
+      rocblaslt_matrix_layout matC, rocblaslt_matrix_layout matD,              \
+      const Tc *alpha, const Tc *beta);                                        \
+  template rocblaslt_status getBestSolutions<Ti, To, Tc>(                      \
+      RocblasltContractionProblem<Ti, To, Tc> prob, int requestedAlgoCount,    \
+      rocblaslt_matmul_heuristic_result heuristicResultsArray[],               \
+      int *returnAlgoCount, size_t maxWorkSpaceBytes);
+
+CREATEFUNCTION(float, float, float)
+CREATEFUNCTION(rocblaslt_half, rocblaslt_half, float)
+CREATEFUNCTION(rocblaslt_bfloat16, rocblaslt_bfloat16, float)
 
 /***********************************************************************************
  * Whether Tensile has been initialized for at least one device (used for

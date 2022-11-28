@@ -34,6 +34,7 @@
 
 #include <hip/hip_bfloat16.h>
 #include <hipblas.h>
+#include <memory>
 #include <stddef.h>
 #include <stdint.h>
 
@@ -279,7 +280,7 @@ typedef enum rocblaslt_matmul_preference_attributes_ {
  * multiplication algorithm.
  *******************************************************************************/
 typedef struct _rocblaslt_matmul_algo {
-  uint32_t solutionIdx = 0;
+  std::shared_ptr<void> data;
   size_t max_workspace_bytes = 0;
 } rocblaslt_matmul_algo;
 

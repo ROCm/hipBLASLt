@@ -115,9 +115,9 @@ struct RocblasltContractionProblem {
       int64_t offset_b, const Tc *beta, const To *C, const To *const *batch_C,
       int64_t ld_c, int64_t batch_stride_c, int64_t offset_c, To *D,
       To *const *batch_D, int64_t ld_d, int64_t batch_stride_d,
-      int64_t offset_d, int64_t batch_count, bool strided_batch,
-      void *workspace, size_t workspaceSize, const To *bias,
-      rocblaslt_epilogue epilogue, hipStream_t stream)
+      int64_t offset_d, int64_t batch_count, bool strided_batch, const To *bias,
+      rocblaslt_epilogue epilogue, void *workspace, size_t workspaceSize,
+      hipStream_t stream)
       : handle(handle), trans_a(trans_a), trans_b(trans_b), m(m), n(n), k(k),
         alpha(alpha), A(A), batch_A(batch_A), row_stride_a(1),
         col_stride_a(ld_a), batch_stride_a(batch_stride_a),
@@ -128,9 +128,8 @@ struct RocblasltContractionProblem {
         buffer_offset_c(offset_c), D(D), batch_D(batch_D), row_stride_d(1),
         col_stride_d(ld_d), batch_stride_d(batch_stride_d),
         buffer_offset_d(offset_d), batch_count(batch_count),
-        strided_batch(strided_batch), workspace(workspace),
-        workspaceSize(workspaceSize), bias(bias), epilogue(epilogue),
-        stream(stream) {}
+        strided_batch(strided_batch), bias(bias), epilogue(epilogue),
+        workspace(workspace), workspaceSize(workspaceSize), stream(stream) {}
 };
 
 /*******************************************************************************
@@ -138,7 +137,8 @@ struct RocblasltContractionProblem {
  *******************************************************************************/
 template <typename Ti, typename To, typename Tc>
 rocblaslt_status
-runContractionProblem(RocblasltContractionProblem<Ti, To, Tc> const &problem);
+runContractionProblem(const rocblaslt_matmul_algo *algo,
+                      RocblasltContractionProblem<Ti, To, Tc> const &problem);
 
 /***********************************************************************************
  * Whether Tensile has been initialized for at least one device (used for
@@ -153,3 +153,25 @@ inline bool &rocblaslt_suppress_tensile_error_messages() {
   thread_local bool t_suppress = false;
   return t_suppress;
 }
+
+/*******************************************************************************
+ * ConstructRocblasltProblem() construct a RocblasltContractionProblem for     *
+ * findTopSolutions                                                            *
+ *******************************************************************************/
+template <typename Ti, typename To = Ti, typename Tc = To>
+RocblasltContractionProblem<Ti, To, Tc> ConstructRocblasltProblem(
+    const rocblaslt_handle handle, const rocblaslt_matmul_desc matmul_descr,
+    rocblaslt_matrix_layout matA, rocblaslt_matrix_layout matB,
+    rocblaslt_matrix_layout matC, rocblaslt_matrix_layout matD, const Tc *alpha,
+    const Tc *beta);
+
+/*******************************************************************************
+ * getBestSolutions() calls finTopSolutions from Tensile and converts to       *
+ * rocblaslt_matmul_heuristic_result                                           *
+ *******************************************************************************/
+template <typename Ti, typename To = Ti, typename Tc = To>
+rocblaslt_status
+getBestSolutions(RocblasltContractionProblem<Ti, To, Tc> prob,
+                 int requestedAlgoCount,
+                 rocblaslt_matmul_heuristic_result heuristicResultsArray[],
+                 int *returnAlgoCount, size_t maxWorkSpaceBytes);

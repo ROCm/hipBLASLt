@@ -53,6 +53,8 @@
 #include <hip/hip_runtime.h>
 #include <hip/hip_runtime_api.h>
 
+#include <memory>
+
 #if defined(__HIP_PLATFORM_HCC__)
 #include "hipblaslt-types.h"
 #endif
@@ -170,7 +172,7 @@ typedef hipblasLtMatmulPreferenceOpaque_t* hipblasLtMatmulPreference_t;
  *  This structure can be trivially serialized and later restored for use with the same version of hipBLASLt library to save on selecting the right configuration again.
  */
 typedef struct _hipblasLtMatmulAlgo_t{
-  uint32_t solutionIdx = 0;
+  std::shared_ptr<void> data;
   size_t max_workspace_bytes = 0;
 } hipblasLtMatmulAlgo_t;
 
