@@ -798,7 +798,7 @@ getBestSolutions(RocblasltContractionProblem<Ti, To, Tc> prob,
 
   auto solutions =
       library->findTopSolutions(tensile_prob, *hardware, requestedAlgoCount);
-  *returnAlgoCount = std::max((int)solutions.size(), requestedAlgoCount);
+  *returnAlgoCount = std::min((int)solutions.size(), requestedAlgoCount);
   for (size_t i = 0; i < *returnAlgoCount; i++) {
     auto solution = solutions[i];
     heuristicResultsArray[i].algo.data.ptr =
