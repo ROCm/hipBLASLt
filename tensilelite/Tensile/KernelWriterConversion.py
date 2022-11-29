@@ -69,7 +69,7 @@ class KernelWriterConversion(KernelWriterBase):
 
     # bias
     if self.state["ProblemType"]["UseBias"]:
-      biasPtrStr = self.state["ProblemType"]["DataType"].toDevice(self.language)
+      biasPtrStr = self.state["ProblemType"]["BiasDataType"].toDevice(self.language)
       kStr += "  " + biasPtrStr + " const * " + "Bias," + self.endLine
 
     # alpha & beta

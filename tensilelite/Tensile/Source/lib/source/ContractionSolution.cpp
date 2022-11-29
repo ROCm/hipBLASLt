@@ -401,7 +401,7 @@ namespace Tensile
 
         if(problemType.useBias && (sizeMapping.globalSplitU == 1))
         {
-            rv.args.append<typename TypedInputs::AType const*>("bias", inputs.bias);
+            rv.args.append<typename TypedInputs::BiasType const*>("bias", inputs.bias);
         }
 
         if(!isSourceKernel())
@@ -693,7 +693,7 @@ namespace Tensile
 
         if(problemType.useBeta && sizeMapping.globalAccumulation == 0)
         {
-            rv.args.append<typename TypedInputs::AType const*>("bias", inputs.bias);
+            rv.args.append<typename TypedInputs::BiasType const*>("bias", inputs.bias);
         }
 
         if(sizeMapping.globalAccumulation)
@@ -812,7 +812,7 @@ namespace Tensile
 
         if(problemType.useBias)
         {
-            rv.args.append<typename TypedInputs::AType const*>("bias", inputs.bias);
+            rv.args.append<typename TypedInputs::BiasType const*>("bias", inputs.bias);
         }
 
         if(sizeMapping.globalAccumulation == 2)
@@ -1149,6 +1149,7 @@ namespace Tensile
         // retreive alpha/beta type set via setAlpha/BetaType()
         auto alphaType = problem.alphaType();
         auto betaType  = problem.betaType();
+        auto biasType  = problem.biasType();
 
         // TODO: Some gtests are passing the "problem" without actually defining the
         // alpha/beta type (alphaType and betaType remain None).
@@ -1163,13 +1164,18 @@ namespace Tensile
         {
             betaType = alphaType;
         }
+        if(biasType == DataType::None)
+        {
+            biasType = problemType.dType;
+        }
 
         auto contractionInputsTypeId = ContractionInputs::TypeId(problemType.aType,
                                                                  problemType.bType,
                                                                  problemType.cType,
                                                                  problemType.dType,
                                                                  alphaType,
-                                                                 betaType);
+                                                                 betaType,
+                                                                 biasType);
 
         switch(contractionInputsTypeId)
         {
@@ -1228,6 +1234,16 @@ namespace Tensile
         case ContractionInputs_I8_I32_I32::TypeId():
         {
             auto const& typedInputs = dynamic_cast<ContractionInputs_I8_I32_I32 const&>(inputs);
+            return solveTyped(problem, typedInputs, hardware);
+        }
+        case ContractionInputs_I8_I32_S::TypeId():
+        {
+            auto const& typedInputs = dynamic_cast<ContractionInputs_I8_I32_S const&>(inputs);
+            return solveTyped(problem, typedInputs, hardware);
+        }
+        case ContractionInputs_I8_I8_S::TypeId():
+        {
+            auto const& typedInputs = dynamic_cast<ContractionInputs_I8_I8_S const&>(inputs);
             return solveTyped(problem, typedInputs, hardware);
         }
 #ifdef TENSILE_USE_BF16

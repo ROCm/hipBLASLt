@@ -52,14 +52,14 @@ namespace Tensile
  */
     enum class ActivationType : uint32_t
     {
-        Abs = 0,
+        None = 0,
+        Abs,
         Clippedrelu,
         Gelu,
         Leakyrelu,
         Relu,
         Sigmoid,
         Tanh,
-        None,
         All,
         Exp, // Verification use only.
         Count

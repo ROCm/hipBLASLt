@@ -128,7 +128,8 @@ class ProblemType:
         rv.dType = dstType
         # we already checked the src/dst/compute types are supported and well-assigned in SolutionStruct
         rv.alphaType = computeType
-        rv.betaType = computeType
+        rv.betaType  = computeType
+        rv.biasType  = DataType(d['BiasDataType']) if 'BiasDataType' in d else dstType
 
         rv.highPrecisionAccumulate = False
         if 'HighPrecisionAccumulate' in d:
@@ -278,7 +279,7 @@ class ProblemType:
             predicates.append(ProblemPredicate("StridedBatched", value=self.stridedBatched))
 
         if includeType:
-            predicates.append(ProblemPredicate("TypesEqual", value=(self.aType, self.bType, self.cType, self.dType)))
+            predicates.append(ProblemPredicate("TypesEqual", value=(self.aType, self.bType, self.cType, self.dType, self.biasType)))
             predicates.append(ProblemPredicate("HighPrecisionAccumulate", value=self.highPrecisionAccumulate))
             predicates.append(ProblemPredicate("ActivationHPA", value=self.activationHPA))
 

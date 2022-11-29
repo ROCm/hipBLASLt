@@ -95,7 +95,7 @@ class StoreState:
             # Really only used if gwvw=1 - edge cases
             # exception: data vgpr cannot be shared if UseInitialStridesCD is enabled and card enable EccHalf,
             #            since each buffer_load_short would overwrite undefined 16bit as zero.
-            self.halfDataRegPerVI = gwvw*self.numVgprsPerDataPerVI < 1.0 and not (kernel["ProblemType"]["UseInitialStridesCD"] and kernelWriter.states.archCaps["HasEccHalf"])
+            self.halfDataRegPerVI = gwvw*self.numVgprsPerDataPerVI == 0.5 and not (kernel["ProblemType"]["UseInitialStridesCD"] and kernelWriter.states.archCaps["HasEccHalf"])
 
     # StoreState constructor:
     def __init__(self, kernelWriter, kernel, gwvw, edge, beta, atomic, elements):
@@ -213,7 +213,7 @@ class StoreState:
             self.numVgprsPerElement += self.cfg.numVgprsPerAddr
         if kernel["ProblemType"]["UseBias"]:
             self.numVgprsPerElement += self.cfg.numVgprsPerAddr  # Bias address
-            numVgprs = int(ceil(kernel["ProblemType"]["DataType"].numRegisters()))
+            numVgprs = int(ceil(kernel["ProblemType"]["BiasDataType"].numRegisters()))
             self.numVgprsPerElement += numVgprs * gwvw  # Loaded data
 
         # Calculate align
@@ -373,7 +373,7 @@ class StoreState:
                             data = lastData
                             del lastData
                 else:
-                    if self.cfg.numVgprsPerDataPerVI == 0.5:
+                    if self.cfg.numVgprsPerDataPerVI == 0.5 or self.cfg.numVgprsPerDataPerVI == 0.25:
                         data = kw.vgprPool.checkOutAligned(int(ceil(self.cfg.numVgprsPerDataPerVI*self.cfg.gwvw)), \
                               int(ceil(self.cfg.numVgprsPerDataPerVI*self.cfg.gwvw)), "writeBatch-data for ei=%u"%elementIdx, preventOverflow=False)
                     else:
@@ -390,7 +390,7 @@ class StoreState:
                 if coordOffset0 in biasVgprMap:
                     dataBias = biasVgprMap[coordOffset0]
                 else:
-                    numVgprs = int(ceil(kernel["ProblemType"]["DataType"].numRegisters()))
+                    numVgprs = int(ceil(kernel["ProblemType"]["BiasDataType"].numRegisters()))
                     dataBias = kw.vgprPool.checkOutAligned(int(numVgprs*self.cfg.gwvw), \
                                   int(ceil(numVgprs*self.cfg.gwvw)), "bias data for ei=%u"%elementIdx, preventOverflow=False)
                     biasVgprMap[coordOffset0] = dataBias

@@ -45,16 +45,19 @@ namespace Tensile
                   typename C     = B,
                   typename D     = C,
                   typename Alpha = D,
-                  typename Beta  = Alpha>
-        struct ManagedContractionInputs : public TypedContractionInputs<A, B, C, D, Alpha, Beta>
+                  typename Beta  = Alpha,
+                  typename Bias  = D>
+        struct ManagedContractionInputs
+            : public TypedContractionInputs<A, B, C, D, Alpha, Beta, Bias>
         {
-            using Base      = TypedContractionInputs<A, B, C, D, Alpha, Beta>;
+            using Base      = TypedContractionInputs<A, B, C, D, Alpha, Beta, Bias>;
             using AType     = A;
             using BType     = B;
             using CType     = C;
             using DType     = D;
             using AlphaType = Alpha;
             using BetaType  = Beta;
+            using BiasType  = Bias;
 
             ManagedContractionInputs(std::shared_ptr<A>    _a,
                                      std::shared_ptr<B>    _b,
@@ -71,7 +74,7 @@ namespace Tensile
                                      Alpha                 _alpha,
                                      Beta                  _beta,
                                      bool                  _gpu,
-                                     std::shared_ptr<A>    _bias          = nullptr,
+                                     std::shared_ptr<Bias> _bias          = nullptr,
                                      std::shared_ptr<void> _ws            = nullptr,
                                      size_t                _workspaceSize = 0)
 
@@ -117,7 +120,7 @@ namespace Tensile
             std::shared_ptr<C*>   managedBatchC;
             std::shared_ptr<D*>   managedBatchD;
             std::shared_ptr<void> managedWS;
-            std::shared_ptr<A>    managedBias;
+            std::shared_ptr<Bias> managedBias;
 
             size_t aElements;
             size_t bElements;
@@ -138,8 +141,15 @@ namespace Tensile
             using DType     = typename TypedInputs::DType;
             using AlphaType = typename TypedInputs::AlphaType;
             using BetaType  = typename TypedInputs::BetaType;
-            using ManagedInputs
-                = ManagedContractionInputs<AType, BType, CType, DType, AlphaType, BetaType>;
+            using BiasType  = typename TypedInputs::BiasType;
+
+            using ManagedInputs = ManagedContractionInputs<AType,
+                                                           BType,
+                                                           CType,
+                                                           DType,
+                                                           AlphaType,
+                                                           BetaType,
+                                                           BiasType>;
 
             TypedDataInitialization(po::variables_map const&    args,
                                     ClientProblemFactory const& problemFactory,
@@ -400,11 +410,11 @@ namespace Tensile
             std::shared_ptr<ManagedInputs> allocNewCPUInputs(std::shared_ptr<ManagedInputs> pristine
                                                              = nullptr)
             {
-                std::shared_ptr<AType> a;
-                std::shared_ptr<BType> b;
-                std::shared_ptr<CType> c;
-                std::shared_ptr<DType> d;
-                std::shared_ptr<AType> bias;
+                std::shared_ptr<AType>    a;
+                std::shared_ptr<BType>    b;
+                std::shared_ptr<CType>    c;
+                std::shared_ptr<DType>    d;
+                std::shared_ptr<BiasType> bias;
 
                 if(pristine)
                 {
@@ -464,8 +474,8 @@ namespace Tensile
                 }
                 else
                 {
-                    bias = std::shared_ptr<AType>(
-                        (AType*)std::malloc(TypeInfo<AType>::ElementSize * m_dMaxElements),
+                    bias = std::shared_ptr<BiasType>(
+                        (BiasType*)std::malloc(TypeInfo<BiasType>::ElementSize * m_dMaxElements),
                         std::free);
                     if(bias == nullptr)
                         throw std::runtime_error("out of host memory allocating d");
@@ -510,11 +520,11 @@ namespace Tensile
                 if(m_curBoundsCheck != BoundsCheckMode::Disable || (pristine && !pristine->gpu))
                     pristine = nullptr;
 
-                std::shared_ptr<AType> a;
-                std::shared_ptr<BType> b;
-                std::shared_ptr<CType> c;
-                std::shared_ptr<DType> d;
-                std::shared_ptr<AType> bias;
+                std::shared_ptr<AType>    a;
+                std::shared_ptr<BType>    b;
+                std::shared_ptr<CType>    c;
+                std::shared_ptr<DType>    d;
+                std::shared_ptr<BiasType> bias;
 
                 std::shared_ptr<AType*> batch_a;
                 std::shared_ptr<BType*> batch_b;
@@ -624,8 +634,8 @@ namespace Tensile
                 }
                 else
                 {
-                    bias = allocNewGPUBuffer<AType>("bias",
-                                                    TypeInfo<AType>::ElementSize * m_dMaxElements);
+                    bias = allocNewGPUBuffer<BiasType>(
+                        "bias", TypeInfo<BiasType>::ElementSize * m_dMaxElements);
                 }
                 auto rv = std::make_shared<ManagedInputs>(a,
                                                           b,
@@ -852,9 +862,9 @@ namespace Tensile
                     if(!m_cEqualsD)
                         Tensile::hip::CopyTensor(dst->d, src->d, problem.d(), kind);
 
-                    memcpy(const_cast<AType*>(dst->bias),
+                    memcpy(const_cast<BiasType*>(dst->bias),
                            src->bias,
-                           problem.d().sizes()[0] * TypeInfo<AType>::ElementSize);
+                           problem.d().sizes()[0] * TypeInfo<BiasType>::ElementSize);
 
                     dst->alpha = src->alpha;
                     dst->beta  = src->beta;
@@ -905,10 +915,11 @@ namespace Tensile
                                                     * problem.d().totalAllocatedElements(),
                                                 kind));
 
-                    HIP_CHECK_EXC(hipMemcpy(const_cast<AType*>(dst->bias),
-                                            src->bias,
-                                            TypeInfo<AType>::ElementSize * problem.d().sizes()[0],
-                                            kind));
+                    HIP_CHECK_EXC(
+                        hipMemcpy(const_cast<BiasType*>(dst->bias),
+                                  src->bias,
+                                  TypeInfo<BiasType>::ElementSize * problem.d().sizes()[0],
+                                  kind));
 
                     dst->alpha = src->alpha;
                     dst->beta  = src->beta;
@@ -970,6 +981,10 @@ namespace Tensile
             = ManagedContractionInputs<int8_t, int8_t, int8_t, int8_t, int32_t, int32_t>;
         using ManagedContractionInputs_I8_I32_I32
             = ManagedContractionInputs<int8_t, int8_t, int32_t, int32_t>;
+        using ManagedContractionInputs_I8_I32_S
+            = ManagedContractionInputs<int8_t, int8_t, int32_t, int32_t, float, float>;
+        using ManagedContractionInputs_I8_I8_S
+            = ManagedContractionInputs<int8_t, int8_t, int8_t, int8_t, float, float>;
         using ManagedContractionInputs_I32_I32_I32 = ManagedContractionInputs<int32_t>;
 #ifdef TENSILE_USE_BF16
         using ManagedContractionInputs_B_B_S

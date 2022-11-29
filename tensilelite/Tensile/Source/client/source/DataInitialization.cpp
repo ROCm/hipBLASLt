@@ -253,9 +253,10 @@ namespace Tensile
             auto dType     = args["d-type"].as<DataType>();
             auto alphaType = args["alpha-type"].as<DataType>();
             auto betaType  = args["beta-type"].as<DataType>();
+            auto biasType  = args["bias-type"].as<DataType>();
 
-            auto contractionInputsTypeId
-                = ContractionInputs::TypeId(aType, bType, cType, dType, alphaType, betaType);
+            auto contractionInputsTypeId = ContractionInputs::TypeId(
+                aType, bType, cType, dType, alphaType, betaType, biasType);
 
             switch(contractionInputsTypeId)
             {
@@ -307,6 +308,16 @@ namespace Tensile
             case ContractionInputs_I8_I32_I32::TypeId():
             {
                 return GetTyped<ContractionInputs_I8_I32_I32>(
+                    args, problemFactory, maxWorkspaceSize);
+            }
+            case ContractionInputs_I8_I32_S::TypeId():
+            {
+                return GetTyped<ContractionInputs_I8_I32_S>(
+                    args, problemFactory, maxWorkspaceSize);
+            }
+            case ContractionInputs_I8_I8_S::TypeId():
+            {
+                return GetTyped<ContractionInputs_I8_I8_S>(
                     args, problemFactory, maxWorkspaceSize);
             }
 #ifdef TENSILE_USE_BF16

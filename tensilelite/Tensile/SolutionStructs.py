@@ -161,8 +161,14 @@ class ProblemType(Mapping):
         self["BetaOnlyUseBias"] = False
       else:
         self["BetaOnlyUseBias"] = self["UseBias"]
+      if "BiasDataType" not in config:
+        if self["DestDataType"].isInt8():
+          self["BiasDataType"] = self["ComputeDataType"]
+        else:
+          self["BiasDataType"] = self["DestDataType"]
     else:
       self["BetaOnlyUseBias"] = False
+      self["BiasDataType"] = self["DestDataType"]
 
     # Activation
     if "Activation" in config:
@@ -180,8 +186,9 @@ class ProblemType(Mapping):
     if self["ActivationType"] != 'none':
       if ((not self["HighPrecisionAccumulate"]) and self["ActivationHPA"]):
           printExit("Must enable HighPrecisionAccumulate to use ActivationHPA.")
-      if ((self["HighPrecisionAccumulate"]) and (not self["ActivationHPA"]) and \
-          (self["DestDataType"].isBFloat16() or self["DestDataType"].isInt8())):
+      if self["ComputeDataType"].isSingle() and \
+         not self["ActivationHPA"] and \
+         (not self["DestDataType"].isSingle() or not self["DestDataType"].isDouble()):
           printWarning("%s only supports ActivationHPA = True if HighPrecisionAccumulate = True. \
                         ActivationHPA will be set to True automatically."%str(self["DestDataType"]))
           self["ActivationHPA"] = True

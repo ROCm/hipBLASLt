@@ -91,6 +91,8 @@ def writeSolutions(filename, problemSizes, activationArgs, solutions, cache=Fals
                     solutionState["ProblemType"]["DestDataType"].value
             solutionState["ProblemType"]["ComputeDataType"] = \
                     solutionState["ProblemType"]["ComputeDataType"].value
+            solutionState["ProblemType"]["BiasDataType"] = \
+                    solutionState["ProblemType"]["BiasDataType"].value
             solutionState["ProblemType"]["ActivationComputeDataType"] = \
                     solutionState["ProblemType"]["ActivationComputeDataType"].value
             solutionState["ProblemType"]["ActivationType"] = \
@@ -312,6 +314,8 @@ def createLibraryLogic(schedulePrefix, architectureName, deviceNames, logicTuple
             problemTypeState["DestDataType"].value
     problemTypeState["ComputeDataType"] = \
             problemTypeState["ComputeDataType"].value
+    problemTypeState["BiasDataType"] = \
+            problemTypeState["BiasDataType"].value
     problemTypeState["ActivationComputeDataType"] = \
             problemTypeState["ActivationComputeDataType"].value
     problemTypeState["ActivationType"] = \
@@ -329,6 +333,8 @@ def createLibraryLogic(schedulePrefix, architectureName, deviceNames, logicTuple
                 solutionState["ProblemType"]["DestDataType"].value
         solutionState["ProblemType"]["ComputeDataType"] = \
                 solutionState["ProblemType"]["ComputeDataType"].value
+        solutionState["ProblemType"]["BiasDataType"] = \
+                solutionState["ProblemType"]["BiasDataType"].value
         solutionState["ProblemType"]["ActivationComputeDataType"] = \
                 solutionState["ProblemType"]["ActivationComputeDataType"].value
         solutionState["ProblemType"]["ActivationType"] = \
@@ -346,6 +352,8 @@ def createLibraryLogic(schedulePrefix, architectureName, deviceNames, logicTuple
                     solutionState["ProblemType"]["DestDataType"].value
             solutionState["ProblemType"]["ComputeDataType"] = \
                     solutionState["ProblemType"]["ComputeDataType"].value
+            solutionState["ProblemType"]["BiasDataType"] = \
+                    solutionState["ProblemType"]["BiasDataType"].value
             solutionState["ProblemType"]["ActivationComputeDataType"] = \
                     solutionState["ProblemType"]["ActivationComputeDataType"].value
             solutionState["ProblemType"]["ActivationType"] = \

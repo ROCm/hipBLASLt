@@ -20,14 +20,12 @@
 ################################################################################
 
 import ctypes
-from copy import deepcopy
 import math
-import re
 import struct
 from collections import OrderedDict
 
 from .TensileInstructions import Module, TextBlock, HolderContainer, RegisterContainer, \
-                          VCC, vgpr, sgpr, Holder
+                          VCC, vgpr, sgpr, Holder, fastdeepcopy
 from .TensileInstructions.Enums import *
 from .TensileInstructions.Instructions import *
 from .Common import printExit, printWarning
@@ -122,14 +120,14 @@ class ActivationType:
 
     # Note: The BFloat16 gemm uses Single type activations. The int8 gemm uses int32 type activations.
                                                                                  # Half,Single,Double,BFloat16,  Int8, Int16, Int32
-    lookup = OrderedDict([('abs',         ActivationTypeRegister('abs', 0,         True,  True,  True,    True, False, False,  True)), \
+    lookup = OrderedDict([('none',        ActivationTypeRegister('none', 0,        True,  True,  True,    True,  True,  True,  True)), \
+                          ('abs',         ActivationTypeRegister('abs', 0,         True,  True,  True,    True, False, False,  True)), \
                           ('clippedrelu', ActivationTypeRegister('clippedrelu', 2, True,  True,  True,   False, False, False,  True)), \
                           ('gelu',        ActivationTypeRegister('gelu', 0,        True,  True, False,   False, False, False, False)), \
                           ('leakyrelu',   ActivationTypeRegister('leakyrelu', 1,   True,  True,  True,   False, False, False,  True)), \
                           ('relu',        ActivationTypeRegister('relu', 0,        True,  True,  True,   False, False, False,  True)), \
                           ('sigmoid',     ActivationTypeRegister('sigmoid', 0,     True,  True, False,   False, False, False, False)), \
                           ('tanh',        ActivationTypeRegister('tanh', 2,        True,  True, False,   False, False, False, False)), \
-                          ('none',        ActivationTypeRegister('none', 0,        True,  True,  True,    True,  True,  True,  True)), \
                           ('all',         ActivationTypeRegister('all', 0)) ])
     def __init__(self, value):
         if isinstance(value, str):
@@ -328,7 +326,7 @@ class ActivationModule:
                 module.add(VMovB32(dst=vgpr(Holder(idx=vgprTemp2)), src=hex(127), comment="value = 127"))
                 module.add(VMed3I32(dst=self.vgprPrefix(vgprIdx), src0=self.vgprPrefix(vgprIdx), src1=vgpr(Holder(idx=vgprTemp)), src2=vgpr(Holder(idx=vgprTemp2)), comment="y = min(127, max(x, x2))"))
             else:
-                module.add(VSubI32(dst=self.vgprPrefix(vgprIdx), src0=vgpr(Holder(idx=vgprTemp)), src1=self.vgprPrefix(vgprIdx), comment="y = max(x, x2)"))
+                module.add(VMaxI32(dst=self.vgprPrefix(vgprIdx), src0=vgpr(Holder(idx=vgprTemp)), src1=self.vgprPrefix(vgprIdx), comment="y = max(x, x2)"))
         else:
             raise RuntimeError("Unsupported data type %s."%cDataType.toDevice("HIP"))
         return module
@@ -650,7 +648,7 @@ def FuseInstruction(currentInst, moduleAndIndex, fuseDebug):
                     # Cannot fuse if the target instruction has any rvalue reassigned or its lvalue
                     # used before the current instruction
                     if not FindAssignAndUse(oldInst, currentInst, outVgpr, outVgpr):
-                        newInst = deepcopy(oldInst)
+                        newInst = fastdeepcopy(oldInst)
                         newInst.src[2] = addConst + newInst.src[2]
                         newInst.comment += " ( + 1 (fused))"
                         replaceInst(currentInst, newInst, fuseDebug)
@@ -698,7 +696,7 @@ def FuseInstruction(currentInst, moduleAndIndex, fuseDebug):
                     if not FindAssignAndUse(oldInst, currentInst, outVgpr, outVgpr):
                         for paramIdx, param in enumerate(oldInst.src):
                             if (isinstance(param, float) or isinstance(param, int)):
-                                newInst = deepcopy(oldInst)
+                                newInst = fastdeepcopy(oldInst)
                                 newValue = param * mulConst
                                 formatting = " (fused %f)" if isinstance(param, float) else " (fused %d)"
                                 if newFuseInst:

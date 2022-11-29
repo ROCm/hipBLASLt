@@ -109,6 +109,8 @@ class StateValues:
   #     Later, another kernel will accumulate this buffer
   #     and convert the final result to Cexternal (= DestDataType) as the gemm result
   bpeCexternal: int = field(init=False)
+  # The type of bias vector
+  bpeBias: int = field(init=False)
   # already covers: dgemm, cgemm, zgemm, sgemm
   #               : hgemm  + !HPA ([H/H/H] compute = internal = f16)
   #               : hgemm  +  HPA ([H/H/S] or [H/S/S] compute = internal = f32)
@@ -2781,6 +2783,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
         kernel["ProblemType"]["HighPrecisionAccumulate"] = False
     self.states.bpeCexternal = self.states.bpeCinternal if kernel["_GlobalAccumulation"] else \
       int(self.states.bpr * kernel["ProblemType"]["DestDataType"].numRegisters())
+    self.states.bpeBias = int(self.states.bpr * kernel["ProblemType"]["BiasDataType"].numRegisters())
 
     assert self.states.bpeAB == tensorParametersA["bpe"]
     assert self.states.bpeAB == tensorParametersB["bpe"]

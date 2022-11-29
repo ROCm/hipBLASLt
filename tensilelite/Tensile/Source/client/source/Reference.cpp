@@ -117,6 +117,9 @@ namespace Tensile
         typename std::enable_if<std::is_same<int8_t, T>::value, T>::type
             SaturateCast(Accumulator val)
         {
+            if(std::is_same<Accumulator, float>::value)
+                val = std::nearbyint(val);//round to even
+
             if(val > static_cast<Accumulator>(127))
                 val = static_cast<Accumulator>(127);
             else if(val < static_cast<Accumulator>(-128))
@@ -450,7 +453,8 @@ namespace Tensile
                 {
                     int  pos  = int(dNum % problem.d().sizes()[0]);
                     auto bias = multiply<Accumulator>(
-                        Transform<typename Inputs::AType>::Input(inputs.bias[pos], aConjugate), 1);
+                        Transform<typename Inputs::BiasType>::Input(inputs.bias[pos], aConjugate),
+                        1);
                     resultD += bias;
                 }
                 // Activation adds here
@@ -470,6 +474,7 @@ namespace Tensile
             // retreive alpha/beta type set via setAlpha/BetaType()
             auto alphaType = problem.alphaType();
             auto betaType  = problem.betaType();
+            auto biasType  = problem.biasType();
 
             // Backward-compatible: when setAlpha/BetaType() wasn't called, use the old way
             // Could remove after rocBLAS is updated
@@ -482,13 +487,18 @@ namespace Tensile
             {
                 betaType = alphaType;
             }
+            if(biasType == DataType::None)
+            {
+                biasType = problem.d().dataType();
+            }
 
             auto contractionInputsTypeId = ContractionInputs::TypeId(problem.a().dataType(),
                                                                      problem.b().dataType(),
                                                                      problem.c().dataType(),
                                                                      problem.d().dataType(),
                                                                      alphaType,
-                                                                     betaType);
+                                                                     betaType,
+                                                                     biasType);
 
             switch(contractionInputsTypeId)
             {
@@ -569,6 +579,18 @@ namespace Tensile
             {
                 auto const& typedInputs = dynamic_cast<ContractionInputs_I8_I32_I32 const&>(inputs);
                 return ReferenceSolution<ContractionInputs_I8_I32_I32>::SolveCPU(
+                    problem, typedInputs, validationStride);
+            }
+            case ContractionInputs_I8_I32_S::TypeId():
+            {
+                auto const& typedInputs = dynamic_cast<ContractionInputs_I8_I32_S const&>(inputs);
+                return ReferenceSolution<ContractionInputs_I8_I32_S, float>::SolveCPU(
+                    problem, typedInputs, validationStride);
+            }
+            case ContractionInputs_I8_I8_S::TypeId():
+            {
+                auto const& typedInputs = dynamic_cast<ContractionInputs_I8_I8_S const&>(inputs);
+                return ReferenceSolution<ContractionInputs_I8_I8_S, float>::SolveCPU(
                     problem, typedInputs, validationStride);
             }
 #ifdef TENSILE_USE_BF16

@@ -983,7 +983,7 @@ namespace Tensile
                 };
                 TypesEqual() = default;
 
-                std::array<DataType, 4> value;
+                std::array<DataType, 5> value;
 
                 static std::string Type()
                 {
@@ -992,9 +992,14 @@ namespace Tensile
 
                 virtual bool operator()(ContractionProblem const& problem) const override
                 {
+                    bool isBiasSame = true;
+                    if(problem.useBias())
+                    {
+                        isBiasSame = problem.biasType() == value[4];
+                    }
                     return problem.a().dataType() == value[0] && problem.b().dataType() == value[1]
                            && problem.c().dataType() == value[2]
-                           && problem.d().dataType() == value[3];
+                           && problem.d().dataType() == value[3] && isBiasSame;
                 }
 
                 virtual std::string toString() const override
@@ -1008,7 +1013,8 @@ namespace Tensile
                                        value[2],
                                        ", d:",
                                        value[3],
-                                       ")");
+                                       ", bias",
+                                       value[4]);
                 }
 
                 virtual bool debugEval(ContractionProblem const& problem,
@@ -1020,7 +1026,7 @@ namespace Tensile
                            << "&& b:" << problem.b().dataType() << " == " << value[1]
                            << "&& c:" << problem.c().dataType() << " == " << value[2]
                            << "&& d:" << problem.d().dataType() << " == " << value[3]
-                           << "): " << rv;
+                           << "&& bias:" << problem.biasType() << " == " << value[4] << "): " << rv;
 
                     return rv;
                 }

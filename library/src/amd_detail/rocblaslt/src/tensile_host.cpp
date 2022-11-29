@@ -273,6 +273,7 @@ auto ConstructTensileProblem(
 
   // set bias mode
   tensileProblem.setUseBias(true);
+  tensileProblem.setBiasType(Tensile_To);
 
   // set Actvation
   tensileProblem.setActivationType(Tensile::ActivationType::All);

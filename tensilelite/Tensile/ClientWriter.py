@@ -464,6 +464,7 @@ def writeClientConfigIni(problemSizes, activationArgs, problemType, sourceDir, c
         param('d-type',     problemType.dType.toEnum())
         param('alpha-type', problemType.alphaType.toEnum())
         param('beta-type',  problemType.betaType.toEnum())
+        param('bias-type',  problemType.biasType.toEnum())
         param('use-bias',   problemType.useBias)
 
         param('high-precision-accumulate', problemType.highPrecisionAccumulate)

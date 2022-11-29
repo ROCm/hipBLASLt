@@ -46,6 +46,7 @@ namespace Tensile
             , m_dType(DataType::Float)
             , m_alphaType(DataType::Float)
             , m_betaType(DataType::Float)
+            , m_biasType(DataType::Float)
             , m_stridedBatched(args["strided-batched"].as<bool>())
             , m_highPrecisionAccumulate(args["high-precision-accumulate"].as<bool>())
             , m_kernelLanguage(args["kernel-language"].as<KernelLanguage>())
@@ -98,6 +99,8 @@ namespace Tensile
                 m_alphaType = args["alpha-type"].as<DataType>();
             if(args.count("beta-type"))
                 m_betaType = args["beta-type"].as<DataType>();
+            if(args.count("bias-type"))
+                m_biasType = args["bias-type"].as<DataType>();
 
             m_beta  = DataInitialization::getValue<double>(args["init-beta"].as<InitMode>());
             m_alpha = DataInitialization::getValue<double>(args["init-alpha"].as<InitMode>());
@@ -209,6 +212,7 @@ namespace Tensile
                     }
                     rv.back().setAlphaType(m_alphaType);
                     rv.back().setBetaType(m_betaType);
+                    rv.back().setBiasType(m_biasType);
                     rv.back().setStridedBatched(m_stridedBatched);
                     rv.back().setHighPrecisionAccumulate(m_highPrecisionAccumulate);
                     rv.back().setUseBias(m_useBias);

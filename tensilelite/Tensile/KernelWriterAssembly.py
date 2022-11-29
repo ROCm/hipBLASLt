@@ -1728,7 +1728,7 @@ class KernelWriterAssembly(KernelWriter):
   def computeLoadSrd(self, kernel, tP, tc, indices, bpe):
     module = Module("computeLoadSrd")
 
-    with self.allocTmpSgpr(2 + 2 + 1) as tmpSgprInfo:
+    with self.allocTmpSgpr(2 + 2) as tmpSgprInfo:
       stmp = tmpSgprInfo.idx
       tileStart = stmp+2
       wroteTileStart = False
@@ -3981,7 +3981,7 @@ class KernelWriterAssembly(KernelWriter):
                   # In some cards, loading half types into register will zero out
                   # the other half. Therefore we need to load into a separate register
                   # then pack 2 registers into one
-                  if tP["localWriteInstruction"].blockWidth == 0.5:
+                  if (tP["localWriteInstruction"].blockWidth == 0.5) and (r%2 == 0):
                     numVgprG2L = self.states.a.numVgprG2L if tc == 'A' else self.states.b.numVgprG2L
                     eccOffset = _getEccOffset(tP["globalReadInstruction"].totalWidth, bpr=self.states.bpr, bpe=tP["bpe"], \
                       glvw=tP["glvw"], idx=loopCnt, numVgprG2L=numVgprG2L)
@@ -5635,7 +5635,10 @@ class KernelWriterAssembly(KernelWriter):
     offset = addrCalc.coordOffset0 * self.states.bpeCexternal
     ds     = DSModifiers(offset=offset)
 
-    if bps==2:
+    if bps==1:
+      module.add(DSStoreB8(dstAddr=addr0, src=vgpr(srcVgpr, rpv*4), \
+                ds=ds, comment="storeRemap lw"))
+    elif bps==2:
       module.add(DSStoreB16(dstAddr=addr0, src=vgpr(srcVgpr, rpv*2), \
                 ds=ds, comment="storeRemap lw"))
     elif bps==4:
@@ -5687,11 +5690,11 @@ class KernelWriterAssembly(KernelWriter):
       ds  = DSModifiers(offset=offset)
       dst = vgpr(storeRegs[rIdx], rpv)
       if bps==4:
-        module.add(DSLoadB32(dst=dst, src=src, ds=ds, comment="storeRemap lr"))
+        module.add(DSLoadB32(dst=dst, src=src, ds=ds, readToTempVgpr=False, comment="storeRemap lr"))
       elif bps==8:
-        module.add(DSLoadB64(dst=dst, src=src, ds=ds, comment="storeRemap lr"))
+        module.add(DSLoadB64(dst=dst, src=src, ds=ds, readToTempVgpr=False, comment="storeRemap lr"))
       elif bps==16:
-        module.add(DSLoadB128(dst=dst, src=src, ds=ds, comment="storeRemap lr"))
+        module.add(DSLoadB128(dst=dst, src=src, ds=ds, readToTempVgpr=False, comment="storeRemap lr"))
       else:
         assert 0, "StoreRemap: bad bps!"
 
@@ -5778,6 +5781,9 @@ class KernelWriterAssembly(KernelWriter):
             module.add(self.chooseGlobalWrite(True, bpe, sumIdx, rpe, addr0, addr1, 0, ntStr, hi16=vi%2))
           else:
             module.add(self.chooseGlobalWrite(True, bps, sumIdx, rpv, addr0, addr1, 0, ntStr))
+
+          if bps == 1:
+            module.add(VAShiftRightI32(dst=vgpr("ValuC+%u"%sumIdx), shiftHex=8, src=vgpr("ValuC+%u"%sumIdx), comment=" shift 1 byte" ))
 
     module.addSpaceLine()
     self.vgprPool.checkIn(vTmp)
@@ -6173,7 +6179,7 @@ class KernelWriterAssembly(KernelWriter):
       bf16CVTVgpr = self.vgprPool.checkOut(4)
       bf16CVTVgprStruct = self.BF16CVTVgprStruct(vgprBf16Temp=bf16CVTVgpr, vgprBf16Mask=(bf16CVTVgpr+1), \
                                                  vgprFp32Nan=(bf16CVTVgpr+2), vgprBf16Inc=(bf16CVTVgpr+3))
-    elif kernel["ProblemType"]["DataType"].isBFloat16() and kernel["ProblemType"]["UseBias"]:
+    elif kernel["ProblemType"]["BiasDataType"].isBFloat16() and kernel["ProblemType"]["UseBias"]:
       bf16CVTVgpr = self.vgprPool.checkOut(1)
       bf16CVTVgprStruct = self.BF16CVTVgprStruct(vgprBf16Temp=None, vgprBf16Mask=(bf16CVTVgpr), \
                                                  vgprFp32Nan=None, vgprBf16Inc=None)
@@ -6184,8 +6190,8 @@ class KernelWriterAssembly(KernelWriter):
     toActModuleList = None
     isInsertActFunctionCallAddrCalc = True
     if kernel["ActivationFuncCall"]:
-      sgprOffsetActivation = self.sgprPool.checkOut(2)
-      sgprOffsetBack = self.sgprPool.checkOut(2)
+      sgprOffsetActivation = self.sgprPool.checkOutAligned(2, 2)
+      sgprOffsetBack = self.sgprPool.checkOutAligned(2, 2)
       activationSetPCStruct = self.ActivationSetPCStruct(sgprOffsetActivation=sgprOffsetActivation, \
         sgprOffsetBack=sgprOffsetBack, vgprActCopy=tmpVgpr)
       activationCDataType = kernel["ProblemType"]["ActivationComputeDataType"]
@@ -6607,7 +6613,13 @@ class KernelWriterAssembly(KernelWriter):
     module = Module("chooseGlobalWrite %s -> %s (%s)"%(srcVgpr, addr0, addr1))
 
     def bufferStoreImpl(tmpSgpr, mubuf):
-      if bps==2 and hi16:
+      if bps==1 and hi16:
+        module.add(BufferStoreD16HIB16(src=vgpr(srcVgpr, rpv*4), vaddr=addr0, \
+                                       saddr=addr1, soffset=tmpSgpr, mubuf=mubuf, comment="store D"))
+      elif bps==1 and not hi16:
+        module.add(BufferStoreB8(src=vgpr(srcVgpr, rpv*4), vaddr=addr0, \
+                                 saddr=addr1, soffset=tmpSgpr, mubuf=mubuf, comment="store D"))
+      elif bps==2 and hi16:
         module.add(BufferStoreD16HIB16(src=vgpr(srcVgpr, rpv*2), vaddr=addr0, \
                                        saddr=addr1, soffset=tmpSgpr, mubuf=mubuf, comment="store D"))
       elif bps==2 and not hi16:
@@ -6671,7 +6683,7 @@ class KernelWriterAssembly(KernelWriter):
     # Add bias here
     module = Module("addBias")
     if kernel["ProblemType"]["UseBias"] and (kernel["GlobalSplitU"] == 1):
-      bps = kernel["ProblemType"]["DataType"].numBytes() * ss.cfg.gwvw
+      bps = kernel["ProblemType"]["BiasDataType"].numBytes() * ss.cfg.gwvw
       if kernel["BufferLoad"]:
         addr0 = vgpr(addrCalc.addrBiasVgpr)
         addr1 = sgpr("SrdBias", 4)
@@ -6680,17 +6692,17 @@ class KernelWriterAssembly(KernelWriter):
         addr1 = ""
 
       useBuffer = kernel["BufferLoad"]
-      if kernel["ProblemType"]["DataType"].isHalf() or kernel["ProblemType"]["DataType"].isBFloat16():
+      if kernel["ProblemType"]["DestDataType"].isHalf() or kernel["ProblemType"]["DestDataType"].isBFloat16():
         module.add(self.chooseGlobalRead(useBuffer, bps, biasVgpr, \
                           addr0, addr1, soffset=0, offset=addrCalc.biasOffset, hi16=0, comment="load bias"))
-      elif kernel["ProblemType"]["DataType"].isInt32() or kernel["ProblemType"]["DataType"].isSingle():
+      elif kernel["ProblemType"]["DestDataType"].isInt32() or kernel["ProblemType"]["DestDataType"].isSingle():
         module.add(self.chooseGlobalRead(useBuffer, bps, biasVgpr, \
                           addr0, addr1, soffset=0, offset=addrCalc.biasOffset, comment="load bias"))
-      elif kernel["ProblemType"]["DataType"].isDouble() or kernel["ProblemType"]["DataType"].isSingleComplex() :
+      elif kernel["ProblemType"]["DestDataType"].isDouble() or kernel["ProblemType"]["DestDataType"].isSingleComplex() :
         module.add(self.chooseGlobalRead(useBuffer, bps, biasVgpr, \
                           addr0, addr1, soffset=0, offset=addrCalc.biasOffset, comment="load bias"))
       else:
-        printExit("Unsupported bias type %s."%(str(kernel["ProblemType"]["DataType"])))
+        printExit("Unsupported bias type %s."%(str(kernel["ProblemType"]["DestDataType"])))
     return module
 
   ##############################################################################
@@ -6781,7 +6793,8 @@ class KernelWriterAssembly(KernelWriter):
     elif kernel["ProblemType"]["DestDataType"].isInt8():
      module.add(self.chooseGlobalRead(useBuffer, bps, data, \
                 addr0, addr1, soffset=0, offset=addrCalc.globalOffset, \
-                glc=isGlc, slc=isSlc, lds=False, hi16=vc0 % 4,
+                glc=isGlc, slc=isSlc, lds=False, \
+                #hi16=vc0 % 4,
                 comment="load C for beta calc"))
     elif kernel["ProblemType"]["DestDataType"].isBFloat16() or \
          kernel["ProblemType"]["DestDataType"].isInt32() or \

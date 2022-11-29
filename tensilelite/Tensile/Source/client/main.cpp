@@ -112,6 +112,7 @@ namespace Tensile
                 ("d-type",                   po::value<DataType>()->default_value(DataType::None), "D data type")
                 ("alpha-type",               po::value<DataType>()->default_value(DataType::None), "alpha data type")
                 ("beta-type",                po::value<DataType>()->default_value(DataType::None), "beta data type")
+                ("bias-type",                po::value<DataType>()->default_value(DataType::None), "bias data type")
                 ("high-precision-accumulate", po::value<bool>()->default_value(false), "Use high-precision accumulate.")
                 ("strided-batched",          po::value<bool>()->default_value(true), "Use strided-batched or general batched")
                 ("kernel-language",          po::value<KernelLanguage>()->default_value(KernelLanguage::Any), "Select kernel language.")
@@ -400,6 +401,7 @@ namespace Tensile
                 args.at("d-type").value()     = boost::any(type);
                 args.at("alpha-type").value() = boost::any(type);
                 args.at("beta-type").value()  = boost::any(type);
+                args.at("bias-type").value()  = boost::any(type);
             }
         }
 

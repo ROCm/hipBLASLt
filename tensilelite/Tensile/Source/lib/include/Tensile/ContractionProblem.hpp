@@ -547,6 +547,16 @@ namespace Tensile
             return m_useBias;
         }
 
+        void setBiasType(DataType type)
+        {
+            m_biasType = type;
+        }
+
+        DataType biasType() const
+        {
+            return m_biasType;
+        }
+
         void setBetaRestriction(ScalarValue beta)
         {
             m_betaRestriction = beta;
@@ -845,6 +855,7 @@ namespace Tensile
 
         DataType m_alphaType = DataType::None; // if not assigned, will follow d-type
         DataType m_betaType  = DataType::None; // for bwd-compatible
+        DataType m_biasType  = DataType::None; // if not assigned, will follow d-type
 
         ScalarValue m_alphaRestriction = ScalarValue::Any; // restrictions on the alpha value used
         ScalarValue m_betaRestriction  = ScalarValue::Any; // restrictions on the beta value used
@@ -900,7 +911,8 @@ namespace Tensile
                                          DataType cType,
                                          DataType dType,
                                          DataType alphaType,
-                                         DataType betaType)
+                                         DataType betaType,
+                                         DataType biasType)
         {
             static_assert(BitFieldGenerator::ElementWidth((uint32_t)DataType::Count) * 6
                               <= BitFieldGenerator::maxBitFieldWidth,
@@ -913,7 +925,8 @@ namespace Tensile
                 (uint32_t)cType,
                 (uint32_t)dType,
                 (uint32_t)alphaType,
-                (uint32_t)betaType);
+                (uint32_t)betaType,
+                (uint32_t)biasType);
         }
     };
 
@@ -921,7 +934,13 @@ namespace Tensile
  * Contains actual pointer and argument values for a particular set of
  * inputs.
  */
-    template <typename A, typename B, typename C, typename D, typename Alpha, typename Beta>
+    template <typename A,
+              typename B,
+              typename C,
+              typename D,
+              typename Alpha,
+              typename Beta,
+              typename Bias>
     struct TENSILE_API TypedContractionInputs : public ContractionInputs
     {
         using AType     = A;
@@ -930,17 +949,18 @@ namespace Tensile
         using DType     = D;
         using AlphaType = Alpha;
         using BetaType  = Beta;
+        using BiasType  = Bias;
 
         TypedContractionInputs();
 
-        TypedContractionInputs(A const* _a,
-                               B const* _b,
-                               C const* _c,
-                               D*       _d,
-                               Alpha    _alpha,
-                               Beta     _beta,
-                               A const* _bias = nullptr,
-                               void*    _ws   = nullptr)
+        TypedContractionInputs(A const*    _a,
+                               B const*    _b,
+                               C const*    _c,
+                               D*          _d,
+                               Alpha       _alpha,
+                               Beta        _beta,
+                               Bias const* _bias = nullptr,
+                               void*       _ws   = nullptr)
             : TypedContractionInputs(
                 _a, _b, _c, _d, nullptr, nullptr, nullptr, nullptr, _alpha, _beta){};
 
@@ -954,7 +974,7 @@ namespace Tensile
                                D* const*       _batchD,
                                Alpha           _alpha,
                                Beta            _beta,
-                               A const*        _bias = nullptr,
+                               Bias const*     _bias = nullptr,
                                void*           _ws   = nullptr);
 
         ~TypedContractionInputs();
@@ -974,7 +994,7 @@ namespace Tensile
         Alpha alpha = static_cast<Alpha>(0);
         Beta  beta  = static_cast<Beta>(0);
 
-        A const* bias = nullptr;
+        Bias const* bias = nullptr;
 
         std::vector<D> activationArgs;
 
@@ -985,7 +1005,8 @@ namespace Tensile
                                              TypeInfo<C>::Enum,
                                              TypeInfo<D>::Enum,
                                              TypeInfo<Alpha>::Enum,
-                                             TypeInfo<Beta>::Enum);
+                                             TypeInfo<Beta>::Enum,
+                                             TypeInfo<Bias>::Enum);
         }
     };
 
@@ -1004,8 +1025,10 @@ namespace Tensile
 #endif // TENSILE_USE_HALF
     using ContractionInputs_I8x4_I32_I32 = TypedContractionInputs<Int8x4, Int8x4, int32_t, int32_t>;
     using ContractionInputs_I8_I8_I32
-        = TypedContractionInputs<int8_t, int8_t, int8_t, int8_t, int32_t, int32_t>;
+        = TypedContractionInputs<int8_t, int8_t, int8_t, int8_t, int32_t, int32_t, int32_t>;
     using ContractionInputs_I8_I32_I32  = TypedContractionInputs<int8_t, int8_t, int32_t, int32_t>;
+    using ContractionInputs_I8_I32_S  = TypedContractionInputs<int8_t, int8_t, int32_t, int32_t, float, float>;
+    using ContractionInputs_I8_I8_S  = TypedContractionInputs<int8_t, int8_t, int8_t, int8_t, float, float>;
     using ContractionInputs_I32_I32_I32 = TypedContractionInputs<int32_t>;
 #ifdef TENSILE_USE_BF16
     using ContractionInputs_B_B_S

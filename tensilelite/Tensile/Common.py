@@ -355,12 +355,13 @@ validMatrixInstructions = validMatrixInstructions + validMFMA["_format9"]
 validGEMMTypes = [ ('H','H','H'), ('S','S','S'), ('D','D','D'), ('C','C','C'), ('Z','Z','Z'), \
                    ('H','H','S'), ('H','S','S'), \
                    ('B','B','S'), ('B','S','S'), \
-                   ('I8','I','I'), ('4xi8','I','I'), ('I8','I8','I')]
+                   ('I8','I','I'), ('4xi8','I','I'), ('I8','I8','I'), \
+                   ('I8','I','S'), ('I8','I8','S')]
 
 # All HPA types are listed here (HPA=T). The name of the library logic files for these types is:
 # *_TiToTc_BH*.yaml where Ti, Tc, and To are the data types of A/B, C/D, and computation, respectively.
 # The name of the library logic files for non-HPA (HPA=F) types is: *_TiB*.yaml.
-HPATypes = [ ('H','S','S'), ('H','H','S'), ('B','B','S'), ('B','S','S'), ('I8','I','I'), ('4xi8','I','I')]
+HPATypes = [ ('H','S','S'), ('H','H','S'), ('B','B','S'), ('B','S','S'), ('I8','I','I'), ('4xi8','I','I'), ('I8','I','S'), ('I8','I8','S')]
 
 validParameters = {
     # original global read to lds is interlace, [w0,w1,w2,w3,w0,w1,w2,w3,w0,w1,w2,w3,w0,w1,w2,w3]
@@ -1036,6 +1037,7 @@ defaultProblemType = {
     "DataType":                 0,                # data types can specified by a variety of ways, such as "s", as listed in SolutionStructs.py::DataType
     "DestDataType":             0,                # destination data types can specified by a variety of ways, such as "s", as listed in SolutionStructs.py::DataType
     "ComputeDataType":          0,                # compute data types can specified by a variety of ways, such as "s", as listed in SolutionStructs.py::DataType
+    "BiasDataType":             0,                # bias data types
     "UseBeta":                  True,             # =True use beta parameter (asm will check for B=0 and optimize the write for that), =False don't use beta parameter
     "UseBias":                  False,            # =True use bias vector
     "HighPrecisionAccumulate":  False,            # f32 += f16*f16

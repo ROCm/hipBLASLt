@@ -35,6 +35,7 @@ namespace Tensile
               typename C     = A,
               typename D     = C,
               typename Alpha = D,
-              typename Beta  = D>
+              typename Beta  = D,
+              typename Bias  = D>
     struct TypedContractionInputs;
 } // namespace Tensile
