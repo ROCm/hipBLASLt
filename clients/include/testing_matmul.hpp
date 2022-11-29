@@ -376,11 +376,11 @@ void testing_matmul(const Arguments& arg)
             HIPBLAS_STATUS_SUCCESS);
     }
     // Get Heuristic results
-    hipblasLtMatmulHeuristicResult_t heuristicResult[3] = {0};
+    hipblasLtMatmulHeuristicResult_t heuristicResult[1] = {0};
     int                              returnedAlgoCount  = 0;
     EXPECT_HIPBLAS_STATUS(
         (hipblasLtMatmulAlgoGetHeuristic(
-            handle, matmul, matA, matB, matC, matD, pref, 3, heuristicResult, &returnedAlgoCount)),
+            handle, matmul, matA, matB, matC, matD, pref, 1, heuristicResult, &returnedAlgoCount)),
         HIPBLAS_STATUS_SUCCESS);
 
     if(arg.unit_check || arg.norm_check)
