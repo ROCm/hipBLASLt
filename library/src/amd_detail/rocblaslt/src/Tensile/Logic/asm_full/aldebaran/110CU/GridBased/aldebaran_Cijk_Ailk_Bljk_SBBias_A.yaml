@@ -226821,7 +226821,7 @@
     UnrollMemFence: false
     Use64bShadowLimit: 1
     UseInstOffsetForGRO: 0
-    UseSgprForGRO: -1
+    UseSgprForGRO: 0
     Valid: true
     VectorAtomicWidth: 1
     VectorStore: -1
@@ -345885,7 +345885,7 @@
     UnrollMemFence: false
     Use64bShadowLimit: 1
     UseInstOffsetForGRO: 0
-    UseSgprForGRO: -1
+    UseSgprForGRO: 0
     Valid: true
     VectorAtomicWidth: 1
     VectorStore: -1
@@ -345898,7 +345898,7 @@
     WorkGroupMappingType: B
     _DepthULds: 16
     _GlobalAccumulation: null
-    _UseSgprForGRO: 1
+    _UseSgprForGRO: 0
     _VectorStore: 1
     _WorkspaceSizePerElemC: 0
     _staggerStrideShift: 2
@@ -346413,7 +346413,7 @@
     UnrollMemFence: false
     Use64bShadowLimit: 1
     UseInstOffsetForGRO: 0
-    UseSgprForGRO: -1
+    UseSgprForGRO: 0
     Valid: true
     VectorAtomicWidth: 1
     VectorStore: -1
@@ -346426,7 +346426,7 @@
     WorkGroupMappingType: B
     _DepthULds: 16
     _GlobalAccumulation: null
-    _UseSgprForGRO: 1
+    _UseSgprForGRO: 0
     _VectorStore: 1
     _WorkspaceSizePerElemC: 0
     _staggerStrideShift: 2
@@ -351429,7 +351429,7 @@
     UnrollMemFence: false
     Use64bShadowLimit: 1
     UseInstOffsetForGRO: 0
-    UseSgprForGRO: -1
+    UseSgprForGRO: 0
     Valid: true
     VectorAtomicWidth: 1
     VectorStore: -1
@@ -351442,7 +351442,7 @@
     WorkGroupMappingType: B
     _DepthULds: 16
     _GlobalAccumulation: null
-    _UseSgprForGRO: 1
+    _UseSgprForGRO: 0
     _VectorStore: 1
     _WorkspaceSizePerElemC: 0
     _staggerStrideShift: 2
@@ -362517,7 +362517,7 @@
     UnrollMemFence: false
     Use64bShadowLimit: 1
     UseInstOffsetForGRO: 0
-    UseSgprForGRO: -1
+    UseSgprForGRO: 0
     Valid: true
     VectorAtomicWidth: 1
     VectorStore: -1
@@ -362530,7 +362530,7 @@
     WorkGroupMappingType: B
     _DepthULds: 16
     _GlobalAccumulation: null
-    _UseSgprForGRO: 1
+    _UseSgprForGRO: 0
     _VectorStore: 1
     _WorkspaceSizePerElemC: 0
     _staggerStrideShift: 2

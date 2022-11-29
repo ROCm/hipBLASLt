@@ -59178,7 +59178,7 @@
     UnrollMemFence: false
     Use64bShadowLimit: 1
     UseInstOffsetForGRO: 0
-    UseSgprForGRO: -1
+    UseSgprForGRO: 0
     Valid: true
     VectorAtomicWidth: 2
     VectorStore: -1
@@ -200946,7 +200946,7 @@
     UnrollMemFence: false
     Use64bShadowLimit: 1
     UseInstOffsetForGRO: 0
-    UseSgprForGRO: -1
+    UseSgprForGRO: 0
     Valid: true
     VectorAtomicWidth: 2
     VectorStore: -1
