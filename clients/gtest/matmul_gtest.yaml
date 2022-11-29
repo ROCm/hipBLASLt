@@ -48,6 +48,14 @@ Tests:
 - {name: alpha_beta_zero_NaN, category: pre_checkin, precision: *real_precisions,
    function: matmul, transA: N, transB: N, M: 256, N: 128, K:  64, alpha: [ .NaN, 2 ], beta: [ .NaN, 2 ] }
 
+- name: matmul_one
+  category: quick
+  function:
+    matmul: *real_precisions
+  matrix_size: *one_matrix_size_range
+  transA_transB: *transA_transB_range
+  alpha_beta: *alpha_beta_range
+
 - name: matmul_small
   category: quick
   function:
