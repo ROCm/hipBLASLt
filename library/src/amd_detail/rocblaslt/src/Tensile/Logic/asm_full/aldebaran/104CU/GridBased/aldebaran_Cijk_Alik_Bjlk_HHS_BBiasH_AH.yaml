@@ -79,26 +79,26 @@
     EdgeType: ShiftPtr
     EnableMatrixInstruction: true
     ExpandPointerSwap: 0
-    GlobalLoadVectorWidthA: 4
-    GlobalLoadVectorWidthB: 4
+    GlobalLoadVectorWidthA: 1
+    GlobalLoadVectorWidthB: 1
     GlobalReadPerMfma: 1
-    GlobalReadVectorWidth: 4
+    GlobalReadVectorWidth: 1
     GlobalSplitU: 1
     GlobalSplitUAlgorithm: SingleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: false
     GuaranteeNoPartialA: true
-    GuaranteeNoPartialB: false
+    GuaranteeNoPartialB: true
     ISA: [9, 0, 10]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
     LSCA: 32
     LSCB: 32
-    LSPA: 32
-    LSPB: 32
-    LVCA: 8
-    LVCB: 8
+    LSPA: 8
+    LSPB: 8
+    LVCA: 32
+    LVCB: 32
     LVPA: 8
     LVPB: 8
     LdsBlockSizePerPad: 128
@@ -156,12 +156,12 @@
     NumElementsPerBatchStore: 2
     NumElementsPerThread: 4
     NumGlobalWriteVectorsPerThread: 4
-    NumLoadsA: 1
-    NumLoadsB: 1
+    NumLoadsA: 4
+    NumLoadsB: 4
     NumLoadsCoalescedA: 1
     NumLoadsCoalescedB: 1
-    NumLoadsPerpendicularA: 1
-    NumLoadsPerpendicularB: 1
+    NumLoadsPerpendicularA: 4
+    NumLoadsPerpendicularB: 4
     NumThreads: 256
     OptNoLoadLoop: 1
     PackedC0IdxChars: [I]
@@ -264,7 +264,7 @@
     WorkGroupMapping: 8
     _DepthULds: 32
     _GlobalAccumulation: null
-    _UseSgprForGRO: false
+    _UseSgprForGRO: 1
     _VectorStore: 1
     _WorkspaceSizePerElemC: 0
     _staggerStrideShift: 2
