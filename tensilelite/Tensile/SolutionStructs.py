@@ -166,6 +166,8 @@ class ProblemType(Mapping):
           self["BiasDataType"] = self["ComputeDataType"]
         else:
           self["BiasDataType"] = self["DestDataType"]
+      else:
+        self["BiasDataType"] = DataType(config["BiasDataType"])
     else:
       self["BetaOnlyUseBias"] = False
       self["BiasDataType"] = self["DestDataType"]
@@ -386,11 +388,11 @@ class ProblemType(Mapping):
 
     # Other
     if self["UseBeta"]: name += "B"
-    if self["UseBias"]: name += "Bias"
     if self["HighPrecisionAccumulate"] and not self["SilentHighPrecisionAccumulate"]: name += "H"
     if self["Fp16AltImpl"]: name += "R"
     if self["UseInitialStridesAB"]: name += "I"
     if self["UseInitialStridesCD"]: name += "Ic"
+    if self["UseBias"]: name += "_Bias%s"%self["BiasDataType"].toChar()
 
     # precision and other
     # name += "_SB" if self["StridedBatched"] else "_GB"

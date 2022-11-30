@@ -118,7 +118,7 @@ namespace Tensile
             SaturateCast(Accumulator val)
         {
             if(std::is_same<Accumulator, float>::value)
-                val = std::nearbyint(val);//round to even
+                val = std::nearbyint(val); //round to even
 
             if(val > static_cast<Accumulator>(127))
                 val = static_cast<Accumulator>(127);
@@ -552,6 +552,13 @@ namespace Tensile
             {
                 auto const& typedInputs = dynamic_cast<ContractionInputs_H_H_S const&>(inputs);
                 return ReferenceSolution<ContractionInputs_H_H_S, float>::SolveCPU(
+                    problem, typedInputs, validationStride);
+            }
+            case ContractionInputs_H_H_S_BiasS::TypeId():
+            {
+                auto const& typedInputs
+                    = dynamic_cast<ContractionInputs_H_H_S_BiasS const&>(inputs);
+                return ReferenceSolution<ContractionInputs_H_H_S_BiasS, float>::SolveCPU(
                     problem, typedInputs, validationStride);
             }
 #endif // TENSILE_USE_HALF

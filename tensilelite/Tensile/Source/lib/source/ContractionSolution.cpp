@@ -750,7 +750,8 @@ namespace Tensile
 
         if(problemType.useBias && (sizeMapping.globalAccumulation == 0))
         {
-            name += "_Bias";
+            auto s = TypeAbbrev(problem.biasType());
+            name += ("_Bias" + s);
         }
 
         if(sizeMapping.globalAccumulation)
@@ -900,7 +901,8 @@ namespace Tensile
 
         if(problemType.useBias)
         {
-            name += "_Bias";
+            auto s = TypeAbbrev(problem.biasType());
+            name += ("_Bias" + s);
         }
 
         if(problem.activationType() != ActivationType::None)
@@ -1213,6 +1215,11 @@ namespace Tensile
         case ContractionInputs_H_S_S::TypeId():
         {
             auto const& typedInputs = dynamic_cast<ContractionInputs_H_S_S const&>(inputs);
+            return solveTyped(problem, typedInputs, hardware);
+        }
+        case ContractionInputs_H_H_S_BiasS::TypeId():
+        {
+            auto const& typedInputs = dynamic_cast<ContractionInputs_H_H_S_BiasS const&>(inputs);
             return solveTyped(problem, typedInputs, hardware);
         }
 #endif // TENSILE_USE_HALF

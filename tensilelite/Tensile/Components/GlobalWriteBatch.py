@@ -253,8 +253,8 @@ class GlobalWriteBatchWriter:
         module.add(addrCalc.emitLdChange(self.kernel, self.ss, 'Bias', self.edge, self.beta, mask, (elementIdx == 0), self.tmpVgpr, addrBiasVgpr, self.addrBias))
         if dataBias not in loadedDataBias:
           # Shift right several vgprs for cvt ops if needed
-          numVgprs = int(ceil(self.kernel["ProblemType"]["DataType"].numRegisters() * self.ss.cfg.gwvw))
-          reg = self.kernel["ProblemType"]["DataType"].numRegisters() if self.kernel["ProblemType"]["DataType"].numRegisters() >= 1 else 1
+          numVgprs = int(ceil(self.kernel["ProblemType"]["BiasDataType"].numRegisters() * self.ss.cfg.gwvw))
+          reg = self.kernel["ProblemType"]["BiasDataType"].numRegisters() if self.kernel["ProblemType"]["BiasDataType"].numRegisters() >= 1 else 1
           gprShiftBias = dataBias + (self.ss.cfg.gwvw * reg - numVgprs)
           if self.kernel["GroupLoadStore"]:
             # Group bias load with C input to
@@ -1121,7 +1121,7 @@ class GlobalWriteBatchWriter:
           else:
             module.add(VMulLOU32(dst=vgpr(tmpVgpr), src0=sgpr("Beta"), src1=vgpr(tmpVgpr), comment="C = C*beta"))
             module.add(VAddU32(dst=vgpr("ValuC+%u"%newSumIdxV), src0=vgpr(tmpVgpr), src1=vgpr("ValuC+%u"%newSumIdxV), comment="finalSum = sum*alpha + C*beta"))
-                  
+
       elif kernel["ProblemType"]["DestDataType"].isInt32():
         newSumIdxV = sumIdxV - self.parentWriter.states.c.startVgprValu
         if kernel["ProblemType"]["ComputeDataType"].isSingle():

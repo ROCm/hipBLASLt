@@ -240,6 +240,10 @@ namespace Tensile
             {
                 return validateSolutionCast<ManagedContractionInputs_H_S_S>(inputs);
             }
+            case ManagedContractionInputs_H_H_S_BiasS::TypeId():
+            {
+                return validateSolutionCast<ManagedContractionInputs_H_H_S_BiasS>(inputs);
+            }
 #endif // TENSILE_USE_HALF
             case ManagedContractionInputs_I8x4_I32_I32::TypeId():
             {

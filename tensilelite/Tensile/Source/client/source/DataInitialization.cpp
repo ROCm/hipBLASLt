@@ -289,6 +289,11 @@ namespace Tensile
             {
                 return GetTyped<ContractionInputs_H_S_S>(args, problemFactory, maxWorkspaceSize);
             }
+            case ContractionInputs_H_H_S_BiasS::TypeId():
+            {
+                return GetTyped<ContractionInputs_H_H_S_BiasS>(
+                    args, problemFactory, maxWorkspaceSize);
+            }
 #endif // TENSILE_USE_HALF
             case ContractionInputs_I8x4_I32_I32::TypeId():
             {
@@ -312,13 +317,11 @@ namespace Tensile
             }
             case ContractionInputs_I8_I32_S::TypeId():
             {
-                return GetTyped<ContractionInputs_I8_I32_S>(
-                    args, problemFactory, maxWorkspaceSize);
+                return GetTyped<ContractionInputs_I8_I32_S>(args, problemFactory, maxWorkspaceSize);
             }
             case ContractionInputs_I8_I8_S::TypeId():
             {
-                return GetTyped<ContractionInputs_I8_I8_S>(
-                    args, problemFactory, maxWorkspaceSize);
+                return GetTyped<ContractionInputs_I8_I8_S>(args, problemFactory, maxWorkspaceSize);
             }
 #ifdef TENSILE_USE_BF16
             case ContractionInputs_B_B_S::TypeId():
@@ -345,7 +348,9 @@ namespace Tensile
                                                  ", alpha: ",
                                                  alphaType,
                                                  ", beta: ",
-                                                 betaType));
+                                                 betaType,
+                                                 ", bias: ",
+                                                 biasType));
         }
 
         DataInitialization::DataInitialization(po::variables_map const&    args,
