@@ -390,7 +390,7 @@ class KernelWriterAssembly(KernelWriter):
     for i in range(numDummySgpr):
       self.defineSgpr("DummySgpr%d"%i, 1)
 
-    if self.sgprPool.size() >= self.consts.maxSgprs:
+    if self.sgprPool.size() > self.consts.maxSgprs:
       print ("warning: Number of defined SGPRS (%d) overflowed max SGPRS (%d)." \
                % (self.sgprPool.size(), self.consts.maxSgprs))
 
@@ -1728,7 +1728,7 @@ class KernelWriterAssembly(KernelWriter):
   def computeLoadSrd(self, kernel, tP, tc, indices, bpe):
     module = Module("computeLoadSrd")
 
-    with self.allocTmpSgpr(2 + 2 + 1) as tmpSgprInfo:
+    with self.allocTmpSgpr(2 + 2) as tmpSgprInfo:
       stmp = tmpSgprInfo.idx
       tileStart = stmp+2
       wroteTileStart = False
