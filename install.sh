@@ -154,14 +154,14 @@ install_packages( )
 
   # dependencies needed for library and clients to build
   local library_dependencies_ubuntu=( "gfortran" "make" "pkg-config" "libnuma1" "git")
-  local library_dependencies_centos=( "devtoolset-7-gcc-gfortran" "epel-release" "make" "cmake3" "gcc-c++" "rpm-build" )
-  local library_dependencies_centos8=( "gcc-gfortran" "epel-release" "make" "cmake3" "gcc-c++" "rpm-build" "numactl-libs" )
-  local library_dependencies_fedora=( "gcc-gfortran" "make" "cmake" "gcc-c++" "libcxx-devel" "rpm-build" "numactl-libs" )
-  local library_dependencies_sles=( "gcc-fortran" "make" "cmake" "gcc-c++" "libcxxtools9" "rpm-build" )
+  local library_dependencies_centos=( "epel-release" "make" "gcc-c++" "rpm-build" )
+  local library_dependencies_centos8=( "epel-release" "make" "gcc-c++" "rpm-build" "numactl-libs" )
+  local library_dependencies_fedora=( "gcc-gfortran" "make" "gcc-c++" "libcxx-devel" "rpm-build" "numactl-libs" )
+  local library_dependencies_sles=( "gcc-fortran" "make" "gcc-c++" "libcxxtools9" "rpm-build" )
 
   local client_dependencies_ubuntu=( "python3" "python3-yaml")
   local client_dependencies_centos=( "python36" "python3-pip" )
-  local client_dependencies_centos8=( "python36" "python3-pip" )
+  local client_dependencies_centos8=( "python39" "python3-virtualenv" )
   local client_dependencies_fedora=( "python36" "PyYAML" "python3-pip" )
   local client_dependencies_sles=( "pkg-config" "dpkg" "python3-pip" )
 
@@ -194,11 +194,19 @@ install_packages( )
     else
       library_dependencies_centos+=( "numactl-libs" )
     fi
-    if [[ "${VERSION_ID}" == "8" ]]; then
+    if (( "${VERSION_ID%%.*}" >= "8" )); then
       client_dependencies_centos8+=( "python3-pyyaml" )
     else
       client_dependencies_centos8+=( "PyYAML" )
     fi
+  fi
+
+  if [[ "${build_clients}" == true ]]; then
+    library_dependencies_ubuntu+=( "gfortran" )
+    library_dependencies_centos+=( "devtoolset-7-gcc-gfortran" )
+    library_dependencies_centos8+=( "gcc-gfortran" )
+    library_dependencies_fedora+=( "gcc-gfortran" )
+    library_dependencies_sles+=( "gcc-fortran" "pkg-config" "dpkg" )
   fi
 
   case "${ID}" in
@@ -216,7 +224,7 @@ install_packages( )
 #     yum -y update brings *all* installed packages up to date
 #     without seeking user approval
 #     elevate_if_not_root yum -y update
-      if [[ "${VERSION_ID}" == "8" ]]; then
+      if (( "${VERSION_ID%%.*}" >= "8" )); then
         install_yum_packages "${library_dependencies_centos8[@]}"
         if [[ "${build_clients}" == true ]]; then
           install_yum_packages "${client_dependencies_centos8[@]}"
@@ -492,12 +500,6 @@ fi
 
 # Default cmake executable is called cmake
 cmake_executable=cmake
-
-case "${ID}" in
-  centos|rhel)
-  cmake_executable=cmake3
-  ;;
-esac
 
 # If user provides custom ${rocm_path} path for hcc it has lesser priority,
 # but with hip-clang existing path has lesser priority to avoid use of installed clang++
