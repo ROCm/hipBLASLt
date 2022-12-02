@@ -689,7 +689,7 @@ RocblasltContractionProblem<Ti, To, Tc> ConstructRocblasltProblem(
     const rocblaslt_handle handle, const rocblaslt_matmul_desc matmul_descr,
     rocblaslt_matrix_layout matA, rocblaslt_matrix_layout matB,
     rocblaslt_matrix_layout matC, rocblaslt_matrix_layout matD, const Tc *alpha,
-    const Tc *beta) {
+    const Tc *beta, size_t maxWorkSpaceBytes) {
   hipblasOperation_t opA = matmul_descr->op_A;
   hipblasOperation_t opB = matmul_descr->op_B;
   const To *bias = nullptr;
@@ -769,7 +769,7 @@ RocblasltContractionProblem<Ti, To, Tc> ConstructRocblasltProblem(
                                                   bias,
                                                   epilogue,
                                                   nullptr,
-                                                  100000,
+                                                  maxWorkSpaceBytes,
                                                   nullptr};
   return problem;
 }
@@ -835,7 +835,7 @@ extern "C" void rocblaslt_createialize() { get_library_and_adapter(); }
       const rocblaslt_handle handle, const rocblaslt_matmul_desc matmul_descr, \
       rocblaslt_matrix_layout matA, rocblaslt_matrix_layout matB,              \
       rocblaslt_matrix_layout matC, rocblaslt_matrix_layout matD,              \
-      const Tc *alpha, const Tc *beta);                                        \
+      const Tc *alpha, const Tc *beta, size_t maxWorkSpaceBytes);              \
   template rocblaslt_status getBestSolutions<Ti, To, Tc>(                      \
       RocblasltContractionProblem<Ti, To, Tc> prob, int requestedAlgoCount,    \
       rocblaslt_matmul_heuristic_result heuristicResultsArray[],               \

@@ -783,7 +783,8 @@ rocblaslt_status
                     float alpha = 1.0;
                     float beta  = 1.0;
                     auto  prob  = ConstructRocblasltProblem<float, float, float>(
-                        handle, matmul_desc, matA, matB, matC, matD, &alpha, &beta);
+                        handle, matmul_desc, matA, matB, matC, matD, &alpha, &beta,
+                        pref->max_workspace_bytes);
                     status = getBestSolutions<float, float, float>(prob,
                                                                    requestedAlgoCount,
                                                                    heuristicResultsArray,
@@ -801,7 +802,8 @@ rocblaslt_status
                     float alpha = 1.0;
                     float beta  = 1.0;
                     auto  prob  = ConstructRocblasltProblem<rocblaslt_half, rocblaslt_half, float>(
-                        handle, matmul_desc, matA, matB, matC, matD, &alpha, &beta);
+                        handle, matmul_desc, matA, matB, matC, matD, &alpha, &beta,
+                        pref->max_workspace_bytes);
                     status = getBestSolutions<rocblaslt_half, rocblaslt_half, float>(
                         prob,
                         requestedAlgoCount,
@@ -821,7 +823,8 @@ rocblaslt_status
                     float beta  = 1.0;
                     auto  prob
                         = ConstructRocblasltProblem<rocblaslt_bfloat16, rocblaslt_bfloat16, float>(
-                            handle, matmul_desc, matA, matB, matC, matD, &alpha, &beta);
+                            handle, matmul_desc, matA, matB, matC, matD, &alpha, &beta,
+                            pref->max_workspace_bytes);
                     status = getBestSolutions<rocblaslt_bfloat16, rocblaslt_bfloat16, float>(
                         prob,
                         requestedAlgoCount,
