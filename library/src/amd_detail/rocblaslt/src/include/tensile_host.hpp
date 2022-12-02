@@ -163,7 +163,7 @@ RocblasltContractionProblem<Ti, To, Tc> ConstructRocblasltProblem(
     const rocblaslt_handle handle, const rocblaslt_matmul_desc matmul_descr,
     rocblaslt_matrix_layout matA, rocblaslt_matrix_layout matB,
     rocblaslt_matrix_layout matC, rocblaslt_matrix_layout matD, const Tc *alpha,
-    const Tc *beta);
+    const Tc *beta, size_t maxWorkSpaceBytes);
 
 /*******************************************************************************
  * getBestSolutions() calls finTopSolutions from Tensile and converts to       *
