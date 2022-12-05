@@ -89,12 +89,14 @@ def _removeDuplicatedActivationFunctions(module):
     moduleLast = Module("AddToLast")
     for _, mlist in modFunc.items():
         if len(mlist) > 1:
-            moduleLast.add(fastdeepcopy(mlist[0]))
             labels = []
             for ml in mlist:
                 labelName = ml.items()[0].items()[0].getLabelName()
                 labels.append(labelName)
-                ml.items().clear()
+                ml.parent.removeItem(ml)
+            # Avoid using deepcopy
+            moduleLast.add(mlist[0])
+
             _replaceActBranchLabel(module, labels)
     if moduleLast.items():
         module.add(moduleLast)

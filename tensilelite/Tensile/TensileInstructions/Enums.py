@@ -81,3 +81,9 @@ class CvtType(Enum):
     CVT_F32_to_F16 = 2
     CVT_U32_to_F32 = 3
     CVT_F32_to_U32 = 4
+    CVT_I32_to_F32 = 5
+    CVT_F32_to_I32 = 6
+
+class RoundType(Enum):
+    ROUND_UP = 0
+    ROUND_TO_NEAREST_EVEN = 1

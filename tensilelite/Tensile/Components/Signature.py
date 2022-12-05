@@ -62,10 +62,11 @@ class SignatureCOV3(Signature):
                                     vgprWorkItem=0,
                                     flatWorkGroupSize=(kernel["SubGroup0"] * kernel["SubGroup1"] * kernel["LocalSplitU"]))
 
-        srcValueType = kernel["ProblemType"]["DataType"].toNameAbbrev()
-        dstValueType = kernel["ProblemType"]["DestDataType"].toNameAbbrev()
-        cptValueType = kernel["ProblemType"]["ComputeDataType"].toNameAbbrev()
-        actValueType = kernel["ProblemType"]["ActivationComputeDataType"].toNameAbbrev()
+        srcValueType  = kernel["ProblemType"]["DataType"].toNameAbbrev()
+        dstValueType  = kernel["ProblemType"]["DestDataType"].toNameAbbrev()
+        cptValueType  = kernel["ProblemType"]["ComputeDataType"].toNameAbbrev()
+        biasValueType = "void"
+        actValueType  = kernel["ProblemType"]["ActivationComputeDataType"].toNameAbbrev()
 
         if globalParameters["DebugKernel"]:
             signature.addArg("AddressDbg", SVK.SIG_GLOBALBUFFER, "struct", "generic")
@@ -84,7 +85,8 @@ class SignatureCOV3(Signature):
         if kernel["ProblemType"]["UseBeta"]:
             signature.addArg("beta",        SVK.SIG_VALUE, cptValueType)
         if kernel["ProblemType"]["UseBias"] and (kernel["GlobalSplitU"] == 1):
-            signature.addArg("bias", SVK.SIG_GLOBALBUFFER, srcValueType, "generic")
+            signature.addArg("bias", SVK.SIG_GLOBALBUFFER, biasValueType, "generic")
+            signature.addArg("biasType",    SVK.SIG_VALUE,        "u32")
 
         if ((kernel["ProblemType"]["ActivationType"] != 'none') and (kernel["GlobalSplitU"] == 1) \
             and kernel["ActivationFused"]):

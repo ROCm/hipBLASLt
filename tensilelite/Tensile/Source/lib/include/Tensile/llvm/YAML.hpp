@@ -33,6 +33,9 @@
 
 #include <cstddef>
 
+LLVM_YAML_IS_FLOW_SEQUENCE_VECTOR(Tensile::DataType)
+LLVM_YAML_IS_FLOW_SEQUENCE_VECTOR(Tensile::ActivationType)
+
 namespace llvm
 {
     namespace yaml

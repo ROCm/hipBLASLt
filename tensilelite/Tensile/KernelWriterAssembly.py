@@ -23,7 +23,7 @@ from .TensileInstructions import KernelBody, Label, Macro, Module, RegSet, SrdUp
                           StructuredModule, TextBlock, ValueEndif, ValueIf, ValueSet, SignatureBase, \
                           MUBUFModifiers, RegisterContainer, InstType, SelectBit, SGetPositivePCOffset, \
                           SLongBranchPositive, SCLongBranchScc0, SCLongBranchScc1, \
-                          SBranchIfZero, SBranchIfNotZero, SMulInt64to32, DSInit, \
+                          SBranchIfZero, SBranchIfNotZero, SMulInt64to32, DSInit, VCvtBF16toFP32, \
                           ArgumentLoader, bomb, vectorStaticDivideAndRemainder, \
                           vectorStaticDivide, vectorStaticRemainder, \
                           scalarStaticDivideAndRemainder, sMagicDiv, staticMultiply, \
@@ -3981,7 +3981,7 @@ class KernelWriterAssembly(KernelWriter):
                   # In some cards, loading half types into register will zero out
                   # the other half. Therefore we need to load into a separate register
                   # then pack 2 registers into one
-                  if tP["localWriteInstruction"].blockWidth == 0.5:
+                  if (tP["localWriteInstruction"].blockWidth == 0.5) and (r%2 == 0):
                     numVgprG2L = self.states.a.numVgprG2L if tc == 'A' else self.states.b.numVgprG2L
                     eccOffset = _getEccOffset(tP["globalReadInstruction"].totalWidth, bpr=self.states.bpr, bpe=tP["bpe"], \
                       glvw=tP["glvw"], idx=loopCnt, numVgprG2L=numVgprG2L)
@@ -4756,6 +4756,7 @@ class KernelWriterAssembly(KernelWriter):
       # if transposing, positions of sPerp and sPara are transposed
       instructionCnt = -1
       fp16AltMap = {}
+      g2lIdxDict = {}
       for perp in range(0, tP["nrp"]):
         instructionCnt += 1
         localWriteCode = imod.add(Module("LocalWrite%u perp=%d"%(instructionCnt,perp)))
@@ -4789,6 +4790,15 @@ class KernelWriterAssembly(KernelWriter):
               g2lIdx = int((i * kernel["DepthULdsDivisor"] + uDu) * blockWidth)
               #print("uDu=%u, g2lIdx = %u, offset: %u"%(uDu, g2lIdx, offset))
 
+            # If g2lIdx is already in the dict and blockWidth < 1, the data may
+            # be packed into one register.
+            instHi = 0
+            if g2lIdx in g2lIdxDict:
+              g2lIdxDict[g2lIdx] += 1
+            else:
+              g2lIdxDict[g2lIdx] = 0
+            instHi = g2lIdxDict[g2lIdx]
+
             # TODO- INT8: check uDu
             if (blockWidth == 0.25) and ((s % 4) == 0):
                 src = "G2L%s+%u" % (tc, g2lIdx)
@@ -4799,7 +4809,7 @@ class KernelWriterAssembly(KernelWriter):
             if self.states.archCaps["HasEccHalf"]:
               numVgprG2L = self.states.a.numVgprG2L if tc == 'A' else self.states.b.numVgprG2L
               eccOffset = _getEccOffset(tP["globalReadInstruction"].totalWidth, bpr=self.states.bpr, bpe=tP["bpe"], \
-                glvw=tP["glvw"], idx=instructionCnt, numVgprG2L=numVgprG2L)
+                glvw=tP["glvw"], idx=instHi, numVgprG2L=numVgprG2L)
             else:
               eccOffset = 0
 
@@ -4839,7 +4849,7 @@ class KernelWriterAssembly(KernelWriter):
             if (kernel["ProblemType"]["DataType"].isHalf() or kernel["ProblemType"]["DataType"].isBFloat16()):
               if s%2==1:
                 isHigh16Bits = True
-              if tP["glvw"]==1 and instructionCnt%2==1:
+              if tP["glvw"]==1 and instHi%2==1:
                 isHigh16Bits = True
 
             #       |  hi16  |  hi16  |        |        |
@@ -5510,7 +5520,7 @@ class KernelWriterAssembly(KernelWriter):
     module.add(SMovB32(dst=sgpr("Srd%s+2"%ch), src=0))
     module.add(SBranch(label2.getLabelName()))
     module.add(label)
-    module.add(SMovB32(dst=sgpr("Srd%s+2"%ch), src=hex(0x80000000)))
+    module.add(SMovB32(dst=sgpr("Srd%s+2"%ch), src=sgpr("SizeI")))
     module.add(SMovB32(dst=sgpr("Srd%s+3"%ch), src="Srd127_96", comment="Set bits 127_96 in post-loop SRD"))
     module.add(label2)
     module.addSpaceLine()
@@ -5635,7 +5645,10 @@ class KernelWriterAssembly(KernelWriter):
     offset = addrCalc.coordOffset0 * self.states.bpeCexternal
     ds     = DSModifiers(offset=offset)
 
-    if bps==2:
+    if bps==1:
+      module.add(DSStoreB8(dstAddr=addr0, src=vgpr(srcVgpr, rpv*4), \
+                ds=ds, comment="storeRemap lw"))
+    elif bps==2:
       module.add(DSStoreB16(dstAddr=addr0, src=vgpr(srcVgpr, rpv*2), \
                 ds=ds, comment="storeRemap lw"))
     elif bps==4:
@@ -5687,11 +5700,11 @@ class KernelWriterAssembly(KernelWriter):
       ds  = DSModifiers(offset=offset)
       dst = vgpr(storeRegs[rIdx], rpv)
       if bps==4:
-        module.add(DSLoadB32(dst=dst, src=src, ds=ds, comment="storeRemap lr"))
+        module.add(DSLoadB32(dst=dst, src=src, ds=ds, readToTempVgpr=False, comment="storeRemap lr"))
       elif bps==8:
-        module.add(DSLoadB64(dst=dst, src=src, ds=ds, comment="storeRemap lr"))
+        module.add(DSLoadB64(dst=dst, src=src, ds=ds, readToTempVgpr=False, comment="storeRemap lr"))
       elif bps==16:
-        module.add(DSLoadB128(dst=dst, src=src, ds=ds, comment="storeRemap lr"))
+        module.add(DSLoadB128(dst=dst, src=src, ds=ds, readToTempVgpr=False, comment="storeRemap lr"))
       else:
         assert 0, "StoreRemap: bad bps!"
 
@@ -5778,6 +5791,9 @@ class KernelWriterAssembly(KernelWriter):
             module.add(self.chooseGlobalWrite(True, bpe, sumIdx, rpe, addr0, addr1, 0, ntStr, hi16=vi%2))
           else:
             module.add(self.chooseGlobalWrite(True, bps, sumIdx, rpv, addr0, addr1, 0, ntStr))
+
+          if bps == 1:
+            module.add(VAShiftRightI32(dst=vgpr("ValuC+%u"%sumIdx), shiftHex=8, src=vgpr("ValuC+%u"%sumIdx), comment=" shift 1 byte" ))
 
     module.addSpaceLine()
     self.vgprPool.checkIn(vTmp)
@@ -6173,10 +6189,29 @@ class KernelWriterAssembly(KernelWriter):
       bf16CVTVgpr = self.vgprPool.checkOut(4)
       bf16CVTVgprStruct = self.BF16CVTVgprStruct(vgprBf16Temp=bf16CVTVgpr, vgprBf16Mask=(bf16CVTVgpr+1), \
                                                  vgprFp32Nan=(bf16CVTVgpr+2), vgprBf16Inc=(bf16CVTVgpr+3))
-    elif kernel["ProblemType"]["DataType"].isBFloat16() and kernel["ProblemType"]["UseBias"]:
-      bf16CVTVgpr = self.vgprPool.checkOut(1)
-      bf16CVTVgprStruct = self.BF16CVTVgprStruct(vgprBf16Temp=None, vgprBf16Mask=(bf16CVTVgpr), \
-                                                 vgprFp32Nan=None, vgprBf16Inc=None)
+
+    # Add bias lds
+    if kernel["ProblemType"]["UseBias"] and (kernel["GlobalSplitU"] == 1):
+      multiBiasTypeLabel = []
+      for i in kernel["ProblemType"]["BiasDataTypeList"]:
+        name = self.labels.getNameInc("Load_Bias%s"%i.toNameAbbrev())
+        multiBiasTypeLabel.append(Label(name, ""))
+      loadBiasEndLabel = Label(self.labels.getNameInc("Load_Bias_End"), "")
+      multiBiasTypeLabel.append(loadBiasEndLabel)
+      offsetVgpr  = self.vgprPool.checkOut(1, 1)
+      tmpVgprRes = RegisterPoolResource(idx=tmpVgpr, size=4)
+      with self.allocTmpSgpr(1, 1) as tmpSgprRes:
+        if len(kernel["ProblemType"]["BiasDataTypeList"]) == 1:
+          module.add(self.readBiasToLDS(kernel["ProblemType"]["BiasDataTypeList"][0], kernel, 1, offsetVgpr, tmpSgprRes.idx, tmpVgprRes))
+        else:
+          for i, label in enumerate(multiBiasTypeLabel[1:]):
+            module.add(multiBiasTypeLabel[i])
+            module.add(SCmpKLGU32(sgpr("BiasType"), kernel["ProblemType"]["BiasDataTypeList"][i].value, "BiasType != %u"%i))
+            module.add(SCBranchSCC1(label.getLabelName(), "Branch if true"))
+            module.add(self.readBiasToLDS(kernel["ProblemType"]["BiasDataTypeList"][i], kernel, 1, offsetVgpr, tmpSgprRes.idx, tmpVgprRes))
+            module.add(SBranch(labelName=loadBiasEndLabel.getLabelName(), comment="Branch to load bias end"))
+          module.add(loadBiasEndLabel)
+      self.vgprPool.checkIn(offsetVgpr)
 
     activationSetPCStruct = None
     activationLabelList = None
@@ -6184,8 +6219,8 @@ class KernelWriterAssembly(KernelWriter):
     toActModuleList = None
     isInsertActFunctionCallAddrCalc = True
     if kernel["ActivationFuncCall"]:
-      sgprOffsetActivation = self.sgprPool.checkOut(2)
-      sgprOffsetBack = self.sgprPool.checkOut(2)
+      sgprOffsetActivation = self.sgprPool.checkOutAligned(2, 2)
+      sgprOffsetBack = self.sgprPool.checkOutAligned(2, 2)
       activationSetPCStruct = self.ActivationSetPCStruct(sgprOffsetActivation=sgprOffsetActivation, \
         sgprOffsetBack=sgprOffsetBack, vgprActCopy=tmpVgpr)
       activationCDataType = kernel["ProblemType"]["ActivationComputeDataType"]
@@ -6607,7 +6642,13 @@ class KernelWriterAssembly(KernelWriter):
     module = Module("chooseGlobalWrite %s -> %s (%s)"%(srcVgpr, addr0, addr1))
 
     def bufferStoreImpl(tmpSgpr, mubuf):
-      if bps==2 and hi16:
+      if bps==1 and hi16:
+        module.add(BufferStoreD16HIB16(src=vgpr(srcVgpr, rpv*4), vaddr=addr0, \
+                                       saddr=addr1, soffset=tmpSgpr, mubuf=mubuf, comment="store D"))
+      elif bps==1 and not hi16:
+        module.add(BufferStoreB8(src=vgpr(srcVgpr, rpv*4), vaddr=addr0, \
+                                 saddr=addr1, soffset=tmpSgpr, mubuf=mubuf, comment="store D"))
+      elif bps==2 and hi16:
         module.add(BufferStoreD16HIB16(src=vgpr(srcVgpr, rpv*2), vaddr=addr0, \
                                        saddr=addr1, soffset=tmpSgpr, mubuf=mubuf, comment="store D"))
       elif bps==2 and not hi16:
@@ -6663,7 +6704,7 @@ class KernelWriterAssembly(KernelWriter):
 
     return module
 
-  def addBiasLoad(self, kernel, ss, addrCalc, biasVgpr):
+  def addBiasGlobalLoad(self, dataType, kernel, biasVgpr, addr0, addr1, offset, gwvw):
     """
     Add bias for the element with addrCalc, elementIdx, and biasVgpr.
     biasVgpr is one or more vgpr :temp vGPR ( = gwvw * numbytes // 4 + 1 if cvt is needed)
@@ -6671,27 +6712,50 @@ class KernelWriterAssembly(KernelWriter):
     # Add bias here
     module = Module("addBias")
     if kernel["ProblemType"]["UseBias"] and (kernel["GlobalSplitU"] == 1):
-      bps = kernel["ProblemType"]["DataType"].numBytes() * ss.cfg.gwvw
+      bps = dataType.numBytes() * gwvw
+
+      useBuffer = kernel["BufferLoad"]
+      if dataType.isHalf() or dataType.isBFloat16():
+        module.add(self.chooseGlobalRead(useBuffer, bps, biasVgpr, \
+                          addr0, addr1, soffset=0, offset=offset, hi16=0, comment="load bias"))
+      elif dataType.isInt32() or dataType.isSingle():
+        module.add(self.chooseGlobalRead(useBuffer, bps, biasVgpr, \
+                          addr0, addr1, soffset=0, offset=offset, comment="load bias"))
+      elif dataType.isDouble() or dataType.isSingleComplex() :
+        module.add(self.chooseGlobalRead(useBuffer, bps, biasVgpr, \
+                          addr0, addr1, soffset=0, offset=offset, comment="load bias"))
+      else:
+        printExit("Unsupported bias type %s."%(str(dataType)))
+    return module
+
+  def addBiasLoad(self, dataType, kernel, ss, addrCalc, biasVgpr, isLocal=False):
+    if isLocal and kernel["ProblemType"]["UseBias"] and (kernel["GlobalSplitU"] == 1):
+      module = Module("addBias")
+      dst = vgpr(biasVgpr)
+      src = vgpr(addrCalc.addrBiasVgpr)
+      ds = DSModifiers(offset=addrCalc.biasOffset)
+      bps = dataType.numBytes() * ss.cfg.gwvw
+      if bps==2:
+        module.add(DSLoadU16(dst=dst, src=src, readToTempVgpr=False, ds=ds, comment="load bias"))
+      elif bps==4:
+        module.add(DSLoadB32(dst=dst, src=src, readToTempVgpr=False, ds=ds, comment="load bias"))
+      elif bps==8:
+        module.add(DSLoadB64(dst=vgpr(biasVgpr, 2), src=src, readToTempVgpr=False, ds=ds, comment="load bias"))
+      elif bps==16:
+        module.add(DSLoadB128(dst=vgpr(biasVgpr, 4), src=src, readToTempVgpr=False, ds=ds, comment="load bias"))
+      return module
+
+    if kernel["ProblemType"]["UseBias"] and (kernel["GlobalSplitU"] == 1):
       if kernel["BufferLoad"]:
         addr0 = vgpr(addrCalc.addrBiasVgpr)
         addr1 = sgpr("SrdBias", 4)
       else:
         addr0 = vgpr(addrCalc.addrBiasVgpr,2)
         addr1 = ""
-
-      useBuffer = kernel["BufferLoad"]
-      if kernel["ProblemType"]["DataType"].isHalf() or kernel["ProblemType"]["DataType"].isBFloat16():
-        module.add(self.chooseGlobalRead(useBuffer, bps, biasVgpr, \
-                          addr0, addr1, soffset=0, offset=addrCalc.biasOffset, hi16=0, comment="load bias"))
-      elif kernel["ProblemType"]["DataType"].isInt32() or kernel["ProblemType"]["DataType"].isSingle():
-        module.add(self.chooseGlobalRead(useBuffer, bps, biasVgpr, \
-                          addr0, addr1, soffset=0, offset=addrCalc.biasOffset, comment="load bias"))
-      elif kernel["ProblemType"]["DataType"].isDouble() or kernel["ProblemType"]["DataType"].isSingleComplex() :
-        module.add(self.chooseGlobalRead(useBuffer, bps, biasVgpr, \
-                          addr0, addr1, soffset=0, offset=addrCalc.biasOffset, comment="load bias"))
-      else:
-        printExit("Unsupported bias type %s."%(str(kernel["ProblemType"]["DataType"])))
-    return module
+    else:
+      addr0 = ""
+      addr1 = ""
+    return self.addBiasGlobalLoad(dataType, kernel, biasVgpr, addr0, addr1, addrCalc.biasOffset, ss.cfg.gwvw)
 
   ##############################################################################
   def addStore(self, kernel, ss, addrCalc, sumIdx, tmpS01, edge):
@@ -6781,7 +6845,8 @@ class KernelWriterAssembly(KernelWriter):
     elif kernel["ProblemType"]["DestDataType"].isInt8():
      module.add(self.chooseGlobalRead(useBuffer, bps, data, \
                 addr0, addr1, soffset=0, offset=addrCalc.globalOffset, \
-                glc=isGlc, slc=isSlc, lds=False, hi16=vc0 % 4,
+                glc=isGlc, slc=isSlc, lds=False, \
+                #hi16=vc0 % 4,
                 comment="load C for beta calc"))
     elif kernel["ProblemType"]["DestDataType"].isBFloat16() or \
          kernel["ProblemType"]["DestDataType"].isInt32() or \
@@ -6824,6 +6889,82 @@ class KernelWriterAssembly(KernelWriter):
     skipPGR2 = Label(self.labels.getName("skipPGR2"), "")
     imod.add(skipPGR2)
     return imod
+
+  ########################################
+  # Bias related
+  ########################################
+  def readBiasToLDS(self, biasDataType, kernel, gwvw, offsetVgpr, tmpSgpr, tmpVgpr1Res: RegisterPoolResource):
+    assert gwvw == 1
+    assert tmpVgpr1Res.size >= gwvw * kernel["ProblemType"]["ComputeDataType"].numRegisters()
+    # Params
+    biasBpe = int(self.states.bpr * biasDataType.numRegisters())
+    module = Module("ReadBiasToLds")
+    module.addComment2("Read Bias to LDS")
+    # Recalculate bias length
+    module.add(SMulI32(dst=sgpr("SrdBias+2"), src0=hex(biasBpe), src1=sgpr("SrdBias+2"), comment="scaled by BPE"))
+    # Calculate global offset- macro tile 0 part
+    module.add(SMulI32(dst=sgpr(tmpSgpr), src0=kernel["MacroTile0"], src1=sgpr("WorkGroup0"), comment="wgp0 * MT0"))
+    module.add(VAddU32(dst=vgpr(offsetVgpr), src0=sgpr(tmpSgpr), src1=vgpr("Serial"), comment="coord 0 = wgp0 * MT0 + thread offset"))
+    module.add(VLShiftLeftB32(dst=vgpr(offsetVgpr), \
+                              shiftHex=hex(log2(biasBpe)), \
+                              src=vgpr(offsetVgpr), \
+                              comment="Global bias address scaled by BPE"))
+    # Offset
+    numVgprs  = int(ceil(biasDataType.numRegisters() * gwvw))
+    reg = biasDataType.numRegisters() if biasDataType.numRegisters() >= kernel["ProblemType"]["ComputeDataType"].numRegisters() \
+      else kernel["ProblemType"]["ComputeDataType"].numRegisters()
+    shiftOffset  = (gwvw * reg - numVgprs)
+    # global load
+    tmpVgpr1 = tmpVgpr1Res.idx
+    addr0 = vgpr(offsetVgpr)
+    addr1 = sgpr("SrdBias", 4)
+    divisor = kernel["SubGroup0"] * kernel["SubGroup1"]
+    turn    = ceil(kernel["MacroTile0"] / (divisor * gwvw))
+    offset  = (divisor * gwvw) * biasBpe
+    tmpVgprN = tmpVgpr1
+    for i in range(turn):
+      if i != (turn - 1):
+        module.add(VAddU32(dst=vgpr(offsetVgpr), src0=offset, src1=vgpr(offsetVgpr), comment="add subgroup offset"))
+      module.add(self.addBiasGlobalLoad(biasDataType, kernel, tmpVgprN + shiftOffset, addr0, addr1, 0, gwvw))
+      tmpVgprN += 1
+    # Local write
+    module.add(VLShiftLeftB32(dst=vgpr(offsetVgpr), \
+                              shiftHex=hex(log2(self.states.bpeCinternal)), \
+                              src=vgpr("Serial"), \
+                              comment="Local bias address scaled by BPE"))
+    offset  = (divisor * gwvw) * self.states.bpeCinternal
+    tmpVgprN = tmpVgpr1
+    for i in reversed(range(turn)):
+      if i != (turn - 1):
+        module.add(VAddU32(dst=vgpr(offsetVgpr), src0=offset, src1=vgpr(offsetVgpr), comment="add subgroup offset"))
+      module.add(SWaitCnt(vmcnt=i, comment="wait for bias load"))
+      bps = kernel["ProblemType"]["ComputeDataType"].numBytes() * gwvw
+      ds  = DSModifiers(offset=0)
+      dst = vgpr(offsetVgpr)
+      for vi in range(gwvw):
+        # Does not support hi/lo yet
+        shiftOffset2 = shiftOffset + int(vi * biasDataType.numRegisters())
+        if kernel["ProblemType"]["ComputeDataType"].isSingle():
+          if biasDataType.isHalf():
+            module.add(VCvtF16toF32(dst=vgpr(tmpVgprN + vi), src=vgpr(tmpVgprN + shiftOffset2), comment="convert to FP32"))
+          elif biasDataType.isBFloat16():
+            module.add(VCvtBF16toFP32(dst=(tmpVgprN + vi), src=(tmpVgprN + shiftOffset2), vgprMask=None, vi=0))
+          elif biasDataType == kernel["ProblemType"]["ComputeDataType"]:
+            pass # Same, no need to convert
+          else:
+            printExit("Unrecognized bias type %s."%str(biasDataType))
+        else:
+          printExit("Does not support ComputeDataType != float")
+      if bps==2:
+        module.add(DSStoreB16(dstAddr=dst, src=vgpr(tmpVgprN), ds=ds, comment="store bias"))
+      elif bps==4:
+        module.add(DSStoreB32(dstAddr=dst, src=vgpr(tmpVgprN), ds=ds, comment="store bias"))
+      elif bps==8:
+        module.add(DSStoreB64(dstAddr=dst, src=vgpr(tmpVgprN, 2), ds=ds, comment="store bias"))
+      else:
+        assert 0
+    # We move lgkmcnt and s_barrier before local load
+    return module
 
   ########################################
   # Activation related

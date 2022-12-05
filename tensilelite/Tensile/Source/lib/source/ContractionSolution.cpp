@@ -401,7 +401,8 @@ namespace Tensile
 
         if(problemType.useBias && (sizeMapping.globalSplitU == 1))
         {
-            rv.args.append<typename TypedInputs::AType const*>("bias", inputs.bias);
+            rv.args.append<void const*>("bias", inputs.bias);
+            rv.args.append<uint32_t>("bias_type", static_cast<uint32_t>(problem.biasType()));
         }
 
         if(!isSourceKernel())
@@ -693,7 +694,7 @@ namespace Tensile
 
         if(problemType.useBeta && sizeMapping.globalAccumulation == 0)
         {
-            rv.args.append<typename TypedInputs::AType const*>("bias", inputs.bias);
+            rv.args.append<void const*>("bias", inputs.bias);
         }
 
         if(sizeMapping.globalAccumulation)
@@ -750,7 +751,8 @@ namespace Tensile
 
         if(problemType.useBias && (sizeMapping.globalAccumulation == 0))
         {
-            name += "_Bias";
+            auto s = TypeAbbrev(problem.biasType());
+            name += ("_Bias" + s);
         }
 
         if(sizeMapping.globalAccumulation)
@@ -812,7 +814,7 @@ namespace Tensile
 
         if(problemType.useBias)
         {
-            rv.args.append<typename TypedInputs::AType const*>("bias", inputs.bias);
+            rv.args.append<void const*>("bias", inputs.bias);
         }
 
         if(sizeMapping.globalAccumulation == 2)
@@ -900,7 +902,8 @@ namespace Tensile
 
         if(problemType.useBias)
         {
-            name += "_Bias";
+            auto s = TypeAbbrev(problem.biasType());
+            name += ("_Bias" + s);
         }
 
         if(problem.activationType() != ActivationType::None)
@@ -1149,6 +1152,7 @@ namespace Tensile
         // retreive alpha/beta type set via setAlpha/BetaType()
         auto alphaType = problem.alphaType();
         auto betaType  = problem.betaType();
+        auto biasType  = problem.biasType();
 
         // TODO: Some gtests are passing the "problem" without actually defining the
         // alpha/beta type (alphaType and betaType remain None).
@@ -1162,6 +1166,10 @@ namespace Tensile
         if(betaType == DataType::None)
         {
             betaType = alphaType;
+        }
+        if(biasType == DataType::None)
+        {
+            biasType = problemType.dType;
         }
 
         auto contractionInputsTypeId = ContractionInputs::TypeId(problemType.aType,
@@ -1228,6 +1236,16 @@ namespace Tensile
         case ContractionInputs_I8_I32_I32::TypeId():
         {
             auto const& typedInputs = dynamic_cast<ContractionInputs_I8_I32_I32 const&>(inputs);
+            return solveTyped(problem, typedInputs, hardware);
+        }
+        case ContractionInputs_I8_I32_S::TypeId():
+        {
+            auto const& typedInputs = dynamic_cast<ContractionInputs_I8_I32_S const&>(inputs);
+            return solveTyped(problem, typedInputs, hardware);
+        }
+        case ContractionInputs_I8_I8_S::TypeId():
+        {
+            auto const& typedInputs = dynamic_cast<ContractionInputs_I8_I8_S const&>(inputs);
             return solveTyped(problem, typedInputs, hardware);
         }
 #ifdef TENSILE_USE_BF16
@@ -1318,6 +1336,11 @@ namespace Tensile
         return size;
     }
 
+    float ContractionSolution::computeGranularity(float x)
+    {
+        return x / ceil(x);
+    }
+
     ContractionSolution::Granularities ContractionSolution::computeGranularities(
         Hardware const& hardware, double M, double N, double K, double NumBatches) const
     {
@@ -1345,8 +1368,8 @@ namespace Tensile
         granularities.numTiles0 = M / MT0;
         granularities.numTiles1 = N / MT1;
 
-        granularities.tile0Granularity = granularities.numTiles0 / ceil(granularities.numTiles0);
-        granularities.tile1Granularity = granularities.numTiles1 / ceil(granularities.numTiles1);
+        granularities.tile0Granularity = computeGranularity(granularities.numTiles0);
+        granularities.tile1Granularity = computeGranularity(granularities.numTiles1);
 
         granularities.tilesPerCu
             = (NumBatches * ceil(granularities.numTiles0) * ceil(granularities.numTiles1))
@@ -1355,8 +1378,7 @@ namespace Tensile
         granularities.totalTiles    = ceil(granularities.numTiles0) * ceil(granularities.numTiles1);
         granularities.natTilesPerCu = NumBatches * granularities.totalTiles / NumCUs;
         granularities.suTilesPerCu  = (granularities.totalTiles * GlobalSplitU) / NumCUs;
-        granularities.suCuGranularity
-            = granularities.suTilesPerCu / ceil(granularities.suTilesPerCu);
+        granularities.suCuGranularity = computeGranularity(granularities.suTilesPerCu);
 
         granularities.waveGranularity = std::min(
             1.00,
@@ -1376,7 +1398,7 @@ namespace Tensile
             = NumBatches * ceil(granularities.numTiles0) * ceil(granularities.numTiles1) / NumCUs;
         granularities.natCuGranularity = ceil(nat_tiles_per_cu) * ceil(nat_tiles_per_cu) / NumCUs;
 
-        granularities.cuGranularity = granularities.tilesPerCu / ceil(granularities.tilesPerCu);
+        granularities.cuGranularity = computeGranularity(granularities.tilesPerCu);
 
         granularities.totalGranularity
             = granularities.tile0Granularity * granularities.tile1Granularity
@@ -1599,5 +1621,4 @@ namespace Tensile
                       << " shiftPtrElemB=" << st.shiftPtrElemB << " depthUorMT0=" << st.depthUorMT0
                       << " depthUorMT1=" << st.depthUorMT1;
     }
-
 } // namespace Tensile

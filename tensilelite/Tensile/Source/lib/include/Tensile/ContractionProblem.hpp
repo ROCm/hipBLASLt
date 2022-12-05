@@ -547,6 +547,16 @@ namespace Tensile
             return m_useBias;
         }
 
+        void setBiasType(DataType type)
+        {
+            m_biasType = type;
+        }
+
+        DataType biasType() const
+        {
+            return m_biasType;
+        }
+
         void setBetaRestriction(ScalarValue beta)
         {
             m_betaRestriction = beta;
@@ -602,7 +612,8 @@ namespace Tensile
 
         PerformanceMetric performanceMetric() const
         {
-            return m_performanceMetric;
+            const bool experimental = Debug::Instance().useExperimentalSelection();
+            return experimental ? PerformanceMetric::Experimental : m_performanceMetric;
         }
 
         void setDeterministicMode(bool value)
@@ -845,6 +856,7 @@ namespace Tensile
 
         DataType m_alphaType = DataType::None; // if not assigned, will follow d-type
         DataType m_betaType  = DataType::None; // for bwd-compatible
+        DataType m_biasType  = DataType::None; // if not assigned, will follow d-type
 
         ScalarValue m_alphaRestriction = ScalarValue::Any; // restrictions on the alpha value used
         ScalarValue m_betaRestriction  = ScalarValue::Any; // restrictions on the beta value used
@@ -933,29 +945,29 @@ namespace Tensile
 
         TypedContractionInputs();
 
-        TypedContractionInputs(A const* _a,
-                               B const* _b,
-                               C const* _c,
-                               D*       _d,
-                               Alpha    _alpha,
-                               Beta     _beta,
-                               A const* _bias = nullptr,
-                               void*    _ws   = nullptr)
+        TypedContractionInputs(A const*                           _a,
+                               B const*                           _b,
+                               C const*                           _c,
+                               D*                                 _d,
+                               Alpha                              _alpha,
+                               Beta                               _beta,
+                               std::vector<std::shared_ptr<void>> _biasList,
+                               void*                              _ws = nullptr)
             : TypedContractionInputs(
-                _a, _b, _c, _d, nullptr, nullptr, nullptr, nullptr, _alpha, _beta){};
+                _a, _b, _c, _d, nullptr, nullptr, nullptr, nullptr, _alpha, _beta, _biasList){};
 
-        TypedContractionInputs(A const*        _a,
-                               B const*        _b,
-                               C const*        _c,
-                               D*              _d,
-                               A const* const* _batchA,
-                               B const* const* _batchB,
-                               C const* const* _batchC,
-                               D* const*       _batchD,
-                               Alpha           _alpha,
-                               Beta            _beta,
-                               A const*        _bias = nullptr,
-                               void*           _ws   = nullptr);
+        TypedContractionInputs(A const*                           _a,
+                               B const*                           _b,
+                               C const*                           _c,
+                               D*                                 _d,
+                               A const* const*                    _batchA,
+                               B const* const*                    _batchB,
+                               C const* const*                    _batchC,
+                               D* const*                          _batchD,
+                               Alpha                              _alpha,
+                               Beta                               _beta,
+                               std::vector<std::shared_ptr<void>> _biasList,
+                               void*                              _ws = nullptr);
 
         ~TypedContractionInputs();
 
@@ -974,7 +986,8 @@ namespace Tensile
         Alpha alpha = static_cast<Alpha>(0);
         Beta  beta  = static_cast<Beta>(0);
 
-        A const* bias = nullptr;
+        void const*              bias = nullptr;
+        std::vector<void const*> biasList;
 
         std::vector<D> activationArgs;
 
@@ -1005,7 +1018,11 @@ namespace Tensile
     using ContractionInputs_I8x4_I32_I32 = TypedContractionInputs<Int8x4, Int8x4, int32_t, int32_t>;
     using ContractionInputs_I8_I8_I32
         = TypedContractionInputs<int8_t, int8_t, int8_t, int8_t, int32_t, int32_t>;
-    using ContractionInputs_I8_I32_I32  = TypedContractionInputs<int8_t, int8_t, int32_t, int32_t>;
+    using ContractionInputs_I8_I32_I32 = TypedContractionInputs<int8_t, int8_t, int32_t, int32_t>;
+    using ContractionInputs_I8_I32_S
+        = TypedContractionInputs<int8_t, int8_t, int32_t, int32_t, float, float>;
+    using ContractionInputs_I8_I8_S
+        = TypedContractionInputs<int8_t, int8_t, int8_t, int8_t, float, float>;
     using ContractionInputs_I32_I32_I32 = TypedContractionInputs<int32_t>;
 #ifdef TENSILE_USE_BF16
     using ContractionInputs_B_B_S

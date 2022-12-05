@@ -65,6 +65,7 @@ namespace Tensile
             , m_bOffset(args["offset-b"].as<size_t>())
             , m_cOffset(args["offset-c"].as<size_t>())
             , m_dOffset(args["offset-d"].as<size_t>())
+            , m_biasTypeArgs(std::vector<DataType>(1, DataType::Float))
             , m_activationType(ActivationType::None)
             , m_activationHPA(false)
             , m_activationEnumArg(std::vector<ActivationType>(1, ActivationType::None))
@@ -106,6 +107,9 @@ namespace Tensile
                 m_convProblemSizes
                     = args["convolution-problem"].as<std::vector<std::vector<size_t>>>();
 
+            if(args.count("bias-type-args"))
+                m_biasTypeArgs = args["bias-type-args"].as<std::vector<DataType>>();
+
             if(args.count("activation-type"))
                 m_activationType = args["activation-type"].as<ActivationType>();
             if(args.count("activation-hpa"))
@@ -128,7 +132,8 @@ namespace Tensile
         std::vector<ContractionProblem> ClientProblemFactory::createProblems()
         {
             std::vector<ContractionProblem> rv;
-            int activationSize = std::max(1, (int)m_activationEnumArg.size());
+            int                             biasSize = std::max(1, (int)m_biasTypeArgs.size());
+            int activationSize                       = std::max(1, (int)m_activationEnumArg.size());
             rv.reserve(m_problemSizes.size() * activationSize);
 
             std::vector<size_t> aStrides, bStrides, cStrides, dStrides;
@@ -141,95 +146,108 @@ namespace Tensile
                 cStrides = m_cStrides[0];
             if(m_dStrides.size() == 1)
                 dStrides = m_dStrides[0];
-            for(int j = 0; j < activationSize; j++)
+            for(int k = 0; k < biasSize; k++)
             {
-                for(int i = 0; i < m_problemSizes.size(); i++)
+                for(int j = 0; j < activationSize; j++)
                 {
-                    if(m_aStrides.size() == m_problemSizes.size())
-                        aStrides = m_aStrides[i];
-                    if(m_bStrides.size() == m_problemSizes.size())
-                        bStrides = m_bStrides[i];
-                    if(m_cStrides.size() == m_problemSizes.size())
-                        cStrides = m_cStrides[i];
-                    if(m_dStrides.size() == m_problemSizes.size())
-                        dStrides = m_dStrides[i];
-
-                    rv.push_back(ContractionProblem::FromIndexSizes(m_freeIndices,
-                                                                    m_batchIndices,
-                                                                    m_boundIndices,
-                                                                    m_problemSizes[i],
-                                                                    m_aType,
-                                                                    aStrides,
-                                                                    m_aOps,
-                                                                    m_aOffset,
-                                                                    m_bType,
-                                                                    bStrides,
-                                                                    m_bOps,
-                                                                    m_bOffset,
-                                                                    m_cType,
-                                                                    cStrides,
-                                                                    m_cOps,
-                                                                    m_cOffset,
-                                                                    m_dType,
-                                                                    dStrides,
-                                                                    m_dOps,
-                                                                    m_dOffset,
-                                                                    m_beta));
-
-                    rv.back().setAlphaRestriction(toScalarValueEnum(m_alpha));
-                    rv.back().setCEqualsD(m_cEqualsD);
-
-                    if(i < m_aZeroPads.size())
+                    for(int i = 0; i < m_problemSizes.size(); i++)
                     {
-                        const auto& zp = m_aZeroPads[i];
-                        if(zp.size() % 4 != 0)
-                            throw std::runtime_error("zero-pad must contain tuples of 4 values");
-                        for(int zi = 0; zi < zp.size(); zi += 4)
+                        if(m_aStrides.size() == m_problemSizes.size())
+                            aStrides = m_aStrides[i];
+                        if(m_bStrides.size() == m_problemSizes.size())
+                            bStrides = m_bStrides[i];
+                        if(m_cStrides.size() == m_problemSizes.size())
+                            cStrides = m_cStrides[i];
+                        if(m_dStrides.size() == m_problemSizes.size())
+                            dStrides = m_dStrides[i];
+
+                        rv.push_back(ContractionProblem::FromIndexSizes(m_freeIndices,
+                                                                        m_batchIndices,
+                                                                        m_boundIndices,
+                                                                        m_problemSizes[i],
+                                                                        m_aType,
+                                                                        aStrides,
+                                                                        m_aOps,
+                                                                        m_aOffset,
+                                                                        m_bType,
+                                                                        bStrides,
+                                                                        m_bOps,
+                                                                        m_bOffset,
+                                                                        m_cType,
+                                                                        cStrides,
+                                                                        m_cOps,
+                                                                        m_cOffset,
+                                                                        m_dType,
+                                                                        dStrides,
+                                                                        m_dOps,
+                                                                        m_dOffset,
+                                                                        m_beta));
+
+                        rv.back().setAlphaRestriction(toScalarValueEnum(m_alpha));
+                        rv.back().setCEqualsD(m_cEqualsD);
+
+                        if(i < m_aZeroPads.size())
                         {
-                            rv.back().addAZeroPad(
-                                ContractionProblem::ZeroPad({static_cast<int32_t>(zp[zi + 0]),
-                                                             static_cast<int32_t>(zp[zi + 1]),
-                                                             static_cast<int64_t>(zp[zi + 2]),
-                                                             static_cast<int64_t>(zp[zi + 3])}));
+                            const auto& zp = m_aZeroPads[i];
+                            if(zp.size() % 4 != 0)
+                                throw std::runtime_error(
+                                    "zero-pad must contain tuples of 4 values");
+                            for(int zi = 0; zi < zp.size(); zi += 4)
+                            {
+                                rv.back().addAZeroPad(ContractionProblem::ZeroPad(
+                                    {static_cast<int32_t>(zp[zi + 0]),
+                                     static_cast<int32_t>(zp[zi + 1]),
+                                     static_cast<int64_t>(zp[zi + 2]),
+                                     static_cast<int64_t>(zp[zi + 3])}));
+                            }
                         }
-                    }
-                    if(i < m_bZeroPads.size())
-                    {
-                        const auto& zp = m_bZeroPads[i];
-                        if(zp.size() % 4 != 0)
-                            throw std::runtime_error("zero-pad must contain tuples of 4 values");
-                        for(int zi = 0; zi < zp.size(); zi += 4)
+                        if(i < m_bZeroPads.size())
                         {
-                            rv.back().addBZeroPad(
-                                ContractionProblem::ZeroPad({static_cast<int32_t>(zp[zi + 0]),
-                                                             static_cast<int32_t>(zp[zi + 1]),
-                                                             static_cast<int64_t>(zp[zi + 2]),
-                                                             static_cast<int64_t>(zp[zi + 3])}));
+                            const auto& zp = m_bZeroPads[i];
+                            if(zp.size() % 4 != 0)
+                                throw std::runtime_error(
+                                    "zero-pad must contain tuples of 4 values");
+                            for(int zi = 0; zi < zp.size(); zi += 4)
+                            {
+                                rv.back().addBZeroPad(ContractionProblem::ZeroPad(
+                                    {static_cast<int32_t>(zp[zi + 0]),
+                                     static_cast<int32_t>(zp[zi + 1]),
+                                     static_cast<int64_t>(zp[zi + 2]),
+                                     static_cast<int64_t>(zp[zi + 3])}));
+                            }
                         }
-                    }
-                    rv.back().setAlphaType(m_alphaType);
-                    rv.back().setBetaType(m_betaType);
-                    rv.back().setStridedBatched(m_stridedBatched);
-                    rv.back().setHighPrecisionAccumulate(m_highPrecisionAccumulate);
-                    rv.back().setUseBias(m_useBias);
-                    rv.back().setKernelLanguage(m_kernelLanguage);
-                    rv.back().setPerformanceMetric(m_performanceMetric);
-                    rv.back().setDeterministicMode(m_deterministicMode);
-                    rv.back().setArithmeticUnit(m_arithmeticUnit);
-                    rv.back().setFp16AltImpl(m_fp16AltImpl);
-                    rv.back().setActivationType(m_activationType);
-                    if(j < m_activationEnumArg.size())
-                    {
-                        rv.back().setActivationEnumArg(m_activationEnumArg[j]);
-                    }
-                    else
-                    {
+                        rv.back().setAlphaType(m_alphaType);
+                        rv.back().setBetaType(m_betaType);
+                        rv.back().setStridedBatched(m_stridedBatched);
+                        rv.back().setHighPrecisionAccumulate(m_highPrecisionAccumulate);
+                        rv.back().setUseBias(m_useBias);
+                        rv.back().setKernelLanguage(m_kernelLanguage);
+                        rv.back().setPerformanceMetric(m_performanceMetric);
+                        rv.back().setDeterministicMode(m_deterministicMode);
+                        rv.back().setArithmeticUnit(m_arithmeticUnit);
+                        rv.back().setFp16AltImpl(m_fp16AltImpl);
                         rv.back().setActivationType(m_activationType);
-                    }
-                    rv.back().setActivationHPA(m_activationHPA);
+                        if(k < m_biasTypeArgs.size())
+                        {
+                            rv.back().setBiasType(m_biasTypeArgs[k]);
+                        }
+                        else
+                        {
+                            rv.back().setBiasType(m_betaType);
+                        }
+                        if(j < m_activationEnumArg.size())
+                        {
+                            rv.back().setActivationEnumArg(m_activationEnumArg[j]);
+                        }
+                        else
+                        {
+                            rv.back().setActivationType(m_activationType);
+                        }
+                        rv.back().setActivationHPA(m_activationHPA);
 
-                    if(m_convProblemSizes.size())
-                        rv.back().setConvProblemSizes(m_convProblemSizes[i]);
+                        if(m_convProblemSizes.size())
+                            rv.back().setConvProblemSizes(m_convProblemSizes[i]);
+                    }
                 }
             }
 

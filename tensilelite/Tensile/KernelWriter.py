@@ -3307,9 +3307,12 @@ class KernelWriter(metaclass=abc.ABCMeta):
     if kernel["ProblemType"]["UseBeta"]:
       self.defineSgpr("Beta", numSgprBeta, numSgprBeta)
     numSgprAddressBias = 0
+    BiasType = 0
     if kernel["ProblemType"]["UseBias"] and (kernel["GlobalSplitU"] == 1):
       numSgprAddressBias = numSgprAddressA
       self.defineSgpr("AddressBias", numSgprAddressBias)  # Same as mat A
+      BiasType = 1
+      self.defineSgpr("BiasType", BiasType)
     if ((kernel["ProblemType"]["ActivationType"] != 'none') and (kernel["GlobalSplitU"] == 1) \
         and kernel["ActivationFused"]):
       for name in kernel["ProblemType"]["ActivationType"].getAdditionalArgStringList():
@@ -3353,7 +3356,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
     self.defineSgpr("OffsetA", self.states.a.numSgprOffset)
     self.defineSgpr("OffsetB", self.states.b.numSgprOffset)
 
-    self.states.numSgprToLoad = 2 + 2 + numSgprAddressD + numSgprAddressC + numSgprAddressA + numSgprAddressB + numSgprAddressBias + numSgprAlpha + \
+    self.states.numSgprToLoad = 2 + 2 + numSgprAddressD + numSgprAddressC + numSgprAddressA + numSgprAddressB + numSgprAddressBias + BiasType + numSgprAlpha + \
       (numSgprBeta if kernel["ProblemType"]["UseBeta"] else 0) + self.states.d.numSgprStrides + self.states.c.numSgprStrides + self.states.a.numSgprStrides + \
       self.states.b.numSgprStrides + self.states.numSgprSizesFree + self.states.numSgprSizesSum + \
       len(kernel["PackedC0IdxChars"][:-1])*2 + len(kernel["PackedC1IdxChars"][:-1])*2 + \

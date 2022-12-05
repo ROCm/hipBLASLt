@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright 2022 Advanced Micro Devices, Inc.
+ * Copyright (C) 2019-2022 Advanced Micro Devices, Inc. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -24,50 +24,31 @@
  *
  *******************************************************************************/
 
-#pragma once
-
-#include <complex>
-#include <cstdlib>
-#include <iostream>
-#include <map>
-#include <stdexcept>
-#include <string>
+#include <Tensile/MLFeatures.hpp>
 
 namespace Tensile
 {
-    /**
- * \ingroup Tensile
- * \defgroup ActivationTypes Activation Type Info
- *
- * @brief Definitions and metadata on supported activation types.
- */
-
-    /**
- * \ingroup ActivationTypes
- * @{
- */
-
-    /**
- * Data Type
- */
-    enum class ActivationType : uint32_t
+    namespace MLFeatures
     {
-        None = 0,
-        Abs,
-        Clippedrelu,
-        Gelu,
-        Leakyrelu,
-        Relu,
-        Sigmoid,
-        Tanh,
-        All,
-        Exp, // Verification use only.
-        Count
-    };
+        float tilesPerCU(ContractionProblem const&        problem,
+                         CUGranularityScaleFactors const& cuFactors)
+        {
+            float numBatches = 1; // TODO: Higher batch sizes
+            float numTilesM  = problem.freeSizeA(0) * cuFactors.mt0Scale; // M / MT0
+            float numTilesN  = problem.freeSizeB(0) * cuFactors.mt1Scale; // N / MT1
+            float totalTiles = numBatches * ceil(numTilesM) * ceil(numTilesN);
+            return totalTiles * cuFactors.cuScale;
+        };
 
-    std::string   ToString(ActivationType d);
-    std::ostream& operator<<(std::ostream& stream, const ActivationType& t);
-    std::istream& operator>>(std::istream& stream, ActivationType& t);
+        std::ostream& operator<<(std::ostream& stream, CUGranularityScaleFactors const& cugsf)
+        {
+            return stream << " mt0=" << cugsf.mt0Scale << " mt1=" << cugsf.mt1Scale
+                          << " cus=" << cugsf.cuScale;
+        };
 
-    int getAdditionalArgNum(ActivationType d);
+        std::ostream& operator<<(std::ostream& stream, WaveGranularityScaleFactors const& wgsf)
+        {
+            return stream << wgsf.cuFactors << " ws=" << wgsf.waveScale;
+        };
+    } // namespace Tensile
 }

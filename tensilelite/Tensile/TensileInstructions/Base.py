@@ -21,6 +21,7 @@
 
 from .Formatting import __TI_DEBUG_LEVEL__, printExit
 
+from copy import deepcopy
 from dataclasses import dataclass
 from typing import Tuple
 
@@ -125,6 +126,14 @@ class Item:
     def __init__(self, name: str="") -> None:
         self.parent = ""
         self.name = name
+
+    def __deepcopy__(self, memo):
+        cls = self.__class__
+        result = cls.__new__(cls)
+        memo[id(self)] = result
+        for k, v in self.__dict__.items():
+            setattr(result, k, deepcopy(v, memo))
+        return result
 
     @property
     def asmCaps(self) -> dict:

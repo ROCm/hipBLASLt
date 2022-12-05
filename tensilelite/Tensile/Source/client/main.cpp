@@ -244,6 +244,7 @@ namespace Tensile
                 ("activation-additional-args",vector_default_empty<std::string>(), "Activation additional floating-point number arguments.")
                 ("activation-enum-args",      po::value<std::vector<ActivationType>>()->default_value(std::vector<ActivationType>(1, ActivationType::None), "[]"), "Activation enum argument.")
                 ("use-bias",                  po::value<bool>()->default_value(false), "Use bias.")
+                ("bias-type-args",            po::value<std::vector<DataType>>()->default_value(std::vector<DataType>(1, DataType::None), "[]"), "Bias data type args.")
                 ;
             // clang-format on
 
@@ -372,6 +373,12 @@ namespace Tensile
             parse_arg_nums<double>(args, name);
         }
 
+        void parse_bias_type_args(po::variables_map& args, std::string const& name)
+        {
+            auto type             = args[name].as<std::vector<DataType>>();
+            args.at(name).value() = boost::any(type);
+        }
+
         void parse_activation_enum_args(po::variables_map& args, std::string const& name)
         {
             auto type             = args[name].as<std::vector<ActivationType>>();
@@ -442,6 +449,7 @@ namespace Tensile
 
             if(args["convolution-vs-contraction"].as<bool>())
                 parse_arg_ints(args, "convolution-problem");
+            parse_bias_type_args(args, "bias-type-args");
             parse_activation_int(args, "activation-type");
             parse_activation_enum_args(args, "activation-enum-args");
             parse_arg_double(args, "activation-additional-args");

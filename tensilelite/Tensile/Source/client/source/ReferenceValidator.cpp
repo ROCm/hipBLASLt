@@ -182,6 +182,7 @@ namespace Tensile
             // retreive alpha/beta type set via setAlpha/BetaType()
             auto alphaType = m_problem.alphaType();
             auto betaType  = m_problem.betaType();
+            auto biasType  = m_problem.biasType();
 
             // Backward-compatible: when setAlpha/BetaType() wasn't called, use the old way
             // Could remove after rocBLAS is updated
@@ -250,6 +251,14 @@ namespace Tensile
             case ManagedContractionInputs_I8_I32_I32::TypeId():
             {
                 return validateSolutionCast<ManagedContractionInputs_I8_I32_I32>(inputs);
+            }
+            case ManagedContractionInputs_I8_I32_S::TypeId():
+            {
+                return validateSolutionCast<ManagedContractionInputs_I8_I32_S>(inputs);
+            }
+            case ManagedContractionInputs_I8_I8_S::TypeId():
+            {
+                return validateSolutionCast<ManagedContractionInputs_I8_I8_S>(inputs);
             }
 #ifdef TENSILE_USE_BF16
             case ManagedContractionInputs_B_B_S::TypeId():

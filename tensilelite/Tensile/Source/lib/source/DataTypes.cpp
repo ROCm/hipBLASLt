@@ -88,6 +88,33 @@ namespace Tensile
         return "Invalid";
     }
 
+    size_t GetElementSize(DataType d)
+    {
+        switch(d)
+        {
+        case DataType::Float:
+            return TypeInfo<float>::ElementSize;
+        case DataType::Double:
+            return TypeInfo<double>::ElementSize;
+        case DataType::ComplexFloat:
+            return TypeInfo<std::complex<float>>::ElementSize;
+        case DataType::ComplexDouble:
+            return TypeInfo<std::complex<double>>::ElementSize;
+        case DataType::Half:
+            return TypeInfo<Half>::ElementSize;
+        case DataType::Int8x4:
+            return TypeInfo<Int8x4>::ElementSize;
+        case DataType::Int32:
+            return TypeInfo<int32_t>::ElementSize;
+        case DataType::BFloat16:
+            return TypeInfo<BFloat16>::ElementSize;
+        case DataType::Int8:
+            return TypeInfo<int8_t>::ElementSize;
+        case DataType::Count:;
+        }
+        return 1;
+    }
+
     template <typename T>
     void DataTypeInfo::registerTypeInfo()
     {

@@ -25,7 +25,7 @@ from .Common import print1, print2, hasParam, printExit, \
         defaultBenchmarkCommonParameters, validParameters, globalParameters, \
         defaultBatchedBenchmarkFinalProblemSizes, defaultBenchmarkFinalProblemSizes
 from .CustomKernels import getAllCustomKernelNames
-from .SolutionStructs import ProblemType, ProblemSizes, ActivationArgs
+from .SolutionStructs import ProblemType, ProblemSizes, ActivationArgs, BiasTypeArgs
 
 
 def getDefaultsForMissingParameters(paramList, defaultParams):
@@ -146,10 +146,18 @@ class BenchmarkProcess:
         self.customKernels = getNonNoneFromConfig("CustomKernels", [])
 
         activationConf = ""
+        biasTypesConf  = ""
         if "BenchmarkFinalParameters" in config:
             sizes          = config["BenchmarkFinalParameters"][0]["ProblemSizes"]
-            if len(config["BenchmarkFinalParameters"]) == 2:
-                activationConf = config["BenchmarkFinalParameters"][1]["ActivationArgs"]
+            for bfp in config["BenchmarkFinalParameters"][1:]:
+                if "ActivationArgs" in bfp:
+                  if activationConf:
+                    printExit("Duplicated ActivationArgs.")
+                  activationConf = bfp["ActivationArgs"]
+                if "BiasTypeArgs" in bfp:
+                  if biasTypesConf:
+                    printExit("Duplicated BiasTypeArgs.")
+                  biasTypesConf = bfp["BiasTypeArgs"]
         else:
             sizes = defaultBatchedBenchmarkFinalProblemSizes if isbatched \
                 else defaultBenchmarkFinalProblemSizes
@@ -157,6 +165,7 @@ class BenchmarkProcess:
         self.problemSizes = ProblemSizes(self.problemType, sizes)
         checkCDBufferAndStrides(self.problemType, self.problemSizes, globalParameters["CEqualD"])
 
+        self.biasTypesArgs  = BiasTypeArgs(self.problemType, biasTypesConf)
         self.activationArgs = ActivationArgs(self.problemType, activationConf)
 
         # validate parameter values
@@ -206,6 +215,7 @@ class BenchmarkProcess:
                 self.paramGroups, \
                 self.customKernels, \
                 self.problemSizes, \
+                self.biasTypesArgs, \
                 self.activationArgs, \
                 self.benchmarkStepIdx)
         self.benchmarkSteps.append(benchmarkStep)
@@ -267,13 +277,14 @@ def constructForkPermutations(forkParams, paramGroups):
 class BenchmarkStep:
     """A single benchmark step which consists of constant and fork parameters and a set of sizes"""
 
-    def __init__(self, forkParams, constantParams, paramGroups, customKernels, problemSizes, activationArgs, idx):
+    def __init__(self, forkParams, constantParams, paramGroups, customKernels, problemSizes, biasTypeArgs, activationArgs, idx):
         """Basic constructor storing each argument"""
         self.forkParams = forkParams
         self.constantParams = constantParams
         self.paramGroups = paramGroups
         self.customKernels = customKernels
         self.problemSizes = problemSizes
+        self.biasTypeArgs = biasTypeArgs
         self.activationArgs = activationArgs
         self.stepIdx = idx
 

@@ -39,6 +39,7 @@ set(tensile_sources  ${tensile_sources}
     source/Activation.cpp
     source/KernelArguments.cpp
     source/KernelLanguageTypes.cpp
+    source/MLFeatures.cpp
     source/PerformanceMetricTypes.cpp
     source/ScalarValueTypes.cpp
     source/TensorDescriptor.cpp

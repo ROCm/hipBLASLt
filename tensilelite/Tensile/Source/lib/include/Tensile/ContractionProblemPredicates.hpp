@@ -1007,8 +1007,7 @@ namespace Tensile
                                        ", c:",
                                        value[2],
                                        ", d:",
-                                       value[3],
-                                       ")");
+                                       value[3]);
                 }
 
                 virtual bool debugEval(ContractionProblem const& problem,
@@ -1021,6 +1020,7 @@ namespace Tensile
                            << "&& c:" << problem.c().dataType() << " == " << value[2]
                            << "&& d:" << problem.d().dataType() << " == " << value[3]
                            << "): " << rv;
+                    ;
 
                     return rv;
                 }
@@ -1399,6 +1399,27 @@ namespace Tensile
                 }
             };
 
+            struct Experimental : public Predicate_CRTP<Experimental, ContractionProblem>
+            {
+                enum
+                {
+                    HasIndex = false,
+                    HasValue = false
+                };
+
+                Experimental() = default;
+
+                static std::string Type()
+                {
+                    return "Experimental";
+                }
+
+                virtual bool operator()(ContractionProblem const& problem) const override
+                {
+                    return (problem.performanceMetric() == PerformanceMetric::Experimental);
+                }
+            };
+
             struct Fp16AltImpl : public Predicate_CRTP<Fp16AltImpl, ContractionProblem>
             {
                 enum
@@ -1478,7 +1499,7 @@ namespace Tensile
                 };
                 ActivationEnumWhiteList() = default;
 
-                std::string value;
+                std::vector<ActivationType> value;
 
                 static std::string Type()
                 {
@@ -1489,10 +1510,12 @@ namespace Tensile
                 {
                     if(problem.activationType() == ActivationType::All)
                     {
-                        auto problemEnum = ToString(problem.activationEnumArg());
-                        if(value.find(problemEnum) != std::string::npos)
+                        for(size_t i = 0; i < value.size(); i++)
                         {
-                            return true;
+                            if(value[i] == problem.activationEnumArg())
+                            {
+                                return true;
+                            }
                         }
                         return false;
                     }
@@ -1501,7 +1524,12 @@ namespace Tensile
 
                 virtual std::string toString() const override
                 {
-                    return std::string("The supported activations are: " + value);
+                    std::string actString = "";
+                    for(size_t i = 0; i < value.size(); i++)
+                    {
+                        actString += ToString(value[i]) + ", ";
+                    }
+                    return std::string("The supported activations are: " + actString);
                 }
             };
 
@@ -1555,6 +1583,50 @@ namespace Tensile
                 virtual bool operator()(ContractionProblem const& problem) const override
                 {
                     return problem.useBias() == value;
+                }
+            };
+
+            struct BiasDataTypeWhiteList
+                : public Predicate_CRTP<BiasDataTypeWhiteList, ContractionProblem>
+            {
+                enum
+                {
+                    HasIndex = false,
+                    HasValue = true
+                };
+                BiasDataTypeWhiteList() = default;
+
+                std::vector<DataType> value;
+
+                static std::string Type()
+                {
+                    return "BiasDataTypeWhiteList";
+                }
+
+                virtual bool operator()(ContractionProblem const& problem) const override
+                {
+                    if(problem.useBias())
+                    {
+                        for(size_t i = 0; i < value.size(); i++)
+                        {
+                            if(value[i] == problem.biasType())
+                            {
+                                return true;
+                            }
+                        }
+                        return false;
+                    }
+                    return true;
+                }
+
+                virtual std::string toString() const override
+                {
+                    std::string biasString = "";
+                    for(size_t i = 0; i < value.size(); i++)
+                    {
+                        biasString += ToString(value[i]) + ", ";
+                    }
+                    return std::string("The supported bias types are: " + biasString);
                 }
             };
         } // namespace Contraction

@@ -37,10 +37,11 @@ from .Activation import ActivationType
 
 from .CustomKernels import isCustomKernelConfig
 
-from collections import namedtuple,OrderedDict
+from collections import OrderedDict
 from collections.abc import Mapping
 from copy import deepcopy
 from enum import Enum
+from typing import List
 
 import collections
 import math
@@ -161,8 +162,14 @@ class ProblemType(Mapping):
         self["BetaOnlyUseBias"] = False
       else:
         self["BetaOnlyUseBias"] = self["UseBias"]
+      if "BiasDataTypeList" in config:
+        self["BiasDataTypeList"] = [DataType(btype) for btype in config["BiasDataTypeList"]]
+        self["BiasDataTypeList"].sort() # Make name unique
+      else:
+        self["BiasDataTypeList"] = getBiasDataTypeListDefault(self)
     else:
       self["BetaOnlyUseBias"] = False
+      self["BiasDataTypeList"] = []
 
     # Activation
     if "Activation" in config:
@@ -174,21 +181,22 @@ class ProblemType(Mapping):
       self["ActivationHPA"] = config["ActivationHPA"]
     else:
       self["ActivationHPA"] = False
-    self["ActivationComputeDataType"] = self["ComputeDataType"] if self["ActivationHPA"] else \
-                                        self["DestDataType"]
 
     if self["ActivationType"] != 'none':
       if ((not self["HighPrecisionAccumulate"]) and self["ActivationHPA"]):
           printExit("Must enable HighPrecisionAccumulate to use ActivationHPA.")
-      if ((self["HighPrecisionAccumulate"]) and (not self["ActivationHPA"]) and \
-          (self["DestDataType"].isBFloat16() or self["DestDataType"].isInt8())):
-          printWarning("%s only supports ActivationHPA = True if HighPrecisionAccumulate = True. \
-                        ActivationHPA will be set to True automatically."%str(self["DestDataType"]))
+      if (not self["ActivationHPA"]) and \
+        (self["DataType"].numRegisters() < self["DestDataType"].numRegisters()):
+          printWarning("TensileLite only supports ActivationHPA = True if DestDataType > DataType. \
+                        ActivationHPA will be set to True automatically.")
           self["ActivationHPA"] = True
-      if self["ActivationHPA"] and (self["DestDataType"].isSingle() or self["DestDataType"].isDouble()):
+      if self["ActivationHPA"] and (self["DataType"] == self["DestDataType"]) and \
+        (self["DestDataType"].isSingle() or self["DestDataType"].isDouble()):
         printWarning("Single and Double does not support ActivationHPA. ActivationHPA will be set to False automatically.")
         self["ActivationHPA"] = False
 
+    self["ActivationComputeDataType"] = self["ComputeDataType"] if self["ActivationHPA"] else \
+                                        self["DestDataType"]
 
   ################################################################################
    # Function checkIfSupportedGEMMType:
@@ -379,11 +387,11 @@ class ProblemType(Mapping):
 
     # Other
     if self["UseBeta"]: name += "B"
-    if self["UseBias"]: name += "Bias"
     if self["HighPrecisionAccumulate"] and not self["SilentHighPrecisionAccumulate"]: name += "H"
     if self["Fp16AltImpl"]: name += "R"
     if self["UseInitialStridesAB"]: name += "I"
     if self["UseInitialStridesCD"]: name += "Ic"
+    if self["UseBias"]: name += "_Bias" # Not showing bias types
 
     # precision and other
     # name += "_SB" if self["StridedBatched"] else "_GB"
@@ -770,6 +778,37 @@ class ProblemSizes:
     return s
 
 ################################################################################
+# Bias Type
+################################################################################
+
+def getBiasDataTypeListDefault(problem: ProblemType) -> List[DataType]:
+  biasDataTypeList = list(set([problem["DataType"], problem["ComputeDataType"], problem["DestDataType"]]))
+  biasDataTypeList.sort() # Make name unique
+  return biasDataTypeList
+
+class BiasTypeArgs:
+
+  ########################################
+  def __init__(self, problemType, config):
+    self.biasTypes = []
+    self.totalProblemSizes = 0
+    if problemType["UseBias"]:
+      for btype in config:
+        datatype = DataType(btype)
+        if datatype not in problemType["BiasDataTypeList"]:
+          printWarning("Datatype: %s not support in this kernel (%s)"%(datatype, str(problemType["BiasDataTypeList"])))
+        self.biasTypes.append(datatype)
+
+      if not self.biasTypes:
+        printExit("Must provide a bias type in benchmark parameters if UseBias is set to True.")
+
+      self.totalProblemSizes = len(self.biasTypes)
+
+  def __str__(self):
+    s = "BiasTypesArgs\n"
+    return s
+
+################################################################################
 # Activation
 ################################################################################
 
@@ -900,17 +939,26 @@ class Solution(collections.abc.Mapping):
     self.initActivationFunctionObjects()
     self.initActivationOnlyKernelObjects()
 
-
   ########################################
   # create BetaONly Kernels
   def initBetaOnlyKernelObjects(self):
     self.betaOnlyKernelObjects = []
     if self["GlobalSplitU"] > 1:
-      state = {}
-      state["ProblemType"] = deepcopy(self["ProblemType"])
-      state["KernelLanguage"] = "Source"
-      state["_GlobalAccumulation"] = self["_GlobalAccumulation"]
-      self.betaOnlyKernelObjects.append(KernelWriterBetaOnly(state))
+      if self["ProblemType"]["UseBias"]:
+        for btype in self["ProblemType"]["BiasDataTypeList"]:
+          state = {}
+          state["ProblemType"] = deepcopy(self["ProblemType"])
+          state["ProblemType"]["BiasDataTypeList"] = []
+          state["ProblemType"]["BiasDataType"] = deepcopy(btype)
+          state["KernelLanguage"] = "Source"
+          state["_GlobalAccumulation"] = self["_GlobalAccumulation"]
+          self.betaOnlyKernelObjects.append(KernelWriterBetaOnly(state))
+      else:
+        state = {}
+        state["ProblemType"] = deepcopy(self["ProblemType"])
+        state["KernelLanguage"] = "Source"
+        state["_GlobalAccumulation"] = self["_GlobalAccumulation"]
+        self.betaOnlyKernelObjects.append(KernelWriterBetaOnly(state))
 
 
   ########################################
@@ -918,12 +966,23 @@ class Solution(collections.abc.Mapping):
   def initConversionKernelObjects(self):
     self.conversionKernelObjects = []
     if (self["GlobalSplitU"] > 1) and self["_GlobalAccumulation"]:
-      state = {}
-      state["ProblemType"] = deepcopy(self["ProblemType"])
-      state["KernelLanguage"] = "Source"
-      state["_GlobalAccumulation"] = self["_GlobalAccumulation"]
-      state["ActivationFused"] = self["ActivationFused"]
-      self.conversionKernelObjects.append(KernelWriterConversion(state))
+      if self["ProblemType"]["UseBias"]:
+        for btype in self["ProblemType"]["BiasDataTypeList"]:
+          state = {}
+          state["ProblemType"] = deepcopy(self["ProblemType"])
+          state["ProblemType"]["BiasDataTypeList"] = []
+          state["ProblemType"]["BiasDataType"] = deepcopy(btype)
+          state["KernelLanguage"] = "Source"
+          state["_GlobalAccumulation"] = self["_GlobalAccumulation"]
+          state["ActivationFused"] = self["ActivationFused"]
+          self.conversionKernelObjects.append(KernelWriterConversion(state))
+      else:
+        state = {}
+        state["ProblemType"] = deepcopy(self["ProblemType"])
+        state["KernelLanguage"] = "Source"
+        state["_GlobalAccumulation"] = self["_GlobalAccumulation"]
+        state["ActivationFused"] = self["ActivationFused"]
+        self.conversionKernelObjects.append(KernelWriterConversion(state))
 
   def initActivationEnumHeaderObjects(self):
     self.activationEnumHeaderObjects = []
@@ -949,6 +1008,8 @@ class Solution(collections.abc.Mapping):
       and (self["ProblemType"]["ActivationType"] != 'none') :
       state = {}
       state["ProblemType"] = deepcopy(self["ProblemType"])
+      state["ProblemType"]["UseBias"] = False
+      state["ProblemType"]["BiasDataTypeList"] = []
       state["KernelLanguage"] = "Source"
       state["_GlobalAccumulation"] = self["_GlobalAccumulation"]
       state["ActivationFused"] = self["ActivationFused"]

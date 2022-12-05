@@ -110,7 +110,7 @@ def generateCustomKernelSolutions(problemType, customKernels, failOnMismatch):
     return solutions
 
 def writeBenchmarkFiles(stepBaseDir, solutions, problemSizes, \
-        activationArgs, stepName, solutionSummationSizes):
+        biasTypeArgs, activationArgs, stepName, solutionSummationSizes):
     """Write all the files needed for a given benchmarking step"""
     if not globalParameters["MergeFiles"]:
         ensurePath(os.path.join(globalParameters["WorkingPath"], "Solutions"))
@@ -182,10 +182,10 @@ def writeBenchmarkFiles(stepBaseDir, solutions, problemSizes, \
                 idealSize = {"Exact": [idealM, idealN, idealK]}
                 idealSizes.append(idealSize)
         idealProblemSizes = ProblemSizes(problemType, idealSizes)
-        writeClientConfig(True, solutions, idealProblemSizes, activationArgs, stepName, stepBaseDir, \
+        writeClientConfig(True, solutions, idealProblemSizes, biasTypeArgs, activationArgs, stepName, stepBaseDir, \
             newLibrary, codeObjectFiles, True)
     else:
-        writeClientConfig(True, solutions, problemSizes, activationArgs, stepName, stepBaseDir, \
+        writeClientConfig(True, solutions, problemSizes, biasTypeArgs, activationArgs, stepName, stepBaseDir, \
             newLibrary, codeObjectFiles, False)
 
     if len(solutions) == 0:
@@ -230,6 +230,7 @@ def benchmarkProblemType(problemTypeConfig, problemSizeGroupConfig, problemSizeG
         elapsedTime = currentTime - startTime
         print1("# Benchmark Step: {} - {} {:.3f}s".format(groupName, stepName, elapsedTime))
         print1("# Num Sizes: {}".format(benchmarkStep.problemSizes.totalProblemSizes))
+        print1("# Activation steps: {}".format(benchmarkStep.biasTypeArgs.totalProblemSizes))
         print1("# Activation steps: {}".format(benchmarkStep.activationArgs.totalProblemSizes))
         print1("# Fork Parameters:")
         for k, v in benchmarkStep.forkParams.items():
@@ -299,7 +300,8 @@ def benchmarkProblemType(problemTypeConfig, problemSizeGroupConfig, problemSizeG
             # write benchmarkFiles
             prevCount = len(solutions)
             codeObjectFiles = writeBenchmarkFiles(stepBaseDir, solutions, \
-                    benchmarkStep.problemSizes, benchmarkStep.activationArgs, shortName, [])
+                    benchmarkStep.problemSizes, benchmarkStep.biasTypeArgs, \
+                    benchmarkStep.activationArgs, shortName, [])
             # ^ this mutates solutions
 
             # write cache data
@@ -323,13 +325,15 @@ def benchmarkProblemType(problemTypeConfig, problemSizeGroupConfig, problemSizeG
             conProblemType = ContractionsProblemType.FromOriginalState(ssProblemType)
             outFile = os.path.join(globalParameters["WorkingPath"], "ClientParameters.ini")
 
-            writeClientConfigIni(benchmarkStep.problemSizes, benchmarkStep.activationArgs, conProblemType,
+            writeClientConfigIni(benchmarkStep.problemSizes, benchmarkStep.biasTypeArgs,
+                                 benchmarkStep.activationArgs, conProblemType,
                                  globalParameters["WorkingPath"], codeObjectFiles, resultsFileName,
                                  outFile)
 
         # I think the size portion of this yaml could be removed,
         # but for now it's needed, so we update it even in the cache case
-        LibraryIO.writeSolutions(solutionsFileName, benchmarkStep.problemSizes, benchmarkStep.activationArgs, solutions, cacheValid)
+        LibraryIO.writeSolutions(solutionsFileName, benchmarkStep.problemSizes, benchmarkStep.biasTypeArgs,
+            benchmarkStep.activationArgs, solutions, cacheValid)
 
         popWorkingPath()  # source
 

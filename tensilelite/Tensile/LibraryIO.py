@@ -35,6 +35,12 @@ except ImportError:
     )
 
 try:
+    from yaml import CSafeLoader as yamlLoader
+except ImportError:
+    from yaml import SafeLoader as yamlLoader
+    printWarning("CSafeLoader not installed. Fallback to SafeLoader.")
+
+try:
     import msgpack
 except ImportError:
     print("Message pack python library not detected. Must use YAML backend instead.")
@@ -72,7 +78,7 @@ def writeMsgPack(filename, data):
     with open(filename, "wb") as f:
         msgpack.pack(data, f)
 
-def writeSolutions(filename, problemSizes, activationArgs, solutions, cache=False):
+def writeSolutions(filename, problemSizes, biasTypeArgs, activationArgs, solutions, cache=False):
     """Writes solution YAML file."""
 
     # convert objects to nested dictionaries
@@ -80,7 +86,12 @@ def writeSolutions(filename, problemSizes, activationArgs, solutions, cache=Fals
 
     if cache:
         solYaml = readYAML(filename)
-        solutionStates = solYaml[3:] if activationArgs else solYaml[2:]
+        if biasTypeArgs and activationArgs:
+            solutionStates = solYaml[4:]
+        elif biasTypeArgs or activationArgs:
+            solutionStates = solYaml[3:]
+        else:
+            solutionStates = solYaml[2:]
     else:
         for solution in solutions:
             solutionState = solution.getAttributes()
@@ -91,6 +102,8 @@ def writeSolutions(filename, problemSizes, activationArgs, solutions, cache=Fals
                     solutionState["ProblemType"]["DestDataType"].value
             solutionState["ProblemType"]["ComputeDataType"] = \
                     solutionState["ProblemType"]["ComputeDataType"].value
+            solutionState["ProblemType"]["BiasDataTypeList"] = \
+                    [btype.value for btype in solutionState["ProblemType"]["BiasDataTypeList"]]
             solutionState["ProblemType"]["ActivationComputeDataType"] = \
                     solutionState["ProblemType"]["ActivationComputeDataType"].value
             solutionState["ProblemType"]["ActivationType"] = \
@@ -106,6 +119,8 @@ def writeSolutions(filename, problemSizes, activationArgs, solutions, cache=Fals
             for problemExact in problemSizes.exacts:
                 #FIXME-problem, this ignores strides:
                 f.write("  - Exact: {}\n".format(problemExact))
+        if biasTypeArgs:
+            f.write("- BiasTypeArgs: [{}]\n".format([btype.value for btype in biasTypeArgs.biasTypes]))
         if activationArgs:
             f.write("- ActivationArgs:\n")
             for setting in activationArgs.settingList:
@@ -119,7 +134,7 @@ def writeSolutions(filename, problemSizes, activationArgs, solutions, cache=Fals
 def readYAML(filename):
     """Reads and returns YAML data from file."""
     with open(filename, "r") as f:
-        data = yaml.load(f, yaml.SafeLoader)
+        data = yaml.load(f, yamlLoader)
     return data
 
 
@@ -144,9 +159,10 @@ def parseSolutionsData(data, srcFile="?"):
 
     problemSizesConfig = data[1]["ProblemSizes"]
     solutionStartIdxInData = 2
-    if len(data) > 2:
-        if "ActivationArgs" in data[2]:
-            solutionStartIdxInData += 1
+    if (len(data) > solutionStartIdxInData) and "BiasTypeArgs" in data[solutionStartIdxInData]:
+        solutionStartIdxInData += 1
+    if (len(data) > solutionStartIdxInData) and "ActivationArgs" in data[solutionStartIdxInData]:
+        solutionStartIdxInData += 1
 
     solutions = []
     for i in range(solutionStartIdxInData, len(data)):
@@ -312,6 +328,8 @@ def createLibraryLogic(schedulePrefix, architectureName, deviceNames, logicTuple
             problemTypeState["DestDataType"].value
     problemTypeState["ComputeDataType"] = \
             problemTypeState["ComputeDataType"].value
+    problemTypeState["BiasDataTypeList"] = \
+            [btype.value for btype in problemTypeState["BiasDataTypeList"]]
     problemTypeState["ActivationComputeDataType"] = \
             problemTypeState["ActivationComputeDataType"].value
     problemTypeState["ActivationType"] = \
@@ -329,6 +347,8 @@ def createLibraryLogic(schedulePrefix, architectureName, deviceNames, logicTuple
                 solutionState["ProblemType"]["DestDataType"].value
         solutionState["ProblemType"]["ComputeDataType"] = \
                 solutionState["ProblemType"]["ComputeDataType"].value
+        solutionState["ProblemType"]["BiasDataTypeList"] = \
+                [btype.value for btype in solutionState["ProblemType"]["BiasDataTypeList"]]
         solutionState["ProblemType"]["ActivationComputeDataType"] = \
                 solutionState["ProblemType"]["ActivationComputeDataType"].value
         solutionState["ProblemType"]["ActivationType"] = \
@@ -346,6 +366,8 @@ def createLibraryLogic(schedulePrefix, architectureName, deviceNames, logicTuple
                     solutionState["ProblemType"]["DestDataType"].value
             solutionState["ProblemType"]["ComputeDataType"] = \
                     solutionState["ProblemType"]["ComputeDataType"].value
+            solutionState["ProblemType"]["BiasDataTypeList"] = \
+                    [btype.value for btype in solutionState["ProblemType"]["BiasDataTypeList"]]
             solutionState["ProblemType"]["ActivationComputeDataType"] = \
                     solutionState["ProblemType"]["ActivationComputeDataType"].value
             solutionState["ProblemType"]["ActivationType"] = \

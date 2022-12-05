@@ -309,6 +309,14 @@ namespace Tensile
                 return GetTyped<ContractionInputs_I8_I32_I32>(
                     args, problemFactory, maxWorkspaceSize);
             }
+            case ContractionInputs_I8_I32_S::TypeId():
+            {
+                return GetTyped<ContractionInputs_I8_I32_S>(args, problemFactory, maxWorkspaceSize);
+            }
+            case ContractionInputs_I8_I8_S::TypeId():
+            {
+                return GetTyped<ContractionInputs_I8_I8_S>(args, problemFactory, maxWorkspaceSize);
+            }
 #ifdef TENSILE_USE_BF16
             case ContractionInputs_B_B_S::TypeId():
             {
@@ -357,6 +365,7 @@ namespace Tensile
             , m_bMaxElements(0)
             , m_cMaxElements(0)
             , m_dMaxElements(0)
+            , m_biasMaxElements(0)
             , m_maxBatch(0)
             , m_stridedBatched(args["strided-batched"].as<bool>())
             , m_cEqualsD(args["c-equal-d"].as<bool>())
@@ -380,10 +389,11 @@ namespace Tensile
 
             for(auto const& problem : problemFactory.problems())
             {
-                m_aMaxElements = std::max(m_aMaxElements, problem.a().totalAllocatedElements());
-                m_bMaxElements = std::max(m_bMaxElements, problem.b().totalAllocatedElements());
-                m_cMaxElements = std::max(m_cMaxElements, problem.c().totalAllocatedElements());
-                m_dMaxElements = std::max(m_dMaxElements, problem.d().totalAllocatedElements());
+                m_aMaxElements    = std::max(m_aMaxElements, problem.a().totalAllocatedElements());
+                m_bMaxElements    = std::max(m_bMaxElements, problem.b().totalAllocatedElements());
+                m_cMaxElements    = std::max(m_cMaxElements, problem.c().totalAllocatedElements());
+                m_dMaxElements    = std::max(m_dMaxElements, problem.d().totalAllocatedElements());
+                m_biasMaxElements = std::max(m_dMaxElements, problem.d().sizes()[0]);
 
                 size_t numOfBatch = 1;
                 for(size_t i = 0; i < problem.batchIndices().size(); i++)
@@ -419,6 +429,7 @@ namespace Tensile
                 m_bMaxElements = RoundUpToMultiple<unsigned int>(m_bMaxElements, bRoundUpSize);
                 m_cMaxElements = RoundUpToMultiple<unsigned int>(m_cMaxElements, cRoundUpSize);
                 m_dMaxElements = RoundUpToMultiple<unsigned int>(m_dMaxElements, dRoundUpSize);
+                // No bias page guard
             }
             m_problemDependentData = IsProblemDependent(m_aInit) || IsProblemDependent(m_bInit)
                                      || IsProblemDependent(m_cInit) || IsProblemDependent(m_dInit);

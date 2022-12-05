@@ -107,6 +107,7 @@ namespace Tensile
                                                                      SolutionProgress,
                                                                      OperationIdentifier,
                                                                      ProblemSizes,
+                                                                     BiasType,
                                                                      ActivationType,
                                                                      SolutionName,
                                                                      Validation,

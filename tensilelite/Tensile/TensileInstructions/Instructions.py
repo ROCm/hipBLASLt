@@ -670,6 +670,10 @@ class FlatLoadB128(FLATReadInstruction):
         super().__init__(InstType.INST_B128, dst, vaddr, flat, comment)
 
 ## Buffer store
+class BufferStoreB8(MUBUFStoreInstruction):
+    def __init__(self, src, vaddr, saddr, soffset, mubuf: Optional[MUBUFModifiers] = None, comment="") -> None:
+        super().__init__(InstType.INST_B8, src, vaddr, saddr, soffset, mubuf, comment)
+
 class BufferStoreD16HIU8(MUBUFStoreInstruction):
     def __init__(self, src, vaddr, saddr, soffset, mubuf: Optional[MUBUFModifiers] = None, comment="") -> None:
         super().__init__(InstType.INST_D16_HI_U8, src, vaddr, saddr, soffset, mubuf, comment)
@@ -1031,11 +1035,15 @@ class SCmpKEQU32(CommonInstruction):
     def __init__(self, src, simm16: Union[int, str], comment="") -> None:
         super().__init__(InstType.INST_U32, None, [src, simm16], None, None, comment)
         self.setInst("s_cmpk_eq_u32")
-
 class SCmpKGtU32(CommonInstruction):
     def __init__(self, src, simm16: str, comment="") -> None:
         super().__init__(InstType.INST_U32, None, [src, simm16], None, None, comment)
         self.setInst("s_cmpk_gt_u32")
+
+class SCmpKLGU32(CommonInstruction):
+    def __init__(self, src, simm16: Union[int, str], comment="") -> None:
+        super().__init__(InstType.INST_U32, None, [src, simm16], None, None, comment)
+        self.setInst("s_cmpk_lg_u32")
 
 # S Select
 # D.u = SCC ? S0.u : S1.u
@@ -1912,6 +1920,16 @@ class VCvtU32toF32(VCvtInstruction):
         super().__init__(CvtType.CVT_U32_to_F32, dst, src, sdwa, comment)
         self.setInst("v_cvt_f32_u32")
 
+class VCvtI32toF32(VCvtInstruction):
+    def __init__(self, dst, src, sdwa: Optional[SDWAModifiers] = None, comment="") -> None:
+        super().__init__(CvtType.CVT_I32_to_F32, dst, src, sdwa, comment)
+        self.setInst("v_cvt_f32_i32")
+
+class VCvtF32toI32(VCvtInstruction):
+    def __init__(self, dst, src, sdwa: Optional[SDWAModifiers] = None, comment="") -> None:
+        super().__init__(CvtType.CVT_F32_to_I32, dst, src, sdwa, comment)
+        self.setInst("v_cvt_i32_f32")
+
 # V Mask
 class VCndMaskB32(CommonInstruction):
     def __init__(self, dst, src0, src1, src2 = VCC(), sdwa: Optional[SDWAModifiers] = None, comment="") -> None:
@@ -2086,3 +2104,9 @@ class VReadfirstlaneB32(CommonInstruction):
     def __init__(self, dst, src, comment="") -> None:
         super().__init__(InstType.INST_B32, dst, [src], None, None, comment)
         self.setInst("v_readfirstlane_b32")
+
+# Rounding
+class VRndneF32(CommonInstruction):
+    def __init__(self, dst, src, comment="") -> None:
+        super().__init__(InstType.INST_F32, dst, [src], None, None, comment)
+        self.setInst("v_rndne_f32")
