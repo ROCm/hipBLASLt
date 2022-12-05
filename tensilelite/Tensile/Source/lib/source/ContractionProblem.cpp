@@ -1244,18 +1244,19 @@ namespace Tensile
     TypedContractionInputs<A, B, C, D, Alpha, Beta>::~TypedContractionInputs() = default;
 
     template <typename A, typename B, typename C, typename D, typename Alpha, typename Beta>
-    TypedContractionInputs<A, B, C, D, Alpha, Beta>::TypedContractionInputs(A const*        _a,
-                                                                            B const*        _b,
-                                                                            C const*        _c,
-                                                                            D*              _d,
-                                                                            A const* const* _batchA,
-                                                                            B const* const* _batchB,
-                                                                            C const* const* _batchC,
-                                                                            D* const*       _batchD,
-                                                                            Alpha           _alpha,
-                                                                            Beta            _beta,
-                                                                            A const*        _bias,
-                                                                            void*           _ws)
+    TypedContractionInputs<A, B, C, D, Alpha, Beta>::TypedContractionInputs(
+        A const*                           _a,
+        B const*                           _b,
+        C const*                           _c,
+        D*                                 _d,
+        A const* const*                    _batchA,
+        B const* const*                    _batchB,
+        C const* const*                    _batchC,
+        D* const*                          _batchD,
+        Alpha                              _alpha,
+        Beta                               _beta,
+        std::vector<std::shared_ptr<void>> _biasList,
+        void*                              _ws)
         : a(_a)
         , b(_b)
         , c(_c)
@@ -1267,8 +1268,11 @@ namespace Tensile
         , ws(_ws)
         , alpha(_alpha)
         , beta(_beta)
-        , bias(_bias)
     {
+        for(size_t i = 0; i < _biasList.size(); ++i)
+        {
+            biasList.push_back(_biasList[i].get());
+        }
     }
 
     template struct TypedContractionInputs<float>;
@@ -1279,6 +1283,8 @@ namespace Tensile
     template struct TypedContractionInputs<int32_t>;
     template struct TypedContractionInputs<int8_t, int8_t, int8_t, int8_t, int32_t, int32_t>;
     template struct TypedContractionInputs<int8_t, int8_t, int32_t, int32_t>;
+    template struct TypedContractionInputs<int8_t, int8_t, int32_t, int32_t, float, float>;
+    template struct TypedContractionInputs<int8_t, int8_t, int8_t, int8_t, float, float>;
 
 #ifdef TENSILE_USE_HALF
     template struct TypedContractionInputs<Half>;

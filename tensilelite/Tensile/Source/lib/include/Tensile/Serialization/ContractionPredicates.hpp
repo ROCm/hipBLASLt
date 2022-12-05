@@ -93,12 +93,14 @@ namespace Tensile
                     Base::template Pair<Predicates::Contraction::CDStridesEqual>(),
                     Base::template Pair<Predicates::Contraction::StridedBatchedEqual>(),
                     Base::template Pair<Predicates::Contraction::CUEfficiency>(),
+                    Base::template Pair<Predicates::Contraction::Experimental>(),
                     Base::template Pair<Predicates::Contraction::Fp16AltImpl>(),
                     Base::template Pair<Predicates::Contraction::EqualityMatching>(),
                     Base::template Pair<Predicates::Contraction::ActivationEqual>(),
                     Base::template Pair<Predicates::Contraction::ActivationHPAEqual>(),
                     Base::template Pair<Predicates::Contraction::ActivationEnumWhiteList>(),
                     Base::template Pair<Predicates::Contraction::UseBiasEqual>(),
+                    Base::template Pair<Predicates::Contraction::BiasDataTypeWhiteList>(),
                     Base::template Pair<Predicates::Contraction::SizeInRange>(),
                 });
 
@@ -341,6 +343,12 @@ namespace Tensile
         };
 
         template <typename IO>
+        struct MappingTraits<Predicates::Contraction::Experimental, IO>
+            : public AutoMappingTraits<Predicates::Contraction::Experimental, IO>
+        {
+        };
+
+        template <typename IO>
         struct MappingTraits<Predicates::Contraction::Fp16AltImpl, IO>
             : public AutoMappingTraits<Predicates::Contraction::Fp16AltImpl, IO>
         {
@@ -359,8 +367,8 @@ namespace Tensile
         };
 
         template <typename IO>
-        struct MappingTraits<Predicates::Contraction::ActivationEnumWhiteList, IO>
-            : public AutoMappingTraits<Predicates::Contraction::ActivationEnumWhiteList, IO>
+        struct MappingTraits<Predicates::Contraction::BiasDataTypeWhiteList, IO>
+            : public AutoMappingTraits<Predicates::Contraction::BiasDataTypeWhiteList, IO>
         {
         };
 
@@ -373,6 +381,12 @@ namespace Tensile
         template <typename IO>
         struct MappingTraits<Predicates::Contraction::UseBiasEqual, IO>
             : public AutoMappingTraits<Predicates::Contraction::UseBiasEqual, IO>
+        {
+        };
+
+        template <typename IO>
+        struct MappingTraits<Predicates::Contraction::ActivationEnumWhiteList, IO>
+            : public AutoMappingTraits<Predicates::Contraction::ActivationEnumWhiteList, IO>
         {
         };
 

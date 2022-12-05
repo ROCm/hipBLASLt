@@ -123,6 +123,7 @@ namespace Tensile
                 iot::mapOptional(io, "fp16AltImpl", s.fp16AltImpl);
                 iot::mapOptional(io, "activationType", s.activationType);
                 iot::mapOptional(io, "activationHPA", s.activationHPA);
+                iot::mapOptional(io, "biasDataTypeWhiteList", s.biasDataTypeWhiteList);
             }
 
             const static bool flow = false;

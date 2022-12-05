@@ -24,6 +24,7 @@ from .Common import printExit
 from .TensileInstructions import DataType
 from . import Hardware
 from . import Properties
+from .SolutionStructs import getBiasDataTypeListDefault
 from .SolutionStructs import Solution as OriginalSolution
 from .Utils import state, state_key_ordering
 
@@ -61,7 +62,7 @@ class BoundIndex:
 
 class ProblemType:
     StateKeys = ['operationIdentifier', 'aType', 'bType', 'cType', 'dType',
-                 'useBeta', 'useBias', 'highPrecisionAccumulate',
+                 'useBeta', 'useBias', 'biasDataTypeWhiteList', 'highPrecisionAccumulate',
                  'useInitialStridesAB', 'useInitialStridesCD', 'stridedBatched',
                  'activationType', 'activationHPA']
     @classmethod
@@ -128,7 +129,7 @@ class ProblemType:
         rv.dType = dstType
         # we already checked the src/dst/compute types are supported and well-assigned in SolutionStruct
         rv.alphaType = computeType
-        rv.betaType = computeType
+        rv.betaType  = computeType
 
         rv.highPrecisionAccumulate = False
         if 'HighPrecisionAccumulate' in d:
@@ -159,9 +160,15 @@ class ProblemType:
         if 'UseBeta' in d:
             rv.useBeta = d['UseBeta']
 
-        rv.useBias = False
+        rv.useBias               = False
+        rv.biasDataTypeWhiteList = []
         if 'UseBias' in d:
             rv.useBias = d['UseBias']
+            if 'BiasDataTypeList' in d:
+                d["BiasDataTypeList"].sort()  # Sort to make sure names are unique
+                rv.biasDataTypeWhiteList = d['BiasDataTypeList']
+            else:
+                rv.biasDataTypeWhiteList = getBiasDataTypeListDefault(d)
 
         rv.batched = d['Batched']
 
@@ -267,14 +274,11 @@ class ProblemType:
             if not self.useBeta:
                 predicates.append(ProblemPredicate("BetaZero"))
             predicates.append(ProblemPredicate("UseBias", value=self.useBias))
+            predicates.append(ProblemPredicate("BiasDataTypeWhiteList", value=self.biasDataTypeWhiteList))
             predicates.append(ProblemPredicate("Activation", value=self.activationType))
             if self.activationType == 'all':
-                enumList = ActivationType.getEnumStrList(self.activationComputeDataType)
-                wlStr = ""
-                for actType in enumList:
-                    wlStr += ActivationType(actType).toEnum() + ","
-                wlStr = wlStr.rstrip(',')
-                predicates.append(ProblemPredicate("ActivationEnumWhiteList", value=wlStr))
+                enumList = [actEnum.capitalize() for actEnum in ActivationType.getEnumStrList(self.activationComputeDataType)]
+                predicates.append(ProblemPredicate("ActivationEnumWhiteList", value=enumList))
             predicates.append(ProblemPredicate("StridedBatched", value=self.stridedBatched))
 
         if includeType:

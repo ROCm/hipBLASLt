@@ -271,7 +271,7 @@ class KernelWriterBetaOnly(KernelWriterBase):
     name += "_"
     name += self.state["ProblemType"]["DestDataType"].toChar()
     name += "" if self.state["ProblemType"]["StridedBatched"] else "_GB" # legacy
-    name += "_Bias" if self.state["ProblemType"]["BetaOnlyUseBias"] else ""
+    name += "_Bias%s"%self.state["ProblemType"]["BiasDataType"].toChar() if self.state["ProblemType"]["BetaOnlyUseBias"] else ""
     name += "_GA" if self.state["_GlobalAccumulation"] else ""
 
     return name

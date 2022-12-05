@@ -56,24 +56,24 @@ namespace Tensile
             using AlphaType = Alpha;
             using BetaType  = Beta;
 
-            ManagedContractionInputs(std::shared_ptr<A>    _a,
-                                     std::shared_ptr<B>    _b,
-                                     std::shared_ptr<C>    _c,
-                                     std::shared_ptr<D>    _d,
-                                     std::shared_ptr<A*>   _batchA,
-                                     std::shared_ptr<B*>   _batchB,
-                                     std::shared_ptr<C*>   _batchC,
-                                     std::shared_ptr<D*>   _batchD,
-                                     size_t                _aElements,
-                                     size_t                _bElements,
-                                     size_t                _cElements,
-                                     size_t                _dElements,
-                                     Alpha                 _alpha,
-                                     Beta                  _beta,
-                                     bool                  _gpu,
-                                     std::shared_ptr<A>    _bias          = nullptr,
-                                     std::shared_ptr<void> _ws            = nullptr,
-                                     size_t                _workspaceSize = 0)
+            ManagedContractionInputs(std::shared_ptr<A>                 _a,
+                                     std::shared_ptr<B>                 _b,
+                                     std::shared_ptr<C>                 _c,
+                                     std::shared_ptr<D>                 _d,
+                                     std::shared_ptr<A*>                _batchA,
+                                     std::shared_ptr<B*>                _batchB,
+                                     std::shared_ptr<C*>                _batchC,
+                                     std::shared_ptr<D*>                _batchD,
+                                     size_t                             _aElements,
+                                     size_t                             _bElements,
+                                     size_t                             _cElements,
+                                     size_t                             _dElements,
+                                     Alpha                              _alpha,
+                                     Beta                               _beta,
+                                     bool                               _gpu,
+                                     std::vector<std::shared_ptr<void>> _biasList,
+                                     std::shared_ptr<void>              _ws            = nullptr,
+                                     size_t                             _workspaceSize = 0)
 
                 : Base(_a.get(),
                        _b.get(),
@@ -85,7 +85,7 @@ namespace Tensile
                        _batchD.get(),
                        _alpha,
                        _beta,
-                       _bias.get(),
+                       _biasList,
                        _ws.get())
                 , managedA(_a)
                 , managedB(_b)
@@ -100,7 +100,7 @@ namespace Tensile
                 , cElements(_cElements)
                 , dElements(_dElements)
                 , gpu(_gpu)
-                , managedBias(_bias)
+                , managedBiasList(_biasList)
                 , managedWS(_ws)
                 , workspaceSize(_workspaceSize)
             {
@@ -108,16 +108,16 @@ namespace Tensile
 
             ~ManagedContractionInputs() = default;
 
-            std::shared_ptr<A>    managedA;
-            std::shared_ptr<B>    managedB;
-            std::shared_ptr<C>    managedC;
-            std::shared_ptr<D>    managedD;
-            std::shared_ptr<A*>   managedBatchA;
-            std::shared_ptr<B*>   managedBatchB;
-            std::shared_ptr<C*>   managedBatchC;
-            std::shared_ptr<D*>   managedBatchD;
-            std::shared_ptr<void> managedWS;
-            std::shared_ptr<A>    managedBias;
+            std::shared_ptr<A>                 managedA;
+            std::shared_ptr<B>                 managedB;
+            std::shared_ptr<C>                 managedC;
+            std::shared_ptr<D>                 managedD;
+            std::shared_ptr<A*>                managedBatchA;
+            std::shared_ptr<B*>                managedBatchB;
+            std::shared_ptr<C*>                managedBatchC;
+            std::shared_ptr<D*>                managedBatchD;
+            std::shared_ptr<void>              managedWS;
+            std::vector<std::shared_ptr<void>> managedBiasList;
 
             size_t aElements;
             size_t bElements;
@@ -138,6 +138,7 @@ namespace Tensile
             using DType     = typename TypedInputs::DType;
             using AlphaType = typename TypedInputs::AlphaType;
             using BetaType  = typename TypedInputs::BetaType;
+
             using ManagedInputs
                 = ManagedContractionInputs<AType, BType, CType, DType, AlphaType, BetaType>;
 
@@ -162,6 +163,12 @@ namespace Tensile
                     m_curBoundsCheck = BoundsCheckMode::GuardPageBack;
 
                 return prepareGPUInputsTyped(problem);
+            }
+
+            void setBiasPtr(ContractionProblem const&       problem,
+                            std::shared_ptr<ManagedInputs>* inputs)
+            {
+                inputs->get()->bias = inputs->get()->biasList[(int)problem.biasType()];
             }
 
             std::shared_ptr<ManagedInputs> prepareCPUInputsTyped(ContractionProblem const& problem)
@@ -202,6 +209,8 @@ namespace Tensile
                     if(allocated || m_curBoundsCheck == BoundsCheckMode::NaN)
                         copyInputs(m_cpuConvInputs, m_cpuInputsPristine, m_cpuBadInputs, problem);
                 }
+
+                setBiasPtr(problem, &m_cpuInputs);
 
                 return m_cpuInputs;
             }
@@ -358,6 +367,8 @@ namespace Tensile
 
                 initializeGPUBatchedInputs(*m_gpuInputs, problem);
 
+                setBiasPtr(problem, &m_gpuInputs);
+
                 return m_gpuInputs;
             }
 
@@ -400,11 +411,11 @@ namespace Tensile
             std::shared_ptr<ManagedInputs> allocNewCPUInputs(std::shared_ptr<ManagedInputs> pristine
                                                              = nullptr)
             {
-                std::shared_ptr<AType> a;
-                std::shared_ptr<BType> b;
-                std::shared_ptr<CType> c;
-                std::shared_ptr<DType> d;
-                std::shared_ptr<AType> bias;
+                std::shared_ptr<AType>             a;
+                std::shared_ptr<BType>             b;
+                std::shared_ptr<CType>             c;
+                std::shared_ptr<DType>             d;
+                std::vector<std::shared_ptr<void>> biasList;
 
                 if(pristine)
                 {
@@ -460,15 +471,33 @@ namespace Tensile
 
                 if(pristine)
                 {
-                    bias = pristine->managedBias;
+                    biasList = pristine->managedBiasList;
                 }
                 else
                 {
-                    bias = std::shared_ptr<AType>(
-                        (AType*)std::malloc(TypeInfo<AType>::ElementSize * m_dMaxElements),
-                        std::free);
-                    if(bias == nullptr)
-                        throw std::runtime_error("out of host memory allocating d");
+                    for(int dataTypeInt = (int)DataType::Float; dataTypeInt != (int)DataType::Count;
+                        dataTypeInt++)
+                    {
+                        std::shared_ptr<void> biasptr;
+                        size_t                allocatedSize = 1;
+                        // Does not support complex
+                        if(dataTypeInt == (int)DataType::ComplexDouble
+                           && dataTypeInt == (int)DataType::ComplexFloat
+                           && dataTypeInt == (int)DataType::Int8x4)
+                        {
+                            allocatedSize = 1;
+                        }
+                        else
+                        {
+                            allocatedSize = GetElementSize(static_cast<DataType>(dataTypeInt))
+                                            * m_biasMaxElements;
+                        }
+                        biasptr
+                            = std::shared_ptr<void>((void*)std::malloc(allocatedSize), std::free);
+                        biasList.push_back(biasptr);
+                        if(biasptr == nullptr)
+                            throw std::runtime_error("out of host memory allocating d");
+                    }
                 }
 
                 auto rv = std::make_shared<ManagedInputs>(a,
@@ -486,7 +515,7 @@ namespace Tensile
                                                           alpha,
                                                           beta,
                                                           false,
-                                                          bias);
+                                                          biasList);
 
                 return rv;
             }
@@ -510,11 +539,11 @@ namespace Tensile
                 if(m_curBoundsCheck != BoundsCheckMode::Disable || (pristine && !pristine->gpu))
                     pristine = nullptr;
 
-                std::shared_ptr<AType> a;
-                std::shared_ptr<BType> b;
-                std::shared_ptr<CType> c;
-                std::shared_ptr<DType> d;
-                std::shared_ptr<AType> bias;
+                std::shared_ptr<AType>             a;
+                std::shared_ptr<BType>             b;
+                std::shared_ptr<CType>             c;
+                std::shared_ptr<DType>             d;
+                std::vector<std::shared_ptr<void>> biasList;
 
                 std::shared_ptr<AType*> batch_a;
                 std::shared_ptr<BType*> batch_b;
@@ -620,12 +649,32 @@ namespace Tensile
 
                 if(pristine)
                 {
-                    bias = pristine->managedBias;
+                    biasList = pristine->managedBiasList;
                 }
                 else
                 {
-                    bias = allocNewGPUBuffer<AType>("bias",
-                                                    TypeInfo<AType>::ElementSize * m_dMaxElements);
+                    for(int dataTypeInt = (int)DataType::Float; dataTypeInt != (int)DataType::Count;
+                        dataTypeInt++)
+                    {
+                        std::shared_ptr<void> biasptr;
+                        size_t                allocatedSize = 1;
+                        // Does not support complex
+                        if(dataTypeInt == (int)DataType::ComplexDouble
+                           && dataTypeInt == (int)DataType::ComplexFloat
+                           && dataTypeInt == (int)DataType::Int8x4)
+                        {
+                            allocatedSize = 1;
+                        }
+                        else
+                        {
+                            allocatedSize = GetElementSize(static_cast<DataType>(dataTypeInt))
+                                            * m_biasMaxElements;
+                        }
+                        biasptr = allocNewGPUBuffer<void>("bias", allocatedSize);
+                        biasList.push_back(biasptr);
+                        if(biasptr == nullptr)
+                            throw std::runtime_error("out of host memory allocating d");
+                    }
                 }
                 auto rv = std::make_shared<ManagedInputs>(a,
                                                           b,
@@ -642,7 +691,7 @@ namespace Tensile
                                                           alpha,
                                                           beta,
                                                           true,
-                                                          bias,
+                                                          biasList,
                                                           ws,
                                                           m_workspaceSize);
                 return rv;
@@ -678,8 +727,53 @@ namespace Tensile
 
                     if(problem.useBias())
                     {
-                        // FIXME: Use mbiasMaxElements
-                        initArray(m_biasInit, inputs.managedBias.get(), m_dMaxElements);
+
+                        for(size_t i = 0; i < inputs.managedBiasList.size(); i++)
+                        {
+                            auto biasType = static_cast<DataType>(i);
+                            switch(biasType)
+                            {
+                            case DataType::Float:
+                                initArray<float>(
+                                    m_biasInit,
+                                    static_cast<float*>(inputs.managedBiasList[i].get()),
+                                    m_biasMaxElements);
+                                break;
+                            case DataType::Double:
+                                initArray<double>(
+                                    m_biasInit,
+                                    static_cast<double*>(inputs.managedBiasList[i].get()),
+                                    m_biasMaxElements);
+                                break;
+                            case DataType::Half:
+                                initArray<Half>(m_biasInit,
+                                                static_cast<Half*>(inputs.managedBiasList[i].get()),
+                                                m_biasMaxElements);
+                                break;
+                            case DataType::Int32:
+                                initArray<int32_t>(
+                                    m_biasInit,
+                                    static_cast<int32_t*>(inputs.managedBiasList[i].get()),
+                                    m_biasMaxElements);
+                                break;
+                            case DataType::BFloat16:
+                                initArray<BFloat16>(
+                                    m_biasInit,
+                                    static_cast<BFloat16*>(inputs.managedBiasList[i].get()),
+                                    m_biasMaxElements);
+                                break;
+                            case DataType::Int8:
+                                initArray<int8_t>(
+                                    m_biasInit,
+                                    static_cast<int8_t*>(inputs.managedBiasList[i].get()),
+                                    m_biasMaxElements);
+                                break;
+                            case DataType::ComplexFloat:
+                            case DataType::ComplexDouble:
+                            case DataType::Int8x4:
+                            case DataType::Count:;
+                            }
+                        }
                     }
 
                     for(int i = 0; i < getAdditionalArgNum(problem.activationType()); i++)
@@ -787,10 +881,14 @@ namespace Tensile
                                             TypeInfo<DType>::ElementSize * m_dMaxElements,
                                             kind));
 
-                HIP_CHECK_EXC(hipMemcpy(dst->managedBias.get(),
-                                        src->managedBias.get(),
-                                        TypeInfo<AType>::ElementSize * m_dMaxElements,
-                                        kind));
+                for(size_t i = 0; i < src->managedBiasList.size(); i++)
+                {
+                    HIP_CHECK_EXC(
+                        hipMemcpy(dst->managedBiasList[i].get(),
+                                  src->managedBiasList[i].get(),
+                                  GetElementSize(static_cast<DataType>(i)) * m_biasMaxElements,
+                                  kind));
+                }
 
                 dst->alpha = src->alpha;
                 dst->beta  = src->beta;
@@ -852,9 +950,12 @@ namespace Tensile
                     if(!m_cEqualsD)
                         Tensile::hip::CopyTensor(dst->d, src->d, problem.d(), kind);
 
-                    memcpy(const_cast<AType*>(dst->bias),
-                           src->bias,
-                           problem.d().sizes()[0] * TypeInfo<AType>::ElementSize);
+                    for(size_t i = 0; i < src->biasList.size(); i++)
+                    {
+                        memcpy(const_cast<void*>(dst->biasList[i]),
+                               src->biasList[i],
+                               problem.d().sizes()[0] * GetElementSize(static_cast<DataType>(i)));
+                    }
 
                     dst->alpha = src->alpha;
                     dst->beta  = src->beta;
@@ -905,10 +1006,14 @@ namespace Tensile
                                                     * problem.d().totalAllocatedElements(),
                                                 kind));
 
-                    HIP_CHECK_EXC(hipMemcpy(const_cast<AType*>(dst->bias),
-                                            src->bias,
-                                            TypeInfo<AType>::ElementSize * problem.d().sizes()[0],
-                                            kind));
+                    for(size_t i = 0; i < src->biasList.size(); i++)
+                    {
+                        HIP_CHECK_EXC(hipMemcpy(const_cast<void*>(dst->biasList[i]),
+                                                src->biasList[i],
+                                                GetElementSize(static_cast<DataType>(i))
+                                                    * problem.d().sizes()[0],
+                                                kind));
+                    }
 
                     dst->alpha = src->alpha;
                     dst->beta  = src->beta;
@@ -970,6 +1075,10 @@ namespace Tensile
             = ManagedContractionInputs<int8_t, int8_t, int8_t, int8_t, int32_t, int32_t>;
         using ManagedContractionInputs_I8_I32_I32
             = ManagedContractionInputs<int8_t, int8_t, int32_t, int32_t>;
+        using ManagedContractionInputs_I8_I32_S
+            = ManagedContractionInputs<int8_t, int8_t, int32_t, int32_t, float, float>;
+        using ManagedContractionInputs_I8_I8_S
+            = ManagedContractionInputs<int8_t, int8_t, int8_t, int8_t, float, float>;
         using ManagedContractionInputs_I32_I32_I32 = ManagedContractionInputs<int32_t>;
 #ifdef TENSILE_USE_BF16
         using ManagedContractionInputs_B_B_S

@@ -201,7 +201,7 @@ class KernelWriterActivationOnly(KernelWriterBase):
       rvalueStr = "activation((%s)D[idxD]%s)" % (typeActivationStr, names)
 
       if self.state["ProblemType"]["DestDataType"].isInt8() and self.state["ProblemType"]["HighPrecisionAccumulate"]:
-        rvalueStr = "min(127, max(-128, %s))" % rvalueStr
+        rvalueStr = "min(127, max(-128, (int32_t)std::nearbyint(%s)))" % rvalueStr
 
       kStr += "  D[idxD] = (%s)%s;%s" % (typeStr, rvalueStr, self.endLine)
 

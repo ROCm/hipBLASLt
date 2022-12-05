@@ -87,6 +87,7 @@ namespace Tensile
             PerformanceMetric           m_performanceMetric;
             bool                        m_fp16AltImpl;
             ActivationType              m_activationType;
+            std::vector<DataType>       m_biasTypeArgs;
             bool                        m_activationHPA;
             std::vector<ActivationType> m_activationEnumArg;
 
