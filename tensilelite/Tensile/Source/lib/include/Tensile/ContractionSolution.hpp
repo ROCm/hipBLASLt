@@ -168,7 +168,8 @@ namespace Tensile
         /**
    * Calculate required workspace size.
    */
-        size_t requiredWorkspaceSize(Problem const& problem) const;
+        size_t       requiredWorkspaceSize(Problem const& problem) const;
+        static float computeGranularity(float x);
 
         Granularities computeGranularities(
             Hardware const& hardware, double M, double N, double K, double NumBatches) const;
@@ -276,20 +277,21 @@ namespace Tensile
 
         struct ProblemType
         {
-            std::string    operationIdentifier;
-            DataType       aType                   = DataType::Float;
-            DataType       bType                   = DataType::Float;
-            DataType       cType                   = DataType::Float;
-            DataType       dType                   = DataType::Float;
-            bool           highPrecisionAccumulate = false;
-            bool           useBeta                 = true;
-            bool           useBias                 = false;
-            bool           useInitialStridesAB     = false;
-            bool           useInitialStridesCD     = false;
-            bool           stridedBatched          = true;
-            bool           fp16AltImpl             = false;
-            ActivationType activationType          = ActivationType::None;
-            bool           activationHPA           = false;
+            std::string           operationIdentifier;
+            DataType              aType                   = DataType::Float;
+            DataType              bType                   = DataType::Float;
+            DataType              cType                   = DataType::Float;
+            DataType              dType                   = DataType::Float;
+            bool                  highPrecisionAccumulate = false;
+            bool                  useBeta                 = true;
+            bool                  useBias                 = false;
+            bool                  useInitialStridesAB     = false;
+            bool                  useInitialStridesCD     = false;
+            bool                  stridedBatched          = true;
+            bool                  fp16AltImpl             = false;
+            ActivationType        activationType          = ActivationType::None;
+            bool                  activationHPA           = false;
+            std::vector<DataType> biasDataTypeWhiteList;
         };
 
         struct LinearModel

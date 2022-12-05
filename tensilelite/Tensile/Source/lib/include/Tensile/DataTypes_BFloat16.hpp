@@ -62,6 +62,11 @@ namespace Tensile
         {
         }
 
+        explicit operator _Float16() const
+        {
+            return _Float16(bfloat16_to_float(*this));
+        }
+
         explicit operator float() const
         {
             return bfloat16_to_float(*this);

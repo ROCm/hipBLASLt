@@ -79,6 +79,7 @@ namespace Tensile
             m_reporter->report(ResultKey::LDD, problem.d().strides()[1]);
 
             m_reporter->report(ResultKey::ProblemSizes, problem.problemSizes());
+            m_reporter->report(ResultKey::BiasType, ToString(problem.biasType()));
             m_reporter->report(ResultKey::ActivationType, ToString(problem.activationEnumArg()));
         }
 

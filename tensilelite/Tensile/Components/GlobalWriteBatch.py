@@ -26,9 +26,10 @@ from ..Activation import ActivationModule, ActivationType
 from ..AsmStoreState import StoreState
 from ..TensileInstructions import Label, Module, EXEC, SDWAModifiers, VCC, SelectBit, \
                             vgpr, sgpr, replaceHolder, SaturateCastType, VCvtBF16toFP32, \
-                            DataType
+                            DataType, CvtType, RoundType
 from ..TensileInstructions.Instructions import *
 from ..AsmAddressCalculation import AddrCalculation
+from ..Components.PackData import formatting
 
 from math import ceil
 
@@ -78,6 +79,7 @@ class GlobalWriteBatchWriter:
     self.parentWriter = parentWriter
     self.loadsIssued = 0
     self.storesIssued = 0
+    self.biasLocalBarrierInit = False
 
   @property
   def wavelen(self) -> int:
@@ -187,8 +189,9 @@ class GlobalWriteBatchWriter:
     self.ss.setupStoreElementsForBatch(self.kernel, self.gwvw, self.batchElements, self.batchElementSgprs, isOptNLL=False, \
                                   allowLRVWforTLUandMI=self.kernel["allowLRVWforTLUandMI"], lrvwB=self.parentWriter.states.lrvwB)
 
-    self.loadsIssued = 0
-    self.storesIssued = 0
+    self.loadsIssued     = 0
+    self.localLoadIssued = 0
+    self.storesIssued    = 0
 
     ########################################
     # calculate addr and masks
@@ -242,29 +245,33 @@ class GlobalWriteBatchWriter:
 
       # create code Module to push mov vgpr,acc instructions
       if self.beta:
-        module.add(addrCalc.emitLdChange(self.kernel, self.ss, 'C', self.edge, self.beta, mask, (elementIdx == 0), self.tmpVgpr, addrCVgpr, self.addrC))
+        module.add(addrCalc.emitLdChange(self.kernel, self.ss, 'C', self.edge, self.beta, mask, (elementIdx == 0), self.tmpVgpr, self.tmpSgpr, addrCVgpr, self.addrC))
         if self.kernel["GroupLoadStore"]:
           loadInputCode.add(self.parentWriter.readCInput(self.kernel, self.ss, addrCalc, vc0, data, self.gwvw, addrCVgpr, self.tmpS01))
         else:
           module.add(self.parentWriter.readCInput(self.kernel, self.ss, addrCalc, vc0, data, self.gwvw, addrCVgpr, self.tmpS01))
         self.loadsIssued += 1
       if self.kernel["ProblemType"]["UseBias"]:
-        module.add(addrCalc.emitLdChange(self.kernel, self.ss, 'Bias', self.edge, self.beta, mask, (elementIdx == 0), self.tmpVgpr, addrBiasVgpr, self.addrBias))
+        module.add(addrCalc.emitLdChange(self.kernel, self.ss, 'Bias', self.edge, self.beta, mask, (elementIdx == 0), self.tmpVgpr, self.tmpSgpr, addrBiasVgpr, self.addrBias))
         if dataBias not in loadedDataBias:
-          # Shift right several vgprs for cvt ops if needed
-          numVgprs = int(ceil(self.kernel["ProblemType"]["DataType"].numRegisters() * self.ss.cfg.gwvw))
-          reg = self.kernel["ProblemType"]["DataType"].numRegisters() if self.kernel["ProblemType"]["DataType"].numRegisters() >= 1 else 1
-          gprShiftBias = dataBias + (self.ss.cfg.gwvw * reg - numVgprs)
           if self.kernel["GroupLoadStore"]:
             # Group bias load with C input to
-            loadInputCode.add(self.parentWriter.addBiasLoad(self.kernel, self.ss, addrCalc, gprShiftBias))
+            if (self.kernel["GlobalSplitU"] == 1) and (not self.biasLocalBarrierInit):
+              loadInputCode.add(SWaitCnt(lgkmcnt=0, comment="Wait for Bias LDS write"))
+              loadInputCode.add(SBarrier("Bias LDS write barrier"))
+              self.biasLocalBarrierInit = True
+            loadInputCode.add(self.parentWriter.addBiasLoad(self.kernel["ProblemType"]["ComputeDataType"], self.kernel, self.ss, addrCalc, dataBias, True))
           else:
-            module.add(self.parentWriter.addBiasLoad(self.kernel, self.ss, addrCalc, gprShiftBias))
+            if (self.kernel["GlobalSplitU"] == 1) and (not self.biasLocalBarrierInit):
+              module.add(SWaitCnt(lgkmcnt=0, comment="Wait for Bias LDS write"))
+              module.add(SBarrier("Bias LDS write barrier"))
+              self.biasLocalBarrierInit = True
+            module.add(self.parentWriter.addBiasLoad(self.kernel["ProblemType"]["ComputeDataType"], self.kernel, self.ss, addrCalc, dataBias, True))
           loadedDataBias[dataBias] = 1
-          self.loadsIssued += 1
+          self.localLoadIssued += 1
       self.biasLoadIssued.append(len(loadedDataBias))
 
-      module.add(addrCalc.emitLdChange(self.kernel, self.ss, 'D', self.edge, self.beta, mask, (elementIdx == len(self.batchElements) - 1), self.tmpVgpr, addrDVgpr, self.addrD))
+      module.add(addrCalc.emitLdChange(self.kernel, self.ss, 'D', self.edge, self.beta, mask, (elementIdx == len(self.batchElements) - 1), self.tmpVgpr, self.tmpSgpr, addrDVgpr, self.addrD))
 
       if self.atomic and (not self.parentWriter.states.useAtomicAdd):
         # load c into data+1 because of CAS structure
@@ -299,12 +306,6 @@ class GlobalWriteBatchWriter:
             vgpr(offsetSrc+0), "addrDVgpr = D + index*bytes (lo)"))
         module.add(VAddCCOU32(vgpr(addrDVgpr+1), VCC(), vgpr(self.addrD+1), \
             vgpr(offsetSrc+1), VCC(), "addrDVgpr = D + index*bytes (hi)"))
-
-        if self.kernel["ProblemType"]["UseBias"] and (self.kernel["GlobalSplitU"] == 1):
-          module.add(VAddCOU32(dst=vgpr(addrBiasVgpr+0), dst1=VCC(), src0=vgpr(self.addrBias+0), \
-              src1=vgpr(addrBiasVgpr+0), comment="addrBiasVgpr = Bias + index*bytes (lo)" ))
-          module.add(VAddCCOU32(dst=vgpr(addrBiasVgpr+1), dst1=VCC(), src0=vgpr(self.addrBias+1), \
-              src1=VCC(), src2=vgpr(addrBiasVgpr+1), comment="addrBiasVgpr = Bias + index*bytes (hi)"))
 
         # restore full exec mask for calculating addr of next element
         if self.edge and (self.beta or self.atomic):
@@ -422,8 +423,16 @@ class GlobalWriteBatchWriter:
 
     ########################################
     # wait for batched load
-    if (self.beta or self.kernel["ProblemType"]["UseBias"]) and not interleaveStoreVmcnt:
-      module.add(SWaitCnt(vmcnt=0, vscnt=0, comment="writes & wait C"))
+    if not interleaveStoreVmcnt:
+      biasWait = self.kernel["ProblemType"]["UseBias"] and (self.kernel["GlobalSplitU"] == 1)
+      if self.beta:
+        extraStr = " / Bias " if biasWait else ""
+        if biasWait:
+          module.add(SWaitCnt(vmcnt=0, vscnt=0, lgkmcnt=0, comment="writes & wait C" + extraStr))
+        else:
+          module.add(SWaitCnt(vmcnt=0, vscnt=0, comment="writes & wait C" + extraStr))
+      elif biasWait:
+        module.add(SWaitCnt(lgkmcnt=0, comment="writes & wait bias LDS"))
 
     module.addComment1("apply mask, calc new C and issue writes")
     # module.add(self.getBomb()) # can see store addresses just before the store inst
@@ -446,7 +455,6 @@ class GlobalWriteBatchWriter:
           activationLabelModule = Label("Activation_%s_%s"% (enumStr.capitalize(), activationLabelSuffix), "")
           activationLabelModules.append(activationLabelModule)
         for index, activationLabelModule in enumerate(activationLabelModules):
-          if index != 0:
             enumIndex = ActivationType.getEnumIndex(activationEnumStrList[index])
             module.add(SCmpKEQU32(sgpr("ActivationType"), enumIndex, "activationType == %u"%enumIndex))
             module.add(SCBranchSCC1(activationLabelModule.getLabelName(), "Branch if true"))
@@ -468,11 +476,9 @@ class GlobalWriteBatchWriter:
         module.add(VMovB32(vgpr(self.bf16CVTVgprStruct.vgprBf16Mask), "0xffff0000", "mask for pack two bfloat16 element to 32bit" ))
         module.add(VMovB32(vgpr(self.bf16CVTVgprStruct.vgprFp32Nan), "0x7fff0000", "fp32 Nan" ))
         module.add(VMovB32(vgpr(self.bf16CVTVgprStruct.vgprBf16Inc), "0x7fff", "rounding bias for bfloat16" ))
-      elif self.kernel["ProblemType"]["DataType"].isBFloat16() and self.kernel["ProblemType"]["UseBias"]:
-        module.add(VMovB32(dst=vgpr(self.bf16CVTVgprStruct.vgprBf16Mask), src="0xffff0000", comment="mask for pack two bfloat16 element to 32bit"))
 
       storeCode = Module("GroupLoadStore")
-      cvtDataBias = {}
+      biasWaitDict = {}
       for elementIdx in range(0, len(self.batchElements)):
         element = self.batchElements[elementIdx]
         addrCalc: AddrCalculation = self.ss.elementAddr[elementIdx]
@@ -499,24 +505,38 @@ class GlobalWriteBatchWriter:
         # at least two stores so does some combining across VI -
         # for example assuming we can have two elements and can use pk_mul
         # here:
-        if (self.beta or self.kernel["ProblemType"]["UseBias"]) and interleaveStoreVmcnt:
-          waitLoadCnt = 0
-          if self.beta: waitLoadCnt = elementIdx
-          if self.kernel["ProblemType"]["UseBias"]: waitLoadCnt += self.biasLoadIssued[elementIdx]
-          vmcnt = self.loadsIssued - waitLoadCnt - 1
-          if self.parentWriter.states.archCaps["SeparateVscnt"]:
-            waitStoreCnt = 0
-            vmComment = "{} = {} - {} - 1".format(vmcnt, self.loadsIssued, waitLoadCnt)
+        if (self.beta or (self.kernel["ProblemType"]["UseBias"] and (self.kernel["GlobalSplitU"] == 1))) and interleaveStoreVmcnt:
+          if (not self.beta): # If no beta
+            if (dataBias not in biasWaitDict):
+              localLoadCnt = self.localLoadIssued - self.biasLoadIssued[elementIdx]
+              module.addSpaceLine()
+              module.add(SWaitCnt(lgkmcnt=localLoadCnt, comment="wait bias lds load (interleaved)"))
           else:
-            waitStoreCnt = self.storesIssued if not self.kernel["GroupLoadStore"] else 0
-            vmComment = "{} = {} - {} + {} - 1".format(vmcnt + waitStoreCnt, self.loadsIssued, waitLoadCnt, waitStoreCnt)
+            waitLoadCnt = 0
+            waitLocalLoadCnt = -1
+            if self.beta: waitLoadCnt = elementIdx
+            if self.kernel["ProblemType"]["UseBias"] and (dataBias not in biasWaitDict):
+              waitLocalLoadCnt = self.localLoadIssued - self.biasLoadIssued[elementIdx]
 
-          #print "wmvcnt=", vmcnt
-          module.addSpaceLine()
-          module.add(SWaitCnt(lgkmcnt=-1, vmcnt=vmcnt, vscnt=waitStoreCnt, comment="wait C (interleaved) " + vmComment))
+            vmcnt = self.loadsIssued - waitLoadCnt - 1
+            if self.parentWriter.states.archCaps["SeparateVscnt"]:
+              waitStoreCnt = 0
+              vmComment = "{} = {} - {} - 1".format(vmcnt, self.loadsIssued, waitLoadCnt)
+            else:
+              waitStoreCnt = self.storesIssued if not self.kernel["GroupLoadStore"] else 0
+              vmComment = "{} = {} - {} + {} - 1".format(vmcnt + waitStoreCnt, self.loadsIssued, waitLoadCnt, waitStoreCnt)
+
+            #print "wmvcnt=", vmcnt
+            module.addSpaceLine()
+            module.add(SWaitCnt(lgkmcnt=waitLocalLoadCnt, vmcnt=vmcnt, vscnt=waitStoreCnt, comment="wait C (interleaved) " + vmComment))
+          biasWaitDict[dataBias] = 1 # No need to wait again if the bias data is already loaded.
 
         if self.beta:
           module.add(self._addSumAlphaWithCBeta(self.kernel, self.ss, self.gwvw, elementIdx, vc0, self.tmpVgpr, self.bf16CVTVgprStruct))
+        elif ((self.kernel["ProblemType"]["UseBias"] and (self.kernel["GlobalSplitU"] == 1)) or self.kernel["ActivationFuncCall"]) and not self.applyAlpha: # case of alpha=1 and beta=0
+          if (self.kernel["ProblemType"]["DestDataType"].isInt8() or self.kernel["ProblemType"]["DestDataType"].isInt32()) and self.kernel["ProblemType"]["ComputeDataType"].isSingle():
+            module.add(convertData(self.gwvw, self.ss.elementSumIdx[elementIdx], cvtType=CvtType.CVT_I32_to_F32, \
+                                        inputPrefix="ValuC+", prefixOffset=self.parentWriter.states.c.startVgprValu))
 
         # Add bias
         mergeActFuncCall = False
@@ -524,9 +544,6 @@ class GlobalWriteBatchWriter:
           if activationCDataType == self.kernel["ProblemType"]["ComputeDataType"] and self.kernel["ActivationFuncCall"]:
             mergeActFuncCall = True
           for vi in range(0, self.gwvw):
-            numVgprs  = int(ceil(self.kernel["ProblemType"]["DataType"].numRegisters() * self.ss.cfg.gwvw))
-            reg = self.kernel["ProblemType"]["DataType"].numRegisters() if self.kernel["ProblemType"]["DataType"].numRegisters() >= 1 else 1
-            loadVgpr  = dataBias + (self.ss.cfg.gwvw * reg - numVgprs) + int(vi * self.kernel["ProblemType"]["DataType"].numRegisters())
             inputVgpr = dataBias + vi
             sumIdxV   = self.ss.elementSumIdx[elementIdx] + vi
             if self.kernel["ProblemType"]["ComputeDataType"].isSingle():
@@ -534,32 +551,12 @@ class GlobalWriteBatchWriter:
               vgprDst = (self.activationSetPCStruct.vgprActCopy + vi) if mergeActFuncCall else "ValuC+%d"%vgprIdx
               # Generate single f32 code if edge is detected.
               if ((vi + 1) == self.gwvw) and ((self.gwvw % 2) == 1):
-                if inputVgpr not in cvtDataBias:
-                  if self.kernel["ProblemType"]["DataType"].isHalf():
-                    if vi % 2 == 0:
-                      sdwa = SDWAModifiers(src0_sel=SelectBit.WORD_0)
-                    else:
-                      sdwa = SDWAModifiers(src0_sel=SelectBit.WORD_1)
-                    module.add(VCvtF16toF32(dst=vgpr(inputVgpr), src=vgpr(loadVgpr), sdwa=sdwa, comment="convert f16 to fp32"))
-                  elif self.kernel["ProblemType"]["DataType"].isBFloat16():
-                    module.add(VCvtBF16toFP32(dst=inputVgpr, src=loadVgpr, vgprMask=self.bf16CVTVgprStruct.vgprBf16Mask, vi=vi))
-                  cvtDataBias[inputVgpr] = 1
                 module.add(VAddF32(dst=vgpr(vgprDst), src0=vgpr(inputVgpr), src1=vgpr("ValuC+%d"%vgprIdx), \
                                    comment="C += bias"))
               # Original packed route
               elif vi%2 == 1:
                 assert (self.gwvw % 2 == 0)
               else:
-                if inputVgpr not in cvtDataBias:
-                  if self.kernel["ProblemType"]["DataType"].isHalf():
-                    module.add(VCvtF16toF32(dst=vgpr(inputVgpr), src=vgpr(loadVgpr), \
-                                            sdwa=SDWAModifiers(src0_sel=SelectBit.WORD_0), comment="convert f16 to fp32"))
-                    module.add(VCvtF16toF32(dst=vgpr(inputVgpr+1), src=vgpr(loadVgpr), \
-                                            sdwa=SDWAModifiers(src0_sel=SelectBit.WORD_1), comment="convert f16 to fp32"))
-                  elif self.kernel["ProblemType"]["DataType"].isBFloat16():
-                    module.add(VCvtBF16toFP32(dst=inputVgpr, src=loadVgpr, vgprMask=self.bf16CVTVgprStruct.vgprBf16Mask, vi=vi))
-                    module.add(VCvtBF16toFP32(dst=inputVgpr+1, src=loadVgpr, vgprMask=self.bf16CVTVgprStruct.vgprBf16Mask, vi=vi+1))
-                  cvtDataBias[inputVgpr] = 1
                 module.add(VAddPKF32(dst=vgpr(vgprDst, 2), src0=vgpr(inputVgpr, 2), \
                                      src1=vgpr("ValuC+%d"%vgprIdx, 2), comment="C += bias"))
             else:
@@ -596,6 +593,7 @@ class GlobalWriteBatchWriter:
 
         # pack stores, beta and non-beta reach here:
         packModule = Module("Empty pack module")
+        convertModule = Module("Empty convert module")
         if self.kernel["ProblemType"]["HighPrecisionAccumulate"] and (self.kernel["_GlobalAccumulation"] != 'MultipleBuffer'):
           if self.kernel["ActivationFuncCall"] and activationCDataType == self.kernel["ProblemType"]["DestDataType"]:
             destIdx = self.activationSetPCStruct.vgprActCopy
@@ -606,15 +604,24 @@ class GlobalWriteBatchWriter:
           elif self.kernel["ProblemType"]["DestDataType"].isBFloat16():
             packModule = self.packdata(self.gwvw, destIdx, self.ss.elementSumIdx[elementIdx], bf16CVTVgprStruct=self.bf16CVTVgprStruct,
                                        tmpS01=self.tmpS01, laneSGPRC=self.laneSGPRC, inputPrefix="ValuC+", prefixOffset=self.parentWriter.states.c.startVgprValu)
+          elif self.kernel["ProblemType"]["DestDataType"].isInt32():
+            if self.kernel["ProblemType"]["ComputeDataType"].isSingle():
+              convertModule = convertData(self.gwvw, self.ss.elementSumIdx[elementIdx], cvtType=CvtType.CVT_F32_to_I32, \
+                                          inputPrefix="ValuC+", prefixOffset=self.parentWriter.states.c.startVgprValu)
           elif self.kernel["ProblemType"]["DestDataType"].isInt8():
+            if self.kernel["ProblemType"]["ComputeDataType"].isSingle():
+              convertModule = convertData(self.gwvw, self.ss.elementSumIdx[elementIdx], cvtType=CvtType.CVT_F32_to_I32, roundType=RoundType.ROUND_TO_NEAREST_EVEN, \
+                                          inputPrefix="ValuC+", prefixOffset=self.parentWriter.states.c.startVgprValu)
             packModule = self.packdata(self.gwvw, destIdx, self.ss.elementSumIdx[elementIdx], self.tmpVgpr, self.tmpS01,
                                        SaturateTypeInt8=SaturateTypeInt8, inputPrefix="ValuC+", prefixOffset=self.parentWriter.states.c.startVgprValu)
 
         if isActivationInsertAfter:
+          module.add(convertModule)
           module.add(packModule)
           module.add(activationModule)
         else:
           module.add(activationModule)
+          module.add(convertModule)
           module.add(packModule)
 
         if not self.kernel["StoreRemapVectorWidth"]:
@@ -1000,6 +1007,10 @@ class GlobalWriteBatchWriter:
         # sgemm, HPA-bfgemm(b,b,b,b,s,s), and HPA-hgemm(h,h,h,h,s,s)
         # (h,h,h,h,h,h) + HPA (will be converted to (h,h,h,h,s,s)), internal alpha is single
         elif kernel["ProblemType"]["ComputeDataType"].isSingle() or (kernel["ProblemType"]["ComputeDataType"].isHalf() and kernel["ProblemType"]["HighPrecisionAccumulate"]):
+
+          if kernel["ProblemType"]["DataType"].isInt8() and kernel["ProblemType"]["HighPrecisionAccumulate"]:
+            module.add(VCvtI32toF32(dst=vgpr("ValuC+%u"%sumIdxV), src=vgpr("ValuC+%u"%sumIdxV), comment="convert to fp32" ))
+
           newSumIdx = sumIdxV - self.parentWriter.states.c.startVgprValu
           module.add(VMulF32(dst=vgpr("ValuC+%u"%newSumIdx), src0=sgpr("Alpha"), src1=vgpr("ValuC+%u"%newSumIdx), comment="*= alpha" ))
           if self.parentWriter.db["ForceExpectedValue"]:
@@ -1094,25 +1105,32 @@ class GlobalWriteBatchWriter:
 
       elif kernel["ProblemType"]["DestDataType"].isInt8():
         if kernel["ProblemType"]["HighPrecisionAccumulate"]:
-          assert (gwvw % 4 == 0)
           if (vi%4) != 3:
-            tmpC = tmpVgpr
-            module.add(VBfeI32(dst=vgpr(tmpC), src0=vgpr(dataV+0), src1=(vi * 8), src2=8, comment="int8 to int32"))
+            module.add(VBfeI32(dst=vgpr(tmpVgpr), src0=vgpr(dataV+0), src1=(vi * 8), src2=8, comment="int8 to int32"))
           else:
-            tmpC = dataV+0
-            module.add(VAShiftRightI32(dst=vgpr(dataV+0), shiftHex=24, src=vgpr(dataV+0), comment="int8 to int32"))
+            module.add(VAShiftRightI32(dst=vgpr(tmpVgpr), shiftHex=24, src=vgpr(dataV+0), comment="int8 to int32"))
+
           newSumIdxV = sumIdxV - self.parentWriter.states.c.startVgprValu
-          module.add(VMulLOU32(dst=vgpr(tmpC), src0=sgpr("Beta"), src1=vgpr(tmpC), comment="C = C*beta"))
-          module.add(VAddU32(dst=vgpr("ValuC+%u"%newSumIdxV), src0=vgpr(tmpC), src1=vgpr("ValuC+%u"%newSumIdxV), comment="finalSum = sum*alpha + C*beta"))
+          if kernel["ProblemType"]["ComputeDataType"].isSingle():
+            module.add(VCvtI32toF32(dst=vgpr(tmpVgpr), src=vgpr(tmpVgpr), comment="convert to fp32" ))
+            module.add(VMacF32(dst=vgpr("ValuC+%u"%newSumIdxV), src0=vgpr(tmpVgpr), src1=sgpr("Beta"), \
+                               comment="finalSum = sum*alpha + C*beta"))
+          else:
+            module.add(VMulLOU32(dst=vgpr(tmpVgpr), src0=sgpr("Beta"), src1=vgpr(tmpVgpr), comment="C = C*beta"))
+            module.add(VAddU32(dst=vgpr("ValuC+%u"%newSumIdxV), src0=vgpr(tmpVgpr), src1=vgpr("ValuC+%u"%newSumIdxV), comment="finalSum = sum*alpha + C*beta"))
 
       elif kernel["ProblemType"]["DestDataType"].isInt32():
-        # assume we will need to replace v_mac_f32 with v_add_u32 and s_mul_lo_i32
-        # v_mad_i32_i24
-        # module.add(VMadI32I24(dst=vgpr("ValuC+%u"%sumIdxV), src0=vgpr(dataV+0), src1=sgpr("Beta"), src2=vgpr("ValuC+%u"%sumIdxV), \
-        #     comment="finalSum = sum*alpha + C*beta"))
         newSumIdxV = sumIdxV - self.parentWriter.states.c.startVgprValu
-        module.add(VMulLOU32(dst=vgpr(dataV+0), src0=sgpr("Beta"), src1=vgpr(dataV+0), comment="C = C*beta"))
-        module.add(VAddU32(dst=vgpr("ValuC+%u"%newSumIdxV), src0=vgpr(dataV+0), src1=vgpr("ValuC+%u"%newSumIdxV), comment="finalSum = sum*alpha + C*beta"))
+        if kernel["ProblemType"]["ComputeDataType"].isSingle():
+          module.add(VCvtI32toF32(dst=vgpr(dataV+0), src=vgpr(dataV+0), comment="convert to fp32" ))
+          module.add(VMacF32(dst=vgpr("ValuC+%u"%newSumIdxV), src0=vgpr(dataV+0), src1=sgpr("Beta"), comment="finalSum = sum*alpha + C*beta"))
+        else:
+          # assume we will need to replace v_mac_f32 with v_add_u32 and s_mul_lo_i32
+          # v_mad_i32_i24
+          # module.add(VMadI32I24(dst=vgpr("ValuC+%u"%sumIdxV), src0=vgpr(dataV+0), src1=sgpr("Beta"), src2=vgpr("ValuC+%u"%sumIdxV), \
+          #     comment="finalSum = sum*alpha + C*beta"))
+          module.add(VMulLOU32(dst=vgpr(dataV+0), src0=sgpr("Beta"), src1=vgpr(dataV+0), comment="C = C*beta"))
+          module.add(VAddU32(dst=vgpr("ValuC+%u"%newSumIdxV), src0=vgpr(dataV+0), src1=vgpr("ValuC+%u"%newSumIdxV), comment="finalSum = sum*alpha + C*beta"))
 
       elif kernel["ProblemType"]["DestDataType"].isDouble():
         newSumIdxV = sumIdxV * 2 - self.parentWriter.states.c.startVgprValu
@@ -1164,4 +1182,20 @@ def copyData(computeDataType, elementSumIdx, gwvw, vgprStart, direction=0):
       tmp = i.src[0]
       i.src[0] = i.dst
       i.dst = tmp
+  return module
+
+def convertData(gwvw, elementSumIdx, cvtType: CvtType, roundType: RoundType = RoundType.ROUND_UP, inputPrefix="", prefixOffset=0):
+  module = Module("ConvertData")
+  for vi in range(0, gwvw):
+    sumIdxV = elementSumIdx + vi
+    formatVgpr = formatting(sumIdxV, inputPrefix, prefixOffset)
+    if cvtType == CvtType.CVT_F32_to_I32:
+        if roundType == RoundType.ROUND_TO_NEAREST_EVEN:
+          module.add(VRndneF32(dst=vgpr(formatVgpr), src=vgpr(formatVgpr), comment=" round to even"))
+        module.add(VCvtF32toI32(dst=vgpr(formatVgpr), src=vgpr(formatVgpr), comment=" convert fp32 to i32"))
+    elif cvtType == CvtType.CVT_I32_to_F32:
+        module.add(VCvtI32toF32(dst=vgpr(formatVgpr), src=vgpr(formatVgpr), comment=" convert to fp32"))
+    else:
+      #TODO add other convert types here.
+      assert 0
   return module

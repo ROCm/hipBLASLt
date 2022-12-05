@@ -21,9 +21,9 @@
 
 from . import ClientExecutable
 from . import LibraryIO
-from .TensileInstructions import getGfxName
+from .TensileInstructions import getGfxName, DataType
 from .Common import globalParameters, pushWorkingPath, popWorkingPath, print1, printExit, CHeader, printWarning, listToInitializer, ClientExecutionLock
-from .SolutionStructs import ProblemType, ProblemSizesMock, ActivationArgs
+from .SolutionStructs import ProblemType, ProblemSizesMock, ActivationArgs, BiasTypeArgs
 from .TensileCreateLibrary import copyStaticFiles
 
 import os
@@ -107,11 +107,13 @@ def main( config ):
     functions.append((scheduleName, problemType))
     functionNames.append("tensile_%s" % (problemType))
     problemSizes = ProblemSizesMock(exactLogic)
+    biasTypeArgs   = BiasTypeArgs(problemType, [problemType["DataType"]])
     activationArgs = ActivationArgs(problemType, [[{'Enum': 'relu'}]]) if problemType["ActivationType"] == 'all' else ""
     clientParametersPaths.append(writeClientConfig(
                                   forBenchmark=False,
                                   solutions=None,
                                   problemSizes=problemSizes,
+                                  biasTypeArgs=biasTypeArgs,
                                   activationArgs=activationArgs,
                                   stepName=str(ProblemType(problemType)),
                                   stepBaseDir=globalParameters["WorkingPath"],
@@ -439,7 +441,7 @@ def boundsCheckName(mode):
     if mode == 4: return 'GuardPageAll'
 
 
-def writeClientConfigIni(problemSizes, activationArgs, problemType, sourceDir, codeObjectFiles, resultsFileName, parametersFilePath, libraryFile=None):
+def writeClientConfigIni(problemSizes, biasTypeArgs, activationArgs, problemType, sourceDir, codeObjectFiles, resultsFileName, parametersFilePath, libraryFile=None):
 
     with open(parametersFilePath, "w") as f:
         def param(key, value):
@@ -465,6 +467,9 @@ def writeClientConfigIni(problemSizes, activationArgs, problemType, sourceDir, c
         param('alpha-type', problemType.alphaType.toEnum())
         param('beta-type',  problemType.betaType.toEnum())
         param('use-bias',   problemType.useBias)
+        if biasTypeArgs:
+          for btype in biasTypeArgs.biasTypes:
+            param('bias-type-args',  btype.toEnum())
 
         param('high-precision-accumulate', problemType.highPrecisionAccumulate)
         param('strided-batched', problemType.stridedBatched)
@@ -535,7 +540,7 @@ def writeClientConfigIni(problemSizes, activationArgs, problemType, sourceDir, c
         param("library-update-comment",   globalParameters["LibraryUpdateComment"])
 
 
-def writeClientConfig(forBenchmark, solutions, problemSizes, activationArgs, stepName, stepBaseDir, newLibrary, codeObjectFiles, tileAwareSelection, configBase = "ClientParameters", libraryFile = None):
+def writeClientConfig(forBenchmark, solutions, problemSizes, biasTypeArgs, activationArgs, stepName, stepBaseDir, newLibrary, codeObjectFiles, tileAwareSelection, configBase = "ClientParameters", libraryFile = None):
 
     if tileAwareSelection:
       filename = os.path.join(globalParameters["WorkingPath"], "%s_Granularity.ini"%configBase)
@@ -553,7 +558,7 @@ def writeClientConfig(forBenchmark, solutions, problemSizes, activationArgs, ste
 
     newSolution = next(iter(newLibrary.solutions.values()))
     sourceDir = os.path.join(stepBaseDir, "source")
-    writeClientConfigIni(problemSizes, activationArgs, newSolution.problemType, sourceDir, codeObjectFiles, resultsFileName, filename, libraryFile)
+    writeClientConfigIni(problemSizes, biasTypeArgs, activationArgs, newSolution.problemType, sourceDir, codeObjectFiles, resultsFileName, filename, libraryFile)
 
     return filename
 

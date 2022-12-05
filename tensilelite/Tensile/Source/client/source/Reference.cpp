@@ -23,6 +23,7 @@
  */
 
 #include "Reference.hpp"
+#include "DataInitialization.hpp"
 #include "Tensile/Debug.hpp"
 #include "Tensile/Utils.hpp"
 
@@ -117,6 +118,9 @@ namespace Tensile
         typename std::enable_if<std::is_same<int8_t, T>::value, T>::type
             SaturateCast(Accumulator val)
         {
+            if(std::is_same<Accumulator, float>::value)
+                val = std::nearbyint(val); //round to even
+
             if(val > static_cast<Accumulator>(127))
                 val = static_cast<Accumulator>(127);
             else if(val < static_cast<Accumulator>(-128))
@@ -129,6 +133,75 @@ namespace Tensile
             SaturateCast(Accumulator val)
         {
             return static_cast<T>(val);
+        }
+
+        template <typename Accumulator>
+        typename std::enable_if<std::is_same<Half, Accumulator>::value
+                                    || std::is_same<float, Accumulator>::value
+                                    || std::is_same<double, Accumulator>::value
+                                    || std::is_same<BFloat16, Accumulator>::value
+                                    || std::is_same<int32_t, Accumulator>::value
+                                    || std::is_same<int8_t, Accumulator>::value,
+                                Accumulator>::type
+            GetBias(DataType biasType, void const* biasptr, int pos, bool aConjugate)
+        {
+            switch(biasType)
+            {
+            case DataType::Float:
+            {
+                auto bptr = static_cast<float const*>(biasptr);
+                return multiply<Accumulator>(Transform<float>::Input(bptr[pos], aConjugate), 1);
+            }
+            break;
+            case DataType::Double:
+            {
+                auto bptr = static_cast<double const*>(biasptr);
+                return multiply<Accumulator>(Transform<double>::Input(bptr[pos], aConjugate), 1);
+            }
+            break;
+            case DataType::Half:
+            {
+                auto bptr = static_cast<Half const*>(biasptr);
+                return multiply<Accumulator>(Transform<Half>::Input(bptr[pos], aConjugate), 1);
+            }
+            break;
+            case DataType::Int32:
+            {
+                auto bptr = static_cast<int32_t const*>(biasptr);
+                return multiply<Accumulator>(Transform<int32_t>::Input(bptr[pos], aConjugate), 1);
+            }
+            break;
+            case DataType::BFloat16:
+            {
+                auto bptr = static_cast<BFloat16 const*>(biasptr);
+                return multiply<Accumulator>(Transform<BFloat16>::Input(bptr[pos], aConjugate), 1);
+            }
+            break;
+            case DataType::Int8:
+            {
+                auto bptr = static_cast<int8_t const*>(biasptr);
+                return multiply<Accumulator>(Transform<int8_t>::Input(bptr[pos], aConjugate), 1);
+            }
+            break;
+            case DataType::ComplexFloat:
+            case DataType::ComplexDouble:
+            case DataType::Int8x4:
+            case DataType::Count:;
+            }
+            return DataInitialization::getValue<Accumulator, InitMode::Zero>();
+        }
+
+        template <typename Accumulator>
+        typename std::enable_if<!std::is_same<Half, Accumulator>::value
+                                    && !std::is_same<float, Accumulator>::value
+                                    && !std::is_same<double, Accumulator>::value
+                                    && !std::is_same<BFloat16, Accumulator>::value
+                                    && !std::is_same<int32_t, Accumulator>::value
+                                    && !std::is_same<int8_t, Accumulator>::value,
+                                Accumulator>::type
+            GetBias(DataType biasType, void const* biasptr, int pos, bool aConjugate)
+        {
+            return DataInitialization::getValue<Accumulator, InitMode::Zero>();
         }
 
         template <typename T>
@@ -448,9 +521,12 @@ namespace Tensile
                 // bias
                 if(problem.useBias())
                 {
-                    int  pos  = int(dNum % problem.d().sizes()[0]);
-                    auto bias = multiply<Accumulator>(
-                        Transform<typename Inputs::AType>::Input(inputs.bias[pos], aConjugate), 1);
+                    int         pos = int(dNum % problem.d().sizes()[0]);
+                    Accumulator bias
+                        = GetBias<Accumulator>(problem.biasType(),
+                                               inputs.biasList[(int)problem.biasType()],
+                                               pos,
+                                               aConjugate);
                     resultD += bias;
                 }
                 // Activation adds here
@@ -470,6 +546,7 @@ namespace Tensile
             // retreive alpha/beta type set via setAlpha/BetaType()
             auto alphaType = problem.alphaType();
             auto betaType  = problem.betaType();
+            auto biasType  = problem.biasType();
 
             // Backward-compatible: when setAlpha/BetaType() wasn't called, use the old way
             // Could remove after rocBLAS is updated
@@ -481,6 +558,10 @@ namespace Tensile
             if(betaType == DataType::None)
             {
                 betaType = alphaType;
+            }
+            if(biasType == DataType::None)
+            {
+                biasType = problem.d().dataType();
             }
 
             auto contractionInputsTypeId = ContractionInputs::TypeId(problem.a().dataType(),
@@ -569,6 +650,18 @@ namespace Tensile
             {
                 auto const& typedInputs = dynamic_cast<ContractionInputs_I8_I32_I32 const&>(inputs);
                 return ReferenceSolution<ContractionInputs_I8_I32_I32>::SolveCPU(
+                    problem, typedInputs, validationStride);
+            }
+            case ContractionInputs_I8_I32_S::TypeId():
+            {
+                auto const& typedInputs = dynamic_cast<ContractionInputs_I8_I32_S const&>(inputs);
+                return ReferenceSolution<ContractionInputs_I8_I32_S, float>::SolveCPU(
+                    problem, typedInputs, validationStride);
+            }
+            case ContractionInputs_I8_I8_S::TypeId():
+            {
+                auto const& typedInputs = dynamic_cast<ContractionInputs_I8_I8_S const&>(inputs);
+                return ReferenceSolution<ContractionInputs_I8_I8_S, float>::SolveCPU(
                     problem, typedInputs, validationStride);
             }
 #ifdef TENSILE_USE_BF16

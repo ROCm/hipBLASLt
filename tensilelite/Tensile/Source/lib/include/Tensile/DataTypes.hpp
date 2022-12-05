@@ -74,6 +74,7 @@ namespace Tensile
 
     std::string   ToString(DataType d);
     std::string   TypeAbbrev(DataType d);
+    size_t        GetElementSize(DataType d);
     std::ostream& operator<<(std::ostream& stream, DataType const& t);
     std::istream& operator>>(std::istream& stream, DataType& t);
 
