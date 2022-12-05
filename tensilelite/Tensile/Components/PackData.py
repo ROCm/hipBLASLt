@@ -109,14 +109,17 @@ class PackData_INT8(PackData):
                            src1=vgpr(formatting(sumIdxV-2, inputPrefix, prefixOffset)), \
                            sdwa=SDWAModifiers(dst_sel=SelectBit.DWORD, dst_unused=UnusedBit.UNUSED_PAD, \
                                               src0_sel=SelectBit.BYTE_0, src1_sel=SelectBit.DWORD)))
+                module.add(SNop(waitState=0, comment="1 wait states")) # workaround for emulator
                 module.add(VOrB32(dst=vgpr(formatting(sumIdxV-2, inputPrefix, prefixOffset)), \
                            src0=vgpr(formatting(sumIdxV-1, inputPrefix, prefixOffset)), \
                            src1=vgpr(formatVgpr), \
                            sdwa=SDWAModifiers(dst_sel=SelectBit.WORD_1, dst_unused=UnusedBit.UNUSED_PAD, \
                                               src0_sel=SelectBit.BYTE_0, src1_sel=SelectBit.DWORD)))
+                module.add(SNop(waitState=0, comment="1 wait states")) # workaround for emulator
                 module.add(VOrB32(dst=vgpr(d), src0=vgpr(formatting(sumIdxV-3, inputPrefix, prefixOffset)), src1=vgpr(formatting(sumIdxV-2, inputPrefix, prefixOffset)), \
                            sdwa=SDWAModifiers(dst_sel=SelectBit.DWORD, dst_unused=UnusedBit.UNUSED_PAD, \
                                               src0_sel=SelectBit.WORD_0, src1_sel=SelectBit.DWORD)))
+                module.add(SNop(waitState=0, comment="1 wait states")) # workaround for emulator
         # Left
         for vi in range(gwvw4, gwvw):
             sumIdxV = elementSumIdx + vi
@@ -130,12 +133,15 @@ class PackData_INT8(PackData):
                 module.add(VOrB32(dst=vgpr(formatVgpr), src0=vgpr(formatVgpr), src1=vgpr(formatting(sumIdxV-1, inputPrefix, prefixOffset)), \
                        sdwa=SDWAModifiers(dst_sel=SelectBit.WORD_1, dst_unused=UnusedBit.UNUSED_PAD, \
                                            src0_sel=SelectBit.BYTE_0, src1_sel=SelectBit.DWORD)))
+                module.add(SNop(waitState=0, comment="1 wait states")) # workaround for emulator
                 module.add(VOrB32(dst=vgpr(d), src0=vgpr(d), src1=vgpr(formatVgpr), \
                        sdwa=SDWAModifiers(dst_sel=SelectBit.DWORD, dst_unused=UnusedBit.UNUSED_PAD, \
                                             src0_sel=SelectBit.BYTE_0, src1_sel=SelectBit.DWORD)))
+                module.add(SNop(waitState=0, comment="1 wait states")) # workaround for emulator
             elif vi + 1 >= gwvw:
                 module.add(VSaturateCastInt(sumIdxV, tmpVgpr, tmpS01, -128, 127, type=SaturateTypeInt8, initGpr=True))
                 module.add(VOrB32(dst=vgpr(d), src0=vgpr(formatVgpr), src1=vgpr(formatting(sumIdxV, inputPrefix, prefixOffset)), \
                         sdwa=SDWAModifiers(dst_sel=SelectBit.DWORD, dst_unused=UnusedBit.UNUSED_PAD, \
                                             src0_sel=SelectBit.BYTE_0, src1_sel=SelectBit.DWORD)))
+                module.add(SNop(waitState=0, comment="1 wait states")) # workaround for emulator
         return module
