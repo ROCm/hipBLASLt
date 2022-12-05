@@ -182,22 +182,22 @@ class ProblemType(Mapping):
       self["ActivationHPA"] = config["ActivationHPA"]
     else:
       self["ActivationHPA"] = False
-    self["ActivationComputeDataType"] = self["ComputeDataType"] if self["ActivationHPA"] else \
-                                        self["DestDataType"]
 
     if self["ActivationType"] != 'none':
       if ((not self["HighPrecisionAccumulate"]) and self["ActivationHPA"]):
           printExit("Must enable HighPrecisionAccumulate to use ActivationHPA.")
-      if self["ComputeDataType"].isSingle() and \
-         not self["ActivationHPA"] and \
-         (not self["DestDataType"].isSingle() or not self["DestDataType"].isDouble()):
-          printWarning("%s only supports ActivationHPA = True if HighPrecisionAccumulate = True. \
-                        ActivationHPA will be set to True automatically."%str(self["DestDataType"]))
+      if (not self["ActivationHPA"]) and \
+        (self["DataType"].numRegisters() < self["DestDataType"].numRegisters()):
+          printWarning("TensileLite only supports ActivationHPA = True if DestDataType > DataType. \
+                        ActivationHPA will be set to True automatically.")
           self["ActivationHPA"] = True
-      if self["ActivationHPA"] and (self["DestDataType"].isSingle() or self["DestDataType"].isDouble()):
+      if self["ActivationHPA"] and (self["DataType"] == self["DestDataType"]) and \
+        (self["DestDataType"].isSingle() or self["DestDataType"].isDouble()):
         printWarning("Single and Double does not support ActivationHPA. ActivationHPA will be set to False automatically.")
         self["ActivationHPA"] = False
 
+    self["ActivationComputeDataType"] = self["ComputeDataType"] if self["ActivationHPA"] else \
+                                        self["DestDataType"]
 
   ################################################################################
    # Function checkIfSupportedGEMMType:
