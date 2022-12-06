@@ -42,14 +42,14 @@
 #include <hipblaslt/hipblaslt.h>
 #include <omp.h>
 
-template <typename Ti, typename To, typename Tact, typename F>
+template <typename Ti, typename To, typename Tbias, typename Tact, typename F>
 void epilogue_func(int64_t m,
                    int64_t n,
                    int64_t ld,
                    Ti*     in,
                    To*     out,
                    bool    enable_bias,
-                   To*     bias,
+                   Tbias*  bias,
                    Tact    arg1,
                    Tact    arg2,
                    F&      act_func)
@@ -58,7 +58,7 @@ void epilogue_func(int64_t m,
 
     for(int i = 0; i < m; i++)
     {
-        Tact bias_data = enable_bias ? static_cast<Ti>(*(bias + i)) : 0;
+        Ti bias_data = enable_bias ? static_cast<Ti>(*(bias + i)) : 0;
 #pragma omp parallel for
         for(int j = 0; j < n; j++)
         {
@@ -68,8 +68,8 @@ void epilogue_func(int64_t m,
         }
     }
 }
-template <typename Ti, typename To>
-void epilogue_func(int64_t m, int64_t n, int64_t ld, Ti* in, To* out, bool enable_bias, To* bias)
+template <typename Ti, typename To, typename Tbias>
+void epilogue_func(int64_t m, int64_t n, int64_t ld, Ti* in, To* out, bool enable_bias, Tbias* bias)
 {
     auto saturate_o = [](Ti val) { return static_cast<To>(val); };
 
@@ -272,12 +272,14 @@ void testing_matmul(const Arguments& arg)
     device_vector<To>            dC(size_C, 1, HMM);
     device_vector<To>            dD(size_D, 1, HMM);
     device_vector<To>            dBias(size_bias, 1, HMM);
+    device_vector<Talpha>        dBias_C(size_bias, 1, HMM);
     device_vector<unsigned char> dWorkspace(workspace_size, 1, HMM);
     CHECK_DEVICE_ALLOCATION(dA.memcheck());
     CHECK_DEVICE_ALLOCATION(dB.memcheck());
     CHECK_DEVICE_ALLOCATION(dC.memcheck());
     CHECK_DEVICE_ALLOCATION(dD.memcheck());
     CHECK_DEVICE_ALLOCATION(dBias.memcheck());
+    CHECK_DEVICE_ALLOCATION(dBias_C.memcheck());
     CHECK_DEVICE_ALLOCATION(dWorkspace.memcheck());
 
     // Naming: dX is in GPU (device) memory. hK is in CPU (host) memory
@@ -288,6 +290,7 @@ void testing_matmul(const Arguments& arg)
     host_vector<Talpha> hD_gold_epl(size_D_copy);
     host_vector<To>     hD_1(size_D_copy);
     host_vector<To>     hBias(size_bias);
+    host_vector<Talpha> hBias_C(size_bias);
 
     hipblaslt_seedrand();
 
@@ -338,15 +341,19 @@ void testing_matmul(const Arguments& arg)
     }
 
     if(arg.bias_vector)
+    {
         hipblaslt_init<To>(hBias, M, 1, M);
-
+        hipblaslt_init<Talpha>(hBias_C, M, 1, M);
+    }
     // copy data from CPU to device
     CHECK_HIP_ERROR(dA.transfer_from(hA));
     CHECK_HIP_ERROR(dB.transfer_from(hB));
     CHECK_HIP_ERROR(dC.transfer_from(hC));
     if(arg.bias_vector)
+    {
         CHECK_HIP_ERROR(dBias.transfer_from(hBias));
-
+        CHECK_HIP_ERROR(dBias_C.transfer_from(hBias_C));
+    }
     if(size_D_copy)
     {
         if(epilogue_on)
@@ -367,9 +374,26 @@ void testing_matmul(const Arguments& arg)
                 matmul, HIPBLASLT_MATMUL_DESC_EPILOGUE, &epilogue, sizeof(epilogue)),
             HIPBLAS_STATUS_SUCCESS);
 
+    bool change_bias_type = false;
     if(arg.bias_vector)
     {
-        const void* bias_addr = dBias;
+        const void* bias_addr;
+        if(arg.d_type != arg.scale_type && arg.bias_type == arg.scale_type)
+        {
+            bias_addr        = dBias_C;
+            change_bias_type = true;
+            EXPECT_HIPBLAS_STATUS(
+                hipblasLtMatmulDescSetAttribute(matmul,
+                                                HIPBLASLT_MATMUL_DESC_BIAS_DATA_TYPE,
+                                                &arg.bias_type,
+                                                sizeof(hipblasDatatype_t)),
+                HIPBLAS_STATUS_SUCCESS);
+        }
+        else
+        {
+            bias_addr = dBias;
+        }
+
         EXPECT_HIPBLAS_STATUS(
             hipblasLtMatmulDescSetAttribute(
                 matmul, HIPBLASLT_MATMUL_DESC_BIAS_POINTER, &bias_addr, sizeof(void*)),
@@ -409,7 +433,7 @@ void testing_matmul(const Arguments& arg)
             cpu_time_used = get_time_us_no_sync();
         }
 
-#define epilogue_param M, N, ldd, hD_gold_epl + pos, hD_gold + pos, arg.bias_vector, hBias + 0
+#define epilogue_param M, N, ldd, hD_gold_epl + pos, hD_gold + pos, arg.bias_vector
         for(int i = 0; i < num_batches; i++)
         {
             if(epilogue_on)
@@ -429,19 +453,51 @@ void testing_matmul(const Arguments& arg)
                                                ldd,
                                                false);
                 auto pos = stride_d * i;
-                switch(arg.activation_type)
+                if(change_bias_type == false)
                 {
-                case hipblaslt_activation_type::gelu:
-                    epilogue_func(
-                        epilogue_param, arg.activation_arg1, arg.activation_arg2, ::_gelu);
-                    break;
-                case hipblaslt_activation_type::relu:
-                    epilogue_func(
-                        epilogue_param, arg.activation_arg1, arg.activation_arg2, ::_relu);
-                    break;
-                default:
-                    epilogue_func(epilogue_param);
-                    break;
+                    switch(arg.activation_type)
+                    {
+                    case hipblaslt_activation_type::gelu:
+                        epilogue_func(epilogue_param,
+                                      hBias + 0,
+                                      arg.activation_arg1,
+                                      arg.activation_arg2,
+                                      ::_gelu);
+                        break;
+                    case hipblaslt_activation_type::relu:
+                        epilogue_func(epilogue_param,
+                                      hBias + 0,
+                                      arg.activation_arg1,
+                                      arg.activation_arg2,
+                                      ::_relu);
+                        break;
+                    default:
+                        epilogue_func(epilogue_param, hBias + 0);
+                        break;
+                    }
+                }
+                else
+                {
+                    switch(arg.activation_type)
+                    {
+                    case hipblaslt_activation_type::gelu:
+                        epilogue_func(epilogue_param,
+                                      hBias_C + 0,
+                                      arg.activation_arg1,
+                                      arg.activation_arg2,
+                                      ::_gelu);
+                        break;
+                    case hipblaslt_activation_type::relu:
+                        epilogue_func(epilogue_param,
+                                      hBias_C + 0,
+                                      arg.activation_arg1,
+                                      arg.activation_arg2,
+                                      ::_relu);
+                        break;
+                    default:
+                        epilogue_func(epilogue_param, hBias_C + 0);
+                        break;
+                    }
                 }
             }
             else

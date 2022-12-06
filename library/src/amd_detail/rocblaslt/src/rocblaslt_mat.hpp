@@ -34,132 +34,242 @@
 #include "tensile_host.hpp"
 
 template <typename Ti, typename To, typename Tc>
-rocblaslt_status rocblaslt_batched_template(
-    rocblaslt_handle handle, hipblasOperation_t trans_a,
-    hipblasOperation_t trans_b, int64_t m, int64_t n, int64_t k,
-    const Tc *alpha, const Ti *a, int64_t ld_a, int64_t batch_stride_a,
-    int64_t offset_a, const Ti *b, int64_t ld_b, int64_t batch_stride_b,
-    int64_t offset_b, const Tc *beta, const To *c, int64_t ld_c,
-    int64_t batch_stride_c, int64_t offset_c, To *d, int64_t ld_d,
-    int64_t batch_stride_d, int64_t offset_d, int64_t batch_count,
-    bool strided_batch, const rocblaslt_matmul_algo *algo,
-    void *workspace, size_t workspaceSizeInBytes, const To *bias,
-    rocblaslt_epilogue epilogue, hipStream_t stream) {
-  workspaceSizeInBytes = min(workspaceSizeInBytes, algo->max_workspace_bytes);
-  RocblasltContractionProblem<Ti, To, Tc> problem{handle,
-                                                  trans_a,
-                                                  trans_b,
-                                                  m,
-                                                  n,
-                                                  k,
-                                                  alpha,
-                                                  a,
-                                                  nullptr,
-                                                  ld_a,
-                                                  batch_stride_a,
-                                                  offset_a,
-                                                  b,
-                                                  nullptr,
-                                                  ld_b,
-                                                  batch_stride_b,
-                                                  offset_b,
-                                                  beta,
-                                                  c,
-                                                  nullptr,
-                                                  ld_c,
-                                                  batch_stride_c,
-                                                  offset_c,
-                                                  d,
-                                                  nullptr,
-                                                  ld_d,
-                                                  batch_stride_d,
-                                                  offset_d,
-                                                  batch_count,
-                                                  strided_batch,
-                                                  bias,
-                                                  epilogue,
-                                                  workspace,
-                                                  workspaceSizeInBytes,
-                                                  stream};
-  return runContractionProblem(algo, problem);
+rocblaslt_status rocblaslt_batched_template(rocblaslt_handle             handle,
+                                            hipblasOperation_t           trans_a,
+                                            hipblasOperation_t           trans_b,
+                                            int64_t                      m,
+                                            int64_t                      n,
+                                            int64_t                      k,
+                                            const Tc*                    alpha,
+                                            const Ti*                    a,
+                                            int64_t                      ld_a,
+                                            int64_t                      batch_stride_a,
+                                            int64_t                      offset_a,
+                                            const Ti*                    b,
+                                            int64_t                      ld_b,
+                                            int64_t                      batch_stride_b,
+                                            int64_t                      offset_b,
+                                            const Tc*                    beta,
+                                            const To*                    c,
+                                            int64_t                      ld_c,
+                                            int64_t                      batch_stride_c,
+                                            int64_t                      offset_c,
+                                            To*                          d,
+                                            int64_t                      ld_d,
+                                            int64_t                      batch_stride_d,
+                                            int64_t                      offset_d,
+                                            int64_t                      batch_count,
+                                            bool                         strided_batch,
+                                            const rocblaslt_matmul_algo* algo,
+                                            void*                        workspace,
+                                            size_t                       workspaceSizeInBytes,
+                                            const void*                  bias,
+                                            hipblasDatatype_t            bias_type,
+                                            rocblaslt_epilogue           epilogue,
+                                            hipStream_t                  stream)
+{
+    workspaceSizeInBytes = min(workspaceSizeInBytes, algo->max_workspace_bytes);
+    RocblasltContractionProblem<Ti, To, Tc> problem{handle,
+                                                    trans_a,
+                                                    trans_b,
+                                                    m,
+                                                    n,
+                                                    k,
+                                                    alpha,
+                                                    a,
+                                                    nullptr,
+                                                    ld_a,
+                                                    batch_stride_a,
+                                                    offset_a,
+                                                    b,
+                                                    nullptr,
+                                                    ld_b,
+                                                    batch_stride_b,
+                                                    offset_b,
+                                                    beta,
+                                                    c,
+                                                    nullptr,
+                                                    ld_c,
+                                                    batch_stride_c,
+                                                    offset_c,
+                                                    d,
+                                                    nullptr,
+                                                    ld_d,
+                                                    batch_stride_d,
+                                                    offset_d,
+                                                    batch_count,
+                                                    strided_batch,
+                                                    bias,
+                                                    bias_type,
+                                                    epilogue,
+                                                    workspace,
+                                                    workspaceSizeInBytes,
+                                                    stream};
+    return runContractionProblem(algo, problem);
 }
 
 template <typename Ti, typename To = Ti, typename Tc = To>
-rocblaslt_status rocblaslt_matmul_typecasting(
-    rocblaslt_handle handle, hipblasOperation_t trans_a,
-    hipblasOperation_t trans_b, int64_t m, int64_t n, int64_t k,
-    const void *alpha, const void *a, int64_t ld_a, int64_t batch_stride_a,
-    int64_t offset_a, const void *b, int64_t ld_b, int64_t batch_stride_b,
-    int64_t offset_b, const void *beta, const void *c, int64_t ld_c,
-    int64_t batch_stride_c, int64_t offset_c, void *d, int64_t ld_d,
-    int64_t batch_stride_d, int64_t offset_d, int64_t batch_count,
-    bool strided_batch, const rocblaslt_matmul_algo *algo,
-    void *workspace, size_t workspaceSizeInBytes, const void *bias,
-    rocblaslt_epilogue epilogue, hipStream_t stream) {
-  // check alignment of pointers before casting
-  if (!isAligned(a, sizeof(Ti)) || !isAligned(b, sizeof(Ti)) ||
-      !isAligned(c, sizeof(Ti)) || !isAligned(d, sizeof(To))) {
-    std::cerr << "memmory is not aligned" << std::endl;
-    return rocblaslt_status_invalid_size;
-  }
-  return rocblaslt_batched_template(
-      handle, trans_a, trans_b, m, n, k, reinterpret_cast<const Tc *>(alpha),
-      reinterpret_cast<const Ti *>(a), ld_a, batch_stride_a, offset_a,
-      reinterpret_cast<const Ti *>(b), ld_b, batch_stride_b, offset_b,
-      reinterpret_cast<const Tc *>(beta), reinterpret_cast<const To *>(c), ld_c,
-      batch_stride_c, offset_c, (To *)d, ld_d, batch_stride_d, offset_d,
-      batch_count, strided_batch, algo, workspace, workspaceSizeInBytes,
-      reinterpret_cast<const To *>(bias), epilogue, stream);
+rocblaslt_status rocblaslt_matmul_typecasting(rocblaslt_handle             handle,
+                                              hipblasOperation_t           trans_a,
+                                              hipblasOperation_t           trans_b,
+                                              int64_t                      m,
+                                              int64_t                      n,
+                                              int64_t                      k,
+                                              const void*                  alpha,
+                                              const void*                  a,
+                                              int64_t                      ld_a,
+                                              int64_t                      batch_stride_a,
+                                              int64_t                      offset_a,
+                                              const void*                  b,
+                                              int64_t                      ld_b,
+                                              int64_t                      batch_stride_b,
+                                              int64_t                      offset_b,
+                                              const void*                  beta,
+                                              const void*                  c,
+                                              int64_t                      ld_c,
+                                              int64_t                      batch_stride_c,
+                                              int64_t                      offset_c,
+                                              void*                        d,
+                                              int64_t                      ld_d,
+                                              int64_t                      batch_stride_d,
+                                              int64_t                      offset_d,
+                                              int64_t                      batch_count,
+                                              bool                         strided_batch,
+                                              const rocblaslt_matmul_algo* algo,
+                                              void*                        workspace,
+                                              size_t                       workspaceSizeInBytes,
+                                              const void*                  bias,
+                                              hipblasDatatype_t            bias_type,
+                                              rocblaslt_epilogue           epilogue,
+                                              hipStream_t                  stream)
+{
+    // check alignment of pointers before casting
+    if(!isAligned(a, sizeof(Ti)) || !isAligned(b, sizeof(Ti)) || !isAligned(c, sizeof(Ti))
+       || !isAligned(d, sizeof(To)))
+    {
+        std::cerr << "memmory is not aligned" << std::endl;
+        return rocblaslt_status_invalid_size;
+    }
+    return rocblaslt_batched_template(handle,
+                                      trans_a,
+                                      trans_b,
+                                      m,
+                                      n,
+                                      k,
+                                      reinterpret_cast<const Tc*>(alpha),
+                                      reinterpret_cast<const Ti*>(a),
+                                      ld_a,
+                                      batch_stride_a,
+                                      offset_a,
+                                      reinterpret_cast<const Ti*>(b),
+                                      ld_b,
+                                      batch_stride_b,
+                                      offset_b,
+                                      reinterpret_cast<const Tc*>(beta),
+                                      reinterpret_cast<const To*>(c),
+                                      ld_c,
+                                      batch_stride_c,
+                                      offset_c,
+                                      (To*)d,
+                                      ld_d,
+                                      batch_stride_d,
+                                      offset_d,
+                                      batch_count,
+                                      strided_batch,
+                                      algo,
+                                      workspace,
+                                      workspaceSizeInBytes,
+                                      reinterpret_cast<const void*>(bias),
+                                      bias_type,
+                                      epilogue,
+                                      stream);
 }
 
-inline rocblaslt_status rocblaslt_matmul_template(
-    rocblaslt_handle handle, hipblasOperation_t trans_a,
-    hipblasOperation_t trans_b, int64_t m, int64_t n, int64_t k,
-    const void *alpha, const void *a, hipblasDatatype_t a_type, int64_t ld_a,
-    int64_t batch_stride_a, int64_t offset_a, const void *b,
-    hipblasDatatype_t b_type, int64_t ld_b, int64_t batch_stride_b,
-    int64_t offset_b, const void *beta, const void *c, hipblasDatatype_t c_type,
-    int64_t ld_c, int64_t batch_stride_c, int64_t offset_c, void *d,
-    hipblasDatatype_t d_type, int64_t ld_d, int64_t batch_stride_d,
-    int64_t offset_d, int64_t batch_count, bool strided_batch,
-    rocblaslt_compute_type compute_type, const rocblaslt_matmul_algo *algo,
-    void *workspace, size_t workspaceSizeInBytes, const void *bias,
-    rocblaslt_epilogue epilogue, hipStream_t stream) {
-  rocblaslt_status rs_status = rocblaslt_status_not_implemented;
+inline rocblaslt_status rocblaslt_matmul_template(rocblaslt_handle             handle,
+                                                  hipblasOperation_t           trans_a,
+                                                  hipblasOperation_t           trans_b,
+                                                  int64_t                      m,
+                                                  int64_t                      n,
+                                                  int64_t                      k,
+                                                  const void*                  alpha,
+                                                  const void*                  a,
+                                                  hipblasDatatype_t            a_type,
+                                                  int64_t                      ld_a,
+                                                  int64_t                      batch_stride_a,
+                                                  int64_t                      offset_a,
+                                                  const void*                  b,
+                                                  hipblasDatatype_t            b_type,
+                                                  int64_t                      ld_b,
+                                                  int64_t                      batch_stride_b,
+                                                  int64_t                      offset_b,
+                                                  const void*                  beta,
+                                                  const void*                  c,
+                                                  hipblasDatatype_t            c_type,
+                                                  int64_t                      ld_c,
+                                                  int64_t                      batch_stride_c,
+                                                  int64_t                      offset_c,
+                                                  void*                        d,
+                                                  hipblasDatatype_t            d_type,
+                                                  int64_t                      ld_d,
+                                                  int64_t                      batch_stride_d,
+                                                  int64_t                      offset_d,
+                                                  int64_t                      batch_count,
+                                                  bool                         strided_batch,
+                                                  rocblaslt_compute_type       compute_type,
+                                                  const rocblaslt_matmul_algo* algo,
+                                                  void*                        workspace,
+                                                  size_t                       workspaceSizeInBytes,
+                                                  const void*                  bias,
+                                                  hipblasDatatype_t            bias_type,
+                                                  rocblaslt_epilogue           epilogue,
+                                                  hipStream_t                  stream)
+{
+    rocblaslt_status rs_status = rocblaslt_status_not_implemented;
 
-#define EX_TYPECASTING_PARM                                                    \
-  handle, trans_a, trans_b, m, n, k, alpha, a, ld_a, batch_stride_a, offset_a, \
-      b, ld_b, batch_stride_b, offset_b, beta, c, ld_c, batch_stride_c,        \
-      offset_c, d, ld_d, batch_stride_d, offset_d, batch_count, strided_batch, \
-      algo, workspace, workspaceSizeInBytes, bias, epilogue, stream
+#define EX_TYPECASTING_PARM                                                               \
+    handle, trans_a, trans_b, m, n, k, alpha, a, ld_a, batch_stride_a, offset_a, b, ld_b, \
+        batch_stride_b, offset_b, beta, c, ld_c, batch_stride_c, offset_c, d, ld_d,       \
+        batch_stride_d, offset_d, batch_count, strided_batch, algo, workspace,            \
+        workspaceSizeInBytes, bias, bias_type, epilogue, stream
 
-  if (a_type == HIPBLAS_R_32F && b_type == HIPBLAS_R_32F) {
-    if (c_type == HIPBLAS_R_32F && d_type == HIPBLAS_R_32F) {
-      if (compute_type == rocblaslt_compute_f32) {
-        rs_status = rocblaslt_matmul_typecasting<float, float, float>(
-            EX_TYPECASTING_PARM);
-      }
+    if(a_type == HIPBLAS_R_32F && b_type == HIPBLAS_R_32F)
+    {
+        if(c_type == HIPBLAS_R_32F && d_type == HIPBLAS_R_32F)
+        {
+            if(compute_type == rocblaslt_compute_f32)
+            {
+                rs_status = rocblaslt_matmul_typecasting<float, float, float>(EX_TYPECASTING_PARM);
+            }
+        }
     }
-  } else if (a_type == HIPBLAS_R_16F && b_type == HIPBLAS_R_16F) {
-    if (c_type == HIPBLAS_R_16F && d_type == HIPBLAS_R_16F) {
-      if (compute_type == rocblaslt_compute_f32) {
-        rs_status =
-            rocblaslt_matmul_typecasting<rocblaslt_half, rocblaslt_half, float>(
-                EX_TYPECASTING_PARM);
-      }
+    else if(a_type == HIPBLAS_R_16F && b_type == HIPBLAS_R_16F)
+    {
+        if(c_type == HIPBLAS_R_16F && d_type == HIPBLAS_R_16F)
+        {
+            if(compute_type == rocblaslt_compute_f32)
+            {
+                rs_status = rocblaslt_matmul_typecasting<rocblaslt_half, rocblaslt_half, float>(
+                    EX_TYPECASTING_PARM);
+            }
+        }
     }
-  } else if (a_type == HIPBLAS_R_16B && b_type == HIPBLAS_R_16B) {
-    if (c_type == HIPBLAS_R_16B && d_type == HIPBLAS_R_16B) {
-      if (compute_type == rocblaslt_compute_f32) {
-        rs_status =
-            rocblaslt_matmul_typecasting<rocblaslt_bfloat16, rocblaslt_bfloat16,
-                                         float>(EX_TYPECASTING_PARM);
-      }
+    else if(a_type == HIPBLAS_R_16B && b_type == HIPBLAS_R_16B)
+    {
+        if(c_type == HIPBLAS_R_16B && d_type == HIPBLAS_R_16B)
+        {
+            if(compute_type == rocblaslt_compute_f32)
+            {
+                rs_status
+                    = rocblaslt_matmul_typecasting<rocblaslt_bfloat16, rocblaslt_bfloat16, float>(
+                        EX_TYPECASTING_PARM);
+            }
+        }
     }
-  } else {
-    rs_status = rocblaslt_status_not_implemented;
-  }
+    else
+    {
+        rs_status = rocblaslt_status_not_implemented;
+    }
 
-  return rs_status;
+    return rs_status;
 }
 #endif

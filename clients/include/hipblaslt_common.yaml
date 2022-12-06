@@ -4,6 +4,7 @@ Datatypes:
   - hipblasDatatype_t:
       bases: [ c_int ]
       attr:
+        default: -1
         f16_r: 150
         f32_r: 151
         bf16_r: 168
@@ -94,6 +95,7 @@ Arguments:
   - activation_type: hipblaslt_activation_type
   - activation_arg1: c_float
   - activation_arg2: c_float
+  - bias_type: hipblasDatatype_t
   - bias_vector: c_bool
   - c_noalias_d: c_bool
   - HMM: c_bool
@@ -165,4 +167,5 @@ Defaults:
   activation_type: none
   activation_arg1: 0
   activation_arg2: 0
+  bias_type: default
   bias_vector: false
