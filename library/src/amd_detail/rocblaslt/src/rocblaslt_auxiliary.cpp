@@ -453,6 +453,15 @@ rocblaslt_status rocblaslt_matmul_desc_set_attribute(rocblaslt_matmul_desc      
                     return rocblaslt_status_invalid_value;
                 }
                 break;
+            case ROCBLASLT_MATMUL_DESC_BIAS_DATA_TYPE:
+                if(sizeof(int32_t) <= sizeInBytes)
+                    memcpy(&matmulDesc->bias_type, buf, sizeof(int32_t));
+                else
+                {
+                    log_error(__func__, "invalid buf size", sizeInBytes);
+                    return rocblaslt_status_invalid_value;
+                }
+                break;
             default:
                 log_error(__func__, "invalid attribute", matmulAttr);
                 return rocblaslt_status_invalid_value;
@@ -540,6 +549,15 @@ rocblaslt_status rocblaslt_matmul_desc_get_attribute(rocblaslt_matmul_desc      
                     return rocblaslt_status_invalid_value;
                 }
                 memcpy(buf, &matmulDesc->bias, sizeof(void*));
+                break;
+            case ROCBLASLT_MATMUL_DESC_BIAS_DATA_TYPE:
+                *sizeWritten = sizeof(int32_t);
+                if(sizeInBytes < sizeof(int32_t))
+                {
+                    log_error(__func__, "invalid buf size", sizeInBytes);
+                    return rocblaslt_status_invalid_value;
+                }
+                memcpy(buf, &matmulDesc->bias_type, sizeof(int32_t));
                 break;
             default:
                 log_error(__func__, "invalid attribute", matmulAttr);
@@ -782,9 +800,16 @@ rocblaslt_status
                 {
                     float alpha = 1.0;
                     float beta  = 1.0;
-                    auto  prob  = ConstructRocblasltProblem<float, float, float>(
-                        handle, matmul_desc, matA, matB, matC, matD, &alpha, &beta,
-                        pref->max_workspace_bytes);
+                    auto  prob
+                        = ConstructRocblasltProblem<float, float, float>(handle,
+                                                                         matmul_desc,
+                                                                         matA,
+                                                                         matB,
+                                                                         matC,
+                                                                         matD,
+                                                                         &alpha,
+                                                                         &beta,
+                                                                         pref->max_workspace_bytes);
                     status = getBestSolutions<float, float, float>(prob,
                                                                    requestedAlgoCount,
                                                                    heuristicResultsArray,
@@ -802,7 +827,14 @@ rocblaslt_status
                     float alpha = 1.0;
                     float beta  = 1.0;
                     auto  prob  = ConstructRocblasltProblem<rocblaslt_half, rocblaslt_half, float>(
-                        handle, matmul_desc, matA, matB, matC, matD, &alpha, &beta,
+                        handle,
+                        matmul_desc,
+                        matA,
+                        matB,
+                        matC,
+                        matD,
+                        &alpha,
+                        &beta,
                         pref->max_workspace_bytes);
                     status = getBestSolutions<rocblaslt_half, rocblaslt_half, float>(
                         prob,
@@ -823,7 +855,14 @@ rocblaslt_status
                     float beta  = 1.0;
                     auto  prob
                         = ConstructRocblasltProblem<rocblaslt_bfloat16, rocblaslt_bfloat16, float>(
-                            handle, matmul_desc, matA, matB, matC, matD, &alpha, &beta,
+                            handle,
+                            matmul_desc,
+                            matA,
+                            matB,
+                            matC,
+                            matD,
+                            &alpha,
+                            &beta,
                             pref->max_workspace_bytes);
                     status = getBestSolutions<rocblaslt_bfloat16, rocblaslt_bfloat16, float>(
                         prob,

@@ -219,6 +219,7 @@ try
     std::string d_type;
     std::string compute_type;
     std::string scale_type;
+    std::string bias_type;
     std::string initialization;
     std::string filter;
     std::string activation_type;
@@ -372,6 +373,10 @@ try
          value<float>(&arg.activation_arg2)->default_value(std::numeric_limits<float>::infinity()),
          "activation argument #2, when activation_type is clippedrelu, this argument used to be the upperbound.")
 
+        ("bias_type",
+         value<std::string>(&bias_type), "Precision of bias vector."
+        "Options: f16_r,bf16_r,f32_r,default")
+
         ("bias_vector",
          bool_switch(&arg.bias_vector)->default_value(false),
          "Apply bias vector")
@@ -466,6 +471,12 @@ try
                                           : string_to_hipblaslt_computetype(compute_type);
     if(arg.compute_type == static_cast<hipblasLtComputeType_t>(-1))
         throw std::invalid_argument("Invalid value for --compute_type " + compute_type);
+
+    if(string_to_hipblas_datatype(bias_type) == static_cast<hipblasDatatype_t>(-1)
+       && bias_type != "" && bias_type != "default")
+        throw std::invalid_argument("Invalid value for --bias_type " + bias_type);
+    else
+        arg.bias_type = string_to_hipblas_datatype(bias_type);
 
     arg.initialization = string2hipblaslt_initialization(initialization);
     if(arg.initialization == static_cast<hipblaslt_initialization>(-1))

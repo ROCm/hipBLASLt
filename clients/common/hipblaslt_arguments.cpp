@@ -97,6 +97,7 @@ void Arguments::init()
     activation_type = hipblaslt_activation_type::none;
     activation_arg1 = 0.0f;
     activation_arg2 = std::numeric_limits<float>::infinity();
+    bias_type       = static_cast<hipblasDatatype_t>(-1);
     bias_vector     = false;
     c_noalias_d     = false;
     HMM             = false;

@@ -108,8 +108,11 @@ namespace
                 }
 
                 if(arg.bias_vector)
+                {
                     name << "_BIAS";
-
+                    if(arg.d_type != arg.scale_type && arg.bias_type == arg.scale_type)
+                        name << hipblas_datatype_to_string(arg.bias_type);
+                }
                 name << '_' << (char)std::toupper(arg.transA) << (char)std::toupper(arg.transB);
 
                 name << '_' << arg.M << '_' << arg.N << '_' << arg.K << '_' << arg.alpha << '_'
