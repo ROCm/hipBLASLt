@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright 2022 Advanced Micro Devices, Inc.
+ * Copyright (c) 2022 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -186,7 +186,7 @@ namespace Tensile
         {
         public:
             TopSolutionIterator(std::shared_ptr<MasterSolutionLibrary<ContractionProblem>> library,
-                                std::shared_ptr<Hardware> hardware,
+                                std::shared_ptr<Hardware>                                  hardware,
                                 int numSolutions);
 
             virtual void preProblem(ContractionProblem const& problem) override;
@@ -199,9 +199,9 @@ namespace Tensile
             virtual std::shared_ptr<ContractionSolution> getSolution() override;
 
         private:
-            std::vector<std::shared_ptr<ContractionSolution>>     m_solutions;
-            int                                                   m_numSolutions = 1;
-            int                                                   m_currentSolutionIdx = 0;
+            std::vector<std::shared_ptr<ContractionSolution>> m_solutions;
+            int                                               m_numSolutions       = 1;
+            int                                               m_currentSolutionIdx = 0;
         };
     } // namespace Client
 } // namespace Tensile

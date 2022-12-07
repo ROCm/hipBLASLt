@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright 2022 Advanced Micro Devices, Inc.
+ * Copyright (c) 2022 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -38,8 +38,8 @@ namespace Tensile
             std::shared_ptr<Hardware>                                  hardware,
             po::variables_map const&                                   args)
         {
-            bool bestSolution = args["best-solution"].as<bool>();
-            int gridbasedTopSols = Debug::Instance().getGridbasedTopSols();
+            bool bestSolution     = args["best-solution"].as<bool>();
+            int  gridbasedTopSols = Debug::Instance().getGridbasedTopSols();
 
             if(bestSolution)
             {
@@ -272,7 +272,7 @@ namespace Tensile
             m_reporter->report(ResultKey::SolutionLibraryIndex, solution.libraryLogicIndex);
             m_reporter->report(ResultKey::SolutionIndex, m_currentSolutionIdx);
             m_reporter->report(ResultKey::SolutionProgress,
-                                            concatenate(m_currentSolutionIdx, "/", m_solutions.size()));
+                               concatenate(m_currentSolutionIdx, "/", m_solutions.size()));
         }
 
         void TopSolutionIterator::postSolution()

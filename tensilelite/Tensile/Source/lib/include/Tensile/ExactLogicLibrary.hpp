@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright 2022 Advanced Micro Devices, Inc.
+ * Copyright (c) 2022 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -109,8 +109,8 @@ namespace Tensile
         }
 
         virtual SolutionVector<MySolution> findTopSolutions(MyProblem const& problem,
-                                                            Hardware  const& hardware,
-                                                            int              numSolutions) const override
+                                                            Hardware const&  hardware,
+                                                            int numSolutions) const override
         {
             SolutionVector<MySolution> rv, solutions;
 
@@ -118,7 +118,8 @@ namespace Tensile
             {
                 if(row.first(problem, hardware))
                 {
-                    solutions = row.second->findTopSolutions(problem, hardware, numSolutions - rv.size());
+                    solutions
+                        = row.second->findTopSolutions(problem, hardware, numSolutions - rv.size());
                     rv.insert(std::end(rv), std::begin(solutions), std::end(solutions));
                     if(rv.size() == numSolutions)
                         return rv;

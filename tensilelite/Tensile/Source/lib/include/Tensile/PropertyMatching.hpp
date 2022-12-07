@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 Advanced Micro Devices, Inc. All rights reserved.
+ * Copyright (c) 2022 Advanced Micro Devices, Inc. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -24,10 +24,10 @@
 
 #include <cstddef>
 #include <functional>
+#include <iomanip>
 #include <string>
 #include <tuple>
 #include <vector>
-#include <iomanip>
 
 #include <Tensile/Debug.hpp>
 #include <Tensile/Distance.hpp>
@@ -78,9 +78,8 @@ namespace Tensile
             virtual std::tuple<ReturnValue, double> findBestMatch(Object const& object,
                                                                   Transform transform) const = 0;
 
-            virtual std::vector<ReturnValue> findTopMatch(Object const& object,
-                                                          Transform     transform,
-                                                          int           numSolutions) const = 0;
+            virtual std::vector<ReturnValue>
+                findTopMatch(Object const& object, Transform transform, int numSolutions) const = 0;
 
             virtual ReturnValue findBestEvaluationSolution(Object const&   object,
                                                            Hardware const& hardware,
@@ -142,15 +141,17 @@ namespace Tensile
                     ProblemKey::keyForProblem<Key, Object>(object, this->properties), transform);
             }
 
-            virtual std::vector<ReturnValue> findTopKeyMatch(Key const& key,
-                                                             Transform  transform,
-                                                             int        numSolutions) const = 0;
-
             virtual std::vector<ReturnValue>
-                findTopMatch(Object const& object, Transform transform, int numSolutions) const override
+                findTopKeyMatch(Key const& key, Transform transform, int numSolutions) const = 0;
+
+            virtual std::vector<ReturnValue> findTopMatch(Object const& object,
+                                                          Transform     transform,
+                                                          int           numSolutions) const override
             {
                 return findTopKeyMatch(
-                    ProblemKey::keyForProblem<Key, Object>(object, this->properties), transform, numSolutions);
+                    ProblemKey::keyForProblem<Key, Object>(object, this->properties),
+                    transform,
+                    numSolutions);
             }
 
             virtual ReturnValue findBestEvaluationSolution(Object const&   object,
@@ -335,18 +336,17 @@ namespace Tensile
                     else
                         return findBestKeyMatch_BinSearch<false>(key, transform);
                 }
-
             }
 
-            std::vector<ReturnValue> findTopKeyMatch(Key const& key,
-                                                     Transform  transform,
-                                                     int        numSolutions) const
+            std::vector<ReturnValue>
+                findTopKeyMatch(Key const& key, Transform transform, int numSolutions) const
             {
                 ReturnValue              solution;
                 std::vector<ReturnValue> solutions;
-                double fitness;
-                std:tie(solution, fitness) = findBestKeyMatch(key, transform);
-                if (solution)
+                double                   fitness;
+            std:
+                tie(solution, fitness) = findBestKeyMatch(key, transform);
+                if(solution)
                     solutions.push_back(solution);
                 return solutions;
             }
@@ -650,15 +650,15 @@ namespace Tensile
                            : std::make_tuple(this->nullValue, std::numeric_limits<double>::max());
             }
 
-            std::vector<ReturnValue> findTopKeyMatch(Key const& key,
-                                                     Transform  transform,
-                                                     int        numSolutions) const
+            std::vector<ReturnValue>
+                findTopKeyMatch(Key const& key, Transform transform, int numSolutions) const
             {
                 ReturnValue              solution;
                 std::vector<ReturnValue> solutions;
-                double fitness;
-                std:tie(solution, fitness) = findBestKeyMatch(key, transform);
-                if (solution)
+                double                   fitness;
+            std:
+                tie(solution, fitness) = findBestKeyMatch(key, transform);
+                if(solution)
                     solutions.push_back(solution);
                 return solutions;
             }
@@ -716,15 +716,14 @@ namespace Tensile
                                                              Transform  transform) const
             {
                 std::vector<ReturnValue> solutions = findTopKeyMatch(key, transform, 1);
-                ReturnValue solution = this->nullValue;
-                if (solutions.size() > 0)
+                ReturnValue              solution  = this->nullValue;
+                if(solutions.size() > 0)
                     solution = solutions[0];
                 return std::make_tuple(solution, std::numeric_limits<double>::max());
             }
 
-            std::vector<ReturnValue> findTopKeyMatch(Key const& key,
-                                                     Transform  transform,
-                                                     int        numSolutions) const
+            std::vector<ReturnValue>
+                findTopKeyMatch(Key const& key, Transform transform, int numSolutions) const
             {
                 if(Debug::Instance().printPropertyEvaluation())
                     return findBestKeyMatch_GridBased<true>(key, transform, numSolutions);
@@ -771,11 +770,11 @@ namespace Tensile
                 auto   bestMatch    = this->nullValue;
                 bool   thisMatch    = false;
                 bool   uniqueSol    = false;
-                int  baseN     = 0;
-                int  stepN     = 0;
-                for (int i=1;; i++)
+                int    baseN        = 0;
+                int    stepN        = 0;
+                for(int i = 1;; i++)
                 {
-                    if(i*(i+1)/2>=numSolutions)
+                    if(i * (i + 1) / 2 >= numSolutions)
                     {
                         baseN = i;
                         break;
@@ -793,7 +792,7 @@ namespace Tensile
                         std::cout << std::endl << std::endl;
                     }
 
-                    if (stepN == baseN && baseN != 1)
+                    if(stepN == baseN && baseN != 1)
                     {
                         stepN = 1;
                         baseN--;
@@ -805,10 +804,8 @@ namespace Tensile
                         start = origIter_N_upper;
                     }
 
-                    origIter_M_lower = std::lower_bound(start,
-                                                        table.end(),
-                                                        std::min(key[0], (table.end() - 1)->key[0]),
-                                                        compM);
+                    origIter_M_lower = std::lower_bound(
+                        start, table.end(), std::min(key[0], (table.end() - 1)->key[0]), compM);
 
                     if(T_Debug)
                     {
@@ -817,10 +814,11 @@ namespace Tensile
                         std::cout << std::endl << std::endl;
                     }
 
-                    origIter_M_upper = std::lower_bound(origIter_M_lower,
-                                                        table.end(),
-                                                        std::min(origIter_M_lower->key[0] + 1, (table.end() - 1)->key[0] + 1),
-                                                        compM);
+                    origIter_M_upper = std::lower_bound(
+                        origIter_M_lower,
+                        table.end(),
+                        std::min(origIter_M_lower->key[0] + 1, (table.end() - 1)->key[0] + 1),
+                        compM);
 
                     if(T_Debug)
                     {
@@ -829,10 +827,11 @@ namespace Tensile
                         std::cout << std::endl << std::endl;
                     }
 
-                    origIter_N_lower = std::lower_bound(origIter_M_lower,
-                                                        origIter_M_upper,
-                                                        std::min(key[1], (origIter_M_upper - 1)->key[1]),
-                                                        compN);
+                    origIter_N_lower
+                        = std::lower_bound(origIter_M_lower,
+                                           origIter_M_upper,
+                                           std::min(key[1], (origIter_M_upper - 1)->key[1]),
+                                           compN);
 
                     if(T_Debug)
                     {
@@ -841,10 +840,11 @@ namespace Tensile
                         std::cout << std::endl << std::endl;
                     }
 
-                    origIter_N_upper = std::lower_bound(origIter_N_lower,
-                                                        origIter_M_upper,
-                                                        std::min(origIter_N_lower->key[1] + 1, (origIter_M_upper - 1)->key[1] + 1),
-                                                        compN);
+                    origIter_N_upper = std::lower_bound(
+                        origIter_N_lower,
+                        origIter_M_upper,
+                        std::min(origIter_N_lower->key[1] + 1, (origIter_M_upper - 1)->key[1] + 1),
+                        compN);
 
                     if(T_Debug)
                     {
@@ -909,17 +909,19 @@ namespace Tensile
                     }
                     if(thisMatch or bestmatches.size())
                     {
-                        if (std::find(bestmatches.begin(), bestmatches.end(), bestMatch) == bestmatches.end())
+                        if(std::find(bestmatches.begin(), bestmatches.end(), bestMatch)
+                           == bestmatches.end())
                         {
                             bestmatches.push_back(bestMatch);
                             uniqueSol = true;
                         }
                         if(T_Debug)
                         {
-                            if (uniqueSol)
+                            if(uniqueSol)
                                 std::cout << "add Best to Top Solutions" << std::endl << std::endl;
                             else
-                                std::cout << "Best solution is duplicated" << std::endl << std::endl;
+                                std::cout << "Best solution is duplicated" << std::endl
+                                          << std::endl;
                         }
                     }
                 }
@@ -937,8 +939,8 @@ namespace Tensile
                         iter != table.rend();
                         iter++)
                     {
-                        thisMatch = false;
-                        uniqueSol = false;
+                        thisMatch       = false;
+                        uniqueSol       = false;
                         auto myDistance = distance(key, iter->key);
                         auto myMatch    = transform(iter->value);
 
@@ -947,7 +949,8 @@ namespace Tensile
                             bestDistance = myDistance;
                             bestMatch    = myMatch;
                             thisMatch    = true;
-                            if(std::find(bestmatches.begin(), bestmatches.end(), bestMatch) == bestmatches.end())
+                            if(std::find(bestmatches.begin(), bestmatches.end(), bestMatch)
+                               == bestmatches.end())
                             {
                                 bestmatches.push_back(bestMatch);
                                 uniqueSol = true;
@@ -978,7 +981,8 @@ namespace Tensile
                     double considered = count;
                     considered /= table.size();
                     considered *= 100;
-                    std::cout << "Considered " << count << "(" << considered << "%) of entries." << std::endl;
+                    std::cout << "Considered " << count << "(" << considered << "%) of entries."
+                              << std::endl;
                 }
 
                 if(T_Debug && bestmatches.size())

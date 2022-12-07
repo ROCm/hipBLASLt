@@ -42,51 +42,60 @@
 #define ROCBLASLT_COV_EXCL_START (void)("LCOV_EXCL_START")
 #define ROCBLASLT_COV_EXCL_STOP (void)("LCOV_EXCL_STOP")
 
-#define RETURN_IF_HIP_ERROR(INPUT_STATUS_FOR_CHECK)                            \
-  {                                                                            \
-    hipError_t TMP_STATUS_FOR_CHECK = INPUT_STATUS_FOR_CHECK;                  \
-    if (TMP_STATUS_FOR_CHECK != hipSuccess) {                                  \
-      return get_rocblaslt_status_for_hip_status(TMP_STATUS_FOR_CHECK);        \
-    }                                                                          \
-  }
+#define RETURN_IF_HIP_ERROR(INPUT_STATUS_FOR_CHECK)                           \
+    {                                                                         \
+        hipError_t TMP_STATUS_FOR_CHECK = INPUT_STATUS_FOR_CHECK;             \
+        if(TMP_STATUS_FOR_CHECK != hipSuccess)                                \
+        {                                                                     \
+            return get_rocblaslt_status_for_hip_status(TMP_STATUS_FOR_CHECK); \
+        }                                                                     \
+    }
 
-#define RETURN_IF_ROCBLASLT_ERROR(INPUT_STATUS_FOR_CHECK)                      \
-  {                                                                            \
-    rocblaslt_status TMP_STATUS_FOR_CHECK = INPUT_STATUS_FOR_CHECK;            \
-    if (TMP_STATUS_FOR_CHECK != rocblaslt_status_success) {                    \
-      return TMP_STATUS_FOR_CHECK;                                             \
-    }                                                                          \
-  }
+#define RETURN_IF_ROCBLASLT_ERROR(INPUT_STATUS_FOR_CHECK)               \
+    {                                                                   \
+        rocblaslt_status TMP_STATUS_FOR_CHECK = INPUT_STATUS_FOR_CHECK; \
+        if(TMP_STATUS_FOR_CHECK != rocblaslt_status_success)            \
+        {                                                               \
+            return TMP_STATUS_FOR_CHECK;                                \
+        }                                                               \
+    }
 
-#define THROW_IF_HIP_ERROR(INPUT_STATUS_FOR_CHECK)                             \
-  {                                                                            \
-    hipError_t TMP_STATUS_FOR_CHECK = INPUT_STATUS_FOR_CHECK;                  \
-    if (TMP_STATUS_FOR_CHECK != hipSuccess) {                                  \
-      throw get_rocblaslt_status_for_hip_status(TMP_STATUS_FOR_CHECK);         \
-    }                                                                          \
-  }
+#define THROW_IF_HIP_ERROR(INPUT_STATUS_FOR_CHECK)                           \
+    {                                                                        \
+        hipError_t TMP_STATUS_FOR_CHECK = INPUT_STATUS_FOR_CHECK;            \
+        if(TMP_STATUS_FOR_CHECK != hipSuccess)                               \
+        {                                                                    \
+            throw get_rocblaslt_status_for_hip_status(TMP_STATUS_FOR_CHECK); \
+        }                                                                    \
+    }
 
-#define PRINT_IF_HIP_ERROR(INPUT_STATUS_FOR_CHECK)                             \
-  {                                                                            \
-    hipError_t TMP_STATUS_FOR_CHECK = INPUT_STATUS_FOR_CHECK;                  \
-    if (TMP_STATUS_FOR_CHECK != hipSuccess) {                                  \
-      fprintf(stderr, "hip error code: %d at %s:%d\n", TMP_STATUS_FOR_CHECK,   \
-              __FILE__, __LINE__);                                             \
-    }                                                                          \
-  }
+#define PRINT_IF_HIP_ERROR(INPUT_STATUS_FOR_CHECK)                \
+    {                                                             \
+        hipError_t TMP_STATUS_FOR_CHECK = INPUT_STATUS_FOR_CHECK; \
+        if(TMP_STATUS_FOR_CHECK != hipSuccess)                    \
+        {                                                         \
+            fprintf(stderr,                                       \
+                    "hip error code: %d at %s:%d\n",              \
+                    TMP_STATUS_FOR_CHECK,                         \
+                    __FILE__,                                     \
+                    __LINE__);                                    \
+        }                                                         \
+    }
 
-#define RETURN_IF_INVALID_HANDLE(HANDLE)                                       \
-  {                                                                            \
-    if (HANDLE == nullptr) {                                                   \
-      return rocblaslt_status_invalid_handle;                                  \
-    }                                                                          \
-  }
+#define RETURN_IF_INVALID_HANDLE(HANDLE)            \
+    {                                               \
+        if(HANDLE == nullptr)                       \
+        {                                           \
+            return rocblaslt_status_invalid_handle; \
+        }                                           \
+    }
 
-#define RETURN_IF_NULLPTR(PTR)                                                 \
-  {                                                                            \
-    if (PTR == nullptr) {                                                      \
-      return rocblaslt_status_invalid_pointer;                                 \
-    }                                                                          \
-  }
+#define RETURN_IF_NULLPTR(PTR)                       \
+    {                                                \
+        if(PTR == nullptr)                           \
+        {                                            \
+            return rocblaslt_status_invalid_pointer; \
+        }                                            \
+    }
 
 #endif // DEFINITIONS_H

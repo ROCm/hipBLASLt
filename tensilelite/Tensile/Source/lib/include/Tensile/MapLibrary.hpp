@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright 2022 Advanced Micro Devices, Inc.
+ * Copyright (c) 2022 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -132,8 +132,8 @@ namespace Tensile
         LibraryMap<MyProblem, MySolution, Key>    map;
 
         virtual SolutionVector<MySolution> findTopSolutions(MyProblem const& problem,
-                                                            Hardware  const& hardware,
-                                                            int              numSolutions) const override
+                                                            Hardware const&  hardware,
+                                                            int numSolutions) const override
         {
             auto library = lookup(problem, hardware);
 
