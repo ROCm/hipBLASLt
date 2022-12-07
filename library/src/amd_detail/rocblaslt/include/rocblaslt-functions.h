@@ -97,14 +97,22 @@ extern "C" {
  *  \retval     rocblaslt_status_not_implemented
  */
 
-rocblaslt_status
-rocblaslt_matmul(rocblaslt_handle handle, rocblaslt_matmul_desc matmul_descr,
-                 const void *alpha, const void *A, rocblaslt_matrix_layout matA,
-                 const void *B, rocblaslt_matrix_layout matB, const void *beta,
-                 const void *C, rocblaslt_matrix_layout matC, void *D,
-                 rocblaslt_matrix_layout matD,
-                 const rocblaslt_matmul_algo *algo, void *workspace,
-                 size_t workspaceSizeInBytes, hipStream_t stream);
+rocblaslt_status rocblaslt_matmul(rocblaslt_handle             handle,
+                                  rocblaslt_matmul_desc        matmul_descr,
+                                  const void*                  alpha,
+                                  const void*                  A,
+                                  rocblaslt_matrix_layout      matA,
+                                  const void*                  B,
+                                  rocblaslt_matrix_layout      matB,
+                                  const void*                  beta,
+                                  const void*                  C,
+                                  rocblaslt_matrix_layout      matC,
+                                  void*                        D,
+                                  rocblaslt_matrix_layout      matD,
+                                  const rocblaslt_matmul_algo* algo,
+                                  void*                        workspace,
+                                  size_t                       workspaceSizeInBytes,
+                                  hipStream_t                  stream);
 
 #ifdef __cplusplus
 }

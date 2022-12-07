@@ -61,92 +61,110 @@
  *              will stream to log_ofs. Else it will stream to std::cerr.
  */
 
-inline void open_log_stream(std::ostream **log_os, std::ofstream *log_ofs,
-                            std::string environment_variable_name) {
-  *log_os = &std::cerr;
+inline void open_log_stream(std::ostream** log_os,
+                            std::ofstream* log_ofs,
+                            std::string    environment_variable_name)
+{
+    *log_os = &std::cerr;
 
-  char const *environment_variable_value =
-      getenv(environment_variable_name.c_str());
+    char const* environment_variable_value = getenv(environment_variable_name.c_str());
 
-  if (environment_variable_value != NULL) {
-    // if environment variable is set, open file at logfile_pathname contained
-    // in the environment variable
-    std::string logfile_pathname = (std::string)environment_variable_value;
+    if(environment_variable_value != NULL)
+    {
+        // if environment variable is set, open file at logfile_pathname contained
+        // in the environment variable
+        std::string logfile_pathname = (std::string)environment_variable_value;
 
-    log_ofs->exceptions(std::ofstream::failbit | std::ofstream::badbit);
-    try {
-      size_t pos = logfile_pathname.find("%i");
-      if (pos != std::string::npos)
-        logfile_pathname.replace(pos, 2, std::to_string(getpid()));
-      log_ofs->open(logfile_pathname);
+        log_ofs->exceptions(std::ofstream::failbit | std::ofstream::badbit);
+        try
+        {
+            size_t pos = logfile_pathname.find("%i");
+            if(pos != std::string::npos)
+                logfile_pathname.replace(pos, 2, std::to_string(getpid()));
+            log_ofs->open(logfile_pathname);
 
-      // if log_ofs is open, then stream to log_ofs, else log_os is already
-      // set equal to std::cerr
-      if (log_ofs->is_open() == true) {
-        *log_os = log_ofs;
-      }
-    } catch (std::ofstream::failure &e) {
-      std::cerr << "exception occured when writing to file: "
-                << logfile_pathname << "\n"
-                << e.what() << std::endl;
+            // if log_ofs is open, then stream to log_ofs, else log_os is already
+            // set equal to std::cerr
+            if(log_ofs->is_open() == true)
+            {
+                *log_os = log_ofs;
+            }
+        }
+        catch(std::ofstream::failure& e)
+        {
+            std::cerr << "exception occured when writing to file: " << logfile_pathname << "\n"
+                      << e.what() << std::endl;
+        }
     }
-  }
 }
 
-class LoggerSingleton {
+class LoggerSingleton
+{
 public:
-  std::ostream *log_os = nullptr;
-  uint32_t env_layer_mode = 0;
-  static LoggerSingleton &getInstance() { return gInstance; }
+    std::ostream*           log_os         = nullptr;
+    uint32_t                env_layer_mode = 0;
+    static LoggerSingleton& getInstance()
+    {
+        return gInstance;
+    }
 
-  // copy contructor
-  LoggerSingleton(const LoggerSingleton &) = delete;
-  // assignment operator
-  LoggerSingleton &operator=(const LoggerSingleton &) = delete;
+    // copy contructor
+    LoggerSingleton(const LoggerSingleton&) = delete;
+    // assignment operator
+    LoggerSingleton& operator=(const LoggerSingleton&) = delete;
 
 private:
-  static LoggerSingleton gInstance;
+    static LoggerSingleton gInstance;
 
-  // logging streams
-  std::ofstream log_file_ofs;
+    // logging streams
+    std::ofstream log_file_ofs;
 
-  LoggerSingleton() {
-    // Get Layer mode
-    char *str_layer_mode;
-    if ((str_layer_mode = getenv("HIPBLASLT_LOG_LEVEL")) == NULL) {
-      if ((str_layer_mode = getenv("HIPBLASLT_LOG_MASK")) != NULL) {
-        env_layer_mode = strtol(str_layer_mode, nullptr, 0);
-      }
-    } else {
-      switch (atoi(str_layer_mode)) {
-      case rocblaslt_layer_level_log_api:
-        env_layer_mode |= rocblaslt_layer_mode_log_api;
-      case rocblaslt_layer_level_log_info:
-        env_layer_mode |= rocblaslt_layer_mode_log_info;
-      case rocblaslt_layer_level_log_hints:
-        env_layer_mode |= rocblaslt_layer_mode_log_hints;
-      case rocblaslt_layer_level_log_trace:
-        env_layer_mode |= rocblaslt_layer_mode_log_trace;
-      case rocblaslt_layer_level_log_error:
-        env_layer_mode |= rocblaslt_layer_mode_log_error;
-        break;
-      default:
-        env_layer_mode = rocblaslt_layer_mode_none;
-        break;
-      }
+    LoggerSingleton()
+    {
+        // Get Layer mode
+        char* str_layer_mode;
+        if((str_layer_mode = getenv("HIPBLASLT_LOG_LEVEL")) == NULL)
+        {
+            if((str_layer_mode = getenv("HIPBLASLT_LOG_MASK")) != NULL)
+            {
+                env_layer_mode = strtol(str_layer_mode, nullptr, 0);
+            }
+        }
+        else
+        {
+            switch(atoi(str_layer_mode))
+            {
+            case rocblaslt_layer_level_log_api:
+                env_layer_mode |= rocblaslt_layer_mode_log_api;
+            case rocblaslt_layer_level_log_info:
+                env_layer_mode |= rocblaslt_layer_mode_log_info;
+            case rocblaslt_layer_level_log_hints:
+                env_layer_mode |= rocblaslt_layer_mode_log_hints;
+            case rocblaslt_layer_level_log_trace:
+                env_layer_mode |= rocblaslt_layer_mode_log_trace;
+            case rocblaslt_layer_level_log_error:
+                env_layer_mode |= rocblaslt_layer_mode_log_error;
+                break;
+            default:
+                env_layer_mode = rocblaslt_layer_mode_none;
+                break;
+            }
+        }
+
+        // Open log file
+        if(env_layer_mode != rocblaslt_layer_mode_none)
+        {
+            open_log_stream(&log_os, &log_file_ofs, "HIPBLASLT_LOG_FILE");
+        }
     }
 
-    // Open log file
-    if (env_layer_mode != rocblaslt_layer_mode_none) {
-      open_log_stream(&log_os, &log_file_ofs, "HIPBLASLT_LOG_FILE");
+    ~LoggerSingleton()
+    {
+        if(log_file_ofs.is_open())
+        {
+            log_file_ofs.close();
+        }
     }
-  }
-
-  ~LoggerSingleton() {
-    if (log_file_ofs.is_open()) {
-      log_file_ofs.close();
-    }
-  }
 };
 /**
  * @brief Invoke functor for each argument in variadic parameter pack.
@@ -165,15 +183,20 @@ private:
  *
  * @parm xs variadic parameter pack with list of arguments
  */
-template <typename F, typename... Ts> void each_args(F f, Ts &&...xs) {
-  (void)std::initializer_list<int>{((void)f(xs), 0)...};
+template <typename F, typename... Ts>
+void each_args(F f, Ts&&... xs)
+{
+    (void)std::initializer_list<int>{((void)f(xs), 0)...};
 }
 
 /**
  * @brief Workaround for gcc warnings when each_args called with single argument
  *        and no parameter pack.
  */
-template <typename F> void each_args(F) {}
+template <typename F>
+void each_args(F)
+{
+}
 
 /**
  * @brief Functor for logging arguments
@@ -184,16 +207,24 @@ template <typename F> void each_args(F) {}
  * the function call operator () applied to them with operand x,
  * and it will output x to ofs and return void".
  */
-struct log_arg {
-  log_arg(std::ostream &os, std::string &separator)
-      : os_(os), separator_(separator) {}
+struct log_arg
+{
+    log_arg(std::ostream& os, std::string& separator)
+        : os_(os)
+        , separator_(separator)
+    {
+    }
 
-  /// Generic overload for () operator.
-  template <typename T> void operator()(T &x) const { os_ << separator_ << x; }
+    /// Generic overload for () operator.
+    template <typename T>
+    void operator()(T& x) const
+    {
+        os_ << separator_ << x;
+    }
 
 private:
-  std::ostream &os_;       ///< Output stream.
-  std::string &separator_; ///< Separator: output preceding argument.
+    std::ostream& os_; ///< Output stream.
+    std::string&  separator_; ///< Separator: output preceding argument.
 };
 
 /**
@@ -223,41 +254,42 @@ private:
  */
 
 template <typename T, typename... Ts>
-inline void log_arg_data(std::ostream &os, std::string &separator, T &x,
-                         Ts &&...xs);
+inline void log_arg_data(std::ostream& os, std::string& separator, T& x, Ts&&... xs);
 template <typename T, typename... Ts>
-inline void log_arg_head(std::ostream &os, std::string &separator, T &x,
-                         Ts &&...xs);
+inline void log_arg_head(std::ostream& os, std::string& separator, T& x, Ts&&... xs);
 
-inline void log_arg_data(std::ostream &os, std::string &separator) {}
-inline void log_arg_head(std::ostream &os, std::string &separator) {}
+inline void log_arg_data(std::ostream& os, std::string& separator) {}
+inline void log_arg_head(std::ostream& os, std::string& separator) {}
 
 template <typename T>
-inline void log_arg_head(std::ostream &os, std::string &separator, T &x) {
-  os << x;
+inline void log_arg_head(std::ostream& os, std::string& separator, T& x)
+{
+    os << x;
 }
 template <typename T>
-inline void log_arg_data(std::ostream &os, std::string &separator, T &x) {
-  os << "=" << x << separator;
+inline void log_arg_data(std::ostream& os, std::string& separator, T& x)
+{
+    os << "=" << x << separator;
 }
 template <typename T, typename... Ts>
-inline void log_arg_head(std::ostream &os, std::string &separator, T &x,
-                         Ts &&...xs) {
-  os << x;
-  log_arg_data(os, separator, xs...);
+inline void log_arg_head(std::ostream& os, std::string& separator, T& x, Ts&&... xs)
+{
+    os << x;
+    log_arg_data(os, separator, xs...);
 }
 template <typename T, typename... Ts>
-inline void log_arg_data(std::ostream &os, std::string &separator, T &x,
-                         Ts &&...xs) {
-  os << "=" << x << separator;
-  log_arg_head(os, separator, xs...);
+inline void log_arg_data(std::ostream& os, std::string& separator, T& x, Ts&&... xs)
+{
+    os << "=" << x << separator;
+    log_arg_head(os, separator, xs...);
 }
 template <typename H, typename... Ts>
-void log_arguments(std::ostream &os, std::string &separator,
-                   std::string &prefix, H head, Ts &&...xs) {
-  os << prefix << " " << head;
-  log_arg_data(os, separator, xs...);
-  os << "\n";
+void log_arguments(
+    std::ostream& os, std::string& separator, std::string& prefix, H head, Ts&&... xs)
+{
+    os << prefix << " " << head;
+    log_arg_data(os, separator, xs...);
+    os << "\n";
 }
 /**
  * @brief Logging function
@@ -279,8 +311,9 @@ void log_arguments(std::ostream &os, std::string &separator,
  *                 Argument to log. It is preceded by newline.
  */
 template <typename H>
-void log_argument(std::ostream &os, std::string &separator, H head) {
-  os << "\n" << head;
+void log_argument(std::ostream& os, std::string& separator, H head)
+{
+    os << "\n" << head;
 }
 
 /**
@@ -298,8 +331,10 @@ void log_argument(std::ostream &os, std::string &separator, H head) {
  * head            <typename H>
  *                 Argument to log. It is preceded by newline.
  */
-template <typename H> void log_argument(std::ostream &os, H head) {
-  os << "\n" << head;
+template <typename H>
+void log_argument(std::ostream& os, H head)
+{
+    os << "\n" << head;
 }
 
 #endif // LOGGING_H

@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright 2022 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (c) 2022 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -62,5 +62,5 @@ class KernelWriterActivationFunction(KernelWriterBase):
     self._tf.setKernelInfo(tuple(self.state["Kernel"]["ISA"]), self.state["Kernel"]["WavefrontSize"])
     activation = ActivationInline(activationCDataType)
     fileString += activation.generateInlineAssemblyFunction(self.state["ProblemType"]["ActivationType"])
-    
+
     return fileString

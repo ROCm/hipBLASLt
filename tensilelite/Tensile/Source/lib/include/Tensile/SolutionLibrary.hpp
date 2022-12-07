@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright 2022 Advanced Micro Devices, Inc.
+ * Copyright (c) 2022 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -28,8 +28,8 @@
 
 #include <memory>
 #include <set>
-#include <vector>
 #include <string>
+#include <vector>
 
 #include <Tensile/Tensile.hpp>
 
@@ -109,7 +109,7 @@ namespace Tensile
                                                             Hardware const&  hardware,
                                                             int              numSolutions) const
         {
-          return SolutionVector<MySolution>();
+            return SolutionVector<MySolution>();
         }
     };
 

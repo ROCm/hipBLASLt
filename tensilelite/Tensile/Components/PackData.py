@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright 2022 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (c) 2022 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -136,5 +136,5 @@ class PackData_INT8(PackData):
                 module.add(VSaturateCastInt(sumIdxV, tmpVgpr, tmpS01, -128, 127, type=SaturateTypeInt8, initGpr=True))
                 module.add(VOrB32(dst=vgpr(d), src0=vgpr(formatVgpr), src1=vgpr(formatting(sumIdxV, inputPrefix, prefixOffset)), \
                         sdwa=SDWAModifiers(dst_sel=SelectBit.DWORD, dst_unused=UnusedBit.UNUSED_PAD, \
-                                            src0_sel=SelectBit.BYTE_0, src1_sel=SelectBit.DWORD))) 
+                                            src0_sel=SelectBit.BYTE_0, src1_sel=SelectBit.DWORD)))
         return module

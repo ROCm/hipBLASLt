@@ -35,50 +35,68 @@ ROCBLASLT_KERNEL void init_kernel(){};
 /*******************************************************************************
  * constructor
  ******************************************************************************/
-_rocblaslt_handle::_rocblaslt_handle() {
-  // Default device is active device
-  THROW_IF_HIP_ERROR(hipGetDevice(&device));
-  THROW_IF_HIP_ERROR(hipGetDeviceProperties(&properties, device));
+_rocblaslt_handle::_rocblaslt_handle()
+{
+    // Default device is active device
+    THROW_IF_HIP_ERROR(hipGetDevice(&device));
+    THROW_IF_HIP_ERROR(hipGetDeviceProperties(&properties, device));
 
-  // Device wavefront size
-  wavefront_size = properties.warpSize;
+    // Device wavefront size
+    wavefront_size = properties.warpSize;
 
 #if HIP_VERSION >= 307
-  // ASIC revision
-  asic_rev = properties.asicRevision;
+    // ASIC revision
+    asic_rev = properties.asicRevision;
 #else
-  asic_rev = 0;
+    asic_rev = 0;
 #endif
 }
 
 /*******************************************************************************
  * destructor
  ******************************************************************************/
-_rocblaslt_attribute::~_rocblaslt_attribute() { clear(); }
-
-void _rocblaslt_attribute::clear() { set(nullptr, 0); }
-
-const void *_rocblaslt_attribute::data() { return _data; }
-size_t _rocblaslt_attribute::length() { return _data_size; }
-
-size_t _rocblaslt_attribute::get(void *out, size_t size) {
-  if (out != nullptr && _data != nullptr && _data_size >= size) {
-    memcpy(out, _data, size);
-    return size;
-  }
-  return 0;
+_rocblaslt_attribute::~_rocblaslt_attribute()
+{
+    clear();
 }
 
-void _rocblaslt_attribute::set(const void *in, size_t size) {
-  if (in == nullptr || (_data != nullptr && _data_size != size)) {
-    free(_data);
-    _data = nullptr;
-    _data_size = 0;
-  }
-  if (in != nullptr) {
-    if (_data == nullptr)
-      _data = malloc(size);
-    memcpy(_data, in, size);
-    _data_size = size;
-  }
+void _rocblaslt_attribute::clear()
+{
+    set(nullptr, 0);
+}
+
+const void* _rocblaslt_attribute::data()
+{
+    return _data;
+}
+size_t _rocblaslt_attribute::length()
+{
+    return _data_size;
+}
+
+size_t _rocblaslt_attribute::get(void* out, size_t size)
+{
+    if(out != nullptr && _data != nullptr && _data_size >= size)
+    {
+        memcpy(out, _data, size);
+        return size;
+    }
+    return 0;
+}
+
+void _rocblaslt_attribute::set(const void* in, size_t size)
+{
+    if(in == nullptr || (_data != nullptr && _data_size != size))
+    {
+        free(_data);
+        _data      = nullptr;
+        _data_size = 0;
+    }
+    if(in != nullptr)
+    {
+        if(_data == nullptr)
+            _data = malloc(size);
+        memcpy(_data, in, size);
+        _data_size = size;
+    }
 }
