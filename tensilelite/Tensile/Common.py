@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright 2022 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (c) 2022 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -753,17 +753,17 @@ validParameters = {
     #
     # we can hide store behind the other WG's loop by lowering priority of store
     #   priority of loop is the same as priority of store
-    #     WG0: ￣￣￣￣￣￣￣￣￣￣￣￣￣￣￣\__
+    #     WG0: ???????????????\__
     #         |<-- loop --->|<-- store -->|end
     #
-    #     WG1: ___________________________/￣￣￣￣￣￣￣￣￣￣￣￣\__
+    #     WG1: ___________________________/????????????\__
     #         |<--------- loop ------------------->|<-- store -->|end
     #
     #   priority of loop is higher than priority of store
-    #     WG0: ￣￣￣￣￣￣￣\____________________
+    #     WG0: ???????\____________________
     #         |<-- loop --->|<------ store ----->|end
     #
-    #     WG1: _____________/￣￣￣￣￣\__________________
+    #     WG1: _____________/?????\__________________
     #         |<------- loop -------->|<----- store ---->|end
     "StorePriorityOpt":           [False, True],
     #

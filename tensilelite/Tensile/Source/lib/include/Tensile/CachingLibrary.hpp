@@ -2,7 +2,7 @@
 /*******************************************************************************
  * MIT License
  *
- * Copyright 2022 Advanced Micro Devices, Inc.
+ * Copyright (c) 2022 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -157,8 +157,8 @@ namespace Tensile
     {
     public:
         using Library = SolutionLibrary<MyProblem, MySolution>;
-        using Cache   = CacheMap<std::tuple<std::shared_ptr<MySolution>, double>, AMDGPU, MyProblem>;
-        using Caches  = CacheMap<SolutionVector<MySolution>, AMDGPU, MyProblem>;
+        using Cache  = CacheMap<std::tuple<std::shared_ptr<MySolution>, double>, AMDGPU, MyProblem>;
+        using Caches = CacheMap<SolutionVector<MySolution>, AMDGPU, MyProblem>;
 
         CachingLibrary(std::shared_ptr<Library> subLibrary)
             : m_subLibrary(subLibrary)
@@ -225,12 +225,12 @@ namespace Tensile
         }
 
         virtual SolutionVector<MySolution> findTopSolutions(MyProblem const& problem,
-                                                            Hardware  const& hardware,
-                                                            int              numSolutions) const override
+                                                            Hardware const&  hardware,
+                                                            int numSolutions) const override
         {
             try
             {
-                auto const& amdgpu = dynamic_cast<AMDGPU const&>(hardware);
+                auto const&                amdgpu = dynamic_cast<AMDGPU const&>(hardware);
                 SolutionVector<MySolution> solutions;
                 solutions = m_caches.find(problem, amdgpu);
 

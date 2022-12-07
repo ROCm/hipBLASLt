@@ -30,48 +30,45 @@
 #define DEBUG_H
 
 #include <iostream>
-static constexpr const char *s_rocblaslt_debug_str = "//rocblaslt.degug: ";
+static constexpr const char* s_rocblaslt_debug_str = "//rocblaslt.degug: ";
 
 //
 // Trace message..
 //
 #undef ROCBLASLT_DEBUG_VERBOSE
-#define ROCBLASLT_DEBUG_VERBOSE(msg__)                                         \
-  do {                                                                         \
-    std::cout << s_rocblaslt_debug_str << std::endl;                           \
-    std::cout << s_rocblaslt_debug_str << "verbose" << std::endl;              \
-    std::cout << s_rocblaslt_debug_str << "  function : '" << __FUNCTION__     \
-              << "'" << std::endl;                                             \
-    std::cout << s_rocblaslt_debug_str << "  file     : '" << __FILE__ << "'"  \
-              << std::endl;                                                    \
-    std::cout << s_rocblaslt_debug_str << "  line     : " << __LINE__          \
-              << std::endl;                                                    \
-    std::cout << s_rocblaslt_debug_str << "  message  : " << msg__             \
-              << std::endl;                                                    \
-    std::cout << s_rocblaslt_debug_str << std::endl;                           \
-  } while (false)
+#define ROCBLASLT_DEBUG_VERBOSE(msg__)                                                          \
+    do                                                                                          \
+    {                                                                                           \
+        std::cout << s_rocblaslt_debug_str << std::endl;                                        \
+        std::cout << s_rocblaslt_debug_str << "verbose" << std::endl;                           \
+        std::cout << s_rocblaslt_debug_str << "  function : '" << __FUNCTION__ << "'"           \
+                  << std::endl;                                                                 \
+        std::cout << s_rocblaslt_debug_str << "  file     : '" << __FILE__ << "'" << std::endl; \
+        std::cout << s_rocblaslt_debug_str << "  line     : " << __LINE__ << std::endl;         \
+        std::cout << s_rocblaslt_debug_str << "  message  : " << msg__ << std::endl;            \
+        std::cout << s_rocblaslt_debug_str << std::endl;                                        \
+    } while(false)
 
-inline rocblaslt_status rocblaslt_return_status_trace(const char *function,
-                                                      const char *file,
-                                                      const int line,
-                                                      rocblaslt_status status) {
-  if (rocblaslt_status_success != status) {
-    std::cerr << s_rocblaslt_debug_str << std::endl
-              << s_rocblaslt_debug_str << "invalid status" << std::endl
-              << s_rocblaslt_debug_str << "function       : '" << function
-              << "'" << std::endl
-              << s_rocblaslt_debug_str << "line           :  " << line
-              << std::endl
-              << s_rocblaslt_debug_str << "file           : '" << file << "'"
-              << std::endl
-              << s_rocblaslt_debug_str << std::endl;
-  }
-  return status;
+inline rocblaslt_status rocblaslt_return_status_trace(const char*      function,
+                                                      const char*      file,
+                                                      const int        line,
+                                                      rocblaslt_status status)
+{
+    if(rocblaslt_status_success != status)
+    {
+        std::cerr << s_rocblaslt_debug_str << std::endl
+                  << s_rocblaslt_debug_str << "invalid status" << std::endl
+                  << s_rocblaslt_debug_str << "function       : '" << function << "'" << std::endl
+                  << s_rocblaslt_debug_str << "line           :  " << line << std::endl
+                  << s_rocblaslt_debug_str << "file           : '" << file << "'" << std::endl
+                  << s_rocblaslt_debug_str << std::endl;
+    }
+    return status;
 }
 
 #undef ROCBLASLT_RETURN_STATUS
-#define ROCBLASLT_RETURN_STATUS(token__)                                       \
-  return rocblaslt_return_status_trace(__FUNCTION__, __FILE__, __LINE__,       \
-                                       rocblaslt_status_##token__)
+#define ROCBLASLT_RETURN_STATUS(token__)  \
+    return rocblaslt_return_status_trace( \
+        __FUNCTION__, __FILE__, __LINE__, rocblaslt_status_##token__)
 
 #endif // DEBUG_H

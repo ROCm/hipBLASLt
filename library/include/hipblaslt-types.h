@@ -47,8 +47,9 @@ typedef float hipblasLtFloat;
 typedef _Float16 hipblasLtHalf;
 #else
 /*! \brief Structure definition for hipblasLtHalf */
-typedef struct _hipblasLtHalf {
-  uint16_t data;
+typedef struct _hipblasLtHalf
+{
+    uint16_t data;
 } hipblasLtHalf;
 #endif
 

@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright 2022 Advanced Micro Devices, Inc.
+ * Copyright (c) 2022 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -242,7 +242,7 @@ namespace Tensile
                 for(auto ver : {"", "-xnack-", "-xnack+"})
                 {
                     std::string modifiedCOName = helperKernelName + ver + ".hsaco";
-                    err = loadCodeObjectFile(codeObjectDir + modifiedCOName);
+                    err                        = loadCodeObjectFile(codeObjectDir + modifiedCOName);
 
                     if(err == hipSuccess)
                         return err;
