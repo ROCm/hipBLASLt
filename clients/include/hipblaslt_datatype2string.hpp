@@ -46,6 +46,23 @@ typedef enum _hipblaslt_activation_type
     gelu = 2,
 } hipblaslt_activation_type;
 
+inline hipblaslt_internal_ostream& operator<<(hipblaslt_internal_ostream& os,
+                                              hipblaslt_activation_type   act)
+{
+    switch(act)
+    {
+    case hipblaslt_activation_type::none:
+        os << "none";
+        break;
+    case hipblaslt_activation_type::relu:
+        os << "relu";
+        break;
+    case hipblaslt_activation_type::gelu:
+        os << "gelu";
+        break;
+    }
+    return os;
+}
 constexpr auto hipblaslt_initialization2string(hipblaslt_initialization init)
 {
     switch(init)
