@@ -449,7 +449,8 @@ namespace roc
                 const value_base* val = opt.get_val().get();
                 if(printvalue && !dynamic_cast<const value<bool>*>(val))
                     left << " <value>";
-                os << std::setw(26) << std::left << left.str() << " " << opt.get_desc() << " ";
+                os << std::setw(26) << std::left << left.str() << " " << std::setw(82) << std::left
+                   << opt.get_desc() << " ";
                 left.str(std::string());
 
                 // Print the default value of the variable type if it exists
@@ -484,7 +485,7 @@ namespace roc
                         left << ")";
                     }
                 }
-                os << left.str() << "\n\n";
+                os << left.str() << "\n";
             }
             return os << std::flush;
         }

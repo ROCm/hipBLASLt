@@ -36,7 +36,7 @@ void Arguments::init()
 {
     // match python in hipblaslt_common.py
 
-    function[0] = 0;
+    strcpy(function, "matmul");
     strcpy(name, "hipblaslt-bench");
     category[0]            = 0;
     known_bug_platforms[0] = 0;

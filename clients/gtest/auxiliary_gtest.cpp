@@ -55,7 +55,7 @@ namespace
         To,
         Tc,
         std::enable_if_t<std::is_same<Ti, hipblasLtHalf>{} || std::is_same<Ti, hip_bfloat16>{}
-                         || std::is_same<Ti, int8_t>{}>> : hipblaslt_test_valid
+                         || std::is_same<Ti, float>{}>> : hipblaslt_test_valid
     {
         void operator()(const Arguments& arg)
         {
