@@ -36,7 +36,7 @@ function display_help()
   echo "    [-i|--install] install after build"
   echo "    [-d|--dependencies] install build dependencies"
   echo "    [-t|--test_local_path] Specify a local path for Tensile instead of remote GIT repo"
-  echo "    [-a|--architecture] Set GPU architecture target(s), e.g., all, gfx000, gfx900, gfx906:xnack-;gfx908:xnack-"
+  echo "    [-a|--architecture] Set GPU architecture target(s), e.g., all, gfx90a:xnack+;gfx90a:xnack-"
   echo "    [-c|--clients] build library clients too (combines with -i & -d)"
   echo "    [-r]--relocatable] create a package to support relocatable ROCm"
   echo "    [-g|--debug] -DCMAKE_BUILD_TYPE=Debug (default is =Release)"

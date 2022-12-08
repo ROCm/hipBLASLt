@@ -1,6 +1,23 @@
 # hipBLASLt
-hipBLASLt provides general matrix-matrix operations on top of AMD's Radeon Open eCosystem Platform [ROCm][] runtime and toolchains. hipBLASLt is created using the [HIP][] programming language and optimized for AMD's latest discrete GPUs.
-hipBLASLt provides some flexible API to let user set attributes for solution selection.
+hipBLASLt is a library that provides general matrix-matrix operations.
+hipBLASLt is created using the HIP programming language and optimized for AMD's latest discrete GPUs.
+hipBLASLt provides flexible APIs to let users set attributes for solution selection.\
+hipBLASLt is an equivalent math library to CUDA’s cuBLASLt which is a lightweight library dedicated to GEneral Matrix-to-matrix Multiply (GEMM) operations with new flexible APIs.
+This library adds flexibility in matrix data layouts, input types, compute types, and also in choosing the algorithmic implementations and heuristics through parameter programmability.
+After a set of options for the intended GEMM operation are identified by the user, these options can be used repeatedly for different inputs.
+It is designed to be used from C and C++ code. The GEMM operation of hipBLASLt is performed by hipblasLtMatmul().\
+The equation is listed here:
+```math
+D = Activation(alpha \cdot op(A) \cdot op(B) + beta \cdot op(C) + bias)
+```
+Where op(A)/op(B) refers to in-place operations such as transpose/non-transpose, and alpha, beta are scalars.\
+Acitivation function support relu and gelu.\
+Here are data type supported list:
+| A | B | C | D | Compute(Scale) |
+| :---: | :---: | :---: | :---: | :---: |
+| fp32  | fp32  | fp32  | fp32  | fp32  |
+| fp16  | fp16  | fp16  | fp16  | fp32  |
+| bf16  | bf16  | bf16  | bf16  | fp32  |
 
 ## Documentation (TBD)
 TBD
@@ -10,7 +27,10 @@ TBD
 * CMake 3.16.8 or later
 * python3.7 or later
 * python3.7-venv or later
-* AMD [ROCm] 5.5 platform or later
+* AMD [ROCm] 5.5 or later
+
+## Required ROCM library
+* hipBLAS
 
 ## Quickstart hipBLASLt build and install
 
@@ -18,7 +38,7 @@ TBD
 You can build hipBLASLt using the *install.sh* script
 ```
 # Clone hipBLASLt using git
-TBD
+git clone https://github.com/ROCmSoftwarePlatform/hipBLASLt
 
 # Go to hipBLASLt directory
 cd hipBLASLt
@@ -30,68 +50,16 @@ cd hipBLASLt
 #   -d|--dependencies - install build dependencies
 #   -c|--clients      - build library clients too (combines with -i & -d)
 #   -g|--debug        - build with debug flag
-./install.sh -dc
-```
-
-#### CMake
-All compiler specifications are determined automatically. The compilation process can be performed by
-```
-# Clone hipBLASLt using git
-git clone https://github.com/ROCmSoftwarePlatform/hipBLASLt
-
-# Go to hipBLASLt directory, create and go to the build directory
-cd hipBLASLt; mkdir -p build/release; cd build/release
-
-# Configure hipBLASLt
-# Build options:
-#   BUILD_CLIENTS_TESTS      - build tests (OFF)
-#   BUILD_CLIENTS_BENCHMARKS - build benchmarks (OFF)
-#   BUILD_CLIENTS_SAMPLES    - build examples (ON)
-#   BUILD_VERBOSE            - verbose output (OFF)
-#   BUILD_SHARED_LIBS        - build hipBLASLt as a shared library (ON)
-CXX=/opt/rocm/bin/hipcc cmake -DBUILD_CLIENTS_TESTS=ON ../..
-
-# Build
-make
-
-# Install
-[sudo] make install
+./install.sh -idc
 ```
 
 ## Unit tests
-To run unit tests, hipBLASLt has to be built with option -DBUILD_CLIENTS_TESTS=ON.
-```
-# Go to hipBLASLt build directory
-cd hipBLASLt; cd build/release
-
-# Run sample tests
-./clients/staging/example_hipblaslt_preference
-Usage: ./example_hipblaslt_preference <options>
-options:
-        -h, --help                              Show this help message
-        -v, --verbose                           Verbose output
-        -V, --validate                          Verify results
-        -m                      m               GEMM_STRIDED argument m
-        -n                      n               GEMM_STRIDED argument n
-        -k                      k               GEMM_STRIDED argument k
-        --lda                   lda             GEMM_STRIDED argument lda
-        --ldb                   ldb             GEMM_STRIDED argument ldb
-        --ldc                   ldc             GEMM_STRIDED argument ldc
-        --ldd                   ldd             GEMM_STRIDED argument ldd
-        --trans_a               trans_a         GEMM_STRIDED argument trans_a
-        --trans_b               trans_b         GEMM_STRIDED argument trans_b
-        --datatype              datatype        GEMM_STRIDED argument in out datatype:fp32
-        --stride_a              stride_a        GEMM_STRIDED argument stride_a
-        --stride_b              stride_b        GEMM_STRIDED argument stride_b
-        --stride_c              stride_c        GEMM_STRIDED argument stride_c
-        --stride_d              stride_d        GEMM_STRIDED argument stride_d
-        --alpha                 alpha           GEMM_STRIDED argument alpha
-        --beta                  beta            GEMM_STRIDED argument beta
-        --act                   act             GEMM_STRIDED set activation type: relu or gelu
-        --bias                  bias            GEMM_STRIDED enable bias: 0 or 1 (default is 0)
-        --header                header          Print header for output (default is enabled)
-        --timing                timing          Bechmark GPU kernel performance:0 or 1 (default is 1)
-```
+To build unit tests, hipBLASLt has to be built with --clients.\
+All unit tests are in path build/release/clients/staging/.\
+Please check these links for more information.\
+[hipblaslt-test](clients/gtest/README.md)\
+[hipblaslt-bench](clients/benchmarks/README.md)\
+[example_hipblaslt_preference](clients/samples/README.md)
 
 ## Support
 Please use [the issue tracker][] for bugs and feature requests.

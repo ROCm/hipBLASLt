@@ -87,7 +87,8 @@ struct perf_matmul<
     std::enable_if_t<
 #ifdef __HIP_PLATFORM_HCC__
         (std::is_same<Ti, To>{}
-         && (std::is_same<Ti, hipblasLtHalf>{} || std::is_same<Ti, hip_bfloat16>{})
+         && (std::is_same<Ti, hipblasLtHalf>{} || std::is_same<Ti, hip_bfloat16>{}
+             || std::is_same<Ti, float>{})
          && std::is_same<Tc, float>{})
 #else
         (std::is_same<Ti, To>{}
@@ -143,36 +144,50 @@ int run_bench_test(Arguments& arg, const std::string& filter, bool any_stride, b
     int64_t min_ldd = arg.M;
     if(arg.lda < min_lda)
     {
-        hipblaslt_cout << "hipblaslt-bench INFO: lda < min_lda, set lda = " << min_lda << std::endl;
+        //hipblaslt_cout << "hipblaslt-bench INFO: lda < min_lda, set lda = " << min_lda << std::endl;
         arg.lda = min_lda;
     }
     if(arg.ldb < min_ldb)
     {
-        hipblaslt_cout << "hipblaslt-bench INFO: ldb < min_ldb, set ldb = " << min_ldb << std::endl;
+        //hipblaslt_cout << "hipblaslt-bench INFO: ldb < min_ldb, set ldb = " << min_ldb << std::endl;
         arg.ldb = min_ldb;
     }
     if(arg.ldc < min_ldc)
     {
-        hipblaslt_cout << "hipblaslt-bench INFO: ldc < min_ldc, set ldc = " << min_ldc << std::endl;
+        //hipblaslt_cout << "hipblaslt-bench INFO: ldc < min_ldc, set ldc = " << min_ldc << std::endl;
         arg.ldc = min_ldc;
     }
     if(arg.ldd < min_ldd)
     {
-        hipblaslt_cout << "hipblaslt-bench INFO: ldd < min_ldd, set ldd = " << min_ldc << std::endl;
+        //hipblaslt_cout << "hipblaslt-bench INFO: ldd < min_ldd, set ldd = " << min_ldc << std::endl;
         arg.ldd = min_ldd;
     }
+    int64_t min_stride_a = arg.lda * (arg.transA == 'N' ? arg.K : arg.M);
+    int64_t min_stride_b = arg.ldb * (arg.transB == 'N' ? arg.N : arg.K);
     int64_t min_stride_c = arg.ldc * arg.N;
     int64_t min_stride_d = arg.ldd * arg.N;
+    if(!any_stride && arg.stride_a < min_stride_a)
+    {
+        //hipblaslt_cout << "hipblaslt-bench INFO: stride_a < min_stride_a, set stride_a = "
+        //               << min_stride_a << std::endl;
+        arg.stride_a = min_stride_a;
+    }
+    if(!any_stride && arg.stride_b < min_stride_b)
+    {
+        //hipblaslt_cout << "hipblaslt-bench INFO: stride_b < min_stride_b, set stride_b = "
+        //               << min_stride_b << std::endl;
+        arg.stride_b = min_stride_b;
+    }
     if(!any_stride && arg.stride_c < min_stride_c)
     {
-        hipblaslt_cout << "hipblaslt-bench INFO: stride_c < min_stride_c, set stride_c = "
-                       << min_stride_c << std::endl;
+        //hipblaslt_cout << "hipblaslt-bench INFO: stride_c < min_stride_c, set stride_c = "
+        //               << min_stride_c << std::endl;
         arg.stride_c = min_stride_c;
     }
     if(!any_stride && arg.stride_d < min_stride_d)
     {
-        hipblaslt_cout << "hipblaslt-bench INFO: stride_d < min_stride_d, set stride_d = "
-                       << min_stride_d << std::endl;
+        //hipblaslt_cout << "hipblaslt-bench INFO: stride_d < min_stride_d, set stride_d = "
+        //               << min_stride_d << std::endl;
         arg.stride_d = min_stride_d;
     }
 
@@ -247,19 +262,19 @@ try
          "Specific matrix size: the number of columns in A and rows in B.")
 
         ("lda",
-         value<int64_t>(&arg.lda)->default_value(128),
+         value<int64_t>(&arg.lda),
          "Leading dimension of matrix A.")
 
         ("ldb",
-         value<int64_t>(&arg.ldb)->default_value(128),
+         value<int64_t>(&arg.ldb),
          "Leading dimension of matrix B.")
 
         ("ldc",
-         value<int64_t>(&arg.ldc)->default_value(128),
+         value<int64_t>(&arg.ldc),
          "Leading dimension of matrix C.")
 
         ("ldd",
-         value<int64_t>(&arg.ldd)->default_value(128),
+         value<int64_t>(&arg.ldd),
          "Leading dimension of matrix D.")
 
         ("any_stride",
@@ -267,19 +282,19 @@ try
          "Do not modify input strides based on leading dimensions")
 
         ("stride_a",
-         value<int64_t>(&arg.stride_a)->default_value(128*128),
+         value<int64_t>(&arg.stride_a),
          "Specific stride of strided_batched matrix A, second dimension * leading dimension.")
 
         ("stride_b",
-         value<int64_t>(&arg.stride_b)->default_value(128*128),
+         value<int64_t>(&arg.stride_b),
          "Specific stride of strided_batched matrix B, second dimension * leading dimension.")
 
         ("stride_c",
-         value<int64_t>(&arg.stride_c)->default_value(128*128),
+         value<int64_t>(&arg.stride_c),
          "Specific stride of strided_batched matrix C, second dimension * leading dimension.")
 
         ("stride_d",
-         value<int64_t>(&arg.stride_d)->default_value(128*128),
+         value<int64_t>(&arg.stride_d),
          "Specific stride of strided_batched matrix D, second dimension * leading dimension.")
 
         ("alpha",
@@ -289,32 +304,33 @@ try
          value<float>(&arg.beta)->default_value(0.0), "specifies the scalar beta")
 
         ("function,f",
-         value<std::string>(&function),
-         "BLAS function to test.")
+         value<std::string>(&function)->default_value("matmul"), "BLASLt function to test. "
+         "Options: matmul")
 
         ("precision,r",
-         value<std::string>(&precision)->default_value("f16_r"), "Precision. "
-         "Options: h,f16_r,bf16_r,i8_r")
+         value<std::string>(&precision)->default_value("f16_r"), "Precision of matrix A,B,C,D  "
+         "Options: f32_r,f16_r,bf16_r")
 
+/*TODO: Enable individual matrix type option once input/output can support different data type.
         ("a_type",
          value<std::string>(&a_type), "Precision of matrix A. "
-        "Options: h,f16_r,bf16_r,i8_r")
+        "Options: f32_r,f16_r,bf16_r")
 
         ("b_type",
          value<std::string>(&b_type), "Precision of matrix B. "
-        "Options: h,f16_r,bf16_r,i8_r")
+        "Options: f32_r,f16_r,bf16_r")
 
         ("c_type",
          value<std::string>(&c_type), "Precision of matrix C. "
-         "Options: h,f16_r,bf16_r,i8_r")
+         "Options: f32_r,f16_r,bf16_r")
 
         ("d_type",
          value<std::string>(&d_type), "Precision of matrix D. "
-        "Options: h,f16_r,bf16_r,i8_r")
-
+        "Options: f32_r,f16_r,bf16_r")
+*/
         ("compute_type",
-         value<std::string>(&compute_type), "Precision of computation. "
-         "Options: s,f32_r,i32_r")
+         value<std::string>(&compute_type)->default_value("f32_r"), "Precision of computation. "
+         "Options: s,f32_r")
 
         ("scale_type",
          value<std::string>(&scale_type), "Precision of scalar. "
@@ -322,14 +338,14 @@ try
 
         ("initialization",
          value<std::string>(&initialization)->default_value("hpl"),
-         "Intialize with random integers, trig functions sin and cos, or hpl-like input. "
-         "Options: rand_int, trig_float, hpl")
+         "Intialize matrix data."
+         "Options: rand_int, trig_float, hpl(floating)")
 
-        ("transposeA",
+        ("transA",
          value<char>(&arg.transA)->default_value('N'),
          "N = no transpose, T = transpose, C = conjugate transpose")
 
-        ("transposeB",
+        ("transB",
          value<char>(&arg.transB)->default_value('N'),
          "N = no transpose, T = transpose, C = conjugate transpose")
 
@@ -355,27 +371,27 @@ try
 
         ("algo",
          value<uint32_t>(&arg.algo)->default_value(0),
-         "extended precision matmul algorithm")
+         "Reserved.")
 
         ("solution_index",
          value<int32_t>(&arg.solution_index)->default_value(0),
-         "extended precision matmul solution index")
+         "Reserved.")
 
         ("activation_type",
          value<std::string>(&activation_type)->default_value("none"),
-         "Options: None, clippedrelu, gelu, relu")
+         "Options: None, gelu, relu")
 
         ("activation_arg1",
          value<float>(&arg.activation_arg1)->default_value(0),
-         "activation argument #1, when activation_type is clippedrelu, this argument used to be the threshold.")
+         "Reserved.")
 
         ("activation_arg2",
          value<float>(&arg.activation_arg2)->default_value(std::numeric_limits<float>::infinity()),
-         "activation argument #2, when activation_type is clippedrelu, this argument used to be the upperbound.")
+         "Reserved.")
 
         ("bias_type",
          value<std::string>(&bias_type), "Precision of bias vector."
-        "Options: f16_r,bf16_r,f32_r,default")
+        "Options: f16_r,bf16_r,f32_r,default(same with D type)")
 
         ("bias_vector",
          bool_switch(&arg.bias_vector)->default_value(false),
