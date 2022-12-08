@@ -878,6 +878,28 @@ RocblasltContractionProblem<Ti, To, Tc>
  * getBestSolutions calls Tensile's findTopSolutions and converts to          *
  * rocblaslt_matmul_heuristic_result.                                         *
  ******************************************************************************/
+
+void _convertToHeuristicResultArray(
+    std::vector<std::shared_ptr<Tensile::ContractionSolution>>& solutions,
+    int                                                         requestedAlgoCount,
+    rocblaslt_matmul_heuristic_result                           heuristicResultsArray[],
+    int*                                                        returnAlgoCount,
+    size_t                                                      maxWorkSpaceBytes)
+{
+    *returnAlgoCount = std::min((int)solutions.size(), requestedAlgoCount);
+    for(size_t i = 0; i < *returnAlgoCount; i++)
+    {
+        auto solution                          = solutions[i];
+        heuristicResultsArray[i].algo.data.ptr = std::static_pointer_cast<void>(solution);
+        heuristicResultsArray[i].algo.max_workspace_bytes = maxWorkSpaceBytes;
+        heuristicResultsArray[i].state                    = rocblaslt_status_success;
+    }
+    for(size_t i = *returnAlgoCount; i < requestedAlgoCount; i++)
+    {
+        heuristicResultsArray[i].state = rocblaslt_status_invalid_value;
+    }
+}
+
 template <typename Ti, typename To, typename Tc>
 rocblaslt_status getBestSolutions(RocblasltContractionProblem<Ti, To, Tc> prob,
                                   int                                     requestedAlgoCount,
@@ -894,21 +916,29 @@ rocblaslt_status getBestSolutions(RocblasltContractionProblem<Ti, To, Tc> prob,
 
     hardware          = Tensile::hip::GetDevice(*deviceProp);
     auto tensile_prob = ConstructTensileProblem(prob);
-    // auto handle = prob.handle;
-
-    auto solutions   = library->findTopSolutions(tensile_prob, *hardware, requestedAlgoCount);
-    *returnAlgoCount = std::min((int)solutions.size(), requestedAlgoCount);
-    for(size_t i = 0; i < *returnAlgoCount; i++)
+    std::vector<std::shared_ptr<Tensile::ContractionSolution>> solutions_fallback;
+    // Fallback to original kernels
+    if(prob.bias == nullptr && tensile_prob.activationEnumArg() == Tensile::ActivationType::None)
     {
-        auto solution                          = solutions[i];
-        heuristicResultsArray[i].algo.data.ptr = std::static_pointer_cast<void>(solution);
-        heuristicResultsArray[i].algo.max_workspace_bytes = maxWorkSpaceBytes;
-        heuristicResultsArray[i].state                    = rocblaslt_status_success;
+        auto useBias = tensile_prob.useBias();
+        auto actType = tensile_prob.activationType();
+        auto actHPA  = tensile_prob.activationHPA();
+        tensile_prob.setUseBias(false);
+        tensile_prob.setActivationType(Tensile::ActivationType::None);
+        tensile_prob.setActivationHPA(false);
+        solutions_fallback = library->findTopSolutions(tensile_prob, *hardware, requestedAlgoCount);
+        // restore
+        tensile_prob.setUseBias(useBias);
+        tensile_prob.setActivationType(actType);
+        tensile_prob.setActivationHPA(actHPA);
     }
-    for(size_t i = *returnAlgoCount; i < requestedAlgoCount; i++)
+    auto solutions = library->findTopSolutions(tensile_prob, *hardware, requestedAlgoCount);
+    if(solutions_fallback.size() > 0)
     {
-        heuristicResultsArray[i].state = rocblaslt_status_invalid_value;
+        solutions.insert(solutions.begin(), solutions_fallback.begin(), solutions_fallback.end());
     }
+    _convertToHeuristicResultArray(
+        solutions, requestedAlgoCount, heuristicResultsArray, returnAlgoCount, maxWorkSpaceBytes);
 
     return rocblaslt_status_success;
 }
