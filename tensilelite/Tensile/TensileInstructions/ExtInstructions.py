@@ -138,17 +138,18 @@ def SLongBranchNegative(label: Label, tmpSgprRes: RegisterPoolResource, comment=
 # Use when erroring out "invalid operand due to label > SIMM16"
 ##############################################################################
 def SCLongBranchScc0(label: Label, tmpSgprRes: RegisterPoolResource, \
-                     noBranchLabelStr: str, postiveLabelStr: str, posNeg: int = 0):
+                     noBranchLabelStr: str, postiveLabelStr: str, \
+                     posNeg: int = 0, comment=""):
     module = Module("SCLongBranchScc0 %s"%label.getLabelName())
     noBranchLabel = Label(noBranchLabelStr, "")
     module.add(SCBranchSCC1(labelName=noBranchLabel.getLabelName(), \
                             comment="Only branch on scc0"))
     if posNeg > 0:
-        module.add(SLongBranchPositive(label, tmpSgprRes))
+        module.add(SLongBranchPositive(label, tmpSgprRes, comment=comment))
     elif posNeg < 0:
-        module.add(SLongBranchNegative(label, tmpSgprRes))
+        module.add(SLongBranchNegative(label, tmpSgprRes, comment=comment))
     else:
-        module.add(SLongBranch(label, tmpSgprRes, postiveLabelStr))
+        module.add(SLongBranch(label, tmpSgprRes, postiveLabelStr, comment=comment))
     module.add(noBranchLabel)
     return module
 
@@ -158,17 +159,18 @@ def SCLongBranchScc0(label: Label, tmpSgprRes: RegisterPoolResource, \
 # Use when erroring out "invalid operand due to label > SIMM16"
 ##############################################################################
 def SCLongBranchScc1(label: Label, tmpSgprRes: RegisterPoolResource, \
-                     noBranchLabelStr: str, postiveLabelStr: str, posNeg: int = 0):
+                     noBranchLabelStr: str, postiveLabelStr: str, \
+                     posNeg: int = 0, comment=""):
     module = Module("SCLongBranchScc1 %s"%label.getLabelName())
     noBranchLabel = Label(noBranchLabelStr, "")
     module.add(SCBranchSCC0(labelName=noBranchLabel.getLabelName(), \
                             comment="Only branch on scc1"))
     if posNeg > 0:
-        module.add(SLongBranchPositive(label, tmpSgprRes))
+        module.add(SLongBranchPositive(label, tmpSgprRes, comment=comment))
     elif posNeg < 0:
-        module.add(SLongBranchNegative(label, tmpSgprRes))
+        module.add(SLongBranchNegative(label, tmpSgprRes, comment=comment))
     else:
-        module.add(SLongBranch(label, tmpSgprRes, postiveLabelStr))
+        module.add(SLongBranch(label, tmpSgprRes, postiveLabelStr, comment=comment))
     module.add(noBranchLabel)
     return module
 
@@ -360,6 +362,9 @@ class ArgumentLoader:
 
     def resetOffset(self) -> None:
         self.kernArgOffset = 0
+
+    def setOffset(self, offset: int) -> None:
+        self.kernArgOffset = offset
 
     def getOffset(self) -> int:
         return self.kernArgOffset

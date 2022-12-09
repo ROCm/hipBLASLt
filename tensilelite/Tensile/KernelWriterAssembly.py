@@ -355,6 +355,10 @@ class KernelWriterAssembly(KernelWriter):
     # Mostly impacts flat kernels and GSU edge since these need SGPR
     # for conditionals
     # self.states.lastPostLoopSgpr = self.sgprPool.size()
+    if kernel["BufferLoad"]:
+       # resource descriptor (SRD) A and B, must be aligned on 4-SGPR boundary
+      self.defineSgpr("SrdA", 4, 4)
+      self.defineSgpr("SrdB", 4, 4)
 
     if self.states.use64bShadowLimit:
       # If need more SGPR could overlap this with the Tensor2dSize regs
@@ -935,20 +939,20 @@ class KernelWriterAssembly(KernelWriter):
       # load kernel args
       module.addComment1("Load Kernel Args")
       self.kernArgOffset = 0
-      argLoader = ArgumentLoader()
+      self.argLoader = ArgumentLoader()
       if globalParameters["DebugKernel"]:
-        module.add(argLoader.loadSingleKernArg("AddressDbg", "KernArgAddress"))
-        module.add(argLoader.loadSingleKernArg("AddressDbg+1", "KernArgAddress"))
+        module.add(self.argLoader.loadSingleKernArg("AddressDbg", "KernArgAddress"))
+        module.add(self.argLoader.loadSingleKernArg("AddressDbg+1", "KernArgAddress"))
 
-      argLoader.loadSingleKernArg("Tensor2dSizeC+0", "KernArgAddress", False)
-      argLoader.loadSingleKernArg("Tensor2dSizeC+1", "KernArgAddress", False)
+      self.argLoader.loadSingleKernArg("Tensor2dSizeC+0", "KernArgAddress", False)
+      self.argLoader.loadSingleKernArg("Tensor2dSizeC+1", "KernArgAddress", False)
 
       load = self.states.numSgprToLoad
       sgprStart = self.sgprs["Tensor2dSizeA"]
-      module.addModuleAsFlatItems(argLoader.loadAllKernArg(sgprStart, "KernArgAddress", load))
+      module.addModuleAsFlatItems(self.argLoader.loadAllKernArg(sgprStart, "KernArgAddress", load))
       if kernel.enabledSetPrioSplitLDS:
         module.add(SSetPrior(prior=1, comment="prioritize init code so as to issue load sooner"))
-      module.add(SWaitCnt(lgkmcnt=0, comment="wait for %u bytes of kern args" % argLoader.getOffset() ))
+      module.add(SWaitCnt(lgkmcnt=0, comment="wait for %u bytes of kern args" % self.argLoader.getOffset() ))
 
       if not kernel["ProblemType"]["StridedBatched"]:
         with self.allocTmpSgpr(self.states.laneSGPRCount) as tmpSgpr:
@@ -2428,7 +2432,7 @@ class KernelWriterAssembly(KernelWriter):
   ##############################################################################
   def closeShadowInit(self, kernel):
     module = Module("closeShadowInit")
-    assert(self.doShadowInit and kernel["PrefetchGlobalRead"])
+    assert(self.states.doShadowInit and kernel["PrefetchGlobalRead"])
 
     module.add(self.checkLastIter(kernel))
     if kernel["SuppressNoLoadLoop"]:
@@ -3196,6 +3200,59 @@ class KernelWriterAssembly(KernelWriter):
     if kernel["SuppressNoLoadLoop"]:
       module.add(SWaitCnt(lgkmcnt=0, vmcnt=0, vscnt=0, comment="wait for all summation activity"))
 
+    ########################################
+    # Load kernel args needed by global write batch
+    # Calculate storeSgprLoad
+    module.addComment0("load store sgprs")
+    numSgprAddressBias = 0
+    BiasType = 0
+    storeSgprLoad = 0
+    runActivation = True if ((kernel["ProblemType"]["ActivationType"] != 'none') and (kernel["GlobalSplitU"] == 1) \
+        and kernel["ActivationFused"]) else False
+    if kernel["ProblemType"]["UseBias"] and (kernel["GlobalSplitU"] == 1):
+      numSgprAddressBias = 2 # 64-bit
+      if runActivation:
+        BiasType = max(1, kernel["ProblemType"]["DestDataType"].numRegisters())
+      else:
+        BiasType = 1
+      storeSgprLoad += numSgprAddressBias + BiasType
+    if runActivation:
+      if kernel["ProblemType"]["ActivationType"] == 'all':
+        self.states.numActivationTypeArgSize = 1
+      storeSgprLoad += self.states.numActivationTypeArgSize + self.states.numactivationArgTotalSize
+
+    # Define sgprs for kernel args
+    self.defineSgpr("LoadStoreSgprs", storeSgprLoad, align=4)
+    if storeSgprLoad:
+      soffset = self.sgprs["LoadStoreSgprs"]
+      if numSgprAddressBias:
+        module.add(RegSet("s", "sgprAddressBias", soffset))
+        soffset += numSgprAddressBias
+        module.add(RegSet("s", "sgprBiasType", soffset))
+        soffset += BiasType
+      if runActivation:
+        for name in kernel["ProblemType"]["ActivationType"].getAdditionalArgStringList():
+          module.add(RegSet("s", "sgpr"+name, soffset))
+          soffset += self.states.numActivationArgSize
+      if self.states.numActivationTypeArgSize:
+        module.add(RegSet("s", "sgprActivationType", soffset))
+      argOffset = self.argLoader.getOffset() # Backup offset
+      module.addModuleAsFlatItems(self.argLoader.loadAllKernArg(self.sgprs["LoadStoreSgprs"], "KernArgAddress", storeSgprLoad))
+      self.argLoader.setOffset(argOffset) # Restore offset
+
+    # define the rest sgprs
+    if (not self.states.doShadowInit) and kernel["BufferStore"]:
+      self.defineSgpr("SrdD", 4, 4)
+      self.defineSgpr("SrdC", 4, 4)
+      module.add(RegSet("s", "sgprSrdC", self.sgprs["SrdC"]))
+      module.add(RegSet("s", "sgprSrdD", self.sgprs["SrdD"]))
+    if kernel["ProblemType"]["UseBias"] and (kernel["GlobalSplitU"] == 1):
+      self.defineSgpr("SrdBias", 4, 4)
+      module.add(RegSet("s", "sgprSrdBias", self.sgprs["SrdBias"]))
+    self.states.numStoreSgprToLoad = storeSgprLoad
+    # Load kernel args end
+    ########################################
+
     # copy accumulated C from agpr to vgpr
     if kernel["EnableMatrixInstruction"]:
       #TODO avoid s_nop if its possible
@@ -3512,13 +3569,20 @@ class KernelWriterAssembly(KernelWriter):
   # isOptNLL : this is for the store-interleaved NLL optimization
   ##############################################################################
   def openSumAtLeastUnroll(self, kernel, prefetch, isOptNLL):
+    isLongBranch = False
+    if kernel["ProblemType"]["ActivationType"] == 'all':
+      acclen = getAccToArchLen(kernel, self.states.lrvwB)
+      # Just a rough calculation
+      if acclen > 100:
+        isLongBranch = True
+
     module = Module("openSumAtLeastUnroll")
     if prefetch:
       if not isOptNLL:
         module.add(self.checkLastIter(kernel))
         if kernel["StorePriorityOpt"]:
           module.add(SSetPrior(prior=0, comment="optimization store"))
-        if self.doShadowInit:
+        if self.states.doShadowInit:
           shadowName = Label.getFormatting("ShadowInitStart")
           module.add(SCBranchSCC1(labelName=shadowName, \
               comment="skip to ShadowInitStart iter b/c numIter==0"))
@@ -3532,7 +3596,7 @@ class KernelWriterAssembly(KernelWriter):
       skipOptNLL = Label("OptNLL_End", "")
       with self.allocTmpSgpr(2) as tmpSgprInfo:
         tmpSgpr = tmpSgprInfo.idx
-        module.add(self.checkIsBetaZero(kernel, tmpSgpr, skipOptNLL))
+        module.add(self.checkIsBetaZero(kernel, tmpSgpr, skipOptNLL, isLongBranch=isLongBranch, posNeg=1))
 
         # check alpha
         if self.do["ApplyAlpha"]:
@@ -3574,10 +3638,13 @@ class KernelWriterAssembly(KernelWriter):
             module.add(SMovB32(dst=sgpr(tmpSgpr+1), src=hex(0x00000000), comment="msb of imag part of 0.0"))
             module.add(SCmpEQU64(src0=sgpr("Alpha+2",2), src1=sgpr(tmpSgpr,2), comment="Alpha.imag == 0.0 ?"))
 
-          module.add(SCBranchSCC0(labelName=skipOptNLL.getLabelName(), comment="branch if alpha != 1"))
+          if isLongBranch:
+            module.add(self.longBranchScc0(skipOptNLL, posNeg=1, comment="branch if alpha != 1"))
+          else:
+            module.add(SCBranchSCC0(labelName=skipOptNLL.getLabelName(), comment="branch if alpha != 1"))
           module.addSpaceLine()
 
-        module.add(self.checkIsEdge(kernel, tmpSgpr, skipOptNLL))
+        module.add(self.checkIsEdge(kernel, tmpSgpr, skipOptNLL, isLongBranch=isLongBranch))
         module.addSpaceLine()
 
         # Check tail loop required:
@@ -3588,7 +3655,10 @@ class KernelWriterAssembly(KernelWriter):
           module.add(scalarStaticDivideAndRemainder(tmpSgpr, tmpSgpr+1, "SizesSum+%u"%self.states.unrollIdx, \
                     kernel["DepthU"], RegisterPoolResource(tmpSgpr+2, 2), 2))
           module.add(SCmpEQU32(src0=sgpr(tmpSgpr+1), src1=hex(0), comment="numIter%s == 0"%loopChar ))
-          module.add(SCBranchSCC0(labelName=skipOptNLL.getLabelName(), comment="skip if tail loop required"))
+          if isLongBranch:
+            module.add(self.longBranchScc0(skipOptNLL, posNeg=1, comment="skip if tail loop required"))
+          else:
+            module.add(SCBranchSCC0(labelName=skipOptNLL.getLabelName(), comment="skip if tail loop required"))
 
       # save the vgprPool for generating the normal path.
       # dump the 'dirty' pool upon s_endpgm and swap back the 'clean' pool
@@ -5443,8 +5513,6 @@ class KernelWriterAssembly(KernelWriter):
     if kernel["BufferStore"]:
       module.add(self.allocPostLoopSrd("D"))
       module.add(self.allocPostLoopSrd("C"))
-      if kernel["ProblemType"]["UseBias"] and (kernel["GlobalSplitU"] == 1):
-        module.add(self.allocPostLoopSrdSuppress("Bias"))
       module.add(self.computeStoreSrdStart(kernel))
     return module
 
@@ -5506,23 +5574,6 @@ class KernelWriterAssembly(KernelWriter):
     module.add(SMovB32(dst=sgpr("Srd%s+1"%ch), src=sgpr("Address%s+1"%ch), comment="init SRD base address (upper) + other fields" ))
     module.add(SMovB32(dst=sgpr("Srd%s+2"%ch), src=hex(0x80000000)))
     module.add(SMovB32(dst=sgpr("Srd%s+3"%ch), src="Srd127_96", comment="Set bits 127_96 in post-loop SRD"))
-    module.addSpaceLine()
-    return module
-
-  def allocPostLoopSrdSuppress(self, ch: str):
-    module = Module("allocPostLoopSrdSuppress")
-    label  = Label("%sAddrValid"%ch, "")
-    label2 = Label("%sAddrValid_End"%ch, "")
-    # Buffer-load uses one base read pointer stored in the SRD - set it here:
-    module.add(SMovB32(dst=sgpr("Srd%s+0"%ch), src=sgpr("Address%s+0"%ch), comment="init SRD base address (lower)" ))
-    module.add(SMovB32(dst=sgpr("Srd%s+1"%ch), src=sgpr("Address%s+1"%ch), comment="init SRD base address (upper) + other fields" ))
-    module.add(SBranchIfNotZero("Address%s"%ch, DataType('int64'), label))
-    module.add(SMovB32(dst=sgpr("Srd%s+2"%ch), src=0))
-    module.add(SBranch(label2.getLabelName()))
-    module.add(label)
-    module.add(SMovB32(dst=sgpr("Srd%s+2"%ch), src=sgpr("SizeI")))
-    module.add(SMovB32(dst=sgpr("Srd%s+3"%ch), src="Srd127_96", comment="Set bits 127_96 in post-loop SRD"))
-    module.add(label2)
     module.addSpaceLine()
     return module
 
@@ -6038,7 +6089,7 @@ class KernelWriterAssembly(KernelWriter):
   # tmpSgpr must have at least 6 free SGPR
   # isEdgeTarget is the branch target if edges are required
   ##############################################################################
-  def checkIsEdge(self, kernel, tmpSgpr, isEdgeTarget):
+  def checkIsEdge(self, kernel, tmpSgpr, isEdgeTarget, isLongBranch=False):
     assert(isinstance(isEdgeTarget, Label))
     isEdgeTargetLabel = isEdgeTarget.getLabelName()
     module = Module("checkIsEdge")
@@ -6073,7 +6124,10 @@ class KernelWriterAssembly(KernelWriter):
       module.add(SCmpKGtU32(src=sgpr(tmpS0), simm16=hex(0), comment="rMT0 > 0"))
       if self.db["ForceEdgeStores"]:
         module.add(SCmpEQU32(src0=sgpr(tmpS0), src1=sgpr(tmpS0), comment="ForceEdgeStores!"))
-      module.add(SCBranchSCC1(labelName=isEdgeTargetLabel, comment="jump if edges required"))
+      if isLongBranch:
+        module.add(self.longBranchScc1(isEdgeTarget, posNeg=1, comment="jump if edges required"))
+      else:
+        module.add(SCBranchSCC1(labelName=isEdgeTargetLabel, comment="jump if edges required"))
 
     # check edge1 ###
     # TODO-packed - this only needs to change to handle packing into C1 index
@@ -6093,7 +6147,10 @@ class KernelWriterAssembly(KernelWriter):
     # if rMT1 > 0 goto label_B?_E1
     if self.do["EdgeWrite"]:
       module.add(SCmpKGtU32(src=sgpr(tmpS0), simm16=hex(0), comment="rMT1 > 0"))
-      module.add(SCBranchSCC1(labelName=isEdgeTargetLabel, comment="jump if edges required"))
+      if isLongBranch:
+        module.add(self.longBranchScc1(isEdgeTarget, posNeg=1, comment="jump if edges required"))
+      else:
+        module.add(SCBranchSCC1(labelName=isEdgeTargetLabel, comment="jump if edges required"))
 
     return module
 
@@ -6118,6 +6175,10 @@ class KernelWriterAssembly(KernelWriter):
                           edges=None):
     if not self.do["PostLoop"]: return Module("GlobalWriteElements (Empty)")
     module = Module("GlobalWriteElements")
+    module.addComment2("Global Write Elements")
+    if self.states.numStoreSgprToLoad: # Wait for kernel args
+      module.add(SWaitCnt(lgkmcnt=0, comment="wait for %u bytes of kern args."%(self.states.numStoreSgprToLoad * 4)))
+
     atomic = (kernel["GlobalSplitU"] > 1) and (kernel["_GlobalAccumulation"] != 'MultipleBuffer')
     activation = ActivationModule()
 
@@ -6192,6 +6253,9 @@ class KernelWriterAssembly(KernelWriter):
 
     # Add bias lds
     if kernel["ProblemType"]["UseBias"] and (kernel["GlobalSplitU"] == 1):
+      # Init bias Srd
+      labelStr = self.labels.getNameInc("Bias")
+      module.add(allocPostLoopSrdSuppress("Bias", labelStr))
       multiBiasTypeLabel = []
       for i in kernel["ProblemType"]["BiasDataTypeList"]:
         name = self.labels.getNameInc("Load_Bias%s"%i.toNameAbbrev())
@@ -6258,14 +6322,7 @@ class KernelWriterAssembly(KernelWriter):
       if beta:
         betaModule.add(betaLabel)
 
-      ########################################
-      # branch if Edge0 or Edge1
-      if False in edges and True in edges:
-        with self.allocTmpSgpr(4) as tmpSgprInfo:
-          betaModule.add(self.checkIsEdge(kernel, tmpSgprInfo.idx, writeLabels[beta][True]))
-
       mod_pos = len(betaModule.items())
-      currentInstLength += betaModule.countType(Instruction)
       # by now we either jumped to E1 or stayed at E0
       for idx1 in reversed(range(len(edges))):
         edge = edges[idx1]
@@ -6441,41 +6498,83 @@ class KernelWriterAssembly(KernelWriter):
         #edgeModule.addComment("storeStats, %d, %d, %d"% (edgeI, numSgprs, numElementsPerBatch))
         # so if we don't have *GPR resources to handle a larger batch then need
         # to mark overflowedResources rather than generate a kernel that won't work.
+        # Activation
+        actLoopEndLabel, actLoopLabelModules, actLoopEnumStrList = self.initActivationLoop(kernel, beta, edge)
+        actLoopModuleList = []
+        actLoopModuleCodeLength = []
         with self.allocTmpSgpr(numSgprs, 2) as tmpSgprRes:
-          tmpSgpr = tmpSgprRes.idx
-          actTempSgpr = tmpSgpr # Get sgpr start address, should always be the same
-          elementSgprs = tmpSgpr + ss.cfg.numTempSgprPerBatch
-          codeAccVgprRead = deepcopy(self.codes.accVgprRead) if self.states.serializedStore else None
-          codeMulAlpha    = deepcopy(self.codes.mulAlpha) if self.states.serializedStore else None
+          for index, activationLabelModule in enumerate(actLoopLabelModules):
+            actLoopModule = Module("Activation Loop %s"%index)
+            activationTypeStr = actLoopEnumStrList[index]
+            if activationLabelModule:
+              actLoopModule.add(activationLabelModule)
 
-          self.alphaBeforeLoadC = False
-          if kernel["MIArchVgpr"] and applyAlpha:
-            codeAccVgprRead = None
+            tmpSgpr = tmpSgprRes.idx
+            actTempSgpr = tmpSgpr # Get sgpr start address, should always be the same
+            elementSgprs = tmpSgpr + ss.cfg.numTempSgprPerBatch
+            codeAccVgprRead = deepcopy(self.codes.accVgprRead) if self.states.serializedStore else None
+            codeMulAlpha    = deepcopy(self.codes.mulAlpha) if self.states.serializedStore else None
 
-            #Only apply when 2 wave optimization features are enabled
-            if (kernel["StorePriorityOpt"] or kernel["StoreSyncOpt"]) and beta:
-              self.alphaBeforeLoadC = True
-          else:
-            codeMulAlpha = None
+            self.alphaBeforeLoadC = False
+            if kernel["MIArchVgpr"] and applyAlpha:
+              codeAccVgprRead = None
 
-          for batchIdx in range(0, numBatches):
-            elementStartIdx = batchIdx * numElementsPerBatch
-            elementStopIdx = min( elementStartIdx + numElementsPerBatch, len(elements[edgeI]) )
-            elementsThisBatch = elements[edgeI][elementStartIdx:elementStopIdx]
-            #print("BATCH[%u/%u]: elements[edgeI][%u:%u] VGPRs=%u" % (batchIdx, numBatches, elementStartIdx, elementStopIdx,ss.numVgprsPerElement ))
-            # elementVgprs can be large and should be perfectly tuned to the number of available
-            # VGPRS.  We do not want to accidentally overflow and grow the pool here:
+              #Only apply when 2 wave optimization features are enabled
+              if (kernel["StorePriorityOpt"] or kernel["StoreSyncOpt"]) and beta:
+                self.alphaBeforeLoadC = True
+            else:
+              codeMulAlpha = None
 
-            if kernel["StoreRemapVectorWidth"]:
-              #Indication if this batch is last batch for this column block shape
-              self.StoreRemapLastBatch = 1 if (batchIdx+1) % nBatchesPerRow == 0 else 0
+            for batchIdx in range(0, numBatches):
+              elementStartIdx = batchIdx * numElementsPerBatch
+              elementStopIdx = min( elementStartIdx + numElementsPerBatch, len(elements[edgeI]) )
+              elementsThisBatch = elements[edgeI][elementStartIdx:elementStopIdx]
+              #print("BATCH[%u/%u]: elements[edgeI][%u:%u] VGPRs=%u" % (batchIdx, numBatches, elementStartIdx, elementStopIdx,ss.numVgprsPerElement ))
+              # elementVgprs can be large and should be perfectly tuned to the number of available
+              # VGPRS.  We do not want to accidentally overflow and grow the pool here:
 
-            edgeModule.add(self.globalWriteBatch(kernel, tPA, tPB, activation, ss, batchIdx, \
-                applyAlpha, beta, edge, atomic, gwvw, atomicW, \
-                elementsThisBatch, self.vgprs.addrD, self.vgprs.addrC, self.vgprs.addrBias, \
-                tmpVgpr, bf16CVTVgprStruct, activationSetPCStruct, \
-                elementSgprs, tmpSgpr, codeAccVgprRead, codeMulAlpha))
+              if kernel["StoreRemapVectorWidth"]:
+                #Indication if this batch is last batch for this column block shape
+                self.StoreRemapLastBatch = 1 if (batchIdx+1) % nBatchesPerRow == 0 else 0
 
+              actLoopModule.add(self.globalWriteBatch(kernel, tPA, tPB, activation, ss, batchIdx, \
+                  applyAlpha, beta, edge, atomic, gwvw, atomicW, \
+                  elementsThisBatch, self.vgprs.addrD, self.vgprs.addrC, self.vgprs.addrBias, \
+                  tmpVgpr, bf16CVTVgprStruct, activationSetPCStruct, activationTypeStr, \
+                  elementSgprs, tmpSgpr, codeAccVgprRead, codeMulAlpha))
+
+            ss.resetState()
+            actLoopModuleList.append(actLoopModule)
+            actLoopModuleCodeLength.append(actLoopModule.countType(Instruction))
+
+        if len(actLoopLabelModules) > 1:
+          actInstCounter = 0
+          # Add activation branch
+          for index, actLoopLabelModule in enumerate(actLoopLabelModules):
+            enumIndex = ActivationType.getEnumIndex(actLoopEnumStrList[index])
+            edgeModule.add(SCmpKEQU32(sgpr("ActivationType"), enumIndex, "activationType == %u"%enumIndex))
+            if actInstCounter >= 16384:
+              edgeModule.add(self.longBranchScc1(actLoopLabelModule, posNeg=1, comment="Branch if true"))
+            else:
+              edgeModule.add(SCBranchSCC1(actLoopLabelModule.getLabelName(), "Branch if true"))
+            actInstCounter += actLoopModuleCodeLength[index]
+          # Add jump to activation end
+          for index, _ in enumerate(actLoopLabelModules):
+            actLoopModule = actLoopModuleList[index]
+            if (index < (len(actLoopLabelModules) - 1)):
+              if actInstCounter >= 16384:
+                with self.allocTmpSgpr(3) as tmpSgprInfo:
+                  SLongBranchPositive(actLoopEndLabel, tmpSgprInfo)
+              else:
+                actLoopModule.add(SBranch(labelName=actLoopEndLabel.getLabelName()))
+            actInstCounter -= actLoopModuleCodeLength[index]
+
+        # Append to edgeModule
+        for actLoopModule in actLoopModuleList:
+          edgeModule.appendModule(actLoopModule)
+        # Add actLoopEndLabel if needed
+        if len(actLoopLabelModules) > 1:
+          edgeModule.add(actLoopEndLabel)
 
         if currentInstLength >= 16384:
           with self.allocTmpSgpr(3) as tmpSgprInfo:
@@ -6485,6 +6584,14 @@ class KernelWriterAssembly(KernelWriter):
         currentInstLength += edgeModule.countType(Instruction)
         betaModule.add(edgeModule, pos=mod_pos)
         del ss
+      ########################################
+      # branch if Edge0 or Edge1
+      if False in edges and True in edges:
+        isLongBranch = True if currentInstLength >= 16384 else False
+        with self.allocTmpSgpr(4) as tmpSgprInfo:
+          checkIsEdge = betaModule.add(self.checkIsEdge(kernel, tmpSgprInfo.idx, \
+            writeLabels[beta][True], isLongBranch=isLongBranch), pos=mod_pos)
+          currentInstLength += checkIsEdge.countType(Instruction)
       betaModules.add(betaModule, pos=0)
 
     # Check if branch exceeds
@@ -6867,12 +6974,13 @@ class KernelWriterAssembly(KernelWriter):
   def globalWriteBatch(self, kernel, tPA, tPB, activation, ss: StoreState, batchIdx, \
       applyAlpha, beta, edge, atomic, gwvw, atomicW, \
       batchElements, addrD, addrC, addrBias, \
-      tmpVgpr, bf16CVTVgprStruct, activationSetPCStruct, batchElementSgprs, tmpSgpr, codeAccVgprRead, codeMulAlpha) -> Module:
+      tmpVgpr, bf16CVTVgprStruct, activationSetPCStruct, activationTypeStr, \
+      batchElementSgprs, tmpSgpr, codeAccVgprRead, codeMulAlpha) -> Module:
       packdata = Component.PackData.find(self)
       gwriter  = Component.GlobalWriteComponents.find(self)
       return gwriter(kernel, tPA, tPB, activation, ss, \
         batchIdx, applyAlpha, beta, edge, atomic, gwvw, atomicW, \
-        batchElements, addrD, addrC, addrBias, tmpVgpr, bf16CVTVgprStruct, activationSetPCStruct, \
+        batchElements, addrD, addrC, addrBias, tmpVgpr, bf16CVTVgprStruct, activationSetPCStruct, activationTypeStr, \
         batchElementSgprs, tmpSgpr, codeAccVgprRead, codeMulAlpha, packdata, self)
 
   ##############################################################################
@@ -6969,6 +7077,31 @@ class KernelWriterAssembly(KernelWriter):
   ########################################
   # Activation related
   ########################################
+  def initActivationLoop(self, kernel, beta, edge):
+    # Create a suffix and check if the string exists
+    activationLabelSuffix = self.labels.getNameInc( \
+      "%s%s"%("_Beta" if beta else "", "_Edge" if edge else ""))
+    activationCDataType = kernel["ProblemType"]["ActivationComputeDataType"]
+    activationEndLabel = Label("Activation_End%s"%activationLabelSuffix, "")
+    activationLabelModules = []
+    activationEnumStrList = []
+    if kernel["ActivationFuncCall"]:
+      activationLabelModules.append("")
+      activationEnumStrList.append("none")
+    elif ((kernel["GlobalSplitU"] == 1) and kernel["ActivationFused"]) and \
+      (kernel["ProblemType"]["ActivationType"] != 'none'):
+      if kernel["ProblemType"]["ActivationType"] == 'all':
+        activationEnumStrList = ActivationType.getEnumStrList(activationCDataType)
+        for _, enumStr in enumerate(activationEnumStrList):
+          activationLabelModule = Label("Activation_%s%s"% (enumStr.capitalize(), activationLabelSuffix), "")
+          activationLabelModules.append(activationLabelModule)
+      else:
+        activationEnumStrList.append(str(kernel["ProblemType"]["ActivationType"]).lower())
+    else:
+      activationLabelModules.append("")
+      activationEnumStrList.append("none")
+    return activationEndLabel, activationLabelModules, activationEnumStrList
+
   def insertActFunctionCallAddrCalc(self, sgprOffset, gwvw, \
     toActModuleList, activationEnumStrList, activationLabelList, \
     betaIdx = -1, edgeIdx = -1):
@@ -7161,24 +7294,24 @@ class KernelWriterAssembly(KernelWriter):
   # Conditional branch to label when SCC == 0
   # Use when erroring out "invalid operand due to label > SIMM16"
   ##############################################################################
-  def longBranchScc0(self, label: Label, posNeg: int=0):
+  def longBranchScc0(self, label: Label, posNeg: int=0, comment=""):
     with self.allocTmpSgpr(3) as tmpSgprInfo:
       return SCLongBranchScc0(label, tmpSgprInfo, \
         self.labels.getUniqueNamePrefix("NoBranch"), \
         self.labels.getUniqueNamePrefix("Positive"),
-        posNeg)
+        posNeg, comment)
 
   ##############################################################################
   # longBranchScc1 - 32 bit offset
   # Conditional branch to label when SCC == 1
   # Use when erroring out "invalid operand due to label > SIMM16"
   ##############################################################################
-  def longBranchScc1(self, label: Label, posNeg: int=0):
+  def longBranchScc1(self, label: Label, posNeg: int=0, comment=""):
     with self.allocTmpSgpr(3) as tmpSgprInfo:
       return SCLongBranchScc1(label, tmpSgprInfo, \
         self.labels.getUniqueNamePrefix("NoBranch"), \
         self.labels.getUniqueNamePrefix("Positive"),
-        posNeg)
+        posNeg, comment)
 
   def sMagicDivWrapper(self, dest, dividend, magicNumber, magicShift):
     tmpVgpr = self.vgprPool.checkOut(2)

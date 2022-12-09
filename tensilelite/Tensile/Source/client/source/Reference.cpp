@@ -519,14 +519,11 @@ namespace Tensile
                                + ((beta == zero) ? static_cast<Accumulator>(zero)
                                                  : multiply<Accumulator>(beta, inputs.c[cIndex]));
                 // bias
-                if(problem.useBias())
+                if(problem.useBias() && inputs.bias)
                 {
                     int         pos = int(dNum % problem.d().sizes()[0]);
                     Accumulator bias
-                        = GetBias<Accumulator>(problem.biasType(),
-                                               inputs.biasList[(int)problem.biasType()],
-                                               pos,
-                                               aConjugate);
+                        = GetBias<Accumulator>(problem.biasType(), inputs.bias, pos, aConjugate);
                     resultD += bias;
                 }
                 // Activation adds here

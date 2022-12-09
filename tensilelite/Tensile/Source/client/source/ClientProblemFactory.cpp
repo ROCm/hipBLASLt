@@ -233,7 +233,7 @@ namespace Tensile
                         }
                         else
                         {
-                            rv.back().setBiasType(m_betaType);
+                            rv.back().setBiasType(DataType::None);
                         }
                         if(j < m_activationEnumArg.size())
                         {

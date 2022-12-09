@@ -399,53 +399,6 @@ namespace Tensile
                 rv.args.append<typename TypedInputs::BetaType>("beta_2", inputs.beta);
         }
 
-        if(problemType.useBias && (sizeMapping.globalSplitU == 1))
-        {
-            rv.args.append<void const*>("bias", inputs.bias);
-            rv.args.append<uint32_t>("bias_type", static_cast<uint32_t>(problem.biasType()));
-        }
-
-        if(!isSourceKernel())
-        {
-            if((problem.activationType() != ActivationType::None) && sizeMapping.activationFused
-               && (sizeMapping.globalSplitU == 1))
-            {
-                for(int i = 0; i < inputs.activationArgs.size(); i++)
-                {
-                    std::string name = "activation_" + std::to_string(i);
-                    if(problem.activationHPA()) // Same as hpa type.
-                    {
-                        rv.args.append<typename TypedInputs::BetaType>(
-                            name.c_str(),
-                            static_cast<typename TypedInputs::BetaType>(inputs.activationArgs[i]));
-                    }
-                    else if(std::is_same<typename TypedInputs::DType, Half>::value)
-                    {
-                        rv.args.append<typename TypedInputs::DType>((name + "_pk").c_str(),
-                                                                    inputs.activationArgs[i]);
-                        rv.args.append<typename TypedInputs::DType>(name.c_str(),
-                                                                    inputs.activationArgs[i]);
-                    }
-                    else
-                    {
-                        if(std::is_same<typename TypedInputs::DType, BFloat16>::value)
-                        {
-                            // BFloat16 to float32.
-                            rv.args.append<uint16_t>((name + "_append").c_str(),
-                                                     static_cast<uint16_t>(0));
-                        }
-                        rv.args.append<typename TypedInputs::DType>(name.c_str(),
-                                                                    inputs.activationArgs[i]);
-                    }
-                }
-                if(problem.activationType() == ActivationType::All)
-                {
-                    rv.args.append<uint32_t>("activationType",
-                                             static_cast<uint32_t>(problem.activationEnumArg()));
-                }
-            }
-        }
-
         size_t startStrideCD = problemType.useInitialStridesCD ? 0 : 1;
         size_t startStrideAB = problemType.useInitialStridesAB ? 0 : 1;
 
@@ -626,6 +579,64 @@ namespace Tensile
         rv.args.append<uint32_t>("offsetC", c.offset());
         rv.args.append<uint32_t>("offsetA", a.offset());
         rv.args.append<uint32_t>("offsetB", b.offset());
+
+        bool runActivation = false;
+        if(!isSourceKernel())
+        {
+            if((problem.activationType() != ActivationType::None) && sizeMapping.activationFused
+               && (sizeMapping.globalSplitU == 1))
+                runActivation = true;
+        }
+        if(problemType.useBias && (sizeMapping.globalSplitU == 1))
+        {
+            rv.args.append<void const*>("bias", inputs.bias);
+            if(runActivation)
+            {
+                size_t dummyInsertSize = max(sizeof(typename TypedInputs::DType), 4) / 4 - 1;
+                for(size_t i = 0; i < dummyInsertSize; i++)
+                {
+                    rv.args.append<uint32_t>("bias_type_dummy", static_cast<uint32_t>(0));
+                }
+            }
+            rv.args.append<uint32_t>("bias_type", static_cast<uint32_t>(problem.biasType()));
+        }
+
+        if(runActivation)
+        {
+            for(int i = 0; i < inputs.activationArgs.size(); i++)
+            {
+                std::string name = "activation_" + std::to_string(i);
+                if(problem.activationHPA()) // Same as hpa type.
+                {
+                    rv.args.append<typename TypedInputs::BetaType>(
+                        name.c_str(),
+                        static_cast<typename TypedInputs::BetaType>(inputs.activationArgs[i]));
+                }
+                else if(std::is_same<typename TypedInputs::DType, Half>::value)
+                {
+                    rv.args.append<typename TypedInputs::DType>((name + "_pk").c_str(),
+                                                                inputs.activationArgs[i]);
+                    rv.args.append<typename TypedInputs::DType>(name.c_str(),
+                                                                inputs.activationArgs[i]);
+                }
+                else
+                {
+                    if(std::is_same<typename TypedInputs::DType, BFloat16>::value)
+                    {
+                        // BFloat16 to float32.
+                        rv.args.append<uint16_t>((name + "_append").c_str(),
+                                                 static_cast<uint16_t>(0));
+                    }
+                    rv.args.append<typename TypedInputs::DType>(name.c_str(),
+                                                                inputs.activationArgs[i]);
+                }
+            }
+            if(problem.activationType() == ActivationType::All)
+            {
+                rv.args.append<uint32_t>("activationType",
+                                         static_cast<uint32_t>(problem.activationEnumArg()));
+            }
+        }
 
         if(!isSourceKernel())
         {

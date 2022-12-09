@@ -102,6 +102,7 @@ class StoreState:
         self.kernelWriter = kernelWriter
         self.kernel = kernel
 
+        self.isReset = False
         #--
         # Optimizations for coord0/column address calculations:
         #
@@ -424,6 +425,8 @@ class StoreState:
                     sumIdx = kw.states.c.startVgprValu + vc0 + d0*kernel["VectorWidth"] + vc1*kernel["ThreadTile0"] + d1*kernel["VectorWidth"]*kernel["ThreadTile0"]
             self.elementSumIdx.append(sumIdx) # sumIdx is an element idx, need to div/2 for half
             self.lastCoordOffset1 = coordOffset1
+        # reset flag
+        self.isReset = False
 
     def checkInTempVgprC(self):
         if self.kernelWriter.states.serializedStore is False:
@@ -435,7 +438,13 @@ class StoreState:
                 # print("checked in vgpr %u"%i)
             self.elementSumIdx = []
 
+    def resetState(self):
+        if not self.isReset:
+            self.lastCoordOffset1 = 0
+            self.isReset = True
+
     def __del__(self):
+
         if (self.sharedColDVgprs != None):
             self.kernelWriter.vgprPool.checkIn(self.sharedColDVgprs)
             if (self.sharedColCVgprs != self.sharedColDVgprs):
@@ -443,3 +452,4 @@ class StoreState:
         if (self.sharedColBiasVgprs != None):
             self.kernelWriter.vgprPool.checkIn(self.sharedColBiasVgprs)
         self.checkInTempVgprC()
+        self.resetState()

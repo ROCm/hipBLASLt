@@ -22,7 +22,7 @@
 from . import Common
 from .TensileInstructions import Item, TensileInstructions, slash50, replaceHolder, \
                           KernelBody, Module, StructuredModule, TextBlock, Dump, LabelManager, \
-                          RegisterPool, Assert, fastdeepcopy, \
+                          RegisterPool, Assert, fastdeepcopy, TensileInstructionsPassOptions, \
                           TensileInstructionsPass, getAsmCompileArgs, getAsmLinkCodeObjectArgs
 from .TensileInstructions.Instructions import *
 from .KernelWriterModules import *
@@ -125,6 +125,8 @@ class StateValues:
   scheduleGlobalRead: int                = 0
   scheduleLocalWrite: int                = 0
   scheduleIterAlg: int                   = 0
+  ## ShadowInit
+  doShadowInit: int                      = 0
   ## Loop
   actualSummationLoops: int              = 0
   otherSummationLoops: int               = 0
@@ -184,10 +186,9 @@ class StateValues:
   numSgprAddressDbg: int                 = 0
 
   firstInitSgpr: int                     = -1
-  argAddressOffset: int                  = -1
   lastPostLoopSgpr: int                  = 0
-  numSgprToLoad: int                     = 0
-  argOffsetOffset: int                   = -1
+  numSgprToLoad: int                     = 0 # For kernel args
+  numStoreSgprToLoad: int                = 0 # For post-loop kernel args
 
   numReadPerVectorA: int                 = 0
   numReadPerVectorB: int                 = 0
@@ -1292,7 +1293,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
     # we can't init in shadow of this prefetch
     # since that would initC inside the other summation loops
 
-    if self.doShadowInit != 2:
+    if self.states.doShadowInit != 2:
       module.add(self.initC(kernel))
 
     # open non-unrolled summation loops
@@ -2008,26 +2009,16 @@ class KernelWriter(metaclass=abc.ABCMeta):
     module.addComment1("local read addresses: declare addresses b")
     module.add(self.lraDeclareAddresses(kernel, tensorParametersB))
 
-    # doShadowInit performs initialization in the 'shadow' of the global mem prefetch
-    self.doShadowInit = 0
-    if kernel["PrefetchGlobalRead"]:
-      if self.states.actualSummationLoops == 1:
-        self.doShadowInit = 2 # 2 is both store setup and initC
-      else:
-        # can't do shadow initC with multiple summation since this resets the ValuC counters
-        # on each unroll iteration.
-        self.doShadowInit = 1 # 1 is just store setup
-
     module.add(self.setupNewTile(kernel, tensorParametersA, tensorParametersB, isOptNLL=False))
 
     pack = [ Module() for i in range (self.states.numVgprBuffer+1) ]
     self.preLoopLocalWriteCode = None
 
     if kernel["PrefetchGlobalRead"]:
-      if self.doShadowInit:
+      if self.states.doShadowInit:
         module.add(self.openShadowInit())
         module.add(self.globalWriteWorkGroupInit(kernel))
-        if self.doShadowInit == 2:
+        if self.states.doShadowInit == 2:
           module.add(self.initC(kernel)) # initC while waiting for global reads
         module.add(self.closeShadowInit(kernel))
 
@@ -2157,7 +2148,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
 
         firstNLLgenerated = False
         if kernel["KernelLanguage"] == "Assembly" and kernel["OptNoLoadLoop"] and \
-           kernel["BufferLoad"] and kernel["BufferStore"] and self.doShadowInit and \
+           kernel["BufferLoad"] and kernel["BufferStore"] and self.states.doShadowInit and \
            kernel["LocalSplitU"]==1 and kernel["GlobalSplitU"] == 1 and \
            self.states.actualSummationLoops==1:
 
@@ -2364,7 +2355,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
       module.add(self.closeLoop(kernel, tensorParametersA, tensorParametersB, i, True))
 
     module.add(self.endSummation(kernel))
-    if not self.doShadowInit:
+    if not self.states.doShadowInit:
       module.add(self.globalWriteWorkGroupInit(kernel))
 
     ####################################
@@ -2438,8 +2429,13 @@ class KernelWriter(metaclass=abc.ABCMeta):
     moduleKernelBody.addBody(module)
     self.checkResources(moduleKernelBody)
 
-    # Tensile instruction pass
-    TensileInstructionsPass(moduleKernelBody)
+    # Tensile instruction pass, temporarily disable due to build time.
+    # Kernels with epilog especially with activation is too long (50000~ lines).
+    # Need to refactor global write elements.
+    tipo = TensileInstructionsPassOptions()
+    if kernel["ProblemType"]["ActivationType"] == "all":
+      tipo.removeDupAssign = False
+    TensileInstructionsPass(moduleKernelBody, tipo)
 
     error = self.states.overflowedResources
     return (error, str(moduleKernelBody))
@@ -2486,6 +2482,15 @@ class KernelWriter(metaclass=abc.ABCMeta):
     self.states.actualSummationLoops = kernel["ProblemType"]["NumIndicesSummation"]
     self.states.otherSummationLoops  = self.states.actualSummationLoops-1
     self.states.otherSummations      = kernel["ProblemType"]["NumIndicesSummation"]-1 # not loops but summations vars
+
+    # doShadowInit performs initialization in the 'shadow' of the global mem prefetch
+    if kernel["PrefetchGlobalRead"]:
+      if self.states.actualSummationLoops == 1:
+        self.states.doShadowInit = 2 # 2 is both store setup and initC
+      else:
+        # can't do shadow initC with multiple summation since this resets the ValuC counters
+        # on each unroll iteration.
+        self.states.doShadowInit = 1 # 1 is just store setup
 
     self.states.indexChars = []
     for i in range(0, len(globalParameters["IndexChars"])):
@@ -3273,16 +3278,9 @@ class KernelWriter(metaclass=abc.ABCMeta):
       self.defineSgpr("AddressDbg", self.states.numSgprAddressDbg)
       self.defineSgpr("DebugKernelItems", 1)
 
-    if kernel["BufferLoad"]:
-       # resource descriptor (SRD) A and B, must be aligned on 4-SGPR boundary
-      self.defineSgpr("SrdA", 4, 4)
-      self.defineSgpr("SrdB", 4, 4)
-    if kernel["BufferStore"]:
+    if self.states.doShadowInit and kernel["BufferStore"]:
       self.defineSgpr("SrdD", 4, 4)
       self.defineSgpr("SrdC", 4, 4)
-    if kernel["ProblemType"]["UseBias"] and (kernel["GlobalSplitU"] == 1):
-      self.defineSgpr("SrdBias", 4, 4)
-
     ###################################
     # Get kernel argument start here
     self.defineSgpr("Tensor2dSizeA", 2,4)
@@ -3297,7 +3295,6 @@ class KernelWriter(metaclass=abc.ABCMeta):
         break
       SgprSlot.append(tempSgpr)
     self.defineSgpr("Tensor2dSizeB", 2, 2)
-    self.states.argAddressOffset = 6 * 4 # 8 bytes C, A, B
 
     self.defineSgpr("AddressD", numSgprAddressD)
     self.defineSgpr("AddressC", numSgprAddressC)
@@ -3306,20 +3303,6 @@ class KernelWriter(metaclass=abc.ABCMeta):
     self.defineSgpr("Alpha", numSgprAlpha, numSgprAlpha)
     if kernel["ProblemType"]["UseBeta"]:
       self.defineSgpr("Beta", numSgprBeta, numSgprBeta)
-    numSgprAddressBias = 0
-    BiasType = 0
-    if kernel["ProblemType"]["UseBias"] and (kernel["GlobalSplitU"] == 1):
-      numSgprAddressBias = numSgprAddressA
-      self.defineSgpr("AddressBias", numSgprAddressBias)  # Same as mat A
-      BiasType = 1
-      self.defineSgpr("BiasType", BiasType)
-    if ((kernel["ProblemType"]["ActivationType"] != 'none') and (kernel["GlobalSplitU"] == 1) \
-        and kernel["ActivationFused"]):
-      for name in kernel["ProblemType"]["ActivationType"].getAdditionalArgStringList():
-          self.defineSgpr(name, self.states.numActivationArgSize, self.states.numActivationArgSize)
-      if kernel["ProblemType"]["ActivationType"] == 'all':
-        self.states.numActivationTypeArgSize = 1
-        self.defineSgpr("ActivationType", self.states.numActivationTypeArgSize)
     self.defineSgpr("StridesD", self.states.d.numSgprStrides)
     self.defineSgpr("StridesC", self.states.c.numSgprStrides)
     self.defineSgpr("StridesA", self.states.a.numSgprStrides)
@@ -3356,7 +3339,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
     self.defineSgpr("OffsetA", self.states.a.numSgprOffset)
     self.defineSgpr("OffsetB", self.states.b.numSgprOffset)
 
-    self.states.numSgprToLoad = 2 + 2 + numSgprAddressD + numSgprAddressC + numSgprAddressA + numSgprAddressB + numSgprAddressBias + BiasType + numSgprAlpha + \
+    self.states.numSgprToLoad = 2 + 2 + numSgprAddressD + numSgprAddressC + numSgprAddressA + numSgprAddressB + numSgprAlpha + \
       (numSgprBeta if kernel["ProblemType"]["UseBeta"] else 0) + self.states.d.numSgprStrides + self.states.c.numSgprStrides + self.states.a.numSgprStrides + \
       self.states.b.numSgprStrides + self.states.numSgprSizesFree + self.states.numSgprSizesSum + \
       len(kernel["PackedC0IdxChars"][:-1])*2 + len(kernel["PackedC1IdxChars"][:-1])*2 + \
@@ -3364,12 +3347,6 @@ class KernelWriter(metaclass=abc.ABCMeta):
       2 + \
       3 + \
       self.states.d.numSgprOffset + self.states.c.numSgprOffset + self.states.a.numSgprOffset + self.states.b.numSgprOffset
-    if ((kernel["ProblemType"]["ActivationType"] != 'none') and (kernel["GlobalSplitU"] == 1) \
-        and kernel["ActivationFused"]):
-      self.states.numSgprToLoad += self.states.numActivationTypeArgSize + self.states.numactivationArgTotalSize
-
-    self.states.argOffsetOffset = (self.states.numSgprToLoad + 2 - (self.states.d.numSgprOffset + self.states.c.numSgprOffset + self.states.a.numSgprOffset + self.states.b.numSgprOffset)) * 4
-
     # Get kernel argument end here
     ###################################
 

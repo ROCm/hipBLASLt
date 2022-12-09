@@ -28,14 +28,26 @@ from .Instructions import BranchInstruction, CommonInstruction, Instruction, \
                           _SWaitCnt, _SWaitCntVscnt, SSleep, SBarrier, SNop
 from .Formatting import slash50
 
-def TensileInstructionsPass(kernelBody: KernelBody):
+from dataclasses import dataclass, field
+
+@dataclass
+class TensileInstructionsPassOptions:
+    removeDupAssign: bool = True
+
+    def doOpt(self) -> bool:
+        return self.removeDupAssign
+
+def TensileInstructionsPass(kernelBody: KernelBody, \
+    options: TensileInstructionsPassOptions):
     module = kernelBody.body
     assignDict = getAssignmentDict(module)
     compositeToInstruction(module)
-    maxVgpr = kernelBody.totalVgprs
-    maxSgpr = kernelBody.totalSgprs
-    graph = buildGraph(module, maxVgpr, maxSgpr, assignDict)
-    removeDuplicateAssignment(graph)
+    if options.doOpt():
+        maxVgpr = kernelBody.totalVgprs
+        maxSgpr = kernelBody.totalSgprs
+        graph = buildGraph(module, maxVgpr, maxSgpr, assignDict)
+        if options.removeDupAssign:
+            removeDuplicateAssignment(graph)
 
 #######################################
 # Setup

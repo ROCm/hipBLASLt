@@ -19,8 +19,26 @@
 # CTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ################################################################################
 
-from .TensileInstructions import Module, vgpr, sgpr, accvgpr, Holder
+from .TensileInstructions import DataType, Label, Module, vgpr, sgpr, accvgpr, \
+                                 Holder, SBranchIfNotZero
 from .TensileInstructions.Instructions import *
+
+def allocPostLoopSrdSuppress(ch: str, labelStr: str) -> Module:
+    module = Module("allocPostLoopSrdSuppress")
+    label  = Label("%sAddrValid"%labelStr, "")
+    label2 = Label("%sAddrValid_End"%labelStr, "")
+    # Buffer-load uses one base read pointer stored in the SRD - set it here:
+    module.add(SMovB32(dst=sgpr("Srd%s+0"%ch), src=sgpr("Address%s+0"%ch), comment="init SRD base address (lower)" ))
+    module.add(SMovB32(dst=sgpr("Srd%s+1"%ch), src=sgpr("Address%s+1"%ch), comment="init SRD base address (upper) + other fields" ))
+    module.add(SMovB32(dst=sgpr("Srd%s+3"%ch), src="Srd127_96", comment="Set bits 127_96 in post-loop SRD"))
+    module.add(SBranchIfNotZero("Address%s"%ch, DataType('int64'), label))
+    module.add(SMovB32(dst=sgpr("Srd%s+2"%ch), src=0))
+    module.add(SBranch(label2.getLabelName()))
+    module.add(label)
+    module.add(SMovB32(dst=sgpr("Srd%s+2"%ch), src=sgpr("SizeI")))
+    module.add(label2)
+    module.addSpaceLine()
+    return module
 
 ##############################################################################
 # WaitCnt
@@ -101,17 +119,7 @@ def syncThreads(kernel, archCaps, comment=""):
                 comment)
     return imod
 
-##############################################################################
-# accToArchMapper
-# Provides forward (acc2arch) and backward (arch2acc) index transformation
-#  - Forward transformation is currently used for acc->vgpr copying
-#  - Backward transformation is used in ShiftVectorComponent() to map logical
-#    C-tile index back to original acc index
-##############################################################################
-def accToArchMapper(kernel, lrvwB):
-  acc2arch = dict()
-  arch2acc = dict()
-
+def _getAccToArchInfo(kernel, lrvwB):
   matrixInstM  = (kernel["MatrixInstM"] * kernel["MatrixInstBM"]) if (kernel["MatrixInstM"] == 4) else kernel["MatrixInstM"]
   matrixInstN  = (kernel["MatrixInstN"] * kernel["MatrixInstBN"]) if (kernel["MatrixInstN"] == 4) else kernel["MatrixInstN"]
   matrixInstBM = 1                                                if (kernel["MatrixInstM"] == 4) else kernel["MatrixInstBM"]
@@ -123,6 +131,24 @@ def accToArchMapper(kernel, lrvwB):
   lrvwB            = lrvwB if kernel["allowLRVWforTLUandMI"] else 1
   VectorWidth1     = lrvwB
   outerTT1         = kernel["MIWaveTile"][1] // VectorWidth1
+  return matrixInstBM, matrixInstBN, OutputsPerMFMA1B, VectorWidth0, outerTT0, lrvwB, outerTT1
+
+def getAccToArchLen(kernel, lrvwB):
+  matrixInstBM, matrixInstBN, OutputsPerMFMA1B, VectorWidth0, outerTT0, lrvwB, outerTT1 = _getAccToArchInfo(kernel, lrvwB)
+  return (outerTT1 * lrvwB *  outerTT0 * matrixInstBN * matrixInstBM * OutputsPerMFMA1B * VectorWidth0)
+
+##############################################################################
+# accToArchMapper
+# Provides forward (acc2arch) and backward (arch2acc) index transformation
+#  - Forward transformation is currently used for acc->vgpr copying
+#  - Backward transformation is used in ShiftVectorComponent() to map logical
+#    C-tile index back to original acc index
+##############################################################################
+def accToArchMapper(kernel, lrvwB):
+  acc2arch = dict()
+  arch2acc = dict()
+
+  matrixInstBM, matrixInstBN, OutputsPerMFMA1B, VectorWidth0, outerTT0, lrvwB, outerTT1 = _getAccToArchInfo(kernel, lrvwB)
 
   for wgIdx1 in range(0, outerTT1):
     for lb in range(0, lrvwB):
