@@ -168,7 +168,14 @@ namespace Tensile
             void setBiasPtr(ContractionProblem const&       problem,
                             std::shared_ptr<ManagedInputs>* inputs)
             {
-                inputs->get()->bias = inputs->get()->biasList[(int)problem.biasType()];
+                if(m_biasInit == InitMode::Zero)
+                {
+                    inputs->get()->bias = nullptr;
+                }
+                else
+                {
+                    inputs->get()->bias = inputs->get()->biasList[(int)problem.biasType()];
+                }
             }
 
             std::shared_ptr<ManagedInputs> prepareCPUInputsTyped(ContractionProblem const& problem)

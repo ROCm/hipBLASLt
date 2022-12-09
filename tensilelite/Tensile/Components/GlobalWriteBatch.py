@@ -38,19 +38,19 @@ class GlobalWriteBatchComponent(GlobalWriteComponents):
   def __call__(self, kernel: Solution, tPA, tPB, activation: ActivationModule, ss: StoreState, \
     batchIdx, applyAlpha, beta, edge, atomic, gwvw, atomicW, \
     batchElements, addrD, addrC, addrBias, \
-    tmpVgpr, bf16CVTVgprStruct, activationSetPCStruct, batchElementSgprs, tmpSgpr, codeAccVgprRead, codeMulAlpha, \
+    tmpVgpr, bf16CVTVgprStruct, activationSetPCStruct, activationTypeStr, batchElementSgprs, tmpSgpr, codeAccVgprRead, codeMulAlpha, \
     packdata, parentWriter) -> Module:
     return GlobalWriteBatchWriter(kernel, tPA, tPB, activation, ss, batchIdx, applyAlpha, \
       beta, edge, atomic, gwvw, atomicW, \
       batchElements, addrD, addrC, addrBias, \
-      tmpVgpr, bf16CVTVgprStruct, activationSetPCStruct, batchElementSgprs, tmpSgpr, codeAccVgprRead, codeMulAlpha, \
+      tmpVgpr, bf16CVTVgprStruct, activationSetPCStruct, activationTypeStr, batchElementSgprs, tmpSgpr, codeAccVgprRead, codeMulAlpha, \
       packdata, parentWriter).emit()
 
 class GlobalWriteBatchWriter:
   def __init__(self, kernel: Solution, tPA, tPB, activation: ActivationModule, ss: StoreState, \
     batchIdx, applyAlpha, beta, edge, atomic, gwvw, atomicW, \
     batchElements, addrD, addrC, addrBias, \
-    tmpVgpr, bf16CVTVgprStruct, activationSetPCStruct, batchElementSgprs, tmpSgpr, codeAccVgprRead, codeMulAlpha, \
+    tmpVgpr, bf16CVTVgprStruct, activationSetPCStruct, activationTypeStr, batchElementSgprs, tmpSgpr, codeAccVgprRead, codeMulAlpha, \
       packdata, parentWriter):
     self.kernel = kernel
     self.tPA    = tPA
@@ -69,6 +69,7 @@ class GlobalWriteBatchWriter:
     self.addrC    = addrC
     self.addrBias = addrBias
     self.activationSetPCStruct = activationSetPCStruct
+    self.activationTypeStr     = activationTypeStr
     self.tmpVgpr = tmpVgpr
     self.bf16CVTVgprStruct = bf16CVTVgprStruct
     self.batchElementSgprs = batchElementSgprs
@@ -437,267 +438,229 @@ class GlobalWriteBatchWriter:
     module.addComment1("apply mask, calc new C and issue writes")
     # module.add(self.getBomb()) # can see store addresses just before the store inst
 
-    # Create a suffix and check if the string exists
-    activationLabelSuffix = self.parentWriter.labels.getNameInc( \
-      "%s%s%u"%("Beta_" if self.beta else "", "Edge_" if self.edge else "", self.batchIdx))
     activationCDataType = self.kernel["ProblemType"]["ActivationComputeDataType"]
-    activationLabelEndModule = Label("Activation_End_%s"%activationLabelSuffix, "")
-    activationLabelModules = []
-    activationEnumStrList = []
-    if self.kernel["ActivationFuncCall"]:
-      activationLabelModules.append("")
-      activationEnumStrList.append("none")
-    elif ((self.kernel["GlobalSplitU"] == 1) and self.kernel["ActivationFused"]) and \
-      (self.kernel["ProblemType"]["ActivationType"] != 'none'):
-      if self.kernel["ProblemType"]["ActivationType"] == 'all':
-        activationEnumStrList = ActivationType.getEnumStrList(activationCDataType)
-        for index, enumStr in enumerate(activationEnumStrList):
-          activationLabelModule = Label("Activation_%s_%s"% (enumStr.capitalize(), activationLabelSuffix), "")
-          activationLabelModules.append(activationLabelModule)
-        for index, activationLabelModule in enumerate(activationLabelModules):
-            enumIndex = ActivationType.getEnumIndex(activationEnumStrList[index])
-            module.add(SCmpKEQU32(sgpr("ActivationType"), enumIndex, "activationType == %u"%enumIndex))
-            module.add(SCBranchSCC1(activationLabelModule.getLabelName(), "Branch if true"))
+
+    if self.kernel["ProblemType"]["DestDataType"].isBFloat16() and self.kernel["ProblemType"]["HighPrecisionAccumulate"]:
+      module.add(VMovB32(vgpr(self.bf16CVTVgprStruct.vgprBf16Mask), "0xffff0000", "mask for pack two bfloat16 element to 32bit" ))
+      module.add(VMovB32(vgpr(self.bf16CVTVgprStruct.vgprFp32Nan), "0x7fff0000", "fp32 Nan" ))
+      module.add(VMovB32(vgpr(self.bf16CVTVgprStruct.vgprBf16Inc), "0x7fff", "rounding bias for bfloat16" ))
+
+    storeCode = Module("GroupLoadStore")
+    biasWaitDict = {}
+    for elementIdx in range(0, len(self.batchElements)):
+      element = self.batchElements[elementIdx]
+      addrCalc: AddrCalculation = self.ss.elementAddr[elementIdx]
+      addr = addrCalc.addrDVgpr
+      dataBias = self.ss.elementDataBias[elementIdx]
+      mask = self.ss.elementMask[elementIdx]
+      vc0 = element[3]
+      sumIdx = self.ss.elementSumIdx[elementIdx]
+
+      # print(str(element)+" rowInc="+str(addrCalc.rowInc))
+      # Already write wave column block into LDS
+      # Now read lds data back to registers and write to global memroy
+      if self.ss.optSrdIncForRow and addrCalc.rowInc and self.kernel["StoreRemapVectorWidth"] > 0:
+        module.addComment1("StoreRemap: shift coord1 address")
+        module.add(addrCalc.incrementToNextRow(self.kernel, "D", self.ss, self.tmpS01))
+        module.add(VMovB32(vgpr(self.tmpVgpr), addrCalc.rowInc, "set shift rows"))
+        module.add(VAddU32(vgpr(self.parentWriter.vgprs.storeRemapCoord1), vgpr(self.parentWriter.vgprs.storeRemapCoord1), vgpr(self.tmpVgpr), "shift storeRemap coord1"))
+
+      # apply in-bounds exec mask
+      if self.edge and not self.kernel["BufferStore"]:
+        module.add(self.getEdgeMovInstType()(EXEC(), sgpr(mask, self.laneSGPRC), "sgprs -> exec"))
+
+      # if GWVW=1 the half path still assumes we have
+      # at least two stores so does some combining across VI -
+      # for example assuming we can have two elements and can use pk_mul
+      # here:
+      if (self.beta or (self.kernel["ProblemType"]["UseBias"] and (self.kernel["GlobalSplitU"] == 1))) and interleaveStoreVmcnt:
+        if (not self.beta): # If no beta
+          if (dataBias not in biasWaitDict):
+            localLoadCnt = self.localLoadIssued - self.biasLoadIssued[elementIdx]
+            module.addSpaceLine()
+            module.add(SWaitCnt(lgkmcnt=localLoadCnt, comment="wait bias lds load (interleaved)"))
+        else:
+          waitLoadCnt = 0
+          waitLocalLoadCnt = -1
+          if self.beta: waitLoadCnt = elementIdx
+          if self.kernel["ProblemType"]["UseBias"] and (dataBias not in biasWaitDict):
+            waitLocalLoadCnt = self.localLoadIssued - self.biasLoadIssued[elementIdx]
+
+          vmcnt = self.loadsIssued - waitLoadCnt - 1
+          if self.parentWriter.states.archCaps["SeparateVscnt"]:
+            waitStoreCnt = 0
+            vmComment = "{} = {} - {} - 1".format(vmcnt, self.loadsIssued, waitLoadCnt)
+          else:
+            waitStoreCnt = self.storesIssued if not self.kernel["GroupLoadStore"] else 0
+            vmComment = "{} = {} - {} + {} - 1".format(vmcnt + waitStoreCnt, self.loadsIssued, waitLoadCnt, waitStoreCnt)
+
+          #print "wmvcnt=", vmcnt
+          module.addSpaceLine()
+          module.add(SWaitCnt(lgkmcnt=waitLocalLoadCnt, vmcnt=vmcnt, vscnt=waitStoreCnt, comment="wait C (interleaved) " + vmComment))
+        biasWaitDict[dataBias] = 1 # No need to wait again if the bias data is already loaded.
+
+      if self.beta:
+        module.add(self._addSumAlphaWithCBeta(self.kernel, self.ss, self.gwvw, elementIdx, vc0, self.tmpVgpr, self.bf16CVTVgprStruct))
+      elif ((self.kernel["ProblemType"]["UseBias"] and (self.kernel["GlobalSplitU"] == 1)) or self.kernel["ActivationFuncCall"]) and not self.applyAlpha: # case of alpha=1 and beta=0
+        if (self.kernel["ProblemType"]["DestDataType"].isInt8() or self.kernel["ProblemType"]["DestDataType"].isInt32()) and self.kernel["ProblemType"]["ComputeDataType"].isSingle():
+          module.add(convertData(self.gwvw, self.ss.elementSumIdx[elementIdx], cvtType=CvtType.CVT_I32_to_F32, \
+                                      inputPrefix="ValuC+", prefixOffset=self.parentWriter.states.c.startVgprValu))
+
+      # Add bias
+      mergeActFuncCall = False
+      if self.kernel["ProblemType"]["UseBias"] and (self.kernel["GlobalSplitU"] == 1):
+        if activationCDataType == self.kernel["ProblemType"]["ComputeDataType"] and self.kernel["ActivationFuncCall"]:
+          mergeActFuncCall = True
+        for vi in range(0, self.gwvw):
+          inputVgpr = dataBias + vi
+          sumIdxV   = self.ss.elementSumIdx[elementIdx] + vi
+          if self.kernel["ProblemType"]["ComputeDataType"].isSingle():
+            vgprIdx = sumIdxV - self.parentWriter.states.c.startVgprValu
+            vgprDst = (self.activationSetPCStruct.vgprActCopy + vi) if mergeActFuncCall else "ValuC+%d"%vgprIdx
+            # Generate single f32 code if edge is detected.
+            if ((vi + 1) == self.gwvw) and ((self.gwvw % 2) == 1):
+              module.add(VAddF32(dst=vgpr(vgprDst), src0=vgpr(inputVgpr), src1=vgpr("ValuC+%d"%vgprIdx), \
+                                 comment="C += bias"))
+            # Original packed route
+            elif vi%2 == 1:
+              assert (self.gwvw % 2 == 0)
+            else:
+              module.add(VAddPKF32(dst=vgpr(vgprDst, 2), src0=vgpr(inputVgpr, 2), \
+                                   src1=vgpr("ValuC+%d"%vgprIdx, 2), comment="C += bias"))
+          else:
+            raise RuntimeError("Unsupported bias compute data type %s."%str(self.kernel["ProblemType"]["ComputeDataType"]))
+
+      SaturateTypeInt8 = SaturateCastType.NORMAL
+      # Activation
+      activationModule = None
+      isActivationInsertAfter = False
+      if self.kernel["ActivationFuncCall"]:
+        if (activationCDataType == self.kernel["ProblemType"]["DestDataType"]) and \
+          (activationCDataType != self.kernel["ProblemType"]["ComputeDataType"]):
+          isActivationInsertAfter = True
+        activationModule = Module("ActivationFuncCall")
+        if (not mergeActFuncCall) and (not isActivationInsertAfter):
+          activationModule.appendModule (copyData(activationCDataType, self.ss.elementSumIdx[elementIdx], self.gwvw, \
+            self.activationSetPCStruct.vgprActCopy))
+        activationModule.add(SSwapPCB64(dst=sgpr(self.activationSetPCStruct.sgprOffsetBack, 2), \
+          src=sgpr(self.activationSetPCStruct.sgprOffsetActivation, 2)))
+        activationModule.appendModule (copyData(activationCDataType, self.ss.elementSumIdx[elementIdx], self.gwvw, \
+          self.activationSetPCStruct.vgprActCopy, 1))
+      elif self.parentWriter.insertActivationAfterPacked(self.kernel, self.activationTypeStr):
+        isActivationInsertAfter = True
+        activationModule = self.parentWriter.getActivationDestDataType(self.kernel, self.activation, \
+          self.activationTypeStr, self.gwvw, self.ss.elementSumIdx[elementIdx], self.tmpVgpr, self.tmpSgpr)
       else:
-        activationEnumStrList.append(str(self.kernel["ProblemType"]["ActivationType"]).lower())
-    else:
-      activationLabelModules.append("")
-      activationEnumStrList.append("none")
-    loadsIssuedRestore = self.loadsIssued
-    storesIssuedRestore = self.storesIssued
-    for index, activationLabelModule in enumerate(activationLabelModules):
-      self.loadsIssued = loadsIssuedRestore
-      self.storesIssued = storesIssuedRestore
-      activationTypeStr = activationEnumStrList[index]
-      if activationLabelModule:
-        module.add(activationLabelModule)
+        satInt8 = False
+        if self.kernel["ProblemType"]["DestDataType"].isInt8():
+          if (self.activationTypeStr == 'abs') or (self.activationTypeStr == 'relu'):
+            SaturateTypeInt8 = SaturateCastType.DO_NOTHING
+            satInt8 = True
+        activationModule = self.parentWriter.getActivationActivationComputeType(self.kernel, self.activation, \
+          self.activationTypeStr, self.gwvw, self.ss.elementSumIdx[elementIdx], self.tmpVgpr, self.tmpSgpr, satInt8)
 
-      if self.kernel["ProblemType"]["DestDataType"].isBFloat16() and self.kernel["ProblemType"]["HighPrecisionAccumulate"]:
-        module.add(VMovB32(vgpr(self.bf16CVTVgprStruct.vgprBf16Mask), "0xffff0000", "mask for pack two bfloat16 element to 32bit" ))
-        module.add(VMovB32(vgpr(self.bf16CVTVgprStruct.vgprFp32Nan), "0x7fff0000", "fp32 Nan" ))
-        module.add(VMovB32(vgpr(self.bf16CVTVgprStruct.vgprBf16Inc), "0x7fff", "rounding bias for bfloat16" ))
+      # pack stores, beta and non-beta reach here:
+      packModule = Module("Empty pack module")
+      convertModule = Module("Empty convert module")
+      if self.kernel["ProblemType"]["HighPrecisionAccumulate"] and (self.kernel["_GlobalAccumulation"] != 'MultipleBuffer'):
+        if self.kernel["ActivationFuncCall"] and activationCDataType == self.kernel["ProblemType"]["DestDataType"]:
+          destIdx = self.activationSetPCStruct.vgprActCopy
+        else:
+          destIdx = self.ss.elementSumIdx[elementIdx]
+        if self.kernel["ProblemType"]["DestDataType"].isHalf():
+          packModule = self.packdata(self.gwvw, destIdx, self.ss.elementSumIdx[elementIdx], inputPrefix="ValuC+", prefixOffset=self.parentWriter.states.c.startVgprValu)
+        elif self.kernel["ProblemType"]["DestDataType"].isBFloat16():
+          packModule = self.packdata(self.gwvw, destIdx, self.ss.elementSumIdx[elementIdx], bf16CVTVgprStruct=self.bf16CVTVgprStruct,
+                                     tmpS01=self.tmpS01, laneSGPRC=self.laneSGPRC, inputPrefix="ValuC+", prefixOffset=self.parentWriter.states.c.startVgprValu)
+        elif self.kernel["ProblemType"]["DestDataType"].isInt32():
+          if self.kernel["ProblemType"]["ComputeDataType"].isSingle() and ((self.kernel["ProblemType"]["UseBias"] and (self.kernel["GlobalSplitU"] == 1)) or self.kernel["ActivationFuncCall"] or self.applyAlpha or self.beta):
+            convertModule = convertData(self.gwvw, self.ss.elementSumIdx[elementIdx], cvtType=CvtType.CVT_F32_to_I32, \
+                                        inputPrefix="ValuC+", prefixOffset=self.parentWriter.states.c.startVgprValu)
+        elif self.kernel["ProblemType"]["DestDataType"].isInt8():
+          if self.kernel["ProblemType"]["ComputeDataType"].isSingle() and ((self.kernel["ProblemType"]["UseBias"] and (self.kernel["GlobalSplitU"] == 1)) or self.kernel["ActivationFuncCall"] or self.applyAlpha or self.beta):
+            convertModule = convertData(self.gwvw, self.ss.elementSumIdx[elementIdx], cvtType=CvtType.CVT_F32_to_I32, roundType=RoundType.ROUND_TO_NEAREST_EVEN, \
+                                        inputPrefix="ValuC+", prefixOffset=self.parentWriter.states.c.startVgprValu)
+          packModule = self.packdata(self.gwvw, destIdx, self.ss.elementSumIdx[elementIdx], self.tmpVgpr, self.tmpS01,
+                                     SaturateTypeInt8=SaturateTypeInt8, inputPrefix="ValuC+", prefixOffset=self.parentWriter.states.c.startVgprValu)
 
-      storeCode = Module("GroupLoadStore")
-      biasWaitDict = {}
+      if isActivationInsertAfter:
+        module.add(convertModule)
+        module.add(packModule)
+        module.add(activationModule)
+      else:
+        module.add(activationModule)
+        module.add(convertModule)
+        module.add(packModule)
+
+      if not self.kernel["StoreRemapVectorWidth"]:
+        tmpStoreCode = self.parentWriter.addStore(self.kernel, self.ss, addrCalc, sumIdx, self.tmpS01, self.edge)
+        if self.kernel["GroupLoadStore"]:
+          storeCode.add(tmpStoreCode)
+        else:
+          module.add(tmpStoreCode)
+        self.storesIssued += 1
+
+      else:
+        rpe = self.parentWriter.states.bpeCinternal // self.parentWriter.states.bpr
+        module.add(self.parentWriter.storeRemapAddLocalWrite(self.ss, addrCalc, sumIdx*rpe))
+        # Column Block Shape has been written to LDS
+        # Now read back and write out to global memory
+
+    module.add(storeCode)
+
+    if self.parentWriter.db["CheckStoreC"]>=0:
+      useBuffer = self.kernel["BufferStore"]
+      # Note - CheckStoreC won't work for EDGE store cases since they load 0 for OOB, would need more sophisticated check
+      # Note - TODO- CheckStoreC also won't work for StoreRemap
+      module.add(SWaitCnt(vmcnt=0, vscnt=0, comment="CheckStoreC, wait for stores to complete"))
       for elementIdx in range(0, len(self.batchElements)):
-        element = self.batchElements[elementIdx]
-        addrCalc: AddrCalculation = self.ss.elementAddr[elementIdx]
-        addr = addrCalc.addrDVgpr
-        dataBias = self.ss.elementDataBias[elementIdx]
-        mask = self.ss.elementMask[elementIdx]
-        vc0 = element[3]
+        addr = self.ss.elementAddr[elementIdx].addrDVgpr
         sumIdx = self.ss.elementSumIdx[elementIdx]
 
-        # print(str(element)+" rowInc="+str(addrCalc.rowInc))
-        # Already write wave column block into LDS
-        # Now read lds data back to registers and write to global memroy
-        if self.ss.optSrdIncForRow and addrCalc.rowInc and self.kernel["StoreRemapVectorWidth"] > 0:
-          module.addComment1("StoreRemap: shift coord1 address")
-          module.add(addrCalc.incrementToNextRow(self.kernel, "D", self.ss, self.tmpS01))
-          module.add(VMovB32(vgpr(self.tmpVgpr), addrCalc.rowInc, "set shift rows"))
-          module.add(VAddU32(vgpr(self.parentWriter.vgprs.storeRemapCoord1), vgpr(self.parentWriter.vgprs.storeRemapCoord1), vgpr(self.tmpVgpr), "shift storeRemap coord1"))
-
-        # apply in-bounds exec mask
-        if self.edge and not self.kernel["BufferStore"]:
-          module.add(self.getEdgeMovInstType()(EXEC(), sgpr(mask, self.laneSGPRC), "sgprs -> exec"))
-
-        # if GWVW=1 the half path still assumes we have
-        # at least two stores so does some combining across VI -
-        # for example assuming we can have two elements and can use pk_mul
-        # here:
-        if (self.beta or (self.kernel["ProblemType"]["UseBias"] and (self.kernel["GlobalSplitU"] == 1))) and interleaveStoreVmcnt:
-          if (not self.beta): # If no beta
-            if (dataBias not in biasWaitDict):
-              localLoadCnt = self.localLoadIssued - self.biasLoadIssued[elementIdx]
-              module.addSpaceLine()
-              module.add(SWaitCnt(lgkmcnt=localLoadCnt, comment="wait bias lds load (interleaved)"))
-          else:
-            waitLoadCnt = 0
-            waitLocalLoadCnt = -1
-            if self.beta: waitLoadCnt = elementIdx
-            if self.kernel["ProblemType"]["UseBias"] and (dataBias not in biasWaitDict):
-              waitLocalLoadCnt = self.localLoadIssued - self.biasLoadIssued[elementIdx]
-
-            vmcnt = self.loadsIssued - waitLoadCnt - 1
-            if self.parentWriter.states.archCaps["SeparateVscnt"]:
-              waitStoreCnt = 0
-              vmComment = "{} = {} - {} - 1".format(vmcnt, self.loadsIssued, waitLoadCnt)
-            else:
-              waitStoreCnt = self.storesIssued if not self.kernel["GroupLoadStore"] else 0
-              vmComment = "{} = {} - {} + {} - 1".format(vmcnt + waitStoreCnt, self.loadsIssued, waitLoadCnt, waitStoreCnt)
-
-            #print "wmvcnt=", vmcnt
-            module.addSpaceLine()
-            module.add(SWaitCnt(lgkmcnt=waitLocalLoadCnt, vmcnt=vmcnt, vscnt=waitStoreCnt, comment="wait C (interleaved) " + vmComment))
-          biasWaitDict[dataBias] = 1 # No need to wait again if the bias data is already loaded.
-
-        if self.beta:
-          module.add(self._addSumAlphaWithCBeta(self.kernel, self.ss, self.gwvw, elementIdx, vc0, self.tmpVgpr, self.bf16CVTVgprStruct))
-        elif ((self.kernel["ProblemType"]["UseBias"] and (self.kernel["GlobalSplitU"] == 1)) or self.kernel["ActivationFuncCall"]) and not self.applyAlpha: # case of alpha=1 and beta=0
-          if (self.kernel["ProblemType"]["DestDataType"].isInt8() or self.kernel["ProblemType"]["DestDataType"].isInt32()) and self.kernel["ProblemType"]["ComputeDataType"].isSingle():
-            module.add(convertData(self.gwvw, self.ss.elementSumIdx[elementIdx], cvtType=CvtType.CVT_I32_to_F32, \
-                                        inputPrefix="ValuC+", prefixOffset=self.parentWriter.states.c.startVgprValu))
-
-        # Add bias
-        mergeActFuncCall = False
-        if self.kernel["ProblemType"]["UseBias"] and (self.kernel["GlobalSplitU"] == 1):
-          if activationCDataType == self.kernel["ProblemType"]["ComputeDataType"] and self.kernel["ActivationFuncCall"]:
-            mergeActFuncCall = True
-          for vi in range(0, self.gwvw):
-            inputVgpr = dataBias + vi
-            sumIdxV   = self.ss.elementSumIdx[elementIdx] + vi
-            if self.kernel["ProblemType"]["ComputeDataType"].isSingle():
-              vgprIdx = sumIdxV - self.parentWriter.states.c.startVgprValu
-              vgprDst = (self.activationSetPCStruct.vgprActCopy + vi) if mergeActFuncCall else "ValuC+%d"%vgprIdx
-              # Generate single f32 code if edge is detected.
-              if ((vi + 1) == self.gwvw) and ((self.gwvw % 2) == 1):
-                module.add(VAddF32(dst=vgpr(vgprDst), src0=vgpr(inputVgpr), src1=vgpr("ValuC+%d"%vgprIdx), \
-                                   comment="C += bias"))
-              # Original packed route
-              elif vi%2 == 1:
-                assert (self.gwvw % 2 == 0)
-              else:
-                module.add(VAddPKF32(dst=vgpr(vgprDst, 2), src0=vgpr(inputVgpr, 2), \
-                                     src1=vgpr("ValuC+%d"%vgprIdx, 2), comment="C += bias"))
-            else:
-              raise RuntimeError("Unsupported bias compute data type %s."%str(self.kernel["ProblemType"]["ComputeDataType"]))
-
-        SaturateTypeInt8 = SaturateCastType.NORMAL
-        # Activation
-        activationModule = None
-        isActivationInsertAfter = False
-        if self.kernel["ActivationFuncCall"]:
-          if (activationCDataType == self.kernel["ProblemType"]["DestDataType"]) and \
-            (activationCDataType != self.kernel["ProblemType"]["ComputeDataType"]):
-            isActivationInsertAfter = True
-          activationModule = Module("ActivationFuncCall")
-          if (not mergeActFuncCall) and (not isActivationInsertAfter):
-            activationModule.appendModule (copyData(activationCDataType, self.ss.elementSumIdx[elementIdx], self.gwvw, \
-              self.activationSetPCStruct.vgprActCopy))
-          activationModule.add(SSwapPCB64(dst=sgpr(self.activationSetPCStruct.sgprOffsetBack, 2), \
-            src=sgpr(self.activationSetPCStruct.sgprOffsetActivation, 2)))
-          activationModule.appendModule (copyData(activationCDataType, self.ss.elementSumIdx[elementIdx], self.gwvw, \
-            self.activationSetPCStruct.vgprActCopy, 1))
-        elif self.parentWriter.insertActivationAfterPacked(self.kernel, activationTypeStr):
-          isActivationInsertAfter = True
-          activationModule = self.parentWriter.getActivationDestDataType(self.kernel, self.activation, \
-            activationTypeStr, self.gwvw, self.ss.elementSumIdx[elementIdx], self.tmpVgpr, self.tmpSgpr)
+        bps = self.kernel["ProblemType"]["DestDataType"].numBytes() * self.gwvw
+        if self.kernel["BufferStore"]:
+          addr0 = vgpr(addr)
+          addr1 = sgpr("SrdC", 4)
         else:
-          satInt8 = False
-          if self.kernel["ProblemType"]["DestDataType"].isInt8():
-            if (activationTypeStr == 'abs') or (activationTypeStr == 'relu'):
-              SaturateTypeInt8 = SaturateCastType.DO_NOTHING
-              satInt8 = True
-          activationModule = self.parentWriter.getActivationActivationComputeType(self.kernel, self.activation, \
-            activationTypeStr, self.gwvw, self.ss.elementSumIdx[elementIdx], self.tmpVgpr, self.tmpSgpr, satInt8)
+          addr0 = vgpr(addr,2)
+          addr1 = ""
 
-        # pack stores, beta and non-beta reach here:
-        packModule = Module("Empty pack module")
-        convertModule = Module("Empty convert module")
-        if self.kernel["ProblemType"]["HighPrecisionAccumulate"] and (self.kernel["_GlobalAccumulation"] != 'MultipleBuffer'):
-          if self.kernel["ActivationFuncCall"] and activationCDataType == self.kernel["ProblemType"]["DestDataType"]:
-            destIdx = self.activationSetPCStruct.vgprActCopy
+        if self.kernel["ProblemType"]["DestDataType"].isHalf() or self.kernel["ProblemType"]["DestDataType"].isBFloat16():
+          if not self.kernel["ProblemType"]["HighPrecisionAccumulate"]:
+            module.add(self.parentWriter.chooseGlobalRead(useBuffer, bps, sumIdx//2, \
+                                  addr0, addr1, soffset=0, offset=0, hi16=sumIdx%2))
           else:
-            destIdx = self.ss.elementSumIdx[elementIdx]
-          if self.kernel["ProblemType"]["DestDataType"].isHalf():
-            packModule = self.packdata(self.gwvw, destIdx, self.ss.elementSumIdx[elementIdx], inputPrefix="ValuC+", prefixOffset=self.parentWriter.states.c.startVgprValu)
-          elif self.kernel["ProblemType"]["DestDataType"].isBFloat16():
-            packModule = self.packdata(self.gwvw, destIdx, self.ss.elementSumIdx[elementIdx], bf16CVTVgprStruct=self.bf16CVTVgprStruct,
-                                       tmpS01=self.tmpS01, laneSGPRC=self.laneSGPRC, inputPrefix="ValuC+", prefixOffset=self.parentWriter.states.c.startVgprValu)
-          elif self.kernel["ProblemType"]["DestDataType"].isInt32():
-            if self.kernel["ProblemType"]["ComputeDataType"].isSingle():
-              convertModule = convertData(self.gwvw, self.ss.elementSumIdx[elementIdx], cvtType=CvtType.CVT_F32_to_I32, \
-                                          inputPrefix="ValuC+", prefixOffset=self.parentWriter.states.c.startVgprValu)
-          elif self.kernel["ProblemType"]["DestDataType"].isInt8():
-            if self.kernel["ProblemType"]["ComputeDataType"].isSingle():
-              convertModule = convertData(self.gwvw, self.ss.elementSumIdx[elementIdx], cvtType=CvtType.CVT_F32_to_I32, roundType=RoundType.ROUND_TO_NEAREST_EVEN, \
-                                          inputPrefix="ValuC+", prefixOffset=self.parentWriter.states.c.startVgprValu)
-            packModule = self.packdata(self.gwvw, destIdx, self.ss.elementSumIdx[elementIdx], self.tmpVgpr, self.tmpS01,
-                                       SaturateTypeInt8=SaturateTypeInt8, inputPrefix="ValuC+", prefixOffset=self.parentWriter.states.c.startVgprValu)
-
-        if isActivationInsertAfter:
-          module.add(convertModule)
-          module.add(packModule)
-          module.add(activationModule)
-        else:
-          module.add(activationModule)
-          module.add(convertModule)
-          module.add(packModule)
-
-        if not self.kernel["StoreRemapVectorWidth"]:
-          tmpStoreCode = self.parentWriter.addStore(self.kernel, self.ss, addrCalc, sumIdx, self.tmpS01, self.edge)
-          if self.kernel["GroupLoadStore"]:
-            storeCode.add(tmpStoreCode)
-          else:
-            module.add(tmpStoreCode)
-          self.storesIssued += 1
-
-        else:
-          rpe = self.parentWriter.states.bpeCinternal // self.parentWriter.states.bpr
-          module.add(self.parentWriter.storeRemapAddLocalWrite(self.ss, addrCalc, sumIdx*rpe))
-          # Column Block Shape has been written to LDS
-          # Now read back and write out to global memory
-
-      module.add(storeCode)
-
-      if self.parentWriter.db["CheckStoreC"]>=0:
-        useBuffer = self.kernel["BufferStore"]
-        # Note - CheckStoreC won't work for EDGE store cases since they load 0 for OOB, would need more sophisticated check
-        # Note - TODO- CheckStoreC also won't work for StoreRemap
-        module.add(SWaitCnt(vmcnt=0, vscnt=0, comment="CheckStoreC, wait for stores to complete"))
-        for elementIdx in range(0, len(self.batchElements)):
-          addr = self.ss.elementAddr[elementIdx].addrDVgpr
-          sumIdx = self.ss.elementSumIdx[elementIdx]
-
-          bps = self.kernel["ProblemType"]["DestDataType"].numBytes() * self.gwvw
-          if self.kernel["BufferStore"]:
-            addr0 = vgpr(addr)
-            addr1 = sgpr("SrdC", 4)
-          else:
-            addr0 = vgpr(addr,2)
-            addr1 = ""
-
-          if self.kernel["ProblemType"]["DestDataType"].isHalf() or self.kernel["ProblemType"]["DestDataType"].isBFloat16():
-            if not self.kernel["ProblemType"]["HighPrecisionAccumulate"]:
-              module.add(self.parentWriter.chooseGlobalRead(useBuffer, bps, sumIdx//2, \
-                                    addr0, addr1, soffset=0, offset=0, hi16=sumIdx%2))
-            else:
-              module.add(self.parentWriter.chooseGlobalRead(useBuffer, bps, sumIdx, \
-                                    addr0, addr1, soffset=0, offset=0, hi16=0))
-          elif self.kernel["ProblemType"]["DestDataType"].isInt32() or self.kernel["ProblemType"]["DestDataType"].isSingle():
             module.add(self.parentWriter.chooseGlobalRead(useBuffer, bps, sumIdx, \
-                                  addr0, addr1, soffset=0, offset=0))
-          elif self.kernel["ProblemType"]["DestDataType"].isDouble() or self.kernel["ProblemType"]["DestDataType"].isSingleComplex() :
-            module.add(self.parentWriter.chooseGlobalRead(useBuffer, bps, sumIdx*2, \
-                                  addr0, addr1, soffset=0, offset=0))
-          elif self.kernel["ProblemType"]["DestDataType"].isDoubleComplex():
-            module.add(self.parentWriter.chooseGlobalRead(useBuffer, bps, sumIdx*4, \
-                                  addr0, addr1, soffset=0, offset=0))
-        module.add(SWaitCnt(vmcnt=0, vscnt=0, comment="CheckStoreC, wait for stores to complete"))
-        # Add checks for expected values:
-        module.add(SMovB32(sgpr(self.tmpS01), self.parentWriter.db["CheckStoreC"], "expected value"))
-        for elementIdx in range(0, len(self.batchElements)):
-          sumIdx = self.ss.elementSumIdx[elementIdx]
-          # Need to fix for other types:
-          assert (self.kernel["ProblemType"]["DestDataType"].isSingle() or self.kernel["ProblemType"]["DestDataType"].isInt32())
-          module.add(self.parentWriter.getCmpAssert(self.parentWriter.asmAssert.eq, vgpr(sumIdx), sgpr(self.tmpS01)))
+                                  addr0, addr1, soffset=0, offset=0, hi16=0))
+        elif self.kernel["ProblemType"]["DestDataType"].isInt32() or self.kernel["ProblemType"]["DestDataType"].isSingle():
+          module.add(self.parentWriter.chooseGlobalRead(useBuffer, bps, sumIdx, \
+                                addr0, addr1, soffset=0, offset=0))
+        elif self.kernel["ProblemType"]["DestDataType"].isDouble() or self.kernel["ProblemType"]["DestDataType"].isSingleComplex() :
+          module.add(self.parentWriter.chooseGlobalRead(useBuffer, bps, sumIdx*2, \
+                                addr0, addr1, soffset=0, offset=0))
+        elif self.kernel["ProblemType"]["DestDataType"].isDoubleComplex():
+          module.add(self.parentWriter.chooseGlobalRead(useBuffer, bps, sumIdx*4, \
+                                addr0, addr1, soffset=0, offset=0))
+      module.add(SWaitCnt(vmcnt=0, vscnt=0, comment="CheckStoreC, wait for stores to complete"))
+      # Add checks for expected values:
+      module.add(SMovB32(sgpr(self.tmpS01), self.parentWriter.db["CheckStoreC"], "expected value"))
+      for elementIdx in range(0, len(self.batchElements)):
+        sumIdx = self.ss.elementSumIdx[elementIdx]
+        # Need to fix for other types:
+        assert (self.kernel["ProblemType"]["DestDataType"].isSingle() or self.kernel["ProblemType"]["DestDataType"].isInt32())
+        module.add(self.parentWriter.getCmpAssert(self.parentWriter.asmAssert.eq, vgpr(sumIdx), sgpr(self.tmpS01)))
 
 
-      if self.edge and (self.atomic or not self.kernel["BufferStore"]):
-        # subsequent batch must start with full exec mask
-        # BufferStore doesn't need exec since it used buffer range checking when
-        # possible
-        module.add(self.getEdgeMovInstType()(EXEC(), -1, "full mask -> exec"))
+    if self.edge and (self.atomic or not self.kernel["BufferStore"]):
+      # subsequent batch must start with full exec mask
+      # BufferStore doesn't need exec since it used buffer range checking when
+      # possible
+      module.add(self.getEdgeMovInstType()(EXEC(), -1, "full mask -> exec"))
 
-      if self.parentWriter.db["ConservativeWaitCnt"] & 0x40:
-        module.add(SBarrier("debug"))
-        module.add(SWaitCnt(vmcnt=0, vscnt=0, comment="ConservativeWaitCnt"))
-        module.add(SBarrier("debug"))
-
-      if (index < (len(activationLabelModules) - 1)):
-        module.add(SBranch(labelName=activationLabelEndModule.getLabelName()))
-    if len(activationLabelModules) > 1:
-      module.add(activationLabelEndModule)
+    if self.parentWriter.db["ConservativeWaitCnt"] & 0x40:
+      module.add(SBarrier("debug"))
+      module.add(SWaitCnt(vmcnt=0, vscnt=0, comment="ConservativeWaitCnt"))
+      module.add(SBarrier("debug"))
 
   def _emitAtomicAdd(self, module: Module):
     ########################################

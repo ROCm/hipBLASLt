@@ -84,18 +84,6 @@ class SignatureCOV3(Signature):
         signature.addArg(   "alpha",        SVK.SIG_VALUE, cptValueType)
         if kernel["ProblemType"]["UseBeta"]:
             signature.addArg("beta",        SVK.SIG_VALUE, cptValueType)
-        if kernel["ProblemType"]["UseBias"] and (kernel["GlobalSplitU"] == 1):
-            signature.addArg("bias", SVK.SIG_GLOBALBUFFER, biasValueType, "generic")
-            signature.addArg("biasType",    SVK.SIG_VALUE,        "u32")
-
-        if ((kernel["ProblemType"]["ActivationType"] != 'none') and (kernel["GlobalSplitU"] == 1) \
-            and kernel["ActivationFused"]):
-            if kernel["ProblemType"]["ActivationComputeDataType"].isHalf():
-                actValueType = 'pkf16'
-            for name in kernel["ProblemType"]["ActivationType"].getAdditionalArgStringList():
-                signature.addArg(                   name, SVK.SIG_VALUE,        actValueType)
-            if kernel["ProblemType"]["ActivationType"] == 'all':
-                signature.addArg(       "activationType", SVK.SIG_VALUE,               "u32")
 
         for i in range(0, writer.states.d.numSgprStrides):
             signature.addArg(              "strideD%u"%i, SVK.SIG_VALUE,               "u32")
@@ -132,6 +120,19 @@ class SignatureCOV3(Signature):
         signature.addArg(                      "OffsetC", SVK.SIG_VALUE,              "u32")
         signature.addArg(                      "OffsetA", SVK.SIG_VALUE,              "u32")
         signature.addArg(                      "OffsetB", SVK.SIG_VALUE,              "u32")
+
+        if kernel["ProblemType"]["UseBias"] and (kernel["GlobalSplitU"] == 1):
+            signature.addArg("bias", SVK.SIG_GLOBALBUFFER, biasValueType, "generic")
+            signature.addArg("biasType",    SVK.SIG_VALUE,        "u32")
+
+        if ((kernel["ProblemType"]["ActivationType"] != 'none') and (kernel["GlobalSplitU"] == 1) \
+            and kernel["ActivationFused"]):
+            if kernel["ProblemType"]["ActivationComputeDataType"].isHalf():
+                actValueType = 'pkf16'
+            for name in kernel["ProblemType"]["ActivationType"].getAdditionalArgStringList():
+                signature.addArg(                   name, SVK.SIG_VALUE,        actValueType)
+            if kernel["ProblemType"]["ActivationType"] == 'all':
+                signature.addArg(       "activationType", SVK.SIG_VALUE,               "u32")
 
         signature.addArg(                      "padding", SVK.SIG_VALUE,              "u32")
 
