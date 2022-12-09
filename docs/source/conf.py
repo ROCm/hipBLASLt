@@ -1,7 +1,27 @@
+"""Copyright (C) 2016-2022 Advanced Micro Devices, Inc. All rights reserved.
+
+   Permission is hereby granted, free of charge, to any person obtaining a copy
+   of this software and associated documentation files (the "Software"), to deal
+   in the Software without restriction, including without limitation the rights
+   to use, copy, modify, merge, publish, distribute, sublicense, and/or sell cop-
+   ies of the Software, and to permit persons to whom the Software is furnished
+   to do so, subject to the following conditions:
+
+   The above copyright notice and this permission notice shall be included in all
+   copies or substantial portions of the Software.
+
+   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IM-
+   PLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+   FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+   COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+   IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNE-
+   CTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+"""
+
 # -*- coding: utf-8 -*-
 #
 # hipBLASLt documentation build configuration file, created by
-# sphinx-quickstart on Mon Nov  8 16:34:42 2021.
+# sphinx-quickstart on Mon Jan  8 16:34:42 2018.
 #
 # This file is execfile()d with the current directory set to its
 # containing dir.
@@ -38,7 +58,22 @@ if read_the_docs_build:
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
-extensions = ['sphinx.ext.mathjax', 'breathe']
+extensions = ['sphinx.ext.mathjax',
+               'breathe',
+               "sphinx.ext.duration",
+               "sphinx.ext.doctest",
+               "sphinx.ext.autodoc",
+               "sphinx.ext.autosummary",
+               "sphinx.ext.intersphinx",
+               #"sphinx_external_toc",
+               "sphinx_design",
+               "sphinx_copybutton",
+               "myst_nb"]
+                
+# MyST Configuration
+myst_enable_extensions = ["colon_fence", "linkify"]
+myst_heading_anchors = 3
+                
 breathe_projects = { "hipBLASLt": "../docBin/xml" }
 breathe_default_project = "hipBLASLt"
 
@@ -48,15 +83,14 @@ templates_path = ['_templates']
 # The suffix(es) of source filenames.
 # You can specify multiple suffix as a list of string:
 #
-# source_suffix = ['.rst', '.md']
-source_suffix = '.rst'
+source_suffix = ['.rst', '.md']
 
 # The master toctree document.
 master_doc = 'index'
 
 # General information about the project.
 project = u'hipBLASLt'
-copyright = u'2022, Advanced Micro Devices'
+copyright = u'2016-2022, Advanced Micro Devices'
 author = u'Advanced Micro Devices'
 
 # The version info for the project you're documenting, acts as replacement for
@@ -98,14 +132,24 @@ todo_include_todos = False
 #    html_theme = 'default'
 #else:
 import sphinx_rtd_theme
-html_theme = "sphinx_rtd_theme"
-html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
-html_logo = "rocm_logo.png"
+#html_theme = "sphinx_rtd_theme"
+#html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
+#html_logo = "rocm_logo.png"
+
+html_theme = "sphinx_book_theme"
+html_title = project
+html_theme_options = {
+    "home_page_in_toc": True,
+    "use_edit_page_button": True,
+    "repository_url": "https://github.com/ROCmSoftwarePlatform/hipBLASLt/",
+#TODO: import branch based on current git checkout
+    "repository_branch": "develop",
+    "path_to_docs": "docs",
+}
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
 # documentation.
-#
 html_theme_options = {
     'logo_only': True,
     'display_version': True
@@ -114,7 +158,7 @@ html_theme_options = {
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-# html_static_path = ['_static']
+#html_static_path = ['_static']
 
 # Custom sidebar templates, must be a dictionary that maps document names
 # to template names.
@@ -181,6 +225,7 @@ man_pages = [
 #  dir menu entry, description, category)
 texinfo_documents = [
     (master_doc, 'hipBLASLt', u'hipBLASLt Documentation',
-     author, 'hipBLASLt', 'BLASLt for AMD ROCm',
+     author, 'hipBLASLt', 'BLAS for AMD ROCm',
      'Miscellaneous'),
 ]
+
