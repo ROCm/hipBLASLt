@@ -1,6 +1,6 @@
 # hipBLASLt
-hipBLASLt provides general matrix-matrix operations on top of AMD's Radeon Open eCosystem Platform [ROCm][] runtime and toolchains. hipBLASLt is created using the [HIP][] programming language and optimized for AMD's latest discrete GPUs.
-hipBLASLt provides some flexible API to let user set attributes for solution selection.
+hipBLASLt is a library that provides general matrix-matrix operations. hipBLASLt is created using the [HIP][] programming language and optimized for AMD's latest discrete GPUs. 
+hipBLASLt provides flexible APIs to let users set attributes for solution selection.
 
 ## Documentation (TBD)
 TBD
@@ -10,7 +10,7 @@ TBD
 * CMake 3.16.8 or later
 * python3.7 or later
 * python3.7-venv or later
-* AMD [ROCm] 5.5 platform or later
+* AMD [ROCm] 5.5 or later
 
 ## Quickstart hipBLASLt build and install
 
