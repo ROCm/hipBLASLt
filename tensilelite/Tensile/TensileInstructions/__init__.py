@@ -21,8 +21,8 @@
 
 # Init module
 import sys
-if not (sys.version_info[0] >= 3 and sys.version_info[1] >= 7):
-    raise Exception("Must be using Python 3.7 or above")
+if not (sys.version_info[0] >= 3 and sys.version_info[1] >= 6):
+    raise Exception("Must be using Python 3.6 or above")
 
 from .Base import *
 from .Code import *
