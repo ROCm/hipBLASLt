@@ -154,7 +154,7 @@ Build Library Using Individual Commands
    cd [HIPBLASLT_BUILD_DIR]/release
    # Default install location is in /opt/rocm, define -DCMAKE_INSTALL_PREFIX=<path> to specify other
    # Default build config is 'Release', define -DCMAKE_BUILD_TYPE=<config> to specify other
-   CXX=/opt/rocm/bin/hipcc ccmake [HIPBLAS_SOURCE]
+   CXX=/opt/rocm/bin/hipcc ccmake [HIPBLASLT_SOURCE]
    make -j$(nproc)
    sudo make install # sudo required if installing into system directory such as /opt/rocm
 
@@ -172,14 +172,14 @@ The hipBLASLt samples have no external dependencies, but our unit test and bench
 - `lapack <https://github.com/Reference-LAPACK/lapack-release>`_,  lapack itself brings a dependency on a fortran compiler
 - `googletest <https://github.com/google/googletest>`_
 
-Unfortunately, googletest and lapack are not as easy to install. Many distros do not provide a googletest package with pre-compiled libraries, and the lapack packages do not have the necessary cmake config files for cmake to configure linking the cblas library. hipBLAS provide a cmake script that builds the above dependencies from source. This is an optional step; users can provide their own builds of these dependencies and help cmake find them by setting the CMAKE_PREFIX_PATH definition. The following is a sequence of steps to build dependencies and install them to the cmake default /usr/local.
+Unfortunately, googletest and lapack are not as easy to install. Many distros do not provide a googletest package with pre-compiled libraries, and the lapack packages do not have the necessary cmake config files for cmake to configure linking the cblas library. hipBLASLt provide a cmake script that builds the above dependencies from source. This is an optional step; users can provide their own builds of these dependencies and help cmake find them by setting the CMAKE_PREFIX_PATH definition. The following is a sequence of steps to build dependencies and install them to the cmake default /usr/local.
 
 (optional, one time only)
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 .. code-block::bash
    mkdir -p [HIPBLASLT_BUILD_DIR]/release/deps
    cd [HIPBLASLT_BUILD_DIR]/release/deps
-   ccmake -DBUILD_BOOST=OFF [HIPBLAS_SOURCE]/deps   # assuming boost is installed through package manager as above
+   ccmake -DBUILD_BOOST=OFF [HIPBLASLT_SOURCE]/deps   # assuming boost is installed through package manager as above
    make -j$(nproc) install
 
 Once dependencies are available on the system, it is possible to configure the clients to build. This requires a few extra cmake flags to the library cmake configure script. If the dependencies are not installed into system defaults (like /usr/local ), you should pass the CMAKE_PREFIX_PATH to cmake to help find them.
