@@ -39,7 +39,7 @@ configure_file("${CMAKE_CURRENT_SOURCE_DIR}/include/hipblaslt-version.h.in"
 configure_file( "${CMAKE_CURRENT_SOURCE_DIR}/include/hipblaslt.h" "${PROJECT_BINARY_DIR}/include/hipblaslt/hipblaslt.h" COPYONLY)
 configure_file( "${CMAKE_CURRENT_SOURCE_DIR}/include/hipblaslt-types.h" "${PROJECT_BINARY_DIR}/include/hipblaslt/hipblaslt-types.h" COPYONLY)
 
-# Public hipBLAS headers
+# Public hipBLASLt headers
 set(hipblaslt_headers_public
   include/hipblaslt.h
   ${PROJECT_BINARY_DIR}/include/hipblaslt/hipblaslt-version.h
@@ -74,7 +74,7 @@ if( BUILD_WITH_TENSILE )
 
     # bypassing cmake dependencies chain for static link as it won't allow target from different directory
 
-    # including tensile headers into hipblas tensileHost client so get compile properties
+    # including tensile headers into hipblaslt tensileHost client so get compile properties
     get_target_property(TensileHost_INCLUDES TensileHost INCLUDE_DIRECTORIES)
     target_include_directories( hipblaslt PRIVATE ${TensileHost_INCLUDES} )
     get_target_property(TensileHost_DEFINES TensileHost COMPILE_DEFINITIONS)

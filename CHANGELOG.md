@@ -1,6 +1,6 @@
 # Change Log for hipBLASLt
 
-## (Unreleased) hipBLASLt 1.0.0
+## (Unreleased) hipBLASLt 0.1.0
 ### Added
 - Enable hipBLASLt APIs
 - Support gfx90a

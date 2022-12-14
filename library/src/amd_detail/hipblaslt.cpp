@@ -414,7 +414,7 @@ catch(...)
 hipblasStatus_t hipblasLtGetGitRevision(hipblasLtHandle_t handle, char* rev)
 try
 {
-    // Get hipBLAS revision
+    // Get hipBLASLt revision
     if(handle == nullptr)
     {
         return HIPBLAS_STATUS_NOT_INITIALIZED;
