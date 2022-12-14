@@ -96,10 +96,10 @@ namespace
             }
             else
             {
-                name << hipblas_datatype_to_string(arg.a_type)
-                     << hipblas_datatype_to_string(arg.b_type)
-                     << hipblas_datatype_to_string(arg.c_type)
-                     << hipblas_datatype_to_string(arg.d_type)
+                name << hip_datatype_to_string(arg.a_type)
+                     << hip_datatype_to_string(arg.b_type)
+                     << hip_datatype_to_string(arg.c_type)
+                     << hip_datatype_to_string(arg.d_type)
                      << hipblaslt_computetype_to_string(arg.compute_type);
 
                 if(arg.activation_type != hipblaslt_activation_type::none)
@@ -111,7 +111,7 @@ namespace
                 {
                     name << "_BIAS";
                     if(arg.d_type != arg.scale_type && arg.bias_type == arg.scale_type)
-                        name << hipblas_datatype_to_string(arg.bias_type);
+                        name << hip_datatype_to_string(arg.bias_type);
                 }
                 name << '_' << (char)std::toupper(arg.transA) << (char)std::toupper(arg.transB);
 

@@ -29,25 +29,25 @@
 #define ROCBLASLT_UTILS_HPP
 #include "handle.h"
 
-inline rocblaslt_status getOriginalSizes(hipblasOperation_t opA,
-                                         hipblasOperation_t opB,
-                                         int64_t            num_rows_a,
-                                         int64_t            num_cols_a,
-                                         int64_t            num_rows_b,
-                                         int64_t            num_cols_b,
-                                         int64_t&           m,
-                                         int64_t&           n,
-                                         int64_t&           k)
+inline rocblaslt_status getOriginalSizes(hipblasLtOperation_t opA,
+                                         hipblasLtOperation_t opB,
+                                         int64_t              num_rows_a,
+                                         int64_t              num_cols_a,
+                                         int64_t              num_rows_b,
+                                         int64_t              num_cols_b,
+                                         int64_t&             m,
+                                         int64_t&             n,
+                                         int64_t&             k)
 {
     // values of num_* are values after been transposed, redirect to before which
     // been transposed. initialized m,n,k by NN.
     m = num_rows_a, n = num_cols_b, k = num_cols_a;
-    if(opA == HIPBLAS_OP_T)
+    if(opA == HIPBLASLT_OP_T)
     {
         m = num_cols_a;
         k = num_rows_a;
     }
-    if(opB == HIPBLAS_OP_T)
+    if(opB == HIPBLASLT_OP_T)
     {
         n = num_rows_b;
         if(k != num_cols_b)
@@ -69,8 +69,8 @@ inline rocblaslt_status getOriginalSizes(hipblasOperation_t opA,
  * Validate Matmul Descr. init Arguments - matrix init.
  ******************************************************************************/
 inline rocblaslt_status validateMatmulDescrArgs(rocblaslt_handle       handle,
-                                                hipblasOperation_t     opA,
-                                                hipblasOperation_t     opB,
+                                                hipblasLtOperation_t   opA,
+                                                hipblasLtOperation_t   opB,
                                                 int64_t                num_rows_a,
                                                 int64_t                num_cols_a,
                                                 int64_t                lda,
@@ -83,10 +83,10 @@ inline rocblaslt_status validateMatmulDescrArgs(rocblaslt_handle       handle,
                                                 int64_t                num_rows_d,
                                                 int64_t                num_cols_d,
                                                 int64_t                ldd,
-                                                hipblasDatatype_t      type_a,
-                                                hipblasDatatype_t      type_b,
-                                                hipblasDatatype_t      type_c,
-                                                hipblasDatatype_t      type_d,
+                                                hipDataType            type_a,
+                                                hipDataType            type_b,
+                                                hipDataType            type_c,
+                                                hipDataType            type_d,
                                                 rocblaslt_compute_type compute_type)
 {
     // handle must be valid
@@ -115,7 +115,7 @@ inline rocblaslt_status validateMatmulDescrArgs(rocblaslt_handle       handle,
 
     switch(type_a)
     {
-    case HIPBLAS_R_32F:
+    case HIP_R_32F:
         if(compute_type != rocblaslt_compute_f32)
             return rocblaslt_status_invalid_value;
         break;
@@ -186,7 +186,8 @@ inline rocblaslt_status validateMatmulArgs(rocblaslt_handle handle,
 }
 
 template <typename Ti, typename To, typename Tc>
-inline int rocblaslt_get_matmul_alg_config_max_id(hipblasOperation_t opA, hipblasOperation_t opB)
+inline int rocblaslt_get_matmul_alg_config_max_id(hipblasLtOperation_t opA,
+                                                  hipblasLtOperation_t opB)
 {
     // TODO
     return true;

@@ -39,13 +39,13 @@
 extern "C" {
 #endif
 
-#define RETURN_IF_HIPBLASLT_ERROR(INPUT_STATUS_FOR_CHECK)              \
-    {                                                                  \
-        hipblasStatus_t TMP_STATUS_FOR_CHECK = INPUT_STATUS_FOR_CHECK; \
-        if(TMP_STATUS_FOR_CHECK != HIPBLAS_STATUS_SUCCESS)             \
-        {                                                              \
-            return TMP_STATUS_FOR_CHECK;                               \
-        }                                                              \
+#define RETURN_IF_HIPBLASLT_ERROR(INPUT_STATUS_FOR_CHECK)                \
+    {                                                                    \
+        hipblasLtStatus_t TMP_STATUS_FOR_CHECK = INPUT_STATUS_FOR_CHECK; \
+        if(TMP_STATUS_FOR_CHECK != HIPBLASLT_STATUS_SUCCESS)             \
+        {                                                                \
+            return TMP_STATUS_FOR_CHECK;                                 \
+        }                                                                \
     }
 
 #define RETURN_IF_ROCBLASLT_ERROR(INPUT_STATUS_FOR_CHECK)               \
@@ -57,69 +57,69 @@ extern "C" {
         }                                                               \
     }
 
-hipblasStatus_t hipErrorToHIPBLASStatus(hipError_t status)
+hipblasLtStatus_t hipErrorToHIPBLASStatus(hipError_t status)
 {
     switch(status)
     {
     case hipSuccess:
-        return HIPBLAS_STATUS_SUCCESS;
+        return HIPBLASLT_STATUS_SUCCESS;
     case hipErrorMemoryAllocation:
     case hipErrorLaunchOutOfResources:
-        return HIPBLAS_STATUS_ALLOC_FAILED;
+        return HIPBLASLT_STATUS_ALLOC_FAILED;
     case hipErrorInvalidDevicePointer:
-        return HIPBLAS_STATUS_INVALID_VALUE;
+        return HIPBLASLT_STATUS_INVALID_VALUE;
     case hipErrorInvalidDevice:
     case hipErrorInvalidResourceHandle:
-        return HIPBLAS_STATUS_NOT_INITIALIZED;
+        return HIPBLASLT_STATUS_NOT_INITIALIZED;
     case hipErrorInvalidValue:
-        return HIPBLAS_STATUS_INVALID_VALUE;
+        return HIPBLASLT_STATUS_INVALID_VALUE;
     case hipErrorNoDevice:
     case hipErrorUnknown:
-        return HIPBLAS_STATUS_INTERNAL_ERROR;
+        return HIPBLASLT_STATUS_INTERNAL_ERROR;
     default:
-        return HIPBLAS_STATUS_INTERNAL_ERROR;
+        return HIPBLASLT_STATUS_INTERNAL_ERROR;
     }
 }
 
-hipblasStatus_t RocBlasLtStatusToHIPStatus(rocblaslt_status_ status)
+hipblasLtStatus_t RocBlasLtStatusToHIPStatus(rocblaslt_status_ status)
 {
     switch(status)
     {
     case rocblaslt_status_success:
-        return HIPBLAS_STATUS_SUCCESS;
+        return HIPBLASLT_STATUS_SUCCESS;
     case rocblaslt_status_invalid_handle:
-        return HIPBLAS_STATUS_NOT_INITIALIZED;
+        return HIPBLASLT_STATUS_NOT_INITIALIZED;
     case rocblaslt_status_not_implemented:
-        return HIPBLAS_STATUS_INTERNAL_ERROR;
+        return HIPBLASLT_STATUS_INTERNAL_ERROR;
     case rocblaslt_status_invalid_pointer:
-        return HIPBLAS_STATUS_INVALID_VALUE;
+        return HIPBLASLT_STATUS_INVALID_VALUE;
     case rocblaslt_status_invalid_size:
-        return HIPBLAS_STATUS_INVALID_VALUE;
+        return HIPBLASLT_STATUS_INVALID_VALUE;
     case rocblaslt_status_memory_error:
-        return HIPBLAS_STATUS_ALLOC_FAILED;
+        return HIPBLASLT_STATUS_ALLOC_FAILED;
     case rocblaslt_status_internal_error:
-        return HIPBLAS_STATUS_INTERNAL_ERROR;
+        return HIPBLASLT_STATUS_INTERNAL_ERROR;
     case rocblaslt_status_invalid_value:
-        return HIPBLAS_STATUS_INVALID_VALUE;
+        return HIPBLASLT_STATUS_INVALID_VALUE;
     case rocblaslt_status_arch_mismatch:
-        return HIPBLAS_STATUS_ARCH_MISMATCH;
+        return HIPBLASLT_STATUS_ARCH_MISMATCH;
     default:
-        throw HIPBLAS_STATUS_INVALID_ENUM;
+        throw HIPBLASLT_STATUS_INVALID_ENUM;
     }
 }
 
-hipblasStatus_t hipblasLtCreate(hipblasLtHandle_t* handle)
+hipblasLtStatus_t hipblasLtCreate(hipblasLtHandle_t* handle)
 try
 {
     // Check if handle is valid
     if(handle == nullptr)
     {
-        return HIPBLAS_STATUS_INVALID_VALUE;
+        return HIPBLASLT_STATUS_INVALID_VALUE;
     }
 
-    int             deviceId;
-    hipError_t      err;
-    hipblasStatus_t retval = HIPBLAS_STATUS_SUCCESS;
+    int               deviceId;
+    hipError_t        err;
+    hipblasLtStatus_t retval = HIPBLASLT_STATUS_SUCCESS;
 
     err = hipGetDevice(&deviceId);
     if(err == hipSuccess)
@@ -130,24 +130,24 @@ try
 }
 catch(...)
 {
-    return exception_to_hipblas_status();
+    return exception_to_hipblaslt_status();
 }
 
-hipblasStatus_t hipblasLtDestroy(const hipblasLtHandle_t handle)
+hipblasLtStatus_t hipblasLtDestroy(const hipblasLtHandle_t handle)
 try
 {
     return RocBlasLtStatusToHIPStatus(rocblaslt_destroy((const rocblaslt_handle)handle));
 }
 catch(...)
 {
-    return exception_to_hipblas_status();
+    return exception_to_hipblaslt_status();
 }
 
-hipblasStatus_t hipblasLtMatrixLayoutCreate(hipblasLtMatrixLayout_t* matDescr,
-                                            hipblasDatatype_t        valueType,
-                                            uint64_t                 rows,
-                                            uint64_t                 cols,
-                                            int64_t                  ld)
+hipblasLtStatus_t hipblasLtMatrixLayoutCreate(hipblasLtMatrixLayout_t* matDescr,
+                                              hipDataType              valueType,
+                                              uint64_t                 rows,
+                                              uint64_t                 cols,
+                                              int64_t                  ld)
 try
 {
     return RocBlasLtStatusToHIPStatus(rocblaslt_matrix_layout_create(
@@ -155,10 +155,10 @@ try
 }
 catch(...)
 {
-    return exception_to_hipblas_status();
+    return exception_to_hipblaslt_status();
 }
 
-hipblasStatus_t hipblasLtMatrixLayoutDestroy(const hipblasLtMatrixLayout_t descr)
+hipblasLtStatus_t hipblasLtMatrixLayoutDestroy(const hipblasLtMatrixLayout_t descr)
 try
 {
     return RocBlasLtStatusToHIPStatus(
@@ -166,12 +166,12 @@ try
 }
 catch(...)
 {
-    return exception_to_hipblas_status();
+    return exception_to_hipblaslt_status();
 }
 
-hipblasStatus_t hipblasLtMatmulDescCreate(hipblasLtMatmulDesc_t* matmulDesc,
-                                          hipblasLtComputeType_t computeType,
-                                          hipblasDatatype_t      scaleType)
+hipblasLtStatus_t hipblasLtMatmulDescCreate(hipblasLtMatmulDesc_t* matmulDesc,
+                                            hipblasLtComputeType_t computeType,
+                                            hipDataType            scaleType)
 try
 {
     return RocBlasLtStatusToHIPStatus(rocblaslt_matmul_desc_create(
@@ -179,13 +179,13 @@ try
 }
 catch(...)
 {
-    return exception_to_hipblas_status();
+    return exception_to_hipblaslt_status();
 }
 
-hipblasStatus_t hipblasLtMatrixLayoutSetAttribute(hipblasLtMatrixLayout_t          matLayout,
-                                                  hipblasLtMatrixLayoutAttribute_t attr,
-                                                  const void*                      buf,
-                                                  size_t                           sizeInBytes)
+hipblasLtStatus_t hipblasLtMatrixLayoutSetAttribute(hipblasLtMatrixLayout_t          matLayout,
+                                                    hipblasLtMatrixLayoutAttribute_t attr,
+                                                    const void*                      buf,
+                                                    size_t                           sizeInBytes)
 try
 {
     return RocBlasLtStatusToHIPStatus(
@@ -196,14 +196,14 @@ try
 }
 catch(...)
 {
-    return exception_to_hipblas_status();
+    return exception_to_hipblaslt_status();
 }
 
-hipblasStatus_t hipblasLtMatrixLayoutGetAttribute(hipblasLtMatrixLayout_t          matLayout,
-                                                  hipblasLtMatrixLayoutAttribute_t attr,
-                                                  void*                            buf,
-                                                  size_t                           sizeInBytes,
-                                                  size_t*                          sizeWritten)
+hipblasLtStatus_t hipblasLtMatrixLayoutGetAttribute(hipblasLtMatrixLayout_t          matLayout,
+                                                    hipblasLtMatrixLayoutAttribute_t attr,
+                                                    void*                            buf,
+                                                    size_t                           sizeInBytes,
+                                                    size_t*                          sizeWritten)
 try
 {
     return RocBlasLtStatusToHIPStatus(
@@ -215,10 +215,10 @@ try
 }
 catch(...)
 {
-    return exception_to_hipblas_status();
+    return exception_to_hipblaslt_status();
 }
 
-hipblasStatus_t hipblasLtMatmulDescDestroy(const hipblasLtMatmulDesc_t descr)
+hipblasLtStatus_t hipblasLtMatmulDescDestroy(const hipblasLtMatmulDesc_t descr)
 try
 {
     return RocBlasLtStatusToHIPStatus(
@@ -226,13 +226,13 @@ try
 }
 catch(...)
 {
-    return exception_to_hipblas_status();
+    return exception_to_hipblaslt_status();
 }
 
-hipblasStatus_t hipblasLtMatmulDescSetAttribute(hipblasLtMatmulDesc_t           matmulDesc,
-                                                hipblasLtMatmulDescAttributes_t matmulAttr,
-                                                const void*                     buf,
-                                                size_t                          sizeInBytes)
+hipblasLtStatus_t hipblasLtMatmulDescSetAttribute(hipblasLtMatmulDesc_t           matmulDesc,
+                                                  hipblasLtMatmulDescAttributes_t matmulAttr,
+                                                  const void*                     buf,
+                                                  size_t                          sizeInBytes)
 try
 {
     return RocBlasLtStatusToHIPStatus(
@@ -243,13 +243,13 @@ try
 }
 catch(...)
 {
-    return exception_to_hipblas_status();
+    return exception_to_hipblaslt_status();
 }
-hipblasStatus_t hipblasLtMatmulDescGetAttribute(hipblasLtMatmulDesc_t           matmulDesc,
-                                                hipblasLtMatmulDescAttributes_t matmulAttr,
-                                                void*                           buf,
-                                                size_t                          sizeInBytes,
-                                                size_t*                         sizeWritten)
+hipblasLtStatus_t hipblasLtMatmulDescGetAttribute(hipblasLtMatmulDesc_t           matmulDesc,
+                                                  hipblasLtMatmulDescAttributes_t matmulAttr,
+                                                  void*                           buf,
+                                                  size_t                          sizeInBytes,
+                                                  size_t*                         sizeWritten)
 try
 {
     return RocBlasLtStatusToHIPStatus(
@@ -261,10 +261,10 @@ try
 }
 catch(...)
 {
-    return exception_to_hipblas_status();
+    return exception_to_hipblaslt_status();
 }
 
-hipblasStatus_t hipblasLtMatmulPreferenceCreate(hipblasLtMatmulPreference_t* pref)
+hipblasLtStatus_t hipblasLtMatmulPreferenceCreate(hipblasLtMatmulPreference_t* pref)
 try
 {
     return RocBlasLtStatusToHIPStatus(
@@ -272,9 +272,9 @@ try
 }
 catch(...)
 {
-    return exception_to_hipblas_status();
+    return exception_to_hipblaslt_status();
 }
-hipblasStatus_t hipblasLtMatmulPreferenceDestroy(const hipblasLtMatmulPreference_t pref)
+hipblasLtStatus_t hipblasLtMatmulPreferenceDestroy(const hipblasLtMatmulPreference_t pref)
 try
 {
     return RocBlasLtStatusToHIPStatus(
@@ -282,10 +282,10 @@ try
 }
 catch(...)
 {
-    return exception_to_hipblas_status();
+    return exception_to_hipblaslt_status();
 }
 
-hipblasStatus_t
+hipblasLtStatus_t
     hipblasLtMatmulPreferenceSetAttribute(hipblasLtMatmulPreference_t           pref,
                                           hipblasLtMatmulPreferenceAttributes_t attribute,
                                           const void*                           data,
@@ -300,10 +300,10 @@ try
 }
 catch(...)
 {
-    return exception_to_hipblas_status();
+    return exception_to_hipblaslt_status();
 }
 
-hipblasStatus_t
+hipblasLtStatus_t
     hipblasLtMatmulPreferenceGetAttribute(hipblasLtMatmulPreference_t           pref,
                                           hipblasLtMatmulPreferenceAttributes_t attribute,
                                           void*                                 data,
@@ -320,10 +320,10 @@ try
 }
 catch(...)
 {
-    return exception_to_hipblas_status();
+    return exception_to_hipblaslt_status();
 }
 
-hipblasStatus_t
+hipblasLtStatus_t
     hipblasLtMatmulAlgoGetHeuristic(hipblasLtHandle_t                handle,
                                     hipblasLtMatmulDesc_t            matmulDesc,
                                     hipblasLtMatrixLayout_t          Adesc,
@@ -350,25 +350,25 @@ try
 }
 catch(...)
 {
-    return exception_to_hipblas_status();
+    return exception_to_hipblaslt_status();
 }
 
-hipblasStatus_t hipblasLtMatmul(hipblasLtHandle_t            handle,
-                                hipblasLtMatmulDesc_t        matmul_descr,
-                                const void*                  alpha,
-                                const void*                  A,
-                                hipblasLtMatrixLayout_t      matA,
-                                const void*                  B,
-                                hipblasLtMatrixLayout_t      matB,
-                                const void*                  beta,
-                                const void*                  C,
-                                hipblasLtMatrixLayout_t      matC,
-                                void*                        D,
-                                hipblasLtMatrixLayout_t      matD,
-                                const hipblasLtMatmulAlgo_t* algo,
-                                void*                        workspace,
-                                size_t                       workspaceSizeInBytes,
-                                hipStream_t                  stream)
+hipblasLtStatus_t hipblasLtMatmul(hipblasLtHandle_t            handle,
+                                  hipblasLtMatmulDesc_t        matmul_descr,
+                                  const void*                  alpha,
+                                  const void*                  A,
+                                  hipblasLtMatrixLayout_t      matA,
+                                  const void*                  B,
+                                  hipblasLtMatrixLayout_t      matB,
+                                  const void*                  beta,
+                                  const void*                  C,
+                                  hipblasLtMatrixLayout_t      matC,
+                                  void*                        D,
+                                  hipblasLtMatrixLayout_t      matD,
+                                  const hipblasLtMatmulAlgo_t* algo,
+                                  void*                        workspace,
+                                  size_t                       workspaceSizeInBytes,
+                                  hipStream_t                  stream)
 try
 {
     return RocBlasLtStatusToHIPStatus(rocblaslt_matmul((rocblaslt_handle)handle,
@@ -390,60 +390,60 @@ try
 }
 catch(...)
 {
-    return exception_to_hipblas_status();
+    return exception_to_hipblaslt_status();
 }
 
 // Other Utilities
-hipblasStatus_t hipblasLtGetVersion(hipblasLtHandle_t handle, int* version)
+hipblasLtStatus_t hipblasLtGetVersion(hipblasLtHandle_t handle, int* version)
 try
 {
     if(handle == nullptr)
     {
-        return HIPBLAS_STATUS_NOT_INITIALIZED;
+        return HIPBLASLT_STATUS_NOT_INITIALIZED;
     }
 
     *version = HIPBLASLT_VERSION_MAJOR * 100000 + HIPBLASLT_VERSION_MINOR * 100
                + HIPBLASLT_VERSION_PATCH;
 
-    return HIPBLAS_STATUS_SUCCESS;
+    return HIPBLASLT_STATUS_SUCCESS;
 }
 catch(...)
 {
-    return exception_to_hipblas_status();
+    return exception_to_hipblaslt_status();
 }
-hipblasStatus_t hipblasLtGetGitRevision(hipblasLtHandle_t handle, char* rev)
+hipblasLtStatus_t hipblasLtGetGitRevision(hipblasLtHandle_t handle, char* rev)
 try
 {
-    // Get hipBLAS revision
+    // Get hipBLASLt revision
     if(handle == nullptr)
     {
-        return HIPBLAS_STATUS_NOT_INITIALIZED;
+        return HIPBLASLT_STATUS_NOT_INITIALIZED;
     }
 
     if(rev == nullptr)
     {
-        return HIPBLAS_STATUS_INVALID_VALUE;
+        return HIPBLASLT_STATUS_INVALID_VALUE;
     }
 
     static constexpr char v[] = TO_STR(HIPBLASLT_VERSION_TWEAK);
 
     memcpy(rev, v, sizeof(v));
 
-    return HIPBLAS_STATUS_SUCCESS;
+    return HIPBLASLT_STATUS_SUCCESS;
 }
 catch(...)
 {
-    return exception_to_hipblas_status();
+    return exception_to_hipblaslt_status();
 }
 
-hipblasStatus_t hipblasLtGetArchName(char** archName)
+hipblasLtStatus_t hipblasLtGetArchName(char** archName)
 try
 {
     *archName        = nullptr;
     std::string arch = rocblaslt_internal_get_arch_name();
     *archName        = (char*)malloc(arch.size() * sizeof(char));
     strncpy(*archName, arch.c_str(), arch.size());
-    return HIPBLAS_STATUS_SUCCESS;
+    return HIPBLASLT_STATUS_SUCCESS;
 }
 catch(...)
 {
@@ -452,7 +452,7 @@ catch(...)
         free(*archName);
         *archName = nullptr;
     }
-    return exception_to_hipblas_status();
+    return exception_to_hipblaslt_status();
 }
 
 #ifdef __cplusplus

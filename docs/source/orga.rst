@@ -24,7 +24,7 @@ library/src/include
 ```````````````````
 Internal include files for:
 
-- Converting C++ exceptions to hipBLAS status.
+- Converting C++ exceptions to hipBLASLt status.
 
 The `clients` directory
 -----------------------

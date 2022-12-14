@@ -376,7 +376,7 @@ bool match_test_category(const Arguments& arg, const char* category)
 
         // The name of the current GPU platform
         char* archName;
-        if(hipblasLtGetArchName(&archName) != HIPBLAS_STATUS_SUCCESS)
+        if(hipblasLtGetArchName(&archName) != HIPBLASLT_STATUS_SUCCESS)
             return false;
         static const std::string platform(archName);
 

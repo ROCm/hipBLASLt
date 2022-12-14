@@ -225,8 +225,6 @@ else()
     endif()
 endif()
 
-find_package( hipblas 0.50.0 REQUIRED CONFIG PATHS ${HIP_DIR} ${ROCM_PATH} /opt/rocm)
-
 # Setup version
 set(VERSION_STRING "0.0.7")
 rocm_setup_version(VERSION ${VERSION_STRING})
@@ -290,10 +288,6 @@ if( BUILD_CLIENTS_SAMPLES OR BUILD_CLIENTS_TESTS OR BUILD_CLIENTS_BENCHMARKS )
         RPM "${GFORTRAN_RPM}")
   endif()
   add_subdirectory( clients )
-endif( )
-
-if( NOT BUILD_CUDA )
-  rocm_package_add_dependencies(DEPENDS "hipblas >= 0.50.0")
 endif( )
 
 # Package specific CPACK vars

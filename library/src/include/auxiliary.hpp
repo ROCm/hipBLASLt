@@ -29,80 +29,80 @@
 #include <hipblaslt/hipblaslt.h>
 
 HIPBLASLT_EXPORT
-constexpr const char* hipblas_status_to_string(hipblasStatus_t status)
+constexpr const char* hipblaslt_status_to_string(hipblasLtStatus_t status)
 {
 #define CASE(x) \
     case x:     \
         return #x
     switch(status)
     {
-        CASE(HIPBLAS_STATUS_SUCCESS);
-        CASE(HIPBLAS_STATUS_NOT_INITIALIZED);
-        CASE(HIPBLAS_STATUS_ALLOC_FAILED);
-        CASE(HIPBLAS_STATUS_INVALID_VALUE);
-        CASE(HIPBLAS_STATUS_MAPPING_ERROR);
-        CASE(HIPBLAS_STATUS_EXECUTION_FAILED);
-        CASE(HIPBLAS_STATUS_INTERNAL_ERROR);
-        CASE(HIPBLAS_STATUS_NOT_SUPPORTED);
-        CASE(HIPBLAS_STATUS_ARCH_MISMATCH);
-        CASE(HIPBLAS_STATUS_INVALID_ENUM);
-        CASE(HIPBLAS_STATUS_UNKNOWN);
-        CASE(HIPBLAS_STATUS_HANDLE_IS_NULLPTR);
+        CASE(HIPBLASLT_STATUS_SUCCESS);
+        CASE(HIPBLASLT_STATUS_NOT_INITIALIZED);
+        CASE(HIPBLASLT_STATUS_ALLOC_FAILED);
+        CASE(HIPBLASLT_STATUS_INVALID_VALUE);
+        CASE(HIPBLASLT_STATUS_MAPPING_ERROR);
+        CASE(HIPBLASLT_STATUS_EXECUTION_FAILED);
+        CASE(HIPBLASLT_STATUS_INTERNAL_ERROR);
+        CASE(HIPBLASLT_STATUS_NOT_SUPPORTED);
+        CASE(HIPBLASLT_STATUS_ARCH_MISMATCH);
+        CASE(HIPBLASLT_STATUS_INVALID_ENUM);
+        CASE(HIPBLASLT_STATUS_UNKNOWN);
+        CASE(HIPBLASLT_STATUS_HANDLE_IS_NULLPTR);
     }
 #undef CASE
     // We don't use default: so that the compiler warns us if any valid enums are
-    // missing from our switch. If the value is not a valid hipblasStatus_t, we
+    // missing from our switch. If the value is not a valid hipblasLtStatus_t, we
     // return this string.
-    return "<undefined hipblasStatus_t value>";
+    return "<undefined hipblasLtStatus_t value>";
 }
 
 HIPBLASLT_EXPORT
-constexpr const char* hipblas_operation_to_string(hipblasOperation_t value)
+constexpr const char* hipblaslt_operation_to_string(hipblasLtOperation_t value)
 {
     switch(value)
     {
-    case HIPBLAS_OP_N:
+    case HIPBLASLT_OP_N:
         return "N";
-    case HIPBLAS_OP_T:
+    case HIPBLASLT_OP_T:
         return "T";
-    case HIPBLAS_OP_C:
+    case HIPBLASLT_OP_C:
         return "C";
     }
     return "invalid";
 }
 
 HIPBLASLT_EXPORT
-constexpr hipblasOperation_t char_to_hipblas_operation(char value)
+constexpr hipblasLtOperation_t char_to_hipblaslt_operation(char value)
 {
     switch(value)
     {
     case 'N':
     case 'n':
-        return HIPBLAS_OP_N;
+        return HIPBLASLT_OP_N;
     case 'T':
     case 't':
-        return HIPBLAS_OP_T;
+        return HIPBLASLT_OP_T;
     case 'C':
     case 'c':
-        return HIPBLAS_OP_C;
+        return HIPBLASLT_OP_C;
     default:
-        return static_cast<hipblasOperation_t>(-1);
+        return static_cast<hipblasLtOperation_t>(-1);
     }
 }
 
-// return precision string for hipblasDatatype_t
+// return precision string for hipDataType
 HIPBLASLT_EXPORT
-constexpr const char* hipblas_datatype_to_string(hipblasDatatype_t type)
+constexpr const char* hip_datatype_to_string(hipDataType type)
 {
     switch(type)
     {
-    case HIPBLAS_R_32F:
+    case HIP_R_32F:
         return "f32_r";
-    case HIPBLAS_R_16F:
+    case HIP_R_16F:
         return "f16_r";
-    case HIPBLAS_R_16B:
+    case HIP_R_16BF:
         return "bf16_r";
-    case HIPBLAS_R_8I:
+    case HIP_R_8I:
         return "i8_r";
     default:
         return "non-supported type";
@@ -110,7 +110,7 @@ constexpr const char* hipblas_datatype_to_string(hipblasDatatype_t type)
     return "invalid";
 }
 
-// return precision string for hipblasDatatype_t
+// return precision string for hipDataType
 HIPBLASLT_EXPORT
 constexpr const char* hipblaslt_computetype_to_string(hipblasLtComputeType_t type)
 {
@@ -124,13 +124,13 @@ constexpr const char* hipblaslt_computetype_to_string(hipblasLtComputeType_t typ
 
 // clang-format off
 HIPBLASLT_EXPORT
-constexpr hipblasDatatype_t string_to_hipblas_datatype(const std::string& value)
+constexpr hipDataType string_to_hip_datatype(const std::string& value)
 {
     return
-        value == "f32_r" || value == "s" ? HIPBLAS_R_32F  :
-        value == "f16_r" || value == "h" ? HIPBLAS_R_16F  :
-        value == "bf16_r"                ? HIPBLAS_R_16B  :
-        static_cast<hipblasDatatype_t>(-1);
+        value == "f32_r" || value == "s" ? HIP_R_32F  :
+        value == "f16_r" || value == "h" ? HIP_R_16F  :
+        value == "bf16_r"                ? HIP_R_16BF  :
+        static_cast<hipDataType>(-1);
 }
 
 HIPBLASLT_EXPORT

@@ -2,6 +2,14 @@
 hipBLASLt Datatypes Reference
 *****************************
 
+hipblasLtStatus_t
+-------------------
+.. doxygenenum:: hipblasLtStatus_t
+
+hipblasLtOperation_t
+-------------------
+.. doxygenenum:: hipblasLtOperation_t
+
 hipblasLtEpilogue_t
 -------------------
 .. doxygenenum:: hipblasLtEpilogue_t
@@ -121,7 +129,7 @@ hipblasLtMatmul supports the following computeType, scaleType, Atype/Btype, Ctyp
 ======================= =================== ============= ==============
 computeType             scaleType/Bias Type Atype/Btype   Ctype/Dtype
 ======================= =================== ============= ==============
-HIPBLASLT_COMPUTE_F32   HIPBLAS_R_32F       HIPBLAS_R_32F HIPBLAS_R_32F
-HIPBLASLT_COMPUTE_F32   HIPBLAS_R_32F       HIPBLAS_R_16F HIPBLAS_R_16F
-HIPBLASLT_COMPUTE_F32   HIPBLAS_R_32F       HIPBLAS_R_16B HIPBLAS_R_16B
+HIPBLASLT_COMPUTE_F32   HIP_R_32F       HIP_R_32F HIP_R_32F
+HIPBLASLT_COMPUTE_F32   HIP_R_32F       HIP_R_16F HIP_R_16F
+HIPBLASLT_COMPUTE_F32   HIP_R_32F       HIP_R_16BF HIP_R_16BF
 ======================= =================== ============= ==============

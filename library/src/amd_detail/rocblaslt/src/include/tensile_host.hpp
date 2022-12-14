@@ -51,9 +51,9 @@
 template <typename Ti, typename To = Ti, typename Tc = To>
 struct RocblasltContractionProblem
 {
-    rocblaslt_handle   handle;
-    hipblasOperation_t trans_a;
-    hipblasOperation_t trans_b;
+    rocblaslt_handle     handle;
+    hipblasLtOperation_t trans_a;
+    hipblasLtOperation_t trans_b;
 
     // The RocblasltContractionProblem data members should exactly match
     // Tensile's parameter types, even if rocBLAS uses differently
@@ -99,7 +99,7 @@ struct RocblasltContractionProblem
     bool   strided_batch;
 
     const void*        bias;
-    hipblasDatatype_t  bias_type;
+    hipDataType        bias_type;
     rocblaslt_epilogue epilogue;
     void*              workspace;
     size_t             workspaceSize;
@@ -108,42 +108,42 @@ struct RocblasltContractionProblem
 
     // gemm_ex
     // gemm_strided_batched_ex
-    RocblasltContractionProblem(rocblaslt_handle   handle,
-                                hipblasOperation_t trans_a,
-                                hipblasOperation_t trans_b,
-                                int64_t            m,
-                                int64_t            n,
-                                int64_t            k,
-                                const Tc*          alpha,
-                                const Ti*          A,
-                                const Ti* const*   batch_A,
-                                int64_t            ld_a,
-                                int64_t            batch_stride_a,
-                                int64_t            offset_a,
-                                const Ti*          B,
-                                const Ti* const*   batch_B,
-                                int64_t            ld_b,
-                                int64_t            batch_stride_b,
-                                int64_t            offset_b,
-                                const Tc*          beta,
-                                const To*          C,
-                                const To* const*   batch_C,
-                                int64_t            ld_c,
-                                int64_t            batch_stride_c,
-                                int64_t            offset_c,
-                                To*                D,
-                                To* const*         batch_D,
-                                int64_t            ld_d,
-                                int64_t            batch_stride_d,
-                                int64_t            offset_d,
-                                int64_t            batch_count,
-                                bool               strided_batch,
-                                const void*        bias,
-                                hipblasDatatype_t  bias_type,
-                                rocblaslt_epilogue epilogue,
-                                void*              workspace,
-                                size_t             workspaceSize,
-                                hipStream_t        stream)
+    RocblasltContractionProblem(rocblaslt_handle     handle,
+                                hipblasLtOperation_t trans_a,
+                                hipblasLtOperation_t trans_b,
+                                int64_t              m,
+                                int64_t              n,
+                                int64_t              k,
+                                const Tc*            alpha,
+                                const Ti*            A,
+                                const Ti* const*     batch_A,
+                                int64_t              ld_a,
+                                int64_t              batch_stride_a,
+                                int64_t              offset_a,
+                                const Ti*            B,
+                                const Ti* const*     batch_B,
+                                int64_t              ld_b,
+                                int64_t              batch_stride_b,
+                                int64_t              offset_b,
+                                const Tc*            beta,
+                                const To*            C,
+                                const To* const*     batch_C,
+                                int64_t              ld_c,
+                                int64_t              batch_stride_c,
+                                int64_t              offset_c,
+                                To*                  D,
+                                To* const*           batch_D,
+                                int64_t              ld_d,
+                                int64_t              batch_stride_d,
+                                int64_t              offset_d,
+                                int64_t              batch_count,
+                                bool                 strided_batch,
+                                const void*          bias,
+                                hipDataType          bias_type,
+                                rocblaslt_epilogue   epilogue,
+                                void*                workspace,
+                                size_t               workspaceSize,
+                                hipStream_t          stream)
         : handle(handle)
         , trans_a(trans_a)
         , trans_b(trans_b)

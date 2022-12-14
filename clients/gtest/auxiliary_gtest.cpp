@@ -142,7 +142,7 @@ namespace
         {
             RocBlasLt_TestName<aux_test> name(arg.name);
 
-            name << hipblas_datatype_to_string(arg.a_type);
+            name << hip_datatype_to_string(arg.a_type);
 
             return std::move(name);
         }

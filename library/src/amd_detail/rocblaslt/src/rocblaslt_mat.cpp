@@ -56,51 +56,50 @@ rocblaslt_status rocblaslt_matmul_impl(const rocblaslt_handle       handle,
                                        size_t                       workspaceSizeInBytes,
                                        hipStream_t                  stream)
 {
-    hipblasOperation_t     opA          = matmul_descr->op_A;
-    hipblasOperation_t     opB          = matmul_descr->op_B;
+    hipblasLtOperation_t   opA          = matmul_descr->op_A;
+    hipblasLtOperation_t   opB          = matmul_descr->op_B;
     rocblaslt_compute_type compute_type = matmul_descr->compute_type;
     const void*            bias         = nullptr;
-    hipblasDatatype_t      bias_type
-        = matmul_descr->bias_type == -1 ? matD->type : matmul_descr->bias_type;
+    hipDataType bias_type = matmul_descr->bias_type == -1 ? matD->type : matmul_descr->bias_type;
     rocblaslt_epilogue epilogue = matmul_descr->epilogue;
     if(is_bias_enabled(epilogue))
         bias = matmul_descr->bias;
 
     // matrix A
-    int64_t           num_rows_a     = matA->m;
-    int64_t           num_cols_a     = matA->n;
-    int64_t           lda            = matA->ld;
-    int64_t           batch_stride_a = matA->batch_stride;
-    int               num_batches_a  = matA->batch_count;
-    hipblasDatatype_t type_a         = matA->type;
+    int64_t     num_rows_a     = matA->m;
+    int64_t     num_cols_a     = matA->n;
+    int64_t     lda            = matA->ld;
+    int64_t     batch_stride_a = matA->batch_stride;
+    int         num_batches_a  = matA->batch_count;
+    hipDataType type_a         = matA->type;
 
     // matrix B
     // int64_t num_rows_b = matB->m;
     // int64_t num_cols_b = matB->n;
-    int64_t           ldb            = matB->ld;
-    int64_t           batch_stride_b = matB->batch_stride;
-    int               num_batches_b  = matB->batch_count;
-    hipblasDatatype_t type_b         = matB->type;
+    int64_t     ldb            = matB->ld;
+    int64_t     batch_stride_b = matB->batch_stride;
+    int         num_batches_b  = matB->batch_count;
+    hipDataType type_b         = matB->type;
 
     // matrix C
     // int64_t num_rows_c = matC->m;
     // int64_t num_cols_c = matC->n;
-    int64_t           ldc            = matC->ld;
-    int64_t           batch_stride_c = matC->batch_stride;
-    int               num_batches_c  = matC->batch_count;
-    hipblasDatatype_t type_c         = matC->type;
+    int64_t     ldc            = matC->ld;
+    int64_t     batch_stride_c = matC->batch_stride;
+    int         num_batches_c  = matC->batch_count;
+    hipDataType type_c         = matC->type;
 
     // matrix D
-    int64_t           num_rows_d     = matD->m;
-    int64_t           num_cols_d     = matD->n;
-    int64_t           ldd            = matD->ld;
-    int64_t           batch_stride_d = matD->batch_stride;
-    int               num_batches_d  = matD->batch_count;
-    hipblasDatatype_t type_d         = matD->type;
+    int64_t     num_rows_d     = matD->m;
+    int64_t     num_cols_d     = matD->n;
+    int64_t     ldd            = matD->ld;
+    int64_t     batch_stride_d = matD->batch_stride;
+    int         num_batches_d  = matD->batch_count;
+    hipDataType type_d         = matD->type;
 
     int64_t m = num_rows_d;
     int64_t n = num_cols_d;
-    int64_t k = (opA == HIPBLAS_OP_N) ? num_cols_a : num_rows_a;
+    int64_t k = (opA == HIPBLASLT_OP_N) ? num_cols_a : num_rows_a;
 
     auto validArgs = validateMatmulArgs(handle,
                                         m,

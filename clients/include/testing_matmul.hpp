@@ -114,8 +114,8 @@ void testing_matmul_bad_arg(const Arguments& arg)
 
     const size_t safe_size = N * lda;
 
-    const hipblasOperation_t transA = HIPBLAS_OP_T;
-    const hipblasOperation_t transB = HIPBLAS_OP_N;
+    const hipblasLtOperation_t transA = HIPBLASLT_OP_T;
+    const hipblasLtOperation_t transB = HIPBLASLT_OP_N;
 
     // allocate memory on device
     device_vector<Ti> dA(safe_size / 2);
@@ -149,8 +149,8 @@ template <typename Ti,
           hipblaslt_batch_type btype = hipblaslt_batch_type::none>
 void testing_matmul(const Arguments& arg)
 {
-    hipblasOperation_t transA = char_to_hipblas_operation(arg.transA);
-    hipblasOperation_t transB = char_to_hipblas_operation(arg.transB);
+    hipblasLtOperation_t transA = char_to_hipblaslt_operation(arg.transA);
+    hipblasLtOperation_t transB = char_to_hipblaslt_operation(arg.transB);
 
     using Talpha = float;
 
@@ -172,13 +172,13 @@ void testing_matmul(const Arguments& arg)
     hipStream_t            stream;
     CHECK_HIP_ERROR(hipStreamCreate(&stream));
 
-    int64_t A_row = transA == HIPBLAS_OP_N ? M : K;
-    int64_t A_col = transA == HIPBLAS_OP_N ? K : M;
-    int64_t B_row = transB == HIPBLAS_OP_N ? K : N;
-    int64_t B_col = transB == HIPBLAS_OP_N ? N : K;
+    int64_t A_row = transA == HIPBLASLT_OP_N ? M : K;
+    int64_t A_col = transA == HIPBLASLT_OP_N ? K : M;
+    int64_t B_row = transB == HIPBLASLT_OP_N ? K : N;
+    int64_t B_col = transB == HIPBLASLT_OP_N ? N : K;
 
-    int64_t stride_1_a = transA == HIPBLAS_OP_N ? 1 : lda;
-    int64_t stride_2_a = transA == HIPBLAS_OP_N ? lda : 1;
+    int64_t stride_1_a = transA == HIPBLASLT_OP_N ? 1 : lda;
+    int64_t stride_2_a = transA == HIPBLASLT_OP_N ? lda : 1;
 
     constexpr bool do_batched  = (btype == hipblaslt_batch_type::batched);
     int            num_batches = (do_batched ? arg.batch_count : 1);
@@ -194,22 +194,22 @@ void testing_matmul(const Arguments& arg)
 
     if(do_batched)
     {
-        EXPECT_HIPBLAS_STATUS(
+        EXPECT_HIPBLASLT_STATUS(
             hipblasLtMatrixLayoutSetAttribute(
                 matA, HIPBLASLT_MATRIX_LAYOUT_BATCH_COUNT, &num_batches, sizeof(int)),
-            HIPBLAS_STATUS_SUCCESS);
-        EXPECT_HIPBLAS_STATUS(
+            HIPBLASLT_STATUS_SUCCESS);
+        EXPECT_HIPBLASLT_STATUS(
             hipblasLtMatrixLayoutSetAttribute(
                 matB, HIPBLASLT_MATRIX_LAYOUT_BATCH_COUNT, &num_batches, sizeof(int)),
-            HIPBLAS_STATUS_SUCCESS);
-        EXPECT_HIPBLAS_STATUS(
+            HIPBLASLT_STATUS_SUCCESS);
+        EXPECT_HIPBLASLT_STATUS(
             hipblasLtMatrixLayoutSetAttribute(
                 matC, HIPBLASLT_MATRIX_LAYOUT_BATCH_COUNT, &num_batches, sizeof(int)),
-            HIPBLAS_STATUS_SUCCESS);
-        EXPECT_HIPBLAS_STATUS(
+            HIPBLASLT_STATUS_SUCCESS);
+        EXPECT_HIPBLASLT_STATUS(
             hipblasLtMatrixLayoutSetAttribute(
                 matD, HIPBLASLT_MATRIX_LAYOUT_BATCH_COUNT, &num_batches, sizeof(int)),
-            HIPBLAS_STATUS_SUCCESS);
+            HIPBLASLT_STATUS_SUCCESS);
     }
 
     hipblaslt_local_matmul_descr matmul(transA, transB, arg.compute_type, arg.scale_type);
@@ -251,12 +251,12 @@ void testing_matmul(const Arguments& arg)
     size_t workspace_size = 1024;
 
     hipblaslt_local_preference pref;
-    EXPECT_HIPBLAS_STATUS(
+    EXPECT_HIPBLASLT_STATUS(
         hipblasLtMatmulPreferenceSetAttribute(pref,
                                               HIPBLASLT_MATMUL_PREF_MAX_WORKSPACE_BYTES,
                                               &workspace_size,
                                               sizeof(workspace_size)),
-        HIPBLAS_STATUS_SUCCESS);
+        HIPBLASLT_STATUS_SUCCESS);
 
     const size_t size_A = stride_a == 0 ? lda * A_col * num_batches : stride_a * num_batches;
 
@@ -369,10 +369,10 @@ void testing_matmul(const Arguments& arg)
     }
 
     if(epilogue_on)
-        EXPECT_HIPBLAS_STATUS(
+        EXPECT_HIPBLASLT_STATUS(
             hipblasLtMatmulDescSetAttribute(
                 matmul, HIPBLASLT_MATMUL_DESC_EPILOGUE, &epilogue, sizeof(epilogue)),
-            HIPBLAS_STATUS_SUCCESS);
+            HIPBLASLT_STATUS_SUCCESS);
 
     bool change_bias_type = false;
     if(arg.bias_vector)
@@ -382,51 +382,51 @@ void testing_matmul(const Arguments& arg)
         {
             bias_addr        = dBias_C;
             change_bias_type = true;
-            EXPECT_HIPBLAS_STATUS(
+            EXPECT_HIPBLASLT_STATUS(
                 hipblasLtMatmulDescSetAttribute(matmul,
                                                 HIPBLASLT_MATMUL_DESC_BIAS_DATA_TYPE,
                                                 &arg.bias_type,
-                                                sizeof(hipblasDatatype_t)),
-                HIPBLAS_STATUS_SUCCESS);
+                                                sizeof(hipDataType)),
+                HIPBLASLT_STATUS_SUCCESS);
         }
         else
         {
             bias_addr = dBias;
         }
 
-        EXPECT_HIPBLAS_STATUS(
+        EXPECT_HIPBLASLT_STATUS(
             hipblasLtMatmulDescSetAttribute(
                 matmul, HIPBLASLT_MATMUL_DESC_BIAS_POINTER, &bias_addr, sizeof(void*)),
-            HIPBLAS_STATUS_SUCCESS);
+            HIPBLASLT_STATUS_SUCCESS);
     }
     // Get Heuristic results
     hipblasLtMatmulHeuristicResult_t heuristicResult[3] = {0};
     int                              returnedAlgoCount  = 0;
-    EXPECT_HIPBLAS_STATUS(
+    EXPECT_HIPBLASLT_STATUS(
         (hipblasLtMatmulAlgoGetHeuristic(
             handle, matmul, matA, matB, matC, matD, pref, 3, heuristicResult, &returnedAlgoCount)),
-        HIPBLAS_STATUS_SUCCESS);
+        HIPBLASLT_STATUS_SUCCESS);
 
     if(arg.unit_check || arg.norm_check)
     {
         CHECK_HIP_ERROR(hipStreamSynchronize(stream));
-        EXPECT_HIPBLAS_STATUS(hipblasLtMatmul(handle,
-                                              matmul,
-                                              &h_alpha,
-                                              dA,
-                                              matA,
-                                              dB,
-                                              matB,
-                                              &h_beta,
-                                              dC,
-                                              matC,
-                                              dD,
-                                              matD,
-                                              &heuristicResult[0].algo,
-                                              dWorkspace,
-                                              workspace_size,
-                                              stream),
-                              HIPBLAS_STATUS_SUCCESS);
+        EXPECT_HIPBLASLT_STATUS(hipblasLtMatmul(handle,
+                                                matmul,
+                                                &h_alpha,
+                                                dA,
+                                                matA,
+                                                dB,
+                                                matB,
+                                                &h_beta,
+                                                dC,
+                                                matC,
+                                                dD,
+                                                matD,
+                                                &heuristicResult[0].algo,
+                                                dWorkspace,
+                                                workspace_size,
+                                                stream),
+                                HIPBLASLT_STATUS_SUCCESS);
         // now we can recycle gold matrix for reference purposes
         if(arg.timing)
         {
@@ -544,46 +544,46 @@ void testing_matmul(const Arguments& arg)
         int number_hot_calls  = arg.iters;
         for(int i = 0; i < number_cold_calls; i++)
         {
-            EXPECT_HIPBLAS_STATUS(hipblasLtMatmul(handle,
-                                                  matmul,
-                                                  &h_alpha,
-                                                  dA,
-                                                  matA,
-                                                  dB,
-                                                  matB,
-                                                  &h_beta,
-                                                  dC,
-                                                  matC,
-                                                  dD,
-                                                  matD,
-                                                  &heuristicResult[0].algo,
-                                                  dWorkspace,
-                                                  workspace_size,
-                                                  stream),
-                                  HIPBLAS_STATUS_SUCCESS);
+            EXPECT_HIPBLASLT_STATUS(hipblasLtMatmul(handle,
+                                                    matmul,
+                                                    &h_alpha,
+                                                    dA,
+                                                    matA,
+                                                    dB,
+                                                    matB,
+                                                    &h_beta,
+                                                    dC,
+                                                    matC,
+                                                    dD,
+                                                    matD,
+                                                    &heuristicResult[0].algo,
+                                                    dWorkspace,
+                                                    workspace_size,
+                                                    stream),
+                                    HIPBLASLT_STATUS_SUCCESS);
         }
 
         CHECK_HIP_ERROR(hipStreamSynchronize(stream));
         gpu_time_used = get_time_us_sync(stream); // in microseconds
         for(int i = 0; i < number_hot_calls; i++)
         {
-            EXPECT_HIPBLAS_STATUS(hipblasLtMatmul(handle,
-                                                  matmul,
-                                                  &h_alpha,
-                                                  dA,
-                                                  matA,
-                                                  dB,
-                                                  matB,
-                                                  &h_beta,
-                                                  dC,
-                                                  matC,
-                                                  dD,
-                                                  matD,
-                                                  &heuristicResult[0].algo,
-                                                  dWorkspace,
-                                                  workspace_size,
-                                                  stream),
-                                  HIPBLAS_STATUS_SUCCESS);
+            EXPECT_HIPBLASLT_STATUS(hipblasLtMatmul(handle,
+                                                    matmul,
+                                                    &h_alpha,
+                                                    dA,
+                                                    matA,
+                                                    dB,
+                                                    matB,
+                                                    &h_beta,
+                                                    dC,
+                                                    matC,
+                                                    dD,
+                                                    matD,
+                                                    &heuristicResult[0].algo,
+                                                    dWorkspace,
+                                                    workspace_size,
+                                                    stream),
+                                    HIPBLASLT_STATUS_SUCCESS);
         }
         CHECK_HIP_ERROR(hipStreamSynchronize(stream));
         gpu_time_used = get_time_us_sync(stream) - gpu_time_used;

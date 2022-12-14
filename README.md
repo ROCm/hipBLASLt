@@ -29,9 +29,6 @@ TBD
 * python3.7-venv or later
 * AMD [ROCm] 5.5 or later
 
-## Required ROCM library
-* hipBLAS
-
 ## Quickstart hipBLASLt build and install
 
 #### Install script

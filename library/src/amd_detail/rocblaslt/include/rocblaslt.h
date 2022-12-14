@@ -34,5 +34,6 @@
 
 #include "rocblaslt-auxiliary.h"
 #include "rocblaslt-functions.h"
+#include <hipblaslt/hipblaslt.h>
 
 #endif /* _ROCBLASLT_H_ */
