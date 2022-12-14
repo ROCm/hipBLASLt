@@ -2,7 +2,7 @@
 hipBLASLt is a library that provides general matrix-matrix operations.
 hipBLASLt is created using the HIP programming language and optimized for AMD's latest discrete GPUs.
 hipBLASLt provides flexible APIs to let users set attributes for solution selection.\
-hipBLASLt is an equivalent math library to CUDA’s cuBLASLt which is a lightweight library dedicated to GEneral Matrix-to-matrix Multiply (GEMM) operations with new flexible APIs.
+hipBLASLt is an equivalent math library to CUDA's cuBLASLt which is a lightweight library dedicated to GEneral Matrix-to-matrix Multiply (GEMM) operations with new flexible APIs.
 This library adds flexibility in matrix data layouts, input types, compute types, and also in choosing the algorithmic implementations and heuristics through parameter programmability.
 After a set of options for the intended GEMM operation are identified by the user, these options can be used repeatedly for different inputs.
 It is designed to be used from C and C++ code. The GEMM operation of hipBLASLt is performed by hipblasLtMatmul().\
