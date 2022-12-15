@@ -5,10 +5,12 @@ Introduction
 General Description
 ===================
 
-hipBLASLt is created using the HIP programming language and optimized for AMD's latest discrete GPUs.
-hipBLASLt is an equivalent math library to CUDA's cuBLASLt which is a lightweight library dedicated to GEneral Matrix-to-matrix Multiply (GEMM) operations with a new flexible API.
+hipBLASLt is a library that provides general matrix-matrix operations with a flexible API and extends funtionalities beyond traditional BLAS library.
+hipBLASLt is exposed APIs in HIP programming language with an underlying optimized generator as a backend kernel provider.
+
 This library adds flexibility in matrix data layouts, input types, compute types, and also in choosing the algorithmic implementations and heuristics through parameter programmability.
-After a set of options for the intended GEMM operation are identified by the user, these options can be used repeatedly for different inputs. It is designed to be used from C and C++ code.
+After a set of options for the intended GEMM operation are identified by the user, these options can be used repeatedly for different inputs.
+
 The GEMM operation of hipBLASLt is performed by :ref:`hipblasltmatmul`. The equation is listed here:
 
 .. math::
@@ -16,12 +18,9 @@ The GEMM operation of hipBLASLt is performed by :ref:`hipblasltmatmul`. The equa
  D = Activation(alpha \cdot op(A) \cdot op(B) + beta \cdot op(C) + bias)
 
 where :math:`op(A)/op(B)` refers to in-place operations such as transpose/non-transpose, and alpha, beta are scalars.
+Acitivation function supports Gelu, Relu.
 
 The code is open and hosted here: https://github.com/ROCmSoftwarePlatform/hipBLASLt
-
-hipBLASLt exports an interface that does not require the client to change, regardless of the chosen backend.
-hipBLASLt currently support rocBLASLt (core implementation of hipBLASLt) as backend. hipBLASLt will support cuBLASLt as backends in the coming release.
-
 
 hipBLASLt Logging
 =================
