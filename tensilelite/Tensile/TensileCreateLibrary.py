@@ -1380,6 +1380,10 @@ def TensileCreateLibrary():
 
       param("best-solution", True)
 
+  print1("# Check if generated files exists.")
+  for filePath in libMetadataPaths + sourceLibPaths + asmLibPaths:
+    if not os.path.exists(filePath):
+      printExit("File %s is missing.", filePath)
 
   print1("# Tensile Library Writer DONE")
   print1(HR)
