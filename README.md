@@ -1,17 +1,18 @@
 # hipBLASLt
-hipBLASLt is a library that provides general matrix-matrix operations.
-hipBLASLt is created using the HIP programming language and optimized for AMD's latest discrete GPUs.
-hipBLASLt provides flexible APIs to let users set attributes for solution selection.\
-hipBLASLt is an equivalent math library to CUDA's cuBLASLt which is a lightweight library dedicated to GEneral Matrix-to-matrix Multiply (GEMM) operations with new flexible APIs.
+hipBLASLt is a library that provides general matrix-matrix operations with a flexible API and extends funtionalties beyond traditonal BLAS library. 
+hipBLASLt is exposed APIs in HIP programming language with an underlying optimized generator as a backend kernel provider. 
+
 This library adds flexibility in matrix data layouts, input types, compute types, and also in choosing the algorithmic implementations and heuristics through parameter programmability.
 After a set of options for the intended GEMM operation are identified by the user, these options can be used repeatedly for different inputs.
-It is designed to be used from C and C++ code. The GEMM operation of hipBLASLt is performed by hipblasLtMatmul().\
-The equation is listed here:
+The GEMM operation of hipBLASLt is performed by hipblasLtMatmul API.
+
+The equation is as below:
 ```math
 D = Activation(alpha \cdot op(A) \cdot op(B) + beta \cdot op(C) + bias)
 ```
-Where op(A)/op(B) refers to in-place operations such as transpose/non-transpose, and alpha, beta are scalars.\
-Acitivation function support relu and gelu.\
+Where op(A)/op(B) refers to in-place operations such as transpose/non-transpose, and alpha, beta are scalars.
+Acitivation function supports Abs, Clippedrelu, Gelu, Leakyrelu, Relu, Sigmoid, Tanh.
+
 Here are data type supported list:
 | A | B | C | D | Compute(Scale) |
 | :---: | :---: | :---: | :---: | :---: |
@@ -19,8 +20,8 @@ Here are data type supported list:
 | fp16  | fp16  | fp16  | fp16  | fp32  |
 | bf16  | bf16  | bf16  | bf16  | fp32  |
 
-## Documentation (TBD)
-TBD
+## Documentation 
+Refer to doc folder 
 
 ## Requirements
 * Git
@@ -30,7 +31,7 @@ TBD
 * AMD [ROCm] 5.5 or later
 
 ## Required ROCM library
-* hipBLAS
+* hipBLAS (for the header file)
 
 ## Quickstart hipBLASLt build and install
 
