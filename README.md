@@ -1,6 +1,6 @@
 # hipBLASLt
-hipBLASLt is a library that provides general matrix-matrix operations with a flexible API and extends funtionalties beyond traditonal BLAS library. 
-hipBLASLt is exposed APIs in HIP programming language with an underlying optimized generator as a backend kernel provider. 
+hipBLASLt is a library that provides general matrix-matrix operations with a flexible API and extends funtionalities beyond traditional BLAS library.
+hipBLASLt is exposed APIs in HIP programming language with an underlying optimized generator as a backend kernel provider.
 
 This library adds flexibility in matrix data layouts, input types, compute types, and also in choosing the algorithmic implementations and heuristics through parameter programmability.
 After a set of options for the intended GEMM operation are identified by the user, these options can be used repeatedly for different inputs.
