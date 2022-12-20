@@ -1,6 +1,6 @@
 # Change Log for hipBLASLt
 
-## (Unreleased) hipBLASLt 0.1.0
+## hipBLASLt 0.1.0 for ROCm 5.5.0
 ### Added
 - Enable hipBLASLt APIs
 - Support gfx90a
