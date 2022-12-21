@@ -737,22 +737,6 @@ namespace Tensile
         return found->i;
     }
 
-    void ContractionProblem::addAZeroPad(const ZeroPad& zp)
-    {
-        m_boundIndices[toBoundsPos(zp.boundIndex)].aZeroPad           = zp;
-        m_boundIndices[toBoundsPos(zp.boundIndex)].aZeroPad.anchorPos = toAPos(zp.anchorIndex);
-        m_boundIndices[toBoundsPos(zp.boundIndex)].aZeroPad.boundPos  = toAPos(zp.boundIndex);
-        m_aZeroPads.push_back(m_boundIndices[toBoundsPos(zp.boundIndex)].aZeroPad);
-    }
-
-    void ContractionProblem::addBZeroPad(const ZeroPad& zp)
-    {
-        m_boundIndices[toBoundsPos(zp.boundIndex)].bZeroPad           = zp;
-        m_boundIndices[toBoundsPos(zp.boundIndex)].bZeroPad.anchorPos = toBPos(zp.anchorIndex);
-        m_boundIndices[toBoundsPos(zp.boundIndex)].bZeroPad.boundPos  = toBPos(zp.boundIndex);
-        m_bZeroPads.push_back(m_boundIndices[toBoundsPos(zp.boundIndex)].bZeroPad);
-    }
-
     void ContractionProblem::checkPersistentKernelEligibility(ContractionSolution const& solution,
                                                               Hardware const&            hardware)
     {
@@ -856,11 +840,6 @@ namespace Tensile
 
             m_maxProblemSize = std::max(m_maxProblemSize, m_boundSizes[i]);
         }
-
-        for(auto zp : m_aZeroPads)
-            m_boundIndices[toBoundsPos(zp.boundIndex)].aZeroPad = zp;
-        for(auto zp : m_bZeroPads)
-            m_boundIndices[toBoundsPos(zp.boundIndex)].bZeroPad = zp;
 
         getIndexNames(m_aNames, m_bNames, m_cNames, m_dNames, m_sumNames);
 

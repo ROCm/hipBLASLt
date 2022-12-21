@@ -142,8 +142,6 @@ namespace Tensile
             virtual std::shared_ptr<ContractionInputs>
                 prepareGPUInputs(ContractionProblem const& problem) = 0;
 
-            virtual std::shared_ptr<ContractionInputs> cpuConvInputs() const = 0;
-
             template <typename T>
             static inline T convertDoubleTo(double value);
 
@@ -513,7 +511,6 @@ namespace Tensile
             bool m_stridedBatched;
 
             bool m_cEqualsD;
-            bool m_convolutionVsContraction;
 
             bool m_useBias;
             bool m_useScaleD;

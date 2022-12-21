@@ -208,28 +208,10 @@ namespace Tensile
                     copyInputs(m_cpuInputs, m_cpuInputsPristine, m_cpuBadInputs, problem);
                 }
 
-                if(m_convolutionVsContraction)
-                {
-                    bool allocated = false;
-                    if(!m_cpuConvInputs)
-                    {
-                        allocated       = true;
-                        m_cpuConvInputs = allocNewCPUInputs();
-                    }
-
-                    if(allocated || m_curBoundsCheck == BoundsCheckMode::NaN)
-                        copyInputs(m_cpuConvInputs, m_cpuInputsPristine, m_cpuBadInputs, problem);
-                }
-
                 setBiasPtr(problem, &m_cpuInputs);
 
                 return m_cpuInputs;
             }
-
-            virtual std::shared_ptr<ContractionInputs> cpuConvInputs() const
-            {
-                return m_cpuConvInputs;
-            };
 
             template <typename T>
             void initGPUBatchedInput(T                          base,
@@ -1108,7 +1090,6 @@ namespace Tensile
              * all point to separately allocated buffers.
              */
 
-            std::shared_ptr<ManagedInputs> m_cpuConvInputs;
             std::shared_ptr<ManagedInputs> m_cpuInputsPristine; //< Untouched copies of the inputs
             std::shared_ptr<ManagedInputs>
                 m_cpuInputs; //< Inputs used for CPU reference calculations

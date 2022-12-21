@@ -101,8 +101,6 @@ namespace Tensile
             return kernelName;
         }
 
-        bool isSourceKernel() const;
-
         //! Estimates based on problem size, solution tile, and  machine hardware
         //! charz:
         struct StaticPerformanceModel

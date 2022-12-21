@@ -30,7 +30,6 @@
 
 #include <boost/program_options.hpp>
 
-#include <ConvolutionProblem.hpp>
 #include <Tensile/ContractionProblem.hpp>
 #include <Tensile/ContractionSolution.hpp>
 
@@ -123,8 +122,6 @@ namespace Tensile
             std::shared_ptr<DataInitialization> m_dataInit;
             std::shared_ptr<ContractionInputs>  m_referenceInputs;
 
-            ConvolutionProblem m_convolutionProblem;
-
             size_t                   m_cpuResultBufferSize = 0;
             std::shared_ptr<uint8_t> m_cpuResultBuffer;
 
@@ -144,14 +141,11 @@ namespace Tensile
             bool m_printTensorRef;
             bool m_printAny;
 
-            bool m_convolutionVsContraction;
-
             int m_numBenchmarkRuns = 0;
 
             bool   m_validatedSolution               = false;
             bool   m_errorInSolution                 = false;
             bool   m_error                           = false;
-            bool   m_errorInConvolutionVsContraction = false;
             size_t m_errorsReported                  = 0;
 
             bool validateSolution(std::shared_ptr<ContractionInputs> inputs);

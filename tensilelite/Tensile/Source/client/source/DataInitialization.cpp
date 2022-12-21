@@ -386,9 +386,6 @@ namespace Tensile
                 m_numRunsPerSolution = 2;
             }
 
-            if(args.count("convolution-vs-contraction"))
-                m_convolutionVsContraction = args["convolution-vs-contraction"].as<bool>();
-
             for(auto const& problem : problemFactory.problems())
             {
                 m_aMaxElements     = std::max(m_aMaxElements, problem.a().totalAllocatedElements());
