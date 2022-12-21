@@ -192,6 +192,8 @@ class StateValues:
   lastPostLoopSgpr: int                  = 0
   numSgprToLoad: int                     = 0 # For kernel args
   numStoreSgprToLoad: int                = 0 # For post-loop kernel args
+  numSgprAddressBias: int                = 0
+  BiasType: int                          = 0
 
   numReadPerVectorA: int                 = 0
   numReadPerVectorB: int                 = 0
@@ -3350,6 +3352,10 @@ class KernelWriter(metaclass=abc.ABCMeta):
     self.defineSgpr("OffsetA", self.states.a.numSgprOffset)
     self.defineSgpr("OffsetB", self.states.b.numSgprOffset)
 
+    if kernel["ProblemType"]["GroupedGemm"]:
+      self.defineSgpr("SmallMagicNumberDivWg0", 1)
+      self.defineSgpr("SmallMagicNumberDivWg01", 1)
+
     self.states.numSgprToLoad = 2 + 2 + numSgprAddressD + numSgprAddressC + numSgprAddressA + numSgprAddressB + numSgprAddressScaleD + numSgprAlpha + \
       (numSgprBeta if kernel["ProblemType"]["UseBeta"] else 0) + self.states.d.numSgprStrides + self.states.c.numSgprStrides + self.states.a.numSgprStrides + \
       self.states.b.numSgprStrides + self.states.numSgprSizesFree + self.states.numSgprSizesSum + \
@@ -3357,7 +3363,8 @@ class KernelWriter(metaclass=abc.ABCMeta):
       1 + \
       2 + \
       3 + \
-      self.states.d.numSgprOffset + self.states.c.numSgprOffset + self.states.a.numSgprOffset + self.states.b.numSgprOffset
+      self.states.d.numSgprOffset + self.states.c.numSgprOffset + self.states.a.numSgprOffset + self.states.b.numSgprOffset + \
+      (2 if kernel["ProblemType"]["GroupedGemm"] else 0)
     # Get kernel argument end here
     ###################################
 

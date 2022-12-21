@@ -104,16 +104,25 @@ namespace Tensile
                 }
             }
 
-            void report() const
+            void report()
             {
                 if(m_errors && m_printReport)
+                {
                     std::cout << "Found " << m_errors << " incorrect values in " << m_values
                               << " total values compared." << std::endl;
+                    m_failed = true;
+                }
+                m_errors = 0;
+                m_values = 0;
+                m_doPrint = true;
+                m_printed = 0;
             }
 
-            bool error() const
+            bool error()
             {
-                return m_errors != 0;
+                bool failed = m_failed;
+                m_failed = false;
+                return failed;
             }
 
         private:
@@ -124,6 +133,7 @@ namespace Tensile
             size_t m_printed     = 0;
             bool   m_doPrint     = false;
             bool   m_printReport = false;
+            bool   m_failed      = false;
         };
 
         template <typename T>

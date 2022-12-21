@@ -87,6 +87,13 @@ namespace Tensile
                                                              Hardware const&  hardware,
                                                              double* fitness = nullptr) const = 0;
 
+        virtual std::shared_ptr<MySolution> findBestSolution(std::vector<MyProblem> const& problems,
+                                                             Hardware const&  hardware,
+                                                             double* fitness = nullptr) const
+        {
+          return std::shared_ptr<MySolution>();
+        }
+
         /**
    * Returns all `Solution` objects that are capable of correctly solving this
    * `problem` on this `hardware`.
@@ -110,6 +117,12 @@ namespace Tensile
                                                             int              numSolutions) const
         {
             return SolutionVector<MySolution>();
+        }
+        virtual SolutionVector<MySolution> findTopSolutionsGroupedGemm(std::vector<MyProblem> const& problems,
+                                                                       Hardware               const& hardware,
+                                                                       int                           numSolutions) const
+        {
+          return SolutionVector<MySolution>();
         }
     };
 

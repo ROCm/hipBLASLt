@@ -128,5 +128,18 @@ namespace Tensile
                 = table->findTopMatch(problem, transform, numSolutions);
             return solutions;
         }
+
+        virtual SolutionVector<MySolution> findTopSolutionsGroupedGemm(std::vector<MyProblem> const& problems,
+                                                                       Hardware               const& hardware,
+                                                                       int                           numSolutions) const override
+        {
+            typename Table::Transform transform
+                = [&](Element library) -> std::shared_ptr<MySolution> {
+                return library->findBestSolution(problems, hardware);
+            };
+            SolutionVector<MySolution> solutions
+                = table->findTopMatch(problems[0], transform, numSolutions);
+            return solutions;
+        }
     };
 } // namespace Tensile

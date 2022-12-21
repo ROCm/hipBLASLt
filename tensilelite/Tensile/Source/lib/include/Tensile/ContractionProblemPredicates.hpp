@@ -1364,6 +1364,33 @@ namespace Tensile
                 }
             };
 
+            struct GroupedGemmEqual
+                : public Predicate_CRTP<GroupedGemmEqual, ContractionProblem>
+            {
+                enum
+                {
+                    HasIndex = false,
+                    HasValue = true
+                };
+                bool value;
+
+                GroupedGemmEqual() = default;
+                GroupedGemmEqual(bool value)
+                    : value(value)
+                {
+                }
+
+                static std::string Type()
+                {
+                    return "GroupedGemm";
+                }
+
+                virtual bool operator()(ContractionProblem const& problem) const override
+                {
+                    return problem.groupedGemm() == value;
+                }
+            };
+
             struct CUEfficiency : public Predicate_CRTP<CUEfficiency, ContractionProblem>
             {
                 enum

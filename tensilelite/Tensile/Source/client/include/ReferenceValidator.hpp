@@ -54,6 +54,7 @@ namespace Tensile
             virtual void postBenchmarkRun() override;
 
             virtual void preProblem(ContractionProblem const& problem) override;
+            virtual void preProblemGroupedGemm(std::vector<ContractionProblem> const& problems) override;
             virtual void postProblem() override;
 
             virtual void preSolution(ContractionSolution const& solution) override;
@@ -126,6 +127,8 @@ namespace Tensile
             std::shared_ptr<uint8_t> m_cpuResultBuffer;
 
             ContractionProblem m_problem;
+            std::vector<ContractionProblem> m_problems;
+            bool m_groupedGemm = false;
 
             bool m_enabled;
 

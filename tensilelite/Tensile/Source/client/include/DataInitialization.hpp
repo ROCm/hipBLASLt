@@ -506,9 +506,18 @@ namespace Tensile
             size_t m_scaleMaxElements;
             size_t m_maxBatch;
 
+            std::vector<size_t> m_aElementsGroupedGemm;
+            std::vector<size_t> m_bElementsGroupedGemm;
+            std::vector<size_t> m_cElementsGroupedGemm;
+            std::vector<size_t> m_dElementsGroupedGemm;
+            std::vector<size_t> m_biasElementsGroupedGemm;
+            std::vector<size_t> m_scaleElementsGroupedGemm;
+            std::vector<DataType> m_biasTypeGroupedGemm;
+
             size_t m_workspaceSize;
 
             bool m_stridedBatched;
+            bool m_groupedGemm;
 
             bool m_cEqualsD;
 

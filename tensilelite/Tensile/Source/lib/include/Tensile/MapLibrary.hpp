@@ -142,5 +142,17 @@ namespace Tensile
 
             return library->findTopSolutions(problem, hardware, numSolutions);
         }
+
+        virtual SolutionVector<MySolution> findTopSolutionsGroupedGemm(std::vector<MyProblem> const& problems,
+                                                                       Hardware               const& hardware,
+                                                                       int                           numSolutions) const override
+        {
+            auto library = lookup(problems[0], hardware);
+
+            if(library == nullptr)
+                return SolutionVector<MySolution>();
+
+            return library->findTopSolutionsGroupedGemm(problems, hardware, numSolutions);
+        }
     };
 } // namespace Tensile

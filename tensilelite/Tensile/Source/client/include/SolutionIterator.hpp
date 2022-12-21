@@ -114,6 +114,7 @@ namespace Tensile
             virtual bool                                 runCurrentSolution();
 
             virtual void preProblem(ContractionProblem const& problem) override;
+            virtual void preProblemGroupedGemm(std::vector<ContractionProblem> const& problems) override;
 
         protected:
             SolutionIterator(std::shared_ptr<MasterSolutionLibrary<ContractionProblem>> library,
@@ -125,6 +126,8 @@ namespace Tensile
             std::shared_ptr<MasterSolutionLibrary<ContractionProblem>> m_library;
             std::shared_ptr<Hardware>                                  m_hardware;
             ContractionProblem                                         m_problem;
+            std::vector<ContractionProblem>                            m_problems;
+            bool                                                       m_groupedGemm = false;
             bool                                                       m_printWinnerOnly;
         };
 
@@ -195,6 +198,7 @@ namespace Tensile
                                 bool printWinnerOnly);
 
             virtual void preProblem(ContractionProblem const& problem) override;
+            virtual void preProblemGroupedGemm(std::vector<ContractionProblem> const& problems) override;
             virtual void postProblem() override;
 
             virtual void preSolution(ContractionSolution const& solution) override;
