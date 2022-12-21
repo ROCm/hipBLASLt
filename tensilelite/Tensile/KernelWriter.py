@@ -83,6 +83,7 @@ class ABMatrixInfo(MatrixInfo):
   numSgprGlobalReadIncs: int     = -1
 
   #sparse
+  numVgprValuMetadataPerBlock: int       = -1
   numVgprValuMetadata: int               = -1
   startVgprValuMetadata: int             = -1
   startVgprGlobalReadOffsetMetadata: int = -1
@@ -1417,7 +1418,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
           module.add(self._wait(kernel, tensorParametersA, tensorParametersB, 1, 0, -1, "wait for local write"))
           module.add(self._syncThreads(kernel, "sync for local read after write"))
 
-        if not isNGLL:
+        if not isNGLL or (isNGLL and kernel["ExpandPointerSwap"]):
           # PAP would have GlobalRead and GlobalInc, but no localWrite
           # Get the perIterGlobalReadCode code for PAP (if PAP=On), else would be empty
           self.makeSchedule(kernel, tensorParametersA, tensorParametersB, localWriteEndIter, uDu, skipGlobalReadInc=False, lastLoop=NLLlast)
@@ -1592,6 +1593,9 @@ class KernelWriter(metaclass=abc.ABCMeta):
     if isNGLL:
       self.codes.perIterLocalWrite = self.codes.perIterLocalWriteCodeNGLL
       self.states.perIterLocalWriteCanSkip = [ 0 for i in range (kernel["LoopIters"]) ]
+      if kernel["ExpandPointerSwap"] == 1:
+        self.codes.globalReadA = StructuredModule() # empty
+        self.codes.globalReadB = StructuredModule() # empty
     #else:
     if not isNGLL:
       self.codes.dtlsM0UpdateA = StructuredModule()
@@ -2991,7 +2995,9 @@ class KernelWriter(metaclass=abc.ABCMeta):
     self.states.b.numVgprValu = self.states.b.numVgprValuPerBlock * valuBlocks
 
     if kernel["ProblemType"]["SparseA"]:
-      self.states.a.numVgprValuMetadata = kernel["MIWaveTileA"] * kernel["LoopIters"] * kernel["DepthULdsDivisor"] * (kernel["PrefetchGlobalRead"] + 1) #every 8bit need 1 register
+      self.states.a.numVgprValuMetadataPerBlock = kernel["MIWaveTileA"] * kernel["LoopIters"] * kernel["DepthULdsDivisor"] #every 8bit need 1 register
+      self.states.a.numVgprValuMetadata = self.states.a.numVgprValuMetadataPerBlock * (kernel["PrefetchGlobalRead"] + 1)
+
 
     ####################################
     # num vgprs: global -> local elements
@@ -3648,6 +3654,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
     tP["localReadSwapByteOffset"]  = 0
     tP["localWriteSwapByteOffset"] = 0
     tP["gpr"] = {}
+    tP["metadataWriteSwapByteOffset"] = 0
 
   ##############################################################################
   # Global Read Addresses: Tile Assignment A/B

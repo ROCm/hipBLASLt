@@ -718,6 +718,12 @@ def assignLWSchedIndexDefault(writer, kernel, numLocalWritesPerSched, localWrite
 def getReadsToWait(writer, kernel):
     readsToWait = len(list(writer.codes.localWriteA.items())) + len(list(writer.codes.localWriteB.items()))
     readsToWaitDTV = 0
+
+    if kernel["ProblemType"]["SparseA"] and kernel["PrefetchGlobalRead"] == 2:
+        # SparseA + PGR2 will have #numVgprValuMetadataPerBlock numbers of v_mov instructions
+        # insert in lw codes, which don't need to wait.
+        readsToWait -= writer.states.a.numVgprValuMetadataPerBlock
+
     # add waitcnt for DirectToVgpr. Delaying wait for DirectToVgpr global read
     if kernel["DirectToVgprA"] or kernel["DirectToVgprB"]:
         # DirectToVgprA case, actual A load is in writer.codes.globalReadB (due to swap).
@@ -821,6 +827,13 @@ def schedLocalWrite(writer, kernel, numLocalWriteModPerIter, numLocalWritesPerSc
 
     # should never run out of items to schedule
     assert not itemsLWToSched # should have scheduled everthing already
+
+    #For the sparseA case, GR and LW are not in paired.
+    #Hence, we must add all the remaining GRs into imod at the end.
+    while itemsGRToSchedLater:
+      itemGR = itemsGRToSchedLater[0]
+      imod.add(itemGR)
+      itemsGRToSchedLater.pop(0)
 
 ################################################################################
 ################################################################################

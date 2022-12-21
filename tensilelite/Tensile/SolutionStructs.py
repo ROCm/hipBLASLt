@@ -2077,7 +2077,8 @@ class Solution(collections.abc.Mapping):
       #if not (bufferLoad and state["PrefetchGlobalRead"] == 1):
       if not ((bufferLoad or state["DirectToVgprA"] or state["DirectToVgprB"]) and ( state["PrefetchGlobalRead"] == 1 \
               or (state["PrefetchGlobalRead"] > 1 and \
-                  (state["ProblemType"]["DataType"].isDouble() or state["ProblemType"]["DataType"].isDoubleComplex())))):
+                  (state["ProblemType"]["DataType"].isDouble() or state["ProblemType"]["DataType"].isDoubleComplex()))
+              or (state["ProblemType"]["SparseA"]))):
         state["ExpandPointerSwap"] = 0
       # EPS not supported with SplitLDS yet
       if state["DepthULdsDivisor"] > 1:
@@ -2849,9 +2850,6 @@ class Solution(collections.abc.Mapping):
 
     # SparseA problem
     if state["ProblemType"]["SparseA"]:
-      if state["PrefetchGlobalRead"] > 1:
-        reject(state, "Sparse A kernel does not support PGR2 yet.")
-        return
       if state["PrefetchGlobalRead"] and not state["ExpandPointerSwap"]:
         reject(state, "Sparse A kernel only support PGR with EPS=1.")
         return
