@@ -45,6 +45,7 @@ namespace Tensile
             , m_alphaType(DataType::Float)
             , m_betaType(DataType::Float)
             , m_stridedBatched(args["strided-batched"].as<bool>())
+            , m_groupedGemm(args["grouped-gemm"].as<bool>())
             , m_highPrecisionAccumulate(args["high-precision-accumulate"].as<bool>())
             , m_kernelLanguage(args["kernel-language"].as<KernelLanguage>())
             , m_performanceMetric(args["performance-metric"].as<PerformanceMetric>())
@@ -115,6 +116,8 @@ namespace Tensile
                 m_useBias = args["use-bias"].as<bool>();
             if(args.count("use-scaleD"))
                 m_useScaleD = args["use-scaleD"].as<bool>();
+            if(args.count("max-workspace-size"))
+                m_maxWorkspaceSize = args["max-workspace-size"].as<size_t>();
             m_problems = createProblems();
         }
 
@@ -184,6 +187,7 @@ namespace Tensile
                         rv.back().setAlphaType(m_alphaType);
                         rv.back().setBetaType(m_betaType);
                         rv.back().setStridedBatched(m_stridedBatched);
+                        rv.back().setGroupedGemm(m_groupedGemm);
                         rv.back().setHighPrecisionAccumulate(m_highPrecisionAccumulate);
                         rv.back().setUseBias(m_useBias);
                         rv.back().setUseScaleD(m_useScaleD);
@@ -193,6 +197,7 @@ namespace Tensile
                         rv.back().setArithmeticUnit(m_arithmeticUnit);
                         rv.back().setFp16AltImpl(m_fp16AltImpl);
                         rv.back().setActivationType(m_activationType);
+                        rv.back().setWorkspaceSize(m_maxWorkspaceSize);
                         if(k < m_biasTypeArgs.size())
                         {
                             rv.back().setBiasType(m_biasTypeArgs[k]);

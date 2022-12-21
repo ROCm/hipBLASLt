@@ -26,6 +26,8 @@
 
 #include <Tensile/ContractionSolution.hpp>
 
+#include <Tensile/hip/HipUtils.hpp>
+
 #include <Tensile/AMDGPU.hpp>
 #include <Tensile/ContractionProblem.hpp>
 #include <Tensile/Utils.hpp>
@@ -350,20 +352,17 @@ namespace Tensile
 
         rv.sharedMemBytes = 0;
 
-        if(!isSourceKernel())
-        {
-            uint64_t tensor2dSizeC = c.totalAllocatedElements();
-            uint64_t tensor2dSizeA = (sizeMapping.packBatchDims & 0x1)
-                                         ? a.totalAllocatedElements()
-                                         : problem.allocatedElementsNonBatchA();
-            uint64_t tensor2dSizeB = (sizeMapping.packBatchDims & 0x2)
-                                         ? b.totalAllocatedElements()
-                                         : problem.allocatedElementsNonBatchB();
+        uint64_t tensor2dSizeC = c.totalAllocatedElements();
+        uint64_t tensor2dSizeA = (sizeMapping.packBatchDims & 0x1)
+                                        ? a.totalAllocatedElements()
+                                        : problem.allocatedElementsNonBatchA();
+        uint64_t tensor2dSizeB = (sizeMapping.packBatchDims & 0x2)
+                                        ? b.totalAllocatedElements()
+                                        : problem.allocatedElementsNonBatchB();
 
-            rv.args.append<uint64_t>("tensor2dSizeC", tensor2dSizeC);
-            rv.args.append<uint64_t>("tensor2dSizeA", tensor2dSizeA);
-            rv.args.append<uint64_t>("tensor2dSizeB", tensor2dSizeB);
-        }
+        rv.args.append<uint64_t>("tensor2dSizeC", tensor2dSizeC);
+        rv.args.append<uint64_t>("tensor2dSizeA", tensor2dSizeA);
+        rv.args.append<uint64_t>("tensor2dSizeB", tensor2dSizeB);
 
         if(sizeMapping.globalAccumulation)
         {
@@ -451,138 +450,27 @@ namespace Tensile
             }
         }
 
-        if(sizeMapping.packSummationDims)
-            // boundIndices are ordered with unroll last.
-            // Magic numbers for all but first are needed to unpack other dims.
-            for(auto si = 1; si < problem.boundIndices().size(); si++)
-            {
-                auto numIter  = problem.boundSize(si);
-                bool isUnroll = si == problem.boundIndices().size() - 1;
-                if(isUnroll)
-                {
-                    numIter = numIter / sizeMapping.depthU / sizeMapping.globalSplitU
-                              * sizeMapping.depthU;
-                }
-                uint32_t magicShift;
-                rv.args.append<uint32_t>(
-                    concatenate_if<T_Debug>("magicNumberNumIter_", si),
-                    magicNumber(sizeMapping.magicDivAlg, numIter, &magicShift));
-                rv.args.append<uint32_t>(concatenate_if<T_Debug>("magicShiftNumIter_", si),
-                                         magicShift);
-
-                if(isUnroll and sizeMapping.globalSplitU > 1)
-                {
-                    // compute magic number for gsu remainder iterations:
-                    // Kernel will select whether to use above or remainder portion based on work-group assignment
-                    rv.args.append<uint32_t>(
-                        concatenate_if<T_Debug>("magicNumberNumIter_GsuRemainder"),
-                        magicNumber(
-                            sizeMapping.magicDivAlg, numIter + sizeMapping.depthU, &magicShift));
-                    rv.args.append<uint32_t>(
-                        concatenate_if<T_Debug>("magicShiftNumIter_GsuRemainder"), magicShift);
-                }
-            }
-
-        if(problem.freeIndicesA().size() > 1 || sizeMapping.packBatchDims & 0x1)
-        {
-            std::vector<size_t> packedIndices
-                = generatePackedIndicesA(problem, sizeMapping.packBatchDims);
-
-            // Pack in all non-summation indices, except don't need magic number for the
-            // last one
-            for(auto pi = packedIndices.begin(); pi != packedIndices.end() - 1; pi++)
-            {
-                auto     idx  = *pi;
-                auto     size = a.sizes()[idx];
-                uint32_t magicShift;
-                rv.args.append<uint32_t>(concatenate_if<T_Debug>("magicNumberSizeA_", idx),
-                                         magicNumber(sizeMapping.magicDivAlg, size, &magicShift));
-                rv.args.append<uint32_t>(concatenate_if<T_Debug>("magicShiftSizeA_", idx),
-                                         magicShift);
-            }
-        }
-        if(problem.freeIndicesB().size() > 1 || sizeMapping.packBatchDims & 0x2)
-        {
-            std::vector<size_t> packedIndices
-                = generatePackedIndicesB(problem, sizeMapping.packBatchDims);
-
-            // Pack in all non-summation indices, except don't need magic number for the
-            // last one
-            for(auto pi = packedIndices.begin(); pi != packedIndices.end() - 1; pi++)
-            {
-                auto     idx  = *pi;
-                auto     size = b.sizes()[idx];
-                uint32_t magicShift;
-                rv.args.append<uint32_t>(concatenate_if<T_Debug>("magicNumberSizeB_", idx),
-                                         magicNumber(sizeMapping.magicDivAlg, size, &magicShift));
-                rv.args.append<uint32_t>(concatenate_if<T_Debug>("magicShiftSizeB_", idx),
-                                         magicShift);
-            }
-        }
-
-        for(auto si : problem.boundIndices())
-        {
-            if(si.aZeroPad.valid())
-            {
-                rv.args.append<int32_t>(concatenate_if<T_Debug>("padStartA_", si.a),
-                                        si.aZeroPad.padStart);
-                rv.args.append<int32_t>(concatenate_if<T_Debug>("padEndA_", si.a),
-                                        si.aZeroPad.padEnd);
-            }
-            if(si.bZeroPad.valid())
-            {
-                rv.args.append<int32_t>(concatenate_if<T_Debug>("padStartB_", si.b),
-                                        si.bZeroPad.padStart);
-                rv.args.append<int32_t>(concatenate_if<T_Debug>("padEndB_", si.b),
-                                        si.bZeroPad.padEnd);
-            }
-        }
-
         rv.args.append<int32_t>("staggerUIter", staggerUIter(problem, inputs, hardware));
 
         rv.args.append<uint32_t>("problemNumGroupTiles0", problemNumGroupTiles0);
         rv.args.append<uint32_t>("problemNumGroupTiles1", problemNumGroupTiles1);
 
-        if(!isSourceKernel())
+        uint32_t numFullBlocks            = problemNumGroupTiles1;
+        uint32_t wgmRemainder1            = 0;
+        uint32_t magicNumberWgmRemainder1 = 0;
+
+        if(sizeMapping.workGroupMapping != 0)
         {
-            uint32_t numFullBlocks            = problemNumGroupTiles1;
-            uint32_t wgmRemainder1            = 0;
-            uint32_t magicNumberWgmRemainder1 = 0;
-
-            // conditional args, aligned with KernelWriterAssembly.py
-            if(sizeMapping.persistentKernel != 0)
-            {
-                uint32_t magicShift;
-                rv.args.append<uint32_t>("magicNumberProblemNumGroupTiles0",
-                                         magicNumber(2, problemNumGroupTiles0, &magicShift));
-                rv.args.append<uint32_t>("magicShiftProblemNumGroupTiles0", magicShift);
-                rv.args.append<uint32_t>("gridNumWorkGroups0", rv.numWorkGroups.x);
-            }
-
-            if(sizeMapping.persistentKernelAlongBatch)
-            {
-                uint32_t numGroupTiles0x1 = problemNumGroupTiles0 * problemNumGroupTiles1;
-                uint32_t magicShift;
-
-                rv.args.append<uint32_t>("problemNumGroupTiles2", problemNumGroupTiles2);
-                rv.args.append<uint32_t>("magicNumberProblemNumGroupTiles0By1",
-                                         magicNumber(2, numGroupTiles0x1, &magicShift));
-                rv.args.append<uint32_t>("magicShiftProblemNumGroupTiles0By1", magicShift);
-            }
-
-            if(sizeMapping.workGroupMapping != 0)
-            {
-                numFullBlocks = problemNumGroupTiles1 / sizeMapping.workGroupMapping;
-                wgmRemainder1 = problemNumGroupTiles1 % sizeMapping.workGroupMapping;
-                if(wgmRemainder1 == 0)
-                    wgmRemainder1 = sizeMapping.workGroupMapping;
-                magicNumberWgmRemainder1 = smallMagicNumber(wgmRemainder1);
-            }
-
-            rv.args.append<uint32_t>("numFullBlocks", numFullBlocks);
-            rv.args.append<uint32_t>("wgmRemainder1", wgmRemainder1);
-            rv.args.append<uint32_t>("magicNumberWgmRemainder1", magicNumberWgmRemainder1);
+            numFullBlocks = problemNumGroupTiles1 / sizeMapping.workGroupMapping;
+            wgmRemainder1 = problemNumGroupTiles1 % sizeMapping.workGroupMapping;
+            if(wgmRemainder1 == 0)
+                wgmRemainder1 = sizeMapping.workGroupMapping;
+            magicNumberWgmRemainder1 = smallMagicNumber(wgmRemainder1);
         }
+
+        rv.args.append<uint32_t>("numFullBlocks", numFullBlocks);
+        rv.args.append<uint32_t>("wgmRemainder1", wgmRemainder1);
+        rv.args.append<uint32_t>("magicNumberWgmRemainder1", magicNumberWgmRemainder1);
 
         rv.args.append<uint32_t>("offsetD", d.offset());
         rv.args.append<uint32_t>("offsetC", c.offset());
@@ -644,11 +532,268 @@ namespace Tensile
             }
         }
 
-        if(!isSourceKernel())
+        rv.codeObjectFile = codeObjectFilename.load();
+
+        return rv;
+    }
+
+    template <typename TypedInputs, bool T_Debug>
+    KernelInvocation
+        ContractionSolution::generateSingleCallGroupedGemm(std::vector<ContractionSolution::Problem> const& problems,
+                                                           TypedInputs const&                               inputs,
+                                                           Hardware const&                                  hardware) const
+    {
+        TENSILE_ASSERT_EXC(sizeMapping.workGroupMapping >= 0);
+        KernelInvocation rv;
+        rv.kernelName = kernelName;
+        rv.args = KernelArguments(T_Debug);
+        auto args = KernelArguments(T_Debug);
+        args.reserve(1024, 128);
+        std::vector<uint32_t> wg_table;
+        uint32_t wgLeft = 0;
+        uint32_t wgRight = 0;
+
+        rv.workGroupSize.x = sizeMapping.workGroupSize.x * sizeMapping.workGroupSize.y
+                            * sizeMapping.workGroupSize.z;
+        rv.workGroupSize.y = 1;
+        rv.workGroupSize.z = 1;
+
+        rv.numWorkItems.x = 0;
+        rv.numWorkItems.y = 1;
+        rv.numWorkItems.z = 1;
+
+        for(int idx = 0; idx < problems.size(); idx++)
         {
-            rv.args.append<uint32_t>("pad", 0);
+            auto problem = problems[idx];
+
+            rv.numWorkGroups.x = 1;
+            rv.numWorkGroups.y = 1;
+            rv.numWorkGroups.z = 1;
+
+            for(size_t i = 0; i < problem.freeIndicesA().size(); i++)
+            {
+                rv.numWorkGroups.x *= problem.freeSizeA(i);
+            }
+
+            for(size_t i = 0; i < problem.freeIndicesB().size(); i++)
+            {
+                rv.numWorkGroups.y *= problem.freeSizeB(i);
+            }
+
+            for(size_t i = 0; i < problem.batchIndices().size(); i++)
+            {
+                if(sizeMapping.packBatchDims & 0x1)
+                    rv.numWorkGroups.x *= problem.batchSize(i);
+                if(sizeMapping.packBatchDims & 0x2)
+                    rv.numWorkGroups.y *= problem.batchSize(i);
+                if(!sizeMapping.packBatchDims)
+                    rv.numWorkGroups.z *= problem.batchSize(i);
+            }
+
+            if(problem.transposeC01())
+                std::swap(rv.numWorkGroups.x, rv.numWorkGroups.y);
+
+            rv.numWorkGroups.x = CeilDivide(rv.numWorkGroups.x, sizeMapping.macroTile.x);
+            rv.numWorkGroups.y = CeilDivide(rv.numWorkGroups.y, sizeMapping.macroTile.y);
+
+            uint32_t problemNumGroupTiles0 = rv.numWorkGroups.x;
+            uint32_t problemNumGroupTiles1 = rv.numWorkGroups.y;
+
+            rv.numWorkItems.x += (rv.workGroupSize.x * rv.numWorkGroups.x *\
+                                  rv.workGroupSize.y * rv.numWorkGroups.y * sizeMapping.globalSplitU *\
+                                  rv.workGroupSize.y * rv.numWorkGroups.z);
+
+            wgRight = rv.numWorkItems.x / rv.workGroupSize.x / rv.workGroupSize.y / rv.workGroupSize.y;
+            wg_table.push_back(wgLeft);
+            wgLeft = wgRight;
+
+            rv.sharedMemBytes = 0;
+
+            TensorDescriptor const& a = problem.a();
+            TensorDescriptor const& b = problem.b();
+            TensorDescriptor const& c = problem.c();
+            TensorDescriptor const& d = problem.d();
+
+            uint64_t tensor2dSizeC = c.totalAllocatedElements();
+            uint64_t tensor2dSizeA = (sizeMapping.packBatchDims & 0x1)
+                                            ? a.totalAllocatedElements()
+                                            : problem.allocatedElementsNonBatchA();
+            uint64_t tensor2dSizeB = (sizeMapping.packBatchDims & 0x2)
+                                            ? b.totalAllocatedElements()
+                                            : problem.allocatedElementsNonBatchB();
+
+            args.append<uint64_t>("tensor2dSizeC", tensor2dSizeC);
+            args.append<uint64_t>("tensor2dSizeA", tensor2dSizeA);
+            args.append<uint64_t>("tensor2dSizeB", tensor2dSizeB);
+
+            if(sizeMapping.globalAccumulation)
+            {
+                args.append<void const*>("ws_d", inputs.ws);
+                args.append<void const*>("ws_c", inputs.ws);
+            }
+            else
+            {
+                args.append<typename TypedInputs::DType const*>("d", inputs.groupedD[idx]);
+                args.append<typename TypedInputs::CType const*>("c", inputs.groupedC[idx]);
+            }
+
+            args.append<typename TypedInputs::AType const*>("a", inputs.groupedA[idx]);
+            args.append<typename TypedInputs::BType const*>("b", inputs.groupedB[idx]);
+
+            args.append<typename TypedInputs::AlphaType>("alpha", inputs.groupedAlpha[idx]);
+            if(std::is_same<typename TypedInputs::AlphaType, Half>::value)
+                args.append<typename TypedInputs::AlphaType>("alpha_2", inputs.groupedAlpha[idx]);
+
+            if(problemType.useBeta)
+            {
+                args.append<typename TypedInputs::BetaType>("beta", inputs.groupedBeta[idx]);
+                if(std::is_same<typename TypedInputs::BetaType, Half>::value)
+                    args.append<typename TypedInputs::BetaType>("beta_2", inputs.groupedBeta[idx]);
+            }
+
+            if(problemType.useScaleD && (sizeMapping.globalSplitU == 1)) //kernel input data
+            {
+                args.append<typename TypedInputs::AlphaType const*>("scaleD", inputs.groupedScaleD[idx]);
+            }
+
+            size_t startStrideCD = problemType.useInitialStridesCD ? 0 : 1;
+            size_t startStrideAB = problemType.useInitialStridesAB ? 0 : 1;
+
+            if(sizeMapping.globalAccumulation)
+            {
+                size_t wsStride = startStrideCD ? d.sizes()[0] : 1;
+                for(size_t i = startStrideCD; i < d.dimensions(); i++)
+                {
+                    args.append<uint32_t>(concatenate_if<T_Debug>("strideW_D", i), wsStride);
+                    wsStride *= d.sizes()[i];
+                }
+
+                wsStride = startStrideCD ? d.sizes()[0] : 1;
+                for(size_t i = startStrideCD; i < c.dimensions(); i++)
+                {
+                    args.append<uint32_t>(concatenate_if<T_Debug>("strideW_C", i), wsStride);
+                    wsStride *= d.sizes()[i];
+                }
+            }
+            else
+            {
+                for(size_t i = startStrideCD; i < d.dimensions(); i++)
+                    args.append<uint32_t>(concatenate_if<T_Debug>("strideD", i), d.strides()[i]);
+
+                for(size_t i = startStrideCD; i < c.dimensions(); i++)
+                    args.append<uint32_t>(concatenate_if<T_Debug>("strideC", i), c.strides()[i]);
+            }
+
+            for(size_t i = startStrideAB; i < a.dimensions(); i++)
+                args.append<uint32_t>(concatenate_if<T_Debug>("strideA", i), a.strides()[i]);
+
+            for(size_t i = startStrideAB; i < b.dimensions(); i++)
+                args.append<uint32_t>(concatenate_if<T_Debug>("strideB", i), b.strides()[i]);
+
+            {
+                int idx = 0;
+                for(auto size : problem.problemSizes())
+                {
+                    args.append<uint32_t>(concatenate_if<T_Debug>("size_", idx), size);
+                    idx++;
+                }
+            }
+
+            args.append<int32_t>("staggerUIter", staggerUIter(problem, inputs, hardware));
+
+            args.append<uint32_t>("problemNumGroupTiles0", problemNumGroupTiles0);
+            args.append<uint32_t>("problemNumGroupTiles1", problemNumGroupTiles1);
+
+            uint32_t numFullBlocks            = problemNumGroupTiles1;
+            uint32_t wgmRemainder1            = 0;
+            uint32_t magicNumberWgmRemainder1 = 0;
+
+            if(sizeMapping.workGroupMapping != 0)
+            {
+                numFullBlocks = problemNumGroupTiles1 / sizeMapping.workGroupMapping;
+                wgmRemainder1 = problemNumGroupTiles1 % sizeMapping.workGroupMapping;
+                if(wgmRemainder1 == 0)
+                    wgmRemainder1 = sizeMapping.workGroupMapping;
+                magicNumberWgmRemainder1 = smallMagicNumber(wgmRemainder1);
+            }
+
+            args.append<uint32_t>("numFullBlocks", numFullBlocks);
+            args.append<uint32_t>("wgmRemainder1", wgmRemainder1);
+            args.append<uint32_t>("magicNumberWgmRemainder1", magicNumberWgmRemainder1);
+
+            args.append<uint32_t>("offsetD", d.offset());
+            args.append<uint32_t>("offsetC", c.offset());
+            args.append<uint32_t>("offsetA", a.offset());
+            args.append<uint32_t>("offsetB", b.offset());
+
+            args.append<uint32_t>("SmallMagicNumberDivWg0", smallMagicNumber(problemNumGroupTiles0));
+            args.append<uint32_t>("SmallMagicNumberDivWg01", smallMagicNumber(problemNumGroupTiles0 * problemNumGroupTiles1));
+
+            bool runActivation = false;
+            if((problem.activationType() != ActivationType::None) && sizeMapping.activationFused
+                && (sizeMapping.globalSplitU == 1))
+                runActivation = true;
+            if(problemType.useBias && (sizeMapping.globalSplitU == 1))
+            {
+                args.append<void const*>("bias", inputs.groupedBias[idx]);
+                if(runActivation)
+                {
+                    size_t dummyInsertSize = max(sizeof(typename TypedInputs::DType), 4) / 4 - 1;
+                    for(size_t i = 0; i < dummyInsertSize; i++)
+                    {
+                        args.append<uint32_t>("bias_type_dummy", static_cast<uint32_t>(0));
+                    }
+                }
+                args.append<uint32_t>("bias_type", static_cast<uint32_t>(problem.biasType()));
+            }
+
+            if(runActivation)
+            {
+                for(int i = 0; i < inputs.groupedActivationArgs[idx].size(); i++)
+                {
+                    std::string name = "activation_" + std::to_string(i);
+                    if(problem.activationHPA()) // Same as hpa type.
+                    {
+                        args.append<typename TypedInputs::BetaType>(
+                            name.c_str(),
+                            static_cast<typename TypedInputs::BetaType>(inputs.groupedActivationArgs[idx][i]));
+                    }
+                    else if(std::is_same<typename TypedInputs::DType, Half>::value)
+                    {
+                        args.append<typename TypedInputs::DType>((name + "_pk").c_str(),
+                                                                    inputs.groupedActivationArgs[idx][i]);
+                        args.append<typename TypedInputs::DType>(name.c_str(),
+                                                                    inputs.groupedActivationArgs[idx][i]);
+                    }
+                    else
+                    {
+                        if(std::is_same<typename TypedInputs::DType, BFloat16>::value)
+                        {
+                            // BFloat16 to float32.
+                            args.append<uint16_t>((name + "_append").c_str(),
+                                                    static_cast<uint16_t>(0));
+                        }
+                        args.append<typename TypedInputs::DType>(name.c_str(),
+                                                                    inputs.groupedActivationArgs[idx][i]);
+                    }
+                }
+                if(problem.activationType() == ActivationType::All)
+                {
+                    args.append<uint32_t>("activationType",
+                                            static_cast<uint32_t>(problem.activationEnumArg()));
+                }
+            }
         }
 
+        std::vector<uint8_t> h_args;
+        h_args.resize((args.size() * sizeof(uint8_t) + wg_table.size() * sizeof(uint32_t)) / sizeof(uint8_t));
+        std::memcpy(&h_args[0], wg_table.data(), wg_table.size() * sizeof(uint32_t));
+        std::memcpy(&h_args[wg_table.size() * sizeof(uint32_t) / sizeof(uint8_t)], args.data(), args.size() * sizeof(uint8_t));
+
+        rv.args.append<uint32_t>("numGemms", problems.size());
+        uint8_t* d_args = (uint8_t*)(inputs.groupedWs[0]);
+        HIP_CHECK_EXC(hipMemcpy(d_args, h_args.data(), h_args.size() * sizeof(uint8_t), hipMemcpyHostToDevice));
+        rv.args.append<uint8_t const*>("args", d_args);
         rv.codeObjectFile = codeObjectFilename.load();
 
         return rv;
@@ -760,7 +905,11 @@ namespace Tensile
         std::string name = concatenate(
             "C", problem.cNames(), "_", TypeInfo<typename TypedInputs::DType>::Abbrev());
 
-        if(!problemType.stridedBatched)
+        if(problemType.groupedGemm)
+        {
+            name += "_GG";
+        }
+        else if(!problemType.stridedBatched)
         {
             name += "_GB";
         }
@@ -915,7 +1064,11 @@ namespace Tensile
         std::string name = concatenate(
             "C", problem.cNames(), "_", TypeInfo<typename TypedInputs::DType>::Abbrev());
 
-        if(!problemType.stridedBatched)
+        if(problemType.groupedGemm)
+        {
+            name += "_GG";
+        }
+        else if(!problemType.stridedBatched)
         {
             name += "_GB";
         }
@@ -1166,6 +1319,97 @@ namespace Tensile
         return rv;
     }
 
+    template <typename TypedInputs>
+    std::vector<KernelInvocation> ContractionSolution::solveTypedGroupedGemm(std::vector<Problem> const&     problems,
+                                                                             TypedInputs const& inputs,
+                                                                             Hardware const&    hardware) const
+    {
+        bool debug = Debug::Instance().printKernelArguments() || this->kernelArgsLog;
+
+        // Check for nullptrs if alpha is non-zero.
+        for(int idx = 0; idx < problems.size(); idx++){
+            int boundSize = 1;
+            for(size_t i = 0; i < problems[idx].boundIndices().size(); i++)
+                boundSize *= problems[idx].boundSize(i);
+
+            if(((inputs.groupedAlpha[idx] != static_cast<typename TypedInputs::AlphaType>(0)) && (boundSize != 0))
+            && ((problems[idx].stridedBatched() && (inputs.groupedA[idx] == nullptr || inputs.groupedB[idx] == nullptr))))
+            {
+                std::string matrixID = inputs.groupedA[idx] == nullptr ? "A" : "B";
+                std::string msg      = std::string("Unsupported nullptr for ") + matrixID
+                                + std::string(" when (Alpha !=0) && (K != 0)\n");
+                throw std::runtime_error(msg.c_str());
+            }
+
+            // Check if alpha matches problem definition
+            if(problems[idx].alphaRestriction() != ScalarValue::Any
+            && problems[idx].alphaRestriction() != toScalarValueEnum(inputs.groupedAlpha[idx]))
+            {
+                std::stringstream inputValue;
+                inputValue << inputs.groupedAlpha[idx];
+                std::string msg = std::string("Alpha value ") + inputValue.str()
+                                + std::string(" doesn't match that set in problem: ")
+                                + ToString(problems[idx].alphaRestriction());
+                throw std::runtime_error(msg.c_str());
+            }
+
+            // Check if beta matches problem definition
+            if(problems[idx].betaRestriction() != ScalarValue::Any
+            && problems[idx].betaRestriction() != toScalarValueEnum(inputs.groupedBeta[idx]))
+            {
+                std::stringstream inputValue;
+                inputValue << inputs.groupedBeta[idx];
+                std::string msg = std::string("Beta value ") + inputValue.str()
+                                + std::string(" doesn't match that set in problem: ")
+                                + ToString(problems[idx].betaRestriction());
+                throw std::runtime_error(msg.c_str());
+            }
+
+            if(problems[idx].cEqualsD() && inputs.groupedC[idx] != inputs.groupedD[idx])
+                throw std::runtime_error(
+                    "ContractionProblem has cEqualsD set, but pointers for c and d are not equal");
+        }
+
+        std::vector<KernelInvocation> rv;
+
+        // if(sizeMapping.globalSplitU > 1 && sizeMapping.globalAccumulation != 2)
+        // {
+        //     if(debug)
+        //         rv.push_back(generateBetaOnlyCall<TypedInputs, true>(problems[0], inputs, hardware));
+        //     else
+        //         rv.push_back(generateBetaOnlyCall<TypedInputs, false>(problems[0], inputs, hardware));
+        // }
+
+        if(debug)
+            rv.push_back(generateSingleCallGroupedGemm<TypedInputs, true>(problems, inputs, hardware));
+        else
+            rv.push_back(generateSingleCallGroupedGemm<TypedInputs, false>(problems, inputs, hardware));
+
+        // if(sizeMapping.globalAccumulation)
+        // {
+        //     if(debug)
+        //         rv.push_back(
+        //             generateOutputConversionCall<TypedInputs, true>(problems[0], inputs, hardware));
+        //     else
+        //         rv.push_back(
+        //             generateOutputConversionCall<TypedInputs, false>(problems[0], inputs, hardware));
+        // }
+
+        // if(((sizeMapping.globalSplitU > 1 && (!sizeMapping.globalAccumulation))
+        //     || (!sizeMapping.activationFused))
+        //    && (problems[0].activationType() != ActivationType::None))
+        // {
+        //     if(debug)
+        //         rv.push_back(
+        //             generateActivationOnlyCall<TypedInputs, true>(problems[0], inputs, hardware));
+        //     else
+        //         rv.push_back(
+        //             generateActivationOnlyCall<TypedInputs, false>(problems[0], inputs, hardware));
+        // }
+
+        return rv;
+    }
+
     std::vector<KernelInvocation>
         ContractionSolution::solve(ContractionSolution::Problem const& problem,
                                    ContractionSolution::Inputs const&  inputs,
@@ -1283,6 +1527,131 @@ namespace Tensile
         {
             auto const& typedInputs = dynamic_cast<ContractionInputs_B_S_S const&>(inputs);
             return solveTyped(problem, typedInputs, hardware);
+        }
+#endif // TENSILE_USE_BF16
+
+        default:;
+        }
+        throw std::runtime_error("Data type not implemented.");
+    }
+
+    std::vector<KernelInvocation>
+        ContractionSolution::solveGroupedGemm(std::vector<ContractionSolution::Problem> const& problems,
+                                              ContractionSolution::Inputs const&  inputs,
+                                              Hardware const&                     hardware) const
+    {
+        if(Debug::Instance().printWinningKernelName())
+            std::cout << "Running kernel: " << this->KernelName() << std::endl;
+
+        // retreive alpha/beta type set via setAlpha/BetaType()
+        auto alphaType = problems[0].alphaType();
+        auto betaType  = problems[0].betaType();
+        auto biasType  = problems[0].biasType();
+
+        // TODO: Some gtests are passing the "problem" without actually defining the
+        // alpha/beta type (alphaType and betaType remain None).
+        // Until we fix those gtests, we need to keep this condition to adjust the missing
+        // alpha/beta data types.
+        if(alphaType == DataType::None)
+        {
+            alphaType
+                = problemType.aType == DataType::BFloat16 ? DataType::Float : problemType.dType;
+        }
+        if(betaType == DataType::None)
+        {
+            betaType = alphaType;
+        }
+        if(biasType == DataType::None)
+        {
+            biasType = problemType.dType;
+        }
+
+        auto contractionInputsTypeId = ContractionInputs::TypeId(problemType.aType,
+                                                                 problemType.bType,
+                                                                 problemType.cType,
+                                                                 problemType.dType,
+                                                                 alphaType,
+                                                                 betaType);
+
+        switch(contractionInputsTypeId)
+        {
+        case ContractionInputs_S_S_S::TypeId():
+        {
+            auto const& typedInputs = dynamic_cast<ContractionInputs_S_S_S const&>(inputs);
+            return solveTypedGroupedGemm(problems, typedInputs, hardware);
+        }
+        case ContractionInputs_D_D_D::TypeId():
+        {
+            auto const& typedInputs = dynamic_cast<ContractionInputs_D_D_D const&>(inputs);
+            return solveTypedGroupedGemm(problems, typedInputs, hardware);
+        }
+        case ContractionInputs_C_C_C::TypeId():
+        {
+            auto const& typedInputs = dynamic_cast<ContractionInputs_C_C_C const&>(inputs);
+            return solveTypedGroupedGemm(problems, typedInputs, hardware);
+        }
+        case ContractionInputs_Z_Z_Z::TypeId():
+        {
+            auto const& typedInputs = dynamic_cast<ContractionInputs_Z_Z_Z const&>(inputs);
+            return solveTypedGroupedGemm(problems, typedInputs, hardware);
+        }
+#ifdef TENSILE_USE_HALF
+        case ContractionInputs_H_H_H::TypeId():
+        {
+            auto const& typedInputs = dynamic_cast<ContractionInputs_H_H_H const&>(inputs);
+            return solveTypedGroupedGemm(problems, typedInputs, hardware);
+        }
+        case ContractionInputs_H_H_S::TypeId():
+        {
+            auto const& typedInputs = dynamic_cast<ContractionInputs_H_H_S const&>(inputs);
+            return solveTypedGroupedGemm(problems, typedInputs, hardware);
+        }
+        case ContractionInputs_H_S_S::TypeId():
+        {
+            auto const& typedInputs = dynamic_cast<ContractionInputs_H_S_S const&>(inputs);
+            return solveTypedGroupedGemm(problems, typedInputs, hardware);
+        }
+#endif // TENSILE_USE_HALF
+        case ContractionInputs_I8x4_I32_I32::TypeId():
+        {
+            auto const& typedInputs = dynamic_cast<ContractionInputs_I8x4_I32_I32 const&>(inputs);
+            return solveTypedGroupedGemm(problems, typedInputs, hardware);
+        }
+        case ContractionInputs_I32_I32_I32::TypeId():
+        {
+            auto const& typedInputs = dynamic_cast<ContractionInputs_I32_I32_I32 const&>(inputs);
+            return solveTypedGroupedGemm(problems, typedInputs, hardware);
+        }
+        case ContractionInputs_I8_I8_I32::TypeId():
+        {
+            auto const& typedInputs = dynamic_cast<ContractionInputs_I8_I8_I32 const&>(inputs);
+            return solveTypedGroupedGemm(problems, typedInputs, hardware);
+        }
+        case ContractionInputs_I8_I32_I32::TypeId():
+        {
+            auto const& typedInputs = dynamic_cast<ContractionInputs_I8_I32_I32 const&>(inputs);
+            return solveTypedGroupedGemm(problems, typedInputs, hardware);
+        }
+        case ContractionInputs_I8_I32_S::TypeId():
+        {
+            auto const& typedInputs = dynamic_cast<ContractionInputs_I8_I32_S const&>(inputs);
+            return solveTypedGroupedGemm(problems, typedInputs, hardware);
+        }
+        case ContractionInputs_I8_I8_S::TypeId():
+        {
+            auto const& typedInputs = dynamic_cast<ContractionInputs_I8_I8_S const&>(inputs);
+            return solveTypedGroupedGemm(problems, typedInputs, hardware);
+        }
+#ifdef TENSILE_USE_BF16
+        case ContractionInputs_B_B_S::TypeId():
+        {
+            auto const& typedInputs = dynamic_cast<ContractionInputs_B_B_S const&>(inputs);
+            return solveTypedGroupedGemm(problems, typedInputs, hardware);
+        }
+        case ContractionInputs_B_S_S::TypeId():
+        {
+            auto const& typedInputs = dynamic_cast<ContractionInputs_B_S_S const&>(inputs);
+            return solveTypedGroupedGemm(problems, typedInputs, hardware);
         }
 #endif // TENSILE_USE_BF16
 

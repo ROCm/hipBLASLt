@@ -550,6 +550,16 @@ namespace Tensile
             return m_stridedBatched;
         }
 
+        void setGroupedGemm(bool value)
+        {
+            m_groupedGemm = value;
+        }
+
+        bool groupedGemm() const
+        {
+            return m_groupedGemm;
+        }
+
         void setHighPrecisionAccumulate(bool value)
         {
             m_highPrecisionAccumulate = value;
@@ -803,6 +813,7 @@ namespace Tensile
         bool              m_transB;
         bool              m_cEqualsD                = false;
         bool              m_stridedBatched          = true;
+        bool              m_groupedGemm             = false;
         bool              m_highPrecisionAccumulate = false;
         bool              m_deterministicMode       = false;
         bool              m_eligibleForPK           = true;
@@ -951,6 +962,21 @@ namespace Tensile
         Alpha const*             scaleD = nullptr;
 
         std::vector<D> activationArgs;
+
+        std::vector<A const*> groupedA;
+        std::vector<B const*> groupedB;
+        std::vector<C const*> groupedC;
+        std::vector<D*>       groupedD;
+
+        std::vector<Alpha> groupedAlpha;
+        std::vector<Beta>  groupedBeta ;
+
+        std::vector<void*> groupedWs;
+
+        std::vector<void const*> groupedBias;
+        std::vector<Alpha const*> groupedScaleD;
+
+        std::vector<std::vector<D>> groupedActivationArgs;
 
         constexpr static uint32_t TypeId()
         {

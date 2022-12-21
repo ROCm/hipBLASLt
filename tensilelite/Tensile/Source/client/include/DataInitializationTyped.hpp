@@ -169,6 +169,63 @@ namespace Tensile
                 return prepareGPUInputsTyped(problem);
             }
 
+            void setGroupedGemm(std::shared_ptr<ManagedInputs>* inputs)
+            {
+                auto aBuffer = inputs->get()->a;
+                auto bBuffer = inputs->get()->b;
+                auto cBuffer = inputs->get()->c;
+                auto dBuffer = inputs->get()->d;
+                auto biasBuffer = inputs->get()->bias;
+                auto scaleDBuffer = inputs->get()->scaleD;
+                size_t gemmOffsetBias[sizeof(DataType)/4] = {0};
+                auto wsBuffer = inputs->get()->ws;
+                auto alpha = inputs->get()->alpha;
+                auto beta = inputs->get()->beta;
+                auto activationArgs = inputs->get()->activationArgs;
+                for(int idx = 0; idx < m_aElementsGroupedGemm.size(); idx++)
+                {
+                    inputs->get()->groupedA.push_back(aBuffer);
+                    inputs->get()->groupedB.push_back(bBuffer);
+                    inputs->get()->groupedC.push_back(cBuffer);
+                    inputs->get()->groupedD.push_back(dBuffer);
+
+                    if(m_biasInit != InitMode::Zero)
+                    {
+                        switch(m_biasTypeGroupedGemm[idx])
+                        {
+                            case DataType::Float:
+                                biasBuffer = (float*)(inputs->get()->biasList[(int)m_biasTypeGroupedGemm[idx]])\
+                                              + gemmOffsetBias[(int)m_biasTypeGroupedGemm[idx]];
+                                break;
+                            case DataType::Half:
+                                biasBuffer = (short*)inputs->get()->biasList[(int)m_biasTypeGroupedGemm[idx]]\
+                                              + gemmOffsetBias[(int)m_biasTypeGroupedGemm[idx]];
+                                break;
+                            case DataType::BFloat16:
+                                biasBuffer = (short*)inputs->get()->biasList[(int)m_biasTypeGroupedGemm[idx]]\
+                                              + gemmOffsetBias[(int)m_biasTypeGroupedGemm[idx]];
+                                break;
+                            default:
+                                break;
+                        }
+                    }
+
+                    inputs->get()->groupedBias.push_back(biasBuffer);
+                    inputs->get()->groupedScaleD.push_back(scaleDBuffer);
+                    inputs->get()->groupedWs.push_back(wsBuffer);
+                    inputs->get()->groupedAlpha.push_back(alpha);
+                    inputs->get()->groupedBeta.push_back(beta);
+                    inputs->get()->groupedActivationArgs.push_back(activationArgs);
+
+                    aBuffer += m_aElementsGroupedGemm[idx];
+                    bBuffer += m_bElementsGroupedGemm[idx];
+                    cBuffer += m_cElementsGroupedGemm[idx];
+                    dBuffer += m_dElementsGroupedGemm[idx];
+                    gemmOffsetBias[(int)m_biasTypeGroupedGemm[idx]] += m_biasElementsGroupedGemm[idx];
+                    scaleDBuffer += m_scaleElementsGroupedGemm[idx];
+                }
+            }
+
             void setBiasPtr(ContractionProblem const&       problem,
                             std::shared_ptr<ManagedInputs>* inputs)
             {
@@ -209,6 +266,8 @@ namespace Tensile
                 }
 
                 setBiasPtr(problem, &m_cpuInputs);
+
+                setGroupedGemm(&m_cpuInputs);
 
                 return m_cpuInputs;
             }
@@ -362,6 +421,8 @@ namespace Tensile
 
                 setBiasPtr(problem, &m_gpuInputs);
 
+                setGroupedGemm(&m_gpuInputs);
+
                 return m_gpuInputs;
             }
 
@@ -426,7 +487,7 @@ namespace Tensile
                     b = std::shared_ptr<BType>(
                         (BType*)std::malloc(TypeInfo<BType>::ElementSize * m_bMaxElements),
                         std::free);
-                    if(a == nullptr)
+                    if(b == nullptr)
                         throw std::runtime_error("out of host memory allocating b");
                 }
 

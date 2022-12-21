@@ -110,6 +110,8 @@ namespace Tensile
                                         rhs.workspaceSize(),
                                         lhs.stridedBatched(),
                                         rhs.stridedBatched(),
+                                        lhs.groupedGemm(),
+                                        rhs.groupedGemm(),
                                         lhs.performanceMetric(),
                                         rhs.performanceMetric(),
                                         lhs.fp16AltImpl(),
@@ -144,12 +146,45 @@ namespace std
                                          problem.arithmeticUnit(),
                                          problem.workspaceSize(),
                                          problem.stridedBatched(),
+                                         problem.groupedGemm(),
                                          problem.performanceMetric(),
                                          problem.fp16AltImpl(),
                                          problem.activationType(),
                                          problem.activationHPA(),
                                          problem.useBias(),
                                          problem.useScaleD());
+        }
+    };
+
+    template <>
+    struct hash<std::vector<Tensile::ContractionProblem>>
+    {
+        inline size_t operator()(std::vector<Tensile::ContractionProblem> const& problems) const
+        {
+            size_t hash = 0;
+            for( int idx = 0; idx < problems.size(); idx++)
+            {
+                auto problem = problems[idx];
+                hash += Tensile::hash_combine(problem.operationIdentifier(),
+                                              problem.a(),
+                                              problem.b(),
+                                              problem.c(),
+                                              problem.d(),
+                                              problem.highPrecisionAccumulate(),
+                                              problem.kernelLanguage(),
+                                              problem.deterministicMode(),
+                                              problem.arithmeticUnit(),
+                                              problem.workspaceSize(),
+                                              problem.stridedBatched(),
+                                              problem.groupedGemm(),
+                                              problem.performanceMetric(),
+                                              problem.fp16AltImpl(),
+                                              problem.activationType(),
+                                              problem.activationHPA(),
+                                              problem.useBias(),
+                                              problem.useScaleD());
+            }
+            return hash;
         }
     };
 

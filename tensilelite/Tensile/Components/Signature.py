@@ -141,8 +141,6 @@ class SignatureCOV3(Signature):
             if kernel["ProblemType"]["ActivationType"] == 'all':
                 signature.addArg(       "activationType", SVK.SIG_VALUE,               "u32")
 
-        signature.addArg(                      "padding", SVK.SIG_VALUE,              "u32")
-
         self.addOptConfigComment(signature,
                                 tt=[kernel["ThreadTile0"], kernel["ThreadTile1"]],
                                 sg=[kernel["SubGroup0"], kernel["SubGroup1"]],

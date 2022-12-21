@@ -150,8 +150,8 @@ globalParameters["DataInitTypeC"]  = 3
 globalParameters["DataInitTypeD"]  = 0
 globalParameters["DataInitTypeAlpha"] = 2
 globalParameters["DataInitTypeBeta"] = 2
-globalParameters["DataInitTypeBias"] = 1
-globalParameters["DataInitTypeScaleD"] = 1
+globalParameters["DataInitTypeBias"] = 3
+globalParameters["DataInitTypeScaleD"] = 3
 globalParameters["DataInitValueActivationArgs"] = [2.0, 2.0]
 globalParameters["CEqualD"] = False               # Set to true if testing for the case where the pointer to C is the same as D.
 globalParameters["BufferOffsetA"] = 0             # data offset of buffer A
@@ -1057,6 +1057,7 @@ defaultProblemType = {
     "TransposeB":               True,
     "Batched":                  False,            # add batching dimension
     "StridedBatched":           True,             # use to select general batch or strided batch
+    "GroupedGemm":              False,             # use to select general batch or strided batch
 
     # for OperationType == TensorContraction
     # - Indices < NumIndicesC are Free or Batch indices and appear in C and D

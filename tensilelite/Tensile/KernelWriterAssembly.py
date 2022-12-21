@@ -911,6 +911,22 @@ class KernelWriterAssembly(KernelWriter):
     self.defineVariableSgprs(kernel)
     module.add(self.macroAndSet(kernel, tPA, tPB))
 
+    runActivation = True if ((kernel["ProblemType"]["ActivationType"] != 'none') and (kernel["GlobalSplitU"] == 1) \
+        and kernel["ActivationFused"]) else False
+    storeSgprLoad = 0
+    if kernel["ProblemType"]["UseBias"] and (kernel["GlobalSplitU"] == 1):
+      self.states.numSgprAddressBias = 2 # 64-bit
+      if runActivation:
+        self.states.BiasType = max(1, kernel["ProblemType"]["DestDataType"].numRegisters())
+      else:
+        self.states.BiasType = 1
+      storeSgprLoad += self.states.numSgprAddressBias + self.states.BiasType
+    if runActivation:
+      if kernel["ProblemType"]["ActivationType"] == 'all':
+        self.states.numActivationTypeArgSize = 1
+      storeSgprLoad += self.states.numActivationTypeArgSize + self.states.numactivationArgTotalSize
+    self.states.numStoreSgprToLoad = storeSgprLoad
+
     module.addComment2("Allocate Resources")
     if kernel["StorePriorityOpt"]:
       module.add(SSetPrior(prior=3, comment="optimization store"))
@@ -940,31 +956,108 @@ class KernelWriterAssembly(KernelWriter):
 
       ########################################
       # load kernel args
-      module.addComment1("Load Kernel Args")
+      moduleArgs = Module("load arguments")
       self.kernArgOffset = 0
       self.argLoader = ArgumentLoader()
+      moduleArgs.addComment1("Load Kernel Args")
       if globalParameters["DebugKernel"]:
-        module.add(self.argLoader.loadSingleKernArg("AddressDbg", "KernArgAddress"))
-        module.add(self.argLoader.loadSingleKernArg("AddressDbg+1", "KernArgAddress"))
+        moduleArgs.add(self.argLoader.loadKernArg("AddressDbg", "KernArgAddress", dword=2))
 
-      self.argLoader.loadSingleKernArg("Tensor2dSizeC+0", "KernArgAddress", False)
-      self.argLoader.loadSingleKernArg("Tensor2dSizeC+1", "KernArgAddress", False)
+      self.argLoader.loadKernArg("Tensor2dSizeC", "KernArgAddress", dword=2, writeSgpr=False)
 
       load = self.states.numSgprToLoad
       sgprStart = self.sgprs["Tensor2dSizeA"]
-      module.addModuleAsFlatItems(self.argLoader.loadAllKernArg(sgprStart, "KernArgAddress", load))
+      moduleArgs.addModuleAsFlatItems(self.argLoader.loadAllKernArg(sgprStart, "KernArgAddress", load))
       if kernel.enabledSetPrioSplitLDS:
-        module.add(SSetPrior(prior=1, comment="prioritize init code so as to issue load sooner"))
-      module.add(SWaitCnt(lgkmcnt=0, comment="wait for %u bytes of kern args" % self.argLoader.getOffset() ))
+        moduleArgs.add(SSetPrior(prior=1, comment="prioritize init code so as to issue load sooner"))
+      moduleArgs.add(SWaitCnt(lgkmcnt=0, comment="wait for %u bytes of kern args" % self.argLoader.getOffset()))
 
       if not kernel["ProblemType"]["StridedBatched"]:
         with self.allocTmpSgpr(self.states.laneSGPRCount) as tmpSgpr:
-          module.add(self.loadBatchedAddress(kernel, "WorkGroup2", tmpSgpr))
-        module.add(SWaitCnt(lgkmcnt=0, comment="wait global buffer address ready"))
+          moduleArgs.add(self.loadBatchedAddress(kernel, "WorkGroup2", tmpSgpr))
+        moduleArgs.add(SWaitCnt(lgkmcnt=0, comment="wait global buffer address ready"))
+
+      if kernel["ProblemType"]["GroupedGemm"]:
+        tmpSgprGemmIdxMiddle = 7
+        tmpSgprGemmIdxLeft = 8
+        tmpSgprGemmIdxRight = 9
+
+        tmpSgpr0 = 10
+        tmpSgpr1 = 11
+
+        tmpSgprTargetPlus1 = 10
+        tmpSgprWgMiddle = 12
+        tmpSgprWgLeft = 13
+
+        tmpSgprNumGemm = 14
+
+        module.addComment1("Grouped Gemm: Load num of Gemms")
+        module.add(self.argLoader.loadKernArg(tmpSgprNumGemm, "KernArgAddress", hex(0), dword=1))
+        module.addComment1("Grouped Gemm: Load address of kernel arguments")
+        module.add(self.argLoader.loadKernArg("KernArgAddress", "KernArgAddress", hex(4), dword=2))
+        module.add(SWaitCnt(lgkmcnt=0))
+
+        module.addComment1("Grouped Gemm: binary search gemmIdx by workgroup table")
+        module.add(SMovB32(dst=sgpr(tmpSgprGemmIdxLeft), src=0))
+        module.add(SMovB32(dst=sgpr(tmpSgprGemmIdxRight), src=sgpr(tmpSgprNumGemm)))
+        module.add(SAddU32(dst=sgpr(tmpSgprTargetPlus1), src0=sgpr("WorkGroup0"), src1=hex(1)))
+        label_findGemm = Label("FIND_GEMM", "")
+        module.add(label_findGemm)
+        module.add(SAddU32(dst=sgpr(tmpSgprGemmIdxMiddle), src0=sgpr(tmpSgprGemmIdxLeft), src1=sgpr(tmpSgprGemmIdxRight)))
+        module.add(SLShiftRightB32(dst=sgpr(tmpSgprGemmIdxMiddle), src=sgpr(tmpSgprGemmIdxMiddle), shiftHex=log2(2)))
+        module.add(SLShiftLeftB32(dst=sgpr(tmpSgpr1), src=sgpr(tmpSgprGemmIdxMiddle), shiftHex=log2(4)))
+        module.add(self.argLoader.loadKernArg(tmpSgprWgMiddle, "KernArgAddress", sgpr(tmpSgpr1), dword=1))
+        module.add(SWaitCnt(lgkmcnt=0))
+        module.add(SCmpLtI32(src0=sgpr(tmpSgprWgMiddle), src1=sgpr(tmpSgprTargetPlus1)))
+        module.add(SCSelectB32(dst=sgpr(tmpSgprWgLeft),       src0=sgpr(tmpSgprWgMiddle),      src1=sgpr(tmpSgprWgLeft)))
+        module.add(SCSelectB32(dst=sgpr(tmpSgprGemmIdxRight), src0=sgpr(tmpSgprGemmIdxRight),  src1=sgpr(tmpSgprGemmIdxMiddle)))
+        module.add(SCSelectB32(dst=sgpr(tmpSgpr1),            src0=sgpr(tmpSgprGemmIdxMiddle), src1=sgpr(tmpSgprGemmIdxLeft)))
+        module.add(SAddCU32(dst=sgpr(tmpSgprGemmIdxLeft), src0=sgpr(tmpSgpr1), src1=hex(0)))
+        module.add(SCmpLtU32(src0=sgpr(tmpSgprGemmIdxLeft), src1=sgpr(tmpSgprGemmIdxRight)))
+        module.add(SCBranchSCC1(labelName=label_findGemm.getLabelName()))
+        module.add(SSubU32(dst=sgpr(tmpSgprGemmIdxLeft), src0=sgpr(tmpSgprGemmIdxLeft), src1=hex(1)))
+
+        module.addComment1("Grouped Gemm: offset argument address to gemm")
+        module.addComment0("Grouped Gemm: offset address from wg_table_start to args_start")
+        module.add(SLShiftLeft2AddU32(dst=sgpr("KernArgAddress"), src0=sgpr(tmpSgprNumGemm), src1=sgpr("KernArgAddress")))
+        module.add(SAddCU32(dst=sgpr("KernArgAddress+1"), src0=sgpr("KernArgAddress+1"), src1=hex(0)))
+        module.addComment0("Grouped Gemm: offset address from args_start to gemm_start")
+        module.add(SMulI32(dst=sgpr(tmpSgprGemmIdxLeft), src0=sgpr(tmpSgprGemmIdxLeft),\
+                           src1=(self.argLoader.getOffset() + (storeSgprLoad * 4))))
+        module.add(SAddU32(dst=sgpr("KernArgAddress"), src0=sgpr("KernArgAddress"), src1=sgpr(tmpSgprGemmIdxLeft)))
+        module.add(SAddCU32(dst=sgpr("KernArgAddress+1"), src0=sgpr("KernArgAddress+1"), src1=hex(0)))
+
+        module.add(moduleArgs)
+
+        module.addComment1("Grouped Gemm: remap wg from 1D(numWG012) to 3D(wg2,wg1,wg0)")
+        module.addComment0("numWG012 = hw_wg - accu_wg")
+        module.add(SSubU32(dst=sgpr("WorkGroup0"), src0=sgpr("WorkGroup0"), src1=sgpr(tmpSgprWgLeft)))
+        module.addComment0("wg2 = numWG012 * smallMagicNumber(1/(numWG0*numWG1))")
+        module.add(self.sMagicDivWrapper(dest=tmpSgpr0, dividend=sgpr("WorkGroup0"), \
+                   magicNumber=sgpr("SmallMagicNumberDivWg01"), magicShift=31))
+        module.add(SMovB32(dst=sgpr("WorkGroup2"), src=sgpr(tmpSgpr0)))
+        module.addComment0("numWG01 = numWG012 - wg2 * numWG0 * numWG1")
+        module.add(SMulI32(dst=sgpr(tmpSgpr0), src0=sgpr("WorkGroup2"), src1=sgpr("NumWorkGroups0")))
+        module.add(SMulI32(dst=sgpr(tmpSgpr0), src0=sgpr(tmpSgpr0), src1=sgpr("NumWorkGroups1")))
+        module.add(SSubU32(dst=sgpr("WorkGroup0"), src0=sgpr("WorkGroup0"), src1=sgpr(tmpSgpr0)))
+        module.addComment0("wg1 = numWG01 * smallMagicNumber(1/numWG0)")
+        module.add(self.sMagicDivWrapper(dest=tmpSgpr0, dividend=sgpr("WorkGroup0"), \
+                   magicNumber=sgpr("SmallMagicNumberDivWg0"), magicShift=31))
+        module.add(SMovB32(dst=sgpr("WorkGroup1"), src=sgpr(tmpSgpr0)))
+        module.addComment0("wg0 = numWG01 - wg1 * numWG0")
+        module.add(SMulI32(dst=sgpr(tmpSgpr0), src0=sgpr("WorkGroup1"), src1=sgpr("NumWorkGroups0")))
+        module.add(SSubU32(dst=sgpr("WorkGroup0"), src0=sgpr("WorkGroup0"), src1=sgpr(tmpSgpr0)))
+
+        module.addSpaceLine()
+        module.add(self.undefineSgpr("SmallMagicNumberDivWg0"))
+        module.add(self.undefineSgpr("SmallMagicNumberDivWg01"))
+      else:
+        module.add(moduleArgs)
     else:
       module.add(ValueIf(0))
 
     # add offset to buffer
+    module.addComment1("add offset to buffer")
     def addOffset2Buffer(imod, mat, value):
       imod.add(SLShiftLeftB32(dst=sgpr("Offset%s"%mat), src=sgpr("Offset%s"%mat), shiftHex=hex(value), comment="elements offset to bytes offset"))
       imod.add(SAddU32(dst=sgpr("Address%s+0"%mat), src0=sgpr("Address%s+0"%mat), src1=sgpr("Offset%s"%mat), comment="add offset to buffer address"))
@@ -3207,32 +3300,19 @@ class KernelWriterAssembly(KernelWriter):
     # Load kernel args needed by global write batch
     # Calculate storeSgprLoad
     module.addComment0("load store sgprs")
-    numSgprAddressBias = 0
-    BiasType = 0
-    storeSgprLoad = 0
-    runActivation = True if ((kernel["ProblemType"]["ActivationType"] != 'none') and (kernel["GlobalSplitU"] == 1) \
-        and kernel["ActivationFused"]) else False
-    if kernel["ProblemType"]["UseBias"] and (kernel["GlobalSplitU"] == 1):
-      numSgprAddressBias = 2 # 64-bit
-      if runActivation:
-        BiasType = max(1, kernel["ProblemType"]["DestDataType"].numRegisters())
-      else:
-        BiasType = 1
-      storeSgprLoad += numSgprAddressBias + BiasType
-    if runActivation:
-      if kernel["ProblemType"]["ActivationType"] == 'all':
-        self.states.numActivationTypeArgSize = 1
-      storeSgprLoad += self.states.numActivationTypeArgSize + self.states.numactivationArgTotalSize
+    storeSgprLoad = self.states.numStoreSgprToLoad
 
     # Define sgprs for kernel args
+    runActivation = True if ((kernel["ProblemType"]["ActivationType"] != 'none') and (kernel["GlobalSplitU"] == 1) \
+        and kernel["ActivationFused"]) else False
     self.defineSgpr("LoadStoreSgprs", storeSgprLoad, align=4)
     if storeSgprLoad:
       soffset = self.sgprs["LoadStoreSgprs"]
-      if numSgprAddressBias:
+      if self.states.numSgprAddressBias:
         module.add(RegSet("s", "sgprAddressBias", soffset))
-        soffset += numSgprAddressBias
+        soffset += self.states.numSgprAddressBias
         module.add(RegSet("s", "sgprBiasType", soffset))
-        soffset += BiasType
+        soffset += self.states.BiasType
       if runActivation:
         for name in kernel["ProblemType"]["ActivationType"].getAdditionalArgStringList():
           module.add(RegSet("s", "sgpr"+name, soffset))
@@ -3252,7 +3332,6 @@ class KernelWriterAssembly(KernelWriter):
     if kernel["ProblemType"]["UseBias"] and (kernel["GlobalSplitU"] == 1):
       self.defineSgpr("SrdBias", 4, 4)
       module.add(RegSet("s", "sgprSrdBias", self.sgprs["SrdBias"]))
-    self.states.numStoreSgprToLoad = storeSgprLoad
     # Load kernel args end
     ########################################
 

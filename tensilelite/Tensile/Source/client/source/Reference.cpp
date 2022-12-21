@@ -467,6 +467,193 @@ namespace Tensile
             }
         }
 
+        template <typename Inputs, typename Accumulator>
+        void ReferenceSolution<Inputs, Accumulator>::SolveCPUGroupedGemm(std::vector<ContractionProblem> const& problems,
+                                                                         Inputs const&             inputs,
+                                                                         size_t validationStride)
+        {
+            for(int idx = 0; idx < problems.size(); idx++)
+            {
+                auto problem = problems[idx];
+
+                auto const& freeIndicesA = problem.freeIndicesA();
+                auto const& freeIndicesB = problem.freeIndicesB();
+                auto const& batchIndices = problem.batchIndices();
+                auto const& boundIndices = problem.boundIndices();
+
+                auto const& a = problem.a();
+                auto const& b = problem.b();
+                auto const& c = problem.c();
+                auto const& d = problem.d();
+
+                bool aConjugate = false;
+                bool bConjugate = false;
+
+                for(auto const& op : problem.aOps())
+                    if(op.type == TensorOp::Type::ComplexConjugate)
+                        aConjugate = true;
+
+                for(auto const& op : problem.bOps())
+                    if(op.type == TensorOp::Type::ComplexConjugate)
+                        bConjugate = true;
+
+                std::vector<size_t> freeASize(freeIndicesA.size());
+                std::vector<size_t> freeBSize(freeIndicesB.size());
+                std::vector<size_t> batchSize(batchIndices.size());
+                std::vector<size_t> boundSize(boundIndices.size());
+
+                for(int i = 0; i < freeASize.size(); i++)
+                    freeASize[i] = problem.freeSizeA(i);
+                for(int i = 0; i < freeBSize.size(); i++)
+                    freeBSize[i] = problem.freeSizeB(i);
+                for(int i = 0; i < batchSize.size(); i++)
+                    batchSize[i] = problem.batchSize(i);
+                for(int i = 0; i < boundSize.size(); i++)
+                    boundSize[i] = problem.boundSize(i);
+
+                auto boundCount = CoordCount(boundSize.begin() + 1, boundSize.end());
+
+                if(inputs.alpha != static_cast<typename Inputs::AlphaType>(0))
+                {
+                    if(inputs.a == nullptr || inputs.b == nullptr)
+                    {
+                        std::ostringstream msg;
+                        msg << "Unsupported nullptr for";
+                        if(!inputs.a)
+                            msg << " A";
+                        if(!inputs.b)
+                            msg << " B";
+                        msg << " when Alpha !=0";
+
+                        throw std::runtime_error(msg.str());
+                    }
+                }
+
+    #pragma omp parallel for
+                for(size_t dNum = 0; dNum < d.totalLogicalElements(); dNum += validationStride)
+                {
+                    std::vector<int64_t> aCoord(a.dimensions());
+                    std::vector<int64_t> bCoord(b.dimensions());
+                    std::vector<int64_t> cCoord(c.dimensions());
+                    std::vector<int64_t> dCoord(d.dimensions());
+
+                    CoordNumbered(
+                        dNum, dCoord.begin(), dCoord.end(), d.sizes().begin(), d.sizes().end());
+
+                    for(size_t i = 0; i < problem.batchIndices().size(); i++)
+                    {
+                        auto const& idx   = problem.batchIndices()[i];
+                        size_t      coord = dCoord[idx.d];
+
+                        aCoord[idx.a] = coord;
+                        bCoord[idx.b] = coord;
+                        cCoord[idx.c] = coord;
+                    }
+
+                    for(size_t i = 0; i < problem.freeIndices().size(); i++)
+                    {
+                        auto const& idx   = problem.freeIndices()[i];
+                        size_t      coord = dCoord[idx.d];
+
+                        cCoord[idx.c] = coord;
+
+                        if(idx.isA)
+                            aCoord[idx.i] = coord;
+                        else
+                            bCoord[idx.i] = coord;
+                    }
+
+                    Accumulator value(0);
+
+                    // Check short-circuit for alpha = 0
+                    if(inputs.alpha != static_cast<typename Inputs::AlphaType>(0))
+                    {
+                        for(size_t boundNum = 0; boundNum < boundCount; boundNum++)
+                        {
+                            std::vector<int64_t> bound(problem.boundIndices().size());
+                            CoordNumbered(boundNum,
+                                        bound.begin() + 1,
+                                        bound.end(),
+                                        boundSize.begin() + 1,
+                                        boundSize.end());
+
+                            for(int i = 1; i < bound.size(); i++)
+                            {
+                                aCoord[boundIndices[i].a] = bound[i];
+                                bCoord[boundIndices[i].b] = bound[i];
+
+                                if(problem.boundIndices()[i].aMirror)
+                                    aCoord[boundIndices[i].a]
+                                        = boundSize[i] - aCoord[boundIndices[i].a] - 1;
+                                if(problem.boundIndices()[i].bMirror)
+                                    bCoord[boundIndices[i].b]
+                                        = boundSize[i] - bCoord[boundIndices[i].b] - 1;
+                            }
+
+                            size_t aIndex = a.index(aCoord);
+                            size_t bIndex = b.index(bCoord);
+
+                            auto aStride = problem.a().strides()[boundIndices[0].a];
+                            auto bStride = problem.b().strides()[boundIndices[0].b];
+
+                            // innermost bound calculation:
+                            for(size_t i = 0; i < boundSize[0]; i++)
+                            {
+                                size_t      aI
+                                    = problem.boundIndices()[0].aMirror ? (boundSize[0] - i - 1) : i;
+                                size_t bI
+                                    = problem.boundIndices()[0].bMirror ? (boundSize[0] - i - 1) : i;
+
+                                typename Inputs::AType aVal(0);
+                                typename Inputs::BType bVal(0);
+                                aVal = Transform<typename Inputs::AType>::Input(
+                                    inputs.groupedA[idx][aIndex + (aI * aStride)], aConjugate);
+                                bVal = Transform<typename Inputs::BType>::Input(
+                                    inputs.groupedB[idx][bIndex + (bI * bStride)], bConjugate);
+
+                                value += multiply<Accumulator>(aVal, bVal);
+                            }
+                        }
+                    }
+
+                    auto cIndex = c.index(cCoord);
+                    auto dIndex = d.index(dCoord);
+
+                    // Ensure zero*nan returns zero
+                    auto beta = inputs.beta;
+                    auto zero = static_cast<typename Inputs::BetaType>(0);
+
+                    auto resultD = multiply<Accumulator>(inputs.alpha, value)
+                                + ((beta == zero) ? static_cast<Accumulator>(zero)
+                                                    : multiply<Accumulator>(beta, inputs.groupedC[idx][cIndex]));
+                    // bias
+                    if(problem.useBias() && inputs.bias)
+                    {
+                        int         pos = int(dNum % problem.d().sizes()[0]);
+                        Accumulator bias
+                            = GetBias<Accumulator>(problem.biasType(), inputs.groupedBias[idx], pos, aConjugate);
+                        resultD += bias;
+                    }
+                    // Activation adds here
+                    std::vector<Accumulator> actArgs;
+                    for(int i = 0; i < inputs.activationArgs.size(); i++)
+                        actArgs.push_back(static_cast<Accumulator>(inputs.activationArgs[i]));
+                    resultD = Activation(
+                        problem.activationType(), resultD, problem.activationEnumArg(), actArgs);
+                    if(problem.useScaleD())
+                    {
+                        int  pos = int(dNum % problem.d().sizes()[0]);
+                        auto scaleD
+                            = multiply<Accumulator>(Transform<typename Inputs::AlphaType>::Input(
+                                                        inputs.groupedScaleD[idx][pos], aConjugate),
+                                                    1);
+                        resultD *= scaleD;
+                    }
+                    inputs.groupedD[idx][dIndex] = SaturateCast<typename Inputs::DType>(resultD);
+                }
+            }
+        }
+
         void SolveCPU(ContractionProblem const& problem,
                       ContractionInputs const&  inputs,
                       size_t                    validationStride)
@@ -613,6 +800,161 @@ namespace Tensile
                 auto const& typedInputs = dynamic_cast<ContractionInputs_B_S_S const&>(inputs);
                 return ReferenceSolution<ContractionInputs_B_S_S>::SolveCPU(
                     problem, typedInputs, validationStride);
+            }
+#endif // TENSILE_USE_BF16
+
+            default:;
+            }
+
+            throw std::runtime_error("Data type not implemented.");
+        }
+
+        void SolveCPUGroupedGemm(std::vector<ContractionProblem> const& problems,
+                                 ContractionInputs const&  inputs,
+                                 size_t                    validationStride)
+        {
+            // retreive alpha/beta type set via setAlpha/BetaType()
+            auto alphaType = problems[0].alphaType();
+            auto betaType  = problems[0].betaType();
+            auto biasType  = problems[0].biasType();
+
+            // Backward-compatible: when setAlpha/BetaType() wasn't called, use the old way
+            // Could remove after rocBLAS is updated
+            if(alphaType == DataType::None)
+            {
+                alphaType = problems[0].a().dataType() == DataType::BFloat16 ? DataType::Float
+                                                                         : problems[0].d().dataType();
+            }
+            if(betaType == DataType::None)
+            {
+                betaType = alphaType;
+            }
+            if(biasType == DataType::None)
+            {
+                biasType = problems[0].d().dataType();
+            }
+
+            auto contractionInputsTypeId = ContractionInputs::TypeId(problems[0].a().dataType(),
+                                                                     problems[0].b().dataType(),
+                                                                     problems[0].c().dataType(),
+                                                                     problems[0].d().dataType(),
+                                                                     alphaType,
+                                                                     betaType);
+
+            switch(contractionInputsTypeId)
+            {
+            case ContractionInputs_S_S_S::TypeId():
+            {
+                auto const& typedInputs = dynamic_cast<ContractionInputs_S_S_S const&>(inputs);
+                return ReferenceSolution<ContractionInputs_S_S_S>::SolveCPUGroupedGemm(
+                    problems, typedInputs, validationStride);
+            }
+            case ContractionInputs_D_D_D::TypeId():
+            {
+                auto const& typedInputs = dynamic_cast<ContractionInputs_D_D_D const&>(inputs);
+                return ReferenceSolution<ContractionInputs_D_D_D>::SolveCPUGroupedGemm(
+                    problems, typedInputs, validationStride);
+            }
+            case ContractionInputs_C_C_C::TypeId():
+            {
+                auto const& typedInputs = dynamic_cast<ContractionInputs_C_C_C const&>(inputs);
+                return ReferenceSolution<ContractionInputs_C_C_C>::SolveCPUGroupedGemm(
+                    problems, typedInputs, validationStride);
+            }
+            case ContractionInputs_Z_Z_Z::TypeId():
+            {
+                auto const& typedInputs = dynamic_cast<ContractionInputs_Z_Z_Z const&>(inputs);
+                return ReferenceSolution<ContractionInputs_Z_Z_Z>::SolveCPUGroupedGemm(
+                    problems, typedInputs, validationStride);
+            }
+#ifdef TENSILE_USE_HALF
+            case ContractionInputs_H_H_H::TypeId():
+            {
+                auto const& typedInputs = dynamic_cast<ContractionInputs_H_H_H const&>(inputs);
+
+                if(problems[0].highPrecisionAccumulate())
+                {
+                    return ReferenceSolution<ContractionInputs_H_H_H, float>::SolveCPUGroupedGemm(
+                        problems, typedInputs, validationStride);
+                }
+                else
+                {
+                    return ReferenceSolution<ContractionInputs_H_H_H>::SolveCPUGroupedGemm(
+                        problems, typedInputs, validationStride);
+                }
+            }
+            case ContractionInputs_H_S_S::TypeId():
+            {
+                auto const& typedInputs = dynamic_cast<ContractionInputs_H_S_S const&>(inputs);
+                return ReferenceSolution<ContractionInputs_H_S_S>::SolveCPUGroupedGemm(
+                    problems, typedInputs, validationStride);
+            }
+            case ContractionInputs_H_H_S::TypeId():
+            {
+                auto const& typedInputs = dynamic_cast<ContractionInputs_H_H_S const&>(inputs);
+                return ReferenceSolution<ContractionInputs_H_H_S, float>::SolveCPUGroupedGemm(
+                    problems, typedInputs, validationStride);
+            }
+#endif // TENSILE_USE_HALF
+            case ContractionInputs_I8x4_I32_I32::TypeId():
+            {
+                auto const& typedInputs
+                    = dynamic_cast<ContractionInputs_I8x4_I32_I32 const&>(inputs);
+                return ReferenceSolution<ContractionInputs_I8x4_I32_I32>::SolveCPUGroupedGemm(
+                    problems, typedInputs, validationStride);
+            }
+            case ContractionInputs_I32_I32_I32::TypeId():
+            {
+                auto const& typedInputs
+                    = dynamic_cast<ContractionInputs_I32_I32_I32 const&>(inputs);
+                return ReferenceSolution<ContractionInputs_I32_I32_I32>::SolveCPUGroupedGemm(
+                    problems, typedInputs, validationStride);
+            }
+            case ContractionInputs_I8_I8_I32::TypeId():
+            {
+                auto const& typedInputs = dynamic_cast<ContractionInputs_I8_I8_I32 const&>(inputs);
+                return ReferenceSolution<ContractionInputs_I8_I8_I32, int32_t>::SolveCPUGroupedGemm(
+                    problems, typedInputs, validationStride);
+            }
+            case ContractionInputs_I8_I32_I32::TypeId():
+            {
+                auto const& typedInputs = dynamic_cast<ContractionInputs_I8_I32_I32 const&>(inputs);
+                return ReferenceSolution<ContractionInputs_I8_I32_I32>::SolveCPUGroupedGemm(
+                    problems, typedInputs, validationStride);
+            }
+            case ContractionInputs_I8_I32_S::TypeId():
+            {
+                auto const& typedInputs = dynamic_cast<ContractionInputs_I8_I32_S const&>(inputs);
+                return ReferenceSolution<ContractionInputs_I8_I32_S, float>::SolveCPUGroupedGemm(
+                    problems, typedInputs, validationStride);
+            }
+            case ContractionInputs_I8_I8_S::TypeId():
+            {
+                auto const& typedInputs = dynamic_cast<ContractionInputs_I8_I8_S const&>(inputs);
+                return ReferenceSolution<ContractionInputs_I8_I8_S, float>::SolveCPUGroupedGemm(
+                    problems, typedInputs, validationStride);
+            }
+#ifdef TENSILE_USE_BF16
+            case ContractionInputs_B_B_S::TypeId():
+            {
+                auto const& typedInputs = dynamic_cast<ContractionInputs_B_B_S const&>(inputs);
+
+                if(problems[0].highPrecisionAccumulate())
+                {
+                    return ReferenceSolution<ContractionInputs_B_B_S, float>::SolveCPUGroupedGemm(
+                        problems, typedInputs, validationStride);
+                }
+                else
+                {
+                    return ReferenceSolution<ContractionInputs_B_B_S>::SolveCPUGroupedGemm(
+                        problems, typedInputs, validationStride);
+                }
+            }
+            case ContractionInputs_B_S_S::TypeId():
+            {
+                auto const& typedInputs = dynamic_cast<ContractionInputs_B_S_S const&>(inputs);
+                return ReferenceSolution<ContractionInputs_B_S_S>::SolveCPUGroupedGemm(
+                    problems, typedInputs, validationStride);
             }
 #endif // TENSILE_USE_BF16
 

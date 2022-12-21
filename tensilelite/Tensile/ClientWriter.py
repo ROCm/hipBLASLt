@@ -479,6 +479,7 @@ def writeClientConfigIni(problemSizes, biasTypeArgs, activationArgs, problemType
 
         param('high-precision-accumulate', problemType.highPrecisionAccumulate)
         param('strided-batched', problemType.stridedBatched)
+        param('grouped-gemm', problemType.groupedGemm)
 
         for problem in problemSizes.problems:
             for key,value in problemSizeParams(problemType, problem):

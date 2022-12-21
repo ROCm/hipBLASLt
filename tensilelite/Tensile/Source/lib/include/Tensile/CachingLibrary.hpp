@@ -160,11 +160,13 @@ namespace Tensile
         using Library = SolutionLibrary<MyProblem, MySolution>;
         using Cache  = CacheMap<std::tuple<std::shared_ptr<MySolution>, double>, AMDGPU, MyProblem>;
         using Caches = CacheMap<SolutionVector<MySolution>, AMDGPU, MyProblem>;
+        using CachesGroupedGemm  = CacheMap<SolutionVector<MySolution>, AMDGPU, std::vector<MyProblem>>;
 
         CachingLibrary(std::shared_ptr<Library> subLibrary)
             : m_subLibrary(subLibrary)
             , m_cache(std::make_tuple(nullptr, std::numeric_limits<double>::max()))
             , m_caches(SolutionVector<MySolution>{})
+            , m_cachesGroupedGemm(SolutionVector<MySolution>{})
         {
         }
 
@@ -251,10 +253,37 @@ namespace Tensile
             return m_subLibrary->findTopSolutions(problem, hardware, numSolutions);
         }
 
+        virtual SolutionVector<MySolution> findTopSolutionsGroupedGemm(std::vector<MyProblem> const& problems,
+                                                                       Hardware               const& hardware,
+                                                                       int                           numSolutions) const override
+        {
+            try
+            {
+                auto const& amdgpu = dynamic_cast<AMDGPU const&>(hardware);
+                SolutionVector<MySolution> solutions;
+                solutions = m_cachesGroupedGemm.find(problems, amdgpu);
+
+                if(solutions.size() != 0)
+                    return solutions;
+
+                solutions = m_subLibrary->findTopSolutionsGroupedGemm(problems, hardware, numSolutions);
+                if(solutions.size() != 0)
+                    m_cachesGroupedGemm.add(solutions, problems, amdgpu);
+
+                return solutions;
+            }
+            catch(std::bad_cast const& exc)
+            {
+                return m_subLibrary->findTopSolutionsGroupedGemm(problems, hardware, numSolutions);
+            }
+            return m_subLibrary->findTopSolutionsGroupedGemm(problems, hardware, numSolutions);
+        }
+
     private:
         std::shared_ptr<Library> m_subLibrary;
         mutable Cache            m_cache;
         mutable Caches           m_caches;
+        mutable CachesGroupedGemm m_cachesGroupedGemm;
     };
 
 #if 0

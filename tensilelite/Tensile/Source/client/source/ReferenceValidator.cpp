@@ -91,6 +91,16 @@ namespace Tensile
             }
         }
 
+        void ReferenceValidator::preProblemGroupedGemm(std::vector<ContractionProblem> const& problems)
+        {
+            if(m_enabled)
+            {
+                m_problems         = problems;
+                m_groupedGemm      = true;
+                SolveCPUGroupedGemm(problems, *m_referenceInputs, m_validationStride);
+            }
+        }
+
         void ReferenceValidator::preSolution(ContractionSolution const& solution)
         {
             m_validatedSolution = false;
@@ -384,137 +394,277 @@ namespace Tensile
                                                    CompareInvalid&      compareInvalid)
         {
             using Type         = typename ManagedInputs::DType;
-            auto const& tensor = m_problem.d();
-
-            size_t elementsToCopy       = tensor.totalAllocatedElements();
-            size_t elementsOffsetToCopy = 0;
-            size_t elementsBeforeData   = 0;
-            size_t elementsAfterData    = 0;
-
-            BoundsCheckMode boundsCheck = m_dataInit->getCurBoundsCheck();
-            if(boundsCheck == BoundsCheckMode::NaN)
-                elementsToCopy = result.dElements;
-            size_t bytesToCopy = elementsToCopy * sizeof(Type);
-
-            if(m_cpuResultBufferSize < bytesToCopy)
-                allocateResultBuffer(bytesToCopy);
-
-            if(boundsCheck == BoundsCheckMode::GuardPageBack)
-                elementsOffsetToCopy = result.dElements - tensor.totalAllocatedElements();
-
-            auto copykind = result.gpu ? hipMemcpyDeviceToHost : hipMemcpyHostToHost;
-
-            HIP_CHECK_EXC(hipMemcpy(m_cpuResultBuffer.get(),
-                                    result.managedD.get() + elementsOffsetToCopy,
-                                    bytesToCopy,
-                                    copykind));
-
-            if(boundsCheck == BoundsCheckMode::NaN)
+            if(m_groupedGemm)
             {
-                elementsBeforeData = result.d - result.managedD.get();
-                elementsAfterData
-                    = elementsToCopy - (tensor.totalAllocatedElements() + elementsBeforeData);
-            }
-            // If there was extra data allocated before the tensor to do bounds
-            // checking, resultBuffer is the whole allocation, while resultData
-            // points directly to the result.
-            Type const* resultBuffer    = reinterpret_cast<Type const*>(m_cpuResultBuffer.get());
-            Type const* resultData      = resultBuffer + elementsBeforeData;
-            Type const* resultAfterData = resultData + tensor.totalAllocatedElements();
-
-            size_t boundsCheckElements = 0;
-
-            for(ptrdiff_t i = 0; i < elementsBeforeData; i++)
-            {
-                boundsCheckElements++;
-                compareInvalid.before(resultBuffer[i], i, elementsBeforeData);
-            }
-
-            if(m_validationStride == 1)
-            {
-                std::vector<size_t> coord(tensor.dimensions());
-                size_t outerCount = CoordCount(tensor.sizes().begin() + 1, tensor.sizes().end());
-
-                size_t       prevBaseIndex = 0;
-                const size_t innerDimSize  = tensor.sizes()[0];
-                const size_t initialStride = tensor.strides()[0];
-
-                for(size_t i = 0; i < outerCount; i++)
+                for(int idx = 0; idx < m_problems.size(); idx++)
                 {
-                    CoordNumbered(i,
-                                  coord.begin() + 1,
-                                  coord.end(),
-                                  tensor.sizes().begin() + 1,
-                                  tensor.sizes().end());
-                    size_t baseElemIndex = tensor.index(coord);
+                    auto const& tensor = m_problems[idx].d();
 
-                    if(boundsCheck == BoundsCheckMode::NaN && baseElemIndex != 0
-                       && baseElemIndex != prevBaseIndex + innerDimSize)
+                    size_t elementsToCopy       = tensor.totalAllocatedElements();
+                    size_t elementsOffsetToCopy = 0;
+                    size_t elementsBeforeData   = 0;
+                    size_t elementsAfterData    = 0;
+
+                    BoundsCheckMode boundsCheck = m_dataInit->getCurBoundsCheck();
+                    if(boundsCheck == BoundsCheckMode::NaN)
+                        elementsToCopy = result.dElements;
+                    size_t bytesToCopy = elementsToCopy * sizeof(Type);
+
+                    if(m_cpuResultBufferSize < bytesToCopy)
+                        allocateResultBuffer(bytesToCopy);
+
+                    if(boundsCheck == BoundsCheckMode::GuardPageBack)
+                        elementsOffsetToCopy = result.dElements - tensor.totalAllocatedElements();
+
+                    auto copykind = result.gpu ? hipMemcpyDeviceToHost : hipMemcpyHostToHost;
+
+                    HIP_CHECK_EXC(hipMemcpy(m_cpuResultBuffer.get(),
+                                            result.groupedD[idx] + elementsOffsetToCopy,
+                                            bytesToCopy,
+                                            copykind));
+
+                    if(boundsCheck == BoundsCheckMode::NaN)
                     {
-                        for(auto innerIndex = prevBaseIndex + innerDimSize;
-                            innerIndex < baseElemIndex;
-                            innerIndex++)
+                        elementsBeforeData = result.d - result.managedD.get();
+                        elementsAfterData
+                            = elementsToCopy - (tensor.totalAllocatedElements() + elementsBeforeData);
+                    }
+                    // If there was extra data allocated before the tensor to do bounds
+                    // checking, resultBuffer is the whole allocation, while resultData
+                    // points directly to the result.
+                    Type const* resultBuffer    = reinterpret_cast<Type const*>(m_cpuResultBuffer.get());
+                    Type const* resultData      = resultBuffer + elementsBeforeData;
+                    Type const* resultAfterData = resultData + tensor.totalAllocatedElements();
+
+                    size_t boundsCheckElements = 0;
+
+                    for(ptrdiff_t i = 0; i < elementsBeforeData; i++)
+                    {
+                        boundsCheckElements++;
+                        compareInvalid.before(resultBuffer[i], i, elementsBeforeData);
+                    }
+
+                    if(m_validationStride == 1)
+                    {
+                        std::vector<size_t> coord(tensor.dimensions());
+                        size_t outerCount = CoordCount(tensor.sizes().begin() + 1, tensor.sizes().end());
+
+                        size_t       prevBaseIndex = 0;
+                        const size_t innerDimSize  = tensor.sizes()[0];
+                        const size_t initialStride = tensor.strides()[0];
+
+                        for(size_t i = 0; i < outerCount; i++)
                         {
-                            compareInvalid.inside(
-                                resultData[innerIndex], innerIndex, baseElemIndex);
+                            CoordNumbered(i,
+                                        coord.begin() + 1,
+                                        coord.end(),
+                                        tensor.sizes().begin() + 1,
+                                        tensor.sizes().end());
+                            size_t baseElemIndex = tensor.index(coord);
+
+                            if(boundsCheck == BoundsCheckMode::NaN && baseElemIndex != 0
+                            && baseElemIndex != prevBaseIndex + innerDimSize)
+                            {
+                                for(auto innerIndex = prevBaseIndex + innerDimSize;
+                                    innerIndex < baseElemIndex;
+                                    innerIndex++)
+                                {
+                                    compareInvalid.inside(
+                                        resultData[innerIndex], innerIndex, baseElemIndex);
+                                }
+                            }
+
+                            prevBaseIndex = baseElemIndex;
+
+                            for(size_t j = 0; j < innerDimSize; j++)
+                            {
+                                size_t elemIndex = baseElemIndex + (j * initialStride);
+
+                                Type referenceValue = reference.groupedD[idx][elemIndex];
+                                Type resultValue    = resultData[elemIndex];
+
+                                compareValid(
+                                    referenceValue, resultValue, elemIndex, (i * tensor.sizes()[0]) + j);
+                            }
+                        }
+                    }
+                    else
+                    {
+                        std::vector<size_t> coord(tensor.dimensions());
+                        for(size_t elemNumber = 0; elemNumber < tensor.totalLogicalElements();
+                            elemNumber += m_validationStride)
+                        {
+                            CoordNumbered(elemNumber,
+                                        coord.begin(),
+                                        coord.end(),
+                                        tensor.sizes().begin(),
+                                        tensor.sizes().end());
+                            size_t elemIndex = tensor.index(coord);
+
+                            Type referenceValue = reference.groupedD[idx][elemIndex];
+                            Type resultValue    = resultData[elemIndex];
+
+                            compareValid(referenceValue, resultValue, elemIndex, elemNumber);
                         }
                     }
 
-                    prevBaseIndex = baseElemIndex;
-
-                    for(size_t j = 0; j < innerDimSize; j++)
+                    for(ptrdiff_t i = 0; i < elementsAfterData; i++)
                     {
-                        size_t elemIndex = baseElemIndex + (j * initialStride);
+                        compareInvalid.after(resultAfterData[i], i, elementsAfterData);
+                    }
+
+                    if(boundsCheckElements > 0)
+                        std::cout << "Performed bounds check on " << boundsCheckElements << " elements ("
+                                << elementsBeforeData << " before data)" << std::endl;
+
+                    compareValid.report();
+                    compareInvalid.report();
+                }
+
+                if(compareValid.error() || compareInvalid.error())
+                {
+                    m_errorInSolution = true;
+                    m_error           = true;
+
+                    return true;
+                }
+
+                return false;
+            }
+            else
+            {
+                auto const& tensor = m_problem.d();
+
+                size_t elementsToCopy       = tensor.totalAllocatedElements();
+                size_t elementsOffsetToCopy = 0;
+                size_t elementsBeforeData   = 0;
+                size_t elementsAfterData    = 0;
+
+                BoundsCheckMode boundsCheck = m_dataInit->getCurBoundsCheck();
+                if(boundsCheck == BoundsCheckMode::NaN)
+                    elementsToCopy = result.dElements;
+                size_t bytesToCopy = elementsToCopy * sizeof(Type);
+
+                if(m_cpuResultBufferSize < bytesToCopy)
+                    allocateResultBuffer(bytesToCopy);
+
+                if(boundsCheck == BoundsCheckMode::GuardPageBack)
+                    elementsOffsetToCopy = result.dElements - tensor.totalAllocatedElements();
+
+                auto copykind = result.gpu ? hipMemcpyDeviceToHost : hipMemcpyHostToHost;
+
+                HIP_CHECK_EXC(hipMemcpy(m_cpuResultBuffer.get(),
+                                        result.managedD.get() + elementsOffsetToCopy,
+                                        bytesToCopy,
+                                        copykind));
+
+                if(boundsCheck == BoundsCheckMode::NaN)
+                {
+                    elementsBeforeData = result.d - result.managedD.get();
+                    elementsAfterData
+                        = elementsToCopy - (tensor.totalAllocatedElements() + elementsBeforeData);
+                }
+                // If there was extra data allocated before the tensor to do bounds
+                // checking, resultBuffer is the whole allocation, while resultData
+                // points directly to the result.
+                Type const* resultBuffer    = reinterpret_cast<Type const*>(m_cpuResultBuffer.get());
+                Type const* resultData      = resultBuffer + elementsBeforeData;
+                Type const* resultAfterData = resultData + tensor.totalAllocatedElements();
+
+                size_t boundsCheckElements = 0;
+
+                for(ptrdiff_t i = 0; i < elementsBeforeData; i++)
+                {
+                    boundsCheckElements++;
+                    compareInvalid.before(resultBuffer[i], i, elementsBeforeData);
+                }
+
+                if(m_validationStride == 1)
+                {
+                    std::vector<size_t> coord(tensor.dimensions());
+                    size_t outerCount = CoordCount(tensor.sizes().begin() + 1, tensor.sizes().end());
+
+                    size_t       prevBaseIndex = 0;
+                    const size_t innerDimSize  = tensor.sizes()[0];
+                    const size_t initialStride = tensor.strides()[0];
+
+                    for(size_t i = 0; i < outerCount; i++)
+                    {
+                        CoordNumbered(i,
+                                    coord.begin() + 1,
+                                    coord.end(),
+                                    tensor.sizes().begin() + 1,
+                                    tensor.sizes().end());
+                        size_t baseElemIndex = tensor.index(coord);
+
+                        if(boundsCheck == BoundsCheckMode::NaN && baseElemIndex != 0
+                        && baseElemIndex != prevBaseIndex + innerDimSize)
+                        {
+                            for(auto innerIndex = prevBaseIndex + innerDimSize;
+                                innerIndex < baseElemIndex;
+                                innerIndex++)
+                            {
+                                compareInvalid.inside(
+                                    resultData[innerIndex], innerIndex, baseElemIndex);
+                            }
+                        }
+
+                        prevBaseIndex = baseElemIndex;
+
+                        for(size_t j = 0; j < innerDimSize; j++)
+                        {
+                            size_t elemIndex = baseElemIndex + (j * initialStride);
+
+                            Type referenceValue = reference.d[elemIndex];
+                            Type resultValue    = resultData[elemIndex];
+
+                            compareValid(
+                                referenceValue, resultValue, elemIndex, (i * tensor.sizes()[0]) + j);
+                        }
+                    }
+                }
+                else
+                {
+                    std::vector<size_t> coord(tensor.dimensions());
+                    for(size_t elemNumber = 0; elemNumber < tensor.totalLogicalElements();
+                        elemNumber += m_validationStride)
+                    {
+                        CoordNumbered(elemNumber,
+                                    coord.begin(),
+                                    coord.end(),
+                                    tensor.sizes().begin(),
+                                    tensor.sizes().end());
+                        size_t elemIndex = tensor.index(coord);
 
                         Type referenceValue = reference.d[elemIndex];
                         Type resultValue    = resultData[elemIndex];
 
-                        compareValid(
-                            referenceValue, resultValue, elemIndex, (i * tensor.sizes()[0]) + j);
+                        compareValid(referenceValue, resultValue, elemIndex, elemNumber);
                     }
                 }
-            }
-            else
-            {
-                std::vector<size_t> coord(tensor.dimensions());
-                for(size_t elemNumber = 0; elemNumber < tensor.totalLogicalElements();
-                    elemNumber += m_validationStride)
+
+                for(ptrdiff_t i = 0; i < elementsAfterData; i++)
                 {
-                    CoordNumbered(elemNumber,
-                                  coord.begin(),
-                                  coord.end(),
-                                  tensor.sizes().begin(),
-                                  tensor.sizes().end());
-                    size_t elemIndex = tensor.index(coord);
-
-                    Type referenceValue = reference.d[elemIndex];
-                    Type resultValue    = resultData[elemIndex];
-
-                    compareValid(referenceValue, resultValue, elemIndex, elemNumber);
+                    compareInvalid.after(resultAfterData[i], i, elementsAfterData);
                 }
+
+                if(boundsCheckElements > 0)
+                    std::cout << "Performed bounds check on " << boundsCheckElements << " elements ("
+                            << elementsBeforeData << " before data)" << std::endl;
+
+                compareValid.report();
+                compareInvalid.report();
+
+                if(compareValid.error() || compareInvalid.error())
+                {
+                    m_errorInSolution = true;
+                    m_error           = true;
+
+                    return true;
+                }
+
+                return false;
             }
-
-            for(ptrdiff_t i = 0; i < elementsAfterData; i++)
-            {
-                compareInvalid.after(resultAfterData[i], i, elementsAfterData);
-            }
-
-            if(boundsCheckElements > 0)
-                std::cout << "Performed bounds check on " << boundsCheckElements << " elements ("
-                          << elementsBeforeData << " before data)" << std::endl;
-
-            compareValid.report();
-            compareInvalid.report();
-
-            if(compareValid.error() || compareInvalid.error())
-            {
-                m_errorInSolution = true;
-                m_error           = true;
-
-                return true;
-            }
-
-            return false;
         }
 
         void ReferenceValidator::postSolution()
