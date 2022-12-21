@@ -150,9 +150,6 @@ namespace Tensile
 
                 ("dump-tensors",             po::value<bool>()->default_value(false), "Binary dump tensors instead of printing.")
 
-                ("convolution-identifier",   po::value<std::string>(), "Convolution problem identifer:  ConvolutionType_ActFormat_FilterFormat_Filter_Stride_Dilation_Groups.  Example: ConvolutionBackwardWeights_NCHW_filter:3x3_stride:1x1_dilation:1x1_groups:1.  Batch count, spacial dimensions (H,W,D), Cin and Cout filters are determined by the problem dimensions.")
-                ("convolution-vs-contraction",  po::value<bool>()->default_value(false), "Compare reference convolution against contraction.")
-
                 ("device-idx",               po::value<int>()->default_value(0), "Device index")
                 ("use-default-stream",       po::value<bool>()->default_value(false), "Use default Hip stream to run kernels.")
                 ("platform-idx",             po::value<int>()->default_value(0), "OpenCL Platform Index")
@@ -199,18 +196,6 @@ namespace Tensile
                                                                                   "(prev_dim_stride*prev_dim_size)"
                                                                                   "specifying once applies to all problem sizes, "
                                                                                   "otherwise specify once per problem size.")
-
-                ("convolution-problem",      vector_default_empty<std::string>(), "Specify a Convolution problem size. Comma-separated list of sizes:"
-                                                                                  "Spatial(w,h,d),Filter(x,y,z),Stride(v,u,#),"
-                                                                                  "Dilation(j,l,^),Pad start(q,p,$),Pad end(q_,p_,$_)")
-
-                ("a-zero-pads",                vector_default_empty<std::string>(), "Comma-separated tuple(s) of anchor dim,"
-                                                                                  "summation dim, leading pad, trailing pad."
-                                                                                  "Each tuple must be separated with a semi-colon.")
-
-                ("b-zero-pads",                vector_default_empty<std::string>(), "Comma-separated tuple(s) of anchor dim,"
-                                                                                  "summation dim, leading pad, trailing pad."
-                                                                                  "Each tuple must be separated with a semi-colon.")
 
                 ("a-ops",                    vector_default_empty<TensorOp>(), "Operations applied to A.")
                 ("b-ops",                    vector_default_empty<TensorOp>(), "Operations applied to B.")
@@ -448,11 +433,6 @@ namespace Tensile
             parse_arg_ints(args, "b-strides");
             parse_arg_ints(args, "c-strides");
             parse_arg_ints(args, "d-strides");
-            parse_arg_ints(args, "a-zero-pads");
-            parse_arg_ints(args, "b-zero-pads");
-
-            if(args["convolution-vs-contraction"].as<bool>())
-                parse_arg_ints(args, "convolution-problem");
             parse_bias_type_args(args, "bias-type-args");
             parse_activation_int(args, "activation-type");
             parse_activation_enum_args(args, "activation-enum-args");

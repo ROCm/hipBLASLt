@@ -60,34 +60,6 @@ namespace Tensile
         using Inputs   = ContractionInputs;
 
         ContractionProblem() = default;
-
-        /**
-   * Zero-padding description
-   */
-        struct ZeroPad
-        {
-            ZeroPad(int32_t ai = -1, int32_t bi = -1, int64_t ps = 0, int64_t pe = 0)
-                : anchorIndex(ai)
-                , anchorPos(-1)
-                , boundIndex(bi)
-                , padStart(ps)
-                , padEnd(pe){};
-
-            int32_t anchorIndex;
-            int32_t anchorPos; //! position of anchorIndex in A or B tensor
-            int32_t boundIndex;
-            int32_t boundPos; //! position of anchroIndex in A or B tensor
-            int64_t padStart;
-            int64_t padEnd;
-
-            bool valid() const
-            {
-                return anchorIndex != -1;
-            };
-            std::string description() const;
-        };
-        using ZeroPads = std::vector<ZeroPad>;
-
         /**
    * Represents a pair of free indices in a tensor contraction.
    */
@@ -120,8 +92,6 @@ namespace Tensile
                 , aMirror(aMirror)
                 , bMirror(bMirror){};
             size_t  a, b; //! positions in a or b tensor
-            ZeroPad aZeroPad;
-            ZeroPad bZeroPad;
             bool    aMirror, bMirror;
         };
         using BoundIndices = std::vector<BoundIndex>;
@@ -490,15 +460,6 @@ namespace Tensile
             return m_problemStrides;
         }
 
-        std::vector<size_t> const& convProblemSizes() const
-        {
-            return m_convProblemSizes;
-        }
-        void setConvProblemSizes(std::vector<size_t>& convProblemSizes)
-        {
-            m_convProblemSizes.assign(convProblemSizes.begin(), convProblemSizes.end());
-        }
-
         void setCEqualsD(bool cEqualsD)
         {
             m_cEqualsD = cEqualsD;
@@ -753,18 +714,6 @@ namespace Tensile
             return m_boundIndices;
         }
 
-        ZeroPads const& aZeroPad() const
-        {
-            return m_aZeroPads;
-        }
-        ZeroPads const& bZeroPad() const
-        {
-            return m_bZeroPads;
-        }
-
-        void addAZeroPad(const ZeroPad& zp);
-        void addBZeroPad(const ZeroPad& zp);
-
         bool transposeC01() const
         {
             return m_transposeC01;
@@ -880,9 +829,6 @@ namespace Tensile
         BatchIndices m_batchIndices;
         BoundIndices m_boundIndices;
 
-        ZeroPads m_aZeroPads;
-        ZeroPads m_bZeroPads;
-
         std::vector<size_t> m_freeSizesA;
         std::vector<size_t> m_freeSizesB;
         std::vector<size_t> m_batchSizes;
@@ -890,7 +836,6 @@ namespace Tensile
 
         std::vector<size_t> m_problemSizes;
         std::vector<size_t> m_problemStrides;
-        std::vector<size_t> m_convProblemSizes;
 
         bool   m_transposeC01;
         double m_beta;

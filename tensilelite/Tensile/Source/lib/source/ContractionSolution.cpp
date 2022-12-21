@@ -393,13 +393,13 @@ namespace Tensile
         }
 
         rv.args.append<typename TypedInputs::AlphaType>("alpha", inputs.alpha);
-        if(std::is_same<typename TypedInputs::AlphaType, Half>::value && !isSourceKernel())
+        if(std::is_same<typename TypedInputs::AlphaType, Half>::value)
             rv.args.append<typename TypedInputs::AlphaType>("alpha_2", inputs.alpha);
 
         if(problemType.useBeta)
         {
             rv.args.append<typename TypedInputs::BetaType>("beta", inputs.beta);
-            if(std::is_same<typename TypedInputs::BetaType, Half>::value && !isSourceKernel())
+            if(std::is_same<typename TypedInputs::BetaType, Half>::value)
                 rv.args.append<typename TypedInputs::BetaType>("beta_2", inputs.beta);
         }
 
@@ -590,12 +590,9 @@ namespace Tensile
         rv.args.append<uint32_t>("offsetB", b.offset());
 
         bool runActivation = false;
-        if(!isSourceKernel())
-        {
-            if((problem.activationType() != ActivationType::None) && sizeMapping.activationFused
-               && (sizeMapping.globalSplitU == 1))
-                runActivation = true;
-        }
+        if((problem.activationType() != ActivationType::None) && sizeMapping.activationFused
+            && (sizeMapping.globalSplitU == 1))
+            runActivation = true;
         if(problemType.useBias && (sizeMapping.globalSplitU == 1))
         {
             rv.args.append<void const*>("bias", inputs.bias);
@@ -655,11 +652,6 @@ namespace Tensile
         rv.codeObjectFile = codeObjectFilename.load();
 
         return rv;
-    }
-
-    bool ContractionSolution::isSourceKernel() const
-    {
-        return sizeMapping.sourceKernel;
     }
 
     template <typename TypedInputs, bool T_Debug>

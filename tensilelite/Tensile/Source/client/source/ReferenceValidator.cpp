@@ -57,11 +57,6 @@ namespace Tensile
             m_printAny = m_printTensorA || m_printTensorB || m_printTensorC || m_printTensorD
                          || m_printTensorRef;
 
-            m_convolutionVsContraction = args["convolution-vs-contraction"].as<bool>();
-            if(args.count("convolution-identifier"))
-                m_convolutionProblem.FromIdentifier(
-                    args["convolution-identifier"].as<std::string>());
-
             m_enabled = m_elementsToValidate != 0 || m_printAny;
         }
 
@@ -93,28 +88,6 @@ namespace Tensile
                         = NextPrime(problem.d().totalAllocatedElements() / m_elementsToValidate);
 
                 SolveCPU(problem, *m_referenceInputs, m_validationStride);
-
-                if(m_convolutionVsContraction)
-                {
-
-                    SolveCPUConvolution(
-                        m_convolutionProblem, problem, *(m_dataInit->cpuConvInputs()));
-                    // std::cout << "ValidateConv--Start\n";
-                    m_errorInConvolutionVsContraction = validateSolution(
-                        m_dataInit->cpuConvInputs()); // validate conv against reference
-                    // TODO - print problem dimensions??
-                    std::cout << m_convolutionProblem << " vs " << problem.operationIdentifier()
-                              << " :  ";
-                    if(m_errorInConvolutionVsContraction)
-                    {
-                        std::cout << "FAILED_CONV";
-                    }
-                    else
-                    {
-                        std::cout << "PASSED_CONV";
-                    }
-                    std::cout << "\n";
-                }
             }
         }
 
@@ -153,26 +126,6 @@ namespace Tensile
             auto const& typedResult    = dynamic_cast<ManagedInputs const&>(*inputs);
 
             auto rv = validateTyped(typedReference, typedResult);
-
-            if(0 and inputs == m_dataInit->cpuConvInputs())
-            {
-                m_reporter->logTensor(
-                    LogLevel::Verbose, "Aval-conv", typedResult.a, m_problem.a(), nullptr);
-                m_reporter->logTensor(
-                    LogLevel::Verbose, "Bval-conv", typedResult.b, m_problem.b(), nullptr);
-                m_reporter->logTensor(
-                    LogLevel::Verbose, "Dval-conv", typedResult.d, m_problem.d(), nullptr);
-                m_reporter->logTensor(LogLevel::Verbose,
-                                      "Bval-contraction",
-                                      typedReference.b,
-                                      m_problem.b(),
-                                      nullptr);
-                m_reporter->logTensor(LogLevel::Verbose,
-                                      "Dval-contraction",
-                                      typedReference.d,
-                                      m_problem.d(),
-                                      nullptr);
-            }
 
             return rv;
         }
@@ -571,12 +524,7 @@ namespace Tensile
 
             if(m_elementsToValidate != 0)
             {
-                if(m_errorInConvolutionVsContraction)
-                {
-                    m_errorsReported++;
-                    m_reporter->report(ResultKey::Validation, "FAILED_CONV");
-                }
-                else if(m_errorInSolution)
+                if(m_errorInSolution)
                 {
                     m_errorsReported++;
                     m_reporter->report(ResultKey::Validation, "FAILED");

@@ -3997,7 +3997,6 @@ class KernelWriterAssembly(KernelWriter):
 
     directToLdsLoads = 0
     prevLdsOffset    = 0
-    # print("tc={}, nrp={}, nrpv={}, nrc={}, nrcv/nrcvpi={}, sgprforGRO={}".format(tc, tP["nrp"], tP["nrpv"], tP["nrc"], tP["nrcv"]//tP["nrcvpi"], problemType["ZeroPad%s"%tc], kernel["UseSgprForGRO"]))
 
     instOffset = 0
     loopCnt = -1

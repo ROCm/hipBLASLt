@@ -70,19 +70,6 @@ namespace Tensile
         return m_value & 0x80;
     }
 
-    bool Debug::printConvolutionReference1() const
-    {
-        return m_value & 0x100;
-    }
-    bool Debug::printConvolutionReference2() const
-    {
-        return m_value & 0x200;
-    }
-    bool Debug::printConvolutionReference3() const
-    {
-        return m_value & 0x400;
-    }
-
     bool Debug::printTensorModeHex() const
     {
         return m_value & 0x800;
