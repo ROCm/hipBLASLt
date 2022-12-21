@@ -3488,10 +3488,10 @@ class KernelWriterAssembly(KernelWriter):
             oddIterCode.add(self.localReadSwapOffsets(kernel, False, tPB))
 
           if kernel["ProblemType"]["SparseA"]:
-            numVgprPerBlk = kernel["MIWaveTileA"] * kernel["LoopIters"] * kernel["DepthULdsDivisor"]
-            for i in range(0, numVgprPerBlk):
-              oddIterCode.add(VMovB32(vgpr("ValuMetadata+%u"%i), vgpr("ValuMetadata+%u+%u"%(numVgprPerBlk, i)), \
-                                       "copy ValuMetadata blk1 to blk0"))
+            oddIterCode.add(SWaitCnt(vmcnt=0, comment="wait for global read before moving metadata to target vgpr"))
+            for i in range(0, self.states.a.numVgprValuMetadataPerBlock):
+              oddIterCode.add(VMovB32(vgpr("ValuMetadata+%u"%i), vgpr("ValuMetadata+%u+%u"%(self.states.a.numVgprValuMetadataPerBlock, i)), \
+                                      "copy ValuMetadata blk1 to blk0"))
 
           evenIterPreCode.add(loopLabelEndEvenExit)
           # generate even code here (so far, for PrefetchGlobalRead=2 only)
@@ -4233,6 +4233,10 @@ class KernelWriterAssembly(KernelWriter):
     module = Module("closeSumAtLeastUnroll")
     if not prefetch:
       if isNGLL:
+        if kernel["ProblemType"]["SparseA"] and kernel["PrefetchGlobalRead"] == 2:
+          for i in range(0, self.states.a.numVgprValuMetadataPerBlock):
+            module.add(VMovB32(vgpr("ValuMetadata+%u"%i), vgpr("ValuMetadata+%u+%u"%(self.states.a.numVgprValuMetadataPerBlock, i)), \
+                                    "copy ValuMetadata blk1 to blk0"))
         toPGR1 = Label(self.labels.getName("toPGR1"), "")
         module.add(toPGR1)
       else:
@@ -4458,6 +4462,7 @@ class KernelWriterAssembly(KernelWriter):
         imod.add( self.incrementSrd(tP, sgpr("GlobalReadIncs%s+%u"%(tc,loopIdx)), incUpper))
         if kernel["ProblemType"]["SparseA"] and tP["isA"]:
           incSparse = self.calculateIncrementMetadata(kernel)
+          imod.addComment1("global read inc metadata loop%s"%(loopChar))
           imod.add(self.incrementMetadataSrd(incSparse, hex(0)))
     else:
       graIdx = 0
@@ -4876,7 +4881,12 @@ class KernelWriterAssembly(KernelWriter):
             for byteIdx in range(0, bpl):
               constOffset += (uDuIdx * kernel["MatrixInstK"] // kernel["DepthULdsDivisor"] // 8 + byteIdx)
               if byteIdx == 0:
-                destVgprLow="ValuMetadata+%u"%((wtIdx*kernel["LoopIters"]+unrollIdx)*kernel["DepthULdsDivisor"] + uDuIdx )
+                # For PGR=2 read metadata into the 3rd blk of vpgrValuMetadata
+                if kernel["PrefetchGlobalRead"] == 2:
+                  offsetBlk = self.states.a.numVgprValuMetadataPerBlock * 2
+                else:
+                  offsetBlk = 0
+                destVgprLow="ValuMetadata+%u+%u"%(offsetBlk, (wtIdx*kernel["LoopIters"]+unrollIdx)*kernel["DepthULdsDivisor"] + uDuIdx)
                 destVgpr=destVgprLow
               else:
                 destVgprHi = self.vgprPool.checkOut(1, 'destVgprHi')
@@ -5131,8 +5141,10 @@ class KernelWriterAssembly(KernelWriter):
                         comment="G -> Reg %u_%u_%u_%u"%(para, sPara, perp, sPerp )))
 
     if kernel["ProblemType"]["SparseA"] and tP["isA"]:
-      if kernel["PrefetchGlobalRead"] and unrollLoopIdx % 2 == 0:
-        offsetBlk = kernel["MIWaveTileA"] * kernel["LoopIters"] * kernel["DepthULdsDivisor"]
+      if kernel["PrefetchGlobalRead"] == 1 and unrollLoopIdx % 2 == 0:
+        offsetBlk = self.states.a.numVgprValuMetadataPerBlock
+      elif kernel["PrefetchGlobalRead"] == 2:
+        offsetBlk = self.states.a.numVgprValuMetadataPerBlock * 2
       else:
         offsetBlk = 0
       for wtIdx in range(0, kernel["MIWaveTileA"]):
@@ -5141,8 +5153,9 @@ class KernelWriterAssembly(KernelWriter):
           bpl = kernel["MIInputPerThread"]//8 # bytes per load: 1 byte for fp16,bf16, 2 bytes for int8
           constOffset = unrollIdx * kernel["MatrixInstK"] * kernel["DepthULdsDivisor"] // 8
           for uDuIdx in range(0, kernel["DepthULdsDivisor"]):
+            codeMod = Module("load metadata%u"%loopCnt)
             constOffset += uDuIdx * kernel["MatrixInstK"] // kernel["DepthULdsDivisor"] // 8
-            loadModule.add( self.chooseGlobalRead(kernel["BufferLoad"], \
+            codeMod.add( self.chooseGlobalRead(kernel["BufferLoad"], \
                       bpl, \
                       destVgpr="ValuMetadata+%u+%u"%(offsetBlk, (wtIdx*kernel["LoopIters"]+unrollIdx)*kernel["DepthULdsDivisor"] + uDuIdx), \
                       addr0=vgpr(offsetVgpr), addr1=sgpr("SrdMetadata",4), \
@@ -5151,6 +5164,7 @@ class KernelWriterAssembly(KernelWriter):
                       memoryModifierFormat=kernel["MemoryModifierFormat"], \
                       hi16=0, \
                       comment="G -> Reg ValuMetadata"))
+            loadModule.add(codeMod)
 
     if self.db["ConservativeWaitCnt"] & 0x1:
         imod.footer.add(SBarrier(comment="debug"))
@@ -5198,6 +5212,10 @@ class KernelWriterAssembly(KernelWriter):
               src0=hex(kernel["LdsOffsetA_Blk"]*tP["bpe"]), \
               src1=vgpr("LocalWriteAddr%s+%u"%(tc,i)), \
               comment="swap Red Blk"))
+        # This used to control where to store the metadata
+    if kernel["ProblemType"]["SparseA"] and tP["isA"] and kernel["PrefetchGlobalRead"] == 2 and kernel["ExpandPointerSwap"]:
+      tP["metadataWriteSwapByteOffset"] = 0 if tP["metadataWriteSwapByteOffset"] else self.states.a.numVgprValuMetadataPerBlock
+      module.addComment1("metadata write swap offset -> %u" % tP["metadataWriteSwapByteOffset"])
     return module
 
   ##############################################################################
@@ -5226,6 +5244,9 @@ class KernelWriterAssembly(KernelWriter):
             src0=resetMask, \
             src1=vgpr("LocalWriteAddr%s"%tP["tensorChar"]), \
             comment="reset to Red"))
+    if kernel["ProblemType"]["SparseA"] and tP["isA"] and kernel["PrefetchGlobalRead"] == 2 and kernel["ExpandPointerSwap"]:
+      tP["metadataWriteSwapByteOffset"] = 0
+      module.addComment1("reset metadata write offset to %u" % tP["metadataWriteSwapByteOffset"])
     return module
 
   ##############################################################################
@@ -5591,6 +5612,20 @@ class KernelWriterAssembly(KernelWriter):
       localWriteCode.add(SBarrier(comment="dump LDS"))
       localWriteCode.add(self.getCmpAssert(self.asmAssert.ne, sgpr("WorkGroup0"),1))
       #localWriteCode.add(self.getBomb())
+
+    if kernel["ProblemType"]["SparseA"] and tP["isA"] and kernel["PrefetchGlobalRead"] == 2:
+      #vpgr to store metadata
+      offsetBlk = tP["metadataWriteSwapByteOffset"]
+      instructionCnt = -1
+      for wtIdx in range(0, kernel["MIWaveTileA"]):
+        for unrollIdx in range(0, kernel["LoopIters"]):
+          for uDuIdx in range(0, kernel["DepthULdsDivisor"]):
+            instructionCnt +=1
+            localWriteCode = imod.add(Module("MetadataWrite%u "%(instructionCnt)))
+            localWriteCode.add(VMovB32( \
+              vgpr("ValuMetadata+%u+%u"%(offsetBlk, (wtIdx * kernel["LoopIters"]+unrollIdx * kernel["DepthULdsDivisor"]) + uDuIdx)), \
+              vgpr("ValuMetadata+%u+%u"%(self.states.a.numVgprValuMetadataPerBlock * 2, (wtIdx*kernel["LoopIters"]+unrollIdx)*kernel["DepthULdsDivisor"] + uDuIdx)), \
+              "copy ValuMetadata from blk2"))
 
     return imod
 
