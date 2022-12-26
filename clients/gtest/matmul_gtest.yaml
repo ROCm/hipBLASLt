@@ -469,4 +469,35 @@ Tests:
   bias_type: [default, f32_r]
   unit_check: 1
 
+- name: matmul_fallback_equality
+  category: pre_checkin
+  function:
+    matmul: *hpa_half_precision
+  matrix_size:
+    - { M:  1104, N:  1   , K:  4608 }
+    - { M:  1104, N:  16  , K:  4608 }
+    - { M:  1104, N:  1335, K:  4608 }
+    - { M:  1104, N:  1408, K:  4608 }
+    - { M:  4608, N:  1   , K:  320 }
+    - { M:  4608, N:  16  , K:  320 }
+    - { M:  4608, N:  1335, K:  320 }
+    - { M:  4608, N:  1408, K:  320 }
+    - { M:  16  , N:  1   , K:  4608 }
+    - { M:  16  , N:  16  , K:  4608 }
+    - { M:  16  , N:  1335, K:  4608 }
+    - { M:  16  , N:  1408, K:  4608 }
+    - { M:  768 , N:  1   , K:  4608 }
+    - { M:  768 , N:  16  , K:  4608 }
+    - { M:  768 , N:  1335, K:  4608 }
+    - { M:  768 , N:  1408, K:  4608 }
+    - { M:  4608, N:  1   , K:  768 }
+    - { M:  4608, N:  16  , K:  768 }
+    - { M:  4608, N:  1335, K:  768 }
+    - { M:  4608, N:  1408, K:  768 }
+  transA: N
+  transB: N
+  alpha: 1
+  beta: [ 0.0, 2.0 ]
+  unit_check: 1
+
 ...
