@@ -714,7 +714,13 @@ rocblaslt_status runContractionProblem(const rocblaslt_matmul_algo*             
 
         hardware          = Tensile::hip::GetDevice(*deviceProp);
         auto tensile_prob = ConstructTensileProblem(prob);
-
+        if(algo->fallback && prob.bias == nullptr
+           && tensile_prob.activationEnumArg() == Tensile::ActivationType::None)
+        {
+            tensile_prob.setUseBias(false);
+            tensile_prob.setActivationType(Tensile::ActivationType::None);
+            tensile_prob.setActivationHPA(false);
+        }
         std::shared_ptr<Tensile::ContractionSolution> solution
             = std::static_pointer_cast<Tensile::ContractionSolution>(algo->data.ptr);
 
@@ -884,7 +890,8 @@ void _convertToHeuristicResultArray(
     int                                                         requestedAlgoCount,
     rocblaslt_matmul_heuristic_result                           heuristicResultsArray[],
     int*                                                        returnAlgoCount,
-    size_t                                                      maxWorkSpaceBytes)
+    size_t                                                      maxWorkSpaceBytes,
+    size_t                                                      fallbackCount)
 {
     *returnAlgoCount = std::min((int)solutions.size(), requestedAlgoCount);
     for(size_t i = 0; i < *returnAlgoCount; i++)
@@ -892,6 +899,7 @@ void _convertToHeuristicResultArray(
         auto solution                          = solutions[i];
         heuristicResultsArray[i].algo.data.ptr = std::static_pointer_cast<void>(solution);
         heuristicResultsArray[i].algo.max_workspace_bytes = maxWorkSpaceBytes;
+        heuristicResultsArray[i].algo.fallback            = fallbackCount-- > 0 ? true : false;
         heuristicResultsArray[i].state                    = rocblaslt_status_success;
     }
     for(size_t i = *returnAlgoCount; i < requestedAlgoCount; i++)
@@ -937,8 +945,12 @@ rocblaslt_status getBestSolutions(RocblasltContractionProblem<Ti, To, Tc> prob,
     {
         solutions.insert(solutions.begin(), solutions_fallback.begin(), solutions_fallback.end());
     }
-    _convertToHeuristicResultArray(
-        solutions, requestedAlgoCount, heuristicResultsArray, returnAlgoCount, maxWorkSpaceBytes);
+    _convertToHeuristicResultArray(solutions,
+                                   requestedAlgoCount,
+                                   heuristicResultsArray,
+                                   returnAlgoCount,
+                                   maxWorkSpaceBytes,
+                                   solutions_fallback.size());
 
     return rocblaslt_status_success;
 }
