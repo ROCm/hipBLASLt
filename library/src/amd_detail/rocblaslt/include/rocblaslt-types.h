@@ -284,13 +284,14 @@ typedef enum rocblaslt_matmul_preference_attributes_
  * \brief rocblaslt_matmul_algo holds the description of the matrix
  * multiplication algorithm.
  *******************************************************************************/
-typedef struct _rocblaslt_matmul_algo
+typedef struct __attribute__((packed, aligned(8))) _rocblaslt_matmul_algo
 {
     union u
     {
         std::shared_ptr<void> ptr;
         uint8_t               data[48];
     } data;
+    bool   fallback;
     size_t max_workspace_bytes = 0;
 } rocblaslt_matmul_algo;
 
