@@ -1194,6 +1194,11 @@ class Solution(collections.abc.Mapping):
         state["SubGroup0"]   = state["MIWaveGroup"][0] * (state["WavefrontSize"] // state["MatrixInstN"])
         state["SubGroup1"]   = state["MIWaveGroup"][1] * state["MatrixInstN"]
 
+      #for the old Logic yaml file which does not contain keys: MIInputPerThreadA/B
+      if not "MIInputPerThreadA" in state:
+        state["MIInputPerThreadA"] = state["MIInputPerThread"]
+        state["MIInputPerThreadB"] = state["MIInputPerThread"]
+  
     elif EnableMatrixInstruction == False:
       state["ThreadTile0"] = state["ThreadTile"][0]
       state["ThreadTile1"] = state["ThreadTile"][1]
