@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022 Advanced Micro Devices, Inc.
+ * Copyright (C) 2022-2023 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -146,8 +146,8 @@ double get_time_us_no_sync(void)
 int64_t query_device_property()
 {
     int             device_count;
-    hipblasStatus_t status = (hipblasStatus_t)hipGetDeviceCount(&device_count);
-    if(status != HIPBLAS_STATUS_SUCCESS)
+    hipblasltStatus_t status = (hipblasltStatus_t)hipGetDeviceCount(&device_count);
+    if(status != HIPBLASLT_STATUS_SUCCESS)
     {
         hipblaslt_cerr << "Query device error: cannot get device count" << std::endl;
         return -1;
@@ -168,8 +168,8 @@ int64_t query_device_property()
             break;
 
         hipDeviceProp_t props;
-        hipblasStatus_t status = (hipblasStatus_t)hipGetDeviceProperties(&props, i);
-        if(status != HIPBLAS_STATUS_SUCCESS)
+        hipblasltStatus_t status = (hipblasltStatus_t)hipGetDeviceProperties(&props, i);
+        if(status != HIPBLASLT_STATUS_SUCCESS)
         {
             hipblaslt_cerr << "Query device error: cannot get device ID " << i << "'s property"
                            << std::endl;
@@ -206,8 +206,8 @@ int64_t query_device_property()
 /*  set current device to device_id */
 void set_device(int64_t device_id)
 {
-    hipblasStatus_t status = (hipblasStatus_t)hipSetDevice(device_id);
-    if(status != HIPBLAS_STATUS_SUCCESS)
+    hipblasltStatus_t status = (hipblasltStatus_t)hipSetDevice(device_id);
+    if(status != HIPBLASLT_STATUS_SUCCESS)
     {
         hipblaslt_cerr << "Set device error: cannot set device ID " << device_id
                        << ", there may not be such device ID" << std::endl;
@@ -221,8 +221,8 @@ void set_device(int64_t device_id)
 hipblaslt_local_handle::hipblaslt_local_handle()
 {
     auto status = hipblasLtCreate(&m_handle);
-    if(status != HIPBLAS_STATUS_SUCCESS)
-        throw std::runtime_error(hipblas_status_to_string(status));
+    if(status != HIPBLASLT_STATUS_SUCCESS)
+        throw std::runtime_error(hipblaslt_status_to_string(status));
 
 #ifdef GOOGLE_TEST
     if(t_set_stream_callback)

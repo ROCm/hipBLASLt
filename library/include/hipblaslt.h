@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022 Advanced Micro Devices, Inc.
+ * Copyright (C) 2022-2023 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -46,7 +46,6 @@
 
 #include "hipblaslt-export.h"
 #include "hipblaslt-version.h"
-#include <hipblas.h>
 
 #include <hip/hip_bfloat16.h>
 #include <hip/hip_complex.h>
@@ -91,11 +90,11 @@ typedef enum {
  *  \brief Specify the attributes that define the specifics of the matrix multiply operation.
  */
 typedef enum {
-  HIPBLASLT_MATMUL_DESC_TRANSA = 0,               /**<Specifies the type of transformation operation that should be performed on matrix A. Default value is HIPBLAS_OP_N (for example, non-transpose operation). See hipblasOperation_t. Data Type:int32_t*/
-  HIPBLASLT_MATMUL_DESC_TRANSB = 1,               /**<Specifies the type of transformation operation that should be performed on matrix B. Default value is HIPBLAS_OP_N (for example, non-transpose operation). See hipblasOperation_t. Data Type:int32_t*/
+  HIPBLASLT_MATMUL_DESC_TRANSA = 0,               /**<Specifies the type of transformation operation that should be performed on matrix A. Default value is HIPBLASLT_OP_N (for example, non-transpose operation). See hipblasltOperation_t. Data Type:int32_t*/
+  HIPBLASLT_MATMUL_DESC_TRANSB = 1,               /**<Specifies the type of transformation operation that should be performed on matrix B. Default value is HIPBLASLT_OP_N (for example, non-transpose operation). See hipblasltOperation_t. Data Type:int32_t*/
   HIPBLASLT_MATMUL_DESC_EPILOGUE = 2,             /**<Epilogue function. See hipblasLtEpilogue_t. Default value is: HIPBLASLT_EPILOGUE_DEFAULT. Data Type: uint32_t*/
   HIPBLASLT_MATMUL_DESC_BIAS_POINTER = 3,         /**<Bias or Bias gradient vector pointer in the device memory. Data Type:void *\/ const void**/
-  HIPBLASLT_MATMUL_DESC_BIAS_DATA_TYPE = 4,       /**<Type of the bias vector in the device memory. Can be set same as D matrix type or Scale type. Bias case: see HIPBLASLT_EPILOGUE_BIAS. Data Type:int32_t based on hipblasDatatype_t*/
+  HIPBLASLT_MATMUL_DESC_BIAS_DATA_TYPE = 4,       /**<Type of the bias vector in the device memory. Can be set same as D matrix type or Scale type. Bias case: see HIPBLASLT_EPILOGUE_BIAS. Data Type:int32_t based on hipDataType*/
   HIPBLASLT_MATMUL_DESC_MAX = 5
 } hipblasLtMatmulDescAttributes_t;
 
@@ -107,6 +106,32 @@ typedef enum {
   HIPBLASLT_MATMUL_PREF_MAX_WORKSPACE_BYTES = 1,  /**<Maximum allowed workspace memory. Default is 0 (no workspace memory allowed). Data Type: uint64_t*/
   HIPBLASLT_MATMUL_PREF_MAX = 2
 } hipblasLtMatmulPreferenceAttributes_t;
+
+/*! \brief hipblas status codes definition */
+typedef enum
+{
+    HIPBLASLT_STATUS_SUCCESS           = 0, /**< Function succeeds */
+    HIPBLASLT_STATUS_NOT_INITIALIZED   = 1, /**< HIPBLAS library not initialized */
+    HIPBLASLT_STATUS_ALLOC_FAILED      = 2, /**< resource allocation failed */
+    HIPBLASLT_STATUS_INVALID_VALUE     = 3, /**< unsupported numerical value was passed to function */
+    HIPBLASLT_STATUS_MAPPING_ERROR     = 4, /**< access to GPU memory space failed */
+    HIPBLASLT_STATUS_EXECUTION_FAILED  = 5, /**< GPU program failed to execute */
+    HIPBLASLT_STATUS_INTERNAL_ERROR    = 6, /**< an internal HIPBLAS operation failed */
+    HIPBLASLT_STATUS_NOT_SUPPORTED     = 7, /**< function not implemented */
+    HIPBLASLT_STATUS_ARCH_MISMATCH     = 8, /**< architecture mismatch */
+    HIPBLASLT_STATUS_HANDLE_IS_NULLPTR = 9, /**< hipBLAS handle is null pointer */
+    HIPBLASLT_STATUS_INVALID_ENUM      = 10, /**<  unsupported enum value was passed to function */
+    HIPBLASLT_STATUS_UNKNOWN           = 11, /**<  back-end returned an unsupported status code */
+} hipblasltStatus_t;
+
+// set the values of enum constants to be the same as those used in cblas
+/*! \brief Used to specify whether the matrix is to be transposed or not. */
+typedef enum
+{
+    HIPBLASLT_OP_N = 111, /**<  Operate with the matrix. */
+    HIPBLASLT_OP_T = 112, /**<  Operate with the transpose of the matrix. */
+    HIPBLASLT_OP_C = 113 /**< Operate with the conjugate transpose of the matrix. */
+} hipblasltOperation_t;
 
 #if defined(__HIP_PLATFORM_HCC__)
 typedef struct {
@@ -185,7 +210,7 @@ typedef struct _hipblasLtMatmulAlgo_t{
 typedef struct _hipblasLtMatmulHeuristicResult_t{
   hipblasLtMatmulAlgo_t algo;                      /**<Algo struct*/
   size_t workspaceSize = 0;                        /**<Actual size of workspace memory required.*/
-  hipblasStatus_t state = HIPBLAS_STATUS_SUCCESS;  /**<Result status. Other fields are valid only if, after call to hipblasLtMatmulAlgoGetHeuristic(), this member is set to HIPBLAS_STATUS_SUCCESS..*/
+  hipblasltStatus_t state = HIPBLASLT_STATUS_SUCCESS;  /**<Result status. Other fields are valid only if, after call to hipblasLtMatmulAlgoGetHeuristic(), this member is set to HIPBLASLT_STATUS_SUCCESS..*/
   float wavesCount = 1.0;                          /**<Waves count is a device utilization metric. A wavesCount value of 1.0f suggests that when the kernel is launched it will fully occupy the GPU.*/
   int reserved[4];                                 /**<Reserved.*/
 } hipblasLtMatmulHeuristicResult_t;
@@ -198,12 +223,12 @@ extern "C" {
 #endif
 
 HIPBLASLT_EXPORT
-hipblasStatus_t hipblasLtGetVersion(hipblasLtHandle_t handle, int* version);
+hipblasltStatus_t hipblasLtGetVersion(hipblasLtHandle_t handle, int* version);
 HIPBLASLT_EXPORT
-hipblasStatus_t hipblasLtGetGitRevision(hipblasLtHandle_t handle, char* rev);
+hipblasltStatus_t hipblasLtGetGitRevision(hipblasLtHandle_t handle, char* rev);
 
 HIPBLASLT_EXPORT
-hipblasStatus_t hipblasLtGetArchName(char** archName);
+hipblasltStatus_t hipblasLtGetArchName(char** archName);
 /*! \ingroup library_module
  *  \brief Create a hipblaslt handle
  *
@@ -219,11 +244,11 @@ hipblasStatus_t hipblasLtGetArchName(char** archName);
  *  handle  Pointer to the allocated hipBLASLt handle for the created hipBLASLt
  * context.
  *
- *  \retval HIPBLAS_STATUS_SUCCESS The allocation completed successfully.
- *  \retval HIPBLAS_STATUS_INVALID_VALUE \p handle == NULL.
+ *  \retval HIPBLASLT_STATUS_SUCCESS The allocation completed successfully.
+ *  \retval HIPBLASLT_STATUS_INVALID_VALUE \p handle == NULL.
  */
 HIPBLASLT_EXPORT
-hipblasStatus_t hipblasLtCreate(hipblasLtHandle_t* handle);
+hipblasltStatus_t hipblasLtCreate(hipblasLtHandle_t* handle);
 
 /*! \ingroup library_module
  *  \brief Destory a hipblaslt handle
@@ -239,12 +264,12 @@ hipblasStatus_t hipblasLtCreate(hipblasLtHandle_t* handle);
  *  @param[in]
  *  handle  Pointer to the hipBLASLt handle to be destroyed.
  *
- *  \retval HIPBLAS_STATUS_SUCCESS The hipBLASLt context was successfully
- * destroyed. \retval HIPBLAS_STATUS_NOT_INITIALIZED The hipBLASLt library was
- * not initialized. \retval HIPBLAS_STATUS_INVALID_VALUE \p handle == NULL.
+ *  \retval HIPBLASLT_STATUS_SUCCESS The hipBLASLt context was successfully
+ * destroyed. \retval HIPBLASLT_STATUS_NOT_INITIALIZED The hipBLASLt library was
+ * not initialized. \retval HIPBLASLT_STATUS_INVALID_VALUE \p handle == NULL.
  */
 HIPBLASLT_EXPORT
-hipblasStatus_t hipblasLtDestroy(const hipblasLtHandle_t handle);
+hipblasltStatus_t hipblasLtDestroy(const hipblasLtHandle_t handle);
 
 /*! \ingroup library_module
  *  \brief Create a matrix layout descriptor
@@ -258,7 +283,7 @@ hipblasStatus_t hipblasLtDestroy(const hipblasLtHandle_t handle);
  * created by this function. see \ref hipblasLtMatrixLayout_t .
  *  @param[in]
  *  type Enumerant that specifies the data precision for the matrix layout
- * descriptor this function creates. See hipblasDataType_t.
+ * descriptor this function creates. See hipDataType.
  *  @param[in]
  *  rows Number of rows of the matrix.
  *  @param[in]
@@ -268,12 +293,12 @@ hipblasStatus_t hipblasLtDestroy(const hipblasLtHandle_t handle);
  * number of elements to jump to reach the next column. Thus ld >= m (number of
  * rows).
  *
- *  \retval HIPBLAS_STATUS_SUCCESS If the descriptor was created successfully.
- *  \retval HIPBLAS_STATUS_ALLOC_FAILED If the memory could not be allocated.
+ *  \retval HIPBLASLT_STATUS_SUCCESS If the descriptor was created successfully.
+ *  \retval HIPBLASLT_STATUS_ALLOC_FAILED If the memory could not be allocated.
  */
 HIPBLASLT_EXPORT
-hipblasStatus_t hipblasLtMatrixLayoutCreate(hipblasLtMatrixLayout_t* matLayout,
-                                            hipblasDatatype_t        type,
+hipblasltStatus_t hipblasLtMatrixLayoutCreate(hipblasLtMatrixLayout_t* matLayout,
+                                            hipDataType        type,
                                             uint64_t                 rows,
                                             uint64_t                 cols,
                                             int64_t                  ld);
@@ -288,10 +313,10 @@ hipblasStatus_t hipblasLtMatrixLayoutCreate(hipblasLtMatrixLayout_t* matLayout,
  *  matLayout Pointer to the structure holding the matrix layout descriptor that
  * should be destroyed by this function. see \ref hipblasLtMatrixLayout_t .
  *
- *  \retval HIPBLAS_STATUS_SUCCESS If the operation was successful.
+ *  \retval HIPBLASLT_STATUS_SUCCESS If the operation was successful.
  */
 HIPBLASLT_EXPORT
-hipblasStatus_t hipblasLtMatrixLayoutDestroy(const hipblasLtMatrixLayout_t matLayout);
+hipblasltStatus_t hipblasLtMatrixLayoutDestroy(const hipblasLtMatrixLayout_t matLayout);
 
 /*! \ingroup library_module
  *  \brief  Set attribute to a matrix descriptor
@@ -312,12 +337,12 @@ hipblasStatus_t hipblasLtMatrixLayoutDestroy(const hipblasLtMatrixLayout_t matLa
  *  @param[in]
  *  sizeInBytes Size of buf buffer (in bytes) for verification.
  *
- *  \retval HIPBLAS_STATUS_SUCCESS If the attribute was set successfully..
- *  \retval HIPBLAS_STATUS_INVALID_VALUE If \p buf is NULL or \p sizeInBytes
+ *  \retval HIPBLASLT_STATUS_SUCCESS If the attribute was set successfully..
+ *  \retval HIPBLASLT_STATUS_INVALID_VALUE If \p buf is NULL or \p sizeInBytes
  * doesn't match the size of the internal storage for the selected attribute.
  */
 HIPBLASLT_EXPORT
-hipblasStatus_t hipblasLtMatrixLayoutSetAttribute(hipblasLtMatrixLayout_t          matLayout,
+hipblasltStatus_t hipblasLtMatrixLayoutSetAttribute(hipblasLtMatrixLayout_t          matLayout,
                                                   hipblasLtMatrixLayoutAttribute_t attr,
                                                   const void*                      buf,
                                                   size_t                           sizeInBytes);
@@ -342,19 +367,19 @@ hipblasStatus_t hipblasLtMatrixLayoutSetAttribute(hipblasLtMatrixLayout_t       
  *  @param[in]
  *  sizeInBytes Size of \p buf buffer (in bytes) for verification.
  *  @param[out]
- *  sizeWritten Valid only when the return value is HIPBLAS_STATUS_SUCCESS. If
+ *  sizeWritten Valid only when the return value is HIPBLASLT_STATUS_SUCCESS. If
  * sizeInBytes is non-zero: then sizeWritten is the number of bytes actually
  * written; if sizeInBytes is 0: then sizeWritten is the number of bytes needed
  * to write full contents.
  *
- *  \retval HIPBLAS_STATUS_SUCCESS       If attribute's value was successfully
- * written to user memory. \retval HIPBLAS_STATUS_INVALID_VALUE If \p
+ *  \retval HIPBLASLT_STATUS_SUCCESS       If attribute's value was successfully
+ * written to user memory. \retval HIPBLASLT_STATUS_INVALID_VALUE If \p
  * sizeInBytes is 0 and \p sizeWritten is NULL, or if \p sizeInBytes is non-zero
  * and \p buf is NULL, or \p sizeInBytes doesn't match size of internal storage
  * for the selected attribute.
  */
 HIPBLASLT_EXPORT
-hipblasStatus_t hipblasLtMatrixLayoutGetAttribute(hipblasLtMatrixLayout_t          matLayout,
+hipblasltStatus_t hipblasLtMatrixLayoutGetAttribute(hipblasLtMatrixLayout_t          matLayout,
                                                   hipblasLtMatrixLayoutAttribute_t attr,
                                                   void*                            buf,
                                                   size_t                           sizeInBytes,
@@ -375,15 +400,15 @@ hipblasStatus_t hipblasLtMatrixLayoutGetAttribute(hipblasLtMatrixLayout_t       
  * multiply descriptor this function creates. See \ref hipblasLtComputeType_t .
  *  @param[in]
  *  scaleType  Enumerant that specifies the data precision for the matrix
- * transform descriptor this function creates. See hipblasDataType_t.
+ * transform descriptor this function creates. See hipDataType.
  *
- *  \retval HIPBLAS_STATUS_SUCCESS If the descriptor was created successfully.
- *  \retval HIPBLAS_STATUS_ALLOC_FAILED If the memory could not be allocated.
+ *  \retval HIPBLASLT_STATUS_SUCCESS If the descriptor was created successfully.
+ *  \retval HIPBLASLT_STATUS_ALLOC_FAILED If the memory could not be allocated.
  */
 HIPBLASLT_EXPORT
-hipblasStatus_t hipblasLtMatmulDescCreate(hipblasLtMatmulDesc_t* matmulDesc,
+hipblasltStatus_t hipblasLtMatmulDescCreate(hipblasLtMatmulDesc_t* matmulDesc,
                                           hipblasLtComputeType_t computeType,
-                                          hipblasDatatype_t      scaleType);
+                                          hipDataType      scaleType);
 
 /*! \ingroup library_module
  *  \brief Destory a matrix multiply descriptor
@@ -396,10 +421,10 @@ hipblasStatus_t hipblasLtMatmulDescCreate(hipblasLtMatmulDesc_t* matmulDesc,
  *  matmulDesc  Pointer to the structure holding the matrix multiply descriptor
  * that should be destroyed by this function. See \ref hipblasLtMatmulDesc_t .
  *
- *  \retval HIPBLAS_STATUS_SUCCESS If operation was successful.
+ *  \retval HIPBLASLT_STATUS_SUCCESS If operation was successful.
  */
 HIPBLASLT_EXPORT
-hipblasStatus_t hipblasLtMatmulDescDestroy(const hipblasLtMatmulDesc_t matmulDesc);
+hipblasltStatus_t hipblasLtMatmulDescDestroy(const hipblasLtMatmulDesc_t matmulDesc);
 
 /*! \ingroup library_module
  *  \brief  Set attribute to a matrix multiply descriptor
@@ -420,12 +445,12 @@ hipblasStatus_t hipblasLtMatmulDescDestroy(const hipblasLtMatmulDesc_t matmulDes
  *  @param[in]
  *  sizeInBytes Size of buf buffer (in bytes) for verification.
  *
- *  \retval HIPBLAS_STATUS_SUCCESS If the attribute was set successfully..
- *  \retval HIPBLAS_STATUS_INVALID_VALUE If \p buf is NULL or \p sizeInBytes
+ *  \retval HIPBLASLT_STATUS_SUCCESS If the attribute was set successfully..
+ *  \retval HIPBLASLT_STATUS_INVALID_VALUE If \p buf is NULL or \p sizeInBytes
  * doesn't match the size of the internal storage for the selected attribute.
  */
 HIPBLASLT_EXPORT
-hipblasStatus_t hipblasLtMatmulDescSetAttribute(hipblasLtMatmulDesc_t           matmulDesc,
+hipblasltStatus_t hipblasLtMatmulDescSetAttribute(hipblasLtMatmulDesc_t           matmulDesc,
                                                 hipblasLtMatmulDescAttributes_t attr,
                                                 const void*                     buf,
                                                 size_t                          sizeInBytes);
@@ -450,19 +475,19 @@ hipblasStatus_t hipblasLtMatmulDescSetAttribute(hipblasLtMatmulDesc_t           
  *  @param[in]
  *  sizeInBytes Size of \p buf buffer (in bytes) for verification.
  *  @param[out]
- *  sizeWritten Valid only when the return value is HIPBLAS_STATUS_SUCCESS. If
+ *  sizeWritten Valid only when the return value is HIPBLASLT_STATUS_SUCCESS. If
  * sizeInBytes is non-zero: then sizeWritten is the number of bytes actually
  * written; if sizeInBytes is 0: then sizeWritten is the number of bytes needed
  * to write full contents.
  *
- *  \retval HIPBLAS_STATUS_SUCCESS       If attribute's value was successfully
- * written to user memory. \retval HIPBLAS_STATUS_INVALID_VALUE If \p
+ *  \retval HIPBLASLT_STATUS_SUCCESS       If attribute's value was successfully
+ * written to user memory. \retval HIPBLASLT_STATUS_INVALID_VALUE If \p
  * sizeInBytes is 0 and \p sizeWritten is NULL, or if \p sizeInBytes is non-zero
  * and \p buf is NULL, or \p sizeInBytes doesn't match size of internal storage
  * for the selected attribute.
  */
 HIPBLASLT_EXPORT
-hipblasStatus_t hipblasLtMatmulDescGetAttribute(hipblasLtMatmulDesc_t           matmulDesc,
+hipblasltStatus_t hipblasLtMatmulDescGetAttribute(hipblasLtMatmulDesc_t           matmulDesc,
                                                 hipblasLtMatmulDescAttributes_t attr,
                                                 void*                           buf,
                                                 size_t                          sizeInBytes,
@@ -479,12 +504,12 @@ hipblasStatus_t hipblasLtMatmulDescGetAttribute(hipblasLtMatmulDesc_t           
  *  pref  Pointer to the structure holding the matrix multiply preferences
  * descriptor created by this function. see \ref hipblasLtMatmulPreference_t .
  *
- *  \retval HIPBLAS_STATUS_SUCCESS         If the descriptor was created
- * successfully. \retval HIPBLAS_STATUS_ALLOC_FAILED    If memory could not be
+ *  \retval HIPBLASLT_STATUS_SUCCESS         If the descriptor was created
+ * successfully. \retval HIPBLASLT_STATUS_ALLOC_FAILED    If memory could not be
  * allocated.
  */
 HIPBLASLT_EXPORT
-hipblasStatus_t hipblasLtMatmulPreferenceCreate(hipblasLtMatmulPreference_t* pref);
+hipblasltStatus_t hipblasLtMatmulPreferenceCreate(hipblasLtMatmulPreference_t* pref);
 
 /*! \ingroup library_module
  *  \brief Destory a preferences descriptor
@@ -498,10 +523,10 @@ hipblasStatus_t hipblasLtMatmulPreferenceCreate(hipblasLtMatmulPreference_t* pre
  * descriptor that should be destroyed by this function. See \ref
  * hipblasLtMatmulPreference_t .
  *
- *  \retval HIPBLAS_STATUS_SUCCESS If operation was successful.
+ *  \retval HIPBLASLT_STATUS_SUCCESS If operation was successful.
  */
 HIPBLASLT_EXPORT
-hipblasStatus_t hipblasLtMatmulPreferenceDestroy(const hipblasLtMatmulPreference_t pref);
+hipblasltStatus_t hipblasLtMatmulPreferenceDestroy(const hipblasLtMatmulPreference_t pref);
 
 /*! \ingroup library_module
  *  \brief Set attribute to a preference descriptor
@@ -522,12 +547,12 @@ hipblasStatus_t hipblasLtMatmulPreferenceDestroy(const hipblasLtMatmulPreference
  *  @param[in]
  *  sizeInBytes Size of \p buf buffer (in bytes) for verification.
  *
- *  \retval HIPBLAS_STATUS_SUCCESS If the attribute was set successfully..
- *  \retval HIPBLAS_STATUS_INVALID_VALUE If \p buf is NULL or \p sizeInBytes
+ *  \retval HIPBLASLT_STATUS_SUCCESS If the attribute was set successfully..
+ *  \retval HIPBLASLT_STATUS_INVALID_VALUE If \p buf is NULL or \p sizeInBytes
  * doesn't match the size of the internal storage for the selected attribute.
  */
 HIPBLASLT_EXPORT
-hipblasStatus_t hipblasLtMatmulPreferenceSetAttribute(hipblasLtMatmulPreference_t           pref,
+hipblasltStatus_t hipblasLtMatmulPreferenceSetAttribute(hipblasLtMatmulPreference_t           pref,
                                                       hipblasLtMatmulPreferenceAttributes_t attr,
                                                       const void*                           buf,
                                                       size_t sizeInBytes);
@@ -552,19 +577,19 @@ hipblasStatus_t hipblasLtMatmulPreferenceSetAttribute(hipblasLtMatmulPreference_
  *  @param[in]
  *  sizeInBytes Size of \p buf buffer (in bytes) for verification.
  *  @param[out]
- *  sizeWritten Valid only when the return value is HIPBLAS_STATUS_SUCCESS. If
+ *  sizeWritten Valid only when the return value is HIPBLASLT_STATUS_SUCCESS. If
  * sizeInBytes is non-zero: then sizeWritten is the number of bytes actually
  * written; if sizeInBytes is 0: then sizeWritten is the number of bytes needed
  * to write full contents.
  *
- *  \retval HIPBLAS_STATUS_SUCCESS       If attribute's value was successfully
- * written to user memory. \retval HIPBLAS_STATUS_INVALID_VALUE If \p
+ *  \retval HIPBLASLT_STATUS_SUCCESS       If attribute's value was successfully
+ * written to user memory. \retval HIPBLASLT_STATUS_INVALID_VALUE If \p
  * sizeInBytes is 0 and \p sizeWritten is NULL, or if \p sizeInBytes is non-zero
  * and \p buf is NULL, or \p sizeInBytes doesn't match size of internal storage
  * for the selected attribute.
  */
 HIPBLASLT_EXPORT
-hipblasStatus_t hipblasLtMatmulPreferenceGetAttribute(hipblasLtMatmulPreference_t           pref,
+hipblasltStatus_t hipblasLtMatmulPreferenceGetAttribute(hipblasLtMatmulPreference_t           pref,
                                                       hipblasLtMatmulPreferenceAttributes_t attr,
                                                       void*                                 buf,
                                                       size_t  sizeInBytes,
@@ -602,14 +627,14 @@ hipblasStatus_t hipblasLtMatmulPreferenceGetAttribute(hipblasLtMatmulPreference_
  *  returnAlgoCount         Number of algorithms returned by this function. This
  * is the number of \p heuristicResultsArray elements written.
  *
- *  \retval HIPBLAS_STATUS_SUCCESS           If query was successful. Inspect
+ *  \retval HIPBLASLT_STATUS_SUCCESS           If query was successful. Inspect
  * heuristicResultsArray[0 to (returnAlgoCount -1)].state for the status of the
- * results. \retval HIPBLAS_STATUS_NOT_SUPPORTED     If no heuristic function
- * available for current configuration. \retval HIPBLAS_STATUS_INVALID_VALUE If
+ * results. \retval HIPBLASLT_STATUS_NOT_SUPPORTED     If no heuristic function
+ * available for current configuration. \retval HIPBLASLT_STATUS_INVALID_VALUE If
  * \p requestedAlgoCount is less or equal to zero.
  */
 HIPBLASLT_EXPORT
-hipblasStatus_t
+hipblasltStatus_t
     hipblasLtMatmulAlgoGetHeuristic(hipblasLtHandle_t                handle,
                                     hipblasLtMatmulDesc_t            matmulDesc,
                                     hipblasLtMatrixLayout_t          Adesc,
@@ -669,20 +694,20 @@ hipblasStatus_t
  *  stream                  The HIP stream where all the GPU work will be
  * submitted.
  *
- *  \retval HIPBLAS_STATUS_SUCCESS           If the operation completed
- * successfully. \retval HIPBLAS_STATUS_EXECUTION_FAILED  If HIP reported an
- * execution error from the device. \retval HIPBLAS_STATUS_ARCH_MISMATCH     If
+ *  \retval HIPBLASLT_STATUS_SUCCESS           If the operation completed
+ * successfully. \retval HIPBLASLT_STATUS_EXECUTION_FAILED  If HIP reported an
+ * execution error from the device. \retval HIPBLASLT_STATUS_ARCH_MISMATCH     If
  * the configured operation cannot be run using the selected device. \retval
- * HIPBLAS_STATUS_NOT_SUPPORTED     If the current implementation on the
+ * HIPBLASLT_STATUS_NOT_SUPPORTED     If the current implementation on the
  * selected device doesn't support the configured operation. \retval
- * HIPBLAS_STATUS_INVALID_VALUE     If the parameters are unexpectedly NULL, in
+ * HIPBLASLT_STATUS_INVALID_VALUE     If the parameters are unexpectedly NULL, in
  * conflict or in an impossible configuration. For example, when
  * workspaceSizeInBytes is less than workspace required by the configured algo.
  *  \retval HIBLAS_STATUS_NOT_INITIALIZED    If hipBLASLt handle has not been
  * initialized.
  */
 HIPBLASLT_EXPORT
-hipblasStatus_t hipblasLtMatmul(hipblasLtHandle_t            handle,
+hipblasltStatus_t hipblasLtMatmul(hipblasLtHandle_t            handle,
                                 hipblasLtMatmulDesc_t        matmulDesc,
                                 const void*                  alpha,
                                 const void*                  A,

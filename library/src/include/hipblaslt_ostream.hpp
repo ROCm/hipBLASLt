@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022 Advanced Micro Devices, Inc.
+ * Copyright (C) 2022-2023 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -415,11 +415,11 @@ public:
         return os << s.c_str();
     }
 
-    // hipblasDatatype_t output
+    // hipDataType output
     friend hipblaslt_internal_ostream& operator<<(hipblaslt_internal_ostream& os,
-                                                  hipblasDatatype_t           d)
+                                                  hipDataType           d)
     {
-        os.m_os << hipblas_datatype_to_string(d);
+        os.m_os << hip_datatype_to_string(d);
         return os;
     }
 
@@ -431,19 +431,19 @@ public:
         return os;
     }
 
-    // hipblasOperation_t output
+    // hipblasltOperation_t output
     friend hipblaslt_internal_ostream& operator<<(hipblaslt_internal_ostream& os,
-                                                  hipblasOperation_t          trans)
+                                                  hipblasltOperation_t          trans)
 
     {
-        return os << hipblas_operation_to_string(trans);
+        return os << hipblaslt_operation_to_string(trans);
     }
 
-    // hipblasStatus_t output
+    // hipblasltStatus_t output
     friend hipblaslt_internal_ostream& operator<<(hipblaslt_internal_ostream& os,
-                                                  hipblasStatus_t             status)
+                                                  hipblasltStatus_t             status)
     {
-        os.m_os << hipblas_status_to_string(status);
+        os.m_os << hipblaslt_status_to_string(status);
         return os;
     }
 

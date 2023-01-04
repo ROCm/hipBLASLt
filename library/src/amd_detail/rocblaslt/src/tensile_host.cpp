@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022 Advanced Micro Devices, Inc.
+ * Copyright (C) 2022-2023 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -84,18 +84,18 @@ namespace
     /******************************************************
  * Map a hipblas data type to a corresponding Tensile type *
  ******************************************************/
-    inline Tensile::DataType hipblasDatatype_to_tensile_type(hipblasDatatype_t type)
+    inline Tensile::DataType hipDataType_to_tensile_type(hipDataType type)
     {
         switch(type)
         {
-        case HIPBLAS_R_16F:
+        case HIP_R_16F:
             return Tensile::DataType::Half;
-        case HIPBLAS_R_32F:
+        case HIP_R_32F:
             return Tensile::DataType::Float;
-        case HIPBLAS_R_16B:
+        case HIP_R_16BF:
             return Tensile::DataType::BFloat16;
         default:
-            assert(!"hipblasDatatype_to_tensile_type: non-supported type");
+            assert(!"hipDataType_to_tensile_type: non-supported type");
             return Tensile::DataType::None;
         }
     }
@@ -191,7 +191,7 @@ namespace
         // clang-format off
 
         // If A is transposed, swap the free and bound dimensions and their ranks
-        if(prob.trans_a != HIPBLAS_OP_N)
+        if(prob.trans_a != HIPBLASLT_OP_N)
         {
             a = {
                     Tensile_Ti,
@@ -215,7 +215,7 @@ namespace
         }
 
         // If B is transposed, swap the free and bound dimensions and their ranks
-        if(prob.trans_b != HIPBLAS_OP_N)
+        if(prob.trans_b != HIPBLASLT_OP_N)
         {
             b = {
                     Tensile_Ti,
@@ -300,7 +300,7 @@ namespace
 
         // set bias mode
         tensileProblem.setUseBias(true);
-        tensileProblem.setBiasType(hipblasDatatype_to_tensile_type(prob.bias_type));
+        tensileProblem.setBiasType(hipDataType_to_tensile_type(prob.bias_type));
 
         // set Actvation
         tensileProblem.setActivationType(Tensile::ActivationType::All);
@@ -777,10 +777,10 @@ RocblasltContractionProblem<Ti, To, Tc>
                               const Tc*                   beta,
                               size_t                      maxWorkSpaceBytes)
 {
-    hipblasOperation_t opA       = matmul_descr->op_A;
-    hipblasOperation_t opB       = matmul_descr->op_B;
+    hipblasltOperation_t opA       = matmul_descr->op_A;
+    hipblasltOperation_t opB       = matmul_descr->op_B;
     const void*        bias      = nullptr;
-    hipblasDatatype_t  bias_type = matmul_descr->bias_type == static_cast<hipblasDatatype_t>(-1)
+    hipDataType  bias_type = matmul_descr->bias_type == static_cast<hipDataType>(-1)
                                        ? matD->type
                                        : matmul_descr->bias_type;
     rocblaslt_epilogue epilogue  = matmul_descr->epilogue;
@@ -813,7 +813,7 @@ RocblasltContractionProblem<Ti, To, Tc>
 
     int64_t m = num_rows_d;
     int64_t n = num_cols_d;
-    int64_t k = (opA == HIPBLAS_OP_N) ? num_cols_a : num_rows_a;
+    int64_t k = (opA == HIPBLASLT_OP_N) ? num_cols_a : num_rows_a;
 
     int8_t      dummy;
     const void* dummy_ptr = &dummy;

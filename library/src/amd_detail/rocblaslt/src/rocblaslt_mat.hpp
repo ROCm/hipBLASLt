@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022 Advanced Micro Devices, Inc.
+ * Copyright (C) 2022-2023 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -35,8 +35,8 @@
 
 template <typename Ti, typename To, typename Tc>
 rocblaslt_status rocblaslt_batched_template(rocblaslt_handle             handle,
-                                            hipblasOperation_t           trans_a,
-                                            hipblasOperation_t           trans_b,
+                                            hipblasltOperation_t         trans_a,
+                                            hipblasltOperation_t         trans_b,
                                             int64_t                      m,
                                             int64_t                      n,
                                             int64_t                      k,
@@ -64,7 +64,7 @@ rocblaslt_status rocblaslt_batched_template(rocblaslt_handle             handle,
                                             void*                        workspace,
                                             size_t                       workspaceSizeInBytes,
                                             const void*                  bias,
-                                            hipblasDatatype_t            bias_type,
+                                            hipDataType            bias_type,
                                             rocblaslt_epilogue           epilogue,
                                             hipStream_t                  stream)
 {
@@ -110,8 +110,8 @@ rocblaslt_status rocblaslt_batched_template(rocblaslt_handle             handle,
 
 template <typename Ti, typename To = Ti, typename Tc = To>
 rocblaslt_status rocblaslt_matmul_typecasting(rocblaslt_handle             handle,
-                                              hipblasOperation_t           trans_a,
-                                              hipblasOperation_t           trans_b,
+                                              hipblasltOperation_t         trans_a,
+                                              hipblasltOperation_t         trans_b,
                                               int64_t                      m,
                                               int64_t                      n,
                                               int64_t                      k,
@@ -139,7 +139,7 @@ rocblaslt_status rocblaslt_matmul_typecasting(rocblaslt_handle             handl
                                               void*                        workspace,
                                               size_t                       workspaceSizeInBytes,
                                               const void*                  bias,
-                                              hipblasDatatype_t            bias_type,
+                                              hipDataType            bias_type,
                                               rocblaslt_epilogue           epilogue,
                                               hipStream_t                  stream)
 {
@@ -186,30 +186,30 @@ rocblaslt_status rocblaslt_matmul_typecasting(rocblaslt_handle             handl
 }
 
 inline rocblaslt_status rocblaslt_matmul_template(rocblaslt_handle             handle,
-                                                  hipblasOperation_t           trans_a,
-                                                  hipblasOperation_t           trans_b,
+                                                  hipblasltOperation_t         trans_a,
+                                                  hipblasltOperation_t         trans_b,
                                                   int64_t                      m,
                                                   int64_t                      n,
                                                   int64_t                      k,
                                                   const void*                  alpha,
                                                   const void*                  a,
-                                                  hipblasDatatype_t            a_type,
+                                                  hipDataType            a_type,
                                                   int64_t                      ld_a,
                                                   int64_t                      batch_stride_a,
                                                   int64_t                      offset_a,
                                                   const void*                  b,
-                                                  hipblasDatatype_t            b_type,
+                                                  hipDataType            b_type,
                                                   int64_t                      ld_b,
                                                   int64_t                      batch_stride_b,
                                                   int64_t                      offset_b,
                                                   const void*                  beta,
                                                   const void*                  c,
-                                                  hipblasDatatype_t            c_type,
+                                                  hipDataType            c_type,
                                                   int64_t                      ld_c,
                                                   int64_t                      batch_stride_c,
                                                   int64_t                      offset_c,
                                                   void*                        d,
-                                                  hipblasDatatype_t            d_type,
+                                                  hipDataType            d_type,
                                                   int64_t                      ld_d,
                                                   int64_t                      batch_stride_d,
                                                   int64_t                      offset_d,
@@ -220,7 +220,7 @@ inline rocblaslt_status rocblaslt_matmul_template(rocblaslt_handle             h
                                                   void*                        workspace,
                                                   size_t                       workspaceSizeInBytes,
                                                   const void*                  bias,
-                                                  hipblasDatatype_t            bias_type,
+                                                  hipDataType            bias_type,
                                                   rocblaslt_epilogue           epilogue,
                                                   hipStream_t                  stream)
 {
@@ -232,9 +232,9 @@ inline rocblaslt_status rocblaslt_matmul_template(rocblaslt_handle             h
         batch_stride_d, offset_d, batch_count, strided_batch, algo, workspace,            \
         workspaceSizeInBytes, bias, bias_type, epilogue, stream
 
-    if(a_type == HIPBLAS_R_32F && b_type == HIPBLAS_R_32F)
+    if(a_type == HIP_R_32F && b_type == HIP_R_32F)
     {
-        if(c_type == HIPBLAS_R_32F && d_type == HIPBLAS_R_32F)
+        if(c_type == HIP_R_32F && d_type == HIP_R_32F)
         {
             if(compute_type == rocblaslt_compute_f32)
             {
@@ -242,9 +242,9 @@ inline rocblaslt_status rocblaslt_matmul_template(rocblaslt_handle             h
             }
         }
     }
-    else if(a_type == HIPBLAS_R_16F && b_type == HIPBLAS_R_16F)
+    else if(a_type == HIP_R_16F && b_type == HIP_R_16F)
     {
-        if(c_type == HIPBLAS_R_16F && d_type == HIPBLAS_R_16F)
+        if(c_type == HIP_R_16F && d_type == HIP_R_16F)
         {
             if(compute_type == rocblaslt_compute_f32)
             {
@@ -253,9 +253,9 @@ inline rocblaslt_status rocblaslt_matmul_template(rocblaslt_handle             h
             }
         }
     }
-    else if(a_type == HIPBLAS_R_16B && b_type == HIPBLAS_R_16B)
+    else if(a_type == HIP_R_16BF && b_type == HIP_R_16BF)
     {
-        if(c_type == HIPBLAS_R_16B && d_type == HIPBLAS_R_16B)
+        if(c_type == HIP_R_16BF && d_type == HIP_R_16BF)
         {
             if(compute_type == rocblaslt_compute_f32)
             {

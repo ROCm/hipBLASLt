@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022 Advanced Micro Devices, Inc.
+ * Copyright (C) 2022-2023 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -142,7 +142,7 @@ namespace
         {
             RocBlasLt_TestName<aux_test> name(arg.name);
 
-            name << hipblas_datatype_to_string(arg.a_type);
+            name << hip_datatype_to_string(arg.a_type);
 
             return std::move(name);
         }

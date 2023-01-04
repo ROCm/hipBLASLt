@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022 Advanced Micro Devices, Inc.
+ * Copyright (C) 2022-2023 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -32,8 +32,9 @@
 #ifndef _ROCBLASLT_TYPES_H_
 #define _ROCBLASLT_TYPES_H_
 
+#include <hipblaslt/hipblaslt.h>
+
 #include <hip/hip_bfloat16.h>
-#include <hipblas.h>
 #include <memory>
 #include <stddef.h>
 #include <stdint.h>

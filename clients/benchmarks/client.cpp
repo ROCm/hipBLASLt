@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022 Advanced Micro Devices, Inc.
+ * Copyright (C) 2022-2023 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -68,7 +68,7 @@ void run_function(const func_map& map, const Arguments& arg, const std::string& 
     auto match = map.find(arg.function);
     if(match == map.end())
         throw std::invalid_argument("Invalid combination --function "s + arg.function
-                                    + " --a_type "s + hipblas_datatype_to_string(arg.a_type) + msg);
+                                    + " --a_type "s + hip_datatype_to_string(arg.a_type) + msg);
     match->second(arg);
 }
 
@@ -462,33 +462,33 @@ try
 
     std::transform(precision.begin(), precision.end(), precision.begin(), ::tolower);
     auto prec = string_to_hipblas_datatype(precision);
-    if(prec == static_cast<hipblasDatatype_t>(-1))
+    if(prec == static_cast<hipDataType>(-1))
         throw std::invalid_argument("Invalid value for --precision " + precision);
 
     arg.a_type = a_type == "" ? prec : string_to_hipblas_datatype(a_type);
-    if(arg.a_type == static_cast<hipblasDatatype_t>(-1))
+    if(arg.a_type == static_cast<hipDataType>(-1))
         throw std::invalid_argument("Invalid value for --a_type " + a_type);
 
     arg.b_type = b_type == "" ? prec : string_to_hipblas_datatype(b_type);
-    if(arg.b_type == static_cast<hipblasDatatype_t>(-1))
+    if(arg.b_type == static_cast<hipDataType>(-1))
         throw std::invalid_argument("Invalid value for --b_type " + b_type);
 
     arg.c_type = c_type == "" ? prec : string_to_hipblas_datatype(c_type);
-    if(arg.c_type == static_cast<hipblasDatatype_t>(-1))
+    if(arg.c_type == static_cast<hipDataType>(-1))
         throw std::invalid_argument("Invalid value for --c_type " + c_type);
 
     arg.d_type = d_type == "" ? prec : string_to_hipblas_datatype(d_type);
-    if(arg.d_type == static_cast<hipblasDatatype_t>(-1))
+    if(arg.d_type == static_cast<hipDataType>(-1))
         throw std::invalid_argument("Invalid value for --d_type " + d_type);
 
-    bool is_f16      = arg.a_type == HIPBLAS_R_16F || arg.a_type == HIPBLAS_R_16B;
-    bool is_f32      = arg.a_type == HIPBLAS_R_32F;
+    bool is_f16      = arg.a_type == HIP_R_16F || arg.a_type == HIP_R_16BF;
+    bool is_f32      = arg.a_type == HIP_R_32F;
     arg.compute_type = compute_type == "" ? (HIPBLASLT_COMPUTE_F32)
                                           : string_to_hipblaslt_computetype(compute_type);
     if(arg.compute_type == static_cast<hipblasLtComputeType_t>(-1))
         throw std::invalid_argument("Invalid value for --compute_type " + compute_type);
 
-    if(string_to_hipblas_datatype(bias_type) == static_cast<hipblasDatatype_t>(-1)
+    if(string_to_hipblas_datatype(bias_type) == static_cast<hipDataType>(-1)
        && bias_type != "" && bias_type != "default")
         throw std::invalid_argument("Invalid value for --bias_type " + bias_type);
     else

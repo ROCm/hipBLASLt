@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022 Advanced Micro Devices, Inc.
+ * Copyright (C) 2022-2023 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -68,12 +68,12 @@ void Arguments::init()
     algo           = 0;
     solution_index = 0;
 
-    a_type       = HIPBLAS_R_16F;
-    b_type       = HIPBLAS_R_16F;
-    c_type       = HIPBLAS_R_16F;
-    d_type       = HIPBLAS_R_16F;
+    a_type       = HIP_R_16F;
+    b_type       = HIP_R_16F;
+    c_type       = HIP_R_16F;
+    d_type       = HIP_R_16F;
     compute_type = HIPBLASLT_COMPUTE_F32;
-    scale_type   = HIPBLAS_R_32F;
+    scale_type   = HIP_R_32F;
 
     initialization = hipblaslt_initialization::hpl;
 
@@ -97,7 +97,7 @@ void Arguments::init()
     activation_type = hipblaslt_activation_type::none;
     activation_arg1 = 0.0f;
     activation_arg2 = std::numeric_limits<float>::infinity();
-    bias_type       = static_cast<hipblasDatatype_t>(-1);
+    bias_type       = static_cast<hipDataType>(-1);
     bias_vector     = false;
     c_noalias_d     = false;
     HMM             = false;

@@ -1,5 +1,5 @@
 # ########################################################################
-# Copyright (C) 2022 Advanced Micro Devices, Inc.
+# Copyright (C) 2022-2023 Advanced Micro Devices, Inc.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -163,7 +163,7 @@ else()
     message(STATUS "AMDGPU_TARGETS: ${AMDGPU_TARGETS}")
 
     if( CMAKE_CXX_COMPILER_ID MATCHES "Clang" )
-        find_package( hip REQUIRED CONFIG PATHS ${HIP_DIR} ${ROCM_PATH} /opt/rocm )
+        find_package( hip 5.5 REQUIRED CONFIG PATHS ${HIP_DIR} ${ROCM_PATH} /opt/rocm )
     endif( )
 
     option( BUILD_WITH_TENSILE "Build full functionality which requires tensile?" ON )
@@ -225,7 +225,6 @@ else()
     endif()
 endif()
 
-find_package( hipblas 0.50.0 REQUIRED CONFIG PATHS ${HIP_DIR} ${ROCM_PATH} /opt/rocm)
 
 # Setup version
 set(VERSION_STRING "0.1.0")
@@ -290,10 +289,6 @@ if( BUILD_CLIENTS_SAMPLES OR BUILD_CLIENTS_TESTS OR BUILD_CLIENTS_BENCHMARKS )
         RPM "${GFORTRAN_RPM}")
   endif()
   add_subdirectory( clients )
-endif( )
-
-if( NOT BUILD_CUDA )
-  rocm_package_add_dependencies(DEPENDS "hipblas >= 0.50.0")
 endif( )
 
 # Package specific CPACK vars

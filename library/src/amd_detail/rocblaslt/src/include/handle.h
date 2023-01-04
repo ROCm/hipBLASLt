@@ -3,7 +3,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022 Advanced Micro Devices, Inc.
+ * Copyright (C) 2022-2023 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -117,7 +117,7 @@ struct _rocblaslt_matrix_layout
     // leading dimension
     int64_t ld = 0;
     // data type of the matrix
-    hipblasDatatype_t type;
+    hipDataType type;
     int32_t           batch_count  = 1;
     int64_t           batch_stride = 0;
 };
@@ -136,17 +136,17 @@ struct _rocblaslt_matmul_desc
     ~_rocblaslt_matmul_desc(){};
 
     // operation applied to the matrix A
-    hipblasOperation_t op_A = HIPBLAS_OP_N;
+    hipblasltOperation_t op_A = HIPBLASLT_OP_N;
     // operation applied to the matrix B
-    hipblasOperation_t op_B = HIPBLAS_OP_N;
+    hipblasltOperation_t op_B = HIPBLASLT_OP_N;
     // epilogue operation
     rocblaslt_epilogue epilogue = ROCBLASLT_EPILOGUE_DEFAULT;
     // bias vector pointer
     void*             bias      = nullptr;
-    hipblasDatatype_t bias_type = static_cast<hipblasDatatype_t>(-1);
+    hipDataType bias_type = static_cast<hipDataType>(-1);
     //
     rocblaslt_compute_type compute_type;
-    hipblasDatatype_t      scale_type;
+    hipDataType      scale_type;
 };
 
 /********************************************************************************

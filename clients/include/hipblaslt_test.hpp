@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022 Advanced Micro Devices, Inc.
+ * Copyright (C) 2022-2023 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -75,12 +75,12 @@
 // This wraps the hipBLASLt call with catch_signals_and_exceptions_as_failures().
 // By placing it at the hipBLASLt call site, memory resources are less likely to
 // be leaked in the event of a caught signal.
-#define EXPECT_HIPBLAS_STATUS(STATUS, EXPECT)                 \
+#define EXPECT_HIPBLASLT_STATUS(STATUS, EXPECT)                 \
     do                                                        \
     {                                                         \
         volatile bool signal_or_exception = true;             \
         /* Use status__ in case STATUS contains "status" */   \
-        hipblasStatus_t status__;                             \
+        hipblasltStatus_t status__;                             \
         catch_signals_and_exceptions_as_failures([&] {        \
             status__            = (STATUS);                   \
             signal_or_exception = false;                      \
@@ -88,20 +88,20 @@
         if(signal_or_exception)                               \
             return;                                           \
         { /* localize status for ASSERT_EQ message */         \
-            hipblasStatus_t status_ = status__;               \
+            hipblasltStatus_t status_ = status__;               \
             ASSERT_EQ(status_, EXPECT); /* prints "status" */ \
         }                                                     \
     } while(0)
 
 #else // GOOGLE_TEST
 
-inline void hipblaslt_expect_status(hipblasStatus_t status, hipblasStatus_t expect)
+inline void hipblaslt_expect_status(hipblasltStatus_t status, hipblasltStatus_t expect)
 {
     if(status != expect)
     {
-        hipblaslt_cerr << "hipBLASLt status error: Expected " << hipblas_status_to_string(expect)
-                       << ", received " << hipblas_status_to_string(status) << std::endl;
-        if(expect == HIPBLAS_STATUS_SUCCESS)
+        hipblaslt_cerr << "hipBLASLt status error: Expected " << hipblaslt_status_to_string(expect)
+                       << ", received " << hipblaslt_status_to_string(status) << std::endl;
+        if(expect == HIPBLASLT_STATUS_SUCCESS)
             exit(EXIT_FAILURE);
     }
 }
@@ -121,7 +121,7 @@ inline void hipblaslt_expect_status(hipblasStatus_t status, hipblasStatus_t expe
 
 #define CHECK_DEVICE_ALLOCATION CHECK_HIP_ERROR
 
-#define EXPECT_HIPBLAS_STATUS hipblaslt_expect_status
+#define EXPECT_HIPBLASLT_STATUS hipblaslt_expect_status
 
 #define CHECK_SUCCESS(ERROR) \
     if(!(ERROR))             \
@@ -129,7 +129,7 @@ inline void hipblaslt_expect_status(hipblasStatus_t status, hipblasStatus_t expe
 
 #endif // GOOGLE_TEST
 
-#define CHECK_HIPBLASLT_ERROR2(STATUS) EXPECT_HIPBLAS_STATUS(STATUS, HIPBLAS_STATUS_SUCCESS)
+#define CHECK_HIPBLASLT_ERROR2(STATUS) EXPECT_HIPBLASLT_STATUS(STATUS, HIPBLASLT_STATUS_SUCCESS)
 #define CHECK_HIPBLASLT_ERROR(STATUS) CHECK_HIPBLASLT_ERROR2(STATUS)
 
 #ifdef GOOGLE_TEST
@@ -404,10 +404,10 @@ struct hipblaslt_test_invalid
 #else
         hipblaslt_cerr << msg << std::endl;
         hipblaslt_cerr << "function: " << arg.function << " types: "
-                       << " a: " << hipblas_datatype_to_string(arg.a_type)
-                       << " b: " << hipblas_datatype_to_string(arg.b_type)
-                       << " c: " << hipblas_datatype_to_string(arg.c_type)
-                       << " d: " << hipblas_datatype_to_string(arg.d_type)
+                       << " a: " << hip_datatype_to_string(arg.a_type)
+                       << " b: " << hip_datatype_to_string(arg.b_type)
+                       << " c: " << hip_datatype_to_string(arg.c_type)
+                       << " d: " << hip_datatype_to_string(arg.d_type)
                        << " compute:" << hipblaslt_computetype_to_string(arg.compute_type)
                        << std::endl;
         hipblaslt_abort();

@@ -1,7 +1,7 @@
 # Data types are defined as either aliases to Python-recognized ctypes,
 # or enums defined with c_int base clases and attributes.
 Datatypes:
-  - hipblasDatatype_t:
+  - hipDataType:
       bases: [ c_int ]
       attr:
         default: -1
@@ -76,12 +76,12 @@ Arguments:
   - cold_iters: c_int32
   - algo: c_uint32
   - solution_index: c_int32
-  - a_type: hipblasDatatype_t
-  - b_type: hipblasDatatype_t
-  - c_type: hipblasDatatype_t
-  - d_type: hipblasDatatype_t
+  - a_type: hipDataType
+  - b_type: hipDataType
+  - c_type: hipDataType
+  - d_type: hipDataType
   - compute_type: hipblasLtComputeType_t
-  - scale_type: hipblasDatatype_t
+  - scale_type: hipDataType
   - initialization: hipblaslt_initialization
   - pad: c_uint32
   - threads: c_uint16
@@ -95,7 +95,7 @@ Arguments:
   - activation_type: hipblaslt_activation_type
   - activation_arg1: c_float
   - activation_arg2: c_float
-  - bias_type: hipblasDatatype_t
+  - bias_type: hipDataType
   - bias_vector: c_bool
   - c_noalias_d: c_bool
   - HMM: c_bool

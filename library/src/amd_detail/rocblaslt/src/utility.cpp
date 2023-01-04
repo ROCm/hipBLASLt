@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022 Advanced Micro Devices, Inc.
+ * Copyright (C) 2022-2023 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -60,15 +60,15 @@ std::string prefix(const char* layer, const char* caller)
     return std::string(buf.get());
 }
 
-const char* hipblasDatatype_to_string(hipblasDatatype_t type)
+const char* hipDataType_to_string(hipDataType type)
 {
     switch(type)
     {
-    case HIPBLAS_R_16F:
+    case HIP_R_16F:
         return "R_16F";
-    case HIPBLAS_R_16B:
+    case HIP_R_16BF:
         return "R_16BF";
-    case HIPBLAS_R_32F:
+    case HIP_R_32F:
         return "R_32F";
     default:
         return "Invalid";
@@ -117,15 +117,15 @@ const char* rocblaslt_matmul_desc_attributes_to_string(rocblaslt_matmul_desc_att
         return "Invalid";
     }
 }
-const char* hipblasOperation_to_string(hipblasOperation_t op)
+const char* hipblasltOperation_to_string(hipblasltOperation_t op)
 {
     switch(op)
     {
-    case HIPBLAS_OP_N:
+    case HIPBLASLT_OP_N:
         return "OP_N";
-    case HIPBLAS_OP_T:
+    case HIPBLASLT_OP_T:
         return "OP_T";
-    case HIPBLAS_OP_C:
+    case HIPBLASLT_OP_C:
         return "OP_C";
     default:
         return "Invalid";
@@ -183,14 +183,14 @@ std::string rocblaslt_matrix_layout_to_string(rocblaslt_matrix_layout mat)
     if(mat->batch_count <= 1)
         std::sprintf(buf.get(),
                      format.c_str(),
-                     hipblasDatatype_to_string(mat->type),
+                     hipDataType_to_string(mat->type),
                      mat->m,
                      mat->n,
                      mat->ld);
     else
         std::sprintf(buf.get(),
                      format.c_str(),
-                     hipblasDatatype_to_string(mat->type),
+                     hipDataType_to_string(mat->type),
                      mat->m,
                      mat->n,
                      mat->ld,
@@ -200,7 +200,7 @@ std::string rocblaslt_matrix_layout_to_string(rocblaslt_matrix_layout mat)
 }
 std::string rocblaslt_matmul_desc_to_string(rocblaslt_matmul_desc matmul_desc)
 {
-    std::string format = matmul_desc->bias_type == static_cast<hipblasDatatype_t>(-1)
+    std::string format = matmul_desc->bias_type == static_cast<hipDataType>(-1)
                              ? "[computeType=%s scaleType=%s transA=%s transB=%s "
                                "epilogue=%s biasPointer=0x%x]\0"
                              : "[computeType=%s scaleType=%s transA=%s transB=%s "
@@ -208,24 +208,24 @@ std::string rocblaslt_matmul_desc_to_string(rocblaslt_matmul_desc matmul_desc)
 
     std::unique_ptr<char[]> buf(new char[255]);
 
-    if(matmul_desc->bias_type == static_cast<hipblasDatatype_t>(-1))
+    if(matmul_desc->bias_type == static_cast<hipDataType>(-1))
         std::sprintf(buf.get(),
                      format.c_str(),
                      rocblaslt_compute_type_to_string(matmul_desc->compute_type),
-                     hipblasDatatype_to_string(matmul_desc->scale_type),
-                     hipblasOperation_to_string(matmul_desc->op_A),
-                     hipblasOperation_to_string(matmul_desc->op_B),
+                     hipDataType_to_string(matmul_desc->scale_type),
+                     hipblasltOperation_to_string(matmul_desc->op_A),
+                     hipblasltOperation_to_string(matmul_desc->op_B),
                      rocblaslt_epilogue_to_string(matmul_desc->epilogue),
                      matmul_desc->bias);
     else
         std::sprintf(buf.get(),
                      format.c_str(),
                      rocblaslt_compute_type_to_string(matmul_desc->compute_type),
-                     hipblasDatatype_to_string(matmul_desc->scale_type),
-                     hipblasOperation_to_string(matmul_desc->op_A),
-                     hipblasOperation_to_string(matmul_desc->op_B),
+                     hipDataType_to_string(matmul_desc->scale_type),
+                     hipblasltOperation_to_string(matmul_desc->op_A),
+                     hipblasltOperation_to_string(matmul_desc->op_B),
                      rocblaslt_epilogue_to_string(matmul_desc->epilogue),
                      matmul_desc->bias,
-                     hipblasDatatype_to_string(matmul_desc->bias_type));
+                     hipDataType_to_string(matmul_desc->bias_type));
     return std::string(buf.get());
 }

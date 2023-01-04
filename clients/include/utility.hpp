@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022 Advanced Micro Devices, Inc.
+ * Copyright (C) 2022-2023 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -139,18 +139,18 @@ public:
 class hipblaslt_local_matrix_layout
 {
     hipblasLtMatrixLayout_t m_descr;
-    hipblasStatus_t         m_status  = HIPBLAS_STATUS_NOT_INITIALIZED;
+    hipblasltStatus_t         m_status  = HIPBLASLT_STATUS_NOT_INITIALIZED;
     static constexpr int    alignment = 16;
 
 public:
-    hipblaslt_local_matrix_layout(int64_t row, int64_t col, int64_t ld, hipblasDatatype_t type)
+    hipblaslt_local_matrix_layout(int64_t row, int64_t col, int64_t ld, hipDataType type)
     {
         this->m_status = hipblasLtMatrixLayoutCreate(&this->m_descr, type, row, col, ld);
     }
 
     ~hipblaslt_local_matrix_layout()
     {
-        if(this->m_status == HIPBLAS_STATUS_SUCCESS)
+        if(this->m_status == HIPBLASLT_STATUS_SUCCESS)
             hipblasLtMatrixLayoutDestroy(this->m_descr);
     }
 
@@ -159,7 +159,7 @@ public:
     hipblaslt_local_matrix_layout& operator=(const hipblaslt_local_matrix_layout&) = delete;
     hipblaslt_local_matrix_layout& operator=(hipblaslt_local_matrix_layout&&) = delete;
 
-    hipblasStatus_t status()
+    hipblasltStatus_t status()
     {
         return m_status;
     }
@@ -188,13 +188,13 @@ public:
 class hipblaslt_local_matmul_descr
 {
     hipblasLtMatmulDesc_t m_descr;
-    hipblasStatus_t       m_status = HIPBLAS_STATUS_NOT_INITIALIZED;
+    hipblasltStatus_t       m_status = HIPBLASLT_STATUS_NOT_INITIALIZED;
 
 public:
-    hipblaslt_local_matmul_descr(hipblasOperation_t     opA,
-                                 hipblasOperation_t     opB,
+    hipblaslt_local_matmul_descr(hipblasltOperation_t     opA,
+                                 hipblasltOperation_t     opB,
                                  hipblasLtComputeType_t compute_type,
-                                 hipblasDatatype_t      scale_type)
+                                 hipDataType      scale_type)
     {
         this->m_status = hipblasLtMatmulDescCreate(&this->m_descr, compute_type, scale_type);
 
@@ -211,7 +211,7 @@ public:
     hipblaslt_local_matmul_descr& operator=(const hipblaslt_local_matmul_descr&) = delete;
     hipblaslt_local_matmul_descr& operator=(hipblaslt_local_matmul_descr&&) = delete;
 
-    hipblasStatus_t status()
+    hipblasltStatus_t status()
     {
         return m_status;
     }
@@ -240,7 +240,7 @@ public:
 class hipblaslt_local_preference
 {
     hipblasLtMatmulPreference_t m_pref;
-    hipblasStatus_t             m_status = HIPBLAS_STATUS_NOT_INITIALIZED;
+    hipblasltStatus_t             m_status = HIPBLASLT_STATUS_NOT_INITIALIZED;
 
 public:
     hipblaslt_local_preference()
@@ -251,7 +251,7 @@ public:
 
     ~hipblaslt_local_preference()
     {
-        if(this->m_status == HIPBLAS_STATUS_SUCCESS)
+        if(this->m_status == HIPBLASLT_STATUS_SUCCESS)
             hipblasLtMatmulPreferenceDestroy(this->m_pref);
     }
 
@@ -260,7 +260,7 @@ public:
     hipblaslt_local_preference& operator=(const hipblaslt_local_preference&) = delete;
     hipblaslt_local_preference& operator=(hipblaslt_local_preference&&) = delete;
 
-    hipblasStatus_t status()
+    hipblasltStatus_t status()
     {
         return this->m_status;
     }

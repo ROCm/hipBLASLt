@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022 Advanced Micro Devices, Inc.
+ * Copyright (C) 2022-2023 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -37,8 +37,8 @@
 
 // gemm
 template <typename Ti, typename To, typename Tc>
-void cblas_gemm(hipblasOperation_t     transA,
-                hipblasOperation_t     transB,
+void cblas_gemm(hipblasltOperation_t     transA,
+                hipblasltOperation_t     transB,
                 int64_t                m,
                 int64_t                n,
                 int64_t                k,

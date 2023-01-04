@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022 Advanced Micro Devices, Inc.
+ * Copyright (C) 2022-2023 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -376,7 +376,7 @@ bool match_test_category(const Arguments& arg, const char* category)
 
         // The name of the current GPU platform
         char* archName;
-        if(hipblasLtGetArchName(&archName) != HIPBLAS_STATUS_SUCCESS)
+        if(hipblasLtGetArchName(&archName) != HIPBLASLT_STATUS_SUCCESS)
             return false;
         static const std::string platform(archName);
 

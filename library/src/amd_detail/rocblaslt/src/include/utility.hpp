@@ -3,7 +3,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022 Advanced Micro Devices, Inc.
+ * Copyright (C) 2022-2023 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -42,15 +42,15 @@ inline bool isAligned(const void* pointer, size_t byte_count)
 }
 
 // return precision string for rocblaslt_datatype
-constexpr const char* rocblaslt_datatype_string(hipblasDatatype_t type)
+constexpr const char* rocblaslt_datatype_string(hipDataType type)
 {
     switch(type)
     {
-    case HIPBLAS_R_16F:
+    case HIP_R_16F:
         return "f16_r";
-    case HIPBLAS_R_32F:
+    case HIP_R_32F:
         return "f32_r";
-    case HIPBLAS_R_16B:
+    case HIP_R_16BF:
         return "b16_r";
     default:
         return "invalidType";
@@ -69,13 +69,13 @@ constexpr const char* rocblaslt_compute_type_string(rocblaslt_compute_type type)
     }
 }
 
-constexpr const char* rocblaslt_transpose_letter(hipblasOperation_t op)
+constexpr const char* rocblaslt_transpose_letter(hipblasltOperation_t op)
 {
     switch(op)
     {
-    case HIPBLAS_OP_N:
+    case HIPBLASLT_OP_N:
         return "N";
-    case HIPBLAS_OP_T:
+    case HIPBLASLT_OP_T:
         return "T";
     default:
         return "invalidTranspose";
@@ -131,7 +131,7 @@ static constexpr char rocblaslt_precision_string<uint32_t>[] = "u32_r";
 
 std::string prefix(const char* layer, const char* caller);
 
-const char* hipblasDatatype_to_string(hipblasDatatype_t type);
+const char* hipDataType_to_string(hipDataType type);
 
 const char* rocblaslt_compute_type_to_string(rocblaslt_compute_type type);
 
@@ -139,7 +139,7 @@ const char* rocblaslt_matrix_layout_attributes_to_string(rocblaslt_matrix_layout
 
 const char* rocblaslt_matmul_desc_attributes_to_string(rocblaslt_matmul_desc_attributes type);
 
-const char* hipblasOperation_to_string(hipblasOperation_t op);
+const char* hipblasltOperation_to_string(hipblasltOperation_t op);
 
 const char* rocblaslt_layer_mode2string(rocblaslt_layer_mode layer_mode);
 

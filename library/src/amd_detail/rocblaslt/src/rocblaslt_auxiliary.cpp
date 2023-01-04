@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022 Advanced Micro Devices, Inc.
+ * Copyright (C) 2022-2023 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -102,7 +102,7 @@ rocblaslt_status rocblaslt_destroy(const rocblaslt_handle handle)
  * It should be destroyed at the end using rocblaslt_matrix_layout_destory().
  *******************************************************************************/
 rocblaslt_status rocblaslt_matrix_layout_create(rocblaslt_matrix_layout* matDescr,
-                                                hipblasDatatype_t        valueType,
+                                                hipDataType              valueType,
                                                 uint64_t                 rows,
                                                 uint64_t                 cols,
                                                 int64_t                  ld)
@@ -128,7 +128,7 @@ rocblaslt_status rocblaslt_matrix_layout_create(rocblaslt_matrix_layout* matDesc
                     "matLayout[out]",
                     matDescr,
                     "type",
-                    hipblasDatatype_to_string(valueType),
+                    hipDataType_to_string(valueType),
                     "rows",
                     rows,
                     "cols",
@@ -315,7 +315,7 @@ rocblaslt_status rocblaslt_matrix_layout_get_attribute(rocblaslt_matrix_layout  
  *******************************************************************************/
 rocblaslt_status rocblaslt_matmul_desc_create(rocblaslt_matmul_desc* matmulDesc,
                                               rocblaslt_compute_type computeType,
-                                              hipblasDatatype_t      scaleType)
+                                              hipDataType            scaleType)
 {
     // Check if matmulDesc is valid
     if(matmulDesc == nullptr)
@@ -335,7 +335,7 @@ rocblaslt_status rocblaslt_matmul_desc_create(rocblaslt_matmul_desc* matmulDesc,
                 throw rocblaslt_status_invalid_value;
             }
 
-            if(scaleType != HIPBLAS_R_32F)
+            if(scaleType != HIP_R_32F)
             {
                 log_error(__func__, "invalid scale type", scaleType);
                 throw rocblaslt_status_invalid_value;
@@ -350,7 +350,7 @@ rocblaslt_status rocblaslt_matmul_desc_create(rocblaslt_matmul_desc* matmulDesc,
                     "computeType",
                     rocblaslt_compute_type_to_string(computeType),
                     "scaleType",
-                    hipblasDatatype_to_string(scaleType));
+                    hipDataType_to_string(scaleType));
         }
         catch(const rocblaslt_status& status)
         {
@@ -787,14 +787,14 @@ rocblaslt_status
     rocblaslt_status status = rocblaslt_status_success;
     try
     {
-        hipblasDatatype_t      a_type       = matA->type;
-        hipblasDatatype_t      b_type       = matB->type;
-        hipblasDatatype_t      c_type       = matC->type;
-        hipblasDatatype_t      d_type       = matD->type;
+        hipDataType      a_type       = matA->type;
+        hipDataType      b_type       = matB->type;
+        hipDataType      c_type       = matC->type;
+        hipDataType      d_type       = matD->type;
         rocblaslt_compute_type compute_type = matmul_desc->compute_type;
-        if(a_type == HIPBLAS_R_32F && b_type == HIPBLAS_R_32F)
+        if(a_type == HIP_R_32F && b_type == HIP_R_32F)
         {
-            if(c_type == HIPBLAS_R_32F && d_type == HIPBLAS_R_32F)
+            if(c_type == HIP_R_32F && d_type == HIP_R_32F)
             {
                 if(compute_type == rocblaslt_compute_f32)
                 {
@@ -818,9 +818,9 @@ rocblaslt_status
                 }
             }
         }
-        else if(a_type == HIPBLAS_R_16F && b_type == HIPBLAS_R_16F)
+        else if(a_type == HIP_R_16F && b_type == HIP_R_16F)
         {
-            if(c_type == HIPBLAS_R_16F && d_type == HIPBLAS_R_16F)
+            if(c_type == HIP_R_16F && d_type == HIP_R_16F)
             {
                 if(compute_type == rocblaslt_compute_f32)
                 {
@@ -845,9 +845,9 @@ rocblaslt_status
                 }
             }
         }
-        else if(a_type == HIPBLAS_R_16B && b_type == HIPBLAS_R_16B)
+        else if(a_type == HIP_R_16BF && b_type == HIP_R_16BF)
         {
-            if(c_type == HIPBLAS_R_16B && d_type == HIPBLAS_R_16B)
+            if(c_type == HIP_R_16BF && d_type == HIP_R_16BF)
             {
                 if(compute_type == rocblaslt_compute_f32)
                 {

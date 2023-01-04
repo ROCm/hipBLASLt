@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022 Advanced Micro Devices, Inc.
+ * Copyright (C) 2022-2023 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -30,23 +30,23 @@
 #include <iostream>
 #include <omp.h>
 
-CBLAS_TRANSPOSE HIPOperationToCBLASTanspose(hipblasOperation_t trans)
+CBLAS_TRANSPOSE HIPOperationToCBLASTanspose(hipblasltOperation_t trans)
 {
     switch(trans)
     {
-    case HIPBLAS_OP_N:
+    case HIPBLASLT_OP_N:
         return CblasNoTrans;
-    case HIPBLAS_OP_T:
+    case HIPBLASLT_OP_T:
         return CblasTrans;
-    case HIPBLAS_OP_C:
+    case HIPBLASLT_OP_C:
         return CblasConjTrans;
     }
 }
 
 // gemm
 template <>
-void cblas_gemm<hip_bfloat16, hip_bfloat16, float>(hipblasOperation_t  transA,
-                                                   hipblasOperation_t  transB,
+void cblas_gemm<hip_bfloat16, hip_bfloat16, float>(hipblasltOperation_t  transA,
+                                                   hipblasltOperation_t  transB,
                                                    int64_t             m,
                                                    int64_t             n,
                                                    int64_t             k,
@@ -63,8 +63,8 @@ void cblas_gemm<hip_bfloat16, hip_bfloat16, float>(hipblasOperation_t  transA,
     // cblas does not support hip_bfloat16, so convert to higher precision float
     // This will give more precise result which is acceptable for testing
 
-    size_t sizeA = (transA == HIPBLAS_OP_N ? k : m) * size_t(lda);
-    size_t sizeB = (transB == HIPBLAS_OP_N ? n : k) * size_t(ldb);
+    size_t sizeA = (transA == HIPBLASLT_OP_N ? k : m) * size_t(lda);
+    size_t sizeB = (transB == HIPBLASLT_OP_N ? n : k) * size_t(ldb);
     size_t sizeC = n * size_t(ldc);
 
     host_vector<float> A_float(sizeA), B_float(sizeB), C_float(sizeC);
@@ -98,8 +98,8 @@ void cblas_gemm<hip_bfloat16, hip_bfloat16, float>(hipblasOperation_t  transA,
 }
 
 template <>
-void cblas_gemm<hip_bfloat16, float, float>(hipblasOperation_t  transA,
-                                            hipblasOperation_t  transB,
+void cblas_gemm<hip_bfloat16, float, float>(hipblasltOperation_t  transA,
+                                            hipblasltOperation_t  transB,
                                             int64_t             m,
                                             int64_t             n,
                                             int64_t             k,
@@ -116,8 +116,8 @@ void cblas_gemm<hip_bfloat16, float, float>(hipblasOperation_t  transA,
     // cblas does not support hip_bfloat16, so convert to higher precision float
     // This will give more precise result which is acceptable for testing
 
-    size_t sizeA = (transA == HIPBLAS_OP_N ? k : m) * size_t(lda);
-    size_t sizeB = (transB == HIPBLAS_OP_N ? n : k) * size_t(ldb);
+    size_t sizeA = (transA == HIPBLASLT_OP_N ? k : m) * size_t(lda);
+    size_t sizeB = (transB == HIPBLASLT_OP_N ? n : k) * size_t(ldb);
     size_t sizeC = n * size_t(ldc);
 
     host_vector<float> A_float(sizeA), B_float(sizeB), C_float(sizeC);
@@ -146,8 +146,8 @@ void cblas_gemm<hip_bfloat16, float, float>(hipblasOperation_t  transA,
 }
 
 template <>
-void cblas_gemm<hipblasLtHalf, hipblasLtHalf, float>(hipblasOperation_t   transA,
-                                                     hipblasOperation_t   transB,
+void cblas_gemm<hipblasLtHalf, hipblasLtHalf, float>(hipblasltOperation_t   transA,
+                                                     hipblasltOperation_t   transB,
                                                      int64_t              m,
                                                      int64_t              n,
                                                      int64_t              k,
@@ -164,8 +164,8 @@ void cblas_gemm<hipblasLtHalf, hipblasLtHalf, float>(hipblasOperation_t   transA
     // cblas does not support hipblasLtHalf, so convert to higher precision float
     // This will give more precise result which is acceptable for testing
 
-    size_t sizeA = (transA == HIPBLAS_OP_N ? k : m) * size_t(lda);
-    size_t sizeB = (transB == HIPBLAS_OP_N ? n : k) * size_t(ldb);
+    size_t sizeA = (transA == HIPBLASLT_OP_N ? k : m) * size_t(lda);
+    size_t sizeB = (transB == HIPBLASLT_OP_N ? n : k) * size_t(ldb);
     size_t sizeC = n * size_t(ldc);
 
     host_vector<float> A_float(sizeA), B_float(sizeB), C_float(sizeC);
@@ -211,8 +211,8 @@ void cblas_gemm<hipblasLtHalf, hipblasLtHalf, float>(hipblasOperation_t   transA
 }
 
 template <>
-void cblas_gemm<hipblasLtHalf, float, float>(hipblasOperation_t   transA,
-                                             hipblasOperation_t   transB,
+void cblas_gemm<hipblasLtHalf, float, float>(hipblasltOperation_t   transA,
+                                             hipblasltOperation_t   transB,
                                              int64_t              m,
                                              int64_t              n,
                                              int64_t              k,
@@ -229,8 +229,8 @@ void cblas_gemm<hipblasLtHalf, float, float>(hipblasOperation_t   transA,
     // cblas does not support hipblasLtHalf, so convert to higher precision float
     // This will give more precise result which is acceptable for testing
 
-    size_t sizeA = (transA == HIPBLAS_OP_N ? k : m) * size_t(lda);
-    size_t sizeB = (transB == HIPBLAS_OP_N ? n : k) * size_t(ldb);
+    size_t sizeA = (transA == HIPBLASLT_OP_N ? k : m) * size_t(lda);
+    size_t sizeB = (transB == HIPBLASLT_OP_N ? n : k) * size_t(ldb);
 
     host_vector<float> A_float(sizeA), B_float(sizeB);
 
@@ -268,8 +268,8 @@ void cblas_gemm<hipblasLtHalf, float, float>(hipblasOperation_t   transA,
 }
 
 template <>
-void cblas_gemm<float, float, float>(hipblasOperation_t transA,
-                                     hipblasOperation_t transB,
+void cblas_gemm<float, float, float>(hipblasltOperation_t transA,
+                                     hipblasltOperation_t transB,
                                      int64_t            m,
                                      int64_t            n,
                                      int64_t            k,

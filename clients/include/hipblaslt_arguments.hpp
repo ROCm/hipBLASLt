@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022 Advanced Micro Devices, Inc.
+ * Copyright (C) 2022-2023 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -83,12 +83,12 @@ struct Arguments
     uint32_t algo;
     int32_t  solution_index;
 
-    hipblasDatatype_t      a_type;
-    hipblasDatatype_t      b_type;
-    hipblasDatatype_t      c_type;
-    hipblasDatatype_t      d_type;
+    hipDataType      a_type;
+    hipDataType      b_type;
+    hipDataType      c_type;
+    hipDataType      d_type;
     hipblasLtComputeType_t compute_type;
-    hipblasDatatype_t      scale_type;
+    hipDataType      scale_type;
 
     hipblaslt_initialization initialization;
 
@@ -113,7 +113,7 @@ struct Arguments
     float                     activation_arg1; // threshold when activation type is relu
     float                     activation_arg2; // upperbound when activation type is relu
 
-    hipblasDatatype_t bias_type;
+    hipDataType bias_type;
     bool              bias_vector;
     bool              c_noalias_d;
     bool              HMM;
@@ -198,7 +198,7 @@ struct Arguments
                                                   std::pair<char const*, T>   p);
 
     friend hipblaslt_internal_ostream& operator<<(hipblaslt_internal_ostream&               os,
-                                                  std::pair<char const*, hipblasDatatype_t> p);
+                                                  std::pair<char const*, hipDataType> p);
 
     friend hipblaslt_internal_ostream&
         operator<<(hipblaslt_internal_ostream&                      os,
