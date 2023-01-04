@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022 Advanced Micro Devices, Inc.
+ * Copyright (C) 2022-2023 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -891,6 +891,7 @@ void _convertToHeuristicResultArray(
     rocblaslt_matmul_heuristic_result                           heuristicResultsArray[],
     int*                                                        returnAlgoCount,
     size_t                                                      maxWorkSpaceBytes,
+    const Tensile::ContractionProblem&                          problem,
     size_t                                                      fallbackCount)
 {
     *returnAlgoCount = std::min((int)solutions.size(), requestedAlgoCount);
@@ -901,6 +902,7 @@ void _convertToHeuristicResultArray(
         heuristicResultsArray[i].algo.max_workspace_bytes = maxWorkSpaceBytes;
         heuristicResultsArray[i].algo.fallback            = fallbackCount-- > 0 ? true : false;
         heuristicResultsArray[i].state                    = rocblaslt_status_success;
+        heuristicResultsArray[i].workspaceSize = solution->requiredWorkspaceSize(problem);
     }
     for(size_t i = *returnAlgoCount; i < requestedAlgoCount; i++)
     {
@@ -950,6 +952,7 @@ rocblaslt_status getBestSolutions(RocblasltContractionProblem<Ti, To, Tc> prob,
                                    heuristicResultsArray,
                                    returnAlgoCount,
                                    maxWorkSpaceBytes,
+                                   tensile_prob,
                                    solutions_fallback.size());
 
     return rocblaslt_status_success;
