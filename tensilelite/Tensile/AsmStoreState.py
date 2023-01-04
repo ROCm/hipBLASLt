@@ -1,6 +1,6 @@
 ################################################################################
 #
-# Copyright (C) 2022 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -441,6 +441,15 @@ class StoreState:
 
     def resetState(self):
         if not self.isReset:
+            # Init part
+            if self.optSharedColVgpr:
+                pass # Nothing to reset
+            elif self.optSingleColVgpr:
+                self.singleColDAddrUpdated = False
+                self.singleColCAddrUpdated = False
+            else:
+                pass # Nothing to reset
+            # setup store element
             self.lastCoordOffset1 = 0
             self.isReset = True
 
