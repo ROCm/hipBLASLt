@@ -94,9 +94,9 @@ typedef enum {
   HIPBLASLT_MATMUL_DESC_TRANSA = 0,               /**<Specifies the type of transformation operation that should be performed on matrix A. Default value is HIPBLAS_OP_N (for example, non-transpose operation). See hipblasOperation_t. Data Type:int32_t*/
   HIPBLASLT_MATMUL_DESC_TRANSB = 1,               /**<Specifies the type of transformation operation that should be performed on matrix B. Default value is HIPBLAS_OP_N (for example, non-transpose operation). See hipblasOperation_t. Data Type:int32_t*/
   HIPBLASLT_MATMUL_DESC_EPILOGUE = 2,             /**<Epilogue function. See hipblasLtEpilogue_t. Default value is: HIPBLASLT_EPILOGUE_DEFAULT. Data Type: uint32_t*/
-  HIPBLASLT_MATMUL_DESC_BIAS_POINTER = 3,         /**<Bias or Bias gradient vector pointer in the device memory. Data Type:void *\/ const void**/
+  HIPBLASLT_MATMUL_DESC_BIAS_POINTER = 3,         /**<Bias or Bias gradient vector pointer in the device memory. Data Type:void* /const void* */
   HIPBLASLT_MATMUL_DESC_BIAS_DATA_TYPE = 4,       /**<Type of the bias vector in the device memory. Can be set same as D matrix type or Scale type. Bias case: see HIPBLASLT_EPILOGUE_BIAS. Data Type:int32_t based on hipblasDatatype_t*/
-  HIPBLASLT_MATMUL_DESC_D_SCALE_POINTER = 5,               /**<D-Scale vector pointer in the device memory performed on matrix D. Data Type:*/
+  HIPBLASLT_MATMUL_DESC_D_SCALE_POINTER = 5,      /**<D scale vector length must match matrix D rows. It must match Scale data type. D scale vector is broadcast to all columns and multipied after final postprocssion. Data Type: void* /const void* */
   HIPBLASLT_MATMUL_DESC_MAX = 6
 } hipblasLtMatmulDescAttributes_t;
 

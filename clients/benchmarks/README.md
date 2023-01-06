@@ -39,6 +39,7 @@ cd hipBLASLt; cd build/release
 --activation_arg2 <value>  Reserved.                                                                           (Default value is: inf)
 --bias_type <value>        Precision of bias vector.Options: f16_r,bf16_r,f32_r,default(same with D type)
 --bias_vector              Apply bias vector
+--scaleD_vector            Apply scaleD vector
 --device <value>           Set default device to be used for subsequent program runs                           (Default value is: 0)
 --c_noalias_d              C and D are stored in separate memory
 --workspace <value>        Set fixed workspace memory size instead of using hipblaslt managed memory           (Default value is: 0)
