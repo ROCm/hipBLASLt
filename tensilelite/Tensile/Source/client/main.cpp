@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022 Advanced Micro Devices, Inc.
+ * Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -126,6 +126,7 @@ namespace Tensile
                 ("init-alpha",               po::value<InitMode>()->default_value(InitMode::Two), "Initialization for alpha")
                 ("init-beta",                po::value<InitMode>()->default_value(InitMode::Two), "Initialization for beta")
                 ("init-bias",                po::value<InitMode>()->default_value(InitMode::One), "Initialization for bias")
+                ("init-scaleD",              po::value<InitMode>()->default_value(InitMode::One), "Initialization for scaleD")
                 ("pristine-on-gpu",          po::value<bool>()->default_value(true), "Keep a pristine copy of inputs on GPU for performance")
                 ("c-equal-d",                po::value<bool>()->default_value(false), "C equals D")
                 ("offset-a",                 po::value<size_t>()->default_value(0), "buffer a start offset")
@@ -244,6 +245,7 @@ namespace Tensile
                 ("activation-additional-args",vector_default_empty<std::string>(), "Activation additional floating-point number arguments.")
                 ("activation-enum-args",      po::value<std::vector<ActivationType>>()->default_value(std::vector<ActivationType>(1, ActivationType::None), "[]"), "Activation enum argument.")
                 ("use-bias",                  po::value<bool>()->default_value(false), "Use bias.")
+                ("use-scaleD",                  po::value<bool>()->default_value(false), "Use scaleD.")
                 ("bias-type-args",            po::value<std::vector<DataType>>()->default_value(std::vector<DataType>(1, DataType::None), "[]"), "Bias data type args.")
                 ;
             // clang-format on

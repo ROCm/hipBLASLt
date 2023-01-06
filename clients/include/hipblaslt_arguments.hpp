@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022 Advanced Micro Devices, Inc.
+ * Copyright (C) 2022-2023 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -115,6 +115,7 @@ struct Arguments
 
     hipblasDatatype_t bias_type;
     bool              bias_vector;
+    bool              scaleD_vector;
     bool              c_noalias_d;
     bool              HMM;
     /*************************************************************************
@@ -173,6 +174,7 @@ struct Arguments
     OPER(activation_arg2) SEP        \
     OPER(bias_type) SEP              \
     OPER(bias_vector) SEP            \
+    OPER(scaleD_vector) SEP            \
     OPER(c_noalias_d) SEP            \
     OPER(HMM) SEP
 

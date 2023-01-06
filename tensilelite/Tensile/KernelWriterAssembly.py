@@ -1,5 +1,6 @@
 ################################################################################
-# Copyright (C) 2022 Advanced Micro Devices, Inc. All rights reserved.
+#
+# Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -5513,6 +5514,10 @@ class KernelWriterAssembly(KernelWriter):
     if kernel["BufferStore"]:
       module.add(self.allocPostLoopSrd("D"))
       module.add(self.allocPostLoopSrd("C"))
+      if kernel["ProblemType"]["UseScaleD"] and (kernel["GlobalSplitU"] == 1):
+        labelStr = self.labels.getNameInc("ScaleD")
+        module.add(allocPostLoopSrdSuppress("ScaleD", labelStr))
+        module.add(SMulI32(dst=sgpr("SrdScaleD+2"), src0=hex(self.states.bpeCinternal), src1=sgpr("SrdScaleD+2"), comment="scaled by BPE"))# scaled by BPE
       module.add(self.computeStoreSrdStart(kernel))
     return module
 
@@ -5534,6 +5539,7 @@ class KernelWriterAssembly(KernelWriter):
       self.vgprs.addrD    = -1
       self.vgprs.addrC    = -1
       self.vgprs.addrBias = -1
+      self.vgprs.addrScaleD = -1
     else:
       self.vgprs.addrD = self.vgprPool.checkOut(2)
       module.add(VMovB32(
@@ -5562,6 +5568,16 @@ class KernelWriterAssembly(KernelWriter):
         module.add(VMovB32( \
             dst=vgpr(self.vgprs.addrBias+1), \
             src=sgpr("AddressBias+1"), \
+            comment="sgpr -> vgpr"))
+      if kernel["ProblemType"]["UseScaleD"] and (kernel["GlobalSplitU"] == 1):
+        self.vgprs.addrScaleD = self.vgprPool.checkOut(2, 'addrScaleD')
+        module.add(VMovB32( \
+            dst=vgpr(self.vgprs.addrScaleD+0), \
+            src=sgpr("AddressScaleD+0"), \
+            comment="sgpr -> vgpr"))
+        module.add(VMovB32( \
+            dst=vgpr(self.vgprs.addrScaleD+1), \
+            src=sgpr("AddressScaleD+1"), \
             comment="sgpr -> vgpr"))
 
     return module
@@ -5596,6 +5612,7 @@ class KernelWriterAssembly(KernelWriter):
       self.vgprs.addrD    = -1
       self.vgprs.addrC    = -1
       self.vgprs.addrBias = -1
+      self.vgprs.addrScaleD = -1
     else:
       self.vgprs.addrD = self.vgprPool.checkOut(2, 'addrD')
       module.add(VMovB32(
@@ -5625,6 +5642,16 @@ class KernelWriterAssembly(KernelWriter):
             dst=vgpr(self.vgprs.addrBias+1), \
             src=sgpr("AddressBias+1"), \
             comment="sgpr -> vgpr"))
+      if kernel["ProblemType"]["UseScaleD"] and (kernel["GlobalSplitU"] == 1):
+        self.vgprs.addrScaleD = self.vgprPool.checkOut(2, 'addrScaleD')
+        module.add(VMovB32( \
+            dst=vgpr(self.vgprs.addrScaleD+0), \
+            src=sgpr("AddressScaleD+0"), \
+            comment="sgpr -> vgpr"))
+        module.add(VMovB32( \
+            dst=vgpr(self.vgprs.addrScaleD+1), \
+            src=sgpr("AddressScaleD+1"), \
+            comment="sgpr -> vgpr"))
     return module
 
   ##############################################################################
@@ -5647,6 +5674,8 @@ class KernelWriterAssembly(KernelWriter):
       self.vgprPool.checkIn(self.vgprs.addrC)
       if kernel["ProblemType"]["UseBias"] and (kernel["GlobalSplitU"] == 1):
         self.vgprPool.checkIn(self.vgprs.addrBias)
+      if kernel["ProblemType"]["UseScaleD"] and (kernel["GlobalSplitU"] == 1):
+        self.vgprPool.checkIn(self.vgprs.addrScaleD)
 
   ##############################################################################
   # Return max global write vector width, in elements
@@ -6539,7 +6568,7 @@ class KernelWriterAssembly(KernelWriter):
 
               actLoopModule.add(self.globalWriteBatch(kernel, tPA, tPB, activation, ss, batchIdx, \
                   applyAlpha, beta, edge, atomic, gwvw, atomicW, \
-                  elementsThisBatch, self.vgprs.addrD, self.vgprs.addrC, self.vgprs.addrBias, \
+                  elementsThisBatch, self.vgprs.addrD, self.vgprs.addrC, self.vgprs.addrBias, self.vgprs.addrScaleD, \
                   tmpVgpr, bf16CVTVgprStruct, activationSetPCStruct, activationTypeStr, \
                   elementSgprs, tmpSgpr, codeAccVgprRead, codeMulAlpha))
 
@@ -6835,6 +6864,37 @@ class KernelWriterAssembly(KernelWriter):
         printExit("Unsupported bias type %s."%(str(dataType)))
     return module
 
+  def addScaleDLoad(self, kernel, ss, addrCalc, scaleDVgpr):
+    """
+    Add scaleD for the element with addrCalc, elementIdx, and scaleDVgpr.
+    scaleDVgpr is one or more vgpr :temp vGPR ( = gwvw * numbytes // 4 + 1 if cvt is needed)
+    """
+    module = Module("addScaleD")
+    if kernel["ProblemType"]["UseScaleD"] and (kernel["GlobalSplitU"] == 1):
+      bps = kernel["ProblemType"]["ComputeDataType"].numBytes() * ss.cfg.gwvw
+      if kernel["BufferLoad"]:
+        addr0 = vgpr(addrCalc.addrScaleDVgpr)
+        addr1 = sgpr("SrdScaleD", 4)
+      else:
+        addr0 = vgpr(addrCalc.addrScaleDVgpr,2)
+        addr1 = ""
+
+      useBuffer = kernel["BufferLoad"]
+
+      if kernel["ProblemType"]["ComputeDataType"].isHalf() or kernel["ProblemType"]["ComputeDataType"].isBFloat16():
+        module.add(self.chooseGlobalRead(useBuffer, bps, scaleDVgpr, \
+                          addr0, addr1, soffset=0, offset=addrCalc.scaleDOffset, hi16=0, comment="load scaleDH"))
+      elif kernel["ProblemType"]["ComputeDataType"].isInt32() or kernel["ProblemType"]["ComputeDataType"].isSingle():
+        module.add(self.chooseGlobalRead(useBuffer, bps, scaleDVgpr, \
+                          addr0, addr1, soffset=0, offset=addrCalc.scaleDOffset, comment="load scaleDI"))
+      elif kernel["ProblemType"]["ComputeDataType"].isDouble() or kernel["ProblemType"]["ComputeDataType"].isSingleComplex() :
+        module.add(self.chooseGlobalRead(useBuffer, bps, scaleDVgpr, \
+                          addr0, addr1, soffset=0, offset=addrCalc.scaleDOffset, comment="load scaleD"))
+      else:
+        printExit("Unsupported scaleD type %s."%(str(kernel["ProblemType"]["ComputeDataType"])))
+
+    return module
+
   def addBiasLoad(self, dataType, kernel, ss, addrCalc, biasVgpr, isLocal=False):
     if isLocal and kernel["ProblemType"]["UseBias"] and (kernel["GlobalSplitU"] == 1):
       module = Module("addBias")
@@ -6973,14 +7033,14 @@ class KernelWriterAssembly(KernelWriter):
   ##############################################################################
   def globalWriteBatch(self, kernel, tPA, tPB, activation, ss: StoreState, batchIdx, \
       applyAlpha, beta, edge, atomic, gwvw, atomicW, \
-      batchElements, addrD, addrC, addrBias, \
+      batchElements, addrD, addrC, addrBias, addrScaleD, \
       tmpVgpr, bf16CVTVgprStruct, activationSetPCStruct, activationTypeStr, \
       batchElementSgprs, tmpSgpr, codeAccVgprRead, codeMulAlpha) -> Module:
       packdata = Component.PackData.find(self)
       gwriter  = Component.GlobalWriteComponents.find(self)
       return gwriter(kernel, tPA, tPB, activation, ss, \
         batchIdx, applyAlpha, beta, edge, atomic, gwvw, atomicW, \
-        batchElements, addrD, addrC, addrBias, tmpVgpr, bf16CVTVgprStruct, activationSetPCStruct, activationTypeStr, \
+        batchElements, addrD, addrC, addrBias, addrScaleD, tmpVgpr, bf16CVTVgprStruct, activationSetPCStruct, activationTypeStr, \
         batchElementSgprs, tmpSgpr, codeAccVgprRead, codeMulAlpha, packdata, self)
 
   ##############################################################################

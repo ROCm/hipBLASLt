@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022 Advanced Micro Devices, Inc.
+ * Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -72,6 +72,7 @@ namespace Tensile
                                      Beta                               _beta,
                                      bool                               _gpu,
                                      std::vector<std::shared_ptr<void>> _biasList,
+                                     std::shared_ptr<Alpha>             _scaleD        = nullptr,
                                      std::shared_ptr<void>              _ws            = nullptr,
                                      size_t                             _workspaceSize = 0)
 
@@ -86,6 +87,7 @@ namespace Tensile
                        _alpha,
                        _beta,
                        _biasList,
+                       _scaleD.get(),
                        _ws.get())
                 , managedA(_a)
                 , managedB(_b)
@@ -101,6 +103,7 @@ namespace Tensile
                 , dElements(_dElements)
                 , gpu(_gpu)
                 , managedBiasList(_biasList)
+                , managedScaleD(_scaleD)
                 , managedWS(_ws)
                 , workspaceSize(_workspaceSize)
             {
@@ -118,6 +121,7 @@ namespace Tensile
             std::shared_ptr<D*>                managedBatchD;
             std::shared_ptr<void>              managedWS;
             std::vector<std::shared_ptr<void>> managedBiasList;
+            std::shared_ptr<Alpha>             managedScaleD;
 
             size_t aElements;
             size_t bElements;
@@ -423,6 +427,7 @@ namespace Tensile
                 std::shared_ptr<CType>             c;
                 std::shared_ptr<DType>             d;
                 std::vector<std::shared_ptr<void>> biasList;
+                std::shared_ptr<AlphaType>         scaleD;
 
                 if(pristine)
                 {
@@ -479,6 +484,7 @@ namespace Tensile
                 if(pristine)
                 {
                     biasList = pristine->managedBiasList;
+                    scaleD   = pristine->managedScaleD;
                 }
                 else
                 {
@@ -505,6 +511,13 @@ namespace Tensile
                         if(biasptr == nullptr)
                             throw std::runtime_error("out of host memory allocating d");
                     }
+                    scaleD = std::shared_ptr<AlphaType>(
+                        (AlphaType*)std::malloc(TypeInfo<AlphaType>::ElementSize
+                                                * m_scaleMaxElements),
+                        std::free);
+
+                    if(scaleD == nullptr)
+                        throw std::runtime_error("out of host memory allocating scaleD");
                 }
 
                 auto rv = std::make_shared<ManagedInputs>(a,
@@ -522,7 +535,8 @@ namespace Tensile
                                                           alpha,
                                                           beta,
                                                           false,
-                                                          biasList);
+                                                          biasList,
+                                                          scaleD);
 
                 return rv;
             }
@@ -551,6 +565,7 @@ namespace Tensile
                 std::shared_ptr<CType>             c;
                 std::shared_ptr<DType>             d;
                 std::vector<std::shared_ptr<void>> biasList;
+                std::shared_ptr<AlphaType>         scaleD;
 
                 std::shared_ptr<AType*> batch_a;
                 std::shared_ptr<BType*> batch_b;
@@ -657,6 +672,7 @@ namespace Tensile
                 if(pristine)
                 {
                     biasList = pristine->managedBiasList;
+                    scaleD   = pristine->managedScaleD;
                 }
                 else
                 {
@@ -682,6 +698,8 @@ namespace Tensile
                         if(biasptr == nullptr)
                             throw std::runtime_error("out of host memory allocating d");
                     }
+                    scaleD = allocNewGPUBuffer<AlphaType>(
+                        "scaleD", TypeInfo<AlphaType>::ElementSize * m_scaleMaxElements);
                 }
                 auto rv = std::make_shared<ManagedInputs>(a,
                                                           b,
@@ -699,6 +717,7 @@ namespace Tensile
                                                           beta,
                                                           true,
                                                           biasList,
+                                                          scaleD,
                                                           ws,
                                                           m_workspaceSize);
                 return rv;
@@ -781,6 +800,11 @@ namespace Tensile
                             case DataType::Count:;
                             }
                         }
+                    }
+
+                    if(problem.useScaleD())
+                    {
+                        initArray(m_scaleDInit, inputs.managedScaleD.get(), m_scaleMaxElements);
                     }
 
                     for(int i = 0; i < getAdditionalArgNum(problem.activationType()); i++)
@@ -896,6 +920,10 @@ namespace Tensile
                                   GetElementSize(static_cast<DataType>(i)) * m_biasMaxElements,
                                   kind));
                 }
+                HIP_CHECK_EXC(hipMemcpy(dst->managedScaleD.get(),
+                                        src->managedScaleD.get(),
+                                        TypeInfo<AlphaType>::ElementSize * m_scaleMaxElements,
+                                        kind));
 
                 dst->alpha = src->alpha;
                 dst->beta  = src->beta;
@@ -964,6 +992,10 @@ namespace Tensile
                                problem.d().sizes()[0] * GetElementSize(static_cast<DataType>(i)));
                     }
 
+                    memcpy(const_cast<AlphaType*>(dst->scaleD),
+                           src->scaleD,
+                           problem.d().sizes()[0] * TypeInfo<AlphaType>::ElementSize);
+
                     dst->alpha = src->alpha;
                     dst->beta  = src->beta;
 
@@ -1021,6 +1053,12 @@ namespace Tensile
                                                     * problem.d().sizes()[0],
                                                 kind));
                     }
+
+                    HIP_CHECK_EXC(
+                        hipMemcpy(const_cast<AlphaType*>(dst->scaleD),
+                                  src->scaleD,
+                                  TypeInfo<AlphaType>::ElementSize * problem.d().sizes()[0],
+                                  kind));
 
                     dst->alpha = src->alpha;
                     dst->beta  = src->beta;

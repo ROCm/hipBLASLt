@@ -1,5 +1,6 @@
 ################################################################################
-# Copyright (C) 2022 Advanced Micro Devices, Inc. All rights reserved.
+#
+# Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -418,6 +419,7 @@ def dataInitParams(problemType):
     initAlpha = globalParameters['DataInitTypeAlpha']
     initBeta  = globalParameters['DataInitTypeBeta']
     initBias  = globalParameters['DataInitTypeBias']
+    initScaleD  = globalParameters['DataInitTypeScaleD']
 
     if not problemType.useBeta:
         initBeta = 0
@@ -431,7 +433,8 @@ def dataInitParams(problemType):
             ('init-d',            DataInitName(initD).name),
             ('init-alpha',        DataInitName(initAlpha).name),
             ('init-beta',         DataInitName(initBeta).name),
-            ('init-bias',         DataInitName(initBias).name)]
+            ('init-bias',         DataInitName(initBias).name),
+            ('init-scaleD',         DataInitName(initScaleD).name)]
 
 def boundsCheckName(mode):
     if mode == 0: return 'Disable'
@@ -467,6 +470,7 @@ def writeClientConfigIni(problemSizes, biasTypeArgs, activationArgs, problemType
         param('alpha-type', problemType.alphaType.toEnum())
         param('beta-type',  problemType.betaType.toEnum())
         param('use-bias',   problemType.useBias)
+        param('use-scaleD',   problemType.useScaleD)
         if biasTypeArgs:
           for btype in biasTypeArgs.biasTypes:
             param('bias-type-args',  btype.toEnum())

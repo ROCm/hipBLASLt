@@ -1,7 +1,7 @@
 /**
  * MIT License
  *
- * Copyright (C) 2022 Advanced Micro Devices, Inc. All rights reserved.
+ * Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -1256,6 +1256,7 @@ namespace Tensile
         Alpha                              _alpha,
         Beta                               _beta,
         std::vector<std::shared_ptr<void>> _biasList,
+        Alpha const*                       _scaleD,
         void*                              _ws)
         : a(_a)
         , b(_b)
@@ -1268,6 +1269,7 @@ namespace Tensile
         , ws(_ws)
         , alpha(_alpha)
         , beta(_beta)
+        , scaleD(_scaleD)
     {
         for(size_t i = 0; i < _biasList.size(); ++i)
         {

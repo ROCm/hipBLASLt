@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022 Advanced Micro Devices, Inc.
+ * Copyright (C) 2022-2023 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -257,12 +257,13 @@ typedef enum rocblaslt_matrix_layout_attribute_
  */
 typedef enum rocblaslt_matmul_desc_attributes_
 {
-    ROCBLASLT_MATMUL_DESC_TRANSA         = 0,
-    ROCBLASLT_MATMUL_DESC_TRANSB         = 1,
-    ROCBLASLT_MATMUL_DESC_EPILOGUE       = 2,
-    ROCBLASLT_MATMUL_DESC_BIAS_POINTER   = 3,
-    ROCBLASLT_MATMUL_DESC_BIAS_DATA_TYPE = 4,
-    ROCBLASLT_MATMUL_DESC_MAX            = 5
+    ROCBLASLT_MATMUL_DESC_TRANSA          = 0,
+    ROCBLASLT_MATMUL_DESC_TRANSB          = 1,
+    ROCBLASLT_MATMUL_DESC_EPILOGUE        = 2,
+    ROCBLASLT_MATMUL_DESC_BIAS_POINTER    = 3,
+    ROCBLASLT_MATMUL_DESC_BIAS_DATA_TYPE  = 4,
+    ROCBLASLT_MATMUL_DESC_D_SCALE_POINTER = 5,
+    ROCBLASLT_MATMUL_DESC_MAX             = 6
 } rocblaslt_matmul_desc_attributes;
 
 /*! \ingroup types_module

@@ -3,7 +3,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022 Advanced Micro Devices, Inc.
+ * Copyright (C) 2022-2023 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -143,6 +143,7 @@ struct _rocblaslt_matmul_desc
     rocblaslt_epilogue epilogue = ROCBLASLT_EPILOGUE_DEFAULT;
     // bias vector pointer
     void*             bias      = nullptr;
+    void*             scaleD    = nullptr;
     hipblasDatatype_t bias_type = static_cast<hipblasDatatype_t>(-1);
     //
     rocblaslt_compute_type compute_type;

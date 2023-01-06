@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022 Advanced Micro Devices, Inc.
+ * Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -1583,6 +1583,32 @@ namespace Tensile
                 virtual bool operator()(ContractionProblem const& problem) const override
                 {
                     return problem.useBias() == value;
+                }
+            };
+
+            struct UseScaleDEqual : public Predicate_CRTP<UseScaleDEqual, ContractionProblem>
+            {
+                enum
+                {
+                    HasIndex = false,
+                    HasValue = true
+                };
+                bool value;
+
+                UseScaleDEqual() = default;
+                UseScaleDEqual(bool value)
+                    : value(value)
+                {
+                }
+
+                static std::string Type()
+                {
+                    return "UseScaleD";
+                }
+
+                virtual bool operator()(ContractionProblem const& problem) const override
+                {
+                    return problem.useScaleD() == value;
                 }
             };
 

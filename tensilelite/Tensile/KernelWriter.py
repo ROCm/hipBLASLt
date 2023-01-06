@@ -1,5 +1,6 @@
 ################################################################################
-# Copyright (C) 2022 Advanced Micro Devices, Inc. All rights reserved.
+#
+# Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -3281,6 +3282,9 @@ class KernelWriter(metaclass=abc.ABCMeta):
     if self.states.doShadowInit and kernel["BufferStore"]:
       self.defineSgpr("SrdD", 4, 4)
       self.defineSgpr("SrdC", 4, 4)
+
+    if kernel["ProblemType"]["UseScaleD"] and (kernel["GlobalSplitU"] == 1):
+      self.defineSgpr("SrdScaleD", 4, 4)# asm input interface
     ###################################
     # Get kernel argument start here
     self.defineSgpr("Tensor2dSizeA", 2,4)
@@ -3303,6 +3307,11 @@ class KernelWriter(metaclass=abc.ABCMeta):
     self.defineSgpr("Alpha", numSgprAlpha, numSgprAlpha)
     if kernel["ProblemType"]["UseBeta"]:
       self.defineSgpr("Beta", numSgprBeta, numSgprBeta)
+    #asm input interface depen
+    numSgprAddressScaleD = 0
+    if kernel["ProblemType"]["UseScaleD"] and (kernel["GlobalSplitU"] == 1):
+      numSgprAddressScaleD = numSgprAddressA
+      self.defineSgpr("AddressScaleD", numSgprAddressScaleD)
     self.defineSgpr("StridesD", self.states.d.numSgprStrides)
     self.defineSgpr("StridesC", self.states.c.numSgprStrides)
     self.defineSgpr("StridesA", self.states.a.numSgprStrides)
@@ -3339,7 +3348,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
     self.defineSgpr("OffsetA", self.states.a.numSgprOffset)
     self.defineSgpr("OffsetB", self.states.b.numSgprOffset)
 
-    self.states.numSgprToLoad = 2 + 2 + numSgprAddressD + numSgprAddressC + numSgprAddressA + numSgprAddressB + numSgprAlpha + \
+    self.states.numSgprToLoad = 2 + 2 + numSgprAddressD + numSgprAddressC + numSgprAddressA + numSgprAddressB + numSgprAddressScaleD + numSgprAlpha + \
       (numSgprBeta if kernel["ProblemType"]["UseBeta"] else 0) + self.states.d.numSgprStrides + self.states.c.numSgprStrides + self.states.a.numSgprStrides + \
       self.states.b.numSgprStrides + self.states.numSgprSizesFree + self.states.numSgprSizesSum + \
       len(kernel["PackedC0IdxChars"][:-1])*2 + len(kernel["PackedC1IdxChars"][:-1])*2 + \
