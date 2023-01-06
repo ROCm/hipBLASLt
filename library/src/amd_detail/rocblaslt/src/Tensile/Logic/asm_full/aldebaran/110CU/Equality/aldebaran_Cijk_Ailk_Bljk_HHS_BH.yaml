@@ -56,6 +56,7 @@
   TransposeB: 0
   UseBeta: true
   UseBias: false
+  UseScaleD: false
   UseInitialStridesAB: false
   UseInitialStridesCD: false
 - - 1LDSBuffer: 0
@@ -225,6 +226,7 @@
       TransposeB: 0
       UseBeta: true
       UseBias: false
+      UseScaleD: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
     ScheduleGlobalRead: 1
@@ -438,6 +440,7 @@
       TransposeB: 0
       UseBeta: true
       UseBias: false
+      UseScaleD: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
     ScheduleGlobalRead: 1
@@ -651,6 +654,7 @@
       TransposeB: 0
       UseBeta: true
       UseBias: false
+      UseScaleD: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
     ScheduleGlobalRead: 1
@@ -864,6 +868,7 @@
       TransposeB: 0
       UseBeta: true
       UseBias: false
+      UseScaleD: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
     ScheduleGlobalRead: 1
@@ -1077,6 +1082,7 @@
       TransposeB: 0
       UseBeta: true
       UseBias: false
+      UseScaleD: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
     ScheduleGlobalRead: 1
@@ -1290,6 +1296,7 @@
       TransposeB: 0
       UseBeta: true
       UseBias: false
+      UseScaleD: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
     ScheduleGlobalRead: 1
@@ -1503,6 +1510,7 @@
       TransposeB: 0
       UseBeta: true
       UseBias: false
+      UseScaleD: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
     ScheduleGlobalRead: 1
@@ -1716,6 +1724,7 @@
       TransposeB: 0
       UseBeta: true
       UseBias: false
+      UseScaleD: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
     ScheduleGlobalRead: 1
@@ -1929,6 +1938,7 @@
       TransposeB: 0
       UseBeta: true
       UseBias: false
+      UseScaleD: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
     ScheduleGlobalRead: 1
@@ -2142,6 +2152,7 @@
       TransposeB: 0
       UseBeta: true
       UseBias: false
+      UseScaleD: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
     ScheduleGlobalRead: 1
@@ -2355,6 +2366,7 @@
       TransposeB: 0
       UseBeta: true
       UseBias: false
+      UseScaleD: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
     ScheduleGlobalRead: 1
@@ -2568,6 +2580,7 @@
       TransposeB: 0
       UseBeta: true
       UseBias: false
+      UseScaleD: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
     ScheduleGlobalRead: 1
@@ -2781,6 +2794,7 @@
       TransposeB: 0
       UseBeta: true
       UseBias: false
+      UseScaleD: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
     ScheduleGlobalRead: 1
@@ -2994,6 +3008,7 @@
       TransposeB: 0
       UseBeta: true
       UseBias: false
+      UseScaleD: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
     ScheduleGlobalRead: 1
@@ -3207,6 +3222,7 @@
       TransposeB: 0
       UseBeta: true
       UseBias: false
+      UseScaleD: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
     ScheduleGlobalRead: 1
@@ -3420,6 +3436,7 @@
       TransposeB: 0
       UseBeta: true
       UseBias: false
+      UseScaleD: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
     ScheduleGlobalRead: 1
@@ -3633,6 +3650,7 @@
       TransposeB: 0
       UseBeta: true
       UseBias: false
+      UseScaleD: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
     ScheduleGlobalRead: 1
