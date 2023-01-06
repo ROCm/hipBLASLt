@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022 Advanced Micro Devices, Inc. All rights reserved.
+ * Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -403,6 +403,11 @@ namespace Tensile
                 rv.args.append<typename TypedInputs::BetaType>("beta_2", inputs.beta);
         }
 
+        if(problemType.useScaleD && (sizeMapping.globalSplitU == 1)) //kernel input data
+        {
+            rv.args.append<typename TypedInputs::AlphaType const*>("scaleD", inputs.scaleD);
+        }
+
         size_t startStrideCD = problemType.useInitialStridesCD ? 0 : 1;
         size_t startStrideAB = problemType.useInitialStridesAB ? 0 : 1;
 
@@ -711,6 +716,10 @@ namespace Tensile
         {
             rv.args.append<void const*>("bias", inputs.bias);
         }
+        if(problemType.useBeta && sizeMapping.globalAccumulation == 0)
+        {
+            rv.args.append<typename TypedInputs::AlphaType const*>("scaleD", inputs.scaleD);
+        }
 
         if(sizeMapping.globalAccumulation)
         {
@@ -831,6 +840,10 @@ namespace Tensile
         {
             rv.args.append<void const*>("bias", inputs.bias);
         }
+        if(problemType.useScaleD) // GSU dep
+        {
+            rv.args.append<typename TypedInputs::AlphaType const*>("scaleD", inputs.scaleD);
+        }
 
         if(sizeMapping.globalAccumulation == 2)
             rv.args.append<typename TypedInputs::AlphaType>("alpha", inputs.alpha);
@@ -935,6 +948,11 @@ namespace Tensile
         if(problem.activationHPA())
         {
             name += "h";
+        }
+
+        if(problemType.useScaleD)
+        {
+            name += ("_ScaleD");
         }
 
         name += "_PostGSU";

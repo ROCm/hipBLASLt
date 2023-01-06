@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022 Advanced Micro Devices, Inc.
+ * Copyright (C) 2022-2023 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -65,6 +65,10 @@ rocblaslt_status rocblaslt_matmul_impl(const rocblaslt_handle       handle,
     rocblaslt_epilogue epilogue = matmul_descr->epilogue;
     if(is_bias_enabled(epilogue))
         bias = matmul_descr->bias;
+
+    const void* scaleD = nullptr;
+    if(matmul_descr->scaleD)
+        scaleD = matmul_descr->scaleD;
 
     // matrix A
     int64_t           num_rows_a     = matA->m;
@@ -130,7 +134,7 @@ rocblaslt_status rocblaslt_matmul_impl(const rocblaslt_handle       handle,
     handle, opA, opB, m, n, k, alpha, A, type_a, lda, batch_stride_a, 0, B, type_b, ldb, \
         batch_stride_b, 0, beta, C, type_c, ldc, batch_stride_c, 0, D, type_d, ldd,      \
         batch_stride_d, 0, num_batches_a, true, compute_type, algo, workspace,           \
-        workspaceSizeInBytes, bias, bias_type, epilogue, stream
+        workspaceSizeInBytes, bias, scaleD, bias_type, epilogue, stream
 
     return rocblaslt_matmul_template(EX_PARM);
 }

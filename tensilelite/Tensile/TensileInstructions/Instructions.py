@@ -1,6 +1,6 @@
 ################################################################################
 #
-# Copyright (C) 2022 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -1537,6 +1537,11 @@ class VMulPKF16(CommonInstruction):
     def __init__(self, dst, src0, src1, sdwa: Optional[SDWAModifiers] = None, vop3: Optional[VOP3PModifiers] = None, comment="") -> None:
         super().__init__(InstType.INST_F16, dst, [src0, src1], sdwa, vop3, comment)
         self.setInst("v_pk_mul_f16")
+
+class VMulPKF32(CommonInstruction):
+    def __init__(self, dst, src0, src1, sdwa: Optional[SDWAModifiers] = None, vop3: Optional[VOP3PModifiers] = None, comment="") -> None:
+        super().__init__(InstType.INST_F32, dst, [src0, src1], sdwa, vop3, comment)
+        self.setInst("v_pk_mul_f32")
 
 class VMulLOU32(CommonInstruction):
     def __init__(self, dst, src0, src1, comment="") -> None:

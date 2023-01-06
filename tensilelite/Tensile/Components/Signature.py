@@ -1,6 +1,6 @@
 ################################################################################
 #
-# Copyright (C) 2022 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -87,7 +87,8 @@ class SignatureCOV3(Signature):
         signature.addArg(   "alpha",        SVK.SIG_VALUE, cptValueType)
         if kernel["ProblemType"]["UseBeta"]:
             signature.addArg("beta",        SVK.SIG_VALUE, cptValueType)
-
+        if kernel["ProblemType"]["UseScaleD"] and (kernel["GlobalSplitU"] == 1):
+            signature.addArg("AddressScaleD", SVK.SIG_GLOBALBUFFER, cptValueType, "generic")
         for i in range(0, writer.states.d.numSgprStrides):
             signature.addArg(              "strideD%u"%i, SVK.SIG_VALUE,               "u32")
 
@@ -126,7 +127,10 @@ class SignatureCOV3(Signature):
 
         if kernel["ProblemType"]["UseBias"] and (kernel["GlobalSplitU"] == 1):
             signature.addArg("bias", SVK.SIG_GLOBALBUFFER, biasValueType, "generic")
+
+        if kernel["ProblemType"]["UseBias"] and (kernel["GlobalSplitU"] == 1):
             signature.addArg("biasType",    SVK.SIG_VALUE,        "u32")
+
 
         if ((kernel["ProblemType"]["ActivationType"] != 'none') and (kernel["GlobalSplitU"] == 1) \
             and kernel["ActivationFused"]):

@@ -97,6 +97,7 @@ Arguments:
   - activation_arg2: c_float
   - bias_type: hipblasDatatype_t
   - bias_vector: c_bool
+  - scaleD_vector: c_bool
   - c_noalias_d: c_bool
   - HMM: c_bool
 
@@ -169,3 +170,4 @@ Defaults:
   activation_arg2: 0
   bias_type: default
   bias_vector: false
+  scaleD_vector: false

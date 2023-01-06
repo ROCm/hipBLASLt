@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022 Advanced Micro Devices, Inc.
+ * Copyright (C) 2022-2023 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -121,6 +121,8 @@ namespace
 
                 if(strstr(arg.function, "_batched") != nullptr)
                     name << '_' << arg.batch_count;
+                if(arg.scaleD_vector)
+                    name << "_SD";
             }
 
             return std::move(name);

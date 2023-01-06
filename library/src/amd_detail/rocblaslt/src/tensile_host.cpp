@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022 Advanced Micro Devices, Inc.
+ * Copyright (C) 2022-2023 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -302,6 +302,9 @@ namespace
         tensileProblem.setUseBias(true);
         tensileProblem.setBiasType(hipblasDatatype_to_tensile_type(prob.bias_type));
 
+        // set ScaleD mode
+        tensileProblem.setUseScaleD(true);
+
         // set Actvation
         tensileProblem.setActivationType(Tensile::ActivationType::All);
         tensileProblem.setActivationHPA(sizeof(Tc) > sizeof(Ti));
@@ -369,7 +372,8 @@ namespace
         inputs.ws = prob.workspace;
 
         // set bias vector
-        inputs.bias = reinterpret_cast<const Tensile_To*>(prob.bias);
+        inputs.bias   = reinterpret_cast<const Tensile_To*>(prob.bias);
+        inputs.scaleD = reinterpret_cast<const Tensile_Talpha_beta*>(prob.scaleD);
 
         // push 2 activation arguments
         inputs.activationArgs.push_back(static_cast<Tensile_To>(0.0f));
@@ -714,12 +718,13 @@ rocblaslt_status runContractionProblem(const rocblaslt_matmul_algo*             
 
         hardware          = Tensile::hip::GetDevice(*deviceProp);
         auto tensile_prob = ConstructTensileProblem(prob);
-        if(algo->fallback && prob.bias == nullptr
+        if(algo->fallback && prob.bias == nullptr && prob.scaleD == nullptr
            && tensile_prob.activationEnumArg() == Tensile::ActivationType::None)
         {
             tensile_prob.setUseBias(false);
             tensile_prob.setActivationType(Tensile::ActivationType::None);
             tensile_prob.setActivationHPA(false);
+            tensile_prob.setUseScaleD(false);
         }
         std::shared_ptr<Tensile::ContractionSolution> solution
             = std::static_pointer_cast<Tensile::ContractionSolution>(algo->data.ptr);
@@ -786,6 +791,10 @@ RocblasltContractionProblem<Ti, To, Tc>
     rocblaslt_epilogue epilogue  = matmul_descr->epilogue;
     if(is_bias_enabled(epilogue))
         bias = (const void*)matmul_descr->bias;
+
+    const Tc* scaleD = nullptr;
+    if(matmul_descr->scaleD)
+        scaleD = (const Tc*)matmul_descr->scaleD;
 
     // matrix A
     int64_t num_rows_a     = matA->m;
@@ -872,6 +881,7 @@ RocblasltContractionProblem<Ti, To, Tc>
                                                     num_batches_a,
                                                     true,
                                                     bias,
+                                                    scaleD,
                                                     bias_type,
                                                     epilogue,
                                                     nullptr,
@@ -926,20 +936,25 @@ rocblaslt_status getBestSolutions(RocblasltContractionProblem<Ti, To, Tc> prob,
     auto tensile_prob = ConstructTensileProblem(prob);
     std::vector<std::shared_ptr<Tensile::ContractionSolution>> solutions_fallback;
     // Fallback to original kernels
-    if(prob.bias == nullptr && tensile_prob.activationEnumArg() == Tensile::ActivationType::None)
+    if(prob.scaleD == nullptr && prob.bias == nullptr
+       && tensile_prob.activationEnumArg() == Tensile::ActivationType::None)
     {
-        auto useBias = tensile_prob.useBias();
-        auto actType = tensile_prob.activationType();
-        auto actHPA  = tensile_prob.activationHPA();
+        auto useBias   = tensile_prob.useBias();
+        auto actType   = tensile_prob.activationType();
+        auto actHPA    = tensile_prob.activationHPA();
+        auto useScaleD = tensile_prob.useScaleD();
         tensile_prob.setUseBias(false);
         tensile_prob.setActivationType(Tensile::ActivationType::None);
         tensile_prob.setActivationHPA(false);
+        tensile_prob.setUseScaleD(false);
         solutions_fallback = library->findTopSolutions(tensile_prob, *hardware, requestedAlgoCount);
         // restore
         tensile_prob.setUseBias(useBias);
         tensile_prob.setActivationType(actType);
         tensile_prob.setActivationHPA(actHPA);
+        tensile_prob.setUseScaleD(useScaleD);
     }
+
     auto solutions = library->findTopSolutions(tensile_prob, *hardware, requestedAlgoCount);
     if(solutions_fallback.size() > 0)
     {

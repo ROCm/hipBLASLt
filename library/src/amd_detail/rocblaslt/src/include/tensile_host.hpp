@@ -3,7 +3,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022 Advanced Micro Devices, Inc.
+ * Copyright (C) 2022-2023 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -99,6 +99,7 @@ struct RocblasltContractionProblem
     bool   strided_batch;
 
     const void*        bias;
+    const Tc*          scaleD;
     hipblasDatatype_t  bias_type;
     rocblaslt_epilogue epilogue;
     void*              workspace;
@@ -139,6 +140,7 @@ struct RocblasltContractionProblem
                                 int64_t            batch_count,
                                 bool               strided_batch,
                                 const void*        bias,
+                                const Tc*          scaleD,
                                 hipblasDatatype_t  bias_type,
                                 rocblaslt_epilogue epilogue,
                                 void*              workspace,
@@ -179,6 +181,7 @@ struct RocblasltContractionProblem
         , batch_count(batch_count)
         , strided_batch(strided_batch)
         , bias(bias)
+        , scaleD(scaleD)
         , bias_type(bias_type)
         , epilogue(epilogue)
         , workspace(workspace)

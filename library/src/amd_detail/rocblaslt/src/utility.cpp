@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022 Advanced Micro Devices, Inc.
+ * Copyright (C) 2022-2023 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -113,6 +113,8 @@ const char* rocblaslt_matmul_desc_attributes_to_string(rocblaslt_matmul_desc_att
         return "MATMUL_DESC_BIAS_POINTER";
     case ROCBLASLT_MATMUL_DESC_BIAS_DATA_TYPE:
         return "MATMUL_DESC_BIAS_DATA_TYPE";
+    case ROCBLASLT_MATMUL_DESC_D_SCALE_POINTER:
+        return "MATMUL_DESC_D_SCALE_POINTER";
     default:
         return "Invalid";
     }
