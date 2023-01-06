@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022 Advanced Micro Devices, Inc.
+ * Copyright (C) 2022-2023 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -99,6 +99,7 @@ void Arguments::init()
     activation_arg2 = std::numeric_limits<float>::infinity();
     bias_type       = static_cast<hipblasDatatype_t>(-1);
     bias_vector     = false;
+    scaleD_vector   = false;
     c_noalias_d     = false;
     HMM             = false;
 }
