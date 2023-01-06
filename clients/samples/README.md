@@ -29,6 +29,7 @@ options:
         --beta                  beta            GEMM_STRIDED argument beta
         --act                   act             GEMM_STRIDED set activation type: relu or gelu
         --bias                  bias            GEMM_STRIDED enable bias: 0 or 1 (default is 0)
+        --scaleD                scaleD          GEMM_STRIDED enable scaleD: 0 or 1 (default is 0)
         --header                header          Print header for output (default is enabled)
         --timing                timing          Bechmark GPU kernel performance:0 or 1 (default is 1)
 ```

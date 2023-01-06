@@ -69,11 +69,13 @@ Build library dependencies + client dependencies + library + client
 
 The client contains executables in the table below.
 
-============================ ====================================================
+============================ =====================================================
 executable name               description
-============================ ====================================================
+============================ =====================================================
+hipblaslt-test                runs Google Tests to test the library
+hipblaslt-bench               executable to benchmark or test individual functions
 example_hipblaslt_preference  example C code calling hipblaslt functions
-============================ ====================================================
+============================ =====================================================
 
 Common uses of install.sh to build (dependencies + library + client) are
 in the table below.

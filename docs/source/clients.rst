@@ -87,6 +87,7 @@ For more information:
    --activation_arg2 <value>  Reserved.                                                                           (Default value is: inf)
    --bias_type <value>        Precision of bias vector.Options: f16_r,bf16_r,f32_r,default(same with D type)
    --bias_vector              Apply bias vector
+   --scaleD_vector            Apply scaleD vector
    --device <value>           Set default device to be used for subsequent program runs                           (Default value is: 0)
    --c_noalias_d              C and D are stored in separate memory
    --workspace <value>        Set fixed workspace memory size instead of using hipblaslt managed memory           (Default value is: 0)
@@ -127,6 +128,7 @@ For more information:
         --beta                  beta            GEMM_STRIDED argument beta
         --act                   act             GEMM_STRIDED set activation type: relu or gelu
         --bias                  bias            GEMM_STRIDED enable bias: 0 or 1 (default is 0)
+        --scaleD                scaleD          GEMM_STRIDED enable scaleD: 0 or 1 (default is 0)
         --header                header          Print header for output (default is enabled)
         --timing                timing          Bechmark GPU kernel performance:0 or 1 (default is 1)
 
