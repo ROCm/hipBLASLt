@@ -1,5 +1,6 @@
 ################################################################################
-# Copyright (C) 2022 Advanced Micro Devices, Inc. All rights reserved.
+#
+# Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -146,6 +147,7 @@ globalParameters["DataInitTypeD"]  = 0
 globalParameters["DataInitTypeAlpha"] = 2
 globalParameters["DataInitTypeBeta"] = 2
 globalParameters["DataInitTypeBias"] = 1
+globalParameters["DataInitTypeScaleD"] = 1
 globalParameters["DataInitValueActivationArgs"] = [2.0, 2.0]
 globalParameters["CEqualD"] = False               # Set to true if testing for the case where the pointer to C is the same as D.
 globalParameters["BufferOffsetA"] = 0             # data offset of buffer A
@@ -1039,6 +1041,7 @@ defaultProblemType = {
     "ComputeDataType":          0,                # compute data types can specified by a variety of ways, such as "s", as listed in SolutionStructs.py::DataType
     "UseBeta":                  True,             # =True use beta parameter (asm will check for B=0 and optimize the write for that), =False don't use beta parameter
     "UseBias":                  False,            # =True use bias vector
+    "UseScaleD":                False,            # =True use scaleD vector
     "HighPrecisionAccumulate":  False,            # f32 += f16*f16
     "SilentHighPrecisionAccumulate": False,       # Keep kernel names the same for HPA mode.  Useful for testing.
 

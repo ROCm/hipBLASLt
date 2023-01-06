@@ -1,5 +1,6 @@
 ################################################################################
-# Copyright (C) 2022 Advanced Micro Devices, Inc. All rights reserved.
+#
+# Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -74,6 +75,11 @@ class KernelWriterConversion(KernelWriterBase):
     if self.state["ProblemType"]["UseBias"]:
       biasPtrStr = self.state["ProblemType"]["BiasDataType"].toDevice(self.language)
       kStr += "  " + biasPtrStr + " const * " + "Bias," + self.endLine
+
+    # interface: ScaleD GSU>1 GSUA "MUL"
+    if self.state["ProblemType"]["UseScaleD"]:
+      scaleDPtrStr = self.state["ProblemType"]["ComputeDataType"].toDevice(self.language)
+      kStr += "  " + scaleDPtrStr + " const * " + "ScaleD," + self.endLine
 
     # alpha & beta
     kStr += "  %s const alpha,%s" % (self.state["ProblemType"]["ComputeDataType"].toDevice(self.language), self.endLine)
@@ -259,6 +265,7 @@ class KernelWriterConversion(KernelWriterBase):
     kStr += ";" + self.endLine
 
     kStr += "  " + intermediateDataType + " accum = 0;%s" % self.endLine
+    kStr += "  " + self.datatype + " result = 0;%s" % self.endLine
     kStr += "  for (int i=0; i<gsu; i++) {%s" % self.endLine
     kStr += "    accum += W[idxW];%s" % self.endLine
     kStr += "    idxW  += strideW;%s" % self.endLine
@@ -267,6 +274,10 @@ class KernelWriterConversion(KernelWriterBase):
     biasStr = ""
     if self.state["ProblemType"]["UseBias"]:
       biasStr = " + ((" + intermediateDataType + ")(Bias == 0 ? 0 : Bias[id0]))"
+
+    scaleDStr = ""
+    if self.state["ProblemType"]["UseScaleD"]:
+      scaleDStr = " * ((" + intermediateDataType + ")(ScaleD == 0 ? 1 : ScaleD[id0]))"
 
     kStr += "  if( beta == (%s)0)%s" % (self.state["ProblemType"]["ComputeDataType"].toDevice(self.language), self.endLine)
     kStr += "    accum = ((" + intermediateDataType + ")alpha) * accum%s;%s" % (biasStr, self.endLine)
@@ -288,7 +299,8 @@ class KernelWriterConversion(KernelWriterBase):
     if self.state["ProblemType"]["DestDataType"].isInt8() and self.state["ProblemType"]["HighPrecisionAccumulate"]:
       rvalueStr = "min(127, max(-128, (int32_t)std::nearbyint(%s)))" % rvalueStr
 
-    kStr += "  D[idxD] = (%s)%s;%s" % (typeStr, rvalueStr, self.endLine)
+    kStr += "  result = (%s)%s;%s" % (typeStr, rvalueStr, self.endLine)
+    kStr += "  D[idxD] = (%s)(result%s);%s" % (typeStr, scaleDStr, self.endLine)
 
     ########################################
     # end
@@ -322,6 +334,7 @@ class KernelWriterConversion(KernelWriterBase):
       else:
         name += "_%s"%str(self.state["ProblemType"]["ActivationType"]).upper()
       name += ("h" if self.state["ProblemType"]["ActivationHPA"] else "")
+    name += "_ScaleD" if self.state["ProblemType"]["UseScaleD"] else ""
     name += "_PostGSU"
     return name
 

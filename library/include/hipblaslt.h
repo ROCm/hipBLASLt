@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022 Advanced Micro Devices, Inc.
+ * Copyright (C) 2022-2023 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -96,7 +96,8 @@ typedef enum {
   HIPBLASLT_MATMUL_DESC_EPILOGUE = 2,             /**<Epilogue function. See hipblasLtEpilogue_t. Default value is: HIPBLASLT_EPILOGUE_DEFAULT. Data Type: uint32_t*/
   HIPBLASLT_MATMUL_DESC_BIAS_POINTER = 3,         /**<Bias or Bias gradient vector pointer in the device memory. Data Type:void *\/ const void**/
   HIPBLASLT_MATMUL_DESC_BIAS_DATA_TYPE = 4,       /**<Type of the bias vector in the device memory. Can be set same as D matrix type or Scale type. Bias case: see HIPBLASLT_EPILOGUE_BIAS. Data Type:int32_t based on hipblasDatatype_t*/
-  HIPBLASLT_MATMUL_DESC_MAX = 5
+  HIPBLASLT_MATMUL_DESC_D_SCALE_POINTER = 5,               /**<D-Scale vector pointer in the device memory performed on matrix D. Data Type:*/
+  HIPBLASLT_MATMUL_DESC_MAX = 6
 } hipblasLtMatmulDescAttributes_t;
 
 /*! \ingroup types_module

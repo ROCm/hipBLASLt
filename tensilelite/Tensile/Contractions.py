@@ -1,5 +1,6 @@
-#################################################################################
-# Copyright (C) 2022 Advanced Micro Devices, Inc. All rights reserved.
+################################################################################
+#
+# Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -62,7 +63,7 @@ class BoundIndex:
 
 class ProblemType:
     StateKeys = ['operationIdentifier', 'aType', 'bType', 'cType', 'dType',
-                 'useBeta', 'useBias', 'biasDataTypeWhiteList', 'highPrecisionAccumulate',
+                 'useBeta', 'useBias', 'useScaleD','biasDataTypeWhiteList', 'highPrecisionAccumulate',
                  'useInitialStridesAB', 'useInitialStridesCD', 'stridedBatched',
                  'activationType', 'activationHPA']
     @classmethod
@@ -169,6 +170,10 @@ class ProblemType:
                 rv.biasDataTypeWhiteList = d['BiasDataTypeList']
             else:
                 rv.biasDataTypeWhiteList = getBiasDataTypeListDefault(d)
+
+        rv.useScaleD = False
+        if 'UseScaleD' in d:
+            rv.useScaleD = d['UseScaleD']
 
         rv.batched = d['Batched']
 

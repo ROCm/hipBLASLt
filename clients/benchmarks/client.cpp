@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022 Advanced Micro Devices, Inc.
+ * Copyright (C) 2022-2023 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -396,6 +396,10 @@ try
         ("bias_vector",
          bool_switch(&arg.bias_vector)->default_value(false),
          "Apply bias vector")
+
+        ("scaleD_vector",
+         bool_switch(&arg.scaleD_vector)->default_value(false),
+         "Apply scaleD vector")
 
         ("device",
          value<int>(&device_id)->default_value(0),

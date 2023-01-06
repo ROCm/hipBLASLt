@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022 Advanced Micro Devices, Inc.
+ * Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -100,6 +100,7 @@ namespace Tensile
                     Base::template Pair<Predicates::Contraction::ActivationHPAEqual>(),
                     Base::template Pair<Predicates::Contraction::ActivationEnumWhiteList>(),
                     Base::template Pair<Predicates::Contraction::UseBiasEqual>(),
+                    Base::template Pair<Predicates::Contraction::UseScaleDEqual>(),
                     Base::template Pair<Predicates::Contraction::BiasDataTypeWhiteList>(),
                     Base::template Pair<Predicates::Contraction::SizeInRange>(),
                 });
@@ -381,6 +382,12 @@ namespace Tensile
         template <typename IO>
         struct MappingTraits<Predicates::Contraction::UseBiasEqual, IO>
             : public AutoMappingTraits<Predicates::Contraction::UseBiasEqual, IO>
+        {
+        };
+
+        template <typename IO>
+        struct MappingTraits<Predicates::Contraction::UseScaleDEqual, IO>
+            : public AutoMappingTraits<Predicates::Contraction::UseScaleDEqual, IO>
         {
         };
 

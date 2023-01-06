@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022 Advanced Micro Devices, Inc.
+ * Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -355,6 +355,7 @@ namespace Tensile
             , m_alphaInit(args["init-alpha"].as<InitMode>())
             , m_betaInit(args["init-beta"].as<InitMode>())
             , m_biasInit(args["init-bias"].as<InitMode>())
+            , m_scaleDInit(args["init-scaleD"].as<InitMode>())
             , m_activationType(ActivationType::None)
             , m_activationHPA(false)
             , m_aBufferOffset(args["offset-a"].as<size_t>())
@@ -366,6 +367,7 @@ namespace Tensile
             , m_cMaxElements(0)
             , m_dMaxElements(0)
             , m_biasMaxElements(0)
+            , m_scaleMaxElements(0)
             , m_maxBatch(0)
             , m_stridedBatched(args["strided-batched"].as<bool>())
             , m_cEqualsD(args["c-equal-d"].as<bool>())
@@ -389,11 +391,12 @@ namespace Tensile
 
             for(auto const& problem : problemFactory.problems())
             {
-                m_aMaxElements    = std::max(m_aMaxElements, problem.a().totalAllocatedElements());
-                m_bMaxElements    = std::max(m_bMaxElements, problem.b().totalAllocatedElements());
-                m_cMaxElements    = std::max(m_cMaxElements, problem.c().totalAllocatedElements());
-                m_dMaxElements    = std::max(m_dMaxElements, problem.d().totalAllocatedElements());
-                m_biasMaxElements = std::max(m_dMaxElements, problem.d().sizes()[0]);
+                m_aMaxElements     = std::max(m_aMaxElements, problem.a().totalAllocatedElements());
+                m_bMaxElements     = std::max(m_bMaxElements, problem.b().totalAllocatedElements());
+                m_cMaxElements     = std::max(m_cMaxElements, problem.c().totalAllocatedElements());
+                m_dMaxElements     = std::max(m_dMaxElements, problem.d().totalAllocatedElements());
+                m_biasMaxElements  = std::max(m_biasMaxElements, problem.d().sizes()[0]);
+                m_scaleMaxElements = std::max(m_scaleMaxElements, problem.d().sizes()[0]);
 
                 size_t numOfBatch = 1;
                 for(size_t i = 0; i < problem.batchIndices().size(); i++)
@@ -443,6 +446,8 @@ namespace Tensile
                     = args["activation-additional-args"].as<std::vector<std::vector<double>>>();
             if(args.count("use-bias"))
                 m_useBias = args["use-bias"].as<bool>();
+            if(args.count("use-scaleD"))
+                m_useScaleD = args["use-scaleD"].as<bool>();
         }
 
         DataInitialization::~DataInitialization() {}

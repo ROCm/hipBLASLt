@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022 Advanced Micro Devices, Inc.
+ * Copyright (C) 2022-2023 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -42,13 +42,15 @@
 #include <hipblaslt/hipblaslt.h>
 #include <omp.h>
 
-template <typename Ti, typename To, typename Tbias, typename Tact, typename F>
+template <typename Ti, typename To, typename Tbias, typename Talpha, typename Tact, typename F>
 void epilogue_func(int64_t m,
                    int64_t n,
                    int64_t ld,
                    Ti*     in,
                    To*     out,
                    bool    enable_bias,
+                   bool    enable_scaleD,
+                   Talpha* scaleD,
                    Tbias*  bias,
                    Tact    arg1,
                    Tact    arg2,
@@ -58,29 +60,60 @@ void epilogue_func(int64_t m,
 
     for(int i = 0; i < m; i++)
     {
-        Ti bias_data = enable_bias ? static_cast<Ti>(*(bias + i)) : 0;
+        Ti bias_data   = enable_bias ? static_cast<Ti>(*(bias + i)) : 0;
+        Ti scaleD_data = enable_scaleD ? static_cast<Ti>(*(scaleD + i)) : 1;
 #pragma omp parallel for
         for(int j = 0; j < n; j++)
         {
             auto pos     = j * ld + i;
             auto in_Tact = static_cast<Tact>(*(in + pos)) + bias_data;
+            in_Tact *= scaleD_data;
             *(out + pos) = saturate_o(act_func(in_Tact, arg1, arg2));
         }
     }
 }
-template <typename Ti, typename To, typename Tbias>
-void epilogue_func(int64_t m, int64_t n, int64_t ld, Ti* in, To* out, bool enable_bias, Tbias* bias)
+template <typename Ti, typename To, typename Tbias, typename Talpha>
+void epilogue_func(int64_t m,
+                   int64_t n,
+                   int64_t ld,
+                   Ti*     in,
+                   To*     out,
+                   bool    enable_bias,
+                   bool    enable_scaleD,
+                   Talpha* scaleD,
+                   Tbias*  bias)
 {
     auto saturate_o = [](Ti val) { return static_cast<To>(val); };
 
     for(int i = 0; i < m; i++)
     {
-        Ti bias_data = enable_bias ? static_cast<Ti>(*(bias + i)) : 0;
+        Ti bias_data   = enable_bias ? static_cast<Ti>(*(bias + i)) : 0;
+        Ti scaleD_data = enable_scaleD ? static_cast<Ti>(*(scaleD + i)) : 1;
+#pragma omp parallel for
+        for(int j = 0; j < n; j++)
+        {
+            auto pos  = j * ld + i;
+            auto temp = static_cast<Ti>(*(in + pos)) + bias_data;
+            temp *= scaleD_data;
+            *(out + pos) = saturate_o(temp);
+        }
+    }
+}
+
+template <typename Ti, typename To, typename Talpha>
+void scaleD_func(
+    int64_t m, int64_t n, int64_t ld, Ti* in, To* out, bool enable_scaleD, Talpha* scaleD)
+{
+    auto saturate_o = [](Ti val) { return static_cast<To>(val); };
+
+    for(int i = 0; i < m; i++)
+    {
+        Ti scaleD_data = enable_scaleD ? static_cast<Ti>(*(scaleD + i)) : 1;
 #pragma omp parallel for
         for(int j = 0; j < n; j++)
         {
             auto pos     = j * ld + i;
-            auto temp    = static_cast<Ti>(*(in + pos)) + bias_data;
+            auto temp    = static_cast<Ti>(*(in + pos)) * scaleD_data;
             *(out + pos) = saturate_o(temp);
         }
     }
@@ -265,6 +298,7 @@ void testing_matmul(const Arguments& arg)
     const size_t size_D      = stride_d == 0 ? ldd * N * num_batches : stride_d * num_batches;
     const size_t size_D_copy = arg.unit_check || arg.norm_check ? size_D : 0;
     const size_t size_bias   = arg.bias_vector ? M : 1;
+    const size_t size_scaleD = arg.scaleD_vector ? M : 1;
 
     // allocate memory on device
     device_vector<Ti>            dA(size_A, 1, HMM);
@@ -272,6 +306,7 @@ void testing_matmul(const Arguments& arg)
     device_vector<To>            dC(size_C, 1, HMM);
     device_vector<To>            dD(size_D, 1, HMM);
     device_vector<To>            dBias(size_bias, 1, HMM);
+    device_vector<Talpha>        dScaleD(size_scaleD, 1, HMM);
     device_vector<Talpha>        dBias_C(size_bias, 1, HMM);
     device_vector<unsigned char> dWorkspace(workspace_size, 1, HMM);
     CHECK_DEVICE_ALLOCATION(dA.memcheck());
@@ -279,6 +314,7 @@ void testing_matmul(const Arguments& arg)
     CHECK_DEVICE_ALLOCATION(dC.memcheck());
     CHECK_DEVICE_ALLOCATION(dD.memcheck());
     CHECK_DEVICE_ALLOCATION(dBias.memcheck());
+    CHECK_DEVICE_ALLOCATION(dScaleD.memcheck());
     CHECK_DEVICE_ALLOCATION(dBias_C.memcheck());
     CHECK_DEVICE_ALLOCATION(dWorkspace.memcheck());
 
@@ -290,6 +326,7 @@ void testing_matmul(const Arguments& arg)
     host_vector<Talpha> hD_gold_epl(size_D_copy);
     host_vector<To>     hD_1(size_D_copy);
     host_vector<To>     hBias(size_bias);
+    host_vector<Talpha> hScaleD(size_scaleD);
     host_vector<Talpha> hBias_C(size_bias);
 
     hipblaslt_seedrand();
@@ -345,6 +382,10 @@ void testing_matmul(const Arguments& arg)
         hipblaslt_init<To>(hBias, M, 1, M);
         hipblaslt_init<Talpha>(hBias_C, M, 1, M);
     }
+
+    if(arg.scaleD_vector)
+        hipblaslt_init<Talpha>(hScaleD, M, 1, M);
+
     // copy data from CPU to device
     CHECK_HIP_ERROR(dA.transfer_from(hA));
     CHECK_HIP_ERROR(dB.transfer_from(hB));
@@ -354,9 +395,19 @@ void testing_matmul(const Arguments& arg)
         CHECK_HIP_ERROR(dBias.transfer_from(hBias));
         CHECK_HIP_ERROR(dBias_C.transfer_from(hBias_C));
     }
+
+    if(arg.scaleD_vector)
+        CHECK_HIP_ERROR(dScaleD.transfer_from(hScaleD));
+
     if(size_D_copy)
     {
         if(epilogue_on)
+        {
+            std::transform(hC.begin(), hC.end(), hD_gold_epl.begin(), [](To c) -> Talpha {
+                return static_cast<Talpha>(c);
+            });
+        }
+        else if(arg.scaleD_vector)
         {
             std::transform(hC.begin(), hC.end(), hD_gold_epl.begin(), [](To c) -> Talpha {
                 return static_cast<Talpha>(c);
@@ -399,6 +450,16 @@ void testing_matmul(const Arguments& arg)
                 matmul, HIPBLASLT_MATMUL_DESC_BIAS_POINTER, &bias_addr, sizeof(void*)),
             HIPBLAS_STATUS_SUCCESS);
     }
+
+    if(arg.scaleD_vector)
+    {
+        const void* scaleD_addr = dScaleD;
+        EXPECT_HIPBLAS_STATUS(
+            hipblasLtMatmulDescSetAttribute(
+                matmul, HIPBLASLT_MATMUL_DESC_D_SCALE_POINTER, &scaleD_addr, sizeof(void*)),
+            HIPBLAS_STATUS_SUCCESS);
+    }
+
     // Get Heuristic results
     hipblasLtMatmulHeuristicResult_t heuristicResult[3] = {0};
     int                              returnedAlgoCount  = 0;
@@ -433,7 +494,8 @@ void testing_matmul(const Arguments& arg)
             cpu_time_used = get_time_us_no_sync();
         }
 
-#define epilogue_param M, N, ldd, hD_gold_epl + pos, hD_gold + pos, arg.bias_vector
+#define epilogue_param \
+    M, N, ldd, hD_gold_epl + pos, hD_gold + pos, arg.bias_vector, arg.scaleD_vector, hScaleD + 0
         for(int i = 0; i < num_batches; i++)
         {
             if(epilogue_on)
@@ -453,6 +515,7 @@ void testing_matmul(const Arguments& arg)
                                                ldd,
                                                false);
                 auto pos = stride_d * i;
+
                 if(change_bias_type == false)
                 {
                     switch(arg.activation_type)
@@ -500,7 +563,28 @@ void testing_matmul(const Arguments& arg)
                     }
                 }
             }
+            else if(arg.scaleD_vector)
+            {
+                cblas_gemm<Ti, Talpha, Talpha>(transA,
+                                               transB,
+                                               M,
+                                               N,
+                                               K,
+                                               h_alpha,
+                                               hA + stride_a * i,
+                                               lda,
+                                               hB + stride_b * i,
+                                               ldb,
+                                               h_beta,
+                                               hD_gold_epl + stride_d * i,
+                                               ldd,
+                                               false);
+#define scaleD_param M, N, ldd, hD_gold_epl + pos, hD_gold + pos, arg.scaleD_vector, hScaleD + 0
+                auto pos = stride_d * i;
+                scaleD_func(scaleD_param);
+            }
             else
+            {
                 cblas_gemm<Ti, To, Talpha>(transA,
                                            transB,
                                            M,
@@ -515,6 +599,7 @@ void testing_matmul(const Arguments& arg)
                                            hD_gold + stride_d * i,
                                            ldd,
                                            false);
+            }
         }
 
         if(arg.timing)

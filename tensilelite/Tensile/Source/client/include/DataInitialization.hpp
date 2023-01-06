@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022 Advanced Micro Devices, Inc.
+ * Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -493,7 +493,7 @@ namespace Tensile
         protected:
             InitMode m_aInit, m_bInit, m_cInit, m_dInit;
             InitMode m_alphaInit, m_betaInit;
-            InitMode m_biasInit;
+            InitMode m_biasInit, m_scaleDInit;
 
             size_t m_aBufferOffset;
             size_t m_bBufferOffset;
@@ -505,6 +505,7 @@ namespace Tensile
             size_t m_cMaxElements;
             size_t m_dMaxElements;
             size_t m_biasMaxElements;
+            size_t m_scaleMaxElements;
             size_t m_maxBatch;
 
             size_t m_workspaceSize;
@@ -515,6 +516,7 @@ namespace Tensile
             bool m_convolutionVsContraction;
 
             bool m_useBias;
+            bool m_useScaleD;
 
             ActivationType m_activationType;
             bool           m_activationHPA;

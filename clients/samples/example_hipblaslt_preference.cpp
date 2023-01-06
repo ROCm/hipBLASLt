@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022 Advanced Micro Devices, Inc.
+ * Copyright (C) 2022-2023 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -183,6 +183,7 @@ void mat_mul_bias_activation(Tc             alpha,
                              int            Ds2,
                              int            Ds3,
                              To*            bias,
+                             Tc*            scaleD,
                              ActivationType actType)
 {
     std::function<Tc(Tc)> actFunc;
@@ -207,6 +208,7 @@ void mat_mul_bias_activation(Tc             alpha,
                     + (bias == nullptr ? 0 : bias[i1]);
                 if(actType != ActivationType::NONE)
                     t = actFunc(t);
+                t                                    = t * (scaleD == nullptr ? 1.0 : scaleD[i1]);
                 D[i1 * Ds1 + i2 * Ds2 + batch * Ds3] = static_cast<To>(t);
             }
         }
@@ -242,6 +244,8 @@ static void show_usage(char* argv[])
                  "or gelu\n"
               << "\t--bias \t\t\tbias \t\tGEMM_STRIDED enable bias: 0 or 1 "
                  "(default is 0)\n"
+              << "\t--scaleD \t\t\tscaleD \t\tGEMM_STRIDED enable scaleD: 0 or 1 "
+                 "(default is 0)\n"
               << "\t--header \t\theader \t\tPrint header for output (default is "
                  "enabled)\n"
               << "\t--timing \t\ttiming \t\tBechmark GPU kernel performance:0 or "
@@ -269,6 +273,7 @@ static int parse_arguments(int                 argc,
                            hipblasOperation_t& trans_a,
                            hipblasOperation_t& trans_b,
                            bool&               enable_bias,
+                           bool&               enable_scaleD,
                            ActivationType&     actType,
                            bool&               header,
                            bool&               verbose,
@@ -362,6 +367,10 @@ static int parse_arguments(int                 argc,
                 else if((arg == "--bias") && (i + 1 < argc))
                 {
                     enable_bias = atoi(argv[++i]);
+                }
+                else if((arg == "--scaleD") && (i + 1 < argc))
+                {
+                    enable_scaleD = atoi(argv[++i]);
                 }
                 else if((arg == "--act") && (i + 1 < argc))
                 {
@@ -529,14 +538,16 @@ bool bad_argument(hipblasOperation_t trans_a,
 }
 
 template <typename T>
-void initialize_a_b_c_bias(std::vector<T>& ha,
-                           int64_t         size_a,
-                           std::vector<T>& hb,
-                           int64_t         size_b,
-                           std::vector<T>& hc,
-                           int64_t         size_c,
-                           std::vector<T>& h_bias,
-                           int64_t         size_bias)
+void initialize_a_b_c_bias(std::vector<T>&     ha,
+                           int64_t             size_a,
+                           std::vector<T>&     hb,
+                           int64_t             size_b,
+                           std::vector<T>&     hc,
+                           int64_t             size_c,
+                           std::vector<T>&     h_bias,
+                           int64_t             size_bias,
+                           std::vector<float>& h_scaleD,
+                           int64_t             size_scaleD)
 {
     srand(1);
     for(int i = 0; i < size_a; ++i)
@@ -554,6 +565,10 @@ void initialize_a_b_c_bias(std::vector<T>& ha,
     for(int i = 0; i < size_bias; ++i)
     {
         h_bias[i] = static_cast<T>((rand() % 7) - 3);
+    }
+    for(int i = 0; i < size_scaleD; ++i)
+    {
+        h_scaleD[i] = static_cast<float>((rand() % 7) - 3);
     }
 }
 
@@ -576,6 +591,7 @@ void test_hipblaslt(hipblasDatatype_t  in_out_datatype,
                     float              alpha,
                     float              beta,
                     bool               enable_bias,
+                    bool               enable_scaleD,
                     ActivationType     actType,
                     bool               validate,
                     bool               verbose,
@@ -624,25 +640,28 @@ void test_hipblaslt(hipblasDatatype_t  in_out_datatype,
     row_c = m;
     col_c = n;
 
-    int size_a    = batch_count == 0 ? size_a1 : size_a1 + stride_a * (batch_count - 1);
-    int size_b    = batch_count == 0 ? size_b1 : size_b1 + stride_b * (batch_count - 1);
-    int size_c    = batch_count == 0 ? size_c1 : size_c1 + stride_c * (batch_count - 1);
-    int size_d    = batch_count == 0 ? size_d1 : size_d1 + stride_d * (batch_count - 1);
-    int size_bias = enable_bias ? m : 0;
+    int size_a      = batch_count == 0 ? size_a1 : size_a1 + stride_a * (batch_count - 1);
+    int size_b      = batch_count == 0 ? size_b1 : size_b1 + stride_b * (batch_count - 1);
+    int size_c      = batch_count == 0 ? size_c1 : size_c1 + stride_c * (batch_count - 1);
+    int size_d      = batch_count == 0 ? size_d1 : size_d1 + stride_d * (batch_count - 1);
+    int size_bias   = enable_bias ? m : 0;
+    int size_scaleD = enable_scaleD ? m : 0;
 
     // Naming: da is in GPU (device) memory. ha is in CPU (host) memory
-    std::vector<T> ha(size_a);
-    std::vector<T> hb(size_b);
-    std::vector<T> hc(size_c);
-    std::vector<T> hd(size_c);
-    std::vector<T> hd_gold(size_d);
-    std::vector<T> h_bias(size_bias);
+    std::vector<T>     ha(size_a);
+    std::vector<T>     hb(size_b);
+    std::vector<T>     hc(size_c);
+    std::vector<T>     hd(size_c);
+    std::vector<T>     hd_gold(size_d);
+    std::vector<T>     h_bias(size_bias);
+    std::vector<float> h_scaleD(size_scaleD);
 
     // initial data on host
-    initialize_a_b_c_bias(ha, size_a, hb, size_b, hc, size_c, h_bias, size_bias);
+    initialize_a_b_c_bias(
+        ha, size_a, hb, size_b, hc, size_c, h_bias, size_bias, h_scaleD, size_scaleD);
 
     // allocate memory on device
-    void *      da, *db, *dc, *dd, *d_bias;
+    void *      da, *db, *dc, *dd, *d_bias, *d_scaleD;
     int         num_streams = 1;
     hipStream_t stream      = nullptr;
 
@@ -652,6 +671,8 @@ void test_hipblaslt(hipblasDatatype_t  in_out_datatype,
     CHECK_HIP_ERROR(hipMalloc(&dd, size_d * sizeof(T)));
     if(enable_bias)
         CHECK_HIP_ERROR(hipMalloc(&d_bias, size_bias * sizeof(T)));
+    if(enable_scaleD)
+        CHECK_HIP_ERROR(hipMalloc(&d_scaleD, size_scaleD * sizeof(float)));
     // copy matrices from host to device
     CHECK_HIP_ERROR(hipMemcpy(da, ha.data(), sizeof(T) * size_a, hipMemcpyHostToDevice));
     CHECK_HIP_ERROR(hipMemcpy(db, hb.data(), sizeof(T) * size_b, hipMemcpyHostToDevice));
@@ -659,6 +680,9 @@ void test_hipblaslt(hipblasDatatype_t  in_out_datatype,
     if(enable_bias)
         CHECK_HIP_ERROR(
             hipMemcpy(d_bias, h_bias.data(), sizeof(T) * size_bias, hipMemcpyHostToDevice));
+    if(enable_scaleD)
+        CHECK_HIP_ERROR(hipMemcpy(
+            d_scaleD, h_scaleD.data(), sizeof(float) * size_scaleD, hipMemcpyHostToDevice));
 
     hipblasLtHandle_t           handle;
     hipblasLtMatrixLayout_t     matA, matB, matC, matD;
@@ -719,6 +743,9 @@ void test_hipblaslt(hipblasDatatype_t  in_out_datatype,
     if(enable_bias)
         CHECK_HIPBLASLT_ERROR(hipblasLtMatmulDescSetAttribute(
             matmul, HIPBLASLT_MATMUL_DESC_BIAS_POINTER, &d_bias, sizeof(void*)));
+    if(enable_scaleD)
+        CHECK_HIPBLASLT_ERROR(hipblasLtMatmulDescSetAttribute(
+            matmul, HIPBLASLT_MATMUL_DESC_D_SCALE_POINTER, &d_scaleD, sizeof(void*)));
 
     // Set User Preference attributes
     CHECK_HIPBLASLT_ERROR(hipblasLtMatmulPreferenceCreate(&pref));
@@ -731,7 +758,7 @@ void test_hipblaslt(hipblasDatatype_t  in_out_datatype,
     CHECK_HIPBLASLT_ERROR(hipblasLtMatmulAlgoGetHeuristic(
         handle, matmul, matA, matB, matC, matD, pref, 3, heuristicResult, &returnedAlgoCount));
 
-    // Solve problem
+    // Solve problem  // call gen function
     CHECK_HIPBLASLT_ERROR(hipblasLtMatmul(handle,
                                           matmul,
                                           &alpha,
@@ -794,7 +821,7 @@ void test_hipblaslt(hipblasDatatype_t  in_out_datatype,
     std::cout << trans_string << m << ", " << n << ", " << k << ", " << lda << ", " << ldb << ", "
               << ldc << ", " << stride_a << ", " << stride_b << ", " << stride_c << ", "
               << batch_count << ", " << alpha << ", " << beta << ", " << enable_bias << ", "
-              << ToString(actType) << timing_string << std::endl;
+              << enable_scaleD << ", " << ToString(actType) << timing_string << std::endl;
 
     // calculate golden or correct result
     if(validate)
@@ -808,6 +835,11 @@ void test_hipblaslt(hipblasDatatype_t  in_out_datatype,
             bias_ptr = &h_bias[0];
         else
             bias_ptr = nullptr;
+        float* scaleD_ptr;
+        if(enable_scaleD)
+            scaleD_ptr = &h_scaleD[0];
+        else
+            scaleD_ptr = nullptr;
         mat_mul_bias_activation<T, T, float>(alpha,
                                              beta,
                                              m,
@@ -831,6 +863,7 @@ void test_hipblaslt(hipblasDatatype_t  in_out_datatype,
                                              ldd,
                                              stride_d,
                                              bias_ptr,
+                                             scaleD_ptr,
                                              actType);
 
         bool passed = true;
@@ -877,6 +910,8 @@ void test_hipblaslt(hipblasDatatype_t  in_out_datatype,
         print_strided_batched("hc initial", &hc[0], m, n, batch_count, 1, ldc, stride_c);
         if(enable_bias)
             print_strided_batched("h_bias", &h_bias[0], m, 1, 1, 1, m, 0);
+        if(enable_scaleD)
+            print_strided_batched("h_scaleD", &h_scaleD[0], m, 1, 1, 1, m, 0);
         print_strided_batched("hd_gold", &hd_gold[0], m, n, batch_count, 1, ldc, stride_c);
         print_strided_batched("hd device", &hd[0], m, n, batch_count, 1, ldc, stride_c);
     }
@@ -888,6 +923,8 @@ void test_hipblaslt(hipblasDatatype_t  in_out_datatype,
     CHECK_HIP_ERROR(hipFree(d_workspace));
     if(enable_bias)
         CHECK_HIP_ERROR(hipFree(d_bias));
+    if(enable_scaleD)
+        CHECK_HIP_ERROR(hipFree(d_scaleD));
     CHECK_HIPBLASLT_ERROR(hipblasLtMatmulPreferenceDestroy(pref));
     CHECK_HIPBLASLT_ERROR(hipblasLtMatmulDescDestroy(matmul));
     CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutDestroy(matA));
@@ -918,10 +955,11 @@ int main(int argc, char* argv[])
 
     int32_t batch_count = BATCH_COUNT;
 
-    float          alpha       = ALPHA;
-    float          beta        = BETA;
-    bool           enable_bias = false;
-    ActivationType actType     = ActivationType::NONE;
+    float          alpha         = ALPHA;
+    float          beta          = BETA;
+    bool           enable_bias   = false;
+    bool           enable_scaleD = false;
+    ActivationType actType       = ActivationType::NONE;
 
     bool verbose  = false;
     bool header   = true;
@@ -948,6 +986,7 @@ int main(int argc, char* argv[])
                        trans_a,
                        trans_b,
                        enable_bias,
+                       enable_scaleD,
                        actType,
                        header,
                        verbose,
@@ -1010,7 +1049,7 @@ int main(int argc, char* argv[])
     if(header)
     {
         std::cout << "transAB, M, N, K, lda, ldb, ldc, stride_a, stride_b, "
-                     "stride_c, batch_count, alpha, beta, bias, activationType";
+                     "stride_c, batch_count, alpha, beta, bias, scaleD, activationType";
         if(timing)
             std::cout << ", ms, tflops";
         std::cout << std::endl;
@@ -1035,6 +1074,7 @@ int main(int argc, char* argv[])
                                        alpha,
                                        beta,
                                        enable_bias,
+                                       enable_scaleD,
                                        actType,
                                        validate,
                                        verbose,
@@ -1058,6 +1098,7 @@ int main(int argc, char* argv[])
                                       alpha,
                                       beta,
                                       enable_bias,
+                                      enable_scaleD,
                                       actType,
                                       validate,
                                       verbose,
@@ -1081,6 +1122,7 @@ int main(int argc, char* argv[])
                                           alpha,
                                           beta,
                                           enable_bias,
+                                          enable_scaleD,
                                           actType,
                                           validate,
                                           verbose,

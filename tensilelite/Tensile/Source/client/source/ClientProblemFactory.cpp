@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022 Advanced Micro Devices, Inc.
+ * Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -119,6 +119,8 @@ namespace Tensile
                     = args["activation-enum-args"].as<std::vector<ActivationType>>();
             if(args.count("use-bias"))
                 m_useBias = args["use-bias"].as<bool>();
+            if(args.count("use-scaleD"))
+                m_useScaleD = args["use-scaleD"].as<bool>();
             m_problems = createProblems();
         }
 
@@ -221,6 +223,7 @@ namespace Tensile
                         rv.back().setStridedBatched(m_stridedBatched);
                         rv.back().setHighPrecisionAccumulate(m_highPrecisionAccumulate);
                         rv.back().setUseBias(m_useBias);
+                        rv.back().setUseScaleD(m_useScaleD);
                         rv.back().setKernelLanguage(m_kernelLanguage);
                         rv.back().setPerformanceMetric(m_performanceMetric);
                         rv.back().setDeterministicMode(m_deterministicMode);

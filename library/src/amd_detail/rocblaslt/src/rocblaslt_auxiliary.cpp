@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022 Advanced Micro Devices, Inc.
+ * Copyright (C) 2022-2023 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -453,6 +453,15 @@ rocblaslt_status rocblaslt_matmul_desc_set_attribute(rocblaslt_matmul_desc      
                     return rocblaslt_status_invalid_value;
                 }
                 break;
+            case ROCBLASLT_MATMUL_DESC_D_SCALE_POINTER:
+                if(sizeof(void*) <= sizeInBytes)
+                    memcpy(&matmulDesc->scaleD, buf, sizeof(void*));
+                else
+                {
+                    log_error(__func__, "invalid scaleD buf size", sizeInBytes);
+                    return rocblaslt_status_invalid_value;
+                }
+                break;
             case ROCBLASLT_MATMUL_DESC_BIAS_DATA_TYPE:
                 if(sizeof(int32_t) <= sizeInBytes)
                     memcpy(&matmulDesc->bias_type, buf, sizeof(int32_t));
@@ -549,6 +558,15 @@ rocblaslt_status rocblaslt_matmul_desc_get_attribute(rocblaslt_matmul_desc      
                     return rocblaslt_status_invalid_value;
                 }
                 memcpy(buf, &matmulDesc->bias, sizeof(void*));
+                break;
+            case ROCBLASLT_MATMUL_DESC_D_SCALE_POINTER:
+                *sizeWritten = sizeof(void*);
+                if(sizeInBytes < sizeof(void*))
+                {
+                    log_error(__func__, "invalid buf size", sizeInBytes);
+                    return rocblaslt_status_invalid_value;
+                }
+                memcpy(buf, &matmulDesc->scaleD, sizeof(void*));
                 break;
             case ROCBLASLT_MATMUL_DESC_BIAS_DATA_TYPE:
                 *sizeWritten = sizeof(int32_t);
