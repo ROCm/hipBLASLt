@@ -244,7 +244,7 @@ static void show_usage(char* argv[])
                  "or gelu\n"
               << "\t--bias \t\t\tbias \t\tGEMM_STRIDED enable bias: 0 or 1 "
                  "(default is 0)\n"
-              << "\t--scaleD \t\t\tscaleD \t\tGEMM_STRIDED enable scaleD: 0 or 1 "
+              << "\t--scaleD \t\tscaleD \t\tGEMM_STRIDED enable scaleD: 0 or 1 "
                  "(default is 0)\n"
               << "\t--header \t\theader \t\tPrint header for output (default is "
                  "enabled)\n"
