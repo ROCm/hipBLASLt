@@ -1,23 +1,23 @@
 - {MinimumRequiredVersion: 4.33.0}
 - aldebaran
-- {Architecture: gfx90a, CUCount: 104}
+- gfx90a
 - [Device 0050, Device 0051, Device 0052, Device 0054, Device 0062, Device 7400, Device
     740c]
 - Activation: true
   ActivationComputeDataType: 0
-  ActivationHPA: false
+  ActivationHPA: true
   ActivationType: all
   AllowNoFreeDims: false
   AssignedDerivedParameters: true
   Batched: true
-  BetaOnlyUseBias: true
+  BetaOnlyUseBias: false
   ComplexConjugateA: false
   ComplexConjugateB: false
   ComputeDataType: 0
-  DataType: 0
-  DestDataType: 0
+  DataType: 7
+  DestDataType: 7
   Fp16AltImpl: false
-  HighPrecisionAccumulate: false
+  HighPrecisionAccumulate: true
   Index0: 0
   Index01A: 0
   Index01B: 1
@@ -55,6 +55,7 @@
   TransposeB: 1
   UseBeta: true
   UseBias: true
+  UseScaleD: true
   UseInitialStridesAB: false
   UseInitialStridesCD: false
 - - 1LDSBuffer: 0
@@ -105,26 +106,26 @@
     LdsBlockSizePerPadA: 128
     LdsBlockSizePerPadB: 0
     LdsInitCVgprs: false
-    LdsNumElements: 6208
-    LdsNumElementsAlignedA: 1088
+    LdsNumElements: 6272
+    LdsNumElementsAlignedA: 1152
     LdsNumElementsAlignedB: 1024
     LdsOffsetA: 0
     LdsOffsetA_Blk: 4096
-    LdsOffsetB: 1088
-    LdsOffsetB_Blk: 5184
-    LdsPadA: 2
+    LdsOffsetB: 1152
+    LdsOffsetB_Blk: 5248
+    LdsPadA: 4
     LdsPadB: 0
-    LocalReadVectorWidth: 1
+    LocalReadVectorWidth: 4
     LocalSplitU: 1
     LocalWritePerMfma: -1
     LocalWriteUseSgprA: false
     LocalWriteUseSgprB: false
-    LoopIters: 8
+    LoopIters: 2
     LoopUnroll: 32
-    MFMA_BF16_1K: false
+    MFMA_BF16_1K: true
     MIArchVgpr: false
-    MIBlock: [16, 16, 4, 1, 1, 1]
-    MIInputPerThread: 1
+    MIBlock: [16, 16, 16, 1, 1, 1]
+    MIInputPerThread: 4
     MIOutputVectorWidth: 4
     MIRegPerOut: 1
     MIWaveGroup: [2, 2]
@@ -139,10 +140,10 @@
     MatrixInstB: 1
     MatrixInstBM: 1
     MatrixInstBN: 1
-    MatrixInstK: 4
+    MatrixInstK: 16
     MatrixInstM: 16
     MatrixInstN: 16
-    MatrixInstruction: [16, 16, 4, 1]
+    MatrixInstruction: [16, 16, 16, 1]
     MaxOccupancy: 40
     MaxVgprNumber: 256
     MinVgprNumber: 0
@@ -169,23 +170,23 @@
     PackedC1IdxChars: [J]
     PackedC1IndicesX: [1]
     PrefetchGlobalRead: 2
-    PrefetchLocalRead: 9
+    PrefetchLocalRead: 3
     ProblemType:
       Activation: true
       ActivationComputeDataType: 0
-      ActivationHPA: false
+      ActivationHPA: true
       ActivationType: all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
       Batched: true
-      BetaOnlyUseBias: true
+      BetaOnlyUseBias: false
       ComplexConjugateA: false
       ComplexConjugateB: false
       ComputeDataType: 0
-      DataType: 0
-      DestDataType: 0
+      DataType: 7
+      DestDataType: 7
       Fp16AltImpl: false
-      HighPrecisionAccumulate: false
+      HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
       Index01B: 1
@@ -223,13 +224,14 @@
       TransposeB: 1
       UseBeta: true
       UseBias: true
+      UseScaleD: true
       UseInitialStridesAB: false
       UseInitialStridesCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 0
-    SolutionNameMin: Cijk_Alik_Bjlk_SBBias_A_MT32x32x32_MI16x16x4x1_SN_MIWT1_1
+    SolutionNameMin: Cijk_Alik_Bjlk_BBS_BBiasH_AH_SD_MT32x32x32_MI16x16x16x1_SN_MIWT1_1
     SourceSwap: 1
     StaggerU: 32
     StaggerUMapping: 0
@@ -267,7 +269,7 @@
     _UseSgprForGRO: 1
     _VectorStore: 1
     _WorkspaceSizePerElemC: 0
-    _staggerStrideShift: 1
+    _staggerStrideShift: 2
     allowLRVWforTLUandMI: false
 - [2, 3, 0, 1]
 - - - [1, 1, 1, 1]

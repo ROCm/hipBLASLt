@@ -55,6 +55,7 @@
   TransposeB: 1
   UseBeta: true
   UseBias: true
+  UseScaleD: true
   UseInitialStridesAB: false
   UseInitialStridesCD: false
 - - 1LDSBuffer: 0
@@ -223,13 +224,14 @@
       TransposeB: 1
       UseBeta: true
       UseBias: true
+      UseScaleD: true
       UseInitialStridesAB: false
       UseInitialStridesCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 0
-    SolutionNameMin: Cijk_Alik_Bjlk_SBBias_A_MT32x32x32_MI16x16x4x1_SN_MIWT1_1
+    SolutionNameMin: Cijk_Alik_Bjlk_SBBias_A_SD_MT32x32x32_MI16x16x4x1_SN_MIWT1_1
     SourceSwap: 1
     StaggerU: 32
     StaggerUMapping: 0

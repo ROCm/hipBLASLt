@@ -1,6 +1,6 @@
 - {MinimumRequiredVersion: 4.33.0}
 - aldebaran
-- {Architecture: gfx90a, CUCount: 104}
+- gfx90a
 - [Device 0050, Device 0051, Device 0052, Device 0054, Device 0062, Device 7400, Device
     740c]
 - Activation: true
@@ -55,6 +55,7 @@
   TransposeB: 1
   UseBeta: true
   UseBias: true
+  UseScaleD: true
   UseInitialStridesAB: false
   UseInitialStridesCD: false
 - - 1LDSBuffer: 0
@@ -223,13 +224,14 @@
       TransposeB: 1
       UseBeta: true
       UseBias: true
+      UseScaleD: true
       UseInitialStridesAB: false
       UseInitialStridesCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 0
-    SolutionNameMin: Cijk_Alik_Bjlk_HHS_BBiasH_AH_MT32x32x32_MI16x16x16x1_SN_MIWT1_1
+    SolutionNameMin: Cijk_Alik_Bjlk_HHS_BBiasH_AH_SD_MT32x32x32_MI16x16x16x1_SN_MIWT1_1
     SourceSwap: 1
     StaggerU: 32
     StaggerUMapping: 0
