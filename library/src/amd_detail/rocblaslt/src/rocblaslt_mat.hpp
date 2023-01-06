@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022 Advanced Micro Devices, Inc.
+ * Copyright (C) 2022-2023 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -64,6 +64,7 @@ rocblaslt_status rocblaslt_batched_template(rocblaslt_handle             handle,
                                             void*                        workspace,
                                             size_t                       workspaceSizeInBytes,
                                             const void*                  bias,
+                                            const Tc*                    scaleD,
                                             hipblasDatatype_t            bias_type,
                                             rocblaslt_epilogue           epilogue,
                                             hipStream_t                  stream)
@@ -100,6 +101,7 @@ rocblaslt_status rocblaslt_batched_template(rocblaslt_handle             handle,
                                                     batch_count,
                                                     strided_batch,
                                                     bias,
+                                                    scaleD,
                                                     bias_type,
                                                     epilogue,
                                                     workspace,
@@ -139,6 +141,7 @@ rocblaslt_status rocblaslt_matmul_typecasting(rocblaslt_handle             handl
                                               void*                        workspace,
                                               size_t                       workspaceSizeInBytes,
                                               const void*                  bias,
+                                              const void*                  scaleD,
                                               hipblasDatatype_t            bias_type,
                                               rocblaslt_epilogue           epilogue,
                                               hipStream_t                  stream)
@@ -180,6 +183,7 @@ rocblaslt_status rocblaslt_matmul_typecasting(rocblaslt_handle             handl
                                       workspace,
                                       workspaceSizeInBytes,
                                       reinterpret_cast<const void*>(bias),
+                                      reinterpret_cast<const Tc*>(scaleD),
                                       bias_type,
                                       epilogue,
                                       stream);
@@ -220,6 +224,7 @@ inline rocblaslt_status rocblaslt_matmul_template(rocblaslt_handle             h
                                                   void*                        workspace,
                                                   size_t                       workspaceSizeInBytes,
                                                   const void*                  bias,
+                                                  const void*                  scaleD,
                                                   hipblasDatatype_t            bias_type,
                                                   rocblaslt_epilogue           epilogue,
                                                   hipStream_t                  stream)
@@ -230,7 +235,7 @@ inline rocblaslt_status rocblaslt_matmul_template(rocblaslt_handle             h
     handle, trans_a, trans_b, m, n, k, alpha, a, ld_a, batch_stride_a, offset_a, b, ld_b, \
         batch_stride_b, offset_b, beta, c, ld_c, batch_stride_c, offset_c, d, ld_d,       \
         batch_stride_d, offset_d, batch_count, strided_batch, algo, workspace,            \
-        workspaceSizeInBytes, bias, bias_type, epilogue, stream
+        workspaceSizeInBytes, bias, scaleD, bias_type, epilogue, stream
 
     if(a_type == HIPBLAS_R_32F && b_type == HIPBLAS_R_32F)
     {

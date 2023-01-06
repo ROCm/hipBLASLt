@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022 Advanced Micro Devices, Inc. All rights reserved.
+ * Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -544,9 +544,19 @@ namespace Tensile
             m_useBias = useBias;
         }
 
+        void setUseScaleD(bool useScaleD)
+        {
+            m_useScaleD = useScaleD;
+        }
+
         bool useBias() const
         {
             return m_useBias;
+        }
+
+        bool useScaleD() const
+        {
+            return m_useScaleD;
         }
 
         void setBiasType(DataType type)
@@ -849,6 +859,7 @@ namespace Tensile
         bool              m_eligibleForPK           = true;
         bool              m_fp16AltImpl             = false;
         bool              m_useBias                 = false;
+        bool              m_useScaleD               = false;
         ActivationType    m_activationType          = ActivationType::None;
         ActivationType    m_activationEnumArg       = ActivationType::None;
         bool              m_activationHPA           = false;
@@ -954,7 +965,8 @@ namespace Tensile
                                Alpha                              _alpha,
                                Beta                               _beta,
                                std::vector<std::shared_ptr<void>> _biasList,
-                               void*                              _ws = nullptr)
+                               Alpha const*                       _scaleD = nullptr,
+                               void*                              _ws     = nullptr)
             : TypedContractionInputs(
                 _a, _b, _c, _d, nullptr, nullptr, nullptr, nullptr, _alpha, _beta, _biasList){};
 
@@ -969,7 +981,8 @@ namespace Tensile
                                Alpha                              _alpha,
                                Beta                               _beta,
                                std::vector<std::shared_ptr<void>> _biasList,
-                               void*                              _ws = nullptr);
+                               Alpha const*                       _scaleD = nullptr,
+                               void*                              _ws     = nullptr);
 
         ~TypedContractionInputs();
 
@@ -990,6 +1003,7 @@ namespace Tensile
 
         void const*              bias = nullptr;
         std::vector<void const*> biasList;
+        Alpha const*             scaleD = nullptr;
 
         std::vector<D> activationArgs;
 
