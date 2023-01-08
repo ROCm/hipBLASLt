@@ -7,6 +7,7 @@
 - Support problem type: fp32, fp16, bf16
 - Support activation: relu, gelu
 - Support bias vector
+- Support Scale D vector
 - Integreate with tensilelite kernel generator
 - Add Gtest: hipblaslt-test
 - Add full function tool: hipblaslt-bench
