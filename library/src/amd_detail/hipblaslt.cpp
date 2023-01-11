@@ -353,6 +353,28 @@ catch(...)
     return exception_to_hipblas_status();
 }
 
+hipblasStatus_t
+    hipblasLtExtGroupedGemmAlgoGetHeuristic(hipblasLtExtGroupedGemm_t        groupedgemm,
+                                            hipblasLtMatmulPreference_t      pref,
+                                            int                              requestedAlgoCount,
+                                            hipblasLtMatmulHeuristicResult_t heuristicResultsArray[],
+                                            int*                             returnAlgoCount)
+try
+{
+    if(groupedgemm->gemm_count == 0)
+        return HIPBLAS_STATUS_INVALID_VALUE;
+    return RocBlasLtStatusToHIPStatus(rocblaslt_groupedgemm_algo_get_heuristic(
+        (rocblaslt_groupedgemm)groupedgemm,
+        (rocblaslt_matmul_preference)pref,
+        requestedAlgoCount,
+        (rocblaslt_matmul_heuristic_result*)heuristicResultsArray,
+        returnAlgoCount));
+}
+catch(...)
+{
+    return exception_to_hipblas_status();
+}
+
 hipblasStatus_t hipblasLtMatmul(hipblasLtHandle_t            handle,
                                 hipblasLtMatmulDesc_t        matmul_descr,
                                 const void*                  alpha,
@@ -387,6 +409,102 @@ try
                                                        workspace,
                                                        workspaceSizeInBytes,
                                                        stream));
+}
+catch(...)
+{
+    return exception_to_hipblas_status();
+}
+
+hipblasStatus_t hipblasLtExtGroupedGemmCreate(hipblasLtExtGroupedGemm_t*            groupedgemm,
+                                              hipblasLtHandle_t                     handle,
+                                              std::vector<hipblasLtMatmulDesc_t>&   matmul_descr,
+                                              std::vector<float>&                   alpha,
+                                              std::vector<void*>&                   A,
+                                              std::vector<hipblasLtMatrixLayout_t>& matA,
+                                              std::vector<void*>&                   B,
+                                              std::vector<hipblasLtMatrixLayout_t>& matB,
+                                              std::vector<float>&                   beta,
+                                              std::vector<void*>&                   C,
+                                              std::vector<hipblasLtMatrixLayout_t>& matC,
+                                              std::vector<void*>&                   D,
+                                              std::vector<hipblasLtMatrixLayout_t>& matD)
+try
+{
+    std::vector<rocblaslt_matmul_desc> matmul_descr_groupedGemm;
+    std::vector<rocblaslt_matrix_layout> matA_groupedGemm;
+    std::vector<rocblaslt_matrix_layout> matB_groupedGemm;
+    std::vector<rocblaslt_matrix_layout> matC_groupedGemm;
+    std::vector<rocblaslt_matrix_layout> matD_groupedGemm;
+    std::vector<const void*> A_groupedGemm, B_groupedGemm, C_groupedGemm;
+    std::vector<const void*> alpha_groupedGemm, beta_groupedGemm;
+    for(int i = 0; i < matmul_descr.size(); i++){
+        matmul_descr_groupedGemm.push_back((rocblaslt_matmul_desc)matmul_descr[i]);
+        matA_groupedGemm.push_back((rocblaslt_matrix_layout)matA[i]);
+        matB_groupedGemm.push_back((rocblaslt_matrix_layout)matB[i]);
+        matC_groupedGemm.push_back((rocblaslt_matrix_layout)matC[i]);
+        matD_groupedGemm.push_back((rocblaslt_matrix_layout)matD[i]);
+        A_groupedGemm.push_back((const void*)(A[i]));
+        B_groupedGemm.push_back((const void*)(B[i]));
+        C_groupedGemm.push_back((const void*)(C[i]));
+        alpha_groupedGemm.push_back((const void*)(&(alpha[i])));
+        beta_groupedGemm.push_back((const void*)(&(beta[i])));
+    }
+    return RocBlasLtStatusToHIPStatus(rocblaslt_groupedgemm_create(
+                                                       (rocblaslt_groupedgemm*)groupedgemm,
+                                                       (rocblaslt_handle)handle,
+                                                       matmul_descr_groupedGemm,
+                                                       alpha_groupedGemm,
+                                                       A_groupedGemm,
+                                                       matA_groupedGemm,
+                                                       B_groupedGemm,
+                                                       matB_groupedGemm,
+                                                       beta_groupedGemm,
+                                                       C_groupedGemm,
+                                                       matC_groupedGemm,
+                                                       D,
+                                                       matD_groupedGemm));
+}
+catch(...)
+{
+    return exception_to_hipblas_status();
+}
+
+hipblasStatus_t hipblasLtExtGroupedGemmDestroy(const hipblasLtExtGroupedGemm_t groupedgemm)
+try
+{
+    return RocBlasLtStatusToHIPStatus(
+        rocblaslt_groupedgemm_destroy((const rocblaslt_groupedgemm)groupedgemm));
+}
+catch(...)
+{
+    return exception_to_hipblas_status();
+}
+
+hipblasStatus_t hipblasLtExtGroupedGemmMakeArgument(hipblasLtExtGroupedGemm_t    groupedgemm,
+                                                    const hipblasLtMatmulAlgo_t* algo,
+                                                    void*                        workspace,
+                                                    hipStream_t                  stream)
+try
+{
+    if(groupedgemm->gemm_count == 0)
+        return HIPBLAS_STATUS_INVALID_VALUE;
+    return RocBlasLtStatusToHIPStatus(rocblaslt_groupedgemm_makeArgument((rocblaslt_groupedgemm)        groupedgemm,
+                                                                         (const rocblaslt_matmul_algo*) algo,
+                                                                         workspace,
+                                                                         stream));
+}
+catch(...)
+{
+    return exception_to_hipblas_status();
+}
+
+hipblasStatus_t hipblasLtExtGroupedGemmRun(hipblasLtExtGroupedGemm_t groupedgemm,
+                                           hipStream_t               stream)
+try
+{
+    if(groupedgemm->gemm_count == 0)
+        return HIPBLAS_STATUS_INVALID_VALUE;
+    return RocBlasLtStatusToHIPStatus(rocblaslt_groupedgemm_run((rocblaslt_groupedgemm)groupedgemm, stream));
 }
 catch(...)
 {

@@ -819,8 +819,7 @@ rocblaslt_status
                     float alpha = 1.0;
                     float beta  = 1.0;
                     auto  prob
-                        = ConstructRocblasltProblem<float, float, float>(handle,
-                                                                         matmul_desc,
+                        = ConstructRocblasltProblem<float, float, float>(matmul_desc,
                                                                          matA,
                                                                          matB,
                                                                          matC,
@@ -829,6 +828,7 @@ rocblaslt_status
                                                                          &beta,
                                                                          pref->max_workspace_bytes);
                     status = getBestSolutions<float, float, float>(prob,
+                                                                   handle,
                                                                    requestedAlgoCount,
                                                                    heuristicResultsArray,
                                                                    returnAlgoCount,
@@ -845,7 +845,6 @@ rocblaslt_status
                     float alpha = 1.0;
                     float beta  = 1.0;
                     auto  prob  = ConstructRocblasltProblem<rocblaslt_half, rocblaslt_half, float>(
-                        handle,
                         matmul_desc,
                         matA,
                         matB,
@@ -856,6 +855,7 @@ rocblaslt_status
                         pref->max_workspace_bytes);
                     status = getBestSolutions<rocblaslt_half, rocblaslt_half, float>(
                         prob,
+                        handle,
                         requestedAlgoCount,
                         heuristicResultsArray,
                         returnAlgoCount,
@@ -873,7 +873,6 @@ rocblaslt_status
                     float beta  = 1.0;
                     auto  prob
                         = ConstructRocblasltProblem<rocblaslt_bfloat16, rocblaslt_bfloat16, float>(
-                            handle,
                             matmul_desc,
                             matA,
                             matB,
@@ -884,6 +883,7 @@ rocblaslt_status
                             pref->max_workspace_bytes);
                     status = getBestSolutions<rocblaslt_bfloat16, rocblaslt_bfloat16, float>(
                         prob,
+                        handle,
                         requestedAlgoCount,
                         heuristicResultsArray,
                         returnAlgoCount,
@@ -895,6 +895,40 @@ rocblaslt_status
         {
             status = rocblaslt_status_not_implemented;
         }
+
+        log_api(__func__, "returnAlogCount", *returnAlgoCount);
+        if(status != rocblaslt_status_success)
+        {
+            throw status;
+        }
+    }
+    catch(const rocblaslt_status& status)
+    {
+        return status;
+    }
+    return rocblaslt_status_success;
+}
+
+rocblaslt_status
+    rocblaslt_groupedgemm_algo_get_heuristic(rocblaslt_groupedgemm             groupedgemm,
+                                             rocblaslt_matmul_preference       pref,
+                                             int                               requestedAlgoCount,
+                                             rocblaslt_matmul_heuristic_result heuristicResultsArray[],
+                                             int*                              returnAlgoCount)
+{
+    if(requestedAlgoCount < 1)
+    {
+        log_error(__func__, "invalid requested count", requestedAlgoCount);
+        return rocblaslt_status_invalid_value;
+    }
+    rocblaslt_status status = rocblaslt_status_success;
+    try
+    {
+        status = getBestSolutionsGroupedGemm(groupedgemm,
+                                             pref,
+                                             requestedAlgoCount,
+                                             heuristicResultsArray,
+                                             returnAlgoCount);
 
         log_api(__func__, "returnAlogCount", *returnAlgoCount);
         if(status != rocblaslt_status_success)

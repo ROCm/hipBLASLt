@@ -171,4 +171,23 @@ struct _rocblaslt_matmul_preference
     int64_t search_iterations = 0;
 };
 
+/********************************************************************************
+ * \brief rocblaslt_groupedgemm holds the description of the grouped gemm
+ * It is initialized and destroyed with rocblaslt_groupedgemm_create()
+ * and rocblaslt_groupedgemm_destroy() functions respectively.
+ *******************************************************************************/
+struct _rocblaslt_groupedgemm
+{
+    // constructor
+    _rocblaslt_groupedgemm(){};
+    // destructor
+    ~_rocblaslt_groupedgemm(){};
+    //
+    std::shared_ptr<void> problemGroupedGemmPtr;
+    std::shared_ptr<void> groupedInputsPtr;
+    std::shared_ptr<void> kernelsPtr;
+    size_t gemm_count = 0;
+    _rocblaslt_handle* handle;
+};
+
 #endif // HANDLE_H

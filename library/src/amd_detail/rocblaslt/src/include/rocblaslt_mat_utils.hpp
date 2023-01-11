@@ -130,8 +130,7 @@ inline rocblaslt_status validateMatmulDescrArgs(rocblaslt_handle       handle,
 /*******************************************************************************
  * Validate Matmul Arguments
  ******************************************************************************/
-inline rocblaslt_status validateMatmulArgs(rocblaslt_handle handle,
-                                           int64_t          m,
+inline rocblaslt_status validateMatmulArgs(int64_t          m,
                                            int64_t          n,
                                            int64_t          k,
                                            const void*      alpha,
@@ -149,10 +148,6 @@ inline rocblaslt_status validateMatmulArgs(rocblaslt_handle handle,
                                            int64_t          batch_stride_c = 0,
                                            int64_t          batch_stride_d = 0)
 {
-    // handle must be valid
-    if(!handle)
-        return rocblaslt_status_invalid_handle;
-
     // sizes must not be negative
     if(batch_stride_a < 0 || batch_stride_b < 0 || batch_stride_c < 0 || batch_stride_d < 0)
     {

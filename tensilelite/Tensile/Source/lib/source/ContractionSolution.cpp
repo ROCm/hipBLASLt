@@ -512,15 +512,17 @@ namespace Tensile
     KernelInvocation ContractionSolution::generateSingleCallGroupedGemm(
         std::vector<ContractionSolution::Problem> const& problems,
         ContractionSolution::GroupedInputs const&        inputs,
-        Hardware const&                                  hardware) const
+        Hardware const&                                  hardware,
+        hipStream_t                                      stream) const
     {
         TENSILE_ASSERT_EXC(sizeMapping.workGroupMapping >= 0);
         KernelInvocation rv;
         rv.kernelName = kernelName;
         rv.args       = KernelArguments(T_Debug);
         auto args     = KernelArguments(T_Debug);
-        args.reserve(1024, 128);
-        std::vector<uint32_t> wg_table;
+        args.reserve(32768, 4096);
+        std::vector<uint32_t> problemNumGroupTiles0;
+        std::vector<uint32_t> problemNumGroupTiles1;
         uint32_t              wgLeft  = 0;
         uint32_t              wgRight = 0;
 
@@ -567,8 +569,8 @@ namespace Tensile
             rv.numWorkGroups.x = CeilDivide(rv.numWorkGroups.x, sizeMapping.macroTile.x);
             rv.numWorkGroups.y = CeilDivide(rv.numWorkGroups.y, sizeMapping.macroTile.y);
 
-            uint32_t problemNumGroupTiles0 = rv.numWorkGroups.x;
-            uint32_t problemNumGroupTiles1 = rv.numWorkGroups.y;
+            problemNumGroupTiles0.push_back(rv.numWorkGroups.x);
+            problemNumGroupTiles1.push_back(rv.numWorkGroups.y);
 
             rv.numWorkItems.x += (rv.workGroupSize.x * rv.numWorkGroups.x * rv.workGroupSize.y
                                   * rv.numWorkGroups.y * sizeMapping.globalSplitU
@@ -576,31 +578,27 @@ namespace Tensile
 
             wgRight
                 = rv.numWorkItems.x / rv.workGroupSize.x / rv.workGroupSize.y / rv.workGroupSize.y;
-            wg_table.push_back(wgLeft);
+            args.append<uint32_t>("wgTable", wgLeft);
             wgLeft = wgRight;
 
             rv.sharedMemBytes = 0;
+        }
 
+        for(int idx = 0; idx < problems.size(); idx++)
+        {
+            auto problem = problems[idx];
             singleCallArgs<T_Debug>(problem,
                                     inputs.grouped[idx],
-                                    problemNumGroupTiles0,
-                                    problemNumGroupTiles1,
+                                    problemNumGroupTiles0[idx],
+                                    problemNumGroupTiles1[idx],
                                     true,
                                     args);
         }
 
-        std::vector<uint8_t> h_args;
-        h_args.resize((args.size() * sizeof(uint8_t) + wg_table.size() * sizeof(uint32_t))
-                      / sizeof(uint8_t));
-        std::memcpy(&h_args[0], wg_table.data(), wg_table.size() * sizeof(uint32_t));
-        std::memcpy(&h_args[wg_table.size() * sizeof(uint32_t) / sizeof(uint8_t)],
-                    args.data(),
-                    args.size() * sizeof(uint8_t));
-
         rv.args.append<uint32_t>("numGemms", problems.size());
         uint8_t* d_args = (uint8_t*)(inputs.grouped[0].ws);
-        HIP_CHECK_EXC(hipMemcpy(
-            d_args, h_args.data(), h_args.size() * sizeof(uint8_t), hipMemcpyHostToDevice));
+        HIP_CHECK_EXC(hipMemcpyAsync(
+            d_args, args.data(), args.size() * sizeof(uint8_t), hipMemcpyHostToDevice, stream));
         rv.args.append<uint8_t const*>("args", d_args);
         rv.codeObjectFile = codeObjectFilename.load();
 
@@ -1028,7 +1026,8 @@ namespace Tensile
 
     std::vector<KernelInvocation> ContractionSolution::solve(ContractionProblem const& problem,
                                                              ProblemInputs const&      inputs,
-                                                             Hardware const& hardware) const
+                                                             Hardware const&           hardware,
+                                                             hipStream_t               stream) const
     {
         if(auto gemmProblem = dynamic_cast<ContractionProblemGemm const*>(&problem))
         {
@@ -1039,7 +1038,7 @@ namespace Tensile
         {
             auto& gemms         = groupedProblem->gemms;
             auto  groupedInputs = dynamic_cast<ContractionGroupedInputs const*>(&inputs);
-            return solveGroupedGemm(gemms, (*groupedInputs), hardware);
+            return solveGroupedGemm(gemms, (*groupedInputs), hardware, stream);
         }
         else
         {
@@ -1163,7 +1162,8 @@ namespace Tensile
     std::vector<KernelInvocation> ContractionSolution::solveGroupedGemm(
         std::vector<ContractionSolution::Problem> const& problems,
         ContractionSolution::GroupedInputs const&        inputs,
-        Hardware const&                                  hardware) const
+        Hardware const&                                  hardware,
+        hipStream_t                                      stream) const
     {
         if(Debug::Instance().printWinningKernelName())
             std::cout << "Running kernel: " << this->KernelName() << std::endl;
@@ -1242,9 +1242,9 @@ namespace Tensile
         std::vector<KernelInvocation> rv;
 
         if(debug)
-            rv.push_back(generateSingleCallGroupedGemm<true>(problems, inputs, hardware));
+            rv.push_back(generateSingleCallGroupedGemm<true>(problems, inputs, hardware, stream));
         else
-            rv.push_back(generateSingleCallGroupedGemm<false>(problems, inputs, hardware));
+            rv.push_back(generateSingleCallGroupedGemm<false>(problems, inputs, hardware, stream));
 
         return rv;
     }

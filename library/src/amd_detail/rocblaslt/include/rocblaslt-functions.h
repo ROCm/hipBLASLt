@@ -34,6 +34,7 @@
 #define _ROCBLASLT_FUNCTIONS_H_
 
 #include "rocblaslt-types.h"
+#include <vector>
 
 #ifdef __cplusplus
 extern "C" {
@@ -113,6 +114,30 @@ rocblaslt_status rocblaslt_matmul(rocblaslt_handle             handle,
                                   void*                        workspace,
                                   size_t                       workspaceSizeInBytes,
                                   hipStream_t                  stream);
+
+rocblaslt_status rocblaslt_groupedgemm_create(rocblaslt_groupedgemm*                groupedgemm,
+                                              rocblaslt_handle                      handle,
+                                              std::vector<rocblaslt_matmul_desc>&   matmul_descr,
+                                              std::vector<const void*>&             alpha,
+                                              std::vector<const void*>&             A,
+                                              std::vector<rocblaslt_matrix_layout>& matA,
+                                              std::vector<const void*>&             B,
+                                              std::vector<rocblaslt_matrix_layout>& matB,
+                                              std::vector<const void*>&             beta,
+                                              std::vector<const void*>&             C,
+                                              std::vector<rocblaslt_matrix_layout>& matC,
+                                              std::vector<void*>&                   D,
+                                              std::vector<rocblaslt_matrix_layout>& matD);
+
+rocblaslt_status rocblaslt_groupedgemm_destroy(const rocblaslt_groupedgemm groupedgemm);
+
+rocblaslt_status rocblaslt_groupedgemm_makeArgument(rocblaslt_groupedgemm        groupedgemm,
+                                                    const rocblaslt_matmul_algo* algo,
+                                                    void*                        workspace,
+                                                    hipStream_t                  stream);
+
+rocblaslt_status rocblaslt_groupedgemm_run(rocblaslt_groupedgemm groupedgemm,
+                                           hipStream_t           stream);
 
 #ifdef __cplusplus
 }

@@ -51,7 +51,6 @@
 template <typename Ti, typename To = Ti, typename Tc = To>
 struct RocblasltContractionProblem
 {
-    rocblaslt_handle   handle;
     hipblasOperation_t trans_a;
     hipblasOperation_t trans_b;
 
@@ -93,6 +92,7 @@ struct RocblasltContractionProblem
 
     size_t batch_count;
     bool   strided_batch;
+    bool   grouped_gemm;
 
     const void*        bias;
     const Tc*          scaleD;
@@ -105,8 +105,7 @@ struct RocblasltContractionProblem
 
     // gemm_ex
     // gemm_strided_batched_ex
-    RocblasltContractionProblem(rocblaslt_handle   handle,
-                                hipblasOperation_t trans_a,
+    RocblasltContractionProblem(hipblasOperation_t trans_a,
                                 hipblasOperation_t trans_b,
                                 int64_t            m,
                                 int64_t            n,
@@ -131,6 +130,7 @@ struct RocblasltContractionProblem
                                 int64_t            batch_stride_d,
                                 int64_t            batch_count,
                                 bool               strided_batch,
+                                bool               grouped_gemm,
                                 const void*        bias,
                                 const Tc*          scaleD,
                                 hipblasDatatype_t  bias_type,
@@ -138,8 +138,7 @@ struct RocblasltContractionProblem
                                 void*              workspace,
                                 size_t             workspaceSize,
                                 hipStream_t        stream)
-        : handle(handle)
-        , trans_a(trans_a)
+        : trans_a(trans_a)
         , trans_b(trans_b)
         , m(m)
         , n(n)
@@ -168,6 +167,7 @@ struct RocblasltContractionProblem
         , batch_stride_d(batch_stride_d)
         , batch_count(batch_count)
         , strided_batch(strided_batch)
+        , grouped_gemm(grouped_gemm)
         , bias(bias)
         , scaleD(scaleD)
         , bias_type(bias_type)
@@ -183,8 +183,21 @@ struct RocblasltContractionProblem
  * runContractionProblem() solves a RocblasltContractionProblem *
  *******************************************************************************/
 template <typename Ti, typename To, typename Tc>
-rocblaslt_status runContractionProblem(const rocblaslt_matmul_algo*                   algo,
+rocblaslt_status runContractionProblem(rocblaslt_handle                               handle,
+                                       const rocblaslt_matmul_algo*                   algo,
                                        RocblasltContractionProblem<Ti, To, Tc> const& problem);
+
+template <typename Ti, typename To, typename Tc>
+rocblaslt_status groupedGemmCreate(rocblaslt_groupedgemm                                 groupedgemm,
+                                   std::vector<RocblasltContractionProblem<Ti, To, Tc>>& probs);
+
+rocblaslt_status groupedGemmMakeArgument(rocblaslt_groupedgemm        groupedgemm,
+                                         const rocblaslt_matmul_algo* algo,
+                                         void*                        workspace,
+                                         hipStream_t                  stream);
+
+rocblaslt_status runGroupedGemm(rocblaslt_groupedgemm groupedgemm,
+                                hipStream_t           stream);
 
 /***********************************************************************************
  * Whether Tensile has been initialized for at least one device (used for
@@ -207,8 +220,7 @@ inline bool& rocblaslt_suppress_tensile_error_messages()
  *******************************************************************************/
 template <typename Ti, typename To = Ti, typename Tc = To>
 RocblasltContractionProblem<Ti, To, Tc>
-    ConstructRocblasltProblem(const rocblaslt_handle      handle,
-                              const rocblaslt_matmul_desc matmul_descr,
+    ConstructRocblasltProblem(const rocblaslt_matmul_desc matmul_descr,
                               rocblaslt_matrix_layout     matA,
                               rocblaslt_matrix_layout     matB,
                               rocblaslt_matrix_layout     matC,
@@ -223,7 +235,14 @@ RocblasltContractionProblem<Ti, To, Tc>
  *******************************************************************************/
 template <typename Ti, typename To = Ti, typename Tc = To>
 rocblaslt_status getBestSolutions(RocblasltContractionProblem<Ti, To, Tc> prob,
+                                  rocblaslt_handle                        handle,
                                   int                                     requestedAlgoCount,
                                   rocblaslt_matmul_heuristic_result       heuristicResultsArray[],
                                   int*                                    returnAlgoCount,
                                   size_t                                  maxWorkSpaceBytes);
+
+rocblaslt_status getBestSolutionsGroupedGemm(rocblaslt_groupedgemm             groupedgemm,
+                                             rocblaslt_matmul_preference       pref,
+                                             int                               requestedAlgoCount,
+                                             rocblaslt_matmul_heuristic_result heuristicResultsArray[],
+                                             int*                              returnAlgoCount);
