@@ -331,6 +331,13 @@ rocblaslt_status
                                         rocblaslt_matmul_heuristic_result heuristicResultsArray[],
                                         int*                              returnAlgoCount);
 
+rocblaslt_status
+    rocblaslt_groupedgemm_algo_get_heuristic(rocblaslt_groupedgemm             groupedgemm,
+                                             rocblaslt_matmul_preference       pref,
+                                             int                               requestedAlgoCount,
+                                             rocblaslt_matmul_heuristic_result heuristicResultsArray[],
+                                             int*                              returnAlgoCount);
+
 // for internal use during testing, fetch arch name
 std::string rocblaslt_internal_get_arch_name();
 #ifdef __cplusplus

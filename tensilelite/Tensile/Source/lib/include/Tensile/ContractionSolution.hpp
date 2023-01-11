@@ -211,14 +211,16 @@ namespace Tensile
    */
         virtual std::vector<KernelInvocation> solve(ContractionProblem const& problem,
                                                     ProblemInputs const&      inputs,
-                                                    Hardware const&           hardware) const;
+                                                    Hardware const&           hardware,
+                                                    hipStream_t               stream) const;
 
         virtual std::vector<KernelInvocation>
             solve(Problem const& problem, Inputs const& inputs, Hardware const& hardware) const;
 
         virtual std::vector<KernelInvocation> solveGroupedGemm(std::vector<Problem> const& problems,
                                                                GroupedInputs const&        inputs,
-                                                               Hardware const& hardware) const;
+                                                               Hardware const&             hardware,
+                                                               hipStream_t                 stream) const;
 
         template <bool T_Debug>
         void singleCallArgs(Problem const&           problem,
@@ -236,7 +238,8 @@ namespace Tensile
         template <bool T_Debug>
         KernelInvocation generateSingleCallGroupedGemm(std::vector<Problem> const& problems,
                                                        GroupedInputs const&        inputs,
-                                                       Hardware const&             hardware) const;
+                                                       Hardware const&             hardware,
+                                                       hipStream_t                 stream) const;
 
         template <bool T_Debug>
         KernelInvocation generateBetaOnlyCall(Problem const&           problem,
