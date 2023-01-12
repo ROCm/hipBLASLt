@@ -281,14 +281,14 @@ void testing_matmul(const Arguments& arg)
         }
     }
 
-    size_t workspace_size = 1024;
+    size_t max_workspace_size = 32 * 1024 * 1024;
 
     hipblaslt_local_preference pref;
     EXPECT_HIPBLAS_STATUS(
         hipblasLtMatmulPreferenceSetAttribute(pref,
                                               HIPBLASLT_MATMUL_PREF_MAX_WORKSPACE_BYTES,
-                                              &workspace_size,
-                                              sizeof(workspace_size)),
+                                              &max_workspace_size,
+                                              sizeof(max_workspace_size)),
         HIPBLAS_STATUS_SUCCESS);
 
     const size_t size_A = stride_a == 0 ? lda * A_col * num_batches : stride_a * num_batches;
@@ -301,14 +301,13 @@ void testing_matmul(const Arguments& arg)
     const size_t size_scaleD = arg.scaleD_vector ? M : 1;
 
     // allocate memory on device
-    device_vector<Ti>            dA(size_A, 1, HMM);
-    device_vector<Ti>            dB(size_B, 1, HMM);
-    device_vector<To>            dC(size_C, 1, HMM);
-    device_vector<To>            dD(size_D, 1, HMM);
-    device_vector<To>            dBias(size_bias, 1, HMM);
-    device_vector<Talpha>        dScaleD(size_scaleD, 1, HMM);
-    device_vector<Talpha>        dBias_C(size_bias, 1, HMM);
-    device_vector<unsigned char> dWorkspace(workspace_size, 1, HMM);
+    device_vector<Ti>     dA(size_A, 1, HMM);
+    device_vector<Ti>     dB(size_B, 1, HMM);
+    device_vector<To>     dC(size_C, 1, HMM);
+    device_vector<To>     dD(size_D, 1, HMM);
+    device_vector<To>     dBias(size_bias, 1, HMM);
+    device_vector<Talpha> dScaleD(size_scaleD, 1, HMM);
+    device_vector<Talpha> dBias_C(size_bias, 1, HMM);
     CHECK_DEVICE_ALLOCATION(dA.memcheck());
     CHECK_DEVICE_ALLOCATION(dB.memcheck());
     CHECK_DEVICE_ALLOCATION(dC.memcheck());
@@ -316,7 +315,6 @@ void testing_matmul(const Arguments& arg)
     CHECK_DEVICE_ALLOCATION(dBias.memcheck());
     CHECK_DEVICE_ALLOCATION(dScaleD.memcheck());
     CHECK_DEVICE_ALLOCATION(dBias_C.memcheck());
-    CHECK_DEVICE_ALLOCATION(dWorkspace.memcheck());
 
     // Naming: dX is in GPU (device) memory. hK is in CPU (host) memory
     host_vector<Ti>     hA(size_A);
@@ -468,6 +466,10 @@ void testing_matmul(const Arguments& arg)
             handle, matmul, matA, matB, matC, matD, pref, 3, heuristicResult, &returnedAlgoCount)),
         HIPBLAS_STATUS_SUCCESS);
 
+    size_t                       workspace_size = heuristicResult[0].workspaceSize;
+    device_vector<unsigned char> dWorkspace(workspace_size, 1, HMM);
+    CHECK_DEVICE_ALLOCATION(dWorkspace.memcheck());
+
     if(arg.unit_check || arg.norm_check)
     {
         CHECK_HIP_ERROR(hipStreamSynchronize(stream));
@@ -582,11 +584,9 @@ void testing_matmul(const Arguments& arg)
 #define scaleD_param M, N, ldd, hD_gold_epl + pos, hD_gold + pos, arg.scaleD_vector, hScaleD + 0
                 auto pos = stride_d * i;
                 scaleD_func(scaleD_param);
-                hipblaslt_cout << "here no epilogue_on beta: " << h_beta << std::endl;
             }
             else
             {
-                hipblaslt_cout << "here else beta: " << h_beta << std::endl;
                 cblas_gemm<Ti, To, Talpha>(transA,
                                            transB,
                                            M,
