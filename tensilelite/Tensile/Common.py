@@ -292,7 +292,7 @@ def getArchitectureName(gfxName):
 # Enumerate Valid Solution Parameters
 ################################################################################
 validWorkGroups = []
-for numThreads in range(64, 1025, 64):
+for numThreads in range(32, 1025, 32):
   for nsg in [ 1, 2, 4, 8, 16, 32, 64, 96, 128, 256 ]:
     for sg0 in range(1, numThreads//nsg+1):
       sg1 = numThreads//nsg//sg0
@@ -329,10 +329,11 @@ validMFMA["C"] = validMFMA["S"]
 validMFMA["Z"] = validMFMA["D"]
 validMFMA["I8"] = [[32,32,4,2], [32,32,8,1], [16,16,4,4], [16,16,16,1], [4,4,4,16]] + [[32,32,16,1], [16,16,32,1]]
 validMFMA["X"] = [[32,32,4,1], [16,16,8,1]]
+validWMMA = [[16,16,16,1], ]
 validTT = 16
 validMFMA["_format9"] = []
 
-for MFMA in [validMFMA["H"], validMFMA["S"], validMFMA["B"], validMFMA["D"], validMFMA["X"]]:
+for MFMA in [validMFMA["H"], validMFMA["S"], validMFMA["B"], validMFMA["D"], validMFMA["X"], validWMMA]:
   for MI in MFMA:
     for bm in range(int(math.log(MI[3],2))+1):
       for tt0 in range(1,validTT+1):

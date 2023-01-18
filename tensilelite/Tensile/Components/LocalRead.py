@@ -82,12 +82,18 @@ class LocalReadMFMA(LocalRead):
         else:
             numReadsPerUnroll = tP["bpe"] * writer.states.lrvwB // int(blockWidth * 4) # bytes/register
         numVgpr  = int(ceil(blockWidth))
+        numElementPerRead = int(blockWidth * 4) // tP['bpe']
 
         # pack register
-        needPack = blockWidth < 1 if not tP["isM"] else False
+        if writer.states.archCaps["HasEccHalf"]:
+          needPack = blockWidth < 1 if not tP["isM"] else False
+        else:
+          needPack = blockWidth == 0.25
         pack     = Module("pack%s_I%s"%(tc,iui))
         if needPack:
-            packTimesPerVgpr = int(1/blockWidth) - 1 # 0.5->pack once (16->32) / 0.25->pack three times (8->16, 8->16, 16->32)
+            # ECC 0.5->pack once (16->32) / 0.25->pack three times (8->16, 8->16, 16->32)
+            # No ECC 0.25: pack one time 0x00ff00ff | (0x00ff00ff << 8)
+            packTimesPerVgpr = (int(1/blockWidth) - 1) if writer.states.archCaps["HasEccHalf"] else 1
             tmpVgprIdx = writer.vgprPool.checkOut(writer.states.a.numVgprValuPerBlock*writer.states.numReadsIterCoalescedA*packTimesPerVgpr if tc == 'A' \
                 else writer.states.b.numVgprValuPerBlock*writer.states.numReadsIterCoalescedB*packTimesPerVgpr)
             pack.addTempVgpr(tmpVgprIdx) # important, add to pack Module for later CheckIn
@@ -104,28 +110,42 @@ class LocalReadMFMA(LocalRead):
                     baseLRVgpr = vgpr("Valu%s_X%u_I%u+%u"%(tc, bufferIdx, iui, valuiIdx), numVgpr)
                     destVgpr = baseLRVgpr
 
-                    # pack for blockWidth 0.5 type
                     highBitsForHalf = (blockWidth == 0.5) and ((rIdx % 2) == 1) # rIdx = 1
-                    if needPack and highBitsForHalf:
-                        # highVgpr = vgpr(tmpVgprIdx + valuiIdx)
-                        highVgpr = vgpr(tmpVgprIdx)
-                        tmpVgprIdx += 1
-                        packCode.add(VOrB32(dst=destVgpr, src0=destVgpr, src1=highVgpr, comment="pack two half Vgpr to one Vgpr"))
-                        destVgpr = highVgpr
 
                     isHigh8Bits  = (blockWidth == 0.25) and ( ((rIdx % 4) % 2) == 1) # 1,3
                     isHigh16Bits = (blockWidth == 0.25) and ( ((rIdx % 4) //2) == 1) # 2,3
-                    if needPack:
-                        if isHigh8Bits or isHigh16Bits:
+                    if writer.states.archCaps["HasEccHalf"]: # ECC pack
+                        # pack for ECC blockWidth 0.5 type
+                        if needPack and highBitsForHalf:
+                            # highVgpr = vgpr(tmpVgprIdx + valuiIdx)
                             highVgpr = vgpr(tmpVgprIdx)
+                            tmpVgprIdx += 1 #cm tmp here
+                            packCode.add(VOrB32(dst=destVgpr, src0=destVgpr, src1=highVgpr, comment="pack two half Vgpr to one Vgpr"))
                             destVgpr = highVgpr
-                        if isHigh8Bits:
-                            lowVgpr = vgpr(tmpVgprIdx-1) if isHigh16Bits else baseLRVgpr
-                            packCode.add(VLShiftLeftOrB32(dst=lowVgpr, src0=highVgpr, shiftHex=hex(0x8), src1=lowVgpr, comment="pack two int8 Vgpr to one half Vgpr"))
-                            if isHigh16Bits:
-                                packCode.add(VOrB32(dst=baseLRVgpr, src0=baseLRVgpr, src1=lowVgpr, comment="pack two half Vgpr to one Vgpr"))
-                        if isHigh8Bits or isHigh16Bits:
-                            tmpVgprIdx += 1
+
+                        # pack for ECC blockwidth 0.25 type
+                        if needPack:
+                            if isHigh8Bits or isHigh16Bits:
+                                highVgpr = vgpr(tmpVgprIdx)
+                                destVgpr = highVgpr
+                            if isHigh8Bits:
+                                lowVgpr = vgpr(tmpVgprIdx-1) if isHigh16Bits else baseLRVgpr
+                                packCode.add(VLShiftLeftOrB32(dst=lowVgpr, src0=highVgpr, shiftHex=hex(0x8), src1=lowVgpr, comment="pack two int8 Vgpr to one half Vgpr"))
+                                if isHigh16Bits:
+                                    packCode.add(VOrB32(dst=baseLRVgpr, src0=baseLRVgpr, src1=lowVgpr, comment="pack two half Vgpr to one Vgpr"))
+                            if isHigh8Bits or isHigh16Bits:
+                                tmpVgprIdx += 1
+                    else: # no ECC pack
+                        # pack for No ECC blockwidth 0.25 type
+                        isHigh8Bits  = (blockWidth == 0.25) and ( ((rIdx % 4) % 2) == 1) # 1,3
+                        isHigh16Bits = (blockWidth == 0.25) and ( ((rIdx % 4) //2) == 1) # 2,3
+                        if needPack:
+                            if isHigh8Bits:
+                                highVgpr = vgpr(tmpVgprIdx)
+                                destVgpr = highVgpr
+                            if isHigh8Bits and isHigh16Bits:
+                                packCode.add(VLShiftLeftOrB32(dst=baseLRVgpr, src0=highVgpr, shiftHex=hex(0x8), src1=baseLRVgpr, comment="pack two int8x2 Vgpr to one Vgpr"))
+                                tmpVgprIdx += 1
 
                     valufIdx += blockWidth if not tP["isM"] else 1
 
@@ -144,7 +164,7 @@ class LocalReadMFMA(LocalRead):
                         else:
                           # normal case
                           offset_val = (eIdx + (vIdx * numOffsets+oIdx) * MIWaveGroupShape[tile01]) * tileStride
-                          offset_val = (rIdx * UnrollStride + offset_val + tP["localReadOffset"]) * tP["bpe"]
+                          offset_val = (rIdx * numElementPerRead * UnrollStride + offset_val + tP["localReadOffset"]) * tP["bpe"]
                         if (kernel["LdsBlockSizePerPad%s"%tc] != 0) and (kernel["LdsPad%s"%tc] != 0):
                             offset_val = offset_val + (offset_val // kernel["LdsBlockSizePerPad%s"%tc]) * kernel["LdsPad%s"%tc] * tP["bpe"]
                         offset_val = offset_val + tP["localReadSwapByteOffset"]
@@ -178,7 +198,7 @@ class LocalReadMFMA(LocalRead):
                             % (tP["localReadOffset"], tP["localReadSwapByteOffset"], MIWaveGroupShape[tile01], vIdx, eIdx, rIdx, oIdx, bufferIdx, iui)
 
                     highBits = highBitsForHalf or isHigh16Bits
-                    readToTempVgpr = highBitsForHalf or isHigh8Bits or isHigh16Bits
+                    readToTempVgpr = (highBitsForHalf or isHigh8Bits or isHigh16Bits) if writer.states.archCaps["HasEccHalf"] else isHigh8Bits
 
                     if numOffsets == 1:
                         ds = DSModifiers(na=1, offset=paramList[0])
