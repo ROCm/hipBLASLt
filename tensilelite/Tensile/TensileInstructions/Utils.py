@@ -97,7 +97,7 @@ class Holder:
 # mfma
 ########################################
 
-def _dataTypeNameAbbrevToInstType(abbrev: str) -> InstType:
+def dataTypeNameAbbrevToInstType(abbrev: str) -> InstType:
     if abbrev == 'f64':
         return InstType.INST_F64
     elif abbrev == 'f32':
@@ -116,8 +116,8 @@ def _dataTypeNameAbbrevToInstType(abbrev: str) -> InstType:
 
 def dataTypeToMfmaInstTypePair(dataType: DataType, Fp16AltImpl: bool) -> Tuple[InstType, InstType]:
     miInTypeStr      = "bf16" if Fp16AltImpl else dataType.toNameAbbrev()
-    miInInstType = _dataTypeNameAbbrevToInstType(miInTypeStr) # v_mfma_[...xK]<InType>
-    miOutInstType = _dataTypeNameAbbrevToInstType(dataType.MIOutputTypeNameAbbrev()) # v_mfma_<OutType>..
+    miInInstType = dataTypeNameAbbrevToInstType(miInTypeStr) # v_mfma_[...xK]<InType>
+    miOutInstType = dataTypeNameAbbrevToInstType(dataType.MIOutputTypeNameAbbrev()) # v_mfma_<OutType>..
     return miInInstType, miOutInstType
 
 ########################################

@@ -83,6 +83,8 @@ class StoreState:
                 self.numVgprsPerDataPerVI = (1.0 * regsPerElement * kernelWriter.states.bpeCexternal) / kernelWriter.states.bpr
             elif beta:
                 self.numVgprsPerDataPerVI = (1.0 * kernelWriter.states.bpeCexternal) / kernelWriter.states.bpr
+                if kernelWriter.states.HHH_WMMA:
+                    self.numVgprsPerDataPerVI = 1.0
             else:
                 self.numVgprsPerDataPerVI = 0.0
 
