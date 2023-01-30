@@ -1,5 +1,5 @@
 # ########################################################################
-# Copyright (C) 2022 Advanced Micro Devices, Inc.
+# Copyright (C) 2022-2023 Advanced Micro Devices, Inc.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -103,7 +103,7 @@ set(CMAKE_INSTALL_LIBDIR "lib" CACHE INTERNAL "Installation directory for librar
 option(BUILD_SHARED_LIBS "Build hipBLASLt as a shared library" ON)
 option(BUILD_CLIENTS_TESTS "Build tests (requires googletest)" OFF)
 option(BUILD_CLIENTS_BENCHMARKS "Build benchmarks" OFF)
-option(BUILD_CLIENTS_SAMPLES "Build examples" ON)
+option(BUILD_CLIENTS_SAMPLES "Build examples" OFF)
 option(BUILD_VERBOSE "Output additional build information" OFF)
 option(BUILD_CODE_COVERAGE "Build hipBLASLt with code coverage enabled" OFF)
 option(BUILD_ADDRESS_SANITIZER "Build hipBLASLt with address sanitizer enabled" OFF)
