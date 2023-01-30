@@ -1,5 +1,5 @@
 # ########################################################################
-# Copyright (C) 2022 Advanced Micro Devices, Inc.
+# Copyright (C) 2022-2023 Advanced Micro Devices, Inc.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -120,3 +120,5 @@ add_custom_target( hipblaslt-test-data
                    DEPENDS "${HIPBLASLT_TEST_DATA}" )
 add_dependencies( hipblaslt-test hipblaslt-test-data hipblaslt-common )
 
+rocm_install(TARGETS hipblaslt-test COMPONENT tests)
+rocm_install(FILES ${HIPBLASLT_TEST_DATA} DESTINATION "${CMAKE_INSTALL_BINDIR}" COMPONENT tests)
