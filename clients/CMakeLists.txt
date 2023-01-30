@@ -1,5 +1,5 @@
 # ########################################################################
-# Copyright (C) 2022 Advanced Micro Devices, Inc.
+# Copyright (C) 2022-2023 Advanced Micro Devices, Inc.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -136,3 +136,14 @@ add_custom_command( OUTPUT "${HIPBLASLT_GENTEST}"
                     WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}" )
 
 add_custom_target( hipblaslt-common DEPENDS "${HIPBLASLT_COMMON}" "${HIPBLASLT_TEMPLATE}" "${HIPBLASLT_GENTEST}" )
+
+rocm_install(
+  FILES ${HIPBLASLT_COMMON} ${HIPBLASLT_TEMPLATE}
+  DESTINATION "${CMAKE_INSTALL_BINDIR}"
+  COMPONENT clients-common
+)
+rocm_install(
+  PROGRAMS ${HIPBLASLT_GENTEST}
+  DESTINATION "${CMAKE_INSTALL_BINDIR}"
+  COMPONENT clients-common
+)
