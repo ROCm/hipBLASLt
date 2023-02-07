@@ -284,19 +284,22 @@ class ProblemType:
             predicates.append(ProblemPredicate("OperationIdentifierEqual", value=self.operationIdentifier))
             if not self.useBeta:
                 predicates.append(ProblemPredicate("BetaZero"))
-            predicates.append(ProblemPredicate("UseBias", value=self.useBias))
             predicates.append(ProblemPredicate("BiasDataTypeWhiteList", value=self.biasDataTypeWhiteList))
             predicates.append(ProblemPredicate("Activation", value=self.activationType))
             if self.activationType == 'all':
                 enumList = [actEnum.capitalize() for actEnum in ActivationType.getEnumStrList(self.activationComputeDataType)]
                 predicates.append(ProblemPredicate("ActivationEnumWhiteList", value=enumList))
-            predicates.append(ProblemPredicate("StridedBatched", value=self.stridedBatched))
-            predicates.append(ProblemPredicate("GroupedGemm", value=self.groupedGemm))
+            # predicates.append(ProblemPredicate("UseScaleD", value=self.useScaleD))
+            # predicates.append(ProblemPredicate("GroupedGemm", value=self.groupedGemm))
 
         if includeType:
             predicates.append(ProblemPredicate("TypesEqual", value=(self.aType, self.bType, self.cType, self.dType)))
             predicates.append(ProblemPredicate("HighPrecisionAccumulate", value=self.highPrecisionAccumulate))
             predicates.append(ProblemPredicate("ActivationHPA", value=self.activationHPA))
+            predicates.append(ProblemPredicate("UseBias", value=self.useBias))
+            predicates.append(ProblemPredicate("StridedBatched", value=self.stridedBatched))
+            predicates.append(ProblemPredicate("GroupedGemm", value=self.groupedGemm))
+            predicates.append(ProblemPredicate("UseScaleD", value=self.useScaleD))
 
         return predicates
 
