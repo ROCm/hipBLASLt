@@ -5190,30 +5190,33 @@ class KernelWriterAssembly(KernelWriter):
   ##############################################################################
   def localWriteSwapOffsets(self, kernel, internalPointerSwap, tP):
     if not self.do["LocalWrite"]: return Module("localWriteSwapOffsets (No local write)")
-    if kernel["1LDSBuffer"]: return Module("localWriteSwapOffsets (Empty)")
+    needSwap = False if kernel["1LDSBuffer"] else True
+    needMetatSwap = True if kernel["ProblemType"]["SparseA"] and tP["isA"] and kernel["PrefetchGlobalRead"] == 2 and kernel["ExpandPointerSwap"] else False
+    if not (needSwap or needMetatSwap): return Module("localWriteSwapOffsets (Empty)")
     module = Module("localWriteSwapOffsets")
-    tc = tP["tensorChar"]
-    #fixme-iui  need to use wrapping increment for double or triple buffering:
-    if internalPointerSwap:
-      tP["localWriteSwapByteOffset"] = 0 if tP["localWriteSwapByteOffset"] else kernel["LdsOffsetA_Blk"]*tP["bpe"]
-      module.addComment1("(EPS=1) local write swap internal offset -> %u" % tP["localWriteSwapByteOffset"])
-    else:
-      if kernel["LocalWriteUseSgpr%s"%tc]:
-        module.add(SXorB32(
-            dst=sgpr("LocalWriteAddr%s"%tP["tensorChar"]), \
-            src0=hex(kernel["LdsOffsetA_Blk"]*tP["bpe"]), \
-            src1=sgpr("LocalWriteAddr%s"%tP["tensorChar"]), \
-            comment="swap Red Blk SGPR"))
-      elif not kernel["DirectToVgpr%s"%tc]: # no local write code if DirectToVgpr is enabled
-        numLwa = self.states.a.numVgprLocalWriteAddr if tP["isA"] else self.states.b.numVgprLocalWriteAddr
-        for i in range(0,numLwa):
-          module.add(VXorB32(
-              dst=vgpr("LocalWriteAddr%s+%u"%(tc,i)), \
+    if needSwap:
+      tc = tP["tensorChar"]
+      #fixme-iui  need to use wrapping increment for double or triple buffering:
+      if internalPointerSwap:
+        tP["localWriteSwapByteOffset"] = 0 if tP["localWriteSwapByteOffset"] else kernel["LdsOffsetA_Blk"]*tP["bpe"]
+        module.addComment1("(EPS=1) local write swap internal offset -> %u" % tP["localWriteSwapByteOffset"])
+      else:
+        if kernel["LocalWriteUseSgpr%s"%tc]:
+          module.add(SXorB32(
+              dst=sgpr("LocalWriteAddr%s"%tP["tensorChar"]), \
               src0=hex(kernel["LdsOffsetA_Blk"]*tP["bpe"]), \
-              src1=vgpr("LocalWriteAddr%s+%u"%(tc,i)), \
-              comment="swap Red Blk"))
-        # This used to control where to store the metadata
-    if kernel["ProblemType"]["SparseA"] and tP["isA"] and kernel["PrefetchGlobalRead"] == 2 and kernel["ExpandPointerSwap"]:
+              src1=sgpr("LocalWriteAddr%s"%tP["tensorChar"]), \
+              comment="swap Red Blk SGPR"))
+        elif not kernel["DirectToVgpr%s"%tc]: # no local write code if DirectToVgpr is enabled
+          numLwa = self.states.a.numVgprLocalWriteAddr if tP["isA"] else self.states.b.numVgprLocalWriteAddr
+          for i in range(0,numLwa):
+            module.add(VXorB32(
+                dst=vgpr("LocalWriteAddr%s+%u"%(tc,i)), \
+                src0=hex(kernel["LdsOffsetA_Blk"]*tP["bpe"]), \
+                src1=vgpr("LocalWriteAddr%s+%u"%(tc,i)), \
+                comment="swap Red Blk"))
+    # This used to control where to store the metadata
+    if needMetatSwap:
       tP["metadataWriteSwapByteOffset"] = 0 if tP["metadataWriteSwapByteOffset"] else self.states.a.numVgprValuMetadataPerBlock
       module.addComment1("metadata write swap offset -> %u" % tP["metadataWriteSwapByteOffset"])
     return module
@@ -5225,26 +5228,30 @@ class KernelWriterAssembly(KernelWriter):
   def localWriteResetOffsets(self, kernel, internalPointerSwap, tP):
     tc = tP["tensorChar"]
     if not self.do["LocalWrite"]: return Module("localWriteResetOffsets (no local write)")
-    if kernel["1LDSBuffer"] or kernel["DirectToVgpr%s"%tc]: # no local write code if DirectToVgpr is enabled
+    needReset = not (kernel["1LDSBuffer"] or kernel["DirectToVgpr%s"%tc])
+    needMetaReset = True if kernel["ProblemType"]["SparseA"] and tP["isA"] and kernel["PrefetchGlobalRead"] == 2 and kernel["ExpandPointerSwap"] else False
+
+    if not (needReset or needMetaReset): # no local write code if DirectToVgpr is enabled
       return Module("localWriteResetOffsets (Empty)")
     module = Module("localWriteResetOffsets")
-    resetMask = hex(kernel["LdsOffsetA_Blk"]*tP["bpe"]-1 | self.consts.ldsOOB)
-    if internalPointerSwap:
-      tP["localWriteSwapByteOffset"] = 0
-    else:
-      if kernel["LocalWriteUseSgpr%s"%tc]:
-        module.add(SAndB32(
-            dst=sgpr("LocalWriteAddr%s"%tP["tensorChar"]), \
-            src0=resetMask, \
-            src1=sgpr("LocalWriteAddr%s"%tP["tensorChar"]), \
-            comment="reset to Red"))
+    if needReset:
+      resetMask = hex(kernel["LdsOffsetA_Blk"]*tP["bpe"]-1 | self.consts.ldsOOB)
+      if internalPointerSwap:
+        tP["localWriteSwapByteOffset"] = 0
       else:
-        module.add(VAndB32(
-            dst=vgpr("LocalWriteAddr%s"%tP["tensorChar"]), \
-            src0=resetMask, \
-            src1=vgpr("LocalWriteAddr%s"%tP["tensorChar"]), \
-            comment="reset to Red"))
-    if kernel["ProblemType"]["SparseA"] and tP["isA"] and kernel["PrefetchGlobalRead"] == 2 and kernel["ExpandPointerSwap"]:
+        if kernel["LocalWriteUseSgpr%s"%tc]:
+          module.add(SAndB32(
+              dst=sgpr("LocalWriteAddr%s"%tP["tensorChar"]), \
+              src0=resetMask, \
+              src1=sgpr("LocalWriteAddr%s"%tP["tensorChar"]), \
+              comment="reset to Red"))
+        else:
+          module.add(VAndB32(
+              dst=vgpr("LocalWriteAddr%s"%tP["tensorChar"]), \
+              src0=resetMask, \
+              src1=vgpr("LocalWriteAddr%s"%tP["tensorChar"]), \
+              comment="reset to Red"))
+    if needMetaReset:
       tP["metadataWriteSwapByteOffset"] = 0
       module.addComment1("reset metadata write offset to %u" % tP["metadataWriteSwapByteOffset"])
     return module
