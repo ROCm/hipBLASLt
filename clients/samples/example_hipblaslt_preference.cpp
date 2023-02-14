@@ -240,6 +240,7 @@ static void show_usage(char* argv[])
               << "\t--stride_d \t\tstride_d \tGEMM_STRIDED argument stride_d\n"
               << "\t--alpha \t\talpha \t\tGEMM_STRIDED argument alpha\n"
               << "\t--beta \t\t\tbeta \t\tGEMM_STRIDED argument beta\n"
+              << "\t--batch_count \t\tbatch \t\tGEMM_STRIDED argument batch count\n"
               << "\t--act \t\t\tact \t\tGEMM_STRIDED set activation type: relu "
                  "or gelu\n"
               << "\t--bias \t\t\tbias \t\tGEMM_STRIDED enable bias: 0 or 1 "
