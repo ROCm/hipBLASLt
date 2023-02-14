@@ -27,6 +27,7 @@ options:
         --stride_d              stride_d        GEMM_STRIDED argument stride_d
         --alpha                 alpha           GEMM_STRIDED argument alpha
         --beta                  beta            GEMM_STRIDED argument beta
+        --batch_count           batch           GEMM_STRIDED argument batch count
         --act                   act             GEMM_STRIDED set activation type: relu or gelu
         --bias                  bias            GEMM_STRIDED enable bias: 0 or 1 (default is 0)
         --scaleD                scaleD          GEMM_STRIDED enable scaleD: 0 or 1 (default is 0)

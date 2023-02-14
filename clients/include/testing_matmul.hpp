@@ -176,10 +176,7 @@ void testing_matmul_bad_arg(const Arguments& arg)
     hipStream_t stream = nullptr;
 }
 
-template <typename Ti,
-          typename To,
-          typename Tc,
-          hipblaslt_batch_type btype = hipblaslt_batch_type::none>
+template <typename Ti, typename To, typename Tc>
 void testing_matmul(const Arguments& arg)
 {
     hipblasOperation_t transA = char_to_hipblas_operation(arg.transA);
@@ -213,12 +210,12 @@ void testing_matmul(const Arguments& arg)
     int64_t stride_1_a = transA == HIPBLAS_OP_N ? 1 : lda;
     int64_t stride_2_a = transA == HIPBLAS_OP_N ? lda : 1;
 
-    constexpr bool do_batched  = (btype == hipblaslt_batch_type::batched);
-    int            num_batches = (do_batched ? arg.batch_count : 1);
-    int64_t        stride_a    = do_batched ? arg.stride_a : lda * A_col;
-    int64_t        stride_b    = do_batched ? arg.stride_b : ldb * B_col;
-    int64_t        stride_c    = do_batched ? arg.stride_c : ldc * N;
-    int64_t        stride_d    = do_batched ? arg.stride_c : ldd * N;
+    bool    do_batched  = (arg.batch_count > 1);
+    int     num_batches = (do_batched ? arg.batch_count : 1);
+    int64_t stride_a    = do_batched ? arg.stride_a : lda * A_col;
+    int64_t stride_b    = do_batched ? arg.stride_b : ldb * B_col;
+    int64_t stride_c    = do_batched ? arg.stride_c : ldc * N;
+    int64_t stride_d    = do_batched ? arg.stride_c : ldd * N;
 
     hipblaslt_local_matrix_layout matA(A_row, A_col, lda, arg.a_type);
     hipblaslt_local_matrix_layout matB(B_row, B_col, ldb, arg.b_type);
@@ -242,6 +239,23 @@ void testing_matmul(const Arguments& arg)
         EXPECT_HIPBLAS_STATUS(
             hipblasLtMatrixLayoutSetAttribute(
                 matD, HIPBLASLT_MATRIX_LAYOUT_BATCH_COUNT, &num_batches, sizeof(int)),
+            HIPBLAS_STATUS_SUCCESS);
+
+        EXPECT_HIPBLAS_STATUS(
+            hipblasLtMatrixLayoutSetAttribute(
+                matA, HIPBLASLT_MATRIX_LAYOUT_STRIDED_BATCH_OFFSET, &stride_a, sizeof(int64_t)),
+            HIPBLAS_STATUS_SUCCESS);
+        EXPECT_HIPBLAS_STATUS(
+            hipblasLtMatrixLayoutSetAttribute(
+                matB, HIPBLASLT_MATRIX_LAYOUT_STRIDED_BATCH_OFFSET, &stride_b, sizeof(int64_t)),
+            HIPBLAS_STATUS_SUCCESS);
+        EXPECT_HIPBLAS_STATUS(
+            hipblasLtMatrixLayoutSetAttribute(
+                matC, HIPBLASLT_MATRIX_LAYOUT_STRIDED_BATCH_OFFSET, &stride_c, sizeof(int64_t)),
+            HIPBLAS_STATUS_SUCCESS);
+        EXPECT_HIPBLAS_STATUS(
+            hipblasLtMatrixLayoutSetAttribute(
+                matD, HIPBLASLT_MATRIX_LAYOUT_STRIDED_BATCH_OFFSET, &stride_d, sizeof(int64_t)),
             HIPBLAS_STATUS_SUCCESS);
     }
 
@@ -700,13 +714,14 @@ void testing_matmul(const Arguments& arg)
                                                             ArgumentLogging::NA_value,
                                                             cpu_time_used,
                                                             hipblaslt_error);
-        ArgumentModel<argument_param_nb>{}.log_args<float>(hipblaslt_cout,
-                                                           arg,
-                                                           gpu_time_used,
-                                                           flops,
-                                                           ArgumentLogging::NA_value,
-                                                           cpu_time_used,
-                                                           hipblaslt_error);
+        else
+            ArgumentModel<argument_param_nb>{}.log_args<float>(hipblaslt_cout,
+                                                               arg,
+                                                               gpu_time_used,
+                                                               flops,
+                                                               ArgumentLogging::NA_value,
+                                                               cpu_time_used,
+                                                               hipblaslt_error);
     }
     CHECK_HIP_ERROR(hipStreamDestroy(stream));
 }
