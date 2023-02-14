@@ -61,8 +61,6 @@ namespace
         {
             if(!strcmp(arg.function, "matmul"))
                 testing_matmul<Ti, To, Tc>(arg);
-            else if(!strcmp(arg.function, "matmul_batched"))
-                testing_matmul<Ti, To, Tc, hipblaslt_batch_type::batched>(arg);
             else if(!strcmp(arg.function, "matmul_bad_arg"))
                 testing_matmul_bad_arg<Ti, To, Tc>(arg);
             else
@@ -81,8 +79,7 @@ namespace
         // Filter for which functions apply to this suite
         static bool function_filter(const Arguments& arg)
         {
-            return !strcmp(arg.function, "matmul") || !strcmp(arg.function, "matmul_batched")
-                   || !strcmp(arg.function, "matmul_bad_arg");
+            return !strcmp(arg.function, "matmul") || !strcmp(arg.function, "matmul_bad_arg");
         }
 
         // Google Test name suffix based on parameters
@@ -119,8 +116,8 @@ namespace
                      << arg.lda << '_' << arg.ldb << '_' << arg.beta << '_' << arg.ldc << '_'
                      << arg.ldd;
 
-                if(strstr(arg.function, "_batched") != nullptr)
-                    name << '_' << arg.batch_count;
+                name << '_' << arg.batch_count;
+
                 if(arg.scaleD_vector)
                     name << "_SD";
             }

@@ -73,6 +73,15 @@ Tests:
   transA_transB: *transA_transB_range
   alpha_beta: *alpha_beta_range
 
+- name: matmul_batch_medium
+  category: pre_checkin
+  function:
+    matmul: *real_precisions
+  matrix_size: *medium_matrix_size_range
+  transA_transB: *transA_transB_range
+  alpha_beta: *alpha_beta_range
+  batch_count: 10
+
 #TODO: enable it after enable fp16altimpl
 #- name: matmul_medium_alt
 #  category: pre_checkin

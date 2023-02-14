@@ -100,10 +100,7 @@ struct perf_matmul<
 {
     void operator()(const Arguments& arg)
     {
-        static const func_map map = {
-            {"matmul", testing_matmul<Ti, To, Tc>},
-            {"matmul_batched", testing_matmul<Ti, To, Tc, hipblaslt_batch_type::batched>},
-        };
+        static const func_map map = {{"matmul", testing_matmul<Ti, To, Tc>}};
         run_function(map, arg);
     }
 };
