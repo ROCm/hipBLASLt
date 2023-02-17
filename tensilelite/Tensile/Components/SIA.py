@@ -1,6 +1,6 @@
 ################################################################################
 #
-# Copyright (C) 2022 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -23,7 +23,7 @@
 from ..TensileInstructions import Item, Module, HolderContainer, Instruction, \
                                 GlobalReadInstruction, LocalReadInstruction, \
                                 LocalWriteInstruction, SSetPrior, SWaitCnt, \
-                                replaceHolder, fastdeepcopy
+                                replaceHolder, fastdeepcopy, VMovB32
 from ..Common import roundUp
 from ..Component import SIA
 
@@ -719,11 +719,6 @@ def getReadsToWait(writer, kernel):
     readsToWait = len(list(writer.codes.localWriteA.items())) + len(list(writer.codes.localWriteB.items()))
     readsToWaitDTV = 0
 
-    if kernel["ProblemType"]["SparseA"] and kernel["PrefetchGlobalRead"] == 2:
-        # SparseA + PGR2 will have #numVgprValuMetadataPerBlock numbers of v_mov instructions
-        # insert in lw codes, which don't need to wait.
-        readsToWait -= writer.states.a.numVgprValuMetadataPerBlock
-
     # add waitcnt for DirectToVgpr. Delaying wait for DirectToVgpr global read
     if kernel["DirectToVgprA"] or kernel["DirectToVgprB"]:
         # DirectToVgprA case, actual A load is in writer.codes.globalReadB (due to swap).
@@ -753,6 +748,8 @@ def schedLocalWrite(writer, kernel, numLocalWriteModPerIter, numLocalWritesPerSc
             imod = Module("LocalWriteMod%u"%u)
             imodNGLL = Module("LocalWriteMod%u"%u)
             writesPerItem = item.countType(LocalWriteInstruction)
+            if kernel["ProblemType"]["SparseA"] and not writesPerItem:
+                writesPerItem = item.name.startswith("MetadataWrite") and item.countType(VMovB32)
             readsToWaitAdjustForStoreC = 0
             if writesPerItem:
                 imod.addComment0("sched write - iter %u writesPerItem=%u"%(u,writesPerItem))

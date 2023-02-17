@@ -365,7 +365,7 @@ class KernelWriterAssembly(KernelWriter):
       self.defineSgpr("SrdB", 4, 4)
       if kernel["ProblemType"]["SparseA"]:
         self.defineSgpr("SrdMetadata", 4, 4)
-  
+
     if self.states.use64bShadowLimit:
       self.defineSgpr("ShadowLimitA", 2, 2)
       self.defineSgpr("ShadowLimitB", 2, 2)
@@ -1307,7 +1307,7 @@ class KernelWriterAssembly(KernelWriter):
           comment="0. thread id in wave: wtid = tid %% wavelength(%u)" % waveWidth))
       module.add(vectorStaticRemainder(dummy, tReg, tReg, kernel["MatrixInstM"], tmpVgprRes, tmpSgprInfo, \
           comment="1. tile offset: nIdx = wtid %% MI_N(%u)" % kernel["MatrixInstM"]))
-  
+
       # wave offset
       if num1DWaves > 1:
         module.add(vectorStaticDivide(wReg, "Serial", dividedForWaveId, tmpVgprRes, \
@@ -1531,7 +1531,7 @@ class KernelWriterAssembly(KernelWriter):
       module.add(SAndB32(dst=sgpr(shiftSgpr), src0=sgpr(edgeSgpr), src1=hex(margin-1), comment="edge size & (glvw-1)"))
       module.add(SSubU32(dst=sgpr(shiftSgpr), src0=hex(margin), src1=sgpr(shiftSgpr), comment="shift size = glvw - (edge size & (glvw-1))"))
       module.add(SAndN2B32(dst=sgpr(edgeSgpr), src0=sgpr(edgeSgpr), src1=hex(margin-1), comment="edgeCoord = edge & !(glvw-1)"))
-  
+
       # apply shiftPointer into vgpr offset
       shiftedCoord = self.vgprPool.checkOut(1, "shiftedCoord", self.states.preventVgprOverflowDuringNewTile)
       for graIdx in range (0, kernel["MIWaveTile"][0]):
@@ -1602,7 +1602,7 @@ class KernelWriterAssembly(KernelWriter):
           module.add(VCndMaskB32(dst=vgpr(vDst+l), src0=vgpr(edge), src1=vgpr(vSrc+l), src2=sgpr(tmpSgpr,self.states.laneSGPRCount),
                       comment="offset = (%s) ? offset(v%u) : edge(v%u)"%(cmpCommentText, vSrc+l, edge)))
     self.vgprPool.checkIn(edge)
-  
+
     if kernel["ProblemType"]["SparseA"] and tP["isA"]:
       module.add(self.graMetadataShift(kernel, tP))
     return module
@@ -1659,7 +1659,7 @@ class KernelWriterAssembly(KernelWriter):
         "  3. bytes offset : bnIdx = global read elememt offset / 8"))
 
     module.add(Label("graFinalMeta", ""))
-  
+
     # release register
     self.vgprPool.checkIn(kReg)
     self.vgprPool.checkIn(tmpVgpr)
@@ -1918,11 +1918,11 @@ class KernelWriterAssembly(KernelWriter):
       actualBatchIndex = stmp+5 #for broadcast
 
       module.addModuleAsFlatItems(self.s_mul_u64_u32(sgpr(tileStart+0), sgpr(tileStart+1), sgpr(tP["wg"]), kernel[tP["mt"]], "WorkGroup[01] * MT"))
-     
+
       unrollSummation = [ i for i in tP["ia"] if i in kernel["ProblemType"]["IndicesSummation"] ]
       module.addModuleAsFlatItems(self.s_mul_u64_u32(sgpr(tileStart), sgpr(tileStart+1), sgpr(tileStart+0), self.sizeRef(unrollSummation[-1]), \
                                 "scaled tile-offset by Summation size"))
-  
+
       if kernel["GlobalSplitU"] > 1:
         module.addModuleAsFlatItems(self.s_mul_u64_u32(sgpr(stmp+0), sgpr(stmp+1), kernel["DepthU"], sgpr("GSUSumIdx"), "gsuOffset = DepthU*bpe*GSUSumIdx"))
         module.add(SAddU32(dst=sgpr(tileStart+0), src0=sgpr(tileStart+0), src1=sgpr(stmp+0), comment="accum GsuOffet term to tilestart"))
@@ -1938,24 +1938,24 @@ class KernelWriterAssembly(KernelWriter):
         module.addModuleAsFlatItems(self.s_mul_u64_u32(sgpr(tensorSize), sgpr(tensorSize+1), sgpr(blockOffset), sgpr(actualBatchSize), \
                                 "calculate metadata tensor size"))
         module.add(SCSelectB32(dst=sgpr(actualBatchIndex), src0=hex(0) , src1=sgpr("WorkGroup2"), comment="set batchIndex as 0 for boardcast A"))
-  
+
       if self.states.use64bShadowLimit:
         limitTmp0 = "ShadowLimitMetadata"
         limitTmp1 = "ShadowLimitMetadata+1"
       else:
         limitTmp0 = stmp+0
         limitTmp1 = stmp+1
-  
+
       module.add(SSubU32(sgpr(limitTmp0), sgpr(tensorSize), sgpr(tileStart+0), "sub tileStart"))
       module.add(SSubBU32(sgpr(limitTmp1), sgpr(tensorSize+1), sgpr(tileStart+1), "sub tileStart"))
-  
+
       if self.states.use64bShadowLimit:
         module.add(SLShiftRightB64(sgpr(limitTmp0,2), hex(log2(8)), sgpr(limitTmp0,2), "Set limit to use bytes"))
         module.add(SCmpEQU32(sgpr(limitTmp1), 0, "are we within 2^32?"))
         module.add(SCSelectB32(sgpr("SrdMetadata+2"), sgpr(limitTmp0), "BufferLimit", "Move shadow to real if we are within 2^32"))
       else:
         module.add(SLShiftRightB32(sgpr("SrdMetadata+2"), hex(log2(8)), sgpr(limitTmp0), "Set limit to use bytes"))
-  
+
       numDim = len(indices)
       wg=2
       for i in range(0, numDim):
@@ -1972,7 +1972,7 @@ class KernelWriterAssembly(KernelWriter):
             module.addModuleAsFlatItems(self.s_mul_u64_u32(sgpr(stmp+0), sgpr(stmp+1), sgpr(blockOffset), sgpr(actualBatchIndex), "block offset*WG"))
             module.add(SAddU32(sgpr(tileStart+0), sgpr(tileStart+0), sgpr(stmp+0), "accum wg term to tilestart"))
             module.add(SAddCU32(sgpr(tileStart+1), sgpr(tileStart+1), sgpr(stmp+1), "accum wg term to tilestart"))
-  
+
       if wroteTileStart:
         module.add(SLShiftRightB64(sgpr(tileStart,2), hex(log2(8)), sgpr(tileStart,2), "Set limit to use bytes"))
         module.add(SAddU32(sgpr("SrdMetadata+0"), sgpr("AddressMetadata+0"), sgpr(tileStart+0), "SRD base = Address+ tileStart0"))
@@ -1980,8 +1980,8 @@ class KernelWriterAssembly(KernelWriter):
       else:
         module.add(SMovB32(sgpr("SrdMetadata+0"), sgpr("AddressMetadata+0"), "init SRD base address (lower )" ))
         module.add(SMovB32(sgpr("SrdMetadata+1"), sgpr("AddressMetadata+1"), "init SRD base address (upper) + other fields" ))
-  
-      module.add(SMovB32(sgpr("SrdMetadata+3"), "Srd127_96", "Set bits 127_96 in SRD"))    
+
+      module.add(SMovB32(sgpr("SrdMetadata+3"), "Srd127_96", "Set bits 127_96 in SRD"))
     return module
 
   ##############################################################################
@@ -2971,10 +2971,10 @@ class KernelWriterAssembly(KernelWriter):
                     sgpr("WrapU%s+0"%tc), sgpr("WrapU%s+1"%tc), \
                     self.loopCounter(kernel, self.states.unrollIdx), incSparse, \
                     "Number of bytes accessed by the unroll loop"))
-  
+
           imod.add(SSubU32(sgpr("WrapU%s+0"%tc), incSparse, sgpr("WrapU%s+0"%tc), " remove one iteration"))
           imod.add(SSubBU32(sgpr("WrapU%s+1"%tc), 0, sgpr("WrapU%s+1"%tc), " remove one iteration"))
-  
+
           imod.add(self.incrementMetadataSrd(sgpr(staggerTmp), sgpr(staggerTmp+1)))
 
       if tP["isB"]:
@@ -3850,7 +3850,7 @@ class KernelWriterAssembly(KernelWriter):
               for iui in range(0, innerUnroll):
                 bStr = vgpr("ValuB_X%u_I%u+%u+%u" % (m, iui, b*vgprPerInputB, bk + group*vgprPerSet0Group), 1)
                 shiftK.add(VCndMaskB32(dst=bStr, src0=bStr, src1=hex(0), src2=sgpr(tmpSgpr, 2), comment="set 0 if K_idx >= sizeL"))
-  
+
         # replace 0 for same thread
         if numMIInput > 1 and kernel["AssertSummationElementMultiple"] < 8:
           abRegSize = max(vgprPerInput,vgprPerInput)
@@ -4329,7 +4329,7 @@ class KernelWriterAssembly(KernelWriter):
 
   def incrementMetadataSrd(self, incSparseLower, incSparseUpper):
     imod = Module("incrementMetadataSrd")
-  
+
     imod.add(SAddU32(sgpr("SrdMetadata+0"), \
                      sgpr("SrdMetadata+0"), \
                      incSparseLower, \
@@ -4338,7 +4338,7 @@ class KernelWriterAssembly(KernelWriter):
                       sgpr("SrdMetadata+1"), \
                       incSparseUpper, \
                       "gra SRD += incSparse(uppper)" ))
-  
+
     # also have to move the boundary since we change the base
     # so less buffers to the edge:
     if self.states.use64bShadowLimit:
@@ -5154,6 +5154,7 @@ class KernelWriterAssembly(KernelWriter):
           constOffset = unrollIdx * kernel["MatrixInstK"] * kernel["DepthULdsDivisor"] // 8
           for uDuIdx in range(0, kernel["DepthULdsDivisor"]):
             codeMod = Module("load metadata%u"%loopCnt)
+            imod.middle.add(codeMod)
             constOffset += uDuIdx * kernel["MatrixInstK"] // kernel["DepthULdsDivisor"] // 8
             codeMod.add( self.chooseGlobalRead(kernel["BufferLoad"], \
                       bpl, \
@@ -5164,7 +5165,6 @@ class KernelWriterAssembly(KernelWriter):
                       memoryModifierFormat=kernel["MemoryModifierFormat"], \
                       hi16=0, \
                       comment="G -> Reg ValuMetadata"))
-            loadModule.add(codeMod)
 
     if self.db["ConservativeWaitCnt"] & 0x1:
         imod.footer.add(SBarrier(comment="debug"))
