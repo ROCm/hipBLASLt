@@ -65,8 +65,8 @@ class BoundIndex:
 
 class ProblemType:
     StateKeys = ['operationIdentifier', 'aType', 'bType', 'cType', 'dType',
-                 'useBeta', 'useBias', 'useScaleD','biasDataTypeWhiteList', 'highPrecisionAccumulate',
-                 'useInitialStridesAB', 'useInitialStridesCD', 'stridedBatched',
+                 'useBeta', 'useBias', 'useScaleD', 'biasDataTypeWhiteList', 'highPrecisionAccumulate',
+                 'useInitialStridesAB', 'useInitialStridesCD', 'stridedBatched', 'groupedGemm',
                  'activationType', 'activationHPA']
     @classmethod
     def FromOriginalState(cls, d):
@@ -148,6 +148,10 @@ class ProblemType:
         rv.stridedBatched = True
         if 'StridedBatched' in d:
           rv.stridedBatched = d['StridedBatched']
+
+        rv.groupedGemm = False
+        if 'GroupedGemm' in d:
+          rv.groupedGemm = d['GroupedGemm']
 
         rv.setConstStrideA = []
         if 'SetConstStrideA' in d:
@@ -280,18 +284,22 @@ class ProblemType:
             predicates.append(ProblemPredicate("OperationIdentifierEqual", value=self.operationIdentifier))
             if not self.useBeta:
                 predicates.append(ProblemPredicate("BetaZero"))
-            predicates.append(ProblemPredicate("UseBias", value=self.useBias))
             predicates.append(ProblemPredicate("BiasDataTypeWhiteList", value=self.biasDataTypeWhiteList))
             predicates.append(ProblemPredicate("Activation", value=self.activationType))
             if self.activationType == 'all':
                 enumList = [actEnum.capitalize() for actEnum in ActivationType.getEnumStrList(self.activationComputeDataType)]
                 predicates.append(ProblemPredicate("ActivationEnumWhiteList", value=enumList))
-            predicates.append(ProblemPredicate("StridedBatched", value=self.stridedBatched))
+            # predicates.append(ProblemPredicate("UseScaleD", value=self.useScaleD))
+            # predicates.append(ProblemPredicate("GroupedGemm", value=self.groupedGemm))
 
         if includeType:
             predicates.append(ProblemPredicate("TypesEqual", value=(self.aType, self.bType, self.cType, self.dType)))
             predicates.append(ProblemPredicate("HighPrecisionAccumulate", value=self.highPrecisionAccumulate))
             predicates.append(ProblemPredicate("ActivationHPA", value=self.activationHPA))
+            predicates.append(ProblemPredicate("UseBias", value=self.useBias))
+            predicates.append(ProblemPredicate("StridedBatched", value=self.stridedBatched))
+            predicates.append(ProblemPredicate("GroupedGemm", value=self.groupedGemm))
+            predicates.append(ProblemPredicate("UseScaleD", value=self.useScaleD))
 
         return predicates
 

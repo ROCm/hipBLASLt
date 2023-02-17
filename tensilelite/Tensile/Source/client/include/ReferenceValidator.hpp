@@ -30,7 +30,6 @@
 
 #include <boost/program_options.hpp>
 
-#include <ConvolutionProblem.hpp>
 #include <Tensile/ContractionProblem.hpp>
 #include <Tensile/ContractionSolution.hpp>
 
@@ -55,6 +54,7 @@ namespace Tensile
             virtual void postBenchmarkRun() override;
 
             virtual void preProblem(ContractionProblem const& problem) override;
+            virtual void preProblemGroupedGemm(std::vector<ContractionProblem> const& problems) override;
             virtual void postProblem() override;
 
             virtual void preSolution(ContractionSolution const& solution) override;
@@ -123,12 +123,12 @@ namespace Tensile
             std::shared_ptr<DataInitialization> m_dataInit;
             std::shared_ptr<ContractionInputs>  m_referenceInputs;
 
-            ConvolutionProblem m_convolutionProblem;
-
             size_t                   m_cpuResultBufferSize = 0;
             std::shared_ptr<uint8_t> m_cpuResultBuffer;
 
             ContractionProblem m_problem;
+            std::vector<ContractionProblem> m_problems;
+            bool m_groupedGemm = false;
 
             bool m_enabled;
 
@@ -144,14 +144,11 @@ namespace Tensile
             bool m_printTensorRef;
             bool m_printAny;
 
-            bool m_convolutionVsContraction;
-
             int m_numBenchmarkRuns = 0;
 
             bool   m_validatedSolution               = false;
             bool   m_errorInSolution                 = false;
             bool   m_error                           = false;
-            bool   m_errorInConvolutionVsContraction = false;
             size_t m_errorsReported                  = 0;
 
             bool validateSolution(std::shared_ptr<ContractionInputs> inputs);

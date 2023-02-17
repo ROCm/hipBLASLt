@@ -40,10 +40,11 @@ namespace Tensile
         {
             bool bestSolution     = args["best-solution"].as<bool>();
             int  gridbasedTopSols = Debug::Instance().getGridbasedTopSols();
+            bool printWinnerOnly = args["PrintWinnersOnly"].as<bool>();
 
             if(bestSolution)
             {
-                return std::make_shared<TopSolutionIterator>(library, hardware, gridbasedTopSols);
+                return std::make_shared<TopSolutionIterator>(library, hardware, gridbasedTopSols, printWinnerOnly);
             }
             else
             {
@@ -55,15 +56,18 @@ namespace Tensile
                     hardware,
                     firstSolutionIdx,
                     numSolutions,
+                    printWinnerOnly,
                     AllSolutionsIterator::CreateCriteria(library, hardware, args));
             }
         }
 
         SolutionIterator::SolutionIterator(
             std::shared_ptr<MasterSolutionLibrary<ContractionProblem>> library,
-            std::shared_ptr<Hardware>                                  hardware)
+            std::shared_ptr<Hardware>                                  hardware,
+            bool                                                       printWinnerOnly)
             : m_library(library)
             , m_hardware(hardware)
+            , m_printWinnerOnly(printWinnerOnly)
         {
         }
 
@@ -72,36 +76,81 @@ namespace Tensile
             m_problem = problem;
         }
 
+        void SolutionIterator::preProblemGroupedGemm(std::vector<ContractionProblem> const& problems)
+        {
+            m_problems = problems;
+            m_groupedGemm = true;
+        }
+
         bool SolutionIterator::checkSolution(ContractionSolution const& solution)
         {
-            if(!(*solution.hardwarePredicate)(*m_hardware))
+            if(m_groupedGemm)
             {
-                m_reporter->report(ResultKey::Validation, "WRONG_HARDWARE");
-                if(m_reporter->logAtLevel(LogLevel::Verbose))
+                for(int idx = 0; idx < m_problems.size(); idx++)
                 {
-                    std::ostringstream msg;
-                    solution.hardwarePredicate->debugEval(*m_hardware, msg);
-                    msg << std::endl;
-                    m_reporter->log(LogLevel::Verbose, msg.str());
-                }
+                    auto problem = m_problems[idx];
+                    if(!(*solution.hardwarePredicate)(*m_hardware))
+                    {
+                        m_reporter->report(ResultKey::Validation, "WRONG_HARDWARE");
+                        if(m_reporter->logAtLevel(LogLevel::Verbose))
+                        {
+                            std::ostringstream msg;
+                            solution.hardwarePredicate->debugEval(*m_hardware, msg);
+                            msg << std::endl;
+                            m_reporter->log(LogLevel::Verbose, msg.str());
+                        }
 
-                return false;
+                        return false;
+                    }
+
+                    // Test if the persistent kernel is eligible for the current hw and solution
+                    problem.checkPersistentKernelEligibility(solution, *m_hardware);
+                    if(!(*solution.problemPredicate)(problem))
+                    {
+                        m_reporter->report(ResultKey::Validation, "DID_NOT_SATISFY_ASSERTS");
+                        if(m_reporter->logAtLevel(LogLevel::Verbose) && !m_printWinnerOnly)
+                        {
+                            std::ostringstream msg;
+                            solution.problemPredicate->debugEval(problem, msg);
+                            msg << std::endl;
+                            m_reporter->log(LogLevel::Verbose, msg.str());
+                        }
+
+                        return false;
+                    }
+                }
             }
-
-            // Test if the persistent kernel is eligible for the current hw and solution
-            m_problem.checkPersistentKernelEligibility(solution, *m_hardware);
-            if(!(*solution.problemPredicate)(m_problem))
+            else
             {
-                m_reporter->report(ResultKey::Validation, "DID_NOT_SATISFY_ASSERTS");
-                if(m_reporter->logAtLevel(LogLevel::Verbose))
+                if(!(*solution.hardwarePredicate)(*m_hardware))
                 {
-                    std::ostringstream msg;
-                    solution.problemPredicate->debugEval(m_problem, msg);
-                    msg << std::endl;
-                    m_reporter->log(LogLevel::Verbose, msg.str());
+                    m_reporter->report(ResultKey::Validation, "WRONG_HARDWARE");
+                    if(m_reporter->logAtLevel(LogLevel::Verbose))
+                    {
+                        std::ostringstream msg;
+                        solution.hardwarePredicate->debugEval(*m_hardware, msg);
+                        msg << std::endl;
+                        m_reporter->log(LogLevel::Verbose, msg.str());
+                    }
+
+                    return false;
                 }
 
-                return false;
+                // Test if the persistent kernel is eligible for the current hw and solution
+                m_problem.checkPersistentKernelEligibility(solution, *m_hardware);
+                if(!(*solution.problemPredicate)(m_problem))
+                {
+                    m_reporter->report(ResultKey::Validation, "DID_NOT_SATISFY_ASSERTS");
+                    if(m_reporter->logAtLevel(LogLevel::Verbose) && !m_printWinnerOnly)
+                    {
+                        std::ostringstream msg;
+                        solution.problemPredicate->debugEval(m_problem, msg);
+                        msg << std::endl;
+                        m_reporter->log(LogLevel::Verbose, msg.str());
+                    }
+
+                    return false;
+                }
             }
 
             return true;
@@ -138,8 +187,9 @@ namespace Tensile
             std::shared_ptr<Hardware>                                  hardware,
             int                                                        firstSolutionIdx,
             int                                                        numSolutions,
+            bool                                                       printWinnerOnly,
             RunCriteria                                                runCriteria)
-            : SolutionIterator(library, hardware)
+            : SolutionIterator(library, hardware, printWinnerOnly)
             , m_runCriteria(runCriteria)
         {
             m_firstSolutionIdx = firstSolutionIdx;
@@ -213,8 +263,9 @@ namespace Tensile
 
         BestSolutionIterator::BestSolutionIterator(
             std::shared_ptr<MasterSolutionLibrary<ContractionProblem>> library,
-            std::shared_ptr<Hardware>                                  hardware)
-            : SolutionIterator(library, hardware)
+            std::shared_ptr<Hardware>                                  hardware,
+            bool                                                       printWinnerOnly)
+            : SolutionIterator(library, hardware, printWinnerOnly)
         {
         }
 
@@ -222,6 +273,10 @@ namespace Tensile
         {
             SolutionIterator::preProblem(problem);
             m_currentSolution     = m_library->findBestSolution(m_problem, *m_hardware);
+            if (m_currentSolution == nullptr)
+            {
+                m_currentSolution = m_library->solutions.find(0)->second;
+            }
             m_usedCurrentSolution = false;
         }
 
@@ -252,8 +307,9 @@ namespace Tensile
         TopSolutionIterator::TopSolutionIterator(
             std::shared_ptr<MasterSolutionLibrary<ContractionProblem>> library,
             std::shared_ptr<Hardware>                                  hardware,
-            int                                                        numSolutions)
-            : SolutionIterator(library, hardware)
+            int                                                        numSolutions,
+            bool                                                       printWinnerOnly)
+            : SolutionIterator(library, hardware, printWinnerOnly)
             , m_numSolutions(numSolutions)
         {
         }
@@ -262,6 +318,21 @@ namespace Tensile
         {
             SolutionIterator::preProblem(problem);
             m_solutions = m_library->findTopSolutions(m_problem, *m_hardware, m_numSolutions);
+            if (m_solutions.size() == 0)
+            {
+                m_solutions.push_back(m_library->solutions.find(0)->second);
+            }
+            m_currentSolutionIdx = 0;
+        }
+
+        void TopSolutionIterator::preProblemGroupedGemm(std::vector<ContractionProblem> const& problems)
+        {
+            SolutionIterator::preProblemGroupedGemm(problems);
+            m_solutions = m_library->findTopSolutionsGroupedGemm(m_problems, *m_hardware, m_numSolutions);
+            if (m_solutions.size() == 0)
+            {
+                m_solutions.push_back(m_library->solutions.find(0)->second);
+            }
             m_currentSolutionIdx = 0;
         }
 

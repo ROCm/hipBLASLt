@@ -169,6 +169,63 @@ namespace Tensile
                 return prepareGPUInputsTyped(problem);
             }
 
+            void setGroupedGemm(std::shared_ptr<ManagedInputs>* inputs)
+            {
+                auto aBuffer = inputs->get()->a;
+                auto bBuffer = inputs->get()->b;
+                auto cBuffer = inputs->get()->c;
+                auto dBuffer = inputs->get()->d;
+                auto biasBuffer = inputs->get()->bias;
+                auto scaleDBuffer = inputs->get()->scaleD;
+                size_t gemmOffsetBias[sizeof(DataType)/4] = {0};
+                auto wsBuffer = inputs->get()->ws;
+                auto alpha = inputs->get()->alpha;
+                auto beta = inputs->get()->beta;
+                auto activationArgs = inputs->get()->activationArgs;
+                for(int idx = 0; idx < m_aElementsGroupedGemm.size(); idx++)
+                {
+                    inputs->get()->groupedA.push_back(aBuffer);
+                    inputs->get()->groupedB.push_back(bBuffer);
+                    inputs->get()->groupedC.push_back(cBuffer);
+                    inputs->get()->groupedD.push_back(dBuffer);
+
+                    if(m_biasInit != InitMode::Zero)
+                    {
+                        switch(m_biasTypeGroupedGemm[idx])
+                        {
+                            case DataType::Float:
+                                biasBuffer = (float*)(inputs->get()->biasList[(int)m_biasTypeGroupedGemm[idx]])\
+                                              + gemmOffsetBias[(int)m_biasTypeGroupedGemm[idx]];
+                                break;
+                            case DataType::Half:
+                                biasBuffer = (short*)inputs->get()->biasList[(int)m_biasTypeGroupedGemm[idx]]\
+                                              + gemmOffsetBias[(int)m_biasTypeGroupedGemm[idx]];
+                                break;
+                            case DataType::BFloat16:
+                                biasBuffer = (short*)inputs->get()->biasList[(int)m_biasTypeGroupedGemm[idx]]\
+                                              + gemmOffsetBias[(int)m_biasTypeGroupedGemm[idx]];
+                                break;
+                            default:
+                                break;
+                        }
+                    }
+
+                    inputs->get()->groupedBias.push_back(biasBuffer);
+                    inputs->get()->groupedScaleD.push_back(scaleDBuffer);
+                    inputs->get()->groupedWs.push_back(wsBuffer);
+                    inputs->get()->groupedAlpha.push_back(alpha);
+                    inputs->get()->groupedBeta.push_back(beta);
+                    inputs->get()->groupedActivationArgs.push_back(activationArgs);
+
+                    aBuffer += m_aElementsGroupedGemm[idx];
+                    bBuffer += m_bElementsGroupedGemm[idx];
+                    cBuffer += m_cElementsGroupedGemm[idx];
+                    dBuffer += m_dElementsGroupedGemm[idx];
+                    gemmOffsetBias[(int)m_biasTypeGroupedGemm[idx]] += m_biasElementsGroupedGemm[idx];
+                    scaleDBuffer += m_scaleElementsGroupedGemm[idx];
+                }
+            }
+
             void setBiasPtr(ContractionProblem const&       problem,
                             std::shared_ptr<ManagedInputs>* inputs)
             {
@@ -208,28 +265,12 @@ namespace Tensile
                     copyInputs(m_cpuInputs, m_cpuInputsPristine, m_cpuBadInputs, problem);
                 }
 
-                if(m_convolutionVsContraction)
-                {
-                    bool allocated = false;
-                    if(!m_cpuConvInputs)
-                    {
-                        allocated       = true;
-                        m_cpuConvInputs = allocNewCPUInputs();
-                    }
-
-                    if(allocated || m_curBoundsCheck == BoundsCheckMode::NaN)
-                        copyInputs(m_cpuConvInputs, m_cpuInputsPristine, m_cpuBadInputs, problem);
-                }
-
                 setBiasPtr(problem, &m_cpuInputs);
+
+                setGroupedGemm(&m_cpuInputs);
 
                 return m_cpuInputs;
             }
-
-            virtual std::shared_ptr<ContractionInputs> cpuConvInputs() const
-            {
-                return m_cpuConvInputs;
-            };
 
             template <typename T>
             void initGPUBatchedInput(T                          base,
@@ -380,6 +421,8 @@ namespace Tensile
 
                 setBiasPtr(problem, &m_gpuInputs);
 
+                setGroupedGemm(&m_gpuInputs);
+
                 return m_gpuInputs;
             }
 
@@ -444,7 +487,7 @@ namespace Tensile
                     b = std::shared_ptr<BType>(
                         (BType*)std::malloc(TypeInfo<BType>::ElementSize * m_bMaxElements),
                         std::free);
-                    if(a == nullptr)
+                    if(b == nullptr)
                         throw std::runtime_error("out of host memory allocating b");
                 }
 
@@ -518,6 +561,27 @@ namespace Tensile
 
                     if(scaleD == nullptr)
                         throw std::runtime_error("out of host memory allocating scaleD");
+                }
+
+                // allocate remaining memory to prevend other user use GPU when benchmarking
+                if(Debug::Instance().getBenchmark()) {
+                    CType* extra = nullptr;
+                    size_t  remainingSize;
+                    hipDeviceProp_t hipProps;
+                    hipGetDeviceProperties(&hipProps, 0);
+                    remainingSize = size_t(hipProps.totalGlobalMem);
+                    printf("Trying to allocate all GPU memory to prevend other user use GPU when benchmarking \n");
+                    while(1){
+                        if (hipSuccess == hipMalloc(&extra, remainingSize)){
+                            printf("LOCAL: GPU benchmark protect, allocate %zu MB Success \n",remainingSize/(1024*1024));
+                        } else {
+                            printf("LOCAL: GPU benchmark protect, allocate %zu MB Fail \n",remainingSize/(1024*1024));
+                        }
+                        remainingSize = remainingSize/2;
+                        if (remainingSize <= 0) {
+                            break;
+                        }
+                    };
                 }
 
                 auto rv = std::make_shared<ManagedInputs>(a,
@@ -1087,7 +1151,6 @@ namespace Tensile
              * all point to separately allocated buffers.
              */
 
-            std::shared_ptr<ManagedInputs> m_cpuConvInputs;
             std::shared_ptr<ManagedInputs> m_cpuInputsPristine; //< Untouched copies of the inputs
             std::shared_ptr<ManagedInputs>
                 m_cpuInputs; //< Inputs used for CPU reference calculations

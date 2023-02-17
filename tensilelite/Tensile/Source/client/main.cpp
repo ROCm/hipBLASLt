@@ -114,6 +114,7 @@ namespace Tensile
                 ("beta-type",                po::value<DataType>()->default_value(DataType::None), "beta data type")
                 ("high-precision-accumulate", po::value<bool>()->default_value(false), "Use high-precision accumulate.")
                 ("strided-batched",          po::value<bool>()->default_value(true), "Use strided-batched or general batched")
+                ("grouped-gemm",             po::value<bool>()->default_value(false), "Use grouped gemm")
                 ("kernel-language",          po::value<KernelLanguage>()->default_value(KernelLanguage::Any), "Select kernel language.")
                 ("deterministic-mode",       po::value<bool>()->default_value(false), "Enforce deterministic summation patterns"
                                                                                       "by not splitting U among workgroups")
@@ -150,9 +151,6 @@ namespace Tensile
 
                 ("dump-tensors",             po::value<bool>()->default_value(false), "Binary dump tensors instead of printing.")
 
-                ("convolution-identifier",   po::value<std::string>(), "Convolution problem identifer:  ConvolutionType_ActFormat_FilterFormat_Filter_Stride_Dilation_Groups.  Example: ConvolutionBackwardWeights_NCHW_filter:3x3_stride:1x1_dilation:1x1_groups:1.  Batch count, spacial dimensions (H,W,D), Cin and Cout filters are determined by the problem dimensions.")
-                ("convolution-vs-contraction",  po::value<bool>()->default_value(false), "Compare reference convolution against contraction.")
-
                 ("device-idx",               po::value<int>()->default_value(0), "Device index")
                 ("use-default-stream",       po::value<bool>()->default_value(false), "Use default Hip stream to run kernels.")
                 ("platform-idx",             po::value<int>()->default_value(0), "OpenCL Platform Index")
@@ -161,6 +159,7 @@ namespace Tensile
                 ("sync-after-warmups",       po::value<bool>()->default_value(true), "Synchronize GPU after warmup kernel runs")
                 ("num-benchmarks",           po::value<int>()->default_value(1), "Number of benchmarks to run")
                 ("num-enqueues-per-sync",    po::value<int>()->default_value(1), "Enqueues per sync, will affect by min-flops-per-sync")
+                ("max-enqueues-per-sync",    po::value<int>()->default_value(-1), "Max Enqueues per sync, will affect by min-flops-per-sync")
                 ("num-syncs-per-benchmark",  po::value<int>()->default_value(1), "Syncs per benchmark")
                 ("min-flops-per-sync",       po::value<size_t>()->default_value(0), "Minimum number of flops per sync to increase stability for small problems.")
                 ("use-gpu-timer",            po::value<bool>()->default_value(true), "Use GPU timer")
@@ -174,6 +173,7 @@ namespace Tensile
                 ("perf-ops-per-cycle",       po::value<int>()->default_value(64), "Ops per cycle")
                 ("csv-export-extra-cols",    po::value<bool>()->default_value(false), "CSV exports winner information")
                 ("csv-merge-same-problems",  po::value<bool>()->default_value(false), "CSV merge rows of same problem id")
+                ("PrintWinnersOnly",         po::value<bool>()->default_value(false), "PrintWinnersOnly")
 
                 ("problem-size,p",           vector_default_empty<std::string>(), "Specify a problem size.  Comma-separated list of "
                                                                                   "sizes, in the order of the Einstein notation.")
@@ -197,18 +197,6 @@ namespace Tensile
                                                                                   "(prev_dim_stride*prev_dim_size)"
                                                                                   "specifying once applies to all problem sizes, "
                                                                                   "otherwise specify once per problem size.")
-
-                ("convolution-problem",      vector_default_empty<std::string>(), "Specify a Convolution problem size. Comma-separated list of sizes:"
-                                                                                  "Spatial(w,h,d),Filter(x,y,z),Stride(v,u,#),"
-                                                                                  "Dilation(j,l,^),Pad start(q,p,$),Pad end(q_,p_,$_)")
-
-                ("a-zero-pads",                vector_default_empty<std::string>(), "Comma-separated tuple(s) of anchor dim,"
-                                                                                  "summation dim, leading pad, trailing pad."
-                                                                                  "Each tuple must be separated with a semi-colon.")
-
-                ("b-zero-pads",                vector_default_empty<std::string>(), "Comma-separated tuple(s) of anchor dim,"
-                                                                                  "summation dim, leading pad, trailing pad."
-                                                                                  "Each tuple must be separated with a semi-colon.")
 
                 ("a-ops",                    vector_default_empty<TensorOp>(), "Operations applied to A.")
                 ("b-ops",                    vector_default_empty<TensorOp>(), "Operations applied to B.")
@@ -446,68 +434,11 @@ namespace Tensile
             parse_arg_ints(args, "b-strides");
             parse_arg_ints(args, "c-strides");
             parse_arg_ints(args, "d-strides");
-            parse_arg_ints(args, "a-zero-pads");
-            parse_arg_ints(args, "b-zero-pads");
-
-            if(args["convolution-vs-contraction"].as<bool>())
-                parse_arg_ints(args, "convolution-problem");
             parse_bias_type_args(args, "bias-type-args");
             parse_activation_int(args, "activation-type");
             parse_activation_enum_args(args, "activation-enum-args");
             parse_arg_double(args, "activation-additional-args");
             return args;
-        }
-
-        size_t getMaxWorkspace(std::shared_ptr<MasterSolutionLibrary<ContractionProblem>>& library,
-                               std::shared_ptr<Hardware>&                                  hardware,
-                               po::variables_map&                                          args,
-                               std::vector<ContractionProblem>&                            problems,
-                               int firstProblemIdx,
-                               int lastProblemIdx)
-        {
-            // get max workspace size
-            size_t maxWorkspaceSize = 0;
-
-            auto            solutionIterator = SolutionIterator::Default(library, hardware, args);
-            MetaRunListener listeners;
-            listeners.addListener(solutionIterator);
-            auto reporters = std::make_shared<MetaResultReporter>();
-            listeners.setReporter(reporters);
-
-            listeners.preBenchmarkRun();
-
-            for(int problemIdx = firstProblemIdx; problemIdx <= lastProblemIdx; problemIdx++)
-            {
-                auto& problem = problems[problemIdx];
-
-                problem.setWorkspaceSize(std::numeric_limits<size_t>::max());
-
-                listeners.preProblem(problem);
-
-                while(solutionIterator->moreSolutionsInProblem())
-                {
-                    auto solution = solutionIterator->getSolution();
-                    if(solution == nullptr)
-                        throw std::runtime_error("Could not find a solution");
-
-                    listeners.preSolution(*solution);
-
-                    if(solutionIterator->runCurrentSolution())
-                    {
-                        maxWorkspaceSize
-                            = std::max(maxWorkspaceSize,
-                                       solution->requiredWorkspaceSize(problems[problemIdx]));
-                    }
-
-                    listeners.postSolution();
-                }
-
-                listeners.postProblem();
-            }
-
-            listeners.postBenchmarkRun();
-
-            return maxWorkspaceSize;
         }
 
     } // namespace Client
@@ -552,6 +483,7 @@ int main(int argc, const char* argv[])
     bool gpuTimer         = args["use-gpu-timer"].as<bool>();
     bool runKernels       = !args["selection-only"].as<bool>();
     bool exitOnError      = args["exit-on-error"].as<bool>();
+    bool groupedGemm      = args["grouped-gemm"].as<bool>();
 
     if(firstSolutionIdx < 0)
         firstSolutionIdx = library->solutions.begin()->first;
@@ -562,10 +494,7 @@ int main(int argc, const char* argv[])
         iter--;
     }
 
-    size_t maxWorkspaceSizeLimit = args["max-workspace-size"].as<size_t>();
-    size_t maxWorkspaceSize
-        = getMaxWorkspace(library, hardware, args, problems, firstProblemIdx, lastProblemIdx);
-    maxWorkspaceSize = std::min(maxWorkspaceSize, maxWorkspaceSizeLimit);
+    size_t maxWorkspaceSize = args["max-workspace-size"].as<size_t>();
 
     auto dataInit = DataInitialization::Get(args, problemFactory, maxWorkspaceSize);
 
@@ -576,9 +505,10 @@ int main(int argc, const char* argv[])
     listeners.addListener(dataInit);
     listeners.addListener(solutionIterator);
     listeners.addListener(std::make_shared<ProgressListener>(args));
+    auto referenceValidator = std::make_shared<ReferenceValidator>(args, dataInit);
     if(runKernels)
     {
-        listeners.addListener(std::make_shared<ReferenceValidator>(args, dataInit));
+        listeners.addListener(referenceValidator);
         listeners.addListener(std::make_shared<BenchmarkTimer>(args, *hardware));
         listeners.addListener(std::make_shared<HardwareMonitorListener>(args));
     }
@@ -612,108 +542,217 @@ int main(int argc, const char* argv[])
     {
         listeners.preBenchmarkRun();
 
-        for(int problemIdx = firstProblemIdx; problemIdx <= lastProblemIdx; problemIdx++)
+        if(groupedGemm)
         {
-            auto& problem = problems[problemIdx];
-            problem.setWorkspaceSize(dataInit->workspaceSize());
-
-            reporters->report(ResultKey::ProblemIndex, problemIdx);
-            reporters->report(ResultKey::ProblemProgress,
-                              concatenate(problemIdx, "/", lastProblemIdx));
-
-            // std::cout << "Problem: " << problem.operationDescription() <<
-            // std::endl; std::cout << "a: " << problem.a() << std::endl; std::cout <<
-            // "b: " << problem.b() << std::endl; std::cout << "c: " << problem.c() <<
-            // std::endl; std::cout << "d: " << problem.d() << std::endl;
-
-            listeners.preProblem(problem);
-
-            while(solutionIterator->moreSolutionsInProblem())
+            for(int problemIdx = firstProblemIdx; problemIdx <= lastProblemIdx; problemIdx++)
             {
-                auto solution = solutionIterator->getSolution();
-                if(solution == nullptr)
-                    throw std::runtime_error("Could not find a solution");
+                auto& problem = problems[problemIdx];
 
-                listeners.preSolution(*solution);
+                reporters->report(ResultKey::ProblemIndex, problemIdx);
+                reporters->report(ResultKey::ProblemProgress,
+                                concatenate(problemIdx, "/", lastProblemIdx));
 
-                if(solutionIterator->runCurrentSolution() && runKernels)
+                listeners.preProblem(problem);
+                solutionIterator->preProblemGroupedGemm(problems);
+                referenceValidator->preProblemGroupedGemm(problems);
+
+                while(solutionIterator->moreSolutionsInProblem())
                 {
-                    try
+                    auto solution = solutionIterator->getSolution();
+                    if(solution == nullptr)
+                        throw std::runtime_error("Could not find a solution");
+
+                    listeners.preSolution(*solution);
+
+                    if(solutionIterator->runCurrentSolution() && runKernels)
                     {
-                        while(listeners.needMoreRunsInSolution())
+                        try
                         {
-                            auto inputs = dataInit->prepareGPUInputs(problem);
-
-                            auto kernels = solution->solve(problem, *inputs, *hardware);
-
-                            size_t       warmupInvocations = listeners.numWarmupRuns();
-                            size_t       eventCount        = gpuTimer ? kernels.size() : 0;
-                            TimingEvents warmupStartEvents(warmupInvocations, eventCount);
-                            TimingEvents warmupStopEvents(warmupInvocations, eventCount);
-
-                            for(int i = 0; i < warmupInvocations; i++)
+                            while(listeners.needMoreRunsInSolution())
                             {
-                                listeners.preWarmup();
-                                if(gpuTimer)
-                                    HIP_CHECK_EXC(adapter.launchKernels(kernels,
-                                                                        stream,
-                                                                        warmupStartEvents[i],
-                                                                        warmupStopEvents[i]));
-                                else
-                                    HIP_CHECK_EXC(
-                                        adapter.launchKernels(kernels, stream, nullptr, nullptr));
-                                listeners.postWarmup();
-                            }
+                                auto inputs = dataInit->prepareGPUInputs(problem);
 
-                            listeners.validateWarmups(inputs, warmupStartEvents, warmupStopEvents);
+                                auto kernels = solution->solveGroupedGemm(problems, *inputs, *hardware);
 
-                            size_t syncs = listeners.numSyncs();
-                            size_t enq   = listeners.numEnqueuesPerSync();
+                                size_t       warmupInvocations = listeners.numWarmupRuns();
+                                size_t       eventCount        = gpuTimer ? kernels.size() : 0;
+                                TimingEvents warmupStartEvents(warmupInvocations, eventCount);
+                                TimingEvents warmupStopEvents(warmupInvocations, eventCount);
 
-                            listeners.preSyncs();
-
-                            for(int i = 0; i < syncs; i++)
-                            {
-                                TimingEvents startEvents(enq, eventCount);
-                                TimingEvents stopEvents(enq, eventCount);
-
-                                listeners.preEnqueues();
-
-                                for(int j = 0; j < enq; j++)
+                                for(int i = 0; i < warmupInvocations; i++)
                                 {
+                                    listeners.preWarmup();
                                     if(gpuTimer)
-                                        HIP_CHECK_EXC(adapter.launchKernels(
-                                            kernels, stream, startEvents[j], stopEvents[j]));
+                                        HIP_CHECK_EXC(adapter.launchKernels(kernels,
+                                                                            stream,
+                                                                            warmupStartEvents[i],
+                                                                            warmupStopEvents[i]));
                                     else
-                                        HIP_CHECK_EXC(adapter.launchKernels(
-                                            kernels, stream, nullptr, nullptr));
+                                        HIP_CHECK_EXC(
+                                            adapter.launchKernels(kernels, stream, nullptr, nullptr));
+                                    listeners.postWarmup();
+                                    // Do validation after first warmup
+                                    if(i == 0)
+                                        listeners.validateWarmups(
+                                            inputs, warmupStartEvents, warmupStopEvents);
                                 }
 
-                                listeners.postEnqueues(startEvents, stopEvents);
-                                listeners.validateEnqueues(inputs, startEvents, stopEvents);
-                            }
+                                size_t syncs = listeners.numSyncs();
+                                size_t enq   = listeners.numEnqueuesPerSync();
 
-                            listeners.postSyncs();
+                                listeners.preSyncs();
+
+                                for(int i = 0; i < syncs; i++)
+                                {
+                                    TimingEvents startEvents(enq, eventCount);
+                                    TimingEvents stopEvents(enq, eventCount);
+
+                                    listeners.preEnqueues();
+
+                                    for(int j = 0; j < enq; j++)
+                                    {
+                                        if(gpuTimer)
+                                            HIP_CHECK_EXC(adapter.launchKernels(
+                                                kernels, stream, startEvents[j], stopEvents[j]));
+                                        else
+                                            HIP_CHECK_EXC(adapter.launchKernels(
+                                                kernels, stream, nullptr, nullptr));
+                                    }
+
+                                    listeners.postEnqueues(startEvents, stopEvents);
+                                    listeners.validateEnqueues(inputs, startEvents, stopEvents);
+                                }
+
+                                listeners.postSyncs();
+                            }
+                        }
+                        catch(std::runtime_error const& err)
+                        {
+                            reporters->report(ResultKey::Validation, "INVALID");
+                            reporters->log(LogLevel::Error,
+                                        concatenate("Exception occurred: ", err.what(), "\n"));
                         }
                     }
-                    catch(std::runtime_error const& err)
+
+                    listeners.postSolution();
+
+                    if(exitOnError && listeners.error() > 0)
                     {
-                        reporters->report(ResultKey::Validation, "INVALID");
-                        reporters->log(LogLevel::Error,
-                                       concatenate("Exception occurred: ", err.what(), "\n"));
+                        // error range in shell is [0-255]
+                        return std::min(listeners.error(), 255);
                     }
                 }
 
-                listeners.postSolution();
-
-                if(exitOnError && listeners.error() > 0)
-                {
-                    // error range in shell is [0-255]
-                    return std::min(listeners.error(), 255);
-                }
+                listeners.postProblem();
             }
+        }
+        else
+        {
+            for(int problemIdx = firstProblemIdx; problemIdx <= lastProblemIdx; problemIdx++)
+            {
+                auto& problem = problems[problemIdx];
+                problem.setWorkspaceSize(dataInit->workspaceSize());
 
-            listeners.postProblem();
+                reporters->report(ResultKey::ProblemIndex, problemIdx);
+                reporters->report(ResultKey::ProblemProgress,
+                                concatenate(problemIdx, "/", lastProblemIdx));
+
+                // std::cout << "Problem: " << problem.operationDescription() <<
+                // std::endl; std::cout << "a: " << problem.a() << std::endl; std::cout <<
+                // "b: " << problem.b() << std::endl; std::cout << "c: " << problem.c() <<
+                // std::endl; std::cout << "d: " << problem.d() << std::endl;
+
+                listeners.preProblem(problem);
+
+                while(solutionIterator->moreSolutionsInProblem())
+                {
+                    auto solution = solutionIterator->getSolution();
+                    if(solution == nullptr)
+                        throw std::runtime_error("Could not find a solution");
+
+                    listeners.preSolution(*solution);
+
+                    if(solutionIterator->runCurrentSolution() && runKernels)
+                    {
+                        try
+                        {
+                            while(listeners.needMoreRunsInSolution())
+                            {
+                                auto inputs = dataInit->prepareGPUInputs(problem);
+
+                                auto kernels = solution->solve(problem, *inputs, *hardware);
+
+                                size_t       warmupInvocations = listeners.numWarmupRuns();
+                                size_t       eventCount        = gpuTimer ? kernels.size() : 0;
+                                TimingEvents warmupStartEvents(warmupInvocations, eventCount);
+                                TimingEvents warmupStopEvents(warmupInvocations, eventCount);
+
+                                for(int i = 0; i < warmupInvocations; i++)
+                                {
+                                    listeners.preWarmup();
+                                    if(gpuTimer)
+                                        HIP_CHECK_EXC(adapter.launchKernels(kernels,
+                                                                            stream,
+                                                                            warmupStartEvents[i],
+                                                                            warmupStopEvents[i]));
+                                    else
+                                        HIP_CHECK_EXC(
+                                            adapter.launchKernels(kernels, stream, nullptr, nullptr));
+                                    listeners.postWarmup();
+                                    // Do validation after first warmup
+                                    if(i == 0)
+                                        listeners.validateWarmups(
+                                            inputs, warmupStartEvents, warmupStopEvents);
+                                }
+
+                                size_t syncs = listeners.numSyncs();
+                                size_t enq   = listeners.numEnqueuesPerSync();
+
+                                listeners.preSyncs();
+
+                                for(int i = 0; i < syncs; i++)
+                                {
+                                    TimingEvents startEvents(enq, eventCount);
+                                    TimingEvents stopEvents(enq, eventCount);
+
+                                    listeners.preEnqueues();
+
+                                    for(int j = 0; j < enq; j++)
+                                    {
+                                        if(gpuTimer)
+                                            HIP_CHECK_EXC(adapter.launchKernels(
+                                                kernels, stream, startEvents[j], stopEvents[j]));
+                                        else
+                                            HIP_CHECK_EXC(adapter.launchKernels(
+                                                kernels, stream, nullptr, nullptr));
+                                    }
+
+                                    listeners.postEnqueues(startEvents, stopEvents);
+                                    listeners.validateEnqueues(inputs, startEvents, stopEvents);
+                                }
+
+                                listeners.postSyncs();
+                            }
+                        }
+                        catch(std::runtime_error const& err)
+                        {
+                            reporters->report(ResultKey::Validation, "INVALID");
+                            reporters->log(LogLevel::Error,
+                                        concatenate("Exception occurred: ", err.what(), "\n"));
+                        }
+                    }
+
+                    listeners.postSolution();
+
+                    if(exitOnError && listeners.error() > 0)
+                    {
+                        // error range in shell is [0-255]
+                        return std::min(listeners.error(), 255);
+                    }
+                }
+
+                listeners.postProblem();
+            }
         }
 
         listeners.postBenchmarkRun();

@@ -370,6 +370,7 @@ namespace Tensile
             , m_scaleMaxElements(0)
             , m_maxBatch(0)
             , m_stridedBatched(args["strided-batched"].as<bool>())
+            , m_groupedGemm(args["grouped-gemm"].as<bool>())
             , m_cEqualsD(args["c-equal-d"].as<bool>())
             , m_elementsToValidate(args["num-elements-to-validate"].as<int>())
             , m_keepPristineCopyOnGPU(args["pristine-on-gpu"].as<bool>())
@@ -386,22 +387,44 @@ namespace Tensile
                 m_numRunsPerSolution = 2;
             }
 
-            if(args.count("convolution-vs-contraction"))
-                m_convolutionVsContraction = args["convolution-vs-contraction"].as<bool>();
-
             for(auto const& problem : problemFactory.problems())
             {
-                m_aMaxElements     = std::max(m_aMaxElements, problem.a().totalAllocatedElements());
-                m_bMaxElements     = std::max(m_bMaxElements, problem.b().totalAllocatedElements());
-                m_cMaxElements     = std::max(m_cMaxElements, problem.c().totalAllocatedElements());
-                m_dMaxElements     = std::max(m_dMaxElements, problem.d().totalAllocatedElements());
-                m_biasMaxElements  = std::max(m_biasMaxElements, problem.d().sizes()[0]);
-                m_scaleMaxElements = std::max(m_scaleMaxElements, problem.d().sizes()[0]);
+                if(m_groupedGemm)
+                {
+                    m_aMaxElements    += problem.a().totalAllocatedElements();
+                    m_bMaxElements    += problem.b().totalAllocatedElements();
+                    m_cMaxElements    += problem.c().totalAllocatedElements();
+                    m_dMaxElements    += problem.d().totalAllocatedElements();
+                    m_biasMaxElements += problem.d().sizes()[0];
+                    m_scaleMaxElements += problem.d().sizes()[0];
 
-                size_t numOfBatch = 1;
-                for(size_t i = 0; i < problem.batchIndices().size(); i++)
-                    numOfBatch *= problem.batchSize(i);
-                m_maxBatch = std::max(m_maxBatch, numOfBatch);
+                    size_t numOfBatch = 1;
+                    for(size_t i = 0; i < problem.batchIndices().size(); i++)
+                        numOfBatch *= problem.batchSize(i);
+                    m_maxBatch += numOfBatch;
+
+                    m_aElementsGroupedGemm.push_back(problem.a().totalAllocatedElements());
+                    m_bElementsGroupedGemm.push_back(problem.b().totalAllocatedElements());
+                    m_cElementsGroupedGemm.push_back(problem.c().totalAllocatedElements());
+                    m_dElementsGroupedGemm.push_back(problem.d().totalAllocatedElements());
+                    m_biasElementsGroupedGemm.push_back(problem.d().sizes()[0]);
+                    m_scaleElementsGroupedGemm.push_back(problem.d().sizes()[0]);
+                    m_biasTypeGroupedGemm.push_back(problem.biasType());
+                }
+                else
+                {
+                    m_aMaxElements    = std::max(m_aMaxElements, problem.a().totalAllocatedElements());
+                    m_bMaxElements    = std::max(m_bMaxElements, problem.b().totalAllocatedElements());
+                    m_cMaxElements    = std::max(m_cMaxElements, problem.c().totalAllocatedElements());
+                    m_dMaxElements    = std::max(m_dMaxElements, problem.d().totalAllocatedElements());
+                    m_biasMaxElements = std::max(m_biasMaxElements, problem.d().sizes()[0]);
+                    m_scaleMaxElements = std::max(m_scaleMaxElements, problem.d().sizes()[0]);
+
+                    size_t numOfBatch = 1;
+                    for(size_t i = 0; i < problem.batchIndices().size(); i++)
+                        numOfBatch *= problem.batchSize(i);
+                    m_maxBatch = std::max(m_maxBatch, numOfBatch);
+                }
             }
 
             m_aMaxElements += m_aBufferOffset;

@@ -273,7 +273,10 @@ class KernelWriterBetaOnly(KernelWriterBase):
       name += indexChars[i].lower()
     name += "_"
     name += self.state["ProblemType"]["DestDataType"].toChar()
-    name += "" if self.state["ProblemType"]["StridedBatched"] else "_GB" # legacy
+    if self.state["ProblemType"]["GroupedGemm"]:
+      name += "_GG"
+    else:
+      name += "" if self.state["ProblemType"]["StridedBatched"] else "_GB"
     name += "_Bias%s"%self.state["ProblemType"]["BiasDataType"].toChar() if self.state["ProblemType"]["BetaOnlyUseBias"] else ""
     name += "_GA" if self.state["_GlobalAccumulation"] else ""
 
