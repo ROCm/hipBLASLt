@@ -70,19 +70,6 @@ namespace Tensile
         return m_value & 0x80;
     }
 
-    bool Debug::printConvolutionReference1() const
-    {
-        return m_value & 0x100;
-    }
-    bool Debug::printConvolutionReference2() const
-    {
-        return m_value & 0x200;
-    }
-    bool Debug::printConvolutionReference3() const
-    {
-        return m_value & 0x400;
-    }
-
     bool Debug::printTensorModeHex() const
     {
         return m_value & 0x800;
@@ -143,6 +130,11 @@ namespace Tensile
         return m_metric;
     }
 
+    bool Debug::getBenchmark() const
+    {
+        return m_benchmark;
+    }
+
     int Debug::getSolutionIndex() const
     {
         return m_solution_index;
@@ -188,6 +180,10 @@ namespace Tensile
         const char* gridbasedTopSols = std::getenv("GRIDBASED_TOPSOLS");
         if(gridbasedTopSols)
             m_gridbasedTopSols = strtol(gridbasedTopSols, nullptr, 0);
+
+        const char* tensile_benchmark = std::getenv("TENSILE_BENCHMARK");
+        if(tensile_benchmark)
+            m_benchmark = strtol(tensile_benchmark, nullptr, 0) != 0;
     }
 
 } // namespace Tensile

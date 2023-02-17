@@ -101,8 +101,6 @@ namespace Tensile
             return kernelName;
         }
 
-        bool isSourceKernel() const;
-
         //! Estimates based on problem size, solution tile, and  machine hardware
         //! charz:
         struct StaticPerformanceModel
@@ -213,15 +211,28 @@ namespace Tensile
         virtual std::vector<KernelInvocation>
             solve(Problem const& problem, Inputs const& inputs, Hardware const& hardware) const;
 
+        virtual std::vector<KernelInvocation>
+            solveGroupedGemm(std::vector<Problem> const& problems, Inputs const& inputs, Hardware const& hardware) const;
+
         template <typename TypedInputs>
         std::vector<KernelInvocation> solveTyped(Problem const&     problem,
                                                  TypedInputs const& inputs,
                                                  Hardware const&    hardware) const;
 
+        template <typename TypedInputs>
+        std::vector<KernelInvocation> solveTypedGroupedGemm(std::vector<Problem> const&     problems,
+                                                            TypedInputs const& inputs,
+                                                            Hardware const&    hardware) const;
+
         template <typename TypedInputs, bool T_Debug>
         KernelInvocation generateSingleCall(Problem const&     problem,
                                             TypedInputs const& inputs,
                                             Hardware const&    hardware) const;
+
+        template <typename TypedInputs, bool T_Debug>
+        KernelInvocation generateSingleCallGroupedGemm(std::vector<Problem> const&     problems,
+                                                       TypedInputs const& inputs,
+                                                       Hardware const&    hardware) const;
 
         template <typename TypedInputs, bool T_Debug>
         KernelInvocation generateBetaOnlyCall(Problem const&     problem,
@@ -293,6 +304,7 @@ namespace Tensile
             bool                  useInitialStridesAB     = false;
             bool                  useInitialStridesCD     = false;
             bool                  stridedBatched          = true;
+            bool                  groupedGemm             = false;
             bool                  fp16AltImpl             = false;
             ActivationType        activationType          = ActivationType::None;
             bool                  activationHPA           = false;

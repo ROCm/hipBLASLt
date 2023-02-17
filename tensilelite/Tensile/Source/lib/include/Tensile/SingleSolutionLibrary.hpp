@@ -99,6 +99,45 @@ namespace Tensile
             return std::shared_ptr<MySolution>();
         }
 
+        virtual std::shared_ptr<MySolution> findBestSolution(std::vector<MyProblem> const& problems,
+                                                             Hardware const&  hardware,
+                                                             double*          fitness
+                                                             = nullptr) const override
+        {
+            bool debug = Debug::Instance().printPredicateEvaluation();
+
+            if(solution)
+            {
+                if(debug)
+                {
+                    solution->hardwarePredicate->debugEval(hardware, std::cout);
+                    for(int idx = 0; idx < problems.size(); idx++)
+                    {
+                        auto problem = problems[idx];
+                        solution->problemPredicate->debugEval(problem, std::cout);
+                    }
+                }
+
+                if(!(*solution->hardwarePredicate)(hardware))
+                    return std::shared_ptr<MySolution>();
+
+                for(int idx = 0; idx < problems.size(); idx++)
+                {
+                    auto problem = problems[idx];
+                    if(!(*solution->problemPredicate)(problem))
+                        return std::shared_ptr<MySolution>();
+                }
+
+                return solution;
+            }
+            else if(debug)
+            {
+                std::cout << " (empty library)";
+            }
+
+            return std::shared_ptr<MySolution>();
+        }
+
         virtual SolutionSet<MySolution> findAllSolutions(MyProblem const& problem,
                                                          Hardware const&  hardware) const override
         {

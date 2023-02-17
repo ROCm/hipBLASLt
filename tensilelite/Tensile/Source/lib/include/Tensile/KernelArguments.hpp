@@ -196,7 +196,7 @@ namespace Tensile
     template <typename T>
     inline void KernelArguments::append(std::string const& name, T value, bool bound)
     {
-        alignTo(alignof(T));
+        // alignTo(alignof(T));
 
         size_t offset = m_data.size();
         size_t size   = sizeof(T);

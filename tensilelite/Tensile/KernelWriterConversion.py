@@ -328,7 +328,10 @@ class KernelWriterConversion(KernelWriterBase):
       name += indexChars[i].lower()
     name += "_"
     name += self.state["ProblemType"]["DestDataType"].toChar()
-    name += "" if self.state["ProblemType"]["StridedBatched"] else "_GB"
+    if self.state["ProblemType"]["GroupedGemm"]:
+      name += "_GG"
+    else:
+      name += "" if self.state["ProblemType"]["StridedBatched"] else "_GB"
     name += "_Bias%s"%self.state["ProblemType"]["BiasDataType"].toChar() if self.state["ProblemType"]["UseBias"] else ""
     if ((self.state["ProblemType"]["ActivationType"] != 'none') and self.state["ActivationFused"]):
       if self.state["ProblemType"]["ActivationType"] == 'all':

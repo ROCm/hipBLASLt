@@ -78,6 +78,7 @@ namespace Tensile
             DataType                    m_alphaType;
             DataType                    m_betaType;
             bool                        m_stridedBatched;
+            bool                        m_groupedGemm;
             bool                        m_highPrecisionAccumulate;
             bool                        m_deterministicMode;
             bool                        m_cEqualsD;
@@ -91,15 +92,13 @@ namespace Tensile
             std::vector<DataType>       m_biasTypeArgs;
             bool                        m_activationHPA;
             std::vector<ActivationType> m_activationEnumArg;
+            size_t                      m_maxWorkspaceSize = 0;
 
             std::vector<std::vector<size_t>> m_problemSizes;
             std::vector<std::vector<size_t>> m_aStrides;
             std::vector<std::vector<size_t>> m_bStrides;
             std::vector<std::vector<size_t>> m_cStrides;
             std::vector<std::vector<size_t>> m_dStrides;
-            std::vector<std::vector<size_t>> m_aZeroPads;
-            std::vector<std::vector<size_t>> m_bZeroPads;
-            std::vector<std::vector<size_t>> m_convProblemSizes;
 
             TensorOps m_aOps;
             TensorOps m_bOps;

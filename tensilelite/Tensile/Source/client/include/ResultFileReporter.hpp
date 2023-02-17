@@ -79,6 +79,8 @@ namespace Tensile
             int64_t     m_winnerSolutionIdx = -1;
             double      m_fastestGflops     = -1.0;
             double      m_fasterTimeUS      = -1.0;
+            double      m_fastestTilesPerCu  = -1.0;
+            double      m_fastestTotalGranularity  = -1.0;
             // for merge rows
             int64_t                                                         m_currProbID = -1;
             std::map<int64_t, std::unordered_map<std::string, std::string>> m_probMap;

@@ -51,11 +51,6 @@ namespace Tensile
         // print tensor dims, strides, memory sizes
         bool printTensorInfo() const;
 
-        // 3 levels of debugging for the convolution reference debug
-        bool printConvolutionReference1() const;
-        bool printConvolutionReference2() const;
-        bool printConvolutionReference3() const;
-
         // if tensors are printed, use hexadecimal output format
         bool printTensorModeHex() const;
 
@@ -79,6 +74,8 @@ namespace Tensile
 
         std::string getMetric() const;
 
+        bool getBenchmark() const;
+
         int getSolutionIndex() const;
 
         int getGridbasedTopSols() const;
@@ -94,6 +91,7 @@ namespace Tensile
         int         m_solution_index      = -1;
         std::string m_metric              = "";
         int         m_gridbasedTopSols    = 1;
+        bool        m_benchmark           = false;
 
         Debug();
     };

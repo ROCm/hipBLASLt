@@ -65,9 +65,11 @@ globalParameters["CodeFromFiles"] = True          # if False byte arrays will be
 globalParameters["SortProblems"] = False          # sort problems by size; else use order in YAML file
 globalParameters["PinClocks"] = False             # T=pin gpu clocks and fan, F=don't
 globalParameters["HardwareMonitor"] = True        # False: disable benchmarking client monitoring clocks using rocm-smi.
+globalParameters["MinFlopsPerSync"] = 1           # Minimum number of flops per sync to increase stability for small problems
 globalParameters["NumBenchmarks"] = 1             # how many benchmark data points to collect per problem/solution
 globalParameters["SyncsPerBenchmark"] = 1         # how iterations of the stream synchronization for-loop to do per benchmark data point
 globalParameters["EnqueuesPerSync"] = 1           # how many solution enqueues to perform per synchronization
+globalParameters["MaxEnqueuesPerSync"] = -1       # max solution enqueues to perform per synchronization
 globalParameters["SleepPercent"] = 300            # how long to sleep after every data point: 25 means 25% of solution time. Sleeping lets gpu cool down more.
 # cProfile
 globalParameters["Profiler"] = 0                  # Enable profiler. 0=off, 1=cProfile. This will set CpuThreads to 1.
@@ -148,8 +150,8 @@ globalParameters["DataInitTypeC"]  = 3
 globalParameters["DataInitTypeD"]  = 0
 globalParameters["DataInitTypeAlpha"] = 2
 globalParameters["DataInitTypeBeta"] = 2
-globalParameters["DataInitTypeBias"] = 1
-globalParameters["DataInitTypeScaleD"] = 1
+globalParameters["DataInitTypeBias"] = 3
+globalParameters["DataInitTypeScaleD"] = 3
 globalParameters["DataInitValueActivationArgs"] = [2.0, 2.0]
 globalParameters["CEqualD"] = False               # Set to true if testing for the case where the pointer to C is the same as D.
 globalParameters["BufferOffsetA"] = 0             # data offset of buffer A
@@ -773,7 +775,7 @@ validParameters = {
     #
     # If we issue store in short period of time, kernel will become from compute bound to memory bound
     # 0 means issue instructions as many as possible if VGPR available
-    "NumElementsPerBatchStore":   list(range(0, 256)),
+    "NumElementsPerBatchStore":   list(range(-1, 256)),
     #
     # add sync after per batch store in order to store contiguous elements
     # add sleep after per batch store in order to distribute store over whole loops
@@ -1055,6 +1057,7 @@ defaultProblemType = {
     "TransposeB":               True,
     "Batched":                  False,            # add batching dimension
     "StridedBatched":           True,             # use to select general batch or strided batch
+    "GroupedGemm":              False,             # use to select general batch or strided batch
 
     # for OperationType == TensorContraction
     # - Indices < NumIndicesC are Free or Batch indices and appear in C and D

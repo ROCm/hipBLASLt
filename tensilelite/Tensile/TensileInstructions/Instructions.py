@@ -1025,6 +1025,11 @@ class SCmpLgU32(CommonInstruction):
         super().__init__(InstType.INST_U32, None, [src0, src1], None, None, comment)
         self.setInst("s_cmp_lg_u32")
 
+class SCmpLtI32(CommonInstruction):
+    def __init__(self, src0, src1, comment="") -> None:
+        super().__init__(InstType.INST_I32, None, [src0, src1], None, None, comment)
+        self.setInst("s_cmp_lt_i32")
+
 class SCmpLtU32(CommonInstruction):
     def __init__(self, src0, src1, comment="") -> None:
         super().__init__(InstType.INST_U32, None, [src0, src1], None, None, comment)
@@ -1170,6 +1175,26 @@ class SAShiftRightI32(CommonInstruction):
     def __init__(self, dst, shiftHex, src, comment="") -> None:
         super().__init__(InstType.INST_I32, dst, [src, shiftHex], None, None, comment)
         self.setInst("s_ashr_i32")
+
+class SLShiftLeft1AddU32(CommonInstruction):
+    def __init__(self, dst, src0, src1, comment="") -> None:
+        super().__init__(InstType.INST_B32, dst, [src0, src1], None, None, comment)
+        self.setInst("s_lshl1_add_u32")
+
+class SLShiftLeft2AddU32(CommonInstruction):
+    def __init__(self, dst, src0, src1, comment="") -> None:
+        super().__init__(InstType.INST_B32, dst, [src0, src1], None, None, comment)
+        self.setInst("s_lshl2_add_u32")
+
+class SLShiftLeft3AddU32(CommonInstruction):
+    def __init__(self, dst, src0, src1, comment="") -> None:
+        super().__init__(InstType.INST_B32, dst, [src0, src1], None, None, comment)
+        self.setInst("s_lshl3_add_u32")
+
+class SLShiftLeft4AddU32(CommonInstruction):
+    def __init__(self, dst, src0, src1, comment="") -> None:
+        super().__init__(InstType.INST_B32, dst, [src0, src1], None, None, comment)
+        self.setInst("s_lshl4_add_u32")
 
 # S mov
 class SMovB32(CommonInstruction):

@@ -46,6 +46,7 @@ namespace Tensile
             , m_syncAfterWarmups(args["sync-after-warmups"].as<bool>())
             , m_numBenchmarks(args["num-benchmarks"].as<int>())
             , m_numEnqueuesPerSync(args["num-enqueues-per-sync"].as<int>())
+            , m_maxEnqueuesPerSync(args["max-enqueues-per-sync"].as<int>())
             , m_minFlopsPerSync(args["min-flops-per-sync"].as<size_t>())
             , m_numSyncsPerBenchmark(args["num-syncs-per-benchmark"].as<int>())
             , m_hardware(hardware)
@@ -170,7 +171,7 @@ namespace Tensile
                 enqueuesByFlops       = CeilDivide(m_minFlopsPerSync, flopsInProblem);
             }
 
-            return std::max<size_t>(m_numEnqueuesPerSync, enqueuesByFlops);
+            return std::min<size_t>(std::max<size_t>(m_numEnqueuesPerSync, enqueuesByFlops), m_maxEnqueuesPerSync);
         }
 
         void BenchmarkTimer::setNumEnqueuesPerSync(size_t count)
@@ -182,6 +183,7 @@ namespace Tensile
         {
             if(!m_useGPUTimer)
             {
+                HIP_CHECK_EXC(hipDeviceSynchronize());
                 m_startTime = clock::now();
             }
         }

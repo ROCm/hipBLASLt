@@ -38,8 +38,6 @@ namespace Tensile
             , m_batchIndices(args["batch"].as<ContractionProblem::BatchIndices>())
             , m_boundIndices(args["bound"].as<ContractionProblem::BoundIndices>())
             , m_problemSizes(args["problem-size"].as<std::vector<std::vector<size_t>>>())
-            , m_aZeroPads(args["a-zero-pads"].as<std::vector<std::vector<size_t>>>())
-            , m_bZeroPads(args["b-zero-pads"].as<std::vector<std::vector<size_t>>>())
             , m_aType(DataType::Float)
             , m_bType(DataType::Float)
             , m_cType(DataType::Float)
@@ -47,6 +45,7 @@ namespace Tensile
             , m_alphaType(DataType::Float)
             , m_betaType(DataType::Float)
             , m_stridedBatched(args["strided-batched"].as<bool>())
+            , m_groupedGemm(args["grouped-gemm"].as<bool>())
             , m_highPrecisionAccumulate(args["high-precision-accumulate"].as<bool>())
             , m_kernelLanguage(args["kernel-language"].as<KernelLanguage>())
             , m_performanceMetric(args["performance-metric"].as<PerformanceMetric>())
@@ -103,10 +102,6 @@ namespace Tensile
             m_beta  = DataInitialization::getValue<double>(args["init-beta"].as<InitMode>());
             m_alpha = DataInitialization::getValue<double>(args["init-alpha"].as<InitMode>());
 
-            if(args["convolution-vs-contraction"].as<bool>())
-                m_convProblemSizes
-                    = args["convolution-problem"].as<std::vector<std::vector<size_t>>>();
-
             if(args.count("bias-type-args"))
                 m_biasTypeArgs = args["bias-type-args"].as<std::vector<DataType>>();
 
@@ -121,6 +116,8 @@ namespace Tensile
                 m_useBias = args["use-bias"].as<bool>();
             if(args.count("use-scaleD"))
                 m_useScaleD = args["use-scaleD"].as<bool>();
+            if(args.count("max-workspace-size"))
+                m_maxWorkspaceSize = args["max-workspace-size"].as<size_t>();
             m_problems = createProblems();
         }
 
@@ -187,40 +184,10 @@ namespace Tensile
 
                         rv.back().setAlphaRestriction(toScalarValueEnum(m_alpha));
                         rv.back().setCEqualsD(m_cEqualsD);
-
-                        if(i < m_aZeroPads.size())
-                        {
-                            const auto& zp = m_aZeroPads[i];
-                            if(zp.size() % 4 != 0)
-                                throw std::runtime_error(
-                                    "zero-pad must contain tuples of 4 values");
-                            for(int zi = 0; zi < zp.size(); zi += 4)
-                            {
-                                rv.back().addAZeroPad(ContractionProblem::ZeroPad(
-                                    {static_cast<int32_t>(zp[zi + 0]),
-                                     static_cast<int32_t>(zp[zi + 1]),
-                                     static_cast<int64_t>(zp[zi + 2]),
-                                     static_cast<int64_t>(zp[zi + 3])}));
-                            }
-                        }
-                        if(i < m_bZeroPads.size())
-                        {
-                            const auto& zp = m_bZeroPads[i];
-                            if(zp.size() % 4 != 0)
-                                throw std::runtime_error(
-                                    "zero-pad must contain tuples of 4 values");
-                            for(int zi = 0; zi < zp.size(); zi += 4)
-                            {
-                                rv.back().addBZeroPad(ContractionProblem::ZeroPad(
-                                    {static_cast<int32_t>(zp[zi + 0]),
-                                     static_cast<int32_t>(zp[zi + 1]),
-                                     static_cast<int64_t>(zp[zi + 2]),
-                                     static_cast<int64_t>(zp[zi + 3])}));
-                            }
-                        }
                         rv.back().setAlphaType(m_alphaType);
                         rv.back().setBetaType(m_betaType);
                         rv.back().setStridedBatched(m_stridedBatched);
+                        rv.back().setGroupedGemm(m_groupedGemm);
                         rv.back().setHighPrecisionAccumulate(m_highPrecisionAccumulate);
                         rv.back().setUseBias(m_useBias);
                         rv.back().setUseScaleD(m_useScaleD);
@@ -230,6 +197,7 @@ namespace Tensile
                         rv.back().setArithmeticUnit(m_arithmeticUnit);
                         rv.back().setFp16AltImpl(m_fp16AltImpl);
                         rv.back().setActivationType(m_activationType);
+                        rv.back().setWorkspaceSize(m_maxWorkspaceSize);
                         if(k < m_biasTypeArgs.size())
                         {
                             rv.back().setBiasType(m_biasTypeArgs[k]);
@@ -247,9 +215,6 @@ namespace Tensile
                             rv.back().setActivationType(m_activationType);
                         }
                         rv.back().setActivationHPA(m_activationHPA);
-
-                        if(m_convProblemSizes.size())
-                            rv.back().setConvProblemSizes(m_convProblemSizes[i]);
                     }
                 }
             }

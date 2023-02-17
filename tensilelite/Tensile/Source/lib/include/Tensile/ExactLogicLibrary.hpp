@@ -128,6 +128,26 @@ namespace Tensile
 
             return rv;
         }
+
+        virtual SolutionVector<MySolution> findTopSolutionsGroupedGemm(std::vector<MyProblem> const& problems,
+                                                                       Hardware               const& hardware,
+                                                                       int                           numSolutions) const override
+        {
+            SolutionVector<MySolution> rv, solutions;
+
+            for(auto const& row : rows)
+            {
+                if(row.first(problems[0], hardware))
+                {
+                    solutions = row.second->findTopSolutionsGroupedGemm(problems, hardware, numSolutions - rv.size());
+                    rv.insert(std::end(rv), std::begin(solutions), std::end(solutions));
+                    if(rv.size() == numSolutions)
+                        return rv;
+                }
+            }
+
+            return rv;
+        }
     };
 
     struct HardwarePredicate

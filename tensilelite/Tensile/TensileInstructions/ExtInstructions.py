@@ -376,16 +376,21 @@ class ArgumentLoader:
     # if writeSgpr==0, just move the kernArgOffset - this is used to skip
     # unused parms
     ##############################################################################
-    def loadSingleKernArg(self, dst: Union[int, str], srcAddr: Union[int, str], \
+    def loadKernArg(self, dst: Union[int, str], srcAddr: Union[int, str], sgprOffset = None, dword=1,\
                         writeSgpr=True) -> Union[Instruction, TextBlock]:
         item = None
-        size = 1*4
+        size = dword*4
         if writeSgpr:
-            item = SLoadB32(dst=sgpr(dst), \
-                base=sgpr(srcAddr, 2), soffset=hex(self.kernArgOffset))
+            SLoadBX = { 512: SLoadB512,
+                        256: SLoadB256,
+                        128: SLoadB128,
+                        64:  SLoadB64,
+                        32:  SLoadB32
+                    }[dword * 32]
+            item = SLoadBX(dst=sgpr(dst, dword), base=sgpr(srcAddr, 2), soffset=hex(self.kernArgOffset) if sgprOffset == None else sgprOffset )
         else:
             item = TextBlock("Move offset by %u\n" % size)
-        self.kernArgOffset += size
+        self.kernArgOffset += size if sgprOffset == None else 0
         return item
 
     def loadAllKernArg(self, sgprStartIndex: int, srcAddr: Union[int, str], \

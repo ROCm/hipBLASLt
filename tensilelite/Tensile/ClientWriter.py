@@ -479,6 +479,7 @@ def writeClientConfigIni(problemSizes, biasTypeArgs, activationArgs, problemType
 
         param('high-precision-accumulate', problemType.highPrecisionAccumulate)
         param('strided-batched', problemType.stridedBatched)
+        param('grouped-gemm', problemType.groupedGemm)
 
         for problem in problemSizes.problems:
             for key,value in problemSizeParams(problemType, problem):
@@ -525,11 +526,12 @@ def writeClientConfigIni(problemSizes, biasTypeArgs, activationArgs, problemType
         param("num-benchmarks",           globalParameters["NumBenchmarks"])
         param("num-elements-to-validate", globalParameters["NumElementsToValidate"])
         param("num-enqueues-per-sync",    globalParameters["EnqueuesPerSync"])
+        param("max-enqueues-per-sync",    globalParameters["MaxEnqueuesPerSync"])
         param("num-syncs-per-benchmark",  globalParameters["SyncsPerBenchmark"])
         param("use-gpu-timer",            globalParameters["KernelTime"])
         param("hardware-monitor",         globalParameters["HardwareMonitor"])
-        if not globalParameters["KernelTime"]:
-            param("num-warmups", 1)
+        param("num-warmups",              globalParameters["NumWarmups"])
+        param("min-flops-per-sync",       globalParameters["MinFlopsPerSync"])
         param("sleep-percent",            globalParameters["SleepPercent"])
         param("perf-l2-read-hits",        globalParameters["PerfModelL2ReadHits"])
         param("perf-l2-write-hits",       globalParameters["PerfModelL2WriteHits"])
@@ -539,6 +541,7 @@ def writeClientConfigIni(problemSizes, biasTypeArgs, activationArgs, problemType
         param("csv-merge-same-problems",  globalParameters["CSVMergeSameProblemID"])
         param("log-level",                ClientLogLevel(globalParameters["ClientLogLevel"]).name)
         param("max-workspace-size",       globalParameters["MaxWorkspaceSize"])
+        param("PrintWinnersOnly",         globalParameters["PrintWinnersOnly"])
         param("granularity-threshold",    globalParameters["GranularityThreshold"])
         param("pristine-on-gpu",          globalParameters["PristineOnGPU"])
 
