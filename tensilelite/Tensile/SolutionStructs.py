@@ -1198,7 +1198,7 @@ class Solution(collections.abc.Mapping):
       if not "MIInputPerThreadA" in state:
         state["MIInputPerThreadA"] = state["MIInputPerThread"]
         state["MIInputPerThreadB"] = state["MIInputPerThread"]
-  
+
     elif EnableMatrixInstruction == False:
       state["ThreadTile0"] = state["ThreadTile"][0]
       state["ThreadTile1"] = state["ThreadTile"][1]
@@ -2083,7 +2083,7 @@ class Solution(collections.abc.Mapping):
       if not ((bufferLoad or state["DirectToVgprA"] or state["DirectToVgprB"]) and ( state["PrefetchGlobalRead"] == 1 \
               or (state["PrefetchGlobalRead"] > 1 and \
                   (state["ProblemType"]["DataType"].isDouble() or state["ProblemType"]["DataType"].isDoubleComplex()))
-              or (state["ProblemType"]["SparseA"]))):
+              or (state["ProblemType"]["SparseA"] and state["PrefetchGlobalRead"] > 0))):
         state["ExpandPointerSwap"] = 0
       # EPS not supported with SplitLDS yet
       if state["DepthULdsDivisor"] > 1:
