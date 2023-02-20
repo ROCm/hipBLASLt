@@ -37,21 +37,21 @@ namespace Tensile
     namespace Serialization
     {
         template <typename IO>
-        struct SubclassMappingTraits<Predicates::Predicate<ContractionProblem>, IO>
+        struct SubclassMappingTraits<Predicates::Predicate<ContractionProblemGemm>, IO>
             : public DefaultSubclassMappingTraits<
-                  SubclassMappingTraits<Predicates::Predicate<ContractionProblem>, IO>,
-                  Predicates::Predicate<ContractionProblem>,
+                  SubclassMappingTraits<Predicates::Predicate<ContractionProblemGemm>, IO>,
+                  Predicates::Predicate<ContractionProblemGemm>,
                   IO>
         {
-            using Self = SubclassMappingTraits<Predicates::Predicate<ContractionProblem>, IO>;
+            using Self = SubclassMappingTraits<Predicates::Predicate<ContractionProblemGemm>, IO>;
             using Base = DefaultSubclassMappingTraits<
-                SubclassMappingTraits<Predicates::Predicate<ContractionProblem>, IO>,
-                Predicates::Predicate<ContractionProblem>,
+                SubclassMappingTraits<Predicates::Predicate<ContractionProblemGemm>, IO>,
+                Predicates::Predicate<ContractionProblemGemm>,
                 IO>;
             using SubclassMap = typename Base::SubclassMap;
             const static SubclassMap subclasses;
 
-            using Generic = PredicateMappingTraits<ContractionProblem, IO>;
+            using Generic = PredicateMappingTraits<ContractionProblemGemm, IO>;
 
             static SubclassMap GetSubclasses()
             {
@@ -81,7 +81,6 @@ namespace Tensile
                     Base::template Pair<Predicates::Contraction::HighPrecisionAccumulateEqual>(),
                     Base::template Pair<Predicates::Contraction::KernelLanguageCompatible>(),
                     Base::template Pair<Predicates::Contraction::DeterministicModeEqual>(),
-                    Base::template Pair<Predicates::Contraction::ArithmeticUnitCompatible>(),
                     Base::template Pair<Predicates::Contraction::TypesEqual>(),
                     Base::template Pair<Predicates::Contraction::OperationIdentifierEqual>(),
                     Base::template Pair<Predicates::Contraction::BufferLoadOffsetLimitCheck>(),
@@ -115,7 +114,7 @@ namespace Tensile
 
         template <typename IO>
         using ContractionProblemPredicateSMT
-            = SubclassMappingTraits<Predicates::Predicate<ContractionProblem>, IO>;
+            = SubclassMappingTraits<Predicates::Predicate<ContractionProblemGemm>, IO>;
 
         template <typename IO>
         const typename ContractionProblemPredicateSMT<IO>::SubclassMap
@@ -257,12 +256,6 @@ namespace Tensile
         template <typename IO>
         struct MappingTraits<Predicates::Contraction::HighPrecisionAccumulateEqual, IO>
             : public AutoMappingTraits<Predicates::Contraction::HighPrecisionAccumulateEqual, IO>
-        {
-        };
-
-        template <typename IO>
-        struct MappingTraits<Predicates::Contraction::ArithmeticUnitCompatible, IO>
-            : public AutoMappingTraits<Predicates::Contraction::ArithmeticUnitCompatible, IO>
         {
         };
 

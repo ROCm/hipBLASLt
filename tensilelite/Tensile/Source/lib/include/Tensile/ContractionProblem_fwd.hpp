@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022 Advanced Micro Devices, Inc. All rights reserved.
+ * Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -28,15 +28,8 @@
 
 namespace Tensile
 {
-
     class ContractionProblem;
+    class ContractionProblemGemm;
+    class ContractionProblemGroupedGemm;
     struct ContractionInputs;
-
-    template <typename A     = float,
-              typename B     = A,
-              typename C     = A,
-              typename D     = C,
-              typename Alpha = D,
-              typename Beta  = D>
-    struct TypedContractionInputs;
 } // namespace Tensile

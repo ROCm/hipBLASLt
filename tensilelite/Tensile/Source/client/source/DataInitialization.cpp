@@ -25,7 +25,7 @@
  *******************************************************************************/
 
 #include "DataInitialization.hpp"
-#include "DataInitializationTyped.hpp"
+// #include "DataInitializationTyped.hpp"
 
 #include <Tensile/Utils.hpp>
 
@@ -83,6 +83,8 @@ namespace Tensile
                 return "DenormMax";
             case InitMode::RandomNegPosLimited:
                 return "RandomNegPosLimited";
+            case InitMode::Free:
+                return "Free";
 
             case InitMode::Count:
                 break;
@@ -217,6 +219,95 @@ namespace Tensile
             return stream;
         }
 
+        template <typename T>
+        std::shared_ptr<T> allocNewGPUBuffer(const char* title, size_t size)
+        {
+            static const int sizew = 10;
+            T*               ptr   = nullptr;
+            HIP_CHECK_EXC(hipMalloc(&ptr, size));
+            auto p = std::shared_ptr<T>(ptr, hipFree);
+            if(Debug::Instance().printTensorInfo())
+                std::cout << "info: allocate " << title << " " << std::setw(sizew) << size
+                          << " bytes at " << static_cast<void*>(ptr) << "\n";
+            return p;
+        }
+
+        void initGPUBatchedInput(void*                      base,
+                                 void**                     array,
+                                 TensorDescriptor const&    tensor,
+                                 const std::vector<size_t>& batchIdx)
+        {
+            std::vector<size_t> batchSizes;
+            std::vector<size_t> batchStrides;
+            for(auto& idx : batchIdx)
+            {
+                batchSizes.push_back(tensor.sizes().at(idx));
+                batchStrides.push_back(tensor.strides().at(idx));
+            }
+            std::vector<size_t> coord(batchSizes.size(), 0);
+
+            auto      count    = CoordCount(batchSizes.begin(), batchSizes.end());
+            uint8_t** cpuArray = (uint8_t**)std::malloc(count * sizeof(void*));
+            for(size_t idx = 0; idx < count; idx++)
+            {
+                CoordNumbered(
+                    idx, coord.begin(), coord.end(), batchSizes.begin(), batchSizes.end());
+                cpuArray[idx] = (uint8_t*)base;
+                for(size_t i = 0; i < batchSizes.size(); i++)
+                {
+                    cpuArray[idx] += coord[i] * batchStrides[i];
+                }
+            }
+
+            HIP_CHECK_EXC(hipMemcpy(array, cpuArray, count * sizeof(void*), hipMemcpyHostToDevice));
+
+            std::free(cpuArray);
+        }
+
+        void* copyBadInputBuffers(const TensorDescriptor& descriptor,
+                                  void*                   dst,
+                                  void*                   src,
+                                  void*                   bad,
+                                  size_t                  totalElements,
+                                  hipMemcpyKind           kind)
+        {
+            HIP_CHECK_EXC(
+                hipMemcpy(dst,
+                          src,
+                          DataTypeInfo::Get(descriptor.dataType()).elementSize * totalElements,
+                          kind));
+            ptrdiff_t dPadding = totalElements - descriptor.totalAllocatedElements();
+            dPadding *= descriptor.elementBytes();
+            void* dstOffset = (void*)((uint8_t*)dst + dPadding / 2);
+            Tensile::hip::CopyTensorVoid(dstOffset, src, descriptor, kind);
+            return dstOffset;
+        }
+
+        void* copyNaNInputBuffers(const TensorDescriptor& descriptor,
+                                  void*                   dst,
+                                  void*                   src,
+                                  size_t                  totalElements,
+                                  hipMemcpyKind           kind)
+        {
+            ptrdiff_t dPadding  = totalElements - descriptor.totalAllocatedElements();
+            uint8_t*  dstOffset = (uint8_t*)dst + (dPadding * descriptor.elementBytes());
+            HIP_CHECK_EXC(hipMemcpy(dstOffset,
+                                    src,
+                                    descriptor.elementBytes() * descriptor.totalAllocatedElements(),
+                                    kind));
+            return dstOffset;
+        }
+
+        void* copyInputBuffers(const TensorDescriptor& descriptor,
+                               void*                   dst,
+                               void*                   src,
+                               size_t                  totalElements,
+                               hipMemcpyKind           kind)
+        {
+            HIP_CHECK_EXC(hipMemcpy(dst, src, descriptor.elementBytes() * totalElements, kind));
+            return dst;
+        }
+
         double DataInitialization::GetRepresentativeBetaValue(po::variables_map const& args)
         {
             auto argValue = args["init-beta"].as<int>();
@@ -230,147 +321,11 @@ namespace Tensile
             return 1.5;
         }
 
-        template <typename TypedInputs>
-        std::shared_ptr<TypedDataInitialization<TypedInputs>>
-            DataInitialization::GetTyped(po::variables_map const&    args,
-                                         ClientProblemFactory const& problemFactory,
-                                         size_t                      maxWorkspaceSize)
-        {
-            auto* ptr
-                = new TypedDataInitialization<TypedInputs>(args, problemFactory, maxWorkspaceSize);
-
-            return std::shared_ptr<TypedDataInitialization<TypedInputs>>(ptr);
-        }
-
-        std::shared_ptr<DataInitialization>
-            DataInitialization::Get(po::variables_map const&    args,
-                                    ClientProblemFactory const& problemFactory,
-                                    size_t                      maxWorkspaceSize)
-        {
-            auto aType     = args["a-type"].as<DataType>();
-            auto bType     = args["b-type"].as<DataType>();
-            auto cType     = args["c-type"].as<DataType>();
-            auto dType     = args["d-type"].as<DataType>();
-            auto alphaType = args["alpha-type"].as<DataType>();
-            auto betaType  = args["beta-type"].as<DataType>();
-
-            auto contractionInputsTypeId
-                = ContractionInputs::TypeId(aType, bType, cType, dType, alphaType, betaType);
-
-            switch(contractionInputsTypeId)
-            {
-            case ContractionInputs_S_S_S::TypeId():
-            {
-                return GetTyped<ContractionInputs_S_S_S>(args, problemFactory, maxWorkspaceSize);
-            }
-            case ContractionInputs_D_D_D::TypeId():
-            {
-                return GetTyped<ContractionInputs_D_D_D>(args, problemFactory, maxWorkspaceSize);
-            }
-            case ContractionInputs_C_C_C::TypeId():
-            {
-                return GetTyped<ContractionInputs_C_C_C>(args, problemFactory, maxWorkspaceSize);
-            }
-            case ContractionInputs_Z_Z_Z::TypeId():
-            {
-                return GetTyped<ContractionInputs_Z_Z_Z>(args, problemFactory, maxWorkspaceSize);
-            }
-#ifdef TENSILE_USE_HALF
-            case ContractionInputs_H_H_H::TypeId():
-            {
-                return GetTyped<ContractionInputs_H_H_H>(args, problemFactory, maxWorkspaceSize);
-            }
-            case ContractionInputs_H_H_S::TypeId():
-            {
-                return GetTyped<ContractionInputs_H_H_S>(args, problemFactory, maxWorkspaceSize);
-            }
-            case ContractionInputs_H_S_S::TypeId():
-            {
-                return GetTyped<ContractionInputs_H_S_S>(args, problemFactory, maxWorkspaceSize);
-            }
-#endif // TENSILE_USE_HALF
-            case ContractionInputs_I8x4_I32_I32::TypeId():
-            {
-                return GetTyped<ContractionInputs_I8x4_I32_I32>(
-                    args, problemFactory, maxWorkspaceSize);
-            }
-            case ContractionInputs_I32_I32_I32::TypeId():
-            {
-                return GetTyped<ContractionInputs_I32_I32_I32>(
-                    args, problemFactory, maxWorkspaceSize);
-            }
-            case ContractionInputs_I8_I8_I32::TypeId():
-            {
-                return GetTyped<ContractionInputs_I8_I8_I32>(
-                    args, problemFactory, maxWorkspaceSize);
-            }
-            case ContractionInputs_I8_I32_I32::TypeId():
-            {
-                return GetTyped<ContractionInputs_I8_I32_I32>(
-                    args, problemFactory, maxWorkspaceSize);
-            }
-            case ContractionInputs_I8_I32_S::TypeId():
-            {
-                return GetTyped<ContractionInputs_I8_I32_S>(args, problemFactory, maxWorkspaceSize);
-            }
-            case ContractionInputs_I8_I8_S::TypeId():
-            {
-                return GetTyped<ContractionInputs_I8_I8_S>(args, problemFactory, maxWorkspaceSize);
-            }
-#ifdef TENSILE_USE_BF16
-            case ContractionInputs_B_B_S::TypeId():
-            {
-                return GetTyped<ContractionInputs_B_B_S>(args, problemFactory, maxWorkspaceSize);
-            }
-            case ContractionInputs_B_S_S::TypeId():
-            {
-                return GetTyped<ContractionInputs_B_S_S>(args, problemFactory, maxWorkspaceSize);
-            }
-#endif // TENSILE_USE_BF16
-            default:;
-            }
-
-            throw std::runtime_error(concatenate("Invalid combination of data types: ",
-                                                 "a: ",
-                                                 aType,
-                                                 ", b: ",
-                                                 bType,
-                                                 ", c: ",
-                                                 cType,
-                                                 ", d: ",
-                                                 dType,
-                                                 ", alpha: ",
-                                                 alphaType,
-                                                 ", beta: ",
-                                                 betaType));
-        }
-
         DataInitialization::DataInitialization(po::variables_map const&    args,
                                                ClientProblemFactory const& problemFactory,
                                                size_t                      maxWorkspaceSize)
-            : m_aInit(args["init-a"].as<InitMode>())
-            , m_bInit(args["init-b"].as<InitMode>())
-            , m_cInit(args["init-c"].as<InitMode>())
-            , m_dInit(args["init-d"].as<InitMode>())
-            , m_alphaInit(args["init-alpha"].as<InitMode>())
-            , m_betaInit(args["init-beta"].as<InitMode>())
-            , m_biasInit(args["init-bias"].as<InitMode>())
-            , m_scaleDInit(args["init-scaleD"].as<InitMode>())
-            , m_activationType(ActivationType::None)
-            , m_activationHPA(false)
-            , m_aBufferOffset(args["offset-a"].as<size_t>())
-            , m_bBufferOffset(args["offset-b"].as<size_t>())
-            , m_cBufferOffset(args["offset-c"].as<size_t>())
-            , m_dBufferOffset(args["offset-d"].as<size_t>())
-            , m_aMaxElements(0)
-            , m_bMaxElements(0)
-            , m_cMaxElements(0)
-            , m_dMaxElements(0)
-            , m_biasMaxElements(0)
-            , m_scaleMaxElements(0)
-            , m_maxBatch(0)
+            : m_maxBatch(0)
             , m_stridedBatched(args["strided-batched"].as<bool>())
-            , m_groupedGemm(args["grouped-gemm"].as<bool>())
             , m_cEqualsD(args["c-equal-d"].as<bool>())
             , m_elementsToValidate(args["num-elements-to-validate"].as<int>())
             , m_keepPristineCopyOnGPU(args["pristine-on-gpu"].as<bool>())
@@ -387,90 +342,922 @@ namespace Tensile
                 m_numRunsPerSolution = 2;
             }
 
-            for(auto const& problem : problemFactory.problems())
+            std::vector<std::vector<double>> activationAdditionalArgs;
+            if(args.count("activation-additional-args"))
+                activationAdditionalArgs
+                    = args["activation-additional-args"].as<std::vector<std::vector<double>>>();
+
+            if(problemFactory.problems().empty())
             {
-                if(m_groupedGemm)
+                throw std::runtime_error("No problems in ProblemFactory.");
+            }
+
+            // Add switch cases here if needed. ex. GEMM, GEMM+GEMM
+
+            // Get tensor info from problem factory.
+            // TODO: Let ContractionProblemGroupedGemm use the same API as ContractionProblemGemm if possible.
+            {
+                auto const& p = problemFactory.problems()[0];
+                if(auto ptr = dynamic_cast<ContractionProblemGroupedGemm const*>(p.get()))
                 {
-                    m_aMaxElements    += problem.a().totalAllocatedElements();
-                    m_bMaxElements    += problem.b().totalAllocatedElements();
-                    m_cMaxElements    += problem.c().totalAllocatedElements();
-                    m_dMaxElements    += problem.d().totalAllocatedElements();
-                    m_biasMaxElements += problem.d().sizes()[0];
-                    m_scaleMaxElements += problem.d().sizes()[0];
-
-                    size_t numOfBatch = 1;
-                    for(size_t i = 0; i < problem.batchIndices().size(); i++)
-                        numOfBatch *= problem.batchSize(i);
-                    m_maxBatch += numOfBatch;
-
-                    m_aElementsGroupedGemm.push_back(problem.a().totalAllocatedElements());
-                    m_bElementsGroupedGemm.push_back(problem.b().totalAllocatedElements());
-                    m_cElementsGroupedGemm.push_back(problem.c().totalAllocatedElements());
-                    m_dElementsGroupedGemm.push_back(problem.d().totalAllocatedElements());
-                    m_biasElementsGroupedGemm.push_back(problem.d().sizes()[0]);
-                    m_scaleElementsGroupedGemm.push_back(problem.d().sizes()[0]);
-                    m_biasTypeGroupedGemm.push_back(problem.biasType());
+                    const ContractionProblemGroupedGemm& grouped = (*ptr);
+                    if(m_problemDependentData)
+                    {
+                        throw std::runtime_error(
+                            "Currently does not support dependent data with grouped gemm.");
+                    }
+                    if(problemFactory.problems().size() != 1)
+                    {
+                        throw std::runtime_error("Currently only supports one ContractionProblem "
+                                                 "if grouped gemm is found in the ProblemFactory.");
+                    }
+                    m_vdata.resize(grouped.gemms[0].tensors().size());
+                    m_cdata.resize(grouped.gemms[0].constants().size());
                 }
                 else
                 {
-                    m_aMaxElements    = std::max(m_aMaxElements, problem.a().totalAllocatedElements());
-                    m_bMaxElements    = std::max(m_bMaxElements, problem.b().totalAllocatedElements());
-                    m_cMaxElements    = std::max(m_cMaxElements, problem.c().totalAllocatedElements());
-                    m_dMaxElements    = std::max(m_dMaxElements, problem.d().totalAllocatedElements());
-                    m_biasMaxElements = std::max(m_biasMaxElements, problem.d().sizes()[0]);
-                    m_scaleMaxElements = std::max(m_scaleMaxElements, problem.d().sizes()[0]);
+                    m_vdata.resize(problemFactory.problems()[0]->tensors().size());
+                    m_cdata.resize(problemFactory.problems()[0]->constants().size());
+                }
+            }
+
+            for(auto const& p : problemFactory.problems())
+            {
+                if(auto ptr = dynamic_cast<ContractionProblemGemm const*>(p.get()))
+                {
+                    const ContractionProblemGemm& problem = (*ptr);
+                    for(size_t i = 0; i < problem.tensors().size(); i++)
+                    {
+                        auto dataType = problem.tensors()[i].dataType();
+                        if(m_vdata[i].pristine.find(dataType) == m_vdata[i].pristine.end())
+                        {
+                            m_vdata[i].pristine[dataType]             = PristineUnit();
+                            m_vdata[i].pristine[dataType].maxElements = 0;
+                        }
+                        auto& pristine       = m_vdata[i].pristine[dataType];
+                        pristine.maxElements = std::max(
+                            pristine.maxElements, problem.tensors()[i].totalAllocatedElements());
+                        if(m_vdata[i].name.empty())
+                        {
+                            m_vdata[i].name = problem.tensors()[i].getName();
+                        }
+                        else if(m_vdata[i].name != problem.tensors()[i].getName())
+                        {
+                            std::string s = "Input tensor name " + problem.tensors()[i].getName()
+                                            + " not match the pristine name " + m_vdata[i].name
+                                            + " at index " + std::to_string(i) + ".";
+                            throw std::runtime_error(s.c_str());
+                        }
+                    }
+                    auto constants = problem.constants();
+                    for(size_t i = 0; i < constants.size(); i++)
+                    {
+                        if(m_cdata[i].name.empty())
+                        {
+                            m_cdata[i].name = constants[i].name;
+                        }
+                        else if(m_cdata[i].name != constants[i].name)
+                        {
+                            std::string s = "Input constant name " + constants[i].name
+                                            + " not match the pristine name " + m_cdata[i].name
+                                            + " at index " + std::to_string(i) + ".";
+                            throw std::runtime_error(s.c_str());
+                        }
+                    }
 
                     size_t numOfBatch = 1;
                     for(size_t i = 0; i < problem.batchIndices().size(); i++)
                         numOfBatch *= problem.batchSize(i);
                     m_maxBatch = std::max(m_maxBatch, numOfBatch);
                 }
+                else if(auto ptr = dynamic_cast<ContractionProblemGroupedGemm const*>(p.get()))
+                {
+                    const ContractionProblemGroupedGemm& problems = (*ptr);
+
+                    for(auto const& problem : problems.gemms)
+                    {
+                        for(size_t i = 0; i < problem.tensors().size(); i++)
+                        {
+                            auto dataType = problem.tensors()[i].dataType();
+                            if(m_vdata[i].pristine.find(dataType) == m_vdata[i].pristine.end())
+                            {
+                                m_vdata[i].pristine[dataType]             = PristineUnit();
+                                m_vdata[i].pristine[dataType].maxElements = 0;
+                            }
+                            auto& pristine = m_vdata[i].pristine[dataType];
+                            pristine.maxElements += problem.tensors()[i].totalAllocatedElements();
+                            pristine.groupedGemmOffsets.push_back(
+                                problem.tensors()[i].totalAllocatedElements());
+                            if(m_vdata[i].name.empty())
+                            {
+                                m_vdata[i].name = problem.tensors()[i].getName();
+                            }
+                            else if(m_vdata[i].name != problem.tensors()[i].getName())
+                            {
+                                std::string s = "Input tensor name "
+                                                + problem.tensors()[i].getName()
+                                                + " not match the pristine name " + m_vdata[i].name
+                                                + " at index " + std::to_string(i) + ".";
+                                throw std::runtime_error(s.c_str());
+                            }
+                        }
+                        auto constants = problem.constants();
+                        for(size_t i = 0; i < constants.size(); i++)
+                        {
+                            if(m_cdata[i].name.empty())
+                            {
+                                m_cdata[i].name = constants[i].name;
+                            }
+                            else if(m_cdata[i].name != constants[i].name)
+                            {
+                                std::string s = "Input constant name " + constants[i].name
+                                                + " not match the pristine name " + m_cdata[i].name
+                                                + " at index " + std::to_string(i) + ".";
+                                throw std::runtime_error(s.c_str());
+                            }
+                        }
+
+                        size_t numOfBatch = 1;
+                        for(size_t i = 0; i < problem.batchIndices().size(); i++)
+                            numOfBatch *= problem.batchSize(i);
+                        m_maxBatch = std::max(m_maxBatch, numOfBatch);
+                    }
+                }
             }
 
-            m_aMaxElements += m_aBufferOffset;
-            m_bMaxElements += m_bBufferOffset;
-            m_cMaxElements += m_cBufferOffset;
-            m_dMaxElements += m_dBufferOffset;
+            // Init tensors
+            for(size_t i = 0; i < m_vdata.size(); i++)
+            {
+                std::string initName   = "init-" + m_vdata[i].name;
+                std::string offsetName = "offset-" + m_vdata[i].name;
+                std::string typeName   = m_vdata[i].name + "-type";
+                if(args.count(initName))
+                {
+                    m_vdata[i].init = args[initName].as<InitMode>();
+                }
+                else
+                {
+                    m_vdata[i].init = InitMode::Zero;
+                }
+                if(args.count(offsetName))
+                {
+                    m_vdata[i].offset = args[offsetName].as<size_t>();
+                    for(auto p : m_vdata[i].pristine)
+                    {
+                        p.second.maxElements += m_vdata[i].offset;
+                    }
+                }
+                else
+                {
+                    m_vdata[i].offset = 0;
+                }
 
+                for(auto p = m_vdata[i].pristine.begin(); p != m_vdata[i].pristine.end();)
+                {
+                    // Remove pristine with maxElements = 0
+                    if(p->second.maxElements == 0)
+                    {
+                        p = m_vdata[i].pristine.erase(p);
+                        continue;
+                    }
+
+                    size_t dataTypeSize = DataTypeInfo::Get(p->first).elementSize;
+                    if(m_curBoundsCheck == BoundsCheckMode::NaN)
+                    {
+                        p->second.maxElements += 1024;
+                    }
+                    else if(m_curBoundsCheck == BoundsCheckMode::GuardPageFront
+                            || m_curBoundsCheck == BoundsCheckMode::GuardPageBack)
+                    {
+                        unsigned int roundUpSize = pageSize / dataTypeSize;
+                        p->second.maxElements
+                            = RoundUpToMultiple<unsigned int>(p->second.maxElements, roundUpSize);
+                        // No bias page guard
+                    }
+                    ++p;
+                }
+            }
+
+            // Init contants
+            for(size_t i = 0; i < m_cdata.size(); i++)
+            {
+                std::string initName = "init-" + m_cdata[i].name;
+                m_cdata[i].dataType  = DataType::None;
+                // FIXME: Currently hardcoded
+                if(m_cdata[i].name.find("activation") != std::string::npos)
+                {
+                    double value = 0.0;
+                    if(activationAdditionalArgs.empty())
+                    {
+                        value = getValueWithUpperLowerBoundFP<double>(2.0, -2.0);
+                    }
+                    else
+                    {
+                        std::string            name   = m_cdata[i].name;
+                        std::string            prefix = "activation-";
+                        std::string::size_type pos    = name.find(prefix);
+
+                        size_t index = -1;
+                        if(pos != std::string::npos)
+                        {
+                            name.erase(pos, prefix.length());
+                            index = greekToIndex(name);
+                        }
+                        // FIXME: Valgrind error: Invalid read of size 8
+                        const auto& actArgs = activationAdditionalArgs[0];
+                        value = (index >= actArgs.size()) ? actArgs[actArgs.size() - 1]
+                                                          : actArgs[index];
+                    }
+                    m_cdata[i].freeValue = value;
+                    m_cdata[i].init      = InitMode::Free;
+                }
+                else if(args.count(initName))
+                {
+                    m_cdata[i].init = args[initName].as<InitMode>();
+                }
+                else
+                {
+                    m_cdata[i].init = InitMode::Zero;
+                }
+                std::cout << "constant name " << m_cdata[i].name << " init mode "
+                          << ToString(m_cdata[i].init) << std::endl;
+            }
+
+            // Need refactor, gemm a, b, c, d only
+            m_problemDependentData = 0;
+            for(size_t i = 0; i < 4; i++)
+            {
+                m_problemDependentData
+                    = m_problemDependentData || IsProblemDependent(m_vdata[i].init);
+            }
+
+            allocNewCPUInputs();
+            allocNewGPUInputs();
+
+            for(auto& it : m_vdata)
+            {
+                for(auto& p : it.pristine)
+                {
+                    auto  dataTypeSize = DataTypeInfo::Get(p.first).elementSize;
+                    auto& pUnit        = p.second;
+                    // Init and copy valid from cpu to gpu, only copies when != dependent data
+                    if(!m_problemDependentData)
+                    {
+
+                        initArray(p.first, it.init, pUnit.cpuInput.valid.get(), pUnit.maxElements);
+                        HIP_CHECK_EXC(hipMemcpy(pUnit.gpuInput.valid.get(),
+                                                pUnit.cpuInput.valid.get(),
+                                                dataTypeSize * pUnit.maxElements,
+                                                hipMemcpyHostToDevice));
+                    }
+                    // Init and copy bad from cpu to gpu
+                    if(pUnit.gpuInput.bad && pUnit.cpuInput.bad)
+                    {
+                        initArray(p.first,
+                                  InitMode::BadOutput,
+                                  pUnit.cpuInput.bad.get(),
+                                  pUnit.maxElements);
+                        HIP_CHECK_EXC(hipMemcpy(pUnit.gpuInput.bad.get(),
+                                                pUnit.cpuInput.bad.get(),
+                                                dataTypeSize * pUnit.maxElements,
+                                                hipMemcpyHostToDevice));
+                    }
+                }
+            }
+        }
+
+        void DataInitialization::allocNewCPUInputs()
+        {
+            for(auto& it : m_vdata)
+            {
+                for(auto& p : it.pristine)
+                {
+                    auto&  pUnit = p.second;
+                    size_t size  = DataTypeInfo::Get(p.first).elementSize * pUnit.maxElements;
+                    if(size <= 0)
+                    {
+                        throw std::runtime_error("Size not exists.");
+                    }
+
+                    std::stringstream ss;
+                    ss << "Failed to allocate cpu input " << it.name << " type("
+                       << DataTypeInfo::Get(p.first).abbrev
+                       << "), element size: " << DataTypeInfo::Get(p.first).elementSize
+                       << ", element length: " << pUnit.maxElements;
+
+                    if(!pUnit.cpuInput.current)
+                    {
+                        auto ptr = std::shared_ptr<void>(std::malloc(size), std::free);
+                        if(ptr == nullptr)
+                        {
+                            std::stringstream s;
+                            s << "[input]" << ss.str();
+                            throw std::runtime_error(s.str().c_str());
+                        }
+                        pUnit.cpuInput.current = ptr;
+                    }
+                    if(!pUnit.cpuInput.valid)
+                    {
+                        auto ptr = std::shared_ptr<void>(std::malloc(size), std::free);
+                        if(ptr == nullptr)
+                        {
+                            std::stringstream s;
+                            s << "[valid]" << ss.str();
+                            throw std::runtime_error(s.str().c_str());
+                        }
+                        pUnit.cpuInput.valid = ptr;
+                    }
+                    if(!pUnit.cpuInput.bad && m_curBoundsCheck == BoundsCheckMode::NaN)
+                    {
+                        auto ptr = std::shared_ptr<void>(std::malloc(size), std::free);
+                        if(ptr == nullptr)
+                        {
+                            std::stringstream s;
+                            s << "[bad]" << ss.str();
+                            throw std::runtime_error(s.str().c_str());
+                        }
+                        pUnit.cpuInput.bad = ptr;
+                    }
+                }
+            }
+            return;
+        }
+
+        void DataInitialization::allocNewGPUInputs()
+        {
+            std::vector<std::shared_ptr<void>> guardPage;
+            void*                              guardPagePtr;
+            bool enableGuardPage = (m_curBoundsCheck == BoundsCheckMode::GuardPageFront
+                                    || m_curBoundsCheck == BoundsCheckMode::GuardPageBack);
+
+            for(auto& it : m_vdata)
+            {
+                for(auto& p : it.pristine)
+                {
+                    auto&  pUnit = p.second;
+                    size_t size  = DataTypeInfo::Get(p.first).elementSize * pUnit.maxElements;
+
+                    std::stringstream ss;
+                    ss << "Failed to allocate cpu input " << it.name << " type("
+                       << DataTypeInfo::Get(p.first).abbrev
+                       << "), element size: " << DataTypeInfo::Get(p.first).elementSize
+                       << ", element length: " << pUnit.maxElements;
+
+                    if(!pUnit.gpuInput.current)
+                    {
+                        if(enableGuardPage)
+                        {
+                            HIP_CHECK_EXC(hipMalloc(&guardPagePtr, pageSize));
+                            guardPage.push_back(std::shared_ptr<void>(guardPagePtr, hipFree));
+                        }
+                        auto ptr = allocNewGPUBuffer<void>(it.name.c_str(), size);
+                        if(ptr == nullptr)
+                        {
+                            std::stringstream s;
+                            s << "[input]" << ss.str();
+                            throw std::runtime_error(s.str().c_str());
+                        }
+                        pUnit.gpuInput.current = ptr;
+                        std::string n          = "batch" + it.name;
+                        auto        batch_ptr
+                            = allocNewGPUBuffer<void*>(n.c_str(), sizeof(uint8_t*) * m_maxBatch);
+                        if(batch_ptr == nullptr)
+                            throw std::runtime_error("out of batch gpu memory");
+                        pUnit.gpuInput.batch = batch_ptr;
+                    }
+                    if(!pUnit.gpuInput.valid)
+                    {
+                        if(enableGuardPage)
+                        {
+                            HIP_CHECK_EXC(hipMalloc(&guardPagePtr, pageSize));
+                            guardPage.push_back(std::shared_ptr<void>(guardPagePtr, hipFree));
+                        }
+                        auto ptr = allocNewGPUBuffer<void>(it.name.c_str(), size);
+                        if(ptr == nullptr)
+                        {
+                            std::stringstream s;
+                            s << "[valid]" << ss.str();
+                            throw std::runtime_error(s.str().c_str());
+                        }
+                        pUnit.gpuInput.valid = ptr;
+                    }
+                    if(!pUnit.gpuInput.bad)
+                    {
+                        if(enableGuardPage)
+                        {
+                            HIP_CHECK_EXC(hipMalloc(&guardPagePtr, pageSize));
+                            guardPage.push_back(std::shared_ptr<void>(guardPagePtr, hipFree));
+                        }
+                        auto ptr = allocNewGPUBuffer<void>(it.name.c_str(), size);
+                        if(ptr == nullptr)
+                        {
+                            std::stringstream s;
+                            s << "[bad]" << ss.str();
+                            throw std::runtime_error(s.str().c_str());
+                        }
+                        pUnit.gpuInput.bad = ptr;
+                    }
+                }
+            }
+
+            if(!m_workspacePristine)
+            {
+                std::shared_ptr<void> ptr = nullptr;
+                if(m_workspaceSize > 0)
+                {
+                    ptr = allocNewGPUBuffer<void>("ws", m_workspaceSize);
+                    if(ptr == nullptr)
+                        throw std::runtime_error(
+                            "out of gpu memory while allocating workspace size");
+                }
+                m_workspacePristine = ptr;
+            }
+
+            // allocate remaining memory to prevend other user use GPU when benchmarking
+            if(Debug::Instance().getBenchmark())
+            {
+                void*           extra = nullptr;
+                size_t          remainingSize;
+                hipDeviceProp_t hipProps;
+                HIP_CHECK_EXC(hipGetDeviceProperties(&hipProps, 0));
+                remainingSize = size_t(hipProps.totalGlobalMem);
+                printf("Trying to allocate all GPU memory to prevend other user use GPU when "
+                       "benchmarking \n");
+                while(1)
+                {
+                    if(hipSuccess == hipMalloc(&extra, remainingSize))
+                    {
+                        printf("LOCAL: GPU benchmark protect, allocate %zu MB Success \n",
+                               remainingSize / (1024 * 1024));
+                    }
+                    else
+                    {
+                        printf("LOCAL: GPU benchmark protect, allocate %zu MB Fail \n",
+                               remainingSize / (1024 * 1024));
+                    }
+                    remainingSize = remainingSize / 2;
+                    if(remainingSize <= 0)
+                    {
+                        break;
+                    }
+                };
+            }
+            return;
+        }
+
+        void DataInitialization::initializeGPUBatchedInputs(ContractionProblemGemm const& problem)
+        {
+            auto batchIdxs = problem.batchIndices();
+            // FIXME: batch not supported for bias and scaleD
+            for(size_t i = 0; i < 4 /*m_vdata.size()*/; i++)
+            {
+                auto&               pUnit = m_vdata[i].pristine[problem.tensors()[i].dataType()];
+                std::vector<size_t> batchIdx(batchIdxs.size(), 0);
+                ptrdiff_t           padding = 0;
+                for(size_t j = 0; j < batchIdxs.size(); j++)
+                {
+                    switch(i)
+                    {
+                    case 0:
+                        batchIdx[j] = batchIdxs[j].a;
+                        break;
+                    case 1:
+                        batchIdx[j] = batchIdxs[j].b;
+                        break;
+                    case 2:
+                        batchIdx[j] = batchIdxs[j].c;
+                        break;
+                    case 3:
+                        batchIdx[j] = batchIdxs[j].d;
+                        break;
+                    }
+                }
+                if(m_curBoundsCheck == BoundsCheckMode::NaN)
+                {
+                    padding
+                        = (pUnit.maxElements - problem.tensors()[i].totalAllocatedElements()) / 2;
+                }
+                else if(m_curBoundsCheck == BoundsCheckMode::GuardPageBack)
+                {
+                    padding = pUnit.maxElements - problem.tensors()[i].totalAllocatedElements();
+                }
+                padding *= DataTypeInfo::Get(problem.tensors()[i].dataType()).elementSize;
+                uint8_t* offset = (uint8_t*)pUnit.gpuInput.current.get();
+                initGPUBatchedInput((void*)(offset + padding),
+                                    pUnit.gpuInput.batch.get(),
+                                    problem.tensors()[i],
+                                    batchIdx);
+            }
+        }
+
+        void DataInitialization::initializeCPUInputs(ContractionProblemGemm const& problem)
+        {
+            auto& tensors = problem.tensors();
+            for(size_t i = 0; i < m_vdata.size(); i++)
+            {
+                if(m_problemDependentData)
+                {
+                    // Should this m_cEqualsD set in ContractionProblem or boost args?
+                    for(auto& p : m_vdata[i].pristine)
+                    {
+                        // Only update when the descriptor changed
+                        if(p.second.initDescriptor != tensors[i])
+                        {
+                            p.second.initDescriptor = tensors[i];
+                            initArray(p.first,
+                                      m_vdata[i].init,
+                                      p.second.cpuInput.valid.get(),
+                                      tensors[i]);
+                        }
+                    }
+                }
+            }
+        }
+
+        void DataInitialization::initializeConstantInputs(ContractionProblemGemm const& problem)
+        {
+            // Update constants if needed
+            for(size_t i = 0; i < problem.constants().size(); i++)
+            {
+                auto& prop = m_cdata[i];
+                if(prop.dataType != problem.constants()[i].dataType)
+                {
+                    prop.dataType = problem.constants()[i].dataType;
+                    switch(prop.dataType)
+                    {
+                    case DataType::Float:
+                        prop.value = getValue<float>(prop.init, prop.freeValue);
+                        break;
+                    case DataType::Double:
+                        prop.value = getValue<double>(prop.init, prop.freeValue);
+                        break;
+                    case DataType::Half:
+                        prop.value = getValue<Half>(prop.init, prop.freeValue);
+                        break;
+                    case DataType::Int32:
+                        prop.value = getValue<int32_t>(prop.init, prop.freeValue);
+                        break;
+                    case DataType::BFloat16:
+                        prop.value = getValue<BFloat16>(prop.init, prop.freeValue);
+                        break;
+                    case DataType::Int8:
+                        prop.value = getValue<int8_t>(prop.init, prop.freeValue);
+                        break;
+                    case DataType::ComplexFloat:
+                        prop.value = getValue<std::complex<float>>(prop.init, prop.freeValue);
+                        break;
+                    case DataType::ComplexDouble:
+                        prop.value = getValue<std::complex<double>>(prop.init, prop.freeValue);
+                        break;
+                    case DataType::Int8x4:
+                        prop.value = getValue<Int8x4>(prop.init, prop.freeValue);
+                        break;
+                    case DataType::Count:;
+                    }
+                }
+                if(Debug::Instance().printTensorInfo() && prop.dataType != DataType::None)
+                    std::cout << "Constant " << m_cdata[i].name << ". Type "
+                              << DataTypeInfo::Get(prop.dataType).abbrev << std::endl;
+            }
+            return;
+        }
+
+        void DataInitialization::copyInputs(std::vector<void*>&               ptrs,
+                                            std::vector<void**>&              batchPtrs,
+                                            std::vector<size_t>&              maxElements,
+                                            std::vector<std::vector<size_t>>& offsets,
+                                            ContractionProblemGemm const&     problem,
+                                            hipMemcpyKind                     kind)
+        {
+            ptrs.clear();
+            batchPtrs.clear();
+            maxElements.clear();
             if(m_curBoundsCheck == BoundsCheckMode::NaN)
             {
-                m_aMaxElements += 1024;
-                m_bMaxElements += 1024;
-                m_cMaxElements += 1024;
-                m_dMaxElements += 1024;
+                for(size_t i = 0; i < m_vdata.size(); i++)
+                {
+                    void* ptr  = nullptr;
+                    auto& desc = problem.tensors()[i];
+                    auto  it   = m_vdata[i].pristine.find(desc.dataType());
+                    if(it != m_vdata[i].pristine.end())
+                    {
+                        auto& p = it->second;
+                        if(kind == hipMemcpyHostToHost)
+                            ptr = copyBadInputBuffers(desc,
+                                                      p.cpuInput.current.get(),
+                                                      p.cpuInput.valid.get(),
+                                                      p.cpuInput.bad.get(),
+                                                      p.maxElements,
+                                                      kind);
+                        else if(kind == hipMemcpyHostToDevice)
+                            ptr = copyBadInputBuffers(desc,
+                                                      p.gpuInput.current.get(),
+                                                      p.cpuInput.valid.get(),
+                                                      p.cpuInput.bad.get(),
+                                                      p.maxElements,
+                                                      kind);
+                        else if(kind == hipMemcpyDeviceToDevice)
+                            ptr = copyBadInputBuffers(desc,
+                                                      p.gpuInput.current.get(),
+                                                      p.gpuInput.valid.get(),
+                                                      p.gpuInput.bad.get(),
+                                                      p.maxElements,
+                                                      kind);
+                        ptrs.push_back(ptr);
+                        batchPtrs.push_back(p.getInputByKind(kind).batch.get());
+                        maxElements.push_back(p.maxElements);
+                        offsets.push_back(p.groupedGemmOffsets);
+                    }
+                    else
+                    {
+                        ptrs.push_back(nullptr);
+                        batchPtrs.push_back(nullptr);
+                        maxElements.push_back(0);
+                        offsets.push_back(std::vector<size_t>());
+                    }
+                }
             }
-            else if(m_curBoundsCheck == BoundsCheckMode::GuardPageFront
-                    || m_curBoundsCheck == BoundsCheckMode::GuardPageBack)
+            else if(m_curBoundsCheck == BoundsCheckMode::GuardPageBack)
             {
-                unsigned int aRoundUpSize
-                    = pageSize / DataTypeInfo::Get(args["a-type"].as<DataType>()).elementSize;
-                unsigned int bRoundUpSize
-                    = pageSize / DataTypeInfo::Get(args["b-type"].as<DataType>()).elementSize;
-                unsigned int cRoundUpSize
-                    = pageSize / DataTypeInfo::Get(args["c-type"].as<DataType>()).elementSize;
-                unsigned int dRoundUpSize
-                    = pageSize / DataTypeInfo::Get(args["d-type"].as<DataType>()).elementSize;
-
-                m_aMaxElements = RoundUpToMultiple<unsigned int>(m_aMaxElements, aRoundUpSize);
-                m_bMaxElements = RoundUpToMultiple<unsigned int>(m_bMaxElements, bRoundUpSize);
-                m_cMaxElements = RoundUpToMultiple<unsigned int>(m_cMaxElements, cRoundUpSize);
-                m_dMaxElements = RoundUpToMultiple<unsigned int>(m_dMaxElements, dRoundUpSize);
-                // No bias page guard
+                for(size_t i = 0; i < m_vdata.size(); i++)
+                {
+                    void* ptr  = nullptr;
+                    auto& desc = problem.tensors()[i];
+                    auto  it   = m_vdata[i].pristine.find(desc.dataType());
+                    if(it != m_vdata[i].pristine.end())
+                    {
+                        auto& p = it->second;
+                        if(kind == hipMemcpyHostToHost)
+                            ptr = copyNaNInputBuffers(desc,
+                                                      p.cpuInput.current.get(),
+                                                      p.cpuInput.valid.get(),
+                                                      p.maxElements,
+                                                      kind);
+                        else if(kind == hipMemcpyHostToDevice)
+                            ptr = copyNaNInputBuffers(desc,
+                                                      p.gpuInput.current.get(),
+                                                      p.cpuInput.valid.get(),
+                                                      p.maxElements,
+                                                      kind);
+                        else if(kind == hipMemcpyDeviceToDevice)
+                            ptr = copyNaNInputBuffers(desc,
+                                                      p.gpuInput.current.get(),
+                                                      p.gpuInput.valid.get(),
+                                                      p.maxElements,
+                                                      kind);
+                        ptrs.push_back(ptr);
+                        batchPtrs.push_back(p.getInputByKind(kind).batch.get());
+                        maxElements.push_back(p.maxElements);
+                        offsets.push_back(p.groupedGemmOffsets);
+                    }
+                    else
+                    {
+                        ptrs.push_back(nullptr);
+                        batchPtrs.push_back(nullptr);
+                        maxElements.push_back(0);
+                        offsets.push_back(std::vector<size_t>());
+                    }
+                }
             }
-            m_problemDependentData = IsProblemDependent(m_aInit) || IsProblemDependent(m_bInit)
-                                     || IsProblemDependent(m_cInit) || IsProblemDependent(m_dInit);
+            else
+            {
+                for(size_t i = 0; i < m_vdata.size(); i++)
+                {
+                    void* ptr  = nullptr;
+                    auto& desc = problem.tensors()[i];
+                    auto  it   = m_vdata[i].pristine.find(desc.dataType());
+                    if(it != m_vdata[i].pristine.end())
+                    {
+                        auto& p = it->second;
+                        if(kind == hipMemcpyHostToHost)
+                            ptr = copyInputBuffers(desc,
+                                                   p.cpuInput.current.get(),
+                                                   p.cpuInput.valid.get(),
+                                                   p.maxElements,
+                                                   kind);
+                        else if(kind == hipMemcpyHostToDevice)
+                            ptr = copyInputBuffers(desc,
+                                                   p.gpuInput.current.get(),
+                                                   p.cpuInput.valid.get(),
+                                                   p.maxElements,
+                                                   kind);
+                        else if(kind == hipMemcpyDeviceToDevice)
+                            ptr = copyInputBuffers(desc,
+                                                   p.gpuInput.current.get(),
+                                                   p.gpuInput.valid.get(),
+                                                   p.maxElements,
+                                                   kind);
+                        if(ptr == nullptr)
+                        {
+                            std::runtime_error("output ptr is null when copy input");
+                        }
+                        ptrs.push_back(ptr);
+                        batchPtrs.push_back(p.getInputByKind(kind).batch.get());
+                        maxElements.push_back(p.maxElements);
+                        offsets.push_back(p.groupedGemmOffsets);
+                    }
+                    else
+                    {
+                        ptrs.push_back(nullptr);
+                        batchPtrs.push_back(nullptr);
+                        maxElements.push_back(0);
+                        offsets.push_back(std::vector<size_t>());
+                    }
+                }
+            }
+        }
 
-            if(args.count("activation-type"))
-                m_activationType = args["activation-type"].as<ActivationType>();
-            if(args.count("activation-hpa"))
-                m_activationHPA = args["activation-hpa"].as<bool>();
-            if(args.count("activation-additional-args"))
-                m_activationAdditionalArgs
-                    = args["activation-additional-args"].as<std::vector<std::vector<double>>>();
-            if(args.count("use-bias"))
-                m_useBias = args["use-bias"].as<bool>();
-            if(args.count("use-scaleD"))
-                m_useScaleD = args["use-scaleD"].as<bool>();
+        void DataInitialization::resetOutput(std::vector<void*>&               ptrs,
+                                             std::vector<void**>&              batchPtrs,
+                                             std::vector<size_t>&              maxElements,
+                                             std::vector<std::vector<size_t>>& offsets,
+                                             ContractionProblemGemm const&     problem,
+                                             hipMemcpyKind                     kind)
+        {
+            for(size_t i = 0; i < m_vdata.size(); i++)
+            {
+                void* ptr  = nullptr;
+                auto& desc = problem.tensors()[i];
+                if(!desc.isOutput()) // Need init first
+                    continue;
+                auto it = m_vdata[i].pristine.find(desc.dataType());
+                if(it != m_vdata[i].pristine.end())
+                {
+                    auto& p = it->second;
+                    if(kind == hipMemcpyHostToHost)
+                        ptr = copyInputBuffers(desc,
+                                               p.cpuInput.current.get(),
+                                               p.cpuInput.valid.get(),
+                                               p.maxElements,
+                                               kind);
+                    else if(kind == hipMemcpyHostToDevice)
+                        ptr = copyInputBuffers(desc,
+                                               p.gpuInput.current.get(),
+                                               p.cpuInput.valid.get(),
+                                               p.maxElements,
+                                               kind);
+                    else if(kind == hipMemcpyDeviceToDevice)
+                        ptr = copyInputBuffers(desc,
+                                               p.gpuInput.current.get(),
+                                               p.gpuInput.valid.get(),
+                                               p.maxElements,
+                                               kind);
+                    if(ptr == nullptr)
+                    {
+                        std::runtime_error("output ptr is null when copy input");
+                    }
+                    ptrs[i]        = ptr;
+                    batchPtrs[i]   = p.getInputByKind(kind).batch.get();
+                    maxElements[i] = p.maxElements;
+                    offsets[i]     = p.groupedGemmOffsets;
+                }
+                else
+                {
+                    ptrs[i]        = nullptr;
+                    batchPtrs[i]   = nullptr;
+                    maxElements[i] = 0;
+                    offsets[i].clear();
+                }
+            }
+        }
+
+        void DataInitialization::copyValidToGPUBuffer(ContractionProblemGemm const& problem)
+        {
+            for(size_t i = 0; i < m_vdata.size(); i++)
+            {
+                void* ptr  = nullptr;
+                auto& desc = problem.tensors()[i];
+                auto& p    = m_vdata[i].pristine[desc.dataType()];
+                ptr        = copyInputBuffers(desc,
+                                       p.gpuInput.valid.get(),
+                                       p.cpuInput.valid.get(),
+                                       p.maxElements,
+                                       hipMemcpyHostToDevice);
+                if(ptr == nullptr)
+                    std::__throw_runtime_error("error");
+            }
+        }
+
+        void DataInitialization::setGroupedGemm(ContractionProblemGemm const&       problem,
+                                                std::shared_ptr<ContractionInputs>& inputs)
+        {
+            if(m_groupedOffsets[0].empty())
+                return;
+
+            auto aBuffer      = (uint8_t*)inputs->a;
+            auto bBuffer      = (uint8_t*)inputs->b;
+            auto cBuffer      = (uint8_t*)inputs->c;
+            auto dBuffer      = (uint8_t*)inputs->d;
+            auto biasBuffer   = (uint8_t*)inputs->bias;
+            auto scaleDBuffer = (uint8_t*)inputs->scaleD;
+            auto wsBuffer     = inputs->ws;
+            // offsets
+            size_t biasOffset   = 0;
+            size_t scaleDOffset = 0;
+            // Contants
+            auto alpha          = inputs->alpha;
+            auto beta           = inputs->beta;
+            auto activationArgs = inputs->activationArgs;
+            for(int idx = 0; idx < m_groupedOffsets[0].size(); idx++)
+            {
+                inputs->groupedA.push_back(aBuffer);
+                inputs->groupedB.push_back(bBuffer);
+                inputs->groupedC.push_back(cBuffer);
+                inputs->groupedD.push_back(dBuffer);
+
+                inputs->groupedWs.push_back(wsBuffer);
+                inputs->groupedAlpha.push_back(inputs->alpha);
+                inputs->groupedBeta.push_back(inputs->beta);
+                inputs->groupedActivationArgs.push_back(activationArgs);
+
+                aBuffer += m_groupedOffsets[ContractionProblemGemm::TENSOR::A][idx]
+                           * problem.a().elementBytes();
+                bBuffer += m_groupedOffsets[ContractionProblemGemm::TENSOR::B][idx]
+                           * problem.b().elementBytes();
+                cBuffer += m_groupedOffsets[ContractionProblemGemm::TENSOR::C][idx]
+                           * problem.c().elementBytes();
+                dBuffer += m_groupedOffsets[ContractionProblemGemm::TENSOR::D][idx]
+                           * problem.d().elementBytes();
+                if(inputs->bias != nullptr)
+                {
+                    inputs->groupedBias.push_back(biasBuffer);
+                    biasBuffer
+                        += m_groupedOffsets[ContractionProblemGemm::TENSOR::BIAS][idx]
+                           * problem.tensors()[ContractionProblemGemm::TENSOR::BIAS].elementBytes();
+                }
+                if(inputs->scaleD != nullptr)
+                {
+                    inputs->groupedScaleD.push_back(scaleDBuffer);
+                    scaleDBuffer += m_groupedOffsets[ContractionProblemGemm::TENSOR::SCALED][idx]
+                                    * problem.tensors()[ContractionProblemGemm::TENSOR::SCALED]
+                                          .elementBytes();
+                }
+                std::vector<size_t> elements;
+                for(size_t j = 0; j < m_groupedOffsets.size(); j++)
+                {
+
+                    if(m_groupedOffsets[j].size() != 0)
+                    {
+                        elements.push_back(m_groupedOffsets[j][idx]);
+                    }
+                    else
+                    {
+                        elements.push_back(0);
+                    }
+                }
+                inputs->groupedMaxElements.push_back(elements);
+            }
+        }
+
+        // For GEMM only
+        std::shared_ptr<ContractionInputs>
+            DataInitialization::ConvertToContractionInputs(ContractionProblemGemm const& problem,
+                                                           bool                          isGPU)
+        {
+            // 0 for cpu, 1 for gpu
+            auto inputs = std::make_shared<ContractionInputs>();
+            if(!isGPU)
+            {
+                inputs->a      = m_cpuPtrs[ContractionProblemGemm::TENSOR::A];
+                inputs->b      = m_cpuPtrs[ContractionProblemGemm::TENSOR::B];
+                inputs->c      = m_cpuPtrs[ContractionProblemGemm::TENSOR::C];
+                inputs->d      = m_cpuPtrs[ContractionProblemGemm::TENSOR::D];
+                inputs->bias   = m_cpuPtrs[ContractionProblemGemm::TENSOR::BIAS];
+                inputs->scaleD = m_cpuPtrs[ContractionProblemGemm::TENSOR::SCALED];
+
+                inputs->batchA = nullptr;
+                inputs->batchB = nullptr;
+                inputs->batchC = nullptr;
+                inputs->batchD = nullptr;
+
+                inputs->gpu = false;
+            }
+            else
+            {
+                inputs->a      = m_gpuPtrs[ContractionProblemGemm::TENSOR::A];
+                inputs->b      = m_gpuPtrs[ContractionProblemGemm::TENSOR::B];
+                inputs->c      = m_gpuPtrs[ContractionProblemGemm::TENSOR::C];
+                inputs->d      = m_gpuPtrs[ContractionProblemGemm::TENSOR::D];
+                inputs->bias   = m_gpuPtrs[ContractionProblemGemm::TENSOR::BIAS];
+                inputs->scaleD = m_gpuPtrs[ContractionProblemGemm::TENSOR::SCALED];
+
+                inputs->batchA = m_gpuBatchPtrs[ContractionProblemGemm::TENSOR::A];
+                inputs->batchB = m_gpuBatchPtrs[ContractionProblemGemm::TENSOR::B];
+                inputs->batchC = m_gpuBatchPtrs[ContractionProblemGemm::TENSOR::C];
+                inputs->batchD = m_gpuBatchPtrs[ContractionProblemGemm::TENSOR::D];
+
+                inputs->gpu = true;
+            }
+            inputs->ws             = m_workspacePristine.get();
+            inputs->alpha          = m_cdata[ContractionProblemGemm::CONST::ALPHA].value;
+            inputs->beta           = m_cdata[ContractionProblemGemm::CONST::BETA].value;
+            inputs->activationArgs = {m_cdata[ContractionProblemGemm::CONST::ACTALPHA].value,
+                                      m_cdata[ContractionProblemGemm::CONST::ACTBETA].value};
+
+            inputs->maxElements = m_maxElements;
+
+            setGroupedGemm(problem, inputs);
+            return inputs;
         }
 
         DataInitialization::~DataInitialization() {}
