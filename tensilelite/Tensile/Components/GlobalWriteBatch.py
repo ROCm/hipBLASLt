@@ -610,7 +610,7 @@ class GlobalWriteBatchWriter:
       isActivationInsertAfter = False
       if self.kernel["ActivationFuncCall"]:
         if (activationCDataType == self.kernel["ProblemType"]["DestDataType"]) and \
-          (activationCDataType != self.kernel["ProblemType"]["ComputeDataType"]):
+          (activationCDataType != self.kernel["ProblemType"]["ComputeDataType"]) and (self.kernel["ProblemType"]["UseScaleD"] == False):
           isActivationInsertAfter = True
         activationModule = Module("ActivationFuncCall")
         if (not mergeActFuncCall) and (not isActivationInsertAfter):
@@ -620,7 +620,7 @@ class GlobalWriteBatchWriter:
           src=sgpr(self.activationSetPCStruct.sgprOffsetActivation, 2)))
         activationModule.appendModule (copyData(activationCDataType, self.ss.elementSumIdx[elementIdx], self.gwvw, \
           self.activationSetPCStruct.vgprActCopy, 1))
-      elif self.parentWriter.insertActivationAfterPacked(self.kernel, self.activationTypeStr):
+      elif self.parentWriter.insertActivationAfterPacked(self.kernel, self.activationTypeStr) and (self.kernel["ProblemType"]["UseScaleD"] == False):
         isActivationInsertAfter = True
         activationModule = self.parentWriter.getActivationDestDataType(self.kernel, self.activation, \
           self.activationTypeStr, self.gwvw, self.ss.elementSumIdx[elementIdx] , self.ss.elementSumIdx[elementIdx], self.tmpVgpr, self.tmpSgpr)
@@ -726,10 +726,6 @@ class GlobalWriteBatchWriter:
         module.add(convertModule)
         module.add(packModule)
         module.add(activationModule)
-        module.add(scaleDModule)
-        if self.kernel["ProblemType"]["UseScaleD"] and (self.kernel["GlobalSplitU"] == 1):
-          module.add(convertModule)
-          module.add(packModule)
       else:
         module.add(activationModule)
         module.add(scaleDModule)
