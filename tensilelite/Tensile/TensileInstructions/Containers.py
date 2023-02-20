@@ -1,6 +1,6 @@
 ################################################################################
 #
-# Copyright (C) 2022 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -199,13 +199,36 @@ class VOP3PModifiers(Container):
             kStr += " op_sel_hi:" + str(self.op_sel_hi).replace(" ", "")
         return kStr
 
-class RegName(Container):
-    def __init__(self, name, *args):
+class EXEC(Container):
+    def __init__(self, setHi=False) -> None:
         super().__init__()
+        self.setHi = setHi
+
+    def __str__(self) -> str:
+        if self.kernel.wavefrontSize == 64:
+            return "exec"
+        else:
+            return "exec_lo"
+
+class VCC(Container):
+    def __init__(self, setHi=False) -> None:
+        super().__init__()
+        self.setHi = setHi
+
+    def __str__(self) -> str:
+        if self.kernel.wavefrontSize == 64:
+            return "vcc"
+        else:
+            return "vcc_hi" if self.setHi else "vcc_lo"
+
+########################################
+# The class below does not inherit Item
+########################################
+class RegName:
+    __slots__ = ('name', 'offsets')
+    def __init__(self, name, offsets: List[int]):
         self.name    = name
-        self.offsets = []
-        for offset in args:
-            self.offsets.append(offset)
+        self.offsets = offsets
 
     def getTotalOffsets(self):
         total = 0
@@ -213,6 +236,14 @@ class RegName(Container):
             for i in self.offsets:
                 total += i
         return total
+
+    def __deepcopy__(self, memo):
+        cls = self.__class__
+        result = cls.__new__(cls)
+        memo[id(self)] = result
+        result.name    = self.name
+        result.offsets = deepcopy(self.offsets)
+        return result
 
     def __key(self) -> tuple:
         return (self.name, str(self.offsets))
@@ -232,12 +263,12 @@ class RegName(Container):
                 ss += "+%u"%i
         return ss
 
-class RegisterContainer(Container):
+class RegisterContainer:
+    __slots__ = ('regType', 'regName', 'regIdx', 'regNum', 'isInlineAsm', 'isMinus')
     def __init__(self, regType, regName, regIdx, regNum) -> None:
-        super().__init__()
         self.regType = regType
-        self.regIdx = regIdx
-        self.regNum = int(math.ceil(regNum))
+        self.regIdx  = regIdx
+        self.regNum  = int(math.ceil(regNum))
         self.regName = regName
 
         self.isInlineAsm = False
@@ -291,6 +322,18 @@ class RegisterContainer(Container):
         r2 = RegisterContainer(self.regType, regName2, regIdx2, 1)
         return r1, r2
 
+    def __deepcopy__(self, memo):
+        cls = self.__class__
+        result = cls.__new__(cls)
+        memo[id(self)] = result
+        result.regType     = self.regType
+        result.regIdx      = self.regIdx
+        result.regNum      = self.regNum
+        result.regName     = deepcopy(self.regName)
+        result.isInlineAsm = self.isInlineAsm
+        result.isMinus     = self.isMinus
+        return result
+
     def __eq__(self, o) -> bool:
         if not isinstance(o, RegisterContainer):
             return False
@@ -323,14 +366,18 @@ class RegisterContainer(Container):
                 return "%s%s[%u:%u]" % (minusStr, self.regType, self.regIdx, self.regIdx+self.regNum-1)
 
 class HolderContainer(RegisterContainer):
+    __slots__ = ('regType', 'regName', 'regIdx', 'regNum', 'isInlineAsm', 'isMinus', \
+        'holderName', 'holderIdx', 'holderType')
     def __init__(self, regType, holderName, holderIdx, regNum) -> None:
         super().__init__(regType, None, None, regNum)
         if holderIdx != None:
             assert(holderName == None)
             self.holderIdx    = holderIdx
+            self.holderName   = None
             self.holderType   = 0
         else:
             assert(holderIdx == None)
+            self.holderIdx    = None
             self.holderName   = holderName
             self.holderType   = 1
 
@@ -362,24 +409,9 @@ class HolderContainer(RegisterContainer):
         r2 = HolderContainer(self.regType, holderName2, holderIdx2, 1)
         return r1, r2
 
-class EXEC(Container):
-    def __init__(self, setHi=False) -> None:
-        super().__init__()
-        self.setHi = setHi
-
-    def __str__(self) -> str:
-        if self.kernel.wavefrontSize == 64:
-            return "exec"
-        else:
-            return "exec_lo"
-
-class VCC(Container):
-    def __init__(self, setHi=False) -> None:
-        super().__init__()
-        self.setHi = setHi
-
-    def __str__(self) -> str:
-        if self.kernel.wavefrontSize == 64:
-            return "vcc"
-        else:
-            return "vcc_hi" if self.setHi else "vcc_lo"
+    def __deepcopy__(self, memo):
+        result = super().__deepcopy__(memo)
+        result.holderIdx  = self.holderIdx
+        result.holderName = self.holderName
+        result.holderType = self.holderType
+        return result

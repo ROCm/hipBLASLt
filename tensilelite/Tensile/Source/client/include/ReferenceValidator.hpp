@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022 Advanced Micro Devices, Inc. All rights reserved.
+ * Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -53,8 +53,9 @@ namespace Tensile
             virtual void preBenchmarkRun() override;
             virtual void postBenchmarkRun() override;
 
-            virtual void preProblem(ContractionProblem const& problem) override;
-            virtual void preProblemGroupedGemm(std::vector<ContractionProblem> const& problems) override;
+            virtual void preProblem(ContractionProblemGemm const& problem) override;
+            virtual void
+                preProblemGroupedGemm(ContractionProblemGroupedGemm const& problems) override;
             virtual void postProblem() override;
 
             virtual void preSolution(ContractionSolution const& solution) override;
@@ -94,24 +95,22 @@ namespace Tensile
             {
             }
 
-            /**
-   * Helper which does dynamic_cast of inputs and m_referenceInputs
-   * to ManagedInputs and then calls ValidateTyped().
-   */
-            template <typename ManagedInputs>
-            bool validateSolutionCast(std::shared_ptr<ContractionInputs> inputs);
+            bool validate(ContractionInputs const& reference, ContractionInputs const& result);
 
-            template <typename TypedInputs>
-            bool validateTyped(TypedInputs const& reference, TypedInputs const& result);
+            bool validateTyped(TensorDescriptor const& tensor,
+                               void const*             refPtr,
+                               void const*             resPtr,
+                               size_t                  maxElements,
+                               bool                    isgpu);
 
-            template <typename ManagedInputs, typename CompareValid, typename CompareInvalid>
-            bool checkResultsTyped(ManagedInputs const& reference,
-                                   ManagedInputs const& result,
-                                   CompareValid&        compareValid,
-                                   CompareInvalid&      compareInvalid);
+            template <typename ValidType>
+            bool checkResultsTyped(TensorDescriptor const& tensor,
+                                   ValidType const*        reference,
+                                   ValidType const*        result,
+                                   size_t                  maxElement,
+                                   bool                    isgpu);
 
-            template <typename TypedInputs>
-            void printTensorsTyped(TypedInputs const& reference, TypedInputs const& result);
+            void printTensors(ContractionInputs const& reference, ContractionInputs const& result);
 
             virtual void finalizeReport() override;
 
@@ -126,9 +125,9 @@ namespace Tensile
             size_t                   m_cpuResultBufferSize = 0;
             std::shared_ptr<uint8_t> m_cpuResultBuffer;
 
-            ContractionProblem m_problem;
-            std::vector<ContractionProblem> m_problems;
-            bool m_groupedGemm = false;
+            ContractionProblemGemm        m_problem;
+            ContractionProblemGroupedGemm m_problems;
+            bool                          m_groupedGemm = false;
 
             bool m_enabled;
 
@@ -146,10 +145,10 @@ namespace Tensile
 
             int m_numBenchmarkRuns = 0;
 
-            bool   m_validatedSolution               = false;
-            bool   m_errorInSolution                 = false;
-            bool   m_error                           = false;
-            size_t m_errorsReported                  = 0;
+            bool   m_validatedSolution = false;
+            bool   m_errorInSolution   = false;
+            bool   m_error             = false;
+            size_t m_errorsReported    = 0;
 
             bool validateSolution(std::shared_ptr<ContractionInputs> inputs);
         };

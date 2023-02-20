@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022 Advanced Micro Devices, Inc. All rights reserved.
+ * Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -68,8 +68,8 @@ namespace Tensile
    **********/
 
             /// Called at the beginning of each problem.
-            virtual void preProblem(ContractionProblem const& problem) = 0;
-            virtual void preProblemGroupedGemm(std::vector<ContractionProblem> const& problems){};
+            virtual void preProblem(ContractionProblemGemm const& problem) = 0;
+            virtual void preProblemGroupedGemm(ContractionProblemGroupedGemm const& problems){};
 
             /// Called at end of each problem.
             virtual void postProblem() = 0;

@@ -27,7 +27,6 @@
 #pragma once
 
 #include <Tensile/Activation.hpp>
-#include <Tensile/ArithmeticUnitTypes.hpp>
 #include <Tensile/ContractionProblem.hpp>
 #include <Tensile/KernelLanguageTypes.hpp>
 #include <Tensile/Tensile.hpp>
@@ -49,27 +48,16 @@ namespace Tensile
             ClientProblemFactory(po::variables_map const& args);
             ~ClientProblemFactory();
 
-            ClientProblemFactory(ContractionProblem const& problem)
-                : m_problems({problem})
-            {
-            }
-
-            template <typename Iterator>
-            ClientProblemFactory(Iterator begin, Iterator end)
-                : m_problems(begin, end)
-            {
-            }
-
-            std::vector<ContractionProblem> const& problems() const;
-
-            std::vector<ContractionProblem> createProblems();
+            std::vector<std::shared_ptr<ContractionProblem>> const& problems() const;
 
         private:
-            std::vector<ContractionProblem> m_problems;
+            void createProblems(std::vector<ContractionProblemGemm>& rv);
 
-            ContractionProblem::FreeIndices  m_freeIndices;
-            ContractionProblem::BatchIndices m_batchIndices;
-            ContractionProblem::BoundIndices m_boundIndices;
+            std::vector<std::shared_ptr<ContractionProblem>> m_problems;
+
+            ContractionProblemGemm::FreeIndices  m_freeIndices;
+            ContractionProblemGemm::BatchIndices m_batchIndices;
+            ContractionProblemGemm::BoundIndices m_boundIndices;
 
             DataType                    m_aType;
             DataType                    m_bType;
@@ -84,7 +72,6 @@ namespace Tensile
             bool                        m_cEqualsD;
             bool                        m_useBias;
             bool                        m_useScaleD;
-            ArithmeticUnit              m_arithmeticUnit;
             KernelLanguage              m_kernelLanguage;
             PerformanceMetric           m_performanceMetric;
             bool                        m_fp16AltImpl;
@@ -99,11 +86,6 @@ namespace Tensile
             std::vector<std::vector<size_t>> m_bStrides;
             std::vector<std::vector<size_t>> m_cStrides;
             std::vector<std::vector<size_t>> m_dStrides;
-
-            TensorOps m_aOps;
-            TensorOps m_bOps;
-            TensorOps m_cOps;
-            TensorOps m_dOps;
 
             size_t m_aOffset;
             size_t m_bOffset;
