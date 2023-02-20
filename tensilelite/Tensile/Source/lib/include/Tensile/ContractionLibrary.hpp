@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022 Advanced Micro Devices, Inc. All rights reserved.
+ * Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -38,17 +38,20 @@
 
 namespace Tensile
 {
-    using ContractionLibrary       = SolutionLibrary<ContractionProblem>;
-    using MasterContractionLibrary = MasterSolutionLibrary<ContractionProblem, ContractionSolution>;
-    using SingleContractionLibrary = SingleSolutionLibrary<ContractionProblem, ContractionSolution>;
+    using ContractionLibrary = SolutionLibrary<ContractionProblemGemm>;
+    using MasterContractionLibrary
+        = MasterSolutionLibrary<ContractionProblemGemm, ContractionSolution>;
+    using SingleContractionLibrary
+        = SingleSolutionLibrary<ContractionProblemGemm, ContractionSolution>;
     using ContractionHardwareSelectionLibrary
-        = HardwareSelectionLibrary<ContractionProblem, ContractionSolution>;
+        = HardwareSelectionLibrary<ContractionProblemGemm, ContractionSolution>;
     using ContractionProblemSelectionLibrary
-        = ProblemSelectionLibrary<ContractionProblem, ContractionSolution>;
+        = ProblemSelectionLibrary<ContractionProblemGemm, ContractionSolution>;
     using ContractionProblemMatchingLibrary
-        = ProblemMatchingLibrary<ContractionProblem, ContractionSolution>;
-    using ContractionProblemMapLibrary = ProblemMapLibrary<ContractionProblem, ContractionSolution>;
-    using ContractionProblemPredicate  = ProblemPredicate<ContractionProblem>;
+        = ProblemMatchingLibrary<ContractionProblemGemm, ContractionSolution>;
+    using ContractionProblemMapLibrary
+        = ProblemMapLibrary<ContractionProblemGemm, ContractionSolution>;
+    using ContractionProblemPredicate = ProblemPredicate<ContractionProblemGemm>;
     using ContractionGranularitySelectionLibrary
-        = GranularitySelectionLibrary<ContractionProblem, ContractionSolution>;
+        = GranularitySelectionLibrary<ContractionProblemGemm, ContractionSolution>;
 } // namespace Tensile

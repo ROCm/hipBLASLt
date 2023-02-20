@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022 Advanced Micro Devices, Inc. All rights reserved.
+ * Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -25,6 +25,7 @@
  *******************************************************************************/
 
 #include "PerformanceReporter.hpp"
+#include "Tensile/hip/HipUtils.hpp"
 
 #include <cmath>
 #include <cstddef>
@@ -55,15 +56,15 @@ namespace Tensile
                                                  double l2ReadBwMultiplier,
                                                  double readEff)
         {
-            hipGetDeviceProperties(&m_props, deviceIndex);
+            HIP_CHECK_EXC(hipGetDeviceProperties(&m_props, deviceIndex));
 #if HIP_VERSION >= 50220730
             int hip_version;
-            hipRuntimeGetVersion(&hip_version);
+            HIP_CHECK_EXC(hipRuntimeGetVersion(&hip_version));
             if(hip_version >= 50220730)
             {
-                hipDeviceGetAttribute(&m_props.multiProcessorCount,
-                                      hipDeviceAttributePhysicalMultiProcessorCount,
-                                      deviceIndex);
+                HIP_CHECK_EXC(hipDeviceGetAttribute(&m_props.multiProcessorCount,
+                                                    hipDeviceAttributePhysicalMultiProcessorCount,
+                                                    deviceIndex));
             }
 #endif
             setNumCUs();
@@ -191,7 +192,7 @@ namespace Tensile
                                                     std::vector<size_t> const& value)
         {
         }
-        void PerformanceReporter::preProblem(ContractionProblem const& problem) {}
+        void PerformanceReporter::preProblem(ContractionProblemGemm const& problem) {}
         void PerformanceReporter::preSolution(ContractionSolution const& solution) {}
         void PerformanceReporter::finalizeReport() {}
 

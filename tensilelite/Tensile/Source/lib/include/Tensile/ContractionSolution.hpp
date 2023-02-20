@@ -76,7 +76,7 @@ namespace Tensile
     class ContractionSolution : public Solution
     {
     public:
-        using Problem = ContractionProblem;
+        using Problem = ContractionProblemGemm;
         using Inputs  = ContractionInputs;
 
         static std::string Type()
@@ -208,61 +208,53 @@ namespace Tensile
         /**
    * Generate a set of kernel calls to solve a particular problem.
    */
+        virtual std::vector<KernelInvocation> solve(ContractionProblem const& problem,
+                                                    Inputs const&             inputs,
+                                                    Hardware const&           hardware) const;
+
         virtual std::vector<KernelInvocation>
             solve(Problem const& problem, Inputs const& inputs, Hardware const& hardware) const;
 
-        virtual std::vector<KernelInvocation>
-            solveGroupedGemm(std::vector<Problem> const& problems, Inputs const& inputs, Hardware const& hardware) const;
+        virtual std::vector<KernelInvocation> solveGroupedGemm(std::vector<Problem> const& problems,
+                                                               Inputs const&               inputs,
+                                                               Hardware const& hardware) const;
 
-        template <typename TypedInputs>
-        std::vector<KernelInvocation> solveTyped(Problem const&     problem,
-                                                 TypedInputs const& inputs,
-                                                 Hardware const&    hardware) const;
+        template <bool T_Debug>
+        KernelInvocation generateSingleCall(Problem const&           problem,
+                                            ContractionInputs const& inputs,
+                                            Hardware const&          hardware) const;
 
-        template <typename TypedInputs>
-        std::vector<KernelInvocation> solveTypedGroupedGemm(std::vector<Problem> const&     problems,
-                                                            TypedInputs const& inputs,
-                                                            Hardware const&    hardware) const;
+        template <bool T_Debug>
+        KernelInvocation generateSingleCallGroupedGemm(std::vector<Problem> const& problems,
+                                                       ContractionInputs const&    inputs,
+                                                       Hardware const&             hardware) const;
 
-        template <typename TypedInputs, bool T_Debug>
-        KernelInvocation generateSingleCall(Problem const&     problem,
-                                            TypedInputs const& inputs,
-                                            Hardware const&    hardware) const;
+        template <bool T_Debug>
+        KernelInvocation generateBetaOnlyCall(Problem const&           problem,
+                                              ContractionInputs const& inputs,
+                                              Hardware const&          hardware) const;
 
-        template <typename TypedInputs, bool T_Debug>
-        KernelInvocation generateSingleCallGroupedGemm(std::vector<Problem> const&     problems,
-                                                       TypedInputs const& inputs,
-                                                       Hardware const&    hardware) const;
+        std::string betaOnlyKernelName(Problem const&           problem,
+                                       ContractionInputs const& inputs,
+                                       Hardware const&          hardware) const;
 
-        template <typename TypedInputs, bool T_Debug>
-        KernelInvocation generateBetaOnlyCall(Problem const&     problem,
-                                              TypedInputs const& inputs,
-                                              Hardware const&    hardware) const;
+        template <bool T_Debug>
+        KernelInvocation generateOutputConversionCall(Problem const&           problem,
+                                                      ContractionInputs const& inputs,
+                                                      Hardware const&          hardware) const;
 
-        template <typename TypedInputs>
-        std::string betaOnlyKernelName(Problem const&     problem,
-                                       TypedInputs const& inputs,
-                                       Hardware const&    hardware) const;
+        std::string outputConversionKernelName(Problem const&           problem,
+                                               ContractionInputs const& inputs,
+                                               Hardware const&          hardware) const;
 
-        template <typename TypedInputs, bool T_Debug>
-        KernelInvocation generateOutputConversionCall(Problem const&     problem,
-                                                      TypedInputs const& inputs,
-                                                      Hardware const&    hardware) const;
+        template <bool T_Debug>
+        KernelInvocation generateActivationOnlyCall(Problem const&           problem,
+                                                    ContractionInputs const& inputs,
+                                                    Hardware const&          hardware) const;
 
-        template <typename TypedInputs>
-        std::string outputConversionKernelName(Problem const&     problem,
-                                               TypedInputs const& inputs,
-                                               Hardware const&    hardware) const;
-
-        template <typename TypedInputs, bool T_Debug>
-        KernelInvocation generateActivationOnlyCall(Problem const&     problem,
-                                                    TypedInputs const& inputs,
-                                                    Hardware const&    hardware) const;
-
-        template <typename TypedInputs>
-        std::string activationOnlyKernelName(Problem const&     problem,
-                                             TypedInputs const& inputs,
-                                             Hardware const&    hardware) const;
+        std::string activationOnlyKernelName(Problem const&           problem,
+                                             ContractionInputs const& inputs,
+                                             Hardware const&          hardware) const;
 
         struct SizeMapping
         {

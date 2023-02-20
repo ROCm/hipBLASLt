@@ -26,7 +26,6 @@
 
 #pragma once
 
-#include <Tensile/ArithmeticUnitTypes.hpp>
 #include <Tensile/ContractionProblem.hpp>
 #include <Tensile/ContractionSolution.hpp>
 #include <Tensile/KernelLanguageTypes.hpp>
@@ -46,11 +45,12 @@ namespace Tensile
  * @{
  */
         /**
- * @brief ContractionProblem predicates
+ * @brief ContractionProblemGemm predicates
  */
         namespace Contraction
         {
-            struct Free0SizeMultiple : public Predicate_CRTP<Free0SizeMultiple, ContractionProblem>
+            struct Free0SizeMultiple
+                : public Predicate_CRTP<Free0SizeMultiple, ContractionProblemGemm>
             {
                 enum
                 {
@@ -72,7 +72,7 @@ namespace Tensile
                     return "Free0SizeMultiple";
                 }
 
-                virtual bool operator()(ContractionProblem const& problem) const override
+                virtual bool operator()(ContractionProblemGemm const& problem) const override
                 {
                     return (!problem.transposeC01() ? problem.freeSizeA(index)
                                                     : problem.freeSizeB(index))
@@ -81,7 +81,8 @@ namespace Tensile
                 }
             };
 
-            struct Free1SizeMultiple : public Predicate_CRTP<Free1SizeMultiple, ContractionProblem>
+            struct Free1SizeMultiple
+                : public Predicate_CRTP<Free1SizeMultiple, ContractionProblemGemm>
             {
                 enum
                 {
@@ -103,7 +104,7 @@ namespace Tensile
                     return "Free1SizeMultiple";
                 }
 
-                virtual bool operator()(ContractionProblem const& problem) const override
+                virtual bool operator()(ContractionProblemGemm const& problem) const override
                 {
                     return (!problem.transposeC01() ? problem.freeSizeB(index)
                                                     : problem.freeSizeA(index))
@@ -112,7 +113,8 @@ namespace Tensile
                 }
             };
 
-            struct BatchSizeMultiple : public Predicate_CRTP<BatchSizeMultiple, ContractionProblem>
+            struct BatchSizeMultiple
+                : public Predicate_CRTP<BatchSizeMultiple, ContractionProblemGemm>
             {
                 enum
                 {
@@ -134,13 +136,13 @@ namespace Tensile
                     return "BatchSizeMultiple";
                 }
 
-                virtual bool operator()(ContractionProblem const& problem) const override
+                virtual bool operator()(ContractionProblemGemm const& problem) const override
                 {
                     return problem.batchSize(index) % value == 0;
                 }
             };
 
-            struct BatchSizeEqual : public Predicate_CRTP<BatchSizeEqual, ContractionProblem>
+            struct BatchSizeEqual : public Predicate_CRTP<BatchSizeEqual, ContractionProblemGemm>
             {
                 enum
                 {
@@ -162,13 +164,14 @@ namespace Tensile
                     return "BatchSizeEqual";
                 }
 
-                virtual bool operator()(ContractionProblem const& problem) const override
+                virtual bool operator()(ContractionProblemGemm const& problem) const override
                 {
                     return problem.batchSize(index) == value;
                 }
             };
 
-            struct BoundSizeMultiple : public Predicate_CRTP<BoundSizeMultiple, ContractionProblem>
+            struct BoundSizeMultiple
+                : public Predicate_CRTP<BoundSizeMultiple, ContractionProblemGemm>
             {
                 enum
                 {
@@ -190,7 +193,7 @@ namespace Tensile
                     return "BoundSizeMultiple";
                 }
 
-                virtual bool operator()(ContractionProblem const& problem) const override
+                virtual bool operator()(ContractionProblemGemm const& problem) const override
                 {
                     if(index < 0)
                         return problem.boundSize(problem.boundIndices().size() + index) % value
@@ -200,7 +203,8 @@ namespace Tensile
                 }
             };
 
-            struct ProblemSizeEqual : public Predicate_CRTP<ProblemSizeEqual, ContractionProblem>
+            struct ProblemSizeEqual
+                : public Predicate_CRTP<ProblemSizeEqual, ContractionProblemGemm>
             {
                 enum
                 {
@@ -222,14 +226,14 @@ namespace Tensile
                     return "ProblemSizeEqual";
                 }
 
-                virtual bool operator()(ContractionProblem const& problem) const override
+                virtual bool operator()(ContractionProblemGemm const& problem) const override
                 {
                     return problem.problemSizes()[index] == value;
                 }
             };
 
             struct MaxProblemSizeGreaterThan
-                : public Predicate_CRTP<MaxProblemSizeGreaterThan, ContractionProblem>
+                : public Predicate_CRTP<MaxProblemSizeGreaterThan, ContractionProblemGemm>
             {
                 enum
                 {
@@ -249,13 +253,13 @@ namespace Tensile
                     return "MaxProblemSizeGreaterThan";
                 }
 
-                virtual bool operator()(ContractionProblem const& problem) const override
+                virtual bool operator()(ContractionProblemGemm const& problem) const override
                 {
                     return problem.maxProblemSize() > value;
                 }
 
-                virtual bool debugEval(ContractionProblem const& problem,
-                                       std::ostream&             stream) const override
+                virtual bool debugEval(ContractionProblemGemm const& problem,
+                                       std::ostream&                 stream) const override
                 {
                     bool rv = (*this)(problem);
 
@@ -269,7 +273,7 @@ namespace Tensile
             // If the tensor contains no free dimensions, then the first batch dimension
             // serves as the leading free size
             struct LeadingFree0SizesGreaterOrEqual
-                : public Predicate_CRTP<LeadingFree0SizesGreaterOrEqual, ContractionProblem>
+                : public Predicate_CRTP<LeadingFree0SizesGreaterOrEqual, ContractionProblemGemm>
             {
                 enum
                 {
@@ -289,7 +293,7 @@ namespace Tensile
                     return "LeadingFree0SizesGreaterOrEqual";
                 }
 
-                virtual bool operator()(ContractionProblem const& problem) const override
+                virtual bool operator()(ContractionProblemGemm const& problem) const override
                 {
                     assert(problem.batchIndices().size() <= 1);
                     // TODO: this is not quite right since it assumes batchSize(0) is lowest
@@ -300,8 +304,8 @@ namespace Tensile
                     return (problem.freeIndicesA().size() ? problem.freeSizeA(0) >= value
                                                           : problem.batchSize(0) >= value);
                 }
-                virtual bool debugEval(ContractionProblem const& problem,
-                                       std::ostream&             stream) const override
+                virtual bool debugEval(ContractionProblemGemm const& problem,
+                                       std::ostream&                 stream) const override
                 {
                     bool rv = (*this)(problem);
 
@@ -316,7 +320,7 @@ namespace Tensile
             };
 
             struct LeadingFree1SizesGreaterOrEqual
-                : public Predicate_CRTP<LeadingFree1SizesGreaterOrEqual, ContractionProblem>
+                : public Predicate_CRTP<LeadingFree1SizesGreaterOrEqual, ContractionProblemGemm>
             {
                 enum
                 {
@@ -336,7 +340,7 @@ namespace Tensile
                     return "LeadingFree1SizesGreaterOrEqual";
                 }
 
-                virtual bool operator()(ContractionProblem const& problem) const override
+                virtual bool operator()(ContractionProblemGemm const& problem) const override
                 {
                     assert(problem.batchIndices().size() <= 1);
                     // TODO: this is not quite right since it assumes batchSize(0) is lowest
@@ -347,8 +351,8 @@ namespace Tensile
                     return (problem.freeIndicesB().size() ? problem.freeSizeB(0) >= value
                                                           : problem.batchSize(0) >= value);
                 }
-                virtual bool debugEval(ContractionProblem const& problem,
-                                       std::ostream&             stream) const override
+                virtual bool debugEval(ContractionProblemGemm const& problem,
+                                       std::ostream&                 stream) const override
                 {
                     bool rv = (*this)(problem);
 
@@ -362,7 +366,7 @@ namespace Tensile
                 }
             };
 
-            struct SizeEqual : public Predicate_CRTP<SizeEqual, ContractionProblem>
+            struct SizeEqual : public Predicate_CRTP<SizeEqual, ContractionProblemGemm>
             {
                 enum
                 {
@@ -384,13 +388,13 @@ namespace Tensile
                     return "SizeEqual";
                 }
 
-                virtual bool operator()(ContractionProblem const& problem) const override
+                virtual bool operator()(ContractionProblemGemm const& problem) const override
                 {
                     return problem.size(index) == value;
                 }
 
-                virtual bool debugEval(ContractionProblem const& problem,
-                                       std::ostream&             stream) const override
+                virtual bool debugEval(ContractionProblemGemm const& problem,
+                                       std::ostream&                 stream) const override
                 {
                     bool rv = (*this)(problem);
 
@@ -401,7 +405,7 @@ namespace Tensile
                 }
             };
 
-            struct SizeGreaterThan : public Predicate_CRTP<SizeGreaterThan, ContractionProblem>
+            struct SizeGreaterThan : public Predicate_CRTP<SizeGreaterThan, ContractionProblemGemm>
             {
                 enum
                 {
@@ -423,13 +427,13 @@ namespace Tensile
                     return "SizeGreaterThan";
                 }
 
-                virtual bool operator()(ContractionProblem const& problem) const override
+                virtual bool operator()(ContractionProblemGemm const& problem) const override
                 {
                     return (problem.size(index) > value);
                 }
 
-                virtual bool debugEval(ContractionProblem const& problem,
-                                       std::ostream&             stream) const override
+                virtual bool debugEval(ContractionProblemGemm const& problem,
+                                       std::ostream&                 stream) const override
                 {
                     bool rv = (*this)(problem);
 
@@ -440,7 +444,7 @@ namespace Tensile
                 }
             };
 
-            struct SizeLessThan : public Predicate_CRTP<SizeLessThan, ContractionProblem>
+            struct SizeLessThan : public Predicate_CRTP<SizeLessThan, ContractionProblemGemm>
             {
                 enum
                 {
@@ -462,13 +466,13 @@ namespace Tensile
                     return "SizeLessThan";
                 }
 
-                virtual bool operator()(ContractionProblem const& problem) const override
+                virtual bool operator()(ContractionProblemGemm const& problem) const override
                 {
                     return (problem.size(index) < value);
                 }
 
-                virtual bool debugEval(ContractionProblem const& problem,
-                                       std::ostream&             stream) const override
+                virtual bool debugEval(ContractionProblemGemm const& problem,
+                                       std::ostream&                 stream) const override
                 {
                     bool rv = (*this)(problem);
 
@@ -479,7 +483,7 @@ namespace Tensile
                 }
             };
 
-            struct SizeMultiple : public Predicate_CRTP<SizeMultiple, ContractionProblem>
+            struct SizeMultiple : public Predicate_CRTP<SizeMultiple, ContractionProblemGemm>
             {
                 enum
                 {
@@ -501,13 +505,13 @@ namespace Tensile
                     return "SizeMultiple";
                 }
 
-                virtual bool operator()(ContractionProblem const& problem) const override
+                virtual bool operator()(ContractionProblemGemm const& problem) const override
                 {
                     return ((problem.size(index) % value) == 0);
                 }
 
-                virtual bool debugEval(ContractionProblem const& problem,
-                                       std::ostream&             stream) const override
+                virtual bool debugEval(ContractionProblemGemm const& problem,
+                                       std::ostream&                 stream) const override
                 {
                     bool rv = (*this)(problem);
 
@@ -529,7 +533,7 @@ namespace Tensile
                 return stream << "min: " << range.min << ", max: " << range.max;
             }
 
-            struct SizeInRange : public Predicate_CRTP<SizeInRange, ContractionProblem>
+            struct SizeInRange : public Predicate_CRTP<SizeInRange, ContractionProblemGemm>
             {
                 enum
                 {
@@ -551,13 +555,13 @@ namespace Tensile
                     return "SizeInRange";
                 }
 
-                virtual bool operator()(ContractionProblem const& problem) const override
+                virtual bool operator()(ContractionProblemGemm const& problem) const override
                 {
                     return (problem.size(index) >= value.min) && (problem.size(index) < value.max);
                 }
 
-                virtual bool debugEval(ContractionProblem const& problem,
-                                       std::ostream&             stream) const override
+                virtual bool debugEval(ContractionProblemGemm const& problem,
+                                       std::ostream&                 stream) const override
                 {
                     bool rv = (*this)(problem);
                     stream << *this << ": (" << value.min << " <= " << problem.size(index)
@@ -567,7 +571,7 @@ namespace Tensile
                 }
             };
 
-            struct StrideAEqual : public Predicate_CRTP<StrideAEqual, ContractionProblem>
+            struct StrideAEqual : public Predicate_CRTP<StrideAEqual, ContractionProblemGemm>
             {
                 enum
                 {
@@ -589,13 +593,13 @@ namespace Tensile
                     return "StrideAEqual";
                 }
 
-                virtual bool operator()(ContractionProblem const& problem) const override
+                virtual bool operator()(ContractionProblemGemm const& problem) const override
                 {
                     return problem.a().strides()[index] == value;
                 }
 
-                virtual bool debugEval(ContractionProblem const& problem,
-                                       std::ostream&             stream) const override
+                virtual bool debugEval(ContractionProblemGemm const& problem,
+                                       std::ostream&                 stream) const override
                 {
                     bool rv = (*this)(problem);
 
@@ -606,7 +610,7 @@ namespace Tensile
                 }
             };
 
-            struct StrideBEqual : public Predicate_CRTP<StrideBEqual, ContractionProblem>
+            struct StrideBEqual : public Predicate_CRTP<StrideBEqual, ContractionProblemGemm>
             {
                 enum
                 {
@@ -628,13 +632,13 @@ namespace Tensile
                     return "StrideBEqual";
                 }
 
-                virtual bool operator()(ContractionProblem const& problem) const override
+                virtual bool operator()(ContractionProblemGemm const& problem) const override
                 {
                     return problem.b().strides()[index] == value;
                 }
 
-                virtual bool debugEval(ContractionProblem const& problem,
-                                       std::ostream&             stream) const override
+                virtual bool debugEval(ContractionProblemGemm const& problem,
+                                       std::ostream&                 stream) const override
                 {
                     bool rv = (*this)(problem);
 
@@ -645,7 +649,7 @@ namespace Tensile
                 }
             };
 
-            struct StrideCEqual : public Predicate_CRTP<StrideCEqual, ContractionProblem>
+            struct StrideCEqual : public Predicate_CRTP<StrideCEqual, ContractionProblemGemm>
             {
                 enum
                 {
@@ -667,13 +671,13 @@ namespace Tensile
                     return "StrideCEqual";
                 }
 
-                virtual bool operator()(ContractionProblem const& problem) const override
+                virtual bool operator()(ContractionProblemGemm const& problem) const override
                 {
                     return problem.c().strides()[index] == value;
                 }
 
-                virtual bool debugEval(ContractionProblem const& problem,
-                                       std::ostream&             stream) const override
+                virtual bool debugEval(ContractionProblemGemm const& problem,
+                                       std::ostream&                 stream) const override
                 {
                     bool rv = (*this)(problem);
 
@@ -684,7 +688,7 @@ namespace Tensile
                 }
             };
 
-            struct StrideDEqual : public Predicate_CRTP<StrideDEqual, ContractionProblem>
+            struct StrideDEqual : public Predicate_CRTP<StrideDEqual, ContractionProblemGemm>
             {
                 enum
                 {
@@ -706,13 +710,13 @@ namespace Tensile
                     return "StrideDEqual";
                 }
 
-                virtual bool operator()(ContractionProblem const& problem) const override
+                virtual bool operator()(ContractionProblemGemm const& problem) const override
                 {
                     return problem.d().strides()[index] == value;
                 }
 
-                virtual bool debugEval(ContractionProblem const& problem,
-                                       std::ostream&             stream) const override
+                virtual bool debugEval(ContractionProblemGemm const& problem,
+                                       std::ostream&                 stream) const override
                 {
                     bool rv = (*this)(problem);
 
@@ -723,7 +727,7 @@ namespace Tensile
                 }
             };
 
-            struct LDCEqualsLDD : public Predicate_CRTP<LDCEqualsLDD, ContractionProblem>
+            struct LDCEqualsLDD : public Predicate_CRTP<LDCEqualsLDD, ContractionProblemGemm>
             {
                 enum
                 {
@@ -735,13 +739,13 @@ namespace Tensile
                     return "LDCEqualsLDD";
                 }
 
-                virtual bool operator()(ContractionProblem const& problem) const override
+                virtual bool operator()(ContractionProblemGemm const& problem) const override
                 {
                     return problem.c().strides()[1] == problem.d().strides()[1];
                 }
             };
 
-            struct CEqualsD : public Predicate_CRTP<CEqualsD, ContractionProblem>
+            struct CEqualsD : public Predicate_CRTP<CEqualsD, ContractionProblemGemm>
             {
                 enum
                 {
@@ -753,13 +757,13 @@ namespace Tensile
                     return "CEqualsD";
                 }
 
-                virtual bool operator()(ContractionProblem const& problem) const override
+                virtual bool operator()(ContractionProblemGemm const& problem) const override
                 {
                     return problem.cEqualsD();
                 }
 
-                virtual bool debugEval(ContractionProblem const& problem,
-                                       std::ostream&             stream) const override
+                virtual bool debugEval(ContractionProblemGemm const& problem,
+                                       std::ostream&                 stream) const override
                 {
                     bool rv = (*this)(problem);
 
@@ -769,7 +773,7 @@ namespace Tensile
                 }
             };
 
-            struct BetaZero : public Predicate_CRTP<BetaZero, ContractionProblem>
+            struct BetaZero : public Predicate_CRTP<BetaZero, ContractionProblemGemm>
             {
                 enum
                 {
@@ -783,13 +787,13 @@ namespace Tensile
                     return "BetaZero";
                 }
 
-                virtual bool operator()(ContractionProblem const& problem) const override
+                virtual bool operator()(ContractionProblemGemm const& problem) const override
                 {
                     return problem.beta() == 0.0;
                 }
             };
 
-            struct BetaOne : public Predicate_CRTP<BetaOne, ContractionProblem>
+            struct BetaOne : public Predicate_CRTP<BetaOne, ContractionProblemGemm>
             {
                 enum
                 {
@@ -803,14 +807,14 @@ namespace Tensile
                     return "BetaOne";
                 }
 
-                virtual bool operator()(ContractionProblem const& problem) const override
+                virtual bool operator()(ContractionProblemGemm const& problem) const override
                 {
                     return problem.beta() == 1.0;
                 }
             };
 
             struct HighPrecisionAccumulateEqual
-                : public Predicate_CRTP<HighPrecisionAccumulateEqual, ContractionProblem>
+                : public Predicate_CRTP<HighPrecisionAccumulateEqual, ContractionProblemGemm>
             {
                 enum
                 {
@@ -830,14 +834,14 @@ namespace Tensile
                     return "HighPrecisionAccumulate";
                 }
 
-                virtual bool operator()(ContractionProblem const& problem) const override
+                virtual bool operator()(ContractionProblemGemm const& problem) const override
                 {
                     return problem.highPrecisionAccumulate() == value;
                 }
             };
 
             struct KernelLanguageCompatible
-                : public Predicate_CRTP<KernelLanguageCompatible, ContractionProblem>
+                : public Predicate_CRTP<KernelLanguageCompatible, ContractionProblemGemm>
             {
                 enum
                 {
@@ -857,7 +861,7 @@ namespace Tensile
                     return "KernelLanguageCompatible";
                 }
 
-                virtual bool operator()(ContractionProblem const& problem) const override
+                virtual bool operator()(ContractionProblemGemm const& problem) const override
                 {
                     return problem.kernelLanguage() == value
                            || problem.kernelLanguage() == KernelLanguage::Any;
@@ -865,7 +869,7 @@ namespace Tensile
             };
 
             struct DeterministicModeEqual
-                : public Predicate_CRTP<DeterministicModeEqual, ContractionProblem>
+                : public Predicate_CRTP<DeterministicModeEqual, ContractionProblemGemm>
             {
                 enum
                 {
@@ -885,42 +889,13 @@ namespace Tensile
                     return "DeterministicMode";
                 }
 
-                virtual bool operator()(ContractionProblem const& problem) const override
+                virtual bool operator()(ContractionProblemGemm const& problem) const override
                 {
                     return problem.deterministicMode() == value;
                 }
             };
 
-            struct ArithmeticUnitCompatible
-                : public Predicate_CRTP<ArithmeticUnitCompatible, ContractionProblem>
-            {
-                enum
-                {
-                    HasIndex = false,
-                    HasValue = true
-                };
-
-                ArithmeticUnit value;
-
-                ArithmeticUnitCompatible() = default;
-                ArithmeticUnitCompatible(ArithmeticUnit value)
-                    : value(value)
-                {
-                }
-
-                static std::string Type()
-                {
-                    return "ArithmeticUnitCompatible";
-                }
-
-                virtual bool operator()(ContractionProblem const& problem) const override
-                {
-                    return problem.arithmeticUnit() == value
-                           || problem.arithmeticUnit() == ArithmeticUnit::Any;
-                }
-            };
-
-            struct AlphaValue : public Predicate_CRTP<AlphaValue, ContractionProblem>
+            struct AlphaValue : public Predicate_CRTP<AlphaValue, ContractionProblemGemm>
             {
                 enum
                 {
@@ -941,13 +916,13 @@ namespace Tensile
                     return "AlphaValue";
                 }
 
-                virtual bool operator()(ContractionProblem const& problem) const override
+                virtual bool operator()(ContractionProblemGemm const& problem) const override
                 {
                     return problem.alphaRestriction() == value || value == ScalarValue::Any;
                 }
             };
 
-            struct BetaValue : public Predicate_CRTP<BetaValue, ContractionProblem>
+            struct BetaValue : public Predicate_CRTP<BetaValue, ContractionProblemGemm>
             {
                 enum
                 {
@@ -968,13 +943,13 @@ namespace Tensile
                     return "BetaValue";
                 }
 
-                virtual bool operator()(ContractionProblem const& problem) const override
+                virtual bool operator()(ContractionProblemGemm const& problem) const override
                 {
                     return problem.betaRestriction() == value || value == ScalarValue::Any;
                 }
             };
 
-            struct TypesEqual : public Predicate_CRTP<TypesEqual, ContractionProblem>
+            struct TypesEqual : public Predicate_CRTP<TypesEqual, ContractionProblemGemm>
             {
                 enum
                 {
@@ -990,7 +965,7 @@ namespace Tensile
                     return "TypesEqual";
                 }
 
-                virtual bool operator()(ContractionProblem const& problem) const override
+                virtual bool operator()(ContractionProblemGemm const& problem) const override
                 {
                     return problem.a().dataType() == value[0] && problem.b().dataType() == value[1]
                            && problem.c().dataType() == value[2]
@@ -1010,8 +985,8 @@ namespace Tensile
                                        value[3]);
                 }
 
-                virtual bool debugEval(ContractionProblem const& problem,
-                                       std::ostream&             stream) const override
+                virtual bool debugEval(ContractionProblemGemm const& problem,
+                                       std::ostream&                 stream) const override
                 {
                     bool rv = (*this)(problem);
 
@@ -1027,7 +1002,7 @@ namespace Tensile
             };
 
             struct OperationIdentifierEqual
-                : public Predicate_CRTP<OperationIdentifierEqual, ContractionProblem>
+                : public Predicate_CRTP<OperationIdentifierEqual, ContractionProblemGemm>
             {
                 enum
                 {
@@ -1043,14 +1018,14 @@ namespace Tensile
                     return "OperationIdentifierEqual";
                 }
 
-                virtual bool operator()(ContractionProblem const& problem) const override
+                virtual bool operator()(ContractionProblemGemm const& problem) const override
                 {
                     return problem.operationIdentifier() == value;
                 }
             };
 
             struct BufferLoadOffsetLimitCheck
-                : public Predicate_CRTP<BufferLoadOffsetLimitCheck, ContractionProblem>
+                : public Predicate_CRTP<BufferLoadOffsetLimitCheck, ContractionProblemGemm>
             {
                 enum
                 {
@@ -1070,7 +1045,7 @@ namespace Tensile
                     return "BufferLoadOffsetLimitCheck";
                 }
 
-                virtual bool operator()(ContractionProblem const& problem) const override
+                virtual bool operator()(ContractionProblemGemm const& problem) const override
                 {
                     const uint64_t TWO_POW_32 = 4294967296;
                     return (problem.a().strides()[1] * value.depthUorMT0 + value.shiftPtrElemA)
@@ -1095,8 +1070,8 @@ namespace Tensile
                                        ")");
                 }
 
-                virtual bool debugEval(ContractionProblem const& problem,
-                                       std::ostream&             stream) const override
+                virtual bool debugEval(ContractionProblemGemm const& problem,
+                                       std::ostream&                 stream) const override
                 {
                     bool rv = (*this)(problem);
 
@@ -1114,7 +1089,7 @@ namespace Tensile
             };
 
             struct BufferLoadOffsetLimitCheck_Beta
-                : public Predicate_CRTP<BufferLoadOffsetLimitCheck_Beta, ContractionProblem>
+                : public Predicate_CRTP<BufferLoadOffsetLimitCheck_Beta, ContractionProblemGemm>
             {
                 enum
                 {
@@ -1134,7 +1109,7 @@ namespace Tensile
                     return "BufferLoadOffsetLimitCheck_Beta";
                 }
 
-                virtual bool operator()(ContractionProblem const& problem) const override
+                virtual bool operator()(ContractionProblemGemm const& problem) const override
                 {
                     if(problem.c().empty() || problem.beta() == 0)
                     {
@@ -1153,8 +1128,8 @@ namespace Tensile
                     return concatenate(this->type(), "(MT1:", value, ")");
                 }
 
-                virtual bool debugEval(ContractionProblem const& problem,
-                                       std::ostream&             stream) const override
+                virtual bool debugEval(ContractionProblemGemm const& problem,
+                                       std::ostream&                 stream) const override
                 {
                     bool rv = (*this)(problem);
 
@@ -1167,7 +1142,7 @@ namespace Tensile
             };
 
             struct BufferStoreOffsetLimitCheck
-                : public Predicate_CRTP<BufferStoreOffsetLimitCheck, ContractionProblem>
+                : public Predicate_CRTP<BufferStoreOffsetLimitCheck, ContractionProblemGemm>
             {
                 enum
                 {
@@ -1187,7 +1162,7 @@ namespace Tensile
                     return "BufferStoreOffsetLimitCheck";
                 }
 
-                virtual bool operator()(ContractionProblem const& problem) const override
+                virtual bool operator()(ContractionProblemGemm const& problem) const override
                 {
                     const uint64_t TWO_POW_32 = 4294967296;
                     return problem.d().strides()[1] * problem.d().elementBytes() * value
@@ -1199,8 +1174,8 @@ namespace Tensile
                     return concatenate(this->type(), "(MT1:", value, ")");
                 }
 
-                virtual bool debugEval(ContractionProblem const& problem,
-                                       std::ostream&             stream) const override
+                virtual bool debugEval(ContractionProblemGemm const& problem,
+                                       std::ostream&                 stream) const override
                 {
                     bool rv = (*this)(problem);
 
@@ -1212,7 +1187,7 @@ namespace Tensile
                 }
             };
 
-            struct WorkspaceCheck : public Predicate_CRTP<WorkspaceCheck, ContractionProblem>
+            struct WorkspaceCheck : public Predicate_CRTP<WorkspaceCheck, ContractionProblemGemm>
             {
                 enum
                 {
@@ -1234,13 +1209,13 @@ namespace Tensile
                     return "WorkspaceCheck";
                 }
 
-                virtual bool operator()(ContractionProblem const& problem) const override
+                virtual bool operator()(ContractionProblemGemm const& problem) const override
                 {
                     return problem.d().totalLogicalElements() * value <= problem.workspaceSize();
                 }
 
-                virtual bool debugEval(ContractionProblem const& problem,
-                                       std::ostream&             stream) const override
+                virtual bool debugEval(ContractionProblemGemm const& problem,
+                                       std::ostream&                 stream) const override
                 {
                     bool rv = (*this)(problem);
 
@@ -1252,7 +1227,7 @@ namespace Tensile
             };
 
             struct PersistentKernelCheck
-                : public Predicate_CRTP<PersistentKernelCheck, ContractionProblem>
+                : public Predicate_CRTP<PersistentKernelCheck, ContractionProblemGemm>
             {
                 enum
                 {
@@ -1266,14 +1241,14 @@ namespace Tensile
                     return "PersistentKernelCheck";
                 }
 
-                virtual bool operator()(ContractionProblem const& problem) const override
+                virtual bool operator()(ContractionProblemGemm const& problem) const override
                 {
                     return problem.getPersistentKernelEligibility();
                 }
             };
 
             struct GlobalSplitUCheckMinK
-                : public Predicate_CRTP<GlobalSplitUCheckMinK, ContractionProblem>
+                : public Predicate_CRTP<GlobalSplitUCheckMinK, ContractionProblemGemm>
             {
                 enum
                 {
@@ -1294,7 +1269,7 @@ namespace Tensile
                     return "GlobalSplitUCheckMinK";
                 }
 
-                virtual bool operator()(ContractionProblem const& problem) const override
+                virtual bool operator()(ContractionProblemGemm const& problem) const override
                 {
                     return problem.boundSize(0) >= value;
                 }
@@ -1304,8 +1279,8 @@ namespace Tensile
                     return concatenate(this->type(), "(value:", value, ")");
                 }
 
-                virtual bool debugEval(ContractionProblem const& problem,
-                                       std::ostream&             stream) const override
+                virtual bool debugEval(ContractionProblemGemm const& problem,
+                                       std::ostream&                 stream) const override
                 {
                     bool rv = (*this)(problem);
 
@@ -1316,7 +1291,7 @@ namespace Tensile
                 }
             };
 
-            struct CDStridesEqual : public Predicate_CRTP<CDStridesEqual, ContractionProblem>
+            struct CDStridesEqual : public Predicate_CRTP<CDStridesEqual, ContractionProblemGemm>
             {
                 enum
                 {
@@ -1331,14 +1306,14 @@ namespace Tensile
                     return "CDStridesEqual";
                 }
 
-                virtual bool operator()(ContractionProblem const& problem) const override
+                virtual bool operator()(ContractionProblemGemm const& problem) const override
                 {
                     return problem.c().strides() == problem.d().strides();
                 }
             };
 
             struct StridedBatchedEqual
-                : public Predicate_CRTP<StridedBatchedEqual, ContractionProblem>
+                : public Predicate_CRTP<StridedBatchedEqual, ContractionProblemGemm>
             {
                 enum
                 {
@@ -1358,14 +1333,14 @@ namespace Tensile
                     return "StridedBatched";
                 }
 
-                virtual bool operator()(ContractionProblem const& problem) const override
+                virtual bool operator()(ContractionProblemGemm const& problem) const override
                 {
                     return problem.stridedBatched() == value;
                 }
             };
 
             struct GroupedGemmEqual
-                : public Predicate_CRTP<GroupedGemmEqual, ContractionProblem>
+                : public Predicate_CRTP<GroupedGemmEqual, ContractionProblemGemm>
             {
                 enum
                 {
@@ -1385,13 +1360,13 @@ namespace Tensile
                     return "GroupedGemm";
                 }
 
-                virtual bool operator()(ContractionProblem const& problem) const override
+                virtual bool operator()(ContractionProblemGemm const& problem) const override
                 {
                     return problem.groupedGemm() == value;
                 }
             };
 
-            struct CUEfficiency : public Predicate_CRTP<CUEfficiency, ContractionProblem>
+            struct CUEfficiency : public Predicate_CRTP<CUEfficiency, ContractionProblemGemm>
             {
                 enum
                 {
@@ -1406,7 +1381,7 @@ namespace Tensile
                     return "CUEfficiency";
                 }
 
-                virtual bool operator()(ContractionProblem const& problem) const override
+                virtual bool operator()(ContractionProblemGemm const& problem) const override
                 {
                     if(problem.performanceMetric() == PerformanceMetric::CUEfficiency)
                     {
@@ -1426,7 +1401,7 @@ namespace Tensile
                 }
             };
 
-            struct Experimental : public Predicate_CRTP<Experimental, ContractionProblem>
+            struct Experimental : public Predicate_CRTP<Experimental, ContractionProblemGemm>
             {
                 enum
                 {
@@ -1441,13 +1416,13 @@ namespace Tensile
                     return "Experimental";
                 }
 
-                virtual bool operator()(ContractionProblem const& problem) const override
+                virtual bool operator()(ContractionProblemGemm const& problem) const override
                 {
                     return (problem.performanceMetric() == PerformanceMetric::Experimental);
                 }
             };
 
-            struct Fp16AltImpl : public Predicate_CRTP<Fp16AltImpl, ContractionProblem>
+            struct Fp16AltImpl : public Predicate_CRTP<Fp16AltImpl, ContractionProblemGemm>
             {
                 enum
                 {
@@ -1462,13 +1437,14 @@ namespace Tensile
                     return "Fp16AltImpl";
                 }
 
-                virtual bool operator()(ContractionProblem const& problem) const override
+                virtual bool operator()(ContractionProblemGemm const& problem) const override
                 {
                     return problem.fp16AltImpl();
                 }
             };
 
-            struct EqualityMatching : public Predicate_CRTP<EqualityMatching, ContractionProblem>
+            struct EqualityMatching
+                : public Predicate_CRTP<EqualityMatching, ContractionProblemGemm>
             {
                 enum
                 {
@@ -1483,14 +1459,14 @@ namespace Tensile
                     return "EqualityMatching";
                 }
 
-                virtual bool operator()(ContractionProblem const& problem) const override
+                virtual bool operator()(ContractionProblemGemm const& problem) const override
                 {
                     return true;
                 }
             };
 
             // Activation
-            struct ActivationEqual : public Predicate_CRTP<ActivationEqual, ContractionProblem>
+            struct ActivationEqual : public Predicate_CRTP<ActivationEqual, ContractionProblemGemm>
             {
                 enum
                 {
@@ -1510,14 +1486,14 @@ namespace Tensile
                     return "Activation";
                 }
 
-                virtual bool operator()(ContractionProblem const& problem) const override
+                virtual bool operator()(ContractionProblemGemm const& problem) const override
                 {
                     return problem.activationType() == value;
                 }
             };
 
             struct ActivationEnumWhiteList
-                : public Predicate_CRTP<ActivationEnumWhiteList, ContractionProblem>
+                : public Predicate_CRTP<ActivationEnumWhiteList, ContractionProblemGemm>
             {
                 enum
                 {
@@ -1533,7 +1509,7 @@ namespace Tensile
                     return "ActivationEnumWhiteList";
                 }
 
-                virtual bool operator()(ContractionProblem const& problem) const override
+                virtual bool operator()(ContractionProblemGemm const& problem) const override
                 {
                     if(problem.activationType() == ActivationType::All)
                     {
@@ -1561,7 +1537,7 @@ namespace Tensile
             };
 
             struct ActivationHPAEqual
-                : public Predicate_CRTP<ActivationHPAEqual, ContractionProblem>
+                : public Predicate_CRTP<ActivationHPAEqual, ContractionProblemGemm>
             {
                 enum
                 {
@@ -1581,13 +1557,13 @@ namespace Tensile
                     return "ActivationHPA";
                 }
 
-                virtual bool operator()(ContractionProblem const& problem) const override
+                virtual bool operator()(ContractionProblemGemm const& problem) const override
                 {
                     return problem.activationHPA() == value;
                 }
             };
 
-            struct UseBiasEqual : public Predicate_CRTP<UseBiasEqual, ContractionProblem>
+            struct UseBiasEqual : public Predicate_CRTP<UseBiasEqual, ContractionProblemGemm>
             {
                 enum
                 {
@@ -1607,13 +1583,13 @@ namespace Tensile
                     return "UseBias";
                 }
 
-                virtual bool operator()(ContractionProblem const& problem) const override
+                virtual bool operator()(ContractionProblemGemm const& problem) const override
                 {
                     return problem.useBias() == value;
                 }
             };
 
-            struct UseScaleDEqual : public Predicate_CRTP<UseScaleDEqual, ContractionProblem>
+            struct UseScaleDEqual : public Predicate_CRTP<UseScaleDEqual, ContractionProblemGemm>
             {
                 enum
                 {
@@ -1633,14 +1609,14 @@ namespace Tensile
                     return "UseScaleD";
                 }
 
-                virtual bool operator()(ContractionProblem const& problem) const override
+                virtual bool operator()(ContractionProblemGemm const& problem) const override
                 {
                     return problem.useScaleD() == value;
                 }
             };
 
             struct BiasDataTypeWhiteList
-                : public Predicate_CRTP<BiasDataTypeWhiteList, ContractionProblem>
+                : public Predicate_CRTP<BiasDataTypeWhiteList, ContractionProblemGemm>
             {
                 enum
                 {
@@ -1656,7 +1632,7 @@ namespace Tensile
                     return "BiasDataTypeWhiteList";
                 }
 
-                virtual bool operator()(ContractionProblem const& problem) const override
+                virtual bool operator()(ContractionProblemGemm const& problem) const override
                 {
                     if(problem.useBias())
                     {

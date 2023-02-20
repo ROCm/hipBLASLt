@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
+ * Copyright (C) 2023 Advanced Micro Devices, Inc. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -24,31 +24,28 @@
  *
  *******************************************************************************/
 
-#ifdef TENSILE_DEFAULT_SERIALIZATION
-
-#include <Tensile/EmbeddedLibrary.hpp>
-
-#include <Tensile/Contractions.hpp>
-#include <Tensile/EmbeddedData.hpp>
+#include <TypedId.hpp>
 
 namespace Tensile
 {
-    template <typename MyProblem, typename MySolution>
-    std::shared_ptr<SolutionLibrary<MyProblem, MySolution>>
-        EmbeddedLibrary<MyProblem, MySolution>::NewLibrary(std::string const& key)
-    {
-        auto const& data = EmbeddedData<SolutionLibrary<MyProblem, MySolution>>::Get(key);
-        if(data.size() == 0)
-            return nullptr;
-        if(data.size() > 1)
-            throw std::runtime_error(concatenate("Expected one data item, found ", data.size()));
+    template struct TypedGemm<float>;
+    template struct TypedGemm<double>;
+    template struct TypedGemm<std::complex<float>>;
+    template struct TypedGemm<std::complex<double>>;
+    template struct TypedGemm<Int8x4, Int8x4, int32_t, int32_t>;
+    template struct TypedGemm<int32_t>;
+    template struct TypedGemm<int8_t, int8_t, int8_t, int8_t, int32_t, int32_t>;
+    template struct TypedGemm<int8_t, int8_t, int32_t, int32_t>;
+    template struct TypedGemm<int8_t, int8_t, int32_t, int32_t, float, float>;
+    template struct TypedGemm<int8_t, int8_t, int8_t, int8_t, float, float>;
 
-        return LoadLibraryData<MyProblem, MySolution>(data[0]);
-    }
-
-    template std::shared_ptr<SolutionLibrary<ContractionProblemGemm, ContractionSolution>>
-        EmbeddedLibrary<ContractionProblemGemm, ContractionSolution>::NewLibrary(
-            std::string const&);
-} // namespace Tensile
-
+#ifdef TENSILE_USE_HALF
+    template struct TypedGemm<Half>;
+    template struct TypedGemm<Half, Half, Half, Half, float, float>;
+    template struct TypedGemm<Half, Half, float, float>;
 #endif
+#ifdef TENSILE_USE_BF16
+    template struct TypedGemm<BFloat16, BFloat16, BFloat16, BFloat16, float, float>;
+    template struct TypedGemm<BFloat16, BFloat16, float, float>;
+#endif
+} // namespace Tensile

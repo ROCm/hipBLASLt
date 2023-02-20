@@ -42,7 +42,7 @@ from .KernelWriter import KernelWriter
 from .KernelWriterModules import *
 from .SolutionStructs import isPackedIndex
 from .AsmStoreState import StoreState
-from .Activation import ActivationType, ActivationModule
+from .Activation import ActivationType
 
 from math import ceil, log
 from copy import deepcopy
@@ -6289,7 +6289,7 @@ class KernelWriterAssembly(KernelWriter):
       module.add(SWaitCnt(lgkmcnt=0, comment="wait for %u bytes of kern args."%(self.states.numStoreSgprToLoad * 4)))
 
     atomic = (kernel["GlobalSplitU"] > 1) and (kernel["_GlobalAccumulation"] != 'MultipleBuffer')
-    activation = ActivationModule()
+    activation = self.exclasses.activation
 
     # write possibilities and labels
     # if beta/edge combo not specified fall back to global param definition
@@ -6342,9 +6342,13 @@ class KernelWriterAssembly(KernelWriter):
     actPCGwvwVgpr = 0
     actPCMaxTempSgpr = 0
     actTempSgpr = 0
-    if kernel["ActivationFuncCall"]:
+
+    if kernel["ActivationFuncCall"] or \
+      (((kernel["GlobalSplitU"] == 1) and kernel["ActivationFused"]) and \
+      (kernel["ProblemType"]["ActivationType"] != 'none')):
       maxVw = max(vectorWidths)
-      usage = activation.getAllGprUsage(kernel["ProblemType"]["ActivationComputeDataType"])
+      # Here is where activation creates cache if cache is enabled
+      usage = activation.getAllGprUsage(kernel["ProblemType"]["ActivationComputeDataType"], kernel["ProblemType"]["ActivationType"])
       actPCMaxTempVgpr = 0
       for _, gprs in usage.items():
         actPCMaxTempVgpr = max(actPCMaxTempVgpr, gprs["vgpr"])
@@ -6378,8 +6382,9 @@ class KernelWriterAssembly(KernelWriter):
           module.add(self.readBiasToLDS(kernel["ProblemType"]["BiasDataTypeList"][0], kernel, 1, offsetVgpr, tmpSgprRes.idx, tmpVgprRes))
         else:
           for i, label in enumerate(multiBiasTypeLabel[1:]):
+            typeValue = kernel["ProblemType"]["BiasDataTypeList"][i].value
             module.add(multiBiasTypeLabel[i])
-            module.add(SCmpKLGU32(sgpr("BiasType"), kernel["ProblemType"]["BiasDataTypeList"][i].value, "BiasType != %u"%i))
+            module.add(SCmpKLGU32(sgpr("BiasType"), typeValue, "BiasType != %u"%typeValue))
             module.add(SCBranchSCC1(label.getLabelName(), "Branch if true"))
             module.add(self.readBiasToLDS(kernel["ProblemType"]["BiasDataTypeList"][i], kernel, 1, offsetVgpr, tmpSgprRes.idx, tmpVgprRes))
             module.add(SBranch(labelName=loadBiasEndLabel.getLabelName(), comment="Branch to load bias end"))
@@ -6634,6 +6639,7 @@ class KernelWriterAssembly(KernelWriter):
             else:
               codeMulAlpha = None
 
+            biasLocalBarrierInit = False
             for batchIdx in range(0, numBatches):
               elementStartIdx = batchIdx * numElementsPerBatch
               elementStopIdx = min( elementStartIdx + numElementsPerBatch, len(elements[edgeI]) )
@@ -6649,8 +6655,9 @@ class KernelWriterAssembly(KernelWriter):
               actLoopModule.add(self.globalWriteBatch(kernel, tPA, tPB, activation, ss, batchIdx, \
                   applyAlpha, beta, edge, atomic, gwvw, atomicW, \
                   elementsThisBatch, self.vgprs.addrD, self.vgprs.addrC, self.vgprs.addrBias, self.vgprs.addrScaleD, \
-                  tmpVgpr, bf16CVTVgprStruct, activationSetPCStruct, activationTypeStr, \
-                  elementSgprs, tmpSgpr, codeAccVgprRead, codeMulAlpha))
+                  biasLocalBarrierInit, tmpVgpr, bf16CVTVgprStruct, activationSetPCStruct, \
+                  activationTypeStr, elementSgprs, tmpSgpr, codeAccVgprRead, codeMulAlpha))
+              biasLocalBarrierInit = True
 
             ss.resetState()
             actLoopModuleList.append(actLoopModule)
@@ -6736,13 +6743,14 @@ class KernelWriterAssembly(KernelWriter):
           actModule = Module(activationLabelModule.getLabelName())
           actModule.add(activationLabelModule)
           activationTypeStr = activationEnumStrList[index]
+          vgprIdx = activationSetPCStruct.vgprActCopy
           if self.insertActivationAfterPacked(kernel, activationTypeStr):
             actModule.appendModule(self.getActivationDestDataType(kernel, activation, \
-              activationTypeStr, gwvw, activationSetPCStruct.vgprActCopy, (tmpVgpr + actPCGwvwVgpr), \
+              activationTypeStr, gwvw, vgprIdx, vgprIdx, (tmpVgpr + actPCGwvwVgpr), \
               actTempSgpr))
           else:
             actModule.appendModule(self.getActivationActivationComputeType(kernel, activation, \
-              activationTypeStr, gwvw, activationSetPCStruct.vgprActCopy, (tmpVgpr + actPCGwvwVgpr), \
+              activationTypeStr, gwvw, vgprIdx, vgprIdx, (tmpVgpr + actPCGwvwVgpr), \
               actTempSgpr))
           actModule.add(SSetPCB64(src=sgpr(activationSetPCStruct.sgprOffsetBack,2)))
           actModules.add(actModule)
@@ -7113,14 +7121,15 @@ class KernelWriterAssembly(KernelWriter):
   ##############################################################################
   def globalWriteBatch(self, kernel, tPA, tPB, activation, ss: StoreState, batchIdx, \
       applyAlpha, beta, edge, atomic, gwvw, atomicW, \
-      batchElements, addrD, addrC, addrBias, addrScaleD, \
+      batchElements, addrD, addrC, addrBias, addrScaleD, biasLocalBarrierInit: bool, \
       tmpVgpr, bf16CVTVgprStruct, activationSetPCStruct, activationTypeStr, \
       batchElementSgprs, tmpSgpr, codeAccVgprRead, codeMulAlpha) -> Module:
       packdata = Component.PackData.find(self)
       gwriter  = Component.GlobalWriteComponents.find(self)
       return gwriter(kernel, tPA, tPB, activation, ss, \
         batchIdx, applyAlpha, beta, edge, atomic, gwvw, atomicW, \
-        batchElements, addrD, addrC, addrBias, addrScaleD, tmpVgpr, bf16CVTVgprStruct, activationSetPCStruct, activationTypeStr, \
+        batchElements, addrD, addrC, addrBias, addrScaleD, biasLocalBarrierInit, \
+        tmpVgpr, bf16CVTVgprStruct, activationSetPCStruct, activationTypeStr, \
         batchElementSgprs, tmpSgpr, codeAccVgprRead, codeMulAlpha, packdata, self)
 
   ##############################################################################
@@ -7283,10 +7292,11 @@ class KernelWriterAssembly(KernelWriter):
     return result
 
   def getActivationDestDataType(self, kernel, activation, activationTypeStr: str, gwvw, \
-  elementSumIdx, tmpVgpr, tmpSgpr):
+  elementSumIdxIn, elementSumIdxOut, tmpVgpr, tmpSgpr):
     module = Module("ActivationAfterPack")
     for vi in range(0, gwvw):
-      sumIdxV = elementSumIdx + vi
+      sumIdxVIn  = elementSumIdxIn + vi
+      sumIdxVOut = elementSumIdxOut + vi
       if kernel["ProblemType"]["DestDataType"].isHalf() or \
           kernel["ProblemType"]["DestDataType"].isBFloat16():
         if kernel["ProblemType"]["HighPrecisionAccumulate"]:
@@ -7298,34 +7308,41 @@ class KernelWriterAssembly(KernelWriter):
             assert (gwvw % 2 == 0)
           else:
             continue
-          vgprIdx = elementSumIdx + vi//2
+          vgprIn  = elementSumIdxIn + vi//2
+          vgprOut = elementSumIdxOut + vi//2
+
         else:
-          if (sumIdxV % 2 != 0):
+          if (sumIdxVIn % 2 != 0):
             continue
-          vgprIdx = sumIdxV // 2
+          vgprIn  = sumIdxVIn // 2
+          vgprOut = sumIdxVOut // 2
       elif kernel["ProblemType"]["DestDataType"].isSingle():
-        vgprIdx = sumIdxV
+        vgprIn  = sumIdxVIn
+        vgprOut = sumIdxVOut
       elif kernel["ProblemType"]["DestDataType"].isDouble():
-        vgprIdx = sumIdxV * 2
+        vgprIn  = sumIdxVIn * 2
+        vgprOut = sumIdxVOut * 2
       elif kernel["ProblemType"]["DestDataType"].isInt32():
-        vgprIdx = sumIdxV
+        vgprIn  = sumIdxVIn
+        vgprOut = sumIdxVOut
       else:
         raise RuntimeError("Unsupported data type %s for activation vgpr index."%str(self.states.kernel["ProblemType"]["DestDataType"]))
       # Here we still use DestDataType cause the data is ready to be written to global
-      actModule = activation.getModule(self.states.kernel["ProblemType"]["DestDataType"], activationTypeStr, vgprIdx)
+      actModule = activation.getModule(self.states.kernel["ProblemType"]["DestDataType"], activationTypeStr, vgprIn, vgprOut)
       module.add(activation.assignGpr(actModule, tmpVgpr, tmpSgpr))
       activation.setUsePK(True)
     return module
 
   def getActivationActivationComputeType(self, kernel, activation, activationTypeStr: str, gwvw, \
-    elementSumIdx, tmpVgpr, tmpSgpr, satInt8=False):
+    elementSumIdxIn, elementSumIdxOut, tmpVgpr, tmpSgpr, satInt8=False):
     module = Module("ActivationBeforePack")
     if satInt8:
       activation.setSaturationForInt8(True)
     activation.setVgprPrefixFormat("ValuC+%u")
     for vi in range(0, gwvw):
-      vgprIdx = elementSumIdx + vi - self.states.c.startVgprValu
-      actModule = activation.getModule(kernel["ProblemType"]["ActivationComputeDataType"], activationTypeStr, vgprIdx)
+      vgprIn  = elementSumIdxIn + vi - self.states.c.startVgprValu
+      vgprOut = elementSumIdxOut + vi
+      actModule = activation.getModule(kernel["ProblemType"]["ActivationComputeDataType"], activationTypeStr, vgprIn, vgprOut)
       module.add(activation.assignGpr(actModule, tmpVgpr, tmpSgpr))
     activation.setSaturationForInt8(False)
     activation.setVgprPrefixFormat("")
