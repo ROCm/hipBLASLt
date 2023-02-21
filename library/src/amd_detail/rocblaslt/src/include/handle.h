@@ -144,7 +144,7 @@ struct _rocblaslt_matmul_desc
     // bias vector pointer
     void*             bias      = nullptr;
     void*             scaleD    = nullptr;
-    hipblasDatatype_t bias_type = static_cast<hipblasDatatype_t>(-1);
+    hipblasDatatype_t bias_type = static_cast<hipblasDatatype_t>(0);
     //
     rocblaslt_compute_type compute_type;
     hipblasDatatype_t      scale_type;

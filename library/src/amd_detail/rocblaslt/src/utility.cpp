@@ -202,7 +202,7 @@ std::string rocblaslt_matrix_layout_to_string(rocblaslt_matrix_layout mat)
 }
 std::string rocblaslt_matmul_desc_to_string(rocblaslt_matmul_desc matmul_desc)
 {
-    std::string format = matmul_desc->bias_type == static_cast<hipblasDatatype_t>(-1)
+    std::string format = matmul_desc->bias_type == static_cast<hipblasDatatype_t>(0)
                              ? "[computeType=%s scaleType=%s transA=%s transB=%s "
                                "epilogue=%s biasPointer=0x%x]\0"
                              : "[computeType=%s scaleType=%s transA=%s transB=%s "
@@ -210,7 +210,7 @@ std::string rocblaslt_matmul_desc_to_string(rocblaslt_matmul_desc matmul_desc)
 
     std::unique_ptr<char[]> buf(new char[255]);
 
-    if(matmul_desc->bias_type == static_cast<hipblasDatatype_t>(-1))
+    if(matmul_desc->bias_type == static_cast<hipblasDatatype_t>(0))
         std::sprintf(buf.get(),
                      format.c_str(),
                      rocblaslt_compute_type_to_string(matmul_desc->compute_type),

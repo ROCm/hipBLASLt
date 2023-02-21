@@ -463,44 +463,44 @@ try
 
     std::transform(precision.begin(), precision.end(), precision.begin(), ::tolower);
     auto prec = string_to_hipblas_datatype(precision);
-    if(prec == static_cast<hipblasDatatype_t>(-1))
+    if(prec == static_cast<hipblasDatatype_t>(0))
         throw std::invalid_argument("Invalid value for --precision " + precision);
 
     arg.a_type = a_type == "" ? prec : string_to_hipblas_datatype(a_type);
-    if(arg.a_type == static_cast<hipblasDatatype_t>(-1))
+    if(arg.a_type == static_cast<hipblasDatatype_t>(0))
         throw std::invalid_argument("Invalid value for --a_type " + a_type);
 
     arg.b_type = b_type == "" ? prec : string_to_hipblas_datatype(b_type);
-    if(arg.b_type == static_cast<hipblasDatatype_t>(-1))
+    if(arg.b_type == static_cast<hipblasDatatype_t>(0))
         throw std::invalid_argument("Invalid value for --b_type " + b_type);
 
     arg.c_type = c_type == "" ? prec : string_to_hipblas_datatype(c_type);
-    if(arg.c_type == static_cast<hipblasDatatype_t>(-1))
+    if(arg.c_type == static_cast<hipblasDatatype_t>(0))
         throw std::invalid_argument("Invalid value for --c_type " + c_type);
 
     arg.d_type = d_type == "" ? prec : string_to_hipblas_datatype(d_type);
-    if(arg.d_type == static_cast<hipblasDatatype_t>(-1))
+    if(arg.d_type == static_cast<hipblasDatatype_t>(0))
         throw std::invalid_argument("Invalid value for --d_type " + d_type);
 
     bool is_f16      = arg.a_type == HIPBLAS_R_16F || arg.a_type == HIPBLAS_R_16B;
     bool is_f32      = arg.a_type == HIPBLAS_R_32F;
     arg.compute_type = compute_type == "" ? (HIPBLASLT_COMPUTE_F32)
                                           : string_to_hipblaslt_computetype(compute_type);
-    if(arg.compute_type == static_cast<hipblasLtComputeType_t>(-1))
+    if(arg.compute_type == static_cast<hipblasLtComputeType_t>(0))
         throw std::invalid_argument("Invalid value for --compute_type " + compute_type);
 
-    if(string_to_hipblas_datatype(bias_type) == static_cast<hipblasDatatype_t>(-1)
-       && bias_type != "" && bias_type != "default")
+    if(string_to_hipblas_datatype(bias_type) == static_cast<hipblasDatatype_t>(0) && bias_type != ""
+       && bias_type != "default")
         throw std::invalid_argument("Invalid value for --bias_type " + bias_type);
     else
         arg.bias_type = string_to_hipblas_datatype(bias_type);
 
     arg.initialization = string2hipblaslt_initialization(initialization);
-    if(arg.initialization == static_cast<hipblaslt_initialization>(-1))
+    if(arg.initialization == static_cast<hipblaslt_initialization>(0))
         throw std::invalid_argument("Invalid value for --initialization " + initialization);
 
     arg.activation_type = string_to_hipblaslt_activation_type(activation_type);
-    if(arg.activation_type == static_cast<hipblaslt_activation_type>(-1))
+    if(arg.activation_type == static_cast<hipblaslt_activation_type>(0))
         throw std::invalid_argument("Invalid value for --activation_type " + activation_type);
 
     if(arg.M < 0)
