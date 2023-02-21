@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022 Advanced Micro Devices, Inc.
+ * Copyright (C) 2022-2023 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -86,7 +86,7 @@ constexpr hipblasOperation_t char_to_hipblas_operation(char value)
     case 'c':
         return HIPBLAS_OP_C;
     default:
-        return static_cast<hipblasOperation_t>(-1);
+        return static_cast<hipblasOperation_t>(0);
     }
 }
 
@@ -130,7 +130,7 @@ constexpr hipblasDatatype_t string_to_hipblas_datatype(const std::string& value)
         value == "f32_r" || value == "s" ? HIPBLAS_R_32F  :
         value == "f16_r" || value == "h" ? HIPBLAS_R_16F  :
         value == "bf16_r"                ? HIPBLAS_R_16B  :
-        static_cast<hipblasDatatype_t>(-1);
+        static_cast<hipblasDatatype_t>(0);
 }
 
 HIPBLASLT_EXPORT
@@ -138,7 +138,7 @@ constexpr hipblasLtComputeType_t string_to_hipblaslt_computetype(const std::stri
 {
     return
         value == "f32_r" || value == "s" ? HIPBLASLT_COMPUTE_F32  :
-        static_cast<hipblasLtComputeType_t>(-1);
+        static_cast<hipblasLtComputeType_t>(0);
 }
 // clang-format on
 

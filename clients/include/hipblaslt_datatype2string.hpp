@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022 Advanced Micro Devices, Inc.
+ * Copyright (C) 2022-2023 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -41,9 +41,9 @@ enum class hipblaslt_initialization
 
 typedef enum _hipblaslt_activation_type
 {
-    none = 0,
-    relu = 1,
-    gelu = 2,
+    none = 1,
+    relu = 2,
+    gelu = 3,
 } hipblaslt_activation_type;
 
 inline hipblaslt_internal_ostream& operator<<(hipblaslt_internal_ostream& os,
@@ -93,7 +93,7 @@ inline hipblaslt_initialization string2hipblaslt_initialization(const std::strin
         value == "trig_float" ? hipblaslt_initialization::trig_float :
         value == "hpl"        ? hipblaslt_initialization::hpl        :
         value == "special"    ? hipblaslt_initialization::special        :
-        static_cast<hipblaslt_initialization>(-1);
+        static_cast<hipblaslt_initialization>(0);
 }
 // clang-format on
 inline const hipblaslt_activation_type string_to_hipblaslt_activation_type(const std::string& value)
@@ -101,7 +101,7 @@ inline const hipblaslt_activation_type string_to_hipblaslt_activation_type(const
     return value == "none"   ? hipblaslt_activation_type::none
            : value == "gelu" ? hipblaslt_activation_type::gelu
            : value == "relu" ? hipblaslt_activation_type::relu
-                             : static_cast<hipblaslt_activation_type>(-1);
+                             : static_cast<hipblaslt_activation_type>(0);
 }
 
 // Convert hipblaslt_activation_type to string

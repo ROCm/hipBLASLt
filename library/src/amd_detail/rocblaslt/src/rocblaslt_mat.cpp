@@ -61,7 +61,7 @@ rocblaslt_status rocblaslt_matmul_impl(const rocblaslt_handle       handle,
     rocblaslt_compute_type compute_type = matmul_descr->compute_type;
     const void*            bias         = nullptr;
     hipblasDatatype_t      bias_type
-        = matmul_descr->bias_type == -1 ? matD->type : matmul_descr->bias_type;
+        = matmul_descr->bias_type == 0 ? matD->type : matmul_descr->bias_type;
     rocblaslt_epilogue epilogue = matmul_descr->epilogue;
     if(is_bias_enabled(epilogue))
         bias = matmul_descr->bias;

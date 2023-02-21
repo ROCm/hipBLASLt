@@ -785,7 +785,7 @@ RocblasltContractionProblem<Ti, To, Tc>
     hipblasOperation_t opA       = matmul_descr->op_A;
     hipblasOperation_t opB       = matmul_descr->op_B;
     const void*        bias      = nullptr;
-    hipblasDatatype_t  bias_type = matmul_descr->bias_type == static_cast<hipblasDatatype_t>(-1)
+    hipblasDatatype_t  bias_type = matmul_descr->bias_type == static_cast<hipblasDatatype_t>(0)
                                        ? matD->type
                                        : matmul_descr->bias_type;
     rocblaslt_epilogue epilogue  = matmul_descr->epilogue;
