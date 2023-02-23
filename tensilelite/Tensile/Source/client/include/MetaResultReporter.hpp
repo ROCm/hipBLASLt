@@ -177,9 +177,9 @@ namespace Tensile
                     (*iter)->postWarmup();
             }
 
-            virtual void validateWarmups(std::shared_ptr<ContractionInputs> inputs,
-                                         TimingEvents const&                startEvents,
-                                         TimingEvents const&                stopEvents) override
+            virtual void validateWarmups(std::shared_ptr<ProblemInputs> inputs,
+                                         TimingEvents const&            startEvents,
+                                         TimingEvents const&            stopEvents) override
             {
                 for(auto iter = m_reporters.begin(); iter != m_reporters.end(); iter++)
                     (*iter)->validateWarmups(inputs, startEvents, stopEvents);
@@ -231,9 +231,9 @@ namespace Tensile
                     (*iter)->postEnqueues(startEvents, stopEvents);
             }
 
-            virtual void validateEnqueues(std::shared_ptr<ContractionInputs> inputs,
-                                          TimingEvents const&                startEvents,
-                                          TimingEvents const&                stopEvents) override
+            virtual void validateEnqueues(std::shared_ptr<ProblemInputs> inputs,
+                                          TimingEvents const&            startEvents,
+                                          TimingEvents const&            stopEvents) override
             {
                 for(auto iter = m_reporters.begin(); iter != m_reporters.end(); iter++)
                     (*iter)->validateEnqueues(inputs, startEvents, stopEvents);

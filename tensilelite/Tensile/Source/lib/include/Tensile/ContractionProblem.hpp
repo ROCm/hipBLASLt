@@ -967,21 +967,11 @@ namespace Tensile
         std::vector<size_t> maxElements;
         size_t              workspaceSize;
         bool                gpu = false;
+    };
 
-        // TODO: Add ContractionGroupedInputs
-        std::vector<void const*>                  groupedA;
-        std::vector<void const*>                  groupedB;
-        std::vector<void const*>                  groupedC;
-        std::vector<void*>                        groupedD;
-        std::vector<void*>                        groupedE;
-        std::vector<void const*>                  groupedBias;
-        std::vector<void const*>                  groupedScaleD;
-        std::vector<ConstantVariant>              groupedAlpha;
-        std::vector<ConstantVariant>              groupedBeta;
-        std::vector<std::vector<ConstantVariant>> groupedActivationArgs;
-        std::vector<void*>                        groupedWs;
-        std::vector<std::vector<size_t>>          groupedMaxElements;
-        // Grouped input end
+    struct TENSILE_API ContractionGroupedInputs : public ProblemInputs
+    {
+        std::vector<ContractionInputs> grouped;
     };
 
     // Deprecated: Legacy support for hipBLASLt

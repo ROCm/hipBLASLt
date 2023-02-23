@@ -125,8 +125,7 @@ namespace Tensile
    * Returns a ContractionInputs object with pointers to CPU memory,
    * suitable for using to calculate reference results.
    */
-            std::shared_ptr<ContractionInputs>
-                prepareCPUInputs(ContractionProblemGemm const& problem)
+            std::shared_ptr<ProblemInputs> prepareCPUInputs(ContractionProblemGemm const& problem)
             {
                 if(m_cpuInit && m_curBoundsCheck == BoundsCheckMode::Disable
                    && !m_problemDependentData)
@@ -155,15 +154,14 @@ namespace Tensile
                 }
                 initializeConstantInputs(problem);
 
-                return ConvertToContractionInputs(problem, false);
+                return ConvertToProblemInputs(problem, false);
             }
 
             /**
-   * Returns a ContractionInputs object with pointers to GPU memory,
+   * Returns a ProblemInputs object with pointers to GPU memory,
    * suitable for using to run the kernel.
    */
-            std::shared_ptr<ContractionInputs>
-                prepareGPUInputs(ContractionProblemGemm const& problem)
+            std::shared_ptr<ProblemInputs> prepareGPUInputs(ContractionProblemGemm const& problem)
             {
                 if(m_numRunsInSolution > 0 && m_curBoundsCheck == BoundsCheckMode::GuardPageFront
                    && m_boundsCheck == BoundsCheckMode::GuardPageAll)
@@ -217,7 +215,7 @@ namespace Tensile
                 if(m_cpuPtrs.empty())
                     initializeConstantInputs(problem);
 
-                return ConvertToContractionInputs(problem, true);
+                return ConvertToProblemInputs(problem, true);
             }
 
             template <typename S>
@@ -566,9 +564,9 @@ namespace Tensile
             virtual void setNumWarmupRuns(size_t count) override{};
             virtual void preWarmup() override{};
             virtual void postWarmup() override{};
-            virtual void validateWarmups(std::shared_ptr<ContractionInputs> inputs,
-                                         TimingEvents const&                startEvents,
-                                         TimingEvents const&                stopEvents) override
+            virtual void validateWarmups(std::shared_ptr<ProblemInputs> inputs,
+                                         TimingEvents const&            startEvents,
+                                         TimingEvents const&            stopEvents) override
             {
                 m_numRunsInSolution++;
             };
@@ -589,9 +587,9 @@ namespace Tensile
             virtual void preEnqueues() override{};
             virtual void postEnqueues(TimingEvents const& startEvents,
                                       TimingEvents const& stopEvents) override{};
-            virtual void validateEnqueues(std::shared_ptr<ContractionInputs> inputs,
-                                          TimingEvents const&                startEvents,
-                                          TimingEvents const&                stopEvents) override{};
+            virtual void validateEnqueues(std::shared_ptr<ProblemInputs> inputs,
+                                          TimingEvents const&            startEvents,
+                                          TimingEvents const&            stopEvents) override{};
 
             virtual void finalizeReport() override{};
 
@@ -672,11 +670,26 @@ namespace Tensile
                              ContractionProblemGemm const&     problem,
                              hipMemcpyKind                     kind);
 
-            void setGroupedGemm(ContractionProblemGemm const&       problem,
-                                std::shared_ptr<ContractionInputs>& inputs);
+            template <typename T>
+            void setContractionInputs(std::vector<T*>&                      ptrs,
+                                      std::vector<void**>&                  batchPtrs,
+                                      void*                                 ws,
+                                      std::vector<ConstDataInitProperties>& cdata,
+                                      std::vector<size_t>                   maxElements,
+                                      bool                                  isGPU,
+                                      ContractionInputs*                    inputs);
 
-            std::shared_ptr<ContractionInputs>
-                ConvertToContractionInputs(ContractionProblemGemm const& problem, bool isGPU);
+            void setContractionGroupedInputs(std::vector<void*>&                     ptrs,
+                                             std::vector<void**>&                    batchPtrs,
+                                             void*                                   ws,
+                                             std::vector<ConstDataInitProperties>&   cdata,
+                                             bool                                    isGPU,
+                                             ContractionProblemGemm const&           problem,
+                                             std::vector<std::vector<size_t>> const& offsets,
+                                             ContractionGroupedInputs*               inputs);
+
+            std::shared_ptr<ProblemInputs>
+                ConvertToProblemInputs(ContractionProblemGemm const& problem, bool isGPU);
 
             std::vector<VectorDataInitProperties> m_vdata;
             std::vector<void*>                    m_cpuPtrs;

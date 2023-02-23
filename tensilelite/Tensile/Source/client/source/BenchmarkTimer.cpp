@@ -140,9 +140,9 @@ namespace Tensile
 
         void BenchmarkTimer::postWarmup() {}
 
-        void BenchmarkTimer::validateWarmups(std::shared_ptr<ContractionInputs> inputs,
-                                             TimingEvents const&                startEvents,
-                                             TimingEvents const&                stopEvents)
+        void BenchmarkTimer::validateWarmups(std::shared_ptr<ProblemInputs> inputs,
+                                             TimingEvents const&            startEvents,
+                                             TimingEvents const&            stopEvents)
         {
             if(m_syncAfterWarmups && (stopEvents->size() > 0) && (stopEvents->back().size() > 0))
                 HIP_CHECK_EXC(hipEventSynchronize(stopEvents->back().back()));
@@ -199,9 +199,9 @@ namespace Tensile
             }
         }
 
-        void BenchmarkTimer::validateEnqueues(std::shared_ptr<ContractionInputs> inputs,
-                                              TimingEvents const&                startEvents,
-                                              TimingEvents const&                stopEvents)
+        void BenchmarkTimer::validateEnqueues(std::shared_ptr<ProblemInputs> inputs,
+                                              TimingEvents const&            startEvents,
+                                              TimingEvents const&            stopEvents)
         {
             double_millis totalTime(0.0);
 

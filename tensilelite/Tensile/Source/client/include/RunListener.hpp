@@ -99,9 +99,9 @@ namespace Tensile
             virtual void   setNumWarmupRuns(size_t count) = 0;
             virtual void   preWarmup()                    = 0;
             virtual void   postWarmup()                   = 0;
-            virtual void   validateWarmups(std::shared_ptr<ContractionInputs> inputs,
-                                           TimingEvents const&                startEvents,
-                                           TimingEvents const&                stopEvents)
+            virtual void   validateWarmups(std::shared_ptr<ProblemInputs> inputs,
+                                           TimingEvents const&            startEvents,
+                                           TimingEvents const&            stopEvents)
                 = 0;
 
             virtual size_t numSyncs()                = 0;
@@ -115,9 +115,9 @@ namespace Tensile
             virtual void   postEnqueues(TimingEvents const& startEvents,
                                         TimingEvents const& stopEvents)
                 = 0;
-            virtual void validateEnqueues(std::shared_ptr<ContractionInputs> inputs,
-                                          TimingEvents const&                startEvents,
-                                          TimingEvents const&                stopEvents)
+            virtual void validateEnqueues(std::shared_ptr<ProblemInputs> inputs,
+                                          TimingEvents const&            startEvents,
+                                          TimingEvents const&            stopEvents)
                 = 0;
 
             /// Called at end of program execution.  Print out a summary of the runs.

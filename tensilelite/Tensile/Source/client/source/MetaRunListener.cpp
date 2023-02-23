@@ -145,9 +145,9 @@ namespace Tensile
                 (*iter)->postWarmup();
         }
 
-        void MetaRunListener::validateWarmups(std::shared_ptr<ContractionInputs> inputs,
-                                              TimingEvents const&                startEvents,
-                                              TimingEvents const&                stopEvents)
+        void MetaRunListener::validateWarmups(std::shared_ptr<ProblemInputs> inputs,
+                                              TimingEvents const&            startEvents,
+                                              TimingEvents const&            stopEvents)
         {
             for(auto iter = m_listeners.begin(); iter != m_listeners.end(); iter++)
                 (*iter)->validateWarmups(inputs, startEvents, stopEvents);
@@ -212,9 +212,9 @@ namespace Tensile
                 (*iter)->postEnqueues(startEvents, stopEvents);
         }
 
-        void MetaRunListener::validateEnqueues(std::shared_ptr<ContractionInputs> inputs,
-                                               TimingEvents const&                startEvents,
-                                               TimingEvents const&                stopEvents)
+        void MetaRunListener::validateEnqueues(std::shared_ptr<ProblemInputs> inputs,
+                                               TimingEvents const&            startEvents,
+                                               TimingEvents const&            stopEvents)
         {
             for(auto iter = m_listeners.begin(); iter != m_listeners.end(); iter++)
                 (*iter)->validateEnqueues(inputs, startEvents, stopEvents);

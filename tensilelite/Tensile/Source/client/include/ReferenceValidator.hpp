@@ -67,9 +67,9 @@ namespace Tensile
             virtual void   setNumWarmupRuns(size_t count) override;
             virtual void   preWarmup() override;
             virtual void   postWarmup() override;
-            virtual void   validateWarmups(std::shared_ptr<ContractionInputs> inputs,
-                                           TimingEvents const&                startEvents,
-                                           TimingEvents const&                stopEvents) override;
+            virtual void   validateWarmups(std::shared_ptr<ProblemInputs> inputs,
+                                           TimingEvents const&            startEvents,
+                                           TimingEvents const&            stopEvents) override;
 
             virtual size_t numSyncs() override
             {
@@ -89,13 +89,13 @@ namespace Tensile
                                       TimingEvents const& stopEvents) override
             {
             }
-            virtual void validateEnqueues(std::shared_ptr<ContractionInputs> inputs,
-                                          TimingEvents const&                startEvents,
-                                          TimingEvents const&                stopEvents) override
+            virtual void validateEnqueues(std::shared_ptr<ProblemInputs> inputs,
+                                          TimingEvents const&            startEvents,
+                                          TimingEvents const&            stopEvents) override
             {
             }
 
-            bool validate(ContractionInputs const& reference, ContractionInputs const& result);
+            bool validate(ProblemInputs const& referenceInputs, ProblemInputs const& resultInputs);
 
             bool validateTyped(TensorDescriptor const& tensor,
                                void const*             refPtr,
@@ -120,7 +120,7 @@ namespace Tensile
             void allocateResultBuffer(size_t bytes);
 
             std::shared_ptr<DataInitialization> m_dataInit;
-            std::shared_ptr<ContractionInputs>  m_referenceInputs;
+            std::shared_ptr<ProblemInputs>      m_referenceInputs;
 
             size_t                   m_cpuResultBufferSize = 0;
             std::shared_ptr<uint8_t> m_cpuResultBuffer;
@@ -150,7 +150,7 @@ namespace Tensile
             bool   m_error             = false;
             size_t m_errorsReported    = 0;
 
-            bool validateSolution(std::shared_ptr<ContractionInputs> inputs);
+            bool validateSolution(std::shared_ptr<ProblemInputs> inputs);
         };
     } // namespace Client
 } // namespace Tensile
