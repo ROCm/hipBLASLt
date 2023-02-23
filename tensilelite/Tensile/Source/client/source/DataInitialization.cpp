@@ -324,14 +324,13 @@ namespace Tensile
         }
 
         DataInitialization::DataInitialization(po::variables_map const&    args,
-                                               ClientProblemFactory const& problemFactory,
-                                               size_t                      maxWorkspaceSize)
+                                               ClientProblemFactory const& problemFactory)
             : m_maxBatch(0)
             , m_stridedBatched(args["strided-batched"].as<bool>())
             , m_cEqualsD(args["c-equal-d"].as<bool>())
             , m_elementsToValidate(args["num-elements-to-validate"].as<int>())
             , m_keepPristineCopyOnGPU(args["pristine-on-gpu"].as<bool>())
-            , m_workspaceSize(maxWorkspaceSize)
+            , m_workspaceSize(problemFactory.workspaceSize())
         {
             m_boundsCheck    = args["bounds-check"].as<BoundsCheckMode>();
             m_curBoundsCheck = m_boundsCheck;

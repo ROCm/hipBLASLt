@@ -74,40 +74,35 @@ namespace Tensile
             m_numBenchmarkRuns++;
         }
 
-        void ReferenceValidator::preProblem(ContractionProblemGemm const& problem)
+        void ReferenceValidator::preProblem(ContractionProblem* const problem)
         {
             if(m_enabled)
             {
-                m_problem          = problem;
-                m_referenceInputs  = m_dataInit->prepareCPUInputs(problem);
-                m_validationStride = 1;
-                if(m_elementsToValidate > 0
-                   && m_elementsToValidate < problem.d().totalLogicalElements())
-                    m_validationStride
-                        = NextPrime(problem.d().totalAllocatedElements() / m_elementsToValidate);
-                if(auto refInput = dynamic_cast<ContractionInputs*>(m_referenceInputs.get()))
-                    SolveCPU(problem, *refInput, m_validationStride);
-                else if(auto refInput
-                        = dynamic_cast<ContractionGroupedInputs*>(m_referenceInputs.get()))
+                m_problem = problem;
+                if(auto groupedProblem
+                   = dynamic_cast<ContractionProblemGroupedGemm const*>(problem))
                 {
-                    // TODO: The grouped gemm problem should be solved here.
+                    m_referenceInputs = m_dataInit->prepareCPUInputs(groupedProblem->gemms[0]);
+                    if(auto refInput
+                       = dynamic_cast<ContractionGroupedInputs*>(m_referenceInputs.get()))
+                        SolveCPUGroupedGemm(groupedProblem->gemms, *refInput, m_elementsToValidate);
+                    else
+                        throw std::runtime_error(
+                            "Unable to cast input to ContractionGroupedInputs.");
+                }
+                else if(auto gemmProblem = dynamic_cast<ContractionProblemGemm const*>(problem))
+                {
+                    m_referenceInputs = m_dataInit->prepareCPUInputs(*gemmProblem);
+                    if(auto refInput = dynamic_cast<ContractionInputs*>(m_referenceInputs.get()))
+                        SolveCPU(*gemmProblem, *refInput, m_elementsToValidate);
+                    else
+                        throw std::runtime_error("Unable to cast input to ContractionInputs.");
                 }
                 else
-                    throw std::runtime_error("Unable to cast input.");
-            }
-        }
-
-        void
-            ReferenceValidator::preProblemGroupedGemm(ContractionProblemGroupedGemm const& problems)
-        {
-            if(m_enabled)
-            {
-                m_problems    = problems;
-                m_groupedGemm = true;
-                if(auto refInput = dynamic_cast<ContractionGroupedInputs*>(m_referenceInputs.get()))
-                    SolveCPUGroupedGemm(problems.gemms, *refInput, m_validationStride);
-                else
-                    throw std::runtime_error("Unable to cast input.");
+                {
+                    throw std::runtime_error(
+                        "[ReferenceValidator] Failed to cast to any ContractionProblem");
+                }
             }
         }
 
@@ -141,26 +136,35 @@ namespace Tensile
 
         bool ReferenceValidator::validateSolution(std::shared_ptr<ProblemInputs> inputs)
         {
-            // If problem == ContractionProblemGemm
-            // retreive alpha/beta type set via setAlpha/BetaType()
-            auto alphaType = m_problem.alphaType();
-            auto betaType  = m_problem.betaType();
-            auto biasType  = m_problem.biasType();
+            if(!m_enabled)
+                return false;
 
-            // Backward-compatible: when setAlpha/BetaType() wasn't called, use the old way
-            // Could remove after rocBLAS is updated
-            if(alphaType == DataType::None)
-            {
-                alphaType = m_problem.a().dataType() == DataType::BFloat16
-                                ? DataType::Float
-                                : m_problem.d().dataType();
-            }
-            if(betaType == DataType::None)
-            {
-                betaType = alphaType;
-            }
+            bool rv = false;
 
-            auto rv = validate(*m_referenceInputs, *inputs);
+            if(m_elementsToValidate != 0)
+            {
+                if(auto problems = dynamic_cast<ContractionProblemGroupedGemm*>(m_problem))
+                {
+                    auto reference
+                        = dynamic_cast<ContractionGroupedInputs const&>(*m_referenceInputs);
+                    auto result = dynamic_cast<ContractionGroupedInputs const&>(*inputs);
+                    rv          = true;
+                    for(size_t j = 0; j < problems->gemms.size(); j++)
+                    {
+                        rv &= validate(problems->gemms[j], reference.grouped[j], result.grouped[j]);
+                    }
+                }
+                else if(auto problem = dynamic_cast<ContractionProblemGemm*>(m_problem))
+                {
+                    auto reference = dynamic_cast<ContractionInputs const&>(*m_referenceInputs);
+                    auto result    = dynamic_cast<ContractionInputs const&>(*inputs);
+                    rv             = validate(*problem, reference, result);
+                }
+                else
+                {
+                    throw std::runtime_error("Failed to cast to any ContractionProblem.");
+                }
+            }
 
             return rv;
         }
@@ -176,25 +180,34 @@ namespace Tensile
             }
         }
 
-        bool ReferenceValidator::validateTyped(TensorDescriptor const& tensor,
-                                               void const*             refPtr,
-                                               void const*             resPtr,
-                                               size_t                  maxElements,
-                                               bool                    isgpu)
+        bool ReferenceValidator::checkResults(TensorDescriptor const& tensor,
+                                              void const*             refPtr,
+                                              void const*             resPtr,
+                                              size_t                  maxElements,
+                                              bool                    isgpu,
+                                              size_t                  validationStride)
         {
             bool rv = false;
             switch(tensor.dataType())
             {
             case DataType::Float:
             {
-                rv = checkResultsTyped(
-                    tensor, (float const*)refPtr, (float const*)resPtr, maxElements, isgpu);
+                rv = checkResultsTyped(tensor,
+                                       (float const*)refPtr,
+                                       (float const*)resPtr,
+                                       maxElements,
+                                       isgpu,
+                                       validationStride);
             }
             break;
             case DataType::Double:
             {
-                rv = checkResultsTyped(
-                    tensor, (double const*)refPtr, (double const*)resPtr, maxElements, isgpu);
+                rv = checkResultsTyped(tensor,
+                                       (double const*)refPtr,
+                                       (double const*)resPtr,
+                                       maxElements,
+                                       isgpu,
+                                       validationStride);
             }
             break;
             case DataType::ComplexFloat:
@@ -203,7 +216,8 @@ namespace Tensile
                                        (std::complex<float> const*)refPtr,
                                        (std::complex<float> const*)resPtr,
                                        maxElements,
-                                       isgpu);
+                                       isgpu,
+                                       validationStride);
             }
             break;
             case DataType::ComplexDouble:
@@ -212,13 +226,18 @@ namespace Tensile
                                        (std::complex<double> const*)refPtr,
                                        (std::complex<double> const*)resPtr,
                                        maxElements,
-                                       isgpu);
+                                       isgpu,
+                                       validationStride);
             }
             break;
             case DataType::Half:
             {
-                rv = checkResultsTyped(
-                    tensor, (Half const*)refPtr, (Half const*)resPtr, maxElements, isgpu);
+                rv = checkResultsTyped(tensor,
+                                       (Half const*)refPtr,
+                                       (Half const*)resPtr,
+                                       maxElements,
+                                       isgpu,
+                                       validationStride);
             }
             break;
             case DataType::Int8x4:
@@ -228,20 +247,32 @@ namespace Tensile
             break;
             case DataType::Int32:
             {
-                rv = checkResultsTyped(
-                    tensor, (int32_t const*)refPtr, (int32_t const*)resPtr, maxElements, isgpu);
+                rv = checkResultsTyped(tensor,
+                                       (int32_t const*)refPtr,
+                                       (int32_t const*)resPtr,
+                                       maxElements,
+                                       isgpu,
+                                       validationStride);
             }
             break;
             case DataType::BFloat16:
             {
-                rv = checkResultsTyped(
-                    tensor, (BFloat16 const*)refPtr, (BFloat16 const*)resPtr, maxElements, isgpu);
+                rv = checkResultsTyped(tensor,
+                                       (BFloat16 const*)refPtr,
+                                       (BFloat16 const*)resPtr,
+                                       maxElements,
+                                       isgpu,
+                                       validationStride);
             }
             break;
             case DataType::Int8:
             {
-                rv = checkResultsTyped(
-                    tensor, (int8_t const*)refPtr, (int8_t const*)resPtr, maxElements, isgpu);
+                rv = checkResultsTyped(tensor,
+                                       (int8_t const*)refPtr,
+                                       (int8_t const*)resPtr,
+                                       maxElements,
+                                       isgpu,
+                                       validationStride);
             }
             break;
             default:
@@ -254,171 +285,88 @@ namespace Tensile
             return rv;
         }
 
-        bool ReferenceValidator::validate(ProblemInputs const& referenceInputs,
-                                          ProblemInputs const& resultInputs)
+        bool ReferenceValidator::validate(ContractionProblemGemm const& problem,
+                                          ContractionInputs const&      reference,
+                                          ContractionInputs const&      result)
         {
-            bool rv = false;
-            if(!m_enabled)
-                return rv;
+            if(problem.tensors().empty())
+                return false;
 
-            if(m_elementsToValidate != 0)
+            bool rv = true;
+
+            if(m_printAny)
+                printTensors(problem, reference, result);
+
+            size_t validationStride = 1;
+            if(m_elementsToValidate > 0
+               && m_elementsToValidate < problem.d().totalLogicalElements())
+                validationStride
+                    = NextPrime(problem.d().totalAllocatedElements() / m_elementsToValidate);
+
+            for(size_t i = 0; i < problem.tensors().size(); i++)
             {
-                // TODO: Combine ContractionProblemGroupedGemm and ContractionProblemGemm
-                if(m_groupedGemm)
+                auto& tensor = problem.tensors()[i];
+                if(!tensor.isOutput())
+                    continue;
+
+                void const* refPtr = nullptr;
+                void const* resPtr = nullptr;
+                switch(static_cast<ContractionProblemGemm::TENSOR>(i))
                 {
-                    auto reference = dynamic_cast<ContractionGroupedInputs const&>(referenceInputs);
-                    auto result    = dynamic_cast<ContractionGroupedInputs const&>(resultInputs);
-                    for(size_t j = 0; j < m_problems.gemms.size(); j++)
-                    {
-
-                        if(m_printAny)
-                            printTensors(reference.grouped[j], result.grouped[j]);
-
-                        for(size_t i = 0; i < m_problems.gemms[j].tensors().size(); i++)
-                        {
-                            auto& tensor = m_problems.gemms[j].tensors()[i];
-                            if(!tensor.isOutput())
-                                continue;
-
-                            void const* refPtr = nullptr;
-                            void const* resPtr = nullptr;
-                            switch(static_cast<ContractionProblemGemm::TENSOR>(i))
-                            {
-                            case ContractionProblemGemm::TENSOR::A:
-                            {
-                                refPtr = reference.grouped[j].a;
-                                resPtr = result.grouped[j].a;
-                            }
-                            break;
-                            case ContractionProblemGemm::TENSOR::B:
-                            {
-                                refPtr = reference.grouped[j].b;
-                                resPtr = result.grouped[j].b;
-                            }
-                            break;
-                            case ContractionProblemGemm::TENSOR::C:
-                            {
-                                refPtr = reference.grouped[j].c;
-                                resPtr = result.grouped[j].c;
-                            }
-                            break;
-                            case ContractionProblemGemm::TENSOR::D:
-                            {
-                                refPtr = reference.grouped[j].d;
-                                resPtr = result.grouped[j].d;
-                            }
-                            break;
-                            case ContractionProblemGemm::TENSOR::E:
-                            {
-                                refPtr = reference.grouped[j].e;
-                                resPtr = result.grouped[j].e;
-                            }
-                            break;
-                            case ContractionProblemGemm::TENSOR::BIAS:
-                            {
-                                refPtr = reference.grouped[j].bias;
-                                resPtr = result.grouped[j].bias;
-                            }
-                            break;
-                            case ContractionProblemGemm::TENSOR::SCALED:
-                            {
-                                refPtr = reference.grouped[j].scaleD;
-                                resPtr = result.grouped[j].scaleD;
-                            }
-                            break;
-                            default:
-                                throw std::runtime_error("Unrecognized output tensor.");
-                            }
-
-                            if(Debug::Instance().printTensorInfo())
-                                std::cout
-                                    << "Validating tensor " << tensor.getName() << ", cpu pointer "
-                                    << refPtr << ", gpu pointer " << resPtr
-                                    << ", size = " << result.grouped[j].maxElements[i] << std::endl;
-
-                            rv = validateTyped(tensor,
-                                               refPtr,
-                                               resPtr,
-                                               result.grouped[j].maxElements[i],
-                                               result.grouped[j].gpu);
-                        }
-                    }
-                    return rv;
+                case ContractionProblemGemm::TENSOR::A:
+                {
+                    refPtr = reference.a;
+                    resPtr = result.a;
+                }
+                break;
+                case ContractionProblemGemm::TENSOR::B:
+                {
+                    refPtr = reference.b;
+                    resPtr = result.b;
+                }
+                break;
+                case ContractionProblemGemm::TENSOR::C:
+                {
+                    refPtr = reference.c;
+                    resPtr = result.c;
+                }
+                break;
+                case ContractionProblemGemm::TENSOR::D:
+                {
+                    refPtr = reference.d;
+                    resPtr = result.d;
+                }
+                break;
+                case ContractionProblemGemm::TENSOR::E:
+                {
+                    refPtr = reference.e;
+                    resPtr = result.e;
+                }
+                break;
+                case ContractionProblemGemm::TENSOR::BIAS:
+                {
+                    refPtr = reference.bias;
+                    resPtr = result.bias;
+                }
+                break;
+                case ContractionProblemGemm::TENSOR::SCALED:
+                {
+                    refPtr = reference.scaleD;
+                    resPtr = result.scaleD;
+                }
+                break;
+                default:
+                    throw std::runtime_error("Unrecognized output tensor.");
                 }
 
-                auto reference = dynamic_cast<ContractionInputs const&>(referenceInputs);
-                auto result    = dynamic_cast<ContractionInputs const&>(resultInputs);
+                if(Debug::Instance().printTensorInfo())
+                    std::cout << "Validating tensor " << tensor.getName() << ", cpu pointer "
+                              << refPtr << ", gpu pointer " << resPtr
+                              << ", size = " << result.maxElements[i] << std::endl;
 
-                if(m_printAny)
-                    printTensors(reference, result);
-
-                for(size_t i = 0; i < m_problem.tensors().size(); i++)
-                {
-                    auto& tensor = m_problem.tensors()[i];
-                    if(!tensor.isOutput())
-                        continue;
-
-                    void const* refPtr = nullptr;
-                    void const* resPtr = nullptr;
-                    if(dynamic_cast<ContractionProblemGemm*>(&m_problem))
-                    {
-                        switch(static_cast<ContractionProblemGemm::TENSOR>(i))
-                        {
-                        case ContractionProblemGemm::TENSOR::A:
-                        {
-                            refPtr = reference.a;
-                            resPtr = result.a;
-                        }
-                        break;
-                        case ContractionProblemGemm::TENSOR::B:
-                        {
-                            refPtr = reference.b;
-                            resPtr = result.b;
-                        }
-                        break;
-                        case ContractionProblemGemm::TENSOR::C:
-                        {
-                            refPtr = reference.c;
-                            resPtr = result.c;
-                        }
-                        break;
-                        case ContractionProblemGemm::TENSOR::D:
-                        {
-                            refPtr = reference.d;
-                            resPtr = result.d;
-                        }
-                        break;
-                        case ContractionProblemGemm::TENSOR::E:
-                        {
-                            refPtr = reference.e;
-                            resPtr = result.e;
-                        }
-                        break;
-                        case ContractionProblemGemm::TENSOR::BIAS:
-                        {
-                            refPtr = reference.bias;
-                            resPtr = result.bias;
-                        }
-                        break;
-                        case ContractionProblemGemm::TENSOR::SCALED:
-                        {
-                            refPtr = reference.scaleD;
-                            resPtr = result.scaleD;
-                        }
-                        break;
-                        default:
-                            throw std::runtime_error("Unrecognized output tensor.");
-                        }
-                    }
-                    else
-                    {
-                        throw std::runtime_error("Failed to cast problem to one of the tensors.");
-                    }
-
-                    rv = validateTyped(tensor, refPtr, resPtr, result.maxElements[i], result.gpu);
-                }
+                rv &= checkResults(
+                    tensor, refPtr, resPtr, result.maxElements[i], result.gpu, validationStride);
             }
-
             return rv;
         }
 
@@ -434,8 +382,9 @@ namespace Tensile
             m_cpuResultBufferSize = bytes;
         }
 
-        void ReferenceValidator::printTensors(ContractionInputs const& reference,
-                                              ContractionInputs const& result)
+        void ReferenceValidator::printTensors(ContractionProblemGemm const& problem,
+                                              ContractionInputs const&      reference,
+                                              ContractionInputs const&      result)
         {
             size_t requiredBufferSize = 0;
 
@@ -446,19 +395,19 @@ namespace Tensile
 
             if(m_printTensorA)
                 requiredBufferSize
-                    = std::max(requiredBufferSize, m_problem.a().totalAllocatedBytes());
+                    = std::max(requiredBufferSize, problem.a().totalAllocatedBytes());
             if(m_printTensorB)
                 requiredBufferSize
-                    = std::max(requiredBufferSize, m_problem.b().totalAllocatedBytes());
+                    = std::max(requiredBufferSize, problem.b().totalAllocatedBytes());
             if(m_printTensorC)
                 requiredBufferSize
-                    = std::max(requiredBufferSize, m_problem.c().totalAllocatedBytes());
+                    = std::max(requiredBufferSize, problem.c().totalAllocatedBytes());
             if(m_printTensorD)
                 requiredBufferSize
-                    = std::max(requiredBufferSize, m_problem.d().totalAllocatedBytes());
+                    = std::max(requiredBufferSize, problem.d().totalAllocatedBytes());
             if(m_printTensorRef)
                 requiredBufferSize
-                    = std::max(requiredBufferSize, m_problem.d().totalAllocatedBytes());
+                    = std::max(requiredBufferSize, problem.d().totalAllocatedBytes());
 
             if(m_cpuResultBufferSize < requiredBufferSize)
                 allocateResultBuffer(requiredBufferSize);
@@ -467,20 +416,20 @@ namespace Tensile
             {
                 HIP_CHECK_EXC(hipMemcpy(m_cpuResultBuffer.get(),
                                         result.a,
-                                        m_problem.a().totalAllocatedBytes(),
+                                        problem.a().totalAllocatedBytes(),
                                         hipMemcpyDeviceToHost));
                 m_reporter->logTensor(
-                    LogLevel::Verbose, "A", m_cpuResultBuffer.get(), m_problem.a(), result.a);
+                    LogLevel::Verbose, "A", m_cpuResultBuffer.get(), problem.a(), result.a);
             }
 
             if(m_printTensorB)
             {
                 HIP_CHECK_EXC(hipMemcpy(m_cpuResultBuffer.get(),
                                         result.b,
-                                        m_problem.b().totalAllocatedBytes(),
+                                        problem.b().totalAllocatedBytes(),
                                         hipMemcpyDeviceToHost));
                 m_reporter->logTensor(
-                    LogLevel::Verbose, "B", m_cpuResultBuffer.get(), m_problem.b(), result.b);
+                    LogLevel::Verbose, "B", m_cpuResultBuffer.get(), problem.b(), result.b);
             }
 
             if(result.c == result.d && (m_printTensorC || m_printTensorD))
@@ -488,10 +437,10 @@ namespace Tensile
                 // If the pointers are the same, only print the buffer once.
                 HIP_CHECK_EXC(hipMemcpy(m_cpuResultBuffer.get(),
                                         result.c,
-                                        m_problem.c().totalAllocatedBytes(),
+                                        problem.c().totalAllocatedBytes(),
                                         hipMemcpyDeviceToHost));
                 m_reporter->logTensor(
-                    LogLevel::Verbose, "C_D", m_cpuResultBuffer.get(), m_problem.c(), result.c);
+                    LogLevel::Verbose, "C_D", m_cpuResultBuffer.get(), problem.c(), result.c);
             }
             else
             {
@@ -499,27 +448,27 @@ namespace Tensile
                 {
                     HIP_CHECK_EXC(hipMemcpy(m_cpuResultBuffer.get(),
                                             result.c,
-                                            m_problem.c().totalAllocatedBytes(),
+                                            problem.c().totalAllocatedBytes(),
                                             hipMemcpyDeviceToHost));
                     m_reporter->logTensor(
-                        LogLevel::Verbose, "C", m_cpuResultBuffer.get(), m_problem.c(), result.c);
+                        LogLevel::Verbose, "C", m_cpuResultBuffer.get(), problem.c(), result.c);
                 }
 
                 if(m_printTensorD)
                 {
                     HIP_CHECK_EXC(hipMemcpy(m_cpuResultBuffer.get(),
                                             result.d,
-                                            m_problem.d().totalAllocatedBytes(),
+                                            problem.d().totalAllocatedBytes(),
                                             hipMemcpyDeviceToHost));
                     m_reporter->logTensor(
-                        LogLevel::Verbose, "D", m_cpuResultBuffer.get(), m_problem.d(), result.d);
+                        LogLevel::Verbose, "D", m_cpuResultBuffer.get(), problem.d(), result.d);
                 }
             }
 
             if(m_printTensorRef)
             {
                 m_reporter->logTensor(
-                    LogLevel::Verbose, "Ref", reference.d, m_problem.d(), reference.d);
+                    LogLevel::Verbose, "Ref", reference.d, problem.d(), reference.d);
             }
         }
 
@@ -528,7 +477,8 @@ namespace Tensile
                                                    ValidType const*        reference,
                                                    ValidType const*        result,
                                                    size_t                  maxElement,
-                                                   bool                    isgpu)
+                                                   bool                    isgpu,
+                                                   size_t                  validationStride)
         {
             PointwiseComparison<ValidType> compareValid(m_printValids, m_printMax, m_printMax > 0);
             InvalidComparison<ValidType>   compareInvalid(m_printMax, m_printMax > 0);
@@ -577,7 +527,7 @@ namespace Tensile
                 compareInvalid.before(resultBuffer[i], i, elementsBeforeData);
             }
 
-            if(m_validationStride == 1)
+            if(validationStride == 1)
             {
                 std::vector<size_t> coord(tensor.dimensions());
                 size_t outerCount = CoordCount(tensor.sizes().begin() + 1, tensor.sizes().end());
@@ -625,7 +575,7 @@ namespace Tensile
             {
                 std::vector<size_t> coord(tensor.dimensions());
                 for(size_t elemNumber = 0; elemNumber < tensor.totalLogicalElements();
-                    elemNumber += m_validationStride)
+                    elemNumber += validationStride)
                 {
                     CoordNumbered(elemNumber,
                                   coord.begin(),

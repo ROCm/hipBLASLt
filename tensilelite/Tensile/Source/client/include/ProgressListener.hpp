@@ -51,7 +51,7 @@ namespace Tensile
 
             virtual void postBenchmarkRun() override;
 
-            virtual void preProblem(ContractionProblemGemm const& problem) override;
+            virtual void preProblem(ContractionProblem* const problem) override;
 
             virtual void postProblem() override;
 
@@ -89,6 +89,8 @@ namespace Tensile
             virtual int error() const override;
 
         private:
+            void writeReport(ContractionProblemGemm const& problem);
+
             size_t m_benchmarkRun = 0;
             bool   m_runOnce      = false;
         };

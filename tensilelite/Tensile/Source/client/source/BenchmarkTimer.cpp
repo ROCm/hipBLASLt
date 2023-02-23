@@ -70,7 +70,7 @@ namespace Tensile
             m_numBenchmarksRun++;
         }
 
-        void BenchmarkTimer::preProblem(ContractionProblemGemm const& problem)
+        void BenchmarkTimer::preProblem(ContractionProblem* const problem)
         {
             m_problem = problem;
         }
@@ -82,8 +82,22 @@ namespace Tensile
             m_numEnqueuesInSolution = 0;
             m_timeInSolution        = double_millis::zero();
 
-            ContractionSolution::ProjectedPerformance pp
-                = solution.projectedPerformance(m_problem, m_hardware);
+            ContractionSolution::ProjectedPerformance pp;
+
+            if(auto problem = dynamic_cast<ContractionProblemGroupedGemm*>(m_problem))
+            {
+                pp = solution.projectedPerformance(problem->gemms[0], m_hardware);
+            }
+            else if(auto problem = dynamic_cast<ContractionProblemGemm*>(m_problem))
+            {
+                pp = solution.projectedPerformance(*problem, m_hardware);
+            }
+            else
+            {
+                throw std::runtime_error(
+                    "[BenchmarkTimer] Failed to cast problem to any ContractionProblem.");
+            }
+
             m_solution = solution;
 
             m_reporter->report(ResultKey::Tile0Granularity, pp.granularities.tile0Granularity);
@@ -103,10 +117,25 @@ namespace Tensile
             double timePerEnqueue_us
                 = double_micros(m_timeInSolution).count() / m_numEnqueuesInSolution;
 
-            ContractionSolution::ProjectedPerformance pp
-                = m_solution.projectedPerformance(m_problem, m_hardware);
+            ContractionSolution::ProjectedPerformance pp;
+            double                                    flopCount = 0;
+            if(auto problem = dynamic_cast<ContractionProblemGroupedGemm*>(m_problem))
+            {
+                pp        = m_solution.projectedPerformance(problem->gemms[0], m_hardware);
+                flopCount = problem->gemms[0].flopCount();
+            }
+            else if(auto problem = dynamic_cast<ContractionProblemGemm*>(m_problem))
+            {
+                pp        = m_solution.projectedPerformance(*problem, m_hardware);
+                flopCount = problem->flopCount();
+            }
+            else
+            {
+                throw std::runtime_error(
+                    "[BenchmarkTimer] Failed to cast problem to any ContractionProblem.");
+            }
 
-            double gflops      = m_problem.flopCount() / (timePerEnqueue_us) / 1000.0;
+            double gflops      = flopCount / (timePerEnqueue_us) / 1000.0;
             int    tiles       = pp.granularities.tilesPerCu * perf.CUs;
             int    usedCus     = std::min(tiles, perf.CUs);
             double gflopsPerCu = gflops / usedCus;
@@ -167,7 +196,21 @@ namespace Tensile
             size_t enqueuesByFlops = 0;
             if(m_minFlopsPerSync > 0)
             {
-                size_t flopsInProblem = m_problem.flopCount();
+                double flopCount = 0;
+                if(auto problem = dynamic_cast<ContractionProblemGroupedGemm*>(m_problem))
+                {
+                    flopCount = problem->gemms[0].flopCount();
+                }
+                else if(auto problem = dynamic_cast<ContractionProblemGemm*>(m_problem))
+                {
+                    flopCount = problem->flopCount();
+                }
+                else
+                {
+                    throw std::runtime_error(
+                        "[BenchmarkTimer] Failed to cast problem to any ContractionProblem.");
+                }
+                size_t flopsInProblem = flopCount;
                 enqueuesByFlops       = CeilDivide(m_minFlopsPerSync, flopsInProblem);
             }
 

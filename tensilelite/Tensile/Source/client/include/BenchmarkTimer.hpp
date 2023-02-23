@@ -53,7 +53,7 @@ namespace Tensile
             virtual void preBenchmarkRun() override;
             virtual void postBenchmarkRun() override;
 
-            virtual void preProblem(ContractionProblemGemm const& problem) override;
+            virtual void preProblem(ContractionProblem* const problem) override;
             virtual void postProblem() override;
 
             virtual void preSolution(ContractionSolution const& solution) override;
@@ -101,9 +101,9 @@ namespace Tensile
 
             int m_numBenchmarksRun = 0;
 
-            Hardware const&        m_hardware;
-            ContractionProblemGemm m_problem;
-            ContractionSolution    m_solution;
+            Hardware const&     m_hardware;
+            ContractionProblem* m_problem;
+            ContractionSolution m_solution;
 
             int m_numEnqueuesInSolution = 0;
             int m_numSyncsInBenchmark   = 0;

@@ -72,86 +72,64 @@ namespace Tensile
         {
         }
 
-        void SolutionIterator::preProblem(ContractionProblemGemm const& problem)
+        void SolutionIterator::preProblem(ContractionProblem* const problem)
         {
             m_problem = problem;
         }
 
-        void SolutionIterator::preProblemGroupedGemm(ContractionProblemGroupedGemm const& problems)
+        bool SolutionIterator::checkSolution(ContractionSolution const& solution,
+                                             ContractionProblemGemm&    problem)
         {
-            m_problems    = problems;
-            m_groupedGemm = true;
+            if(!(*solution.hardwarePredicate)(*m_hardware))
+            {
+                m_reporter->report(ResultKey::Validation, "WRONG_HARDWARE");
+                if(m_reporter->logAtLevel(LogLevel::Verbose))
+                {
+                    std::ostringstream msg;
+                    solution.hardwarePredicate->debugEval(*m_hardware, msg);
+                    msg << std::endl;
+                    m_reporter->log(LogLevel::Verbose, msg.str());
+                }
+
+                return false;
+            }
+
+            // Test if the persistent kernel is eligible for the current hw and solution
+            problem.checkPersistentKernelEligibility(solution, *m_hardware);
+            if(!(*solution.problemPredicate)(problem))
+            {
+                m_reporter->report(ResultKey::Validation, "DID_NOT_SATISFY_ASSERTS");
+                if(m_reporter->logAtLevel(LogLevel::Verbose) && !m_printWinnerOnly)
+                {
+                    std::ostringstream msg;
+                    solution.problemPredicate->debugEval(problem, msg);
+                    msg << std::endl;
+                    m_reporter->log(LogLevel::Verbose, msg.str());
+                }
+
+                return false;
+            }
+            return true;
         }
 
         bool SolutionIterator::checkSolution(ContractionSolution const& solution)
         {
-            if(m_groupedGemm)
+            if(auto problems = dynamic_cast<ContractionProblemGroupedGemm*>(m_problem))
             {
-                for(int idx = 0; idx < m_problems.gemms.size(); idx++)
+                for(int idx = 0; idx < problems->gemms.size(); idx++)
                 {
-                    auto problem = m_problems.gemms[idx];
-                    if(!(*solution.hardwarePredicate)(*m_hardware))
-                    {
-                        m_reporter->report(ResultKey::Validation, "WRONG_HARDWARE");
-                        if(m_reporter->logAtLevel(LogLevel::Verbose))
-                        {
-                            std::ostringstream msg;
-                            solution.hardwarePredicate->debugEval(*m_hardware, msg);
-                            msg << std::endl;
-                            m_reporter->log(LogLevel::Verbose, msg.str());
-                        }
-
+                    if(!checkSolution(solution, problems->gemms[idx]))
                         return false;
-                    }
-
-                    // Test if the persistent kernel is eligible for the current hw and solution
-                    problem.checkPersistentKernelEligibility(solution, *m_hardware);
-                    if(!(*solution.problemPredicate)(problem))
-                    {
-                        m_reporter->report(ResultKey::Validation, "DID_NOT_SATISFY_ASSERTS");
-                        if(m_reporter->logAtLevel(LogLevel::Verbose) && !m_printWinnerOnly)
-                        {
-                            std::ostringstream msg;
-                            solution.problemPredicate->debugEval(problem, msg);
-                            msg << std::endl;
-                            m_reporter->log(LogLevel::Verbose, msg.str());
-                        }
-
-                        return false;
-                    }
                 }
+            }
+            else if(auto problem = dynamic_cast<ContractionProblemGemm*>(m_problem))
+            {
+                return checkSolution(solution, *problem);
             }
             else
             {
-                if(!(*solution.hardwarePredicate)(*m_hardware))
-                {
-                    m_reporter->report(ResultKey::Validation, "WRONG_HARDWARE");
-                    if(m_reporter->logAtLevel(LogLevel::Verbose))
-                    {
-                        std::ostringstream msg;
-                        solution.hardwarePredicate->debugEval(*m_hardware, msg);
-                        msg << std::endl;
-                        m_reporter->log(LogLevel::Verbose, msg.str());
-                    }
-
-                    return false;
-                }
-
-                // Test if the persistent kernel is eligible for the current hw and solution
-                m_problem.checkPersistentKernelEligibility(solution, *m_hardware);
-                if(!(*solution.problemPredicate)(m_problem))
-                {
-                    m_reporter->report(ResultKey::Validation, "DID_NOT_SATISFY_ASSERTS");
-                    if(m_reporter->logAtLevel(LogLevel::Verbose) && !m_printWinnerOnly)
-                    {
-                        std::ostringstream msg;
-                        solution.problemPredicate->debugEval(m_problem, msg);
-                        msg << std::endl;
-                        m_reporter->log(LogLevel::Verbose, msg.str());
-                    }
-
-                    return false;
-                }
+                throw std::runtime_error(
+                    "[SolutionIterator] Failed to cast to any ContractionProblem");
             }
 
             return true;
@@ -211,7 +189,7 @@ namespace Tensile
             m_currentSolutionIdx = m_firstSolutionIdx;
         }
 
-        void AllSolutionsIterator::preProblem(ContractionProblemGemm const& problem)
+        void AllSolutionsIterator::preProblem(ContractionProblem* const problem)
         {
             SolutionIterator::preProblem(problem);
 
@@ -256,8 +234,21 @@ namespace Tensile
 
             for(auto const& criterion : m_runCriteria)
             {
-                if(!criterion(m_problem, *m_hardware, *solution))
+                if(auto problem = dynamic_cast<ContractionProblemGroupedGemm*>(m_problem))
+                {
+                    if(!criterion(problem->gemms[0], *m_hardware, *solution))
+                        return false;
+                }
+                else if(auto problem = dynamic_cast<ContractionProblemGemm*>(m_problem))
+                {
+                    if(!criterion(*problem, *m_hardware, *solution))
+                        return false;
+                }
+                else
+                {
+                    std::cout << "Failed to cast problem to any ContractionProblem.";
                     return false;
+                }
             }
             return true;
         }
@@ -270,10 +261,23 @@ namespace Tensile
         {
         }
 
-        void BestSolutionIterator::preProblem(ContractionProblemGemm const& problem)
+        void BestSolutionIterator::preProblem(ContractionProblem* const problem)
         {
             SolutionIterator::preProblem(problem);
-            m_currentSolution = m_library->findBestSolution(m_problem, *m_hardware);
+            if(auto groupedProblem = dynamic_cast<const ContractionProblemGroupedGemm*>(problem))
+            {
+                m_currentSolution
+                    = m_library->findBestSolution(groupedProblem->gemms[0], *m_hardware);
+            }
+            else if(auto gemmProblem = dynamic_cast<const ContractionProblemGemm*>(problem))
+            {
+                m_currentSolution = m_library->findBestSolution(*gemmProblem, *m_hardware);
+            }
+            else
+            {
+                throw std::runtime_error(
+                    "[BestSolutionIterator] Failed to cast to any ContractionProblem");
+            }
             if(m_currentSolution == nullptr)
             {
                 m_currentSolution = m_library->solutions.find(0)->second;
@@ -315,23 +319,24 @@ namespace Tensile
         {
         }
 
-        void TopSolutionIterator::preProblem(ContractionProblemGemm const& problem)
+        void TopSolutionIterator::preProblem(ContractionProblem* const problem)
         {
             SolutionIterator::preProblem(problem);
-            m_solutions = m_library->findTopSolutions(m_problem, *m_hardware, m_numSolutions);
-            if(m_solutions.size() == 0)
+            if(auto groupedProblem = dynamic_cast<const ContractionProblemGroupedGemm*>(problem))
             {
-                m_solutions.push_back(m_library->solutions.find(0)->second);
+                m_solutions = m_library->findTopSolutionsGroupedGemm(
+                    groupedProblem->gemms, *m_hardware, m_numSolutions);
             }
-            m_currentSolutionIdx = 0;
-        }
-
-        void TopSolutionIterator::preProblemGroupedGemm(
-            ContractionProblemGroupedGemm const& problems)
-        {
-            SolutionIterator::preProblemGroupedGemm(problems);
-            m_solutions = m_library->findTopSolutionsGroupedGemm(
-                m_problems.gemms, *m_hardware, m_numSolutions);
+            else if(auto gemmProblem = dynamic_cast<const ContractionProblemGemm*>(problem))
+            {
+                m_solutions
+                    = m_library->findTopSolutions(*gemmProblem, *m_hardware, m_numSolutions);
+            }
+            else
+            {
+                throw std::runtime_error(
+                    "[TopSolutionIterator] Failed to cast to any ContractionProblem");
+            }
             if(m_solutions.size() == 0)
             {
                 m_solutions.push_back(m_library->solutions.find(0)->second);
