@@ -85,8 +85,15 @@ namespace Tensile
                    && m_elementsToValidate < problem.d().totalLogicalElements())
                     m_validationStride
                         = NextPrime(problem.d().totalAllocatedElements() / m_elementsToValidate);
-
-                SolveCPU(problem, *m_referenceInputs, m_validationStride);
+                if(auto refInput = dynamic_cast<ContractionInputs*>(m_referenceInputs.get()))
+                    SolveCPU(problem, *refInput, m_validationStride);
+                else if(auto refInput
+                        = dynamic_cast<ContractionGroupedInputs*>(m_referenceInputs.get()))
+                {
+                    // TODO: The grouped gemm problem should be solved here.
+                }
+                else
+                    throw std::runtime_error("Unable to cast input.");
             }
         }
 
@@ -97,7 +104,10 @@ namespace Tensile
             {
                 m_problems    = problems;
                 m_groupedGemm = true;
-                SolveCPUGroupedGemm(problems.gemms, *m_referenceInputs, m_validationStride);
+                if(auto refInput = dynamic_cast<ContractionGroupedInputs*>(m_referenceInputs.get()))
+                    SolveCPUGroupedGemm(problems.gemms, *refInput, m_validationStride);
+                else
+                    throw std::runtime_error("Unable to cast input.");
             }
         }
 
@@ -129,8 +139,9 @@ namespace Tensile
 
         void ReferenceValidator::postWarmup() {}
 
-        bool ReferenceValidator::validateSolution(std::shared_ptr<ContractionInputs> inputs)
+        bool ReferenceValidator::validateSolution(std::shared_ptr<ProblemInputs> inputs)
         {
+            // If problem == ContractionProblemGemm
             // retreive alpha/beta type set via setAlpha/BetaType()
             auto alphaType = m_problem.alphaType();
             auto betaType  = m_problem.betaType();
@@ -149,17 +160,14 @@ namespace Tensile
                 betaType = alphaType;
             }
 
-            auto const& typedReference = dynamic_cast<ContractionInputs const&>(*m_referenceInputs);
-            auto const& typedResult    = dynamic_cast<ContractionInputs const&>(*inputs);
-
-            auto rv = validate(typedReference, typedResult);
+            auto rv = validate(*m_referenceInputs, *inputs);
 
             return rv;
         }
 
-        void ReferenceValidator::validateWarmups(std::shared_ptr<ContractionInputs> inputs,
-                                                 TimingEvents const&                startEvents,
-                                                 TimingEvents const&                stopEvents)
+        void ReferenceValidator::validateWarmups(std::shared_ptr<ProblemInputs> inputs,
+                                                 TimingEvents const&            startEvents,
+                                                 TimingEvents const&            stopEvents)
         {
             if(m_enabled && !m_validatedSolution)
             {
@@ -246,23 +254,26 @@ namespace Tensile
             return rv;
         }
 
-        bool ReferenceValidator::validate(ContractionInputs const& reference,
-                                          ContractionInputs const& result)
+        bool ReferenceValidator::validate(ProblemInputs const& referenceInputs,
+                                          ProblemInputs const& resultInputs)
         {
             bool rv = false;
             if(!m_enabled)
                 return rv;
-
-            if(m_printAny)
-                printTensors(reference, result);
 
             if(m_elementsToValidate != 0)
             {
                 // TODO: Combine ContractionProblemGroupedGemm and ContractionProblemGemm
                 if(m_groupedGemm)
                 {
+                    auto reference = dynamic_cast<ContractionGroupedInputs const&>(referenceInputs);
+                    auto result    = dynamic_cast<ContractionGroupedInputs const&>(resultInputs);
                     for(size_t j = 0; j < m_problems.gemms.size(); j++)
                     {
+
+                        if(m_printAny)
+                            printTensors(reference.grouped[j], result.grouped[j]);
+
                         for(size_t i = 0; i < m_problems.gemms[j].tensors().size(); i++)
                         {
                             auto& tensor = m_problems.gemms[j].tensors()[i];
@@ -275,59 +286,71 @@ namespace Tensile
                             {
                             case ContractionProblemGemm::TENSOR::A:
                             {
-                                refPtr = reference.groupedA[j];
-                                resPtr = result.groupedA[j];
+                                refPtr = reference.grouped[j].a;
+                                resPtr = result.grouped[j].a;
                             }
                             break;
                             case ContractionProblemGemm::TENSOR::B:
                             {
-                                refPtr = reference.groupedB[j];
-                                resPtr = result.groupedB[j];
+                                refPtr = reference.grouped[j].b;
+                                resPtr = result.grouped[j].b;
                             }
                             break;
                             case ContractionProblemGemm::TENSOR::C:
                             {
-                                refPtr = reference.groupedC[j];
-                                resPtr = result.groupedC[j];
+                                refPtr = reference.grouped[j].c;
+                                resPtr = result.grouped[j].c;
                             }
                             break;
                             case ContractionProblemGemm::TENSOR::D:
                             {
-                                refPtr = reference.groupedD[j];
-                                resPtr = result.groupedD[j];
+                                refPtr = reference.grouped[j].d;
+                                resPtr = result.grouped[j].d;
                             }
                             break;
                             case ContractionProblemGemm::TENSOR::E:
                             {
-                                refPtr = reference.groupedE[j];
-                                resPtr = result.groupedE[j];
+                                refPtr = reference.grouped[j].e;
+                                resPtr = result.grouped[j].e;
                             }
                             break;
                             case ContractionProblemGemm::TENSOR::BIAS:
                             {
-                                refPtr = reference.groupedBias[j];
-                                resPtr = result.groupedBias[j];
+                                refPtr = reference.grouped[j].bias;
+                                resPtr = result.grouped[j].bias;
                             }
                             break;
                             case ContractionProblemGemm::TENSOR::SCALED:
                             {
-                                refPtr = reference.groupedScaleD[j];
-                                resPtr = result.groupedScaleD[j];
+                                refPtr = reference.grouped[j].scaleD;
+                                resPtr = result.grouped[j].scaleD;
                             }
                             break;
                             default:
                                 throw std::runtime_error("Unrecognized output tensor.");
                             }
 
+                            if(Debug::Instance().printTensorInfo())
+                                std::cout
+                                    << "Validating tensor " << tensor.getName() << ", cpu pointer "
+                                    << refPtr << ", gpu pointer " << resPtr
+                                    << ", size = " << result.grouped[j].maxElements[i] << std::endl;
+
                             rv = validateTyped(tensor,
                                                refPtr,
                                                resPtr,
-                                               result.groupedMaxElements[j][i],
-                                               result.gpu);
+                                               result.grouped[j].maxElements[i],
+                                               result.grouped[j].gpu);
                         }
                     }
                     return rv;
                 }
+
+                auto reference = dynamic_cast<ContractionInputs const&>(referenceInputs);
+                auto result    = dynamic_cast<ContractionInputs const&>(resultInputs);
+
+                if(m_printAny)
+                    printTensors(reference, result);
 
                 for(size_t i = 0; i < m_problem.tensors().size(); i++)
                 {
