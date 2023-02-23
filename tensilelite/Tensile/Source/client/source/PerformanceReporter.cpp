@@ -192,7 +192,7 @@ namespace Tensile
                                                     std::vector<size_t> const& value)
         {
         }
-        void PerformanceReporter::preProblem(ContractionProblemGemm const& problem) {}
+        void PerformanceReporter::preProblem(ContractionProblem* const problem) {}
         void PerformanceReporter::preSolution(ContractionSolution const& solution) {}
         void PerformanceReporter::finalizeReport() {}
 

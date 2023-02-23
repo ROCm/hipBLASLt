@@ -56,9 +56,8 @@ namespace Tensile
             m_benchmarkRun++;
         }
 
-        void ProgressListener::preProblem(ContractionProblemGemm const& problem)
+        void ProgressListener::writeReport(ContractionProblemGemm const& problem)
         {
-
             m_reporter->report(ResultKey::OperationIdentifier, problem.operationIdentifier());
 
             m_reporter->report(ResultKey::TotalFlops, problem.flopCount());
@@ -88,6 +87,22 @@ namespace Tensile
                 m_reporter->report(ResultKey::BiasType, "None");
             }
             m_reporter->report(ResultKey::ActivationType, ToString(problem.activationEnumArg()));
+        }
+
+        void ProgressListener::preProblem(ContractionProblem* const problem)
+        {
+            if(auto groupedProblem = dynamic_cast<const ContractionProblemGroupedGemm*>(problem))
+            {
+                writeReport(groupedProblem->gemms[0]);
+            }
+            else if(auto gemmProblem = dynamic_cast<const ContractionProblemGemm*>(problem))
+            {
+                writeReport(*gemmProblem);
+            }
+            else
+            {
+                throw std::runtime_error("Failed to cast to any ContractionProblem.");
+            }
         }
 
         void ProgressListener::postProblem() {}
