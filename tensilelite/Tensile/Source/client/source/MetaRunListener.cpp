@@ -83,7 +83,7 @@ namespace Tensile
                 (*iter)->postBenchmarkRun();
         }
 
-        void MetaRunListener::preProblem(ContractionProblemGemm const& problem)
+        void MetaRunListener::preProblem(ContractionProblem* const problem)
         {
             for(auto iter = m_listeners.begin(); iter != m_listeners.end(); iter++)
                 (*iter)->preProblem(problem);

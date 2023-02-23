@@ -407,8 +407,13 @@ namespace Tensile
         template <typename Inputs, typename Accumulator>
         void ReferenceSolution<Inputs, Accumulator>::SolveCPU(ContractionProblemGemm const& problem,
                                                               ContractionInputs const&      inputs,
-                                                              size_t validationStride)
+                                                              size_t elementsToValidate)
         {
+            size_t validationStride = 1;
+            if(elementsToValidate > 0 && elementsToValidate < problem.d().totalLogicalElements())
+                validationStride
+                    = NextPrime(problem.d().totalAllocatedElements() / elementsToValidate);
+
             // Convert void* to pointers
             typename Inputs::AType const* aPtr = (typename Inputs::AType const*)inputs.a;
             typename Inputs::BType const* bPtr = (typename Inputs::BType const*)inputs.b;
@@ -600,10 +605,16 @@ namespace Tensile
         void ReferenceSolution<Inputs, Accumulator>::SolveCPUGroupedGemm(
             std::vector<ContractionProblemGemm> const& problems,
             ContractionGroupedInputs const&            inputs,
-            size_t                                     validationStride)
+            size_t                                     elementsToValidate)
         {
             for(int idx = 0; idx < problems.size(); idx++)
             {
+                size_t validationStride = 1;
+                if(elementsToValidate > 0
+                   && elementsToValidate < problems[idx].d().totalLogicalElements())
+                    validationStride = NextPrime(problems[idx].d().totalAllocatedElements()
+                                                 / elementsToValidate);
+
                 // Convert void* to pointers
                 typename Inputs::AType const* aPtr
                     = (typename Inputs::AType const*)inputs.grouped[idx].a;
@@ -805,7 +816,7 @@ namespace Tensile
 
         void SolveCPU(ContractionProblemGemm const& problem,
                       ContractionInputs const&      inputs,
-                      size_t                        validationStride)
+                      size_t                        elementsToValidate)
         {
             // retreive alpha/beta type set via setAlpha/BetaType()
             auto alphaType = problem.alphaType();
@@ -840,22 +851,22 @@ namespace Tensile
             case TypedGemm_S_S_S::TypeId():
             {
                 return ReferenceSolution<TypedGemm_S_S_S>::SolveCPU(
-                    problem, inputs, validationStride);
+                    problem, inputs, elementsToValidate);
             }
             case TypedGemm_D_D_D::TypeId():
             {
                 return ReferenceSolution<TypedGemm_D_D_D>::SolveCPU(
-                    problem, inputs, validationStride);
+                    problem, inputs, elementsToValidate);
             }
             case TypedGemm_C_C_C::TypeId():
             {
                 return ReferenceSolution<TypedGemm_C_C_C>::SolveCPU(
-                    problem, inputs, validationStride);
+                    problem, inputs, elementsToValidate);
             }
             case TypedGemm_Z_Z_Z::TypeId():
             {
                 return ReferenceSolution<TypedGemm_Z_Z_Z>::SolveCPU(
-                    problem, inputs, validationStride);
+                    problem, inputs, elementsToValidate);
             }
 #ifdef TENSILE_USE_HALF
             case TypedGemm_H_H_H::TypeId():
@@ -863,54 +874,54 @@ namespace Tensile
                 if(problem.highPrecisionAccumulate())
                 {
                     return ReferenceSolution<TypedGemm_H_H_H, float>::SolveCPU(
-                        problem, inputs, validationStride);
+                        problem, inputs, elementsToValidate);
                 }
                 else
                 {
                     return ReferenceSolution<TypedGemm_H_H_H>::SolveCPU(
-                        problem, inputs, validationStride);
+                        problem, inputs, elementsToValidate);
                 }
             }
             case TypedGemm_H_S_S::TypeId():
             {
                 return ReferenceSolution<TypedGemm_H_S_S>::SolveCPU(
-                    problem, inputs, validationStride);
+                    problem, inputs, elementsToValidate);
             }
             case TypedGemm_H_H_S::TypeId():
             {
                 return ReferenceSolution<TypedGemm_H_H_S, float>::SolveCPU(
-                    problem, inputs, validationStride);
+                    problem, inputs, elementsToValidate);
             }
 #endif // TENSILE_USE_HALF
             case TypedGemm_I8x4_I32_I32::TypeId():
             {
                 return ReferenceSolution<TypedGemm_I8x4_I32_I32>::SolveCPU(
-                    problem, inputs, validationStride);
+                    problem, inputs, elementsToValidate);
             }
             case TypedGemm_I32_I32_I32::TypeId():
             {
                 return ReferenceSolution<TypedGemm_I32_I32_I32>::SolveCPU(
-                    problem, inputs, validationStride);
+                    problem, inputs, elementsToValidate);
             }
             case TypedGemm_I8_I8_I32::TypeId():
             {
                 return ReferenceSolution<TypedGemm_I8_I8_I32, int32_t>::SolveCPU(
-                    problem, inputs, validationStride);
+                    problem, inputs, elementsToValidate);
             }
             case TypedGemm_I8_I32_I32::TypeId():
             {
                 return ReferenceSolution<TypedGemm_I8_I32_I32>::SolveCPU(
-                    problem, inputs, validationStride);
+                    problem, inputs, elementsToValidate);
             }
             case TypedGemm_I8_I32_S::TypeId():
             {
                 return ReferenceSolution<TypedGemm_I8_I32_S, float>::SolveCPU(
-                    problem, inputs, validationStride);
+                    problem, inputs, elementsToValidate);
             }
             case TypedGemm_I8_I8_S::TypeId():
             {
                 return ReferenceSolution<TypedGemm_I8_I8_S, float>::SolveCPU(
-                    problem, inputs, validationStride);
+                    problem, inputs, elementsToValidate);
             }
 #ifdef TENSILE_USE_BF16
             case TypedGemm_B_B_S::TypeId():
@@ -918,18 +929,18 @@ namespace Tensile
                 if(problem.highPrecisionAccumulate())
                 {
                     return ReferenceSolution<TypedGemm_B_B_S, float>::SolveCPU(
-                        problem, inputs, validationStride);
+                        problem, inputs, elementsToValidate);
                 }
                 else
                 {
                     return ReferenceSolution<TypedGemm_B_B_S>::SolveCPU(
-                        problem, inputs, validationStride);
+                        problem, inputs, elementsToValidate);
                 }
             }
             case TypedGemm_B_S_S::TypeId():
             {
                 return ReferenceSolution<TypedGemm_B_S_S>::SolveCPU(
-                    problem, inputs, validationStride);
+                    problem, inputs, elementsToValidate);
             }
 #endif // TENSILE_USE_BF16
 
@@ -941,7 +952,7 @@ namespace Tensile
 
         void SolveCPUGroupedGemm(std::vector<ContractionProblemGemm> const& problems,
                                  ContractionGroupedInputs const&            inputs,
-                                 size_t                                     validationStride)
+                                 size_t                                     elementsToValidate)
         {
             // retreive alpha/beta type set via setAlpha/BetaType()
             auto alphaType = problems[0].alphaType();
@@ -977,22 +988,22 @@ namespace Tensile
             case TypedGemm_S_S_S::TypeId():
             {
                 return ReferenceSolution<TypedGemm_S_S_S>::SolveCPUGroupedGemm(
-                    problems, inputs, validationStride);
+                    problems, inputs, elementsToValidate);
             }
             case TypedGemm_D_D_D::TypeId():
             {
                 return ReferenceSolution<TypedGemm_D_D_D>::SolveCPUGroupedGemm(
-                    problems, inputs, validationStride);
+                    problems, inputs, elementsToValidate);
             }
             case TypedGemm_C_C_C::TypeId():
             {
                 return ReferenceSolution<TypedGemm_C_C_C>::SolveCPUGroupedGemm(
-                    problems, inputs, validationStride);
+                    problems, inputs, elementsToValidate);
             }
             case TypedGemm_Z_Z_Z::TypeId():
             {
                 return ReferenceSolution<TypedGemm_Z_Z_Z>::SolveCPUGroupedGemm(
-                    problems, inputs, validationStride);
+                    problems, inputs, elementsToValidate);
             }
 #ifdef TENSILE_USE_HALF
             case TypedGemm_H_H_H::TypeId():
@@ -1000,54 +1011,54 @@ namespace Tensile
                 if(problems[0].highPrecisionAccumulate())
                 {
                     return ReferenceSolution<TypedGemm_H_H_H, float>::SolveCPUGroupedGemm(
-                        problems, inputs, validationStride);
+                        problems, inputs, elementsToValidate);
                 }
                 else
                 {
                     return ReferenceSolution<TypedGemm_H_H_H>::SolveCPUGroupedGemm(
-                        problems, inputs, validationStride);
+                        problems, inputs, elementsToValidate);
                 }
             }
             case TypedGemm_H_S_S::TypeId():
             {
                 return ReferenceSolution<TypedGemm_H_S_S>::SolveCPUGroupedGemm(
-                    problems, inputs, validationStride);
+                    problems, inputs, elementsToValidate);
             }
             case TypedGemm_H_H_S::TypeId():
             {
                 return ReferenceSolution<TypedGemm_H_H_S, float>::SolveCPUGroupedGemm(
-                    problems, inputs, validationStride);
+                    problems, inputs, elementsToValidate);
             }
 #endif // TENSILE_USE_HALF
             case TypedGemm_I8x4_I32_I32::TypeId():
             {
                 return ReferenceSolution<TypedGemm_I8x4_I32_I32>::SolveCPUGroupedGemm(
-                    problems, inputs, validationStride);
+                    problems, inputs, elementsToValidate);
             }
             case TypedGemm_I32_I32_I32::TypeId():
             {
                 return ReferenceSolution<TypedGemm_I32_I32_I32>::SolveCPUGroupedGemm(
-                    problems, inputs, validationStride);
+                    problems, inputs, elementsToValidate);
             }
             case TypedGemm_I8_I8_I32::TypeId():
             {
                 return ReferenceSolution<TypedGemm_I8_I8_I32, int32_t>::SolveCPUGroupedGemm(
-                    problems, inputs, validationStride);
+                    problems, inputs, elementsToValidate);
             }
             case TypedGemm_I8_I32_I32::TypeId():
             {
                 return ReferenceSolution<TypedGemm_I8_I32_I32>::SolveCPUGroupedGemm(
-                    problems, inputs, validationStride);
+                    problems, inputs, elementsToValidate);
             }
             case TypedGemm_I8_I32_S::TypeId():
             {
                 return ReferenceSolution<TypedGemm_I8_I32_S, float>::SolveCPUGroupedGemm(
-                    problems, inputs, validationStride);
+                    problems, inputs, elementsToValidate);
             }
             case TypedGemm_I8_I8_S::TypeId():
             {
                 return ReferenceSolution<TypedGemm_I8_I8_S, float>::SolveCPUGroupedGemm(
-                    problems, inputs, validationStride);
+                    problems, inputs, elementsToValidate);
             }
 #ifdef TENSILE_USE_BF16
             case TypedGemm_B_B_S::TypeId():
@@ -1055,18 +1066,18 @@ namespace Tensile
                 if(problems[0].highPrecisionAccumulate())
                 {
                     return ReferenceSolution<TypedGemm_B_B_S, float>::SolveCPUGroupedGemm(
-                        problems, inputs, validationStride);
+                        problems, inputs, elementsToValidate);
                 }
                 else
                 {
                     return ReferenceSolution<TypedGemm_B_B_S>::SolveCPUGroupedGemm(
-                        problems, inputs, validationStride);
+                        problems, inputs, elementsToValidate);
                 }
             }
             case TypedGemm_B_S_S::TypeId():
             {
                 return ReferenceSolution<TypedGemm_B_S_S>::SolveCPUGroupedGemm(
-                    problems, inputs, validationStride);
+                    problems, inputs, elementsToValidate);
             }
 #endif // TENSILE_USE_BF16
 

@@ -68,8 +68,7 @@ namespace Tensile
    **********/
 
             /// Called at the beginning of each problem.
-            virtual void preProblem(ContractionProblemGemm const& problem) = 0;
-            virtual void preProblemGroupedGemm(ContractionProblemGroupedGemm const& problems){};
+            virtual void preProblem(ContractionProblem* const problem) = 0;
 
             /// Called at end of each problem.
             virtual void postProblem() = 0;
