@@ -181,6 +181,24 @@ namespace Tensile
                 reportValue_string(key, msg.str());
             }
 
+            virtual void
+                reportValue_vecOfSizes(std::string const&                      key,
+                                       std::vector<std::vector<size_t>> const& value) override
+            {
+                std::ostringstream msg;
+                msg << "(";
+                for(size_t i = 0; i < value.size(); i++)
+                {
+                    msg << "(";
+                    streamJoin(msg, value[i], ",");
+                    msg << ")";
+                    if(i != value.size() - 1)
+                        msg << ",";
+                }
+                msg << ")";
+                reportValue_string(key, msg.str());
+            }
+
             void acceptValidation(std::string const& value)
             {
                 if(value == "PASSED" || value == "NO_CHECK")
