@@ -62,9 +62,9 @@ class LraTileAssignmentMFMA(LraTileAssignment):
         tile01           = tP["tile01Idx"]
         waveWidth        = writer.states.kernel["WavefrontSize"]
         inputPerThread   = max(writer.states.lrvwA,writer.states.lrvwB)
-        
-        if kernel["ProblemType"]["SparseA"] and tP["isA"]:
-          inputPerThread = inputPerThread//2
+
+        if kernel["ProblemType"]["SparseA"]:
+          inputPerThread = inputPerThread // (2 if tP["isA"] else 8 if tP["isM"] else 1)
 
         if kernel["DirectToVgprA"]:
           # DirectToVgprA case, ignore lrvwA
@@ -86,7 +86,7 @@ class LraTileAssignmentMFMA(LraTileAssignment):
         dividedForWaveId = waveWidth if (tile01 == 0) else (waveWidth * kernel["MIWaveGroup"][0])
         vectorWidth      = kernel["VectorWidth"] if ((tile01 == 0) and kernel["SourceSwap"]) else 1 # TODO: nonSwap VectorWidth
         if kernel["allowLRVWforTLUandMI"]:
-          lrvw = writer.states.lrvwA if tP["isA"] else writer.states.lrvwB
+          lrvw = writer.states.lrvwA if tP["isA"] else writer.states.lrvwB if tP["isB"] else writer.states.lrvwM
           if lrvw > 1:
             vectorWidth = lrvw
           inputPerThread = 1
