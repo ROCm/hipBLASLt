@@ -77,7 +77,6 @@ namespace Tensile
             m_reporter->report(ResultKey::LDC, problem.c().strides()[1]);
             m_reporter->report(ResultKey::LDD, problem.d().strides()[1]);
 
-            m_reporter->report(ResultKey::ProblemSizes, problem.problemSizes());
             if(problem.useBias())
             {
                 m_reporter->report(ResultKey::BiasType, ToString(problem.biasType()));
@@ -94,10 +93,15 @@ namespace Tensile
             if(auto groupedProblem = dynamic_cast<const ContractionProblemGroupedGemm*>(problem))
             {
                 writeReport(groupedProblem->gemms[0]);
+                std::vector<std::vector<size_t>> sizes;
+                for(auto& it : groupedProblem->gemms)
+                    sizes.push_back(it.problemSizes());
+                m_reporter->report(ResultKey::ProblemSizes, sizes);
             }
             else if(auto gemmProblem = dynamic_cast<const ContractionProblemGemm*>(problem))
             {
                 writeReport(*gemmProblem);
+                m_reporter->report(ResultKey::ProblemSizes, gemmProblem->problemSizes());
             }
             else
             {
