@@ -93,7 +93,10 @@ namespace Tensile
                                             std::string const& value) override;
             virtual void reportValue_sizes(std::string const&         key,
                                            std::vector<size_t> const& value) override;
-            void         finalizeReport() override;
+            virtual void
+                 reportValue_vecOfSizes(std::string const&                      key,
+                                        std::vector<std::vector<size_t>> const& value) override;
+            void finalizeReport() override;
 
         protected:
             hipDeviceProp_t m_props;
