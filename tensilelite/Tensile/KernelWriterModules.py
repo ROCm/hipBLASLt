@@ -66,21 +66,29 @@ def wait(states, kernel, tPA, tPB, skipGlobalRead, skipLocalWrite, \
                    else tPA["nrp"]*tPA["nrc"]*max(tPA["nwcv"],tPA["nwpv"])//tPA["nwcvpi"]
             numB = 0 if kernel["DirectToLdsB"] \
                    else tPB["nrp"]*tPB["nrc"]*max(tPB["nwcv"],tPB["nwpv"])//tPB["nwcvpi"]
-            lgkmcnt += skipLocalWrite * (numA + numB)
+
+            numM = 0
+            if kernel["ProblemType"]["SparseA"] and not kernel["DirectToVgprSparseMetadata"]:
+              tPM = tPA["tpsMetadata"]
+              numM = tPM["nrp"]*tPM["nrc"]*max(tPM["nwcv"],tPM["nwpv"])//tPM["nwcvpi"]
+            lgkmcnt += skipLocalWrite * (numA + numB + numM)
         if skipLocalRead > -1:
-            readsPerIter = states.numReadsPerIterA + states.numReadsPerIterB
+            readsPerIter = states.numReadsPerIterA + states.numReadsPerIterB + states.numReadsPerIterMetadata
             lgkmcnt += skipLocalRead * readsPerIter
 
     vmcnt = 0 if skipGlobalRead > -1 else -1
     if skipGlobalRead > -1:
         numA = kernel["NumLoadsPerpendicularA"] * kernel["NumLoadsCoalescedA"]
         numB = kernel["NumLoadsPerpendicularB"] * kernel["NumLoadsCoalescedB"]
-        vmcnt += skipGlobalRead * (numA + numB)
+        numM = 0
+        if kernel["ProblemType"]["SparseA"] and not kernel["DirectToVgprSparseMetadata"]:
+          numM = kernel["NumLoadsPerpendicularMetadata"] * kernel["NumLoadsCoalescedMetadata"]
+        vmcnt += skipGlobalRead * (numA + numB + numM)
 
         # Unlike flat loads, BufferLoad do not increment the outstanding
         # lgkmcnt
         if lgkmcnt > -1 and not kernel["BufferLoad"]:
-            lgkmcnt += skipGlobalRead * (numA + numB)
+            lgkmcnt += skipGlobalRead * (numA + numB + numM)
 
     if (conservativeWaitCnt & 0x2) and skipGlobalRead != -1 or \
        (conservativeWaitCnt & 0x4) and skipLocalWrite != -1 or \

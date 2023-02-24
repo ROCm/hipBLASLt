@@ -27,7 +27,7 @@ from .Common import assignParameterWithDefault, \
                     globalParameters, \
                     print2, printExit, printWarning, \
                     validMFMA, validSMFMA, validParameters, \
-                    validGEMMTypes, HPATypes
+                    validGEMMTypes, HPATypes, roundUp
 from .TensileInstructions import DataType, roundUpToNearestMultiple
 
 from .KernelWriterBetaOnly import KernelWriterBetaOnly
@@ -270,9 +270,11 @@ class ProblemType(Mapping):
     sumIdx = 3 if self["Batched"] else 2
     self["IndexAssignmentsA"] = [0, sumIdx] # N
     self["IndexAssignmentsB"] = [sumIdx, 1] # N
-    self["IndexAssignmentsMetadata"] = [sumIdx, 1] # T
+    self["IndexAssignmentsMetadata"] = [sumIdx, 0] # T
+    #self["IndexAssignmentsMetadata"] = [0, sumIdx] # N
     if self["TransposeA"]:
       self["IndexAssignmentsA"] = [sumIdx, 0] # T
+      #self["IndexAssignmentsMetadata"] = [sumIdx, 0] # T
     if self["TransposeB"]:
       self["IndexAssignmentsB"] = [1, sumIdx] # T
     if self["Batched"]:
@@ -357,6 +359,10 @@ class ProblemType(Mapping):
       if state["IndexAssignmentsB"][i] == state["IndexUnroll"]:
         state["IndexUnrollB"] = i
         break
+    for i in range(0, len(state["IndexAssignmentsMetadata"])):
+      if state["IndexAssignmentsMetadata"][i] == state["IndexUnroll"]:
+        state["IndexUnrollM"] = i
+        break
     #print2("IndexUnrollA: %u" % state["IndexUnrollA"])
     #print2("IndexUnrollB: %u" % state["IndexUnrollB"])
 
@@ -406,6 +412,15 @@ class ProblemType(Mapping):
     #!unrollDimStrideLessThanTileDimStrideB   = TLUB =  transB = fast
     state["AssignedDerivedParameters"] = True
 
+    if state["SparseA"]:
+      state["Index01Metadata"] = [i for i in state["IndexAssignmentsMetadata"] if i in dimList][0]
+      strideIdxM = state["IndexAssignmentsMetadata"].index(state["Index01Metadata"])
+      unrollIdxM = state["IndexAssignmentsMetadata"].index(state["IndexUnroll"])
+      state["TLUMetadata"] = strideIdxM < unrollIdxM
+      if globalParameters["PrintIndexAssignments"]:
+        print("TLUMetadata:  %s (stridePosM(%d) <? unrollIdxM(%d)" % \
+          (state["TLUMetadata"], strideIdxM, unrollIdxM))
+        print("Index01Metadata:  %s" % state["Index01Metadata"])
 
   ########################################
   def __str__(self):
@@ -1598,6 +1613,7 @@ class Solution(collections.abc.Mapping):
       state['MIInputPerThread']  = mi[0] * mi[2] * mi[3] // 64
       state['MIInputPerThreadA'] = state['MIInputPerThread'] if not state["ProblemType"]["SparseA"] else state['MIInputPerThread']//2
       state['MIInputPerThreadB'] = state['MIInputPerThread']
+      state['MIInputPerThreadMetadata'] = state['MIInputPerThread'] if not state["ProblemType"]["SparseA"] else state['MIInputPerThread']//8
     elif state["MatrixInstruction"] != [] and len(state["MatrixInstruction"]) == 4:
       state["EnableMatrixInstruction"] = True
     else:
@@ -1997,6 +2013,19 @@ class Solution(collections.abc.Mapping):
     Solution.checkAndAssignWaveSeparateGlobalRead(state, 'A')
     Solution.checkAndAssignWaveSeparateGlobalRead(state, 'B')
 
+    if state["ProblemType"]["SparseA"] and not state["DirectToVgprSparseMetadata"]:
+      state["ThreadTileMetadata"] = state["ThreadTileA"]
+      state["SubGroupMetadata"] = state["SubGroupA"]
+      state["MacroTileMetadata"] = state["MacroTileA"]
+      if state["EnableMatrixInstruction"]:
+        state["MIWaveTileMetadata"] = state["MIWaveTileA"]
+      state["WaveSeparateGlobalReadMetadata"] = state["WaveSeparateGlobalReadA"]
+      Solution.checkAndAssignWaveSeparateGlobalRead(state, 'Metadata')
+      state["DirectToLdsMetadata"] = False
+      state["DirectToVgprMetadata"] = False
+      state["LocalWriteUseSgprMetadat"] = False
+      state["ProblemType"]["MirrorDimsMetadata"]  = state["ProblemType"]["MirrorDimsA"]
+
     # Init vars early since there are early-exit return statements below
     state["DirectToLdsA"] = False
     state["DirectToLdsB"] = False
@@ -2301,9 +2330,12 @@ class Solution(collections.abc.Mapping):
     depthUA = depthU if not state["ProblemType"]["SparseA"] else depthU//2
     depthUB = depthU
 
+    depthUM = depthUA // 4 if state["ProblemType"]["SparseA"] and not state["DirectToVgprSparseMetadata"] else depthUA
+
     state["_DepthULds"] = state["DepthU"]//state["DepthULdsDivisor"] # internal
     state["_DepthULdsA"] = depthUA//state["DepthULdsDivisor"] # internal
     state["_DepthULdsB"] = depthUB//state["DepthULdsDivisor"] # internal
+    state["_DepthULdsMetadata"] = depthUM//state["DepthULdsDivisor"] # internal
 
     ########################################
     # Search DepthU
@@ -2351,6 +2383,15 @@ class Solution(collections.abc.Mapping):
 
       totalElementsA = totalElementsCoalescedA * totalElementsPerpA
       totalElementsB = totalElementsCoalescedB * totalElementsPerpB
+
+      if state["ProblemType"]["SparseA"] and not state["DirectToVgprSparseMetadata"]:
+        if state["ProblemType"]["TLUMetadata"]:
+          totalElementsCoalescedM = state["MacroTileMetadata"]
+          totalElementsPerpM = depthUM
+        else:
+          totalElementsCoalescedM = depthUM
+          totalElementsPerpM = state["MacroTileMetadata"]
+        totalElementsM = totalElementsCoalescedM * totalElementsPerpM
 
       GlobalReadVectorWidth = state["GlobalReadVectorWidth"]
       if state["DirectToVgprA"]:
@@ -2410,6 +2451,35 @@ class Solution(collections.abc.Mapping):
           if state["GlobalLoadVectorWidthB"] < 4:
             reject(state, "Int8 requires GLVWB >= 4, current is %u"%state["GlobalLoadVectorWidthB"])
 
+      if state["ProblemType"]["SparseA"] and not state["DirectToVgprSparseMetadata"]:
+        if state["GlobalReadVectorWidth"] < 4:
+          reject(state, "Sparse requires GRVW >= 4, current is %u"%state["GlobalReadVectorWidth"])
+        GlobalReadVectorWidth = state["GlobalReadVectorWidth"] // 4
+        tvm = totalElementsM // GlobalReadVectorWidth
+        validDepthUM = True
+        if not Solution.setGlobalLoadVectorWidth(state, "Metadata", tvm, GlobalReadVectorWidth):
+          validDepthUM = False
+
+        if state["EnableMatrixInstruction"] and state["GlobalLoadVectorWidthMetadata"]:
+          partialM = state["ProblemType"]["TLUMetadata"] and (state["AssertFree0ElementMultiple"] % state["GlobalLoadVectorWidthA"] != 0)
+          if partialM:
+            glvwMlimit = 16
+            if state["SourceSwap"]:
+              matrixInstM = (state["MatrixInstM"] * state["MatrixInstBM"]) if (state["MatrixInstM"] == 4) else state["MatrixInstM"]
+              glvwMlimit = matrixInstM * state["VectorWidth"]
+            else:
+              matrixInstN = (state["MatrixInstN"] * state["MatrixInstBN"]) if (state["MatrixInstN"] == 4) else state["MatrixInstN"]
+              glvwMlimit  = state["MIOutputVectorWidth"] * (state["WavefrontSize"] // matrixInstN)
+
+            # reduce GLVMetadata if GLVMetadata larger than MIOVW
+            if state["GlobalLoadVectorWidthMetadata"] > glvwMlimit:
+              tvm = totalElementsM // glvwMlimit
+              if not Solution.setGlobalLoadVectorWidth(state, "Metadata", tvm, glvwMlimit):
+                validDepthUM = False
+
+        if validDepthUM and state["KernelLanguage"] == "Assembly":
+          if state["GlobalLoadVectorWidthMetadata"] < 1:
+            reject(state, "Metadata requires GLVW >= 4, current is %u"%state["GlobalLoadVectorWidthMetadata"] * 4)
 
       # Now convert elements to vectors based on GlobalReadVectorWidth
       GlobalLoadVectorWidthA = state["GlobalLoadVectorWidthA"]
@@ -2422,6 +2492,13 @@ class Solution(collections.abc.Mapping):
       totalVectorsCoalescedB = totalElementsCoalescedB // GlobalLoadVectorWidthB
       totalVectorsA = totalElementsA // GlobalLoadVectorWidthA
       totalVectorsB = totalElementsB // GlobalLoadVectorWidthB
+
+      if state["ProblemType"]["SparseA"] and not state["DirectToVgprSparseMetadata"]:
+        GlobalLoadVectorWidthMetadata = state["GlobalLoadVectorWidthMetadata"]
+        if GlobalLoadVectorWidthMetadata == 0:
+          GlobalLoadVectorWidthMetadata = 1
+        totalVectorsCoalescedM = totalElementsCoalescedM // GlobalLoadVectorWidthMetadata
+        totalVectorsM = totalElementsM // GlobalLoadVectorWidthMetadata
 
       if 0:
         print("info:", pvar(state, "NumThreads"), pvar(state, "DepthU"), pvar(state, "DepthULdsDivisor"),
@@ -2464,6 +2541,10 @@ class Solution(collections.abc.Mapping):
           if depthU < state["GlobalLoadVectorWidthB"]:
             validDepthU = False
 
+        if state["ProblemType"]["SparseA"] and not state["DirectToVgprSparseMetadata"]:
+          if not state["ProblemType"]["TLUMetadata"]:
+            if depthUM < state["GlobalLoadVectorWidthMetadata"]:
+              validDepthU = False
       # this depthU is valid, done unless user wants to double (for TN)
       if validDepthU:
         if userDepthU < -3: # for every int below -3, use next doubled value
@@ -2493,12 +2574,20 @@ class Solution(collections.abc.Mapping):
 
     assert(state["DepthU"]> 0)
 
+    if state["ProblemType"]["SparseA"] and not state["DirectToVgprSparseMetadata"]:
+      state["NumLoadsCoalescedMetadata"] = 1
+
     if not Solution.setGlobalLoadTileDimClassic(state, "A", state["NumLoadsA"], \
         totalVectorsCoalescedA, totalElementsPerpA, depthUA):
       return
     if not Solution.setGlobalLoadTileDimClassic(state, "B", state["NumLoadsB"], \
         totalVectorsCoalescedB, totalElementsPerpB, depthU):
       return
+
+    if state["ProblemType"]["SparseA"] and not state["DirectToVgprSparseMetadata"]:
+      if not Solution.setGlobalLoadTileDimClassic(state, "Metadata", state["NumLoadsMetadata"], \
+          totalVectorsCoalescedM, totalElementsPerpM, depthUM):
+        return
 
     # allow LocalReadVectorWidth for TLU + MatrixInstruction
     # so far, limited to double + (DTVB or (DTVA + no DTL)) only
@@ -2541,6 +2630,10 @@ class Solution(collections.abc.Mapping):
     state["LVPA"] = roundupRatio(state["LSPA"] , state["GlobalLoadVectorWidthA"])
     state["LVCB"] = roundupRatio(state["LSCB"] , state["GlobalLoadVectorWidthB"])
     state["LVPB"] = roundupRatio(state["LSPB"] , state["GlobalLoadVectorWidthB"])
+
+    if state["ProblemType"]["SparseA"] and not state["DirectToVgprSparseMetadata"]:
+      state["LVCMetadata"] = roundupRatio(state["LSCMetadata"] , state["GlobalLoadVectorWidthMetadata"])
+      state["LVPMetadata"] = roundupRatio(state["LSPMetadata"] , state["GlobalLoadVectorWidthMetadata"])
 
     for tc in ('A','B'):
       if problemType["TLU%s"%tc]:
@@ -2588,6 +2681,10 @@ class Solution(collections.abc.Mapping):
     # LDS
     ########################################
 
+    state["UnrollMajorLDSMetadata"] = False
+    if state["ProblemType"]["SparseA"] and not state["DirectToVgprSparseMetadata"]:
+      state["UnrollMajorLDSMetadata"] = state["TransposeLDS"] and (not state["ProblemType"]["TLUMetadata"])
+
     if state["LdsBlockSizePerPad"] == -1:
       if state["MatrixInstruction"] and state["TransposeLDS"]:
         state["LdsBlockSizePerPad"] = 128
@@ -2598,6 +2695,7 @@ class Solution(collections.abc.Mapping):
 
     state["LdsBlockSizePerPadA"] = state["LdsBlockSizePerPad"] if state["UnrollMajorLDSA"] else 0
     state["LdsBlockSizePerPadB"] = state["LdsBlockSizePerPad"] if state["UnrollMajorLDSB"] else 0
+    state["LdsBlockSizePerPadMetadata"] = state["LdsBlockSizePerPad"] if state["UnrollMajorLDSMetadata"] else 0
 
     if state["EnableMatrixInstruction"]:
       if state["LdsBlockSizePerPadA"]:
@@ -2718,6 +2816,22 @@ class Solution(collections.abc.Mapping):
           state["LdsPadB"] = 0
       assert(state["LdsPadB"] >= 0)
 
+    if state["ProblemType"]["SparseA"] and not state["DirectToVgprSparseMetadata"]:
+      state["LdsPadMetadata"] = 0
+      optPadM = 1
+      if state["LdsPadMetadata"] == -1:
+        if state["ProblemType"]["TLUMetadata"]:
+          state["LdsPadMetadata"] = 0
+        else:
+          if state["EnableMatrixInstruction"] and state["TransposeLDS"]:
+            state["LdsPadMetadata"] = max(state["GlobalReadVectorWidth"] // 4, optPadM)
+          else:
+            state["LdsPadMetadata"] = 1
+          ## turn-off padding for directToLds
+          if state["EnableMatrixInstruction"] and state["TransposeLDS"] and state["DirectToLdsMetadata"]:
+            state["LdsPadMetadata"] = 0
+        assert(state["LdsPadMetadata"] >= 0)
+
     if (state["UnrollMajorLDSA"] or state["UnrollMajorLDSB"]) and (not state["EnableMatrixInstruction"]):
         reject(state, "UnrollMajorLDS Supports only in EnableMatrixInstruction=1")
 
@@ -2749,22 +2863,40 @@ class Solution(collections.abc.Mapping):
       ldsNumElementsB = 0
       ldsNumElementsAlignedB = 0
 
+    if state["ProblemType"]["SparseA"] and not state["DirectToVgprSparseMetadata"]:
+      if state["UnrollMajorLDSA"]:
+        ldsNumElementsMetadata = (state["_DepthULdsMetadata"] + state["LdsPadMetadata"]) * state["MacroTileMetadata"]
+      else:
+        ldsNumElementsMetadata = state["_DepthULdsMetadata"] * (state["MacroTileMetadata"] + state["LdsPadMetadata"])
+      ldsNumElementsMetadata = roundUp(ldsNumElementsMetadata / bpeAB) # metadata is in byte type. so divide ldsNumElementsMetadata by A,B's bpe
+      padInterval = state["LdsBlockSizePerPadMetadata"]
+      if padInterval != 0:
+        ldsNumElementsMetadata = int(roundUp(state["_DepthULdsMetadata"] * state["MacroTileMetadata"]/bpeAB) / padInterval * (padInterval + state["LdsPadMetadata"]))
+      ldsNumElementsAlignedMetadata = roundUpToNearestMultiple(ldsNumElementsMetadata, ldsAlign)
+    else:
+      ldsNumElementsMetadata = 0
+      ldsNumElementsAlignedMetadata = 0
+
     # todo, can the alignment be a power of 2?
     state["LdsOffsetA"] = 0
     if state["PrefetchGlobalRead"]:
       state["LdsNumElementsAlignedA"] = ldsNumElementsAlignedA
       state["LdsNumElementsAlignedB"] = ldsNumElementsAlignedB
-      state["LdsOffsetB"] = state["LdsOffsetA"] + state["LdsNumElementsAlignedA"]
+      state["LdsNumElementsAlignedMetadata"] = ldsNumElementsAlignedMetadata
+      state["LdsOffsetMetadata"] = state["LdsOffsetA"] + state["LdsNumElementsAlignedA"]
+      state["LdsOffsetB"] = state["LdsOffsetMetadata"] + state["LdsNumElementsAlignedMetadata"]
 
-      offsetBlk = state["LdsOffsetB"] + ldsNumElementsAlignedB
+      offsetBlk = state["LdsOffsetB"] +  ldsNumElementsAlignedB
       offsetBlk = int(2**(math.ceil(math.log(offsetBlk, 2))))
 
       state["LdsOffsetA_Blk"] = offsetBlk
-      state["LdsOffsetB_Blk"] = state["LdsOffsetA_Blk"] + state["LdsNumElementsAlignedA"]
+      state["LdsOffsetMetadata_Blk"] = state["LdsOffsetA_Blk"] + state["LdsNumElementsAlignedA"]
+      state["LdsOffsetB_Blk"] = state["LdsOffsetMetadata_Blk"] + state["LdsNumElementsAlignedMetadata"]
       ldsNumElementsAB = state["LdsOffsetB_Blk"]+ ldsNumElementsB
     else:
-      state["LdsOffsetB"] = ldsNumElementsAlignedA
-      ldsNumElementsAB = ldsNumElementsAlignedA + ldsNumElementsB
+      state["LdsOffsetMetadata"] = ldsNumElementsAlignedA
+      state["LdsOffsetB"] = state["LdsOffsetMetadata"] + ldsNumElementsAlignedMetadata
+      ldsNumElementsAB = state["LdsOffsetB"] + ldsNumElementsB
 
     # lds buffer size for reduction
     ldsNumElementsReduction = state["LocalSplitU"]*state["MacroTile0"]*state["MacroTile1"] if state["LocalSplitU"] > 1 else 0
@@ -2775,9 +2907,18 @@ class Solution(collections.abc.Mapping):
 
     #print("ldsNumElementsA", ldsNumElementsA)
     #print("ldsNumElementsB", ldsNumElementsB)
+    #print("ldsNumElementsMetadata", ldsNumElementsMetadata)
     #print("ldsNumElementsAlignedA", ldsNumElementsAlignedA)
     #print("ldsNumElementsAlignedB", ldsNumElementsAlignedB)
+    #print("ldsNumElementsAlignedMetadata", ldsNumElementsAlignedMetadata)
     #print("ldsNumElementsAB", ldsNumElementsAB)
+#
+    #print("LdsOffsetB", state["LdsOffsetB"])
+    #print("LdsOffsetMetadata", state["LdsOffsetMetadata"])
+    #if state["PrefetchGlobalRead"]:
+    #  print("LdsOffsetA_BLK", state["LdsOffsetA_Blk"])
+    #  print("LdsOffsetB_BLK", state["LdsOffsetB_Blk"])
+    #  print("LdsOffsetMetadata_BLK", state["LdsOffsetMetadata_Blk"])
 
     if state["EnableMatrixInstruction"]:
       if state["DirectToLds"] and state["1LDSBuffer"]:
@@ -2799,7 +2940,8 @@ class Solution(collections.abc.Mapping):
       if (not state["ScheduleIterAlg"] == 2) and (not state["ScheduleIterAlg"] == 3) and (state["ScheduleLocalWrite"]):
         reject(state, "1LDSBuffer only support SIA2 or SIA3, or SIA1 without SLW")
       state["LdsOffsetB"] = ldsNumElementsAlignedA
-      ldsNumElementsAB = ldsNumElementsAlignedA + ldsNumElementsB
+      state["LdsOffsetMetadata"] = state["LdsOffsetB"] + ldsNumElementsAlignedB
+      ldsNumElementsAB = ldsNumElementsAlignedA + ldsNumElementsAlignedB + ldsNumElementsMetadata
 
     # lds size is the greater of the two
     ldsNumElements = max(ldsNumElementsAB, ldsNumElementsReduction, ldsNumElementsOccupancy)
@@ -3159,7 +3301,10 @@ class Solution(collections.abc.Mapping):
       # 40 is based on current SGPR usage, this may need to be tuned in the future:
       numLoadsA = state["NumLoadsCoalescedA"]*state["NumLoadsPerpendicularA"]
       numLoadsB = state["NumLoadsCoalescedB"]*state["NumLoadsPerpendicularB"]
-      if numLoadsA + numLoadsB > 35 or state["DirectToVgprA"] or state["DirectToVgprB"]: # force _UseSgprForGRO = 0 if DirectToVgpr is enabled
+      numLoadsM = 0
+      if state["ProblemType"]["SparseA"] and not state["DirectToVgprSparseMetadata"]:
+        numLoadsM = state["NumLoadsCoalescedMetadata"]*state["NumLoadsPerpendicularMetadata"]
+      if numLoadsA + numLoadsB + numLoadsM > 35 or state["DirectToVgprA"] or state["DirectToVgprB"]: # force _UseSgprForGRO = 0 if DirectToVgpr is enabled
         #print "info: Disabling UseSgprForGRO since predicting too many SGPR will be used"
         state["_UseSgprForGRO"] = 0
       else:

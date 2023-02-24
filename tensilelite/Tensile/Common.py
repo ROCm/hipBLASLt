@@ -529,7 +529,7 @@ validParameters = {
     # Assembly only
     "DirectToVgprA":              [ False, True ],
     "DirectToVgprB":              [ False, True ],
-
+    "DirectToVgprSparseMetadata": [ False, True ],
     # Attempt to load directly from global memory into LDS.
     # Assembly only
     # Requires BufferLoad, assembler support for lds modifier on buffer
@@ -934,7 +934,7 @@ validParameters = {
     "NonTemporalC":               list(range(0,4)),
     "NonTemporalA":               list(range(0,4)),
     "NonTemporalB":               list(range(0,4)),
-
+    "NonTemporalMetadata":        list(range(0,4)),
     # Group together unroll iterations inside the unroll loop.
     # For example, InnerUnroll=2 will fetch LDS for two unroll iterations
     "InnerUnroll":                [1,2,4,8,16,32,64],
@@ -1001,6 +1001,7 @@ defaultBenchmarkCommonParameters = [
     {"LocalReadVectorWidth":      [ -1 ] },
     {"WaveSeparateGlobalReadA":   [ 0 ] },
     {"WaveSeparateGlobalReadB":   [ 0 ] },
+    {"WaveSeparateGlobalReadMetadata":   [ 0 ] },
     {"PrefetchGlobalRead":        [ 1 ] },
     {"PrefetchLocalRead":         [ 1 ] },
     {"SuppressNoLoadLoop":        [ False ]},
@@ -1020,6 +1021,8 @@ defaultBenchmarkCommonParameters = [
     {"BufferStore":               [ True ] },
     {"DirectToVgprA":             [ False ] },
     {"DirectToVgprB":             [ False ] },
+    {"DirectToVgprMetadata":      [ False ] },
+    {"DirectToVgprSparseMetadata":[ True ] },
     {"DirectToLds":               [ False ] },
     {"UseSgprForGRO":             [ -1 ] },
     {"UseInstOffsetForGRO":       [ 0 ] },
@@ -1050,6 +1053,7 @@ defaultBenchmarkCommonParameters = [
     {"NonTemporalC":              [ 0 ] },
     {"NonTemporalA":              [ 0 ] },
     {"NonTemporalB":              [ 0 ] },
+    {"NonTemporalMetadata":       [ 0 ] },
     {"CustomKernelName":          [ "" ] },
     {"NoReject":                  [ False ]},
     {"MinVgprNumber":             [0]},
@@ -1149,6 +1153,7 @@ defaultProblemType = {
     # Summation dimension indices
     "MirrorDimsA":              [],
     "MirrorDimsB":              [],
+    "MirrorDimsMetadata":       [],
 
     # for LD description
     "NumIndicesLD":             4,

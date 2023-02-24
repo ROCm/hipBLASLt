@@ -42,6 +42,9 @@ class LocalReadMFMA(LocalRead):
         if tc == "A":
             lrvw = writer.states.lrvwA
             writer.states.localReadDoCntA += 1
+        elif tc == "Metadata":
+            lrvw = writer.states.lrvwM
+            writer.states.localReadDoCntMetadata += 1
         else:
             lrvw = writer.states.lrvwB
             writer.states.localReadDoCntB += 1
@@ -74,12 +77,14 @@ class LocalReadMFMA(LocalRead):
         # for TLU=0 case, blockWidth and LRVW should match
         if tc == "A":
             numReadsPerUnroll = tP["bpe"] * writer.states.lrvwA // int(blockWidth * 4) # bytes/register
+        elif tc == "Metadata":
+            numReadsPerUnroll = tP["bpe"] * writer.states.lrvwM // int(blockWidth * 4) # bytes/register
         else:
             numReadsPerUnroll = tP["bpe"] * writer.states.lrvwB // int(blockWidth * 4) # bytes/register
         numVgpr  = int(ceil(blockWidth))
 
         # pack register
-        needPack = blockWidth < 1
+        needPack = blockWidth < 1 if not tP["isM"] else False
         pack     = Module("pack%s_I%s"%(tc,iui))
         if needPack:
             packTimesPerVgpr = int(1/blockWidth) - 1 # 0.5->pack once (16->32) / 0.25->pack three times (8->16, 8->16, 16->32)
@@ -122,7 +127,7 @@ class LocalReadMFMA(LocalRead):
                         if isHigh8Bits or isHigh16Bits:
                             tmpVgprIdx += 1
 
-                    valufIdx += blockWidth
+                    valufIdx += blockWidth if not tP["isM"] else 1
 
                     # load read instrution
                     paramList = []
