@@ -113,9 +113,27 @@ namespace Tensile
             ~DataInitialization();
 
             /**
-   * Returns a ContractionInputs object with pointers to CPU memory,
-   * suitable for using to calculate reference results.
-   */
+             * Returns a ContractionInputs object with pointers to CPU memory,
+             * suitable for using to calculate reference results.
+             */
+            std::shared_ptr<ProblemInputs> prepareCPUInputs(ContractionProblem const* problem)
+            {
+                if(auto groupedProblem
+                   = dynamic_cast<ContractionProblemGroupedGemm const*>(problem))
+                {
+                    return prepareCPUInputs(groupedProblem->gemms[0]);
+                }
+                else if(auto gemmProblem = dynamic_cast<ContractionProblemGemm const*>(problem))
+                {
+                    return prepareCPUInputs(*gemmProblem);
+                }
+                else
+                {
+                    throw std::runtime_error(
+                        "[DataInitialization] Failed to cast to any ContractionProblem");
+                }
+            }
+
             std::shared_ptr<ProblemInputs> prepareCPUInputs(ContractionProblemGemm const& problem)
             {
                 if(m_cpuInit && m_curBoundsCheck == BoundsCheckMode::Disable
