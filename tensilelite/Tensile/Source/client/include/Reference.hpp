@@ -114,17 +114,14 @@ namespace Tensile
             static void SolveCPU(ContractionProblemGemm const& contraction,
                                  ContractionInputs const&      inputs,
                                  size_t                        elementsToValidate);
-            static void SolveCPUGroupedGemm(std::vector<ContractionProblemGemm> const& contractions,
-                                            ContractionGroupedInputs const&            inputs,
-                                            size_t elementsToValidate);
+            static void SolveCPU(ContractionProblemGroupedGemm const& contractions,
+                                 ContractionGroupedInputs const&      inputs,
+                                 size_t                               elementsToValidate);
         };
 
-        void SolveCPU(ContractionProblemGemm const& contraction,
-                      ContractionInputs const&      inputs,
-                      size_t                        elementsToValidate);
+        void SolveCPU(ContractionProblem const* contraction,
+                      ProblemInputs const*      inputs,
+                      size_t                    elementsToValidate);
 
-        void SolveCPUGroupedGemm(std::vector<ContractionProblemGemm> const& contractions,
-                                 ContractionGroupedInputs const&            inputs,
-                                 size_t                                     elementsToValidate);
     } // namespace Client
 } // namespace Tensile
