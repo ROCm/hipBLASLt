@@ -650,6 +650,19 @@ namespace Tensile
             a, b, c, d, e, bias, scaleD, freeIndices, batchIndices, boundIndices, beta);
     }
 
+    ContractionProblemGemm ContractionProblemGemm::GetDummy()
+    {
+        ContractionProblemGemm gemm;
+        gemm.m_tensors[ContractionProblemGemm::TENSOR::A]      = TensorDescriptor("a");
+        gemm.m_tensors[ContractionProblemGemm::TENSOR::B]      = TensorDescriptor("b");
+        gemm.m_tensors[ContractionProblemGemm::TENSOR::C]      = TensorDescriptor("c");
+        gemm.m_tensors[ContractionProblemGemm::TENSOR::D]      = TensorDescriptor("d");
+        gemm.m_tensors[ContractionProblemGemm::TENSOR::E]      = TensorDescriptor("e");
+        gemm.m_tensors[ContractionProblemGemm::TENSOR::BIAS]   = TensorDescriptor("bias");
+        gemm.m_tensors[ContractionProblemGemm::TENSOR::SCALED] = TensorDescriptor("scaleD");
+        return gemm;
+    }
+
     ContractionProblemGemm::ContractionProblemGemm(TensorDescriptor const& a,
                                                    TensorDescriptor const& b,
                                                    TensorDescriptor const& c,
