@@ -106,6 +106,7 @@ namespace Tensile
                 ("b-type",                   po::value<DataType>()->default_value(DataType::None), "B data type")
                 ("c-type",                   po::value<DataType>()->default_value(DataType::None), "C data type")
                 ("d-type",                   po::value<DataType>()->default_value(DataType::None), "D data type")
+                ("e-type",                   po::value<DataType>()->default_value(DataType::None), "E data type")
                 ("alpha-type",               po::value<DataType>()->default_value(DataType::None), "alpha data type")
                 ("beta-type",                po::value<DataType>()->default_value(DataType::None), "beta data type")
                 ("high-precision-accumulate", po::value<bool>()->default_value(false), "Use high-precision accumulate.")
@@ -119,6 +120,7 @@ namespace Tensile
                 ("init-b",                   po::value<InitMode>()->default_value(InitMode::Random), "Initialization for B")
                 ("init-c",                   po::value<InitMode>()->default_value(InitMode::Random), "Initialization for C")
                 ("init-d",                   po::value<InitMode>()->default_value(InitMode::Zero), "Initialization for D")
+                ("init-e",                   po::value<InitMode>()->default_value(InitMode::Zero), "Initialization for E")
                 ("init-alpha",               po::value<InitMode>()->default_value(InitMode::Two), "Initialization for alpha")
                 ("init-beta",                po::value<InitMode>()->default_value(InitMode::Two), "Initialization for beta")
                 ("init-bias",                po::value<InitMode>()->default_value(InitMode::One), "Initialization for bias")
@@ -129,6 +131,7 @@ namespace Tensile
                 ("offset-b",                 po::value<size_t>()->default_value(0), "buffer b start offset")
                 ("offset-c",                 po::value<size_t>()->default_value(0), "buffer c start offset")
                 ("offset-d",                 po::value<size_t>()->default_value(0), "buffer d start offset")
+                ("offset-e",                 po::value<size_t>()->default_value(0), "buffer e start offset")
                 ("print-valids",             po::value<bool>()->default_value(false), "Print values that pass validation")
                 ("print-max",                po::value<int>()->default_value(-1), "Max number of values to print")
                 ("num-elements-to-validate", po::value<int>()->default_value(0), "Number of elements to validate")
@@ -193,6 +196,11 @@ namespace Tensile
                                                                                   "specifying once applies to all problem sizes, "
                                                                                   "otherwise specify once per problem size.")
 
+                ("e-strides",                vector_default_empty<std::string>(), "Unspecified means default stride "
+                                                                                  "(prev_dim_stride*prev_dim_size)"
+                                                                                  "specifying once applies to all problem sizes, "
+                                                                                  "otherwise specify once per problem size.")
+
                 ("problem-start-idx",        po::value<int>()->default_value(0),  "First problem to run")
                 ("num-problems",             po::value<int>()->default_value(-1), "Number of problems to run")
 
@@ -223,8 +231,9 @@ namespace Tensile
                 ("activation-additional-args",vector_default_empty<std::string>(), "Activation additional floating-point number arguments.")
                 ("activation-enum-args",      po::value<std::vector<ActivationType>>()->default_value(std::vector<ActivationType>(1, ActivationType::None), "[]"), "Activation enum argument.")
                 ("use-bias",                  po::value<bool>()->default_value(false), "Use bias.")
-                ("use-scaleD",                  po::value<bool>()->default_value(false), "Use scaleD.")
+                ("use-scaleD",                po::value<bool>()->default_value(false), "Use scaleD.")
                 ("bias-type-args",            po::value<std::vector<DataType>>()->default_value(std::vector<DataType>(1, DataType::None), "[]"), "Bias data type args.")
+                ("use-e",                     po::value<bool>()->default_value(false), "Use E.")
                 ;
             // clang-format on
 
@@ -424,6 +433,7 @@ namespace Tensile
             parse_arg_ints(args, "b-strides");
             parse_arg_ints(args, "c-strides");
             parse_arg_ints(args, "d-strides");
+            parse_arg_ints(args, "e-strides");
             parse_bias_type_args(args, "bias-type-args");
             parse_activation_int(args, "activation-type");
             parse_activation_enum_args(args, "activation-enum-args");

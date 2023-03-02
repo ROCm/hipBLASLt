@@ -584,6 +584,14 @@ namespace Tensile
                         = GetValue<Accumulator>(problem.biasType(), inputs.bias, pos, aConjugate);
                     resultD += bias;
                 }
+                // E
+                if(problem.useE())
+                {
+                    typename Inputs::BetaType* ePtr = (typename Inputs::BetaType*)inputs.e;
+                    auto                       eIndex
+                        = problem.tensors()[ContractionProblemGemm::TENSOR::E].index(dCoord);
+                    ePtr[eIndex] = SaturateCast<typename Inputs::BetaType>(resultD);
+                }
                 // Activation adds here
                 std::vector<Accumulator> actArgs;
                 for(int i = 0; i < inputs.activationArgs.size(); i++)
@@ -791,6 +799,15 @@ namespace Tensile
                             problem.biasType(), inputs.grouped[idx].bias, pos, aConjugate);
                         resultD += bias;
                     }
+                    // E
+                    if(problem.useE())
+                    {
+                        typename Inputs::BetaType* ePtr
+                            = (typename Inputs::BetaType*)inputs.grouped[idx].e;
+                        auto eIndex
+                            = problem.tensors()[ContractionProblemGemm::TENSOR::E].index(dCoord);
+                        ePtr[eIndex] = SaturateCast<typename Inputs::BetaType>(resultD);
+                    }
                     // Activation adds here
                     std::vector<Accumulator> actArgs;
                     for(int i = 0; i < inputs.grouped[idx].activationArgs.size(); i++)
@@ -837,6 +854,18 @@ namespace Tensile
             if(biasType == DataType::None)
             {
                 biasType = problem.d().dataType();
+            }
+
+            if(problem.useE())
+            {
+                if(alphaType != betaType)
+                {
+                    throw std::runtime_error("Alpha type and beta type must be the same.");
+                }
+                if(problem.tensors()[ContractionProblemGemm::TENSOR::E].dataType() != betaType)
+                {
+                    throw std::runtime_error("E type and beta type must be the same.");
+                }
             }
 
             auto contractionInputsTypeId = Tensile::GemmTypeId(problem.a().dataType(),
@@ -974,6 +1003,18 @@ namespace Tensile
             if(biasType == DataType::None)
             {
                 biasType = problems[0].d().dataType();
+            }
+
+            if(problems[0].useE())
+            {
+                if(alphaType != betaType)
+                {
+                    throw std::runtime_error("Alpha type and beta type must be the same.");
+                }
+                if(problems[0].tensors()[ContractionProblemGemm::TENSOR::E].dataType() != betaType)
+                {
+                    throw std::runtime_error("E type and beta type must be the same.");
+                }
             }
 
             auto contractionInputsTypeId = GemmTypeId(problems[0].a().dataType(),
