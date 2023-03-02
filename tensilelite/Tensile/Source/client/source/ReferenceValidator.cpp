@@ -407,6 +407,20 @@ namespace Tensile
                                         hipMemcpyDeviceToHost));
                 m_reporter->logTensor(
                     LogLevel::Verbose, "A", m_cpuResultBuffer.get(), a, adata);
+
+                if(problem.sparseA())
+                {
+                    auto metadata = problem.metadata();
+                    HIP_CHECK_EXC(hipMemcpy(m_cpuResultBuffer.get(),
+                                            result.metadata,
+                                            metadata.totalAllocatedBytes(),
+                                            hipMemcpyDeviceToHost));
+                    m_reporter->logTensor(LogLevel::Verbose,
+                                          "Metadata",
+                                          m_cpuResultBuffer.get(),
+                                          problem.metadata(),
+                                          result.metadata);
+                }
             }
 
             if(m_printTensorB)
