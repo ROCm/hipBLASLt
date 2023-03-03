@@ -159,6 +159,7 @@ globalParameters["BufferOffsetA"] = 0             # data offset of buffer A
 globalParameters["BufferOffsetB"] = 0             # data offset of buffer B
 globalParameters["BufferOffsetC"] = 0             # data offset of buffer C
 globalParameters["BufferOffsetD"] = 0             # data offset of buffer D
+globalParameters["BufferOffsetE"] = 0             # data offset of buffer E
 
 # build parameters
 globalParameters["CMakeCXXFlags"] = ""            # pass flags to cmake

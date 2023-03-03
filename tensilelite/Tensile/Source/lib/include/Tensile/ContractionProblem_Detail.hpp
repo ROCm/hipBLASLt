@@ -120,6 +120,8 @@ namespace Tensile
                                         rhs.activationHPA(),
                                         lhs.useBias(),
                                         rhs.useBias(),
+                                        lhs.useE(),
+                                        rhs.useE(),
                                         lhs.useScaleD(),
                                         rhs.useScaleD());
         }
@@ -149,6 +151,7 @@ namespace std
                                          problem.activationType(),
                                          problem.activationHPA(),
                                          problem.useBias(),
+                                         problem.useE(),
                                          problem.useScaleD());
         }
     };

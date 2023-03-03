@@ -67,6 +67,14 @@ namespace Tensile
         }
 
         /**
+         * Return a TensorDescriptor.
+         */
+        virtual TensorDescriptor const& tensor(int idx) const
+        {
+            return m_tensors[idx];
+        }
+
+        /**
          * Return vector of constant datatype.
          */
         virtual std::vector<ConstantDescriptor> const constants() const = 0;
@@ -587,13 +595,13 @@ namespace Tensile
         void setE(DataType                   type,
                   std::vector<size_t> const& sizes,
                   std::vector<size_t> const& strides,
-                  size_t                     offset,
                   bool                       isOutput = false)
         {
             if(type != DataType::None && m_useE)
             {
+                // Currently only supports offset = 0
                 TensorDescriptor e(
-                    "e", type, sizes.begin(), sizes.end(), strides.begin(), strides.end(), offset);
+                    "e", type, sizes.begin(), sizes.end(), strides.begin(), strides.end(), 0);
                 e.setAsOutput(isOutput);
                 m_tensors[ContractionProblemGemm::TENSOR::E] = e;
             }

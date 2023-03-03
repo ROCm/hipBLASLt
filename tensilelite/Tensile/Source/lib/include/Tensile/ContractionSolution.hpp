@@ -298,9 +298,11 @@ namespace Tensile
             DataType              bType                   = DataType::Float;
             DataType              cType                   = DataType::Float;
             DataType              dType                   = DataType::Float;
+            DataType              eType                   = DataType::Float;
             bool                  highPrecisionAccumulate = false;
             bool                  useBeta                 = true;
             bool                  useBias                 = false;
+            bool                  useE                    = false;
             bool                  useScaleD               = false;
             bool                  useInitialStridesAB     = false;
             bool                  useInitialStridesCD     = false;

@@ -281,7 +281,6 @@ namespace Tensile
                             rv.back().setE(m_tensorTypes[ContractionProblemGemm::TENSOR::E],
                                            rv.back().d().sizes(),
                                            eStrides,
-                                           m_tensorOffsets[ContractionProblemGemm::TENSOR::E],
                                            isEOutput);
                         }
                         if(j < m_activationEnumArg.size())
