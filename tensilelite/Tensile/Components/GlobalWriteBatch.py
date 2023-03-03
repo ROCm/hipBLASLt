@@ -38,19 +38,19 @@ class GlobalWriteBatchComponent(GlobalWriteComponents):
   kernel = {"ProblemType": {"OperationType": "GEMM" }}
   def __call__(self, kernel: Solution, tPA, tPB, activation: ActivationModule, ss: StoreState, \
     batchIdx, applyAlpha, beta, edge, atomic, gwvw, atomicW, \
-    batchElements, addrD, addrC, addrBias, addrScaleD, biasLocalBarrierInit: bool, \
+    batchElements, addrE, addrD, addrC, addrBias, addrScaleD, biasLocalBarrierInit: bool, \
     tmpVgpr, bf16CVTVgprStruct, activationSetPCStruct, activationTypeStr, batchElementSgprs, tmpSgpr, codeAccVgprRead, codeMulAlpha, \
     packdata, parentWriter) -> Module:
     return GlobalWriteBatchWriter(kernel, tPA, tPB, activation, ss, batchIdx, applyAlpha, \
       beta, edge, atomic, gwvw, atomicW, \
-      batchElements, addrD, addrC, addrBias, addrScaleD, biasLocalBarrierInit, \
+      batchElements, addrE, addrD, addrC, addrBias, addrScaleD, biasLocalBarrierInit, \
       tmpVgpr, bf16CVTVgprStruct, activationSetPCStruct, activationTypeStr, batchElementSgprs, tmpSgpr, codeAccVgprRead, codeMulAlpha, \
       packdata, parentWriter).emit()
 
 class GlobalWriteBatchWriter:
   def __init__(self, kernel: Solution, tPA, tPB, activation: ActivationModule, ss: StoreState, \
     batchIdx, applyAlpha, beta, edge, atomic, gwvw, atomicW, \
-    batchElements, addrD, addrC, addrBias, addrScaleD, biasLocalBarrierInit: bool, \
+    batchElements, addrE, addrD, addrC, addrBias, addrScaleD, biasLocalBarrierInit: bool, \
     tmpVgpr, bf16CVTVgprStruct, activationSetPCStruct, activationTypeStr, batchElementSgprs, tmpSgpr, codeAccVgprRead, codeMulAlpha, \
       packdata, parentWriter):
     self.kernel = kernel
@@ -66,6 +66,7 @@ class GlobalWriteBatchWriter:
     self.gwvw = gwvw
     self.atomicW = atomicW
     self.batchElements = batchElements
+    self.addrE    = addrE
     self.addrD    = addrD
     self.addrC    = addrC
     self.addrBias = addrBias
@@ -238,6 +239,7 @@ class GlobalWriteBatchWriter:
       addrCalc: AddrCalculation = self.ss.elementAddr[elementIdx]
       addrCVgpr    = addrCalc.addrCVgpr
       addrDVgpr    = addrCalc.addrDVgpr
+      addrEVgpr    = addrCalc.addrEVgpr
       addrBiasVgpr = addrCalc.addrBiasVgpr
       addrScaleDVgpr = addrCalc.addrScaleDVgpr
       data     = self.ss.elementData[elementIdx]
@@ -295,6 +297,8 @@ class GlobalWriteBatchWriter:
           self.loadsScaleDIssued += 1
       self.scaleDLoadIssued.append(len(loadedDataScaleD))
 
+      if self.kernel["ProblemType"]["UseE"] and (self.kernel["GlobalSplitU"] == 1):
+        module.add(addrCalc.emitLdChange(self.kernel, self.ss, 'E', self.edge, self.beta, mask, (elementIdx == len(self.batchElements) - 1), self.tmpVgpr, self.tmpSgpr, addrEVgpr, self.addrE))
       module.add(addrCalc.emitLdChange(self.kernel, self.ss, 'D', self.edge, self.beta, mask, (elementIdx == len(self.batchElements) - 1), self.tmpVgpr, self.tmpSgpr, addrDVgpr, self.addrD))
 
       if self.atomic and (not self.parentWriter.states.useAtomicAdd):
@@ -372,16 +376,20 @@ class GlobalWriteBatchWriter:
 
   def _epilog(self, module: Module):
     # return registers to pool:
-    lastData        = -1
+    lastDataD       = -1
+    lastDataE       = -1
     checkedDataBias = {}
     checkedDataScaleD = {}
     for elementIdx in range(len(self.batchElements)):
       if not self.ss.sharedColDVgprs:
         addrCalc: AddrCalculation = self.ss.elementAddr[elementIdx]
+        addrEVgpr    = addrCalc.addrEVgpr
         addrDVgpr    = addrCalc.addrDVgpr
         addrCVgpr    = addrCalc.addrCVgpr
         addrBiasVgpr = addrCalc.addrBiasVgpr
         addrScaleDVgpr = addrCalc.addrScaleDVgpr
+        if addrEVgpr != None:
+          self.parentWriter.vgprPool.checkIn(addrEVgpr)
         self.parentWriter.vgprPool.checkIn(addrDVgpr)
         if addrCVgpr != addrDVgpr:
           self.parentWriter.vgprPool.checkIn(addrCVgpr)
@@ -392,15 +400,21 @@ class GlobalWriteBatchWriter:
 
       data = self.ss.elementData[elementIdx]
       if data != 0:
-        if data != lastData:
+        if data != lastDataD:
           self.parentWriter.vgprPool.checkIn(data)
-        lastData = data
+        lastDataD = data
 
       dataBias = self.ss.elementDataBias[elementIdx]
       if dataBias != 0:
         if dataBias not in checkedDataBias:
           self.parentWriter.vgprPool.checkIn(dataBias)
         checkedDataBias[dataBias] = 1
+
+      dataE = self.ss.elementDataE[elementIdx]
+      if dataE != 0:
+        if dataE != lastDataE:
+          self.parentWriter.vgprPool.checkIn(dataE)
+        lastDataE = dataE
 
       dataScaleD = self.ss.elementDataScaleD[elementIdx]
       if dataScaleD != 0:
@@ -502,6 +516,9 @@ class GlobalWriteBatchWriter:
       # Now read lds data back to registers and write to global memroy
       if self.ss.optSrdIncForRow and addrCalc.rowInc and self.kernel["StoreRemapVectorWidth"] > 0:
         module.addComment1("StoreRemap: shift coord1 address")
+        if self.kernel["ProblemType"]["UseE"] and (self.kernel["GlobalSplitU"] == 1):
+          printExit("Use E does not support StoreRemapVectorWidth if GSU == 1.")
+          # module.add(addrCalc.incrementToNextRow(self.kernel, "E", self.ss, self.tmpS01, isCompute=True))
         module.add(addrCalc.incrementToNextRow(self.kernel, "D", self.ss, self.tmpS01))
         module.add(VMovB32(vgpr(self.tmpVgpr), addrCalc.rowInc, "set shift rows"))
         module.add(VAddU32(vgpr(self.parentWriter.vgprs.storeRemapCoord1), vgpr(self.parentWriter.vgprs.storeRemapCoord1), vgpr(self.tmpVgpr), "shift storeRemap coord1"))
@@ -603,6 +620,11 @@ class GlobalWriteBatchWriter:
                                    src1=vgpr("ValuC+%d"%vgprIdx, 2), comment="C += bias"))
           else:
             raise RuntimeError("Unsupported bias compute data type %s."%str(self.kernel["ProblemType"]["ComputeDataType"]))
+
+      if self.kernel["ProblemType"]["UseE"] and (self.kernel["GlobalSplitU"] == 1):
+        vgprIdx = self.ss.elementSumIdx[elementIdx] - self.parentWriter.states.c.startVgprValu
+        vgprDst = self.activationSetPCStruct.vgprActCopy if mergeActFuncCall else "ValuC+%d"%vgprIdx
+        module.add(self.parentWriter.addStore(self.kernel, 'E', self.ss, addrCalc, vgprDst, self.tmpS01, self.edge, comment="store E"))
 
       SaturateTypeInt8 = SaturateCastType.NORMAL
       # Activation
@@ -733,12 +755,14 @@ class GlobalWriteBatchWriter:
         module.add(packModule)
 
       if not self.kernel["StoreRemapVectorWidth"]:
-        tmpStoreCode = self.parentWriter.addStore(self.kernel, self.ss, addrCalc, sumIdx, self.tmpS01, self.edge)
+        tmpStoreCode = self.parentWriter.addStore(self.kernel, 'D', self.ss, addrCalc, sumIdx, self.tmpS01, self.edge, comment="store D")
         if self.kernel["GroupLoadStore"]:
           storeCode.add(tmpStoreCode)
         else:
           module.add(tmpStoreCode)
         self.storesIssued += 1
+        if self.kernel["ProblemType"]["UseE"] and (self.kernel["GlobalSplitU"] == 1):
+          self.storesIssued += 1
 
       else:
         rpe = self.parentWriter.states.bpeCinternal // self.parentWriter.states.bpr
