@@ -267,6 +267,7 @@ namespace Tensile
         TensorDescriptor const& b = problem.b();
         TensorDescriptor const& c = problem.c();
         TensorDescriptor const& d = problem.d();
+        TensorDescriptor const& e = problem.tensor(ContractionProblemGemm::TENSOR::E);
 
         if(sizeMapping.globalAccumulation)
         {
@@ -392,6 +393,15 @@ namespace Tensile
         if(problemType.useBias && (sizeMapping.globalSplitU == 1))
         {
             args.append<void const*>("bias", inputs.bias);
+        }
+
+        if(problemType.useE)
+        {
+            args.append<void*>("e", inputs.e);
+        }
+
+        if(problemType.useBias && (sizeMapping.globalSplitU == 1))
+        {
             if(runActivation)
             {
                 size_t dummyInsertSize
@@ -402,6 +412,12 @@ namespace Tensile
                 }
             }
             args.append<uint32_t>("bias_type", static_cast<uint32_t>(problem.biasType()));
+        }
+
+        if(problemType.useE)
+        {
+            for(size_t i = startStrideCD; i < e.dimensions(); i++)
+                args.append<uint32_t>(concatenate_if<T_Debug>("strideE", i), e.strides()[i]);
         }
 
         if(runActivation)
@@ -736,6 +752,7 @@ namespace Tensile
     {
         TensorDescriptor const& c = problem.c();
         TensorDescriptor const& d = problem.d();
+        TensorDescriptor const& e = problem.tensor(ContractionProblemGemm::TENSOR::E);
 
         KernelInvocation rv;
 
@@ -766,6 +783,14 @@ namespace Tensile
         rv.numWorkItems.x = rv.workGroupSize.x * rv.numWorkGroups.x;
         rv.numWorkItems.y = rv.workGroupSize.y * rv.numWorkGroups.y;
         rv.numWorkItems.z = rv.workGroupSize.z * rv.numWorkGroups.z;
+
+        if(problemType.useE)
+        {
+            if(problemType.stridedBatched)
+                rv.args.append<void*>("E", inputs.e);
+            else
+                rv.args.append<void const* const*>("batchE", 0);
+        }
 
         if(problemType.stridedBatched)
             rv.args.append<void*>("D", inputs.d);
@@ -825,6 +850,10 @@ namespace Tensile
             }
         }
 
+        if(problemType.useE)
+            for(size_t i = 1; i < e.dimensions(); i++)
+                rv.args.append<uint32_t>(concatenate_if<T_Debug>("strideE", i), e.strides()[i]);
+
         for(size_t i = 1; i < d.dimensions(); i++)
             rv.args.append<uint32_t>(concatenate_if<T_Debug>("strideD", i), d.strides()[i]);
 
@@ -876,6 +905,12 @@ namespace Tensile
         {
             auto s = TypeAbbrev(problem.biasType());
             name += ("_Bias" + s);
+        }
+
+        if(problemType.useE)
+        {
+            auto s = TypeAbbrev(problem.tensors()[ContractionProblemGemm::TENSOR::E].dataType());
+            name += ("_Aux" + s);
         }
 
         if(problem.activationType() != ActivationType::None)

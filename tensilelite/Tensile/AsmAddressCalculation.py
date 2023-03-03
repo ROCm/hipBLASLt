@@ -33,11 +33,12 @@ class AddrCalculation:
     #    packed index for the 0 coordinate of the C/D matrix.
     # coord1Vgpr : VGPR which tracks the last coord1 calculation.
     #          If this is new coord1, just overwrite it with latest calc.
-    def __init__(self, kernelWriter, ss, addrCVgpr, addrDVgpr, addrBiasVgpr, addrScaleDVgpr, element, \
+    def __init__(self, kernelWriter, ss, addrCVgpr, addrDVgpr, addrEVgpr, addrBiasVgpr, addrScaleDVgpr, element, \
         coordOffset0, coord1Vgpr, coordOffset1, rowInc, newCoord1):
         self.kernelWriter = kernelWriter
 
         # vgprs for address, could be more than one (for flat)
+        self.addrEVgpr    = addrEVgpr
         self.addrDVgpr    = addrDVgpr
         self.addrCVgpr    = addrCVgpr
         self.addrBiasVgpr = addrBiasVgpr
@@ -55,12 +56,14 @@ class AddrCalculation:
             # optimized stores use the load offset for coordOffset0 calculations.
             self.biasOffset   = coordOffset0 * kernelWriter.states.bpeCinternal
             self.scaleDOffset   = coordOffset0 * kernelWriter.states.bpeCinternal
-            self.globalOffset = coordOffset0 * kernelWriter.states.bpeCexternal
+            self.globalOffset  = coordOffset0 * kernelWriter.states.bpeCexternal
+            self.globalOffsetE = coordOffset0 * kernelWriter.states.bpeCinternal
         else:
             # else non-opt stores include the coord0 offset into VGPR address calcs
             self.biasOffset   = 0
             self.scaleDOffset   = 0
             self.globalOffset = 0
+            self.globalOffsetE = 0
 
     def addScaled(self, destV, src0, src1, scale1, tmpS01, comment=""):
         """
@@ -133,8 +136,9 @@ class AddrCalculation:
         kw = self.kernelWriter
         packedIndices = kernel["PackedC0IndicesX"]
         packedBits = self.coord0Vgpr # start with coord0, will move to temp below
-        rowPtr = kw.vgprs.cinRowPtr if (storeChar == 'C') else kw.vgprs.coutRowPtr
-        addrVgpr = self.addrCVgpr if (storeChar == 'C') else self.addrDVgpr
+        rowPtr = kw.vgprs.cinRowPtr if (storeChar == 'C') else (kw.vgprs.coutRowPtrE if (storeChar == 'E') else kw.vgprs.coutRowPtrD)
+        addrVgpr = self.addrCVgpr if (storeChar == 'C') else (self.addrEVgpr if (storeChar == 'E') else self.addrDVgpr)
+        bpe = kw.states.bpeCinternal if (storeChar == 'E') else kw.states.bpeCexternal
 
         for i,idx in enumerate(packedIndices[:-1]):
             # vgprTmp assignments:
@@ -182,7 +186,7 @@ class AddrCalculation:
             module.add(VAddLShiftLeftU32(dst=vgpr(addrVgpr), \
                       src0=vgpr(rowPtr), \
                       src1=vgpr(addrVgpr), \
-                      shiftHex=hex(log2(kw.states.bpeCexternal)), \
+                      shiftHex=hex(log2(bpe)), \
                       comment="packed: add rowPtr and scaleToBpe"))
 
         return module
@@ -195,8 +199,9 @@ class AddrCalculation:
         module = Module("emitScaleToBpe")
         kw = self.kernelWriter
         (d1,d0,vc1,vc0) = self.element
-        rowPtr = kw.vgprs.cinRowPtr if (tc == 'C') else kw.vgprs.coutRowPtr
-        addrVgpr = self.addrCVgpr if (tc == 'C') else self.addrDVgpr
+        rowPtr = kw.vgprs.cinRowPtr if (tc == 'C') else ( kw.vgprs.coutRowPtrE if (tc == 'E') else kw.vgprs.coutRowPtrD)
+        addrVgpr = self.addrCVgpr if (tc == 'C') else (self.addrEVgpr if (tc == 'E') else self.addrDVgpr)
+        bpe = kw.states.bpeCinternal if (tc == 'E') else kw.states.bpeCexternal
         # set when we generate code that updates the address
         # optSingleColVgpr and optSharedColVgpr attempt to minimize these updates
         updatedAddr = False
@@ -220,7 +225,7 @@ class AddrCalculation:
             assert (kw.vgprs.coord0 == self.coord0Vgpr) # elementAddr assignment above assumes these are the same
             if singleUpdate:
                 updatedAddr = True
-                singleColAddrUpdated = ss.singleColCAddrUpdated if (tc == 'C') else ss.singleColDAddrUpdated
+                singleColAddrUpdated = ss.singleColCAddrUpdated if (tc == 'C') else (ss.singleColEAddrUpdated if (tc == 'E') else ss.singleColDAddrUpdated)
                 if not singleColAddrUpdated or not ss.optSrdIncForRow:
                     if tc == 'Bias' and kernel["ProblemType"]["UseBias"] and (kernel["GlobalSplitU"] == 1):
                         module.add(SMulI32(dst=sgpr(tmpSgpr), src0=kernel["MacroTile0"], src1=sgpr("WorkGroup0"), comment="wgp0 * MT0"))
@@ -238,12 +243,14 @@ class AddrCalculation:
                         return module
                     if tc == 'C':
                         ss.singleColCAddrUpdated = True
+                    elif tc == 'E':
+                        ss.singleColEAddrUpdated = True
                     else:
                         ss.singleColDAddrUpdated = True
                     module.add(VAddLShiftLeftU32(dst=vgpr(addrVgpr), \
                       src0=vgpr(rowPtr), \
                       src1=vgpr(elementVgpr), \
-                      shiftHex=hex(log2(kw.states.bpeCexternal)), \
+                      shiftHex=hex(log2(bpe)), \
                       comment="optSingleColVgpr scaleToBpe: sharedAddrVgpr <- cinRowPtr + coord0, scaled by BPE. BSHERE:coord0=%d, coord0Vgpr=%d"%(kw.vgprs.coord0, self.coord0Vgpr)))
         elif ss.optSharedColVgpr:
             # Need an address calculation for the first address in each row:
@@ -271,7 +278,7 @@ class AddrCalculation:
                     module.add(VAddLShiftLeftU32(dst=vgpr(addrVgpr), \
                       src0=vgpr(rowPtr), \
                       src1=vgpr(elementVgpr), \
-                      shiftHex=hex(log2(kw.states.bpeCexternal)), \
+                      shiftHex=hex(log2(bpe)), \
                       comment="optSharedColVgpr scaleToBpe for first row: col addr <- cinRowPtr + coord0, scaled by BPE"))
         else:
             # Generate final address calculation (to bytes) for each element
@@ -301,7 +308,7 @@ class AddrCalculation:
                 module.add(VAddLShiftLeftU32(dst=vgpr(addrVgpr), \
                     src0=vgpr(rowPtr), \
                     src1=vgpr(elementVgpr), \
-                    shiftHex=hex(log2(kw.states.bpeCexternal)), \
+                    shiftHex=hex(log2(bpe)), \
                     comment="scaleToBpe: accumulate d0 lower and *= bpe into Cin addr"))
 
         # if not optSrdIncForRow then we may have moved the row pointer
@@ -311,7 +318,7 @@ class AddrCalculation:
             module.add(VAddLShiftLeftU32(dst=vgpr(addrVgpr), \
               src0=vgpr(rowPtr), \
               src1=vgpr(kw.vgprs.coord0), \
-              shiftHex=hex(log2(kw.states.bpeCexternal)), \
+              shiftHex=hex(log2(bpe)), \
               comment="scaleToBpe: Update address with new rowPtr"))
 
         return module
@@ -406,8 +413,11 @@ class AddrCalculation:
                     strideChar = self.kernelWriter.states.indexChars[kernel["PackedC1IndicesX"][0]]
                     module.add(self.addScaled(vgpr(kw.vgprs.cinRowPtr),  vgpr(kw.vgprs.cinRowPtr),  \
                               sgpr("StrideC%s"%strideChar), self.rowInc, tmpS01, "ROWINC- Move cinRowPtr to next row"))
-                    module.add(self.addScaled(vgpr(kw.vgprs.coutRowPtr), vgpr(kw.vgprs.coutRowPtr), \
-                              sgpr("StrideD%s"%strideChar), self.rowInc, tmpS01, "Move coutRowPtr to next row"))
+                    module.add(self.addScaled(vgpr(kw.vgprs.coutRowPtrD), vgpr(kw.vgprs.coutRowPtrD), \
+                              sgpr("StrideD%s"%strideChar), self.rowInc, tmpS01, "Move coutRowPtrD to next row"))
+                    if kernel["ProblemType"]["UseE"] and (kernel["GlobalSplitU"] == 1):
+                        module.add(self.addScaled(vgpr(kw.vgprs.coutRowPtrE), vgpr(kw.vgprs.coutRowPtrE), \
+                                  sgpr("StrideE%s"%strideChar), self.rowInc, tmpS01, "Move coutRowPtrE to next row"))
                 elif len(kernel["PackedC1IndicesX"]) > 1:
                     module.add(kw.extractPackedCoord1ToRowStart(kernel, kernel["PackedC1IndicesX"] , self.coord1Vgpr, 'D'))
 
@@ -423,6 +433,7 @@ class AddrCalculation:
                 packedC1 = kernel["PackedC1IndicesX"]
                 strideC1 = "StrideC%s" % (kw.states.indexChars[packedC1[0]])
                 strideD1 = "StrideD%s" % (kw.states.indexChars[packedC1[0]])
+                strideE1 = "StrideE%s" % (kw.states.indexChars[packedC1[0]])
 
                 module.addComment1("shift vector components d1")
                 vw = kernel["GlobalLoadVectorWidthB"]
@@ -449,9 +460,14 @@ class AddrCalculation:
                              comment="new rowStart address += shift column * StridesC"))
                 module.add(VCndMaskB32(dst=vgpr(kw.vgprs.cinRowPtr), src0=vgpr(kw.vgprs.cinRowPtr), src1=vgpr(vTmp1), src2=sgpr(sTmp1,sgprCnt), \
                              comment="set new rowStart if meet conditions" ))
-                module.add(VMadI32I24(dst=vgpr(vTmp1), src0=sgpr(strideD1), src1=vgpr(vTmp2), src2=vgpr(kw.vgprs.coutRowPtr), \
+                module.add(VMadI32I24(dst=vgpr(vTmp1), src0=sgpr(strideD1), src1=vgpr(vTmp2), src2=vgpr(kw.vgprs.coutRowPtrD), \
                              comment="new rowStart address += shift column * StridesD"))
-                module.add(VCndMaskB32(dst=vgpr(kw.vgprs.coutRowPtr), src0=vgpr(kw.vgprs.coutRowPtr), src1=vgpr(vTmp1), src2=sgpr(sTmp1,sgprCnt), \
+                module.add(VCndMaskB32(dst=vgpr(kw.vgprs.coutRowPtrD), src0=vgpr(kw.vgprs.coutRowPtrD), src1=vgpr(vTmp1), src2=sgpr(sTmp1,sgprCnt), \
+                             comment="set new rowStart if meet conditions" ))
+                if kernel["ProblemType"]["UseE"] and (kernel["GlobalSplitU"] == 1):
+                    module.add(VMadI32I24(dst=vgpr(vTmp1), src0=sgpr(strideE1), src1=vgpr(vTmp2), src2=vgpr(kw.vgprs.coutRowPtrE), \
+                             comment="new rowStart address += shift column * StridesE"))
+                    module.add(VCndMaskB32(dst=vgpr(kw.vgprs.coutRowPtrE), src0=vgpr(kw.vgprs.coutRowPtrE), src1=vgpr(vTmp1), src2=sgpr(sTmp1,sgprCnt), \
                              comment="set new rowStart if meet conditions" ))
 
                 if kernel["StoreRemapVectorWidth"]:
@@ -462,7 +478,8 @@ class AddrCalculation:
                                 comment="new lds write address += shift column * Lds byte Stride"))
                     module.add(VCndMaskB32(dst=vgpr(kw.vgprs.storeRemapLW), src0=vgpr(kw.vgprs.storeRemapLW), src1=vgpr(vTmp1), \
                                   src2=sgpr(sTmp1,sgprCnt), comment="set new rowStart if meet conditions" ))
-
+                    if kernel["ProblemType"]["UseE"] and (kernel["GlobalSplitU"] == 1):
+                        printExit("Output E does not support StoreRemapVectorWidth")
                 module.addSpaceLine()
 
         return module
@@ -503,7 +520,7 @@ class AddrCalculation:
                             src2=VCC(), comment="addrVgpr = C(D) + index*bytes (hi)"))
         return module
 
-    def incrementToNextRow(self, kernel, tc, ss, stmp):
+    def incrementToNextRow(self, kernel, tc, ss, stmp, isCompute=False):
         """
         Generate code to move to the next row(s)
         If optSrdIncForRow, this will move the SRD forward
@@ -512,7 +529,7 @@ class AddrCalculation:
 
         module = Module("incrementToNextRow")
         numRows = self.rowInc
-        tmpBpe = self.kernelWriter.states.bpeCexternal
+        tmpBpe = self.kernelWriter.states.bpeCinternal if isCompute else self.kernelWriter.states.bpeCexternal
         if ss.optSrdIncForRow:
             if numRows:
                 packedC1 = kernel["PackedC1IndicesX"]

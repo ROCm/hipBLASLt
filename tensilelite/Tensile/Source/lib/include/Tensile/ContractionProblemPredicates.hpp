@@ -1589,6 +1589,32 @@ namespace Tensile
                 }
             };
 
+            struct UseEEqual : public Predicate_CRTP<UseEEqual, ContractionProblemGemm>
+            {
+                enum
+                {
+                    HasIndex = false,
+                    HasValue = true
+                };
+                bool value;
+
+                UseEEqual() = default;
+                UseEEqual(bool value)
+                    : value(value)
+                {
+                }
+
+                static std::string Type()
+                {
+                    return "UseE";
+                }
+
+                virtual bool operator()(ContractionProblemGemm const& problem) const override
+                {
+                    return problem.useE() == value;
+                }
+            };
+
             struct UseScaleDEqual : public Predicate_CRTP<UseScaleDEqual, ContractionProblemGemm>
             {
                 enum

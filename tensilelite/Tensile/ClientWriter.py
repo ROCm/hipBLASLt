@@ -410,6 +410,8 @@ def problemSizeParams(problemType, problem):
       rv.append(('c-strides', ",".join(map(str, cstrides))))
     if dstrides:
       rv.append(('d-strides', ",".join(map(str, dstrides))))
+      if problemType.useE:
+          rv.append(('e-strides', ",".join(map(str, dstrides))))
 
     return rv
 
@@ -469,9 +471,12 @@ def writeClientConfigIni(problemSizes, biasTypeArgs, activationArgs, problemType
         param('b-type',     problemType.bType.toEnum())
         param('c-type',     problemType.cType.toEnum())
         param('d-type',     problemType.dType.toEnum())
+        if problemType.useE:
+            param('e-type',     problemType.eType.toEnum())
         param('alpha-type', problemType.alphaType.toEnum())
         param('beta-type',  problemType.betaType.toEnum())
         param('use-bias',   problemType.useBias)
+        param('use-e', problemType.useE)
         param('use-scaleD',   problemType.useScaleD)
         if biasTypeArgs:
           for btype in biasTypeArgs.biasTypes:

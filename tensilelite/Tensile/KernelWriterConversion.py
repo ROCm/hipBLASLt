@@ -69,6 +69,10 @@ class KernelWriterConversion(KernelWriterBase):
     ptrStr += '' if self.state["ProblemType"]["StridedBatched"] else '*'
     bStr = '' if self.state["ProblemType"]["StridedBatched"] else 'Batch'
 
+    if self.state["ProblemType"]["UseE"]:
+      ptrCStr = self.state["ProblemType"]["ComputeDataType"].toDevice(self.language)
+      ptrCStr += '' if self.state["ProblemType"]["StridedBatched"] else '*'
+      kStr += "  " + ptrCStr + " * " + bStr + "E," + self.endLine
     kStr += "  " + ptrStr + " * " + bStr + "D," + self.endLine
     kStr += "  " + self.datatype + " * W," + self.endLine
     kStr += "  " + ptrStr + " const * " + bStr + "C," + self.endLine
@@ -103,6 +107,9 @@ class KernelWriterConversion(KernelWriterBase):
     if self.state["ProblemType"]["UseInitialStridesCD"]:
       firstStrideCD = 0
     lastStrideC = self.state["ProblemType"]["NumIndicesC"]
+    if self.state["ProblemType"]["UseE"]:
+      for i in range(firstStrideCD, lastStrideC):
+        kStr += "  unsigned int const strideE%s,%s" % (self.indexChars[i], self.endLine)
     for i in range(firstStrideCD, lastStrideC):
       kStr += "  unsigned int const strideD%s,%s" % (self.indexChars[i], self.endLine)
     for i in range(firstStrideCD, lastStrideC):
@@ -136,6 +143,9 @@ class KernelWriterConversion(KernelWriterBase):
       # #define initial stride
       kStr += "/* hard-coded initial strides */%s" % self.endLine
       lastStrideC = 1
+    if self.state["ProblemType"]["UseE"]:
+      for i in range(firstStride, lastStrideC):
+        kStr += "#define strideE" + self.indexChars[i] + " 1" + self.endLine
     for i in range(firstStride, lastStrideC):
       kStr += "#define strideD" + self.indexChars[i] + " 1" + self.endLine
     for i in range(firstStride, lastStrideC):
@@ -144,6 +154,18 @@ class KernelWriterConversion(KernelWriterBase):
       kStr += "#define strideC" + self.indexChars[i] + " 1" + self.endLine
 
     ########################################
+    # GLOBAL_E()
+    if self.state["ProblemType"]["UseE"]:
+      kStr += "#define GLOBAL_E(IDX%s" % self.indexChars[0]
+      for i in range(1, problemType["NumIndicesC"]):
+        kStr += ", IDX%s" % self.indexChars[i]
+      indexChar = self.indexChars[0]
+      kStr += ") (( (IDX%s)*strideE%s" % (indexChar, indexChar)
+      for i in range(1, problemType["NumIndicesC"]):
+        indexChar = self.indexChars[i]
+        kStr += " + (IDX%s)*strideE%s" % (indexChar, indexChar)
+      kStr += " ))" + self.endLine
+
     # GLOBAL_D()
     kStr += "#define GLOBAL_D(IDX%s" % self.indexChars[0]
     for i in range(1, problemType["NumIndicesC"]):
@@ -214,6 +236,9 @@ class KernelWriterConversion(KernelWriterBase):
         batchStride += " * size%s" % self.indexChars[i]
       kStr += ";" + self.endLine
 
+      if self.state["ProblemType"]["UseE"]:
+        ptrStr = self.state["ProblemType"]["ComputeDataType"].toDevice(self.language)
+        kStr += "  " + ptrStr + " * E = BatchE[wg];" + self.endLine
       ptrStr = self.state["ProblemType"]["DestDataType"].toDevice(self.language)
       kStr += "  " + ptrStr + " * D = BatchD[wg];" + self.endLine
       ptrStr = self.state["ProblemType"]["DestDataType"].toDevice(self.language)
@@ -236,7 +261,7 @@ class KernelWriterConversion(KernelWriterBase):
       kStr += 'id%d' % i
     kStr += ");%s" % (self.endLine)
 
-    # D index
+    # C index
     kStr += "  %s idxC = GLOBAL_C( (%s)" % (self.uint64Str, self.uint64Str)
     for i in range(problemType["NumIndicesC"]):
       kStr += ', ' if i else ''
@@ -275,6 +300,18 @@ class KernelWriterConversion(KernelWriterBase):
     kStr += "    accum = ((" + intermediateDataType + ")alpha) * accum%s;%s" % (biasStr, self.endLine)
     kStr += "  else%s" % self.endLine
     kStr += "    accum = (((" + intermediateDataType + ")alpha) * accum + ((" + intermediateDataType + ")beta) * ((" + intermediateDataType + ")C[idxC])" + biasStr + ");" + self.endLine
+
+    if self.state["ProblemType"]["UseE"]:
+      # E index
+      kStr += "  if( E != nullptr)%s" % (self.endLine)
+      kStr += "  {%s" % (self.endLine)
+      kStr += "    %s idxE = GLOBAL_E( (%s)" % (self.uint64Str, self.uint64Str)
+      for i in range(problemType["NumIndicesC"]):
+        kStr += ', ' if i else ''
+        kStr += '0'  if i in nonTileFreeIndices else ('id%d' % i)
+      kStr += ");%s" % (self.endLine)
+      kStr += "    E[idxE] = (%s)(accum);%s" % (intermediateDataType, self.endLine)
+      kStr += "  }%s" % (self.endLine)
 
     typeStr = self.state["ProblemType"]["DestDataType"].toDevice(self.language)
     if ((self.state["ProblemType"]["ActivationType"] != 'none') and self.state["ActivationFused"]):
@@ -323,6 +360,7 @@ class KernelWriterConversion(KernelWriterBase):
     else:
       name += "" if self.state["ProblemType"]["StridedBatched"] else "_GB"
     name += "_Bias%s"%self.state["ProblemType"]["BiasDataType"].toChar() if self.state["ProblemType"]["UseBias"] else ""
+    name += "_Aux%s"%self.state["ProblemType"]["ComputeDataType"].toChar() if self.state["ProblemType"]["UseE"] else ""
     if ((self.state["ProblemType"]["ActivationType"] != 'none') and self.state["ActivationFused"]):
       if self.state["ProblemType"]["ActivationType"] == 'all':
         name += "_A"
