@@ -201,6 +201,19 @@ class ProblemType(Mapping):
     self["ActivationComputeDataType"] = self["ComputeDataType"] if self["ActivationHPA"] else \
                                         self["DestDataType"]
 
+    if "UseE" in config:
+      if config["UseE"]:
+        if self["ActivationType"] == 'none':
+          printWarning("Use E is disabled cause Activation is set to False.")
+          self["UseE"] = False
+        else:
+          self["UseE"] = config["UseE"]
+      else:
+        self["UseE"] = config["UseE"]
+    else:
+      self["UseE"] = False
+
+
   ################################################################################
    # Function checkIfSupportedGEMMType:
   #   Assures 3 data-types are valid, supported and well-assigned
@@ -395,6 +408,7 @@ class ProblemType(Mapping):
     if self["UseInitialStridesAB"]: name += "I"
     if self["UseInitialStridesCD"]: name += "Ic"
     if self["UseBias"]: name += "_Bias" # Not showing bias types
+    if self["UseE"]: name += "_Aux" # Not showing aux types
 
     # precision and other
     # name += "_SB" if self["StridedBatched"] else "_GB"
@@ -3029,6 +3043,19 @@ class Solution(collections.abc.Mapping):
            (state["ThreadTile0"] == 8 and state["ThreadTile1"] == 4) or \
            (state["ThreadTile0"] == 4 and state["ThreadTile1"] == 8)):
       reject(state, "UnrollLoopEfficiencyEnable does not support ThreadTile0,1 = [%u,%u]"%(state["ThreadTile0"], state["ThreadTile1"]))
+
+    # Set E
+    if state["ProblemType"]["UseE"]:
+      if (state["_GlobalAccumulation"] == 'SingleBuffer') and state["GlobalSplitU"] > 1:
+        reject(state, "GlobalSplitU > 1 only compatible with MultipleBuffer")
+      if len(state["PackedC1IndicesX"]) > 1:
+        reject(state, "Use E does not support len(PackedC1IndicesX) > 1.")
+      if not state["BufferStore"]:
+        reject(state, "Use E only supports BufferStore due to no suppress no store.")
+      if state["StoreRemapVectorWidth"] and (state["GlobalSplitU"] == 1):
+        reject(state, "Use E does not support StoreRemapVectorWidth if GSU == 1.")
+      if state["GroupLoadStore"]:
+        reject(state, "Use E does not support GroupLoadStore.")
 
     # Activation
     # Function call is set to false if GSU != 1 or Activation is not fused or ActivationType is not All.

@@ -64,8 +64,8 @@ class BoundIndex:
 
 
 class ProblemType:
-    StateKeys = ['operationIdentifier', 'aType', 'bType', 'cType', 'dType',
-                 'useBeta', 'useBias', 'useScaleD', 'biasDataTypeWhiteList', 'highPrecisionAccumulate',
+    StateKeys = ['operationIdentifier', 'aType', 'bType', 'cType', 'dType', 'eType',
+                 'useBeta', 'useBias', 'useE', 'useScaleD', 'biasDataTypeWhiteList', 'highPrecisionAccumulate',
                  'useInitialStridesAB', 'useInitialStridesCD', 'stridedBatched', 'groupedGemm',
                  'activationType', 'activationHPA']
     @classmethod
@@ -130,6 +130,7 @@ class ProblemType:
         rv.bType = srcType
         rv.cType = dstType
         rv.dType = dstType
+        rv.eType = computeType
         # we already checked the src/dst/compute types are supported and well-assigned in SolutionStruct
         rv.alphaType = computeType
         rv.betaType  = computeType
@@ -176,6 +177,10 @@ class ProblemType:
                 rv.biasDataTypeWhiteList = d['BiasDataTypeList']
             else:
                 rv.biasDataTypeWhiteList = getBiasDataTypeListDefault(d)
+
+        rv.useE = False
+        if 'UseE' in d:
+            rv.useE = d['UseE']
 
         rv.useScaleD = False
         if 'UseScaleD' in d:

@@ -172,6 +172,7 @@ class StateValues:
   b: ABMatrixInfo = ABMatrixInfo()
   c: MatrixInfo = MatrixInfo()
   d: MatrixInfo = MatrixInfo()
+  e: MatrixInfo = MatrixInfo()
   totalAgprs: int                        = 0
   totalVgprs: int                        = 0
   totalSgprs: int                        = 0
@@ -193,6 +194,7 @@ class StateValues:
   lastPostLoopSgpr: int                  = 0
   numSgprToLoad: int                     = 0 # For kernel args
   numStoreSgprToLoad: int                = 0 # For post-loop kernel args
+  numStoreSgprInst: int                  = 0 # For pose-loop kernel args
   numSgprAddressBias: int                = 0
   BiasType: int                          = 0
 
@@ -243,9 +245,11 @@ class StateVgprs:
 
   # BufferStore
   cinRowPtr: int  = -1
-  coutRowPtr: int = -1
+  coutRowPtrE: int = -1
+  coutRowPtrD: int = -1
 
   # FlatStore
+  addrE: int    = -1
   addrD: int    = -1
   addrC: int    = -1
   addrBias: int = -1
@@ -3209,11 +3213,13 @@ class KernelWriter(metaclass=abc.ABCMeta):
     # since even if ComputeType = H, we still pass the arg as a 32-bit (concate two 16-bit)
     numSgprAlpha = max(1,int(self.states.bpeCinternal/4))
     numSgprBeta  = max(1,int(self.states.bpeCinternal/4)) if kernel["ProblemType"]["UseBeta"] else 0
+    self.states.e.numSgprStrides = kernel["ProblemType"]["NumIndicesC"]
     self.states.d.numSgprStrides = kernel["ProblemType"]["NumIndicesC"]
     self.states.c.numSgprStrides = kernel["ProblemType"]["NumIndicesC"]
     self.states.a.numSgprStrides = len(kernel["ProblemType"]["IndexAssignmentsA"])
     self.states.b.numSgprStrides = len(kernel["ProblemType"]["IndexAssignmentsB"])
     if not kernel["ProblemType"]["UseInitialStridesCD"]:
+      self.states.e.numSgprStrides -= 1
       self.states.d.numSgprStrides -= 1
       self.states.c.numSgprStrides -= 1
     if not kernel["ProblemType"]["UseInitialStridesAB"]:

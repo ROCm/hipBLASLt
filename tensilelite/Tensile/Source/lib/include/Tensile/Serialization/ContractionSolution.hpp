@@ -114,8 +114,10 @@ namespace Tensile
                 iot::mapRequired(io, "bType", s.bType);
                 iot::mapRequired(io, "cType", s.cType);
                 iot::mapRequired(io, "dType", s.dType);
+                iot::mapOptional(io, "eType", s.eType);
                 iot::mapRequired(io, "useBeta", s.useBeta);
                 iot::mapOptional(io, "useBias", s.useBias);
+                iot::mapOptional(io, "useE", s.useE);
                 iot::mapOptional(io, "useScaleD", s.useScaleD);
                 iot::mapRequired(io, "highPrecisionAccumulate", s.highPrecisionAccumulate);
                 iot::mapOptional(io, "useInitialStridesAB", s.useInitialStridesAB);

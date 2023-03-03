@@ -1,6 +1,6 @@
 ################################################################################
 #
-# Copyright (C) 2022 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -24,7 +24,7 @@ from .TensileInstructions import DataType, Label, Module, vgpr, sgpr, accvgpr, \
                                  Holder, SBranchIfNotZero
 from .TensileInstructions.Instructions import *
 
-def allocPostLoopSrdSuppress(ch: str, labelStr: str) -> Module:
+def allocPostLoopSrdSuppress(ch: str, labelStr: str, sgprLength) -> Module:
     module = Module("allocPostLoopSrdSuppress")
     label  = Label("%sAddrValid"%labelStr, "")
     label2 = Label("%sAddrValid_End"%labelStr, "")
@@ -36,7 +36,7 @@ def allocPostLoopSrdSuppress(ch: str, labelStr: str) -> Module:
     module.add(SMovB32(dst=sgpr("Srd%s+2"%ch), src=0))
     module.add(SBranch(label2.getLabelName()))
     module.add(label)
-    module.add(SMovB32(dst=sgpr("Srd%s+2"%ch), src=sgpr("SizeI")))
+    module.add(SMovB32(dst=sgpr("Srd%s+2"%ch), src=sgprLength))
     module.add(label2)
     module.addSpaceLine()
     return module
