@@ -901,7 +901,7 @@ class KernelWriterAssembly(KernelWriter):
     return module
 
   ##############################################################################
-  def defineAndResources(self, kernel, tPA, tPB):
+  def defineAndResources(self, kernel, tPA, tPB, lralwaCode):
     module = Module("allocateResources")
     self.defineVariableSgprs(kernel)
     module.add(self.macroAndSet(kernel, tPA, tPB))
@@ -963,6 +963,7 @@ class KernelWriterAssembly(KernelWriter):
       moduleArgs.addModuleAsFlatItems(self.argLoader.loadAllKernArg(sgprStart, "KernArgAddress", load))
       if kernel.enabledSetPrioSplitLDS:
         moduleArgs.add(SSetPrior(prior=1, comment="prioritize init code so as to issue load sooner"))
+      moduleArgs.addModuleAsFlatItems(lralwaCode)
       moduleArgs.add(SWaitCnt(lgkmcnt=0, comment="wait for %u bytes of kern args" % self.argLoader.getOffset()))
 
       if not kernel["ProblemType"]["StridedBatched"]:
@@ -1242,132 +1243,30 @@ class KernelWriterAssembly(KernelWriter):
   def graTileAssignment(self, kernel, tP):
     module = Module("graTileAssignment")
     tc = tP["tensorChar"]
+    tReg =  tP["gpr"]["lwoT"]
 
-    divisorName = tP["lvc"]
-    divisor = kernel[divisorName]
+    module.addComment0("graTileAssignment%s = %s" % (tc, vgpr(tReg)))
 
-    # force to swap gro-tile and gro-unroll for DirectToVgpr + TLU=False
-    forceSwap = (kernel["DirectToVgpr%s"%tc] and not tP["tlu"])
-    if tP["tlu"] or forceSwap:
-      rReg = self.vgprPool.checkOut(1, "graTA rReg0", self.states.preventVgprOverflowDuringNewTile) # gro-tile = serial%divisor
-      qReg = self.vgprPool.checkOut(1, "graTA qReg0", self.states.preventVgprOverflowDuringNewTile) # gro-unroll = serial/divisor
-      tReg = rReg
-      uReg = qReg
-      tOpStr = "%"
-      uOpStr = "/"
-    else:
-      qReg = self.vgprPool.checkOut(1, 'graTA qReg1', self.states.preventVgprOverflowDuringNewTile) # gro-tile = serial/divisor
-      rReg = self.vgprPool.checkOut(1, 'graTA rReg1', self.states.preventVgprOverflowDuringNewTile) # gro-unroll = serial%divisor
-      tReg = qReg
-      uReg = rReg
-      tOpStr = "/"
-      uOpStr = "%"
-
-    module.addComment0("%s = %u" % (divisorName, kernel[divisorName]))
     if self.states.groOffsetInMacroTile:
       tReg2 = tReg
       # treg2 and treg same register and value - we store the 'static'
       # part of the address calculation in the SRD to maximize the
       # range of the 32-bit GRO
-      module.addComment0("%s = (local)gro%s-tile = serial%s%s (note (wg%s*MT%s) will be added to SRD)" \
-          % (vgpr(tReg2), tc, tOpStr, divisorName, tc, tc) )
     else:
       tReg2 = self.vgprPool.checkOut(1, 'treg2', self.states.preventVgprOverflowDuringNewTile)
-      module.addComment0("%s = gro%s-tile = serial%s%s + (wg%s*MT%s)" \
-          % (vgpr(tReg2), tc, tOpStr, divisorName, tc, tc) )
-
-    module.addComment0("%s = gro%s-unroll = serial%s%s" \
-        % (vgpr(uReg), tc, uOpStr, divisorName) )
-
-    tmpVgpr = self.vgprPool.checkOutAligned(2, 2, 'graTA vgpr', self.states.preventVgprOverflowDuringNewTile)
-    tmpVgprRes = RegisterPoolResource(tmpVgpr, 2)
-
-    dividendReg = "Serial" # local serial
-
-    if kernel["WaveSeparateGlobalRead%s"%tc]:
-      dividendReg = self.vgprPool.checkOut(1, "idInWave", self.states.preventVgprOverflowDuringNewTile)
-      dummy       = self.vgprPool.checkOut(1, "dummy", self.states.preventVgprOverflowDuringNewTile)
-      with self.allocTmpSgpr(1) as tmpSgprInfo:
-        module.add(vectorStaticRemainder(dummy, dividendReg, "Serial", kernel["WavefrontSize"], tmpVgprRes, tmpSgprInfo))
-
-    if kernel["DirectToVgpr%s"%tc]:
-      # offset calculation for DirectToVgpr
-      # ported code from local read for DirectToVgpr
-      # alloc vgpr
-      wReg       = self.vgprPool.checkOut(1,"wReg") # quotient
-      # parameters
-      tile01      = tP["tile01Idx"]
-      waveWidth   = kernel["WavefrontSize"]
-      num1DBlocks = kernel["MatrixInstBM"] if (tile01 == 0) else kernel["MatrixInstBN"]
-      num1DWaves  = kernel["MIWaveGroup"][0] if (tile01 == 0) else kernel["MIWaveGroup"][1]
-      vectorWidth = 1 # kernel["VectorWidth"] if ((tile01 == 0) and kernel["SourceSwap"]) else 1 # TODO: nonSwap VectorWidth
-      strideTile  = 1 # tentative
-      strideWave  = kernel["MatrixInstM"] * num1DBlocks * strideTile * vectorWidth
-      # tile offset
-      with self.allocTmpSgpr(1) as tmpSgprInfo:
-        module.add(vectorStaticRemainder(wReg, qReg, dividendReg, waveWidth, tmpVgprRes, tmpSgprInfo))
-        module.add(vectorStaticRemainder(wReg, rReg, qReg, kernel["MatrixInstN"], tmpVgprRes, tmpSgprInfo))
-        # block offset (no code. assuming num1DBlocks == 1)
-        # unroll offset (no code here. This will be handled in GlobalOffset)
-        # wave offset
-        if num1DWaves > 1:
-          module.add(vectorStaticDivide(wReg, dividendReg, waveWidth, tmpVgprRes))
-          module.add(vectorStaticRemainder(tmpVgpr, wReg, wReg, num1DWaves, tmpVgprRes, tmpSgprInfo))
-          module.add(staticMultiply(vgpr(wReg), vgpr(wReg), strideWave, tmpSgprInfo))
-          module.add(VAddU32(dst=vgpr(rReg), src0=vgpr(wReg), src1=vgpr(rReg)))
-          # need division for qReg
-          module.add(vectorStaticDivide(qReg, qReg, kernel["MatrixInstN"], tmpVgprRes))
-          lrvwOther = self.states.lrvwB if tP["isA"] else self.states.lrvwA # The other side of lrvw
-          if lrvwOther == 2 and not kernel["allowLRVWforTLUandMI"] and tP["tlu"]:
-            # DirectToVgpr + LocalReadVectorWidth=2 case, multiply qReg by 2
-            module.add(staticMultiply(vgpr(qReg), vgpr(qReg), lrvwOther, tmpSgprInfo))
-      # release register
-      self.vgprPool.checkIn(wReg)
-    else:
-      module.add(vectorStaticDivideAndRemainder(qReg, rReg, dividendReg, divisor, tmpVgprRes))
-
-
-    if kernel["WaveSeparateGlobalRead%s"%tc]:
-      with self.allocTmpSgpr(1) as tmpSgprInfo:
-        tmpSgpr = tmpSgprInfo.idx
-        module.add(VReadfirstlaneB32(dst=sgpr(tmpSgpr), src=vgpr("Serial"), comment="WaveIdxWavefrontWidth"))
-        module.add(SLShiftRightB32(dst=sgpr(tmpSgpr), src=sgpr(tmpSgpr), shiftHex=hex(log2(kernel["WavefrontSize"])), comment="WaveId"))
-        module.add(SMulI32(dst=sgpr(tmpSgpr), src0=sgpr(tmpSgpr), src1=(kernel[tP["lsp"]] * tP["nrp"]), \
-            comment="Global Read Wave: each wave loads continuous lsp(%u)*nrp(%u) columns" % (kernel[tP["lsp"]], tP["nrp"])))
-        module.add(VAddU32(dst=vgpr(qReg), src0=sgpr(tmpSgpr), src1=vgpr(qReg), \
-            comment="Global Read Wave: add back to column index"))
-      self.vgprPool.checkIn(dividendReg)
-      self.vgprPool.checkIn(dummy)
 
     with self.allocTmpSgpr(1) as tmpSgprInfo:
-      if tP["glvw"] > 1:
-        if tP["tlu"]:
-          module.addComment0("gro-tile *= glvw")
-          module.add(staticMultiply(vgpr(tReg), vgpr(tReg), tP["glvw"], tmpSgprInfo))
-        else:
-          module.addComment0("gro-unroll *= glvw")
-          module.add(staticMultiply(vgpr(uReg), vgpr(uReg), tP["glvw"], tmpSgprInfo))
-      if forceSwap:
-        # in this case, need to multiply vw to gro-tile
-        module.addComment0("gro-tile *= vw")
-        module.add(staticMultiply(vgpr(tReg), vgpr(tReg), kernel["VectorWidth"], tmpSgprInfo))
-
       if not self.states.groOffsetInMacroTile:
+        tmpVgpr = self.vgprPool.checkOut(1, 'graTA vgpr', self.states.preventVgprOverflowDuringNewTile)
         # Buffer Load will set the SRD to start of the MacroTile
         # So don't add the static wg-related component here - save for later.
         module.add(staticMultiply(vgpr(tmpVgpr), sgpr(tP["wg"]), kernel[tP["mt"]], tmpSgprInfo))  # workgroup
         module.add(VAddCOU32(dst=vgpr(tReg2), dst1=VCC(), src0=vgpr(tmpVgpr), \
             src1=vgpr(tReg), comment="gro%s-tile = serial%s%s*VW + (wg%s*MT%s)" \
             % (tc, tOpStr, divisorName, tc, tc) ))
+        self.vgprPool.checkIn(tmpVgpr)
 
-    if kernel["GlobalSplitU"] > 1:
-      uReg2 = self.vgprPool.checkOut(1, "uReg2", self.states.preventVgprOverflowDuringNewTile)
-      module.add(VMovB32(dst=vgpr(uReg2), src=vgpr(uReg), comment="copy for GlobalSplitU"))
-      tP["gpr"]["uReg2"] = uReg2
-    tP["gpr"]["lwoT"] = tReg
     tP["gpr"]["tReg"] = tReg2
-    tP["gpr"]["uReg"] = uReg
-    self.vgprPool.checkIn(tmpVgpr)
 
     return Module("graTileAssignment (Empty)") if self.dontAppendCode else module
 
@@ -1599,6 +1498,19 @@ class KernelWriterAssembly(KernelWriter):
               # single loop
               singleStr, graIdx = self.graFinalOffsetsSingleLoop(kernel, tP, tc, tmp, graIdx, perp, sPerp, para, sPara)
               module.add(singleModule)
+
+    self.vgprPool.checkIn(tP["gpr"]["lwoT"])
+    tP["gpr"]["lwoT"] = None
+    if kernel["GlobalSplitU"] > 1:
+      self.vgprPool.checkIn(tP["gpr"]["uReg2"])
+      tP["gpr"]["uReg2"] = None
+
+    self.vgprPool.checkIn(tP["gpr"]["uReg"])
+    tP["gpr"]["uReg"] = None
+    if "subIterReg" in tP["gpr"]:
+      if tP["gpr"]["subIterReg"] is not None:
+        self.vgprPool.checkIn(tP["gpr"]["subIterReg"])
+      tP["gpr"]["subIterReg"] = None
 
     if tP["vgprTileOffsetsCheckOut"]:
       self.vgprPool.checkIn(tP["vgprTileOffsets"])
@@ -2140,15 +2052,120 @@ class KernelWriterAssembly(KernelWriter):
     #module.add(SEndpgm())
     #if tP["isB"]:
     #  module.add(self.getBomb(0x100))
+    #return Module("graIncrements (Empty)") if self.dontAppendCode else module
     return Module("graIncrements (Empty)") if self.dontAppendCode else module
 
   ##############################################################################
   # Local Write Addresses: Tile Assignment A/B
   ##############################################################################
-  def lwaTileAssignment(self, tP):
+  def lwaTileAssignment(self, kernel, tP):
     module = Module("lwaTileAssignment")
-    module.addComment0("lwaTileAssignment%s = %s" % (tP["tensorChar"], \
-        vgpr(tP["gpr"]["lwoT"])))
+    tc = tP["tensorChar"]
+
+    divisorName = tP["lvc"]
+    divisor = kernel[divisorName]
+
+    # force to swap tile and unroll for DirectToVgpr + TLU=False
+    forceSwap = (kernel["DirectToVgpr%s"%tc] and not tP["tlu"])
+    if tP["tlu"] or forceSwap:
+      rReg = self.vgprPool.checkOut(1, "lwaTA rReg0", self.states.preventVgprOverflowDuringNewTile) # tile = serial%divisor
+      qReg = self.vgprPool.checkOut(1, "lwaTA qReg0", self.states.preventVgprOverflowDuringNewTile) # unroll = serial/divisor
+      tReg = rReg
+      uReg = qReg
+      tOpStr = "%"
+      uOpStr = "/"
+    else:
+      qReg = self.vgprPool.checkOut(1, 'lwaTA qReg1', self.states.preventVgprOverflowDuringNewTile) # tile = serial/divisor
+      rReg = self.vgprPool.checkOut(1, 'lwaTA rReg1', self.states.preventVgprOverflowDuringNewTile) # unroll = serial%divisor
+      tReg = qReg
+      uReg = rReg
+      tOpStr = "/"
+      uOpStr = "%"
+
+    module.addComment0("%s = %u" % (divisorName, kernel[divisorName]))
+    module.addComment0("%s = %s-unroll = serial%s%s" \
+        % (vgpr(uReg), tc, uOpStr, divisorName) )
+
+    tmpVgpr = self.vgprPool.checkOutAligned(2, 2, 'lwaTA vgpr', self.states.preventVgprOverflowDuringNewTile)
+    tmpVgprRes = RegisterPoolResource(tmpVgpr, 2)
+
+    dividendReg = "Serial" # local serial
+
+    if kernel["WaveSeparateGlobalRead%s"%tc]:
+      dividendReg = self.vgprPool.checkOut(1, "idInWave", self.states.preventVgprOverflowDuringNewTile)
+      dummy       = self.vgprPool.checkOut(1, "dummy", self.states.preventVgprOverflowDuringNewTile)
+      with self.allocTmpSgpr(1) as tmpSgprInfo:
+        module.add(vectorStaticRemainder(dummy, dividendReg, "Serial", kernel["WavefrontSize"], tmpVgprRes, tmpSgprInfo))
+
+    if kernel["DirectToVgpr%s"%tc]:
+      # offset calculation for DirectToVgpr
+      # ported code from local read for DirectToVgpr
+      # alloc vgpr
+      wReg       = self.vgprPool.checkOut(1,"wReg") # quotient
+      # parameters
+      tile01      = tP["tile01Idx"]
+      waveWidth   = kernel["WavefrontSize"]
+      num1DBlocks = kernel["MatrixInstBM"] if (tile01 == 0) else kernel["MatrixInstBN"]
+      num1DWaves  = kernel["MIWaveGroup"][0] if (tile01 == 0) else kernel["MIWaveGroup"][1]
+      vectorWidth = 1 # kernel["VectorWidth"] if ((tile01 == 0) and kernel["SourceSwap"]) else 1 # TODO: nonSwap VectorWidth
+      strideTile  = 1 # tentative
+      strideWave  = kernel["MatrixInstM"] * num1DBlocks * strideTile * vectorWidth
+      # tile offset
+      with self.allocTmpSgpr(1) as tmpSgprInfo:
+        module.add(vectorStaticRemainder(wReg, qReg, dividendReg, waveWidth, tmpVgprRes, tmpSgprInfo))
+        module.add(vectorStaticRemainder(wReg, rReg, qReg, kernel["MatrixInstN"], tmpVgprRes, tmpSgprInfo))
+        # block offset (no code. assuming num1DBlocks == 1)
+        # unroll offset (no code here. This will be handled in GlobalOffset)
+        # wave offset
+        if num1DWaves > 1:
+          module.add(vectorStaticDivide(wReg, dividendReg, waveWidth, tmpVgprRes))
+          module.add(vectorStaticRemainder(tmpVgpr, wReg, wReg, num1DWaves, tmpVgprRes, tmpSgprInfo))
+          module.add(staticMultiply(vgpr(wReg), vgpr(wReg), strideWave, tmpSgprInfo))
+          module.add(VAddU32(dst=vgpr(rReg), src0=vgpr(wReg), src1=vgpr(rReg)))
+          # need division for qReg
+          module.add(vectorStaticDivide(qReg, qReg, kernel["MatrixInstN"], tmpVgprRes))
+          lrvwOther = self.states.lrvwB if tP["isA"] else self.states.lrvwA # The other side of lrvw
+          if lrvwOther == 2 and not kernel["allowLRVWforTLUandMI"] and tP["tlu"]:
+            # DirectToVgpr + LocalReadVectorWidth=2 case, multiply qReg by 2
+            module.add(staticMultiply(vgpr(qReg), vgpr(qReg), lrvwOther, tmpSgprInfo))
+      # release register
+      self.vgprPool.checkIn(wReg)
+    else:
+      module.add(vectorStaticDivideAndRemainder(qReg, rReg, dividendReg, divisor, tmpVgprRes))
+
+
+    if kernel["WaveSeparateGlobalRead%s"%tc]:
+      with self.allocTmpSgpr(1) as tmpSgprInfo:
+        tmpSgpr = tmpSgprInfo.idx
+        module.add(VReadfirstlaneB32(dst=sgpr(tmpSgpr), src=vgpr("Serial"), comment="WaveIdxWavefrontWidth"))
+        module.add(SLShiftRightB32(dst=sgpr(tmpSgpr), src=sgpr(tmpSgpr), shiftHex=hex(log2(kernel["WavefrontSize"])), comment="WaveId"))
+        module.add(SMulI32(dst=sgpr(tmpSgpr), src0=sgpr(tmpSgpr), src1=(kernel[tP["lsp"]] * tP["nrp"]), \
+            comment="Each wave loads continuous lsp(%u)*nrp(%u) columns" % (kernel[tP["lsp"]], tP["nrp"])))
+        module.add(VAddU32(dst=vgpr(qReg), src0=sgpr(tmpSgpr), src1=vgpr(qReg), \
+            comment="Add back to column index"))
+      self.vgprPool.checkIn(dividendReg)
+      self.vgprPool.checkIn(dummy)
+
+    with self.allocTmpSgpr(1) as tmpSgprInfo:
+      if tP["glvw"] > 1:
+        if tP["tlu"]:
+          module.addComment0("tile *= glvw")
+          module.add(staticMultiply(vgpr(tReg), vgpr(tReg), tP["glvw"], tmpSgprInfo))
+        else:
+          module.addComment0("unroll *= glvw")
+          module.add(staticMultiply(vgpr(uReg), vgpr(uReg), tP["glvw"], tmpSgprInfo))
+      if forceSwap:
+        # in this case, need to multiply vw to tile
+        module.addComment0("tile *= vw")
+        module.add(staticMultiply(vgpr(tReg), vgpr(tReg), kernel["VectorWidth"], tmpSgprInfo))
+
+    if kernel["GlobalSplitU"] > 1:
+      uReg2 = self.vgprPool.checkOut(1, "uReg2", self.states.preventVgprOverflowDuringNewTile)
+      module.add(VMovB32(dst=vgpr(uReg2), src=vgpr(uReg), comment="copy for GlobalSplitU"))
+      tP["gpr"]["uReg2"] = uReg2
+    tP["gpr"]["lwoT"] = tReg
+    tP["gpr"]["uReg"] = uReg
+    self.vgprPool.checkIn(tmpVgpr)
     return module
 
   ##############################################################################
@@ -2201,14 +2218,14 @@ class KernelWriterAssembly(KernelWriter):
 
     # LdsBlockSizePerPad: add padding
     if kernel["LdsBlockSizePerPad%s"%tc] != 0 and kernel["LdsPad%s"%tc] != 0:
-      tmpVgpr = self.vgprPool.checkOut(2)
-      tmpVgprRes = RegisterPoolResource(tmpVgpr, 2)
-      module.add(vectorStaticDivide(uReg, destVgpr, kernel["LdsBlockSizePerPad%s"%tc], tmpVgprRes, \
+      tmpVgpr = self.vgprPool.checkOut(1)
+      #tmpVgprRes = RegisterPoolResource(tmpVgpr, 2)
+      module.add(vectorStaticDivide(tmpVgpr, destVgpr, kernel["LdsBlockSizePerPad%s"%tc], 0, \
         "padding %u per block %u" % (kernel["LdsPad%s"%tc], kernel["LdsBlockSizePerPad%s"%tc])))
       with self.allocTmpSgpr(1) as tmpSgprInfo:
-        module.add(staticMultiply(vgpr(uReg), vgpr(uReg), kernel["LdsPad%s"%tc] * tP["bpe"], tmpSgprInfo, \
+        module.add(staticMultiply(vgpr(tmpVgpr), vgpr(tmpVgpr), kernel["LdsPad%s"%tc] * tP["bpe"], tmpSgprInfo, \
           "padding %u per block %u" % (kernel["LdsPad%s"%tc], kernel["LdsBlockSizePerPad%s"%tc])))
-      module.add(VAddU32(dst=vgpr(destVgpr), src0=vgpr(uReg), src1=vgpr(destVgpr), \
+      module.add(VAddU32(dst=vgpr(destVgpr), src0=vgpr(tmpVgpr), src1=vgpr(destVgpr), \
         comment="add padding %u per block %u" % (kernel["LdsPad%s"%tc], kernel["LdsBlockSizePerPad%s"%tc])))
       self.vgprPool.checkIn(tmpVgpr)
 
@@ -2222,11 +2239,6 @@ class KernelWriterAssembly(KernelWriter):
             comment="lwFOB = lwB%s + lwB%s*MT%s + LDS_OFFSET_B=%u*%u" % (tP["tileChar"], \
             self.states.unrollChar, tP["tileChar"], kernel["LdsOffsetB"], self.states.bpeAB) ))
 
-    self.vgprPool.checkIn(tP["gpr"]["lwoT"])
-    tP["gpr"]["lwoT"] = None
-    if kernel["GlobalSplitU"] > 1:
-      self.vgprPool.checkIn(tP["gpr"]["uReg2"])
-      tP["gpr"]["uReg2"] = None
     #LSC_ * LSP_
     numBytesPerElement = kernel["ProblemType"]["DataType"].numBytes()
     validWIPerLoad     = kernel[tP["lsc"]] * kernel[tP["lsp"]]//tP["glvw"]
@@ -2280,12 +2292,6 @@ class KernelWriterAssembly(KernelWriter):
           comment="Copy lds write address VGPR to SGPR"))
       self.vgprPool.checkIn(destVgpr)
 
-    self.vgprPool.checkIn(tP["gpr"]["uReg"])
-    tP["gpr"]["uReg"] = None
-    if "subIterReg" in tP["gpr"]:
-      if tP["gpr"]["subIterReg"] is not None:
-        self.vgprPool.checkIn(tP["gpr"]["subIterReg"])
-      tP["gpr"]["subIterReg"] = None
     # dump lds write offsets
     #if tP["isA"]:
       #module.add(self.dump(vgpr("LocalWriteAddr%s"%tP["tensorChar"])))
@@ -4777,6 +4783,13 @@ class KernelWriterAssembly(KernelWriter):
         [tP["localWriteStrideTile"], tP["localWriteStrideUnroll"]] )
     tP["localWriteInstruction"] = self.memoryInstructions["LocalWrite"][newInstIdx]
 
+    # local write tile assignments
+    module.add(self.lwaTileAssignment(kernel, tP))
+    # local write unroll assignments
+    module.add(self.lwaUnrollAssignment(kernel, tP))
+    # local write local write first offsets
+    module.add(self.lwaFirstOffset(kernel, tP, uDu))
+
     # global read tile assignment
     module.add(self.graTileAssignment(kernel, tP))
     # global read tile offsets
@@ -4786,13 +4799,6 @@ class KernelWriterAssembly(KernelWriter):
     # still needed for vgpr resource management
     # intentionally not emitting code
     self.graFinalOffsets(kernel, tP)
-
-    # local write tile assignments
-    module.add(self.lwaTileAssignment(tP))
-    # local write unroll assignments
-    module.add(self.lwaUnrollAssignment(kernel, tP))
-    # local write local write first offsets
-    module.add(self.lwaFirstOffset(kernel, tP, uDu))
 
     return module
 
