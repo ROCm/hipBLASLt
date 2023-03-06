@@ -1270,25 +1270,6 @@ class KernelWriter(metaclass=abc.ABCMeta):
     for i in reversed(range(kernel["ProblemType"]["NumIndicesSummation"])):
       module.add(self.graIncrements(kernel, i, tensorParametersB))
 
-    ####################################
-    # Local Write Addresses
-    ####################################
-    module.addComment2("Local Write Addresses")
-
-    # tile assignments
-    module.add(self.lwaTileAssignment(tensorParametersA))
-    module.add(self.lwaTileAssignment(tensorParametersB))
-
-    # unroll assignments
-    module.add(self.lwaUnrollAssignment(kernel, tensorParametersA))
-    module.add(self.lwaUnrollAssignment(kernel, tensorParametersB))
-
-    # first offsets
-    module.addComment1("local write addresses: first offset a")
-    module.add(self.lwaFirstOffset(kernel, tensorParametersA))
-    module.addComment1("local write addresses: first offset b")
-    module.add(self.lwaFirstOffset(kernel, tensorParametersB))
-    self.dontAppendCode = False
     self.dontAppendCode = self.dontAppendCode or forceNoTileCode
 
     ###########################################################################
@@ -1986,6 +1967,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
   ##############################################################################
   def kernelBody( self, kernel, tensorParametersA, tensorParametersB ):
     expand = kernel["ExpandPointerSwap"]
+    self.dontAppendCode = False
 
     ####################################
     # Begin String
@@ -1997,29 +1979,49 @@ class KernelWriter(metaclass=abc.ABCMeta):
     fs = self.functionSignature()
     moduleKernelBody.addSignature(fs)
 
-    module = Module("body")
-    module.add(self.defineAndResources(kernel, tensorParametersA, tensorParametersB))
-
     ####################################
     # Local Read Addresses
     ####################################
-    module.addComment2("Local Read Addresses")
+    lralwaMod = Module("local")
+    lralwaMod.addComment2("Local Read Addresses")
 
     # tile assignments
-    module.addComment1("local read addresses: tile assignments a/b")
-    module.add(self.lraTileAssignment(kernel, tensorParametersA, tensorParametersB))
+    lralwaMod.addComment1("local read addresses: tile assignments a/b")
+    lralwaMod.add(self.lraTileAssignment(kernel, tensorParametersA, tensorParametersB))
 
     # final offsets
-    module.addComment1("local read addresses: final offsets a")
-    module.add(self.lraFinalOffset(kernel, tensorParametersA))
-    module.addComment1("local read addresses: final offsets b")
-    module.add(self.lraFinalOffset(kernel, tensorParametersB))
+    lralwaMod.addComment1("local read addresses: final offsets a")
+    lralwaMod.add(self.lraFinalOffset(kernel, tensorParametersA))
+    lralwaMod.addComment1("local read addresses: final offsets b")
+    lralwaMod.add(self.lraFinalOffset(kernel, tensorParametersB))
 
     # declare addresses
-    module.addComment1("local read addresses: declare addresses a")
-    module.add(self.lraDeclareAddresses(kernel, tensorParametersA))
-    module.addComment1("local read addresses: declare addresses b")
-    module.add(self.lraDeclareAddresses(kernel, tensorParametersB))
+    lralwaMod.addComment1("local read addresses: declare addresses a")
+    lralwaMod.add(self.lraDeclareAddresses(kernel, tensorParametersA))
+    lralwaMod.addComment1("local read addresses: declare addresses b")
+    lralwaMod.add(self.lraDeclareAddresses(kernel, tensorParametersB))
+
+    ####################################
+    # Local Write Addresses
+    ####################################
+    lralwaMod.addComment2("Local Write Addresses")
+
+    # tile assignments
+    lralwaMod.add(self.lwaTileAssignment(kernel, tensorParametersA))
+    lralwaMod.add(self.lwaTileAssignment(kernel, tensorParametersB))
+
+    # unroll assignments
+    lralwaMod.add(self.lwaUnrollAssignment(kernel, tensorParametersA))
+    lralwaMod.add(self.lwaUnrollAssignment(kernel, tensorParametersB))
+
+    # first offsets
+    lralwaMod.addComment1("local write addresses: first offset a")
+    lralwaMod.add(self.lwaFirstOffset(kernel, tensorParametersA))
+    lralwaMod.addComment1("local write addresses: first offset b")
+    lralwaMod.add(self.lwaFirstOffset(kernel, tensorParametersB))
+
+    module = Module("body")
+    module.add(self.defineAndResources(kernel, tensorParametersA, tensorParametersB, lralwaMod))
 
     module.add(self.setupNewTile(kernel, tensorParametersA, tensorParametersB, isOptNLL=False))
 
@@ -3472,7 +3474,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
   # Allocate Resources
   ##############################################################################
   @abc.abstractmethod
-  def defineAndResources(self, kernel, tPA, tPB):
+  def defineAndResources(self, kernel, tPA, tPB, lralwaCode):
     return ""
 
   ##############################################################################
@@ -3614,7 +3616,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
   # Local Write Addresses: Tile Assignment A/B
   ##############################################################################
   @abc.abstractmethod
-  def lwaTileAssignment(self, tP):
+  def lwaTileAssignment(self, kernel, tP):
     return ""
 
   ##############################################################################
