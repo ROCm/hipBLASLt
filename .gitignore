@@ -45,3 +45,6 @@ _build
 # matrices
 *.csr
 *.mtx
+
+# Python
+__pycache__
