@@ -2493,13 +2493,6 @@ class Solution(collections.abc.Mapping):
       totalVectorsA = totalElementsA // GlobalLoadVectorWidthA
       totalVectorsB = totalElementsB // GlobalLoadVectorWidthB
 
-      if state["ProblemType"]["SparseA"] and not state["DirectToVgprSparseMetadata"]:
-        GlobalLoadVectorWidthMetadata = state["GlobalLoadVectorWidthMetadata"]
-        if GlobalLoadVectorWidthMetadata == 0:
-          GlobalLoadVectorWidthMetadata = 1
-        totalVectorsCoalescedM = totalElementsCoalescedM // GlobalLoadVectorWidthMetadata
-        totalVectorsM = totalElementsM // GlobalLoadVectorWidthMetadata
-
       if 0:
         print("info:", pvar(state, "NumThreads"), pvar(state, "DepthU"), pvar(state, "DepthULdsDivisor"),
                       "TT=%ux%u" % (state["ThreadTile0"], state["ThreadTile1"]),
@@ -2555,6 +2548,12 @@ class Solution(collections.abc.Mapping):
         else: # use this found value
           state["DepthU"] = depthU
           state["_DepthULds"] = depthU//state["DepthULdsDivisor"]
+          depthUA = depthU if not state["ProblemType"]["SparseA"] else depthU//2
+          depthUB = depthU
+          depthUM = depthUA // 4 if state["ProblemType"]["SparseA"] and not state["DirectToVgprSparseMetadata"] else depthUA
+          state["_DepthULdsA"] = depthUA//state["DepthULdsDivisor"]
+          state["_DepthULdsB"] = depthUB//state["DepthULdsDivisor"]
+          state["_DepthULdsMetadata"] = depthUM//state["DepthULdsDivisor"]
           break
 
       # this depthU not valid
@@ -2584,7 +2583,30 @@ class Solution(collections.abc.Mapping):
         totalVectorsCoalescedB, totalElementsPerpB, depthU):
       return
 
+    # Try to enlarge GLVW for metadata
     if state["ProblemType"]["SparseA"] and not state["DirectToVgprSparseMetadata"]:
+      if state["ProblemType"]["TLUMetadata"]:
+        totalElementsCoalescedM = state["MacroTileMetadata"]
+        totalElementsPerpM = depthUM
+      else:
+        totalElementsCoalescedM = depthUM
+        totalElementsPerpM = state["MacroTileMetadata"]
+      totalElementsM = totalElementsCoalescedM * totalElementsPerpM
+
+      bGlobalLoadVectorWidthMetadata = state["GlobalLoadVectorWidthMetadata"]
+      GlobalReadVectorWidth = state["GlobalLoadVectorWidthMetadata"] * state["NumLoadsPerpendicularA"] #sum all need read
+      tvm = totalElementsM // GlobalReadVectorWidth
+      if not Solution.setGlobalLoadVectorWidth(state, "Metadata", tvm, GlobalReadVectorWidth):
+        #fallback
+        tvm = totalElementsM // bGlobalLoadVectorWidthMetadata
+        Solution.setGlobalLoadVectorWidth(state, "Metadata", tvm, bGlobalLoadVectorWidthMetadata)
+
+      GlobalLoadVectorWidthMetadata = state["GlobalLoadVectorWidthMetadata"]
+      if GlobalLoadVectorWidthMetadata == 0:
+        GlobalLoadVectorWidthMetadata = 1
+      totalVectorsCoalescedM = totalElementsCoalescedM // GlobalLoadVectorWidthMetadata
+      totalVectorsM = totalElementsM // GlobalLoadVectorWidthMetadata
+
       if not Solution.setGlobalLoadTileDimClassic(state, "Metadata", state["NumLoadsMetadata"], \
           totalVectorsCoalescedM, totalElementsPerpM, depthUM):
         return
