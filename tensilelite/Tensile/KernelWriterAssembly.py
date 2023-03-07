@@ -6680,7 +6680,7 @@ class KernelWriterAssembly(KernelWriter):
             if (index < (len(actLoopLabelModules) - 1)):
               if actInstCounter >= 16384:
                 with self.allocTmpSgpr(3) as tmpSgprInfo:
-                  SLongBranchPositive(actLoopEndLabel, tmpSgprInfo)
+                  actLoopModule.add(SLongBranchPositive(actLoopEndLabel, tmpSgprInfo))
               else:
                 actLoopModule.add(SBranch(labelName=actLoopEndLabel.getLabelName()))
             actInstCounter -= actLoopModuleCodeLength[index]
