@@ -1465,6 +1465,33 @@ namespace Tensile
                 }
             };
 
+            struct UseGradientEqual
+                : public Predicate_CRTP<UseGradientEqual, ContractionProblemGemm>
+            {
+                enum
+                {
+                    HasIndex = false,
+                    HasValue = true
+                };
+                bool value;
+
+                UseGradientEqual() = default;
+                UseGradientEqual(bool value)
+                    : value(value)
+                {
+                }
+
+                static std::string Type()
+                {
+                    return "UseGradient";
+                }
+
+                virtual bool operator()(ContractionProblemGemm const& problem) const override
+                {
+                    return problem.useGradient() == value;
+                }
+            };
+
             // Activation
             struct ActivationEqual : public Predicate_CRTP<ActivationEqual, ContractionProblemGemm>
             {
@@ -1560,6 +1587,33 @@ namespace Tensile
                 virtual bool operator()(ContractionProblemGemm const& problem) const override
                 {
                     return problem.activationHPA() == value;
+                }
+            };
+
+            struct ActivationGuardEqual
+                : public Predicate_CRTP<ActivationGuardEqual, ContractionProblemGemm>
+            {
+                enum
+                {
+                    HasIndex = false,
+                    HasValue = true
+                };
+                bool value;
+
+                ActivationGuardEqual() = default;
+                ActivationGuardEqual(bool value)
+                    : value(value)
+                {
+                }
+
+                static std::string Type()
+                {
+                    return "ActivationGuard";
+                }
+
+                virtual bool operator()(ContractionProblemGemm const& problem) const override
+                {
+                    return problem.activationGuard() == value;
                 }
             };
 

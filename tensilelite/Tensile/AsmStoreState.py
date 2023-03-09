@@ -234,6 +234,10 @@ class StoreState:
             self.numVgprsPerElement += self.cfg.numVgprsPerAddr
         if kernel["ProblemType"]["UseE"] and (kernel["GlobalSplitU"] == 1):
             self.numVgprsPerElement += self.cfg.numVgprsPerAddr  # E address
+            # Only needed in gradient activation
+            if (kernel["ProblemType"]["Gradient"] and kernel["ProblemType"]["ActivationType"] != 'none'):
+                numVgprs = int(ceil(kernel["ProblemType"]["ComputeDataType"].numRegisters()))
+                self.numVgprsPerElement += numVgprs * gwvw # Loaded data
         if kernel["ProblemType"]["UseBias"] and (kernel["GlobalSplitU"] == 1):
             self.numVgprsPerElement += self.cfg.numVgprsPerAddr  # Bias address
             numVgprs = int(ceil(kernel["ProblemType"]["ComputeDataType"].numRegisters()))
@@ -451,13 +455,12 @@ class StoreState:
             self.elementDataBias.append(dataBias)
 
             # Only needed in gradient activation
-            # if kernel["ProblemType"]["UseE"]:
-            #     numVgprs = int(ceil(kernel["ProblemType"]["ComputeDataType"].numRegisters()))
-            #     dataE = kw.vgprPool.checkOutAligned(int(numVgprs*self.cfg.gwvw), \
-            #                   int(ceil(numVgprs*self.cfg.gwvw)), "e data for ei=%u"%elementIdx, preventOverflow=False)
-            # else:
-            #     dataE = 0
-            dataE = 0
+            if (kernel["ProblemType"]["Gradient"] and kernel["ProblemType"]["ActivationType"] != 'none' and kernel["ProblemType"]["UseE"]) and (kernel["GlobalSplitU"] == 1):
+                numVgprs = int(ceil(kernel["ProblemType"]["ComputeDataType"].numRegisters()))
+                dataE = kw.vgprPool.checkOutAligned(int(numVgprs*self.cfg.gwvw), \
+                              int(ceil(numVgprs*self.cfg.gwvw)), "e data for ei=%u"%elementIdx, preventOverflow=False)
+            else:
+                dataE = 0
             self.elementDataE.append(dataE)
 
             if kernel["ProblemType"]["UseScaleD"] and (kernel["GlobalSplitU"] == 1):

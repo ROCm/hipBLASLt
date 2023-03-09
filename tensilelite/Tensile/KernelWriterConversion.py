@@ -37,6 +37,11 @@ class KernelWriterConversion(KernelWriterBase):
     self.state["_GlobalAccumulation"] = state["_GlobalAccumulation"]
     self.state["ActivationFused"] = state["ActivationFused"]
 
+    self.actGradientPrefix = ""
+    if self.state["ProblemType"]["Gradient"]:
+      self.actGradientPrefix = "Gradient"
+    self.gaurdStr = "G" if self.state["ProblemType"]["ActivationGuard"] else ""
+
     # derive parameter
     self.language = "HIP"
     self.kernelName = self.getKernelName()
@@ -52,7 +57,6 @@ class KernelWriterConversion(KernelWriterBase):
     self.indexChars[self.state["ProblemType"]["Index1"]] = "1" + self.indexChars[self.state["ProblemType"]["Index1"]]
     self.tileChar0 = self.indexChars[self.state["ProblemType"]["Index0"]]
     self.tileChar1 = self.indexChars[self.state["ProblemType"]["Index1"]]
-
 
   def functionSignature(self):
     kStr = ""
@@ -93,7 +97,7 @@ class KernelWriterConversion(KernelWriterBase):
 
     # activation
     activationCDataType = self.state["ProblemType"]["ActivationComputeDataType"]
-    enumName = "Tensile::ActivationType_%s"%activationCDataType.toChar()
+    enumName = "Tensile::%sActivationType_%s"%(self.actGradientPrefix, activationCDataType.toChar())
     if ((self.state["ProblemType"]["ActivationType"] != 'none') and self.state["ActivationFused"]):
       activationCDataType = self.state["ProblemType"]["ComputeDataType"] if self.state["ProblemType"]["ActivationHPA"] else \
                             self.state["ProblemType"]["DestDataType"]
@@ -302,16 +306,24 @@ class KernelWriterConversion(KernelWriterBase):
     kStr += "    accum = (((" + intermediateDataType + ")alpha) * accum + ((" + intermediateDataType + ")beta) * ((" + intermediateDataType + ")C[idxC])" + biasStr + ");" + self.endLine
 
     if self.state["ProblemType"]["UseE"]:
-      # E index
-      kStr += "  if( E != nullptr)%s" % (self.endLine)
-      kStr += "  {%s" % (self.endLine)
-      kStr += "    %s idxE = GLOBAL_E( (%s)" % (self.uint64Str, self.uint64Str)
-      for i in range(problemType["NumIndicesC"]):
-        kStr += ', ' if i else ''
-        kStr += '0'  if i in nonTileFreeIndices else ('id%d' % i)
-      kStr += ");%s" % (self.endLine)
-      kStr += "    E[idxE] = (%s)(accum);%s" % (intermediateDataType, self.endLine)
-      kStr += "  }%s" % (self.endLine)
+      if self.state["ProblemType"]["Gradient"]:
+        kStr += "  %s idxE = GLOBAL_E( (%s)" % (self.uint64Str, self.uint64Str)
+        for i in range(problemType["NumIndicesC"]):
+          kStr += ', ' if i else ''
+          kStr += '0'  if i in nonTileFreeIndices else ('id%d' % i)
+        kStr += ");%s" % (self.endLine)
+        kStr += "  auto dataE = (%s)E[idxE];%s" % (intermediateDataType, self.endLine)
+      else:
+        # E index
+        kStr += "  if( E != nullptr)%s" % (self.endLine)
+        kStr += "  {%s" % (self.endLine)
+        kStr += "    %s idxE = GLOBAL_E( (%s)" % (self.uint64Str, self.uint64Str)
+        for i in range(problemType["NumIndicesC"]):
+          kStr += ', ' if i else ''
+          kStr += '0'  if i in nonTileFreeIndices else ('id%d' % i)
+        kStr += ");%s" % (self.endLine)
+        kStr += "    E[idxE] = (%s)(accum);%s" % (intermediateDataType, self.endLine)
+        kStr += "  }%s" % (self.endLine)
 
     typeStr = self.state["ProblemType"]["DestDataType"].toDevice(self.language)
     if ((self.state["ProblemType"]["ActivationType"] != 'none') and self.state["ActivationFused"]):
@@ -322,7 +334,10 @@ class KernelWriterConversion(KernelWriterBase):
         names += ", activationType"
       for name in self.state["ProblemType"]["ActivationType"].getAdditionalArgStringList():
         names += (", " + name)
-      rvalueStr = "activation((%s)accum%s)" % (typeActivationStr, names)
+      if self.state["ProblemType"]["Gradient"]:
+        rvalueStr = "(%s)accum * activation%s((%s)dataE%s)" % (typeActivationStr, self.gaurdStr, typeActivationStr, names)
+      else:
+        rvalueStr = "activation%s((%s)accum%s)" % (self.gaurdStr, typeActivationStr, names)
     else:
       rvalueStr = "accum"
     if self.state["ProblemType"]["DestDataType"].isInt8() and self.state["ProblemType"]["HighPrecisionAccumulate"]:
@@ -360,13 +375,19 @@ class KernelWriterConversion(KernelWriterBase):
     else:
       name += "" if self.state["ProblemType"]["StridedBatched"] else "_GB"
     name += "_Bias%s"%self.state["ProblemType"]["BiasDataType"].toChar() if self.state["ProblemType"]["UseBias"] else ""
-    name += "_Aux%s"%self.state["ProblemType"]["ComputeDataType"].toChar() if self.state["ProblemType"]["UseE"] else ""
+    if self.state["ProblemType"]["UseE"]:
+      if self.state["ProblemType"]["Gradient"]:
+        name += "_Grad%s"%self.state["ProblemType"]["ComputeDataType"].toChar()
+      else:
+        name += "_Aux%s"%self.state["ProblemType"]["ComputeDataType"].toChar()
+
     if ((self.state["ProblemType"]["ActivationType"] != 'none') and self.state["ActivationFused"]):
       if self.state["ProblemType"]["ActivationType"] == 'all':
         name += "_A"
       else:
         name += "_%s"%str(self.state["ProblemType"]["ActivationType"]).upper()
       name += ("h" if self.state["ProblemType"]["ActivationHPA"] else "")
+      name += ("g" if self.state["ProblemType"]["ActivationGuard"] else "")
     name += "_ScaleD" if self.state["ProblemType"]["UseScaleD"] else ""
     name += "_PostGSU"
     return name
@@ -384,8 +405,10 @@ class KernelWriterConversion(KernelWriterBase):
       fileString += "\n"
       activationCDataType = self.state["ProblemType"]["ActivationComputeDataType"]
       if self.state["ProblemType"]["ActivationType"] == 'all':
-        fileString += "#include \"TensileActivation_%s_%s.h\"\n"%(activationCDataType.toChar(), \
-                                                                  self.state["ProblemType"]["ActivationType"])
+        fileString += "#include \"Tensile%sActivation%s_%s_%s.h\"\n"%(self.actGradientPrefix, \
+                                                                      self.gaurdStr, \
+                                                                      activationCDataType.toChar(), \
+                                                                      self.state["ProblemType"]["ActivationType"])
       fileString += "\n"
 
     fileString += self.functionSignature()
