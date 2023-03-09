@@ -301,6 +301,7 @@ namespace Tensile
             DataType              eType                   = DataType::Float;
             bool                  highPrecisionAccumulate = false;
             bool                  useBeta                 = true;
+            bool                  useGradient             = false;
             bool                  useBias                 = false;
             bool                  useE                    = false;
             bool                  useScaleD               = false;

@@ -712,6 +712,16 @@ namespace Tensile
             return m_fp16AltImpl;
         }
 
+        void setUseGradient(bool value)
+        {
+            m_useGradient = value;
+        }
+
+        bool useGradient() const
+        {
+            return m_useGradient;
+        }
+
         void setActivationType(ActivationType activationtype)
         {
             m_activationType = activationtype;
@@ -895,6 +905,7 @@ namespace Tensile
         bool              m_deterministicMode       = false;
         bool              m_eligibleForPK           = true;
         bool              m_fp16AltImpl             = false;
+        bool              m_useGradient             = false;
         bool              m_useE                    = false;
         bool              m_useBias                 = false;
         bool              m_useScaleD               = false;

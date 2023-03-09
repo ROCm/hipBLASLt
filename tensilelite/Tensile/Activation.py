@@ -26,7 +26,7 @@ import struct
 from collections import OrderedDict
 
 from .TensileInstructions import Module, TextBlock, HolderContainer, RegisterContainer, \
-                          VCC, vgpr, sgpr, Holder, fastdeepcopy, DataType
+                          VCC, vgpr, sgpr, Holder, fastdeepcopy, DataType, Label
 from .TensileInstructions.Enums import *
 from .TensileInstructions.Instructions import *
 from .Common import printExit, printWarning
@@ -96,9 +96,10 @@ class ActivationAvailable:
         self.int32 = canInt32
 
 class ActivationTypeRegister:
-    def __init__(self, name, extraArgs, canHalf=False, canSingle=False, canDouble=False, canBFloat16=False, canInt8=False, canInt16=False, canInt32=False):
+    def __init__(self, name, isGradient, extraArgs, canHalf=False, canSingle=False, canDouble=False, canBFloat16=False, canInt8=False, canInt16=False, canInt32=False):
         self.name = name
-        self.extraArgs = extraArgs
+        self.isGradient = isGradient
+        self.extraArgs  = extraArgs
         self.can = ActivationAvailable(canHalf, canSingle, canDouble, canBFloat16, canInt8, canInt16, canInt32)
     def typeAvailable(self, dataType):
         if dataType.isHalf() and self.can.half:
@@ -116,6 +117,11 @@ class ActivationTypeRegister:
         return False
 
 class ActivationType:
+    class Export(Enum):
+        NORMAL = 0
+        GRADONLY = 1
+        BOTH = 2
+
     stringList = ['alpha', 'beta', 'gamma', 'delta' ]
     # Exp is only for verification. So we will not return exp in the supported list.
                                                                              # Half,Single,Double,BFloat16,  Int8, Int16, Int32
@@ -123,15 +129,17 @@ class ActivationType:
 
     # Note: The BFloat16 gemm uses Single type activations. The int8 gemm uses int32 type activations.
                                                                                  # Half,Single,Double,BFloat16,  Int8, Int16, Int32
-    lookup = OrderedDict([('none',        ActivationTypeRegister('none', 0,        True,  True,  True,    True,  True,  True,  True)), \
-                          ('abs',         ActivationTypeRegister('abs', 0,         True,  True,  True,    True, False, False,  True)), \
-                          ('clippedrelu', ActivationTypeRegister('clippedrelu', 2, True,  True,  True,   False, False, False,  True)), \
-                          ('gelu',        ActivationTypeRegister('gelu', 0,        True,  True, False,   False, False, False, False)), \
-                          ('leakyrelu',   ActivationTypeRegister('leakyrelu', 1,   True,  True,  True,   False, False, False,  True)), \
-                          ('relu',        ActivationTypeRegister('relu', 0,        True,  True,  True,   False, False, False,  True)), \
-                          ('sigmoid',     ActivationTypeRegister('sigmoid', 0,     True,  True, False,   False, False, False, False)), \
-                          ('tanh',        ActivationTypeRegister('tanh', 2,        True,  True, False,   False, False, False, False)), \
-                          ('all',         ActivationTypeRegister('all', 0)) ])
+    lookup = OrderedDict([('none',        ActivationTypeRegister('none', False, 0,        True,  True,  True,    True,  True,  True,  True)), \
+                          ('abs',         ActivationTypeRegister('abs', False, 0,         True,  True,  True,    True, False, False,  True)), \
+                          ('clippedrelu', ActivationTypeRegister('clippedrelu', False, 2, True,  True,  True,   False, False, False,  True)), \
+                          ('gelu',        ActivationTypeRegister('gelu', False, 0,        True,  True, False,   False, False, False, False)), \
+                          ('leakyrelu',   ActivationTypeRegister('leakyrelu', False, 1,   True,  True,  True,   False, False, False,  True)), \
+                          ('relu',        ActivationTypeRegister('relu', False, 0,        True,  True,  True,   False, False, False,  True)), \
+                          ('sigmoid',     ActivationTypeRegister('sigmoid', False, 0,     True,  True, False,   False, False, False, False)), \
+                          ('tanh',        ActivationTypeRegister('tanh', False, 2,        True,  True, False,   False, False, False, False)), \
+                          ('dgelu',       ActivationTypeRegister('dgelu', True, 0,       False,  True, False,   False, False, False, False)), \
+                          ('all',         ActivationTypeRegister('all', False, 0)) ])
+
     def __init__(self, value):
         if isinstance(value, str):
             strValue = value.lower()
@@ -145,10 +153,21 @@ class ActivationType:
             self.value = value.value
         else:
             raise RuntimeError("Unrecognized input type %s, should be string or ActivationType"%str(value))
-    def getAdditionalArgNum(self):
+
+    def passActivation(self, isGradient, exportType: Export) -> bool:
+        if exportType == ActivationType.Export.NORMAL:
+            return isGradient
+        elif exportType == ActivationType.Export.GRADONLY:
+            return not isGradient
+        elif exportType == ActivationType.Export.BOTH:
+            return False
+
+    def getAdditionalArgNum(self, exportType: Export=Export.NORMAL):
         if self.value == 'all':
             maxArgNum = 0
-            for key, activationInst in self.lookup.items():
+            for _, activationInst in self.lookup.items():
+                if self.passActivation(activationInst.isGradient, exportType):
+                    continue
                 maxArgNum = max(maxArgNum, activationInst.extraArgs)
             return maxArgNum
         elif self.value in self.lookup:
@@ -166,9 +185,11 @@ class ActivationType:
     def getEnumIndex(cls, enumStr):
         return list(cls.lookup.keys()).index(enumStr)
     @classmethod
-    def getEnumStrList(cls, dataType, includeNone = True):
+    def getEnumStrList(cls, dataType, includeNone = True, exportType: Export=Export.NORMAL):
         enumList = []
         for key, activationInst in cls.lookup.items():
+            if cls.passActivation(cls, activationInst.isGradient, exportType):
+                continue
             if (((key != 'none') or includeNone) and (key != 'all')):
                 if activationInst.typeAvailable(dataType):
                     enumList.append(key)
@@ -206,7 +227,15 @@ class actCacheInfo:
 
 ActivationMagicNumbers = {"FloatGeluK0": 0x3f4c422a, \
                           "FloatGeluK1": 0x3d372713, \
-                          "Float16GeluK1": 0x29b9 }
+                          "Float16GeluK1": 0x29b9, \
+                          # 0.0535161
+                          "FloatDGeluK0": 0x3d5b33b3, \
+                          # 0.398942
+                          "FloatDGeluK1": 0x3ecc4220, \
+                          # 0.035677
+                          "FloatDGeluK2": 0x3d12220c, \
+                          # 0.797885
+                          "FloatDGeluK3": 0x3f4c4231}
 
 # float32 union
 class floatUnion(ctypes.Union):
@@ -235,6 +264,7 @@ class ActivationModule:
         # Cache
         self.cacheDict = {}
         self.useCache = False
+        self.labelCounter = 0
 
     # Public function
     def getModule(self, cDataType, activationType, vgprIn, vgprOut):
@@ -261,6 +291,8 @@ class ActivationModule:
             module = self.getSigmoidModule(cDataType, vgprIn, vgprOut)
         elif (activationType == 'tanh'):
             module = self.getTanhModule(cDataType, vgprIn, vgprOut, "activationAlpha", "activationBeta")
+        elif (activationType == 'dgelu'):
+            module = self.getDGeluModule(cDataType, vgprIn, vgprOut)
         elif (activationType == 'none'):
             return Module("No activation")
         else:
@@ -272,9 +304,9 @@ class ActivationModule:
             self.createCache(cDataType, activationType, vgprIn, vgprOut, module)
         return module
 
-    def getAllGprUsage(self, cDataType, actType) -> dict:
+    def getAllGprUsage(self, cDataType, actType, exportType: ActivationType.Export=ActivationType.Export.NORMAL) -> dict:
         usage = {}
-        enumList = ActivationType.getEnumStrList(cDataType) if actType == 'all' else [str(actType)]
+        enumList = ActivationType.getEnumStrList(cDataType, exportType=exportType) if actType == 'all' else [str(actType)]
         for enumStr in enumList:
             _ = self.getModule(cDataType, enumStr, 0, 1) # dummy vgpr
             usage[enumStr] = {"vgpr": self.vgprCounter, "sgpr": self.sgprCounter}
@@ -610,6 +642,60 @@ class ActivationModule:
             module.add(VFmaF32(dst=self.vgprPrefix(vgprOut), src0=-2.0, src1=self.vgprPrefix(vgprOut), src2=1.0, comment="(-2) * (1 / (e^2x + 1)) + 1"))
             if activationBeta:
                 module.add(VMulF32(dst=self.vgprPrefix(vgprOut), src0=sgpr(activationBeta), src1=self.vgprPrefix(vgprOut), comment="beta * tanh(x)"))
+        else:
+            raise RuntimeError("Unsupported data type %s."%cDataType.toDevice("HIP"))
+        return module
+
+    def getDGeluModule(self, cDataType, vgprIn, vgprOut):
+        self.needCombine = True
+        module = Module("Gradient Gelu")
+        # tmp = x * x
+        # tmp = tmp * x
+        # tmp2 = 0.0535161 * tmp + 0.398942 * x # x1
+        # tmp  = 0.035677 * tmp + 0.797885 * x
+        # tmp3 = exp(tmp)
+        # tmp = exp(-tmp)
+        # out = tmp3 + tmp # (e^xx + e^-xx)
+        # tmp = tmp3 - tmp # (e^xx - e^-xx)
+        # tmp3 = 1/out # 1/ (e^xx + e^-xx)
+        # out = tmp3 * tmp # (e^xx - e^-xx) / (e^xx + e^-xx)
+        # out = 0.5 * out # 0.5 * (e^xx - e^-xx) / (e^xx + e^-xx)
+        # tmp = tmp * tmp
+        # tmp = 1/tmp
+        # tmp = 4 * tmp # x2
+        # out = tmp * tmp2 + out
+        # out = out + 0.5
+        if cDataType.isSingle():
+            vgprTemp1 = self.getVgpr(1)
+            vgprTemp2 = self.getVgpr(1)
+            vgprTemp3 = self.getVgpr(1)
+            sgprTemp = self.getSgpr(1)
+            module.add(VMulF32(dst=vgpr(Holder(idx=vgprTemp1)), src0=self.vgprPrefix(vgprIn), src1=self.vgprPrefix(vgprIn), comment="tmp1 = pow(x * 2)"))
+            module.add(VMulF32(dst=vgpr(Holder(idx=vgprTemp1)), src0=vgpr(Holder(idx=vgprTemp1)), src1=self.vgprPrefix(vgprIn), comment="tmp1 = pow(x * 3)"))
+            coef = floatUnion(u=ActivationMagicNumbers["FloatDGeluK1"])
+            module.add(VMulF32(dst=vgpr(Holder(idx=vgprTemp2)), src0=hex(coef.u), src1=self.vgprPrefix(vgprIn), comment="tmp2 = 0.398942 * x"))
+            coef = floatUnion(u=ActivationMagicNumbers["FloatDGeluK0"])
+            module.add(SMovB32(dst=sgpr(Holder(idx=sgprTemp)), src=hex(coef.u), comment="move magic number to sgpr"))
+            module.add(VFmaF32(dst=vgpr(Holder(idx=vgprTemp2)), src0=sgpr(Holder(idx=sgprTemp)), src1=vgpr(Holder(idx=vgprTemp1)), src2=vgpr(Holder(idx=vgprTemp2)), comment="tmp2 = 0.0535161 * x^3 + tmp2"))
+            coef = floatUnion(u=ActivationMagicNumbers["FloatDGeluK3"])
+            module.add(VMulF32(dst=vgpr(Holder(idx=vgprTemp3)), src0=hex(coef.u), src1=self.vgprPrefix(vgprIn), comment="tmp3 = 0.797885 * x"))
+            coef = floatUnion(u=ActivationMagicNumbers["FloatDGeluK2"])
+            module.add(SMovB32(dst=sgpr(Holder(idx=sgprTemp)), src=hex(coef.u), comment="move magic number to sgpr"))
+            module.add(VFmaF32(dst=vgpr(Holder(idx=vgprTemp1)), src0=sgpr(Holder(idx=sgprTemp)), src1=vgpr(Holder(idx=vgprTemp1)), src2=vgpr(Holder(idx=vgprTemp3)), comment="tmp1 = 0.035677 * x^3 + tmp3"))
+            module.add(self.getExpModule(cDataType, Holder(idx=vgprTemp1), Holder(idx=vgprTemp3)))
+            module.add(VMulF32(dst=vgpr(Holder(idx=vgprTemp1)), src0=-1.0, src1=vgpr(Holder(idx=vgprTemp1)), comment="tmp1 = -tmp1"))
+            module.add(self.getExpModule(cDataType, Holder(idx=vgprTemp1), Holder(idx=vgprTemp1)))
+            module.add(VAddF32(dst=self.vgprPrefix(vgprOut), src0=vgpr(Holder(idx=vgprTemp3)), src1=vgpr(Holder(idx=vgprTemp1)), comment="out = e^xx + e^-xx"))
+            module.add(VSubF32(dst=vgpr(Holder(idx=vgprTemp1)), src0=vgpr(Holder(idx=vgprTemp3)), src1=vgpr(Holder(idx=vgprTemp1)), comment="tmp1 = e^xx - e^-xx"))
+            module.add(VRcpF32(dst=vgpr(Holder(idx=vgprTemp3)), src=self.vgprPrefix(vgprOut), comment="tmp3 = 1/out"))
+            module.add(VMulF32(dst=vgpr(Holder(idx=vgprTemp1)), src0=vgpr(Holder(idx=vgprTemp1)), src1=vgpr(Holder(idx=vgprTemp3)), comment="tmp1 = tmp1 * tmp3"))
+            module.add(VMulF32(dst=vgpr(Holder(idx=vgprTemp1)), src0=0.5, src1=vgpr(Holder(idx=vgprTemp1)), comment="tmp1 = 0.5 * tmp1"))
+            module.add(VMulF32(dst=self.vgprPrefix(vgprOut), src0=self.vgprPrefix(vgprOut), src1=self.vgprPrefix(vgprOut), comment="out = out * out"))
+            module.add(VRcpF32(dst=self.vgprPrefix(vgprOut), src=self.vgprPrefix(vgprOut), comment="out = 1/out"))
+            coef = floatUnion(f=4)
+            module.add(VMulF32(dst=self.vgprPrefix(vgprOut), src0=hex(coef.u), src1=self.vgprPrefix(vgprOut), comment="out = 4 * out"))
+            module.add(VFmaF32(dst=self.vgprPrefix(vgprOut), src0=self.vgprPrefix(vgprOut), src1=vgpr(Holder(idx=vgprTemp2)), src2=vgpr(Holder(idx=vgprTemp1)), comment="out = out * tmp2 + tmp1"))
+            module.add(VAddF32(dst=self.vgprPrefix(vgprOut), src0=0.5, src1=self.vgprPrefix(vgprOut), comment="out = out + 0.5"))
         else:
             raise RuntimeError("Unsupported data type %s."%cDataType.toDevice("HIP"))
         return module
@@ -986,12 +1072,17 @@ class ActivationInline:
     self.asmStr = "asm("
 
   # Public Function
-  def generateInlineAssemblyFunction(self, activationType):
+  def generateInlineAssemblyFunction(self, activationType, exportType: ActivationType.Export):
     kStr = ""
     if activationType == 'none':
       return kStr
 
-    enumName = "Tensile::ActivationType_%s"%self.dataType.toChar()
+    prefix = ""
+    if exportType == ActivationType.Export.GRADONLY:
+        prefix = "Gradient"
+    elif exportType == ActivationType.Export.BOTH:
+        prefix = "All"
+    enumName = "Tensile::%sActivationType_%s"%(prefix, self.dataType.toChar())
 
     ptrStr = self.dataType.toDevice("HIP")
     names = ""
@@ -1005,7 +1096,7 @@ class ActivationInline:
     kStr += "__device__ inline %s activation(%s%s value%s)\n{\n"%(ptrStr, changeLine, ptrStr, names)
     # function body
     if activationType == 'all':
-      for index, enumStr in enumerate(ActivationType.getEnumStrList(self.dataType, includeNone=False)):
+      for index, enumStr in enumerate(ActivationType.getEnumStrList(self.dataType, includeNone=False, exportType=exportType)):
         if index == 0:
           kStr += "  if (activationType == %s::%s) {\n"%(enumName, ActivationType(enumStr).toEnum())
         else:
@@ -1114,6 +1205,12 @@ class ActivationInline:
       module = activation.getTanhModule(self.dataType, 0, 0, 1, 2)
       kStr += self.getActivationAsmStr(activation, module, (len(asm) * " "))
       kStr += addSpace(asm, ": \"+v\"(value) : \"s\"(alpha), \"s\"(beta)\n")
+      kStr += self.getRequiredRegStr(asm, activation.vgprCounter, activation.sgprCounter)
+    elif (activationType == 'dgelu'):
+      kStr += (asm + " // dgelu\n")
+      module = activation.getDGeluModule(self.dataType, 0, 0)
+      kStr += self.getActivationAsmStr(activation, module, (len(asm) * " "))
+      kStr += addSpace(asm, ": \"+v\"(value) : \n")
       kStr += self.getRequiredRegStr(asm, activation.vgprCounter, activation.sgprCounter)
     else:
       if (activationType != 'none'):

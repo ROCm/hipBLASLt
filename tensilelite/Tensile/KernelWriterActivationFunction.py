@@ -1,6 +1,6 @@
 ################################################################################
 #
-# Copyright (C) 2022 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -24,7 +24,7 @@ from copy import deepcopy
 
 from .TensileInstructions import TensileInstructions
 from .Common import globalParameters, CHeader
-from .Activation import ActivationInline
+from .Activation import ActivationInline, ActivationType
 from .KernelWriterBase import KernelWriterBase
 
 class KernelWriterActivationFunction(KernelWriterBase):
@@ -35,6 +35,12 @@ class KernelWriterActivationFunction(KernelWriterBase):
     self.state["Kernel"] = state["Kernel"]
     self._tf = TensileInstructions()
 
+    self.actGradientPrefix = ""
+    self.actExportType =  ActivationType.Export.NORMAL
+    if self.state["ProblemType"]["Gradient"]:
+      self.actGradientPrefix = "Gradient"
+      self.actExportType = ActivationType.Export.GRADONLY
+
     # derive parameter
     self.language = "HIP"
     self.kernelName = self.getKernelName()
@@ -43,8 +49,9 @@ class KernelWriterActivationFunction(KernelWriterBase):
     return self.getKernelName()
 
   def getKernelName(self):
-    return "TensileActivation_%s_%s"%(self.state["ProblemType"]["ActivationComputeDataType"].toChar(), \
-                                      self.state["ProblemType"]["ActivationType"])
+    return "Tensile%sActivation_%s_%s"%(self.actGradientPrefix, \
+                                        self.state["ProblemType"]["ActivationComputeDataType"].toChar(), \
+                                        self.state["ProblemType"]["ActivationType"])
 
 
   def getSourceFileString(self):
@@ -57,11 +64,11 @@ class KernelWriterActivationFunction(KernelWriterBase):
     if not globalParameters["MergeFiles"]:
       fileString += CHeader
       fileString += "#pragma once\n\n"
-      fileString += "#include \"TensileActivationEnum_%s.h\"\n"%activationCDataType.toChar()
+      fileString += "#include \"Tensile%sActivationEnum_%s.h\"\n"%(self.actGradientPrefix, activationCDataType.toChar())
       fileString += "\n"
 
     self._tf.setKernelInfo(tuple(self.state["Kernel"]["ISA"]), self.state["Kernel"]["WavefrontSize"])
     activation = ActivationInline(activationCDataType)
-    fileString += activation.generateInlineAssemblyFunction(self.state["ProblemType"]["ActivationType"])
+    fileString += activation.generateInlineAssemblyFunction(self.state["ProblemType"]["ActivationType"], exportType=self.actExportType)
 
     return fileString

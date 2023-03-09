@@ -1594,6 +1594,11 @@ class VMulU32U24(CommonInstruction):
         super().__init__(InstType.INST_U32, dst, [src0, src1], None, None, comment)
         self.setInst("v_mul_u32_u24")
 
+class VSubF32(CommonInstruction):
+    def __init__(self, dst, src0, src1, sdwa: Optional[SDWAModifiers] = None, comment="") -> None:
+        super().__init__(InstType.INST_F32, dst, [src0, src1], sdwa, None, comment)
+        self.setInst("v_sub_f32")
+
 class VSubI32(CommonInstruction):
     def __init__(self, dst, src0, src1, comment="") -> None:
         super().__init__(InstType.INST_I32, dst, [src0, src1], None, None, comment)

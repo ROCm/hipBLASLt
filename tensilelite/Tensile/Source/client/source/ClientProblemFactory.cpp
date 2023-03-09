@@ -146,6 +146,9 @@ namespace Tensile
             if(args.count("use-e"))
                 m_useE = args["use-e"].as<bool>();
 
+            if(args.count("use-gradient"))
+                m_useGradient = args["use-gradient"].as<bool>();
+
             if(args.count("bias-type-args"))
                 m_biasTypeArgs = args["bias-type-args"].as<std::vector<DataType>>();
 
@@ -259,6 +262,7 @@ namespace Tensile
                         rv.back().setBetaType(m_constantTypes[ContractionProblemGemm::CONST::BETA]);
                         rv.back().setStridedBatched(m_stridedBatched);
                         rv.back().setHighPrecisionAccumulate(m_highPrecisionAccumulate);
+                        rv.back().setUseGradient(m_useGradient);
                         rv.back().setUseBias(m_useBias);
                         rv.back().setUseE(m_useE);
                         rv.back().setKernelLanguage(m_kernelLanguage);
@@ -278,6 +282,8 @@ namespace Tensile
                         if(m_useE)
                         {
                             bool isEOutput = true;
+                            if(m_useGradient)
+                                isEOutput = false;
                             rv.back().setE(m_tensorTypes[ContractionProblemGemm::TENSOR::E],
                                            rv.back().d().sizes(),
                                            eStrides,

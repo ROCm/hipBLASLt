@@ -79,6 +79,7 @@ namespace Tensile
             bool m_useBias;
             bool m_useScaleD;
             bool m_useE;
+            bool m_useGradient = false;
 
             KernelLanguage              m_kernelLanguage;
             PerformanceMetric           m_performanceMetric;

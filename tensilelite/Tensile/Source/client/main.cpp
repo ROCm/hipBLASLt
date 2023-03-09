@@ -234,6 +234,7 @@ namespace Tensile
                 ("use-scaleD",                po::value<bool>()->default_value(false), "Use scaleD.")
                 ("bias-type-args",            po::value<std::vector<DataType>>()->default_value(std::vector<DataType>(1, DataType::None), "[]"), "Bias data type args.")
                 ("use-e",                     po::value<bool>()->default_value(false), "Use E.")
+                ("use-gradient",              po::value<bool>()->default_value(false), "Use gradient.")
                 ;
             // clang-format on
 
