@@ -45,6 +45,7 @@ namespace Tensile
             , m_biasTypeArgs(std::vector<DataType>(1, DataType::Float))
             , m_activationType(ActivationType::None)
             , m_activationHPA(false)
+            , m_activationGuard(false)
             , m_activationEnumArg(std::vector<ActivationType>(1, ActivationType::None))
         {
             std::vector<bool> isComplex;
@@ -136,6 +137,9 @@ namespace Tensile
             if(args.count("use-e"))
                 m_useE = args["use-e"].as<bool>();
 
+            if(args.count("use-gradient"))
+                m_useGradient = args["use-gradient"].as<bool>();
+
             if(args.count("bias-type-args"))
                 m_biasTypeArgs = args["bias-type-args"].as<std::vector<DataType>>();
 
@@ -143,6 +147,8 @@ namespace Tensile
                 m_activationType = args["activation-type"].as<ActivationType>();
             if(args.count("activation-hpa"))
                 m_activationHPA = args["activation-hpa"].as<bool>();
+            if(args.count("activation-guard"))
+                m_activationGuard = args["activation-guard"].as<bool>();
             if(args.count("activation-enum-args"))
                 m_activationEnumArg
                     = args["activation-enum-args"].as<std::vector<ActivationType>>();
@@ -245,6 +251,7 @@ namespace Tensile
                         rv.back().setBetaType(m_constantTypes[ContractionProblemGemm::CONST::BETA]);
                         rv.back().setStridedBatched(m_stridedBatched);
                         rv.back().setHighPrecisionAccumulate(m_highPrecisionAccumulate);
+                        rv.back().setUseGradient(m_useGradient);
                         rv.back().setUseBias(m_useBias);
                         rv.back().setUseE(m_useE);
                         rv.back().setKernelLanguage(m_kernelLanguage);
@@ -264,6 +271,8 @@ namespace Tensile
                         if(m_useE)
                         {
                             bool isEOutput = true;
+                            if(m_useGradient)
+                                isEOutput = false;
                             rv.back().setE(m_tensorTypes[ContractionProblemGemm::TENSOR::E],
                                            rv.back().d().sizes(),
                                            eStrides,
@@ -278,6 +287,7 @@ namespace Tensile
                             rv.back().setActivationType(m_activationType);
                         }
                         rv.back().setActivationHPA(m_activationHPA);
+                        rv.back().setActivationGuard(m_activationGuard);
                         rv.back().setUseScaleD(m_useScaleD);
                         rv.back().setScaleD(m_constantTypes[ContractionProblemGemm::CONST::ALPHA],
                                             rv.back().d().sizes()[0]);

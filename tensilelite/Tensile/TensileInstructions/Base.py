@@ -1,6 +1,6 @@
 ################################################################################
 #
-# Copyright (C) 2022 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -76,7 +76,7 @@ class TensileInstructions:
 
     def setKernelInfo(self, isaVersion: Tuple[int, int, int], wavefrontSize: int) -> None:
         if isaVersion not in self._isaInfo: # type: ignore
-            printExit("Current isa %s not initialized."%str(isaVersion))
+            printExit("Current isa %s not initialized. Initialized isas are %s"%(str(isaVersion), str(self._isaInfo.keys())))
         with self._lock:
             if len(self._kernelInfo) > 1000:
                 self._kernelInfo = _removeIdent(self._kernelInfo)

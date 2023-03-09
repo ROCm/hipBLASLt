@@ -591,6 +591,16 @@ namespace Tensile
             return m_fp16AltImpl;
         }
 
+        void setUseGradient(bool value)
+        {
+            m_useGradient = value;
+        }
+
+        bool useGradient() const
+        {
+            return m_useGradient;
+        }
+
         void setActivationType(ActivationType activationtype)
         {
             m_activationType = activationtype;
@@ -609,6 +619,16 @@ namespace Tensile
         bool activationHPA() const
         {
             return m_activationHPA;
+        }
+
+        void setActivationGuard(bool value)
+        {
+            m_activationGuard = value;
+        }
+
+        bool activationGuard() const
+        {
+            return m_activationGuard;
         }
 
         void setActivationEnumArg(ActivationType activationEnumArg)
@@ -774,12 +794,14 @@ namespace Tensile
         bool              m_deterministicMode       = false;
         bool              m_eligibleForPK           = true;
         bool              m_fp16AltImpl             = false;
+        bool              m_useGradient             = false;
         bool              m_useE                    = false;
         bool              m_useBias                 = false;
         bool              m_useScaleD               = false;
         ActivationType    m_activationType          = ActivationType::None;
         ActivationType    m_activationEnumArg       = ActivationType::None;
         bool              m_activationHPA           = false;
+        bool              m_activationGuard         = false;
         KernelLanguage    m_kernelLanguage          = KernelLanguage::Any;
         PerformanceMetric m_performanceMetric       = PerformanceMetric::DeviceEfficiency;
 

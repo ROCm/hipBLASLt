@@ -420,6 +420,7 @@ def dataInitParams(problemType):
     initB = globalParameters['DataInitTypeB']
     initC = globalParameters['DataInitTypeC']
     initD = globalParameters['DataInitTypeD']
+    initE = globalParameters['DataInitTypeE']
     initAlpha = globalParameters['DataInitTypeAlpha']
     initBeta  = globalParameters['DataInitTypeBeta']
     initBias  = globalParameters['DataInitTypeBias']
@@ -435,6 +436,7 @@ def dataInitParams(problemType):
             ('init-b',            DataInitName(initB).name),
             ('init-c',            DataInitName(initC).name),
             ('init-d',            DataInitName(initD).name),
+            ('init-e',            DataInitName(initE).name),
             ('init-alpha',        DataInitName(initAlpha).name),
             ('init-beta',         DataInitName(initBeta).name),
             ('init-bias',         DataInitName(initBias).name),
@@ -475,6 +477,7 @@ def writeClientConfigIni(problemSizes, biasTypeArgs, activationArgs, problemType
             param('e-type',     problemType.eType.toEnum())
         param('alpha-type', problemType.alphaType.toEnum())
         param('beta-type',  problemType.betaType.toEnum())
+        param('use-gradient', problemType.useGradient)
         param('use-bias',   problemType.useBias)
         param('use-e', problemType.useE)
         param('use-scaleD',   problemType.useScaleD)
@@ -495,6 +498,7 @@ def writeClientConfigIni(problemSizes, biasTypeArgs, activationArgs, problemType
             param('activation-enum-args', setting.activationEnum.toEnum())
         param('activation-type', problemType.activationType.toEnum())
         param('activation-hpa', problemType.activationHPA)
+        param('activation-guard', problemType.activationGuard)
         if globalParameters["DataInitValueActivationArgs"]:
           param('activation-additional-args', ','.join(map(str, globalParameters["DataInitValueActivationArgs"])))
 

@@ -354,6 +354,25 @@ namespace Tensile
                     tanh(multiply<castT>(static_cast<castT>(val), static_cast<castT>(args[0]))),
                     static_cast<castT>(args[1]));
             }
+            else if(new_type == ActivationType::DGelu)
+            {
+                auto castedVal = static_cast<float>(val);
+                auto k0        = 0.0535161f;
+                auto k1        = 0.398942f;
+                auto k2        = 0.0356774f;
+                auto k3        = 0.797885f;
+                // Original: (0.0535161x3 + 0.398942x) x cosh-2(0.0356774x3 + 0.797885x)
+                // x1 = (0.0535161 * pow(x, 3) + 0.398942 * x)
+                // xx = 0.0356774 * pow(x, 3)+ 0.797885 * x
+                // x2 = 4/pow(math.exp(-xx) + math.exp(xx),2)
+                // 0.5 * math.tanh(xx) + x1 * x2 + 0.5
+                float pow3 = castedVal * castedVal * castedVal;
+                float x1   = k0 * pow3 + k1 * castedVal;
+                float xx   = k2 * pow3 + k3 * castedVal;
+                float x2   = 4 / pow(exp(-xx) + exp(xx), 2);
+                float tmp  = 0.5 * tanh(xx) + x1 * x2 + 0.5;
+                return static_cast<T>(tmp);
+            }
             return val;
         }
 
@@ -386,6 +405,10 @@ namespace Tensile
                 assert((args.size() == getAdditionalArgNum(activationType)));
                 val = val > 0 ? val : val * args[0];
                 return val;
+            }
+            else if(new_type == ActivationType::DGelu)
+            {
+                throw std::runtime_error("Unsupported type dgelu.");
             }
             return val;
         }
@@ -585,7 +608,7 @@ namespace Tensile
                     resultD += bias;
                 }
                 // E
-                if(problem.useE())
+                if(problem.useE() && !problem.useGradient())
                 {
                     typename Inputs::BetaType* ePtr = (typename Inputs::BetaType*)inputs.e;
                     auto                       eIndex
@@ -596,8 +619,28 @@ namespace Tensile
                 std::vector<Accumulator> actArgs;
                 for(int i = 0; i < inputs.activationArgs.size(); i++)
                     actArgs.push_back(constVariantCast<Accumulator>(inputs.activationArgs[i]));
-                resultD = Activation(
-                    problem.activationType(), resultD, problem.activationEnumArg(), actArgs);
+                if(problem.useGradient() && problem.activationType() != ActivationType::None
+                   && problem.activationEnumArg() != ActivationType::None)
+                {
+                    Accumulator dataE = static_cast<Accumulator>(0);
+                    if(problem.useE())
+                    {
+                        typename Inputs::BetaType* ePtr = (typename Inputs::BetaType*)inputs.e;
+                        auto                       eIndex
+                            = problem.tensors()[ContractionProblemGemm::TENSOR::E].index(dCoord);
+                        dataE = GetValue<Accumulator>(
+                            problem.betaType(), inputs.e, eIndex, aConjugate);
+                    }
+                    dataE = Activation(
+                        problem.activationType(), dataE, problem.activationEnumArg(), actArgs);
+                    resultD *= dataE;
+                }
+                else
+                {
+                    resultD = Activation(
+                        problem.activationType(), resultD, problem.activationEnumArg(), actArgs);
+                }
+
                 if(problem.useScaleD())
                 {
                     int         pos    = int(dNum % problem.d().sizes()[0]);

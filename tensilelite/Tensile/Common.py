@@ -145,10 +145,11 @@ globalParameters["CSVMergeSameProblemID"] = False
 #       For Alpha/Beta: Only problem-independent init (0~7, 16) can be used,
 #                       problem-dependent init (8~15) would cause a exception (Invalid InitMode) in New Client
 globalParameters["DataInitTypeAB"] = 3
-globalParameters["DataInitTypeA"] = -1
-globalParameters["DataInitTypeB"] = -1
+globalParameters["DataInitTypeA"]  = -1
+globalParameters["DataInitTypeB"]  = -1
 globalParameters["DataInitTypeC"]  = 3
 globalParameters["DataInitTypeD"]  = 0
+globalParameters["DataInitTypeE"]  = 0
 globalParameters["DataInitTypeAlpha"] = 2
 globalParameters["DataInitTypeBeta"] = 2
 globalParameters["DataInitTypeBias"] = 3
@@ -896,6 +897,7 @@ validParameters = {
 
     # add gls or slc after global memory read/writes to change cacheing, not cacheing the writes is promising and improved performance a tiny bit
     # 1: glc, 2: slc, 3: glc+slc
+    "NonTemporalE":               list(range(0,4)),
     "NonTemporalD":               list(range(0,4)),
     "NonTemporalC":               list(range(0,4)),
     "NonTemporalA":               list(range(0,4)),
@@ -940,7 +942,7 @@ validParameters = {
 
     # True-  function call
     # False- inline
-    "ActivationFuncCall":          [False, True]
+    "ActivationFuncCall":          [False, True],
     }
 
 
@@ -1003,6 +1005,7 @@ defaultBenchmarkCommonParameters = [
     {"1LDSBuffer":                [ 0 ] },
     {"DepthU":                    [ -1 ] },
     {"DepthULdsDivisor":          [ 1 ] },
+    {"NonTemporalE":              [ 0 ] },
     {"NonTemporalD":              [ 0 ] },
     {"NonTemporalC":              [ 0 ] },
     {"NonTemporalA":              [ 0 ] },
@@ -1041,6 +1044,8 @@ defaultProblemType = {
     "DestDataType":             0,                # destination data types can specified by a variety of ways, such as "s", as listed in SolutionStructs.py::DataType
     "ComputeDataType":          0,                # compute data types can specified by a variety of ways, such as "s", as listed in SolutionStructs.py::DataType
     "UseBeta":                  True,             # =True use beta parameter (asm will check for B=0 and optimize the write for that), =False don't use beta parameter
+    "UseE":                     False,            # =True use output E to output gemm results before activation
+    "Gradient":                 False,            # =True set globalWriteElements to gradient mode
     "UseBias":                  False,            # =True use bias vector
     "UseScaleD":                False,            # =True use scaleD vector
     "HighPrecisionAccumulate":  False,            # f32 += f16*f16
@@ -1112,7 +1117,8 @@ defaultProblemType = {
 
     # Activation
     "Activation":               False,
-    "ActivationHPA":            False
+    "ActivationHPA":            False,
+    "ActivationGuard":          True
     }
 
 defaultProblemSizes = [{"Range": [ [2880], 0, 0 ]}]

@@ -96,8 +96,10 @@ namespace Tensile
                     Base::template Pair<Predicates::Contraction::Experimental>(),
                     Base::template Pair<Predicates::Contraction::Fp16AltImpl>(),
                     Base::template Pair<Predicates::Contraction::EqualityMatching>(),
+                    Base::template Pair<Predicates::Contraction::UseGradientEqual>(),
                     Base::template Pair<Predicates::Contraction::ActivationEqual>(),
                     Base::template Pair<Predicates::Contraction::ActivationHPAEqual>(),
+                    Base::template Pair<Predicates::Contraction::ActivationGuardEqual>(),
                     Base::template Pair<Predicates::Contraction::ActivationEnumWhiteList>(),
                     Base::template Pair<Predicates::Contraction::UseBiasEqual>(),
                     Base::template Pair<Predicates::Contraction::UseEEqual>(),
@@ -363,6 +365,12 @@ namespace Tensile
         };
 
         template <typename IO>
+        struct MappingTraits<Predicates::Contraction::UseGradientEqual, IO>
+            : public AutoMappingTraits<Predicates::Contraction::UseGradientEqual, IO>
+        {
+        };
+
+        template <typename IO>
         struct MappingTraits<Predicates::Contraction::ActivationEqual, IO>
             : public AutoMappingTraits<Predicates::Contraction::ActivationEqual, IO>
         {
@@ -377,6 +385,12 @@ namespace Tensile
         template <typename IO>
         struct MappingTraits<Predicates::Contraction::ActivationHPAEqual, IO>
             : public AutoMappingTraits<Predicates::Contraction::ActivationHPAEqual, IO>
+        {
+        };
+
+        template <typename IO>
+        struct MappingTraits<Predicates::Contraction::ActivationGuardEqual, IO>
+            : public AutoMappingTraits<Predicates::Contraction::ActivationGuardEqual, IO>
         {
         };
 

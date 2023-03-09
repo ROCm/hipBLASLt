@@ -67,7 +67,7 @@ class ProblemType:
     StateKeys = ['operationIdentifier', 'aType', 'bType', 'cType', 'dType', 'eType',
                  'useBeta', 'useBias', 'useE', 'useScaleD', 'biasDataTypeWhiteList', 'highPrecisionAccumulate',
                  'useInitialStridesAB', 'useInitialStridesCD', 'stridedBatched', 'groupedGemm',
-                 'activationType', 'activationHPA']
+                 'useGradient', 'activationType', 'activationHPA', 'activationGuard']
     @classmethod
     def FromOriginalState(cls, d):
         indices = [None]*d['TotalIndices']
@@ -182,6 +182,10 @@ class ProblemType:
         if 'UseE' in d:
             rv.useE = d['UseE']
 
+        rv.useGradient = False
+        if 'Gradient' in d:
+            rv.useGradient = d["Gradient"]
+
         rv.useScaleD = False
         if 'UseScaleD' in d:
             rv.useScaleD = d['UseScaleD']
@@ -194,6 +198,9 @@ class ProblemType:
         rv.activationHPA = False
         if 'ActivationHPA' in d:
             rv.activationHPA = d['ActivationHPA']
+        rv.activationGuard = False
+        if 'ActivationGuard' in d:
+            rv.activationGuard = d["ActivationGuard"]
         if 'ActivationComputeDataType' in d:
             rv.activationComputeDataType = DataType(d['ActivationComputeDataType'])
         else:
@@ -292,7 +299,8 @@ class ProblemType:
             predicates.append(ProblemPredicate("BiasDataTypeWhiteList", value=self.biasDataTypeWhiteList))
             predicates.append(ProblemPredicate("Activation", value=self.activationType))
             if self.activationType == 'all':
-                enumList = [actEnum.capitalize() for actEnum in ActivationType.getEnumStrList(self.activationComputeDataType)]
+                exportType = ActivationType.Export.GRADONLY if self.useGradient else ActivationType.Export.NORMAL
+                enumList = [actEnum.capitalize() for actEnum in ActivationType.getEnumStrList(self.activationComputeDataType, exportType=exportType)]
                 predicates.append(ProblemPredicate("ActivationEnumWhiteList", value=enumList))
             # predicates.append(ProblemPredicate("UseScaleD", value=self.useScaleD))
             # predicates.append(ProblemPredicate("GroupedGemm", value=self.groupedGemm))
@@ -301,6 +309,8 @@ class ProblemType:
             predicates.append(ProblemPredicate("TypesEqual", value=(self.aType, self.bType, self.cType, self.dType)))
             predicates.append(ProblemPredicate("HighPrecisionAccumulate", value=self.highPrecisionAccumulate))
             predicates.append(ProblemPredicate("ActivationHPA", value=self.activationHPA))
+            predicates.append(ProblemPredicate("ActivationGuard", value=self.activationGuard))
+            predicates.append(ProblemPredicate("UseGradient", value=self.useGradient))
             predicates.append(ProblemPredicate("UseBias", value=self.useBias))
             predicates.append(ProblemPredicate("StridedBatched", value=self.stridedBatched))
             predicates.append(ProblemPredicate("GroupedGemm", value=self.groupedGemm))

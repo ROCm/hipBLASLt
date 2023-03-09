@@ -118,6 +118,10 @@ namespace Tensile
                                         rhs.activationType(),
                                         lhs.activationHPA(),
                                         rhs.activationHPA(),
+                                        lhs.activationGuard(),
+                                        rhs.activationGuard(),
+                                        lhs.useGradient(),
+                                        rhs.useGradient(),
                                         lhs.useBias(),
                                         rhs.useBias(),
                                         lhs.useE(),
@@ -150,6 +154,8 @@ namespace std
                                          problem.fp16AltImpl(),
                                          problem.activationType(),
                                          problem.activationHPA(),
+                                         problem.activationGuard(),
+                                         problem.useGradient(),
                                          problem.useBias(),
                                          problem.useE(),
                                          problem.useScaleD());
@@ -180,6 +186,7 @@ namespace std
                                               problem.fp16AltImpl(),
                                               problem.activationType(),
                                               problem.activationHPA(),
+                                              problem.activationGuard(),
                                               problem.useBias(),
                                               problem.useScaleD());
             }

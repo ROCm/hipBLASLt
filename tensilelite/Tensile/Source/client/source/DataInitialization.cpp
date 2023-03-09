@@ -564,6 +564,8 @@ namespace Tensile
                     }
                     ++p;
                 }
+                std::cout << "Tensor name " << m_vdata[i].name << " init mode "
+                          << ToString(m_vdata[i].init) << std::endl;
             }
 
             // Init contants

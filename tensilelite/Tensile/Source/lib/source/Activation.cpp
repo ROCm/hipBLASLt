@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022 Advanced Micro Devices, Inc.
+ * Copyright (C) 2022-2023 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -49,6 +49,8 @@ namespace Tensile
             return "Sigmoid";
         case ActivationType::Tanh:
             return "Tanh";
+        case ActivationType::DGelu:
+            return "Dgelu";
         case ActivationType::All:
             return "All";
         case ActivationType::None:
@@ -98,6 +100,10 @@ namespace Tensile
         else if(strValue == ToString(ActivationType::Tanh))
         {
             t = ActivationType::Tanh;
+        }
+        else if(strValue == ToString(ActivationType::DGelu))
+        {
+            t = ActivationType::DGelu;
         }
         else if(strValue == ToString(ActivationType::All))
         {

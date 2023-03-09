@@ -57,13 +57,13 @@ class AddrCalculation:
             self.biasOffset   = coordOffset0 * kernelWriter.states.bpeCinternal
             self.scaleDOffset   = coordOffset0 * kernelWriter.states.bpeCinternal
             self.globalOffset  = coordOffset0 * kernelWriter.states.bpeCexternal
-            self.globalOffsetE = coordOffset0 * kernelWriter.states.bpeCinternal
+            self.globalOffsetInternal = coordOffset0 * kernelWriter.states.bpeCinternal
         else:
             # else non-opt stores include the coord0 offset into VGPR address calcs
             self.biasOffset   = 0
             self.scaleDOffset   = 0
             self.globalOffset = 0
-            self.globalOffsetE = 0
+            self.globalOffsetInternal = 0
 
     def addScaled(self, destV, src0, src1, scale1, tmpS01, comment=""):
         """

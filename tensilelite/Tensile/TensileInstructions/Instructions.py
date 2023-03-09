@@ -23,7 +23,7 @@
 from .Base import Item
 from .Enums import InstType, CvtType
 from .Containers import DSModifiers, FLATModifiers, MUBUFModifiers, SMEMModifiers, SDWAModifiers, VOP3PModifiers, VCC, \
-                        RegisterContainer, HolderContainer
+                        RegisterContainer, HolderContainer, EXEC
 from .Formatting import formatStr, printExit
 import abc
 from enum import Enum
@@ -215,9 +215,26 @@ class VCmpXInstruction(CommonInstruction):
             l = [l1, l2]
         return l
 
+    def getArgStr(self) -> str:
+        kStr = ""
+        if self.archCaps["CMPXWritesSGPR"]:
+            if self.dst:
+                kStr += str(self.dst)
+        if self.dst1:
+            if kStr:
+                kStr += ", "
+            kStr += str(self.dst1)
+        if self.srcs:
+            if kStr:
+                kStr += ", "
+            kStr += str(self.srcs[0])
+        for i in self.srcs[1:]:
+            kStr += ", " + str(i)
+        return kStr
+
     def __str__(self) -> str:
         self.preStr()
-        if self.archCaps["CMPXWritesSGPR"]:
+        if self.archCaps["CMPXWritesSGPR"] or isinstance(self.dst, EXEC):
             kStr = self.instStr + " " + self.getArgStr()
             kStr += str(self.sdwa) if self.sdwa else ""
             kStr += str(self.vop3) if self.vop3 else ""
@@ -1199,6 +1216,15 @@ class SLShiftLeft4AddU32(CommonInstruction):
         self.setInst("s_lshl4_add_u32")
 
 # S mov
+class SSetMask(CommonInstruction):
+    def __init__(self, dst, src, comment="") -> None:
+        super().__init__(InstType.INST_B64, dst, [src], None, None, comment)
+        if self.kernel.wavefrontSize == 32:
+            self.instType = InstType.INST_B32
+            self.setInst("s_mov_b32")
+        else:
+            self.setInst("s_mov_b64")
+
 class SMovB32(CommonInstruction):
     def __init__(self, dst, src, comment="") -> None:
         super().__init__(InstType.INST_B32, dst, [src], None, None, comment)
@@ -1594,6 +1620,11 @@ class VMulU32U24(CommonInstruction):
         super().__init__(InstType.INST_U32, dst, [src0, src1], None, None, comment)
         self.setInst("v_mul_u32_u24")
 
+class VSubF32(CommonInstruction):
+    def __init__(self, dst, src0, src1, sdwa: Optional[SDWAModifiers] = None, comment="") -> None:
+        super().__init__(InstType.INST_F32, dst, [src0, src1], sdwa, None, comment)
+        self.setInst("v_sub_f32")
+
 class VSubI32(CommonInstruction):
     def __init__(self, dst, src0, src1, comment="") -> None:
         super().__init__(InstType.INST_I32, dst, [src0, src1], None, None, comment)
@@ -1809,6 +1840,11 @@ class VCmpNeU64(VCmpInstruction):
         self.setInst("v_cmp_ne_u64")
 
 # CmpX
+class VCmpXClassF32(VCmpXInstruction):
+    def __init__(self, dst, src0, src1, sdwa: Optional[SDWAModifiers] = None, comment="") -> None:
+        super().__init__(InstType.INST_U32, dst, src0, src1, sdwa, comment)
+        self.setInst("v_cmpx_class_f32")
+
 class VCmpXEqU32(VCmpXInstruction):
     def __init__(self, dst, src0, src1, sdwa: Optional[SDWAModifiers] = None, comment="") -> None:
         super().__init__(InstType.INST_U32, dst, src0, src1, sdwa, comment)
@@ -1828,6 +1864,11 @@ class VCmpXLeU32(VCmpXInstruction):
     def __init__(self, dst, src0, src1, sdwa: Optional[SDWAModifiers] = None, comment="") -> None:
         super().__init__(InstType.INST_U32, dst, src0, src1, sdwa, comment)
         self.setInst("v_cmpx_le_u32")
+
+class VCmpXLtF32(VCmpXInstruction):
+    def __init__(self, dst, src0, src1, sdwa: Optional[SDWAModifiers] = None, comment="") -> None:
+        super().__init__(InstType.INST_F32, dst, src0, src1, sdwa, comment)
+        self.setInst("v_cmpx_lt_f32")
 
 class VCmpXLtI32(VCmpXInstruction):
     def __init__(self, dst, src0, src1, sdwa: Optional[SDWAModifiers] = None, comment="") -> None:

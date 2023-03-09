@@ -6391,13 +6391,13 @@ class KernelWriterAssembly(KernelWriter):
     actPCGwvwVgpr = 0
     actPCMaxTempSgpr = 0
     actTempSgpr = 0
-
+    actExportType = ActivationType.Export.GRADONLY if kernel["ProblemType"]["Gradient"] else ActivationType.Export.NORMAL
     if kernel["ActivationFuncCall"] or \
       (((kernel["GlobalSplitU"] == 1) and kernel["ActivationFused"]) and \
       (kernel["ProblemType"]["ActivationType"] != 'none')):
       maxVw = max(vectorWidths)
       # Here is where activation creates cache if cache is enabled
-      usage = activation.getAllGprUsage(kernel["ProblemType"]["ActivationComputeDataType"], kernel["ProblemType"]["ActivationType"])
+      usage = activation.getAllGprUsage(kernel["ProblemType"]["ActivationComputeDataType"], kernel["ProblemType"]["ActivationType"], exportType=actExportType)
       actPCMaxTempVgpr = 0
       for _, gprs in usage.items():
         actPCMaxTempVgpr = max(actPCMaxTempVgpr, gprs["vgpr"])
@@ -6461,7 +6461,7 @@ class KernelWriterAssembly(KernelWriter):
       activationCDataType = kernel["ProblemType"]["ActivationComputeDataType"]
       activationLabelList = {}
       toActModuleList = {}
-      activationEnumStrList = ActivationType.getEnumStrList(activationCDataType)
+      activationEnumStrList = ActivationType.getEnumStrList(activationCDataType, exportType=actExportType)
       for gwvw in vectorWidths:
         if gwvw in activationLabelList:
           continue
@@ -7070,7 +7070,7 @@ class KernelWriterAssembly(KernelWriter):
     return self.addBiasGlobalLoad(dataType, kernel, biasVgpr, addr0, addr1, addrCalc.biasOffset, ss.cfg.gwvw)
 
   ##############################################################################
-  def addStore(self, kernel, tc: str, ss, addrCalc, sumIdx, tmpS01, edge, comment):
+  def addStore(self, kernel, ss, tc: str, addrCalc, sumIdx, tmpS01, edge, comment):
     """
     Add stores for the element with addrCalc and sumIdx.
     tmpS01 is a single :temp sGPR
@@ -7114,7 +7114,7 @@ class KernelWriterAssembly(KernelWriter):
         if ss.optSrdIncForRow and addrCalc.rowInc:
           module.add(addrCalc.incrementToNextRow(kernel, "E", ss, tmpS01, isCompute=True))
         dataType     = kernel["ProblemType"]["ComputeDataType"]
-        globalOffset = addrCalc.globalOffsetE
+        globalOffset = addrCalc.globalOffsetInternal
       else:
         printExit("Unsupported store tc %s"%tc)
 
@@ -7147,47 +7147,54 @@ class KernelWriterAssembly(KernelWriter):
     return module
 
   ##############################################################################
-  # Global Read C Input
+  # Global Read Input
   ##############################################################################
-  def readCInput(self, kernel, ss, addrCalc, vc0, data, gwvw, addr, tmpS01):
-    module = Module("readCInput")
-    bps = kernel["ProblemType"]["DestDataType"].numBytes() * gwvw
+  def readInput(self, kernel, ss, tc: str, dataType, addrCalc, vc0, data, gwvw, addr, tmpS01):
+    module = Module("read%sInput"%tc)
+    bps = dataType.numBytes() * gwvw
     useBuffer = kernel["BufferStore"]
 
     if kernel["BufferStore"]:
       addr0 = vgpr(addr)
-      addr1 = sgpr("SrdC", 4)
+      addr1 = sgpr("Srd%s"%tc, 4)
     else:
       addr0 = vgpr(addr,2)
       addr1 = ""
 
-    isGlc = True if kernel["NonTemporalC"]%2==1 else False
-    isSlc = True if kernel["NonTemporalC"]//2==1 else False
+    isGlc = True if kernel["NonTemporal%s"%tc]%2==1 else False
+    isSlc = True if kernel["NonTemporal%s"%tc]//2==1 else False
+
+    if dataType == kernel["ProblemType"]["ComputeDataType"]:
+      globalOffset = addrCalc.globalOffsetInternal
+      isCompute    = True
+    else:
+      globalOffset = addrCalc.globalOffset
+      isCompute    = False
 
     if ss.optSrdIncForRow and addrCalc.rowInc:
-      module.add(addrCalc.incrementToNextRow(kernel, "C", ss, tmpS01))
+      module.add(addrCalc.incrementToNextRow(kernel, tc, ss, tmpS01, isCompute=isCompute))
 
-    if kernel["ProblemType"]["DestDataType"].isHalf():
+    if dataType.isHalf():
       module.add(self.chooseGlobalRead(useBuffer, bps, data, \
-                addr0, addr1, soffset=0, offset=addrCalc.globalOffset, \
+                addr0, addr1, soffset=0, offset=globalOffset, \
                 glc=isGlc, slc=isSlc, lds=False, hi16=vc0 % 2,
-                comment="load C for beta calc"))
-    elif kernel["ProblemType"]["DestDataType"].isInt8():
+                comment="load %s"%tc))
+    elif dataType.isInt8():
      module.add(self.chooseGlobalRead(useBuffer, bps, data, \
-                addr0, addr1, soffset=0, offset=addrCalc.globalOffset, \
+                addr0, addr1, soffset=0, offset=globalOffset, \
                 glc=isGlc, slc=isSlc, lds=False, \
                 #hi16=vc0 % 4,
-                comment="load C for beta calc"))
-    elif kernel["ProblemType"]["DestDataType"].isBFloat16() or \
-         kernel["ProblemType"]["DestDataType"].isInt32() or \
-         kernel["ProblemType"]["DestDataType"].isSingle() or \
-         kernel["ProblemType"]["DestDataType"].isDouble() or \
-         kernel["ProblemType"]["DestDataType"].isSingleComplex() or \
-         kernel["ProblemType"]["DestDataType"].isDoubleComplex():
+                comment="load %s"%tc))
+    elif dataType.isBFloat16() or \
+         dataType.isInt32() or \
+         dataType.isSingle() or \
+         dataType.isDouble() or \
+         dataType.isSingleComplex() or \
+         dataType.isDoubleComplex():
       module.add(self.chooseGlobalRead(useBuffer, bps, data, \
-                addr0, addr1, soffset=0, offset=addrCalc.globalOffset, \
+                addr0, addr1, soffset=0, offset=globalOffset, \
                 glc=isGlc, slc=isSlc, lds=False, \
-                comment="load C for beta calc"))
+                comment="load %s"%tc))
 
     return module
 
@@ -7315,7 +7322,8 @@ class KernelWriterAssembly(KernelWriter):
     elif ((kernel["GlobalSplitU"] == 1) and kernel["ActivationFused"]) and \
       (kernel["ProblemType"]["ActivationType"] != 'none'):
       if kernel["ProblemType"]["ActivationType"] == 'all':
-        activationEnumStrList = ActivationType.getEnumStrList(activationCDataType)
+        exportType = ActivationType.Export.GRADONLY if kernel["ProblemType"]["Gradient"] else ActivationType.Export.NORMAL
+        activationEnumStrList = ActivationType.getEnumStrList(activationCDataType, exportType=exportType)
         for _, enumStr in enumerate(activationEnumStrList):
           activationLabelModule = Label("Activation_%s%s"% (enumStr.capitalize(), activationLabelSuffix), "")
           activationLabelModules.append(activationLabelModule)
@@ -7413,7 +7421,8 @@ class KernelWriterAssembly(KernelWriter):
     module = Module("ActivationBeforePack")
     if satInt8:
       activation.setSaturationForInt8(True)
-    activation.setVgprPrefixFormat("ValuC+%u")
+    if not kernel["ProblemType"]["Gradient"]:
+      activation.setVgprPrefixFormat("ValuC+%u")
     for vi in range(0, gwvw):
       vgprIn  = elementSumIdxIn + vi - self.states.c.startVgprValu
       vgprOut = elementSumIdxOut + vi
