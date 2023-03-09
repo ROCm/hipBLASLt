@@ -192,7 +192,7 @@ class KernelWriterActivationOnly(KernelWriterBase):
         names += ", activationType"
       for name in self.state["ProblemType"]["ActivationType"].getAdditionalArgStringList():
         names += (", " + name)
-      rvalueStr = "activation((%s)D[idxD]%s)" % (typeActivationStr, names)
+      rvalueStr = "activation%s((%s)D[idxD]%s)" % (self.gaurdStr, typeActivationStr, names)
 
       if self.state["ProblemType"]["DestDataType"].isInt8() and self.state["ProblemType"]["HighPrecisionAccumulate"]:
         rvalueStr = "min(127, max(-128, (int32_t)std::nearbyint(%s)))" % rvalueStr
@@ -222,6 +222,7 @@ class KernelWriterActivationOnly(KernelWriterBase):
     elif self.state["ProblemType"]["ActivationType"] != 'none':
       name += "_%s"%str(self.state["ProblemType"]["ActivationType"]).upper()
     name += ("h" if self.state["ProblemType"]["ActivationHPA"] else "")
+    name += ("g" if self.state["ProblemType"]["ActivationGuard"] else "")
 
     return name
 
@@ -250,8 +251,10 @@ class KernelWriterActivationOnly(KernelWriterBase):
       fileString += "\n"
       activationCDataType = self.state["ProblemType"]["ActivationComputeDataType"]
       if self.state["ProblemType"]["ActivationType"] == 'all':
-        fileString += "#include \"TensileActivation_%s_%s.h\"\n"%(activationCDataType.toChar(), \
-                                                                  self.state["ProblemType"]["ActivationType"])
+        fileString += "#include \"Tensile%sActivation%s_%s_%s.h\"\n"%(self.actGradientPrefix, \
+                                                                      self.gaurdStr, \
+                                                                      activationCDataType.toChar(), \
+                                                                      self.state["ProblemType"]["ActivationType"])
       fileString += "\n"
 
     fileString += self.functionSignature()

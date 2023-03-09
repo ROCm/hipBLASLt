@@ -198,6 +198,12 @@ class ProblemType(Mapping):
         printWarning("Single and Double does not support ActivationHPA. ActivationHPA will be set to False automatically.")
         self["ActivationHPA"] = False
 
+    if "ActivationGuard" in config:
+      self["ActivationGuard"] = config["ActivationGuard"]
+      if self["ActivationGuard"] and (self["ActivationType"] == 'none'):
+        print("ActivationGuard is set to False cause Acivation is off.")
+        self["ActivationGuard"] = False
+
     self["ActivationComputeDataType"] = self["ComputeDataType"] if self["ActivationHPA"] else \
                                         self["DestDataType"]
 
@@ -210,9 +216,22 @@ class ProblemType(Mapping):
           self["UseE"] = config["UseE"]
       else:
         self["UseE"] = config["UseE"]
-    else:
-      self["UseE"] = False
 
+    if "Gradient" in config:
+      if config["Gradient"]:
+        if self["ActivationType"] != 'none' and self["UseE"] == False:
+          printWarning("Use E is enabled cause Activation is enabled.")
+          self["UseE"] = True
+        elif self["ActivationType"] != 'none' and self["UseE"] == False:
+          printWarning("Use E is disabled cause Activation is disabled.")
+          self["UseE"] = False
+        if self["UseScaleD"]:
+          printWarning("Use scaleD is disabled cause Gradient is enabled.")
+          self["UseScaleD"] = False
+        if self["UseBias"]:
+          printWarning("UseBias is disabled cause Gradient is enabled.")
+          self["UseBias"] = False
+      self["Gradient"] = config["Gradient"]
 
   ################################################################################
    # Function checkIfSupportedGEMMType:
@@ -408,7 +427,11 @@ class ProblemType(Mapping):
     if self["UseInitialStridesAB"]: name += "I"
     if self["UseInitialStridesCD"]: name += "Ic"
     if self["UseBias"]: name += "_Bias" # Not showing bias types
-    if self["UseE"]: name += "_Aux" # Not showing aux types
+    if self["UseE"]:
+      if self["Gradient"]:
+        name += "_Grad"
+      else:
+        name += "_Aux" # Not showing aux types
 
     # precision and other
     # name += "_SB" if self["StridedBatched"] else "_GB"
@@ -424,6 +447,7 @@ class ProblemType(Mapping):
       else:
         name += "_%s"%str(self["ActivationType"]).upper()
     if self["ActivationHPA"]: name += "H"
+    if self["ActivationGuard"]: name += "G"
 
     if self["UseScaleD"]: name += "_SD"
 
