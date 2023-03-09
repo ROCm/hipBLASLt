@@ -1022,7 +1022,7 @@ defaultBenchmarkCommonParameters = [
     {"DirectToVgprA":             [ False ] },
     {"DirectToVgprB":             [ False ] },
     {"DirectToVgprMetadata":      [ False ] },
-    {"DirectToVgprSparseMetadata":[ True ] },
+    {"DirectToVgprSparseMetadata":[ False ] },
     {"DirectToLds":               [ False ] },
     {"UseSgprForGRO":             [ -1 ] },
     {"UseInstOffsetForGRO":       [ 0 ] },

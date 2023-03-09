@@ -2025,6 +2025,8 @@ class Solution(collections.abc.Mapping):
       state["DirectToVgprMetadata"] = False
       state["LocalWriteUseSgprMetadat"] = False
       state["ProblemType"]["MirrorDimsMetadata"]  = state["ProblemType"]["MirrorDimsA"]
+    elif not state["ProblemType"]["SparseA"]:
+      state["DirectToVgprSparseMetadata"] = False
 
     # Init vars early since there are early-exit return statements below
     state["DirectToLdsA"] = False
