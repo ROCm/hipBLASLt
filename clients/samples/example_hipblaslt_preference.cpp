@@ -67,6 +67,8 @@
 #define ALPHA 2
 #define BETA 3
 #define BENCH_LOOP_COUNT 3
+#define COLD_LOOP_COUNT 0
+#define GPU_TIMER 0
 
 typedef enum _ActivationType
 {
@@ -215,6 +217,19 @@ void mat_mul_bias_activation(Tc             alpha,
     }
 }
 
+/*! \brief  CPU Timer(in microsecond): synchronize with given queue/stream and return wall time */
+double get_time_us_sync(hipStream_t stream)
+{
+    hipStreamSynchronize(stream);
+
+    auto now = std::chrono::steady_clock::now();
+    // now.time_since_epoch() is the duration since epoch
+    // which is converted to microseconds
+    auto duration
+        = std::chrono::duration_cast<std::chrono::microseconds>(now.time_since_epoch()).count();
+    return (static_cast<double>(duration));
+};
+
 // cppcheck-suppress constParameter
 static void show_usage(char* argv[])
 {
@@ -251,6 +266,10 @@ static void show_usage(char* argv[])
                  "enabled)\n"
               << "\t--timing \t\ttiming \t\tBechmark GPU kernel performance:0 or "
                  "1 (default is 1)\n"
+              << "\t--iters \t\titers \t\tIterations to run inside timing loop "
+                 "(default is 3)\n"
+              << "\t--cold_iters \t\tcold_iters \tCold Iterations to run "
+                 "before entering the timing loop (default is 0)\n"
               << std::endl;
 }
 
@@ -279,7 +298,9 @@ static int parse_arguments(int                 argc,
                            bool&               header,
                            bool&               verbose,
                            bool&               validate,
-                           bool&               timing)
+                           bool&               timing,
+                           int32_t&            bench_loop_count,
+                           int32_t&            cold_loop_count)
 {
     if(argc >= 2)
     {
@@ -445,6 +466,14 @@ static int parse_arguments(int                 argc,
                         return EXIT_FAILURE;
                     }
                 }
+                else if((arg == "--iters") && (i + 1 < argc))
+                {
+                    bench_loop_count = atoi(argv[++i]);
+                }
+                else if((arg == "--cold_iters") && (i + 1 < argc))
+                {
+                    cold_loop_count = atoi(argv[++i]);
+                }
                 else
                 {
                     std::cerr << "error with " << arg << std::endl;
@@ -596,7 +625,9 @@ void test_hipblaslt(hipblasDatatype_t  in_out_datatype,
                     ActivationType     actType,
                     bool               validate,
                     bool               verbose,
-                    bool               timing)
+                    bool               timing,
+                    int32_t            bench_loop_count,
+                    int32_t            cold_loop_count)
 {
     int64_t     a_stride_1, a_stride_2, b_stride_1, b_stride_2;
     int64_t     row_a, col_a, row_b, col_b, row_c, col_c;
@@ -787,9 +818,10 @@ void test_hipblaslt(hipblasDatatype_t  in_out_datatype,
         hipEvent_t start, stop;
         hipEventCreate(&start);
         hipEventCreate(&stop);
-        float eventMs = 1.0f;
-        hipEventRecord(start, stream);
-        for(int loop = 0; loop < BENCH_LOOP_COUNT; loop++)
+        float  eventMs = 1.0f;
+        double eventms = 0;
+
+        for(int loop = 0; loop < cold_loop_count; loop++)
         {
             CHECK_HIPBLASLT_ERROR(hipblasLtMatmul(handle,
                                                   matmul,
@@ -808,22 +840,58 @@ void test_hipblaslt(hipblasDatatype_t  in_out_datatype,
                                                   workspace_size,
                                                   stream));
         }
-        hipEventRecord(stop, stream);
-        hipEventSynchronize(stop);
-        hipEventElapsedTime(&eventMs, start, stop);
-        hipEventDestroy(start);
-        hipEventDestroy(stop);
-        eventMs /= BENCH_LOOP_COUNT;
+
+        if(GPU_TIMER)
+            hipEventRecord(start, stream);
+        else
+            eventms = get_time_us_sync(stream); // in microseconds
+
+        for(int loop = 0; loop < bench_loop_count; loop++)
+        {
+            CHECK_HIPBLASLT_ERROR(hipblasLtMatmul(handle,
+                                                  matmul,
+                                                  &alpha,
+                                                  da,
+                                                  matA,
+                                                  db,
+                                                  matB,
+                                                  &beta,
+                                                  dc,
+                                                  matC,
+                                                  dd,
+                                                  matD,
+                                                  &heuristicResult[0].algo,
+                                                  d_workspace,
+                                                  workspace_size,
+                                                  stream));
+        }
+
+        if(GPU_TIMER)
+        {
+            hipEventRecord(stop, stream);
+            hipEventSynchronize(stop);
+            hipEventElapsedTime(&eventMs, start, stop);
+            hipEventDestroy(start);
+            hipEventDestroy(stop);
+            eventMs /= bench_loop_count;
+            eventms = eventMs * 1000;
+        }
+        else
+        {
+            eventms = get_time_us_sync(stream) - eventms;
+            eventms /= bench_loop_count;
+            eventMs = eventms / 1000;
+        }
         double flops  = 2 * m * n * k * batch_count;
         double tflops = flops / eventMs / 1000000000;
         timing_string
-            = timing_string + ", " + std::to_string(eventMs) + ", " + std::to_string(tflops);
-    }
-    std::cout << trans_string << m << ", " << n << ", " << k << ", " << lda << ", " << ldb << ", "
-              << ldc << ", " << stride_a << ", " << stride_b << ", " << stride_c << ", "
-              << batch_count << ", " << alpha << ", " << beta << ", " << enable_bias << ", "
-              << enable_scaleD << ", " << ToString(actType) << timing_string << std::endl;
+            = timing_string + ", " + std::to_string(eventms) + ", " + std::to_string(tflops);
 
+        std::cout << trans_string << m << ", " << n << ", " << k << ", " << lda << ", " << ldb
+                  << ", " << ldc << ", " << stride_a << ", " << stride_b << ", " << stride_c << ", "
+                  << batch_count << ", " << alpha << ", " << beta << ", " << enable_bias << ", "
+                  << enable_scaleD << ", " << ToString(actType) << timing_string << std::endl;
+    }
     // calculate golden or correct result
     if(validate)
     {
@@ -939,6 +1007,8 @@ void test_hipblaslt(hipblasDatatype_t  in_out_datatype,
 
 int main(int argc, char* argv[])
 {
+    int deviceId = 0;
+    CHECK_HIP_ERROR(hipSetDevice(deviceId));
     // initialize parameters with default values
     hipblasOperation_t trans_a         = HIPBLAS_OP_N;
     hipblasOperation_t trans_b         = HIPBLAS_OP_N;
@@ -954,7 +1024,9 @@ int main(int argc, char* argv[])
     int64_t k = invalid_int, ldc = invalid_int, stride_c = invalid_int;
     int64_t ldd = invalid_int, stride_d = invalid_int;
 
-    int32_t batch_count = BATCH_COUNT;
+    int32_t batch_count      = BATCH_COUNT;
+    int32_t bench_loop_count = BENCH_LOOP_COUNT;
+    int32_t cold_loop_count  = COLD_LOOP_COUNT;
 
     float          alpha         = ALPHA;
     float          beta          = BETA;
@@ -992,7 +1064,9 @@ int main(int argc, char* argv[])
                        header,
                        verbose,
                        validate,
-                       timing))
+                       timing,
+                       bench_loop_count,
+                       cold_loop_count))
     {
         show_usage(argv);
         return EXIT_FAILURE;
@@ -1079,7 +1153,9 @@ int main(int argc, char* argv[])
                                        actType,
                                        validate,
                                        verbose,
-                                       timing);
+                                       timing,
+                                       bench_loop_count,
+                                       cold_loop_count);
     else if(in_out_datatype == HIPBLAS_R_16F)
         test_hipblaslt<hipblasLtHalf>(in_out_datatype,
                                       trans_a,
@@ -1103,7 +1179,9 @@ int main(int argc, char* argv[])
                                       actType,
                                       validate,
                                       verbose,
-                                      timing);
+                                      timing,
+                                      bench_loop_count,
+                                      cold_loop_count);
     else if(in_out_datatype == HIPBLAS_R_16B)
         test_hipblaslt<hipblasLtBfloat16>(in_out_datatype,
                                           trans_a,
@@ -1127,7 +1205,9 @@ int main(int argc, char* argv[])
                                           actType,
                                           validate,
                                           verbose,
-                                          timing);
+                                          timing,
+                                          bench_loop_count,
+                                          cold_loop_count);
 
     return EXIT_SUCCESS;
 }
