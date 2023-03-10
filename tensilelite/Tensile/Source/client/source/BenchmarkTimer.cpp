@@ -179,22 +179,34 @@ namespace Tensile
             m_curNumEnqueuesPerSync = count;
         }
 
-        void BenchmarkTimer::preEnqueues()
+        void BenchmarkTimer::preEnqueues(hipStream_t const& stream)
         {
             if(!m_useGPUTimer)
             {
                 HIP_CHECK_EXC(hipDeviceSynchronize());
                 m_startTime = clock::now();
             }
+            else
+            {
+                hipEventCreate(&start);
+                hipEventCreate(&stop);
+                hipEventRecord(start, stream);
+            }
         }
 
         void BenchmarkTimer::postEnqueues(TimingEvents const& startEvents,
-                                          TimingEvents const& stopEvents)
+                                          TimingEvents const& stopEvents,
+                                          hipStream_t const&  stream)
         {
             if(!m_useGPUTimer)
             {
                 HIP_CHECK_EXC(hipDeviceSynchronize());
                 m_endTime = clock::now();
+            }
+            else
+            {
+                hipEventRecord(stop, stream);
+                hipEventSynchronize(stop);
             }
         }
 
@@ -206,15 +218,25 @@ namespace Tensile
 
             if(m_useGPUTimer)
             {
-                HIP_CHECK_EXC(hipEventSynchronize(stopEvents->back().back()));
-                for(size_t i = 0; i < startEvents->size(); i++)
+                if((start == nullptr) && (stop == nullptr))
                 {
                     float enqTime = 0.0f;
+                    HIP_CHECK_EXC(hipEventSynchronize(stopEvents->back().back()));
+                    for(size_t i = 0; i < startEvents->size(); i++)
+                    {
+                        HIP_CHECK_EXC(hipEventElapsedTime(
+                            &enqTime, startEvents->at(i).front(), stopEvents->at(i).back()));
 
-                    HIP_CHECK_EXC(hipEventElapsedTime(
-                        &enqTime, startEvents->at(i).front(), stopEvents->at(i).back()));
-
-                    totalTime += double_millis(enqTime);
+                        totalTime += double_millis(enqTime);
+                    }
+                }
+                else
+                {
+                    float eventMs = 0.0f;
+                    hipEventElapsedTime(&eventMs, start, stop);
+                    totalTime = double_millis(eventMs);
+                    hipEventDestroy(start);
+                    hipEventDestroy(stop);
                 }
             }
             else
