@@ -947,7 +947,10 @@ validParameters = {
 
     # True-  function call
     # False- inline
-    "ActivationFuncCall":          [False, True]
+    "ActivationFuncCall":          [False, True],
+
+    # Extra code to deal with NaN...
+    "ActivationGuard":             [False, True]
     }
 
 
@@ -1027,7 +1030,8 @@ defaultBenchmarkCommonParameters = [
     {"GroupLoadStore":            [ False ] },
     {"MIArchVgpr":                [ False ] },
     {"ActivationFused":           [ True  ] },
-    {"ActivationFuncCall":        [ True  ] }
+    {"ActivationFuncCall":        [ True  ] },
+    {"ActivationGuard":           [ False ] }
     ]
 
 # dictionary of defaults comprised of default option for each parameter

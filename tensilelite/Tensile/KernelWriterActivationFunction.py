@@ -68,7 +68,7 @@ class KernelWriterActivationFunction(KernelWriterBase):
       fileString += "\n"
 
     self._tf.setKernelInfo(tuple(self.state["Kernel"]["ISA"]), self.state["Kernel"]["WavefrontSize"])
-    activation = ActivationInline(activationCDataType)
+    activation = ActivationInline(activationCDataType, self.state["Kernel"]["ActivationGuard"])
     fileString += activation.generateInlineAssemblyFunction(self.state["ProblemType"]["ActivationType"], exportType=self.actExportType)
 
     return fileString

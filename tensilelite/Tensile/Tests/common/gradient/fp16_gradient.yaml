@@ -64,6 +64,7 @@ BenchmarkProblems:
         - NumElementsPerBatchStore: [2]
         - StorePriorityOpt: [1]
         - ActivationFuncCall: [0, 1]
+        - ActivationGuard: [0, 1]
       BenchmarkJoinParameters:
       BenchmarkFinalParameters:
         - ProblemSizes:
@@ -75,7 +76,7 @@ BenchmarkProblems:
           - [Enum: Dgelu]
 
   ########################################
-  # NN - standard
+  # TN - standard
   ########################################
   -
     - # ProblemType
@@ -126,6 +127,7 @@ BenchmarkProblems:
         - NumElementsPerBatchStore: [2]
         - StorePriorityOpt: [1]
         - ActivationFuncCall: [0, 1]
+        - ActivationGuard: [0, 1]
       BenchmarkJoinParameters:
       BenchmarkFinalParameters:
         - ProblemSizes:

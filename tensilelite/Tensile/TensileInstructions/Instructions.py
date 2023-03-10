@@ -1199,6 +1199,15 @@ class SLShiftLeft4AddU32(CommonInstruction):
         self.setInst("s_lshl4_add_u32")
 
 # S mov
+class SSetMask(CommonInstruction):
+    def __init__(self, dst, src, comment="") -> None:
+        super().__init__(InstType.INST_B64, dst, [src], None, None, comment)
+        if self.kernel.wavefrontSize == 32:
+            self.instType = InstType.INST_B32
+            self.setInst("s_mov_b32")
+        else:
+            self.setInst("s_mov_b64")
+
 class SMovB32(CommonInstruction):
     def __init__(self, dst, src, comment="") -> None:
         super().__init__(InstType.INST_B32, dst, [src], None, None, comment)
@@ -1814,6 +1823,11 @@ class VCmpNeU64(VCmpInstruction):
         self.setInst("v_cmp_ne_u64")
 
 # CmpX
+class VCmpXClassF32(VCmpXInstruction):
+    def __init__(self, dst, src0, src1, sdwa: Optional[SDWAModifiers] = None, comment="") -> None:
+        super().__init__(InstType.INST_U32, dst, src0, src1, sdwa, comment)
+        self.setInst("v_cmpx_class_f32")
+
 class VCmpXEqU32(VCmpXInstruction):
     def __init__(self, dst, src0, src1, sdwa: Optional[SDWAModifiers] = None, comment="") -> None:
         super().__init__(InstType.INST_U32, dst, src0, src1, sdwa, comment)
@@ -1833,6 +1847,11 @@ class VCmpXLeU32(VCmpXInstruction):
     def __init__(self, dst, src0, src1, sdwa: Optional[SDWAModifiers] = None, comment="") -> None:
         super().__init__(InstType.INST_U32, dst, src0, src1, sdwa, comment)
         self.setInst("v_cmpx_le_u32")
+
+class VCmpXLtF32(VCmpXInstruction):
+    def __init__(self, dst, src0, src1, sdwa: Optional[SDWAModifiers] = None, comment="") -> None:
+        super().__init__(InstType.INST_F32, dst, src0, src1, sdwa, comment)
+        self.setInst("v_cmpx_lt_f32")
 
 class VCmpXLtI32(VCmpXInstruction):
     def __init__(self, dst, src0, src1, sdwa: Optional[SDWAModifiers] = None, comment="") -> None:

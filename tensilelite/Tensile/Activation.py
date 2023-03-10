@@ -26,7 +26,7 @@ import struct
 from collections import OrderedDict
 
 from .TensileInstructions import Module, TextBlock, HolderContainer, RegisterContainer, \
-                          VCC, vgpr, sgpr, Holder, fastdeepcopy, DataType, Label
+                          VCC, EXEC, vgpr, sgpr, Holder, fastdeepcopy, DataType
 from .TensileInstructions.Enums import *
 from .TensileInstructions.Instructions import *
 from .Common import printExit, printWarning
@@ -215,15 +215,16 @@ class ActivationType:
 class actCacheInfo:
     usePK: bool
     saturateI8: bool
+    enableGuard: bool
     prefix: str
     vgprIdxList: List[List[RegisterContainer]]
     module: Module
     vgprCounter: int
     sgprCounter: int
 
-    def isSame(self, usePK, saturateI8, prefix):
+    def isSame(self, usePK, saturateI8, enableGuard, prefix):
         return (self.usePK == usePK) and (self.saturateI8 == saturateI8) and \
-            (self.prefix == prefix)
+            (self.enableGuard == enableGuard) and (self.prefix == prefix)
 
 ActivationMagicNumbers = {"FloatGeluK0": 0x3f4c422a, \
                           "FloatGeluK1": 0x3d372713, \
@@ -265,6 +266,8 @@ class ActivationModule:
         self.cacheDict = {}
         self.useCache = False
         self.labelCounter = 0
+
+        self.enableGuard = False
 
     # Public function
     def getModule(self, cDataType, activationType, vgprIn, vgprOut):
@@ -336,6 +339,9 @@ class ActivationModule:
 
     def setUseCache(self, cache: bool):
         self.useCache = cache
+
+    def setGuard(self, guard: bool):
+        self.enableGuard = guard
 
     ################################################################################
     ################################################################################
@@ -649,22 +655,10 @@ class ActivationModule:
     def getDGeluModule(self, cDataType, vgprIn, vgprOut):
         self.needCombine = True
         module = Module("Gradient Gelu")
-        # tmp = x * x
-        # tmp = tmp * x
-        # tmp2 = 0.0535161 * tmp + 0.398942 * x # x1
-        # tmp  = 0.035677 * tmp + 0.797885 * x
-        # tmp3 = exp(tmp)
-        # tmp = exp(-tmp)
-        # out = tmp3 + tmp # (e^xx + e^-xx)
-        # tmp = tmp3 - tmp # (e^xx - e^-xx)
-        # tmp3 = 1/out # 1/ (e^xx + e^-xx)
-        # out = tmp3 * tmp # (e^xx - e^-xx) / (e^xx + e^-xx)
-        # out = 0.5 * out # 0.5 * (e^xx - e^-xx) / (e^xx + e^-xx)
-        # tmp = tmp * tmp
-        # tmp = 1/tmp
-        # tmp = 4 * tmp # x2
-        # out = tmp * tmp2 + out
-        # out = out + 0.5
+        # x1 = (0.0535161 * pow(x, 3) + 0.398942 * x)
+        # xx = 0.0356774 * pow(x, 3)+ 0.797885 * x
+        # x2 = cosh-2(xx) = 4/pow(math.exp(-xx) + math.exp(xx),2)
+        # => 0.5 * math.tanh(xx) + x1 * x2 + 0.5
         if cDataType.isSingle():
             vgprTemp1 = self.getVgpr(1)
             vgprTemp2 = self.getVgpr(1)
@@ -688,8 +682,16 @@ class ActivationModule:
             module.add(VAddF32(dst=self.vgprPrefix(vgprOut), src0=vgpr(Holder(idx=vgprTemp3)), src1=vgpr(Holder(idx=vgprTemp1)), comment="out = e^xx + e^-xx"))
             module.add(VSubF32(dst=vgpr(Holder(idx=vgprTemp1)), src0=vgpr(Holder(idx=vgprTemp3)), src1=vgpr(Holder(idx=vgprTemp1)), comment="tmp1 = e^xx - e^-xx"))
             module.add(VRcpF32(dst=vgpr(Holder(idx=vgprTemp3)), src=self.vgprPrefix(vgprOut), comment="tmp3 = 1/out"))
-            module.add(VMulF32(dst=vgpr(Holder(idx=vgprTemp1)), src0=vgpr(Holder(idx=vgprTemp1)), src1=vgpr(Holder(idx=vgprTemp3)), comment="tmp1 = tmp1 * tmp3"))
-            module.add(VMulF32(dst=vgpr(Holder(idx=vgprTemp1)), src0=0.5, src1=vgpr(Holder(idx=vgprTemp1)), comment="tmp1 = 0.5 * tmp1"))
+            module.add(VMulF32(dst=vgpr(Holder(idx=vgprTemp3)), src0=vgpr(Holder(idx=vgprTemp1)), src1=vgpr(Holder(idx=vgprTemp3)), comment="tmp3 = tmp1 * tmp3"))
+            if self.enableGuard:
+                coef = floatUnion(u=0x200)
+                module.add(SMovB32(dst=sgpr(Holder(idx=sgprTemp)), src=hex(0x200), comment="move magic number to sgpr"))
+                module.add(VCmpXClassF32(dst=EXEC(), src0=self.vgprPrefix(vgprOut), src1=sgpr(Holder(idx=sgprTemp)), comment="True if tmp1 = inf"))
+                module.add(VMovB32(dst=vgpr(Holder(idx=vgprTemp3)), src=hex(0x3f800000), comment="tmp3 = 1 if True"))
+                module.add(VCmpXLtF32(dst=EXEC(), src0=vgpr(Holder(idx=vgprTemp2)), src1=0, comment="check if x < 0" ))
+                module.add(VMovB32(dst=vgpr(Holder(idx=vgprTemp3)), src=hex(0xbf800000), comment="tmp3 = -1 if True"))
+                module.add(SSetMask(dst=EXEC(), src=-1, comment="reset mask" ))
+            module.add(VMulF32(dst=vgpr(Holder(idx=vgprTemp1)), src0=0.5, src1=vgpr(Holder(idx=vgprTemp3)), comment="tmp1 = 0.5 * tmp1"))
             module.add(VMulF32(dst=self.vgprPrefix(vgprOut), src0=self.vgprPrefix(vgprOut), src1=self.vgprPrefix(vgprOut), comment="out = out * out"))
             module.add(VRcpF32(dst=self.vgprPrefix(vgprOut), src=self.vgprPrefix(vgprOut), comment="out = 1/out"))
             coef = floatUnion(f=4)
@@ -717,7 +719,7 @@ class ActivationModule:
         # Get reg name
         regName = self.vgprPrefixFormat.split("+")[0] if self.vgprPrefixFormat else ""
         vgprIdxList = createVgprIdxList(copied, [vgprIn, vgprOut], regName)
-        actInfo = actCacheInfo(usePK=self.usePK, saturateI8=self.saturateI8, \
+        actInfo = actCacheInfo(usePK=self.usePK, saturateI8=self.saturateI8, enableGuard=self.enableGuard, \
                 prefix=self.vgprPrefixFormat, vgprIdxList=vgprIdxList, module=copied, \
                 vgprCounter=self.vgprCounter, sgprCounter=self.sgprCounter)
         if typeChar in actDict:
@@ -733,7 +735,7 @@ class ActivationModule:
                 actInfoList = actDict[typeChar]
                 for actInfo in actInfoList:
                     if actInfo.isSame(usePK=self.usePK, saturateI8=self.saturateI8, \
-                        prefix=self.vgprPrefixFormat):
+                                      enableGuard=self.enableGuard, prefix=self.vgprPrefixFormat):
                         if self.vgprPrefixFormat:
                             for vgpr in actInfo.vgprIdxList[0]:
                                 vgpr.regName.offsets[0] = vgprIn
@@ -1067,9 +1069,10 @@ def addSpace(alignStr, str):
   return '{message: >{width}}'.format(message=str, width=totalLength)
 
 class ActivationInline:
-  def __init__(self, dataType) -> None:
-    self.dataType = dataType
-    self.asmStr = "asm("
+  def __init__(self, dataType, enableGuard) -> None:
+    self.dataType    = dataType
+    self.enableGuard = enableGuard
+    self.asmStr      = "asm("
 
   # Public Function
   def generateInlineAssemblyFunction(self, activationType, exportType: ActivationType.Export):
@@ -1143,6 +1146,7 @@ class ActivationInline:
   def generateInlineAssemblyBody(self, spaces, activationType):
     ptrStr = self.dataType.toDevice("HIP")
     activation = ActivationModule()
+    activation.setGuard(self.enableGuard)
     activation.setUsePK(False)
     activation.resetGprCounter()
     kStr = ""

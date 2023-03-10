@@ -1038,7 +1038,7 @@ class Solution(collections.abc.Mapping):
       state = {}
       state["ProblemType"] = deepcopy(self["ProblemType"])
       state["KernelLanguage"] = "Source"
-      state["Kernel"] = {"WavefrontSize": self["WavefrontSize"], "ISA": tuple(self["ISA"])}
+      state["Kernel"] = {"WavefrontSize": self["WavefrontSize"], "ISA": tuple(self["ISA"]), "ActivationGuard": self["ActivationGuard"]}
       self.activationFunctionObjects.append(KernelWriterActivationFunction(state))
 
   def initActivationOnlyKernelObjects(self):

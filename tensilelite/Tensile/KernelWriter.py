@@ -2477,6 +2477,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
 
     if kernel["ProblemType"]["ActivationType"] == 'all':
       self.exclasses.activation.setUseCache(True)
+    self.exclasses.activation.setGuard(kernel["ActivationGuard"])
 
     self.states.asmCaps  = ti.getAsmCaps()
     self.states.archCaps = ti.getArchCaps()
