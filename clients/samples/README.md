@@ -33,4 +33,6 @@ options:
         --scaleD                scaleD          GEMM_STRIDED enable scaleD: 0 or 1 (default is 0)
         --header                header          Print header for output (default is enabled)
         --timing                timing          Bechmark GPU kernel performance:0 or 1 (default is 1)
+        --iters                 iters           Iterations to run inside timing loop (default is 3)
+        --cold_iters            cold_iters      Cold Iterations to run before entering the timing loop (default is 0)
 ```
