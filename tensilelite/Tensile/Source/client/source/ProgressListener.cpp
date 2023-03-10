@@ -159,10 +159,11 @@ namespace Tensile
 
         void ProgressListener::setNumEnqueuesPerSync(size_t count) {}
 
-        void ProgressListener::preEnqueues() {}
+        void ProgressListener::preEnqueues(hipStream_t const& stream) {}
 
         void ProgressListener::postEnqueues(TimingEvents const& startEvents,
-                                            TimingEvents const& stopEvents)
+                                            TimingEvents const& stopEvents,
+                                            hipStream_t const&  stream)
         {
         }
 
