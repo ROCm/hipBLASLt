@@ -227,16 +227,17 @@ namespace Tensile
                     (*iter)->setNumEnqueuesPerSync(count);
             }
 
-            virtual void preEnqueues() override
+            virtual void preEnqueues(hipStream_t const& stream) override
             {
                 for(auto iter = m_reporters.begin(); iter != m_reporters.end(); iter++)
-                    (*iter)->preEnqueues();
+                    (*iter)->preEnqueues(stream);
             }
             virtual void postEnqueues(TimingEvents const& startEvents,
-                                      TimingEvents const& stopEvents) override
+                                      TimingEvents const& stopEvents,
+                                      hipStream_t const&  stream) override
             {
                 for(auto iter = m_reporters.begin(); iter != m_reporters.end(); iter++)
-                    (*iter)->postEnqueues(startEvents, stopEvents);
+                    (*iter)->postEnqueues(startEvents, stopEvents, stream);
             }
 
             virtual void validateEnqueues(std::shared_ptr<ProblemInputs> inputs,
