@@ -113,7 +113,7 @@ def _getAssignmentDictIter(module, assignmentDict):
 def _addRegToGraph(item, assignmentDict, params: list, graph, noOpt):
     for p in params:
         if isinstance(p, RegisterContainer):
-            _setName2RegNum(p, assignmentDict)
+            _setName2RegNum(p, assignmentDict, item)
             if p.regType == "acc":
                 continue
             for i in range(p.regIdx, p.regIdx + p.regNum):
@@ -187,10 +187,12 @@ def _removeDuplicateAssignmentGPR(graph, regType):
 ################################################################################
 
 # Find ".set AAAAA 0" and convert "s[AAAAA]" into "s0"
-def _setName2RegNum(gpr, assignmentDict):
+def _setName2RegNum(gpr, assignmentDict, item):
     assert(isinstance(gpr, RegisterContainer))
     if gpr.regIdx == None and gpr.regName:
         name = gpr.getRegNameWithType()
+        if name not in assignmentDict:
+            print(str(item))
         num = assignmentDict[name] + gpr.regName.getTotalOffsets()
         gpr.regIdx = num
     RegNumList = []
