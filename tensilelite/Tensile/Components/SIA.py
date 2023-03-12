@@ -712,9 +712,13 @@ def prepareLWInstToSched(writer, kernel, numLocalWritesPerSched):
     # See getNumLocalWritePerMfma for how this work
     itemsLWToSchedTemp = []
     for i in range(len(itemsLWToSched)-1):
-        itemsLWToSchedTemp.append(itemsLWToSched.pop(0))
-        for j in range(PRECISION-1):
-            itemsLWToSchedTemp.append(Module())
+        item = itemsLWToSched.pop(0)
+        itemsLWToSchedTemp.append(item)
+        skip = kernel["PrefetchGlobalRead"] == 2 and kernel["ProblemType"]["SparseA"] and kernel["DirectToVgprSparseMetadata"] \
+           and item.name.startswith("MetadataWrite") and item.countType(VMovB32)
+        if not skip:
+           for j in range(PRECISION-1):
+               itemsLWToSchedTemp.append(Module())
     if itemsLWToSched:
         itemsLWToSchedTemp.append(itemsLWToSched.pop(0))
         for i in range(numLocalWritesPerSched + numLocalWritesPerSched % PRECISION - len(itemsLWToSchedTemp) % numLocalWritesPerSched):
