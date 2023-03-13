@@ -529,9 +529,8 @@ namespace Tensile
             // Init tensors
             for(size_t i = 0; i < m_vdata.size(); i++)
             {
-                std::string initName   = "init-" + m_vdata[i].name;
-                std::string offsetName = "offset-" + m_vdata[i].name;
-                std::string typeName   = m_vdata[i].name + "-type";
+                std::string initName = "init-" + m_vdata[i].name;
+                std::string typeName = m_vdata[i].name + "-type";
                 if(args.count(initName))
                 {
                     m_vdata[i].init = args[initName].as<InitMode>();
@@ -539,18 +538,6 @@ namespace Tensile
                 else
                 {
                     m_vdata[i].init = InitMode::Zero;
-                }
-                if(args.count(offsetName))
-                {
-                    m_vdata[i].offset = args[offsetName].as<size_t>();
-                    for(auto p : m_vdata[i].pristine)
-                    {
-                        p.second.maxElements += m_vdata[i].offset;
-                    }
-                }
-                else
-                {
-                    m_vdata[i].offset = 0;
                 }
 
                 for(auto p = m_vdata[i].pristine.begin(); p != m_vdata[i].pristine.end();)

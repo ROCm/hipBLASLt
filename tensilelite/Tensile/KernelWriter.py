@@ -65,7 +65,6 @@ class MatrixInfo:
   startVgprValu: int             = -1
 
   numSgprStrides: int            = -1
-  numSgprOffset: int             = -1
 
 @dataclass
 class ABMatrixInfo(MatrixInfo):
@@ -3220,10 +3219,6 @@ class KernelWriter(metaclass=abc.ABCMeta):
       self.states.b.numSgprStrides -= 1
     self.states.numSgprSizesSum = kernel["ProblemType"]["NumIndicesSummation"]
     self.states.numSgprSizesFree = kernel["ProblemType"]["NumIndicesC"]
-    self.states.d.numSgprOffset = 1
-    self.states.c.numSgprOffset = 1
-    self.states.a.numSgprOffset = 1
-    self.states.b.numSgprOffset = 1
     self.states.numActivationTypeArgSize = 0 # Will change to 1 if activationType == All
     self.states.numActivationArgSize = max(1, int(kernel["ProblemType"]["DestDataType"].numRegisters()))
     self.states.numactivationArgTotalSize = self.states.numActivationArgSize * kernel["ProblemType"]["ActivationType"].getAdditionalArgNum()
@@ -3302,7 +3297,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
       self.defineSgpr("SrdScaleD", 4, 4)# asm input interface
     ###################################
     # Get kernel argument start here
-    self.defineSgpr("Tensor2dSizeA", 2,4)
+    self.defineSgpr("AddressD", numSgprAddressD,4)
     # fill empty Sgpr slot caused by Sgpr alignment,
     # because we need following defineSgpr use continuous sgpr
     SgprSlot = []
@@ -3313,9 +3308,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
         self.sgprPool.checkIn(tempSgpr)
         break
       SgprSlot.append(tempSgpr)
-    self.defineSgpr("Tensor2dSizeB", 2, 2)
 
-    self.defineSgpr("AddressD", numSgprAddressD)
     self.defineSgpr("AddressC", numSgprAddressC)
     self.defineSgpr("AddressA", numSgprAddressA)
     self.defineSgpr("AddressB", numSgprAddressB)
@@ -3354,27 +3347,22 @@ class KernelWriter(metaclass=abc.ABCMeta):
     # Mostly impacts flat kernels and GSU edge since these need SGPR
     # for conditionals
     self.states.lastPostLoopSgpr = self.sgprPool.size()
-    self.defineSgpr("NumFullBlocks", 1) # Magic number to use for div by (NumWorkGroups1 % WGM)
-    self.defineSgpr("WgmRemainder1", 1) # Magic number to use for div by (NumWorkGroups1 % WGM)
-    self.defineSgpr("MagicNumberWgmRemainder1", 1) # Magic number to use for div by (NumWorkGroups1 % WGM)
-
-    self.defineSgpr("OffsetD", self.states.d.numSgprOffset)
-    self.defineSgpr("OffsetC", self.states.c.numSgprOffset)
-    self.defineSgpr("OffsetA", self.states.a.numSgprOffset)
-    self.defineSgpr("OffsetB", self.states.b.numSgprOffset)
+    if kernel["WorkGroupMapping"] > 1:
+      self.defineSgpr("NumFullBlocks", 1) # Magic number to use for div by (NumWorkGroups1 % WGM)
+      self.defineSgpr("WgmRemainder1", 1) # Magic number to use for div by (NumWorkGroups1 % WGM)
+      self.defineSgpr("MagicNumberWgmRemainder1", 1) # Magic number to use for div by (NumWorkGroups1 % WGM)
 
     if kernel["ProblemType"]["GroupedGemm"]:
       self.defineSgpr("SmallMagicNumberDivWg0", 1)
       self.defineSgpr("SmallMagicNumberDivWg01", 1)
 
-    self.states.numSgprToLoad = 2 + 2 + numSgprAddressD + numSgprAddressC + numSgprAddressA + numSgprAddressB + numSgprAddressScaleD + numSgprAlpha + \
+    self.states.numSgprToLoad = numSgprAddressD + numSgprAddressC + numSgprAddressA + numSgprAddressB + numSgprAddressScaleD + numSgprAlpha + \
       (numSgprBeta if kernel["ProblemType"]["UseBeta"] else 0) + self.states.d.numSgprStrides + self.states.c.numSgprStrides + self.states.a.numSgprStrides + \
       self.states.b.numSgprStrides + self.states.numSgprSizesFree + self.states.numSgprSizesSum + \
       len(kernel["PackedC0IdxChars"][:-1])*2 + len(kernel["PackedC1IdxChars"][:-1])*2 + \
       1 + \
       2 + \
-      3 + \
-      self.states.d.numSgprOffset + self.states.c.numSgprOffset + self.states.a.numSgprOffset + self.states.b.numSgprOffset + \
+      (3 if kernel["WorkGroupMapping"] > 1 else 1) + \
       (2 if kernel["ProblemType"]["GroupedGemm"] else 0)
     # Get kernel argument end here
     ###################################

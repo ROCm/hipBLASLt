@@ -130,11 +130,11 @@ rocblaslt_status rocblaslt_matmul_impl(const rocblaslt_handle       handle,
         // float alpha_f = *(reinterpret_cast<const float *>(alpha));
         // float beta_f = *(reinterpret_cast<const float *>(beta));
 
-#define EX_PARM                                                                          \
-    handle, opA, opB, m, n, k, alpha, A, type_a, lda, batch_stride_a, 0, B, type_b, ldb, \
-        batch_stride_b, 0, beta, C, type_c, ldc, batch_stride_c, 0, D, type_d, ldd,      \
-        batch_stride_d, 0, num_batches_a, true, compute_type, algo, workspace,           \
-        workspaceSizeInBytes, bias, scaleD, bias_type, epilogue, stream
+#define EX_PARM                                                                                 \
+    handle, opA, opB, m, n, k, alpha, A, type_a, lda, batch_stride_a, B, type_b, ldb,           \
+        batch_stride_b, beta, C, type_c, ldc, batch_stride_c, D, type_d, ldd, batch_stride_d,   \
+        num_batches_a, true, compute_type, algo, workspace, workspaceSizeInBytes, bias, scaleD, \
+        bias_type, epilogue, stream
 
     return rocblaslt_matmul_template(EX_PARM);
 }

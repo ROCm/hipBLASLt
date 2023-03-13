@@ -66,7 +66,6 @@ namespace Tensile
 
             std::vector<DataType>                         m_tensorTypes;
             std::vector<std::vector<std::vector<size_t>>> m_tensorStrides;
-            std::vector<size_t>                           m_tensorOffsets;
 
             std::vector<DataType> m_constantTypes;
             std::vector<double>   m_constantValues;

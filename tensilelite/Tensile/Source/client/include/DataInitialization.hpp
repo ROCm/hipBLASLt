@@ -656,7 +656,6 @@ namespace Tensile
             {
                 std::string                      name;
                 InitMode                         init;
-                size_t                           offset;
                 std::map<DataType, PristineUnit> pristine;
             };
 

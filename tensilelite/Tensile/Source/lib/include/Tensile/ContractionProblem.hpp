@@ -188,34 +188,6 @@ namespace Tensile
                                                    double   beta);
 
         /**
-   * Create a ContractionProblemGemm representing a batched GEMM, specifying
-   * strides between matrices.
-   */
-        static ContractionProblemGemm GEMM_Strides(bool     transA,
-                                                   bool     transB,
-                                                   DataType aType,
-                                                   DataType bType,
-                                                   DataType cType,
-                                                   DataType dType,
-                                                   size_t   m,
-                                                   size_t   n,
-                                                   size_t   k,
-                                                   size_t   batchSize,
-                                                   size_t   lda,
-                                                   size_t   aStride,
-                                                   size_t   aOffset,
-                                                   size_t   ldb,
-                                                   size_t   bStride,
-                                                   size_t   bOffset,
-                                                   size_t   ldc,
-                                                   size_t   cStride,
-                                                   size_t   cOffset,
-                                                   size_t   ldd,
-                                                   size_t   dStride,
-                                                   size_t   dOffset,
-                                                   double   beta);
-
-        /**
    * Create a ContractionProblemGemm representing a batched SGEMM, with
    * leading dimensions, but no strides.
    */
@@ -317,58 +289,6 @@ namespace Tensile
                                                      double                     beta);
 
         /**
-   * Create a ContractionProblemGemm from a definition of each index, the
-   * size of each index, the strides of each tensor, and any operations.
-   *
-   * @param freeIndices  Free indices
-   * @param batchIndices Batch indices
-   * @param boundIndices Bound indices
-   * @param indexSizes   Size of each index, in the order of appearance in
-   *                     the D tensor.
-   *
-   * @param aType    Data type of A
-   * @param aStrides Strides of A
-   * @param aOps     Operations to apply to A as it is read
-   * @param aOffset  start offset of buffer A
-   *
-   * @param bType    Data type of B
-   * @param bStrides Strides of B
-   * @param bOps     Operations to apply to B as it is read
-   * @param bOffset  start offset of buffer B
-   *
-   * @param cType    Data type of C
-   * @param cStrides Strides of C
-   * @param cOps     Operations to apply to C as it is read
-   * @param cOffset  start offset of buffer C
-   *
-   * @param dType    Data type of D
-   * @param dStrides Strides of D
-   * @param dOps     Operations to apply to D as it is read
-   * @param dOffset  start offset of buffer D
-   *
-   * @param beta Representative value of beta. Is only used to possibly
-   *             select a more efficient kernel if we know that
-   *             `beta == 0` or `beta == 1`.
-   */
-        static ContractionProblemGemm FromIndexSizes(FreeIndices const&         freeIndices,
-                                                     BatchIndices const&        batchIndices,
-                                                     BoundIndices const&        boundIndices,
-                                                     std::vector<size_t> const& indexSizes,
-                                                     DataType                   aType,
-                                                     std::vector<size_t> const& aStrides,
-                                                     size_t                     aOffset,
-                                                     DataType                   bType,
-                                                     std::vector<size_t> const& bStrides,
-                                                     size_t                     bOffset,
-                                                     DataType                   cType,
-                                                     std::vector<size_t> const& cStrides,
-                                                     size_t                     cOffset,
-                                                     DataType                   dType,
-                                                     std::vector<size_t> const& dStrides,
-                                                     size_t                     dOffset,
-                                                     double                     beta);
-
-        /**
    * Create a ContractionProblemGemm based on an operation identifier such as
    * `Contraction_l_AlikC_Bjlk_Cijk_Dijk` and individual index sizes.
    *
@@ -404,52 +324,6 @@ namespace Tensile
                                                      std::vector<size_t> const& cStrides,
                                                      DataType                   dType,
                                                      std::vector<size_t> const& dStrides,
-                                                     double                     beta);
-
-        /**
-   * Create a ContractionProblemGemm based on an operation identifier such as
-   * `Contraction_l_AlikC_Bjlk_Cijk_Dijk` and individual index sizes.
-   *
-   * @param operationIdentifier String that represents this exact
-   *                            operation in terms of transposes, data
-   *                            types, and operations.
-   * @param indexSizes   Size of each index, in the order of appearance in
-   *                     the D tensor.
-   *
-   * @param aType    Data type of A
-   * @param aStrides Strides of A
-   * @param aOffset  Data offset of buffer A
-   *
-   * @param bType    Data type of B
-   * @param bStrides Strides of B
-   * @param bOffset  Data offset of buffer B
-   *
-   * @param cType    Data type of C
-   * @param cStrides Strides of C
-   * @param cOffset  Data offset of buffer C
-   *
-   * @param dType    Data type of D
-   * @param dStrides Strides of D
-   * @param dOffset  Data offset of buffer D
-   *
-   * @param beta Representative value of beta. Is only used to possibly
-   *             select a more efficient kernel if we know that
-   *             `beta == 0` or `beta == 1`.
-   */
-        static ContractionProblemGemm FromIndexSizes(std::string const&         operationIdentifier,
-                                                     std::vector<size_t> const& indexSizes,
-                                                     DataType                   aType,
-                                                     std::vector<size_t> const& aStrides,
-                                                     size_t                     aOffset,
-                                                     DataType                   bType,
-                                                     std::vector<size_t> const& bStrides,
-                                                     size_t                     bOffset,
-                                                     DataType                   cType,
-                                                     std::vector<size_t> const& cStrides,
-                                                     size_t                     cOffset,
-                                                     DataType                   dType,
-                                                     std::vector<size_t> const& dStrides,
-                                                     size_t                     dOffset,
                                                      double                     beta);
 
         /**
@@ -587,13 +461,12 @@ namespace Tensile
         void setE(DataType                   type,
                   std::vector<size_t> const& sizes,
                   std::vector<size_t> const& strides,
-                  size_t                     offset,
                   bool                       isOutput = false)
         {
             if(type != DataType::None && m_useE)
             {
                 TensorDescriptor e(
-                    "e", type, sizes.begin(), sizes.end(), strides.begin(), strides.end(), offset);
+                    "e", type, sizes.begin(), sizes.end(), strides.begin(), strides.end());
                 e.setAsOutput(isOutput);
                 m_tensors[ContractionProblemGemm::TENSOR::E] = e;
             }
@@ -604,7 +477,7 @@ namespace Tensile
             m_biasType = type;
             if(type != DataType::None && m_useBias)
             {
-                TensorDescriptor bias("bias", m_biasType, {length}, {1, length}, 0);
+                TensorDescriptor bias("bias", m_biasType, {length}, {1, length});
                 bias.setAsOutput(isOutput);
                 m_tensors[ContractionProblemGemm::TENSOR::BIAS] = bias;
             }
@@ -620,7 +493,7 @@ namespace Tensile
             m_scaleDType = type;
             if(type != DataType::None && m_useScaleD)
             {
-                TensorDescriptor scaleD("scaleD", m_scaleDType, {length}, {1, length}, 0);
+                TensorDescriptor scaleD("scaleD", m_scaleDType, {length}, {1, length});
                 m_tensors[ContractionProblemGemm::TENSOR::SCALED] = scaleD;
             }
         }

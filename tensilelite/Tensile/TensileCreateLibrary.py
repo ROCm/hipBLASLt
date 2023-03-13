@@ -1,6 +1,6 @@
 ################################################################################
 #
-# Copyright (C) 2022 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -121,6 +121,9 @@ def getAssemblyCodeObjectFiles(kernels, kernelWriterAssembly, outputPath):
             subprocess.check_call(args, cwd=asmDir)
           else:
             args = kernelWriterAssembly.getLinkCodeObjectArgs(objectFiles, coFile)
+            if globalParameters["PrintCodeCommands"]:
+              print(asmDir)
+              print(' '.join(args))
             subprocess.check_call(args, cwd=asmDir)
 
           coFiles.append(coFile)

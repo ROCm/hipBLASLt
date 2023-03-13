@@ -70,14 +70,12 @@ struct RocblasltContractionProblem
     size_t           row_stride_a;
     size_t           col_stride_a;
     size_t           batch_stride_a;
-    size_t           buffer_offset_a;
 
     const Ti*        B;
     const Ti* const* batch_B;
     size_t           row_stride_b;
     size_t           col_stride_b;
     size_t           batch_stride_b;
-    size_t           buffer_offset_b;
 
     const Tc* beta;
 
@@ -86,14 +84,12 @@ struct RocblasltContractionProblem
     size_t           row_stride_c;
     size_t           col_stride_c;
     size_t           batch_stride_c;
-    size_t           buffer_offset_c;
 
     To*        D;
     To* const* batch_D;
     size_t     row_stride_d;
     size_t     col_stride_d;
     size_t     batch_stride_d;
-    size_t     buffer_offset_d;
 
     size_t batch_count;
     bool   strided_batch;
@@ -120,23 +116,19 @@ struct RocblasltContractionProblem
                                 const Ti* const*   batch_A,
                                 int64_t            ld_a,
                                 int64_t            batch_stride_a,
-                                int64_t            offset_a,
                                 const Ti*          B,
                                 const Ti* const*   batch_B,
                                 int64_t            ld_b,
                                 int64_t            batch_stride_b,
-                                int64_t            offset_b,
                                 const Tc*          beta,
                                 const To*          C,
                                 const To* const*   batch_C,
                                 int64_t            ld_c,
                                 int64_t            batch_stride_c,
-                                int64_t            offset_c,
                                 To*                D,
                                 To* const*         batch_D,
                                 int64_t            ld_d,
                                 int64_t            batch_stride_d,
-                                int64_t            offset_d,
                                 int64_t            batch_count,
                                 bool               strided_batch,
                                 const void*        bias,
@@ -158,26 +150,22 @@ struct RocblasltContractionProblem
         , row_stride_a(1)
         , col_stride_a(ld_a)
         , batch_stride_a(batch_stride_a)
-        , buffer_offset_a(offset_a)
         , B(B)
         , batch_B(batch_B)
         , row_stride_b(1)
         , col_stride_b(ld_b)
         , batch_stride_b(batch_stride_b)
-        , buffer_offset_b(offset_b)
         , beta(beta)
         , C(C)
         , batch_C(batch_C)
         , row_stride_c(1)
         , col_stride_c(ld_c)
         , batch_stride_c(batch_stride_c)
-        , buffer_offset_c(offset_c)
         , D(D)
         , batch_D(batch_D)
         , row_stride_d(1)
         , col_stride_d(ld_d)
         , batch_stride_d(batch_stride_d)
-        , buffer_offset_d(offset_d)
         , batch_count(batch_count)
         , strided_batch(strided_batch)
         , bias(bias)

@@ -83,7 +83,6 @@ namespace Tensile
             auto constants = dummy.constants();
             m_tensorTypes.resize(tensors.size());
             m_tensorStrides.resize(tensors.size());
-            m_tensorOffsets.resize(tensors.size());
             m_constantTypes.resize(constants.size());
             m_constantValues.resize(constants.size());
             // Get types and values from the information from ContractionProblem
@@ -108,15 +107,6 @@ namespace Tensile
                 else
                 {
                     m_tensorStrides[i] = std::vector<std::vector<size_t>>();
-                }
-                std::string offsetName = "offset-" + tensors[i].getName();
-                if(args.count(offsetName))
-                {
-                    m_tensorOffsets[i] = args[offsetName].as<size_t>();
-                }
-                else
-                {
-                    m_tensorOffsets[i] = 0;
                 }
             }
             // Get constant types
@@ -239,16 +229,12 @@ namespace Tensile
                             m_problemSizes[i],
                             m_tensorTypes[ContractionProblemGemm::TENSOR::A],
                             aStrides,
-                            m_tensorOffsets[ContractionProblemGemm::TENSOR::A],
                             m_tensorTypes[ContractionProblemGemm::TENSOR::B],
                             bStrides,
-                            m_tensorOffsets[ContractionProblemGemm::TENSOR::B],
                             m_tensorTypes[ContractionProblemGemm::TENSOR::C],
                             cStrides,
-                            m_tensorOffsets[ContractionProblemGemm::TENSOR::C],
                             m_tensorTypes[ContractionProblemGemm::TENSOR::D],
                             dStrides,
-                            m_tensorOffsets[ContractionProblemGemm::TENSOR::D],
                             m_constantValues[ContractionProblemGemm::CONST::BETA]));
 
                         rv.back().setAlphaRestriction(toScalarValueEnum(
@@ -281,7 +267,6 @@ namespace Tensile
                             rv.back().setE(m_tensorTypes[ContractionProblemGemm::TENSOR::E],
                                            rv.back().d().sizes(),
                                            eStrides,
-                                           m_tensorOffsets[ContractionProblemGemm::TENSOR::E],
                                            isEOutput);
                         }
                         if(j < m_activationEnumArg.size())
