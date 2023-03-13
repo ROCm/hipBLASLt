@@ -4,7 +4,7 @@ Datatypes:
   - hipblasDatatype_t:
       bases: [ c_int ]
       attr:
-        default: -1
+        default: 151
         f16_r: 150
         f32_r: 151
         bf16_r: 168
@@ -23,9 +23,9 @@ Datatypes:
   - hipblaslt_activation_type:
       bases: [ c_int ]
       attr:
-        none: 0
-        relu: 1
-        gelu: 2
+        none: 1
+        relu: 2
+        gelu: 3
 
 
 

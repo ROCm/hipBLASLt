@@ -128,36 +128,28 @@ namespace Tensile
                          IterA       sizesBegin,
                          IterA       sizesEnd,
                          IterB       stridesBegin,
-                         IterB       stridesEnd,
-                         size_t      offset = 0)
+                         IterB       stridesEnd)
             : m_name(name)
             , m_sizes(sizesBegin, sizesEnd)
             , m_strides(stridesBegin, stridesEnd)
             , m_dataType(t)
-            , m_offset(offset)
         {
             this->calculate();
         }
 
         template <typename Iter>
-        TensorDescriptor(
-            const char* name, DataType t, Iter sizesBegin, Iter sizesEnd, size_t offset = 0)
+        TensorDescriptor(const char* name, DataType t, Iter sizesBegin, Iter sizesEnd)
             : m_name(name)
             , m_sizes(sizesBegin, sizesEnd)
             , m_dataType(t)
-            , m_offset(offset)
         {
             this->calculate();
         }
 
-        TensorDescriptor(const char*                   name,
-                         DataType                      t,
-                         std::initializer_list<size_t> sizes,
-                         size_t                        offset = 0)
+        TensorDescriptor(const char* name, DataType t, std::initializer_list<size_t> sizes)
             : m_name(name)
             , m_sizes(sizes)
             , m_dataType(t)
-            , m_offset(offset)
 
         {
             this->calculate();
@@ -166,13 +158,11 @@ namespace Tensile
         TensorDescriptor(const char*                   name,
                          DataType                      t,
                          std::initializer_list<size_t> sizes,
-                         std::initializer_list<size_t> strides,
-                         size_t                        offset = 0)
+                         std::initializer_list<size_t> strides)
             : m_name(name)
             , m_sizes(sizes)
             , m_strides(strides)
             , m_dataType(t)
-            , m_offset(offset)
         {
             this->calculate();
         }
@@ -228,8 +218,6 @@ namespace Tensile
             for(int i = 0; i < m_sizes.size(); i++)
                 m_totalAllocatedElements += m_strides[i] * (m_sizes[i] - 1);
 
-            m_totalAllocatedElements += m_offset;
-
             if(Debug::Instance().printTensorInfo())
             {
                 std::cout << "TensorDescriptor:calculate  " << *this
@@ -246,12 +234,6 @@ namespace Tensile
         {
             return m_strides;
         }
-
-        size_t offset() const
-        {
-            return m_offset;
-        }
-
         bool empty() const
         {
             return m_sizes.empty();
@@ -320,7 +302,7 @@ namespace Tensile
                 if(indices[i] >= m_sizes[i])
                     throw std::runtime_error("Index out of bounds.");
 
-            return std::inner_product(indices.begin(), indices.end(), m_strides.begin(), m_offset);
+            return std::inner_product(indices.begin(), indices.end(), m_strides.begin(), 0);
         }
 
         template <typename T>
@@ -334,7 +316,7 @@ namespace Tensile
                 if(*i.first >= *i.second)
                     throw std::runtime_error("Index out of bounds.");
 
-            return std::inner_product(indices.begin(), indices.end(), m_strides.begin(), m_offset);
+            return std::inner_product(indices.begin(), indices.end(), m_strides.begin(), 0);
         }
 
         template <class... Ts,
@@ -369,7 +351,6 @@ namespace Tensile
         std::string         m_name;
         std::vector<size_t> m_sizes;
         std::vector<size_t> m_strides;
-        size_t              m_offset = 0;
 
         size_t m_totalLogicalElements   = 0;
         size_t m_totalAllocatedElements = 0;

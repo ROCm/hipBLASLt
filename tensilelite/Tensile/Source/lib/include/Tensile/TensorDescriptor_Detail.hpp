@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022 Advanced Micro Devices, Inc. All rights reserved.
+ * Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -46,9 +46,7 @@ namespace Tensile
                                         lhs.sizes(),
                                         rhs.sizes(),
                                         lhs.strides(),
-                                        rhs.strides(),
-                                        lhs.offset(),
-                                        rhs.offset());
+                                        rhs.strides());
         }
     };
 
@@ -65,8 +63,7 @@ namespace std
             return Tensile::combine_hashes(
                 std::hash<size_t>()((size_t)tensor.dataType()),
                 Tensile::hash_combine_iter(tensor.sizes().begin(), tensor.sizes().end()),
-                Tensile::hash_combine_iter(tensor.strides().begin(), tensor.strides().end()),
-                std::hash<size_t>()((size_t)tensor.offset()));
+                Tensile::hash_combine_iter(tensor.strides().begin(), tensor.strides().end()));
         }
     };
 } // namespace std

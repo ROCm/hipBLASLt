@@ -114,10 +114,6 @@ class KernelWriterConversion(KernelWriterBase):
     for i in range(0, self.state["ProblemType"]["NumIndicesC"]):
       kStr += "  unsigned int const size%s,%s" % (self.indexChars[i], self.endLine)
 
-    # offset
-    kStr += "  unsigned int offsetD,%s" % self.endLine
-    kStr += "  unsigned int offsetC,%s" % self.endLine
-
     # gsu
     kStr += "  unsigned int const gsu)%s" % self.endLine
 
@@ -223,12 +219,6 @@ class KernelWriterConversion(KernelWriterBase):
       ptrStr = self.state["ProblemType"]["DestDataType"].toDevice(self.language)
       zeroStr = self.state["ProblemType"]["ComputeDataType"].zeroString(self.language, 1)
       kStr += "  " + ptrStr + f" const* C = (beta == {zeroStr}) ? nullptr : BatchC[wg];" + self.endLine
-
-    ########################################
-    # apply offset
-    kStr += self.endLine
-    kStr += "  D = D + offsetD;" + self.endLine
-    kStr += "  C = C + offsetC;" + self.endLine
 
     ########################################
     # D index
