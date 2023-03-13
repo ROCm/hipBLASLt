@@ -268,18 +268,6 @@ namespace Tensile
         TensorDescriptor const& c = problem.c();
         TensorDescriptor const& d = problem.d();
 
-        uint64_t tensor2dSizeC = c.totalAllocatedElements();
-        uint64_t tensor2dSizeA = (sizeMapping.packBatchDims & 0x1)
-                                     ? a.totalAllocatedElements()
-                                     : problem.allocatedElementsNonBatchA();
-        uint64_t tensor2dSizeB = (sizeMapping.packBatchDims & 0x2)
-                                     ? b.totalAllocatedElements()
-                                     : problem.allocatedElementsNonBatchB();
-
-        args.append<uint64_t>("tensor2dSizeC", tensor2dSizeC);
-        args.append<uint64_t>("tensor2dSizeA", tensor2dSizeA);
-        args.append<uint64_t>("tensor2dSizeB", tensor2dSizeB);
-
         if(sizeMapping.globalAccumulation)
         {
             args.append<void const*>("ws_d", inputs.ws);
@@ -375,23 +363,19 @@ namespace Tensile
         uint32_t wgmRemainder1            = 0;
         uint32_t magicNumberWgmRemainder1 = 0;
 
-        if(sizeMapping.workGroupMapping != 0)
+        if(sizeMapping.workGroupMapping > 1)
         {
             numFullBlocks = problemNumGroupTiles1 / sizeMapping.workGroupMapping;
             wgmRemainder1 = problemNumGroupTiles1 % sizeMapping.workGroupMapping;
             if(wgmRemainder1 == 0)
                 wgmRemainder1 = sizeMapping.workGroupMapping;
             magicNumberWgmRemainder1 = smallMagicNumber(wgmRemainder1);
+            args.append<uint32_t>("numFullBlocks", numFullBlocks);
+            args.append<uint32_t>("wgmRemainder1", wgmRemainder1);
+            args.append<uint32_t>("magicNumberWgmRemainder1", magicNumberWgmRemainder1);
         }
-
-        args.append<uint32_t>("numFullBlocks", numFullBlocks);
-        args.append<uint32_t>("wgmRemainder1", wgmRemainder1);
-        args.append<uint32_t>("magicNumberWgmRemainder1", magicNumberWgmRemainder1);
-
-        args.append<uint32_t>("offsetD", d.offset());
-        args.append<uint32_t>("offsetC", c.offset());
-        args.append<uint32_t>("offsetA", a.offset());
-        args.append<uint32_t>("offsetB", b.offset());
+        else
+            args.append<uint32_t>("pad0", 0);
 
         if(isGrouped)
         {
@@ -710,9 +694,6 @@ namespace Tensile
             idx++;
         }
 
-        rv.args.append<uint32_t>("offsetD", d.offset());
-        rv.args.append<uint32_t>("offsetC", c.offset());
-
         rv.args.append("beta", inputs.beta, problem.betaType());
 
         //Pass along code object dependency
@@ -866,9 +847,6 @@ namespace Tensile
             idx++;
         }
 
-        rv.args.append<uint32_t>("offsetD", d.offset());
-        rv.args.append<uint32_t>("offsetC", c.offset());
-
         if(sizeMapping.globalAccumulation == 1)
             rv.args.append<uint32_t>("gsu", 1);
         else
@@ -1019,8 +997,6 @@ namespace Tensile
             rv.args.append<uint32_t>(concatenate_if<T_Debug>("size_", idx), size);
             idx++;
         }
-
-        rv.args.append<uint32_t>("offsetD", d.offset());
 
         return rv;
     }

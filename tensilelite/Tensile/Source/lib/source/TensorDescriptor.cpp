@@ -41,8 +41,7 @@ namespace Tensile
 
     bool TensorDescriptor::operator==(const TensorDescriptor& rhs) const
     {
-        return m_dataType == rhs.m_dataType && m_sizes == rhs.m_sizes && m_strides == rhs.m_strides
-               && m_offset == rhs.m_offset;
+        return m_dataType == rhs.m_dataType && m_sizes == rhs.m_sizes && m_strides == rhs.m_strides;
     }
 
     bool TensorDescriptor::operator!=(const TensorDescriptor& rhs) const
@@ -112,8 +111,6 @@ namespace Tensile
 
         result << "), strides(";
         streamJoin(result, m_strides, ", ");
-
-        result << "), offset(" << m_offset << "))";
 
         return result.str();
     }

@@ -1,6 +1,6 @@
 ################################################################################
 #
-# Copyright (C) 2022 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -89,9 +89,6 @@ class KernelWriterActivationOnly(KernelWriterBase):
     for i in range(0, self.state["ProblemType"]["NumIndicesC"]):
       kStr += "  unsigned int const size%s,%s" % (self.states.indexChars[i], self.endLine)
 
-    # offset
-    kStr += "  unsigned int offsetD)%s" % self.endLine
-
     return kStr
 
 
@@ -168,10 +165,6 @@ class KernelWriterActivationOnly(KernelWriterBase):
 
       ptrStr = self.state["ProblemType"]["DestDataType"].toDevice(self.language)
       kStr += "  " + ptrStr + " * D = BatchD[wg];" + self.endLine
-
-    # apply offset
-    kStr += self.endLine
-    kStr += "  D = D + offsetD;" + self.endLine
 
 
     kStr += self.endLine

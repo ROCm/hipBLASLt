@@ -194,8 +194,7 @@ namespace
                     "a",
                     Tensile_Ti,
                     {k, prob.m, prob.batch_count},
-                    {prob.row_stride_a, prob.col_stride_a, prob.batch_stride_a},
-                    prob.buffer_offset_a
+                    {prob.row_stride_a, prob.col_stride_a, prob.batch_stride_a}
                 };
             freeIndex[0].i  = 1;
             boundIndex[0].a = 0;
@@ -206,8 +205,7 @@ namespace
                     "a",
                     Tensile_Ti,
                     {prob.m, k, prob.batch_count},
-                    {prob.row_stride_a, prob.col_stride_a, prob.batch_stride_a},
-                    prob.buffer_offset_a
+                    {prob.row_stride_a, prob.col_stride_a, prob.batch_stride_a}
                 };
             freeIndex[0].i  = 0;
             boundIndex[0].a = 1;
@@ -220,8 +218,7 @@ namespace
                     "b",
                     Tensile_Ti,
                     {prob.n, k, prob.batch_count},
-                    {prob.row_stride_b, prob.col_stride_b, prob.batch_stride_b},
-                    prob.buffer_offset_b
+                    {prob.row_stride_b, prob.col_stride_b, prob.batch_stride_b}
                 };
             freeIndex[1].i  = 0;
             boundIndex[0].b = 1;
@@ -232,8 +229,7 @@ namespace
                     "b",
                     Tensile_Ti,
                     {k, prob.n, prob.batch_count},
-                    {prob.row_stride_b, prob.col_stride_b, prob.batch_stride_b},
-                    prob.buffer_offset_b
+                    {prob.row_stride_b, prob.col_stride_b, prob.batch_stride_b}
                 };
             freeIndex[1].i  = 1;
             boundIndex[0].b = 0;
@@ -245,15 +241,13 @@ namespace
         Tensile::TensorDescriptor c{"c",
                                     Tensile_To,
                                     {prob.m, prob.n, prob.batch_count},
-                                    {prob.row_stride_c, prob.col_stride_c, prob.batch_stride_c},
-                                    prob.buffer_offset_c};
+                                    {prob.row_stride_c, prob.col_stride_c, prob.batch_stride_c}};
 
         // Descriptor for output matrix D
         Tensile::TensorDescriptor d{"d",
                                     Tensile_To,
                                     {prob.m, prob.n, prob.batch_count},
-                                    {prob.row_stride_d, prob.col_stride_d, prob.batch_stride_d},
-                                    prob.buffer_offset_d};
+                                    {prob.row_stride_d, prob.col_stride_d, prob.batch_stride_d}};
 
         Tensile::TensorDescriptor e{"e"};
         Tensile::TensorDescriptor bias{"bias"};
@@ -860,23 +854,19 @@ RocblasltContractionProblem<Ti, To, Tc>
                                                     nullptr,
                                                     lda,
                                                     batch_stride_a,
-                                                    0,
                                                     nullptr,
                                                     nullptr,
                                                     ldb,
                                                     batch_stride_b,
-                                                    0,
                                                     beta,
                                                     nullptr,
                                                     nullptr,
                                                     ldc,
                                                     batch_stride_c,
-                                                    0,
                                                     nullptr,
                                                     nullptr,
                                                     ldd,
                                                     batch_stride_d,
-                                                    0,
                                                     num_batches_a,
                                                     true,
                                                     bias,
