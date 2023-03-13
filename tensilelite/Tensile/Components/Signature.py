@@ -64,7 +64,8 @@ class SignatureCOV3(Signature):
                                     groupSegmentSize=group_segment_size,
                                     sgprWorkGroup=[1, 1, sgprWgZ],
                                     vgprWorkItem=0,
-                                    flatWorkGroupSize=(kernel["NumThreads"]))
+                                    flatWorkGroupSize=(kernel["NumThreads"]),
+                                    forceStoreSC1WA=globalParameters["ForceStoreSC1WA"])
 
         srcValueType  = kernel["ProblemType"]["DataType"].toNameAbbrev()
         dstValueType  = kernel["ProblemType"]["DestDataType"].toNameAbbrev()
