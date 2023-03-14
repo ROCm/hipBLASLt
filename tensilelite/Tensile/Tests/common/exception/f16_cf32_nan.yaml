@@ -66,6 +66,7 @@ BenchmarkProblems:
         - NumElementsPerBatchStore: [2]
         - StorePriorityOpt: [1]
         - ActivationFuncCall: [0, 1]
+        - ActivationAlt: [0, 1]
       BenchmarkJoinParameters:
       BenchmarkFinalParameters:
         - ProblemSizes:
