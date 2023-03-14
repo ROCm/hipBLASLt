@@ -943,6 +943,10 @@ validParameters = {
     # True-  function call
     # False- inline
     "ActivationFuncCall":          [False, True],
+
+    # Alternative implementation for activation function
+    # Currently only supports GSU == 1
+    "ActivationAlt":               [False, True]
     }
 
 
@@ -1022,7 +1026,8 @@ defaultBenchmarkCommonParameters = [
     {"GroupLoadStore":            [ False ] },
     {"MIArchVgpr":                [ False ] },
     {"ActivationFused":           [ True  ] },
-    {"ActivationFuncCall":        [ True  ] }
+    {"ActivationFuncCall":        [ True  ] },
+    {"ActivationAlt":             [ False ] }
     ]
 
 # dictionary of defaults comprised of default option for each parameter

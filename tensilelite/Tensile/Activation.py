@@ -216,15 +216,17 @@ class actCacheInfo:
     usePK: bool
     saturateI8: bool
     enableGuard: bool
+    isAlt: bool
     prefix: str
     vgprIdxList: List[List[RegisterContainer]]
     module: Module
     vgprCounter: int
     sgprCounter: int
 
-    def isSame(self, usePK, saturateI8, enableGuard, prefix):
+    def isSame(self, usePK, saturateI8, enableGuard, isAlt, prefix):
         return (self.usePK == usePK) and (self.saturateI8 == saturateI8) and \
-            (self.enableGuard == enableGuard) and (self.prefix == prefix)
+            (self.enableGuard == enableGuard) and (self.prefix == prefix) and \
+            (self.isAlt == isAlt)
 
 ActivationMagicNumbers = {"FloatGeluK0": 0x3f4c422a, \
                           "FloatGeluK1": 0x3d372713, \
@@ -268,6 +270,7 @@ class ActivationModule:
         self.labelCounter = 0
 
         self.enableGuard = False
+        self.isAlt       = False
 
     # Public function
     def getModule(self, cDataType, activationType, vgprIn, vgprOut):
@@ -342,6 +345,9 @@ class ActivationModule:
 
     def setGuard(self, guard: bool):
         self.enableGuard = guard
+
+    def setAlt(self, alt: bool):
+        self.isAlt = alt
 
     ################################################################################
     ################################################################################
@@ -677,23 +683,31 @@ class ActivationModule:
             module.add(SMovB32(dst=sgpr(Holder(idx=sgprTemp)), src=hex(coef.u), comment="move magic number to sgpr"))
             module.add(VFmaF32(dst=vgpr(Holder(idx=vgprTemp1)), src0=sgpr(Holder(idx=sgprTemp)), src1=vgpr(Holder(idx=vgprTemp1)), src2=vgpr(Holder(idx=vgprTemp3)), comment="tmp1 = 0.035677 * x^3 + tmp3"))
             module.add(self.getExpModule(cDataType, Holder(idx=vgprTemp1), Holder(idx=vgprTemp3)))
-            module.add(VMulF32(dst=vgpr(Holder(idx=vgprTemp1)), src0=-1.0, src1=vgpr(Holder(idx=vgprTemp1)), comment="tmp1 = -tmp1"))
-            module.add(self.getExpModule(cDataType, Holder(idx=vgprTemp1), Holder(idx=vgprTemp1)))
-            module.add(VAddF32(dst=self.vgprPrefix(vgprOut), src0=vgpr(Holder(idx=vgprTemp3)), src1=vgpr(Holder(idx=vgprTemp1)), comment="out = e^xx + e^-xx"))
-            module.add(VSubF32(dst=vgpr(Holder(idx=vgprTemp1)), src0=vgpr(Holder(idx=vgprTemp3)), src1=vgpr(Holder(idx=vgprTemp1)), comment="tmp1 = e^xx - e^-xx"))
-            module.add(VRcpF32(dst=vgpr(Holder(idx=vgprTemp3)), src=self.vgprPrefix(vgprOut), comment="tmp3 = 1/out"))
-            module.add(VMulF32(dst=vgpr(Holder(idx=vgprTemp3)), src0=vgpr(Holder(idx=vgprTemp1)), src1=vgpr(Holder(idx=vgprTemp3)), comment="tmp3 = tmp1 * tmp3"))
-            if self.enableGuard:
-                coef = floatUnion(u=0x200)
-                module.add(SMovB32(dst=sgpr(Holder(idx=sgprTemp)), src=hex(0x200), comment="move magic number to sgpr"))
-                module.add(VCmpXClassF32(dst=EXEC(), src0=self.vgprPrefix(vgprOut), src1=sgpr(Holder(idx=sgprTemp)), comment="True if tmp1 = inf"))
-                module.add(VMovB32(dst=vgpr(Holder(idx=vgprTemp3)), src=hex(0x3f800000), comment="tmp3 = 1 if True"))
-                module.add(VCmpXLtF32(dst=EXEC(), src0=vgpr(Holder(idx=vgprTemp2)), src1=0, comment="check if x < 0" ))
-                module.add(VMovB32(dst=vgpr(Holder(idx=vgprTemp3)), src=hex(0xbf800000), comment="tmp3 = -1 if True"))
-                module.add(SSetMask(dst=EXEC(), src=-1, comment="reset mask" ))
-            module.add(VMulF32(dst=vgpr(Holder(idx=vgprTemp1)), src0=0.5, src1=vgpr(Holder(idx=vgprTemp3)), comment="tmp1 = 0.5 * tmp1"))
-            module.add(VMulF32(dst=self.vgprPrefix(vgprOut), src0=self.vgprPrefix(vgprOut), src1=self.vgprPrefix(vgprOut), comment="out = out * out"))
-            module.add(VRcpF32(dst=self.vgprPrefix(vgprOut), src=self.vgprPrefix(vgprOut), comment="out = 1/out"))
+            if self.isAlt:
+                module.add(VMulF32(dst=vgpr(Holder(idx=vgprTemp1)), src0=-1.0, src1=vgpr(Holder(idx=vgprTemp1)), comment="tmp1 = -tmp1"))
+                module.add(self.getExpModule(cDataType, Holder(idx=vgprTemp1), Holder(idx=vgprTemp1)))
+                module.add(VAddF32(dst=self.vgprPrefix(vgprOut), src0=vgpr(Holder(idx=vgprTemp3)), src1=vgpr(Holder(idx=vgprTemp1)), comment="out = e^xx + e^-xx"))
+                module.add(VSubF32(dst=vgpr(Holder(idx=vgprTemp1)), src0=vgpr(Holder(idx=vgprTemp3)), src1=vgpr(Holder(idx=vgprTemp1)), comment="tmp1 = e^xx - e^-xx"))
+                module.add(VRcpF32(dst=vgpr(Holder(idx=vgprTemp3)), src=self.vgprPrefix(vgprOut), comment="tmp3 = 1/out"))
+                module.add(VMulF32(dst=vgpr(Holder(idx=vgprTemp3)), src0=vgpr(Holder(idx=vgprTemp1)), src1=vgpr(Holder(idx=vgprTemp3)), comment="tmp3 = tmp1 * tmp3"))
+                if self.enableGuard:
+                    module.add(SMovB32(dst=sgpr(Holder(idx=sgprTemp)), src=hex(0x200), comment="move magic number to sgpr"))
+                    module.add(VCmpXClassF32(dst=EXEC(), src0=self.vgprPrefix(vgprOut), src1=sgpr(Holder(idx=sgprTemp)), comment="True if tmp1 = inf"))
+                    module.add(VMovB32(dst=vgpr(Holder(idx=vgprTemp3)), src=hex(0x3f800000), comment="tmp3 = 1 if True"))
+                    module.add(VCmpXLtF32(dst=EXEC(), src0=vgpr(Holder(idx=vgprTemp2)), src1=0, comment="check if x < 0" ))
+                    module.add(VMovB32(dst=vgpr(Holder(idx=vgprTemp3)), src=hex(0xbf800000), comment="tmp3 = -1 if True"))
+                    module.add(SSetMask(dst=EXEC(), src=-1, comment="reset mask" ))
+                module.add(VMulF32(dst=vgpr(Holder(idx=vgprTemp1)), src0=0.5, src1=vgpr(Holder(idx=vgprTemp3)), comment="tmp1 = 0.5 * tmp1"))
+                module.add(VMulF32(dst=self.vgprPrefix(vgprOut), src0=self.vgprPrefix(vgprOut), src1=self.vgprPrefix(vgprOut), comment="out = out * out"))
+                module.add(VRcpF32(dst=self.vgprPrefix(vgprOut), src=self.vgprPrefix(vgprOut), comment="out = 1/out"))
+            else:
+                module.add(self.getTanhModule(cDataType, Holder(idx=vgprTemp1), vgprOut, "", ""))
+                module.add(VMulF32(dst=vgpr(Holder(idx=vgprTemp1)), src0=-1.0, src1=vgpr(Holder(idx=vgprTemp1)), comment="tmp1 = -tmp1"))
+                module.add(self.getExpModule(cDataType, Holder(idx=vgprTemp1), Holder(idx=vgprTemp1)))
+                module.add(VAddF32(dst=vgpr(Holder(idx=vgprTemp3)), src0=vgpr(Holder(idx=vgprTemp3)), src1=vgpr(Holder(idx=vgprTemp1)), comment="out = e^xx + e^-xx"))
+                module.add(VMulF32(dst=vgpr(Holder(idx=vgprTemp1)), src0=0.5, src1=self.vgprPrefix(vgprOut), comment="tmp1 = 0.5 * tmp1"))
+                module.add(VMulF32(dst=vgpr(Holder(idx=vgprTemp3)), src0=vgpr(Holder(idx=vgprTemp3)), src1=vgpr(Holder(idx=vgprTemp3)), comment="out = out * out"))
+                module.add(VRcpF32(dst=self.vgprPrefix(vgprOut), src=vgpr(Holder(idx=vgprTemp3)), comment="out = 1/out"))
             coef = floatUnion(f=4)
             module.add(VMulF32(dst=self.vgprPrefix(vgprOut), src0=hex(coef.u), src1=self.vgprPrefix(vgprOut), comment="out = 4 * out"))
             module.add(VFmaF32(dst=self.vgprPrefix(vgprOut), src0=self.vgprPrefix(vgprOut), src1=vgpr(Holder(idx=vgprTemp2)), src2=vgpr(Holder(idx=vgprTemp1)), comment="out = out * tmp2 + tmp1"))
@@ -720,7 +734,7 @@ class ActivationModule:
         regName = self.vgprPrefixFormat.split("+")[0] if self.vgprPrefixFormat else ""
         vgprIdxList = createVgprIdxList(copied, [vgprIn, vgprOut], regName)
         actInfo = actCacheInfo(usePK=self.usePK, saturateI8=self.saturateI8, enableGuard=self.enableGuard, \
-                prefix=self.vgprPrefixFormat, vgprIdxList=vgprIdxList, module=copied, \
+                isAlt=self.isAlt, prefix=self.vgprPrefixFormat, vgprIdxList=vgprIdxList, module=copied, \
                 vgprCounter=self.vgprCounter, sgprCounter=self.sgprCounter)
         if typeChar in actDict:
             actDict[typeChar].append(actInfo)
@@ -734,7 +748,7 @@ class ActivationModule:
             if typeChar in actDict:
                 actInfoList = actDict[typeChar]
                 for actInfo in actInfoList:
-                    if actInfo.isSame(usePK=self.usePK, saturateI8=self.saturateI8, \
+                    if actInfo.isSame(usePK=self.usePK, saturateI8=self.saturateI8, isAlt=self.isAlt, \
                                       enableGuard=self.enableGuard, prefix=self.vgprPrefixFormat):
                         if self.vgprPrefixFormat:
                             for vgpr in actInfo.vgprIdxList[0]:

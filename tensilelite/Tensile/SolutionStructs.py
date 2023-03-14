@@ -198,12 +198,6 @@ class ProblemType(Mapping):
         printWarning("Single and Double does not support ActivationHPA. ActivationHPA will be set to False automatically.")
         self["ActivationHPA"] = False
 
-    if "ActivationGuard" in config:
-      self["ActivationGuard"] = config["ActivationGuard"]
-      if self["ActivationGuard"] and (self["ActivationType"] == 'none'):
-        print("ActivationGuard is set to False cause Acivation is off.")
-        self["ActivationGuard"] = False
-
     self["ActivationComputeDataType"] = self["ComputeDataType"] if self["ActivationHPA"] else \
                                         self["DestDataType"]
 
@@ -232,6 +226,18 @@ class ProblemType(Mapping):
           printWarning("UseBias is disabled cause Gradient is enabled.")
           self["UseBias"] = False
       self["Gradient"] = config["Gradient"]
+
+    if "ActivationGuard" in config:
+      self["ActivationGuard"] = config["ActivationGuard"]
+      if self["ActivationGuard"]:
+        if self["ActivationType"] == 'none':
+          if globalParameters["PrintLevel"] == 2:
+            printWarning("ActivationGuard is set to False cause Acivation is off.")
+          self["ActivationGuard"] = False
+        if (not self["Gradient"]):
+          if globalParameters["PrintLevel"] == 2:
+            printWarning("ActivationGuard is set to False cause Gradient is off.")
+          self["ActivationGuard"] = False
 
   ################################################################################
    # Function checkIfSupportedGEMMType:
@@ -3086,6 +3092,13 @@ class Solution(collections.abc.Mapping):
     if not ((state["GlobalSplitU"] == 1) and state["ActivationFused"] and state["ProblemType"]["ActivationType"] == 'all') \
       and state["ActivationFuncCall"]:
       state["ActivationFuncCall"] = False
+
+    if state["ActivationAlt"]:
+      if state["GlobalSplitU"] > 1:
+        # Turn off ActivationAlt if GSU > 1
+        state["ActivationAlt"] = False
+      if not state["ProblemType"]["Gradient"]:
+        reject(state, "ActivationAlt does not support gradient.")
 
   ########################################
   # create a dictionary with booleans on whether to include parameter in name
