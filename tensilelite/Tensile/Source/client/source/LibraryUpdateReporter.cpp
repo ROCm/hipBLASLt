@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
+ * Copyright (C) 2022 Advanced Micro Devices, Inc. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -126,15 +126,6 @@ namespace Tensile
             if(key == ResultKey::ProblemSizes)
             {
                 m_problemSizes = value;
-            }
-        }
-
-        void LibraryUpdateReporter::reportValue_vecOfSizes(
-            std::string const& key, std::vector<std::vector<size_t>> const& value)
-        {
-            if(key == ResultKey::ProblemSizes)
-            {
-                m_problemSizes = value[0];
             }
         }
 

@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
+ * Copyright (C) 2022 Advanced Micro Devices, Inc. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -56,9 +56,6 @@ namespace Tensile
             virtual void reportValue_double(std::string const& key, double value) override;
             virtual void reportValue_sizes(std::string const&         key,
                                            std::vector<size_t> const& value) override;
-            virtual void
-                reportValue_vecOfSizes(std::string const&                      key,
-                                       std::vector<std::vector<size_t>> const& value) override;
 
             virtual void postProblem() override;
             virtual void postSolution() override;
@@ -78,12 +75,12 @@ namespace Tensile
             PerformanceMetric m_performanceMetric;
             // for extra columns
             std::string m_winnerSolution;
-            int64_t     m_currSolutionIdx         = -1;
-            int64_t     m_winnerSolutionIdx       = -1;
-            double      m_fastestGflops           = -1.0;
-            double      m_fasterTimeUS            = -1.0;
-            double      m_fastestTilesPerCu       = -1.0;
-            double      m_fastestTotalGranularity = -1.0;
+            int64_t     m_currSolutionIdx   = -1;
+            int64_t     m_winnerSolutionIdx = -1;
+            double      m_fastestGflops     = -1.0;
+            double      m_fasterTimeUS      = -1.0;
+            double      m_fastestTilesPerCu  = -1.0;
+            double      m_fastestTotalGranularity  = -1.0;
             // for merge rows
             int64_t                                                         m_currProbID = -1;
             std::map<int64_t, std::unordered_map<std::string, std::string>> m_probMap;

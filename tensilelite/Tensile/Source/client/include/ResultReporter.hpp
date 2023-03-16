@@ -165,19 +165,11 @@ namespace Tensile
                 reportValue_sizes(key, value);
             }
 
-            void report(std::string const& key, std::vector<std::vector<size_t>> const& value)
-            {
-                reportValue_vecOfSizes(key, value);
-            }
-
             virtual void reportValue_string(std::string const& key, std::string const& value) = 0;
             virtual void reportValue_uint(std::string const& key, uint64_t value)             = 0;
             virtual void reportValue_int(std::string const& key, int64_t value)               = 0;
             virtual void reportValue_double(std::string const& key, double value)             = 0;
             virtual void reportValue_sizes(std::string const& key, std::vector<size_t> const& value)
-                = 0;
-            virtual void reportValue_vecOfSizes(std::string const&                      key,
-                                                std::vector<std::vector<size_t>> const& value)
                 = 0;
 
             virtual bool logAtLevel(LogLevel level)

@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
+ * Copyright (C) 2022 Advanced Micro Devices, Inc. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -87,10 +87,8 @@ namespace Tensile
                         m_fasterTimeUS = timeUS;
                         if(m_extraCol)
                         {
-                            m_fastestTilesPerCu
-                                = std::stod(m_output.readValueFromKey(ResultKey::TilesPerCu));
-                            m_fastestTotalGranularity
-                                = std::stod(m_output.readValueFromKey(ResultKey::TotalGranularity));
+                            m_fastestTilesPerCu = std::stod(m_output.readValueFromKey(ResultKey::TilesPerCu));
+                            m_fastestTotalGranularity = std::stod(m_output.readValueFromKey(ResultKey::TotalGranularity));
                         }
                     }
                 }
@@ -151,37 +149,6 @@ namespace Tensile
                     std::string key = concatenate("Size", static_cast<char>('I' + i));
                     m_output.setHeaderForKey(key, key);
                     m_output.setValueForKey(key, value[i]);
-                }
-
-                // Values for these come separately.
-                m_output.setHeaderForKey(ResultKey::LDD, "LDD");
-                m_output.setHeaderForKey(ResultKey::LDC, "LDC");
-                m_output.setHeaderForKey(ResultKey::LDA, "LDA");
-                m_output.setHeaderForKey(ResultKey::LDB, "LDB");
-                m_output.setHeaderForKey(ResultKey::TotalFlops, "TotalFlops");
-                if(m_extraCol)
-                {
-                    m_output.setHeaderForKey(ResultKey::TilesPerCu, "TilesPerCu");
-                    m_output.setHeaderForKey(ResultKey::TotalGranularity, "TotalGranularity");
-                    m_output.setHeaderForKey(ResultKey::FastestGFlops, "WinnerGFlops");
-                    m_output.setHeaderForKey(ResultKey::TimeUS, "WinnerTimeUS");
-                    m_output.setHeaderForKey(ResultKey::SolutionWinnerIdx, "WinnerIdx");
-                    m_output.setHeaderForKey(ResultKey::SolutionWinner, "WinnerName");
-                }
-            }
-        }
-
-        // Remain unchanged
-        void ResultFileReporter::reportValue_vecOfSizes(
-            std::string const& key, std::vector<std::vector<size_t>> const& value)
-        {
-            if(key == ResultKey::ProblemSizes)
-            {
-                for(size_t i = 0; i < value[0].size(); i++)
-                {
-                    std::string key = concatenate("Size", static_cast<char>('I' + i));
-                    m_output.setHeaderForKey(key, key);
-                    m_output.setValueForKey(key, value[0][i]);
                 }
 
                 // Values for these come separately.
@@ -274,13 +241,13 @@ namespace Tensile
                 m_output.setValueForKey(ResultKey::SolutionWinner, m_winnerSolution);
             }
             // reset
-            m_winnerSolution          = "";
-            m_currSolutionIdx         = -1;
-            m_winnerSolutionIdx       = -1;
-            m_fastestGflops           = -1.0;
-            m_fasterTimeUS            = -1.0;
-            m_fastestTilesPerCu       = -1.0;
-            m_fastestTotalGranularity = -1.0;
+            m_winnerSolution    = "";
+            m_currSolutionIdx   = -1;
+            m_winnerSolutionIdx = -1;
+            m_fastestGflops     = -1.0;
+            m_fasterTimeUS      = -1.0;
+            m_fastestTilesPerCu = -1.0;
+            m_fastestTotalGranularity  = -1.0;
 
             if(!m_mergeSameProblems)
             {

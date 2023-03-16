@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
+ * Copyright (C) 2022 Advanced Micro Devices, Inc. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -59,9 +59,6 @@ namespace Tensile
             virtual void reportValue_double(std::string const& key, double value) override;
             virtual void reportValue_sizes(std::string const&         key,
                                            std::vector<size_t> const& value) override;
-            virtual void
-                reportValue_vecOfSizes(std::string const&                      key,
-                                       std::vector<std::vector<size_t>> const& value) override;
 
             virtual void postProblem() override;
             virtual void postSolution() override;

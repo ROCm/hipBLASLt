@@ -75,14 +75,6 @@ namespace Tensile
                     r->reportValue_sizes(key, value);
             }
 
-            virtual void
-                reportValue_vecOfSizes(std::string const&                      key,
-                                       std::vector<std::vector<size_t>> const& value) override
-            {
-                for(auto r : m_reporters)
-                    r->reportValue_vecOfSizes(key, value);
-            }
-
             virtual bool logAtLevel(LogLevel level) override
             {
                 for(auto r : m_reporters)
