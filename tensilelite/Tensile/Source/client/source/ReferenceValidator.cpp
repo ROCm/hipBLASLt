@@ -474,9 +474,13 @@ namespace Tensile
             if(m_cpuResultBufferSize < bytesToCopy)
                 allocateResultBuffer(bytesToCopy);
 
+            if(boundsCheck == BoundsCheckMode::GuardPageBack)
+                elementsOffsetToCopy = (maxElement - tensor.totalAllocatedElements());
+
             auto copykind = isgpu ? hipMemcpyDeviceToHost : hipMemcpyHostToHost;
 
-            HIP_CHECK_EXC(hipMemcpy(m_cpuResultBuffer.get(), result, bytesToCopy, copykind));
+            HIP_CHECK_EXC(hipMemcpy(
+                m_cpuResultBuffer.get(), result + elementsOffsetToCopy, bytesToCopy, copykind));
 
             if(boundsCheck == BoundsCheckMode::NaN)
             {
