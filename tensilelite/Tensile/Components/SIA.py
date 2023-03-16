@@ -254,7 +254,8 @@ def getLocalWriteMFMAStart(writer, kernel, tensorParametersA, tensorParametersB,
             # since each iteration shares same tempVgpr, only read-to-vgprBuffer can
             # be scheduled in the front of loop.
                 # localwrite have to start after last read-to-tempVgpr.
-                numHalfReads = (writer.states.numReadPerVectorA//2)*kernel["InnerUnroll"]*kernel["MIWaveTileA"] + (writer.states.numReadPerVectorB//2)*kernel["InnerUnroll"]*kernel["MIWaveTileB"]
+                numHalfReads = (writer.states.numReadPerVectorA//2)*kernel["InnerUnroll"]*kernel["MIWaveTileA"] + (writer.states.numReadPerVectorB//2)*kernel["InnerUnroll"]*kernel["MIWaveTileB"] \
+                              + (writer.states.numReadPerVectorMetadata//2)*kernel["InnerUnroll"]*kernel["MIWaveTileMetadata"]
                 numMfmaForHalfRead = 1
                 latencyLeft = writer.states.miLatencyLeft
                 for i in range(numHalfReads):
