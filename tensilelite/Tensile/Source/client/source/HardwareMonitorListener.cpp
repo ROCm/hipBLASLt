@@ -56,15 +56,14 @@ namespace Tensile
             m_monitor->addFanSpeedMonitor();
         }
 
-        void HardwareMonitorListener::preEnqueues(hipStream_t const& stream)
+        void HardwareMonitorListener::preEnqueues()
         {
             if(m_active && !m_useGPUTimer)
                 m_monitor->start();
         }
 
         void HardwareMonitorListener::postEnqueues(TimingEvents const& startEvents,
-                                                   TimingEvents const& stopEvents,
-                                                   hipStream_t const&  stream)
+                                                   TimingEvents const& stopEvents)
         {
             if(!m_active)
                 return;

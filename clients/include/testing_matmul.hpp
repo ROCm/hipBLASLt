@@ -65,11 +65,10 @@ void epilogue_func(int64_t m,
 #pragma omp parallel for
         for(int j = 0; j < n; j++)
         {
-            auto pos         = j * ld + i;
-            auto in_Tact     = static_cast<Tact>(*(in + pos)) + bias_data;
-            auto in_Tact_act = act_func(in_Tact, arg1, arg2);
-            in_Tact_act *= scaleD_data;
-            *(out + pos) = saturate_o(in_Tact_act);
+            auto pos     = j * ld + i;
+            auto in_Tact = static_cast<Tact>(*(in + pos)) + bias_data;
+            in_Tact *= scaleD_data;
+            *(out + pos) = saturate_o(act_func(in_Tact, arg1, arg2));
         }
     }
 }
@@ -296,11 +295,6 @@ void testing_matmul(const Arguments& arg)
         }
     }
 
-    if(arg.scaleD_vector)
-    {
-        epilogue_on = true;
-    }
-
     size_t max_workspace_size = 32 * 1024 * 1024;
 
     hipblaslt_local_preference pref;
@@ -420,6 +414,12 @@ void testing_matmul(const Arguments& arg)
     if(size_D_copy)
     {
         if(epilogue_on)
+        {
+            std::transform(hC.begin(), hC.end(), hD_gold_epl.begin(), [](To c) -> Talpha {
+                return static_cast<Talpha>(c);
+            });
+        }
+        else if(arg.scaleD_vector)
         {
             std::transform(hC.begin(), hC.end(), hD_gold_epl.begin(), [](To c) -> Talpha {
                 return static_cast<Talpha>(c);
@@ -578,6 +578,26 @@ void testing_matmul(const Arguments& arg)
                         break;
                     }
                 }
+            }
+            else if(arg.scaleD_vector)
+            {
+                cblas_gemm<Ti, Talpha, Talpha>(transA,
+                                               transB,
+                                               M,
+                                               N,
+                                               K,
+                                               h_alpha,
+                                               hA + stride_a * i,
+                                               lda,
+                                               hB + stride_b * i,
+                                               ldb,
+                                               h_beta,
+                                               hD_gold_epl + stride_d * i,
+                                               ldd,
+                                               false);
+#define scaleD_param M, N, ldd, hD_gold_epl + pos, hD_gold + pos, arg.scaleD_vector, hScaleD + 0
+                auto pos = stride_d * i;
+                scaleD_func(scaleD_param);
             }
             else
             {

@@ -76,10 +76,9 @@ namespace Tensile
 
             virtual size_t numEnqueuesPerSync() override;
             virtual void   setNumEnqueuesPerSync(size_t count) override;
-            virtual void   preEnqueues(hipStream_t const& stream) override;
+            virtual void   preEnqueues() override;
             virtual void   postEnqueues(TimingEvents const& startEvents,
-                                        TimingEvents const& stopEvents,
-                                        hipStream_t const&  stream) override;
+                                        TimingEvents const& stopEvents) override;
             virtual void   validateEnqueues(std::shared_ptr<ProblemInputs> inputs,
                                             TimingEvents const&            startEvents,
                                             TimingEvents const&            stopEvents) override;
@@ -112,9 +111,6 @@ namespace Tensile
 
             clock::time_point m_startTime;
             clock::time_point m_endTime;
-
-            hipEvent_t start = nullptr;
-            hipEvent_t stop  = nullptr;
 
             using double_millis = std::chrono::duration<double, std::milli>;
             using double_micros = std::chrono::duration<double, std::micro>;

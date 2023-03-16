@@ -199,18 +199,17 @@ namespace Tensile
                 (*iter)->setNumEnqueuesPerSync(count);
         }
 
-        void MetaRunListener::preEnqueues(hipStream_t const& stream)
+        void MetaRunListener::preEnqueues()
         {
             for(auto iter = m_listeners.begin(); iter != m_listeners.end(); iter++)
-                (*iter)->preEnqueues(stream);
+                (*iter)->preEnqueues();
         }
 
         void MetaRunListener::postEnqueues(TimingEvents const& startEvents,
-                                           TimingEvents const& stopEvents,
-                                           hipStream_t const&  stream)
+                                           TimingEvents const& stopEvents)
         {
             for(auto iter = m_listeners.rbegin(); iter != m_listeners.rend(); iter++)
-                (*iter)->postEnqueues(startEvents, stopEvents, stream);
+                (*iter)->postEnqueues(startEvents, stopEvents);
         }
 
         void MetaRunListener::validateEnqueues(std::shared_ptr<ProblemInputs> inputs,

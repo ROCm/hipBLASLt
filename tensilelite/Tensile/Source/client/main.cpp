@@ -605,15 +605,19 @@ int main(int argc, const char* argv[])
                                 TimingEvents startEvents(enq, eventCount);
                                 TimingEvents stopEvents(enq, eventCount);
 
-                                listeners.preEnqueues(stream);
+                                listeners.preEnqueues();
 
                                 for(int j = 0; j < enq; j++)
                                 {
-                                    HIP_CHECK_EXC(
-                                        adapter.launchKernels(kernels, stream, nullptr, nullptr));
+                                    if(gpuTimer)
+                                        HIP_CHECK_EXC(adapter.launchKernels(
+                                            kernels, stream, startEvents[j], stopEvents[j]));
+                                    else
+                                        HIP_CHECK_EXC(adapter.launchKernels(
+                                            kernels, stream, nullptr, nullptr));
                                 }
 
-                                listeners.postEnqueues(startEvents, stopEvents, stream);
+                                listeners.postEnqueues(startEvents, stopEvents);
                                 listeners.validateEnqueues(inputs, startEvents, stopEvents);
                             }
 
