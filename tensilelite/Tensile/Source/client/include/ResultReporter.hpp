@@ -230,9 +230,9 @@ namespace Tensile
             virtual void setNumWarmupRuns(size_t count) override {}
             virtual void preWarmup() override {}
             virtual void postWarmup() override {}
-            virtual void validateWarmups(std::shared_ptr<ProblemInputs> inputs,
-                                         TimingEvents const&            startEvents,
-                                         TimingEvents const&            stopEvents) override
+            virtual void validateWarmups(std::shared_ptr<ContractionInputs> inputs,
+                                         TimingEvents const&                startEvents,
+                                         TimingEvents const&                stopEvents) override
             {
             }
 
@@ -254,9 +254,9 @@ namespace Tensile
                                       TimingEvents const& stopEvents) override
             {
             }
-            virtual void validateEnqueues(std::shared_ptr<ProblemInputs> inputs,
-                                          TimingEvents const&            startEvents,
-                                          TimingEvents const&            stopEvents) override
+            virtual void validateEnqueues(std::shared_ptr<ContractionInputs> inputs,
+                                          TimingEvents const&                startEvents,
+                                          TimingEvents const&                stopEvents) override
             {
             }
 

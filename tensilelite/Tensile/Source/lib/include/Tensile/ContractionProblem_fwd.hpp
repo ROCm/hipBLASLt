@@ -32,5 +32,4 @@ namespace Tensile
     class ContractionProblemGemm;
     class ContractionProblemGroupedGemm;
     struct ContractionInputs;
-    struct ContractionGroupedInputs;
 } // namespace Tensile

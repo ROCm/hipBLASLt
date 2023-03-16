@@ -40,7 +40,9 @@ namespace Tensile
 {
     PerfModel perf;
 
-    int32_t ContractionSolution::staggerUIter(ContractionSolution::Problem const& problem) const
+    int32_t ContractionSolution::staggerUIter(ContractionSolution::Problem const& problem,
+                                              ContractionSolution::Inputs const&  inputs,
+                                              Hardware const&                     hardware) const
     {
         uint32_t sizeL = problem.boundSize(0);
 
@@ -450,7 +452,7 @@ namespace Tensile
             }
         }
 
-        rv.args.append<int32_t>("staggerUIter", staggerUIter(problem));
+        rv.args.append<int32_t>("staggerUIter", staggerUIter(problem, inputs, hardware));
 
         rv.args.append<uint32_t>("problemNumGroupTiles0", problemNumGroupTiles0);
         rv.args.append<uint32_t>("problemNumGroupTiles1", problemNumGroupTiles1);
@@ -537,7 +539,7 @@ namespace Tensile
     template <bool T_Debug>
     KernelInvocation ContractionSolution::generateSingleCallGroupedGemm(
         std::vector<ContractionSolution::Problem> const& problems,
-        ContractionSolution::GroupedInputs const&        inputs,
+        ContractionInputs const&                         inputs,
         Hardware const&                                  hardware) const
     {
         TENSILE_ASSERT_EXC(sizeMapping.workGroupMapping >= 0);
@@ -626,32 +628,32 @@ namespace Tensile
 
             if(sizeMapping.globalAccumulation)
             {
-                args.append<void const*>("ws_d", inputs.grouped[idx].ws);
-                args.append<void const*>("ws_c", inputs.grouped[idx].ws);
+                args.append<void const*>("ws_d", inputs.ws);
+                args.append<void const*>("ws_c", inputs.ws);
             }
             else
             {
-                args.append<void const*>("d", inputs.grouped[idx].d);
-                args.append<void const*>("c", inputs.grouped[idx].c);
+                args.append<void const*>("d", inputs.groupedD[idx]);
+                args.append<void const*>("c", inputs.groupedC[idx]);
             }
 
-            args.append<void const*>("a", inputs.grouped[idx].a);
-            args.append<void const*>("b", inputs.grouped[idx].b);
+            args.append<void const*>("a", inputs.groupedA[idx]);
+            args.append<void const*>("b", inputs.groupedB[idx]);
 
-            args.append("alpha", inputs.grouped[idx].alpha, problem.alphaType());
+            args.append("alpha", inputs.groupedAlpha[idx], problem.alphaType());
             if(problem.alphaType() == DataType::Half)
-                args.append("alpha_2", inputs.grouped[idx].alpha, problem.alphaType());
+                args.append("alpha_2", inputs.groupedAlpha[idx], problem.alphaType());
 
             if(problemType.useBeta)
             {
-                args.append("beta", inputs.grouped[idx].beta, problem.betaType());
+                args.append("beta", inputs.groupedBeta[idx], problem.betaType());
                 if(problem.betaType() == DataType::Half)
-                    args.append("beta_2", inputs.grouped[idx].beta, problem.betaType());
+                    args.append("beta_2", inputs.groupedBeta[idx], problem.betaType());
             }
 
             if(problemType.useScaleD && (sizeMapping.globalSplitU == 1)) //kernel input data
             {
-                args.append<void const*>("scaleD", inputs.grouped[idx].scaleD);
+                args.append<void const*>("scaleD", inputs.groupedScaleD[idx]);
             }
 
             size_t startStrideCD = problemType.useInitialStridesCD ? 0 : 1;
@@ -697,7 +699,7 @@ namespace Tensile
                 }
             }
 
-            args.append<int32_t>("staggerUIter", staggerUIter(problem));
+            args.append<int32_t>("staggerUIter", staggerUIter(problem, inputs, hardware));
 
             args.append<uint32_t>("problemNumGroupTiles0", problemNumGroupTiles0);
             args.append<uint32_t>("problemNumGroupTiles1", problemNumGroupTiles1);
@@ -735,7 +737,7 @@ namespace Tensile
                 runActivation = true;
             if(problemType.useBias && (sizeMapping.globalSplitU == 1))
             {
-                args.append<void const*>("bias", inputs.grouped[idx].bias);
+                args.append<void const*>("bias", inputs.groupedBias[idx]);
                 if(runActivation)
                 {
                     size_t dummyInsertSize = max(problem.d().elementBytes(), 4) / 4 - 1;
@@ -749,22 +751,21 @@ namespace Tensile
 
             if(runActivation)
             {
-                for(int i = 0; i < inputs.grouped[idx].activationArgs.size(); i++)
+                for(int i = 0; i < inputs.groupedActivationArgs[idx].size(); i++)
                 {
                     std::string name = "activation_" + std::to_string(i);
                     if(problem.activationHPA()) // Same as hpa type.
                     {
-                        args.append(name.c_str(),
-                                    inputs.grouped[idx].activationArgs[i],
-                                    problem.betaType());
+                        args.append(
+                            name.c_str(), inputs.groupedActivationArgs[idx][i], problem.betaType());
                     }
                     else if(problem.d().dataType() == DataType::Half)
                     {
                         args.append((name + "_pk").c_str(),
-                                    inputs.grouped[idx].activationArgs[i],
+                                    inputs.groupedActivationArgs[idx][i],
                                     problem.d().dataType());
                         args.append(name.c_str(),
-                                    inputs.grouped[idx].activationArgs[i],
+                                    inputs.groupedActivationArgs[idx][i],
                                     problem.d().dataType());
                     }
                     else
@@ -776,7 +777,7 @@ namespace Tensile
                                                   static_cast<uint16_t>(0));
                         }
                         args.append(name.c_str(),
-                                    inputs.grouped[idx].activationArgs[i],
+                                    inputs.groupedActivationArgs[idx][i],
                                     problem.d().dataType());
                     }
                 }
@@ -797,7 +798,7 @@ namespace Tensile
                     args.size() * sizeof(uint8_t));
 
         rv.args.append<uint32_t>("numGemms", problems.size());
-        uint8_t* d_args = (uint8_t*)(inputs.grouped[0].ws);
+        uint8_t* d_args = (uint8_t*)(inputs.groupedWs[0]);
         HIP_CHECK_EXC(hipMemcpy(
             d_args, h_args.data(), h_args.size() * sizeof(uint8_t), hipMemcpyHostToDevice));
         rv.args.append<uint8_t const*>("args", d_args);
@@ -1233,20 +1234,19 @@ namespace Tensile
         return name;
     }
 
-    std::vector<KernelInvocation> ContractionSolution::solve(ContractionProblem const& problem,
-                                                             ProblemInputs const&      inputs,
-                                                             Hardware const& hardware) const
+    std::vector<KernelInvocation>
+        ContractionSolution::solve(ContractionProblem const&          problem,
+                                   ContractionSolution::Inputs const& inputs,
+                                   Hardware const&                    hardware) const
     {
         if(auto gemmProblem = dynamic_cast<ContractionProblemGemm const*>(&problem))
         {
-            auto gemmInputs = dynamic_cast<ContractionInputs const*>(&inputs);
-            return solve((*gemmProblem), (*gemmInputs), hardware);
+            return solve((*gemmProblem), inputs, hardware);
         }
         else if(auto groupedProblem = dynamic_cast<ContractionProblemGroupedGemm const*>(&problem))
         {
-            auto& gemms         = groupedProblem->gemms;
-            auto  groupedInputs = dynamic_cast<ContractionGroupedInputs const*>(&inputs);
-            return solveGroupedGemm(gemms, (*groupedInputs), hardware);
+            auto& gemms = groupedProblem->gemms;
+            return solveGroupedGemm(gemms, inputs, hardware);
         }
         else
         {
@@ -1369,7 +1369,7 @@ namespace Tensile
 
     std::vector<KernelInvocation> ContractionSolution::solveGroupedGemm(
         std::vector<ContractionSolution::Problem> const& problems,
-        ContractionSolution::GroupedInputs const&        inputs,
+        ContractionSolution::Inputs const&               inputs,
         Hardware const&                                  hardware) const
     {
         if(Debug::Instance().printWinningKernelName())
@@ -1407,11 +1407,11 @@ namespace Tensile
             for(size_t i = 0; i < problems[idx].boundIndices().size(); i++)
                 boundSize *= problems[idx].boundSize(i);
 
-            if(((!CompareValue(inputs.grouped[idx].alpha, (double)0)) && (boundSize != 0))
+            if(((!CompareValue(inputs.groupedAlpha[idx], (double)0)) && (boundSize != 0))
                && ((problems[idx].stridedBatched()
-                    && (inputs.grouped[idx].a == nullptr || inputs.grouped[idx].b == nullptr))))
+                    && (inputs.groupedA[idx] == nullptr || inputs.groupedB[idx] == nullptr))))
             {
-                std::string matrixID = inputs.grouped[idx].a == nullptr ? "A" : "B";
+                std::string matrixID = inputs.groupedA[idx] == nullptr ? "A" : "B";
                 std::string msg      = std::string("Unsupported nullptr for ") + matrixID
                                   + std::string(" when (Alpha !=0) && (K != 0)\n");
                 throw std::runtime_error(msg.c_str());
@@ -1419,10 +1419,10 @@ namespace Tensile
 
             // Check if alpha matches problem definition
             if(problems[idx].alphaRestriction() != ScalarValue::Any
-               && problems[idx].alphaRestriction() != toScalarValueEnum(inputs.grouped[idx].alpha))
+               && problems[idx].alphaRestriction() != toScalarValueEnum(inputs.groupedAlpha[idx]))
             {
                 std::stringstream inputValue;
-                inputValue << ToString(inputs.grouped[idx].alpha);
+                inputValue << ToString(inputs.groupedAlpha[idx]);
                 std::string msg = std::string("Alpha value ") + inputValue.str()
                                   + std::string(" doesn't match that set in problem: ")
                                   + ToString(problems[idx].alphaRestriction());
@@ -1431,17 +1431,17 @@ namespace Tensile
 
             // Check if beta matches problem definition
             if(problems[idx].betaRestriction() != ScalarValue::Any
-               && problems[idx].betaRestriction() != toScalarValueEnum(inputs.grouped[idx].beta))
+               && problems[idx].betaRestriction() != toScalarValueEnum(inputs.groupedBeta[idx]))
             {
                 std::stringstream inputValue;
-                inputValue << ToString(inputs.grouped[idx].beta);
+                inputValue << ToString(inputs.groupedBeta[idx]);
                 std::string msg = std::string("Beta value ") + inputValue.str()
                                   + std::string(" doesn't match that set in problem: ")
                                   + ToString(problems[idx].betaRestriction());
                 throw std::runtime_error(msg.c_str());
             }
 
-            if(problems[idx].cEqualsD() && inputs.grouped[idx].c != inputs.grouped[idx].d)
+            if(problems[idx].cEqualsD() && inputs.groupedC[idx] != inputs.groupedD[idx])
                 throw std::runtime_error(
                     "ContractionProblem has cEqualsD set, but pointers for c and d are not equal");
         }

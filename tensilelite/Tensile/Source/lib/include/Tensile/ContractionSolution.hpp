@@ -76,9 +76,8 @@ namespace Tensile
     class ContractionSolution : public Solution
     {
     public:
-        using Problem       = ContractionProblemGemm;
-        using Inputs        = ContractionInputs;
-        using GroupedInputs = ContractionGroupedInputs;
+        using Problem = ContractionProblemGemm;
+        using Inputs  = ContractionInputs;
 
         static std::string Type()
         {
@@ -210,14 +209,14 @@ namespace Tensile
    * Generate a set of kernel calls to solve a particular problem.
    */
         virtual std::vector<KernelInvocation> solve(ContractionProblem const& problem,
-                                                    ProblemInputs const&      inputs,
+                                                    Inputs const&             inputs,
                                                     Hardware const&           hardware) const;
 
         virtual std::vector<KernelInvocation>
             solve(Problem const& problem, Inputs const& inputs, Hardware const& hardware) const;
 
         virtual std::vector<KernelInvocation> solveGroupedGemm(std::vector<Problem> const& problems,
-                                                               GroupedInputs const&        inputs,
+                                                               Inputs const&               inputs,
                                                                Hardware const& hardware) const;
 
         template <bool T_Debug>
@@ -227,7 +226,7 @@ namespace Tensile
 
         template <bool T_Debug>
         KernelInvocation generateSingleCallGroupedGemm(std::vector<Problem> const& problems,
-                                                       GroupedInputs const&        inputs,
+                                                       ContractionInputs const&    inputs,
                                                        Hardware const&             hardware) const;
 
         template <bool T_Debug>
@@ -332,7 +331,9 @@ namespace Tensile
         std::map<int, double> ideals;
         LinearModel           linearModel;
 
-        int32_t staggerUIter(Problem const& problem) const;
+        int32_t staggerUIter(Problem const&  problem,
+                             Inputs const&   inputs,
+                             Hardware const& hardware) const;
 
         uint32_t magicNumberAlg1(uint32_t x, uint32_t* magicShift) const;
         uint32_t magicNumberAlg2(uint32_t x, uint32_t* magicShift) const;

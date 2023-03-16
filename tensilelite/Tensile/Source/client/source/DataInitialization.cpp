@@ -31,8 +31,6 @@
 
 #include <hip/hip_runtime.h>
 
-#include <algorithm>
-
 namespace Tensile
 {
     namespace Client
@@ -1140,164 +1138,126 @@ namespace Tensile
             }
         }
 
-        template <typename T>
-        void DataInitialization::setContractionInputs(std::vector<T*>&     ptrs,
-                                                      std::vector<void**>& batchPtrs,
-                                                      void*                ws,
-                                                      std::vector<ConstDataInitProperties>& cdata,
-                                                      std::vector<size_t> maxElements,
-                                                      bool                isGPU,
-                                                      ContractionInputs*  inputs)
+        void DataInitialization::setGroupedGemm(ContractionProblemGemm const&       problem,
+                                                std::shared_ptr<ContractionInputs>& inputs)
         {
-            inputs->a      = (void*)ptrs[ContractionProblemGemm::TENSOR::A];
-            inputs->b      = (void*)ptrs[ContractionProblemGemm::TENSOR::B];
-            inputs->c      = (void*)ptrs[ContractionProblemGemm::TENSOR::C];
-            inputs->d      = (void*)ptrs[ContractionProblemGemm::TENSOR::D];
-            inputs->bias   = (void*)ptrs[ContractionProblemGemm::TENSOR::BIAS];
-            inputs->scaleD = (void*)ptrs[ContractionProblemGemm::TENSOR::SCALED];
+            if(m_groupedOffsets[0].empty())
+                return;
 
-            inputs->batchA = (void**)batchPtrs[ContractionProblemGemm::TENSOR::A];
-            inputs->batchB = (void**)batchPtrs[ContractionProblemGemm::TENSOR::B];
-            inputs->batchC = (void**)batchPtrs[ContractionProblemGemm::TENSOR::C];
-            inputs->batchD = (void**)batchPtrs[ContractionProblemGemm::TENSOR::D];
-
-            inputs->gpu = isGPU;
-
-            inputs->ws             = (void*)ws;
-            inputs->alpha          = cdata[ContractionProblemGemm::CONST::ALPHA].value;
-            inputs->beta           = cdata[ContractionProblemGemm::CONST::BETA].value;
-            inputs->activationArgs = {cdata[ContractionProblemGemm::CONST::ACTALPHA].value,
-                                      cdata[ContractionProblemGemm::CONST::ACTBETA].value};
-
-            inputs->maxElements = maxElements;
-        }
-
-        void DataInitialization::setContractionGroupedInputs(
-            std::vector<void*>&                     ptrs,
-            std::vector<void**>&                    batchPtrs,
-            void*                                   ws,
-            std::vector<ConstDataInitProperties>&   cdata,
-            bool                                    isGPU,
-            ContractionProblemGemm const&           problem,
-            std::vector<std::vector<size_t>> const& offsets,
-            ContractionGroupedInputs*               inputs)
-        {
-            auto aBuffer      = (uint8_t*)ptrs[ContractionProblemGemm::TENSOR::A];
-            auto bBuffer      = (uint8_t*)ptrs[ContractionProblemGemm::TENSOR::B];
-            auto cBuffer      = (uint8_t*)ptrs[ContractionProblemGemm::TENSOR::C];
-            auto dBuffer      = (uint8_t*)ptrs[ContractionProblemGemm::TENSOR::D];
-            auto biasBuffer   = (uint8_t*)ptrs[ContractionProblemGemm::TENSOR::BIAS];
-            auto scaleDBuffer = (uint8_t*)ptrs[ContractionProblemGemm::TENSOR::SCALED];
-
-            std::vector<uint8_t*> u8Ptr;
-            for(auto p : ptrs)
+            auto aBuffer      = (uint8_t*)inputs->a;
+            auto bBuffer      = (uint8_t*)inputs->b;
+            auto cBuffer      = (uint8_t*)inputs->c;
+            auto dBuffer      = (uint8_t*)inputs->d;
+            auto biasBuffer   = (uint8_t*)inputs->bias;
+            auto scaleDBuffer = (uint8_t*)inputs->scaleD;
+            auto wsBuffer     = inputs->ws;
+            // offsets
+            size_t biasOffset   = 0;
+            size_t scaleDOffset = 0;
+            // Contants
+            auto alpha          = inputs->alpha;
+            auto beta           = inputs->beta;
+            auto activationArgs = inputs->activationArgs;
+            for(int idx = 0; idx < m_groupedOffsets[0].size(); idx++)
             {
-                u8Ptr.push_back((uint8_t*)p);
-            }
+                inputs->groupedA.push_back(aBuffer);
+                inputs->groupedB.push_back(bBuffer);
+                inputs->groupedC.push_back(cBuffer);
+                inputs->groupedD.push_back(dBuffer);
 
-            for(int idx = 0; idx < offsets[0].size(); idx++)
-            {
-                ContractionInputs   unit;
-                std::vector<size_t> maxElements;
-                for(size_t j = 0; j < offsets.size(); j++)
+                inputs->groupedWs.push_back(wsBuffer);
+                inputs->groupedAlpha.push_back(inputs->alpha);
+                inputs->groupedBeta.push_back(inputs->beta);
+                inputs->groupedActivationArgs.push_back(activationArgs);
+
+                aBuffer += m_groupedOffsets[ContractionProblemGemm::TENSOR::A][idx]
+                           * problem.a().elementBytes();
+                bBuffer += m_groupedOffsets[ContractionProblemGemm::TENSOR::B][idx]
+                           * problem.b().elementBytes();
+                cBuffer += m_groupedOffsets[ContractionProblemGemm::TENSOR::C][idx]
+                           * problem.c().elementBytes();
+                dBuffer += m_groupedOffsets[ContractionProblemGemm::TENSOR::D][idx]
+                           * problem.d().elementBytes();
+                if(inputs->bias != nullptr)
+                {
+                    inputs->groupedBias.push_back(biasBuffer);
+                    biasBuffer
+                        += m_groupedOffsets[ContractionProblemGemm::TENSOR::BIAS][idx]
+                           * problem.tensors()[ContractionProblemGemm::TENSOR::BIAS].elementBytes();
+                }
+                if(inputs->scaleD != nullptr)
+                {
+                    inputs->groupedScaleD.push_back(scaleDBuffer);
+                    scaleDBuffer += m_groupedOffsets[ContractionProblemGemm::TENSOR::SCALED][idx]
+                                    * problem.tensors()[ContractionProblemGemm::TENSOR::SCALED]
+                                          .elementBytes();
+                }
+                std::vector<size_t> elements;
+                for(size_t j = 0; j < m_groupedOffsets.size(); j++)
                 {
 
-                    if(offsets[j].size() != 0)
+                    if(m_groupedOffsets[j].size() != 0)
                     {
-                        maxElements.push_back(offsets[j][idx]);
+                        elements.push_back(m_groupedOffsets[j][idx]);
                     }
                     else
                     {
-                        maxElements.push_back(0);
+                        elements.push_back(0);
                     }
                 }
-                setContractionInputs(u8Ptr, batchPtrs, ws, cdata, maxElements, isGPU, &unit);
-                inputs->grouped.push_back(unit);
-
-                u8Ptr[ContractionProblemGemm::TENSOR::A]
-                    += offsets[ContractionProblemGemm::TENSOR::A][idx] * problem.a().elementBytes();
-                u8Ptr[ContractionProblemGemm::TENSOR::B]
-                    += offsets[ContractionProblemGemm::TENSOR::B][idx] * problem.b().elementBytes();
-                u8Ptr[ContractionProblemGemm::TENSOR::C]
-                    += offsets[ContractionProblemGemm::TENSOR::C][idx] * problem.c().elementBytes();
-                u8Ptr[ContractionProblemGemm::TENSOR::D]
-                    += offsets[ContractionProblemGemm::TENSOR::D][idx] * problem.d().elementBytes();
-                if(u8Ptr[ContractionProblemGemm::TENSOR::BIAS] != nullptr)
-                {
-                    u8Ptr[ContractionProblemGemm::TENSOR::BIAS]
-                        += offsets[ContractionProblemGemm::TENSOR::BIAS][idx]
-                           * problem.tensors()[ContractionProblemGemm::TENSOR::BIAS].elementBytes();
-                }
-                if(u8Ptr[ContractionProblemGemm::TENSOR::SCALED] != nullptr)
-                {
-                    u8Ptr[ContractionProblemGemm::TENSOR::SCALED]
-                        += offsets[ContractionProblemGemm::TENSOR::SCALED][idx]
-                           * problem.tensors()[ContractionProblemGemm::TENSOR::SCALED]
-                                 .elementBytes();
-                }
+                inputs->groupedMaxElements.push_back(elements);
             }
         }
 
         // For GEMM only
-        std::shared_ptr<ProblemInputs>
-            DataInitialization::ConvertToProblemInputs(ContractionProblemGemm const& problem,
-                                                       bool                          isGPU)
+        std::shared_ptr<ContractionInputs>
+            DataInitialization::ConvertToContractionInputs(ContractionProblemGemm const& problem,
+                                                           bool                          isGPU)
         {
-            std::shared_ptr<ProblemInputs> result;
-            if(m_groupedOffsets[0].empty())
+            // 0 for cpu, 1 for gpu
+            auto inputs = std::make_shared<ContractionInputs>();
+            if(!isGPU)
             {
-                auto inputs = new ContractionInputs();
-                if(isGPU)
-                    setContractionInputs(m_gpuPtrs,
-                                         m_gpuBatchPtrs,
-                                         m_workspacePristine.get(),
-                                         m_cdata,
-                                         m_maxElements,
-                                         isGPU,
-                                         inputs);
-                else
-                {
-                    auto dummyBatchPtrs = std::vector<void**>(
-                        ContractionProblemGemm::TENSOR::TENSOR_COUNT, nullptr);
-                    setContractionInputs(m_cpuPtrs,
-                                         dummyBatchPtrs,
-                                         m_workspacePristine.get(),
-                                         m_cdata,
-                                         m_maxElements,
-                                         isGPU,
-                                         inputs);
-                }
-                result = static_pointer_cast<ProblemInputs>(
-                    std::shared_ptr<ContractionInputs>(inputs));
+                inputs->a      = m_cpuPtrs[ContractionProblemGemm::TENSOR::A];
+                inputs->b      = m_cpuPtrs[ContractionProblemGemm::TENSOR::B];
+                inputs->c      = m_cpuPtrs[ContractionProblemGemm::TENSOR::C];
+                inputs->d      = m_cpuPtrs[ContractionProblemGemm::TENSOR::D];
+                inputs->bias   = m_cpuPtrs[ContractionProblemGemm::TENSOR::BIAS];
+                inputs->scaleD = m_cpuPtrs[ContractionProblemGemm::TENSOR::SCALED];
+
+                inputs->batchA = nullptr;
+                inputs->batchB = nullptr;
+                inputs->batchC = nullptr;
+                inputs->batchD = nullptr;
+
+                inputs->gpu = false;
             }
             else
             {
-                auto inputs = new ContractionGroupedInputs();
-                // Currently grouped gemm does not support batch, so we use a dummy batch vector here.
-                auto dummyBatchPtrs
-                    = std::vector<void**>(ContractionProblemGemm::TENSOR::TENSOR_COUNT, nullptr);
-                if(isGPU)
-                    setContractionGroupedInputs(m_gpuPtrs,
-                                                dummyBatchPtrs,
-                                                m_workspacePristine.get(),
-                                                m_cdata,
-                                                isGPU,
-                                                problem,
-                                                m_groupedOffsets,
-                                                inputs);
-                else
-                    setContractionGroupedInputs(m_cpuPtrs,
-                                                dummyBatchPtrs,
-                                                m_workspacePristine.get(),
-                                                m_cdata,
-                                                isGPU,
-                                                problem,
-                                                m_groupedOffsets,
-                                                inputs);
-                result = static_pointer_cast<ProblemInputs>(
-                    std::shared_ptr<ContractionGroupedInputs>(inputs));
+                inputs->a      = m_gpuPtrs[ContractionProblemGemm::TENSOR::A];
+                inputs->b      = m_gpuPtrs[ContractionProblemGemm::TENSOR::B];
+                inputs->c      = m_gpuPtrs[ContractionProblemGemm::TENSOR::C];
+                inputs->d      = m_gpuPtrs[ContractionProblemGemm::TENSOR::D];
+                inputs->bias   = m_gpuPtrs[ContractionProblemGemm::TENSOR::BIAS];
+                inputs->scaleD = m_gpuPtrs[ContractionProblemGemm::TENSOR::SCALED];
+
+                inputs->batchA = m_gpuBatchPtrs[ContractionProblemGemm::TENSOR::A];
+                inputs->batchB = m_gpuBatchPtrs[ContractionProblemGemm::TENSOR::B];
+                inputs->batchC = m_gpuBatchPtrs[ContractionProblemGemm::TENSOR::C];
+                inputs->batchD = m_gpuBatchPtrs[ContractionProblemGemm::TENSOR::D];
+
+                inputs->gpu = true;
             }
-            return result;
+            inputs->ws             = m_workspacePristine.get();
+            inputs->alpha          = m_cdata[ContractionProblemGemm::CONST::ALPHA].value;
+            inputs->beta           = m_cdata[ContractionProblemGemm::CONST::BETA].value;
+            inputs->activationArgs = {m_cdata[ContractionProblemGemm::CONST::ACTALPHA].value,
+                                      m_cdata[ContractionProblemGemm::CONST::ACTBETA].value};
+
+            inputs->maxElements = m_maxElements;
+
+            setGroupedGemm(problem, inputs);
+            return inputs;
         }
 
         DataInitialization::~DataInitialization() {}

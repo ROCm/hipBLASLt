@@ -115,7 +115,7 @@ namespace Tensile
                                  ContractionInputs const&      inputs,
                                  size_t                        validationStride = 1);
             static void SolveCPUGroupedGemm(std::vector<ContractionProblemGemm> const& contractions,
-                                            ContractionGroupedInputs const&            inputs,
+                                            ContractionInputs const&                   inputs,
                                             size_t validationStride = 1);
         };
 
@@ -124,7 +124,7 @@ namespace Tensile
                       size_t                        validationStride = 1);
 
         void SolveCPUGroupedGemm(std::vector<ContractionProblemGemm> const& contractions,
-                                 ContractionGroupedInputs const&            inputs,
+                                 ContractionInputs const&                   inputs,
                                  size_t                                     validationStride = 1);
     } // namespace Client
 } // namespace Tensile

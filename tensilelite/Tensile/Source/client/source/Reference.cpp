@@ -599,19 +599,19 @@ namespace Tensile
         template <typename Inputs, typename Accumulator>
         void ReferenceSolution<Inputs, Accumulator>::SolveCPUGroupedGemm(
             std::vector<ContractionProblemGemm> const& problems,
-            ContractionGroupedInputs const&            inputs,
+            ContractionInputs const&                   inputs,
             size_t                                     validationStride)
         {
             for(int idx = 0; idx < problems.size(); idx++)
             {
                 // Convert void* to pointers
                 typename Inputs::AType const* aPtr
-                    = (typename Inputs::AType const*)inputs.grouped[idx].a;
+                    = (typename Inputs::AType const*)inputs.groupedA[idx];
                 typename Inputs::BType const* bPtr
-                    = (typename Inputs::BType const*)inputs.grouped[idx].b;
+                    = (typename Inputs::BType const*)inputs.groupedB[idx];
                 typename Inputs::CType const* cPtr
-                    = (typename Inputs::CType const*)inputs.grouped[idx].c;
-                typename Inputs::DType* dPtr = (typename Inputs::DType*)inputs.grouped[idx].d;
+                    = (typename Inputs::CType const*)inputs.groupedC[idx];
+                typename Inputs::DType* dPtr = (typename Inputs::DType*)inputs.groupedD[idx];
 
                 auto problem = problems[idx];
 
@@ -654,16 +654,16 @@ namespace Tensile
 
                 auto boundCount = CoordCount(boundSize.begin() + 1, boundSize.end());
 
-                if(std::get<typename Inputs::AlphaType>(inputs.grouped[idx].alpha)
+                if(std::get<typename Inputs::AlphaType>(inputs.alpha)
                    != static_cast<typename Inputs::AlphaType>(0))
                 {
-                    if(inputs.grouped[idx].a == nullptr || inputs.grouped[idx].b == nullptr)
+                    if(inputs.a == nullptr || inputs.b == nullptr)
                     {
                         std::ostringstream msg;
                         msg << "Unsupported nullptr for";
-                        if(!inputs.grouped[idx].a)
+                        if(!inputs.a)
                             msg << " A";
-                        if(!inputs.grouped[idx].b)
+                        if(!inputs.b)
                             msg << " B";
                         msg << " when Alpha !=0";
 
@@ -708,7 +708,7 @@ namespace Tensile
                     Accumulator value(0);
 
                     // Check short-circuit for alpha = 0
-                    if(std::get<typename Inputs::AlphaType>(inputs.grouped[idx].alpha)
+                    if(std::get<typename Inputs::AlphaType>(inputs.alpha)
                        != static_cast<typename Inputs::AlphaType>(0))
                     {
                         for(size_t boundNum = 0; boundNum < boundCount; boundNum++)
@@ -765,32 +765,31 @@ namespace Tensile
                     auto dIndex = d.index(dCoord);
 
                     // Ensure zero*nan returns zero
-                    Accumulator alpha = constVariantCast<Accumulator>(inputs.grouped[idx].alpha);
-                    Accumulator beta  = constVariantCast<Accumulator>(inputs.grouped[idx].beta);
+                    Accumulator alpha = constVariantCast<Accumulator>(inputs.alpha);
+                    Accumulator beta  = constVariantCast<Accumulator>(inputs.beta);
                     auto        zero  = static_cast<Accumulator>(0);
 
                     auto resultD = multiply<Accumulator>(alpha, value)
                                    + ((beta == zero) ? static_cast<Accumulator>(zero)
                                                      : multiply<Accumulator>(beta, cPtr[cIndex]));
                     // bias
-                    if(problem.useBias() && inputs.grouped[idx].bias)
+                    if(problem.useBias() && inputs.bias)
                     {
                         int         pos  = int(dNum % problem.d().sizes()[0]);
                         Accumulator bias = GetValue<Accumulator>(
-                            problem.biasType(), inputs.grouped[idx].bias, pos, aConjugate);
+                            problem.biasType(), inputs.groupedBias[idx], pos, aConjugate);
                         resultD += bias;
                     }
                     // Activation adds here
                     std::vector<Accumulator> actArgs;
-                    for(int i = 0; i < inputs.grouped[idx].activationArgs.size(); i++)
-                        actArgs.push_back(
-                            constVariantCast<Accumulator>(inputs.grouped[idx].activationArgs[i]));
+                    for(int i = 0; i < inputs.activationArgs.size(); i++)
+                        actArgs.push_back(constVariantCast<Accumulator>(inputs.activationArgs[i]));
                     resultD = Activation(
                         problem.activationType(), resultD, problem.activationEnumArg(), actArgs);
                     if(problem.useScaleD())
                     {
                         typename Inputs::AlphaType const* scaleDPtr
-                            = (typename Inputs::AlphaType const*)inputs.grouped[idx].scaleD;
+                            = (typename Inputs::AlphaType const*)inputs.groupedScaleD[idx];
                         int  pos = int(dNum % problem.d().sizes()[0]);
                         auto scaleD
                             = multiply<Accumulator>(Transform<typename Inputs::AlphaType>::Input(
@@ -940,7 +939,7 @@ namespace Tensile
         }
 
         void SolveCPUGroupedGemm(std::vector<ContractionProblemGemm> const& problems,
-                                 ContractionGroupedInputs const&            inputs,
+                                 ContractionInputs const&                   inputs,
                                  size_t                                     validationStride)
         {
             // retreive alpha/beta type set via setAlpha/BetaType()

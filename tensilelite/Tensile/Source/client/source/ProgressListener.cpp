@@ -116,9 +116,9 @@ namespace Tensile
 
         void ProgressListener::postWarmup() {}
 
-        void ProgressListener::validateWarmups(std::shared_ptr<ProblemInputs> inputs,
-                                               TimingEvents const&            startEvents,
-                                               TimingEvents const&            stopEvents)
+        void ProgressListener::validateWarmups(std::shared_ptr<ContractionInputs> inputs,
+                                               TimingEvents const&                startEvents,
+                                               TimingEvents const&                stopEvents)
         {
         }
 
@@ -147,9 +147,9 @@ namespace Tensile
         {
         }
 
-        void ProgressListener::validateEnqueues(std::shared_ptr<ProblemInputs> inputs,
-                                                TimingEvents const&            startEvents,
-                                                TimingEvents const&            stopEvents)
+        void ProgressListener::validateEnqueues(std::shared_ptr<ContractionInputs> inputs,
+                                                TimingEvents const&                startEvents,
+                                                TimingEvents const&                stopEvents)
         {
             struct timeval tmnow;
             struct tm*     tm;
