@@ -64,22 +64,19 @@ namespace Tensile
             ContractionProblemGemm::BatchIndices m_batchIndices;
             ContractionProblemGemm::BoundIndices m_boundIndices;
 
-            std::vector<DataType>                         m_tensorTypes;
-            std::vector<std::vector<std::vector<size_t>>> m_tensorStrides;
-            std::vector<size_t>                           m_tensorOffsets;
-
-            std::vector<DataType> m_constantTypes;
-            std::vector<double>   m_constantValues;
-
-            bool m_stridedBatched;
-            bool m_groupedGemm;
-            bool m_highPrecisionAccumulate;
-            bool m_deterministicMode;
-            bool m_cEqualsD;
-            bool m_useBias;
-            bool m_useScaleD;
-            bool m_useE;
-
+            DataType                    m_aType;
+            DataType                    m_bType;
+            DataType                    m_cType;
+            DataType                    m_dType;
+            DataType                    m_alphaType;
+            DataType                    m_betaType;
+            bool                        m_stridedBatched;
+            bool                        m_groupedGemm;
+            bool                        m_highPrecisionAccumulate;
+            bool                        m_deterministicMode;
+            bool                        m_cEqualsD;
+            bool                        m_useBias;
+            bool                        m_useScaleD;
             KernelLanguage              m_kernelLanguage;
             PerformanceMetric           m_performanceMetric;
             bool                        m_fp16AltImpl;
@@ -90,6 +87,18 @@ namespace Tensile
             size_t                      m_maxWorkspaceSize = 0;
 
             std::vector<std::vector<size_t>> m_problemSizes;
+            std::vector<std::vector<size_t>> m_aStrides;
+            std::vector<std::vector<size_t>> m_bStrides;
+            std::vector<std::vector<size_t>> m_cStrides;
+            std::vector<std::vector<size_t>> m_dStrides;
+
+            size_t m_aOffset;
+            size_t m_bOffset;
+            size_t m_cOffset;
+            size_t m_dOffset;
+
+            double m_beta;
+            double m_alpha;
         };
 
     } // namespace Client

@@ -452,11 +452,6 @@ namespace Tensile
                                                      size_t                     dOffset,
                                                      double                     beta);
 
-        /**
-         * Create a dummy ContractionProblemGemm to get the information of the problem type.
-         */
-        static ContractionProblemGemm GetDummy();
-
         ContractionProblemGemm(TensorDescriptor const& a,
                                TensorDescriptor const& b,
                                TensorDescriptor const& c,
@@ -554,11 +549,6 @@ namespace Tensile
             return m_betaType;
         }
 
-        void setUseE(bool useE)
-        {
-            m_useE = useE;
-        }
-
         void setUseBias(bool useBias)
         {
             m_useBias = useBias;
@@ -569,11 +559,6 @@ namespace Tensile
             m_useScaleD = useScaleD;
         }
 
-        bool useE() const
-        {
-            return m_useE;
-        }
-
         bool useBias() const
         {
             return m_useBias;
@@ -582,21 +567,6 @@ namespace Tensile
         bool useScaleD() const
         {
             return m_useScaleD;
-        }
-
-        void setE(DataType                   type,
-                  std::vector<size_t> const& sizes,
-                  std::vector<size_t> const& strides,
-                  size_t                     offset,
-                  bool                       isOutput = false)
-        {
-            if(type != DataType::None && m_useE)
-            {
-                TensorDescriptor e(
-                    "e", type, sizes.begin(), sizes.end(), strides.begin(), strides.end(), offset);
-                e.setAsOutput(isOutput);
-                m_tensors[ContractionProblemGemm::TENSOR::E] = e;
-            }
         }
 
         void setBias(DataType type, size_t length, bool isOutput = false)
@@ -887,7 +857,6 @@ namespace Tensile
         bool              m_deterministicMode       = false;
         bool              m_eligibleForPK           = true;
         bool              m_fp16AltImpl             = false;
-        bool              m_useE                    = false;
         bool              m_useBias                 = false;
         bool              m_useScaleD               = false;
         ActivationType    m_activationType          = ActivationType::None;

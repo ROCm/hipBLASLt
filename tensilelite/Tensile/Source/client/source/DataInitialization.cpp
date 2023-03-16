@@ -1192,7 +1192,6 @@ namespace Tensile
             inputs->b      = (void*)ptrs[ContractionProblemGemm::TENSOR::B];
             inputs->c      = (void*)ptrs[ContractionProblemGemm::TENSOR::C];
             inputs->d      = (void*)ptrs[ContractionProblemGemm::TENSOR::D];
-            inputs->e      = (void*)ptrs[ContractionProblemGemm::TENSOR::E];
             inputs->bias   = (void*)ptrs[ContractionProblemGemm::TENSOR::BIAS];
             inputs->scaleD = (void*)ptrs[ContractionProblemGemm::TENSOR::SCALED];
 
