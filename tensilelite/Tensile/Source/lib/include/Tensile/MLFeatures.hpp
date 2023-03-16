@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2019-2023 Advanced Micro Devices, Inc. All rights reserved.
+ * Copyright (C) 2019-2022 Advanced Micro Devices, Inc. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -57,7 +57,7 @@ namespace Tensile
             float                     waveScale;
         };
 
-        float tilesPerCU(ContractionProblemGemm const&    problem,
+        float tilesPerCU(ContractionProblem const&        problem,
                          CUGranularityScaleFactors const& cuFactors);
 
         std::ostream& operator<<(std::ostream& stream, CUGranularityScaleFactors const& cugsf);
@@ -86,7 +86,7 @@ namespace Tensile
          * \addtogroup MLFeatures
          * @{
          */
-        struct FreeSizeA : public MLFeature_CRTP<FreeSizeA, ContractionProblemGemm>
+        struct FreeSizeA : public MLFeature_CRTP<FreeSizeA, ContractionProblem>
         {
             enum
             {
@@ -100,13 +100,13 @@ namespace Tensile
                 return "FreeSizeA";
             }
 
-            virtual float operator()(ContractionProblemGemm const& problem) const
+            virtual float operator()(ContractionProblem const& problem) const
             {
                 return (float)problem.freeSizeA(index);
             }
         };
 
-        struct FreeSizeB : public MLFeature_CRTP<FreeSizeB, ContractionProblemGemm>
+        struct FreeSizeB : public MLFeature_CRTP<FreeSizeB, ContractionProblem>
         {
             enum
             {
@@ -120,13 +120,13 @@ namespace Tensile
                 return "FreeSizeB";
             }
 
-            virtual float operator()(ContractionProblemGemm const& problem) const
+            virtual float operator()(ContractionProblem const& problem) const
             {
                 return (float)problem.freeSizeB(index);
             }
         };
 
-        struct BoundSize : public MLFeature_CRTP<BoundSize, ContractionProblemGemm>
+        struct BoundSize : public MLFeature_CRTP<BoundSize, ContractionProblem>
         {
             enum
             {
@@ -140,13 +140,13 @@ namespace Tensile
                 return "BoundSize";
             }
 
-            virtual float operator()(ContractionProblemGemm const& problem) const
+            virtual float operator()(ContractionProblem const& problem) const
             {
                 return (float)problem.boundSize(index);
             }
         };
 
-        struct Tile0Granularity : public MLFeature_CRTP<Tile0Granularity, ContractionProblemGemm>
+        struct Tile0Granularity : public MLFeature_CRTP<Tile0Granularity, ContractionProblem>
         {
             enum
             {
@@ -160,14 +160,14 @@ namespace Tensile
                 return "Tile0Granularity";
             }
 
-            virtual float operator()(ContractionProblemGemm const& problem) const
+            virtual float operator()(ContractionProblem const& problem) const
             {
                 float numTiles = problem.freeSizeA(0) * value;
                 return ContractionSolution::computeGranularity(numTiles);
             }
         };
 
-        struct Tile1Granularity : public MLFeature_CRTP<Tile1Granularity, ContractionProblemGemm>
+        struct Tile1Granularity : public MLFeature_CRTP<Tile1Granularity, ContractionProblem>
         {
             enum
             {
@@ -181,14 +181,14 @@ namespace Tensile
                 return "Tile1Granularity";
             }
 
-            virtual float operator()(ContractionProblemGemm const& problem) const
+            virtual float operator()(ContractionProblem const& problem) const
             {
                 float numTiles = problem.freeSizeB(0) * value;
                 return ContractionSolution::computeGranularity(numTiles);
             }
         };
 
-        struct CUGranularity : public MLFeature_CRTP<CUGranularity, ContractionProblemGemm>
+        struct CUGranularity : public MLFeature_CRTP<CUGranularity, ContractionProblem>
         {
             enum
             {
@@ -203,13 +203,13 @@ namespace Tensile
                 return "CUGranularity";
             }
 
-            virtual float operator()(ContractionProblemGemm const& problem) const
+            virtual float operator()(ContractionProblem const& problem) const
             {
                 return ContractionSolution::computeGranularity(tilesPerCU(problem, value));
             }
         };
 
-        struct WavesPerSIMD : public MLFeature_CRTP<WavesPerSIMD, ContractionProblemGemm>
+        struct WavesPerSIMD : public MLFeature_CRTP<WavesPerSIMD, ContractionProblem>
         {
             enum
             {
@@ -224,7 +224,7 @@ namespace Tensile
                 return "WavesPerSIMD";
             }
 
-            virtual float operator()(ContractionProblemGemm const& problem) const
+            virtual float operator()(ContractionProblem const& problem) const
             {
                 return ceil(tilesPerCU(problem, value.cuFactors)) * value.waveScale;
             }

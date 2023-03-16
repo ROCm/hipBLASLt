@@ -1,6 +1,6 @@
 ################################################################################
 #
-# Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2022 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -33,6 +33,7 @@ endif()
 
 set(tensile_sources  ${tensile_sources}
     source/AMDGPU.cpp
+    source/ArithmeticUnitTypes.cpp
     source/ContractionProblem.cpp
     source/ContractionSolution.cpp
     source/DataTypes.cpp
@@ -45,6 +46,7 @@ set(tensile_sources  ${tensile_sources}
     source/PerformanceMetricTypes.cpp
     source/ScalarValueTypes.cpp
     source/TensorDescriptor.cpp
+    source/TensorOps.cpp
     source/Tensile.cpp
     source/Utils.cpp
     )
@@ -91,7 +93,7 @@ add_library (TensileHost STATIC ${tensile_sources})
 
 set_target_properties(TensileHost
                       PROPERTIES
-                      CXX_STANDARD 20
+                      CXX_STANDARD 14
                       CXX_STANDARD_REQUIRED ON
                       CXX_EXTENSIONS OFF)
 

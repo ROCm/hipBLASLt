@@ -36,8 +36,6 @@ from .CustomKernels import isCustomKernelConfig
 from .SolutionStructs import Solution, isPackedIndex
 from .AsmMemoryInstruction import MemoryInstruction
 
-from .Activation import ActivationModule
-
 import abc
 import os
 import subprocess
@@ -269,10 +267,6 @@ class CodeModules:
   perIterLocalWriteCodeNGLL: Optional[Module] = None
   perIterGlobalReadCodeDTV: Optional[Module]  = None
 
-@dataclass
-class ExternClasses:
-  activation: ActivationModule = ActivationModule()
-
 ################################################################################
 # Kernel Writer
 ################################################################################
@@ -385,8 +379,6 @@ class KernelWriter(metaclass=abc.ABCMeta):
     self.consts = ConstValues()
     self.states = StateValues((0,0,0), {}, "")
     self.vgprs  = StateVgprs()
-
-    self.exclasses = ExternClasses()
 
   ##############################################################################
   # makeSchedule:  Schedule work into interations.
@@ -2470,9 +2462,6 @@ class KernelWriter(metaclass=abc.ABCMeta):
     self.sgprs  = collections.OrderedDict()
     self.codes  = CodeModules()
     self.labels = LabelManager()
-
-    if kernel["ProblemType"]["ActivationType"] == 'all':
-      self.exclasses.activation.setUseCache(True)
 
     self.states.asmCaps  = ti.getAsmCaps()
     self.states.archCaps = ti.getArchCaps()

@@ -1,6 +1,6 @@
 ################################################################################
 #
-# Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2022 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -151,7 +151,7 @@ def _removeDuplicateAssignmentGPR(graph, regType):
             # FIXME: Need refactor.
             elif isinstance(item, SMovB32):
                 gpr      = item.dst
-                gprValue = item.srcs
+                gprValue = item.src
                 if gpr.regIdx == idx and gprValue == assignValue:
                     if item.comment:
                         comment = item.comment + " (dup assign opt.)"

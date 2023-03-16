@@ -101,10 +101,8 @@ class CompositeInstruction(Instruction):
         pass
 
     def getParams(self) -> list:
-        plist = [self.dst]
-        if self.srcs:
-            plist.extend(self.srcs)
-        return plist
+        assert 0
+        return []
 
     def preStr(self):
         self.setupInstructions()
@@ -114,13 +112,13 @@ class CompositeInstruction(Instruction):
         return '\n'.join([str(s) for s in self.instructions])
 
 class CommonInstruction(Instruction):
-    def __init__(self, instType: InstType, dst, srcs: list, \
+    def __init__(self, instType: InstType, dst, src: list, \
                  sdwa: Optional[SDWAModifiers]=None, vop3: Optional[VOP3PModifiers]=None, \
                  comment="") -> None:
         super().__init__(instType, comment)
         self.dst      = dst
         self.dst1     = None # Usually we don't need this
-        self.srcs     = srcs
+        self.src      = src
         self.sdwa     = sdwa
         self.vop3     = vop3
 
@@ -132,11 +130,11 @@ class CommonInstruction(Instruction):
             if kStr:
                 kStr += ", "
             kStr += str(self.dst1)
-        if self.srcs:
+        if self.src:
             if kStr:
                 kStr += ", "
-            kStr += str(self.srcs[0])
-        for i in self.srcs[1:]:
+            kStr += str(self.src[0])
+        for i in self.src[1:]:
             kStr += ", " + str(i)
         return kStr
 
@@ -146,8 +144,8 @@ class CommonInstruction(Instruction):
             l.append(self.dst)
         if self.dst1:
             l.append(self.dst1)
-        if self.srcs:
-            l.extend(self.srcs)
+        if self.src:
+            l.extend(self.src)
         return l
 
     def toList(self) -> list:
@@ -157,8 +155,8 @@ class CommonInstruction(Instruction):
             l.append(self.dst)
         if self.dst1:
             l.append(self.dst1)
-        if self.srcs:
-            l.extend(self.srcs)
+        if self.src:
+            l.extend(self.src)
         l.extend(self.sdwa.toList()) if self.sdwa else ""
         l.extend(self.vop3.toList()) if self.vop3 else ""
         l.append(self.comment)
@@ -197,15 +195,15 @@ class VCmpXInstruction(CommonInstruction):
         self.preStr()
         if self.archCaps["CMPXWritesSGPR"]:
             l = [self.instStr, self.dst]
-            if self.srcs:
-                l.extend(self.srcs)
+            if self.src:
+                l.extend(self.src)
             l.extend(self.sdwa.toList()) if self.sdwa else ""
             l.append(self.comment)
         else:
             instStr = self.instStr.replace("_cmpx_", "_cmp_")
             l1 = [instStr, self.dst]
-            if self.srcs:
-                l1.extend(self.srcs)
+            if self.src:
+                l1.extend(self.src)
             l1.extend(self.sdwa.toList()) if self.sdwa else ""
             l1.append(self.comment)
             if self.kernel.wavefrontSize == 64:
@@ -533,7 +531,7 @@ class LocalReadInstruction(ReadWriteInstruction):
                  readToTempVgpr: bool, comment="") -> None:
         super().__init__(instType, ReadWriteInstruction.RWType.RW_TYPE1, comment)
         self.dst            = dst
-        self.srcs            = src
+        self.src            = src
 
         self.readToTempVgpr = readToTempVgpr
 
@@ -546,18 +544,18 @@ class DSLoadInstruction(LocalReadInstruction):
         self.ds             = ds
 
     def getParams(self) -> list:
-        return [self.dst, self.srcs]
+        return [self.dst, self.src]
 
     def preStr(self):
         if self.kernel.isa[0] < 11:
             self.instStr = self.instStr.replace("load", "read")
 
     def getArgStr(self) -> str:
-        return str(self.dst) + ", " + str(self.srcs)
+        return str(self.dst) + ", " + str(self.src)
 
     def toList(self) -> list:
         self.preStr()
-        l = [self.instStr, self.dst, self.srcs]
+        l = [self.instStr, self.dst, self.src]
         l.extend(self.ds.toList()) if self.ds else ""
         l.append(self.comment)
         return l
@@ -1119,27 +1117,27 @@ class SGetPCB64(CommonInstruction):
 class SSetPCB64(BranchInstruction):
     def __init__(self, src, comment="") -> None:
         super().__init__("", comment)
-        self.srcs = src
+        self.src = src
         self.setInst("s_setpc_b64")
 
     def toList(self) -> list:
-        return [self.instStr, self.srcs, self.comment]
+        return [self.instStr, self.src, self.comment]
 
     def __str__(self) -> str:
-        return self.formatWithComment(self.instStr + " " + str(self.srcs))
+        return self.formatWithComment(self.instStr + " " + str(self.src))
 
 class SSwapPCB64(BranchInstruction):
     def __init__(self, dst, src, comment="") -> None:
         super().__init__("", comment)
         self.dst = dst
-        self.srcs = src
+        self.src = src
         self.setInst("s_swappc_b64")
 
     def toList(self) -> list:
-        return [self.instStr, self.dst, self.srcs, self.comment]
+        return [self.instStr, self.dst, self.src, self.comment]
 
     def __str__(self) -> str:
-        return self.formatWithComment(self.instStr + " " + str(self.dst) + ", " + str(self.srcs))
+        return self.formatWithComment(self.instStr + " " + str(self.dst) + ", " + str(self.src))
 
 class SCBranchExecZ(BranchInstruction):
     def __init__(self, labelName: str, comment="") -> None:
@@ -1374,9 +1372,6 @@ class SWaitCnt(CompositeInstruction):
         self.vscnt   = vscnt
         self.waitAll = waitAll
 
-    def getParams(self) -> list:
-        return []
-
     def setupInstructions(self):
         super().setupInstructions()
         if self.waitAll:
@@ -1512,6 +1507,10 @@ class VAddPKF32(CompositeInstruction):
     def __init__(self, dst, src0, src1, comment="") -> None:
         super().__init__(InstType.INST_F32, dst, [src0, src1], comment)
         self.setInst("v_pk_add_f32")
+
+    def getParams(self) -> list:
+        assert 0 and "Not supported."
+        return []
 
     def toList(self) -> list:
         assert 0 and "Not supported."

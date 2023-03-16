@@ -62,7 +62,7 @@ class StoreState:
                 self.numTempSgprPerBatch   = 2 * kernelWriter.states.laneSGPRCount
 
             if self.numMaskSgprPerElement:
-                numSgprAvailable = kernelWriter.consts.maxSgprs - kernelWriter.sgprPool.size() + kernelWriter.sgprPool.availableBlockAtEnd()
+                numSgprAvailable = kernelWriter.maxSgprs - kernelWriter.sgprPool.size() + kernelWriter.sgprPool.availableBlockAtEnd()
                 numSgprAvailable = numSgprAvailable & ~0x1 # make sure it's aligned
                 #print("numSgprAvailable=", numSgprAvailable)
                 self.numElementsPerBatchLimitedBySgprs = (numSgprAvailable - self.numTempSgprPerBatch - self.numMaskSgprPerBatch) // self.numMaskSgprPerElement

@@ -371,6 +371,12 @@ class ProblemPredicate(Properties.Predicate):
             if ('_GlobalAccumulation' not in state) or (state['_GlobalAccumulation'] != 'MultipleBuffer'):
                 rv += [cls("DeterministicMode", value = False)]
 
+        if ("MatrixInstruction" in state and state["MatrixInstruction"]) or \
+           ("EnableMatrixInstruction" in state and state["EnableMatrixInstruction"] is True):
+            rv += [cls("ArithmeticUnitCompatible", value="MFMA")]
+        else:
+            printExit("TensileLite does not support VALU.")
+
         # if bufferload is performed, we output some predication info for host side,
         # to prevent from some extremely large problems from launching and causing bufferload offset limit < 2^32
         # thoses cases will not satisfy the assertion thus won't use the kernel.

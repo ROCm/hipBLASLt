@@ -1,6 +1,6 @@
 ################################################################################
 #
-# Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2022 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -299,8 +299,6 @@ def Tensile(userArgs):
     if profiler:
         profiler.disable()
         filename = globalParameters["OutputPath"] + "/tensile.stats"
-        profiler.dump_stats(filename)
-        filename = globalParameters["OutputPath"] + "/tensile.prof"
         profiler.dump_stats(filename)
 
 def TensileConfigPath(*args):

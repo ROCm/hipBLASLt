@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
+ * Copyright (C) 2022 Advanced Micro Devices, Inc. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -116,22 +116,14 @@ namespace Tensile
             this->calculate();
         }
 
-        TensorDescriptor(const char* name)
-            : m_name(name)
-        {
-            this->calculate();
-        }
-
         template <typename IterA, typename IterB>
-        TensorDescriptor(const char* name,
-                         DataType    t,
-                         IterA       sizesBegin,
-                         IterA       sizesEnd,
-                         IterB       stridesBegin,
-                         IterB       stridesEnd,
-                         size_t      offset = 0)
-            : m_name(name)
-            , m_sizes(sizesBegin, sizesEnd)
+        TensorDescriptor(DataType t,
+                         IterA    sizesBegin,
+                         IterA    sizesEnd,
+                         IterB    stridesBegin,
+                         IterB    stridesEnd,
+                         size_t   offset = 0)
+            : m_sizes(sizesBegin, sizesEnd)
             , m_strides(stridesBegin, stridesEnd)
             , m_dataType(t)
             , m_offset(offset)
@@ -140,22 +132,16 @@ namespace Tensile
         }
 
         template <typename Iter>
-        TensorDescriptor(
-            const char* name, DataType t, Iter sizesBegin, Iter sizesEnd, size_t offset = 0)
-            : m_name(name)
-            , m_sizes(sizesBegin, sizesEnd)
+        TensorDescriptor(DataType t, Iter sizesBegin, Iter sizesEnd, size_t offset = 0)
+            : m_sizes(sizesBegin, sizesEnd)
             , m_dataType(t)
             , m_offset(offset)
         {
             this->calculate();
         }
 
-        TensorDescriptor(const char*                   name,
-                         DataType                      t,
-                         std::initializer_list<size_t> sizes,
-                         size_t                        offset = 0)
-            : m_name(name)
-            , m_sizes(sizes)
+        TensorDescriptor(DataType t, std::initializer_list<size_t> sizes, size_t offset = 0)
+            : m_sizes(sizes)
             , m_dataType(t)
             , m_offset(offset)
 
@@ -163,38 +149,16 @@ namespace Tensile
             this->calculate();
         }
 
-        TensorDescriptor(const char*                   name,
-                         DataType                      t,
+        TensorDescriptor(DataType                      t,
                          std::initializer_list<size_t> sizes,
                          std::initializer_list<size_t> strides,
                          size_t                        offset = 0)
-            : m_name(name)
-            , m_sizes(sizes)
+            : m_sizes(sizes)
             , m_strides(strides)
             , m_dataType(t)
             , m_offset(offset)
         {
             this->calculate();
-        }
-
-        void setName(const char* name)
-        {
-            m_name = name;
-        }
-
-        const std::string& getName() const
-        {
-            return m_name;
-        }
-
-        void setAsOutput(bool isOutput)
-        {
-            m_isOutput = isOutput;
-        }
-
-        bool isOutput() const
-        {
-            return m_isOutput;
         }
 
         inline void calculate()
@@ -366,7 +330,6 @@ namespace Tensile
         friend std::ostream& operator<<(std::ostream& stream, const TensorDescriptor& t);
 
     private:
-        std::string         m_name;
         std::vector<size_t> m_sizes;
         std::vector<size_t> m_strides;
         size_t              m_offset = 0;
@@ -375,8 +338,6 @@ namespace Tensile
         size_t m_totalAllocatedElements = 0;
 
         DataType m_dataType = DataType::Float;
-
-        bool m_isOutput = false;
     };
 
     std::ostream& operator<<(std::ostream& stream, const TensorDescriptor& t);

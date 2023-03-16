@@ -28,7 +28,6 @@
 #include "DataInitialization.hpp"
 #include "Tensile/Debug.hpp"
 #include "Tensile/Utils.hpp"
-#include "TypedId.hpp"
 
 #include <cstddef>
 
@@ -82,50 +81,18 @@ namespace Tensile
             return static_cast<Accumulator>(static_cast<LMultT>(l) * static_cast<RMultT>(r));
         }
 
-        template <typename Accumulator, typename Type>
-        inline Accumulator cast(Type val)
-        {
-            /* Transform the data type from TypeL/TypeR to Accumulator if TypeL!=ACC or TypeR!=ACC, but filter out cases, I8/I32/I32 and I8x4/I32/I32
-             *
-             * There are three cases of doing multiplication and their conditions to do transform or not are as below.
-             * 1. AxB : (A!=ACC or B!=ACC) and A!=I8 and A!=I8x4
-             * 2. Alpha x rC :  (Alpha!=ACC or rC!=ACC)
-             * 3. Beta x C : (Beta!=ACC or C!=ACC)
-            */
-            constexpr bool needAccumCast
-                = !std::is_same<Type, Accumulator>()
-                  && !std::is_same<Type, Int8>() //case I8/I32/I32, I8 be implicitly cast to int.
-                  && !std::is_same<Type, Int8x4>(); //case I8x4/I32/I32, I8x4 overloading the op*.
-
-            using MultT = std::conditional_t<needAccumCast, Accumulator, Type>;
-            return static_cast<MultT>(val);
-        }
-
         template <typename T, typename Accumulator>
         typename std::enable_if<std::is_same<int8_t, T>::value, T>::type
             SaturateCast(Accumulator val)
         {
-            if constexpr(std::is_same<Accumulator, Half>::value
-                         || std::is_same<Accumulator, BFloat16>::value)
-            {
-                float tmp = std::nearbyint((float)val); //round to even
-                if(tmp > static_cast<float>(127))
-                    tmp = static_cast<float>(127);
-                else if(tmp < static_cast<float>(-128))
-                    tmp = static_cast<float>(-128);
-                return static_cast<T>(tmp);
-            }
-            else
-            {
-                if constexpr(std::is_same<Accumulator, float>::value
-                             || std::is_same<Accumulator, double>::value)
-                    val = std::nearbyint(val); //round to even
-                if(val > static_cast<Accumulator>(127))
-                    val = static_cast<Accumulator>(127);
-                else if(val < static_cast<Accumulator>(-128))
-                    val = static_cast<Accumulator>(-128);
-                return static_cast<T>(val);
-            }
+            if(std::is_same<Accumulator, float>::value)
+                val = std::nearbyint(val); //round to even
+
+            if(val > static_cast<Accumulator>(127))
+                val = static_cast<Accumulator>(127);
+            else if(val < static_cast<Accumulator>(-128))
+                val = static_cast<Accumulator>(-128);
+            return static_cast<T>(val);
         }
 
         template <typename T, typename Accumulator>
@@ -143,44 +110,44 @@ namespace Tensile
                                     || std::is_same<int32_t, Accumulator>::value
                                     || std::is_same<int8_t, Accumulator>::value,
                                 Accumulator>::type
-            GetValue(DataType dataType, void const* voidPtr, int pos, bool aConjugate)
+            GetBias(DataType biasType, void const* biasptr, int pos, bool aConjugate)
         {
-            switch(dataType)
+            switch(biasType)
             {
             case DataType::Float:
             {
-                auto typedPtr = static_cast<float const*>(voidPtr);
-                return cast<Accumulator>(Transform<float>::Input(typedPtr[pos], aConjugate));
+                auto bptr = static_cast<float const*>(biasptr);
+                return multiply<Accumulator>(Transform<float>::Input(bptr[pos], aConjugate), 1);
             }
             break;
             case DataType::Double:
             {
-                auto typedPtr = static_cast<double const*>(voidPtr);
-                return cast<Accumulator>(Transform<double>::Input(typedPtr[pos], aConjugate));
+                auto bptr = static_cast<double const*>(biasptr);
+                return multiply<Accumulator>(Transform<double>::Input(bptr[pos], aConjugate), 1);
             }
             break;
             case DataType::Half:
             {
-                auto typedPtr = static_cast<Half const*>(voidPtr);
-                return cast<Accumulator>(Transform<Half>::Input(typedPtr[pos], aConjugate));
+                auto bptr = static_cast<Half const*>(biasptr);
+                return multiply<Accumulator>(Transform<Half>::Input(bptr[pos], aConjugate), 1);
             }
             break;
             case DataType::Int32:
             {
-                auto typedPtr = static_cast<int32_t const*>(voidPtr);
-                return cast<Accumulator>(Transform<int32_t>::Input(typedPtr[pos], aConjugate));
+                auto bptr = static_cast<int32_t const*>(biasptr);
+                return multiply<Accumulator>(Transform<int32_t>::Input(bptr[pos], aConjugate), 1);
             }
             break;
             case DataType::BFloat16:
             {
-                auto typedPtr = static_cast<BFloat16 const*>(voidPtr);
-                return cast<Accumulator>(Transform<BFloat16>::Input(typedPtr[pos], aConjugate));
+                auto bptr = static_cast<BFloat16 const*>(biasptr);
+                return multiply<Accumulator>(Transform<BFloat16>::Input(bptr[pos], aConjugate), 1);
             }
             break;
             case DataType::Int8:
             {
-                auto typedPtr = static_cast<int8_t const*>(voidPtr);
-                return cast<Accumulator>(Transform<int8_t>::Input(typedPtr[pos], aConjugate));
+                auto bptr = static_cast<int8_t const*>(biasptr);
+                return multiply<Accumulator>(Transform<int8_t>::Input(bptr[pos], aConjugate), 1);
             }
             break;
             case DataType::ComplexFloat:
@@ -199,95 +166,9 @@ namespace Tensile
                                     && !std::is_same<int32_t, Accumulator>::value
                                     && !std::is_same<int8_t, Accumulator>::value,
                                 Accumulator>::type
-            GetValue(DataType biasType, void const* biasptr, int pos, bool aConjugate)
+            GetBias(DataType biasType, void const* biasptr, int pos, bool aConjugate)
         {
             return DataInitialization::getValue<Accumulator, InitMode::Zero>();
-        }
-
-        template <typename Accumulator,
-                  std::enable_if_t<std::is_same<Half, Accumulator>::value
-                                       || std::is_same<float, Accumulator>::value
-                                       || std::is_same<double, Accumulator>::value
-                                       || std::is_same<BFloat16, Accumulator>::value
-                                       || std::is_same<int32_t, Accumulator>::value
-                                       || std::is_same<int8_t, Accumulator>::value,
-                                   bool> = true>
-        void SetValue(DataType dataType, Accumulator& src, void* dstPtr, int pos)
-        {
-            switch(dataType)
-            {
-            case DataType::Float:
-            {
-                auto typedPtr = static_cast<float*>(dstPtr);
-                typedPtr[pos] = SaturateCast<float>(src);
-            }
-            break;
-            case DataType::Double:
-            {
-                auto typedPtr = static_cast<double*>(dstPtr);
-                typedPtr[pos] = SaturateCast<double>(src);
-            }
-            break;
-            case DataType::Half:
-            {
-                auto typedPtr = static_cast<Half*>(dstPtr);
-                typedPtr[pos] = SaturateCast<Half>(src);
-            }
-            break;
-            case DataType::Int32:
-            {
-                auto typedPtr = static_cast<int32_t*>(dstPtr);
-                typedPtr[pos] = SaturateCast<int32_t>(src);
-            }
-            break;
-            case DataType::BFloat16:
-            {
-                auto typedPtr = static_cast<BFloat16*>(dstPtr);
-                typedPtr[pos] = SaturateCast<BFloat16>(src);
-            }
-            break;
-            case DataType::Int8:
-            {
-                auto typedPtr = static_cast<int8_t*>(dstPtr);
-                typedPtr[pos] = SaturateCast<int8_t>(src);
-            }
-            break;
-            case DataType::ComplexFloat:
-            case DataType::ComplexDouble:
-            case DataType::Int8x4:
-            case DataType::Count:;
-            }
-        }
-
-        template <typename Accumulator,
-                  std::enable_if_t<!std::is_same<Half, Accumulator>::value
-                                       && !std::is_same<float, Accumulator>::value
-                                       && !std::is_same<double, Accumulator>::value
-                                       && !std::is_same<BFloat16, Accumulator>::value
-                                       && !std::is_same<int32_t, Accumulator>::value
-                                       && !std::is_same<int8_t, Accumulator>::value,
-                                   bool> = true>
-        void SetValue(DataType dataType, Accumulator& src, void* dstPtr, int pos)
-        {
-            switch(dataType)
-            {
-            case DataType::Float:
-            case DataType::Double:
-            case DataType::Half:
-            case DataType::Int32:
-            case DataType::BFloat16:
-            case DataType::Int8:
-                break;
-            case DataType::ComplexFloat:
-            case DataType::ComplexDouble:
-                break;
-            case DataType::Int8x4:
-            {
-                throw std::runtime_error("Not supported yet.");
-            }
-            break;
-            case DataType::Count:;
-            }
         }
 
         template <typename T>
@@ -405,16 +286,10 @@ namespace Tensile
         }
 
         template <typename Inputs, typename Accumulator>
-        void ReferenceSolution<Inputs, Accumulator>::SolveCPU(ContractionProblemGemm const& problem,
-                                                              ContractionInputs const&      inputs,
+        void ReferenceSolution<Inputs, Accumulator>::SolveCPU(ContractionProblem const& problem,
+                                                              Inputs const&             inputs,
                                                               size_t validationStride)
         {
-            // Convert void* to pointers
-            typename Inputs::AType const* aPtr = (typename Inputs::AType const*)inputs.a;
-            typename Inputs::BType const* bPtr = (typename Inputs::BType const*)inputs.b;
-            typename Inputs::CType const* cPtr = (typename Inputs::CType const*)inputs.c;
-            typename Inputs::DType*       dPtr = (typename Inputs::DType*)inputs.d;
-
             auto const& freeIndicesA = problem.freeIndicesA();
             auto const& freeIndicesB = problem.freeIndicesB();
             auto const& batchIndices = problem.batchIndices();
@@ -428,15 +303,13 @@ namespace Tensile
             bool aConjugate = false;
             bool bConjugate = false;
 
-            if(DataTypeInfo::Get(problem.a().dataType()).isComplex)
-            {
-                aConjugate = true;
-            }
+            for(auto const& op : problem.aOps())
+                if(op.type == TensorOp::Type::ComplexConjugate)
+                    aConjugate = true;
 
-            if(DataTypeInfo::Get(problem.b().dataType()).isComplex)
-            {
-                bConjugate = true;
-            }
+            for(auto const& op : problem.bOps())
+                if(op.type == TensorOp::Type::ComplexConjugate)
+                    bConjugate = true;
 
             std::vector<size_t> freeASize(freeIndicesA.size());
             std::vector<size_t> freeBSize(freeIndicesB.size());
@@ -454,8 +327,7 @@ namespace Tensile
 
             auto boundCount = CoordCount(boundSize.begin() + 1, boundSize.end());
 
-            if(std::get<typename Inputs::AlphaType>(inputs.alpha)
-               != static_cast<typename Inputs::AlphaType>(0))
+            if(inputs.alpha != static_cast<typename Inputs::AlphaType>(0))
             {
                 if(inputs.a == nullptr || inputs.b == nullptr)
                 {
@@ -508,8 +380,7 @@ namespace Tensile
                 Accumulator value(0);
 
                 // Check short-circuit for alpha = 0
-                if(std::get<typename Inputs::AlphaType>(inputs.alpha)
-                   != static_cast<typename Inputs::AlphaType>(0))
+                if(inputs.alpha != static_cast<typename Inputs::AlphaType>(0))
                 {
                     for(size_t boundNum = 0; boundNum < boundCount; boundNum++)
                     {
@@ -542,7 +413,7 @@ namespace Tensile
                         // innermost bound calculation:
                         for(size_t i = 0; i < boundSize[0]; i++)
                         {
-                            size_t aI
+                            size_t      aI
                                 = problem.boundIndices()[0].aMirror ? (boundSize[0] - i - 1) : i;
                             size_t bI
                                 = problem.boundIndices()[0].bMirror ? (boundSize[0] - i - 1) : i;
@@ -550,9 +421,9 @@ namespace Tensile
                             typename Inputs::AType aVal(0);
                             typename Inputs::BType bVal(0);
                             aVal = Transform<typename Inputs::AType>::Input(
-                                aPtr[aIndex + (aI * aStride)], aConjugate);
+                                inputs.a[aIndex + (aI * aStride)], aConjugate);
                             bVal = Transform<typename Inputs::BType>::Input(
-                                bPtr[bIndex + (bI * bStride)], bConjugate);
+                                inputs.b[bIndex + (bI * bStride)], bConjugate);
 
                             value += multiply<Accumulator>(aVal, bVal);
                         }
@@ -563,56 +434,46 @@ namespace Tensile
                 auto dIndex = d.index(dCoord);
 
                 // Ensure zero*nan returns zero
-                Accumulator alpha = constVariantCast<Accumulator>(inputs.alpha);
-                Accumulator beta  = constVariantCast<Accumulator>(inputs.beta);
-                auto        zero  = static_cast<Accumulator>(0);
+                auto beta = inputs.beta;
+                auto zero = static_cast<typename Inputs::BetaType>(0);
 
-                auto resultD = multiply<Accumulator>(alpha, value)
+                auto resultD = multiply<Accumulator>(inputs.alpha, value)
                                + ((beta == zero) ? static_cast<Accumulator>(zero)
-                                                 : multiply<Accumulator>(beta, cPtr[cIndex]));
-
+                                                 : multiply<Accumulator>(beta, inputs.c[cIndex]));
                 // bias
                 if(problem.useBias() && inputs.bias)
                 {
                     int         pos = int(dNum % problem.d().sizes()[0]);
                     Accumulator bias
-                        = GetValue<Accumulator>(problem.biasType(), inputs.bias, pos, aConjugate);
+                        = GetBias<Accumulator>(problem.biasType(), inputs.bias, pos, aConjugate);
                     resultD += bias;
                 }
                 // Activation adds here
                 std::vector<Accumulator> actArgs;
                 for(int i = 0; i < inputs.activationArgs.size(); i++)
-                    actArgs.push_back(constVariantCast<Accumulator>(inputs.activationArgs[i]));
+                    actArgs.push_back(static_cast<Accumulator>(inputs.activationArgs[i]));
                 resultD = Activation(
                     problem.activationType(), resultD, problem.activationEnumArg(), actArgs);
                 if(problem.useScaleD())
                 {
-                    int         pos    = int(dNum % problem.d().sizes()[0]);
-                    Accumulator scaleD = GetValue<Accumulator>(
-                        problem.alphaType(), inputs.scaleD, pos, aConjugate);
+                    int  pos = int(dNum % problem.d().sizes()[0]);
+                    auto scaleD
+                        = multiply<Accumulator>(Transform<typename Inputs::AlphaType>::Input(
+                                                    inputs.scaleD[pos], aConjugate),
+                                                1);
                     resultD *= scaleD;
                 }
-                dPtr[dIndex] = SaturateCast<typename Inputs::DType>(resultD);
+                inputs.d[dIndex] = SaturateCast<typename Inputs::DType>(resultD);
             }
         }
 
         template <typename Inputs, typename Accumulator>
-        void ReferenceSolution<Inputs, Accumulator>::SolveCPUGroupedGemm(
-            std::vector<ContractionProblemGemm> const& problems,
-            ContractionInputs const&                   inputs,
-            size_t                                     validationStride)
+        void ReferenceSolution<Inputs, Accumulator>::SolveCPUGroupedGemm(std::vector<ContractionProblem> const& problems,
+                                                                         Inputs const&             inputs,
+                                                                         size_t validationStride)
         {
             for(int idx = 0; idx < problems.size(); idx++)
             {
-                // Convert void* to pointers
-                typename Inputs::AType const* aPtr
-                    = (typename Inputs::AType const*)inputs.groupedA[idx];
-                typename Inputs::BType const* bPtr
-                    = (typename Inputs::BType const*)inputs.groupedB[idx];
-                typename Inputs::CType const* cPtr
-                    = (typename Inputs::CType const*)inputs.groupedC[idx];
-                typename Inputs::DType* dPtr = (typename Inputs::DType*)inputs.groupedD[idx];
-
                 auto problem = problems[idx];
 
                 auto const& freeIndicesA = problem.freeIndicesA();
@@ -628,15 +489,13 @@ namespace Tensile
                 bool aConjugate = false;
                 bool bConjugate = false;
 
-                if(DataTypeInfo::Get(problem.a().dataType()).isComplex)
-                {
-                    aConjugate = true;
-                }
+                for(auto const& op : problem.aOps())
+                    if(op.type == TensorOp::Type::ComplexConjugate)
+                        aConjugate = true;
 
-                if(DataTypeInfo::Get(problem.b().dataType()).isComplex)
-                {
-                    bConjugate = true;
-                }
+                for(auto const& op : problem.bOps())
+                    if(op.type == TensorOp::Type::ComplexConjugate)
+                        bConjugate = true;
 
                 std::vector<size_t> freeASize(freeIndicesA.size());
                 std::vector<size_t> freeBSize(freeIndicesB.size());
@@ -654,8 +513,7 @@ namespace Tensile
 
                 auto boundCount = CoordCount(boundSize.begin() + 1, boundSize.end());
 
-                if(std::get<typename Inputs::AlphaType>(inputs.alpha)
-                   != static_cast<typename Inputs::AlphaType>(0))
+                if(inputs.alpha != static_cast<typename Inputs::AlphaType>(0))
                 {
                     if(inputs.a == nullptr || inputs.b == nullptr)
                     {
@@ -671,7 +529,7 @@ namespace Tensile
                     }
                 }
 
-#pragma omp parallel for
+    #pragma omp parallel for
                 for(size_t dNum = 0; dNum < d.totalLogicalElements(); dNum += validationStride)
                 {
                     std::vector<int64_t> aCoord(a.dimensions());
@@ -708,17 +566,16 @@ namespace Tensile
                     Accumulator value(0);
 
                     // Check short-circuit for alpha = 0
-                    if(std::get<typename Inputs::AlphaType>(inputs.alpha)
-                       != static_cast<typename Inputs::AlphaType>(0))
+                    if(inputs.alpha != static_cast<typename Inputs::AlphaType>(0))
                     {
                         for(size_t boundNum = 0; boundNum < boundCount; boundNum++)
                         {
                             std::vector<int64_t> bound(problem.boundIndices().size());
                             CoordNumbered(boundNum,
-                                          bound.begin() + 1,
-                                          bound.end(),
-                                          boundSize.begin() + 1,
-                                          boundSize.end());
+                                        bound.begin() + 1,
+                                        bound.end(),
+                                        boundSize.begin() + 1,
+                                        boundSize.end());
 
                             for(int i = 1; i < bound.size(); i++)
                             {
@@ -742,19 +599,17 @@ namespace Tensile
                             // innermost bound calculation:
                             for(size_t i = 0; i < boundSize[0]; i++)
                             {
-                                size_t aI = problem.boundIndices()[0].aMirror
-                                                ? (boundSize[0] - i - 1)
-                                                : i;
-                                size_t bI = problem.boundIndices()[0].bMirror
-                                                ? (boundSize[0] - i - 1)
-                                                : i;
+                                size_t      aI
+                                    = problem.boundIndices()[0].aMirror ? (boundSize[0] - i - 1) : i;
+                                size_t bI
+                                    = problem.boundIndices()[0].bMirror ? (boundSize[0] - i - 1) : i;
 
                                 typename Inputs::AType aVal(0);
                                 typename Inputs::BType bVal(0);
                                 aVal = Transform<typename Inputs::AType>::Input(
-                                    aPtr[aIndex + (aI * aStride)], aConjugate);
+                                    inputs.groupedA[idx][aIndex + (aI * aStride)], aConjugate);
                                 bVal = Transform<typename Inputs::BType>::Input(
-                                    bPtr[bIndex + (bI * bStride)], bConjugate);
+                                    inputs.groupedB[idx][bIndex + (bI * bStride)], bConjugate);
 
                                 value += multiply<Accumulator>(aVal, bVal);
                             }
@@ -765,46 +620,43 @@ namespace Tensile
                     auto dIndex = d.index(dCoord);
 
                     // Ensure zero*nan returns zero
-                    Accumulator alpha = constVariantCast<Accumulator>(inputs.alpha);
-                    Accumulator beta  = constVariantCast<Accumulator>(inputs.beta);
-                    auto        zero  = static_cast<Accumulator>(0);
+                    auto beta = inputs.beta;
+                    auto zero = static_cast<typename Inputs::BetaType>(0);
 
-                    auto resultD = multiply<Accumulator>(alpha, value)
-                                   + ((beta == zero) ? static_cast<Accumulator>(zero)
-                                                     : multiply<Accumulator>(beta, cPtr[cIndex]));
+                    auto resultD = multiply<Accumulator>(inputs.alpha, value)
+                                + ((beta == zero) ? static_cast<Accumulator>(zero)
+                                                    : multiply<Accumulator>(beta, inputs.groupedC[idx][cIndex]));
                     // bias
                     if(problem.useBias() && inputs.bias)
                     {
-                        int         pos  = int(dNum % problem.d().sizes()[0]);
-                        Accumulator bias = GetValue<Accumulator>(
-                            problem.biasType(), inputs.groupedBias[idx], pos, aConjugate);
+                        int         pos = int(dNum % problem.d().sizes()[0]);
+                        Accumulator bias
+                            = GetBias<Accumulator>(problem.biasType(), inputs.groupedBias[idx], pos, aConjugate);
                         resultD += bias;
                     }
                     // Activation adds here
                     std::vector<Accumulator> actArgs;
                     for(int i = 0; i < inputs.activationArgs.size(); i++)
-                        actArgs.push_back(constVariantCast<Accumulator>(inputs.activationArgs[i]));
+                        actArgs.push_back(static_cast<Accumulator>(inputs.activationArgs[i]));
                     resultD = Activation(
                         problem.activationType(), resultD, problem.activationEnumArg(), actArgs);
                     if(problem.useScaleD())
                     {
-                        typename Inputs::AlphaType const* scaleDPtr
-                            = (typename Inputs::AlphaType const*)inputs.groupedScaleD[idx];
                         int  pos = int(dNum % problem.d().sizes()[0]);
                         auto scaleD
                             = multiply<Accumulator>(Transform<typename Inputs::AlphaType>::Input(
-                                                        scaleDPtr[pos], aConjugate),
+                                                        inputs.groupedScaleD[idx][pos], aConjugate),
                                                     1);
                         resultD *= scaleD;
                     }
-                    dPtr[dIndex] = SaturateCast<typename Inputs::DType>(resultD);
+                    inputs.groupedD[idx][dIndex] = SaturateCast<typename Inputs::DType>(resultD);
                 }
             }
         }
 
-        void SolveCPU(ContractionProblemGemm const& problem,
-                      ContractionInputs const&      inputs,
-                      size_t                        validationStride)
+        void SolveCPU(ContractionProblem const& problem,
+                      ContractionInputs const&  inputs,
+                      size_t                    validationStride)
         {
             // retreive alpha/beta type set via setAlpha/BetaType()
             auto alphaType = problem.alphaType();
@@ -827,108 +679,127 @@ namespace Tensile
                 biasType = problem.d().dataType();
             }
 
-            auto contractionInputsTypeId = Tensile::GemmTypeId(problem.a().dataType(),
-                                                               problem.b().dataType(),
-                                                               problem.c().dataType(),
-                                                               problem.d().dataType(),
-                                                               alphaType,
-                                                               betaType);
+            auto contractionInputsTypeId = ContractionInputs::TypeId(problem.a().dataType(),
+                                                                     problem.b().dataType(),
+                                                                     problem.c().dataType(),
+                                                                     problem.d().dataType(),
+                                                                     alphaType,
+                                                                     betaType);
 
             switch(contractionInputsTypeId)
             {
-            case TypedGemm_S_S_S::TypeId():
+            case ContractionInputs_S_S_S::TypeId():
             {
-                return ReferenceSolution<TypedGemm_S_S_S>::SolveCPU(
-                    problem, inputs, validationStride);
+                auto const& typedInputs = dynamic_cast<ContractionInputs_S_S_S const&>(inputs);
+                return ReferenceSolution<ContractionInputs_S_S_S>::SolveCPU(
+                    problem, typedInputs, validationStride);
             }
-            case TypedGemm_D_D_D::TypeId():
+            case ContractionInputs_D_D_D::TypeId():
             {
-                return ReferenceSolution<TypedGemm_D_D_D>::SolveCPU(
-                    problem, inputs, validationStride);
+                auto const& typedInputs = dynamic_cast<ContractionInputs_D_D_D const&>(inputs);
+                return ReferenceSolution<ContractionInputs_D_D_D>::SolveCPU(
+                    problem, typedInputs, validationStride);
             }
-            case TypedGemm_C_C_C::TypeId():
+            case ContractionInputs_C_C_C::TypeId():
             {
-                return ReferenceSolution<TypedGemm_C_C_C>::SolveCPU(
-                    problem, inputs, validationStride);
+                auto const& typedInputs = dynamic_cast<ContractionInputs_C_C_C const&>(inputs);
+                return ReferenceSolution<ContractionInputs_C_C_C>::SolveCPU(
+                    problem, typedInputs, validationStride);
             }
-            case TypedGemm_Z_Z_Z::TypeId():
+            case ContractionInputs_Z_Z_Z::TypeId():
             {
-                return ReferenceSolution<TypedGemm_Z_Z_Z>::SolveCPU(
-                    problem, inputs, validationStride);
+                auto const& typedInputs = dynamic_cast<ContractionInputs_Z_Z_Z const&>(inputs);
+                return ReferenceSolution<ContractionInputs_Z_Z_Z>::SolveCPU(
+                    problem, typedInputs, validationStride);
             }
 #ifdef TENSILE_USE_HALF
-            case TypedGemm_H_H_H::TypeId():
+            case ContractionInputs_H_H_H::TypeId():
             {
+                auto const& typedInputs = dynamic_cast<ContractionInputs_H_H_H const&>(inputs);
+
                 if(problem.highPrecisionAccumulate())
                 {
-                    return ReferenceSolution<TypedGemm_H_H_H, float>::SolveCPU(
-                        problem, inputs, validationStride);
+                    return ReferenceSolution<ContractionInputs_H_H_H, float>::SolveCPU(
+                        problem, typedInputs, validationStride);
                 }
                 else
                 {
-                    return ReferenceSolution<TypedGemm_H_H_H>::SolveCPU(
-                        problem, inputs, validationStride);
+                    return ReferenceSolution<ContractionInputs_H_H_H>::SolveCPU(
+                        problem, typedInputs, validationStride);
                 }
             }
-            case TypedGemm_H_S_S::TypeId():
+            case ContractionInputs_H_S_S::TypeId():
             {
-                return ReferenceSolution<TypedGemm_H_S_S>::SolveCPU(
-                    problem, inputs, validationStride);
+                auto const& typedInputs = dynamic_cast<ContractionInputs_H_S_S const&>(inputs);
+                return ReferenceSolution<ContractionInputs_H_S_S>::SolveCPU(
+                    problem, typedInputs, validationStride);
             }
-            case TypedGemm_H_H_S::TypeId():
+            case ContractionInputs_H_H_S::TypeId():
             {
-                return ReferenceSolution<TypedGemm_H_H_S, float>::SolveCPU(
-                    problem, inputs, validationStride);
+                auto const& typedInputs = dynamic_cast<ContractionInputs_H_H_S const&>(inputs);
+                return ReferenceSolution<ContractionInputs_H_H_S, float>::SolveCPU(
+                    problem, typedInputs, validationStride);
             }
 #endif // TENSILE_USE_HALF
-            case TypedGemm_I8x4_I32_I32::TypeId():
+            case ContractionInputs_I8x4_I32_I32::TypeId():
             {
-                return ReferenceSolution<TypedGemm_I8x4_I32_I32>::SolveCPU(
-                    problem, inputs, validationStride);
+                auto const& typedInputs
+                    = dynamic_cast<ContractionInputs_I8x4_I32_I32 const&>(inputs);
+                return ReferenceSolution<ContractionInputs_I8x4_I32_I32>::SolveCPU(
+                    problem, typedInputs, validationStride);
             }
-            case TypedGemm_I32_I32_I32::TypeId():
+            case ContractionInputs_I32_I32_I32::TypeId():
             {
-                return ReferenceSolution<TypedGemm_I32_I32_I32>::SolveCPU(
-                    problem, inputs, validationStride);
+                auto const& typedInputs
+                    = dynamic_cast<ContractionInputs_I32_I32_I32 const&>(inputs);
+                return ReferenceSolution<ContractionInputs_I32_I32_I32>::SolveCPU(
+                    problem, typedInputs, validationStride);
             }
-            case TypedGemm_I8_I8_I32::TypeId():
+            case ContractionInputs_I8_I8_I32::TypeId():
             {
-                return ReferenceSolution<TypedGemm_I8_I8_I32, int32_t>::SolveCPU(
-                    problem, inputs, validationStride);
+                auto const& typedInputs = dynamic_cast<ContractionInputs_I8_I8_I32 const&>(inputs);
+                return ReferenceSolution<ContractionInputs_I8_I8_I32, int32_t>::SolveCPU(
+                    problem, typedInputs, validationStride);
             }
-            case TypedGemm_I8_I32_I32::TypeId():
+            case ContractionInputs_I8_I32_I32::TypeId():
             {
-                return ReferenceSolution<TypedGemm_I8_I32_I32>::SolveCPU(
-                    problem, inputs, validationStride);
+                auto const& typedInputs = dynamic_cast<ContractionInputs_I8_I32_I32 const&>(inputs);
+                return ReferenceSolution<ContractionInputs_I8_I32_I32>::SolveCPU(
+                    problem, typedInputs, validationStride);
             }
-            case TypedGemm_I8_I32_S::TypeId():
+            case ContractionInputs_I8_I32_S::TypeId():
             {
-                return ReferenceSolution<TypedGemm_I8_I32_S, float>::SolveCPU(
-                    problem, inputs, validationStride);
+                auto const& typedInputs = dynamic_cast<ContractionInputs_I8_I32_S const&>(inputs);
+                return ReferenceSolution<ContractionInputs_I8_I32_S, float>::SolveCPU(
+                    problem, typedInputs, validationStride);
             }
-            case TypedGemm_I8_I8_S::TypeId():
+            case ContractionInputs_I8_I8_S::TypeId():
             {
-                return ReferenceSolution<TypedGemm_I8_I8_S, float>::SolveCPU(
-                    problem, inputs, validationStride);
+                auto const& typedInputs = dynamic_cast<ContractionInputs_I8_I8_S const&>(inputs);
+                return ReferenceSolution<ContractionInputs_I8_I8_S, float>::SolveCPU(
+                    problem, typedInputs, validationStride);
             }
 #ifdef TENSILE_USE_BF16
-            case TypedGemm_B_B_S::TypeId():
+            case ContractionInputs_B_B_S::TypeId():
             {
+                auto const& typedInputs = dynamic_cast<ContractionInputs_B_B_S const&>(inputs);
+
                 if(problem.highPrecisionAccumulate())
                 {
-                    return ReferenceSolution<TypedGemm_B_B_S, float>::SolveCPU(
-                        problem, inputs, validationStride);
+                    return ReferenceSolution<ContractionInputs_B_B_S, float>::SolveCPU(
+                        problem, typedInputs, validationStride);
                 }
                 else
                 {
-                    return ReferenceSolution<TypedGemm_B_B_S>::SolveCPU(
-                        problem, inputs, validationStride);
+                    return ReferenceSolution<ContractionInputs_B_B_S>::SolveCPU(
+                        problem, typedInputs, validationStride);
                 }
             }
-            case TypedGemm_B_S_S::TypeId():
+            case ContractionInputs_B_S_S::TypeId():
             {
-                return ReferenceSolution<TypedGemm_B_S_S>::SolveCPU(
-                    problem, inputs, validationStride);
+                auto const& typedInputs = dynamic_cast<ContractionInputs_B_S_S const&>(inputs);
+                return ReferenceSolution<ContractionInputs_B_S_S>::SolveCPU(
+                    problem, typedInputs, validationStride);
             }
 #endif // TENSILE_USE_BF16
 
@@ -938,9 +809,9 @@ namespace Tensile
             throw std::runtime_error("Data type not implemented.");
         }
 
-        void SolveCPUGroupedGemm(std::vector<ContractionProblemGemm> const& problems,
-                                 ContractionInputs const&                   inputs,
-                                 size_t                                     validationStride)
+        void SolveCPUGroupedGemm(std::vector<ContractionProblem> const& problems,
+                                 ContractionInputs const&  inputs,
+                                 size_t                    validationStride)
         {
             // retreive alpha/beta type set via setAlpha/BetaType()
             auto alphaType = problems[0].alphaType();
@@ -951,9 +822,8 @@ namespace Tensile
             // Could remove after rocBLAS is updated
             if(alphaType == DataType::None)
             {
-                alphaType = problems[0].a().dataType() == DataType::BFloat16
-                                ? DataType::Float
-                                : problems[0].d().dataType();
+                alphaType = problems[0].a().dataType() == DataType::BFloat16 ? DataType::Float
+                                                                         : problems[0].d().dataType();
             }
             if(betaType == DataType::None)
             {
@@ -964,108 +834,127 @@ namespace Tensile
                 biasType = problems[0].d().dataType();
             }
 
-            auto contractionInputsTypeId = GemmTypeId(problems[0].a().dataType(),
-                                                      problems[0].b().dataType(),
-                                                      problems[0].c().dataType(),
-                                                      problems[0].d().dataType(),
-                                                      alphaType,
-                                                      betaType);
+            auto contractionInputsTypeId = ContractionInputs::TypeId(problems[0].a().dataType(),
+                                                                     problems[0].b().dataType(),
+                                                                     problems[0].c().dataType(),
+                                                                     problems[0].d().dataType(),
+                                                                     alphaType,
+                                                                     betaType);
 
             switch(contractionInputsTypeId)
             {
-            case TypedGemm_S_S_S::TypeId():
+            case ContractionInputs_S_S_S::TypeId():
             {
-                return ReferenceSolution<TypedGemm_S_S_S>::SolveCPUGroupedGemm(
-                    problems, inputs, validationStride);
+                auto const& typedInputs = dynamic_cast<ContractionInputs_S_S_S const&>(inputs);
+                return ReferenceSolution<ContractionInputs_S_S_S>::SolveCPUGroupedGemm(
+                    problems, typedInputs, validationStride);
             }
-            case TypedGemm_D_D_D::TypeId():
+            case ContractionInputs_D_D_D::TypeId():
             {
-                return ReferenceSolution<TypedGemm_D_D_D>::SolveCPUGroupedGemm(
-                    problems, inputs, validationStride);
+                auto const& typedInputs = dynamic_cast<ContractionInputs_D_D_D const&>(inputs);
+                return ReferenceSolution<ContractionInputs_D_D_D>::SolveCPUGroupedGemm(
+                    problems, typedInputs, validationStride);
             }
-            case TypedGemm_C_C_C::TypeId():
+            case ContractionInputs_C_C_C::TypeId():
             {
-                return ReferenceSolution<TypedGemm_C_C_C>::SolveCPUGroupedGemm(
-                    problems, inputs, validationStride);
+                auto const& typedInputs = dynamic_cast<ContractionInputs_C_C_C const&>(inputs);
+                return ReferenceSolution<ContractionInputs_C_C_C>::SolveCPUGroupedGemm(
+                    problems, typedInputs, validationStride);
             }
-            case TypedGemm_Z_Z_Z::TypeId():
+            case ContractionInputs_Z_Z_Z::TypeId():
             {
-                return ReferenceSolution<TypedGemm_Z_Z_Z>::SolveCPUGroupedGemm(
-                    problems, inputs, validationStride);
+                auto const& typedInputs = dynamic_cast<ContractionInputs_Z_Z_Z const&>(inputs);
+                return ReferenceSolution<ContractionInputs_Z_Z_Z>::SolveCPUGroupedGemm(
+                    problems, typedInputs, validationStride);
             }
 #ifdef TENSILE_USE_HALF
-            case TypedGemm_H_H_H::TypeId():
+            case ContractionInputs_H_H_H::TypeId():
             {
+                auto const& typedInputs = dynamic_cast<ContractionInputs_H_H_H const&>(inputs);
+
                 if(problems[0].highPrecisionAccumulate())
                 {
-                    return ReferenceSolution<TypedGemm_H_H_H, float>::SolveCPUGroupedGemm(
-                        problems, inputs, validationStride);
+                    return ReferenceSolution<ContractionInputs_H_H_H, float>::SolveCPUGroupedGemm(
+                        problems, typedInputs, validationStride);
                 }
                 else
                 {
-                    return ReferenceSolution<TypedGemm_H_H_H>::SolveCPUGroupedGemm(
-                        problems, inputs, validationStride);
+                    return ReferenceSolution<ContractionInputs_H_H_H>::SolveCPUGroupedGemm(
+                        problems, typedInputs, validationStride);
                 }
             }
-            case TypedGemm_H_S_S::TypeId():
+            case ContractionInputs_H_S_S::TypeId():
             {
-                return ReferenceSolution<TypedGemm_H_S_S>::SolveCPUGroupedGemm(
-                    problems, inputs, validationStride);
+                auto const& typedInputs = dynamic_cast<ContractionInputs_H_S_S const&>(inputs);
+                return ReferenceSolution<ContractionInputs_H_S_S>::SolveCPUGroupedGemm(
+                    problems, typedInputs, validationStride);
             }
-            case TypedGemm_H_H_S::TypeId():
+            case ContractionInputs_H_H_S::TypeId():
             {
-                return ReferenceSolution<TypedGemm_H_H_S, float>::SolveCPUGroupedGemm(
-                    problems, inputs, validationStride);
+                auto const& typedInputs = dynamic_cast<ContractionInputs_H_H_S const&>(inputs);
+                return ReferenceSolution<ContractionInputs_H_H_S, float>::SolveCPUGroupedGemm(
+                    problems, typedInputs, validationStride);
             }
 #endif // TENSILE_USE_HALF
-            case TypedGemm_I8x4_I32_I32::TypeId():
+            case ContractionInputs_I8x4_I32_I32::TypeId():
             {
-                return ReferenceSolution<TypedGemm_I8x4_I32_I32>::SolveCPUGroupedGemm(
-                    problems, inputs, validationStride);
+                auto const& typedInputs
+                    = dynamic_cast<ContractionInputs_I8x4_I32_I32 const&>(inputs);
+                return ReferenceSolution<ContractionInputs_I8x4_I32_I32>::SolveCPUGroupedGemm(
+                    problems, typedInputs, validationStride);
             }
-            case TypedGemm_I32_I32_I32::TypeId():
+            case ContractionInputs_I32_I32_I32::TypeId():
             {
-                return ReferenceSolution<TypedGemm_I32_I32_I32>::SolveCPUGroupedGemm(
-                    problems, inputs, validationStride);
+                auto const& typedInputs
+                    = dynamic_cast<ContractionInputs_I32_I32_I32 const&>(inputs);
+                return ReferenceSolution<ContractionInputs_I32_I32_I32>::SolveCPUGroupedGemm(
+                    problems, typedInputs, validationStride);
             }
-            case TypedGemm_I8_I8_I32::TypeId():
+            case ContractionInputs_I8_I8_I32::TypeId():
             {
-                return ReferenceSolution<TypedGemm_I8_I8_I32, int32_t>::SolveCPUGroupedGemm(
-                    problems, inputs, validationStride);
+                auto const& typedInputs = dynamic_cast<ContractionInputs_I8_I8_I32 const&>(inputs);
+                return ReferenceSolution<ContractionInputs_I8_I8_I32, int32_t>::SolveCPUGroupedGemm(
+                    problems, typedInputs, validationStride);
             }
-            case TypedGemm_I8_I32_I32::TypeId():
+            case ContractionInputs_I8_I32_I32::TypeId():
             {
-                return ReferenceSolution<TypedGemm_I8_I32_I32>::SolveCPUGroupedGemm(
-                    problems, inputs, validationStride);
+                auto const& typedInputs = dynamic_cast<ContractionInputs_I8_I32_I32 const&>(inputs);
+                return ReferenceSolution<ContractionInputs_I8_I32_I32>::SolveCPUGroupedGemm(
+                    problems, typedInputs, validationStride);
             }
-            case TypedGemm_I8_I32_S::TypeId():
+            case ContractionInputs_I8_I32_S::TypeId():
             {
-                return ReferenceSolution<TypedGemm_I8_I32_S, float>::SolveCPUGroupedGemm(
-                    problems, inputs, validationStride);
+                auto const& typedInputs = dynamic_cast<ContractionInputs_I8_I32_S const&>(inputs);
+                return ReferenceSolution<ContractionInputs_I8_I32_S, float>::SolveCPUGroupedGemm(
+                    problems, typedInputs, validationStride);
             }
-            case TypedGemm_I8_I8_S::TypeId():
+            case ContractionInputs_I8_I8_S::TypeId():
             {
-                return ReferenceSolution<TypedGemm_I8_I8_S, float>::SolveCPUGroupedGemm(
-                    problems, inputs, validationStride);
+                auto const& typedInputs = dynamic_cast<ContractionInputs_I8_I8_S const&>(inputs);
+                return ReferenceSolution<ContractionInputs_I8_I8_S, float>::SolveCPUGroupedGemm(
+                    problems, typedInputs, validationStride);
             }
 #ifdef TENSILE_USE_BF16
-            case TypedGemm_B_B_S::TypeId():
+            case ContractionInputs_B_B_S::TypeId():
             {
+                auto const& typedInputs = dynamic_cast<ContractionInputs_B_B_S const&>(inputs);
+
                 if(problems[0].highPrecisionAccumulate())
                 {
-                    return ReferenceSolution<TypedGemm_B_B_S, float>::SolveCPUGroupedGemm(
-                        problems, inputs, validationStride);
+                    return ReferenceSolution<ContractionInputs_B_B_S, float>::SolveCPUGroupedGemm(
+                        problems, typedInputs, validationStride);
                 }
                 else
                 {
-                    return ReferenceSolution<TypedGemm_B_B_S>::SolveCPUGroupedGemm(
-                        problems, inputs, validationStride);
+                    return ReferenceSolution<ContractionInputs_B_B_S>::SolveCPUGroupedGemm(
+                        problems, typedInputs, validationStride);
                 }
             }
-            case TypedGemm_B_S_S::TypeId():
+            case ContractionInputs_B_S_S::TypeId():
             {
-                return ReferenceSolution<TypedGemm_B_S_S>::SolveCPUGroupedGemm(
-                    problems, inputs, validationStride);
+                auto const& typedInputs = dynamic_cast<ContractionInputs_B_S_S const&>(inputs);
+                return ReferenceSolution<ContractionInputs_B_S_S>::SolveCPUGroupedGemm(
+                    problems, typedInputs, validationStride);
             }
 #endif // TENSILE_USE_BF16
 

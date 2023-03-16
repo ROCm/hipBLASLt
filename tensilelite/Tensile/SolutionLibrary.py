@@ -1,6 +1,6 @@
 ################################################################################
 #
-# Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2022 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -498,8 +498,8 @@ class MasterSolutionLibrary:
 
     @property
     def cpp_base_class(self):
-        return "SolutionLibrary<ContractionProblemGemm, ContractionSolution>"
+        return "SolutionLibrary<ContractionProblem, ContractionSolution>"
 
     @property
     def cpp_class(self):
-        return "MasterSolutionLibrary<ContractionProblemGemm, ContractionSolution>"
+        return "MasterSolutionLibrary<ContractionProblem, ContractionSolution>"

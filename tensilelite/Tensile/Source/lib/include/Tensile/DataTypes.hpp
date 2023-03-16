@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
+ * Copyright (C) 2022 Advanced Micro Devices, Inc. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -32,7 +32,6 @@
 #include <map>
 #include <stdexcept>
 #include <string>
-#include <variant>
 
 #include <Tensile/Comparison.hpp>
 
@@ -204,72 +203,6 @@ namespace Tensile
     struct TypeInfo<int8_t> : public BaseTypeInfo<int8_t, DataType::Int8, 1, false, true>
     {
     };
-
-    // Variant for constants
-    using ConstantVariant = std::variant<float,
-                                         double,
-                                         std::complex<float>,
-                                         std::complex<double>,
-                                         Half,
-                                         Int8x4,
-                                         int32_t,
-                                         BFloat16,
-                                         int8_t>;
-
-    // Convert variants to type T
-    template <typename T>
-    typename std::enable_if<std::is_same<float, T>::value || std::is_same<double, T>::value
-                                || std::is_same<Half, T>::value || std::is_same<int32_t, T>::value
-                                || std::is_same<BFloat16, T>::value
-                                || std::is_same<int8_t, T>::value,
-                            T>::type
-        constVariantCast(const ConstantVariant& val)
-    {
-        switch(val.index())
-        {
-        case static_cast<int>(DataType::Float):
-            return static_cast<T>(*std::get_if<float>(&val));
-        case static_cast<int>(DataType::Double):
-            return static_cast<T>(*std::get_if<double>(&val));
-        case static_cast<int>(DataType::Half):
-            return static_cast<T>(*std::get_if<Half>(&val));
-        case static_cast<int>(DataType::Int32):
-            return static_cast<T>(*std::get_if<int32_t>(&val));
-        case static_cast<int>(DataType::BFloat16):
-            return static_cast<T>(*std::get_if<BFloat16>(&val));
-        case static_cast<int>(DataType::Int8):
-            return static_cast<T>(*std::get_if<int8_t>(&val));
-        default:
-            throw std::runtime_error("Unsupported variant cast type.");
-        }
-    }
-
-    template <typename T>
-    typename std::enable_if<std::is_same<std::complex<double>, T>::value
-                                || std::is_same<std::complex<float>, T>::value,
-                            T>::type
-        constVariantCast(const ConstantVariant& val)
-    {
-        switch(val.index())
-        {
-        case static_cast<int>(DataType::ComplexFloat):
-            return static_cast<T>(*std::get_if<std::complex<float>>(&val));
-        case static_cast<int>(DataType::ComplexDouble):
-            return static_cast<T>(*std::get_if<std::complex<double>>(&val));
-        default:
-            throw std::runtime_error("Unsupported variant cast type.");
-        }
-    }
-
-    template <typename T>
-    typename std::enable_if<std::is_same<Int8x4, T>::value, T>::type
-        constVariantCast(const ConstantVariant& val)
-    {
-        return static_cast<T>(*std::get_if<Int8x4>(&val));
-    }
-
-    std::string ToString(ConstantVariant d);
-    bool        CompareValue(const ConstantVariant& d, double value);
 
     /**
  * @}

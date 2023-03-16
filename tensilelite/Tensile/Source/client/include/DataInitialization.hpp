@@ -29,7 +29,6 @@
 #include <boost/program_options.hpp>
 
 #include <Tensile/ContractionProblem.hpp>
-#include <Tensile/hip/HipUtils.hpp>
 
 #include "ClientProblemFactory.hpp"
 
@@ -71,7 +70,6 @@ namespace Tensile
             DenormMin, // 19
             DenormMax, // 20
             RandomNegPosLimited, // 21
-            Free, // 22
             Count
         };
 
@@ -103,6 +101,9 @@ namespace Tensile
         std::ostream& operator<<(std::ostream& stream, BoundsCheckMode const& mode);
         std::istream& operator>>(std::istream& stream, BoundsCheckMode& mode);
 
+        template <typename TypedInputs>
+        class TypedDataInitialization;
+
         class DataInitialization : public RunListener
         {
         public:
@@ -116,6 +117,12 @@ namespace Tensile
                     ClientProblemFactory const& problemFactory,
                     size_t                      maxWorkspaceSize = 0);
 
+            template <typename TypedInputs>
+            static std::shared_ptr<TypedDataInitialization<TypedInputs>>
+                GetTyped(po::variables_map const&    args,
+                         ClientProblemFactory const& problemFactory,
+                         size_t                      maxWorkspaceSize = 0);
+
             DataInitialization(po::variables_map const&    args,
                                ClientProblemFactory const& problemFactory,
                                size_t                      maxWorkspaceSize = 0);
@@ -125,136 +132,21 @@ namespace Tensile
    * Returns a ContractionInputs object with pointers to CPU memory,
    * suitable for using to calculate reference results.
    */
-            std::shared_ptr<ContractionInputs>
-                prepareCPUInputs(ContractionProblemGemm const& problem)
-            {
-                if(m_cpuInit && m_curBoundsCheck == BoundsCheckMode::Disable
-                   && !m_problemDependentData)
-                {
-                    std::vector<void**> bPtr;
-                    if(m_elementsToValidate)
-                        resetOutput(m_cpuPtrs,
-                                    bPtr,
-                                    m_maxElements,
-                                    m_groupedOffsets,
-                                    problem,
-                                    hipMemcpyHostToHost);
-                }
-                else
-                {
-                    if(m_problemDependentData)
-                        initializeCPUInputs(problem);
-                    std::vector<void**> bPtr;
-                    copyInputs(m_cpuPtrs,
-                               bPtr,
-                               m_maxElements,
-                               m_groupedOffsets,
-                               problem,
-                               hipMemcpyHostToHost);
-                    m_cpuInit = false;
-                }
-                initializeConstantInputs(problem);
-
-                return ConvertToContractionInputs(problem, false);
-            }
+            virtual std::shared_ptr<ContractionInputs>
+                prepareCPUInputs(ContractionProblem const& problem) = 0;
 
             /**
    * Returns a ContractionInputs object with pointers to GPU memory,
    * suitable for using to run the kernel.
    */
-            std::shared_ptr<ContractionInputs>
-                prepareGPUInputs(ContractionProblemGemm const& problem)
-            {
-                if(m_numRunsInSolution > 0 && m_curBoundsCheck == BoundsCheckMode::GuardPageFront
-                   && m_boundsCheck == BoundsCheckMode::GuardPageAll)
-                    m_curBoundsCheck = BoundsCheckMode::GuardPageBack;
-
-                hipMemcpyKind kind;
-
-                if(m_keepPristineCopyOnGPU && !m_problemDependentData)
-                {
-                    // use gpu pristine
-                    kind = hipMemcpyDeviceToDevice;
-                }
-                else
-                {
-                    // use cpu pristine
-                    kind = hipMemcpyHostToDevice;
-                }
-
-                if(m_gpuInit && m_curBoundsCheck == BoundsCheckMode::Disable
-                   && !m_problemDependentData)
-                {
-                    if(m_elementsToValidate)
-                    {
-                        resetOutput(m_gpuPtrs,
-                                    m_gpuBatchPtrs,
-                                    m_maxElements,
-                                    m_groupedOffsets,
-                                    problem,
-                                    kind);
-                    }
-                }
-                else
-                {
-                    // Update CPU Inputs if prepareGPUInputs is not called.
-                    if(m_cpuPtrs.empty() && m_problemDependentData)
-                        initializeCPUInputs(problem);
-                    if(m_problemDependentData)
-                        copyValidToGPUBuffer(problem);
-
-                    // gpu to gpu
-                    copyInputs(m_gpuPtrs,
-                               m_gpuBatchPtrs,
-                               m_maxElements,
-                               m_groupedOffsets,
-                               problem,
-                               hipMemcpyDeviceToDevice);
-                    m_gpuInit = true;
-                }
-                initializeGPUBatchedInputs(problem);
-
-                if(m_cpuPtrs.empty())
-                    initializeConstantInputs(problem);
-
-                return ConvertToContractionInputs(problem, true);
-            }
-
-            template <typename S>
-            void initArray(DataType dataType, InitMode initMode, void* array, S descriptor)
-            {
-                switch(dataType)
-                {
-                case DataType::Float:
-                    initArray<float>(initMode, static_cast<float*>(array), descriptor);
-                    break;
-                case DataType::Double:
-                    initArray<double>(initMode, static_cast<double*>(array), descriptor);
-                    break;
-                case DataType::Half:
-                    initArray<Half>(initMode, static_cast<Half*>(array), descriptor);
-                    break;
-                case DataType::Int32:
-                    initArray<int32_t>(initMode, static_cast<int32_t*>(array), descriptor);
-                    break;
-                case DataType::BFloat16:
-                    initArray<BFloat16>(initMode, static_cast<BFloat16*>(array), descriptor);
-                    break;
-                case DataType::Int8:
-                    initArray<int8_t>(initMode, static_cast<int8_t*>(array), descriptor);
-                    break;
-                case DataType::ComplexFloat:
-                case DataType::ComplexDouble:
-                case DataType::Int8x4:
-                case DataType::Count:;
-                }
-            }
+            virtual std::shared_ptr<ContractionInputs>
+                prepareGPUInputs(ContractionProblem const& problem) = 0;
 
             template <typename T>
             static inline T convertDoubleTo(double value);
 
             template <typename T>
-            static T getValue(InitMode mode, double value = 0.0)
+            static T getValue(InitMode mode)
             {
                 switch(mode)
                 {
@@ -286,8 +178,6 @@ namespace Tensile
                     return getValue<T, InitMode::DenormMax>();
                 case InitMode::RandomNegPosLimited:
                     return getValue<T, InitMode::RandomNegPosLimited>();
-                case InitMode::Free:
-                    return convertDoubleTo<T>(value);
                 case InitMode::SerialIdx:
                 case InitMode::SerialDim0:
                 case InitMode::SerialDim1:
@@ -366,7 +256,6 @@ namespace Tensile
                 case InitMode::SerialIdx:
                     initArrayConvert<T>(array, elements);
                     break;
-                case InitMode::Free:
                 case InitMode::SerialDim0:
                 case InitMode::SerialDim1:
                 case InitMode::Identity:
@@ -451,7 +340,6 @@ namespace Tensile
                 case InitMode::RandomNegPosLimited:
                     initArray<T, InitMode::RandomNegPosLimited>(array, tensor);
                     break;
-                case InitMode::Free:
                 case InitMode::Count:
                     throw std::runtime_error("Invalid InitMode.");
                 }
@@ -550,7 +438,7 @@ namespace Tensile
             };
             virtual void preBenchmarkRun() override{};
             virtual void postBenchmarkRun() override{};
-            virtual void preProblem(ContractionProblemGemm const& problem) override{};
+            virtual void preProblem(ContractionProblem const& problem) override{};
             virtual void postProblem() override{};
             virtual void preSolution(ContractionSolution const& solution) override{};
             virtual void postSolution() override{};
@@ -601,104 +489,45 @@ namespace Tensile
             };
 
         protected:
-            // Memory input for class DataInitialization
-            struct MemoryInput
-            {
-                std::shared_ptr<void>  current;
-                std::shared_ptr<void>  valid;
-                std::shared_ptr<void>  bad;
-                std::shared_ptr<void*> batch;
-            };
+            InitMode m_aInit, m_bInit, m_cInit, m_dInit;
+            InitMode m_alphaInit, m_betaInit;
+            InitMode m_biasInit, m_scaleDInit;
 
-            // Pristine unit for each allocated memory
-            struct PristineUnit
-            {
-                size_t              maxElements;
-                std::vector<size_t> groupedGemmOffsets;
-                TensorDescriptor    initDescriptor;
-                MemoryInput         cpuInput;
-                MemoryInput         gpuInput;
+            size_t m_aBufferOffset;
+            size_t m_bBufferOffset;
+            size_t m_cBufferOffset;
+            size_t m_dBufferOffset;
 
-                MemoryInput& getInputByKind(hipMemcpyKind kind)
-                {
-                    if(kind == hipMemcpyHostToHost || kind == hipMemcpyDeviceToHost)
-                        return cpuInput;
-                    return gpuInput;
-                }
-            };
-
-            // Properties for each tensor (arranged in index)
-            struct VectorDataInitProperties
-            {
-                std::string                      name;
-                InitMode                         init;
-                size_t                           offset;
-                std::map<DataType, PristineUnit> pristine;
-            };
-
-            // Properties for each constants (arranged in index)
-            struct ConstDataInitProperties
-            {
-                std::string     name;
-                InitMode        init;
-                DataType        dataType;
-                double          freeValue; // For InitMode::Free
-                ConstantVariant value;
-            };
-
-            void allocNewCPUInputs();
-
-            void allocNewGPUInputs();
-
-            void copyValidToGPUBuffer(ContractionProblemGemm const& problem);
-
-            void initializeGPUBatchedInputs(ContractionProblemGemm const& problem);
-
-            void initializeCPUInputs(ContractionProblemGemm const& problem);
-
-            void initializeConstantInputs(ContractionProblemGemm const& problem);
-
-            void copyInputs(std::vector<void*>&               ptrs,
-                            std::vector<void**>&              batchPtrs,
-                            std::vector<size_t>&              maxElements,
-                            std::vector<std::vector<size_t>>& offsets,
-                            ContractionProblemGemm const&     problem,
-                            hipMemcpyKind                     kind);
-
-            void resetOutput(std::vector<void*>&               ptrs,
-                             std::vector<void**>&              batchPtrs,
-                             std::vector<size_t>&              maxElements,
-                             std::vector<std::vector<size_t>>& offsets,
-                             ContractionProblemGemm const&     problem,
-                             hipMemcpyKind                     kind);
-
-            void setGroupedGemm(ContractionProblemGemm const&       problem,
-                                std::shared_ptr<ContractionInputs>& inputs);
-
-            std::shared_ptr<ContractionInputs>
-                ConvertToContractionInputs(ContractionProblemGemm const& problem, bool isGPU);
-
-            std::vector<VectorDataInitProperties> m_vdata;
-            std::vector<void*>                    m_cpuPtrs;
-            std::vector<void*>                    m_gpuPtrs;
-            std::vector<std::vector<size_t>>      m_groupedOffsets;
-            std::vector<size_t>                   m_maxElements;
-            std::vector<void**>                   m_gpuBatchPtrs;
-            std::shared_ptr<void>                 m_workspacePristine;
-            std::vector<ConstDataInitProperties>  m_cdata;
-
-            bool m_cpuInit = false;
-            bool m_gpuInit = false;
-
+            size_t m_aMaxElements;
+            size_t m_bMaxElements;
+            size_t m_cMaxElements;
+            size_t m_dMaxElements;
+            size_t m_biasMaxElements;
+            size_t m_scaleMaxElements;
             size_t m_maxBatch;
+
+            std::vector<size_t> m_aElementsGroupedGemm;
+            std::vector<size_t> m_bElementsGroupedGemm;
+            std::vector<size_t> m_cElementsGroupedGemm;
+            std::vector<size_t> m_dElementsGroupedGemm;
+            std::vector<size_t> m_biasElementsGroupedGemm;
+            std::vector<size_t> m_scaleElementsGroupedGemm;
+            std::vector<DataType> m_biasTypeGroupedGemm;
 
             size_t m_workspaceSize;
 
             bool m_stridedBatched;
+            bool m_groupedGemm;
 
             bool m_cEqualsD;
 
+            bool m_useBias;
+            bool m_useScaleD;
+
             ActivationType m_activationType;
+            bool           m_activationHPA;
+            // Reserve for multiple argument inputs
+            std::vector<std::vector<double>> m_activationAdditionalArgs;
 
             int m_elementsToValidate = 0;
 

@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
+ * Copyright (C) 2022 Advanced Micro Devices, Inc. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -45,10 +45,6 @@ namespace Tensile
         virtual ~KernelArguments();
 
         void reserve(size_t bytes, size_t count);
-
-        void append(std::string const& name, ConstantVariant const& value, DataType type);
-
-        void append(std::string const& name, float const value, DataType type);
 
         template <typename T>
         void append(std::string const& name, T value);
@@ -131,50 +127,6 @@ namespace Tensile
 
     TENSILE_API KernelArguments::const_iterator begin(KernelArguments const&);
     TENSILE_API KernelArguments::const_iterator end(KernelArguments const&);
-
-    inline void KernelArguments::append(std::string const&     name,
-                                        ConstantVariant const& value,
-                                        DataType               type)
-    {
-        switch(type)
-        {
-        case DataType::Float:
-            return append<float>(name, (*std::get_if<float>(&value)), true);
-        case DataType::Double:
-            return append<double>(name, (*std::get_if<double>(&value)), true);
-        case DataType::Half:
-            return append<Half>(name, (*std::get_if<Half>(&value)), true);
-        case DataType::Int32:
-            return append<int32_t>(name, (*std::get_if<int32_t>(&value)), true);
-        case DataType::BFloat16:
-            return append<BFloat16>(name, (*std::get_if<BFloat16>(&value)), true);
-        case DataType::Int8:
-            return append<int8_t>(name, (*std::get_if<int8_t>(&value)), true);
-        default:
-            throw std::runtime_error("Unsupported ConstantVariant append type.");
-        }
-    }
-
-    inline void KernelArguments::append(std::string const& name, float const value, DataType type)
-    {
-        switch(type)
-        {
-        case DataType::Float:
-            return append<float>(name, value, true);
-        case DataType::Double:
-            return append<double>(name, (double const)value, true);
-        case DataType::Half:
-            return append<Half>(name, (Half const)value, true);
-        case DataType::Int32:
-            return append<int32_t>(name, (int32_t const)value, true);
-        case DataType::BFloat16:
-            return append<BFloat16>(name, (BFloat16 const)value, true);
-        case DataType::Int8:
-            return append<int8_t>(name, (int8_t const)value, true);
-        default:
-            throw std::runtime_error("Unsupported ConstantVariant append type.");
-        }
-    }
 
     template <typename T>
     inline void KernelArguments::append(std::string const& name, T value)

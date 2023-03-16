@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
+ * Copyright (C) 2022 Advanced Micro Devices, Inc. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -34,6 +34,7 @@
 #include <vector>
 
 #include <Tensile/Activation.hpp>
+#include <Tensile/ArithmeticUnitTypes.hpp>
 #include <Tensile/DataTypes.hpp>
 #include <Tensile/KernelLanguageTypes.hpp>
 #include <Tensile/ScalarValueTypes.hpp>
@@ -392,6 +393,21 @@ namespace Tensile
                 {
                     auto const& info = KernelLanguageTypeInfo::Get(i);
                     iot::enumCase(io, value, info.name.c_str(), info.m_kernelLanguage);
+                }
+            }
+        };
+
+        template <typename IO>
+        struct EnumTraits<ArithmeticUnit, IO>
+        {
+            using iot = IOTraits<IO>;
+
+            static void enumeration(IO& io, ArithmeticUnit& value)
+            {
+                for(int i = 0; i < static_cast<int>(ArithmeticUnit::Count); i++)
+                {
+                    auto const& info = ArithmeticUnitTypeInfo::Get(i);
+                    iot::enumCase(io, value, info.name.c_str(), info.m_arithmeticUnit);
                 }
             }
         };

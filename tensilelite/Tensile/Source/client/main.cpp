@@ -24,6 +24,7 @@
  *
  *******************************************************************************/
 
+#include <Tensile/ArithmeticUnitTypes.hpp>
 #include <Tensile/Contractions.hpp>
 #include <Tensile/EmbeddedLibrary.hpp>
 #include <Tensile/MasterSolutionLibrary.hpp>
@@ -100,6 +101,9 @@ namespace Tensile
 
                 ("problem-identifier",       po::value<std::string>(), "Problem identifer (Einstein notation). Either "
                                                                        "this or free/batch/bound must be specified.")
+                ("free",                     value_default<ContractionProblem::FreeIndices>("[]"),  "Free index. Order: a,b,ca,cb,da,db")
+                ("batch",                    value_default<ContractionProblem::BatchIndices>("[]"), "Batch index. Order: a,b,c,d")
+                ("bound",                    value_default<ContractionProblem::BoundIndices>("[]"), "Bound/summation index. Order: a,b")
 
                 ("type",                     po::value<DataType>()->default_value(DataType::None), "Data type")
                 ("a-type",                   po::value<DataType>()->default_value(DataType::None), "A data type")
@@ -114,6 +118,7 @@ namespace Tensile
                 ("kernel-language",          po::value<KernelLanguage>()->default_value(KernelLanguage::Any), "Select kernel language.")
                 ("deterministic-mode",       po::value<bool>()->default_value(false), "Enforce deterministic summation patterns"
                                                                                       "by not splitting U among workgroups")
+                ("arithmetic-unit",          po::value<ArithmeticUnit>()->default_value(ArithmeticUnit::Any), "Select arithmetic unit.")
 
                 ("init-a",                   po::value<InitMode>()->default_value(InitMode::Random), "Initialization for A")
                 ("init-b",                   po::value<InitMode>()->default_value(InitMode::Random), "Initialization for B")
@@ -193,6 +198,11 @@ namespace Tensile
                                                                                   "specifying once applies to all problem sizes, "
                                                                                   "otherwise specify once per problem size.")
 
+                ("a-ops",                    vector_default_empty<TensorOp>(), "Operations applied to A.")
+                ("b-ops",                    vector_default_empty<TensorOp>(), "Operations applied to B.")
+                ("c-ops",                    vector_default_empty<TensorOp>(), "Operations applied to C.")
+                ("d-ops",                    vector_default_empty<TensorOp>(), "Operations applied to D.")
+
                 ("problem-start-idx",        po::value<int>()->default_value(0),  "First problem to run")
                 ("num-problems",             po::value<int>()->default_value(-1), "Number of problems to run")
 
@@ -257,19 +267,19 @@ namespace Tensile
             return stream;
         }
 
-        std::shared_ptr<MasterSolutionLibrary<ContractionProblemGemm>>
+        std::shared_ptr<MasterSolutionLibrary<ContractionProblem>>
             LoadSolutionLibrary(po::variables_map const& args)
         {
             auto filename = args["library-file"];
             if(!filename.empty())
             {
-                return std::dynamic_pointer_cast<MasterSolutionLibrary<ContractionProblemGemm>>(
-                    LoadLibraryFile<ContractionProblemGemm>(filename.as<std::string>()));
+                return std::dynamic_pointer_cast<MasterSolutionLibrary<ContractionProblem>>(
+                    LoadLibraryFile<ContractionProblem>(filename.as<std::string>()));
             }
 
             auto embeddedLibrary
-                = std::dynamic_pointer_cast<MasterSolutionLibrary<ContractionProblemGemm>>(
-                    EmbeddedLibrary<ContractionProblemGemm>::Get());
+                = std::dynamic_pointer_cast<MasterSolutionLibrary<ContractionProblem>>(
+                    EmbeddedLibrary<ContractionProblem>::Get());
 
             if(embeddedLibrary != nullptr)
                 return embeddedLibrary;
@@ -459,12 +469,7 @@ int main(int argc, const char* argv[])
     else
         libraryDirectory = '.';
 
-    auto result = adapter.initializeLazyLoading(hardware->archName(), libraryDirectory);
-    if(result != hipSuccess)
-    {
-        std::string str = "Lazy loading failed. (" + std::to_string(int(result)) + ").";
-        std::runtime_error(str.c_str());
-    }
+    adapter.initializeLazyLoading(hardware->archName(), libraryDirectory);
 
     auto problems        = problemFactory.problems();
     int  firstProblemIdx = args["problem-start-idx"].as<int>();
@@ -491,8 +496,7 @@ int main(int argc, const char* argv[])
 
     size_t maxWorkspaceSize = args["max-workspace-size"].as<size_t>();
 
-    auto* ptr      = new DataInitialization(args, problemFactory, maxWorkspaceSize);
-    auto  dataInit = std::shared_ptr<DataInitialization>(ptr);
+    auto dataInit = DataInitialization::Get(args, problemFactory, maxWorkspaceSize);
 
     auto solutionIterator = SolutionIterator::Default(library, hardware, args);
 
@@ -542,16 +546,15 @@ int main(int argc, const char* argv[])
         {
             for(int problemIdx = firstProblemIdx; problemIdx <= lastProblemIdx; problemIdx++)
             {
-                auto problem
-                    = dynamic_cast<ContractionProblemGroupedGemm*>(problems[problemIdx].get());
+                auto& problem = problems[problemIdx];
 
                 reporters->report(ResultKey::ProblemIndex, problemIdx);
                 reporters->report(ResultKey::ProblemProgress,
-                                  concatenate(problemIdx, "/", lastProblemIdx));
+                                concatenate(problemIdx, "/", lastProblemIdx));
 
-                listeners.preProblem(problem->gemms[0]);
-                solutionIterator->preProblemGroupedGemm((*problem));
-                referenceValidator->preProblemGroupedGemm((*problem));
+                listeners.preProblem(problem);
+                solutionIterator->preProblemGroupedGemm(problems);
+                referenceValidator->preProblemGroupedGemm(problems);
 
                 while(solutionIterator->moreSolutionsInProblem())
                 {
@@ -567,9 +570,9 @@ int main(int argc, const char* argv[])
                         {
                             while(listeners.needMoreRunsInSolution())
                             {
-                                auto inputs = dataInit->prepareGPUInputs(problem->gemms[0]);
+                                auto inputs = dataInit->prepareGPUInputs(problem);
 
-                                auto kernels = solution->solve((*problem), *inputs, *hardware);
+                                auto kernels = solution->solveGroupedGemm(problems, *inputs, *hardware);
 
                                 size_t       warmupInvocations = listeners.numWarmupRuns();
                                 size_t       eventCount        = gpuTimer ? kernels.size() : 0;
@@ -585,8 +588,8 @@ int main(int argc, const char* argv[])
                                                                             warmupStartEvents[i],
                                                                             warmupStopEvents[i]));
                                     else
-                                        HIP_CHECK_EXC(adapter.launchKernels(
-                                            kernels, stream, nullptr, nullptr));
+                                        HIP_CHECK_EXC(
+                                            adapter.launchKernels(kernels, stream, nullptr, nullptr));
                                     listeners.postWarmup();
                                     // Do validation after first warmup
                                     if(i == 0)
@@ -627,7 +630,7 @@ int main(int argc, const char* argv[])
                         {
                             reporters->report(ResultKey::Validation, "INVALID");
                             reporters->log(LogLevel::Error,
-                                           concatenate("Exception occurred: ", err.what(), "\n"));
+                                        concatenate("Exception occurred: ", err.what(), "\n"));
                         }
                     }
 
@@ -647,19 +650,19 @@ int main(int argc, const char* argv[])
         {
             for(int problemIdx = firstProblemIdx; problemIdx <= lastProblemIdx; problemIdx++)
             {
-                auto problem = dynamic_cast<ContractionProblemGemm*>(problems[problemIdx].get());
-                problem->setWorkspaceSize(dataInit->workspaceSize());
+                auto& problem = problems[problemIdx];
+                problem.setWorkspaceSize(dataInit->workspaceSize());
 
                 reporters->report(ResultKey::ProblemIndex, problemIdx);
                 reporters->report(ResultKey::ProblemProgress,
-                                  concatenate(problemIdx, "/", lastProblemIdx));
+                                concatenate(problemIdx, "/", lastProblemIdx));
 
                 // std::cout << "Problem: " << problem.operationDescription() <<
                 // std::endl; std::cout << "a: " << problem.a() << std::endl; std::cout <<
                 // "b: " << problem.b() << std::endl; std::cout << "c: " << problem.c() <<
                 // std::endl; std::cout << "d: " << problem.d() << std::endl;
 
-                listeners.preProblem((*problem));
+                listeners.preProblem(problem);
 
                 while(solutionIterator->moreSolutionsInProblem())
                 {
@@ -675,9 +678,9 @@ int main(int argc, const char* argv[])
                         {
                             while(listeners.needMoreRunsInSolution())
                             {
-                                auto inputs = dataInit->prepareGPUInputs((*problem));
+                                auto inputs = dataInit->prepareGPUInputs(problem);
 
-                                auto kernels = solution->solve((*problem), *inputs, *hardware);
+                                auto kernels = solution->solve(problem, *inputs, *hardware);
 
                                 size_t       warmupInvocations = listeners.numWarmupRuns();
                                 size_t       eventCount        = gpuTimer ? kernels.size() : 0;
@@ -693,8 +696,8 @@ int main(int argc, const char* argv[])
                                                                             warmupStartEvents[i],
                                                                             warmupStopEvents[i]));
                                     else
-                                        HIP_CHECK_EXC(adapter.launchKernels(
-                                            kernels, stream, nullptr, nullptr));
+                                        HIP_CHECK_EXC(
+                                            adapter.launchKernels(kernels, stream, nullptr, nullptr));
                                     listeners.postWarmup();
                                     // Do validation after first warmup
                                     if(i == 0)
@@ -735,7 +738,7 @@ int main(int argc, const char* argv[])
                         {
                             reporters->report(ResultKey::Validation, "INVALID");
                             reporters->log(LogLevel::Error,
-                                           concatenate("Exception occurred: ", err.what(), "\n"));
+                                        concatenate("Exception occurred: ", err.what(), "\n"));
                         }
                     }
 

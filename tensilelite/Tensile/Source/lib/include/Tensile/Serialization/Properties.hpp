@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
+ * Copyright (C) 2022 Advanced Micro Devices, Inc. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -45,16 +45,16 @@ namespace Tensile
         };
 
         template <typename IO>
-        struct SubclassMappingTraits<Property<ContractionProblemGemm, size_t>, IO>
+        struct SubclassMappingTraits<Property<ContractionProblem, size_t>, IO>
             : public DefaultSubclassMappingTraits<
-                  SubclassMappingTraits<Property<ContractionProblemGemm, size_t>, IO>,
-                  Property<ContractionProblemGemm, size_t>,
+                  SubclassMappingTraits<Property<ContractionProblem, size_t>, IO>,
+                  Property<ContractionProblem, size_t>,
                   IO>
         {
-            using Self = SubclassMappingTraits<Property<ContractionProblemGemm, size_t>, IO>;
+            using Self = SubclassMappingTraits<Property<ContractionProblem, size_t>, IO>;
             using Base = DefaultSubclassMappingTraits<
-                SubclassMappingTraits<Property<ContractionProblemGemm, size_t>, IO>,
-                Property<ContractionProblemGemm, size_t>,
+                SubclassMappingTraits<Property<ContractionProblem, size_t>, IO>,
+                Property<ContractionProblem, size_t>,
                 IO>;
             using SubclassMap = typename Base::SubclassMap;
             const static SubclassMap subclasses;
@@ -73,16 +73,16 @@ namespace Tensile
         };
 
         template <typename IO>
-        struct SubclassMappingTraits<Property<ContractionProblemGemm, std::string>, IO>
+        struct SubclassMappingTraits<Property<ContractionProblem, std::string>, IO>
             : public DefaultSubclassMappingTraits<
-                  SubclassMappingTraits<Property<ContractionProblemGemm, std::string>, IO>,
-                  Property<ContractionProblemGemm, std::string>,
+                  SubclassMappingTraits<Property<ContractionProblem, std::string>, IO>,
+                  Property<ContractionProblem, std::string>,
                   IO>
         {
-            using Self = SubclassMappingTraits<Property<ContractionProblemGemm, std::string>, IO>;
+            using Self = SubclassMappingTraits<Property<ContractionProblem, std::string>, IO>;
             using Base = DefaultSubclassMappingTraits<
-                SubclassMappingTraits<Property<ContractionProblemGemm, std::string>, IO>,
-                Property<ContractionProblemGemm, std::string>,
+                SubclassMappingTraits<Property<ContractionProblem, std::string>, IO>,
+                Property<ContractionProblem, std::string>,
                 IO>;
             using SubclassMap = typename Base::SubclassMap;
             const static SubclassMap subclasses;
@@ -94,17 +94,15 @@ namespace Tensile
         };
 
         template <typename IO>
-        const typename SubclassMappingTraits<Property<ContractionProblemGemm, size_t>,
-                                             IO>::SubclassMap
-            SubclassMappingTraits<Property<ContractionProblemGemm, size_t>, IO>::subclasses
-            = SubclassMappingTraits<Property<ContractionProblemGemm, size_t>, IO>::GetSubclasses();
+        const typename SubclassMappingTraits<Property<ContractionProblem, size_t>, IO>::SubclassMap
+            SubclassMappingTraits<Property<ContractionProblem, size_t>, IO>::subclasses
+            = SubclassMappingTraits<Property<ContractionProblem, size_t>, IO>::GetSubclasses();
 
         template <typename IO>
-        const typename SubclassMappingTraits<Property<ContractionProblemGemm, std::string>,
+        const typename SubclassMappingTraits<Property<ContractionProblem, std::string>,
                                              IO>::SubclassMap
-            SubclassMappingTraits<Property<ContractionProblemGemm, std::string>, IO>::subclasses
-            = SubclassMappingTraits<Property<ContractionProblemGemm, std::string>,
-                                    IO>::GetSubclasses();
+            SubclassMappingTraits<Property<ContractionProblem, std::string>, IO>::subclasses
+            = SubclassMappingTraits<Property<ContractionProblem, std::string>, IO>::GetSubclasses();
 
         template <typename IO>
         struct MappingTraits<Contraction::FreeSizeA, IO>

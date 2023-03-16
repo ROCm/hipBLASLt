@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
+ * Copyright (C) 2022 Advanced Micro Devices, Inc. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -284,31 +284,29 @@ namespace llvm
             }
         };
 
-        static_assert(
-            sn::has_EmptyMappingTraits<
-                std::shared_ptr<Tensile::SolutionLibrary<Tensile::ContractionProblemGemm>>,
-                IO>::value,
-            "asdf2");
+        static_assert(sn::has_EmptyMappingTraits<
+                          std::shared_ptr<Tensile::SolutionLibrary<Tensile::ContractionProblem>>,
+                          IO>::value,
+                      "asdf2");
 
-        static_assert(
-            sn::has_SerializationTraits<
-                std::shared_ptr<Tensile::SolutionLibrary<Tensile::ContractionProblemGemm>>,
-                IO>::value,
-            "asdf");
+        static_assert(sn::has_SerializationTraits<
+                          std::shared_ptr<Tensile::SolutionLibrary<Tensile::ContractionProblem>>,
+                          IO>::value,
+                      "asdf");
 
         static_assert(
             !has_SequenceTraits<Hide<
-                std::shared_ptr<Tensile::SolutionLibrary<Tensile::ContractionProblemGemm>>>>::value,
+                std::shared_ptr<Tensile::SolutionLibrary<Tensile::ContractionProblem>>>>::value,
             "fdsa");
         static_assert(
             has_MappingTraits<
-                Hide<std::shared_ptr<Tensile::SolutionLibrary<Tensile::ContractionProblemGemm>>>,
+                Hide<std::shared_ptr<Tensile::SolutionLibrary<Tensile::ContractionProblem>>>,
                 EmptyContext>::value,
             "fdsa");
 
         static_assert(
             !missingTraits<
-                Hide<std::shared_ptr<Tensile::SolutionLibrary<Tensile::ContractionProblemGemm>>>,
+                Hide<std::shared_ptr<Tensile::SolutionLibrary<Tensile::ContractionProblem>>>,
                 EmptyContext>::value,
             "fdsa");
     } // namespace yaml

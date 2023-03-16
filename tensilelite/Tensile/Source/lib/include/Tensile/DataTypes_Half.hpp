@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
+ * Copyright (C) 2022 Advanced Micro Devices, Inc. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -55,10 +55,5 @@ namespace std
     inline ostream& operator<<(ostream& stream, const Tensile::Half val)
     {
         return stream << static_cast<float>(val);
-    }
-
-    inline std::string to_string(const Tensile::Half val)
-    {
-        return std::to_string(static_cast<float>(val));
     }
 } // namespace std

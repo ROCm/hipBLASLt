@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
+ * Copyright (C) 2022 Advanced Micro Devices, Inc. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -96,7 +96,7 @@ namespace Tensile
                                                         Stream&                  stream,
                                                         LogLevel level = LogLevel::Count)
             {
-                bool dumpTensors      = args["dump-tensors"].as<bool>();
+                bool dumpTensors = args["dump-tensors"].as<bool>();
                 bool PrintWinnersOnly = args["PrintWinnersOnly"].as<bool>();
                 using namespace ResultKey;
                 if(level == LogLevel::Count)
@@ -295,10 +295,10 @@ namespace Tensile
 
             virtual void setReporter(std::shared_ptr<ResultReporter> reporter) override {}
 
-            virtual void preProblem(ContractionProblemGemm const& problem) override
+            virtual void preProblem(ContractionProblem const& problem) override
             {
                 m_csvOutput.push();
-                m_winner   = std::numeric_limits<double>::infinity();
+                m_winner = std::numeric_limits<double>::infinity();
                 m_firstRun = true;
             }
 
@@ -310,14 +310,11 @@ namespace Tensile
 
             virtual void postSolution() override
             {
-                std::unordered_map<std::string, std::string> curRow;
+                std::unordered_map<std::string,std::string> curRow;
                 m_csvOutput.readCurrentRow(curRow);
-                bool validation = curRow[ResultKey::Validation] == "PASSED"
-                                  || curRow[ResultKey::Validation] == "NO_CHECK";
+                bool validation = curRow[ResultKey::Validation] == "PASSED" || curRow[ResultKey::Validation] == "NO_CHECK";
                 float currentTimeUS = std::stof(curRow[ResultKey::TimeUS]);
-                if(m_rowLevel <= m_level
-                   && (!m_PrintWinnersOnly || currentTimeUS < m_winner || !validation
-                       || m_firstRun))
+                if(m_rowLevel <= m_level && (!m_PrintWinnersOnly || currentTimeUS < m_winner || !validation || m_firstRun))
                 {
                     m_csvOutput.writeCurrentRow();
                     if(validation)
@@ -344,11 +341,11 @@ namespace Tensile
             std::ostream&                 m_stream;
             std::shared_ptr<std::ostream> m_ownedStream;
 
-            bool   m_firstRun         = true;
-            bool   m_inSolution       = false;
-            bool   m_dumpTensors      = false;
-            bool   m_PrintWinnersOnly = false;
-            double m_winner           = std::numeric_limits<double>::infinity();
+            bool m_firstRun    = true;
+            bool m_inSolution  = false;
+            bool m_dumpTensors = false;
+            bool m_PrintWinnersOnly = false;
+            double m_winner = std::numeric_limits<double>::infinity();
 
             LogLevel m_rowLevel;
 

@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
+ * Copyright (C) 2022 Advanced Micro Devices, Inc. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -77,69 +77,10 @@
             return e;          \
     } while(0)
 
-#define HIP_CHECK_PRINT(expr)                             \
-    {                                                     \
-        hipError_t e = (expr);                            \
-        if(e)                                             \
-            std::cout << "Error code " << e << std::endl; \
-    }
-
 namespace Tensile
 {
     namespace hip
     {
-        inline void CopyTensorVoid(void*                   dst,
-                                   void const*             src,
-                                   TensorDescriptor const& desc,
-                                   hipMemcpyKind           direction,
-                                   hipStream_t             stream = 0)
-        {
-            if(desc.dimensions() == 0 || desc.totalLogicalElements() == 0)
-                return;
-
-            auto const&         sizes   = desc.sizes();
-            auto const&         strides = desc.strides();
-            std::vector<size_t> coord(desc.dimensions(), 0);
-
-            size_t contiguousDimensions = 0;
-            size_t expectedStride       = 1;
-
-            // Optimize the number of copy operations by coalescing all the
-            // dimensions that are contiguous in memory.
-            for(size_t i = 0; i < desc.dimensions(); i++)
-            {
-                if(strides[i] > expectedStride)
-                    break;
-
-                contiguousDimensions = i + 1;
-
-                if(i < desc.dimensions() - 1)
-                    expectedStride = strides[i] * sizes[i];
-            }
-
-            auto copyCount = CoordCount(sizes.begin() + contiguousDimensions, sizes.end());
-
-            size_t maxStride
-                = *std::max_element(strides.begin(), strides.begin() + contiguousDimensions);
-            size_t copyBytes = maxStride * sizes.at(contiguousDimensions - 1) * desc.elementBytes();
-
-            for(size_t idx = 0; idx < copyCount; idx++)
-            {
-                CoordNumbered(idx,
-                              coord.begin() + contiguousDimensions,
-                              coord.end(),
-                              sizes.begin() + contiguousDimensions,
-                              sizes.end());
-
-                auto     beginOffset = desc.index(coord);
-                auto     bytesOffset = desc.elementBytes() * beginOffset;
-                uint8_t* dstBytes    = (uint8_t*)dst + bytesOffset;
-                uint8_t* srcBytes    = (uint8_t*)dst + bytesOffset;
-
-                HIP_CHECK_EXC(hipMemcpyAsync(dstBytes, srcBytes, copyBytes, direction, stream));
-            }
-        }
-
         template <typename T>
         void CopyTensor(T*                      dst,
                         T const*                src,
@@ -189,16 +130,6 @@ namespace Tensile
                 HIP_CHECK_EXC(hipMemcpyAsync(
                     dst + beginOffset, src + beginOffset, copyBytes, direction, stream));
             }
-        }
-
-        template <typename T>
-        void CopyBuffer(T*            dst,
-                        T const*      src,
-                        const size_t  copyBytes,
-                        hipMemcpyKind direction,
-                        hipStream_t   stream = 0)
-        {
-            HIP_CHECK_EXC(hipMemcpyAsync(dst, src, copyBytes, direction, stream));
         }
     } // namespace hip
 } // namespace Tensile

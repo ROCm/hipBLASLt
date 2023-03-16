@@ -34,7 +34,10 @@ namespace Tensile
     namespace Client
     {
         ClientProblemFactory::ClientProblemFactory(po::variables_map const& args)
-            : m_problemSizes(args["problem-size"].as<std::vector<std::vector<size_t>>>())
+            : m_freeIndices(args["free"].as<ContractionProblem::FreeIndices>())
+            , m_batchIndices(args["batch"].as<ContractionProblem::BatchIndices>())
+            , m_boundIndices(args["bound"].as<ContractionProblem::BoundIndices>())
+            , m_problemSizes(args["problem-size"].as<std::vector<std::vector<size_t>>>())
             , m_aType(DataType::Float)
             , m_bType(DataType::Float)
             , m_cType(DataType::Float)
@@ -48,10 +51,15 @@ namespace Tensile
             , m_performanceMetric(args["performance-metric"].as<PerformanceMetric>())
             , m_deterministicMode(args["deterministic-mode"].as<bool>())
             , m_cEqualsD(args["c-equal-d"].as<bool>())
+            , m_arithmeticUnit(args["arithmetic-unit"].as<ArithmeticUnit>())
             , m_aStrides(args["a-strides"].as<std::vector<std::vector<size_t>>>())
             , m_bStrides(args["b-strides"].as<std::vector<std::vector<size_t>>>())
             , m_cStrides(args["c-strides"].as<std::vector<std::vector<size_t>>>())
             , m_dStrides(args["d-strides"].as<std::vector<std::vector<size_t>>>())
+            , m_aOps(args["a-ops"].as<TensorOps>())
+            , m_bOps(args["b-ops"].as<TensorOps>())
+            , m_cOps(args["c-ops"].as<TensorOps>())
+            , m_dOps(args["d-ops"].as<TensorOps>())
             , m_aOffset(args["offset-a"].as<size_t>())
             , m_bOffset(args["offset-b"].as<size_t>())
             , m_cOffset(args["offset-c"].as<size_t>())
@@ -61,28 +69,16 @@ namespace Tensile
             , m_activationHPA(false)
             , m_activationEnumArg(std::vector<ActivationType>(1, ActivationType::None))
         {
-            std::vector<bool> isComplex;
             if(args.count("problem-identifier"))
-            {
-                ContractionProblemGemm::IdentifierToIndices(
+                ContractionProblem::IdentifierToIndices(
                     args["problem-identifier"].as<std::string>(),
                     m_freeIndices,
                     m_batchIndices,
                     m_boundIndices,
-                    isComplex);
-
-                for(size_t i = 0; i < isComplex.size(); i++)
-                {
-                    if(isComplex[i])
-                    {
-                        std::runtime_error("Complex is not supported.");
-                    }
-                }
-            }
-            else
-            {
-                std::runtime_error("Currently only accepts identifier as input.");
-            }
+                    m_aOps,
+                    m_bOps,
+                    m_cOps,
+                    m_dOps);
 
             if(args.count("type"))
             {
@@ -122,39 +118,21 @@ namespace Tensile
                 m_useScaleD = args["use-scaleD"].as<bool>();
             if(args.count("max-workspace-size"))
                 m_maxWorkspaceSize = args["max-workspace-size"].as<size_t>();
-
-            if(m_groupedGemm)
-            {
-                auto problems = std::make_shared<ContractionProblemGroupedGemm>();
-                createProblems(problems->gemms);
-                m_problems.push_back(static_pointer_cast<ContractionProblem>(problems));
-            }
-            else
-            {
-                std::vector<ContractionProblemGemm> v;
-                createProblems(v);
-                for(auto& it : v)
-                {
-                    auto problem     = std::make_shared<ContractionProblemGemm>();
-                    (*problem.get()) = it;
-                    m_problems.push_back(static_pointer_cast<ContractionProblem>(problem));
-                }
-            }
+            m_problems = createProblems();
         }
 
         ClientProblemFactory::~ClientProblemFactory() = default;
 
-        std::vector<std::shared_ptr<ContractionProblem>> const&
-            ClientProblemFactory::problems() const
+        std::vector<ContractionProblem> const& ClientProblemFactory::problems() const
         {
             return m_problems;
         }
 
-        void ClientProblemFactory::createProblems(std::vector<ContractionProblemGemm>& rv)
+        std::vector<ContractionProblem> ClientProblemFactory::createProblems()
         {
-            rv.clear();
-            int biasSize       = std::max(1, (int)m_biasTypeArgs.size());
-            int activationSize = std::max(1, (int)m_activationEnumArg.size());
+            std::vector<ContractionProblem> rv;
+            int                             biasSize = std::max(1, (int)m_biasTypeArgs.size());
+            int activationSize                       = std::max(1, (int)m_activationEnumArg.size());
             rv.reserve(m_problemSizes.size() * activationSize);
 
             std::vector<size_t> aStrides, bStrides, cStrides, dStrides;
@@ -182,44 +160,51 @@ namespace Tensile
                         if(m_dStrides.size() == m_problemSizes.size())
                             dStrides = m_dStrides[i];
 
-                        rv.push_back(ContractionProblemGemm::FromIndexSizes(m_freeIndices,
-                                                                            m_batchIndices,
-                                                                            m_boundIndices,
-                                                                            m_problemSizes[i],
-                                                                            m_aType,
-                                                                            aStrides,
-                                                                            m_aOffset,
-                                                                            m_bType,
-                                                                            bStrides,
-                                                                            m_bOffset,
-                                                                            m_cType,
-                                                                            cStrides,
-                                                                            m_cOffset,
-                                                                            m_dType,
-                                                                            dStrides,
-                                                                            m_dOffset,
-                                                                            m_beta));
+                        rv.push_back(ContractionProblem::FromIndexSizes(m_freeIndices,
+                                                                        m_batchIndices,
+                                                                        m_boundIndices,
+                                                                        m_problemSizes[i],
+                                                                        m_aType,
+                                                                        aStrides,
+                                                                        m_aOps,
+                                                                        m_aOffset,
+                                                                        m_bType,
+                                                                        bStrides,
+                                                                        m_bOps,
+                                                                        m_bOffset,
+                                                                        m_cType,
+                                                                        cStrides,
+                                                                        m_cOps,
+                                                                        m_cOffset,
+                                                                        m_dType,
+                                                                        dStrides,
+                                                                        m_dOps,
+                                                                        m_dOffset,
+                                                                        m_beta));
 
                         rv.back().setAlphaRestriction(toScalarValueEnum(m_alpha));
                         rv.back().setCEqualsD(m_cEqualsD);
                         rv.back().setAlphaType(m_alphaType);
                         rv.back().setBetaType(m_betaType);
                         rv.back().setStridedBatched(m_stridedBatched);
+                        rv.back().setGroupedGemm(m_groupedGemm);
                         rv.back().setHighPrecisionAccumulate(m_highPrecisionAccumulate);
                         rv.back().setUseBias(m_useBias);
+                        rv.back().setUseScaleD(m_useScaleD);
                         rv.back().setKernelLanguage(m_kernelLanguage);
                         rv.back().setPerformanceMetric(m_performanceMetric);
                         rv.back().setDeterministicMode(m_deterministicMode);
+                        rv.back().setArithmeticUnit(m_arithmeticUnit);
                         rv.back().setFp16AltImpl(m_fp16AltImpl);
                         rv.back().setActivationType(m_activationType);
                         rv.back().setWorkspaceSize(m_maxWorkspaceSize);
                         if(k < m_biasTypeArgs.size())
                         {
-                            rv.back().setBias(m_biasTypeArgs[k], rv.back().d().sizes()[0]);
+                            rv.back().setBiasType(m_biasTypeArgs[k]);
                         }
                         else
                         {
-                            rv.back().setBias(DataType::None, 0);
+                            rv.back().setBiasType(DataType::None);
                         }
                         if(j < m_activationEnumArg.size())
                         {
@@ -230,13 +215,11 @@ namespace Tensile
                             rv.back().setActivationType(m_activationType);
                         }
                         rv.back().setActivationHPA(m_activationHPA);
-                        rv.back().setUseScaleD(m_useScaleD);
-                        rv.back().setScaleD(m_alphaType, rv.back().d().sizes()[0]);
-
-                        rv.back().setGroupedGemm(m_groupedGemm);
                     }
                 }
             }
+
+            return rv;
         }
     } // namespace Client
 } // namespace Tensile

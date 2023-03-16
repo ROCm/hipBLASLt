@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
+ * Copyright (C) 2022 Advanced Micro Devices, Inc. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -112,8 +112,8 @@ namespace Tensile
                               << " total values compared." << std::endl;
                     m_failed = true;
                 }
-                m_errors  = 0;
-                m_values  = 0;
+                m_errors = 0;
+                m_values = 0;
                 m_doPrint = true;
                 m_printed = 0;
             }
@@ -121,7 +121,7 @@ namespace Tensile
             bool error()
             {
                 bool failed = m_failed;
-                m_failed    = false;
+                m_failed = false;
                 return failed;
             }
 

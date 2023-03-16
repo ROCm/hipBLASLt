@@ -27,6 +27,7 @@
 #pragma once
 
 #include <Tensile/Activation.hpp>
+#include <Tensile/ArithmeticUnitTypes.hpp>
 #include <Tensile/KernelLanguageTypes.hpp>
 #include <Tensile/PerformanceMetricTypes.hpp>
 #include <Tensile/ScalarValueTypes.hpp>
@@ -36,6 +37,7 @@
 #include <Tensile/ContractionSolution_fwd.hpp>
 
 #include <Tensile/TensorDescriptor.hpp>
+#include <Tensile/TensorOps.hpp>
 #include <Tensile/Utils.hpp>
 
 namespace Tensile
@@ -44,50 +46,6 @@ namespace Tensile
  * \addtogroup Problem
  * @{
  */
-    class TENSILE_API ContractionProblemGemm;
-
-    struct ConstantDescriptor
-    {
-        std::string name;
-        DataType    dataType;
-    };
-
-    class ContractionProblem : public Problem
-    {
-    public:
-        ContractionProblem(std::vector<TensorDescriptor> tensors, size_t workspaceSize);
-        ContractionProblem(size_t size);
-
-        /**
-         * Return vector of TensorDescriptor.
-         */
-        std::vector<TensorDescriptor> const& tensors() const
-        {
-            return m_tensors;
-        }
-
-        /**
-         * Return vector of constant datatype.
-         */
-        virtual std::vector<ConstantDescriptor> const constants() const = 0;
-
-        void setWorkspaceSize(size_t size)
-        {
-            m_workspaceSize = size;
-        }
-
-        size_t workspaceSize() const
-        {
-            return m_workspaceSize;
-        }
-
-    protected:
-        friend class ContractionProblemGemm;
-        std::vector<TensorDescriptor> m_tensors;
-        std::vector<std::string>      m_names;
-
-        size_t m_workspaceSize;
-    };
 
     /**
  * Describes a tensor contraction in by using TensorDescriptor objects for
@@ -95,36 +53,13 @@ namespace Tensile
  * summations, etc. This is decoupled from any particular pointers, which
  * are provided in ContractionInputs objects.
  */
-    class ContractionProblemGemm : public ContractionProblem
+    class TENSILE_API ContractionProblem : public Problem
     {
     public:
-        enum TENSOR : int
-        {
-            A      = 0,
-            B      = 1,
-            C      = 2,
-            D      = 3,
-            E      = 4,
-            BIAS   = 5,
-            SCALED = 6,
-            TENSOR_COUNT
-        };
-
-        enum CONST : int
-        {
-            ALPHA    = 0,
-            BETA     = 1,
-            ACTALPHA = 2,
-            ACTBETA  = 3,
-            CONST_COUNT
-        };
-
         using Solution = ContractionSolution;
         using Inputs   = ContractionInputs;
 
-        ContractionProblemGemm()
-            : ContractionProblem(ContractionProblemGemm::TENSOR::TENSOR_COUNT){};
-
+        ContractionProblem() = default;
         /**
    * Represents a pair of free indices in a tensor contraction.
    */
@@ -156,111 +91,115 @@ namespace Tensile
                 , b(xb)
                 , aMirror(aMirror)
                 , bMirror(bMirror){};
-            size_t a, b; //! positions in a or b tensor
-            bool   aMirror, bMirror;
+            size_t  a, b; //! positions in a or b tensor
+            bool    aMirror, bMirror;
         };
         using BoundIndices = std::vector<BoundIndex>;
 
         virtual std::string description() const;
 
         /**
-   * Create a ContractionProblemGemm representing a batched GEMM, specifying
+   * Create a ContractionProblem representing a batched GEMM, specifying
    * strides between matrices.
    */
-        static ContractionProblemGemm GEMM_Strides(bool     transA,
-                                                   bool     transB,
-                                                   DataType aType,
-                                                   DataType bType,
-                                                   DataType cType,
-                                                   DataType dType,
-                                                   size_t   m,
-                                                   size_t   n,
-                                                   size_t   k,
-                                                   size_t   batchSize,
-                                                   size_t   lda,
-                                                   size_t   aStride,
-                                                   size_t   ldb,
-                                                   size_t   bStride,
-                                                   size_t   ldc,
-                                                   size_t   cStride,
-                                                   size_t   ldd,
-                                                   size_t   dStride,
-                                                   double   beta);
+        static ContractionProblem GEMM_Strides(bool     transA,
+                                               bool     transB,
+                                               DataType aType,
+                                               DataType bType,
+                                               DataType cType,
+                                               DataType dType,
+                                               size_t   m,
+                                               size_t   n,
+                                               size_t   k,
+                                               size_t   batchSize,
+                                               size_t   lda,
+                                               size_t   aStride,
+                                               size_t   ldb,
+                                               size_t   bStride,
+                                               size_t   ldc,
+                                               size_t   cStride,
+                                               size_t   ldd,
+                                               size_t   dStride,
+                                               double   beta);
 
         /**
-   * Create a ContractionProblemGemm representing a batched GEMM, specifying
+   * Create a ContractionProblem representing a batched GEMM, specifying
    * strides between matrices.
    */
-        static ContractionProblemGemm GEMM_Strides(bool     transA,
-                                                   bool     transB,
-                                                   DataType aType,
-                                                   DataType bType,
-                                                   DataType cType,
-                                                   DataType dType,
-                                                   size_t   m,
-                                                   size_t   n,
-                                                   size_t   k,
-                                                   size_t   batchSize,
-                                                   size_t   lda,
-                                                   size_t   aStride,
-                                                   size_t   aOffset,
-                                                   size_t   ldb,
-                                                   size_t   bStride,
-                                                   size_t   bOffset,
-                                                   size_t   ldc,
-                                                   size_t   cStride,
-                                                   size_t   cOffset,
-                                                   size_t   ldd,
-                                                   size_t   dStride,
-                                                   size_t   dOffset,
-                                                   double   beta);
+        static ContractionProblem GEMM_Strides(bool     transA,
+                                               bool     transB,
+                                               DataType aType,
+                                               DataType bType,
+                                               DataType cType,
+                                               DataType dType,
+                                               size_t   m,
+                                               size_t   n,
+                                               size_t   k,
+                                               size_t   batchSize,
+                                               size_t   lda,
+                                               size_t   aStride,
+                                               size_t   aOffset,
+                                               size_t   ldb,
+                                               size_t   bStride,
+                                               size_t   bOffset,
+                                               size_t   ldc,
+                                               size_t   cStride,
+                                               size_t   cOffset,
+                                               size_t   ldd,
+                                               size_t   dStride,
+                                               size_t   dOffset,
+                                               double   beta);
 
         /**
-   * Create a ContractionProblemGemm representing a batched SGEMM, with
+   * Create a ContractionProblem representing a batched SGEMM, with
    * leading dimensions, but no strides.
    */
-        static ContractionProblemGemm GEMM(bool   transA,
-                                           bool   transB,
-                                           size_t m,
-                                           size_t n,
-                                           size_t k,
-                                           size_t lda,
-                                           size_t ldb,
-                                           size_t ldc,
-                                           double beta,
-                                           bool   unused,
-                                           size_t batchCount);
+        static ContractionProblem GEMM(bool   transA,
+                                       bool   transB,
+                                       size_t m,
+                                       size_t n,
+                                       size_t k,
+                                       size_t lda,
+                                       size_t ldb,
+                                       size_t ldc,
+                                       double beta,
+                                       bool   unused,
+                                       size_t batchCount);
 
         /**
-   * Create a ContractionProblemGemm representing a batched SGEMM, with
+   * Create a ContractionProblem representing a batched SGEMM, with
    * leading dimensions, but no strides.
    */
-        static ContractionProblemGemm GEMM(bool   transA,
-                                           bool   transB,
-                                           size_t m,
-                                           size_t n,
-                                           size_t k,
-                                           size_t lda,
-                                           size_t offsetA,
-                                           size_t ldb,
-                                           size_t offsetB,
-                                           size_t ldc,
-                                           size_t offsetC,
-                                           double beta,
-                                           bool   unused,
-                                           size_t batchCount);
+        static ContractionProblem GEMM(bool   transA,
+                                       bool   transB,
+                                       size_t m,
+                                       size_t n,
+                                       size_t k,
+                                       size_t lda,
+                                       size_t offsetA,
+                                       size_t ldb,
+                                       size_t offsetB,
+                                       size_t ldc,
+                                       size_t offsetC,
+                                       double beta,
+                                       bool   unused,
+                                       size_t batchCount);
 
         /**
-   * Create a ContractionProblemGemm representing a batched GEMM based on the
+   * Create a ContractionProblem representing a batched GEMM based on the
    * dimensions of each of the tensors.
    */
-        static ContractionProblemGemm GEMM(bool                    transA,
-                                           bool                    transB,
-                                           TensorDescriptor const& a,
-                                           TensorDescriptor const& b,
-                                           TensorDescriptor const& c,
-                                           TensorDescriptor const& d,
-                                           double                  beta);
+        static ContractionProblem GEMM(bool                    transA,
+                                       bool                    transB,
+                                       TensorDescriptor const& a,
+                                       TensorOps const&        aOps,
+                                       TensorDescriptor const& b,
+                                       TensorOps const&        bOps,
+                                       TensorDescriptor const& c,
+                                       TensorOps const&        cOps,
+                                       TensorDescriptor const& d,
+                                       TensorOps const&        dOps,
+                                       double                  beta);
 
         /**
    * Converts an identifier such as `Contraction_l_AlikC_Bjlk_Cijk_Dijk`
@@ -270,10 +209,13 @@ namespace Tensile
                                         FreeIndices&       freeIndices,
                                         BatchIndices&      batchIndices,
                                         BoundIndices&      boundIndices,
-                                        std::vector<bool>& isComplex);
+                                        TensorOps&         aOps,
+                                        TensorOps&         bOps,
+                                        TensorOps&         cOps,
+                                        TensorOps&         dOps);
 
         /**
-   * Create a ContractionProblemGemm from a definition of each index, the
+   * Create a ContractionProblem from a definition of each index, the
    * size of each index, the strides of each tensor, and any operations.
    *
    * @param freeIndices  Free indices
@@ -302,22 +244,26 @@ namespace Tensile
    *             select a more efficient kernel if we know that
    *             `beta == 0` or `beta == 1`.
    */
-        static ContractionProblemGemm FromIndexSizes(FreeIndices const&         freeIndices,
-                                                     BatchIndices const&        batchIndices,
-                                                     BoundIndices const&        boundIndices,
-                                                     std::vector<size_t> const& indexSizes,
-                                                     DataType                   aType,
-                                                     std::vector<size_t> const& aStrides,
-                                                     DataType                   bType,
-                                                     std::vector<size_t> const& bStrides,
-                                                     DataType                   cType,
-                                                     std::vector<size_t> const& cStrides,
-                                                     DataType                   dType,
-                                                     std::vector<size_t> const& dStrides,
-                                                     double                     beta);
+        static ContractionProblem FromIndexSizes(FreeIndices const&         freeIndices,
+                                                 BatchIndices const&        batchIndices,
+                                                 BoundIndices const&        boundIndices,
+                                                 std::vector<size_t> const& indexSizes,
+                                                 DataType                   aType,
+                                                 std::vector<size_t> const& aStrides,
+                                                 TensorOps const&           aOps,
+                                                 DataType                   bType,
+                                                 std::vector<size_t> const& bStrides,
+                                                 TensorOps const&           bOps,
+                                                 DataType                   cType,
+                                                 std::vector<size_t> const& cStrides,
+                                                 TensorOps const&           cOps,
+                                                 DataType                   dType,
+                                                 std::vector<size_t> const& dStrides,
+                                                 TensorOps const&           dOps,
+                                                 double                     beta);
 
         /**
-   * Create a ContractionProblemGemm from a definition of each index, the
+   * Create a ContractionProblem from a definition of each index, the
    * size of each index, the strides of each tensor, and any operations.
    *
    * @param freeIndices  Free indices
@@ -350,26 +296,30 @@ namespace Tensile
    *             select a more efficient kernel if we know that
    *             `beta == 0` or `beta == 1`.
    */
-        static ContractionProblemGemm FromIndexSizes(FreeIndices const&         freeIndices,
-                                                     BatchIndices const&        batchIndices,
-                                                     BoundIndices const&        boundIndices,
-                                                     std::vector<size_t> const& indexSizes,
-                                                     DataType                   aType,
-                                                     std::vector<size_t> const& aStrides,
-                                                     size_t                     aOffset,
-                                                     DataType                   bType,
-                                                     std::vector<size_t> const& bStrides,
-                                                     size_t                     bOffset,
-                                                     DataType                   cType,
-                                                     std::vector<size_t> const& cStrides,
-                                                     size_t                     cOffset,
-                                                     DataType                   dType,
-                                                     std::vector<size_t> const& dStrides,
-                                                     size_t                     dOffset,
-                                                     double                     beta);
+        static ContractionProblem FromIndexSizes(FreeIndices const&         freeIndices,
+                                                 BatchIndices const&        batchIndices,
+                                                 BoundIndices const&        boundIndices,
+                                                 std::vector<size_t> const& indexSizes,
+                                                 DataType                   aType,
+                                                 std::vector<size_t> const& aStrides,
+                                                 TensorOps const&           aOps,
+                                                 size_t                     aOffset,
+                                                 DataType                   bType,
+                                                 std::vector<size_t> const& bStrides,
+                                                 TensorOps const&           bOps,
+                                                 size_t                     bOffset,
+                                                 DataType                   cType,
+                                                 std::vector<size_t> const& cStrides,
+                                                 TensorOps const&           cOps,
+                                                 size_t                     cOffset,
+                                                 DataType                   dType,
+                                                 std::vector<size_t> const& dStrides,
+                                                 TensorOps const&           dOps,
+                                                 size_t                     dOffset,
+                                                 double                     beta);
 
         /**
-   * Create a ContractionProblemGemm based on an operation identifier such as
+   * Create a ContractionProblem based on an operation identifier such as
    * `Contraction_l_AlikC_Bjlk_Cijk_Dijk` and individual index sizes.
    *
    * @param operationIdentifier String that represents this exact
@@ -394,20 +344,20 @@ namespace Tensile
    *             select a more efficient kernel if we know that
    *             `beta == 0` or `beta == 1`.
    */
-        static ContractionProblemGemm FromIndexSizes(std::string const&         operationIdentifier,
-                                                     std::vector<size_t> const& indexSizes,
-                                                     DataType                   aType,
-                                                     std::vector<size_t> const& aStrides,
-                                                     DataType                   bType,
-                                                     std::vector<size_t> const& bStrides,
-                                                     DataType                   cType,
-                                                     std::vector<size_t> const& cStrides,
-                                                     DataType                   dType,
-                                                     std::vector<size_t> const& dStrides,
-                                                     double                     beta);
+        static ContractionProblem FromIndexSizes(std::string const&         operationIdentifier,
+                                                 std::vector<size_t> const& indexSizes,
+                                                 DataType                   aType,
+                                                 std::vector<size_t> const& aStrides,
+                                                 DataType                   bType,
+                                                 std::vector<size_t> const& bStrides,
+                                                 DataType                   cType,
+                                                 std::vector<size_t> const& cStrides,
+                                                 DataType                   dType,
+                                                 std::vector<size_t> const& dStrides,
+                                                 double                     beta);
 
         /**
-   * Create a ContractionProblemGemm based on an operation identifier such as
+   * Create a ContractionProblem based on an operation identifier such as
    * `Contraction_l_AlikC_Bjlk_Cijk_Dijk` and individual index sizes.
    *
    * @param operationIdentifier String that represents this exact
@@ -436,34 +386,35 @@ namespace Tensile
    *             select a more efficient kernel if we know that
    *             `beta == 0` or `beta == 1`.
    */
-        static ContractionProblemGemm FromIndexSizes(std::string const&         operationIdentifier,
-                                                     std::vector<size_t> const& indexSizes,
-                                                     DataType                   aType,
-                                                     std::vector<size_t> const& aStrides,
-                                                     size_t                     aOffset,
-                                                     DataType                   bType,
-                                                     std::vector<size_t> const& bStrides,
-                                                     size_t                     bOffset,
-                                                     DataType                   cType,
-                                                     std::vector<size_t> const& cStrides,
-                                                     size_t                     cOffset,
-                                                     DataType                   dType,
-                                                     std::vector<size_t> const& dStrides,
-                                                     size_t                     dOffset,
-                                                     double                     beta);
+        static ContractionProblem FromIndexSizes(std::string const&         operationIdentifier,
+                                                 std::vector<size_t> const& indexSizes,
+                                                 DataType                   aType,
+                                                 std::vector<size_t> const& aStrides,
+                                                 size_t                     aOffset,
+                                                 DataType                   bType,
+                                                 std::vector<size_t> const& bStrides,
+                                                 size_t                     bOffset,
+                                                 DataType                   cType,
+                                                 std::vector<size_t> const& cStrides,
+                                                 size_t                     cOffset,
+                                                 DataType                   dType,
+                                                 std::vector<size_t> const& dStrides,
+                                                 size_t                     dOffset,
+                                                 double                     beta);
 
-        ContractionProblemGemm(TensorDescriptor const& a,
-                               TensorDescriptor const& b,
-                               TensorDescriptor const& c,
-                               TensorDescriptor const& d,
-                               TensorDescriptor const& e,
-                               TensorDescriptor const& bias,
-                               TensorDescriptor const& scaleD,
-                               FreeIndices const&      freeIndices,
-                               BatchIndices const&     batchIndices,
-                               BoundIndices const&     boundIndices,
-                               double                  beta,
-                               size_t                  workspaceSize = 0);
+        ContractionProblem(TensorDescriptor const& a,
+                           TensorOps const&        aOps,
+                           TensorDescriptor const& b,
+                           TensorOps const&        bOps,
+                           TensorDescriptor const& c,
+                           TensorOps const&        cOps,
+                           TensorDescriptor const& d,
+                           TensorOps const&        dOps,
+                           FreeIndices const&      freeIndices,
+                           BatchIndices const&     batchIndices,
+                           BoundIndices const&     boundIndices,
+                           double                  beta,
+                           size_t                  workspaceSize = 0);
 
         //! Returns size given original index assignment (in range
         //! 0..NumIndicesC+boundSizes)
@@ -569,30 +520,14 @@ namespace Tensile
             return m_useScaleD;
         }
 
-        void setBias(DataType type, size_t length, bool isOutput = false)
+        void setBiasType(DataType type)
         {
             m_biasType = type;
-            if(type != DataType::None && m_useBias)
-            {
-                TensorDescriptor bias("bias", m_biasType, {length}, {1, length}, 0);
-                bias.setAsOutput(isOutput);
-                m_tensors[ContractionProblemGemm::TENSOR::BIAS] = bias;
-            }
         }
 
         DataType biasType() const
         {
             return m_biasType;
-        }
-
-        void setScaleD(DataType type, size_t length)
-        {
-            m_scaleDType = type;
-            if(type != DataType::None && m_useScaleD)
-            {
-                TensorDescriptor scaleD("scaleD", m_scaleDType, {length}, {1, length}, 0);
-                m_tensors[ContractionProblemGemm::TENSOR::SCALED] = scaleD;
-            }
         }
 
         void setBetaRestriction(ScalarValue beta)
@@ -633,6 +568,15 @@ namespace Tensile
         bool highPrecisionAccumulate() const
         {
             return m_highPrecisionAccumulate;
+        }
+
+        void setArithmeticUnit(ArithmeticUnit value)
+        {
+            m_arithmeticUnit = value;
+        }
+        ArithmeticUnit arithmeticUnit() const
+        {
+            return m_arithmeticUnit;
         }
 
         void setKernelLanguage(KernelLanguage value)
@@ -727,19 +671,36 @@ namespace Tensile
 
         TensorDescriptor const& a() const
         {
-            return m_tensors[ContractionProblemGemm::TENSOR::A];
+            return m_a;
         }
         TensorDescriptor const& b() const
         {
-            return m_tensors[ContractionProblemGemm::TENSOR::B];
+            return m_b;
         }
         TensorDescriptor const& c() const
         {
-            return m_tensors[ContractionProblemGemm::TENSOR::C];
+            return m_c;
         }
         TensorDescriptor const& d() const
         {
-            return m_tensors[ContractionProblemGemm::TENSOR::D];
+            return m_d;
+        }
+
+        TensorOps const& aOps() const
+        {
+            return m_aOps;
+        }
+        TensorOps const& bOps() const
+        {
+            return m_bOps;
+        }
+        TensorOps const& cOps() const
+        {
+            return m_cOps;
+        }
+        TensorOps const& dOps() const
+        {
+            return m_dOps;
         }
 
         FreeIndices const& freeIndicesA() const
@@ -775,19 +736,19 @@ namespace Tensile
 
         std::string const& aNames() const
         {
-            return m_names[ContractionProblemGemm::TENSOR::A];
+            return m_aNames;
         }
         std::string const& bNames() const
         {
-            return m_names[ContractionProblemGemm::TENSOR::B];
+            return m_bNames;
         }
         std::string const& cNames() const
         {
-            return m_names[ContractionProblemGemm::TENSOR::C];
+            return m_cNames;
         }
         std::string const& dNames() const
         {
-            return m_names[ContractionProblemGemm::TENSOR::D];
+            return m_dNames;
         }
         std::string const& sumNames() const
         {
@@ -796,11 +757,11 @@ namespace Tensile
 
         bool transA() const
         {
-            return m_names[ContractionProblemGemm::TENSOR::A] == "lik";
+            return m_aNames == "lik";
         }
         bool transB() const
         {
-            return m_names[ContractionProblemGemm::TENSOR::B] == "jlk";
+            return m_bNames == "jlk";
         }
 
         std::string        operationName() const;
@@ -813,6 +774,16 @@ namespace Tensile
             return getOperationDescription();
         }
 
+        void setWorkspaceSize(size_t size)
+        {
+            m_workspaceSize = size;
+        }
+
+        size_t workspaceSize() const
+        {
+            return m_workspaceSize;
+        }
+
         void checkPersistentKernelEligibility(ContractionSolution const& solution,
                                               Hardware const&            hardware);
 
@@ -821,35 +792,25 @@ namespace Tensile
             return m_eligibleForPK;
         }
 
-        virtual std::vector<ConstantDescriptor> const constants() const
-        {
-            std::vector<ConstantDescriptor> c = {{"alpha", m_alphaType}, {"beta", m_betaType}};
-
-            size_t                   num    = getAdditionalArgNum(activationType());
-            size_t                   numAll = getAdditionalArgNum(ActivationType::All);
-            std::vector<std::string> s      = generateArgNameList(numAll, "activation");
-            size_t                   i      = 0;
-            if(m_activationHPA)
-            {
-                for(i = 0; i < num; i++)
-                    c.push_back({s[i], m_betaType});
-            }
-            else
-            {
-                for(i = 0; i < num; i++)
-                    c.push_back({s[i], d().dataType()});
-            }
-            // Push the rest of the args even unused.
-            for(; i < numAll; i++)
-                c.push_back({s[i], DataType::None});
-
-            return c;
-        }
-
     private:
+        TensorDescriptor m_a;
+        TensorDescriptor m_b;
+        TensorDescriptor m_c;
+        TensorDescriptor m_d;
+        TensorOps        m_aOps;
+        TensorOps        m_bOps;
+        TensorOps        m_cOps;
+        TensorOps        m_dOps;
+
+        std::string m_aNames;
+        std::string m_bNames;
+        std::string m_cNames;
+        std::string m_dNames;
         std::string m_sumNames;
         std::string m_operationIdentifier;
 
+        bool              m_transA;
+        bool              m_transB;
         bool              m_cEqualsD                = false;
         bool              m_stridedBatched          = true;
         bool              m_groupedGemm             = false;
@@ -862,13 +823,13 @@ namespace Tensile
         ActivationType    m_activationType          = ActivationType::None;
         ActivationType    m_activationEnumArg       = ActivationType::None;
         bool              m_activationHPA           = false;
+        ArithmeticUnit    m_arithmeticUnit          = ArithmeticUnit::Any;
         KernelLanguage    m_kernelLanguage          = KernelLanguage::Any;
         PerformanceMetric m_performanceMetric       = PerformanceMetric::DeviceEfficiency;
 
-        DataType m_alphaType  = DataType::None; // if not assigned, will follow d-type
-        DataType m_betaType   = DataType::None; // for bwd-compatible
-        DataType m_biasType   = DataType::None;
-        DataType m_scaleDType = DataType::None; // if not assigned, will follow alpha-type
+        DataType m_alphaType = DataType::None; // if not assigned, will follow d-type
+        DataType m_betaType  = DataType::None; // for bwd-compatible
+        DataType m_biasType  = DataType::None; // if not assigned, will follow d-type
 
         ScalarValue m_alphaRestriction = ScalarValue::Any; // restrictions on the alpha value used
         ScalarValue m_betaRestriction  = ScalarValue::Any; // restrictions on the beta value used
@@ -895,6 +856,8 @@ namespace Tensile
         size_t m_allocatedElementsNonBatchA;
         size_t m_allocatedElementsNonBatchB;
 
+        size_t m_workspaceSize;
+
         void normalize();
         void consistencyCheck() const;
 
@@ -908,109 +871,167 @@ namespace Tensile
         std::string getOperationDescription() const;
     };
 
-    class ContractionProblemGroupedGemm : public ContractionProblem
-    {
-    public:
-        ContractionProblemGroupedGemm()
-            : ContractionProblem(0){};
-        std::vector<ContractionProblemGemm> gemms;
-        virtual std::string                 description() const
-        {
-            throw std::runtime_error("Get the information from gemms[idx].description() instead.");
-        }
-        virtual std::vector<ConstantDescriptor> const constants() const
-        {
-            throw std::runtime_error("Get the information from gemms[idx].constants() instead.");
-        }
-    };
-
     struct TENSILE_API ContractionInputs : public ProblemInputs
     {
         ContractionInputs();
         virtual ~ContractionInputs();
 
-        ContractionInputs(void const*        _a,
-                          void const*        _b,
-                          void const*        _c,
-                          void*              _d,
-                          void const* const* _batchA,
-                          void const* const* _batchB,
-                          void const* const* _batchC,
-                          void* const*       _batchD,
-                          void const*        _bias,
-                          void const*        _scaleD,
-                          void*              _ws);
+        constexpr static uint32_t TypeId(DataType aType,
+                                         DataType bType,
+                                         DataType cType,
+                                         DataType dType,
+                                         DataType alphaType,
+                                         DataType betaType)
+        {
+            static_assert(BitFieldGenerator::ElementWidth((uint32_t)DataType::Count) * 6
+                              <= BitFieldGenerator::maxBitFieldWidth,
+                          "Max bitfield width exceeded");
 
-        // TODO: Remove this
-        void const* a = nullptr;
-        void const* b = nullptr;
-        void const* c = nullptr;
-        void*       d = nullptr;
-        void*       e = nullptr;
+            return BitFieldGenerator::GenerateBitField(
+                BitFieldGenerator::ElementWidth((uint32_t)DataType::Count),
+                (uint32_t)aType,
+                (uint32_t)bType,
+                (uint32_t)cType,
+                (uint32_t)dType,
+                (uint32_t)alphaType,
+                (uint32_t)betaType);
+        }
+    };
 
-        void const* const* batchA = nullptr;
-        void const* const* batchB = nullptr;
-        void const* const* batchC = nullptr;
-        void* const*       batchD = nullptr;
+    /**
+ * Contains actual pointer and argument values for a particular set of
+ * inputs.
+ */
+    template <typename A, typename B, typename C, typename D, typename Alpha, typename Beta>
+    struct TENSILE_API TypedContractionInputs : public ContractionInputs
+    {
+        using AType     = A;
+        using BType     = B;
+        using CType     = C;
+        using DType     = D;
+        using AlphaType = Alpha;
+        using BetaType  = Beta;
 
-        void const* bias   = nullptr;
-        void const* scaleD = nullptr;
+        TypedContractionInputs();
 
-        // Constants
-        ConstantVariant              alpha = static_cast<float>(0);
-        ConstantVariant              beta  = static_cast<float>(0);
-        std::vector<ConstantVariant> activationArgs;
+        TypedContractionInputs(A const*                           _a,
+                               B const*                           _b,
+                               C const*                           _c,
+                               D*                                 _d,
+                               Alpha                              _alpha,
+                               Beta                               _beta,
+                               std::vector<std::shared_ptr<void>> _biasList,
+                               Alpha const*                       _scaleD = nullptr,
+                               void*                              _ws     = nullptr)
+            : TypedContractionInputs(
+                _a, _b, _c, _d, nullptr, nullptr, nullptr, nullptr, _alpha, _beta, _biasList){};
 
-        // Workspace
+        TypedContractionInputs(A const*                           _a,
+                               B const*                           _b,
+                               C const*                           _c,
+                               D*                                 _d,
+                               A const* const*                    _batchA,
+                               B const* const*                    _batchB,
+                               C const* const*                    _batchC,
+                               D* const*                          _batchD,
+                               Alpha                              _alpha,
+                               Beta                               _beta,
+                               std::vector<std::shared_ptr<void>> _biasList,
+                               Alpha const*                       _scaleD = nullptr,
+                               void*                              _ws     = nullptr);
+
+        ~TypedContractionInputs();
+
+        A const* a = nullptr;
+        B const* b = nullptr;
+        C const* c = nullptr;
+        D*       d = nullptr;
+
+        A const* const* batchA = nullptr;
+        B const* const* batchB = nullptr;
+        C const* const* batchC = nullptr;
+        D* const*       batchD = nullptr;
+
         void* ws = nullptr;
 
-        std::vector<size_t> maxElements;
-        size_t              workspaceSize;
-        bool                gpu = false;
+        Alpha alpha = static_cast<Alpha>(0);
+        Beta  beta  = static_cast<Beta>(0);
 
-        // TODO: Add ContractionGroupedInputs
-        std::vector<void const*>                  groupedA;
-        std::vector<void const*>                  groupedB;
-        std::vector<void const*>                  groupedC;
-        std::vector<void*>                        groupedD;
-        std::vector<void*>                        groupedE;
-        std::vector<void const*>                  groupedBias;
-        std::vector<void const*>                  groupedScaleD;
-        std::vector<ConstantVariant>              groupedAlpha;
-        std::vector<ConstantVariant>              groupedBeta;
-        std::vector<std::vector<ConstantVariant>> groupedActivationArgs;
-        std::vector<void*>                        groupedWs;
-        std::vector<std::vector<size_t>>          groupedMaxElements;
-        // Grouped input end
+        void const*              bias = nullptr;
+        std::vector<void const*> biasList;
+        Alpha const*             scaleD = nullptr;
+
+        std::vector<D> activationArgs;
+
+        std::vector<A const*> groupedA;
+        std::vector<B const*> groupedB;
+        std::vector<C const*> groupedC;
+        std::vector<D*>       groupedD;
+
+        std::vector<Alpha> groupedAlpha;
+        std::vector<Beta>  groupedBeta ;
+
+        std::vector<void*> groupedWs;
+
+        std::vector<void const*> groupedBias;
+        std::vector<Alpha const*> groupedScaleD;
+
+        std::vector<std::vector<D>> groupedActivationArgs;
+
+        constexpr static uint32_t TypeId()
+        {
+            return ContractionInputs::TypeId(TypeInfo<A>::Enum,
+                                             TypeInfo<B>::Enum,
+                                             TypeInfo<C>::Enum,
+                                             TypeInfo<D>::Enum,
+                                             TypeInfo<Alpha>::Enum,
+                                             TypeInfo<Beta>::Enum);
+        }
     };
 
-    // Deprecated: Legacy support for hipBLASLt
-    template <typename A     = float,
-              typename B     = A,
-              typename C     = A,
-              typename D     = C,
-              typename Alpha = D,
-              typename Beta  = D>
-    struct TypedContractionInputs : ContractionInputs
-    {
-    };
+    // Commonly used contraction input type groupings
+    // Naming: _[Ti_To_Tc]_:
+    // S=float, D=double, C=complex<float>, Z=complex<double>,
+    // H=Half, B=BF16, I8x4=Int8x4, I32=int32_t
+    using ContractionInputs_S_S_S = TypedContractionInputs<float>;
+    using ContractionInputs_D_D_D = TypedContractionInputs<double>;
+    using ContractionInputs_C_C_C = TypedContractionInputs<std::complex<float>>;
+    using ContractionInputs_Z_Z_Z = TypedContractionInputs<std::complex<double>>;
+#ifdef TENSILE_USE_HALF
+    using ContractionInputs_H_H_H = TypedContractionInputs<Half>;
+    using ContractionInputs_H_H_S = TypedContractionInputs<Half, Half, Half, Half, float, float>;
+    using ContractionInputs_H_S_S = TypedContractionInputs<Half, Half, float, float>;
+#endif // TENSILE_USE_HALF
+    using ContractionInputs_I8x4_I32_I32 = TypedContractionInputs<Int8x4, Int8x4, int32_t, int32_t>;
+    using ContractionInputs_I8_I8_I32
+        = TypedContractionInputs<int8_t, int8_t, int8_t, int8_t, int32_t, int32_t>;
+    using ContractionInputs_I8_I32_I32 = TypedContractionInputs<int8_t, int8_t, int32_t, int32_t>;
+    using ContractionInputs_I8_I32_S
+        = TypedContractionInputs<int8_t, int8_t, int32_t, int32_t, float, float>;
+    using ContractionInputs_I8_I8_S
+        = TypedContractionInputs<int8_t, int8_t, int8_t, int8_t, float, float>;
+    using ContractionInputs_I32_I32_I32 = TypedContractionInputs<int32_t>;
+#ifdef TENSILE_USE_BF16
+    using ContractionInputs_B_B_S
+        = TypedContractionInputs<BFloat16, BFloat16, BFloat16, BFloat16, float, float>;
+    using ContractionInputs_B_S_S = TypedContractionInputs<BFloat16, BFloat16, float, float>;
+#endif // TENSILE_USE_BF16
 
-    TENSILE_API std::ostream& operator<<(std::ostream&                 stream,
-                                         ContractionProblemGemm const& contraction);
+    TENSILE_API std::ostream& operator<<(std::ostream&             stream,
+                                         ContractionProblem const& contraction);
 
-    TENSILE_API std::ostream& operator<<(std::ostream&                            stream,
-                                         ContractionProblemGemm::FreeIndex const& free);
-    TENSILE_API std::ostream& operator<<(std::ostream&                             stream,
-                                         ContractionProblemGemm::BatchIndex const& batch);
-    TENSILE_API std::ostream& operator<<(std::ostream&                             stream,
-                                         ContractionProblemGemm::BoundIndex const& bound);
+    TENSILE_API std::ostream& operator<<(std::ostream&                        stream,
+                                         ContractionProblem::FreeIndex const& free);
+    TENSILE_API std::ostream& operator<<(std::ostream&                         stream,
+                                         ContractionProblem::BatchIndex const& batch);
+    TENSILE_API std::ostream& operator<<(std::ostream&                         stream,
+                                         ContractionProblem::BoundIndex const& bound);
 
-    TENSILE_API std::istream& operator>>(std::istream&                      stream,
-                                         ContractionProblemGemm::FreeIndex& free);
-    TENSILE_API std::istream& operator>>(std::istream&                       stream,
-                                         ContractionProblemGemm::BatchIndex& batch);
-    TENSILE_API std::istream& operator>>(std::istream&                       stream,
-                                         ContractionProblemGemm::BoundIndex& bound);
+    TENSILE_API std::istream& operator>>(std::istream& stream, ContractionProblem::FreeIndex& free);
+    TENSILE_API std::istream& operator>>(std::istream&                   stream,
+                                         ContractionProblem::BatchIndex& batch);
+    TENSILE_API std::istream& operator>>(std::istream&                   stream,
+                                         ContractionProblem::BoundIndex& bound);
 
     /**
  * @}

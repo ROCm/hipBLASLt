@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
+ * Copyright (C) 2022 Advanced Micro Devices, Inc. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -66,7 +66,7 @@ namespace Tensile
         SolutionAdapter::~SolutionAdapter()
         {
             for(auto module : m_modules)
-                HIP_CHECK_PRINT(hipModuleUnload(module));
+                hipModuleUnload(module);
         }
 
         std::string removeXnack(std::string coFilename)

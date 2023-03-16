@@ -38,19 +38,19 @@ class GlobalWriteBatchComponent(GlobalWriteComponents):
   kernel = {"ProblemType": {"OperationType": "GEMM" }}
   def __call__(self, kernel: Solution, tPA, tPB, activation: ActivationModule, ss: StoreState, \
     batchIdx, applyAlpha, beta, edge, atomic, gwvw, atomicW, \
-    batchElements, addrD, addrC, addrBias, addrScaleD, biasLocalBarrierInit: bool, \
+    batchElements, addrD, addrC, addrBias, addrScaleD, \
     tmpVgpr, bf16CVTVgprStruct, activationSetPCStruct, activationTypeStr, batchElementSgprs, tmpSgpr, codeAccVgprRead, codeMulAlpha, \
     packdata, parentWriter) -> Module:
     return GlobalWriteBatchWriter(kernel, tPA, tPB, activation, ss, batchIdx, applyAlpha, \
       beta, edge, atomic, gwvw, atomicW, \
-      batchElements, addrD, addrC, addrBias, addrScaleD, biasLocalBarrierInit, \
+      batchElements, addrD, addrC, addrBias, addrScaleD, \
       tmpVgpr, bf16CVTVgprStruct, activationSetPCStruct, activationTypeStr, batchElementSgprs, tmpSgpr, codeAccVgprRead, codeMulAlpha, \
       packdata, parentWriter).emit()
 
 class GlobalWriteBatchWriter:
   def __init__(self, kernel: Solution, tPA, tPB, activation: ActivationModule, ss: StoreState, \
     batchIdx, applyAlpha, beta, edge, atomic, gwvw, atomicW, \
-    batchElements, addrD, addrC, addrBias, addrScaleD, biasLocalBarrierInit: bool, \
+    batchElements, addrD, addrC, addrBias, addrScaleD, \
     tmpVgpr, bf16CVTVgprStruct, activationSetPCStruct, activationTypeStr, batchElementSgprs, tmpSgpr, codeAccVgprRead, codeMulAlpha, \
       packdata, parentWriter):
     self.kernel = kernel
@@ -70,7 +70,6 @@ class GlobalWriteBatchWriter:
     self.addrC    = addrC
     self.addrBias = addrBias
     self.addrScaleD = addrScaleD
-    self.biasLocalBarrierInit  = biasLocalBarrierInit
     self.activationSetPCStruct = activationSetPCStruct
     self.activationTypeStr     = activationTypeStr
     self.tmpVgpr = tmpVgpr
@@ -83,6 +82,7 @@ class GlobalWriteBatchWriter:
     self.parentWriter = parentWriter
     self.loadsIssued = 0
     self.storesIssued = 0
+    self.biasLocalBarrierInit = False
 
   @property
   def wavelen(self) -> int:
@@ -623,7 +623,7 @@ class GlobalWriteBatchWriter:
       elif self.parentWriter.insertActivationAfterPacked(self.kernel, self.activationTypeStr):
         isActivationInsertAfter = True
         activationModule = self.parentWriter.getActivationDestDataType(self.kernel, self.activation, \
-          self.activationTypeStr, self.gwvw, self.ss.elementSumIdx[elementIdx] , self.ss.elementSumIdx[elementIdx], self.tmpVgpr, self.tmpSgpr)
+          self.activationTypeStr, self.gwvw, self.ss.elementSumIdx[elementIdx], self.tmpVgpr, self.tmpSgpr)
       else:
         satInt8 = False
         if self.kernel["ProblemType"]["DestDataType"].isInt8():
@@ -631,7 +631,7 @@ class GlobalWriteBatchWriter:
             SaturateTypeInt8 = SaturateCastType.DO_NOTHING
             satInt8 = True
         activationModule = self.parentWriter.getActivationActivationComputeType(self.kernel, self.activation, \
-          self.activationTypeStr, self.gwvw, self.ss.elementSumIdx[elementIdx], self.ss.elementSumIdx[elementIdx], self.tmpVgpr, self.tmpSgpr, satInt8)
+          self.activationTypeStr, self.gwvw, self.ss.elementSumIdx[elementIdx], self.tmpVgpr, self.tmpSgpr, satInt8)
 
       # pack stores, beta and non-beta reach here:
       packModule = Module("Empty pack module")
@@ -1286,8 +1286,8 @@ def copyData(computeDataType, elementSumIdx, gwvw, vgprStart, direction=0):
 
   if direction == 1:
     for i in module.items():
-      tmp = i.srcs[0]
-      i.srcs[0] = i.dst
+      tmp = i.src[0]
+      i.src[0] = i.dst
       i.dst = tmp
   return module
 

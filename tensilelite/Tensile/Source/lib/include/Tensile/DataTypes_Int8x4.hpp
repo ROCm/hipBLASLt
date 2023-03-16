@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
+ * Copyright (C) 2022 Advanced Micro Devices, Inc. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -75,12 +75,3 @@ namespace Tensile
 
     static_assert(sizeof(Int8x4) == 4, "Int8x4 must be 4 bytes.");
 } // namespace Tensile
-
-namespace std
-{
-    inline std::string to_string(const Tensile::Int8x4& val)
-    {
-        return "(" + std::to_string(val.a) + ", " + std::to_string(val.b) + ", "
-               + std::to_string(val.c) + ", " + std::to_string(val.d) + ")";
-    }
-} // namespace std

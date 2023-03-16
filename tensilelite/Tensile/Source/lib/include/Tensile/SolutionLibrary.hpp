@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
+ * Copyright (C) 2022 Advanced Micro Devices, Inc. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -88,10 +88,10 @@ namespace Tensile
                                                              double* fitness = nullptr) const = 0;
 
         virtual std::shared_ptr<MySolution> findBestSolution(std::vector<MyProblem> const& problems,
-                                                             Hardware const&               hardware,
+                                                             Hardware const&  hardware,
                                                              double* fitness = nullptr) const
         {
-            return std::shared_ptr<MySolution>();
+          return std::shared_ptr<MySolution>();
         }
 
         /**
@@ -118,12 +118,11 @@ namespace Tensile
         {
             return SolutionVector<MySolution>();
         }
-        virtual SolutionVector<MySolution>
-            findTopSolutionsGroupedGemm(std::vector<MyProblem> const& problems,
-                                        Hardware const&               hardware,
-                                        int                           numSolutions) const
+        virtual SolutionVector<MySolution> findTopSolutionsGroupedGemm(std::vector<MyProblem> const& problems,
+                                                                       Hardware               const& hardware,
+                                                                       int                           numSolutions) const
         {
-            return SolutionVector<MySolution>();
+          return SolutionVector<MySolution>();
         }
     };
 

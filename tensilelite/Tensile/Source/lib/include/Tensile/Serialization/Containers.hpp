@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
+ * Copyright (C) 2022 Advanced Micro Devices, Inc. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -167,26 +167,26 @@ namespace Tensile
         TENSILE_SERIALIZE_VECTOR(true, ExactSelectionTableEntry);
 
         TENSILE_SERIALIZE_VECTOR(true,
-                                 Tensile::ExactLogicLibrary<Tensile::ContractionProblemGemm,
+                                 Tensile::ExactLogicLibrary<Tensile::ContractionProblem,
                                                             Tensile::ContractionSolution,
                                                             Tensile::HardwarePredicate>::Row);
 
         TENSILE_SERIALIZE_VECTOR(
             true,
-            Tensile::ExactLogicLibrary<Tensile::ContractionProblemGemm,
+            Tensile::ExactLogicLibrary<Tensile::ContractionProblem,
                                        Tensile::ContractionSolution,
-                                       Tensile::ProblemPredicate<ContractionProblemGemm>>::Row);
+                                       Tensile::ProblemPredicate<ContractionProblem>>::Row);
 
         TENSILE_SERIALIZE_VECTOR(
-            true, std::shared_ptr<Tensile::Predicates::Predicate<Tensile::ContractionProblemGemm>>);
+            true, std::shared_ptr<Tensile::Predicates::Predicate<Tensile::ContractionProblem>>);
         TENSILE_SERIALIZE_VECTOR(
             true, std::shared_ptr<Tensile::Predicates::Predicate<Tensile::Hardware>>);
         TENSILE_SERIALIZE_VECTOR(true,
                                  std::shared_ptr<Tensile::Predicates::Predicate<Tensile::AMDGPU>>);
+        TENSILE_SERIALIZE_VECTOR(true,
+                                 std::shared_ptr<Tensile::Property<Tensile::ContractionProblem>>);
         TENSILE_SERIALIZE_VECTOR(
-            true, std::shared_ptr<Tensile::Property<Tensile::ContractionProblemGemm>>);
-        TENSILE_SERIALIZE_VECTOR(
-            true, std::shared_ptr<Tensile::MLFeatures::MLFeature<Tensile::ContractionProblemGemm>>);
+            true, std::shared_ptr<Tensile::MLFeatures::MLFeature<Tensile::ContractionProblem>>);
 
         TENSILE_SERIALIZE_VECTOR(false, std::shared_ptr<Tensile::ContractionSolution>);
 
@@ -201,7 +201,7 @@ namespace Tensile
 
         TENSILE_SERIALIZE_VECTOR(true, Tensile::DecisionTree::Node);
         // TENSILE_SERIALIZE_VECTOR(true,
-        //                          Tensile::DecisionTreeLibrary<Tensile::ContractionProblemGemm,
+        //                          Tensile::DecisionTreeLibrary<Tensile::ContractionProblem,
         //                                                       Tensile::ContractionSolution>::Tree);
 
         template <typename Key, typename Value, typename ReturnValue, typename IO>

@@ -1,6 +1,6 @@
 ################################################################################
 #
-# Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2022 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -39,7 +39,6 @@ set(client_sources
     source/ResultReporter.cpp
     source/SolutionIterator.cpp
     source/TimingEvents.cpp
-    source/TypedId.cpp
     )
 
 find_package(Boost  COMPONENTS program_options filesystem REQUIRED)
@@ -48,7 +47,7 @@ add_library(TensileClient STATIC ${client_sources})
 
 set_target_properties(TensileClient
                       PROPERTIES
-                      CXX_STANDARD 20
+                      CXX_STANDARD 14
                       CXX_STANDARD_REQUIRED ON
                       CXX_EXTENSIONS OFF)
 
@@ -68,7 +67,7 @@ endif()
 add_executable(tensile_client main.cpp)
 set_target_properties(tensile_client
                       PROPERTIES
-                      CXX_STANDARD 20
+                      CXX_STANDARD 14
                       CXX_STANDARD_REQUIRED ON
                       CXX_EXTENSIONS OFF)
 
@@ -78,5 +77,5 @@ if(TENSILE_USE_OPENMP)
 endif()
 
 foreach(arch IN LISTS TENSILE_GPU_ARCHS)
-    target_link_libraries(tensile_client PRIVATE "--offload-arch=${arch}")
+    target_link_libraries(tensile_client PRIVATE "--amdgpu-target=${arch}")
 endforeach(arch)

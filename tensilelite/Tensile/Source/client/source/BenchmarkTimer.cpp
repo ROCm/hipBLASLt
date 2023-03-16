@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
+ * Copyright (C) 2022 Advanced Micro Devices, Inc. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -70,7 +70,7 @@ namespace Tensile
             m_numBenchmarksRun++;
         }
 
-        void BenchmarkTimer::preProblem(ContractionProblemGemm const& problem)
+        void BenchmarkTimer::preProblem(ContractionProblem const& problem)
         {
             m_problem = problem;
         }
@@ -171,8 +171,7 @@ namespace Tensile
                 enqueuesByFlops       = CeilDivide(m_minFlopsPerSync, flopsInProblem);
             }
 
-            return std::min<size_t>(std::max<size_t>(m_numEnqueuesPerSync, enqueuesByFlops),
-                                    m_maxEnqueuesPerSync);
+            return std::min<size_t>(std::max<size_t>(m_numEnqueuesPerSync, enqueuesByFlops), m_maxEnqueuesPerSync);
         }
 
         void BenchmarkTimer::setNumEnqueuesPerSync(size_t count)

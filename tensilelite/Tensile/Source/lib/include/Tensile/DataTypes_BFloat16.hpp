@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
+ * Copyright (C) 2022 Advanced Micro Devices, Inc. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -85,11 +85,6 @@ namespace Tensile
         explicit operator uint32_t() const
         {
             return static_cast<uint32_t>(float(*this));
-        }
-
-        explicit operator int8_t() const
-        {
-            return static_cast<int8_t>(float(*this));
         }
 
         uint16_t data;
@@ -310,10 +305,5 @@ namespace std
     inline Tensile::BFloat16 cos(const Tensile::BFloat16& a)
     {
         return static_cast<Tensile::BFloat16>(std::cos(static_cast<float>(a)));
-    }
-
-    inline std::string to_string(const Tensile::BFloat16& a)
-    {
-        return std::to_string(static_cast<float>(a));
     }
 } // namespace std

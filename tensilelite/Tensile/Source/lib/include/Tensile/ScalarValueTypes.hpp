@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
+ * Copyright (C) 2022 Advanced Micro Devices, Inc. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -25,8 +25,6 @@
  *******************************************************************************/
 
 #pragma once
-
-#include <Tensile/DataTypes.hpp>
 
 #include <cstdlib>
 #include <iostream>
@@ -136,24 +134,12 @@ namespace Tensile
     template <typename T>
     ScalarValue toScalarValueEnum(T value)
     {
-        if constexpr(std::is_same<T, ConstantVariant>::value)
-        {
-            if(CompareValue(value, (double)1))
-                return ScalarValue::One;
-            else if(CompareValue(value, (double)-1))
-                return ScalarValue::NegativeOne;
-            else
-                return ScalarValue::Any;
-        }
+        if(value == T(1))
+            return ScalarValue::One;
+        else if(value == T(-1))
+            return ScalarValue::NegativeOne;
         else
-        {
-            if(value == T(1))
-                return ScalarValue::One;
-            else if(value == T(-1))
-                return ScalarValue::NegativeOne;
-            else
-                return ScalarValue::Any;
-        }
+            return ScalarValue::Any;
     }
 
     /**

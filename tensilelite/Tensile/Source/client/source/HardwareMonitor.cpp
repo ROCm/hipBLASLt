@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
+ * Copyright (C) 2022 Advanced Micro Devices, Inc. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -383,7 +383,7 @@ namespace Tensile
 
         void HardwareMonitor::runLoop()
         {
-            HIP_CHECK_EXC(hipSetDevice(m_hipDeviceIndex));
+            hipSetDevice(m_hipDeviceIndex);
 
             std::unique_lock<std::mutex> lock(m_mutex);
             while(!m_exit)

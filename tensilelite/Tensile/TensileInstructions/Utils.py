@@ -1,6 +1,6 @@
 ################################################################################
 #
-# Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2022 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -81,7 +81,7 @@ def _generateRegName(rawText):
     if len(splitTxt) > 1:
         for arg in splitTxt[1:]:
             offsets.append(int(arg))
-    return RegName(splitTxt[0], offsets)
+    return RegName(splitTxt[0], *offsets) if offsets else RegName(splitTxt[0])
 
 class Holder:
     def __init__(self, idx=None, name=None):

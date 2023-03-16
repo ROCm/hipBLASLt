@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
+ * Copyright (C) 2022 Advanced Micro Devices, Inc. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -46,9 +46,8 @@ namespace Tensile
         return LoadLibraryData<MyProblem, MySolution>(data[0]);
     }
 
-    template std::shared_ptr<SolutionLibrary<ContractionProblemGemm, ContractionSolution>>
-        EmbeddedLibrary<ContractionProblemGemm, ContractionSolution>::NewLibrary(
-            std::string const&);
+    template std::shared_ptr<SolutionLibrary<ContractionProblem, ContractionSolution>>
+        EmbeddedLibrary<ContractionProblem, ContractionSolution>::NewLibrary(std::string const&);
 } // namespace Tensile
 
 #endif

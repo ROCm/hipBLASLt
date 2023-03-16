@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
+ * Copyright (C) 2022 Advanced Micro Devices, Inc. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -39,7 +39,7 @@ namespace Tensile
  */
     namespace Contraction
     {
-        struct FreeSizeA : public Property_CRTP<FreeSizeA, ContractionProblemGemm>
+        struct FreeSizeA : public Property_CRTP<FreeSizeA, ContractionProblem>
         {
             enum
             {
@@ -53,13 +53,13 @@ namespace Tensile
                 return "FreeSizeA";
             }
 
-            virtual size_t operator()(ContractionProblemGemm const& problem) const
+            virtual size_t operator()(ContractionProblem const& problem) const
             {
                 return problem.freeSizeA(index);
             }
         };
 
-        struct FreeSizeB : public Property_CRTP<FreeSizeB, ContractionProblemGemm>
+        struct FreeSizeB : public Property_CRTP<FreeSizeB, ContractionProblem>
         {
             enum
             {
@@ -73,13 +73,13 @@ namespace Tensile
                 return "FreeSizeB";
             }
 
-            virtual size_t operator()(ContractionProblemGemm const& problem) const
+            virtual size_t operator()(ContractionProblem const& problem) const
             {
                 return problem.freeSizeB(index);
             }
         };
 
-        struct BatchSize : public Property_CRTP<BatchSize, ContractionProblemGemm>
+        struct BatchSize : public Property_CRTP<BatchSize, ContractionProblem>
         {
             enum
             {
@@ -93,13 +93,13 @@ namespace Tensile
                 return "BatchSize";
             }
 
-            virtual size_t operator()(ContractionProblemGemm const& problem) const
+            virtual size_t operator()(ContractionProblem const& problem) const
             {
                 return problem.batchSize(index);
             }
         };
 
-        struct BoundSize : public Property_CRTP<BoundSize, ContractionProblemGemm>
+        struct BoundSize : public Property_CRTP<BoundSize, ContractionProblem>
         {
             enum
             {
@@ -113,13 +113,13 @@ namespace Tensile
                 return "BoundSize";
             }
 
-            virtual size_t operator()(ContractionProblemGemm const& problem) const
+            virtual size_t operator()(ContractionProblem const& problem) const
             {
                 return problem.boundSize(index);
             }
         };
 
-        struct AStride : public Property_CRTP<AStride, ContractionProblemGemm>
+        struct AStride : public Property_CRTP<AStride, ContractionProblem>
         {
             enum
             {
@@ -133,13 +133,13 @@ namespace Tensile
                 return "AStride";
             }
 
-            virtual size_t operator()(ContractionProblemGemm const& problem) const
+            virtual size_t operator()(ContractionProblem const& problem) const
             {
                 return problem.a().strides()[index];
             }
         };
 
-        struct BStride : public Property_CRTP<BStride, ContractionProblemGemm>
+        struct BStride : public Property_CRTP<BStride, ContractionProblem>
         {
             enum
             {
@@ -153,13 +153,13 @@ namespace Tensile
                 return "BStride";
             }
 
-            virtual size_t operator()(ContractionProblemGemm const& problem) const
+            virtual size_t operator()(ContractionProblem const& problem) const
             {
                 return problem.b().strides()[index];
             }
         };
 
-        struct CStride : public Property_CRTP<CStride, ContractionProblemGemm>
+        struct CStride : public Property_CRTP<CStride, ContractionProblem>
         {
             enum
             {
@@ -173,13 +173,13 @@ namespace Tensile
                 return "CStride";
             }
 
-            virtual size_t operator()(ContractionProblemGemm const& problem) const
+            virtual size_t operator()(ContractionProblem const& problem) const
             {
                 return problem.c().strides()[index];
             }
         };
 
-        struct DStride : public Property_CRTP<DStride, ContractionProblemGemm>
+        struct DStride : public Property_CRTP<DStride, ContractionProblem>
         {
             enum
             {
@@ -193,14 +193,14 @@ namespace Tensile
                 return "DStride";
             }
 
-            virtual size_t operator()(ContractionProblemGemm const& problem) const
+            virtual size_t operator()(ContractionProblem const& problem) const
             {
                 return problem.d().strides()[index];
             }
         };
 
         struct OperationIdentifier
-            : public Property_CRTP<OperationIdentifier, ContractionProblemGemm, std::string>
+            : public Property_CRTP<OperationIdentifier, ContractionProblem, std::string>
         {
             enum
             {
@@ -213,7 +213,7 @@ namespace Tensile
                 return "OperationIdentifier";
             }
 
-            virtual std::string operator()(ContractionProblemGemm const& problem) const
+            virtual std::string operator()(ContractionProblem const& problem) const
             {
                 return problem.operationIdentifier();
             }

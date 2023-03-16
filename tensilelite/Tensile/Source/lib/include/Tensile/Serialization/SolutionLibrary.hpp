@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
+ * Copyright (C) 2022 Advanced Micro Devices, Inc. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -51,8 +51,8 @@ namespace Tensile
     namespace Serialization
     {
         template <typename IO>
-        struct MappingTraits<std::shared_ptr<SolutionLibrary<ContractionProblemGemm>>, IO>
-            : public BaseClassMappingTraits<SolutionLibrary<ContractionProblemGemm>, IO, false>
+        struct MappingTraits<std::shared_ptr<SolutionLibrary<ContractionProblem>>, IO>
+            : public BaseClassMappingTraits<SolutionLibrary<ContractionProblem>, IO, false>
         {
         };
 

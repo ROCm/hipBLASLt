@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
+ * Copyright (C) 2022 Advanced Micro Devices, Inc. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -61,41 +61,6 @@ namespace Tensile
 
         m_success = true;
         return true;
-    }
-
-    const std::vector<std::string> greekNames
-        = {"alpha", "beta",  "gamma",  "epsilon", "digamma", "zeta", "eta",     "theta",
-           "iota",  "kappa", "lambda", "mu",      "nu",      "xi",   "omicron", "pi",
-           "rho",   "sigma", "tau",    "upsilon", "phi",     "chi",  "psi",     "omega"};
-
-    std::vector<std::string> generateArgNameList(size_t length, const char* name)
-    {
-
-        if(length > greekNames.size())
-        {
-            throw std::runtime_error("Exceed maximum list legnth");
-        }
-        std::string prefix = name;
-        if(!prefix.empty())
-            prefix += "-";
-        std::vector<std::string> out(length);
-        for(int i = 0; i < length; i++)
-        {
-            out[i] = prefix + greekNames[i];
-        }
-        return out;
-    }
-
-    size_t greekToIndex(std::string name)
-    {
-        for(int i = 0; i < greekNames.size(); i++)
-        {
-            if(name == greekNames[i])
-            {
-                return i;
-            }
-        }
-        return (size_t)-1;
     }
 
 } // namespace Tensile

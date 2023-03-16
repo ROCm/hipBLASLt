@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
+ * Copyright (C) 2022 Advanced Micro Devices, Inc. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -160,8 +160,7 @@ namespace Tensile
         using Library = SolutionLibrary<MyProblem, MySolution>;
         using Cache  = CacheMap<std::tuple<std::shared_ptr<MySolution>, double>, AMDGPU, MyProblem>;
         using Caches = CacheMap<SolutionVector<MySolution>, AMDGPU, MyProblem>;
-        using CachesGroupedGemm
-            = CacheMap<SolutionVector<MySolution>, AMDGPU, std::vector<MyProblem>>;
+        using CachesGroupedGemm  = CacheMap<SolutionVector<MySolution>, AMDGPU, std::vector<MyProblem>>;
 
         CachingLibrary(std::shared_ptr<Library> subLibrary)
             : m_subLibrary(subLibrary)
@@ -254,22 +253,20 @@ namespace Tensile
             return m_subLibrary->findTopSolutions(problem, hardware, numSolutions);
         }
 
-        virtual SolutionVector<MySolution>
-            findTopSolutionsGroupedGemm(std::vector<MyProblem> const& problems,
-                                        Hardware const&               hardware,
-                                        int                           numSolutions) const override
+        virtual SolutionVector<MySolution> findTopSolutionsGroupedGemm(std::vector<MyProblem> const& problems,
+                                                                       Hardware               const& hardware,
+                                                                       int                           numSolutions) const override
         {
             try
             {
-                auto const&                amdgpu = dynamic_cast<AMDGPU const&>(hardware);
+                auto const& amdgpu = dynamic_cast<AMDGPU const&>(hardware);
                 SolutionVector<MySolution> solutions;
                 solutions = m_cachesGroupedGemm.find(problems, amdgpu);
 
                 if(solutions.size() != 0)
                     return solutions;
 
-                solutions
-                    = m_subLibrary->findTopSolutionsGroupedGemm(problems, hardware, numSolutions);
+                solutions = m_subLibrary->findTopSolutionsGroupedGemm(problems, hardware, numSolutions);
                 if(solutions.size() != 0)
                     m_cachesGroupedGemm.add(solutions, problems, amdgpu);
 
@@ -283,21 +280,21 @@ namespace Tensile
         }
 
     private:
-        std::shared_ptr<Library>  m_subLibrary;
-        mutable Cache             m_cache;
-        mutable Caches            m_caches;
+        std::shared_ptr<Library> m_subLibrary;
+        mutable Cache            m_cache;
+        mutable Caches           m_caches;
         mutable CachesGroupedGemm m_cachesGroupedGemm;
     };
 
 #if 0
-    struct ContractionCachingLibrary: public CachingLibrary<ContractionProblemGemm>
+    struct ContractionCachingLibrary: public CachingLibrary<ContractionProblem>
     {
-        using Super = CachingLibrary<ContractionProblemGemm>;
+        using Super = CachingLibrary<ContractionProblem>;
         using Library = typename Super::Library;
         using Key = typename Super::Key;
 
         ContractionCachingLibrary(std::shared_ptr<Library> subLibrary)
-            : CachingLibrary<ContractionProblemGemm>(subLibrary)
+            : CachingLibrary<ContractionProblem>(subLibrary)
         {}
 
     };

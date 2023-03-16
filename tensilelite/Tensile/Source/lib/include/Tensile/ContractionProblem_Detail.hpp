@@ -34,59 +34,59 @@
 namespace Tensile
 {
     template <>
-    struct Comparison<ContractionProblemGemm::FreeIndex>
+    struct Comparison<ContractionProblem::FreeIndex>
     {
         enum
         {
             implemented = true
         };
 
-        static int compare(ContractionProblemGemm::FreeIndex const& lhs,
-                           ContractionProblemGemm::FreeIndex const& rhs)
+        static int compare(ContractionProblem::FreeIndex const& lhs,
+                           ContractionProblem::FreeIndex const& rhs)
         {
             return LexicographicCompare(lhs.d, rhs.d, lhs.c, rhs.c, lhs.i, rhs.i, lhs.isA, rhs.isA);
         }
     };
 
     template <>
-    struct Comparison<ContractionProblemGemm::BatchIndex>
+    struct Comparison<ContractionProblem::BatchIndex>
     {
         enum
         {
             implemented = true
         };
 
-        static int compare(ContractionProblemGemm::BatchIndex const& lhs,
-                           ContractionProblemGemm::BatchIndex const& rhs)
+        static int compare(ContractionProblem::BatchIndex const& lhs,
+                           ContractionProblem::BatchIndex const& rhs)
         {
             return LexicographicCompare(lhs.d, rhs.d, lhs.c, rhs.c, lhs.a, rhs.a, lhs.b, rhs.b);
         }
     };
 
     template <>
-    struct Comparison<ContractionProblemGemm::BoundIndex>
+    struct Comparison<ContractionProblem::BoundIndex>
     {
         enum
         {
             implemented = true
         };
 
-        static int compare(ContractionProblemGemm::BoundIndex const& lhs,
-                           ContractionProblemGemm::BoundIndex const& rhs)
+        static int compare(ContractionProblem::BoundIndex const& lhs,
+                           ContractionProblem::BoundIndex const& rhs)
         {
             return LexicographicCompare(lhs.a, rhs.a, lhs.b, rhs.b);
         }
     };
 
     template <>
-    struct Comparison<ContractionProblemGemm>
+    struct Comparison<ContractionProblem>
     {
         enum
         {
             implemented = true
         };
 
-        static int compare(ContractionProblemGemm const& lhs, ContractionProblemGemm const& rhs)
+        static int compare(ContractionProblem const& lhs, ContractionProblem const& rhs)
         {
             return LexicographicCompare(lhs.operationIdentifier(),
                                         rhs.operationIdentifier(),
@@ -96,6 +96,8 @@ namespace Tensile
                                         rhs.kernelLanguage(),
                                         lhs.deterministicMode(),
                                         rhs.deterministicMode(),
+                                        lhs.arithmeticUnit(),
+                                        rhs.arithmeticUnit(),
                                         lhs.a(),
                                         rhs.a(),
                                         lhs.b(),
@@ -129,9 +131,9 @@ namespace Tensile
 namespace std
 {
     template <>
-    struct hash<Tensile::ContractionProblemGemm>
+    struct hash<Tensile::ContractionProblem>
     {
-        inline size_t operator()(Tensile::ContractionProblemGemm const& problem) const
+        inline size_t operator()(Tensile::ContractionProblem const& problem) const
         {
             return Tensile::hash_combine(problem.operationIdentifier(),
                                          problem.a(),
@@ -141,6 +143,7 @@ namespace std
                                          problem.highPrecisionAccumulate(),
                                          problem.kernelLanguage(),
                                          problem.deterministicMode(),
+                                         problem.arithmeticUnit(),
                                          problem.workspaceSize(),
                                          problem.stridedBatched(),
                                          problem.groupedGemm(),
@@ -154,12 +157,12 @@ namespace std
     };
 
     template <>
-    struct hash<std::vector<Tensile::ContractionProblemGemm>>
+    struct hash<std::vector<Tensile::ContractionProblem>>
     {
-        inline size_t operator()(std::vector<Tensile::ContractionProblemGemm> const& problems) const
+        inline size_t operator()(std::vector<Tensile::ContractionProblem> const& problems) const
         {
             size_t hash = 0;
-            for(int idx = 0; idx < problems.size(); idx++)
+            for( int idx = 0; idx < problems.size(); idx++)
             {
                 auto problem = problems[idx];
                 hash += Tensile::hash_combine(problem.operationIdentifier(),
@@ -170,6 +173,7 @@ namespace std
                                               problem.highPrecisionAccumulate(),
                                               problem.kernelLanguage(),
                                               problem.deterministicMode(),
+                                              problem.arithmeticUnit(),
                                               problem.workspaceSize(),
                                               problem.stridedBatched(),
                                               problem.groupedGemm(),

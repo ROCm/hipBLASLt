@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2019-2023 Advanced Micro Devices, Inc. All rights reserved.
+ * Copyright (C) 2019-2022 Advanced Micro Devices, Inc. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -68,22 +68,22 @@ namespace Tensile
 
         // Set Flow
         template <typename IO>
-        struct MappingTraits<std::shared_ptr<MLFeatures::MLFeature<ContractionProblemGemm>>, IO>
-            : public BaseClassMappingTraits<MLFeatures::MLFeature<ContractionProblemGemm>, IO, true>
+        struct MappingTraits<std::shared_ptr<MLFeatures::MLFeature<ContractionProblem>>, IO>
+            : public BaseClassMappingTraits<MLFeatures::MLFeature<ContractionProblem>, IO, true>
         {
         };
 
         template <typename IO>
-        struct SubclassMappingTraits<MLFeatures::MLFeature<ContractionProblemGemm>, IO>
+        struct SubclassMappingTraits<MLFeatures::MLFeature<ContractionProblem>, IO>
             : public DefaultSubclassMappingTraits<
-                  SubclassMappingTraits<MLFeatures::MLFeature<ContractionProblemGemm>, IO>,
-                  MLFeatures::MLFeature<ContractionProblemGemm>,
+                  SubclassMappingTraits<MLFeatures::MLFeature<ContractionProblem>, IO>,
+                  MLFeatures::MLFeature<ContractionProblem>,
                   IO>
         {
-            using Self = SubclassMappingTraits<MLFeatures::MLFeature<ContractionProblemGemm>, IO>;
+            using Self = SubclassMappingTraits<MLFeatures::MLFeature<ContractionProblem>, IO>;
             using Base = DefaultSubclassMappingTraits<
-                SubclassMappingTraits<MLFeatures::MLFeature<ContractionProblemGemm>, IO>,
-                MLFeatures::MLFeature<ContractionProblemGemm>,
+                SubclassMappingTraits<MLFeatures::MLFeature<ContractionProblem>, IO>,
+                MLFeatures::MLFeature<ContractionProblem>,
                 IO>;
             using SubclassMap = typename Base::SubclassMap;
             const static SubclassMap subclasses;
@@ -102,7 +102,7 @@ namespace Tensile
 
         template <typename IO>
         using ContractionProblemFeatureSMT
-            = SubclassMappingTraits<MLFeatures::MLFeature<ContractionProblemGemm>, IO>;
+            = SubclassMappingTraits<MLFeatures::MLFeature<ContractionProblem>, IO>;
 
         template <typename IO>
         const typename ContractionProblemFeatureSMT<IO>::SubclassMap

@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
+ * Copyright (C) 2022 Advanced Micro Devices, Inc. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -129,10 +129,9 @@ namespace Tensile
             return rv;
         }
 
-        virtual SolutionVector<MySolution>
-            findTopSolutionsGroupedGemm(std::vector<MyProblem> const& problems,
-                                        Hardware const&               hardware,
-                                        int                           numSolutions) const override
+        virtual SolutionVector<MySolution> findTopSolutionsGroupedGemm(std::vector<MyProblem> const& problems,
+                                                                       Hardware               const& hardware,
+                                                                       int                           numSolutions) const override
         {
             SolutionVector<MySolution> rv, solutions;
 
@@ -140,8 +139,7 @@ namespace Tensile
             {
                 if(row.first(problems[0], hardware))
                 {
-                    solutions = row.second->findTopSolutionsGroupedGemm(
-                        problems, hardware, numSolutions - rv.size());
+                    solutions = row.second->findTopSolutionsGroupedGemm(problems, hardware, numSolutions - rv.size());
                     rv.insert(std::end(rv), std::begin(solutions), std::end(solutions));
                     if(rv.size() == numSolutions)
                         return rv;

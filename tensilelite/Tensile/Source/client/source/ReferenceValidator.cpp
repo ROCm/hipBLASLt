@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
+ * Copyright (C) 2022 Advanced Micro Devices, Inc. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -25,6 +25,7 @@
  *******************************************************************************/
 
 #include "ReferenceValidator.hpp"
+#include "DataInitializationTyped.hpp"
 #include "ResultComparison.hpp"
 #include "ResultReporter.hpp"
 
@@ -74,7 +75,7 @@ namespace Tensile
             m_numBenchmarkRuns++;
         }
 
-        void ReferenceValidator::preProblem(ContractionProblemGemm const& problem)
+        void ReferenceValidator::preProblem(ContractionProblem const& problem)
         {
             if(m_enabled)
             {
@@ -90,14 +91,13 @@ namespace Tensile
             }
         }
 
-        void
-            ReferenceValidator::preProblemGroupedGemm(ContractionProblemGroupedGemm const& problems)
+        void ReferenceValidator::preProblemGroupedGemm(std::vector<ContractionProblem> const& problems)
         {
             if(m_enabled)
             {
-                m_problems    = problems;
-                m_groupedGemm = true;
-                SolveCPUGroupedGemm(problems.gemms, *m_referenceInputs, m_validationStride);
+                m_problems         = problems;
+                m_groupedGemm      = true;
+                SolveCPUGroupedGemm(problems, *m_referenceInputs, m_validationStride);
             }
         }
 
@@ -129,6 +129,17 @@ namespace Tensile
 
         void ReferenceValidator::postWarmup() {}
 
+        template <typename ManagedInputs>
+        bool ReferenceValidator::validateSolutionCast(std::shared_ptr<ContractionInputs> inputs)
+        {
+            auto const& typedReference = dynamic_cast<ManagedInputs const&>(*m_referenceInputs);
+            auto const& typedResult    = dynamic_cast<ManagedInputs const&>(*inputs);
+
+            auto rv = validateTyped(typedReference, typedResult);
+
+            return rv;
+        }
+
         bool ReferenceValidator::validateSolution(std::shared_ptr<ContractionInputs> inputs)
         {
             // retreive alpha/beta type set via setAlpha/BetaType()
@@ -149,12 +160,83 @@ namespace Tensile
                 betaType = alphaType;
             }
 
-            auto const& typedReference = dynamic_cast<ContractionInputs const&>(*m_referenceInputs);
-            auto const& typedResult    = dynamic_cast<ContractionInputs const&>(*inputs);
+            auto contractionInputsTypeId = ContractionInputs::TypeId(m_problem.a().dataType(),
+                                                                     m_problem.b().dataType(),
+                                                                     m_problem.c().dataType(),
+                                                                     m_problem.d().dataType(),
+                                                                     alphaType,
+                                                                     betaType);
 
-            auto rv = validate(typedReference, typedResult);
+            switch(contractionInputsTypeId)
+            {
+            case ManagedContractionInputs_S_S_S::TypeId():
+            {
+                return validateSolutionCast<ManagedContractionInputs_S_S_S>(inputs);
+            }
+            case ManagedContractionInputs_D_D_D::TypeId():
+            {
+                return validateSolutionCast<ManagedContractionInputs_D_D_D>(inputs);
+            }
+            case ManagedContractionInputs_C_C_C::TypeId():
+            {
+                return validateSolutionCast<ManagedContractionInputs_C_C_C>(inputs);
+            }
+            case ManagedContractionInputs_Z_Z_Z::TypeId():
+            {
+                return validateSolutionCast<ManagedContractionInputs_Z_Z_Z>(inputs);
+            }
+#ifdef TENSILE_USE_HALF
+            case ManagedContractionInputs_H_H_H::TypeId():
+            {
+                return validateSolutionCast<ManagedContractionInputs_H_H_H>(inputs);
+            }
+            case ManagedContractionInputs_H_H_S::TypeId():
+            {
+                return validateSolutionCast<ManagedContractionInputs_H_H_S>(inputs);
+            }
+            case ManagedContractionInputs_H_S_S::TypeId():
+            {
+                return validateSolutionCast<ManagedContractionInputs_H_S_S>(inputs);
+            }
+#endif // TENSILE_USE_HALF
+            case ManagedContractionInputs_I8x4_I32_I32::TypeId():
+            {
+                return validateSolutionCast<ManagedContractionInputs_I8x4_I32_I32>(inputs);
+            }
+            case ManagedContractionInputs_I32_I32_I32::TypeId():
+            {
+                return validateSolutionCast<ManagedContractionInputs_I32_I32_I32>(inputs);
+            }
+            case ManagedContractionInputs_I8_I8_I32::TypeId():
+            {
+                return validateSolutionCast<ManagedContractionInputs_I8_I8_I32>(inputs);
+            }
+            case ManagedContractionInputs_I8_I32_I32::TypeId():
+            {
+                return validateSolutionCast<ManagedContractionInputs_I8_I32_I32>(inputs);
+            }
+            case ManagedContractionInputs_I8_I32_S::TypeId():
+            {
+                return validateSolutionCast<ManagedContractionInputs_I8_I32_S>(inputs);
+            }
+            case ManagedContractionInputs_I8_I8_S::TypeId():
+            {
+                return validateSolutionCast<ManagedContractionInputs_I8_I8_S>(inputs);
+            }
+#ifdef TENSILE_USE_BF16
+            case ManagedContractionInputs_B_B_S::TypeId():
+            {
+                return validateSolutionCast<ManagedContractionInputs_B_B_S>(inputs);
+            }
+            case ManagedContractionInputs_B_S_S::TypeId():
+            {
+                return validateSolutionCast<ManagedContractionInputs_B_S_S>(inputs);
+            }
+#endif // TENSILE_USE_BF16
+            default:;
+            }
 
-            return rv;
+            throw std::runtime_error("Data type not implemented.");
         }
 
         void ReferenceValidator::validateWarmups(std::shared_ptr<ContractionInputs> inputs,
@@ -168,232 +250,26 @@ namespace Tensile
             }
         }
 
-        bool ReferenceValidator::validateTyped(TensorDescriptor const& tensor,
-                                               void const*             refPtr,
-                                               void const*             resPtr,
-                                               size_t                  maxElements,
-                                               bool                    isgpu)
-        {
-            bool rv = false;
-            switch(tensor.dataType())
-            {
-            case DataType::Float:
-            {
-                rv = checkResultsTyped(
-                    tensor, (float const*)refPtr, (float const*)resPtr, maxElements, isgpu);
-            }
-            break;
-            case DataType::Double:
-            {
-                rv = checkResultsTyped(
-                    tensor, (double const*)refPtr, (double const*)resPtr, maxElements, isgpu);
-            }
-            break;
-            case DataType::ComplexFloat:
-            {
-                rv = checkResultsTyped(tensor,
-                                       (std::complex<float> const*)refPtr,
-                                       (std::complex<float> const*)resPtr,
-                                       maxElements,
-                                       isgpu);
-            }
-            break;
-            case DataType::ComplexDouble:
-            {
-                rv = checkResultsTyped(tensor,
-                                       (std::complex<double> const*)refPtr,
-                                       (std::complex<double> const*)resPtr,
-                                       maxElements,
-                                       isgpu);
-            }
-            break;
-            case DataType::Half:
-            {
-                rv = checkResultsTyped(
-                    tensor, (Half const*)refPtr, (Half const*)resPtr, maxElements, isgpu);
-            }
-            break;
-            case DataType::Int8x4:
-            {
-                throw std::runtime_error("Unsupported validator data type Int8x4 for output.");
-            }
-            break;
-            case DataType::Int32:
-            {
-                rv = checkResultsTyped(
-                    tensor, (int32_t const*)refPtr, (int32_t const*)resPtr, maxElements, isgpu);
-            }
-            break;
-            case DataType::BFloat16:
-            {
-                rv = checkResultsTyped(
-                    tensor, (BFloat16 const*)refPtr, (BFloat16 const*)resPtr, maxElements, isgpu);
-            }
-            break;
-            case DataType::Int8:
-            {
-                rv = checkResultsTyped(
-                    tensor, (int8_t const*)refPtr, (int8_t const*)resPtr, maxElements, isgpu);
-            }
-            break;
-            default:
-                throw std::runtime_error("Unsupported validator data type");
-            }
-            if(rv)
-            {
-                std::cout << "Check failed in output tensor: " << tensor << std::endl;
-            }
-            return rv;
-        }
-
-        bool ReferenceValidator::validate(ContractionInputs const& reference,
-                                          ContractionInputs const& result)
+        template <typename ManagedInputs>
+        bool ReferenceValidator::validateTyped(ManagedInputs const& reference,
+                                               ManagedInputs const& result)
         {
             bool rv = false;
             if(!m_enabled)
                 return rv;
 
             if(m_printAny)
-                printTensors(reference, result);
+                printTensorsTyped(reference, result);
 
             if(m_elementsToValidate != 0)
             {
-                // TODO: Combine ContractionProblemGroupedGemm and ContractionProblemGemm
-                if(m_groupedGemm)
-                {
-                    for(size_t j = 0; j < m_problems.gemms.size(); j++)
-                    {
-                        for(size_t i = 0; i < m_problems.gemms[j].tensors().size(); i++)
-                        {
-                            auto& tensor = m_problems.gemms[j].tensors()[i];
-                            if(!tensor.isOutput())
-                                continue;
-
-                            void const* refPtr = nullptr;
-                            void const* resPtr = nullptr;
-                            switch(static_cast<ContractionProblemGemm::TENSOR>(i))
-                            {
-                            case ContractionProblemGemm::TENSOR::A:
-                            {
-                                refPtr = reference.groupedA[j];
-                                resPtr = result.groupedA[j];
-                            }
-                            break;
-                            case ContractionProblemGemm::TENSOR::B:
-                            {
-                                refPtr = reference.groupedB[j];
-                                resPtr = result.groupedB[j];
-                            }
-                            break;
-                            case ContractionProblemGemm::TENSOR::C:
-                            {
-                                refPtr = reference.groupedC[j];
-                                resPtr = result.groupedC[j];
-                            }
-                            break;
-                            case ContractionProblemGemm::TENSOR::D:
-                            {
-                                refPtr = reference.groupedD[j];
-                                resPtr = result.groupedD[j];
-                            }
-                            break;
-                            case ContractionProblemGemm::TENSOR::E:
-                            {
-                                refPtr = reference.groupedE[j];
-                                resPtr = result.groupedE[j];
-                            }
-                            break;
-                            case ContractionProblemGemm::TENSOR::BIAS:
-                            {
-                                refPtr = reference.groupedBias[j];
-                                resPtr = result.groupedBias[j];
-                            }
-                            break;
-                            case ContractionProblemGemm::TENSOR::SCALED:
-                            {
-                                refPtr = reference.groupedScaleD[j];
-                                resPtr = result.groupedScaleD[j];
-                            }
-                            break;
-                            default:
-                                throw std::runtime_error("Unrecognized output tensor.");
-                            }
-
-                            rv = validateTyped(tensor,
-                                               refPtr,
-                                               resPtr,
-                                               result.groupedMaxElements[j][i],
-                                               result.gpu);
-                        }
-                    }
-                    return rv;
-                }
-
-                for(size_t i = 0; i < m_problem.tensors().size(); i++)
-                {
-                    auto& tensor = m_problem.tensors()[i];
-                    if(!tensor.isOutput())
-                        continue;
-
-                    void const* refPtr = nullptr;
-                    void const* resPtr = nullptr;
-                    if(dynamic_cast<ContractionProblemGemm*>(&m_problem))
-                    {
-                        switch(static_cast<ContractionProblemGemm::TENSOR>(i))
-                        {
-                        case ContractionProblemGemm::TENSOR::A:
-                        {
-                            refPtr = reference.a;
-                            resPtr = result.a;
-                        }
-                        break;
-                        case ContractionProblemGemm::TENSOR::B:
-                        {
-                            refPtr = reference.b;
-                            resPtr = result.b;
-                        }
-                        break;
-                        case ContractionProblemGemm::TENSOR::C:
-                        {
-                            refPtr = reference.c;
-                            resPtr = result.c;
-                        }
-                        break;
-                        case ContractionProblemGemm::TENSOR::D:
-                        {
-                            refPtr = reference.d;
-                            resPtr = result.d;
-                        }
-                        break;
-                        case ContractionProblemGemm::TENSOR::E:
-                        {
-                            refPtr = reference.e;
-                            resPtr = result.e;
-                        }
-                        break;
-                        case ContractionProblemGemm::TENSOR::BIAS:
-                        {
-                            refPtr = reference.bias;
-                            resPtr = result.bias;
-                        }
-                        break;
-                        case ContractionProblemGemm::TENSOR::SCALED:
-                        {
-                            refPtr = reference.scaleD;
-                            resPtr = result.scaleD;
-                        }
-                        break;
-                        default:
-                            throw std::runtime_error("Unrecognized output tensor.");
-                        }
-                    }
-                    else
-                    {
-                        throw std::runtime_error("Failed to cast problem to one of the tensors.");
-                    }
-
-                    rv = validateTyped(tensor, refPtr, resPtr, result.maxElements[i], result.gpu);
-                }
+                // RMSComparison<typename ManagedInputs::DType> compareValid(1e-7,
+                // m_printMax > 0);
+                PointwiseComparison<typename ManagedInputs::DType> compareValid(
+                    m_printValids, m_printMax, m_printMax > 0);
+                InvalidComparison<typename ManagedInputs::DType> compareInvalid(m_printMax,
+                                                                                m_printMax > 0);
+                rv = checkResultsTyped(reference, result, compareValid, compareInvalid);
             }
 
             return rv;
@@ -411,15 +287,16 @@ namespace Tensile
             m_cpuResultBufferSize = bytes;
         }
 
-        void ReferenceValidator::printTensors(ContractionInputs const& reference,
-                                              ContractionInputs const& result)
+        template <typename ManagedInputs>
+        void ReferenceValidator::printTensorsTyped(ManagedInputs const& reference,
+                                                   ManagedInputs const& result)
         {
             size_t requiredBufferSize = 0;
 
-            std::cout << "reference alpha: " << ToString(reference.alpha)
-                      << ", beta: " << ToString(reference.beta) << std::endl;
-            std::cout << "result    alpha: " << ToString(result.alpha)
-                      << ", beta: " << ToString(result.beta) << std::endl;
+            std::cout << "reference alpha: " << reference.alpha << ", beta: " << reference.beta
+                      << std::endl;
+            std::cout << "result    alpha: " << result.alpha << ", beta: " << result.beta
+                      << std::endl;
 
             if(m_printTensorA)
                 requiredBufferSize
@@ -446,8 +323,10 @@ namespace Tensile
                                         result.a,
                                         m_problem.a().totalAllocatedBytes(),
                                         hipMemcpyDeviceToHost));
-                m_reporter->logTensor(
-                    LogLevel::Verbose, "A", m_cpuResultBuffer.get(), m_problem.a(), result.a);
+                auto const* buffer = reinterpret_cast<typename ManagedInputs::AType const*>(
+                    m_cpuResultBuffer.get());
+
+                m_reporter->logTensor(LogLevel::Verbose, "A", buffer, m_problem.a(), result.a);
             }
 
             if(m_printTensorB)
@@ -456,8 +335,10 @@ namespace Tensile
                                         result.b,
                                         m_problem.b().totalAllocatedBytes(),
                                         hipMemcpyDeviceToHost));
-                m_reporter->logTensor(
-                    LogLevel::Verbose, "B", m_cpuResultBuffer.get(), m_problem.b(), result.b);
+                auto const* buffer = reinterpret_cast<typename ManagedInputs::BType const*>(
+                    m_cpuResultBuffer.get());
+
+                m_reporter->logTensor(LogLevel::Verbose, "B", buffer, m_problem.b(), result.b);
             }
 
             if(result.c == result.d && (m_printTensorC || m_printTensorD))
@@ -467,8 +348,10 @@ namespace Tensile
                                         result.c,
                                         m_problem.c().totalAllocatedBytes(),
                                         hipMemcpyDeviceToHost));
-                m_reporter->logTensor(
-                    LogLevel::Verbose, "C_D", m_cpuResultBuffer.get(), m_problem.c(), result.c);
+                auto const* buffer = reinterpret_cast<typename ManagedInputs::CType const*>(
+                    m_cpuResultBuffer.get());
+
+                m_reporter->logTensor(LogLevel::Verbose, "C_D", buffer, m_problem.c(), result.c);
             }
             else
             {
@@ -478,8 +361,10 @@ namespace Tensile
                                             result.c,
                                             m_problem.c().totalAllocatedBytes(),
                                             hipMemcpyDeviceToHost));
-                    m_reporter->logTensor(
-                        LogLevel::Verbose, "C", m_cpuResultBuffer.get(), m_problem.c(), result.c);
+                    auto const* buffer = reinterpret_cast<typename ManagedInputs::CType const*>(
+                        m_cpuResultBuffer.get());
+
+                    m_reporter->logTensor(LogLevel::Verbose, "C", buffer, m_problem.c(), result.c);
                 }
 
                 if(m_printTensorD)
@@ -488,8 +373,10 @@ namespace Tensile
                                             result.d,
                                             m_problem.d().totalAllocatedBytes(),
                                             hipMemcpyDeviceToHost));
-                    m_reporter->logTensor(
-                        LogLevel::Verbose, "D", m_cpuResultBuffer.get(), m_problem.d(), result.d);
+                    auto const* buffer = reinterpret_cast<typename ManagedInputs::DType const*>(
+                        m_cpuResultBuffer.get());
+
+                    m_reporter->logTensor(LogLevel::Verbose, "D", buffer, m_problem.d(), result.d);
                 }
             }
 
@@ -500,145 +387,284 @@ namespace Tensile
             }
         }
 
-        template <typename ValidType>
-        bool ReferenceValidator::checkResultsTyped(TensorDescriptor const& tensor,
-                                                   ValidType const*        reference,
-                                                   ValidType const*        result,
-                                                   size_t                  maxElement,
-                                                   bool                    isgpu)
+        template <typename ManagedInputs, typename CompareValid, typename CompareInvalid>
+        bool ReferenceValidator::checkResultsTyped(ManagedInputs const& reference,
+                                                   ManagedInputs const& result,
+                                                   CompareValid&        compareValid,
+                                                   CompareInvalid&      compareInvalid)
         {
-            PointwiseComparison<ValidType> compareValid(m_printValids, m_printMax, m_printMax > 0);
-            InvalidComparison<ValidType>   compareInvalid(m_printMax, m_printMax > 0);
-
-            size_t elementsToCopy       = tensor.totalAllocatedElements();
-            size_t elementsOffsetToCopy = 0;
-            size_t elementsBeforeData   = 0;
-            size_t elementsAfterData    = 0;
-
-            BoundsCheckMode boundsCheck = m_dataInit->getCurBoundsCheck();
-            if(boundsCheck == BoundsCheckMode::NaN)
-                elementsToCopy = maxElement;
-            size_t bytesToCopy = elementsToCopy * sizeof(ValidType);
-
-            if(m_cpuResultBufferSize < bytesToCopy)
-                allocateResultBuffer(bytesToCopy);
-
-            if(boundsCheck == BoundsCheckMode::GuardPageBack)
-                elementsOffsetToCopy = (maxElement - tensor.totalAllocatedElements());
-
-            auto copykind = isgpu ? hipMemcpyDeviceToHost : hipMemcpyHostToHost;
-
-            HIP_CHECK_EXC(hipMemcpy(
-                m_cpuResultBuffer.get(), result + elementsOffsetToCopy, bytesToCopy, copykind));
-
-            if(boundsCheck == BoundsCheckMode::NaN)
+            using Type         = typename ManagedInputs::DType;
+            if(m_groupedGemm)
             {
-                ptrdiff_t bPadding = maxElement - tensor.totalAllocatedElements();
-                elementsBeforeData = bPadding / 2;
-                elementsAfterData
-                    = elementsToCopy - (tensor.totalAllocatedElements() + elementsBeforeData);
-            }
-            // If there was extra data allocated before the tensor to do bounds
-            // checking, resultBuffer is the whole allocation, while resultData
-            // points directly to the result.
-            ValidType const* resultBuffer
-                = reinterpret_cast<ValidType const*>(m_cpuResultBuffer.get());
-            ValidType const* resultData      = resultBuffer + elementsBeforeData;
-            ValidType const* resultAfterData = resultData + tensor.totalAllocatedElements();
-
-            size_t boundsCheckElements = 0;
-
-            for(ptrdiff_t i = 0; i < elementsBeforeData; i++)
-            {
-                boundsCheckElements++;
-                compareInvalid.before(resultBuffer[i], i, elementsBeforeData);
-            }
-
-            if(m_validationStride == 1)
-            {
-                std::vector<size_t> coord(tensor.dimensions());
-                size_t outerCount = CoordCount(tensor.sizes().begin() + 1, tensor.sizes().end());
-
-                size_t       prevBaseIndex = 0;
-                const size_t innerDimSize  = tensor.sizes()[0];
-                const size_t initialStride = tensor.strides()[0];
-
-                for(size_t i = 0; i < outerCount; i++)
+                for(int idx = 0; idx < m_problems.size(); idx++)
                 {
-                    CoordNumbered(i,
-                                  coord.begin() + 1,
-                                  coord.end(),
-                                  tensor.sizes().begin() + 1,
-                                  tensor.sizes().end());
-                    size_t baseElemIndex = tensor.index(coord);
+                    auto const& tensor = m_problems[idx].d();
 
-                    if(boundsCheck == BoundsCheckMode::NaN && baseElemIndex != 0
-                       && baseElemIndex != prevBaseIndex + innerDimSize)
+                    size_t elementsToCopy       = tensor.totalAllocatedElements();
+                    size_t elementsOffsetToCopy = 0;
+                    size_t elementsBeforeData   = 0;
+                    size_t elementsAfterData    = 0;
+
+                    BoundsCheckMode boundsCheck = m_dataInit->getCurBoundsCheck();
+                    if(boundsCheck == BoundsCheckMode::NaN)
+                        elementsToCopy = result.dElements;
+                    size_t bytesToCopy = elementsToCopy * sizeof(Type);
+
+                    if(m_cpuResultBufferSize < bytesToCopy)
+                        allocateResultBuffer(bytesToCopy);
+
+                    if(boundsCheck == BoundsCheckMode::GuardPageBack)
+                        elementsOffsetToCopy = result.dElements - tensor.totalAllocatedElements();
+
+                    auto copykind = result.gpu ? hipMemcpyDeviceToHost : hipMemcpyHostToHost;
+
+                    HIP_CHECK_EXC(hipMemcpy(m_cpuResultBuffer.get(),
+                                            result.groupedD[idx] + elementsOffsetToCopy,
+                                            bytesToCopy,
+                                            copykind));
+
+                    if(boundsCheck == BoundsCheckMode::NaN)
                     {
-                        for(auto innerIndex = prevBaseIndex + innerDimSize;
-                            innerIndex < baseElemIndex;
-                            innerIndex++)
+                        elementsBeforeData = result.d - result.managedD.get();
+                        elementsAfterData
+                            = elementsToCopy - (tensor.totalAllocatedElements() + elementsBeforeData);
+                    }
+                    // If there was extra data allocated before the tensor to do bounds
+                    // checking, resultBuffer is the whole allocation, while resultData
+                    // points directly to the result.
+                    Type const* resultBuffer    = reinterpret_cast<Type const*>(m_cpuResultBuffer.get());
+                    Type const* resultData      = resultBuffer + elementsBeforeData;
+                    Type const* resultAfterData = resultData + tensor.totalAllocatedElements();
+
+                    size_t boundsCheckElements = 0;
+
+                    for(ptrdiff_t i = 0; i < elementsBeforeData; i++)
+                    {
+                        boundsCheckElements++;
+                        compareInvalid.before(resultBuffer[i], i, elementsBeforeData);
+                    }
+
+                    if(m_validationStride == 1)
+                    {
+                        std::vector<size_t> coord(tensor.dimensions());
+                        size_t outerCount = CoordCount(tensor.sizes().begin() + 1, tensor.sizes().end());
+
+                        size_t       prevBaseIndex = 0;
+                        const size_t innerDimSize  = tensor.sizes()[0];
+                        const size_t initialStride = tensor.strides()[0];
+
+                        for(size_t i = 0; i < outerCount; i++)
                         {
-                            compareInvalid.inside(
-                                resultData[innerIndex], innerIndex, baseElemIndex);
+                            CoordNumbered(i,
+                                        coord.begin() + 1,
+                                        coord.end(),
+                                        tensor.sizes().begin() + 1,
+                                        tensor.sizes().end());
+                            size_t baseElemIndex = tensor.index(coord);
+
+                            if(boundsCheck == BoundsCheckMode::NaN && baseElemIndex != 0
+                            && baseElemIndex != prevBaseIndex + innerDimSize)
+                            {
+                                for(auto innerIndex = prevBaseIndex + innerDimSize;
+                                    innerIndex < baseElemIndex;
+                                    innerIndex++)
+                                {
+                                    compareInvalid.inside(
+                                        resultData[innerIndex], innerIndex, baseElemIndex);
+                                }
+                            }
+
+                            prevBaseIndex = baseElemIndex;
+
+                            for(size_t j = 0; j < innerDimSize; j++)
+                            {
+                                size_t elemIndex = baseElemIndex + (j * initialStride);
+
+                                Type referenceValue = reference.groupedD[idx][elemIndex];
+                                Type resultValue    = resultData[elemIndex];
+
+                                compareValid(
+                                    referenceValue, resultValue, elemIndex, (i * tensor.sizes()[0]) + j);
+                            }
+                        }
+                    }
+                    else
+                    {
+                        std::vector<size_t> coord(tensor.dimensions());
+                        for(size_t elemNumber = 0; elemNumber < tensor.totalLogicalElements();
+                            elemNumber += m_validationStride)
+                        {
+                            CoordNumbered(elemNumber,
+                                        coord.begin(),
+                                        coord.end(),
+                                        tensor.sizes().begin(),
+                                        tensor.sizes().end());
+                            size_t elemIndex = tensor.index(coord);
+
+                            Type referenceValue = reference.groupedD[idx][elemIndex];
+                            Type resultValue    = resultData[elemIndex];
+
+                            compareValid(referenceValue, resultValue, elemIndex, elemNumber);
                         }
                     }
 
-                    prevBaseIndex = baseElemIndex;
-
-                    for(size_t j = 0; j < innerDimSize; j++)
+                    for(ptrdiff_t i = 0; i < elementsAfterData; i++)
                     {
-                        size_t elemIndex = baseElemIndex + (j * initialStride);
-
-                        ValidType referenceValue = reference[elemIndex];
-                        ValidType resultValue    = resultData[elemIndex];
-
-                        compareValid(
-                            referenceValue, resultValue, elemIndex, (i * tensor.sizes()[0]) + j);
+                        compareInvalid.after(resultAfterData[i], i, elementsAfterData);
                     }
+
+                    if(boundsCheckElements > 0)
+                        std::cout << "Performed bounds check on " << boundsCheckElements << " elements ("
+                                << elementsBeforeData << " before data)" << std::endl;
+
+                    compareValid.report();
+                    compareInvalid.report();
                 }
+
+                if(compareValid.error() || compareInvalid.error())
+                {
+                    m_errorInSolution = true;
+                    m_error           = true;
+
+                    return true;
+                }
+
+                return false;
             }
             else
             {
-                std::vector<size_t> coord(tensor.dimensions());
-                for(size_t elemNumber = 0; elemNumber < tensor.totalLogicalElements();
-                    elemNumber += m_validationStride)
+                auto const& tensor = m_problem.d();
+
+                size_t elementsToCopy       = tensor.totalAllocatedElements();
+                size_t elementsOffsetToCopy = 0;
+                size_t elementsBeforeData   = 0;
+                size_t elementsAfterData    = 0;
+
+                BoundsCheckMode boundsCheck = m_dataInit->getCurBoundsCheck();
+                if(boundsCheck == BoundsCheckMode::NaN)
+                    elementsToCopy = result.dElements;
+                size_t bytesToCopy = elementsToCopy * sizeof(Type);
+
+                if(m_cpuResultBufferSize < bytesToCopy)
+                    allocateResultBuffer(bytesToCopy);
+
+                if(boundsCheck == BoundsCheckMode::GuardPageBack)
+                    elementsOffsetToCopy = result.dElements - tensor.totalAllocatedElements();
+
+                auto copykind = result.gpu ? hipMemcpyDeviceToHost : hipMemcpyHostToHost;
+
+                HIP_CHECK_EXC(hipMemcpy(m_cpuResultBuffer.get(),
+                                        result.managedD.get() + elementsOffsetToCopy,
+                                        bytesToCopy,
+                                        copykind));
+
+                if(boundsCheck == BoundsCheckMode::NaN)
                 {
-                    CoordNumbered(elemNumber,
-                                  coord.begin(),
-                                  coord.end(),
-                                  tensor.sizes().begin(),
-                                  tensor.sizes().end());
-                    size_t elemIndex = tensor.index(coord);
-
-                    ValidType referenceValue = reference[elemIndex];
-                    ValidType resultValue    = resultData[elemIndex];
-
-                    compareValid(referenceValue, resultValue, elemIndex, elemNumber);
+                    elementsBeforeData = result.d - result.managedD.get();
+                    elementsAfterData
+                        = elementsToCopy - (tensor.totalAllocatedElements() + elementsBeforeData);
                 }
+                // If there was extra data allocated before the tensor to do bounds
+                // checking, resultBuffer is the whole allocation, while resultData
+                // points directly to the result.
+                Type const* resultBuffer    = reinterpret_cast<Type const*>(m_cpuResultBuffer.get());
+                Type const* resultData      = resultBuffer + elementsBeforeData;
+                Type const* resultAfterData = resultData + tensor.totalAllocatedElements();
+
+                size_t boundsCheckElements = 0;
+
+                for(ptrdiff_t i = 0; i < elementsBeforeData; i++)
+                {
+                    boundsCheckElements++;
+                    compareInvalid.before(resultBuffer[i], i, elementsBeforeData);
+                }
+
+                if(m_validationStride == 1)
+                {
+                    std::vector<size_t> coord(tensor.dimensions());
+                    size_t outerCount = CoordCount(tensor.sizes().begin() + 1, tensor.sizes().end());
+
+                    size_t       prevBaseIndex = 0;
+                    const size_t innerDimSize  = tensor.sizes()[0];
+                    const size_t initialStride = tensor.strides()[0];
+
+                    for(size_t i = 0; i < outerCount; i++)
+                    {
+                        CoordNumbered(i,
+                                    coord.begin() + 1,
+                                    coord.end(),
+                                    tensor.sizes().begin() + 1,
+                                    tensor.sizes().end());
+                        size_t baseElemIndex = tensor.index(coord);
+
+                        if(boundsCheck == BoundsCheckMode::NaN && baseElemIndex != 0
+                        && baseElemIndex != prevBaseIndex + innerDimSize)
+                        {
+                            for(auto innerIndex = prevBaseIndex + innerDimSize;
+                                innerIndex < baseElemIndex;
+                                innerIndex++)
+                            {
+                                compareInvalid.inside(
+                                    resultData[innerIndex], innerIndex, baseElemIndex);
+                            }
+                        }
+
+                        prevBaseIndex = baseElemIndex;
+
+                        for(size_t j = 0; j < innerDimSize; j++)
+                        {
+                            size_t elemIndex = baseElemIndex + (j * initialStride);
+
+                            Type referenceValue = reference.d[elemIndex];
+                            Type resultValue    = resultData[elemIndex];
+
+                            compareValid(
+                                referenceValue, resultValue, elemIndex, (i * tensor.sizes()[0]) + j);
+                        }
+                    }
+                }
+                else
+                {
+                    std::vector<size_t> coord(tensor.dimensions());
+                    for(size_t elemNumber = 0; elemNumber < tensor.totalLogicalElements();
+                        elemNumber += m_validationStride)
+                    {
+                        CoordNumbered(elemNumber,
+                                    coord.begin(),
+                                    coord.end(),
+                                    tensor.sizes().begin(),
+                                    tensor.sizes().end());
+                        size_t elemIndex = tensor.index(coord);
+
+                        Type referenceValue = reference.d[elemIndex];
+                        Type resultValue    = resultData[elemIndex];
+
+                        compareValid(referenceValue, resultValue, elemIndex, elemNumber);
+                    }
+                }
+
+                for(ptrdiff_t i = 0; i < elementsAfterData; i++)
+                {
+                    compareInvalid.after(resultAfterData[i], i, elementsAfterData);
+                }
+
+                if(boundsCheckElements > 0)
+                    std::cout << "Performed bounds check on " << boundsCheckElements << " elements ("
+                            << elementsBeforeData << " before data)" << std::endl;
+
+                compareValid.report();
+                compareInvalid.report();
+
+                if(compareValid.error() || compareInvalid.error())
+                {
+                    m_errorInSolution = true;
+                    m_error           = true;
+
+                    return true;
+                }
+
+                return false;
             }
-
-            for(ptrdiff_t i = 0; i < elementsAfterData; i++)
-            {
-                compareInvalid.after(resultAfterData[i], i, elementsAfterData);
-            }
-
-            if(boundsCheckElements > 0)
-                std::cout << "Performed bounds check on " << boundsCheckElements << " elements ("
-                          << elementsBeforeData << " before data)" << std::endl;
-
-            compareValid.report();
-            compareInvalid.report();
-
-            if(compareValid.error() || compareInvalid.error())
-            {
-                m_errorInSolution = true;
-                m_error           = true;
-
-                return true;
-            }
-
-            return false;
         }
 
         void ReferenceValidator::postSolution()

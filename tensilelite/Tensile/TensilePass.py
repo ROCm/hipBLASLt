@@ -1,6 +1,6 @@
 ################################################################################
 #
-# Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2022 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -71,7 +71,7 @@ def _replaceActBranchLabel(module, labels):
                 replaceLabel = False
                 for inst in item.items():
                     if isinstance(inst, SAddI32) and inst.comment == "target branch offset":
-                        if inst.srcs[0] in labelLeft:
+                        if inst.src[0] in labelLeft:
                             replaceLabel = True
                             break
                 if replaceLabel:
@@ -80,8 +80,8 @@ def _replaceActBranchLabel(module, labels):
                             # The label is generated in the format of XXXX_1, XXXX_2
                             # and string.rpartition returns ('XXXX', '_', '1').
                             # We only need the first string.
-                            part = inst.srcs[0].rpartition("_")
-                            inst.srcs[0] = part[0]
+                            part = inst.src[0].rpartition("_")
+                            inst.src[0] = part[0]
             else:
                 _replaceActBranchLabel(item, labels)
 

@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
+ * Copyright (C) 2022 Advanced Micro Devices, Inc. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -237,45 +237,5 @@ namespace Tensile
 #endif
 
         return stream;
-    }
-
-    std::string ToString(ConstantVariant d)
-    {
-        return std::visit(
-            [](const auto& cv) {
-                using T = std::decay_t<decltype(cv)>;
-                if constexpr(std::is_same_v<
-                                 T,
-                                 std::complex<float>> || std::is_same_v<T, std::complex<double>>)
-                    return "(" + std::to_string(cv.real()) + ", " + std::to_string(cv.imag()) + ")";
-                else
-                    return std::to_string(cv);
-            },
-            d);
-    }
-
-    bool CompareValue(const ConstantVariant& d, double value)
-    {
-        switch(d.index())
-        {
-        case static_cast<int>(DataType::Float):
-            return (*std::get_if<float>(&d)) == float(value);
-        case static_cast<int>(DataType::Double):
-            return (*std::get_if<double>(&d)) == double(value);
-        case static_cast<int>(DataType::ComplexFloat):
-            return (*std::get_if<std::complex<float>>(&d)) == std::complex<float>(value);
-        case static_cast<int>(DataType::ComplexDouble):
-            return (*std::get_if<std::complex<double>>(&d)) == std::complex<double>(value);
-        case static_cast<int>(DataType::Half):
-            return (*std::get_if<Half>(&d)) == Half(value);
-        case static_cast<int>(DataType::Int32):
-            return (*std::get_if<int32_t>(&d)) == int32_t(value);
-        case static_cast<int>(DataType::BFloat16):
-            return (*std::get_if<BFloat16>(&d)) == BFloat16(value);
-        case static_cast<int>(DataType::Int8):
-            return (*std::get_if<int8_t>(&d)) == int8_t(value);
-        default:
-            throw std::runtime_error("Unsupported variant cast type.");
-        }
     }
 } // namespace Tensile
