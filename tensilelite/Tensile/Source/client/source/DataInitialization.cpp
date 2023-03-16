@@ -435,13 +435,6 @@ namespace Tensile
                 {
                     const ContractionProblemGroupedGemm& problems = (*ptr);
 
-                    struct gElement
-                    {
-                        size_t              maxElements;
-                        std::vector<size_t> offsets;
-                    };
-
-                    auto gElements = std::vector<std::map<DataType, gElement>>(m_vdata.size());
                     for(auto const& problem : problems.gemms)
                     {
                         for(size_t i = 0; i < problem.tensors().size(); i++)
@@ -452,14 +445,9 @@ namespace Tensile
                                 m_vdata[i].pristine[dataType]             = PristineUnit();
                                 m_vdata[i].pristine[dataType].maxElements = 0;
                             }
-                            if(gElements[i].find(dataType) == gElements[i].end())
-                            {
-                                gElements[i][dataType].maxElements = 0;
-                            }
                             auto& pristine = m_vdata[i].pristine[dataType];
-                            gElements[i][dataType].maxElements
-                                += problem.tensors()[i].totalAllocatedElements();
-                            gElements[i][dataType].offsets.push_back(
+                            pristine.maxElements += problem.tensors()[i].totalAllocatedElements();
+                            pristine.groupedGemmOffsets.push_back(
                                 problem.tensors()[i].totalAllocatedElements());
                             if(m_vdata[i].name.empty())
                             {
@@ -494,34 +482,6 @@ namespace Tensile
                         for(size_t i = 0; i < problem.batchIndices().size(); i++)
                             numOfBatch *= problem.batchSize(i);
                         m_maxBatch = std::max(m_maxBatch, numOfBatch);
-                    }
-
-                    // Update maxElements
-                    for(size_t i = 0; i < gElements.size(); i++)
-                    {
-                        for(auto it : gElements[i])
-                        {
-                            auto& pristine = m_vdata[i].pristine[it.first];
-                            pristine.maxElements
-                                = std::max(pristine.maxElements, it.second.maxElements);
-                            if(pristine.groupedGemmOffsets.empty())
-                            {
-                                pristine.groupedGemmOffsets = it.second.offsets;
-                            }
-                            else
-                            {
-                                if(pristine.groupedGemmOffsets.size() != it.second.offsets.size())
-                                {
-                                    throw std::runtime_error(
-                                        "Unable to update groupedGemmOffsets.");
-                                }
-                                for(size_t j = 0; j < it.second.offsets.size(); j++)
-                                {
-                                    pristine.groupedGemmOffsets[j] = std::max(
-                                        pristine.groupedGemmOffsets[j], it.second.offsets[j]);
-                                }
-                            }
-                        }
                     }
                 }
             }
