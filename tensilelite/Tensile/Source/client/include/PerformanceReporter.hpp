@@ -63,7 +63,7 @@ namespace Tensile
 
             virtual void preSolution(ContractionSolution const& solution) override;
 
-            virtual void preProblem(ContractionProblem* const problem) override;
+            virtual void preProblem(ContractionProblemGemm const& problem) override;
 
             virtual void postSolution() override;
 

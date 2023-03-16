@@ -53,7 +53,9 @@ namespace Tensile
             virtual void preBenchmarkRun() override;
             virtual void postBenchmarkRun() override;
 
-            virtual void preProblem(ContractionProblem* const problem) override;
+            virtual void preProblem(ContractionProblemGemm const& problem) override;
+            virtual void
+                preProblemGroupedGemm(ContractionProblemGroupedGemm const& problems) override;
             virtual void postProblem() override;
 
             virtual void preSolution(ContractionSolution const& solution) override;
@@ -93,28 +95,22 @@ namespace Tensile
             {
             }
 
-            bool validate(ContractionProblemGemm const& problem,
-                          ContractionInputs const&      reference,
-                          ContractionInputs const&      result);
+            bool validate(ProblemInputs const& referenceInputs, ProblemInputs const& resultInputs);
 
-            bool checkResults(TensorDescriptor const& tensor,
-                              void const*             refPtr,
-                              void const*             resPtr,
-                              size_t                  maxElements,
-                              bool                    isgpu,
-                              size_t                  validationStride);
+            bool validateTyped(TensorDescriptor const& tensor,
+                               void const*             refPtr,
+                               void const*             resPtr,
+                               size_t                  maxElements,
+                               bool                    isgpu);
 
             template <typename ValidType>
             bool checkResultsTyped(TensorDescriptor const& tensor,
                                    ValidType const*        reference,
                                    ValidType const*        result,
                                    size_t                  maxElement,
-                                   bool                    isgpu,
-                                   size_t                  validationStride);
+                                   bool                    isgpu);
 
-            void printTensors(ContractionProblemGemm const& problem,
-                              ContractionInputs const&      reference,
-                              ContractionInputs const&      result);
+            void printTensors(ContractionInputs const& reference, ContractionInputs const& result);
 
             virtual void finalizeReport() override;
 
@@ -129,13 +125,16 @@ namespace Tensile
             size_t                   m_cpuResultBufferSize = 0;
             std::shared_ptr<uint8_t> m_cpuResultBuffer;
 
-            ContractionProblem* m_problem;
+            ContractionProblemGemm        m_problem;
+            ContractionProblemGroupedGemm m_problems;
+            bool                          m_groupedGemm = false;
 
             bool m_enabled;
 
             int  m_elementsToValidate;
             bool m_printValids;
             int  m_printMax;
+            int  m_validationStride;
 
             bool m_printTensorA;
             bool m_printTensorB;

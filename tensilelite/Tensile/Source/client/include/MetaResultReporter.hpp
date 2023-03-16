@@ -122,7 +122,7 @@ namespace Tensile
                     (*iter)->postBenchmarkRun();
             }
 
-            virtual void preProblem(ContractionProblem* const problem) override
+            virtual void preProblem(ContractionProblemGemm const& problem) override
             {
                 for(auto iter = m_reporters.begin(); iter != m_reporters.end(); iter++)
                     (*iter)->preProblem(problem);

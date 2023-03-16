@@ -50,11 +50,6 @@ namespace Tensile
 
             std::vector<std::shared_ptr<ContractionProblem>> const& problems() const;
 
-            size_t workspaceSize() const
-            {
-                return m_maxWorkspaceSize;
-            }
-
         private:
             void createProblems(std::vector<ContractionProblemGemm>& rv);
 

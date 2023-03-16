@@ -108,8 +108,17 @@ namespace Tensile
         public:
             static double GetRepresentativeBetaValue(po::variables_map const& args);
 
+            /**
+   * Factory function.
+   */
+            static std::shared_ptr<DataInitialization>
+                Get(po::variables_map const&    args,
+                    ClientProblemFactory const& problemFactory,
+                    size_t                      maxWorkspaceSize = 0);
+
             DataInitialization(po::variables_map const&    args,
-                               ClientProblemFactory const& problemFactory);
+                               ClientProblemFactory const& problemFactory,
+                               size_t                      maxWorkspaceSize = 0);
             ~DataInitialization();
 
             /**
@@ -152,22 +161,6 @@ namespace Tensile
    * Returns a ProblemInputs object with pointers to GPU memory,
    * suitable for using to run the kernel.
    */
-            // A temporarily wrapper
-            std::shared_ptr<ProblemInputs> prepareGPUInputs(ContractionProblem const* problem)
-            {
-                if(auto groupedProblem
-                   = dynamic_cast<ContractionProblemGroupedGemm const*>(problem))
-                {
-                    return prepareGPUInputs(groupedProblem->gemms[0]);
-                }
-                else if(auto gemmProblem = dynamic_cast<ContractionProblemGemm const*>(problem))
-                {
-                    return prepareGPUInputs(*gemmProblem);
-                }
-                else
-                    throw std::runtime_error("Failed to cast to any ContractionProblem.");
-            }
-
             std::shared_ptr<ProblemInputs> prepareGPUInputs(ContractionProblemGemm const& problem)
             {
                 if(m_numRunsInSolution > 0 && m_curBoundsCheck == BoundsCheckMode::GuardPageFront
@@ -555,7 +548,7 @@ namespace Tensile
             };
             virtual void preBenchmarkRun() override{};
             virtual void postBenchmarkRun() override{};
-            virtual void preProblem(ContractionProblem* const problem) override{};
+            virtual void preProblem(ContractionProblemGemm const& problem) override{};
             virtual void postProblem() override{};
             virtual void preSolution(ContractionSolution const& solution) override{};
             virtual void postSolution() override{};

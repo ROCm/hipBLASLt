@@ -295,7 +295,7 @@ namespace Tensile
 
             virtual void setReporter(std::shared_ptr<ResultReporter> reporter) override {}
 
-            virtual void preProblem(ContractionProblem* const problem) override
+            virtual void preProblem(ContractionProblemGemm const& problem) override
             {
                 m_csvOutput.push();
                 m_winner   = std::numeric_limits<double>::infinity();
