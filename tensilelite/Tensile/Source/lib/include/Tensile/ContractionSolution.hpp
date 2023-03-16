@@ -221,14 +221,6 @@ namespace Tensile
                                                                Hardware const& hardware) const;
 
         template <bool T_Debug>
-        void singleCallArgs(Problem const&           problem,
-                            ContractionInputs const& inputs,
-                            uint32_t const&          problemNumGroupTiles0,
-                            uint32_t const&          problemNumGroupTiles1,
-                            bool const&              isGrouped,
-                            KernelArguments&         args) const;
-
-        template <bool T_Debug>
         KernelInvocation generateSingleCall(Problem const&           problem,
                                             ContractionInputs const& inputs,
                                             Hardware const&          hardware) const;

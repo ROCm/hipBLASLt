@@ -251,215 +251,17 @@ namespace Tensile
     }
 
     template <bool T_Debug>
-    void ContractionSolution::singleCallArgs(ContractionSolution::Problem const& problem,
-                                             ContractionInputs const&            inputs,
-                                             uint32_t const&  problemNumGroupTiles0,
-                                             uint32_t const&  problemNumGroupTiles1,
-                                             bool const&      isGrouped,
-                                             KernelArguments& args) const
-    {
-        if(debugKernel)
-        {
-            args.appendUnbound<unsigned int*>("debugBuffer");
-        }
-
-        TensorDescriptor const& a = problem.a();
-        TensorDescriptor const& b = problem.b();
-        TensorDescriptor const& c = problem.c();
-        TensorDescriptor const& d = problem.d();
-
-        uint64_t tensor2dSizeC = c.totalAllocatedElements();
-        uint64_t tensor2dSizeA = (sizeMapping.packBatchDims & 0x1)
-                                     ? a.totalAllocatedElements()
-                                     : problem.allocatedElementsNonBatchA();
-        uint64_t tensor2dSizeB = (sizeMapping.packBatchDims & 0x2)
-                                     ? b.totalAllocatedElements()
-                                     : problem.allocatedElementsNonBatchB();
-
-        args.append<uint64_t>("tensor2dSizeC", tensor2dSizeC);
-        args.append<uint64_t>("tensor2dSizeA", tensor2dSizeA);
-        args.append<uint64_t>("tensor2dSizeB", tensor2dSizeB);
-
-        if(sizeMapping.globalAccumulation)
-        {
-            args.append<void const*>("ws_d", inputs.ws);
-            args.append<void const*>("ws_c", inputs.ws);
-        }
-        else if(problemType.stridedBatched)
-        {
-            args.append<void const*>("d", inputs.d);
-            args.append<void const*>("c", inputs.c);
-        }
-        else
-        {
-            args.append<void const* const*>("batchD", inputs.batchD);
-            args.append<void const* const*>("batchC", inputs.batchC);
-        }
-
-        if(problemType.stridedBatched)
-        {
-            args.append<void const*>("a", inputs.a);
-            args.append<void const*>("b", inputs.b);
-        }
-        else
-        {
-            args.append<void const* const*>("batchA", inputs.batchA);
-            args.append<void const* const*>("batchB", inputs.batchB);
-        }
-
-        args.append("alpha", inputs.alpha, problem.alphaType());
-        if(problem.alphaType() == DataType::Half)
-            args.append("alpha_2", inputs.alpha, problem.alphaType());
-
-        if(problemType.useBeta)
-        {
-            args.append("beta", inputs.beta, problem.betaType());
-            if(problem.betaType() == DataType::Half)
-                args.append("beta_2", inputs.beta, problem.betaType());
-        }
-
-        if(problemType.useScaleD && (sizeMapping.globalSplitU == 1)) //kernel input data
-        {
-            args.append<void const*>("scaleD", inputs.scaleD);
-        }
-
-        size_t startStrideCD = problemType.useInitialStridesCD ? 0 : 1;
-        size_t startStrideAB = problemType.useInitialStridesAB ? 0 : 1;
-
-        if(sizeMapping.globalAccumulation)
-        {
-            size_t wsStride = startStrideCD ? d.sizes()[0] : 1;
-            for(size_t i = startStrideCD; i < d.dimensions(); i++)
-            {
-                args.append<uint32_t>(concatenate_if<T_Debug>("strideW_D", i), wsStride);
-                wsStride *= d.sizes()[i];
-            }
-
-            wsStride = startStrideCD ? d.sizes()[0] : 1;
-            for(size_t i = startStrideCD; i < c.dimensions(); i++)
-            {
-                args.append<uint32_t>(concatenate_if<T_Debug>("strideW_C", i), wsStride);
-                wsStride *= d.sizes()[i];
-            }
-        }
-        else
-        {
-            for(size_t i = startStrideCD; i < d.dimensions(); i++)
-                args.append<uint32_t>(concatenate_if<T_Debug>("strideD", i), d.strides()[i]);
-
-            for(size_t i = startStrideCD; i < c.dimensions(); i++)
-                args.append<uint32_t>(concatenate_if<T_Debug>("strideC", i), c.strides()[i]);
-        }
-
-        for(size_t i = startStrideAB; i < a.dimensions(); i++)
-            args.append<uint32_t>(concatenate_if<T_Debug>("strideA", i), a.strides()[i]);
-
-        for(size_t i = startStrideAB; i < b.dimensions(); i++)
-            args.append<uint32_t>(concatenate_if<T_Debug>("strideB", i), b.strides()[i]);
-
-        {
-            int idx = 0;
-            for(auto size : problem.problemSizes())
-            {
-                args.append<uint32_t>(concatenate_if<T_Debug>("size_", idx), size);
-                idx++;
-            }
-        }
-
-        args.append<int32_t>("staggerUIter", staggerUIter(problem));
-
-        args.append<uint32_t>("problemNumGroupTiles0", problemNumGroupTiles0);
-        args.append<uint32_t>("problemNumGroupTiles1", problemNumGroupTiles1);
-
-        uint32_t numFullBlocks            = problemNumGroupTiles1;
-        uint32_t wgmRemainder1            = 0;
-        uint32_t magicNumberWgmRemainder1 = 0;
-
-        if(sizeMapping.workGroupMapping != 0)
-        {
-            numFullBlocks = problemNumGroupTiles1 / sizeMapping.workGroupMapping;
-            wgmRemainder1 = problemNumGroupTiles1 % sizeMapping.workGroupMapping;
-            if(wgmRemainder1 == 0)
-                wgmRemainder1 = sizeMapping.workGroupMapping;
-            magicNumberWgmRemainder1 = smallMagicNumber(wgmRemainder1);
-        }
-
-        args.append<uint32_t>("numFullBlocks", numFullBlocks);
-        args.append<uint32_t>("wgmRemainder1", wgmRemainder1);
-        args.append<uint32_t>("magicNumberWgmRemainder1", magicNumberWgmRemainder1);
-
-        args.append<uint32_t>("offsetD", d.offset());
-        args.append<uint32_t>("offsetC", c.offset());
-        args.append<uint32_t>("offsetA", a.offset());
-        args.append<uint32_t>("offsetB", b.offset());
-
-        if(isGrouped)
-        {
-            args.append<uint32_t>("SmallMagicNumberDivWg0",
-                                  smallMagicNumber(problemNumGroupTiles0));
-            args.append<uint32_t>("SmallMagicNumberDivWg01",
-                                  smallMagicNumber(problemNumGroupTiles0 * problemNumGroupTiles1));
-        }
-
-        bool runActivation = false;
-        if((problem.activationType() != ActivationType::None) && sizeMapping.activationFused
-           && (sizeMapping.globalSplitU == 1))
-            runActivation = true;
-        if(problemType.useBias && (sizeMapping.globalSplitU == 1))
-        {
-            args.append<void const*>("bias", inputs.bias);
-            if(runActivation)
-            {
-                size_t dummyInsertSize
-                    = max(DataTypeInfo::Get(problem.d().dataType()).elementSize, 4) / 4 - 1;
-                for(size_t i = 0; i < dummyInsertSize; i++)
-                {
-                    args.append<uint32_t>("bias_type_dummy", static_cast<uint32_t>(0));
-                }
-            }
-            args.append<uint32_t>("bias_type", static_cast<uint32_t>(problem.biasType()));
-        }
-
-        if(runActivation)
-        {
-            for(int i = 0; i < inputs.activationArgs.size(); i++)
-            {
-                std::string name = "activation_" + std::to_string(i);
-                if(problem.activationHPA()) // Same as hpa type.
-                {
-                    args.append(name.c_str(), inputs.activationArgs[i], problem.betaType());
-                }
-                else if(problem.d().dataType() == DataType::Half)
-                {
-                    args.append(
-                        (name + "_pk").c_str(), inputs.activationArgs[i], problem.d().dataType());
-                    args.append(name.c_str(), inputs.activationArgs[i], problem.d().dataType());
-                }
-                else
-                {
-                    if(problem.d().dataType() == DataType::BFloat16)
-                    {
-                        // BFloat16 to float32.
-                        args.append<uint16_t>((name + "_append").c_str(), static_cast<uint16_t>(0));
-                    }
-                    args.append(name.c_str(), inputs.activationArgs[i], problem.d().dataType());
-                }
-            }
-            if(problem.activationType() == ActivationType::All)
-            {
-                args.append<uint32_t>("activationType",
-                                      static_cast<uint32_t>(problem.activationEnumArg()));
-            }
-        }
-    }
-
-    template <bool T_Debug>
     KernelInvocation
         ContractionSolution::generateSingleCall(ContractionSolution::Problem const& problem,
                                                 ContractionInputs const&            inputs,
                                                 Hardware const&                     hardware) const
     {
         TENSILE_ASSERT_EXC(sizeMapping.workGroupMapping >= 0);
+
+        TensorDescriptor const& a = problem.a();
+        TensorDescriptor const& b = problem.b();
+        TensorDescriptor const& c = problem.c();
+        TensorDescriptor const& d = problem.d();
 
         KernelInvocation rv;
 
@@ -510,14 +312,222 @@ namespace Tensile
 
         rv.numWorkGroups.y *= sizeMapping.globalSplitU;
 
+        if(sizeMapping.persistentKernel != 0)
+        {
+            AMDGPU const* pAMDGPU = dynamic_cast<AMDGPU const*>(&hardware);
+            assert(pAMDGPU != nullptr && pAMDGPU->computeUnitCount != 0);
+
+            size_t cuCount       = pAMDGPU->computeUnitCount;
+            size_t finalPKValue  = sizeMapping.persistentKernel;
+            size_t problemGroups = rv.numWorkGroups.x * rv.numWorkGroups.y;
+            if(sizeMapping.persistentKernelAlongBatch)
+            {
+                problemGroups *= rv.numWorkGroups.z;
+                rv.numWorkGroups.z = 1;
+            }
+
+            if(finalPKValue == -1)
+            {
+                // 1. Get the largest pk value (ex.3)
+                //    which can make the PK.G (ex.3*120=360) <= problemGroups (ex.433)
+                // 2. Scale by 5/8 (can try 0.5~1, to control the tiles-per-workgroup = 1~2)
+                finalPKValue = 5 * (problemGroups / cuCount) / 8;
+                finalPKValue = std::max(finalPKValue, (size_t)1);
+                //std::cout << "final persistent kernel value: " << finalPKValue << std::endl;
+            }
+
+            size_t persistentGroups = cuCount * finalPKValue;
+            rv.numWorkGroups.x      = std::min(persistentGroups, problemGroups);
+            rv.numWorkGroups.y      = 1;
+        }
+
         rv.numWorkItems.x = rv.workGroupSize.x * rv.numWorkGroups.x;
         rv.numWorkItems.y = rv.workGroupSize.y * rv.numWorkGroups.y;
         rv.numWorkItems.z = rv.workGroupSize.z * rv.numWorkGroups.z;
 
+        if(debugKernel)
+        {
+            rv.args.appendUnbound<unsigned int*>("debugBuffer");
+        }
+
         rv.sharedMemBytes = 0;
 
-        singleCallArgs<T_Debug>(
-            problem, inputs, problemNumGroupTiles0, problemNumGroupTiles1, false, rv.args);
+        uint64_t tensor2dSizeC = c.totalAllocatedElements();
+        uint64_t tensor2dSizeA = (sizeMapping.packBatchDims & 0x1)
+                                     ? a.totalAllocatedElements()
+                                     : problem.allocatedElementsNonBatchA();
+        uint64_t tensor2dSizeB = (sizeMapping.packBatchDims & 0x2)
+                                     ? b.totalAllocatedElements()
+                                     : problem.allocatedElementsNonBatchB();
+
+        rv.args.append<uint64_t>("tensor2dSizeC", tensor2dSizeC);
+        rv.args.append<uint64_t>("tensor2dSizeA", tensor2dSizeA);
+        rv.args.append<uint64_t>("tensor2dSizeB", tensor2dSizeB);
+
+        if(sizeMapping.globalAccumulation)
+        {
+            rv.args.append<void const*>("ws_d", inputs.ws);
+            rv.args.append<void const*>("ws_c", inputs.ws);
+        }
+        else if(problemType.stridedBatched)
+        {
+            rv.args.append<void const*>("d", inputs.d);
+            rv.args.append<void const*>("c", inputs.c);
+        }
+        else
+        {
+            rv.args.append<void const* const*>("batchD", inputs.batchD);
+            rv.args.append<void const* const*>("batchC", inputs.batchC);
+        }
+
+        if(problemType.stridedBatched)
+        {
+            rv.args.append<void const*>("a", inputs.a);
+            rv.args.append<void const*>("b", inputs.b);
+        }
+        else
+        {
+            rv.args.append<void const* const*>("batchA", inputs.batchA);
+            rv.args.append<void const* const*>("batchB", inputs.batchB);
+        }
+
+        rv.args.append("alpha", inputs.alpha, problem.alphaType());
+        if(problem.alphaType() == DataType::Half)
+            rv.args.append("alpha_2", inputs.alpha, problem.alphaType());
+
+        if(problemType.useBeta)
+        {
+            rv.args.append("beta", inputs.beta, problem.betaType());
+            if(problem.betaType() == DataType::Half)
+                rv.args.append("beta_2", inputs.beta, problem.betaType());
+        }
+
+        if(problemType.useScaleD && (sizeMapping.globalSplitU == 1)) //kernel input data
+        {
+            rv.args.append<void const*>("scaleD", inputs.scaleD);
+        }
+
+        size_t startStrideCD = problemType.useInitialStridesCD ? 0 : 1;
+        size_t startStrideAB = problemType.useInitialStridesAB ? 0 : 1;
+
+        if(sizeMapping.globalAccumulation)
+        {
+            size_t wsStride = startStrideCD ? d.sizes()[0] : 1;
+            for(size_t i = startStrideCD; i < d.dimensions(); i++)
+            {
+                rv.args.append<uint32_t>(concatenate_if<T_Debug>("strideW_D", i), wsStride);
+                wsStride *= d.sizes()[i];
+            }
+
+            wsStride = startStrideCD ? d.sizes()[0] : 1;
+            for(size_t i = startStrideCD; i < c.dimensions(); i++)
+            {
+                rv.args.append<uint32_t>(concatenate_if<T_Debug>("strideW_C", i), wsStride);
+                wsStride *= d.sizes()[i];
+            }
+        }
+        else
+        {
+            for(size_t i = startStrideCD; i < d.dimensions(); i++)
+                rv.args.append<uint32_t>(concatenate_if<T_Debug>("strideD", i), d.strides()[i]);
+
+            for(size_t i = startStrideCD; i < c.dimensions(); i++)
+                rv.args.append<uint32_t>(concatenate_if<T_Debug>("strideC", i), c.strides()[i]);
+        }
+
+        for(size_t i = startStrideAB; i < a.dimensions(); i++)
+            rv.args.append<uint32_t>(concatenate_if<T_Debug>("strideA", i), a.strides()[i]);
+
+        for(size_t i = startStrideAB; i < b.dimensions(); i++)
+            rv.args.append<uint32_t>(concatenate_if<T_Debug>("strideB", i), b.strides()[i]);
+
+        {
+            int idx = 0;
+            for(auto size : problem.problemSizes())
+            {
+                rv.args.append<uint32_t>(concatenate_if<T_Debug>("size_", idx), size);
+                idx++;
+            }
+        }
+
+        rv.args.append<int32_t>("staggerUIter", staggerUIter(problem));
+
+        rv.args.append<uint32_t>("problemNumGroupTiles0", problemNumGroupTiles0);
+        rv.args.append<uint32_t>("problemNumGroupTiles1", problemNumGroupTiles1);
+
+        uint32_t numFullBlocks            = problemNumGroupTiles1;
+        uint32_t wgmRemainder1            = 0;
+        uint32_t magicNumberWgmRemainder1 = 0;
+
+        if(sizeMapping.workGroupMapping != 0)
+        {
+            numFullBlocks = problemNumGroupTiles1 / sizeMapping.workGroupMapping;
+            wgmRemainder1 = problemNumGroupTiles1 % sizeMapping.workGroupMapping;
+            if(wgmRemainder1 == 0)
+                wgmRemainder1 = sizeMapping.workGroupMapping;
+            magicNumberWgmRemainder1 = smallMagicNumber(wgmRemainder1);
+        }
+
+        rv.args.append<uint32_t>("numFullBlocks", numFullBlocks);
+        rv.args.append<uint32_t>("wgmRemainder1", wgmRemainder1);
+        rv.args.append<uint32_t>("magicNumberWgmRemainder1", magicNumberWgmRemainder1);
+
+        rv.args.append<uint32_t>("offsetD", d.offset());
+        rv.args.append<uint32_t>("offsetC", c.offset());
+        rv.args.append<uint32_t>("offsetA", a.offset());
+        rv.args.append<uint32_t>("offsetB", b.offset());
+
+        bool runActivation = false;
+        if((problem.activationType() != ActivationType::None) && sizeMapping.activationFused
+           && (sizeMapping.globalSplitU == 1))
+            runActivation = true;
+        if(problemType.useBias && (sizeMapping.globalSplitU == 1))
+        {
+            rv.args.append<void const*>("bias", inputs.bias);
+            if(runActivation)
+            {
+                size_t dummyInsertSize
+                    = max(DataTypeInfo::Get(problem.d().dataType()).elementSize, 4) / 4 - 1;
+                for(size_t i = 0; i < dummyInsertSize; i++)
+                {
+                    rv.args.append<uint32_t>("bias_type_dummy", static_cast<uint32_t>(0));
+                }
+            }
+            rv.args.append<uint32_t>("bias_type", static_cast<uint32_t>(problem.biasType()));
+        }
+
+        if(runActivation)
+        {
+            for(int i = 0; i < inputs.activationArgs.size(); i++)
+            {
+                std::string name = "activation_" + std::to_string(i);
+                if(problem.activationHPA()) // Same as hpa type.
+                {
+                    rv.args.append(name.c_str(), inputs.activationArgs[i], problem.betaType());
+                }
+                else if(problem.d().dataType() == DataType::Half)
+                {
+                    rv.args.append(
+                        (name + "_pk").c_str(), inputs.activationArgs[i], problem.d().dataType());
+                    rv.args.append(name.c_str(), inputs.activationArgs[i], problem.d().dataType());
+                }
+                else
+                {
+                    if(problem.d().dataType() == DataType::BFloat16)
+                    {
+                        // BFloat16 to float32.
+                        rv.args.append<uint16_t>((name + "_append").c_str(),
+                                                 static_cast<uint16_t>(0));
+                    }
+                    rv.args.append(name.c_str(), inputs.activationArgs[i], problem.d().dataType());
+                }
+            }
+            if(problem.activationType() == ActivationType::All)
+            {
+                rv.args.append<uint32_t>("activationType",
+                                         static_cast<uint32_t>(problem.activationEnumArg()));
+            }
+        }
 
         rv.codeObjectFile = codeObjectFilename.load();
 
@@ -597,12 +607,185 @@ namespace Tensile
 
             rv.sharedMemBytes = 0;
 
-            singleCallArgs<T_Debug>(problem,
-                                    inputs.grouped[idx],
-                                    problemNumGroupTiles0,
-                                    problemNumGroupTiles1,
-                                    true,
-                                    args);
+            TensorDescriptor const& a = problem.a();
+            TensorDescriptor const& b = problem.b();
+            TensorDescriptor const& c = problem.c();
+            TensorDescriptor const& d = problem.d();
+
+            uint64_t tensor2dSizeC = c.totalAllocatedElements();
+            uint64_t tensor2dSizeA = (sizeMapping.packBatchDims & 0x1)
+                                         ? a.totalAllocatedElements()
+                                         : problem.allocatedElementsNonBatchA();
+            uint64_t tensor2dSizeB = (sizeMapping.packBatchDims & 0x2)
+                                         ? b.totalAllocatedElements()
+                                         : problem.allocatedElementsNonBatchB();
+
+            args.append<uint64_t>("tensor2dSizeC", tensor2dSizeC);
+            args.append<uint64_t>("tensor2dSizeA", tensor2dSizeA);
+            args.append<uint64_t>("tensor2dSizeB", tensor2dSizeB);
+
+            if(sizeMapping.globalAccumulation)
+            {
+                args.append<void const*>("ws_d", inputs.grouped[idx].ws);
+                args.append<void const*>("ws_c", inputs.grouped[idx].ws);
+            }
+            else
+            {
+                args.append<void const*>("d", inputs.grouped[idx].d);
+                args.append<void const*>("c", inputs.grouped[idx].c);
+            }
+
+            args.append<void const*>("a", inputs.grouped[idx].a);
+            args.append<void const*>("b", inputs.grouped[idx].b);
+
+            args.append("alpha", inputs.grouped[idx].alpha, problem.alphaType());
+            if(problem.alphaType() == DataType::Half)
+                args.append("alpha_2", inputs.grouped[idx].alpha, problem.alphaType());
+
+            if(problemType.useBeta)
+            {
+                args.append("beta", inputs.grouped[idx].beta, problem.betaType());
+                if(problem.betaType() == DataType::Half)
+                    args.append("beta_2", inputs.grouped[idx].beta, problem.betaType());
+            }
+
+            if(problemType.useScaleD && (sizeMapping.globalSplitU == 1)) //kernel input data
+            {
+                args.append<void const*>("scaleD", inputs.grouped[idx].scaleD);
+            }
+
+            size_t startStrideCD = problemType.useInitialStridesCD ? 0 : 1;
+            size_t startStrideAB = problemType.useInitialStridesAB ? 0 : 1;
+
+            if(sizeMapping.globalAccumulation)
+            {
+                size_t wsStride = startStrideCD ? d.sizes()[0] : 1;
+                for(size_t i = startStrideCD; i < d.dimensions(); i++)
+                {
+                    args.append<uint32_t>(concatenate_if<T_Debug>("strideW_D", i), wsStride);
+                    wsStride *= d.sizes()[i];
+                }
+
+                wsStride = startStrideCD ? d.sizes()[0] : 1;
+                for(size_t i = startStrideCD; i < c.dimensions(); i++)
+                {
+                    args.append<uint32_t>(concatenate_if<T_Debug>("strideW_C", i), wsStride);
+                    wsStride *= d.sizes()[i];
+                }
+            }
+            else
+            {
+                for(size_t i = startStrideCD; i < d.dimensions(); i++)
+                    args.append<uint32_t>(concatenate_if<T_Debug>("strideD", i), d.strides()[i]);
+
+                for(size_t i = startStrideCD; i < c.dimensions(); i++)
+                    args.append<uint32_t>(concatenate_if<T_Debug>("strideC", i), c.strides()[i]);
+            }
+
+            for(size_t i = startStrideAB; i < a.dimensions(); i++)
+                args.append<uint32_t>(concatenate_if<T_Debug>("strideA", i), a.strides()[i]);
+
+            for(size_t i = startStrideAB; i < b.dimensions(); i++)
+                args.append<uint32_t>(concatenate_if<T_Debug>("strideB", i), b.strides()[i]);
+
+            {
+                int idx = 0;
+                for(auto size : problem.problemSizes())
+                {
+                    args.append<uint32_t>(concatenate_if<T_Debug>("size_", idx), size);
+                    idx++;
+                }
+            }
+
+            args.append<int32_t>("staggerUIter", staggerUIter(problem));
+
+            args.append<uint32_t>("problemNumGroupTiles0", problemNumGroupTiles0);
+            args.append<uint32_t>("problemNumGroupTiles1", problemNumGroupTiles1);
+
+            uint32_t numFullBlocks            = problemNumGroupTiles1;
+            uint32_t wgmRemainder1            = 0;
+            uint32_t magicNumberWgmRemainder1 = 0;
+
+            if(sizeMapping.workGroupMapping != 0)
+            {
+                numFullBlocks = problemNumGroupTiles1 / sizeMapping.workGroupMapping;
+                wgmRemainder1 = problemNumGroupTiles1 % sizeMapping.workGroupMapping;
+                if(wgmRemainder1 == 0)
+                    wgmRemainder1 = sizeMapping.workGroupMapping;
+                magicNumberWgmRemainder1 = smallMagicNumber(wgmRemainder1);
+            }
+
+            args.append<uint32_t>("numFullBlocks", numFullBlocks);
+            args.append<uint32_t>("wgmRemainder1", wgmRemainder1);
+            args.append<uint32_t>("magicNumberWgmRemainder1", magicNumberWgmRemainder1);
+
+            args.append<uint32_t>("offsetD", d.offset());
+            args.append<uint32_t>("offsetC", c.offset());
+            args.append<uint32_t>("offsetA", a.offset());
+            args.append<uint32_t>("offsetB", b.offset());
+
+            args.append<uint32_t>("SmallMagicNumberDivWg0",
+                                  smallMagicNumber(problemNumGroupTiles0));
+            args.append<uint32_t>("SmallMagicNumberDivWg01",
+                                  smallMagicNumber(problemNumGroupTiles0 * problemNumGroupTiles1));
+
+            bool runActivation = false;
+            if((problem.activationType() != ActivationType::None) && sizeMapping.activationFused
+               && (sizeMapping.globalSplitU == 1))
+                runActivation = true;
+            if(problemType.useBias && (sizeMapping.globalSplitU == 1))
+            {
+                args.append<void const*>("bias", inputs.grouped[idx].bias);
+                if(runActivation)
+                {
+                    size_t dummyInsertSize = max(problem.d().elementBytes(), 4) / 4 - 1;
+                    for(size_t i = 0; i < dummyInsertSize; i++)
+                    {
+                        args.append<uint32_t>("bias_type_dummy", static_cast<uint32_t>(0));
+                    }
+                }
+                args.append<uint32_t>("bias_type", static_cast<uint32_t>(problem.biasType()));
+            }
+
+            if(runActivation)
+            {
+                for(int i = 0; i < inputs.grouped[idx].activationArgs.size(); i++)
+                {
+                    std::string name = "activation_" + std::to_string(i);
+                    if(problem.activationHPA()) // Same as hpa type.
+                    {
+                        args.append(name.c_str(),
+                                    inputs.grouped[idx].activationArgs[i],
+                                    problem.betaType());
+                    }
+                    else if(problem.d().dataType() == DataType::Half)
+                    {
+                        args.append((name + "_pk").c_str(),
+                                    inputs.grouped[idx].activationArgs[i],
+                                    problem.d().dataType());
+                        args.append(name.c_str(),
+                                    inputs.grouped[idx].activationArgs[i],
+                                    problem.d().dataType());
+                    }
+                    else
+                    {
+                        if(problem.d().dataType() == DataType::BFloat16)
+                        {
+                            // BFloat16 to float32.
+                            args.append<uint16_t>((name + "_append").c_str(),
+                                                  static_cast<uint16_t>(0));
+                        }
+                        args.append(name.c_str(),
+                                    inputs.grouped[idx].activationArgs[i],
+                                    problem.d().dataType());
+                    }
+                }
+                if(problem.activationType() == ActivationType::All)
+                {
+                    args.append<uint32_t>("activationType",
+                                          static_cast<uint32_t>(problem.activationEnumArg()));
+                }
+            }
         }
 
         std::vector<uint8_t> h_args;

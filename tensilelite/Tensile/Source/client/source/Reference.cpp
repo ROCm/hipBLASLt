@@ -610,19 +610,230 @@ namespace Tensile
         }
 
         template <typename Inputs, typename Accumulator>
-        void ReferenceSolution<Inputs, Accumulator>::SolveCPU(
-            ContractionProblemGroupedGemm const& problem,
-            ContractionGroupedInputs const&      inputs,
-            size_t                               elementsToValidate)
+        void ReferenceSolution<Inputs, Accumulator>::SolveCPUGroupedGemm(
+            std::vector<ContractionProblemGemm> const& problems,
+            ContractionGroupedInputs const&            inputs,
+            size_t                                     elementsToValidate)
         {
-            for(int idx = 0; idx < problem.gemms.size(); idx++)
+            for(int idx = 0; idx < problems.size(); idx++)
             {
-                ReferenceSolution<Inputs, Accumulator>::SolveCPU(
-                    problem.gemms[idx], inputs.grouped[idx], elementsToValidate);
+                size_t validationStride = 1;
+                if(elementsToValidate > 0
+                   && elementsToValidate < problems[idx].d().totalLogicalElements())
+                    validationStride = NextPrime(problems[idx].d().totalAllocatedElements()
+                                                 / elementsToValidate);
+
+                // Convert void* to pointers
+                typename Inputs::AType const* aPtr
+                    = (typename Inputs::AType const*)inputs.grouped[idx].a;
+                typename Inputs::BType const* bPtr
+                    = (typename Inputs::BType const*)inputs.grouped[idx].b;
+                typename Inputs::CType const* cPtr
+                    = (typename Inputs::CType const*)inputs.grouped[idx].c;
+                typename Inputs::DType* dPtr = (typename Inputs::DType*)inputs.grouped[idx].d;
+
+                auto problem = problems[idx];
+
+                auto const& freeIndicesA = problem.freeIndicesA();
+                auto const& freeIndicesB = problem.freeIndicesB();
+                auto const& batchIndices = problem.batchIndices();
+                auto const& boundIndices = problem.boundIndices();
+
+                auto const& a = problem.a();
+                auto const& b = problem.b();
+                auto const& c = problem.c();
+                auto const& d = problem.d();
+
+                bool aConjugate = false;
+                bool bConjugate = false;
+
+                if(DataTypeInfo::Get(problem.a().dataType()).isComplex)
+                {
+                    aConjugate = true;
+                }
+
+                if(DataTypeInfo::Get(problem.b().dataType()).isComplex)
+                {
+                    bConjugate = true;
+                }
+
+                std::vector<size_t> freeASize(freeIndicesA.size());
+                std::vector<size_t> freeBSize(freeIndicesB.size());
+                std::vector<size_t> batchSize(batchIndices.size());
+                std::vector<size_t> boundSize(boundIndices.size());
+
+                for(int i = 0; i < freeASize.size(); i++)
+                    freeASize[i] = problem.freeSizeA(i);
+                for(int i = 0; i < freeBSize.size(); i++)
+                    freeBSize[i] = problem.freeSizeB(i);
+                for(int i = 0; i < batchSize.size(); i++)
+                    batchSize[i] = problem.batchSize(i);
+                for(int i = 0; i < boundSize.size(); i++)
+                    boundSize[i] = problem.boundSize(i);
+
+                auto boundCount = CoordCount(boundSize.begin() + 1, boundSize.end());
+
+                if(std::get<typename Inputs::AlphaType>(inputs.grouped[idx].alpha)
+                   != static_cast<typename Inputs::AlphaType>(0))
+                {
+                    if(inputs.grouped[idx].a == nullptr || inputs.grouped[idx].b == nullptr)
+                    {
+                        std::ostringstream msg;
+                        msg << "Unsupported nullptr for";
+                        if(!inputs.grouped[idx].a)
+                            msg << " A";
+                        if(!inputs.grouped[idx].b)
+                            msg << " B";
+                        msg << " when Alpha !=0";
+
+                        throw std::runtime_error(msg.str());
+                    }
+                }
+
+#pragma omp parallel for
+                for(size_t dNum = 0; dNum < d.totalLogicalElements(); dNum += validationStride)
+                {
+                    std::vector<int64_t> aCoord(a.dimensions());
+                    std::vector<int64_t> bCoord(b.dimensions());
+                    std::vector<int64_t> cCoord(c.dimensions());
+                    std::vector<int64_t> dCoord(d.dimensions());
+
+                    CoordNumbered(
+                        dNum, dCoord.begin(), dCoord.end(), d.sizes().begin(), d.sizes().end());
+
+                    for(size_t i = 0; i < problem.batchIndices().size(); i++)
+                    {
+                        auto const& idx   = problem.batchIndices()[i];
+                        size_t      coord = dCoord[idx.d];
+
+                        aCoord[idx.a] = coord;
+                        bCoord[idx.b] = coord;
+                        cCoord[idx.c] = coord;
+                    }
+
+                    for(size_t i = 0; i < problem.freeIndices().size(); i++)
+                    {
+                        auto const& idx   = problem.freeIndices()[i];
+                        size_t      coord = dCoord[idx.d];
+
+                        cCoord[idx.c] = coord;
+
+                        if(idx.isA)
+                            aCoord[idx.i] = coord;
+                        else
+                            bCoord[idx.i] = coord;
+                    }
+
+                    Accumulator value(0);
+
+                    // Check short-circuit for alpha = 0
+                    if(std::get<typename Inputs::AlphaType>(inputs.grouped[idx].alpha)
+                       != static_cast<typename Inputs::AlphaType>(0))
+                    {
+                        for(size_t boundNum = 0; boundNum < boundCount; boundNum++)
+                        {
+                            std::vector<int64_t> bound(problem.boundIndices().size());
+                            CoordNumbered(boundNum,
+                                          bound.begin() + 1,
+                                          bound.end(),
+                                          boundSize.begin() + 1,
+                                          boundSize.end());
+
+                            for(int i = 1; i < bound.size(); i++)
+                            {
+                                aCoord[boundIndices[i].a] = bound[i];
+                                bCoord[boundIndices[i].b] = bound[i];
+
+                                if(problem.boundIndices()[i].aMirror)
+                                    aCoord[boundIndices[i].a]
+                                        = boundSize[i] - aCoord[boundIndices[i].a] - 1;
+                                if(problem.boundIndices()[i].bMirror)
+                                    bCoord[boundIndices[i].b]
+                                        = boundSize[i] - bCoord[boundIndices[i].b] - 1;
+                            }
+
+                            size_t aIndex = a.index(aCoord);
+                            size_t bIndex = b.index(bCoord);
+
+                            auto aStride = problem.a().strides()[boundIndices[0].a];
+                            auto bStride = problem.b().strides()[boundIndices[0].b];
+
+                            // innermost bound calculation:
+                            for(size_t i = 0; i < boundSize[0]; i++)
+                            {
+                                size_t aI = problem.boundIndices()[0].aMirror
+                                                ? (boundSize[0] - i - 1)
+                                                : i;
+                                size_t bI = problem.boundIndices()[0].bMirror
+                                                ? (boundSize[0] - i - 1)
+                                                : i;
+
+                                typename Inputs::AType aVal(0);
+                                typename Inputs::BType bVal(0);
+                                aVal = Transform<typename Inputs::AType>::Input(
+                                    aPtr[aIndex + (aI * aStride)], aConjugate);
+                                bVal = Transform<typename Inputs::BType>::Input(
+                                    bPtr[bIndex + (bI * bStride)], bConjugate);
+
+                                value += multiply<Accumulator>(aVal, bVal);
+                            }
+                        }
+                    }
+
+                    auto cIndex = c.index(cCoord);
+                    auto dIndex = d.index(dCoord);
+
+                    // Ensure zero*nan returns zero
+                    Accumulator alpha = constVariantCast<Accumulator>(inputs.grouped[idx].alpha);
+                    Accumulator beta  = constVariantCast<Accumulator>(inputs.grouped[idx].beta);
+                    auto        zero  = static_cast<Accumulator>(0);
+
+                    auto resultD = multiply<Accumulator>(alpha, value)
+                                   + ((beta == zero) ? static_cast<Accumulator>(zero)
+                                                     : multiply<Accumulator>(beta, cPtr[cIndex]));
+                    // bias
+                    if(problem.useBias() && inputs.grouped[idx].bias)
+                    {
+                        int         pos  = int(dNum % problem.d().sizes()[0]);
+                        Accumulator bias = GetValue<Accumulator>(
+                            problem.biasType(), inputs.grouped[idx].bias, pos, aConjugate);
+                        resultD += bias;
+                    }
+                    // E
+                    if(problem.useE())
+                    {
+                        typename Inputs::BetaType* ePtr
+                            = (typename Inputs::BetaType*)inputs.grouped[idx].e;
+                        auto eIndex
+                            = problem.tensors()[ContractionProblemGemm::TENSOR::E].index(dCoord);
+                        ePtr[eIndex] = SaturateCast<typename Inputs::BetaType>(resultD);
+                    }
+                    // Activation adds here
+                    std::vector<Accumulator> actArgs;
+                    for(int i = 0; i < inputs.grouped[idx].activationArgs.size(); i++)
+                        actArgs.push_back(
+                            constVariantCast<Accumulator>(inputs.grouped[idx].activationArgs[i]));
+                    resultD = Activation(
+                        problem.activationType(), resultD, problem.activationEnumArg(), actArgs);
+                    if(problem.useScaleD())
+                    {
+                        typename Inputs::AlphaType const* scaleDPtr
+                            = (typename Inputs::AlphaType const*)inputs.grouped[idx].scaleD;
+                        int  pos = int(dNum % problem.d().sizes()[0]);
+                        auto scaleD
+                            = multiply<Accumulator>(Transform<typename Inputs::AlphaType>::Input(
+                                                        scaleDPtr[pos], aConjugate),
+                                                    1);
+                        resultD *= scaleD;
+                    }
+                    dPtr[dIndex] = SaturateCast<typename Inputs::DType>(resultD);
+                }
             }
         }
 
-        uint32_t getInputContractionInputsTypeId(ContractionProblemGemm const& problem)
+        void SolveCPU(ContractionProblemGemm const& problem,
+                      ContractionInputs const&      inputs,
+                      size_t                        elementsToValidate)
         {
             // retreive alpha/beta type set via setAlpha/BetaType()
             auto alphaType = problem.alphaType();
@@ -657,29 +868,12 @@ namespace Tensile
                 }
             }
 
-            return Tensile::GemmTypeId(problem.a().dataType(),
-                                       problem.b().dataType(),
-                                       problem.c().dataType(),
-                                       problem.d().dataType(),
-                                       alphaType,
-                                       betaType);
-        }
-
-        template <typename Problem, typename Inputs>
-        void SolveCPUTemplates(uint32_t const& contractionInputsTypeId,
-                               Problem const&  problem,
-                               Inputs const&   inputs,
-                               size_t          elementsToValidate)
-        {
-            bool isHPA = false;
-            if constexpr(std::is_same<ContractionProblemGemm, Problem>::value)
-            {
-                isHPA = problem.highPrecisionAccumulate();
-            }
-            else if constexpr(std::is_same<ContractionProblemGroupedGemm, Problem>::value)
-            {
-                isHPA = problem.gemms[0].highPrecisionAccumulate();
-            }
+            auto contractionInputsTypeId = Tensile::GemmTypeId(problem.a().dataType(),
+                                                               problem.b().dataType(),
+                                                               problem.c().dataType(),
+                                                               problem.d().dataType(),
+                                                               alphaType,
+                                                               betaType);
 
             switch(contractionInputsTypeId)
             {
@@ -706,7 +900,7 @@ namespace Tensile
 #ifdef TENSILE_USE_HALF
             case TypedGemm_H_H_H::TypeId():
             {
-                if(isHPA)
+                if(problem.highPrecisionAccumulate())
                 {
                     return ReferenceSolution<TypedGemm_H_H_H, float>::SolveCPU(
                         problem, inputs, elementsToValidate);
@@ -761,7 +955,7 @@ namespace Tensile
 #ifdef TENSILE_USE_BF16
             case TypedGemm_B_B_S::TypeId():
             {
-                if(isHPA)
+                if(problem.highPrecisionAccumulate())
                 {
                     return ReferenceSolution<TypedGemm_B_B_S, float>::SolveCPU(
                         problem, inputs, elementsToValidate);
@@ -785,37 +979,153 @@ namespace Tensile
             throw std::runtime_error("Data type not implemented.");
         }
 
-        void SolveCPU(ContractionProblem const* problem,
-                      ProblemInputs const*      inputs,
-                      size_t                    elementsToValidate)
+        void SolveCPUGroupedGemm(std::vector<ContractionProblemGemm> const& problems,
+                                 ContractionGroupedInputs const&            inputs,
+                                 size_t                                     elementsToValidate)
         {
-            if(auto groupedProblem = dynamic_cast<ContractionProblemGroupedGemm const*>(problem))
+            // retreive alpha/beta type set via setAlpha/BetaType()
+            auto alphaType = problems[0].alphaType();
+            auto betaType  = problems[0].betaType();
+            auto biasType  = problems[0].biasType();
+
+            // Backward-compatible: when setAlpha/BetaType() wasn't called, use the old way
+            // Could remove after rocBLAS is updated
+            if(alphaType == DataType::None)
             {
-                if(auto refInput = dynamic_cast<ContractionGroupedInputs const*>(inputs))
+                alphaType = problems[0].a().dataType() == DataType::BFloat16
+                                ? DataType::Float
+                                : problems[0].d().dataType();
+            }
+            if(betaType == DataType::None)
+            {
+                betaType = alphaType;
+            }
+            if(biasType == DataType::None)
+            {
+                biasType = problems[0].d().dataType();
+            }
+
+            if(problems[0].useE())
+            {
+                if(alphaType != betaType)
                 {
-                    auto contractionInputsTypeId
-                        = getInputContractionInputsTypeId(groupedProblem->gemms[0]);
-                    SolveCPUTemplates(
-                        contractionInputsTypeId, *groupedProblem, *refInput, elementsToValidate);
+                    throw std::runtime_error("Alpha type and beta type must be the same.");
+                }
+                if(problems[0].tensors()[ContractionProblemGemm::TENSOR::E].dataType() != betaType)
+                {
+                    throw std::runtime_error("E type and beta type must be the same.");
+                }
+            }
+
+            auto contractionInputsTypeId = GemmTypeId(problems[0].a().dataType(),
+                                                      problems[0].b().dataType(),
+                                                      problems[0].c().dataType(),
+                                                      problems[0].d().dataType(),
+                                                      alphaType,
+                                                      betaType);
+
+            switch(contractionInputsTypeId)
+            {
+            case TypedGemm_S_S_S::TypeId():
+            {
+                return ReferenceSolution<TypedGemm_S_S_S>::SolveCPUGroupedGemm(
+                    problems, inputs, elementsToValidate);
+            }
+            case TypedGemm_D_D_D::TypeId():
+            {
+                return ReferenceSolution<TypedGemm_D_D_D>::SolveCPUGroupedGemm(
+                    problems, inputs, elementsToValidate);
+            }
+            case TypedGemm_C_C_C::TypeId():
+            {
+                return ReferenceSolution<TypedGemm_C_C_C>::SolveCPUGroupedGemm(
+                    problems, inputs, elementsToValidate);
+            }
+            case TypedGemm_Z_Z_Z::TypeId():
+            {
+                return ReferenceSolution<TypedGemm_Z_Z_Z>::SolveCPUGroupedGemm(
+                    problems, inputs, elementsToValidate);
+            }
+#ifdef TENSILE_USE_HALF
+            case TypedGemm_H_H_H::TypeId():
+            {
+                if(problems[0].highPrecisionAccumulate())
+                {
+                    return ReferenceSolution<TypedGemm_H_H_H, float>::SolveCPUGroupedGemm(
+                        problems, inputs, elementsToValidate);
                 }
                 else
-                    throw std::runtime_error("Unable to cast input to ContractionGroupedInputs.");
-            }
-            else if(auto gemmProblem = dynamic_cast<ContractionProblemGemm const*>(problem))
-            {
-                if(auto refInput = dynamic_cast<ContractionInputs const*>(inputs))
                 {
-                    auto contractionInputsTypeId = getInputContractionInputsTypeId(*gemmProblem);
-                    SolveCPUTemplates(
-                        contractionInputsTypeId, *gemmProblem, *refInput, elementsToValidate);
+                    return ReferenceSolution<TypedGemm_H_H_H>::SolveCPUGroupedGemm(
+                        problems, inputs, elementsToValidate);
+                }
+            }
+            case TypedGemm_H_S_S::TypeId():
+            {
+                return ReferenceSolution<TypedGemm_H_S_S>::SolveCPUGroupedGemm(
+                    problems, inputs, elementsToValidate);
+            }
+            case TypedGemm_H_H_S::TypeId():
+            {
+                return ReferenceSolution<TypedGemm_H_H_S, float>::SolveCPUGroupedGemm(
+                    problems, inputs, elementsToValidate);
+            }
+#endif // TENSILE_USE_HALF
+            case TypedGemm_I8x4_I32_I32::TypeId():
+            {
+                return ReferenceSolution<TypedGemm_I8x4_I32_I32>::SolveCPUGroupedGemm(
+                    problems, inputs, elementsToValidate);
+            }
+            case TypedGemm_I32_I32_I32::TypeId():
+            {
+                return ReferenceSolution<TypedGemm_I32_I32_I32>::SolveCPUGroupedGemm(
+                    problems, inputs, elementsToValidate);
+            }
+            case TypedGemm_I8_I8_I32::TypeId():
+            {
+                return ReferenceSolution<TypedGemm_I8_I8_I32, int32_t>::SolveCPUGroupedGemm(
+                    problems, inputs, elementsToValidate);
+            }
+            case TypedGemm_I8_I32_I32::TypeId():
+            {
+                return ReferenceSolution<TypedGemm_I8_I32_I32>::SolveCPUGroupedGemm(
+                    problems, inputs, elementsToValidate);
+            }
+            case TypedGemm_I8_I32_S::TypeId():
+            {
+                return ReferenceSolution<TypedGemm_I8_I32_S, float>::SolveCPUGroupedGemm(
+                    problems, inputs, elementsToValidate);
+            }
+            case TypedGemm_I8_I8_S::TypeId():
+            {
+                return ReferenceSolution<TypedGemm_I8_I8_S, float>::SolveCPUGroupedGemm(
+                    problems, inputs, elementsToValidate);
+            }
+#ifdef TENSILE_USE_BF16
+            case TypedGemm_B_B_S::TypeId():
+            {
+                if(problems[0].highPrecisionAccumulate())
+                {
+                    return ReferenceSolution<TypedGemm_B_B_S, float>::SolveCPUGroupedGemm(
+                        problems, inputs, elementsToValidate);
                 }
                 else
-                    throw std::runtime_error("Unable to cast input to ContractionInputs.");
+                {
+                    return ReferenceSolution<TypedGemm_B_B_S>::SolveCPUGroupedGemm(
+                        problems, inputs, elementsToValidate);
+                }
             }
-            else
+            case TypedGemm_B_S_S::TypeId():
             {
-                throw std::runtime_error("[Reference] Failed to cast to any ContractionProblem");
+                return ReferenceSolution<TypedGemm_B_S_S>::SolveCPUGroupedGemm(
+                    problems, inputs, elementsToValidate);
             }
+#endif // TENSILE_USE_BF16
+
+            default:;
+            }
+
+            throw std::runtime_error("Data type not implemented.");
         }
     } // namespace Client
 } // namespace Tensile

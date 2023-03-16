@@ -78,9 +78,31 @@ namespace Tensile
         {
             if(m_enabled)
             {
-                m_problem         = problem;
-                m_referenceInputs = m_dataInit->prepareCPUInputs(problem);
-                SolveCPU(problem, m_referenceInputs.get(), m_elementsToValidate);
+                m_problem = problem;
+                if(auto groupedProblem
+                   = dynamic_cast<ContractionProblemGroupedGemm const*>(problem))
+                {
+                    m_referenceInputs = m_dataInit->prepareCPUInputs(groupedProblem->gemms[0]);
+                    if(auto refInput
+                       = dynamic_cast<ContractionGroupedInputs*>(m_referenceInputs.get()))
+                        SolveCPUGroupedGemm(groupedProblem->gemms, *refInput, m_elementsToValidate);
+                    else
+                        throw std::runtime_error(
+                            "Unable to cast input to ContractionGroupedInputs.");
+                }
+                else if(auto gemmProblem = dynamic_cast<ContractionProblemGemm const*>(problem))
+                {
+                    m_referenceInputs = m_dataInit->prepareCPUInputs(*gemmProblem);
+                    if(auto refInput = dynamic_cast<ContractionInputs*>(m_referenceInputs.get()))
+                        SolveCPU(*gemmProblem, *refInput, m_elementsToValidate);
+                    else
+                        throw std::runtime_error("Unable to cast input to ContractionInputs.");
+                }
+                else
+                {
+                    throw std::runtime_error(
+                        "[ReferenceValidator] Failed to cast to any ContractionProblem");
+                }
             }
         }
 
