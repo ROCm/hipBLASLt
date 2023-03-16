@@ -2013,20 +2013,22 @@ class Solution(collections.abc.Mapping):
     Solution.checkAndAssignWaveSeparateGlobalRead(state, 'A')
     Solution.checkAndAssignWaveSeparateGlobalRead(state, 'B')
 
-    if state["ProblemType"]["SparseA"] and not state["DirectToVgprSparseMetadata"]:
-      state["ThreadTileMetadata"] = state["ThreadTileA"]
-      state["SubGroupMetadata"] = state["SubGroupA"]
-      state["MacroTileMetadata"] = state["MacroTileA"]
+    if state["ProblemType"]["SparseA"]:
+      if not state["DirectToVgprSparseMetadata"]:
+        state["ThreadTileMetadata"] = state["ThreadTileA"]
+        state["SubGroupMetadata"] = state["SubGroupA"]
+        state["MacroTileMetadata"] = state["MacroTileA"]
+        state["WaveSeparateGlobalReadMetadata"] = state["WaveSeparateGlobalReadA"]
+        Solution.checkAndAssignWaveSeparateGlobalRead(state, 'Metadata')
+        state["DirectToLdsMetadata"] = False
+        state["DirectToVgprMetadata"] = False
+        state["LocalWriteUseSgprMetadat"] = False
+        state["ProblemType"]["MirrorDimsMetadata"]  = state["ProblemType"]["MirrorDimsA"]
       if state["EnableMatrixInstruction"]:
         state["MIWaveTileMetadata"] = state["MIWaveTileA"]
-      state["WaveSeparateGlobalReadMetadata"] = state["WaveSeparateGlobalReadA"]
-      Solution.checkAndAssignWaveSeparateGlobalRead(state, 'Metadata')
-      state["DirectToLdsMetadata"] = False
-      state["DirectToVgprMetadata"] = False
-      state["LocalWriteUseSgprMetadat"] = False
-      state["ProblemType"]["MirrorDimsMetadata"]  = state["ProblemType"]["MirrorDimsA"]
     elif not state["ProblemType"]["SparseA"]:
       state["DirectToVgprSparseMetadata"] = False
+      state["MIWaveTileMetadata"] = 0
 
     # Init vars early since there are early-exit return statements below
     state["DirectToLdsA"] = False
@@ -2705,9 +2707,10 @@ class Solution(collections.abc.Mapping):
     # LDS
     ########################################
 
-    state["UnrollMajorLDSMetadata"] = False
+    state["TransposeLDSMetadata"] = True
+    state["UnrollMajorLDSMetadata"] = True
     if state["ProblemType"]["SparseA"] and not state["DirectToVgprSparseMetadata"]:
-      state["UnrollMajorLDSMetadata"] = state["TransposeLDS"] and (not state["ProblemType"]["TLUMetadata"])
+      state["UnrollMajorLDSMetadata"] = state["TransposeLDSMetadata"] and (not state["ProblemType"]["TLUMetadata"])
 
     if state["LdsBlockSizePerPad"] == -1:
       if state["MatrixInstruction"] and state["TransposeLDS"]:
@@ -2847,12 +2850,12 @@ class Solution(collections.abc.Mapping):
         if state["ProblemType"]["TLUMetadata"]:
           state["LdsPadMetadata"] = 0
         else:
-          if state["EnableMatrixInstruction"] and state["TransposeLDS"]:
+          if state["EnableMatrixInstruction"] and state["TransposeLDSMetadata"]:
             state["LdsPadMetadata"] = max(state["GlobalReadVectorWidth"] // 4, optPadM)
           else:
             state["LdsPadMetadata"] = 1
           ## turn-off padding for directToLds
-          if state["EnableMatrixInstruction"] and state["TransposeLDS"] and state["DirectToLdsMetadata"]:
+          if state["EnableMatrixInstruction"] and state["TransposeLDSMetadata"] and state["DirectToLdsMetadata"]:
             state["LdsPadMetadata"] = 0
         assert(state["LdsPadMetadata"] >= 0)
 
