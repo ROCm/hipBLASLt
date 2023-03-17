@@ -111,15 +111,11 @@ namespace Tensile
     public:
         static const size_t UseDefaultStride;
 
-        TensorDescriptor()
-        {
-            this->calculate();
-        }
+        TensorDescriptor() {}
 
         TensorDescriptor(const char* name)
             : m_name(name)
         {
-            this->calculate();
         }
 
         template <typename IterA, typename IterB>
@@ -164,6 +160,24 @@ namespace Tensile
             , m_strides(strides)
             , m_dataType(t)
         {
+            this->calculate();
+        }
+
+        TensorDescriptor(const TensorDescriptor& rhs)
+            : m_name(rhs.m_name)
+            , m_sizes(rhs.m_sizes)
+            , m_strides(rhs.m_strides)
+            , m_totalLogicalElements(rhs.m_totalLogicalElements)
+            , m_totalAllocatedElements(rhs.m_totalAllocatedElements)
+            , m_dataType(rhs.m_dataType)
+            , m_isOutput(rhs.m_isOutput)
+        {
+        }
+
+        void resize(std::initializer_list<size_t>& sizes, std::initializer_list<size_t>& strides)
+        {
+            m_sizes   = sizes;
+            m_strides = strides;
             this->calculate();
         }
 

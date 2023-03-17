@@ -55,8 +55,7 @@ namespace Tensile
     class ContractionProblem : public Problem
     {
     public:
-        ContractionProblem(std::vector<TensorDescriptor> tensors, size_t workspaceSize);
-        ContractionProblem(size_t size);
+        ContractionProblem(size_t size, size_t workspaceSize = 0);
 
         /**
          * Return vector of TensorDescriptor.
@@ -64,6 +63,21 @@ namespace Tensile
         std::vector<TensorDescriptor> const& tensors() const
         {
             return m_tensors;
+        }
+
+        /**
+         * Return a TensorDescriptor.
+         */
+        virtual TensorDescriptor const& tensor(int idx) const
+        {
+            return m_tensors[idx];
+        }
+
+        virtual void resizeTensor(int                           idx,
+                                  std::initializer_list<size_t> sizes,
+                                  std::initializer_list<size_t> strides)
+        {
+            m_tensors[idx].resize(sizes, strides);
         }
 
         /**
@@ -465,10 +479,10 @@ namespace Tensile
         {
             if(type != DataType::None && m_useE)
             {
-                TensorDescriptor e(
-                    "e", type, sizes.begin(), sizes.end(), strides.begin(), strides.end());
-                e.setAsOutput(isOutput);
-                m_tensors[ContractionProblemGemm::TENSOR::E] = e;
+                // Currently only supports offset = 0
+                m_tensors[ContractionProblemGemm::TENSOR::E]
+                    = {"e", type, sizes.begin(), sizes.end(), strides.begin(), strides.end()};
+                m_tensors[ContractionProblemGemm::TENSOR::E].setAsOutput(isOutput);
             }
         }
 
@@ -477,9 +491,9 @@ namespace Tensile
             m_biasType = type;
             if(type != DataType::None && m_useBias)
             {
-                TensorDescriptor bias("bias", m_biasType, {length}, {1, length});
-                bias.setAsOutput(isOutput);
-                m_tensors[ContractionProblemGemm::TENSOR::BIAS] = bias;
+                m_tensors[ContractionProblemGemm::TENSOR::BIAS]
+                    = {"bias", m_biasType, {length}, {1, length}};
+                m_tensors[ContractionProblemGemm::TENSOR::BIAS].setAsOutput(isOutput);
             }
         }
 
@@ -493,8 +507,8 @@ namespace Tensile
             m_scaleDType = type;
             if(type != DataType::None && m_useScaleD)
             {
-                TensorDescriptor scaleD("scaleD", m_scaleDType, {length}, {1, length});
-                m_tensors[ContractionProblemGemm::TENSOR::SCALED] = scaleD;
+                m_tensors[ContractionProblemGemm::TENSOR::SCALED]
+                    = {"scaleD", m_scaleDType, {length}, {1, length}};
             }
         }
 

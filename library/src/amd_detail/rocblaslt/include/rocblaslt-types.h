@@ -292,6 +292,11 @@ typedef struct __attribute__((packed, aligned(8))) _rocblaslt_matmul_algo
         std::shared_ptr<void> ptr;
         uint8_t               data[48];
     } data;
+    union u2
+    {
+        std::shared_ptr<void> ptr;
+        uint8_t               data[48];
+    } data2;
     bool   fallback;
     size_t max_workspace_bytes = 0;
 } rocblaslt_matmul_algo;

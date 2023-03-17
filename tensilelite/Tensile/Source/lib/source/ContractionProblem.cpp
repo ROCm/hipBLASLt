@@ -36,15 +36,8 @@
 
 namespace Tensile
 {
-    ContractionProblem::ContractionProblem(std::vector<TensorDescriptor> tensors,
-                                           size_t                        workspaceSize)
+    ContractionProblem::ContractionProblem(size_t size, size_t workspaceSize)
         : m_workspaceSize(workspaceSize)
-    {
-        m_tensors = tensors;
-        m_names.resize(m_tensors.size());
-    }
-
-    ContractionProblem::ContractionProblem(size_t size)
     {
         m_tensors.resize(size);
         m_names.resize(size);
@@ -528,12 +521,20 @@ namespace Tensile
                                                    BoundIndices const&     boundIndices,
                                                    double                  beta,
                                                    size_t                  workspaceSize)
-        : ContractionProblem({a, b, c, d, e, bias, scaleD}, workspaceSize)
+        : ContractionProblem(ContractionProblemGemm::TENSOR::TENSOR_COUNT)
         , m_freeIndices(freeIndices)
         , m_batchIndices(batchIndices)
         , m_boundIndices(boundIndices)
         , m_beta(beta)
     {
+        m_workspaceSize                                   = workspaceSize;
+        m_tensors[ContractionProblemGemm::TENSOR::A]      = a;
+        m_tensors[ContractionProblemGemm::TENSOR::B]      = b;
+        m_tensors[ContractionProblemGemm::TENSOR::C]      = c;
+        m_tensors[ContractionProblemGemm::TENSOR::D]      = d;
+        m_tensors[ContractionProblemGemm::TENSOR::E]      = e;
+        m_tensors[ContractionProblemGemm::TENSOR::BIAS]   = bias;
+        m_tensors[ContractionProblemGemm::TENSOR::SCALED] = scaleD;
         m_tensors[ContractionProblemGemm::TENSOR::D].setAsOutput(true); // Set d as output
         m_betaRestriction = toScalarValueEnum(
             m_beta); // Set enum using beta to potentially allow for faster solutions

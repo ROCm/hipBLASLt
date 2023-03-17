@@ -321,6 +321,133 @@ namespace
         return tensileProblem;
     }
 
+    template <typename Ti, typename To, typename Tc>
+    void updateTensileProblem(const bool                                     fallback,
+                              const RocblasltContractionProblem<Ti, To, Tc>& prob,
+                              Tensile::ContractionProblemGemm&               tensileProblem)
+    {
+        // Tensile DataTypes corresponding to rocblaslt data types
+        static constexpr Tensile::DataType Tensile_Ti = tensile_datatype<Ti>;
+        static constexpr Tensile::DataType Tensile_To = tensile_datatype<To>;
+        static constexpr Tensile::DataType Tensile_Tc = tensile_datatype<Tc>;
+
+        // Should we update tensor only if the size changed? Or should we just
+        // return error if size changed?
+
+        // We set K=0 when alpha==0.
+        // This makes alpha==0 a change in the problem, and not just a change in the
+        // inputs. It optimizes all problems with alpha==0 into K=0 and alpha=(don't
+        // care)
+        auto k = prob.k && *prob.alpha ? prob.k : 0;
+
+        // clang-format off
+
+        // If A is transposed, swap the free and bound dimensions and their ranks
+        if(prob.trans_a != HIPBLAS_OP_N)
+        {
+            tensileProblem.resizeTensor(Tensile::ContractionProblemGemm::TENSOR::A,
+                    {k, prob.m, prob.batch_count},
+                    {prob.row_stride_a, prob.col_stride_a, prob.batch_stride_a});
+        }
+        else
+        {
+            tensileProblem.resizeTensor(Tensile::ContractionProblemGemm::TENSOR::A,
+                    {prob.m, k, prob.batch_count},
+                    {prob.row_stride_a, prob.col_stride_a, prob.batch_stride_a});
+        }
+
+        // If B is transposed, swap the free and bound dimensions and their ranks
+        if(prob.trans_b != HIPBLAS_OP_N)
+        {
+            tensileProblem.resizeTensor(Tensile::ContractionProblemGemm::TENSOR::B,
+                    {prob.n, k, prob.batch_count},
+                    {prob.row_stride_b, prob.col_stride_b, prob.batch_stride_b});
+        }
+        else
+        {
+            tensileProblem.resizeTensor(Tensile::ContractionProblemGemm::TENSOR::B,
+                    {k, prob.n, prob.batch_count},
+                    {prob.row_stride_b, prob.col_stride_b, prob.batch_stride_b});
+        }
+
+        // clang-format on
+
+        // Descriptor for input matrix C
+        tensileProblem.resizeTensor(Tensile::ContractionProblemGemm::TENSOR::C,
+                                    {prob.m, prob.n, prob.batch_count},
+                                    {prob.row_stride_c, prob.col_stride_c, prob.batch_stride_c});
+
+        // Descriptor for output matrix D
+        tensileProblem.resizeTensor(Tensile::ContractionProblemGemm::TENSOR::D,
+                                    {prob.m, prob.n, prob.batch_count},
+                                    {prob.row_stride_d, prob.col_stride_d, prob.batch_stride_d});
+
+        tensileProblem.setAlphaType(Tensile_Tc);
+        tensileProblem.setBetaType(Tensile_Tc);
+
+        // HPA is active iff sizeof(compute type) > sizeof(input type)
+        tensileProblem.setHighPrecisionAccumulate(sizeof(Tc) > sizeof(Ti));
+
+        // set batch mode
+        tensileProblem.setStridedBatched(prob.strided_batch);
+
+        // alpha and beta are stored by value in Tensile::TypedContractionInputs
+        // alpha and beta are copied from host to Tensile::TypedContractionInputs
+        // If k==0, we do not need to dereference prob.alpha and can set
+        // tensileAlpha=0 Not positive if this is necessary here as well
+        typename AlphaBeta<Ti, To, Tc>::tensile_type tensileAlpha;
+        if(prob.k)
+            AlphaBeta<Ti, To, Tc>::copy(&tensileAlpha, prob.alpha);
+        else
+            memset(&tensileAlpha, 0, sizeof(tensileAlpha));
+        tensileProblem.setAlphaRestriction(Tensile::toScalarValueEnum(tensileAlpha));
+        tensileProblem.setBetaRestriction(Tensile::toScalarValueEnum((double)(*prob.beta)));
+
+        // Add problem predicates for CEqualsD
+        tensileProblem.setCEqualsD(prob.C == prob.D);
+
+        Tensile::ActivationType tensileAct = Tensile::ActivationType::None;
+        switch(prob.epilogue)
+        {
+        case ROCBLASLT_EPILOGUE_RELU:
+        case ROCBLASLT_EPILOGUE_RELU_BIAS:
+            tensileAct = Tensile::ActivationType::Relu;
+            break;
+        case ROCBLASLT_EPILOGUE_GELU:
+        case ROCBLASLT_EPILOGUE_GELU_BIAS:
+            tensileAct = Tensile::ActivationType::Gelu;
+            break;
+        case ROCBLASLT_EPILOGUE_BIAS:
+        case ROCBLASLT_EPILOGUE_DEFAULT:
+            break;
+        }
+        tensileProblem.setActivationEnumArg(tensileAct);
+
+        if(fallback && prob.bias == nullptr && prob.scaleD == nullptr
+           && tensileAct == Tensile::ActivationType::None)
+        {
+            tensileProblem.setUseBias(false);
+            tensileProblem.setActivationType(Tensile::ActivationType::None);
+            tensileProblem.setActivationHPA(false);
+            tensileProblem.setUseScaleD(false);
+        }
+        else
+        {
+            auto& d = tensileProblem.tensor(Tensile::ContractionProblemGemm::TENSOR::D);
+            // set bias mode
+            tensileProblem.setUseBias(true);
+            tensileProblem.setBias(hipblasDatatype_to_tensile_type(prob.bias_type), d.sizes()[0]);
+
+            // set ScaleD mode
+            tensileProblem.setUseScaleD(true);
+            tensileProblem.setScaleD(Tensile_Tc, d.sizes()[0]);
+
+            // set Actvation
+            tensileProblem.setActivationType(Tensile::ActivationType::All);
+            tensileProblem.setActivationHPA(sizeof(Tc) > sizeof(Ti));
+        }
+    }
+
     /***************************************************************
  * Construct the inputs to a Tensile ContractionProblemGemm        *
  ***************************************************************/
@@ -709,16 +836,11 @@ rocblaslt_status runContractionProblem(const rocblaslt_matmul_algo*             
 
         auto& adapter = get_library_and_adapter(&library, &deviceProp, prob.handle->device);
 
-        hardware          = Tensile::hip::GetDevice(*deviceProp);
-        auto tensile_prob = ConstructTensileProblem(prob);
-        if(algo->fallback && prob.bias == nullptr && prob.scaleD == nullptr
-           && tensile_prob.activationEnumArg() == Tensile::ActivationType::None)
-        {
-            tensile_prob.setUseBias(false);
-            tensile_prob.setActivationType(Tensile::ActivationType::None);
-            tensile_prob.setActivationHPA(false);
-            tensile_prob.setUseScaleD(false);
-        }
+        hardware = Tensile::hip::GetDevice(*deviceProp);
+        std::shared_ptr<Tensile::ContractionProblemGemm> tensile_prob
+            = std::static_pointer_cast<Tensile::ContractionProblemGemm>(algo->data2.ptr);
+        updateTensileProblem(algo->fallback, prob, *tensile_prob);
+
         std::shared_ptr<Tensile::ContractionSolution> solution
             = std::static_pointer_cast<Tensile::ContractionSolution>(algo->data.ptr);
 
@@ -732,10 +854,11 @@ rocblaslt_status runContractionProblem(const rocblaslt_matmul_algo*             
         }
         else
         {
-            adapter.launchKernels(solution->solve(tensile_prob, GetTensileInputs(prob), *hardware),
-                                  prob.stream,
-                                  nullptr,
-                                  nullptr);
+            adapter.launchKernels(
+                solution->solve((*tensile_prob), GetTensileInputs(prob), *hardware),
+                prob.stream,
+                nullptr,
+                nullptr);
             status = rocblaslt_status_success;
         }
     }
@@ -896,8 +1019,10 @@ void _convertToHeuristicResultArray(
     *returnAlgoCount = std::min((int)solutions.size(), requestedAlgoCount);
     for(size_t i = 0; i < *returnAlgoCount; i++)
     {
-        auto solution                          = solutions[i];
-        heuristicResultsArray[i].algo.data.ptr = std::static_pointer_cast<void>(solution);
+        auto solution                           = solutions[i];
+        heuristicResultsArray[i].algo.data.ptr  = std::static_pointer_cast<void>(solution);
+        heuristicResultsArray[i].algo.data2.ptr = std::static_pointer_cast<void>(
+            std::make_shared<Tensile::ContractionProblemGemm>(problem));
         heuristicResultsArray[i].algo.max_workspace_bytes = maxWorkSpaceBytes;
         heuristicResultsArray[i].algo.fallback            = fallbackCount-- > 0 ? true : false;
         heuristicResultsArray[i].state                    = rocblaslt_status_success;
