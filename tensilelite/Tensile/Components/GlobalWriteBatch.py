@@ -522,7 +522,7 @@ class GlobalWriteBatchWriter:
             localLoadCnt = self.localLoadIssued - self.biasLoadIssued[elementIdx]
 
           waitLoadCnt = 0
-          waitLoadCntScaleDVskip = waitLoadCnt
+
           if self.kernel["ProblemType"]["UseScaleD"] and (dataScaleD not in scaleDWaitDict):
             waitLoadCnt = waitLoadCnt + self.scaleDLoadIssued[elementIdx]
 
@@ -546,12 +546,12 @@ class GlobalWriteBatchWriter:
           waitLoadCnt = 0
           waitLocalLoadCnt = -1
 
-          if self.beta: waitLoadCnt = elementIdx + 1
+          if self.beta: waitLoadCnt = elementIdx
           if self.kernel["ProblemType"]["UseBias"] and (dataBias not in biasWaitDict):
             waitLocalLoadCnt = self.localLoadIssued - self.biasLoadIssued[elementIdx]
 
-          waitLoadCntScaleDVskip = waitLoadCnt
-          if self.kernel["ProblemType"]["UseScaleD"] and (dataScaleD not in scaleDWaitDict):
+
+          if self.kernel["ProblemType"]["UseScaleD"]:
             waitLoadCnt = waitLoadCnt + self.scaleDLoadIssued[elementIdx]
 
           vmcnt = self.loadsIssued + self.loadsScaleDIssued - waitLoadCnt - 1
@@ -561,7 +561,7 @@ class GlobalWriteBatchWriter:
             vmComment = "{} = {} - {} - 1".format(vmcnt, self.loadsIssued, waitLoadCnt)
           else:
             waitStoreCnt = self.storesIssued if not self.kernel["GroupLoadStore"] else 0
-            vmComment = " {} = {}{},{} - {},{},{} + {} - 1".format(vmcnt + waitStoreCnt,
+            vmComment = " {} = {}({},{}) - {}({},{}) + {} - 1".format(vmcnt + waitStoreCnt,
                                                             self.loadsIssued+self.loadsScaleDIssued, self.loadsIssued, self.loadsScaleDIssued,
                                                             waitLoadCnt, elementIdx, self.scaleDLoadIssued[elementIdx],
                                                             waitStoreCnt)
