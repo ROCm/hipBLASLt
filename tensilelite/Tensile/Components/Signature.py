@@ -24,6 +24,7 @@
 
 from ..Component import Signature
 from ..Common import globalParameters
+from ..Utils import DataDirection
 from ..TensileInstructions import SignatureBase
 from ..TensileInstructions import SignatureValueKind as SVK
 
@@ -120,13 +121,15 @@ class SignatureCOV3(Signature):
         else:
             signature.addArg(                      "padding", SVK.SIG_VALUE,              "u32")
 
-        if kernel["ProblemType"]["UseBias"] and (kernel["GlobalSplitU"] == 1):
+        if writer.states.useBias == DataDirection.READ:
             signature.addArg("bias", SVK.SIG_GLOBALBUFFER, biasValueType, "generic")
+        elif writer.states.useBias == DataDirection.WRITE:
+            signature.addArg("ws_bias", SVK.SIG_GLOBALBUFFER, biasValueType, "generic")
 
         if kernel["ProblemType"]["UseE"] and (kernel["GlobalSplitU"] == 1):
             signature.addArg(      "E", SVK.SIG_GLOBALBUFFER, cptValueType, "generic")
 
-        if kernel["ProblemType"]["UseBias"] and (kernel["GlobalSplitU"] == 1):
+        if writer.states.useBias == DataDirection.READ:
             signature.addArg("biasType",    SVK.SIG_VALUE,        "u32")
 
         if kernel["ProblemType"]["UseE"] and (kernel["GlobalSplitU"] == 1):

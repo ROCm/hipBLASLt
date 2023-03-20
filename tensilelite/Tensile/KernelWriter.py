@@ -35,6 +35,7 @@ from .Component import Component
 from .CustomKernels import isCustomKernelConfig
 from .SolutionStructs import Solution, isPackedIndex
 from .AsmMemoryInstruction import MemoryInstruction
+from .Utils import DataDirection
 
 from .Activation import ActivationModule
 
@@ -219,6 +220,9 @@ class StateValues:
   numLocalWriteModPerMfma: int           = 0
 
   perIterLocalWriteCanSkip: List[int]    = field(init=False)
+
+  # Epilogue states
+  useBias = DataDirection.NONE
 
   def __post_init__(self):
     """ How many SGPRs does it take to have one bit per lane? """
@@ -3453,6 +3457,12 @@ class KernelWriter(metaclass=abc.ABCMeta):
     canCheckValueC = canCheckValueC or kernel["ProblemType"]["DataType"].isSingle()
     canCheckValueC = canCheckValueC or (kernel["ProblemType"]["DataType"].isInt8() and kernel["ProblemType"]["HighPrecisionAccumulate"])
     assert not self.db["CheckValueC"] or canCheckValueC
+
+    # Epilogue related
+    if kernel["ProblemType"]["UseBias"] and (kernel["GlobalSplitU"] == 1):
+      self.states.useBias = DataDirection.WRITE if kernel["ProblemType"]["Gradient"] else DataDirection.READ
+    else:
+      self.states.useBias = DataDirection.NONE
 
     if self.db["InitLds"] : print ("\n***WARNING: InitLds enabled, may impact performance\n")
     if self.db["InitSgpr"] : print ("\n***WARNING: InitSgpr enabled, may impact performance\n")

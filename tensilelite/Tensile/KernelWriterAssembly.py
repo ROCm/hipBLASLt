@@ -43,6 +43,7 @@ from .KernelWriterModules import *
 from .SolutionStructs import isPackedIndex
 from .AsmStoreState import StoreState
 from .Activation import ActivationType
+from .Utils import DataDirection
 
 from math import ceil, log
 from copy import deepcopy
@@ -909,12 +910,14 @@ class KernelWriterAssembly(KernelWriter):
     runActivation = True if ((kernel["ProblemType"]["ActivationType"] != 'none') and (kernel["GlobalSplitU"] == 1) \
         and kernel["ActivationFused"]) else False
     storeSgprLoad = 0
-    if kernel["ProblemType"]["UseBias"] and (kernel["GlobalSplitU"] == 1):
+    if self.states.useBias != DataDirection.NONE:
       self.states.numSgprAddressBias = 2 # 64-bit
-      if runActivation:
-        self.states.BiasType = max(1, kernel["ProblemType"]["DestDataType"].numRegisters())
-      else:
-        self.states.BiasType = 1
+      self.states.BiasType = 0
+      if self.states.useBias == DataDirection.READ:
+        if runActivation:
+          self.states.BiasType = max(1, kernel["ProblemType"]["DestDataType"].numRegisters())
+        else:
+          self.states.BiasType = 1
       storeSgprLoad += self.states.numSgprAddressBias + self.states.BiasType
     if kernel["ProblemType"]["UseE"] and (kernel["GlobalSplitU"] == 1):
       storeSgprLoad += self.states.rpga + self.states.e.numSgprStrides
@@ -3316,7 +3319,7 @@ class KernelWriterAssembly(KernelWriter):
       if kernel["ProblemType"]["UseE"] and (kernel["GlobalSplitU"] == 1):
         module.add(RegSet("s", "sgprAddressE", soffset))
         soffset += self.states.rpga
-      if self.states.numSgprAddressBias:
+      if self.states.BiasType:
         module.add(RegSet("s", "sgprBiasType", soffset))
         soffset += self.states.BiasType
       if kernel["ProblemType"]["UseE"] and (kernel["GlobalSplitU"] == 1):
@@ -3339,7 +3342,7 @@ class KernelWriterAssembly(KernelWriter):
       self.defineSgpr("SrdC", 4, 4)
       module.add(RegSet("s", "sgprSrdC", self.sgprs["SrdC"]))
       module.add(RegSet("s", "sgprSrdD", self.sgprs["SrdD"]))
-    if kernel["ProblemType"]["UseBias"] and (kernel["GlobalSplitU"] == 1):
+    if self.states.useBias != DataDirection.NONE:
       self.defineSgpr("SrdBias", 4, 4)
       module.add(RegSet("s", "sgprSrdBias", self.sgprs["SrdBias"]))
 
@@ -5673,7 +5676,7 @@ class KernelWriterAssembly(KernelWriter):
             dst=vgpr(self.vgprs.addrE+1), \
             src=sgpr("AddressE+1"), \
             comment="sgpr -> vgpr"))
-      if kernel["ProblemType"]["UseBias"] and (kernel["GlobalSplitU"] == 1):
+      if self.states.useBias == DataDirection.READ:
         self.vgprs.addrBias = self.vgprPool.checkOut(2, 'addrBias')
         module.add(VMovB32( \
             dst=vgpr(self.vgprs.addrBias+0), \
@@ -5757,7 +5760,7 @@ class KernelWriterAssembly(KernelWriter):
             dst=vgpr(self.vgprs.addrE+1), \
             src=sgpr("AddressE+1"), \
             comment="sgpr -> vgpr"))
-      if kernel["ProblemType"]["UseBias"] and (kernel["GlobalSplitU"] == 1):
+      if self.states.useBias == DataDirection.READ:
         self.vgprs.addrBias = self.vgprPool.checkOut(2, 'addrBias')
         module.add(VMovB32( \
             dst=vgpr(self.vgprs.addrBias+0), \
@@ -5801,7 +5804,7 @@ class KernelWriterAssembly(KernelWriter):
       self.vgprPool.checkIn(self.vgprs.addrC)
       if kernel["ProblemType"]["UseE"] and (kernel["GlobalSplitU"] == 1):
         self.vgprPool.checkIn(self.vgprs.addrE)
-      if kernel["ProblemType"]["UseBias"] and (kernel["GlobalSplitU"] == 1):
+      if self.states.useBias == DataDirection.READ:
         self.vgprPool.checkIn(self.vgprs.addrBias)
       if kernel["ProblemType"]["UseScaleD"] and (kernel["GlobalSplitU"] == 1):
         self.vgprPool.checkIn(self.vgprs.addrScaleD)
@@ -6414,7 +6417,7 @@ class KernelWriterAssembly(KernelWriter):
                                                  vgprFp32Nan=(bf16CVTVgpr+2), vgprBf16Inc=(bf16CVTVgpr+3))
 
     # Add bias lds
-    if kernel["ProblemType"]["UseBias"] and (kernel["GlobalSplitU"] == 1):
+    if self.states.useBias == DataDirection.READ:
       # Init bias Srd
       labelStr = self.labels.getNameInc("Bias")
       module.add(allocPostLoopSrdSuppress("Bias", labelStr, sgprLength=sgpr("SizeI")))
@@ -6992,7 +6995,7 @@ class KernelWriterAssembly(KernelWriter):
     """
     # Add bias here
     module = Module("addBias")
-    if kernel["ProblemType"]["UseBias"] and (kernel["GlobalSplitU"] == 1):
+    if self.states.useBias == DataDirection.READ:
       bps = dataType.numBytes() * gwvw
 
       useBuffer = kernel["BufferLoad"]
@@ -7041,7 +7044,7 @@ class KernelWriterAssembly(KernelWriter):
     return module
 
   def addBiasLoad(self, dataType, kernel, ss, addrCalc, biasVgpr, isLocal=False):
-    if isLocal and kernel["ProblemType"]["UseBias"] and (kernel["GlobalSplitU"] == 1):
+    if isLocal and (self.states.useBias == DataDirection.READ):
       module = Module("addBias")
       dst = vgpr(biasVgpr)
       src = vgpr(addrCalc.addrBiasVgpr)
@@ -7057,7 +7060,7 @@ class KernelWriterAssembly(KernelWriter):
         module.add(DSLoadB128(dst=vgpr(biasVgpr, 4), src=src, readToTempVgpr=False, ds=ds, comment="load bias"))
       return module
 
-    if kernel["ProblemType"]["UseBias"] and (kernel["GlobalSplitU"] == 1):
+    if self.states.useBias == DataDirection.READ:
       if kernel["BufferLoad"]:
         addr0 = vgpr(addrCalc.addrBiasVgpr)
         addr1 = sgpr("SrdBias", 4)
