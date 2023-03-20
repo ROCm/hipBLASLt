@@ -1,6 +1,6 @@
 ################################################################################
 #
-# Copyright (C) 2022 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -22,10 +22,16 @@
 #
 ################################################################################
 
+from enum import Enum
 from .Common import ProgressBar
 
 import functools
 import sys
+
+class DataDirection(Enum):
+  NONE  = 0,
+  READ  = 1,
+  WRITE = 2
 
 class SpinnyThing:
     def __init__(self):

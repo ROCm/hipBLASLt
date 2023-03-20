@@ -25,6 +25,7 @@ from ..Component import GlobalWriteComponents
 from ..SolutionStructs import Solution
 from ..Activation import ActivationModule, ActivationType
 from ..AsmStoreState import StoreState
+from ..Utils import DataDirection
 from ..TensileInstructions import Label, Module, EXEC, SDWAModifiers, VCC, SelectBit, \
                             vgpr, sgpr, replaceHolder, SaturateCastType, VCvtBF16toFP32, \
                             DataType, CvtType, RoundType
@@ -272,7 +273,7 @@ class GlobalWriteBatchWriter:
         self.loadE = True
       else:
         self.loadE = False
-      if self.kernel["ProblemType"]["UseBias"]:
+      if self.parentWriter.states.useBias == DataDirection.READ:
         module.add(addrCalc.emitLdChange(self.kernel, self.ss, 'Bias', self.edge, self.beta, mask, (elementIdx == 0), self.tmpVgpr, self.tmpSgpr, addrBiasVgpr, self.addrBias))
         if dataBias not in loadedDataBias:
           if self.kernel["GroupLoadStore"]:
@@ -483,7 +484,7 @@ class GlobalWriteBatchWriter:
     ########################################
     # wait for batched load
     if not interleaveStoreVmcnt:
-      biasWait = self.kernel["ProblemType"]["UseBias"] and (self.kernel["GlobalSplitU"] == 1)
+      biasWait = (self.parentWriter.states.useBias == DataDirection.READ)
       scaleDWait = self.kernel["ProblemType"]["UseScaleD"] and (self.kernel["GlobalSplitU"] == 1)
       if self.beta or self.loadE:
         extraStr = " / Bias " if biasWait else ""
@@ -543,11 +544,11 @@ class GlobalWriteBatchWriter:
       # at least two stores so does some combining across VI -
       # for example assuming we can have two elements and can use pk_mul
       # here:
-      if (self.beta or self.loadE or ((self.kernel["ProblemType"]["UseBias"] or self.kernel["ProblemType"]["UseScaleD"]) and (self.kernel["GlobalSplitU"] == 1))) and interleaveStoreVmcnt:
+      if (self.beta or self.loadE or (self.parentWriter.states.useBias == DataDirection.READ) or (self.kernel["ProblemType"]["UseScaleD"] and (self.kernel["GlobalSplitU"] == 1))) and interleaveStoreVmcnt:
         if (not self.beta) and (not self.loadE): # If no beta or loadE
 
           localLoadCnt = -1
-          if self.kernel["ProblemType"]["UseBias"] and (dataBias not in biasWaitDict):
+          if (self.parentWriter.states.useBias == DataDirection.READ) and (dataBias not in biasWaitDict):
             localLoadCnt = self.localLoadIssued - self.biasLoadIssued[elementIdx]
 
           waitLoadCnt = 0
@@ -568,7 +569,7 @@ class GlobalWriteBatchWriter:
             if self.kernel["ProblemType"]["UseScaleD"]:
               module.addSpaceLine()
               module.add(SWaitCnt(vmcnt=vmcnt, vscnt=waitStoreCnt, comment="wait scaleD (interleaved)" + vmComment))
-            if self.kernel["ProblemType"]["UseBias"]:
+            if (self.parentWriter.states.useBias == DataDirection.READ):
               module.addSpaceLine()
               module.add(SWaitCnt(lgkmcnt=localLoadCnt, comment="wait bias lds load (interleaved)"))
         else:
@@ -577,7 +578,7 @@ class GlobalWriteBatchWriter:
 
           if self.beta: waitLoadCnt += (elementIdx + 1)
           if self.loadE: waitLoadCnt += (elementIdx + 1)
-          if self.kernel["ProblemType"]["UseBias"] and (dataBias not in biasWaitDict):
+          if (self.parentWriter.states.useBias == DataDirection.READ) and (dataBias not in biasWaitDict):
             waitLocalLoadCnt = self.localLoadIssued - self.biasLoadIssued[elementIdx]
 
 
@@ -604,14 +605,14 @@ class GlobalWriteBatchWriter:
 
       if self.beta:
         module.add(self._addSumAlphaWithCBeta(self.kernel, self.ss, self.gwvw, elementIdx, vc0, self.tmpVgpr, self.bf16CVTVgprStruct))
-      elif ((self.kernel["ProblemType"]["UseBias"] and (self.kernel["GlobalSplitU"] == 1)) or self.kernel["ActivationFuncCall"]) and not self.applyAlpha: # case of alpha=1 and beta=0
+      elif ((self.parentWriter.states.useBias == DataDirection.READ) or self.kernel["ActivationFuncCall"]) and not self.applyAlpha: # case of alpha=1 and beta=0
         if (self.kernel["ProblemType"]["DestDataType"].isInt8() or self.kernel["ProblemType"]["DestDataType"].isInt32()) and self.kernel["ProblemType"]["ComputeDataType"].isSingle():
           module.add(convertData(self.gwvw, self.ss.elementSumIdx[elementIdx], cvtType=CvtType.CVT_I32_to_F32, \
                                       inputPrefix="ValuC+", prefixOffset=self.parentWriter.states.c.startVgprValu))
 
       # Add bias
       mergeActFuncCall = False
-      if self.kernel["ProblemType"]["UseBias"] and (self.kernel["GlobalSplitU"] == 1):
+      if self.parentWriter.states.useBias == DataDirection.READ:
         if activationCDataType == self.kernel["ProblemType"]["ComputeDataType"] and self.kernel["ActivationFuncCall"]:
           mergeActFuncCall = True
         if (self.kernel["ProblemType"]["Gradient"] and self.kernel["ProblemType"]["ActivationType"] != 'none' and self.kernel["ProblemType"]["UseE"]) and (self.kernel["GlobalSplitU"] == 1):
@@ -704,11 +705,11 @@ class GlobalWriteBatchWriter:
           packModule = self.packdata(self.gwvw, destIdx, self.ss.elementSumIdx[elementIdx], bf16CVTVgprStruct=self.bf16CVTVgprStruct,
                                      tmpS01=self.tmpS01, laneSGPRC=self.laneSGPRC, inputPrefix="ValuC+", prefixOffset=self.parentWriter.states.c.startVgprValu)
         elif self.kernel["ProblemType"]["DestDataType"].isInt32():
-          if self.kernel["ProblemType"]["ComputeDataType"].isSingle() and ((self.kernel["ProblemType"]["UseBias"] and (self.kernel["GlobalSplitU"] == 1)) or self.kernel["ActivationFuncCall"] or self.applyAlpha or self.beta):
+          if self.kernel["ProblemType"]["ComputeDataType"].isSingle() and ((self.parentWriter.states.useBias == DataDirection.READ) or self.kernel["ActivationFuncCall"] or self.applyAlpha or self.beta):
             convertModule = convertData(self.gwvw, self.ss.elementSumIdx[elementIdx], cvtType=CvtType.CVT_F32_to_I32, \
                                         inputPrefix="ValuC+", prefixOffset=self.parentWriter.states.c.startVgprValu)
         elif self.kernel["ProblemType"]["DestDataType"].isInt8():
-          if self.kernel["ProblemType"]["ComputeDataType"].isSingle() and ((self.kernel["ProblemType"]["UseBias"] and (self.kernel["GlobalSplitU"] == 1)) or self.kernel["ActivationFuncCall"] or self.applyAlpha or self.beta):
+          if self.kernel["ProblemType"]["ComputeDataType"].isSingle() and ((self.parentWriter.states.useBias == DataDirection.READ) or self.kernel["ActivationFuncCall"] or self.applyAlpha or self.beta):
             convertModule = convertData(self.gwvw, self.ss.elementSumIdx[elementIdx], cvtType=CvtType.CVT_F32_to_I32, roundType=RoundType.ROUND_TO_NEAREST_EVEN, \
                                         inputPrefix="ValuC+", prefixOffset=self.parentWriter.states.c.startVgprValu)
           packModule = self.packdata(self.gwvw, destIdx, self.ss.elementSumIdx[elementIdx], self.tmpVgpr, self.tmpS01,
