@@ -44,9 +44,9 @@
 #ifndef _HIPBLASLT_H_
 #define _HIPBLASLT_H_
 
-#include "hipblaslt-export.h"
-#include "hipblaslt-version.h"
-#include <hipblas.h>
+#include "hipblaslt/hipblaslt-export.h"
+#include "hipblaslt/hipblaslt-version.h"
+#include <hipblas/hipblas.h>
 
 #include <hip/hip_bfloat16.h>
 #include <hip/hip_complex.h>
