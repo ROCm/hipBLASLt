@@ -1,4 +1,5 @@
 # hipBLASLt
+
 hipBLASLt is a library that provides general matrix-matrix operations.
 hipBLASLt is created using the HIP programming language and optimized for AMD's latest discrete GPUs.
 hipBLASLt provides flexible APIs to let users set attributes for solution selection.\
@@ -19,10 +20,20 @@ Here are data type supported list:
 | fp16  | fp16  | fp16  | fp16  | fp32  |
 | bf16  | bf16  | bf16  | bf16  | fp32  |
 
-## Documentation (TBD)
-TBD
+## Documentation 
+
+Run the steps below to build documentation locally.
+
+```
+cd docs
+
+pip3 install -r .sphinx/requirements.txt
+
+python3 -m sphinx -T -E -b html -d _build/doctrees -D language=en . _build/html
+```
 
 ## Requirements
+
 * Git
 * CMake 3.16.8 or later
 * python3.7 or later
@@ -30,11 +41,13 @@ TBD
 * AMD [ROCm] 5.5 or later
 
 ## Required ROCM library
+
 * hipBLAS
 
 ## Quickstart hipBLASLt build and install
 
 #### Install script
+
 You can build hipBLASLt using the *install.sh* script
 ```
 # Clone hipBLASLt using git
@@ -54,6 +67,7 @@ cd hipBLASLt
 ```
 
 ## Unit tests
+
 To build unit tests, hipBLASLt has to be built with --clients.\
 All unit tests are in path build/release/clients/staging/.\
 Please check these links for more information.\
@@ -62,9 +76,11 @@ Please check these links for more information.\
 [example_hipblaslt_preference](clients/samples/README.md)
 
 ## Support
+
 Please use [the issue tracker][] for bugs and feature requests.
 
 ## License
+
 The [license file][] can be found in the main repository.
 
 [ROCm]: https://github.com/RadeonOpenCompute/ROCm
