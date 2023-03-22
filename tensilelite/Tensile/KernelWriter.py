@@ -2850,14 +2850,6 @@ class KernelWriter(metaclass=abc.ABCMeta):
 
     assert self.states.bpeAB == tensorParametersA["bpe"]
     assert self.states.bpeAB == tensorParametersB["bpe"]
-
-    # Store SC1 WA for gfx940
-    if self.states.version == (9,4,0):
-      if globalParameters["ForceStoreSC1WA"]:
-        kernel["NonTemporalD"] |= 2
-        kernel["NonTemporalC"] |= 2
-        kernel["NonTemporalA"] |= 2
-        kernel["NonTemporalB"] |= 2
   
     #######################################L
     # Available Memory Instructions
