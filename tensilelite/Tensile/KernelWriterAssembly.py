@@ -6003,7 +6003,10 @@ class KernelWriterAssembly(KernelWriter):
       module.add(SSetPrior(prior=1))
     if kernel["NonTemporalD"]%2==1:
       ntStr += " " + getGlcBitName(kernel["MemoryModifierFormat"])
-    if kernel["NonTemporalD"]//2==1:
+
+    #Store SC1 WA for gfx940
+    forceSC1 = (globalParameters["CurrentISA"] == (9,4,0)) and (globalParameters["ForceStoreSC1WA"]) #Force SC1 WA
+    if kernel["NonTemporalD"]//2==1 or forceSC1:
       ntStr += " " + getSlcBitName(kernel["MemoryModifierFormat"])
 
     addr1 = sgpr("SrdD", 4)
@@ -7113,7 +7116,8 @@ class KernelWriterAssembly(KernelWriter):
         assert 0, "bad bps"
 
     if useBuffer:
-      mubuf = MUBUFModifiers(offen=True, offset12=offset, glc=glc, slc=slc, memoryModifierFormat=memoryModifierFormat)
+      forceSC1 = (globalParameters["CurrentISA"] == (9,4,0)) and (globalParameters["ForceStoreSC1WA"]) #Force SC1 WA
+      mubuf = MUBUFModifiers(offen=True, offset12=offset, glc=glc, slc=slc, memoryModifierFormat=memoryModifierFormat, forceSC1=forceSC1)
       # buffer_load offset field is 12-bit.
       # if offset >= 4096, use soffset instead
       if offset >= 4096:
@@ -7127,7 +7131,8 @@ class KernelWriterAssembly(KernelWriter):
         bufferStoreImpl(0, mubuf)
 
     else:
-      flat = FLATModifiers(glc=glc, slc=slc, memoryModifierFormat=memoryModifierFormat)
+      forceSC1 = (globalParameters["CurrentISA"] == (9,4,0)) and (globalParameters["ForceStoreSC1WA"]) #Force SC1 WA
+      flat = FLATModifiers(glc=glc, slc=slc, memoryModifierFormat=memoryModifierFormat, forceSC1=forceSC1)
       if bps==2 and hi16:
         module.add(FlatStoreD16HIB16(vaddr=addr0, src=vgpr(srcVgpr*2), flat=flat, comment=comment))
       elif bps==2 and not hi16:
@@ -7239,7 +7244,11 @@ class KernelWriterAssembly(KernelWriter):
       # if GWVW > Vw, might need to support loops to
       # implement wider stores
       isGlc = False
-      isSlc = False
+
+      #Store SC1 WA for gfx940
+      forceSC1 = (globalParameters["CurrentISA"] == (9,4,0)) and (globalParameters["ForceStoreSC1WA"]) #Force SC1 WA
+      isSlc = forceSC1
+
       if tc == 'D':
         if kernel["NonTemporalD"]%2==1:
           isGlc = True
