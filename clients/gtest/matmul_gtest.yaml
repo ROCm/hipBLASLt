@@ -113,13 +113,13 @@ Tests:
   alpha: 2
   beta: 3
 
-#- name: matmul_deepbench
-#  category: nightly
-#  function:
-#    matmul: *real_precisions
-#  matrix_size: *deepbench_sizes
-#  alpha_beta: *deepbench_alpha_beta_range
-#  transA_transB: *deepbench_transA_transB_range
+- name: matmul_deepbench
+  category: nightly
+  function:
+    matmul: *real_precisions
+  matrix_size: *deepbench_sizes
+  alpha_beta: *deepbench_alpha_beta_range
+  transA_transB: *deepbench_transA_transB_range
 
 #TODO: enable it after enable fp16altimpl
 #- name: matmul_deepbench_alt
