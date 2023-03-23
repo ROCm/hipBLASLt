@@ -186,7 +186,7 @@ class StoreState:
                 self.sharedColCVgprs = kernelWriter.vgprPool.checkOut(self.numAddrVgpr, "sharedColCVgprs for packed elements")
             else:
                 self.sharedColCVgprs = self.sharedColDVgprs
-            if self.useBias == DataDirection.READ:
+            if self.useBias != DataDirection.NONE:
                 self.sharedColBiasVgprs = kernelWriter.vgprPool.checkOut(self.numAddrVgpr, "sharedColBiasVgprs for packed elements")
             else:
                 self.sharedColBiasVgprs = None
@@ -201,14 +201,15 @@ class StoreState:
         elif self.optSingleColVgpr:
             self.numAddrVgpr = 1
             self.sharedColDVgprs = kernelWriter.vgprPool.checkOut(1, "sharedColDVgprs")
-            self.singleColEAddrUpdated = False
-            self.singleColDAddrUpdated = False
-            self.singleColCAddrUpdated = False
+            self.singleColBiasAddrUpdated = False
+            self.singleColEAddrUpdated    = False
+            self.singleColDAddrUpdated    = False
+            self.singleColCAddrUpdated    = False
             if kernel["ProblemType"]["UseBeta"]:
                 self.sharedColCVgprs = kernelWriter.vgprPool.checkOut(1, "sharedColCVgprs")
             else:
                 self.sharedColCVgprs = self.sharedColDVgprs
-            if self.useBias == DataDirection.READ:
+            if self.useBias != DataDirection.NONE:
                 self.sharedColBiasVgprs = kernelWriter.vgprPool.checkOut(1, "sharedColBiasVgprs for packed elements")
             else:
                 self.sharedColBiasVgprs = None
@@ -242,10 +243,11 @@ class StoreState:
             if (kernel["ProblemType"]["Gradient"] and kernel["ProblemType"]["ActivationType"] != 'none'):
                 numVgprs = int(ceil(kernel["ProblemType"]["ComputeDataType"].numRegisters()))
                 self.numVgprsPerElement += numVgprs * gwvw # Loaded data
-        if self.useBias == DataDirection.READ:
+        if self.useBias != DataDirection.NONE:
             self.numVgprsPerElement += self.cfg.numVgprsPerAddr  # Bias address
-            numVgprs = int(ceil(kernel["ProblemType"]["ComputeDataType"].numRegisters()))
-            self.numVgprsPerElement += numVgprs * gwvw  # Loaded data
+            if self.useBias == DataDirection.READ:
+                numVgprs = int(ceil(kernel["ProblemType"]["ComputeDataType"].numRegisters()))
+                self.numVgprsPerElement += numVgprs * gwvw  # Loaded data
 
         if kernel["ProblemType"]["UseScaleD"] and (kernel["GlobalSplitU"] == 1):
             self.numVgprsPerElement += self.cfg.numVgprsPerAddr  # ScaleD address
@@ -371,7 +373,7 @@ class StoreState:
                 elementCol   = trunc(elementCol)
                 addrDVgpr    = self.sharedColDVgprs+elementCol
                 addrCVgpr    = self.sharedColCVgprs+elementCol
-                if self.useBias == DataDirection.READ:
+                if self.useBias != DataDirection.NONE:
                     addrBiasVgpr = self.sharedColBiasVgprs+elementCol
                 else:
                     addrBiasVgpr = None
@@ -394,7 +396,7 @@ class StoreState:
                         int(ceil(self.cfg.numVgprsPerAddr)), "loadCBatch-addr for ei=%u"%(elementIdx), preventOverflow=not isOptNLL)
                 else:
                     addrCVgpr = addrDVgpr
-                if self.useBias == DataDirection.READ:
+                if self.useBias != DataDirection.NONE:
                     addrBiasVgpr = kw.vgprPool.checkOutAligned(self.cfg.numVgprsPerAddr, \
                         int(ceil(self.cfg.numVgprsPerAddr)), "loadBiasBatch-addr for ei=%u"%(elementIdx), preventOverflow=not isOptNLL)
                 else:
@@ -524,9 +526,10 @@ class StoreState:
             if self.optSharedColVgpr:
                 pass # Nothing to reset
             elif self.optSingleColVgpr:
-                self.singleColEAddrUpdated = False
-                self.singleColDAddrUpdated = False
-                self.singleColCAddrUpdated = False
+                self.singleColBiasAddrUpdated = False
+                self.singleColEAddrUpdated    = False
+                self.singleColDAddrUpdated    = False
+                self.singleColCAddrUpdated    = False
             else:
                 pass # Nothing to reset
             # setup store element
