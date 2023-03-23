@@ -600,7 +600,7 @@ namespace Tensile
                                                  : multiply<Accumulator>(beta, cPtr[cIndex]));
 
                 // bias
-                if(problem.useBias() && inputs.bias)
+                if(problem.useBias() && inputs.bias && !problem.useGradient())
                 {
                     int         pos = int(dNum % problem.d().sizes()[0]);
                     Accumulator bias

@@ -392,7 +392,10 @@ namespace Tensile
             runActivation = true;
         if(problemType.useBias && (sizeMapping.globalSplitU == 1))
         {
-            args.append<void const*>("bias", inputs.bias);
+            if(problemType.useGradient)
+                args.append<void const*>("ws_bias", inputs.ws);
+            else
+                args.append<void const*>("bias", inputs.bias);
         }
 
         if(problemType.useE)
@@ -400,7 +403,7 @@ namespace Tensile
             args.append<void*>("e", inputs.e);
         }
 
-        if(problemType.useBias && (sizeMapping.globalSplitU == 1))
+        if(problemType.useBias && (sizeMapping.globalSplitU == 1) && (!problemType.useGradient))
         {
             if(runActivation)
             {
@@ -671,7 +674,7 @@ namespace Tensile
         else
             rv.args.append<void const* const*>("batchC", inputs.batchC);
 
-        if(problemType.useBias && sizeMapping.globalAccumulation == 0)
+        if(problemType.useBias && sizeMapping.globalAccumulation == 0 && (!problemType.useGradient))
         {
             rv.args.append<void const*>("bias", inputs.bias);
         }
@@ -732,7 +735,8 @@ namespace Tensile
             name += "_GB";
         }
 
-        if(problemType.useBias && (sizeMapping.globalAccumulation == 0))
+        if(problemType.useBias && (sizeMapping.globalAccumulation == 0)
+           && (!problemType.useGradient))
         {
             auto s = TypeAbbrev(problem.biasType());
             name += ("_Bias" + s);
@@ -806,7 +810,8 @@ namespace Tensile
 
         if(problemType.useBias)
         {
-            rv.args.append<void const*>("bias", inputs.bias);
+            if(!problemType.useGradient)
+                rv.args.append<void const*>("bias", inputs.bias);
         }
         if(problemType.useScaleD) // GSU dep
         {
@@ -904,7 +909,10 @@ namespace Tensile
         if(problemType.useBias)
         {
             auto s = TypeAbbrev(problem.biasType());
-            name += ("_Bias" + s);
+            if(problemType.useGradient)
+                name += ("_DBias" + s);
+            else
+                name += ("_Bias" + s);
         }
 
         if(problemType.useE)

@@ -262,7 +262,9 @@ namespace Tensile
                         rv.back().setWorkspaceSize(m_maxWorkspaceSize);
                         if(k < m_biasTypeArgs.size())
                         {
-                            rv.back().setBias(m_biasTypeArgs[k], rv.back().d().sizes()[0]);
+                            bool isBiasOutput = m_useGradient ? true : false;
+                            rv.back().setBias(
+                                m_biasTypeArgs[k], rv.back().d().sizes()[0], isBiasOutput);
                         }
                         else
                         {
