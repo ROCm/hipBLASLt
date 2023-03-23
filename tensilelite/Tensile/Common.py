@@ -946,7 +946,10 @@ validParameters = {
 
     # Alternative implementation for activation function
     # Currently only supports GSU == 1
-    "ActivationAlt":               [False, True]
+    "ActivationAlt":               [False, True],
+
+    # Do workgroup reduction. Currently for DBias
+    "WorkGroupReduction":          [False]
     }
 
 
@@ -1027,7 +1030,8 @@ defaultBenchmarkCommonParameters = [
     {"MIArchVgpr":                [ False ] },
     {"ActivationFused":           [ True  ] },
     {"ActivationFuncCall":        [ True  ] },
-    {"ActivationAlt":             [ False ] }
+    {"ActivationAlt":             [ False ] },
+    {"WorkGroupReduction":        [ False ] }
     ]
 
 # dictionary of defaults comprised of default option for each parameter

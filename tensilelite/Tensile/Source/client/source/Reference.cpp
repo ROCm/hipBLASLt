@@ -211,8 +211,9 @@ namespace Tensile
                                        || std::is_same<BFloat16, Accumulator>::value
                                        || std::is_same<int32_t, Accumulator>::value
                                        || std::is_same<int8_t, Accumulator>::value,
-                                   bool> = true>
-        void SetValue(DataType dataType, Accumulator& src, void* dstPtr, int pos)
+                                   bool>
+                  = true>
+        void SetValue(DataType dataType, Accumulator& src, void* dstPtr, size_t pos)
         {
             switch(dataType)
             {
@@ -266,8 +267,9 @@ namespace Tensile
                                        && !std::is_same<BFloat16, Accumulator>::value
                                        && !std::is_same<int32_t, Accumulator>::value
                                        && !std::is_same<int8_t, Accumulator>::value,
-                                   bool> = true>
-        void SetValue(DataType dataType, Accumulator& src, void* dstPtr, int pos)
+                                   bool>
+                  = true>
+        void SetValue(DataType dataType, Accumulator& src, void* dstPtr, size_t pos)
         {
             switch(dataType)
             {
@@ -432,10 +434,21 @@ namespace Tensile
                                                               ContractionInputs const&      inputs,
                                                               size_t elementsToValidate)
         {
-            size_t validationStride = 1;
-            if(elementsToValidate > 0 && elementsToValidate < problem.d().totalLogicalElements())
-                validationStride
-                    = NextPrime(problem.d().totalAllocatedElements() / elementsToValidate);
+            Accumulator* ws                   = nullptr;
+            size_t       validationStrideGemm = 1;
+            if(problem.useGradient() && problem.useBias())
+            {
+                validationStrideGemm = 1;
+                ws                   = (Accumulator*)malloc(problem.d().totalAllocatedElements()
+                                          * sizeof(Accumulator));
+            }
+            else
+            {
+                if(elementsToValidate > 0
+                   && elementsToValidate < problem.d().totalLogicalElements())
+                    validationStrideGemm
+                        = NextPrime(problem.d().totalAllocatedElements() / elementsToValidate);
+            }
 
             // Convert void* to pointers
             typename Inputs::AType const* aPtr = (typename Inputs::AType const*)inputs.a;
@@ -499,8 +512,9 @@ namespace Tensile
                 }
             }
 
+            // gemm
 #pragma omp parallel for
-            for(size_t dNum = 0; dNum < d.totalLogicalElements(); dNum += validationStride)
+            for(size_t dNum = 0; dNum < d.totalLogicalElements(); dNum += validationStrideGemm)
             {
                 std::vector<int64_t> aCoord(a.dimensions());
                 std::vector<int64_t> bCoord(b.dimensions());
@@ -648,7 +662,63 @@ namespace Tensile
                         problem.alphaType(), inputs.scaleD, pos, aConjugate);
                     resultD *= scaleD;
                 }
+                if(problem.useBias() && problem.useGradient())
+                {
+                    ws[dIndex] = resultD;
+                }
                 dPtr[dIndex] = SaturateCast<typename Inputs::DType>(resultD);
+            }
+
+            if(problem.useGradient() && problem.useBias())
+            {
+                auto&  biasTensor       = problem.tensor(ContractionProblemGemm::TENSOR::BIAS);
+                size_t validationStride = 1;
+                if(elementsToValidate > 0 && elementsToValidate < biasTensor.totalLogicalElements())
+                    validationStride
+                        = NextPrime(biasTensor.totalAllocatedElements() / elementsToValidate);
+
+                // For 2D bias reduction, d batch = 1
+                if((problem.d().dimensions() == 3 && problem.d().sizes()[2] == 1)
+                   || problem.d().dimensions() == 2)
+                {
+#pragma omp parallel for
+                    for(size_t bNum = 0; bNum < biasTensor.totalLogicalElements();
+                        bNum += validationStride)
+                    {
+                        std::vector<int64_t> dCoord(d.dimensions());
+                        size_t               sumLength = 0;
+                        size_t               idx       = 0;
+                        if(biasTensor.sizes()[0] == problem.d().sizes()[0])
+                        {
+                            sumLength = problem.d().sizes()[1];
+                            dCoord[0] = bNum;
+                            idx       = 1;
+                        }
+                        else
+                        {
+                            sumLength = problem.d().sizes()[0];
+                            dCoord[1] = bNum;
+                            idx       = 0;
+                        }
+                        Accumulator sum = static_cast<Accumulator>(0);
+                        for(size_t i = 0; i < sumLength; i++)
+                        {
+                            dCoord[idx] = i;
+                            auto dIndex = d.index(dCoord);
+                            sum += ws[dIndex];
+                        }
+                        auto biasPtr = (void*)inputs.bias;
+                        SetValue<Accumulator>(biasTensor.dataType(), sum, biasPtr, bNum);
+                    }
+                }
+                else
+                {
+                    free(ws);
+                    std::string msg = "Unsupported reduction dimension "
+                                      + std::to_string(problem.d().dimensions()) + ".";
+                    throw std::runtime_error(msg.c_str());
+                }
+                free(ws);
             }
         }
 

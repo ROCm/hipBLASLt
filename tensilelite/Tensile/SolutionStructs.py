@@ -35,6 +35,7 @@ from .KernelWriterConversion import KernelWriterConversion
 from .KernelWriterActivationEnumHeader import KernelWriterActivationEnumHeader
 from .KernelWriterActivationFunction import KernelWriterActivationFunction
 from .KernelWriterActivationOnly import KernelWriterActivationOnly
+from .KernelWriterReduction import KernelWriterReduction
 
 from .Activation import ActivationType
 
@@ -222,9 +223,6 @@ class ProblemType(Mapping):
         if self["UseScaleD"]:
           printWarning("Use scaleD is disabled cause Gradient is enabled.")
           self["UseScaleD"] = False
-        if self["UseBias"]:
-          printWarning("UseBias is disabled cause Gradient is enabled.")
-          self["UseBias"] = False
       self["Gradient"] = config["Gradient"]
 
     if "ActivationNoGuard" in config:
@@ -988,6 +986,7 @@ class Solution(collections.abc.Mapping):
     self.initActivationEnumHeaderObjects()
     self.initActivationFunctionObjects()
     self.initActivationOnlyKernelObjects()
+    self.initReductionKernelObjects()
 
   ########################################
   # create BetaONly Kernels
@@ -1017,7 +1016,10 @@ class Solution(collections.abc.Mapping):
     self.conversionKernelObjects = []
     if (self["GlobalSplitU"] > 1) and self["_GlobalAccumulation"]:
       if self["ProblemType"]["UseBias"]:
-        for btype in self["ProblemType"]["BiasDataTypeList"]:
+        typeList = self["ProblemType"]["BiasDataTypeList"]
+        if self["ProblemType"]["Gradient"]:
+          typeList = [self["ProblemType"]["ComputeDataType"]]
+        for btype in typeList:
           state = {}
           state["ProblemType"] = deepcopy(self["ProblemType"])
           state["ProblemType"]["BiasDataTypeList"] = []
@@ -1065,12 +1067,22 @@ class Solution(collections.abc.Mapping):
       state["ActivationFused"] = self["ActivationFused"]
       self.activationOnlyKernelObjects.append(KernelWriterActivationOnly(state))
 
+  def initReductionKernelObjects(self):
+    self.reductionKernelObjects = []
+    if self["ProblemType"]["Gradient"] and self["ProblemType"]["UseBias"]:
+      for btype in self["ProblemType"]["BiasDataTypeList"]:
+        state = {}
+        state["ProblemType"] = deepcopy(self["ProblemType"])
+        state["ProblemType"]["BiasDataTypeList"] = []
+        state["ProblemType"]["BiasDataType"] = deepcopy(btype)
+        self.reductionKernelObjects.append(KernelWriterReduction(state))
+
   ########################################
   # get Helper Kernels
   def getHelperKernelObjects(self):
     return self.activationEnumHeaderObjects + self.activationFunctionObjects + \
            self.betaOnlyKernelObjects + self.conversionKernelObjects + \
-           self.activationOnlyKernelObjects
+           self.activationOnlyKernelObjects + self.reductionKernelObjects
 
 
   ########################################
@@ -3097,6 +3109,19 @@ class Solution(collections.abc.Mapping):
         state["ActivationAlt"] = False
       if not state["ProblemType"]["Gradient"]:
         reject(state, "ActivationAlt does not support gradient.")
+
+    # Bias reduction
+    if state["ProblemType"]["UseBias"] and state["ProblemType"]["Gradient"]:
+      if (state["_GlobalAccumulation"] == 'SingleBuffer') and state["GlobalSplitU"] > 1:
+        reject(state, "GlobalSplitU > 1 only compatible with MultipleBuffer for bias reduction")
+      if len(state["PackedC1IndicesX"]) > 1:
+        reject(state, "Bias reduction does not support len(PackedC1IndicesX) > 1.")
+      if not state["BufferStore"]:
+        reject(state, "Bias reduction only supports BufferStore due to no suppress no store.")
+      if state["StoreRemapVectorWidth"] and (state["GlobalSplitU"] == 1):
+        reject(state, "Bias reduction does not support StoreRemapVectorWidth if GSU == 1.")
+      if state["GroupLoadStore"]:
+        reject(state, "Bias reduction does not support GroupLoadStore.")
 
   ########################################
   # create a dictionary with booleans on whether to include parameter in name

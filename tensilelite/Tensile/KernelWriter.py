@@ -249,6 +249,7 @@ class StateVgprs:
 
   # BufferStore
   cinRowPtr: int  = -1
+  coutRowPtrBias: int = -1
   coutRowPtrE: int = -1
   coutRowPtrD: int = -1
 

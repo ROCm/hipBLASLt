@@ -1209,9 +1209,21 @@ namespace Tensile
                     return "WorkspaceCheck";
                 }
 
+                static size_t reductionSize(ContractionProblemGemm const& problem)
+                {
+                    size_t reductionSize = 0;
+                    if(problem.useGradient() && problem.useBias())
+                    {
+                        reductionSize += problem.d().totalLogicalElements();
+                    }
+                    return reductionSize;
+                }
+
                 virtual bool operator()(ContractionProblemGemm const& problem) const override
                 {
-                    return problem.d().totalLogicalElements() * value <= problem.workspaceSize();
+                    size_t rs = reductionSize(problem);
+                    return problem.d().totalLogicalElements() * value + rs
+                           <= problem.workspaceSize();
                 }
 
                 virtual bool debugEval(ContractionProblemGemm const& problem,
@@ -1219,8 +1231,10 @@ namespace Tensile
                 {
                     bool rv = (*this)(problem);
 
+                    size_t rs = reductionSize(problem);
+
                     stream << *this << ": (" << problem.d().totalLogicalElements() << " * " << value
-                           << " <= " << problem.workspaceSize() << ") == " << rv;
+                           << " + " << rs << " <= " << problem.workspaceSize() << ") == " << rv;
 
                     return rv;
                 }
