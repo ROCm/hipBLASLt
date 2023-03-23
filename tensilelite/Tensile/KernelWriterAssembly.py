@@ -5799,6 +5799,8 @@ class KernelWriterAssembly(KernelWriter):
       self.vgprPool.checkIn(self.vgprs.coutRowPtrD)
       if kernel["ProblemType"]["UseE"] and (kernel["GlobalSplitU"] == 1):
         self.vgprPool.checkIn(self.vgprs.coutRowPtrE)
+      if self.states.useBias == DataDirection.WRITE and (not kernel["WorkGroupReduction"]):
+        self.vgprPool.checkIn(self.vgprs.coutRowPtrBias)
     if not kernel["BufferStore"]:
       self.vgprPool.checkIn(self.vgprs.addrD)
       self.vgprPool.checkIn(self.vgprs.addrC)
@@ -6442,6 +6444,9 @@ class KernelWriterAssembly(KernelWriter):
             module.add(SBranch(labelName=loadBiasEndLabel.getLabelName(), comment="Branch to load bias end"))
           module.add(loadBiasEndLabel)
       self.vgprPool.checkIn(offsetVgpr)
+    elif self.states.useBias == DataDirection.WRITE:
+      labelStr = self.labels.getNameInc("Bias")
+      module.add(allocPostLoopSrdSuppress("Bias", labelStr, hex(0x80000000)))
 
     if kernel["ProblemType"]["UseE"] and (kernel["GlobalSplitU"] == 1):
       # Update E offset1
@@ -7104,18 +7109,18 @@ class KernelWriterAssembly(KernelWriter):
           module.add(addrCalc.incrementToNextRow(kernel, "D", ss, tmpS01))
         dataType     = kernel["ProblemType"]["DestDataType"]
         globalOffset = addrCalc.globalOffset
-      elif tc == 'E':
+      elif tc == 'E' or tc == 'Bias':
         bps = self.states.bpeCinternal * ss.cfg.gwvw
         rpv = self.states.bpeCinternal * ss.cfg.gwvw / self.states.bpr
 
         if kernel["BufferStore"]:
           addr0 = vgpr(addrCalc.addrEVgpr)
-          addr1 = sgpr("SrdE", 4)
+          addr1 = sgpr("Srd%s"%tc, 4)
         else:
           addr0 = vgpr(addrCalc.addrEVgpr,2)
           addr1 = ""
         if ss.optSrdIncForRow and addrCalc.rowInc:
-          module.add(addrCalc.incrementToNextRow(kernel, "E", ss, tmpS01, isCompute=True))
+          module.add(addrCalc.incrementToNextRow(kernel, tc, ss, tmpS01, isCompute=True))
         dataType     = kernel["ProblemType"]["ComputeDataType"]
         globalOffset = addrCalc.globalOffsetInternal
       else:

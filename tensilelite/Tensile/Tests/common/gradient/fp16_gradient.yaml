@@ -28,7 +28,7 @@ BenchmarkProblems:
       Batched: True
       Gradient: True
       UseE: True
-      UseBias:       True
+      UseBias:       False
       Activation:    True
       ActivationHPA: True
       UseScaleD:     False
@@ -90,7 +90,7 @@ BenchmarkProblems:
       Batched: True
       Gradient: True
       UseE: True
-      UseBias:       True
+      UseBias:       False
       Activation:    True
       ActivationHPA: True
       UseScaleD:     False

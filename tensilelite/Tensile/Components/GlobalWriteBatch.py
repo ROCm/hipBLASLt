@@ -311,6 +311,8 @@ class GlobalWriteBatchWriter:
 
       if (self.kernel["ProblemType"]["UseE"] and not self.kernel["ProblemType"]["Gradient"]) and (self.kernel["GlobalSplitU"] == 1):
         module.add(addrCalc.emitLdChange(self.kernel, self.ss, 'E', self.edge, self.beta, mask, (elementIdx == len(self.batchElements) - 1), self.tmpVgpr, self.tmpSgpr, addrEVgpr, self.addrE))
+      if self.parentWriter.states.useBias == DataDirection.WRITE and (not self.kernel["WorkGroupReduction"]):
+        module.add(addrCalc.emitLdChange(self.kernel, self.ss, 'Bias', self.edge, self.beta, mask, (elementIdx == len(self.batchElements) - 1), self.tmpVgpr, self.tmpSgpr, addrBiasVgpr, self.addrBias))
       module.add(addrCalc.emitLdChange(self.kernel, self.ss, 'D', self.edge, self.beta, mask, (elementIdx == len(self.batchElements) - 1), self.tmpVgpr, self.tmpSgpr, addrDVgpr, self.addrD))
 
       if self.atomic and (not self.parentWriter.states.useAtomicAdd):
@@ -780,6 +782,11 @@ class GlobalWriteBatchWriter:
           else:
             raise RuntimeError("Unsupported scaleD compute data type %s."%str(self.kernel["ProblemType"]["ComputeDataType"]))
 
+      biasReductionModule = Module("biasReductionModule")
+      if self.parentWriter.states.useBias == DataDirection.WRITE and (not self.kernel["WorkGroupReduction"]):
+        vgprIdx = self.ss.elementSumIdx[elementIdx] - self.parentWriter.states.c.startVgprValu
+        biasReductionModule.add(self.parentWriter.addStore(self.kernel, self.ss, 'Bias', addrCalc, "ValuC+%d"%vgprIdx, self.tmpS01, self.edge, comment="store Bias"))
+
       if isActivationInsertAfter:
         module.add(convertModule)
         module.add(packModule)
@@ -787,6 +794,7 @@ class GlobalWriteBatchWriter:
       else:
         module.add(activationModule)
         module.add(scaleDModule)
+        module.add(biasReductionModule)
         module.add(convertModule)
         module.add(packModule)
 
@@ -798,6 +806,8 @@ class GlobalWriteBatchWriter:
           module.add(tmpStoreCode)
         self.storesIssued += 1
         if (self.kernel["ProblemType"]["UseE"] and not self.kernel["ProblemType"]["Gradient"]) and (self.kernel["GlobalSplitU"] == 1):
+          self.storesIssued += 1
+        if self.parentWriter.states.useBias == DataDirection.WRITE and (not self.kernel["WorkGroupReduction"]):
           self.storesIssued += 1
 
       else:

@@ -268,6 +268,18 @@ namespace Tensile
                                              ContractionInputs const& inputs,
                                              Hardware const&          hardware) const;
 
+        template <bool T_Debug>
+        KernelInvocation generateReductionCall(Problem const&           problem,
+                                               ContractionInputs const& inputs,
+                                               Hardware const&          hardware) const;
+
+        std::string outputReductionKernelName(Problem const&           problem,
+                                              ContractionInputs const& inputs,
+                                              Hardware const&          hardware,
+                                              size_t                   mt0,
+                                              size_t                   mt1,
+                                              size_t                   vw) const;
+
         struct SizeMapping
         {
             dim3 workGroupSize;
