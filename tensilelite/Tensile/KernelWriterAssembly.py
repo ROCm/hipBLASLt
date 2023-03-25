@@ -1465,7 +1465,7 @@ class KernelWriterAssembly(KernelWriter):
   ##############################################################################
   # Global Read Addresses: Tile Offsets A/B
   ##############################################################################
-  def graTileOffsets(self, kernel, tP):
+  def graTileOffsets(self, kernel, tP, margin=-1):
     module = Module("graTileOffsets")
     tc = tP["tensorChar"]
     tP["vgprPackedOffsets"] = None
@@ -1490,8 +1490,14 @@ class KernelWriterAssembly(KernelWriter):
         strideInterleave = True
         stride = stride * kernel["VectorWidth"] - (kernel["VectorWidth"] - 1)
 
+      if tP["isM"] and not margin == -1:
+        # margin is the number of how many continuous element need to be read
+        # shift metadata global read offset to align A's global read offset.
+        module.add(VLShiftRightB32(dst=vgpr(v), shiftHex=hex(log2(margin)), src=vgpr(tP["gpr"]["tReg"]), comment="gro%s%s_%u /= %d"%(tP["tensorChar"], tP["tileChar"], 0, margin)))
+        module.add(VLShiftLeftB32(dst=vgpr(v), shiftHex=hex(log2(margin)), src=vgpr(v), comment="gro%s%s_%u *= %d"%(tP["tensorChar"], tP["tileChar"], 0, margin)))
+      else:
+        module.add(VMovB32(dst=vgpr(v), src=vgpr(tP["gpr"]["tReg"]), comment="gro%s%s_%u"%(tP["tensorChar"], tP["tileChar"], 0) ))
 
-      module.add(VMovB32(dst=vgpr(v), src=vgpr(tP["gpr"]["tReg"]), comment="gro%s%s_%u"%(tP["tensorChar"], tP["tileChar"], 0) ))
       for l in range(1, tP["nrt"]):
         strideValue = stride
         if strideInterleave and (l & 1) != 0:
@@ -1596,7 +1602,7 @@ class KernelWriterAssembly(KernelWriter):
     return module
 
   ##############################################################################
-  def graShift(self, kernel, tP):
+  def graShift(self, kernel, tP, margin=-1):
     # graShift requires a vgpr for each address component (so each component
     # can be examined and shifted if necessary) - therefore does not work
     # with UseSgprForGRO.
@@ -1605,7 +1611,11 @@ class KernelWriterAssembly(KernelWriter):
     module = Module("graShift")
     #tc = tP["tensorChar"]
     # edge value
-    margin = tP["glvw"] if tP["rtv"] else 1
+    marginO = margin
+    # for the edge case, using A's margin to instead Metadata's margin,
+    # otherwise, loaded data of A and Metadata will not match
+    if margin == -1:
+      margin = tP["glvw"] if tP["rtv"] else 1
     edge = self.vgprPool.checkOut(1, "edge", self.states.preventVgprOverflowDuringNewTile)
 
     with self.allocTmpSgpr(1) as tmpSgprInfo:
@@ -1649,6 +1659,11 @@ class KernelWriterAssembly(KernelWriter):
           # shift
           module.add(VCndMaskB32(dst=vgpr(vDst+l), src0=vgpr(edge), src1=vgpr(vSrc+l), src2=sgpr(tmpSgpr,self.states.laneSGPRCount),
                       comment="offset = (%s) ? offset(v%u) : edge(v%u)"%(cmpCommentText, vSrc+l, edge)))
+    # For metadata and using A's margin, shift extra tail offset
+    if tP["isM"] and not marginO == -1:
+      module.add(VAndB32(dst=vgpr(edge), src0=(margin-1), src1=vgpr(tP["gpr"]["tReg"]), comment="shifTailOffstet = tailOffset %% %d"%(margin)))
+      module.add(VAddU32(dst=vgpr(vDst+l), src0=vgpr(edge), src1=vgpr(vSrc+l),
+                      comment="offset += shifTailOffstet"))
     self.vgprPool.checkIn(edge)
     return module
 
