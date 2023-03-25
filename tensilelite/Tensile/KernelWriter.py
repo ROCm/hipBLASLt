@@ -1273,7 +1273,8 @@ class KernelWriter(metaclass=abc.ABCMeta):
     module.add(self.graTileOffsets(kernel, tensorParametersA))
     if kernel["ProblemType"]["SparseA"] and not kernel["DirectToVgprSparseMetadata"]:
       module.addComment1("global read addresses: tile offsets metadata")
-      module.add(self.graTileOffsets(kernel, tensorParametersA["tpsMetadata"]))
+      # Using A's margin to instead Metadata's margin
+      module.add(self.graTileOffsets(kernel, tensorParametersA["tpsMetadata"], tensorParametersA["glvw"] if tensorParametersA["rtv"] else 1))
     module.addComment1("global read addresses: tile offsets b")
     module.add(self.graTileOffsets(kernel, tensorParametersB))
 
@@ -1306,7 +1307,8 @@ class KernelWriter(metaclass=abc.ABCMeta):
           if kernel["DirectToVgprSparseMetadata"]:
             module.add(self.graMetadataShift(kernel, tensorParametersA))
           else:
-            module.add(self.graShift(kernel, tensorParametersA["tpsMetadata"]))
+            # Using A's margin to instead Metadata's margin
+            module.add(self.graShift(kernel, tensorParametersA["tpsMetadata"], tensorParametersA["glvw"] if tensorParametersA["rtv"] else 1))
       if not (kernel["BufferLoad"] and  kernel["GuaranteeNoPartialB"]) and not forceNoTileCode:
         module.addComment1("global read addresses: shift b")
         module.add(self.graShift(kernel, tensorParametersB))
