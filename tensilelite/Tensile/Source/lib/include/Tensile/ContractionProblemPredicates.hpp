@@ -1752,6 +1752,65 @@ namespace Tensile
                     return std::string("The supported bias types are: " + biasString);
                 }
             };
+
+            struct BiasSrcWhiteList
+                : public Predicate_CRTP<BiasSrcWhiteList, ContractionProblemGemm>
+            {
+                enum
+                {
+                    HasIndex = false,
+                    HasValue = true
+                };
+                BiasSrcWhiteList() = default;
+
+                // This is actually the index of the problem type
+                std::vector<int> value;
+
+                static std::string Type()
+                {
+                    return "BiasSrcWhiteList";
+                }
+
+                virtual bool operator()(ContractionProblemGemm const& problem) const override
+                {
+                    if(problem.useBias())
+                    {
+                        for(size_t i = 0; i < value.size(); i++)
+                        {
+                            if(value[i] == static_cast<int>(problem.biasSrc()))
+                            {
+                                // Check if the length is set correctly.
+                                auto& length = problem.tensor(ContractionProblemGemm::TENSOR::BIAS)
+                                                   .sizes()[0];
+                                if(problem.biasSrc() == ContractionProblemGemm::TENSOR::A
+                                   || problem.biasSrc() == ContractionProblemGemm::TENSOR::D)
+                                {
+                                    if(length != problem.d().sizes()[0])
+                                        return false;
+                                }
+                                else if(problem.biasSrc() == ContractionProblemGemm::TENSOR::B)
+                                {
+                                    if(length != problem.d().sizes()[1])
+                                        return false;
+                                }
+                                return true;
+                            }
+                        }
+                        return false;
+                    }
+                    return true;
+                }
+
+                virtual std::string toString() const override
+                {
+                    std::string biasString = "";
+                    for(size_t i = 0; i < value.size(); i++)
+                    {
+                        biasString += ToString(value[i]) + ", ";
+                    }
+                    return std::string("The supported bias types are: " + biasString);
+                }
+            };
         } // namespace Contraction
 
         /**

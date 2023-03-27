@@ -86,6 +86,16 @@ class GlobalWriteBatchWriter:
     self.loadsIssued = 0
     self.storesIssued = 0
 
+    # Internal state for GlobalWriteBatch
+    # 0 for None, 1 for WorkGroupReduction = False, 2 for WorkGroupReduction = True
+    self.storeBiasD = 0
+    if self.parentWriter.states.useBias == DataDirection.WRITE and \
+      (not self.kernel["WorkGroupReduction"]) and \
+      self.kernel["ProblemType"]["BiasSrc"] == "D":
+      self.storeBiasD = 1
+
+
+
   @property
   def wavelen(self) -> int:
     return self.kernel["WavefrontSize"]
@@ -311,7 +321,7 @@ class GlobalWriteBatchWriter:
 
       if (self.kernel["ProblemType"]["UseE"] and not self.kernel["ProblemType"]["Gradient"]) and (self.kernel["GlobalSplitU"] == 1):
         module.add(addrCalc.emitLdChange(self.kernel, self.ss, 'E', self.edge, self.beta, mask, (elementIdx == len(self.batchElements) - 1), self.tmpVgpr, self.tmpSgpr, addrEVgpr, self.addrE))
-      if self.parentWriter.states.useBias == DataDirection.WRITE and (not self.kernel["WorkGroupReduction"]):
+      if self.storeBiasD == 1:
         module.add(addrCalc.emitLdChange(self.kernel, self.ss, 'Bias', self.edge, self.beta, mask, (elementIdx == len(self.batchElements) - 1), self.tmpVgpr, self.tmpSgpr, addrBiasVgpr, self.addrBias))
       module.add(addrCalc.emitLdChange(self.kernel, self.ss, 'D', self.edge, self.beta, mask, (elementIdx == len(self.batchElements) - 1), self.tmpVgpr, self.tmpSgpr, addrDVgpr, self.addrD))
 
@@ -792,7 +802,7 @@ class GlobalWriteBatchWriter:
             raise RuntimeError("Unsupported scaleD compute data type %s."%str(self.kernel["ProblemType"]["ComputeDataType"]))
 
       biasReductionModule = Module("biasReductionModule")
-      if self.parentWriter.states.useBias == DataDirection.WRITE and (not self.kernel["WorkGroupReduction"]):
+      if self.storeBiasD == 1:
         vgprIdx = self.ss.elementSumIdx[elementIdx] - self.parentWriter.states.c.startVgprValu
         biasReductionModule.add(self.parentWriter.addStore(self.kernel, self.ss, 'Bias', addrCalc, "ValuC+%d"%vgprIdx, self.tmpS01, self.edge, comment="store Bias"))
 
@@ -816,7 +826,7 @@ class GlobalWriteBatchWriter:
         self.storesIssued += 1
         if (self.kernel["ProblemType"]["UseE"] and not self.kernel["ProblemType"]["Gradient"]) and (self.kernel["GlobalSplitU"] == 1):
           self.storesIssued += 1
-        if self.parentWriter.states.useBias == DataDirection.WRITE and (not self.kernel["WorkGroupReduction"]):
+        if self.storeBiasD == 1:
           self.storesIssued += 1
 
       else:

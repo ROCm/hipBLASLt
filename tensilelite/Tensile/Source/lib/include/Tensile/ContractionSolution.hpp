@@ -328,6 +328,7 @@ namespace Tensile
             ActivationType        activationType          = ActivationType::None;
             bool                  activationHPA           = false;
             bool                  activationNoGuard       = false;
+            std::vector<int>      biasSrcWhiteList;
             std::vector<DataType> biasDataTypeWhiteList;
         };
 

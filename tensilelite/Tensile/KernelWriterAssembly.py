@@ -5799,7 +5799,7 @@ class KernelWriterAssembly(KernelWriter):
       self.vgprPool.checkIn(self.vgprs.coutRowPtrD)
       if kernel["ProblemType"]["UseE"] and (kernel["GlobalSplitU"] == 1):
         self.vgprPool.checkIn(self.vgprs.coutRowPtrE)
-      if self.states.useBias == DataDirection.WRITE and (not kernel["WorkGroupReduction"]):
+      if self.vgprs.coutRowPtrBias != -1:
         self.vgprPool.checkIn(self.vgprs.coutRowPtrBias)
     if not kernel["BufferStore"]:
       self.vgprPool.checkIn(self.vgprs.addrD)

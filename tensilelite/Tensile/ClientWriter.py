@@ -479,6 +479,7 @@ def writeClientConfigIni(problemSizes, biasTypeArgs, activationArgs, problemType
         param('beta-type',  problemType.betaType.toEnum())
         param('use-gradient', problemType.useGradient)
         param('use-bias',   problemType.useBias)
+        param('bias-source',   problemType.biasSrcWhiteList[0])
         param('use-e', problemType.useE)
         param('use-scaleD',   problemType.useScaleD)
         if biasTypeArgs:

@@ -429,6 +429,87 @@ namespace Tensile
             return val;
         }
 
+        template <
+            typename Input,
+            typename Accumulator,
+            std::enable_if_t<
+                std::is_same<Half, Input>::value || std::is_same<float, Input>::value
+                    || std::is_same<double, Input>::value || std::is_same<BFloat16, Input>::value
+                    || std::is_same<int32_t, Input>::value || std::is_same<int8_t, Input>::value,
+                bool>
+            = true>
+        std::string ReductionCPU(TensorDescriptor const&  biasTensor,
+                                 TensorDescriptor const&  tensor,
+                                 void const*              src,
+                                 ContractionInputs const& inputs,
+                                 const size_t&            elementsToValidate)
+        {
+            size_t validationStride = 1;
+            if(elementsToValidate > 0 && elementsToValidate < biasTensor.totalLogicalElements())
+                validationStride
+                    = NextPrime(biasTensor.totalAllocatedElements() / elementsToValidate);
+
+            Input const* srcTyped = (Input const*)src;
+            // For 2D bias reduction, d batch = 1
+            if((tensor.dimensions() == 3 && tensor.sizes()[2] == 1) || tensor.dimensions() == 2)
+            {
+#pragma omp parallel for
+                for(size_t bNum = 0; bNum < biasTensor.totalLogicalElements();
+                    bNum += validationStride)
+                {
+                    std::vector<int64_t> coord(tensor.dimensions());
+                    size_t               sumLength = 0;
+                    size_t               idx       = 0;
+                    if(biasTensor.sizes()[0] == tensor.sizes()[0])
+                    {
+                        sumLength = tensor.sizes()[1];
+                        coord[0]  = bNum;
+                        idx       = 1;
+                    }
+                    else
+                    {
+                        sumLength = tensor.sizes()[0];
+                        coord[1]  = bNum;
+                        idx       = 0;
+                    }
+                    Accumulator sum = static_cast<Accumulator>(0);
+                    for(size_t i = 0; i < sumLength; i++)
+                    {
+                        coord[idx] = i;
+                        auto index = tensor.index(coord);
+                        sum += static_cast<Accumulator>(srcTyped[index]);
+                    }
+                    auto biasPtr = (void*)inputs.bias;
+                    SetValue<Accumulator>(biasTensor.dataType(), sum, biasPtr, bNum);
+                }
+            }
+            else
+            {
+                std::string msg = "Unsupported reduction dimension "
+                                  + std::to_string(tensor.dimensions()) + ".";
+                return msg;
+            }
+            return "";
+        }
+
+        template <
+            typename Input,
+            typename Accumulator,
+            std::enable_if_t<
+                !std::is_same<Half, Input>::value && !std::is_same<float, Input>::value
+                    && !std::is_same<double, Input>::value && !std::is_same<BFloat16, Input>::value
+                    && !std::is_same<int32_t, Input>::value && !std::is_same<int8_t, Input>::value,
+                bool>
+            = true>
+        std::string ReductionCPU(TensorDescriptor const&  biasTensor,
+                                 TensorDescriptor const&  tensor,
+                                 void const*              src,
+                                 ContractionInputs const& inputs,
+                                 const size_t&            elementsToValidate)
+        {
+            throw std::runtime_error("Unsupported input type.");
+        }
+
         template <typename Inputs, typename Accumulator>
         void ReferenceSolution<Inputs, Accumulator>::SolveCPU(ContractionProblemGemm const& problem,
                                                               ContractionInputs const&      inputs,
@@ -436,7 +517,8 @@ namespace Tensile
         {
             Accumulator* ws                   = nullptr;
             size_t       validationStrideGemm = 1;
-            if(problem.useGradient() && problem.useBias())
+            if(problem.useGradient() && problem.useBias()
+               && (problem.biasSrc() == ContractionProblemGemm::D))
             {
                 validationStrideGemm = 1;
                 ws                   = (Accumulator*)malloc(problem.d().totalAllocatedElements()
@@ -662,7 +744,8 @@ namespace Tensile
                         problem.alphaType(), inputs.scaleD, pos, aConjugate);
                     resultD *= scaleD;
                 }
-                if(problem.useBias() && problem.useGradient())
+                if(problem.useBias() && problem.useGradient()
+                   && (problem.biasSrc() == ContractionProblemGemm::D))
                 {
                     ws[dIndex] = resultD;
                 }
@@ -671,51 +754,39 @@ namespace Tensile
 
             if(problem.useGradient() && problem.useBias())
             {
-                auto&  biasTensor       = problem.tensor(ContractionProblemGemm::TENSOR::BIAS);
-                size_t validationStride = 1;
-                if(elementsToValidate > 0 && elementsToValidate < biasTensor.totalLogicalElements())
-                    validationStride
-                        = NextPrime(biasTensor.totalAllocatedElements() / elementsToValidate);
-
-                // For 2D bias reduction, d batch = 1
-                if((problem.d().dimensions() == 3 && problem.d().sizes()[2] == 1)
-                   || problem.d().dimensions() == 2)
+                auto& biasTensor = problem.tensor(ContractionProblemGemm::TENSOR::BIAS);
+                if(problem.biasSrc() == ContractionProblemGemm::D)
                 {
-#pragma omp parallel for
-                    for(size_t bNum = 0; bNum < biasTensor.totalLogicalElements();
-                        bNum += validationStride)
+                    auto msg = ReductionCPU<Accumulator, Accumulator>(
+                        biasTensor, d, ws, inputs, elementsToValidate);
+                    if(!msg.empty())
                     {
-                        std::vector<int64_t> dCoord(d.dimensions());
-                        size_t               sumLength = 0;
-                        size_t               idx       = 0;
-                        if(biasTensor.sizes()[0] == problem.d().sizes()[0])
-                        {
-                            sumLength = problem.d().sizes()[1];
-                            dCoord[0] = bNum;
-                            idx       = 1;
-                        }
-                        else
-                        {
-                            sumLength = problem.d().sizes()[0];
-                            dCoord[1] = bNum;
-                            idx       = 0;
-                        }
-                        Accumulator sum = static_cast<Accumulator>(0);
-                        for(size_t i = 0; i < sumLength; i++)
-                        {
-                            dCoord[idx] = i;
-                            auto dIndex = d.index(dCoord);
-                            sum += ws[dIndex];
-                        }
-                        auto biasPtr = (void*)inputs.bias;
-                        SetValue<Accumulator>(biasTensor.dataType(), sum, biasPtr, bNum);
+                        free(ws);
+                        std::runtime_error(msg.c_str());
+                    }
+                }
+                else if(problem.biasSrc() == ContractionProblemGemm::A)
+                {
+                    auto msg = ReductionCPU<typename Inputs::AType, Accumulator>(
+                        biasTensor, a, inputs.a, inputs, elementsToValidate);
+                    if(!msg.empty())
+                    {
+                        std::runtime_error(msg.c_str());
+                    }
+                }
+                else if(problem.biasSrc() == ContractionProblemGemm::B)
+                {
+                    auto msg = ReductionCPU<typename Inputs::BType, Accumulator>(
+                        biasTensor, b, inputs.b, inputs, elementsToValidate);
+                    if(!msg.empty())
+                    {
+                        std::runtime_error(msg.c_str());
                     }
                 }
                 else
                 {
-                    free(ws);
-                    std::string msg = "Unsupported reduction dimension "
-                                      + std::to_string(problem.d().dimensions()) + ".";
+                    std::string msg = "Unsupported bias reduction source "
+                                      + std::to_string(problem.biasSrc()) + ".";
                     throw std::runtime_error(msg.c_str());
                 }
                 free(ws);

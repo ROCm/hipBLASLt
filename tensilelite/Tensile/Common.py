@@ -1056,6 +1056,7 @@ defaultProblemType = {
     "UseE":                     False,            # =True use output E to output gemm results before activation
     "Gradient":                 False,            # =True set globalWriteElements to gradient mode
     "UseBias":                  False,            # =True use bias vector
+    "BiasSrc":                  "D",              # This parameter is used in gradient + bias. Support A, B, D.
     "UseScaleD":                False,            # =True use scaleD vector
     "HighPrecisionAccumulate":  False,            # f32 += f16*f16
     "SilentHighPrecisionAccumulate": False,       # Keep kernel names the same for HPA mode.  Useful for testing.

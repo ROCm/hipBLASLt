@@ -154,6 +154,8 @@ namespace Tensile
                     = args["activation-enum-args"].as<std::vector<ActivationType>>();
             if(args.count("use-bias"))
                 m_useBias = args["use-bias"].as<bool>();
+            if(args.count("bias-source"))
+                m_biasSrc = args["bias-source"].as<int>();
             if(args.count("use-scaleD"))
                 m_useScaleD = args["use-scaleD"].as<bool>();
             if(args.count("max-workspace-size"))
@@ -262,9 +264,15 @@ namespace Tensile
                         rv.back().setWorkspaceSize(m_maxWorkspaceSize);
                         if(k < m_biasTypeArgs.size())
                         {
+                            auto length       = (m_biasSrc == ContractionProblemGemm::TENSOR::B)
+                                                    ? rv.back().d().sizes()[1]
+                                                    : rv.back().d().sizes()[0];
                             bool isBiasOutput = m_useGradient ? true : false;
                             rv.back().setBias(
-                                m_biasTypeArgs[k], rv.back().d().sizes()[0], isBiasOutput);
+                                m_biasTypeArgs[k],
+                                length,
+                                isBiasOutput,
+                                static_cast<ContractionProblemGemm::TENSOR>(m_biasSrc));
                         }
                         else
                         {

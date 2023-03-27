@@ -486,9 +486,13 @@ namespace Tensile
             }
         }
 
-        void setBias(DataType type, size_t length, bool isOutput = false)
+        void setBias(DataType                       type,
+                     size_t                         length,
+                     bool                           isOutput = false,
+                     ContractionProblemGemm::TENSOR src      = ContractionProblemGemm::TENSOR::D)
         {
             m_biasType = type;
+            m_biasSrc  = src;
             if(type != DataType::None && m_useBias)
             {
                 m_tensors[ContractionProblemGemm::TENSOR::BIAS]
@@ -500,6 +504,11 @@ namespace Tensile
         DataType biasType() const
         {
             return m_biasType;
+        }
+
+        ContractionProblemGemm::TENSOR biasSrc() const
+        {
+            return m_biasSrc;
         }
 
         void setScaleD(DataType type, size_t length)
@@ -809,6 +818,8 @@ namespace Tensile
         DataType m_betaType   = DataType::None; // for bwd-compatible
         DataType m_biasType   = DataType::None;
         DataType m_scaleDType = DataType::None; // if not assigned, will follow alpha-type
+
+        ContractionProblemGemm::TENSOR m_biasSrc = ContractionProblemGemm::TENSOR::D;
 
         ScalarValue m_alphaRestriction = ScalarValue::Any; // restrictions on the alpha value used
         ScalarValue m_betaRestriction  = ScalarValue::Any; // restrictions on the beta value used
