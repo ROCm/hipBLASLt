@@ -225,6 +225,19 @@ class ProblemType(Mapping):
           self["UseScaleD"] = False
       self["Gradient"] = config["Gradient"]
 
+    # Need gradient info
+    biasSrcList = ["A", "B", "D"]
+    if "BiasSrc" in config:
+      if not self["Gradient"] and config["BiasSrc"] != "D":
+        printWarning("BiasSrc is set to D cause Gradient is disabled.")
+        self["BiasSrc"] = "D"
+      elif self["Gradient"]:
+        # Currently only supports D :)
+        if config["BiasSrc"] != "D":
+          printExit("BiasSrc currently only supports D.")
+        if config["BiasSrc"] not in biasSrcList:
+          printExit("BiasSrc only supports A, B, D.")
+
     if "ActivationNoGuard" in config:
       self["ActivationNoGuard"] = config["ActivationNoGuard"]
       if self["ActivationNoGuard"]:
@@ -428,7 +441,10 @@ class ProblemType(Mapping):
     if self["Fp16AltImpl"]: name += "R"
     if self["UseInitialStridesAB"]: name += "I"
     if self["UseInitialStridesCD"]: name += "Ic"
-    if self["UseBias"]: name += "_Bias" # Not showing bias types
+    if self["UseBias"]:
+      name += "_Bias" # Not showing bias types
+      if self["BiasSrc"] and self["Gradient"]: # Show bias src if gradient = True
+        name += "_BiasSrc%s"%self["BiasSrc"]
     if self["UseE"]:
       if self["Gradient"]:
         name += "_Grad"

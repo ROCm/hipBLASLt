@@ -232,6 +232,7 @@ namespace Tensile
                 ("activation-additional-args",vector_default_empty<std::string>(), "Activation additional floating-point number arguments.")
                 ("activation-enum-args",      po::value<std::vector<ActivationType>>()->default_value(std::vector<ActivationType>(1, ActivationType::None), "[]"), "Activation enum argument.")
                 ("use-bias",                  po::value<bool>()->default_value(false), "Use bias.")
+                ("bias-source",               po::value<int>()->default_value(3), "Bias source.")
                 ("use-scaleD",                po::value<bool>()->default_value(false), "Use scaleD.")
                 ("bias-type-args",            po::value<std::vector<DataType>>()->default_value(std::vector<DataType>(1, DataType::None), "[]"), "Bias data type args.")
                 ("use-e",                     po::value<bool>()->default_value(false), "Use E.")

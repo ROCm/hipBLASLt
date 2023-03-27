@@ -54,7 +54,7 @@ class ComputeStoreVgprsMFMA(ComputeStoreVgprs):
             writer.vgprs.coutRowPtrD  = writer.vgprPool.checkOut(1, "coutRowPtrD")
             if kernel["ProblemType"]["UseE"] and (kernel["GlobalSplitU"] == 1):
                 writer.vgprs.coutRowPtrE = writer.vgprPool.checkOut(1, "coutRowPtrE")
-            if writer.states.useBias == DataDirection.WRITE and (not kernel["WorkGroupReduction"]):
+            if writer.states.useBias == DataDirection.WRITE and (not kernel["WorkGroupReduction"]) and kernel["ProblemType"]["BiasSrc"] == "D":
                 writer.vgprs.coutRowPtrBias = writer.vgprPool.checkOut(1, "coutRowPtrBias")
 
         wave_id = writer.vgprPool.checkOut(1)
@@ -94,7 +94,7 @@ class ComputeStoreVgprsMFMA(ComputeStoreVgprs):
             module.add(VMulLOU32(dst=vgpr(writer.vgprs.coutRowPtrD), src0=vgpr(tid1), src1=sgpr(strideD1), comment=" offset 1"))
             if kernel["ProblemType"]["UseE"] and (kernel["GlobalSplitU"] == 1):
                 module.add(VMovB32(dst=vgpr(writer.vgprs.coutRowPtrE), src=vgpr(tid1), comment=" save offset 1 for E"))
-            if writer.states.useBias == DataDirection.WRITE and (not kernel["WorkGroupReduction"]):
+            if writer.vgprs.coutRowPtrBias != -1:
                 index = packedC1[0] - 1
                 strideW1 = "Size%s" % "I" if index == 0 else ("J" if index == 1 else (writer.states.indexChars[index]))
                 module.add(VMulLOU32(dst=vgpr(writer.vgprs.coutRowPtrBias), src0=vgpr(tid1), src1=sgpr(strideW1), comment=" offset 1"))
@@ -168,7 +168,7 @@ class ComputeStoreVgprsMFMASwap(ComputeStoreVgprs):
             writer.vgprs.coutRowPtrD = writer.vgprPool.checkOut(1, "coutRowPtrD")
             if kernel["ProblemType"]["UseE"] and (kernel["GlobalSplitU"] == 1):
                 writer.vgprs.coutRowPtrE = writer.vgprPool.checkOut(1, "coutRowPtrE")
-            if writer.states.useBias == DataDirection.WRITE and (not kernel["WorkGroupReduction"]):
+            if writer.states.useBias == DataDirection.WRITE and (not kernel["WorkGroupReduction"]) and kernel["ProblemType"]["BiasSrc"] == "D":
                 writer.vgprs.coutRowPtrBias = writer.vgprPool.checkOut(1, "coutRowPtrBias")
 
         wave_id = writer.vgprPool.checkOut(1)
@@ -212,7 +212,7 @@ class ComputeStoreVgprsMFMASwap(ComputeStoreVgprs):
             module.add(VMulLOU32(dst=vgpr(writer.vgprs.coutRowPtrD), src0=vgpr(tid1), src1=sgpr(strideD1), comment=" offset 1"))
             if kernel["ProblemType"]["UseE"] and (kernel["GlobalSplitU"] == 1):
                 module.add(VMovB32(dst=vgpr(writer.vgprs.coutRowPtrE), src=vgpr(tid1), comment=" save offset 1 for E"))
-            if writer.states.useBias == DataDirection.WRITE and (not kernel["WorkGroupReduction"]):
+            if writer.vgprs.coutRowPtrBias != -1:
                 index = packedC1[0] - 1
                 strideW1 = "Size%s" % "I" if index == 0 else ("J" if index == 1 else (writer.states.indexChars[index]))
                 module.add(VMulLOU32(dst=vgpr(writer.vgprs.coutRowPtrBias), src0=vgpr(tid1), src1=sgpr(strideW1), comment=" offset 1"))

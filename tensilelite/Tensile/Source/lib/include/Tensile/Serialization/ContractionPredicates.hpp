@@ -105,6 +105,7 @@ namespace Tensile
                     Base::template Pair<Predicates::Contraction::UseEEqual>(),
                     Base::template Pair<Predicates::Contraction::UseScaleDEqual>(),
                     Base::template Pair<Predicates::Contraction::BiasDataTypeWhiteList>(),
+                    Base::template Pair<Predicates::Contraction::BiasSrcWhiteList>(),
                     Base::template Pair<Predicates::Contraction::SizeInRange>(),
                 });
 
@@ -379,6 +380,12 @@ namespace Tensile
         template <typename IO>
         struct MappingTraits<Predicates::Contraction::BiasDataTypeWhiteList, IO>
             : public AutoMappingTraits<Predicates::Contraction::BiasDataTypeWhiteList, IO>
+        {
+        };
+
+        template <typename IO>
+        struct MappingTraits<Predicates::Contraction::BiasSrcWhiteList, IO>
+            : public AutoMappingTraits<Predicates::Contraction::BiasSrcWhiteList, IO>
         {
         };
 
