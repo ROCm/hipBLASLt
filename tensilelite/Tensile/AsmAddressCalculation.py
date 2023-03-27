@@ -448,7 +448,7 @@ class AddrCalculation:
                     if kernel["ProblemType"]["UseE"] and (kernel["GlobalSplitU"] == 1):
                         module.add(self.addScaled(vgpr(kw.vgprs.coutRowPtrE), vgpr(kw.vgprs.coutRowPtrE), \
                                   sgpr("StrideE%s"%strideChar), self.rowInc, tmpS01, "Move coutRowPtrE to next row"))
-                    if kw.states.useBias == DataDirection.WRITE and (not kernel["WorkGroupReduction"]):
+                    if kw.vgprs.coutRowPtrBias != -1:
                         index = kernel["PackedC1IndicesX"][0] - 1
                         strideW1 = "Size%s" % "I" if index == 0 else ("J" if index == 1 else (kw.states.indexChars[index]))
                         module.add(self.addScaled(vgpr(kw.vgprs.coutRowPtrBias), vgpr(kw.vgprs.coutRowPtrBias), \
@@ -506,7 +506,7 @@ class AddrCalculation:
                              comment="new rowStart address += shift column * StridesE"))
                     module.add(VCndMaskB32(dst=vgpr(kw.vgprs.coutRowPtrE), src0=vgpr(kw.vgprs.coutRowPtrE), src1=vgpr(vTmp1), src2=sgpr(sTmp1,sgprCnt), \
                              comment="set new rowStart if meet conditions" ))
-                if kw.states.useBias == DataDirection.WRITE and (not kernel["WorkGroupReduction"]):
+                if kw.vgprs.coutRowPtrBias != -1:
                     module.add(VMadI32I24(dst=vgpr(vTmp1), src0=sgpr(strideW1), src1=vgpr(vTmp2), src2=vgpr(kw.vgprs.coutRowPtrBias), \
                              comment="new rowStart address += shift column * StridesW"))
                     module.add(VCndMaskB32(dst=vgpr(kw.vgprs.coutRowPtrBias), src0=vgpr(kw.vgprs.coutRowPtrBias), src1=vgpr(vTmp1), src2=sgpr(sTmp1,sgprCnt), \
@@ -522,7 +522,7 @@ class AddrCalculation:
                                   src2=sgpr(sTmp1,sgprCnt), comment="set new rowStart if meet conditions" ))
                     if kernel["ProblemType"]["UseE"] and (kernel["GlobalSplitU"] == 1):
                         printExit("Output E does not support StoreRemapVectorWidth")
-                    if kw.states.useBias == DataDirection.WRITE:
+                    if kw.vgprs.coutRowPtrBias != -1:
                         printExit("Bias reduction does not support StoreRemapVectorWidth")
                 module.addSpaceLine()
 
