@@ -478,31 +478,42 @@ Tests:
   bias_type: [default, f32_r]
   unit_check: 1
 
-- name: matmul_fallback_equality
+- name: matmul_fallback_equality_NN
   category: pre_checkin
   function:
     matmul: *hpa_half_precision
   matrix_size:
-    - { M:  1104, N:  1   , K:  4608 }
-    - { M:  1104, N:  16  , K:  4608 }
-    - { M:  1104, N:  1335, K:  4608 }
-    - { M:  1104, N:  1408, K:  4608 }
-    - { M:  4608, N:  1   , K:  320 }
-    - { M:  4608, N:  16  , K:  320 }
-    - { M:  4608, N:  1335, K:  320 }
-    - { M:  4608, N:  1408, K:  320 }
-    - { M:  16  , N:  1   , K:  4608 }
-    - { M:  16  , N:  16  , K:  4608 }
-    - { M:  16  , N:  1335, K:  4608 }
-    - { M:  16  , N:  1408, K:  4608 }
-    - { M:  768 , N:  1   , K:  4608 }
-    - { M:  768 , N:  16  , K:  4608 }
-    - { M:  768 , N:  1335, K:  4608 }
-    - { M:  768 , N:  1408, K:  4608 }
-    - { M:  4608, N:  1   , K:  768 }
-    - { M:  4608, N:  16  , K:  768 }
-    - { M:  4608, N:  1335, K:  768 }
-    - { M:  4608, N:  1408, K:  768 }
+    - { M:  1104 , N:  1   , K:  4608 }
+    - { M:  1104 , N:  16  , K:  4608 }
+    - { M:  1104 , N:  1335, K:  4608 }
+    - { M:  1104 , N:  1408, K:  4608 }
+    - { M:  4608 , N:  1   , K:  320 }
+    - { M:  4608 , N:  16  , K:  320 }
+    - { M:  4608 , N:  1335, K:  320 }
+    - { M:  4608 , N:  1408, K:  320 }
+    - { M:  16   , N:  1   , K:  4608 }
+    - { M:  16   , N:  16  , K:  4608 }
+    - { M:  16   , N:  1335, K:  4608 }
+    - { M:  16   , N:  1408, K:  4608 }
+    - { M:  768  , N:  1   , K:  4608 }
+    - { M:  768  , N:  16  , K:  4608 }
+    - { M:  768  , N:  1335, K:  4608 }
+    - { M:  768  , N:  1408, K:  4608 }
+    - { M:  4608 , N:  1   , K:  768 }
+    - { M:  4608 , N:  16  , K:  768 }
+    - { M:  4608 , N:  1335, K:  768 }
+    - { M:  4608 , N:  1408, K:  768 }
+    - { M:  320  , N:  8192, K:  320 }
+    - { M:  640  , N:  2048, K:  640 }
+    - { M:  320  , N:  8192, K:  1280 }
+    - { M:  1280 , N:  512 , K:  1280 }
+    - { M:  10240, N:  512 , K:  1280 }
+    - { M:  2560 , N:  8192, K:  320 }
+    - { M:  5120 , N:  2048, K:  640 }
+    - { M:  1280 , N:  512 , K:  5120 }
+    - { M:  640  , N:  2048, K:  2560 }
+    - { M:  320  , N:  154 , K:  768 }
+    - { M:  1280 , N:  154 , K:  768 }
   transA: N
   transB: N
   alpha: 1
@@ -521,4 +532,35 @@ Tests:
   scaleD_vector: 1
   unit_check: 1
 
+- name: matmul_fallback_equality_NN_batch16
+  category: pre_checkin
+  function:
+    matmul: *hpa_half_precision
+  matrix_size:
+    - { M:  40   , N:  4096, K:  4096 }
+    - { M:  80   , N:  1024, K:  1024 }
+    - { M:  40   , N:  4096, K:  77 }
+    - { M:  80   , N:  1024, K:  77 }
+    - { M:  160  , N:  256 , K:  256 }
+  transA: N
+  transB: N
+  alpha: 1
+  beta: [ 0.0, 2.0 ]
+  batch_count: 16
+
+- name: matmul_fallback_equality_TN_batch16
+  category: pre_checkin
+  function:
+    matmul: *hpa_half_precision
+  matrix_size:
+    - { M:  4096, N:  4096, K:  40 }
+    - { M:  1024, N:  1024, K:  80 }
+    - { M:  77  , N:  1024, K:  80 }
+    - { M:  77  , N:  4096, K:  40 }
+    - { M:  77  , N:  256 , K:  160 }
+  transA: T
+  transB: N
+  alpha: 1
+  beta: [ 0.0, 2.0 ]
+  batch_count: 16
 ...
