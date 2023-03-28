@@ -485,22 +485,31 @@ class GlobalWriteBatchWriter:
 
     ########################################
     # wait for batched load
+    # Here we wait all
     if not interleaveStoreVmcnt:
-      biasWait = (self.parentWriter.states.useBias == DataDirection.READ)
-      scaleDWait = self.kernel["ProblemType"]["UseScaleD"] and (self.kernel["GlobalSplitU"] == 1)
-      if self.beta or self.loadE:
-        extraStr = " / Bias " if biasWait else ""
-        ScaleDStr = " / ScaleD " if scaleDWait else ""
-        extraStr += ScaleDStr
-        if biasWait:
-          module.add(SWaitCnt(vmcnt=0, vscnt=0, lgkmcnt=0, comment="writes & wait C" + extraStr))
-        else:
-          module.add(SWaitCnt(vmcnt=0, vscnt=0, comment="writes & wait C" + extraStr))
-      else:
-        if scaleDWait:
-          module.add(SWaitCnt(vmcnt=0, comment="writes & wait scaleD"))
-        if biasWait:
-          module.add(SWaitCnt(lgkmcnt=0, comment="writes & wait bias LDS"))
+      vmcnt = -1
+      lgkmcnt = -1
+      commentList = []
+      # Global read wait
+      if self.beta:
+        vmcnt = 0
+        commentList.append("Beta")
+      if self.loadE:
+        vmcnt = 0
+        commentList.append("E")
+      if self.kernel["ProblemType"]["UseScaleD"] and (self.kernel["GlobalSplitU"] == 1):
+        vmcnt = 0
+        commentList.append("ScaleD")
+      # Local read wait
+      if self.parentWriter.states.useBias == DataDirection.READ:
+        lgkmcnt = 0
+        commentList.append("Bias LDS")
+      if (vmcnt != -1) or (lgkmcnt != -1):
+        # Get comment
+        comment = "wait for " + commentList[0]
+        for c in commentList[1:]:
+          comment += ", %s"%c
+        module.add(SWaitCnt(lgkmcnt=lgkmcnt, vmcnt=vmcnt, vscnt=-1, comment=comment))
 
     module.addComment1("apply mask, calc new C and issue writes")
     # module.add(self.getBomb()) # can see store addresses just before the store inst
@@ -513,8 +522,7 @@ class GlobalWriteBatchWriter:
       module.add(VMovB32(vgpr(self.bf16CVTVgprStruct.vgprBf16Inc), "0x7fff", "rounding bias for bfloat16" ))
 
     storeCode = Module("GroupLoadStore")
-    biasWaitDict = {}
-    scaleDWaitDict = {}
+    waitCnter = [self.loadsIssued + self.loadsScaleDIssued, self.localLoadIssued]
     for elementIdx in range(0, len(self.batchElements)):
       element = self.batchElements[elementIdx]
       addrCalc: AddrCalculation = self.ss.elementAddr[elementIdx]
@@ -546,64 +554,65 @@ class GlobalWriteBatchWriter:
       # at least two stores so does some combining across VI -
       # for example assuming we can have two elements and can use pk_mul
       # here:
-      if (self.beta or self.loadE or (self.parentWriter.states.useBias == DataDirection.READ) or (self.kernel["ProblemType"]["UseScaleD"] and (self.kernel["GlobalSplitU"] == 1))) and interleaveStoreVmcnt:
-        if (not self.beta) and (not self.loadE): # If no beta or loadE
-
-          localLoadCnt = -1
-          if (self.parentWriter.states.useBias == DataDirection.READ) and (dataBias not in biasWaitDict):
-            localLoadCnt = self.localLoadIssued - self.biasLoadIssued[elementIdx]
-
-          waitLoadCnt = 0
-
-          if self.kernel["ProblemType"]["UseScaleD"] and (dataScaleD not in scaleDWaitDict):
-            waitLoadCnt = waitLoadCnt + self.scaleDLoadIssued[elementIdx]
-
+      if interleaveStoreVmcnt:
+        waitLocalLoadCnt = 0
+        waitLocalLoadCntStrList = []
+        waitLoadCnt = 0
+        waitLoadCntStrList = []
+        # Calculate global loads
+        if self.beta:
+          betaCnt = elementIdx + 1
+          waitLoadCnt += betaCnt
+          waitLoadCntStrList.append("%d (beta)"%betaCnt)
+        if self.loadE:
+          loadECnt = elementIdx + 1
+          waitLoadCnt += loadECnt
+          waitLoadCntStrList.append("%d (load E)"%loadECnt)
+        if self.kernel["ProblemType"]["UseScaleD"]:
+          waitLoadCnt += self.scaleDLoadIssued[elementIdx]
+          waitLoadCntStrList.append("%d (scaleD)"%self.scaleDLoadIssued[elementIdx])
+        # Calculate local loads
+        if self.parentWriter.states.useBias == DataDirection.READ:
+          waitLocalLoadCnt += self.biasLoadIssued[elementIdx]
+          waitLocalLoadCntStrList.append("%d (bias)"%self.biasLoadIssued[elementIdx])
+        # Get vmcnt and lgkmcnt
+        if waitCnter[0] > 0: # Check if global load issued > 0
           vmcnt = self.loadsIssued + self.loadsScaleDIssued - waitLoadCnt
-
-          if self.parentWriter.states.archCaps["SeparateVscnt"]:
-            waitStoreCnt = 0
-            vmComment = "{} = {} - {} - 1".format(vmcnt, self.loadsIssued, waitLoadCnt)
-          else:
-            waitStoreCnt = self.storesIssued if not self.kernel["GroupLoadStore"] else 0
-            vmComment = " {} = {},{} - {},{} + {} - 1".format(vmcnt + waitStoreCnt, self.loadsIssued + self.loadsScaleDIssued, self.loadsScaleDIssued, waitLoadCnt, self.scaleDLoadIssued[elementIdx], waitStoreCnt)
-
-          if (dataBias not in biasWaitDict) or (dataScaleD not in scaleDWaitDict):
-            if self.kernel["ProblemType"]["UseScaleD"]:
-              module.addSpaceLine()
-              module.add(SWaitCnt(vmcnt=vmcnt, vscnt=waitStoreCnt, comment="wait scaleD (interleaved)" + vmComment))
-            if (self.parentWriter.states.useBias == DataDirection.READ):
-              module.addSpaceLine()
-              module.add(SWaitCnt(lgkmcnt=localLoadCnt, comment="wait bias lds load (interleaved)"))
+          if waitCnter[0] == vmcnt: # No need to wait if the global load cnt doesn't change
+            vmcnt = -1
+          waitCnter[0] = vmcnt
         else:
-          waitLoadCnt = 0
-          waitLocalLoadCnt = -1
-
-          if self.beta: waitLoadCnt += (elementIdx + 1)
-          if self.loadE: waitLoadCnt += (elementIdx + 1)
-          if (self.parentWriter.states.useBias == DataDirection.READ) and (dataBias not in biasWaitDict):
-            waitLocalLoadCnt = self.localLoadIssued - self.biasLoadIssued[elementIdx]
-
-
-          if self.kernel["ProblemType"]["UseScaleD"]:
-            waitLoadCnt = waitLoadCnt + self.scaleDLoadIssued[elementIdx]
-
-          vmcnt = self.loadsIssued + self.loadsScaleDIssued - waitLoadCnt
-
+          vmcnt = -1
+        if waitCnter[1] > 0: # Check if local load issued > 0
+          lgkmcnt = self.localLoadIssued - waitLocalLoadCnt
+          if waitCnter[1] == lgkmcnt: # No need to wait if the local load cnt doesn't change
+            lgkmcnt = -1
+          waitCnter[1] = lgkmcnt
+        else:
+          lgkmcnt = -1
+        # Get vscnt
+        if vmcnt != -1:
           if self.parentWriter.states.archCaps["SeparateVscnt"]:
-            waitStoreCnt = 0
-            vmComment = "{} = {} - {}".format(vmcnt, self.loadsIssued, waitLoadCnt)
+            vscnt = 0
           else:
-            waitStoreCnt = self.storesIssued if not self.kernel["GroupLoadStore"] else 0
-            vmComment = " {} = {}({},{}) - {}({},{}) + {}".format(vmcnt + waitStoreCnt,
-                                                            self.loadsIssued+self.loadsScaleDIssued, self.loadsIssued, self.loadsScaleDIssued,
-                                                            waitLoadCnt, elementIdx, self.scaleDLoadIssued[elementIdx],
-                                                            waitStoreCnt)
-
+            vscnt = self.storesIssued if not self.kernel["GroupLoadStore"] else 0
+        else:
+          vscnt = -1
+        if (vmcnt != -1) or (vscnt != -1) or (lgkmcnt != -1):
+          # Get comment
+          comment = ""
+          if vmcnt != -1:
+            tmp = ""
+            for cntStr in waitLoadCntStrList:
+              tmp += " - %s"%cntStr
+            comment = "vmcnt(%s) = %d%s"%(vmcnt, self.loadsIssued + self.loadsScaleDIssued, tmp)
+          if lgkmcnt != -1:
+            tmp = ""
+            for cntStr in waitLocalLoadCntStrList:
+              tmp += " - %s"%cntStr
+            comment = comment + (" " if comment else "") + "lgkmcnt(%d) = %d%s"%(lgkmcnt, self.localLoadIssued, tmp)
           module.addSpaceLine()
-          module.add(SWaitCnt(lgkmcnt=waitLocalLoadCnt, vmcnt=vmcnt, vscnt=waitStoreCnt, comment="wait C (interleaved)" + vmComment))
-
-        biasWaitDict[dataBias] = 1 # No need to wait again if the bias data is already loaded.
-        scaleDWaitDict[dataScaleD] = 1 # No need to wait again if the scaleD data is already loaded.
+          module.add(SWaitCnt(lgkmcnt=lgkmcnt, vmcnt=vmcnt, vscnt=vscnt, comment="%s (interleaved)"%comment))
 
       if self.beta:
         module.add(self._addSumAlphaWithCBeta(self.kernel, self.ss, self.gwvw, elementIdx, vc0, self.tmpVgpr, self.bf16CVTVgprStruct))
