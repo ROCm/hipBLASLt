@@ -1126,7 +1126,7 @@ int main(int argc, char* argv[])
         std::cout << "transAB, M, N, K, lda, ldb, ldc, stride_a, stride_b, "
                      "stride_c, batch_count, alpha, beta, bias, scaleD, activationType";
         if(timing)
-            std::cout << ", ms, tflops";
+            std::cout << ", us, tflops";
         std::cout << std::endl;
     }
 
