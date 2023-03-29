@@ -49,6 +49,7 @@
 #include <hipblas/hipblas.h>
 
 #include <vector>
+#include <memory>
 
 #include <hip/hip_bfloat16.h>
 #include <hip/hip_complex.h>
