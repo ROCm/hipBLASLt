@@ -94,6 +94,7 @@ struct Arguments
 
     // memory padding for testing write out of bounds
     uint32_t pad;
+    int32_t           grouped_gemm;
 
     // 16 bit
     uint16_t threads;
@@ -118,6 +119,7 @@ struct Arguments
     bool              scaleD_vector;
     bool              c_noalias_d;
     bool              HMM;
+
     /*************************************************************************
      *                     End Of Arguments                                  *
      *************************************************************************/
@@ -161,6 +163,7 @@ struct Arguments
     OPER(scale_type) SEP             \
     OPER(initialization) SEP         \
     OPER(pad) SEP                    \
+    OPER(grouped_gemm) SEP           \
     OPER(threads) SEP                \
     OPER(streams) SEP                \
     OPER(devices) SEP                \
@@ -174,7 +177,7 @@ struct Arguments
     OPER(activation_arg2) SEP        \
     OPER(bias_type) SEP              \
     OPER(bias_vector) SEP            \
-    OPER(scaleD_vector) SEP            \
+    OPER(scaleD_vector) SEP          \
     OPER(c_noalias_d) SEP            \
     OPER(HMM) SEP
 

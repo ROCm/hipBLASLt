@@ -84,6 +84,7 @@ Arguments:
   - scale_type: hipblasDatatype_t
   - initialization: hipblaslt_initialization
   - pad: c_uint32
+  - grouped_gemm: c_int32
   - threads: c_uint16
   - streams: c_uint16
   - devices: c_uint8
@@ -171,3 +172,4 @@ Defaults:
   bias_type: default
   bias_vector: false
   scaleD_vector: false
+  grouped_gemm: 0
