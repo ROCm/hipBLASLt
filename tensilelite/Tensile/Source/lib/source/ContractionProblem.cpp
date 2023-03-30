@@ -506,8 +506,8 @@ namespace Tensile
         gemm.m_tensors[ContractionProblemGemm::TENSOR::E]          = TensorDescriptor("e");
         gemm.m_tensors[ContractionProblemGemm::TENSOR::BIAS]       = TensorDescriptor("bias");
         gemm.m_tensors[ContractionProblemGemm::TENSOR::SCALEDVEC]  = TensorDescriptor("scaleDVec");
-        gemm.m_tensors[ContractionProblemGemm::TENSOR::COMPRESSED] = TensorDescriptor("compressed");
         gemm.m_tensors[ContractionProblemGemm::TENSOR::METADATA]   = TensorDescriptor("metadata");
+        gemm.m_tensor_compressed = TensorDescriptor("compressed");
         return gemm;
     }
 
@@ -794,13 +794,13 @@ namespace Tensile
                 ca_strides[i]       = ca_strides[i - 1] * ca_sizes[i - 1];
                 metadata_strides[i] = metadata_strides[i - 1] * metadata_sizes[i - 1];
             }
-            m_tensors[ContractionProblemGemm::TENSOR::COMPRESSED] = TensorDescriptor(
-                                                                        "compressed",
-                                                                        aTensor.dataType(),
-                                                                        ca_sizes.begin(),
-                                                                        ca_sizes.end(),
-                                                                        ca_strides.begin(),
-                                                                        ca_strides.end());
+            m_tensor_compressed = TensorDescriptor(
+                                                   "compressed",
+                                                   aTensor.dataType(),
+                                                   ca_sizes.begin(),
+                                                   ca_sizes.end(),
+                                                   ca_strides.begin(),
+                                                   ca_strides.end());
                                                             
             m_tensors[ContractionProblemGemm::TENSOR::METADATA] = TensorDescriptor(
                                                                         "metadata",
@@ -810,7 +810,6 @@ namespace Tensile
                                                                         metadata_strides.begin(),
                                                                         metadata_strides.end());
 
-            auto& caTensor =  m_tensors[ContractionProblemGemm::TENSOR::COMPRESSED];
             m_allocatedElementsNonBatchCompressedA = 1;
             for(int idx = 0; idx < compressed().dimensions(); idx++)
             {
@@ -821,12 +820,12 @@ namespace Tensile
                                                    return bi.a == idx;
                                                });
                 if(!isBatch)
-                    m_allocatedElementsNonBatchCompressedA += caTensor.strides()[idx] * (caTensor.sizes()[idx] - 1);
+                    m_allocatedElementsNonBatchCompressedA += m_tensor_compressed.strides()[idx] * (m_tensor_compressed.sizes()[idx] - 1);
             }
         }
         else
         {
-            m_tensors[ContractionProblemGemm::TENSOR::COMPRESSED] = TensorDescriptor("compressed");
+            m_tensor_compressed = TensorDescriptor("compressed");
             m_tensors[ContractionProblemGemm::TENSOR::METADATA] = TensorDescriptor("metadata");
             m_allocatedElementsNonBatchCompressedA = 0;
         }
@@ -1189,7 +1188,6 @@ namespace Tensile
                                          void const*          _bias,
                                          void const*          _scaleDVec,
                                          void*                _ws,
-                                         void const*          _compressed,
                                          unsigned char const* _metadata)
         : a(_a)
         , b(_b)
@@ -1202,7 +1200,6 @@ namespace Tensile
         , bias(_bias)
         , scaleDVec(_scaleDVec)
         , ws(_ws)
-        , compressed(_compressed)
         , metadata(_metadata)
     {
     }

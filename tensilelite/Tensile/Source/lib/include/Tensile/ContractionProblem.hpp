@@ -128,15 +128,14 @@ namespace Tensile
     public:
         enum TENSOR : int
         {
-            A          = 0,
-            B          = 1,
-            C          = 2,
-            D          = 3,
-            E          = 4,
-            BIAS       = 5,
-            SCALEDVEC  = 6,
-            COMPRESSED = 7,
-            METADATA   = 8,
+            A         = 0,
+            B         = 1,
+            C         = 2,
+            D         = 3,
+            E         = 4,
+            BIAS      = 5,
+            SCALEDVEC = 6,
+            METADATA  = 7,
             TENSOR_COUNT
         };
 
@@ -730,7 +729,7 @@ namespace Tensile
         }
         TensorDescriptor const& compressed() const
         {
-            return m_tensors[ContractionProblemGemm::TENSOR::COMPRESSED];
+            return m_tensor_compressed;
         }
         TensorDescriptor const& metadata() const
         {
@@ -904,6 +903,8 @@ namespace Tensile
         size_t m_allocatedElementsNonBatchB;
         size_t m_allocatedElementsNonBatchCompressedA;
 
+        TensorDescriptor m_tensor_compressed;
+
         void normalize();
         void normalizeSparseA();
 
@@ -951,7 +952,6 @@ namespace Tensile
                           void const*          _bias,
                           void const*          _scaleDVec,
                           void*                _ws,
-                          void const*          _compressed,
                           unsigned char const* _metadata);
 
         // TODO: Remove this
@@ -976,7 +976,6 @@ namespace Tensile
 
         // Workspace
         void* ws = nullptr;
-        void const* compressed = nullptr;
         unsigned char const* metadata = nullptr;
 
         std::vector<size_t> maxElements;

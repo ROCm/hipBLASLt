@@ -290,10 +290,7 @@ namespace Tensile
 
         if(problemType.stridedBatched)
         {
-            if(problem.sparseA())
-                args.append<void const*>("a", inputs.compressed);
-            else
-                args.append<void const*>("a", inputs.a);
+            args.append<void const*>("a", inputs.a);
             args.append<void const*>("b", inputs.b);
         }
         else
