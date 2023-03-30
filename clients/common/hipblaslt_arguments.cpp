@@ -100,6 +100,7 @@ void Arguments::init()
     bias_type       = static_cast<hipblasDatatype_t>(-1);
     bias_vector     = false;
     scaleD_vector   = false;
+    grouped_gemm    = 0;
     c_noalias_d     = false;
     HMM             = false;
 }

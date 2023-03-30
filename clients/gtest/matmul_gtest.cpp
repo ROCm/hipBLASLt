@@ -120,6 +120,9 @@ namespace
 
                 if(arg.scaleD_vector)
                     name << "_SD";
+
+                if(arg.grouped_gemm > 0)
+                    name << "_GG" << arg.grouped_gemm;
             }
 
             return std::move(name);
