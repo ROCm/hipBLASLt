@@ -180,21 +180,6 @@ void testing_matmul_bad_arg(const Arguments& arg)
 template <typename Ti, typename To, typename Tc>
 void testing_matmul(const Arguments& arg)
 {
-    hipblasOperation_t transA = char_to_hipblas_operation(arg.transA);
-    hipblasOperation_t transB = char_to_hipblas_operation(arg.transB);
-
-    using Talpha = float;
-
-    int64_t M       = arg.M;
-    int64_t N       = arg.N;
-    int64_t K       = arg.K;
-    Talpha  h_alpha = arg.get_alpha<Talpha>();
-    Talpha  h_beta  = arg.get_beta<Talpha>();
-    int64_t lda     = arg.lda;
-    int64_t ldb     = arg.ldb;
-    int64_t ldc     = arg.ldc;
-    int64_t ldd     = arg.ldd;
-
     double gpu_time_used, cpu_time_used;
     gpu_time_used = cpu_time_used          = 0.0;
     double                 hipblaslt_error = 0.0;
@@ -203,106 +188,310 @@ void testing_matmul(const Arguments& arg)
     hipStream_t            stream;
     CHECK_HIP_ERROR(hipStreamCreate(&stream));
 
-    int64_t A_row = transA == HIPBLAS_OP_N ? M : K;
-    int64_t A_col = transA == HIPBLAS_OP_N ? K : M;
-    int64_t B_row = transB == HIPBLAS_OP_N ? K : N;
-    int64_t B_col = transB == HIPBLAS_OP_N ? N : K;
+    hipblasOperation_t transA(char_to_hipblas_operation(arg.transA));
+    hipblasOperation_t transB(char_to_hipblas_operation(arg.transB));
 
-    int64_t stride_1_a = transA == HIPBLAS_OP_N ? 1 : lda;
-    int64_t stride_2_a = transA == HIPBLAS_OP_N ? lda : 1;
+    using Talpha = float;
 
-    bool    do_batched  = (arg.batch_count > 1);
-    int     num_batches = (do_batched ? arg.batch_count : 1);
-    int64_t stride_a    = do_batched ? arg.stride_a : lda * A_col;
-    int64_t stride_b    = do_batched ? arg.stride_b : ldb * B_col;
-    int64_t stride_c    = do_batched ? arg.stride_c : ldc * N;
-    int64_t stride_d    = do_batched ? arg.stride_c : ldd * N;
+    bool do_grouped_gemm = arg.grouped_gemm > 0;
+    int32_t gemm_count = std::max(1, arg.grouped_gemm);
 
-    hipblaslt_local_matrix_layout matA(A_row, A_col, lda, arg.a_type);
-    hipblaslt_local_matrix_layout matB(B_row, B_col, ldb, arg.b_type);
-    hipblaslt_local_matrix_layout matC(M, N, ldc, arg.c_type);
-    hipblaslt_local_matrix_layout matD(M, N, ldc, arg.d_type);
+    std::vector<int64_t> M(gemm_count), N(gemm_count), K(gemm_count), lda(gemm_count), ldb(gemm_count), ldc(gemm_count), ldd(gemm_count);
+    std::vector<Talpha>  h_alpha(gemm_count), h_beta(gemm_count);
+    std::vector<int64_t> A_row(gemm_count), A_col(gemm_count), B_row(gemm_count), B_col(gemm_count);
+    std::vector<int64_t> stride_a(gemm_count), stride_b(gemm_count), stride_c(gemm_count), stride_d(gemm_count);
+    std::vector<bool>    do_batched(gemm_count), epilogue_on(gemm_count, false), change_bias_type(gemm_count, false);
+    std::vector<int>     num_batches(gemm_count);
+    std::vector<size_t>  size_A(gemm_count), size_B(gemm_count), size_C(gemm_count), size_D(gemm_count), size_D_copy(gemm_count), size_bias(gemm_count), size_scaleD(gemm_count);
 
-    if(do_batched)
+    std::vector<hipblasLtMatrixLayout_t> matA(gemm_count), matB(gemm_count), matC(gemm_count), matD(gemm_count);
+    std::vector<hipblasLtMatmulDesc_t>   matmul(gemm_count);
+    std::vector<hipblasLtEpilogue_t>     epilogue(gemm_count, HIPBLASLT_EPILOGUE_DEFAULT);
+
+    std::vector<device_vector<Ti>*>     dA(gemm_count), dB(gemm_count);
+    std::vector<device_vector<To>*>     dC(gemm_count), dD(gemm_count), dBias(gemm_count);
+    std::vector<device_vector<Talpha>*> dScaleD(gemm_count), dBias_C(gemm_count);
+
+    std::vector<host_vector<Ti>*>     hA(gemm_count), hB(gemm_count);
+    std::vector<host_vector<To>*>     hC(gemm_count), hD_gold(gemm_count), hD_1(gemm_count), hBias(gemm_count);
+    std::vector<host_vector<Talpha>*> hD_gold_epl(gemm_count), hScaleD(gemm_count), hBias_C(gemm_count);
+
+    for(int i = 0; i < gemm_count; i++)
     {
-        EXPECT_HIPBLAS_STATUS(
-            hipblasLtMatrixLayoutSetAttribute(
-                matA, HIPBLASLT_MATRIX_LAYOUT_BATCH_COUNT, &num_batches, sizeof(int)),
-            HIPBLAS_STATUS_SUCCESS);
-        EXPECT_HIPBLAS_STATUS(
-            hipblasLtMatrixLayoutSetAttribute(
-                matB, HIPBLASLT_MATRIX_LAYOUT_BATCH_COUNT, &num_batches, sizeof(int)),
-            HIPBLAS_STATUS_SUCCESS);
-        EXPECT_HIPBLAS_STATUS(
-            hipblasLtMatrixLayoutSetAttribute(
-                matC, HIPBLASLT_MATRIX_LAYOUT_BATCH_COUNT, &num_batches, sizeof(int)),
-            HIPBLAS_STATUS_SUCCESS);
-        EXPECT_HIPBLAS_STATUS(
-            hipblasLtMatrixLayoutSetAttribute(
-                matD, HIPBLASLT_MATRIX_LAYOUT_BATCH_COUNT, &num_batches, sizeof(int)),
-            HIPBLAS_STATUS_SUCCESS);
+        M[i] = arg.M;
+        N[i] = arg.N;
+        K[i] = arg.K;
+        h_alpha[i] = arg.get_alpha<Talpha>();
+        h_beta[i] = arg.get_beta<Talpha>();
+        lda[i] = arg.lda;
+        ldb[i] = arg.ldb;
+        ldc[i] = arg.ldc;
+        ldd[i] = arg.ldd;
 
-        EXPECT_HIPBLAS_STATUS(
-            hipblasLtMatrixLayoutSetAttribute(
-                matA, HIPBLASLT_MATRIX_LAYOUT_STRIDED_BATCH_OFFSET, &stride_a, sizeof(int64_t)),
-            HIPBLAS_STATUS_SUCCESS);
-        EXPECT_HIPBLAS_STATUS(
-            hipblasLtMatrixLayoutSetAttribute(
-                matB, HIPBLASLT_MATRIX_LAYOUT_STRIDED_BATCH_OFFSET, &stride_b, sizeof(int64_t)),
-            HIPBLAS_STATUS_SUCCESS);
-        EXPECT_HIPBLAS_STATUS(
-            hipblasLtMatrixLayoutSetAttribute(
-                matC, HIPBLASLT_MATRIX_LAYOUT_STRIDED_BATCH_OFFSET, &stride_c, sizeof(int64_t)),
-            HIPBLAS_STATUS_SUCCESS);
-        EXPECT_HIPBLAS_STATUS(
-            hipblasLtMatrixLayoutSetAttribute(
-                matD, HIPBLASLT_MATRIX_LAYOUT_STRIDED_BATCH_OFFSET, &stride_d, sizeof(int64_t)),
-            HIPBLAS_STATUS_SUCCESS);
-    }
+        A_row[i] = transA == HIPBLAS_OP_N ? M[i] : K[i];
+        A_col[i] = transA == HIPBLAS_OP_N ? K[i] : M[i];
+        B_row[i] = transB == HIPBLAS_OP_N ? K[i] : N[i];
+        B_col[i] = transB == HIPBLAS_OP_N ? N[i] : K[i];
 
-    hipblaslt_local_matmul_descr matmul(transA, transB, arg.compute_type, arg.scale_type);
-    bool                         epilogue_on = false;
-    hipblasLtEpilogue_t          epilogue    = HIPBLASLT_EPILOGUE_DEFAULT;
-    if(arg.bias_vector)
-    {
-        epilogue_on = true;
-        switch(arg.activation_type)
+        do_batched[i]  = (arg.batch_count > 1);
+        num_batches[i] = (do_batched[i] ? arg.batch_count : 1);
+
+        stride_a[i]    = do_batched[i] ? arg.stride_a : lda[i] * A_col[i];
+        stride_b[i]    = do_batched[i] ? arg.stride_b : ldb[i] * B_col[i];
+        stride_c[i]    = do_batched[i] ? arg.stride_c : ldc[i] * N[i];
+        stride_d[i]    = do_batched[i] ? arg.stride_c : ldd[i] * N[i];
+
+        CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutCreate(&(matA[i]), arg.a_type, A_row[i], A_col[i], lda[i]));
+        CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutCreate(&(matB[i]), arg.b_type, B_row[i], B_col[i], ldb[i]));
+        CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutCreate(&(matC[i]), arg.c_type, M[i], N[i], ldc[i]));
+        CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutCreate(&(matD[i]), arg.d_type, M[i], N[i], ldc[i]));
+
+        if(do_batched[i])
         {
-        case hipblaslt_activation_type::relu:
-            epilogue = HIPBLASLT_EPILOGUE_RELU_BIAS;
-            break;
-        case hipblaslt_activation_type::gelu:
-            epilogue = HIPBLASLT_EPILOGUE_GELU_BIAS;
-            break;
-        default:
-            epilogue = HIPBLASLT_EPILOGUE_BIAS;
-            break;
+            EXPECT_HIPBLAS_STATUS(
+                hipblasLtMatrixLayoutSetAttribute(
+                    matA[i], HIPBLASLT_MATRIX_LAYOUT_BATCH_COUNT, &(num_batches[i]), sizeof(int)),
+                HIPBLAS_STATUS_SUCCESS);
+            EXPECT_HIPBLAS_STATUS(
+                hipblasLtMatrixLayoutSetAttribute(
+                    matB[i], HIPBLASLT_MATRIX_LAYOUT_BATCH_COUNT, &(num_batches[i]), sizeof(int)),
+                HIPBLAS_STATUS_SUCCESS);
+            EXPECT_HIPBLAS_STATUS(
+                hipblasLtMatrixLayoutSetAttribute(
+                    matC[i], HIPBLASLT_MATRIX_LAYOUT_BATCH_COUNT, &(num_batches[i]), sizeof(int)),
+                HIPBLAS_STATUS_SUCCESS);
+            EXPECT_HIPBLAS_STATUS(
+                hipblasLtMatrixLayoutSetAttribute(
+                    matD[i], HIPBLASLT_MATRIX_LAYOUT_BATCH_COUNT, &(num_batches[i]), sizeof(int)),
+                HIPBLAS_STATUS_SUCCESS);
+
+            EXPECT_HIPBLAS_STATUS(
+                hipblasLtMatrixLayoutSetAttribute(
+                    matA[i], HIPBLASLT_MATRIX_LAYOUT_STRIDED_BATCH_OFFSET, &(stride_a[i]), sizeof(int64_t)),
+                HIPBLAS_STATUS_SUCCESS);
+            EXPECT_HIPBLAS_STATUS(
+                hipblasLtMatrixLayoutSetAttribute(
+                    matB[i], HIPBLASLT_MATRIX_LAYOUT_STRIDED_BATCH_OFFSET, &(stride_b[i]), sizeof(int64_t)),
+                HIPBLAS_STATUS_SUCCESS);
+            EXPECT_HIPBLAS_STATUS(
+                hipblasLtMatrixLayoutSetAttribute(
+                    matC[i], HIPBLASLT_MATRIX_LAYOUT_STRIDED_BATCH_OFFSET, &(stride_c[i]), sizeof(int64_t)),
+                HIPBLAS_STATUS_SUCCESS);
+            EXPECT_HIPBLAS_STATUS(
+                hipblasLtMatrixLayoutSetAttribute(
+                    matD[i], HIPBLASLT_MATRIX_LAYOUT_STRIDED_BATCH_OFFSET, &(stride_d[i]), sizeof(int64_t)),
+                HIPBLAS_STATUS_SUCCESS);
         }
-    }
-    else
-    {
-        switch(arg.activation_type)
+
+        CHECK_HIPBLASLT_ERROR(hipblasLtMatmulDescCreate(&(matmul[i]), arg.compute_type, arg.scale_type));
+
+        CHECK_HIPBLASLT_ERROR(hipblasLtMatmulDescSetAttribute(
+            matmul[i], HIPBLASLT_MATMUL_DESC_TRANSA, &transA, sizeof(int32_t)));
+        CHECK_HIPBLASLT_ERROR(hipblasLtMatmulDescSetAttribute(
+            matmul[i], HIPBLASLT_MATMUL_DESC_TRANSB, &transB, sizeof(int32_t)));
+
+        if(arg.bias_vector)
         {
-        case hipblaslt_activation_type::relu:
-            epilogue    = HIPBLASLT_EPILOGUE_RELU;
-            epilogue_on = true;
-            break;
-        case hipblaslt_activation_type::gelu:
-            epilogue    = HIPBLASLT_EPILOGUE_GELU;
-            epilogue_on = true;
-            break;
-        default:
-            break;
+            epilogue_on[i] = true;
+            switch(arg.activation_type)
+            {
+            case hipblaslt_activation_type::relu:
+                epilogue[i] = HIPBLASLT_EPILOGUE_RELU_BIAS;
+                break;
+            case hipblaslt_activation_type::gelu:
+                epilogue[i] = HIPBLASLT_EPILOGUE_GELU_BIAS;
+                break;
+            default:
+                epilogue[i] = HIPBLASLT_EPILOGUE_BIAS;
+                break;
+            }
         }
+        else
+        {
+            switch(arg.activation_type)
+            {
+            case hipblaslt_activation_type::relu:
+                epilogue[i]    = HIPBLASLT_EPILOGUE_RELU;
+                epilogue_on[i] = true;
+                break;
+            case hipblaslt_activation_type::gelu:
+                epilogue[i]    = HIPBLASLT_EPILOGUE_GELU;
+                epilogue_on[i] = true;
+                break;
+            default:
+                break;
+            }
+        }
+
+        if(arg.scaleD_vector)
+        {
+            epilogue_on[i] = true;
+        }
+
+        size_A[i]      = stride_a[i] == 0 ? lda[i] * A_col[i] * num_batches[i] : stride_a[i] * num_batches[i];
+        size_B[i]      = stride_b[i] == 0 ? ldb[i] * B_col[i] * num_batches[i] : stride_b[i] * num_batches[i];
+        size_C[i]      = stride_c[i] == 0 ? ldc[i] * N[i] * num_batches[i] : stride_c[i] * num_batches[i];
+        size_D[i]      = stride_d[i] == 0 ? ldd[i] * N[i] * num_batches[i] : stride_d[i] * num_batches[i];
+        size_D_copy[i] = arg.unit_check || arg.norm_check ? size_D[i] : 0;
+        size_bias[i]   = arg.bias_vector ? M[i] : 1;
+        size_scaleD[i] = arg.scaleD_vector ? M[i] : 1;
+
+        // allocate memory on device
+        dA[i]      = new device_vector<Ti>(size_A[i], 1, HMM);
+        dB[i]      = new device_vector<Ti>(size_B[i], 1, HMM);
+        dC[i]      = new device_vector<To>(size_C[i], 1, HMM);
+        dD[i]      = new device_vector<To>(size_D[i], 1, HMM);
+        dBias[i]   = new device_vector<To>(size_bias[i], 1, HMM);
+        dScaleD[i] = new device_vector<Talpha>(size_scaleD[i], 1, HMM);
+        dBias_C[i] = new device_vector<Talpha>(size_bias[i], 1, HMM);
+
+        CHECK_DEVICE_ALLOCATION(dA[i]->memcheck());
+        CHECK_DEVICE_ALLOCATION(dB[i]->memcheck());
+        CHECK_DEVICE_ALLOCATION(dC[i]->memcheck());
+        CHECK_DEVICE_ALLOCATION(dD[i]->memcheck());
+        CHECK_DEVICE_ALLOCATION(dBias[i]->memcheck());
+        CHECK_DEVICE_ALLOCATION(dScaleD[i]->memcheck());
+        CHECK_DEVICE_ALLOCATION(dBias_C[i]->memcheck());
+
+        // Naming: dX is in GPU (device) memory. hK is in CPU (host) memory
+        hA[i]          = new host_vector<Ti>(size_A[i]);
+        hB[i]          = new host_vector<Ti>(size_B[i]);
+        hC[i]          = new host_vector<To>(size_C[i]);
+        hD_gold[i]     = new host_vector<To>(size_D_copy[i]);
+        hD_gold_epl[i] = new host_vector<Talpha>(size_D_copy[i]);
+        hD_1[i]        = new host_vector<To>(size_D_copy[i]);
+        hBias[i]       = new host_vector<To>(size_bias[i]);
+        hScaleD[i]     = new host_vector<Talpha>(size_scaleD[i]);
+        hBias_C[i]     = new host_vector<Talpha>(size_bias[i]);
+
+        hipblaslt_seedrand();
+
+        // Initial Data on CPU
+        if(arg.alpha_isnan<Tc>())
+        {
+            hipblaslt_init_nan<Ti>(*hA[i], A_row[i], A_col[i], lda[i], stride_a[i], num_batches[i]);
+            hipblaslt_init_nan<Ti>(*hB[i], B_row[i], B_col[i], ldb[i], stride_b[i], num_batches[i]);
+        }
+        else
+        {
+            if(arg.initialization == hipblaslt_initialization::rand_int)
+            {
+                hipblaslt_init<Ti>(*hA[i], A_row[i], A_col[i], lda[i], stride_a[i], num_batches[i]);
+                hipblaslt_init_alternating_sign<Ti>(*hB[i], B_row[i], B_col[i], ldb[i], stride_b[i], num_batches[i]);
+            }
+            else if(arg.initialization == hipblaslt_initialization::trig_float)
+            {
+                hipblaslt_init_sin<Ti>(*hA[i], A_row[i], A_col[i], lda[i], stride_a[i], num_batches[i]);
+                hipblaslt_init_cos<Ti>(*hB[i], B_row[i], B_col[i], ldb[i], stride_b[i], num_batches[i]);
+            }
+            else if(arg.initialization == hipblaslt_initialization::hpl)
+            {
+                hipblaslt_init_hpl<Ti>(*hA[i], A_row[i], A_col[i], lda[i], stride_a[i], num_batches[i]);
+                hipblaslt_init_hpl<Ti>(*hB[i], B_row[i], B_col[i], ldb[i], stride_b[i], num_batches[i]);
+            }
+            else if(arg.initialization == hipblaslt_initialization::special)
+            {
+                hipblaslt_init_alt_impl_big<Ti>(*hA[i], A_row[i], A_col[i], lda[i], num_batches[i]);
+                hipblaslt_init_alt_impl_small<Ti>(*hB[i], B_row[i], B_col[i], ldb[i], num_batches[i]);
+            }
+        }
+
+        if(arg.beta_isnan<Tc>())
+        {
+            hipblaslt_init_nan<To>(*hC[i], M[i], N[i], ldc[i], stride_c[i], num_batches[i]);
+        }
+        else
+        {
+            if(arg.initialization == hipblaslt_initialization::rand_int)
+                hipblaslt_init<To>(*hC[i], M[i], N[i], ldc[i], stride_c[i], num_batches[i]);
+            else if(arg.initialization == hipblaslt_initialization::trig_float)
+                hipblaslt_init_sin<To>(*hC[i], M[i], N[i], ldc[i], stride_c[i], num_batches[i]);
+            else if(arg.initialization == hipblaslt_initialization::hpl)
+                hipblaslt_init_hpl<To>(*hC[i], M[i], N[i], ldc[i], stride_c[i], num_batches[i]);
+            else if(arg.initialization == hipblaslt_initialization::special)
+                hipblaslt_init<To>(*hC[i], M[i], N[i], ldc[i], stride_c[i], num_batches[i]);
+        }
+
+        if(arg.bias_vector)
+        {
+            hipblaslt_init<To>(*hBias[i], M[i], 1, M[i]);
+            hipblaslt_init<Talpha>(*hBias_C[i], M[i], 1, M[i]);
+        }
+
+        if(arg.scaleD_vector)
+            hipblaslt_init<Talpha>(*hScaleD[i], M[i], 1, M[i]);
+
+        // copy data from CPU to device
+        CHECK_HIP_ERROR(dA[i]->transfer_from(*hA[i]));
+        CHECK_HIP_ERROR(dB[i]->transfer_from(*hB[i]));
+        CHECK_HIP_ERROR(dC[i]->transfer_from(*hC[i]));
+        if(arg.bias_vector)
+        {
+            CHECK_HIP_ERROR(dBias[i]->transfer_from(*hBias[i]));
+            CHECK_HIP_ERROR(dBias_C[i]->transfer_from(*hBias_C[i]));
+        }
+
+        if(arg.scaleD_vector)
+            CHECK_HIP_ERROR(dScaleD[i]->transfer_from(*hScaleD[i]));
+
+        if(size_D_copy[i])
+        {
+            if(epilogue_on[i])
+            {
+                std::transform(hC[i]->begin(), hC[i]->end(), hD_gold_epl[i]->begin(), [](To c) -> Talpha {
+                    return static_cast<Talpha>(c);
+                });
+            }
+            else
+            {
+                std::copy(hC[i]->begin(), hC[i]->end(), hD_gold[i]->begin());
+            }
+        }
+
+        if(epilogue_on[i])
+            EXPECT_HIPBLAS_STATUS(
+                hipblasLtMatmulDescSetAttribute(
+                    matmul[i], HIPBLASLT_MATMUL_DESC_EPILOGUE, &(epilogue[i]), sizeof(epilogue[i])),
+                HIPBLAS_STATUS_SUCCESS);
+
+        if(arg.bias_vector)
+        {
+            const void* bias_addr;
+            if(arg.d_type != arg.scale_type && arg.bias_type == arg.scale_type)
+            {
+                bias_addr        = *dBias_C[i];
+                change_bias_type[i] = true;
+                EXPECT_HIPBLAS_STATUS(
+                    hipblasLtMatmulDescSetAttribute(matmul[i],
+                                                    HIPBLASLT_MATMUL_DESC_BIAS_DATA_TYPE,
+                                                    &arg.bias_type,
+                                                    sizeof(hipblasDatatype_t)),
+                    HIPBLAS_STATUS_SUCCESS);
+            }
+            else
+            {
+                bias_addr = *dBias[i];
+            }
+
+            EXPECT_HIPBLAS_STATUS(
+                hipblasLtMatmulDescSetAttribute(
+                    matmul[i], HIPBLASLT_MATMUL_DESC_BIAS_POINTER, &bias_addr, sizeof(void*)),
+                HIPBLAS_STATUS_SUCCESS);
+        }
+
+        if(arg.scaleD_vector)
+        {
+            const void* scaleD_addr = *dScaleD[i];
+            EXPECT_HIPBLAS_STATUS(
+                hipblasLtMatmulDescSetAttribute(
+                    matmul[i], HIPBLASLT_MATMUL_DESC_D_SCALE_POINTER, &scaleD_addr, sizeof(void*)),
+                HIPBLAS_STATUS_SUCCESS);
+        }
+
     }
 
-    if(arg.scaleD_vector)
-    {
-        epilogue_on = true;
-    }
-
+    // set preference
     size_t max_workspace_size = 32 * 1024 * 1024;
-
     hipblaslt_local_preference pref;
     EXPECT_HIPBLAS_STATUS(
         hipblasLtMatmulPreferenceSetAttribute(pref,
@@ -311,290 +500,180 @@ void testing_matmul(const Arguments& arg)
                                               sizeof(max_workspace_size)),
         HIPBLAS_STATUS_SUCCESS);
 
-    const size_t size_A = stride_a == 0 ? lda * A_col * num_batches : stride_a * num_batches;
-
-    const size_t size_B      = stride_b == 0 ? ldb * B_col * num_batches : stride_b * num_batches;
-    const size_t size_C      = stride_c == 0 ? ldc * N * num_batches : stride_c * num_batches;
-    const size_t size_D      = stride_d == 0 ? ldd * N * num_batches : stride_d * num_batches;
-    const size_t size_D_copy = arg.unit_check || arg.norm_check ? size_D : 0;
-    const size_t size_bias   = arg.bias_vector ? M : 1;
-    const size_t size_scaleD = arg.scaleD_vector ? M : 1;
-
-    // allocate memory on device
-    device_vector<Ti>     dA(size_A, 1, HMM);
-    device_vector<Ti>     dB(size_B, 1, HMM);
-    device_vector<To>     dC(size_C, 1, HMM);
-    device_vector<To>     dD(size_D, 1, HMM);
-    device_vector<To>     dBias(size_bias, 1, HMM);
-    device_vector<Talpha> dScaleD(size_scaleD, 1, HMM);
-    device_vector<Talpha> dBias_C(size_bias, 1, HMM);
-    CHECK_DEVICE_ALLOCATION(dA.memcheck());
-    CHECK_DEVICE_ALLOCATION(dB.memcheck());
-    CHECK_DEVICE_ALLOCATION(dC.memcheck());
-    CHECK_DEVICE_ALLOCATION(dD.memcheck());
-    CHECK_DEVICE_ALLOCATION(dBias.memcheck());
-    CHECK_DEVICE_ALLOCATION(dScaleD.memcheck());
-    CHECK_DEVICE_ALLOCATION(dBias_C.memcheck());
-
-    // Naming: dX is in GPU (device) memory. hK is in CPU (host) memory
-    host_vector<Ti>     hA(size_A);
-    host_vector<Ti>     hB(size_B);
-    host_vector<To>     hC(size_C);
-    host_vector<To>     hD_gold(size_D_copy);
-    host_vector<Talpha> hD_gold_epl(size_D_copy);
-    host_vector<To>     hD_1(size_D_copy);
-    host_vector<To>     hBias(size_bias);
-    host_vector<Talpha> hScaleD(size_scaleD);
-    host_vector<Talpha> hBias_C(size_bias);
-
-    hipblaslt_seedrand();
-
-    // Initial Data on CPU
-    if(arg.alpha_isnan<Tc>())
-    {
-        hipblaslt_init_nan<Ti>(hA, A_row, A_col, lda, stride_a, num_batches);
-        hipblaslt_init_nan<Ti>(hB, B_row, B_col, ldb, stride_b, num_batches);
-    }
-    else
-    {
-        if(arg.initialization == hipblaslt_initialization::rand_int)
-        {
-            hipblaslt_init<Ti>(hA, A_row, A_col, lda, stride_a, num_batches);
-            hipblaslt_init_alternating_sign<Ti>(hB, B_row, B_col, ldb, stride_b, num_batches);
-        }
-        else if(arg.initialization == hipblaslt_initialization::trig_float)
-        {
-            hipblaslt_init_sin<Ti>(hA, A_row, A_col, lda, stride_a, num_batches);
-            hipblaslt_init_cos<Ti>(hB, B_row, B_col, ldb, stride_b, num_batches);
-        }
-        else if(arg.initialization == hipblaslt_initialization::hpl)
-        {
-            hipblaslt_init_hpl<Ti>(hA, A_row, A_col, lda, stride_a, num_batches);
-            hipblaslt_init_hpl<Ti>(hB, B_row, B_col, ldb, stride_b, num_batches);
-        }
-        else if(arg.initialization == hipblaslt_initialization::special)
-        {
-            hipblaslt_init_alt_impl_big<Ti>(hA, A_row, A_col, lda, num_batches);
-            hipblaslt_init_alt_impl_small<Ti>(hB, B_row, B_col, ldb, num_batches);
-        }
-    }
-
-    if(arg.beta_isnan<Tc>())
-    {
-        hipblaslt_init_nan<To>(hC, M, N, ldc, stride_c, num_batches);
-    }
-    else
-    {
-        if(arg.initialization == hipblaslt_initialization::rand_int)
-            hipblaslt_init<To>(hC, M, N, ldc, stride_c, num_batches);
-        else if(arg.initialization == hipblaslt_initialization::trig_float)
-            hipblaslt_init_sin<To>(hC, M, N, ldc, stride_c, num_batches);
-        else if(arg.initialization == hipblaslt_initialization::hpl)
-            hipblaslt_init_hpl<To>(hC, M, N, ldc, stride_c, num_batches);
-        else if(arg.initialization == hipblaslt_initialization::special)
-            hipblaslt_init<To>(hC, M, N, ldc, stride_c, num_batches);
-    }
-
-    if(arg.bias_vector)
-    {
-        hipblaslt_init<To>(hBias, M, 1, M);
-        hipblaslt_init<Talpha>(hBias_C, M, 1, M);
-    }
-
-    if(arg.scaleD_vector)
-        hipblaslt_init<Talpha>(hScaleD, M, 1, M);
-
-    // copy data from CPU to device
-    CHECK_HIP_ERROR(dA.transfer_from(hA));
-    CHECK_HIP_ERROR(dB.transfer_from(hB));
-    CHECK_HIP_ERROR(dC.transfer_from(hC));
-    if(arg.bias_vector)
-    {
-        CHECK_HIP_ERROR(dBias.transfer_from(hBias));
-        CHECK_HIP_ERROR(dBias_C.transfer_from(hBias_C));
-    }
-
-    if(arg.scaleD_vector)
-        CHECK_HIP_ERROR(dScaleD.transfer_from(hScaleD));
-
-    if(size_D_copy)
-    {
-        if(epilogue_on)
-        {
-            std::transform(hC.begin(), hC.end(), hD_gold_epl.begin(), [](To c) -> Talpha {
-                return static_cast<Talpha>(c);
-            });
-        }
-        else
-        {
-            std::copy(hC.begin(), hC.end(), hD_gold.begin());
-        }
-    }
-
-    if(epilogue_on)
-        EXPECT_HIPBLAS_STATUS(
-            hipblasLtMatmulDescSetAttribute(
-                matmul, HIPBLASLT_MATMUL_DESC_EPILOGUE, &epilogue, sizeof(epilogue)),
-            HIPBLAS_STATUS_SUCCESS);
-
-    bool change_bias_type = false;
-    if(arg.bias_vector)
-    {
-        const void* bias_addr;
-        if(arg.d_type != arg.scale_type && arg.bias_type == arg.scale_type)
-        {
-            bias_addr        = dBias_C;
-            change_bias_type = true;
-            EXPECT_HIPBLAS_STATUS(
-                hipblasLtMatmulDescSetAttribute(matmul,
-                                                HIPBLASLT_MATMUL_DESC_BIAS_DATA_TYPE,
-                                                &arg.bias_type,
-                                                sizeof(hipblasDatatype_t)),
-                HIPBLAS_STATUS_SUCCESS);
-        }
-        else
-        {
-            bias_addr = dBias;
-        }
-
-        EXPECT_HIPBLAS_STATUS(
-            hipblasLtMatmulDescSetAttribute(
-                matmul, HIPBLASLT_MATMUL_DESC_BIAS_POINTER, &bias_addr, sizeof(void*)),
-            HIPBLAS_STATUS_SUCCESS);
-    }
-
-    if(arg.scaleD_vector)
-    {
-        const void* scaleD_addr = dScaleD;
-        EXPECT_HIPBLAS_STATUS(
-            hipblasLtMatmulDescSetAttribute(
-                matmul, HIPBLASLT_MATMUL_DESC_D_SCALE_POINTER, &scaleD_addr, sizeof(void*)),
-            HIPBLAS_STATUS_SUCCESS);
-    }
+    // set workspace
+    device_vector<unsigned char>*    dWorkspace;
+    size_t                           workspace_size     = 0;
 
     // Get Heuristic results
-    hipblasLtMatmulHeuristicResult_t heuristicResult[3] = {0};
+    hipblasLtMatmulHeuristicResult_t heuristicResult[1] = {0};
+    int                              requestAlgoCount   = 1;
     int                              returnedAlgoCount  = 0;
-    EXPECT_HIPBLAS_STATUS(
-        (hipblasLtMatmulAlgoGetHeuristic(
-            handle, matmul, matA, matB, matC, matD, pref, 3, heuristicResult, &returnedAlgoCount)),
-        HIPBLAS_STATUS_SUCCESS);
 
-    size_t                       workspace_size = heuristicResult[0].workspaceSize;
-    device_vector<unsigned char> dWorkspace(workspace_size, 1, HMM);
-    CHECK_DEVICE_ALLOCATION(dWorkspace.memcheck());
+    // grouped gemm
+    hipblasLtExtGroupedGemm_t groupedGemm;
+    std::vector<void*> da(gemm_count), db(gemm_count), dc(gemm_count), dd(gemm_count);
+
+    if(!do_grouped_gemm)
+    {
+        EXPECT_HIPBLAS_STATUS(
+            (hipblasLtMatmulAlgoGetHeuristic(
+                handle, matmul[0], matA[0], matB[0], matC[0], matD[0], pref, requestAlgoCount, heuristicResult, &returnedAlgoCount)),
+            HIPBLAS_STATUS_SUCCESS);
+
+        for(int i = 0; i < returnedAlgoCount; i ++)
+            workspace_size = std::max(workspace_size, heuristicResult[i].workspaceSize);
+        dWorkspace = new device_vector<unsigned char>(workspace_size, 1, HMM);
+        CHECK_DEVICE_ALLOCATION(dWorkspace->memcheck());
+    }
+    else
+    {
+        // grouped gemm
+        for(int gemmIdx = 0; gemmIdx < gemm_count; gemmIdx++)
+        {
+            da[gemmIdx] = *dA[gemmIdx];
+            db[gemmIdx] = *dB[gemmIdx];
+            dc[gemmIdx] = *dC[gemmIdx];
+            dd[gemmIdx] = *dD[gemmIdx];
+        }
+        CHECK_HIPBLASLT_ERROR(hipblasLtExtGroupedGemmCreate(
+            &groupedGemm, handle, matmul, h_alpha, da, matA, db, matB, h_beta, dc, matC, dd, matD));
+
+        CHECK_HIPBLASLT_ERROR(hipblasLtExtGroupedGemmAlgoGetHeuristic(
+            groupedGemm, pref, requestAlgoCount, heuristicResult, &returnedAlgoCount));
+
+        dWorkspace = new device_vector<unsigned char>(max_workspace_size, 1, HMM);
+        CHECK_DEVICE_ALLOCATION(dWorkspace->memcheck());
+    }
 
     if(arg.unit_check || arg.norm_check)
     {
-        CHECK_HIP_ERROR(hipStreamSynchronize(stream));
-        EXPECT_HIPBLAS_STATUS(hipblasLtMatmul(handle,
-                                              matmul,
-                                              &h_alpha,
-                                              dA,
-                                              matA,
-                                              dB,
-                                              matB,
-                                              &h_beta,
-                                              dC,
-                                              matC,
-                                              dD,
-                                              matD,
-                                              &heuristicResult[0].algo,
-                                              dWorkspace,
-                                              workspace_size,
-                                              stream),
-                              HIPBLAS_STATUS_SUCCESS);
-        // now we can recycle gold matrix for reference purposes
+        if(!do_grouped_gemm)
+        {
+            CHECK_HIP_ERROR(hipStreamSynchronize(stream));
+            EXPECT_HIPBLAS_STATUS(hipblasLtMatmul(handle,
+                                                matmul[0],
+                                                &(h_alpha[0]),
+                                                *(dA[0]),
+                                                matA[0],
+                                                *(dB[0]),
+                                                matB[0],
+                                                &(h_beta[0]),
+                                                *(dC[0]),
+                                                matC[0],
+                                                *(dD[0]),
+                                                matD[0],
+                                                &heuristicResult[0].algo,
+                                                *dWorkspace,
+                                                workspace_size,
+                                                stream),
+                                HIPBLAS_STATUS_SUCCESS);
+        }
+        else
+        {
+            //grouped gemm
+            CHECK_HIPBLASLT_ERROR(hipblasLtExtGroupedGemmMakeArgument(
+                groupedGemm, &heuristicResult[0].algo, *dWorkspace, stream));
+
+            CHECK_HIPBLASLT_ERROR(hipblasLtExtGroupedGemmRun(groupedGemm, stream));
+        }
+    }
+
+    // get CPU result
+    if(arg.unit_check || arg.norm_check)
+    {
         if(arg.timing)
         {
             cpu_time_used = get_time_us_no_sync();
         }
 
 #define epilogue_param \
-    M, N, ldd, hD_gold_epl + pos, hD_gold + pos, arg.bias_vector, arg.scaleD_vector, hScaleD + 0
-        for(int i = 0; i < num_batches; i++)
+    M[gemmIdx], N[gemmIdx], ldd[gemmIdx], *(hD_gold_epl[gemmIdx]) + pos, *(hD_gold[gemmIdx]) + pos, arg.bias_vector, arg.scaleD_vector, *(hScaleD[gemmIdx]) + 0
+        for(int gemmIdx = 0; gemmIdx < gemm_count; gemmIdx++)
         {
-            if(epilogue_on)
+            for(int batchIdx = 0; batchIdx < num_batches[gemmIdx]; batchIdx++)
             {
-                cblas_gemm<Ti, Talpha, Talpha>(transA,
-                                               transB,
-                                               M,
-                                               N,
-                                               K,
-                                               h_alpha,
-                                               hA + stride_a * i,
-                                               lda,
-                                               hB + stride_b * i,
-                                               ldb,
-                                               h_beta,
-                                               hD_gold_epl + stride_d * i,
-                                               ldd,
-                                               false);
-                auto pos = stride_d * i;
-
-                if(change_bias_type == false)
+                if(epilogue_on[gemmIdx])
                 {
-                    switch(arg.activation_type)
+                    cblas_gemm<Ti, Talpha, Talpha>(transA,
+                                                transB,
+                                                M[gemmIdx],
+                                                N[gemmIdx],
+                                                K[gemmIdx],
+                                                h_alpha[gemmIdx],
+                                                *(hA[gemmIdx]) + stride_a[gemmIdx] * batchIdx,
+                                                lda[gemmIdx],
+                                                *(hB[gemmIdx]) + stride_b[gemmIdx] * batchIdx,
+                                                ldb[gemmIdx],
+                                                h_beta[gemmIdx],
+                                                *(hD_gold_epl[gemmIdx]) + stride_d[gemmIdx] * batchIdx,
+                                                ldd[gemmIdx],
+                                                false);
+                    auto pos = stride_d[gemmIdx] * batchIdx;
+
+                    if(change_bias_type[gemmIdx] == false)
                     {
-                    case hipblaslt_activation_type::gelu:
-                        epilogue_func(epilogue_param,
-                                      hBias + 0,
-                                      arg.activation_arg1,
-                                      arg.activation_arg2,
-                                      ::_gelu);
-                        break;
-                    case hipblaslt_activation_type::relu:
-                        epilogue_func(epilogue_param,
-                                      hBias + 0,
-                                      arg.activation_arg1,
-                                      arg.activation_arg2,
-                                      ::_relu);
-                        break;
-                    default:
-                        epilogue_func(epilogue_param, hBias + 0);
-                        break;
+                        switch(arg.activation_type)
+                        {
+                        case hipblaslt_activation_type::gelu:
+                            epilogue_func(epilogue_param,
+                                        *(hBias[gemmIdx]) + 0,
+                                        arg.activation_arg1,
+                                        arg.activation_arg2,
+                                        ::_gelu);
+                            break;
+                        case hipblaslt_activation_type::relu:
+                            epilogue_func(epilogue_param,
+                                        *(hBias[gemmIdx]) + 0,
+                                        arg.activation_arg1,
+                                        arg.activation_arg2,
+                                        ::_relu);
+                            break;
+                        default:
+                            epilogue_func(epilogue_param, *(hBias[gemmIdx]) + 0);
+                            break;
+                        }
+                    }
+                    else
+                    {
+                        switch(arg.activation_type)
+                        {
+                        case hipblaslt_activation_type::gelu:
+                            epilogue_func(epilogue_param,
+                                        *(hBias_C[gemmIdx]) + 0,
+                                        arg.activation_arg1,
+                                        arg.activation_arg2,
+                                        ::_gelu);
+                            break;
+                        case hipblaslt_activation_type::relu:
+                            epilogue_func(epilogue_param,
+                                        *(hBias_C[gemmIdx]) + 0,
+                                        arg.activation_arg1,
+                                        arg.activation_arg2,
+                                        ::_relu);
+                            break;
+                        default:
+                            epilogue_func(epilogue_param, *(hBias_C[gemmIdx]) + 0);
+                            break;
+                        }
                     }
                 }
                 else
                 {
-                    switch(arg.activation_type)
-                    {
-                    case hipblaslt_activation_type::gelu:
-                        epilogue_func(epilogue_param,
-                                      hBias_C + 0,
-                                      arg.activation_arg1,
-                                      arg.activation_arg2,
-                                      ::_gelu);
-                        break;
-                    case hipblaslt_activation_type::relu:
-                        epilogue_func(epilogue_param,
-                                      hBias_C + 0,
-                                      arg.activation_arg1,
-                                      arg.activation_arg2,
-                                      ::_relu);
-                        break;
-                    default:
-                        epilogue_func(epilogue_param, hBias_C + 0);
-                        break;
-                    }
+                    cblas_gemm<Ti, To, Talpha>(transA,
+                                            transB,
+                                            M[gemmIdx],
+                                            N[gemmIdx],
+                                            K[gemmIdx],
+                                            h_alpha[gemmIdx],
+                                            *(hA[gemmIdx]) + stride_a[gemmIdx] * batchIdx,
+                                            lda[gemmIdx],
+                                            *(hB[gemmIdx]) + stride_b[gemmIdx] * batchIdx,
+                                            ldb[gemmIdx],
+                                            h_beta[gemmIdx],
+                                            *(hD_gold[gemmIdx]) + stride_d[gemmIdx] * batchIdx,
+                                            ldd[gemmIdx],
+                                            false);
                 }
-            }
-            else
-            {
-                cblas_gemm<Ti, To, Talpha>(transA,
-                                           transB,
-                                           M,
-                                           N,
-                                           K,
-                                           h_alpha,
-                                           hA + stride_a * i,
-                                           lda,
-                                           hB + stride_b * i,
-                                           ldb,
-                                           h_beta,
-                                           hD_gold + stride_d * i,
-                                           ldd,
-                                           false);
             }
         }
 
@@ -605,17 +684,20 @@ void testing_matmul(const Arguments& arg)
 
         // fetch GPU
         CHECK_HIP_ERROR(hipStreamSynchronize(stream));
-        CHECK_HIP_ERROR(hD_1.transfer_from(dD));
 
-        if(arg.unit_check)
+        for(int gemmIdx = 0; gemmIdx < gemm_count; gemmIdx++)
         {
-            unit_check_general<To>(M, N, ldd, stride_d, hD_gold, hD_1, num_batches);
-        }
+            CHECK_HIP_ERROR(hD_1[gemmIdx]->transfer_from(*(dD[gemmIdx])));
+            if(arg.unit_check)
+            {
+                unit_check_general<To>(M[gemmIdx], N[gemmIdx], ldd[gemmIdx], stride_d[gemmIdx], *(hD_gold[gemmIdx]), *(hD_1[gemmIdx]), num_batches[gemmIdx]);
+            }
 
-        if(arg.norm_check)
-        {
-            hipblaslt_error = std::abs(
-                norm_check_general<To>('F', M, N, ldd, stride_d, hD_gold, hD_1, num_batches));
+            if(arg.norm_check)
+            {
+                hipblaslt_error = std::abs(
+                    norm_check_general<To>('F', M[gemmIdx], N[gemmIdx], ldd[gemmIdx], stride_d[gemmIdx], *(hD_gold[gemmIdx]), *(hD_1[gemmIdx]), num_batches[gemmIdx]));
+            }
         }
     }
 
@@ -623,85 +705,104 @@ void testing_matmul(const Arguments& arg)
     {
         int number_cold_calls = arg.cold_iters;
         int number_hot_calls  = arg.iters;
-        for(int i = 0; i < number_cold_calls; i++)
-        {
-            EXPECT_HIPBLAS_STATUS(hipblasLtMatmul(handle,
-                                                  matmul,
-                                                  &h_alpha,
-                                                  dA,
-                                                  matA,
-                                                  dB,
-                                                  matB,
-                                                  &h_beta,
-                                                  dC,
-                                                  matC,
-                                                  dD,
-                                                  matD,
-                                                  &heuristicResult[0].algo,
-                                                  dWorkspace,
-                                                  workspace_size,
-                                                  stream),
-                                  HIPBLAS_STATUS_SUCCESS);
-        }
 
-        CHECK_HIP_ERROR(hipStreamSynchronize(stream));
-        gpu_time_used = get_time_us_sync(stream); // in microseconds
-        for(int i = 0; i < number_hot_calls; i++)
+        if(!do_grouped_gemm)
         {
-            EXPECT_HIPBLAS_STATUS(hipblasLtMatmul(handle,
-                                                  matmul,
-                                                  &h_alpha,
-                                                  dA,
-                                                  matA,
-                                                  dB,
-                                                  matB,
-                                                  &h_beta,
-                                                  dC,
-                                                  matC,
-                                                  dD,
-                                                  matD,
-                                                  &heuristicResult[0].algo,
-                                                  dWorkspace,
-                                                  workspace_size,
-                                                  stream),
-                                  HIPBLAS_STATUS_SUCCESS);
-        }
-        CHECK_HIP_ERROR(hipStreamSynchronize(stream));
-        gpu_time_used = get_time_us_sync(stream) - gpu_time_used;
-        auto flops    = gemm_gflop_count<float>(M, N, K);
-        switch(arg.activation_type)
-        {
-        case hipblaslt_activation_type::relu:
-            flops += relu_gflop_count<float>(M, N);
-            break;
-        case hipblaslt_activation_type::gelu:
-            flops += gelu_gflop_count<float>(M, N);
-            break;
-        default:
-            break;
-        }
-#define argument_param_nb                                                                     \
-    e_transA, e_transB, e_M, e_N, e_K, e_alpha, e_lda, e_stride_a, e_beta, e_ldb, e_stride_b, \
-        e_ldc, e_stride_c, e_ldd, e_stride_d, e_d_type, e_compute_type, e_activation_type,    \
-        e_bias_vector
-#define argument_param argument_param_nb, e_batch_count
+            for(int i = 0; i < number_cold_calls; i++)
+            {
+                EXPECT_HIPBLAS_STATUS(hipblasLtMatmul(handle,
+                                                        matmul[0],
+                                                        &(h_alpha[0]),
+                                                        *(dA[0]),
+                                                        matA[0],
+                                                        *(dB[0]),
+                                                        matB[0],
+                                                        &(h_beta[0]),
+                                                        *(dC[0]),
+                                                        matC[0],
+                                                        *(dD[0]),
+                                                        matD[0],
+                                                        &heuristicResult[0].algo,
+                                                        *dWorkspace,
+                                                        workspace_size,
+                                                        stream),
+                                    HIPBLAS_STATUS_SUCCESS);
+            }
 
-        if(do_batched)
-            ArgumentModel<argument_param>{}.log_args<float>(hipblaslt_cout,
-                                                            arg,
-                                                            gpu_time_used,
-                                                            flops,
-                                                            ArgumentLogging::NA_value,
-                                                            cpu_time_used,
-                                                            hipblaslt_error);
+            CHECK_HIP_ERROR(hipStreamSynchronize(stream));
+            gpu_time_used = get_time_us_sync(stream); // in microseconds
+            for(int i = 0; i < number_hot_calls; i++)
+            {
+                EXPECT_HIPBLAS_STATUS(hipblasLtMatmul(handle,
+                                                        matmul[0],
+                                                        &(h_alpha[0]),
+                                                        *(dA[0]),
+                                                        matA[0],
+                                                        *(dB[0]),
+                                                        matB[0],
+                                                        &(h_beta[0]),
+                                                        *(dC[0]),
+                                                        matC[0],
+                                                        *(dD[0]),
+                                                        matD[0],
+                                                        &heuristicResult[0].algo,
+                                                        *dWorkspace,
+                                                        workspace_size,
+                                                        stream),
+                                    HIPBLAS_STATUS_SUCCESS);
+            }
+            CHECK_HIP_ERROR(hipStreamSynchronize(stream));
+            gpu_time_used = get_time_us_sync(stream) - gpu_time_used;
+        }
         else
-            ArgumentModel<argument_param_nb>{}.log_args<float>(hipblaslt_cout,
-                                                               arg,
-                                                               gpu_time_used,
-                                                               flops,
-                                                               ArgumentLogging::NA_value,
-                                                               cpu_time_used,
-                                                               hipblaslt_error);
+        {
+            //grouped gemm
+            CHECK_HIPBLASLT_ERROR(hipblasLtExtGroupedGemmMakeArgument(
+                groupedGemm, &heuristicResult[0].algo, *dWorkspace, stream));
+
+            for(int i = 0; i < number_cold_calls; i++)
+                CHECK_HIPBLASLT_ERROR(hipblasLtExtGroupedGemmRun(groupedGemm, stream));
+
+            CHECK_HIP_ERROR(hipStreamSynchronize(stream));
+            gpu_time_used = get_time_us_sync(stream); // in microseconds
+
+            for(int i = 0; i < number_hot_calls; i++)
+                CHECK_HIPBLASLT_ERROR(hipblasLtExtGroupedGemmRun(groupedGemm, stream));
+
+            CHECK_HIP_ERROR(hipStreamSynchronize(stream));
+            gpu_time_used = get_time_us_sync(stream) - gpu_time_used;
+        }
+
+        double flops = 0;
+        for(int gemmIdx = 0; gemmIdx < gemm_count; gemmIdx++)
+        {
+            flops += gemm_gflop_count<float>(M[gemmIdx], N[gemmIdx], K[gemmIdx]);
+            switch(arg.activation_type)
+            {
+            case hipblaslt_activation_type::relu:
+                flops += relu_gflop_count<float>(M[gemmIdx], N[gemmIdx]);
+                break;
+            case hipblaslt_activation_type::gelu:
+                flops += gelu_gflop_count<float>(M[gemmIdx], N[gemmIdx]);
+                break;
+            default:
+                break;
+            }
+        }
+
+#define argument_param                                                                     \
+    e_transA, e_transB, e_grouped_gemm, e_batch_count, e_M, e_N, e_K, \
+        e_alpha, e_lda, e_stride_a, e_beta, e_ldb, e_stride_b, e_ldc, e_stride_c, e_ldd, e_stride_d, \
+        e_d_type, e_compute_type, e_activation_type, e_bias_vector
+
+        ArgumentModel<argument_param>{}.log_args<float>(hipblaslt_cout,
+                                                        arg,
+                                                        gpu_time_used,
+                                                        flops,
+                                                        ArgumentLogging::NA_value,
+                                                        cpu_time_used,
+                                                        hipblaslt_error);
     }
+
     CHECK_HIP_ERROR(hipStreamDestroy(stream));
 }
