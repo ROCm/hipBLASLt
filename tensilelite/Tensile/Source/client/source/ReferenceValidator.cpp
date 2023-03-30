@@ -392,21 +392,19 @@ namespace Tensile
             if(m_printTensorA)
             {
                 auto a = problem.a();
-                auto adata = result.a;
                 if (problem.sparseA())
                 {
                     m_reporter->logTensor(
                         LogLevel::Verbose, "Ref A", reference.a, problem.a(), reference.a);
                     a = problem.compressed();
-                    adata = result.compressed;
                 }
 
                 HIP_CHECK_EXC(hipMemcpy(m_cpuResultBuffer.get(),
-                                        adata,
+                                        result.a,
                                         a.totalAllocatedBytes(),
                                         hipMemcpyDeviceToHost));
                 m_reporter->logTensor(
-                    LogLevel::Verbose, "A", m_cpuResultBuffer.get(), a, adata);
+                    LogLevel::Verbose, "A", m_cpuResultBuffer.get(), a, result.a);
 
                 if(problem.sparseA())
                 {
