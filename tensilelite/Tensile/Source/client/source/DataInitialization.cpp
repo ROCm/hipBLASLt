@@ -362,7 +362,7 @@ namespace Tensile
             compressSparseArray(cpuCompressed, cpuMeta, srcBuffer, tensor, tensorC, dim);
 
             //copy compressed sparse matrix and metadata matrix to GPU
-            Tensile::hip::CopyTensor(dstCompressed, cpuCompressed, tensorC, hipMemcpyHostToDevice);
+            Tensile::hip::CopyTensor(dstCompressed, cpuCompressed, tensor, hipMemcpyHostToDevice);
             HIP_CHECK_EXC(hipMemcpy(dstMeta, cpuMeta, tensor.totalLogicalElements()/8, hipMemcpyHostToDevice));
 
             // free temp cpu memory
@@ -1108,9 +1108,8 @@ namespace Tensile
         
                 if (problem.sparseA() && i == ContractionProblemGemm::TENSOR::A)
                 {
-                    auto& pUnitCA = m_vdata[ContractionProblemGemm::TENSOR::COMPRESSED].pristine[problem.tensors()[ContractionProblemGemm::TENSOR::COMPRESSED].dataType()];
-                    auto& pUnitM = m_vdata[ContractionProblemGemm::TENSOR::METADATA].pristine[problem.tensors()[ContractionProblemGemm::TENSOR::METADATA].dataType()];
-                    initGPUSparseInput(pUnitCA.gpuInput.current.get(), pUnitM.gpuInput.current.get(), (void*)(offset), problem.tensors()[ContractionProblemGemm::TENSOR::A], problem.tensors()[ContractionProblemGemm::TENSOR::COMPRESSED], problem.boundIndices()[0].a);
+                    auto& pUnitM = m_vdata[ContractionProblemGemm::TENSOR::METADATA].pristine[problem.metadata().dataType()];
+                    initGPUSparseInput(pUnit.gpuInput.current.get(), pUnitM.gpuInput.current.get(), (void*)(offset), problem.a(), problem.compressed(), problem.boundIndices()[0].a);
                 }
             }
         }
@@ -1438,7 +1437,6 @@ namespace Tensile
             inputs->e          = (void*)ptrs[ContractionProblemGemm::TENSOR::E];
             inputs->bias       = (void*)ptrs[ContractionProblemGemm::TENSOR::BIAS];
             inputs->scaleDVec  = (void*)ptrs[ContractionProblemGemm::TENSOR::SCALEDVEC];
-            inputs->compressed = (void*)ptrs[ContractionProblemGemm::TENSOR::COMPRESSED];
             inputs->metadata   = (unsigned char*)ptrs[ContractionProblemGemm::TENSOR::METADATA];
 
             inputs->batchA = (void**)batchPtrs[ContractionProblemGemm::TENSOR::A];
