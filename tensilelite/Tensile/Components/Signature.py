@@ -129,7 +129,7 @@ class SignatureCOV3(Signature):
         if kernel["ProblemType"]["UseE"] and (kernel["GlobalSplitU"] == 1):
             signature.addArg(      "E", SVK.SIG_GLOBALBUFFER, cptValueType, "generic")
 
-        if writer.states.useBias == DataDirection.READ:
+        if writer.states.needBiasType:
             signature.addArg("biasType",    SVK.SIG_VALUE,        "u32")
 
         if kernel["ProblemType"]["UseE"] and (kernel["GlobalSplitU"] == 1):

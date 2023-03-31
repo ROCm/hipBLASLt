@@ -821,6 +821,12 @@ class DSLoadD16HIU16(DSLoadInstruction):
         if ds: ds.na = 1
         self.setInst("ds_load_u16_d16_hi")
 
+class DSLoadB16(DSLoadInstruction):
+    def __init__(self, dst, src, readToTempVgpr: bool, ds: Optional[DSModifiers] = None, comment="") -> None:
+        super().__init__(InstType.INST_B16, dst, src, readToTempVgpr, ds, comment)
+        if ds: ds.na = 1
+        self.setInst("ds_load_b16")
+
 class DSLoadB32(DSLoadInstruction):
     def __init__(self, dst, src, readToTempVgpr: bool, ds: Optional[DSModifiers] = None, comment="") -> None:
         super().__init__(InstType.INST_B32, dst, src, readToTempVgpr, ds, comment)
@@ -987,6 +993,11 @@ class SMulHIU32(CommonInstruction):
         super().__init__(InstType.INST_HI_U32, dst, [src0, src1], None, None, comment)
         self.setInst("s_mul_hi_u32")
 
+class SMulLOU32(CommonInstruction):
+    def __init__(self, dst, src0, src1, comment="") -> None:
+        super().__init__(InstType.INST_HI_U32, dst, [src0, src1], None, None, comment)
+        self.setInst("s_mul_lo_u32")
+
 class SSubI32(CommonInstruction):
     def __init__(self, dst, src0, src1, comment="") -> None:
         super().__init__(InstType.INST_I32, dst, [src0, src1], None, None, comment)
@@ -1060,6 +1071,12 @@ class SCmpKEQU32(CommonInstruction):
     def __init__(self, src, simm16: Union[int, str], comment="") -> None:
         super().__init__(InstType.INST_U32, None, [src, simm16], None, None, comment)
         self.setInst("s_cmpk_eq_u32")
+
+class SCmpKGeU32(CommonInstruction):
+    def __init__(self, src, simm16: str, comment="") -> None:
+        super().__init__(InstType.INST_U32, None, [src, simm16], None, None, comment)
+        self.setInst("s_cmpk_ge_u32")
+
 class SCmpKGtU32(CommonInstruction):
     def __init__(self, src, simm16: str, comment="") -> None:
         super().__init__(InstType.INST_U32, None, [src, simm16], None, None, comment)
@@ -1687,12 +1704,17 @@ class VMacF32(CommonInstruction):
 # Dot
 class VDot2CF32F16(CommonInstruction):
     def __init__(self, dst, src0, src1, sdwa: Optional[SDWAModifiers] = None, comment="") -> None:
-        super().__init__(InstType.INST_F32, dst, [src0, src1], sdwa, None, comment)
+        super().__init__(InstType.INST_F32, dst, [src0, src1], sdwa, None, None, comment)
         self.setInst("v_dot2c_f32_f16")
 
     def preStr(self):
         if self.kernel.isa[0] >= 11:
             self.setInst("v_dot2acc_f32_f16")
+
+class VDot2F32F16(CommonInstruction):
+    def __init__(self, dst, src0, src1, src2, vop3: Optional[VOP3PModifiers] = None, comment="") -> None:
+        super().__init__(InstType.INST_F32, dst, [src0, src1, src2], None, vop3, comment)
+        self.setInst("v_dot2_f32_f16")
 
 # Fma
 class VFmaF16(CommonInstruction):

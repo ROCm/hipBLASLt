@@ -442,7 +442,8 @@ namespace Tensile
                                  TensorDescriptor const&  tensor,
                                  void const*              src,
                                  ContractionInputs const& inputs,
-                                 const size_t&            elementsToValidate)
+                                 const size_t&            elementsToValidate,
+                                 size_t                   reducIdx)
         {
             size_t validationStride = 1;
             if(elementsToValidate > 0 && elementsToValidate < biasTensor.totalLogicalElements())
@@ -460,7 +461,7 @@ namespace Tensile
                     std::vector<int64_t> coord(tensor.dimensions());
                     size_t               sumLength = 0;
                     size_t               idx       = 0;
-                    if(biasTensor.sizes()[0] == tensor.sizes()[0])
+                    if(reducIdx == 1)
                     {
                         sumLength = tensor.sizes()[1];
                         coord[0]  = bNum;
@@ -505,7 +506,8 @@ namespace Tensile
                                  TensorDescriptor const&  tensor,
                                  void const*              src,
                                  ContractionInputs const& inputs,
-                                 const size_t&            elementsToValidate)
+                                 const size_t&            elementsToValidate,
+                                 size_t                   reducIdx)
         {
             throw std::runtime_error("Unsupported input type.");
         }
@@ -758,7 +760,7 @@ namespace Tensile
                 if(problem.biasSrc() == ContractionProblemGemm::D)
                 {
                     auto msg = ReductionCPU<Accumulator, Accumulator>(
-                        biasTensor, d, ws, inputs, elementsToValidate);
+                        biasTensor, d, ws, inputs, elementsToValidate, 1);
                     if(!msg.empty())
                     {
                         free(ws);
@@ -767,8 +769,9 @@ namespace Tensile
                 }
                 else if(problem.biasSrc() == ContractionProblemGemm::A)
                 {
-                    auto msg = ReductionCPU<typename Inputs::AType, Accumulator>(
-                        biasTensor, a, inputs.a, inputs, elementsToValidate);
+                    auto reducIdx = problem.transA() ? 0 : 1;
+                    auto msg      = ReductionCPU<typename Inputs::AType, Accumulator>(
+                        biasTensor, a, inputs.a, inputs, elementsToValidate, reducIdx);
                     if(!msg.empty())
                     {
                         std::runtime_error(msg.c_str());
@@ -776,8 +779,9 @@ namespace Tensile
                 }
                 else if(problem.biasSrc() == ContractionProblemGemm::B)
                 {
-                    auto msg = ReductionCPU<typename Inputs::BType, Accumulator>(
-                        biasTensor, b, inputs.b, inputs, elementsToValidate);
+                    auto reducIdx = problem.transB() ? 1 : 0;
+                    auto msg      = ReductionCPU<typename Inputs::BType, Accumulator>(
+                        biasTensor, b, inputs.b, inputs, elementsToValidate, reducIdx);
                     if(!msg.empty())
                     {
                         std::runtime_error(msg.c_str());

@@ -174,6 +174,7 @@ class StateValues:
   c: MatrixInfo = MatrixInfo()
   d: MatrixInfo = MatrixInfo()
   e: MatrixInfo = MatrixInfo()
+  bias: MatrixInfo = MatrixInfo()
   totalAgprs: int                        = 0
   totalVgprs: int                        = 0
   totalSgprs: int                        = 0
@@ -222,7 +223,8 @@ class StateValues:
   perIterLocalWriteCanSkip: List[int]    = field(init=False)
 
   # Epilogue states
-  useBias = DataDirection.NONE
+  useBias      = DataDirection.NONE
+  needBiasType = False
 
   def __post_init__(self):
     """ How many SGPRs does it take to have one bit per lane? """
@@ -280,6 +282,7 @@ class CodeModules:
 @dataclass
 class ExternClasses:
   activation: ActivationModule = ActivationModule()
+  biasSumUnroll: Optional[Component.SumUnroll] = None
 
 ################################################################################
 # Kernel Writer
@@ -1092,6 +1095,8 @@ class KernelWriter(metaclass=abc.ABCMeta):
               flagInsert = True
           if flagInsert:
             iterCode.add(SSetPrior(prior=0, comment="store optimization"))
+      while macIterItems:
+        iterCode.add(macIterItems.pop(0))
     else:
       assert 0, "Unsupported scheduleIterAlg=%u"%self.states.scheduleIterAlg
 
@@ -1242,6 +1247,9 @@ class KernelWriter(metaclass=abc.ABCMeta):
 
     # tile edges
     if kernel["EdgeType"] == "ShiftPtr":
+      if self.states.useBias == DataDirection.WRITE and (kernel["ProblemType"]["BiasSrc"] == "A" or kernel["ProblemType"]["BiasSrc"] == "B"):
+        # Not supported
+        assert not forceNoTileCode
       # Shift here has two purposes:
       #  1. Ensure the loads are in-bounds to prevent fault.
       #     BufferLoad uses the buffer limit hardware and does not require bounds checking for this case
@@ -1297,6 +1305,8 @@ class KernelWriter(metaclass=abc.ABCMeta):
 
     if self.states.doShadowInit != 2:
       module.add(self.initC(kernel))
+      if kernel["ProblemType"]["Gradient"] and kernel["ProblemType"]["UseBias"] and (kernel["ProblemType"]["BiasSrc"] == "A" or kernel["ProblemType"]["BiasSrc"] == "B"):
+        module.add(self.initSumUnroll(kernel))
 
     # open non-unrolled summation loops
     if not forceNoTileCode:
@@ -1529,6 +1539,8 @@ class KernelWriter(metaclass=abc.ABCMeta):
         macIterCode.add(self.mfmaIter(kernel, tensorParametersA, tensorParametersB, u, kernel["InnerUnroll"], vregSetIdxMFMA))
       else:
         printExit("TensileLite does not support MAC instructions.")
+      if kernel["ProblemType"]["Gradient"] and kernel["ProblemType"]["UseBias"] and (kernel["ProblemType"]["BiasSrc"] == "A" or kernel["ProblemType"]["BiasSrc"] == "B"):
+        macIterCode.add(self.exclasses.biasSumUnroll.loopSum(self, kernel, kernel["ProblemType"]["BiasSrc"], u, kernel["InnerUnroll"]))
 
       subIterCode = self.makeSubIterSchedule(kernel, tensorParametersA, tensorParametersB, localReads, \
                       u, pointerLWCode, pointerLRCode, waitCode, macIterCode, waitLWCode, syncCode, pack[luIdx], isDTVodd, NLLlast)
@@ -1930,6 +1942,8 @@ class KernelWriter(metaclass=abc.ABCMeta):
         macIterCode.add(self.mfmaIter(kernel, tensorParametersA, tensorParametersB, u, kernel["InnerUnroll"], vregSetIdxMFMA))
       else:
         printExit("TensileLite does not support MAC instructions.")
+      if kernel["ProblemType"]["Gradient"] and kernel["ProblemType"]["UseBias"] and (kernel["ProblemType"]["BiasSrc"] == "A" or kernel["ProblemType"]["BiasSrc"] == "B"):
+        macIterCode.add(self.exclasses.biasSumUnroll.loopSum(self, kernel, kernel["ProblemType"]["BiasSrc"], u, kernel["InnerUnroll"]))
 
       ###### unroll loop efficiency implementation######################################
       # unroll loop efficiency implementation
@@ -2043,6 +2057,8 @@ class KernelWriter(metaclass=abc.ABCMeta):
         module.add(self.globalWriteWorkGroupInit(kernel))
         if self.states.doShadowInit == 2:
           module.add(self.initC(kernel)) # initC while waiting for global reads
+          if kernel["ProblemType"]["Gradient"] and kernel["ProblemType"]["UseBias"] and (kernel["ProblemType"]["BiasSrc"] == "A" or kernel["ProblemType"]["BiasSrc"] == "B"):
+            module.add(self.initSumUnroll(kernel))
         module.add(self.closeShadowInit(kernel))
 
       module.add(self._wait(kernel, tensorParametersA, tensorParametersB, 0, -1, -1, "8wait for global read"))
@@ -2363,6 +2379,8 @@ class KernelWriter(metaclass=abc.ABCMeta):
             module.add(self.mfmaIter(kernel, tensorParametersA, tensorParametersB, 0, tailLoopInnerUnroll, vregSetIdxMFMA, True))
           else:
             printExit("TensileLite does not support MAC instructions.")
+          if kernel["ProblemType"]["Gradient"] and kernel["ProblemType"]["UseBias"] and (kernel["ProblemType"]["BiasSrc"] == "A" or kernel["ProblemType"]["BiasSrc"] == "B"):
+            module.add(self.exclasses.biasSumUnroll.loopSum(self, kernel, kernel["ProblemType"]["BiasSrc"], 0, tailLoopInnerUnroll))
 
           finalLoop = mValue == mEnd - 1
           module.add(self.closeLoop(kernel, tensorParametersA, tensorParametersB, -1, finalLoop, uDu if kernel.enabledSplitLDS else None))
@@ -2377,7 +2395,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
       module.add(self.globalReadIncrementAB(kernel, tensorParametersA, tensorParametersB, i, 0))
       module.add(self.closeLoop(kernel, tensorParametersA, tensorParametersB, i, True))
 
-    module.add(self.endSummation(kernel))
+    module.add(self.endSummation(kernel, tensorParametersA, tensorParametersB))
     if not self.states.doShadowInit:
       module.add(self.globalWriteWorkGroupInit(kernel))
 
@@ -2480,6 +2498,12 @@ class KernelWriter(metaclass=abc.ABCMeta):
     self.sgprs  = collections.OrderedDict()
     self.codes  = CodeModules()
     self.labels = LabelManager()
+
+    # external classes
+    if kernel["ProblemType"]["Gradient"] and kernel["ProblemType"]["UseBias"] and (kernel["ProblemType"]["BiasSrc"] == "A" or kernel["ProblemType"]["BiasSrc"] == "B"):
+      self.exclasses.biasSumUnroll = Component.SumUnroll.find(self)
+      assert self.exclasses.biasSumUnroll
+
 
     if kernel["ProblemType"]["ActivationType"] == 'all':
       self.exclasses.activation.setUseCache(True)
@@ -3101,6 +3125,19 @@ class KernelWriter(metaclass=abc.ABCMeta):
         vgprIdx = self.states.b.startVgprValu \
             + max(self.states.b.numVgprValu, self.states.b.numVgprG2LAllocated)
 
+    if kernel["ProblemType"]["Gradient"] and kernel["ProblemType"]["UseBias"]:
+      if kernel["ProblemType"]["BiasSrc"] == "A":
+        self.states.bias.numVgprValu = kernel["MIWaveTile"][0]
+      elif kernel["ProblemType"]["BiasSrc"] == "B":
+        self.states.bias.numVgprValu = kernel["MIWaveTile"][1]
+      else:
+        self.states.bias.numVgprValu = 0
+      self.states.bias.numVgprValu *= max(kernel["ProblemType"]["ComputeDataType"].numRegisters(), 1)
+    else:
+      self.states.bias.numVgprValu = 0
+    self.states.bias.startVgprValu = vgprIdx
+    vgprIdx += self.states.bias.numVgprValu
+
     # Registers allocated above this point can be used as temps during setup
     # Registers above here are reserved in initC, near the end of the setup
     # code
@@ -3462,8 +3499,15 @@ class KernelWriter(metaclass=abc.ABCMeta):
     # Epilogue related
     if kernel["ProblemType"]["UseBias"] and (kernel["GlobalSplitU"] == 1):
       self.states.useBias = DataDirection.WRITE if kernel["ProblemType"]["Gradient"] else DataDirection.READ
+      # Need bias type if the kernel supports multiple bias type.
+      if self.states.useBias == DataDirection.READ or (self.states.useBias == DataDirection.WRITE and (kernel["ProblemType"]["BiasSrc"] == "A" or kernel["ProblemType"]["BiasSrc"] == "B") and kernel["GlobalSplitU"] == 1):
+        self.states.needBiasType = True
+      else:
+        self.states.needBiasType = False
     else:
       self.states.useBias = DataDirection.NONE
+      self.states.needBiasType = False
+
 
     if self.db["InitLds"] : print ("\n***WARNING: InitLds enabled, may impact performance\n")
     if self.db["InitSgpr"] : print ("\n***WARNING: InitSgpr enabled, may impact performance\n")
@@ -3749,6 +3793,13 @@ class KernelWriter(metaclass=abc.ABCMeta):
     return ""
 
   ##############################################################################
+  # Initialize Summ unroll
+  ##############################################################################
+  @abc.abstractmethod
+  def initSumUnroll(self, kernel):
+    return ""
+
+  ##############################################################################
   # Open Loop
   # loopIdx<0 : tail loop
   ##############################################################################
@@ -3768,7 +3819,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
   # End Summation
   ##############################################################################
   @abc.abstractmethod
-  def endSummation(self, kernel, label = None):
+  def endSummation(self, kernel, tPA, tPB, label = None):
     return ""
 
   ##############################################################################

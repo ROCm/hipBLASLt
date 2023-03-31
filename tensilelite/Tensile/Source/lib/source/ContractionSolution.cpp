@@ -392,7 +392,11 @@ namespace Tensile
             runActivation = true;
         if(problemType.useBias && (sizeMapping.globalSplitU == 1))
         {
-            if(problemType.useGradient)
+            if(problemType.useGradient
+               && (problem.biasSrc() == ContractionProblemGemm::TENSOR::D
+                   || ((problem.biasSrc() == ContractionProblemGemm::TENSOR::A
+                        || problem.biasSrc() == ContractionProblemGemm::TENSOR::B)
+                       && sizeMapping.globalSplitU > 1)))
                 args.append<void const*>("ws_bias", inputs.ws);
             else
                 args.append<void const*>("bias", inputs.bias);
@@ -403,7 +407,11 @@ namespace Tensile
             args.append<void*>("e", inputs.e);
         }
 
-        if(problemType.useBias && (sizeMapping.globalSplitU == 1) && (!problemType.useGradient))
+        if(problemType.useBias && (sizeMapping.globalSplitU == 1)
+           && (!problemType.useGradient
+               || (problemType.useGradient
+                   && (problem.biasSrc() == ContractionProblemGemm::TENSOR::A
+                       || problem.biasSrc() == ContractionProblemGemm::TENSOR::B))))
         {
             if(runActivation)
             {
@@ -1298,7 +1306,11 @@ namespace Tensile
                 rv.push_back(generateActivationOnlyCall<false>(problem, inputs, hardware));
         }
 
-        if(problem.useBias() && problem.useGradient())
+        if(problem.useBias() && problem.useGradient()
+           && (problem.biasSrc() == ContractionProblemGemm::TENSOR::D
+               || (problem.biasSrc() == ContractionProblemGemm::TENSOR::A
+                   || problem.biasSrc() == ContractionProblemGemm::TENSOR::B)
+                      && sizeMapping.globalAccumulation > 1))
         {
             if(problem.d().dimensions() != 3)
             {

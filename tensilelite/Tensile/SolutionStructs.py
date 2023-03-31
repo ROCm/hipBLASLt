@@ -214,6 +214,9 @@ class ProblemType(Mapping):
 
     if "Gradient" in config:
       if config["Gradient"]:
+        if (not self["UseBias"]) and self["ActivationType"] == 'none':
+          printWarning("Gradient is disabled cause bias and activation are both disabled.")
+          self["Gradient"] = False
         if self["ActivationType"] != 'none' and self["UseE"] == False:
           printWarning("Use E is enabled cause Activation is enabled.")
           self["UseE"] = True
@@ -226,15 +229,15 @@ class ProblemType(Mapping):
       self["Gradient"] = config["Gradient"]
 
     # Need gradient info
-    biasSrcList = ["A", "B", "D"]
+    biasSrcList = ["A", "D"]
     if "BiasSrc" in config:
       if not self["Gradient"] and config["BiasSrc"] != "D":
         printWarning("BiasSrc is set to D cause Gradient is disabled.")
         self["BiasSrc"] = "D"
       elif self["Gradient"]:
-        # Currently only supports D :)
-        if config["BiasSrc"] != "D":
-          printExit("BiasSrc currently only supports D.")
+        # # Currently only supports D :)
+        # if config["BiasSrc"] != "D":
+        #   printExit("BiasSrc currently only supports D.")
         if config["BiasSrc"] not in biasSrcList:
           printExit("BiasSrc only supports A, B, D.")
 
@@ -3128,6 +3131,12 @@ class Solution(collections.abc.Mapping):
 
     # Bias reduction
     if state["ProblemType"]["UseBias"] and state["ProblemType"]["Gradient"]:
+      if (state["ProblemType"]["BiasSrc"] == "A" or state["ProblemType"]["BiasSrc"] == "B"):
+        if state["allowLRVWforTLUandMI"]:
+          # Block for not verified.
+          reject(state, "Bias reduction on A, B does not support allowLRVWforTLUandMI")
+        if state["GlobalSplitU"] > 1:
+          reject(state, "Bias reduction on A, B is not supported yet.")
       if (state["_GlobalAccumulation"] == 'SingleBuffer') and state["GlobalSplitU"] > 1:
         reject(state, "GlobalSplitU > 1 only compatible with MultipleBuffer for bias reduction")
       if len(state["PackedC1IndicesX"]) > 1:

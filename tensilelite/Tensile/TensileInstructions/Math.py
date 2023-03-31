@@ -1,6 +1,6 @@
 ################################################################################
 #
-# Copyright (C) 2022 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -183,6 +183,49 @@ def scalarStaticDivideAndRemainder(qReg, rReg, dReg, divisor, tmpSgprRes: Option
         if doRemainder:
             module.add(SMulI32(dst=sgpr(tmpSgpr), src0=qRegSgpr, src1=hex(divisor), comment="quotient*divisor"))
             module.add(SSubU32(dst=sgpr(rReg), src0=dRegSgpr, src1=sgpr(tmpSgpr), comment="rReg = dividend - quotient*divisor"))
+    return module
+
+def scalarStaticRemainder(qReg, rReg, dReg, divisor, tmpSgprRes: Optional[RegisterPoolResource], comment=""):
+    if comment == "":
+        comment = "%s = %s %% %s" % (sgpr(rReg), sgpr(dReg), divisor)
+
+    module = Module("vectorStaticRemainder")
+    if ((divisor & (divisor - 1)) == 0): # pow of 2
+        module.add(SAndB32(dst=sgpr(rReg), src0=(divisor-1), src1=sgpr(dReg), comment=comment))
+    else:
+        assert tmpSgprRes and tmpSgprRes.size >= 3
+        tmpSgpr = tmpSgprRes.idx
+        """
+        if divisor == 30:
+            shift = 32+2
+        elif divisor >= 14:
+            shift = 32+4
+        elif divisor >= 7:
+            shift = 32+3
+        elif divisor >= 6:
+            shift = 32+2 # this was 32+3 but divisor hex didn't fit into 32 bits
+        elif divisor >= 5:
+            shift = 32+2
+        elif divisor >= 3:
+            shift = 32+1
+        """
+        shift = 32+1
+        magic = ((2**shift) // divisor) + 1
+        if magic <= 64 and magic >= -16:
+            module.add(SMulHIU32(dst=sgpr(tmpSgpr+1), src0=sgpr(dReg), src1=hex(magic), comment=comment))
+            module.add(SMulLOU32(dst=sgpr(tmpSgpr+0), src0=sgpr(dReg), src1=hex(magic), comment=comment))
+        else:
+            module.add(SMovB32(dst=sgpr(tmpSgpr+2), src=hex(magic), comment=comment))
+            module.add(SMulHIU32(dst=sgpr(tmpSgpr+1), src0=sgpr(dReg), src1=sgpr(tmpSgpr+2), comment=comment))
+            module.add(SMulLOU32(dst=sgpr(tmpSgpr+0), src0=sgpr(dReg), src1=sgpr(tmpSgpr+2), comment=comment))
+        module.add(SLShiftRightB64(dst=sgpr(tmpSgpr,2), shiftHex=hex(shift), src=sgpr(tmpSgpr,2), comment=comment))
+        module.add(SMovB32(dst=sgpr(qReg), src=sgpr(tmpSgpr), comment=comment))
+        if divisor <= 64 and divisor >= -16:
+            module.add(SMulLOU32(dst=sgpr(tmpSgpr), src0=sgpr(qReg), src1=hex(divisor), comment=comment))
+        else:
+            module.add(SMovB32(dst=sgpr(tmpSgpr+2), src=hex(divisor), comment=comment))
+            module.add(SMulLOU32(dst=sgpr(tmpSgpr), src0=sgpr(qReg), src1=sgpr(tmpSgpr+2), comment=comment))
+        module.add(SSubU32(dst=sgpr(rReg), src0=sgpr(dReg), src1=sgpr(tmpSgpr), comment=comment))
     return module
 
 ########################################
