@@ -1,6 +1,6 @@
 ################################################################################
 #
-# Copyright (C) 2022 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -213,6 +213,18 @@ class LocalRead(Component):
     Local read block.
     """
     pass
+
+class SumUnroll(Component):
+    """
+    Sum unroll block.
+    """
+    @abc.abstractmethod
+    def loopSum(self, writer, kernel, tc, u, innerUnroll):
+        pass
+
+    @abc.abstractmethod
+    def storeSumLDS(self, writer, kernel, tPA, tPB):
+        pass
 
 class ShiftVectorComponents(Component):
     """
