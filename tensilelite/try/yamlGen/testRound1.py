@@ -123,7 +123,7 @@ BenchmarkProblems:\n\
         - GlobalReadVectorWidth: [-1,2,4,8]\n\
         # - GlobalReadVectorWidth: [4]\n\
         # - LocalReadVectorWidth: [4,8]\n\
-        # - LocalReadVectorWidth: [-1,2,4,8]\n\
+        - LocalReadVectorWidth: [-1,2,4,8]\n\
         # - LocalReadVectorWidth: [4]\n\
         - ScheduleIterAlg: [3]\n\
         - InnerUnroll: [1]\n\
@@ -138,13 +138,13 @@ BenchmarkProblems:\n\
         # - StaggerU: [0,32]\n\
         # - StaggerU: [0,4,32]\n\
         # - WorkGroupMapping: [2]\n\
-        # - WorkGroupMapping: [1,4,8,16,32,64,110]\n\
+        - WorkGroupMapping: [1,4,8,16,32,64,110]\n\
         # - WorkGroupMapping: [1]\n\
         # - StaggerUMapping: [0,3]\n\
-        # - WaveSeparateGlobalReadA: [0]\n\
-        - WaveSeparateGlobalReadA: [0,1]\n\
-        - WaveSeparateGlobalReadB: [0,1]\n\
-        # - WaveSeparateGlobalReadB: [0]\n\
+        # - WaveSeparateGlobalReadA: [1]\n\
+        # - WaveSeparateGlobalReadA: [0,1]\n\
+        # - WaveSeparateGlobalReadB: [0,1]\n\
+        # - WaveSeparateGlobalReadB: [1]\n\
         # - MaxOccupancy: [40]\n\
         # - 1LDSBuffer: [0]\n\
         - 1LDSBuffer: [0,1]\n\

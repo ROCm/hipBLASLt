@@ -310,7 +310,7 @@ for problemidx in range(0, problemnum):
           - LdsPadB: [-1]\n"
 
   if 1:#(StaggerUStride) == '0':
-    yaml = yaml+"          - StaggerUStride: [128,256]\n"
+    yaml = yaml+"          # - StaggerUStride: [128,256]\n"
   # elif (StaggerUStride) == 'jk':
   #   yaml = yaml+"          - StaggerUStride: [128,256]\n"
   else:
@@ -319,9 +319,9 @@ for problemidx in range(0, problemnum):
   if 0:#(StaggerU) != 'ijk':
     yaml = yaml+"          - StaggerU: ["+str(StaggerU)+"]\n"
   else:
-    yaml = yaml+"          - StaggerU: [0,4,32]\n"
+    yaml = yaml+"          # - StaggerU: [0,4,32]\n"
 
-  yaml = yaml+"          - WorkGroupMapping: [1,4,8,16,32,64,110]\n\
+  yaml = yaml+"          # - WorkGroupMapping: [1,4,8,16,32,64,110]\n\
           # - WorkGroupMapping: ["+str(WorkGroupMapping)+"]\n\
           # - WorkGroupMapping: [1]\n\
           # - StaggerUMapping: [0,3]\n\

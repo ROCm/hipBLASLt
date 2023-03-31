@@ -1,21 +1,33 @@
-print("HELLORound2\n")
+print("HELLORound3\n")
 
 import pandas as pd
 
 def get_arg(arg):
     start = WinnerName.find(arg) + 1
     end = start + WinnerName[start:].find('_')
-    if arg == '_WGM':
-      end = len(WinnerName)
-    value = WinnerName[start+len(arg)-1:end]
-    # if arg == '_VW':
-    #   end = start+len(arg)
-    #   print("_VW",WinnerName[start+len(arg)-1:])
+    # if arg == '_WGM':
+    #   end = len(WinnerName)
     # value = WinnerName[start+len(arg)-1:end]
+    if arg == '_VW':
+      end = start+len(arg)
+      print("_VW",WinnerName[start+len(arg)-1:])
+    value = WinnerName[start+len(arg)-1:end]
+    return value
+
+def get_arg1(arg):
+    start = WinnerName1.find(arg) + 1
+    end = start + WinnerName1[start:].find('_')
+    # if arg == '_WGM':
+    #   end = len(WinnerName1)
+    # value = WinnerName1[start+len(arg)-1:end]
+    if arg == '_VW':
+      end = start+len(arg)
+      print("_VW",WinnerName1[start+len(arg)-1:])
+
     if arg == '_TLDS':
       end = start+len(arg)
-      print("_TLDS",WinnerName[start+len(arg)-1:])
-    value = WinnerName[start+len(arg)-1:end]
+      print("_TLDS",WinnerName1[start+len(arg)-1:])
+    value = WinnerName1[start+len(arg)-1:end]
     return value
 
 def Convert(string):
@@ -25,13 +37,16 @@ def Convert(string):
 problemnum = 5
 
 idx=1
-df = pd.read_csv('/Victor/hipBLASLt/hipBLASLt/tensilelite/try32TN/yamlGen/chcek.csv', encoding='gbk')
+df = pd.read_csv('/Victor/hipBLASLt/hipBLASLt/tensilelite/try32TN/yamlGen/chcekRound2.csv', encoding='gbk')
+df1 = pd.read_csv('/Victor/hipBLASLt/hipBLASLt/tensilelite/try32TN/yamlGen/chcek.csv', encoding='gbk')
 # print(list(df))
 # print(df['kernelname'])
 for problemidx in range(0, problemnum):
   print(problemidx)
-  file1 = open("/Victor/hipBLASLt/hipBLASLt/tensilelite/try32TN/yamlGen/FP16_NN_MI250X_testBFVF_Round2_"+str(problemidx)+".yaml","w")
+  file1 = open("/Victor/hipBLASLt/hipBLASLt/tensilelite/try32TN/yamlGen/FP16_NN_MI250X_testBFVF_Round3_"+str(problemidx)+".yaml","w")
   WinnerName = df['kernelname'][problemidx]
+  WinnerName1 = df1['kernelname'][problemidx]
+  print(WinnerName)
   # WinnerName = " Cijk_Ailk_Bljk_HHS_BH_MT32x64x64_MI32x32x8x1_SN_1LDSB0_GRVW7_K1_LPB8_LRVW8_MIWT1_1_PLR10_SRVW4_SVW4_VW8_WG32_4_1_WGM16"#df[' WinnerName'][problemidx]
 
   # pos = -1 
@@ -103,19 +118,23 @@ for problemidx in range(0, problemnum):
   WG0 = (int(MT0)/int(WT0))/int(MI_M)
   WG1 = (int(MT1)/int(WT1))/int(MI_N)
 
-  AssertFree0ElementMultiple = get_arg('_AF0EM')
-  TransposeLDS = get_arg('_TLDS')
   PrefetchLocalRead = get_arg('_PLR')
+  if PrefetchLocalRead == 'jk':
+    PrefetchLocalRead = '1,3,5,9'
   VectorWidth = get_arg('_VW')
   # if VectorWidth == 'ijk':
   #   VectorWidth = '-1,2,4,8'
   GlobalReadVectorWidth = get_arg('_GRVW')
+  if GlobalReadVectorWidth == 'k':
+    GlobalReadVectorWidth = '-1,2,4,8'
   LocalReadVectorWidth = get_arg('_LRVW')
-  # if LocalReadVectorWidth == 'k':
-  #   LocalReadVectorWidth = '-1,2,4,8'
+  if LocalReadVectorWidth == 'k':
+    LocalReadVectorWidth = '-1,2,4,8'
   WorkGroupMapping = get_arg('_WGM')
   # print(WorkGroupMapping,"\n")
-  LDSBuffer = get_arg('1LDSB')
+  LDSBuffer = get_arg1('1LDSB')
+  AssertFree0ElementMultiple = get_arg1('_AF0EM')
+  TransposeLDS = get_arg1('_TLDS')
   StoreVectorWidth = get_arg('_SVW')
   SourceSwap = get_arg('_SS')
   # print(SourceSwap,"\n")
@@ -123,6 +142,8 @@ for problemidx in range(0, problemnum):
   #   SourceSwap = 0
   # print(SourceSwap,"\n")  
   StoreRemapVectorWidth = get_arg('_SRVW')
+  if StoreRemapVectorWidth == 'k':
+    StoreRemapVectorWidth = '0,-1'
 
   WaveSeparateGlobalReadA = get_arg('_WSGRA')
   WaveSeparateGlobalReadB = get_arg('_WSGRB')
@@ -287,28 +308,30 @@ for problemidx in range(0, problemnum):
   #           - [16, 16,16, 1,  1,  4, 4,  2,2 ] #MT128x128?\n\
   #           - [16, 16,16, 1,  1,  4, 4,  4,1 ] #MT256x64?\n\
           # - AssertFree0ElementMultiple: [4,8]\n\
+          # - AssertFree0ElementMultiple: [8]\n\
           - AssertFree0ElementMultiple: ["+str(AssertFree0ElementMultiple)+"]\n\
           - PrefetchGlobalRead: [2] #1\n\
           # - PrefetchLocalRead: [3,5]\n\
-          - PrefetchLocalRead: [1,3,5,9]\n\
+          # - PrefetchLocalRead: [1,3,5,9]\n\
           # - PrefetchLocalRead: [5,9]\n\
-          # - PrefetchLocalRead: ["+str(PrefetchLocalRead)+"]\n\
+          - PrefetchLocalRead: ["+str(PrefetchLocalRead)+"]\n\
           # - DepthU: [64,96]\n\
           - DepthU: ["+str(DepthU)+"]\n\
           # - DepthU: [16,32,64]\n\
           # - VectorWidth: [4]\n\
           # - VectorWidth: [1,2]\n\
-          # - VectorWidth: ["+str(VectorWidth)+"]\n\
-          - VectorWidth: [-1,2,4,8]\n\
+          - VectorWidth: ["+str(VectorWidth)+"]\n\
+          # - VectorWidth: [-1,2,4,8]\n\
           # - GlobalReadVectorWidth: [8]\n\
-          # - GlobalReadVectorWidth: ["+str(GlobalReadVectorWidth)+"]\n\
-          - GlobalReadVectorWidth: [-1,2,4,8]\n\
-          - LocalReadVectorWidth: [-1,2,4,8]\n\
-          # - LocalReadVectorWidth: ["+str(LocalReadVectorWidth)+"]\n\
+          - GlobalReadVectorWidth: ["+str(GlobalReadVectorWidth)+"]\n\
+          # - GlobalReadVectorWidth: [-1,2,4,8]\n\
+          # - LocalReadVectorWidth: [-1,2,4,8]\n\
+          - LocalReadVectorWidth: ["+str(LocalReadVectorWidth)+"]\n\
           # - LocalReadVectorWidth: [4]\n\
           - ScheduleIterAlg: [3]\n\
           - InnerUnroll: [1]\n\
           - ExpandPointerSwap: [0]\n\
+          # - TransposeLDS: [1] #NN\n\
           - TransposeLDS: ["+str(TransposeLDS)+"] #NN\n\
           # - TransposeLDS: [0] #NT\n\
           - LdsBlockSizePerPad: [-1]\n\
@@ -316,7 +339,7 @@ for problemidx in range(0, problemnum):
           - LdsPadB: [-1]\n"
 
   if 1:#(StaggerUStride) == '0':
-    yaml = yaml+"          # - StaggerUStride: [128,256]\n"
+    yaml = yaml+"          - StaggerUStride: [128,256]\n"
   # elif (StaggerUStride) == 'jk':
   #   yaml = yaml+"          - StaggerUStride: [128,256]\n"
   else:
@@ -325,15 +348,15 @@ for problemidx in range(0, problemnum):
   if 0:#(StaggerU) != 'ijk':
     yaml = yaml+"          - StaggerU: ["+str(StaggerU)+"]\n"
   else:
-    yaml = yaml+"          # - StaggerU: [0,4,32]\n"
+    yaml = yaml+"          - StaggerU: [0,4,32]\n"
 
-  yaml = yaml+"          # - WorkGroupMapping: [1,4,8,16,32,64,110]\n\
+  yaml = yaml+"          - WorkGroupMapping: [1,4,8,16,32,64,110]\n\
           # - WorkGroupMapping: ["+str(WorkGroupMapping)+"]\n\
           # - WorkGroupMapping: [1]\n\
           # - StaggerUMapping: [0,3]\n\
           # - WaveSeparateGlobalReadA: ["+str(WaveSeparateGlobalReadA)+"]\n\
-          # - WaveSeparateGlobalReadA: [0,1]\n\
-          # - WaveSeparateGlobalReadB: [0,1]\n\
+          - WaveSeparateGlobalReadA: [0,1]\n\
+          - WaveSeparateGlobalReadB: [0,1]\n\
           # - WaveSeparateGlobalReadB: ["+str(WaveSeparateGlobalReadB)+"]\n\
           # - MaxOccupancy: [40]\n\
           # - 1LDSBuffer: [0, 1]\n\
@@ -348,11 +371,11 @@ for problemidx in range(0, problemnum):
           - GlobalSplitUAlgorithm: [\"SingleBuffer\"]\n\
           - GlobalReadPerMfma: [1]\n\
           - LocalWritePerMfma: [-1]\n\
-          - StoreVectorWidth: [-1,2,4,8]\n\
-          # - StoreVectorWidth: ["+str(StoreVectorWidth)+"]\n\
+          # - StoreVectorWidth: [-1,2,4,8]\n\
+          - StoreVectorWidth: ["+str(StoreVectorWidth)+"]\n\
           # - StoreVectorWidth: [1]\n\
-          - SourceSwap: [0, 1]\n\
-          # - SourceSwap: ["+str(SourceSwap)+"]\n\
+          # - SourceSwap: [0, 1]\n\
+          - SourceSwap: ["+str(SourceSwap)+"]\n\
           # - SourceSwap: [1]\n\
           # - NumElementsPerBatchStore: [2]\n\
           # - NumElementsPerBatchStore: [0, 2]\n\
@@ -361,8 +384,8 @@ for problemidx in range(0, problemnum):
           # - StorePriorityOpt: [0,1]X\n\
           # - NumLoadsCoalescedA: [1]\n\
           # - NumLoadsCoalescedA: [1,3]X\n\
-          # - StoreRemapVectorWidth: ["+str(StoreRemapVectorWidth)+"]\n\
-          - StoreRemapVectorWidth: [0,-1]\n\
+          - StoreRemapVectorWidth: ["+str(StoreRemapVectorWidth)+"]\n\
+          # - StoreRemapVectorWidth: [0,-1]\n\
         BenchmarkJoinParameters:\n\
         BenchmarkFinalParameters:\n\
           - ProblemSizes:\n\
