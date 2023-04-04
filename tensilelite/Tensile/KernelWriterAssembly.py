@@ -5998,14 +5998,14 @@ class KernelWriterAssembly(KernelWriter):
     module.addSpaceLine()
 
     # Global Write
+    #Store SC1 WA for gfx940
+    forceSC1 = (globalParameters["CurrentISA"] == (9,4,0)) and (globalParameters["ForceStoreSC1WA"]) #Force SC1 WA
     ntStr = ""
     if kernel.enabledSetPrioSplitLDS:
       module.add(SSetPrior(prior=1))
-    if kernel["NonTemporalD"]%2==1:
+    if kernel["NonTemporalD"]%2==1 or forceSC1:
       ntStr += " " + getGlcBitName(kernel["MemoryModifierFormat"])
 
-    #Store SC1 WA for gfx940
-    forceSC1 = (globalParameters["CurrentISA"] == (9,4,0)) and (globalParameters["ForceStoreSC1WA"]) #Force SC1 WA
     if kernel["NonTemporalD"]//2==1 or forceSC1:
       ntStr += " " + getSlcBitName(kernel["MemoryModifierFormat"])
 
