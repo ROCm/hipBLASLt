@@ -81,7 +81,7 @@ class FLATModifiers(Container):
         kStr = ""
         if self.offset12 != 0:
             kStr += " offset:%u"%self.offset12
-        if self.glc:
+        if self.glc or self.forceSC1:
             kStr += " " + getGlcBitName(self.memoryModifierFormat)
         if self.slc or self.forceSC1:
             kStr += " " + getSlcBitName(self.memoryModifierFormat)
@@ -111,7 +111,7 @@ class MUBUFModifiers(Container):
             kStr += " offen offset:%u"%self.offset12
         if (self.glc or self.slc or self.lds):
             kStr += ","
-        if self.glc:
+        if self.glc or self.forceSC1:
             kStr += " " + getGlcBitName(self.memoryModifierFormat)
         if self.slc or self.forceSC1:
             kStr += " " + getSlcBitName(self.memoryModifierFormat)
