@@ -2456,13 +2456,14 @@ class Solution(collections.abc.Mapping):
             reject(state, "Int8 requires GLVWB >= 4, current is %u"%state["GlobalLoadVectorWidthB"])
 
       if state["ProblemType"]["SparseA"] and not state["DirectToVgprSparseMetadata"]:
-        if state["GlobalReadVectorWidth"] < 4:
-          reject(state, "Sparse requires GRVW >= 4, current is %u"%state["GlobalReadVectorWidth"])
+        if state["GlobalReadVectorWidth"] % 4 != 0:
+          reject(state, "Sparse requires GRVW % 4 == 0, current GRVW is %u"%state["GlobalReadVectorWidth"])
+          return
         GlobalReadVectorWidth = state["GlobalReadVectorWidth"] // 4
         tvm = totalElementsM // GlobalReadVectorWidth
-        validDepthUM = True
+
         if not Solution.setGlobalLoadVectorWidth(state, "Metadata", tvm, GlobalReadVectorWidth):
-          validDepthUM = False
+          validDepthU = False
 
         if state["EnableMatrixInstruction"] and state["GlobalLoadVectorWidthMetadata"]:
           partialM = state["ProblemType"]["TLUMetadata"] and (state["AssertFree0ElementMultiple"] % state["GlobalLoadVectorWidthA"] != 0)
@@ -2479,11 +2480,7 @@ class Solution(collections.abc.Mapping):
             if state["GlobalLoadVectorWidthMetadata"] > glvwMlimit:
               tvm = totalElementsM // glvwMlimit
               if not Solution.setGlobalLoadVectorWidth(state, "Metadata", tvm, glvwMlimit):
-                validDepthUM = False
-
-        if validDepthUM and state["KernelLanguage"] == "Assembly":
-          if state["GlobalLoadVectorWidthMetadata"] < 1:
-            reject(state, "Metadata requires GLVW >= 4, current is %u"%state["GlobalLoadVectorWidthMetadata"] * 4)
+                validDepthU = False
 
       # Now convert elements to vectors based on GlobalReadVectorWidth
       GlobalLoadVectorWidthA = state["GlobalLoadVectorWidthA"]
