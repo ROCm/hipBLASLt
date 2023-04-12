@@ -30,6 +30,7 @@
 #include <functional>
 #include <hip/hip_runtime.h>
 #include <hipblaslt/hipblaslt.h>
+#include <iomanip>
 #include <iostream>
 #include <limits>
 #include <string>
@@ -238,6 +239,7 @@ static void show_usage(char* argv[])
               << "\t-h, --help\t\t\t\tShow this help message\n"
               << "\t-v, --verbose\t\t\t\tVerbose output\n"
               << "\t-V, --validate\t\t\t\tVerify results\n"
+              << "\t-s, --request_solutions\t\t\tNumber of solutions to run (default is 1)\n"
               << "\t-m \t\t\tm\t\tGEMM_STRIDED argument m\n"
               << "\t-n \t\t\tn\t\tGEMM_STRIDED argument n\n"
               << "\t-k \t\t\tk \t\tGEMM_STRIDED argument k\n"
@@ -299,6 +301,7 @@ static int parse_arguments(int                 argc,
                            bool&               verbose,
                            bool&               validate,
                            bool&               timing,
+                           int32_t&            request_solutions,
                            int32_t&            bench_loop_count,
                            int32_t&            cold_loop_count)
 {
@@ -321,6 +324,16 @@ static int parse_arguments(int                 argc,
                 else if((arg == "-V") || (arg == "--validate"))
                 {
                     validate = true;
+                }
+                else if((arg == "-s") || arg == "--request_solutions")
+                {
+                    request_solutions = atoi(argv[++i]);
+                    if(request_solutions == 0)
+                    {
+                        std::cerr << "Error: request_solutions is " << request_solutions
+                                  << std::endl;
+                        return EXIT_FAILURE;
+                    }
                 }
                 else if(arg == "--header")
                 {
@@ -626,6 +639,7 @@ void test_hipblaslt(hipblasDatatype_t  in_out_datatype,
                     bool               validate,
                     bool               verbose,
                     bool               timing,
+                    int32_t            request_solutions,
                     int32_t            bench_loop_count,
                     int32_t            cold_loop_count)
 {
@@ -720,9 +734,8 @@ void test_hipblaslt(hipblasDatatype_t  in_out_datatype,
     hipblasLtMatrixLayout_t     matA, matB, matC, matD;
     hipblasLtMatmulDesc_t       matmul;
     hipblasLtMatmulPreference_t pref;
-    uint64_t                    workspace_size = 1024 * 1024;
-    void*                       d_workspace;
-    CHECK_HIP_ERROR(hipMalloc(&d_workspace, workspace_size));
+    uint64_t                    max_workspace_size = 32 * 1024 * 1024;
+    void*                       d_workspace        = nullptr;
 
     CHECK_HIPBLASLT_ERROR(hipblasLtCreate(&handle));
 
@@ -781,14 +794,39 @@ void test_hipblaslt(hipblasDatatype_t  in_out_datatype,
 
     // Set User Preference attributes
     CHECK_HIPBLASLT_ERROR(hipblasLtMatmulPreferenceCreate(&pref));
-    CHECK_HIPBLASLT_ERROR(hipblasLtMatmulPreferenceSetAttribute(
-        pref, HIPBLASLT_MATMUL_PREF_MAX_WORKSPACE_BYTES, &workspace_size, sizeof(workspace_size)));
+    CHECK_HIPBLASLT_ERROR(
+        hipblasLtMatmulPreferenceSetAttribute(pref,
+                                              HIPBLASLT_MATMUL_PREF_MAX_WORKSPACE_BYTES,
+                                              &max_workspace_size,
+                                              sizeof(max_workspace_size)));
 
     // Get Heuristic results
-    hipblasLtMatmulHeuristicResult_t heuristicResult[3] = {0};
-    int                              returnedAlgoCount  = 0;
-    CHECK_HIPBLASLT_ERROR(hipblasLtMatmulAlgoGetHeuristic(
-        handle, matmul, matA, matB, matC, matD, pref, 3, heuristicResult, &returnedAlgoCount));
+    hipblasLtMatmulHeuristicResult_t* heuristicResult
+        = new hipblasLtMatmulHeuristicResult_t[request_solutions]{0};
+    int returnedAlgoCount = 0;
+    CHECK_HIPBLASLT_ERROR(hipblasLtMatmulAlgoGetHeuristic(handle,
+                                                          matmul,
+                                                          matA,
+                                                          matB,
+                                                          matC,
+                                                          matD,
+                                                          pref,
+                                                          request_solutions,
+                                                          heuristicResult,
+                                                          &returnedAlgoCount));
+    if(returnedAlgoCount != request_solutions && returnedAlgoCount >= 1)
+        std::cout << "Less Solution found! request: " << request_solutions
+                  << ", found: " << returnedAlgoCount << std::endl;
+    if(returnedAlgoCount == 0)
+    {
+        std::cerr << "No Solution found! request: " << request_solutions << std::endl;
+        return;
+    }
+    uint64_t workspace_size = 0;
+    for(int sol = 0; sol < returnedAlgoCount; sol++)
+        workspace_size = max(workspace_size, heuristicResult[sol].workspaceSize);
+    if(workspace_size > 0)
+        CHECK_HIP_ERROR(hipMalloc(&d_workspace, workspace_size));
 
     // Solve problem  // call gen function
     CHECK_HIPBLASLT_ERROR(hipblasLtMatmul(handle,
@@ -812,86 +850,121 @@ void test_hipblaslt(hipblasDatatype_t  in_out_datatype,
     // copy output from device to CPU
     CHECK_HIP_ERROR(hipMemcpy(hd.data(), dd, sizeof(T) * size_c, hipMemcpyDeviceToHost));
 
-    std::string timing_string;
+    double   bestMs = std::numeric_limits<double>::max();
+    double   bestTflops;
+    uint32_t bestIdx = 0;
+    for(int sol = 0; sol < returnedAlgoCount; sol++)
+    {
+        std::string timing_string;
+        if(timing)
+        {
+            hipEvent_t start, stop;
+            hipEventCreate(&start);
+            hipEventCreate(&stop);
+            double eventMs = 0;
+
+            for(int loop = 0; loop < cold_loop_count; loop++)
+            {
+                CHECK_HIPBLASLT_ERROR(hipblasLtMatmul(handle,
+                                                      matmul,
+                                                      &alpha,
+                                                      da,
+                                                      matA,
+                                                      db,
+                                                      matB,
+                                                      &beta,
+                                                      dc,
+                                                      matC,
+                                                      dd,
+                                                      matD,
+                                                      &heuristicResult[sol].algo,
+                                                      d_workspace,
+                                                      workspace_size,
+                                                      stream));
+            }
+
+            if(GPU_TIMER)
+                hipEventRecord(start, stream);
+            else
+                eventMs = get_time_us_sync(stream); // in microseconds
+
+            for(int loop = 0; loop < bench_loop_count; loop++)
+            {
+                CHECK_HIPBLASLT_ERROR(hipblasLtMatmul(handle,
+                                                      matmul,
+                                                      &alpha,
+                                                      da,
+                                                      matA,
+                                                      db,
+                                                      matB,
+                                                      &beta,
+                                                      dc,
+                                                      matC,
+                                                      dd,
+                                                      matD,
+                                                      &heuristicResult[sol].algo,
+                                                      d_workspace,
+                                                      workspace_size,
+                                                      stream));
+            }
+
+            if(GPU_TIMER)
+            {
+                hipEventRecord(stop, stream);
+                hipEventSynchronize(stop);
+                float temp;
+                hipEventElapsedTime(&temp, start, stop);
+                eventMs = double(temp);
+                hipEventDestroy(start);
+                hipEventDestroy(stop);
+                eventMs /= bench_loop_count;
+                eventMs = eventMs * 1000;
+            }
+            else
+            {
+                eventMs = get_time_us_sync(stream) - eventMs;
+                eventMs /= bench_loop_count;
+                eventMs = eventMs / 1000;
+            }
+            bestMs        = std::min(bestMs, eventMs);
+            double flops  = 2 * m * n * k * batch_count;
+            double tflops = flops / eventMs / 1000000000;
+
+            if(bestMs == eventMs)
+            {
+                bestTflops = tflops;
+                bestIdx    = sol;
+            }
+
+            if(returnedAlgoCount > 1)
+            {
+                std::cout << std::setprecision(3) << "  Solution" << std::setw(3) << sol << ":"
+                          << std::setw(10) << eventMs * 1000 << " us, " << std::setw(7) << tflops
+                          << " Tflops";
+
+                if(bestMs == eventMs)
+                {
+                    std::cout << " *" << std::endl;
+                }
+                else
+                    std::cout << std::endl;
+            }
+        }
+    }
+
+    std::cout << trans_string << m << ", " << n << ", " << k << ", " << lda << ", " << ldb << ", "
+              << ldc << ", " << stride_a << ", " << stride_b << ", " << stride_c << ", "
+              << batch_count << ", " << alpha << ", " << beta << ", " << enable_bias << ", "
+              << enable_scaleD << ", " << ToString(actType);
     if(timing)
     {
-        hipEvent_t start, stop;
-        hipEventCreate(&start);
-        hipEventCreate(&stop);
-        float  eventMs = 1.0f;
-        double eventms = 0;
-
-        for(int loop = 0; loop < cold_loop_count; loop++)
-        {
-            CHECK_HIPBLASLT_ERROR(hipblasLtMatmul(handle,
-                                                  matmul,
-                                                  &alpha,
-                                                  da,
-                                                  matA,
-                                                  db,
-                                                  matB,
-                                                  &beta,
-                                                  dc,
-                                                  matC,
-                                                  dd,
-                                                  matD,
-                                                  &heuristicResult[0].algo,
-                                                  d_workspace,
-                                                  workspace_size,
-                                                  stream));
-        }
-
-        if(GPU_TIMER)
-            hipEventRecord(start, stream);
-        else
-            eventms = get_time_us_sync(stream); // in microseconds
-
-        for(int loop = 0; loop < bench_loop_count; loop++)
-        {
-            CHECK_HIPBLASLT_ERROR(hipblasLtMatmul(handle,
-                                                  matmul,
-                                                  &alpha,
-                                                  da,
-                                                  matA,
-                                                  db,
-                                                  matB,
-                                                  &beta,
-                                                  dc,
-                                                  matC,
-                                                  dd,
-                                                  matD,
-                                                  &heuristicResult[0].algo,
-                                                  d_workspace,
-                                                  workspace_size,
-                                                  stream));
-        }
-
-        if(GPU_TIMER)
-        {
-            hipEventRecord(stop, stream);
-            hipEventSynchronize(stop);
-            hipEventElapsedTime(&eventMs, start, stop);
-            hipEventDestroy(start);
-            hipEventDestroy(stop);
-            eventMs /= bench_loop_count;
-            eventms = eventMs * 1000;
-        }
-        else
-        {
-            eventms = get_time_us_sync(stream) - eventms;
-            eventms /= bench_loop_count;
-            eventMs = eventms / 1000;
-        }
-        double flops  = 2 * m * n * k * batch_count;
-        double tflops = flops / eventMs / 1000000000;
-        timing_string
-            = timing_string + ", " + std::to_string(eventms) + ", " + std::to_string(tflops);
-
-        std::cout << trans_string << m << ", " << n << ", " << k << ", " << lda << ", " << ldb
-                  << ", " << ldc << ", " << stride_a << ", " << stride_b << ", " << stride_c << ", "
-                  << batch_count << ", " << alpha << ", " << beta << ", " << enable_bias << ", "
-                  << enable_scaleD << ", " << ToString(actType) << timing_string << std::endl;
+        std::cout << ", " << bestMs * 1000 << ", " << bestTflops;
     }
+    if(request_solutions > 1)
+        std::cout << ", solution " << bestIdx;
+
+    std::cout << std::endl;
+
     // calculate golden or correct result
     if(validate)
     {
@@ -947,14 +1020,18 @@ void test_hipblaslt(hipblasDatatype_t  in_out_datatype,
                 passed = false;
             }
         }
+
         if(!passed)
         {
-            std::cout << "FAIL" << std::endl;
+            std::cout << "FAIL";
         }
         else
         {
-            std::cout << "PASS" << std::endl;
+            std::cout << "PASS";
         }
+        if(returnedAlgoCount > 1)
+            std::cout << " (Only validate first solution)";
+        std::cout << std::endl;
     }
 
     if(verbose)
@@ -985,6 +1062,7 @@ void test_hipblaslt(hipblasDatatype_t  in_out_datatype,
         print_strided_batched("hd device", &hd[0], m, n, batch_count, 1, ldc, stride_c);
     }
 
+    delete[] heuristicResult;
     CHECK_HIP_ERROR(hipFree(da));
     CHECK_HIP_ERROR(hipFree(db));
     CHECK_HIP_ERROR(hipFree(dc));
@@ -1024,9 +1102,10 @@ int main(int argc, char* argv[])
     int64_t k = invalid_int, ldc = invalid_int, stride_c = invalid_int;
     int64_t ldd = invalid_int, stride_d = invalid_int;
 
-    int32_t batch_count      = BATCH_COUNT;
-    int32_t bench_loop_count = BENCH_LOOP_COUNT;
-    int32_t cold_loop_count  = COLD_LOOP_COUNT;
+    int32_t batch_count       = BATCH_COUNT;
+    int32_t bench_loop_count  = BENCH_LOOP_COUNT;
+    int32_t cold_loop_count   = COLD_LOOP_COUNT;
+    int32_t request_solutions = 1;
 
     float          alpha         = ALPHA;
     float          beta          = BETA;
@@ -1065,6 +1144,7 @@ int main(int argc, char* argv[])
                        verbose,
                        validate,
                        timing,
+                       request_solutions,
                        bench_loop_count,
                        cold_loop_count))
     {
@@ -1127,6 +1207,8 @@ int main(int argc, char* argv[])
                      "stride_c, batch_count, alpha, beta, bias, scaleD, activationType";
         if(timing)
             std::cout << ", us, tflops";
+        if(request_solutions > 1)
+            std::cout << ", best solution";
         std::cout << std::endl;
     }
 
@@ -1154,6 +1236,7 @@ int main(int argc, char* argv[])
                                        validate,
                                        verbose,
                                        timing,
+                                       request_solutions,
                                        bench_loop_count,
                                        cold_loop_count);
     else if(in_out_datatype == HIPBLAS_R_16F)
@@ -1180,6 +1263,7 @@ int main(int argc, char* argv[])
                                       validate,
                                       verbose,
                                       timing,
+                                      request_solutions,
                                       bench_loop_count,
                                       cold_loop_count);
     else if(in_out_datatype == HIPBLAS_R_16B)
@@ -1206,6 +1290,7 @@ int main(int argc, char* argv[])
                                           validate,
                                           verbose,
                                           timing,
+                                          request_solutions,
                                           bench_loop_count,
                                           cold_loop_count);
 
