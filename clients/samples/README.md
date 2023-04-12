@@ -16,6 +16,7 @@ options:
         -h, --help                              Show this help message
         -v, --verbose                           Verbose output
         -V, --validate                          Verify results
+        -s, --request_solutions                 Number of solutions to run (default is 1)
         -m                      m               GEMM_STRIDED argument m
         -n                      n               GEMM_STRIDED argument n
         -k                      k               GEMM_STRIDED argument k
@@ -25,7 +26,7 @@ options:
         --ldd                   ldd             GEMM_STRIDED argument ldd
         --trans_a               trans_a         GEMM_STRIDED argument trans_a
         --trans_b               trans_b         GEMM_STRIDED argument trans_b
-        --datatype              datatype        GEMM_STRIDED argument in out datatype:fp32
+        --datatype              datatype        GEMM_STRIDED argument in out datatype:fp32,fp16,bf16
         --stride_a              stride_a        GEMM_STRIDED argument stride_a
         --stride_b              stride_b        GEMM_STRIDED argument stride_b
         --stride_c              stride_c        GEMM_STRIDED argument stride_c
@@ -41,12 +42,27 @@ options:
         --iters                 iters           Iterations to run inside timing loop (default is 3)
         --cold_iters            cold_iters      Cold Iterations to run before entering the timing loop (default is 0)
 
-example:
+Example 1:
 ./example_hipblaslt_preference --datatype fp16 --trans_a T --trans_b N -m 1024 -n 1024 -k 1024
-
 result:
 transAB, M, N, K, lda, ldb, ldc, stride_a, stride_b, stride_c, batch_count, alpha, beta, bias, scaleD, activationType, us, tflops
 TN, 1024, 1024, 1024, 1024, 1024, 1024, 1048576, 1048576, 1048576, 1, 2.00, 3.00, 0, 0, none, 92.333333, 23.257946
+
+Example 2: (run 10 solutions for single problem)
+./example_hipblaslt_preference --datatype fp16 --trans_a T --trans_b N -m 1024 -n 1024 -k 1024 -s 10
+result:
+transAB, M, N, K, lda, ldb, ldc, stride_a, stride_b, stride_c, batch_count, alpha, beta, bias, scaleD, activationType, us, tflops, best solution
+  Solution  0:    91.667 us,  23.427 Tflops *
+  Solution  1:    46.000 us,  46.684 Tflops *
+  Solution  2:    49.667 us,  43.238 Tflops
+  Solution  3:    45.667 us,  47.025 Tflops *
+  Solution  4:    52.667 us,  40.775 Tflops
+  Solution  5:    40.000 us,  53.687 Tflops *
+  Solution  6:    44.333 us,  48.439 Tflops
+  Solution  7:    49.000 us,  43.826 Tflops
+  Solution  8:    44.000 us,  48.806 Tflops
+  Solution  9:    64.000 us,  33.554 Tflops
+TN, 1024, 1024, 1024, 1024, 1024, 1024, 1048576, 1048576, 1048576, 1, 2.000, 3.000, 0, 0, none, 40.000, 53.687, solution 5
 ```
 
 # Run grouped gemm sample test
