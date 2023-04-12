@@ -13,8 +13,8 @@
   ComplexConjugateA: false
   ComplexConjugateB: false
   ComputeDataType: 0
-  DataType: 7
-  DestDataType: 7
+  DataType: 4
+  DestDataType: 4
   Fp16AltImpl: false
   HighPrecisionAccumulate: true
   Index0: 0
@@ -54,6 +54,7 @@
   TransposeB: 1
   UseBeta: true
   UseBias: true
+  UseScaleD: true
   UseInitialStridesAB: false
   UseInitialStridesCD: false
 - - 1LDSBuffer: 0
@@ -88,7 +89,7 @@
     GroupLoadStore: false
     GuaranteeNoPartialA: true
     GuaranteeNoPartialB: true
-    ISA: [9, 0, 10]
+    ISA: [9, 4, 0]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -120,7 +121,7 @@
     LocalWriteUseSgprB: false
     LoopIters: 2
     LoopUnroll: 32
-    MFMA_BF16_1K: true
+    MFMA_BF16_1K: false
     MIArchVgpr: false
     MIBlock: [16, 16, 16, 1, 1, 1]
     MIInputPerThread: 4
@@ -181,8 +182,8 @@
       ComplexConjugateA: false
       ComplexConjugateB: false
       ComputeDataType: 0
-      DataType: 7
-      DestDataType: 7
+      DataType: 4
+      DestDataType: 4
       Fp16AltImpl: false
       HighPrecisionAccumulate: true
       Index0: 0
@@ -222,13 +223,14 @@
       TransposeB: 1
       UseBeta: true
       UseBias: true
+      UseScaleD: true
       UseInitialStridesAB: false
       UseInitialStridesCD: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 0
-    SolutionNameMin: Cijk_Alik_Bjlk_BBS_BBiasH_AH_MT32x32x32_MI16x16x16x1_SN_MIWT1_1
+    SolutionNameMin: Cijk_Alik_Bjlk_HHS_BBiasH_AH_SD_MT32x32x32_MI16x16x16x1_SN_MIWT1_1
     SourceSwap: 1
     StaggerU: 32
     StaggerUMapping: 0
