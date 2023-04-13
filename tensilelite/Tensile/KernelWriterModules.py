@@ -24,15 +24,15 @@ from .TensileInstructions import DataType, Label, Module, vgpr, sgpr, accvgpr, \
                                  Holder, SBranchIfNotZero
 from .TensileInstructions.Instructions import *
 
-def allocPostLoopSrdSuppress(ch: str, labelStr: str, sgprLength) -> Module:
+def allocPostLoopSrdSuppressRaw(ch: str, chAddress: str, labelStr: str, sgprLength) -> Module:
     module = Module("allocPostLoopSrdSuppress")
     label  = Label("%sAddrValid"%labelStr, "")
     label2 = Label("%sAddrValid_End"%labelStr, "")
     # Buffer-load uses one base read pointer stored in the SRD - set it here:
-    module.add(SMovB32(dst=sgpr("Srd%s+0"%ch), src=sgpr("Address%s+0"%ch), comment="init SRD base address (lower)" ))
-    module.add(SMovB32(dst=sgpr("Srd%s+1"%ch), src=sgpr("Address%s+1"%ch), comment="init SRD base address (upper) + other fields" ))
+    module.add(SMovB32(dst=sgpr("Srd%s+0"%ch), src=sgpr("Address%s+0"%chAddress), comment="init SRD base address (lower)" ))
+    module.add(SMovB32(dst=sgpr("Srd%s+1"%ch), src=sgpr("Address%s+1"%chAddress), comment="init SRD base address (upper) + other fields" ))
     module.add(SMovB32(dst=sgpr("Srd%s+3"%ch), src="Srd127_96", comment="Set bits 127_96 in post-loop SRD"))
-    module.add(SBranchIfNotZero("Address%s"%ch, DataType('int64'), label))
+    module.add(SBranchIfNotZero("Address%s"%chAddress, DataType('int64'), label))
     module.add(SMovB32(dst=sgpr("Srd%s+2"%ch), src=0))
     module.add(SBranch(label2.getLabelName()))
     module.add(label)
@@ -40,6 +40,9 @@ def allocPostLoopSrdSuppress(ch: str, labelStr: str, sgprLength) -> Module:
     module.add(label2)
     module.addSpaceLine()
     return module
+
+def allocPostLoopSrdSuppress(ch: str, labelStr: str, sgprLength) -> Module:
+    return allocPostLoopSrdSuppressRaw(ch, ch, labelStr, sgprLength)
 
 ##############################################################################
 # WaitCnt

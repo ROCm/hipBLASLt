@@ -100,6 +100,11 @@ class SumUnrollMfma(SumUnroll):
 
         return imod
 
+    """
+    Store sum to LDS
+    Use the same pattern as local read, except the leading dimension is the sum index instead of free indices
+    totalVgprToBeStoredInK is calculated to find out the length of the sum index.
+    """
     def storeSumLDS(self, writer, kernel, tPA, tPB):
         # bias data type
         diasBpe        = kernel["ProblemType"]["ComputeDataType"].numBytes()

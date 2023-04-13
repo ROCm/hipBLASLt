@@ -392,11 +392,8 @@ namespace Tensile
             runActivation = true;
         if(problemType.useBias && (sizeMapping.globalSplitU == 1))
         {
-            if(problemType.useGradient
-               && (problem.biasSrc() == ContractionProblemGemm::TENSOR::D
-                   || ((problem.biasSrc() == ContractionProblemGemm::TENSOR::A
-                        || problem.biasSrc() == ContractionProblemGemm::TENSOR::B)
-                       && sizeMapping.globalSplitU > 1)))
+            // We save the bias data in ws_d
+            if(problemType.useGradient && problem.biasSrc() == ContractionProblemGemm::TENSOR::D)
                 args.append<void const*>("ws_bias", inputs.ws);
             else
                 args.append<void const*>("bias", inputs.bias);
@@ -820,6 +817,18 @@ namespace Tensile
         {
             if(!problemType.useGradient)
                 rv.args.append<void const*>("bias", inputs.bias);
+            if(problemType.useGradient)
+            {
+                for(auto it : problemType.biasSrcWhiteList)
+                {
+                    if(it == ContractionProblemGemm::TENSOR::A
+                       || it == ContractionProblemGemm::TENSOR::B)
+                    {
+                        rv.args.append<void*>("bias", const_cast<void*>(inputs.bias));
+                        break;
+                    }
+                }
+            }
         }
         if(problemType.useScaleD) // GSU dep
         {
@@ -918,7 +927,18 @@ namespace Tensile
         {
             auto s = TypeAbbrev(problem.biasType());
             if(problemType.useGradient)
-                name += ("_DBias" + s);
+            {
+                const char* alpha[5] = {"A", "B", "C", "D", "E"};
+                std::string ss;
+                for(auto it : problemType.biasSrcWhiteList)
+                {
+                    if(it < 5)
+                    {
+                        ss += alpha[it];
+                    }
+                }
+                name += ("_DBias" + ss + s);
+            }
             else
                 name += ("_Bias" + s);
         }
@@ -1306,11 +1326,9 @@ namespace Tensile
                 rv.push_back(generateActivationOnlyCall<false>(problem, inputs, hardware));
         }
 
+        // The reduction of A is done in ConversionKernel when GSU > 1 in MultipleBuffer mode
         if(problem.useBias() && problem.useGradient()
-           && (problem.biasSrc() == ContractionProblemGemm::TENSOR::D
-               || (problem.biasSrc() == ContractionProblemGemm::TENSOR::A
-                   || problem.biasSrc() == ContractionProblemGemm::TENSOR::B)
-                      && sizeMapping.globalAccumulation > 1))
+           && (problem.biasSrc() == ContractionProblemGemm::TENSOR::D))
         {
             if(problem.d().dimensions() != 3)
             {

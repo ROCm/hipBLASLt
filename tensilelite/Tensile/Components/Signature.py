@@ -123,7 +123,8 @@ class SignatureCOV3(Signature):
 
         if writer.states.useBias == DataDirection.READ:
             signature.addArg("bias", SVK.SIG_GLOBALBUFFER, biasValueType, "generic")
-        elif writer.states.useBias == DataDirection.WRITE:
+        # We append the data in ws_d
+        elif writer.states.useBias == DataDirection.WRITE and (kernel["GlobalSplitU"] == 1):
             signature.addArg("ws_bias", SVK.SIG_GLOBALBUFFER, biasValueType, "generic")
 
         if kernel["ProblemType"]["UseE"] and (kernel["GlobalSplitU"] == 1):
