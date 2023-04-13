@@ -3497,17 +3497,21 @@ class KernelWriter(metaclass=abc.ABCMeta):
     assert not self.db["CheckValueC"] or canCheckValueC
 
     # Epilogue related
-    if kernel["ProblemType"]["UseBias"] and (kernel["GlobalSplitU"] == 1):
-      self.states.useBias = DataDirection.WRITE if kernel["ProblemType"]["Gradient"] else DataDirection.READ
+    self.states.useBias = DataDirection.NONE
+    self.states.needBiasType = False
+    if kernel["ProblemType"]["UseBias"]:
+      if kernel["ProblemType"]["Gradient"]:
+        if (kernel["GlobalSplitU"] == 1) and(kernel["ProblemType"]["BiasSrc"] == "D"):
+          self.states.useBias = DataDirection.WRITE
+        elif kernel["ProblemType"]["BiasSrc"] == "A" or kernel["ProblemType"]["BiasSrc"] == "B":
+          self.states.useBias = DataDirection.WRITE
+      elif kernel["GlobalSplitU"] == 1:
+        self.states.useBias = DataDirection.READ
       # Need bias type if the kernel supports multiple bias type.
-      if self.states.useBias == DataDirection.READ or (self.states.useBias == DataDirection.WRITE and (kernel["ProblemType"]["BiasSrc"] == "A" or kernel["ProblemType"]["BiasSrc"] == "B") and kernel["GlobalSplitU"] == 1):
-        self.states.needBiasType = True
-      else:
-        self.states.needBiasType = False
+    if self.states.useBias == DataDirection.READ or (self.states.useBias == DataDirection.WRITE and (kernel["ProblemType"]["BiasSrc"] == "A" or kernel["ProblemType"]["BiasSrc"] == "B") and kernel["GlobalSplitU"] == 1):
+      self.states.needBiasType = True
     else:
-      self.states.useBias = DataDirection.NONE
       self.states.needBiasType = False
-
 
     if self.db["InitLds"] : print ("\n***WARNING: InitLds enabled, may impact performance\n")
     if self.db["InitSgpr"] : print ("\n***WARNING: InitSgpr enabled, may impact performance\n")

@@ -1209,19 +1209,29 @@ namespace Tensile
                     return "WorkspaceCheck";
                 }
 
-                static size_t reductionSize(ContractionProblemGemm const& problem)
+                static size_t reductionSize(ContractionProblemGemm const& problem, size_t value)
                 {
                     size_t reductionSize = 0;
+                    // 2d reduction
                     if(problem.useGradient() && problem.useBias())
                     {
-                        reductionSize += problem.d().totalLogicalElements();
+                        if(problem.biasSrc() == ContractionProblemGemm::TENSOR::D && (value == 0))
+                            reductionSize += problem.d().totalLogicalElements();
+                        else if(problem.biasSrc() == ContractionProblemGemm::TENSOR::A)
+                        {
+                            reductionSize += problem.freeSizeA(0) * value;
+                        }
+                        else if(problem.biasSrc() == ContractionProblemGemm::TENSOR::B)
+                        {
+                            reductionSize += problem.freeSizeB(0) * value;
+                        }
                     }
                     return reductionSize;
                 }
 
                 virtual bool operator()(ContractionProblemGemm const& problem) const override
                 {
-                    size_t rs = reductionSize(problem);
+                    size_t rs = reductionSize(problem, value);
                     return problem.d().totalLogicalElements() * value + rs
                            <= problem.workspaceSize();
                 }
@@ -1231,7 +1241,7 @@ namespace Tensile
                 {
                     bool rv = (*this)(problem);
 
-                    size_t rs = reductionSize(problem);
+                    size_t rs = reductionSize(problem, value);
 
                     stream << *this << ": (" << problem.d().totalLogicalElements() << " * " << value
                            << " + " << rs << " <= " << problem.workspaceSize() << ") == " << rv;

@@ -82,9 +82,13 @@ class KernelWriterConversion(KernelWriterBase):
     kStr += "  " + ptrStr + " const * " + bStr + "C," + self.endLine
 
     # bias
-    if self.state["ProblemType"]["UseBias"] and (not self.state["ProblemType"]["Gradient"]):
-      biasPtrStr = self.state["ProblemType"]["BiasDataType"].toDevice(self.language)
-      kStr += "  " + biasPtrStr + " const * " + "Bias," + self.endLine
+    if self.state["ProblemType"]["UseBias"]:
+      if (not self.state["ProblemType"]["Gradient"]):
+        biasPtrStr = self.state["ProblemType"]["BiasDataType"].toDevice(self.language)
+        kStr += "  " + biasPtrStr + " const * " + "Bias," + self.endLine
+      elif self.state["ProblemType"]["Gradient"] and (self.state["ProblemType"]["BiasSrc"] == "A" or self.state["ProblemType"]["BiasSrc"] == "B"):
+        biasPtrStr = self.state["ProblemType"]["BiasDataType"].toDevice(self.language)
+        kStr += "  " + biasPtrStr + "* " + "Bias," + self.endLine
 
     # interface: ScaleD GSU>1 GSUA "MUL"
     if self.state["ProblemType"]["UseScaleD"]:
@@ -296,6 +300,25 @@ class KernelWriterConversion(KernelWriterBase):
     kStr += "    %s  += strideW;%s" % (wIdxStr, self.endLine)
     kStr += "  }%s" % self.endLine
 
+    if self.state["ProblemType"]["UseBias"] and self.state["ProblemType"]["Gradient"] and (self.state["ProblemType"]["BiasSrc"] == "A" or self.state["ProblemType"]["BiasSrc"] == "B"):
+      size          = "size0I" if self.state["ProblemType"]["BiasSrc"] == "A" else "size1J"
+      barrier       = "id1" if self.state["ProblemType"]["BiasSrc"] == "A" else "id0"
+      biasIdxStr    = "id0" if self.state["ProblemType"]["BiasSrc"] == "A" else "id1"
+      biasIdxGsuStr = biasIdxStr + "Gsu"
+      biasPtrStr    = self.state["ProblemType"]["BiasDataType"].toDevice(self.language)
+      kStr += "  if(%s == 0 && id2 == 0)%s"%(barrier, self.endLine)
+      kStr += "  {%s" % self.endLine
+      kStr += "    auto offset = strideW * gsu;%s"% self.endLine
+      kStr += "    auto strideBias = %s;%s"%(size, self.endLine)
+      kStr += "    auto %s = %s + offset;%s"%(biasIdxGsuStr, biasIdxStr, self.endLine)
+      kStr += "    " + intermediateDataType + " biasAccum = 0;%s" % self.endLine
+      kStr += "    for (int i=0; i<gsu; i++) {%s" % self.endLine
+      kStr += "      biasAccum += W[%s];%s" % (biasIdxGsuStr, self.endLine)
+      kStr += "      %s  += strideBias;%s" % (biasIdxGsuStr, self.endLine)
+      kStr += "    }%s" % self.endLine
+      kStr += "    Bias[%s] = (%s)biasAccum;%s"%(biasIdxStr, biasPtrStr, self.endLine)
+      kStr += "  }%s" % self.endLine
+
     biasStr = ""
     if self.state["ProblemType"]["UseBias"] and (not self.state["ProblemType"]["Gradient"]):
       biasStr = " + ((" + intermediateDataType + ")(Bias == 0 ? 0 : Bias[id0]))"
@@ -348,7 +371,7 @@ class KernelWriterConversion(KernelWriterBase):
       rvalueStr = "min(127, max(-128, (int32_t)std::nearbyint(%s)))" % rvalueStr
 
     kStr += "  result = %s%s;%s" % (rvalueStr, scaleDStr, self.endLine)
-    if self.state["ProblemType"]["UseBias"] and self.state["ProblemType"]["Gradient"]:
+    if self.state["ProblemType"]["UseBias"] and self.state["ProblemType"]["Gradient"] and self.state["ProblemType"]["BiasSrc"] == "D":
       kStr += "  W[idxW] = result;%s" % (self.endLine)
     kStr += "  D[idxD] = (%s)(result);%s" % (typeStr, self.endLine)
 
@@ -382,7 +405,7 @@ class KernelWriterConversion(KernelWriterBase):
       name += "" if self.state["ProblemType"]["StridedBatched"] else "_GB"
     if self.state["ProblemType"]["UseBias"]:
       if self.state["ProblemType"]["Gradient"]:
-        name += "_DBias%s"%self.state["ProblemType"]["BiasDataType"].toChar()
+        name += "_DBias%s%s"%(self.state["ProblemType"]["BiasSrc"], self.state["ProblemType"]["BiasDataType"].toChar())
       else:
         name += "_Bias%s"%self.state["ProblemType"]["BiasDataType"].toChar()
     if self.state["ProblemType"]["UseE"]:
