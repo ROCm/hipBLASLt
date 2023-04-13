@@ -1213,18 +1213,14 @@ namespace Tensile
             std::vector<std::vector<size_t>> const& offsets,
             ContractionGroupedInputs*               inputs)
         {
-            auto aBuffer      = (uint8_t*)ptrs[ContractionProblemGemm::TENSOR::A];
-            auto bBuffer      = (uint8_t*)ptrs[ContractionProblemGemm::TENSOR::B];
-            auto cBuffer      = (uint8_t*)ptrs[ContractionProblemGemm::TENSOR::C];
-            auto dBuffer      = (uint8_t*)ptrs[ContractionProblemGemm::TENSOR::D];
-            auto biasBuffer   = (uint8_t*)ptrs[ContractionProblemGemm::TENSOR::BIAS];
-            auto scaleDBuffer = (uint8_t*)ptrs[ContractionProblemGemm::TENSOR::SCALED];
 
             std::vector<uint8_t*> u8Ptr;
             for(auto p : ptrs)
             {
                 u8Ptr.push_back((uint8_t*)p);
             }
+
+            inputs->ws = ws;
 
             for(int idx = 0; idx < offsets[0].size(); idx++)
             {
@@ -1253,6 +1249,11 @@ namespace Tensile
                     += offsets[ContractionProblemGemm::TENSOR::C][idx] * problem.c().elementBytes();
                 u8Ptr[ContractionProblemGemm::TENSOR::D]
                     += offsets[ContractionProblemGemm::TENSOR::D][idx] * problem.d().elementBytes();
+                if(u8Ptr[ContractionProblemGemm::TENSOR::E] != nullptr)
+                {
+                    u8Ptr[ContractionProblemGemm::TENSOR::E]
+                        += offsets[ContractionProblemGemm::TENSOR::E][idx] * problem.tensors()[ContractionProblemGemm::TENSOR::E].elementBytes();
+                }
                 if(u8Ptr[ContractionProblemGemm::TENSOR::BIAS] != nullptr)
                 {
                     u8Ptr[ContractionProblemGemm::TENSOR::BIAS]
