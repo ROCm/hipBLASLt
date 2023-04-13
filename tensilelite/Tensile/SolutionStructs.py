@@ -3135,8 +3135,6 @@ class Solution(collections.abc.Mapping):
         if state["allowLRVWforTLUandMI"]:
           # Block for not verified.
           reject(state, "Bias reduction on A, B does not support allowLRVWforTLUandMI")
-        if state["GlobalSplitU"] > 1:
-          reject(state, "Bias reduction on A, B is not supported yet.")
       if (state["_GlobalAccumulation"] == 'SingleBuffer') and state["GlobalSplitU"] > 1:
         reject(state, "GlobalSplitU > 1 only compatible with MultipleBuffer for bias reduction")
       if len(state["PackedC1IndicesX"]) > 1:
