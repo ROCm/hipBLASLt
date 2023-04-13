@@ -229,7 +229,7 @@ class ProblemType(Mapping):
       self["Gradient"] = config["Gradient"]
 
     # Need gradient info
-    biasSrcList = ["A", "D"]
+    biasSrcList = ["A", "B", "D"]
     if "BiasSrc" in config:
       if not self["Gradient"] and config["BiasSrc"] != "D":
         printWarning("BiasSrc is set to D cause Gradient is disabled.")
