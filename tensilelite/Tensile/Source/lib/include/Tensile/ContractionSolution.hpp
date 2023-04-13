@@ -227,6 +227,7 @@ namespace Tensile
                             ContractionInputs const& inputs,
                             uint32_t const&          problemNumGroupTiles0,
                             uint32_t const&          problemNumGroupTiles1,
+                            uint32_t const&          workspaceOffsetInByte,
                             bool const&              isGrouped,
                             KernelArguments&         args) const;
 
@@ -239,21 +240,36 @@ namespace Tensile
         KernelInvocation generateSingleCallGroupedGemm(std::vector<Problem> const& problems,
                                                        GroupedInputs const&        inputs,
                                                        Hardware const&             hardware,
-                                                       hipStream_t                 stream) const;
+                                                       KernelArguments &           h_args) const;
 
         template <bool T_Debug>
         KernelInvocation generateBetaOnlyCall(Problem const&           problem,
                                               ContractionInputs const& inputs,
                                               Hardware const&          hardware) const;
 
-        std::string betaOnlyKernelName(Problem const&           problem,
-                                       ContractionInputs const& inputs,
-                                       Hardware const&          hardware) const;
+        template <bool T_Debug>
+        KernelInvocation generateBetaOnlyCallGroupedGemm(std::vector<Problem> const& problems,
+                                                         GroupedInputs const&        inputs,
+                                                         Hardware const&             hardware) const;
+
+        std::string betaOnlyKernelName(Problem const& problem) const;
+
+        template <bool T_Debug>
+        void outputConversionCallArgs(Problem const&           problem,
+                                      ContractionInputs const& inputs,
+                                      uint32_t const&          workspaceOffsetInByte,
+                                      KernelArguments&         args) const;
 
         template <bool T_Debug>
         KernelInvocation generateOutputConversionCall(Problem const&           problem,
                                                       ContractionInputs const& inputs,
                                                       Hardware const&          hardware) const;
+
+        template <bool T_Debug>
+        KernelInvocation generateOutputConversionCallGroupedGemm(std::vector<Problem> const& problems,
+                                                                 GroupedInputs const&        inputs,
+                                                                 Hardware const&             hardware,
+                                                                 KernelArguments &           h_args) const;
 
         std::string outputConversionKernelName(Problem const&           problem,
                                                ContractionInputs const& inputs,

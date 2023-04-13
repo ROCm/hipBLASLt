@@ -3423,7 +3423,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
       len(kernel["PackedC0IdxChars"][:-1])*2 + len(kernel["PackedC1IdxChars"][:-1])*2 + \
       1 + \
       2 + \
-      (3 if kernel["WorkGroupMapping"] > 1 else 1) + \
+      (3 if kernel["WorkGroupMapping"] > 1 else 0) + \
       (2 if kernel["ProblemType"]["GroupedGemm"] else 0)
     # Get kernel argument end here
     ###################################

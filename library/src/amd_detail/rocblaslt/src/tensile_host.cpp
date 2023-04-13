@@ -954,6 +954,7 @@ rocblaslt_status groupedGemmMakeArgument(rocblaslt_groupedgemm        groupedgem
         {
             (*groupedInputs).grouped[i].ws = workspace;
         }
+        (*groupedInputs).ws = workspace;
 
         // fallback to normal gemm if is normal kernel
         std::vector<bool>                    useBias, actHPA, useScaleD;
