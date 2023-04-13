@@ -1043,6 +1043,8 @@ class KernelWriterAssembly(KernelWriter):
         module.addComment0("numWG01 = numWG012 - wg2 * numWG0 * numWG1")
         module.add(SMulI32(dst=sgpr(tmpSgpr0), src0=sgpr("WorkGroup2"), src1=sgpr("NumWorkGroups0")))
         module.add(SMulI32(dst=sgpr(tmpSgpr0), src0=sgpr(tmpSgpr0), src1=sgpr("NumWorkGroups1")))
+        if kernel["GlobalSplitU"] > 1:
+          module.add(SMulI32(dst=sgpr(tmpSgpr0), src0=sgpr(tmpSgpr0), src1=kernel["GlobalSplitU"]))
         module.add(SSubU32(dst=sgpr("WorkGroup0"), src0=sgpr("WorkGroup0"), src1=sgpr(tmpSgpr0)))
         module.addComment0("wg1 = numWG01 * smallMagicNumber(1/numWG0)")
         module.add(self.sMagicDivWrapper(dest=tmpSgpr0, dividend=sgpr("WorkGroup0"), \
