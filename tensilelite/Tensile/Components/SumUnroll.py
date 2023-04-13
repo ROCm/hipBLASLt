@@ -196,9 +196,9 @@ class SumUnrollMfma(SumUnroll):
                     "6-1.mask duplicated: wtid0 = wtid / num1DWaves(%u)" % num1DWaves))
                 else:
                     module.add(vectorStaticDivide(dummy, "Serial", waveWidth, tmpVgprRes, \
-                        "6-1. wave offset in N dimen (waveWidth): wtid = tid / waveWidth(%u)" % waveWidth))
-                    module.add(vectorStaticRemainder(dummy, dummy, wReg, kernel["MIWaveGroup"][0], tmpVgprRes, tmpSgprInfo, \
-                        "6-1. wave offset in M dimen (MIWaveGroup0): wtid0 = wtid % MIWaveGroup0(%u)" % kernel["MIWaveGroup"][0]))
+                        "6-1. wave offset in N dimen (waveWidth): wtid_1 = tid / waveWidth(%u)" % waveWidth))
+                    module.add(vectorStaticRemainder(dummy, dummy, dummy, kernel["MIWaveGroup"][0], tmpVgprRes, tmpSgprInfo, \
+                        "6-1. wave offset in M dimen (MIWaveGroup0): wtid0 = wtid_1 %% MIWaveGroup0(%u)" % kernel["MIWaveGroup"][0]))
                 module.add(VCmpXEqU32(dst=EXEC(), src0=vgpr(dummy), src1=0, comment="6-1. True if ans = 0"))
                 module.add(vectorStaticRemainder(dummy, wReg, wReg, num1DWaves, tmpVgprRes, tmpSgprInfo, \
                     "6. wave offset in M dimen: wtid0 = wtid %% num1DWaves(%u)" % num1DWaves))
