@@ -219,11 +219,15 @@ class SumUnroll(Component):
     Sum unroll block.
     """
     @abc.abstractmethod
-    def loopSum(self, writer, kernel, tc, u, innerUnroll):
+    def initSumUnroll(self, writer, kernel):
         pass
 
     @abc.abstractmethod
-    def storeSumLDS(self, writer, kernel, tPA, tPB):
+    def loopSum(self, writer, kernel, tP, u, innerUnroll):
+        pass
+
+    @abc.abstractmethod
+    def storeSumLDS(self, writer, kernel, tP):
         pass
 
 class ShiftVectorComponents(Component):

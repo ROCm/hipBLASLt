@@ -25,10 +25,10 @@
 from ..Component import SumUnroll
 from ..Common import printExit
 from ..TensileInstructions import Module, VDot2F32F16, SMovB32, VAddU32, VCmpXEqU32, \
-    VLShiftLeftB32, \
+    VLShiftLeftB32, VMovB32, VAddF32, \
     staticMultiply, vectorStaticDivide, vectorStaticRemainder, \
     DSModifiers, SSetMask, DSStoreB16, DSStoreB32, DSStoreB64, \
-    EXEC, vgpr, sgpr, RegisterPoolResource, log2
+    RegSet, EXEC, vgpr, sgpr, RegisterPoolResource, log2
 
 class SumUnrollMfma(SumUnroll):
     kernel = {"EnableMatrixInstruction": True}
@@ -40,7 +40,26 @@ class SumUnrollMfma(SumUnroll):
     def __call__(self):
         assert(0)
 
-    def loopSum(self, writer, kernel, tc, u, innerUnroll):
+    def initSumUnroll(self, writer, kernel):
+        imod = Module("initSumUnroll")
+        idx = 0
+        while idx < writer.states.bias.numVgprValu:
+            imod.add(VMovB32(dst=vgpr("ValuSum+%d"%idx), src=0, comment="reset 0"))
+            idx += 1
+
+        # Init sum unroll, create pack for dot if needed
+        # Unregister is in storeSumLDS
+        if kernel["ProblemType"]["DataType"].numRegisters() < 1:
+            if kernel["ProblemType"]["DataType"].isHalf():
+                writer.defineSgpr("SumUnrollConstOne", 1)
+                imod.add(RegSet("s", "sgprSumUnrollConstOne", writer.sgprs["SumUnrollConstOne"]))
+                imod.add(SMovB32(dst=sgpr("SumUnrollConstOne"), src=hex(0x3c003c00), comment="packed 1.0"))
+            else:
+                assert "[initSumUnroll] Unsupported data type"
+        return imod
+
+    def loopSum(self, writer, kernel, tP, u, innerUnroll):
+        tc   = tP["tensorChar"]
         imod = Module("SumUnroll%s_I%s" % (tc, innerUnroll))
         assert (not kernel["DirectToVgpr%s"%tc])
 
@@ -70,12 +89,6 @@ class SumUnrollMfma(SumUnroll):
         vgprBuffer_new = (m//numIterPerCoalescedRead)*numIterPerCoalescedRead
         vgprBuffer_new_offset = m%numIterPerCoalescedRead*kernel["InnerUnroll"]*vgprPerInput
 
-        tmpSgpr = -1
-        if numRegistersIn < 1:
-            assert kernel["ProblemType"]["DataType"].isHalf()
-            tmpSgpr = writer.sgprPool.checkOut(1)
-            imod.add(SMovB32(dst=sgpr(tmpSgpr), src=hex(0x3c003c00), comment="packed 1.0"))
-
         for iui in range(0, innerUnroll):
             iui_new = (iui//numReadsIterCoalesced)*numReadsIterCoalesced
             iui_new_offset = iui%numReadsIterCoalesced*vgprPerInput
@@ -89,14 +102,16 @@ class SumUnrollMfma(SumUnroll):
                     # First version only supports mfma with K > 1
                     if vgprPerInput > 1 and (vgprPerInput % 2 == 0):
                         for inputIdx in range(0, vgprPerInput):
-                            imod.add(VDot2F32F16(dst=vgpr(valuSumStr), src0=vgpr("%s+%s"%(valuStr, iui_new_offset + inputIdx)), src1=sgpr(tmpSgpr), src2=vgpr(valuSumStr), comment="sum K"))
+                            imod.add(VDot2F32F16(dst=vgpr(valuSumStr), src0=vgpr("%s+%s"%(valuStr, iui_new_offset + inputIdx)), src1=sgpr("SumUnrollConstOne"), src2=vgpr(valuSumStr), comment="sum K"))
                     else:
                         printExit("Currently unsupported vgprPerInput %u"%vgprPerInput)
+                elif kernel["ProblemType"]["DataType"].isSingle():
+                    inputIdx = 0
+                    while inputIdx < vgprPerInput:
+                        imod.add(VAddF32(dst=vgpr(valuSumStr), src0=vgpr("%s+%s"%(valuStr, iui_new_offset + inputIdx)), src1=vgpr(valuSumStr), comment="sum K"))
+                        inputIdx += 1
                 else:
                     printExit("Currently unsupported data type")
-
-        if tmpSgpr != -1:
-            writer.sgprPool.checkIn(tmpSgpr)
 
         return imod
 
@@ -105,16 +120,20 @@ class SumUnrollMfma(SumUnroll):
     Use the same pattern as local read, except the leading dimension is the sum index instead of free indices
     totalVgprToBeStoredInK is calculated to find out the length of the sum index.
     """
-    def storeSumLDS(self, writer, kernel, tPA, tPB):
+    def storeSumLDS(self, writer, kernel, tP):
+        imod = Module("StoreSumLDS")
+        # Unregister defined sgpr
+        if kernel["ProblemType"]["DataType"].numRegisters() < 1:
+            if kernel["ProblemType"]["DataType"].isHalf():
+                imod.add(writer.undefineSgpr("SumUnrollConstOne"))
+
         # bias data type
         diasBpe        = kernel["ProblemType"]["ComputeDataType"].numBytes()
         # get constant parameter
-        tP             = tPA if kernel["ProblemType"]["BiasSrc"] == "A" else tPB
-        tc             = tP["tensorChar"]
         tile01         = tP["tile01Idx"]
         waveWidth      = writer.states.kernel["WavefrontSize"]
         mt             = kernel["MacroTile%u" % tile01]
-        flatWWorkGroup = kernel["SubGroup0"] * kernel["SubGroup1"] * kernel["LocalSplitU"]
+        flatWorkGroup = kernel["SubGroup0"] * kernel["SubGroup1"] * kernel["LocalSplitU"]
 
         wReg    = writer.vgprPool.checkOut(1,"wReg") # quotient
         tReg    = writer.vgprPool.checkOut(1,"tReg") # remainder
@@ -141,20 +160,19 @@ class SumUnrollMfma(SumUnroll):
 
         # strider for each type of index
         # Calculate K
-        totalVgprToBeStoredInK = flatWWorkGroup * num1DBlocks * kernel["MIWaveGroup"][tile01] * kernel["MIWaveTile"][tile01] \
+        totalVgprToBeStoredInK = flatWorkGroup * num1DBlocks * kernel["MIWaveGroup"][tile01] * kernel["MIWaveTile"][tile01] \
                     // kernel["MatrixInstB"] // (kernel["MIWaveGroup"][0] * kernel["MIWaveGroup"][1]) // mt
         strideTile       = totalVgprToBeStoredInK
         strideBlock      = kernel["MatrixInstM"] * strideTile
         strideWave       = kernel["MatrixInstM"] * num1DBlocks * strideTile * vectorWidth
 
-        module = Module("StoreSumLDS")
         with writer.allocTmpSgpr(1) as tmpSgprInfo:
             # tile offset
-            module.add(vectorStaticRemainder(dummy, kReg, "Serial", waveWidth, tmpVgprRes, tmpSgprInfo, \
+            imod.add(vectorStaticRemainder(dummy, kReg, "Serial", waveWidth, tmpVgprRes, tmpSgprInfo, \
                 "0. thread id in wave: wtid = tid %% wavelength(%u)" % waveWidth))
-            module.add(vectorStaticRemainder(dummy, tReg, kReg, kernel["MatrixInstN"], tmpVgprRes, tmpSgprInfo, \
+            imod.add(vectorStaticRemainder(dummy, tReg, kReg, kernel["MatrixInstN"], tmpVgprRes, tmpSgprInfo, \
                 "1. N offset: nIdx = wtid %% MI_N(%u)" % kernel["MatrixInstN"]))
-            module.add(staticMultiply(vgpr(tReg), vgpr(tReg), strideTile, tmpSgprInfo, \
+            imod.add(staticMultiply(vgpr(tReg), vgpr(tReg), strideTile, tmpSgprInfo, \
                 "1. N offset: nOffset = nIdx * nStride(%u)" % strideTile))
             # block offset
             # Here we calculate the coordinate of the block offset, and remove the duplicated blocks.
@@ -162,51 +180,51 @@ class SumUnrollMfma(SumUnroll):
             # 0 1
             # 2 3
             # For tile01 = 0 we should only use 0, 2. For tile01 = 1 we should only use 0, 1.
-            module.add(vectorStaticDivide(wReg, kReg, dividedForBlkId1, tmpVgprRes, \
+            imod.add(vectorStaticDivide(wReg, kReg, dividedForBlkId1, tmpVgprRes, \
                 "2-1. block offset: bnIdx = wtid / dividedForBlkId1(%u)" % dividedForBlkId1))
-            module.add(vectorStaticRemainder(dummy, wReg, wReg, num1DBlocks1, tmpVgprRes, tmpSgprInfo, \
+            imod.add(vectorStaticRemainder(dummy, wReg, wReg, num1DBlocks1, tmpVgprRes, tmpSgprInfo, \
                 "2-1. block offset: bnIdx = bnIdx %% num1DBlocks1(%u)" % num1DBlocks1))
-            module.add(VCmpXEqU32(dst=EXEC(), src0=vgpr(wReg), src1=0, comment="2-1. True if ans = 0"))
-            module.add(vectorStaticDivide(wReg, kReg, dividedForBlkId, tmpVgprRes, \
+            imod.add(VCmpXEqU32(dst=EXEC(), src0=vgpr(wReg), src1=0, comment="2-1. True if ans = 0"))
+            imod.add(vectorStaticDivide(wReg, kReg, dividedForBlkId, tmpVgprRes, \
                 "2. block offset: bnIdx = wtid / dividedForBlkId(%u)" % dividedForBlkId))
-            module.add(vectorStaticRemainder(dummy, wReg, wReg, num1DBlocks, tmpVgprRes, tmpSgprInfo, \
+            imod.add(vectorStaticRemainder(dummy, wReg, wReg, num1DBlocks, tmpVgprRes, tmpSgprInfo, \
                 "2. block offset: bnIdx = bnIdx %% num1DBlocks(%u)" % num1DBlocks))
-            module.add(staticMultiply(vgpr(wReg), vgpr(wReg), strideBlock, tmpSgprInfo, \
+            imod.add(staticMultiply(vgpr(wReg), vgpr(wReg), strideBlock, tmpSgprInfo, \
                 "2. block offset: bnOffset = bnIdx * strideBlock(%u)" % strideBlock))
-            module.add(VAddU32(dst=vgpr(tReg), src0=vgpr(wReg), src1=vgpr(tReg), \
+            imod.add(VAddU32(dst=vgpr(tReg), src0=vgpr(wReg), src1=vgpr(tReg), \
                 comment="3. add N and block offset: bnOffset = block and N offset"))
-            module.add(staticMultiply(vgpr(tReg), vgpr(tReg), vectorWidth, tmpSgprInfo, \
+            imod.add(staticMultiply(vgpr(tReg), vgpr(tReg), vectorWidth, tmpSgprInfo, \
                 "3. apply VectorWidth: bnOffset = bnOffset * vw(%u)" % vectorWidth))
             # unroll offset
-            module.add(vectorStaticDivide(kReg, kReg, dividendForKId, tmpVgprRes, \
+            imod.add(vectorStaticDivide(kReg, kReg, dividendForKId, tmpVgprRes, \
                 "4. K offset: kIdx = wtid / (MIN(%u) * MIBB(%u))" % (kernel["MatrixInstN"], kernel["MatrixInstB"])))
-            module.add(staticMultiply(vgpr(kReg), vgpr(kReg), 1, tmpSgprInfo, \
+            imod.add(staticMultiply(vgpr(kReg), vgpr(kReg), 1, tmpSgprInfo, \
                 "4. K offset: lrKOffset = kIdx * mStride(1)"))
 
-            module.add(VAddU32(dst=vgpr(tReg), src0=vgpr(kReg), src1=vgpr(tReg), \
+            imod.add(VAddU32(dst=vgpr(tReg), src0=vgpr(kReg), src1=vgpr(tReg), \
                 comment="5. offset in wave: lrOffset = bnOffset + lrKOffset"))
             # wave offset
             if num1DWaves > 1:
             # FIXME: Should be two cases tile01 == 0 and tile01 == 1
-                module.add(vectorStaticDivide(wReg, "Serial", dividedForWaveId, tmpVgprRes, \
+                imod.add(vectorStaticDivide(wReg, "Serial", dividedForWaveId, tmpVgprRes, \
                     "6. wave offset in N dimen: wtid = tid / dividedForWaveId(%u)" % dividedForWaveId))
                 # Here we calculate the coordinate of the block offset, and remove the duplicated wave.
                 if tile01 == 0:
-                    module.add(vectorStaticDivide(dummy, wReg, num1DWaves, tmpVgprRes, \
+                    imod.add(vectorStaticDivide(dummy, wReg, num1DWaves, tmpVgprRes, \
                     "6-1.mask duplicated: wtid0 = wtid / num1DWaves(%u)" % num1DWaves))
                 else:
-                    module.add(vectorStaticDivide(dummy, "Serial", waveWidth, tmpVgprRes, \
+                    imod.add(vectorStaticDivide(dummy, "Serial", waveWidth, tmpVgprRes, \
                         "6-1. wave offset in N dimen (waveWidth): wtid_1 = tid / waveWidth(%u)" % waveWidth))
-                    module.add(vectorStaticRemainder(dummy, dummy, dummy, kernel["MIWaveGroup"][0], tmpVgprRes, tmpSgprInfo, \
+                    imod.add(vectorStaticRemainder(dummy, dummy, dummy, kernel["MIWaveGroup"][0], tmpVgprRes, tmpSgprInfo, \
                         "6-1. wave offset in M dimen (MIWaveGroup0): wtid0 = wtid_1 %% MIWaveGroup0(%u)" % kernel["MIWaveGroup"][0]))
-                module.add(VCmpXEqU32(dst=EXEC(), src0=vgpr(dummy), src1=0, comment="6-1. True if ans = 0"))
-                module.add(vectorStaticRemainder(dummy, wReg, wReg, num1DWaves, tmpVgprRes, tmpSgprInfo, \
+                imod.add(VCmpXEqU32(dst=EXEC(), src0=vgpr(dummy), src1=0, comment="6-1. True if ans = 0"))
+                imod.add(vectorStaticRemainder(dummy, wReg, wReg, num1DWaves, tmpVgprRes, tmpSgprInfo, \
                     "6. wave offset in M dimen: wtid0 = wtid %% num1DWaves(%u)" % num1DWaves))
-                module.add(staticMultiply(vgpr(wReg), vgpr(wReg), strideWave, tmpSgprInfo, \
+                imod.add(staticMultiply(vgpr(wReg), vgpr(wReg), strideWave, tmpSgprInfo, \
                     "6. wave offset in M dimen: wOffset = wtid0 * W0Stride(%u)" % strideWave))
-                module.add(VAddU32(dst=vgpr(tReg), src0=vgpr(wReg), src1=vgpr(tReg), \
+                imod.add(VAddU32(dst=vgpr(tReg), src0=vgpr(wReg), src1=vgpr(tReg), \
                     comment="7. final local read offset: flrOffset = lrOffset + WOffset"))
-            module.add(VLShiftLeftB32(dst=vgpr(tReg), src=vgpr(tReg), shiftHex=hex(log2(diasBpe)), \
+            imod.add(VLShiftLeftB32(dst=vgpr(tReg), src=vgpr(tReg), shiftHex=hex(log2(diasBpe)), \
                 comment="offset = offset*bpe" ))
         # release register
         writer.vgprPool.checkIn(wReg)
@@ -229,16 +247,16 @@ class SumUnrollMfma(SumUnroll):
                 dst = vgpr(tReg)
                 vgprStr = "ValuSum+%u"%idx
                 if bps==2:
-                    module.add(DSStoreB16(dstAddr=dst, src=vgpr(vgprStr), ds=ds, comment="local store bias"))
+                    imod.add(DSStoreB16(dstAddr=dst, src=vgpr(vgprStr), ds=ds, comment="local store bias"))
                 elif bps==4:
-                    module.add(DSStoreB32(dstAddr=dst, src=vgpr(vgprStr), ds=ds, comment="local store bias"))
+                    imod.add(DSStoreB32(dstAddr=dst, src=vgpr(vgprStr), ds=ds, comment="local store bias"))
                 elif bps==8:
-                    module.add(DSStoreB64(dstAddr=dst, src=vgpr(vgprStr, 2), ds=ds, comment="local store bias"))
+                    imod.add(DSStoreB64(dstAddr=dst, src=vgpr(vgprStr, 2), ds=ds, comment="local store bias"))
                 else:
                     assert 0
                 idx += 1
         # tReg
         writer.vgprPool.checkIn(tReg)
-        module.add(SSetMask(dst=EXEC(), src=-1, comment="reset mask" ))
+        imod.add(SSetMask(dst=EXEC(), src=-1, comment="reset mask" ))
         # For later write in Global Write Batch
-        return module
+        return imod

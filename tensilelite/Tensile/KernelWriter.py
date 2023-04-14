@@ -1542,7 +1542,8 @@ class KernelWriter(metaclass=abc.ABCMeta):
       else:
         printExit("TensileLite does not support MAC instructions.")
       if kernel["ProblemType"]["Gradient"] and kernel["ProblemType"]["UseBias"] and (kernel["ProblemType"]["BiasSrc"] == "A" or kernel["ProblemType"]["BiasSrc"] == "B"):
-        macIterCode.add(self.exclasses.biasSumUnroll.loopSum(self, kernel, kernel["ProblemType"]["BiasSrc"], u, kernel["InnerUnroll"]))
+        tP = tensorParametersA if kernel["ProblemType"]["BiasSrc"] == "A" else tensorParametersB
+        macIterCode.add(self.exclasses.biasSumUnroll.loopSum(self, kernel, tP, u, kernel["InnerUnroll"]))
 
       subIterCode = self.makeSubIterSchedule(kernel, tensorParametersA, tensorParametersB, localReads, \
                       u, pointerLWCode, pointerLRCode, waitCode, macIterCode, waitLWCode, syncCode, pack[luIdx], isDTVodd, NLLlast)
@@ -1945,7 +1946,8 @@ class KernelWriter(metaclass=abc.ABCMeta):
       else:
         printExit("TensileLite does not support MAC instructions.")
       if kernel["ProblemType"]["Gradient"] and kernel["ProblemType"]["UseBias"] and (kernel["ProblemType"]["BiasSrc"] == "A" or kernel["ProblemType"]["BiasSrc"] == "B"):
-        macIterCode.add(self.exclasses.biasSumUnroll.loopSum(self, kernel, kernel["ProblemType"]["BiasSrc"], u, kernel["InnerUnroll"]))
+        tP = tensorParametersA if kernel["ProblemType"]["BiasSrc"] == "A" else tensorParametersB
+        macIterCode.add(self.exclasses.biasSumUnroll.loopSum(self, kernel, tP, u, kernel["InnerUnroll"]))
 
       ###### unroll loop efficiency implementation######################################
       # unroll loop efficiency implementation
@@ -2382,7 +2384,8 @@ class KernelWriter(metaclass=abc.ABCMeta):
           else:
             printExit("TensileLite does not support MAC instructions.")
           if kernel["ProblemType"]["Gradient"] and kernel["ProblemType"]["UseBias"] and (kernel["ProblemType"]["BiasSrc"] == "A" or kernel["ProblemType"]["BiasSrc"] == "B"):
-            module.add(self.exclasses.biasSumUnroll.loopSum(self, kernel, kernel["ProblemType"]["BiasSrc"], 0, tailLoopInnerUnroll))
+            tP = tensorParametersA if kernel["ProblemType"]["BiasSrc"] == "A" else tensorParametersB
+            module.add(self.exclasses.biasSumUnroll.loopSum(self, kernel, tP, 0, tailLoopInnerUnroll))
 
           finalLoop = mValue == mEnd - 1
           module.add(self.closeLoop(kernel, tensorParametersA, tensorParametersB, -1, finalLoop, uDu if kernel.enabledSplitLDS else None))
