@@ -3289,7 +3289,7 @@ class KernelWriterAssembly(KernelWriter):
       # Update vbegin and vsize
       vbegin = self.states.bias.startVgprValu
       vsize = self.states.lastVgprForReads - vbegin
-
+      module.add(SBarrier(comment="Wait for all wavefronts"))
       tP = tPA if kernel["ProblemType"]["BiasSrc"] == "A" else tPB
       module.add(self.exclasses.biasSumUnroll.storeSumLDS(self, kernel, tP))
 
