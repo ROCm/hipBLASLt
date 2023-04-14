@@ -133,7 +133,6 @@ class SumUnrollMfma(SumUnroll):
         tile01         = tP["tile01Idx"]
         waveWidth      = writer.states.kernel["WavefrontSize"]
         mt             = kernel["MacroTile%u" % tile01]
-        flatWorkGroup = kernel["SubGroup0"] * kernel["SubGroup1"] * kernel["LocalSplitU"]
 
         wReg    = writer.vgprPool.checkOut(1,"wReg") # quotient
         tReg    = writer.vgprPool.checkOut(1,"tReg") # remainder
@@ -160,7 +159,7 @@ class SumUnrollMfma(SumUnroll):
 
         # strider for each type of index
         # Calculate K
-        totalVgprToBeStoredInK = flatWorkGroup * num1DBlocks * kernel["MIWaveGroup"][tile01] * kernel["MIWaveTile"][tile01] \
+        totalVgprToBeStoredInK = kernel["NumThreads"] * num1DBlocks * kernel["MIWaveGroup"][tile01] * kernel["MIWaveTile"][tile01] \
                     // kernel["MatrixInstB"] // (kernel["MIWaveGroup"][0] * kernel["MIWaveGroup"][1]) // mt
         strideTile       = totalVgprToBeStoredInK
         strideBlock      = kernel["MatrixInstM"] * strideTile
