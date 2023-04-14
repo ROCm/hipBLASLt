@@ -24,7 +24,18 @@
 
 from ..TensileInstructions import Module, VAddU32, staticMultiply, vectorStaticDivide, \
                                 vectorStaticRemainder, RegisterPoolResource, vgpr
-from ..Component import LraTileAssignment
+from ..Component import LraTileAssignment, LraTileProperties
+from dataclasses import dataclass
+
+@dataclass
+class LraTilePropertiesMFMA(LraTileProperties):
+   dividendForKId: int
+   num1DBlocks: int
+   num1DWaves: int
+   dividedForBlkId: int
+   dividedForWaveId: int
+   vectorWidth: int
+   maxKId: int
 
 class LraTileAssignmentMFMA(LraTileAssignment):
     kernel = {"EnableMatrixInstruction": True}
@@ -74,6 +85,14 @@ class LraTileAssignmentMFMA(LraTileAssignment):
           if lrvw > 1:
             vectorWidth = lrvw
           inputPerThread = 1
+        maxKId = waveWidth // ((kernel["MatrixInstM"] if (tile01 == 0) else kernel["MatrixInstN"]) * kernel["MatrixInstB"])
+        writer.states.lraTileProperties[tile01] = LraTilePropertiesMFMA(dividendForKId=dividendForKId, \
+                                                                        num1DBlocks=num1DBlocks, \
+                                                                        num1DWaves=num1DWaves, \
+                                                                        dividedForBlkId=dividedForBlkId, \
+                                                                        dividedForWaveId = dividedForWaveId, \
+                                                                        vectorWidth=vectorWidth, \
+                                                                        maxKId=maxKId)
 
         # strider for each type of index
         umlds            = kernel["UnrollMajorLDS%s" % tc]

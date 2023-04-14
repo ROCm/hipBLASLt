@@ -31,7 +31,7 @@ from .TensileInstructions.Instructions import *
 from .KernelWriterModules import *
 from .TensilePass import TensilePass, TensilePassOptions
 from .Common import globalParameters, CHeader, roundUp, Backup, print2, printExit
-from .Component import Component
+from .Component import Component, LraTileProperties
 from .CustomKernels import isCustomKernelConfig
 from .SolutionStructs import Solution, isPackedIndex
 from .AsmMemoryInstruction import MemoryInstruction
@@ -45,7 +45,7 @@ import subprocess
 import copy
 import collections
 from dataclasses import dataclass, field
-from typing import NamedTuple, Tuple, Type
+from typing import Dict, NamedTuple, Tuple, Type
 
 # Make const values immutable
 class ConstValues(NamedTuple):
@@ -222,6 +222,8 @@ class StateValues:
 
   perIterLocalWriteCanSkip: List[int]    = field(init=False)
 
+  lraTileProperties: Dict[int, LraTileProperties] = field(init=False)
+
   # Epilogue states
   useBias      = DataDirection.NONE
   needBiasType = False
@@ -236,6 +238,8 @@ class StateValues:
     self.srdShiftLeft = {}  # Workaround
 
     self.perIterLocalWriteCanSkip = []
+
+    self.lraTileProperties = {}  # Workaround
 
 @dataclass
 class StateVgprs:
