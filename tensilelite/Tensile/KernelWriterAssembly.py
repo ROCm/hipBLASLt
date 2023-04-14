@@ -6404,9 +6404,8 @@ class KernelWriterAssembly(KernelWriter):
         tP             = tPA if kernel["ProblemType"]["BiasSrc"] == "A" else tPB
         tile01         = tP["tile01Idx"]
         mt             = kernel["MacroTile%u" % tile01]
-        flatWorkGroup = kernel["SubGroup0"] * kernel["SubGroup1"] * kernel["LocalSplitU"]
         num1DBlocks    = kernel["MatrixInstBM"] if (tile01 == 0) else kernel["MatrixInstBN"]
-        totalVgprToBeStoredInK = flatWorkGroup * num1DBlocks * kernel["MIWaveGroup"][tile01] * kernel["MIWaveTile"][tile01] \
+        totalVgprToBeStoredInK = kernel["NumThreads"] * num1DBlocks * kernel["MIWaveGroup"][tile01] * kernel["MIWaveTile"][tile01] \
                 // kernel["MatrixInstB"] // (kernel["MIWaveGroup"][0] * kernel["MIWaveGroup"][1]) // mt
         biasMaxVgpr = kernel["VectorWidth"] * kernel["ProblemType"]["ComputeDataType"].numRegisters() * totalVgprToBeStoredInK
         maxAlign    = max(1, (kernel["VectorWidth"] - 1) // 2 * 2)
@@ -7412,19 +7411,18 @@ class KernelWriterAssembly(KernelWriter):
   def writeBiasToGlobal(self, biasDataType, kernel, tP, offsetVgpr, tmpSgprRes, tmpVgpr1Res: RegisterPoolResource):
     tile01         = tP["tile01Idx"]
     mt             = kernel["MacroTile%u" % tile01]
-    flatWorkGroup = kernel["SubGroup0"] * kernel["SubGroup1"] * kernel["LocalSplitU"]
     num1DBlocks    = kernel["MatrixInstBM"] if (tile01 == 0) else kernel["MatrixInstBN"]
-    totalVgprToBeStoredInK = flatWorkGroup * num1DBlocks * kernel["MIWaveGroup"][tile01] * kernel["MIWaveTile"][tile01] \
+    totalVgprToBeStoredInK = kernel["NumThreads"] * num1DBlocks * kernel["MIWaveGroup"][tile01] * kernel["MIWaveTile"][tile01] \
                 // kernel["MatrixInstB"] // (kernel["MIWaveGroup"][0] * kernel["MIWaveGroup"][1]) // mt
     assert tmpSgprRes.size >= 1
     assert tmpVgpr1Res.size >= kernel["VectorWidth"] * kernel["ProblemType"]["ComputeDataType"].numRegisters() * totalVgprToBeStoredInK
 
     # Get gwvw
     '''
-    gwvw is set to max(mt // flatWorkGroup, kernel["VectorWidth"]) instead of kernel["VectorWidth"] is that we don't want batch exists.
+    gwvw is set to max(mt // kernel["NumThreads"], kernel["VectorWidth"]) instead of kernel["VectorWidth"] is that we don't want batch exists.
     If VW is set to 1, MT=512, and flat work group = 256. We will have to set gwvw to 2 to store all the bias data.
     '''
-    gwvw = max(mt // flatWorkGroup, kernel["VectorWidth"])
+    gwvw = max(mt // kernel["NumThreads"], kernel["VectorWidth"])
     assert gwvw % 2 == 0 or gwvw == 1
 
     # Params
