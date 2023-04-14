@@ -6401,13 +6401,10 @@ class KernelWriterAssembly(KernelWriter):
       labelStr = self.labels.getNameInc("Bias")
       if kernel["ProblemType"]["BiasSrc"] == "A" or kernel["ProblemType"]["BiasSrc"] == "B":
         # Calculate max vgpr for bias write A, B
-        tP             = tPA if kernel["ProblemType"]["BiasSrc"] == "A" else tPB
-        tile01         = tP["tile01Idx"]
-        mt             = kernel["MacroTile%u" % tile01]
-        num1DBlocks    = kernel["MatrixInstBM"] if (tile01 == 0) else kernel["MatrixInstBN"]
-        totalVgprToBeStoredInK = kernel["NumThreads"] * num1DBlocks * kernel["MIWaveGroup"][tile01] * kernel["MIWaveTile"][tile01] \
-                // kernel["MatrixInstB"] // (kernel["MIWaveGroup"][0] * kernel["MIWaveGroup"][1]) // mt
-        biasMaxVgpr = kernel["VectorWidth"] * kernel["ProblemType"]["ComputeDataType"].numRegisters() * totalVgprToBeStoredInK
+        tP          = tPA if kernel["ProblemType"]["BiasSrc"] == "A" else tPB
+        tile01      = tP["tile01Idx"]
+        maxKId      = self.states.lraTileProperties[tile01].maxKId
+        biasMaxVgpr = kernel["VectorWidth"] * kernel["ProblemType"]["ComputeDataType"].numRegisters() * maxKId
         maxAlign    = max(1, (kernel["VectorWidth"] - 1) // 2 * 2)
         tmpVgpr     = self.vgprPool.checkOutAligned(biasMaxVgpr, maxAlign, "store tmps")
         tmpVgprRes  = RegisterPoolResource(idx=tmpVgpr, size=biasMaxVgpr)
@@ -7409,13 +7406,11 @@ class KernelWriterAssembly(KernelWriter):
   Wider global store only enables when freeElementMultiple % gwvw == 0 since each thread only stores 1, 2 elements.
   '''
   def writeBiasToGlobal(self, biasDataType, kernel, tP, offsetVgpr, tmpSgprRes, tmpVgpr1Res: RegisterPoolResource):
-    tile01         = tP["tile01Idx"]
-    mt             = kernel["MacroTile%u" % tile01]
-    num1DBlocks    = kernel["MatrixInstBM"] if (tile01 == 0) else kernel["MatrixInstBN"]
-    totalVgprToBeStoredInK = kernel["NumThreads"] * num1DBlocks * kernel["MIWaveGroup"][tile01] * kernel["MIWaveTile"][tile01] \
-                // kernel["MatrixInstB"] // (kernel["MIWaveGroup"][0] * kernel["MIWaveGroup"][1]) // mt
+    tile01 = tP["tile01Idx"]
+    mt     = kernel["MacroTile%u" % tile01]
+    maxKId = self.states.lraTileProperties[tile01].maxKId
     assert tmpSgprRes.size >= 1
-    assert tmpVgpr1Res.size >= kernel["VectorWidth"] * kernel["ProblemType"]["ComputeDataType"].numRegisters() * totalVgprToBeStoredInK
+    assert tmpVgpr1Res.size >= kernel["VectorWidth"] * kernel["ProblemType"]["ComputeDataType"].numRegisters() * maxKId
 
     # Get gwvw
     '''
@@ -7470,8 +7465,8 @@ class KernelWriterAssembly(KernelWriter):
 
     # Local read
     # remaining size % VW
-    module.add(staticMultiply(vgpr(offsetVgpr), vgpr("Serial"), totalVgprToBeStoredInK, tmpSgprRes, \
-            "offset = serial * totalVgprToBeStoredInK"))
+    module.add(staticMultiply(vgpr(offsetVgpr), vgpr("Serial"), maxKId, tmpSgprRes, \
+            "offset = serial * maxKId"))
     module.add(staticMultiply(vgpr(offsetVgpr), vgpr(offsetVgpr), gwvw, tmpSgprRes, \
             "apply VectorWidth: offset = bnOffset * vw(%u)" % gwvw))
 
@@ -7501,7 +7496,7 @@ class KernelWriterAssembly(KernelWriter):
         module.add(VCmpXGeU32(dst=EXEC(), src0=vgpr(serialOffsetVgpr), src1=sgpr(tmpSgpr), comment="needs shift if serial > edge"))
       else:
         module.add(VCmpXGeU32(dst=EXEC(), src0=vgpr("Serial"), src1=sgpr(tmpSgpr), comment="needs shift if serial > edge"))
-      module.add(VMulLOU32(dst=vgpr(serialOffsetVgpr), src0=hex(totalVgprToBeStoredInK), src1=sgpr(tmpSgpr+1), comment="ds_offset = K * offset"))
+      module.add(VMulLOU32(dst=vgpr(serialOffsetVgpr), src0=hex(maxKId), src1=sgpr(tmpSgpr+1), comment="ds_offset = K * offset"))
       module.add(VAddU32(dst=vgpr(offsetVgpr), src0=vgpr(offsetVgpr), src1=vgpr(serialOffsetVgpr), comment="real offset = offset + ds_offset"))
       module.add(SMovB64(dst=EXEC(), src=-1, comment="reset mask"))
 
@@ -7514,7 +7509,7 @@ class KernelWriterAssembly(KernelWriter):
     srcAddr = vgpr(offsetVgpr)
     tmpVgpr1 = tmpVgpr1Res.idx
     tmpVgprN = tmpVgpr1
-    if totalVgprToBeStoredInK == 1:
+    if maxKId == 1:
       bps = kernel["ProblemType"]["ComputeDataType"].numBytes() * gwvw
       ds  = DSModifiers(offset=0)
       if bps==2:
@@ -7530,8 +7525,8 @@ class KernelWriterAssembly(KernelWriter):
       for _ in range(0, gwvw):
         gwvwK = 1
         idx = 0
-        while idx < totalVgprToBeStoredInK:
-          gwvwK = 2 if (idx + 1 < totalVgprToBeStoredInK * gwvw) else 1
+        while idx < maxKId:
+          gwvwK = 2 if (idx + 1 < maxKId * gwvw) else 1
           bps = kernel["ProblemType"]["ComputeDataType"].numBytes() * gwvwK
           ds  = DSModifiers(offset=dsOffset)
           if bps==2:
@@ -7554,13 +7549,13 @@ class KernelWriterAssembly(KernelWriter):
     v7 = v8 + v9
     '''
     tmpVgprN = tmpVgpr1 + 1
-    if totalVgprToBeStoredInK != 1:
+    if maxKId != 1:
       for gidx in range(0, gwvw):
         tmpVgprAccum = tmpVgpr1 + gidx
         if gidx != 0:
           module.add(VMovB32(dst=vgpr(tmpVgprAccum), src=vgpr(tmpVgprN), comment="Copy address"))
           tmpVgprN += 1
-        for idx in range(1, totalVgprToBeStoredInK):
+        for idx in range(1, maxKId):
           if kernel["ProblemType"]["ComputeDataType"].isSingle():
             module.add(VAddF32(dst=vgpr(tmpVgprAccum), src0=vgpr(tmpVgprN), src1=vgpr(tmpVgprAccum), comment="Sum K"))
           else:
