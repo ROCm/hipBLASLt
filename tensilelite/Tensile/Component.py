@@ -69,6 +69,14 @@ Components can be categorized in different files in the `Tensile/Components` dir
 import abc
 from collections.abc import Mapping
 import inspect
+from dataclasses import dataclass
+
+@dataclass
+class LraTileProperties:
+    """
+    Lra tile assignment properties.
+    """
+    pass
 
 def PartialMatch(pattern, obj, debug=False, level=0):
     indent = "    " * level

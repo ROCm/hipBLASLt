@@ -118,9 +118,10 @@ class SumUnrollMfma(SumUnroll):
     """
     Store sum to LDS
     Use the same pattern as local read, except the leading dimension is the sum index instead of free indices
-    totalVgprToBeStoredInK is calculated to find out the length of the sum index.
+    maxKId is calculated to find out the length of the sum index.
     """
     def storeSumLDS(self, writer, kernel, tP):
+        assert not kernel["allowLRVWforTLUandMI"]
         imod = Module("StoreSumLDS")
         # Unregister defined sgpr
         if kernel["ProblemType"]["DataType"].numRegisters() < 1:
@@ -144,24 +145,21 @@ class SumUnrollMfma(SumUnroll):
         dummy   = writer.vgprPool.checkOut(1,"dummy")
 
         # parameter for get each type index
-        dividendForKId   = kernel["MatrixInstM"] * kernel["MatrixInstB"]
-        num1DBlocks      = kernel["MatrixInstBM"] if (tile01 == 0) else kernel["MatrixInstBN"]
-        num1DBlocks1     = kernel["MatrixInstBN"] if (tile01 == 0) else kernel["MatrixInstBM"]
-        num1DWaves       = kernel["MIWaveGroup"][0] if (tile01 == 0) else kernel["MIWaveGroup"][1]
-        if kernel["SourceSwap"]:
-            dividedForBlkId  = kernel["MatrixInstM"] if (tile01 == 0) else (kernel["MatrixInstM"] * kernel["MatrixInstBM"])
-            dividedForBlkId1 = (kernel["MatrixInstM"] * kernel["MatrixInstBM"]) if (tile01 == 0) else kernel["MatrixInstM"]
-        else:
-            dividedForBlkId  = (kernel["MatrixInstN"] * kernel["MatrixInstBN"]) if (tile01 == 0) else kernel["MatrixInstN"]
-            dividedForBlkId1 = kernel["MatrixInstN"] if (tile01 == 0) else (kernel["MatrixInstN"] * kernel["MatrixInstBN"])
-        dividedForWaveId = waveWidth if (tile01 == 0) else (waveWidth * kernel["MIWaveGroup"][0])
-        vectorWidth      = kernel["VectorWidth"] if ((tile01 == 0) and kernel["SourceSwap"]) else 1 # TODO: nonSwap VectorWidth
+        tile10           = 1 - tile01
+        # Must init LraTileProperties in LraTileAssignment
+        assert writer.states.lraTileProperties[tile01] and writer.states.lraTileProperties[tile10]
 
-        # strider for each type of index
-        # Calculate K
-        totalVgprToBeStoredInK = kernel["NumThreads"] * num1DBlocks * kernel["MIWaveGroup"][tile01] * kernel["MIWaveTile"][tile01] \
-                    // kernel["MatrixInstB"] // (kernel["MIWaveGroup"][0] * kernel["MIWaveGroup"][1]) // mt
-        strideTile       = totalVgprToBeStoredInK
+        dividendForKId   = writer.states.lraTileProperties[tile01].dividendForKId
+        num1DBlocks      = writer.states.lraTileProperties[tile01].num1DBlocks
+        num1DBlocks1     = writer.states.lraTileProperties[tile10].num1DBlocks
+        num1DWaves       = writer.states.lraTileProperties[tile01].num1DWaves
+        dividedForBlkId  = writer.states.lraTileProperties[tile01].dividedForBlkId
+        dividedForBlkId1 = writer.states.lraTileProperties[tile10].dividedForBlkId
+        dividedForWaveId = writer.states.lraTileProperties[tile01].dividedForWaveId
+        vectorWidth      = writer.states.lraTileProperties[tile01].vectorWidth
+        maxKId           = writer.states.lraTileProperties[tile01].maxKId
+
+        strideTile       = maxKId
         strideBlock      = kernel["MatrixInstM"] * strideTile
         strideWave       = kernel["MatrixInstM"] * num1DBlocks * strideTile * vectorWidth
 
@@ -240,7 +238,7 @@ class SumUnrollMfma(SumUnroll):
         for vIdx in range(0, numVectorsPerTile):
             for eIdx in range(0, numReadPerTileVector):
                 # normal case
-                offset_val = (eIdx + vIdx * MIWaveGroupShape[tile01]) * totalVgprToBeStoredInK * kernel["ProblemType"]["ComputeDataType"].numBytes()
+                offset_val = (eIdx + vIdx * MIWaveGroupShape[tile01]) * maxKId * kernel["ProblemType"]["ComputeDataType"].numBytes()
                 bps = kernel["ProblemType"]["ComputeDataType"].numBytes()
                 ds  = DSModifiers(offset=offset_val)
                 dst = vgpr(tReg)
