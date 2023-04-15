@@ -935,7 +935,7 @@ namespace Tensile
         {
             name += "h";
         }
-        if(problem.activationGuard())
+        if(problem.activationNoGuard())
         {
             name += "g";
         }

@@ -220,7 +220,7 @@ namespace Tensile
         virtual std::vector<KernelInvocation> solveGroupedGemm(std::vector<Problem> const& problems,
                                                                GroupedInputs const&        inputs,
                                                                Hardware const&             hardware,
-                                                               hipStream_t                 stream) const;
+                                                               hipStream_t stream) const;
 
         template <bool T_Debug>
         void singleCallArgs(Problem const&           problem,
@@ -315,7 +315,7 @@ namespace Tensile
             bool                  fp16AltImpl             = false;
             ActivationType        activationType          = ActivationType::None;
             bool                  activationHPA           = false;
-            bool                  activationGuard         = false;
+            bool                  activationNoGuard       = false;
             std::vector<DataType> biasDataTypeWhiteList;
         };
 

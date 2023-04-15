@@ -621,14 +621,14 @@ namespace Tensile
             return m_activationHPA;
         }
 
-        void setActivationGuard(bool value)
+        void setActivationNoGuard(bool value)
         {
-            m_activationGuard = value;
+            m_activationNoGuard = value;
         }
 
-        bool activationGuard() const
+        bool activationNoGuard() const
         {
-            return m_activationGuard;
+            return m_activationNoGuard;
         }
 
         void setActivationEnumArg(ActivationType activationEnumArg)
@@ -801,7 +801,7 @@ namespace Tensile
         ActivationType    m_activationType          = ActivationType::None;
         ActivationType    m_activationEnumArg       = ActivationType::None;
         bool              m_activationHPA           = false;
-        bool              m_activationGuard         = false;
+        bool              m_activationNoGuard       = false;
         KernelLanguage    m_kernelLanguage          = KernelLanguage::Any;
         PerformanceMetric m_performanceMetric       = PerformanceMetric::DeviceEfficiency;
 

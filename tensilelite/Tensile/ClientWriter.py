@@ -498,7 +498,7 @@ def writeClientConfigIni(problemSizes, biasTypeArgs, activationArgs, problemType
             param('activation-enum-args', setting.activationEnum.toEnum())
         param('activation-type', problemType.activationType.toEnum())
         param('activation-hpa', problemType.activationHPA)
-        param('activation-guard', problemType.activationGuard)
+        param('activation-no-guard', problemType.activationNoGuard)
         if globalParameters["DataInitValueActivationArgs"]:
           param('activation-additional-args', ','.join(map(str, globalParameters["DataInitValueActivationArgs"])))
 

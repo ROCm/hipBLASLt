@@ -222,7 +222,7 @@ class KernelWriterActivationOnly(KernelWriterBase):
     elif self.state["ProblemType"]["ActivationType"] != 'none':
       name += "_%s"%str(self.state["ProblemType"]["ActivationType"]).upper()
     name += ("h" if self.state["ProblemType"]["ActivationHPA"] else "")
-    name += ("g" if self.state["ProblemType"]["ActivationGuard"] else "")
+    name += ("ng" if self.state["ProblemType"]["ActivationNoGuard"] else "")
 
     return name
 

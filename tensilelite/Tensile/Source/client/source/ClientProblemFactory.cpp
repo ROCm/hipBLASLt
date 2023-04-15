@@ -45,7 +45,7 @@ namespace Tensile
             , m_biasTypeArgs(std::vector<DataType>(1, DataType::Float))
             , m_activationType(ActivationType::None)
             , m_activationHPA(false)
-            , m_activationGuard(false)
+            , m_activationNoGuard(false)
             , m_activationEnumArg(std::vector<ActivationType>(1, ActivationType::None))
         {
             std::vector<bool> isComplex;
@@ -147,8 +147,8 @@ namespace Tensile
                 m_activationType = args["activation-type"].as<ActivationType>();
             if(args.count("activation-hpa"))
                 m_activationHPA = args["activation-hpa"].as<bool>();
-            if(args.count("activation-guard"))
-                m_activationGuard = args["activation-guard"].as<bool>();
+            if(args.count("activation-no-guard"))
+                m_activationNoGuard = args["activation-no-guard"].as<bool>();
             if(args.count("activation-enum-args"))
                 m_activationEnumArg
                     = args["activation-enum-args"].as<std::vector<ActivationType>>();
@@ -287,7 +287,7 @@ namespace Tensile
                             rv.back().setActivationType(m_activationType);
                         }
                         rv.back().setActivationHPA(m_activationHPA);
-                        rv.back().setActivationGuard(m_activationGuard);
+                        rv.back().setActivationNoGuard(m_activationNoGuard);
                         rv.back().setUseScaleD(m_useScaleD);
                         rv.back().setScaleD(m_constantTypes[ContractionProblemGemm::CONST::ALPHA],
                                             rv.back().d().sizes()[0]);

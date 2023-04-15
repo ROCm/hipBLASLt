@@ -40,7 +40,7 @@ class KernelWriterActivationFunction(KernelWriterBase):
     if self.state["ProblemType"]["Gradient"]:
       self.actGradientPrefix = "Gradient"
       self.actExportType = ActivationType.Export.GRADONLY
-    self.gaurdStr = "G" if self.state["ProblemType"]["ActivationGuard"] else ""
+    self.gaurdStr = "NG" if self.state["ProblemType"]["ActivationNoGuard"] else ""
 
     self.enumName = "Tensile::%sActivationType_%s"%(self.actGradientPrefix, \
                                                     self.state["ProblemType"]["ActivationComputeDataType"])
@@ -133,7 +133,7 @@ class KernelWriterActivationFunction(KernelWriterBase):
 
     activationCDataType = self.state["ProblemType"]["ActivationComputeDataType"]
     self._tf.setKernelInfo(tuple(self.state["Kernel"]["ISA"]), self.state["Kernel"]["WavefrontSize"])
-    activation = ActivationInline(activationCDataType, self.state["ProblemType"]["ActivationGuard"])
+    activation = ActivationInline(activationCDataType, not self.state["ProblemType"]["ActivationNoGuard"])
 
     fileString = "" # CHeader
     if not globalParameters["MergeFiles"]:
