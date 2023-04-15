@@ -1123,7 +1123,7 @@ defaultProblemType = {
     # Activation
     "Activation":               False,
     "ActivationHPA":            False,
-    "ActivationGuard":          True
+    "ActivationNoGuard":        False
     }
 
 defaultProblemSizes = [{"Range": [ [2880], 0, 0 ]}]

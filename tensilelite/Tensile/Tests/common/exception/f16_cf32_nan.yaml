@@ -32,7 +32,6 @@ BenchmarkProblems:
       UseBias:       True
       Activation:    True
       ActivationHPA: True
-      ActivationGuard: True
       UseScaleD:     False
     - # BenchmarkProblemSizeGroup - Standard
       InitialSolutionParameters:
