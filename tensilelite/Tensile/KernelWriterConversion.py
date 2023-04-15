@@ -40,7 +40,7 @@ class KernelWriterConversion(KernelWriterBase):
     self.actGradientPrefix = ""
     if self.state["ProblemType"]["Gradient"]:
       self.actGradientPrefix = "Gradient"
-    self.gaurdStr = "G" if self.state["ProblemType"]["ActivationGuard"] else ""
+    self.gaurdStr = "NG" if self.state["ProblemType"]["ActivationNoGuard"] else ""
 
     # derive parameter
     self.language = "HIP"
@@ -387,7 +387,7 @@ class KernelWriterConversion(KernelWriterBase):
       else:
         name += "_%s"%str(self.state["ProblemType"]["ActivationType"]).upper()
       name += ("h" if self.state["ProblemType"]["ActivationHPA"] else "")
-      name += ("g" if self.state["ProblemType"]["ActivationGuard"] else "")
+      name += ("ng" if self.state["ProblemType"]["ActivationNoGuard"] else "")
     name += "_ScaleD" if self.state["ProblemType"]["UseScaleD"] else ""
     name += "_PostGSU"
     return name

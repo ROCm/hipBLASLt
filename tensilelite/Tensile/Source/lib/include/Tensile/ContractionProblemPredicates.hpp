@@ -1590,8 +1590,8 @@ namespace Tensile
                 }
             };
 
-            struct ActivationGuardEqual
-                : public Predicate_CRTP<ActivationGuardEqual, ContractionProblemGemm>
+            struct ActivationNoGuardEqual
+                : public Predicate_CRTP<ActivationNoGuardEqual, ContractionProblemGemm>
             {
                 enum
                 {
@@ -1600,20 +1600,20 @@ namespace Tensile
                 };
                 bool value;
 
-                ActivationGuardEqual() = default;
-                ActivationGuardEqual(bool value)
+                ActivationNoGuardEqual() = default;
+                ActivationNoGuardEqual(bool value)
                     : value(value)
                 {
                 }
 
                 static std::string Type()
                 {
-                    return "ActivationGuard";
+                    return "ActivationNoGuard";
                 }
 
                 virtual bool operator()(ContractionProblemGemm const& problem) const override
                 {
-                    return problem.activationGuard() == value;
+                    return problem.activationNoGuard() == value;
                 }
             };
 

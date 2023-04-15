@@ -86,7 +86,7 @@ namespace Tensile
             ActivationType              m_activationType;
             std::vector<DataType>       m_biasTypeArgs;
             bool                        m_activationHPA;
-            bool                        m_activationGuard;
+            bool                        m_activationNoGuard;
             std::vector<ActivationType> m_activationEnumArg;
             size_t                      m_maxWorkspaceSize = 0;
 

@@ -227,17 +227,15 @@ class ProblemType(Mapping):
           self["UseBias"] = False
       self["Gradient"] = config["Gradient"]
 
-    if "ActivationGuard" in config:
-      self["ActivationGuard"] = config["ActivationGuard"]
-      if self["ActivationGuard"]:
+    if "ActivationNoGuard" in config:
+      self["ActivationNoGuard"] = config["ActivationNoGuard"]
+      if self["ActivationNoGuard"]:
         if self["ActivationType"] == 'none':
-          if globalParameters["PrintLevel"] == 2:
-            printWarning("ActivationGuard is set to False cause Acivation is off.")
-          self["ActivationGuard"] = False
+          printWarning("ActivationNoGuard is set to False cause Acivation is off.")
+          self["ActivationNoGuard"] = False
         if (not self["Gradient"]):
-          if globalParameters["PrintLevel"] == 2:
-            printWarning("ActivationGuard is set to False cause Gradient is off.")
-          self["ActivationGuard"] = False
+          printWarning("ActivationNoGuard is set to False cause Gradient is off.")
+          self["ActivationNoGuard"] = False
 
   ################################################################################
    # Function checkIfSupportedGEMMType:
@@ -453,7 +451,7 @@ class ProblemType(Mapping):
       else:
         name += "_%s"%str(self["ActivationType"]).upper()
     if self["ActivationHPA"]: name += "H"
-    if self["ActivationGuard"]: name += "G"
+    if self["ActivationNoGuard"]: name += "NG"
 
     if self["UseScaleD"]: name += "_SD"
 

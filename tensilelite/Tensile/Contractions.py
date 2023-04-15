@@ -67,7 +67,7 @@ class ProblemType:
     StateKeys = ['operationIdentifier', 'aType', 'bType', 'cType', 'dType', 'eType',
                  'useBeta', 'useBias', 'useE', 'useScaleD', 'biasDataTypeWhiteList', 'highPrecisionAccumulate',
                  'useInitialStridesAB', 'useInitialStridesCD', 'stridedBatched', 'groupedGemm',
-                 'useGradient', 'activationType', 'activationHPA', 'activationGuard']
+                 'useGradient', 'activationType', 'activationHPA', 'activationNoGuard']
     @classmethod
     def FromOriginalState(cls, d):
         indices = [None]*d['TotalIndices']
@@ -198,9 +198,9 @@ class ProblemType:
         rv.activationHPA = False
         if 'ActivationHPA' in d:
             rv.activationHPA = d['ActivationHPA']
-        rv.activationGuard = False
-        if 'ActivationGuard' in d:
-            rv.activationGuard = d["ActivationGuard"]
+        rv.activationNoGuard = False
+        if 'ActivationNoGuard' in d:
+            rv.activationNoGuard = d["ActivationNoGuard"]
         if 'ActivationComputeDataType' in d:
             rv.activationComputeDataType = DataType(d['ActivationComputeDataType'])
         else:
@@ -309,7 +309,7 @@ class ProblemType:
             predicates.append(ProblemPredicate("TypesEqual", value=(self.aType, self.bType, self.cType, self.dType)))
             predicates.append(ProblemPredicate("HighPrecisionAccumulate", value=self.highPrecisionAccumulate))
             predicates.append(ProblemPredicate("ActivationHPA", value=self.activationHPA))
-            predicates.append(ProblemPredicate("ActivationGuard", value=self.activationGuard))
+            predicates.append(ProblemPredicate("ActivationNoGuard", value=self.activationNoGuard))
             predicates.append(ProblemPredicate("UseGradient", value=self.useGradient))
             predicates.append(ProblemPredicate("UseBias", value=self.useBias))
             predicates.append(ProblemPredicate("StridedBatched", value=self.stridedBatched))
