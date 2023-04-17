@@ -1158,7 +1158,9 @@ namespace Tensile
                 void* ptr  = nullptr;
                 auto& desc = problem.tensors()[i];
                 auto& p    = m_vdata[i].pristine[desc.dataType()];
-                ptr        = copyInputBuffers(desc,
+                if(p.gpuInput.valid.get() == nullptr || p.cpuInput.valid.get() == nullptr)
+                    continue;
+                ptr = copyInputBuffers(desc,
                                        p.gpuInput.valid.get(),
                                        p.cpuInput.valid.get(),
                                        p.maxElements,
