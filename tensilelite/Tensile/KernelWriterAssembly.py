@@ -3289,7 +3289,7 @@ class KernelWriterAssembly(KernelWriter):
       # Update vbegin and vsize
       vbegin = self.states.bias.startVgprValu
       vsize = self.states.lastVgprForReads - vbegin
-      module.add(SBarrier(comment="Wait for all wavefronts"))
+
       tP = tPA if kernel["ProblemType"]["BiasSrc"] == "A" else tPB
       module.add(self.exclasses.biasSumUnroll.storeSumLDS(self, kernel, tP))
 
@@ -7361,12 +7361,17 @@ class KernelWriterAssembly(KernelWriter):
                               shiftHex=hex(log2(self.states.bpeCinternal)), \
                               src=vgpr("Serial"), \
                               comment="Local bias address scaled by BPE"))
+
     offset  = (divisor * gwvw) * self.states.bpeCinternal
     tmpVgprN = tmpVgpr1
     for i in reversed(range(turn)):
       if i != (turn - 1):
         module.add(VAddU32(dst=vgpr(offsetVgpr), src0=offset, src1=vgpr(offsetVgpr), comment="add subgroup offset"))
       module.add(SWaitCnt(vmcnt=i, comment="wait for bias load"))
+      if i == 0:
+        # Add barrier here to avoid race condition if lds offset starts from 0
+        if kernel["LdsOffsetBias"] == 0:
+          module.add(SBarrier(comment="Wait for all wavefronts"))
       bps = kernel["ProblemType"]["ComputeDataType"].numBytes() * gwvw
       ds  = DSModifiers(offset=0)
       dst = vgpr(offsetVgpr)

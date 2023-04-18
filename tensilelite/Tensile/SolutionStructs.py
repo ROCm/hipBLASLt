@@ -2887,6 +2887,29 @@ class Solution(collections.abc.Mapping):
 
       ldsNumElements = max(ldsNumElements, ldsNumElementsRemapC)
 
+    if state["ProblemType"]["UseBias"]:
+      # Currently all offsets starts from 0
+      state["LdsOffsetBias"] = 0 # TODO: ldsBiasOffset = ldsNumElementsAB
+      ldsBiasMaxElements = 0
+      if state["ProblemType"]["Gradient"]:
+        if state["ProblemType"]["BiasSrc"] == "A":
+          tile01 = state["ProblemType"]["Index01A"]
+        elif state["ProblemType"]["BiasSrc"] == "B":
+          tile01 = state["ProblemType"]["Index01B"]
+        elif state["ProblemType"]["BiasSrc"] == "D":
+          tile01 = -1
+        else:
+          assert 0 and "Unsupported tile01 for bias lds calculation."
+        # Don't need to calculate lds bias
+        if tile01 > -1:
+          maxKId = state["WavefrontSize"] // ((state["MatrixInstM"] if (tile01 == 0) else state["MatrixInstN"]) * state["MatrixInstB"])
+          for dataType in state["ProblemType"]["BiasDataTypeList"]:
+            ldsBiasMaxElements = max(ldsBiasMaxElements, state["MacroTile%d"%tile01] * maxKId * dataType.numBytes())
+      else:
+        for dataType in state["ProblemType"]["BiasDataTypeList"]:
+          ldsBiasMaxElements = max(ldsBiasMaxElements, state["MacroTile0"] * dataType.numBytes())
+      ldsNumElements = max(ldsNumElements, state["LdsOffsetBias"] + ldsBiasMaxElements)
+
     state["LdsNumElements"] = ldsNumElements
     ldsSize = ldsNumElements * state["ProblemType"]["DataType"].numBytes()
     if ldsSize > globalParameters["MaxLDS"]:
