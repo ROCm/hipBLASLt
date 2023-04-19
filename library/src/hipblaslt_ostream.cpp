@@ -1,5 +1,5 @@
 /* ************************************************************************
- * Copyright (C) 2022 Advanced Micro Devices, Inc.
+ * Copyright (C) 2022-2023 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -83,6 +83,7 @@ extern "C" void hipblaslt_abort()
 {
     // If multiple threads call hipblaslt_abort(), the first one wins
     static int once = (hipblaslt_abort_once(), 0);
+    std::cout << once << std::endl;
 }
 
 // Get worker for writing to a file descriptor

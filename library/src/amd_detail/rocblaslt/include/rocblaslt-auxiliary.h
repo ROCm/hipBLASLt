@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022 Advanced Micro Devices, Inc.
+ * Copyright (C) 2022-2023 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -331,17 +331,17 @@ rocblaslt_status
                                         rocblaslt_matmul_heuristic_result heuristicResultsArray[],
                                         int*                              returnAlgoCount);
 
-rocblaslt_status
-    rocblaslt_groupedgemm_algo_get_heuristic(rocblaslt_groupedgemm             groupedgemm,
-                                             rocblaslt_matmul_preference       pref,
-                                             int                               requestedAlgoCount,
-                                             rocblaslt_matmul_heuristic_result heuristicResultsArray[],
-                                             int*                              returnAlgoCount);
+rocblaslt_status rocblaslt_groupedgemm_algo_get_heuristic(
+    rocblaslt_groupedgemm             groupedgemm,
+    rocblaslt_matmul_preference       pref,
+    int                               requestedAlgoCount,
+    rocblaslt_matmul_heuristic_result heuristicResultsArray[],
+    int*                              returnAlgoCount);
 
-// for internal use during testing, fetch arch name
-std::string rocblaslt_internal_get_arch_name();
 #ifdef __cplusplus
 }
+// for internal use during testing, fetch arch name
+std::string rocblaslt_internal_get_arch_name();
 #endif
 
 #endif /* _ROCBLASLT_AUXILIARY_H_ */

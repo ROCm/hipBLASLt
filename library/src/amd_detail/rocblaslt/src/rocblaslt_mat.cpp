@@ -129,21 +129,21 @@ rocblaslt_status rocblaslt_matmul_impl(const rocblaslt_handle       handle,
     bool strided_batch = true;
     bool grouped_gemm  = false;
 
-#define EX_PARM                                                                          \
-    handle, opA, opB, m, n, k, alpha, A, type_a, lda, batch_stride_a, B, type_b, ldb, \
-        batch_stride_b, beta, C, type_c, ldc, batch_stride_c, D, type_d, ldd,      \
-        batch_stride_d, num_batches_a, strided_batch, grouped_gemm, compute_type, algo, workspace,           \
+#define EX_PARM                                                                               \
+    handle, opA, opB, m, n, k, alpha, A, type_a, lda, batch_stride_a, B, type_b, ldb,         \
+        batch_stride_b, beta, C, type_c, ldc, batch_stride_c, D, type_d, ldd, batch_stride_d, \
+        num_batches_a, strided_batch, grouped_gemm, compute_type, algo, workspace,            \
         workspaceSizeInBytes, bias, scaleD, bias_type, epilogue, stream
 
     return rocblaslt_matmul_template(EX_PARM);
 }
 
-rocblaslt_status rocblaslt_groupedgemm_create_impl(rocblaslt_groupedgemm                 groupedgemm,
-                                                   std::vector<rocblaslt_matmul_desc>&   matmul_descr,
-                                                   std::vector<const void*>&             A,
-                                                   std::vector<const void*>&             B,
-                                                   std::vector<const void*>&             C,
-                                                   std::vector<void*>&                   D,
+rocblaslt_status rocblaslt_groupedgemm_create_impl(rocblaslt_groupedgemm               groupedgemm,
+                                                   std::vector<rocblaslt_matmul_desc>& matmul_descr,
+                                                   std::vector<const void*>&           A,
+                                                   std::vector<const void*>&           B,
+                                                   std::vector<const void*>&           C,
+                                                   std::vector<void*>&                 D,
                                                    std::vector<rocblaslt_matrix_layout>& matA,
                                                    std::vector<rocblaslt_matrix_layout>& matB,
                                                    std::vector<rocblaslt_matrix_layout>& matC,
@@ -151,29 +151,30 @@ rocblaslt_status rocblaslt_groupedgemm_create_impl(rocblaslt_groupedgemm        
                                                    std::vector<const void*>&             alpha,
                                                    std::vector<const void*>&             beta)
 {
-    hipblasOperation_t opA              = matmul_descr[0]->op_A;
-    hipblasOperation_t opB              = matmul_descr[0]->op_B;
+    hipblasOperation_t     opA          = matmul_descr[0]->op_A;
+    hipblasOperation_t     opB          = matmul_descr[0]->op_B;
     rocblaslt_compute_type compute_type = matmul_descr[0]->compute_type;
-    hipblasDatatype_t type_a            = matA[0]->type;
-    hipblasDatatype_t type_b            = matB[0]->type;
-    hipblasDatatype_t type_c            = matC[0]->type;
-    hipblasDatatype_t type_d            = matD[0]->type;
+    hipblasDatatype_t      type_a       = matA[0]->type;
+    hipblasDatatype_t      type_b       = matB[0]->type;
+    hipblasDatatype_t      type_c       = matC[0]->type;
+    hipblasDatatype_t      type_d       = matD[0]->type;
 
-    std::vector<const void*>            A_vec, B_vec, C_vec, alpha_vec, beta_vec;
-    std::vector<void*>                  D_vec;
-    std::vector<const void*>            bias_vec;
-    std::vector<const void*>            scaleD_vec;
-    std::vector<hipblasDatatype_t>      bias_type_vec;
-    std::vector<rocblaslt_epilogue>     epilogue_vec;
-    std::vector<int64_t> m_vec, n_vec, k_vec;
-    std::vector<int64_t> lda_vec, batch_stride_a_vec, num_batches_a_vec;
-    std::vector<int64_t> ldb_vec, batch_stride_b_vec, num_batches_b_vec;
-    std::vector<int64_t> ldc_vec, batch_stride_c_vec, num_batches_c_vec;
-    std::vector<int64_t> ldd_vec, batch_stride_d_vec, num_batches_d_vec;
+    std::vector<const void*>        A_vec, B_vec, C_vec, alpha_vec, beta_vec;
+    std::vector<void*>              D_vec;
+    std::vector<const void*>        bias_vec;
+    std::vector<const void*>        scaleD_vec;
+    std::vector<hipblasDatatype_t>  bias_type_vec;
+    std::vector<rocblaslt_epilogue> epilogue_vec;
+    std::vector<int64_t>            m_vec, n_vec, k_vec;
+    std::vector<int64_t>            lda_vec, batch_stride_a_vec, num_batches_a_vec;
+    std::vector<int64_t>            ldb_vec, batch_stride_b_vec, num_batches_b_vec;
+    std::vector<int64_t>            ldc_vec, batch_stride_c_vec, num_batches_c_vec;
+    std::vector<int64_t>            ldd_vec, batch_stride_d_vec, num_batches_d_vec;
 
-    for(int i = 0; i < matmul_descr.size(); i++){
-        const void*            bias         = nullptr;
-        hipblasDatatype_t      bias_type
+    for(int i = 0; i < matmul_descr.size(); i++)
+    {
+        const void*       bias = nullptr;
+        hipblasDatatype_t bias_type
             = matmul_descr[i]->bias_type == 0 ? matD[i]->type : matmul_descr[i]->bias_type;
         rocblaslt_epilogue epilogue = matmul_descr[i]->epilogue;
         if(is_bias_enabled(epilogue))
@@ -184,32 +185,32 @@ rocblaslt_status rocblaslt_groupedgemm_create_impl(rocblaslt_groupedgemm        
             scaleD = matmul_descr[i]->scaleD;
 
         // matrix A
-        int64_t           num_rows_a     = matA[i]->m;
-        int64_t           num_cols_a     = matA[i]->n;
-        int64_t           lda            = matA[i]->ld;
-        int64_t           batch_stride_a = matA[i]->batch_stride;
-        int               num_batches_a  = matA[i]->batch_count;
+        int64_t num_rows_a     = matA[i]->m;
+        int64_t num_cols_a     = matA[i]->n;
+        int64_t lda            = matA[i]->ld;
+        int64_t batch_stride_a = matA[i]->batch_stride;
+        int     num_batches_a  = matA[i]->batch_count;
 
         // matrix B
         // int64_t num_rows_b = matB[i]->m;
         // int64_t num_cols_b = matB[i]->n;
-        int64_t           ldb            = matB[i]->ld;
-        int64_t           batch_stride_b = matB[i]->batch_stride;
-        int               num_batches_b  = matB[i]->batch_count;
+        int64_t ldb            = matB[i]->ld;
+        int64_t batch_stride_b = matB[i]->batch_stride;
+        int     num_batches_b  = matB[i]->batch_count;
 
         // matrix C
         // int64_t num_rows_c = matC[i]->m;
         // int64_t num_cols_c = matC[i]->n;
-        int64_t           ldc            = matC[i]->ld;
-        int64_t           batch_stride_c = matC[i]->batch_stride;
-        int               num_batches_c  = matC[i]->batch_count;
+        int64_t ldc            = matC[i]->ld;
+        int64_t batch_stride_c = matC[i]->batch_stride;
+        int     num_batches_c  = matC[i]->batch_count;
 
         // matrix D
-        int64_t           num_rows_d     = matD[i]->m;
-        int64_t           num_cols_d     = matD[i]->n;
-        int64_t           ldd            = matD[i]->ld;
-        int64_t           batch_stride_d = matD[i]->batch_stride;
-        int               num_batches_d  = matD[i]->batch_count;
+        int64_t num_rows_d     = matD[i]->m;
+        int64_t num_cols_d     = matD[i]->n;
+        int64_t ldd            = matD[i]->ld;
+        int64_t batch_stride_d = matD[i]->batch_stride;
+        int     num_batches_d  = matD[i]->batch_count;
 
         int64_t m = num_rows_d;
         int64_t n = num_cols_d;
@@ -235,7 +236,7 @@ rocblaslt_status rocblaslt_groupedgemm_create_impl(rocblaslt_groupedgemm        
         if(validArgs == rocblaslt_status_success)
             continue;
         if(validArgs != rocblaslt_status_continue)
-            return validArgs;;
+            return validArgs;
 
         bias_type_vec.push_back(bias_type);
         epilogue_vec.push_back(epilogue);
@@ -281,11 +282,12 @@ rocblaslt_status rocblaslt_groupedgemm_create_impl(rocblaslt_groupedgemm        
     bool strided_batch = true;
     bool grouped_gemm  = true;
 
-#define EX_PARM_GroupedGemm                                                              \
-        groupedgemm, opA, opB, m_vec, n_vec, k_vec, alpha_vec, A_vec, type_a, lda_vec, batch_stride_a_vec, B_vec, type_b, ldb_vec, \
-        batch_stride_b_vec, beta_vec, C_vec, type_c, ldc_vec, batch_stride_c_vec, D_vec, type_d, ldd_vec,      \
-        batch_stride_d_vec, num_batches_a_vec, strided_batch, grouped_gemm, compute_type,           \
-        bias_vec, scaleD_vec, bias_type_vec, epilogue_vec
+#define EX_PARM_GroupedGemm                                                                      \
+    groupedgemm, opA, opB, m_vec, n_vec, k_vec, alpha_vec, A_vec, type_a, lda_vec,               \
+        batch_stride_a_vec, B_vec, type_b, ldb_vec, batch_stride_b_vec, beta_vec, C_vec, type_c, \
+        ldc_vec, batch_stride_c_vec, D_vec, type_d, ldd_vec, batch_stride_d_vec,                 \
+        num_batches_a_vec, strided_batch, grouped_gemm, compute_type, bias_vec, scaleD_vec,      \
+        bias_type_vec, epilogue_vec
 
     return rocblaslt_groupedgemm_create_template(EX_PARM_GroupedGemm);
 }
@@ -446,7 +448,7 @@ rocblaslt_status rocblaslt_groupedgemm_create(rocblaslt_groupedgemm*            
         // Allocate
         try
         {
-            *groupedgemm = new _rocblaslt_groupedgemm();
+            *groupedgemm           = new _rocblaslt_groupedgemm();
             (*groupedgemm)->handle = handle;
             log_api(__func__, "groupedgemm[out]", *groupedgemm);
         }
@@ -459,7 +461,7 @@ rocblaslt_status rocblaslt_groupedgemm_create(rocblaslt_groupedgemm*            
         {
             // Check if handle is valid
             if(matmul_descr[i] == nullptr || matA[i] == nullptr || matB[i] == nullptr
-            || matC[i] == nullptr || matD[i] == nullptr)
+               || matC[i] == nullptr || matD[i] == nullptr)
             {
                 log_error(__func__, "invalid handle pointer");
                 return rocblaslt_status_invalid_handle;
@@ -481,26 +483,16 @@ rocblaslt_status rocblaslt_groupedgemm_create(rocblaslt_groupedgemm*            
             //     return rocblaslt_status_invalid_pointer;
             // }
 
-            if(matA[i]->type != matB[i]->type || matA[i]->type != matC[i]->type || matA[i]->type != matD[i]->type
-            || matA[0]->type != matA[i]->type)
+            if(matA[i]->type != matB[i]->type || matA[i]->type != matC[i]->type
+               || matA[i]->type != matD[i]->type || matA[0]->type != matA[i]->type)
             {
                 log_error(__func__, "invalid  matrix datatype");
                 return rocblaslt_status_type_mismatch;
             }
         }
 
-        return rocblaslt_groupedgemm_create_impl(*groupedgemm,
-                                                matmul_descr,
-                                                A,
-                                                B,
-                                                C,
-                                                D,
-                                                matA,
-                                                matB,
-                                                matC,
-                                                matD,
-                                                alpha,
-                                                beta);
+        return rocblaslt_groupedgemm_create_impl(
+            *groupedgemm, matmul_descr, A, B, C, D, matA, matB, matC, matD, alpha, beta);
     }
 }
 
@@ -525,8 +517,7 @@ rocblaslt_status rocblaslt_groupedgemm_destroy(const rocblaslt_groupedgemm group
     return rocblaslt_status_success;
 }
 
-rocblaslt_status rocblaslt_groupedgemm_run(rocblaslt_groupedgemm groupedgemm,
-                                           hipStream_t           stream)
+rocblaslt_status rocblaslt_groupedgemm_run(rocblaslt_groupedgemm groupedgemm, hipStream_t stream)
 {
     return rocblaslt_groupedgemm_run_template(groupedgemm, stream);
 }

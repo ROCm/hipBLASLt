@@ -328,8 +328,6 @@ namespace
                               Tensile::ContractionProblemGemm&               tensileProblem)
     {
         // Tensile DataTypes corresponding to rocblaslt data types
-        static constexpr Tensile::DataType Tensile_Ti = tensile_datatype<Ti>;
-        static constexpr Tensile::DataType Tensile_To = tensile_datatype<To>;
         static constexpr Tensile::DataType Tensile_Tc = tensile_datatype<Tc>;
 
         // Should we update tensor only if the size changed? Or should we just
@@ -537,7 +535,7 @@ namespace
         }
 
         // TensileHost is not copyable or assignable
-        TensileHost(const TensileHost&) = delete;
+        TensileHost(const TensileHost&)            = delete;
         TensileHost& operator=(const TensileHost&) = delete;
 
         // Get the number of devices
@@ -644,7 +642,7 @@ namespace
                 do
                 {
                     std::string codeObjectFile = path + "\\" + finddata.cFileName;
-                    adapter.loadCodeObjectFile(codeObjectFile.c_str());
+                    static_cast<void>(adapter.loadCodeObjectFile(codeObjectFile.c_str()));
                 } while(FindNextFileA(hfine, &finddata));
             }
             else
@@ -658,7 +656,7 @@ namespace
             if(!g)
             {
                 for(size_t i = 0; i < glob_result.gl_pathc; ++i)
-                    adapter.loadCodeObjectFile(glob_result.gl_pathv[i]);
+                    static_cast<void>(adapter.loadCodeObjectFile(glob_result.gl_pathv[i]));
             }
             else if(g == GLOB_NOMATCH)
             {
@@ -717,7 +715,7 @@ namespace
                 return 0;
             }();
 
-            if(!m_library)
+            if(!m_library && once != 0)
             {
                 std::cerr << "\nrocblaslt error: Could not initialize Tensile library" << std::endl;
                 // rocblaslt_abort();
@@ -731,7 +729,7 @@ namespace
     };
 
     // Return the library and adapter for the current HIP device
-    auto& get_library_and_adapter(
+    Tensile::hip::SolutionAdapter* get_library_and_adapter(
         std::shared_ptr<Tensile::MasterSolutionLibrary<Tensile::ContractionProblemGemm>>* library
         = nullptr,
         std::shared_ptr<hipDeviceProp_t>* deviceProp = nullptr,
@@ -742,7 +740,7 @@ namespace
         static TensileHost host;
 
         if(device == -1)
-            hipGetDevice(&device);
+            static_cast<void>(hipGetDevice(&device));
 
         // Adapter entry for the current HIP device ID
         auto& a       = host.get_adapters().at(device);
@@ -774,20 +772,20 @@ namespace
         if(deviceProp)
             *deviceProp = host.get_device_property();
 
-        return *adapter;
+        return adapter;
     }
     catch(const std::exception& e)
     {
         std::cerr << "\nrocblaslt error: Could not initialize Tensile host:\n"
                   << e.what() << std::endl;
-        // rocblaslt_abort();
+        return nullptr;
     }
     catch(...)
     {
         std::cerr << "\nrocblaslt error: Could not initialize Tensile host:\nUnknown "
                      "exception thrown"
                   << std::endl;
-        // rocblaslt_abort();
+        return nullptr;
     }
 
 #if 0
@@ -811,7 +809,6 @@ namespace
             std::cerr << msg << std::endl;
     }
 #endif
-
 } // namespace
 
 /******************************************************************************
@@ -830,7 +827,7 @@ rocblaslt_status runContractionProblem(rocblaslt_handle                         
         std::shared_ptr<hipDeviceProp_t>                                                 deviceProp;
         std::shared_ptr<Tensile::Hardware>                                               hardware;
 
-        auto& adapter = get_library_and_adapter(&library, &deviceProp, handle->device);
+        auto adapter = get_library_and_adapter(&library, &deviceProp, handle->device);
 
         hardware = Tensile::hip::GetDevice(*deviceProp);
         std::shared_ptr<Tensile::ContractionProblemGemm> tensile_prob
@@ -850,11 +847,11 @@ rocblaslt_status runContractionProblem(rocblaslt_handle                         
         }
         else
         {
-            adapter.launchKernels(
+            static_cast<void>(adapter->launchKernels(
                 solution->solve((*tensile_prob), GetTensileInputs(prob), *hardware),
                 prob.stream,
                 nullptr,
-                nullptr);
+                nullptr));
             status = rocblaslt_status_success;
         }
     }
@@ -889,12 +886,13 @@ rocblaslt_status groupedGemmCreate(rocblaslt_groupedgemm groupedgemm,
     try
     {
         Tensile::ContractionProblemGroupedGemm tensile_probs;
-        Tensile::ContractionGroupedInputs groupedInputs;
+        Tensile::ContractionGroupedInputs      groupedInputs;
 
-        for(int i = 0; i < probs.size(); i++){
+        for(int i = 0; i < probs.size(); i++)
+        {
             // Check if pointer is valid
-            if(probs[i].alpha == nullptr || probs[i].beta == nullptr || probs[i].A == nullptr || probs[i].B == nullptr
-            || probs[i].C == nullptr || probs[i].D == nullptr)
+            if(probs[i].alpha == nullptr || probs[i].beta == nullptr || probs[i].A == nullptr
+               || probs[i].B == nullptr || probs[i].C == nullptr || probs[i].D == nullptr)
             {
                 log_error(__func__, "invalid data pointer");
                 return rocblaslt_status_invalid_pointer;
@@ -902,7 +900,8 @@ rocblaslt_status groupedGemmCreate(rocblaslt_groupedgemm groupedgemm,
             tensile_probs.gemms.push_back(ConstructTensileProblem(probs[i]));
             groupedInputs.grouped.push_back(GetTensileInputs(probs[i]));
         }
-        auto problemGroupedGemmPtr = std::make_shared<Tensile::ContractionProblemGroupedGemm>(tensile_probs);
+        auto problemGroupedGemmPtr
+            = std::make_shared<Tensile::ContractionProblemGroupedGemm>(tensile_probs);
         groupedgemm->problemGroupedGemmPtr = std::static_pointer_cast<void>(problemGroupedGemmPtr);
 
         auto groupedInputsPtr = std::make_shared<Tensile::ContractionGroupedInputs>(groupedInputs);
@@ -944,10 +943,12 @@ rocblaslt_status groupedGemmMakeArgument(rocblaslt_groupedgemm        groupedgem
             = std::static_pointer_cast<Tensile::ContractionSolution>(algo->data.ptr);
 
         std::shared_ptr<Tensile::ContractionProblemGroupedGemm> tensile_probs
-            = std::static_pointer_cast<Tensile::ContractionProblemGroupedGemm>(groupedgemm->problemGroupedGemmPtr);
+            = std::static_pointer_cast<Tensile::ContractionProblemGroupedGemm>(
+                groupedgemm->problemGroupedGemmPtr);
 
         std::shared_ptr<Tensile::ContractionGroupedInputs> groupedInputs
-            = std::static_pointer_cast<Tensile::ContractionGroupedInputs>(groupedgemm->groupedInputsPtr);
+            = std::static_pointer_cast<Tensile::ContractionGroupedInputs>(
+                groupedgemm->groupedInputsPtr);
 
         for(int i = 0; i < (*groupedInputs).grouped.size(); i++)
         {
@@ -955,7 +956,7 @@ rocblaslt_status groupedGemmMakeArgument(rocblaslt_groupedgemm        groupedgem
         }
 
         // fallback to normal gemm if is normal kernel
-        std::vector<bool> useBias, actHPA, useScaleD;
+        std::vector<bool>                    useBias, actHPA, useScaleD;
         std::vector<Tensile::ActivationType> actType;
         for(int i = 0; i < (*tensile_probs).gemms.size(); i++)
         {
@@ -968,7 +969,8 @@ rocblaslt_status groupedGemmMakeArgument(rocblaslt_groupedgemm        groupedgem
             (*tensile_probs).gemms[i].setActivationHPA(solution->problemType.activationHPA);
             (*tensile_probs).gemms[i].setUseScaleD(solution->problemType.useScaleD);
         }
-        std::vector<Tensile::KernelInvocation> kernels = solution->solveGroupedGemm((*tensile_probs).gemms, *groupedInputs, *hardware, stream);
+        std::vector<Tensile::KernelInvocation> kernels
+            = solution->solveGroupedGemm((*tensile_probs).gemms, *groupedInputs, *hardware, stream);
         for(int i = 0; i < (*tensile_probs).gemms.size(); i++)
         {
             (*tensile_probs).gemms[i].setUseBias(useBias[i]);
@@ -977,8 +979,8 @@ rocblaslt_status groupedGemmMakeArgument(rocblaslt_groupedgemm        groupedgem
             (*tensile_probs).gemms[i].setUseScaleD(useScaleD[i]);
         }
 
-
-        groupedgemm->kernelsPtr = std::static_pointer_cast<void>(std::make_shared<std::vector<Tensile::KernelInvocation>>(kernels));
+        groupedgemm->kernelsPtr = std::static_pointer_cast<void>(
+            std::make_shared<std::vector<Tensile::KernelInvocation>>(kernels));
 
         status = rocblaslt_status_success;
     }
@@ -1002,25 +1004,22 @@ rocblaslt_status groupedGemmMakeArgument(rocblaslt_groupedgemm        groupedgem
     return status;
 }
 
-rocblaslt_status runGroupedGemm(rocblaslt_groupedgemm groupedgemm,
-                                hipStream_t           stream)
+rocblaslt_status runGroupedGemm(rocblaslt_groupedgemm groupedgemm, hipStream_t stream)
 {
     rocblaslt_status status = rocblaslt_status_internal_error;
     try
     {
         std::shared_ptr<Tensile::MasterSolutionLibrary<Tensile::ContractionProblemGemm>> library;
-        std::shared_ptr<hipDeviceProp_t>                                             deviceProp;
-        std::shared_ptr<Tensile::Hardware>                                           hardware;
+        std::shared_ptr<hipDeviceProp_t>                                                 deviceProp;
+        std::shared_ptr<Tensile::Hardware>                                               hardware;
 
-        auto& adapter = get_library_and_adapter(&library, &deviceProp, groupedgemm->handle->device);
+        auto adapter = get_library_and_adapter(&library, &deviceProp, groupedgemm->handle->device);
 
         std::shared_ptr<std::vector<Tensile::KernelInvocation>> kernels
-            = std::static_pointer_cast<std::vector<Tensile::KernelInvocation>>(groupedgemm->kernelsPtr);
+            = std::static_pointer_cast<std::vector<Tensile::KernelInvocation>>(
+                groupedgemm->kernelsPtr);
 
-        adapter.launchKernels(*kernels,
-                              stream,
-                              nullptr,
-                              nullptr);
+        static_cast<void>(adapter->launchKernels(*kernels, stream, nullptr, nullptr));
 
         status = rocblaslt_status_success;
     }
@@ -1068,7 +1067,7 @@ RocblasltContractionProblem<Ti, To, Tc>
     rocblaslt_epilogue epilogue  = matmul_descr->epilogue;
     if(is_bias_enabled(epilogue))
         bias = (const void*)matmul_descr->bias;
-    bool grouped_gemm       = 0;
+    bool grouped_gemm = 0;
 
     const Tc* scaleD = nullptr;
     if(matmul_descr->scaleD)
@@ -1105,22 +1104,22 @@ RocblasltContractionProblem<Ti, To, Tc>
     int8_t      dummy;
     const void* dummy_ptr = &dummy;
     auto        validArgs = validateMatmulArgs(m,
-                                               n,
-                                               k,
-                                               dummy_ptr,
-                                               dummy_ptr,
-                                               dummy_ptr,
-                                               dummy_ptr,
-                                               dummy_ptr,
-                                               dummy_ptr,
-                                               num_batches_a,
-                                               num_batches_b,
-                                               num_batches_c,
-                                               num_batches_d,
-                                               batch_stride_a,
-                                               batch_stride_b,
-                                               batch_stride_c,
-                                               batch_stride_d);
+                                        n,
+                                        k,
+                                        dummy_ptr,
+                                        dummy_ptr,
+                                        dummy_ptr,
+                                        dummy_ptr,
+                                        dummy_ptr,
+                                        dummy_ptr,
+                                        num_batches_a,
+                                        num_batches_b,
+                                        num_batches_c,
+                                        num_batches_d,
+                                        batch_stride_a,
+                                        batch_stride_b,
+                                        batch_stride_c,
+                                        batch_stride_d);
     if(validArgs != rocblaslt_status_continue)
     {
         m = 0;
@@ -1208,7 +1207,7 @@ rocblaslt_status getBestSolutions(RocblasltContractionProblem<Ti, To, Tc> prob,
     std::shared_ptr<Tensile::Hardware>                                               hardware;
 
     // auto &adapter =
-    get_library_and_adapter(&library, &deviceProp, handle->device);
+    static_cast<void>(get_library_and_adapter(&library, &deviceProp, handle->device));
 
     hardware          = Tensile::hip::GetDevice(*deviceProp);
     auto tensile_prob = ConstructTensileProblem(prob);
@@ -1249,36 +1248,40 @@ rocblaslt_status getBestSolutions(RocblasltContractionProblem<Ti, To, Tc> prob,
     return rocblaslt_status_success;
 }
 
-rocblaslt_status getBestSolutionsGroupedGemm(rocblaslt_groupedgemm             groupedgemm,
-                                             rocblaslt_matmul_preference       pref,
-                                             int                               requestedAlgoCount,
-                                             rocblaslt_matmul_heuristic_result heuristicResultsArray[],
-                                             int*                              returnAlgoCount)
+rocblaslt_status
+    getBestSolutionsGroupedGemm(rocblaslt_groupedgemm             groupedgemm,
+                                rocblaslt_matmul_preference       pref,
+                                int                               requestedAlgoCount,
+                                rocblaslt_matmul_heuristic_result heuristicResultsArray[],
+                                int*                              returnAlgoCount)
 {
     std::shared_ptr<Tensile::MasterSolutionLibrary<Tensile::ContractionProblemGemm>> library;
-    std::shared_ptr<hipDeviceProp_t>                                             deviceProp;
-    std::shared_ptr<Tensile::Hardware>                                           hardware;
+    std::shared_ptr<hipDeviceProp_t>                                                 deviceProp;
+    std::shared_ptr<Tensile::Hardware>                                               hardware;
 
     // auto &adapter =
-    get_library_and_adapter(&library, &deviceProp, groupedgemm->handle->device);
+    static_cast<void>(get_library_and_adapter(&library, &deviceProp, groupedgemm->handle->device));
 
-    hardware          = Tensile::hip::GetDevice(*deviceProp);
+    hardware = Tensile::hip::GetDevice(*deviceProp);
 
     std::shared_ptr<Tensile::ContractionProblemGroupedGemm> tensile_probs
-            = std::static_pointer_cast<Tensile::ContractionProblemGroupedGemm>(groupedgemm->problemGroupedGemmPtr);
+        = std::static_pointer_cast<Tensile::ContractionProblemGroupedGemm>(
+            groupedgemm->problemGroupedGemmPtr);
 
     std::shared_ptr<Tensile::ContractionGroupedInputs> groupedInputs
-        = std::static_pointer_cast<Tensile::ContractionGroupedInputs>(groupedgemm->groupedInputsPtr);
+        = std::static_pointer_cast<Tensile::ContractionGroupedInputs>(
+            groupedgemm->groupedInputsPtr);
 
     // Fallback to original kernels
     std::vector<std::shared_ptr<Tensile::ContractionSolution>> solutions_fallback;
-    std::vector<bool> useBias, actHPA, useScaleD;
-    std::vector<Tensile::ActivationType> actType;
-    bool normal_gemm = 1;
+    std::vector<bool>                                          useBias, actHPA, useScaleD;
+    std::vector<Tensile::ActivationType>                       actType;
+    bool                                                       normal_gemm = 1;
     for(int i = 0; i < (*tensile_probs).gemms.size(); i++)
     {
-        if((*groupedInputs).grouped[i].scaleD != nullptr || (*groupedInputs).grouped[i].bias != nullptr
-            || (*tensile_probs).gemms[i].activationEnumArg() != Tensile::ActivationType::None)
+        if((*groupedInputs).grouped[i].scaleD != nullptr
+           || (*groupedInputs).grouped[i].bias != nullptr
+           || (*tensile_probs).gemms[i].activationEnumArg() != Tensile::ActivationType::None)
         {
             normal_gemm = 0;
             break;
@@ -1297,7 +1300,8 @@ rocblaslt_status getBestSolutionsGroupedGemm(rocblaslt_groupedgemm             g
             (*tensile_probs).gemms[i].setActivationHPA(false);
             (*tensile_probs).gemms[i].setUseScaleD(false);
         }
-        solutions_fallback = library->findTopSolutionsGroupedGemm((*tensile_probs).gemms, *hardware, requestedAlgoCount);
+        solutions_fallback = library->findTopSolutionsGroupedGemm(
+            (*tensile_probs).gemms, *hardware, requestedAlgoCount);
         for(int i = 0; i < (*tensile_probs).gemms.size(); i++)
         {
             (*tensile_probs).gemms[i].setUseBias(useBias[i]);
@@ -1307,7 +1311,8 @@ rocblaslt_status getBestSolutionsGroupedGemm(rocblaslt_groupedgemm             g
         }
     }
 
-    auto solutions = library->findTopSolutionsGroupedGemm((*tensile_probs).gemms, *hardware, requestedAlgoCount-solutions_fallback.size());
+    auto solutions = library->findTopSolutionsGroupedGemm(
+        (*tensile_probs).gemms, *hardware, requestedAlgoCount - solutions_fallback.size());
     solutions.insert(solutions.begin(), solutions_fallback.begin(), solutions_fallback.end());
 
     _convertToHeuristicResultArray(solutions,
@@ -1326,7 +1331,7 @@ rocblaslt_status getBestSolutionsGroupedGemm(rocblaslt_groupedgemm             g
  ***************************************************************/
 extern "C" void rocblaslt_createialize()
 {
-    get_library_and_adapter();
+    static_cast<void>(get_library_and_adapter());
 }
 
 /******************************************************************************
@@ -1336,27 +1341,28 @@ extern "C" void rocblaslt_createialize()
  ******************************************************************************/
 
 // types
-#define CREATEFUNCTION(Ti, To, Tc)                                                          \
-    template rocblaslt_status runContractionProblem<Ti, To, Tc>(                            \
-        rocblaslt_handle handle, const rocblaslt_matmul_algo* algo,                         \
-        const RocblasltContractionProblem<Ti, To, Tc>&);                                    \
+#define CREATEFUNCTION(Ti, To, Tc)                                                                 \
+    template rocblaslt_status runContractionProblem<Ti, To, Tc>(                                   \
+        rocblaslt_handle             handle,                                                       \
+        const rocblaslt_matmul_algo* algo,                                                         \
+        const RocblasltContractionProblem<Ti, To, Tc>&);                                           \
     template rocblaslt_status groupedGemmCreate<Ti, To, Tc>(                                       \
         rocblaslt_groupedgemm groupedgemm, std::vector<RocblasltContractionProblem<Ti, To, Tc>>&); \
-    template RocblasltContractionProblem<Ti, To, Tc> ConstructRocblasltProblem<Ti, To, Tc>( \
-        const rocblaslt_matmul_desc matmul_descr,                                           \
-        rocblaslt_matrix_layout     matA,                                                   \
-        rocblaslt_matrix_layout     matB,                                                   \
-        rocblaslt_matrix_layout     matC,                                                   \
-        rocblaslt_matrix_layout     matD,                                                   \
-        const Tc*                   alpha,                                                  \
-        const Tc*                   beta,                                                   \
-        size_t                      maxWorkSpaceBytes);                                     \
-    template rocblaslt_status getBestSolutions<Ti, To, Tc>(                                 \
-        RocblasltContractionProblem<Ti, To, Tc> prob,                                       \
-        rocblaslt_handle                        handle,                                     \
-        int                                     requestedAlgoCount,                         \
-        rocblaslt_matmul_heuristic_result       heuristicResultsArray[],                    \
-        int*                                    returnAlgoCount,                            \
+    template RocblasltContractionProblem<Ti, To, Tc> ConstructRocblasltProblem<Ti, To, Tc>(        \
+        const rocblaslt_matmul_desc matmul_descr,                                                  \
+        rocblaslt_matrix_layout     matA,                                                          \
+        rocblaslt_matrix_layout     matB,                                                          \
+        rocblaslt_matrix_layout     matC,                                                          \
+        rocblaslt_matrix_layout     matD,                                                          \
+        const Tc*                   alpha,                                                         \
+        const Tc*                   beta,                                                          \
+        size_t                      maxWorkSpaceBytes);                                                                 \
+    template rocblaslt_status getBestSolutions<Ti, To, Tc>(                                        \
+        RocblasltContractionProblem<Ti, To, Tc> prob,                                              \
+        rocblaslt_handle                        handle,                                            \
+        int                                     requestedAlgoCount,                                \
+        rocblaslt_matmul_heuristic_result       heuristicResultsArray[],                           \
+        int*                                    returnAlgoCount,                                   \
         size_t                                  maxWorkSpaceBytes);
 
 CREATEFUNCTION(float, float, float)

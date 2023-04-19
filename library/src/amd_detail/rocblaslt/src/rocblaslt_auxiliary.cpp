@@ -231,7 +231,7 @@ rocblaslt_status rocblaslt_matrix_layout_set_attribute(rocblaslt_matrix_layout  
                     "sizeInBytes",
                     sizeInBytes,
                     "bufData",
-                    (void*)(*(int32_t*)buf));
+                    (void*)(intptr_t)(*(int32_t*)buf));
         }
         catch(const rocblaslt_status& status)
         {
@@ -300,7 +300,7 @@ rocblaslt_status rocblaslt_matrix_layout_get_attribute(rocblaslt_matrix_layout  
                     "sizeInBytes",
                     sizeInBytes,
                     "bufData[out]",
-                    (void*)(*(int32_t*)buf));
+                    (void*)(intptr_t)(*(int32_t*)buf));
         }
         catch(const rocblaslt_status& status)
         {
@@ -485,7 +485,7 @@ rocblaslt_status rocblaslt_matmul_desc_set_attribute(rocblaslt_matmul_desc      
                     "sizeInBytes",
                     sizeInBytes,
                     "bufData",
-                    (void*)(*(uint32_t*)buf));
+                    (void*)(uintptr_t)(*(uint32_t*)buf));
         }
         catch(const rocblaslt_status& status)
         {
@@ -591,7 +591,7 @@ rocblaslt_status rocblaslt_matmul_desc_get_attribute(rocblaslt_matmul_desc      
                     "sizeInBytes",
                     sizeInBytes,
                     "bufData[out]",
-                    (void*)(*(uint32_t*)buf));
+                    (void*)(uintptr_t)(*(uint32_t*)buf));
         }
         catch(const rocblaslt_status& status)
         {
@@ -909,12 +909,12 @@ rocblaslt_status
     return rocblaslt_status_success;
 }
 
-rocblaslt_status
-    rocblaslt_groupedgemm_algo_get_heuristic(rocblaslt_groupedgemm             groupedgemm,
-                                             rocblaslt_matmul_preference       pref,
-                                             int                               requestedAlgoCount,
-                                             rocblaslt_matmul_heuristic_result heuristicResultsArray[],
-                                             int*                              returnAlgoCount)
+rocblaslt_status rocblaslt_groupedgemm_algo_get_heuristic(
+    rocblaslt_groupedgemm             groupedgemm,
+    rocblaslt_matmul_preference       pref,
+    int                               requestedAlgoCount,
+    rocblaslt_matmul_heuristic_result heuristicResultsArray[],
+    int*                              returnAlgoCount)
 {
     if(requestedAlgoCount < 1)
     {
@@ -924,11 +924,8 @@ rocblaslt_status
     rocblaslt_status status = rocblaslt_status_success;
     try
     {
-        status = getBestSolutionsGroupedGemm(groupedgemm,
-                                             pref,
-                                             requestedAlgoCount,
-                                             heuristicResultsArray,
-                                             returnAlgoCount);
+        status = getBestSolutionsGroupedGemm(
+            groupedgemm, pref, requestedAlgoCount, heuristicResultsArray, returnAlgoCount);
 
         log_api(__func__, "returnAlogCount", *returnAlgoCount);
         if(status != rocblaslt_status_success)
@@ -982,8 +979,8 @@ struct ArchName<PROP, void_t<decltype(PROP::gcnArchName)>>
 std::string rocblaslt_internal_get_arch_name()
 {
     int deviceId;
-    hipGetDevice(&deviceId);
+    static_cast<void>(hipGetDevice(&deviceId));
     hipDeviceProp_t deviceProperties;
-    hipGetDeviceProperties(&deviceProperties, deviceId);
+    static_cast<void>(hipGetDeviceProperties(&deviceProperties, deviceId));
     return ArchName<hipDeviceProp_t>{}(deviceProperties);
 }
