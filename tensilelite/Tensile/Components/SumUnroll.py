@@ -25,7 +25,7 @@
 from ..Component import SumUnroll
 from ..Common import printExit
 from ..TensileInstructions import Module, VDot2F32F16, SMovB32, VAddU32, VCmpXEqU32, \
-    VLShiftLeftB32, VMovB32, VAddF32, SBarrier, \
+    VLShiftLeftB32, VMovB32, VAddF32, \
     staticMultiply, vectorStaticDivide, vectorStaticRemainder, \
     DSModifiers, SSetMask, DSStoreB16, DSStoreB32, DSStoreB64, \
     RegSet, EXEC, vgpr, sgpr, RegisterPoolResource, log2
@@ -230,11 +230,6 @@ class SumUnrollMfma(SumUnroll):
         writer.vgprPool.checkIn(ldsVgpr)
         writer.vgprPool.checkIn(ldsVgpr1)
         writer.vgprPool.checkIn(dummy)
-
-        # Add barrier here to avoid race condition if lds offset starts from 0
-        if kernel["LdsOffsetBias"] == 0:
-          imod.add(SBarrier(comment="Wait for all wavefronts"))
-
         MIWaveGroupShape = [ kernel["MatrixInstM"] * kernel["MatrixInstBM"] * kernel["MIWaveGroup"][0] * vectorWidth, \
                             kernel["MatrixInstN"] * kernel["MatrixInstBN"] * kernel["MIWaveGroup"][1] * 1]
         numReadPerTileVector = vectorWidth if (tile01 == 0) else 1

@@ -225,8 +225,8 @@ class StateValues:
   lraTileProperties: Dict[int, LraTileProperties] = field(init=False)
 
   # Epilogue states
-  useBias            = DataDirection.NONE
-  needBiasType       = False
+  useBias      = DataDirection.NONE
+  needBiasType = False
 
   def __post_init__(self):
     """ How many SGPRs does it take to have one bit per lane? """
