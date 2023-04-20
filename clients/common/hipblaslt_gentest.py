@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 # ########################################################################
-# Copyright (C) 2022 Advanced Micro Devices, Inc.
+# Copyright (C) 2022-2023 Advanced Micro Devices, Inc.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -234,6 +234,7 @@ def setdefaults(test):
         test.setdefault('ldb', 0)
         test.setdefault('ldc', 0)
         test.setdefault('ldd', 0)
+        test.setdefault('lde', 0)
     else: #catered to gemm default behaviour
         test.setdefault('lda', (test['M'] if test['M'] != 0 else 1) if test['transA'].upper() == 'N'
                         else test['K'] if test['K'] != 0 else 1)
@@ -241,6 +242,7 @@ def setdefaults(test):
                         else test['N'] if test['N'] != 0 else 1)
         test.setdefault('ldc', test['M'] if test['M'] != 0 else 1)
         test.setdefault('ldd', test['M'] if test['M'] != 0 else 1)
+        test.setdefault('lde', test['M'] if test['M'] != 0 else 1)
         if test['batch_count'] > 0:
             test.setdefault('stride_a', test['lda'] *
                             (test['K'] if test['transA'].upper() == 'N' else
@@ -250,12 +252,14 @@ def setdefaults(test):
                              test['K']))
             test.setdefault('stride_c', test['ldc'] * test['N'])
             test.setdefault('stride_d', test['ldd'] * test['N'])
+            test.setdefault('stride_e', test['lde'] * test['N'])
             return
 
     test.setdefault('stride_a', 0)
     test.setdefault('stride_b', 0)
     test.setdefault('stride_c', 0)
     test.setdefault('stride_d', 0)
+    test.setdefault('stride_e', 0)
 
 
 def write_signature(out):

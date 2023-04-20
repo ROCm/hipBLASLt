@@ -145,6 +145,10 @@ struct _rocblaslt_matmul_desc
     void*             bias      = nullptr;
     void*             scaleD    = nullptr;
     hipblasDatatype_t bias_type = static_cast<hipblasDatatype_t>(0);
+    // E
+    void*   e        = nullptr;
+    int64_t lde      = 0;
+    int64_t stride_e = 0;
     //
     rocblaslt_compute_type compute_type;
     hipblasDatatype_t      scale_type;
@@ -186,8 +190,8 @@ struct _rocblaslt_groupedgemm
     std::shared_ptr<void> problemGroupedGemmPtr;
     std::shared_ptr<void> groupedInputsPtr;
     std::shared_ptr<void> kernelsPtr;
-    size_t gemm_count = 0;
-    _rocblaslt_handle* handle;
+    size_t                gemm_count = 0;
+    _rocblaslt_handle*    handle;
 };
 
 #endif // HANDLE_H

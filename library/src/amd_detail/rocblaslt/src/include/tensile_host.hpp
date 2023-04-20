@@ -90,9 +90,16 @@ struct RocblasltContractionProblem
     size_t     col_stride_d;
     size_t     batch_stride_d;
 
+    Tc*        E;
+    Tc* const* batch_E;
+    size_t     row_stride_e;
+    size_t     col_stride_e;
+    size_t     batch_stride_e;
+
     size_t batch_count;
     bool   strided_batch;
     bool   grouped_gemm;
+    bool   gradient;
 
     const void*        bias;
     const Tc*          scaleD;
@@ -128,9 +135,14 @@ struct RocblasltContractionProblem
                                 To* const*         batch_D,
                                 int64_t            ld_d,
                                 int64_t            batch_stride_d,
+                                Tc*                E,
+                                Tc* const*         batch_E,
+                                int64_t            ld_e,
+                                int64_t            batch_stride_e,
                                 int64_t            batch_count,
                                 bool               strided_batch,
                                 bool               grouped_gemm,
+                                bool               gradient,
                                 const void*        bias,
                                 const Tc*          scaleD,
                                 hipblasDatatype_t  bias_type,
@@ -164,10 +176,15 @@ struct RocblasltContractionProblem
         , batch_D(batch_D)
         , row_stride_d(1)
         , col_stride_d(ld_d)
-        , batch_stride_d(batch_stride_d)
+        , E(E)
+        , batch_E(batch_E)
+        , row_stride_e(1)
+        , col_stride_e(ld_e)
+        , batch_stride_e(batch_stride_e)
         , batch_count(batch_count)
         , strided_batch(strided_batch)
         , grouped_gemm(grouped_gemm)
+        , gradient(gradient)
         , bias(bias)
         , scaleD(scaleD)
         , bias_type(bias_type)
@@ -188,7 +205,7 @@ rocblaslt_status runContractionProblem(rocblaslt_handle                         
                                        RocblasltContractionProblem<Ti, To, Tc> const& problem);
 
 template <typename Ti, typename To, typename Tc>
-rocblaslt_status groupedGemmCreate(rocblaslt_groupedgemm                                 groupedgemm,
+rocblaslt_status groupedGemmCreate(rocblaslt_groupedgemm groupedgemm,
                                    std::vector<RocblasltContractionProblem<Ti, To, Tc>>& probs);
 
 rocblaslt_status groupedGemmMakeArgument(rocblaslt_groupedgemm        groupedgemm,
@@ -196,8 +213,7 @@ rocblaslt_status groupedGemmMakeArgument(rocblaslt_groupedgemm        groupedgem
                                          void*                        workspace,
                                          hipStream_t                  stream);
 
-rocblaslt_status runGroupedGemm(rocblaslt_groupedgemm groupedgemm,
-                                hipStream_t           stream);
+rocblaslt_status runGroupedGemm(rocblaslt_groupedgemm groupedgemm, hipStream_t stream);
 
 /***********************************************************************************
  * Whether Tensile has been initialized for at least one device (used for
@@ -241,8 +257,9 @@ rocblaslt_status getBestSolutions(RocblasltContractionProblem<Ti, To, Tc> prob,
                                   int*                                    returnAlgoCount,
                                   size_t                                  maxWorkSpaceBytes);
 
-rocblaslt_status getBestSolutionsGroupedGemm(rocblaslt_groupedgemm             groupedgemm,
-                                             rocblaslt_matmul_preference       pref,
-                                             int                               requestedAlgoCount,
-                                             rocblaslt_matmul_heuristic_result heuristicResultsArray[],
-                                             int*                              returnAlgoCount);
+rocblaslt_status
+    getBestSolutionsGroupedGemm(rocblaslt_groupedgemm             groupedgemm,
+                                rocblaslt_matmul_preference       pref,
+                                int                               requestedAlgoCount,
+                                rocblaslt_matmul_heuristic_result heuristicResultsArray[],
+                                int*                              returnAlgoCount);

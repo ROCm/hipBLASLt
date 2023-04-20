@@ -145,12 +145,14 @@ typedef struct rocblaslt_half
  */
 typedef enum rocblaslt_epilogue_
 {
-    ROCBLASLT_EPILOGUE_DEFAULT   = 1,
-    ROCBLASLT_EPILOGUE_RELU      = 2,
-    ROCBLASLT_EPILOGUE_BIAS      = 4,
-    ROCBLASLT_EPILOGUE_RELU_BIAS = 6,
-    ROCBLASLT_EPILOGUE_GELU      = 32,
-    ROCBLASLT_EPILOGUE_GELU_BIAS = 36
+    ROCBLASLT_EPILOGUE_DEFAULT       = 1,
+    ROCBLASLT_EPILOGUE_RELU          = 2,
+    ROCBLASLT_EPILOGUE_BIAS          = 4,
+    ROCBLASLT_EPILOGUE_RELU_BIAS     = 6,
+    ROCBLASLT_EPILOGUE_GELU          = 32,
+    ROCBLASLT_EPILOGUE_GELU_BIAS     = 36,
+    ROCBLASLT_EPILOGUE_GELU_AUX      = 160,
+    ROCBLASLT_EPILOGUE_GELU_AUX_BIAS = 164
 } rocblaslt_epilogue;
 
 /*! \ingroup types_module
@@ -265,13 +267,16 @@ typedef enum rocblaslt_matrix_layout_attribute_
  */
 typedef enum rocblaslt_matmul_desc_attributes_
 {
-    ROCBLASLT_MATMUL_DESC_TRANSA          = 0,
-    ROCBLASLT_MATMUL_DESC_TRANSB          = 1,
-    ROCBLASLT_MATMUL_DESC_EPILOGUE        = 2,
-    ROCBLASLT_MATMUL_DESC_BIAS_POINTER    = 3,
-    ROCBLASLT_MATMUL_DESC_BIAS_DATA_TYPE  = 4,
-    ROCBLASLT_MATMUL_DESC_D_SCALE_POINTER = 5,
-    ROCBLASLT_MATMUL_DESC_MAX             = 6
+    ROCBLASLT_MATMUL_DESC_TRANSA                    = 0,
+    ROCBLASLT_MATMUL_DESC_TRANSB                    = 1,
+    ROCBLASLT_MATMUL_DESC_EPILOGUE                  = 2,
+    ROCBLASLT_MATMUL_DESC_BIAS_POINTER              = 3,
+    ROCBLASLT_MATMUL_DESC_BIAS_DATA_TYPE            = 4,
+    ROCBLASLT_MATMUL_DESC_D_SCALE_POINTER           = 5,
+    ROCBLASLT_MATMUL_DESC_EPILOGUE_AUX_POINTER      = 6,
+    ROCBLASLT_MATMUL_DESC_EPILOGUE_AUX_LD           = 7,
+    ROCBLASLT_MATMUL_DESC_EPILOGUE_AUX_BATCH_STRIDE = 8,
+    ROCBLASLT_MATMUL_DESC_MAX                       = 9
 } rocblaslt_matmul_desc_attributes;
 
 /*! \ingroup types_module

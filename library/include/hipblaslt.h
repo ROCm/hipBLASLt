@@ -48,8 +48,8 @@
 #include "hipblaslt/hipblaslt-version.h"
 #include <hipblas/hipblas.h>
 
-#include <vector>
 #include <memory>
+#include <vector>
 
 #include <hip/hip_bfloat16.h>
 #include <hip/hip_complex.h>
@@ -67,12 +67,14 @@
  *  \brief Specify the enum type to set the postprocessing options for the epilogue.
  */
 typedef enum {
-  HIPBLASLT_EPILOGUE_DEFAULT = 1,    /**<No special postprocessing, just scale and quantize the results if necessary.*/
-  HIPBLASLT_EPILOGUE_RELU = 2,       /**<Apply ReLU point-wise transform to the results:(x:=max(x, 0))*/
-  HIPBLASLT_EPILOGUE_BIAS = 4,       /**<Apply (broadcast) bias from the bias vector. Bias vector length must match matrix D rows, and it must be packed (such as stride between vector elements is 1). Bias vector is broadcast to all columns and added before applying the final postprocessing.*/
-  HIPBLASLT_EPILOGUE_RELU_BIAS = 6,  /**<Apply bias and then ReLU transform.*/
-  HIPBLASLT_EPILOGUE_GELU = 32,      /**<Apply GELU point-wise transform to the results (x:=GELU(x)).*/
-  HIPBLASLT_EPILOGUE_GELU_BIAS = 36  /**<Apply Bias and then GELU transform.*/
+  HIPBLASLT_EPILOGUE_DEFAULT = 1,        /**<No special postprocessing, just scale and quantize the results if necessary.*/
+  HIPBLASLT_EPILOGUE_RELU = 2,           /**<Apply ReLU point-wise transform to the results:(x:=max(x, 0))*/
+  HIPBLASLT_EPILOGUE_BIAS = 4,           /**<Apply (broadcast) bias from the bias vector. Bias vector length must match matrix D rows, and it must be packed (such as stride between vector elements is 1). Bias vector is broadcast to all columns and added before applying the final postprocessing.*/
+  HIPBLASLT_EPILOGUE_RELU_BIAS = 6,      /**<Apply bias and then ReLU transform.*/
+  HIPBLASLT_EPILOGUE_GELU = 32,          /**<Apply GELU point-wise transform to the results (x:=GELU(x)).*/
+  HIPBLASLT_EPILOGUE_GELU_BIAS = 36,     /**<Apply Bias and then GELU transform.*/
+  HIPBLASLT_EPILOGUE_GELU_AUX = 160,     /**<Output GEMM results before applying GELU transform.*/
+  HIPBLASLT_EPILOGUE_GELU_AUX_BIAS = 164 /**<Output GEMM results after applying bias but before applying GELU transform.*/
 } hipblasLtEpilogue_t;
 
 /*! \ingroup types_module
@@ -94,13 +96,16 @@ typedef enum {
  *  \brief Specify the attributes that define the specifics of the matrix multiply operation.
  */
 typedef enum {
-  HIPBLASLT_MATMUL_DESC_TRANSA = 0,               /**<Specifies the type of transformation operation that should be performed on matrix A. Default value is HIPBLAS_OP_N (for example, non-transpose operation). See hipblasOperation_t. Data Type:int32_t*/
-  HIPBLASLT_MATMUL_DESC_TRANSB = 1,               /**<Specifies the type of transformation operation that should be performed on matrix B. Default value is HIPBLAS_OP_N (for example, non-transpose operation). See hipblasOperation_t. Data Type:int32_t*/
-  HIPBLASLT_MATMUL_DESC_EPILOGUE = 2,             /**<Epilogue function. See hipblasLtEpilogue_t. Default value is: HIPBLASLT_EPILOGUE_DEFAULT. Data Type: uint32_t*/
-  HIPBLASLT_MATMUL_DESC_BIAS_POINTER = 3,         /**<Bias or Bias gradient vector pointer in the device memory. Data Type:void* /const void* */
-  HIPBLASLT_MATMUL_DESC_BIAS_DATA_TYPE = 4,       /**<Type of the bias vector in the device memory. Can be set same as D matrix type or Scale type. Bias case: see HIPBLASLT_EPILOGUE_BIAS. Data Type:int32_t based on hipblasDatatype_t*/
-  HIPBLASLT_MATMUL_DESC_D_SCALE_POINTER = 5,      /**<D scale vector length must match matrix D rows. It must match Scale data type. D scale vector is broadcast to all columns and multipied after final postprocssion. Data Type: void* /const void* */
-  HIPBLASLT_MATMUL_DESC_MAX = 6
+  HIPBLASLT_MATMUL_DESC_TRANSA = 0,                     /**<Specifies the type of transformation operation that should be performed on matrix A. Default value is HIPBLAS_OP_N (for example, non-transpose operation). See hipblasOperation_t. Data Type:int32_t*/
+  HIPBLASLT_MATMUL_DESC_TRANSB = 1,                     /**<Specifies the type of transformation operation that should be performed on matrix B. Default value is HIPBLAS_OP_N (for example, non-transpose operation). See hipblasOperation_t. Data Type:int32_t*/
+  HIPBLASLT_MATMUL_DESC_EPILOGUE = 2,                   /**<Epilogue function. See hipblasLtEpilogue_t. Default value is: HIPBLASLT_EPILOGUE_DEFAULT. Data Type: uint32_t*/
+  HIPBLASLT_MATMUL_DESC_BIAS_POINTER = 3,               /**<Bias or Bias gradient vector pointer in the device memory. Data Type:void* /const void* */
+  HIPBLASLT_MATMUL_DESC_BIAS_DATA_TYPE = 4,             /**<Type of the bias vector in the device memory. Can be set same as D matrix type or Scale type. Bias case: see HIPBLASLT_EPILOGUE_BIAS. Data Type:int32_t based on hipblasDatatype_t*/
+  HIPBLASLT_MATMUL_DESC_D_SCALE_POINTER = 5,            /**<D scale vector length must match matrix D rows. It must match Scale data type. D scale vector is broadcast to all columns and multipied after final postprocssion. Data Type: void* /const void* */
+  HIPBLASLT_MATMUL_DESC_EPILOGUE_AUX_POINTER = 6,       /**<Epilogue auxiliary buffer pointer in the device memory. Data Type:void* /const void* */
+  HIPBLASLT_MATMUL_DESC_EPILOGUE_AUX_LD = 7,            /**<The leading dimension of the epilogue auxiliary buffer pointer in the device memory. Data Type:int64_t */
+  HIPBLASLT_MATMUL_DESC_EPILOGUE_AUX_BATCH_STRIDE = 8,  /**<The batch stride of the epilogue auxiliary buffer pointer in the device memory. Data Type:int64_t */
+  HIPBLASLT_MATMUL_DESC_MAX = 9
 } hipblasLtMatmulDescAttributes_t;
 
 /*! \ingroup types_module
@@ -635,12 +640,12 @@ hipblasStatus_t
                                     int*                             returnAlgoCount);
 
 HIPBLASLT_EXPORT
-hipblasStatus_t
-    hipblasLtExtGroupedGemmAlgoGetHeuristic(hipblasLtExtGroupedGemm_t        groupedgemm,
-                                            hipblasLtMatmulPreference_t      pref,
-                                            int                              requestedAlgoCount,
-                                            hipblasLtMatmulHeuristicResult_t heuristicResultsArray[],
-                                            int*                             returnAlgoCount);
+hipblasStatus_t hipblasLtExtGroupedGemmAlgoGetHeuristic(
+    hipblasLtExtGroupedGemm_t        groupedgemm,
+    hipblasLtMatmulPreference_t      pref,
+    int                              requestedAlgoCount,
+    hipblasLtMatmulHeuristicResult_t heuristicResultsArray[],
+    int*                             returnAlgoCount);
 
 /*! \ingroup library_module
  *  \brief Retrieve the possible algorithms
