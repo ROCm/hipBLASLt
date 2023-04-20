@@ -317,6 +317,7 @@ class ProblemType:
             predicates.append(ProblemPredicate("ActivationNoGuard", value=self.activationNoGuard))
             predicates.append(ProblemPredicate("UseGradient", value=self.useGradient))
             predicates.append(ProblemPredicate("UseBias", value=self.useBias))
+            predicates.append(ProblemPredicate("UseE", value=self.useE))
             predicates.append(ProblemPredicate("StridedBatched", value=self.stridedBatched))
             predicates.append(ProblemPredicate("GroupedGemm", value=self.groupedGemm))
             predicates.append(ProblemPredicate("UseScaleD", value=self.useScaleD))
