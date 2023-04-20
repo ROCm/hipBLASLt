@@ -220,7 +220,7 @@ namespace Tensile
         virtual std::vector<KernelInvocation> solveGroupedGemm(std::vector<Problem> const& problems,
                                                                GroupedInputs const&        inputs,
                                                                Hardware const&             hardware,
-                                                               hipStream_t                 stream) const;
+                                                               hipStream_t stream) const;
 
         template <bool T_Debug>
         void singleCallArgs(Problem const&           problem,
@@ -268,6 +268,18 @@ namespace Tensile
                                              ContractionInputs const& inputs,
                                              Hardware const&          hardware) const;
 
+        template <bool T_Debug>
+        KernelInvocation generateReductionCall(Problem const&           problem,
+                                               ContractionInputs const& inputs,
+                                               Hardware const&          hardware) const;
+
+        std::string outputReductionKernelName(Problem const&           problem,
+                                              ContractionInputs const& inputs,
+                                              Hardware const&          hardware,
+                                              size_t                   mt0,
+                                              size_t                   mt1,
+                                              size_t                   vw) const;
+
         struct SizeMapping
         {
             dim3 workGroupSize;
@@ -301,9 +313,12 @@ namespace Tensile
             DataType              bType                   = DataType::Float;
             DataType              cType                   = DataType::Float;
             DataType              dType                   = DataType::Float;
+            DataType              eType                   = DataType::Float;
             bool                  highPrecisionAccumulate = false;
             bool                  useBeta                 = true;
+            bool                  useGradient             = false;
             bool                  useBias                 = false;
+            bool                  useE                    = false;
             bool                  useScaleD               = false;
             bool                  useInitialStridesAB     = false;
             bool                  useInitialStridesCD     = false;
@@ -312,6 +327,8 @@ namespace Tensile
             bool                  fp16AltImpl             = false;
             ActivationType        activationType          = ActivationType::None;
             bool                  activationHPA           = false;
+            bool                  activationNoGuard       = false;
+            std::vector<int>      biasSrcWhiteList;
             std::vector<DataType> biasDataTypeWhiteList;
         };
 

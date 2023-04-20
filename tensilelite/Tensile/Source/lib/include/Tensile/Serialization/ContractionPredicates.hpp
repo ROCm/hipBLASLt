@@ -96,12 +96,16 @@ namespace Tensile
                     Base::template Pair<Predicates::Contraction::Experimental>(),
                     Base::template Pair<Predicates::Contraction::Fp16AltImpl>(),
                     Base::template Pair<Predicates::Contraction::EqualityMatching>(),
+                    Base::template Pair<Predicates::Contraction::UseGradientEqual>(),
                     Base::template Pair<Predicates::Contraction::ActivationEqual>(),
                     Base::template Pair<Predicates::Contraction::ActivationHPAEqual>(),
+                    Base::template Pair<Predicates::Contraction::ActivationNoGuardEqual>(),
                     Base::template Pair<Predicates::Contraction::ActivationEnumWhiteList>(),
                     Base::template Pair<Predicates::Contraction::UseBiasEqual>(),
+                    Base::template Pair<Predicates::Contraction::UseEEqual>(),
                     Base::template Pair<Predicates::Contraction::UseScaleDEqual>(),
                     Base::template Pair<Predicates::Contraction::BiasDataTypeWhiteList>(),
+                    Base::template Pair<Predicates::Contraction::BiasSrcWhiteList>(),
                     Base::template Pair<Predicates::Contraction::SizeInRange>(),
                 });
 
@@ -362,6 +366,12 @@ namespace Tensile
         };
 
         template <typename IO>
+        struct MappingTraits<Predicates::Contraction::UseGradientEqual, IO>
+            : public AutoMappingTraits<Predicates::Contraction::UseGradientEqual, IO>
+        {
+        };
+
+        template <typename IO>
         struct MappingTraits<Predicates::Contraction::ActivationEqual, IO>
             : public AutoMappingTraits<Predicates::Contraction::ActivationEqual, IO>
         {
@@ -374,14 +384,32 @@ namespace Tensile
         };
 
         template <typename IO>
+        struct MappingTraits<Predicates::Contraction::BiasSrcWhiteList, IO>
+            : public AutoMappingTraits<Predicates::Contraction::BiasSrcWhiteList, IO>
+        {
+        };
+
+        template <typename IO>
         struct MappingTraits<Predicates::Contraction::ActivationHPAEqual, IO>
             : public AutoMappingTraits<Predicates::Contraction::ActivationHPAEqual, IO>
         {
         };
 
         template <typename IO>
+        struct MappingTraits<Predicates::Contraction::ActivationNoGuardEqual, IO>
+            : public AutoMappingTraits<Predicates::Contraction::ActivationNoGuardEqual, IO>
+        {
+        };
+
+        template <typename IO>
         struct MappingTraits<Predicates::Contraction::UseBiasEqual, IO>
             : public AutoMappingTraits<Predicates::Contraction::UseBiasEqual, IO>
+        {
+        };
+
+        template <typename IO>
+        struct MappingTraits<Predicates::Contraction::UseEEqual, IO>
+            : public AutoMappingTraits<Predicates::Contraction::UseEEqual, IO>
         {
         };
 

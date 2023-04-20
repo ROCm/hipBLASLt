@@ -410,6 +410,8 @@ def problemSizeParams(problemType, problem):
       rv.append(('c-strides', ",".join(map(str, cstrides))))
     if dstrides:
       rv.append(('d-strides', ",".join(map(str, dstrides))))
+      if problemType.useE:
+          rv.append(('e-strides', ",".join(map(str, dstrides))))
 
     return rv
 
@@ -418,6 +420,7 @@ def dataInitParams(problemType):
     initB = globalParameters['DataInitTypeB']
     initC = globalParameters['DataInitTypeC']
     initD = globalParameters['DataInitTypeD']
+    initE = globalParameters['DataInitTypeE']
     initAlpha = globalParameters['DataInitTypeAlpha']
     initBeta  = globalParameters['DataInitTypeBeta']
     initBias  = globalParameters['DataInitTypeBias']
@@ -433,6 +436,7 @@ def dataInitParams(problemType):
             ('init-b',            DataInitName(initB).name),
             ('init-c',            DataInitName(initC).name),
             ('init-d',            DataInitName(initD).name),
+            ('init-e',            DataInitName(initE).name),
             ('init-alpha',        DataInitName(initAlpha).name),
             ('init-beta',         DataInitName(initBeta).name),
             ('init-bias',         DataInitName(initBias).name),
@@ -469,9 +473,14 @@ def writeClientConfigIni(problemSizes, biasTypeArgs, activationArgs, problemType
         param('b-type',     problemType.bType.toEnum())
         param('c-type',     problemType.cType.toEnum())
         param('d-type',     problemType.dType.toEnum())
+        if problemType.useE:
+            param('e-type',     problemType.eType.toEnum())
         param('alpha-type', problemType.alphaType.toEnum())
         param('beta-type',  problemType.betaType.toEnum())
+        param('use-gradient', problemType.useGradient)
         param('use-bias',   problemType.useBias)
+        param('bias-source',   problemType.biasSrcWhiteList[0])
+        param('use-e', problemType.useE)
         param('use-scaleD',   problemType.useScaleD)
         if biasTypeArgs:
           for btype in biasTypeArgs.biasTypes:
@@ -490,6 +499,7 @@ def writeClientConfigIni(problemSizes, biasTypeArgs, activationArgs, problemType
             param('activation-enum-args', setting.activationEnum.toEnum())
         param('activation-type', problemType.activationType.toEnum())
         param('activation-hpa', problemType.activationHPA)
+        param('activation-no-guard', problemType.activationNoGuard)
         if globalParameters["DataInitValueActivationArgs"]:
           param('activation-additional-args', ','.join(map(str, globalParameters["DataInitValueActivationArgs"])))
 

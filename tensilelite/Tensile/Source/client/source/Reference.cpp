@@ -211,8 +211,9 @@ namespace Tensile
                                        || std::is_same<BFloat16, Accumulator>::value
                                        || std::is_same<int32_t, Accumulator>::value
                                        || std::is_same<int8_t, Accumulator>::value,
-                                   bool> = true>
-        void SetValue(DataType dataType, Accumulator& src, void* dstPtr, int pos)
+                                   bool>
+                  = true>
+        void SetValue(DataType dataType, Accumulator& src, void* dstPtr, size_t pos)
         {
             switch(dataType)
             {
@@ -266,8 +267,9 @@ namespace Tensile
                                        && !std::is_same<BFloat16, Accumulator>::value
                                        && !std::is_same<int32_t, Accumulator>::value
                                        && !std::is_same<int8_t, Accumulator>::value,
-                                   bool> = true>
-        void SetValue(DataType dataType, Accumulator& src, void* dstPtr, int pos)
+                                   bool>
+                  = true>
+        void SetValue(DataType dataType, Accumulator& src, void* dstPtr, size_t pos)
         {
             switch(dataType)
             {
@@ -354,6 +356,25 @@ namespace Tensile
                     tanh(multiply<castT>(static_cast<castT>(val), static_cast<castT>(args[0]))),
                     static_cast<castT>(args[1]));
             }
+            else if(new_type == ActivationType::DGelu)
+            {
+                auto castedVal = static_cast<float>(val);
+                auto k0        = 0.0535161f;
+                auto k1        = 0.398942f;
+                auto k2        = 0.0356774f;
+                auto k3        = 0.797885f;
+                // Original: (0.0535161x3 + 0.398942x) x cosh-2(0.0356774x3 + 0.797885x)
+                // x1 = (0.0535161 * pow(x, 3) + 0.398942 * x)
+                // xx = 0.0356774 * pow(x, 3)+ 0.797885 * x
+                // x2 = 4/pow(math.exp(-xx) + math.exp(xx),2)
+                // 0.5 * math.tanh(xx) + x1 * x2 + 0.5
+                float pow3 = castedVal * castedVal * castedVal;
+                float x1   = k0 * pow3 + k1 * castedVal;
+                float xx   = k2 * pow3 + k3 * castedVal;
+                float x2   = 4 / pow(exp(-xx) + exp(xx), 2);
+                float tmp  = 0.5 * tanh(xx) + x1 * x2 + 0.5;
+                return static_cast<T>(tmp);
+            }
             return val;
         }
 
@@ -387,6 +408,10 @@ namespace Tensile
                 val = val > 0 ? val : val * args[0];
                 return val;
             }
+            else if(new_type == ActivationType::DGelu)
+            {
+                throw std::runtime_error("Unsupported type dgelu.");
+            }
             return val;
         }
 
@@ -404,15 +429,110 @@ namespace Tensile
             return val;
         }
 
+        template <
+            typename Input,
+            typename Accumulator,
+            std::enable_if_t<
+                std::is_same<Half, Input>::value || std::is_same<float, Input>::value
+                    || std::is_same<double, Input>::value || std::is_same<BFloat16, Input>::value
+                    || std::is_same<int32_t, Input>::value || std::is_same<int8_t, Input>::value,
+                bool>
+            = true>
+        std::string ReductionCPU(TensorDescriptor const&  biasTensor,
+                                 TensorDescriptor const&  tensor,
+                                 void const*              src,
+                                 ContractionInputs const& inputs,
+                                 const size_t&            elementsToValidate,
+                                 size_t                   reducIdx)
+        {
+            size_t validationStride = 1;
+            if(elementsToValidate > 0 && elementsToValidate < biasTensor.totalLogicalElements())
+                validationStride
+                    = NextPrime(biasTensor.totalAllocatedElements() / elementsToValidate);
+
+            Input const* srcTyped = (Input const*)src;
+            // For 2D bias reduction, d batch = 1
+            if((tensor.dimensions() == 3 && tensor.sizes()[2] == 1) || tensor.dimensions() == 2)
+            {
+#pragma omp parallel for
+                for(size_t bNum = 0; bNum < biasTensor.totalLogicalElements();
+                    bNum += validationStride)
+                {
+                    std::vector<int64_t> coord(tensor.dimensions());
+                    size_t               sumLength = 0;
+                    size_t               idx       = 0;
+                    if(reducIdx == 1)
+                    {
+                        sumLength = tensor.sizes()[1];
+                        coord[0]  = bNum;
+                        idx       = 1;
+                    }
+                    else
+                    {
+                        sumLength = tensor.sizes()[0];
+                        coord[1]  = bNum;
+                        idx       = 0;
+                    }
+                    Accumulator sum = static_cast<Accumulator>(0);
+                    for(size_t i = 0; i < sumLength; i++)
+                    {
+                        coord[idx] = i;
+                        auto index = tensor.index(coord);
+                        sum += static_cast<Accumulator>(srcTyped[index]);
+                    }
+                    auto biasPtr = (void*)inputs.bias;
+                    SetValue<Accumulator>(biasTensor.dataType(), sum, biasPtr, bNum);
+                }
+            }
+            else
+            {
+                std::string msg = "Unsupported reduction dimension "
+                                  + std::to_string(tensor.dimensions()) + ".";
+                return msg;
+            }
+            return "";
+        }
+
+        template <
+            typename Input,
+            typename Accumulator,
+            std::enable_if_t<
+                !std::is_same<Half, Input>::value && !std::is_same<float, Input>::value
+                    && !std::is_same<double, Input>::value && !std::is_same<BFloat16, Input>::value
+                    && !std::is_same<int32_t, Input>::value && !std::is_same<int8_t, Input>::value,
+                bool>
+            = true>
+        std::string ReductionCPU(TensorDescriptor const&  biasTensor,
+                                 TensorDescriptor const&  tensor,
+                                 void const*              src,
+                                 ContractionInputs const& inputs,
+                                 const size_t&            elementsToValidate,
+                                 size_t                   reducIdx)
+        {
+            throw std::runtime_error("Unsupported input type.");
+        }
+
         template <typename Inputs, typename Accumulator>
         void ReferenceSolution<Inputs, Accumulator>::SolveCPU(ContractionProblemGemm const& problem,
                                                               ContractionInputs const&      inputs,
                                                               size_t elementsToValidate)
         {
-            size_t validationStride = 1;
-            if(elementsToValidate > 0 && elementsToValidate < problem.d().totalLogicalElements())
-                validationStride
-                    = NextPrime(problem.d().totalAllocatedElements() / elementsToValidate);
+            Accumulator* ws                   = nullptr;
+            size_t       validationStrideGemm = 1;
+            if(problem.useGradient() && problem.useBias()
+               && (problem.biasSrc() == ContractionProblemGemm::D))
+            {
+                validationStrideGemm = 1;
+                ws                   = (Accumulator*)malloc(problem.d().totalAllocatedElements()
+                                          * sizeof(Accumulator));
+            }
+            else
+            {
+                if(elementsToValidate > 0
+                   && elementsToValidate < problem.d().totalLogicalElements())
+                    validationStrideGemm
+                        = NextPrime(problem.d().totalAllocatedElements() / elementsToValidate);
+            }
 
             // Convert void* to pointers
             typename Inputs::AType const* aPtr = (typename Inputs::AType const*)inputs.a;
@@ -476,8 +596,9 @@ namespace Tensile
                 }
             }
 
+            // gemm
 #pragma omp parallel for
-            for(size_t dNum = 0; dNum < d.totalLogicalElements(); dNum += validationStride)
+            for(size_t dNum = 0; dNum < d.totalLogicalElements(); dNum += validationStrideGemm)
             {
                 std::vector<int64_t> aCoord(a.dimensions());
                 std::vector<int64_t> bCoord(b.dimensions());
@@ -577,7 +698,7 @@ namespace Tensile
                                                  : multiply<Accumulator>(beta, cPtr[cIndex]));
 
                 // bias
-                if(problem.useBias() && inputs.bias)
+                if(problem.useBias() && inputs.bias && !problem.useGradient())
                 {
                     int         pos = int(dNum % problem.d().sizes()[0]);
                     Accumulator bias
@@ -585,7 +706,7 @@ namespace Tensile
                     resultD += bias;
                 }
                 // E
-                if(problem.useE())
+                if(problem.useE() && !problem.useGradient())
                 {
                     typename Inputs::BetaType* ePtr = (typename Inputs::BetaType*)inputs.e;
                     auto                       eIndex
@@ -596,8 +717,28 @@ namespace Tensile
                 std::vector<Accumulator> actArgs;
                 for(int i = 0; i < inputs.activationArgs.size(); i++)
                     actArgs.push_back(constVariantCast<Accumulator>(inputs.activationArgs[i]));
-                resultD = Activation(
-                    problem.activationType(), resultD, problem.activationEnumArg(), actArgs);
+                if(problem.useGradient() && problem.activationType() != ActivationType::None
+                   && problem.activationEnumArg() != ActivationType::None)
+                {
+                    Accumulator dataE = static_cast<Accumulator>(0);
+                    if(problem.useE())
+                    {
+                        typename Inputs::BetaType* ePtr = (typename Inputs::BetaType*)inputs.e;
+                        auto                       eIndex
+                            = problem.tensors()[ContractionProblemGemm::TENSOR::E].index(dCoord);
+                        dataE = GetValue<Accumulator>(
+                            problem.betaType(), inputs.e, eIndex, aConjugate);
+                    }
+                    dataE = Activation(
+                        problem.activationType(), dataE, problem.activationEnumArg(), actArgs);
+                    resultD *= dataE;
+                }
+                else
+                {
+                    resultD = Activation(
+                        problem.activationType(), resultD, problem.activationEnumArg(), actArgs);
+                }
+
                 if(problem.useScaleD())
                 {
                     int         pos    = int(dNum % problem.d().sizes()[0]);
@@ -605,7 +746,54 @@ namespace Tensile
                         problem.alphaType(), inputs.scaleD, pos, aConjugate);
                     resultD *= scaleD;
                 }
+                if(problem.useBias() && problem.useGradient()
+                   && (problem.biasSrc() == ContractionProblemGemm::D))
+                {
+                    ws[dIndex] = resultD;
+                }
                 dPtr[dIndex] = SaturateCast<typename Inputs::DType>(resultD);
+            }
+
+            if(problem.useGradient() && problem.useBias())
+            {
+                auto& biasTensor = problem.tensor(ContractionProblemGemm::TENSOR::BIAS);
+                if(problem.biasSrc() == ContractionProblemGemm::D)
+                {
+                    auto msg = ReductionCPU<Accumulator, Accumulator>(
+                        biasTensor, d, ws, inputs, elementsToValidate, 1);
+                    if(!msg.empty())
+                    {
+                        free(ws);
+                        std::runtime_error(msg.c_str());
+                    }
+                }
+                else if(problem.biasSrc() == ContractionProblemGemm::A)
+                {
+                    auto reducIdx = problem.transA() ? 0 : 1;
+                    auto msg      = ReductionCPU<typename Inputs::AType, Accumulator>(
+                        biasTensor, a, inputs.a, inputs, elementsToValidate, reducIdx);
+                    if(!msg.empty())
+                    {
+                        std::runtime_error(msg.c_str());
+                    }
+                }
+                else if(problem.biasSrc() == ContractionProblemGemm::B)
+                {
+                    auto reducIdx = problem.transB() ? 1 : 0;
+                    auto msg      = ReductionCPU<typename Inputs::BType, Accumulator>(
+                        biasTensor, b, inputs.b, inputs, elementsToValidate, reducIdx);
+                    if(!msg.empty())
+                    {
+                        std::runtime_error(msg.c_str());
+                    }
+                }
+                else
+                {
+                    std::string msg = "Unsupported bias reduction source "
+                                      + std::to_string(problem.biasSrc()) + ".";
+                    throw std::runtime_error(msg.c_str());
+                }
+                free(ws);
             }
         }
 

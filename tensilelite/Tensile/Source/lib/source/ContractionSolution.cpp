@@ -267,6 +267,7 @@ namespace Tensile
         TensorDescriptor const& b = problem.b();
         TensorDescriptor const& c = problem.c();
         TensorDescriptor const& d = problem.d();
+        TensorDescriptor const& e = problem.tensor(ContractionProblemGemm::TENSOR::E);
 
         if(sizeMapping.globalAccumulation)
         {
@@ -391,7 +392,24 @@ namespace Tensile
             runActivation = true;
         if(problemType.useBias && (sizeMapping.globalSplitU == 1))
         {
-            args.append<void const*>("bias", inputs.bias);
+            // We save the bias data in ws_d
+            if(problemType.useGradient && problem.biasSrc() == ContractionProblemGemm::TENSOR::D)
+                args.append<void const*>("ws_bias", inputs.ws);
+            else
+                args.append<void const*>("bias", inputs.bias);
+        }
+
+        if(problemType.useE)
+        {
+            args.append<void*>("e", inputs.e);
+        }
+
+        if(problemType.useBias && (sizeMapping.globalSplitU == 1)
+           && (!problemType.useGradient
+               || (problemType.useGradient
+                   && (problem.biasSrc() == ContractionProblemGemm::TENSOR::A
+                       || problem.biasSrc() == ContractionProblemGemm::TENSOR::B))))
+        {
             if(runActivation)
             {
                 size_t dummyInsertSize
@@ -402,6 +420,12 @@ namespace Tensile
                 }
             }
             args.append<uint32_t>("bias_type", static_cast<uint32_t>(problem.biasType()));
+        }
+
+        if(problemType.useE)
+        {
+            for(size_t i = startStrideCD; i < e.dimensions(); i++)
+                args.append<uint32_t>(concatenate_if<T_Debug>("strideE", i), e.strides()[i]);
         }
 
         if(runActivation)
@@ -655,7 +679,7 @@ namespace Tensile
         else
             rv.args.append<void const* const*>("batchC", inputs.batchC);
 
-        if(problemType.useBias && sizeMapping.globalAccumulation == 0)
+        if(problemType.useBias && sizeMapping.globalAccumulation == 0 && (!problemType.useGradient))
         {
             rv.args.append<void const*>("bias", inputs.bias);
         }
@@ -716,7 +740,8 @@ namespace Tensile
             name += "_GB";
         }
 
-        if(problemType.useBias && (sizeMapping.globalAccumulation == 0))
+        if(problemType.useBias && (sizeMapping.globalAccumulation == 0)
+           && (!problemType.useGradient))
         {
             auto s = TypeAbbrev(problem.biasType());
             name += ("_Bias" + s);
@@ -736,6 +761,7 @@ namespace Tensile
     {
         TensorDescriptor const& c = problem.c();
         TensorDescriptor const& d = problem.d();
+        TensorDescriptor const& e = problem.tensor(ContractionProblemGemm::TENSOR::E);
 
         KernelInvocation rv;
 
@@ -767,6 +793,14 @@ namespace Tensile
         rv.numWorkItems.y = rv.workGroupSize.y * rv.numWorkGroups.y;
         rv.numWorkItems.z = rv.workGroupSize.z * rv.numWorkGroups.z;
 
+        if(problemType.useE)
+        {
+            if(problemType.stridedBatched)
+                rv.args.append<void*>("E", inputs.e);
+            else
+                rv.args.append<void const* const*>("batchE", 0);
+        }
+
         if(problemType.stridedBatched)
             rv.args.append<void*>("D", inputs.d);
         else
@@ -781,7 +815,20 @@ namespace Tensile
 
         if(problemType.useBias)
         {
-            rv.args.append<void const*>("bias", inputs.bias);
+            if(!problemType.useGradient)
+                rv.args.append<void const*>("bias", inputs.bias);
+            if(problemType.useGradient)
+            {
+                for(auto it : problemType.biasSrcWhiteList)
+                {
+                    if(it == ContractionProblemGemm::TENSOR::A
+                       || it == ContractionProblemGemm::TENSOR::B)
+                    {
+                        rv.args.append<void*>("bias", const_cast<void*>(inputs.bias));
+                        break;
+                    }
+                }
+            }
         }
         if(problemType.useScaleD) // GSU dep
         {
@@ -824,6 +871,10 @@ namespace Tensile
                                          static_cast<uint32_t>(problem.activationEnumArg()));
             }
         }
+
+        if(problemType.useE)
+            for(size_t i = 1; i < e.dimensions(); i++)
+                rv.args.append<uint32_t>(concatenate_if<T_Debug>("strideE", i), e.strides()[i]);
 
         for(size_t i = 1; i < d.dimensions(); i++)
             rv.args.append<uint32_t>(concatenate_if<T_Debug>("strideD", i), d.strides()[i]);
@@ -875,7 +926,34 @@ namespace Tensile
         if(problemType.useBias)
         {
             auto s = TypeAbbrev(problem.biasType());
-            name += ("_Bias" + s);
+            if(problemType.useGradient)
+            {
+                const char* alpha[5] = {"A", "B", "C", "D", "E"};
+                std::string ss;
+                for(auto it : problemType.biasSrcWhiteList)
+                {
+                    if(it < 5)
+                    {
+                        ss += alpha[it];
+                    }
+                }
+                name += ("_DBias" + ss + s);
+            }
+            else
+                name += ("_Bias" + s);
+        }
+
+        if(problemType.useE)
+        {
+            auto s = TypeAbbrev(problem.tensors()[ContractionProblemGemm::TENSOR::E].dataType());
+            if(problemType.useGradient)
+            {
+                name += ("_Grad" + s);
+            }
+            else
+            {
+                name += ("_Aux" + s);
+            }
         }
 
         if(problem.activationType() != ActivationType::None)
@@ -892,6 +970,10 @@ namespace Tensile
         if(problem.activationHPA())
         {
             name += "h";
+        }
+        if(problem.activationNoGuard())
+        {
+            name += "g";
         }
 
         if(problemType.useScaleD)
@@ -1020,6 +1102,94 @@ namespace Tensile
         {
             name += "h";
         }
+
+        return name;
+    }
+
+    template <bool T_Debug>
+    KernelInvocation ContractionSolution::generateReductionCall(Problem const&           problem,
+                                                                ContractionInputs const& inputs,
+                                                                Hardware const& hardware) const
+    {
+        TensorDescriptor const& c = problem.c();
+        TensorDescriptor const& d = problem.d();
+        TensorDescriptor const& e = problem.tensor(ContractionProblemGemm::TENSOR::E);
+
+        KernelInvocation rv;
+
+        rv.args = KernelArguments(T_Debug);
+
+        rv.args.reserve(512, 64);
+
+        size_t threads = 256;
+        size_t mt0     = 256;
+        size_t mt1     = 1;
+        size_t vw      = 1;
+        // TODO: Currently only support bias reduction
+        if(problem.d().sizes()[1] >= 8192)
+        {
+            threads = 1024;
+            mt1     = 32;
+            vw      = 4;
+        }
+        else if(problem.d().sizes()[1] >= 32)
+        {
+            mt1 = 32;
+        }
+        else
+        {
+            mt1 = int(problem.d().sizes()[1] / 2) * 2;
+            if(mt1 == 0)
+                mt1 = 1;
+        }
+        mt0 = threads / mt1;
+
+        rv.kernelName = outputReductionKernelName(problem, inputs, hardware, mt0, mt1, vw);
+
+        rv.workGroupSize.x = threads;
+        rv.workGroupSize.y = 1;
+        rv.workGroupSize.z = 1;
+
+        // TODO: Currently only support bias reduction
+        rv.numWorkGroups.x = CeilDivide(problem.d().sizes()[0], (mt0 * vw));
+        rv.numWorkGroups.y = 1;
+        rv.numWorkGroups.z = 1;
+
+        rv.numWorkItems.x = rv.workGroupSize.x * rv.numWorkGroups.x;
+        rv.numWorkItems.y = rv.workGroupSize.y * rv.numWorkGroups.y;
+        rv.numWorkItems.z = rv.workGroupSize.z * rv.numWorkGroups.z;
+
+        // FIXME: Need to check the formula for batch > 1
+        rv.args.append<void*>("WS", inputs.ws);
+        rv.args.append<void const*>("bias", inputs.bias);
+        for(size_t i = 0; i < 2; i++)
+        {
+            rv.args.append<uint32_t>(concatenate_if<T_Debug>("size_", i), problem.d().sizes()[i]);
+        }
+        rv.args.append<uint32_t>("strideDJ", d.sizes()[0]);
+
+        //@TODO determine if this is needed, may not end up in the same code object file
+        rv.codeObjectFile = codeObjectFilename.load();
+
+        return rv;
+    }
+
+    std::string ContractionSolution::outputReductionKernelName(Problem const&           problem,
+                                                               ContractionInputs const& inputs,
+                                                               Hardware const&          hardware,
+                                                               size_t                   mt0,
+                                                               size_t                   mt1,
+                                                               size_t                   vw) const
+    {
+        auto&       biasTensor = problem.tensor(ContractionProblemGemm::TENSOR::BIAS);
+        std::string name       = concatenate("D",
+                                       problem.dNames(),
+                                       "_",
+                                       DataTypeInfo::Get(biasTensor.dataType()).abbrev,
+                                       DataTypeInfo::Get(problem.betaType()).abbrev);
+        name += concatenate("_MT", mt0, "x", mt1);
+        name += concatenate("_VW", vw);
+        name += "_Reduction";
 
         return name;
     }
@@ -1154,6 +1324,20 @@ namespace Tensile
                 rv.push_back(generateActivationOnlyCall<true>(problem, inputs, hardware));
             else
                 rv.push_back(generateActivationOnlyCall<false>(problem, inputs, hardware));
+        }
+
+        // The reduction of A is done in ConversionKernel when GSU > 1 in MultipleBuffer mode
+        if(problem.useBias() && problem.useGradient()
+           && (problem.biasSrc() == ContractionProblemGemm::TENSOR::D))
+        {
+            if(problem.d().dimensions() != 3)
+            {
+                throw std::runtime_error("Currently only supports bias reduction (m x n x batch)");
+            }
+            if(debug)
+                rv.push_back(generateReductionCall<true>(problem, inputs, hardware));
+            else
+                rv.push_back(generateReductionCall<false>(problem, inputs, hardware));
         }
 
         return rv;

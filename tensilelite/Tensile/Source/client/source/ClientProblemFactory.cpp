@@ -45,6 +45,7 @@ namespace Tensile
             , m_biasTypeArgs(std::vector<DataType>(1, DataType::Float))
             , m_activationType(ActivationType::None)
             , m_activationHPA(false)
+            , m_activationNoGuard(false)
             , m_activationEnumArg(std::vector<ActivationType>(1, ActivationType::None))
         {
             std::vector<bool> isComplex;
@@ -136,6 +137,9 @@ namespace Tensile
             if(args.count("use-e"))
                 m_useE = args["use-e"].as<bool>();
 
+            if(args.count("use-gradient"))
+                m_useGradient = args["use-gradient"].as<bool>();
+
             if(args.count("bias-type-args"))
                 m_biasTypeArgs = args["bias-type-args"].as<std::vector<DataType>>();
 
@@ -143,11 +147,15 @@ namespace Tensile
                 m_activationType = args["activation-type"].as<ActivationType>();
             if(args.count("activation-hpa"))
                 m_activationHPA = args["activation-hpa"].as<bool>();
+            if(args.count("activation-no-guard"))
+                m_activationNoGuard = args["activation-no-guard"].as<bool>();
             if(args.count("activation-enum-args"))
                 m_activationEnumArg
                     = args["activation-enum-args"].as<std::vector<ActivationType>>();
             if(args.count("use-bias"))
                 m_useBias = args["use-bias"].as<bool>();
+            if(args.count("bias-source"))
+                m_biasSrc = args["bias-source"].as<int>();
             if(args.count("use-scaleD"))
                 m_useScaleD = args["use-scaleD"].as<bool>();
             if(args.count("max-workspace-size"))
@@ -245,6 +253,7 @@ namespace Tensile
                         rv.back().setBetaType(m_constantTypes[ContractionProblemGemm::CONST::BETA]);
                         rv.back().setStridedBatched(m_stridedBatched);
                         rv.back().setHighPrecisionAccumulate(m_highPrecisionAccumulate);
+                        rv.back().setUseGradient(m_useGradient);
                         rv.back().setUseBias(m_useBias);
                         rv.back().setUseE(m_useE);
                         rv.back().setKernelLanguage(m_kernelLanguage);
@@ -255,7 +264,15 @@ namespace Tensile
                         rv.back().setWorkspaceSize(m_maxWorkspaceSize);
                         if(k < m_biasTypeArgs.size())
                         {
-                            rv.back().setBias(m_biasTypeArgs[k], rv.back().d().sizes()[0]);
+                            auto length       = (m_biasSrc == ContractionProblemGemm::TENSOR::B)
+                                                    ? rv.back().d().sizes()[1]
+                                                    : rv.back().d().sizes()[0];
+                            bool isBiasOutput = m_useGradient ? true : false;
+                            rv.back().setBias(
+                                m_biasTypeArgs[k],
+                                length,
+                                isBiasOutput,
+                                static_cast<ContractionProblemGemm::TENSOR>(m_biasSrc));
                         }
                         else
                         {
@@ -264,6 +281,8 @@ namespace Tensile
                         if(m_useE)
                         {
                             bool isEOutput = true;
+                            if(m_useGradient)
+                                isEOutput = false;
                             rv.back().setE(m_tensorTypes[ContractionProblemGemm::TENSOR::E],
                                            rv.back().d().sizes(),
                                            eStrides,
@@ -278,6 +297,7 @@ namespace Tensile
                             rv.back().setActivationType(m_activationType);
                         }
                         rv.back().setActivationHPA(m_activationHPA);
+                        rv.back().setActivationNoGuard(m_activationNoGuard);
                         rv.back().setUseScaleD(m_useScaleD);
                         rv.back().setScaleD(m_constantTypes[ContractionProblemGemm::CONST::ALPHA],
                                             rv.back().d().sizes()[0]);

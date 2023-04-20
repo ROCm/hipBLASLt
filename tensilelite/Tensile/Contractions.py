@@ -64,10 +64,10 @@ class BoundIndex:
 
 
 class ProblemType:
-    StateKeys = ['operationIdentifier', 'aType', 'bType', 'cType', 'dType',
-                 'useBeta', 'useBias', 'useScaleD', 'biasDataTypeWhiteList', 'highPrecisionAccumulate',
+    StateKeys = ['operationIdentifier', 'aType', 'bType', 'cType', 'dType', 'eType',
+                 'useBeta', 'useBias', 'biasSrcWhiteList', 'useE', 'useScaleD', 'biasDataTypeWhiteList', 'highPrecisionAccumulate',
                  'useInitialStridesAB', 'useInitialStridesCD', 'stridedBatched', 'groupedGemm',
-                 'activationType', 'activationHPA']
+                 'useGradient', 'activationType', 'activationHPA', 'activationNoGuard']
     @classmethod
     def FromOriginalState(cls, d):
         indices = [None]*d['TotalIndices']
@@ -130,6 +130,7 @@ class ProblemType:
         rv.bType = srcType
         rv.cType = dstType
         rv.dType = dstType
+        rv.eType = computeType
         # we already checked the src/dst/compute types are supported and well-assigned in SolutionStruct
         rv.alphaType = computeType
         rv.betaType  = computeType
@@ -169,6 +170,7 @@ class ProblemType:
 
         rv.useBias               = False
         rv.biasDataTypeWhiteList = []
+        rv.biasSrcWhiteList = []
         if 'UseBias' in d:
             rv.useBias = d['UseBias']
             if 'BiasDataTypeList' in d:
@@ -176,6 +178,17 @@ class ProblemType:
                 rv.biasDataTypeWhiteList = d['BiasDataTypeList']
             else:
                 rv.biasDataTypeWhiteList = getBiasDataTypeListDefault(d)
+            if 'BiasSrc' in d:
+                m = ["A", "B", "C", "D"]
+                rv.biasSrcWhiteList = [m.index(d['BiasSrc'])]
+
+        rv.useE = False
+        if 'UseE' in d:
+            rv.useE = d['UseE']
+
+        rv.useGradient = False
+        if 'Gradient' in d:
+            rv.useGradient = d["Gradient"]
 
         rv.useScaleD = False
         if 'UseScaleD' in d:
@@ -189,6 +202,9 @@ class ProblemType:
         rv.activationHPA = False
         if 'ActivationHPA' in d:
             rv.activationHPA = d['ActivationHPA']
+        rv.activationNoGuard = False
+        if 'ActivationNoGuard' in d:
+            rv.activationNoGuard = d["ActivationNoGuard"]
         if 'ActivationComputeDataType' in d:
             rv.activationComputeDataType = DataType(d['ActivationComputeDataType'])
         else:
@@ -285,9 +301,11 @@ class ProblemType:
             if not self.useBeta:
                 predicates.append(ProblemPredicate("BetaZero"))
             predicates.append(ProblemPredicate("BiasDataTypeWhiteList", value=self.biasDataTypeWhiteList))
+            predicates.append(ProblemPredicate("BiasSrcWhiteList", value=self.biasSrcWhiteList))
             predicates.append(ProblemPredicate("Activation", value=self.activationType))
             if self.activationType == 'all':
-                enumList = [actEnum.capitalize() for actEnum in ActivationType.getEnumStrList(self.activationComputeDataType)]
+                exportType = ActivationType.Export.GRADONLY if self.useGradient else ActivationType.Export.NORMAL
+                enumList = [actEnum.capitalize() for actEnum in ActivationType.getEnumStrList(self.activationComputeDataType, exportType=exportType)]
                 predicates.append(ProblemPredicate("ActivationEnumWhiteList", value=enumList))
             # predicates.append(ProblemPredicate("UseScaleD", value=self.useScaleD))
             # predicates.append(ProblemPredicate("GroupedGemm", value=self.groupedGemm))
@@ -296,6 +314,8 @@ class ProblemType:
             predicates.append(ProblemPredicate("TypesEqual", value=(self.aType, self.bType, self.cType, self.dType)))
             predicates.append(ProblemPredicate("HighPrecisionAccumulate", value=self.highPrecisionAccumulate))
             predicates.append(ProblemPredicate("ActivationHPA", value=self.activationHPA))
+            predicates.append(ProblemPredicate("ActivationNoGuard", value=self.activationNoGuard))
+            predicates.append(ProblemPredicate("UseGradient", value=self.useGradient))
             predicates.append(ProblemPredicate("UseBias", value=self.useBias))
             predicates.append(ProblemPredicate("StridedBatched", value=self.stridedBatched))
             predicates.append(ProblemPredicate("GroupedGemm", value=self.groupedGemm))

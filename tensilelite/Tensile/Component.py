@@ -1,6 +1,6 @@
 ################################################################################
 #
-# Copyright (C) 2022 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -69,6 +69,14 @@ Components can be categorized in different files in the `Tensile/Components` dir
 import abc
 from collections.abc import Mapping
 import inspect
+from dataclasses import dataclass
+
+@dataclass
+class LraTileProperties:
+    """
+    Lra tile assignment properties.
+    """
+    pass
 
 def PartialMatch(pattern, obj, debug=False, level=0):
     indent = "    " * level
@@ -213,6 +221,22 @@ class LocalRead(Component):
     Local read block.
     """
     pass
+
+class SumUnroll(Component):
+    """
+    Sum unroll block.
+    """
+    @abc.abstractmethod
+    def initSumUnroll(self, writer, kernel):
+        pass
+
+    @abc.abstractmethod
+    def loopSum(self, writer, kernel, tP, u, innerUnroll):
+        pass
+
+    @abc.abstractmethod
+    def storeSumLDS(self, writer, kernel, tP):
+        pass
 
 class ShiftVectorComponents(Component):
     """

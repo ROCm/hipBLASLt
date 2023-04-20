@@ -208,11 +208,12 @@ def buildSourceCodeObjectFile(CxxCompiler, outputPath, kernelFile):
       hipFlags = ["--genco", "-D__HIP_HCC_COMPAT_MODE__=1"] #needs to be fixed when Maneesh's change is made available
 
       hipFlags += ['-I', outputPath]
+      hipFlags += ['-std=c++17']
 
       launcher = shlex.split(os.environ.get('Tensile_CXX_COMPILER_LAUNCHER', ''))
 
       if os.name == "nt":
-        hipFlags += ['-std=c++14', '-fms-extensions', '-fms-compatibility', '-fPIC', '-Wno-deprecated-declarations']
+        hipFlags += ['-fms-extensions', '-fms-compatibility', '-fPIC', '-Wno-deprecated-declarations']
         compileArgs = launcher + [which('hipcc')] + hipFlags + archFlags + [kernelFile, '-c', '-o', os.path.join(buildPath, objectFilename)]
       else:
         compileArgs = launcher + [which('hipcc')] + hipFlags + archFlags + [kernelFile, '-c', '-o', os.path.join(buildPath, objectFilename)]
@@ -737,7 +738,9 @@ def copyStaticFiles(outputPath=None):
   libraryStaticFiles = [
     "TensileTypes.h",
     "tensile_bfloat16.h",
-    "KernelHeader.h" ]
+    "KernelHeader.h",
+    "ReductionTemplate.h",
+    "memory_gfx.h" ]
 
   for fileName in libraryStaticFiles:
     # copy file

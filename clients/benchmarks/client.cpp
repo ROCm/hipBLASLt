@@ -398,6 +398,10 @@ try
          bool_switch(&arg.scaleD_vector)->default_value(false),
          "Apply scaleD vector")
 
+        ("grouped_gemm",
+         value<int32_t>(&arg.grouped_gemm)->default_value(0),
+         "Use grouped_gemm if non-zero. Number of gemms to run")
+
         ("device",
          value<int>(&device_id)->default_value(0),
          "Set default device to be used for subsequent program runs")

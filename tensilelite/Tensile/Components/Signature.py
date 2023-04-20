@@ -24,6 +24,7 @@
 
 from ..Component import Signature
 from ..Common import globalParameters
+from ..Utils import DataDirection
 from ..TensileInstructions import SignatureBase
 from ..TensileInstructions import SignatureValueKind as SVK
 
@@ -63,7 +64,7 @@ class SignatureCOV3(Signature):
                                     groupSegmentSize=group_segment_size,
                                     sgprWorkGroup=[1, 1, sgprWgZ],
                                     vgprWorkItem=0,
-                                    flatWorkGroupSize=(kernel["SubGroup0"] * kernel["SubGroup1"] * kernel["LocalSplitU"]))
+                                    flatWorkGroupSize=(kernel["NumThreads"]))
 
         srcValueType  = kernel["ProblemType"]["DataType"].toNameAbbrev()
         dstValueType  = kernel["ProblemType"]["DestDataType"].toNameAbbrev()
@@ -120,11 +121,21 @@ class SignatureCOV3(Signature):
         else:
             signature.addArg(                      "padding", SVK.SIG_VALUE,              "u32")
 
-        if kernel["ProblemType"]["UseBias"] and (kernel["GlobalSplitU"] == 1):
+        if writer.states.useBias == DataDirection.READ:
             signature.addArg("bias", SVK.SIG_GLOBALBUFFER, biasValueType, "generic")
+        # We append the data in ws_d
+        elif writer.states.useBias == DataDirection.WRITE and (kernel["GlobalSplitU"] == 1):
+            signature.addArg("ws_bias", SVK.SIG_GLOBALBUFFER, biasValueType, "generic")
 
-        if kernel["ProblemType"]["UseBias"] and (kernel["GlobalSplitU"] == 1):
+        if kernel["ProblemType"]["UseE"] and (kernel["GlobalSplitU"] == 1):
+            signature.addArg(      "E", SVK.SIG_GLOBALBUFFER, cptValueType, "generic")
+
+        if writer.states.needBiasType:
             signature.addArg("biasType",    SVK.SIG_VALUE,        "u32")
+
+        if kernel["ProblemType"]["UseE"] and (kernel["GlobalSplitU"] == 1):
+            for i in range(0, writer.states.e.numSgprStrides):
+                signature.addArg("StrideE%u"%i,        SVK.SIG_VALUE,        "u32")
 
 
         if ((kernel["ProblemType"]["ActivationType"] != 'none') and (kernel["GlobalSplitU"] == 1) \

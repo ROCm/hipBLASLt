@@ -1,6 +1,6 @@
 ################################################################################
 #
-# Copyright (C) 2022 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -32,6 +32,12 @@ class KernelWriterActivationEnumHeader(KernelWriterBase):
     super().__init__()
     self.state["ProblemType"] = deepcopy(state["ProblemType"])
 
+    self.actGradientPrefix = ""
+    self.actExportType = ActivationType.Export.NORMAL
+    if self.state["ProblemType"]["Gradient"]:
+      self.actGradientPrefix = "Gradient"
+      self.actExportType = ActivationType.Export.GRADONLY
+
     # derive parameter
     self.language = "HIP"
     self.kernelName = self.getKernelName()
@@ -40,8 +46,8 @@ class KernelWriterActivationEnumHeader(KernelWriterBase):
     return self.getKernelName()
 
   def getKernelName(self):
-    return "TensileActivationEnum_%s"%self.state["ProblemType"]["ActivationComputeDataType"].toChar()
-
+    return "Tensile%sActivationEnum_%s"%(self.actGradientPrefix, \
+                                         self.state["ProblemType"]["ActivationComputeDataType"].toChar())
 
   def getSourceFileString(self):
     fileString = "// This is a dummy file."
@@ -54,11 +60,11 @@ class KernelWriterActivationEnumHeader(KernelWriterBase):
       fileString += "#pragma once\n\n"
 
     activationCDataType = self.state["ProblemType"]["ActivationComputeDataType"]
-    enumName = "ActivationType_%s"%activationCDataType.toChar()
+    enumName = "%sActivationType_%s"%(self.actGradientPrefix, activationCDataType.toChar())
     fileString += "namespace Tensile {\n"
     fileString += "enum class %s : uint32_t\n"%enumName
     fileString += "{\n"
-    enumList = ActivationType.getEnumStrList(activationCDataType)
+    enumList = ActivationType.getEnumStrList(activationCDataType, exportType=self.actExportType)
     for idx, enumStr in enumerate(enumList):
       fileString += "  %s = %s,\n"%(ActivationType(enumStr).toEnum(), ActivationType.getEnumIndex(enumStr))
     fileString += "};\n"

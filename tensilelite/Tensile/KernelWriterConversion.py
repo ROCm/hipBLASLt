@@ -37,6 +37,11 @@ class KernelWriterConversion(KernelWriterBase):
     self.state["_GlobalAccumulation"] = state["_GlobalAccumulation"]
     self.state["ActivationFused"] = state["ActivationFused"]
 
+    self.actGradientPrefix = ""
+    if self.state["ProblemType"]["Gradient"]:
+      self.actGradientPrefix = "Gradient"
+    self.gaurdStr = "NG" if self.state["ProblemType"]["ActivationNoGuard"] else ""
+
     # derive parameter
     self.language = "HIP"
     self.kernelName = self.getKernelName()
@@ -53,7 +58,6 @@ class KernelWriterConversion(KernelWriterBase):
     self.tileChar0 = self.indexChars[self.state["ProblemType"]["Index0"]]
     self.tileChar1 = self.indexChars[self.state["ProblemType"]["Index1"]]
 
-
   def functionSignature(self):
     kStr = ""
 
@@ -69,14 +73,22 @@ class KernelWriterConversion(KernelWriterBase):
     ptrStr += '' if self.state["ProblemType"]["StridedBatched"] else '*'
     bStr = '' if self.state["ProblemType"]["StridedBatched"] else 'Batch'
 
+    if self.state["ProblemType"]["UseE"]:
+      ptrCStr = self.state["ProblemType"]["ComputeDataType"].toDevice(self.language)
+      ptrCStr += '' if self.state["ProblemType"]["StridedBatched"] else '*'
+      kStr += "  " + ptrCStr + " * " + bStr + "E," + self.endLine
     kStr += "  " + ptrStr + " * " + bStr + "D," + self.endLine
     kStr += "  " + self.datatype + " * W," + self.endLine
     kStr += "  " + ptrStr + " const * " + bStr + "C," + self.endLine
 
     # bias
     if self.state["ProblemType"]["UseBias"]:
-      biasPtrStr = self.state["ProblemType"]["BiasDataType"].toDevice(self.language)
-      kStr += "  " + biasPtrStr + " const * " + "Bias," + self.endLine
+      if (not self.state["ProblemType"]["Gradient"]):
+        biasPtrStr = self.state["ProblemType"]["BiasDataType"].toDevice(self.language)
+        kStr += "  " + biasPtrStr + " const * " + "Bias," + self.endLine
+      elif self.state["ProblemType"]["Gradient"] and (self.state["ProblemType"]["BiasSrc"] == "A" or self.state["ProblemType"]["BiasSrc"] == "B"):
+        biasPtrStr = self.state["ProblemType"]["BiasDataType"].toDevice(self.language)
+        kStr += "  " + biasPtrStr + "* " + "Bias," + self.endLine
 
     # interface: ScaleD GSU>1 GSUA "MUL"
     if self.state["ProblemType"]["UseScaleD"]:
@@ -89,7 +101,7 @@ class KernelWriterConversion(KernelWriterBase):
 
     # activation
     activationCDataType = self.state["ProblemType"]["ActivationComputeDataType"]
-    enumName = "Tensile::ActivationType_%s"%activationCDataType.toChar()
+    enumName = "Tensile::%sActivationType_%s"%(self.actGradientPrefix, activationCDataType.toChar())
     if ((self.state["ProblemType"]["ActivationType"] != 'none') and self.state["ActivationFused"]):
       activationCDataType = self.state["ProblemType"]["ComputeDataType"] if self.state["ProblemType"]["ActivationHPA"] else \
                             self.state["ProblemType"]["DestDataType"]
@@ -103,6 +115,9 @@ class KernelWriterConversion(KernelWriterBase):
     if self.state["ProblemType"]["UseInitialStridesCD"]:
       firstStrideCD = 0
     lastStrideC = self.state["ProblemType"]["NumIndicesC"]
+    if self.state["ProblemType"]["UseE"]:
+      for i in range(firstStrideCD, lastStrideC):
+        kStr += "  unsigned int const strideE%s,%s" % (self.indexChars[i], self.endLine)
     for i in range(firstStrideCD, lastStrideC):
       kStr += "  unsigned int const strideD%s,%s" % (self.indexChars[i], self.endLine)
     for i in range(firstStrideCD, lastStrideC):
@@ -136,6 +151,9 @@ class KernelWriterConversion(KernelWriterBase):
       # #define initial stride
       kStr += "/* hard-coded initial strides */%s" % self.endLine
       lastStrideC = 1
+    if self.state["ProblemType"]["UseE"]:
+      for i in range(firstStride, lastStrideC):
+        kStr += "#define strideE" + self.indexChars[i] + " 1" + self.endLine
     for i in range(firstStride, lastStrideC):
       kStr += "#define strideD" + self.indexChars[i] + " 1" + self.endLine
     for i in range(firstStride, lastStrideC):
@@ -144,6 +162,18 @@ class KernelWriterConversion(KernelWriterBase):
       kStr += "#define strideC" + self.indexChars[i] + " 1" + self.endLine
 
     ########################################
+    # GLOBAL_E()
+    if self.state["ProblemType"]["UseE"]:
+      kStr += "#define GLOBAL_E(IDX%s" % self.indexChars[0]
+      for i in range(1, problemType["NumIndicesC"]):
+        kStr += ", IDX%s" % self.indexChars[i]
+      indexChar = self.indexChars[0]
+      kStr += ") (( (IDX%s)*strideE%s" % (indexChar, indexChar)
+      for i in range(1, problemType["NumIndicesC"]):
+        indexChar = self.indexChars[i]
+        kStr += " + (IDX%s)*strideE%s" % (indexChar, indexChar)
+      kStr += " ))" + self.endLine
+
     # GLOBAL_D()
     kStr += "#define GLOBAL_D(IDX%s" % self.indexChars[0]
     for i in range(1, problemType["NumIndicesC"]):
@@ -214,6 +244,9 @@ class KernelWriterConversion(KernelWriterBase):
         batchStride += " * size%s" % self.indexChars[i]
       kStr += ";" + self.endLine
 
+      if self.state["ProblemType"]["UseE"]:
+        ptrStr = self.state["ProblemType"]["ComputeDataType"].toDevice(self.language)
+        kStr += "  " + ptrStr + " * E = BatchE[wg];" + self.endLine
       ptrStr = self.state["ProblemType"]["DestDataType"].toDevice(self.language)
       kStr += "  " + ptrStr + " * D = BatchD[wg];" + self.endLine
       ptrStr = self.state["ProblemType"]["DestDataType"].toDevice(self.language)
@@ -236,7 +269,7 @@ class KernelWriterConversion(KernelWriterBase):
       kStr += 'id%d' % i
     kStr += ");%s" % (self.endLine)
 
-    # D index
+    # C index
     kStr += "  %s idxC = GLOBAL_C( (%s)" % (self.uint64Str, self.uint64Str)
     for i in range(problemType["NumIndicesC"]):
       kStr += ', ' if i else ''
@@ -256,15 +289,38 @@ class KernelWriterConversion(KernelWriterBase):
       kStr += " + (size%s - 1) * strideW%s" % (indexChar, indexChar)
     kStr += ";" + self.endLine
 
+    wIdxStr = "idxW"
+    if self.state["ProblemType"]["UseBias"] and self.state["ProblemType"]["Gradient"]:
+      wIdxStr = "idxW2"
+      kStr += "  auto idxW2 = idxW;%s"%self.endLine
     kStr += "  " + intermediateDataType + " accum = 0;%s" % self.endLine
     kStr += "  " + self.datatype + " result = 0;%s" % self.endLine
     kStr += "  for (int i=0; i<gsu; i++) {%s" % self.endLine
-    kStr += "    accum += W[idxW];%s" % self.endLine
-    kStr += "    idxW  += strideW;%s" % self.endLine
+    kStr += "    accum += W[%s];%s" % (wIdxStr, self.endLine)
+    kStr += "    %s  += strideW;%s" % (wIdxStr, self.endLine)
     kStr += "  }%s" % self.endLine
 
+    if self.state["ProblemType"]["UseBias"] and self.state["ProblemType"]["Gradient"] and (self.state["ProblemType"]["BiasSrc"] == "A" or self.state["ProblemType"]["BiasSrc"] == "B"):
+      size          = "size0I" if self.state["ProblemType"]["BiasSrc"] == "A" else "size1J"
+      barrier       = "id1" if self.state["ProblemType"]["BiasSrc"] == "A" else "id0"
+      biasIdxStr    = "id0" if self.state["ProblemType"]["BiasSrc"] == "A" else "id1"
+      biasIdxGsuStr = biasIdxStr + "Gsu"
+      biasPtrStr    = self.state["ProblemType"]["BiasDataType"].toDevice(self.language)
+      kStr += "  if(%s == 0 && id2 == 0)%s"%(barrier, self.endLine)
+      kStr += "  {%s" % self.endLine
+      kStr += "    auto offset = strideW * gsu;%s"% self.endLine
+      kStr += "    auto strideBias = %s;%s"%(size, self.endLine)
+      kStr += "    auto %s = %s + offset;%s"%(biasIdxGsuStr, biasIdxStr, self.endLine)
+      kStr += "    " + intermediateDataType + " biasAccum = 0;%s" % self.endLine
+      kStr += "    for (int i=0; i<gsu; i++) {%s" % self.endLine
+      kStr += "      biasAccum += W[%s];%s" % (biasIdxGsuStr, self.endLine)
+      kStr += "      %s  += strideBias;%s" % (biasIdxGsuStr, self.endLine)
+      kStr += "    }%s" % self.endLine
+      kStr += "    Bias[%s] = (%s)biasAccum;%s"%(biasIdxStr, biasPtrStr, self.endLine)
+      kStr += "  }%s" % self.endLine
+
     biasStr = ""
-    if self.state["ProblemType"]["UseBias"]:
+    if self.state["ProblemType"]["UseBias"] and (not self.state["ProblemType"]["Gradient"]):
       biasStr = " + ((" + intermediateDataType + ")(Bias == 0 ? 0 : Bias[id0]))"
 
     scaleDStr = ""
@@ -276,6 +332,26 @@ class KernelWriterConversion(KernelWriterBase):
     kStr += "  else%s" % self.endLine
     kStr += "    accum = (((" + intermediateDataType + ")alpha) * accum + ((" + intermediateDataType + ")beta) * ((" + intermediateDataType + ")C[idxC])" + biasStr + ");" + self.endLine
 
+    if self.state["ProblemType"]["UseE"]:
+      if self.state["ProblemType"]["Gradient"]:
+        kStr += "  %s idxE = GLOBAL_E( (%s)" % (self.uint64Str, self.uint64Str)
+        for i in range(problemType["NumIndicesC"]):
+          kStr += ', ' if i else ''
+          kStr += '0'  if i in nonTileFreeIndices else ('id%d' % i)
+        kStr += ");%s" % (self.endLine)
+        kStr += "  auto dataE = (%s)E[idxE];%s" % (intermediateDataType, self.endLine)
+      else:
+        # E index
+        kStr += "  if( E != nullptr)%s" % (self.endLine)
+        kStr += "  {%s" % (self.endLine)
+        kStr += "    %s idxE = GLOBAL_E( (%s)" % (self.uint64Str, self.uint64Str)
+        for i in range(problemType["NumIndicesC"]):
+          kStr += ', ' if i else ''
+          kStr += '0'  if i in nonTileFreeIndices else ('id%d' % i)
+        kStr += ");%s" % (self.endLine)
+        kStr += "    E[idxE] = (%s)(accum);%s" % (intermediateDataType, self.endLine)
+        kStr += "  }%s" % (self.endLine)
+
     typeStr = self.state["ProblemType"]["DestDataType"].toDevice(self.language)
     if ((self.state["ProblemType"]["ActivationType"] != 'none') and self.state["ActivationFused"]):
       typeActivationStr = self.state["ProblemType"]["ComputeDataType"].toDevice(self.language) if self.state["ProblemType"]["ActivationHPA"] else \
@@ -285,14 +361,19 @@ class KernelWriterConversion(KernelWriterBase):
         names += ", activationType"
       for name in self.state["ProblemType"]["ActivationType"].getAdditionalArgStringList():
         names += (", " + name)
-      rvalueStr = "activation((%s)accum%s)" % (typeActivationStr, names)
+      if self.state["ProblemType"]["Gradient"]:
+        rvalueStr = "(%s)accum * activation%s((%s)dataE%s)" % (typeActivationStr, self.gaurdStr, typeActivationStr, names)
+      else:
+        rvalueStr = "activation%s((%s)accum%s)" % (self.gaurdStr, typeActivationStr, names)
     else:
       rvalueStr = "accum"
     if self.state["ProblemType"]["DestDataType"].isInt8() and self.state["ProblemType"]["HighPrecisionAccumulate"]:
       rvalueStr = "min(127, max(-128, (int32_t)std::nearbyint(%s)))" % rvalueStr
 
-    kStr += "  result = (%s)%s;%s" % (typeStr, rvalueStr, self.endLine)
-    kStr += "  D[idxD] = (%s)(result%s);%s" % (typeStr, scaleDStr, self.endLine)
+    kStr += "  result = %s%s;%s" % (rvalueStr, scaleDStr, self.endLine)
+    if self.state["ProblemType"]["UseBias"] and self.state["ProblemType"]["Gradient"] and self.state["ProblemType"]["BiasSrc"] == "D":
+      kStr += "  W[idxW] = result;%s" % (self.endLine)
+    kStr += "  D[idxD] = (%s)(result);%s" % (typeStr, self.endLine)
 
     ########################################
     # end
@@ -322,13 +403,24 @@ class KernelWriterConversion(KernelWriterBase):
       name += "_GG"
     else:
       name += "" if self.state["ProblemType"]["StridedBatched"] else "_GB"
-    name += "_Bias%s"%self.state["ProblemType"]["BiasDataType"].toChar() if self.state["ProblemType"]["UseBias"] else ""
+    if self.state["ProblemType"]["UseBias"]:
+      if self.state["ProblemType"]["Gradient"]:
+        name += "_DBias%s%s"%(self.state["ProblemType"]["BiasSrc"], self.state["ProblemType"]["BiasDataType"].toChar())
+      else:
+        name += "_Bias%s"%self.state["ProblemType"]["BiasDataType"].toChar()
+    if self.state["ProblemType"]["UseE"]:
+      if self.state["ProblemType"]["Gradient"]:
+        name += "_Grad%s"%self.state["ProblemType"]["ComputeDataType"].toChar()
+      else:
+        name += "_Aux%s"%self.state["ProblemType"]["ComputeDataType"].toChar()
+
     if ((self.state["ProblemType"]["ActivationType"] != 'none') and self.state["ActivationFused"]):
       if self.state["ProblemType"]["ActivationType"] == 'all':
         name += "_A"
       else:
         name += "_%s"%str(self.state["ProblemType"]["ActivationType"]).upper()
       name += ("h" if self.state["ProblemType"]["ActivationHPA"] else "")
+      name += ("ng" if self.state["ProblemType"]["ActivationNoGuard"] else "")
     name += "_ScaleD" if self.state["ProblemType"]["UseScaleD"] else ""
     name += "_PostGSU"
     return name
@@ -346,8 +438,10 @@ class KernelWriterConversion(KernelWriterBase):
       fileString += "\n"
       activationCDataType = self.state["ProblemType"]["ActivationComputeDataType"]
       if self.state["ProblemType"]["ActivationType"] == 'all':
-        fileString += "#include \"TensileActivation_%s_%s.h\"\n"%(activationCDataType.toChar(), \
-                                                                  self.state["ProblemType"]["ActivationType"])
+        fileString += "#include \"Tensile%sActivation%s_%s_%s.h\"\n"%(self.actGradientPrefix, \
+                                                                      self.gaurdStr, \
+                                                                      activationCDataType.toChar(), \
+                                                                      self.state["ProblemType"]["ActivationType"])
       fileString += "\n"
 
     fileString += self.functionSignature()

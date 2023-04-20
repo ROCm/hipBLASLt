@@ -21,6 +21,7 @@
 ################################################################################
 
 from .AsmAddressCalculation import AddrCalculation
+from .Utils import DataDirection
 
 from math import ceil, trunc, modf
 
@@ -174,6 +175,9 @@ class StoreState:
         # vgpr holding current coord, setup initial state
         self.coord1Vgpr = kernelWriter.vgprs.coord1
 
+        # epilogue related
+        self.useBias = kernelWriter.states.useBias
+
         if self.optSharedColVgpr:
             numCols = len([e for e in elements if e[0] == 0 and e[2] == 0]) # count #elements with row d1=v1==0
             self.numAddrVgpr = numCols
@@ -182,10 +186,14 @@ class StoreState:
                 self.sharedColCVgprs = kernelWriter.vgprPool.checkOut(self.numAddrVgpr, "sharedColCVgprs for packed elements")
             else:
                 self.sharedColCVgprs = self.sharedColDVgprs
-            if kernel["ProblemType"]["UseBias"] and (kernel["GlobalSplitU"] == 1):
+            if self.useBias != DataDirection.NONE:
                 self.sharedColBiasVgprs = kernelWriter.vgprPool.checkOut(self.numAddrVgpr, "sharedColBiasVgprs for packed elements")
             else:
                 self.sharedColBiasVgprs = None
+            if kernel["ProblemType"]["UseE"] and (kernel["GlobalSplitU"] == 1):
+                self.sharedColEVgprs = kernelWriter.vgprPool.checkOut(self.numAddrVgpr, "sharedColEVgprs for packed elements")
+            else:
+                self.sharedColEVgprs = None
             if kernel["ProblemType"]["UseScaleD"] and (kernel["GlobalSplitU"] == 1):
                 self.sharedColScaleDVgprs = kernelWriter.vgprPool.checkOut(self.numAddrVgpr, "sharedColScaleDVgprs for packed elements")
             else:
@@ -193,22 +201,29 @@ class StoreState:
         elif self.optSingleColVgpr:
             self.numAddrVgpr = 1
             self.sharedColDVgprs = kernelWriter.vgprPool.checkOut(1, "sharedColDVgprs")
-            self.singleColDAddrUpdated = False
-            self.singleColCAddrUpdated = False
+            self.singleColBiasAddrUpdated = False
+            self.singleColEAddrUpdated    = False
+            self.singleColDAddrUpdated    = False
+            self.singleColCAddrUpdated    = False
             if kernel["ProblemType"]["UseBeta"]:
                 self.sharedColCVgprs = kernelWriter.vgprPool.checkOut(1, "sharedColCVgprs")
             else:
                 self.sharedColCVgprs = self.sharedColDVgprs
-            if kernel["ProblemType"]["UseBias"] and (kernel["GlobalSplitU"] == 1):
+            if self.useBias != DataDirection.NONE:
                 self.sharedColBiasVgprs = kernelWriter.vgprPool.checkOut(1, "sharedColBiasVgprs for packed elements")
             else:
                 self.sharedColBiasVgprs = None
+            if kernel["ProblemType"]["UseE"] and (kernel["GlobalSplitU"] == 1):
+                self.sharedColEVgprs = kernelWriter.vgprPool.checkOut(1, "sharedColEVgprs for packed elements")
+            else:
+                self.sharedColEVgprs = None
             if kernel["ProblemType"]["UseScaleD"] and (kernel["GlobalSplitU"] == 1):
                 self.sharedColScaleDVgprs = kernelWriter.vgprPool.checkOut(1, "sharedColScaleDVgprs for packed elements")
             else:
                 self.sharedColScaleDVgprs = None
         else:
             self.numAddrVgpr = 0
+            self.sharedColEVgprs    = None
             self.sharedColDVgprs    = None
             self.sharedColCVgprs    = None
             self.sharedColBiasVgprs = None
@@ -222,10 +237,17 @@ class StoreState:
         self.numVgprsPerElement = self.cfg.numVgprPerValuC*gwvw + self.cfg.numVgprsPerAddr + int(ceil(self.cfg.numVgprsPerDataPerVI * gwvw))
         if kernel["GroupLoadStore"] and kernel["ProblemType"]["UseBeta"]:
             self.numVgprsPerElement += self.cfg.numVgprsPerAddr
-        if kernel["ProblemType"]["UseBias"] and (kernel["GlobalSplitU"] == 1):
+        if kernel["ProblemType"]["UseE"] and (kernel["GlobalSplitU"] == 1):
+            self.numVgprsPerElement += self.cfg.numVgprsPerAddr  # E address
+            # Only needed in gradient activation
+            if (kernel["ProblemType"]["Gradient"] and kernel["ProblemType"]["ActivationType"] != 'none'):
+                numVgprs = int(ceil(kernel["ProblemType"]["ComputeDataType"].numRegisters()))
+                self.numVgprsPerElement += numVgprs * gwvw # Loaded data
+        if self.useBias != DataDirection.NONE:
             self.numVgprsPerElement += self.cfg.numVgprsPerAddr  # Bias address
-            numVgprs = int(ceil(kernel["ProblemType"]["ComputeDataType"].numRegisters()))
-            self.numVgprsPerElement += numVgprs * gwvw  # Loaded data
+            if self.useBias == DataDirection.READ:
+                numVgprs = int(ceil(kernel["ProblemType"]["ComputeDataType"].numRegisters()))
+                self.numVgprsPerElement += numVgprs * gwvw  # Loaded data
 
         if kernel["ProblemType"]["UseScaleD"] and (kernel["GlobalSplitU"] == 1):
             self.numVgprsPerElement += self.cfg.numVgprsPerAddr  # ScaleD address
@@ -253,6 +275,7 @@ class StoreState:
     def setupStoreElementsForBatch(self, kernel, gwvw, batchElements, batchElementSgprs, isOptNLL, allowLRVWforTLUandMI, lrvwB):
 
         self.elementAddr     = []
+        self.elementDataE    = []
         self.elementData     = []  # VGPR to use for element data, needed for atomic or beta
         self.elementDataBias = []
         self.elementDataScaleD = []
@@ -336,6 +359,7 @@ class StoreState:
 
             if self.optSingleColVgpr:
                 # use same address vgpr for all
+                addrEVgpr    = self.sharedColEVgprs
                 addrDVgpr    = self.sharedColDVgprs
                 addrCVgpr    = self.sharedColCVgprs
                 addrBiasVgpr = self.sharedColBiasVgprs
@@ -349,10 +373,14 @@ class StoreState:
                 elementCol   = trunc(elementCol)
                 addrDVgpr    = self.sharedColDVgprs+elementCol
                 addrCVgpr    = self.sharedColCVgprs+elementCol
-                if kernel["ProblemType"]["UseBias"] and (kernel["GlobalSplitU"] == 1):
+                if self.useBias != DataDirection.NONE:
                     addrBiasVgpr = self.sharedColBiasVgprs+elementCol
                 else:
                     addrBiasVgpr = None
+                if kernel["ProblemType"]["UseE"] and (kernel["GlobalSplitU"] == 1):
+                    addrEVgpr = self.sharedColEVgprs+elementCol
+                else:
+                    addrEVgpr = None
                 #print ("d0=", d0, "vc0=", vc0, "elementCol=", elementCol)
 
                 if kernel["ProblemType"]["UseScaleD"] and (kernel["GlobalSplitU"] == 1):
@@ -368,11 +396,16 @@ class StoreState:
                         int(ceil(self.cfg.numVgprsPerAddr)), "loadCBatch-addr for ei=%u"%(elementIdx), preventOverflow=not isOptNLL)
                 else:
                     addrCVgpr = addrDVgpr
-                if kernel["ProblemType"]["UseBias"] and (kernel["GlobalSplitU"] == 1):
+                if self.useBias != DataDirection.NONE:
                     addrBiasVgpr = kw.vgprPool.checkOutAligned(self.cfg.numVgprsPerAddr, \
                         int(ceil(self.cfg.numVgprsPerAddr)), "loadBiasBatch-addr for ei=%u"%(elementIdx), preventOverflow=not isOptNLL)
                 else:
                     addrBiasVgpr = None
+                if kernel["ProblemType"]["UseE"] and (kernel["GlobalSplitU"] == 1):
+                    addrEVgpr = kw.vgprPool.checkOutAligned(self.cfg.numVgprsPerAddr, \
+                        int(ceil(self.cfg.numVgprsPerAddr)), "loadEBatch-addr for ei=%u"%(elementIdx), preventOverflow=not isOptNLL)
+                else:
+                    addrEVgpr = None
 
                 if kernel["ProblemType"]["UseScaleD"] and (kernel["GlobalSplitU"] == 1):
                     addrScaleDVgpr = kw.vgprPool.checkOutAligned(self.cfg.numVgprsPerAddr, \
@@ -380,7 +413,7 @@ class StoreState:
                 else:
                     addrScaleDVgpr = None
 
-            self.elementAddr.append(AddrCalculation(kw, self, addrCVgpr, addrDVgpr, addrBiasVgpr, addrScaleDVgpr, element, coordOffset0, \
+            self.elementAddr.append(AddrCalculation(kw, self, addrCVgpr, addrDVgpr, addrEVgpr, addrBiasVgpr, addrScaleDVgpr, element, coordOffset0, \
               self.kernelWriter.vgprs.coord1, coordOffset1, coordOffset1 - self.lastCoordOffset1, newCoord1))
             # if numVgprsPerDataPerVI == 0.5, then two consecutive elements
             # should have same data pointer, next should move.
@@ -415,7 +448,7 @@ class StoreState:
 
             self.elementData.append(data)
 
-            if kernel["ProblemType"]["UseBias"] and (kernel["GlobalSplitU"] == 1):
+            if self.useBias == DataDirection.READ:
                 if coordOffset0 in biasVgprMap:
                     dataBias = biasVgprMap[coordOffset0]
                 else:
@@ -426,6 +459,15 @@ class StoreState:
             else:
                 dataBias = 0
             self.elementDataBias.append(dataBias)
+
+            # Only needed in gradient activation
+            if (kernel["ProblemType"]["Gradient"] and kernel["ProblemType"]["ActivationType"] != 'none' and kernel["ProblemType"]["UseE"]) and (kernel["GlobalSplitU"] == 1):
+                numVgprs = int(ceil(kernel["ProblemType"]["ComputeDataType"].numRegisters()))
+                dataE = kw.vgprPool.checkOutAligned(int(numVgprs*self.cfg.gwvw), \
+                              int(ceil(numVgprs*self.cfg.gwvw)), "e data for ei=%u"%elementIdx, preventOverflow=False)
+            else:
+                dataE = 0
+            self.elementDataE.append(dataE)
 
             if kernel["ProblemType"]["UseScaleD"] and (kernel["GlobalSplitU"] == 1):
                 if coordOffset0 in scaleDVgprMap:
@@ -484,8 +526,10 @@ class StoreState:
             if self.optSharedColVgpr:
                 pass # Nothing to reset
             elif self.optSingleColVgpr:
-                self.singleColDAddrUpdated = False
-                self.singleColCAddrUpdated = False
+                self.singleColBiasAddrUpdated = False
+                self.singleColEAddrUpdated    = False
+                self.singleColDAddrUpdated    = False
+                self.singleColCAddrUpdated    = False
             else:
                 pass # Nothing to reset
             # setup store element
@@ -494,6 +538,8 @@ class StoreState:
 
     def __del__(self):
 
+        if (self.sharedColEVgprs != None):
+            self.kernelWriter.vgprPool.checkIn(self.sharedColEVgprs)
         if (self.sharedColDVgprs != None):
             self.kernelWriter.vgprPool.checkIn(self.sharedColDVgprs)
             if (self.sharedColCVgprs != self.sharedColDVgprs):

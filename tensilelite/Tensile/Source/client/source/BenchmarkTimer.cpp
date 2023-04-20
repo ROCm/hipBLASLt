@@ -232,9 +232,9 @@ namespace Tensile
             }
             else
             {
-                hipEventCreate(&start);
-                hipEventCreate(&stop);
-                hipEventRecord(start, stream);
+                static_cast<void>(hipEventCreate(&start));
+                static_cast<void>(hipEventCreate(&stop));
+                static_cast<void>(hipEventRecord(start, stream));
             }
         }
 
@@ -249,8 +249,8 @@ namespace Tensile
             }
             else
             {
-                hipEventRecord(stop, stream);
-                hipEventSynchronize(stop);
+                static_cast<void>(hipEventRecord(stop, stream));
+                static_cast<void>(hipEventSynchronize(stop));
             }
         }
 
@@ -277,10 +277,10 @@ namespace Tensile
                 else
                 {
                     float eventMs = 0.0f;
-                    hipEventElapsedTime(&eventMs, start, stop);
+                    static_cast<void>(hipEventElapsedTime(&eventMs, start, stop));
                     totalTime = double_millis(eventMs);
-                    hipEventDestroy(start);
-                    hipEventDestroy(stop);
+                    static_cast<void>(hipEventDestroy(start));
+                    static_cast<void>(hipEventDestroy(stop));
                 }
             }
             else

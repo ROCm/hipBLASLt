@@ -76,8 +76,10 @@ namespace Tensile
             bool m_deterministicMode;
             bool m_cEqualsD;
             bool m_useBias;
+            int  m_biasSrc;
             bool m_useScaleD;
             bool m_useE;
+            bool m_useGradient = false;
 
             KernelLanguage              m_kernelLanguage;
             PerformanceMetric           m_performanceMetric;
@@ -85,6 +87,7 @@ namespace Tensile
             ActivationType              m_activationType;
             std::vector<DataType>       m_biasTypeArgs;
             bool                        m_activationHPA;
+            bool                        m_activationNoGuard;
             std::vector<ActivationType> m_activationEnumArg;
             size_t                      m_maxWorkspaceSize = 0;
 

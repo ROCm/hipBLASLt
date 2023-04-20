@@ -275,17 +275,16 @@ namespace Tensile
             if(m_printAny)
                 printTensors(problem, reference, result);
 
-            size_t validationStride = 1;
-            if(m_elementsToValidate > 0
-               && m_elementsToValidate < problem.d().totalLogicalElements())
-                validationStride
-                    = NextPrime(problem.d().totalAllocatedElements() / m_elementsToValidate);
-
             for(size_t i = 0; i < problem.tensors().size(); i++)
             {
                 auto& tensor = problem.tensors()[i];
                 if(!tensor.isOutput())
                     continue;
+
+                size_t validationStride = 1;
+                if(m_elementsToValidate > 0 && m_elementsToValidate < tensor.totalLogicalElements())
+                    validationStride
+                        = NextPrime(tensor.totalAllocatedElements() / m_elementsToValidate);
 
                 void const* refPtr = nullptr;
                 void const* resPtr = nullptr;

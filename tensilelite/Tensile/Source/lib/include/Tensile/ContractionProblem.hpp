@@ -486,9 +486,13 @@ namespace Tensile
             }
         }
 
-        void setBias(DataType type, size_t length, bool isOutput = false)
+        void setBias(DataType                       type,
+                     size_t                         length,
+                     bool                           isOutput = false,
+                     ContractionProblemGemm::TENSOR src      = ContractionProblemGemm::TENSOR::D)
         {
             m_biasType = type;
+            m_biasSrc  = src;
             if(type != DataType::None && m_useBias)
             {
                 m_tensors[ContractionProblemGemm::TENSOR::BIAS]
@@ -500,6 +504,11 @@ namespace Tensile
         DataType biasType() const
         {
             return m_biasType;
+        }
+
+        ContractionProblemGemm::TENSOR biasSrc() const
+        {
+            return m_biasSrc;
         }
 
         void setScaleD(DataType type, size_t length)
@@ -591,6 +600,16 @@ namespace Tensile
             return m_fp16AltImpl;
         }
 
+        void setUseGradient(bool value)
+        {
+            m_useGradient = value;
+        }
+
+        bool useGradient() const
+        {
+            return m_useGradient;
+        }
+
         void setActivationType(ActivationType activationtype)
         {
             m_activationType = activationtype;
@@ -609,6 +628,16 @@ namespace Tensile
         bool activationHPA() const
         {
             return m_activationHPA;
+        }
+
+        void setActivationNoGuard(bool value)
+        {
+            m_activationNoGuard = value;
+        }
+
+        bool activationNoGuard() const
+        {
+            return m_activationNoGuard;
         }
 
         void setActivationEnumArg(ActivationType activationEnumArg)
@@ -774,12 +803,14 @@ namespace Tensile
         bool              m_deterministicMode       = false;
         bool              m_eligibleForPK           = true;
         bool              m_fp16AltImpl             = false;
+        bool              m_useGradient             = false;
         bool              m_useE                    = false;
         bool              m_useBias                 = false;
         bool              m_useScaleD               = false;
         ActivationType    m_activationType          = ActivationType::None;
         ActivationType    m_activationEnumArg       = ActivationType::None;
         bool              m_activationHPA           = false;
+        bool              m_activationNoGuard       = false;
         KernelLanguage    m_kernelLanguage          = KernelLanguage::Any;
         PerformanceMetric m_performanceMetric       = PerformanceMetric::DeviceEfficiency;
 
@@ -787,6 +818,8 @@ namespace Tensile
         DataType m_betaType   = DataType::None; // for bwd-compatible
         DataType m_biasType   = DataType::None;
         DataType m_scaleDType = DataType::None; // if not assigned, will follow alpha-type
+
+        ContractionProblemGemm::TENSOR m_biasSrc = ContractionProblemGemm::TENSOR::D;
 
         ScalarValue m_alphaRestriction = ScalarValue::Any; // restrictions on the alpha value used
         ScalarValue m_betaRestriction  = ScalarValue::Any; // restrictions on the beta value used

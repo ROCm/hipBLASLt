@@ -1209,9 +1209,31 @@ namespace Tensile
                     return "WorkspaceCheck";
                 }
 
+                static size_t reductionSize(ContractionProblemGemm const& problem, size_t value)
+                {
+                    size_t reductionSize = 0;
+                    // 2d reduction
+                    if(problem.useGradient() && problem.useBias())
+                    {
+                        if(problem.biasSrc() == ContractionProblemGemm::TENSOR::D && (value == 0))
+                            reductionSize += problem.d().totalLogicalElements();
+                        else if(problem.biasSrc() == ContractionProblemGemm::TENSOR::A)
+                        {
+                            reductionSize += problem.freeSizeA(0) * value;
+                        }
+                        else if(problem.biasSrc() == ContractionProblemGemm::TENSOR::B)
+                        {
+                            reductionSize += problem.freeSizeB(0) * value;
+                        }
+                    }
+                    return reductionSize;
+                }
+
                 virtual bool operator()(ContractionProblemGemm const& problem) const override
                 {
-                    return problem.d().totalLogicalElements() * value <= problem.workspaceSize();
+                    size_t rs = reductionSize(problem, value);
+                    return problem.d().totalLogicalElements() * value + rs
+                           <= problem.workspaceSize();
                 }
 
                 virtual bool debugEval(ContractionProblemGemm const& problem,
@@ -1219,8 +1241,10 @@ namespace Tensile
                 {
                     bool rv = (*this)(problem);
 
+                    size_t rs = reductionSize(problem, value);
+
                     stream << *this << ": (" << problem.d().totalLogicalElements() << " * " << value
-                           << " <= " << problem.workspaceSize() << ") == " << rv;
+                           << " + " << rs << " <= " << problem.workspaceSize() << ") == " << rv;
 
                     return rv;
                 }
@@ -1465,6 +1489,33 @@ namespace Tensile
                 }
             };
 
+            struct UseGradientEqual
+                : public Predicate_CRTP<UseGradientEqual, ContractionProblemGemm>
+            {
+                enum
+                {
+                    HasIndex = false,
+                    HasValue = true
+                };
+                bool value;
+
+                UseGradientEqual() = default;
+                UseGradientEqual(bool value)
+                    : value(value)
+                {
+                }
+
+                static std::string Type()
+                {
+                    return "UseGradient";
+                }
+
+                virtual bool operator()(ContractionProblemGemm const& problem) const override
+                {
+                    return problem.useGradient() == value;
+                }
+            };
+
             // Activation
             struct ActivationEqual : public Predicate_CRTP<ActivationEqual, ContractionProblemGemm>
             {
@@ -1563,6 +1614,33 @@ namespace Tensile
                 }
             };
 
+            struct ActivationNoGuardEqual
+                : public Predicate_CRTP<ActivationNoGuardEqual, ContractionProblemGemm>
+            {
+                enum
+                {
+                    HasIndex = false,
+                    HasValue = true
+                };
+                bool value;
+
+                ActivationNoGuardEqual() = default;
+                ActivationNoGuardEqual(bool value)
+                    : value(value)
+                {
+                }
+
+                static std::string Type()
+                {
+                    return "ActivationNoGuard";
+                }
+
+                virtual bool operator()(ContractionProblemGemm const& problem) const override
+                {
+                    return problem.activationNoGuard() == value;
+                }
+            };
+
             struct UseBiasEqual : public Predicate_CRTP<UseBiasEqual, ContractionProblemGemm>
             {
                 enum
@@ -1586,6 +1664,32 @@ namespace Tensile
                 virtual bool operator()(ContractionProblemGemm const& problem) const override
                 {
                     return problem.useBias() == value;
+                }
+            };
+
+            struct UseEEqual : public Predicate_CRTP<UseEEqual, ContractionProblemGemm>
+            {
+                enum
+                {
+                    HasIndex = false,
+                    HasValue = true
+                };
+                bool value;
+
+                UseEEqual() = default;
+                UseEEqual(bool value)
+                    : value(value)
+                {
+                }
+
+                static std::string Type()
+                {
+                    return "UseE";
+                }
+
+                virtual bool operator()(ContractionProblemGemm const& problem) const override
+                {
+                    return problem.useE() == value;
                 }
             };
 
@@ -1640,6 +1744,65 @@ namespace Tensile
                         {
                             if(value[i] == problem.biasType())
                             {
+                                return true;
+                            }
+                        }
+                        return false;
+                    }
+                    return true;
+                }
+
+                virtual std::string toString() const override
+                {
+                    std::string biasString = "";
+                    for(size_t i = 0; i < value.size(); i++)
+                    {
+                        biasString += ToString(value[i]) + ", ";
+                    }
+                    return std::string("The supported bias types are: " + biasString);
+                }
+            };
+
+            struct BiasSrcWhiteList
+                : public Predicate_CRTP<BiasSrcWhiteList, ContractionProblemGemm>
+            {
+                enum
+                {
+                    HasIndex = false,
+                    HasValue = true
+                };
+                BiasSrcWhiteList() = default;
+
+                // This is actually the index of the problem type
+                std::vector<int> value;
+
+                static std::string Type()
+                {
+                    return "BiasSrcWhiteList";
+                }
+
+                virtual bool operator()(ContractionProblemGemm const& problem) const override
+                {
+                    if(problem.useBias())
+                    {
+                        for(size_t i = 0; i < value.size(); i++)
+                        {
+                            if(value[i] == static_cast<int>(problem.biasSrc()))
+                            {
+                                // Check if the length is set correctly.
+                                auto& length = problem.tensor(ContractionProblemGemm::TENSOR::BIAS)
+                                                   .sizes()[0];
+                                if(problem.biasSrc() == ContractionProblemGemm::TENSOR::A
+                                   || problem.biasSrc() == ContractionProblemGemm::TENSOR::D)
+                                {
+                                    if(length != problem.d().sizes()[0])
+                                        return false;
+                                }
+                                else if(problem.biasSrc() == ContractionProblemGemm::TENSOR::B)
+                                {
+                                    if(length != problem.d().sizes()[1])
+                                        return false;
+                                }
                                 return true;
                             }
                         }

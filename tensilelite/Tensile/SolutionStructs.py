@@ -35,6 +35,7 @@ from .KernelWriterConversion import KernelWriterConversion
 from .KernelWriterActivationEnumHeader import KernelWriterActivationEnumHeader
 from .KernelWriterActivationFunction import KernelWriterActivationFunction
 from .KernelWriterActivationOnly import KernelWriterActivationOnly
+from .KernelWriterReduction import KernelWriterReduction
 
 from .Activation import ActivationType
 
@@ -200,6 +201,55 @@ class ProblemType(Mapping):
 
     self["ActivationComputeDataType"] = self["ComputeDataType"] if self["ActivationHPA"] else \
                                         self["DestDataType"]
+
+    if "UseE" in config:
+      if config["UseE"]:
+        if self["ActivationType"] == 'none':
+          printWarning("Use E is disabled cause Activation is set to False.")
+          self["UseE"] = False
+        else:
+          self["UseE"] = config["UseE"]
+      else:
+        self["UseE"] = config["UseE"]
+
+    if "Gradient" in config:
+      if config["Gradient"]:
+        if (not self["UseBias"]) and self["ActivationType"] == 'none':
+          printWarning("Gradient is disabled cause bias and activation are both disabled.")
+          self["Gradient"] = False
+        if self["ActivationType"] != 'none' and self["UseE"] == False:
+          printWarning("Use E is enabled cause Activation is enabled.")
+          self["UseE"] = True
+        elif self["ActivationType"] != 'none' and self["UseE"] == False:
+          printWarning("Use E is disabled cause Activation is disabled.")
+          self["UseE"] = False
+        if self["UseScaleD"]:
+          printWarning("Use scaleD is disabled cause Gradient is enabled.")
+          self["UseScaleD"] = False
+      self["Gradient"] = config["Gradient"]
+
+    # Need gradient info
+    biasSrcList = ["A", "B", "D"]
+    if "BiasSrc" in config:
+      if not self["Gradient"] and config["BiasSrc"] != "D":
+        printWarning("BiasSrc is set to D cause Gradient is disabled.")
+        self["BiasSrc"] = "D"
+      elif self["Gradient"]:
+        # # Currently only supports D :)
+        # if config["BiasSrc"] != "D":
+        #   printExit("BiasSrc currently only supports D.")
+        if config["BiasSrc"] not in biasSrcList:
+          printExit("BiasSrc only supports A, B, D.")
+
+    if "ActivationNoGuard" in config:
+      self["ActivationNoGuard"] = config["ActivationNoGuard"]
+      if self["ActivationNoGuard"]:
+        if self["ActivationType"] == 'none':
+          printWarning("ActivationNoGuard is set to False cause Acivation is off.")
+          self["ActivationNoGuard"] = False
+        if (not self["Gradient"]):
+          printWarning("ActivationNoGuard is set to False cause Gradient is off.")
+          self["ActivationNoGuard"] = False
 
   ################################################################################
    # Function checkIfSupportedGEMMType:
@@ -394,7 +444,15 @@ class ProblemType(Mapping):
     if self["Fp16AltImpl"]: name += "R"
     if self["UseInitialStridesAB"]: name += "I"
     if self["UseInitialStridesCD"]: name += "Ic"
-    if self["UseBias"]: name += "_Bias" # Not showing bias types
+    if self["UseBias"]:
+      name += "_Bias" # Not showing bias types
+      if self["BiasSrc"] and self["Gradient"]: # Show bias src if gradient = True
+        name += "_BiasSrc%s"%self["BiasSrc"]
+    if self["UseE"]:
+      if self["Gradient"]:
+        name += "_Grad"
+      else:
+        name += "_Aux" # Not showing aux types
 
     # precision and other
     # name += "_SB" if self["StridedBatched"] else "_GB"
@@ -410,6 +468,7 @@ class ProblemType(Mapping):
       else:
         name += "_%s"%str(self["ActivationType"]).upper()
     if self["ActivationHPA"]: name += "H"
+    if self["ActivationNoGuard"]: name += "NG"
 
     if self["UseScaleD"]: name += "_SD"
 
@@ -946,6 +1005,7 @@ class Solution(collections.abc.Mapping):
     self.initActivationEnumHeaderObjects()
     self.initActivationFunctionObjects()
     self.initActivationOnlyKernelObjects()
+    self.initReductionKernelObjects()
 
   ########################################
   # create BetaONly Kernels
@@ -975,7 +1035,10 @@ class Solution(collections.abc.Mapping):
     self.conversionKernelObjects = []
     if (self["GlobalSplitU"] > 1) and self["_GlobalAccumulation"]:
       if self["ProblemType"]["UseBias"]:
-        for btype in self["ProblemType"]["BiasDataTypeList"]:
+        typeList = self["ProblemType"]["BiasDataTypeList"]
+        if self["ProblemType"]["Gradient"]:
+          typeList = [self["ProblemType"]["ComputeDataType"]]
+        for btype in typeList:
           state = {}
           state["ProblemType"] = deepcopy(self["ProblemType"])
           state["ProblemType"]["BiasDataTypeList"] = []
@@ -1023,12 +1086,22 @@ class Solution(collections.abc.Mapping):
       state["ActivationFused"] = self["ActivationFused"]
       self.activationOnlyKernelObjects.append(KernelWriterActivationOnly(state))
 
+  def initReductionKernelObjects(self):
+    self.reductionKernelObjects = []
+    if self["ProblemType"]["Gradient"] and self["ProblemType"]["UseBias"]:
+      for btype in self["ProblemType"]["BiasDataTypeList"]:
+        state = {}
+        state["ProblemType"] = deepcopy(self["ProblemType"])
+        state["ProblemType"]["BiasDataTypeList"] = []
+        state["ProblemType"]["BiasDataType"] = deepcopy(btype)
+        self.reductionKernelObjects.append(KernelWriterReduction(state))
+
   ########################################
   # get Helper Kernels
   def getHelperKernelObjects(self):
     return self.activationEnumHeaderObjects + self.activationFunctionObjects + \
            self.betaOnlyKernelObjects + self.conversionKernelObjects + \
-           self.activationOnlyKernelObjects
+           self.activationOnlyKernelObjects + self.reductionKernelObjects
 
 
   ########################################
@@ -2814,6 +2887,29 @@ class Solution(collections.abc.Mapping):
 
       ldsNumElements = max(ldsNumElements, ldsNumElementsRemapC)
 
+    if state["ProblemType"]["UseBias"]:
+      # Currently all offsets starts from 0
+      state["LdsOffsetBias"] = 0 # TODO: ldsBiasOffset = ldsNumElementsAB
+      ldsBiasMaxElements = 0
+      if state["ProblemType"]["Gradient"]:
+        if state["ProblemType"]["BiasSrc"] == "A":
+          tile01 = state["ProblemType"]["Index01A"]
+        elif state["ProblemType"]["BiasSrc"] == "B":
+          tile01 = state["ProblemType"]["Index01B"]
+        elif state["ProblemType"]["BiasSrc"] == "D":
+          tile01 = -1
+        else:
+          assert 0 and "Unsupported tile01 for bias lds calculation."
+        # Don't need to calculate lds bias
+        if tile01 > -1:
+          maxKId = state["WavefrontSize"] // ((state["MatrixInstM"] if (tile01 == 0) else state["MatrixInstN"]) * state["MatrixInstB"])
+          for dataType in state["ProblemType"]["BiasDataTypeList"]:
+            ldsBiasMaxElements = max(ldsBiasMaxElements, state["MacroTile%d"%tile01] * maxKId * dataType.numBytes())
+      else:
+        for dataType in state["ProblemType"]["BiasDataTypeList"]:
+          ldsBiasMaxElements = max(ldsBiasMaxElements, state["MacroTile0"] * dataType.numBytes())
+      ldsNumElements = max(ldsNumElements, state["LdsOffsetBias"] + ldsBiasMaxElements)
+
     state["LdsNumElements"] = ldsNumElements
     ldsSize = ldsNumElements * state["ProblemType"]["DataType"].numBytes()
     if ldsSize > globalParameters["MaxLDS"]:
@@ -3030,11 +3126,48 @@ class Solution(collections.abc.Mapping):
            (state["ThreadTile0"] == 4 and state["ThreadTile1"] == 8)):
       reject(state, "UnrollLoopEfficiencyEnable does not support ThreadTile0,1 = [%u,%u]"%(state["ThreadTile0"], state["ThreadTile1"]))
 
+    # Set E
+    if state["ProblemType"]["UseE"]:
+      if (state["_GlobalAccumulation"] == 'SingleBuffer') and state["GlobalSplitU"] > 1:
+        reject(state, "GlobalSplitU > 1 only compatible with MultipleBuffer")
+      if len(state["PackedC1IndicesX"]) > 1:
+        reject(state, "Use E does not support len(PackedC1IndicesX) > 1.")
+      if not state["BufferStore"]:
+        reject(state, "Use E only supports BufferStore due to no suppress no store.")
+      if state["StoreRemapVectorWidth"] and (state["GlobalSplitU"] == 1):
+        reject(state, "Use E does not support StoreRemapVectorWidth if GSU == 1.")
+      if state["GroupLoadStore"]:
+        reject(state, "Use E does not support GroupLoadStore.")
+
     # Activation
     # Function call is set to false if GSU != 1 or Activation is not fused or ActivationType is not All.
     if not ((state["GlobalSplitU"] == 1) and state["ActivationFused"] and state["ProblemType"]["ActivationType"] == 'all') \
       and state["ActivationFuncCall"]:
       state["ActivationFuncCall"] = False
+
+    if state["ActivationAlt"]:
+      if state["GlobalSplitU"] > 1:
+        # Turn off ActivationAlt if GSU > 1
+        state["ActivationAlt"] = False
+      if not state["ProblemType"]["Gradient"]:
+        reject(state, "ActivationAlt does not support gradient.")
+
+    # Bias reduction
+    if state["ProblemType"]["UseBias"] and state["ProblemType"]["Gradient"]:
+      if (state["ProblemType"]["BiasSrc"] == "A" or state["ProblemType"]["BiasSrc"] == "B"):
+        if state["allowLRVWforTLUandMI"]:
+          # Block for not verified.
+          reject(state, "Bias reduction on A, B does not support allowLRVWforTLUandMI")
+      if (state["_GlobalAccumulation"] == 'SingleBuffer') and state["GlobalSplitU"] > 1:
+        reject(state, "GlobalSplitU > 1 only compatible with MultipleBuffer for bias reduction")
+      if len(state["PackedC1IndicesX"]) > 1:
+        reject(state, "Bias reduction does not support len(PackedC1IndicesX) > 1.")
+      if not state["BufferStore"]:
+        reject(state, "Bias reduction only supports BufferStore due to no suppress no store.")
+      if state["StoreRemapVectorWidth"] and (state["GlobalSplitU"] == 1):
+        reject(state, "Bias reduction does not support StoreRemapVectorWidth if GSU == 1.")
+      if state["GroupLoadStore"]:
+        reject(state, "Bias reduction does not support GroupLoadStore.")
 
   ########################################
   # create a dictionary with booleans on whether to include parameter in name

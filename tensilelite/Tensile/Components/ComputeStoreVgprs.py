@@ -1,6 +1,6 @@
 ################################################################################
 #
-# Copyright (C) 2022 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -23,9 +23,10 @@
 ################################################################################
 
 from ..TensileInstructions import Module, SMulI32, VAddLShiftLeftU32, VAddU32, VMulLOU32, \
-                            staticMultiply, vectorStaticDivide, vectorStaticRemainder, \
-                            RegisterPoolResource, vgpr, sgpr, log2
+                            VMovB32, staticMultiply, vectorStaticDivide, \
+                            vectorStaticRemainder, RegisterPoolResource, vgpr, sgpr, log2
 from ..Component import ComputeStoreVgprs
+from ..Utils import DataDirection
 
 class ComputeStoreVgprsMFMA(ComputeStoreVgprs):
     kernel = {"EnableMatrixInstruction": True,
@@ -43,14 +44,18 @@ class ComputeStoreVgprsMFMA(ComputeStoreVgprs):
         # writer.coord0
         # writer.coord1
         # writer.vgprs.cinRowPtr  : C buffer coulmn offset
-        # writer.vgprs.coutRowPtr : D buffer coulmn offset
+        # writer.vgprs.coutRowPtrD : D buffer coulmn offset
 
         # alloc resources
         tid0 = writer.vgprPool.checkOut(1)
         tid1 = writer.vgprPool.checkOut(1)
         if kernel["BufferStore"]:
-            writer.vgprs.cinRowPtr  = writer.vgprPool.checkOut(1, "cinRowPtr")
-            writer.vgprs.coutRowPtr = writer.vgprPool.checkOut(1, "coutRowPtr")
+            writer.vgprs.cinRowPtr   = writer.vgprPool.checkOut(1, "cinRowPtr")
+            writer.vgprs.coutRowPtrD  = writer.vgprPool.checkOut(1, "coutRowPtrD")
+            if kernel["ProblemType"]["UseE"] and (kernel["GlobalSplitU"] == 1):
+                writer.vgprs.coutRowPtrE = writer.vgprPool.checkOut(1, "coutRowPtrE")
+            if writer.states.useBias == DataDirection.WRITE and (not kernel["WorkGroupReduction"]) and kernel["ProblemType"]["BiasSrc"] == "D":
+                writer.vgprs.coutRowPtrBias = writer.vgprPool.checkOut(1, "coutRowPtrBias")
 
         wave_id = writer.vgprPool.checkOut(1)
 
@@ -86,7 +91,13 @@ class ComputeStoreVgprsMFMA(ComputeStoreVgprs):
             strideC1 = "StrideC%s" % (writer.states.indexChars[packedC1[0]])
             strideD1 = "StrideD%s" % (writer.states.indexChars[packedC1[0]])
             module.add(VMulLOU32(dst=vgpr(writer.vgprs.cinRowPtr), src0=vgpr(tid1), src1=sgpr(strideC1), comment=" offset 1"))
-            module.add(VMulLOU32(dst=vgpr(writer.vgprs.coutRowPtr), src0=vgpr(tid1), src1=sgpr(strideD1), comment=" offset 1"))
+            module.add(VMulLOU32(dst=vgpr(writer.vgprs.coutRowPtrD), src0=vgpr(tid1), src1=sgpr(strideD1), comment=" offset 1"))
+            if kernel["ProblemType"]["UseE"] and (kernel["GlobalSplitU"] == 1):
+                module.add(VMovB32(dst=vgpr(writer.vgprs.coutRowPtrE), src=vgpr(tid1), comment=" save offset 1 for E"))
+            if writer.vgprs.coutRowPtrBias != -1:
+                index = packedC1[0] - 1
+                strideW1 = "Size%s" % "I" if index == 0 else ("J" if index == 1 else (writer.states.indexChars[index]))
+                module.add(VMulLOU32(dst=vgpr(writer.vgprs.coutRowPtrBias), src0=vgpr(tid1), src1=sgpr(strideW1), comment=" offset 1"))
 
             # coord 0 : wave part
             module.add(vectorStaticRemainder(dummy, tmpVgpr0, wave_id, kernel["MIWaveGroup"][0], tmpVgpr1Res, tmpSgprInfo))
@@ -147,14 +158,18 @@ class ComputeStoreVgprsMFMASwap(ComputeStoreVgprs):
         # writer.coord0
         # writer.coord1
         # writer.vgprs.cinRowPtr  : C buffer coulmn offset
-        # writer.vgprs.coutRowPtr : D buffer coulmn offset
+        # writer.vgprs.coutRowPtrD : D buffer coulmn offset
 
         # alloc resources
         tid0 = writer.vgprPool.checkOut(1)
         tid1 = writer.vgprPool.checkOut(1)
         if kernel["BufferStore"]:
             writer.vgprs.cinRowPtr  = writer.vgprPool.checkOut(1, "cinRowPtr")
-            writer.vgprs.coutRowPtr = writer.vgprPool.checkOut(1, "coutRowPtr")
+            writer.vgprs.coutRowPtrD = writer.vgprPool.checkOut(1, "coutRowPtrD")
+            if kernel["ProblemType"]["UseE"] and (kernel["GlobalSplitU"] == 1):
+                writer.vgprs.coutRowPtrE = writer.vgprPool.checkOut(1, "coutRowPtrE")
+            if writer.states.useBias == DataDirection.WRITE and (not kernel["WorkGroupReduction"]) and kernel["ProblemType"]["BiasSrc"] == "D":
+                writer.vgprs.coutRowPtrBias = writer.vgprPool.checkOut(1, "coutRowPtrBias")
 
         wave_id = writer.vgprPool.checkOut(1)
 
@@ -194,7 +209,13 @@ class ComputeStoreVgprsMFMASwap(ComputeStoreVgprs):
             strideC1 = "StrideC%s" % (writer.states.indexChars[packedC1[0]])
             strideD1 = "StrideD%s" % (writer.states.indexChars[packedC1[0]])
             module.add(VMulLOU32(dst=vgpr(writer.vgprs.cinRowPtr), src0=vgpr(tid1), src1=sgpr(strideC1), comment=" offset 1"))
-            module.add(VMulLOU32(dst=vgpr(writer.vgprs.coutRowPtr), src0=vgpr(tid1), src1=sgpr(strideD1), comment=" offset 1"))
+            module.add(VMulLOU32(dst=vgpr(writer.vgprs.coutRowPtrD), src0=vgpr(tid1), src1=sgpr(strideD1), comment=" offset 1"))
+            if kernel["ProblemType"]["UseE"] and (kernel["GlobalSplitU"] == 1):
+                module.add(VMovB32(dst=vgpr(writer.vgprs.coutRowPtrE), src=vgpr(tid1), comment=" save offset 1 for E"))
+            if writer.vgprs.coutRowPtrBias != -1:
+                index = packedC1[0] - 1
+                strideW1 = "Size%s" % "I" if index == 0 else ("J" if index == 1 else (writer.states.indexChars[index]))
+                module.add(VMulLOU32(dst=vgpr(writer.vgprs.coutRowPtrBias), src0=vgpr(tid1), src1=sgpr(strideW1), comment=" offset 1"))
 
             # coord 0 : wave part
             module.add(vectorStaticRemainder(dummy, tid0, wave_id, kernel["MIWaveGroup"][0], tmpVgpr1Res, tmpSgprInfo))
