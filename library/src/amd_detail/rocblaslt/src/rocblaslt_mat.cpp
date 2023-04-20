@@ -56,6 +56,8 @@ rocblaslt_status rocblaslt_matmul_impl(const rocblaslt_handle       handle,
                                        size_t                       workspaceSizeInBytes,
                                        hipStream_t                  stream)
 {
+    rocblaslt_status       isValid      = rocblaslt_status_continue;
+    bool                   gradient     = false;
     hipblasOperation_t     opA          = matmul_descr->op_A;
     hipblasOperation_t     opB          = matmul_descr->op_B;
     rocblaslt_compute_type compute_type = matmul_descr->compute_type;
@@ -102,38 +104,57 @@ rocblaslt_status rocblaslt_matmul_impl(const rocblaslt_handle       handle,
     int               num_batches_d  = matD->batch_count;
     hipblasDatatype_t type_d         = matD->type;
 
+    // matrix E
+    void* E = nullptr;
+    if(is_e_enabled(epilogue))
+    {
+        if(matmul_descr->e == nullptr)
+            isValid = rocblaslt_status_invalid_pointer;
+        E = (void*)matmul_descr->e;
+    }
+    int64_t num_rows_e     = num_rows_d;
+    int64_t num_cols_e     = num_cols_d;
+    int64_t lde            = matmul_descr->lde > 0 ? matmul_descr->lde : num_rows_e;
+    int64_t batch_stride_e = matmul_descr->stride_e > 0 ? matmul_descr->stride_e : lde * num_cols_e;
+    // int     num_batches_e  = num_batches_d;
+    if(E != nullptr
+       && ((matmul_descr->lde < num_rows_e)
+           || (matmul_descr->stride_e < (num_cols_e * num_rows_e))))
+        isValid = rocblaslt_status_invalid_value;
+
     int64_t m = num_rows_d;
     int64_t n = num_cols_d;
     int64_t k = (opA == HIPBLAS_OP_N) ? num_cols_a : num_rows_a;
 
-    auto validArgs = validateMatmulArgs(m,
-                                        n,
-                                        k,
-                                        alpha,
-                                        A,
-                                        B,
-                                        beta,
-                                        C,
-                                        D,
-                                        num_batches_a,
-                                        num_batches_b,
-                                        num_batches_c,
-                                        num_batches_d,
-                                        batch_stride_a,
-                                        batch_stride_b,
-                                        batch_stride_c,
-                                        batch_stride_d);
-    if(validArgs != rocblaslt_status_continue)
-        return validArgs;
+    if(isValid == rocblaslt_status_continue)
+        isValid = validateMatmulArgs(m,
+                                     n,
+                                     k,
+                                     alpha,
+                                     A,
+                                     B,
+                                     beta,
+                                     C,
+                                     D,
+                                     num_batches_a,
+                                     num_batches_b,
+                                     num_batches_c,
+                                     num_batches_d,
+                                     batch_stride_a,
+                                     batch_stride_b,
+                                     batch_stride_c,
+                                     batch_stride_d);
+    if(isValid != rocblaslt_status_continue)
+        return isValid;
 
     bool strided_batch = true;
     bool grouped_gemm  = false;
 
-#define EX_PARM                                                                               \
-    handle, opA, opB, m, n, k, alpha, A, type_a, lda, batch_stride_a, B, type_b, ldb,         \
-        batch_stride_b, beta, C, type_c, ldc, batch_stride_c, D, type_d, ldd, batch_stride_d, \
-        num_batches_a, strided_batch, grouped_gemm, compute_type, algo, workspace,            \
-        workspaceSizeInBytes, bias, scaleD, bias_type, epilogue, stream
+#define EX_PARM                                                                                  \
+    handle, opA, opB, m, n, k, alpha, A, type_a, lda, batch_stride_a, B, type_b, ldb,            \
+        batch_stride_b, beta, C, type_c, ldc, batch_stride_c, D, type_d, ldd, batch_stride_d, E, \
+        lde, batch_stride_e, num_batches_a, strided_batch, grouped_gemm, gradient, compute_type, \
+        algo, workspace, workspaceSizeInBytes, bias, scaleD, bias_type, epilogue, stream
 
     return rocblaslt_matmul_template(EX_PARM);
 }

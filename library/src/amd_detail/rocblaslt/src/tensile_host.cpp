@@ -291,6 +291,16 @@ namespace
         // Add problem predicates for CEqualsD
         tensileProblem.setCEqualsD(prob.C == prob.D);
 
+        if(prob.E != nullptr)
+        {
+            bool isOutput = prob.gradient ? false : true;
+            tensileProblem.setUseE(true);
+            tensileProblem.setE(Tensile_Tc,
+                                {prob.m, prob.n, prob.batch_count},
+                                {prob.row_stride_e, prob.col_stride_e, prob.batch_stride_e},
+                                isOutput);
+        }
+
         // set bias mode
         tensileProblem.setUseBias(true);
         tensileProblem.setBias(hipblasDatatype_to_tensile_type(prob.bias_type), d.sizes()[0]);
@@ -311,6 +321,8 @@ namespace
             break;
         case ROCBLASLT_EPILOGUE_GELU:
         case ROCBLASLT_EPILOGUE_GELU_BIAS:
+        case ROCBLASLT_EPILOGUE_GELU_AUX:
+        case ROCBLASLT_EPILOGUE_GELU_AUX_BIAS:
             tensileAct = Tensile::ActivationType::Gelu;
             break;
         case ROCBLASLT_EPILOGUE_BIAS:
@@ -414,6 +426,8 @@ namespace
             break;
         case ROCBLASLT_EPILOGUE_GELU:
         case ROCBLASLT_EPILOGUE_GELU_BIAS:
+        case ROCBLASLT_EPILOGUE_GELU_AUX:
+        case ROCBLASLT_EPILOGUE_GELU_AUX_BIAS:
             tensileAct = Tensile::ActivationType::Gelu;
             break;
         case ROCBLASLT_EPILOGUE_BIAS:
@@ -422,13 +436,14 @@ namespace
         }
         tensileProblem.setActivationEnumArg(tensileAct);
 
-        if(fallback && prob.bias == nullptr && prob.scaleD == nullptr
+        if(fallback && prob.bias == nullptr && prob.scaleD == nullptr && prob.E == nullptr
            && tensileAct == Tensile::ActivationType::None)
         {
             tensileProblem.setUseBias(false);
             tensileProblem.setActivationType(Tensile::ActivationType::None);
             tensileProblem.setActivationHPA(false);
             tensileProblem.setUseScaleD(false);
+            tensileProblem.setUseE(false);
         }
         else
         {
@@ -444,6 +459,17 @@ namespace
             // set Actvation
             tensileProblem.setActivationType(Tensile::ActivationType::All);
             tensileProblem.setActivationHPA(sizeof(Tc) > sizeof(Ti));
+
+            // set E
+            if(prob.E != nullptr)
+            {
+                bool isOutput = prob.gradient ? false : true;
+                tensileProblem.setUseE(true);
+                tensileProblem.setE(Tensile_Tc,
+                                    {prob.m, prob.n, prob.batch_count},
+                                    {prob.row_stride_e, prob.col_stride_e, prob.batch_stride_e},
+                                    isOutput);
+            }
         }
     }
 
@@ -475,6 +501,7 @@ namespace
         inputs.b = reinterpret_cast<const void*>(prob.B);
         inputs.c = reinterpret_cast<const void*>(prob.C);
         inputs.d = reinterpret_cast<void*>(prob.D);
+        inputs.e = reinterpret_cast<void*>(prob.E);
 
         inputs.batchA = reinterpret_cast<void const* const*>(prob.batch_A);
         inputs.batchB = reinterpret_cast<void const* const*>(prob.batch_B);
@@ -1059,13 +1086,22 @@ RocblasltContractionProblem<Ti, To, Tc>
                               const Tc*                   beta,
                               size_t                      maxWorkSpaceBytes)
 {
+    rocblaslt_status   isValid   = rocblaslt_status_continue;
+    bool               gradient  = false;
     hipblasOperation_t opA       = matmul_descr->op_A;
     hipblasOperation_t opB       = matmul_descr->op_B;
+    const void*        e         = nullptr;
     const void*        bias      = nullptr;
     hipblasDatatype_t  bias_type = matmul_descr->bias_type == static_cast<hipblasDatatype_t>(0)
                                        ? matD->type
                                        : matmul_descr->bias_type;
     rocblaslt_epilogue epilogue  = matmul_descr->epilogue;
+    if(is_e_enabled(epilogue))
+    {
+        if(matmul_descr->e == nullptr)
+            isValid = rocblaslt_status_invalid_pointer;
+        e = (void*)matmul_descr->e;
+    }
     if(is_bias_enabled(epilogue))
         bias = (const void*)matmul_descr->bias;
     bool grouped_gemm = 0;
@@ -1098,30 +1134,42 @@ RocblasltContractionProblem<Ti, To, Tc>
     int64_t batch_stride_d = matD->batch_stride;
     int     num_batches_d  = matD->batch_count;
 
+    // matrix E (Epilogue)
+    int64_t num_rows_e     = num_rows_d;
+    int64_t num_cols_e     = num_cols_d;
+    int64_t lde            = matmul_descr->lde > 0 ? matmul_descr->lde : num_rows_e;
+    int64_t batch_stride_e = matmul_descr->stride_e > 0 ? matmul_descr->stride_e : lde * num_cols_e;
+    // int     num_batches_e  = num_batches_d;
+    if(e != nullptr
+       && ((matmul_descr->lde < num_rows_e)
+           || (matmul_descr->stride_e < (num_cols_e * num_rows_e))))
+        isValid = rocblaslt_status_invalid_value;
+
     int64_t m = num_rows_d;
     int64_t n = num_cols_d;
     int64_t k = (opA == HIPBLAS_OP_N) ? num_cols_a : num_rows_a;
 
     int8_t      dummy;
     const void* dummy_ptr = &dummy;
-    auto        validArgs = validateMatmulArgs(m,
-                                        n,
-                                        k,
-                                        dummy_ptr,
-                                        dummy_ptr,
-                                        dummy_ptr,
-                                        dummy_ptr,
-                                        dummy_ptr,
-                                        dummy_ptr,
-                                        num_batches_a,
-                                        num_batches_b,
-                                        num_batches_c,
-                                        num_batches_d,
-                                        batch_stride_a,
-                                        batch_stride_b,
-                                        batch_stride_c,
-                                        batch_stride_d);
-    if(validArgs != rocblaslt_status_continue)
+    if(isValid == rocblaslt_status_continue)
+        isValid = validateMatmulArgs(m,
+                                     n,
+                                     k,
+                                     dummy_ptr,
+                                     dummy_ptr,
+                                     dummy_ptr,
+                                     dummy_ptr,
+                                     dummy_ptr,
+                                     dummy_ptr,
+                                     num_batches_a,
+                                     num_batches_b,
+                                     num_batches_c,
+                                     num_batches_d,
+                                     batch_stride_a,
+                                     batch_stride_b,
+                                     batch_stride_c,
+                                     batch_stride_d);
+    if(isValid != rocblaslt_status_continue)
     {
         m = 0;
         n = 0;
@@ -1150,9 +1198,14 @@ RocblasltContractionProblem<Ti, To, Tc>
                                                     nullptr,
                                                     ldd,
                                                     batch_stride_d,
+                                                    (Tc*)e,
+                                                    nullptr,
+                                                    lde,
+                                                    batch_stride_e,
                                                     num_batches_a,
                                                     true,
                                                     grouped_gemm,
+                                                    gradient,
                                                     bias,
                                                     scaleD,
                                                     bias_type,
@@ -1213,24 +1266,28 @@ rocblaslt_status getBestSolutions(RocblasltContractionProblem<Ti, To, Tc> prob,
     hardware          = Tensile::hip::GetDevice(*deviceProp);
     auto tensile_prob = ConstructTensileProblem(prob);
     std::vector<std::shared_ptr<Tensile::ContractionSolution>> solutions_fallback;
+
     // Fallback to original kernels
-    if(prob.scaleD == nullptr && prob.bias == nullptr
+    if(prob.scaleD == nullptr && prob.bias == nullptr && prob.E == nullptr
        && tensile_prob.activationEnumArg() == Tensile::ActivationType::None)
     {
         auto useBias   = tensile_prob.useBias();
         auto actType   = tensile_prob.activationType();
         auto actHPA    = tensile_prob.activationHPA();
         auto useScaleD = tensile_prob.useScaleD();
+        auto useE      = tensile_prob.useE();
         tensile_prob.setUseBias(false);
         tensile_prob.setActivationType(Tensile::ActivationType::None);
         tensile_prob.setActivationHPA(false);
         tensile_prob.setUseScaleD(false);
+        tensile_prob.setUseE(false);
         solutions_fallback = library->findTopSolutions(tensile_prob, *hardware, requestedAlgoCount);
         // restore
         tensile_prob.setUseBias(useBias);
         tensile_prob.setActivationType(actType);
         tensile_prob.setActivationHPA(actHPA);
         tensile_prob.setUseScaleD(useScaleD);
+        tensile_prob.setUseE(useE);
     }
 
     auto solutions = library->findTopSolutions(tensile_prob, *hardware, requestedAlgoCount);

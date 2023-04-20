@@ -471,6 +471,33 @@ rocblaslt_status rocblaslt_matmul_desc_set_attribute(rocblaslt_matmul_desc      
                     return rocblaslt_status_invalid_value;
                 }
                 break;
+            case ROCBLASLT_MATMUL_DESC_EPILOGUE_AUX_POINTER:
+                if(sizeof(void*) <= sizeInBytes)
+                    memcpy(&matmulDesc->e, buf, sizeof(void*));
+                else
+                {
+                    log_error(__func__, "invalid e buf size", sizeInBytes);
+                    return rocblaslt_status_invalid_value;
+                }
+                break;
+            case ROCBLASLT_MATMUL_DESC_EPILOGUE_AUX_LD:
+                if(sizeof(int64_t) <= sizeInBytes)
+                    memcpy(&matmulDesc->lde, buf, sizeof(int64_t));
+                else
+                {
+                    log_error(__func__, "invalid lde buf size", sizeInBytes);
+                    return rocblaslt_status_invalid_value;
+                }
+                break;
+            case ROCBLASLT_MATMUL_DESC_EPILOGUE_AUX_BATCH_STRIDE:
+                if(sizeof(int64_t) <= sizeInBytes)
+                    memcpy(&matmulDesc->stride_e, buf, sizeof(int64_t));
+                else
+                {
+                    log_error(__func__, "invalid stride_e buf size", sizeInBytes);
+                    return rocblaslt_status_invalid_value;
+                }
+                break;
             default:
                 log_error(__func__, "invalid attribute", matmulAttr);
                 return rocblaslt_status_invalid_value;

@@ -3,7 +3,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022 Advanced Micro Devices, Inc.
+ * Copyright (C) 2022-2023 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -339,6 +339,18 @@ inline bool rocblaslt_enum_utils::is_invalid(rocblaslt_matmul_preference_attribu
     }
 };
 
+inline bool is_e_enabled(rocblaslt_epilogue value_)
+{
+    switch(value_)
+    {
+    case ROCBLASLT_EPILOGUE_GELU_AUX:
+    case ROCBLASLT_EPILOGUE_GELU_AUX_BIAS:
+        return true;
+    default:
+        return false;
+    }
+};
+
 inline bool is_bias_enabled(rocblaslt_epilogue value_)
 {
     switch(value_)
@@ -346,6 +358,7 @@ inline bool is_bias_enabled(rocblaslt_epilogue value_)
     case ROCBLASLT_EPILOGUE_BIAS:
     case ROCBLASLT_EPILOGUE_GELU_BIAS:
     case ROCBLASLT_EPILOGUE_RELU_BIAS:
+    case ROCBLASLT_EPILOGUE_GELU_AUX_BIAS:
         return true;
     default:
         return false;

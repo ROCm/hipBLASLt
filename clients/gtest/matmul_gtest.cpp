@@ -110,11 +110,22 @@ namespace
                     if(arg.d_type != arg.scale_type && arg.bias_type == arg.scale_type)
                         name << hipblas_datatype_to_string(arg.bias_type);
                 }
+
+                if(arg.use_e)
+                {
+                    name << "_AUX";
+                }
+
                 name << '_' << (char)std::toupper(arg.transA) << (char)std::toupper(arg.transB);
 
                 name << '_' << arg.M << '_' << arg.N << '_' << arg.K << '_' << arg.alpha << '_'
                      << arg.lda << '_' << arg.ldb << '_' << arg.beta << '_' << arg.ldc << '_'
                      << arg.ldd;
+
+                if(arg.use_e)
+                {
+                    name << '_' << arg.lde;
+                }
 
                 name << '_' << arg.batch_count;
 

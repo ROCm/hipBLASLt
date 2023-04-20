@@ -48,6 +48,7 @@ void Arguments::init()
     stride_b = 0;
     stride_c = 0;
     stride_d = 0;
+    stride_e = 0;
 
     user_allocated_workspace = 0;
 
@@ -59,6 +60,7 @@ void Arguments::init()
     ldb = 0;
     ldc = 0;
     ldd = 0;
+    lde = 0;
 
     batch_count = 1;
 
@@ -103,6 +105,8 @@ void Arguments::init()
     grouped_gemm    = 0;
     c_noalias_d     = false;
     HMM             = false;
+    use_e           = false;
+    gradient        = false;
 }
 
 // Function to print Arguments out to stream in YAML format

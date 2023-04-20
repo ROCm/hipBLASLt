@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022 Advanced Micro Devices, Inc.
+ * Copyright (C) 2022-2023 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -130,28 +130,28 @@ inline rocblaslt_status validateMatmulDescrArgs(rocblaslt_handle       handle,
 /*******************************************************************************
  * Validate Matmul Arguments
  ******************************************************************************/
-inline rocblaslt_status validateMatmulArgs(int64_t          m,
-                                           int64_t          n,
-                                           int64_t          k,
-                                           const void*      alpha,
-                                           const void*      a,
-                                           const void*      b,
-                                           const void*      beta,
-                                           const void*      c,
-                                           const void*      d,
-                                           int              num_batches_a  = 1,
-                                           int              num_batches_b  = 1,
-                                           int              num_batches_c  = 1,
-                                           int              num_batches_d  = 1,
-                                           int64_t          batch_stride_a = 0,
-                                           int64_t          batch_stride_b = 0,
-                                           int64_t          batch_stride_c = 0,
-                                           int64_t          batch_stride_d = 0)
+inline rocblaslt_status validateMatmulArgs(int64_t     m,
+                                           int64_t     n,
+                                           int64_t     k,
+                                           const void* alpha,
+                                           const void* a,
+                                           const void* b,
+                                           const void* beta,
+                                           const void* c,
+                                           const void* d,
+                                           int         num_batches_a  = 1,
+                                           int         num_batches_b  = 1,
+                                           int         num_batches_c  = 1,
+                                           int         num_batches_d  = 1,
+                                           int64_t     batch_stride_a = 0,
+                                           int64_t     batch_stride_b = 0,
+                                           int64_t     batch_stride_c = 0,
+                                           int64_t     batch_stride_d = 0)
 {
     // sizes must not be negative
     if(batch_stride_a < 0 || batch_stride_b < 0 || batch_stride_c < 0 || batch_stride_d < 0)
     {
-        std::cerr << "matrix and stride size must be posstive" << std::endl;
+        std::cerr << "matrix and stride size must be positive" << std::endl;
         return rocblaslt_status_invalid_size;
     }
 

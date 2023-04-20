@@ -185,6 +185,10 @@ void mat_mul_bias_activation(Tc             alpha,
                              int            Ds1,
                              int            Ds2,
                              int            Ds3,
+                             Tc*            E,
+                             int            Es1,
+                             int            Es2,
+                             int            Es3,
                              To*            bias,
                              Tc*            scaleD,
                              ActivationType actType)
@@ -209,6 +213,10 @@ void mat_mul_bias_activation(Tc             alpha,
                 }
                 t = beta * static_cast<Tc>(C[i1 * Cs1 + i2 * Cs2 + batch * Cs3]) + alpha * t
                     + (bias == nullptr ? 0 : bias[i1]);
+                if(E != nullptr)
+                {
+                    E[i1 * Es1 + i2 * Es2 + batch * Es3] = static_cast<Tc>(t);
+                }
                 if(actType != ActivationType::NONE)
                     t = actFunc(t);
                 t                                    = t * (scaleD == nullptr ? 1.0 : scaleD[i1]);
@@ -247,8 +255,8 @@ static void show_usage(char* argv[])
               << "\t--ldb \t\t\tldb \t\tGEMM_STRIDED argument ldb\n"
               << "\t--ldc \t\t\tldc \t\tGEMM_STRIDED argument ldc\n"
               << "\t--ldd \t\t\tldd \t\tGEMM_STRIDED argument ldd\n"
-              << "\t--trans_a \t\ttrans_a \tGEMM_STRIDED argument trans_a\n"
-              << "\t--trans_b \t\ttrans_b \tGEMM_STRIDED argument trans_b\n"
+              << "\t--trans_a \t\ttrans_a \tGEMM_STRIDED argument trans_a (N, T)\n"
+              << "\t--trans_b \t\ttrans_b \tGEMM_STRIDED argument trans_b (N, T)\n"
               << "\t--datatype \t\tdatatype \tGEMM_STRIDED argument in out "
                  "datatype:fp32,fp16,bf16\n"
               << "\t--stride_a \t\tstride_a \tGEMM_STRIDED argument stride_a\n"
@@ -260,6 +268,8 @@ static void show_usage(char* argv[])
               << "\t--batch_count \t\tbatch \t\tGEMM_STRIDED argument batch count\n"
               << "\t--act \t\t\tact \t\tGEMM_STRIDED set activation type: relu "
                  "or gelu\n"
+              << "\t--use_e \t\tuse_e \t\tGEMM_STRIDED enable use_e: 0 or 1 "
+                 "(default is 0)\n"
               << "\t--bias \t\t\tbias \t\tGEMM_STRIDED enable bias: 0 or 1 "
                  "(default is 0)\n"
               << "\t--scaleD \t\tscaleD \t\tGEMM_STRIDED enable scaleD: 0 or 1 "
@@ -285,15 +295,19 @@ static int parse_arguments(int                 argc,
                            int64_t&            ldb,
                            int64_t&            ldc,
                            int64_t&            ldd,
+                           int64_t&            lde,
                            int64_t&            stride_a,
                            int64_t&            stride_b,
                            int64_t&            stride_c,
                            int64_t&            stride_d,
+                           int64_t&            stride_e,
                            int32_t&            batch_count,
                            float&              alpha,
                            float&              beta,
                            hipblasOperation_t& trans_a,
                            hipblasOperation_t& trans_b,
+                           bool&               enable_grad,
+                           bool&               enable_e,
                            bool&               enable_bias,
                            bool&               enable_scaleD,
                            ActivationType&     actType,
@@ -375,6 +389,10 @@ static int parse_arguments(int                 argc,
                 {
                     ldd = atoi(argv[++i]);
                 }
+                else if((arg == "--lde") && (i + 1 < argc))
+                {
+                    lde = atoi(argv[++i]);
+                }
                 else if((arg == "--stride_a") && (i + 1 < argc))
                 {
                     stride_a = atoi(argv[++i]);
@@ -391,6 +409,10 @@ static int parse_arguments(int                 argc,
                 {
                     stride_d = atoi(argv[++i]);
                 }
+                else if((arg == "--stride_e") && (i + 1 < argc))
+                {
+                    stride_e = atoi(argv[++i]);
+                }
                 else if((arg == "--alpha") && (i + 1 < argc))
                 {
                     alpha = atof(argv[++i]);
@@ -398,6 +420,15 @@ static int parse_arguments(int                 argc,
                 else if((arg == "--beta") && (i + 1 < argc))
                 {
                     beta = atof(argv[++i]);
+                }
+                // Currently disabled
+                // else if((arg == "--grad") && (i + 1 < argc))
+                // {
+                //     enable_grad = atoi(argv[++i]);
+                // }
+                else if((arg == "--use_e") && (i + 1 < argc))
+                {
+                    enable_e = atoi(argv[++i]);
                 }
                 else if((arg == "--bias") && (i + 1 < argc))
                 {
@@ -514,10 +545,12 @@ bool bad_argument(hipblasOperation_t trans_a,
                   int64_t            ldb,
                   int64_t            ldc,
                   int64_t            ldd,
+                  int64_t            lde,
                   int64_t            stride_a,
                   int64_t            stride_b,
                   int64_t            stride_c,
                   int64_t            stride_d,
+                  int64_t            stride_e,
                   int32_t            batch_count)
 {
     bool argument_error = false;
@@ -571,6 +604,16 @@ bool bad_argument(hipblasOperation_t trans_a,
         argument_error = true;
         std::cerr << "ERROR: bad argument stride_c = " << stride_d << " < " << n * ldd << std::endl;
     }
+    if(lde < m)
+    {
+        argument_error = true;
+        std::cerr << "ERROR: bad argument lde = " << lde << " < " << m << std::endl;
+    }
+    if(stride_e < n * lde)
+    {
+        argument_error = true;
+        std::cerr << "ERROR: bad argument stride_e = " << stride_e << " < " << n * lde << std::endl;
+    }
     if(batch_count == 0)
     {
         argument_error = true;
@@ -581,16 +624,18 @@ bool bad_argument(hipblasOperation_t trans_a,
 }
 
 template <typename T>
-void initialize_a_b_c_bias(std::vector<T>&     ha,
-                           int64_t             size_a,
-                           std::vector<T>&     hb,
-                           int64_t             size_b,
-                           std::vector<T>&     hc,
-                           int64_t             size_c,
-                           std::vector<T>&     h_bias,
-                           int64_t             size_bias,
-                           std::vector<float>& h_scaleD,
-                           int64_t             size_scaleD)
+void initialize_a_b_c_e_bias(std::vector<T>&     ha,
+                             int64_t             size_a,
+                             std::vector<T>&     hb,
+                             int64_t             size_b,
+                             std::vector<T>&     hc,
+                             int64_t             size_c,
+                             std::vector<float>& he,
+                             int64_t             size_e,
+                             std::vector<T>&     h_bias,
+                             int64_t             size_bias,
+                             std::vector<float>& h_scaleD,
+                             int64_t             size_scaleD)
 {
     srand(1);
     for(int i = 0; i < size_a; ++i)
@@ -604,6 +649,10 @@ void initialize_a_b_c_bias(std::vector<T>&     ha,
     for(int i = 0; i < size_c; ++i)
     {
         hc[i] = static_cast<T>((rand() % 7) - 3);
+    }
+    for(int i = 0; i < size_e; ++i)
+    {
+        he[i] = static_cast<float>((rand() % 7) - 3);
     }
     for(int i = 0; i < size_bias; ++i)
     {
@@ -626,13 +675,17 @@ void test_hipblaslt(hipblasDatatype_t  in_out_datatype,
                     int64_t            ldb,
                     int64_t            ldc,
                     int64_t            ldd,
+                    int64_t            lde,
                     int64_t            stride_a,
                     int64_t            stride_b,
                     int64_t            stride_c,
                     int64_t            stride_d,
+                    int64_t            stride_e,
                     int32_t            batch_count,
                     float              alpha,
                     float              beta,
+                    bool               enable_grad,
+                    bool               enable_e,
                     bool               enable_bias,
                     bool               enable_scaleD,
                     ActivationType     actType,
@@ -645,7 +698,7 @@ void test_hipblaslt(hipblasDatatype_t  in_out_datatype,
 {
     int64_t     a_stride_1, a_stride_2, b_stride_1, b_stride_2;
     int64_t     row_a, col_a, row_b, col_b, row_c, col_c;
-    int         size_a1, size_b1, size_c1 = ldc * n, size_d1 = ldd * n;
+    int         size_a1, size_b1, size_c1 = ldc * n, size_d1 = ldd * n, size_e1 = lde * n;
     std::string trans_string;
     if(trans_a == HIPBLAS_OP_N)
     {
@@ -690,6 +743,7 @@ void test_hipblaslt(hipblasDatatype_t  in_out_datatype,
     int size_b      = batch_count == 0 ? size_b1 : size_b1 + stride_b * (batch_count - 1);
     int size_c      = batch_count == 0 ? size_c1 : size_c1 + stride_c * (batch_count - 1);
     int size_d      = batch_count == 0 ? size_d1 : size_d1 + stride_d * (batch_count - 1);
+    int size_e      = batch_count == 0 ? size_e1 : size_e1 + stride_e * (batch_count - 1);
     int size_bias   = enable_bias ? m : 0;
     int size_scaleD = enable_scaleD ? m : 0;
 
@@ -699,15 +753,17 @@ void test_hipblaslt(hipblasDatatype_t  in_out_datatype,
     std::vector<T>     hc(size_c);
     std::vector<T>     hd(size_c);
     std::vector<T>     hd_gold(size_d);
+    std::vector<float> he(size_e);
+    std::vector<float> he_gold(size_e);
     std::vector<T>     h_bias(size_bias);
     std::vector<float> h_scaleD(size_scaleD);
 
     // initial data on host
-    initialize_a_b_c_bias(
-        ha, size_a, hb, size_b, hc, size_c, h_bias, size_bias, h_scaleD, size_scaleD);
+    initialize_a_b_c_e_bias(
+        ha, size_a, hb, size_b, hc, size_c, he, size_e, h_bias, size_bias, h_scaleD, size_scaleD);
 
     // allocate memory on device
-    void *      da, *db, *dc, *dd, *d_bias, *d_scaleD;
+    void *      da, *db, *dc, *dd, *de, *d_bias, *d_scaleD;
     int         num_streams = 1;
     hipStream_t stream      = nullptr;
 
@@ -715,6 +771,8 @@ void test_hipblaslt(hipblasDatatype_t  in_out_datatype,
     CHECK_HIP_ERROR(hipMalloc(&db, size_b * sizeof(T)));
     CHECK_HIP_ERROR(hipMalloc(&dc, size_c * sizeof(T)));
     CHECK_HIP_ERROR(hipMalloc(&dd, size_d * sizeof(T)));
+    if(enable_e)
+        CHECK_HIP_ERROR(hipMalloc(&de, size_e * sizeof(float)));
     if(enable_bias)
         CHECK_HIP_ERROR(hipMalloc(&d_bias, size_bias * sizeof(T)));
     if(enable_scaleD)
@@ -723,7 +781,9 @@ void test_hipblaslt(hipblasDatatype_t  in_out_datatype,
     CHECK_HIP_ERROR(hipMemcpy(da, ha.data(), sizeof(T) * size_a, hipMemcpyHostToDevice));
     CHECK_HIP_ERROR(hipMemcpy(db, hb.data(), sizeof(T) * size_b, hipMemcpyHostToDevice));
     CHECK_HIP_ERROR(hipMemcpy(dc, hc.data(), sizeof(T) * size_c, hipMemcpyHostToDevice));
-    if(enable_bias)
+    if(enable_grad && enable_e)
+        CHECK_HIP_ERROR(hipMemcpy(de, he.data(), sizeof(float) * size_e, hipMemcpyHostToDevice));
+    if(!enable_grad && enable_bias)
         CHECK_HIP_ERROR(
             hipMemcpy(d_bias, h_bias.data(), sizeof(T) * size_bias, hipMemcpyHostToDevice));
     if(enable_scaleD)
@@ -771,20 +831,40 @@ void test_hipblaslt(hipblasDatatype_t  in_out_datatype,
         matmul, HIPBLASLT_MATMUL_DESC_TRANSB, &trans_b, sizeof(int32_t)));
 
     hipblasLtEpilogue_t epilogue;
-    if(enable_bias && actType == ActivationType::NONE)
-        epilogue = HIPBLASLT_EPILOGUE_BIAS;
-    else if(enable_bias && actType == ActivationType::RELU)
-        epilogue = HIPBLASLT_EPILOGUE_RELU_BIAS;
-    else if(enable_bias && actType == ActivationType::GELU)
-        epilogue = HIPBLASLT_EPILOGUE_GELU_BIAS;
-    else if(!enable_bias && actType == ActivationType::NONE)
-        epilogue = HIPBLASLT_EPILOGUE_DEFAULT;
-    else if(!enable_bias && actType == ActivationType::RELU)
-        epilogue = HIPBLASLT_EPILOGUE_RELU;
-    else if(!enable_bias && actType == ActivationType::GELU)
-        epilogue = HIPBLASLT_EPILOGUE_GELU;
+    if(enable_grad)
+    {
+        assert(0);
+    }
+    else
+    {
+        if(!enable_e && enable_bias && actType == ActivationType::NONE)
+            epilogue = HIPBLASLT_EPILOGUE_BIAS;
+        else if(!enable_e && enable_bias && actType == ActivationType::RELU)
+            epilogue = HIPBLASLT_EPILOGUE_RELU_BIAS;
+        else if(!enable_e && enable_bias && actType == ActivationType::GELU)
+            epilogue = HIPBLASLT_EPILOGUE_GELU_BIAS;
+        else if(!enable_e && !enable_bias && actType == ActivationType::NONE)
+            epilogue = HIPBLASLT_EPILOGUE_DEFAULT;
+        else if(!enable_e && !enable_bias && actType == ActivationType::RELU)
+            epilogue = HIPBLASLT_EPILOGUE_RELU;
+        else if(!enable_e && !enable_bias && actType == ActivationType::GELU)
+            epilogue = HIPBLASLT_EPILOGUE_GELU;
+        else if(enable_e && enable_bias && actType == ActivationType::GELU)
+            epilogue = HIPBLASLT_EPILOGUE_GELU_AUX_BIAS;
+        else if(enable_e && actType == ActivationType::GELU)
+            epilogue = HIPBLASLT_EPILOGUE_GELU_AUX;
+    }
     CHECK_HIPBLASLT_ERROR(hipblasLtMatmulDescSetAttribute(
         matmul, HIPBLASLT_MATMUL_DESC_EPILOGUE, &epilogue, sizeof(epilogue)));
+    if(enable_e)
+    {
+        CHECK_HIPBLASLT_ERROR(hipblasLtMatmulDescSetAttribute(
+            matmul, HIPBLASLT_MATMUL_DESC_EPILOGUE_AUX_POINTER, &de, sizeof(void*)));
+        CHECK_HIPBLASLT_ERROR(hipblasLtMatmulDescSetAttribute(
+            matmul, HIPBLASLT_MATMUL_DESC_EPILOGUE_AUX_LD, &lde, sizeof(int64_t)));
+        CHECK_HIPBLASLT_ERROR(hipblasLtMatmulDescSetAttribute(
+            matmul, HIPBLASLT_MATMUL_DESC_EPILOGUE_AUX_BATCH_STRIDE, &stride_e, sizeof(int64_t)));
+    }
     if(enable_bias)
         CHECK_HIPBLASLT_ERROR(hipblasLtMatmulDescSetAttribute(
             matmul, HIPBLASLT_MATMUL_DESC_BIAS_POINTER, &d_bias, sizeof(void*)));
@@ -849,6 +929,8 @@ void test_hipblaslt(hipblasDatatype_t  in_out_datatype,
     hipStreamSynchronize(stream);
     // copy output from device to CPU
     CHECK_HIP_ERROR(hipMemcpy(hd.data(), dd, sizeof(T) * size_c, hipMemcpyDeviceToHost));
+    if(!enable_grad && enable_e)
+        CHECK_HIP_ERROR(hipMemcpy(he.data(), de, sizeof(float) * size_e, hipMemcpyDeviceToHost));
 
     double   bestMs = std::numeric_limits<double>::max();
     double   bestTflops;
@@ -954,8 +1036,8 @@ void test_hipblaslt(hipblasDatatype_t  in_out_datatype,
 
     std::cout << trans_string << m << ", " << n << ", " << k << ", " << lda << ", " << ldb << ", "
               << ldc << ", " << stride_a << ", " << stride_b << ", " << stride_c << ", "
-              << batch_count << ", " << alpha << ", " << beta << ", " << enable_bias << ", "
-              << enable_scaleD << ", " << ToString(actType);
+              << batch_count << ", " << alpha << ", " << beta << ", " << enable_e << ", "
+              << enable_bias << ", " << enable_scaleD << ", " << ToString(actType);
     if(timing)
     {
         std::cout << ", " << bestMs * 1000 << ", " << bestTflops;
@@ -968,11 +1050,16 @@ void test_hipblaslt(hipblasDatatype_t  in_out_datatype,
     // calculate golden or correct result
     if(validate)
     {
-        auto* a_ptr = &ha[0];
-        auto* b_ptr = &hb[0];
-        auto* c_ptr = &hc[0];
-        auto* d_ptr = &hd_gold[0];
-        T*    bias_ptr;
+        auto*  a_ptr = &ha[0];
+        auto*  b_ptr = &hb[0];
+        auto*  c_ptr = &hc[0];
+        auto*  d_ptr = &hd_gold[0];
+        T*     bias_ptr;
+        float* e_ptr;
+        if(!enable_grad && enable_e)
+            e_ptr = &he_gold[0];
+        else
+            e_ptr = nullptr;
         if(enable_bias)
             bias_ptr = &h_bias[0];
         else
@@ -1004,6 +1091,10 @@ void test_hipblaslt(hipblasDatatype_t  in_out_datatype,
                                              1,
                                              ldd,
                                              stride_d,
+                                             e_ptr,
+                                             1,
+                                             lde,
+                                             stride_e,
                                              bias_ptr,
                                              scaleD_ptr,
                                              actType);
@@ -1018,6 +1109,20 @@ void test_hipblaslt(hipblasDatatype_t  in_out_datatype,
                        static_cast<float>(hd_gold[i]),
                        static_cast<float>(hd[i]));
                 passed = false;
+            }
+        }
+        if(!enable_grad && enable_e)
+        {
+            for(int i = 0; i < size_e; i++)
+            {
+                if(!AlmostEqual(he_gold[i], he[i]))
+                {
+                    printf("Err: Index %d: %f vs %f\n",
+                           i,
+                           static_cast<float>(he_gold[i]),
+                           static_cast<float>(he[i]));
+                    passed = false;
+                }
             }
         }
 
@@ -1054,6 +1159,16 @@ void test_hipblaslt(hipblasDatatype_t  in_out_datatype,
             print_strided_batched("hb initial", &hb[0], k, n, batch_count, ldb, 1, stride_b);
         }
         print_strided_batched("hc initial", &hc[0], m, n, batch_count, 1, ldc, stride_c);
+        if(enable_e)
+        {
+            if(enable_grad)
+                print_strided_batched("he initial", &he[0], m, n, batch_count, 1, lde, stride_e);
+            else
+            {
+                print_strided_batched("he_gold", &he_gold[0], m, n, batch_count, 1, lde, stride_e);
+                print_strided_batched("he device", &he[0], m, n, batch_count, 1, lde, stride_e);
+            }
+        }
         if(enable_bias)
             print_strided_batched("h_bias", &h_bias[0], m, 1, 1, 1, m, 0);
         if(enable_scaleD)
@@ -1068,6 +1183,8 @@ void test_hipblaslt(hipblasDatatype_t  in_out_datatype,
     CHECK_HIP_ERROR(hipFree(dc));
     CHECK_HIP_ERROR(hipFree(dd));
     CHECK_HIP_ERROR(hipFree(d_workspace));
+    if(enable_e)
+        CHECK_HIP_ERROR(hipFree(de));
     if(enable_bias)
         CHECK_HIP_ERROR(hipFree(d_bias));
     if(enable_scaleD)
@@ -1101,6 +1218,7 @@ int main(int argc, char* argv[])
     int64_t n = invalid_int, ldb = invalid_int, stride_b = invalid_int;
     int64_t k = invalid_int, ldc = invalid_int, stride_c = invalid_int;
     int64_t ldd = invalid_int, stride_d = invalid_int;
+    int64_t lde = invalid_int, stride_e = invalid_int;
 
     int32_t batch_count       = BATCH_COUNT;
     int32_t bench_loop_count  = BENCH_LOOP_COUNT;
@@ -1109,6 +1227,8 @@ int main(int argc, char* argv[])
 
     float          alpha         = ALPHA;
     float          beta          = BETA;
+    bool           enable_grad   = false;
+    bool           enable_e      = false;
     bool           enable_bias   = false;
     bool           enable_scaleD = false;
     ActivationType actType       = ActivationType::NONE;
@@ -1128,15 +1248,19 @@ int main(int argc, char* argv[])
                        ldb,
                        ldc,
                        ldd,
+                       lde,
                        stride_a,
                        stride_b,
                        stride_c,
                        stride_d,
+                       stride_e,
                        batch_count,
                        alpha,
                        beta,
                        trans_a,
                        trans_b,
+                       enable_grad,
+                       enable_e,
                        enable_bias,
                        enable_scaleD,
                        actType,
@@ -1167,6 +1291,8 @@ int main(int argc, char* argv[])
         ldc = m;
     if(ldd == invalid_int)
         ldd = m;
+    if(lde == invalid_int)
+        lde = m;
     if(stride_a == invalid_int)
         stride_a = trans_a == HIPBLAS_OP_N ? lda * k : lda * m;
     if(stride_b == invalid_int)
@@ -1175,6 +1301,8 @@ int main(int argc, char* argv[])
         stride_c = ldc * n;
     if(stride_d == invalid_int)
         stride_d = ldd * n;
+    if(stride_e == invalid_int)
+        stride_e = lde * n;
     if(alpha != alpha)
         alpha = ALPHA; // check for alpha == invalid_float == NaN
     if(beta != beta)
@@ -1191,10 +1319,12 @@ int main(int argc, char* argv[])
                     ldb,
                     ldc,
                     ldd,
+                    lde,
                     stride_a,
                     stride_b,
                     stride_c,
                     stride_d,
+                    stride_e,
                     batch_count))
     {
         show_usage(argv);
@@ -1204,7 +1334,7 @@ int main(int argc, char* argv[])
     if(header)
     {
         std::cout << "transAB, M, N, K, lda, ldb, ldc, stride_a, stride_b, "
-                     "stride_c, batch_count, alpha, beta, bias, scaleD, activationType";
+                     "stride_c, batch_count, alpha, beta, use_e, bias, scaleD, activationType";
         if(timing)
             std::cout << ", us, tflops";
         if(request_solutions > 1)
@@ -1223,13 +1353,17 @@ int main(int argc, char* argv[])
                                        ldb,
                                        ldc,
                                        ldd,
+                                       lde,
                                        stride_a,
                                        stride_b,
                                        stride_c,
                                        stride_d,
+                                       stride_e,
                                        batch_count,
                                        alpha,
                                        beta,
+                                       enable_grad,
+                                       enable_e,
                                        enable_bias,
                                        enable_scaleD,
                                        actType,
@@ -1250,13 +1384,17 @@ int main(int argc, char* argv[])
                                       ldb,
                                       ldc,
                                       ldd,
+                                      lde,
                                       stride_a,
                                       stride_b,
                                       stride_c,
                                       stride_d,
+                                      stride_e,
                                       batch_count,
                                       alpha,
                                       beta,
+                                      enable_grad,
+                                      enable_e,
                                       enable_bias,
                                       enable_scaleD,
                                       actType,
@@ -1277,13 +1415,17 @@ int main(int argc, char* argv[])
                                           ldb,
                                           ldc,
                                           ldd,
+                                          lde,
                                           stride_a,
                                           stride_b,
                                           stride_c,
                                           stride_d,
+                                          stride_e,
                                           batch_count,
                                           alpha,
                                           beta,
+                                          enable_grad,
+                                          enable_e,
                                           enable_bias,
                                           enable_scaleD,
                                           actType,

@@ -171,6 +171,10 @@ const char* rocblaslt_epilogue_to_string(rocblaslt_epilogue epilogue)
         return "EPILOGUE_GELU";
     case ROCBLASLT_EPILOGUE_GELU_BIAS:
         return "EPILOGUE_GELU_BIAS";
+    case ROCBLASLT_EPILOGUE_GELU_AUX:
+        return "EPILOGUE_GELU_AUX";
+    case ROCBLASLT_EPILOGUE_GELU_AUX_BIAS:
+        return "EPILOGUE_GELU_AUX_BIAS";
     default:
         return "Invalid epilogue";
     }

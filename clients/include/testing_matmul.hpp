@@ -42,12 +42,19 @@
 #include <hipblaslt/hipblaslt.h>
 #include <omp.h>
 
-template <typename Ti, typename To, typename Tbias, typename Talpha, typename Tact, typename F>
+template <typename Ti,
+          typename Tc,
+          typename To,
+          typename Tbias,
+          typename Talpha,
+          typename Tact,
+          typename F>
 void epilogue_func(int64_t m,
                    int64_t n,
                    int64_t ld,
                    Ti*     in,
                    To*     out,
+                   Tc*     e,
                    bool    enable_bias,
                    bool    enable_scaleD,
                    Talpha* scaleD,
@@ -65,20 +72,25 @@ void epilogue_func(int64_t m,
 #pragma omp parallel for
         for(int j = 0; j < n; j++)
         {
-            auto pos         = j * ld + i;
-            auto in_Tact     = static_cast<Tact>(*(in + pos)) + bias_data;
+            auto pos     = j * ld + i;
+            auto in_Tact = static_cast<Tact>(*(in + pos)) + bias_data;
+            if(e)
+            {
+                *(e + pos) = static_cast<Tc>(in_Tact);
+            }
             auto in_Tact_act = act_func(in_Tact, arg1, arg2);
             in_Tact_act *= scaleD_data;
             *(out + pos) = saturate_o(in_Tact_act);
         }
     }
 }
-template <typename Ti, typename To, typename Tbias, typename Talpha>
+template <typename Ti, typename Tc, typename To, typename Tbias, typename Talpha>
 void epilogue_func(int64_t m,
                    int64_t n,
                    int64_t ld,
                    Ti*     in,
                    To*     out,
+                   Tc*     e,
                    bool    enable_bias,
                    bool    enable_scaleD,
                    Talpha* scaleD,
@@ -95,6 +107,10 @@ void epilogue_func(int64_t m,
         {
             auto pos  = j * ld + i;
             auto temp = static_cast<Ti>(*(in + pos)) + bias_data;
+            if(e)
+            {
+                *(e + pos) = static_cast<Tc>(temp);
+            }
             temp *= scaleD_data;
             *(out + pos) = saturate_o(temp);
         }
@@ -193,40 +209,51 @@ void testing_matmul(const Arguments& arg)
 
     using Talpha = float;
 
-    bool do_grouped_gemm = arg.grouped_gemm > 0;
-    int32_t gemm_count = std::max(1, arg.grouped_gemm);
+    bool    do_grouped_gemm = arg.grouped_gemm > 0;
+    int32_t gemm_count      = std::max(1, arg.grouped_gemm);
 
-    std::vector<int64_t> M(gemm_count), N(gemm_count), K(gemm_count), lda(gemm_count), ldb(gemm_count), ldc(gemm_count), ldd(gemm_count);
+    std::vector<int64_t> M(gemm_count), N(gemm_count), K(gemm_count), lda(gemm_count),
+        ldb(gemm_count), ldc(gemm_count), ldd(gemm_count), lde(gemm_count);
     std::vector<Talpha>  h_alpha(gemm_count), h_beta(gemm_count);
     std::vector<int64_t> A_row(gemm_count), A_col(gemm_count), B_row(gemm_count), B_col(gemm_count);
-    std::vector<int64_t> stride_a(gemm_count), stride_b(gemm_count), stride_c(gemm_count), stride_d(gemm_count);
-    std::vector<bool>    do_batched(gemm_count), epilogue_on(gemm_count, false), change_bias_type(gemm_count, false);
-    std::vector<int>     num_batches(gemm_count);
-    std::vector<size_t>  size_A(gemm_count), size_B(gemm_count), size_C(gemm_count), size_D(gemm_count), size_D_copy(gemm_count), size_bias(gemm_count), size_scaleD(gemm_count);
+    std::vector<int64_t> stride_a(gemm_count), stride_b(gemm_count), stride_c(gemm_count),
+        stride_d(gemm_count), stride_e(gemm_count);
+    std::vector<bool> do_batched(gemm_count), epilogue_on(gemm_count, false),
+        change_bias_type(gemm_count, false);
+    std::vector<int>    num_batches(gemm_count);
+    std::vector<size_t> size_A(gemm_count), size_B(gemm_count), size_C(gemm_count),
+        size_D(gemm_count), size_D_copy(gemm_count), size_E(gemm_count), size_bias(gemm_count),
+        size_scaleD(gemm_count);
 
-    std::vector<hipblasLtMatrixLayout_t> matA(gemm_count), matB(gemm_count), matC(gemm_count), matD(gemm_count);
-    std::vector<hipblasLtMatmulDesc_t>   matmul(gemm_count);
-    std::vector<hipblasLtEpilogue_t>     epilogue(gemm_count, HIPBLASLT_EPILOGUE_DEFAULT);
+    std::vector<hipblasLtMatrixLayout_t> matA(gemm_count), matB(gemm_count), matC(gemm_count),
+        matD(gemm_count);
+    std::vector<hipblasLtMatmulDesc_t> matmul(gemm_count);
+    std::vector<hipblasLtEpilogue_t>   epilogue(gemm_count, HIPBLASLT_EPILOGUE_DEFAULT);
 
     std::vector<device_vector<Ti>*>     dA(gemm_count), dB(gemm_count);
     std::vector<device_vector<To>*>     dC(gemm_count), dD(gemm_count), dBias(gemm_count);
     std::vector<device_vector<Talpha>*> dScaleD(gemm_count), dBias_C(gemm_count);
+    std::vector<device_vector<Tc>*>     dE(gemm_count);
 
-    std::vector<host_vector<Ti>*>     hA(gemm_count), hB(gemm_count);
-    std::vector<host_vector<To>*>     hC(gemm_count), hD_gold(gemm_count), hD_1(gemm_count), hBias(gemm_count);
-    std::vector<host_vector<Talpha>*> hD_gold_epl(gemm_count), hScaleD(gemm_count), hBias_C(gemm_count);
+    std::vector<host_vector<Ti>*> hA(gemm_count), hB(gemm_count);
+    std::vector<host_vector<To>*> hC(gemm_count), hD_gold(gemm_count), hD_1(gemm_count),
+        hBias(gemm_count);
+    std::vector<host_vector<Talpha>*> hD_gold_epl(gemm_count), hScaleD(gemm_count),
+        hBias_C(gemm_count);
+    std::vector<host_vector<Tc>*> hE(gemm_count, nullptr), hE_gold(gemm_count, nullptr);
 
     for(int i = 0; i < gemm_count; i++)
     {
-        M[i] = arg.M;
-        N[i] = arg.N;
-        K[i] = arg.K;
+        M[i]       = arg.M;
+        N[i]       = arg.N;
+        K[i]       = arg.K;
         h_alpha[i] = arg.get_alpha<Talpha>();
-        h_beta[i] = arg.get_beta<Talpha>();
-        lda[i] = arg.lda;
-        ldb[i] = arg.ldb;
-        ldc[i] = arg.ldc;
-        ldd[i] = arg.ldd;
+        h_beta[i]  = arg.get_beta<Talpha>();
+        lda[i]     = arg.lda;
+        ldb[i]     = arg.ldb;
+        ldc[i]     = arg.ldc;
+        ldd[i]     = arg.ldd;
+        lde[i]     = arg.lde;
 
         A_row[i] = transA == HIPBLAS_OP_N ? M[i] : K[i];
         A_col[i] = transA == HIPBLAS_OP_N ? K[i] : M[i];
@@ -236,15 +263,20 @@ void testing_matmul(const Arguments& arg)
         do_batched[i]  = (arg.batch_count > 1);
         num_batches[i] = (do_batched[i] ? arg.batch_count : 1);
 
-        stride_a[i]    = do_batched[i] ? arg.stride_a : lda[i] * A_col[i];
-        stride_b[i]    = do_batched[i] ? arg.stride_b : ldb[i] * B_col[i];
-        stride_c[i]    = do_batched[i] ? arg.stride_c : ldc[i] * N[i];
-        stride_d[i]    = do_batched[i] ? arg.stride_c : ldd[i] * N[i];
+        stride_a[i] = do_batched[i] ? arg.stride_a : lda[i] * A_col[i];
+        stride_b[i] = do_batched[i] ? arg.stride_b : ldb[i] * B_col[i];
+        stride_c[i] = do_batched[i] ? arg.stride_c : ldc[i] * N[i];
+        stride_d[i] = do_batched[i] ? arg.stride_c : ldd[i] * N[i];
+        stride_e[i] = do_batched[i] ? arg.stride_e : lde[i] * N[i];
 
-        CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutCreate(&(matA[i]), arg.a_type, A_row[i], A_col[i], lda[i]));
-        CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutCreate(&(matB[i]), arg.b_type, B_row[i], B_col[i], ldb[i]));
-        CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutCreate(&(matC[i]), arg.c_type, M[i], N[i], ldc[i]));
-        CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutCreate(&(matD[i]), arg.d_type, M[i], N[i], ldc[i]));
+        CHECK_HIPBLASLT_ERROR(
+            hipblasLtMatrixLayoutCreate(&(matA[i]), arg.a_type, A_row[i], A_col[i], lda[i]));
+        CHECK_HIPBLASLT_ERROR(
+            hipblasLtMatrixLayoutCreate(&(matB[i]), arg.b_type, B_row[i], B_col[i], ldb[i]));
+        CHECK_HIPBLASLT_ERROR(
+            hipblasLtMatrixLayoutCreate(&(matC[i]), arg.c_type, M[i], N[i], ldc[i]));
+        CHECK_HIPBLASLT_ERROR(
+            hipblasLtMatrixLayoutCreate(&(matD[i]), arg.d_type, M[i], N[i], ldc[i]));
 
         if(do_batched[i])
         {
@@ -266,24 +298,33 @@ void testing_matmul(const Arguments& arg)
                 HIPBLAS_STATUS_SUCCESS);
 
             EXPECT_HIPBLAS_STATUS(
-                hipblasLtMatrixLayoutSetAttribute(
-                    matA[i], HIPBLASLT_MATRIX_LAYOUT_STRIDED_BATCH_OFFSET, &(stride_a[i]), sizeof(int64_t)),
+                hipblasLtMatrixLayoutSetAttribute(matA[i],
+                                                  HIPBLASLT_MATRIX_LAYOUT_STRIDED_BATCH_OFFSET,
+                                                  &(stride_a[i]),
+                                                  sizeof(int64_t)),
                 HIPBLAS_STATUS_SUCCESS);
             EXPECT_HIPBLAS_STATUS(
-                hipblasLtMatrixLayoutSetAttribute(
-                    matB[i], HIPBLASLT_MATRIX_LAYOUT_STRIDED_BATCH_OFFSET, &(stride_b[i]), sizeof(int64_t)),
+                hipblasLtMatrixLayoutSetAttribute(matB[i],
+                                                  HIPBLASLT_MATRIX_LAYOUT_STRIDED_BATCH_OFFSET,
+                                                  &(stride_b[i]),
+                                                  sizeof(int64_t)),
                 HIPBLAS_STATUS_SUCCESS);
             EXPECT_HIPBLAS_STATUS(
-                hipblasLtMatrixLayoutSetAttribute(
-                    matC[i], HIPBLASLT_MATRIX_LAYOUT_STRIDED_BATCH_OFFSET, &(stride_c[i]), sizeof(int64_t)),
+                hipblasLtMatrixLayoutSetAttribute(matC[i],
+                                                  HIPBLASLT_MATRIX_LAYOUT_STRIDED_BATCH_OFFSET,
+                                                  &(stride_c[i]),
+                                                  sizeof(int64_t)),
                 HIPBLAS_STATUS_SUCCESS);
             EXPECT_HIPBLAS_STATUS(
-                hipblasLtMatrixLayoutSetAttribute(
-                    matD[i], HIPBLASLT_MATRIX_LAYOUT_STRIDED_BATCH_OFFSET, &(stride_d[i]), sizeof(int64_t)),
+                hipblasLtMatrixLayoutSetAttribute(matD[i],
+                                                  HIPBLASLT_MATRIX_LAYOUT_STRIDED_BATCH_OFFSET,
+                                                  &(stride_d[i]),
+                                                  sizeof(int64_t)),
                 HIPBLAS_STATUS_SUCCESS);
         }
 
-        CHECK_HIPBLASLT_ERROR(hipblasLtMatmulDescCreate(&(matmul[i]), arg.compute_type, arg.scale_type));
+        CHECK_HIPBLASLT_ERROR(
+            hipblasLtMatmulDescCreate(&(matmul[i]), arg.compute_type, arg.scale_type));
 
         CHECK_HIPBLASLT_ERROR(hipblasLtMatmulDescSetAttribute(
             matmul[i], HIPBLASLT_MATMUL_DESC_TRANSA, &transA, sizeof(int32_t)));
@@ -322,16 +363,36 @@ void testing_matmul(const Arguments& arg)
                 break;
             }
         }
+        if(arg.use_e)
+        {
+            switch(epilogue[i])
+            {
+            case HIPBLASLT_EPILOGUE_GELU:
+                epilogue[i] = HIPBLASLT_EPILOGUE_GELU_AUX;
+                break;
+            case HIPBLASLT_EPILOGUE_GELU_BIAS:
+                epilogue[i] = HIPBLASLT_EPILOGUE_GELU_AUX_BIAS;
+                break;
+            default:
+                break;
+            }
+        }
 
         if(arg.scaleD_vector)
         {
             epilogue_on[i] = true;
         }
 
-        size_A[i]      = stride_a[i] == 0 ? lda[i] * A_col[i] * num_batches[i] : stride_a[i] * num_batches[i];
-        size_B[i]      = stride_b[i] == 0 ? ldb[i] * B_col[i] * num_batches[i] : stride_b[i] * num_batches[i];
-        size_C[i]      = stride_c[i] == 0 ? ldc[i] * N[i] * num_batches[i] : stride_c[i] * num_batches[i];
-        size_D[i]      = stride_d[i] == 0 ? ldd[i] * N[i] * num_batches[i] : stride_d[i] * num_batches[i];
+        size_A[i]
+            = stride_a[i] == 0 ? lda[i] * A_col[i] * num_batches[i] : stride_a[i] * num_batches[i];
+        size_B[i]
+            = stride_b[i] == 0 ? ldb[i] * B_col[i] * num_batches[i] : stride_b[i] * num_batches[i];
+        size_C[i]
+            = stride_c[i] == 0 ? ldc[i] * N[i] * num_batches[i] : stride_c[i] * num_batches[i];
+        size_D[i]
+            = stride_d[i] == 0 ? ldd[i] * N[i] * num_batches[i] : stride_d[i] * num_batches[i];
+        size_E[i]
+            = stride_e[i] == 0 ? lde[i] * N[i] * num_batches[i] : stride_e[i] * num_batches[i];
         size_D_copy[i] = arg.unit_check || arg.norm_check ? size_D[i] : 0;
         size_bias[i]   = arg.bias_vector ? M[i] : 1;
         size_scaleD[i] = arg.scaleD_vector ? M[i] : 1;
@@ -352,6 +413,15 @@ void testing_matmul(const Arguments& arg)
         CHECK_DEVICE_ALLOCATION(dBias[i]->memcheck());
         CHECK_DEVICE_ALLOCATION(dScaleD[i]->memcheck());
         CHECK_DEVICE_ALLOCATION(dBias_C[i]->memcheck());
+        if(arg.use_e)
+        {
+            dE[i] = new device_vector<Tc>(size_E[i], 1, HMM);
+            CHECK_DEVICE_ALLOCATION(dE[i]->memcheck());
+        }
+        else
+        {
+            dE[i] = nullptr;
+        }
 
         // Naming: dX is in GPU (device) memory. hK is in CPU (host) memory
         hA[i]          = new host_vector<Ti>(size_A[i]);
@@ -363,6 +433,13 @@ void testing_matmul(const Arguments& arg)
         hBias[i]       = new host_vector<To>(size_bias[i]);
         hScaleD[i]     = new host_vector<Talpha>(size_scaleD[i]);
         hBias_C[i]     = new host_vector<Talpha>(size_bias[i]);
+
+        if(arg.use_e)
+        {
+            hE[i] = new host_vector<Tc>(size_E[i]);
+            if(!arg.gradient)
+                hE_gold[i] = new host_vector<Tc>(size_E[i]);
+        }
 
         hipblaslt_seedrand();
 
@@ -377,22 +454,28 @@ void testing_matmul(const Arguments& arg)
             if(arg.initialization == hipblaslt_initialization::rand_int)
             {
                 hipblaslt_init<Ti>(*hA[i], A_row[i], A_col[i], lda[i], stride_a[i], num_batches[i]);
-                hipblaslt_init_alternating_sign<Ti>(*hB[i], B_row[i], B_col[i], ldb[i], stride_b[i], num_batches[i]);
+                hipblaslt_init_alternating_sign<Ti>(
+                    *hB[i], B_row[i], B_col[i], ldb[i], stride_b[i], num_batches[i]);
             }
             else if(arg.initialization == hipblaslt_initialization::trig_float)
             {
-                hipblaslt_init_sin<Ti>(*hA[i], A_row[i], A_col[i], lda[i], stride_a[i], num_batches[i]);
-                hipblaslt_init_cos<Ti>(*hB[i], B_row[i], B_col[i], ldb[i], stride_b[i], num_batches[i]);
+                hipblaslt_init_sin<Ti>(
+                    *hA[i], A_row[i], A_col[i], lda[i], stride_a[i], num_batches[i]);
+                hipblaslt_init_cos<Ti>(
+                    *hB[i], B_row[i], B_col[i], ldb[i], stride_b[i], num_batches[i]);
             }
             else if(arg.initialization == hipblaslt_initialization::hpl)
             {
-                hipblaslt_init_hpl<Ti>(*hA[i], A_row[i], A_col[i], lda[i], stride_a[i], num_batches[i]);
-                hipblaslt_init_hpl<Ti>(*hB[i], B_row[i], B_col[i], ldb[i], stride_b[i], num_batches[i]);
+                hipblaslt_init_hpl<Ti>(
+                    *hA[i], A_row[i], A_col[i], lda[i], stride_a[i], num_batches[i]);
+                hipblaslt_init_hpl<Ti>(
+                    *hB[i], B_row[i], B_col[i], ldb[i], stride_b[i], num_batches[i]);
             }
             else if(arg.initialization == hipblaslt_initialization::special)
             {
                 hipblaslt_init_alt_impl_big<Ti>(*hA[i], A_row[i], A_col[i], lda[i], num_batches[i]);
-                hipblaslt_init_alt_impl_small<Ti>(*hB[i], B_row[i], B_col[i], ldb[i], num_batches[i]);
+                hipblaslt_init_alt_impl_small<Ti>(
+                    *hB[i], B_row[i], B_col[i], ldb[i], num_batches[i]);
             }
         }
 
@@ -438,9 +521,10 @@ void testing_matmul(const Arguments& arg)
         {
             if(epilogue_on[i])
             {
-                std::transform(hC[i]->begin(), hC[i]->end(), hD_gold_epl[i]->begin(), [](To c) -> Talpha {
-                    return static_cast<Talpha>(c);
-                });
+                std::transform(hC[i]->begin(),
+                               hC[i]->end(),
+                               hD_gold_epl[i]->begin(),
+                               [](To c) -> Talpha { return static_cast<Talpha>(c); });
             }
             else
             {
@@ -454,12 +538,26 @@ void testing_matmul(const Arguments& arg)
                     matmul[i], HIPBLASLT_MATMUL_DESC_EPILOGUE, &(epilogue[i]), sizeof(epilogue[i])),
                 HIPBLAS_STATUS_SUCCESS);
 
+        if(arg.use_e)
+        {
+            void* e_addr = *dE[i];
+            CHECK_HIPBLASLT_ERROR(hipblasLtMatmulDescSetAttribute(
+                matmul[i], HIPBLASLT_MATMUL_DESC_EPILOGUE_AUX_POINTER, &e_addr, sizeof(void*)));
+            CHECK_HIPBLASLT_ERROR(hipblasLtMatmulDescSetAttribute(
+                matmul[i], HIPBLASLT_MATMUL_DESC_EPILOGUE_AUX_LD, &lde[i], sizeof(int64_t)));
+            CHECK_HIPBLASLT_ERROR(
+                hipblasLtMatmulDescSetAttribute(matmul[i],
+                                                HIPBLASLT_MATMUL_DESC_EPILOGUE_AUX_BATCH_STRIDE,
+                                                &stride_e[i],
+                                                sizeof(int64_t)));
+        }
+
         if(arg.bias_vector)
         {
             const void* bias_addr;
             if(arg.d_type != arg.scale_type && arg.bias_type == arg.scale_type)
             {
-                bias_addr        = *dBias_C[i];
+                bias_addr           = *dBias_C[i];
                 change_bias_type[i] = true;
                 EXPECT_HIPBLAS_STATUS(
                     hipblasLtMatmulDescSetAttribute(matmul[i],
@@ -487,11 +585,10 @@ void testing_matmul(const Arguments& arg)
                     matmul[i], HIPBLASLT_MATMUL_DESC_D_SCALE_POINTER, &scaleD_addr, sizeof(void*)),
                 HIPBLAS_STATUS_SUCCESS);
         }
-
     }
 
     // set preference
-    size_t max_workspace_size = 32 * 1024 * 1024;
+    size_t                     max_workspace_size = 32 * 1024 * 1024;
     hipblaslt_local_preference pref;
     EXPECT_HIPBLAS_STATUS(
         hipblasLtMatmulPreferenceSetAttribute(pref,
@@ -501,8 +598,8 @@ void testing_matmul(const Arguments& arg)
         HIPBLAS_STATUS_SUCCESS);
 
     // set workspace
-    device_vector<unsigned char>*    dWorkspace;
-    size_t                           workspace_size     = 0;
+    device_vector<unsigned char>* dWorkspace;
+    size_t                        workspace_size = 0;
 
     // Get Heuristic results
     hipblasLtMatmulHeuristicResult_t heuristicResult[1] = {0};
@@ -511,16 +608,23 @@ void testing_matmul(const Arguments& arg)
 
     // grouped gemm
     hipblasLtExtGroupedGemm_t groupedGemm;
-    std::vector<void*> da(gemm_count), db(gemm_count), dc(gemm_count), dd(gemm_count);
+    std::vector<void*>        da(gemm_count), db(gemm_count), dc(gemm_count), dd(gemm_count);
 
     if(!do_grouped_gemm)
     {
-        EXPECT_HIPBLAS_STATUS(
-            (hipblasLtMatmulAlgoGetHeuristic(
-                handle, matmul[0], matA[0], matB[0], matC[0], matD[0], pref, requestAlgoCount, heuristicResult, &returnedAlgoCount)),
-            HIPBLAS_STATUS_SUCCESS);
+        EXPECT_HIPBLAS_STATUS((hipblasLtMatmulAlgoGetHeuristic(handle,
+                                                               matmul[0],
+                                                               matA[0],
+                                                               matB[0],
+                                                               matC[0],
+                                                               matD[0],
+                                                               pref,
+                                                               requestAlgoCount,
+                                                               heuristicResult,
+                                                               &returnedAlgoCount)),
+                              HIPBLAS_STATUS_SUCCESS);
 
-        for(int i = 0; i < returnedAlgoCount; i ++)
+        for(int i = 0; i < returnedAlgoCount; i++)
             workspace_size = std::max(workspace_size, heuristicResult[i].workspaceSize);
         dWorkspace = new device_vector<unsigned char>(workspace_size, 1, HMM);
         CHECK_DEVICE_ALLOCATION(dWorkspace->memcheck());
@@ -551,22 +655,22 @@ void testing_matmul(const Arguments& arg)
         {
             CHECK_HIP_ERROR(hipStreamSynchronize(stream));
             EXPECT_HIPBLAS_STATUS(hipblasLtMatmul(handle,
-                                                matmul[0],
-                                                &(h_alpha[0]),
-                                                *(dA[0]),
-                                                matA[0],
-                                                *(dB[0]),
-                                                matB[0],
-                                                &(h_beta[0]),
-                                                *(dC[0]),
-                                                matC[0],
-                                                *(dD[0]),
-                                                matD[0],
-                                                &heuristicResult[0].algo,
-                                                *dWorkspace,
-                                                workspace_size,
-                                                stream),
-                                HIPBLAS_STATUS_SUCCESS);
+                                                  matmul[0],
+                                                  &(h_alpha[0]),
+                                                  *(dA[0]),
+                                                  matA[0],
+                                                  *(dB[0]),
+                                                  matB[0],
+                                                  &(h_beta[0]),
+                                                  *(dC[0]),
+                                                  matC[0],
+                                                  *(dD[0]),
+                                                  matD[0],
+                                                  &heuristicResult[0].algo,
+                                                  *dWorkspace,
+                                                  workspace_size,
+                                                  stream),
+                                  HIPBLAS_STATUS_SUCCESS);
         }
         else
         {
@@ -586,8 +690,10 @@ void testing_matmul(const Arguments& arg)
             cpu_time_used = get_time_us_no_sync();
         }
 
-#define epilogue_param \
-    M[gemmIdx], N[gemmIdx], ldd[gemmIdx], *(hD_gold_epl[gemmIdx]) + pos, *(hD_gold[gemmIdx]) + pos, arg.bias_vector, arg.scaleD_vector, *(hScaleD[gemmIdx]) + 0
+#define epilogue_param                                                       \
+    M[gemmIdx], N[gemmIdx], ldd[gemmIdx], *(hD_gold_epl[gemmIdx]) + pos,     \
+        *(hD_gold[gemmIdx]) + pos, ePos, arg.bias_vector, arg.scaleD_vector, \
+        *(hScaleD[gemmIdx]) + 0
         for(int gemmIdx = 0; gemmIdx < gemm_count; gemmIdx++)
         {
             for(int batchIdx = 0; batchIdx < num_batches[gemmIdx]; batchIdx++)
@@ -595,20 +701,23 @@ void testing_matmul(const Arguments& arg)
                 if(epilogue_on[gemmIdx])
                 {
                     cblas_gemm<Ti, Talpha, Talpha>(transA,
-                                                transB,
-                                                M[gemmIdx],
-                                                N[gemmIdx],
-                                                K[gemmIdx],
-                                                h_alpha[gemmIdx],
-                                                *(hA[gemmIdx]) + stride_a[gemmIdx] * batchIdx,
-                                                lda[gemmIdx],
-                                                *(hB[gemmIdx]) + stride_b[gemmIdx] * batchIdx,
-                                                ldb[gemmIdx],
-                                                h_beta[gemmIdx],
-                                                *(hD_gold_epl[gemmIdx]) + stride_d[gemmIdx] * batchIdx,
-                                                ldd[gemmIdx],
-                                                false);
+                                                   transB,
+                                                   M[gemmIdx],
+                                                   N[gemmIdx],
+                                                   K[gemmIdx],
+                                                   h_alpha[gemmIdx],
+                                                   *(hA[gemmIdx]) + stride_a[gemmIdx] * batchIdx,
+                                                   lda[gemmIdx],
+                                                   *(hB[gemmIdx]) + stride_b[gemmIdx] * batchIdx,
+                                                   ldb[gemmIdx],
+                                                   h_beta[gemmIdx],
+                                                   *(hD_gold_epl[gemmIdx])
+                                                       + stride_d[gemmIdx] * batchIdx,
+                                                   ldd[gemmIdx],
+                                                   false);
                     auto pos = stride_d[gemmIdx] * batchIdx;
+                    auto ePos
+                        = (hE_gold[gemmIdx] == nullptr) ? nullptr : (*(hE_gold[gemmIdx]) + pos);
 
                     if(change_bias_type[gemmIdx] == false)
                     {
@@ -616,17 +725,17 @@ void testing_matmul(const Arguments& arg)
                         {
                         case hipblaslt_activation_type::gelu:
                             epilogue_func(epilogue_param,
-                                        *(hBias[gemmIdx]) + 0,
-                                        arg.activation_arg1,
-                                        arg.activation_arg2,
-                                        ::_gelu);
+                                          *(hBias[gemmIdx]) + 0,
+                                          arg.activation_arg1,
+                                          arg.activation_arg2,
+                                          ::_gelu);
                             break;
                         case hipblaslt_activation_type::relu:
                             epilogue_func(epilogue_param,
-                                        *(hBias[gemmIdx]) + 0,
-                                        arg.activation_arg1,
-                                        arg.activation_arg2,
-                                        ::_relu);
+                                          *(hBias[gemmIdx]) + 0,
+                                          arg.activation_arg1,
+                                          arg.activation_arg2,
+                                          ::_relu);
                             break;
                         default:
                             epilogue_func(epilogue_param, *(hBias[gemmIdx]) + 0);
@@ -639,17 +748,17 @@ void testing_matmul(const Arguments& arg)
                         {
                         case hipblaslt_activation_type::gelu:
                             epilogue_func(epilogue_param,
-                                        *(hBias_C[gemmIdx]) + 0,
-                                        arg.activation_arg1,
-                                        arg.activation_arg2,
-                                        ::_gelu);
+                                          *(hBias_C[gemmIdx]) + 0,
+                                          arg.activation_arg1,
+                                          arg.activation_arg2,
+                                          ::_gelu);
                             break;
                         case hipblaslt_activation_type::relu:
                             epilogue_func(epilogue_param,
-                                        *(hBias_C[gemmIdx]) + 0,
-                                        arg.activation_arg1,
-                                        arg.activation_arg2,
-                                        ::_relu);
+                                          *(hBias_C[gemmIdx]) + 0,
+                                          arg.activation_arg1,
+                                          arg.activation_arg2,
+                                          ::_relu);
                             break;
                         default:
                             epilogue_func(epilogue_param, *(hBias_C[gemmIdx]) + 0);
@@ -660,19 +769,19 @@ void testing_matmul(const Arguments& arg)
                 else
                 {
                     cblas_gemm<Ti, To, Talpha>(transA,
-                                            transB,
-                                            M[gemmIdx],
-                                            N[gemmIdx],
-                                            K[gemmIdx],
-                                            h_alpha[gemmIdx],
-                                            *(hA[gemmIdx]) + stride_a[gemmIdx] * batchIdx,
-                                            lda[gemmIdx],
-                                            *(hB[gemmIdx]) + stride_b[gemmIdx] * batchIdx,
-                                            ldb[gemmIdx],
-                                            h_beta[gemmIdx],
-                                            *(hD_gold[gemmIdx]) + stride_d[gemmIdx] * batchIdx,
-                                            ldd[gemmIdx],
-                                            false);
+                                               transB,
+                                               M[gemmIdx],
+                                               N[gemmIdx],
+                                               K[gemmIdx],
+                                               h_alpha[gemmIdx],
+                                               *(hA[gemmIdx]) + stride_a[gemmIdx] * batchIdx,
+                                               lda[gemmIdx],
+                                               *(hB[gemmIdx]) + stride_b[gemmIdx] * batchIdx,
+                                               ldb[gemmIdx],
+                                               h_beta[gemmIdx],
+                                               *(hD_gold[gemmIdx]) + stride_d[gemmIdx] * batchIdx,
+                                               ldd[gemmIdx],
+                                               false);
                 }
             }
         }
@@ -688,15 +797,46 @@ void testing_matmul(const Arguments& arg)
         for(int gemmIdx = 0; gemmIdx < gemm_count; gemmIdx++)
         {
             CHECK_HIP_ERROR(hD_1[gemmIdx]->transfer_from(*(dD[gemmIdx])));
+            if(!arg.gradient && arg.use_e)
+                CHECK_HIP_ERROR(hE[gemmIdx]->transfer_from(*(dE[gemmIdx])));
             if(arg.unit_check)
             {
-                unit_check_general<To>(M[gemmIdx], N[gemmIdx], ldd[gemmIdx], stride_d[gemmIdx], *(hD_gold[gemmIdx]), *(hD_1[gemmIdx]), num_batches[gemmIdx]);
+                unit_check_general<To>(M[gemmIdx],
+                                       N[gemmIdx],
+                                       ldd[gemmIdx],
+                                       stride_d[gemmIdx],
+                                       *(hD_gold[gemmIdx]),
+                                       *(hD_1[gemmIdx]),
+                                       num_batches[gemmIdx]);
+                if(!arg.gradient && arg.use_e)
+                    unit_check_general<Tc>(M[gemmIdx],
+                                           N[gemmIdx],
+                                           lde[gemmIdx],
+                                           stride_e[gemmIdx],
+                                           *(hE_gold[gemmIdx]),
+                                           *(hE[gemmIdx]),
+                                           num_batches[gemmIdx]);
             }
 
             if(arg.norm_check)
             {
-                hipblaslt_error = std::abs(
-                    norm_check_general<To>('F', M[gemmIdx], N[gemmIdx], ldd[gemmIdx], stride_d[gemmIdx], *(hD_gold[gemmIdx]), *(hD_1[gemmIdx]), num_batches[gemmIdx]));
+                hipblaslt_error = std::abs(norm_check_general<To>('F',
+                                                                  M[gemmIdx],
+                                                                  N[gemmIdx],
+                                                                  ldd[gemmIdx],
+                                                                  stride_d[gemmIdx],
+                                                                  *(hD_gold[gemmIdx]),
+                                                                  *(hD_1[gemmIdx]),
+                                                                  num_batches[gemmIdx]));
+                if(!arg.gradient && arg.use_e)
+                    hipblaslt_error += std::abs(norm_check_general<Tc>('F',
+                                                                       M[gemmIdx],
+                                                                       N[gemmIdx],
+                                                                       lde[gemmIdx],
+                                                                       stride_e[gemmIdx],
+                                                                       *(hE_gold[gemmIdx]),
+                                                                       *(hE[gemmIdx]),
+                                                                       num_batches[gemmIdx]));
             }
         }
     }
@@ -711,22 +851,22 @@ void testing_matmul(const Arguments& arg)
             for(int i = 0; i < number_cold_calls; i++)
             {
                 EXPECT_HIPBLAS_STATUS(hipblasLtMatmul(handle,
-                                                        matmul[0],
-                                                        &(h_alpha[0]),
-                                                        *(dA[0]),
-                                                        matA[0],
-                                                        *(dB[0]),
-                                                        matB[0],
-                                                        &(h_beta[0]),
-                                                        *(dC[0]),
-                                                        matC[0],
-                                                        *(dD[0]),
-                                                        matD[0],
-                                                        &heuristicResult[0].algo,
-                                                        *dWorkspace,
-                                                        workspace_size,
-                                                        stream),
-                                    HIPBLAS_STATUS_SUCCESS);
+                                                      matmul[0],
+                                                      &(h_alpha[0]),
+                                                      *(dA[0]),
+                                                      matA[0],
+                                                      *(dB[0]),
+                                                      matB[0],
+                                                      &(h_beta[0]),
+                                                      *(dC[0]),
+                                                      matC[0],
+                                                      *(dD[0]),
+                                                      matD[0],
+                                                      &heuristicResult[0].algo,
+                                                      *dWorkspace,
+                                                      workspace_size,
+                                                      stream),
+                                      HIPBLAS_STATUS_SUCCESS);
             }
 
             CHECK_HIP_ERROR(hipStreamSynchronize(stream));
@@ -734,22 +874,22 @@ void testing_matmul(const Arguments& arg)
             for(int i = 0; i < number_hot_calls; i++)
             {
                 EXPECT_HIPBLAS_STATUS(hipblasLtMatmul(handle,
-                                                        matmul[0],
-                                                        &(h_alpha[0]),
-                                                        *(dA[0]),
-                                                        matA[0],
-                                                        *(dB[0]),
-                                                        matB[0],
-                                                        &(h_beta[0]),
-                                                        *(dC[0]),
-                                                        matC[0],
-                                                        *(dD[0]),
-                                                        matD[0],
-                                                        &heuristicResult[0].algo,
-                                                        *dWorkspace,
-                                                        workspace_size,
-                                                        stream),
-                                    HIPBLAS_STATUS_SUCCESS);
+                                                      matmul[0],
+                                                      &(h_alpha[0]),
+                                                      *(dA[0]),
+                                                      matA[0],
+                                                      *(dB[0]),
+                                                      matB[0],
+                                                      &(h_beta[0]),
+                                                      *(dC[0]),
+                                                      matC[0],
+                                                      *(dD[0]),
+                                                      matD[0],
+                                                      &heuristicResult[0].algo,
+                                                      *dWorkspace,
+                                                      workspace_size,
+                                                      stream),
+                                      HIPBLAS_STATUS_SUCCESS);
             }
             CHECK_HIP_ERROR(hipStreamSynchronize(stream));
             gpu_time_used = get_time_us_sync(stream) - gpu_time_used;
@@ -790,10 +930,10 @@ void testing_matmul(const Arguments& arg)
             }
         }
 
-#define argument_param                                                                     \
-    e_transA, e_transB, e_grouped_gemm, e_batch_count, e_M, e_N, e_K, \
-        e_alpha, e_lda, e_stride_a, e_beta, e_ldb, e_stride_b, e_ldc, e_stride_c, e_ldd, e_stride_d, \
-        e_d_type, e_compute_type, e_activation_type, e_bias_vector
+#define argument_param                                                                             \
+    e_transA, e_transB, e_grouped_gemm, e_batch_count, e_M, e_N, e_K, e_alpha, e_lda, e_stride_a,  \
+        e_beta, e_ldb, e_stride_b, e_ldc, e_stride_c, e_ldd, e_stride_d, e_d_type, e_compute_type, \
+        e_activation_type, e_bias_vector
 
         ArgumentModel<argument_param>{}.log_args<float>(hipblaslt_cout,
                                                         arg,

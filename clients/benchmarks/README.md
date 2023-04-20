@@ -13,6 +13,7 @@ cd hipBLASLt; cd build/release
 --ldb <value>              Leading dimension of matrix B.
 --ldc <value>              Leading dimension of matrix C.
 --ldd <value>              Leading dimension of matrix D.
+--lde <value>              Leading dimension of matrix E.
 --any_stride               Do not modify input strides based on leading dimensions
 --stride_a <value>         Specific stride of strided_batched matrix A, second dimension * leading dimension.
 --stride_b <value>         Specific stride of strided_batched matrix B, second dimension * leading dimension.
@@ -40,6 +41,7 @@ cd hipBLASLt; cd build/release
 --bias_type <value>        Precision of bias vector.Options: f16_r,bf16_r,f32_r,default(same with D type)
 --bias_vector              Apply bias vector
 --scaleD_vector            Apply scaleD vector
+--use_e                    Apply AUX output/ gradient input
 --grouped_gemm <value>     Apply grouped_gemm                                                                  (Default value is: 0)
 --device <value>           Set default device to be used for subsequent program runs                           (Default value is: 0)
 --c_noalias_d              C and D are stored in separate memory

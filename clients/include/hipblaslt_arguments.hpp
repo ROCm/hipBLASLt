@@ -63,6 +63,7 @@ struct Arguments
     int64_t stride_b; //  stride_b > transB == 'N' ? ldb * N : ldb * K
     int64_t stride_c; //  stride_c > ldc * N
     int64_t stride_d; //  stride_d > ldd * N
+    int64_t stride_e; //  stride_e > lde * N
 
     size_t user_allocated_workspace;
 
@@ -74,6 +75,7 @@ struct Arguments
     int64_t ldb;
     int64_t ldc;
     int64_t ldd;
+    int64_t lde;
 
     int32_t batch_count;
 
@@ -94,7 +96,7 @@ struct Arguments
 
     // memory padding for testing write out of bounds
     uint32_t pad;
-    int32_t           grouped_gemm;
+    int32_t  grouped_gemm;
 
     // 16 bit
     uint16_t threads;
@@ -119,6 +121,8 @@ struct Arguments
     bool              scaleD_vector;
     bool              c_noalias_d;
     bool              HMM;
+    bool              use_e;
+    bool              gradient;
 
     /*************************************************************************
      *                     End Of Arguments                                  *
@@ -142,6 +146,7 @@ struct Arguments
     OPER(stride_b) SEP               \
     OPER(stride_c) SEP               \
     OPER(stride_d) SEP               \
+    OPER(stride_e) SEP               \
     OPER(user_allocated_workspace) SEP \
     OPER(M) SEP                      \
     OPER(N) SEP                      \
@@ -150,6 +155,7 @@ struct Arguments
     OPER(ldb) SEP                    \
     OPER(ldc) SEP                    \
     OPER(ldd) SEP                    \
+    OPER(lde) SEP                    \
     OPER(batch_count) SEP            \
     OPER(iters) SEP                  \
     OPER(cold_iters) SEP             \
@@ -179,7 +185,9 @@ struct Arguments
     OPER(bias_vector) SEP            \
     OPER(scaleD_vector) SEP          \
     OPER(c_noalias_d) SEP            \
-    OPER(HMM) SEP
+    OPER(HMM) SEP                    \
+    OPER(use_e) SEP                  \
+    OPER(gradient) SEP
 
     // clang-format on
 
