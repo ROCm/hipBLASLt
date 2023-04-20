@@ -139,6 +139,7 @@ int run_bench_test(Arguments& arg, const std::string& filter, bool any_stride, b
     int64_t min_ldb = arg.transB == 'N' ? arg.K : arg.N;
     int64_t min_ldc = arg.M;
     int64_t min_ldd = arg.M;
+    int64_t min_lde = arg.M;
     if(arg.lda < min_lda)
     {
         //hipblaslt_cout << "hipblaslt-bench INFO: lda < min_lda, set lda = " << min_lda << std::endl;
@@ -159,10 +160,16 @@ int run_bench_test(Arguments& arg, const std::string& filter, bool any_stride, b
         //hipblaslt_cout << "hipblaslt-bench INFO: ldd < min_ldd, set ldd = " << min_ldc << std::endl;
         arg.ldd = min_ldd;
     }
+    if(arg.lde < min_lde)
+    {
+        //hipblaslt_cout << "hipblaslt-bench INFO: lde < min_lde, set lde = " << min_lde << std::endl;
+        arg.lde = min_lde;
+    }
     int64_t min_stride_a = arg.lda * (arg.transA == 'N' ? arg.K : arg.M);
     int64_t min_stride_b = arg.ldb * (arg.transB == 'N' ? arg.N : arg.K);
     int64_t min_stride_c = arg.ldc * arg.N;
     int64_t min_stride_d = arg.ldd * arg.N;
+    int64_t min_stride_e = arg.lde * arg.N;
     if(!any_stride && arg.stride_a < min_stride_a)
     {
         //hipblaslt_cout << "hipblaslt-bench INFO: stride_a < min_stride_a, set stride_a = "
@@ -186,6 +193,12 @@ int run_bench_test(Arguments& arg, const std::string& filter, bool any_stride, b
         //hipblaslt_cout << "hipblaslt-bench INFO: stride_d < min_stride_d, set stride_d = "
         //               << min_stride_d << std::endl;
         arg.stride_d = min_stride_d;
+    }
+    if(!any_stride && arg.stride_e < min_stride_e)
+    {
+        //hipblaslt_cout << "hipblaslt-bench INFO: stride_e < min_stride_e, set stride_e = "
+        //               << min_stride_e << std::endl;
+        arg.stride_e = min_stride_e;
     }
 
     hipblaslt_matmul_dispatch<perf_matmul>(arg);
@@ -274,6 +287,10 @@ try
          value<int64_t>(&arg.ldd),
          "Leading dimension of matrix D.")
 
+        ("lde",
+         value<int64_t>(&arg.lde),
+         "Leading dimension of matrix E.")
+
         ("any_stride",
          value<bool>(&any_stride)->default_value(false),
          "Do not modify input strides based on leading dimensions")
@@ -293,6 +310,10 @@ try
         ("stride_d",
          value<int64_t>(&arg.stride_d),
          "Specific stride of strided_batched matrix D, second dimension * leading dimension.")
+
+        ("stride_e",
+         value<int64_t>(&arg.stride_e),
+         "Specific stride of strided_batched matrix E, second dimension * leading dimension.")
 
         ("alpha",
           value<float>(&arg.alpha)->default_value(1.0), "specifies the scalar alpha")
@@ -397,6 +418,10 @@ try
         ("scaleD_vector",
          bool_switch(&arg.scaleD_vector)->default_value(false),
          "Apply scaleD vector")
+
+        ("use_e",
+         bool_switch(&arg.use_e)->default_value(false),
+         "Apply AUX output/ gradient input")
 
         ("grouped_gemm",
          value<int32_t>(&arg.grouped_gemm)->default_value(0),
