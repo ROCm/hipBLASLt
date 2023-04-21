@@ -54,6 +54,7 @@ void epilogue_func(int64_t m,
                    int64_t ld,
                    Ti*     in,
                    To*     out,
+                   Tc*     out_raw,
                    Tc*     e,
                    bool    enable_bias,
                    bool    enable_scaleD,
@@ -85,7 +86,8 @@ void epilogue_func(int64_t m,
             else
                 in_Tact_act = act_func(in_Tact, arg1, arg2);
             in_Tact_act *= scaleD_data;
-            *(out + pos) = saturate_o(in_Tact_act);
+            *(out + pos)     = saturate_o(in_Tact_act);
+            *(out_raw + pos) = static_cast<Tc>(in_Tact_act);
         }
     }
 }
@@ -95,6 +97,7 @@ void epilogue_func(int64_t m,
                    int64_t ld,
                    Ti*     in,
                    To*     out,
+                   Tc*     out_raw,
                    Tc*     e,
                    bool    enable_bias,
                    bool    enable_scaleD,
@@ -118,7 +121,26 @@ void epilogue_func(int64_t m,
                 *(e + pos) = static_cast<Tc>(temp);
             }
             temp *= scaleD_data;
-            *(out + pos) = saturate_o(temp);
+            *(out + pos)     = saturate_o(temp);
+            *(out_raw + pos) = static_cast<Tc>(temp);
+        }
+    }
+}
+
+template <typename To, typename Tc>
+void reduction_ij_func(Tc* workspace, To* bias, int m, int n, int ld, int stride, int batch_count)
+{
+    assert(batch_count == 1);
+    for(int batch = 0; batch < batch_count; batch++)
+    {
+        for(int i = 0; i < m; i++)
+        {
+            Tc sum = 0;
+            for(int j = 0; j < n; j++)
+            {
+                sum += workspace[i + j * ld + batch * stride];
+            }
+            bias[i] = static_cast<To>(sum);
         }
     }
 }
@@ -260,9 +282,9 @@ void testing_matmul(const Arguments& arg)
 
     std::vector<host_vector<Ti>*> hA(gemm_count), hB(gemm_count);
     std::vector<host_vector<To>*> hC(gemm_count), hD_gold(gemm_count), hD_1(gemm_count),
-        hBias(gemm_count);
+        hBias(gemm_count), hBias_gold(gemm_count);
     std::vector<host_vector<Talpha>*> hD_gold_epl(gemm_count), hScaleD(gemm_count),
-        hBias_C(gemm_count);
+        hBias_C(gemm_count), hBias_gold_C(gemm_count), hBias_gold_epl(gemm_count);
     std::vector<host_vector<Tc>*> hE(gemm_count, nullptr), hE_gold(gemm_count, nullptr);
 
     for(int i = 0; i < gemm_count; i++)
@@ -394,6 +416,10 @@ void testing_matmul(const Arguments& arg)
                 CHECK_SUCCESS(arg.use_e && "Must enable use e if gradient is enabled with gelu.");
                 epilogue[i] = HIPBLASLT_EPILOGUE_DGELU;
                 break;
+            case HIPBLASLT_EPILOGUE_GELU_BIAS:
+                CHECK_SUCCESS(arg.use_e && "Must enable use e if gradient is enabled with gelu.");
+                epilogue[i] = HIPBLASLT_EPILOGUE_DGELU_BGRAD;
+                break;
             default:
                 break;
             }
@@ -459,15 +485,18 @@ void testing_matmul(const Arguments& arg)
         }
 
         // Naming: dX is in GPU (device) memory. hK is in CPU (host) memory
-        hA[i]          = new host_vector<Ti>(size_A[i]);
-        hB[i]          = new host_vector<Ti>(size_B[i]);
-        hC[i]          = new host_vector<To>(size_C[i]);
-        hD_gold[i]     = new host_vector<To>(size_D_copy[i]);
-        hD_gold_epl[i] = new host_vector<Talpha>(size_D_copy[i]);
-        hD_1[i]        = new host_vector<To>(size_D_copy[i]);
-        hBias[i]       = new host_vector<To>(size_bias[i]);
-        hScaleD[i]     = new host_vector<Talpha>(size_scaleD[i]);
-        hBias_C[i]     = new host_vector<Talpha>(size_bias[i]);
+        hA[i]             = new host_vector<Ti>(size_A[i]);
+        hB[i]             = new host_vector<Ti>(size_B[i]);
+        hC[i]             = new host_vector<To>(size_C[i]);
+        hD_gold[i]        = new host_vector<To>(size_D_copy[i]);
+        hD_gold_epl[i]    = new host_vector<Talpha>(size_D_copy[i]);
+        hD_1[i]           = new host_vector<To>(size_D_copy[i]);
+        hBias[i]          = new host_vector<To>(size_bias[i]);
+        hBias_gold_epl[i] = new host_vector<Talpha>(size_D_copy[i]); // Reduction for matrix D
+        hBias_gold[i]     = new host_vector<To>(size_bias[i]);
+        hBias_gold_C[i]   = new host_vector<Talpha>(size_bias[i]);
+        hScaleD[i]        = new host_vector<Talpha>(size_scaleD[i]);
+        hBias_C[i]        = new host_vector<Talpha>(size_bias[i]);
 
         if(arg.use_e)
         {
@@ -552,7 +581,7 @@ void testing_matmul(const Arguments& arg)
         {
             CHECK_HIP_ERROR(dE[i]->transfer_from(*hE[i]));
         }
-        if(arg.bias_vector)
+        if(!arg.gradient && arg.bias_vector)
         {
             CHECK_HIP_ERROR(dBias[i]->transfer_from(*hBias[i]));
             CHECK_HIP_ERROR(dBias_C[i]->transfer_from(*hBias_C[i]));
@@ -734,10 +763,10 @@ void testing_matmul(const Arguments& arg)
             cpu_time_used = get_time_us_no_sync();
         }
 
-#define epilogue_param                                                       \
-    M[gemmIdx], N[gemmIdx], ldd[gemmIdx], *(hD_gold_epl[gemmIdx]) + pos,     \
-        *(hD_gold[gemmIdx]) + pos, ePos, arg.bias_vector, arg.scaleD_vector, \
-        *(hScaleD[gemmIdx]) + 0
+#define epilogue_param                                                                         \
+    M[gemmIdx], N[gemmIdx], ldd[gemmIdx], *(hD_gold_epl[gemmIdx]) + pos,                       \
+        *(hD_gold[gemmIdx]) + pos, *(hBias_gold_epl[gemmIdx]) + pos, ePos, \
+        applyBias, arg.scaleD_vector, *(hScaleD[gemmIdx]) + 0
         for(int gemmIdx = 0; gemmIdx < gemm_count; gemmIdx++)
         {
             for(int batchIdx = 0; batchIdx < num_batches[gemmIdx]; batchIdx++)
@@ -762,6 +791,7 @@ void testing_matmul(const Arguments& arg)
                     auto pos    = stride_d[gemmIdx] * batchIdx;
                     auto hEInst = arg.gradient ? hE : hE_gold;
                     auto ePos = (hEInst[gemmIdx] == nullptr) ? nullptr : (*(hEInst[gemmIdx]) + pos);
+                    auto applyBias = arg.gradient ? false : arg.bias_vector;
 
                     if(change_bias_type[gemmIdx] == false)
                     {
@@ -829,6 +859,25 @@ void testing_matmul(const Arguments& arg)
                             break;
                         }
                     }
+                    if(arg.gradient && arg.bias_vector)
+                    {
+                        if(arg.d_type != arg.scale_type && arg.bias_type == arg.scale_type)
+                            reduction_ij_func(*(hBias_gold_epl[gemmIdx]) + pos,
+                                              *(hBias_gold_C[gemmIdx]) + 0,
+                                              M[gemmIdx],
+                                              N[gemmIdx],
+                                              ldd[gemmIdx],
+                                              stride_d[gemmIdx],
+                                              num_batches[gemmIdx]);
+                        else
+                            reduction_ij_func(*(hBias_gold_epl[gemmIdx]) + pos,
+                                              *(hBias_gold[gemmIdx]) + 0,
+                                              M[gemmIdx],
+                                              N[gemmIdx],
+                                              ldd[gemmIdx],
+                                              stride_d[gemmIdx],
+                                              num_batches[gemmIdx]);
+                    }
                 }
                 else
                 {
@@ -863,6 +912,11 @@ void testing_matmul(const Arguments& arg)
             CHECK_HIP_ERROR(hD_1[gemmIdx]->transfer_from(*(dD[gemmIdx])));
             if(!arg.gradient && arg.use_e)
                 CHECK_HIP_ERROR(hE[gemmIdx]->transfer_from(*(dE[gemmIdx])));
+            if(arg.gradient && arg.bias_vector)
+            {
+                CHECK_HIP_ERROR(hBias[gemmIdx]->transfer_from(*(dBias[gemmIdx])));
+                CHECK_HIP_ERROR(hBias_C[gemmIdx]->transfer_from(*(dBias_C[gemmIdx])));
+            }
             if(arg.unit_check)
             {
                 unit_check_general<To>(M[gemmIdx],
@@ -880,6 +934,25 @@ void testing_matmul(const Arguments& arg)
                                            *(hE_gold[gemmIdx]),
                                            *(hE[gemmIdx]),
                                            num_batches[gemmIdx]);
+                if(arg.gradient && arg.bias_vector)
+                {
+                    if(arg.d_type != arg.scale_type && arg.bias_type == arg.scale_type)
+                        unit_check_general<Talpha>(M[gemmIdx],
+                                                   1,
+                                                   M[gemmIdx],
+                                                   M[gemmIdx],
+                                                   *(hBias_gold_C[gemmIdx]),
+                                                   *(hBias_C[gemmIdx]),
+                                                   num_batches[gemmIdx]);
+                    else
+                        unit_check_general<To>(M[gemmIdx],
+                                               1,
+                                               M[gemmIdx],
+                                               M[gemmIdx],
+                                               *(hBias_gold[gemmIdx]),
+                                               *(hBias[gemmIdx]),
+                                               num_batches[gemmIdx]);
+                }
             }
 
             if(arg.norm_check)
@@ -901,6 +974,28 @@ void testing_matmul(const Arguments& arg)
                                                                        *(hE_gold[gemmIdx]),
                                                                        *(hE[gemmIdx]),
                                                                        num_batches[gemmIdx]));
+                if(arg.gradient && arg.bias_vector)
+                {
+                    if(arg.d_type != arg.scale_type && arg.bias_type == arg.scale_type)
+                        hipblaslt_error
+                            += std::abs(norm_check_general<Talpha>('F',
+                                                                   M[gemmIdx],
+                                                                   1,
+                                                                   M[gemmIdx],
+                                                                   M[gemmIdx],
+                                                                   *(hBias_gold_C[gemmIdx]),
+                                                                   *(hBias_C[gemmIdx]),
+                                                                   num_batches[gemmIdx]));
+                    else
+                        hipblaslt_error += std::abs(norm_check_general<To>('F',
+                                                                           M[gemmIdx],
+                                                                           1,
+                                                                           M[gemmIdx],
+                                                                           M[gemmIdx],
+                                                                           *(hBias_gold[gemmIdx]),
+                                                                           *(hBias[gemmIdx]),
+                                                                           num_batches[gemmIdx]));
+                }
             }
         }
     }
