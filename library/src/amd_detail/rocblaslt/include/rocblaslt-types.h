@@ -152,7 +152,8 @@ typedef enum rocblaslt_epilogue_
     ROCBLASLT_EPILOGUE_GELU          = 32,
     ROCBLASLT_EPILOGUE_GELU_BIAS     = 36,
     ROCBLASLT_EPILOGUE_GELU_AUX      = 160,
-    ROCBLASLT_EPILOGUE_GELU_AUX_BIAS = 164
+    ROCBLASLT_EPILOGUE_GELU_AUX_BIAS = 164,
+    ROCBLASLT_EPILOGUE_DGELU         = 192
 } rocblaslt_epilogue;
 
 /*! \ingroup types_module

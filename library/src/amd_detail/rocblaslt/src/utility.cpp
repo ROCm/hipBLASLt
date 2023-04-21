@@ -169,6 +169,8 @@ const char* rocblaslt_epilogue_to_string(rocblaslt_epilogue epilogue)
         return "EPILOGUE_RELU_BIAS";
     case ROCBLASLT_EPILOGUE_GELU:
         return "EPILOGUE_GELU";
+    case ROCBLASLT_EPILOGUE_DGELU:
+        return "EPILOGUE_DGELU";
     case ROCBLASLT_EPILOGUE_GELU_BIAS:
         return "EPILOGUE_GELU_BIAS";
     case ROCBLASLT_EPILOGUE_GELU_AUX:

@@ -42,6 +42,7 @@ cd hipBLASLt; cd build/release
 --bias_vector              Apply bias vector
 --scaleD_vector            Apply scaleD vector
 --use_e                    Apply AUX output/ gradient input
+--gradient                 Enable gradient
 --grouped_gemm <value>     Apply grouped_gemm                                                                  (Default value is: 0)
 --device <value>           Set default device to be used for subsequent program runs                           (Default value is: 0)
 --c_noalias_d              C and D are stored in separate memory

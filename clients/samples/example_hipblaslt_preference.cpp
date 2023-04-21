@@ -108,6 +108,23 @@ auto _gelu = [](auto in) -> decltype(in) {
         0.5f * (in_Tc * (1.f + std::tanh(k0 * (in_Tc * (1.f + k1 * (in_Tc * in_Tc)))))));
 };
 
+auto _dgelu = [](auto in) -> decltype(in) {
+    using Tc = float;
+
+    constexpr auto k0    = static_cast<Tc>(0.0535161);
+    constexpr auto k1    = static_cast<Tc>(0.398942);
+    constexpr auto k2    = static_cast<Tc>(0.0356774);
+    constexpr auto k3    = static_cast<Tc>(0.797885);
+    Tc             in_Tc = static_cast<Tc>(in);
+
+    Tc pow3 = in_Tc * in_Tc * in_Tc;
+    Tc x1   = k0 * pow3 + k1 * in_Tc;
+    Tc xx   = k2 * pow3 + k3 * in_Tc;
+    Tc x2   = 4 / pow(exp(-xx) + exp(xx), 2);
+    Tc tmp  = 0.5 * tanh(xx) + x1 * x2 + 0.5;
+    return static_cast<decltype(in)>(0.5f * tanh(xx) + x1 * x2 + 0.5f);
+};
+
 template <typename T>
 inline bool AlmostEqual(T a, T b)
 {
@@ -191,11 +208,14 @@ void mat_mul_bias_activation(Tc             alpha,
                              int            Es3,
                              To*            bias,
                              Tc*            scaleD,
+                             bool           gradient,
                              ActivationType actType)
 {
     std::function<Tc(Tc)> actFunc;
     if(actType == ActivationType::RELU)
         actFunc = _relu;
+    else if(actType == ActivationType::GELU && gradient)
+        actFunc = _dgelu;
     else if(actType == ActivationType::GELU)
         actFunc = _gelu;
 
@@ -213,12 +233,17 @@ void mat_mul_bias_activation(Tc             alpha,
                 }
                 t = beta * static_cast<Tc>(C[i1 * Cs1 + i2 * Cs2 + batch * Cs3]) + alpha * t
                     + (bias == nullptr ? 0 : bias[i1]);
-                if(E != nullptr)
+                if(E != nullptr && !gradient)
                 {
                     E[i1 * Es1 + i2 * Es2 + batch * Es3] = static_cast<Tc>(t);
                 }
                 if(actType != ActivationType::NONE)
-                    t = actFunc(t);
+                {
+                    if(gradient)
+                        t = actFunc(static_cast<Tc>(E[i1 * Es1 + i2 * Es2 + batch * Es3])) * t;
+                    else
+                        t = actFunc(t);
+                }
                 t                                    = t * (scaleD == nullptr ? 1.0 : scaleD[i1]);
                 D[i1 * Ds1 + i2 * Ds2 + batch * Ds3] = static_cast<To>(t);
             }
@@ -268,6 +293,8 @@ static void show_usage(char* argv[])
               << "\t--batch_count \t\tbatch \t\tGEMM_STRIDED argument batch count\n"
               << "\t--act \t\t\tact \t\tGEMM_STRIDED set activation type: relu "
                  "or gelu\n"
+              << "\t--grad \t\tgrad \t\tGEMM_STRIDED enable grad: 0 or 1 "
+                 "(default is 0)\n"
               << "\t--use_e \t\tuse_e \t\tGEMM_STRIDED enable use_e: 0 or 1 "
                  "(default is 0)\n"
               << "\t--bias \t\t\tbias \t\tGEMM_STRIDED enable bias: 0 or 1 "
@@ -421,11 +448,10 @@ static int parse_arguments(int                 argc,
                 {
                     beta = atof(argv[++i]);
                 }
-                // Currently disabled
-                // else if((arg == "--grad") && (i + 1 < argc))
-                // {
-                //     enable_grad = atoi(argv[++i]);
-                // }
+                else if((arg == "--grad") && (i + 1 < argc))
+                {
+                    enable_grad = atoi(argv[++i]);
+                }
                 else if((arg == "--use_e") && (i + 1 < argc))
                 {
                     enable_e = atoi(argv[++i]);
@@ -833,7 +859,8 @@ void test_hipblaslt(hipblasDatatype_t  in_out_datatype,
     hipblasLtEpilogue_t epilogue;
     if(enable_grad)
     {
-        assert(0);
+        if(enable_e && !enable_bias && actType == ActivationType::GELU)
+            epilogue = HIPBLASLT_EPILOGUE_DGELU;
     }
     else
     {
@@ -1058,6 +1085,8 @@ void test_hipblaslt(hipblasDatatype_t  in_out_datatype,
         float* e_ptr;
         if(!enable_grad && enable_e)
             e_ptr = &he_gold[0];
+        else if(enable_grad && enable_e)
+            e_ptr = &he[0];
         else
             e_ptr = nullptr;
         if(enable_bias)
@@ -1097,6 +1126,7 @@ void test_hipblaslt(hipblasDatatype_t  in_out_datatype,
                                              stride_e,
                                              bias_ptr,
                                              scaleD_ptr,
+                                             enable_grad,
                                              actType);
 
         bool passed = true;

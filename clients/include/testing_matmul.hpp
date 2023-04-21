@@ -61,7 +61,8 @@ void epilogue_func(int64_t m,
                    Tbias*  bias,
                    Tact    arg1,
                    Tact    arg2,
-                   F&      act_func)
+                   F&      act_func,
+                   bool    gradient)
 {
     auto saturate_o = [](Tact val) { return static_cast<To>(val); };
 
@@ -74,11 +75,15 @@ void epilogue_func(int64_t m,
         {
             auto pos     = j * ld + i;
             auto in_Tact = static_cast<Tact>(*(in + pos)) + bias_data;
-            if(e)
+            if(e && !gradient)
             {
                 *(e + pos) = static_cast<Tc>(in_Tact);
             }
-            auto in_Tact_act = act_func(in_Tact, arg1, arg2);
+            Tact in_Tact_act = 0;
+            if(gradient)
+                in_Tact_act = act_func(static_cast<Tact>(*(e + pos)), arg1, arg2) * in_Tact;
+            else
+                in_Tact_act = act_func(in_Tact, arg1, arg2);
             in_Tact_act *= scaleD_data;
             *(out + pos) = saturate_o(in_Tact_act);
         }
@@ -94,7 +99,8 @@ void epilogue_func(int64_t m,
                    bool    enable_bias,
                    bool    enable_scaleD,
                    Talpha* scaleD,
-                   Tbias*  bias)
+                   Tbias*  bias,
+                   bool    gradient)
 {
     auto saturate_o = [](Ti val) { return static_cast<To>(val); };
 
@@ -149,6 +155,23 @@ auto _gelu = [](auto in, auto /*arg1*/, auto /*arg2*/) -> decltype(in) {
 
     return static_cast<decltype(in)>(
         0.5f * (in_Tc * (1.f + std::tanh(k0 * (in_Tc * (1.f + k1 * (in_Tc * in_Tc)))))));
+};
+
+auto _dgelu = [](auto in, auto /*arg1*/, auto /*arg2*/) -> decltype(in) {
+    using Tc = float;
+
+    constexpr auto k0    = static_cast<Tc>(0.0535161);
+    constexpr auto k1    = static_cast<Tc>(0.398942);
+    constexpr auto k2    = static_cast<Tc>(0.0356774);
+    constexpr auto k3    = static_cast<Tc>(0.797885);
+    Tc             in_Tc = static_cast<Tc>(in);
+
+    Tc pow3 = in_Tc * in_Tc * in_Tc;
+    Tc x1   = k0 * pow3 + k1 * in_Tc;
+    Tc xx   = k2 * pow3 + k3 * in_Tc;
+    Tc x2   = 4 / pow(exp(-xx) + exp(xx), 2);
+    Tc tmp  = 0.5 * tanh(xx) + x1 * x2 + 0.5;
+    return static_cast<decltype(in)>(0.5f * tanh(xx) + x1 * x2 + 0.5f);
 };
 
 template <typename Ti, typename To, typename Tc>
@@ -363,6 +386,18 @@ void testing_matmul(const Arguments& arg)
                 break;
             }
         }
+        if(arg.gradient)
+        {
+            switch(epilogue[i])
+            {
+            case HIPBLASLT_EPILOGUE_GELU:
+                CHECK_SUCCESS(arg.use_e && "Must enable use e if gradient is enabled with gelu.");
+                epilogue[i] = HIPBLASLT_EPILOGUE_DGELU;
+                break;
+            default:
+                break;
+            }
+        }
         if(arg.use_e)
         {
             switch(epilogue[i])
@@ -495,6 +530,11 @@ void testing_matmul(const Arguments& arg)
                 hipblaslt_init<To>(*hC[i], M[i], N[i], ldc[i], stride_c[i], num_batches[i]);
         }
 
+        if(arg.gradient && arg.use_e)
+        {
+            hipblaslt_init<Tc>(*hE[i], M[i], N[i], lde[i], stride_e[i], num_batches[i]);
+        }
+
         if(arg.bias_vector)
         {
             hipblaslt_init<To>(*hBias[i], M[i], 1, M[i]);
@@ -508,6 +548,10 @@ void testing_matmul(const Arguments& arg)
         CHECK_HIP_ERROR(dA[i]->transfer_from(*hA[i]));
         CHECK_HIP_ERROR(dB[i]->transfer_from(*hB[i]));
         CHECK_HIP_ERROR(dC[i]->transfer_from(*hC[i]));
+        if(arg.gradient && arg.use_e)
+        {
+            CHECK_HIP_ERROR(dE[i]->transfer_from(*hE[i]));
+        }
         if(arg.bias_vector)
         {
             CHECK_HIP_ERROR(dBias[i]->transfer_from(*hBias[i]));
@@ -715,30 +759,40 @@ void testing_matmul(const Arguments& arg)
                                                        + stride_d[gemmIdx] * batchIdx,
                                                    ldd[gemmIdx],
                                                    false);
-                    auto pos = stride_d[gemmIdx] * batchIdx;
-                    auto ePos
-                        = (hE_gold[gemmIdx] == nullptr) ? nullptr : (*(hE_gold[gemmIdx]) + pos);
+                    auto pos    = stride_d[gemmIdx] * batchIdx;
+                    auto hEInst = arg.gradient ? hE : hE_gold;
+                    auto ePos = (hEInst[gemmIdx] == nullptr) ? nullptr : (*(hEInst[gemmIdx]) + pos);
 
                     if(change_bias_type[gemmIdx] == false)
                     {
                         switch(arg.activation_type)
                         {
                         case hipblaslt_activation_type::gelu:
-                            epilogue_func(epilogue_param,
-                                          *(hBias[gemmIdx]) + 0,
-                                          arg.activation_arg1,
-                                          arg.activation_arg2,
-                                          ::_gelu);
+                            if(arg.gradient)
+                                epilogue_func(epilogue_param,
+                                              *(hBias[gemmIdx]) + 0,
+                                              arg.activation_arg1,
+                                              arg.activation_arg2,
+                                              ::_dgelu,
+                                              true);
+                            else
+                                epilogue_func(epilogue_param,
+                                              *(hBias[gemmIdx]) + 0,
+                                              arg.activation_arg1,
+                                              arg.activation_arg2,
+                                              ::_gelu,
+                                              false);
                             break;
                         case hipblaslt_activation_type::relu:
                             epilogue_func(epilogue_param,
                                           *(hBias[gemmIdx]) + 0,
                                           arg.activation_arg1,
                                           arg.activation_arg2,
-                                          ::_relu);
+                                          ::_relu,
+                                          arg.gradient);
                             break;
                         default:
-                            epilogue_func(epilogue_param, *(hBias[gemmIdx]) + 0);
+                            epilogue_func(epilogue_param, *(hBias[gemmIdx]) + 0, false);
                             break;
                         }
                     }
@@ -747,21 +801,31 @@ void testing_matmul(const Arguments& arg)
                         switch(arg.activation_type)
                         {
                         case hipblaslt_activation_type::gelu:
-                            epilogue_func(epilogue_param,
-                                          *(hBias_C[gemmIdx]) + 0,
-                                          arg.activation_arg1,
-                                          arg.activation_arg2,
-                                          ::_gelu);
+                            if(arg.gradient)
+                                epilogue_func(epilogue_param,
+                                              *(hBias_C[gemmIdx]) + 0,
+                                              arg.activation_arg1,
+                                              arg.activation_arg2,
+                                              ::_dgelu,
+                                              true);
+                            else
+                                epilogue_func(epilogue_param,
+                                              *(hBias_C[gemmIdx]) + 0,
+                                              arg.activation_arg1,
+                                              arg.activation_arg2,
+                                              ::_gelu,
+                                              false);
                             break;
                         case hipblaslt_activation_type::relu:
                             epilogue_func(epilogue_param,
                                           *(hBias_C[gemmIdx]) + 0,
                                           arg.activation_arg1,
                                           arg.activation_arg2,
-                                          ::_relu);
+                                          ::_relu,
+                                          arg.gradient);
                             break;
                         default:
-                            epilogue_func(epilogue_param, *(hBias_C[gemmIdx]) + 0);
+                            epilogue_func(epilogue_param, *(hBias_C[gemmIdx]) + 0, false);
                             break;
                         }
                     }
