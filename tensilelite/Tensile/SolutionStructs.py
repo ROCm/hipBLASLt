@@ -223,9 +223,9 @@ class ProblemType(Mapping):
         elif self["ActivationType"] != 'none' and self["UseE"] == False:
           printWarning("Use E is disabled cause Activation is disabled.")
           self["UseE"] = False
-        if self["UseScaleD"]:
-          printWarning("Use scaleD is disabled cause Gradient is enabled.")
-          self["UseScaleD"] = False
+        # if self["UseScaleD"]:
+        #   printWarning("Use scaleD is disabled cause Gradient is enabled.")
+        #   self["UseScaleD"] = False
       self["Gradient"] = config["Gradient"]
 
     # Need gradient info
