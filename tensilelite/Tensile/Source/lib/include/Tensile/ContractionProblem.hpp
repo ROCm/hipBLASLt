@@ -442,6 +442,16 @@ namespace Tensile
             return m_betaType;
         }
 
+        DataType computeType() const
+        {
+            return m_betaType;
+        }
+
+        size_t computeTypeElementSize() const
+        {
+            return DataTypeInfo::Get(m_betaType).elementSize;
+        }
+
         void setUseE(bool useE)
         {
             m_useE = useE;
