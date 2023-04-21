@@ -593,4 +593,20 @@ Tests:
   unit_check: 0
   norm_check: 1
 
+- name: matmul_dgelu
+  category: pre_checkin
+  function:
+    matmul: *hpa_half_precision
+  M: [128, 129]
+  N: [128, 129]
+  K: [128, 129]
+  transA_transB: *transA_transB_range
+  alpha: 1
+  beta: [ 0.0, 2.0 ]
+  use_e: 1
+  gradient: 1
+  activation_type: gelu
+  unit_check: 0
+  norm_check: 1
+
 ...

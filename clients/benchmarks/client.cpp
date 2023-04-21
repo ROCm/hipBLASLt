@@ -423,6 +423,10 @@ try
          bool_switch(&arg.use_e)->default_value(false),
          "Apply AUX output/ gradient input")
 
+        ("gradient",
+         bool_switch(&arg.gradient)->default_value(false),
+         "Enable gradient")
+
         ("grouped_gemm",
          value<int32_t>(&arg.grouped_gemm)->default_value(0),
          "Use grouped_gemm if non-zero. Number of gemms to run")

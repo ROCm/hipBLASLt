@@ -111,9 +111,19 @@ namespace
                         name << hipblas_datatype_to_string(arg.bias_type);
                 }
 
-                if(arg.use_e)
+                if(arg.gradient)
                 {
-                    name << "_AUX";
+                    if(arg.use_e)
+                    {
+                        name << "_GRAD";
+                    }
+                }
+                else
+                {
+                    if(arg.use_e)
+                    {
+                        name << "_AUX";
+                    }
                 }
 
                 name << '_' << (char)std::toupper(arg.transA) << (char)std::toupper(arg.transB);
