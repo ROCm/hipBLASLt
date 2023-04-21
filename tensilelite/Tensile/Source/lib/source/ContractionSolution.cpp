@@ -382,7 +382,8 @@ namespace Tensile
             args.append<uint32_t>("SmallMagicNumberDivWg0",
                                   smallMagicNumber(problemNumGroupTiles0));
             args.append<uint32_t>("SmallMagicNumberDivWg01",
-                                  smallMagicNumber(problemNumGroupTiles0 * problemNumGroupTiles1 * sizeMapping.globalSplitU));
+                                  smallMagicNumber(problemNumGroupTiles0 * problemNumGroupTiles1
+                                                   * sizeMapping.globalSplitU));
         }
 
         // address padding for epilogue alignment
@@ -396,7 +397,8 @@ namespace Tensile
         if(problemType.useBias && (sizeMapping.globalSplitU == 1))
         {
             // We save the bias data in ws_d
-            if(problemType.useGradient && problem.biasSrc() == ContractionProblemGemm::TENSOR::D)
+            if(problemType.useGradient && problem.biasSrc() == ContractionProblemGemm::TENSOR::D
+               && inputs.bias != nullptr)
                 args.append<void const*>("ws_bias", (uint8_t*)inputs.ws + workspaceOffsetInByte);
             else
                 args.append<void const*>("bias", inputs.bias);
@@ -540,7 +542,7 @@ namespace Tensile
         std::vector<ContractionSolution::Problem> const& problems,
         ContractionSolution::GroupedInputs const&        inputs,
         Hardware const&                                  hardware,
-        KernelArguments &                                h_args) const
+        KernelArguments&                                 h_args) const
     {
         TENSILE_ASSERT_EXC(sizeMapping.workGroupMapping >= 0);
         KernelInvocation rv;
@@ -597,15 +599,13 @@ namespace Tensile
             rv.numWorkGroups.x = CeilDivide(rv.numWorkGroups.x, sizeMapping.macroTile.x);
             rv.numWorkGroups.y = CeilDivide(rv.numWorkGroups.y, sizeMapping.macroTile.y);
 
-
             problemNumGroupTiles0.push_back(rv.numWorkGroups.x);
             problemNumGroupTiles1.push_back(rv.numWorkGroups.y);
 
             rv.numWorkGroups.y *= sizeMapping.globalSplitU;
 
-            rv.numWorkItems.x += (rv.workGroupSize.x * rv.numWorkGroups.x
-                                * rv.workGroupSize.y * rv.numWorkGroups.y
-                                * rv.workGroupSize.z * rv.numWorkGroups.z);
+            rv.numWorkItems.x += (rv.workGroupSize.x * rv.numWorkGroups.x * rv.workGroupSize.y
+                                  * rv.numWorkGroups.y * rv.workGroupSize.z * rv.numWorkGroups.z);
 
             wgRight
                 = rv.numWorkItems.x / rv.workGroupSize.x / rv.workGroupSize.y / rv.workGroupSize.y;
@@ -783,11 +783,10 @@ namespace Tensile
     }
 
     template <bool T_Debug>
-    void ContractionSolution::outputConversionCallArgs(
-                                            ContractionSolution::Problem const& problem,
-                                            ContractionInputs const&            inputs,
-                                            uint32_t const&  workspaceOffsetInByte,
-                                            KernelArguments& args) const
+    void ContractionSolution::outputConversionCallArgs(ContractionSolution::Problem const& problem,
+                                                       ContractionInputs const&            inputs,
+                                                       uint32_t const&  workspaceOffsetInByte,
+                                                       KernelArguments& args) const
     {
         TensorDescriptor const& c = problem.c();
         TensorDescriptor const& d = problem.d();
@@ -868,7 +867,7 @@ namespace Tensile
             if(problem.activationType() == ActivationType::All)
             {
                 args.append<uint32_t>("activationType",
-                                        static_cast<uint32_t>(problem.activationEnumArg()));
+                                      static_cast<uint32_t>(problem.activationEnumArg()));
             }
         }
 
@@ -895,7 +894,6 @@ namespace Tensile
             args.append<uint32_t>(concatenate_if<T_Debug>("size_", i), size);
             i++;
         }
-
     }
 
     template <bool T_Debug>
@@ -943,7 +941,7 @@ namespace Tensile
         rv.numWorkItems.y = rv.workGroupSize.y * rv.numWorkGroups.y;
         rv.numWorkItems.z = rv.workGroupSize.z * rv.numWorkGroups.z;
 
-        outputConversionCallArgs<T_Debug>(problem, inputs, 0 , rv.args);
+        outputConversionCallArgs<T_Debug>(problem, inputs, 0, rv.args);
 
         //@TODO determine if this is needed, may not end up in the same code object file
         rv.codeObjectFile = codeObjectFilename.load();
@@ -1030,23 +1028,25 @@ namespace Tensile
 
         rv.numWorkGroups.y = 1;
         rv.numWorkGroups.z = 1;
-        rv.numWorkItems.y = rv.workGroupSize.y * rv.numWorkGroups.y;
-        rv.numWorkItems.z = rv.workGroupSize.z * rv.numWorkGroups.z;
+        rv.numWorkItems.y  = rv.workGroupSize.y * rv.numWorkGroups.y;
+        rv.numWorkItems.z  = rv.workGroupSize.z * rv.numWorkGroups.z;
 
-        rv.kernelName
-            = outputConversionKernelName(problems[0], inputs.grouped[0], hardware, vw, sizeMapping.globalSplitU);
+        rv.kernelName = outputConversionKernelName(
+            problems[0], inputs.grouped[0], hardware, vw, sizeMapping.globalSplitU);
 
         uint32_t workspaceOffsetInByte = 0;
         for(int idx = 0; idx < problems.size(); idx++)
         {
             auto problem = problems[idx];
-            outputConversionCallArgs<T_Debug>(problem, inputs.grouped[idx], workspaceOffsetInByte, h_args);
+            outputConversionCallArgs<T_Debug>(
+                problem, inputs.grouped[idx], workspaceOffsetInByte, h_args);
             workspaceOffsetInByte += requiredWorkspaceSize(problem);
         }
 
-        uint8_t* d_args = (uint8_t*)(inputs.ws) + workspaceOffsetInByte + previousArgsSpaceOffsetInByte;
+        uint8_t* d_args
+            = (uint8_t*)(inputs.ws) + workspaceOffsetInByte + previousArgsSpaceOffsetInByte;
         rv.args.append<uint8_t*>("wiTablePtr", d_args);
-        rv.args.append<uint8_t*>("argsPtr", d_args + problems.size()*sizeof(uint32_t));
+        rv.args.append<uint8_t*>("argsPtr", d_args + problems.size() * sizeof(uint32_t));
         rv.args.append<uint32_t>("gemm_count", problems.size());
         rv.codeObjectFile = codeObjectFilename.load();
 
@@ -1076,16 +1076,19 @@ namespace Tensile
             auto s = TypeAbbrev(problem.biasType());
             if(problemType.useGradient)
             {
-                const char* alpha[5] = {"A", "B", "C", "D", "E"};
-                std::string ss;
-                for(auto it : problemType.biasSrcWhiteList)
+                if(inputs.bias != nullptr)
                 {
-                    if(it < 5)
+                    const char* alpha[5] = {"A", "B", "C", "D", "E"};
+                    std::string ss;
+                    for(auto it : problemType.biasSrcWhiteList)
                     {
-                        ss += alpha[it];
+                        if(it < 5)
+                        {
+                            ss += alpha[it];
+                        }
                     }
+                    name += ("_DBias" + ss + s);
                 }
-                name += ("_DBias" + ss + s);
             }
             else
                 name += ("_Bias" + s);
@@ -1484,10 +1487,14 @@ namespace Tensile
             {
                 throw std::runtime_error("Currently only supports bias reduction (m x n x batch)");
             }
-            if(debug)
-                rv.push_back(generateReductionCall<true>(problem, inputs, hardware));
-            else
-                rv.push_back(generateReductionCall<false>(problem, inputs, hardware));
+            // Skip if output is null
+            if(inputs.bias != nullptr)
+            {
+                if(debug)
+                    rv.push_back(generateReductionCall<true>(problem, inputs, hardware));
+                else
+                    rv.push_back(generateReductionCall<false>(problem, inputs, hardware));
+            }
         }
 
         return rv;
@@ -1574,7 +1581,7 @@ namespace Tensile
         }
 
         std::vector<KernelInvocation> rv;
-        auto h_args = KernelArguments(debug);
+        auto                          h_args = KernelArguments(debug);
         h_args.reserve(32768, 8192);
 
         // if(sizeMapping.globalSplitU > 1 && sizeMapping.globalAccumulation != 2)
@@ -1593,9 +1600,11 @@ namespace Tensile
         if(sizeMapping.globalAccumulation)
         {
             if(debug)
-                rv.push_back(generateOutputConversionCallGroupedGemm<true>(problems, inputs, hardware, h_args));
+                rv.push_back(generateOutputConversionCallGroupedGemm<true>(
+                    problems, inputs, hardware, h_args));
             else
-                rv.push_back(generateOutputConversionCallGroupedGemm<false>(problems, inputs, hardware, h_args));
+                rv.push_back(generateOutputConversionCallGroupedGemm<false>(
+                    problems, inputs, hardware, h_args));
         }
 
         uint32_t workspaceOffsetInByte = 0;
