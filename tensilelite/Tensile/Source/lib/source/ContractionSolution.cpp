@@ -769,8 +769,6 @@ namespace Tensile
 
         rv.args.reserve(512, 64);
 
-        rv.kernelName = outputConversionKernelName(problem, inputs, hardware);
-
         rv.workGroupSize.x = 256;
         rv.workGroupSize.y = 1;
         rv.workGroupSize.z = 1;
@@ -785,7 +783,20 @@ namespace Tensile
         for(size_t i = 0; i < problem.batchIndices().size(); i++)
             wiZ *= problem.batchSize(i);
 
-        rv.numWorkGroups.x = CeilDivide(wiX * wiY * wiZ, rv.workGroupSize.x);
+        size_t vw = 1;
+        if(wiX * wiY * wiZ > 2048)
+        {
+            //reach threashhold to trigger wider load
+            if(problem.freeSizeA(0) % 4 == 0)
+                vw = 4;
+            else if(problem.freeSizeA(0) % 2 == 0)
+                vw = 2;
+        }
+
+        rv.kernelName
+            = outputConversionKernelName(problem, inputs, hardware, vw, sizeMapping.globalSplitU);
+
+        rv.numWorkGroups.x = CeilDivide(wiX * wiY * wiZ, rv.workGroupSize.x * vw);
         rv.numWorkGroups.y = 1;
         rv.numWorkGroups.z = 1;
 
@@ -896,11 +907,6 @@ namespace Tensile
             idx++;
         }
 
-        if(sizeMapping.globalAccumulation == 1)
-            rv.args.append<uint32_t>("gsu", 1);
-        else
-            rv.args.append<uint32_t>("gsu", sizeMapping.globalSplitU);
-
         //@TODO determine if this is needed, may not end up in the same code object file
         rv.codeObjectFile = codeObjectFilename.load();
 
@@ -909,7 +915,9 @@ namespace Tensile
 
     std::string ContractionSolution::outputConversionKernelName(Problem const&           problem,
                                                                 ContractionInputs const& inputs,
-                                                                Hardware const& hardware) const
+                                                                Hardware const&          hardware,
+                                                                size_t                   vw,
+                                                                size_t                   gsu) const
     {
         std::string name = concatenate(
             "C", problem.cNames(), "_", DataTypeInfo::Get(problem.d().dataType()).abbrev);
@@ -981,7 +989,9 @@ namespace Tensile
             name += ("_ScaleD");
         }
 
-        name += "_PostGSU";
+        name += "_PostGSU" + std::to_string(gsu);
+
+        name += "_VW" + std::to_string(vw);
 
         return name;
     }
