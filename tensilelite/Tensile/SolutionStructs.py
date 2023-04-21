@@ -1039,6 +1039,16 @@ class Solution(collections.abc.Mapping):
         if self["ProblemType"]["UseBias"]:
           typeList = self["ProblemType"]["BiasDataTypeList"]
           if self["ProblemType"]["Gradient"]:
+            # If gradient + bias D, generates a normal GSU kernel for bias D = nullptr case
+            state = {}
+            state["ProblemType"] = deepcopy(self["ProblemType"])
+            state["ProblemType"]["UseBias"] = False
+            state["KernelLanguage"] = "Source"
+            state["GlobalSplitU"] = self["GlobalSplitU"]
+            state["_GlobalAccumulation"] = self["_GlobalAccumulation"]
+            state["ActivationFused"] = self["ActivationFused"]
+            self.conversionKernelObjects.append(KernelWriterConversion(state, vw))
+            # bias type list
             typeList = [self["ProblemType"]["ComputeDataType"]]
           for btype in typeList:
             state = {}
