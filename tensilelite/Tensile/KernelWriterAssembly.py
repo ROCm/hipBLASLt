@@ -5519,8 +5519,13 @@ class KernelWriterAssembly(KernelWriter):
   # Add tile assignment fields to store srd
   # This is based on WG not the WI/TT assignment
   ##############################################################################
-  def computeStoreSrdStart(self, kernel, computeEOnly=False):
+  def computeStoreSrdStart(self, kernel, srdTcList: list, useSize: list = [], noMultipleBuffer = False):
     module = Module("computeStoreSrdStart")
+
+    if useSize:
+      assert len(srdTcList) == len(useSize)
+    else:
+      useSize = [False for _ in srdTcList]
 
     with self.allocTmpSgpr(3) as tmpSgprInfo:
       tmpS0 = tmpSgprInfo.idx
@@ -5574,13 +5579,28 @@ class KernelWriterAssembly(KernelWriter):
           coord = None
           addToSrd = False
 
-        MatName = ["E"] if computeEOnly else ["C", "D"]
-        bpe = self.states.bpeCinternal if computeEOnly else self.states.bpeCexternal
         if addToSrd:
-          for mat in MatName:
+          for mat, us in zip(srdTcList, useSize):
+            bpe = self.states.bpeCinternal if mat == "E" or mat =="Bias" else self.states.bpeCexternal
             # These are constant across all workitems, just add to the SRD:
-            strideC = "Stride%s%s"%(mat, self.states.indexChars[i])
-            module.addModuleAsFlatItems(self.s_mul_u64_u32(sgpr(tmpS0), sgpr(tmpS1), coord, sgpr(strideC), "Scale%s %s by Stride"%(mat, coord)))
+            if us:
+              if i == 0:
+                # Skip cause stride = 1 if use size instead
+                continue
+              if i > 1:
+                strideC0 = "Size%s"%(globalParameters["IndexChars"][0])
+                strideC1 = "Size%s"%(globalParameters["IndexChars"][1])
+                module.add(SMulI32(dst=sgpr(tmpS0), src0=sgpr(strideC0), src1=sgpr(strideC1)))
+                for x in range(2, i - 1):
+                  strideC = "Size%s"%(globalParameters["IndexChars"][x])
+                  module.add(SMulI32(dst=sgpr(tmpS0), src0=sgpr(tmpS0), src1=sgpr(strideC)))
+                module.addModuleAsFlatItems(self.s_mul_u64_u32(sgpr(tmpS0), sgpr(tmpS1), coord, sgpr(tmpS0), "Scale%s %s by Stride"%(mat, coord)))
+              else:
+                strideC = "Size%s"%(globalParameters["IndexChars"][i-1])
+                module.addModuleAsFlatItems(self.s_mul_u64_u32(sgpr(tmpS0), sgpr(tmpS1), coord, sgpr(strideC), "Scale%s %s by Stride"%(mat, coord)))
+            else:
+              strideC = "Stride%s%s"%(mat, self.states.indexChars[i])
+              module.addModuleAsFlatItems(self.s_mul_u64_u32(sgpr(tmpS0), sgpr(tmpS1), coord, sgpr(strideC), "Scale%s %s by Stride"%(mat, coord)))
             module.add(SLShiftLeftB64(dst=sgpr(tmpS0,2), src=sgpr(tmpS0,2), shiftHex=log2(bpe), comment="scale by bpe"))
 
             module.add(SAddU32(dst=sgpr("Srd%s+0"%mat), src0=sgpr("%s%s+0"%(addrSrcSgpr, mat)), src1=sgpr(tmpS0), comment="add lo to SRD"))
@@ -5590,7 +5610,7 @@ class KernelWriterAssembly(KernelWriter):
 
           addrSrcSgpr = "Srd" # update src Sgpr for the second or later iterations
 
-    if computeEOnly:
+    if noMultipleBuffer:
       return module
 
     if kernel["_GlobalAccumulation"] == 'MultipleBuffer':
@@ -5650,7 +5670,7 @@ class KernelWriterAssembly(KernelWriter):
         labelStr = self.labels.getNameInc("ScaleD")
         module.add(allocPostLoopSrdSuppress("ScaleD", labelStr, sgprLength=sgpr("SizeI")))
         module.add(SMulI32(dst=sgpr("SrdScaleD+2"), src0=hex(self.states.bpeCinternal), src1=sgpr("SrdScaleD+2"), comment="scaled by BPE"))# scaled by BPE
-      module.add(self.computeStoreSrdStart(kernel))
+      module.add(self.computeStoreSrdStart(kernel, ["C", "D"]))
     return module
 
   ##############################################################################
@@ -6371,6 +6391,8 @@ class KernelWriterAssembly(KernelWriter):
     '''
     Post process for loop
     '''
+    ssslist = []
+    useSize = []
     # Add bias lds
     if self.states.useBias == DataDirection.READ:
       # Calculate max vgpr for bias read
@@ -6451,6 +6473,8 @@ class KernelWriterAssembly(KernelWriter):
       else:
         # Init bias Srd
         module.add(allocPostLoopSrdSuppress("Bias", labelStr, hex(0x80000000)))
+        ssslist.append("Bias")
+        useSize.append(True)
 
     if kernel["ProblemType"]["UseE"] and (kernel["GlobalSplitU"] == 1):
       # Update E offset1
@@ -6458,7 +6482,11 @@ class KernelWriterAssembly(KernelWriter):
       module.add(VMulLOU32(dst=vgpr(self.vgprs.coutRowPtrE), src0=vgpr(self.vgprs.coutRowPtrE), src1=sgpr(strideE1), comment=" offset 1"))
       labelEStr = self.labels.getNameInc("E")
       module.add(allocPostLoopSrdSuppress("E", labelEStr, hex(0x80000000)))
-      module.add(self.computeStoreSrdStart(kernel, computeEOnly=True))
+      ssslist.append("E")
+      useSize.append(False)
+
+    if ssslist:
+      module.add(self.computeStoreSrdStart(kernel, ssslist, useSize=useSize, noMultipleBuffer=True))
 
     '''
     Post process for loop end
