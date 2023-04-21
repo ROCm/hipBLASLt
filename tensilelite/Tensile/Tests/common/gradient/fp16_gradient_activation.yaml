@@ -67,10 +67,10 @@ BenchmarkProblems:
       BenchmarkJoinParameters:
       BenchmarkFinalParameters:
         - ProblemSizes:
-          - Exact: [4608,1335,1, 320]
+          - Exact: [4608,1335,1, 640]
           - Exact: [4608,1335,1,1280]
-          - Exact: [128,  128,1, 320]
-          - Exact: [4608,1408,1, 320]
+          - Exact: [128,  128,1, 640]
+          - Exact: [4608,1408,1, 640]
         - ActivationArgs:
           - [Enum: Dgelu]
 
@@ -129,9 +129,9 @@ BenchmarkProblems:
       BenchmarkJoinParameters:
       BenchmarkFinalParameters:
         - ProblemSizes:
-          - Exact: [4608,1335,1, 320]
+          - Exact: [4608,1335,1, 640]
           - Exact: [4608,1335,1,1280]
-          - Exact: [128,  128,1, 320]
-          - Exact: [4608,1408,1, 320]
+          - Exact: [128,  128,1, 640]
+          - Exact: [4608,1408,1, 640]
         - ActivationArgs:
           - [Enum: Dgelu]

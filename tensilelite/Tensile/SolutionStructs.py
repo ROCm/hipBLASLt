@@ -1033,27 +1033,31 @@ class Solution(collections.abc.Mapping):
   # create Conversion Kernels
   def initConversionKernelObjects(self):
     self.conversionKernelObjects = []
-    if (self["GlobalSplitU"] > 1) and self["_GlobalAccumulation"]:
-      if self["ProblemType"]["UseBias"]:
-        typeList = self["ProblemType"]["BiasDataTypeList"]
-        if self["ProblemType"]["Gradient"]:
-          typeList = [self["ProblemType"]["ComputeDataType"]]
-        for btype in typeList:
+    load_vector_width = [1, 2, 4]
+    for vw in load_vector_width:
+      if (self["GlobalSplitU"] > 1) and self["_GlobalAccumulation"]:
+        if self["ProblemType"]["UseBias"]:
+          typeList = self["ProblemType"]["BiasDataTypeList"]
+          if self["ProblemType"]["Gradient"]:
+            typeList = [self["ProblemType"]["ComputeDataType"]]
+          for btype in typeList:
+            state = {}
+            state["ProblemType"] = deepcopy(self["ProblemType"])
+            state["ProblemType"]["BiasDataTypeList"] = []
+            state["ProblemType"]["BiasDataType"] = deepcopy(btype)
+            state["KernelLanguage"] = "Source"
+            state["GlobalSplitU"] = self["GlobalSplitU"]
+            state["_GlobalAccumulation"] = self["_GlobalAccumulation"]
+            state["ActivationFused"] = self["ActivationFused"]
+            self.conversionKernelObjects.append(KernelWriterConversion(state, vw))
+        else:
           state = {}
           state["ProblemType"] = deepcopy(self["ProblemType"])
-          state["ProblemType"]["BiasDataTypeList"] = []
-          state["ProblemType"]["BiasDataType"] = deepcopy(btype)
           state["KernelLanguage"] = "Source"
+          state["GlobalSplitU"] = self["GlobalSplitU"]
           state["_GlobalAccumulation"] = self["_GlobalAccumulation"]
           state["ActivationFused"] = self["ActivationFused"]
-          self.conversionKernelObjects.append(KernelWriterConversion(state))
-      else:
-        state = {}
-        state["ProblemType"] = deepcopy(self["ProblemType"])
-        state["KernelLanguage"] = "Source"
-        state["_GlobalAccumulation"] = self["_GlobalAccumulation"]
-        state["ActivationFused"] = self["ActivationFused"]
-        self.conversionKernelObjects.append(KernelWriterConversion(state))
+          self.conversionKernelObjects.append(KernelWriterConversion(state, vw))
 
   def initActivationEnumHeaderObjects(self):
     self.activationEnumHeaderObjects = []
