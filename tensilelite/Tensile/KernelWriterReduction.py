@@ -72,8 +72,6 @@ class KernelWriterReduction(KernelWriterBase):
             fileString += "#include <KernelHeader.h>\n\n"
             fileString += "#include <hip/hip_runtime.h>\n"
             fileString += "#include <hip/hip_fp16.h>\n"
-
-            fileString += "#include \"ReductionTemplate.h\"\n"
             fileString += "\n"
 
         indexChars = globalParameters["IndexChars"]

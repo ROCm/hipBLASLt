@@ -36,7 +36,6 @@
 #include "rocblaslt-types.h"
 #include "rocblaslt_mat_utils.hpp"
 #include "tensile_host.hpp"
-//#include "utility.hpp"
 
 //#include <Tensile/AMDGPU.hpp>
 #include <Tensile/Contractions.hpp>
@@ -153,6 +152,29 @@ namespace
             memcpy(dst, src, sizeof(*dst));
         }
     };
+
+    inline Tensile::ActivationType getTensileActivationType(rocblaslt_epilogue epilogue)
+    {
+        switch(epilogue)
+        {
+        case ROCBLASLT_EPILOGUE_RELU:
+        case ROCBLASLT_EPILOGUE_RELU_BIAS:
+            return Tensile::ActivationType::Relu;
+            break;
+        case ROCBLASLT_EPILOGUE_GELU:
+        case ROCBLASLT_EPILOGUE_GELU_BIAS:
+        case ROCBLASLT_EPILOGUE_GELU_AUX:
+        case ROCBLASLT_EPILOGUE_GELU_AUX_BIAS:
+            return Tensile::ActivationType::Gelu;
+            break;
+        case ROCBLASLT_EPILOGUE_DGELU:
+            return Tensile::ActivationType::DGelu;
+        case ROCBLASLT_EPILOGUE_BIAS:
+        case ROCBLASLT_EPILOGUE_DEFAULT:
+            break;
+        }
+        return Tensile::ActivationType::None;
+    }
 
     /****************************************************************
  * Construct a Tensile Problem from a RocblasltContractionProblem *
@@ -312,25 +334,10 @@ namespace
         // set Actvation
         tensileProblem.setActivationType(Tensile::ActivationType::All);
         tensileProblem.setActivationHPA(sizeof(Tc) > sizeof(Ti));
-        Tensile::ActivationType tensileAct = Tensile::ActivationType::None;
-        switch(prob.epilogue)
-        {
-        case ROCBLASLT_EPILOGUE_RELU:
-        case ROCBLASLT_EPILOGUE_RELU_BIAS:
-            tensileAct = Tensile::ActivationType::Relu;
-            break;
-        case ROCBLASLT_EPILOGUE_GELU:
-        case ROCBLASLT_EPILOGUE_GELU_BIAS:
-        case ROCBLASLT_EPILOGUE_GELU_AUX:
-        case ROCBLASLT_EPILOGUE_GELU_AUX_BIAS:
-            tensileAct = Tensile::ActivationType::Gelu;
-            break;
-        case ROCBLASLT_EPILOGUE_BIAS:
-        case ROCBLASLT_EPILOGUE_DEFAULT:
-            break;
-        }
-        tensileProblem.setActivationEnumArg(tensileAct);
+        tensileProblem.setActivationEnumArg(getTensileActivationType(prob.epilogue));
 
+        // set use gradient
+        tensileProblem.setUseGradient(is_grad_enabled(prob.epilogue));
         return tensileProblem;
     }
 
@@ -417,23 +424,7 @@ namespace
         // Add problem predicates for CEqualsD
         tensileProblem.setCEqualsD(prob.C == prob.D);
 
-        Tensile::ActivationType tensileAct = Tensile::ActivationType::None;
-        switch(prob.epilogue)
-        {
-        case ROCBLASLT_EPILOGUE_RELU:
-        case ROCBLASLT_EPILOGUE_RELU_BIAS:
-            tensileAct = Tensile::ActivationType::Relu;
-            break;
-        case ROCBLASLT_EPILOGUE_GELU:
-        case ROCBLASLT_EPILOGUE_GELU_BIAS:
-        case ROCBLASLT_EPILOGUE_GELU_AUX:
-        case ROCBLASLT_EPILOGUE_GELU_AUX_BIAS:
-            tensileAct = Tensile::ActivationType::Gelu;
-            break;
-        case ROCBLASLT_EPILOGUE_BIAS:
-        case ROCBLASLT_EPILOGUE_DEFAULT:
-            break;
-        }
+        auto tensileAct = getTensileActivationType(prob.epilogue);
         tensileProblem.setActivationEnumArg(tensileAct);
 
         if(fallback && prob.bias == nullptr && prob.scaleD == nullptr && prob.E == nullptr
@@ -444,6 +435,7 @@ namespace
             tensileProblem.setActivationHPA(false);
             tensileProblem.setUseScaleD(false);
             tensileProblem.setUseE(false);
+            tensileProblem.setUseGradient(false);
         }
         else
         {
@@ -470,6 +462,9 @@ namespace
                                     {prob.row_stride_e, prob.col_stride_e, prob.batch_stride_e},
                                     isOutput);
             }
+
+            // set gradient
+            tensileProblem.setUseGradient(is_grad_enabled(prob.epilogue));
         }
     }
 

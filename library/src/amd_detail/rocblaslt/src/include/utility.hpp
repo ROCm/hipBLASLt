@@ -339,10 +339,22 @@ inline bool rocblaslt_enum_utils::is_invalid(rocblaslt_matmul_preference_attribu
     }
 };
 
+inline bool is_grad_enabled(rocblaslt_epilogue value_)
+{
+    switch(value_)
+    {
+    case ROCBLASLT_EPILOGUE_DGELU:
+        return true;
+    default:
+        return false;
+    }
+};
+
 inline bool is_e_enabled(rocblaslt_epilogue value_)
 {
     switch(value_)
     {
+    case ROCBLASLT_EPILOGUE_DGELU:
     case ROCBLASLT_EPILOGUE_GELU_AUX:
     case ROCBLASLT_EPILOGUE_GELU_AUX_BIAS:
         return true;
