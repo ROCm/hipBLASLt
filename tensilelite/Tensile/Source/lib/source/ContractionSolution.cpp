@@ -1686,6 +1686,22 @@ namespace Tensile
         size_t size = 0;
 
         size += problem.d().totalLogicalElements() * sizeMapping.workspaceSizePerElemC;
+        if(problem.useGradient() && problem.useBias())
+        {
+            if(problem.biasSrc() == ContractionProblemGemm::TENSOR::A)
+            {
+                size += problem.freeSizeA(0) * sizeMapping.workspaceSizePerElemC;
+            }
+            else if(problem.biasSrc() == ContractionProblemGemm::TENSOR::B)
+            {
+                size += problem.freeSizeB(0) * sizeMapping.workspaceSizePerElemC;
+            }
+            else if(problem.biasSrc() == ContractionProblemGemm::TENSOR::D
+                    && (sizeMapping.workspaceSizePerElemC == 0))
+            {
+                size += problem.d().totalLogicalElements() * problem.computeTypeElementSize();
+            }
+        }
 
         return size;
     }
