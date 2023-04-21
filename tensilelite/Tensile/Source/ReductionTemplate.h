@@ -55,9 +55,10 @@ __device__ inline void
     int voffset = mod * VW;
     int idx     = voffset + soffset;
 
-    int soffsetBytes     = hipBlockIdx_x * MT0 * VW * sizeof(DataTypeCompute);
-    int num_records      = strideJ * n * sizeof(DataTypeCompute);
-    int num_records_bias = m * sizeof(DataTypeCompute);
+    int soffsetBytes      = soffset * sizeof(DataTypeCompute);
+    int soffsetBytes_bias = soffset * sizeof(DataTypeOut);
+    int num_records       = strideJ * n * sizeof(DataTypeCompute);
+    int num_records_bias  = m * sizeof(DataTypeOut);
 
     DataTypeCompute sum[VW] = {0};
     if(idx + (VW - 1) < m)
@@ -92,7 +93,7 @@ __device__ inline void
                     (DataTypeOut)sum[vw],
                     reinterpret_cast<void*>(const_cast<DataTypeOut*>(out)),
                     (uint32_t)(voffset + vw) * sizeof(DataTypeOut),
-                    (uint32_t)(soffsetBytes),
+                    (uint32_t)(soffsetBytes_bias),
                     num_records_bias);
             });
         }
@@ -130,7 +131,7 @@ __device__ inline void
                     (DataTypeOut)sum[vw],
                     reinterpret_cast<void*>(const_cast<DataTypeOut*>(out)),
                     (uint32_t)(voffset + vw) * sizeof(DataTypeOut),
-                    (uint32_t)(soffsetBytes),
+                    (uint32_t)(soffsetBytes_bias),
                     num_records_bias);
             });
         }
