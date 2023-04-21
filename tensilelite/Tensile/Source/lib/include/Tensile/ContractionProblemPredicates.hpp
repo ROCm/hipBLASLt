@@ -1216,7 +1216,8 @@ namespace Tensile
                     if(problem.useGradient() && problem.useBias())
                     {
                         if(problem.biasSrc() == ContractionProblemGemm::TENSOR::D && (value == 0))
-                            reductionSize += problem.d().totalLogicalElements();
+                            reductionSize += problem.d().totalLogicalElements()
+                                             * problem.computeTypeElementSize();
                         else if(problem.biasSrc() == ContractionProblemGemm::TENSOR::A)
                         {
                             reductionSize += problem.freeSizeA(0) * value;
