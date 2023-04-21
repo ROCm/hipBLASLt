@@ -344,6 +344,7 @@ inline bool is_grad_enabled(rocblaslt_epilogue value_)
     switch(value_)
     {
     case ROCBLASLT_EPILOGUE_DGELU:
+    case ROCBLASLT_EPILOGUE_DGELU_BGRAD:
         return true;
     default:
         return false;
@@ -355,6 +356,7 @@ inline bool is_e_enabled(rocblaslt_epilogue value_)
     switch(value_)
     {
     case ROCBLASLT_EPILOGUE_DGELU:
+    case ROCBLASLT_EPILOGUE_DGELU_BGRAD:
     case ROCBLASLT_EPILOGUE_GELU_AUX:
     case ROCBLASLT_EPILOGUE_GELU_AUX_BIAS:
         return true;
@@ -371,6 +373,7 @@ inline bool is_bias_enabled(rocblaslt_epilogue value_)
     case ROCBLASLT_EPILOGUE_GELU_BIAS:
     case ROCBLASLT_EPILOGUE_RELU_BIAS:
     case ROCBLASLT_EPILOGUE_GELU_AUX_BIAS:
+    case ROCBLASLT_EPILOGUE_DGELU_BGRAD:
         return true;
     default:
         return false;

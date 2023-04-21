@@ -168,6 +168,7 @@ namespace
             return Tensile::ActivationType::Gelu;
             break;
         case ROCBLASLT_EPILOGUE_DGELU:
+        case ROCBLASLT_EPILOGUE_DGELU_BGRAD:
             return Tensile::ActivationType::DGelu;
         case ROCBLASLT_EPILOGUE_BIAS:
         case ROCBLASLT_EPILOGUE_DEFAULT:

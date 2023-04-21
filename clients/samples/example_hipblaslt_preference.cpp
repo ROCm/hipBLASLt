@@ -209,7 +209,8 @@ void mat_mul_bias_activation(Tc             alpha,
                              To*            bias,
                              Tc*            scaleD,
                              bool           gradient,
-                             ActivationType actType)
+                             ActivationType actType,
+                             Tc*            workspace)
 {
     std::function<Tc(Tc)> actFunc;
     if(actType == ActivationType::RELU)
@@ -244,9 +245,29 @@ void mat_mul_bias_activation(Tc             alpha,
                     else
                         t = actFunc(t);
                 }
-                t                                    = t * (scaleD == nullptr ? 1.0 : scaleD[i1]);
+                t = t * (scaleD == nullptr ? 1.0 : scaleD[i1]);
+                if(workspace)
+                    workspace[i1 + i2 * M + batch * M * N] = static_cast<Tc>(t);
                 D[i1 * Ds1 + i2 * Ds2 + batch * Ds3] = static_cast<To>(t);
             }
+        }
+    }
+}
+
+template <typename To, typename Tc>
+void reduction_ij(Tc* workspace, To* bias, int M, int N, int batch_count)
+{
+    assert(batch_count == 1);
+    for(int batch = 0; batch < batch_count; batch++)
+    {
+        for(int i1 = 0; i1 < M; i1++)
+        {
+            Tc sum = 0;
+            for(int i2 = 0; i2 < N; i2++)
+            {
+                sum += workspace[i1 + i2 * M + batch * M * N];
+            }
+            bias[i1] = static_cast<To>(sum);
         }
     }
 }
@@ -782,6 +803,7 @@ void test_hipblaslt(hipblasDatatype_t  in_out_datatype,
     std::vector<float> he(size_e);
     std::vector<float> he_gold(size_e);
     std::vector<T>     h_bias(size_bias);
+    std::vector<T>     h_bias_gold(size_bias);
     std::vector<float> h_scaleD(size_scaleD);
 
     // initial data on host
@@ -861,6 +883,8 @@ void test_hipblaslt(hipblasDatatype_t  in_out_datatype,
     {
         if(enable_e && !enable_bias && actType == ActivationType::GELU)
             epilogue = HIPBLASLT_EPILOGUE_DGELU;
+        else if(enable_e && enable_bias && actType == ActivationType::GELU)
+            epilogue = HIPBLASLT_EPILOGUE_DGELU_BGRAD;
     }
     else
     {
@@ -956,6 +980,9 @@ void test_hipblaslt(hipblasDatatype_t  in_out_datatype,
     hipStreamSynchronize(stream);
     // copy output from device to CPU
     CHECK_HIP_ERROR(hipMemcpy(hd.data(), dd, sizeof(T) * size_c, hipMemcpyDeviceToHost));
+    if(enable_grad && enable_bias)
+        CHECK_HIP_ERROR(
+            hipMemcpy(h_bias.data(), d_bias, sizeof(T) * size_bias, hipMemcpyDeviceToHost));
     if(!enable_grad && enable_e)
         CHECK_HIP_ERROR(hipMemcpy(he.data(), de, sizeof(float) * size_e, hipMemcpyDeviceToHost));
 
@@ -1089,7 +1116,7 @@ void test_hipblaslt(hipblasDatatype_t  in_out_datatype,
             e_ptr = &he[0];
         else
             e_ptr = nullptr;
-        if(enable_bias)
+        if(enable_bias && !enable_grad)
             bias_ptr = &h_bias[0];
         else
             bias_ptr = nullptr;
@@ -1098,6 +1125,9 @@ void test_hipblaslt(hipblasDatatype_t  in_out_datatype,
             scaleD_ptr = &h_scaleD[0];
         else
             scaleD_ptr = nullptr;
+        void* workspace = nullptr;
+        if(enable_grad && enable_bias)
+            workspace = (void*)malloc(workspace_size);
         mat_mul_bias_activation<T, T, float>(alpha,
                                              beta,
                                              m,
@@ -1127,7 +1157,17 @@ void test_hipblaslt(hipblasDatatype_t  in_out_datatype,
                                              bias_ptr,
                                              scaleD_ptr,
                                              enable_grad,
-                                             actType);
+                                             actType,
+                                             (float*)workspace);
+        if(enable_grad && enable_bias)
+        {
+            bias_ptr = &h_bias_gold[0];
+            assert(m == size_bias);
+            reduction_ij((float*)workspace, bias_ptr, m, n, batch_count);
+        }
+
+        if(workspace)
+            free(workspace);
 
         bool passed = true;
         for(int i = 0; i < size_c; i++)
@@ -1151,6 +1191,20 @@ void test_hipblaslt(hipblasDatatype_t  in_out_datatype,
                            i,
                            static_cast<float>(he_gold[i]),
                            static_cast<float>(he[i]));
+                    passed = false;
+                }
+            }
+        }
+        if(enable_grad && enable_bias)
+        {
+            for(int i = 0; i < size_bias; i++)
+            {
+                if(!AlmostEqual(h_bias_gold[i], h_bias[i]))
+                {
+                    printf("Bias Err: Index %d: %f vs %f\n",
+                           i,
+                           static_cast<float>(h_bias_gold[i]),
+                           static_cast<float>(h_bias[i]));
                     passed = false;
                 }
             }
@@ -1200,7 +1254,11 @@ void test_hipblaslt(hipblasDatatype_t  in_out_datatype,
             }
         }
         if(enable_bias)
+        {
+            if(enable_grad)
+                print_strided_batched("h_bias gold", &h_bias_gold[0], m, 1, 1, 1, m, 0);
             print_strided_batched("h_bias", &h_bias[0], m, 1, 1, 1, m, 0);
+        }
         if(enable_scaleD)
             print_strided_batched("h_scaleD", &h_scaleD[0], m, 1, 1, 1, m, 0);
         print_strided_batched("hd_gold", &hd_gold[0], m, n, batch_count, 1, ldc, stride_c);
