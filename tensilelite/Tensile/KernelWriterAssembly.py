@@ -7608,12 +7608,13 @@ class KernelWriterAssembly(KernelWriter):
           if biasDataType.isHalf():
             module.add(VCvtF32toF16(dst=vgpr(tmpVgprN), src=vgpr(tmpVgprN), comment="convert to FP16"))
             if vi % 2 == 1 and enablePack:
-              module.add(VPackF16toB32(dst=vgpr(tmpVgprN + vi - 1), src0=vgpr(tmpVgprN + vi - 1), src1=vgpr(tmpVgprN + vi), \
+              module.add(VPackF16toB32(dst=vgpr(tmpVgprN - 1), src0=vgpr(tmpVgprN - 1), src1=vgpr(tmpVgprN), \
                          comment="Pack with neighbor"))
           elif biasDataType == kernel["ProblemType"]["ComputeDataType"]:
             pass # Same, no need to convert
           else:
             printExit("Unrecognized bias type %s."%str(biasDataType))
+          tmpVgprN += 1
         else:
           printExit("Does not support ComputeDataType != float")
     # Global write
