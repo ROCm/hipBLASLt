@@ -7509,9 +7509,9 @@ class KernelWriterAssembly(KernelWriter):
     enableEdge = False
     serialOffsetVgpr = tmpVgpr1Res.idx
     # ShiftPtr
-    if not (kernel["BufferLoad"] and kernel["GuaranteeNoPartialA"]):
+    if not (kernel["BufferLoad"] and kernel["GuaranteeNoPartialA"]) and (kernel["ProblemType"]["BiasSrc"] == "A"):
       enableEdge = True
-    if not (kernel["BufferLoad"] and kernel["GuaranteeNoPartialB"]):
+    if not (kernel["BufferLoad"] and kernel["GuaranteeNoPartialB"]) and (kernel["ProblemType"]["BiasSrc"] == "B"):
       enableEdge = True
     if kernel["EdgeType"] == "ShiftPtr" and enableEdge:
       assert tmpSgprRes.size >= 5 # For ShiftPtr
