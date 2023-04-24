@@ -1819,7 +1819,7 @@ namespace Tensile
                     {
                         biasString += ToString(value[i]) + ", ";
                     }
-                    return std::string("The supported bias types are: " + biasString);
+                    return std::string("The supported bias source are: " + biasString);
                 }
             };
         } // namespace Contraction
