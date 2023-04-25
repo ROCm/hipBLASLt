@@ -6452,19 +6452,27 @@ class KernelWriterAssembly(KernelWriter):
           multiBiasTypeLabel.append(Label(name, ""))
         writeBiasEndLabel = Label(self.labels.getNameInc("Write_Bias_End"), "")
         multiBiasTypeLabel.append(writeBiasEndLabel)
-        offsetVgpr  = self.vgprPool.checkOut(1, 1)
+        # Get gwvw
+        '''
+        gwvw is set to max(mt // kernel["NumThreads"], kernel["VectorWidth"]) instead of kernel["VectorWidth"] is that we don't want batch exists.
+        If VW is set to 1, MT=512, and flat work group = 256. We will have to set gwvw to 2 to store all the bias data.
+        '''
+        tile01 = tP["tile01Idx"]
+        mt     = kernel["MacroTile%u" % tile01]
+        gwvw   = max(mt // kernel["NumThreads"], kernel["VectorWidth"])
+        offsetVgpr  = self.vgprPool.checkOut(gwvw, 1)
         with self.allocTmpSgpr(5, 1) as tmpSgprRes:
           if kernel["GlobalSplitU"] > 1:
-            module.add(self.writeBiasToGlobal(kernel["ProblemType"]["ComputeDataType"], kernel, tP, offsetVgpr, tmpSgprRes, tmpVgprRes))
+            module.add(self.writeBiasToGlobal(kernel["ProblemType"]["ComputeDataType"], kernel, tP, gwvw, offsetVgpr, tmpSgprRes, tmpVgprRes))
           elif len(kernel["ProblemType"]["BiasDataTypeList"]) == 1:
-            module.add(self.writeBiasToGlobal(kernel["ProblemType"]["BiasDataTypeList"][0], kernel, tP, offsetVgpr, tmpSgprRes, tmpVgprRes))
+            module.add(self.writeBiasToGlobal(kernel["ProblemType"]["BiasDataTypeList"][0], kernel, tP, gwvw, offsetVgpr, tmpSgprRes, tmpVgprRes))
           else:
             for i, label in enumerate(multiBiasTypeLabel[1:]):
               typeValue = kernel["ProblemType"]["BiasDataTypeList"][i].value
               module.add(multiBiasTypeLabel[i])
               module.add(SCmpKLGU32(sgpr("BiasType"), typeValue, "BiasType != %u"%typeValue))
               module.add(SCBranchSCC1(label.getLabelName(), "Branch if true"))
-              module.add(self.writeBiasToGlobal(kernel["ProblemType"]["BiasDataTypeList"][i], kernel, tP, offsetVgpr, tmpSgprRes, tmpVgprRes))
+              module.add(self.writeBiasToGlobal(kernel["ProblemType"]["BiasDataTypeList"][i], kernel, tP, gwvw, offsetVgpr, tmpSgprRes, tmpVgprRes))
               module.add(SBranch(labelName=writeBiasEndLabel.getLabelName(), comment="Branch to write bias end"))
             module.add(writeBiasEndLabel)
         self.vgprPool.checkIn(offsetVgpr)
@@ -7432,6 +7440,55 @@ class KernelWriterAssembly(KernelWriter):
     return module
 
   '''
+  Read reduction results from LDS
+  In edge case the gwvw will be set to 1.
+  '''
+  def writeBiasToBlobalLdsRead(self, kernel, offsetVgpr, gwvw, maxKId, outVgpr):
+    module = Module("WriteBiasToGlobalLdsRead")
+    module.add(VLShiftLeftB32(dst=vgpr(offsetVgpr), \
+                              shiftHex=hex(log2(self.states.bpeCinternal)), \
+                              src=vgpr(offsetVgpr), \
+                              comment="Local bias address scaled by BPE"))
+
+    srcAddr = vgpr(offsetVgpr)
+    outVgprN = outVgpr
+    if maxKId == 1:
+      gwvwK = 1
+      bps = kernel["ProblemType"]["ComputeDataType"].numBytes() * gwvw
+      ds  = DSModifiers(offset=0)
+      if bps==2:
+        module.add(DSLoadB16(dst=vgpr(outVgprN), src=srcAddr, readToTempVgpr=True, ds=ds, comment="load bias"))
+      elif bps==4:
+        module.add(DSLoadB32(dst=vgpr(outVgprN), src=srcAddr, readToTempVgpr=True, ds=ds, comment="load bias"))
+      elif bps==8:
+        gwvwK = 2
+        module.add(DSLoadB64(dst=vgpr(outVgprN, 2), src=srcAddr, readToTempVgpr=True, ds=ds, comment="load bias"))
+      else:
+        assert 0
+      outVgprN += gwvwK
+    else:
+      dsOffset = 0
+      for _ in range(0, gwvw):
+        gwvwK = 1
+        idx = 0
+        while idx < maxKId:
+          gwvwK = 2 if (idx + 1 < maxKId * gwvw) else 1
+          bps = kernel["ProblemType"]["ComputeDataType"].numBytes() * gwvwK
+          ds  = DSModifiers(offset=dsOffset)
+          if bps==2:
+            module.add(DSLoadB16(dst=vgpr(outVgprN), src=srcAddr, readToTempVgpr=True, ds=ds, comment="load bias"))
+          elif bps==4:
+            module.add(DSLoadB32(dst=vgpr(outVgprN), src=srcAddr, readToTempVgpr=True, ds=ds, comment="load bias"))
+          elif bps==8:
+            module.add(DSLoadB64(dst=vgpr(outVgprN, 2), src=srcAddr, readToTempVgpr=True, ds=ds, comment="load bias"))
+          else:
+            assert 0
+          outVgprN += gwvwK
+          idx += gwvwK
+          dsOffset += bps
+    return module, outVgprN
+
+  '''
   This is a tiny version of globalWriteElements for Bias reduction.
   Every MT saves MTx1 bias data to global.
 
@@ -7441,19 +7498,14 @@ class KernelWriterAssembly(KernelWriter):
   Wider DS load is always enabled.
   Wider global store only enables when freeElementMultiple % gwvw == 0 since each thread only stores 1, 2 elements.
   '''
-  def writeBiasToGlobal(self, biasDataType, kernel, tP, offsetVgpr, tmpSgprRes, tmpVgpr1Res: RegisterPoolResource):
+  def writeBiasToGlobal(self, biasDataType, kernel, tP, gwvw, offsetVgpr, tmpSgprRes, tmpVgpr1Res: RegisterPoolResource):
     tile01 = tP["tile01Idx"]
     mt     = kernel["MacroTile%u" % tile01]
     maxKId = self.states.lraTileProperties[tile01].maxKId
     assert tmpSgprRes.size >= 1
     assert tmpVgpr1Res.size >= kernel["VectorWidth"] * kernel["ProblemType"]["ComputeDataType"].numRegisters() * maxKId
 
-    # Get gwvw
-    '''
-    gwvw is set to max(mt // kernel["NumThreads"], kernel["VectorWidth"]) instead of kernel["VectorWidth"] is that we don't want batch exists.
-    If VW is set to 1, MT=512, and flat work group = 256. We will have to set gwvw to 2 to store all the bias data.
-    '''
-    gwvw = max(mt // kernel["NumThreads"], kernel["VectorWidth"])
+
     assert gwvw % 2 == 0 or gwvw == 1
 
     # Params
@@ -7507,13 +7559,16 @@ class KernelWriterAssembly(KernelWriter):
             "apply VectorWidth: offset = bnOffset * vw(%u)" % gwvw))
 
     enableEdge = False
-    serialOffsetVgpr = tmpVgpr1Res.idx
+    serialOffsetVgpr  = tmpVgpr1Res.idx
+    serialOffsetVgpr2 = tmpVgpr1Res.idx + 1
     # ShiftPtr
     if not (kernel["BufferLoad"] and kernel["GuaranteeNoPartialA"]) and (kernel["ProblemType"]["BiasSrc"] == "A"):
       enableEdge = True
     if not (kernel["BufferLoad"] and kernel["GuaranteeNoPartialB"]) and (kernel["ProblemType"]["BiasSrc"] == "B"):
       enableEdge = True
     if kernel["EdgeType"] == "ShiftPtr" and enableEdge:
+      jumpLabel    = Label(self.labels.getNameInc("ShiftPtrSkip"), comment="Skip shift ptr")
+      jumpLabelEnd = Label(self.labels.getNameInc("ShiftPtrEnd"), comment="Skip shift ptr end")
       assert tmpSgprRes.size >= 5 # For ShiftPtr
       assert tP["glvw"] % gwvw == 0 # Make sure the magic trick works (serial = serial * gwvw)
       tmpSgpr = tmpSgprRes.idx
@@ -7522,60 +7577,60 @@ class KernelWriterAssembly(KernelWriter):
       module.add(SMulI32(dst=sgpr(tmpSgpr), src0=sgpr(tP["wg"]), src1=kernel[tP["mt"]], comment="WorkGroup[01] * MT"))
       module.add(SSubU32(dst=sgpr(tmpSgpr), src0=self.sizeRef(tP["idx"]), src1=sgpr(tmpSgpr), \
                 comment="edge = Size%s - WG*MT"%(tP["tileChar"])))
+      module.add(SCmpGeU32(src0=sgpr(tmpSgpr), src1=kernel[tP["mt"]], comment="skip shift ptr if edge >= MT"))
+      module.add(SCBranchSCC1(labelName=jumpLabel.getLabelName(), comment="" ))
       module.add(scalarStaticRemainder(tmpSgpr+1, tmpSgpr+1, tmpSgpr, tP["glvw"], tmpSgprShift, comment="remainder = edge %% glvw(%d)"%tP["glvw"]))
       module.add(SSubU32(dst=sgpr(tmpSgpr+1), src0=hex(tP["glvw"]), src1=sgpr(tmpSgpr+1), comment="shift = glvw(%d) - remainder"%tP["glvw"]))
       module.add(SCmpKEQU32(src=sgpr(tmpSgpr+1), simm16=hex(tP["glvw"]), comment="if shift == glvw(%d)?"%tP["glvw"]))
       module.add(SCMovB32(dst=sgpr(tmpSgpr+1), src=0, comment="shift = glvw(%d) ? 0 : NOP"%(tP["glvw"])))
       module.add(SSubU32(dst=sgpr(tmpSgpr), src0=sgpr(tmpSgpr), src1=margin, comment="edge -= margin(%u)"%(margin)))
+      module.add(SCMovB32(dst=sgpr(tmpSgpr), src=0, comment="edge = edge < 0 ? 0 : edge")) # Saturation
       if gwvw != 1:
+        '''
+        Edge case, the gwvw is set to 1 instead, do boundary check on every element.
+
+        if gwvw > 1:
+            for g in rangw(gwvw):
+              if(out_of_bound(g))
+                offset_at_g += shit_offset
+              ds_read vpgr_at_g, offset_at_g
+        else:
+          if(out_of_bound(g))
+            offset_at_g += shit_offset
+          ds_read vpgr_at_g, offset_at_g
+        '''
         module.add(staticMultiply(vgpr(serialOffsetVgpr), vgpr("Serial"), gwvw, tmpSgprShift, comment="serial = serial * gwvw"))
-        module.add(VCmpXGeU32(dst=EXEC(), src0=vgpr(serialOffsetVgpr), src1=sgpr(tmpSgpr), comment="needs shift if serial > edge"))
+        for g in range(gwvw):
+          if g != 0:
+            module.add(VAddU32(dst=vgpr(offsetVgpr+g), src0=vgpr(offsetVgpr+(g-1)), src1=maxKId, comment="new offset = offset + maxKId"))
+        module.add(VMulLOU32(dst=vgpr(serialOffsetVgpr2), src0=hex(maxKId), src1=sgpr(tmpSgpr+1), comment="ds_offset = K * offset"))
+        for g in range(gwvw):
+          module.add(VCmpXGeU32(dst=EXEC(), src0=vgpr(serialOffsetVgpr), src1=sgpr(tmpSgpr), comment="needs shift if serial > edge"))
+          module.add(VAddU32(dst=vgpr(offsetVgpr+g), src0=vgpr(offsetVgpr+g), src1=vgpr(serialOffsetVgpr2), comment="real offset = offset + ds_offset"))
+          if g < gwvw - 1:
+              module.add(VAddU32(dst=vgpr(serialOffsetVgpr), src0=1, src1=vgpr(serialOffsetVgpr), comment="inc += 1"))
       else:
         module.add(VCmpXGeU32(dst=EXEC(), src0=vgpr("Serial"), src1=sgpr(tmpSgpr), comment="needs shift if serial > edge"))
-      module.add(VMulLOU32(dst=vgpr(serialOffsetVgpr), src0=hex(maxKId), src1=sgpr(tmpSgpr+1), comment="ds_offset = K * offset"))
-      module.add(VAddU32(dst=vgpr(offsetVgpr), src0=vgpr(offsetVgpr), src1=vgpr(serialOffsetVgpr), comment="real offset = offset + ds_offset"))
+        module.add(VMulLOU32(dst=vgpr(serialOffsetVgpr), src0=hex(maxKId), src1=sgpr(tmpSgpr+1), comment="ds_offset = K * offset"))
+        module.add(VAddU32(dst=vgpr(offsetVgpr), src0=vgpr(offsetVgpr), src1=vgpr(serialOffsetVgpr), comment="real offset = offset + ds_offset"))
       module.add(SMovB64(dst=EXEC(), src=-1, comment="reset mask"))
-
-
-    module.add(VLShiftLeftB32(dst=vgpr(offsetVgpr), \
-                              shiftHex=hex(log2(self.states.bpeCinternal)), \
-                              src=vgpr(offsetVgpr), \
-                              comment="Local bias address scaled by BPE"))
-
-    srcAddr = vgpr(offsetVgpr)
-    tmpVgpr1 = tmpVgpr1Res.idx
-    tmpVgprN = tmpVgpr1
-    if maxKId == 1:
-      bps = kernel["ProblemType"]["ComputeDataType"].numBytes() * gwvw
-      ds  = DSModifiers(offset=0)
-      if bps==2:
-        module.add(DSLoadB16(dst=vgpr(tmpVgprN), src=srcAddr, readToTempVgpr=True, ds=ds, comment="load bias"))
-      elif bps==4:
-        module.add(DSLoadB32(dst=vgpr(tmpVgprN), src=srcAddr, readToTempVgpr=True, ds=ds, comment="load bias"))
-      elif bps==8:
-        module.add(DSLoadB64(dst=vgpr(tmpVgprN, 2), src=srcAddr, readToTempVgpr=True, ds=ds, comment="load bias"))
-      else:
-        assert 0
+      outVgprNext = tmpVgpr1Res.idx
+      # Shiftptr
+      for g in range(gwvw):
+        wb2blr, outVgprNext = self.writeBiasToBlobalLdsRead(kernel, offsetVgpr + g, 1, maxKId, outVgprNext)
+        module.add(wb2blr)
+      module.add(SBranch(labelName=jumpLabelEnd.getLabelName(), comment=""))
+      module.add(jumpLabel)
+      # Shiftptr case, but no need to shift
+      wb2blrGwvw, _ = self.writeBiasToBlobalLdsRead(kernel, offsetVgpr, gwvw, maxKId, tmpVgpr1Res.idx)
+      module.add(wb2blrGwvw)
+      module.add(jumpLabelEnd)
     else:
-      dsOffset = 0
-      for _ in range(0, gwvw):
-        gwvwK = 1
-        idx = 0
-        while idx < maxKId:
-          gwvwK = 2 if (idx + 1 < maxKId * gwvw) else 1
-          bps = kernel["ProblemType"]["ComputeDataType"].numBytes() * gwvwK
-          ds  = DSModifiers(offset=dsOffset)
-          if bps==2:
-            module.add(DSLoadB16(dst=vgpr(tmpVgprN), src=srcAddr, readToTempVgpr=True, ds=ds, comment="load bias"))
-          elif bps==4:
-            module.add(DSLoadB32(dst=vgpr(tmpVgprN), src=srcAddr, readToTempVgpr=True, ds=ds, comment="load bias"))
-          elif bps==8:
-            module.add(DSLoadB64(dst=vgpr(tmpVgprN, 2), src=srcAddr, readToTempVgpr=True, ds=ds, comment="load bias"))
-          else:
-            assert 0
-          tmpVgprN += gwvwK
-          idx += gwvwK
-          dsOffset += bps
+      # Non-shiftptr case
+      wb2blrGwvw, _ = self.writeBiasToBlobalLdsRead(kernel, offsetVgpr, gwvw, maxKId, tmpVgpr1Res.idx)
+      module.add(wb2blrGwvw)
+
+
     module.add(SWaitCnt(lgkmcnt=0, comment="wait for bias lds load"))
     # Sum K (if needed)
     '''
@@ -7584,6 +7639,7 @@ class KernelWriterAssembly(KernelWriter):
     v6 = v6 + v7
     v7 = v8 + v9
     '''
+    tmpVgpr1 = tmpVgpr1Res.idx
     tmpVgprN = tmpVgpr1 + 1
     if maxKId != 1:
       for gidx in range(0, gwvw):
