@@ -172,9 +172,27 @@ namespace
             return Tensile::ActivationType::DGelu;
         case ROCBLASLT_EPILOGUE_BIAS:
         case ROCBLASLT_EPILOGUE_DEFAULT:
+        case ROCBLASLT_EPILOGUE_BGRADA:
+        case ROCBLASLT_EPILOGUE_BGRADB:
             break;
         }
         return Tensile::ActivationType::None;
+    }
+
+    inline Tensile::ContractionProblemGemm::TENSOR getBiasSrc(rocblaslt_epilogue epilogue)
+    {
+        switch(epilogue)
+        {
+        case ROCBLASLT_EPILOGUE_BGRADA:
+            return Tensile::ContractionProblemGemm::TENSOR::A;
+            break;
+        case ROCBLASLT_EPILOGUE_BGRADB:
+            return Tensile::ContractionProblemGemm::TENSOR::B;
+            break;
+        default:
+            break;
+        }
+        return Tensile::ContractionProblemGemm::TENSOR::D;
     }
 
     /****************************************************************
@@ -314,7 +332,7 @@ namespace
         // Add problem predicates for CEqualsD
         tensileProblem.setCEqualsD(prob.C == prob.D);
 
-        if(prob.E != nullptr)
+        if(is_e_enabled(prob.epilogue))
         {
             bool isOutput = prob.gradient ? false : true;
             tensileProblem.setUseE(true);
@@ -325,17 +343,29 @@ namespace
         }
 
         // set bias mode
+        auto biasSrc = getBiasSrc(prob.epilogue);
+        auto biasSize
+            = (biasSrc == Tensile::ContractionProblemGemm::TENSOR::B) ? d.sizes()[1] : d.sizes()[0];
         tensileProblem.setUseBias(true);
-        tensileProblem.setBias(hipblasDatatype_to_tensile_type(prob.bias_type), d.sizes()[0]);
+        tensileProblem.setBias(
+            hipblasDatatype_to_tensile_type(prob.bias_type), biasSize, prob.gradient, biasSrc);
 
         // set ScaleD mode
         tensileProblem.setUseScaleD(true);
         tensileProblem.setScaleD(Tensile_Tc, d.sizes()[0]);
 
         // set Actvation
-        tensileProblem.setActivationType(Tensile::ActivationType::All);
-        tensileProblem.setActivationHPA(sizeof(Tc) > sizeof(Ti));
-        tensileProblem.setActivationEnumArg(getTensileActivationType(prob.epilogue));
+        if(is_act_enabled(prob.epilogue))
+        {
+            tensileProblem.setActivationType(Tensile::ActivationType::All);
+            tensileProblem.setActivationHPA(sizeof(Tc) > sizeof(Ti));
+            tensileProblem.setActivationEnumArg(getTensileActivationType(prob.epilogue));
+        }
+        else
+        {
+            tensileProblem.setActivationType(Tensile::ActivationType::None);
+            tensileProblem.setActivationHPA(false);
+        }
 
         // set use gradient
         tensileProblem.setUseGradient(is_grad_enabled(prob.epilogue));
@@ -442,19 +472,31 @@ namespace
         {
             auto& d = tensileProblem.tensor(Tensile::ContractionProblemGemm::TENSOR::D);
             // set bias mode
+            auto biasSrc  = getBiasSrc(prob.epilogue);
+            auto biasSize = (biasSrc == Tensile::ContractionProblemGemm::TENSOR::B) ? d.sizes()[1]
+                                                                                    : d.sizes()[0];
             tensileProblem.setUseBias(true);
-            tensileProblem.setBias(hipblasDatatype_to_tensile_type(prob.bias_type), d.sizes()[0]);
+            tensileProblem.setBias(
+                hipblasDatatype_to_tensile_type(prob.bias_type), biasSize, prob.gradient, biasSrc);
 
             // set ScaleD mode
             tensileProblem.setUseScaleD(true);
             tensileProblem.setScaleD(Tensile_Tc, d.sizes()[0]);
 
             // set Actvation
-            tensileProblem.setActivationType(Tensile::ActivationType::All);
-            tensileProblem.setActivationHPA(sizeof(Tc) > sizeof(Ti));
+            if(is_act_enabled(prob.epilogue))
+            {
+                tensileProblem.setActivationType(Tensile::ActivationType::All);
+                tensileProblem.setActivationHPA(sizeof(Tc) > sizeof(Ti));
+            }
+            else
+            {
+                tensileProblem.setActivationType(Tensile::ActivationType::None);
+                tensileProblem.setActivationHPA(false);
+            }
 
             // set E
-            if(prob.E != nullptr)
+            if(is_e_enabled(prob.epilogue))
             {
                 bool isOutput = prob.gradient ? false : true;
                 tensileProblem.setUseE(true);

@@ -26,6 +26,12 @@ Datatypes:
         none: 1
         relu: 2
         gelu: 3
+  - hipblaslt_bias_source:
+      bases: [ c_int ]
+      attr:
+        a: 1
+        b: 2
+        d: 3
 
 
 
@@ -99,6 +105,7 @@ Arguments:
   - activation_arg1: c_float
   - activation_arg2: c_float
   - bias_type: hipblasDatatype_t
+  - bias_source: hipblaslt_bias_source
   - bias_vector: c_bool
   - scaleD_vector: c_bool
   - c_noalias_d: c_bool
@@ -174,6 +181,7 @@ Defaults:
   activation_arg1: 0
   activation_arg2: 0
   bias_type: default
+  bias_source: d
   use_e: false
   gradient: false
   bias_vector: false
