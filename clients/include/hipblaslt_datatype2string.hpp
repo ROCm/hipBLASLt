@@ -39,12 +39,19 @@ enum class hipblaslt_initialization
     special    = 444,
 };
 
-typedef enum _hipblaslt_activation_type
+typedef enum class _hipblaslt_activation_type
 {
     none = 1,
     relu = 2,
     gelu = 3,
 } hipblaslt_activation_type;
+
+typedef enum class _hipblaslt_bias_source
+{
+    a = 1,
+    b = 2,
+    d = 3,
+} hipblaslt_bias_source;
 
 inline hipblaslt_internal_ostream& operator<<(hipblaslt_internal_ostream& os,
                                               hipblaslt_activation_type   act)
@@ -59,6 +66,23 @@ inline hipblaslt_internal_ostream& operator<<(hipblaslt_internal_ostream& os,
         break;
     case hipblaslt_activation_type::gelu:
         os << "gelu";
+        break;
+    }
+    return os;
+}
+inline hipblaslt_internal_ostream& operator<<(hipblaslt_internal_ostream& os,
+                                              hipblaslt_bias_source       bias)
+{
+    switch(bias)
+    {
+    case hipblaslt_bias_source::a:
+        os << "a";
+        break;
+    case hipblaslt_bias_source::b:
+        os << "b";
+        break;
+    case hipblaslt_bias_source::d:
+        os << "d";
         break;
     }
     return os;
@@ -104,6 +128,14 @@ inline const hipblaslt_activation_type string_to_hipblaslt_activation_type(const
                              : static_cast<hipblaslt_activation_type>(0);
 }
 
+inline const hipblaslt_bias_source string_to_hipblaslt_bias_source(const std::string& value)
+{
+    return value == "a"   ? hipblaslt_bias_source::a
+           : value == "b" ? hipblaslt_bias_source::b
+           : value == "d" ? hipblaslt_bias_source::d
+                          : static_cast<hipblaslt_bias_source>(0);
+}
+
 // Convert hipblaslt_activation_type to string
 inline const char* hipblaslt_activation_type_to_string(hipblaslt_activation_type type)
 {
@@ -115,6 +147,22 @@ inline const char* hipblaslt_activation_type_to_string(hipblaslt_activation_type
         return "relu";
     case hipblaslt_activation_type::none:
         return "none";
+    default:
+        return "invalid";
+    }
+}
+
+// Convert hipblaslt_bias_source to string
+inline const char* hipblaslt_bias_source_to_string(hipblaslt_bias_source type)
+{
+    switch(type)
+    {
+    case hipblaslt_bias_source::a:
+        return "a";
+    case hipblaslt_bias_source::b:
+        return "b";
+    case hipblaslt_bias_source::d:
+        return "d";
     default:
         return "invalid";
     }

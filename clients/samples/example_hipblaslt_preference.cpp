@@ -71,25 +71,50 @@
 #define COLD_LOOP_COUNT 0
 #define GPU_TIMER 0
 
-typedef enum _ActivationType
+typedef enum class _ActivationType
 {
     NONE = 0,
     RELU = 1,
     GELU = 2,
 } ActivationType;
 
+typedef enum class _BiasSrc
+{
+    NONE = 0,
+    A    = 1,
+    B    = 2,
+    D    = 3,
+} BiasSrc;
+
 inline const char* ToString(ActivationType act)
 {
     switch(act)
     {
-    case NONE:
+    case ActivationType::NONE:
         return "none";
-    case RELU:
+    case ActivationType::RELU:
         return "relu";
-    case GELU:
+    case ActivationType::GELU:
         return "gelu";
     default:
         return "[Unknown Activation Type]";
+    }
+}
+
+inline const char* ToString(BiasSrc bias)
+{
+    switch(bias)
+    {
+    case BiasSrc::NONE:
+        return "none";
+    case BiasSrc::A:
+        return "A";
+    case BiasSrc::B:
+        return "B";
+    case BiasSrc::D:
+        return "D";
+    default:
+        return "[Unknown Bias Type]";
     }
 }
 
@@ -254,18 +279,18 @@ void mat_mul_bias_activation(Tc             alpha,
     }
 }
 
-template <typename To, typename Tc>
-void reduction_ij(Tc* workspace, To* bias, int M, int N, int batch_count)
+template <typename Tc, typename Ti, typename To>
+void reduction(Ti* workspace, To* bias, int length, int k, int s1, int s2, int s3, int batch_count)
 {
     assert(batch_count == 1);
     for(int batch = 0; batch < batch_count; batch++)
     {
-        for(int i1 = 0; i1 < M; i1++)
+        for(int i1 = 0; i1 < length; i1++)
         {
             Tc sum = 0;
-            for(int i2 = 0; i2 < N; i2++)
+            for(int i2 = 0; i2 < k; i2++)
             {
-                sum += workspace[i1 + i2 * M + batch * M * N];
+                sum += static_cast<Tc>(workspace[i1 * s1 + i2 * s2 + batch * s3]);
             }
             bias[i1] = static_cast<To>(sum);
         }
@@ -318,8 +343,7 @@ static void show_usage(char* argv[])
                  "(default is 0)\n"
               << "\t--use_e \t\tuse_e \t\tGEMM_STRIDED enable use_e: 0 or 1 "
                  "(default is 0)\n"
-              << "\t--bias \t\t\tbias \t\tGEMM_STRIDED enable bias: 0 or 1 "
-                 "(default is 0)\n"
+              << "\t--bias \t\t\tbias \t\tGEMM_STRIDED enable bias and choose bias src: A, B, D\n"
               << "\t--scaleD \t\tscaleD \t\tGEMM_STRIDED enable scaleD: 0 or 1 "
                  "(default is 0)\n"
               << "\t--header \t\theader \t\tPrint header for output (default is "
@@ -356,7 +380,7 @@ static int parse_arguments(int                 argc,
                            hipblasOperation_t& trans_b,
                            bool&               enable_grad,
                            bool&               enable_e,
-                           bool&               enable_bias,
+                           BiasSrc&            biasSrc,
                            bool&               enable_scaleD,
                            ActivationType&     actType,
                            bool&               header,
@@ -479,7 +503,25 @@ static int parse_arguments(int                 argc,
                 }
                 else if((arg == "--bias") && (i + 1 < argc))
                 {
-                    enable_bias = atoi(argv[++i]);
+                    ++i;
+                    if(strncmp(argv[i], "A", 1) == 0 || strncmp(argv[i], "a", 1) == 0)
+                    {
+                        biasSrc = BiasSrc::A;
+                    }
+                    else if(strncmp(argv[i], "B", 1) == 0 || strncmp(argv[i], "b", 1) == 0)
+                    {
+                        biasSrc = BiasSrc::B;
+                    }
+                    else if(strncmp(argv[i], "D", 1) == 0 || strncmp(argv[i], "d", 1) == 0)
+                    {
+                        biasSrc = BiasSrc::D;
+                    }
+                    else
+                    {
+                        std::cerr << "error with " << arg << std::endl;
+                        std::cerr << "do not recognize value " << argv[i];
+                        return EXIT_FAILURE;
+                    }
                 }
                 else if((arg == "--scaleD") && (i + 1 < argc))
                 {
@@ -670,6 +712,37 @@ bool bad_argument(hipblasOperation_t trans_a,
     return argument_error;
 }
 
+bool epilogue_bad_argument(
+    bool enable_grad, bool enable_e, BiasSrc biasSrc, bool enable_scaleD, ActivationType actType)
+{
+    bool argument_error = false;
+    if(biasSrc == BiasSrc::A || biasSrc == BiasSrc::B)
+    {
+        if(!enable_grad)
+        {
+            argument_error = true;
+            std::cerr << "ERROR: Must enable gradient when bias = A or B" << std::endl;
+        }
+        if(actType != ActivationType::NONE)
+        {
+            argument_error = true;
+            std::cerr
+                << "ERROR: Activation type has to be none when bias = A or B. Bad argument act = "
+                << ToString(actType) << std::endl;
+        }
+    }
+    else if(biasSrc == BiasSrc::D && enable_grad)
+    {
+        if(!enable_e)
+        {
+            argument_error = true;
+            std::cerr << "ERROR: Must enable e when gradient = true and bias = D" << std::endl;
+        }
+    }
+
+    return argument_error;
+}
+
 template <typename T>
 void initialize_a_b_c_e_bias(std::vector<T>&     ha,
                              int64_t             size_a,
@@ -733,7 +806,7 @@ void test_hipblaslt(hipblasDatatype_t  in_out_datatype,
                     float              beta,
                     bool               enable_grad,
                     bool               enable_e,
-                    bool               enable_bias,
+                    BiasSrc            biasSrc,
                     bool               enable_scaleD,
                     ActivationType     actType,
                     bool               validate,
@@ -791,8 +864,20 @@ void test_hipblaslt(hipblasDatatype_t  in_out_datatype,
     int size_c      = batch_count == 0 ? size_c1 : size_c1 + stride_c * (batch_count - 1);
     int size_d      = batch_count == 0 ? size_d1 : size_d1 + stride_d * (batch_count - 1);
     int size_e      = batch_count == 0 ? size_e1 : size_e1 + stride_e * (batch_count - 1);
-    int size_bias   = enable_bias ? m : 0;
     int size_scaleD = enable_scaleD ? m : 0;
+    int size_bias   = 0;
+    switch(biasSrc)
+    {
+    case BiasSrc::A:
+    case BiasSrc::D:
+        size_bias = m;
+        break;
+    case BiasSrc::B:
+        size_bias = n;
+        break;
+    default:
+        break;
+    }
 
     // Naming: da is in GPU (device) memory. ha is in CPU (host) memory
     std::vector<T>     ha(size_a);
@@ -821,7 +906,7 @@ void test_hipblaslt(hipblasDatatype_t  in_out_datatype,
     CHECK_HIP_ERROR(hipMalloc(&dd, size_d * sizeof(T)));
     if(enable_e)
         CHECK_HIP_ERROR(hipMalloc(&de, size_e * sizeof(float)));
-    if(enable_bias)
+    if(biasSrc != BiasSrc::NONE)
         CHECK_HIP_ERROR(hipMalloc(&d_bias, size_bias * sizeof(T)));
     if(enable_scaleD)
         CHECK_HIP_ERROR(hipMalloc(&d_scaleD, size_scaleD * sizeof(float)));
@@ -831,7 +916,7 @@ void test_hipblaslt(hipblasDatatype_t  in_out_datatype,
     CHECK_HIP_ERROR(hipMemcpy(dc, hc.data(), sizeof(T) * size_c, hipMemcpyHostToDevice));
     if(enable_grad && enable_e)
         CHECK_HIP_ERROR(hipMemcpy(de, he.data(), sizeof(float) * size_e, hipMemcpyHostToDevice));
-    if(!enable_grad && enable_bias)
+    if(!enable_grad && biasSrc != BiasSrc::NONE)
         CHECK_HIP_ERROR(
             hipMemcpy(d_bias, h_bias.data(), sizeof(T) * size_bias, hipMemcpyHostToDevice));
     if(enable_scaleD)
@@ -881,26 +966,30 @@ void test_hipblaslt(hipblasDatatype_t  in_out_datatype,
     hipblasLtEpilogue_t epilogue;
     if(enable_grad)
     {
-        if(enable_e && !enable_bias && actType == ActivationType::GELU)
+        if(enable_e && biasSrc == BiasSrc::NONE && actType == ActivationType::GELU)
             epilogue = HIPBLASLT_EPILOGUE_DGELU;
-        else if(enable_e && enable_bias && actType == ActivationType::GELU)
+        else if(!enable_e && biasSrc == BiasSrc::A && actType == ActivationType::NONE)
+            epilogue = HIPBLASLT_EPILOGUE_BGRADA;
+        else if(!enable_e && biasSrc == BiasSrc::B && actType == ActivationType::NONE)
+            epilogue = HIPBLASLT_EPILOGUE_BGRADB;
+        else if(enable_e && biasSrc == BiasSrc::D && actType == ActivationType::GELU)
             epilogue = HIPBLASLT_EPILOGUE_DGELU_BGRAD;
     }
     else
     {
-        if(!enable_e && enable_bias && actType == ActivationType::NONE)
+        if(!enable_e && biasSrc == BiasSrc::D && actType == ActivationType::NONE)
             epilogue = HIPBLASLT_EPILOGUE_BIAS;
-        else if(!enable_e && enable_bias && actType == ActivationType::RELU)
+        else if(!enable_e && biasSrc == BiasSrc::D && actType == ActivationType::RELU)
             epilogue = HIPBLASLT_EPILOGUE_RELU_BIAS;
-        else if(!enable_e && enable_bias && actType == ActivationType::GELU)
+        else if(!enable_e && biasSrc == BiasSrc::D && actType == ActivationType::GELU)
             epilogue = HIPBLASLT_EPILOGUE_GELU_BIAS;
-        else if(!enable_e && !enable_bias && actType == ActivationType::NONE)
+        else if(!enable_e && biasSrc == BiasSrc::NONE && actType == ActivationType::NONE)
             epilogue = HIPBLASLT_EPILOGUE_DEFAULT;
-        else if(!enable_e && !enable_bias && actType == ActivationType::RELU)
+        else if(!enable_e && biasSrc == BiasSrc::NONE && actType == ActivationType::RELU)
             epilogue = HIPBLASLT_EPILOGUE_RELU;
-        else if(!enable_e && !enable_bias && actType == ActivationType::GELU)
+        else if(!enable_e && biasSrc == BiasSrc::NONE && actType == ActivationType::GELU)
             epilogue = HIPBLASLT_EPILOGUE_GELU;
-        else if(enable_e && enable_bias && actType == ActivationType::GELU)
+        else if(enable_e && biasSrc == BiasSrc::D && actType == ActivationType::GELU)
             epilogue = HIPBLASLT_EPILOGUE_GELU_AUX_BIAS;
         else if(enable_e && actType == ActivationType::GELU)
             epilogue = HIPBLASLT_EPILOGUE_GELU_AUX;
@@ -916,7 +1005,7 @@ void test_hipblaslt(hipblasDatatype_t  in_out_datatype,
         CHECK_HIPBLASLT_ERROR(hipblasLtMatmulDescSetAttribute(
             matmul, HIPBLASLT_MATMUL_DESC_EPILOGUE_AUX_BATCH_STRIDE, &stride_e, sizeof(int64_t)));
     }
-    if(enable_bias)
+    if(biasSrc != BiasSrc::NONE)
         CHECK_HIPBLASLT_ERROR(hipblasLtMatmulDescSetAttribute(
             matmul, HIPBLASLT_MATMUL_DESC_BIAS_POINTER, &d_bias, sizeof(void*)));
     if(enable_scaleD)
@@ -980,7 +1069,7 @@ void test_hipblaslt(hipblasDatatype_t  in_out_datatype,
     hipStreamSynchronize(stream);
     // copy output from device to CPU
     CHECK_HIP_ERROR(hipMemcpy(hd.data(), dd, sizeof(T) * size_c, hipMemcpyDeviceToHost));
-    if(enable_grad && enable_bias)
+    if(enable_grad && biasSrc != BiasSrc::NONE)
         CHECK_HIP_ERROR(
             hipMemcpy(h_bias.data(), d_bias, sizeof(T) * size_bias, hipMemcpyDeviceToHost));
     if(!enable_grad && enable_e)
@@ -1091,7 +1180,7 @@ void test_hipblaslt(hipblasDatatype_t  in_out_datatype,
     std::cout << trans_string << m << ", " << n << ", " << k << ", " << lda << ", " << ldb << ", "
               << ldc << ", " << stride_a << ", " << stride_b << ", " << stride_c << ", "
               << batch_count << ", " << alpha << ", " << beta << ", " << enable_e << ", "
-              << enable_bias << ", " << enable_scaleD << ", " << ToString(actType);
+              << ToString(biasSrc) << ", " << enable_scaleD << ", " << ToString(actType);
     if(timing)
     {
         std::cout << ", " << bestMs * 1000 << ", " << bestTflops;
@@ -1116,7 +1205,7 @@ void test_hipblaslt(hipblasDatatype_t  in_out_datatype,
             e_ptr = &he[0];
         else
             e_ptr = nullptr;
-        if(enable_bias && !enable_grad)
+        if(biasSrc != BiasSrc::NONE && !enable_grad)
             bias_ptr = &h_bias[0];
         else
             bias_ptr = nullptr;
@@ -1126,7 +1215,7 @@ void test_hipblaslt(hipblasDatatype_t  in_out_datatype,
         else
             scaleD_ptr = nullptr;
         void* workspace = nullptr;
-        if(enable_grad && enable_bias)
+        if(enable_grad && biasSrc == BiasSrc::D)
             workspace = (void*)malloc(workspace_size);
         mat_mul_bias_activation<T, T, float>(alpha,
                                              beta,
@@ -1159,11 +1248,27 @@ void test_hipblaslt(hipblasDatatype_t  in_out_datatype,
                                              enable_grad,
                                              actType,
                                              (float*)workspace);
-        if(enable_grad && enable_bias)
+        if(enable_grad && biasSrc != BiasSrc::NONE)
         {
             bias_ptr = &h_bias_gold[0];
-            assert(m == size_bias);
-            reduction_ij((float*)workspace, bias_ptr, m, n, batch_count);
+            // D case
+            if(biasSrc == BiasSrc::D)
+            {
+                assert(m == size_bias);
+                reduction<float>((float*)workspace, bias_ptr, m, n, 1, m, (m * n), batch_count);
+            }
+            else if(biasSrc == BiasSrc::A)
+            {
+                assert(m == size_bias);
+                reduction<float>(
+                    a_ptr, bias_ptr, m, k, a_stride_1, a_stride_2, stride_a, batch_count);
+            }
+            else if(biasSrc == BiasSrc::B)
+            {
+                assert(n == size_bias);
+                reduction<float>(
+                    b_ptr, bias_ptr, n, k, b_stride_1, b_stride_2, stride_b, batch_count);
+            }
         }
 
         if(workspace)
@@ -1174,7 +1279,7 @@ void test_hipblaslt(hipblasDatatype_t  in_out_datatype,
         {
             if(!AlmostEqual(hd_gold[i], hd[i]))
             {
-                printf("Err: Index %d: %f vs %f\n",
+                printf("[D] Err: Index %d: %f vs %f\n",
                        i,
                        static_cast<float>(hd_gold[i]),
                        static_cast<float>(hd[i]));
@@ -1187,7 +1292,7 @@ void test_hipblaslt(hipblasDatatype_t  in_out_datatype,
             {
                 if(!AlmostEqual(he_gold[i], he[i]))
                 {
-                    printf("Err: Index %d: %f vs %f\n",
+                    printf("[E] Err: Index %d: %f vs %f\n",
                            i,
                            static_cast<float>(he_gold[i]),
                            static_cast<float>(he[i]));
@@ -1195,13 +1300,13 @@ void test_hipblaslt(hipblasDatatype_t  in_out_datatype,
                 }
             }
         }
-        if(enable_grad && enable_bias)
+        if(enable_grad && biasSrc != BiasSrc::NONE)
         {
             for(int i = 0; i < size_bias; i++)
             {
                 if(!AlmostEqual(h_bias_gold[i], h_bias[i]))
                 {
-                    printf("Bias Err: Index %d: %f vs %f\n",
+                    printf("[B] Err: Index %d: %f vs %f\n",
                            i,
                            static_cast<float>(h_bias_gold[i]),
                            static_cast<float>(h_bias[i]));
@@ -1253,7 +1358,7 @@ void test_hipblaslt(hipblasDatatype_t  in_out_datatype,
                 print_strided_batched("he device", &he[0], m, n, batch_count, 1, lde, stride_e);
             }
         }
-        if(enable_bias)
+        if(biasSrc != BiasSrc::NONE)
         {
             if(enable_grad)
                 print_strided_batched("h_bias gold", &h_bias_gold[0], m, 1, 1, 1, m, 0);
@@ -1273,7 +1378,7 @@ void test_hipblaslt(hipblasDatatype_t  in_out_datatype,
     CHECK_HIP_ERROR(hipFree(d_workspace));
     if(enable_e)
         CHECK_HIP_ERROR(hipFree(de));
-    if(enable_bias)
+    if(biasSrc != BiasSrc::NONE)
         CHECK_HIP_ERROR(hipFree(d_bias));
     if(enable_scaleD)
         CHECK_HIP_ERROR(hipFree(d_scaleD));
@@ -1317,7 +1422,7 @@ int main(int argc, char* argv[])
     float          beta          = BETA;
     bool           enable_grad   = false;
     bool           enable_e      = false;
-    bool           enable_bias   = false;
+    BiasSrc        biasSrc       = BiasSrc::NONE;
     bool           enable_scaleD = false;
     ActivationType actType       = ActivationType::NONE;
 
@@ -1349,7 +1454,7 @@ int main(int argc, char* argv[])
                        trans_b,
                        enable_grad,
                        enable_e,
-                       enable_bias,
+                       biasSrc,
                        enable_scaleD,
                        actType,
                        header,
@@ -1419,6 +1524,12 @@ int main(int argc, char* argv[])
         return EXIT_FAILURE;
     }
 
+    if(epilogue_bad_argument(enable_grad, enable_e, biasSrc, enable_scaleD, actType))
+    {
+        show_usage(argv);
+        return EXIT_FAILURE;
+    }
+
     if(header)
     {
         std::cout << "transAB, M, N, K, lda, ldb, ldc, stride_a, stride_b, "
@@ -1452,7 +1563,7 @@ int main(int argc, char* argv[])
                                        beta,
                                        enable_grad,
                                        enable_e,
-                                       enable_bias,
+                                       biasSrc,
                                        enable_scaleD,
                                        actType,
                                        validate,
@@ -1483,7 +1594,7 @@ int main(int argc, char* argv[])
                                       beta,
                                       enable_grad,
                                       enable_e,
-                                      enable_bias,
+                                      biasSrc,
                                       enable_scaleD,
                                       actType,
                                       validate,
@@ -1514,7 +1625,7 @@ int main(int argc, char* argv[])
                                           beta,
                                           enable_grad,
                                           enable_e,
-                                          enable_bias,
+                                          biasSrc,
                                           enable_scaleD,
                                           actType,
                                           validate,
