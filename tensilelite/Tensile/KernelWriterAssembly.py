@@ -982,18 +982,18 @@ class KernelWriterAssembly(KernelWriter):
         moduleArgs.add(SWaitCnt(lgkmcnt=0, comment="wait global buffer address ready"))
 
       if kernel["ProblemType"]["GroupedGemm"]:
-        tmpSgprGemmIdxMiddle = 7
-        tmpSgprGemmIdxLeft = 8
-        tmpSgprGemmIdxRight = 9
+        # allocate temp sgpr for grouped gemm index calculation
+        # can use any sgpr (except addr,wg0) before argument loading
+        tmpSgprNumGemm = 5
+        tmpSgprTargetPlus1 = 6
+        tmpSgpr0 = 7
 
-        tmpSgpr0 = 10
-        tmpSgpr1 = 11
+        tmpSgprGemmIdxMiddle = 8
+        tmpSgprGemmIdxLeft = 9
+        tmpSgprGemmIdxRight = 10
 
-        tmpSgprTargetPlus1 = 10
+        tmpSgprWgLeft = 11
         tmpSgprWgMiddle = 12
-        tmpSgprWgLeft = 13
-
-        tmpSgprNumGemm = 14
 
         module.addComment1("Grouped Gemm: Load num of Gemms")
         module.add(self.argLoader.loadKernArg(tmpSgprNumGemm, "KernArgAddress", hex(0), dword=1))
@@ -1009,17 +1009,19 @@ class KernelWriterAssembly(KernelWriter):
         module.add(label_findGemm)
         module.add(SAddU32(dst=sgpr(tmpSgprGemmIdxMiddle), src0=sgpr(tmpSgprGemmIdxLeft), src1=sgpr(tmpSgprGemmIdxRight)))
         module.add(SLShiftRightB32(dst=sgpr(tmpSgprGemmIdxMiddle), src=sgpr(tmpSgprGemmIdxMiddle), shiftHex=log2(2)))
-        module.add(SLShiftLeftB32(dst=sgpr(tmpSgpr1), src=sgpr(tmpSgprGemmIdxMiddle), shiftHex=log2(4)))
-        module.add(self.argLoader.loadKernArg(tmpSgprWgMiddle, "KernArgAddress", sgpr(tmpSgpr1), dword=1))
+        module.add(SLShiftLeftB32(dst=sgpr(tmpSgpr0), src=sgpr(tmpSgprGemmIdxMiddle), shiftHex=log2(4)))
+        module.add(self.argLoader.loadKernArg(tmpSgprWgMiddle, "KernArgAddress", sgpr(tmpSgpr0), dword=1))
         module.add(SWaitCnt(lgkmcnt=0))
         module.add(SCmpLtI32(src0=sgpr(tmpSgprWgMiddle), src1=sgpr(tmpSgprTargetPlus1)))
         module.add(SCSelectB32(dst=sgpr(tmpSgprWgLeft),       src0=sgpr(tmpSgprWgMiddle),      src1=sgpr(tmpSgprWgLeft)))
         module.add(SCSelectB32(dst=sgpr(tmpSgprGemmIdxRight), src0=sgpr(tmpSgprGemmIdxRight),  src1=sgpr(tmpSgprGemmIdxMiddle)))
-        module.add(SCSelectB32(dst=sgpr(tmpSgpr1),            src0=sgpr(tmpSgprGemmIdxMiddle), src1=sgpr(tmpSgprGemmIdxLeft)))
-        module.add(SAddCU32(dst=sgpr(tmpSgprGemmIdxLeft), src0=sgpr(tmpSgpr1), src1=hex(0)))
+        module.add(SCSelectB32(dst=sgpr(tmpSgpr0),            src0=sgpr(tmpSgprGemmIdxMiddle), src1=sgpr(tmpSgprGemmIdxLeft)))
+        module.add(SAddCU32(dst=sgpr(tmpSgprGemmIdxLeft), src0=sgpr(tmpSgpr0), src1=hex(0)))
         module.add(SCmpLtU32(src0=sgpr(tmpSgprGemmIdxLeft), src1=sgpr(tmpSgprGemmIdxRight)))
         module.add(SCBranchSCC1(labelName=label_findGemm.getLabelName()))
         module.add(SSubU32(dst=sgpr(tmpSgprGemmIdxLeft), src0=sgpr(tmpSgprGemmIdxLeft), src1=hex(1)))
+        module.addComment0("Grouped Gemm: idxWG012 = hw_wg - accu_wg")
+        module.add(SSubU32(dst=sgpr("WorkGroup0"), src0=sgpr("WorkGroup0"), src1=sgpr(tmpSgprWgLeft)))
 
         module.addComment1("Grouped Gemm: offset argument address to gemm")
         module.addComment0("Grouped Gemm: offset address from wg_table_start to args_start")
@@ -1033,26 +1035,25 @@ class KernelWriterAssembly(KernelWriter):
 
         module.add(moduleArgs)
 
-        module.addComment1("Grouped Gemm: remap wg from 1D(numWG012) to 3D(wg2,wg1,wg0)")
-        module.addComment0("numWG012 = hw_wg - accu_wg")
-        module.add(SSubU32(dst=sgpr("WorkGroup0"), src0=sgpr("WorkGroup0"), src1=sgpr(tmpSgprWgLeft)))
-        module.addComment0("wg2 = numWG012 * smallMagicNumber(1/(numWG0*numWG1))")
-        module.add(self.sMagicDivWrapper(dest=tmpSgpr0, dividend=sgpr("WorkGroup0"), \
-                   magicNumber=sgpr("SmallMagicNumberDivWg01"), magicShift=31))
-        module.add(SMovB32(dst=sgpr("WorkGroup2"), src=sgpr(tmpSgpr0)))
-        module.addComment0("numWG01 = numWG012 - wg2 * numWG0 * numWG1")
-        module.add(SMulI32(dst=sgpr(tmpSgpr0), src0=sgpr("WorkGroup2"), src1=sgpr("NumWorkGroups0")))
-        module.add(SMulI32(dst=sgpr(tmpSgpr0), src0=sgpr(tmpSgpr0), src1=sgpr("NumWorkGroups1")))
-        if kernel["GlobalSplitU"] > 1:
-          module.add(SMulI32(dst=sgpr(tmpSgpr0), src0=sgpr(tmpSgpr0), src1=kernel["GlobalSplitU"]))
-        module.add(SSubU32(dst=sgpr("WorkGroup0"), src0=sgpr("WorkGroup0"), src1=sgpr(tmpSgpr0)))
-        module.addComment0("wg1 = numWG01 * smallMagicNumber(1/numWG0)")
-        module.add(self.sMagicDivWrapper(dest=tmpSgpr0, dividend=sgpr("WorkGroup0"), \
-                   magicNumber=sgpr("SmallMagicNumberDivWg0"), magicShift=31))
-        module.add(SMovB32(dst=sgpr("WorkGroup1"), src=sgpr(tmpSgpr0)))
-        module.addComment0("wg0 = numWG01 - wg1 * numWG0")
-        module.add(SMulI32(dst=sgpr(tmpSgpr0), src0=sgpr("WorkGroup1"), src1=sgpr("NumWorkGroups0")))
-        module.add(SSubU32(dst=sgpr("WorkGroup0"), src0=sgpr("WorkGroup0"), src1=sgpr(tmpSgpr0)))
+        with self.allocTmpSgpr(2, alignment = 2) as tmpSgpr:
+          module.addComment1("Grouped Gemm: remap wg from 1D(idxWG012) to 3D(wg2,wg1,wg0)")
+          module.addComment0("wg2 = idxWG012 * smallMagicNumber(1/(numWG0*numWG1))")
+          module.add(self.sMagicDivWrapper(dest=tmpSgpr.idx, dividend=sgpr("WorkGroup0"), \
+                    magicNumber=sgpr("SmallMagicNumberDivWg01"), magicShift=31))
+          module.add(SMovB32(dst=sgpr("WorkGroup2"), src=sgpr(tmpSgpr.idx)))
+          module.addComment0("idxWG01 = idxWG012 - wg2 * numWG0 * numWG1")
+          module.add(SMulI32(dst=sgpr(tmpSgpr.idx), src0=sgpr("WorkGroup2"), src1=sgpr("NumWorkGroups0")))
+          module.add(SMulI32(dst=sgpr(tmpSgpr.idx), src0=sgpr(tmpSgpr.idx), src1=sgpr("NumWorkGroups1")))
+          if kernel["GlobalSplitU"] > 1:
+            module.add(SMulI32(dst=sgpr(tmpSgpr.idx), src0=sgpr(tmpSgpr.idx), src1=kernel["GlobalSplitU"]))
+          module.add(SSubU32(dst=sgpr("WorkGroup0"), src0=sgpr("WorkGroup0"), src1=sgpr(tmpSgpr.idx)))
+          module.addComment0("wg1 = idxWG01 * smallMagicNumber(1/numWG0)")
+          module.add(self.sMagicDivWrapper(dest=tmpSgpr.idx, dividend=sgpr("WorkGroup0"), \
+                    magicNumber=sgpr("SmallMagicNumberDivWg0"), magicShift=31))
+          module.add(SMovB32(dst=sgpr("WorkGroup1"), src=sgpr(tmpSgpr.idx)))
+          module.addComment0("wg0 = idxWG01 - wg1 * numWG0")
+          module.add(SMulI32(dst=sgpr(tmpSgpr.idx), src0=sgpr("WorkGroup1"), src1=sgpr("NumWorkGroups0")))
+          module.add(SSubU32(dst=sgpr("WorkGroup0"), src0=sgpr("WorkGroup0"), src1=sgpr(tmpSgpr.idx)))
 
         module.addSpaceLine()
         module.add(self.undefineSgpr("SmallMagicNumberDivWg0"))
