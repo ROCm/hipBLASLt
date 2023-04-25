@@ -106,7 +106,7 @@ namespace
 
                 if(arg.bias_vector)
                 {
-                    name << "_BIAS";
+                    name << "_BIAS" << hipblaslt_bias_source_to_string(arg.bias_source);
                     if(arg.d_type != arg.scale_type && arg.bias_type == arg.scale_type)
                         name << hipblas_datatype_to_string(arg.bias_type);
                 }

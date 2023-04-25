@@ -245,6 +245,7 @@ try
     std::string compute_type;
     std::string scale_type;
     std::string bias_type;
+    std::string bias_source;
     std::string initialization;
     std::string filter;
     std::string activation_type;
@@ -411,6 +412,10 @@ try
          value<std::string>(&bias_type), "Precision of bias vector."
         "Options: f16_r,bf16_r,f32_r,default(same with D type)")
 
+        ("bias_source",
+         value<std::string>(&bias_source)->default_value("d"),
+         "Choose bias source: a, b, d")
+
         ("bias_vector",
          bool_switch(&arg.bias_vector)->default_value(false),
          "Apply bias vector")
@@ -535,6 +540,8 @@ try
     arg.activation_type = string_to_hipblaslt_activation_type(activation_type);
     if(arg.activation_type == static_cast<hipblaslt_activation_type>(0))
         throw std::invalid_argument("Invalid value for --activation_type " + activation_type);
+
+    arg.bias_source = string_to_hipblaslt_bias_source(bias_source);
 
     if(arg.M < 0)
         throw std::invalid_argument("Invalid value for -m " + std::to_string(arg.M));

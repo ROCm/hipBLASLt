@@ -127,20 +127,28 @@ void epilogue_func(int64_t m,
     }
 }
 
-template <typename To, typename Tc>
-void reduction_ij_func(Tc* workspace, To* bias, int m, int n, int ld, int stride, int batch_count)
+template <bool SumLd, typename Tc, typename Ti, typename To>
+void reduction_func(
+    Ti* workspace, To* bias, int length, int k, int s1, int s2, int s3, int batch_count)
 {
     assert(batch_count == 1);
     for(int batch = 0; batch < batch_count; batch++)
     {
-        for(int i = 0; i < m; i++)
+        for(int i1 = 0; i1 < length; i1++)
         {
             Tc sum = 0;
-            for(int j = 0; j < n; j++)
+            for(int i2 = 0; i2 < k; i2++)
             {
-                sum += workspace[i + j * ld + batch * stride];
+                if constexpr(SumLd)
+                {
+                    sum += static_cast<Tc>(workspace[i1 * s2 + i2 * s1 + batch * s3]);
+                }
+                else
+                {
+                    sum += static_cast<Tc>(workspace[i1 * s1 + i2 * s2 + batch * s3]);
+                }
             }
-            bias[i] = static_cast<To>(sum);
+            bias[i1] = static_cast<To>(sum);
         }
     }
 }
@@ -412,6 +420,21 @@ void testing_matmul(const Arguments& arg)
         {
             switch(epilogue[i])
             {
+            case HIPBLASLT_EPILOGUE_BIAS:
+            {
+                switch(arg.bias_source)
+                {
+                case hipblaslt_bias_source::a:
+                    epilogue[i] = HIPBLASLT_EPILOGUE_BGRADA;
+                    break;
+                case hipblaslt_bias_source::b:
+                    epilogue[i] = HIPBLASLT_EPILOGUE_BGRADB;
+                    break;
+                default:
+                    break;
+                }
+            }
+            break;
             case HIPBLASLT_EPILOGUE_GELU:
                 CHECK_SUCCESS(arg.use_e && "Must enable use e if gradient is enabled with gelu.");
                 epilogue[i] = HIPBLASLT_EPILOGUE_DGELU;
@@ -455,8 +478,19 @@ void testing_matmul(const Arguments& arg)
         size_E[i]
             = stride_e[i] == 0 ? lde[i] * N[i] * num_batches[i] : stride_e[i] * num_batches[i];
         size_D_copy[i] = arg.unit_check || arg.norm_check ? size_D[i] : 0;
-        size_bias[i]   = arg.bias_vector ? M[i] : 1;
         size_scaleD[i] = arg.scaleD_vector ? M[i] : 1;
+        if(arg.bias_vector)
+        {
+            if(arg.bias_source == hipblaslt_bias_source::a
+               || arg.bias_source == hipblaslt_bias_source::d)
+                size_bias[i] = M[i];
+            else if(arg.bias_source == hipblaslt_bias_source::b)
+                size_bias[i] = N[i];
+        }
+        else
+        {
+            size_bias[i] = 1;
+        }
 
         // allocate memory on device
         dA[i]      = new device_vector<Ti>(size_A[i], 1, HMM);
@@ -763,10 +797,10 @@ void testing_matmul(const Arguments& arg)
             cpu_time_used = get_time_us_no_sync();
         }
 
-#define epilogue_param                                                                         \
-    M[gemmIdx], N[gemmIdx], ldd[gemmIdx], *(hD_gold_epl[gemmIdx]) + pos,                       \
-        *(hD_gold[gemmIdx]) + pos, *(hBias_gold_epl[gemmIdx]) + pos, ePos, \
-        applyBias, arg.scaleD_vector, *(hScaleD[gemmIdx]) + 0
+#define epilogue_param                                                                \
+    M[gemmIdx], N[gemmIdx], ldd[gemmIdx], *(hD_gold_epl[gemmIdx]) + pos,              \
+        *(hD_gold[gemmIdx]) + pos, *(hBias_gold_epl[gemmIdx]) + pos, ePos, applyBias, \
+        arg.scaleD_vector, *(hScaleD[gemmIdx]) + 0
         for(int gemmIdx = 0; gemmIdx < gemm_count; gemmIdx++)
         {
             for(int batchIdx = 0; batchIdx < num_batches[gemmIdx]; batchIdx++)
@@ -855,28 +889,98 @@ void testing_matmul(const Arguments& arg)
                                           arg.gradient);
                             break;
                         default:
+                        {
                             epilogue_func(epilogue_param, *(hBias_C[gemmIdx]) + 0, false);
-                            break;
+                        }
+                        break;
                         }
                     }
-                    if(arg.gradient && arg.bias_vector)
+                    if(arg.gradient && arg.bias_vector && batchIdx == num_batches[gemmIdx] - 1)
                     {
-                        if(arg.d_type != arg.scale_type && arg.bias_type == arg.scale_type)
-                            reduction_ij_func(*(hBias_gold_epl[gemmIdx]) + pos,
-                                              *(hBias_gold_C[gemmIdx]) + 0,
-                                              M[gemmIdx],
-                                              N[gemmIdx],
-                                              ldd[gemmIdx],
-                                              stride_d[gemmIdx],
-                                              num_batches[gemmIdx]);
+                        if(arg.bias_source == hipblaslt_bias_source::d)
+                        {
+                            if(arg.d_type != arg.scale_type && arg.bias_type == arg.scale_type)
+                                reduction_func<false, float>(*(hBias_gold_epl[gemmIdx]) + pos,
+                                                             *(hBias_gold_C[gemmIdx]) + 0,
+                                                             M[gemmIdx],
+                                                             N[gemmIdx],
+                                                             1,
+                                                             ldd[gemmIdx],
+                                                             stride_d[gemmIdx],
+                                                             num_batches[gemmIdx]);
+                            else
+                                reduction_func<false, float>(*(hBias_gold_epl[gemmIdx]) + pos,
+                                                             *(hBias_gold[gemmIdx]) + 0,
+                                                             M[gemmIdx],
+                                                             N[gemmIdx],
+                                                             1,
+                                                             ldd[gemmIdx],
+                                                             stride_d[gemmIdx],
+                                                             num_batches[gemmIdx]);
+                        }
                         else
-                            reduction_ij_func(*(hBias_gold_epl[gemmIdx]) + pos,
-                                              *(hBias_gold[gemmIdx]) + 0,
-                                              M[gemmIdx],
-                                              N[gemmIdx],
-                                              ldd[gemmIdx],
-                                              stride_d[gemmIdx],
-                                              num_batches[gemmIdx]);
+                        {
+                            // *(hA[gemmIdx]) + stride_a[gemmIdx] * batchIdx
+                            bool sumLd = false;
+                            int  s1 = 1, s2 = 1, s3 = 1;
+                            Ti*  ptr = nullptr;
+                            if(arg.bias_source == hipblaslt_bias_source::a)
+                            {
+                                ptr   = *(hA[gemmIdx]);
+                                s2    = lda[gemmIdx];
+                                s3    = stride_a[gemmIdx];
+                                sumLd = transA == HIPBLAS_OP_N ? false : true;
+                            }
+                            else if(arg.bias_source == hipblaslt_bias_source::b)
+                            {
+                                ptr   = *(hA[gemmIdx]);
+                                s2    = ldb[gemmIdx];
+                                s3    = stride_b[gemmIdx];
+                                sumLd = transB == HIPBLAS_OP_N ? true : false;
+                            }
+                            if(sumLd)
+                            {
+                                if(arg.d_type != arg.scale_type && arg.bias_type == arg.scale_type)
+                                    reduction_func<true, float>(ptr,
+                                                                *(hBias_gold_C[gemmIdx]) + 0,
+                                                                size_bias[gemmIdx],
+                                                                K[gemmIdx],
+                                                                s1,
+                                                                s2,
+                                                                s3,
+                                                                num_batches[gemmIdx]);
+                                else
+                                    reduction_func<true, float>(ptr,
+                                                                *(hBias_gold[gemmIdx]) + 0,
+                                                                size_bias[gemmIdx],
+                                                                K[gemmIdx],
+                                                                s1,
+                                                                s2,
+                                                                s3,
+                                                                num_batches[gemmIdx]);
+                            }
+                            else
+                            {
+                                if(arg.d_type != arg.scale_type && arg.bias_type == arg.scale_type)
+                                    reduction_func<false, float>(ptr,
+                                                                 *(hBias_gold_C[gemmIdx]) + 0,
+                                                                 size_bias[gemmIdx],
+                                                                 K[gemmIdx],
+                                                                 s1,
+                                                                 s2,
+                                                                 s3,
+                                                                 num_batches[gemmIdx]);
+                                else
+                                    reduction_func<false, float>(ptr,
+                                                                 *(hBias_gold[gemmIdx]) + 0,
+                                                                 size_bias[gemmIdx],
+                                                                 K[gemmIdx],
+                                                                 s1,
+                                                                 s2,
+                                                                 s3,
+                                                                 num_batches[gemmIdx]);
+                            }
+                        }
                     }
                 }
                 else

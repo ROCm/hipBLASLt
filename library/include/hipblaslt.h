@@ -76,7 +76,9 @@ typedef enum {
   HIPBLASLT_EPILOGUE_GELU_AUX = 160,      /**<Output GEMM results before applying GELU transform.*/
   HIPBLASLT_EPILOGUE_GELU_AUX_BIAS = 164, /**<Output GEMM results after applying bias but before applying GELU transform.*/
   HIPBLASLT_EPILOGUE_DGELU = 192,         /**<Apply gradient GELU transform. Requires additional aux input. */
-  HIPBLASLT_EPILOGUE_DGELU_BGRAD = 208    /**<Apply gradient GELU transform and bias gradient to the results. Requires additional aux input. */
+  HIPBLASLT_EPILOGUE_DGELU_BGRAD = 208,   /**<Apply gradient GELU transform and bias gradient to the results. Requires additional aux input. */
+  HIPBLASLT_EPILOGUE_BGRADA = 256,        /**<Apply bias gradient to A and output gemm result. */
+  HIPBLASLT_EPILOGUE_BGRADB = 512         /**<Apply bias gradient to B and output gemm result. */
 } hipblasLtEpilogue_t;
 
 /*! \ingroup types_module

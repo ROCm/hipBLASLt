@@ -345,6 +345,8 @@ inline bool is_grad_enabled(rocblaslt_epilogue value_)
     {
     case ROCBLASLT_EPILOGUE_DGELU:
     case ROCBLASLT_EPILOGUE_DGELU_BGRAD:
+    case ROCBLASLT_EPILOGUE_BGRADA:
+    case ROCBLASLT_EPILOGUE_BGRADB:
         return true;
     default:
         return false;
@@ -374,11 +376,34 @@ inline bool is_bias_enabled(rocblaslt_epilogue value_)
     case ROCBLASLT_EPILOGUE_RELU_BIAS:
     case ROCBLASLT_EPILOGUE_GELU_AUX_BIAS:
     case ROCBLASLT_EPILOGUE_DGELU_BGRAD:
+    case ROCBLASLT_EPILOGUE_BGRADA:
+    case ROCBLASLT_EPILOGUE_BGRADB:
         return true;
     default:
         return false;
     }
 };
+
+inline bool is_act_enabled(rocblaslt_epilogue value_)
+{
+    switch(value_)
+    {
+    case ROCBLASLT_EPILOGUE_DEFAULT:
+    case ROCBLASLT_EPILOGUE_RELU:
+    case ROCBLASLT_EPILOGUE_BIAS:
+    case ROCBLASLT_EPILOGUE_RELU_BIAS:
+    case ROCBLASLT_EPILOGUE_GELU:
+    case ROCBLASLT_EPILOGUE_GELU_BIAS:
+    case ROCBLASLT_EPILOGUE_GELU_AUX:
+    case ROCBLASLT_EPILOGUE_GELU_AUX_BIAS:
+    case ROCBLASLT_EPILOGUE_DGELU:
+    case ROCBLASLT_EPILOGUE_DGELU_BGRAD:
+        return true;
+    default:
+        return false;
+    }
+};
+
 template <typename T>
 struct floating_traits
 {
