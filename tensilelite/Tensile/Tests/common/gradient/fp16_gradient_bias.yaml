@@ -205,6 +205,7 @@ BenchmarkProblems:
       BenchmarkJoinParameters:
       BenchmarkFinalParameters:
         - ProblemSizes:
+          - Exact: [121, 128, 1, 129]
           - Exact: [511, 256, 1,1024]
           - Exact: [512, 256, 1, 511]
           - Exact: [512, 256, 1,1023]
@@ -409,6 +410,7 @@ BenchmarkProblems:
       BenchmarkJoinParameters:
       BenchmarkFinalParameters:
         - ProblemSizes:
+          - Exact: [121, 128, 1, 129]
           - Exact: [511, 256, 1,1024]
           - Exact: [512, 256, 1, 511]
           - Exact: [512, 256, 1,1023]
