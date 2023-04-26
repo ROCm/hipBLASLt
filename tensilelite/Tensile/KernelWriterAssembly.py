@@ -1076,16 +1076,20 @@ class KernelWriterAssembly(KernelWriter):
     # so if alpha/beta=Half, they haven't been converted to f32
     # This means we can use ComputeDataType as AlphaType (even <h,h,h,h,"h,h"> +"HPA")
     if self.do["ApplyAlpha"]:
-      module.addComment1("Short circuit condition if Alpha == 0, then sumDims=0")
-      endCheckLabel = Label("AlphaNonZero", "")
-      module.add(SBranchIfNotZero("Alpha", kernel["ProblemType"]["ComputeDataType"], endCheckLabel))
+      if self.states.useBias == DataDirection.WRITE and (kernel["ProblemType"]["BiasSrc"] == "A" or kernel["ProblemType"]["BiasSrc"] == "B"):
+        # Temporarily turn off "Set summation dim=0 if Alpha == 0" cause reduction.
+        pass
+      else:
+        module.addComment1("Short circuit condition if Alpha == 0, then sumDims=0")
+        endCheckLabel = Label("AlphaNonZero", "")
+        module.add(SBranchIfNotZero("Alpha", kernel["ProblemType"]["ComputeDataType"], endCheckLabel))
 
-      # Conditional set summation dimensions to 0 on SCC==1
-      for i in range(0, self.states.numSgprSizesSum):
-        module.add(SMovB32(dst=sgpr("SizesSum+%u"%(i)), src=hex(0), comment="Set summation dim=0 if Alpha == 0"))
+        # Conditional set summation dimensions to 0 on SCC==1
+        for i in range(0, self.states.numSgprSizesSum):
+          module.add(SMovB32(dst=sgpr("SizesSum+%u"%(i)), src=hex(0), comment="Set summation dim=0 if Alpha == 0"))
 
-      # Jump here if alpha is non-zero
-      module.add(endCheckLabel)
+        # Jump here if alpha is non-zero
+        module.add(endCheckLabel)
 
     if kernel["MagicDivAlg"]==2:
       for idxChar in sorted(set(kernel["PackedC0IdxChars"][:-1] + kernel["PackedC1IdxChars"][:-1])):
