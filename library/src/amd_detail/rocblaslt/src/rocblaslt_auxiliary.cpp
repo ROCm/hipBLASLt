@@ -937,7 +937,7 @@ rocblaslt_status
 }
 
 rocblaslt_status rocblaslt_groupedgemm_algo_get_heuristic(
-    rocblaslt_groupedgemm             groupedgemm,
+    rocblaslt_gemm                    groupedgemm,
     rocblaslt_matmul_preference       pref,
     int                               requestedAlgoCount,
     rocblaslt_matmul_heuristic_result heuristicResultsArray[],

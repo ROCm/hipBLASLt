@@ -176,14 +176,21 @@ typedef hipblasLtMatrixLayoutOpaque_t* hipblasLtMatrixLayout_t;
  */
 typedef hipblasLtMatmulPreferenceOpaque_t* hipblasLtMatmulPreference_t;
 
-typedef struct _hipblasLtGroupedGemmOpaque_t{
-  std::shared_ptr<void> problemGroupedGemmPtr;
-  std::shared_ptr<void> groupedInputsPtr;
+enum _hipblasLtGemmOpaqueTypeEnum
+{
+  HIPBLASLT_GEMM = 1,
+  HIPBLASLT_GROUPED_GEMM = 2
+};
+
+typedef struct _hipblasLtGemmOpaque_t{
+  _hipblasLtGemmOpaqueTypeEnum hipBlasLtGemmType;
+  std::shared_ptr<void> problemGemmPtr;
+  std::shared_ptr<void> inputsPtr;
   std::shared_ptr<void> kernelsPtr;
   size_t gemm_count = 0;
   size_t workspace_bytes = 0;
-} hipblasLtGroupedGemmOpaque_t;
-typedef hipblasLtGroupedGemmOpaque_t* hipblasLtExtGroupedGemm_t;
+} hipblasLtGemmOpaque_t;
+typedef hipblasLtGemmOpaque_t* hipblasLtExtGemm_t;
 
 /*! \ingroup types_module
  *  \brief Description of the matrix multiplication algorithm
@@ -645,7 +652,7 @@ hipblasStatus_t
 
 HIPBLASLT_EXPORT
 hipblasStatus_t hipblasLtExtGroupedGemmAlgoGetHeuristic(
-    hipblasLtExtGroupedGemm_t        groupedgemm,
+    hipblasLtExtGemm_t               groupedgemm,
     hipblasLtMatmulPreference_t      pref,
     int                              requestedAlgoCount,
     hipblasLtMatmulHeuristicResult_t heuristicResultsArray[],
@@ -730,7 +737,7 @@ hipblasStatus_t hipblasLtMatmul(hipblasLtHandle_t            handle,
                                 hipStream_t                  stream);
 
 HIPBLASLT_EXPORT
-hipblasStatus_t hipblasLtExtGroupedGemmCreate(hipblasLtExtGroupedGemm_t*            groupedgemm,
+hipblasStatus_t hipblasLtExtGroupedGemmCreate(hipblasLtExtGemm_t*                   groupedgemm,
                                               hipblasLtHandle_t                     handle,
                                               std::vector<hipblasLtMatmulDesc_t>&   matmul_descr,
                                               std::vector<float>&                   alpha,
@@ -745,17 +752,16 @@ hipblasStatus_t hipblasLtExtGroupedGemmCreate(hipblasLtExtGroupedGemm_t*        
                                               std::vector<hipblasLtMatrixLayout_t>& matD);
 
 HIPBLASLT_EXPORT
-hipblasStatus_t hipblasLtExtGroupedGemmDestroy(hipblasLtExtGroupedGemm_t groupedgemm);
+hipblasStatus_t hipblasLtExtGroupedGemmDestroy(hipblasLtExtGemm_t groupedgemm);
 
 HIPBLASLT_EXPORT
-hipblasStatus_t hipblasLtExtGroupedGemmMakeArgument(hipblasLtExtGroupedGemm_t    groupedgemm,
+hipblasStatus_t hipblasLtExtGroupedGemmMakeArgument(hipblasLtExtGemm_t           groupedgemm,
                                                     const hipblasLtMatmulAlgo_t* algo,
                                                     void*                        workspace,
                                                     hipStream_t                  stream);
 
 HIPBLASLT_EXPORT
-hipblasStatus_t hipblasLtExtGroupedGemmRun(hipblasLtExtGroupedGemm_t groupedgemm,
-                                           hipStream_t               stream);
+hipblasStatus_t hipblasLtExtGroupedGemmRun(hipblasLtExtGemm_t groupedgemm, hipStream_t stream);
 
 #ifdef __cplusplus
 }
