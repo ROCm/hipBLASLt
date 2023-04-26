@@ -331,12 +331,12 @@ rocblaslt_status
                                         rocblaslt_matmul_heuristic_result heuristicResultsArray[],
                                         int*                              returnAlgoCount);
 
-rocblaslt_status rocblaslt_groupedgemm_algo_get_heuristic(
-    rocblaslt_gemm                    groupedgemm,
-    rocblaslt_matmul_preference       pref,
-    int                               requestedAlgoCount,
-    rocblaslt_matmul_heuristic_result heuristicResultsArray[],
-    int*                              returnAlgoCount);
+rocblaslt_status
+    rocblaslt_algo_get_heuristic(rocblaslt_gemm                    gemm,
+                                 rocblaslt_matmul_preference       pref,
+                                 int                               requestedAlgoCount,
+                                 rocblaslt_matmul_heuristic_result heuristicResultsArray[],
+                                 int*                              returnAlgoCount);
 
 #ifdef __cplusplus
 }

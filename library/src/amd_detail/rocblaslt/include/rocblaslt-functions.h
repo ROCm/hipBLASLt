@@ -115,6 +115,20 @@ rocblaslt_status rocblaslt_matmul(rocblaslt_handle             handle,
                                   size_t                       workspaceSizeInBytes,
                                   hipStream_t                  stream);
 
+rocblaslt_status rocblaslt_gemm_create(rocblaslt_gemm*         gemm,
+                                       rocblaslt_handle        handle,
+                                       rocblaslt_matmul_desc   matmul_descr,
+                                       const void*             alpha,
+                                       const void*             A,
+                                       rocblaslt_matrix_layout matA,
+                                       const void*             B,
+                                       rocblaslt_matrix_layout matB,
+                                       const void*             beta,
+                                       const void*             C,
+                                       rocblaslt_matrix_layout matC,
+                                       void*                   D,
+                                       rocblaslt_matrix_layout matD);
+
 rocblaslt_status rocblaslt_groupedgemm_create(rocblaslt_gemm*                       groupedgemm,
                                               rocblaslt_handle                      handle,
                                               std::vector<rocblaslt_matmul_desc>&   matmul_descr,
@@ -129,14 +143,14 @@ rocblaslt_status rocblaslt_groupedgemm_create(rocblaslt_gemm*                   
                                               std::vector<void*>&                   D,
                                               std::vector<rocblaslt_matrix_layout>& matD);
 
-rocblaslt_status rocblaslt_groupedgemm_destroy(const rocblaslt_gemm groupedgemm);
+rocblaslt_status rocblaslt_ext_destroy(const rocblaslt_gemm gemm);
 
-rocblaslt_status rocblaslt_groupedgemm_makeArgument(rocblaslt_gemm               groupedgemm,
-                                                    const rocblaslt_matmul_algo* algo,
-                                                    void*                        workspace,
-                                                    hipStream_t                  stream);
+rocblaslt_status rocblaslt_makeArgument(rocblaslt_gemm               gemm,
+                                        const rocblaslt_matmul_algo* algo,
+                                        void*                        workspace,
+                                        hipStream_t                  stream);
 
-rocblaslt_status rocblaslt_groupedgemm_run(rocblaslt_gemm groupedgemm, hipStream_t stream);
+rocblaslt_status rocblaslt_run(rocblaslt_gemm gemm, hipStream_t stream);
 
 #ifdef __cplusplus
 }
