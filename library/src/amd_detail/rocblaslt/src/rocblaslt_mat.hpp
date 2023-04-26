@@ -113,6 +113,80 @@ rocblaslt_status rocblaslt_batched_template(rocblaslt_handle             handle,
 }
 
 template <typename Ti, typename To, typename Tc>
+rocblaslt_status rocblaslt_gemm_create_batched_template(rocblaslt_gemm     gemm,
+                                                        hipblasOperation_t trans_a,
+                                                        hipblasOperation_t trans_b,
+                                                        int64_t            m,
+                                                        int64_t            n,
+                                                        int64_t            k,
+                                                        const Tc*          alpha,
+                                                        const Ti*          a,
+                                                        int64_t            ld_a,
+                                                        int64_t            batch_stride_a,
+                                                        const Ti*          b,
+                                                        int64_t            ld_b,
+                                                        int64_t            batch_stride_b,
+                                                        const Tc*          beta,
+                                                        const To*          c,
+                                                        int64_t            ld_c,
+                                                        int64_t            batch_stride_c,
+                                                        To*                d,
+                                                        int64_t            ld_d,
+                                                        int64_t            batch_stride_d,
+                                                        Tc*                e,
+                                                        int64_t            ld_e,
+                                                        int64_t            batch_stride_e,
+                                                        int64_t            batch_count,
+                                                        bool               strided_batch,
+                                                        bool               grouped_gemm,
+                                                        bool               gradient,
+                                                        const void*        bias,
+                                                        const Tc*          scaleD,
+                                                        hipblasDatatype_t  bias_type,
+                                                        rocblaslt_epilogue epilogue)
+{
+    RocblasltContractionProblem<Ti, To, Tc> problem{trans_a,
+                                                    trans_b,
+                                                    m,
+                                                    n,
+                                                    k,
+                                                    alpha,
+                                                    a,
+                                                    nullptr,
+                                                    ld_a,
+                                                    batch_stride_a,
+                                                    b,
+                                                    nullptr,
+                                                    ld_b,
+                                                    batch_stride_b,
+                                                    beta,
+                                                    c,
+                                                    nullptr,
+                                                    ld_c,
+                                                    batch_stride_c,
+                                                    d,
+                                                    nullptr,
+                                                    ld_d,
+                                                    batch_stride_d,
+                                                    e,
+                                                    nullptr,
+                                                    ld_e,
+                                                    batch_stride_e,
+                                                    batch_count,
+                                                    strided_batch,
+                                                    grouped_gemm,
+                                                    gradient,
+                                                    bias,
+                                                    scaleD,
+                                                    bias_type,
+                                                    epilogue,
+                                                    nullptr,
+                                                    0,
+                                                    0};
+    return gemmCreate(gemm, problem);
+}
+
+template <typename Ti, typename To, typename Tc>
 rocblaslt_status
     rocblaslt_groupedgemm_create_batched_template(rocblaslt_gemm                   groupedgemm,
                                                   hipblasOperation_t               trans_a,
@@ -267,6 +341,79 @@ rocblaslt_status rocblaslt_matmul_typecasting(rocblaslt_handle             handl
                                       bias_type,
                                       epilogue,
                                       stream);
+}
+
+template <typename Ti, typename To = Ti, typename Tc = To>
+rocblaslt_status rocblaslt_gemm_create_typecasting(rocblaslt_gemm     gemm,
+                                                   hipblasOperation_t trans_a,
+                                                   hipblasOperation_t trans_b,
+                                                   int64_t            m,
+                                                   int64_t            n,
+                                                   int64_t            k,
+                                                   const void*        alpha,
+                                                   const void*        a,
+                                                   int64_t            ld_a,
+                                                   int64_t            batch_stride_a,
+                                                   const void*        b,
+                                                   int64_t            ld_b,
+                                                   int64_t            batch_stride_b,
+                                                   const void*        beta,
+                                                   const void*        c,
+                                                   int64_t            ld_c,
+                                                   int64_t            batch_stride_c,
+                                                   void*              d,
+                                                   int64_t            ld_d,
+                                                   int64_t            batch_stride_d,
+                                                   void*              e,
+                                                   int64_t            ld_e,
+                                                   int64_t            batch_stride_e,
+                                                   int64_t            batch_count,
+                                                   bool               strided_batch,
+                                                   bool               grouped_gemm,
+                                                   bool               gradient,
+                                                   const void*        bias,
+                                                   const void*        scaleD,
+                                                   hipblasDatatype_t  bias_type,
+                                                   rocblaslt_epilogue epilogue)
+{
+    // check alignment of pointers before casting
+    if(!isAligned(a, sizeof(Ti)) || !isAligned(b, sizeof(Ti)) || !isAligned(c, sizeof(Ti))
+       || !isAligned(d, sizeof(To)))
+    {
+        std::cerr << "memmory is not aligned" << std::endl;
+        return rocblaslt_status_invalid_size;
+    }
+    return rocblaslt_gemm_create_batched_template(gemm,
+                                                  trans_a,
+                                                  trans_b,
+                                                  m,
+                                                  n,
+                                                  k,
+                                                  reinterpret_cast<const Tc*>(alpha),
+                                                  reinterpret_cast<const Ti*>(a),
+                                                  ld_a,
+                                                  batch_stride_a,
+                                                  reinterpret_cast<const Ti*>(b),
+                                                  ld_b,
+                                                  batch_stride_b,
+                                                  reinterpret_cast<const Tc*>(beta),
+                                                  reinterpret_cast<const To*>(c),
+                                                  ld_c,
+                                                  batch_stride_c,
+                                                  (To*)d,
+                                                  ld_d,
+                                                  batch_stride_d,
+                                                  (Tc*)e,
+                                                  ld_e,
+                                                  batch_stride_e,
+                                                  batch_count,
+                                                  strided_batch,
+                                                  grouped_gemm,
+                                                  gradient,
+                                                  reinterpret_cast<const void*>(bias),
+                                                  reinterpret_cast<const Tc*>(scaleD),
+                                                  bias_type,
+                                                  epilogue);
 }
 
 template <typename Ti, typename To = Ti, typename Tc = To>
@@ -434,6 +581,93 @@ inline rocblaslt_status rocblaslt_matmul_template(rocblaslt_handle             h
     return rs_status;
 }
 
+inline rocblaslt_status rocblaslt_gemm_create_template(rocblaslt_gemm         gemm,
+                                                       hipblasOperation_t     trans_a,
+                                                       hipblasOperation_t     trans_b,
+                                                       int64_t                m,
+                                                       int64_t                n,
+                                                       int64_t                k,
+                                                       const void*            alpha,
+                                                       const void*            a,
+                                                       hipblasDatatype_t      a_type,
+                                                       int64_t                ld_a,
+                                                       int64_t                batch_stride_a,
+                                                       const void*            b,
+                                                       hipblasDatatype_t      b_type,
+                                                       int64_t                ld_b,
+                                                       int64_t                batch_stride_b,
+                                                       const void*            beta,
+                                                       const void*            c,
+                                                       hipblasDatatype_t      c_type,
+                                                       int64_t                ld_c,
+                                                       int64_t                batch_stride_c,
+                                                       void*                  d,
+                                                       hipblasDatatype_t      d_type,
+                                                       int64_t                ld_d,
+                                                       int64_t                batch_stride_d,
+                                                       void*                  e,
+                                                       int64_t                ld_e,
+                                                       int64_t                batch_stride_e,
+                                                       int64_t                batch_count,
+                                                       bool                   strided_batch,
+                                                       bool                   grouped_gemm,
+                                                       bool                   gradient,
+                                                       rocblaslt_compute_type compute_type,
+                                                       const void*            bias,
+                                                       const void*            scaleD,
+                                                       hipblasDatatype_t      bias_type,
+                                                       rocblaslt_epilogue     epilogue)
+{
+    rocblaslt_status rs_status = rocblaslt_status_not_implemented;
+
+#define EX_TYPECASTING_PARM_GEMM                                                              \
+    gemm, trans_a, trans_b, m, n, k, alpha, a, ld_a, batch_stride_a, b, ld_b, batch_stride_b, \
+        beta, c, ld_c, batch_stride_c, d, ld_d, batch_stride_d, e, ld_e, batch_stride_e,      \
+        batch_count, strided_batch, grouped_gemm, gradient, bias, scaleD, bias_type, epilogue
+
+    if(a_type == HIPBLAS_R_32F && b_type == HIPBLAS_R_32F)
+    {
+        if(c_type == HIPBLAS_R_32F && d_type == HIPBLAS_R_32F)
+        {
+            if(compute_type == rocblaslt_compute_f32)
+            {
+                rs_status = rocblaslt_gemm_create_typecasting<float, float, float>(
+                    EX_TYPECASTING_PARM_GEMM);
+            }
+        }
+    }
+    else if(a_type == HIPBLAS_R_16F && b_type == HIPBLAS_R_16F)
+    {
+        if(c_type == HIPBLAS_R_16F && d_type == HIPBLAS_R_16F)
+        {
+            if(compute_type == rocblaslt_compute_f32)
+            {
+                rs_status
+                    = rocblaslt_gemm_create_typecasting<rocblaslt_half, rocblaslt_half, float>(
+                        EX_TYPECASTING_PARM_GEMM);
+            }
+        }
+    }
+    else if(a_type == HIPBLAS_R_16B && b_type == HIPBLAS_R_16B)
+    {
+        if(c_type == HIPBLAS_R_16B && d_type == HIPBLAS_R_16B)
+        {
+            if(compute_type == rocblaslt_compute_f32)
+            {
+                rs_status = rocblaslt_gemm_create_typecasting<rocblaslt_bfloat16,
+                                                              rocblaslt_bfloat16,
+                                                              float>(EX_TYPECASTING_PARM_GEMM);
+            }
+        }
+    }
+    else
+    {
+        rs_status = rocblaslt_status_not_implemented;
+    }
+
+    return rs_status;
+}
+
 inline rocblaslt_status
     rocblaslt_groupedgemm_create_template(rocblaslt_gemm                   groupedgemm,
                                           hipblasOperation_t               trans_a,
@@ -520,19 +754,17 @@ inline rocblaslt_status
     return rs_status;
 }
 
-inline rocblaslt_status rocblaslt_groupedgemm_run_template(rocblaslt_gemm groupedgemm,
-                                                           hipStream_t    stream)
+inline rocblaslt_status rocblaslt_run_template(rocblaslt_gemm gemm, hipStream_t stream)
 {
-    return runGroupedGemm(groupedgemm, stream);
+    return runKernelFromInvocation(gemm, stream);
 }
 
-inline rocblaslt_status
-    rocblaslt_groupedgemm_makeArgument_template(rocblaslt_gemm               groupedgemm,
-                                                const rocblaslt_matmul_algo* algo,
-                                                void*                        workspace,
-                                                hipStream_t                  stream)
+inline rocblaslt_status rocblaslt_makeArgument_template(rocblaslt_gemm               gemm,
+                                                        const rocblaslt_matmul_algo* algo,
+                                                        void*                        workspace,
+                                                        hipStream_t                  stream)
 {
-    return groupedGemmMakeArgument(groupedgemm, algo, workspace, stream);
+    return makeArgument(gemm, algo, workspace, stream);
 }
 
 #endif

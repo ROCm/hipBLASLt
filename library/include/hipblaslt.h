@@ -651,12 +651,12 @@ hipblasStatus_t
                                     int*                             returnAlgoCount);
 
 HIPBLASLT_EXPORT
-hipblasStatus_t hipblasLtExtGroupedGemmAlgoGetHeuristic(
-    hipblasLtExtGemm_t               groupedgemm,
-    hipblasLtMatmulPreference_t      pref,
-    int                              requestedAlgoCount,
-    hipblasLtMatmulHeuristicResult_t heuristicResultsArray[],
-    int*                             returnAlgoCount);
+hipblasStatus_t
+    hipblasLtExtAlgoGetHeuristic(hipblasLtExtGemm_t               gemm,
+                                 hipblasLtMatmulPreference_t      pref,
+                                 int                              requestedAlgoCount,
+                                 hipblasLtMatmulHeuristicResult_t heuristicResultsArray[],
+                                 int*                             returnAlgoCount);
 
 /*! \ingroup library_module
  *  \brief Retrieve the possible algorithms
@@ -737,6 +737,21 @@ hipblasStatus_t hipblasLtMatmul(hipblasLtHandle_t            handle,
                                 hipStream_t                  stream);
 
 HIPBLASLT_EXPORT
+hipblasStatus_t hipblasLtExtGemmCreate(hipblasLtExtGemm_t*     groupedgemm,
+                                       hipblasLtHandle_t       handle,
+                                       hipblasLtMatmulDesc_t   matmul_descr,
+                                       const void*             alpha,
+                                       const void*             A,
+                                       hipblasLtMatrixLayout_t Adesc,
+                                       const void*             B,
+                                       hipblasLtMatrixLayout_t Bdesc,
+                                       const void*             beta,
+                                       const void*             C,
+                                       hipblasLtMatrixLayout_t Cdesc,
+                                       void*                   D,
+                                       hipblasLtMatrixLayout_t Ddesc);
+
+HIPBLASLT_EXPORT
 hipblasStatus_t hipblasLtExtGroupedGemmCreate(hipblasLtExtGemm_t*                   groupedgemm,
                                               hipblasLtHandle_t                     handle,
                                               std::vector<hipblasLtMatmulDesc_t>&   matmul_descr,
@@ -752,16 +767,16 @@ hipblasStatus_t hipblasLtExtGroupedGemmCreate(hipblasLtExtGemm_t*               
                                               std::vector<hipblasLtMatrixLayout_t>& matD);
 
 HIPBLASLT_EXPORT
-hipblasStatus_t hipblasLtExtGroupedGemmDestroy(hipblasLtExtGemm_t groupedgemm);
+hipblasStatus_t hipblasLtExtDestroy(hipblasLtExtGemm_t gemm);
 
 HIPBLASLT_EXPORT
-hipblasStatus_t hipblasLtExtGroupedGemmMakeArgument(hipblasLtExtGemm_t           groupedgemm,
-                                                    const hipblasLtMatmulAlgo_t* algo,
-                                                    void*                        workspace,
-                                                    hipStream_t                  stream);
+hipblasStatus_t hipblasLtExtMakeArgument(hipblasLtExtGemm_t           gemm,
+                                         const hipblasLtMatmulAlgo_t* algo,
+                                         void*                        workspace,
+                                         hipStream_t                  stream);
 
 HIPBLASLT_EXPORT
-hipblasStatus_t hipblasLtExtGroupedGemmRun(hipblasLtExtGemm_t groupedgemm, hipStream_t stream);
+hipblasStatus_t hipblasLtExtRun(hipblasLtExtGemm_t gemm, hipStream_t stream);
 
 #ifdef __cplusplus
 }

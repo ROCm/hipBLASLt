@@ -749,7 +749,7 @@ void testing_matmul(const Arguments& arg)
         CHECK_HIPBLASLT_ERROR(hipblasLtExtGroupedGemmCreate(
             &groupedGemm, handle, matmul, h_alpha, da, matA, db, matB, h_beta, dc, matC, dd, matD));
 
-        CHECK_HIPBLASLT_ERROR(hipblasLtExtGroupedGemmAlgoGetHeuristic(
+        CHECK_HIPBLASLT_ERROR(hipblasLtExtAlgoGetHeuristic(
             groupedGemm, pref, requestAlgoCount, heuristicResult, &returnedAlgoCount));
 
         dWorkspace = new device_vector<unsigned char>(max_workspace_size, 1, HMM);
@@ -782,10 +782,10 @@ void testing_matmul(const Arguments& arg)
         else
         {
             //grouped gemm
-            CHECK_HIPBLASLT_ERROR(hipblasLtExtGroupedGemmMakeArgument(
+            CHECK_HIPBLASLT_ERROR(hipblasLtExtMakeArgument(
                 groupedGemm, &heuristicResult[0].algo, *dWorkspace, stream));
 
-            CHECK_HIPBLASLT_ERROR(hipblasLtExtGroupedGemmRun(groupedGemm, stream));
+            CHECK_HIPBLASLT_ERROR(hipblasLtExtRun(groupedGemm, stream));
         }
     }
 
@@ -1160,17 +1160,17 @@ void testing_matmul(const Arguments& arg)
         else
         {
             //grouped gemm
-            CHECK_HIPBLASLT_ERROR(hipblasLtExtGroupedGemmMakeArgument(
+            CHECK_HIPBLASLT_ERROR(hipblasLtExtMakeArgument(
                 groupedGemm, &heuristicResult[0].algo, *dWorkspace, stream));
 
             for(int i = 0; i < number_cold_calls; i++)
-                CHECK_HIPBLASLT_ERROR(hipblasLtExtGroupedGemmRun(groupedGemm, stream));
+                CHECK_HIPBLASLT_ERROR(hipblasLtExtRun(groupedGemm, stream));
 
             CHECK_HIP_ERROR(hipStreamSynchronize(stream));
             gpu_time_used = get_time_us_sync(stream); // in microseconds
 
             for(int i = 0; i < number_hot_calls; i++)
-                CHECK_HIPBLASLT_ERROR(hipblasLtExtGroupedGemmRun(groupedGemm, stream));
+                CHECK_HIPBLASLT_ERROR(hipblasLtExtRun(groupedGemm, stream));
 
             CHECK_HIP_ERROR(hipStreamSynchronize(stream));
             gpu_time_used = get_time_us_sync(stream) - gpu_time_used;

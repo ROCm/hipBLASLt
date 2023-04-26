@@ -893,7 +893,7 @@ void test_hipblaslt(hipblasDatatype_t           in_out_datatype,
         CHECK_HIPBLASLT_ERROR(hipblasLtExtGroupedGemmCreate(
             &groupedGemm, handle, matmul, alpha, da, matA, db, matB, beta, dc, matC, dd, matD));
 
-        CHECK_HIPBLASLT_ERROR(hipblasLtExtGroupedGemmAlgoGetHeuristic(
+        CHECK_HIPBLASLT_ERROR(hipblasLtExtAlgoGetHeuristic(
             groupedGemm, pref, request_solutions, heuristicResult[0], &returnedAlgoCount));
         if(returnedAlgoCount != request_solutions)
             std::cout << "less Solution found! request: " << request_solutions
@@ -902,7 +902,7 @@ void test_hipblaslt(hipblasDatatype_t           in_out_datatype,
         double bestMs = std::numeric_limits<double>::max();
         for(int sol = 0; sol < returnedAlgoCount; sol++)
         {
-            CHECK_HIPBLASLT_ERROR(hipblasLtExtGroupedGemmMakeArgument(
+            CHECK_HIPBLASLT_ERROR(hipblasLtExtMakeArgument(
                 groupedGemm, &heuristicResult[0][sol].algo, d_workspace, stream[0]));
 
             double     eventMs;
@@ -920,7 +920,7 @@ void test_hipblaslt(hipblasDatatype_t           in_out_datatype,
             {
                 for(int bench = 0; bench < bench_count; bench++)
                 {
-                    CHECK_HIPBLASLT_ERROR(hipblasLtExtGroupedGemmRun(groupedGemm, stream[0]));
+                    CHECK_HIPBLASLT_ERROR(hipblasLtExtRun(groupedGemm, stream[0]));
                 }
                 hipDeviceSynchronize();
             }
@@ -1286,7 +1286,7 @@ void test_hipblaslt(hipblasDatatype_t           in_out_datatype,
     CHECK_HIPBLASLT_ERROR(hipblasLtMatmulPreferenceDestroy(pref));
     CHECK_HIP_ERROR(hipFree(d_workspace));
     if(grouped_gemm)
-        CHECK_HIPBLASLT_ERROR(hipblasLtExtGroupedGemmDestroy(groupedGemm));
+        CHECK_HIPBLASLT_ERROR(hipblasLtExtDestroy(groupedGemm));
     for(int i = 0; i < gemm_count; i++)
     {
         CHECK_HIP_ERROR(hipFree(da[i]));
