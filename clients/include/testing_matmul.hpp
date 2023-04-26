@@ -714,8 +714,8 @@ void testing_matmul(const Arguments& arg)
     int                              returnedAlgoCount  = 0;
 
     // grouped gemm
-    hipblasLtExtGroupedGemm_t groupedGemm;
-    std::vector<void*>        da(gemm_count), db(gemm_count), dc(gemm_count), dd(gemm_count);
+    hipblasLtExtGemm_t groupedGemm;
+    std::vector<void*> da(gemm_count), db(gemm_count), dc(gemm_count), dd(gemm_count);
 
     if(!do_grouped_gemm)
     {

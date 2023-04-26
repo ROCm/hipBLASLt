@@ -242,70 +242,73 @@ double get_time_us_sync()
 // cppcheck-suppress constParameter
 static void show_usage(char* argv[])
 {
-    std::cerr << "Usage: " << argv[0] << " <options>\n"
-              << "options:\n"
-              << "\t-h, --help\t\t\t\tShow this help message\n"
-              << "\t-v, --verbose\t\t\t\tVerbose output\n"
-              << "\t-V, --validate\t\t\t\tVerify results\n"
-              << "\t--bench_count\t\t\t\tNumber of benchmark runs (default is 1)\n"
-              << "\t--sync_count\t\t\t\tNumber of sync runs (default is 1)\n"
-              << "\t--request_solutions\t\t\tNumber of solutions to run (default is 1)\n"
-              << "\t--num_streams\t\t\t\tRun gemms by multi streams (default is 1)\n"
-              << "\t--grouped_gemm\t\t\t\tRun gemms by grouped gemm kernel (default is 0)\n"
-              << "\t--datatype \t\tdatatype \tGEMM_STRIDED argument in out: fp32, fp16, bf16 (default is fp32)\n"
-              << "\t--trans_a \t\ttrans_a \tGEMM_STRIDED argument trans_a: N or T (default is N)\n"
-              << "\t--trans_b \t\ttrans_b \tGEMM_STRIDED argument trans_b: N or T (default is N)\n"
-              << "\t-m \t\t\tm \t\tGEMM_STRIDED argument m\n"
-              << "\t-n \t\t\tn \t\tGEMM_STRIDED argument n\n"
-              << "\t-k \t\t\tk \t\tGEMM_STRIDED argument k\n"
-              << "\t--batch_count \t\tbatch_count\tGEMM_STRIDED argument batch_count\n"
-              << "\t--lda \t\t\tlda \t\tGEMM_STRIDED argument lda\n"
-              << "\t--ldb \t\t\tldb \t\tGEMM_STRIDED argument ldb\n"
-              << "\t--ldc \t\t\tldc \t\tGEMM_STRIDED argument ldc\n"
-              << "\t--ldd \t\t\tldd \t\tGEMM_STRIDED argument ldd\n"
-              << "\t--stride_a \t\tstride_a \tGEMM_STRIDED argument stride_a\n"
-              << "\t--stride_b \t\tstride_b \tGEMM_STRIDED argument stride_b\n"
-              << "\t--stride_c \t\tstride_c \tGEMM_STRIDED argument stride_c\n"
-              << "\t--stride_d \t\tstride_d \tGEMM_STRIDED argument stride_d\n"
-              << "\t--alpha \t\talpha \t\tGEMM_STRIDED argument alpha (default is 1)\n"
-              << "\t--beta \t\t\tbeta \t\tGEMM_STRIDED argument beta (default is 0)\n"
-              << "\t--act \t\t\tact \t\tGEMM_STRIDED set activation type: relu, gelu, none (default is none)\n"
-              << "\t--bias \t\t\tbias \t\tGEMM_STRIDED set bias: 0 or 1 (default is 0)\n"
-              << "\t--scaleD \t\tscaleD \t\tGEMM_STRIDED enable scaleD: 0 or 1 (default is 0)\n"
-              << "\t--cpu_time \t\tcpu_time \tBechmark timing using cpu time: 0 or 1 (default is 0)\n"
-              << std::endl;
+    std::cerr
+        << "Usage: " << argv[0] << " <options>\n"
+        << "options:\n"
+        << "\t-h, --help\t\t\t\tShow this help message\n"
+        << "\t-v, --verbose\t\t\t\tVerbose output\n"
+        << "\t-V, --validate\t\t\t\tVerify results\n"
+        << "\t--bench_count\t\t\t\tNumber of benchmark runs (default is 1)\n"
+        << "\t--sync_count\t\t\t\tNumber of sync runs (default is 1)\n"
+        << "\t--request_solutions\t\t\tNumber of solutions to run (default is 1)\n"
+        << "\t--num_streams\t\t\t\tRun gemms by multi streams (default is 1)\n"
+        << "\t--grouped_gemm\t\t\t\tRun gemms by grouped gemm kernel (default is 0)\n"
+        << "\t--datatype \t\tdatatype \tGEMM_STRIDED argument in out: fp32, fp16, bf16 (default is "
+           "fp32)\n"
+        << "\t--trans_a \t\ttrans_a \tGEMM_STRIDED argument trans_a: N or T (default is N)\n"
+        << "\t--trans_b \t\ttrans_b \tGEMM_STRIDED argument trans_b: N or T (default is N)\n"
+        << "\t-m \t\t\tm \t\tGEMM_STRIDED argument m\n"
+        << "\t-n \t\t\tn \t\tGEMM_STRIDED argument n\n"
+        << "\t-k \t\t\tk \t\tGEMM_STRIDED argument k\n"
+        << "\t--batch_count \t\tbatch_count\tGEMM_STRIDED argument batch_count\n"
+        << "\t--lda \t\t\tlda \t\tGEMM_STRIDED argument lda\n"
+        << "\t--ldb \t\t\tldb \t\tGEMM_STRIDED argument ldb\n"
+        << "\t--ldc \t\t\tldc \t\tGEMM_STRIDED argument ldc\n"
+        << "\t--ldd \t\t\tldd \t\tGEMM_STRIDED argument ldd\n"
+        << "\t--stride_a \t\tstride_a \tGEMM_STRIDED argument stride_a\n"
+        << "\t--stride_b \t\tstride_b \tGEMM_STRIDED argument stride_b\n"
+        << "\t--stride_c \t\tstride_c \tGEMM_STRIDED argument stride_c\n"
+        << "\t--stride_d \t\tstride_d \tGEMM_STRIDED argument stride_d\n"
+        << "\t--alpha \t\talpha \t\tGEMM_STRIDED argument alpha (default is 1)\n"
+        << "\t--beta \t\t\tbeta \t\tGEMM_STRIDED argument beta (default is 0)\n"
+        << "\t--act \t\t\tact \t\tGEMM_STRIDED set activation type: relu, gelu, none (default is "
+           "none)\n"
+        << "\t--bias \t\t\tbias \t\tGEMM_STRIDED set bias: 0 or 1 (default is 0)\n"
+        << "\t--scaleD \t\tscaleD \t\tGEMM_STRIDED enable scaleD: 0 or 1 (default is 0)\n"
+        << "\t--cpu_time \t\tcpu_time \tBechmark timing using cpu time: 0 or 1 (default is 0)\n"
+        << std::endl;
 }
 
-static int parse_arguments(int                 argc,
-                           char*               argv[],
-                           hipblasDatatype_t&  in_out_datatype,
-                           std::vector<int64_t>&            m,
-                           std::vector<int64_t>&            n,
-                           std::vector<int64_t>&            k,
-                           std::vector<int64_t>&            lda,
-                           std::vector<int64_t>&            ldb,
-                           std::vector<int64_t>&            ldc,
-                           std::vector<int64_t>&            ldd,
-                           std::vector<int64_t>&            stride_a,
-                           std::vector<int64_t>&            stride_b,
-                           std::vector<int64_t>&            stride_c,
-                           std::vector<int64_t>&            stride_d,
-                           std::vector<int32_t>&            batch_count,
-                           std::vector<float>&              alpha,
-                           std::vector<float>&              beta,
-                           hipblasOperation_t& trans_a,
-                           hipblasOperation_t& trans_b,
-                           std::vector<bool>&               enable_bias,
-                           std::vector<bool>&               enable_scaleD,
-                           std::vector<ActivationType>&     actType,
-                           int32_t&            grouped_gemm,
-                           int32_t&            bench_count,
-                           int32_t&            sync_count,
-                           int32_t&            request_solutions,
-                           int32_t&            num_streams,
-                           bool&               verbose,
-                           bool&               validate,
-                           bool&               cpu_time)
+static int parse_arguments(int                          argc,
+                           char*                        argv[],
+                           hipblasDatatype_t&           in_out_datatype,
+                           std::vector<int64_t>&        m,
+                           std::vector<int64_t>&        n,
+                           std::vector<int64_t>&        k,
+                           std::vector<int64_t>&        lda,
+                           std::vector<int64_t>&        ldb,
+                           std::vector<int64_t>&        ldc,
+                           std::vector<int64_t>&        ldd,
+                           std::vector<int64_t>&        stride_a,
+                           std::vector<int64_t>&        stride_b,
+                           std::vector<int64_t>&        stride_c,
+                           std::vector<int64_t>&        stride_d,
+                           std::vector<int32_t>&        batch_count,
+                           std::vector<float>&          alpha,
+                           std::vector<float>&          beta,
+                           hipblasOperation_t&          trans_a,
+                           hipblasOperation_t&          trans_b,
+                           std::vector<bool>&           enable_bias,
+                           std::vector<bool>&           enable_scaleD,
+                           std::vector<ActivationType>& actType,
+                           int32_t&                     grouped_gemm,
+                           int32_t&                     bench_count,
+                           int32_t&                     sync_count,
+                           int32_t&                     request_solutions,
+                           int32_t&                     num_streams,
+                           bool&                        verbose,
+                           bool&                        validate,
+                           bool&                        cpu_time)
 {
     if(argc >= 2)
     {
@@ -618,55 +621,62 @@ void initialize_a_b_c_bias(std::vector<T>&     ha,
 }
 
 template <typename T>
-void test_hipblaslt(hipblasDatatype_t  in_out_datatype,
-                    hipblasOperation_t trans_a,
-                    hipblasOperation_t trans_b,
-                    std::vector<int64_t>            m,
-                    std::vector<int64_t>            n,
-                    std::vector<int64_t>            k,
-                    std::vector<int64_t>            lda,
-                    std::vector<int64_t>            ldb,
-                    std::vector<int64_t>            ldc,
-                    std::vector<int64_t>            ldd,
-                    std::vector<int64_t>            stride_a,
-                    std::vector<int64_t>            stride_b,
-                    std::vector<int64_t>            stride_c,
-                    std::vector<int64_t>            stride_d,
-                    std::vector<int32_t>            batch_count,
-                    std::vector<float>              alpha,
-                    std::vector<float>              beta,
-                    std::vector<bool>               enable_bias,
-                    std::vector<bool>               enable_scaleD,
-                    std::vector<ActivationType>     actType,
-                    int32_t            gemm_count,
-                    int32_t            grouped_gemm,
-                    int32_t            bench_count,
-                    int32_t            sync_count,
-                    int32_t            request_solutions,
-                    int32_t            num_streams,
-                    bool               validate,
-                    bool               verbose,
-                    bool               cpu_time)
+void test_hipblaslt(hipblasDatatype_t           in_out_datatype,
+                    hipblasOperation_t          trans_a,
+                    hipblasOperation_t          trans_b,
+                    std::vector<int64_t>        m,
+                    std::vector<int64_t>        n,
+                    std::vector<int64_t>        k,
+                    std::vector<int64_t>        lda,
+                    std::vector<int64_t>        ldb,
+                    std::vector<int64_t>        ldc,
+                    std::vector<int64_t>        ldd,
+                    std::vector<int64_t>        stride_a,
+                    std::vector<int64_t>        stride_b,
+                    std::vector<int64_t>        stride_c,
+                    std::vector<int64_t>        stride_d,
+                    std::vector<int32_t>        batch_count,
+                    std::vector<float>          alpha,
+                    std::vector<float>          beta,
+                    std::vector<bool>           enable_bias,
+                    std::vector<bool>           enable_scaleD,
+                    std::vector<ActivationType> actType,
+                    int32_t                     gemm_count,
+                    int32_t                     grouped_gemm,
+                    int32_t                     bench_count,
+                    int32_t                     sync_count,
+                    int32_t                     request_solutions,
+                    int32_t                     num_streams,
+                    bool                        validate,
+                    bool                        verbose,
+                    bool                        cpu_time)
 {
-    std::vector<int64_t>     a_stride_1(gemm_count), a_stride_2(gemm_count), b_stride_1(gemm_count), b_stride_2(gemm_count);
-    std::vector<int64_t>     row_a(gemm_count), col_a(gemm_count);
-    std::vector<int64_t>     row_b(gemm_count), col_b(gemm_count);
-    std::vector<int64_t>     row_c(gemm_count), col_c(gemm_count);
-    std::vector<int>         size_a1(gemm_count), size_b1(gemm_count), size_c1(gemm_count), size_d1(gemm_count);
+    std::vector<int64_t> a_stride_1(gemm_count), a_stride_2(gemm_count), b_stride_1(gemm_count),
+        b_stride_2(gemm_count);
+    std::vector<int64_t> row_a(gemm_count), col_a(gemm_count);
+    std::vector<int64_t> row_b(gemm_count), col_b(gemm_count);
+    std::vector<int64_t> row_c(gemm_count), col_c(gemm_count);
+    std::vector<int>     size_a1(gemm_count), size_b1(gemm_count), size_c1(gemm_count),
+        size_d1(gemm_count);
 
-    std::vector<int>         size_a(gemm_count), size_b(gemm_count), size_c(gemm_count), size_d(gemm_count), size_bias(gemm_count), size_scaleD(gemm_count);
-    std::vector<void*>       da(gemm_count), db(gemm_count), dc(gemm_count), dd(gemm_count), d_bias(gemm_count), d_scaleD(gemm_count);
-    std::vector<std::vector<T>> ha(gemm_count), hb(gemm_count), hc(gemm_count), hd(gemm_count), hd_gold(gemm_count), h_bias(gemm_count);
+    std::vector<int> size_a(gemm_count), size_b(gemm_count), size_c(gemm_count), size_d(gemm_count),
+        size_bias(gemm_count), size_scaleD(gemm_count);
+    std::vector<void*> da(gemm_count), db(gemm_count), dc(gemm_count), dd(gemm_count),
+        d_bias(gemm_count), d_scaleD(gemm_count);
+    std::vector<std::vector<T>> ha(gemm_count), hb(gemm_count), hc(gemm_count), hd(gemm_count),
+        hd_gold(gemm_count), h_bias(gemm_count);
     std::vector<std::vector<float>> h_scaleD(gemm_count);
 
     hipblasLtHandle_t handle;
     CHECK_HIPBLASLT_ERROR(hipblasLtCreate(&handle));
 
-    std::vector<hipblasLtMatrixLayout_t>     matA(gemm_count), matB(gemm_count), matC(gemm_count), matD(gemm_count);
-    std::vector<hipblasLtMatmulDesc_t>       matmul(gemm_count);
-    std::vector<hipblasLtEpilogue_t>         epilogue(gemm_count);
+    std::vector<hipblasLtMatrixLayout_t> matA(gemm_count), matB(gemm_count), matC(gemm_count),
+        matD(gemm_count);
+    std::vector<hipblasLtMatmulDesc_t> matmul(gemm_count);
+    std::vector<hipblasLtEpilogue_t>   epilogue(gemm_count);
 
-    for(int i = 0; i < gemm_count; i++){
+    for(int i = 0; i < gemm_count; i++)
+    {
         size_c1[i] = ldc[i] * n[i];
         size_d1[i] = ldd[i] * n[i];
         if(trans_a == HIPBLAS_OP_N)
@@ -721,7 +731,16 @@ void test_hipblaslt(hipblasDatatype_t  in_out_datatype,
         h_scaleD[i].resize(size_scaleD[i]);
 
         // initial data on host
-        initialize_a_b_c_bias(ha[i], size_a[i], hb[i], size_b[i], hc[i], size_c[i], h_bias[i], size_bias[i], h_scaleD[i], size_scaleD[i]);
+        initialize_a_b_c_bias(ha[i],
+                              size_a[i],
+                              hb[i],
+                              size_b[i],
+                              hc[i],
+                              size_c[i],
+                              h_bias[i],
+                              size_bias[i],
+                              h_scaleD[i],
+                              size_scaleD[i]);
 
         CHECK_HIP_ERROR(hipMalloc(&da[i], size_a[i] * sizeof(T)));
         CHECK_HIP_ERROR(hipMalloc(&db[i], size_b[i] * sizeof(T)));
@@ -733,40 +752,75 @@ void test_hipblaslt(hipblasDatatype_t  in_out_datatype,
             CHECK_HIP_ERROR(hipMalloc(&d_scaleD[i], size_scaleD[i] * sizeof(float)));
 
         // copy matrices from host to device
-        CHECK_HIP_ERROR(hipMemcpy(da[i], ha[i].data(), sizeof(T) * size_a[i], hipMemcpyHostToDevice));
-        CHECK_HIP_ERROR(hipMemcpy(db[i], hb[i].data(), sizeof(T) * size_b[i], hipMemcpyHostToDevice));
-        CHECK_HIP_ERROR(hipMemcpy(dc[i], hc[i].data(), sizeof(T) * size_c[i], hipMemcpyHostToDevice));
+        CHECK_HIP_ERROR(
+            hipMemcpy(da[i], ha[i].data(), sizeof(T) * size_a[i], hipMemcpyHostToDevice));
+        CHECK_HIP_ERROR(
+            hipMemcpy(db[i], hb[i].data(), sizeof(T) * size_b[i], hipMemcpyHostToDevice));
+        CHECK_HIP_ERROR(
+            hipMemcpy(dc[i], hc[i].data(), sizeof(T) * size_c[i], hipMemcpyHostToDevice));
         if(enable_bias[i])
-            CHECK_HIP_ERROR(hipMemcpy(d_bias[i], h_bias[i].data(), sizeof(T) * size_bias[i], hipMemcpyHostToDevice));
+            CHECK_HIP_ERROR(hipMemcpy(
+                d_bias[i], h_bias[i].data(), sizeof(T) * size_bias[i], hipMemcpyHostToDevice));
         if(enable_scaleD[i])
-            CHECK_HIP_ERROR(hipMemcpy(d_scaleD[i], h_scaleD[i].data(), sizeof(float) * size_scaleD[i], hipMemcpyHostToDevice));
+            CHECK_HIP_ERROR(hipMemcpy(d_scaleD[i],
+                                      h_scaleD[i].data(),
+                                      sizeof(float) * size_scaleD[i],
+                                      hipMemcpyHostToDevice));
 
-
-        CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutCreate(&matA[i], in_out_datatype, row_a[i], col_a[i], lda[i]));
-        CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutCreate(&matB[i], in_out_datatype, row_b[i], col_b[i], ldb[i]));
-        CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutCreate(&matC[i], in_out_datatype, row_c[i], col_c[i], ldc[i]));
-        CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutCreate(&matD[i], in_out_datatype, row_c[i], col_c[i], ldd[i]));
+        CHECK_HIPBLASLT_ERROR(
+            hipblasLtMatrixLayoutCreate(&matA[i], in_out_datatype, row_a[i], col_a[i], lda[i]));
+        CHECK_HIPBLASLT_ERROR(
+            hipblasLtMatrixLayoutCreate(&matB[i], in_out_datatype, row_b[i], col_b[i], ldb[i]));
+        CHECK_HIPBLASLT_ERROR(
+            hipblasLtMatrixLayoutCreate(&matC[i], in_out_datatype, row_c[i], col_c[i], ldc[i]));
+        CHECK_HIPBLASLT_ERROR(
+            hipblasLtMatrixLayoutCreate(&matD[i], in_out_datatype, row_c[i], col_c[i], ldd[i]));
         if(batch_count[i] > 1)
         {
-            CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutSetAttribute(
-                matA[i], HIPBLASLT_MATRIX_LAYOUT_BATCH_COUNT, &batch_count[i], sizeof(batch_count[i])));
-            CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutSetAttribute(
-                matA[i], HIPBLASLT_MATRIX_LAYOUT_STRIDED_BATCH_OFFSET, &stride_a[i], sizeof(stride_a[i])));
-            CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutSetAttribute(
-                matB[i], HIPBLASLT_MATRIX_LAYOUT_BATCH_COUNT, &batch_count[i], sizeof(batch_count[i])));
-            CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutSetAttribute(
-                matB[i], HIPBLASLT_MATRIX_LAYOUT_STRIDED_BATCH_OFFSET, &stride_b[i], sizeof(stride_b[i])));
-            CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutSetAttribute(
-                matC[i], HIPBLASLT_MATRIX_LAYOUT_BATCH_COUNT, &batch_count[i], sizeof(batch_count[i])));
-            CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutSetAttribute(
-                matC[i], HIPBLASLT_MATRIX_LAYOUT_STRIDED_BATCH_OFFSET, &stride_c[i], sizeof(stride_c[i])));
-            CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutSetAttribute(
-                matD[i], HIPBLASLT_MATRIX_LAYOUT_BATCH_COUNT, &batch_count[i], sizeof(batch_count[i])));
-            CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutSetAttribute(
-                matD[i], HIPBLASLT_MATRIX_LAYOUT_STRIDED_BATCH_OFFSET, &stride_d[i], sizeof(stride_d[i])));
+            CHECK_HIPBLASLT_ERROR(
+                hipblasLtMatrixLayoutSetAttribute(matA[i],
+                                                  HIPBLASLT_MATRIX_LAYOUT_BATCH_COUNT,
+                                                  &batch_count[i],
+                                                  sizeof(batch_count[i])));
+            CHECK_HIPBLASLT_ERROR(
+                hipblasLtMatrixLayoutSetAttribute(matA[i],
+                                                  HIPBLASLT_MATRIX_LAYOUT_STRIDED_BATCH_OFFSET,
+                                                  &stride_a[i],
+                                                  sizeof(stride_a[i])));
+            CHECK_HIPBLASLT_ERROR(
+                hipblasLtMatrixLayoutSetAttribute(matB[i],
+                                                  HIPBLASLT_MATRIX_LAYOUT_BATCH_COUNT,
+                                                  &batch_count[i],
+                                                  sizeof(batch_count[i])));
+            CHECK_HIPBLASLT_ERROR(
+                hipblasLtMatrixLayoutSetAttribute(matB[i],
+                                                  HIPBLASLT_MATRIX_LAYOUT_STRIDED_BATCH_OFFSET,
+                                                  &stride_b[i],
+                                                  sizeof(stride_b[i])));
+            CHECK_HIPBLASLT_ERROR(
+                hipblasLtMatrixLayoutSetAttribute(matC[i],
+                                                  HIPBLASLT_MATRIX_LAYOUT_BATCH_COUNT,
+                                                  &batch_count[i],
+                                                  sizeof(batch_count[i])));
+            CHECK_HIPBLASLT_ERROR(
+                hipblasLtMatrixLayoutSetAttribute(matC[i],
+                                                  HIPBLASLT_MATRIX_LAYOUT_STRIDED_BATCH_OFFSET,
+                                                  &stride_c[i],
+                                                  sizeof(stride_c[i])));
+            CHECK_HIPBLASLT_ERROR(
+                hipblasLtMatrixLayoutSetAttribute(matD[i],
+                                                  HIPBLASLT_MATRIX_LAYOUT_BATCH_COUNT,
+                                                  &batch_count[i],
+                                                  sizeof(batch_count[i])));
+            CHECK_HIPBLASLT_ERROR(
+                hipblasLtMatrixLayoutSetAttribute(matD[i],
+                                                  HIPBLASLT_MATRIX_LAYOUT_STRIDED_BATCH_OFFSET,
+                                                  &stride_d[i],
+                                                  sizeof(stride_d[i])));
         }
 
-        CHECK_HIPBLASLT_ERROR(hipblasLtMatmulDescCreate(&matmul[i], HIPBLASLT_COMPUTE_F32, HIPBLAS_R_32F));
+        CHECK_HIPBLASLT_ERROR(
+            hipblasLtMatmulDescCreate(&matmul[i], HIPBLASLT_COMPUTE_F32, HIPBLAS_R_32F));
 
         CHECK_HIPBLASLT_ERROR(hipblasLtMatmulDescSetAttribute(
             matmul[i], HIPBLASLT_MATMUL_DESC_TRANSA, &trans_a, sizeof(int32_t)));
@@ -797,37 +851,43 @@ void test_hipblaslt(hipblasDatatype_t  in_out_datatype,
 
     // Set User Preference attributes
     hipblasLtMatmulPreference_t pref;
-    uint64_t workspace_size = 32*1024*1024;
-    void* d_workspace;
+    uint64_t                    workspace_size = 32 * 1024 * 1024;
+    void*                       d_workspace;
     CHECK_HIP_ERROR(hipMalloc(&d_workspace, workspace_size));
 
     CHECK_HIPBLASLT_ERROR(hipblasLtMatmulPreferenceCreate(&pref));
     CHECK_HIPBLASLT_ERROR(hipblasLtMatmulPreferenceSetAttribute(
         pref, HIPBLASLT_MATMUL_PREF_MAX_WORKSPACE_BYTES, &workspace_size, sizeof(workspace_size)));
 
-    hipStream_t *stream = new hipStream_t[num_streams];
+    hipStream_t* stream = new hipStream_t[num_streams];
     for(int i = 0; i < num_streams; i++)
         hipStreamCreate(&stream[i]);
 
     // Get Heuristic results
-    int returnedAlgoCount  = 0;
-    hipblasLtMatmulHeuristicResult_t **heuristicResult = new hipblasLtMatmulHeuristicResult_t*[gemm_count];
-    for(int i = 0; i < gemm_count; i++){
+    int                                returnedAlgoCount = 0;
+    hipblasLtMatmulHeuristicResult_t** heuristicResult
+        = new hipblasLtMatmulHeuristicResult_t*[gemm_count];
+    for(int i = 0; i < gemm_count; i++)
+    {
         heuristicResult[i] = new hipblasLtMatmulHeuristicResult_t[request_solutions]{0};
     }
 
-    hipblasLtExtGroupedGemm_t groupedGemm;
+    hipblasLtExtGemm_t groupedGemm;
 
     std::cout << "index, transAB, M, N, K, lda, ldb, ldc, stride_a, stride_b, "
-                 "stride_c, batch_count, alpha, beta, bias, scaleD, activationType" << std::endl;
+                 "stride_c, batch_count, alpha, beta, bias, scaleD, activationType"
+              << std::endl;
     if(grouped_gemm)
     {
-        for(int i = 0; i < gemm_count; i++){
-            std::cout << i << ", " << (trans_a == HIPBLAS_OP_N? "N": "T") << (trans_b == HIPBLAS_OP_N? "N": "T") << ", "
-                    << m[i] << ", " << n[i] << ", " << k[i] << ", " << lda[i] << ", " << ldb[i] << ", "
-                    << ldc[i] << ", " << stride_a[i] << ", " << stride_b[i] << ", " << stride_c[i] << ", "
-                    << batch_count[i] << ", " << alpha[i] << ", " << beta[i] << ", " << enable_bias[i] << ", " << enable_scaleD[i] << ", "
-                    << ToString(actType[i]) << std::endl;
+        for(int i = 0; i < gemm_count; i++)
+        {
+            std::cout << i << ", " << (trans_a == HIPBLAS_OP_N ? "N" : "T")
+                      << (trans_b == HIPBLAS_OP_N ? "N" : "T") << ", " << m[i] << ", " << n[i]
+                      << ", " << k[i] << ", " << lda[i] << ", " << ldb[i] << ", " << ldc[i] << ", "
+                      << stride_a[i] << ", " << stride_b[i] << ", " << stride_c[i] << ", "
+                      << batch_count[i] << ", " << alpha[i] << ", " << beta[i] << ", "
+                      << enable_bias[i] << ", " << enable_scaleD[i] << ", " << ToString(actType[i])
+                      << std::endl;
         }
 
         CHECK_HIPBLASLT_ERROR(hipblasLtExtGroupedGemmCreate(
@@ -836,17 +896,19 @@ void test_hipblaslt(hipblasDatatype_t  in_out_datatype,
         CHECK_HIPBLASLT_ERROR(hipblasLtExtGroupedGemmAlgoGetHeuristic(
             groupedGemm, pref, request_solutions, heuristicResult[0], &returnedAlgoCount));
         if(returnedAlgoCount != request_solutions)
-            std::cout << "less Solution found! request: " << request_solutions << ", found: " << returnedAlgoCount << std::endl;
+            std::cout << "less Solution found! request: " << request_solutions
+                      << ", found: " << returnedAlgoCount << std::endl;
 
         double bestMs = std::numeric_limits<double>::max();
         for(int sol = 0; sol < returnedAlgoCount; sol++)
         {
-            CHECK_HIPBLASLT_ERROR(hipblasLtExtGroupedGemmMakeArgument(groupedGemm, &heuristicResult[0][sol].algo, d_workspace, stream[0]));
+            CHECK_HIPBLASLT_ERROR(hipblasLtExtGroupedGemmMakeArgument(
+                groupedGemm, &heuristicResult[0][sol].algo, d_workspace, stream[0]));
 
-            double eventMs;
+            double     eventMs;
             hipEvent_t start, stop;
             if(cpu_time)
-                eventMs = get_time_us_sync()/1000;
+                eventMs = get_time_us_sync() / 1000;
             else
             {
                 hipEventCreate(&start);
@@ -864,7 +926,7 @@ void test_hipblaslt(hipblasDatatype_t  in_out_datatype,
             }
 
             if(cpu_time)
-                eventMs = get_time_us_sync()/1000 - eventMs;
+                eventMs = get_time_us_sync() / 1000 - eventMs;
             else
             {
                 hipEventRecord(stop, stream[0]);
@@ -877,14 +939,14 @@ void test_hipblaslt(hipblasDatatype_t  in_out_datatype,
             }
 
             eventMs /= (bench_count * sync_count);
-            bestMs = std::min(bestMs, eventMs);
+            bestMs       = std::min(bestMs, eventMs);
             double flops = 0;
             for(int i = 0; i < gemm_count; i++)
                 flops += 2 * m[i] * n[i] * k[i] * batch_count[i];
             double tflops = flops / eventMs / 1000000000;
 
-            std::cout << "      Sol " << sol << ": Perf: "
-                    << std::to_string(eventMs) << " ms, " << std::to_string(tflops) << " Tflops";
+            std::cout << "      Sol " << sol << ": Perf: " << std::to_string(eventMs) << " ms, "
+                      << std::to_string(tflops) << " Tflops";
 
             if(bestMs == eventMs)
                 std::cout << " *" << std::endl;
@@ -897,27 +959,38 @@ void test_hipblaslt(hipblasDatatype_t  in_out_datatype,
         if(num_streams == 1)
         {
             double totalFlops = 0;
-            int* bestIndex = new int[gemm_count];
+            int*   bestIndex  = new int[gemm_count];
             for(int i = 0; i < gemm_count; i++)
             {
-                CHECK_HIPBLASLT_ERROR(hipblasLtMatmulAlgoGetHeuristic(
-                    handle, matmul[i], matA[i], matB[i], matC[i], matD[i], pref, request_solutions, heuristicResult[i], &returnedAlgoCount));
+                CHECK_HIPBLASLT_ERROR(hipblasLtMatmulAlgoGetHeuristic(handle,
+                                                                      matmul[i],
+                                                                      matA[i],
+                                                                      matB[i],
+                                                                      matC[i],
+                                                                      matD[i],
+                                                                      pref,
+                                                                      request_solutions,
+                                                                      heuristicResult[i],
+                                                                      &returnedAlgoCount));
                 if(returnedAlgoCount != request_solutions)
-                    std::cout << "less solution found! request: " << request_solutions << ", found: " << returnedAlgoCount << std::endl;
+                    std::cout << "less solution found! request: " << request_solutions
+                              << ", found: " << returnedAlgoCount << std::endl;
 
-                std::cout << i << ", " << (trans_a == HIPBLAS_OP_N? "N": "T") << (trans_b == HIPBLAS_OP_N? "N": "T") << ", "
-                        << m[i] << ", " << n[i] << ", " << k[i] << ", " << lda[i] << ", " << ldb[i] << ", "
-                        << ldc[i] << ", " << stride_a[i] << ", " << stride_b[i] << ", " << stride_c[i] << ", "
-                        << batch_count[i] << ", " << alpha[i] << ", " << beta[i] << ", " << enable_bias[i] << ", " << enable_scaleD[i] << ", "
-                        << ToString(actType[i]) << std::endl;
+                std::cout << i << ", " << (trans_a == HIPBLAS_OP_N ? "N" : "T")
+                          << (trans_b == HIPBLAS_OP_N ? "N" : "T") << ", " << m[i] << ", " << n[i]
+                          << ", " << k[i] << ", " << lda[i] << ", " << ldb[i] << ", " << ldc[i]
+                          << ", " << stride_a[i] << ", " << stride_b[i] << ", " << stride_c[i]
+                          << ", " << batch_count[i] << ", " << alpha[i] << ", " << beta[i] << ", "
+                          << enable_bias[i] << ", " << enable_scaleD[i] << ", "
+                          << ToString(actType[i]) << std::endl;
 
                 double bestMs = std::numeric_limits<double>::max();
                 for(int sol = 0; sol < returnedAlgoCount; sol++)
                 {
-                    double eventMs;
+                    double     eventMs;
                     hipEvent_t start, stop;
                     if(cpu_time)
-                        eventMs = get_time_us_sync()/1000;
+                        eventMs = get_time_us_sync() / 1000;
                     else
                     {
                         hipEventCreate(&start);
@@ -930,27 +1003,27 @@ void test_hipblaslt(hipblasDatatype_t  in_out_datatype,
                         for(int bench = 0; bench < bench_count; bench++)
                         {
                             CHECK_HIPBLASLT_ERROR(hipblasLtMatmul(handle,
-                                                                matmul[i],
-                                                                &(alpha[i]),
-                                                                da[i],
-                                                                matA[i],
-                                                                db[i],
-                                                                matB[i],
-                                                                &(beta[i]),
-                                                                dc[i],
-                                                                matC[i],
-                                                                dd[i],
-                                                                matD[i],
-                                                                &heuristicResult[i][sol].algo,
-                                                                d_workspace,
-                                                                workspace_size,
-                                                                stream[0]));
+                                                                  matmul[i],
+                                                                  &(alpha[i]),
+                                                                  da[i],
+                                                                  matA[i],
+                                                                  db[i],
+                                                                  matB[i],
+                                                                  &(beta[i]),
+                                                                  dc[i],
+                                                                  matC[i],
+                                                                  dd[i],
+                                                                  matD[i],
+                                                                  &heuristicResult[i][sol].algo,
+                                                                  d_workspace,
+                                                                  workspace_size,
+                                                                  stream[0]));
                         }
                         hipDeviceSynchronize();
                     }
 
                     if(cpu_time)
-                        eventMs = get_time_us_sync()/1000 - eventMs;
+                        eventMs = get_time_us_sync() / 1000 - eventMs;
                     else
                     {
                         hipEventRecord(stop, stream[0]);
@@ -963,26 +1036,28 @@ void test_hipblaslt(hipblasDatatype_t  in_out_datatype,
                     }
 
                     eventMs /= (bench_count * sync_count);
-                    double flops = 2 * m[i] * n[i] * k[i] * batch_count[i];
+                    double flops  = 2 * m[i] * n[i] * k[i] * batch_count[i];
                     double tflops = flops / eventMs / 1000000000;
 
-                    std::cout << "      Sol " << sol << ": Perf: "
-                            << std::to_string(eventMs) << " ms, " << std::to_string(tflops) << " Tflops";
+                    std::cout << "      Sol " << sol << ": Perf: " << std::to_string(eventMs)
+                              << " ms, " << std::to_string(tflops) << " Tflops";
 
-                    if(bestMs > eventMs) {
-                        bestMs = eventMs;
+                    if(bestMs > eventMs)
+                    {
+                        bestMs       = eventMs;
                         bestIndex[i] = sol;
                         std::cout << " *" << std::endl;
-                    } else
+                    }
+                    else
                         std::cout << std::endl;
                 }
                 totalFlops += (2 * m[i] * n[i] * k[i] * batch_count[i]);
             }
 
-            double eventMs;
+            double     eventMs;
             hipEvent_t start, stop;
             if(cpu_time)
-                eventMs = get_time_us_sync()/1000;
+                eventMs = get_time_us_sync() / 1000;
             else
             {
                 hipEventCreate(&start);
@@ -996,29 +1071,30 @@ void test_hipblaslt(hipblasDatatype_t  in_out_datatype,
                 {
                     for(int i = 0; i < gemm_count; i++)
                     {
-                        CHECK_HIPBLASLT_ERROR(hipblasLtMatmul(handle,
-                                                            matmul[i],
-                                                            &(alpha[i]),
-                                                            da[i],
-                                                            matA[i],
-                                                            db[i],
-                                                            matB[i],
-                                                            &(beta[i]),
-                                                            dc[i],
-                                                            matC[i],
-                                                            dd[i],
-                                                            matD[i],
-                                                            &heuristicResult[i][bestIndex[i]].algo,
-                                                            d_workspace,
-                                                            workspace_size,
-                                                            stream[0]));
+                        CHECK_HIPBLASLT_ERROR(
+                            hipblasLtMatmul(handle,
+                                            matmul[i],
+                                            &(alpha[i]),
+                                            da[i],
+                                            matA[i],
+                                            db[i],
+                                            matB[i],
+                                            &(beta[i]),
+                                            dc[i],
+                                            matC[i],
+                                            dd[i],
+                                            matD[i],
+                                            &heuristicResult[i][bestIndex[i]].algo,
+                                            d_workspace,
+                                            workspace_size,
+                                            stream[0]));
                     }
                 }
                 hipDeviceSynchronize();
             }
 
             if(cpu_time)
-                eventMs = get_time_us_sync()/1000 - eventMs;
+                eventMs = get_time_us_sync() / 1000 - eventMs;
             else
             {
                 hipEventRecord(stop, stream[0]);
@@ -1032,30 +1108,42 @@ void test_hipblaslt(hipblasDatatype_t  in_out_datatype,
 
             double totalTflops = totalFlops / eventMs / 1000000000;
             std::cout << "TotalPerf: " << std::to_string(eventMs) << " ms, "
-                                       << std::to_string(totalTflops) << " Tflops" << std::endl;
+                      << std::to_string(totalTflops) << " Tflops" << std::endl;
         }
         else
         {
-            for(int i = 0; i < gemm_count; i++) {
-                CHECK_HIPBLASLT_ERROR(hipblasLtMatmulAlgoGetHeuristic(
-                    handle, matmul[i], matA[i], matB[i], matC[i], matD[i], pref, request_solutions, heuristicResult[i], &returnedAlgoCount));
+            for(int i = 0; i < gemm_count; i++)
+            {
+                CHECK_HIPBLASLT_ERROR(hipblasLtMatmulAlgoGetHeuristic(handle,
+                                                                      matmul[i],
+                                                                      matA[i],
+                                                                      matB[i],
+                                                                      matC[i],
+                                                                      matD[i],
+                                                                      pref,
+                                                                      request_solutions,
+                                                                      heuristicResult[i],
+                                                                      &returnedAlgoCount));
                 if(returnedAlgoCount != request_solutions)
-                    std::cout << "less solution found! request: " << request_solutions << ", found: " << returnedAlgoCount << std::endl;
+                    std::cout << "less solution found! request: " << request_solutions
+                              << ", found: " << returnedAlgoCount << std::endl;
 
-                std::cout << i << ", " << (trans_a == HIPBLAS_OP_N? "N": "T") << (trans_b == HIPBLAS_OP_N? "N": "T") << ", "
-                        << m[i] << ", " << n[i] << ", " << k[i] << ", " << lda[i] << ", " << ldb[i] << ", "
-                        << ldc[i] << ", " << stride_a[i] << ", " << stride_b[i] << ", " << stride_c[i] << ", "
-                        << batch_count[i] << ", " << alpha[i] << ", " << beta[i] << ", " << enable_bias[i] << ", " << enable_scaleD[i] << ", "
-                        << ToString(actType[i]) << std::endl;
+                std::cout << i << ", " << (trans_a == HIPBLAS_OP_N ? "N" : "T")
+                          << (trans_b == HIPBLAS_OP_N ? "N" : "T") << ", " << m[i] << ", " << n[i]
+                          << ", " << k[i] << ", " << lda[i] << ", " << ldb[i] << ", " << ldc[i]
+                          << ", " << stride_a[i] << ", " << stride_b[i] << ", " << stride_c[i]
+                          << ", " << batch_count[i] << ", " << alpha[i] << ", " << beta[i] << ", "
+                          << enable_bias[i] << ", " << enable_scaleD[i] << ", "
+                          << ToString(actType[i]) << std::endl;
             }
 
             double bestMs = std::numeric_limits<double>::max();
             for(int sol = 0; sol < returnedAlgoCount; sol++)
             {
-                double eventMs;
+                double     eventMs;
                 hipEvent_t start, stop;
                 if(cpu_time)
-                    eventMs = get_time_us_sync()/1000;
+                    eventMs = get_time_us_sync() / 1000;
                 else
                 {
                     hipEventCreate(&start);
@@ -1067,30 +1155,31 @@ void test_hipblaslt(hipblasDatatype_t  in_out_datatype,
                 {
                     for(int bench = 0; bench < bench_count; bench++)
                     {
-                        for(int i = 0; i < gemm_count; i++) {
+                        for(int i = 0; i < gemm_count; i++)
+                        {
                             CHECK_HIPBLASLT_ERROR(hipblasLtMatmul(handle,
-                                                                matmul[i],
-                                                                &(alpha[i]),
-                                                                da[i],
-                                                                matA[i],
-                                                                db[i],
-                                                                matB[i],
-                                                                &(beta[i]),
-                                                                dc[i],
-                                                                matC[i],
-                                                                dd[i],
-                                                                matD[i],
-                                                                &heuristicResult[i][sol].algo,
-                                                                d_workspace,
-                                                                workspace_size,
-                                                                stream[i%num_streams]));
+                                                                  matmul[i],
+                                                                  &(alpha[i]),
+                                                                  da[i],
+                                                                  matA[i],
+                                                                  db[i],
+                                                                  matB[i],
+                                                                  &(beta[i]),
+                                                                  dc[i],
+                                                                  matC[i],
+                                                                  dd[i],
+                                                                  matD[i],
+                                                                  &heuristicResult[i][sol].algo,
+                                                                  d_workspace,
+                                                                  workspace_size,
+                                                                  stream[i % num_streams]));
                         }
                     }
                     hipDeviceSynchronize();
                 }
 
                 if(cpu_time)
-                    eventMs = get_time_us_sync()/1000 - eventMs;
+                    eventMs = get_time_us_sync() / 1000 - eventMs;
                 else
                 {
                     hipEventRecord(stop, stream[0]);
@@ -1103,14 +1192,14 @@ void test_hipblaslt(hipblasDatatype_t  in_out_datatype,
                 }
 
                 eventMs /= (bench_count * sync_count);
-                bestMs = std::min(bestMs, eventMs);
+                bestMs       = std::min(bestMs, eventMs);
                 double flops = 0;
                 for(int i = 0; i < gemm_count; i++)
                     flops += 2 * m[i] * n[i] * k[i] * batch_count[i];
                 double tflops = flops / eventMs / 1000000000;
 
-                std::cout << "      Sol " << sol << ": Perf: "
-                        << std::to_string(eventMs) << " ms, " << std::to_string(tflops) << " Tflops";
+                std::cout << "      Sol " << sol << ": Perf: " << std::to_string(eventMs) << " ms, "
+                          << std::to_string(tflops) << " Tflops";
 
                 if(bestMs == eventMs)
                     std::cout << " *" << std::endl;
@@ -1124,10 +1213,12 @@ void test_hipblaslt(hipblasDatatype_t  in_out_datatype,
     if(validate)
     {
         std::cout << "Start to validate (only last solution): " << std::endl;
-        for(int i = 0; i < gemm_count; i++){
+        for(int i = 0; i < gemm_count; i++)
+        {
             std::cout << "GEMM " << i;
             // copy output from device to CPU
-            CHECK_HIP_ERROR(hipMemcpy(hd[i].data(), dd[i], sizeof(T) * size_c[i], hipMemcpyDeviceToHost));
+            CHECK_HIP_ERROR(
+                hipMemcpy(hd[i].data(), dd[i], sizeof(T) * size_c[i], hipMemcpyDeviceToHost));
             auto* a_ptr = &ha[i][0];
             auto* b_ptr = &hb[i][0];
             auto* c_ptr = &hc[i][0];
@@ -1174,9 +1265,9 @@ void test_hipblaslt(hipblasDatatype_t  in_out_datatype,
                 if(!AlmostEqual(hd_gold[i][j], hd[i][j]))
                 {
                     printf("Err: Index %d: %f vs %f\n",
-                        j,
-                        static_cast<float>(hd_gold[i][j]),
-                        static_cast<float>(hd[i][j]));
+                           j,
+                           static_cast<float>(hd_gold[i][j]),
+                           static_cast<float>(hd[i][j]));
                     passed = false;
                 }
             }
@@ -1196,7 +1287,8 @@ void test_hipblaslt(hipblasDatatype_t  in_out_datatype,
     CHECK_HIP_ERROR(hipFree(d_workspace));
     if(grouped_gemm)
         CHECK_HIPBLASLT_ERROR(hipblasLtExtGroupedGemmDestroy(groupedGemm));
-    for(int i = 0; i< gemm_count; i++){
+    for(int i = 0; i < gemm_count; i++)
+    {
         CHECK_HIP_ERROR(hipFree(da[i]));
         CHECK_HIP_ERROR(hipFree(db[i]));
         CHECK_HIP_ERROR(hipFree(dc[i]));
@@ -1227,7 +1319,7 @@ int main(int argc, char* argv[])
     std::vector<int64_t> m, lda, stride_a;
     std::vector<int64_t> n, ldb, stride_b;
     std::vector<int64_t> k, ldc, stride_c;
-    std::vector<int64_t>    ldd, stride_d;
+    std::vector<int64_t> ldd, stride_d;
     std::vector<int32_t> batch_count;
 
     std::vector<float>          alpha;
@@ -1237,9 +1329,9 @@ int main(int argc, char* argv[])
     std::vector<ActivationType> actType;
 
     int32_t grouped_gemm      = 0;
-    bool verbose              = false;
-    bool validate             = false;
-    bool cpu_time             = false;
+    bool    verbose           = false;
+    bool    validate          = false;
+    bool    cpu_time          = false;
     int32_t bench_count       = 1;
     int32_t sync_count        = 1;
     int32_t request_solutions = 1;
@@ -1283,7 +1375,8 @@ int main(int argc, char* argv[])
     int32_t gemm_count = m.size();
 
     // when arguments not specified, set to default values
-    for( int i = 0; i < gemm_count; i++){
+    for(int i = 0; i < gemm_count; i++)
+    {
         if(i == n.size())
             n.push_back(DIM2);
         if(i == k.size())

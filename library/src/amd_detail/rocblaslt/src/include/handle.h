@@ -176,22 +176,30 @@ struct _rocblaslt_matmul_preference
 };
 
 /********************************************************************************
- * \brief rocblaslt_groupedgemm holds the description of the grouped gemm
+ * \brief rocblaslt_gemm holds the description of the grouped gemm
  * It is initialized and destroyed with rocblaslt_groupedgemm_create()
  * and rocblaslt_groupedgemm_destroy() functions respectively.
  *******************************************************************************/
-struct _rocblaslt_groupedgemm
+
+enum _rocblaslt_gemm_type_enum
+{
+    ROCBLASLT_GEMM         = 1,
+    ROCBLASLT_GROUPED_GEMM = 2
+};
+
+struct _rocblaslt_gemm
 {
     // constructor
-    _rocblaslt_groupedgemm(){};
+    _rocblaslt_gemm(){};
     // destructor
-    ~_rocblaslt_groupedgemm(){};
+    ~_rocblaslt_gemm(){};
     //
-    std::shared_ptr<void> problemGroupedGemmPtr;
-    std::shared_ptr<void> groupedInputsPtr;
-    std::shared_ptr<void> kernelsPtr;
-    size_t                gemm_count = 0;
-    _rocblaslt_handle*    handle;
+    _rocblaslt_gemm_type_enum rocblaslt_gemm_type;
+    std::shared_ptr<void>     problemGemmPtr;
+    std::shared_ptr<void>     inputsPtr;
+    std::shared_ptr<void>     kernelsPtr;
+    size_t                    gemm_count = 0;
+    _rocblaslt_handle*        handle;
 };
 
 #endif // HANDLE_H

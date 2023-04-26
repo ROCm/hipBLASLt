@@ -95,12 +95,12 @@ typedef struct _rocblaslt_matmul_desc* rocblaslt_matmul_desc;
 typedef struct _rocblaslt_matmul_preference* rocblaslt_matmul_preference;
 
 /*! \ingroup types_module
- *  \brief Descriptor of the grouped gemm.
+ *  \brief Descriptor of the gemm.
  *
  *  \details
- *  It is initialized with \ref rocblaslt_groupedgemm_create function.
+ *  It is initialized with \ref rocblaslt_groupedgemm_create, rocblaslt_gemm_create function.
  */
-typedef struct _rocblaslt_groupedgemm* rocblaslt_groupedgemm;
+typedef struct _rocblaslt_gemm* rocblaslt_gemm;
 
 /*! \ingroup types_module
  *  \brief Descriptor of the matrix multiplication algorithm.

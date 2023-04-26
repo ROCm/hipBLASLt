@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022 Advanced Micro Devices, Inc.
+ * Copyright (C) 2022-2023 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -115,7 +115,7 @@ rocblaslt_status rocblaslt_matmul(rocblaslt_handle             handle,
                                   size_t                       workspaceSizeInBytes,
                                   hipStream_t                  stream);
 
-rocblaslt_status rocblaslt_groupedgemm_create(rocblaslt_groupedgemm*                groupedgemm,
+rocblaslt_status rocblaslt_groupedgemm_create(rocblaslt_gemm*                       groupedgemm,
                                               rocblaslt_handle                      handle,
                                               std::vector<rocblaslt_matmul_desc>&   matmul_descr,
                                               std::vector<const void*>&             alpha,
@@ -129,15 +129,14 @@ rocblaslt_status rocblaslt_groupedgemm_create(rocblaslt_groupedgemm*            
                                               std::vector<void*>&                   D,
                                               std::vector<rocblaslt_matrix_layout>& matD);
 
-rocblaslt_status rocblaslt_groupedgemm_destroy(const rocblaslt_groupedgemm groupedgemm);
+rocblaslt_status rocblaslt_groupedgemm_destroy(const rocblaslt_gemm groupedgemm);
 
-rocblaslt_status rocblaslt_groupedgemm_makeArgument(rocblaslt_groupedgemm        groupedgemm,
+rocblaslt_status rocblaslt_groupedgemm_makeArgument(rocblaslt_gemm               groupedgemm,
                                                     const rocblaslt_matmul_algo* algo,
                                                     void*                        workspace,
                                                     hipStream_t                  stream);
 
-rocblaslt_status rocblaslt_groupedgemm_run(rocblaslt_groupedgemm groupedgemm,
-                                           hipStream_t           stream);
+rocblaslt_status rocblaslt_groupedgemm_run(rocblaslt_gemm groupedgemm, hipStream_t stream);
 
 #ifdef __cplusplus
 }

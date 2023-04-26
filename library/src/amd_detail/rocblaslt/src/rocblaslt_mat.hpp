@@ -114,7 +114,7 @@ rocblaslt_status rocblaslt_batched_template(rocblaslt_handle             handle,
 
 template <typename Ti, typename To, typename Tc>
 rocblaslt_status
-    rocblaslt_groupedgemm_create_batched_template(rocblaslt_groupedgemm            groupedgemm,
+    rocblaslt_groupedgemm_create_batched_template(rocblaslt_gemm                   groupedgemm,
                                                   hipblasOperation_t               trans_a,
                                                   hipblasOperation_t               trans_b,
                                                   std::vector<int64_t>&            m,
@@ -270,7 +270,7 @@ rocblaslt_status rocblaslt_matmul_typecasting(rocblaslt_handle             handl
 }
 
 template <typename Ti, typename To = Ti, typename Tc = To>
-rocblaslt_status rocblaslt_groupedgemm_create_typecasting(rocblaslt_groupedgemm     groupedgemm,
+rocblaslt_status rocblaslt_groupedgemm_create_typecasting(rocblaslt_gemm            groupedgemm,
                                                           hipblasOperation_t        trans_a,
                                                           hipblasOperation_t        trans_b,
                                                           std::vector<int64_t>&     m,
@@ -435,7 +435,7 @@ inline rocblaslt_status rocblaslt_matmul_template(rocblaslt_handle             h
 }
 
 inline rocblaslt_status
-    rocblaslt_groupedgemm_create_template(rocblaslt_groupedgemm            groupedgemm,
+    rocblaslt_groupedgemm_create_template(rocblaslt_gemm                   groupedgemm,
                                           hipblasOperation_t               trans_a,
                                           hipblasOperation_t               trans_b,
                                           std::vector<int64_t>&            m,
@@ -520,14 +520,14 @@ inline rocblaslt_status
     return rs_status;
 }
 
-inline rocblaslt_status rocblaslt_groupedgemm_run_template(rocblaslt_groupedgemm groupedgemm,
-                                                           hipStream_t           stream)
+inline rocblaslt_status rocblaslt_groupedgemm_run_template(rocblaslt_gemm groupedgemm,
+                                                           hipStream_t    stream)
 {
     return runGroupedGemm(groupedgemm, stream);
 }
 
 inline rocblaslt_status
-    rocblaslt_groupedgemm_makeArgument_template(rocblaslt_groupedgemm        groupedgemm,
+    rocblaslt_groupedgemm_makeArgument_template(rocblaslt_gemm               groupedgemm,
                                                 const rocblaslt_matmul_algo* algo,
                                                 void*                        workspace,
                                                 hipStream_t                  stream)

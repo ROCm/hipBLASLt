@@ -941,7 +941,7 @@ rocblaslt_status runContractionProblem(rocblaslt_handle                         
 }
 
 template <typename Ti, typename To, typename Tc>
-rocblaslt_status groupedGemmCreate(rocblaslt_groupedgemm groupedgemm,
+rocblaslt_status groupedGemmCreate(rocblaslt_gemm groupedgemm,
                                    std::vector<RocblasltContractionProblem<Ti, To, Tc>>& probs)
 {
     groupedgemm->gemm_count = probs.size();
@@ -965,12 +965,12 @@ rocblaslt_status groupedGemmCreate(rocblaslt_groupedgemm groupedgemm,
             tensile_probs.gemms.push_back(ConstructTensileProblem(probs[i]));
             groupedInputs.grouped.push_back(GetTensileInputs(probs[i]));
         }
-        auto problemGroupedGemmPtr
+        auto problemGemmPtr
             = std::make_shared<Tensile::ContractionProblemGroupedGemm>(tensile_probs);
-        groupedgemm->problemGroupedGemmPtr = std::static_pointer_cast<void>(problemGroupedGemmPtr);
+        groupedgemm->problemGemmPtr = std::static_pointer_cast<void>(problemGemmPtr);
 
-        auto groupedInputsPtr = std::make_shared<Tensile::ContractionGroupedInputs>(groupedInputs);
-        groupedgemm->groupedInputsPtr = std::static_pointer_cast<void>(groupedInputsPtr);
+        auto inputsPtr         = std::make_shared<Tensile::ContractionGroupedInputs>(groupedInputs);
+        groupedgemm->inputsPtr = std::static_pointer_cast<void>(inputsPtr);
 
         status = rocblaslt_status_success;
     }
@@ -994,7 +994,7 @@ rocblaslt_status groupedGemmCreate(rocblaslt_groupedgemm groupedgemm,
     return status;
 }
 
-rocblaslt_status groupedGemmMakeArgument(rocblaslt_groupedgemm        groupedgemm,
+rocblaslt_status groupedGemmMakeArgument(rocblaslt_gemm               groupedgemm,
                                          const rocblaslt_matmul_algo* algo,
                                          void*                        workspace,
                                          hipStream_t                  stream)
@@ -1009,11 +1009,10 @@ rocblaslt_status groupedGemmMakeArgument(rocblaslt_groupedgemm        groupedgem
 
         std::shared_ptr<Tensile::ContractionProblemGroupedGemm> tensile_probs
             = std::static_pointer_cast<Tensile::ContractionProblemGroupedGemm>(
-                groupedgemm->problemGroupedGemmPtr);
+                groupedgemm->problemGemmPtr);
 
         std::shared_ptr<Tensile::ContractionGroupedInputs> groupedInputs
-            = std::static_pointer_cast<Tensile::ContractionGroupedInputs>(
-                groupedgemm->groupedInputsPtr);
+            = std::static_pointer_cast<Tensile::ContractionGroupedInputs>(groupedgemm->inputsPtr);
 
         for(int i = 0; i < (*groupedInputs).grouped.size(); i++)
         {
@@ -1070,7 +1069,7 @@ rocblaslt_status groupedGemmMakeArgument(rocblaslt_groupedgemm        groupedgem
     return status;
 }
 
-rocblaslt_status runGroupedGemm(rocblaslt_groupedgemm groupedgemm, hipStream_t stream)
+rocblaslt_status runGroupedGemm(rocblaslt_gemm gemm, hipStream_t stream)
 {
     rocblaslt_status status = rocblaslt_status_internal_error;
     try
@@ -1079,11 +1078,10 @@ rocblaslt_status runGroupedGemm(rocblaslt_groupedgemm groupedgemm, hipStream_t s
         std::shared_ptr<hipDeviceProp_t>                                                 deviceProp;
         std::shared_ptr<Tensile::Hardware>                                               hardware;
 
-        auto adapter = get_library_and_adapter(&library, &deviceProp, groupedgemm->handle->device);
+        auto adapter = get_library_and_adapter(&library, &deviceProp, gemm->handle->device);
 
         std::shared_ptr<std::vector<Tensile::KernelInvocation>> kernels
-            = std::static_pointer_cast<std::vector<Tensile::KernelInvocation>>(
-                groupedgemm->kernelsPtr);
+            = std::static_pointer_cast<std::vector<Tensile::KernelInvocation>>(gemm->kernelsPtr);
 
         static_cast<void>(adapter->launchKernels(*kernels, stream, nullptr, nullptr));
 
@@ -1108,6 +1106,9 @@ rocblaslt_status runGroupedGemm(rocblaslt_groupedgemm groupedgemm, hipStream_t s
 
     return status;
 }
+
+template <rocblaslt_gemm>
+rocblaslt_status runGemm(rocblaslt_gemm gemm, hipStream_t stream);
 
 /******************************************************************************
  * ConstructRocblasltProblem creates RocblasltContractionProblem from mat     *
@@ -1345,7 +1346,7 @@ rocblaslt_status getBestSolutions(RocblasltContractionProblem<Ti, To, Tc> prob,
 }
 
 rocblaslt_status
-    getBestSolutionsGroupedGemm(rocblaslt_groupedgemm             groupedgemm,
+    getBestSolutionsGroupedGemm(rocblaslt_gemm                    groupedgemm,
                                 rocblaslt_matmul_preference       pref,
                                 int                               requestedAlgoCount,
                                 rocblaslt_matmul_heuristic_result heuristicResultsArray[],
@@ -1362,11 +1363,10 @@ rocblaslt_status
 
     std::shared_ptr<Tensile::ContractionProblemGroupedGemm> tensile_probs
         = std::static_pointer_cast<Tensile::ContractionProblemGroupedGemm>(
-            groupedgemm->problemGroupedGemmPtr);
+            groupedgemm->problemGemmPtr);
 
     std::shared_ptr<Tensile::ContractionGroupedInputs> groupedInputs
-        = std::static_pointer_cast<Tensile::ContractionGroupedInputs>(
-            groupedgemm->groupedInputsPtr);
+        = std::static_pointer_cast<Tensile::ContractionGroupedInputs>(groupedgemm->inputsPtr);
 
     for(int i = 0; i < (*tensile_probs).gemms.size(); i++)
     {
@@ -1451,28 +1451,28 @@ extern "C" void rocblaslt_createialize()
  ******************************************************************************/
 
 // types
-#define CREATEFUNCTION(Ti, To, Tc)                                                                 \
-    template rocblaslt_status runContractionProblem<Ti, To, Tc>(                                   \
-        rocblaslt_handle             handle,                                                       \
-        const rocblaslt_matmul_algo* algo,                                                         \
-        const RocblasltContractionProblem<Ti, To, Tc>&);                                           \
-    template rocblaslt_status groupedGemmCreate<Ti, To, Tc>(                                       \
-        rocblaslt_groupedgemm groupedgemm, std::vector<RocblasltContractionProblem<Ti, To, Tc>>&); \
-    template RocblasltContractionProblem<Ti, To, Tc> ConstructRocblasltProblem<Ti, To, Tc>(        \
-        const rocblaslt_matmul_desc matmul_descr,                                                  \
-        rocblaslt_matrix_layout     matA,                                                          \
-        rocblaslt_matrix_layout     matB,                                                          \
-        rocblaslt_matrix_layout     matC,                                                          \
-        rocblaslt_matrix_layout     matD,                                                          \
-        const Tc*                   alpha,                                                         \
-        const Tc*                   beta,                                                          \
-        size_t                      maxWorkSpaceBytes);                                                                 \
-    template rocblaslt_status getBestSolutions<Ti, To, Tc>(                                        \
-        RocblasltContractionProblem<Ti, To, Tc> prob,                                              \
-        rocblaslt_handle                        handle,                                            \
-        int                                     requestedAlgoCount,                                \
-        rocblaslt_matmul_heuristic_result       heuristicResultsArray[],                           \
-        int*                                    returnAlgoCount,                                   \
+#define CREATEFUNCTION(Ti, To, Tc)                                                          \
+    template rocblaslt_status runContractionProblem<Ti, To, Tc>(                            \
+        rocblaslt_handle             handle,                                                \
+        const rocblaslt_matmul_algo* algo,                                                  \
+        const RocblasltContractionProblem<Ti, To, Tc>&);                                    \
+    template rocblaslt_status groupedGemmCreate<Ti, To, Tc>(                                \
+        rocblaslt_gemm groupedgemm, std::vector<RocblasltContractionProblem<Ti, To, Tc>>&); \
+    template RocblasltContractionProblem<Ti, To, Tc> ConstructRocblasltProblem<Ti, To, Tc>( \
+        const rocblaslt_matmul_desc matmul_descr,                                           \
+        rocblaslt_matrix_layout     matA,                                                   \
+        rocblaslt_matrix_layout     matB,                                                   \
+        rocblaslt_matrix_layout     matC,                                                   \
+        rocblaslt_matrix_layout     matD,                                                   \
+        const Tc*                   alpha,                                                  \
+        const Tc*                   beta,                                                   \
+        size_t                      maxWorkSpaceBytes);                                                          \
+    template rocblaslt_status getBestSolutions<Ti, To, Tc>(                                 \
+        RocblasltContractionProblem<Ti, To, Tc> prob,                                       \
+        rocblaslt_handle                        handle,                                     \
+        int                                     requestedAlgoCount,                         \
+        rocblaslt_matmul_heuristic_result       heuristicResultsArray[],                    \
+        int*                                    returnAlgoCount,                            \
         size_t                                  maxWorkSpaceBytes);
 
 CREATEFUNCTION(float, float, float)

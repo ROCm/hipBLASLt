@@ -206,15 +206,16 @@ rocblaslt_status runContractionProblem(rocblaslt_handle                         
                                        RocblasltContractionProblem<Ti, To, Tc> const& problem);
 
 template <typename Ti, typename To, typename Tc>
-rocblaslt_status groupedGemmCreate(rocblaslt_groupedgemm groupedgemm,
+rocblaslt_status groupedGemmCreate(rocblaslt_gemm groupedgemm,
                                    std::vector<RocblasltContractionProblem<Ti, To, Tc>>& probs);
 
-rocblaslt_status groupedGemmMakeArgument(rocblaslt_groupedgemm        groupedgemm,
+rocblaslt_status groupedGemmMakeArgument(rocblaslt_gemm               groupedgemm,
                                          const rocblaslt_matmul_algo* algo,
                                          void*                        workspace,
                                          hipStream_t                  stream);
 
-rocblaslt_status runGroupedGemm(rocblaslt_groupedgemm groupedgemm, hipStream_t stream);
+// Run gemm only, without creating args, problems,...
+rocblaslt_status runGroupedGemm(rocblaslt_gemm gemm, hipStream_t stream);
 
 /***********************************************************************************
  * Whether Tensile has been initialized for at least one device (used for
@@ -259,7 +260,7 @@ rocblaslt_status getBestSolutions(RocblasltContractionProblem<Ti, To, Tc> prob,
                                   size_t                                  maxWorkSpaceBytes);
 
 rocblaslt_status
-    getBestSolutionsGroupedGemm(rocblaslt_groupedgemm             groupedgemm,
+    getBestSolutionsGroupedGemm(rocblaslt_gemm                    groupedgemm,
                                 rocblaslt_matmul_preference       pref,
                                 int                               requestedAlgoCount,
                                 rocblaslt_matmul_heuristic_result heuristicResultsArray[],

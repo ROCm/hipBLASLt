@@ -159,7 +159,7 @@ rocblaslt_status rocblaslt_matmul_impl(const rocblaslt_handle       handle,
     return rocblaslt_matmul_template(EX_PARM);
 }
 
-rocblaslt_status rocblaslt_groupedgemm_create_impl(rocblaslt_groupedgemm               groupedgemm,
+rocblaslt_status rocblaslt_groupedgemm_create_impl(rocblaslt_gemm                      groupedgemm,
                                                    std::vector<rocblaslt_matmul_desc>& matmul_descr,
                                                    std::vector<const void*>&           A,
                                                    std::vector<const void*>&           B,
@@ -442,7 +442,7 @@ rocblaslt_status rocblaslt_matmul(rocblaslt_handle             handle,
                                  stream);
 }
 
-rocblaslt_status rocblaslt_groupedgemm_create(rocblaslt_groupedgemm*                groupedgemm,
+rocblaslt_status rocblaslt_groupedgemm_create(rocblaslt_gemm*                       groupedgemm,
                                               rocblaslt_handle                      handle,
                                               std::vector<rocblaslt_matmul_desc>&   matmul_descr,
                                               std::vector<const void*>&             alpha,
@@ -469,8 +469,9 @@ rocblaslt_status rocblaslt_groupedgemm_create(rocblaslt_groupedgemm*            
         // Allocate
         try
         {
-            *groupedgemm           = new _rocblaslt_groupedgemm();
-            (*groupedgemm)->handle = handle;
+            *groupedgemm                        = new _rocblaslt_gemm();
+            (*groupedgemm)->rocblaslt_gemm_type = _rocblaslt_gemm_type_enum::ROCBLASLT_GROUPED_GEMM;
+            (*groupedgemm)->handle              = handle;
             log_api(__func__, "groupedgemm[out]", *groupedgemm);
         }
         catch(const rocblaslt_status& status)
@@ -517,7 +518,7 @@ rocblaslt_status rocblaslt_groupedgemm_create(rocblaslt_groupedgemm*            
     }
 }
 
-rocblaslt_status rocblaslt_groupedgemm_destroy(const rocblaslt_groupedgemm groupedgemm)
+rocblaslt_status rocblaslt_groupedgemm_destroy(const rocblaslt_gemm groupedgemm)
 {
     if(groupedgemm == nullptr)
     {
@@ -538,12 +539,12 @@ rocblaslt_status rocblaslt_groupedgemm_destroy(const rocblaslt_groupedgemm group
     return rocblaslt_status_success;
 }
 
-rocblaslt_status rocblaslt_groupedgemm_run(rocblaslt_groupedgemm groupedgemm, hipStream_t stream)
+rocblaslt_status rocblaslt_groupedgemm_run(rocblaslt_gemm groupedgemm, hipStream_t stream)
 {
     return rocblaslt_groupedgemm_run_template(groupedgemm, stream);
 }
 
-rocblaslt_status rocblaslt_groupedgemm_makeArgument(rocblaslt_groupedgemm        groupedgemm,
+rocblaslt_status rocblaslt_groupedgemm_makeArgument(rocblaslt_gemm               groupedgemm,
                                                     const rocblaslt_matmul_algo* algo,
                                                     void*                        workspace,
                                                     hipStream_t                  stream)
