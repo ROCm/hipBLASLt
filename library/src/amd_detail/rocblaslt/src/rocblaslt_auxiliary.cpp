@@ -936,12 +936,12 @@ rocblaslt_status
     return rocblaslt_status_success;
 }
 
-rocblaslt_status rocblaslt_groupedgemm_algo_get_heuristic(
-    rocblaslt_gemm                    groupedgemm,
-    rocblaslt_matmul_preference       pref,
-    int                               requestedAlgoCount,
-    rocblaslt_matmul_heuristic_result heuristicResultsArray[],
-    int*                              returnAlgoCount)
+rocblaslt_status
+    rocblaslt_algo_get_heuristic(rocblaslt_gemm                    gemm,
+                                 rocblaslt_matmul_preference       pref,
+                                 int                               requestedAlgoCount,
+                                 rocblaslt_matmul_heuristic_result heuristicResultsArray[],
+                                 int*                              returnAlgoCount)
 {
     if(requestedAlgoCount < 1)
     {
@@ -951,8 +951,8 @@ rocblaslt_status rocblaslt_groupedgemm_algo_get_heuristic(
     rocblaslt_status status = rocblaslt_status_success;
     try
     {
-        status = getBestSolutionsGroupedGemm(
-            groupedgemm, pref, requestedAlgoCount, heuristicResultsArray, returnAlgoCount);
+        status = getBestSolutions(
+            gemm, pref, requestedAlgoCount, heuristicResultsArray, returnAlgoCount);
 
         log_api(__func__, "returnAlogCount", *returnAlgoCount);
         if(status != rocblaslt_status_success)

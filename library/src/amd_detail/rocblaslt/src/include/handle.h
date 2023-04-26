@@ -177,8 +177,8 @@ struct _rocblaslt_matmul_preference
 
 /********************************************************************************
  * \brief rocblaslt_gemm holds the description of the grouped gemm
- * It is initialized and destroyed with rocblaslt_groupedgemm_create()
- * and rocblaslt_groupedgemm_destroy() functions respectively.
+ * It is initialized and destroyed with rocblaslt_[grouped]gemm_create()
+ * and rocblaslt_ext_destroy() functions respectively.
  *******************************************************************************/
 
 enum _rocblaslt_gemm_type_enum
