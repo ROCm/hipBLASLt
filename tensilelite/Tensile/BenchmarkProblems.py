@@ -333,6 +333,13 @@ def benchmarkProblemType(problemTypeConfig, problemSizeGroupConfig, problemSizeG
                                  globalParameters["WorkingPath"], codeObjectFiles, resultsFileName,
                                  outFile)
 
+        # add SolutionIndex and SolutionNameMin into benchmark yaml
+        solutionMinNaming = Solution.getMinNaming(solutions)
+        for i in range(0, len(solutions)):
+            solution = solutions[i]
+            solution["SolutionIndex"] = i
+            solution["SolutionNameMin"] = Solution.getNameMin(solution, solutionMinNaming)
+
         # I think the size portion of this yaml could be removed,
         # but for now it's needed, so we update it even in the cache case
         LibraryIO.writeSolutions(solutionsFileName, benchmarkStep.problemSizes, benchmarkStep.biasTypeArgs,
