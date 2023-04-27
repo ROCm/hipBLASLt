@@ -54,7 +54,7 @@ foreach( exe ${sample_list_all} )
 
   if( CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     # GCC or hip-clang needs specific flags to turn on f16c intrinsics
-    target_compile_options( ${exe} PRIVATE -mf16c )
+    target_compile_options( ${exe} PRIVATE -mf16c -Wno-unused-result )
     target_compile_definitions( ${exe} PRIVATE ROCBLASLT_INTERNAL_API )
   endif( )
 endforeach( )

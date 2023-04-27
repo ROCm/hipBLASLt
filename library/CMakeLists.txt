@@ -1,5 +1,5 @@
 # ########################################################################
-# Copyright (C) 2022 Advanced Micro Devices, Inc.
+# Copyright (C) 2022-2023 Advanced Micro Devices, Inc.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -115,7 +115,7 @@ if( BUILD_WITH_TENSILE )
   target_compile_definitions(hipblaslt PRIVATE ${TENSILE_DEFINES} )
 endif()
 
-    target_compile_options(hipblaslt PRIVATE -Wno-unused-command-line-argument -Wall)
+    target_compile_options(hipblaslt PRIVATE -Wno-unused-command-line-argument -Werror)
     target_compile_definitions(hipblaslt PRIVATE ROCM_USE_FLOAT16 __HIP_PLATFORM_HCC__)
 else()
     target_compile_definitions(hipblaslt PRIVATE __HIP_PLATFORM_NVCC__)
