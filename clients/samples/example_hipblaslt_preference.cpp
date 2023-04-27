@@ -350,8 +350,8 @@ static void show_usage(char* argv[])
                  "enabled)\n"
               << "\t--timing \t\ttiming \t\tBechmark GPU kernel performance:0 or "
                  "1 (default is 1)\n"
-              << "\t--iters \t\titers \t\tIterations to run inside timing loop "
-                 "(default is 3)\n"
+              << "\t--bench_count\t\tbench_count \t\tNumber of benchmark runs (default is 3)\n"
+              << "\t--sync_count\t\tsync_count \t\tNumber of sync runs (default is 1)\n"
               << "\t--cold_iters \t\tcold_iters \tCold Iterations to run "
                  "before entering the timing loop (default is 0)\n"
               << "\t--ext \t\t\text \tuse Ext API\n"
@@ -389,6 +389,7 @@ static int parse_arguments(int                 argc,
                            bool&               validate,
                            bool&               timing,
                            int32_t&            request_solutions,
+                           int32_t&            sync_loop_count,
                            int32_t&            bench_loop_count,
                            int32_t&            cold_loop_count,
                            bool&               useExt)
@@ -601,7 +602,11 @@ static int parse_arguments(int                 argc,
                         return EXIT_FAILURE;
                     }
                 }
-                else if((arg == "--iters") && (i + 1 < argc))
+                else if((arg == "--sync_count") && (i + 1 < argc))
+                {
+                    sync_loop_count = atoi(argv[++i]);
+                }
+                else if((arg == "--bench_count") && (i + 1 < argc))
                 {
                     bench_loop_count = atoi(argv[++i]);
                 }
@@ -819,6 +824,7 @@ void test_hipblaslt(hipblasDatatype_t  in_out_datatype,
                     bool               verbose,
                     bool               timing,
                     int32_t            request_solutions,
+                    int32_t            sync_loop_count,
                     int32_t            bench_loop_count,
                     int32_t            cold_loop_count,
                     bool               useExt)
@@ -1146,24 +1152,28 @@ void test_hipblaslt(hipblasDatatype_t  in_out_datatype,
                 else
                     eventMs = get_time_us_sync(stream); // in microseconds
 
-                for(int loop = 0; loop < bench_loop_count; loop++)
+                for(int sync_loop = 0; sync_loop < sync_loop_count; sync_loop++)
                 {
-                    CHECK_HIPBLASLT_ERROR(hipblasLtMatmul(handle,
-                                                          matmul,
-                                                          &alpha,
-                                                          da,
-                                                          matA,
-                                                          db,
-                                                          matB,
-                                                          &beta,
-                                                          dc,
-                                                          matC,
-                                                          dd,
-                                                          matD,
-                                                          &heuristicResult[sol].algo,
-                                                          d_workspace,
-                                                          workspace_size,
-                                                          stream));
+                    for(int loop = 0; loop < bench_loop_count; loop++)
+                    {
+                        CHECK_HIPBLASLT_ERROR(hipblasLtMatmul(handle,
+                                                              matmul,
+                                                              &alpha,
+                                                              da,
+                                                              matA,
+                                                              db,
+                                                              matB,
+                                                              &beta,
+                                                              dc,
+                                                              matC,
+                                                              dd,
+                                                              matD,
+                                                              &heuristicResult[sol].algo,
+                                                              d_workspace,
+                                                              workspace_size,
+                                                              stream));
+                    }
+                    hipDeviceSynchronize();
                 }
 
                 if(GPU_TIMER)
@@ -1175,13 +1185,13 @@ void test_hipblaslt(hipblasDatatype_t  in_out_datatype,
                     eventMs = double(temp);
                     hipEventDestroy(start);
                     hipEventDestroy(stop);
-                    eventMs /= bench_loop_count;
+                    eventMs /= (bench_loop_count * sync_loop_count);
                     eventMs = eventMs * 1000;
                 }
                 else
                 {
                     eventMs = get_time_us_sync(stream) - eventMs;
-                    eventMs /= bench_loop_count;
+                    eventMs /= (bench_loop_count * sync_loop_count);
                     eventMs = eventMs / 1000;
                 }
             }
@@ -1197,9 +1207,13 @@ void test_hipblaslt(hipblasDatatype_t  in_out_datatype,
                 else
                     eventMs = get_time_us_sync(stream); // in microseconds
 
-                for(int loop = 0; loop < bench_loop_count; loop++)
+                for(int sync_loop = 0; sync_loop < sync_loop_count; sync_loop++)
                 {
-                    CHECK_HIPBLASLT_ERROR(hipblasLtExtRun(handleExt, stream));
+                    for(int loop = 0; loop < bench_loop_count; loop++)
+                    {
+                        CHECK_HIPBLASLT_ERROR(hipblasLtExtRun(handleExt, stream));
+                    }
+                    hipDeviceSynchronize();
                 }
 
                 if(GPU_TIMER)
@@ -1211,13 +1225,13 @@ void test_hipblaslt(hipblasDatatype_t  in_out_datatype,
                     eventMs = double(temp);
                     hipEventDestroy(start);
                     hipEventDestroy(stop);
-                    eventMs /= bench_loop_count;
+                    eventMs /= (bench_loop_count * sync_loop_count);
                     eventMs = eventMs * 1000;
                 }
                 else
                 {
                     eventMs = get_time_us_sync(stream) - eventMs;
-                    eventMs /= bench_loop_count;
+                    eventMs /= (bench_loop_count * sync_loop_count);
                     eventMs = eventMs / 1000;
                 }
             }
@@ -1484,6 +1498,7 @@ int main(int argc, char* argv[])
     int64_t lde = invalid_int, stride_e = invalid_int;
 
     int32_t batch_count       = BATCH_COUNT;
+    int32_t sync_loop_count   = 1;
     int32_t bench_loop_count  = BENCH_LOOP_COUNT;
     int32_t cold_loop_count   = COLD_LOOP_COUNT;
     int32_t request_solutions = 1;
@@ -1534,6 +1549,7 @@ int main(int argc, char* argv[])
                        validate,
                        timing,
                        request_solutions,
+                       sync_loop_count,
                        bench_loop_count,
                        cold_loop_count,
                        useExt))
@@ -1643,6 +1659,7 @@ int main(int argc, char* argv[])
                                        verbose,
                                        timing,
                                        request_solutions,
+                                       sync_loop_count,
                                        bench_loop_count,
                                        cold_loop_count,
                                        useExt);
@@ -1675,6 +1692,7 @@ int main(int argc, char* argv[])
                                       verbose,
                                       timing,
                                       request_solutions,
+                                      sync_loop_count,
                                       bench_loop_count,
                                       cold_loop_count,
                                       useExt);
@@ -1707,6 +1725,7 @@ int main(int argc, char* argv[])
                                           verbose,
                                           timing,
                                           request_solutions,
+                                          sync_loop_count,
                                           bench_loop_count,
                                           cold_loop_count,
                                           useExt);
