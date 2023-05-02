@@ -1325,6 +1325,11 @@ rocblaslt_status
         = std::static_pointer_cast<Tensile::ContractionGroupedInputs>(
             groupedgemm->groupedInputsPtr);
 
+    for(int i = 0; i < (*tensile_probs).gemms.size(); i++)
+    {
+        (*tensile_probs).gemms[i].setWorkspaceSize(pref->max_workspace_bytes);
+    }
+
     // Fallback to original kernels
     std::vector<std::shared_ptr<Tensile::ContractionSolution>> solutions_fallback;
     std::vector<bool>                                          useBias, actHPA, useScaleD;
