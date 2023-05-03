@@ -793,6 +793,9 @@ class ProblemSizes:
           [ExactList.convertLeadingDims(self.problemType, problemSize) for problemSize in self.ranges[i].problemSizes]
 
     self.problems = OrderedDict()
+    for sizeRange in self.ranges:
+      for rangeSize in sizeRange.problemSizes:
+        self.problems.update({Problem(rangeSize) : 1})
     for e in self.exacts:
         self.problems.update({e : 1})
     if globalParameters["SortProblems"]:
