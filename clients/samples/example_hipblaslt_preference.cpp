@@ -339,7 +339,7 @@ static void show_usage(char* argv[])
               << "\t--batch_count \t\tbatch \t\tGEMM_STRIDED argument batch count\n"
               << "\t--act \t\t\tact \t\tGEMM_STRIDED set activation type: relu "
                  "or gelu\n"
-              << "\t--grad \t\tgrad \t\tGEMM_STRIDED enable grad: 0 or 1 "
+              << "\t--grad \t\t\tgrad \t\tGEMM_STRIDED enable grad: 0 or 1 "
                  "(default is 0)\n"
               << "\t--use_e \t\tuse_e \t\tGEMM_STRIDED enable use_e: 0 or 1 "
                  "(default is 0)\n"
@@ -350,11 +350,11 @@ static void show_usage(char* argv[])
                  "enabled)\n"
               << "\t--timing \t\ttiming \t\tBechmark GPU kernel performance:0 or "
                  "1 (default is 1)\n"
-              << "\t--bench_count\t\tbench_count \t\tNumber of benchmark runs (default is 3)\n"
-              << "\t--sync_count\t\tsync_count \t\tNumber of sync runs (default is 1)\n"
+              << "\t--bench_count\t\tbench_count \tNumber of benchmark runs (default is 3)\n"
+              << "\t--sync_count\t\tsync_count \tNumber of sync runs (default is 1)\n"
               << "\t--cold_iters \t\tcold_iters \tCold Iterations to run "
                  "before entering the timing loop (default is 0)\n"
-              << "\t--ext \t\t\text \tuse Ext API\n"
+              << "\t--ext \t\t\text \t\tuse Ext API\n"
               << std::endl;
 }
 
