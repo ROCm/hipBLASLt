@@ -1071,6 +1071,8 @@ namespace Tensile
             auto s = TypeAbbrev(problem.biasType());
             if(problemType.useGradient)
             {
+                if(problem.biasSrc() == ContractionProblemGemm::TENSOR::D)
+                    s = TypeAbbrev(problem.computeType());
                 if(inputs.bias != nullptr)
                 {
                     const char* alpha[5] = {"A", "B", "C", "D", "E"};
