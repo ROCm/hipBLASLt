@@ -469,8 +469,7 @@ namespace Tensile
     template <bool T_Debug>
     KernelInvocation
         ContractionSolution::generateSingleCall(ContractionSolution::Problem const& problem,
-                                                ContractionInputs const&            inputs,
-                                                Hardware const&                     hardware) const
+                                                ContractionInputs const&            inputs) const
     {
         TENSILE_ASSERT_EXC(sizeMapping.workGroupMapping >= 0);
 
@@ -541,7 +540,6 @@ namespace Tensile
     KernelInvocation ContractionSolution::generateSingleCallGroupedGemm(
         std::vector<ContractionSolution::Problem> const& problems,
         ContractionSolution::GroupedInputs const&        inputs,
-        Hardware const&                                  hardware,
         KernelArguments&                                 h_args) const
     {
         TENSILE_ASSERT_EXC(sizeMapping.workGroupMapping >= 0);
@@ -637,8 +635,7 @@ namespace Tensile
 
     template <bool T_Debug>
     KernelInvocation ContractionSolution::generateBetaOnlyCall(Problem const&           problem,
-                                                               ContractionInputs const& inputs,
-                                                               Hardware const& hardware) const
+                                                               ContractionInputs const& inputs) const
     {
         TensorDescriptor const& c = problem.c();
         TensorDescriptor const& d = problem.d();
@@ -733,8 +730,7 @@ namespace Tensile
     template <bool T_Debug>
     KernelInvocation ContractionSolution::generateBetaOnlyCallGroupedGemm(
         std::vector<ContractionSolution::Problem> const& problems,
-        ContractionSolution::GroupedInputs const&        inputs,
-        Hardware const&                                  hardware) const
+        ContractionSolution::GroupedInputs const&        inputs) const
     {
         KernelInvocation rv;
 
@@ -898,7 +894,7 @@ namespace Tensile
 
     template <bool T_Debug>
     KernelInvocation ContractionSolution::generateOutputConversionCall(
-        Problem const& problem, ContractionInputs const& inputs, Hardware const& hardware) const
+        Problem const& problem, ContractionInputs const& inputs) const
     {
         KernelInvocation rv;
 
@@ -931,7 +927,7 @@ namespace Tensile
         }
 
         rv.kernelName
-            = outputConversionKernelName(problem, inputs, hardware, vw, sizeMapping.globalSplitU);
+            = outputConversionKernelName(problem, inputs, vw, sizeMapping.globalSplitU);
 
         rv.numWorkGroups.x = CeilDivide(wiX * wiY * wiZ, rv.workGroupSize.x * vw);
         rv.numWorkGroups.y = 1;
@@ -953,7 +949,6 @@ namespace Tensile
     KernelInvocation ContractionSolution::generateOutputConversionCallGroupedGemm(
         std::vector<ContractionSolution::Problem> const& problems,
         ContractionSolution::GroupedInputs const&        inputs,
-        Hardware const&                                  hardware,
         KernelArguments&                                 h_args) const
     {
         KernelInvocation rv;
@@ -1032,7 +1027,7 @@ namespace Tensile
         rv.numWorkItems.z  = rv.workGroupSize.z * rv.numWorkGroups.z;
 
         rv.kernelName = outputConversionKernelName(
-            problems[0], inputs.grouped[0], hardware, vw, sizeMapping.globalSplitU);
+            problems[0], inputs.grouped[0], vw, sizeMapping.globalSplitU);
 
         uint32_t workspaceOffsetInByte = 0;
         for(int idx = 0; idx < problems.size(); idx++)
@@ -1055,7 +1050,6 @@ namespace Tensile
 
     std::string ContractionSolution::outputConversionKernelName(Problem const&           problem,
                                                                 ContractionInputs const& inputs,
-                                                                Hardware const&          hardware,
                                                                 size_t                   vw,
                                                                 size_t                   gsu) const
     {
@@ -1141,7 +1135,7 @@ namespace Tensile
 
     template <bool T_Debug>
     KernelInvocation ContractionSolution::generateActivationOnlyCall(
-        Problem const& problem, ContractionInputs const& inputs, Hardware const& hardware) const
+        Problem const& problem, ContractionInputs const& inputs) const
     {
         TensorDescriptor const& d = problem.d();
 
@@ -1151,7 +1145,7 @@ namespace Tensile
 
         rv.args.reserve(512, 64);
 
-        rv.kernelName = activationOnlyKernelName(problem, inputs, hardware);
+        rv.kernelName = activationOnlyKernelName(problem, inputs);
 
         rv.workGroupSize.x = 256;
         rv.workGroupSize.y = 1;
@@ -1235,8 +1229,7 @@ namespace Tensile
     }
 
     std::string ContractionSolution::activationOnlyKernelName(Problem const&           problem,
-                                                              ContractionInputs const& inputs,
-                                                              Hardware const& hardware) const
+                                                              ContractionInputs const& inputs) const
     {
         std::string name = concatenate(
             "D", problem.cNames(), "_", DataTypeInfo::Get(problem.d().dataType()).abbrev);
@@ -1261,8 +1254,7 @@ namespace Tensile
 
     template <bool T_Debug>
     KernelInvocation ContractionSolution::generateReductionCall(Problem const&           problem,
-                                                                ContractionInputs const& inputs,
-                                                                Hardware const& hardware) const
+                                                                ContractionInputs const& inputs) const
     {
         TensorDescriptor const& c = problem.c();
         TensorDescriptor const& d = problem.d();
@@ -1297,7 +1289,7 @@ namespace Tensile
         }
         mt0 = threads / mt1;
 
-        rv.kernelName = outputReductionKernelName(problem, inputs, hardware, mt0, mt1, vw);
+        rv.kernelName = outputReductionKernelName(problem, inputs, mt0, mt1, vw);
 
         rv.workGroupSize.x = threads;
         rv.workGroupSize.y = 1;
@@ -1329,7 +1321,6 @@ namespace Tensile
 
     std::string ContractionSolution::outputReductionKernelName(Problem const&           problem,
                                                                ContractionInputs const& inputs,
-                                                               Hardware const&          hardware,
                                                                size_t                   mt0,
                                                                size_t                   mt1,
                                                                size_t                   vw) const
@@ -1451,22 +1442,22 @@ namespace Tensile
         if(sizeMapping.globalSplitU > 1 && sizeMapping.globalAccumulation != 2)
         {
             if(debug)
-                rv.push_back(generateBetaOnlyCall<true>(problem, inputs, hardware));
+                rv.push_back(generateBetaOnlyCall<true>(problem, inputs));
             else
-                rv.push_back(generateBetaOnlyCall<false>(problem, inputs, hardware));
+                rv.push_back(generateBetaOnlyCall<false>(problem, inputs));
         }
 
         if(debug)
-            rv.push_back(generateSingleCall<true>(problem, inputs, hardware));
+            rv.push_back(generateSingleCall<true>(problem, inputs));
         else
-            rv.push_back(generateSingleCall<false>(problem, inputs, hardware));
+            rv.push_back(generateSingleCall<false>(problem, inputs));
 
         if(sizeMapping.globalAccumulation)
         {
             if(debug)
-                rv.push_back(generateOutputConversionCall<true>(problem, inputs, hardware));
+                rv.push_back(generateOutputConversionCall<true>(problem, inputs));
             else
-                rv.push_back(generateOutputConversionCall<false>(problem, inputs, hardware));
+                rv.push_back(generateOutputConversionCall<false>(problem, inputs));
         }
 
         if(((sizeMapping.globalSplitU > 1 && (!sizeMapping.globalAccumulation))
@@ -1474,9 +1465,9 @@ namespace Tensile
            && (problem.activationType() != ActivationType::None))
         {
             if(debug)
-                rv.push_back(generateActivationOnlyCall<true>(problem, inputs, hardware));
+                rv.push_back(generateActivationOnlyCall<true>(problem, inputs));
             else
-                rv.push_back(generateActivationOnlyCall<false>(problem, inputs, hardware));
+                rv.push_back(generateActivationOnlyCall<false>(problem, inputs));
         }
 
         // The reduction of A is done in ConversionKernel when GSU > 1 in MultipleBuffer mode
@@ -1491,9 +1482,9 @@ namespace Tensile
             if(inputs.bias != nullptr)
             {
                 if(debug)
-                    rv.push_back(generateReductionCall<true>(problem, inputs, hardware));
+                    rv.push_back(generateReductionCall<true>(problem, inputs));
                 else
-                    rv.push_back(generateReductionCall<false>(problem, inputs, hardware));
+                    rv.push_back(generateReductionCall<false>(problem, inputs));
             }
         }
 
@@ -1587,24 +1578,24 @@ namespace Tensile
         // if(sizeMapping.globalSplitU > 1 && sizeMapping.globalAccumulation != 2)
         // {
         //     if(debug)
-        //         rv.push_back(generateBetaOnlyCallGroupedGemm<true>(problems, inputs, hardware));
+        //         rv.push_back(generateBetaOnlyCallGroupedGemm<true>(problems, inputs));
         //     else
-        //         rv.push_back(generateBetaOnlyCallGroupedGemm<false>(problems, inputs, hardware));
+        //         rv.push_back(generateBetaOnlyCallGroupedGemm<false>(problems, inputs));
         // }
 
         if(debug)
-            rv.push_back(generateSingleCallGroupedGemm<true>(problems, inputs, hardware, h_args));
+            rv.push_back(generateSingleCallGroupedGemm<true>(problems, inputs, h_args));
         else
-            rv.push_back(generateSingleCallGroupedGemm<false>(problems, inputs, hardware, h_args));
+            rv.push_back(generateSingleCallGroupedGemm<false>(problems, inputs, h_args));
 
         if(sizeMapping.globalAccumulation)
         {
             if(debug)
                 rv.push_back(generateOutputConversionCallGroupedGemm<true>(
-                    problems, inputs, hardware, h_args));
+                    problems, inputs, h_args));
             else
                 rv.push_back(generateOutputConversionCallGroupedGemm<false>(
-                    problems, inputs, hardware, h_args));
+                    problems, inputs, h_args));
         }
 
         uint32_t workspaceOffsetInByte = 0;
@@ -1704,6 +1695,29 @@ namespace Tensile
         }
 
         return size;
+    }
+
+    size_t ContractionSolution::requiredWorkspaceSizeGroupedGemm(std::vector<Problem> const& problems) const
+    {
+        size_t sizeInByte = 0;
+
+        for(int i = 0; i < problems.size(); i++)
+        {
+            auto problem = problems[i];
+            sizeInByte += requiredWorkspaceSize(problem);
+        }
+        ContractionGroupedInputs inputs;
+        for(int i = 0; i < problems.size(); i++)
+        {
+            ContractionInputs unit;
+            inputs.grouped.push_back(unit);
+        }
+        auto h_args = KernelArguments(false);
+        generateSingleCallGroupedGemm<false>(problems, inputs, h_args);
+        generateOutputConversionCallGroupedGemm<false>(problems, inputs, h_args);
+        sizeInByte += h_args.size();
+
+        return sizeInByte;
     }
 
     float ContractionSolution::computeGranularity(float x)

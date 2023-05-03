@@ -95,12 +95,23 @@ namespace Tensile
             return m_workspaceSize;
         }
 
+        void setWorkspaceSizeGroupedGemm(size_t size)
+        {
+            m_workspaceSizeGroupedGemm = size;
+        }
+
+        size_t workspaceSizeGroupedGemm() const
+        {
+            return m_workspaceSizeGroupedGemm;
+        }
+
     protected:
         friend class ContractionProblemGemm;
         std::vector<TensorDescriptor> m_tensors;
         std::vector<std::string>      m_names;
 
         size_t m_workspaceSize;
+        size_t m_workspaceSizeGroupedGemm;
     };
 
     /**

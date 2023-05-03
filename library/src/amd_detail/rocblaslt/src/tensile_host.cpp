@@ -1334,6 +1334,7 @@ rocblaslt_status
     std::vector<std::shared_ptr<Tensile::ContractionSolution>> solutions_fallback;
     std::vector<bool>                                          useBias, actHPA, useScaleD;
     std::vector<Tensile::ActivationType>                       actType;
+    std::vector<size_t>                                        workspaceSizeGroupedGemm;
     bool                                                       normal_gemm = 1;
     for(int i = 0; i < (*tensile_probs).gemms.size(); i++)
     {
@@ -1360,6 +1361,8 @@ rocblaslt_status
         }
         solutions_fallback = library->findTopSolutionsGroupedGemm(
             (*tensile_probs).gemms, *hardware, requestedAlgoCount);
+        for(int i = 0; i < solutions_fallback.size(); i++)
+            workspaceSizeGroupedGemm.push_back(solutions_fallback[i]->requiredWorkspaceSizeGroupedGemm((*tensile_probs).gemms));
         for(int i = 0; i < (*tensile_probs).gemms.size(); i++)
         {
             (*tensile_probs).gemms[i].setUseBias(useBias[i]);
@@ -1371,6 +1374,8 @@ rocblaslt_status
 
     auto solutions = library->findTopSolutionsGroupedGemm(
         (*tensile_probs).gemms, *hardware, requestedAlgoCount - solutions_fallback.size());
+    for(int i = 0; i < solutions.size(); i++)
+        workspaceSizeGroupedGemm.push_back(solutions[i]->requiredWorkspaceSizeGroupedGemm((*tensile_probs).gemms));
     solutions.insert(solutions.begin(), solutions_fallback.begin(), solutions_fallback.end());
 
     _convertToHeuristicResultArray(solutions,
@@ -1380,6 +1385,10 @@ rocblaslt_status
                                    pref->max_workspace_bytes,
                                    (*tensile_probs).gemms[0],
                                    0);
+    for(size_t i = 0; i < *returnAlgoCount; i++)
+    {
+        heuristicResultsArray[i].workspaceSize = workspaceSizeGroupedGemm[i];
+    }
 
     return rocblaslt_status_success;
 }

@@ -121,9 +121,12 @@ namespace Tensile
                 if(!(*solution->hardwarePredicate)(hardware))
                     return std::shared_ptr<MySolution>();
 
+                size_t ws = (*solution).requiredWorkspaceSizeGroupedGemm(problems);
+
                 for(int idx = 0; idx < problems.size(); idx++)
                 {
                     auto problem = problems[idx];
+                    problem.setWorkspaceSizeGroupedGemm(ws);
                     if(!(*solution->problemPredicate)(problem))
                         return std::shared_ptr<MySolution>();
                 }
