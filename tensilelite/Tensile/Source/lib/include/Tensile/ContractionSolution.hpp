@@ -172,6 +172,8 @@ namespace Tensile
    * Calculate required workspace size.
    */
         size_t       requiredWorkspaceSize(Problem const& problem) const;
+        size_t       requiredWorkspaceSizeGroupedGemm(std::vector<Problem> const& problems) const;
+
         static float computeGranularity(float x);
 
         Granularities computeGranularities(
@@ -233,24 +235,20 @@ namespace Tensile
 
         template <bool T_Debug>
         KernelInvocation generateSingleCall(Problem const&           problem,
-                                            ContractionInputs const& inputs,
-                                            Hardware const&          hardware) const;
+                                            ContractionInputs const& inputs) const;
 
         template <bool T_Debug>
         KernelInvocation generateSingleCallGroupedGemm(std::vector<Problem> const& problems,
                                                        GroupedInputs const&        inputs,
-                                                       Hardware const&             hardware,
                                                        KernelArguments &           h_args) const;
 
         template <bool T_Debug>
         KernelInvocation generateBetaOnlyCall(Problem const&           problem,
-                                              ContractionInputs const& inputs,
-                                              Hardware const&          hardware) const;
+                                              ContractionInputs const& inputs) const;
 
         template <bool T_Debug>
         KernelInvocation generateBetaOnlyCallGroupedGemm(std::vector<Problem> const& problems,
-                                                         GroupedInputs const&        inputs,
-                                                         Hardware const&             hardware) const;
+                                                         GroupedInputs const&        inputs) const;
 
         std::string betaOnlyKernelName(Problem const& problem) const;
 
@@ -262,38 +260,31 @@ namespace Tensile
 
         template <bool T_Debug>
         KernelInvocation generateOutputConversionCall(Problem const&           problem,
-                                                      ContractionInputs const& inputs,
-                                                      Hardware const&          hardware) const;
+                                                      ContractionInputs const& inputs) const;
 
         template <bool T_Debug>
         KernelInvocation generateOutputConversionCallGroupedGemm(std::vector<Problem> const& problems,
                                                                  GroupedInputs const&        inputs,
-                                                                 Hardware const&             hardware,
                                                                  KernelArguments &           h_args) const;
 
         std::string outputConversionKernelName(Problem const&           problem,
                                                ContractionInputs const& inputs,
-                                               Hardware const&          hardware,
                                                size_t                   vw,
                                                size_t                   gsu) const;
 
         template <bool T_Debug>
         KernelInvocation generateActivationOnlyCall(Problem const&           problem,
-                                                    ContractionInputs const& inputs,
-                                                    Hardware const&          hardware) const;
+                                                    ContractionInputs const& inputs) const;
 
         std::string activationOnlyKernelName(Problem const&           problem,
-                                             ContractionInputs const& inputs,
-                                             Hardware const&          hardware) const;
+                                             ContractionInputs const& inputs) const;
 
         template <bool T_Debug>
         KernelInvocation generateReductionCall(Problem const&           problem,
-                                               ContractionInputs const& inputs,
-                                               Hardware const&          hardware) const;
+                                               ContractionInputs const& inputs) const;
 
         std::string outputReductionKernelName(Problem const&           problem,
                                               ContractionInputs const& inputs,
-                                              Hardware const&          hardware,
                                               size_t                   mt0,
                                               size_t                   mt1,
                                               size_t                   vw) const;
