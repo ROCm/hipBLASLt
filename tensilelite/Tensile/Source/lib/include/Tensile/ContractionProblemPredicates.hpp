@@ -1233,8 +1233,11 @@ namespace Tensile
                 virtual bool operator()(ContractionProblemGemm const& problem) const override
                 {
                     size_t rs = reductionSize(problem, value);
-                    return problem.d().totalLogicalElements() * value + rs
-                           <= problem.workspaceSize();
+                    if(problem.groupedGemm())
+                        return problem.workspaceSizeGroupedGemm() <= problem.workspaceSize();
+                    else
+                        return problem.d().totalLogicalElements() * value + rs
+                            <= problem.workspaceSize();
                 }
 
                 virtual bool debugEval(ContractionProblemGemm const& problem,
@@ -1244,8 +1247,11 @@ namespace Tensile
 
                     size_t rs = reductionSize(problem, value);
 
-                    stream << *this << ": (" << problem.d().totalLogicalElements() << " * " << value
-                           << " + " << rs << " <= " << problem.workspaceSize() << ") == " << rv;
+                    if(problem.groupedGemm())
+                        stream << *this << ": (" << problem.workspaceSizeGroupedGemm() << " <= " << problem.workspaceSize() << ") == " << rv;
+                    else
+                        stream << *this << ": (" << problem.d().totalLogicalElements() << " * " << value
+                               << " + " << rs << " <= " << problem.workspaceSize() << ") == " << rv;
 
                     return rv;
                 }
