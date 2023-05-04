@@ -605,9 +605,9 @@ class KernelWriter(metaclass=abc.ABCMeta):
         for j in range(max(self.states.numReadsIterCoalescedA,self.states.numReadsIterCoalescedB)):
           packItems += packINtems.pop(0)
 
-      macIterItem = macIterCode.flatitems()
+      macIterItems = macIterCode.flatitems()
       # pop the first code which is s_nop 1 for packing
-      item = macIterItem.pop(0) if isinstance(macIterItem[0], SNop) else None
+      item = macIterItems.pop(0) if isinstance(macIterItems[0], SNop) else None
 
       numMfmaPerIter = self.states.numMfmaPerIter
       curPackIdx = 0
@@ -652,7 +652,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
             iterCode.add(VMovB32(dst="v%u"%(tmpVgpr), src="0x0", comment="valu operation to have different priority"))
             self.vgprPool.checkIn(tmpVgpr)
           iterCode.add(SSetPrior(prior=3, comment="Raise priority while processing macs"))
-        item = macIterItem.pop(0)
+        item = macIterItems.pop(0)
         iterCode.add(item)
       while macIterItems:
         iterCode.add(macIterItems.pop(0))
