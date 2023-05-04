@@ -191,7 +191,7 @@ namespace {
         static constexpr auto datatype = tohipblasDataType<DType>();
     public:
         GEMMRunner(std::size_t m, std::size_t n, std::size_t k)
-        : bufA(m * k), bufB(n * k), bufC(m * n), bufD(m * n), workspace(MaxWorkspaceSize) {
+        : m(m), n(n), k(n), bufA(m * k), bufB(n * k), bufC(m * n), bufD(m * n), workspace(MaxWorkspaceSize) {
             CHECK_HIPBLASLT_ERROR(hipblasLtCreate(&handle));
             CHECK_HIPBLASLT_ERROR(hipblasLtMatmulDescCreate(&matmulDesc, HIPBLASLT_COMPUTE_F32, HIPBLAS_R_32F));
             CHECK_HIPBLASLT_ERROR(hipblasLtMatmulPreferenceCreate(&matmulPref));
@@ -265,7 +265,7 @@ namespace {
         }
 
         std::size_t numElementsProcess() const override {
-            return 0;
+            return 2 * m * n * k;
         }
 
     private:
@@ -384,7 +384,7 @@ int main(int argc, char **argv) {
         po::options_description desc("hipBLASLt CU-masked stream example");
         desc.add_options()
             ("help,h", "Help screen")
-            ("datatype,d", po::value<std::string>()->default_value("f32"), "Data type for GEMM")
+            ("datatype,d", po::value<std::string>()->default_value("f32"), "Data type for GEMM, f32, f16 or b16")
             ("verbose,v", po::value<bool>()->default_value(false)->zero_tokens(), "Verbose output")
             ("m,m", po::value<std::size_t>()->default_value(1024), "M dimension of GEMM")
             ("n,n", po::value<std::size_t>()->default_value(1024), "N dimension of GEMM")
@@ -397,6 +397,12 @@ int main(int argc, char **argv) {
         po::store(po::parse_command_line(argc, argv, desc), vm);
         po::notify(vm);
         const auto verbose = vm.at("verbose").as<bool>();
+
+        if (vm.count("help")) {
+            std::cout << desc;
+            return EXIT_SUCCESS;
+        }
+
         hipblasDatatype_t datatype = HIPBLAS_R_32F;
 
         if (vm.count("datatype")) {
@@ -502,7 +508,7 @@ int main(int argc, char **argv) {
             float dur{};
             CHECK_HIP_ERROR(hipEventElapsedTime(&dur, beg, end));
             const auto numRuns = numBench * numSync;
-            std::cout << "\tPerf: " << std::to_string(flops<T>(numRuns * (2 * m * n * k + mRunner->numElementsProcess()), dur )) << " Tflops, " << std::to_string(dur / numRuns) << " ms\n";
+            std::cout << "\tPerf: " << std::to_string(flops<T>(numRuns * (runner->numElementsProcess() + mRunner->numElementsProcess()), dur )) << " Tflops, " << std::to_string(dur / numRuns) << " ms\n";
             return dur;
         };
 
