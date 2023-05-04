@@ -309,8 +309,9 @@ namespace Tensile
 
             bool sourceKernel = false;
 
-            int    globalAccumulation    = 0;
-            size_t workspaceSizePerElemC = 0;
+            int    globalAccumulation       = 0;
+            size_t workspaceSizePerElemC    = 0;
+            size_t workspaceSizePerElemBias = 0;
 
             bool activationFused = true;
         };

@@ -360,7 +360,7 @@ class ProblemPredicate(Properties.Predicate):
 
             return cls(tag, index=index, value=value)
 
-        if key == "_WorkspaceSizePerElemC" and value > 0:
+        if key == "WorkspaceCheck" and (not all(val == 0 for val in value)):
             return cls("WorkspaceCheck", index=0, value=value)
 
         if key.startswith('Assert'):
@@ -449,6 +449,7 @@ class SizeMapping:
                  'sourceKernel',
                  'globalAccumulation',
                  'workspaceSizePerElemC',
+                 'workspaceSizePerElemBias',
                  'activationFused'
                  ]
 
@@ -459,20 +460,21 @@ class SizeMapping:
             globalAccum = 1
         if d['_GlobalAccumulation'] == 'MultipleBuffer':
             globalAccum = 2
-        return cls(workGroup             = d['WorkGroup'],
-                   macroTile             = cls.ReadOriginalMacroTile(d),
-                   threadTile            = d['ThreadTile'],
-                   workGroupMapping      = d['WorkGroupMapping'],
-                   staggerU              = d['StaggerU'] if 'StaggerU' in d else 0,
-                   depthU                = d['DepthU'],
-                   globalSplitU          = d['GlobalSplitU'],
-                   staggerStrideShift    = d['_staggerStrideShift'] if '_staggerStrideShift' in d else 0,
-                   packBatchDims         = 0,
-                   magicDivAlg           = d.get('MagicDivAlg', 1),
-                   sourceKernel          = d['KernelLanguage'] == 'Source',
-                   globalAccumulation    = globalAccum,
-                   workspaceSizePerElemC = d['_WorkspaceSizePerElemC'],
-                   activationFused       = d['ActivationFused']
+        return cls(workGroup                = d['WorkGroup'],
+                   macroTile                = cls.ReadOriginalMacroTile(d),
+                   threadTile               = d['ThreadTile'],
+                   workGroupMapping         = d['WorkGroupMapping'],
+                   staggerU                 = d['StaggerU'] if 'StaggerU' in d else 0,
+                   depthU                   = d['DepthU'],
+                   globalSplitU             = d['GlobalSplitU'],
+                   staggerStrideShift       = d['_staggerStrideShift'] if '_staggerStrideShift' in d else 0,
+                   packBatchDims            = 0,
+                   magicDivAlg              = d.get('MagicDivAlg', 1),
+                   sourceKernel             = d['KernelLanguage'] == 'Source',
+                   globalAccumulation       = globalAccum,
+                   workspaceSizePerElemC    = d['_WorkspaceSizePerElemC'],
+                   workspaceSizePerElemBias = d['_WorkspaceSizePerElemBias'],
+                   activationFused          = d['ActivationFused']
                    )
 
     @classmethod

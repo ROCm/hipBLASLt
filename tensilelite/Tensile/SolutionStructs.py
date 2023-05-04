@@ -1874,6 +1874,20 @@ class Solution(collections.abc.Mapping):
         elif state["_GlobalAccumulation"] == 'MultipleBuffer':
           state["_WorkspaceSizePerElemC"] = computeBytes * state["GlobalSplitU"]
 
+    if("_WorkspaceSizePerElemBias" not in state):
+      state["_WorkspaceSizePerElemBias"] = 0
+      if state["ProblemType"]["UseBias"] and state["ProblemType"]["Gradient"]:
+        computeBytes = state["ProblemType"]["ComputeDataType"].numBytes()
+        if state["ProblemType"]["BiasSrc"] == "D" and (state["ProblemType"]["ComputeDataType"] != state["ProblemType"]["DestDataType"]):
+          state["_WorkspaceSizePerElemBias"] = computeBytes
+        elif state["GlobalSplitU"] > 1:
+          if state["_GlobalAccumulation"] == 'SingleBuffer':
+            state["_WorkspaceSizePerElemBias"] = computeBytes
+          elif state["_GlobalAccumulation"] == 'MultipleBuffer':
+            state["_WorkspaceSizePerElemBias"] = computeBytes * state["GlobalSplitU"]
+
+    state["WorkspaceCheck"] = [state["_WorkspaceSizePerElemC"], state["_WorkspaceSizePerElemBias"]]
+
     if state["VectorStore"] == -1:
         state["_VectorStore"] = 1 # default, may be changed if needed to generate a valid kernel
 

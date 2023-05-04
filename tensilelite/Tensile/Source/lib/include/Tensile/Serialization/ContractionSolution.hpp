@@ -95,6 +95,7 @@ namespace Tensile
 
                 iot::mapRequired(io, "globalAccumulation", s.globalAccumulation);
                 iot::mapRequired(io, "workspaceSizePerElemC", s.workspaceSizePerElemC);
+                iot::mapRequired(io, "workspaceSizePerElemBias", s.workspaceSizePerElemBias);
 
                 iot::mapOptional(io, "activationFused", s.activationFused);
             }

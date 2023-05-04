@@ -634,8 +634,9 @@ namespace Tensile
     }
 
     template <bool T_Debug>
-    KernelInvocation ContractionSolution::generateBetaOnlyCall(Problem const&           problem,
-                                                               ContractionInputs const& inputs) const
+    KernelInvocation
+        ContractionSolution::generateBetaOnlyCall(Problem const&           problem,
+                                                  ContractionInputs const& inputs) const
     {
         TensorDescriptor const& c = problem.c();
         TensorDescriptor const& d = problem.d();
@@ -893,8 +894,9 @@ namespace Tensile
     }
 
     template <bool T_Debug>
-    KernelInvocation ContractionSolution::generateOutputConversionCall(
-        Problem const& problem, ContractionInputs const& inputs) const
+    KernelInvocation
+        ContractionSolution::generateOutputConversionCall(Problem const&           problem,
+                                                          ContractionInputs const& inputs) const
     {
         KernelInvocation rv;
 
@@ -926,8 +928,7 @@ namespace Tensile
                 vw = 2;
         }
 
-        rv.kernelName
-            = outputConversionKernelName(problem, inputs, vw, sizeMapping.globalSplitU);
+        rv.kernelName = outputConversionKernelName(problem, inputs, vw, sizeMapping.globalSplitU);
 
         rv.numWorkGroups.x = CeilDivide(wiX * wiY * wiZ, rv.workGroupSize.x * vw);
         rv.numWorkGroups.y = 1;
@@ -1134,8 +1135,9 @@ namespace Tensile
     }
 
     template <bool T_Debug>
-    KernelInvocation ContractionSolution::generateActivationOnlyCall(
-        Problem const& problem, ContractionInputs const& inputs) const
+    KernelInvocation
+        ContractionSolution::generateActivationOnlyCall(Problem const&           problem,
+                                                        ContractionInputs const& inputs) const
     {
         TensorDescriptor const& d = problem.d();
 
@@ -1253,8 +1255,9 @@ namespace Tensile
     }
 
     template <bool T_Debug>
-    KernelInvocation ContractionSolution::generateReductionCall(Problem const&           problem,
-                                                                ContractionInputs const& inputs) const
+    KernelInvocation
+        ContractionSolution::generateReductionCall(Problem const&           problem,
+                                                   ContractionInputs const& inputs) const
     {
         TensorDescriptor const& c = problem.c();
         TensorDescriptor const& d = problem.d();
@@ -1591,11 +1594,11 @@ namespace Tensile
         if(sizeMapping.globalAccumulation)
         {
             if(debug)
-                rv.push_back(generateOutputConversionCallGroupedGemm<true>(
-                    problems, inputs, h_args));
+                rv.push_back(
+                    generateOutputConversionCallGroupedGemm<true>(problems, inputs, h_args));
             else
-                rv.push_back(generateOutputConversionCallGroupedGemm<false>(
-                    problems, inputs, h_args));
+                rv.push_back(
+                    generateOutputConversionCallGroupedGemm<false>(problems, inputs, h_args));
         }
 
         uint32_t workspaceOffsetInByte = 0;
@@ -1681,23 +1684,24 @@ namespace Tensile
         {
             if(problem.biasSrc() == ContractionProblemGemm::TENSOR::A)
             {
-                size += problem.freeSizeA(0) * sizeMapping.workspaceSizePerElemC;
+                size += problem.freeSizeA(0) * sizeMapping.workspaceSizePerElemBias;
             }
             else if(problem.biasSrc() == ContractionProblemGemm::TENSOR::B)
             {
-                size += problem.freeSizeB(0) * sizeMapping.workspaceSizePerElemC;
+                size += problem.freeSizeB(0) * sizeMapping.workspaceSizePerElemBias;
             }
             else if(problem.biasSrc() == ContractionProblemGemm::TENSOR::D
                     && (sizeMapping.workspaceSizePerElemC == 0))
             {
-                size += problem.d().totalLogicalElements() * problem.computeTypeElementSize();
+                size += problem.d().totalLogicalElements() * sizeMapping.workspaceSizePerElemBias;
             }
         }
 
         return size;
     }
 
-    size_t ContractionSolution::requiredWorkspaceSizeGroupedGemm(std::vector<Problem> const& problems) const
+    size_t ContractionSolution::requiredWorkspaceSizeGroupedGemm(
+        std::vector<Problem> const& problems) const
     {
         size_t sizeInByte = 0;
 

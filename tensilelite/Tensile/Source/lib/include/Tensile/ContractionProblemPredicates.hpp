@@ -1194,11 +1194,11 @@ namespace Tensile
                     HasIndex = true,
                     HasValue = true
                 };
-                size_t index;
-                size_t value;
+                size_t             index;
+                std::array<int, 2> value;
 
                 WorkspaceCheck() = default;
-                WorkspaceCheck(size_t index, size_t value)
+                WorkspaceCheck(size_t index, std::array<int, 2> value)
                     : index(index)
                     , value(value)
                 {
@@ -1209,22 +1209,24 @@ namespace Tensile
                     return "WorkspaceCheck";
                 }
 
-                static size_t reductionSize(ContractionProblemGemm const& problem, size_t value)
+                static size_t reductionSize(ContractionProblemGemm const& problem,
+                                            std::array<int, 2>            value)
                 {
                     size_t reductionSize = 0;
                     // 2d reduction
                     if(problem.useGradient() && problem.useBias())
                     {
-                        if(problem.biasSrc() == ContractionProblemGemm::TENSOR::D && (value == 0))
+                        if(problem.biasSrc() == ContractionProblemGemm::TENSOR::D
+                           && (value[0] == 0))
                             reductionSize += problem.d().totalLogicalElements()
                                              * problem.computeTypeElementSize();
                         else if(problem.biasSrc() == ContractionProblemGemm::TENSOR::A)
                         {
-                            reductionSize += problem.freeSizeA(0) * value;
+                            reductionSize += problem.freeSizeA(0) * value[1];
                         }
                         else if(problem.biasSrc() == ContractionProblemGemm::TENSOR::B)
                         {
-                            reductionSize += problem.freeSizeB(0) * value;
+                            reductionSize += problem.freeSizeB(0) * value[1];
                         }
                     }
                     return reductionSize;
@@ -1236,8 +1238,8 @@ namespace Tensile
                     if(problem.groupedGemm())
                         return problem.workspaceSizeGroupedGemm() <= problem.workspaceSize();
                     else
-                        return problem.d().totalLogicalElements() * value + rs
-                            <= problem.workspaceSize();
+                        return problem.d().totalLogicalElements() * value[0] + rs
+                               <= problem.workspaceSize();
                 }
 
                 virtual bool debugEval(ContractionProblemGemm const& problem,
@@ -1248,10 +1250,12 @@ namespace Tensile
                     size_t rs = reductionSize(problem, value);
 
                     if(problem.groupedGemm())
-                        stream << *this << ": (" << problem.workspaceSizeGroupedGemm() << " <= " << problem.workspaceSize() << ") == " << rv;
+                        stream << *this << ": (" << problem.workspaceSizeGroupedGemm()
+                               << " <= " << problem.workspaceSize() << ") == " << rv;
                     else
-                        stream << *this << ": (" << problem.d().totalLogicalElements() << " * " << value
-                               << " + " << rs << " <= " << problem.workspaceSize() << ") == " << rv;
+                        stream << *this << ": (" << problem.d().totalLogicalElements() << " * "
+                               << value[0] << " + " << rs << " <= " << problem.workspaceSize()
+                               << ") == " << rv;
 
                     return rv;
                 }
