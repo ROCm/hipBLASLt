@@ -23,8 +23,9 @@
 
 add_executable( example_hipblaslt_preference example_hipblaslt_preference.cpp)
 add_executable( example_hipblaslt_groupedgemm example_hipblaslt_groupedgemm.cpp)
+add_executable( example_hipblaslt_cumaskedstream example_hipblaslt_cumaskedstream.cpp)
 
-set( sample_list_tensile example_hipblaslt_preference example_hipblaslt_groupedgemm)
+set( sample_list_tensile example_hipblaslt_preference example_hipblaslt_groupedgemm example_hipblaslt_cumaskedstream)
 
 set( sample_list_all ${sample_list_tensile})
 set( sample_list_hip_device ${sample_list_tensile} )
@@ -62,3 +63,8 @@ endforeach( )
 foreach( exe ${sample_list_hip_device} )
   target_link_libraries( ${exe} PRIVATE hip::device )
 endforeach( )
+
+find_package(Boost REQUIRED COMPONENTS program_options)
+target_include_directories(example_hipblaslt_cumaskedstream SYSTEM PRIVATE ${Boost_INCLUDE_DIR})
+target_link_libraries(example_hipblaslt_cumaskedstream PRIVATE Boost::program_options)
+set_property(TARGET example_hipblaslt_cumaskedstream PROPERTY CMAKE_CXX_STANDARD 17 APPEND)
