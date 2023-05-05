@@ -93,7 +93,8 @@ namespace Tensile
         }
 
         virtual SolutionSet<MySolution> findAllSolutions(MyProblem const& problem,
-                                                         Hardware const&  hardware) const override
+                                                         Hardware const&  hardware,
+                                                         bool hardwareOnly = false) const override
         {
             bool debug = Debug::Instance().printPropertyEvaluation();
 
@@ -106,7 +107,7 @@ namespace Tensile
                 if(debug)
                     std::cout << row->description() << std::endl;
 
-                auto rowSolutions = row->findAllSolutions(problem, hardware);
+                auto rowSolutions = row->findAllSolutions(problem, hardware, hardwareOnly);
                 rv.insert(rowSolutions.begin(), rowSolutions.end());
 
                 if(debug)

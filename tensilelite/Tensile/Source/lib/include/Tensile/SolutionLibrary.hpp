@@ -85,7 +85,8 @@ namespace Tensile
    */
         virtual std::shared_ptr<MySolution> findBestSolution(MyProblem const& problem,
                                                              Hardware const&  hardware,
-                                                             double* fitness = nullptr) const = 0;
+                                                             double* fitness = nullptr) const
+            = 0;
 
         virtual std::shared_ptr<MySolution> findBestSolution(std::vector<MyProblem> const& problems,
                                                              Hardware const&               hardware,
@@ -101,7 +102,9 @@ namespace Tensile
    * May return an empty set if no such object exists.
    */
         virtual SolutionSet<MySolution> findAllSolutions(MyProblem const& problem,
-                                                         Hardware const&  hardware) const = 0;
+                                                         Hardware const&  hardware,
+                                                         bool hardwareOnly = false) const
+            = 0;
 
         virtual std::string type() const        = 0;
         virtual std::string description() const = 0;

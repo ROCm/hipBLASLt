@@ -154,9 +154,10 @@ namespace Tensile
             return rv;
         }
         virtual SolutionSet<MySolution> findAllSolutions(MyProblem const& problem,
-                                                         Hardware const&  hardware) const override
+                                                         Hardware const&  hardware,
+                                                         bool hardwareOnly = false) const override
         {
-            return library->findAllSolutions(problem, hardware);
+            return library->findAllSolutions(problem, hardware, hardwareOnly);
         }
 
         virtual SolutionVector<MySolution> findTopSolutions(MyProblem const& problem,
