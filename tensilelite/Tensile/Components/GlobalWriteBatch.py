@@ -303,7 +303,7 @@ class GlobalWriteBatchWriter:
           self.localLoadIssued += 1
       self.biasLoadIssued.append(len(loadedDataBias))
 
-      if self.kernel["ProblemType"]["UseScaleD"]:# and (self.kernel["GlobalSplitU"] == 1):
+      if self.kernel["ProblemType"]["UseScaleD"] and (self.kernel["GlobalSplitU"] == 1):
         module.add(addrCalc.emitLdChange(self.kernel, self.ss, 'ScaleD', self.edge, self.beta, mask, (elementIdx == 0), self.tmpVgpr, self.tmpSgpr, addrScaleDVgpr, self.addrScaleD))
         if dataScaleD not in loadedDataScaleD:
           # Shift right several vgprs for cvt ops if needed
@@ -578,7 +578,7 @@ class GlobalWriteBatchWriter:
           loadECnt = elementIdx + 1
           waitLoadCnt += loadECnt
           waitLoadCntStrList.append("%d (load E)"%loadECnt)
-        if self.kernel["ProblemType"]["UseScaleD"]:
+        if self.kernel["ProblemType"]["UseScaleD"] and (self.kernel["GlobalSplitU"] == 1):
           waitLoadCnt += self.scaleDLoadIssued[elementIdx]
           waitLoadCntStrList.append("%d (scaleD)"%self.scaleDLoadIssued[elementIdx])
         # Calculate local loads
