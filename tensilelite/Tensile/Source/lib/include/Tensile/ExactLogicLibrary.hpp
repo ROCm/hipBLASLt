@@ -87,7 +87,8 @@ namespace Tensile
         }
 
         virtual SolutionSet<MySolution> findAllSolutions(MyProblem const& problem,
-                                                         Hardware const&  hardware) const override
+                                                         Hardware const&  hardware,
+                                                         bool hardwareOnly) const override
         {
             SolutionSet<MySolution> rv;
 
@@ -95,7 +96,8 @@ namespace Tensile
             {
                 if(row.first(problem, hardware))
                 {
-                    auto rowSolutions = row.second->findAllSolutions(problem, hardware);
+                    auto rowSolutions
+                        = row.second->findAllSolutions(problem, hardware, hardwareOnly);
                     rv.insert(rowSolutions.begin(), rowSolutions.end());
                 }
             }

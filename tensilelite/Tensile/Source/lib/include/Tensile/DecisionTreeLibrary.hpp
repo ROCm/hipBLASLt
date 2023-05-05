@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022 Advanced Micro Devices, Inc. All rights reserved.
+ * Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -81,8 +81,13 @@ namespace Tensile
         }
 
         virtual SolutionSet<MySolution> findAllSolutions(MyProblem const& problem,
-                                                         Hardware const&  hardware) const override
+                                                         Hardware const&  hardware,
+                                                         bool hardwareOnly = false) const override
         {
+            if(hardwareOnly)
+            {
+                throw std::runtime_error("Dicision tree does not support hardwareOnly mode.");
+            }
             typename Forest::Transform transform
                 = [&](Element library) -> std::shared_ptr<MySolution> {
                 return library->findBestSolution(problem, hardware);

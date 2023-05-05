@@ -142,22 +142,40 @@ namespace Tensile
         }
 
         virtual SolutionSet<MySolution> findAllSolutions(MyProblem const& problem,
-                                                         Hardware const&  hardware) const override
+                                                         Hardware const&  hardware,
+                                                         bool hardwareOnly = false) const override
         {
-
-            auto result = this->findBestSolution(problem, hardware);
-
             bool debug = Debug::Instance().printPredicateEvaluation();
+
+            bool useSolution = false;
+            if(solution)
+            {
+                if(debug)
+                {
+                    solution->hardwarePredicate->debugEval(hardware, std::cout);
+                    if(!hardwareOnly)
+                        solution->problemPredicate->debugEval(problem, std::cout);
+                }
+
+                if((*solution->hardwarePredicate)(hardware)
+                   && (hardwareOnly || (*solution->problemPredicate)(problem)))
+                    useSolution = true;
+            }
+            else if(debug)
+            {
+                std::cout << " (empty library)";
+            }
+
             if(debug)
             {
-                if(result)
+                if(useSolution)
                     std::cout << " (match)";
                 else
                     std::cout << " (no match)";
             }
 
-            if(result)
-                return SolutionSet<MySolution>({result});
+            if(useSolution)
+                return SolutionSet<MySolution>({solution});
 
             return SolutionSet<MySolution>();
         }

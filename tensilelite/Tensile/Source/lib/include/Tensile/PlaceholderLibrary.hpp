@@ -118,14 +118,15 @@ namespace Tensile
          * May return an empty set if no such object exists.
          */
         virtual SolutionSet<MySolution> findAllSolutions(MyProblem const& problem,
-                                                         Hardware const&  hardware) const override
+                                                         Hardware const&  hardware,
+                                                         bool hardwareOnly = false) const override
         {
             if(!library)
             {
                 loadPlaceholderLibrary();
             }
 
-            auto solutions = library->findAllSolutions(problem, hardware);
+            auto solutions = library->findAllSolutions(problem, hardware, hardwareOnly);
 
             for(auto& solution : solutions)
             {
