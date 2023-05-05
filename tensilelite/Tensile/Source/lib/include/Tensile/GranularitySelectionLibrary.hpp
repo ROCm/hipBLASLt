@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022 Advanced Micro Devices, Inc. All rights reserved.
+ * Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -161,7 +161,8 @@ namespace Tensile
         }
 
         virtual SolutionSet<MySolution> findAllSolutions(MyProblem const& problem,
-                                                         Hardware const&  hardware) const override
+                                                         Hardware const&  hardware,
+                                                         bool hardwareOnly = false) const override
         {
             bool debug = Debug::Instance().printPropertyEvaluation();
 
@@ -174,7 +175,7 @@ namespace Tensile
                     std::cout << row.second->description() << ": ";
                 }
 
-                if((*row.second->problemPredicate)(problem)
+                if((hardwareOnly || (*row.second->problemPredicate)(problem))
                    && (*row.second->hardwarePredicate)(hardware))
                 {
                     rv.insert(row.second);
@@ -190,8 +191,11 @@ namespace Tensile
 
                 if(debug)
                 {
-                    row.second->problemPredicate->debugEval(problem, std::cout);
-                    std::cout << std::endl;
+                    if(!hardwareOnly)
+                    {
+                        row.second->problemPredicate->debugEval(problem, std::cout);
+                        std::cout << std::endl;
+                    }
                     row.second->hardwarePredicate->debugEval(hardware, std::cout);
                     std::cout << std::endl;
                 }
