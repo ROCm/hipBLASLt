@@ -396,12 +396,38 @@ validGEMMTypes = [ ('H','H','H'), ('S','S','S'), ('D','D','D'), ('C','C','C'), (
 HPATypes = [ ('H','S','S'), ('H','H','S'), ('B','B','S'), ('B','S','S'), ('I8','I','I'), ('4xi8','I','I'), ('I8','I','S'), ('I8','I8','S')]
 
 validParameters = {
-    # original global read to lds is interlace, [w0,w1,w2,w3,w0,w1,w2,w3,w0,w1,w2,w3,w0,w1,w2,w3]
-    # when WaveSeparateGlobalRead is enabled, LDS is divided to number of waves part.
-    # each wave load a block memory to lds,     [w0,w0,w0,w0,w1,w1,w1,w1,w2,w2,w2,w2,w3,w3,w3,w3]
-    # -1 is selected by logic, 0 disable, 1 enable.
-    "WaveSeparateGlobalReadA":    [ 0, 1 ],
-    "WaveSeparateGlobalReadB":    [ 0, 1 ],
+    # 0: Global read is along parallel direction in thread level,
+    #     each load instruction stride whole threads.
+    #                         ----> perp
+    #       | [w0,  w0,  w1,w1,w2,w2,w3,w3,  w0,  w0, w1,w1,w2,w2,w3,w3]
+    #       | [ t0,t32] [                 ] [ t0,t32] [                ]
+    #  para | [ t1,t33] [  wave 1,2,3     ] [ t1,t33] [ wave 1,2,3     ]
+    #       | [ .., ..] [                 ] [ .., ..] [                ]
+    #       | [t31,t63] [                 ] [t31,t63] [                ]
+    #       V [-load_1]                      [-load_2]
+    #
+    # 1: Each wave load a block of memory,
+    #     each load instruction stride 64 threads.
+    #                         ----> perp
+    #         [ w0, w0,  w0, w0, w1,w1,w1,w1, w2,w2,w2,w2, w3,w3,w3,w3]
+    #       | [ t0,t32][ t0,t32]
+    #  para | [ t1,t33][ t1,t33]
+    #       | [ .., ..][ .., ..]
+    #       | [t31,t63][t31,t63]
+    #       V [-load_1][-load_2]
+    #
+    #
+    # 2: Each load instruction spread threads evenly in the perp direction
+    #                         ----> perp
+    #       |  [w0, w1, w2, w3, w0, w1, w2, w3, w0, w1, w2, w3, w0, w1, w2, w3]
+    #       |  [t0 ]           [t0 ]           [t32]           [t32]
+    #  para |  [t1 ]           [t1 ]           [t33]           [t33]
+    #       |  [.. ]           [.. ]           [.. ]           [.. ]
+    #       |  [t31]           [t31]           [t63]           [t63]
+    #       V [load_1]        [load_2]        [load_1]        [load_2]
+    #
+    "WaveSeparateGlobalReadA":    [ 0, 1, 2 ],
+    "WaveSeparateGlobalReadB":    [ 0, 1, 2 ],
 
     # PrefetchGlobalRead = 1:
     # Requires 2X LDS space, and VGPRs for buffering data on way into LDS
