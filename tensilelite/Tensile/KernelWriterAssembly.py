@@ -2498,7 +2498,7 @@ class KernelWriterAssembly(KernelWriter):
       module.add(vectorStaticDivideAndRemainder(qReg, rReg, dividendReg, divisor, tmpVgprRes))
 
 
-    if kernel["WaveSeparateGlobalRead%s"%tc]:
+    if kernel["WaveSeparateGlobalRead%s"%tc] == 1:
       with self.allocTmpSgpr(1) as tmpSgprInfo:
         tmpSgpr = tmpSgprInfo.idx
         module.add(VReadfirstlaneB32(dst=sgpr(tmpSgpr), src=vgpr("Serial"), comment="WaveIdxWavefrontWidth"))
@@ -2507,6 +2507,13 @@ class KernelWriterAssembly(KernelWriter):
             comment="Each wave loads continuous lsp(%u)*nrp(%u) columns" % (kernel[tP["lsp"]], tP["nrp"])))
         module.add(VAddU32(dst=vgpr(qReg), src0=sgpr(tmpSgpr), src1=vgpr(qReg), \
             comment="Add back to column index"))
+      self.vgprPool.checkIn(dividendReg)
+      self.vgprPool.checkIn(dummy)
+    elif kernel["WaveSeparateGlobalRead%s"%tc] == 2:
+      module.add(VLShiftRightB32(vgpr(dividendReg), hex(log2(kernel["WavefrontSize"])), vgpr("Serial"), "WaveID"))
+      module.add(VMovB32(vgpr(dummy), kernel["NumLoadsPerpendicular%s"%tc]*kernel["NumThreads"]//kernel["WavefrontSize"], "Global Read Wave: add back to cloumn index"))
+      module.add(VMulLOU32(vgpr(qReg), vgpr(dummy), vgpr(qReg), "Global Read Wave: add back to cloumn index"))
+      module.add(VAddU32(vgpr(qReg), vgpr(dividendReg), vgpr(qReg), "Global Read Wave: add back to cloumn index"))
       self.vgprPool.checkIn(dividendReg)
       self.vgprPool.checkIn(dummy)
 
@@ -2626,8 +2633,13 @@ class KernelWriterAssembly(KernelWriter):
     validBytesPerLoad  = kernel[tP["lsc"]] * kernel[tP["lsp"]] * numBytesPerElement
     maxBytesPerLoad    = kernel["NumThreads"] * tP["glvw"] * numBytesPerElement
 
-    if kernel["WaveSeparateGlobalRead%s"%tc]:
+    if kernel["WaveSeparateGlobalRead%s"%tc] == 1:
       validBytesPerLoad *= (kernel["NumThreads"] // self.states.kernel["WavefrontSize"])
+    elif kernel["WaveSeparateGlobalRead%s"%tc] == 2:
+      if kernel["ProblemType"]["TLU%s"%tc]:
+        validBytesPerLoad *= (kernel["DepthU"] // kernel["NumLoadsPerpendicular%s"%tc] // (kernel["NumThreads"] // kernel["WavefrontSize"]))
+      else:
+        validBytesPerLoad *= (kernel["MacroTile%s"%tc] // kernel["NumLoadsPerpendicular%s"%tc] // (kernel["NumThreads"] // kernel["WavefrontSize"]))
 
     assert (validBytesPerLoad <= maxBytesPerLoad)
     assert (kernel[tP["lsc"]] * kernel[tP["lsp"]] % tP["glvw"] == 0)

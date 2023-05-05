@@ -1387,8 +1387,10 @@ class Solution(collections.abc.Mapping):
       state["LSC%s"%tc] = int(math.ceil(float(depthU) / state["NumLoadsCoalesced%s"%tc]))
       state["LSP%s"%tc] = state["MacroTile%s"%tc] // state["NumLoadsPerpendicular%s"%tc]
 
-    if state["WaveSeparateGlobalRead%s"%tc]:
+    if state["WaveSeparateGlobalRead%s"%tc] == 1:
       state["LSP%s"%tc] = roundupRatio(state["LSP%s"%tc], state["NumThreads"] // state["WavefrontSize"])
+    elif state["WaveSeparateGlobalRead%s"%tc] == 2:
+      state["LSP%s"%tc] = state["NumThreads"] // state["WavefrontSize"]
 
     return True
 
