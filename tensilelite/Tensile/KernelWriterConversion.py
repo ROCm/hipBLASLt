@@ -267,7 +267,7 @@ class KernelWriterConversion(KernelWriterBase):
     ########################################
     # kernel start
     kStr += self.endLine
-    kStr += "  if (id >= (arg.size%s" % self.indexChars[0]
+    kStr += "  if (id*NUM_ELEMENT_LOAD >= (arg.size%s" % self.indexChars[0]
     for i in range(1, problemType["NumIndicesC"]):
       kStr += " * arg.size%s" % self.indexChars[i]
     kStr += "))%s" % self.endLine
