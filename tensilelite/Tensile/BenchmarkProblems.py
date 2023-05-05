@@ -1,6 +1,6 @@
 ################################################################################
 #
-# Copyright (C) 2022 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -320,6 +320,13 @@ def benchmarkProblemType(problemTypeConfig, problemSizeGroupConfig, problemSizeG
 
             print1("# Actual Solutions: {} / {} after KernelWriter\n" \
                     .format(len(solutions), prevCount ))
+
+            # add SolutionIndex and SolutionNameMin into benchmark yaml
+            solutionMinNaming = Solution.getMinNaming(solutions)
+            for i in range(0, len(solutions)):
+                solution = solutions[i]
+                solution["SolutionIndex"] = i
+                solution["SolutionNameMin"] = Solution.getNameMin(solution, solutionMinNaming)
         else:
             solutions = None
             print1("# Using cached solution data")
@@ -332,13 +339,6 @@ def benchmarkProblemType(problemTypeConfig, problemSizeGroupConfig, problemSizeG
                                  benchmarkStep.activationArgs, conProblemType,
                                  globalParameters["WorkingPath"], codeObjectFiles, resultsFileName,
                                  outFile)
-
-        # add SolutionIndex and SolutionNameMin into benchmark yaml
-        solutionMinNaming = Solution.getMinNaming(solutions)
-        for i in range(0, len(solutions)):
-            solution = solutions[i]
-            solution["SolutionIndex"] = i
-            solution["SolutionNameMin"] = Solution.getNameMin(solution, solutionMinNaming)
 
         # I think the size portion of this yaml could be removed,
         # but for now it's needed, so we update it even in the cache case
