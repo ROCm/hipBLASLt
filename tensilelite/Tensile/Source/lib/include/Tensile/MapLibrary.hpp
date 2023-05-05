@@ -118,14 +118,15 @@ namespace Tensile
         }
 
         virtual SolutionSet<MySolution> findAllSolutions(MyProblem const& problem,
-                                                         Hardware const&  hardware) const override
+                                                         Hardware const&  hardware,
+                                                         bool hardwareOnly = false) const override
         {
             auto library = lookup(problem, hardware);
 
             if(library == nullptr)
                 return SolutionSet<MySolution>();
 
-            return library->findAllSolutions(problem, hardware);
+            return library->findAllSolutions(problem, hardware, hardwareOnly);
         }
 
         std::shared_ptr<Property<MyProblem, Key>> property;
