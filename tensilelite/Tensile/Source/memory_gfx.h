@@ -79,6 +79,7 @@ using float32x2_t = NativeVector<float, 2>::type;
 using float32x4_t = NativeVector<float, 4>::type;
 
 using int32x4_t = NativeVector<int, 4>::type;
+using int32x2_t = NativeVector<int, 2>::type;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -168,6 +169,24 @@ __device__ float32x4_t
                                       uint32_t  voffset,
                                       uint32_t  soffset,
                                       int32_t cache_op) __asm("llvm.amdgcn.raw.buffer.load.v4f32");
+
+// 4 bytes
+__device__ int32_t
+    llvm_amdgcn_s_buffer_load_i32(int32x4_t buffer_resource,
+                                  uint32_t  soffset,
+                                  int32_t cache_op) __asm("llvm.amdgcn.s.buffer.load.i32");
+
+// 8 bytes
+__device__ int32x2_t
+    llvm_amdgcn_s_buffer_load_i32x2(int32x4_t buffer_resource,
+                                    uint32_t  soffset,
+                                    int32_t cache_op) __asm("llvm.amdgcn.s.buffer.load.v2i32");
+
+// 16 bytes
+__device__ int32x4_t
+    llvm_amdgcn_s_buffer_load_i32x4(int32x4_t buffer_resource,
+                                    uint32_t  soffset,
+                                    int32_t cache_op) __asm("llvm.amdgcn.s.buffer.load.v4i32");
 
 ///
 /// Store
@@ -380,6 +399,99 @@ struct buffer_load<AccessType, 16, cache_op>
         BufferResource buffer_rsc(base_ptr, num_records);
         float32x4_t    ret = llvm_amdgcn_raw_buffer_load_f32x4(
             buffer_rsc, voffset, __builtin_amdgcn_readfirstlane(soffset), cache_op);
+        return *reinterpret_cast<AccessType*>(&ret);
+    }
+};
+
+template <
+    /// Fragment type to store loaded data
+    typename AccessType,
+    /// The bytes of loading
+    int LoadBytes,
+    /// Cache operation
+    CacheOperation::Kind cache_op = CacheOperation::Always>
+struct s_buffer_load;
+
+template <typename AccessType, CacheOperation::Kind cache_op>
+struct s_buffer_load<AccessType, 4, cache_op>
+{
+    INLINEDEVICE
+    s_buffer_load() {}
+
+    INLINEDEVICE
+    s_buffer_load(AccessType& D,
+                  void const* base_ptr,
+                  uint32_t    soffset)
+    {
+        BufferResource buffer_rsc(base_ptr);
+        int32_t    ret = llvm_amdgcn_s_buffer_load_i32(
+            buffer_rsc, __builtin_amdgcn_readfirstlane(soffset), cache_op);
+        D = *reinterpret_cast<AccessType*>(&ret);
+    }
+
+    INLINEDEVICE
+    AccessType load(void const* base_ptr,
+                    uint32_t    soffset)
+    {
+        BufferResource buffer_rsc(base_ptr);
+        int32_t    ret = llvm_amdgcn_s_buffer_load_i32(
+            buffer_rsc, __builtin_amdgcn_readfirstlane(soffset), cache_op);
+        return *reinterpret_cast<AccessType*>(&ret);
+    }
+};
+
+template <typename AccessType, CacheOperation::Kind cache_op>
+struct s_buffer_load<AccessType, 8, cache_op>
+{
+    INLINEDEVICE
+    s_buffer_load() {}
+
+    INLINEDEVICE
+    s_buffer_load(AccessType& D,
+                  void const* base_ptr,
+                  uint32_t    soffset)
+    {
+        BufferResource buffer_rsc(base_ptr);
+        int32x2_t    ret = llvm_amdgcn_s_buffer_load_i32x2(
+            buffer_rsc, __builtin_amdgcn_readfirstlane(soffset), cache_op);
+        D = *reinterpret_cast<AccessType*>(&ret);
+    }
+
+    INLINEDEVICE
+    AccessType load(void const* base_ptr,
+                    uint32_t    soffset)
+    {
+        BufferResource buffer_rsc(base_ptr);
+        int32x2_t    ret = llvm_amdgcn_s_buffer_load_i32x2(
+            buffer_rsc, __builtin_amdgcn_readfirstlane(soffset), cache_op);
+        return *reinterpret_cast<AccessType*>(&ret);
+    }
+};
+
+template <typename AccessType, CacheOperation::Kind cache_op>
+struct s_buffer_load<AccessType, 16, cache_op>
+{
+    INLINEDEVICE
+    s_buffer_load() {}
+
+    INLINEDEVICE
+    s_buffer_load(AccessType& D,
+                  void const* base_ptr,
+                  uint32_t    soffset)
+    {
+        BufferResource buffer_rsc(base_ptr);
+        int32x4_t    ret = llvm_amdgcn_s_buffer_load_i32x4(
+            buffer_rsc, __builtin_amdgcn_readfirstlane(soffset), cache_op);
+        D = *reinterpret_cast<AccessType*>(&ret);
+    }
+
+    INLINEDEVICE
+    AccessType load(void const* base_ptr,
+                    uint32_t    soffset)
+    {
+        BufferResource buffer_rsc(base_ptr);
+        int32x4_t    ret = llvm_amdgcn_s_buffer_load_i32x4(
+            buffer_rsc, __builtin_amdgcn_readfirstlane(soffset), cache_op);
         return *reinterpret_cast<AccessType*>(&ret);
     }
 };
