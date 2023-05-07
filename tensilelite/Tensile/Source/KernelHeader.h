@@ -35,6 +35,8 @@
 #include <hip/hip_runtime.h>
 
 #include "ReductionTemplate.h"
+#include "memory_gfx.h"
+
 
 __device__ inline int GenDot4(int a, int b, int c)
 {

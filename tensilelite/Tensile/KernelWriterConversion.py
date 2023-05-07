@@ -81,13 +81,13 @@ class KernelWriterConversion(KernelWriterBase):
       kStr += "  " + ptrCStr + " * " + bStr + "E;" + self.endLine
     kStr += "  " + ptrStr + " * " + bStr + "D;" + self.endLine
     kStr += "  " + self.datatype + " * W;" + self.endLine
-    kStr += "  " + ptrStr + " const * " + bStr + "C;" + self.endLine
+    kStr += "  " + ptrStr + " * " + bStr + "C;" + self.endLine
 
     # bias
     if self.state["ProblemType"]["UseBias"]:
       if (not self.state["ProblemType"]["Gradient"]):
         biasPtrStr = self.state["ProblemType"]["BiasDataType"].toDevice(self.language)
-        kStr += "  " + biasPtrStr + " const * " + "Bias;" + self.endLine
+        kStr += "  " + biasPtrStr + " * " + "Bias;" + self.endLine
       elif self.state["ProblemType"]["Gradient"] and (self.state["ProblemType"]["BiasSrc"] == "A" or self.state["ProblemType"]["BiasSrc"] == "B"):
         biasPtrStr = self.state["ProblemType"]["BiasDataType"].toDevice(self.language)
         kStr += "  " + biasPtrStr + "* " + "Bias;" + self.endLine
@@ -95,11 +95,11 @@ class KernelWriterConversion(KernelWriterBase):
     # interface: ScaleD GSU>1 GSUA "MUL"
     if self.state["ProblemType"]["UseScaleD"]:
       scaleDPtrStr = self.state["ProblemType"]["ComputeDataType"].toDevice(self.language)
-      kStr += "  " + scaleDPtrStr + " const * " + "ScaleD;" + self.endLine
+      kStr += "  " + scaleDPtrStr + " * " + "ScaleD;" + self.endLine
 
     # alpha & beta
-    kStr += "  %s const alpha;%s" % (self.state["ProblemType"]["ComputeDataType"].toDevice(self.language), self.endLine)
-    kStr += "  %s const beta;%s" % (self.state["ProblemType"]["ComputeDataType"].toDevice(self.language), self.endLine)
+    kStr += "  %s alpha;%s" % (self.state["ProblemType"]["ComputeDataType"].toDevice(self.language), self.endLine)
+    kStr += "  %s beta;%s" % (self.state["ProblemType"]["ComputeDataType"].toDevice(self.language), self.endLine)
 
     # activation
     activationCDataType = self.state["ProblemType"]["ActivationComputeDataType"]
@@ -108,9 +108,9 @@ class KernelWriterConversion(KernelWriterBase):
       activationCDataType = self.state["ProblemType"]["ComputeDataType"] if self.state["ProblemType"]["ActivationHPA"] else \
                             self.state["ProblemType"]["DestDataType"]
       for name in self.state["ProblemType"]["ActivationType"].getAdditionalArgStringList():
-        kStr += "  %s const %s;%s" % (activationCDataType.toDevice(self.language), name, self.endLine)
+        kStr += "  %s %s;%s" % (activationCDataType.toDevice(self.language), name, self.endLine)
       if self.state["ProblemType"]["ActivationType"] == 'all':
-        kStr += "  %s const activationType;%s" % (enumName, self.endLine)
+        kStr += "  %s activationType;%s" % (enumName, self.endLine)
 
     # strides
     firstStrideCD = 1
@@ -119,20 +119,20 @@ class KernelWriterConversion(KernelWriterBase):
     lastStrideC = self.state["ProblemType"]["NumIndicesC"]
     if self.state["ProblemType"]["UseE"]:
       for i in range(firstStrideCD, lastStrideC):
-        kStr += "  unsigned int const strideE%s;%s" % (self.indexChars[i], self.endLine)
+        kStr += "  unsigned int strideE%s;%s" % (self.indexChars[i], self.endLine)
     for i in range(firstStrideCD, lastStrideC):
-      kStr += "  unsigned int const strideD%s;%s" % (self.indexChars[i], self.endLine)
+      kStr += "  unsigned int strideD%s;%s" % (self.indexChars[i], self.endLine)
     for i in range(firstStrideCD, lastStrideC):
-      kStr += "  unsigned int const strideW%s;%s" % (self.indexChars[i], self.endLine)
+      kStr += "  unsigned int strideW%s;%s" % (self.indexChars[i], self.endLine)
     for i in range(firstStrideCD, lastStrideC):
-      kStr += "  unsigned int const strideC%s;%s" % (self.indexChars[i], self.endLine)
+      kStr += "  unsigned int strideC%s;%s" % (self.indexChars[i], self.endLine)
 
     # sizes
     for i in range(0, self.state["ProblemType"]["NumIndicesC"]):
       if i < (self.state["ProblemType"]["NumIndicesC"] - 1):
-        kStr += "  unsigned int const size%s;%s" % (self.indexChars[i], self.endLine)
+        kStr += "  unsigned int size%s;%s" % (self.indexChars[i], self.endLine)
       else:
-        kStr += "  unsigned int const size%s;%s" % (self.indexChars[i], self.endLine)
+        kStr += "  unsigned int size%s;%s" % (self.indexChars[i], self.endLine)
 
     # argument structure end
     kStr += "};" + self.endLine
@@ -262,7 +262,16 @@ class KernelWriterConversion(KernelWriterBase):
       kStr += "      right = middle;" + self.endLine
       kStr += "  }" + self.endLine
       kStr += "  id = id - wiLeft;"  + self.endLine
-      kStr += "  argument_%s arg = argsPtr[left-1];" % ( self.kernelName ) + self.endLine
+
+      # kStr += "  argument_%s arg = argsPtr[left-1];" % ( self.kernelName ) + self.endLine
+      kStr += "  argument_%s arg;" % ( self.kernelName ) + self.endLine
+      kStr += "  int loadsInBytes = 0;" + self.endLine
+      kStr += "  for(; loadsInBytes + 16 <= sizeof(argument_%s); loadsInBytes += 16)" % ( self.kernelName ) + self.endLine
+      kStr += "    s_buffer_load<float4, sizeof(float4)>(*((float4*) &arg + loadsInBytes/16), argsPtr+left-1, loadsInBytes);" + self.endLine
+      kStr += "  for(; loadsInBytes + 8 <= sizeof(argument_%s); loadsInBytes += 8)" % ( self.kernelName ) + self.endLine
+      kStr += "    s_buffer_load<float2, sizeof(float2)>(*((float2*) &arg + loadsInBytes/8), argsPtr+left-1, loadsInBytes);" + self.endLine
+      kStr += "  for(; loadsInBytes + 4 <= sizeof(argument_%s); loadsInBytes += 4)" % ( self.kernelName ) + self.endLine
+      kStr += "    s_buffer_load<float1, sizeof(float1)>(*((float1*) &arg + loadsInBytes/4), argsPtr+left-1, loadsInBytes);" + self.endLine
 
     ########################################
     # kernel start
@@ -358,7 +367,7 @@ class KernelWriterConversion(KernelWriterBase):
     if self.state["ProblemType"]["UseBias"] and self.state["ProblemType"]["Gradient"] and self.state["ProblemType"]["BiasSrc"] == "D":
       kStr += "  auto idxW_ori = idxW;%s"%self.endLine
     loadTypeStr = "float%s" % ( "" if self.num_dword_load == 1 else self.num_dword_load)
-    storeTypeStr = "float%s" % ( "" if self.num_dword_store == 1 else self.num_dword_store)
+    storeTypeStr = "float%s" % (self.num_dword_store) if self.num_dword_store >= 1 else destTypeStr
 
     #Bias A/B
     if self.state["ProblemType"]["UseBias"] and self.state["ProblemType"]["Gradient"] and (self.state["ProblemType"]["BiasSrc"] == "A" or self.state["ProblemType"]["BiasSrc"] == "B"):
@@ -389,7 +398,8 @@ class KernelWriterConversion(KernelWriterBase):
     #Load GSU D buffer
     kStr += "  %s temp[NUM_GSU];" % loadTypeStr + self.endLine
     for gsuIdx in range(self.state["GlobalSplitU"]):
-      kStr += "  temp[%d] = *((%s*)(arg.W+idxW));%s" % (gsuIdx, loadTypeStr, self.endLine)
+      # kStr += "  temp[%d] = *((%s*)(arg.W+idxW));%s" % (gsuIdx, loadTypeStr, self.endLine)
+      kStr += "  buffer_load<%s, sizeof(%s), CacheOperation::Kind::Always>(temp[%d], arg.W, idxW * sizeof(%s), 0);%s" % (loadTypeStr, loadTypeStr, gsuIdx, self.datatype, self.endLine)
       kStr += "  idxW  += strideW;" + self.endLine
     kStr += self.endLine
 
@@ -491,10 +501,8 @@ class KernelWriterConversion(KernelWriterBase):
     for vIdx in range(self.num_dword_load):
       kStr += "  %s[%d] = (%s)%s[%d];%s" % (resultStr, vIdx, destTypeStr, accumStr, vIdx, self.endLine)
 
-    if self.num_elements_load > 1:
-      kStr += "  *(%s *)(arg.D+idxD) = *(%s *)%s;%s" % (storeTypeStr, storeTypeStr, resultStr, self.endLine)
-    else:
-      kStr += "  arg.D[idxD] = (%s)(%s[0]);%s" % (destTypeStr, resultStr, self.endLine)
+    # kStr += "  *(%s *)(arg.D+idxD) = *(%s *)%s;%s" % (storeTypeStr, storeTypeStr, resultStr, self.endLine)
+    kStr += "  buffer_store<%s, sizeof(%s), CacheOperation::Kind::Always>(*(%s *)%s, arg.D, idxD * sizeof(%s), 0);%s" % (storeTypeStr, storeTypeStr, storeTypeStr, resultStr, destTypeStr, self.endLine)
 
     ########################################
     # end
