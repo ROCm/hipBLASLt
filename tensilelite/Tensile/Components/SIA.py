@@ -249,7 +249,7 @@ def getLocalWriteMFMAStart(writer, kernel, tensorParametersA, tensorParametersB,
     else:
         # for 1LDSB, we have to issue localwrites after localreads
         if writer.states.numVgprBuffer == kernel["LoopIters"]:
-            if writer.states.numReadPerVectorA != 1 or writer.states.numReadPerVectorB !=1:
+            if (writer.states.numReadPerVectorA != 1 or writer.states.numReadPerVectorB !=1) and not writer.states.numVgprBufferPack == kernel["LoopIters"]:
             # fp16 or bf16, we read 1 element to vgprBuffer the other element to tempVgpr.
             # since each iteration shares same tempVgpr, only read-to-vgprBuffer can
             # be scheduled in the front of loop.

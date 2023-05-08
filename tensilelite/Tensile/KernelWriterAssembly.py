@@ -443,37 +443,39 @@ class KernelWriterAssembly(KernelWriter):
     module.addComment0("ValuA/B   Xn=PLR buffer idx,  In=InnerUnroll idx")
     # PLR index: from X0 to X<LoopIters-1> (at most) -> VGPRs will be duplicated LoopIters times (at most)
     # eg, if LoopIters = 4, there would be at most 4*VGPRs
-    # PLR = kernel["PrefetchLocalRead"] if kernel["PrefetchLocalRead"] < kernel["LoopIters"] else kernel["LoopIters"] - 1
-    PLR = min(kernel["PrefetchLocalRead"], kernel["LoopIters"]-1)
-    numBi = PLR+1
+    PLR = self.states.numVgprBuffer
     # double the number of VgprValue if self.states.vgprValuDouble is true
     if self.states.vgprValuDouble:
-      numBi *= 2
+      PLR *= 2
     ri = 0
     if self.states.a.numVgprValu > 0: # Do not generate vgprValuA if numVgprValuA is 0
-      for bi in range(0,numBi): # buffer indices
+      for bi in range(0,PLR): # buffer indices
         for iui in range(0, kernel["InnerUnroll"]):
           module.add(RegSet("v", "vgprValuA_X%u_I%u"%(bi,iui), self.states.a.startVgprValu +ri))
           ri += self.states.a.numVgprValuPerBlock
-    if not kernel["DirectToLdsA"] or self.do["KeepDirectToLdsAlloc"]:
-        module.add(RegSet("v", "vgprG2LA", self.states.a.startVgprG2L))
-        if kernel["DirectToVgprA"]:
-          # additional definition G2LA0, G2LA1 for swapping register sets
-          module.add(RegSet("v", "vgprG2LA0", self.states.a.startVgprG2L))
-          module.add(RegSet("v", "vgprG2LA1", self.states.a.startVgprG2L + self.states.a.numVgprG2L//2))
+      ri = 0
+      for data in range(1,int(1/tPA["localReadInstruction"].blockWidth)):
+        for bi in range(0,PLR): # buffer indices
+          if bi % self.states.numVgprBufferPack == 0:
+            ri = (data-1) * kernel["InnerUnroll"] * self.states.numVgprBufferPack * self.states.a.numVgprValuPerBlock
+          for iui in range(0, kernel["InnerUnroll"]):
+            module.add(RegSet("v", "vgprValuA_X%u_I%u_D%u"%(bi,iui,data), self.states.a.startVgprValuPack+ri))
+            ri += self.states.a.numVgprValuPerBlock
 
     ri = 0
     if self.states.b.numVgprValu > 0: # Do not generate vgprValuB if numVgprValuB is 0
-      for bi in range(0,numBi): # buffer indices
+      for bi in range(0,PLR): # buffer indices
         for iui in range(0, kernel["InnerUnroll"]):
           module.add(RegSet("v", "vgprValuB_X%u_I%u"%(bi,iui), self.states.b.startVgprValu+ri))
           ri += self.states.b.numVgprValuPerBlock
-    if not kernel["DirectToLdsB"] or self.do["KeepDirectToLdsAlloc"]:
-        module.add(RegSet("v", "vgprG2LB", self.states.b.startVgprG2L))
-        if kernel["DirectToVgprB"]:
-          # additional definition G2LB0, G2LB1 for swapping register sets
-          module.add(RegSet("v", "vgprG2LB0", self.states.b.startVgprG2L))
-          module.add(RegSet("v", "vgprG2LB1", self.states.b.startVgprG2L + self.states.b.numVgprG2L//2))
+      ri = 0
+      for data in range(1,int(1/tPB["localReadInstruction"].blockWidth)):
+        for bi in range(0,PLR): # buffer indices
+          if bi % self.states.numVgprBufferPack == 0:
+            ri = (data-1) * kernel["InnerUnroll"] * self.states.numVgprBufferPack * self.states.b.numVgprValuPerBlock
+          for iui in range(0, kernel["InnerUnroll"]):
+            module.add(RegSet("v", "vgprValuB_X%u_I%u_D%u"%(bi,iui,data), self.states.b.startVgprValuPack+ri))
+            ri += self.states.b.numVgprValuPerBlock
 
     if kernel["ProblemType"]["Gradient"] and kernel["ProblemType"]["UseBias"] and (kernel["ProblemType"]["BiasSrc"] == "A" or kernel["ProblemType"]["BiasSrc"] == "B"):
       module.add(RegSet("v", "vgprValuSum", self.states.bias.startVgprValu))
@@ -521,6 +523,19 @@ class KernelWriterAssembly(KernelWriter):
           self.startVgprGlobalReadAddressesA))
       module.add(RegSet("v", "vgprGlobalReadAddrB", \
           self.startVgprGlobalReadAddressesB))
+
+    if not kernel["DirectToLdsA"] or self.do["KeepDirectToLdsAlloc"]:
+        module.add(RegSet("v", "vgprG2LA", self.states.a.startVgprG2L))
+        if kernel["DirectToVgprA"]:
+          # additional definition G2LA0, G2LA1 for swapping register sets
+          module.add(RegSet("v", "vgprG2LA0", self.states.a.startVgprG2L))
+          module.add(RegSet("v", "vgprG2LA1", self.states.a.startVgprG2L + self.states.a.numVgprG2L//2))
+    if not kernel["DirectToLdsB"] or self.do["KeepDirectToLdsAlloc"]:
+        module.add(RegSet("v", "vgprG2LB", self.states.b.startVgprG2L))
+        if kernel["DirectToVgprB"]:
+          # additional definition G2LB0, G2LB1 for swapping register sets
+          module.add(RegSet("v", "vgprG2LB0", self.states.b.startVgprG2L))
+          module.add(RegSet("v", "vgprG2LB1", self.states.b.startVgprG2L + self.states.b.numVgprG2L//2))
 
     if self.states.globalReadIncsUseVgpr:
       module.add(RegSet("v", "vgprGlobalReadIncsA", \
@@ -3894,7 +3909,7 @@ class KernelWriterAssembly(KernelWriter):
   def mfmaIter(self, kernel, tPA, tPB, u, innerUnroll, vregSetIdx, tail=False, firstIter=False, unrollIdx = 0, unrollLoopIdx = 0):
     imod = Module("mi")
     shiftK = Module("shiftK")
-    m = (u) % (self.states.numVgprBuffer+1) # local to use for MACs
+    m = (u) % (self.states.numVgprBuffer) # local to use for MACs
 
     miInputType      = kernel["ProblemType"]["F32XdlMathOp"] if kernel["EnableF32XdlMathOp"] else kernel["ProblemType"]["DataType"]
     # calculate constant
