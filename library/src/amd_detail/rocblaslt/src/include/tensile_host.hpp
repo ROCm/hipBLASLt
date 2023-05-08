@@ -251,6 +251,29 @@ RocblasltContractionProblem<Ti, To, Tc>
                               const Tc*                   beta,
                               size_t                      maxWorkSpaceBytes);
 
+template <typename Ti, typename To = Ti, typename Tc = To>
+rocblaslt_status getAllSolutions(RocblasltContractionProblem<Ti, To, Tc>& prob,
+                                 rocblaslt_handle                         handle,
+                                 rocblaslt_matmul_heuristic_result**      heuristicResults,
+                                 int*                                     returnAlgoCount,
+                                 size_t                                   maxWorkSpaceBytes);
+
+template <typename Ti, typename To = Ti, typename Tc = To>
+rocblaslt_status getAllSolutions(std::vector<RocblasltContractionProblem<Ti, To, Tc>>& probs,
+                                 rocblaslt_handle                                      handle,
+                                 rocblaslt_matmul_heuristic_result** heuristicResults,
+                                 int*                                returnAlgoCount,
+                                 size_t                              maxWorkSpaceBytes);
+
+template <typename Ti, typename To = Ti, typename Tc = To>
+rocblaslt_status isSolutionSupported(RocblasltContractionProblem<Ti, To, Tc>& prob,
+                                     rocblaslt_matmul_algo*                   algo,
+                                     size_t*                                  workspaceSizeInBytes);
+
+rocblaslt_status isSolutionSupported(rocblaslt_gemm         gemm,
+                                     rocblaslt_matmul_algo* algo,
+                                     size_t*                workspaceSizeInBytes);
+
 /*******************************************************************************
  * getBestSolutions() calls finTopSolutions from Tensile and converts to       *
  * rocblaslt_matmul_heuristic_result                                           *

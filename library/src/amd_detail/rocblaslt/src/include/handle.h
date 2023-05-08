@@ -181,12 +181,6 @@ struct _rocblaslt_matmul_preference
  * and rocblaslt_ext_destroy() functions respectively.
  *******************************************************************************/
 
-enum _rocblaslt_gemm_type_enum
-{
-    ROCBLASLT_GEMM         = 1,
-    ROCBLASLT_GROUPED_GEMM = 2
-};
-
 struct _rocblaslt_gemm
 {
     // constructor

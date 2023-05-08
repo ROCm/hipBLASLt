@@ -121,6 +121,12 @@ typedef enum {
   HIPBLASLT_MATMUL_PREF_MAX = 2
 } hipblasLtMatmulPreferenceAttributes_t;
 
+typedef enum
+{
+  HIPBLASLT_GEMM = 1,
+  HIPBLASLT_GROUPED_GEMM = 2
+} hipblasLtGemmTypeEnum_t;
+
 #if defined(__HIP_PLATFORM_HCC__)
 typedef struct {
   uint64_t data[4];
@@ -176,14 +182,8 @@ typedef hipblasLtMatrixLayoutOpaque_t* hipblasLtMatrixLayout_t;
  */
 typedef hipblasLtMatmulPreferenceOpaque_t* hipblasLtMatmulPreference_t;
 
-enum _hipblasLtGemmOpaqueTypeEnum
-{
-  HIPBLASLT_GEMM = 1,
-  HIPBLASLT_GROUPED_GEMM = 2
-};
-
 typedef struct _hipblasLtGemmOpaque_t{
-  _hipblasLtGemmOpaqueTypeEnum hipBlasLtGemmType;
+  hipblasLtGemmTypeEnum_t hipBlasLtGemmType;
   std::shared_ptr<void> problemGemmPtr;
   std::shared_ptr<void> inputsPtr;
   std::shared_ptr<void> kernelsPtr;
@@ -649,6 +649,103 @@ hipblasStatus_t
                                     int                              requestedAlgoCount,
                                     hipblasLtMatmulHeuristicResult_t heuristicResultsArray[],
                                     int*                             returnAlgoCount);
+
+/*! \ingroup library_module
+ *  \brief Retrieve the possible algorithms
+ *
+ *  \details
+ *  This function retrieves the possible algorithms for the matrix multiply
+ * operation hipblasLtMatmul() function with the given data and compute tpye.
+ * The output is placed in hipblasLtSolutions_t in the order of increasing
+ * estimated compute time.
+ *
+ *  @param[in]
+ *  handle                  Pointer to the allocated hipBLASLt handle for the
+ * hipBLASLt context. See \ref hipblasLtHandle_t .
+ *  @param[in]
+ *  hipblasLtGemmTypeEnum_t Gemm type. ex. GEMM, GROUPED_GEMM.
+ *  @param[in]
+ *  opA, opB Transpose settings of A, B.
+ *  @param[in]
+ *  typeA,typeB,typeC,typeD The data type of matrix A, B, C, D.
+ *  @param[in]
+ *  typeCompute             The compute type.
+ *  @param[in]
+ *  requestedAlgoCount      Size of the \p heuristicResultsArray (in elements).
+ * This is the requested maximum number of algorithms to return.
+ *  @param[out]
+ *  heuristicResult The algorithm heuristic array.
+ *  @param[out]
+ *  returnedAlgoCount The number of algorithm returned by this function.
+ *
+ *  \retval HIPBLAS_STATUS_SUCCESS           If query was successful. Inspect
+ * returnedAlgoCount > 0.state for the status of the
+ * results. \retval HIPBLAS_STATUS_NOT_SUPPORTED     If no heuristic function
+ * available for current configuration. \retval HIPBLAS_STATUS_INVALID_VALUE If
+ * no solution is found.
+ */
+HIPBLASLT_EXPORT
+hipblasStatus_t hipblasLtExtGetAllAlgos(hipblasLtHandle_t                  handle,
+                                        hipblasLtGemmTypeEnum_t            typeGemm,
+                                        hipblasOperation_t                 opA,
+                                        hipblasOperation_t                 opB,
+                                        hipblasDatatype_t                  typeA,
+                                        hipblasDatatype_t                  typeB,
+                                        hipblasDatatype_t                  typeC,
+                                        hipblasDatatype_t                  typeD,
+                                        hipblasLtComputeType_t             typeCompute,
+                                        hipblasLtMatmulHeuristicResult_t** heuristicResults,
+                                        int*                               returnedAlgoCount);
+
+/*! \ingroup library_module
+ *  \brief Check if the algorithm supports the problem.
+ *
+ *  \details
+ *  This function updates the problem saved inside the algorithm if the problem is
+ * supported. The required workspaceSizeInBytes is also returned.
+ *
+ *  @param[in]
+ *  handle                  Pointer to the allocated hipBLASLt handle for the
+ * hipBLASLt context. See \ref hipblasLtHandle_t .
+ *  @param[in]
+ *  matmulDesc              Handle to a previously created matrix multiplication
+ * descriptor of type \ref hipblasLtMatmulDesc_t .
+ *  @param[in]
+ *  alpha,beta              Pointers to the scalars used in the multiplication.
+ *  @param[in]
+ *  Adesc,Bdesc,Cdesc,Ddesc Handles to the previously created matrix layout
+ * descriptors of the type \ref hipblasLtMatrixLayout_t .
+ *  @param[in]
+ *  algo The algorithm heuristic.
+ *  @param[out]
+ *  workspaceSizeInBytes Return the required workspace size.
+ *
+ *  \retval HIPBLAS_STATUS_SUCCESS           If query was successful. The problem is
+ * supported by the algorithm.
+ * results. \retval HIPBLAS_STATUS_INVALID_VALUE     The problem is not supported.
+ */
+HIPBLASLT_EXPORT
+hipblasStatus_t hipblasLtExtMatmulIsAlgoSupported(hipblasLtHandle_t       handle,
+                                                  hipblasLtMatmulDesc_t   matmulDesc,
+                                                  const void*             alpha,
+                                                  hipblasLtMatrixLayout_t Adesc,
+                                                  hipblasLtMatrixLayout_t Bdesc,
+                                                  const void*             beta,
+                                                  hipblasLtMatrixLayout_t Cdesc,
+                                                  hipblasLtMatrixLayout_t Ddesc,
+                                                  hipblasLtMatmulAlgo_t*  algo,
+                                                  size_t*                 workspaceSizeInBytes);
+
+HIPBLASLT_EXPORT
+hipblasStatus_t hipblasLtExtIsAlgoSupported(hipblasLtExtGemm_t     gemm,
+                                            hipblasLtMatmulAlgo_t* algo,
+                                            size_t*                workspaceSizeInBytes);
+
+/*! \ingroup library_module
+ *  \brief Free the hueristic array inside the hipblasLtSolutions_t.
+ */
+HIPBLASLT_EXPORT
+hipblasStatus_t hipblasLtExtFreeAlgos(hipblasLtMatmulHeuristicResult_t* heuristicResults);
 
 HIPBLASLT_EXPORT
 hipblasStatus_t
