@@ -303,6 +303,63 @@ rocblaslt_status
  * descriptor
  *
  *  \details
+ *  \p rocblaslt_matmul_get_all_algos returns the possible
+ * algorithms for the matrix multiply operation rocblaslt_matmul() function
+ * with the given input type A, B and C, and the output matrix D. The output
+ * is placed in rocblaslt_solutions in the order of increasing estimated
+ * compute time.
+ *
+ *  @param[out]
+ *  rocblaslt_matmul_heuristic_result**
+ *  int*
+ *
+ *  @param[in]
+ *  rocblaslt_handle
+ *  _rocblaslt_gemm_type_enum
+ *  hipblasOperation_t
+ *  hipblasOperation_t
+ *  hipblasDatatype_t
+ *  hipblasDatatype_t
+ *  hipblasDatatype_t
+ *  hipblasDatatype_t
+ *  rocblaslt_compute_type
+ *
+ *  \retval rocblaslt_status_success the operation completed successfully.
+ *  \retval rocblaslt_status_invalid_handle \p handle pointer is invalid.
+ */
+rocblaslt_status
+    rocblaslt_matmul_get_all_algos(rocblaslt_handle                    handle,
+                                   _rocblaslt_gemm_type_enum           typeGemm,
+                                   hipblasOperation_t                  opA,
+                                   hipblasOperation_t                  opB,
+                                   hipblasDatatype_t                   typeA,
+                                   hipblasDatatype_t                   typeB,
+                                   hipblasDatatype_t                   typeC,
+                                   hipblasDatatype_t                   typeD,
+                                   rocblaslt_compute_type              typeCompute,
+                                   rocblaslt_matmul_heuristic_result** heuristicResults,
+                                   int*                                returnAlgoCount);
+
+rocblaslt_status rocblaslt_matmul_is_algo_supported(rocblaslt_handle        handle,
+                                                    rocblaslt_matmul_desc   matmul_descr,
+                                                    const void*             alpha,
+                                                    rocblaslt_matrix_layout matA,
+                                                    rocblaslt_matrix_layout matB,
+                                                    const void*             beta,
+                                                    rocblaslt_matrix_layout matC,
+                                                    rocblaslt_matrix_layout matD,
+                                                    rocblaslt_matmul_algo*  algo,
+                                                    size_t*                 workspaceSizeInBytes);
+
+rocblaslt_status rocblaslt_is_algo_supported(rocblaslt_gemm         gemm,
+                                             rocblaslt_matmul_algo* algo,
+                                             size_t*                workspaceSizeInBytes);
+
+/*! \ingroup aux_module
+ *  \brief Get the specific algorithm attribute from algorithm selection
+ * descriptor
+ *
+ *  \details
  *  \p rocblaslt_matmul_algo_get_heuristic returns the possible algorithms for
  * the matrix multiply operation rocblaslt_matmul() function with the given
  * input matrices A, B and C, and the output matrix D. The output is placed in

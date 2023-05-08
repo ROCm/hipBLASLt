@@ -353,6 +353,91 @@ catch(...)
     return exception_to_hipblas_status();
 }
 
+hipblasStatus_t hipblasLtExtGetAllAlgos(hipblasLtHandle_t                  handle,
+                                        hipblasLtGemmTypeEnum_t            typeGemm,
+                                        hipblasOperation_t                 opA,
+                                        hipblasOperation_t                 opB,
+                                        hipblasDatatype_t                  typeA,
+                                        hipblasDatatype_t                  typeB,
+                                        hipblasDatatype_t                  typeC,
+                                        hipblasDatatype_t                  typeD,
+                                        hipblasLtComputeType_t             typeCompute,
+                                        hipblasLtMatmulHeuristicResult_t** heuristicResults,
+                                        int*                               returnedAlgoCount)
+try
+{
+    return RocBlasLtStatusToHIPStatus(
+        rocblaslt_matmul_get_all_algos((rocblaslt_handle)handle,
+                                       (rocblaslt_gemm_type_enum)typeGemm,
+                                       opA,
+                                       opB,
+                                       typeA,
+                                       typeB,
+                                       typeC,
+                                       typeD,
+                                       (rocblaslt_compute_type)typeCompute,
+                                       (rocblaslt_matmul_heuristic_result**)heuristicResults,
+                                       returnedAlgoCount));
+}
+catch(...)
+{
+    return exception_to_hipblas_status();
+}
+
+hipblasStatus_t hipblasLtExtMatmulIsAlgoSupported(hipblasLtHandle_t       handle,
+                                                  hipblasLtMatmulDesc_t   matmulDesc,
+                                                  const void*             alpha,
+                                                  hipblasLtMatrixLayout_t Adesc,
+                                                  hipblasLtMatrixLayout_t Bdesc,
+                                                  const void*             beta,
+                                                  hipblasLtMatrixLayout_t Cdesc,
+                                                  hipblasLtMatrixLayout_t Ddesc,
+                                                  hipblasLtMatmulAlgo_t*  algo,
+                                                  size_t*                 workspaceSizeInBytes)
+try
+{
+    return RocBlasLtStatusToHIPStatus(
+        rocblaslt_matmul_is_algo_supported((rocblaslt_handle)handle,
+                                           (rocblaslt_matmul_desc)matmulDesc,
+                                           alpha,
+                                           (rocblaslt_matrix_layout)Adesc,
+                                           (rocblaslt_matrix_layout)Bdesc,
+                                           beta,
+                                           (rocblaslt_matrix_layout)Cdesc,
+                                           (rocblaslt_matrix_layout)Ddesc,
+                                           (rocblaslt_matmul_algo*)algo,
+                                           workspaceSizeInBytes));
+}
+catch(...)
+{
+    return exception_to_hipblas_status();
+}
+
+HIPBLASLT_EXPORT
+hipblasStatus_t hipblasLtExtIsAlgoSupported(hipblasLtExtGemm_t     gemm,
+                                            hipblasLtMatmulAlgo_t* algo,
+                                            size_t*                workspaceSizeInBytes)
+try
+{
+    return RocBlasLtStatusToHIPStatus(rocblaslt_is_algo_supported(
+        (rocblaslt_gemm)gemm, (rocblaslt_matmul_algo*)algo, workspaceSizeInBytes));
+}
+catch(...)
+{
+    return exception_to_hipblas_status();
+}
+
+HIPBLASLT_EXPORT
+hipblasStatus_t hipblasLtExtFreeAlgos(hipblasLtMatmulHeuristicResult_t* heuristicResults)
+{
+    auto rocHeuristicResults = (rocblaslt_matmul_heuristic_result*)(heuristicResults);
+    if(rocHeuristicResults != NULL)
+    {
+        free(rocHeuristicResults);
+    }
+    return HIPBLAS_STATUS_SUCCESS;
+}
+
 hipblasStatus_t
     hipblasLtExtAlgoGetHeuristic(hipblasLtExtGemm_t               gemm,
                                  hipblasLtMatmulPreference_t      pref,

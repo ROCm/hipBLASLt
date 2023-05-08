@@ -355,6 +355,7 @@ static void show_usage(char* argv[])
               << "\t--cold_iters \t\tcold_iters \tCold Iterations to run "
                  "before entering the timing loop (default is 0)\n"
               << "\t--ext \t\t\text \t\tuse Ext API\n"
+              << "\t--all \t\t\tall \t\tGet all solutions\n"
               << std::endl;
 }
 
@@ -392,7 +393,8 @@ static int parse_arguments(int                 argc,
                            int32_t&            sync_loop_count,
                            int32_t&            bench_loop_count,
                            int32_t&            cold_loop_count,
-                           bool&               useExt)
+                           bool&               useExt,
+                           bool&               findAll)
 {
     if(argc >= 2)
     {
@@ -618,6 +620,10 @@ static int parse_arguments(int                 argc,
                 {
                     useExt = atoi(argv[++i]);
                 }
+                else if((arg == "--all") && (i + 1 < argc))
+                {
+                    findAll = atoi(argv[++i]);
+                }
                 else
                 {
                     std::cerr << "error with " << arg << std::endl;
@@ -827,7 +833,8 @@ void test_hipblaslt(hipblasDatatype_t  in_out_datatype,
                     int32_t            sync_loop_count,
                     int32_t            bench_loop_count,
                     int32_t            cold_loop_count,
-                    bool               useExt)
+                    bool               useExt,
+                    bool               findAll)
 {
     int64_t     a_stride_1, a_stride_2, b_stride_1, b_stride_2;
     int64_t     row_a, col_a, row_b, col_b, row_c, col_c;
@@ -1035,48 +1042,149 @@ void test_hipblaslt(hipblasDatatype_t  in_out_datatype,
 
     hipblasLtExtGemm_t handleExt;
 
+    hipblasLtMatmulHeuristicResult_t* heuristicResult = nullptr;
+    // All solutions
+    std::vector<int> validIdx;
     // Get Heuristic results
-    hipblasLtMatmulHeuristicResult_t* heuristicResult
-        = new hipblasLtMatmulHeuristicResult_t[request_solutions]{0};
+    if(!findAll)
+    {
+        heuristicResult = new hipblasLtMatmulHeuristicResult_t[request_solutions]{0};
+    }
     int returnedAlgoCount = 0;
     if(!useExt)
     {
-        CHECK_HIPBLASLT_ERROR(hipblasLtMatmulAlgoGetHeuristic(handle,
-                                                              matmul,
-                                                              matA,
-                                                              matB,
-                                                              matC,
-                                                              matD,
-                                                              pref,
-                                                              request_solutions,
-                                                              heuristicResult,
-                                                              &returnedAlgoCount));
+        if(findAll)
+        {
+            CHECK_HIPBLASLT_ERROR(hipblasLtExtGetAllAlgos(handle,
+                                                          HIPBLASLT_GEMM,
+                                                          trans_a,
+                                                          trans_b,
+                                                          in_out_datatype,
+                                                          in_out_datatype,
+                                                          in_out_datatype,
+                                                          in_out_datatype,
+                                                          HIPBLASLT_COMPUTE_F32,
+                                                          &heuristicResult,
+                                                          &returnedAlgoCount));
+
+            for(int i = 0; i < returnedAlgoCount; i++)
+            {
+                size_t workspace_size = 0;
+                if(hipblasLtExtMatmulIsAlgoSupported(handle,
+                                                     matmul,
+                                                     &alpha,
+                                                     matA,
+                                                     matB,
+                                                     &beta,
+                                                     matC,
+                                                     matD,
+                                                     &heuristicResult[i].algo,
+                                                     &workspace_size)
+                   == HIPBLAS_STATUS_SUCCESS)
+                {
+                    validIdx.push_back(i);
+                    heuristicResult[i].workspaceSize = workspace_size;
+                }
+                else
+                {
+                    heuristicResult[i].workspaceSize = 0;
+                }
+            }
+        }
+        else
+        {
+            CHECK_HIPBLASLT_ERROR(hipblasLtMatmulAlgoGetHeuristic(handle,
+                                                                  matmul,
+                                                                  matA,
+                                                                  matB,
+                                                                  matC,
+                                                                  matD,
+                                                                  pref,
+                                                                  request_solutions,
+                                                                  heuristicResult,
+                                                                  &returnedAlgoCount));
+        }
     }
     else
     {
         CHECK_HIPBLASLT_ERROR(hipblasLtExtGemmCreate(
             &handleExt, handle, matmul, &alpha, da, matA, db, matB, &beta, dc, matC, dd, matD));
 
-        CHECK_HIPBLASLT_ERROR(hipblasLtExtAlgoGetHeuristic(
-            handleExt, pref, request_solutions, heuristicResult, &returnedAlgoCount));
+        if(findAll)
+        {
+            CHECK_HIPBLASLT_ERROR(hipblasLtExtGetAllAlgos(handle,
+                                                          HIPBLASLT_GEMM,
+                                                          trans_a,
+                                                          trans_b,
+                                                          in_out_datatype,
+                                                          in_out_datatype,
+                                                          in_out_datatype,
+                                                          in_out_datatype,
+                                                          HIPBLASLT_COMPUTE_F32,
+                                                          &heuristicResult,
+                                                          &returnedAlgoCount));
+
+            for(int i = 0; i < returnedAlgoCount; i++)
+            {
+                size_t workspace_size = 0;
+                if(hipblasLtExtIsAlgoSupported(handleExt, &heuristicResult[i].algo, &workspace_size)
+                   == HIPBLAS_STATUS_SUCCESS)
+                {
+                    validIdx.push_back(i);
+                    heuristicResult[i].workspaceSize = workspace_size;
+                }
+                else
+                {
+                    heuristicResult[i].workspaceSize = 0;
+                }
+            }
+        }
+        else
+        {
+            CHECK_HIPBLASLT_ERROR(hipblasLtExtAlgoGetHeuristic(
+                handleExt, pref, request_solutions, heuristicResult, &returnedAlgoCount));
+        }
     }
-    if(returnedAlgoCount != request_solutions && returnedAlgoCount >= 1)
-        std::cout << "Less Solution found! request: " << request_solutions
-                  << ", found: " << returnedAlgoCount << std::endl;
-    if(returnedAlgoCount == 0)
+
+    if(findAll)
     {
-        std::cerr << "No Solution found! request: " << request_solutions << std::endl;
-        return;
+        std::cout << "Is supported " << validIdx.size()
+                  << " / Total solutions: " << returnedAlgoCount << std::endl;
+        if(validIdx.empty())
+        {
+            std::cerr << "No Solution found!" << std::endl;
+            return;
+        }
+    }
+    else
+    {
+        if(returnedAlgoCount != request_solutions && returnedAlgoCount >= 1)
+            std::cout << "Less Solution found! request: " << request_solutions
+                      << ", found: " << returnedAlgoCount << std::endl;
+        if(returnedAlgoCount == 0)
+        {
+            std::cerr << "No Solution found! request: " << request_solutions << std::endl;
+            return;
+        }
     }
     uint64_t workspace_size = 0;
-    for(int sol = 0; sol < returnedAlgoCount; sol++)
-        workspace_size = max(workspace_size, heuristicResult[sol].workspaceSize);
+    if(findAll)
+    {
+        for(int sol = 0; sol < validIdx.size(); sol++)
+            workspace_size = max(workspace_size, heuristicResult[sol].workspaceSize);
+    }
+    else
+    {
+        for(int sol = 0; sol < returnedAlgoCount; sol++)
+            workspace_size = max(workspace_size, heuristicResult[sol].workspaceSize);
+    }
     if(workspace_size > 0)
         CHECK_HIP_ERROR(hipMalloc(&d_workspace, workspace_size));
 
     // Solve problem  // call gen function
     if(!useExt)
     {
+        auto idx = (findAll) ? validIdx[0] : 0;
         CHECK_HIPBLASLT_ERROR(hipblasLtMatmul(handle,
                                               matmul,
                                               &alpha,
@@ -1089,16 +1197,16 @@ void test_hipblaslt(hipblasDatatype_t  in_out_datatype,
                                               matC,
                                               dd,
                                               matD,
-                                              &heuristicResult[0].algo,
+                                              &heuristicResult[idx].algo,
                                               d_workspace,
                                               workspace_size,
                                               stream));
     }
     else
     {
-        //grouped gemm
+        auto idx = (findAll) ? validIdx[0] : 0;
         CHECK_HIPBLASLT_ERROR(
-            hipblasLtExtMakeArgument(handleExt, &heuristicResult[0].algo, d_workspace, stream));
+            hipblasLtExtMakeArgument(handleExt, &heuristicResult[idx].algo, d_workspace, stream));
 
         CHECK_HIPBLASLT_ERROR(hipblasLtExtRun(handleExt, stream));
     }
@@ -1115,8 +1223,10 @@ void test_hipblaslt(hipblasDatatype_t  in_out_datatype,
     double   bestMs = std::numeric_limits<double>::max();
     double   bestTflops;
     uint32_t bestIdx = 0;
-    for(int sol = 0; sol < returnedAlgoCount; sol++)
+    int      algoNum = (findAll) ? validIdx.size() : returnedAlgoCount;
+    for(int sol = 0; sol < algoNum; sol++)
     {
+        auto        idx = (findAll) ? validIdx[sol] : sol;
         std::string timing_string;
         if(timing)
         {
@@ -1141,7 +1251,7 @@ void test_hipblaslt(hipblasDatatype_t  in_out_datatype,
                                                           matC,
                                                           dd,
                                                           matD,
-                                                          &heuristicResult[sol].algo,
+                                                          &heuristicResult[idx].algo,
                                                           d_workspace,
                                                           workspace_size,
                                                           stream));
@@ -1168,7 +1278,7 @@ void test_hipblaslt(hipblasDatatype_t  in_out_datatype,
                                                               matC,
                                                               dd,
                                                               matD,
-                                                              &heuristicResult[sol].algo,
+                                                              &heuristicResult[idx].algo,
                                                               d_workspace,
                                                               workspace_size,
                                                               stream));
@@ -1197,6 +1307,10 @@ void test_hipblaslt(hipblasDatatype_t  in_out_datatype,
             }
             else
             {
+                auto idx = (findAll) ? validIdx[0] : 0;
+                CHECK_HIPBLASLT_ERROR(hipblasLtExtMakeArgument(
+                    handleExt, &heuristicResult[idx].algo, d_workspace, stream));
+
                 for(int loop = 0; loop < cold_loop_count; loop++)
                 {
                     CHECK_HIPBLASLT_ERROR(hipblasLtExtRun(handleExt, stream));
@@ -1454,7 +1568,14 @@ void test_hipblaslt(hipblasDatatype_t  in_out_datatype,
         print_strided_batched("hd device", &hd[0], m, n, batch_count, 1, ldc, stride_c);
     }
 
-    delete[] heuristicResult;
+    if(findAll)
+    {
+        hipblasLtExtFreeAlgos(heuristicResult);
+    }
+    else
+    {
+        delete[] heuristicResult;
+    }
     CHECK_HIP_ERROR(hipFree(da));
     CHECK_HIP_ERROR(hipFree(db));
     CHECK_HIP_ERROR(hipFree(dc));
@@ -1518,6 +1639,8 @@ int main(int argc, char* argv[])
     bool validate = false;
     bool timing   = true;
 
+    bool findAll = false;
+
     if(parse_arguments(argc,
                        argv,
                        in_out_datatype,
@@ -1552,7 +1675,8 @@ int main(int argc, char* argv[])
                        sync_loop_count,
                        bench_loop_count,
                        cold_loop_count,
-                       useExt))
+                       useExt,
+                       findAll))
     {
         show_usage(argv);
         return EXIT_FAILURE;
@@ -1662,7 +1786,8 @@ int main(int argc, char* argv[])
                                        sync_loop_count,
                                        bench_loop_count,
                                        cold_loop_count,
-                                       useExt);
+                                       useExt,
+                                       findAll);
     else if(in_out_datatype == HIPBLAS_R_16F)
         test_hipblaslt<hipblasLtHalf>(in_out_datatype,
                                       trans_a,
@@ -1695,7 +1820,8 @@ int main(int argc, char* argv[])
                                       sync_loop_count,
                                       bench_loop_count,
                                       cold_loop_count,
-                                      useExt);
+                                      useExt,
+                                      findAll);
     else if(in_out_datatype == HIPBLAS_R_16B)
         test_hipblaslt<hipblasLtBfloat16>(in_out_datatype,
                                           trans_a,
@@ -1728,7 +1854,8 @@ int main(int argc, char* argv[])
                                           sync_loop_count,
                                           bench_loop_count,
                                           cold_loop_count,
-                                          useExt);
+                                          useExt,
+                                          findAll);
 
     return EXIT_SUCCESS;
 }

@@ -137,6 +137,12 @@ typedef struct rocblaslt_half
 } rocblaslt_half;
 #endif
 
+typedef enum _rocblaslt_gemm_type_enum
+{
+    ROCBLASLT_GEMM         = 1,
+    ROCBLASLT_GROUPED_GEMM = 2
+} rocblaslt_gemm_type_enum;
+
 /*! \ingroup types_module
  *  \brief Specify the postprocessing options for the epilogue
  *
@@ -330,6 +336,12 @@ typedef struct _rocblaslt_matmul_heuristic_result
     float                 wavesCount    = 1.0;
     int                   reserved[4];
 } rocblaslt_matmul_heuristic_result;
+
+typedef struct _rocblaslt_solutions
+{
+    rocblaslt_matmul_heuristic_result* heuristicResults;
+    int                                algoCount;
+} rocblaslt_solutions;
 #ifdef __cplusplus
 }
 #endif
