@@ -3793,7 +3793,12 @@ class KernelWriter(metaclass=abc.ABCMeta):
       self.states.localReadDoCntMetadata  = 0
 
     if kernel["EnableMatrixInstruction"]:
-      self.states.miLatency = kernel["MatrixInstM"] // 2
+      mi_divisor = 2
+
+      if kernel["ProblemType"]["SparseA"]:
+        mi_divisor = 4
+      self.states.miLatency = kernel["MatrixInstM"] // mi_divisor
+
       miIssueLatency = 2
       # give 1 quad-cycle buffer to prevend bubble from sync
       miLatencyBuffer = 1
