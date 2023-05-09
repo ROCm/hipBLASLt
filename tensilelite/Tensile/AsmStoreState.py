@@ -272,7 +272,7 @@ class StoreState:
     #
     # Also create an AddrCalc for each memory operation.
     ##############################################################################
-    def setupStoreElementsForBatch(self, kernel, gwvw, batchElements, batchElementSgprs, isOptNLL, allowLRVWforTLUandMI, lrvwB):
+    def setupStoreElementsForBatch(self, kernel, gwvw, batchElements, batchElementSgprs, isOptNLL):
 
         self.elementAddr     = []
         self.elementDataE    = []
@@ -311,7 +311,7 @@ class StoreState:
 
             coordOffset1 = 0
             if kernel["EnableMatrixInstruction"]:
-                vc1Scale = lrvwB if allowLRVWforTLUandMI else 1
+                vectorWidth = kernel["VectorWidthB"] # TODO: nonSwap VectorWidth
                 MIOutputVectorWidth = kernel["MIOutputVectorWidth"]
                 MFMAContinuousOutputs = MIOutputVectorWidth if kernel["SourceSwap"] else 1
                 OutputsPerMIMN        = (matrixInstM * matrixInstN // self.kernel["WavefrontSize"]) if kernel["SourceSwap"] else 1
@@ -326,20 +326,14 @@ class StoreState:
                 coordOffset1  = eIdx1 * (self.kernel["WavefrontSize"] // matrixInstN) * MFMAContinuousOutputs
                 coordOffset1 += bIdx1 * matrixInstN
                 coordOffset1 += wtIdex * matrixInstN *  matrixInstBN * kernel["MIWaveGroup"][1]
-                coordOffset1 = coordOffset1 * vc1Scale + vc1
-            else:
-                if kernel["LocalSplitU"] > 1:
-                    strideD1 = (kernel["NumThreads"]*kernel["VectorWidth"]//kernel["MacroTile0"])
-                else:
-                    strideD1 = (kernel["SubGroup1"] * kernel["VectorWidth"])
-                coordOffset1 = d1 * strideD1 + vc1
+                coordOffset1  = coordOffset1 * vectorWidth + vc1
 
             newCoord1 = (self.firstBatch and elementIdx==0) or (coordOffset1 != self.lastCoordOffset1)
 
             # gpr and offset assignments for element
             coordOffset0 = 0
             if kernel["EnableMatrixInstruction"]:
-                vectorWidth = kernel["VectorWidth"] if kernel["SourceSwap"] else 1 # TODO: nonSwap VectorWidth
+                vectorWidth = kernel["VectorWidthA"]
                 MFMAContinuousOutputs = 1 if kernel["SourceSwap"] else kernel["MIOutputVectorWidth"]
                 OutputsPerMIMN        = 1 if kernel["SourceSwap"] else matrixInstM * matrixInstN // self.kernel["WavefrontSize"]
 
@@ -350,12 +344,10 @@ class StoreState:
                 remain_d0    = remain_d0 // matrixInstBM
                 wtIdex       = remain_d0 % kernel["MIWaveTile"][0]
 
-                coordOffset0  = eIdx0  * vectorWidth * (self.kernel["WavefrontSize"] // matrixInstM) * MFMAContinuousOutputs
-                coordOffset0 += bIdx0  * vectorWidth * matrixInstM
-                coordOffset0 += wtIdex * vectorWidth * matrixInstM * matrixInstBM * kernel["MIWaveGroup"][0]
-                coordOffset0 += vc0
-            else:
-                coordOffset0 = d0 * kernel["SubGroup0"]*kernel["VectorWidth"] + vc0
+                coordOffset0  = eIdx0 * (self.kernel["WavefrontSize"] // matrixInstM) * MFMAContinuousOutputs
+                coordOffset0 += bIdx0 * matrixInstM
+                coordOffset0 += wtIdex * matrixInstM * matrixInstBM * kernel["MIWaveGroup"][0]
+                coordOffset0  = coordOffset0 * vectorWidth + vc0
 
             if self.optSingleColVgpr:
                 # use same address vgpr for all
@@ -368,7 +360,7 @@ class StoreState:
                 if kernel["EnableMatrixInstruction"]:
                     elementCol = (d0 * kernel["MIOutputVectorWidth"] + vc0) / gwvw
                 else:
-                    elementCol = (d0 * kernel["VectorWidth"] + vc0) / gwvw
+                    elementCol = (d0 * kernel["VectorWidthA"] + vc0) / gwvw
                 assert (modf(elementCol)[0] < 0.001)
                 elementCol   = trunc(elementCol)
                 addrDVgpr    = self.sharedColDVgprs+elementCol
@@ -491,9 +483,9 @@ class StoreState:
             #print "Edge=", edge, element
             sumIdx = 0
             if kernel["LocalSplitU"] > 1:
-                sumIdx = kw.states.c.startVgprValu + vc0 + d1*kernel["VectorWidth"]
+                sumIdx = kw.states.c.startVgprValu + vc0 + d1*kernel["VectorWidthA"]
             else:
-                bestVw                  = kernel["VectorWidth"]
+                bestVw                  = kernel["VectorWidthA"]
                 elementsLoadedPerVw     = kernel["NumThreads"] * bestVw
                 elementsLoadedPerbestVw = kernel["NumThreads"] * kernel["StoreVectorWidth"]
 
@@ -504,7 +496,7 @@ class StoreState:
                     alignment = self.cfg.numVgprPerValuC * self.cfg.gwvw
                     sumIdx    = kw.vgprPool.checkOutAligned(self.cfg.numVgprPerValuC*self.cfg.gwvw, alignment, "vgprValuC") // self.cfg.numVgprPerValuC
                 else:
-                    sumIdx = kw.states.c.startVgprValu + vc0 + d0*kernel["VectorWidth"] + vc1*kernel["ThreadTile0"] + d1*kernel["VectorWidth"]*kernel["ThreadTile0"]
+                    sumIdx = kw.states.c.startVgprValu + vc0 + d0*kernel["VectorWidthA"] + vc1*kernel["ThreadTile0"] + d1*kernel["VectorWidthA"]*kernel["ThreadTile0"]
             self.elementSumIdx.append(sumIdx) # sumIdx is an element idx, need to div/2 for half
             self.lastCoordOffset1 = coordOffset1
         # reset flag

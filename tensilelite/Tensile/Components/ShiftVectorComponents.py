@@ -56,7 +56,7 @@ class ShiftVectorComponentsMFMA(ShiftVectorComponents):
             we have numSubOutputGroupsPerWave0 which is 4 (kernel[tP["mt"]](64) // numSubOutputPerWave0(8))
 
             So we do shift back by below algorithm.
-            1. check if M_size % GlobalLoadVectorWidth != 0, return if == 0
+            1. check if M_size % GlobalReadVectorWidth != 0, return if == 0
             2. decide which subgroup we need to shift, M_size(3) means 3/8 = group 0
             3. decide which thread we need to shift, we have different groups of thread, (0-31) for first group, (32-63) for second group.
             4. decide which shift block (subTile1) we want to shift. for ex [0-1], [1-2], we want to shift second subtile
@@ -65,15 +65,16 @@ class ShiftVectorComponentsMFMA(ShiftVectorComponents):
         # TODO: use this for non SourceSwap for B?
         # this part can  support non SourceSwap for B
         # But let non SourceSwap for B go original shiftptr path
-        if (not kernel["SourceSwap"]) and tP["isB"]:
-            return Module("ShiftVectorComponentsMFMA (Empty)")
+        # if (not kernel["SourceSwap"]) and tP["isB"]:
+        #     return Module("ShiftVectorComponentsMFMA (Empty)")
 
         # common parameter
+        tc              = tP["tensorChar"]
         regPerElem      = kernel["MIRegPerOut"]
         glvw            = tP["glvw"]
         numThreadInWave = writer.states.kernel["WavefrontSize"]
-        accImOffset     = accVgprImagNumOffset(kernel, writer.states.lrvwB)
-        vectorWidth     = kernel["VectorWidth"] if (kernel["SourceSwap"] and tP["isA"]) else 1
+        accImOffset     = accVgprImagNumOffset(kernel)
+        vectorWidth     = kernel["VectorWidth%s"%tc]
 
         # use to handle MatrixInst 4x4
         matrixInstM     = kernel["MatrixInstM"] * kernel["MatrixInstBM"] if (kernel["MatrixInstM"] == 4) else kernel["MatrixInstM"]
@@ -97,10 +98,10 @@ class ShiftVectorComponentsMFMA(ShiftVectorComponents):
         threadInterval  = 1 if conThInProcDim else matrixInstPrep
         numThreadInCoal = matrixInstCoal if conThInProcDim else (numThreadInWave // matrixInstPrep)
 
-        numContOutCoal  = 1 if conThInProcDim else kernel["MIOutputVectorWidth"]
-        allContOutCoal  = numContOutCoal * vectorWidth
+        numContOutCoal  = vectorWidth if conThInProcDim else kernel["MIOutputVectorWidth"] * vectorWidth
+        allContOutCoal  = numContOutCoal
 
-        OutBlocksInMI   = (matrixInstCoal * matrixInstPrep) // numThreadInWave // numContOutCoal
+        OutBlocksInMI   = (vectorWidth * matrixInstCoal * matrixInstPrep) // numThreadInWave // numContOutCoal
         OutBlocksInMI   = 1 if conThInProcDim else OutBlocksInMI
 
         subMBShapeCoal  = (matrixInstCoal * vectorWidth) if conThInProcDim else ((numThreadInWave // matrixInstPrep) * numContOutCoal)
@@ -207,7 +208,7 @@ class ShiftVectorComponentsMFMA(ShiftVectorComponents):
 
             # rReg : reminder of M_size % vectorwidth
             # decide to jump to block which handle this case, M_size % vector width
-            module.addComment1("rReg : reminder of M_size % GlobalLoadVectorWidth")
+            module.addComment1("rReg : reminder of M_size % GlobalReadVectorWidth")
             rReg = writer.vgprPool.checkOut(1)
             module.add(vectorStaticRemainder(dummy, rReg, wgMT, glvw, tmpVgprRes, tmpSgprInfo))
             for r in range(1, glvw):
@@ -216,7 +217,7 @@ class ShiftVectorComponentsMFMA(ShiftVectorComponents):
             module.add(SBranch(labelName=glvwLabels[glvw-1].getLabelName(), comment="no shifting" ))
             writer.vgprPool.checkIn(rReg)
 
-            _, arch2acc = accToArchMapper(kernel, writer.states.lrvwB)
+            _, arch2acc = accToArchMapper(kernel)
 
             # blocks for handle M_size % vector width
             for r in range(1, glvw):

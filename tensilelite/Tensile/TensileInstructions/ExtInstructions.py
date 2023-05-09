@@ -613,7 +613,7 @@ class Dump:
                 src=vgpr("Serial"), \
                 comment="dump lds"))
             for i in range(startU, startU+numU):
-                module.add(DSLoadB32(dst=vgpr(tmp), src=vgpr(tmpAddr), readToTempVgpr=True,
+                module.add(DSLoadB32(dst=vgpr(tmp), src=vgpr(tmpAddr),
                         ds=DSModifiers(offset=(i*numThreads*4)), comment="dump lds"))
                 module.add(SWaitCnt(lgkmcnt=0, vmcnt=0, vscnt=0, comment="dump"))
                 module.add(self.dumpVgpr(tmp, labelName))

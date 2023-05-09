@@ -201,8 +201,7 @@ class GlobalWriteBatchWriter:
                                for idx, element in enumerate(self.batchElements)])
     module.addComment2(commentStr)
 
-    self.ss.setupStoreElementsForBatch(self.kernel, self.gwvw, self.batchElements, self.batchElementSgprs, isOptNLL=False, \
-                                  allowLRVWforTLUandMI=self.kernel["allowLRVWforTLUandMI"], lrvwB=self.parentWriter.states.lrvwB)
+    self.ss.setupStoreElementsForBatch(self.kernel, self.gwvw, self.batchElements, self.batchElementSgprs, isOptNLL=False)
 
     self.loadsIssued     = 0
     self.localLoadIssued = 0
@@ -371,8 +370,6 @@ class GlobalWriteBatchWriter:
 
     ########################################
     # AccVgpr read
-    if self.kernel.enabledSetPrioSplitLDS:
-      module.add(SSetPrior(0))
     if self.codeAccVgprRead is not None:
       regsPerScalar = self.parentWriter.states.bpeCinternal // self.parentWriter.states.bpr # register per scalar
       # loop over store instructions within one batch

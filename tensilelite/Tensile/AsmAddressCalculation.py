@@ -460,7 +460,8 @@ class AddrCalculation:
         #   For MFMA shift pointer, correct data is stored in another thread.
         #   Therefore, MFMA cannot use v_mov to amend store data
         #   It needs to modify the coord1 of thread directly.
-        if (not kernel["SourceSwap"]) and (not kernel["GuaranteeNoPartialB"]) and tPB["rtv"] and kernel["EnableMatrixInstruction"] and edge:
+        # (Use ShiftVectorComponentsMFMA now)
+        if 0 and (not kernel["SourceSwap"]) and (not kernel["GuaranteeNoPartialB"]) and tPB["rtv"] and kernel["EnableMatrixInstruction"] and edge:
             (d1,d0,vc1,vc0) = self.element
             if (d1 == vc1 == d0 == vc0 == 0) or self.newCoord1:
                 sgprCnt = self.kernelWriter.states.laneSGPRCount
@@ -473,7 +474,7 @@ class AddrCalculation:
                 strideW1 = "Size%s" % "I" if index == 0 else ("J" if index == 1 else (kw.states.indexChars[index]))
 
                 module.addComment1("shift vector components d1")
-                vw = kernel["GlobalLoadVectorWidthB"]
+                vw = kernel["GlobalReadVectorWidthB"]
                 vTmp1 = tmpVgpr
                 vTmp2 = tmpVgpr+1
                 sTmp1 = tmpS01
