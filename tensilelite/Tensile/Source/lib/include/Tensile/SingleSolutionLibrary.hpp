@@ -179,5 +179,60 @@ namespace Tensile
 
             return SolutionSet<MySolution>();
         }
+
+        virtual SolutionSet<MySolution>
+            findAllSolutionsGroupedGemm(std::vector<MyProblem> const& problems,
+                                        Hardware const&               hardware,
+                                        bool                          hardwareOnly) const override
+        {
+            bool debug = Debug::Instance().printPredicateEvaluation();
+
+            bool useSolution = false;
+            if(solution)
+            {
+                if((*solution->hardwarePredicate)(hardware))
+                    useSolution = true;
+
+                if(!hardwareOnly)
+                {
+                    size_t ws = (*solution).requiredWorkspaceSizeGroupedGemm(problems);
+
+                    for(int idx = 0; idx < problems.size(); idx++)
+                    {
+                        auto problem = problems[idx];
+                        problem.setWorkspaceSizeGroupedGemm(ws);
+                        if(!(*solution->problemPredicate)(problem))
+                            useSolution = false;
+                    }
+                }
+
+                if(debug)
+                {
+                    solution->hardwarePredicate->debugEval(hardware, std::cout);
+                    for(int idx = 0; idx < problems.size(); idx++)
+                    {
+                        auto problem = problems[idx];
+                        solution->problemPredicate->debugEval(problem, std::cout);
+                    }
+                }
+            }
+            else if(debug)
+            {
+                std::cout << " (empty library)";
+            }
+
+            if(debug)
+            {
+                if(useSolution)
+                    std::cout << " (match)";
+                else
+                    std::cout << " (no match)";
+            }
+
+            if(useSolution)
+                return SolutionSet<MySolution>({solution});
+
+            return SolutionSet<MySolution>();
+        }
     };
 } // namespace Tensile

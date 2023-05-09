@@ -160,6 +160,14 @@ namespace Tensile
             return library->findAllSolutions(problem, hardware, hardwareOnly);
         }
 
+        virtual SolutionSet<MySolution>
+            findAllSolutionsGroupedGemm(std::vector<MyProblem> const& problems,
+                                        Hardware const&               hardware,
+                                        bool                          hardwareOnly) const override
+        {
+            return library->findAllSolutionsGroupedGemm(problems, hardware, hardwareOnly);
+        }
+
         virtual SolutionVector<MySolution> findTopSolutions(MyProblem const& problem,
                                                             Hardware const&  hardware,
                                                             int numSolutions) const override
