@@ -23,6 +23,7 @@
 ################################################################################
 
 from ..Component import NotLocalFullTileElements
+from math import ceil
 
 class NotLocalFullTileElementsMFMA(NotLocalFullTileElements):
     kernel = {"EnableMatrixInstruction": True}
@@ -57,13 +58,12 @@ class NotLocalFullTileElementsMFMA(NotLocalFullTileElements):
 
         totalTT0     = totalTT0                      if kernel["SourceSwap"] else (totalTT0 * outputsPerThread)
         totalTT1     = (totalTT1 * outputsPerThread) if kernel["SourceSwap"] else totalTT1
-        vectorWidth0 = kernel["VectorWidth"]         if kernel["SourceSwap"] else kernel["MIOutputVectorWidth"]
-        MIOutputVectorWidthAdj = writer.states.lrvwB if kernel["allowLRVWforTLUandMI"] else kernel["MIOutputVectorWidth"]
-        vectorWidth1 = MIOutputVectorWidthAdj if kernel["SourceSwap"] else 1
+        vectorWidth0 = kernel["VectorWidthA"]        if kernel["SourceSwap"] else kernel["VectorWidthA"] * kernel["MIOutputVectorWidth"]
+        vectorWidth1 = kernel["VectorWidthB"] * kernel["MIOutputVectorWidth"] if kernel["SourceSwap"] else kernel["VectorWidthB"]
 
-        for tt1 in range(0, totalTT1//vectorWidth1):
+        for tt1 in range(0, ceil(totalTT1//vectorWidth1)):
             for vc1 in range(0, vectorWidth1):
-                for tt0 in range(0, totalTT0//vectorWidth0):
+                for tt0 in range(0, ceil(totalTT0//vectorWidth0)):
                     for vc0 in range(0, vectorWidth0, storeVectorWidth): # note step by storeVectorWidth
                         element = (tt1, tt0, vc1, vc0)
                         elements.append(element)
