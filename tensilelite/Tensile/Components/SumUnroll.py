@@ -61,13 +61,12 @@ class SumUnrollMfma(SumUnroll):
     def loopSum(self, writer, kernel, tP, u, innerUnroll):
         tc   = tP["tensorChar"]
         imod = Module("SumUnroll%s_I%s" % (tc, innerUnroll))
-        assert (not kernel["DirectToVgpr%s"%tc])
 
         m = (u) % (writer.states.numVgprBuffer+1) # local to use for MACs
 
         # calculate constant
         numRegistersIn   = kernel["ProblemType"]["DataType"].numRegisters()
-        numMIInput       = kernel["MIInputPerThread"]
+        numMIInput       = kernel["MIInputPerThread%s"%tc]
         vgprPerInput     = int(numMIInput * numRegistersIn)
 
         if tc == "A":
@@ -121,7 +120,6 @@ class SumUnrollMfma(SumUnroll):
     maxKId is calculated to find out the length of the sum index.
     """
     def storeSumLDS(self, writer, kernel, tP):
-        assert not kernel["allowLRVWforTLUandMI"]
         imod = Module("StoreSumLDS")
         # Unregister defined sgpr
         if kernel["ProblemType"]["DataType"].numRegisters() < 1:

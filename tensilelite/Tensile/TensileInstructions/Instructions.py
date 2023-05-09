@@ -602,19 +602,17 @@ class MUBUFStoreInstruction(GlobalWriteInstruction):
 
 class LocalReadInstruction(ReadWriteInstruction):
     def __init__(self, instType: InstType, dst, src, \
-                 readToTempVgpr: bool, comment="") -> None:
+                 comment="") -> None:
         super().__init__(instType, ReadWriteInstruction.RWType.RW_TYPE1, comment)
         self.dst            = dst
         self.srcs            = src
 
-        self.readToTempVgpr = readToTempVgpr
-
 class DSLoadInstruction(LocalReadInstruction):
     def __init__(self, instType: InstType, dst, src, \
-                 readToTempVgpr: bool, \
+                 \
                  ds: Optional[DSModifiers] = None, \
                  comment="") -> None:
-        super().__init__(instType, dst, src, readToTempVgpr, comment)
+        super().__init__(instType, dst, src, comment)
         self.ds             = ds
 
     def getParams(self) -> list:
@@ -853,50 +851,50 @@ class FlatAtomicCmpswapB32(FLATStoreInstruction):
 
 # DS Load
 class DSLoadU8(DSLoadInstruction):
-    def __init__(self, dst, src, readToTempVgpr: bool, ds: Optional[DSModifiers] = None, comment="") -> None:
-        super().__init__(InstType.INST_U8, dst, src, readToTempVgpr, ds, comment)
+    def __init__(self, dst, src, ds: Optional[DSModifiers] = None, comment="") -> None:
+        super().__init__(InstType.INST_U8, dst, src, ds, comment)
         if ds: ds.na = 1
         self.setInst("ds_load_u8")
 
 class DSLoadD16HIU8(DSLoadInstruction):
-    def __init__(self, dst, src, readToTempVgpr: bool, ds: Optional[DSModifiers] = None, comment="") -> None:
-        super().__init__(InstType.INST_D16_HI_U8, dst, src, readToTempVgpr, ds, comment)
+    def __init__(self, dst, src, ds: Optional[DSModifiers] = None, comment="") -> None:
+        super().__init__(InstType.INST_D16_HI_U8, dst, src, ds, comment)
         if ds: ds.na = 1
         self.setInst("ds_load_u8_d16_hi")
 
 class DSLoadU16(DSLoadInstruction):
-    def __init__(self, dst, src, readToTempVgpr: bool, ds: Optional[DSModifiers] = None, comment="") -> None:
-        super().__init__(InstType.INST_U16, dst, src, readToTempVgpr, ds, comment)
+    def __init__(self, dst, src, ds: Optional[DSModifiers] = None, comment="") -> None:
+        super().__init__(InstType.INST_U16, dst, src, ds, comment)
         if ds: ds.na = 1
         self.setInst("ds_load_u16")
 
 class DSLoadD16HIU16(DSLoadInstruction):
-    def __init__(self, dst, src, readToTempVgpr: bool, ds: Optional[DSModifiers] = None, comment="") -> None:
-        super().__init__(InstType.INST_D16_HI_U16, dst, src, readToTempVgpr, ds, comment)
+    def __init__(self, dst, src, ds: Optional[DSModifiers] = None, comment="") -> None:
+        super().__init__(InstType.INST_D16_HI_U16, dst, src, ds, comment)
         if ds: ds.na = 1
         self.setInst("ds_load_u16_d16_hi")
 
 class DSLoadB16(DSLoadInstruction):
-    def __init__(self, dst, src, readToTempVgpr: bool, ds: Optional[DSModifiers] = None, comment="") -> None:
-        super().__init__(InstType.INST_B16, dst, src, readToTempVgpr, ds, comment)
+    def __init__(self, dst, src, ds: Optional[DSModifiers] = None, comment="") -> None:
+        super().__init__(InstType.INST_B16, dst, src, ds, comment)
         if ds: ds.na = 1
         self.setInst("ds_load_b16")
 
 class DSLoadB32(DSLoadInstruction):
-    def __init__(self, dst, src, readToTempVgpr: bool, ds: Optional[DSModifiers] = None, comment="") -> None:
-        super().__init__(InstType.INST_B32, dst, src, readToTempVgpr, ds, comment)
+    def __init__(self, dst, src, ds: Optional[DSModifiers] = None, comment="") -> None:
+        super().__init__(InstType.INST_B32, dst, src, ds, comment)
         if ds: ds.na = 1
         self.setInst("ds_load_b32")
 
 class DSLoadB64(DSLoadInstruction):
-    def __init__(self, dst, src, readToTempVgpr: bool, ds: Optional[DSModifiers] = None, comment="") -> None:
-        super().__init__(InstType.INST_B64, dst, src, readToTempVgpr, ds, comment)
+    def __init__(self, dst, src, ds: Optional[DSModifiers] = None, comment="") -> None:
+        super().__init__(InstType.INST_B64, dst, src, ds, comment)
         if ds: ds.na = 1
         self.setInst("ds_load_b64")
 
 class DSLoadB128(DSLoadInstruction):
-    def __init__(self, dst, src, readToTempVgpr: bool, ds: Optional[DSModifiers] = None, comment="") -> None:
-        super().__init__(InstType.INST_B128, dst, src, readToTempVgpr, ds, comment)
+    def __init__(self, dst, src, ds: Optional[DSModifiers] = None, comment="") -> None:
+        super().__init__(InstType.INST_B128, dst, src, ds, comment)
         if ds: ds.na = 1
         self.setInst("ds_load_b128")
 
@@ -905,14 +903,14 @@ class DSLoadB128(DSLoadInstruction):
         return 2
 
 class DSLoad2B32(DSLoadInstruction):
-    def __init__(self, dst, src, readToTempVgpr: bool, ds: Optional[DSModifiers] = None, comment="") -> None:
-        super().__init__(InstType.INST_B32, dst, src, readToTempVgpr, ds, comment)
+    def __init__(self, dst, src, ds: Optional[DSModifiers] = None, comment="") -> None:
+        super().__init__(InstType.INST_B32, dst, src, ds, comment)
         if ds: ds.na = 2
         self.setInst("ds_load2_b32")
 
 class DSLoad2B64(DSLoadInstruction):
-    def __init__(self, dst, src, readToTempVgpr: bool, ds: Optional[DSModifiers] = None, comment="") -> None:
-        super().__init__(InstType.INST_B64, dst, src, readToTempVgpr, ds, comment)
+    def __init__(self, dst, src, ds: Optional[DSModifiers] = None, comment="") -> None:
+        super().__init__(InstType.INST_B64, dst, src, ds, comment)
         if ds: ds.na = 2
         self.setInst("ds_load2_b64")
 
@@ -2295,3 +2293,8 @@ class VRndneF32(CommonInstruction):
     def __init__(self, dst, src, comment="") -> None:
         super().__init__(InstType.INST_F32, dst, [src], None, None, comment)
         self.setInst("v_rndne_f32")
+
+class VPermB32(CommonInstruction):
+    def __init__(self, dst, src0, src1, src2, comment="") -> None:
+        super().__init__(InstType.INST_B32, dst, [src0, src1, src2], None, None, comment)
+        self.setInst("v_perm_b32")

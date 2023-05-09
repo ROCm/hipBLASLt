@@ -386,8 +386,8 @@ class ProblemPredicate(Properties.Predicate):
             # calculate the minimum supported free dimension size
             TLUA = state['ProblemType']['TLUA']
             TLUB = state['ProblemType']['TLUB']
-            minFree0 = state['GlobalLoadVectorWidthA'] if TLUA else 1
-            minFree1 = state['GlobalLoadVectorWidthB'] if TLUB else 1
+            minFree0 = state['GlobalReadVectorWidthA'] if TLUA else 1
+            minFree1 = state['GlobalReadVectorWidthB'] if TLUB else 1
             rv += [cls('LeadingFree0SizesGreaterOrEqual', value=minFree0)]
             rv += [cls('LeadingFree1SizesGreaterOrEqual', value=minFree1)]
 
@@ -409,11 +409,11 @@ class ProblemPredicate(Properties.Predicate):
         if 'BufferLoad' in state and state['BufferLoad'] == True:
             TLUA = state['ProblemType']['TLUA']
             TLUB = state['ProblemType']['TLUB']
-            MayShiftA = TLUA and state['AssertFree0ElementMultiple'] < state['GlobalLoadVectorWidthA']
-            MayShiftB = TLUB and state['AssertFree1ElementMultiple'] < state['GlobalLoadVectorWidthB']
+            MayShiftA = TLUA and state['AssertFree0ElementMultiple'] < state['GlobalReadVectorWidthA']
+            MayShiftB = TLUB and state['AssertFree1ElementMultiple'] < state['GlobalReadVectorWidthB']
             subrv={}
-            subrv['ShiftPtrElemB'] = state['GlobalLoadVectorWidthB'] if MayShiftB else 0
-            subrv['ShiftPtrElemA'] = state['GlobalLoadVectorWidthA'] if MayShiftA else 0
+            subrv['ShiftPtrElemB'] = state['GlobalReadVectorWidthB'] if MayShiftB else 0
+            subrv['ShiftPtrElemA'] = state['GlobalReadVectorWidthA'] if MayShiftA else 0
             subrv['DUorMT1'] = state['DepthU'] if TLUB else state['MacroTile1']
             subrv['DUorMT0'] = state['DepthU'] if TLUA else state['MacroTile0']
             # value is also a dict for better readibility, client side need to handel the serialization

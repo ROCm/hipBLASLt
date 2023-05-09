@@ -149,21 +149,23 @@ class SignatureCOV3(Signature):
         self.addOptConfigComment(signature,
                                 tt=[kernel["ThreadTile0"], kernel["ThreadTile1"]],
                                 sg=[kernel["SubGroup0"], kernel["SubGroup1"]],
-                                vw=kernel["VectorWidth"],
-                                glvwA=kernel["GlobalLoadVectorWidthA"],
-                                glvwB=kernel["GlobalLoadVectorWidthB"],
+                                vwA=kernel["VectorWidthA"],
+                                vwB=kernel["VectorWidthB"],
+                                glvwA=kernel["GlobalReadVectorWidthA"],
+                                glvwB=kernel["GlobalReadVectorWidthB"],
                                 d2lA=kernel["DirectToLdsA"],
                                 d2lB=kernel["DirectToLdsB"],
                                 useSgprForGRO=kernel["_UseSgprForGRO"])
 
         return signature
 
-    def addOptConfigComment(self, signature: SignatureBase, tt, sg, vw, glvwA, glvwB, d2lA, d2lB, useSgprForGRO):
+    def addOptConfigComment(self, signature: SignatureBase, tt, sg, vwA, vwB, glvwA, glvwB, d2lA, d2lB, useSgprForGRO):
         signature.addDescriptionTopic("Optimizations and Config:")
         signature.addDescriptionBlock("ThreadTile= %u x %u" % (tt[0], tt[1]) )
         signature.addDescriptionBlock("SubGroup= %u x %u" % (sg[0], sg[1]) )
-        signature.addDescriptionBlock("VectorWidth=%u" % vw )
-        signature.addDescriptionBlock("GlobalLoadVectorWidthA=%u, GlobalLoadVectorWidthB=%u" % (glvwA, glvwB) )
+        signature.addDescriptionBlock("VectorWidthA=%u" % vwA )
+        signature.addDescriptionBlock("VectorWidthB=%u" % vwB )
+        signature.addDescriptionBlock("GlobalReadVectorWidthA=%u, GlobalReadVectorWidthB=%u" % (glvwA, glvwB) )
         signature.addDescriptionBlock("DirectToLdsA=%s" % d2lA )
         signature.addDescriptionBlock("DirectToLdsB=%s" % d2lB )
         signature.addDescriptionBlock("UseSgprForGRO=%s" % useSgprForGRO )

@@ -196,7 +196,6 @@ globalParameters["Device"] = 0                    # select hip device or opencl 
 # shouldn't need to change
 globalParameters["DeviceLDS"] = 65536             # LDS bytes per CU, for computing occupancy
 globalParameters["MaxLDS"] = 65536                # max LDS a kernel should attempt to use
-globalParameters["MaxDepthU"] = 256               # max DepthU value to allow
 globalParameters["ShortNames"] = False            # on windows kernel names can get too long; =True will convert solution/kernel names to serial ids
 globalParameters["MergeFiles"] = True             # F=store every solution and kernel in separate file; T=store all solutions in single file
 globalParameters["NumMergedFiles"] = 1            # The number of files that kernels should be split between when merging
@@ -312,8 +311,7 @@ validMacroTileSides = [1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 6, 12, 24, 4
 validMacroTiles = []
 validISA = [(0,0,0)]
 validISA.extend(globalParameters["SupportedISA"])
-depthUs = list(range(-16, 0))
-depthUs.extend(list(range(2,512+1,1)))
+depthUs = list(range(2,512+1,1))
 for i in validMacroTileSides:
   for j in validMacroTileSides:
     validMacroTiles.append([i, j])
@@ -446,12 +444,6 @@ validParameters = {
     # If set ClusterLocalRead, each iteration dedicated vgprBuffer for localRead
     # So we can schedule these localReads to the front of the loop
     "ClusterLocalRead":           [0,1],
-    # For bytes per element less than 4 (FP16, BF16, INT8 ...),
-    # we have to read 1 element to dedicated vgprBuffer, other elements to other vgprBuffers, then pack them into 1 register.
-    # This increase usage of vgpr and might decrease occupancy.
-    # CLRP=0: each iteration share PLR+1 vgprBuffer.
-    # CLRP=1: each iteration has dedicated vgprBuffer for packing.
-    "ClusterLocalReadPack":       [0,1],
 
     # We use double LDS buffer when PrefetchGlobalRead.
     # While it reads data from LDS[0]/[1], it prefetch global data and writes to LDS[1]/[0]
@@ -538,9 +530,8 @@ validParameters = {
 
     # Attempt to load directly from global memory into Vgpr.
     # Assembly only
-    "DirectToVgprA":              [ False, True ],
-    "DirectToVgprB":              [ False, True ],
     "DirectToVgprSparseMetadata": [ False, True ],
+
     # Attempt to load directly from global memory into LDS.
     # Assembly only
     # Requires BufferLoad, assembler support for lds modifier on buffer
@@ -551,7 +542,7 @@ validParameters = {
     # local write offset with an SGPR.
     # For an 8x8 TT with PrefetchGlobalRead=1 this can save 33 VGPRs.
     #    - Requirements for DirectToLds=1:
-    #      GlobalLoadVectorWidth = 1/2/4
+    #      GlobalReadVectorWidth = 1/2/4
     #      TransposeLDS = 1 for TLU=0 case
     # DirectToLds support for x2/x4 (1st part of async_copy() support)
     "DirectToLds":                [ False, True ],
@@ -836,7 +827,8 @@ validParameters = {
     # NOTE: for input bpe=32, max GRVW is 4  (to fit dwordx4) (FP32), min GRVW is 1 (dword)
     #                 bpe=16, max GRVW is 8  (to fit dwordx4) (FP16), min GRVW is 2 (dword)
     #                 bpe=8,  max GRVW is 16 (to fit dwordx4) (INT8), min GRVW is 4 (dword)
-    "GlobalReadVectorWidth":      [ -1, 1, 2, 3, 4, 6, 8, 16 ],
+    "GlobalReadVectorWidthA":      [ -1, 1, 2, 3, 4, 6, 8, 16 ],
+    "GlobalReadVectorWidthB":      [ -1, 1, 2, 3, 4, 6, 8, 16 ],
 
     # Controls desired width (#elements) for loads from LDS -> VGPR.
     # -1 : Set LocalReadVectorWidth =  VectorWidth
@@ -858,11 +850,11 @@ validParameters = {
     # GlobalReadVectorWidth also controls local write width.
     # Local read width also matches since VectorWidth consec elements must be read
     # Typically matching 16 bytes is good choice since the stores will be optimally coalesced with 16 bytes/WI.
-    # -1 means use the largest vector width up to 128 bits.
     # Using a VW too large which results in >16bytes/thread isn't supported
     # For MFMA non SourceSwap: this parameter didn't take effect
-    # For MFMA SourceSwap: this parameter only take effect on A buffer for now
-    "VectorWidth":                [ -1, 1, 2, 3, 4, 6, 8 ],
+    # -1 means set vw to largest localReadWidth according to MIWaveTile
+    "VectorWidthA":               [ -1, 1, 2, 3, 4, 6, 8 ],
+    "VectorWidthB":               [ -1, 1, 2, 3, 4, 6, 8 ],
 
     # If 0, store 1 element per instruction.
     # If 1, store vector-width elements per instruction.
@@ -896,25 +888,6 @@ validParameters = {
     # -3 : Only allow min(GLVWA,GLVWB) < VW ?
     "DepthU":                     depthUs,
 
-    # DepthULdsDivisor (Split LDS) determines how we pipeline the data from global memory to LDS
-    # Instead of moving all in-flight data from the register buffer (G2L) to the LDS at once, we divide the G2L buffer into N portions and
-    # write each portion of the G2L to LDS, read from LDS and do the actual matrix multiply-accumulate, before moving on to the portion and so on.
-    # This helps cut down LDS usage by the value of the divisor. Helps increase CU occupancy or DepthU if kernel was previously LDS limited.
-    #
-    # The premise is to be able to fetch 256B (equivalent to 128 half's or 64 single's) in TN layout problems to maximize L2 utilization. This
-    # was previously a problem for TN since it implies DepthU is large, and that leads to oversubscription of LDS.
-    #
-    # Preconditions:
-    # ScheduleIterAlg=3, TransposeLDS=1, PGR=0/1 exlcuding 2, DirectToLds=0 (DirectToLds=0 because part of the data loaded *need* to reside in registers),
-    # nRegs per load >= DepthULdsDivisor (since we artificially require at least 1 register per LDS write)
-    #
-    # Example: DepthULdsDivisor=2
-    # v0, v1, v2, v3 | v0, v1, v2, v3 | ... ----> unroll dim
-    # -----Thd 0----- -----Thd 1-----   ...
-    # 1st subloop writes v0,v1 to LDS
-    # 2nd subloop writes v2,v3 to LDS
-    "DepthULdsDivisor":           [1, 2, 4],
-
     # integer ammount of padding to put into LDS, in 2016 this didn't seem to help performance, profilers were showing that channel conflicts weren't really hurting
     # performance so this has been deprecated and probably doesn't work
     # -1 means use same padding as the VectorWidth if TLU=0 else 0.  (Padding only helps when transpose is required)
@@ -928,6 +901,7 @@ validParameters = {
     # 0 means disable LdsBlockSizePerPad
     "LdsBlockSizePerPadA":         [-1, 0, 64, 128, 256, 512, 1024],
     "LdsBlockSizePerPadB":         [-1, 0, 64, 128, 256, 512, 1024],
+    "LdsBlockSizePerPadMetadata":  [-1, 0, 64, 128, 256, 512, 1024],
 
     # Transpose LDS format. Local store in Coalsced dimension , same as optimized global fetch dimension . applicable only in TLU=0 case for miSIMD(s)
     # TODO: No code for -1 ?
@@ -1006,10 +980,12 @@ defaultBenchmarkCommonParameters = [
     {"LdsBlockSizePerPadMetadata":[ 0 ] },
     {"TransposeLDS":              [ 0 ] },
     {"MaxOccupancy":              [ 40 ] },
-    {"VectorWidth":               [ -1 ] },
+    {"VectorWidthA":              [ -1 ] },
+    {"VectorWidthB":              [ -1 ] },
     {"VectorStore":               [ -1 ] },
     {"StoreVectorWidth":          [ -1 ] },
-    {"GlobalReadVectorWidth":     [ -1 ] },
+    {"GlobalReadVectorWidthA":     [ -1 ] },
+    {"GlobalReadVectorWidthB":     [ -1 ] },
     {"LocalReadVectorWidth":      [ -1 ] },
     {"WaveSeparateGlobalReadA":   [ 0 ] },
     {"WaveSeparateGlobalReadB":   [ 0 ] },
@@ -1017,7 +993,6 @@ defaultBenchmarkCommonParameters = [
     {"PrefetchGlobalRead":        [ 1 ] },
     {"PrefetchLocalRead":         [ 1 ] },
     {"ClusterLocalRead":          [ 0 ] },
-    {"ClusterLocalReadPack":      [ 0 ] },
     {"SuppressNoLoadLoop":        [ False ]},
     {"ExpandPointerSwap":         [ True ]},
 
@@ -1033,9 +1008,6 @@ defaultBenchmarkCommonParameters = [
 
     {"BufferLoad":                [ True ] },
     {"BufferStore":               [ True ] },
-    {"DirectToVgprA":             [ False ] },
-    {"DirectToVgprB":             [ False ] },
-    {"DirectToVgprMetadata":      [ False ] },
     {"DirectToVgprSparseMetadata":[ False ] },
     {"DirectToLds":               [ False ] },
     {"UseSgprForGRO":             [ -1 ] },
@@ -1059,8 +1031,7 @@ defaultBenchmarkCommonParameters = [
     {"WavefrontSize":             [ 64 ]},
     {"MatrixInstruction":         [ [] ] },
     {"1LDSBuffer":                [ 0 ] },
-    {"DepthU":                    [ -1 ] },
-    {"DepthULdsDivisor":          [ 1 ] },
+    {"DepthU":                    [ 16 ] },
     {"NonTemporalE":              [ 0 ] },
     {"NonTemporalD":              [ 0 ] },
     {"NonTemporalC":              [ 0 ] },
