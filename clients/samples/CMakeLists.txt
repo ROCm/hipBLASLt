@@ -23,8 +23,9 @@
 
 add_executable( example_hipblaslt_preference example_hipblaslt_preference.cpp)
 add_executable( example_hipblaslt_groupedgemm example_hipblaslt_groupedgemm.cpp)
+add_executable( example_hipblaslt_groupedgemm_get_all_algos example_hipblaslt_groupedgemm_get_all_algos.cpp)
 
-set( sample_list_tensile example_hipblaslt_preference example_hipblaslt_groupedgemm)
+set( sample_list_tensile example_hipblaslt_preference example_hipblaslt_groupedgemm example_hipblaslt_groupedgemm_get_all_algos)
 
 set( sample_list_all ${sample_list_tensile})
 set( sample_list_hip_device ${sample_list_tensile} )
