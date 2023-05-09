@@ -207,6 +207,14 @@ namespace Tensile
             return m_subLibrary->findAllSolutions(problem, hardware, hardwareOnly);
         }
 
+        virtual SolutionSet<MySolution>
+            findAllSolutionsGroupedGemm(std::vector<MyProblem> const& problems,
+                                        Hardware const&               hardware,
+                                        bool                          hardwareOnly) const override
+        {
+            return m_subLibrary->findAllSolutionsGroupedGemm(problems, hardware, hardwareOnly);
+        }
+
         std::shared_ptr<MySolution> findSolutionInCache(MyProblem const& problem,
                                                         Hardware const&  hardware) const
         {

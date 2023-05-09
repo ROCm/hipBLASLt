@@ -105,6 +105,26 @@ namespace Tensile
             return rv;
         }
 
+        virtual SolutionSet<MySolution>
+            findAllSolutionsGroupedGemm(std::vector<MyProblem> const& problems,
+                                        Hardware const&               hardware,
+                                        bool                          hardwareOnly) const override
+        {
+            SolutionSet<MySolution> rv;
+
+            for(auto const& row : rows)
+            {
+                if(row.first(problems[0], hardware))
+                {
+                    auto rowSolutions
+                        = row.second->findAllSolutionsGroupedGemm(problems, hardware, hardwareOnly);
+                    rv.insert(rowSolutions.begin(), rowSolutions.end());
+                }
+            }
+
+            return rv;
+        }
+
         virtual std::string description() const override
         {
             return concatenate(this->type(), " library (", rows.size(), " rows)");

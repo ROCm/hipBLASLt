@@ -129,6 +129,19 @@ namespace Tensile
             return library->findAllSolutions(problem, hardware, hardwareOnly);
         }
 
+        virtual SolutionSet<MySolution>
+            findAllSolutionsGroupedGemm(std::vector<MyProblem> const& problems,
+                                        Hardware const&               hardware,
+                                        bool                          hardwareOnly) const override
+        {
+            auto library = lookup(problems[0], hardware);
+
+            if(library == nullptr)
+                return SolutionSet<MySolution>();
+
+            return library->findAllSolutionsGroupedGemm(problems, hardware, hardwareOnly);
+        }
+
         std::shared_ptr<Property<MyProblem, Key>> property;
         LibraryMap<MyProblem, MySolution, Key>    map;
 
