@@ -1,9 +1,9 @@
 # Sample Unit test
 Source code are in
 
-clients/samples/example_hipblaslt_preference.cpp
-
-clients/samples/example_hipblaslt_groupdgemm.cpp
+ - clients/samples/example_hipblaslt_preference.cpp
+ - clients/samples/example_hipblaslt_groupdgemm.cpp
+ - clients/samples/example_hipblaslt_cumaskedstream.cpp
 
 # Go to hipBLASLt build directory
 cd build/release
@@ -117,4 +117,43 @@ result:
       Sol 7: Perf: 0.071136 ms, 64.150669 Tflops *
       Sol 8: Perf: 0.093200 ms, 48.963706 Tflops
       Sol 9: Perf: 0.096768 ms, 47.158376 Tflops
+```
+
+# Run CU-maked stream example
+
+`example_hipblaslt_cumaskedstream` has serveral options:
+
+```
+hipBLASLt CU-masked stream example:
+  -h [ --help ]                    Help screen
+  -d [ --datatype ] arg (=f32)     Data type for GEMM, f32, f16 or b16
+  -v [ --verbose ]                 Verbose output
+  -m [ --m ] arg (=1024)           M dimension of GEMM
+  -n [ --n ] arg (=1024)           N dimension of GEMM
+  -k [ --k ] arg (=1024)           K dimension of GEMM
+  --memory_bound_size arg (=49152) # of elements for memory-bound kernel
+  --num_bench arg (=1)             # of benchmark run
+  --num_sync arg (=1)              # of synchronized run
+  -c [ --cu_mask ] arg             CU-Mask for hipStream of GEMM, a string with
+                                   hex digits, e.g. 0xffffffffffffffffffffffff0
+                                   0000000
+  --m_cu_mask arg                  CU-Mask for hipStream of memory-bound
+                                   kernel, a string with hex digits, e.g.
+                                   0x000000000000000000000000ffffffff
+```
+
+Here's an example:
+
+```
+./example_hipblaslt_cumaskedstream -m 128 -n 768 -k 768 --num_bench 1 --num_sync 10 -c 0xffffffffffffffffffffffff00000000 --m_cu_mask 0x000000000000000000000000ffffffff -d f32 --memory_bound_size 32768
+```
+
+outputs
+
+```
+Run with CU-mask
+        Perf: 3.045890 Tflops, 0.049584 ms
+Run without CU-mask
+        Perf: 2.830344 Tflops, 0.053360 ms
+107.62%
 ```
