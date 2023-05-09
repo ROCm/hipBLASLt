@@ -203,5 +203,65 @@ namespace Tensile
 
             return rv;
         }
+
+        virtual SolutionSet<MySolution>
+            findAllSolutionsGroupedGemm(std::vector<MyProblem> const& problems,
+                                        Hardware const&               hardware,
+                                        bool                          hardwareOnly) const override
+        {
+            bool debug = Debug::Instance().printPropertyEvaluation();
+
+            SolutionSet<MySolution> rv;
+
+            for(auto const& row : solutions)
+            {
+                bool useSolution = false;
+                if(debug)
+                {
+                    std::cout << row.second->description() << ": ";
+                }
+
+                if((*row.second->hardwarePredicate)(hardware))
+                {
+                    useSolution = true;
+                    if(!hardwareOnly)
+                    {
+                        size_t ws = (*row.second).requiredWorkspaceSizeGroupedGemm(problems);
+
+                        for(int idx = 0; idx < problems.size(); idx++)
+                        {
+                            auto problem = problems[idx];
+                            problem.setWorkspaceSizeGroupedGemm(ws);
+                            if(!(*row.second->problemPredicate)(problem))
+                                useSolution = false;
+                        }
+                    }
+
+                    if(useSolution)
+                        rv.insert(row.second);
+                }
+                if(debug)
+                {
+                    if(useSolution)
+                        std::cout << " Works";
+                    else
+                        std::cout << " Predicate failed";
+
+                    if(!hardwareOnly)
+                    {
+                        for(int idx = 0; idx < problems.size(); idx++)
+                        {
+                            auto problem = problems[idx];
+                            row.second->problemPredicate->debugEval(problem, std::cout);
+                            std::cout << std::endl;
+                        }
+                    }
+                    row.second->hardwarePredicate->debugEval(hardware, std::cout);
+                    std::cout << std::endl;
+                }
+            }
+
+            return rv;
+        }
     };
 } // namespace Tensile

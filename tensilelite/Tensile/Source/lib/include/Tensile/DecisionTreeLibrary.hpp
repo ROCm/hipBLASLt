@@ -94,6 +94,22 @@ namespace Tensile
             };
             return forest->matchesInOrder(problem, transform);
         }
+
+        virtual SolutionSet<MySolution>
+            findAllSolutionsGroupedGemm(std::vector<MyProblem> const& problems,
+                                        Hardware const&               hardware,
+                                        bool                          hardwareOnly) const override
+        {
+            if(hardwareOnly)
+            {
+                throw std::runtime_error("Dicision tree does not support hardwareOnly mode.");
+            }
+            typename Forest::Transform transform
+                = [&](Element library) -> std::shared_ptr<MySolution> {
+                return library->findBestSolution(problems, hardware);
+            };
+            return forest->matchesInOrder(problems[0], transform);
+        }
     };
 
 } // namespace Tensile

@@ -136,6 +136,26 @@ namespace Tensile
             return solutions;
         }
 
+        virtual SolutionSet<MySolution>
+            findAllSolutionsGroupedGemm(std::vector<MyProblem> const& problems,
+                                        Hardware const&               hardware,
+                                        bool                          hardwareOnly) const override
+        {
+            if(!library)
+            {
+                loadPlaceholderLibrary();
+            }
+
+            auto solutions = library->findAllSolutionsGroupedGemm(problems, hardware, hardwareOnly);
+
+            for(auto& solution : solutions)
+            {
+                solution->codeObjectFilename = getCodeObjectFileName(hardware, *solution);
+            }
+
+            return solutions;
+        }
+
         static std::string Type()
         {
             return "Placeholder";

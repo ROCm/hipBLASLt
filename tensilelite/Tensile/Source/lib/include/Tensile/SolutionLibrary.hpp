@@ -106,6 +106,12 @@ namespace Tensile
                                                          bool hardwareOnly = false) const
             = 0;
 
+        virtual SolutionSet<MySolution>
+            findAllSolutionsGroupedGemm(std::vector<MyProblem> const& problems,
+                                        Hardware const&               hardware,
+                                        bool                          hardwareOnly = false) const
+            = 0;
+
         virtual std::string type() const        = 0;
         virtual std::string description() const = 0;
 
