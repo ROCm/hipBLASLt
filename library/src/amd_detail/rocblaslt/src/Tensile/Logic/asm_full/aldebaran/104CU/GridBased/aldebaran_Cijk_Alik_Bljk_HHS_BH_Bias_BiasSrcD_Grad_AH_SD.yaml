@@ -284,7 +284,7 @@
     _GlobalAccumulation: null
     _UseSgprForGRO: 1
     _VectorStore: 1
-    _WorkspaceSizePerElemBias: 0
+    _WorkspaceSizePerElemBias: 4
     _WorkspaceSizePerElemC: 0
     _staggerStrideShift: 2
     allowLRVWforTLUandMI: false
@@ -508,7 +508,7 @@
     _GlobalAccumulation: null
     _UseSgprForGRO: 1
     _VectorStore: 1
-    _WorkspaceSizePerElemBias: 0
+    _WorkspaceSizePerElemBias: 4
     _WorkspaceSizePerElemC: 0
     _staggerStrideShift: 2
     allowLRVWforTLUandMI: false
