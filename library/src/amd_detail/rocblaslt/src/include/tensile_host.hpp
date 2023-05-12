@@ -176,6 +176,7 @@ struct RocblasltContractionProblem
         , batch_D(batch_D)
         , row_stride_d(1)
         , col_stride_d(ld_d)
+        , batch_stride_d(batch_stride_d)
         , E(E)
         , batch_E(batch_E)
         , row_stride_e(1)
