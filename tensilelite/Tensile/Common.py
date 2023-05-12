@@ -917,6 +917,7 @@ validParameters = {
     "NonTemporalA":               list(range(0,4)),
     "NonTemporalB":               list(range(0,4)),
     "NonTemporalMetadata":        list(range(0,4)),
+    "NonTemporal":                list(range(-1,4)),
 
     # Group together unroll iterations inside the unroll loop.
     # For example, InnerUnroll=2 will fetch LDS for two unroll iterations
@@ -1038,6 +1039,7 @@ defaultBenchmarkCommonParameters = [
     {"NonTemporalA":              [ 0 ] },
     {"NonTemporalB":              [ 0 ] },
     {"NonTemporalMetadata":       [ 0 ] },
+    {"NonTemporal":               [ -1 ] },
     {"CustomKernelName":          [ "" ] },
     {"NoReject":                  [ False ]},
     {"MinVgprNumber":             [0]},
