@@ -1682,7 +1682,7 @@ namespace Tensile
         size_t size = 0;
 
         size += problem.d().totalLogicalElements() * sizeMapping.workspaceSizePerElemC;
-        if(problem.useGradient() && problem.useBias())
+        if(problemType.useGradient && problemType.useBias)
         {
             if(problem.biasSrc() == ContractionProblemGemm::TENSOR::A)
             {
