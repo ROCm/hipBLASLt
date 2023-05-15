@@ -73,3 +73,8 @@ Heuristics Cache
 ================
 hipBLASLt uses heuristics to pick the most suitable matmul kernel for execution based on the problem sizes, GPU configuration, and other parameters. This requires performing some computations on the host CPU, which could take tens of microseconds.
 To overcome this overhead, it is recommended to query the heuristics once using :ref:`hipblasltmatmulalgogetheuristic` and then reuse the result for subsequent computations using :ref:`hipblasltmatmul`.
+
+
+hipBLASLt Extensions
+================
+See page usage for more information.
