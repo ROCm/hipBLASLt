@@ -12,6 +12,8 @@ There are 4 client executables that can be used with hipBLASLt.
 
 4. example_hipblaslt_groupedgemm
 
+5. example_hipblaslt_groupedgemm_get_all_algos
+
 These clients can be built by following the instructions in the `Build and Install hipBLASLt github page <https://github.com/ROCmSoftwarePlatform/hipBLASLt>`_ . After building the hipBLASLt clients, they can be found in the directory ``hipBLASLt/build/release/clients/staging``.
 The next section will cover a brief explanation and the usage of each hipBLASLt clients.
 
@@ -201,3 +203,49 @@ For example, to solve 3 gemms by groupgemm sample app:
 .. code-block:: bash
 
    ./example_hipblaslt_groupedgemm --datatype fp16 --trans_a T --trans_b N -m 1024 -n 1024 -k 1024 -m 512 -n 512 -k 512 -m 2048 -n 1024 -k 512 --sync_count 10 --grouped_gemm 1 --request_solutions 10
+
+example_hipblaslt_groupedgemm_get_all_algos
+============================
+example_hipblaslt_groupedgemm_get_all_algos is a sample app for hipblaslt grouped gemm using hipblasLtExtGetAllAlgos API.
+
+For more information:
+
+.. code-block:: bash
+
+   ./example_hipblaslt_groupedgemm_get_all_algos --help
+   Usage: ./example_hipblaslt_groupedgemm_get_all_algos <options>
+   options:
+        -h, --help                              Show this help message
+        -v, --verbose                           Verbose output
+        -V, --validate                          Verify results
+        --bench_count                           Number of benchmark runs (default is 1)
+        --sync_count                            Number of sync runs (default is 1)
+        --num_streams                           Run gemms by multi streams (default is 1)
+        --grouped_gemm                          Run gemms by grouped gemm kernel (default is 0)
+        --datatype              datatype        GEMM_STRIDED argument in out: fp32, fp16, bf16 (default is fp32)
+        --trans_a               trans_a         GEMM_STRIDED argument trans_a: N or T (default is N)
+        --trans_b               trans_b         GEMM_STRIDED argument trans_b: N or T (default is N)
+        -m                      m               GEMM_STRIDED argument m
+        -n                      n               GEMM_STRIDED argument n
+        -k                      k               GEMM_STRIDED argument k
+        --batch_count           batch_count     GEMM_STRIDED argument batch_count
+        --lda                   lda             GEMM_STRIDED argument lda
+        --ldb                   ldb             GEMM_STRIDED argument ldb
+        --ldc                   ldc             GEMM_STRIDED argument ldc
+        --ldd                   ldd             GEMM_STRIDED argument ldd
+        --stride_a              stride_a        GEMM_STRIDED argument stride_a
+        --stride_b              stride_b        GEMM_STRIDED argument stride_b
+        --stride_c              stride_c        GEMM_STRIDED argument stride_c
+        --stride_d              stride_d        GEMM_STRIDED argument stride_d
+        --alpha                 alpha           GEMM_STRIDED argument alpha (default is 1)
+        --beta                  beta            GEMM_STRIDED argument beta (default is 0)
+        --act                   act             GEMM_STRIDED set activation type: relu, gelu, none (default is none)
+        --bias                  bias            GEMM_STRIDED set bias: 0 or 1 (default is 0)
+        --scaleD                scaleD          GEMM_STRIDED enable scaleD: 0 or 1 (default is 0)
+        --cpu_time              cpu_time        Bechmark timing using cpu time: 0 or 1 (default is 0)
+
+For example, to solve 3 gemms by groupgemm sample app:
+
+.. code-block:: bash
+
+   ./example_hipblaslt_groupedgemm_get_all_algos --datatype fp16 --trans_a T --trans_b N -m 1024 -n 1024 -k 1024 -m 512 -n 512 -k 512 -m 2048 -n 1024 -k 512 --sync_count 10 --grouped_gemm 1 --request_solutions 10
