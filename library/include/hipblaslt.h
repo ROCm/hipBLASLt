@@ -121,6 +121,9 @@ typedef enum {
   HIPBLASLT_MATMUL_PREF_MAX = 2
 } hipblasLtMatmulPreferenceAttributes_t;
 
+/*! \ingroup types_module
+ *  \brief It is an enumerated type used to specific the type of the gemm problem in hipblasLtExt APIs.
+ */
 typedef enum
 {
   HIPBLASLT_GEMM = 1,
@@ -190,6 +193,21 @@ typedef struct _hipblasLtGemmOpaque_t{
   size_t gemm_count = 0;
   size_t workspace_bytes = 0;
 } hipblasLtGemmOpaque_t;
+
+/*! \ingroup types_module
+ *  \brief Instance used by hipBLASLtExt
+ *
+ *  \details
+ *  The hipblasLtExtGemm_t type holds the information of problem(s),
+ * gemm type, number of gemms, and workspace bytes.
+ *
+ *  \ref hipblasLtExtGemmCreate():
+ *  TO create a normal gemm hipblasLtExt instance.
+ *  \ref hipblasLtExtGroupedGemmCreate():
+ *  To create a grouped gemm hipblasLtExt instance.
+ *  \ref hipblasLtExtDestroy():
+ *  To destroy the hipblasLtExt instance.
+ */
 typedef hipblasLtGemmOpaque_t* hipblasLtExtGemm_t;
 
 /*! \ingroup types_module
@@ -670,11 +688,9 @@ hipblasStatus_t
  *  typeA,typeB,typeC,typeD The data type of matrix A, B, C, D.
  *  @param[in]
  *  typeCompute             The compute type.
- *  @param[in]
- *  requestedAlgoCount      Size of the \p heuristicResultsArray (in elements).
- * This is the requested maximum number of algorithms to return.
  *  @param[out]
- *  heuristicResult The algorithm heuristic array.
+ *  heuristicResult The algorithm heuristic array. Must call hipblasLtExtFreeAlgos
+ * to free heuristicResult if HIPBLAS_STATUS_SUCCESS is returned.
  *  @param[out]
  *  returnedAlgoCount The number of algorithm returned by this function.
  *
@@ -736,13 +752,37 @@ hipblasStatus_t hipblasLtExtMatmulIsAlgoSupported(hipblasLtHandle_t       handle
                                                   hipblasLtMatmulAlgo_t*  algo,
                                                   size_t*                 workspaceSizeInBytes);
 
+/*! \ingroup library_module
+ *  \brief Check if the algorithm supports the problem.
+ *
+ *  \details
+ *  This function updates the problem saved inside the algorithm if the problem is
+ * supported. The required workspaceSizeInBytes is also returned.
+ *
+ *  @param[in]
+ *  gemm The hipblasLt extension instance.
+ *  @param[in]
+ *  algo The algorithm heuristic.
+ *  @param[out]
+ *  workspaceSizeInBytes Return the required workspace size.
+ *
+ *  \retval HIPBLAS_STATUS_SUCCESS           If query was successful. The problem is
+ * supported by the algorithm.
+ * results. \retval HIPBLAS_STATUS_INVALID_VALUE     The problem is not supported.
+ */
 HIPBLASLT_EXPORT
 hipblasStatus_t hipblasLtExtIsAlgoSupported(hipblasLtExtGemm_t     gemm,
                                             hipblasLtMatmulAlgo_t* algo,
                                             size_t*                workspaceSizeInBytes);
 
 /*! \ingroup library_module
- *  \brief Free the hueristic array inside the hipblasLtSolutions_t.
+ *  \brief Free the hueristic array inside the hipblasLtMatmulHeuristicResult_t.
+ *
+ *  @param[in]
+ *  heuristicResults The hipblasLtMatmulHeuristicResult_t array allocated by
+ * hipblasLtExtGetAllAlgos.
+ *
+ * \retval HIPBLAS_STATUS_SUCCESS           Always returns success.
  */
 HIPBLASLT_EXPORT
 hipblasStatus_t hipblasLtExtFreeAlgos(hipblasLtMatmulHeuristicResult_t* heuristicResults);
@@ -833,6 +873,54 @@ hipblasStatus_t hipblasLtMatmul(hipblasLtHandle_t            handle,
                                 size_t                       workspaceSizeInBytes,
                                 hipStream_t                  stream);
 
+/*! \ingroup library_module
+ *  \brief Create a hipblasLtExt normal gemm instance.
+ *
+ *  \details
+ *  This function generates a normal gemm instance. The instance can be used to
+ * create arguments to compute the matrix multiplication of matrices A and B to
+ * produce the output matrix D, according to the following operation: \p D = \p
+ * alpha*( \p A *\p B) + \p beta*( \p C ), where \p A, \p B, and \p C are input
+ * matrices, and \p alpha and \p beta are input scalars. Note: This function
+ * supports both in-place matrix multiplication (C == D and Cdesc == Ddesc) and
+ * out-of-place matrix multiplication (C != D, both matrices must have the same
+ * data type, number of rows, number of columns, batch size, and memory order).
+ * In the out-of-place case, the leading dimension of C can be different from
+ * the leading dimension of D. Specifically the leading dimension of C can be 0
+ * to achieve row or column broadcast. If Cdesc is omitted, this function
+ * assumes it to be equal to Ddesc.
+ *
+ *  @param[out]
+ *  gemm                   The hipblasLtExt instance.
+ *  @param[in]
+ *  handle                  Pointer to the allocated hipBLASLt handle for the
+ * hipBLASLt context. See \ref hipblasLtHandle_t .
+ *  @param[in]
+ *  matmulDesc              Handle to a previously created matrix multiplication
+ * descriptor of type \ref hipblasLtMatmulDesc_t .
+ *  @param[in]
+ *  alpha,beta              Pointers to the scalars used in the multiplication.
+ *  @param[in]
+ *  Adesc,Bdesc,Cdesc,Ddesc Handles to the previously created matrix layout
+ * descriptors of the type \ref hipblasLtMatrixLayout_t .
+ *  @param[in]
+ *  A,B,C                   Pointers to the GPU memory associated with the
+ * corresponding descriptors \p Adesc, \p Bdesc and \p Cdesc .
+ *  @param[out]
+ *  D                       Pointer to the GPU memory associated with the
+ * descriptor \p Ddesc .
+ *
+ *  \retval HIPBLAS_STATUS_SUCCESS           If the operation completed
+ * successfully. \retval HIPBLAS_STATUS_EXECUTION_FAILED  If HIP reported an
+ * execution error from the device. \retval HIPBLAS_STATUS_ARCH_MISMATCH     If
+ * the configured operation cannot be run using the selected device. \retval
+ * HIPBLAS_STATUS_NOT_SUPPORTED     If the current implementation on the
+ * selected device doesn't support the configured operation. \retval
+ * HIPBLAS_STATUS_INVALID_VALUE     If the parameters are unexpectedly NULL, in
+ * conflict or in an impossible configuration.
+ *  \retval HIBLAS_STATUS_NOT_INITIALIZED    If hipBLASLt handle has not been
+ * initialized.
+ */
 HIPBLASLT_EXPORT
 hipblasStatus_t hipblasLtExtGemmCreate(hipblasLtExtGemm_t*     groupedgemm,
                                        hipblasLtHandle_t       handle,
@@ -848,6 +936,55 @@ hipblasStatus_t hipblasLtExtGemmCreate(hipblasLtExtGemm_t*     groupedgemm,
                                        void*                   D,
                                        hipblasLtMatrixLayout_t Ddesc);
 
+/*! \ingroup library_module
+ *  \brief Create a hipblasLtExt grouped gemm instance.
+ *
+ *  \details
+ *  This function generates a grouped gemm instance. The instance can be used
+ * to create arguments to compute the matrix multiplication of matrices A and B
+ * to produce the output matrix D, according to the following operation: \p D =
+ * \p alpha*( \p A *\p B) + \p beta*( \p C ), where \p A, \p B, and \p C are
+ * input matrices, and \p alpha and \p beta are input scalars. Note: This
+ * function supports both in-place matrix multiplication (C == D and Cdesc ==
+ * Ddesc) and out-of-place matrix multiplication (C != D, both matrices must
+ * have the same data type, number of rows, number of columns, batch size, and
+ * memory order).
+ * In the out-of-place case, the leading dimension of C can be different from
+ * the leading dimension of D. Specifically the leading dimension of C can be 0
+ * to achieve row or column broadcast. If Cdesc is omitted, this function
+ * assumes it to be equal to Ddesc.
+ *
+ *  @param[out]
+ *  groupedgemm             The hipblasLtExt instance.
+ *  @param[in]
+ *  handle                  Pointer to the allocated hipBLASLt handle for the
+ * hipBLASLt context. See \ref hipblasLtHandle_t .
+ *  @param[in]
+ *  matmulDesc              Handle to a previously created matrix multiplication
+ * descriptor of type \ref hipblasLtMatmulDesc_t .
+ *  @param[in]
+ *  alpha,beta              Pointers to the scalars used in the multiplication.
+ *  @param[in]
+ *  Adesc,Bdesc,Cdesc,Ddesc Handles to the previously created matrix layout
+ * descriptors of the type \ref hipblasLtMatrixLayout_t .
+ *  @param[in]
+ *  A,B,C                   Pointers to the GPU memory associated with the
+ * corresponding descriptors \p Adesc, \p Bdesc and \p Cdesc .
+ *  @param[out]
+ *  D                       Pointer to the GPU memory associated with the
+ * descriptor \p Ddesc .
+ *
+ *  \retval HIPBLAS_STATUS_SUCCESS           If the operation completed
+ * successfully. \retval HIPBLAS_STATUS_EXECUTION_FAILED  If HIP reported an
+ * execution error from the device. \retval HIPBLAS_STATUS_ARCH_MISMATCH     If
+ * the configured operation cannot be run using the selected device. \retval
+ * HIPBLAS_STATUS_NOT_SUPPORTED     If the current implementation on the
+ * selected device doesn't support the configured operation. \retval
+ * HIPBLAS_STATUS_INVALID_VALUE     If the parameters are unexpectedly NULL, in
+ * conflict or in an impossible configuration.
+ *  \retval HIBLAS_STATUS_NOT_INITIALIZED    If hipBLASLt handle has not been
+ * initialized.
+ */
 HIPBLASLT_EXPORT
 hipblasStatus_t hipblasLtExtGroupedGemmCreate(hipblasLtExtGemm_t*                   groupedgemm,
                                               hipblasLtHandle_t                     handle,
@@ -863,15 +1000,59 @@ hipblasStatus_t hipblasLtExtGroupedGemmCreate(hipblasLtExtGemm_t*               
                                               std::vector<void*>&                   D,
                                               std::vector<hipblasLtMatrixLayout_t>& matD);
 
+/*! \ingroup library_module
+ *  \brief Destroy a hipblasLtExt instance.
+ *
+ *  \retval HIPBLAS_STATUS_SUCCESS           Returns success if the instance
+ * is destroyed. \retval HIPBLAS_STATUS_INVALID_VALUE If the instance is a
+ * null pointer.
+ */
 HIPBLASLT_EXPORT
 hipblasStatus_t hipblasLtExtDestroy(hipblasLtExtGemm_t gemm);
 
+/*! \ingroup library_module
+ *  \brief Create kernel arguments from a given hipblasLtExt instance.
+ *
+ *  \details
+ *  This function creates kernel arguemtns from a given hipblasLtExt instance
+ * then saves the arguments inside the instance.
+ *
+ *  @param[in]
+ *  gemm                   The hipblasLtExt instance.
+ *  @param[in]
+ *  algo                    Handle for matrix multiplication algorithm to be
+ * used. See \ref hipblasLtMatmulAlgo_t. When NULL, an implicit heuritics query
+ * with default search preferences will be performed to determine actual
+ * algorithm to use.
+ *  @param[in]
+ *  workspace               Pointer to the workspace buffer allocated in the GPU
+ * memory. Pointer must be 16B aligned (that is, lowest 4 bits of address must
+ * be 0).
+ *  @param[in]
+ *  stream                  The HIP stream where all the GPU work will be
+ * submitted.
+ *
+ *  \retval HIPBLAS_STATUS_SUCCESS           If the operation completed
+ * successfully. \retval HIPBLAS_STATUS_INVALID_VALUE If the gemm_count = 0.
+ */
 HIPBLASLT_EXPORT
 hipblasStatus_t hipblasLtExtMakeArgument(hipblasLtExtGemm_t           gemm,
                                          const hipblasLtMatmulAlgo_t* algo,
                                          void*                        workspace,
                                          hipStream_t                  stream);
 
+/*! \ingroup library_module
+ *  \brief Execute the kernel arguments stored inside the hipblasLtExt instance.
+ *
+ *  @param[in]
+ *  gemm                   The hipblasLtExt instance.
+ *  @param[in]
+ *  stream                  The HIP stream where all the GPU work will be
+ * submitted.
+ *
+ *  \retval HIPBLAS_STATUS_SUCCESS           If the operation completed
+ * successfully.
+ */
 HIPBLASLT_EXPORT
 hipblasStatus_t hipblasLtExtRun(hipblasLtExtGemm_t gemm, hipStream_t stream);
 
