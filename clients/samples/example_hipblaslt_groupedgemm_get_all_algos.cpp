@@ -863,7 +863,7 @@ void test_hipblaslt(hipblasDatatype_t           in_out_datatype,
     std::vector<int> validIdx;
     int              returnedAlgoCount = 0;
     // Get all algorithms
-    hipblasLtGemmTypeEnum_t gemmType = grouped_gemm ? HIPBLASLT_GROUPED_GEMM : HIPBLASLT_GEMM;
+    hipblasLtExtGemmTypeEnum_t gemmType = grouped_gemm ? HIPBLASLT_GROUPED_GEMM : HIPBLASLT_GEMM;
     CHECK_HIPBLASLT_ERROR(hipblasLtExtGetAllAlgos(handle,
                                                   gemmType,
                                                   trans_a,
