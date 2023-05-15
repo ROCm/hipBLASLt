@@ -8,5 +8,6 @@ subtrees:
     - file: orga
     - file: datatypes
     - file: functions
+    - file: usage
     - file: clients
     - file: deprecation
