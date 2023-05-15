@@ -34,10 +34,6 @@ hipblasLtMatmulPreferenceAttributes_t
 -------------------------------------
 .. doxygenenum:: hipblasLtMatmulPreferenceAttributes_t
 
-hipblasLtGemmTypeEnum_t
--------------------------------------
-.. doxygenenum:: hipblasLtGemmTypeEnum_t
-
 hipblasLtMatrixLayout_t
 -----------------------
 .. doxygentypedef:: hipblasLtMatrixLayout_t
@@ -49,6 +45,10 @@ hipblasLtMatrixLayoutAttribute_t
 ********************************
 hipBLASLtExt Datatypes Reference
 ********************************
+
+hipblasLtExtGemmTypeEnum_t
+-------------------------------------
+.. doxygenenum:: hipblasLtExtGemmTypeEnum_t
 
 hipblasLtExtGemm_t
 -------------------------------------

@@ -128,7 +128,7 @@ typedef enum
 {
   HIPBLASLT_GEMM = 1,
   HIPBLASLT_GROUPED_GEMM = 2
-} hipblasLtGemmTypeEnum_t;
+} hipblasLtExtGemmTypeEnum_t;
 
 #if defined(__HIP_PLATFORM_HCC__)
 typedef struct {
@@ -186,7 +186,7 @@ typedef hipblasLtMatrixLayoutOpaque_t* hipblasLtMatrixLayout_t;
 typedef hipblasLtMatmulPreferenceOpaque_t* hipblasLtMatmulPreference_t;
 
 typedef struct _hipblasLtGemmOpaque_t{
-  hipblasLtGemmTypeEnum_t hipBlasLtGemmType;
+  hipblasLtExtGemmTypeEnum_t hipBlasLtGemmType;
   std::shared_ptr<void> problemGemmPtr;
   std::shared_ptr<void> inputsPtr;
   std::shared_ptr<void> kernelsPtr;
@@ -681,7 +681,7 @@ hipblasStatus_t
  *  handle                  Pointer to the allocated hipBLASLt handle for the
  * hipBLASLt context. See \ref hipblasLtHandle_t .
  *  @param[in]
- *  hipblasLtGemmTypeEnum_t Gemm type. ex. GEMM, GROUPED_GEMM.
+ *  hipblasLtExtGemmTypeEnum_t Gemm type. ex. GEMM, GROUPED_GEMM.
  *  @param[in]
  *  opA, opB Transpose settings of A, B.
  *  @param[in]
@@ -702,7 +702,7 @@ hipblasStatus_t
  */
 HIPBLASLT_EXPORT
 hipblasStatus_t hipblasLtExtGetAllAlgos(hipblasLtHandle_t                  handle,
-                                        hipblasLtGemmTypeEnum_t            typeGemm,
+                                        hipblasLtExtGemmTypeEnum_t         typeGemm,
                                         hipblasOperation_t                 opA,
                                         hipblasOperation_t                 opB,
                                         hipblasDatatype_t                  typeA,

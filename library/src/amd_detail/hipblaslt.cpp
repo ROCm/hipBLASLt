@@ -354,7 +354,7 @@ catch(...)
 }
 
 hipblasStatus_t hipblasLtExtGetAllAlgos(hipblasLtHandle_t                  handle,
-                                        hipblasLtGemmTypeEnum_t            typeGemm,
+                                        hipblasLtExtGemmTypeEnum_t         typeGemm,
                                         hipblasOperation_t                 opA,
                                         hipblasOperation_t                 opB,
                                         hipblasDatatype_t                  typeA,
