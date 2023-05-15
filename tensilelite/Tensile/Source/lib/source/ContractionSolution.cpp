@@ -391,7 +391,7 @@ namespace Tensile
         //     args.append<uint32_t>("PadNonUsed", 0);
 
         bool runActivation = false;
-        if((problem.activationType() != ActivationType::None) && sizeMapping.activationFused
+        if((problemType.activationType != ActivationType::None) && sizeMapping.activationFused
            && (sizeMapping.globalSplitU == 1))
             runActivation = true;
         if(problemType.useBias && (sizeMapping.globalSplitU == 1))
@@ -438,7 +438,7 @@ namespace Tensile
             for(int i = 0; i < inputs.activationArgs.size(); i++)
             {
                 std::string name = "activation_" + std::to_string(i);
-                if(problem.activationHPA()) // Same as hpa type.
+                if(problemType.activationHPA) // Same as hpa type.
                 {
                     args.append(name.c_str(), inputs.activationArgs[i], problem.betaType());
                 }
@@ -458,7 +458,7 @@ namespace Tensile
                     args.append(name.c_str(), inputs.activationArgs[i], problem.d().dataType());
                 }
             }
-            if(problem.activationType() == ActivationType::All)
+            if(problemType.activationType == ActivationType::All)
             {
                 args.append<uint32_t>("activationType",
                                       static_cast<uint32_t>(problem.activationEnumArg()));
@@ -841,12 +841,12 @@ namespace Tensile
         else
             args.append("beta", 0.0f, problem.betaType());
 
-        if((problem.activationType() != ActivationType::None) && sizeMapping.activationFused)
+        if((problemType.activationType != ActivationType::None) && sizeMapping.activationFused)
         {
             for(int i = 0; i < inputs.activationArgs.size(); i++)
             {
                 std::string name = "activation_" + std::to_string(i);
-                if(problem.activationHPA()) // Same as hpa type.
+                if(problemType.activationHPA) // Same as hpa type.
                 {
                     args.append(name.c_str(), inputs.activationArgs[i], problem.betaType());
                 }
@@ -861,7 +861,7 @@ namespace Tensile
                     args.append(name.c_str(), inputs.activationArgs[i], problem.d().dataType());
                 }
             }
-            if(problem.activationType() == ActivationType::All)
+            if(problemType.activationType == ActivationType::All)
             {
                 args.append<uint32_t>("activationType",
                                       static_cast<uint32_t>(problem.activationEnumArg()));
@@ -1104,22 +1104,22 @@ namespace Tensile
             }
         }
 
-        if(problem.activationType() != ActivationType::None)
+        if(problemType.activationType != ActivationType::None)
         {
-            if(problem.activationType() == ActivationType::All)
+            if(problemType.activationType == ActivationType::All)
                 name += "_A";
             else
             {
-                std::string actName = ToString(problem.activationType());
+                std::string actName = ToString(problemType.activationType);
                 std::transform(actName.begin(), actName.end(), actName.begin(), ::toupper);
                 name += actName;
             }
         }
-        if(problem.activationHPA())
+        if(problemType.activationHPA)
         {
             name += "h";
         }
-        if(problem.activationNoGuard())
+        if(problemType.activationNoGuard)
         {
             name += "g";
         }
@@ -1178,9 +1178,9 @@ namespace Tensile
         else
             rv.args.append<void const* const*>("batchD", inputs.batchD);
 
-        if(problem.activationType() != ActivationType::None)
+        if(problemType.activationType != ActivationType::None)
         {
-            if(problem.activationType() == ActivationType::All)
+            if(problemType.activationType == ActivationType::All)
             {
                 rv.args.append<uint32_t>("activationType",
                                          static_cast<uint32_t>(problem.activationEnumArg()));
@@ -1188,7 +1188,7 @@ namespace Tensile
             for(int i = 0; i < inputs.activationArgs.size(); i++)
             {
                 std::string name = "activation_" + std::to_string(i);
-                if(problem.activationHPA()) // Same as hpa type.
+                if(problemType.activationHPA) // Same as hpa type.
                 {
                     rv.args.append(name.c_str(), inputs.activationArgs[i], problem.betaType());
                 }
@@ -1237,18 +1237,18 @@ namespace Tensile
     {
         std::string name = concatenate(
             "D", problem.cNames(), "_", DataTypeInfo::Get(problem.d().dataType()).abbrev);
-        if(problem.activationType() != ActivationType::None)
+        if(problemType.activationType != ActivationType::None)
         {
-            if(problem.activationType() == ActivationType::All)
+            if(problemType.activationType == ActivationType::All)
                 name += "_A";
             else
             {
-                std::string actName = ToString(problem.activationType());
+                std::string actName = ToString(problemType.activationType);
                 std::transform(actName.begin(), actName.end(), actName.begin(), ::toupper);
                 name += actName;
             }
         }
-        if(problem.activationHPA())
+        if(problemType.activationHPA)
         {
             name += "h";
         }
@@ -1467,7 +1467,7 @@ namespace Tensile
 
         if(((sizeMapping.globalSplitU > 1 && (!sizeMapping.globalAccumulation))
             || (!sizeMapping.activationFused))
-           && (problem.activationType() != ActivationType::None))
+           && (problemType.activationType != ActivationType::None))
         {
             if(debug)
                 rv.push_back(generateActivationOnlyCall<true>(problem, inputs));
@@ -1476,7 +1476,7 @@ namespace Tensile
         }
 
         // The reduction of A is done in ConversionKernel when GSU > 1 in MultipleBuffer mode
-        if(problem.useBias() && problem.useGradient()
+        if(problemType.useBias && problemType.useGradient
            && (problem.biasSrc() == ContractionProblemGemm::TENSOR::D))
         {
             if(problem.d().dimensions() != 3)
