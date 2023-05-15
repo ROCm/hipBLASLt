@@ -289,6 +289,9 @@ if( BUILD_CLIENTS_SAMPLES OR BUILD_CLIENTS_TESTS OR BUILD_CLIENTS_BENCHMARKS )
         DEB "${GFORTRAN_DEB}"
         RPM "${GFORTRAN_RPM}")
   endif()
+  if(BUILD_CLIENTS_SAMPLES)
+    rocm_package_setup_client_component(samples)
+  endif()
   add_subdirectory( clients )
 endif( )
 
