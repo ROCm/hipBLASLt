@@ -11,7 +11,6 @@ GlobalParameters:
   CSVMergeSameProblemID: 1
   Device: 0
   MaxWorkspaceSize: 3355443200
-  PrintSolutionRejectionReason: True
 
 BenchmarkProblems:
   ########################################
@@ -30,9 +29,9 @@ BenchmarkProblems:
       Batched: True
       Gradient: True
       UseE: True
-      UseBias:       True
-      BiasSrc:       "D"
-      Activation:    True
+      UseBias: True
+      BiasSrc: "D"
+      Activation: True
       ActivationHPA: True
       ActivationGuard: True
       UseScaleDVec:     False
@@ -45,16 +44,20 @@ BenchmarkProblems:
           - [32, 32, 8, 1,  1,   2, 4,  2,2 ]
         - AssertFree0ElementMultiple: [8]
         - PrefetchGlobalRead: [2]
-        - PrefetchLocalRead: [5]
+        - PrefetchLocalRead: [1]
+        - ClusterLocalRead: [1]
         - DepthU: [32]
-        - VectorWidth: [2]
-        - GlobalReadVectorWidth: [-1]
+        - VectorWidthA: [2]
+        - VectorWidthB: [1]
+        - GlobalReadVectorWidthA: [-1]
+        - GlobalReadVectorWidthB: [-1]
         - LocalReadVectorWidth: [8]
         - ScheduleIterAlg: [3]
         - InnerUnroll: [1]
         - ExpandPointerSwap: [1]
         - TransposeLDS: [1]
-        - LdsBlockSizePerPad: [-1]
+        - LdsBlockSizePerPadA: [-1]
+        - LdsBlockSizePerPadB: [-1]
         - LdsPadA: [-1]
         - LdsPadB: [-1]
         - WaveSeparateGlobalReadB: [1]
@@ -95,9 +98,9 @@ BenchmarkProblems:
       Batched: True
       Gradient: True
       UseE: False
-      UseBias:       True
+      UseBias: True
       BiasSrc: "A"
-      Activation:    False
+      Activation: False
       ActivationHPA: False
       ActivationGuard: False
       UseScaleDVec:     False
@@ -111,16 +114,20 @@ BenchmarkProblems:
           - [32, 32, 8, 1,  1,   2, 4,  2,2 ]
         - AssertFree0ElementMultiple: [1, 8]
         - PrefetchGlobalRead: [2]
-        - PrefetchLocalRead: [5]
+        - PrefetchLocalRead: [1]
+        - ClusterLocalRead: [1]
         - DepthU: [16, 32]
-        - VectorWidth: [2]
-        - GlobalReadVectorWidth: [-1]
+        - VectorWidthA: [2]
+        - VectorWidthB: [1]
+        - GlobalReadVectorWidthA: [-1]
+        - GlobalReadVectorWidthB: [-1]
         - LocalReadVectorWidth: [8]
         - ScheduleIterAlg: [3]
         - InnerUnroll: [1]
         - ExpandPointerSwap: [1]
         - TransposeLDS: [1]
-        - LdsBlockSizePerPad: [0]
+        - LdsBlockSizePerPadA: [0]
+        - LdsBlockSizePerPadB: [0]
         - LdsPadA: [0]
         - LdsPadB: [0]
         - WaveSeparateGlobalReadB: [1]
@@ -161,9 +168,9 @@ BenchmarkProblems:
       Batched: True
       Gradient: True
       UseE: False
-      UseBias:       True
+      UseBias: True
       BiasSrc: "A"
-      Activation:    False
+      Activation: False
       ActivationHPA: False
       ActivationGuard: False
       UseScaleDVec:     False
@@ -177,16 +184,20 @@ BenchmarkProblems:
           - [32, 32, 8, 1,  1,   2, 4,  2,2 ]
         - AssertFree0ElementMultiple: [1, 8]
         - PrefetchGlobalRead: [2]
-        - PrefetchLocalRead: [5]
+        - PrefetchLocalRead: [1]
+        - ClusterLocalRead: [1]
         - DepthU: [16, 32]
-        - VectorWidth: [2]
-        - GlobalReadVectorWidth: [-1]
+        - VectorWidthA: [2]
+        - VectorWidthB: [1]
+        - GlobalReadVectorWidthA: [-1]
+        - GlobalReadVectorWidthB: [-1]
         - LocalReadVectorWidth: [8]
         - ScheduleIterAlg: [3]
         - InnerUnroll: [1]
         - ExpandPointerSwap: [1]
         - TransposeLDS: [0, 1]
-        - LdsBlockSizePerPad: [0]
+        - LdsBlockSizePerPadA: [0]
+        - LdsBlockSizePerPadB: [0]
         - LdsPadA: [0]
         - LdsPadB: [0]
         - WaveSeparateGlobalReadB: [1]
@@ -230,9 +241,9 @@ BenchmarkProblems:
       Batched: True
       Gradient: True
       UseE: False
-      UseBias:       True
+      UseBias: True
       BiasSrc: "A"
-      Activation:    False
+      Activation: False
       ActivationHPA: False
       ActivationGuard: False
       UseScaleDVec:     False
@@ -246,16 +257,20 @@ BenchmarkProblems:
           - [32, 32, 8, 1,  1,   2, 4,  2,2 ]
         - AssertFree0ElementMultiple: [1, 8]
         - PrefetchGlobalRead: [2]
-        - PrefetchLocalRead: [5]
+        - PrefetchLocalRead: [1]
+        - ClusterLocalRead: [1]
         - DepthU: [16, 32]
-        - VectorWidth: [2]
-        - GlobalReadVectorWidth: [-1]
+        - VectorWidthA: [2]
+        - VectorWidthB: [1]
+        - GlobalReadVectorWidthA: [-1]
+        - GlobalReadVectorWidthB: [-1]
         - LocalReadVectorWidth: [8]
         - ScheduleIterAlg: [3]
         - InnerUnroll: [1]
         - ExpandPointerSwap: [1]
         - TransposeLDS: [1]
-        - LdsBlockSizePerPad: [0]
+        - LdsBlockSizePerPadA: [0]
+        - LdsBlockSizePerPadB: [0]
         - LdsPadA: [0]
         - LdsPadB: [0]
         - WaveSeparateGlobalReadB: [1]
@@ -297,9 +312,9 @@ BenchmarkProblems:
       Batched: True
       Gradient: True
       UseE: False
-      UseBias:       True
+      UseBias: True
       BiasSrc: "B"
-      Activation:    False
+      Activation: False
       ActivationHPA: False
       ActivationGuard: False
       UseScaleDVec:     False
@@ -317,16 +332,20 @@ BenchmarkProblems:
           - [32, 32, 8, 1,  1,   2, 4,  2,2 ]
         - AssertFree0ElementMultiple: [1, 8]
         - PrefetchGlobalRead: [2]
-        - PrefetchLocalRead: [5]
+        - PrefetchLocalRead: [1]
+        - ClusterLocalRead: [1]
         - DepthU: [16, 32]
-        - VectorWidth: [2]
-        - GlobalReadVectorWidth: [-1]
+        - VectorWidthA: [2]
+        - VectorWidthB: [1]
+        - GlobalReadVectorWidthA: [-1]
+        - GlobalReadVectorWidthB: [-1]
         - LocalReadVectorWidth: [8]
         - ScheduleIterAlg: [3]
         - InnerUnroll: [1]
         - ExpandPointerSwap: [1]
         - TransposeLDS: [1]
-        - LdsBlockSizePerPad: [0]
+        - LdsBlockSizePerPadA: [0]
+        - LdsBlockSizePerPadB: [0]
         - LdsPadA: [0]
         - LdsPadB: [0]
         - WaveSeparateGlobalReadB: [1]
@@ -367,9 +386,9 @@ BenchmarkProblems:
       Batched: True
       Gradient: True
       UseE: False
-      UseBias:       True
+      UseBias: True
       BiasSrc: "B"
-      Activation:    False
+      Activation: False
       ActivationHPA: False
       ActivationGuard: False
       UseScaleDVec:     False
@@ -387,14 +406,17 @@ BenchmarkProblems:
           - [32, 32, 8, 1,  1,   2, 4,  2,2 ]
         - AssertFree0ElementMultiple: [1, 8]
         - PrefetchGlobalRead: [2]
-        - PrefetchLocalRead: [5]
+        - PrefetchLocalRead: [1]
+        - ClusterLocalRead: [1]
         - DepthU: [8, 16, 32]
-        - VectorWidth: [2]
+        - VectorWidthA: [2]
+        - VectorWidthB: [1]
         - ScheduleIterAlg: [3]
         - InnerUnroll: [1]
         - ExpandPointerSwap: [1]
         - TransposeLDS: [0]
-        - LdsBlockSizePerPad: [0]
+        - LdsBlockSizePerPadA: [0]
+        - LdsBlockSizePerPadB: [0]
         - LdsPadA: [0]
         - LdsPadB: [0]
         - WaveSeparateGlobalReadB: [1]
