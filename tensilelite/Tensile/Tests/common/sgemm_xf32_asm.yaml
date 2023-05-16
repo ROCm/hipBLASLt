@@ -5,7 +5,7 @@ TestParameters:
 GlobalParameters:
   MinimumRequiredVersion: 4.2.0
   CMakeBuildType: Release
-  PrintLevel: 1
+  # PrintLevel: 1
   #ForceRedoBenchmarkProblems: True
   #ForceRedoLibraryLogic: True
   #ForceRedoLibraryClient: True
@@ -20,8 +20,10 @@ GlobalParameters:
   KernelTime: True
   NewClient: 2
   PrintIndexAssignments: 1
-  PrintSolutionRejectionReason: 1
+  # PrintSolutionRejectionReason: 1
   Device: 0
+  PrintWinnersOnly: True
+  MinKForGSU: 1
 
 BenchmarkProblems:
 
@@ -54,12 +56,11 @@ BenchmarkProblems:
         - WorkGroup:
           - [8, 8, 1 ]
         - DepthU: [32]
-        - PrefetchLocalRead: [0, 1, 3]
+        - PrefetchLocalRead: [1]
         - PrefetchGlobalRead: [True]
         - WorkGroupMapping: [8]
         - GlobalSplitU: [1]
         - InnerUnroll: [2]
-        - VectorWidth: [-1]
         - AssertSummationElementMultiple: [1, 2]
       BenchmarkForkParameters:
       JoinParameters:
@@ -100,12 +101,11 @@ BenchmarkProblems:
         - WorkGroup:
           - [8, 8, 1 ]
         - DepthU: [32]
-        - PrefetchLocalRead: [0, 1, 3]
+        - PrefetchLocalRead: [1]
         - PrefetchGlobalRead: [True]
         - WorkGroupMapping: [8]
         - GlobalSplitU: [1]
         - InnerUnroll: [2]
-        - VectorWidth: [-1]
         - AssertSummationElementMultiple: [1, 2]
       BenchmarkForkParameters:
       JoinParameters:
@@ -146,12 +146,11 @@ BenchmarkProblems:
         - WorkGroup:
           - [8, 8, 1 ]
         - DepthU: [32]
-        - PrefetchLocalRead: [0, 1, 3]
+        - PrefetchLocalRead: [1]
         - PrefetchGlobalRead: [True]
         - WorkGroupMapping: [8]
         - GlobalSplitU: [1]
         - InnerUnroll: [2]
-        - VectorWidth: [-1]
         - AssertSummationElementMultiple: [1, 2]
       BenchmarkForkParameters:
       JoinParameters:
@@ -192,12 +191,11 @@ BenchmarkProblems:
         - WorkGroup:
           - [8, 8, 1 ]
         - DepthU: [32]
-        - PrefetchLocalRead: [0, 1, 3]
+        - PrefetchLocalRead: [1]
         - PrefetchGlobalRead: [True]
         - WorkGroupMapping: [8]
         - GlobalSplitU: [1]
         - InnerUnroll: [2]
-        - VectorWidth: [-1]
         - AssertSummationElementMultiple: [1, 2]
       BenchmarkForkParameters:
       JoinParameters:

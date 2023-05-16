@@ -6,7 +6,7 @@ GlobalParameters:
   KernelTime: True
   NewClient: 2
   BoundsCheck: False
-  PrintSolutionRejectionReason: True
+  # PrintSolutionRejectionReason: True
   ValidationMaxToPrint: 4      # maximum number of mismatches to print
   ValidationPrintValids: False # print matches too
   DataInitValueActivationArgs: [0.5, -1]
@@ -17,6 +17,8 @@ GlobalParameters:
   #PrintTensorC: 1
   #PrintTensorD: 1
   #PrintTensorRef: 1
+  PrintWinnersOnly: True
+  MinKForGSU: 1
 
 BenchmarkProblems:
   #######################################
@@ -43,13 +45,7 @@ BenchmarkProblems:
       ForkParameters:
         - MatrixInstruction:
           - [32, 32, 16, 1,  1,  1, 1,  1, 1 ]
-        - ThreadTile:
-          - [ 4, 4 ]
-        - WorkGroup:
-          - [ 8, 8, 1 ]
-        - GlobalReadVectorWidth: [8]
         - DepthU: [32]
-        - VectorWidth: [1,2,4]
         - TransposeLDS: [0]
         - LdsPadA: [-1]
         - LdsPadB: [-1]
@@ -58,7 +54,6 @@ BenchmarkProblems:
         - ScheduleIterAlg: [3]
         - PrefetchLocalRead: [0]
         - PrefetchGlobalRead: [0]
-        - DepthULdsDivisor: [1]
         - StoreRemapVectorWidth: [0]
         - GlobalSplitU: [2]
         - GlobalSplitUAlgorithm: [MultipleBuffer]
@@ -99,13 +94,7 @@ BenchmarkProblems:
       ForkParameters:
         - MatrixInstruction:
           - [32, 32, 16, 1,  1,  1, 1,  1, 1 ]
-        - ThreadTile:
-          - [ 4, 4 ]
-        - WorkGroup:
-          - [ 8, 8, 1 ]
-        - GlobalReadVectorWidth: [8]
         - DepthU: [32]
-        - VectorWidth: [1,2,4]
         - TransposeLDS: [0]
         - LdsPadA: [-1]
         - LdsPadB: [-1]
@@ -114,7 +103,6 @@ BenchmarkProblems:
         - ScheduleIterAlg: [3]
         - PrefetchLocalRead: [0]
         - PrefetchGlobalRead: [0]
-        - DepthULdsDivisor: [1]
         - StoreRemapVectorWidth: [0]
         - GlobalSplitU: [2]
         - GlobalSplitUAlgorithm: [MultipleBuffer]
@@ -155,13 +143,7 @@ BenchmarkProblems:
       ForkParameters:
         - MatrixInstruction:
           - [32, 32, 16, 1,  1,  1, 1,  1, 1 ]
-        - ThreadTile:
-          - [ 4, 4 ]
-        - WorkGroup:
-          - [ 8, 8, 1 ]
-        - GlobalReadVectorWidth: [8]
         - DepthU: [32]
-        - VectorWidth: [1,2,4]
         - TransposeLDS: [0]
         - LdsPadA: [-1]
         - LdsPadB: [-1]
@@ -170,7 +152,6 @@ BenchmarkProblems:
         - ScheduleIterAlg: [3]
         - PrefetchLocalRead: [0]
         - PrefetchGlobalRead: [0]
-        - DepthULdsDivisor: [1]
         - StoreRemapVectorWidth: [0]
         - GlobalSplitU: [2]
         - GlobalSplitUAlgorithm: [MultipleBuffer]
@@ -211,13 +192,7 @@ BenchmarkProblems:
       ForkParameters:
         - MatrixInstruction:
           - [32, 32, 16, 1,  1,  1, 1,  1, 1 ]
-        - ThreadTile:
-          - [ 4, 4 ]
-        - WorkGroup:
-          - [ 8, 8, 1 ]
-        - GlobalReadVectorWidth: [8]
         - DepthU: [32]
-        - VectorWidth: [1,2,4]
         - TransposeLDS: [0]
         - LdsPadA: [-1]
         - LdsPadB: [-1]
@@ -226,7 +201,6 @@ BenchmarkProblems:
         - ScheduleIterAlg: [3]
         - PrefetchLocalRead: [0]
         - PrefetchGlobalRead: [0]
-        - DepthULdsDivisor: [1]
         - StoreRemapVectorWidth: [0]
         - GlobalSplitU: [2]
         - GlobalSplitUAlgorithm: [MultipleBuffer]

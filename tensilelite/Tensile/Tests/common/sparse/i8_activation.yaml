@@ -6,11 +6,13 @@ GlobalParameters:
   KernelTime: True
   NewClient: 2
   BoundsCheck: False
-  PrintSolutionRejectionReason: True
+  # PrintSolutionRejectionReason: True
+  PrintWinnersOnly: True
   ValidationMaxToPrint: 4      # maximum number of mismatches to print
   ValidationPrintValids: False # print matches too
   DataInitValueActivationArgs: [0.5, -1]
   PruneSparseMode: 0
+  MinKForGSU: 1
 
 BenchmarkProblems:
   #######################################
@@ -42,29 +44,102 @@ BenchmarkProblems:
           - [32, 32, 32, 1,  1,  2, 2,  2, 2 ]
           - [32, 32, 32, 1,  1,  2, 4,  4, 2 ]
           - [32, 32, 32, 1,  1,  7, 2,  1, 4 ]
-        - ThreadTile:
-          - [ 4, 4 ]
-        - WorkGroup:
-          - [ 8, 8, 1 ]
-        - GlobalReadVectorWidth: [8]
-        - DepthU: [32]
-        - VectorWidth: [2]
+        - GlobalReadVectorWidthA: [8]
+        - DepthU: [32,64]
         - TransposeLDS: [0,1]
         - LdsPadA: [-1]
         - LdsPadB: [-1]
-        - LdsPadMetadata: [-1,0,8]
+        - LdsPadMetadata: [-1]
         - StaggerU: [0,4]
         - ScheduleIterAlg: [3]
-        - PrefetchLocalRead: [0,1,2]
-        - PrefetchGlobalRead: [0,1,2]
-        - DepthULdsDivisor: [1]
-        - StoreRemapVectorWidth: [0, 8]
+        - PrefetchLocalRead: [1]
+        - ClusterLocalRead: [1]
+        - PrefetchGlobalRead: [2]
+        - StoreRemapVectorWidth: [-1]
         - GlobalSplitU: [1,2]
         - GlobalSplitUAlgorithm: [MultipleBuffer]
         - 1LDSBuffer: [-1]
         - DirectToVgprSparseMetadata: [0,1]
         - WorkGroupMapping: [18]
-        - StoreVectorWidth: [-1,1,2,3]
+        - StoreVectorWidth: [-1]
+      BenchmarkForkParameters:
+      JoinParameters:
+      BenchmarkJoinParameters:
+      BenchmarkFinalParameters:
+        - ProblemSizes:
+          - Exact: [15, 15, 1, 16] # classic format
+          - Exact: [15, 15, 1, 32] # classic format
+          - Exact: [15, 15, 1, 64] # classic format
+          - Exact: [15, 15, 1, 96] # classic format
+          - Exact: [15, 15, 1, 128] # classic format
+          - Exact: [15, 15, 1, 136] # classic format
+          - Exact: [15, 15, 1, 256] # classic format
+          - Exact: [15, 15, 1, 264] # classic format
+          - Exact: [256, 256, 1, 16] # classic format
+          - Exact: [256, 256, 1, 24] # classic format
+          - Exact: [256, 256, 1, 32] # classic format
+          - Exact: [256, 256, 1, 64] # classic format
+          - Exact: [256, 256, 1, 96] # classic format
+          - Exact: [256, 256, 1, 128] # classic format
+          - Exact: [256, 256, 1, 136] # classic format
+          - Exact: [256, 256, 1, 256] # classic format
+        - ActivationArgs:
+          - [Enum: none]
+          - [Enum: abs]
+          - [Enum: clippedrelu]
+          - [Enum: gelu]
+          - [Enum: leakyrelu]
+          - [Enum: relu]
+          - [Enum: sigmoid]
+          - [Enum: tanh]
+  
+  #########################################
+  ## NT - standard
+  #########################################
+  -
+    - # ProblemType
+      OperationType: GEMM
+      DataType: I8
+      DestDataType: I8
+      ComputeDataType: s
+      HighPrecisionAccumulate:  True
+      TransposeA: True
+      TransposeB: False
+      UseBeta: True
+      SparseA: True
+      Batched: True
+      Activation: True
+      ActivationHPA: True
+  
+    - # BenchmarkProblemSizeGroup - Standard
+      InitialSolutionParameters:
+      BenchmarkCommonParameters:
+        - KernelLanguage: ["Assembly"]
+        #- EdgeType: ["ShiftPtr"]
+      ForkParameters:
+        - MatrixInstruction:
+          - [32, 32, 32, 1,  1,  1, 1,  1, 1 ]
+          - [32, 32, 32, 1,  1,  2, 2,  2, 2 ]
+          - [32, 32, 32, 1,  1,  2, 4,  4, 2 ]
+          - [32, 32, 32, 1,  1,  7, 2,  1, 4 ]
+        - GlobalReadVectorWidthA: [8]
+        - DepthU: [32,64]
+        - TransposeLDS: [0,1]
+        - LdsPadA: [-1]
+        - LdsPadB: [-1]
+        - LdsPadMetadata: [-1]
+        - StaggerU: [0,4]
+        - ScheduleIterAlg: [3]
+        - PrefetchLocalRead: [1]
+        - ClusterLocalRead: [1]
+        - PrefetchGlobalRead: [2]
+        - StoreRemapVectorWidth: [-1]
+        - GlobalSplitU: [1,2]
+        - GlobalSplitUAlgorithm: [MultipleBuffer]
+        - 1LDSBuffer: [-1]
+        - DirectToVgprSparseMetadata: [0,1]
+        - WorkGroupMapping: [18]
+        - StoreVectorWidth: [-1]
       BenchmarkForkParameters:
       JoinParameters:
       BenchmarkJoinParameters:
@@ -96,9 +171,7 @@ BenchmarkProblems:
           - [Enum: sigmoid]
           - [Enum: tanh]
 
-  ########################################
-  # NT - standard
-  ########################################
+##
   -
     - # ProblemType
       OperationType: GEMM
@@ -125,29 +198,24 @@ BenchmarkProblems:
           - [32, 32, 32, 1,  1,  2, 2,  2, 2 ]
           - [32, 32, 32, 1,  1,  2, 4,  4, 2 ]
           - [32, 32, 32, 1,  1,  7, 2,  1, 4 ]
-        - ThreadTile:
-          - [ 4, 4 ]
-        - WorkGroup:
-          - [ 8, 8, 1 ]
-        - GlobalReadVectorWidth: [8]
-        - DepthU: [32]
-        - VectorWidth: [2]
+        - GlobalReadVectorWidthA: [8]
+        - DepthU: [32,64]
         - TransposeLDS: [0,1]
         - LdsPadA: [-1]
         - LdsPadB: [-1]
-        - LdsPadMetadata: [-1,0,8]
+        - LdsPadMetadata: [-1]
         - StaggerU: [0,4]
         - ScheduleIterAlg: [3]
-        - PrefetchLocalRead: [0,1,2]
-        - PrefetchGlobalRead: [0,1,2]
-        - DepthULdsDivisor: [1]
-        - StoreRemapVectorWidth: [0, 8]
+        - PrefetchLocalRead: [1]
+        - ClusterLocalRead: [1]
+        - PrefetchGlobalRead: [2]
+        - StoreRemapVectorWidth: [-1]
         - GlobalSplitU: [1,2]
         - GlobalSplitUAlgorithm: [MultipleBuffer]
         - 1LDSBuffer: [-1]
         - DirectToVgprSparseMetadata: [0,1]
         - WorkGroupMapping: [18]
-        - StoreVectorWidth: [-1,1,2,3]
+        - StoreVectorWidth: [-1]
       BenchmarkForkParameters:
       JoinParameters:
       BenchmarkJoinParameters:
@@ -179,94 +247,6 @@ BenchmarkProblems:
           - [Enum: sigmoid]
           - [Enum: tanh]
 
-#
-  #########################################
-  ## TN - standard
-  #########################################
-  -
-    - # ProblemType
-      OperationType: GEMM
-      DataType: I8
-      DestDataType: I8
-      ComputeDataType: s
-      HighPrecisionAccumulate:  True
-      TransposeA: True
-      TransposeB: False
-      UseBeta: True
-      SparseA: True
-      Batched: True
-      Activation: True
-      ActivationHPA: True
-#
-    - # BenchmarkProblemSizeGroup - Standard
-      InitialSolutionParameters:
-      BenchmarkCommonParameters:
-        - KernelLanguage: ["Assembly"]
-        #- EdgeType: ["ShiftPtr"]
-      ForkParameters:
-        - MatrixInstruction:
-          - [32, 32, 32, 1,  1,  1, 1,  1, 1 ]
-          - [32, 32, 32, 1,  1,  2, 2,  2, 2 ]
-          - [32, 32, 32, 1,  1,  2, 4,  4, 2 ]
-          - [32, 32, 32, 1,  1,  7, 2,  1, 4 ]
-        - ThreadTile:
-          - [ 4, 4 ]
-        - WorkGroup:
-          - [ 8, 8, 1 ]
-        - GlobalReadVectorWidth: [8]
-        - DepthU: [32]
-        - VectorWidth: [2]
-        - TransposeLDS: [0,1]
-        - LdsPadA: [-1]
-        - LdsPadB: [-1]
-        - LdsPadMetadata: [-1,0,8]
-        - StaggerU: [0,4]
-        - ScheduleIterAlg: [3]
-        - PrefetchLocalRead: [0,1,2]
-        - PrefetchGlobalRead: [0,1,2]
-        - DepthULdsDivisor: [1]
-        - StoreRemapVectorWidth: [0, 8]
-        - GlobalSplitU: [1,2]
-        - GlobalSplitUAlgorithm: [MultipleBuffer]
-        - 1LDSBuffer: [-1]
-        - DirectToVgprSparseMetadata: [0,1]
-        - WorkGroupMapping: [18]
-        - StoreVectorWidth: [-1,1,2,3]
-      BenchmarkForkParameters:
-      JoinParameters:
-      BenchmarkJoinParameters:
-      BenchmarkFinalParameters:
-        - ProblemSizes:
-          - Exact: [15, 15, 1, 16] # classic format
-          - Exact: [15, 15, 1, 32] # classic format
-          - Exact: [15, 15, 1, 64] # classic format
-          - Exact: [15, 15, 1, 96] # classic format
-          - Exact: [15, 15, 1, 128] # classic format
-          - Exact: [15, 15, 1, 136] # classic format
-          - Exact: [15, 15, 1, 256] # classic format
-          - Exact: [15, 15, 1, 264] # classic format
-          - Exact: [256, 256, 1, 16] # classic format
-          - Exact: [256, 256, 1, 24] # classic format
-          - Exact: [256, 256, 1, 32] # classic format
-          - Exact: [256, 256, 1, 64] # classic format
-          - Exact: [256, 256, 1, 96] # classic format
-          - Exact: [256, 256, 1, 128] # classic format
-          - Exact: [256, 256, 1, 136] # classic format
-          - Exact: [256, 256, 1, 256] # classic format
-        - ActivationArgs:
-          - [Enum: none]
-          - [Enum: abs]
-          - [Enum: clippedrelu]
-          - [Enum: gelu]
-          - [Enum: leakyrelu]
-          - [Enum: relu]
-          - [Enum: sigmoid]
-          - [Enum: tanh]
-
-#
-  #########################################
-  ## TN - standard
-  #########################################
   -
     - # ProblemType
       OperationType: GEMM
@@ -281,7 +261,7 @@ BenchmarkProblems:
       Batched: True
       Activation: True
       ActivationHPA: True
-#
+  
     - # BenchmarkProblemSizeGroup - Standard
       InitialSolutionParameters:
       BenchmarkCommonParameters:
@@ -293,29 +273,24 @@ BenchmarkProblems:
           - [32, 32, 32, 1,  1,  2, 2,  2, 2 ]
           - [32, 32, 32, 1,  1,  2, 4,  4, 2 ]
           - [32, 32, 32, 1,  1,  7, 2,  1, 4 ]
-        - ThreadTile:
-          - [ 4, 4 ]
-        - WorkGroup:
-          - [ 8, 8, 1 ]
-        - GlobalReadVectorWidth: [8]
-        - DepthU: [32]
-        - VectorWidth: [2]
+        - GlobalReadVectorWidthA: [8]
+        - DepthU: [32,64]
         - TransposeLDS: [0,1]
         - LdsPadA: [-1]
         - LdsPadB: [-1]
-        - LdsPadMetadata: [-1,0,8]
+        - LdsPadMetadata: [-1]
         - StaggerU: [0,4]
         - ScheduleIterAlg: [3]
-        - PrefetchLocalRead: [0,1,2]
-        - PrefetchGlobalRead: [0,1,2]
-        - DepthULdsDivisor: [1]
-        - StoreRemapVectorWidth: [0, 8]
+        - PrefetchLocalRead: [1]
+        - ClusterLocalRead: [1]
+        - PrefetchGlobalRead: [2]
+        - StoreRemapVectorWidth: [-1]
         - GlobalSplitU: [1,2]
         - GlobalSplitUAlgorithm: [MultipleBuffer]
         - 1LDSBuffer: [-1]
         - DirectToVgprSparseMetadata: [0,1]
         - WorkGroupMapping: [18]
-        - StoreVectorWidth: [-1,1,2,3]
+        - StoreVectorWidth: [-1]
       BenchmarkForkParameters:
       JoinParameters:
       BenchmarkJoinParameters:
@@ -346,4 +321,3 @@ BenchmarkProblems:
           - [Enum: relu]
           - [Enum: sigmoid]
           - [Enum: tanh]
-
