@@ -156,6 +156,9 @@ globalParameters["DataInitTypeBias"] = 3
 globalParameters["DataInitTypeScaleD"] = 3
 globalParameters["DataInitValueActivationArgs"] = [2.0, 2.0]
 globalParameters["CEqualD"] = False               # Set to true if testing for the case where the pointer to C is the same as D.
+# When this parameter is set to 0, the Tensile client will use srand(time(NULL)).
+# If not 0 the Tensile client will use srand(seed).
+globalParameters["DataInitSeed"] = 0
 
 # build parameters
 globalParameters["CMakeCXXFlags"] = ""            # pass flags to cmake
