@@ -6,11 +6,13 @@ GlobalParameters:
   KernelTime: True
   NewClient: 2
   BoundsCheck: False
-  PrintSolutionRejectionReason: True
+  # PrintSolutionRejectionReason: True
+  PrintWinnersOnly: True
   ValidationMaxToPrint: 4      # maximum number of mismatches to print
   ValidationPrintValids: False # print matches too
   DataInitValueActivationArgs: [0.5, -1]
   PruneSparseMode: 0
+  MinKForGSU: 1
 
 BenchmarkProblems:
   #######################################
@@ -42,29 +44,24 @@ BenchmarkProblems:
           - [32, 32, 16, 1,  1,  2, 2,  2, 2 ]
           - [32, 32, 16, 1,  1,  2, 4,  4, 2 ]
           - [32, 32, 16, 1,  1,  7, 2,  1, 4 ]
-        - ThreadTile:
-          - [ 4, 4 ]
-        - WorkGroup:
-          - [ 8, 8, 1 ]
-        - GlobalReadVectorWidth: [4]
-        - DepthU: [16]
-        - VectorWidth: [4]
+        - GlobalReadVectorWidthA: [4]
+        - DepthU: [32,64]
         - TransposeLDS: [0,1]
         - LdsPadA: [-1]
         - LdsPadB: [-1]
-        - LdsPadMetadata: [-1,0,8]
+        - LdsPadMetadata: [-1]
         - StaggerU: [0,4]
         - ScheduleIterAlg: [3]
-        - PrefetchLocalRead: [0,1,2]
-        - PrefetchGlobalRead: [0,1,2]
-        - DepthULdsDivisor: [1]
-        - StoreRemapVectorWidth: [8]
+        - PrefetchLocalRead: [1]
+        - ClusterLocalRead: [1]
+        - PrefetchGlobalRead: [2]
+        - StoreRemapVectorWidth: [-1]
         - GlobalSplitU: [1,2]
         - GlobalSplitUAlgorithm: [MultipleBuffer]
         - 1LDSBuffer: [-1]
         - DirectToVgprSparseMetadata: [0,1]
         - WorkGroupMapping: [18]
-        - StoreVectorWidth: [-1, 1]
+        - StoreVectorWidth: [-1]
       BenchmarkForkParameters:
       JoinParameters:
       BenchmarkJoinParameters:
@@ -125,29 +122,24 @@ BenchmarkProblems:
           - [32, 32, 16, 1,  1,  2, 2,  2, 2 ]
           - [32, 32, 16, 1,  1,  2, 4,  4, 2 ]
           - [32, 32, 16, 1,  1,  7, 2,  1, 4 ]
-        - ThreadTile:
-          - [ 4, 4 ]
-        - WorkGroup:
-          - [ 8, 8, 1 ]
-        - GlobalReadVectorWidth: [4]
-        - DepthU: [16]
-        - VectorWidth: [4]
+        - GlobalReadVectorWidthA: [4]
+        - DepthU: [32,64]
         - TransposeLDS: [0,1]
         - LdsPadA: [-1]
         - LdsPadB: [-1]
-        - LdsPadMetadata: [-1,0,8]
+        - LdsPadMetadata: [-1]
         - StaggerU: [0,4]
         - ScheduleIterAlg: [3]
-        - PrefetchLocalRead: [0,1,2]
-        - PrefetchGlobalRead: [0,1,2]
-        - DepthULdsDivisor: [1]
-        - StoreRemapVectorWidth: [8]
+        - PrefetchLocalRead: [1]
+        - ClusterLocalRead: [1]
+        - PrefetchGlobalRead: [2]
+        - StoreRemapVectorWidth: [-1]
         - GlobalSplitU: [1,2]
         - GlobalSplitUAlgorithm: [MultipleBuffer]
         - 1LDSBuffer: [-1]
         - DirectToVgprSparseMetadata: [0,1]
         - WorkGroupMapping: [18]
-        - StoreVectorWidth: [-1, 1]
+        - StoreVectorWidth: [-1]
       BenchmarkForkParameters:
       JoinParameters:
       BenchmarkJoinParameters:
@@ -206,29 +198,24 @@ BenchmarkProblems:
           - [32, 32, 16, 1,  1,  2, 2,  2, 2 ]
           - [32, 32, 16, 1,  1,  2, 4,  4, 2 ]
           - [32, 32, 16, 1,  1,  7, 2,  1, 4 ]
-        - ThreadTile:
-          - [ 4, 4 ]
-        - WorkGroup:
-          - [ 8, 8, 1 ]
-        - GlobalReadVectorWidth: [4]
-        - DepthU: [16]
-        - VectorWidth: [4]
+        - GlobalReadVectorWidthA: [4]
+        - DepthU: [32,64]
         - TransposeLDS: [0,1]
         - LdsPadA: [-1]
         - LdsPadB: [-1]
-        - LdsPadMetadata: [-1,0,8]
+        - LdsPadMetadata: [-1]
         - StaggerU: [0,4]
         - ScheduleIterAlg: [3]
-        - PrefetchLocalRead: [0,1,2]
-        - PrefetchGlobalRead: [0,1,2]
-        - DepthULdsDivisor: [1]
-        - StoreRemapVectorWidth: [8]
+        - PrefetchLocalRead: [1]
+        - ClusterLocalRead: [1]
+        - PrefetchGlobalRead: [2]
+        - StoreRemapVectorWidth: [-1]
         - GlobalSplitU: [1,2]
         - GlobalSplitUAlgorithm: [MultipleBuffer]
         - 1LDSBuffer: [-1]
         - DirectToVgprSparseMetadata: [0,1]
         - WorkGroupMapping: [18]
-        - StoreVectorWidth: [-1, 1]
+        - StoreVectorWidth: [-1]
       BenchmarkForkParameters:
       JoinParameters:
       BenchmarkJoinParameters:
@@ -286,29 +273,24 @@ BenchmarkProblems:
           - [32, 32, 16, 1,  1,  2, 2,  2, 2 ]
           - [32, 32, 16, 1,  1,  2, 4,  4, 2 ]
           - [32, 32, 16, 1,  1,  7, 2,  1, 4 ]
-        - ThreadTile:
-          - [ 4, 4 ]
-        - WorkGroup:
-          - [ 8, 8, 1 ]
-        - GlobalReadVectorWidth: [4]
-        - DepthU: [16]
-        - VectorWidth: [4]
+        - GlobalReadVectorWidthA: [4]
+        - DepthU: [32,64]
         - TransposeLDS: [0,1]
         - LdsPadA: [-1]
         - LdsPadB: [-1]
-        - LdsPadMetadata: [-1,0,8]
+        - LdsPadMetadata: [-1]
         - StaggerU: [0,4]
         - ScheduleIterAlg: [3]
-        - PrefetchLocalRead: [0,1,2]
-        - PrefetchGlobalRead: [0,1,2]
-        - DepthULdsDivisor: [1]
-        - StoreRemapVectorWidth: [8]
+        - PrefetchLocalRead: [1]
+        - ClusterLocalRead: [1]
+        - PrefetchGlobalRead: [2]
+        - StoreRemapVectorWidth: [-1]
         - GlobalSplitU: [1,2]
         - GlobalSplitUAlgorithm: [MultipleBuffer]
         - 1LDSBuffer: [-1]
         - DirectToVgprSparseMetadata: [0,1]
         - WorkGroupMapping: [18]
-        - StoreVectorWidth: [-1, 1]
+        - StoreVectorWidth: [-1]
       BenchmarkForkParameters:
       JoinParameters:
       BenchmarkJoinParameters:
