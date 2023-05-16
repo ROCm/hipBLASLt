@@ -505,6 +505,8 @@ def writeClientConfigIni(problemSizes, biasTypeArgs, activationArgs, problemType
 
         param("device-idx",               globalParameters["Device"])
 
+        param("init-seed",                globalParameters["DataInitSeed"])
+
         for key,value in dataInitParams(problemType):
             param(key, value)
 

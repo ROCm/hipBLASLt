@@ -116,6 +116,7 @@ namespace Tensile
                 ("deterministic-mode",       po::value<bool>()->default_value(false), "Enforce deterministic summation patterns"
                                                                                       "by not splitting U among workgroups")
 
+                ("init-seed",                po::value<unsigned int>()->default_value(0), "The seed for srand")
                 ("init-a",                   po::value<InitMode>()->default_value(InitMode::Random), "Initialization for A")
                 ("init-b",                   po::value<InitMode>()->default_value(InitMode::Random), "Initialization for B")
                 ("init-c",                   po::value<InitMode>()->default_value(InitMode::Random), "Initialization for C")
@@ -453,6 +454,15 @@ int main(int argc, const char* argv[])
     using namespace Tensile::Client;
 
     auto args = parse_args(argc, argv);
+
+    // Set srand
+    unsigned int seed = args["init-seed"].as<unsigned int>();
+    if(seed == 0)
+    {
+        seed = time(NULL);
+    }
+    std::cout << std::endl << "srand seed is set to " << seed << std::endl << std::endl;
+    srand(seed);
 
     ClientProblemFactory problemFactory(args);
 
