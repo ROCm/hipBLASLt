@@ -326,6 +326,7 @@ build_codecoverage=false
 install_prefix=hipblaslt-install
 build_relocatable=false
 build_address_sanitizer=false
+build_dir=$(readlink -m ./build)
 matrices_dir=
 matrices_dir_install=
 gpu_architecture=all
@@ -340,6 +341,7 @@ build_tensile=true
 tensile_msgpack_backend=true
 update_cmake=true
 
+
 rocm_path=/opt/rocm
 if ! [ -z ${ROCM_PATH+x} ]; then
     rocm_path=${ROCM_PATH}
@@ -352,7 +354,7 @@ fi
 # check if we have a modern version of getopt that can handle whitespace and long parameters
 getopt -T
 if [[ $? -eq 4 ]]; then
-  GETOPT_PARSE=$(getopt --name "${0}" --longoptions help,install,clients,dependencies,debug,hip-clang,static,relocatable,codecoverage,relwithdebinfo,address-sanitizer,merge-files,no-merge-files,no_tensile,no-tensile,msgpack,no-msgpack,logic:,cov:,fork:,branch:,test_local_path:,cpu_ref_lib:,use-custom-version:,architecture: --options hicdgrkalfbnu:t: -- "$@")
+  GETOPT_PARSE=$(getopt --name "${0}" --longoptions help,install,clients,dependencies,debug,hip-clang,static,relocatable,codecoverage,relwithdebinfo,address-sanitizer,merge-files,no-merge-files,no_tensile,no-tensile,msgpack,no-msgpack,logic:,cov:,fork:,branch:,test_local_path:,cpu_ref_lib:,build_dir:,use-custom-version:,architecture: --options hicdgrkalfbnu:t: -- "$@")
 else
   echo "Need a new version of getopt"
   exit 1
@@ -435,6 +437,10 @@ while true; do
         -u|--use-custom-version)
             tensile_version=${2}
             shift 2;;
+        --build_dir)
+    #use readlink rather than realpath for CentOS 6.10 support
+            build_dir=$(readlink -m ${2})
+            shift 2;;
         --msgpack)
             tensile_msgpack_backend=true
             shift ;;
@@ -483,7 +489,6 @@ if ! [[ "${matrices_dir}" == "" ]];then
     cmake -DCMAKE_MATRICES_DIR=${matrices_dir} -P ./cmake/ClientMatrices.cmake
 fi
 
-build_dir=$(readlink -m ./build)
 printf "\033[32mCreating project build directory in: \033[33m${build_dir}\033[0m\n"
 
 # #################################################
