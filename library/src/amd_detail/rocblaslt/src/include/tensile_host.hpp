@@ -210,7 +210,15 @@ rocblaslt_status gemmCreate(rocblaslt_gemm                                 gemm,
                             RocblasltContractionProblem<Ti, To, Tc> const& problem);
 
 template <typename Ti, typename To, typename Tc>
+rocblaslt_status gemmCreate(rocblaslt::RocGemm&                            gemm,
+                            RocblasltContractionProblem<Ti, To, Tc> const& problem);
+
+template <typename Ti, typename To, typename Tc>
 rocblaslt_status groupedGemmCreate(rocblaslt_gemm groupedgemm,
+                                   std::vector<RocblasltContractionProblem<Ti, To, Tc>>& probs);
+
+template <typename Ti, typename To, typename Tc>
+rocblaslt_status groupedGemmCreate(rocblaslt::RocGemm&                                   gemm,
                                    std::vector<RocblasltContractionProblem<Ti, To, Tc>>& probs);
 
 rocblaslt_status makeArgument(rocblaslt_gemm               gemm,
@@ -218,8 +226,15 @@ rocblaslt_status makeArgument(rocblaslt_gemm               gemm,
                               void*                        workspace,
                               hipStream_t                  stream);
 
+rocblaslt_status makeArgument(rocblaslt::RocGemm&          gemm,
+                              const rocblaslt_matmul_algo& algo,
+                              void*                        workspace,
+                              hipStream_t                  stream);
+
 // Run gemm only, without creating args, problems,...
 rocblaslt_status runKernelFromInvocation(rocblaslt_gemm gemm, hipStream_t stream);
+
+rocblaslt_status runKernelFromInvocation(rocblaslt::RocGemm& gemm, hipStream_t stream);
 
 /***********************************************************************************
  * Whether Tensile has been initialized for at least one device (used for
@@ -266,6 +281,18 @@ rocblaslt_status getAllSolutions(std::vector<RocblasltContractionProblem<Ti, To,
                                  size_t                              maxWorkSpaceBytes);
 
 template <typename Ti, typename To = Ti, typename Tc = To>
+rocblaslt_status getAllSolutions(RocblasltContractionProblem<Ti, To, Tc>&        prob,
+                                 rocblaslt_handle                                handle,
+                                 std::vector<rocblaslt_matmul_heuristic_result>& heuristicResults,
+                                 size_t                                          maxWorkSpaceBytes);
+
+template <typename Ti, typename To = Ti, typename Tc = To>
+rocblaslt_status getAllSolutions(std::vector<RocblasltContractionProblem<Ti, To, Tc>>& probs,
+                                 rocblaslt_handle                                      handle,
+                                 std::vector<rocblaslt_matmul_heuristic_result>& heuristicResults,
+                                 size_t                                          maxWorkSpaceBytes);
+
+template <typename Ti, typename To = Ti, typename Tc = To>
 rocblaslt_status isSolutionSupported(RocblasltContractionProblem<Ti, To, Tc>& prob,
                                      rocblaslt_matmul_algo*                   algo,
                                      size_t*                                  workspaceSizeInBytes);
@@ -273,6 +300,10 @@ rocblaslt_status isSolutionSupported(RocblasltContractionProblem<Ti, To, Tc>& pr
 rocblaslt_status isSolutionSupported(rocblaslt_gemm         gemm,
                                      rocblaslt_matmul_algo* algo,
                                      size_t*                workspaceSizeInBytes);
+
+rocblaslt_status isSolutionSupported(rocblaslt::RocGemm&    gemm,
+                                     rocblaslt_matmul_algo& algo,
+                                     size_t&                workspaceSizeInBytes);
 
 /*******************************************************************************
  * getBestSolutions() calls finTopSolutions from Tensile and converts to       *
@@ -291,3 +322,7 @@ rocblaslt_status getBestSolutions(rocblaslt_gemm                    gemm,
                                   int                               requestedAlgoCount,
                                   rocblaslt_matmul_heuristic_result heuristicResultsArray[],
                                   int*                              returnAlgoCount);
+
+rocblaslt_status getBestSolutions(rocblaslt::RocGemm& gemm,
+                                  const int           requestedAlgoCount,
+                                  std::vector<rocblaslt_matmul_heuristic_result>& heuristicResults);

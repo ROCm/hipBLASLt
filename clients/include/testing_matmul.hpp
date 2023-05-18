@@ -39,6 +39,7 @@
 #include "unit.hpp"
 #include "utility.hpp"
 #include <cstddef>
+#include <hipblaslt/hipblaslt-ext.hpp>
 #include <hipblaslt/hipblaslt.h>
 #include <omp.h>
 
@@ -709,13 +710,13 @@ void testing_matmul(const Arguments& arg)
     size_t                        workspace_size = 0;
 
     // Get Heuristic results
-    hipblasLtMatmulHeuristicResult_t heuristicResult[1] = {0};
-    int                              requestAlgoCount   = 1;
-    int                              returnedAlgoCount  = 0;
+    std::vector<hipblasLtMatmulHeuristicResult_t> heuristicResult{1};
+    int                                           requestAlgoCount  = 1;
+    int                                           returnedAlgoCount = 0;
 
     // grouped gemm
-    hipblasLtExtGemm_t groupedGemm;
-    std::vector<void*> da(gemm_count), db(gemm_count), dc(gemm_count), dd(gemm_count);
+    hipblaslt_ext::Gemm groupedGemm(handle, max_workspace_size);
+    std::vector<void*>  da(gemm_count), db(gemm_count), dc(gemm_count), dd(gemm_count);
 
     if(!do_grouped_gemm)
     {
@@ -727,7 +728,7 @@ void testing_matmul(const Arguments& arg)
                                                                matD[0],
                                                                pref,
                                                                requestAlgoCount,
-                                                               heuristicResult,
+                                                               heuristicResult.data(),
                                                                &returnedAlgoCount)),
                               HIPBLAS_STATUS_SUCCESS);
 
@@ -746,11 +747,12 @@ void testing_matmul(const Arguments& arg)
             dc[gemmIdx] = *dC[gemmIdx];
             dd[gemmIdx] = *dD[gemmIdx];
         }
-        CHECK_HIPBLASLT_ERROR(hipblasLtExtGroupedGemmCreate(
-            &groupedGemm, handle, matmul, h_alpha, da, matA, db, matB, h_beta, dc, matC, dd, matD));
+        CHECK_HIPBLASLT_ERROR(groupedGemm.setGroupedProblemFromhipBlasLt(
+            matmul, h_alpha, da, matA, db, matB, h_beta, dc, matC, dd, matD));
 
-        CHECK_HIPBLASLT_ERROR(hipblasLtExtAlgoGetHeuristic(
-            groupedGemm, pref, requestAlgoCount, heuristicResult, &returnedAlgoCount));
+        CHECK_HIPBLASLT_ERROR(
+            hipblaslt_ext::algoGetHeuristic(groupedGemm, requestAlgoCount, heuristicResult));
+        returnedAlgoCount = heuristicResult.size();
 
         dWorkspace = new device_vector<unsigned char>(max_workspace_size, 1, HMM);
         CHECK_DEVICE_ALLOCATION(dWorkspace->memcheck());
@@ -782,10 +784,10 @@ void testing_matmul(const Arguments& arg)
         else
         {
             //grouped gemm
-            CHECK_HIPBLASLT_ERROR(hipblasLtExtMakeArgument(
-                groupedGemm, &heuristicResult[0].algo, *dWorkspace, stream));
+            CHECK_HIPBLASLT_ERROR(hipblaslt_ext::makeArgument(
+                groupedGemm, heuristicResult[0].algo, *dWorkspace, stream));
 
-            CHECK_HIPBLASLT_ERROR(hipblasLtExtRun(groupedGemm, stream));
+            CHECK_HIPBLASLT_ERROR(hipblaslt_ext::run(groupedGemm, stream));
         }
     }
 
@@ -1160,17 +1162,17 @@ void testing_matmul(const Arguments& arg)
         else
         {
             //grouped gemm
-            CHECK_HIPBLASLT_ERROR(hipblasLtExtMakeArgument(
-                groupedGemm, &heuristicResult[0].algo, *dWorkspace, stream));
+            CHECK_HIPBLASLT_ERROR(hipblaslt_ext::makeArgument(
+                groupedGemm, heuristicResult[0].algo, *dWorkspace, stream));
 
             for(int i = 0; i < number_cold_calls; i++)
-                CHECK_HIPBLASLT_ERROR(hipblasLtExtRun(groupedGemm, stream));
+                CHECK_HIPBLASLT_ERROR(hipblaslt_ext::run(groupedGemm, stream));
 
             CHECK_HIP_ERROR(hipStreamSynchronize(stream));
             gpu_time_used = get_time_us_sync(stream); // in microseconds
 
             for(int i = 0; i < number_hot_calls; i++)
-                CHECK_HIPBLASLT_ERROR(hipblasLtExtRun(groupedGemm, stream));
+                CHECK_HIPBLASLT_ERROR(hipblaslt_ext::run(groupedGemm, stream));
 
             CHECK_HIP_ERROR(hipStreamSynchronize(stream));
             gpu_time_used = get_time_us_sync(stream) - gpu_time_used;

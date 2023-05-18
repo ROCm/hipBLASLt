@@ -26,6 +26,7 @@
 
 #include "hipblaslt.h"
 #include "exceptions.hpp"
+#include "hipblaslt_internal.hpp"
 
 #include <hip/hip_runtime_api.h>
 #include <rocblaslt.h>
@@ -34,28 +35,6 @@
 
 #define TO_STR2(x) #x
 #define TO_STR(x) TO_STR2(x)
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-#define RETURN_IF_HIPBLASLT_ERROR(INPUT_STATUS_FOR_CHECK)              \
-    {                                                                  \
-        hipblasStatus_t TMP_STATUS_FOR_CHECK = INPUT_STATUS_FOR_CHECK; \
-        if(TMP_STATUS_FOR_CHECK != HIPBLAS_STATUS_SUCCESS)             \
-        {                                                              \
-            return TMP_STATUS_FOR_CHECK;                               \
-        }                                                              \
-    }
-
-#define RETURN_IF_ROCBLASLT_ERROR(INPUT_STATUS_FOR_CHECK)               \
-    {                                                                   \
-        rocblaslt_status TMP_STATUS_FOR_CHECK = INPUT_STATUS_FOR_CHECK; \
-        if(TMP_STATUS_FOR_CHECK != rocblaslt_status_success)            \
-        {                                                               \
-            return RocBlasLtStatusToHIPStatus(TMP_STATUS_FOR_CHECK);    \
-        }                                                               \
-    }
 
 hipblasStatus_t hipErrorToHIPBLASStatus(hipError_t status)
 {
@@ -107,6 +86,28 @@ hipblasStatus_t RocBlasLtStatusToHIPStatus(rocblaslt_status_ status)
         throw HIPBLAS_STATUS_INVALID_ENUM;
     }
 }
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#define RETURN_IF_HIPBLASLT_ERROR(INPUT_STATUS_FOR_CHECK)              \
+    {                                                                  \
+        hipblasStatus_t TMP_STATUS_FOR_CHECK = INPUT_STATUS_FOR_CHECK; \
+        if(TMP_STATUS_FOR_CHECK != HIPBLAS_STATUS_SUCCESS)             \
+        {                                                              \
+            return TMP_STATUS_FOR_CHECK;                               \
+        }                                                              \
+    }
+
+#define RETURN_IF_ROCBLASLT_ERROR(INPUT_STATUS_FOR_CHECK)               \
+    {                                                                   \
+        rocblaslt_status TMP_STATUS_FOR_CHECK = INPUT_STATUS_FOR_CHECK; \
+        if(TMP_STATUS_FOR_CHECK != rocblaslt_status_success)            \
+        {                                                               \
+            return RocBlasLtStatusToHIPStatus(TMP_STATUS_FOR_CHECK);    \
+        }                                                               \
+    }
 
 hipblasStatus_t hipblasLtCreate(hipblasLtHandle_t* handle)
 try
