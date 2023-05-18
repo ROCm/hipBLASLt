@@ -784,10 +784,10 @@ void testing_matmul(const Arguments& arg)
         else
         {
             //grouped gemm
-            CHECK_HIPBLASLT_ERROR(hipblaslt_ext::makeArgument(
-                groupedGemm, heuristicResult[0].algo, *dWorkspace, stream));
+            CHECK_HIPBLASLT_ERROR(
+                groupedGemm.makeArgument(heuristicResult[0].algo, *dWorkspace, stream));
 
-            CHECK_HIPBLASLT_ERROR(hipblaslt_ext::run(groupedGemm, stream));
+            CHECK_HIPBLASLT_ERROR(groupedGemm.run(stream));
         }
     }
 
@@ -1162,17 +1162,17 @@ void testing_matmul(const Arguments& arg)
         else
         {
             //grouped gemm
-            CHECK_HIPBLASLT_ERROR(hipblaslt_ext::makeArgument(
-                groupedGemm, heuristicResult[0].algo, *dWorkspace, stream));
+            CHECK_HIPBLASLT_ERROR(
+                groupedGemm.makeArgument(heuristicResult[0].algo, *dWorkspace, stream));
 
             for(int i = 0; i < number_cold_calls; i++)
-                CHECK_HIPBLASLT_ERROR(hipblaslt_ext::run(groupedGemm, stream));
+                CHECK_HIPBLASLT_ERROR(groupedGemm.run(stream));
 
             CHECK_HIP_ERROR(hipStreamSynchronize(stream));
             gpu_time_used = get_time_us_sync(stream); // in microseconds
 
             for(int i = 0; i < number_hot_calls; i++)
-                CHECK_HIPBLASLT_ERROR(hipblaslt_ext::run(groupedGemm, stream));
+                CHECK_HIPBLASLT_ERROR(groupedGemm.run(stream));
 
             CHECK_HIP_ERROR(hipStreamSynchronize(stream));
             gpu_time_used = get_time_us_sync(stream) - gpu_time_used;

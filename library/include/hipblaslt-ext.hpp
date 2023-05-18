@@ -164,6 +164,47 @@ namespace hipblaslt_ext
                                            std::vector<void*>&                   D,
                                            std::vector<hipblasLtMatrixLayout_t>& matD);
 
+        /*! \ingroup library_module
+        *  \brief Create kernel arguments from a given hipblaslt_ext::Gemm instance.
+        *
+        *  \details
+        *  This function creates kernel arguemtns from a given hipblaslt_ext::Gemm instance
+        * then saves the arguments inside the instance.
+        *
+        *  @param[in]
+        *  algo                    Handle for matrix multiplication algorithm to be
+        * used. See \ref hipblasLtMatmulAlgo_t. When NULL, an implicit heuritics query
+        * with default search preferences will be performed to determine actual
+        * algorithm to use.
+        *  @param[in]
+        *  workspace               Pointer to the workspace buffer allocated in the GPU
+        * memory. Pointer must be 16B aligned (that is, lowest 4 bits of address must
+        * be 0).
+        *  @param[in]
+        *  stream                  The HIP stream where all the GPU work will be
+        * submitted.
+        *
+        *  \retval HIPBLAS_STATUS_SUCCESS           If the operation completed
+        * successfully. \retval HIPBLAS_STATUS_INVALID_VALUE If the gemm_count = 0.
+        */
+        HIPBLASLT_EXPORT
+        hipblasStatus_t
+            makeArgument(const hipblasLtMatmulAlgo_t& algo, void* workspace, hipStream_t stream);
+
+        /*! \ingroup library_module
+        *  \brief Execute the kernel arguments stored inside the hipblaslt_ext::Gemm
+        * instance.
+        *
+        *  @param[in]
+        *  stream                  The HIP stream where all the GPU work will be
+        * submitted.
+        *
+        *  \retval HIPBLAS_STATUS_SUCCESS           If the operation completed
+        * successfully.
+        */
+        HIPBLASLT_EXPORT
+        hipblasStatus_t run(hipStream_t stream);
+
         HIPBLASLT_EXPORT GemmType getGemmType();
         HIPBLASLT_EXPORT size_t   getGemmCount();
         HIPBLASLT_EXPORT size_t   getWorkspaceBytes();
@@ -290,51 +331,4 @@ namespace hipblaslt_ext
         algoGetHeuristic(Gemm&                                          gemm,
                          const int                                      requestedAlgoCount,
                          std::vector<hipblasLtMatmulHeuristicResult_t>& heuristicResults);
-
-    /*! \ingroup library_module
-    *  \brief Create kernel arguments from a given hipblaslt_ext::Gemm instance.
-    *
-    *  \details
-    *  This function creates kernel arguemtns from a given hipblaslt_ext::Gemm instance
-    * then saves the arguments inside the instance.
-    *
-    *  @param[in]
-    *  gemm                   The hipblaslt_ext::Gemm instance.
-    *  @param[in]
-    *  algo                    Handle for matrix multiplication algorithm to be
-    * used. See \ref hipblasLtMatmulAlgo_t. When NULL, an implicit heuritics query
-    * with default search preferences will be performed to determine actual
-    * algorithm to use.
-    *  @param[in]
-    *  workspace               Pointer to the workspace buffer allocated in the GPU
-    * memory. Pointer must be 16B aligned (that is, lowest 4 bits of address must
-    * be 0).
-    *  @param[in]
-    *  stream                  The HIP stream where all the GPU work will be
-    * submitted.
-    *
-    *  \retval HIPBLAS_STATUS_SUCCESS           If the operation completed
-    * successfully. \retval HIPBLAS_STATUS_INVALID_VALUE If the gemm_count = 0.
-    */
-    HIPBLASLT_EXPORT
-    hipblasStatus_t makeArgument(Gemm&                        gemm,
-                                 const hipblasLtMatmulAlgo_t& algo,
-                                 void*                        workspace,
-                                 hipStream_t                  stream);
-
-    /*! \ingroup library_module
-    *  \brief Execute the kernel arguments stored inside the hipblaslt_ext::Gemm
-    * instance.
-    *
-    *  @param[in]
-    *  gemm                   The hipblaslt_ext::Gemm instance.
-    *  @param[in]
-    *  stream                  The HIP stream where all the GPU work will be
-    * submitted.
-    *
-    *  \retval HIPBLAS_STATUS_SUCCESS           If the operation completed
-    * successfully.
-    */
-    HIPBLASLT_EXPORT
-    hipblasStatus_t run(Gemm& gemm, hipStream_t stream);
 } // End of namespace hipblasltext

@@ -1069,15 +1069,16 @@ rocblaslt_status groupedGemmCreate(rocblaslt::RocGemm&                          
     return status;
 }
 
-rocblaslt_status makeArgument(rocblaslt::RocGemm&          gemm,
+rocblaslt_status makeArgument(const rocblaslt::RocGemmType gemmType,
                               const rocblaslt_matmul_algo& algo,
                               void*                        workspace,
-                              hipStream_t                  stream)
+                              hipStream_t                  stream,
+                              std::shared_ptr<void>        gemmData)
 {
     rocblaslt_status status = rocblaslt_status_internal_error;
     try
     {
-        if(gemm.getGemmType() == rocblaslt::RocGemmType::ROCBLASLT_GEMM)
+        if(gemmType == rocblaslt::RocGemmType::ROCBLASLT_GEMM)
         {
             std::shared_ptr<Tensile::Hardware> hardware;
 
@@ -1085,7 +1086,7 @@ rocblaslt_status makeArgument(rocblaslt::RocGemm&          gemm,
                 = std::static_pointer_cast<Tensile::ContractionSolution>(algo.data.ptr);
 
             std::shared_ptr<TensileDataGemm> data
-                = std::static_pointer_cast<TensileDataGemm>(gemm.getData());
+                = std::static_pointer_cast<TensileDataGemm>(gemmData);
 
             data->inputs.ws = workspace;
 
@@ -1110,7 +1111,7 @@ rocblaslt_status makeArgument(rocblaslt::RocGemm&          gemm,
             data->problem.setUseE(useE);
             data->problem.setUseGradient(useGrad);
         }
-        else if(gemm.getGemmType() == rocblaslt::RocGemmType::ROCBLASLT_GROUPED_GEMM)
+        else if(gemmType == rocblaslt::RocGemmType::ROCBLASLT_GROUPED_GEMM)
         {
             std::shared_ptr<Tensile::Hardware> hardware;
 
@@ -1118,7 +1119,7 @@ rocblaslt_status makeArgument(rocblaslt::RocGemm&          gemm,
                 = std::static_pointer_cast<Tensile::ContractionSolution>(algo.data.ptr);
 
             std::shared_ptr<TensileDataGroupedGemm> data
-                = std::static_pointer_cast<TensileDataGroupedGemm>(gemm.getData());
+                = std::static_pointer_cast<TensileDataGroupedGemm>(gemmData);
 
             for(int i = 0; i < data->inputs.grouped.size(); i++)
             {
@@ -1172,7 +1173,10 @@ rocblaslt_status makeArgument(rocblaslt::RocGemm&          gemm,
     return status;
 }
 
-rocblaslt_status runKernelFromInvocation(rocblaslt::RocGemm& gemm, hipStream_t stream)
+rocblaslt_status runKernelFromInvocation(rocblaslt_handle       handle,
+                                         rocblaslt::RocGemmType gemmType,
+                                         std::shared_ptr<void>  gemmData,
+                                         hipStream_t            stream)
 {
     rocblaslt_status status = rocblaslt_status_internal_error;
     try
@@ -1181,18 +1185,18 @@ rocblaslt_status runKernelFromInvocation(rocblaslt::RocGemm& gemm, hipStream_t s
         std::shared_ptr<hipDeviceProp_t>                                                 deviceProp;
         std::shared_ptr<Tensile::Hardware>                                               hardware;
 
-        auto adapter = get_library_and_adapter(&library, &deviceProp, gemm.getHandle()->device);
+        auto adapter = get_library_and_adapter(&library, &deviceProp, handle->device);
 
-        if(gemm.getGemmType() == rocblaslt::RocGemmType::ROCBLASLT_GEMM)
+        if(gemmType == rocblaslt::RocGemmType::ROCBLASLT_GEMM)
         {
             std::shared_ptr<TensileDataGemm> data
-                = std::static_pointer_cast<TensileDataGemm>(gemm.getData());
+                = std::static_pointer_cast<TensileDataGemm>(gemmData);
             static_cast<void>(adapter->launchKernels(data->kernels, stream, nullptr, nullptr));
         }
-        else if(gemm.getGemmType() == rocblaslt::RocGemmType::ROCBLASLT_GROUPED_GEMM)
+        else if(gemmType == rocblaslt::RocGemmType::ROCBLASLT_GROUPED_GEMM)
         {
             std::shared_ptr<TensileDataGroupedGemm> data
-                = std::static_pointer_cast<TensileDataGroupedGemm>(gemm.getData());
+                = std::static_pointer_cast<TensileDataGroupedGemm>(gemmData);
             static_cast<void>(adapter->launchKernels(data->kernels, stream, nullptr, nullptr));
         }
         else
