@@ -95,14 +95,6 @@ typedef struct _rocblaslt_matmul_desc* rocblaslt_matmul_desc;
 typedef struct _rocblaslt_matmul_preference* rocblaslt_matmul_preference;
 
 /*! \ingroup types_module
- *  \brief Descriptor of the gemm.
- *
- *  \details
- *  It is initialized with \ref rocblaslt_groupedgemm_create, rocblaslt_gemm_create function.
- */
-typedef struct _rocblaslt_gemm* rocblaslt_gemm;
-
-/*! \ingroup types_module
  *  \brief Descriptor of the matrix multiplication algorithm.
  *
  *  \details
@@ -136,12 +128,6 @@ typedef struct rocblaslt_half
     uint16_t data;
 } rocblaslt_half;
 #endif
-
-typedef enum _rocblaslt_gemm_type_enum
-{
-    ROCBLASLT_GEMM         = 1,
-    ROCBLASLT_GROUPED_GEMM = 2
-} rocblaslt_gemm_type_enum;
 
 /*! \ingroup types_module
  *  \brief Specify the postprocessing options for the epilogue
