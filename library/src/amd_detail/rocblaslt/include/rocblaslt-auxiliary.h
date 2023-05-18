@@ -340,6 +340,18 @@ rocblaslt_status
                                    rocblaslt_matmul_heuristic_result** heuristicResults,
                                    int*                                returnAlgoCount);
 
+rocblaslt_status rocblaslt_matmul_get_all_algos_cpp(
+    rocblaslt_handle                                handle,
+    rocblaslt::RocGemmType                          typeGemm,
+    hipblasOperation_t                              opA,
+    hipblasOperation_t                              opB,
+    hipblasDatatype_t                               typeA,
+    hipblasDatatype_t                               typeB,
+    hipblasDatatype_t                               typeC,
+    hipblasDatatype_t                               typeD,
+    rocblaslt_compute_type                          typeCompute,
+    std::vector<rocblaslt_matmul_heuristic_result>& heuristicResults);
+
 rocblaslt_status rocblaslt_matmul_is_algo_supported(rocblaslt_handle        handle,
                                                     rocblaslt_matmul_desc   matmul_descr,
                                                     const void*             alpha,
@@ -354,6 +366,10 @@ rocblaslt_status rocblaslt_matmul_is_algo_supported(rocblaslt_handle        hand
 rocblaslt_status rocblaslt_is_algo_supported(rocblaslt_gemm         gemm,
                                              rocblaslt_matmul_algo* algo,
                                              size_t*                workspaceSizeInBytes);
+
+rocblaslt_status rocblaslt_is_algo_supported_cpp(rocblaslt::RocGemm&    gemm,
+                                                 rocblaslt_matmul_algo& algo,
+                                                 size_t&                workspaceSizeInBytes);
 
 /*! \ingroup aux_module
  *  \brief Get the specific algorithm attribute from algorithm selection
@@ -394,7 +410,10 @@ rocblaslt_status
                                  int                               requestedAlgoCount,
                                  rocblaslt_matmul_heuristic_result heuristicResultsArray[],
                                  int*                              returnAlgoCount);
-
+rocblaslt_status
+    rocblaslt_algo_get_heuristic_cpp(rocblaslt::RocGemm gemm,
+                                     const int          requestedAlgoCount,
+                                     std::vector<rocblaslt_matmul_heuristic_result>& results);
 #ifdef __cplusplus
 }
 // for internal use during testing, fetch arch name

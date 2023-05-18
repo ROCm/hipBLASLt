@@ -966,6 +966,165 @@ rocblaslt_status
     return rocblaslt_status_success;
 }
 
+rocblaslt_status rocblaslt_matmul_get_all_algos_cpp(
+    rocblaslt_handle                                handle,
+    rocblaslt::RocGemmType                          typeGemm,
+    hipblasOperation_t                              opA,
+    hipblasOperation_t                              opB,
+    hipblasDatatype_t                               typeA,
+    hipblasDatatype_t                               typeB,
+    hipblasDatatype_t                               typeC,
+    hipblasDatatype_t                               typeD,
+    rocblaslt_compute_type                          typeCompute,
+    std::vector<rocblaslt_matmul_heuristic_result>& heuristicResults)
+{
+    // Check if handle is valid
+    if(handle == nullptr)
+    {
+        log_error(__func__, "invalid pointer");
+        return rocblaslt_status_invalid_handle;
+    }
+    // Create dummy
+    auto initMat = [](_rocblaslt_matrix_layout& mat) {
+        mat.m  = 1;
+        mat.n  = 1;
+        mat.ld = 1;
+    };
+    _rocblaslt_matmul_desc   matmul_desc;
+    _rocblaslt_matrix_layout matA;
+    _rocblaslt_matrix_layout matB;
+    _rocblaslt_matrix_layout matC;
+    _rocblaslt_matrix_layout matD;
+    initMat(matA);
+    initMat(matB);
+    initMat(matC);
+    initMat(matD);
+    matmul_desc.op_A                  = opA;
+    matmul_desc.op_B                  = opB;
+    matmul_desc.compute_type          = typeCompute;
+    matmul_desc.scale_type            = typeD;
+    rocblaslt_status status           = rocblaslt_status_success;
+    size_t           maxWorkspaceSize = std::numeric_limits<size_t>::max();
+    try
+    {
+        if(typeA == HIPBLAS_R_32F && typeB == HIPBLAS_R_32F)
+        {
+            if(typeC == HIPBLAS_R_32F && typeD == HIPBLAS_R_32F)
+            {
+                if(typeCompute == rocblaslt_compute_f32)
+                {
+                    float alpha = 1.0;
+                    float beta  = 1.0;
+                    auto  prob  = ConstructRocblasltProblem<float, float, float>(
+                        &matmul_desc, &matA, &matB, &matC, &matD, &alpha, &beta, maxWorkspaceSize);
+                    if(typeGemm == rocblaslt::RocGemmType::ROCBLASLT_GEMM)
+                    {
+                        status = getAllSolutions<float, float, float>(
+                            prob, handle, heuristicResults, maxWorkspaceSize);
+                    }
+                    else if(typeGemm == rocblaslt::RocGemmType::ROCBLASLT_GROUPED_GEMM)
+                    {
+                        std::vector<RocblasltContractionProblem<float, float, float>> probs
+                            = {prob};
+                        status = getAllSolutions<float, float, float>(
+                            probs, handle, heuristicResults, maxWorkspaceSize);
+                    }
+                    else
+                    {
+                        log_api(__func__, "Invalid gemm type", static_cast<int>(typeGemm));
+                        status = rocblaslt_status_not_implemented;
+                    }
+                }
+            }
+        }
+        else if(typeA == HIPBLAS_R_16F && typeB == HIPBLAS_R_16F)
+        {
+            if(typeC == HIPBLAS_R_16F && typeD == HIPBLAS_R_16F)
+            {
+                if(typeCompute == rocblaslt_compute_f32)
+                {
+                    float alpha = 1.0;
+                    float beta  = 1.0;
+                    auto  prob  = ConstructRocblasltProblem<rocblaslt_half, rocblaslt_half, float>(
+                        &matmul_desc, &matA, &matB, &matC, &matD, &alpha, &beta, maxWorkspaceSize);
+                    if(typeGemm == rocblaslt::RocGemmType::ROCBLASLT_GEMM)
+                    {
+                        status = getAllSolutions<rocblaslt_half, rocblaslt_half, float>(
+                            prob, handle, heuristicResults, maxWorkspaceSize);
+                    }
+                    else if(typeGemm == rocblaslt::RocGemmType::ROCBLASLT_GROUPED_GEMM)
+                    {
+                        std::vector<
+                            RocblasltContractionProblem<rocblaslt_half, rocblaslt_half, float>>
+                            probs = {prob};
+                        status    = getAllSolutions<rocblaslt_half, rocblaslt_half, float>(
+                            probs, handle, heuristicResults, maxWorkspaceSize);
+                    }
+                    else
+                    {
+                        log_api(__func__, "Invalid gemm type", static_cast<int>(typeGemm));
+                        status = rocblaslt_status_not_implemented;
+                    }
+                }
+            }
+        }
+        else if(typeA == HIPBLAS_R_16B && typeB == HIPBLAS_R_16B)
+        {
+            if(typeC == HIPBLAS_R_16B && typeD == HIPBLAS_R_16B)
+            {
+                if(typeCompute == rocblaslt_compute_f32)
+                {
+                    float alpha = 1.0;
+                    float beta  = 1.0;
+                    auto  prob
+                        = ConstructRocblasltProblem<rocblaslt_bfloat16, rocblaslt_bfloat16, float>(
+                            &matmul_desc,
+                            &matA,
+                            &matB,
+                            &matC,
+                            &matD,
+                            &alpha,
+                            &beta,
+                            maxWorkspaceSize);
+                    if(typeGemm == rocblaslt::RocGemmType::ROCBLASLT_GEMM)
+                    {
+                        status = getAllSolutions<rocblaslt_bfloat16, rocblaslt_bfloat16, float>(
+                            prob, handle, heuristicResults, maxWorkspaceSize);
+                    }
+                    else if(typeGemm == rocblaslt::RocGemmType::ROCBLASLT_GROUPED_GEMM)
+                    {
+                        std::vector<RocblasltContractionProblem<rocblaslt_bfloat16,
+                                                                rocblaslt_bfloat16,
+                                                                float>>
+                            probs = {prob};
+                        status    = getAllSolutions<rocblaslt_bfloat16, rocblaslt_bfloat16, float>(
+                            probs, handle, heuristicResults, maxWorkspaceSize);
+                    }
+                    else
+                    {
+                        log_api(__func__, "Invalid gemm type", static_cast<int>(typeGemm));
+                        status = rocblaslt_status_not_implemented;
+                    }
+                }
+            }
+        }
+        else
+        {
+            status = rocblaslt_status_not_implemented;
+        }
+
+        if(status != rocblaslt_status_success)
+        {
+            throw status;
+        }
+    }
+    catch(const rocblaslt_status& status)
+    {
+        return status;
+    }
+    return rocblaslt_status_success;
+}
+
 rocblaslt_status rocblaslt_matmul_is_algo_supported(rocblaslt_handle        handle,
                                                     rocblaslt_matmul_desc   matmul_descr,
                                                     const void*             alpha,
@@ -1087,6 +1246,13 @@ rocblaslt_status rocblaslt_matmul_is_algo_supported(rocblaslt_handle        hand
 rocblaslt_status rocblaslt_is_algo_supported(rocblaslt_gemm         gemm,
                                              rocblaslt_matmul_algo* algo,
                                              size_t*                workspaceSizeInBytes)
+{
+    return isSolutionSupported(gemm, algo, workspaceSizeInBytes);
+}
+
+rocblaslt_status rocblaslt_is_algo_supported_cpp(rocblaslt::RocGemm&    gemm,
+                                                 rocblaslt_matmul_algo& algo,
+                                                 size_t&                workspaceSizeInBytes)
 {
     return isSolutionSupported(gemm, algo, workspaceSizeInBytes);
 }
@@ -1257,6 +1423,33 @@ rocblaslt_status
     return rocblaslt_status_success;
 }
 
+rocblaslt_status
+    rocblaslt_algo_get_heuristic_cpp(rocblaslt::RocGemm gemm,
+                                     const int          requestedAlgoCount,
+                                     std::vector<rocblaslt_matmul_heuristic_result>& results)
+{
+    if(requestedAlgoCount < 1)
+    {
+        log_error(__func__, "invalid requested count", requestedAlgoCount);
+        return rocblaslt_status_invalid_value;
+    }
+    rocblaslt_status status = rocblaslt_status_success;
+    try
+    {
+        status = getBestSolutions(gemm, requestedAlgoCount, results);
+
+        log_api(__func__, "returnAlogCount", results.size());
+        if(status != rocblaslt_status_success)
+        {
+            throw status;
+        }
+    }
+    catch(const rocblaslt_status& status)
+    {
+        return status;
+    }
+    return rocblaslt_status_success;
+}
 #ifdef __cplusplus
 }
 #endif

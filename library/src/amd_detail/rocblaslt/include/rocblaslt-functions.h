@@ -129,6 +129,19 @@ rocblaslt_status rocblaslt_gemm_create(rocblaslt_gemm*         gemm,
                                        void*                   D,
                                        rocblaslt_matrix_layout matD);
 
+rocblaslt_status rocblaslt_gemm_create_cpp(rocblaslt_matmul_desc   matmul_descr,
+                                           const void*             alpha,
+                                           const void*             A,
+                                           rocblaslt_matrix_layout matA,
+                                           const void*             B,
+                                           rocblaslt_matrix_layout matB,
+                                           const void*             beta,
+                                           const void*             C,
+                                           rocblaslt_matrix_layout matC,
+                                           void*                   D,
+                                           rocblaslt_matrix_layout matD,
+                                           rocblaslt::RocGemm&     gemm);
+
 rocblaslt_status rocblaslt_groupedgemm_create(rocblaslt_gemm*                       groupedgemm,
                                               rocblaslt_handle                      handle,
                                               std::vector<rocblaslt_matmul_desc>&   matmul_descr,
@@ -143,6 +156,19 @@ rocblaslt_status rocblaslt_groupedgemm_create(rocblaslt_gemm*                   
                                               std::vector<void*>&                   D,
                                               std::vector<rocblaslt_matrix_layout>& matD);
 
+rocblaslt_status rocblaslt_groupedgemm_create_cpp(std::vector<rocblaslt_matmul_desc>& matmul_descr,
+                                                  std::vector<const void*>&           alpha,
+                                                  std::vector<const void*>&           A,
+                                                  std::vector<rocblaslt_matrix_layout>& matA,
+                                                  std::vector<const void*>&             B,
+                                                  std::vector<rocblaslt_matrix_layout>& matB,
+                                                  std::vector<const void*>&             beta,
+                                                  std::vector<const void*>&             C,
+                                                  std::vector<rocblaslt_matrix_layout>& matC,
+                                                  std::vector<void*>&                   D,
+                                                  std::vector<rocblaslt_matrix_layout>& matD,
+                                                  rocblaslt::RocGemm&                   gemm);
+
 rocblaslt_status rocblaslt_ext_destroy(const rocblaslt_gemm gemm);
 
 rocblaslt_status rocblaslt_makeArgument(rocblaslt_gemm               gemm,
@@ -150,7 +176,14 @@ rocblaslt_status rocblaslt_makeArgument(rocblaslt_gemm               gemm,
                                         void*                        workspace,
                                         hipStream_t                  stream);
 
+rocblaslt_status rocblaslt_makeArgument_cpp(rocblaslt::RocGemm&          gemm,
+                                            const rocblaslt_matmul_algo& algo,
+                                            void*                        workspace,
+                                            hipStream_t                  stream);
+
 rocblaslt_status rocblaslt_run(rocblaslt_gemm gemm, hipStream_t stream);
+
+rocblaslt_status rocblaslt_run_cpp(rocblaslt::RocGemm& gemm, hipStream_t stream);
 
 #ifdef __cplusplus
 }

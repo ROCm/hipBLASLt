@@ -37,11 +37,13 @@ configure_file("${CMAKE_CURRENT_SOURCE_DIR}/include/hipblaslt-version.h.in"
 
 # Copy Public Headers to Build Dir
 configure_file( "${CMAKE_CURRENT_SOURCE_DIR}/include/hipblaslt.h" "${PROJECT_BINARY_DIR}/include/hipblaslt/hipblaslt.h" COPYONLY)
+configure_file( "${CMAKE_CURRENT_SOURCE_DIR}/include/hipblaslt-ext.hpp" "${PROJECT_BINARY_DIR}/include/hipblaslt/hipblaslt-ext.hpp" COPYONLY)
 configure_file( "${CMAKE_CURRENT_SOURCE_DIR}/include/hipblaslt-types.h" "${PROJECT_BINARY_DIR}/include/hipblaslt/hipblaslt-types.h" COPYONLY)
 
 # Public hipBLASLt headers
 set(hipblaslt_headers_public
   include/hipblaslt.h
+  include/hipblaslt-ext.hpp
   ${PROJECT_BINARY_DIR}/include/hipblaslt/hipblaslt-version.h
 )
 

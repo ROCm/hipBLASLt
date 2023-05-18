@@ -29,6 +29,7 @@
 #include <cstring>
 #include <functional>
 #include <hip/hip_runtime.h>
+#include <hipblaslt/hipblaslt-ext.hpp>
 #include <hipblaslt/hipblaslt.h>
 #include <iomanip>
 #include <iostream>
@@ -1040,46 +1041,48 @@ void test_hipblaslt(hipblasDatatype_t  in_out_datatype,
                                               &max_workspace_size,
                                               sizeof(max_workspace_size)));
 
-    hipblasLtExtGemm_t handleExt;
+    hipblaslt_ext::Gemm gemm(handle, max_workspace_size);
 
-    hipblasLtMatmulHeuristicResult_t* heuristicResult = nullptr;
+    // hipblasLtMatmulHeuristicResult_t* heuristicResult = nullptr;
+    std::vector<hipblasLtMatmulHeuristicResult_t> heuristicResult;
     // All solutions
     std::vector<int> validIdx;
     // Get Heuristic results
     if(!findAll)
     {
-        heuristicResult = new hipblasLtMatmulHeuristicResult_t[request_solutions]{0};
+        heuristicResult.resize(request_solutions);
     }
     int returnedAlgoCount = 0;
     if(!useExt)
     {
         if(findAll)
         {
-            CHECK_HIPBLASLT_ERROR(hipblasLtExtGetAllAlgos(handle,
-                                                          HIPBLASLT_GEMM,
-                                                          trans_a,
-                                                          trans_b,
-                                                          in_out_datatype,
-                                                          in_out_datatype,
-                                                          in_out_datatype,
-                                                          in_out_datatype,
-                                                          HIPBLASLT_COMPUTE_F32,
-                                                          &heuristicResult,
-                                                          &returnedAlgoCount));
+            CHECK_HIPBLASLT_ERROR(
+                hipblaslt_ext::getAllAlgos(handle,
+                                           hipblaslt_ext::GemmType::HIPBLASLT_GEMM,
+                                           trans_a,
+                                           trans_b,
+                                           in_out_datatype,
+                                           in_out_datatype,
+                                           in_out_datatype,
+                                           in_out_datatype,
+                                           HIPBLASLT_COMPUTE_F32,
+                                           heuristicResult));
+            returnedAlgoCount = heuristicResult.size();
 
             for(int i = 0; i < returnedAlgoCount; i++)
             {
                 size_t workspace_size = 0;
-                if(hipblasLtExtMatmulIsAlgoSupported(handle,
-                                                     matmul,
-                                                     &alpha,
-                                                     matA,
-                                                     matB,
-                                                     &beta,
-                                                     matC,
-                                                     matD,
-                                                     &heuristicResult[i].algo,
-                                                     &workspace_size)
+                if(hipblaslt_ext::matmulIsAlgoSupported(handle,
+                                                        matmul,
+                                                        &alpha,
+                                                        matA,
+                                                        matB,
+                                                        &beta,
+                                                        matC,
+                                                        matD,
+                                                        heuristicResult[i].algo,
+                                                        workspace_size)
                    == HIPBLAS_STATUS_SUCCESS)
                 {
                     validIdx.push_back(i);
@@ -1101,33 +1104,36 @@ void test_hipblaslt(hipblasDatatype_t  in_out_datatype,
                                                                   matD,
                                                                   pref,
                                                                   request_solutions,
-                                                                  heuristicResult,
+                                                                  heuristicResult.data(),
                                                                   &returnedAlgoCount));
         }
     }
     else
     {
-        CHECK_HIPBLASLT_ERROR(hipblasLtExtGemmCreate(
-            &handleExt, handle, matmul, &alpha, da, matA, db, matB, &beta, dc, matC, dd, matD));
+        CHECK_HIPBLASLT_ERROR(gemm.setProblemFromhipBlasLt(
+            matmul, &alpha, da, matA, db, matB, &beta, dc, matC, dd, matD));
+        std::cout << "gemm type " << hipblaslt_ext::gemmType2String(gemm.getGemmType())
+                  << ". problems: " << gemm.getGemmCount() << std::endl;
 
         if(findAll)
         {
-            CHECK_HIPBLASLT_ERROR(hipblasLtExtGetAllAlgos(handle,
-                                                          HIPBLASLT_GEMM,
-                                                          trans_a,
-                                                          trans_b,
-                                                          in_out_datatype,
-                                                          in_out_datatype,
-                                                          in_out_datatype,
-                                                          in_out_datatype,
-                                                          HIPBLASLT_COMPUTE_F32,
-                                                          &heuristicResult,
-                                                          &returnedAlgoCount));
+            CHECK_HIPBLASLT_ERROR(
+                hipblaslt_ext::getAllAlgos(handle,
+                                           hipblaslt_ext::GemmType::HIPBLASLT_GEMM,
+                                           trans_a,
+                                           trans_b,
+                                           in_out_datatype,
+                                           in_out_datatype,
+                                           in_out_datatype,
+                                           in_out_datatype,
+                                           HIPBLASLT_COMPUTE_F32,
+                                           heuristicResult));
+            returnedAlgoCount = heuristicResult.size();
 
             for(int i = 0; i < returnedAlgoCount; i++)
             {
                 size_t workspace_size = 0;
-                if(hipblasLtExtIsAlgoSupported(handleExt, &heuristicResult[i].algo, &workspace_size)
+                if(hipblaslt_ext::isAlgoSupported(gemm, heuristicResult[i].algo, workspace_size)
                    == HIPBLAS_STATUS_SUCCESS)
                 {
                     validIdx.push_back(i);
@@ -1141,8 +1147,9 @@ void test_hipblaslt(hipblasDatatype_t  in_out_datatype,
         }
         else
         {
-            CHECK_HIPBLASLT_ERROR(hipblasLtExtAlgoGetHeuristic(
-                handleExt, pref, request_solutions, heuristicResult, &returnedAlgoCount));
+            CHECK_HIPBLASLT_ERROR(
+                hipblaslt_ext::algoGetHeuristic(gemm, request_solutions, heuristicResult));
+            returnedAlgoCount = heuristicResult.size();
         }
     }
 
@@ -1206,9 +1213,9 @@ void test_hipblaslt(hipblasDatatype_t  in_out_datatype,
     {
         auto idx = (findAll) ? validIdx[0] : 0;
         CHECK_HIPBLASLT_ERROR(
-            hipblasLtExtMakeArgument(handleExt, &heuristicResult[idx].algo, d_workspace, stream));
+            hipblaslt_ext::makeArgument(gemm, heuristicResult[idx].algo, d_workspace, stream));
 
-        CHECK_HIPBLASLT_ERROR(hipblasLtExtRun(handleExt, stream));
+        CHECK_HIPBLASLT_ERROR(hipblaslt_ext::run(gemm, stream));
     }
 
     hipStreamSynchronize(stream);
@@ -1308,12 +1315,12 @@ void test_hipblaslt(hipblasDatatype_t  in_out_datatype,
             else
             {
                 auto idx = (findAll) ? validIdx[0] : 0;
-                CHECK_HIPBLASLT_ERROR(hipblasLtExtMakeArgument(
-                    handleExt, &heuristicResult[idx].algo, d_workspace, stream));
+                CHECK_HIPBLASLT_ERROR(hipblaslt_ext::makeArgument(
+                    gemm, heuristicResult[idx].algo, d_workspace, stream));
 
                 for(int loop = 0; loop < cold_loop_count; loop++)
                 {
-                    CHECK_HIPBLASLT_ERROR(hipblasLtExtRun(handleExt, stream));
+                    CHECK_HIPBLASLT_ERROR(hipblaslt_ext::run(gemm, stream));
                 }
 
                 if(GPU_TIMER)
@@ -1325,7 +1332,7 @@ void test_hipblaslt(hipblasDatatype_t  in_out_datatype,
                 {
                     for(int loop = 0; loop < bench_loop_count; loop++)
                     {
-                        CHECK_HIPBLASLT_ERROR(hipblasLtExtRun(handleExt, stream));
+                        CHECK_HIPBLASLT_ERROR(hipblaslt_ext::run(gemm, stream));
                     }
                     hipDeviceSynchronize();
                 }
@@ -1568,14 +1575,14 @@ void test_hipblaslt(hipblasDatatype_t  in_out_datatype,
         print_strided_batched("hd device", &hd[0], m, n, batch_count, 1, ldc, stride_c);
     }
 
-    if(findAll)
-    {
-        hipblasLtExtFreeAlgos(heuristicResult);
-    }
-    else
-    {
-        delete[] heuristicResult;
-    }
+    // if(findAll)
+    // {
+    //     hipblasLtExtFreeAlgos(heuristicResult);
+    // }
+    // else
+    // {
+    //     delete[] heuristicResult;
+    // }
     CHECK_HIP_ERROR(hipFree(da));
     CHECK_HIP_ERROR(hipFree(db));
     CHECK_HIP_ERROR(hipFree(dc));
