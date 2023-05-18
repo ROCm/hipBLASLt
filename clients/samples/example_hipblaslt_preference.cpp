@@ -1212,10 +1212,9 @@ void test_hipblaslt(hipblasDatatype_t  in_out_datatype,
     else
     {
         auto idx = (findAll) ? validIdx[0] : 0;
-        CHECK_HIPBLASLT_ERROR(
-            hipblaslt_ext::makeArgument(gemm, heuristicResult[idx].algo, d_workspace, stream));
+        CHECK_HIPBLASLT_ERROR(gemm.makeArgument(heuristicResult[idx].algo, d_workspace, stream));
 
-        CHECK_HIPBLASLT_ERROR(hipblaslt_ext::run(gemm, stream));
+        CHECK_HIPBLASLT_ERROR(gemm.run(stream));
     }
 
     hipStreamSynchronize(stream);
@@ -1315,12 +1314,12 @@ void test_hipblaslt(hipblasDatatype_t  in_out_datatype,
             else
             {
                 auto idx = (findAll) ? validIdx[0] : 0;
-                CHECK_HIPBLASLT_ERROR(hipblaslt_ext::makeArgument(
-                    gemm, heuristicResult[idx].algo, d_workspace, stream));
+                CHECK_HIPBLASLT_ERROR(
+                    gemm.makeArgument(heuristicResult[idx].algo, d_workspace, stream));
 
                 for(int loop = 0; loop < cold_loop_count; loop++)
                 {
-                    CHECK_HIPBLASLT_ERROR(hipblaslt_ext::run(gemm, stream));
+                    CHECK_HIPBLASLT_ERROR(gemm.run(stream));
                 }
 
                 if(GPU_TIMER)
@@ -1332,7 +1331,7 @@ void test_hipblaslt(hipblasDatatype_t  in_out_datatype,
                 {
                     for(int loop = 0; loop < bench_loop_count; loop++)
                     {
-                        CHECK_HIPBLASLT_ERROR(hipblaslt_ext::run(gemm, stream));
+                        CHECK_HIPBLASLT_ERROR(gemm.run(stream));
                     }
                     hipDeviceSynchronize();
                 }

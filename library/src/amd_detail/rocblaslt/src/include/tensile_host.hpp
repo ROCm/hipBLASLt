@@ -213,13 +213,17 @@ template <typename Ti, typename To, typename Tc>
 rocblaslt_status groupedGemmCreate(rocblaslt::RocGemm&                                   gemm,
                                    std::vector<RocblasltContractionProblem<Ti, To, Tc>>& probs);
 
-rocblaslt_status makeArgument(rocblaslt::RocGemm&          gemm,
+rocblaslt_status makeArgument(const rocblaslt::RocGemmType gemmType,
                               const rocblaslt_matmul_algo& algo,
                               void*                        workspace,
-                              hipStream_t                  stream);
+                              hipStream_t                  stream,
+                              std::shared_ptr<void>        gemmData);
 
 // Run gemm only, without creating args, problems,...
-rocblaslt_status runKernelFromInvocation(rocblaslt::RocGemm& gemm, hipStream_t stream);
+rocblaslt_status runKernelFromInvocation(rocblaslt_handle       handle,
+                                         rocblaslt::RocGemmType gemmType,
+                                         std::shared_ptr<void>  gemmData,
+                                         hipStream_t            stream);
 
 /***********************************************************************************
  * Whether Tensile has been initialized for at least one device (used for

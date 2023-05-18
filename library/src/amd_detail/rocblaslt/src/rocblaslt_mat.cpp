@@ -676,17 +676,21 @@ rocblaslt_status rocblaslt_groupedgemm_create_cpp(std::vector<rocblaslt_matmul_d
         matmul_descr, A, B, C, D, matA, matB, matC, matD, alpha, beta, gemm);
 }
 
-rocblaslt_status rocblaslt_run_cpp(rocblaslt::RocGemm& gemm, hipStream_t stream)
+rocblaslt_status rocblaslt_run_cpp(rocblaslt_handle       handle,
+                                   rocblaslt::RocGemmType gemmType,
+                                   std::shared_ptr<void>  gemmData,
+                                   hipStream_t            stream)
 {
-    return runKernelFromInvocation(gemm, stream);
+    return runKernelFromInvocation(handle, gemmType, gemmData, stream);
 }
 
-rocblaslt_status rocblaslt_makeArgument_cpp(rocblaslt::RocGemm&          gemm,
+rocblaslt_status rocblaslt_makeArgument_cpp(const rocblaslt::RocGemmType gemmType,
                                             const rocblaslt_matmul_algo& algo,
                                             void*                        workspace,
-                                            hipStream_t                  stream)
+                                            hipStream_t                  stream,
+                                            std::shared_ptr<void>        gemmData)
 {
-    return makeArgument(gemm, algo, workspace, stream);
+    return makeArgument(gemmType, algo, workspace, stream, gemmData);
 }
 
 #ifdef __cplusplus
