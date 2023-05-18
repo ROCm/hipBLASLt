@@ -146,6 +146,37 @@ namespace hipblaslt_ext
         return status;
     }
 
+    HIPBLASLT_EXPORT
+    hipblasStatus_t
+        Gemm::makeArgument(const hipblasLtMatmulAlgo_t& algo, void* workspace, hipStream_t stream)
+    try
+    {
+        if(m_gemm_count == 0)
+            return HIPBLAS_STATUS_INVALID_VALUE;
+        auto gemmType = static_cast<rocblaslt::RocGemmType>(m_gemm_type);
+        auto rocalgo  = reinterpret_cast<const rocblaslt_matmul_algo*>(&algo);
+        return RocBlasLtStatusToHIPStatus(
+            rocblaslt_makeArgument_cpp(gemmType, *rocalgo, workspace, stream, m_data));
+    }
+    catch(...)
+    {
+        return exception_to_hipblas_status();
+    }
+
+    hipblasStatus_t Gemm::run(hipStream_t stream)
+    try
+    {
+        if(m_gemm_count == 0)
+            return HIPBLAS_STATUS_INVALID_VALUE;
+        auto gemmType = static_cast<rocblaslt::RocGemmType>(m_gemm_type);
+        return RocBlasLtStatusToHIPStatus(
+            rocblaslt_run_cpp((rocblaslt_handle)m_handle, gemmType, m_data, stream));
+    }
+    catch(...)
+    {
+        return exception_to_hipblas_status();
+    }
+
     hipblasStatus_t matmulIsAlgoSupported(hipblasLtHandle_t       handle,
                                           hipblasLtMatmulDesc_t   matmulDesc,
                                           const void*             alpha,
@@ -248,36 +279,4 @@ namespace hipblaslt_ext
         return RocBlasLtStatusToHIPStatus(
             rocblaslt_algo_get_heuristic_cpp(*rocgemm, requestedAlgoCount, *results));
     }
-
-    hipblasStatus_t makeArgument(Gemm&                        gemm,
-                                 const hipblasLtMatmulAlgo_t& algo,
-                                 void*                        workspace,
-                                 hipStream_t                  stream)
-    try
-    {
-        if(gemm.getGemmCount() == 0)
-            return HIPBLAS_STATUS_INVALID_VALUE;
-        auto rocgemm = reinterpret_cast<rocblaslt::RocGemm*>(&gemm);
-        auto rocalgo = reinterpret_cast<const rocblaslt_matmul_algo*>(&algo);
-        return RocBlasLtStatusToHIPStatus(
-            rocblaslt_makeArgument_cpp(*rocgemm, *rocalgo, workspace, stream));
-    }
-    catch(...)
-    {
-        return exception_to_hipblas_status();
-    }
-
-    hipblasStatus_t run(Gemm& gemm, hipStream_t stream)
-    try
-    {
-        if(gemm.getGemmCount() == 0)
-            return HIPBLAS_STATUS_INVALID_VALUE;
-        auto rocgemm = reinterpret_cast<rocblaslt::RocGemm*>(&gemm);
-        return RocBlasLtStatusToHIPStatus(rocblaslt_run_cpp(*rocgemm, stream));
-    }
-    catch(...)
-    {
-        return exception_to_hipblas_status();
-    }
-
 } // End of namespace hipblasltext

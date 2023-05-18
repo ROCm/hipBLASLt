@@ -966,8 +966,8 @@ void test_hipblaslt(hipblasDatatype_t           in_out_datatype,
         for(int sol = 0; sol < algoNum; sol++)
         {
             auto solIdx = (findAll) ? validIdx[sol] : sol;
-            CHECK_HIPBLASLT_ERROR(hipblaslt_ext::makeArgument(
-                groupedGemm, heuristicResult[0][solIdx].algo, d_workspace, stream[0]));
+            CHECK_HIPBLASLT_ERROR(
+                groupedGemm.makeArgument(heuristicResult[0][solIdx].algo, d_workspace, stream[0]));
 
             double     eventMs;
             hipEvent_t start, stop;
@@ -984,7 +984,7 @@ void test_hipblaslt(hipblasDatatype_t           in_out_datatype,
             {
                 for(int bench = 0; bench < bench_count; bench++)
                 {
-                    CHECK_HIPBLASLT_ERROR(hipblaslt_ext::run(groupedGemm, stream[0]));
+                    CHECK_HIPBLASLT_ERROR(groupedGemm.run(stream[0]));
                 }
                 hipDeviceSynchronize();
             }
