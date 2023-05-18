@@ -68,7 +68,9 @@ namespace hipblaslt_ext
     class Gemm
     {
     public:
-        // Use when calling bridge layer APIs
+        /*! \ingroup library_module
+        *  \brief Constructor, only use when importing problemms from hipblasLt structures.
+        */
         HIPBLASLT_EXPORT explicit Gemm(hipblasLtHandle_t handle, size_t maxWorkspaceBytes);
 
         /*! \ingroup library_module

@@ -86,64 +86,18 @@ HIPBLASLT_COMPUTE_F32   HIPBLAS_R_32F       HIPBLAS_R_16B HIPBLAS_R_16B
 hipBLASLtExt API Reference
 **************************
 
-hipblasLtExtGetAllAlgos()
+getAllAlgos()
 ------------------------------------------
-.. doxygenfunction:: hipblasLtExtGetAllAlgos
+.. doxygenfunction:: getAllAlgos
 
-.. _hipblasLtExtGetAllAlgos:
-
-hipblasLtExtMatmulIsAlgoSupported()
+matmulIsAlgoSupported()
 ------------------------------------------
-.. doxygenfunction:: hipblasLtExtMatmulIsAlgoSupported
+.. doxygenfunction:: matmulIsAlgoSupported
 
-.. _hipblasLtExtMatmulIsAlgoSupported:
-
-hipblasLtExtIsAlgoSupported()
+isAlgoSupported()
 ------------------------------------------
-.. doxygenfunction:: hipblasLtExtIsAlgoSupported
+.. doxygenfunction:: isAlgoSupported
 
-.. _hipblasLtExtIsAlgoSupported:
-
-hipblasLtExtFreeAlgos()
+algoGetHeuristic()
 ------------------------------------------
-.. doxygenfunction:: hipblasLtExtFreeAlgos
-
-.. _hipblasLtExtFreeAlgos:
-
-hipblasLtExtAlgoGetHeuristic()
-------------------------------------------
-.. doxygenfunction:: hipblasLtExtAlgoGetHeuristic
-
-.. _hipblasLtExtAlgoGetHeuristic:
-
-hipblasLtExtGemmCreate()
-------------------------------------------
-.. doxygenfunction:: hipblasLtExtGemmCreate
-
-.. _hipblasLtExtGemmCreate:
-
-hipblasLtExtGroupedGemmCreate()
-------------------------------------------
-.. doxygenfunction:: hipblasLtExtGroupedGemmCreate
-
-.. _hipblasLtExtGroupedGemmCreate:
-
-hipblasLtExtDestroy()
-------------------------------------------
-.. doxygenfunction:: hipblasLtExtDestroy
-
-.. _hipblasLtExtDestroy:
-
-hipblasLtExtMakeArgument()
-------------------------------------------
-.. doxygenfunction:: hipblasLtExtMakeArgument
-
-.. _hipblasLtExtMakeArgument:
-
-hipblasLtExtRun()
-------------------------------------------
-.. doxygenfunction:: hipblasLtExtRun
-
-.. _hipblasLtExtRun:
-
-hipblasLtExtRun
+.. doxygenfunction:: algoGetHeuristic

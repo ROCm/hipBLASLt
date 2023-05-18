@@ -46,10 +46,13 @@ hipblasLtMatrixLayoutAttribute_t
 hipBLASLtExt Datatypes Reference
 ********************************
 
-hipblasLtExtGemmTypeEnum_t
+GemmType
 -------------------------------------
-.. doxygenenum:: hipblasLtExtGemmTypeEnum_t
+.. doxygenenum:: GemmType
 
-hipblasLtExtGemm_t
+Gemm
 -------------------------------------
-.. doxygentypedef:: hipblasLtExtGemm_t
+.. doxygenclass:: hipblaslt_ext::Gemm
+    :members:
+    :protected-members:
+    :private-members:
