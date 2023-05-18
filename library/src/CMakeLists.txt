@@ -1,5 +1,5 @@
 # ########################################################################
-# Copyright (C) 2022 Advanced Micro Devices, Inc.
+# Copyright (C) 2022-2023 Advanced Micro Devices, Inc.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -27,6 +27,7 @@ if(NOT BUILD_CUDA)
   # hipBLASLt source
   include(src/amd_detail/rocblaslt/CMakeLists.txt)
   set(hipblaslt_source src/amd_detail/hipblaslt.cpp
+                       src/amd_detail/hipblaslt-ext.cpp
                          ${hipblaslt_source_common}
                          ${rocblaslt_source})
 else()

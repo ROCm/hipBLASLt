@@ -29,6 +29,7 @@
 #include <cstring>
 #include <functional>
 #include <hip/hip_runtime.h>
+#include <hipblaslt/hipblaslt-ext.hpp>
 #include <hipblaslt/hipblaslt.h>
 #include <iostream>
 #include <limits>
@@ -858,25 +859,27 @@ void test_hipblaslt(hipblasDatatype_t           in_out_datatype,
         hipStreamCreate(&stream[i]);
 
     // Get Heuristic results
-    hipblasLtMatmulHeuristicResult_t* heuristicResult = nullptr;
-    // All solutions
-    std::vector<int> validIdx;
-    int              returnedAlgoCount = 0;
-    // Get all algorithms
-    hipblasLtExtGemmTypeEnum_t gemmType = grouped_gemm ? HIPBLASLT_GROUPED_GEMM : HIPBLASLT_GEMM;
-    CHECK_HIPBLASLT_ERROR(hipblasLtExtGetAllAlgos(handle,
-                                                  gemmType,
-                                                  trans_a,
-                                                  trans_b,
-                                                  in_out_datatype,
-                                                  in_out_datatype,
-                                                  in_out_datatype,
-                                                  in_out_datatype,
-                                                  HIPBLASLT_COMPUTE_F32,
-                                                  &heuristicResult,
-                                                  &returnedAlgoCount));
+    std::vector<hipblasLtMatmulHeuristicResult_t> heuristicResult;
 
-    hipblasLtExtGemm_t groupedGemm;
+    // Get all algorithms
+    hipblaslt_ext::GemmType gemmType = grouped_gemm
+                                           ? hipblaslt_ext::GemmType::HIPBLASLT_GROUPED_GEMM
+                                           : hipblaslt_ext::GemmType::HIPBLASLT_GEMM;
+    CHECK_HIPBLASLT_ERROR(hipblaslt_ext::getAllAlgos(handle,
+                                                     gemmType,
+                                                     trans_a,
+                                                     trans_b,
+                                                     in_out_datatype,
+                                                     in_out_datatype,
+                                                     in_out_datatype,
+                                                     in_out_datatype,
+                                                     HIPBLASLT_COMPUTE_F32,
+                                                     heuristicResult));
+
+    std::vector<int> validIdx;
+    int              returnedAlgoCount = heuristicResult.size();
+
+    hipblaslt_ext::Gemm groupedGemm(handle, workspace_size);
 
     std::cout << "index, transAB, M, N, K, lda, ldb, ldc, stride_a, stride_b, "
                  "stride_c, batch_count, alpha, beta, bias, scaleD, activationType"
@@ -894,13 +897,13 @@ void test_hipblaslt(hipblasDatatype_t           in_out_datatype,
                       << std::endl;
         }
 
-        CHECK_HIPBLASLT_ERROR(hipblasLtExtGroupedGemmCreate(
-            &groupedGemm, handle, matmul, alpha, da, matA, db, matB, beta, dc, matC, dd, matD));
+        CHECK_HIPBLASLT_ERROR(groupedGemm.setGroupedProblemFromhipBlasLt(
+            matmul, alpha, da, matA, db, matB, beta, dc, matC, dd, matD));
 
         for(int i = 0; i < returnedAlgoCount; i++)
         {
             size_t workspace_size = 0;
-            if(hipblasLtExtIsAlgoSupported(groupedGemm, &heuristicResult[i].algo, &workspace_size)
+            if(hipblaslt_ext::isAlgoSupported(groupedGemm, heuristicResult[i].algo, workspace_size)
                == HIPBLAS_STATUS_SUCCESS)
             {
                 validIdx.push_back(i);
@@ -923,8 +926,8 @@ void test_hipblaslt(hipblasDatatype_t           in_out_datatype,
         double bestMs = std::numeric_limits<double>::max();
         for(int sol = 0; sol < validIdx.size(); sol++)
         {
-            CHECK_HIPBLASLT_ERROR(hipblasLtExtMakeArgument(
-                groupedGemm, &heuristicResult[validIdx[sol]].algo, d_workspace, stream[0]));
+            CHECK_HIPBLASLT_ERROR(hipblaslt_ext::makeArgument(
+                groupedGemm, heuristicResult[validIdx[sol]].algo, d_workspace, stream[0]));
 
             double     eventMs;
             hipEvent_t start, stop;
@@ -941,7 +944,7 @@ void test_hipblaslt(hipblasDatatype_t           in_out_datatype,
             {
                 for(int bench = 0; bench < bench_count; bench++)
                 {
-                    CHECK_HIPBLASLT_ERROR(hipblasLtExtRun(groupedGemm, stream[0]));
+                    CHECK_HIPBLASLT_ERROR(hipblaslt_ext::run(groupedGemm, stream[0]));
                 }
                 hipDeviceSynchronize();
             }
@@ -987,16 +990,16 @@ void test_hipblaslt(hipblasDatatype_t           in_out_datatype,
                 for(int j = 0; j < returnedAlgoCount; j++)
                 {
                     size_t workspace_size = 0;
-                    if(hipblasLtExtMatmulIsAlgoSupported(handle,
-                                                         matmul[i],
-                                                         &(alpha[i]),
-                                                         matA[i],
-                                                         matB[i],
-                                                         &(beta[i]),
-                                                         matC[i],
-                                                         matD[i],
-                                                         &heuristicResult[j].algo,
-                                                         &workspace_size)
+                    if(hipblaslt_ext::matmulIsAlgoSupported(handle,
+                                                            matmul[i],
+                                                            &(alpha[i]),
+                                                            matA[i],
+                                                            matB[i],
+                                                            &(beta[i]),
+                                                            matC[i],
+                                                            matD[i],
+                                                            heuristicResult[j].algo,
+                                                            workspace_size)
                        == HIPBLAS_STATUS_SUCCESS)
                     {
                         validIdx.push_back(j);
@@ -1155,16 +1158,16 @@ void test_hipblaslt(hipblasDatatype_t           in_out_datatype,
                 for(int j = 0; j < returnedAlgoCount; j++)
                 {
                     size_t workspace_size = 0;
-                    if(hipblasLtExtMatmulIsAlgoSupported(handle,
-                                                         matmul[i],
-                                                         &(alpha[i]),
-                                                         matA[i],
-                                                         matB[i],
-                                                         &(beta[i]),
-                                                         matC[i],
-                                                         matD[i],
-                                                         &heuristicResult[j].algo,
-                                                         &workspace_size)
+                    if(hipblaslt_ext::matmulIsAlgoSupported(handle,
+                                                            matmul[i],
+                                                            &(alpha[i]),
+                                                            matA[i],
+                                                            matB[i],
+                                                            &(beta[i]),
+                                                            matC[i],
+                                                            matD[i],
+                                                            heuristicResult[j].algo,
+                                                            workspace_size)
                        == HIPBLAS_STATUS_SUCCESS)
                     {
                         idx.push_back(j);
@@ -1334,13 +1337,10 @@ void test_hipblaslt(hipblasDatatype_t           in_out_datatype,
         }
     }
 
-    hipblasLtExtFreeAlgos(heuristicResult);
-
     CHECK_HIPBLASLT_ERROR(hipblasLtDestroy(handle));
     CHECK_HIPBLASLT_ERROR(hipblasLtMatmulPreferenceDestroy(pref));
     CHECK_HIP_ERROR(hipFree(d_workspace));
-    if(grouped_gemm)
-        CHECK_HIPBLASLT_ERROR(hipblasLtExtDestroy(groupedGemm));
+
     for(int i = 0; i < gemm_count; i++)
     {
         CHECK_HIP_ERROR(hipFree(da[i]));

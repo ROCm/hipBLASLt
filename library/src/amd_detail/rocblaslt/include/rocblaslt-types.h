@@ -310,16 +310,35 @@ typedef enum rocblaslt_matmul_preference_attributes_
  *******************************************************************************/
 typedef struct __attribute__((packed, aligned(8))) _rocblaslt_matmul_algo
 {
+    _rocblaslt_matmul_algo()
+        : data()
+        , data2()
+    {
+    }
+    _rocblaslt_matmul_algo(const _rocblaslt_matmul_algo& algo)
+    {
+        data.ptr            = algo.data.ptr;
+        data2.ptr           = algo.data2.ptr;
+        fallback            = algo.fallback;
+        max_workspace_bytes = algo.max_workspace_bytes;
+    }
     union u
     {
+        constexpr u()
+            : ptr{}
+        {
+        }
+        constexpr u(u& rhs)
+        {
+            ptr = rhs.ptr;
+        }
+        ~u()
+        {
+            ptr.~shared_ptr();
+        }
         std::shared_ptr<void> ptr;
         uint8_t               data[48];
-    } data;
-    union u2
-    {
-        std::shared_ptr<void> ptr;
-        uint8_t               data[48];
-    } data2;
+    } data, data2;
     bool   fallback;
     size_t max_workspace_bytes = 0;
 } rocblaslt_matmul_algo;
@@ -345,5 +364,70 @@ typedef struct _rocblaslt_solutions
 #ifdef __cplusplus
 }
 #endif
+
+namespace rocblaslt
+{
+
+    enum class RocGemmType
+    {
+        ROCBLASLT_GEMM             = 1,
+        ROCBLASLT_GROUPED_GEMM     = 2,
+        ROCBLASLT_GEMMTYPE_UNKNOWN = 3
+    };
+
+    class RocGemm
+    {
+    public:
+        RocGemmType getGemmType()
+        {
+            return m_gemm_type;
+        }
+        size_t getGemmCount()
+        {
+            return m_gemm_count;
+        }
+        size_t getWorkspaceBytes()
+        {
+            return m_workspace_bytes;
+        }
+        rocblaslt_handle getHandle()
+        {
+            return m_handle;
+        }
+        std::shared_ptr<void> getData()
+        {
+            return m_data;
+        }
+
+        void setGemmType(RocGemmType type)
+        {
+            m_gemm_type = type;
+        }
+        void setGemmCount(size_t gemm_count)
+        {
+            m_gemm_count = gemm_count;
+        }
+        void setWorkspaceBytes(size_t bytes)
+        {
+            m_workspace_bytes = bytes;
+        }
+        void setHandle(rocblaslt_handle handle)
+        {
+            m_handle = handle;
+        }
+        void setData(std::shared_ptr<void> data)
+        {
+            m_data = data;
+        }
+
+    private:
+        RocGemmType m_gemm_type       = RocGemmType::ROCBLASLT_GEMMTYPE_UNKNOWN;
+        size_t      m_gemm_count      = 0;
+        size_t      m_workspace_bytes = 0;
+
+        rocblaslt_handle      m_handle;
+        std::shared_ptr<void> m_data;
+    };
+} // End of namespace rocblaslt
 
 #endif /* _ROCBLASLT_TYPES_H_ */
