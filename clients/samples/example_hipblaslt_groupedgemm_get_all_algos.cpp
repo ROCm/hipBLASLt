@@ -879,7 +879,8 @@ void test_hipblaslt(hipblasDatatype_t           in_out_datatype,
     std::vector<int> validIdx;
     int              returnedAlgoCount = heuristicResult.size();
 
-    hipblaslt_ext::Gemm groupedGemm(handle, workspace_size);
+    hipblaslt_ext::Gemm<hipblaslt_ext::GemmType::HIPBLASLT_GROUPED_GEMM> groupedGemm(
+        handle, workspace_size);
 
     std::cout << "index, transAB, M, N, K, lda, ldb, ldc, stride_a, stride_b, "
                  "stride_c, batch_count, alpha, beta, bias, scaleD, activationType"
@@ -897,13 +898,13 @@ void test_hipblaslt(hipblasDatatype_t           in_out_datatype,
                       << std::endl;
         }
 
-        CHECK_HIPBLASLT_ERROR(groupedGemm.setGroupedProblemFromhipBlasLt(
+        CHECK_HIPBLASLT_ERROR(groupedGemm.setProblemFromhipBlasLt(
             matmul, alpha, da, matA, db, matB, beta, dc, matC, dd, matD));
 
         for(int i = 0; i < returnedAlgoCount; i++)
         {
             size_t workspace_size = 0;
-            if(hipblaslt_ext::isAlgoSupported(groupedGemm, heuristicResult[i].algo, workspace_size)
+            if(groupedGemm.isAlgoSupported(heuristicResult[i].algo, workspace_size)
                == HIPBLAS_STATUS_SUCCESS)
             {
                 validIdx.push_back(i);
@@ -926,7 +927,7 @@ void test_hipblaslt(hipblasDatatype_t           in_out_datatype,
         double bestMs = std::numeric_limits<double>::max();
         for(int sol = 0; sol < validIdx.size(); sol++)
         {
-            CHECK_HIPBLASLT_ERROR(groupedGemm.makeArgument(
+            CHECK_HIPBLASLT_ERROR(groupedGemm.initialize(
                 heuristicResult[validIdx[sol]].algo, d_workspace, stream[0]));
 
             double     eventMs;
