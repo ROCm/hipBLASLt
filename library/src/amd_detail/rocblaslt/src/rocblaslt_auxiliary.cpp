@@ -1081,11 +1081,12 @@ rocblaslt_status rocblaslt_matmul_is_algo_supported(rocblaslt_handle        hand
     return rocblaslt_status_success;
 }
 
-rocblaslt_status rocblaslt_is_algo_supported_cpp(rocblaslt::RocGemm&    gemm,
+rocblaslt_status rocblaslt_is_algo_supported_cpp(rocblaslt::RocGemmType gemmType,
+                                                 std::shared_ptr<void>  gemmData,
                                                  rocblaslt_matmul_algo& algo,
                                                  size_t&                workspaceSizeInBytes)
 {
-    return isSolutionSupported(gemm, algo, workspaceSizeInBytes);
+    return isSolutionSupported(gemmType, gemmData, algo, workspaceSizeInBytes);
 }
 
 /********************************************************************************
@@ -1224,8 +1225,11 @@ rocblaslt_status
 }
 
 rocblaslt_status
-    rocblaslt_algo_get_heuristic_cpp(rocblaslt::RocGemm gemm,
-                                     const int          requestedAlgoCount,
+    rocblaslt_algo_get_heuristic_cpp(rocblaslt_handle       handle,
+                                     rocblaslt::RocGemmType gemmType,
+                                     std::shared_ptr<void>  gemmData,
+                                     const int              workspaceBytes,
+                                     const int              requestedAlgoCount,
                                      std::vector<rocblaslt_matmul_heuristic_result>& results)
 {
     if(requestedAlgoCount < 1)
@@ -1236,7 +1240,8 @@ rocblaslt_status
     rocblaslt_status status = rocblaslt_status_success;
     try
     {
-        status = getBestSolutions(gemm, requestedAlgoCount, results);
+        status = getBestSolutions(
+            handle, gemmType, gemmData, workspaceBytes, requestedAlgoCount, results);
 
         log_api(__func__, "returnAlogCount", results.size());
         if(status != rocblaslt_status_success)

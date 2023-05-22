@@ -272,9 +272,10 @@ rocblaslt_status isSolutionSupported(RocblasltContractionProblem<Ti, To, Tc>& pr
                                      rocblaslt_matmul_algo*                   algo,
                                      size_t*                                  workspaceSizeInBytes);
 
-rocblaslt_status isSolutionSupported(rocblaslt::RocGemm&    gemm,
-                                     rocblaslt_matmul_algo& algo,
-                                     size_t&                workspaceSizeInBytes);
+rocblaslt_status isSolutionSupported(const rocblaslt::RocGemmType& gemmType,
+                                     std::shared_ptr<void>         gemmData,
+                                     rocblaslt_matmul_algo&        algo,
+                                     size_t&                       workspaceSizeInBytes);
 
 /*******************************************************************************
  * getBestSolutions() calls finTopSolutions from Tensile and converts to       *
@@ -288,6 +289,9 @@ rocblaslt_status getBestSolutions(RocblasltContractionProblem<Ti, To, Tc> prob,
                                   int*                                    returnAlgoCount,
                                   size_t                                  maxWorkSpaceBytes);
 
-rocblaslt_status getBestSolutions(rocblaslt::RocGemm& gemm,
-                                  const int           requestedAlgoCount,
+rocblaslt_status getBestSolutions(rocblaslt_handle       handle,
+                                  rocblaslt::RocGemmType gemmType,
+                                  std::shared_ptr<void>  gemmData,
+                                  const int              workspaceBytes,
+                                  const int              requestedAlgoCount,
                                   std::vector<rocblaslt_matmul_heuristic_result>& heuristicResults);

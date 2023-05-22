@@ -1782,14 +1782,14 @@ void setRestrictions(Tensile::ContractionProblemGemm& tensile_prob, const Tc* al
     tensile_prob.setBetaRestriction(Tensile::toScalarValueEnum(*beta));
 }
 
-rocblaslt_status isSolutionSupported(rocblaslt::RocGemm&    gemm,
-                                     rocblaslt_matmul_algo& algo,
-                                     size_t&                workspaceSizeInBytes)
+rocblaslt_status isSolutionSupported(const rocblaslt::RocGemmType& gemmType,
+                                     std::shared_ptr<void>         gemmData,
+                                     rocblaslt_matmul_algo&        algo,
+                                     size_t&                       workspaceSizeInBytes)
 {
-    if(gemm.getGemmType() == rocblaslt::RocGemmType::ROCBLASLT_GEMM)
+    if(gemmType == rocblaslt::RocGemmType::ROCBLASLT_GEMM)
     {
-        std::shared_ptr<TensileDataGemm> data
-            = std::static_pointer_cast<TensileDataGemm>(gemm.getData());
+        std::shared_ptr<TensileDataGemm> data = std::static_pointer_cast<TensileDataGemm>(gemmData);
         if(data->problem.computeType() == Tensile::DataType::Float)
         {
             setRestrictions<float>(data->problem,
@@ -1802,10 +1802,10 @@ rocblaslt_status isSolutionSupported(rocblaslt::RocGemm&    gemm,
         }
         return isSolutionSupported(data->problem, data->inputs, &algo, &workspaceSizeInBytes);
     }
-    else if(gemm.getGemmType() == rocblaslt::RocGemmType::ROCBLASLT_GROUPED_GEMM)
+    else if(gemmType == rocblaslt::RocGemmType::ROCBLASLT_GROUPED_GEMM)
     {
         std::shared_ptr<TensileDataGroupedGemm> data
-            = std::static_pointer_cast<TensileDataGroupedGemm>(gemm.getData());
+            = std::static_pointer_cast<TensileDataGroupedGemm>(gemmData);
         if(data->problem.gemms[0].computeType() == Tensile::DataType::Float)
         {
             for(int i = 0; i < data->problem.gemms.size(); i++)
@@ -1825,8 +1825,11 @@ rocblaslt_status isSolutionSupported(rocblaslt::RocGemm&    gemm,
     return rocblaslt_status_not_implemented;
 }
 
-rocblaslt_status getBestSolutions(rocblaslt::RocGemm& gemm,
-                                  const int           requestedAlgoCount,
+rocblaslt_status getBestSolutions(rocblaslt_handle       handle,
+                                  rocblaslt::RocGemmType gemmType,
+                                  std::shared_ptr<void>  gemmData,
+                                  const int              workspaceBytes,
+                                  const int              requestedAlgoCount,
                                   std::vector<rocblaslt_matmul_heuristic_result>& heuristicResults)
 {
     std::shared_ptr<Tensile::MasterSolutionLibrary<Tensile::ContractionProblemGemm>> library;
@@ -1834,16 +1837,15 @@ rocblaslt_status getBestSolutions(rocblaslt::RocGemm& gemm,
     std::shared_ptr<Tensile::Hardware>                                               hardware;
 
     // auto &adapter =
-    static_cast<void>(get_library_and_adapter(&library, &deviceProp, gemm.getHandle()->device));
+    static_cast<void>(get_library_and_adapter(&library, &deviceProp, handle->device));
 
     hardware = Tensile::hip::GetDevice(*deviceProp);
 
-    if(gemm.getGemmType() == rocblaslt::RocGemmType::ROCBLASLT_GEMM)
+    if(gemmType == rocblaslt::RocGemmType::ROCBLASLT_GEMM)
     {
-        std::shared_ptr<TensileDataGemm> data
-            = std::static_pointer_cast<TensileDataGemm>(gemm.getData());
-        int  fallbackSize = 0;
-        auto solutions    = getSolutions(
+        std::shared_ptr<TensileDataGemm> data = std::static_pointer_cast<TensileDataGemm>(gemmData);
+        int                              fallbackSize = 0;
+        auto                             solutions    = getSolutions(
             data->inputs, library, hardware, data->problem, requestedAlgoCount, fallbackSize);
 
         heuristicResults.clear();
@@ -1854,17 +1856,17 @@ rocblaslt_status getBestSolutions(rocblaslt::RocGemm& gemm,
                                        algoCount,
                                        heuristicResults.data(),
                                        &returnAlgoCount,
-                                       gemm.getWorkspaceBytes(),
+                                       workspaceBytes,
                                        data->problem,
                                        fallbackSize);
     }
-    else if(gemm.getGemmType() == rocblaslt::RocGemmType::ROCBLASLT_GROUPED_GEMM)
+    else if(gemmType == rocblaslt::RocGemmType::ROCBLASLT_GROUPED_GEMM)
     {
         std::shared_ptr<TensileDataGroupedGemm> data
-            = std::static_pointer_cast<TensileDataGroupedGemm>(gemm.getData());
+            = std::static_pointer_cast<TensileDataGroupedGemm>(gemmData);
         for(int i = 0; i < data->problem.gemms.size(); i++)
         {
-            data->problem.gemms[i].setWorkspaceSize(gemm.getWorkspaceBytes());
+            data->problem.gemms[i].setWorkspaceSize(workspaceBytes);
         }
 
         // Fallback to original kernels
@@ -1918,7 +1920,7 @@ rocblaslt_status getBestSolutions(rocblaslt::RocGemm& gemm,
                                        algoCount,
                                        heuristicResults.data(),
                                        &returnAlgoCount,
-                                       gemm.getWorkspaceBytes(),
+                                       workspaceBytes,
                                        data->problem.gemms[0],
                                        0);
     }

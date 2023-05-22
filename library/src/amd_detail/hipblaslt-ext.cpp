@@ -32,39 +32,45 @@
 
 namespace hipblaslt_ext
 {
-
-    Gemm::Gemm(hipblasLtHandle_t handle, size_t maxWorkspaceBytes)
-        : m_handle(handle)
+    template <GemmType GemmTypeT>
+    Gemm<GemmTypeT>::Gemm(hipblasLtHandle_t handle, size_t maxWorkspaceBytes)
+        : m_gemm_type(GemmTypeT)
+        , m_handle(handle)
         , m_workspace_bytes(maxWorkspaceBytes)
     {
     }
 
-    GemmType Gemm::getGemmType()
+    template <GemmType GemmTypeT>
+    GemmType Gemm<GemmTypeT>::getGemmType()
     {
         return m_gemm_type;
     }
 
-    size_t Gemm::getGemmCount()
+    template <GemmType GemmTypeT>
+    size_t Gemm<GemmTypeT>::getGemmCount()
     {
         return m_gemm_count;
     }
 
-    size_t Gemm::getWorkspaceBytes()
+    template <GemmType GemmTypeT>
+    size_t Gemm<GemmTypeT>::getWorkspaceBytes()
     {
         return m_workspace_bytes;
     }
 
-    hipblasStatus_t Gemm::setProblemFromhipBlasLt(hipblasLtMatmulDesc_t   matmul_descr,
-                                                  const void*             alpha,
-                                                  const void*             A,
-                                                  hipblasLtMatrixLayout_t matA,
-                                                  const void*             B,
-                                                  hipblasLtMatrixLayout_t matB,
-                                                  const void*             beta,
-                                                  const void*             C,
-                                                  hipblasLtMatrixLayout_t matC,
-                                                  void*                   D,
-                                                  hipblasLtMatrixLayout_t matD)
+    template <GemmType GemmTypeT>
+    template <GemmType T, typename>
+    hipblasStatus_t Gemm<GemmTypeT>::setProblemFromhipBlasLt(hipblasLtMatmulDesc_t   matmul_descr,
+                                                             const void*             alpha,
+                                                             const void*             A,
+                                                             hipblasLtMatrixLayout_t matA,
+                                                             const void*             B,
+                                                             hipblasLtMatrixLayout_t matB,
+                                                             const void*             beta,
+                                                             const void*             C,
+                                                             hipblasLtMatrixLayout_t matC,
+                                                             void*                   D,
+                                                             hipblasLtMatrixLayout_t matD)
     {
         rocblaslt::RocGemm gemm;
         gemm.setWorkspaceBytes(m_workspace_bytes);
@@ -92,18 +98,20 @@ namespace hipblaslt_ext
         return status;
     }
 
+    template <GemmType GemmTypeT>
+    template <GemmType T, typename>
     hipblasStatus_t
-        Gemm::setGroupedProblemFromhipBlasLt(std::vector<hipblasLtMatmulDesc_t>&   matmul_descr,
-                                             std::vector<float>&                   alpha,
-                                             std::vector<void*>&                   A,
-                                             std::vector<hipblasLtMatrixLayout_t>& matA,
-                                             std::vector<void*>&                   B,
-                                             std::vector<hipblasLtMatrixLayout_t>& matB,
-                                             std::vector<float>&                   beta,
-                                             std::vector<void*>&                   C,
-                                             std::vector<hipblasLtMatrixLayout_t>& matC,
-                                             std::vector<void*>&                   D,
-                                             std::vector<hipblasLtMatrixLayout_t>& matD)
+        Gemm<GemmTypeT>::setProblemFromhipBlasLt(std::vector<hipblasLtMatmulDesc_t>&   matmul_descr,
+                                                 std::vector<float>&                   alpha,
+                                                 std::vector<void*>&                   A,
+                                                 std::vector<hipblasLtMatrixLayout_t>& matA,
+                                                 std::vector<void*>&                   B,
+                                                 std::vector<hipblasLtMatrixLayout_t>& matB,
+                                                 std::vector<float>&                   beta,
+                                                 std::vector<void*>&                   C,
+                                                 std::vector<hipblasLtMatrixLayout_t>& matC,
+                                                 std::vector<void*>&                   D,
+                                                 std::vector<hipblasLtMatrixLayout_t>& matD)
     {
         auto matmul_descr_groupedGemm
             = reinterpret_cast<std::vector<rocblaslt_matmul_desc>*>(&matmul_descr);
@@ -146,9 +154,45 @@ namespace hipblaslt_ext
         return status;
     }
 
-    HIPBLASLT_EXPORT
-    hipblasStatus_t
-        Gemm::makeArgument(const hipblasLtMatmulAlgo_t& algo, void* workspace, hipStream_t stream)
+    template <GemmType GemmTypeT>
+    hipblasStatus_t Gemm<GemmTypeT>::algoGetHeuristic(
+        const int                                      requestedAlgoCount,
+        std::vector<hipblasLtMatmulHeuristicResult_t>& heuristicResults)
+    {
+        if(m_gemm_count == 0)
+            return HIPBLAS_STATUS_INVALID_VALUE;
+        auto gemmType = static_cast<rocblaslt::RocGemmType>(m_gemm_type);
+        auto results
+            = reinterpret_cast<std::vector<rocblaslt_matmul_heuristic_result>*>(&heuristicResults);
+        results->clear();
+        return RocBlasLtStatusToHIPStatus(
+            rocblaslt_algo_get_heuristic_cpp((rocblaslt_handle)m_handle,
+                                             gemmType,
+                                             m_data,
+                                             m_workspace_bytes,
+                                             requestedAlgoCount,
+                                             *results));
+    }
+
+    template <GemmType GemmTypeT>
+    hipblasStatus_t Gemm<GemmTypeT>::isAlgoSupported(hipblasLtMatmulAlgo_t& algo,
+                                                     size_t&                workspaceSizeInBytes)
+    try
+    {
+        auto gemmType = static_cast<rocblaslt::RocGemmType>(m_gemm_type);
+        auto rocalgo  = reinterpret_cast<rocblaslt_matmul_algo*>(&algo);
+        return RocBlasLtStatusToHIPStatus(
+            rocblaslt_is_algo_supported_cpp(gemmType, m_data, *rocalgo, workspaceSizeInBytes));
+    }
+    catch(...)
+    {
+        return exception_to_hipblas_status();
+    }
+
+    template <GemmType GemmTypeT>
+    hipblasStatus_t Gemm<GemmTypeT>::initialize(const hipblasLtMatmulAlgo_t& algo,
+                                                void*                        workspace,
+                                                hipStream_t                  stream)
     try
     {
         if(m_gemm_count == 0)
@@ -163,7 +207,8 @@ namespace hipblaslt_ext
         return exception_to_hipblas_status();
     }
 
-    hipblasStatus_t Gemm::run(hipStream_t stream)
+    template <GemmType GemmTypeT>
+    hipblasStatus_t Gemm<GemmTypeT>::run(hipStream_t stream)
     try
     {
         if(m_gemm_count == 0)
@@ -214,8 +259,6 @@ namespace hipblaslt_ext
             return "gemm";
         case GemmType::HIPBLASLT_GROUPED_GEMM:
             return "grouped gemm";
-        case GemmType::HIPBLASLT_GEMMTYPE_UNKNOWN:
-            return "unknown type";
         }
     }
 
@@ -251,32 +294,31 @@ namespace hipblaslt_ext
         return exception_to_hipblas_status();
     }
 
-    hipblasStatus_t
-        isAlgoSupported(Gemm& gemm, hipblasLtMatmulAlgo_t& algo, size_t& workspaceSizeInBytes)
-    try
-    {
-        auto rocgemm = reinterpret_cast<rocblaslt::RocGemm*>(&gemm);
-        auto rocalgo = reinterpret_cast<rocblaslt_matmul_algo*>(&algo);
-        return RocBlasLtStatusToHIPStatus(
-            rocblaslt_is_algo_supported_cpp(*rocgemm, *rocalgo, workspaceSizeInBytes));
-    }
-    catch(...)
-    {
-        return exception_to_hipblas_status();
-    }
-
-    hipblasStatus_t
-        algoGetHeuristic(Gemm&                                          gemm,
-                         const int                                      requestedAlgoCount,
-                         std::vector<hipblasLtMatmulHeuristicResult_t>& heuristicResults)
-    {
-        if(gemm.getGemmCount() == 0)
-            return HIPBLAS_STATUS_INVALID_VALUE;
-        auto rocgemm = reinterpret_cast<rocblaslt::RocGemm*>(&gemm);
-        auto results
-            = reinterpret_cast<std::vector<rocblaslt_matmul_heuristic_result>*>(&heuristicResults);
-        results->clear();
-        return RocBlasLtStatusToHIPStatus(
-            rocblaslt_algo_get_heuristic_cpp(*rocgemm, requestedAlgoCount, *results));
-    }
+    template class HIPBLASLT_EXPORT Gemm<GemmType::HIPBLASLT_GEMM>;
+    template class HIPBLASLT_EXPORT Gemm<GemmType::HIPBLASLT_GROUPED_GEMM>;
+    template HIPBLASLT_EXPORT hipblasStatus_t
+        Gemm<GemmType::HIPBLASLT_GEMM>::setProblemFromhipBlasLt(hipblasLtMatmulDesc_t matmul_descr,
+                                                                const void*           alpha,
+                                                                const void*           A,
+                                                                hipblasLtMatrixLayout_t matA,
+                                                                const void*             B,
+                                                                hipblasLtMatrixLayout_t matB,
+                                                                const void*             beta,
+                                                                const void*             C,
+                                                                hipblasLtMatrixLayout_t matC,
+                                                                void*                   D,
+                                                                hipblasLtMatrixLayout_t matD);
+    template HIPBLASLT_EXPORT hipblasStatus_t
+        Gemm<GemmType::HIPBLASLT_GROUPED_GEMM>::setProblemFromhipBlasLt(
+            std::vector<hipblasLtMatmulDesc_t>&   matmul_descr,
+            std::vector<float>&                   alpha,
+            std::vector<void*>&                   A,
+            std::vector<hipblasLtMatrixLayout_t>& matA,
+            std::vector<void*>&                   B,
+            std::vector<hipblasLtMatrixLayout_t>& matB,
+            std::vector<float>&                   beta,
+            std::vector<void*>&                   C,
+            std::vector<hipblasLtMatrixLayout_t>& matC,
+            std::vector<void*>&                   D,
+            std::vector<hipblasLtMatrixLayout_t>& matD);
 } // End of namespace hipblasltext

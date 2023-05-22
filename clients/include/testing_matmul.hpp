@@ -715,8 +715,9 @@ void testing_matmul(const Arguments& arg)
     int                                           returnedAlgoCount = 0;
 
     // grouped gemm
-    hipblaslt_ext::Gemm groupedGemm(handle, max_workspace_size);
-    std::vector<void*>  da(gemm_count), db(gemm_count), dc(gemm_count), dd(gemm_count);
+    hipblaslt_ext::Gemm<hipblaslt_ext::GemmType::HIPBLASLT_GROUPED_GEMM> groupedGemm(
+        handle, max_workspace_size);
+    std::vector<void*> da(gemm_count), db(gemm_count), dc(gemm_count), dd(gemm_count);
 
     if(!do_grouped_gemm)
     {
@@ -747,11 +748,10 @@ void testing_matmul(const Arguments& arg)
             dc[gemmIdx] = *dC[gemmIdx];
             dd[gemmIdx] = *dD[gemmIdx];
         }
-        CHECK_HIPBLASLT_ERROR(groupedGemm.setGroupedProblemFromhipBlasLt(
+        CHECK_HIPBLASLT_ERROR(groupedGemm.setProblemFromhipBlasLt(
             matmul, h_alpha, da, matA, db, matB, h_beta, dc, matC, dd, matD));
 
-        CHECK_HIPBLASLT_ERROR(
-            hipblaslt_ext::algoGetHeuristic(groupedGemm, requestAlgoCount, heuristicResult));
+        CHECK_HIPBLASLT_ERROR(groupedGemm.algoGetHeuristic(requestAlgoCount, heuristicResult));
         returnedAlgoCount = heuristicResult.size();
 
         dWorkspace = new device_vector<unsigned char>(max_workspace_size, 1, HMM);
@@ -785,7 +785,7 @@ void testing_matmul(const Arguments& arg)
         {
             //grouped gemm
             CHECK_HIPBLASLT_ERROR(
-                groupedGemm.makeArgument(heuristicResult[0].algo, *dWorkspace, stream));
+                groupedGemm.initialize(heuristicResult[0].algo, *dWorkspace, stream));
 
             CHECK_HIPBLASLT_ERROR(groupedGemm.run(stream));
         }
@@ -1182,7 +1182,7 @@ void testing_matmul(const Arguments& arg)
         {
             //grouped gemm
             CHECK_HIPBLASLT_ERROR(
-                groupedGemm.makeArgument(heuristicResult[0].algo, *dWorkspace, stream));
+                groupedGemm.initialize(heuristicResult[0].algo, *dWorkspace, stream));
 
             for(int i = 0; i < number_cold_calls; i++)
                 CHECK_HIPBLASLT_ERROR(groupedGemm.run(stream));
