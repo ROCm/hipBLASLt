@@ -1041,7 +1041,9 @@ void test_hipblaslt(hipblasDatatype_t  in_out_datatype,
                                               &max_workspace_size,
                                               sizeof(max_workspace_size)));
 
-    hipblaslt_ext::Gemm<hipblaslt_ext::GemmType::HIPBLASLT_GEMM> gemm(handle, max_workspace_size);
+    hipblaslt_ext::GemmPreference gemmPref;
+    gemmPref.setMaxWorkspaceBytes(max_workspace_size);
+    hipblaslt_ext::Gemm<hipblaslt_ext::GemmType::HIPBLASLT_GEMM> gemm(handle);
 
     // hipblasLtMatmulHeuristicResult_t* heuristicResult = nullptr;
     std::vector<hipblasLtMatmulHeuristicResult_t> heuristicResult;
@@ -1147,7 +1149,8 @@ void test_hipblaslt(hipblasDatatype_t  in_out_datatype,
         }
         else
         {
-            CHECK_HIPBLASLT_ERROR(gemm.algoGetHeuristic(request_solutions, heuristicResult));
+            CHECK_HIPBLASLT_ERROR(
+                gemm.algoGetHeuristic(request_solutions, gemmPref, heuristicResult));
             returnedAlgoCount = heuristicResult.size();
         }
     }
