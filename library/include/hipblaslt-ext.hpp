@@ -56,6 +56,21 @@ namespace hipblaslt_ext
     };
 
     /*! \ingroup types_module
+     *  \brief hipblasLt extension preference for gemm problems.
+     *
+     * \details Currently only supports setting max workspace size.
+     */
+    class GemmPreference
+    {
+    public:
+        HIPBLASLT_EXPORT void         setMaxWorkspaceBytes(size_t workspaceBytes);
+        HIPBLASLT_EXPORT const size_t getMaxWorkspaceBytes() const;
+
+    private:
+        size_t m_workspace_bytes;
+    };
+
+    /*! \ingroup types_module
      *  \brief hipblasLt extension instance for gemm problems.
      *
      * \details The instance can be used to create arguments to compute the matrix
@@ -71,7 +86,7 @@ namespace hipblaslt_ext
         /*! \ingroup library_module
         *  \brief Constructor, only use when importing problemms from hipblasLt structures.
         */
-        HIPBLASLT_EXPORT explicit Gemm(hipblasLtHandle_t handle, size_t maxWorkspaceBytes);
+        HIPBLASLT_EXPORT explicit Gemm(hipblasLtHandle_t handle);
 
         /*! \ingroup library_module
         *  \brief Set the gemm problem from hipblasLt structures
@@ -191,6 +206,7 @@ namespace hipblaslt_ext
         HIPBLASLT_EXPORT
         hipblasStatus_t
             algoGetHeuristic(const int                                      requestedAlgoCount,
+                             const GemmPreference&                          pref,
                              std::vector<hipblasLtMatmulHeuristicResult_t>& heuristicResults);
 
         /*! \ingroup library_module
@@ -255,12 +271,10 @@ namespace hipblaslt_ext
 
         HIPBLASLT_EXPORT GemmType getGemmType();
         HIPBLASLT_EXPORT size_t   getGemmCount();
-        HIPBLASLT_EXPORT size_t   getWorkspaceBytes();
 
     private:
         GemmType m_gemm_type;
-        size_t   m_gemm_count      = 0;
-        size_t   m_workspace_bytes = 0;
+        size_t   m_gemm_count = 0;
 
         hipblasLtHandle_t     m_handle;
         std::shared_ptr<void> m_data;

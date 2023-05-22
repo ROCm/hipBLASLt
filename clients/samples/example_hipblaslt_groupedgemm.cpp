@@ -886,8 +886,9 @@ void test_hipblaslt(hipblasDatatype_t           in_out_datatype,
     }
     int returnedAlgoCount = 0;
 
-    hipblaslt_ext::Gemm<hipblaslt_ext::GemmType::HIPBLASLT_GROUPED_GEMM> groupedGemm(
-        handle, workspace_size);
+    hipblaslt_ext::GemmPreference gemmPref;
+    gemmPref.setMaxWorkspaceBytes(workspace_size);
+    hipblaslt_ext::Gemm<hipblaslt_ext::GemmType::HIPBLASLT_GROUPED_GEMM> groupedGemm(handle);
 
     std::cout << "index, transAB, M, N, K, lda, ldb, ldc, stride_a, stride_b, "
                  "stride_c, batch_count, alpha, beta, bias, scaleD, activationType"
@@ -940,7 +941,7 @@ void test_hipblaslt(hipblasDatatype_t           in_out_datatype,
         else
         {
             CHECK_HIPBLASLT_ERROR(
-                groupedGemm.algoGetHeuristic(request_solutions, heuristicResult[0]));
+                groupedGemm.algoGetHeuristic(request_solutions, gemmPref, heuristicResult[0]));
             returnedAlgoCount = heuristicResult[0].size();
         }
 

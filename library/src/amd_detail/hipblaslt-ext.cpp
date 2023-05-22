@@ -32,11 +32,20 @@
 
 namespace hipblaslt_ext
 {
+    void GemmPreference::setMaxWorkspaceBytes(size_t workspaceBytes)
+    {
+        m_workspace_bytes = workspaceBytes;
+    }
+
+    const size_t GemmPreference::getMaxWorkspaceBytes() const
+    {
+        return m_workspace_bytes;
+    }
+
     template <GemmType GemmTypeT>
-    Gemm<GemmTypeT>::Gemm(hipblasLtHandle_t handle, size_t maxWorkspaceBytes)
+    Gemm<GemmTypeT>::Gemm(hipblasLtHandle_t handle)
         : m_gemm_type(GemmTypeT)
         , m_handle(handle)
-        , m_workspace_bytes(maxWorkspaceBytes)
     {
     }
 
@@ -50,12 +59,6 @@ namespace hipblaslt_ext
     size_t Gemm<GemmTypeT>::getGemmCount()
     {
         return m_gemm_count;
-    }
-
-    template <GemmType GemmTypeT>
-    size_t Gemm<GemmTypeT>::getWorkspaceBytes()
-    {
-        return m_workspace_bytes;
     }
 
     template <GemmType GemmTypeT>
@@ -73,7 +76,6 @@ namespace hipblaslt_ext
                                                              hipblasLtMatrixLayout_t matD)
     {
         rocblaslt::RocGemm gemm;
-        gemm.setWorkspaceBytes(m_workspace_bytes);
         gemm.setHandle((rocblaslt_handle)m_handle);
         auto status = RocBlasLtStatusToHIPStatus(
             rocblaslt_gemm_create_cpp((rocblaslt_matmul_desc)matmul_descr,
@@ -90,10 +92,9 @@ namespace hipblaslt_ext
                                       gemm));
         if(status == HIPBLAS_STATUS_SUCCESS)
         {
-            m_gemm_type       = static_cast<GemmType>(gemm.getGemmType());
-            m_gemm_count      = gemm.getGemmCount();
-            m_workspace_bytes = gemm.getWorkspaceBytes();
-            m_data            = gemm.getData();
+            m_gemm_type  = static_cast<GemmType>(gemm.getGemmType());
+            m_gemm_count = gemm.getGemmCount();
+            m_data       = gemm.getData();
         }
         return status;
     }
@@ -129,7 +130,6 @@ namespace hipblaslt_ext
             beta_groupedGemm.push_back((const void*)(&(beta[i])));
         }
         rocblaslt::RocGemm gemm;
-        gemm.setWorkspaceBytes(m_workspace_bytes);
         gemm.setHandle((rocblaslt_handle)m_handle);
         auto status
             = RocBlasLtStatusToHIPStatus(rocblaslt_groupedgemm_create_cpp(*matmul_descr_groupedGemm,
@@ -146,10 +146,9 @@ namespace hipblaslt_ext
                                                                           gemm));
         if(status == HIPBLAS_STATUS_SUCCESS)
         {
-            m_gemm_type       = static_cast<GemmType>(gemm.getGemmType());
-            m_gemm_count      = gemm.getGemmCount();
-            m_workspace_bytes = gemm.getWorkspaceBytes();
-            m_data            = gemm.getData();
+            m_gemm_type  = static_cast<GemmType>(gemm.getGemmType());
+            m_gemm_count = gemm.getGemmCount();
+            m_data       = gemm.getData();
         }
         return status;
     }
@@ -157,6 +156,7 @@ namespace hipblaslt_ext
     template <GemmType GemmTypeT>
     hipblasStatus_t Gemm<GemmTypeT>::algoGetHeuristic(
         const int                                      requestedAlgoCount,
+        const GemmPreference&                          pref,
         std::vector<hipblasLtMatmulHeuristicResult_t>& heuristicResults)
     {
         if(m_gemm_count == 0)
@@ -169,7 +169,7 @@ namespace hipblaslt_ext
             rocblaslt_algo_get_heuristic_cpp((rocblaslt_handle)m_handle,
                                              gemmType,
                                              m_data,
-                                             m_workspace_bytes,
+                                             pref.getMaxWorkspaceBytes(),
                                              requestedAlgoCount,
                                              *results));
     }

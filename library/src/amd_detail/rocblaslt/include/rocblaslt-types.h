@@ -372,10 +372,6 @@ namespace rocblaslt
         {
             return m_gemm_count;
         }
-        size_t getWorkspaceBytes()
-        {
-            return m_workspace_bytes;
-        }
         rocblaslt_handle getHandle()
         {
             return m_handle;
@@ -393,10 +389,6 @@ namespace rocblaslt
         {
             m_gemm_count = gemm_count;
         }
-        void setWorkspaceBytes(size_t bytes)
-        {
-            m_workspace_bytes = bytes;
-        }
         void setHandle(rocblaslt_handle handle)
         {
             m_handle = handle;
@@ -407,9 +399,8 @@ namespace rocblaslt
         }
 
     private:
-        RocGemmType m_gemm_type       = RocGemmType::ROCBLASLT_GEMMTYPE_UNKNOWN;
-        size_t      m_gemm_count      = 0;
-        size_t      m_workspace_bytes = 0;
+        RocGemmType m_gemm_type  = RocGemmType::ROCBLASLT_GEMMTYPE_UNKNOWN;
+        size_t      m_gemm_count = 0;
 
         rocblaslt_handle      m_handle;
         std::shared_ptr<void> m_data;

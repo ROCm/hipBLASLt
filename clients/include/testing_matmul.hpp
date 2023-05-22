@@ -715,8 +715,9 @@ void testing_matmul(const Arguments& arg)
     int                                           returnedAlgoCount = 0;
 
     // grouped gemm
-    hipblaslt_ext::Gemm<hipblaslt_ext::GemmType::HIPBLASLT_GROUPED_GEMM> groupedGemm(
-        handle, max_workspace_size);
+    hipblaslt_ext::GemmPreference gemmPref;
+    gemmPref.setMaxWorkspaceBytes(max_workspace_size);
+    hipblaslt_ext::Gemm<hipblaslt_ext::GemmType::HIPBLASLT_GROUPED_GEMM> groupedGemm(handle);
     std::vector<void*> da(gemm_count), db(gemm_count), dc(gemm_count), dd(gemm_count);
 
     if(!do_grouped_gemm)
@@ -751,7 +752,8 @@ void testing_matmul(const Arguments& arg)
         CHECK_HIPBLASLT_ERROR(groupedGemm.setProblemFromhipBlasLt(
             matmul, h_alpha, da, matA, db, matB, h_beta, dc, matC, dd, matD));
 
-        CHECK_HIPBLASLT_ERROR(groupedGemm.algoGetHeuristic(requestAlgoCount, heuristicResult));
+        CHECK_HIPBLASLT_ERROR(
+            groupedGemm.algoGetHeuristic(requestAlgoCount, gemmPref, heuristicResult));
         returnedAlgoCount = heuristicResult.size();
 
         dWorkspace = new device_vector<unsigned char>(max_workspace_size, 1, HMM);
