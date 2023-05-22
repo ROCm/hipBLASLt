@@ -26,7 +26,7 @@ import struct
 from collections import OrderedDict
 
 from .TensileInstructions import Module, TextBlock, HolderContainer, RegisterContainer, \
-                          VCC, EXEC, vgpr, sgpr, Holder, fastdeepcopy, DataType
+                          VCC, EXEC, vgpr, sgpr, Holder, fastdeepcopy, DataType, SNop
 from .TensileInstructions.Enums import *
 from .TensileInstructions.Instructions import *
 from .Common import printExit, printWarning
@@ -689,6 +689,7 @@ class ActivationModule:
                 module.add(VAddF32(dst=self.vgprPrefix(vgprOut), src0=vgpr(Holder(idx=vgprTemp3)), src1=vgpr(Holder(idx=vgprTemp1)), comment="out = e^xx + e^-xx"))
                 module.add(VSubF32(dst=vgpr(Holder(idx=vgprTemp1)), src0=vgpr(Holder(idx=vgprTemp3)), src1=vgpr(Holder(idx=vgprTemp1)), comment="tmp1 = e^xx - e^-xx"))
                 module.add(VRcpF32(dst=vgpr(Holder(idx=vgprTemp3)), src=self.vgprPrefix(vgprOut), comment="tmp3 = 1/out"))
+                module.add(SNop(waitState=0, comment="1 wait states")) #workaround for emulator
                 module.add(VMulF32(dst=vgpr(Holder(idx=vgprTemp3)), src0=vgpr(Holder(idx=vgprTemp1)), src1=vgpr(Holder(idx=vgprTemp3)), comment="tmp3 = tmp1 * tmp3"))
                 if self.enableGuard:
                     module.add(SMovB32(dst=sgpr(Holder(idx=sgprTemp)), src=hex(0x200), comment="move magic number to sgpr"))
@@ -700,6 +701,7 @@ class ActivationModule:
                 module.add(VMulF32(dst=vgpr(Holder(idx=vgprTemp1)), src0=0.5, src1=vgpr(Holder(idx=vgprTemp3)), comment="tmp1 = 0.5 * tmp1"))
                 module.add(VMulF32(dst=self.vgprPrefix(vgprOut), src0=self.vgprPrefix(vgprOut), src1=self.vgprPrefix(vgprOut), comment="out = out * out"))
                 module.add(VRcpF32(dst=self.vgprPrefix(vgprOut), src=self.vgprPrefix(vgprOut), comment="out = 1/out"))
+                module.add(SNop(waitState=0, comment="1 wait states")) #workaround for emulator
             else:
                 module.add(self.getTanhModule(cDataType, Holder(idx=vgprTemp1), vgprOut, "", ""))
                 module.add(VMulF32(dst=vgpr(Holder(idx=vgprTemp1)), src0=-1.0, src1=vgpr(Holder(idx=vgprTemp1)), comment="tmp1 = -tmp1"))
@@ -708,6 +710,7 @@ class ActivationModule:
                 module.add(VMulF32(dst=vgpr(Holder(idx=vgprTemp1)), src0=0.5, src1=self.vgprPrefix(vgprOut), comment="tmp1 = 0.5 * tmp1"))
                 module.add(VMulF32(dst=vgpr(Holder(idx=vgprTemp3)), src0=vgpr(Holder(idx=vgprTemp3)), src1=vgpr(Holder(idx=vgprTemp3)), comment="out = out * out"))
                 module.add(VRcpF32(dst=self.vgprPrefix(vgprOut), src=vgpr(Holder(idx=vgprTemp3)), comment="out = 1/out"))
+                module.add(SNop(waitState=0, comment="1 wait states")) #workaround for emulator
             coef = floatUnion(f=4)
             module.add(VMulF32(dst=self.vgprPrefix(vgprOut), src0=hex(coef.u), src1=self.vgprPrefix(vgprOut), comment="out = 4 * out"))
             module.add(VFmaF32(dst=self.vgprPrefix(vgprOut), src0=self.vgprPrefix(vgprOut), src1=vgpr(Holder(idx=vgprTemp2)), src2=vgpr(Holder(idx=vgprTemp1)), comment="out = out * tmp2 + tmp1"))
