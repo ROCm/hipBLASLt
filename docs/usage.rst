@@ -36,8 +36,8 @@ THe user can get hueristic and make kernel arguments with the instance. If the p
     hipblaslt_ext::Gemm gemm;
     std::vector<hipblasLtMatmulHeuristicResult_t> hueristic;
     gemm.setProblemFromhipBlasLt();
-    hipblaslt_ext::algoGetHeuristic(gemm, hueristic);
-    gemm.makeArgument(hueristic[0].algo, stream);
+    gemm.algoGetHeuristic(gemm, hueristic);
+    gemm.initialize(hueristic[0].algo, stream);
     for(int i = 0; i < 10; i++)
     {
         gemm.run(stream);
@@ -56,7 +56,7 @@ Currently supports importing problems from hipblasLt APIs. The inputs are vector
 
 .. code-block:: c++
 
-    gemm.setGroupedProblemFromhipBlasLt();
+    gemm.setProblemFromhipBlasLt();
 
 After the problem is set, the user can check the problem type with function getGemmType().
 
@@ -90,12 +90,10 @@ Get all algorithms lets users to get all the algorithms of a specific problem ty
 
 This API does not require any problem size or epilogue as input, but will use another API "isAlgoSupported" to check if the algorithm supports a problem.
 
-The API "isAlgoSupported" supports both hipblasLt API and the extension API.
-
 .. code-block:: c++
 
     hipblaslt_ext::matmulIsAlgoSupported()
-    hipblaslt_ext::isAlgoSupported()
+    gemm.isAlgoSupported()
 
 The API will return the required workspace size in bytes if success.
 

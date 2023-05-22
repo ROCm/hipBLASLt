@@ -93,11 +93,3 @@ getAllAlgos()
 matmulIsAlgoSupported()
 ------------------------------------------
 .. doxygenfunction:: matmulIsAlgoSupported
-
-isAlgoSupported()
-------------------------------------------
-.. doxygenfunction:: isAlgoSupported
-
-algoGetHeuristic()
-------------------------------------------
-.. doxygenfunction:: algoGetHeuristic

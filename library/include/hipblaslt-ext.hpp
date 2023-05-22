@@ -51,9 +51,8 @@ namespace hipblaslt_ext
      */
     enum class GemmType
     {
-        HIPBLASLT_GEMM             = 1,
-        HIPBLASLT_GROUPED_GEMM     = 2,
-        HIPBLASLT_GEMMTYPE_UNKNOWN = 3,
+        HIPBLASLT_GEMM         = 1,
+        HIPBLASLT_GROUPED_GEMM = 2,
     };
 
     /*! \ingroup types_module
@@ -65,6 +64,7 @@ namespace hipblaslt_ext
      * where \p A, \p B, and \p C are input matrices, and \p alpha and \p beta are
      * input scalars.
      */
+    template <GemmType GemmTypeT>
     class Gemm
     {
     public:
@@ -106,18 +106,19 @@ namespace hipblaslt_ext
         *  \retval HIBLAS_STATUS_NOT_INITIALIZED    If hipBLASLt handle has not been
         * initialized.
         */
-        HIPBLASLT_EXPORT
-        hipblasStatus_t setProblemFromhipBlasLt(hipblasLtMatmulDesc_t   matmul_descr,
-                                                const void*             alpha,
-                                                const void*             A,
-                                                hipblasLtMatrixLayout_t matA,
-                                                const void*             B,
-                                                hipblasLtMatrixLayout_t matB,
-                                                const void*             beta,
-                                                const void*             C,
-                                                hipblasLtMatrixLayout_t matC,
-                                                void*                   D,
-                                                hipblasLtMatrixLayout_t matD);
+        template <GemmType T = GemmTypeT,
+                  typename   = typename std::enable_if<T == GemmType::HIPBLASLT_GEMM>::type>
+        HIPBLASLT_EXPORT hipblasStatus_t setProblemFromhipBlasLt(hipblasLtMatmulDesc_t matmul_descr,
+                                                                 const void*           alpha,
+                                                                 const void*           A,
+                                                                 hipblasLtMatrixLayout_t matA,
+                                                                 const void*             B,
+                                                                 hipblasLtMatrixLayout_t matB,
+                                                                 const void*             beta,
+                                                                 const void*             C,
+                                                                 hipblasLtMatrixLayout_t matC,
+                                                                 void*                   D,
+                                                                 hipblasLtMatrixLayout_t matD);
 
         /*! \ingroup library_module
         *  \brief Set the grouped gemm problem from hipblasLt structures
@@ -152,19 +153,64 @@ namespace hipblaslt_ext
         *  \retval HIBLAS_STATUS_NOT_INITIALIZED    If hipBLASLt handle has not been
         * initialized.
         */
+        template <GemmType T = GemmTypeT,
+                  typename   = typename std::enable_if<T == GemmType::HIPBLASLT_GROUPED_GEMM>::type>
+        HIPBLASLT_EXPORT hipblasStatus_t
+            setProblemFromhipBlasLt(std::vector<hipblasLtMatmulDesc_t>&   matmul_descr,
+                                    std::vector<float>&                   alpha,
+                                    std::vector<void*>&                   A,
+                                    std::vector<hipblasLtMatrixLayout_t>& matA,
+                                    std::vector<void*>&                   B,
+                                    std::vector<hipblasLtMatrixLayout_t>& matB,
+                                    std::vector<float>&                   beta,
+                                    std::vector<void*>&                   C,
+                                    std::vector<hipblasLtMatrixLayout_t>& matC,
+                                    std::vector<void*>&                   D,
+                                    std::vector<hipblasLtMatrixLayout_t>& matD);
+
+        /*! \ingroup library_module
+        *  \brief Retrieve the possible algorithms
+        *
+        *  \details
+        *  This function retrieves the possible algorithms for the matrix multiply
+        * operation hipblasLtMatmul() function with the given data and compute tpye.
+        * The output is placed in heuristicResult in the order of increasing
+        * estimated compute time.
+        *
+        *  @param[in]
+        *  requestedAlgoCount  number of requested algorithms.
+        *  @param[out]
+        *  heuristicResults    The algorithm heuristic vector.
+        *
+        *  \retval HIPBLAS_STATUS_SUCCESS           If query was successful. Inspect
+        * heuristicResults.size > 0, but may heuristicResults.size < requestedAlgoCount
+        * state for the status of the results. \retval HIPBLAS_STATUS_NOT_SUPPORTED
+        * If no heuristic function available for current configuration.
+        * \retval HIPBLAS_STATUS_INVALID_VALUE If no solution is found.
+        */
         HIPBLASLT_EXPORT
         hipblasStatus_t
-            setGroupedProblemFromhipBlasLt(std::vector<hipblasLtMatmulDesc_t>&   matmul_descr,
-                                           std::vector<float>&                   alpha,
-                                           std::vector<void*>&                   A,
-                                           std::vector<hipblasLtMatrixLayout_t>& matA,
-                                           std::vector<void*>&                   B,
-                                           std::vector<hipblasLtMatrixLayout_t>& matB,
-                                           std::vector<float>&                   beta,
-                                           std::vector<void*>&                   C,
-                                           std::vector<hipblasLtMatrixLayout_t>& matC,
-                                           std::vector<void*>&                   D,
-                                           std::vector<hipblasLtMatrixLayout_t>& matD);
+            algoGetHeuristic(const int                                      requestedAlgoCount,
+                             std::vector<hipblasLtMatmulHeuristicResult_t>& heuristicResults);
+
+        /*! \ingroup library_module
+        *  \brief Check if the algorithm supports the problem. (For hipblaslt extension API)
+        *
+        *  \details
+        *  This function updates the problem saved inside the algorithm if the problem is
+        * supported. The required workspaceSizeInBytes is also returned.
+        *
+        *  @param[in]
+        *  algo The algorithm heuristic.
+        *  @param[out]
+        *  workspaceSizeInBytes Return the required workspace size.
+        *
+        *  \retval HIPBLAS_STATUS_SUCCESS           If query was successful. The problem is
+        * supported by the algorithm.
+        * results. \retval HIPBLAS_STATUS_INVALID_VALUE     The problem is not supported.
+        */
+        HIPBLASLT_EXPORT
+        hipblasStatus_t isAlgoSupported(hipblasLtMatmulAlgo_t& algo, size_t& workspaceSizeInBytes);
 
         /*! \ingroup library_module
         *  \brief Create kernel arguments from a given hipblaslt_ext::Gemm instance.
@@ -191,7 +237,7 @@ namespace hipblaslt_ext
         */
         HIPBLASLT_EXPORT
         hipblasStatus_t
-            makeArgument(const hipblasLtMatmulAlgo_t& algo, void* workspace, hipStream_t stream);
+            initialize(const hipblasLtMatmulAlgo_t& algo, void* workspace, hipStream_t stream);
 
         /*! \ingroup library_module
         *  \brief Execute the kernel arguments stored inside the hipblaslt_ext::Gemm
@@ -212,7 +258,7 @@ namespace hipblaslt_ext
         HIPBLASLT_EXPORT size_t   getWorkspaceBytes();
 
     private:
-        GemmType m_gemm_type       = GemmType::HIPBLASLT_GEMMTYPE_UNKNOWN;
+        GemmType m_gemm_type;
         size_t   m_gemm_count      = 0;
         size_t   m_workspace_bytes = 0;
 
@@ -305,32 +351,4 @@ namespace hipblaslt_ext
                                           hipblasLtMatrixLayout_t Ddesc,
                                           hipblasLtMatmulAlgo_t&  algo,
                                           size_t&                 workspaceSizeInBytes);
-
-    /*! \ingroup library_module
-    *  \brief Check if the algorithm supports the problem. (For hipblaslt extension API)
-    *
-    *  \details
-    *  This function updates the problem saved inside the algorithm if the problem is
-    * supported. The required workspaceSizeInBytes is also returned.
-    *
-    *  @param[in]
-    *  gemm The hipblasLt extension instance.
-    *  @param[in]
-    *  algo The algorithm heuristic.
-    *  @param[out]
-    *  workspaceSizeInBytes Return the required workspace size.
-    *
-    *  \retval HIPBLAS_STATUS_SUCCESS           If query was successful. The problem is
-    * supported by the algorithm.
-    * results. \retval HIPBLAS_STATUS_INVALID_VALUE     The problem is not supported.
-    */
-    HIPBLASLT_EXPORT
-    hipblasStatus_t
-        isAlgoSupported(Gemm& gemm, hipblasLtMatmulAlgo_t& algo, size_t& workspaceSizeInBytes);
-
-    HIPBLASLT_EXPORT
-    hipblasStatus_t
-        algoGetHeuristic(Gemm&                                          gemm,
-                         const int                                      requestedAlgoCount,
-                         std::vector<hipblasLtMatmulHeuristicResult_t>& heuristicResults);
 } // End of namespace hipblasltext
