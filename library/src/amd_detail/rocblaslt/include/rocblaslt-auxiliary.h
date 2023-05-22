@@ -321,7 +321,8 @@ rocblaslt_status rocblaslt_matmul_is_algo_supported(rocblaslt_handle        hand
                                                     rocblaslt_matmul_algo*  algo,
                                                     size_t*                 workspaceSizeInBytes);
 
-rocblaslt_status rocblaslt_is_algo_supported_cpp(rocblaslt::RocGemm&    gemm,
+rocblaslt_status rocblaslt_is_algo_supported_cpp(rocblaslt::RocGemmType gemmType,
+                                                 std::shared_ptr<void>  gemmData,
                                                  rocblaslt_matmul_algo& algo,
                                                  size_t&                workspaceSizeInBytes);
 
@@ -359,8 +360,11 @@ rocblaslt_status
                                         int*                              returnAlgoCount);
 
 rocblaslt_status
-    rocblaslt_algo_get_heuristic_cpp(rocblaslt::RocGemm gemm,
-                                     const int          requestedAlgoCount,
+    rocblaslt_algo_get_heuristic_cpp(rocblaslt_handle       handle,
+                                     rocblaslt::RocGemmType gemmType,
+                                     std::shared_ptr<void>  gemmData,
+                                     const int              workspaceBytes,
+                                     const int              requestedAlgoCount,
                                      std::vector<rocblaslt_matmul_heuristic_result>& results);
 #ifdef __cplusplus
 }

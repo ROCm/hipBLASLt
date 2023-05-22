@@ -1041,7 +1041,7 @@ void test_hipblaslt(hipblasDatatype_t  in_out_datatype,
                                               &max_workspace_size,
                                               sizeof(max_workspace_size)));
 
-    hipblaslt_ext::Gemm gemm(handle, max_workspace_size);
+    hipblaslt_ext::Gemm<hipblaslt_ext::GemmType::HIPBLASLT_GEMM> gemm(handle, max_workspace_size);
 
     // hipblasLtMatmulHeuristicResult_t* heuristicResult = nullptr;
     std::vector<hipblasLtMatmulHeuristicResult_t> heuristicResult;
@@ -1133,7 +1133,7 @@ void test_hipblaslt(hipblasDatatype_t  in_out_datatype,
             for(int i = 0; i < returnedAlgoCount; i++)
             {
                 size_t workspace_size = 0;
-                if(hipblaslt_ext::isAlgoSupported(gemm, heuristicResult[i].algo, workspace_size)
+                if(gemm.isAlgoSupported(heuristicResult[i].algo, workspace_size)
                    == HIPBLAS_STATUS_SUCCESS)
                 {
                     validIdx.push_back(i);
@@ -1147,8 +1147,7 @@ void test_hipblaslt(hipblasDatatype_t  in_out_datatype,
         }
         else
         {
-            CHECK_HIPBLASLT_ERROR(
-                hipblaslt_ext::algoGetHeuristic(gemm, request_solutions, heuristicResult));
+            CHECK_HIPBLASLT_ERROR(gemm.algoGetHeuristic(request_solutions, heuristicResult));
             returnedAlgoCount = heuristicResult.size();
         }
     }
@@ -1212,7 +1211,7 @@ void test_hipblaslt(hipblasDatatype_t  in_out_datatype,
     else
     {
         auto idx = (findAll) ? validIdx[0] : 0;
-        CHECK_HIPBLASLT_ERROR(gemm.makeArgument(heuristicResult[idx].algo, d_workspace, stream));
+        CHECK_HIPBLASLT_ERROR(gemm.initialize(heuristicResult[idx].algo, d_workspace, stream));
 
         CHECK_HIPBLASLT_ERROR(gemm.run(stream));
     }
@@ -1315,7 +1314,7 @@ void test_hipblaslt(hipblasDatatype_t  in_out_datatype,
             {
                 auto idx = (findAll) ? validIdx[0] : 0;
                 CHECK_HIPBLASLT_ERROR(
-                    gemm.makeArgument(heuristicResult[idx].algo, d_workspace, stream));
+                    gemm.initialize(heuristicResult[idx].algo, d_workspace, stream));
 
                 for(int loop = 0; loop < cold_loop_count; loop++)
                 {
