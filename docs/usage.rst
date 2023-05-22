@@ -33,10 +33,11 @@ THe user can get hueristic and make kernel arguments with the instance. If the p
 .. code-block:: c++
 
     // Pseudo code
+    hipblaslt_ext::GemmPreference pref;
     hipblaslt_ext::Gemm gemm;
     std::vector<hipblasLtMatmulHeuristicResult_t> hueristic;
     gemm.setProblemFromhipBlasLt();
-    gemm.algoGetHeuristic(gemm, hueristic);
+    gemm.algoGetHeuristic(gemm, pref, hueristic);
     gemm.initialize(hueristic[0].algo, stream);
     for(int i = 0; i < 10; i++)
     {

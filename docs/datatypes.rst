@@ -50,6 +50,13 @@ GemmType
 -------------------------------------
 .. doxygenenum:: GemmType
 
+GemmPreference
+-------------------------------------
+.. doxygenclass:: hipblaslt_ext::GemmPreference
+    :members:
+    :protected-members:
+    :private-members:
+
 Gemm
 -------------------------------------
 .. doxygenclass:: hipblaslt_ext::Gemm
