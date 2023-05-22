@@ -33,7 +33,7 @@
 #define _ROCBLASLT_AUXILIARY_H_
 
 #include <stdint.h>
-
+#include <vector>
 #include "rocblaslt-types.h"
 
 #include <hip/hip_runtime.h>
