@@ -114,6 +114,26 @@ rocblaslt_status rocblaslt_matmul(rocblaslt_handle             handle,
                                   void*                        workspace,
                                   size_t                       workspaceSizeInBytes,
                                   hipStream_t                  stream);
+#ifdef __cplusplus
+}
+
+rocblaslt_status rocblaslt_gemm_create_cpp(int64_t                        m,
+                                           int64_t                        n,
+                                           int64_t                        b,
+                                           int64_t                        k,
+                                           int64_t                        lda,
+                                           int64_t                        ldb,
+                                           int64_t                        ldc,
+                                           int64_t                        ldd,
+                                           int64_t                        strideA,
+                                           int64_t                        strideB,
+                                           int64_t                        strideC,
+                                           int64_t                        strideD,
+                                           rocblaslt::RocGemmEpilogue&    epilogue,
+                                           rocblaslt::RocGemmInputs&      inputs,
+                                           rocblaslt::RocGemmProblemType& problemtype,
+                                           std::shared_ptr<void>&         gemmData,
+                                           size_t&                        gemmCount);
 
 rocblaslt_status rocblaslt_gemm_create_cpp(rocblaslt_matmul_desc   matmul_descr,
                                            const void*             alpha,
@@ -127,6 +147,25 @@ rocblaslt_status rocblaslt_gemm_create_cpp(rocblaslt_matmul_desc   matmul_descr,
                                            void*                   D,
                                            rocblaslt_matrix_layout matD,
                                            rocblaslt::RocGemm&     gemm);
+
+rocblaslt_status
+    rocblaslt_groupedgemm_create_cpp(std::vector<int64_t>&                       m,
+                                     std::vector<int64_t>&                       n,
+                                     std::vector<int64_t>&                       b,
+                                     std::vector<int64_t>&                       k,
+                                     std::vector<int64_t>&                       lda,
+                                     std::vector<int64_t>&                       ldb,
+                                     std::vector<int64_t>&                       ldc,
+                                     std::vector<int64_t>&                       ldd,
+                                     std::vector<int64_t>&                       strideA,
+                                     std::vector<int64_t>&                       strideB,
+                                     std::vector<int64_t>&                       strideC,
+                                     std::vector<int64_t>&                       strideD,
+                                     std::vector<rocblaslt::RocGemmEpilogue>&    epilogue,
+                                     std::vector<rocblaslt::RocGemmInputs>&      inputs,
+                                     std::vector<rocblaslt::RocGemmProblemType>& problemtype,
+                                     std::shared_ptr<void>&                      gemmData,
+                                     size_t&                                     gemmCount);
 
 rocblaslt_status rocblaslt_groupedgemm_create_cpp(std::vector<rocblaslt_matmul_desc>& matmul_descr,
                                                   std::vector<const void*>&           alpha,
@@ -152,8 +191,6 @@ rocblaslt_status rocblaslt_run_cpp(rocblaslt_handle       handle,
                                    std::shared_ptr<void>  gemmData,
                                    hipStream_t            stream);
 
-#ifdef __cplusplus
-}
 #endif
 
 #endif /* _ROCBLASLT_FUNCTIONS_H_ */

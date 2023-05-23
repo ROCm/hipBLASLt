@@ -113,37 +113,38 @@ rocblaslt_status rocblaslt_batched_template(rocblaslt_handle             handle,
 }
 
 template <typename Ti, typename To, typename Tc>
-rocblaslt_status rocblaslt_gemm_create_batched_template(hipblasOperation_t  trans_a,
-                                                        hipblasOperation_t  trans_b,
-                                                        int64_t             m,
-                                                        int64_t             n,
-                                                        int64_t             k,
-                                                        const Tc*           alpha,
-                                                        const Ti*           a,
-                                                        int64_t             ld_a,
-                                                        int64_t             batch_stride_a,
-                                                        const Ti*           b,
-                                                        int64_t             ld_b,
-                                                        int64_t             batch_stride_b,
-                                                        const Tc*           beta,
-                                                        const To*           c,
-                                                        int64_t             ld_c,
-                                                        int64_t             batch_stride_c,
-                                                        To*                 d,
-                                                        int64_t             ld_d,
-                                                        int64_t             batch_stride_d,
-                                                        Tc*                 e,
-                                                        int64_t             ld_e,
-                                                        int64_t             batch_stride_e,
-                                                        int64_t             batch_count,
-                                                        bool                strided_batch,
-                                                        bool                grouped_gemm,
-                                                        bool                gradient,
-                                                        const void*         bias,
-                                                        const Tc*           scaleD,
-                                                        hipblasDatatype_t   bias_type,
-                                                        rocblaslt_epilogue  epilogue,
-                                                        rocblaslt::RocGemm& gemm)
+rocblaslt_status rocblaslt_gemm_create_batched_template(hipblasOperation_t     trans_a,
+                                                        hipblasOperation_t     trans_b,
+                                                        int64_t                m,
+                                                        int64_t                n,
+                                                        int64_t                k,
+                                                        const Tc*              alpha,
+                                                        const Ti*              a,
+                                                        int64_t                ld_a,
+                                                        int64_t                batch_stride_a,
+                                                        const Ti*              b,
+                                                        int64_t                ld_b,
+                                                        int64_t                batch_stride_b,
+                                                        const Tc*              beta,
+                                                        const To*              c,
+                                                        int64_t                ld_c,
+                                                        int64_t                batch_stride_c,
+                                                        To*                    d,
+                                                        int64_t                ld_d,
+                                                        int64_t                batch_stride_d,
+                                                        Tc*                    e,
+                                                        int64_t                ld_e,
+                                                        int64_t                batch_stride_e,
+                                                        int64_t                batch_count,
+                                                        bool                   strided_batch,
+                                                        bool                   grouped_gemm,
+                                                        bool                   gradient,
+                                                        const void*            bias,
+                                                        const Tc*              scaleD,
+                                                        hipblasDatatype_t      bias_type,
+                                                        rocblaslt_epilogue     epilogue,
+                                                        std::shared_ptr<void>& gemmData,
+                                                        size_t&                gemmCount)
 {
     RocblasltContractionProblem<Ti, To, Tc> problem{trans_a,
                                                     trans_b,
@@ -183,7 +184,7 @@ rocblaslt_status rocblaslt_gemm_create_batched_template(hipblasOperation_t  tran
                                                     nullptr,
                                                     0,
                                                     0};
-    return gemmCreate(gemm, problem);
+    return gemmCreate(problem, gemmData, gemmCount);
 }
 
 template <typename Ti, typename To, typename Tc>
@@ -214,7 +215,8 @@ rocblaslt_status
                                                   std::vector<const Tc*>&          scaleD,
                                                   std::vector<hipblasDatatype_t>&  bias_type,
                                                   std::vector<rocblaslt_epilogue>& epilogue,
-                                                  rocblaslt::RocGemm&              gemm)
+                                                  std::shared_ptr<void>&           gemmData,
+                                                  size_t&                          gemmCount)
 {
     std::vector<RocblasltContractionProblem<Ti, To, Tc>> problems;
 
@@ -259,7 +261,7 @@ rocblaslt_status
                                                                    0,
                                                                    0});
     }
-    return groupedGemmCreate(gemm, problems);
+    return groupedGemmCreate(problems, gemmData, gemmCount);
 }
 
 template <typename Ti, typename To = Ti, typename Tc = To>
@@ -344,37 +346,38 @@ rocblaslt_status rocblaslt_matmul_typecasting(rocblaslt_handle             handl
 }
 
 template <typename Ti, typename To = Ti, typename Tc = To>
-rocblaslt_status rocblaslt_gemm_create_typecasting(hipblasOperation_t  trans_a,
-                                                   hipblasOperation_t  trans_b,
-                                                   int64_t             m,
-                                                   int64_t             n,
-                                                   int64_t             k,
-                                                   const void*         alpha,
-                                                   const void*         a,
-                                                   int64_t             ld_a,
-                                                   int64_t             batch_stride_a,
-                                                   const void*         b,
-                                                   int64_t             ld_b,
-                                                   int64_t             batch_stride_b,
-                                                   const void*         beta,
-                                                   const void*         c,
-                                                   int64_t             ld_c,
-                                                   int64_t             batch_stride_c,
-                                                   void*               d,
-                                                   int64_t             ld_d,
-                                                   int64_t             batch_stride_d,
-                                                   void*               e,
-                                                   int64_t             ld_e,
-                                                   int64_t             batch_stride_e,
-                                                   int64_t             batch_count,
-                                                   bool                strided_batch,
-                                                   bool                grouped_gemm,
-                                                   bool                gradient,
-                                                   const void*         bias,
-                                                   const void*         scaleD,
-                                                   hipblasDatatype_t   bias_type,
-                                                   rocblaslt_epilogue  epilogue,
-                                                   rocblaslt::RocGemm& gemm)
+rocblaslt_status rocblaslt_gemm_create_typecasting(hipblasOperation_t     trans_a,
+                                                   hipblasOperation_t     trans_b,
+                                                   int64_t                m,
+                                                   int64_t                n,
+                                                   int64_t                k,
+                                                   const void*            alpha,
+                                                   const void*            a,
+                                                   int64_t                ld_a,
+                                                   int64_t                batch_stride_a,
+                                                   const void*            b,
+                                                   int64_t                ld_b,
+                                                   int64_t                batch_stride_b,
+                                                   const void*            beta,
+                                                   const void*            c,
+                                                   int64_t                ld_c,
+                                                   int64_t                batch_stride_c,
+                                                   void*                  d,
+                                                   int64_t                ld_d,
+                                                   int64_t                batch_stride_d,
+                                                   void*                  e,
+                                                   int64_t                ld_e,
+                                                   int64_t                batch_stride_e,
+                                                   int64_t                batch_count,
+                                                   bool                   strided_batch,
+                                                   bool                   grouped_gemm,
+                                                   bool                   gradient,
+                                                   const void*            bias,
+                                                   const void*            scaleD,
+                                                   hipblasDatatype_t      bias_type,
+                                                   rocblaslt_epilogue     epilogue,
+                                                   std::shared_ptr<void>& gemmData,
+                                                   size_t&                gemmCount)
 {
     // check alignment of pointers before casting
     if(!isAligned(a, sizeof(Ti)) || !isAligned(b, sizeof(Ti)) || !isAligned(c, sizeof(Ti))
@@ -413,7 +416,8 @@ rocblaslt_status rocblaslt_gemm_create_typecasting(hipblasOperation_t  trans_a,
                                                   reinterpret_cast<const Tc*>(scaleD),
                                                   bias_type,
                                                   epilogue,
-                                                  gemm);
+                                                  gemmData,
+                                                  gemmCount);
 }
 
 template <typename Ti, typename To = Ti, typename Tc = To>
@@ -443,7 +447,8 @@ rocblaslt_status rocblaslt_groupedgemm_create_typecasting(hipblasOperation_t    
                                                           std::vector<const void*>& scaleD,
                                                           std::vector<hipblasDatatype_t>& bias_type,
                                                           std::vector<rocblaslt_epilogue>& epilogue,
-                                                          rocblaslt::RocGemm&              gemm)
+                                                          std::shared_ptr<void>&           gemmData,
+                                                          size_t& gemmCount)
 {
     std::vector<const Tc*> groupedAlpha, groupedBeta;
     std::vector<const Ti*> groupedA, groupedB;
@@ -488,7 +493,8 @@ rocblaslt_status rocblaslt_groupedgemm_create_typecasting(hipblasOperation_t    
                                                          groupedScaleD,
                                                          bias_type,
                                                          epilogue,
-                                                         gemm);
+                                                         gemmData,
+                                                         gemmCount);
 }
 
 inline rocblaslt_status rocblaslt_matmul_template(rocblaslt_handle             handle,
@@ -616,14 +622,16 @@ inline rocblaslt_status rocblaslt_gemm_create_template_cpp(hipblasOperation_t   
                                                            const void*            scaleD,
                                                            hipblasDatatype_t      bias_type,
                                                            rocblaslt_epilogue     epilogue,
-                                                           rocblaslt::RocGemm&    gemm)
+                                                           std::shared_ptr<void>& gemmData,
+                                                           size_t&                gemmCount)
 {
     rocblaslt_status rs_status = rocblaslt_status_not_implemented;
 
 #define EX_TYPECASTING_PARM_GEMM_CPP                                                             \
     trans_a, trans_b, m, n, k, alpha, a, ld_a, batch_stride_a, b, ld_b, batch_stride_b, beta, c, \
         ld_c, batch_stride_c, d, ld_d, batch_stride_d, e, ld_e, batch_stride_e, batch_count,     \
-        strided_batch, grouped_gemm, gradient, bias, scaleD, bias_type, epilogue, gemm
+        strided_batch, grouped_gemm, gradient, bias, scaleD, bias_type, epilogue, gemmData,      \
+        gemmCount
 
     if(a_type == HIPBLAS_R_32F && b_type == HIPBLAS_R_32F)
     {
@@ -700,14 +708,15 @@ inline rocblaslt_status
                                               std::vector<const void*>&        scaleD,
                                               std::vector<hipblasDatatype_t>&  bias_type,
                                               std::vector<rocblaslt_epilogue>& epilogue,
-                                              rocblaslt::RocGemm&              gemm)
+                                              std::shared_ptr<void>&           gemmData,
+                                              size_t&                          gemmCount)
 {
     rocblaslt_status rs_status = rocblaslt_status_not_implemented;
 
 #define EX_TYPECASTING_PARM_GroupedGemm_CPP                                                      \
     trans_a, trans_b, m, n, k, alpha, a, ld_a, batch_stride_a, b, ld_b, batch_stride_b, beta, c, \
         ld_c, batch_stride_c, d, ld_d, batch_stride_d, batch_count, strided_batch, grouped_gemm, \
-        bias, scaleD, bias_type, epilogue, gemm
+        bias, scaleD, bias_type, epilogue, gemmData, gemmCount
 
     if(a_type == HIPBLAS_R_32F && b_type == HIPBLAS_R_32F)
     {
