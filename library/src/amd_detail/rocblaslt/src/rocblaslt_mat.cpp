@@ -298,13 +298,119 @@ rocblaslt_status rocblaslt_gemm_create_cpp_impl(rocblaslt_matmul_desc   matmul_d
     bool strided_batch = true;
     bool grouped_gemm  = false;
 
+    size_t gemmCount = 0;
+
+    std::shared_ptr<void> data;
 #define EX_PARM_GEMM_CPP                                                                          \
     opA, opB, m, n, k, alpha, A, type_a, lda, batch_stride_a, B, type_b, ldb, batch_stride_b,     \
         beta, C, type_c, ldc, batch_stride_c, D, type_d, ldd, batch_stride_d, E, lde,             \
         batch_stride_e, num_batches_a, strided_batch, grouped_gemm, gradient, compute_type, bias, \
-        scaleD, bias_type, epilogue, gemm
+        scaleD, bias_type, epilogue, data, gemmCount
 
-    return rocblaslt_gemm_create_template_cpp(EX_PARM_GEMM_CPP);
+    auto status = rocblaslt_gemm_create_template_cpp(EX_PARM_GEMM_CPP);
+    gemm.setData(data);
+    gemm.setGemmCount(gemmCount);
+    return status;
+}
+
+rocblaslt_status rocblaslt_gemm_create_cpp_impl_2(int64_t                        m,
+                                                  int64_t                        n,
+                                                  int64_t                        b,
+                                                  int64_t                        k,
+                                                  int64_t                        lda,
+                                                  int64_t                        ldb,
+                                                  int64_t                        ldc,
+                                                  int64_t                        ldd,
+                                                  int64_t                        batch_stride_a,
+                                                  int64_t                        batch_stride_b,
+                                                  int64_t                        batch_stride_c,
+                                                  int64_t                        batch_stride_d,
+                                                  rocblaslt::RocGemmEpilogue&    rocEpilogue,
+                                                  rocblaslt::RocGemmInputs&      inputs,
+                                                  rocblaslt::RocGemmProblemType& problemtype,
+                                                  std::shared_ptr<void>&         gemmData,
+                                                  size_t&                        gemmCount)
+{
+    rocblaslt_status  status = rocblaslt_status_continue;
+    hipblasDatatype_t bias_type
+        = rocEpilogue.bias_data_type == 0 ? problemtype.type_d : rocEpilogue.bias_data_type;
+    void *bias = nullptr, *scaleD = nullptr, *E = nullptr;
+    bool  gradient = is_grad_enabled(rocEpilogue.mode);
+
+    if(is_bias_enabled(rocEpilogue.mode))
+        bias = inputs.bias;
+    else
+        bias = nullptr;
+
+    if(inputs.scaleD)
+        scaleD = inputs.scaleD;
+    else
+        scaleD = nullptr;
+
+    // matrix E
+    E = nullptr;
+    if(is_e_enabled(rocEpilogue.mode))
+    {
+        if(inputs.aux == nullptr)
+            status = rocblaslt_status_invalid_pointer;
+        E = (void*)inputs.aux;
+    }
+    int64_t num_rows_e     = m;
+    int64_t num_cols_e     = n;
+    int64_t lde            = rocEpilogue.aux_ld > 0 ? rocEpilogue.aux_ld : num_rows_e;
+    int64_t batch_stride_e = rocEpilogue.aux_stride > 0 ? rocEpilogue.aux_stride : lde * num_cols_e;
+    if(E != nullptr && ((lde < num_rows_e) || (batch_stride_e < (num_cols_e * num_rows_e))))
+        status = rocblaslt_status_invalid_value;
+
+    if(status == rocblaslt_status_continue)
+        status = validateMatmulArgs(m,
+                                    n,
+                                    k,
+                                    inputs.alpha,
+                                    inputs.a,
+                                    inputs.b,
+                                    inputs.beta,
+                                    inputs.c,
+                                    inputs.d,
+                                    b,
+                                    b,
+                                    b,
+                                    b,
+                                    batch_stride_a,
+                                    batch_stride_b,
+                                    batch_stride_c,
+                                    batch_stride_d);
+    if(status != rocblaslt_status_continue)
+        return status;
+
+    // Internal assign
+    void*                   A             = inputs.a;
+    void*                   B             = inputs.b;
+    void*                   C             = inputs.c;
+    void*                   D             = inputs.d;
+    void*                   alpha         = inputs.alpha;
+    void*                   beta          = inputs.beta;
+    hipblasOperation_t&     opA           = problemtype.op_a;
+    hipblasOperation_t&     opB           = problemtype.op_b;
+    hipblasDatatype_t&      type_a        = problemtype.type_a;
+    hipblasDatatype_t&      type_b        = problemtype.type_b;
+    hipblasDatatype_t&      type_c        = problemtype.type_c;
+    hipblasDatatype_t&      type_d        = problemtype.type_d;
+    int                     num_batches_a = b;
+    rocblaslt_compute_type& compute_type  = problemtype.type_compute;
+    rocblaslt_epilogue&     epilogue      = rocEpilogue.mode;
+
+    // Others
+    bool strided_batch = true;
+    bool grouped_gemm  = false;
+
+#define EX_PARM_GEMM_CPP_2                                                                        \
+    opA, opB, m, n, k, alpha, A, type_a, lda, batch_stride_a, B, type_b, ldb, batch_stride_b,     \
+        beta, C, type_c, ldc, batch_stride_c, D, type_d, ldd, batch_stride_d, E, lde,             \
+        batch_stride_e, num_batches_a, strided_batch, grouped_gemm, gradient, compute_type, bias, \
+        scaleD, bias_type, epilogue, gemmData, gemmCount
+
+    return rocblaslt_gemm_create_template_cpp(EX_PARM_GEMM_CPP_2);
 }
 
 rocblaslt_status
@@ -452,13 +558,116 @@ rocblaslt_status
     bool strided_batch = true;
     bool grouped_gemm  = true;
 
+    std::shared_ptr<void> data;
+    size_t                gemmCount = 0;
 #define EX_PARM_GroupedGemm_CPP                                                                    \
     opA, opB, m_vec, n_vec, k_vec, alpha_vec, A_vec, type_a, lda_vec, batch_stride_a_vec, B_vec,   \
         type_b, ldb_vec, batch_stride_b_vec, beta_vec, C_vec, type_c, ldc_vec, batch_stride_c_vec, \
         D_vec, type_d, ldd_vec, batch_stride_d_vec, num_batches_a_vec, strided_batch,              \
-        grouped_gemm, compute_type, bias_vec, scaleD_vec, bias_type_vec, epilogue_vec, gemm
+        grouped_gemm, compute_type, bias_vec, scaleD_vec, bias_type_vec, epilogue_vec, data,       \
+        gemmCount
 
-    return rocblaslt_groupedgemm_create_template_cpp(EX_PARM_GroupedGemm_CPP);
+    auto status = rocblaslt_groupedgemm_create_template_cpp(EX_PARM_GroupedGemm_CPP);
+    gemm.setData(data);
+    gemm.setGemmCount(gemmCount);
+    return status;
+}
+
+rocblaslt_status
+    rocblaslt_groupedgemm_create_cpp_impl_2(std::vector<int64_t>&                       m,
+                                            std::vector<int64_t>&                       n,
+                                            std::vector<int64_t>&                       b,
+                                            std::vector<int64_t>&                       k,
+                                            std::vector<int64_t>&                       lda,
+                                            std::vector<int64_t>&                       ldb,
+                                            std::vector<int64_t>&                       ldc,
+                                            std::vector<int64_t>&                       ldd,
+                                            std::vector<int64_t>&                       strideA,
+                                            std::vector<int64_t>&                       strideB,
+                                            std::vector<int64_t>&                       strideC,
+                                            std::vector<int64_t>&                       strideD,
+                                            std::vector<rocblaslt::RocGemmEpilogue>&    rocEpilogue,
+                                            std::vector<rocblaslt::RocGemmInputs>&      inputs,
+                                            std::vector<rocblaslt::RocGemmProblemType>& problemtype,
+                                            std::shared_ptr<void>&                      gemmData,
+                                            size_t&                                     gemmCount)
+{
+    hipblasOperation_t     opA          = problemtype[0].op_a;
+    hipblasOperation_t     opB          = problemtype[0].op_b;
+    rocblaslt_compute_type compute_type = problemtype[0].type_compute;
+    hipblasDatatype_t      type_a       = problemtype[0].type_a;
+    hipblasDatatype_t      type_b       = problemtype[0].type_b;
+    hipblasDatatype_t      type_c       = problemtype[0].type_c;
+    hipblasDatatype_t      type_d       = problemtype[0].type_d;
+
+    std::vector<const void*>        A_vec, B_vec, C_vec, alpha_vec, beta_vec;
+    std::vector<void*>              D_vec;
+    std::vector<const void*>        bias_vec;
+    std::vector<const void*>        scaleD_vec;
+    std::vector<hipblasDatatype_t>  bias_type_vec;
+    std::vector<rocblaslt_epilogue> epilogue_vec;
+
+    for(int i = 0; i < m.size(); i++)
+    {
+        int                iIdx      = (rocEpilogue.size() <= i) ? rocEpilogue.size() - 1 : i;
+        int                iIdx2     = (problemtype.size() <= i) ? problemtype.size() - 1 : i;
+        const void*        bias      = nullptr;
+        hipblasDatatype_t  bias_type = rocEpilogue[iIdx].bias_data_type == 0
+                                           ? problemtype[iIdx2].type_d
+                                           : rocEpilogue[iIdx].bias_data_type;
+        rocblaslt_epilogue epilogue  = rocEpilogue[iIdx].mode;
+        if(is_bias_enabled(epilogue))
+            bias = inputs[i].bias;
+
+        const void* scaleD = nullptr;
+        if(inputs[i].scaleD)
+            scaleD = inputs[i].scaleD;
+
+        auto validArgs = validateMatmulArgs(m[i],
+                                            n[i],
+                                            k[i],
+                                            inputs[i].alpha,
+                                            inputs[i].a,
+                                            inputs[i].b,
+                                            inputs[i].beta,
+                                            inputs[i].c,
+                                            inputs[i].d,
+                                            b[i],
+                                            b[i],
+                                            b[i],
+                                            b[i],
+                                            strideA[i],
+                                            strideB[i],
+                                            strideC[i],
+                                            strideD[i]);
+        if(validArgs == rocblaslt_status_success)
+            continue;
+        if(validArgs != rocblaslt_status_continue)
+            return validArgs;
+
+        bias_type_vec.push_back(bias_type);
+        epilogue_vec.push_back(epilogue);
+        bias_vec.push_back(bias);
+        scaleD_vec.push_back(scaleD);
+
+        A_vec.push_back(inputs[i].a);
+        B_vec.push_back(inputs[i].b);
+        C_vec.push_back(inputs[i].c);
+        D_vec.push_back(inputs[i].d);
+        alpha_vec.push_back(inputs[i].alpha);
+        beta_vec.push_back(inputs[i].beta);
+    }
+
+    bool strided_batch = true;
+    bool grouped_gemm  = true;
+
+#define EX_PARM_GroupedGemm_CPP_2                                                                \
+    opA, opB, m, n, k, alpha_vec, A_vec, type_a, lda, strideA, B_vec, type_b, ldb, strideB,      \
+        beta_vec, C_vec, type_c, ldc, strideC, D_vec, type_d, ldd, strideD, b, strided_batch,    \
+        grouped_gemm, compute_type, bias_vec, scaleD_vec, bias_type_vec, epilogue_vec, gemmData, \
+        gemmCount
+
+    return rocblaslt_groupedgemm_create_template_cpp(EX_PARM_GroupedGemm_CPP_2);
 }
 
 /********************************************************************************
@@ -589,6 +798,61 @@ rocblaslt_status rocblaslt_matmul(rocblaslt_handle             handle,
                                  workspaceSizeInBytes,
                                  stream);
 }
+#ifdef __cplusplus
+}
+#endif
+
+rocblaslt::RocGemmProblemType updateGemmProblemType(const rocblaslt_matmul_desc   matmul_descr,
+                                                    const rocblaslt_matrix_layout matA,
+                                                    const rocblaslt_matrix_layout matB,
+                                                    const rocblaslt_matrix_layout matC,
+                                                    const rocblaslt_matrix_layout matD)
+{
+    return rocblaslt::RocGemmProblemType{matmul_descr->op_A,
+                                         matmul_descr->op_B,
+                                         matA->type,
+                                         matB->type,
+                                         matC->type,
+                                         matD->type,
+                                         matmul_descr->compute_type};
+}
+
+rocblaslt_status rocblaslt_gemm_create_cpp(int64_t                        m,
+                                           int64_t                        n,
+                                           int64_t                        b,
+                                           int64_t                        k,
+                                           int64_t                        lda,
+                                           int64_t                        ldb,
+                                           int64_t                        ldc,
+                                           int64_t                        ldd,
+                                           int64_t                        strideA,
+                                           int64_t                        strideB,
+                                           int64_t                        strideC,
+                                           int64_t                        strideD,
+                                           rocblaslt::RocGemmEpilogue&    epilogue,
+                                           rocblaslt::RocGemmInputs&      inputs,
+                                           rocblaslt::RocGemmProblemType& problemtype,
+                                           std::shared_ptr<void>&         gemmData,
+                                           size_t&                        gemmCount)
+{
+    return rocblaslt_gemm_create_cpp_impl_2(m,
+                                            n,
+                                            b,
+                                            k,
+                                            lda,
+                                            ldb,
+                                            ldc,
+                                            ldd,
+                                            strideA,
+                                            strideB,
+                                            strideC,
+                                            strideD,
+                                            epilogue,
+                                            inputs,
+                                            problemtype,
+                                            gemmData,
+                                            gemmCount);
+}
 
 rocblaslt_status rocblaslt_gemm_create_cpp(rocblaslt_matmul_desc   matmul_descr,
                                            const void*             alpha,
@@ -603,14 +867,10 @@ rocblaslt_status rocblaslt_gemm_create_cpp(rocblaslt_matmul_desc   matmul_descr,
                                            rocblaslt_matrix_layout matD,
                                            rocblaslt::RocGemm&     gemm)
 {
-    try
+    if(gemm.getGemmType() != rocblaslt::RocGemmType::ROCBLASLT_GEMM)
     {
-        gemm.setGemmType(rocblaslt::RocGemmType::ROCBLASLT_GEMM);
-        log_api(__func__, "gemm[out]");
-    }
-    catch(const rocblaslt_status& status)
-    {
-        return status;
+        log_api(__func__, "invalid gemm type");
+        return rocblaslt_status_invalid_value;
     }
 
     // Check if handle is valid
@@ -627,8 +887,50 @@ rocblaslt_status rocblaslt_gemm_create_cpp(rocblaslt_matmul_desc   matmul_descr,
         return rocblaslt_status_type_mismatch;
     }
 
+    std::vector<rocblaslt::RocGemmProblemType> p{
+        updateGemmProblemType(matmul_descr, matA, matB, matC, matD)};
+    gemm.setProblemTypes(p);
+
     return rocblaslt_gemm_create_cpp_impl(
         matmul_descr, A, B, C, D, matA, matB, matC, matD, alpha, beta, gemm);
+}
+
+rocblaslt_status
+    rocblaslt_groupedgemm_create_cpp(std::vector<int64_t>&                       m,
+                                     std::vector<int64_t>&                       n,
+                                     std::vector<int64_t>&                       b,
+                                     std::vector<int64_t>&                       k,
+                                     std::vector<int64_t>&                       lda,
+                                     std::vector<int64_t>&                       ldb,
+                                     std::vector<int64_t>&                       ldc,
+                                     std::vector<int64_t>&                       ldd,
+                                     std::vector<int64_t>&                       strideA,
+                                     std::vector<int64_t>&                       strideB,
+                                     std::vector<int64_t>&                       strideC,
+                                     std::vector<int64_t>&                       strideD,
+                                     std::vector<rocblaslt::RocGemmEpilogue>&    epilogue,
+                                     std::vector<rocblaslt::RocGemmInputs>&      inputs,
+                                     std::vector<rocblaslt::RocGemmProblemType>& problemtype,
+                                     std::shared_ptr<void>&                      gemmData,
+                                     size_t&                                     gemmCount)
+{
+    return rocblaslt_groupedgemm_create_cpp_impl_2(m,
+                                                   n,
+                                                   b,
+                                                   k,
+                                                   lda,
+                                                   ldb,
+                                                   ldc,
+                                                   ldd,
+                                                   strideA,
+                                                   strideB,
+                                                   strideC,
+                                                   strideD,
+                                                   epilogue,
+                                                   inputs,
+                                                   problemtype,
+                                                   gemmData,
+                                                   gemmCount);
 }
 
 rocblaslt_status rocblaslt_groupedgemm_create_cpp(std::vector<rocblaslt_matmul_desc>& matmul_descr,
@@ -644,16 +946,13 @@ rocblaslt_status rocblaslt_groupedgemm_create_cpp(std::vector<rocblaslt_matmul_d
                                                   std::vector<rocblaslt_matrix_layout>& matD,
                                                   rocblaslt::RocGemm&                   gemm)
 {
-    try
+    if(gemm.getGemmType() != rocblaslt::RocGemmType::ROCBLASLT_GROUPED_GEMM)
     {
-        gemm.setGemmType(rocblaslt::RocGemmType::ROCBLASLT_GROUPED_GEMM);
-        log_api(__func__, "groupedgemm[out]");
-    }
-    catch(const rocblaslt_status& status)
-    {
-        return status;
+        log_api(__func__, "invalid gemm type");
+        return rocblaslt_status_invalid_value;
     }
 
+    std::vector<rocblaslt::RocGemmProblemType> p;
     for(int i = 0; i < matmul_descr.size(); i++)
     {
         // Check if handle is valid
@@ -670,7 +969,9 @@ rocblaslt_status rocblaslt_groupedgemm_create_cpp(std::vector<rocblaslt_matmul_d
             log_error(__func__, "invalid  matrix datatype");
             return rocblaslt_status_type_mismatch;
         }
+        p.push_back(updateGemmProblemType(matmul_descr[i], matA[i], matB[i], matC[i], matD[i]));
     }
+    gemm.setProblemTypes(p);
 
     return rocblaslt_groupedgemm_create_cpp_impl(
         matmul_descr, A, B, C, D, matA, matB, matC, matD, alpha, beta, gemm);
@@ -692,7 +993,3 @@ rocblaslt_status rocblaslt_makeArgument_cpp(const rocblaslt::RocGemmType gemmTyp
 {
     return makeArgument(gemmType, algo, workspace, stream, gemmData);
 }
-
-#ifdef __cplusplus
-}
-#endif

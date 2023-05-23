@@ -57,6 +57,27 @@ GemmPreference
     :protected-members:
     :private-members:
 
+GemmProblemType
+-------------------------------------
+.. doxygenstruct:: hipblaslt_ext::GemmProblemType
+    :members:
+    :protected-members:
+    :private-members:
+
+GemmEpilogue
+-------------------------------------
+.. doxygenstruct:: hipblaslt_ext::GemmEpilogue
+    :members:
+    :protected-members:
+    :private-members:
+
+GemmInputs
+-------------------------------------
+.. doxygenstruct:: hipblaslt_ext::GemmInputs
+    :members:
+    :protected-members:
+    :private-members:
+
 Gemm
 -------------------------------------
 .. doxygenclass:: hipblaslt_ext::Gemm

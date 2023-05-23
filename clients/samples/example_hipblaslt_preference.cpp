@@ -917,7 +917,7 @@ void test_hipblaslt(hipblasDatatype_t  in_out_datatype,
         ha, size_a, hb, size_b, hc, size_c, he, size_e, h_bias, size_bias, h_scaleD, size_scaleD);
 
     // allocate memory on device
-    void *      da, *db, *dc, *dd, *de, *d_bias, *d_scaleD;
+    void *      da, *db, *dc, *dd, *de = nullptr, *d_bias = nullptr, *d_scaleD = nullptr;
     int         num_streams = 1;
     hipStream_t stream      = nullptr;
 
@@ -1043,7 +1043,14 @@ void test_hipblaslt(hipblasDatatype_t  in_out_datatype,
 
     hipblaslt_ext::GemmPreference gemmPref;
     gemmPref.setMaxWorkspaceBytes(max_workspace_size);
-    hipblaslt_ext::Gemm<hipblaslt_ext::GemmType::HIPBLASLT_GEMM> gemm(handle);
+    hipblaslt_ext::Gemm<hipblaslt_ext::GemmType::HIPBLASLT_GEMM> gemm(handle,
+                                                                      trans_a,
+                                                                      trans_b,
+                                                                      in_out_datatype,
+                                                                      in_out_datatype,
+                                                                      in_out_datatype,
+                                                                      in_out_datatype,
+                                                                      HIPBLASLT_COMPUTE_F32);
 
     // hipblasLtMatmulHeuristicResult_t* heuristicResult = nullptr;
     std::vector<hipblasLtMatmulHeuristicResult_t> heuristicResult;

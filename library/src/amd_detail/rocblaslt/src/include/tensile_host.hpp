@@ -197,6 +197,18 @@ struct RocblasltContractionProblem
     }
 };
 
+void initTensileGemmData(rocblaslt_handle       handle,
+                         rocblaslt::RocGemmType gemmType,
+                         hipblasOperation_t     opA,
+                         hipblasOperation_t     opB,
+                         hipblasDatatype_t      typeA,
+                         hipblasDatatype_t      typeB,
+                         hipblasDatatype_t      typeC,
+                         hipblasDatatype_t      typeD,
+                         rocblaslt_compute_type typeCompute,
+                         size_t                 maxWorkspaceBytes,
+                         std::shared_ptr<void>& gemmData);
+
 /*******************************************************************************
  * runContractionProblem() solves a RocblasltContractionProblem *
  *******************************************************************************/
@@ -206,12 +218,14 @@ rocblaslt_status runContractionProblem(rocblaslt_handle                         
                                        RocblasltContractionProblem<Ti, To, Tc> const& problem);
 
 template <typename Ti, typename To, typename Tc>
-rocblaslt_status gemmCreate(rocblaslt::RocGemm&                            gemm,
-                            RocblasltContractionProblem<Ti, To, Tc> const& problem);
+rocblaslt_status gemmCreate(RocblasltContractionProblem<Ti, To, Tc> const& problem,
+                            std::shared_ptr<void>&                         gemmData,
+                            size_t&                                        gemmCount);
 
 template <typename Ti, typename To, typename Tc>
-rocblaslt_status groupedGemmCreate(rocblaslt::RocGemm&                                   gemm,
-                                   std::vector<RocblasltContractionProblem<Ti, To, Tc>>& probs);
+rocblaslt_status groupedGemmCreate(std::vector<RocblasltContractionProblem<Ti, To, Tc>>& probs,
+                                   std::shared_ptr<void>&                                gemmData,
+                                   size_t&                                               gemmCount);
 
 rocblaslt_status makeArgument(const rocblaslt::RocGemmType gemmType,
                               const rocblaslt_matmul_algo& algo,

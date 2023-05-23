@@ -361,6 +361,39 @@ namespace rocblaslt
         ROCBLASLT_GEMMTYPE_UNKNOWN = 3
     };
 
+    struct RocGemmProblemType
+    {
+        hipblasOperation_t     op_a;
+        hipblasOperation_t     op_b;
+        hipblasDatatype_t      type_a;
+        hipblasDatatype_t      type_b;
+        hipblasDatatype_t      type_c;
+        hipblasDatatype_t      type_d;
+        rocblaslt_compute_type type_compute;
+    };
+
+    struct RocGemmEpilogue
+    {
+        rocblaslt_epilogue mode           = ROCBLASLT_EPILOGUE_DEFAULT;
+        hipblasDatatype_t  bias_data_type = static_cast<hipblasDatatype_t>(0);
+        int                aux_ld         = 0;
+        int                aux_stride     = 0;
+    };
+
+    struct RocGemmInputs
+    {
+        void* a     = nullptr;
+        void* b     = nullptr;
+        void* c     = nullptr;
+        void* d     = nullptr;
+        void* alpha = nullptr;
+        void* beta  = nullptr;
+        // Epilogue inputs
+        void* bias   = nullptr;
+        void* scaleD = nullptr;
+        void* aux    = nullptr;
+    };
+
     class RocGemm
     {
     public:
@@ -397,10 +430,20 @@ namespace rocblaslt
         {
             m_data = data;
         }
+        std::vector<RocGemmProblemType> getProblemTypes()
+        {
+            return m_problem_types;
+        }
+        void setProblemTypes(std::vector<RocGemmProblemType>& problem_types)
+        {
+            m_problem_types = problem_types;
+        }
 
     private:
         RocGemmType m_gemm_type  = RocGemmType::ROCBLASLT_GEMMTYPE_UNKNOWN;
         size_t      m_gemm_count = 0;
+
+        std::vector<RocGemmProblemType> m_problem_types;
 
         rocblaslt_handle      m_handle;
         std::shared_ptr<void> m_data;

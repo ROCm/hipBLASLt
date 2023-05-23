@@ -16,17 +16,175 @@ hipBLASLt has extension APIs with namespace hipblaslt_ext. It is C++ compatible 
 Run API (Kernel direct launch)
 ====================
 
-hipblasLt has its own instance (hipblaslt_ext::Gemm). It stores the handle, and max workspace bytes when it is created.
+hipblasLt has its own instance (hipblaslt_ext::Gemm). The problem type is controlled by the template parameter.
+
+The user must assign the problem type when construct or import the problem from hipBLAS API.
 
 .. code-block:: c++
 
-    hipblaslt_ext::Gemm(handle, max_workspace_size);
+    HIPBLASLT_EXPORT explicit Gemm(hipblasLtHandle_t      handle,
+                                   hipblasOperation_t     opA,
+                                   hipblasOperation_t     opB,
+                                   hipblasDatatype_t      typeA,
+                                   hipblasDatatype_t      typeB,
+                                   hipblasDatatype_t      typeC,
+                                   hipblasDatatype_t      typeD,
+                                   hipblasLtComputeType_t typeCompute);
 
-Currently supports importing problems from hipblasLt APIs.
+    // Note: This only works when template == GemmType::HIPBLASLT_GEMM
+    template <GemmType T = GemmTypeT,
+              typename   = typename std::enable_if<T == GemmType::HIPBLASLT_GEMM>::type>
+    HIPBLASLT_EXPORT explicit Gemm(hipblasLtHandle_t       handle,
+                                   hipblasLtMatmulDesc_t   matmul_descr,
+                                   const void*             alpha,
+                                   const void*             A,
+                                   hipblasLtMatrixLayout_t matA,
+                                   const void*             B,
+                                   hipblasLtMatrixLayout_t matB,
+                                   const void*             beta,
+                                   const void*             C,
+                                   hipblasLtMatrixLayout_t matC,
+                                   void*                   D,
+                                   hipblasLtMatrixLayout_t matD);
+
+After the instance is created, the user can set the problem with the API.
+The API may requires the following structures:
+
+GemmProblemType lets user able to change the problem type after the instance is initialized.
 
 .. code-block:: c++
 
-    gemm.setProblemFromhipBlasLt();
+    struct GemmProblemType
+    {
+        hipblasOperation_t     op_a;
+        hipblasOperation_t     op_b;
+        hipblasDatatype_t      type_a;
+        hipblasDatatype_t      type_b;
+        hipblasDatatype_t      type_c;
+        hipblasDatatype_t      type_d;
+        hipblasLtComputeType_t type_compute;
+    };
+
+GemmEpilogue lets user to control the epilogue of the problem.
+
+.. code-block:: c++
+
+    struct GemmEpilogue
+    {
+        hipblasLtEpilogue_t mode = HIPBLASLT_EPILOGUE_DEFAULT;
+        hipblasDatatype_t   bias_data_type;
+        int                 aux_ld;
+        int                 aux_stride;
+    };
+
+GemmInputs is the problem inputs.
+
+.. code-block:: c++
+
+    struct GemmInputs
+    {
+        void* a = nullptr;
+        void* b = nullptr;
+        void* c = nullptr;
+        void* d = nullptr;
+        void* alpha = nullptr;
+        void* beta = nullptr;
+        // Epilogue inputs
+        void* bias = nullptr;
+        void* scaleD = nullptr;
+        void* aux = nullptr;
+    };
+
+And the setProblem APIs:
+
+.. code-block:: c++
+
+    template <GemmType T = GemmTypeT,
+              typename   = typename std::enable_if<T == GemmType::HIPBLASLT_GEMM>::type>
+    HIPBLASLT_EXPORT hipblasStatus_t setProblem(
+        int64_t m, int64_t n, int64_t k, int64_t batch_count, GemmEpilogue& epilogue, GemmInputs& inputs);
+
+    template <GemmType T = GemmTypeT,
+              typename   = typename std::enable_if<T == GemmType::HIPBLASLT_GROUPED_GEMM>::type>
+    HIPBLASLT_EXPORT hipblasStatus_t setProblem(std::vector<int64_t>&      m,
+                                                std::vector<int64_t>&      n,
+                                                std::vector<int64_t>&      k,
+                                                std::vector<int64_t>&      batch_count,
+                                                std::vector<GemmEpilogue>& epilogue,
+                                                std::vector<GemmInputs>&   inputs);
+
+The user can also set the leading dimensions, strides, and reassign the data type with the following API.
+
+.. code-block:: c++
+
+    template <GemmType T = GemmTypeT,
+              typename   = typename std::enable_if<T == GemmType::HIPBLASLT_GEMM>::type>
+    HIPBLASLT_EXPORT hipblasStatus_t setProblem(int64_t          m,
+                                                int64_t          n,
+                                                int64_t          k,
+                                                int64_t          batch_count,
+                                                int64_t          lda,
+                                                int64_t          ldb,
+                                                int64_t          ldc,
+                                                int64_t          ldd,
+                                                int64_t          strideA,
+                                                int64_t          strideB,
+                                                int64_t          strideC,
+                                                int64_t          strideD,
+                                                GemmEpilogue&    epilogue,
+                                                GemmInputs&      inputs,
+                                                GemmProblemType& problemtype);
+
+    template <GemmType T = GemmTypeT,
+              typename   = typename std::enable_if<T == GemmType::HIPBLASLT_GROUPED_GEMM>::type>
+    HIPBLASLT_EXPORT hipblasStatus_t setProblem(std::vector<int64_t>&         m,
+                                                std::vector<int64_t>&         n,
+                                                std::vector<int64_t>&         k,
+                                                std::vector<int64_t>&         batch_count,
+                                                std::vector<int64_t>&         lda,
+                                                std::vector<int64_t>&         ldb,
+                                                std::vector<int64_t>&         ldc,
+                                                std::vector<int64_t>&         ldd,
+                                                std::vector<int64_t>&         strideA,
+                                                std::vector<int64_t>&         strideB,
+                                                std::vector<int64_t>&         strideC,
+                                                std::vector<int64_t>&         strideD,
+                                                std::vector<GemmEpilogue>&    epilogue,
+                                                std::vector<GemmInputs>&      inputs,
+                                                std::vector<GemmProblemType>& problemtype);
+
+The user can also importing problems from hipblasLt APIs after the instance is created, note that this may overwrite the problem type of the instance.
+
+.. code-block:: c++
+
+    template <GemmType T = GemmTypeT,
+              typename   = typename std::enable_if<T == GemmType::HIPBLASLT_GEMM>::type>
+    HIPBLASLT_EXPORT hipblasStatus_t setProblemFromhipBlasLt(hipblasLtMatmulDesc_t matmul_descr,
+                                                             const void*           alpha,
+                                                             const void*           A,
+                                                             hipblasLtMatrixLayout_t matA,
+                                                             const void*             B,
+                                                             hipblasLtMatrixLayout_t matB,
+                                                             const void*             beta,
+                                                             const void*             C,
+                                                             hipblasLtMatrixLayout_t matC,
+                                                             void*                   D,
+                                                             hipblasLtMatrixLayout_t matD);
+
+    template <GemmType T = GemmTypeT,
+              typename   = typename std::enable_if<T == GemmType::HIPBLASLT_GROUPED_GEMM>::type>
+    HIPBLASLT_EXPORT hipblasStatus_t
+        setProblemFromhipBlasLt(std::vector<hipblasLtMatmulDesc_t>&   matmul_descr,
+                                std::vector<float>&                   alpha,
+                                std::vector<void*>&                   A,
+                                std::vector<hipblasLtMatrixLayout_t>& matA,
+                                std::vector<void*>&                   B,
+                                std::vector<hipblasLtMatrixLayout_t>& matB,
+                                std::vector<float>&                   beta,
+                                std::vector<void*>&                   C,
+                                std::vector<hipblasLtMatrixLayout_t>& matC,
+                                std::vector<void*>&                   D,
+                                std::vector<hipblasLtMatrixLayout_t>& matD);
 
 THe user can get hueristic and make kernel arguments with the instance. If the properties of the gemm and the inputs don't change, the user can call the run API to launch the kernel directly.
 
@@ -34,11 +192,29 @@ THe user can get hueristic and make kernel arguments with the instance. If the p
 
     // Pseudo code
     hipblaslt_ext::GemmPreference pref;
-    hipblaslt_ext::Gemm gemm;
+    pref.setMaxWorkspaceBytes(1000000);
+    // Default epilogue mode is HIPBLASLT_EPILOGUE_DEFAULT
+    hipblaslt_ext::GemmEpilogue epilogue;
+    hipblaslt_ext::GemmInputs inputs;
+    inputs.a = a;
+    inputs.b = b;
+    inputs.c = c;
+    inputs.d = d;
+    inputs.alpha = alpha;
+    inputs.beta = beta;
+
+    hipblaslt_ext::Gemm<HIPBLASLT_GEMM> gemm(handle,
+                                             false,
+                                             false,
+                                             HIPBLAS_R_16F,
+                                             HIPBLAS_R_16F,
+                                             HIPBLAS_R_16F,
+                                             HIPBLAS_R_16F,
+                                             HIPBLASLT_COMPUTE_F32);
     std::vector<hipblasLtMatmulHeuristicResult_t> hueristic;
-    gemm.setProblemFromhipBlasLt();
+    gemm.setProblem(1, 1, 1, 1, epilogue, inputs); // m, n, k, batch
     gemm.algoGetHeuristic(gemm, pref, hueristic);
-    gemm.initialize(hueristic[0].algo, stream);
+    gemm.initialize(hueristic[0].algo, d_workspace, stream);
     for(int i = 0; i < 10; i++)
     {
         gemm.run(stream);
@@ -49,16 +225,6 @@ Grouped gemm
 
 hipblasLtExt supports grouped gemm. It shares the same class with normal gemm.
 
-.. code-block:: c++
-
-    hipblaslt_ext::Gemm(handle, max_workspace_size);
-
-Currently supports importing problems from hipblasLt APIs. The inputs are vectors of hipblasLtMatrixLayout_t and vectors of input pointers.
-
-.. code-block:: c++
-
-    gemm.setProblemFromhipBlasLt();
-
 After the problem is set, the user can check the problem type with function getGemmType().
 
 .. code-block:: c++
@@ -66,8 +232,7 @@ After the problem is set, the user can check the problem type with function getG
     enum class GemmType
     {
         HIPBLASLT_GEMM             = 1,
-        HIPBLASLT_GROUPED_GEMM     = 2,
-        HIPBLASLT_GEMMTYPE_UNKNOWN = 3,
+        HIPBLASLT_GROUPED_GEMM     = 2
     };
 
 Get all algorithms
@@ -116,16 +281,16 @@ The API will return the required workspace size in bytes if success.
     for(int j = 0; j < heuristicResult.size(); j++)
     {
         size_t workspace_size = 0;
-        if(hipblasLtExtMatmulIsAlgoSupported(handle,
-                                             matmul,
-                                             &(alpha),
-                                             matA,
-                                             matB,
-                                             &(beta),
-                                             matC,
-                                             matD,
-                                             heuristicResult[j].algo,
-                                             workspace_size)
+        if(hipblaslt_ext::matmulIsAlgoSupported(handle,
+                                                matmul,
+                                                &(alpha),
+                                                matA,
+                                                matB,
+                                                &(beta),
+                                                matC,
+                                                matD,
+                                                heuristicResult[j].algo,
+                                                workspace_size)
            == HIPBLAS_STATUS_SUCCESS)
         {
             validIdx.push_back(j);
@@ -134,5 +299,152 @@ The API will return the required workspace size in bytes if success.
         else
         {
             heuristicResult[j].workspaceSize = 0;
+        }
+    }
+
+Using extension APIs.
+
+Gemm:
+
+.. code-block:: c++
+
+    // Pseudo code for gemm problem
+    // Get all algorithms
+    std::vector<hipblasLtMatmulHeuristicResult_t> heuristicResult;
+    CHECK_HIPBLASLT_ERROR(hipblaslt_ext::getAllAlgos(handle,
+                                                     HIPBLASLT_GEMM,
+                                                     trans_a,
+                                                     trans_b,
+                                                     in_out_datatype,
+                                                     in_out_datatype,
+                                                     in_out_datatype,
+                                                     in_out_datatype,
+                                                     HIPBLASLT_COMPUTE_F32,
+                                                     heuristicResult));
+
+    hipblaslt_ext::GemmPreference pref;
+    pref.setMaxWorkspaceBytes(1000000);
+    hipblaslt_ext::GemmEpilogue epilogue;
+    epilogue.mode = HIPBLASLT_EPILOGUE_GELU;
+    hipblaslt_ext::GemmInputs inputs;
+    inputs.a = a;
+    inputs.b = b;
+    inputs.c = c;
+    inputs.d = d;
+    inputs.alpha = alpha;
+    inputs.beta = beta;
+
+    hipblaslt_ext::Gemm<HIPBLASLT_GEMM> gemm(handle,
+                                             false,
+                                             false,
+                                             HIPBLAS_R_16F,
+                                             HIPBLAS_R_16F,
+                                             HIPBLAS_R_16F,
+                                             HIPBLAS_R_16F,
+                                             HIPBLASLT_COMPUTE_F32);
+
+    gemm.setProblem(1, 1, 1, 1, epilogue, inputs); // m, n, k, batch
+
+    validIdx.clear();
+    for(int j = 0; j < heuristicResult.size(); j++)
+    {
+        size_t workspace_size = 0;
+        if(gemm.isAlgoSupported(heuristicResult[j].algo, workspace_size)
+           == HIPBLAS_STATUS_SUCCESS)
+        {
+            validIdx.push_back(j);
+            heuristicResult[j].workspaceSize = workspace_size;
+        }
+        else
+        {
+            heuristicResult[j].workspaceSize = 0;
+        }
+    }
+
+    if(validIdx.size() > 1)
+    {
+        gemm.initialize(heuristicResult[validIdx[0]].algo, d_workspace, stream);
+        for(int i = 0; i < 10; i++)
+        {
+            gemm.run(stream);
+        }
+    }
+
+Grouped gemm:
+
+.. code-block:: c++
+
+    // Pseudo code for grouped gemm problem
+    // Get all algorithms
+    std::vector<hipblasLtMatmulHeuristicResult_t> heuristicResult;
+    CHECK_HIPBLASLT_ERROR(hipblaslt_ext::getAllAlgos(handle,
+                                                     HIPBLASLT_GEMM,
+                                                     trans_a,
+                                                     trans_b,
+                                                     in_out_datatype,
+                                                     in_out_datatype,
+                                                     in_out_datatype,
+                                                     in_out_datatype,
+                                                     HIPBLASLT_COMPUTE_F32,
+                                                     heuristicResult));
+
+    hipblaslt_ext::GemmPreference pref;
+    pref.setMaxWorkspaceBytes(1000000);
+
+    std::vector<int64_t> m(gemm_count);
+    std::vector<int64_t> n(gemm_count);
+    std::vector<int64_t> k(gemm_count);
+    std::vector<int64_t> batch_count(gemm_count);
+    std::vector<hipblaslt_ext::GemmEpilogue> epilogue(gemm_count);
+    std::vector<hipblaslt_ext::GemmInputs> inputs(gemm_count);
+    for(int i = 0; i < gemm_count; i++)
+    {
+        m[i] = 1;
+        n[i] = 1;
+        k[i] = 1;
+        batch_count[i] = 1;
+        epilogue[i].mode = HIPBLASLT_EPILOGUE_GELU;
+        inputs[i].a = a[i];
+        inputs[i].b = b[i];
+        inputs[i].c = c[i];
+        inputs[i].d = d[i];
+        inputs[i].alpha = alpha[i];
+        inputs[i].beta = beta[i];
+    }
+
+
+    hipblaslt_ext::Gemm<HIPBLASLT_GROUPED_GEMM> groupedGemm(handle,
+                                                            false,
+                                                            false,
+                                                            HIPBLAS_R_16F,
+                                                            HIPBLAS_R_16F,
+                                                            HIPBLAS_R_16F,
+                                                            HIPBLAS_R_16F,
+                                                            HIPBLASLT_COMPUTE_F32);
+
+    groupedGemm.setProblem(m, n, k, batch_count, epilogue, inputs); // m, n, k, batch
+
+    validIdx.clear();
+    for(int j = 0; j < heuristicResult.size(); j++)
+    {
+        size_t workspace_size = 0;
+        if(groupedGemm.isAlgoSupported(heuristicResult[j].algo, workspace_size)
+           == HIPBLAS_STATUS_SUCCESS)
+        {
+            validIdx.push_back(j);
+            heuristicResult[j].workspaceSize = workspace_size;
+        }
+        else
+        {
+            heuristicResult[j].workspaceSize = 0;
+        }
+    }
+
+    if(validIdx.size() > 1)
+    {
+        groupedGemm.initialize(heuristicResult[validIdx[0]].algo, d_workspace, stream);
+        for(int i = 0; i < 10; i++)
+        {
+            groupedGemm.run(stream);
         }
     }

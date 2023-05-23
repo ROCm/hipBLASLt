@@ -43,10 +43,79 @@ namespace hipblaslt_ext
     }
 
     template <GemmType GemmTypeT>
-    Gemm<GemmTypeT>::Gemm(hipblasLtHandle_t handle)
+    HIPBLASLT_EXPORT Gemm<GemmTypeT>::Gemm(hipblasLtHandle_t      handle,
+                                           hipblasOperation_t     opA,
+                                           hipblasOperation_t     opB,
+                                           hipblasDatatype_t      typeA,
+                                           hipblasDatatype_t      typeB,
+                                           hipblasDatatype_t      typeC,
+                                           hipblasDatatype_t      typeD,
+                                           hipblasLtComputeType_t typeCompute)
         : m_gemm_type(GemmTypeT)
         , m_handle(handle)
     {
+        m_problem_types.push_back({opA, opB, typeA, typeB, typeC, typeD, typeCompute});
+        rocblaslt_init_gemmData((rocblaslt_handle)m_handle,
+                                static_cast<rocblaslt::RocGemmType>(m_gemm_type),
+                                opA,
+                                opB,
+                                typeA,
+                                typeB,
+                                typeC,
+                                typeD,
+                                (rocblaslt_compute_type)typeCompute,
+                                0,
+                                m_data);
+    }
+
+    template <GemmType GemmTypeT>
+    template <GemmType T, typename>
+    HIPBLASLT_EXPORT Gemm<GemmTypeT>::Gemm(hipblasLtHandle_t       handle,
+                                           hipblasLtMatmulDesc_t   matmul_descr,
+                                           const void*             alpha,
+                                           const void*             A,
+                                           hipblasLtMatrixLayout_t matA,
+                                           const void*             B,
+                                           hipblasLtMatrixLayout_t matB,
+                                           const void*             beta,
+                                           const void*             C,
+                                           hipblasLtMatrixLayout_t matC,
+                                           void*                   D,
+                                           hipblasLtMatrixLayout_t matD)
+        : m_gemm_type(GemmTypeT)
+        , m_handle(handle)
+    {
+        auto status = setProblemFromhipBlasLt(
+            matmul_descr, alpha, A, matA, B, matB, beta, C, matC, D, matD);
+        if(status != HIPBLAS_STATUS_SUCCESS)
+        {
+            std::cout << "Failed to create instance " << status << std::endl;
+        }
+    }
+
+    template <GemmType GemmTypeT>
+    template <GemmType T, typename>
+    HIPBLASLT_EXPORT Gemm<GemmTypeT>::Gemm(hipblasLtHandle_t                     handle,
+                                           std::vector<hipblasLtMatmulDesc_t>&   matmul_descr,
+                                           std::vector<float>&                   alpha,
+                                           std::vector<void*>&                   A,
+                                           std::vector<hipblasLtMatrixLayout_t>& matA,
+                                           std::vector<void*>&                   B,
+                                           std::vector<hipblasLtMatrixLayout_t>& matB,
+                                           std::vector<float>&                   beta,
+                                           std::vector<void*>&                   C,
+                                           std::vector<hipblasLtMatrixLayout_t>& matC,
+                                           std::vector<void*>&                   D,
+                                           std::vector<hipblasLtMatrixLayout_t>& matD)
+        : m_gemm_type(GemmTypeT)
+        , m_handle(handle)
+    {
+        auto status = setProblemFromhipBlasLt(
+            matmul_descr, alpha, A, matA, B, matB, beta, C, matC, D, matD);
+        if(status != HIPBLAS_STATUS_SUCCESS)
+        {
+            std::cout << "Failed to create instance " << status << std::endl;
+        }
     }
 
     template <GemmType GemmTypeT>
@@ -59,6 +128,181 @@ namespace hipblaslt_ext
     size_t Gemm<GemmTypeT>::getGemmCount()
     {
         return m_gemm_count;
+    }
+
+    template <GemmType GemmTypeT>
+    std::vector<GemmProblemType> Gemm<GemmTypeT>::getProblemTypes()
+    {
+        return m_problem_types;
+    }
+
+    template <GemmType GemmTypeT>
+    template <GemmType T, typename>
+    hipblasStatus_t Gemm<GemmTypeT>::setProblem(int64_t       m,
+                                                int64_t       n,
+                                                int64_t       k,
+                                                int64_t       batch_count,
+                                                GemmEpilogue& epilogue,
+                                                GemmInputs&   inputs)
+    {
+        int lda     = m_problem_types[0].op_a == HIPBLAS_OP_N ? m : k;
+        int ldb     = m_problem_types[0].op_b == HIPBLAS_OP_N ? k : n;
+        int ldc     = m;
+        int strideA = m * k;
+        int strideB = n * k;
+        int strideC = m * n;
+        return setProblem(m,
+                          n,
+                          k,
+                          batch_count,
+                          lda,
+                          ldb,
+                          ldc,
+                          ldc,
+                          strideA,
+                          strideB,
+                          strideC,
+                          strideC,
+                          epilogue,
+                          inputs,
+                          m_problem_types[0]);
+    }
+
+    template <GemmType GemmTypeT>
+    template <GemmType T, typename>
+    hipblasStatus_t Gemm<GemmTypeT>::setProblem(int64_t          m,
+                                                int64_t          n,
+                                                int64_t          k,
+                                                int64_t          batch_count,
+                                                int64_t          lda,
+                                                int64_t          ldb,
+                                                int64_t          ldc,
+                                                int64_t          ldd,
+                                                int64_t          strideA,
+                                                int64_t          strideB,
+                                                int64_t          strideC,
+                                                int64_t          strideD,
+                                                GemmEpilogue&    epilogue,
+                                                GemmInputs&      inputs,
+                                                GemmProblemType& problemtype)
+    {
+        auto rocepilogue    = reinterpret_cast<rocblaslt::RocGemmEpilogue*>(&epilogue);
+        auto rocepinputs    = reinterpret_cast<rocblaslt::RocGemmInputs*>(&inputs);
+        auto rocproblemtype = reinterpret_cast<rocblaslt::RocGemmProblemType*>(&problemtype);
+        auto status         = RocBlasLtStatusToHIPStatus(rocblaslt_gemm_create_cpp(m,
+                                                                           n,
+                                                                           batch_count,
+                                                                           k,
+                                                                           lda,
+                                                                           ldb,
+                                                                           ldc,
+                                                                           ldd,
+                                                                           strideA,
+                                                                           strideB,
+                                                                           strideC,
+                                                                           strideD,
+                                                                           *rocepilogue,
+                                                                           *rocepinputs,
+                                                                           *rocproblemtype,
+                                                                           m_data,
+                                                                           m_gemm_count));
+        if(status == HIPBLAS_STATUS_SUCCESS)
+        {
+            m_problem_types[0] = problemtype;
+        }
+        return status;
+    }
+
+    template <GemmType GemmTypeT>
+    template <GemmType T, typename>
+    hipblasStatus_t Gemm<GemmTypeT>::setProblem(std::vector<int64_t>&      m,
+                                                std::vector<int64_t>&      n,
+                                                std::vector<int64_t>&      k,
+                                                std::vector<int64_t>&      batch_count,
+                                                std::vector<GemmEpilogue>& epilogue,
+                                                std::vector<GemmInputs>&   inputs)
+    {
+        std::vector<int64_t> lda;
+        std::vector<int64_t> ldb;
+        std::vector<int64_t> ldc;
+        std::vector<int64_t> ldd;
+        std::vector<int64_t> strideA;
+        std::vector<int64_t> strideB;
+        std::vector<int64_t> strideC;
+        std::vector<int64_t> strideD;
+        for(size_t i = 0; i < m.size(); i++)
+        {
+            size_t iIdx = m_problem_types.size() == 1 ? 0 : i;
+            lda.push_back(m_problem_types[iIdx].op_a == HIPBLAS_OP_N ? m[i] : k[i]);
+            ldb.push_back(m_problem_types[iIdx].op_b == HIPBLAS_OP_N ? k[i] : n[i]);
+            ldc.push_back(m[i]);
+            ldd.push_back(m[i]);
+            strideA.push_back(m[i] * k[i]);
+            strideB.push_back(m[i] * k[i]);
+            strideC.push_back(m[i] * k[i]);
+            strideD.push_back(m[i] * k[i]);
+        }
+        return setProblem(m,
+                          n,
+                          k,
+                          batch_count,
+                          lda,
+                          ldb,
+                          ldc,
+                          ldd,
+                          strideA,
+                          strideB,
+                          strideC,
+                          strideD,
+                          epilogue,
+                          inputs,
+                          m_problem_types);
+    }
+
+    template <GemmType GemmTypeT>
+    template <GemmType T, typename>
+    hipblasStatus_t Gemm<GemmTypeT>::setProblem(std::vector<int64_t>&         m,
+                                                std::vector<int64_t>&         n,
+                                                std::vector<int64_t>&         k,
+                                                std::vector<int64_t>&         batch_count,
+                                                std::vector<int64_t>&         lda,
+                                                std::vector<int64_t>&         ldb,
+                                                std::vector<int64_t>&         ldc,
+                                                std::vector<int64_t>&         ldd,
+                                                std::vector<int64_t>&         strideA,
+                                                std::vector<int64_t>&         strideB,
+                                                std::vector<int64_t>&         strideC,
+                                                std::vector<int64_t>&         strideD,
+                                                std::vector<GemmEpilogue>&    epilogue,
+                                                std::vector<GemmInputs>&      inputs,
+                                                std::vector<GemmProblemType>& problemtype)
+    {
+        auto rocepilogue = reinterpret_cast<std::vector<rocblaslt::RocGemmEpilogue>*>(&epilogue);
+        auto rocinputs   = reinterpret_cast<std::vector<rocblaslt::RocGemmInputs>*>(&inputs);
+        auto rocproblemtype
+            = reinterpret_cast<std::vector<rocblaslt::RocGemmProblemType>*>(&problemtype);
+        auto status = RocBlasLtStatusToHIPStatus(rocblaslt_groupedgemm_create_cpp(m,
+                                                                                  n,
+                                                                                  batch_count,
+                                                                                  k,
+                                                                                  lda,
+                                                                                  ldb,
+                                                                                  ldc,
+                                                                                  ldd,
+                                                                                  strideA,
+                                                                                  strideB,
+                                                                                  strideC,
+                                                                                  strideD,
+                                                                                  *rocepilogue,
+                                                                                  *rocinputs,
+                                                                                  *rocproblemtype,
+                                                                                  m_data,
+                                                                                  m_gemm_count));
+        if(status == HIPBLAS_STATUS_SUCCESS)
+        {
+            m_problem_types = problemtype;
+        }
+        return status;
     }
 
     template <GemmType GemmTypeT>
@@ -76,6 +320,7 @@ namespace hipblaslt_ext
                                                              hipblasLtMatrixLayout_t matD)
     {
         rocblaslt::RocGemm gemm;
+        gemm.setGemmType(static_cast<rocblaslt::RocGemmType>(m_gemm_type));
         gemm.setHandle((rocblaslt_handle)m_handle);
         auto status = RocBlasLtStatusToHIPStatus(
             rocblaslt_gemm_create_cpp((rocblaslt_matmul_desc)matmul_descr,
@@ -92,9 +337,11 @@ namespace hipblaslt_ext
                                       gemm));
         if(status == HIPBLAS_STATUS_SUCCESS)
         {
-            m_gemm_type  = static_cast<GemmType>(gemm.getGemmType());
-            m_gemm_count = gemm.getGemmCount();
-            m_data       = gemm.getData();
+            auto hipGemm    = reinterpret_cast<Gemm<T>*>(&gemm);
+            m_gemm_type     = hipGemm->getGemmType();
+            m_gemm_count    = hipGemm->getGemmCount();
+            m_data          = hipGemm->m_data;
+            m_problem_types = hipGemm->getProblemTypes();
         }
         return status;
     }
@@ -130,6 +377,7 @@ namespace hipblaslt_ext
             beta_groupedGemm.push_back((const void*)(&(beta[i])));
         }
         rocblaslt::RocGemm gemm;
+        gemm.setGemmType(static_cast<rocblaslt::RocGemmType>(m_gemm_type));
         gemm.setHandle((rocblaslt_handle)m_handle);
         auto status
             = RocBlasLtStatusToHIPStatus(rocblaslt_groupedgemm_create_cpp(*matmul_descr_groupedGemm,
@@ -146,9 +394,11 @@ namespace hipblaslt_ext
                                                                           gemm));
         if(status == HIPBLAS_STATUS_SUCCESS)
         {
-            m_gemm_type  = static_cast<GemmType>(gemm.getGemmType());
-            m_gemm_count = gemm.getGemmCount();
-            m_data       = gemm.getData();
+            auto hipGemm    = reinterpret_cast<Gemm<T>*>(&gemm);
+            m_gemm_type     = hipGemm->getGemmType();
+            m_gemm_count    = hipGemm->getGemmCount();
+            m_data          = hipGemm->m_data;
+            m_problem_types = hipGemm->getProblemTypes();
         }
         return status;
     }
@@ -294,8 +544,26 @@ namespace hipblaslt_ext
         return exception_to_hipblas_status();
     }
 
-    template class HIPBLASLT_EXPORT Gemm<GemmType::HIPBLASLT_GEMM>;
-    template class HIPBLASLT_EXPORT Gemm<GemmType::HIPBLASLT_GROUPED_GEMM>;
+    template class HIPBLASLT_EXPORT           Gemm<GemmType::HIPBLASLT_GEMM>;
+    template class HIPBLASLT_EXPORT           Gemm<GemmType::HIPBLASLT_GROUPED_GEMM>;
+    template HIPBLASLT_EXPORT hipblasStatus_t Gemm<GemmType::HIPBLASLT_GEMM>::setProblem(
+        int64_t m, int64_t n, int64_t b, int64_t k, GemmEpilogue& epilogue, GemmInputs& inputs);
+    template HIPBLASLT_EXPORT hipblasStatus_t
+        Gemm<GemmType::HIPBLASLT_GEMM>::setProblem(int64_t          m,
+                                                   int64_t          n,
+                                                   int64_t          b,
+                                                   int64_t          k,
+                                                   int64_t          lda,
+                                                   int64_t          ldb,
+                                                   int64_t          ldc,
+                                                   int64_t          ldd,
+                                                   int64_t          strideA,
+                                                   int64_t          strideB,
+                                                   int64_t          strideC,
+                                                   int64_t          strideD,
+                                                   GemmEpilogue&    epilogue,
+                                                   GemmInputs&      inputs,
+                                                   GemmProblemType& problemtype);
     template HIPBLASLT_EXPORT hipblasStatus_t
         Gemm<GemmType::HIPBLASLT_GEMM>::setProblemFromhipBlasLt(hipblasLtMatmulDesc_t matmul_descr,
                                                                 const void*           alpha,
@@ -308,6 +576,29 @@ namespace hipblaslt_ext
                                                                 hipblasLtMatrixLayout_t matC,
                                                                 void*                   D,
                                                                 hipblasLtMatrixLayout_t matD);
+    template HIPBLASLT_EXPORT hipblasStatus_t
+        Gemm<GemmType::HIPBLASLT_GROUPED_GEMM>::setProblem(std::vector<int64_t>&      m,
+                                                           std::vector<int64_t>&      n,
+                                                           std::vector<int64_t>&      b,
+                                                           std::vector<int64_t>&      k,
+                                                           std::vector<GemmEpilogue>& epilogue,
+                                                           std::vector<GemmInputs>&   inputs);
+    template HIPBLASLT_EXPORT hipblasStatus_t Gemm<GemmType::HIPBLASLT_GROUPED_GEMM>::setProblem(
+        std::vector<int64_t>&         m,
+        std::vector<int64_t>&         n,
+        std::vector<int64_t>&         b,
+        std::vector<int64_t>&         k,
+        std::vector<int64_t>&         lda,
+        std::vector<int64_t>&         ldb,
+        std::vector<int64_t>&         ldc,
+        std::vector<int64_t>&         ldd,
+        std::vector<int64_t>&         strideA,
+        std::vector<int64_t>&         strideB,
+        std::vector<int64_t>&         strideC,
+        std::vector<int64_t>&         strideD,
+        std::vector<GemmEpilogue>&    epilogue,
+        std::vector<GemmInputs>&      inputs,
+        std::vector<GemmProblemType>& problemtype);
     template HIPBLASLT_EXPORT hipblasStatus_t
         Gemm<GemmType::HIPBLASLT_GROUPED_GEMM>::setProblemFromhipBlasLt(
             std::vector<hipblasLtMatmulDesc_t>&   matmul_descr,
