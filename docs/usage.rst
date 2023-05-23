@@ -16,11 +16,12 @@ hipBLASLt has extension APIs with namespace hipblaslt_ext. It is C++ compatible 
 Run API (Kernel direct launch)
 ====================
 
-hipblasLt has its own instance (hipblaslt_ext::Gemm). It stores the handle, and max workspace bytes when it is created.
+hipblasLt has its own instance (hipblaslt_ext::Gemm). The problem type is controlled by the template parameter.
 
 .. code-block:: c++
 
-    hipblaslt_ext::Gemm(handle, max_workspace_size);
+    hipblaslt_ext::Gemm<HIPBLASLT_GEMM>(handle);
+    hipblaslt_ext::Gemm<HIPBLASLT_GROUPED_GEMM>(handle);
 
 Currently supports importing problems from hipblasLt APIs.
 
@@ -34,7 +35,7 @@ THe user can get hueristic and make kernel arguments with the instance. If the p
 
     // Pseudo code
     hipblaslt_ext::GemmPreference pref;
-    hipblaslt_ext::Gemm gemm;
+    hipblaslt_ext::Gemm<HIPBLASLT_GEMM> gemm;
     std::vector<hipblasLtMatmulHeuristicResult_t> hueristic;
     gemm.setProblemFromhipBlasLt();
     gemm.algoGetHeuristic(gemm, pref, hueristic);
