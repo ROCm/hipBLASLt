@@ -195,9 +195,164 @@ namespace
         return Tensile::ContractionProblemGemm::TENSOR::D;
     }
 
+    Tensile::DataType hip2TensileType(hipblasDatatype_t type)
+    {
+        switch(type)
+        {
+        case HIPBLAS_R_32F:
+            return Tensile::DataType::Float;
+        case HIPBLAS_R_16F:
+            return Tensile::DataType::Half;
+        case HIPBLAS_R_16B:
+            return Tensile::DataType::BFloat16;
+        default:
+            throw std::runtime_error("Unsupported type.");
+        }
+        return Tensile::DataType::None;
+    }
+
+    Tensile::DataType roc2TensileType(rocblaslt_compute_type type)
+    {
+        switch(type)
+        {
+        case rocblaslt_compute_f32:
+            return Tensile::DataType::Float;
+        default:
+            throw std::runtime_error("Unsupported type.");
+        }
+        return Tensile::DataType::None;
+    }
+
+    auto CreateTensileProblem(hipblasOperation_t     opA,
+                              hipblasOperation_t     opB,
+                              hipblasDatatype_t      typeA,
+                              hipblasDatatype_t      typeB,
+                              hipblasDatatype_t      typeC,
+                              hipblasDatatype_t      typeD,
+                              rocblaslt_compute_type typeCompute,
+                              float                  alpha,
+                              float                  beta,
+                              size_t                 maxWorkspaceBytes)
+    {
+        // Tensor descriptors for a, b
+        Tensile::TensorDescriptor a, b;
+
+        // Tensile Indices for contraction problem
+        Tensile::ContractionProblemGemm::FreeIndices  freeIndex(2);
+        Tensile::ContractionProblemGemm::BoundIndices boundIndex(1);
+        Tensile::ContractionProblemGemm::BatchIndices batchIndex{{2, 2, 2, 2}};
+
+        // Set up GEMM indices
+        freeIndex[0].isA = true;
+        freeIndex[1].isA = false;
+        freeIndex[0].c = freeIndex[0].d = 0;
+        freeIndex[1].c = freeIndex[1].d = 1;
+
+        size_t m = 1, n = 1, k = 1;
+        size_t batch_count = 1;
+
+        auto tensileAType = hip2TensileType(typeA);
+        // clang-format off
+
+        // If A is transposed, swap the free and bound dimensions and their ranks
+        if(opA != HIPBLAS_OP_N)
+        {
+            a = {
+                    "a",
+                    tensileAType,
+                    {k, m, batch_count},
+                    {1, k, k * m}
+                };
+            freeIndex[0].i  = 1;
+            boundIndex[0].a = 0;
+        }
+        else
+        {
+            a = {
+                    "a",
+                    tensileAType,
+                    {m, k, batch_count},
+                    {1, m, m * k}
+                };
+            freeIndex[0].i  = 0;
+            boundIndex[0].a = 1;
+        }
+
+        // If B is transposed, swap the free and bound dimensions and their ranks
+        if(opB != HIPBLAS_OP_N)
+        {
+            b = {
+                    "b",
+                    hip2TensileType(typeB),
+                    {n, k, batch_count},
+                    {1, n, n * k}
+                };
+            freeIndex[1].i  = 0;
+            boundIndex[0].b = 1;
+        }
+        else
+        {
+            b = {
+                    "b",
+                    hip2TensileType(typeB),
+                    {k, n, batch_count},
+                    {1, k, k * n}
+                };
+            freeIndex[1].i  = 1;
+            boundIndex[0].b = 0;
+        }
+
+        // clang-format on
+
+        // Descriptor for input matrix C
+        Tensile::TensorDescriptor c{
+            "c", hip2TensileType(typeC), {m, n, batch_count}, {1, m, m * n}};
+
+        // Descriptor for output matrix D
+        Tensile::TensorDescriptor d{
+            "d", hip2TensileType(typeD), {m, n, batch_count}, {1, m, m * n}};
+
+        Tensile::TensorDescriptor e{"e"};
+        Tensile::TensorDescriptor bias{"bias"};
+        Tensile::TensorDescriptor scaleD{"scaleD"};
+
+        // The ContractionProblemGemm
+        Tensile::ContractionProblemGemm tensileProblem{a,
+                                                       b,
+                                                       c,
+                                                       d,
+                                                       e,
+                                                       bias,
+                                                       scaleD,
+                                                       freeIndex,
+                                                       batchIndex,
+                                                       boundIndex,
+                                                       beta,
+                                                       maxWorkspaceBytes};
+
+        auto tensileComputeType = roc2TensileType(typeCompute);
+        tensileProblem.setAlphaType(tensileComputeType);
+        tensileProblem.setBetaType(tensileComputeType);
+
+        // HPA is active iff sizeof(compute type) > sizeof(input type)
+        tensileProblem.setHighPrecisionAccumulate(Tensile::GetElementSize(tensileComputeType)
+                                                  > Tensile::GetElementSize(tensileAType));
+
+        // set batch mode
+        tensileProblem.setStridedBatched(true);
+        tensileProblem.setGroupedGemm(false);
+
+        tensileProblem.setAlphaRestriction(Tensile::toScalarValueEnum(alpha));
+
+        // Add problem predicates for CEqualsD
+        tensileProblem.setCEqualsD(false);
+        return tensileProblem;
+    }
+
     /****************************************************************
  * Construct a Tensile Problem from a RocblasltContractionProblem *
  ****************************************************************/
+    // Should remove this
     template <typename Ti, typename To, typename Tc>
     auto ConstructTensileProblem(const RocblasltContractionProblem<Ti, To, Tc>& prob)
     {
@@ -876,6 +1031,59 @@ namespace
 #endif
 } // namespace
 
+struct TensileDataGemm
+{
+    Tensile::ContractionProblemGemm        problem;
+    Tensile::ContractionInputs             inputs;
+    std::vector<Tensile::KernelInvocation> kernels;
+};
+
+struct TensileDataGroupedGemm
+{
+    Tensile::ContractionProblemGroupedGemm problem;
+    Tensile::ContractionGroupedInputs      inputs;
+    std::vector<Tensile::KernelInvocation> kernels;
+};
+
+void initTensileGemmData(rocblaslt_handle       handle,
+                         rocblaslt::RocGemmType gemmType,
+                         hipblasOperation_t     opA,
+                         hipblasOperation_t     opB,
+                         hipblasDatatype_t      typeA,
+                         hipblasDatatype_t      typeB,
+                         hipblasDatatype_t      typeC,
+                         hipblasDatatype_t      typeD,
+                         rocblaslt_compute_type typeCompute,
+                         size_t                 maxWorkspaceBytes,
+                         std::shared_ptr<void>& gemmData)
+{
+    float alpha = 1.0;
+    float beta  = 1.0;
+    if(gemmType == rocblaslt::RocGemmType::ROCBLASLT_GEMM)
+    {
+        TensileDataGemm data;
+        data.problem = CreateTensileProblem(
+            opA, opB, typeA, typeB, typeC, typeD, typeCompute, alpha, beta, maxWorkspaceBytes);
+        gemmData = std::static_pointer_cast<void>(std::make_shared<TensileDataGemm>(data));
+        return;
+    }
+    else if(gemmType == rocblaslt::RocGemmType::ROCBLASLT_GROUPED_GEMM)
+    {
+        TensileDataGroupedGemm                  data;
+        Tensile::ContractionProblemGroupedGemm& tensile_probs = data.problem;
+        Tensile::ContractionGroupedInputs&      groupedInputs = data.inputs;
+
+        tensile_probs.gemms.push_back(CreateTensileProblem(
+            opA, opB, typeA, typeB, typeC, typeD, typeCompute, alpha, beta, maxWorkspaceBytes));
+        groupedInputs.grouped.resize(1);
+
+        gemmData = std::static_pointer_cast<void>(std::make_shared<TensileDataGroupedGemm>(data));
+        return;
+    }
+
+    throw std::runtime_error("Gemm problem type initialization not implemented.");
+}
+
 /******************************************************************************
  * runContractionProblem calls Tensile to run a contraction problem described *
  * by RocblasltContractionProblem *
@@ -960,23 +1168,10 @@ rocblaslt_status runContractionProblem(rocblaslt_handle                         
     return status;
 }
 
-struct TensileDataGemm
-{
-    Tensile::ContractionProblemGemm        problem;
-    Tensile::ContractionInputs             inputs;
-    std::vector<Tensile::KernelInvocation> kernels;
-};
-
-struct TensileDataGroupedGemm
-{
-    Tensile::ContractionProblemGroupedGemm problem;
-    Tensile::ContractionGroupedInputs      inputs;
-    std::vector<Tensile::KernelInvocation> kernels;
-};
-
 template <typename Ti, typename To, typename Tc>
-rocblaslt_status gemmCreate(rocblaslt::RocGemm&                            gemm,
-                            RocblasltContractionProblem<Ti, To, Tc> const& problem)
+rocblaslt_status gemmCreate(RocblasltContractionProblem<Ti, To, Tc> const& problem,
+                            std::shared_ptr<void>&                         gemmData,
+                            size_t&                                        gemmCount)
 {
     rocblaslt_status status = rocblaslt_status_internal_error;
     try
@@ -988,12 +1183,23 @@ rocblaslt_status gemmCreate(rocblaslt::RocGemm&                            gemm,
             log_error(__func__, "invalid data pointer");
             return rocblaslt_status_invalid_pointer;
         }
-        gemm.setGemmCount(1);
-        TensileDataGemm data;
-        data.problem = ConstructTensileProblem(problem);
-        data.inputs  = GetTensileInputs(problem);
+        gemmCount = 1;
+        if(gemmData)
+        {
+            // Need to check if is same type?
+            std::shared_ptr<TensileDataGemm> data
+                = std::static_pointer_cast<TensileDataGemm>(gemmData);
+            updateTensileProblem(false, problem, data->problem);
+            data->inputs = GetTensileInputs(problem);
+        }
+        else
+        {
+            TensileDataGemm data;
+            data.problem = ConstructTensileProblem(problem);
+            data.inputs  = GetTensileInputs(problem);
 
-        gemm.setData(std::static_pointer_cast<void>(std::make_shared<TensileDataGemm>(data)));
+            gemmData = std::static_pointer_cast<void>(std::make_shared<TensileDataGemm>(data));
+        }
 
         status = rocblaslt_status_success;
     }
@@ -1018,35 +1224,66 @@ rocblaslt_status gemmCreate(rocblaslt::RocGemm&                            gemm,
 }
 
 template <typename Ti, typename To, typename Tc>
-rocblaslt_status groupedGemmCreate(rocblaslt::RocGemm&                                   gemm,
-                                   std::vector<RocblasltContractionProblem<Ti, To, Tc>>& probs)
+rocblaslt_status groupedGemmCreate(std::vector<RocblasltContractionProblem<Ti, To, Tc>>& probs,
+                                   std::shared_ptr<void>&                                gemmData,
+                                   size_t&                                               gemmCount)
 {
-    gemm.setGemmCount(probs.size());
-    if(gemm.getGemmCount() == 0)
+    gemmCount = probs.size();
+    if(gemmCount == 0)
         return rocblaslt_status_success;
     rocblaslt_status status = rocblaslt_status_internal_error;
     try
     {
-        TensileDataGroupedGemm                  data;
-        Tensile::ContractionProblemGroupedGemm& tensile_probs = data.problem;
-        Tensile::ContractionGroupedInputs&      groupedInputs = data.inputs;
-
-        for(int i = 0; i < probs.size(); i++)
+        if(gemmData)
         {
-            // Check if pointer is valid
-            if(probs[i].alpha == nullptr || probs[i].beta == nullptr || probs[i].A == nullptr
-               || probs[i].B == nullptr || probs[i].C == nullptr || probs[i].D == nullptr)
+            // Need to check if is same type?
+            std::shared_ptr<TensileDataGroupedGemm> data
+                = std::static_pointer_cast<TensileDataGroupedGemm>(gemmData);
+            Tensile::ContractionProblemGroupedGemm& tensile_probs = data->problem;
+            Tensile::ContractionGroupedInputs&      groupedInputs = data->inputs;
+
+            groupedInputs.grouped.clear();
+            if(tensile_probs.gemms.size() != probs.size())
+                tensile_probs.gemms.clear();
+
+            for(int i = 0; i < probs.size(); i++)
             {
-                log_error(__func__, "invalid data pointer");
-                return rocblaslt_status_invalid_pointer;
+                // Check if pointer is valid
+                if(probs[i].alpha == nullptr || probs[i].beta == nullptr || probs[i].A == nullptr
+                   || probs[i].B == nullptr || probs[i].C == nullptr || probs[i].D == nullptr)
+                {
+                    log_error(__func__, "invalid data pointer");
+                    return rocblaslt_status_invalid_pointer;
+                }
+                if(tensile_probs.gemms.size() != probs.size())
+                    tensile_probs.gemms.push_back(ConstructTensileProblem(probs[i]));
+                else
+                    updateTensileProblem(false, probs[i], tensile_probs.gemms[i]);
+                groupedInputs.grouped.push_back(GetTensileInputs(probs[i]));
             }
-            tensile_probs.gemms.push_back(ConstructTensileProblem(probs[i]));
-            groupedInputs.grouped.push_back(GetTensileInputs(probs[i]));
         }
+        else
+        {
+            TensileDataGroupedGemm                  data;
+            Tensile::ContractionProblemGroupedGemm& tensile_probs = data.problem;
+            Tensile::ContractionGroupedInputs&      groupedInputs = data.inputs;
 
-        gemm.setData(
-            std::static_pointer_cast<void>(std::make_shared<TensileDataGroupedGemm>(data)));
+            for(int i = 0; i < probs.size(); i++)
+            {
+                // Check if pointer is valid
+                if(probs[i].alpha == nullptr || probs[i].beta == nullptr || probs[i].A == nullptr
+                   || probs[i].B == nullptr || probs[i].C == nullptr || probs[i].D == nullptr)
+                {
+                    log_error(__func__, "invalid data pointer");
+                    return rocblaslt_status_invalid_pointer;
+                }
+                tensile_probs.gemms.push_back(ConstructTensileProblem(probs[i]));
+                groupedInputs.grouped.push_back(GetTensileInputs(probs[i]));
+            }
 
+            gemmData
+                = std::static_pointer_cast<void>(std::make_shared<TensileDataGroupedGemm>(data));
+        }
         status = rocblaslt_status_success;
     }
     catch(const std::exception& e)
@@ -1948,10 +2185,11 @@ extern "C" void rocblaslt_createialize()
         rocblaslt_handle             handle,                                                     \
         const rocblaslt_matmul_algo* algo,                                                       \
         const RocblasltContractionProblem<Ti, To, Tc>&);                                         \
-    template rocblaslt_status gemmCreate(rocblaslt::RocGemm&,                                    \
-                                         const RocblasltContractionProblem<Ti, To, Tc>&);        \
+    template rocblaslt_status gemmCreate(const RocblasltContractionProblem<Ti, To, Tc>&,         \
+                                         std::shared_ptr<void>& gemmData,                        \
+                                         size_t&                gemmCount);                                     \
     template rocblaslt_status groupedGemmCreate<Ti, To, Tc>(                                     \
-        rocblaslt::RocGemm&, std::vector<RocblasltContractionProblem<Ti, To, Tc>>&);             \
+        std::vector<RocblasltContractionProblem<Ti, To, Tc>>&, std::shared_ptr<void>&, size_t&); \
     template RocblasltContractionProblem<Ti, To, Tc> ConstructRocblasltProblem<Ti, To, Tc>(      \
         const rocblaslt_matmul_desc matmul_descr,                                                \
         rocblaslt_matrix_layout     matA,                                                        \
