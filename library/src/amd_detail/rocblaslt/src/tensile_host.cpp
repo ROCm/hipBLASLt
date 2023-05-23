@@ -1848,10 +1848,10 @@ rocblaslt_status getBestSolutions(rocblaslt_handle       handle,
         auto                             solutions    = getSolutions(
             data->inputs, library, hardware, data->problem, requestedAlgoCount, fallbackSize);
 
-        heuristicResults.clear();
-        heuristicResults.resize(solutions.size());
         auto algoCount       = min(requestedAlgoCount, solutions.size());
         int  returnAlgoCount = 0;
+        heuristicResults.clear();
+        heuristicResults.resize(algoCount);
         _convertToHeuristicResultArray(solutions,
                                        algoCount,
                                        heuristicResults.data(),
@@ -1911,10 +1911,10 @@ rocblaslt_status getBestSolutions(rocblaslt_handle       handle,
             data->problem.gemms, *hardware, requestedAlgoCount - solutions_fallback.size());
         solutions.insert(solutions.begin(), solutions_fallback.begin(), solutions_fallback.end());
 
-        heuristicResults.clear();
-        heuristicResults.resize(solutions.size());
         auto algoCount       = min(requestedAlgoCount, solutions.size());
         int  returnAlgoCount = 0;
+        heuristicResults.clear();
+        heuristicResults.resize(algoCount);
 
         _convertToHeuristicResultArray(solutions,
                                        algoCount,
