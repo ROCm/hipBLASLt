@@ -879,15 +879,14 @@ void test_hipblaslt(hipblasDatatype_t           in_out_datatype,
     std::vector<int> validIdx;
     int              returnedAlgoCount = heuristicResult.size();
 
-    hipblaslt_ext::Gemm<hipblaslt_ext::GemmType::HIPBLASLT_GROUPED_GEMM> groupedGemm(
-        handle,
-        trans_a,
-        trans_b,
-        in_out_datatype,
-        in_out_datatype,
-        in_out_datatype,
-        in_out_datatype,
-        HIPBLASLT_COMPUTE_F32);
+    hipblaslt_ext::GroupedGemm groupedGemm(handle,
+                                           trans_a,
+                                           trans_b,
+                                           in_out_datatype,
+                                           in_out_datatype,
+                                           in_out_datatype,
+                                           in_out_datatype,
+                                           HIPBLASLT_COMPUTE_F32);
 
     std::cout << "index, transAB, M, N, K, lda, ldb, ldc, stride_a, stride_b, "
                  "stride_c, batch_count, alpha, beta, bias, scaleD, activationType"
