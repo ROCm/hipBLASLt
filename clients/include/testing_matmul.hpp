@@ -1063,44 +1063,63 @@ void testing_matmul(const Arguments& arg)
 
             if(arg.norm_check)
             {
-                hipblaslt_error = std::abs(norm_check_general<To>('F',
-                                                                  M[gemmIdx],
-                                                                  N[gemmIdx],
-                                                                  ldd[gemmIdx],
-                                                                  stride_d[gemmIdx],
-                                                                  *(hD_gold[gemmIdx]),
-                                                                  *(hD_1[gemmIdx]),
-                                                                  num_batches[gemmIdx]));
+                double norm_error = std::abs(norm_check_general<To>('F',
+                                                                    M[gemmIdx],
+                                                                    N[gemmIdx],
+                                                                    ldd[gemmIdx],
+                                                                    stride_d[gemmIdx],
+                                                                    *(hD_gold[gemmIdx]),
+                                                                    *(hD_1[gemmIdx]),
+                                                                    num_batches[gemmIdx]));
+                hipblaslt_error += norm_error;
+                if(arg.norm_check_assert)
+                    CHECK_SUCCESS(norm_check<To>(norm_error));
+
                 if(!arg.gradient && arg.use_e)
-                    hipblaslt_error += std::abs(norm_check_general<Tc>('F',
-                                                                       M[gemmIdx],
-                                                                       N[gemmIdx],
-                                                                       lde[gemmIdx],
-                                                                       stride_e[gemmIdx],
-                                                                       *(hE_gold[gemmIdx]),
-                                                                       *(hE[gemmIdx]),
-                                                                       num_batches[gemmIdx]));
+                {
+                    double norm_error = std::abs(norm_check_general<Tc>('F',
+                                                                        M[gemmIdx],
+                                                                        N[gemmIdx],
+                                                                        lde[gemmIdx],
+                                                                        stride_e[gemmIdx],
+                                                                        *(hE_gold[gemmIdx]),
+                                                                        *(hE[gemmIdx]),
+                                                                        num_batches[gemmIdx]));
+                    hipblaslt_error += norm_error;
+                    if(arg.norm_check_assert)
+                        CHECK_SUCCESS(norm_check<Tc>(norm_error));
+                }
                 if(arg.gradient && arg.bias_vector)
                 {
                     if(arg.d_type != arg.scale_type && arg.bias_type == arg.scale_type)
-                        hipblaslt_error
-                            += std::abs(norm_check_general<Talpha>('F',
-                                                                   M[gemmIdx],
-                                                                   1,
-                                                                   M[gemmIdx],
-                                                                   M[gemmIdx],
-                                                                   *(hBias_gold_C[gemmIdx]),
-                                                                   *(hBias_C[gemmIdx]),
-                                                                   num_batches[gemmIdx]));
+                    {
+                        double norm_error
+                            = std::abs(norm_check_general<Talpha>('F',
+                                                                  M[gemmIdx],
+                                                                  1,
+                                                                  M[gemmIdx],
+                                                                  M[gemmIdx],
+                                                                  *(hBias_gold_C[gemmIdx]),
+                                                                  *(hBias_C[gemmIdx]),
+                                                                  num_batches[gemmIdx]));
+                        hipblaslt_error += norm_error;
+                        if(arg.norm_check_assert)
+                            CHECK_SUCCESS(norm_check<Tc>(norm_error));
+                    }
                     else
-                        hipblaslt_error += std::abs(norm_check_general<To>('F',
-                                                                           M[gemmIdx],
-                                                                           1,
-                                                                           M[gemmIdx],
-                                                                           M[gemmIdx],
-                                                                           *(hBias_gold[gemmIdx]),
-                                                                           *(hBias[gemmIdx]),
-                                                                           num_batches[gemmIdx]));
+                    {
+                        double norm_error = std::abs(norm_check_general<To>('F',
+                                                                            M[gemmIdx],
+                                                                            1,
+                                                                            M[gemmIdx],
+                                                                            M[gemmIdx],
+                                                                            *(hBias_gold[gemmIdx]),
+                                                                            *(hBias[gemmIdx]),
+                                                                            num_batches[gemmIdx]));
+                        hipblaslt_error += norm_error;
+                        if(arg.norm_check_assert)
+                            CHECK_SUCCESS(norm_check<Tc>(norm_error));
+                    }
                 }
             }
         }

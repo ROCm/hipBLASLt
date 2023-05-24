@@ -96,18 +96,19 @@ void Arguments::init()
     transA = '*';
     transB = '*';
 
-    activation_type = hipblaslt_activation_type::none;
-    activation_arg1 = 0.0f;
-    activation_arg2 = std::numeric_limits<float>::infinity();
-    bias_type       = static_cast<hipblasDatatype_t>(-1);
-    bias_source     = hipblaslt_bias_source::d;
-    bias_vector     = false;
-    scaleD_vector   = false;
-    grouped_gemm    = 0;
-    c_noalias_d     = false;
-    HMM             = false;
-    use_e           = false;
-    gradient        = false;
+    activation_type   = hipblaslt_activation_type::none;
+    activation_arg1   = 0.0f;
+    activation_arg2   = std::numeric_limits<float>::infinity();
+    bias_type         = static_cast<hipblasDatatype_t>(-1);
+    bias_source       = hipblaslt_bias_source::d;
+    bias_vector       = false;
+    scaleD_vector     = false;
+    grouped_gemm      = 0;
+    c_noalias_d       = false;
+    HMM               = false;
+    use_e             = false;
+    gradient          = false;
+    norm_check_assert = true;
 }
 
 // Function to print Arguments out to stream in YAML format

@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022 Advanced Micro Devices, Inc.
+ * Copyright (C) 2022-2023 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -139,10 +139,10 @@ double norm_check_general(char norm_type, int64_t M, int64_t N, int64_t lda, T* 
 }
 
 // For BF16 and half, we convert the results to double first
-template <
-    typename T,
-    typename VEC,
-    std::enable_if_t<std::is_same<T, hipblasLtHalf>{} || std::is_same<T, hip_bfloat16>{}, int> = 0>
+template <typename T,
+          typename VEC,
+          std::enable_if_t<std::is_same<T, hipblasLtHalf>{} || std::is_same<T, hip_bfloat16>{}, int>
+          = 0>
 double norm_check_general(char norm_type, int64_t M, int64_t N, int64_t lda, VEC&& hCPU, T* hGPU)
 {
     size_t              size = N * (size_t)lda;
@@ -255,4 +255,16 @@ double norm_check_general(
     }
 
     return cumulative_error;
+}
+
+template <typename T>
+bool norm_check(double norm_error)
+{
+    if(std::is_same<T, float>{})
+        return norm_error < 0.00001;
+    if(std::is_same<T, hipblasLtHalf>{})
+        return norm_error < 0.01;
+    if(std::is_same<T, hip_bfloat16>{})
+        return norm_error < 0.1;
+    return false;
 }
