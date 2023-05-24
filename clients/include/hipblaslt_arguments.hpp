@@ -124,6 +124,7 @@ struct Arguments
     bool                  HMM;
     bool                  use_e;
     bool                  gradient;
+    bool                  norm_check_assert;
 
     /*************************************************************************
      *                     End Of Arguments                                  *
@@ -189,7 +190,8 @@ struct Arguments
     OPER(c_noalias_d) SEP            \
     OPER(HMM) SEP                    \
     OPER(use_e) SEP                  \
-    OPER(gradient) SEP
+    OPER(gradient) SEP               \
+    OPER(norm_check_assert) SEP
 
     // clang-format on
 

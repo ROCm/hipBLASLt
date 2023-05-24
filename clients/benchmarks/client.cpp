@@ -554,6 +554,7 @@ try
     if(copied <= 0 || copied >= sizeof(arg.function))
         throw std::invalid_argument("Invalid value for --function");
 
+    arg.norm_check_assert = false;
     return run_bench_test(arg, filter, any_stride);
 }
 catch(const std::invalid_argument& exp)
