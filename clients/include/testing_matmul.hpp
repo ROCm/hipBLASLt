@@ -717,7 +717,7 @@ void testing_matmul(const Arguments& arg)
     // grouped gemm
     hipblaslt_ext::GemmPreference gemmPref;
     gemmPref.setMaxWorkspaceBytes(max_workspace_size);
-    hipblaslt_ext::Gemm<hipblaslt_ext::GemmType::HIPBLASLT_GROUPED_GEMM> groupedGemm(
+    hipblaslt_ext::GroupedGemm groupedGemm(
         handle, transA, transB, arg.a_type, arg.b_type, arg.c_type, arg.d_type, arg.compute_type);
     std::vector<void*> da(gemm_count), db(gemm_count), dc(gemm_count), dd(gemm_count);
 

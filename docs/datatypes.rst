@@ -78,9 +78,23 @@ GemmInputs
     :protected-members:
     :private-members:
 
+GemmInstance
+-------------------------------------
+.. doxygenclass:: hipblaslt_ext::GemmInstance
+    :members:
+    :protected-members:
+    :private-members:
+
 Gemm
 -------------------------------------
 .. doxygenclass:: hipblaslt_ext::Gemm
+    :members:
+    :protected-members:
+    :private-members:
+
+GroupedGemm
+-------------------------------------
+.. doxygenclass:: hipblaslt_ext::GroupedGemm
     :members:
     :protected-members:
     :private-members:

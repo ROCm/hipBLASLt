@@ -120,389 +120,11 @@ namespace hipblaslt_ext
 
     /*! \ingroup types_module
      *  \brief hipblasLt extension instance for gemm problems.
-     *
-     * \details The instance can be used to create arguments to compute the matrix
-     * multiplication of matrices A and B to produce the output matrix D, according
-     * to the following operation: \p D = \p alpha*( \p A *\p B) + \p beta*( \p C ),
-     * where \p A, \p B, and \p C are input matrices, and \p alpha and \p beta are
-     * input scalars.
      */
-    template <GemmType GemmTypeT>
-    class Gemm
+    class GemmInstance
     {
     public:
-        /*! \ingroup library_module
-        *  \brief Constructor
-        *
-        *  \details
-        *  This function set the problem from hipblasLt structures. For more information
-        * about the structures, see hipblasLtMatmul for more information.
-        *
-        *  @param[in]
-        *  handle                     The handle from hipBLASLt.
-        *  @param[in]
-        *  opA,opB                    The transpose type of matrix A, B
-        *  @param[in]
-        *  typeA,typeB,typeC,typeD    The data type of matrix A, B, C, D
-        *  @param[in]
-        *  typeCompute                The compute type of the gemm problem
-        */
-        HIPBLASLT_EXPORT explicit Gemm(hipblasLtHandle_t      handle,
-                                       hipblasOperation_t     opA,
-                                       hipblasOperation_t     opB,
-                                       hipblasDatatype_t      typeA,
-                                       hipblasDatatype_t      typeB,
-                                       hipblasDatatype_t      typeC,
-                                       hipblasDatatype_t      typeD,
-                                       hipblasLtComputeType_t typeCompute);
-
-        /*! \ingroup library_module
-        *  \brief Constructor that sets the gemm problem from hipblasLt structures
-        *
-        *  \details
-        *  This constructor sets the problem from hipblasLt structures. For more information
-        * about the structures, see hipblasLtMatmul for more information.
-        *
-        *  @param[in]
-        *  handle                  The handle from hipBLASLt.
-        *  @param[in]
-        *  matmulDesc              Handle to a previously created matrix multiplication
-        * descriptor of type \ref hipblasLtMatmulDesc_t .
-        *  @param[in]
-        *  alpha,beta              Pointers to the scalars used in the multiplication.
-        *  @param[in]
-        *  matA,matB,matC,matD Handles to the previously created matrix layout
-        * descriptors of the type \ref hipblasLtMatrixLayout_t .
-        *  @param[in]
-        *  A,B,C                   Pointers to the GPU memory associated with the
-        * corresponding descriptors \p matA, \p matB and \p matC .
-        *  @param[out]
-        *  D                       Pointer to the GPU memory associated with the
-        * descriptor \p matD .
-        */
-        template <GemmType T = GemmTypeT,
-                  typename   = typename std::enable_if<T == GemmType::HIPBLASLT_GEMM>::type>
-        HIPBLASLT_EXPORT explicit Gemm(hipblasLtHandle_t       handle,
-                                       hipblasLtMatmulDesc_t   matmul_descr,
-                                       const void*             alpha,
-                                       const void*             A,
-                                       hipblasLtMatrixLayout_t matA,
-                                       const void*             B,
-                                       hipblasLtMatrixLayout_t matB,
-                                       const void*             beta,
-                                       const void*             C,
-                                       hipblasLtMatrixLayout_t matC,
-                                       void*                   D,
-                                       hipblasLtMatrixLayout_t matD);
-
-        /*! \ingroup library_module
-        *  \brief Constructor that sets the grouped gemm problem from hipblasLt structures
-        *
-        *  \details
-        *  This constructor sets the problem from hipblasLt structures. For more information
-        * about the structures, see hipblasLtMatmul for more information.
-        *
-        *  @param[in]
-        *  handle                  The handle from hipBLASLt.
-        *  @param[in]
-        *  matmulDesc              Vectors of handle to a previously created matrix
-        * multiplication descriptor of type \ref hipblasLtMatmulDesc_t .
-        *  @param[in]
-        *  alpha,beta              Vectors of float used in the multiplication.
-        *  @param[in]
-        *  matA,matB,matC,matD Vectors of handle to the previously created matrix
-        * layout descriptors of the type \ref hipblasLtMatrixLayout_t .
-        *  @param[in]
-        *  A,B,C                   Vectors of pointer to the GPU memory associated
-        * with the corresponding descriptors \p matA, \p matB and \p matC .
-        *  @param[out]
-        *  D                       Vector of pointer to the GPU memory associated with
-        * the descriptor \p matD .
-        */
-        template <GemmType T = GemmTypeT,
-                  typename   = typename std::enable_if<T == GemmType::HIPBLASLT_GROUPED_GEMM>::type>
-        HIPBLASLT_EXPORT explicit Gemm(hipblasLtHandle_t                     handle,
-                                       std::vector<hipblasLtMatmulDesc_t>&   matmul_descr,
-                                       std::vector<float>&                   alpha,
-                                       std::vector<void*>&                   A,
-                                       std::vector<hipblasLtMatrixLayout_t>& matA,
-                                       std::vector<void*>&                   B,
-                                       std::vector<hipblasLtMatrixLayout_t>& matB,
-                                       std::vector<float>&                   beta,
-                                       std::vector<void*>&                   C,
-                                       std::vector<hipblasLtMatrixLayout_t>& matC,
-                                       std::vector<void*>&                   D,
-                                       std::vector<hipblasLtMatrixLayout_t>& matD);
-
-        /*! \ingroup library_module
-        *  \brief Sets the problem for a gemm problem.
-        *
-        *  \details
-        *  This function sets the problem with m, n, k, batch_count. It uses the problem type sets
-        *  from the constructor.
-        *
-        *  @param[in]
-        *  m,n,k                      The problem size.
-        *  @param[in]
-        *  batch_count                The batch count.
-        *  @param[in]
-        *  epilogue                   The structure that controls the epilogue.
-        *  @param[in]
-        *  inputs                     The inputs of the problem.
-        *
-        *  \retval HIPBLAS_STATUS_SUCCESS           If the operation completed
-        * successfully. \retval HIPBLAS_STATUS_EXECUTION_FAILED  If HIP reported an
-        * execution error from the device. \retval HIPBLAS_STATUS_ARCH_MISMATCH     If
-        * the configured operation cannot be run using the selected device. \retval
-        * HIPBLAS_STATUS_NOT_SUPPORTED     If the current implementation on the
-        * selected device doesn't support the configured operation. \retval
-        * HIPBLAS_STATUS_INVALID_VALUE     If the parameters are unexpectedly NULL, in
-        * conflict or in an impossible configuration.
-        *  \retval HIBLAS_STATUS_NOT_INITIALIZED    If hipBLASLt handle has not been
-        * initialized.
-        */
-        template <GemmType T = GemmTypeT,
-                  typename   = typename std::enable_if<T == GemmType::HIPBLASLT_GEMM>::type>
-        HIPBLASLT_EXPORT hipblasStatus_t setProblem(int64_t       m,
-                                                    int64_t       n,
-                                                    int64_t       k,
-                                                    int64_t       batch_count,
-                                                    GemmEpilogue& epilogue,
-                                                    GemmInputs&   inputs);
-
-        /*! \ingroup library_module
-        *  \brief Sets the problem for a gemm problem.
-        *
-        *  \details
-        *  This function sets the problem with m, n, k, batch_count. It uses the problem type sets
-        *  from the constructor.
-        *
-        *  @param[in]
-        *  m,n,k                            The problem size.
-        *  @param[in]
-        *  batch_count                      The batch count.
-        *  @param[in]
-        *  lda,ldb,ldc,ldd                  The leading dimensions of the matrix.
-        *  @param[in]
-        *  strideA,strideB,strideC,strideD  The batch stride of the matrix.
-        *  @param[in]
-        *  epilogue                         The structure that controls the epilogue.
-        *  @param[in]
-        *  inputs                           The inputs of the problem.
-        *  @param[in]
-        *  problemtype                      The structure that sets the problem type of a gemm problem.
-        *
-        *  \retval HIPBLAS_STATUS_SUCCESS           If the operation completed
-        * successfully. \retval HIPBLAS_STATUS_EXECUTION_FAILED  If HIP reported an
-        * execution error from the device. \retval HIPBLAS_STATUS_ARCH_MISMATCH     If
-        * the configured operation cannot be run using the selected device. \retval
-        * HIPBLAS_STATUS_NOT_SUPPORTED     If the current implementation on the
-        * selected device doesn't support the configured operation. \retval
-        * HIPBLAS_STATUS_INVALID_VALUE     If the parameters are unexpectedly NULL, in
-        * conflict or in an impossible configuration.
-        *  \retval HIBLAS_STATUS_NOT_INITIALIZED    If hipBLASLt handle has not been
-        * initialized.
-        */
-        template <GemmType T = GemmTypeT,
-                  typename   = typename std::enable_if<T == GemmType::HIPBLASLT_GEMM>::type>
-        HIPBLASLT_EXPORT hipblasStatus_t setProblem(int64_t          m,
-                                                    int64_t          n,
-                                                    int64_t          k,
-                                                    int64_t          batch_count,
-                                                    int64_t          lda,
-                                                    int64_t          ldb,
-                                                    int64_t          ldc,
-                                                    int64_t          ldd,
-                                                    int64_t          strideA,
-                                                    int64_t          strideB,
-                                                    int64_t          strideC,
-                                                    int64_t          strideD,
-                                                    GemmEpilogue&    epilogue,
-                                                    GemmInputs&      inputs,
-                                                    GemmProblemType& problemtype);
-
-        /*! \ingroup library_module
-        *  \brief Sets the problem for a gemm problem.
-        *
-        *  \details
-        *  This function sets the problem with m, n, k, batch_count. It uses the problem type sets
-        *  from the constructor.
-        *
-        *  @param[in]
-        *  m,n,k                      The problem size in vector.
-        *  @param[in]
-        *  batch_count                The batch count in vector.
-        *  @param[in]
-        *  epilogue                   The structure in vector that controls the epilogue.
-        *  @param[in]
-        *  inputs                     The inputs in vector of the problem.
-        *
-        *  \retval HIPBLAS_STATUS_SUCCESS           If the operation completed
-        * successfully. \retval HIPBLAS_STATUS_EXECUTION_FAILED  If HIP reported an
-        * execution error from the device. \retval HIPBLAS_STATUS_ARCH_MISMATCH     If
-        * the configured operation cannot be run using the selected device. \retval
-        * HIPBLAS_STATUS_NOT_SUPPORTED     If the current implementation on the
-        * selected device doesn't support the configured operation. \retval
-        * HIPBLAS_STATUS_INVALID_VALUE     If the parameters are unexpectedly NULL, in
-        * conflict or in an impossible configuration.
-        *  \retval HIBLAS_STATUS_NOT_INITIALIZED    If hipBLASLt handle has not been
-        * initialized.
-        */
-        template <GemmType T = GemmTypeT,
-                  typename   = typename std::enable_if<T == GemmType::HIPBLASLT_GROUPED_GEMM>::type>
-        HIPBLASLT_EXPORT hipblasStatus_t setProblem(std::vector<int64_t>&      m,
-                                                    std::vector<int64_t>&      n,
-                                                    std::vector<int64_t>&      k,
-                                                    std::vector<int64_t>&      batch_count,
-                                                    std::vector<GemmEpilogue>& epilogue,
-                                                    std::vector<GemmInputs>&   inputs);
-
-        /*! \ingroup library_module
-        *  \brief Sets the problem for a gemm problem.
-        *
-        *  \details
-        *  This function sets the problem with m, n, k, batch_count. It uses the problem type sets
-        *  from the constructor.
-        *
-        *  @param[in]
-        *  m,n,k                            The problem size in vector.
-        *  @param[in]
-        *  batch_count                      The batch count in vector.
-        *  @param[in]
-        *  lda,ldb,ldc,ldd                  The leading dimensions in vector of the matrix.
-        *  @param[in]
-        *  strideA,strideB,strideC,strideD  The batch stride in vector of the matrix.
-        *  @param[in]
-        *  epilogue                         The structure in vector that controls the epilogue.
-        *  @param[in]
-        *  inputs                           The inputs in vector of the problem.
-        *  @param[in]
-        *  problemtype                      The structure in vector that sets the problem type
-        * of a gemm problem.
-        *
-        *  \retval HIPBLAS_STATUS_SUCCESS           If the operation completed
-        * successfully. \retval HIPBLAS_STATUS_EXECUTION_FAILED  If HIP reported an
-        * execution error from the device. \retval HIPBLAS_STATUS_ARCH_MISMATCH     If
-        * the configured operation cannot be run using the selected device. \retval
-        * HIPBLAS_STATUS_NOT_SUPPORTED     If the current implementation on the
-        * selected device doesn't support the configured operation. \retval
-        * HIPBLAS_STATUS_INVALID_VALUE     If the parameters are unexpectedly NULL, in
-        * conflict or in an impossible configuration.
-        *  \retval HIBLAS_STATUS_NOT_INITIALIZED    If hipBLASLt handle has not been
-        * initialized.
-        */
-        template <GemmType T = GemmTypeT,
-                  typename   = typename std::enable_if<T == GemmType::HIPBLASLT_GROUPED_GEMM>::type>
-        HIPBLASLT_EXPORT hipblasStatus_t setProblem(std::vector<int64_t>&         m,
-                                                    std::vector<int64_t>&         n,
-                                                    std::vector<int64_t>&         k,
-                                                    std::vector<int64_t>&         batch_count,
-                                                    std::vector<int64_t>&         lda,
-                                                    std::vector<int64_t>&         ldb,
-                                                    std::vector<int64_t>&         ldc,
-                                                    std::vector<int64_t>&         ldd,
-                                                    std::vector<int64_t>&         strideA,
-                                                    std::vector<int64_t>&         strideB,
-                                                    std::vector<int64_t>&         strideC,
-                                                    std::vector<int64_t>&         strideD,
-                                                    std::vector<GemmEpilogue>&    epilogue,
-                                                    std::vector<GemmInputs>&      inputs,
-                                                    std::vector<GemmProblemType>& problemtype);
-
-        /*! \ingroup library_module
-        *  \brief Sets the gemm problem from hipblasLt structures
-        *
-        *  \details
-        *  This function sets the problem from hipblasLt structures. For more information
-        * about the structures, see hipblasLtMatmul for more information.
-        *
-        *  @param[in]
-        *  matmulDesc              Handle to a previously created matrix multiplication
-        * descriptor of type \ref hipblasLtMatmulDesc_t .
-        *  @param[in]
-        *  alpha,beta              Pointers to the scalars used in the multiplication.
-        *  @param[in]
-        *  matA,matB,matC,matD Handles to the previously created matrix layout
-        * descriptors of the type \ref hipblasLtMatrixLayout_t .
-        *  @param[in]
-        *  A,B,C                   Pointers to the GPU memory associated with the
-        * corresponding descriptors \p matA, \p matB and \p matC .
-        *  @param[out]
-        *  D                       Pointer to the GPU memory associated with the
-        * descriptor \p matD .
-        *
-        *  \retval HIPBLAS_STATUS_SUCCESS           If the operation completed
-        * successfully. \retval HIPBLAS_STATUS_EXECUTION_FAILED  If HIP reported an
-        * execution error from the device. \retval HIPBLAS_STATUS_ARCH_MISMATCH     If
-        * the configured operation cannot be run using the selected device. \retval
-        * HIPBLAS_STATUS_NOT_SUPPORTED     If the current implementation on the
-        * selected device doesn't support the configured operation. \retval
-        * HIPBLAS_STATUS_INVALID_VALUE     If the parameters are unexpectedly NULL, in
-        * conflict or in an impossible configuration.
-        *  \retval HIBLAS_STATUS_NOT_INITIALIZED    If hipBLASLt handle has not been
-        * initialized.
-        */
-        template <GemmType T = GemmTypeT,
-                  typename   = typename std::enable_if<T == GemmType::HIPBLASLT_GEMM>::type>
-        HIPBLASLT_EXPORT hipblasStatus_t setProblemFromhipBlasLt(hipblasLtMatmulDesc_t matmul_descr,
-                                                                 const void*           alpha,
-                                                                 const void*           A,
-                                                                 hipblasLtMatrixLayout_t matA,
-                                                                 const void*             B,
-                                                                 hipblasLtMatrixLayout_t matB,
-                                                                 const void*             beta,
-                                                                 const void*             C,
-                                                                 hipblasLtMatrixLayout_t matC,
-                                                                 void*                   D,
-                                                                 hipblasLtMatrixLayout_t matD);
-
-        /*! \ingroup library_module
-        *  \brief Sets the grouped gemm problem from hipblasLt structures
-        *
-        *  \details
-        *  This function sets the problem from hipblasLt structures. For more information
-        * about the structures, see hipblasLtMatmul for more information.
-        *
-        *  @param[in]
-        *  matmulDesc              Vectors of handle to a previously created matrix
-        * multiplication descriptor of type \ref hipblasLtMatmulDesc_t .
-        *  @param[in]
-        *  alpha,beta              Vectors of float used in the multiplication.
-        *  @param[in]
-        *  matA,matB,matC,matD Vectors of handle to the previously created matrix
-        * layout descriptors of the type \ref hipblasLtMatrixLayout_t .
-        *  @param[in]
-        *  A,B,C                   Vectors of pointer to the GPU memory associated
-        * with the corresponding descriptors \p matA, \p matB and \p matC .
-        *  @param[out]
-        *  D                       Vector of pointer to the GPU memory associated with
-        * the descriptor \p matD .
-        *
-        *  \retval HIPBLAS_STATUS_SUCCESS           If the operation completed
-        * successfully. \retval HIPBLAS_STATUS_EXECUTION_FAILED  If HIP reported an
-        * execution error from the device. \retval HIPBLAS_STATUS_ARCH_MISMATCH     If
-        * the configured operation cannot be run using the selected device. \retval
-        * HIPBLAS_STATUS_NOT_SUPPORTED     If the current implementation on the
-        * selected device doesn't support the configured operation. \retval
-        * HIPBLAS_STATUS_INVALID_VALUE     If the parameters are unexpectedly NULL, in
-        * conflict or in an impossible configuration.
-        *  \retval HIBLAS_STATUS_NOT_INITIALIZED    If hipBLASLt handle has not been
-        * initialized.
-        */
-        template <GemmType T = GemmTypeT,
-                  typename   = typename std::enable_if<T == GemmType::HIPBLASLT_GROUPED_GEMM>::type>
-        HIPBLASLT_EXPORT hipblasStatus_t
-            setProblemFromhipBlasLt(std::vector<hipblasLtMatmulDesc_t>&   matmul_descr,
-                                    std::vector<float>&                   alpha,
-                                    std::vector<void*>&                   A,
-                                    std::vector<hipblasLtMatrixLayout_t>& matA,
-                                    std::vector<void*>&                   B,
-                                    std::vector<hipblasLtMatrixLayout_t>& matB,
-                                    std::vector<float>&                   beta,
-                                    std::vector<void*>&                   C,
-                                    std::vector<hipblasLtMatrixLayout_t>& matC,
-                                    std::vector<void*>&                   D,
-                                    std::vector<hipblasLtMatrixLayout_t>& matD);
+        virtual ~GemmInstance() {}
 
         /*! \ingroup library_module
         *  \brief Retrieve the possible algorithms
@@ -592,9 +214,13 @@ namespace hipblaslt_ext
 
         HIPBLASLT_EXPORT GemmType getGemmType();
         HIPBLASLT_EXPORT size_t   getGemmCount();
-        HIPBLASLT_EXPORT std::vector<GemmProblemType> getProblemTypes();
 
-    private:
+    protected:
+        /*! \ingroup library_module
+        *  \brief Constructor of GemmInstance.
+        */
+        HIPBLASLT_EXPORT explicit GemmInstance(hipblasLtHandle_t handle, GemmType type);
+
         GemmType m_gemm_type;
         size_t   m_gemm_count = 0;
 
@@ -602,6 +228,418 @@ namespace hipblaslt_ext
 
         hipblasLtHandle_t     m_handle;
         std::shared_ptr<void> m_data;
+    };
+
+    /*! \ingroup types_module
+     *  \brief hipblasLt extension instance for gemm.
+     *
+     * \details The instance can be used to create arguments to compute the matrix
+     * multiplication of matrices A and B to produce the output matrix D, according
+     * to the following operation: \p D = \p alpha*( \p A *\p B) + \p beta*( \p C ),
+     * where \p A, \p B, and \p C are input matrices, and \p alpha and \p beta are
+     * input scalars.
+     */
+    class Gemm : public GemmInstance
+    {
+    public:
+        /*! \ingroup library_module
+        *  \brief Constructor
+        *
+        *  \details
+        *  This function set the problem from hipblasLt structures. For more information
+        * about the structures, see hipblasLtMatmul for more information.
+        *
+        *  @param[in]
+        *  handle                     The handle from hipBLASLt.
+        *  @param[in]
+        *  opA,opB                    The transpose type of matrix A, B
+        *  @param[in]
+        *  typeA,typeB,typeC,typeD    The data type of matrix A, B, C, D
+        *  @param[in]
+        *  typeCompute                The compute type of the gemm problem
+        */
+        HIPBLASLT_EXPORT explicit Gemm(hipblasLtHandle_t      handle,
+                                       hipblasOperation_t     opA,
+                                       hipblasOperation_t     opB,
+                                       hipblasDatatype_t      typeA,
+                                       hipblasDatatype_t      typeB,
+                                       hipblasDatatype_t      typeC,
+                                       hipblasDatatype_t      typeD,
+                                       hipblasLtComputeType_t typeCompute);
+
+        /*! \ingroup library_module
+        *  \brief Constructor that sets the gemm problem from hipblasLt structures
+        *
+        *  \details
+        *  This constructor sets the problem from hipblasLt structures. For more information
+        * about the structures, see hipblasLtMatmul for more information.
+        *
+        *  @param[in]
+        *  handle                  The handle from hipBLASLt.
+        *  @param[in]
+        *  matmulDesc              Handle to a previously created matrix multiplication
+        * descriptor of type \ref hipblasLtMatmulDesc_t .
+        *  @param[in]
+        *  alpha,beta              Pointers to the scalars used in the multiplication.
+        *  @param[in]
+        *  matA,matB,matC,matD Handles to the previously created matrix layout
+        * descriptors of the type \ref hipblasLtMatrixLayout_t .
+        *  @param[in]
+        *  A,B,C                   Pointers to the GPU memory associated with the
+        * corresponding descriptors \p matA, \p matB and \p matC .
+        *  @param[out]
+        *  D                       Pointer to the GPU memory associated with the
+        * descriptor \p matD .
+        */
+        HIPBLASLT_EXPORT explicit Gemm(hipblasLtHandle_t       handle,
+                                       hipblasLtMatmulDesc_t   matmul_descr,
+                                       const void*             alpha,
+                                       const void*             A,
+                                       hipblasLtMatrixLayout_t matA,
+                                       const void*             B,
+                                       hipblasLtMatrixLayout_t matB,
+                                       const void*             beta,
+                                       const void*             C,
+                                       hipblasLtMatrixLayout_t matC,
+                                       void*                   D,
+                                       hipblasLtMatrixLayout_t matD);
+
+        /*! \ingroup library_module
+        *  \brief Sets the problem for a gemm problem.
+        *
+        *  \details
+        *  This function sets the problem with m, n, k, batch_count. It uses the problem type sets
+        *  from the constructor.
+        *
+        *  @param[in]
+        *  m,n,k                      The problem size.
+        *  @param[in]
+        *  batch_count                The batch count.
+        *  @param[in]
+        *  epilogue                   The structure that controls the epilogue.
+        *  @param[in]
+        *  inputs                     The inputs of the problem.
+        *
+        *  \retval HIPBLAS_STATUS_SUCCESS           If the operation completed
+        * successfully. \retval HIPBLAS_STATUS_EXECUTION_FAILED  If HIP reported an
+        * execution error from the device. \retval HIPBLAS_STATUS_ARCH_MISMATCH     If
+        * the configured operation cannot be run using the selected device. \retval
+        * HIPBLAS_STATUS_NOT_SUPPORTED     If the current implementation on the
+        * selected device doesn't support the configured operation. \retval
+        * HIPBLAS_STATUS_INVALID_VALUE     If the parameters are unexpectedly NULL, in
+        * conflict or in an impossible configuration.
+        *  \retval HIBLAS_STATUS_NOT_INITIALIZED    If hipBLASLt handle has not been
+        * initialized.
+        */
+        HIPBLASLT_EXPORT hipblasStatus_t setProblem(int64_t       m,
+                                                    int64_t       n,
+                                                    int64_t       k,
+                                                    int64_t       batch_count,
+                                                    GemmEpilogue& epilogue,
+                                                    GemmInputs&   inputs);
+
+        /*! \ingroup library_module
+        *  \brief Sets the problem for a gemm problem.
+        *
+        *  \details
+        *  This function sets the problem with m, n, k, batch_count. It uses the problem type sets
+        *  from the constructor.
+        *
+        *  @param[in]
+        *  m,n,k                            The problem size.
+        *  @param[in]
+        *  batch_count                      The batch count.
+        *  @param[in]
+        *  lda,ldb,ldc,ldd                  The leading dimensions of the matrix.
+        *  @param[in]
+        *  strideA,strideB,strideC,strideD  The batch stride of the matrix.
+        *  @param[in]
+        *  epilogue                         The structure that controls the epilogue.
+        *  @param[in]
+        *  inputs                           The inputs of the problem.
+        *  @param[in]
+        *  problemtype                      The structure that sets the problem type of a gemm problem.
+        *
+        *  \retval HIPBLAS_STATUS_SUCCESS           If the operation completed
+        * successfully. \retval HIPBLAS_STATUS_EXECUTION_FAILED  If HIP reported an
+        * execution error from the device. \retval HIPBLAS_STATUS_ARCH_MISMATCH     If
+        * the configured operation cannot be run using the selected device. \retval
+        * HIPBLAS_STATUS_NOT_SUPPORTED     If the current implementation on the
+        * selected device doesn't support the configured operation. \retval
+        * HIPBLAS_STATUS_INVALID_VALUE     If the parameters are unexpectedly NULL, in
+        * conflict or in an impossible configuration.
+        *  \retval HIBLAS_STATUS_NOT_INITIALIZED    If hipBLASLt handle has not been
+        * initialized.
+        */
+        HIPBLASLT_EXPORT hipblasStatus_t setProblem(int64_t          m,
+                                                    int64_t          n,
+                                                    int64_t          k,
+                                                    int64_t          batch_count,
+                                                    int64_t          lda,
+                                                    int64_t          ldb,
+                                                    int64_t          ldc,
+                                                    int64_t          ldd,
+                                                    int64_t          strideA,
+                                                    int64_t          strideB,
+                                                    int64_t          strideC,
+                                                    int64_t          strideD,
+                                                    GemmEpilogue&    epilogue,
+                                                    GemmInputs&      inputs,
+                                                    GemmProblemType& problemtype);
+
+        /*! \ingroup library_module
+        *  \brief Sets the gemm problem from hipblasLt structures
+        *
+        *  \details
+        *  This function sets the problem from hipblasLt structures. For more information
+        * about the structures, see hipblasLtMatmul for more information.
+        *
+        *  @param[in]
+        *  matmulDesc              Handle to a previously created matrix multiplication
+        * descriptor of type \ref hipblasLtMatmulDesc_t .
+        *  @param[in]
+        *  alpha,beta              Pointers to the scalars used in the multiplication.
+        *  @param[in]
+        *  matA,matB,matC,matD Handles to the previously created matrix layout
+        * descriptors of the type \ref hipblasLtMatrixLayout_t .
+        *  @param[in]
+        *  A,B,C                   Pointers to the GPU memory associated with the
+        * corresponding descriptors \p matA, \p matB and \p matC .
+        *  @param[out]
+        *  D                       Pointer to the GPU memory associated with the
+        * descriptor \p matD .
+        *
+        *  \retval HIPBLAS_STATUS_SUCCESS           If the operation completed
+        * successfully. \retval HIPBLAS_STATUS_EXECUTION_FAILED  If HIP reported an
+        * execution error from the device. \retval HIPBLAS_STATUS_ARCH_MISMATCH     If
+        * the configured operation cannot be run using the selected device. \retval
+        * HIPBLAS_STATUS_NOT_SUPPORTED     If the current implementation on the
+        * selected device doesn't support the configured operation. \retval
+        * HIPBLAS_STATUS_INVALID_VALUE     If the parameters are unexpectedly NULL, in
+        * conflict or in an impossible configuration.
+        *  \retval HIBLAS_STATUS_NOT_INITIALIZED    If hipBLASLt handle has not been
+        * initialized.
+        */
+        HIPBLASLT_EXPORT hipblasStatus_t setProblemFromhipBlasLt(hipblasLtMatmulDesc_t matmul_descr,
+                                                                 const void*           alpha,
+                                                                 const void*           A,
+                                                                 hipblasLtMatrixLayout_t matA,
+                                                                 const void*             B,
+                                                                 hipblasLtMatrixLayout_t matB,
+                                                                 const void*             beta,
+                                                                 const void*             C,
+                                                                 hipblasLtMatrixLayout_t matC,
+                                                                 void*                   D,
+                                                                 hipblasLtMatrixLayout_t matD);
+
+        HIPBLASLT_EXPORT GemmProblemType getProblemTypes();
+    };
+
+    /*! \ingroup types_module
+     *  \brief hipblasLt extension instance for grouped gemm.
+     *
+     * \details The instance can be used to create arguments to compute the matrix
+     * multiplication of matrices A and B to produce the output matrix D, according
+     * to the following operation: \p D = \p alpha*( \p A *\p B) + \p beta*( \p C ),
+     * where \p A, \p B, and \p C are input matrices, and \p alpha and \p beta are
+     * input scalars.
+     */
+    class GroupedGemm : public GemmInstance
+    {
+    public:
+        /*! \ingroup library_module
+        *  \brief Constructor
+        *
+        *  \details
+        *  This function set the problem from hipblasLt structures. For more information
+        * about the structures, see hipblasLtMatmul for more information.
+        *
+        *  @param[in]
+        *  handle                     The handle from hipBLASLt.
+        *  @param[in]
+        *  opA,opB                    The transpose type of matrix A, B
+        *  @param[in]
+        *  typeA,typeB,typeC,typeD    The data type of matrix A, B, C, D
+        *  @param[in]
+        *  typeCompute                The compute type of the gemm problem
+        */
+        HIPBLASLT_EXPORT explicit GroupedGemm(hipblasLtHandle_t      handle,
+                                              hipblasOperation_t     opA,
+                                              hipblasOperation_t     opB,
+                                              hipblasDatatype_t      typeA,
+                                              hipblasDatatype_t      typeB,
+                                              hipblasDatatype_t      typeC,
+                                              hipblasDatatype_t      typeD,
+                                              hipblasLtComputeType_t typeCompute);
+
+        /*! \ingroup library_module
+        *  \brief Constructor that sets the grouped gemm problem from hipblasLt structures
+        *
+        *  \details
+        *  This constructor sets the problem from hipblasLt structures. For more information
+        * about the structures, see hipblasLtMatmul for more information.
+        *
+        *  @param[in]
+        *  handle                  The handle from hipBLASLt.
+        *  @param[in]
+        *  matmulDesc              Vectors of handle to a previously created matrix
+        * multiplication descriptor of type \ref hipblasLtMatmulDesc_t .
+        *  @param[in]
+        *  alpha,beta              Vectors of float used in the multiplication.
+        *  @param[in]
+        *  matA,matB,matC,matD Vectors of handle to the previously created matrix
+        * layout descriptors of the type \ref hipblasLtMatrixLayout_t .
+        *  @param[in]
+        *  A,B,C                   Vectors of pointer to the GPU memory associated
+        * with the corresponding descriptors \p matA, \p matB and \p matC .
+        *  @param[out]
+        *  D                       Vector of pointer to the GPU memory associated with
+        * the descriptor \p matD .
+        */
+        HIPBLASLT_EXPORT explicit GroupedGemm(hipblasLtHandle_t                     handle,
+                                              std::vector<hipblasLtMatmulDesc_t>&   matmul_descr,
+                                              std::vector<float>&                   alpha,
+                                              std::vector<void*>&                   A,
+                                              std::vector<hipblasLtMatrixLayout_t>& matA,
+                                              std::vector<void*>&                   B,
+                                              std::vector<hipblasLtMatrixLayout_t>& matB,
+                                              std::vector<float>&                   beta,
+                                              std::vector<void*>&                   C,
+                                              std::vector<hipblasLtMatrixLayout_t>& matC,
+                                              std::vector<void*>&                   D,
+                                              std::vector<hipblasLtMatrixLayout_t>& matD);
+
+        /*! \ingroup library_module
+        *  \brief Sets the problem for a gemm problem.
+        *
+        *  \details
+        *  This function sets the problem with m, n, k, batch_count. It uses the problem type sets
+        *  from the constructor.
+        *
+        *  @param[in]
+        *  m,n,k                      The problem size in vector.
+        *  @param[in]
+        *  batch_count                The batch count in vector.
+        *  @param[in]
+        *  epilogue                   The structure in vector that controls the epilogue.
+        *  @param[in]
+        *  inputs                     The inputs in vector of the problem.
+        *
+        *  \retval HIPBLAS_STATUS_SUCCESS           If the operation completed
+        * successfully. \retval HIPBLAS_STATUS_EXECUTION_FAILED  If HIP reported an
+        * execution error from the device. \retval HIPBLAS_STATUS_ARCH_MISMATCH     If
+        * the configured operation cannot be run using the selected device. \retval
+        * HIPBLAS_STATUS_NOT_SUPPORTED     If the current implementation on the
+        * selected device doesn't support the configured operation. \retval
+        * HIPBLAS_STATUS_INVALID_VALUE     If the parameters are unexpectedly NULL, in
+        * conflict or in an impossible configuration.
+        *  \retval HIBLAS_STATUS_NOT_INITIALIZED    If hipBLASLt handle has not been
+        * initialized.
+        */
+        HIPBLASLT_EXPORT hipblasStatus_t setProblem(std::vector<int64_t>&      m,
+                                                    std::vector<int64_t>&      n,
+                                                    std::vector<int64_t>&      k,
+                                                    std::vector<int64_t>&      batch_count,
+                                                    std::vector<GemmEpilogue>& epilogue,
+                                                    std::vector<GemmInputs>&   inputs);
+
+        /*! \ingroup library_module
+        *  \brief Sets the problem for a gemm problem.
+        *
+        *  \details
+        *  This function sets the problem with m, n, k, batch_count. It uses the problem type sets
+        *  from the constructor.
+        *
+        *  @param[in]
+        *  m,n,k                            The problem size in vector.
+        *  @param[in]
+        *  batch_count                      The batch count in vector.
+        *  @param[in]
+        *  lda,ldb,ldc,ldd                  The leading dimensions in vector of the matrix.
+        *  @param[in]
+        *  strideA,strideB,strideC,strideD  The batch stride in vector of the matrix.
+        *  @param[in]
+        *  epilogue                         The structure in vector that controls the epilogue.
+        *  @param[in]
+        *  inputs                           The inputs in vector of the problem.
+        *  @param[in]
+        *  problemtype                      The structure in vector that sets the problem type
+        * of a gemm problem.
+        *
+        *  \retval HIPBLAS_STATUS_SUCCESS           If the operation completed
+        * successfully. \retval HIPBLAS_STATUS_EXECUTION_FAILED  If HIP reported an
+        * execution error from the device. \retval HIPBLAS_STATUS_ARCH_MISMATCH     If
+        * the configured operation cannot be run using the selected device. \retval
+        * HIPBLAS_STATUS_NOT_SUPPORTED     If the current implementation on the
+        * selected device doesn't support the configured operation. \retval
+        * HIPBLAS_STATUS_INVALID_VALUE     If the parameters are unexpectedly NULL, in
+        * conflict or in an impossible configuration.
+        *  \retval HIBLAS_STATUS_NOT_INITIALIZED    If hipBLASLt handle has not been
+        * initialized.
+        */
+        HIPBLASLT_EXPORT hipblasStatus_t setProblem(std::vector<int64_t>&         m,
+                                                    std::vector<int64_t>&         n,
+                                                    std::vector<int64_t>&         k,
+                                                    std::vector<int64_t>&         batch_count,
+                                                    std::vector<int64_t>&         lda,
+                                                    std::vector<int64_t>&         ldb,
+                                                    std::vector<int64_t>&         ldc,
+                                                    std::vector<int64_t>&         ldd,
+                                                    std::vector<int64_t>&         strideA,
+                                                    std::vector<int64_t>&         strideB,
+                                                    std::vector<int64_t>&         strideC,
+                                                    std::vector<int64_t>&         strideD,
+                                                    std::vector<GemmEpilogue>&    epilogue,
+                                                    std::vector<GemmInputs>&      inputs,
+                                                    std::vector<GemmProblemType>& problemtype);
+
+        /*! \ingroup library_module
+        *  \brief Sets the grouped gemm problem from hipblasLt structures
+        *
+        *  \details
+        *  This function sets the problem from hipblasLt structures. For more information
+        * about the structures, see hipblasLtMatmul for more information.
+        *
+        *  @param[in]
+        *  matmulDesc              Vectors of handle to a previously created matrix
+        * multiplication descriptor of type \ref hipblasLtMatmulDesc_t .
+        *  @param[in]
+        *  alpha,beta              Vectors of float used in the multiplication.
+        *  @param[in]
+        *  matA,matB,matC,matD Vectors of handle to the previously created matrix
+        * layout descriptors of the type \ref hipblasLtMatrixLayout_t .
+        *  @param[in]
+        *  A,B,C                   Vectors of pointer to the GPU memory associated
+        * with the corresponding descriptors \p matA, \p matB and \p matC .
+        *  @param[out]
+        *  D                       Vector of pointer to the GPU memory associated with
+        * the descriptor \p matD .
+        *
+        *  \retval HIPBLAS_STATUS_SUCCESS           If the operation completed
+        * successfully. \retval HIPBLAS_STATUS_EXECUTION_FAILED  If HIP reported an
+        * execution error from the device. \retval HIPBLAS_STATUS_ARCH_MISMATCH     If
+        * the configured operation cannot be run using the selected device. \retval
+        * HIPBLAS_STATUS_NOT_SUPPORTED     If the current implementation on the
+        * selected device doesn't support the configured operation. \retval
+        * HIPBLAS_STATUS_INVALID_VALUE     If the parameters are unexpectedly NULL, in
+        * conflict or in an impossible configuration.
+        *  \retval HIBLAS_STATUS_NOT_INITIALIZED    If hipBLASLt handle has not been
+        * initialized.
+        */
+        HIPBLASLT_EXPORT hipblasStatus_t
+            setProblemFromhipBlasLt(std::vector<hipblasLtMatmulDesc_t>&   matmul_descr,
+                                    std::vector<float>&                   alpha,
+                                    std::vector<void*>&                   A,
+                                    std::vector<hipblasLtMatrixLayout_t>& matA,
+                                    std::vector<void*>&                   B,
+                                    std::vector<hipblasLtMatrixLayout_t>& matB,
+                                    std::vector<float>&                   beta,
+                                    std::vector<void*>&                   C,
+                                    std::vector<hipblasLtMatrixLayout_t>& matC,
+                                    std::vector<void*>&                   D,
+                                    std::vector<hipblasLtMatrixLayout_t>& matD);
+
+        HIPBLASLT_EXPORT std::vector<GemmProblemType> getProblemTypes();
     };
 
     /*******************************************************************************
