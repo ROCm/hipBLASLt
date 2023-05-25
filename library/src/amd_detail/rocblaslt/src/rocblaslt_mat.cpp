@@ -266,18 +266,20 @@ rocblaslt_status rocblaslt_matmul_impl(const rocblaslt_handle       handle,
     return rocblaslt_matmul_template(EX_PARM);
 }
 
-rocblaslt_status rocblaslt_gemm_create_cpp_impl(rocblaslt_matmul_desc   matmul_descr,
-                                                const void*             A,
-                                                const void*             B,
-                                                const void*             C,
-                                                void*                   D,
-                                                rocblaslt_matrix_layout matA,
-                                                rocblaslt_matrix_layout matB,
-                                                rocblaslt_matrix_layout matC,
-                                                rocblaslt_matrix_layout matD,
-                                                const void*             alpha,
-                                                const void*             beta,
-                                                rocblaslt::RocGemm&     gemm)
+rocblaslt_status rocblaslt_gemm_create_cpp_impl(rocblaslt_matmul_desc          matmul_descr,
+                                                const void*                    A,
+                                                const void*                    B,
+                                                const void*                    C,
+                                                void*                          D,
+                                                rocblaslt_matrix_layout        matA,
+                                                rocblaslt_matrix_layout        matB,
+                                                rocblaslt_matrix_layout        matC,
+                                                rocblaslt_matrix_layout        matD,
+                                                const void*                    alpha,
+                                                const void*                    beta,
+                                                rocblaslt::RocGemmProblemType& problemtype,
+                                                std::shared_ptr<void>&         gemmData,
+                                                size_t&                        gemmCount)
 {
     int64_t m, n, k, lda, ldb, ldc, ldd, lde, batch_stride_a, batch_stride_b, batch_stride_c,
         batch_stride_d, batch_stride_e;
@@ -331,19 +333,13 @@ rocblaslt_status rocblaslt_gemm_create_cpp_impl(rocblaslt_matmul_desc   matmul_d
     bool strided_batch = true;
     bool grouped_gemm  = false;
 
-    size_t gemmCount = 0;
-
-    std::shared_ptr<void> data;
 #define EX_PARM_GEMM_CPP                                                                          \
     opA, opB, m, n, k, alpha, A, type_a, lda, batch_stride_a, B, type_b, ldb, batch_stride_b,     \
         beta, C, type_c, ldc, batch_stride_c, D, type_d, ldd, batch_stride_d, E, lde,             \
         batch_stride_e, num_batches_a, strided_batch, grouped_gemm, gradient, compute_type, bias, \
-        scaleD, bias_type, epilogue, data, gemmCount
+        scaleD, bias_type, epilogue, gemmData, gemmCount
 
-    auto status = rocblaslt_gemm_create_template_cpp(EX_PARM_GEMM_CPP);
-    gemm.setData(data);
-    gemm.setGemmCount(gemmCount);
-    return status;
+    return rocblaslt_gemm_create_template_cpp(EX_PARM_GEMM_CPP);
 }
 
 rocblaslt_status rocblaslt_gemm_create_cpp_impl_2(int64_t                        m,
@@ -430,6 +426,14 @@ rocblaslt_status rocblaslt_gemm_create_cpp_impl_2(int64_t                       
     bool strided_batch = true;
     bool grouped_gemm  = false;
 
+    problemtype.op_a         = opA;
+    problemtype.op_b         = opB;
+    problemtype.type_a       = type_a;
+    problemtype.type_b       = type_b;
+    problemtype.type_c       = type_c;
+    problemtype.type_d       = type_d;
+    problemtype.type_compute = compute_type;
+
 #define EX_PARM_GEMM_CPP_2                                                                        \
     opA, opB, m, n, k, alpha, A, type_a, lda, batch_stride_a, B, type_b, ldb, batch_stride_b,     \
         beta, C, type_c, ldc, batch_stride_c, D, type_d, ldd, batch_stride_d, E, lde,             \
@@ -440,18 +444,20 @@ rocblaslt_status rocblaslt_gemm_create_cpp_impl_2(int64_t                       
 }
 
 rocblaslt_status
-    rocblaslt_groupedgemm_create_cpp_impl(std::vector<rocblaslt_matmul_desc>&   matmul_descr,
-                                          std::vector<const void*>&             A,
-                                          std::vector<const void*>&             B,
-                                          std::vector<const void*>&             C,
-                                          std::vector<void*>&                   D,
-                                          std::vector<rocblaslt_matrix_layout>& matA,
-                                          std::vector<rocblaslt_matrix_layout>& matB,
-                                          std::vector<rocblaslt_matrix_layout>& matC,
-                                          std::vector<rocblaslt_matrix_layout>& matD,
-                                          std::vector<const void*>&             alpha,
-                                          std::vector<const void*>&             beta,
-                                          rocblaslt::RocGemm&                   gemm)
+    rocblaslt_groupedgemm_create_cpp_impl(std::vector<rocblaslt_matmul_desc>&         matmul_descr,
+                                          std::vector<const void*>&                   A,
+                                          std::vector<const void*>&                   B,
+                                          std::vector<const void*>&                   C,
+                                          std::vector<void*>&                         D,
+                                          std::vector<rocblaslt_matrix_layout>&       matA,
+                                          std::vector<rocblaslt_matrix_layout>&       matB,
+                                          std::vector<rocblaslt_matrix_layout>&       matC,
+                                          std::vector<rocblaslt_matrix_layout>&       matD,
+                                          std::vector<const void*>&                   alpha,
+                                          std::vector<const void*>&                   beta,
+                                          std::vector<rocblaslt::RocGemmProblemType>& problemtype,
+                                          std::shared_ptr<void>&                      gemmData,
+                                          size_t&                                     gemmCount)
 {
     hipblasOperation_t     opA          = matmul_descr[0]->op_A;
     hipblasOperation_t     opB          = matmul_descr[0]->op_B;
@@ -473,6 +479,7 @@ rocblaslt_status
     std::vector<int64_t>            ldc_vec, batch_stride_c_vec, num_batches_c_vec;
     std::vector<int64_t>            ldd_vec, batch_stride_d_vec, num_batches_d_vec;
 
+    std::vector<rocblaslt::RocGemmProblemType> tempprobemtype;
     for(int i = 0; i < matmul_descr.size(); i++)
     {
         // matrix A
@@ -555,6 +562,14 @@ rocblaslt_status
         if(validArgs != rocblaslt_status_continue)
             return validArgs;
 
+        tempprobemtype.push_back({matmul_descr[i]->op_A,
+                                  matmul_descr[i]->op_B,
+                                  matA[i]->type,
+                                  matB[i]->type,
+                                  matC[i]->type,
+                                  matD[i]->type,
+                                  matmul_descr[i]->compute_type});
+
         bias_type_vec.push_back(bias_type);
         epilogue_vec.push_back(epilogue);
         bias_vec.push_back(bias);
@@ -596,22 +611,19 @@ rocblaslt_status
         beta_vec.push_back(beta[i]);
     }
 
+    problemtype = tempprobemtype;
+
     bool strided_batch = true;
     bool grouped_gemm  = true;
 
-    std::shared_ptr<void> data;
-    size_t                gemmCount = 0;
 #define EX_PARM_GroupedGemm_CPP                                                                    \
     opA, opB, m_vec, n_vec, k_vec, alpha_vec, A_vec, type_a, lda_vec, batch_stride_a_vec, B_vec,   \
         type_b, ldb_vec, batch_stride_b_vec, beta_vec, C_vec, type_c, ldc_vec, batch_stride_c_vec, \
         D_vec, type_d, ldd_vec, batch_stride_d_vec, num_batches_a_vec, strided_batch,              \
-        grouped_gemm, compute_type, bias_vec, scaleD_vec, bias_type_vec, epilogue_vec, data,       \
+        grouped_gemm, compute_type, bias_vec, scaleD_vec, bias_type_vec, epilogue_vec, gemmData,   \
         gemmCount
 
-    auto status = rocblaslt_groupedgemm_create_template_cpp(EX_PARM_GroupedGemm_CPP);
-    gemm.setData(data);
-    gemm.setGemmCount(gemmCount);
-    return status;
+    return rocblaslt_groupedgemm_create_template_cpp(EX_PARM_GroupedGemm_CPP);
 }
 
 rocblaslt_status
@@ -858,21 +870,6 @@ rocblaslt_status rocblaslt_matmul(rocblaslt_handle             handle,
 }
 #endif
 
-rocblaslt::RocGemmProblemType updateGemmProblemType(const rocblaslt_matmul_desc   matmul_descr,
-                                                    const rocblaslt_matrix_layout matA,
-                                                    const rocblaslt_matrix_layout matB,
-                                                    const rocblaslt_matrix_layout matC,
-                                                    const rocblaslt_matrix_layout matD)
-{
-    return rocblaslt::RocGemmProblemType{matmul_descr->op_A,
-                                         matmul_descr->op_B,
-                                         matA->type,
-                                         matB->type,
-                                         matC->type,
-                                         matD->type,
-                                         matmul_descr->compute_type};
-}
-
 rocblaslt_status rocblaslt_gemm_create_cpp(int64_t                        m,
                                            int64_t                        n,
                                            int64_t                        b,
@@ -910,25 +907,21 @@ rocblaslt_status rocblaslt_gemm_create_cpp(int64_t                        m,
                                             gemmCount);
 }
 
-rocblaslt_status rocblaslt_gemm_create_cpp(rocblaslt_matmul_desc   matmul_descr,
-                                           const void*             alpha,
-                                           const void*             A,
-                                           rocblaslt_matrix_layout matA,
-                                           const void*             B,
-                                           rocblaslt_matrix_layout matB,
-                                           const void*             beta,
-                                           const void*             C,
-                                           rocblaslt_matrix_layout matC,
-                                           void*                   D,
-                                           rocblaslt_matrix_layout matD,
-                                           rocblaslt::RocGemm&     gemm)
+rocblaslt_status rocblaslt_gemm_create_cpp(rocblaslt_matmul_desc          matmul_descr,
+                                           const void*                    alpha,
+                                           const void*                    A,
+                                           rocblaslt_matrix_layout        matA,
+                                           const void*                    B,
+                                           rocblaslt_matrix_layout        matB,
+                                           const void*                    beta,
+                                           const void*                    C,
+                                           rocblaslt_matrix_layout        matC,
+                                           void*                          D,
+                                           rocblaslt_matrix_layout        matD,
+                                           rocblaslt::RocGemmProblemType& problemtype,
+                                           std::shared_ptr<void>&         gemmData,
+                                           size_t&                        gemmCount)
 {
-    if(gemm.getGemmType() != rocblaslt::RocGemmType::ROCBLASLT_GEMM)
-    {
-        log_api(__func__, "invalid gemm type");
-        return rocblaslt_status_invalid_value;
-    }
-
     // Check if handle is valid
     if(matmul_descr == nullptr || matA == nullptr || matB == nullptr || matC == nullptr
        || matD == nullptr)
@@ -943,12 +936,20 @@ rocblaslt_status rocblaslt_gemm_create_cpp(rocblaslt_matmul_desc   matmul_descr,
         return rocblaslt_status_type_mismatch;
     }
 
-    std::vector<rocblaslt::RocGemmProblemType> p{
-        updateGemmProblemType(matmul_descr, matA, matB, matC, matD)};
-    gemm.setProblemTypes(p);
-
-    return rocblaslt_gemm_create_cpp_impl(
-        matmul_descr, A, B, C, D, matA, matB, matC, matD, alpha, beta, gemm);
+    return rocblaslt_gemm_create_cpp_impl(matmul_descr,
+                                          A,
+                                          B,
+                                          C,
+                                          D,
+                                          matA,
+                                          matB,
+                                          matC,
+                                          matD,
+                                          alpha,
+                                          beta,
+                                          problemtype,
+                                          gemmData,
+                                          gemmCount);
 }
 
 rocblaslt_status
@@ -989,26 +990,22 @@ rocblaslt_status
                                                    gemmCount);
 }
 
-rocblaslt_status rocblaslt_groupedgemm_create_cpp(std::vector<rocblaslt_matmul_desc>& matmul_descr,
-                                                  std::vector<const void*>&           alpha,
-                                                  std::vector<const void*>&           A,
-                                                  std::vector<rocblaslt_matrix_layout>& matA,
-                                                  std::vector<const void*>&             B,
-                                                  std::vector<rocblaslt_matrix_layout>& matB,
-                                                  std::vector<const void*>&             beta,
-                                                  std::vector<const void*>&             C,
-                                                  std::vector<rocblaslt_matrix_layout>& matC,
-                                                  std::vector<void*>&                   D,
-                                                  std::vector<rocblaslt_matrix_layout>& matD,
-                                                  rocblaslt::RocGemm&                   gemm)
+rocblaslt_status
+    rocblaslt_groupedgemm_create_cpp(std::vector<rocblaslt_matmul_desc>&         matmul_descr,
+                                     std::vector<const void*>&                   alpha,
+                                     std::vector<const void*>&                   A,
+                                     std::vector<rocblaslt_matrix_layout>&       matA,
+                                     std::vector<const void*>&                   B,
+                                     std::vector<rocblaslt_matrix_layout>&       matB,
+                                     std::vector<const void*>&                   beta,
+                                     std::vector<const void*>&                   C,
+                                     std::vector<rocblaslt_matrix_layout>&       matC,
+                                     std::vector<void*>&                         D,
+                                     std::vector<rocblaslt_matrix_layout>&       matD,
+                                     std::vector<rocblaslt::RocGemmProblemType>& problemtype,
+                                     std::shared_ptr<void>&                      gemmData,
+                                     size_t&                                     gemmCount)
 {
-    if(gemm.getGemmType() != rocblaslt::RocGemmType::ROCBLASLT_GROUPED_GEMM)
-    {
-        log_api(__func__, "invalid gemm type");
-        return rocblaslt_status_invalid_value;
-    }
-
-    std::vector<rocblaslt::RocGemmProblemType> p;
     for(int i = 0; i < matmul_descr.size(); i++)
     {
         // Check if handle is valid
@@ -1025,12 +1022,22 @@ rocblaslt_status rocblaslt_groupedgemm_create_cpp(std::vector<rocblaslt_matmul_d
             log_error(__func__, "invalid  matrix datatype");
             return rocblaslt_status_type_mismatch;
         }
-        p.push_back(updateGemmProblemType(matmul_descr[i], matA[i], matB[i], matC[i], matD[i]));
     }
-    gemm.setProblemTypes(p);
 
-    return rocblaslt_groupedgemm_create_cpp_impl(
-        matmul_descr, A, B, C, D, matA, matB, matC, matD, alpha, beta, gemm);
+    return rocblaslt_groupedgemm_create_cpp_impl(matmul_descr,
+                                                 A,
+                                                 B,
+                                                 C,
+                                                 D,
+                                                 matA,
+                                                 matB,
+                                                 matC,
+                                                 matD,
+                                                 alpha,
+                                                 beta,
+                                                 problemtype,
+                                                 gemmData,
+                                                 gemmCount);
 }
 
 rocblaslt_status rocblaslt_run_cpp(rocblaslt_handle       handle,
