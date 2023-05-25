@@ -310,11 +310,17 @@ typedef struct __attribute__((packed, aligned(8))) _rocblaslt_matmul_algo
     }
     union u
     {
-        constexpr u()
+#if __cplusplus >= 202002L
+        constexpr
+#endif
+            u()
             : ptr{}
         {
         }
-        constexpr u(u& rhs)
+#if __cplusplus >= 202002L
+        constexpr
+#endif
+            u(u& rhs)
         {
             ptr = rhs.ptr;
         }
