@@ -135,18 +135,20 @@ rocblaslt_status rocblaslt_gemm_create_cpp(int64_t                        m,
                                            std::shared_ptr<void>&         gemmData,
                                            size_t&                        gemmCount);
 
-rocblaslt_status rocblaslt_gemm_create_cpp(rocblaslt_matmul_desc   matmul_descr,
-                                           const void*             alpha,
-                                           const void*             A,
-                                           rocblaslt_matrix_layout matA,
-                                           const void*             B,
-                                           rocblaslt_matrix_layout matB,
-                                           const void*             beta,
-                                           const void*             C,
-                                           rocblaslt_matrix_layout matC,
-                                           void*                   D,
-                                           rocblaslt_matrix_layout matD,
-                                           rocblaslt::RocGemm&     gemm);
+rocblaslt_status rocblaslt_gemm_create_cpp(rocblaslt_matmul_desc          matmul_descr,
+                                           const void*                    alpha,
+                                           const void*                    A,
+                                           rocblaslt_matrix_layout        matA,
+                                           const void*                    B,
+                                           rocblaslt_matrix_layout        matB,
+                                           const void*                    beta,
+                                           const void*                    C,
+                                           rocblaslt_matrix_layout        matC,
+                                           void*                          D,
+                                           rocblaslt_matrix_layout        matD,
+                                           rocblaslt::RocGemmProblemType& problemtype,
+                                           std::shared_ptr<void>&         gemmData,
+                                           size_t&                        gemmCount);
 
 rocblaslt_status
     rocblaslt_groupedgemm_create_cpp(std::vector<int64_t>&                       m,
@@ -167,18 +169,21 @@ rocblaslt_status
                                      std::shared_ptr<void>&                      gemmData,
                                      size_t&                                     gemmCount);
 
-rocblaslt_status rocblaslt_groupedgemm_create_cpp(std::vector<rocblaslt_matmul_desc>& matmul_descr,
-                                                  std::vector<const void*>&           alpha,
-                                                  std::vector<const void*>&           A,
-                                                  std::vector<rocblaslt_matrix_layout>& matA,
-                                                  std::vector<const void*>&             B,
-                                                  std::vector<rocblaslt_matrix_layout>& matB,
-                                                  std::vector<const void*>&             beta,
-                                                  std::vector<const void*>&             C,
-                                                  std::vector<rocblaslt_matrix_layout>& matC,
-                                                  std::vector<void*>&                   D,
-                                                  std::vector<rocblaslt_matrix_layout>& matD,
-                                                  rocblaslt::RocGemm&                   gemm);
+rocblaslt_status
+    rocblaslt_groupedgemm_create_cpp(std::vector<rocblaslt_matmul_desc>&         matmul_descr,
+                                     std::vector<const void*>&                   alpha,
+                                     std::vector<const void*>&                   A,
+                                     std::vector<rocblaslt_matrix_layout>&       matA,
+                                     std::vector<const void*>&                   B,
+                                     std::vector<rocblaslt_matrix_layout>&       matB,
+                                     std::vector<const void*>&                   beta,
+                                     std::vector<const void*>&                   C,
+                                     std::vector<rocblaslt_matrix_layout>&       matC,
+                                     std::vector<void*>&                         D,
+                                     std::vector<rocblaslt_matrix_layout>&       matD,
+                                     std::vector<rocblaslt::RocGemmProblemType>& problemtype,
+                                     std::shared_ptr<void>&                      gemmData,
+                                     size_t&                                     gemmCount);
 
 rocblaslt_status rocblaslt_makeArgument_cpp(const rocblaslt::RocGemmType gemmType,
                                             const rocblaslt_matmul_algo& algo,

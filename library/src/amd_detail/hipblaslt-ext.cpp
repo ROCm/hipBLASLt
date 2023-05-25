@@ -254,10 +254,9 @@ namespace hipblaslt_ext
                                                   void*                   D,
                                                   hipblasLtMatrixLayout_t matD)
     {
-        rocblaslt::RocGemm gemm;
-        gemm.setGemmType(static_cast<rocblaslt::RocGemmType>(m_gemm_type));
-        gemm.setHandle((rocblaslt_handle)m_handle);
-        auto status = RocBlasLtStatusToHIPStatus(
+        auto rocproblemtypes
+            = reinterpret_cast<std::vector<rocblaslt::RocGemmProblemType>*>(&m_problem_types);
+        return RocBlasLtStatusToHIPStatus(
             rocblaslt_gemm_create_cpp((rocblaslt_matmul_desc)matmul_descr,
                                       alpha,
                                       A,
@@ -269,17 +268,9 @@ namespace hipblaslt_ext
                                       (rocblaslt_matrix_layout)matC,
                                       D,
                                       (rocblaslt_matrix_layout)matD,
-                                      gemm));
-        if(status == HIPBLAS_STATUS_SUCCESS)
-        {
-            m_gemm_type           = static_cast<GemmType>(gemm.getGemmType());
-            m_gemm_count          = gemm.getGemmCount();
-            m_data                = gemm.getData();
-            auto problemtypes     = gemm.getProblemTypes();
-            auto castproblemtypes = reinterpret_cast<std::vector<GemmProblemType>*>(&problemtypes);
-            m_problem_types       = *castproblemtypes;
-        }
-        return status;
+                                      (*rocproblemtypes)[0],
+                                      m_data,
+                                      m_gemm_count));
     }
 
     GemmProblemType Gemm::getProblemTypes()
@@ -449,32 +440,23 @@ namespace hipblaslt_ext
             alpha_groupedGemm.push_back((const void*)(&(alpha[i])));
             beta_groupedGemm.push_back((const void*)(&(beta[i])));
         }
-        rocblaslt::RocGemm gemm;
-        gemm.setGemmType(static_cast<rocblaslt::RocGemmType>(m_gemm_type));
-        gemm.setHandle((rocblaslt_handle)m_handle);
-        auto status
-            = RocBlasLtStatusToHIPStatus(rocblaslt_groupedgemm_create_cpp(*matmul_descr_groupedGemm,
-                                                                          alpha_groupedGemm,
-                                                                          *A_groupedGemm,
-                                                                          *matA_groupedGemm,
-                                                                          *B_groupedGemm,
-                                                                          *matB_groupedGemm,
-                                                                          beta_groupedGemm,
-                                                                          *C_groupedGemm,
-                                                                          *matC_groupedGemm,
-                                                                          D,
-                                                                          *matD_groupedGemm,
-                                                                          gemm));
-        if(status == HIPBLAS_STATUS_SUCCESS)
-        {
-            m_gemm_type           = static_cast<GemmType>(gemm.getGemmType());
-            m_gemm_count          = gemm.getGemmCount();
-            m_data                = gemm.getData();
-            auto problemtypes     = gemm.getProblemTypes();
-            auto castproblemtypes = reinterpret_cast<std::vector<GemmProblemType>*>(&problemtypes);
-            m_problem_types       = *castproblemtypes;
-        }
-        return status;
+        auto rocproblemtypes
+            = reinterpret_cast<std::vector<rocblaslt::RocGemmProblemType>*>(&m_problem_types);
+        return RocBlasLtStatusToHIPStatus(
+            rocblaslt_groupedgemm_create_cpp(*matmul_descr_groupedGemm,
+                                             alpha_groupedGemm,
+                                             *A_groupedGemm,
+                                             *matA_groupedGemm,
+                                             *B_groupedGemm,
+                                             *matB_groupedGemm,
+                                             beta_groupedGemm,
+                                             *C_groupedGemm,
+                                             *matC_groupedGemm,
+                                             D,
+                                             *matD_groupedGemm,
+                                             (*rocproblemtypes),
+                                             m_data,
+                                             m_gemm_count));
     }
 
     std::vector<GemmProblemType> GroupedGemm::getProblemTypes()
