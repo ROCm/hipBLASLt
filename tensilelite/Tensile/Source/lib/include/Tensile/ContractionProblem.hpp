@@ -813,6 +813,8 @@ namespace Tensile
             return c;
         }
 
+        void updateProblem();
+
     private:
         std::string m_sumNames;
         std::string m_operationIdentifier;
@@ -944,7 +946,7 @@ namespace Tensile
     struct TENSILE_API ContractionGroupedInputs : public ProblemInputs
     {
         std::vector<ContractionInputs> grouped;
-        void* ws = nullptr;
+        void*                          ws = nullptr;
     };
 
     // Deprecated: Legacy support for hipBLASLt

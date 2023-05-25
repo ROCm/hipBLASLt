@@ -630,6 +630,12 @@ namespace Tensile
         m_eligibleForPK = persistentGroups < problemTiles;
     }
 
+    void ContractionProblemGemm::updateProblem()
+    {
+        consistencyCheck();
+        normalize();
+    }
+
     void ContractionProblemGemm::normalize()
     {
         auto& aTensor    = m_tensors[ContractionProblemGemm::TENSOR::A];
@@ -645,9 +651,13 @@ namespace Tensile
         m_batchSizes.resize(m_batchIndices.size());
         m_boundSizes.resize(m_boundIndices.size());
 
+        m_freeSizesA.clear();
+        m_freeSizesB.clear();
         m_freeSizesA.reserve(m_freeIndices.size());
         m_freeSizesB.reserve(m_freeIndices.size());
 
+        m_freeIndicesA.clear();
+        m_freeIndicesB.clear();
         m_freeIndicesA.reserve(m_freeIndices.size());
         m_freeIndicesB.reserve(m_freeIndices.size());
 
@@ -694,6 +704,7 @@ namespace Tensile
         m_problemSizes.insert(m_problemSizes.end(), cTensor.sizes().begin(), cTensor.sizes().end());
         m_problemSizes.insert(m_problemSizes.end(), m_boundSizes.begin(), m_boundSizes.end());
 
+        m_problemStrides.resize(0);
         m_problemStrides.reserve(aTensor.dimensions() + bTensor.dimensions() + cTensor.dimensions()
                                  + dTensor.dimensions());
         m_problemStrides.insert(
