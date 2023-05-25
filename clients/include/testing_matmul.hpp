@@ -706,7 +706,7 @@ void testing_matmul(const Arguments& arg)
         HIPBLAS_STATUS_SUCCESS);
 
     // set workspace
-    device_vector<unsigned char>* dWorkspace;
+    device_vector<unsigned char>* dWorkspace     = nullptr;
     size_t                        workspace_size = 0;
 
     // Get Heuristic results
@@ -1229,6 +1229,36 @@ void testing_matmul(const Arguments& arg)
                                                         ArgumentLogging::NA_value,
                                                         cpu_time_used,
                                                         hipblaslt_error);
+        if(dWorkspace != nullptr)
+            delete dWorkspace;
+    }
+
+    for(int i = 0; i < gemm_count; i++)
+    {
+        delete hA[i];
+        delete hB[i];
+        delete hC[i];
+        delete hD_gold[i];
+        delete hD_gold_epl[i];
+        delete hD_1[i];
+        delete hBias[i];
+        delete hBias_gold_epl[i];
+        delete hBias_gold[i];
+        delete hBias_gold_C[i];
+        delete hScaleD[i];
+        delete hBias_C[i];
+        delete dA[i];
+        delete dB[i];
+        delete dC[i];
+        delete dD[i];
+        delete dBias[i];
+        delete dScaleD[i];
+        delete dBias_C[i];
+        if(arg.use_e)
+        {
+            delete dE[i];
+            delete hE[i];
+        }
     }
 
     CHECK_HIP_ERROR(hipStreamDestroy(stream));
