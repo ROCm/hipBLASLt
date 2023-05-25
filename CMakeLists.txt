@@ -24,9 +24,9 @@
 # The ROCm platform requires at least Ubuntu 16.04 or Fedora 24, which have cmake 3.5
 cmake_minimum_required(VERSION 3.5 FATAL_ERROR)
 
-# This will add compile option: -std=c++20
-set(CMAKE_CXX_STANDARD 20 )
-# Without this line, it will add -std=gnu++20 instead, which may have issues.
+# This will add compile option: -std=c++17
+set(CMAKE_CXX_STANDARD 17 )
+# Without this line, it will add -std=gnu++17 instead, which may have issues.
 set(CMAKE_CXX_EXTENSIONS OFF )
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
