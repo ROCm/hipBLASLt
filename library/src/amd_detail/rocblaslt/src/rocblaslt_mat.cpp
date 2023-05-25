@@ -31,6 +31,55 @@
 
 #include <hip/hip_runtime_api.h>
 
+inline rocblaslt_status rocblaslt_epilogue_valid_args(const rocblaslt_epilogue& epilogue,
+                                                      const int64_t&            num_rows_e,
+                                                      const int64_t&            num_cols_e,
+                                                      const hipblasDatatype_t&  d_type,
+                                                      const hipblasDatatype_t&  original_bias_type,
+                                                      const void*               e_ptr,
+                                                      const int64_t&            original_lde,
+                                                      const int64_t&            original_stride_e,
+                                                      const void*               original_bias,
+                                                      const void*               original_scaleD,
+                                                      void*&                    E,
+                                                      int64_t&                  lde,
+                                                      int64_t&                  batch_stride_e,
+                                                      void*&                    bias,
+                                                      hipblasDatatype_t&        bias_type,
+                                                      void*&                    scaleD,
+                                                      bool&                     gradient)
+{
+    // Set status
+    rocblaslt_status status = rocblaslt_status_continue;
+    // External update args
+    bias_type = original_bias_type == 0 ? d_type : original_bias_type;
+    gradient  = is_grad_enabled(epilogue);
+
+    if(is_bias_enabled(epilogue))
+        bias = (void*)original_bias;
+    else
+        bias = nullptr;
+
+    if(original_scaleD)
+        scaleD = (void*)original_scaleD;
+    else
+        scaleD = nullptr;
+
+    // matrix E
+    E = nullptr;
+    if(is_e_enabled(epilogue))
+    {
+        if(e_ptr == nullptr)
+            status = rocblaslt_status_invalid_pointer;
+        E = (void*)e_ptr;
+    }
+    lde            = original_lde > 0 ? original_lde : num_rows_e;
+    batch_stride_e = original_stride_e > 0 ? original_stride_e : original_lde * num_cols_e;
+    if(E != nullptr && ((lde < num_rows_e) || (batch_stride_e < (num_cols_e * num_rows_e))))
+        status = rocblaslt_status_invalid_value;
+    return status;
+}
+
 inline rocblaslt_status rocblaslt_matmul_valid_args(const rocblaslt_matmul_desc matmul_descr,
                                                     const void*                 A,
                                                     const void*                 B,
@@ -61,25 +110,8 @@ inline rocblaslt_status rocblaslt_matmul_valid_args(const rocblaslt_matmul_desc 
                                                     void*&                      E,
                                                     bool&                       gradient)
 {
-    // Set status
-    rocblaslt_status status = rocblaslt_status_continue;
     // Internal assign
-    hipblasOperation_t opA      = matmul_descr->op_A;
-    rocblaslt_epilogue epilogue = matmul_descr->epilogue;
-
-    // External update args
-    bias_type = matmul_descr->bias_type == 0 ? matD->type : matmul_descr->bias_type;
-    gradient  = is_grad_enabled(epilogue);
-
-    if(is_bias_enabled(epilogue))
-        bias = matmul_descr->bias;
-    else
-        bias = nullptr;
-
-    if(matmul_descr->scaleD)
-        scaleD = matmul_descr->scaleD;
-    else
-        scaleD = nullptr;
+    hipblasOperation_t opA = matmul_descr->op_A;
 
     // matrix A
     int64_t num_rows_a    = matA->m;
@@ -105,45 +137,46 @@ inline rocblaslt_status rocblaslt_matmul_valid_args(const rocblaslt_matmul_desc 
     ldd                   = matD->ld;
     batch_stride_d        = matD->batch_stride;
 
-    // matrix E
-    E = nullptr;
-    if(is_e_enabled(epilogue))
-    {
-        if(matmul_descr->e == nullptr)
-            status = rocblaslt_status_invalid_pointer;
-        E = (void*)matmul_descr->e;
-    }
-    int64_t num_rows_e = num_rows_d;
-    int64_t num_cols_e = num_cols_d;
-    lde                = matmul_descr->lde > 0 ? matmul_descr->lde : num_rows_e;
-    batch_stride_e     = matmul_descr->stride_e > 0 ? matmul_descr->stride_e : lde * num_cols_e;
-    if(E != nullptr
-       && ((matmul_descr->lde < num_rows_e)
-           || (matmul_descr->stride_e < (num_cols_e * num_rows_e))))
-        status = rocblaslt_status_invalid_value;
-
     m = num_rows_d;
     n = num_cols_d;
     k = (opA == HIPBLAS_OP_N) ? num_cols_a : num_rows_a;
 
+    auto status = validateMatmulArgs(m,
+                                     n,
+                                     k,
+                                     alpha,
+                                     A,
+                                     B,
+                                     beta,
+                                     C,
+                                     D,
+                                     num_batches_a,
+                                     num_batches_b,
+                                     num_batches_c,
+                                     num_batches_d,
+                                     batch_stride_a,
+                                     batch_stride_b,
+                                     batch_stride_c,
+                                     batch_stride_d);
+
     if(status == rocblaslt_status_continue)
-        status = validateMatmulArgs(m,
-                                    n,
-                                    k,
-                                    alpha,
-                                    A,
-                                    B,
-                                    beta,
-                                    C,
-                                    D,
-                                    num_batches_a,
-                                    num_batches_b,
-                                    num_batches_c,
-                                    num_batches_d,
-                                    batch_stride_a,
-                                    batch_stride_b,
-                                    batch_stride_c,
-                                    batch_stride_d);
+        status = rocblaslt_epilogue_valid_args(matmul_descr->epilogue,
+                                               num_rows_d,
+                                               num_cols_d,
+                                               matD->type,
+                                               matmul_descr->bias_type,
+                                               matmul_descr->e,
+                                               matmul_descr->lde,
+                                               matmul_descr->stride_e,
+                                               matmul_descr->bias,
+                                               matmul_descr->scaleD,
+                                               E,
+                                               lde,
+                                               batch_stride_e,
+                                               bias,
+                                               bias_type,
+                                               scaleD,
+                                               gradient);
     return status;
 }
 
@@ -331,55 +364,48 @@ rocblaslt_status rocblaslt_gemm_create_cpp_impl_2(int64_t                       
                                                   std::shared_ptr<void>&         gemmData,
                                                   size_t&                        gemmCount)
 {
-    rocblaslt_status  status = rocblaslt_status_continue;
-    hipblasDatatype_t bias_type
-        = rocEpilogue.bias_data_type == 0 ? problemtype.type_d : rocEpilogue.bias_data_type;
-    void *bias = nullptr, *scaleD = nullptr, *E = nullptr;
-    bool  gradient = is_grad_enabled(rocEpilogue.mode);
 
-    if(is_bias_enabled(rocEpilogue.mode))
-        bias = inputs.bias;
-    else
-        bias = nullptr;
+    auto status = validateMatmulArgs(m,
+                                     n,
+                                     k,
+                                     inputs.alpha,
+                                     inputs.a,
+                                     inputs.b,
+                                     inputs.beta,
+                                     inputs.c,
+                                     inputs.d,
+                                     b,
+                                     b,
+                                     b,
+                                     b,
+                                     batch_stride_a,
+                                     batch_stride_b,
+                                     batch_stride_c,
+                                     batch_stride_d);
 
-    if(inputs.scaleD)
-        scaleD = inputs.scaleD;
-    else
-        scaleD = nullptr;
-
-    // matrix E
-    E = nullptr;
-    if(is_e_enabled(rocEpilogue.mode))
-    {
-        if(inputs.aux == nullptr)
-            status = rocblaslt_status_invalid_pointer;
-        E = (void*)inputs.aux;
-    }
-    int64_t num_rows_e     = m;
-    int64_t num_cols_e     = n;
-    int64_t lde            = rocEpilogue.aux_ld > 0 ? rocEpilogue.aux_ld : num_rows_e;
-    int64_t batch_stride_e = rocEpilogue.aux_stride > 0 ? rocEpilogue.aux_stride : lde * num_cols_e;
-    if(E != nullptr && ((lde < num_rows_e) || (batch_stride_e < (num_cols_e * num_rows_e))))
-        status = rocblaslt_status_invalid_value;
+    void *            bias = nullptr, *scaleD = nullptr, *E = nullptr;
+    int64_t           lde = 0, batch_stride_e = 0;
+    hipblasDatatype_t bias_type = static_cast<hipblasDatatype_t>(0);
+    bool              gradient  = false;
 
     if(status == rocblaslt_status_continue)
-        status = validateMatmulArgs(m,
-                                    n,
-                                    k,
-                                    inputs.alpha,
-                                    inputs.a,
-                                    inputs.b,
-                                    inputs.beta,
-                                    inputs.c,
-                                    inputs.d,
-                                    b,
-                                    b,
-                                    b,
-                                    b,
-                                    batch_stride_a,
-                                    batch_stride_b,
-                                    batch_stride_c,
-                                    batch_stride_d);
+        status = rocblaslt_epilogue_valid_args(rocEpilogue.mode,
+                                               m,
+                                               n,
+                                               problemtype.type_d,
+                                               rocEpilogue.bias_data_type,
+                                               inputs.aux,
+                                               rocEpilogue.aux_ld,
+                                               rocEpilogue.aux_stride,
+                                               inputs.bias,
+                                               inputs.scaleD,
+                                               E,
+                                               lde,
+                                               batch_stride_e,
+                                               bias,
+                                               bias_type,
+                                               scaleD,
+                                               gradient);
     if(status != rocblaslt_status_continue)
         return status;
 
@@ -449,17 +475,6 @@ rocblaslt_status
 
     for(int i = 0; i < matmul_descr.size(); i++)
     {
-        const void*       bias = nullptr;
-        hipblasDatatype_t bias_type
-            = matmul_descr[i]->bias_type == 0 ? matD[i]->type : matmul_descr[i]->bias_type;
-        rocblaslt_epilogue epilogue = matmul_descr[i]->epilogue;
-        if(is_bias_enabled(epilogue))
-            bias = matmul_descr[i]->bias;
-
-        const void* scaleD = nullptr;
-        if(matmul_descr[i]->scaleD)
-            scaleD = matmul_descr[i]->scaleD;
-
         // matrix A
         int64_t num_rows_a     = matA[i]->m;
         int64_t num_cols_a     = matA[i]->n;
@@ -511,6 +526,32 @@ rocblaslt_status
                                             batch_stride_d);
         if(validArgs == rocblaslt_status_success)
             continue;
+
+        void*              bias = nullptr;
+        hipblasDatatype_t  bias_type;
+        void*              scaleD = nullptr;
+        void*              E      = nullptr;
+        int64_t            lde, batch_stride_e;
+        bool               gradient;
+        rocblaslt_epilogue epilogue = matmul_descr[i]->epilogue;
+        if(validArgs == rocblaslt_status_continue)
+            validArgs = rocblaslt_epilogue_valid_args(epilogue,
+                                                      num_rows_d,
+                                                      num_cols_d,
+                                                      matD[i]->type,
+                                                      matmul_descr[i]->bias_type,
+                                                      matmul_descr[i]->e,
+                                                      matmul_descr[i]->lde,
+                                                      matmul_descr[i]->stride_e,
+                                                      matmul_descr[i]->bias,
+                                                      matmul_descr[i]->scaleD,
+                                                      E,
+                                                      lde,
+                                                      batch_stride_e,
+                                                      bias,
+                                                      bias_type,
+                                                      scaleD,
+                                                      gradient);
         if(validArgs != rocblaslt_status_continue)
             return validArgs;
 
@@ -609,20 +650,6 @@ rocblaslt_status
 
     for(int i = 0; i < m.size(); i++)
     {
-        int                iIdx      = (rocEpilogue.size() <= i) ? rocEpilogue.size() - 1 : i;
-        int                iIdx2     = (problemtype.size() <= i) ? problemtype.size() - 1 : i;
-        const void*        bias      = nullptr;
-        hipblasDatatype_t  bias_type = rocEpilogue[iIdx].bias_data_type == 0
-                                           ? problemtype[iIdx2].type_d
-                                           : rocEpilogue[iIdx].bias_data_type;
-        rocblaslt_epilogue epilogue  = rocEpilogue[iIdx].mode;
-        if(is_bias_enabled(epilogue))
-            bias = inputs[i].bias;
-
-        const void* scaleD = nullptr;
-        if(inputs[i].scaleD)
-            scaleD = inputs[i].scaleD;
-
         auto validArgs = validateMatmulArgs(m[i],
                                             n[i],
                                             k[i],
@@ -642,6 +669,35 @@ rocblaslt_status
                                             strideD[i]);
         if(validArgs == rocblaslt_status_success)
             continue;
+
+        void*             bias = nullptr;
+        hipblasDatatype_t bias_type;
+        void*             scaleD = nullptr;
+        void*             E      = nullptr;
+        int64_t           lde, batch_stride_e;
+        bool              gradient;
+
+        int                iIdx     = (rocEpilogue.size() <= i) ? rocEpilogue.size() - 1 : i;
+        int                iIdx2    = (problemtype.size() <= i) ? problemtype.size() - 1 : i;
+        rocblaslt_epilogue epilogue = rocEpilogue[iIdx].mode;
+        if(validArgs == rocblaslt_status_continue)
+            validArgs = rocblaslt_epilogue_valid_args(epilogue,
+                                                      m[i],
+                                                      n[i],
+                                                      problemtype[iIdx2].type_d,
+                                                      rocEpilogue[iIdx].bias_data_type,
+                                                      inputs[i].aux,
+                                                      rocEpilogue[iIdx].aux_ld,
+                                                      rocEpilogue[iIdx].aux_stride,
+                                                      inputs[i].bias,
+                                                      inputs[i].scaleD,
+                                                      E,
+                                                      lde,
+                                                      batch_stride_e,
+                                                      bias,
+                                                      bias_type,
+                                                      scaleD,
+                                                      gradient);
         if(validArgs != rocblaslt_status_continue)
             return validArgs;
 
