@@ -542,7 +542,7 @@ namespace
         // This makes alpha==0 a change in the problem, and not just a change in the
         // inputs. It optimizes all problems with alpha==0 into K=0 and alpha=(don't
         // care)
-        auto k = prob.k && *prob.alpha ? prob.k : 0;
+        auto k = prob.k; // && *prob.alpha ? prob.k : 0;
 
         // clang-format off
 
@@ -586,6 +586,9 @@ namespace
                                     {prob.m, prob.n, prob.batch_count},
                                     {prob.row_stride_d, prob.col_stride_d, prob.batch_stride_d});
 
+        tensileProblem.setBetaRestriction(Tensile::toScalarValueEnum((double)(*prob.beta)));
+        tensileProblem.updateProblem();
+
         tensileProblem.setAlphaType(Tensile_Tc);
         tensileProblem.setBetaType(Tensile_Tc);
 
@@ -605,7 +608,6 @@ namespace
         else
             memset(&tensileAlpha, 0, sizeof(tensileAlpha));
         tensileProblem.setAlphaRestriction(Tensile::toScalarValueEnum(tensileAlpha));
-        tensileProblem.setBetaRestriction(Tensile::toScalarValueEnum((double)(*prob.beta)));
 
         // Add problem predicates for CEqualsD
         tensileProblem.setCEqualsD(prob.C == prob.D);
@@ -1186,7 +1188,6 @@ rocblaslt_status gemmCreate(RocblasltContractionProblem<Ti, To, Tc> const& probl
         gemmCount = 1;
         if(gemmData)
         {
-            // Need to check if is same type?
             std::shared_ptr<TensileDataGemm> data
                 = std::static_pointer_cast<TensileDataGemm>(gemmData);
             updateTensileProblem(false, problem, data->problem);
