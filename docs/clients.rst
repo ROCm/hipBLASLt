@@ -114,27 +114,36 @@ For more information:
         -h, --help                              Show this help message
         -v, --verbose                           Verbose output
         -V, --validate                          Verify results
-        -m                      m               GEMM_STRIDED argument m
-        -n                      n               GEMM_STRIDED argument n
-        -k                      k               GEMM_STRIDED argument k
-        --lda                   lda             GEMM_STRIDED argument lda
-        --ldb                   ldb             GEMM_STRIDED argument ldb
-        --ldc                   ldc             GEMM_STRIDED argument ldc
-        --ldd                   ldd             GEMM_STRIDED argument ldd
-        --trans_a               trans_a         GEMM_STRIDED argument trans_a
-        --trans_b               trans_b         GEMM_STRIDED argument trans_b
-        --datatype              datatype        GEMM_STRIDED argument in out datatype:fp32
-        --stride_a              stride_a        GEMM_STRIDED argument stride_a
-        --stride_b              stride_b        GEMM_STRIDED argument stride_b
-        --stride_c              stride_c        GEMM_STRIDED argument stride_c
-        --stride_d              stride_d        GEMM_STRIDED argument stride_d
-        --alpha                 alpha           GEMM_STRIDED argument alpha
-        --beta                  beta            GEMM_STRIDED argument beta
-        --act                   act             GEMM_STRIDED set activation type: relu or gelu
-        --bias                  bias            GEMM_STRIDED enable bias: 0 or 1 (default is 0)
-        --scaleD                scaleD          GEMM_STRIDED enable scaleD: 0 or 1 (default is 0)
-        --header                header          Print header for output (default is enabled)
-        --timing                timing          Bechmark GPU kernel performance:0 or 1 (default is 1)
+        -s, --request_solutions                 Number of solutions to run (default is 1)
+        -m              m                       GEMM_STRIDED argument m
+        -n              n                       GEMM_STRIDED argument n
+        -k              k                       GEMM_STRIDED argument k
+        --lda           lda                     GEMM_STRIDED argument lda
+        --ldb           ldb                     GEMM_STRIDED argument ldb
+        --ldc           ldc                     GEMM_STRIDED argument ldc
+        --ldd           ldd                     GEMM_STRIDED argument ldd
+        --trans_a       trans_a                 GEMM_STRIDED argument trans_a (N, T)
+        --trans_b       trans_b                 GEMM_STRIDED argument trans_b (N, T)
+        --datatype      datatype                GEMM_STRIDED argument in out datatype:fp32,fp16,bf16
+        --stride_a      stride_a                GEMM_STRIDED argument stride_a
+        --stride_b      stride_b                GEMM_STRIDED argument stride_b
+        --stride_c      stride_c                GEMM_STRIDED argument stride_c
+        --stride_d      stride_d                GEMM_STRIDED argument stride_d
+        --alpha         alpha                   GEMM_STRIDED argument alpha
+        --beta          beta                    GEMM_STRIDED argument beta
+        --batch_count   batch                   GEMM_STRIDED argument batch count
+        --act           act                     GEMM_STRIDED set activation type: relu or gelu
+        --grad          grad                    GEMM_STRIDED enable grad: 0 or 1 (default is 0)
+        --use_e         use_e                   GEMM_STRIDED enable use_e: 0 or 1 (default is 0)
+        --bias          bias                    GEMM_STRIDED enable bias and choose bias src: A, B, D
+        --scaleD        scaleD                  GEMM_STRIDED enable scaleD: 0 or 1 (default is 0)
+        --header        header                  Print header for output (default is enabled)
+        --timing        timing                  Bechmark GPU kernel performance:0 or 1 (default is 1)
+        --bench_count   bench_count             Number of benchmark runs (default is 3)
+        --sync_count    sync_count              Number of sync runs (default is 1)
+        --cold_iters    cold_iters              Cold Iterations to run before entering the timing loop (default is 0)
+        --ext           ext                     use Ext API
+        --all           all                     Get all solutions
 
 For example, to measure performance of fp32 gemm:
 
@@ -197,6 +206,7 @@ For more information:
         --bias                  bias            GEMM_STRIDED set bias: 0 or 1 (default is 0)
         --scaleD                scaleD          GEMM_STRIDED enable scaleD: 0 or 1 (default is 0)
         --cpu_time              cpu_time        Bechmark timing using cpu time: 0 or 1 (default is 0)
+        --all                   all             Get all solutions
 
 For example, to solve 3 gemms by groupgemm sample app:
 
@@ -248,4 +258,4 @@ For example, to solve 3 gemms by groupgemm sample app:
 
 .. code-block:: bash
 
-   ./example_hipblaslt_groupedgemm_get_all_algos --datatype fp16 --trans_a T --trans_b N -m 1024 -n 1024 -k 1024 -m 512 -n 512 -k 512 -m 2048 -n 1024 -k 512 --sync_count 10 --grouped_gemm 1 --request_solutions 10
+   ./example_hipblaslt_groupedgemm_get_all_algos --datatype fp16 --trans_a T --trans_b N -m 1024 -n 1024 -k 1024 -m 512 -n 512 -k 512 -m 2048 -n 1024 -k 512 --sync_count 10 --grouped_gemm 1
