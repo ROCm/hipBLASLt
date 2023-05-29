@@ -627,7 +627,7 @@ namespace Tensile
 
         uint8_t* d_args = (uint8_t*)(inputs.ws) + workspaceOffsetInByte;
         rv.args.append<uint32_t>("gemm_count", problems.size());
-        rv.args.append<uint8_t const*>("argsPtr", d_args);
+        rv.args.append<void const*>("argsPtr", (void*)d_args);
         rv.codeObjectFile = codeObjectFilename.load();
 
         return rv;
@@ -1608,6 +1608,15 @@ namespace Tensile
         {
             auto problem = problems[idx];
             workspaceOffsetInByte += requiredWorkspaceSize(problem);
+        }
+        if(debug)
+        {
+            std::cout << "Grouped gemm argsPtr kernels: " << std::endl;
+            for(auto& kernel : rv)
+            {
+                std::cout << kernel.kernelName << std::endl;
+            }
+            std::cout << h_args;
         }
         uint8_t* d_args = (uint8_t*)inputs.ws + workspaceOffsetInByte;
         HIP_CHECK_EXC(hipMemcpyAsync(

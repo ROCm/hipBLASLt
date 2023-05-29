@@ -132,6 +132,7 @@ namespace Tensile
 
         std::vector<std::string>             m_names;
         std::unordered_map<std::string, Arg> m_argRecords;
+        std::unordered_map<std::string, int> m_argNameCounter;
 
         bool m_log;
     };
@@ -290,10 +291,14 @@ namespace Tensile
         auto it = m_argRecords.find(name);
         if(it != m_argRecords.end())
         {
-            throw std::runtime_error("Duplicate argument name: " + name);
+            std::string name2   = name + "_" + std::to_string(m_argNameCounter[name]);
+            m_argRecords[name2] = record;
+            m_names.push_back(name2);
+            m_argNameCounter[name]++;
+            return;
         }
-
-        m_argRecords[name] = record;
+        m_argNameCounter[name] = 1;
+        m_argRecords[name]     = record;
         m_names.push_back(name);
     }
 
