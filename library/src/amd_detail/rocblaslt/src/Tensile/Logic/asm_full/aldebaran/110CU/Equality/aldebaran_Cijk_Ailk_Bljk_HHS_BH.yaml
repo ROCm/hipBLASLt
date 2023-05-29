@@ -151,7 +151,7 @@
     NoLdsWriteCode: false
     NoReject: false
     NoTailLoop: false
-    NonTemporalA: 0
+    NonTemporalA: 2
     NonTemporalB: 0
     NonTemporalC: 0
     NonTemporalD: 0
@@ -367,7 +367,7 @@
     NoLdsWriteCode: false
     NoReject: false
     NoTailLoop: false
-    NonTemporalA: 0
+    NonTemporalA: 2
     NonTemporalB: 0
     NonTemporalC: 0
     NonTemporalD: 0
@@ -1015,7 +1015,7 @@
     NoLdsWriteCode: false
     NoReject: false
     NoTailLoop: false
-    NonTemporalA: 0
+    NonTemporalA: 2
     NonTemporalB: 0
     NonTemporalC: 0
     NonTemporalD: 0
@@ -1231,7 +1231,7 @@
     NoLdsWriteCode: false
     NoReject: false
     NoTailLoop: false
-    NonTemporalA: 0
+    NonTemporalA: 2
     NonTemporalB: 0
     NonTemporalC: 0
     NonTemporalD: 0
@@ -1879,7 +1879,7 @@
     NoLdsWriteCode: false
     NoReject: false
     NoTailLoop: false
-    NonTemporalA: 0
+    NonTemporalA: 2
     NonTemporalB: 0
     NonTemporalC: 0
     NonTemporalD: 0
@@ -2095,8 +2095,8 @@
     NoLdsWriteCode: false
     NoReject: false
     NoTailLoop: false
-    NonTemporalA: 0
-    NonTemporalB: 0
+    NonTemporalA: 2
+    NonTemporalB: 2
     NonTemporalC: 0
     NonTemporalD: 0
     NumElementsPerBatchStore: 0
@@ -2312,7 +2312,7 @@
     NoReject: false
     NoTailLoop: false
     NonTemporalA: 0
-    NonTemporalB: 0
+    NonTemporalB: 2
     NonTemporalC: 0
     NonTemporalD: 0
     NumElementsPerBatchStore: 0
@@ -2528,7 +2528,7 @@
     NoReject: false
     NoTailLoop: false
     NonTemporalA: 0
-    NonTemporalB: 0
+    NonTemporalB: 2
     NonTemporalC: 0
     NonTemporalD: 0
     NumElementsPerBatchStore: 0
@@ -2743,7 +2743,7 @@
     NoLdsWriteCode: false
     NoReject: false
     NoTailLoop: false
-    NonTemporalA: 0
+    NonTemporalA: 2
     NonTemporalB: 0
     NonTemporalC: 0
     NonTemporalD: 0
@@ -2959,7 +2959,7 @@
     NoLdsWriteCode: false
     NoReject: false
     NoTailLoop: false
-    NonTemporalA: 0
+    NonTemporalA: 2
     NonTemporalB: 0
     NonTemporalC: 0
     NonTemporalD: 0
@@ -3647,7 +3647,7 @@
     NoLdsWriteCode: false
     NoReject: false
     NoTailLoop: false
-    NonTemporalA: 0
+    NonTemporalA: 2
     NonTemporalB: 0
     NonTemporalC: 0
     NonTemporalD: 0
