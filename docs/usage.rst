@@ -227,6 +227,41 @@ The grouped gemm class also has the setProblem APIs.
                                 std::vector<void*>&                   D,
                                 std::vector<hipblasLtMatrixLayout_t>& matD);
 
+For the following API, the argument "epilogue" and "problemtype" supports broadcasting. They will be broadcasted to the length of the problem size by duplicating the last element.
+
+.. code-block:: c++
+
+    HIPBLASLT_EXPORT hipblasStatus_t setProblem(std::vector<int64_t>&         m,
+                                                std::vector<int64_t>&         n,
+                                                std::vector<int64_t>&         k,
+                                                std::vector<int64_t>&         batch_count,
+                                                std::vector<int64_t>&         lda,
+                                                std::vector<int64_t>&         ldb,
+                                                std::vector<int64_t>&         ldc,
+                                                std::vector<int64_t>&         ldd,
+                                                std::vector<int64_t>&         strideA,
+                                                std::vector<int64_t>&         strideB,
+                                                std::vector<int64_t>&         strideC,
+                                                std::vector<int64_t>&         strideD,
+                                                std::vector<GemmEpilogue>&    epilogue,
+                                                std::vector<GemmInputs>&      inputs,
+                                                std::vector<GemmProblemType>& problemtype);
+
+Note that currently only supports problemtype size equals to 1 (Only one GemmProblemType for all problems).
+
+.. code-block:: c++
+
+    // Pseudo code
+    std::vector<int64_t> m, n, k;
+    // ...
+    for(size_t i = 0; i < problem_size, i++)
+    {
+        // ...
+    }
+    std::vector<GemmProblemType> problemtypes;
+    problemtypes.push_back(problemtype);
+    groupedgemm.setProblem(m, n, k, batch_count, lda, ldb, ldc, ldd, strideA, strideB, strideC, strideD, epilogue, inputs, problemtypes);
+
 The base class (GemmInstance)
 ====================
 
