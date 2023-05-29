@@ -1796,13 +1796,16 @@ namespace Tensile
                 {
                     if(problem.useBias())
                     {
+                        auto& tensor = problem.tensor(ContractionProblemGemm::TENSOR::BIAS);
+                        if(tensor.sizes().size() == 0)
+                            return false;
+
                         for(size_t i = 0; i < value.size(); i++)
                         {
                             if(value[i] == static_cast<int>(problem.biasSrc()))
                             {
                                 // Check if the length is set correctly.
-                                auto& length = problem.tensor(ContractionProblemGemm::TENSOR::BIAS)
-                                                   .sizes()[0];
+                                auto& length = tensor.sizes()[0];
                                 if(problem.biasSrc() == ContractionProblemGemm::TENSOR::A
                                    || problem.biasSrc() == ContractionProblemGemm::TENSOR::D)
                                 {
