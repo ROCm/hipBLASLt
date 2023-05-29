@@ -971,6 +971,11 @@ rocblaslt_status
                                      std::shared_ptr<void>&                      gemmData,
                                      size_t&                                     gemmCount)
 {
+    if(problemtype.size() != 1)
+    {
+        log_error(__func__, "Currently only supports same problem type for grouped gemm.");
+        return rocblaslt_status_invalid_value;
+    }
     return rocblaslt_groupedgemm_create_cpp_impl_2(m,
                                                    n,
                                                    b,
