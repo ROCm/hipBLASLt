@@ -904,31 +904,31 @@ void test_hipblaslt(hipblasDatatype_t           in_out_datatype,
                       << std::endl;
         }
 
-        std::vector<hipblaslt_ext::GemmEpilogue>    gemmEpilogue(gemm_count);
-        std::vector<hipblaslt_ext::GemmInputs>      gemmInputs(gemm_count);
-        std::vector<hipblaslt_ext::GemmProblemType> gemmProblemType(gemm_count);
-        std::vector<int64_t>                        batch_count64(gemm_count);
+        std::vector<hipblaslt_ext::GemmEpilogue> gemmEpilogue(gemm_count);
+        std::vector<hipblaslt_ext::GemmInputs>   gemmInputs(gemm_count);
+        std::vector<int64_t>                     batch_count64(gemm_count);
         for(size_t i = 0; i < gemm_count; i++)
         {
-            gemmEpilogue[i].mode            = epilogue[i];
-            gemmEpilogue[i].bias_data_type  = static_cast<hipblasDatatype_t>(0);
-            gemmInputs[i].a                 = da[i];
-            gemmInputs[i].b                 = db[i];
-            gemmInputs[i].c                 = dc[i];
-            gemmInputs[i].d                 = dd[i];
-            gemmInputs[i].alpha             = static_cast<void*>(&alpha[i]);
-            gemmInputs[i].beta              = static_cast<void*>(&beta[i]);
-            gemmInputs[i].scaleD            = d_scaleD[i];
-            gemmInputs[i].bias              = d_bias[i];
-            gemmProblemType[i].op_a         = trans_a;
-            gemmProblemType[i].op_b         = trans_b;
-            gemmProblemType[i].type_a       = in_out_datatype;
-            gemmProblemType[i].type_b       = in_out_datatype;
-            gemmProblemType[i].type_c       = in_out_datatype;
-            gemmProblemType[i].type_d       = in_out_datatype;
-            gemmProblemType[i].type_compute = HIPBLASLT_COMPUTE_F32;
-            batch_count64[i]                = batch_count[i];
+            gemmEpilogue[i].mode           = epilogue[i];
+            gemmEpilogue[i].bias_data_type = static_cast<hipblasDatatype_t>(0);
+            gemmInputs[i].a                = da[i];
+            gemmInputs[i].b                = db[i];
+            gemmInputs[i].c                = dc[i];
+            gemmInputs[i].d                = dd[i];
+            gemmInputs[i].alpha            = static_cast<void*>(&alpha[i]);
+            gemmInputs[i].beta             = static_cast<void*>(&beta[i]);
+            gemmInputs[i].scaleD           = d_scaleD[i];
+            gemmInputs[i].bias             = d_bias[i];
+            batch_count64[i]               = batch_count[i];
         }
+        std::vector<hipblaslt_ext::GemmProblemType> gemmProblemType;
+        gemmProblemType.push_back({trans_a,
+                                   trans_b,
+                                   in_out_datatype,
+                                   in_out_datatype,
+                                   in_out_datatype,
+                                   in_out_datatype,
+                                   HIPBLASLT_COMPUTE_F32});
         CHECK_HIPBLASLT_ERROR(groupedGemm.setProblem(m,
                                                      n,
                                                      k,
