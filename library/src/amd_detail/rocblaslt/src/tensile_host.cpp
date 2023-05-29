@@ -232,6 +232,7 @@ namespace
                               rocblaslt_compute_type typeCompute,
                               float                  alpha,
                               float                  beta,
+                              bool                   isGroupedGemm,
                               size_t                 maxWorkspaceBytes)
     {
         // Tensor descriptors for a, b
@@ -340,7 +341,7 @@ namespace
 
         // set batch mode
         tensileProblem.setStridedBatched(true);
-        tensileProblem.setGroupedGemm(false);
+        tensileProblem.setGroupedGemm(isGroupedGemm);
 
         tensileProblem.setAlphaRestriction(Tensile::toScalarValueEnum(alpha));
 
@@ -597,6 +598,7 @@ namespace
 
         // set batch mode
         tensileProblem.setStridedBatched(prob.strided_batch);
+        tensileProblem.setGroupedGemm(prob.grouped_gemm);
 
         // alpha and beta are stored by value in Tensile::TypedContractionInputs
         // alpha and beta are copied from host to Tensile::TypedContractionInputs
@@ -613,7 +615,6 @@ namespace
         tensileProblem.setCEqualsD(prob.C == prob.D);
 
         auto tensileAct = getTensileActivationType(prob.epilogue);
-        tensileProblem.setActivationEnumArg(tensileAct);
 
         if(fallback && prob.bias == nullptr && prob.scaleD == nullptr && prob.E == nullptr
            && tensileAct == Tensile::ActivationType::None)
@@ -645,11 +646,13 @@ namespace
             {
                 tensileProblem.setActivationType(Tensile::ActivationType::All);
                 tensileProblem.setActivationHPA(sizeof(Tc) > sizeof(Ti));
+                tensileProblem.setActivationEnumArg(tensileAct);
             }
             else
             {
                 tensileProblem.setActivationType(Tensile::ActivationType::None);
                 tensileProblem.setActivationHPA(false);
+                tensileProblem.setActivationEnumArg(Tensile::ActivationType::None);
             }
 
             // set E
@@ -1064,9 +1067,18 @@ void initTensileGemmData(rocblaslt_handle       handle,
     if(gemmType == rocblaslt::RocGemmType::ROCBLASLT_GEMM)
     {
         TensileDataGemm data;
-        data.problem = CreateTensileProblem(
-            opA, opB, typeA, typeB, typeC, typeD, typeCompute, alpha, beta, maxWorkspaceBytes);
-        gemmData = std::static_pointer_cast<void>(std::make_shared<TensileDataGemm>(data));
+        data.problem = CreateTensileProblem(opA,
+                                            opB,
+                                            typeA,
+                                            typeB,
+                                            typeC,
+                                            typeD,
+                                            typeCompute,
+                                            alpha,
+                                            beta,
+                                            false,
+                                            maxWorkspaceBytes);
+        gemmData     = std::static_pointer_cast<void>(std::make_shared<TensileDataGemm>(data));
         return;
     }
     else if(gemmType == rocblaslt::RocGemmType::ROCBLASLT_GROUPED_GEMM)
@@ -1075,8 +1087,17 @@ void initTensileGemmData(rocblaslt_handle       handle,
         Tensile::ContractionProblemGroupedGemm& tensile_probs = data.problem;
         Tensile::ContractionGroupedInputs&      groupedInputs = data.inputs;
 
-        tensile_probs.gemms.push_back(CreateTensileProblem(
-            opA, opB, typeA, typeB, typeC, typeD, typeCompute, alpha, beta, maxWorkspaceBytes));
+        tensile_probs.gemms.push_back(CreateTensileProblem(opA,
+                                                           opB,
+                                                           typeA,
+                                                           typeB,
+                                                           typeC,
+                                                           typeD,
+                                                           typeCompute,
+                                                           alpha,
+                                                           beta,
+                                                           true,
+                                                           maxWorkspaceBytes));
         groupedInputs.grouped.resize(1);
 
         gemmData = std::static_pointer_cast<void>(std::make_shared<TensileDataGroupedGemm>(data));
