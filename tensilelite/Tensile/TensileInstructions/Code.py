@@ -641,7 +641,7 @@ class _SignatureArgumentV3(_SignatureArgument):
 
 class _SignatureKernelDescriptorV3(Item):
     def __init__(self, name, groupSegSize, sgprWorkGroup, vgprWorkItem, \
-        totalVgprs: int=0, totalAgprs: int=0, totalSgprs: int =0, ForceStoreSC1=False):
+        totalVgprs: int=0, totalAgprs: int=0, totalSgprs: int =0):
         super().__init__(name)
         # accumulator offset for Unified Register Files
         if self.archCaps["ArchAccUnifiedRegs"]:
@@ -656,7 +656,6 @@ class _SignatureKernelDescriptorV3(Item):
         self.groupSegSize = groupSegSize
         self.sgprWorkGroup = sgprWorkGroup
         self.vgprWorkItem = vgprWorkItem
-        self.ForceStoreSC1 = ForceStoreSC1
 
     def setGprs(self, totalVgprs: int, totalAgprs: int, totalSgprs: int):
         if self.archCaps["ArchAccUnifiedRegs"]:
@@ -672,15 +671,8 @@ class _SignatureKernelDescriptorV3(Item):
     def __str__(self):
         kdIndent = " " * 2
         kStr = ""
-        # Temporary WA for gfx940
-        forceStore = ""
-        if self.kernel.isa in [(9,4,0),(9,4,1),(9,4,2)]:
-            if self.ForceStoreSC1:
-                forceStore = ":forcestoresc1+"
-            else:
-                forceStore = ":forcestoresc1-"
-        kStr += ".amdgcn_target \"amdgcn-amd-amdhsa--%s%s\"\n" \
-            % (getGfxName(self.kernel.isa), forceStore)
+        kStr += ".amdgcn_target \"amdgcn-amd-amdhsa--%s\"\n" \
+            % (getGfxName(self.kernel.isa))
         kStr += ".text\n"
         kStr += ".protected %s\n" % self.name
         kStr += ".globl %s\n" % self.name
@@ -778,7 +770,7 @@ class SignatureCodeMetaV3(Item):
 
 class SignatureBase(Item):
     def __init__(self, kernelName, codeObjectVersion, groupSegmentSize, sgprWorkGroup, \
-        vgprWorkItem, flatWorkGroupSize, totalVgprs: int=0, totalAgprs: int=0, totalSgprs: int=0, ForceStoreSC1=False) -> None:
+        vgprWorkItem, flatWorkGroupSize, totalVgprs: int=0, totalAgprs: int=0, totalSgprs: int=0) -> None:
         super().__init__(kernelName)
         self.codeObjectVersion = codeObjectVersion
 
@@ -792,8 +784,7 @@ class SignatureBase(Item):
                                                                 totalSgprs=totalSgprs,
                                                                 groupSegSize=groupSegmentSize,
                                                                 sgprWorkGroup=sgprWorkGroup,
-                                                                vgprWorkItem=vgprWorkItem,
-                                                                ForceStoreSC1=ForceStoreSC1)
+                                                                vgprWorkItem=vgprWorkItem)
             self.codeMeta = SignatureCodeMetaV3(name=kernelName,
                                                 groupSegSize=groupSegmentSize,
                                                 totalVgprs=totalVgprs,
