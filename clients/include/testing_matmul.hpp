@@ -1107,7 +1107,7 @@ void testing_matmul(const Arguments& arg)
                                                                   num_batches[gemmIdx]));
                         hipblaslt_error += norm_error;
                         if(arg.norm_check_assert)
-                            CHECK_SUCCESS(norm_check<Tc>(norm_error));
+                            CHECK_SUCCESS(norm_check<Talpha>(norm_error));
                     }
                     else
                     {
@@ -1121,7 +1121,7 @@ void testing_matmul(const Arguments& arg)
                                                                             num_batches[gemmIdx]));
                         hipblaslt_error += norm_error;
                         if(arg.norm_check_assert)
-                            CHECK_SUCCESS(norm_check<Tc>(norm_error));
+                            CHECK_SUCCESS(norm_check<To>(norm_error));
                     }
                 }
             }
