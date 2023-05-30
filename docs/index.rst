@@ -77,4 +77,4 @@ To overcome this overhead, it is recommended to query the heuristics once using 
 
 hipBLASLt Extensions
 ================
-See page usage for more information.
+See extension reference page for more information.
