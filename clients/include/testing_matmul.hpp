@@ -750,7 +750,7 @@ void testing_matmul(const Arguments& arg)
             dc[gemmIdx] = *dC[gemmIdx];
             dd[gemmIdx] = *dD[gemmIdx];
         }
-        CHECK_HIPBLASLT_ERROR(groupedGemm.setProblemFromhipBlasLt(
+        CHECK_HIPBLASLT_ERROR(groupedGemm.setProblem(
             matmul, h_alpha, da, matA, db, matB, h_beta, dc, matC, dd, matD));
 
         CHECK_HIPBLASLT_ERROR(

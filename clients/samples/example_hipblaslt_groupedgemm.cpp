@@ -913,8 +913,8 @@ void test_hipblaslt(hipblasDatatype_t           in_out_datatype,
                       << std::endl;
         }
 
-        CHECK_HIPBLASLT_ERROR(groupedGemm.setProblemFromhipBlasLt(
-            matmul, alpha, da, matA, db, matB, beta, dc, matC, dd, matD));
+        CHECK_HIPBLASLT_ERROR(
+            groupedGemm.setProblem(matmul, alpha, da, matA, db, matB, beta, dc, matC, dd, matD));
 
         if(findAll)
         {
