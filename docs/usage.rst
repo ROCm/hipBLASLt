@@ -123,17 +123,17 @@ The user can also importing problems from hipblasLt APIs after the instance is c
 
 .. code-block:: c++
 
-    HIPBLASLT_EXPORT hipblasStatus_t setProblemFromhipBlasLt(hipblasLtMatmulDesc_t matmul_descr,
-                                                             const void*           alpha,
-                                                             const void*           A,
-                                                             hipblasLtMatrixLayout_t matA,
-                                                             const void*             B,
-                                                             hipblasLtMatrixLayout_t matB,
-                                                             const void*             beta,
-                                                             const void*             C,
-                                                             hipblasLtMatrixLayout_t matC,
-                                                             void*                   D,
-                                                             hipblasLtMatrixLayout_t matD);
+    HIPBLASLT_EXPORT hipblasStatus_t setProblem(hipblasLtMatmulDesc_t   matmul_descr,
+                                                const void*             alpha,
+                                                const void*             A,
+                                                hipblasLtMatrixLayout_t matA,
+                                                const void*             B,
+                                                hipblasLtMatrixLayout_t matB,
+                                                const void*             beta,
+                                                const void*             C,
+                                                hipblasLtMatrixLayout_t matC,
+                                                void*                   D,
+                                                hipblasLtMatrixLayout_t matD);
 
 The user can get hueristic and make kernel arguments with the instance. If the properties of the gemm and the inputs don't change, the user can call the run API to launch the kernel directly.
 
@@ -214,18 +214,17 @@ The grouped gemm class also has the setProblem APIs.
                                                 std::vector<GemmInputs>&      inputs,
                                                 std::vector<GemmProblemType>& problemtype);
 
-    HIPBLASLT_EXPORT hipblasStatus_t
-        setProblemFromhipBlasLt(std::vector<hipblasLtMatmulDesc_t>&   matmul_descr,
-                                std::vector<float>&                   alpha,
-                                std::vector<void*>&                   A,
-                                std::vector<hipblasLtMatrixLayout_t>& matA,
-                                std::vector<void*>&                   B,
-                                std::vector<hipblasLtMatrixLayout_t>& matB,
-                                std::vector<float>&                   beta,
-                                std::vector<void*>&                   C,
-                                std::vector<hipblasLtMatrixLayout_t>& matC,
-                                std::vector<void*>&                   D,
-                                std::vector<hipblasLtMatrixLayout_t>& matD);
+    HIPBLASLT_EXPORT hipblasStatus_t setProblem(std::vector<hipblasLtMatmulDesc_t>&   matmul_descr,
+                                                std::vector<float>&                   alpha,
+                                                std::vector<void*>&                   A,
+                                                std::vector<hipblasLtMatrixLayout_t>& matA,
+                                                std::vector<void*>&                   B,
+                                                std::vector<hipblasLtMatrixLayout_t>& matB,
+                                                std::vector<float>&                   beta,
+                                                std::vector<void*>&                   C,
+                                                std::vector<hipblasLtMatrixLayout_t>& matC,
+                                                std::vector<void*>&                   D,
+                                                std::vector<hipblasLtMatrixLayout_t>& matD);
 
 For the following API, the argument "epilogue" and "problemtype" supports broadcasting. They will be broadcasted to the length of the problem size by duplicating the last element.
 

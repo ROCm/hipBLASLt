@@ -1119,8 +1119,8 @@ void test_hipblaslt(hipblasDatatype_t  in_out_datatype,
     }
     else
     {
-        CHECK_HIPBLASLT_ERROR(gemm.setProblemFromhipBlasLt(
-            matmul, &alpha, da, matA, db, matB, &beta, dc, matC, dd, matD));
+        CHECK_HIPBLASLT_ERROR(
+            gemm.setProblem(matmul, &alpha, da, matA, db, matB, &beta, dc, matC, dd, matD));
         std::cout << "gemm type " << hipblaslt_ext::gemmType2String(gemm.getGemmType())
                   << ". problems: " << gemm.getGemmCount() << std::endl;
 
