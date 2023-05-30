@@ -1,3 +1,80 @@
+********************************
+hipBLASLtExt Reference
+********************************
+
+********************************
+hipBLASLtExt Datatypes Reference
+********************************
+
+GemmType
+-------------------------------------
+.. doxygenenum:: GemmType
+
+GemmProblemType
+-------------------------------------
+.. doxygenstruct:: hipblaslt_ext::GemmProblemType
+    :members:
+    :protected-members:
+    :private-members:
+
+GemmEpilogue
+-------------------------------------
+.. doxygenstruct:: hipblaslt_ext::GemmEpilogue
+    :members:
+    :protected-members:
+    :private-members:
+
+GemmInputs
+-------------------------------------
+.. doxygenstruct:: hipblaslt_ext::GemmInputs
+    :members:
+    :protected-members:
+    :private-members:
+
+********************************
+hipBLASLtExt Class Reference
+********************************
+
+GemmPreference
+-------------------------------------
+.. doxygenclass:: hipblaslt_ext::GemmPreference
+    :members:
+    :protected-members:
+    :private-members:
+
+GemmInstance
+-------------------------------------
+.. doxygenclass:: hipblaslt_ext::GemmInstance
+    :members:
+    :protected-members:
+    :private-members:
+
+Gemm
+-------------------------------------
+.. doxygenclass:: hipblaslt_ext::Gemm
+    :members:
+    :protected-members:
+    :private-members:
+
+GroupedGemm
+-------------------------------------
+.. doxygenclass:: hipblaslt_ext::GroupedGemm
+    :members:
+    :protected-members:
+    :private-members:
+
+**************************
+hipBLASLtExt API Reference
+**************************
+
+getAllAlgos()
+------------------------------------------
+.. doxygenfunction:: getAllAlgos
+
+matmulIsAlgoSupported()
+------------------------------------------
+.. doxygenfunction:: matmulIsAlgoSupported
+
 ***********************
 hipblasLtExt Usage
 ***********************
