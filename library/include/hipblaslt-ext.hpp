@@ -420,17 +420,17 @@ namespace hipblaslt_ext
         *  \retval HIBLAS_STATUS_NOT_INITIALIZED    If hipBLASLt handle has not been
         * initialized.
         */
-        HIPBLASLT_EXPORT hipblasStatus_t setProblemFromhipBlasLt(hipblasLtMatmulDesc_t matmul_descr,
-                                                                 const void*           alpha,
-                                                                 const void*           A,
-                                                                 hipblasLtMatrixLayout_t matA,
-                                                                 const void*             B,
-                                                                 hipblasLtMatrixLayout_t matB,
-                                                                 const void*             beta,
-                                                                 const void*             C,
-                                                                 hipblasLtMatrixLayout_t matC,
-                                                                 void*                   D,
-                                                                 hipblasLtMatrixLayout_t matD);
+        HIPBLASLT_EXPORT hipblasStatus_t setProblem(hipblasLtMatmulDesc_t   matmul_descr,
+                                                    const void*             alpha,
+                                                    const void*             A,
+                                                    hipblasLtMatrixLayout_t matA,
+                                                    const void*             B,
+                                                    hipblasLtMatrixLayout_t matB,
+                                                    const void*             beta,
+                                                    const void*             C,
+                                                    hipblasLtMatrixLayout_t matC,
+                                                    void*                   D,
+                                                    hipblasLtMatrixLayout_t matD);
 
         HIPBLASLT_EXPORT GemmProblemType getProblemTypes();
     };
@@ -627,17 +627,17 @@ namespace hipblaslt_ext
         * initialized.
         */
         HIPBLASLT_EXPORT hipblasStatus_t
-            setProblemFromhipBlasLt(std::vector<hipblasLtMatmulDesc_t>&   matmul_descr,
-                                    std::vector<float>&                   alpha,
-                                    std::vector<void*>&                   A,
-                                    std::vector<hipblasLtMatrixLayout_t>& matA,
-                                    std::vector<void*>&                   B,
-                                    std::vector<hipblasLtMatrixLayout_t>& matB,
-                                    std::vector<float>&                   beta,
-                                    std::vector<void*>&                   C,
-                                    std::vector<hipblasLtMatrixLayout_t>& matC,
-                                    std::vector<void*>&                   D,
-                                    std::vector<hipblasLtMatrixLayout_t>& matD);
+            setProblem(std::vector<hipblasLtMatmulDesc_t>&   matmul_descr,
+                       std::vector<float>&                   alpha,
+                       std::vector<void*>&                   A,
+                       std::vector<hipblasLtMatrixLayout_t>& matA,
+                       std::vector<void*>&                   B,
+                       std::vector<hipblasLtMatrixLayout_t>& matB,
+                       std::vector<float>&                   beta,
+                       std::vector<void*>&                   C,
+                       std::vector<hipblasLtMatrixLayout_t>& matC,
+                       std::vector<void*>&                   D,
+                       std::vector<hipblasLtMatrixLayout_t>& matD);
 
         HIPBLASLT_EXPORT std::vector<GemmProblemType> getProblemTypes();
     };
