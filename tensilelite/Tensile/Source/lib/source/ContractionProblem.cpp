@@ -630,8 +630,19 @@ namespace Tensile
         m_eligibleForPK = persistentGroups < problemTiles;
     }
 
-    void ContractionProblemGemm::updateProblem()
+    void ContractionProblemGemm::updateProblem(FreeIndices const&  freeIndices,
+                                               BatchIndices const& batchIndices,
+                                               BoundIndices const& boundIndices,
+                                               double              beta,
+                                               size_t              workspaceSize)
     {
+        m_freeIndices     = freeIndices;
+        m_batchIndices    = batchIndices;
+        m_boundIndices    = boundIndices;
+        m_beta            = beta;
+        m_workspaceSize   = workspaceSize;
+        m_betaRestriction = toScalarValueEnum(
+            m_beta); // Set enum using beta to potentially allow for faster solutions
         consistencyCheck();
         normalize();
     }

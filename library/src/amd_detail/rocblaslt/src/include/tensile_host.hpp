@@ -215,7 +215,8 @@ void initTensileGemmData(rocblaslt_handle       handle,
 template <typename Ti, typename To, typename Tc>
 rocblaslt_status runContractionProblem(rocblaslt_handle                               handle,
                                        const rocblaslt_matmul_algo*                   algo,
-                                       RocblasltContractionProblem<Ti, To, Tc> const& problem);
+                                       RocblasltContractionProblem<Ti, To, Tc> const& problem,
+                                       std::shared_ptr<void>                          gemmData);
 
 template <typename Ti, typename To, typename Tc>
 rocblaslt_status gemmCreate(RocblasltContractionProblem<Ti, To, Tc> const& problem,
@@ -283,6 +284,7 @@ rocblaslt_status getAllSolutions(std::vector<RocblasltContractionProblem<Ti, To,
 
 template <typename Ti, typename To = Ti, typename Tc = To>
 rocblaslt_status isSolutionSupported(RocblasltContractionProblem<Ti, To, Tc>& prob,
+                                     std::shared_ptr<void>                    gemmData,
                                      rocblaslt_matmul_algo*                   algo,
                                      size_t*                                  workspaceSizeInBytes);
 
@@ -298,6 +300,7 @@ rocblaslt_status isSolutionSupported(const rocblaslt::RocGemmType& gemmType,
 template <typename Ti, typename To = Ti, typename Tc = To>
 rocblaslt_status getBestSolutions(RocblasltContractionProblem<Ti, To, Tc> prob,
                                   rocblaslt_handle                        handle,
+                                  std::shared_ptr<void>                   gemmData,
                                   int                                     requestedAlgoCount,
                                   rocblaslt_matmul_heuristic_result       heuristicResultsArray[],
                                   int*                                    returnAlgoCount,
