@@ -63,7 +63,19 @@ namespace hipblaslt_ext
     class GemmPreference
     {
     public:
-        HIPBLASLT_EXPORT void         setMaxWorkspaceBytes(size_t workspaceBytes);
+        /*! \ingroup library_module
+         *  \brief This function sets the max workspace size.
+         *
+         *  @param[in]
+         *  workspaceBytes  Set the max workspace size in bytes.
+         */
+        HIPBLASLT_EXPORT void setMaxWorkspaceBytes(size_t workspaceBytes);
+
+        /*! \ingroup library_module
+         *  \brief This function returns the set max workspace size.
+         *
+         *  \retval size_t Returns the set max workspace size.
+         */
         HIPBLASLT_EXPORT const size_t getMaxWorkspaceBytes() const;
 
     private:
@@ -77,13 +89,13 @@ namespace hipblaslt_ext
      */
     struct GemmProblemType
     {
-        hipblasOperation_t     op_a;
-        hipblasOperation_t     op_b;
-        hipblasDatatype_t      type_a;
-        hipblasDatatype_t      type_b;
-        hipblasDatatype_t      type_c;
-        hipblasDatatype_t      type_d;
-        hipblasLtComputeType_t type_compute;
+        hipblasOperation_t     op_a; //!< The A martix transpose
+        hipblasOperation_t     op_b; //!< The B matrix transpose
+        hipblasDatatype_t      type_a; //!< The A matrix datatype.
+        hipblasDatatype_t      type_b; //!< The B matrix datatype.
+        hipblasDatatype_t      type_c; //!< The C matrix datatype.
+        hipblasDatatype_t      type_d; //!< The D matrix datatype.
+        hipblasLtComputeType_t type_compute; //!< The compute datatype.
     };
 
     /*! \ingroup types_module
@@ -93,10 +105,14 @@ namespace hipblaslt_ext
      */
     struct GemmEpilogue
     {
-        hipblasLtEpilogue_t mode           = HIPBLASLT_EPILOGUE_DEFAULT;
-        hipblasDatatype_t   bias_data_type = static_cast<hipblasDatatype_t>(0);
-        int                 aux_ld         = 0;
-        int                 aux_stride     = 0;
+        hipblasLtEpilogue_t mode
+            = HIPBLASLT_EPILOGUE_DEFAULT; //!< The mode of epilogue. Default is gemm.
+        hipblasDatatype_t bias_data_type = static_cast<hipblasDatatype_t>(
+            0); //!< The bias datatype. Only works if mode is set to bias related epilogues.
+        int aux_ld
+            = 0; //!< The aux leading dimension. Only works if mode is set to aux related epilogues.
+        int aux_stride
+            = 0; //!< The aux batch stride. Only works if mode is set to aux related epilogues.
     };
 
     /*! \ingroup types_module
@@ -106,16 +122,16 @@ namespace hipblaslt_ext
      */
     struct GemmInputs
     {
-        void* a     = nullptr;
-        void* b     = nullptr;
-        void* c     = nullptr;
-        void* d     = nullptr;
-        void* alpha = nullptr;
-        void* beta  = nullptr;
+        void* a     = nullptr; //!< The a matrix input pointer.
+        void* b     = nullptr; //!< The b matrix input pointer.
+        void* c     = nullptr; //!< The c matrix input pointer.
+        void* d     = nullptr; //!< The d matrix input pointer.
+        void* alpha = nullptr; //!< The alpha value.
+        void* beta  = nullptr; //!< The beta value.
         // Epilogue inputs
-        void* bias   = nullptr;
-        void* scaleD = nullptr;
-        void* aux    = nullptr;
+        void* bias   = nullptr; //!< The bias input pointer.
+        void* scaleD = nullptr; //!< The scaleD vector input pointer.
+        void* aux    = nullptr; //!< The aux input pointer.
     };
 
     /*! \ingroup types_module
