@@ -2,9 +2,8 @@
 hipBLASLtExt Reference
 ********************************
 
-********************************
 hipBLASLtExt Datatypes Reference
-********************************
+================================
 
 GemmType
 -------------------------------------
@@ -31,9 +30,8 @@ GemmInputs
     :protected-members:
     :private-members:
 
-********************************
 hipBLASLtExt Class Reference
-********************************
+================================
 
 GemmPreference
 -------------------------------------
@@ -63,9 +61,8 @@ GroupedGemm
     :protected-members:
     :private-members:
 
-**************************
 hipBLASLtExt API Reference
-**************************
+================================
 
 getAllAlgos()
 ------------------------------------------
@@ -75,12 +72,11 @@ matmulIsAlgoSupported()
 ------------------------------------------
 .. doxygenfunction:: matmulIsAlgoSupported
 
-***********************
 hipblasLtExt Usage
-***********************
+================================
 
 Introduction
-====================
+--------------
 
 hipBLASLt has extension APIs with namespace hipblaslt_ext. It is C++ compatible only. The extensions support:
 
@@ -91,7 +87,7 @@ hipBLASLt has extension APIs with namespace hipblaslt_ext. It is C++ compatible 
 3. Get all algorithms
 
 Gemm
-====================
+--------------
 
 hipblasLt has its own instance.
 
@@ -247,7 +243,7 @@ The user can get hueristic and make kernel arguments with the instance. If the p
     }
 
 Grouped Gemm
-====================
+--------------
 
 hipblasLtExt supports grouped gemm. It shares the same class with normal gemm.
 
@@ -339,7 +335,7 @@ Note that currently only supports problemtype size equals to 1 (Only one GemmPro
     groupedgemm.setProblem(m, n, k, batch_count, lda, ldb, ldc, ldd, strideA, strideB, strideC, strideD, epilogue, inputs, problemtypes);
 
 The base class (GemmInstance)
-====================
+--------------
 
 This is the base class of class Gemm and GroupedGemm.
 
@@ -360,7 +356,7 @@ This is the base class of class Gemm and GroupedGemm.
     HIPBLASLT_EXPORT hipblasStatus_t run(hipStream_t stream);
 
 Get all algorithms
-====================
+--------------
 
 Get all algorithms lets users to get all the algorithms of a specific problem type. It requires the transpose of A, B, the data type of the inputs, and the compute type.
 
@@ -428,7 +424,8 @@ The API will return the required workspace size in bytes if success.
 
 Using extension APIs.
 
-Gemm:
+Gemm
+^^^^^^^^^^^^^^^^^
 
 .. code-block:: c++
 
@@ -494,7 +491,8 @@ Gemm:
         }
     }
 
-Grouped gemm:
+Grouped gemm
+^^^^^^^^^^^^^^^^^
 
 .. code-block:: c++
 
