@@ -73,11 +73,14 @@ namespace Tensile
             return m_tensors[idx];
         }
 
-        virtual void resizeTensor(int                           idx,
-                                  std::initializer_list<size_t> sizes,
-                                  std::initializer_list<size_t> strides)
+        virtual void resetTensor(int                           idx,
+                                 DataType                      type,
+                                 std::initializer_list<size_t> sizes,
+                                 std::initializer_list<size_t> strides)
         {
-            m_tensors[idx].resize(sizes, strides);
+            auto& tensor = m_tensors[idx];
+            tensor.setDataType(type);
+            tensor.resize(sizes, strides);
         }
 
         /**
@@ -813,7 +816,11 @@ namespace Tensile
             return c;
         }
 
-        void updateProblem();
+        void updateProblem(FreeIndices const&  freeIndices,
+                           BatchIndices const& batchIndices,
+                           BoundIndices const& boundIndices,
+                           double              beta,
+                           size_t              workspaceSize);
 
     private:
         std::string m_sumNames;

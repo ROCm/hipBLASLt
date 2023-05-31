@@ -152,6 +152,8 @@ struct _rocblaslt_matmul_desc
     //
     rocblaslt_compute_type compute_type;
     hipblasDatatype_t      scale_type;
+
+    std::shared_ptr<void> m_data; // Tensile data
 };
 
 /********************************************************************************
