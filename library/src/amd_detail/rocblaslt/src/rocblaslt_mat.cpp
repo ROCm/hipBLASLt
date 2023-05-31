@@ -257,11 +257,13 @@ rocblaslt_status rocblaslt_matmul_impl(const rocblaslt_handle       handle,
     bool strided_batch = true;
     bool grouped_gemm  = false;
 
+    auto& gemmData = matmul_descr->m_data;
+
 #define EX_PARM                                                                                  \
     handle, opA, opB, m, n, k, alpha, A, type_a, lda, batch_stride_a, B, type_b, ldb,            \
         batch_stride_b, beta, C, type_c, ldc, batch_stride_c, D, type_d, ldd, batch_stride_d, E, \
         lde, batch_stride_e, num_batches_a, strided_batch, grouped_gemm, gradient, compute_type, \
-        algo, workspace, workspaceSizeInBytes, bias, scaleD, bias_type, epilogue, stream
+        algo, workspace, workspaceSizeInBytes, bias, scaleD, bias_type, epilogue, gemmData, stream
 
     return rocblaslt_matmul_template(EX_PARM);
 }

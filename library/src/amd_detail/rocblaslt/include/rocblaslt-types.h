@@ -298,13 +298,11 @@ typedef struct __attribute__((packed, aligned(8))) _rocblaslt_matmul_algo
 {
     _rocblaslt_matmul_algo()
         : data()
-        , data2()
     {
     }
     _rocblaslt_matmul_algo(const _rocblaslt_matmul_algo& algo)
     {
         data.ptr            = algo.data.ptr;
-        data2.ptr           = algo.data2.ptr;
         fallback            = algo.fallback;
         max_workspace_bytes = algo.max_workspace_bytes;
     }
@@ -330,7 +328,7 @@ typedef struct __attribute__((packed, aligned(8))) _rocblaslt_matmul_algo
         }
         std::shared_ptr<void> ptr;
         uint8_t               data[48];
-    } data, data2;
+    } data;
     bool   fallback;
     size_t max_workspace_bytes = 0;
 } rocblaslt_matmul_algo;

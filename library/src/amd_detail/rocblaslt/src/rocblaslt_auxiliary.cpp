@@ -344,6 +344,17 @@ rocblaslt_status rocblaslt_matmul_desc_create(rocblaslt_matmul_desc* matmulDesc,
             *matmulDesc                 = new _rocblaslt_matmul_desc();
             (*matmulDesc)->compute_type = computeType;
             (*matmulDesc)->scale_type   = scaleType;
+            initTensileGemmData(nullptr,
+                                rocblaslt::RocGemmType::ROCBLASLT_GEMM,
+                                HIPBLAS_OP_N,
+                                HIPBLAS_OP_N,
+                                HIPBLAS_R_32F,
+                                HIPBLAS_R_32F,
+                                HIPBLAS_R_32F,
+                                HIPBLAS_R_32F,
+                                rocblaslt_compute_f32,
+                                0,
+                                (*matmulDesc)->m_data);
             log_api(__func__,
                     "matmulDesc[out]",
                     matmulDesc,
@@ -839,6 +850,7 @@ rocblaslt_status rocblaslt_matmul_is_algo_supported(rocblaslt_handle        hand
         hipblasDatatype_t      c_type       = matC->type;
         hipblasDatatype_t      d_type       = matD->type;
         rocblaslt_compute_type compute_type = matmul_descr->compute_type;
+        auto&                  gemmData     = matmul_descr->m_data;
         if(a_type == HIPBLAS_R_32F && b_type == HIPBLAS_R_32F)
         {
             if(c_type == HIPBLAS_R_32F && d_type == HIPBLAS_R_32F)
@@ -857,7 +869,7 @@ rocblaslt_status rocblaslt_matmul_is_algo_supported(rocblaslt_handle        hand
                                                                          betaf,
                                                                          algo->max_workspace_bytes);
                     status = isSolutionSupported<float, float, float>(
-                        prob, algo, workspaceSizeInBytes);
+                        prob, gemmData, algo, workspaceSizeInBytes);
                 }
             }
         }
@@ -879,7 +891,7 @@ rocblaslt_status rocblaslt_matmul_is_algo_supported(rocblaslt_handle        hand
                         betaf,
                         algo->max_workspace_bytes);
                     status = isSolutionSupported<rocblaslt_half, rocblaslt_half, float>(
-                        prob, algo, workspaceSizeInBytes);
+                        prob, gemmData, algo, workspaceSizeInBytes);
                 }
             }
         }
@@ -902,7 +914,7 @@ rocblaslt_status rocblaslt_matmul_is_algo_supported(rocblaslt_handle        hand
                             betaf,
                             algo->max_workspace_bytes);
                     status = isSolutionSupported<rocblaslt_bfloat16, rocblaslt_bfloat16, float>(
-                        prob, algo, workspaceSizeInBytes);
+                        prob, gemmData, algo, workspaceSizeInBytes);
                 }
             }
         }
@@ -959,6 +971,7 @@ rocblaslt_status
         hipblasDatatype_t      c_type       = matC->type;
         hipblasDatatype_t      d_type       = matD->type;
         rocblaslt_compute_type compute_type = matmul_desc->compute_type;
+        auto&                  tensile_data = matmul_desc->m_data;
         if(a_type == HIPBLAS_R_32F && b_type == HIPBLAS_R_32F)
         {
             if(c_type == HIPBLAS_R_32F && d_type == HIPBLAS_R_32F)
@@ -978,6 +991,7 @@ rocblaslt_status
                                                                          pref->max_workspace_bytes);
                     status = getBestSolutions<float, float, float>(prob,
                                                                    handle,
+                                                                   tensile_data,
                                                                    requestedAlgoCount,
                                                                    heuristicResultsArray,
                                                                    returnAlgoCount,
@@ -1005,6 +1019,7 @@ rocblaslt_status
                     status = getBestSolutions<rocblaslt_half, rocblaslt_half, float>(
                         prob,
                         handle,
+                        tensile_data,
                         requestedAlgoCount,
                         heuristicResultsArray,
                         returnAlgoCount,
@@ -1033,6 +1048,7 @@ rocblaslt_status
                     status = getBestSolutions<rocblaslt_bfloat16, rocblaslt_bfloat16, float>(
                         prob,
                         handle,
+                        tensile_data,
                         requestedAlgoCount,
                         heuristicResultsArray,
                         returnAlgoCount,

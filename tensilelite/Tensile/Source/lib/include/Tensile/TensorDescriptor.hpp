@@ -301,6 +301,11 @@ namespace Tensile
             return DataTypeInfo::Get(m_dataType).elementSize;
         }
 
+        void setDataType(DataType type)
+        {
+            m_dataType = type;
+        }
+
         DataType dataType() const
         {
             return m_dataType;
