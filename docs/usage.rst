@@ -226,8 +226,8 @@ The user can get hueristic and make kernel arguments with the instance. If the p
     inputs.beta = beta;
 
     hipblaslt_ext::Gemm gemm(handle,
-                             false,
-                             false,
+                             HIPBLAS_OP_N,
+                             HIPBLAS_OP_N,
                              HIPBLAS_R_16F,
                              HIPBLAS_R_16F,
                              HIPBLAS_R_16F,
@@ -388,8 +388,8 @@ The API will return the required workspace size in bytes if success.
     // Get all algorithms
     CHECK_HIPBLASLT_ERROR(hipblaslt_ext::getAllAlgos(handle,
                                                      HIPBLASLT_GEMM,
-                                                     trans_a,
-                                                     trans_b,
+                                                     HIPBLAS_OP_N,
+                                                     HIPBLAS_OP_N,
                                                      in_out_datatype,
                                                      in_out_datatype,
                                                      in_out_datatype,
@@ -434,8 +434,8 @@ Gemm
     std::vector<hipblasLtMatmulHeuristicResult_t> heuristicResult;
     CHECK_HIPBLASLT_ERROR(hipblaslt_ext::getAllAlgos(handle,
                                                      HIPBLASLT_GEMM,
-                                                     trans_a,
-                                                     trans_b,
+                                                     HIPBLAS_OP_N,
+                                                     HIPBLAS_OP_N,
                                                      in_out_datatype,
                                                      in_out_datatype,
                                                      in_out_datatype,
@@ -456,8 +456,8 @@ Gemm
     inputs.beta = beta;
 
     hipblaslt_ext::Gemm gemm(handle,
-                             false,
-                             false,
+                             HIPBLAS_OP_N,
+                             HIPBLAS_OP_N,
                              HIPBLAS_R_16F,
                              HIPBLAS_R_16F,
                              HIPBLAS_R_16F,
@@ -501,8 +501,8 @@ Grouped gemm
     std::vector<hipblasLtMatmulHeuristicResult_t> heuristicResult;
     CHECK_HIPBLASLT_ERROR(hipblaslt_ext::getAllAlgos(handle,
                                                      HIPBLASLT_GEMM,
-                                                     trans_a,
-                                                     trans_b,
+                                                     HIPBLAS_OP_N,
+                                                     HIPBLAS_OP_N,
                                                      in_out_datatype,
                                                      in_out_datatype,
                                                      in_out_datatype,
@@ -536,8 +536,8 @@ Grouped gemm
 
 
     hipblaslt_ext::GroupedGemm groupedGemm(handle,
-                                           false,
-                                           false,
+                                           HIPBLAS_OP_N,
+                                           HIPBLAS_OP_N,
                                            HIPBLAS_R_16F,
                                            HIPBLAS_R_16F,
                                            HIPBLAS_R_16F,
