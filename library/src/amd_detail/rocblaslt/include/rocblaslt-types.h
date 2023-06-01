@@ -297,41 +297,9 @@ typedef enum rocblaslt_matmul_preference_attributes_
  *******************************************************************************/
 typedef struct __attribute__((packed, aligned(8))) _rocblaslt_matmul_algo
 {
-    _rocblaslt_matmul_algo()
-        : data()
-    {
-    }
-    _rocblaslt_matmul_algo(const _rocblaslt_matmul_algo& algo)
-    {
-        data.ptr            = algo.data.ptr;
-        fallback            = algo.fallback;
-        max_workspace_bytes = algo.max_workspace_bytes;
-    }
-    union u
-    {
-#if __cplusplus >= 202002L
-        constexpr
-#endif
-            u()
-            : ptr{}
-        {
-        }
-#if __cplusplus >= 202002L
-        constexpr
-#endif
-            u(u& rhs)
-        {
-            ptr = rhs.ptr;
-        }
-        ~u()
-        {
-            ptr.~shared_ptr();
-        }
-        std::shared_ptr<void> ptr;
-        uint8_t               data[48];
-    } data;
-    bool   fallback;
-    size_t max_workspace_bytes = 0;
+    uint8_t data[48];
+    bool    fallback;
+    size_t  max_workspace_bytes = 0;
 } rocblaslt_matmul_algo;
 
 /********************************************************************************

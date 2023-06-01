@@ -1154,9 +1154,7 @@ rocblaslt_status runContractionProblem(rocblaslt_handle                         
         std::shared_ptr<TensileDataGemm> data = std::static_pointer_cast<TensileDataGemm>(gemmData);
         updateTensileProblem(algo->fallback, prob, data->problem);
 
-        std::shared_ptr<Tensile::ContractionSolution> solution
-            = std::static_pointer_cast<Tensile::ContractionSolution>(algo->data.ptr);
-
+        Tensile::ContractionSolution* solution = (*(Tensile::ContractionSolution**)(algo->data));
         if(!solution)
         {
 #if 0
@@ -1345,8 +1343,7 @@ rocblaslt_status makeArgument(const rocblaslt::RocGemmType gemmType,
         {
             std::shared_ptr<Tensile::Hardware> hardware;
 
-            std::shared_ptr<Tensile::ContractionSolution> solution
-                = std::static_pointer_cast<Tensile::ContractionSolution>(algo.data.ptr);
+            Tensile::ContractionSolution* solution = (*(Tensile::ContractionSolution**)(algo.data));
 
             std::shared_ptr<TensileDataGemm> data
                 = std::static_pointer_cast<TensileDataGemm>(gemmData);
@@ -1378,8 +1375,7 @@ rocblaslt_status makeArgument(const rocblaslt::RocGemmType gemmType,
         {
             std::shared_ptr<Tensile::Hardware> hardware;
 
-            std::shared_ptr<Tensile::ContractionSolution> solution
-                = std::static_pointer_cast<Tensile::ContractionSolution>(algo.data.ptr);
+            Tensile::ContractionSolution* solution = (*(Tensile::ContractionSolution**)(algo.data));
 
             std::shared_ptr<TensileDataGroupedGemm> data
                 = std::static_pointer_cast<TensileDataGroupedGemm>(gemmData);
@@ -1651,10 +1647,12 @@ void _convertToHeuristicResultArray(
     *returnAlgoCount = std::min((int)solutions.size(), requestedAlgoCount);
     for(size_t i = 0; i < *returnAlgoCount; i++)
     {
-        auto solution                          = solutions[i];
-        heuristicResultsArray[i].algo.data.ptr = std::static_pointer_cast<void>(solution);
-        // heuristicResultsArray[i].algo.data2.ptr = std::static_pointer_cast<void>(
-        //     std::make_shared<Tensile::ContractionProblemGemm>(problem));
+        auto solution = solutions[i];
+        memset((void*)heuristicResultsArray[i].algo.data,
+               0,
+               sizeof(heuristicResultsArray[i].algo.data));
+        Tensile::ContractionSolution* solution_ptr = solution.get();
+        memcpy((void*)heuristicResultsArray[i].algo.data, (void*)&solution_ptr, sizeof(void*));
         heuristicResultsArray[i].algo.max_workspace_bytes = maxWorkSpaceBytes;
         heuristicResultsArray[i].algo.fallback            = fallbackCount-- > 0 ? true : false;
         heuristicResultsArray[i].state                    = rocblaslt_status_success;
@@ -1754,6 +1752,12 @@ rocblaslt_status getBestSolutions(RocblasltContractionProblem<Ti, To, Tc> prob,
                                    data->problem,
                                    fallbackSize);
 
+    // Add solutions to handle
+    for(auto solution : solutions)
+    {
+        handle->solutions.try_emplace(solution, std::move(solution));
+    }
+
     return rocblaslt_status_success;
 }
 
@@ -1796,7 +1800,8 @@ rocblaslt_status getAllSolutions(MyProblem&                          prob,
     for(auto solution : solutions)
     {
         memset(&(*heuristicResults)[i], 0, sizeof(rocblaslt_matmul_heuristic_result));
-        (*heuristicResults)[i].algo.data.ptr            = std::static_pointer_cast<void>(solution);
+        Tensile::ContractionSolution* solution_ptr = solution.get();
+        memcpy((void*)(*heuristicResults)[i].algo.data, (void*)&solution_ptr, sizeof(void*));
         (*heuristicResults)[i].algo.max_workspace_bytes = maxWorkSpaceBytes;
         (*heuristicResults)[i].algo.fallback            = false;
         (*heuristicResults)[i].state                    = rocblaslt_status_success;
@@ -1804,6 +1809,12 @@ rocblaslt_status getAllSolutions(MyProblem&                          prob,
         i++;
     }
     *returnAlgoCount = solutions.size();
+
+    // Add solutions to handle
+    for(auto solution : solutions)
+    {
+        handle->solutions.try_emplace(solution, std::move(solution));
+    }
 
     return rocblaslt_status_success;
 }
@@ -1842,12 +1853,19 @@ rocblaslt_status getAllSolutions(MyProblem&                                     
     for(auto solution : solutions)
     {
         memset(&heuristicResults[i], 0, sizeof(rocblaslt_matmul_heuristic_result));
-        heuristicResults[i].algo.data.ptr            = std::static_pointer_cast<void>(solution);
+        Tensile::ContractionSolution* solution_ptr = solution.get();
+        memcpy((void*)heuristicResults[i].algo.data, (void*)&solution_ptr, sizeof(void*));
         heuristicResults[i].algo.max_workspace_bytes = maxWorkSpaceBytes;
         heuristicResults[i].algo.fallback            = false;
         heuristicResults[i].state                    = rocblaslt_status_success;
         heuristicResults[i].workspaceSize            = 0;
         i++;
+    }
+
+    // Add solutions to handle
+    for(auto solution : solutions)
+    {
+        handle->solutions.try_emplace(solution, std::move(solution));
     }
 
     return rocblaslt_status_success;
@@ -1885,8 +1903,8 @@ rocblaslt_status isSolutionSupported(MyProblem&             tensile_prob,
                                      size_t*                workspaceSizeInBytes)
 {
     *workspaceSizeInBytes = 0;
-    std::shared_ptr<Tensile::ContractionSolution> solution
-        = std::static_pointer_cast<Tensile::ContractionSolution>(algo->data.ptr);
+
+    Tensile::ContractionSolution* solution = (*(Tensile::ContractionSolution**)(algo->data));
 
     if constexpr(std::is_same<MyProblem, Tensile::ContractionProblemGemm>::value)
     {

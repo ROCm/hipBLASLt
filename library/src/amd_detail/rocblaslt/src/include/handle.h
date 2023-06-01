@@ -94,6 +94,9 @@ struct _rocblaslt_handle
 
     // pointer mode ; default mode is host
     rocblaslt_pointer_mode pointer_mode = rocblaslt_pointer_mode_host;
+
+    // Solution shared_ptrs
+    std::unordered_map<std::shared_ptr<void>, std::shared_ptr<void>> solutions;
 };
 
 /********************************************************************************
