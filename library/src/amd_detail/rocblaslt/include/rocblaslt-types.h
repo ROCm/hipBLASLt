@@ -37,6 +37,7 @@
 #include <memory>
 #include <stddef.h>
 #include <stdint.h>
+#include <vector>
 
 #define ROCBLASLT_KERNEL __global__
 #define ROCBLASLT_DEVICE_ILF __device__
