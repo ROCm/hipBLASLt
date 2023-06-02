@@ -65,7 +65,7 @@ rocblaslt_status rocblaslt_batched_template(rocblaslt_handle             handle,
                                             void*                        workspace,
                                             size_t                       workspaceSizeInBytes,
                                             const void*                  bias,
-                                            const Tc*                    scaleD,
+                                            const Tc*                    scaleDVec,
                                             hipblasDatatype_t            bias_type,
                                             rocblaslt_epilogue           epilogue,
                                             std::shared_ptr<void>        gemmData,
@@ -104,7 +104,7 @@ rocblaslt_status rocblaslt_batched_template(rocblaslt_handle             handle,
                                                     grouped_gemm,
                                                     gradient,
                                                     bias,
-                                                    scaleD,
+                                                    scaleDVec,
                                                     bias_type,
                                                     epilogue,
                                                     workspace,
@@ -141,7 +141,7 @@ rocblaslt_status rocblaslt_gemm_create_batched_template(hipblasOperation_t     t
                                                         bool                   grouped_gemm,
                                                         bool                   gradient,
                                                         const void*            bias,
-                                                        const Tc*              scaleD,
+                                                        const Tc*              scaleDVec,
                                                         hipblasDatatype_t      bias_type,
                                                         rocblaslt_epilogue     epilogue,
                                                         std::shared_ptr<void>& gemmData,
@@ -179,7 +179,7 @@ rocblaslt_status rocblaslt_gemm_create_batched_template(hipblasOperation_t     t
                                                     grouped_gemm,
                                                     gradient,
                                                     bias,
-                                                    scaleD,
+                                                    scaleDVec,
                                                     bias_type,
                                                     epilogue,
                                                     nullptr,
@@ -213,7 +213,7 @@ rocblaslt_status
                                                   bool                             strided_batch,
                                                   bool                             grouped_gemm,
                                                   std::vector<const void*>&        bias,
-                                                  std::vector<const Tc*>&          scaleD,
+                                                  std::vector<const Tc*>&          scaleDVec,
                                                   std::vector<hipblasDatatype_t>&  bias_type,
                                                   std::vector<rocblaslt_epilogue>& epilogue,
                                                   std::shared_ptr<void>&           gemmData,
@@ -255,7 +255,7 @@ rocblaslt_status
                                                                    grouped_gemm,
                                                                    false,
                                                                    bias[i],
-                                                                   scaleD[i],
+                                                                   scaleDVec[i],
                                                                    bias_type[i],
                                                                    epilogue[i],
                                                                    nullptr,
@@ -297,7 +297,7 @@ rocblaslt_status rocblaslt_matmul_typecasting(rocblaslt_handle             handl
                                               void*                        workspace,
                                               size_t                       workspaceSizeInBytes,
                                               const void*                  bias,
-                                              const void*                  scaleD,
+                                              const void*                  scaleDVec,
                                               hipblasDatatype_t            bias_type,
                                               rocblaslt_epilogue           epilogue,
                                               std::shared_ptr<void>        gemmData,
@@ -341,7 +341,7 @@ rocblaslt_status rocblaslt_matmul_typecasting(rocblaslt_handle             handl
                                       workspace,
                                       workspaceSizeInBytes,
                                       reinterpret_cast<const void*>(bias),
-                                      reinterpret_cast<const Tc*>(scaleD),
+                                      reinterpret_cast<const Tc*>(scaleDVec),
                                       bias_type,
                                       epilogue,
                                       gemmData,
@@ -376,7 +376,7 @@ rocblaslt_status rocblaslt_gemm_create_typecasting(hipblasOperation_t     trans_
                                                    bool                   grouped_gemm,
                                                    bool                   gradient,
                                                    const void*            bias,
-                                                   const void*            scaleD,
+                                                   const void*            scaleDVec,
                                                    hipblasDatatype_t      bias_type,
                                                    rocblaslt_epilogue     epilogue,
                                                    std::shared_ptr<void>& gemmData,
@@ -416,7 +416,7 @@ rocblaslt_status rocblaslt_gemm_create_typecasting(hipblasOperation_t     trans_
                                                   grouped_gemm,
                                                   gradient,
                                                   reinterpret_cast<const void*>(bias),
-                                                  reinterpret_cast<const Tc*>(scaleD),
+                                                  reinterpret_cast<const Tc*>(scaleDVec),
                                                   bias_type,
                                                   epilogue,
                                                   gemmData,
@@ -447,7 +447,7 @@ rocblaslt_status rocblaslt_groupedgemm_create_typecasting(hipblasOperation_t    
                                                           bool                      strided_batch,
                                                           bool                      grouped_gemm,
                                                           std::vector<const void*>& bias,
-                                                          std::vector<const void*>& scaleD,
+                                                          std::vector<const void*>& scaleDVec,
                                                           std::vector<hipblasDatatype_t>& bias_type,
                                                           std::vector<rocblaslt_epilogue>& epilogue,
                                                           std::shared_ptr<void>&           gemmData,
@@ -457,7 +457,7 @@ rocblaslt_status rocblaslt_groupedgemm_create_typecasting(hipblasOperation_t    
     std::vector<const Ti*> groupedA, groupedB;
     std::vector<const To*> groupedC;
     std::vector<To*>       groupedD;
-    std::vector<const Tc*> groupedScaleD;
+    std::vector<const Tc*> groupedScaleDVec;
 
     for(int i = 0; i < alpha.size(); i++)
     {
@@ -467,7 +467,7 @@ rocblaslt_status rocblaslt_groupedgemm_create_typecasting(hipblasOperation_t    
         groupedB.push_back(reinterpret_cast<const Ti*>(b[i]));
         groupedC.push_back(reinterpret_cast<const To*>(c[i]));
         groupedD.push_back(reinterpret_cast<To*>(d[i]));
-        groupedScaleD.push_back(reinterpret_cast<const Tc*>(scaleD[i]));
+        groupedScaleDVec.push_back(reinterpret_cast<const Tc*>(scaleDVec[i]));
     }
 
     return rocblaslt_groupedgemm_create_batched_template(trans_a,
@@ -493,7 +493,7 @@ rocblaslt_status rocblaslt_groupedgemm_create_typecasting(hipblasOperation_t    
                                                          strided_batch,
                                                          grouped_gemm,
                                                          bias,
-                                                         groupedScaleD,
+                                                         groupedScaleDVec,
                                                          bias_type,
                                                          epilogue,
                                                          gemmData,
@@ -536,7 +536,7 @@ inline rocblaslt_status rocblaslt_matmul_template(rocblaslt_handle             h
                                                   void*                        workspace,
                                                   size_t                       workspaceSizeInBytes,
                                                   const void*                  bias,
-                                                  const void*                  scaleD,
+                                                  const void*                  scaleDVec,
                                                   hipblasDatatype_t            bias_type,
                                                   rocblaslt_epilogue           epilogue,
                                                   std::shared_ptr<void>        gemmData,
@@ -548,7 +548,7 @@ inline rocblaslt_status rocblaslt_matmul_template(rocblaslt_handle             h
     handle, trans_a, trans_b, m, n, k, alpha, a, ld_a, batch_stride_a, b, ld_b, batch_stride_b,    \
         beta, c, ld_c, batch_stride_c, d, ld_d, batch_stride_d, e, ld_e, batch_stride_e,           \
         batch_count, strided_batch, grouped_gemm, gradient, algo, workspace, workspaceSizeInBytes, \
-        bias, scaleD, bias_type, epilogue, gemmData, stream
+        bias, scaleDVec, bias_type, epilogue, gemmData, stream
 
     if(a_type == HIPBLAS_R_32F && b_type == HIPBLAS_R_32F)
     {
@@ -623,7 +623,7 @@ inline rocblaslt_status rocblaslt_gemm_create_template_cpp(hipblasOperation_t   
                                                            bool                   gradient,
                                                            rocblaslt_compute_type compute_type,
                                                            const void*            bias,
-                                                           const void*            scaleD,
+                                                           const void*            scaleDVec,
                                                            hipblasDatatype_t      bias_type,
                                                            rocblaslt_epilogue     epilogue,
                                                            std::shared_ptr<void>& gemmData,
@@ -634,7 +634,7 @@ inline rocblaslt_status rocblaslt_gemm_create_template_cpp(hipblasOperation_t   
 #define EX_TYPECASTING_PARM_GEMM_CPP                                                             \
     trans_a, trans_b, m, n, k, alpha, a, ld_a, batch_stride_a, b, ld_b, batch_stride_b, beta, c, \
         ld_c, batch_stride_c, d, ld_d, batch_stride_d, e, ld_e, batch_stride_e, batch_count,     \
-        strided_batch, grouped_gemm, gradient, bias, scaleD, bias_type, epilogue, gemmData,      \
+        strided_batch, grouped_gemm, gradient, bias, scaleDVec, bias_type, epilogue, gemmData,   \
         gemmCount
 
     if(a_type == HIPBLAS_R_32F && b_type == HIPBLAS_R_32F)
@@ -709,7 +709,7 @@ inline rocblaslt_status
                                               bool                             grouped_gemm,
                                               rocblaslt_compute_type           compute_type,
                                               std::vector<const void*>&        bias,
-                                              std::vector<const void*>&        scaleD,
+                                              std::vector<const void*>&        scaleDVec,
                                               std::vector<hipblasDatatype_t>&  bias_type,
                                               std::vector<rocblaslt_epilogue>& epilogue,
                                               std::shared_ptr<void>&           gemmData,
@@ -720,7 +720,7 @@ inline rocblaslt_status
 #define EX_TYPECASTING_PARM_GroupedGemm_CPP                                                      \
     trans_a, trans_b, m, n, k, alpha, a, ld_a, batch_stride_a, b, ld_b, batch_stride_b, beta, c, \
         ld_c, batch_stride_c, d, ld_d, batch_stride_d, batch_count, strided_batch, grouped_gemm, \
-        bias, scaleD, bias_type, epilogue, gemmData, gemmCount
+        bias, scaleDVec, bias_type, epilogue, gemmData, gemmCount
 
     if(a_type == HIPBLAS_R_32F && b_type == HIPBLAS_R_32F)
     {

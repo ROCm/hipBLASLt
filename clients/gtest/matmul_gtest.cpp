@@ -140,7 +140,7 @@ namespace
                 name << '_' << arg.batch_count;
 
                 if(arg.scaleD_vector)
-                    name << "_SD";
+                    name << "_SDV";
 
                 if(arg.grouped_gemm > 0)
                     name << "_GG" << arg.grouped_gemm;

@@ -136,7 +136,7 @@ For more information:
         --grad          grad                    GEMM_STRIDED enable grad: 0 or 1 (default is 0)
         --use_e         use_e                   GEMM_STRIDED enable use_e: 0 or 1 (default is 0)
         --bias          bias                    GEMM_STRIDED enable bias and choose bias src: A, B, D
-        --scaleD        scaleD                  GEMM_STRIDED enable scaleD: 0 or 1 (default is 0)
+        --scaleDVec     scaleDVec               GEMM_STRIDED enable scaleDVec: 0 or 1 (default is 0)
         --header        header                  Print header for output (default is enabled)
         --timing        timing                  Bechmark GPU kernel performance:0 or 1 (default is 1)
         --bench_count   bench_count             Number of benchmark runs (default is 3)
@@ -204,7 +204,7 @@ For more information:
         --beta                  beta            GEMM_STRIDED argument beta (default is 0)
         --act                   act             GEMM_STRIDED set activation type: relu, gelu, none (default is none)
         --bias                  bias            GEMM_STRIDED set bias: 0 or 1 (default is 0)
-        --scaleD                scaleD          GEMM_STRIDED enable scaleD: 0 or 1 (default is 0)
+        --scaleDVec             scaleDVec       GEMM_STRIDED enable scaleDVec: 0 or 1 (default is 0)
         --cpu_time              cpu_time        Bechmark timing using cpu time: 0 or 1 (default is 0)
         --all                   all             Get all solutions
 
@@ -251,7 +251,7 @@ For more information:
         --beta                  beta            GEMM_STRIDED argument beta (default is 0)
         --act                   act             GEMM_STRIDED set activation type: relu, gelu, none (default is none)
         --bias                  bias            GEMM_STRIDED set bias: 0 or 1 (default is 0)
-        --scaleD                scaleD          GEMM_STRIDED enable scaleD: 0 or 1 (default is 0)
+        --scaleDVec             scaleDVec       GEMM_STRIDED enable scaleDVec: 0 or 1 (default is 0)
         --cpu_time              cpu_time        Bechmark timing using cpu time: 0 or 1 (default is 0)
 
 For example, to solve 3 gemms by groupgemm sample app:

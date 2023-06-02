@@ -85,8 +85,8 @@ class SignatureCOV3(Signature):
         signature.addArg(   "alpha",        SVK.SIG_VALUE, cptValueType)
         if kernel["ProblemType"]["UseBeta"]:
             signature.addArg("beta",        SVK.SIG_VALUE, cptValueType)
-        if kernel["ProblemType"]["UseScaleD"] and (kernel["GlobalSplitU"] == 1):
-            signature.addArg("AddressScaleD", SVK.SIG_GLOBALBUFFER, cptValueType, "generic")
+        if kernel["ProblemType"]["UseScaleDVec"] and (kernel["GlobalSplitU"] == 1):
+            signature.addArg("AddressScaleDVec", SVK.SIG_GLOBALBUFFER, cptValueType, "generic")
         for i in range(0, writer.states.d.numSgprStrides):
             signature.addArg(              "strideD%u"%i, SVK.SIG_VALUE,               "u32")
 
