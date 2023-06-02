@@ -1704,7 +1704,8 @@ namespace Tensile
                 }
             };
 
-            struct UseScaleDEqual : public Predicate_CRTP<UseScaleDEqual, ContractionProblemGemm>
+            struct UseScaleDVecEqual
+                : public Predicate_CRTP<UseScaleDVecEqual, ContractionProblemGemm>
             {
                 enum
                 {
@@ -1713,20 +1714,20 @@ namespace Tensile
                 };
                 bool value;
 
-                UseScaleDEqual() = default;
-                UseScaleDEqual(bool value)
+                UseScaleDVecEqual() = default;
+                UseScaleDVecEqual(bool value)
                     : value(value)
                 {
                 }
 
                 static std::string Type()
                 {
-                    return "UseScaleD";
+                    return "UseScaleDVec";
                 }
 
                 virtual bool operator()(ContractionProblemGemm const& problem) const override
                 {
-                    return problem.useScaleD() == value;
+                    return problem.useScaleDVec() == value;
                 }
             };
 

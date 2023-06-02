@@ -308,9 +308,9 @@ namespace Tensile
                 args.append("beta_2", inputs.beta, problem.betaType());
         }
 
-        if(problemType.useScaleD && (sizeMapping.globalSplitU == 1)) //kernel input data
+        if(problemType.useScaleDVec && (sizeMapping.globalSplitU == 1)) //kernel input data
         {
-            args.append<void const*>("scaleD", inputs.scaleD);
+            args.append<void const*>("scaleDVec", inputs.scaleDVec);
         }
 
         size_t startStrideCD = problemType.useInitialStridesCD ? 0 : 1;
@@ -687,9 +687,9 @@ namespace Tensile
         {
             rv.args.append<void const*>("bias", inputs.bias);
         }
-        if(problemType.useScaleD && sizeMapping.globalAccumulation == 0)
+        if(problemType.useScaleDVec && sizeMapping.globalAccumulation == 0)
         {
-            rv.args.append<void const*>("scaleD", inputs.scaleD);
+            rv.args.append<void const*>("scaleDVec", inputs.scaleDVec);
         }
 
         if(sizeMapping.globalAccumulation)
@@ -826,9 +826,9 @@ namespace Tensile
                 }
             }
         }
-        if(problemType.useScaleD) // GSU dep
+        if(problemType.useScaleDVec) // GSU dep
         {
-            args.append<void const*>("scaleD", inputs.scaleD);
+            args.append<void const*>("scaleDVec", inputs.scaleDVec);
         }
 
         if(sizeMapping.globalAccumulation == 2)
@@ -1124,9 +1124,9 @@ namespace Tensile
             name += "g";
         }
 
-        if(problemType.useScaleD)
+        if(problemType.useScaleDVec)
         {
-            name += ("_ScaleD");
+            name += ("_ScaleDVec");
         }
 
         name += "_PostGSU" + std::to_string(gsu);

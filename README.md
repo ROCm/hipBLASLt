@@ -8,7 +8,7 @@ The GEMM operation of hipBLASLt is performed by hipblasLtMatmul API.
 
 The equation is as below:
 ```math
-D = Activation(alpha \cdot op(A) \cdot op(B) + beta \cdot op(C) + bias) \cdot scaleD
+D = Activation(alpha \cdot op(A) \cdot op(B) + beta \cdot op(C) + bias) \cdot scaleD_{vector}
 ```
 Where op(A)/op(B) refers to in-place operations such as transpose/non-transpose, and alpha, beta are scalars.
 Acitivation function supports Gelu, Relu.

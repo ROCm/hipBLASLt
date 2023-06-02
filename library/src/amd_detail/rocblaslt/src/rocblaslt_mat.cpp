@@ -40,13 +40,13 @@ inline rocblaslt_status rocblaslt_epilogue_valid_args(const rocblaslt_epilogue& 
                                                       const int64_t&            original_lde,
                                                       const int64_t&            original_stride_e,
                                                       const void*               original_bias,
-                                                      const void*               original_scaleD,
+                                                      const void*               original_scaleDVec,
                                                       void*&                    E,
                                                       int64_t&                  lde,
                                                       int64_t&                  batch_stride_e,
                                                       void*&                    bias,
                                                       hipblasDatatype_t&        bias_type,
-                                                      void*&                    scaleD,
+                                                      void*&                    scaleDVec,
                                                       bool&                     gradient)
 {
     // Set status
@@ -60,10 +60,10 @@ inline rocblaslt_status rocblaslt_epilogue_valid_args(const rocblaslt_epilogue& 
     else
         bias = nullptr;
 
-    if(original_scaleD)
-        scaleD = (void*)original_scaleD;
+    if(original_scaleDVec)
+        scaleDVec = (void*)original_scaleDVec;
     else
-        scaleD = nullptr;
+        scaleDVec = nullptr;
 
     // matrix E
     E = nullptr;
@@ -106,7 +106,7 @@ inline rocblaslt_status rocblaslt_matmul_valid_args(const rocblaslt_matmul_desc 
                                                     int64_t&                    batch_stride_e,
                                                     void*&                      bias,
                                                     hipblasDatatype_t&          bias_type,
-                                                    void*&                      scaleD,
+                                                    void*&                      scaleDVec,
                                                     void*&                      E,
                                                     bool&                       gradient)
 {
@@ -169,13 +169,13 @@ inline rocblaslt_status rocblaslt_matmul_valid_args(const rocblaslt_matmul_desc 
                                                matmul_descr->lde,
                                                matmul_descr->stride_e,
                                                matmul_descr->bias,
-                                               matmul_descr->scaleD,
+                                               matmul_descr->scaleDVec,
                                                E,
                                                lde,
                                                batch_stride_e,
                                                bias,
                                                bias_type,
-                                               scaleD,
+                                               scaleDVec,
                                                gradient);
     return status;
 }
@@ -208,7 +208,7 @@ rocblaslt_status rocblaslt_matmul_impl(const rocblaslt_handle       handle,
     int64_t m, n, k, lda, ldb, ldc, ldd, lde, batch_stride_a, batch_stride_b, batch_stride_c,
         batch_stride_d, batch_stride_e;
     hipblasDatatype_t bias_type;
-    void *            bias = nullptr, *scaleD = nullptr, *E = nullptr;
+    void *            bias = nullptr, *scaleDVec = nullptr, *E = nullptr;
     bool              gradient = false;
     rocblaslt_status  isValid  = rocblaslt_matmul_valid_args(matmul_descr,
                                                            A,
@@ -236,7 +236,7 @@ rocblaslt_status rocblaslt_matmul_impl(const rocblaslt_handle       handle,
                                                            batch_stride_e,
                                                            bias,
                                                            bias_type,
-                                                           scaleD,
+                                                           scaleDVec,
                                                            E,
                                                            gradient);
     if(isValid != rocblaslt_status_continue)
@@ -263,7 +263,8 @@ rocblaslt_status rocblaslt_matmul_impl(const rocblaslt_handle       handle,
     handle, opA, opB, m, n, k, alpha, A, type_a, lda, batch_stride_a, B, type_b, ldb,            \
         batch_stride_b, beta, C, type_c, ldc, batch_stride_c, D, type_d, ldd, batch_stride_d, E, \
         lde, batch_stride_e, num_batches_a, strided_batch, grouped_gemm, gradient, compute_type, \
-        algo, workspace, workspaceSizeInBytes, bias, scaleD, bias_type, epilogue, gemmData, stream
+        algo, workspace, workspaceSizeInBytes, bias, scaleDVec, bias_type, epilogue, gemmData,   \
+        stream
 
     return rocblaslt_matmul_template(EX_PARM);
 }
@@ -286,7 +287,7 @@ rocblaslt_status rocblaslt_gemm_create_cpp_impl(rocblaslt_matmul_desc          m
     int64_t m, n, k, lda, ldb, ldc, ldd, lde, batch_stride_a, batch_stride_b, batch_stride_c,
         batch_stride_d, batch_stride_e;
     hipblasDatatype_t bias_type;
-    void *            bias = nullptr, *scaleD = nullptr, *E = nullptr;
+    void *            bias = nullptr, *scaleDVec = nullptr, *E = nullptr;
     bool              gradient = false;
     rocblaslt_status  isValid  = rocblaslt_matmul_valid_args(matmul_descr,
                                                            A,
@@ -314,7 +315,7 @@ rocblaslt_status rocblaslt_gemm_create_cpp_impl(rocblaslt_matmul_desc          m
                                                            batch_stride_e,
                                                            bias,
                                                            bias_type,
-                                                           scaleD,
+                                                           scaleDVec,
                                                            E,
                                                            gradient);
     if(isValid != rocblaslt_status_continue)
@@ -339,7 +340,7 @@ rocblaslt_status rocblaslt_gemm_create_cpp_impl(rocblaslt_matmul_desc          m
     opA, opB, m, n, k, alpha, A, type_a, lda, batch_stride_a, B, type_b, ldb, batch_stride_b,     \
         beta, C, type_c, ldc, batch_stride_c, D, type_d, ldd, batch_stride_d, E, lde,             \
         batch_stride_e, num_batches_a, strided_batch, grouped_gemm, gradient, compute_type, bias, \
-        scaleD, bias_type, epilogue, gemmData, gemmCount
+        scaleDVec, bias_type, epilogue, gemmData, gemmCount
 
     return rocblaslt_gemm_create_template_cpp(EX_PARM_GEMM_CPP);
 }
@@ -381,7 +382,7 @@ rocblaslt_status rocblaslt_gemm_create_cpp_impl_2(int64_t                       
                                      batch_stride_c,
                                      batch_stride_d);
 
-    void *            bias = nullptr, *scaleD = nullptr, *E = nullptr;
+    void *            bias = nullptr, *scaleDVec = nullptr, *E = nullptr;
     int64_t           lde = 0, batch_stride_e = 0;
     hipblasDatatype_t bias_type = static_cast<hipblasDatatype_t>(0);
     bool              gradient  = false;
@@ -396,13 +397,13 @@ rocblaslt_status rocblaslt_gemm_create_cpp_impl_2(int64_t                       
                                                rocEpilogue.aux_ld,
                                                rocEpilogue.aux_stride,
                                                inputs.bias,
-                                               inputs.scaleD,
+                                               inputs.scaleDVec,
                                                E,
                                                lde,
                                                batch_stride_e,
                                                bias,
                                                bias_type,
-                                               scaleD,
+                                               scaleDVec,
                                                gradient);
     if(status != rocblaslt_status_continue)
         return status;
@@ -440,7 +441,7 @@ rocblaslt_status rocblaslt_gemm_create_cpp_impl_2(int64_t                       
     opA, opB, m, n, k, alpha, A, type_a, lda, batch_stride_a, B, type_b, ldb, batch_stride_b,     \
         beta, C, type_c, ldc, batch_stride_c, D, type_d, ldd, batch_stride_d, E, lde,             \
         batch_stride_e, num_batches_a, strided_batch, grouped_gemm, gradient, compute_type, bias, \
-        scaleD, bias_type, epilogue, gemmData, gemmCount
+        scaleDVec, bias_type, epilogue, gemmData, gemmCount
 
     return rocblaslt_gemm_create_template_cpp(EX_PARM_GEMM_CPP_2);
 }
@@ -538,8 +539,8 @@ rocblaslt_status
 
         void*              bias = nullptr;
         hipblasDatatype_t  bias_type;
-        void*              scaleD = nullptr;
-        void*              E      = nullptr;
+        void*              scaleDVec = nullptr;
+        void*              E         = nullptr;
         int64_t            lde, batch_stride_e;
         bool               gradient;
         rocblaslt_epilogue epilogue = matmul_descr[i]->epilogue;
@@ -553,13 +554,13 @@ rocblaslt_status
                                                       matmul_descr[i]->lde,
                                                       matmul_descr[i]->stride_e,
                                                       matmul_descr[i]->bias,
-                                                      matmul_descr[i]->scaleD,
+                                                      matmul_descr[i]->scaleDVec,
                                                       E,
                                                       lde,
                                                       batch_stride_e,
                                                       bias,
                                                       bias_type,
-                                                      scaleD,
+                                                      scaleDVec,
                                                       gradient);
         if(validArgs != rocblaslt_status_continue)
             return validArgs;
@@ -575,7 +576,7 @@ rocblaslt_status
         bias_type_vec.push_back(bias_type);
         epilogue_vec.push_back(epilogue);
         bias_vec.push_back(bias);
-        scaleD_vec.push_back(scaleD);
+        scaleD_vec.push_back(scaleDVec);
 
         // matrix A
         // int64_t           num_rows_a     = matA[i]->m;
@@ -686,8 +687,8 @@ rocblaslt_status
 
         void*             bias = nullptr;
         hipblasDatatype_t bias_type;
-        void*             scaleD = nullptr;
-        void*             E      = nullptr;
+        void*             scaleDVec = nullptr;
+        void*             E         = nullptr;
         int64_t           lde, batch_stride_e;
         bool              gradient;
 
@@ -704,13 +705,13 @@ rocblaslt_status
                                                       rocEpilogue[iIdx].aux_ld,
                                                       rocEpilogue[iIdx].aux_stride,
                                                       inputs[i].bias,
-                                                      inputs[i].scaleD,
+                                                      inputs[i].scaleDVec,
                                                       E,
                                                       lde,
                                                       batch_stride_e,
                                                       bias,
                                                       bias_type,
-                                                      scaleD,
+                                                      scaleDVec,
                                                       gradient);
         if(validArgs != rocblaslt_status_continue)
             return validArgs;
@@ -718,7 +719,7 @@ rocblaslt_status
         bias_type_vec.push_back(bias_type);
         epilogue_vec.push_back(epilogue);
         bias_vec.push_back(bias);
-        scaleD_vec.push_back(scaleD);
+        scaleD_vec.push_back(scaleDVec);
 
         A_vec.push_back(inputs[i].a);
         B_vec.push_back(inputs[i].b);

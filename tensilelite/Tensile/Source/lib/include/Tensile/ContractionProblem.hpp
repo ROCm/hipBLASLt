@@ -128,13 +128,13 @@ namespace Tensile
     public:
         enum TENSOR : int
         {
-            A      = 0,
-            B      = 1,
-            C      = 2,
-            D      = 3,
-            E      = 4,
-            BIAS   = 5,
-            SCALED = 6,
+            A         = 0,
+            B         = 1,
+            C         = 2,
+            D         = 3,
+            E         = 4,
+            BIAS      = 5,
+            SCALEDVEC = 6,
             TENSOR_COUNT
         };
 
@@ -365,7 +365,7 @@ namespace Tensile
                                TensorDescriptor const& d,
                                TensorDescriptor const& e,
                                TensorDescriptor const& bias,
-                               TensorDescriptor const& scaleD,
+                               TensorDescriptor const& scaleDVec,
                                FreeIndices const&      freeIndices,
                                BatchIndices const&     batchIndices,
                                BoundIndices const&     boundIndices,
@@ -476,9 +476,9 @@ namespace Tensile
             m_useBias = useBias;
         }
 
-        void setUseScaleD(bool useScaleD)
+        void setUseScaleDVec(bool useScaleDVec)
         {
-            m_useScaleD = useScaleD;
+            m_useScaleDVec = useScaleDVec;
         }
 
         bool useE() const
@@ -491,9 +491,9 @@ namespace Tensile
             return m_useBias;
         }
 
-        bool useScaleD() const
+        bool useScaleDVec() const
         {
-            return m_useScaleD;
+            return m_useScaleDVec;
         }
 
         void setE(DataType                   type,
@@ -535,13 +535,13 @@ namespace Tensile
             return m_biasSrc;
         }
 
-        void setScaleD(DataType type, size_t length)
+        void setScaleDVec(DataType type, size_t length)
         {
-            m_scaleDType = type;
-            if(type != DataType::None && m_useScaleD)
+            m_scaleDVecType = type;
+            if(type != DataType::None && m_useScaleDVec)
             {
-                m_tensors[ContractionProblemGemm::TENSOR::SCALED]
-                    = {"scaleD", m_scaleDType, {length}, {1, length}};
+                m_tensors[ContractionProblemGemm::TENSOR::SCALEDVEC]
+                    = {"scaleDVec", m_scaleDVecType, {length}, {1, length}};
             }
         }
 
@@ -836,7 +836,7 @@ namespace Tensile
         bool              m_useGradient             = false;
         bool              m_useE                    = false;
         bool              m_useBias                 = false;
-        bool              m_useScaleD               = false;
+        bool              m_useScaleDVec            = false;
         ActivationType    m_activationType          = ActivationType::None;
         ActivationType    m_activationEnumArg       = ActivationType::None;
         bool              m_activationHPA           = false;
@@ -844,10 +844,10 @@ namespace Tensile
         KernelLanguage    m_kernelLanguage          = KernelLanguage::Any;
         PerformanceMetric m_performanceMetric       = PerformanceMetric::DeviceEfficiency;
 
-        DataType m_alphaType  = DataType::None; // if not assigned, will follow d-type
-        DataType m_betaType   = DataType::None; // for bwd-compatible
-        DataType m_biasType   = DataType::None;
-        DataType m_scaleDType = DataType::None; // if not assigned, will follow alpha-type
+        DataType m_alphaType     = DataType::None; // if not assigned, will follow d-type
+        DataType m_betaType      = DataType::None; // for bwd-compatible
+        DataType m_biasType      = DataType::None;
+        DataType m_scaleDVecType = DataType::None; // if not assigned, will follow alpha-type
 
         ContractionProblemGemm::TENSOR m_biasSrc = ContractionProblemGemm::TENSOR::D;
 
@@ -919,7 +919,7 @@ namespace Tensile
                           void const* const* _batchC,
                           void* const*       _batchD,
                           void const*        _bias,
-                          void const*        _scaleD,
+                          void const*        _scaleDVec,
                           void*              _ws);
 
         // TODO: Remove this
@@ -934,8 +934,8 @@ namespace Tensile
         void const* const* batchC = nullptr;
         void* const*       batchD = nullptr;
 
-        void const* bias   = nullptr;
-        void const* scaleD = nullptr;
+        void const* bias      = nullptr;
+        void const* scaleDVec = nullptr;
 
         // Constants
         ConstantVariant              alpha = static_cast<float>(0);

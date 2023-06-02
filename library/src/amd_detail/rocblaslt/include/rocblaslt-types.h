@@ -268,11 +268,11 @@ typedef enum rocblaslt_matmul_desc_attributes_
     ROCBLASLT_MATMUL_DESC_EPILOGUE                  = 2,
     ROCBLASLT_MATMUL_DESC_BIAS_POINTER              = 3,
     ROCBLASLT_MATMUL_DESC_BIAS_DATA_TYPE            = 4,
-    ROCBLASLT_MATMUL_DESC_D_SCALE_POINTER           = 5,
     ROCBLASLT_MATMUL_DESC_EPILOGUE_AUX_POINTER      = 6,
     ROCBLASLT_MATMUL_DESC_EPILOGUE_AUX_LD           = 7,
     ROCBLASLT_MATMUL_DESC_EPILOGUE_AUX_BATCH_STRIDE = 8,
-    ROCBLASLT_MATMUL_DESC_MAX                       = 9
+    ROCBLASLT_MATMUL_DESC_D_SCALE_VECTOR_POINTER    = 100,
+    ROCBLASLT_MATMUL_DESC_MAX                       = 101
 } rocblaslt_matmul_desc_attributes;
 
 /*! \ingroup types_module
@@ -393,9 +393,9 @@ namespace rocblaslt
         void* alpha = nullptr;
         void* beta  = nullptr;
         // Epilogue inputs
-        void* bias   = nullptr;
-        void* scaleD = nullptr;
-        void* aux    = nullptr;
+        void* bias      = nullptr;
+        void* scaleDVec = nullptr;
+        void* aux       = nullptr;
     };
 
     class RocGemm

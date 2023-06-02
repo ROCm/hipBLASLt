@@ -102,7 +102,7 @@ struct RocblasltContractionProblem
     bool   gradient;
 
     const void*        bias;
-    const Tc*          scaleD;
+    const Tc*          scaleDVec;
     hipblasDatatype_t  bias_type;
     rocblaslt_epilogue epilogue;
     void*              workspace;
@@ -144,7 +144,7 @@ struct RocblasltContractionProblem
                                 bool               grouped_gemm,
                                 bool               gradient,
                                 const void*        bias,
-                                const Tc*          scaleD,
+                                const Tc*          scaleDVec,
                                 hipblasDatatype_t  bias_type,
                                 rocblaslt_epilogue epilogue,
                                 void*              workspace,
@@ -187,7 +187,7 @@ struct RocblasltContractionProblem
         , grouped_gemm(grouped_gemm)
         , gradient(gradient)
         , bias(bias)
-        , scaleD(scaleD)
+        , scaleDVec(scaleDVec)
         , bias_type(bias_type)
         , epilogue(epilogue)
         , workspace(workspace)
