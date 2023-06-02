@@ -143,7 +143,7 @@ struct _rocblaslt_matmul_desc
     rocblaslt_epilogue epilogue = ROCBLASLT_EPILOGUE_DEFAULT;
     // bias vector pointer
     void*             bias      = nullptr;
-    void*             scaleD    = nullptr;
+    void*             scaleDVec = nullptr;
     hipblasDatatype_t bias_type = static_cast<hipblasDatatype_t>(0);
     // E
     void*   e        = nullptr;

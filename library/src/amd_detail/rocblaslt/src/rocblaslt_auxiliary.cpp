@@ -464,12 +464,12 @@ rocblaslt_status rocblaslt_matmul_desc_set_attribute(rocblaslt_matmul_desc      
                     return rocblaslt_status_invalid_value;
                 }
                 break;
-            case ROCBLASLT_MATMUL_DESC_D_SCALE_POINTER:
+            case ROCBLASLT_MATMUL_DESC_D_SCALE_VECTOR_POINTER:
                 if(sizeof(void*) <= sizeInBytes)
-                    memcpy(&matmulDesc->scaleD, buf, sizeof(void*));
+                    memcpy(&matmulDesc->scaleDVec, buf, sizeof(void*));
                 else
                 {
-                    log_error(__func__, "invalid scaleD buf size", sizeInBytes);
+                    log_error(__func__, "invalid scaleDVec buf size", sizeInBytes);
                     return rocblaslt_status_invalid_value;
                 }
                 break;
@@ -597,14 +597,14 @@ rocblaslt_status rocblaslt_matmul_desc_get_attribute(rocblaslt_matmul_desc      
                 }
                 memcpy(buf, &matmulDesc->bias, sizeof(void*));
                 break;
-            case ROCBLASLT_MATMUL_DESC_D_SCALE_POINTER:
+            case ROCBLASLT_MATMUL_DESC_D_SCALE_VECTOR_POINTER:
                 *sizeWritten = sizeof(void*);
                 if(sizeInBytes < sizeof(void*))
                 {
                     log_error(__func__, "invalid buf size", sizeInBytes);
                     return rocblaslt_status_invalid_value;
                 }
-                memcpy(buf, &matmulDesc->scaleD, sizeof(void*));
+                memcpy(buf, &matmulDesc->scaleDVec, sizeof(void*));
                 break;
             case ROCBLASLT_MATMUL_DESC_BIAS_DATA_TYPE:
                 *sizeWritten = sizeof(int32_t);

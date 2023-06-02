@@ -126,8 +126,8 @@ namespace Tensile
                                         rhs.useBias(),
                                         lhs.useE(),
                                         rhs.useE(),
-                                        lhs.useScaleD(),
-                                        rhs.useScaleD());
+                                        lhs.useScaleDVec(),
+                                        rhs.useScaleDVec());
         }
     };
 } // namespace Tensile
@@ -158,7 +158,7 @@ namespace std
                                          problem.useGradient(),
                                          problem.useBias(),
                                          problem.useE(),
-                                         problem.useScaleD());
+                                         problem.useScaleDVec());
         }
     };
 
@@ -190,7 +190,7 @@ namespace std
                                               problem.useGradient(),
                                               problem.useBias(),
                                               problem.useE(),
-                                              problem.useScaleD());
+                                              problem.useScaleDVec());
             }
             return hash;
         }

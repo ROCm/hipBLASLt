@@ -194,10 +194,10 @@ class StoreState:
                 self.sharedColEVgprs = kernelWriter.vgprPool.checkOut(self.numAddrVgpr, "sharedColEVgprs for packed elements")
             else:
                 self.sharedColEVgprs = None
-            if kernel["ProblemType"]["UseScaleD"] and (kernel["GlobalSplitU"] == 1):
-                self.sharedColScaleDVgprs = kernelWriter.vgprPool.checkOut(self.numAddrVgpr, "sharedColScaleDVgprs for packed elements")
+            if kernel["ProblemType"]["UseScaleDVec"] and (kernel["GlobalSplitU"] == 1):
+                self.sharedColScaleDVecVgprs = kernelWriter.vgprPool.checkOut(self.numAddrVgpr, "sharedColScaleDVecVgprs for packed elements")
             else:
-                self.sharedColScaleDVgprs = None
+                self.sharedColScaleDVecVgprs = None
         elif self.optSingleColVgpr:
             self.numAddrVgpr = 1
             self.sharedColDVgprs = kernelWriter.vgprPool.checkOut(1, "sharedColDVgprs")
@@ -217,17 +217,17 @@ class StoreState:
                 self.sharedColEVgprs = kernelWriter.vgprPool.checkOut(1, "sharedColEVgprs for packed elements")
             else:
                 self.sharedColEVgprs = None
-            if kernel["ProblemType"]["UseScaleD"] and (kernel["GlobalSplitU"] == 1):
-                self.sharedColScaleDVgprs = kernelWriter.vgprPool.checkOut(1, "sharedColScaleDVgprs for packed elements")
+            if kernel["ProblemType"]["UseScaleDVec"] and (kernel["GlobalSplitU"] == 1):
+                self.sharedColScaleDVecVgprs = kernelWriter.vgprPool.checkOut(1, "sharedColScaleDVecVgprs for packed elements")
             else:
-                self.sharedColScaleDVgprs = None
+                self.sharedColScaleDVecVgprs = None
         else:
             self.numAddrVgpr = 0
             self.sharedColEVgprs    = None
             self.sharedColDVgprs    = None
             self.sharedColCVgprs    = None
             self.sharedColBiasVgprs = None
-            self.sharedColScaleDVgprs = None
+            self.sharedColScaleDVecVgprs = None
 
         # For detecting when we are running first batch
         self.firstBatch = True
@@ -249,8 +249,8 @@ class StoreState:
                 numVgprs = int(ceil(kernel["ProblemType"]["ComputeDataType"].numRegisters()))
                 self.numVgprsPerElement += numVgprs * gwvw  # Loaded data
 
-        if kernel["ProblemType"]["UseScaleD"] and (kernel["GlobalSplitU"] == 1):
-            self.numVgprsPerElement += self.cfg.numVgprsPerAddr  # ScaleD address
+        if kernel["ProblemType"]["UseScaleDVec"] and (kernel["GlobalSplitU"] == 1):
+            self.numVgprsPerElement += self.cfg.numVgprsPerAddr  # ScaleDVec address
             numVgprs = int(ceil(kernel["ProblemType"]["DataType"].numRegisters()))
             self.numVgprsPerElement += numVgprs * gwvw  # Loaded data
         # Calculate align
@@ -278,7 +278,7 @@ class StoreState:
         self.elementDataE    = []
         self.elementData     = []  # VGPR to use for element data, needed for atomic or beta
         self.elementDataBias = []
-        self.elementDataScaleD = []
+        self.elementDataScaleDVec = []
         self.elementMask     = []  # SGPR to use for element mask
         self.elementSumIdx = []
 
@@ -291,7 +291,7 @@ class StoreState:
             matrixInstBN = 1                                                if (kernel["MatrixInstN"] == 4) else kernel["MatrixInstBN"]
 
         biasVgprMap = {}
-        scaleDVgprMap = {}
+        scaleDVecVgprMap = {}
         lastData = 0
         for elementIdx in range(0, len(batchElements)):
             # Create the AddrCalc for each memory load/store
@@ -363,7 +363,7 @@ class StoreState:
                 addrDVgpr    = self.sharedColDVgprs
                 addrCVgpr    = self.sharedColCVgprs
                 addrBiasVgpr = self.sharedColBiasVgprs
-                addrScaleDVgpr = self.sharedColScaleDVgprs
+                addrScaleDVecVgpr = self.sharedColScaleDVecVgprs
             elif self.optSharedColVgpr:
                 if kernel["EnableMatrixInstruction"]:
                     elementCol = (d0 * kernel["MIOutputVectorWidth"] + vc0) / gwvw
@@ -383,10 +383,10 @@ class StoreState:
                     addrEVgpr = None
                 #print ("d0=", d0, "vc0=", vc0, "elementCol=", elementCol)
 
-                if kernel["ProblemType"]["UseScaleD"] and (kernel["GlobalSplitU"] == 1):
-                    addrScaleDVgpr = self.sharedColScaleDVgprs+elementCol
+                if kernel["ProblemType"]["UseScaleDVec"] and (kernel["GlobalSplitU"] == 1):
+                    addrScaleDVecVgpr = self.sharedColScaleDVecVgprs+elementCol
                 else:
-                    addrScaleDVgpr = None
+                    addrScaleDVecVgpr = None
             else:
                 # allocate new VGPR for each element:
                 addrDVgpr = kw.vgprPool.checkOutAligned(self.cfg.numVgprsPerAddr, \
@@ -407,13 +407,13 @@ class StoreState:
                 else:
                     addrEVgpr = None
 
-                if kernel["ProblemType"]["UseScaleD"] and (kernel["GlobalSplitU"] == 1):
-                    addrScaleDVgpr = kw.vgprPool.checkOutAligned(self.cfg.numVgprsPerAddr, \
-                        int(ceil(self.cfg.numVgprsPerAddr)), "loadScaleDBatch-addr for ei=%u"%(elementIdx), preventOverflow=not isOptNLL)
+                if kernel["ProblemType"]["UseScaleDVec"] and (kernel["GlobalSplitU"] == 1):
+                    addrScaleDVecVgpr = kw.vgprPool.checkOutAligned(self.cfg.numVgprsPerAddr, \
+                        int(ceil(self.cfg.numVgprsPerAddr)), "loadScaleDVecBatch-addr for ei=%u"%(elementIdx), preventOverflow=not isOptNLL)
                 else:
-                    addrScaleDVgpr = None
+                    addrScaleDVecVgpr = None
 
-            self.elementAddr.append(AddrCalculation(kw, self, addrCVgpr, addrDVgpr, addrEVgpr, addrBiasVgpr, addrScaleDVgpr, element, coordOffset0, \
+            self.elementAddr.append(AddrCalculation(kw, self, addrCVgpr, addrDVgpr, addrEVgpr, addrBiasVgpr, addrScaleDVecVgpr, element, coordOffset0, \
               self.kernelWriter.vgprs.coord1, coordOffset1, coordOffset1 - self.lastCoordOffset1, newCoord1))
             # if numVgprsPerDataPerVI == 0.5, then two consecutive elements
             # should have same data pointer, next should move.
@@ -469,17 +469,17 @@ class StoreState:
                 dataE = 0
             self.elementDataE.append(dataE)
 
-            if kernel["ProblemType"]["UseScaleD"] and (kernel["GlobalSplitU"] == 1):
-                if coordOffset0 in scaleDVgprMap:
-                    dataScaleD = scaleDVgprMap[coordOffset0]
+            if kernel["ProblemType"]["UseScaleDVec"] and (kernel["GlobalSplitU"] == 1):
+                if coordOffset0 in scaleDVecVgprMap:
+                    dataScaleDVec = scaleDVecVgprMap[coordOffset0]
                 else:
                     numVgprs = int(ceil(kernel["ProblemType"]["ComputeDataType"].numRegisters()))
-                    dataScaleD = kw.vgprPool.checkOutAligned(int(numVgprs*self.cfg.gwvw), \
-                                  int(ceil(numVgprs*self.cfg.gwvw)), "scaleD data for ei=%u"%elementIdx, preventOverflow=False)
-                    scaleDVgprMap[coordOffset0] = dataScaleD
+                    dataScaleDVec = kw.vgprPool.checkOutAligned(int(numVgprs*self.cfg.gwvw), \
+                                  int(ceil(numVgprs*self.cfg.gwvw)), "scaleDVec data for ei=%u"%elementIdx, preventOverflow=False)
+                    scaleDVecVgprMap[coordOffset0] = dataScaleDVec
             else:
-                dataScaleD = 0
-            self.elementDataScaleD.append(dataScaleD)
+                dataScaleDVec = 0
+            self.elementDataScaleDVec.append(dataScaleDVec)
 
             if batchElementSgprs != None:
                 if self.optSGPRUsage:
@@ -547,7 +547,7 @@ class StoreState:
         if (self.sharedColBiasVgprs != None):
             self.kernelWriter.vgprPool.checkIn(self.sharedColBiasVgprs)
 
-        if (self.sharedColScaleDVgprs != None):
-            self.kernelWriter.vgprPool.checkIn(self.sharedColScaleDVgprs)
+        if (self.sharedColScaleDVecVgprs != None):
+            self.kernelWriter.vgprPool.checkIn(self.sharedColScaleDVecVgprs)
         self.checkInTempVgprC()
         self.resetState()

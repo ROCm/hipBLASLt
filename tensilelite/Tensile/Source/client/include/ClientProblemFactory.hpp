@@ -77,7 +77,7 @@ namespace Tensile
             bool m_cEqualsD;
             bool m_useBias;
             int  m_biasSrc;
-            bool m_useScaleD;
+            bool m_useScaleDVec;
             bool m_useE;
             bool m_useGradient = false;
 

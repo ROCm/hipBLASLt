@@ -739,12 +739,12 @@ namespace Tensile
                         problem.activationType(), resultD, problem.activationEnumArg(), actArgs);
                 }
 
-                if(problem.useScaleD())
+                if(problem.useScaleDVec())
                 {
-                    int         pos    = int(dNum % problem.d().sizes()[0]);
-                    Accumulator scaleD = GetValue<Accumulator>(
-                        problem.alphaType(), inputs.scaleD, pos, aConjugate);
-                    resultD *= scaleD;
+                    int         pos       = int(dNum % problem.d().sizes()[0]);
+                    Accumulator scaleDVec = GetValue<Accumulator>(
+                        problem.alphaType(), inputs.scaleDVec, pos, aConjugate);
+                    resultD *= scaleDVec;
                 }
                 if(problem.useBias() && problem.useGradient()
                    && (problem.biasSrc() == ContractionProblemGemm::D))

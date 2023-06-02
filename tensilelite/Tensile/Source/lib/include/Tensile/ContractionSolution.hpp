@@ -171,8 +171,8 @@ namespace Tensile
         /**
    * Calculate required workspace size.
    */
-        size_t       requiredWorkspaceSize(Problem const& problem) const;
-        size_t       requiredWorkspaceSizeGroupedGemm(std::vector<Problem> const& problems) const;
+        size_t requiredWorkspaceSize(Problem const& problem) const;
+        size_t requiredWorkspaceSizeGroupedGemm(std::vector<Problem> const& problems) const;
 
         static float computeGranularity(float x);
 
@@ -240,7 +240,7 @@ namespace Tensile
         template <bool T_Debug>
         KernelInvocation generateSingleCallGroupedGemm(std::vector<Problem> const& problems,
                                                        GroupedInputs const&        inputs,
-                                                       KernelArguments &           h_args) const;
+                                                       KernelArguments&            h_args) const;
 
         template <bool T_Debug>
         KernelInvocation generateBetaOnlyCall(Problem const&           problem,
@@ -263,9 +263,10 @@ namespace Tensile
                                                       ContractionInputs const& inputs) const;
 
         template <bool T_Debug>
-        KernelInvocation generateOutputConversionCallGroupedGemm(std::vector<Problem> const& problems,
-                                                                 GroupedInputs const&        inputs,
-                                                                 KernelArguments &           h_args) const;
+        KernelInvocation
+            generateOutputConversionCallGroupedGemm(std::vector<Problem> const& problems,
+                                                    GroupedInputs const&        inputs,
+                                                    KernelArguments&            h_args) const;
 
         std::string outputConversionKernelName(Problem const&           problem,
                                                ContractionInputs const& inputs,
@@ -329,7 +330,7 @@ namespace Tensile
             bool                  useGradient             = false;
             bool                  useBias                 = false;
             bool                  useE                    = false;
-            bool                  useScaleD               = false;
+            bool                  useScaleDVec            = false;
             bool                  useInitialStridesAB     = false;
             bool                  useInitialStridesCD     = false;
             bool                  stridedBatched          = true;

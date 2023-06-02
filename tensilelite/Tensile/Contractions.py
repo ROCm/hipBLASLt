@@ -65,7 +65,7 @@ class BoundIndex:
 
 class ProblemType:
     StateKeys = ['operationIdentifier', 'aType', 'bType', 'cType', 'dType', 'eType',
-                 'useBeta', 'useBias', 'biasSrcWhiteList', 'useE', 'useScaleD', 'biasDataTypeWhiteList', 'highPrecisionAccumulate',
+                 'useBeta', 'useBias', 'biasSrcWhiteList', 'useE', 'useScaleDVec', 'biasDataTypeWhiteList', 'highPrecisionAccumulate',
                  'useInitialStridesAB', 'useInitialStridesCD', 'stridedBatched', 'groupedGemm',
                  'useGradient', 'activationType', 'activationHPA', 'activationNoGuard']
     @classmethod
@@ -190,9 +190,9 @@ class ProblemType:
         if 'Gradient' in d:
             rv.useGradient = d["Gradient"]
 
-        rv.useScaleD = False
-        if 'UseScaleD' in d:
-            rv.useScaleD = d['UseScaleD']
+        rv.useScaleDVec = False
+        if 'UseScaleDVec' in d:
+            rv.useScaleDVec = d['UseScaleDVec']
 
         rv.batched = d['Batched']
 
@@ -307,7 +307,7 @@ class ProblemType:
                 exportType = ActivationType.Export.GRADONLY if self.useGradient else ActivationType.Export.NORMAL
                 enumList = [actEnum.capitalize() for actEnum in ActivationType.getEnumStrList(self.activationComputeDataType, exportType=exportType)]
                 predicates.append(ProblemPredicate("ActivationEnumWhiteList", value=enumList))
-            # predicates.append(ProblemPredicate("UseScaleD", value=self.useScaleD))
+            # predicates.append(ProblemPredicate("UseScaleDVec", value=self.useScaleDVec))
             # predicates.append(ProblemPredicate("GroupedGemm", value=self.groupedGemm))
 
         if includeType:
@@ -320,7 +320,7 @@ class ProblemType:
             predicates.append(ProblemPredicate("UseE", value=self.useE))
             predicates.append(ProblemPredicate("StridedBatched", value=self.stridedBatched))
             predicates.append(ProblemPredicate("GroupedGemm", value=self.groupedGemm))
-            predicates.append(ProblemPredicate("UseScaleD", value=self.useScaleD))
+            predicates.append(ProblemPredicate("UseScaleDVec", value=self.useScaleDVec))
 
         return predicates
 

@@ -35,7 +35,7 @@ BenchmarkProblems:
       Activation:    True
       ActivationHPA: True
       ActivationGuard: True
-      UseScaleD:     False
+      UseScaleDVec:     False
     - # BenchmarkProblemSizeGroup - Standard
       InitialSolutionParameters:
       BenchmarkCommonParameters:
@@ -100,7 +100,7 @@ BenchmarkProblems:
       Activation:    False
       ActivationHPA: False
       ActivationGuard: False
-      UseScaleD:     False
+      UseScaleDVec:     False
     - # BenchmarkProblemSizeGroup - Standard
       InitialSolutionParameters:
       BenchmarkCommonParameters:
@@ -166,7 +166,7 @@ BenchmarkProblems:
       Activation:    False
       ActivationHPA: False
       ActivationGuard: False
-      UseScaleD:     False
+      UseScaleDVec:     False
     - # BenchmarkProblemSizeGroup - Standard
       InitialSolutionParameters:
       BenchmarkCommonParameters:
@@ -235,7 +235,7 @@ BenchmarkProblems:
       Activation:    False
       ActivationHPA: False
       ActivationGuard: False
-      UseScaleD:     False
+      UseScaleDVec:     False
     - # BenchmarkProblemSizeGroup - Standard
       InitialSolutionParameters:
       BenchmarkCommonParameters:
@@ -302,7 +302,7 @@ BenchmarkProblems:
       Activation:    False
       ActivationHPA: False
       ActivationGuard: False
-      UseScaleD:     False
+      UseScaleDVec:     False
     - # BenchmarkProblemSizeGroup - Standard
       InitialSolutionParameters:
       BenchmarkCommonParameters:
@@ -372,7 +372,7 @@ BenchmarkProblems:
       Activation:    False
       ActivationHPA: False
       ActivationGuard: False
-      UseScaleD:     False
+      UseScaleDVec:     False
     - # BenchmarkProblemSizeGroup - Standard
       InitialSolutionParameters:
       BenchmarkCommonParameters:

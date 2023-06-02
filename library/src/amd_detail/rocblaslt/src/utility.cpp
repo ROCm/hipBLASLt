@@ -113,8 +113,8 @@ const char* rocblaslt_matmul_desc_attributes_to_string(rocblaslt_matmul_desc_att
         return "MATMUL_DESC_BIAS_POINTER";
     case ROCBLASLT_MATMUL_DESC_BIAS_DATA_TYPE:
         return "MATMUL_DESC_BIAS_DATA_TYPE";
-    case ROCBLASLT_MATMUL_DESC_D_SCALE_POINTER:
-        return "MATMUL_DESC_D_SCALE_POINTER";
+    case ROCBLASLT_MATMUL_DESC_D_SCALE_VECTOR_POINTER:
+        return "MATMUL_DESC_D_SCALE_VECTOR_POINTER";
     default:
         return "Invalid";
     }

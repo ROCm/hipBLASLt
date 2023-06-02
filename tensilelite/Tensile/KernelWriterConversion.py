@@ -92,10 +92,10 @@ class KernelWriterConversion(KernelWriterBase):
         biasPtrStr = self.state["ProblemType"]["BiasDataType"].toDevice(self.language)
         kStr += "  " + biasPtrStr + "* " + "Bias;" + self.endLine
 
-    # interface: ScaleD GSU>1 GSUA "MUL"
-    if self.state["ProblemType"]["UseScaleD"]:
-      scaleDPtrStr = self.state["ProblemType"]["ComputeDataType"].toDevice(self.language)
-      kStr += "  " + scaleDPtrStr + " * " + "ScaleD;" + self.endLine
+    # interface: ScaleDVec GSU>1 GSUA "MUL"
+    if self.state["ProblemType"]["UseScaleDVec"]:
+      scaleDVecPtrStr = self.state["ProblemType"]["ComputeDataType"].toDevice(self.language)
+      kStr += "  " + scaleDVecPtrStr + " * " + "ScaleDVec;" + self.endLine
 
     # alpha & beta
     kStr += "  %s alpha;%s" % (self.state["ProblemType"]["ComputeDataType"].toDevice(self.language), self.endLine)
@@ -478,11 +478,11 @@ class KernelWriterConversion(KernelWriterBase):
           kStr += "  %s[%d] = activation%s((%s)%s[%d]%s);%s" % (accumStr, vIdx, self.gaurdStr, typeActivationStr, accumStr, vIdx, actArgs, self.endLine)
       kStr += self.endLine
 
-    #ScaleD
-    if self.state["ProblemType"]["UseScaleD"]:
-      kStr += "  if(arg.ScaleD != nullptr){" + self.endLine
+    #ScaleDVec
+    if self.state["ProblemType"]["UseScaleDVec"]:
+      kStr += "  if(arg.ScaleDVec != nullptr){" + self.endLine
       for vIdx in range(self.num_dword_load):
-        kStr += "    %s[%d] *= (%s)arg.ScaleD[id0+%d];%s" % (accumStr, vIdx, intermediateDataType, vIdx, self.endLine)
+        kStr += "    %s[%d] *= (%s)arg.ScaleDVec[id0+%d];%s" % (accumStr, vIdx, intermediateDataType, vIdx, self.endLine)
       kStr += "  }" + self.endLine
       kStr += self.endLine
 
@@ -554,7 +554,7 @@ class KernelWriterConversion(KernelWriterBase):
         name += "_%s"%str(self.state["ProblemType"]["ActivationType"]).upper()
       name += ("h" if self.state["ProblemType"]["ActivationHPA"] else "")
       name += ("ng" if self.state["ProblemType"]["ActivationNoGuard"] else "")
-    name += "_ScaleD" if self.state["ProblemType"]["UseScaleD"] else ""
+    name += "_ScaleDVec" if self.state["ProblemType"]["UseScaleDVec"] else ""
     name += "_PostGSU" + str(self.state["GlobalSplitU"])
     if self.num_elements_load != None:
       name += "_VW" + str(self.num_elements_load)
