@@ -1,5 +1,22 @@
 # Change Log for hipBLASLt
 
+## (Unreleased) hipBLASLt 0.3.0
+### Added
+- Add getAllAlgos extension APIs
+- TensileLite support new epilogues: gradient gelu, gradient D, gradient A/B, aux
+- Add sample package including three sample apps
+- Add new C++ GEMM class in hipblaslt extension
+### Changed
+- refactor GroupGemm APIs as C++ class in hipblaslt extension
+- change scaleD vector enum as HIPBLASLT_MATMUL_DESC_D_SCALE_VECTOR_POINTER
+### Fixed
+- Enable norm check validation for CI
+### Optimizations
+- GSU kernel optimization: wider memory, PGR N
+- update logic yaml to improve some FP16 NN sizes
+- GroupGemm support GSU kernel
+- Add grouped gemm tuning for aldebaran
+
 ## (Unreleased) hipBLASLt 0.2.0
 ### Added
 - Added CI tests for tensilelite
@@ -15,7 +32,7 @@
 - Refactored tensilelite host codes
 - Optimized building time
 
-## (Unreleased) hipBLASLt 0.1.0
+## hipBLASLt 0.1.0
 ### Added
 - Enable hipBLASLt APIs
 - Support gfx90a
