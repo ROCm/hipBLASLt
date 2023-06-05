@@ -328,10 +328,11 @@ validMFMA["B1k"] = [[32,32,4,2], [32,32,8,1], [16,16,4,4], [16,16,16,1], [4,4,4,
 validMFMA["C"] = validMFMA["S"]
 validMFMA["Z"] = validMFMA["D"]
 validMFMA["I8"] = [[32,32,4,2], [32,32,8,1], [16,16,4,4], [16,16,16,1], [4,4,4,16]] + [[32,32,16,1], [16,16,32,1]]
+validMFMA["X"] = [[32,32,4,1], [16,16,8,1]]
 validTT = 16
 validMFMA["_format9"] = []
 
-for MFMA in [validMFMA["H"], validMFMA["S"], validMFMA["B"], validMFMA["D"]]:
+for MFMA in [validMFMA["H"], validMFMA["S"], validMFMA["B"], validMFMA["D"], validMFMA["X"]]:
   for MI in MFMA:
     for bm in range(int(math.log(MI[3],2))+1):
       for tt0 in range(1,validTT+1):
@@ -339,7 +340,7 @@ for MFMA in [validMFMA["H"], validMFMA["S"], validMFMA["B"], validMFMA["D"]]:
           for wave_m in range (3):
             for wave_n in range(3):
               validMFMA["_format9"].append([MI[0],MI[1],MI[2],MI[3],2**bm,tt0,tt1,2**wave_m, 2**wave_n])
-validMatrixInstructions = [[], [-1]] + validMFMA["H"] + validMFMA["S"] + validMFMA["B"] + validMFMA["D"] + validMFMA["B1k"]
+validMatrixInstructions = [[], [-1]] + validMFMA["H"] + validMFMA["S"] + validMFMA["B"] + validMFMA["D"] + validMFMA["B1k"] + validMFMA["X"]
 validMatrixInstructions = validMatrixInstructions + validMFMA["_format9"]
 
 validSMFMA = {}
@@ -1089,6 +1090,8 @@ defaultProblemType = {
     "DataType":                 0,                # data types can specified by a variety of ways, such as "s", as listed in SolutionStructs.py::DataType
     "DestDataType":             0,                # destination data types can specified by a variety of ways, such as "s", as listed in SolutionStructs.py::DataType
     "ComputeDataType":          0,                # compute data types can specified by a variety of ways, such as "s", as listed in SolutionStructs.py::DataType
+    "F32XdlMathOp":             0,                # reducing intermediate precision from f32 to a specific type, such as "x", as listed in SolutionStructs.py::DataType.
+                                                  # in:f32, intermediate:xf32, out:f32. f32 = xf32(f32) * xf32(f32)
     "UseBeta":                  True,             # =True use beta parameter (asm will check for B=0 and optimize the write for that), =False don't use beta parameter
     "UseE":                     False,            # =True use output E to output gemm results before activation
     "Gradient":                 False,            # =True set globalWriteElements to gradient mode

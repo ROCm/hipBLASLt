@@ -325,6 +325,7 @@ namespace Tensile
             DataType              cType                   = DataType::Float;
             DataType              dType                   = DataType::Float;
             DataType              eType                   = DataType::Float;
+            DataType              f32XdlMathOp            = DataType::Float;
             bool                  highPrecisionAccumulate = false;
             bool                  useBeta                 = true;
             bool                  useGradient             = false;
@@ -341,7 +342,7 @@ namespace Tensile
             bool                  activationNoGuard       = false;
             std::vector<int>      biasSrcWhiteList;
             std::vector<DataType> biasDataTypeWhiteList;
-            bool                  sparseA                 = false;
+            bool                  sparseA = false;
         };
 
         struct LinearModel

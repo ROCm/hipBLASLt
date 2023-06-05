@@ -485,6 +485,7 @@ def writeClientConfigIni(problemSizes, biasTypeArgs, activationArgs, problemType
             param('e-type',     problemType.eType.toEnum())
         param('alpha-type', problemType.alphaType.toEnum())
         param('beta-type',  problemType.betaType.toEnum())
+        param('f32-xdl-math-op', problemType.f32XdlMathOp.toEnum())
         param('use-gradient', problemType.useGradient)
         param('use-bias',   problemType.useBias)
         param('bias-source',   problemType.biasSrcWhiteList[0])
