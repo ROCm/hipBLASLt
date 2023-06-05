@@ -869,7 +869,7 @@ rocblaslt_status rocblaslt_matmul_is_algo_supported(rocblaslt_handle        hand
                                                                          betaf,
                                                                          algo->max_workspace_bytes);
                     status = isSolutionSupported<float, float, float>(
-                        prob, gemmData, algo, workspaceSizeInBytes);
+                        handle, prob, gemmData, algo, workspaceSizeInBytes);
                 }
             }
         }
@@ -891,7 +891,7 @@ rocblaslt_status rocblaslt_matmul_is_algo_supported(rocblaslt_handle        hand
                         betaf,
                         algo->max_workspace_bytes);
                     status = isSolutionSupported<rocblaslt_half, rocblaslt_half, float>(
-                        prob, gemmData, algo, workspaceSizeInBytes);
+                        handle, prob, gemmData, algo, workspaceSizeInBytes);
                 }
             }
         }
@@ -914,7 +914,7 @@ rocblaslt_status rocblaslt_matmul_is_algo_supported(rocblaslt_handle        hand
                             betaf,
                             algo->max_workspace_bytes);
                     status = isSolutionSupported<rocblaslt_bfloat16, rocblaslt_bfloat16, float>(
-                        prob, gemmData, algo, workspaceSizeInBytes);
+                        handle, prob, gemmData, algo, workspaceSizeInBytes);
                 }
             }
         }
@@ -1261,12 +1261,13 @@ rocblaslt_status rocblaslt_matmul_get_all_algos_cpp(
     return rocblaslt_status_success;
 }
 
-rocblaslt_status rocblaslt_is_algo_supported_cpp(rocblaslt::RocGemmType gemmType,
+rocblaslt_status rocblaslt_is_algo_supported_cpp(rocblaslt_handle       handle,
+                                                 rocblaslt::RocGemmType gemmType,
                                                  std::shared_ptr<void>  gemmData,
                                                  rocblaslt_matmul_algo& algo,
                                                  size_t&                workspaceSizeInBytes)
 {
-    return isSolutionSupported(gemmType, gemmData, algo, workspaceSizeInBytes);
+    return isSolutionSupported(handle, gemmType, gemmData, algo, workspaceSizeInBytes);
 }
 
 rocblaslt_status

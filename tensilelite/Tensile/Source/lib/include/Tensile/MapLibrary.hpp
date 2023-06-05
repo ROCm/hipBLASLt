@@ -104,6 +104,18 @@ namespace Tensile
             return iter->second;
         }
 
+        virtual std::shared_ptr<MySolution> getSolutionByIndex(MyProblem const& problem,
+                                                               Hardware const&  hardware,
+                                                               const int index) const override
+        {
+            auto library = lookup(problem, hardware);
+
+            if(library == nullptr)
+                return std::shared_ptr<MySolution>();
+
+            return library->getSolutionByIndex(problem, hardware, index);
+        }
+
         virtual std::shared_ptr<MySolution> findBestSolution(MyProblem const& problem,
                                                              Hardware const&  hardware,
                                                              double*          fitness

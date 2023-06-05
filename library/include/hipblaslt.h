@@ -184,7 +184,7 @@ typedef hipblasLtMatmulPreferenceOpaque_t* hipblasLtMatmulPreference_t;
  *  This structure can be trivially serialized and later restored for use with the same version of hipBLASLt library to save on selecting the right configuration again.
  */
 typedef struct _hipblasLtMatmulAlgo_t{
-  uint8_t data[56];
+  uint8_t data[16];
   size_t max_workspace_bytes = 0;
 } hipblasLtMatmulAlgo_t;
 

@@ -68,6 +68,17 @@ namespace Tensile
                 return concatenate(type(), ": ", forest->description());
         }
 
+        virtual std::shared_ptr<MySolution> getSolutionByIndex(MyProblem const& problem,
+                                                               Hardware const&  hardware,
+                                                               const int index) const override
+        {
+            typename Forest::Transform transform
+                = [&](Element library) -> std::shared_ptr<MySolution> {
+                return library->getSolutionByIndex(problem, hardware, index);
+            };
+            return forest->findBestMatch(problem, transform);
+        }
+
         virtual std::shared_ptr<MySolution> findBestSolution(MyProblem const& problem,
                                                              Hardware const&  hardware,
                                                              double*          fitness

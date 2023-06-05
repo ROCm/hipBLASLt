@@ -83,6 +83,11 @@ namespace Tensile
    *
    * May return `nullptr` if no such object exists.
    */
+        virtual std::shared_ptr<MySolution> getSolutionByIndex(MyProblem const& problem,
+                                                               Hardware const&  hardware,
+                                                               const int        index) const
+            = 0;
+
         virtual std::shared_ptr<MySolution> findBestSolution(MyProblem const& problem,
                                                              Hardware const&  hardware,
                                                              double* fitness = nullptr) const

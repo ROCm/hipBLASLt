@@ -1056,11 +1056,12 @@ rocblaslt_status rocblaslt_run_cpp(rocblaslt_handle       handle,
     return runKernelFromInvocation(handle, gemmType, gemmData, stream);
 }
 
-rocblaslt_status rocblaslt_makeArgument_cpp(const rocblaslt::RocGemmType gemmType,
+rocblaslt_status rocblaslt_makeArgument_cpp(rocblaslt_handle             handle,
+                                            const rocblaslt::RocGemmType gemmType,
                                             const rocblaslt_matmul_algo& algo,
                                             void*                        workspace,
                                             hipStream_t                  stream,
                                             std::shared_ptr<void>        gemmData)
 {
-    return makeArgument(gemmType, algo, workspace, stream, gemmData);
+    return makeArgument(handle, gemmType, algo, workspace, stream, gemmData);
 }

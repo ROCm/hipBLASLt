@@ -64,6 +64,20 @@ namespace Tensile
                 return concatenate(type(), ": ", table->description());
         }
 
+        virtual std::shared_ptr<MySolution> getSolutionByIndex(MyProblem const& problem,
+                                                               Hardware const&  hardware,
+                                                               const int index) const override
+        {
+            typename Table::Transform transform
+                = [&](Element library) -> std::shared_ptr<MySolution> {
+                return library->getSolutionByIndex(problem, hardware, index);
+            };
+            double                      fitness;
+            std::shared_ptr<MySolution> solution;
+            std::tie(solution, fitness) = table->findBestMatch(problem, transform);
+            return solution;
+        }
+
         virtual std::shared_ptr<MySolution> findBestSolution(MyProblem const& problem,
                                                              Hardware const&  hardware,
                                                              double*          fitness
