@@ -579,7 +579,7 @@ namespace hipblaslt_ext
         *  @param[in]
         *  inputs                           The inputs in vector of the problem.
         *  @param[in]
-        *  problemtype                      The structure in vector that sets the problem type
+        *  problemtype                      The structure that sets the problem type
         * of a gemm problem.
         *
         *  \retval HIPBLAS_STATUS_SUCCESS           If the operation completed
@@ -593,21 +593,21 @@ namespace hipblaslt_ext
         *  \retval HIBLAS_STATUS_NOT_INITIALIZED    If hipBLASLt handle has not been
         * initialized.
         */
-        HIPBLASLT_EXPORT hipblasStatus_t setProblem(std::vector<int64_t>&         m,
-                                                    std::vector<int64_t>&         n,
-                                                    std::vector<int64_t>&         k,
-                                                    std::vector<int64_t>&         batch_count,
-                                                    std::vector<int64_t>&         lda,
-                                                    std::vector<int64_t>&         ldb,
-                                                    std::vector<int64_t>&         ldc,
-                                                    std::vector<int64_t>&         ldd,
-                                                    std::vector<int64_t>&         strideA,
-                                                    std::vector<int64_t>&         strideB,
-                                                    std::vector<int64_t>&         strideC,
-                                                    std::vector<int64_t>&         strideD,
-                                                    std::vector<GemmEpilogue>&    epilogue,
-                                                    std::vector<GemmInputs>&      inputs,
-                                                    std::vector<GemmProblemType>& problemtype);
+        HIPBLASLT_EXPORT hipblasStatus_t setProblem(std::vector<int64_t>&      m,
+                                                    std::vector<int64_t>&      n,
+                                                    std::vector<int64_t>&      k,
+                                                    std::vector<int64_t>&      batch_count,
+                                                    std::vector<int64_t>&      lda,
+                                                    std::vector<int64_t>&      ldb,
+                                                    std::vector<int64_t>&      ldc,
+                                                    std::vector<int64_t>&      ldd,
+                                                    std::vector<int64_t>&      strideA,
+                                                    std::vector<int64_t>&      strideB,
+                                                    std::vector<int64_t>&      strideC,
+                                                    std::vector<int64_t>&      strideD,
+                                                    std::vector<GemmEpilogue>& epilogue,
+                                                    std::vector<GemmInputs>&   inputs,
+                                                    GemmProblemType&           problemtype);
 
         /*! \ingroup library_module
         *  \brief Sets the grouped gemm problem from hipblasLt structures

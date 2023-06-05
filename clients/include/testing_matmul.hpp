@@ -724,14 +724,13 @@ void testing_matmul(const Arguments& arg)
     hipblaslt_ext::GroupedGemm groupedGemm(
         handle, transA, transB, arg.a_type, arg.b_type, arg.c_type, arg.d_type, arg.compute_type);
     std::vector<void*> da(gemm_count), db(gemm_count), dc(gemm_count), dd(gemm_count);
-    std::vector<hipblaslt_ext::GemmEpilogue>    extepilogue;
-    std::vector<hipblaslt_ext::GemmInputs>      extinputs;
-    std::vector<hipblaslt_ext::GemmProblemType> extproblemtype;
+    std::vector<hipblaslt_ext::GemmEpilogue> extepilogue;
+    std::vector<hipblaslt_ext::GemmInputs>   extinputs;
+    hipblaslt_ext::GemmProblemType           extproblemtype;
     if(arg.use_ext_setproblem)
     {
         extepilogue.resize(gemm_count);
         extinputs.resize(gemm_count);
-        extproblemtype.resize(1);
 
         for(int gemmIdx = 0; gemmIdx < gemm_count; gemmIdx++)
         {
@@ -764,13 +763,13 @@ void testing_matmul(const Arguments& arg)
             if(arg.scaleD_vector)
                 extinputs[gemmIdx].scaleDVec = *dScaleDVec[gemmIdx];
         }
-        extproblemtype[0].op_a         = transA;
-        extproblemtype[0].op_b         = transB;
-        extproblemtype[0].type_a       = arg.a_type;
-        extproblemtype[0].type_b       = arg.b_type;
-        extproblemtype[0].type_c       = arg.c_type;
-        extproblemtype[0].type_d       = arg.d_type;
-        extproblemtype[0].type_compute = arg.compute_type;
+        extproblemtype.op_a         = transA;
+        extproblemtype.op_b         = transB;
+        extproblemtype.type_a       = arg.a_type;
+        extproblemtype.type_b       = arg.b_type;
+        extproblemtype.type_c       = arg.c_type;
+        extproblemtype.type_d       = arg.d_type;
+        extproblemtype.type_compute = arg.compute_type;
     }
 
     if(arg.use_findallalgo)
@@ -813,7 +812,7 @@ void testing_matmul(const Arguments& arg)
                                                           stride_d[0],
                                                           extepilogue[0],
                                                           extinputs[0],
-                                                          extproblemtype[0]));
+                                                          extproblemtype));
                 }
                 else
                 {
@@ -948,7 +947,7 @@ void testing_matmul(const Arguments& arg)
                                                           stride_d[0],
                                                           extepilogue[0],
                                                           extinputs[0],
-                                                          extproblemtype[0]));
+                                                          extproblemtype));
                 }
                 else
                 {
