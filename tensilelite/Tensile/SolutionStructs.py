@@ -1273,6 +1273,17 @@ class Solution(collections.abc.Mapping):
 
     state["GlobalLoadVectorWidth%s"%tc] = grvw//pv
 
+    # metadata's glvw is equal to which global read's bpl.
+    # metadata only accepted bpl is 1,2,4,8 or 16.
+    if tc == "Metadata" and state["GlobalLoadVectorWidth%s"%tc] not in [1,2,4,8,16]:
+      for i in reversed([1,2,4,8,16]):
+        if state["GlobalLoadVectorWidth%s"%tc] % i == 0:
+          totalElementsM = totalVectors * grvw
+          grvw = i * pv
+          totalVectors = totalElementsM // grvw
+          return Solution.setGlobalLoadVectorWidth(state, tc, totalVectors, grvw)
+      validDepthU = False
+
     # NumLoads is NOT used on the fractional path
     # NumLoads is number of vector loads per-thread
     state["NumLoads%s"%tc] = totalVectors * pv // state["NumThreads"]
