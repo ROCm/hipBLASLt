@@ -924,14 +924,14 @@ void test_hipblaslt(hipblasDatatype_t           in_out_datatype,
             gemmInputs[i].bias             = d_bias[i];
             batch_count64[i]               = batch_count[i];
         }
-        std::vector<hipblaslt_ext::GemmProblemType> gemmProblemType;
-        gemmProblemType.push_back({trans_a,
-                                   trans_b,
-                                   in_out_datatype,
-                                   in_out_datatype,
-                                   in_out_datatype,
-                                   in_out_datatype,
-                                   HIPBLASLT_COMPUTE_F32});
+
+        auto gemmProblemType = hipblaslt_ext::GemmProblemType{trans_a,
+                                                              trans_b,
+                                                              in_out_datatype,
+                                                              in_out_datatype,
+                                                              in_out_datatype,
+                                                              in_out_datatype,
+                                                              HIPBLASLT_COMPUTE_F32};
         CHECK_HIPBLASLT_ERROR(groupedGemm.setProblem(m,
                                                      n,
                                                      k,

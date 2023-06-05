@@ -363,29 +363,30 @@ namespace hipblaslt_ext
                           strideD,
                           epilogue,
                           inputs,
-                          m_problem_types);
+                          m_problem_types[0]);
     }
 
-    hipblasStatus_t GroupedGemm::setProblem(std::vector<int64_t>&         m,
-                                            std::vector<int64_t>&         n,
-                                            std::vector<int64_t>&         k,
-                                            std::vector<int64_t>&         batch_count,
-                                            std::vector<int64_t>&         lda,
-                                            std::vector<int64_t>&         ldb,
-                                            std::vector<int64_t>&         ldc,
-                                            std::vector<int64_t>&         ldd,
-                                            std::vector<int64_t>&         strideA,
-                                            std::vector<int64_t>&         strideB,
-                                            std::vector<int64_t>&         strideC,
-                                            std::vector<int64_t>&         strideD,
-                                            std::vector<GemmEpilogue>&    epilogue,
-                                            std::vector<GemmInputs>&      inputs,
-                                            std::vector<GemmProblemType>& problemtype)
+    hipblasStatus_t GroupedGemm::setProblem(std::vector<int64_t>&      m,
+                                            std::vector<int64_t>&      n,
+                                            std::vector<int64_t>&      k,
+                                            std::vector<int64_t>&      batch_count,
+                                            std::vector<int64_t>&      lda,
+                                            std::vector<int64_t>&      ldb,
+                                            std::vector<int64_t>&      ldc,
+                                            std::vector<int64_t>&      ldd,
+                                            std::vector<int64_t>&      strideA,
+                                            std::vector<int64_t>&      strideB,
+                                            std::vector<int64_t>&      strideC,
+                                            std::vector<int64_t>&      strideD,
+                                            std::vector<GemmEpilogue>& epilogue,
+                                            std::vector<GemmInputs>&   inputs,
+                                            GemmProblemType&           problemtype)
     {
         auto rocepilogue = reinterpret_cast<std::vector<rocblaslt::RocGemmEpilogue>*>(&epilogue);
         auto rocinputs   = reinterpret_cast<std::vector<rocblaslt::RocGemmInputs>*>(&inputs);
-        auto rocproblemtype
-            = reinterpret_cast<std::vector<rocblaslt::RocGemmProblemType>*>(&problemtype);
+        std::vector<GemmProblemType> tmptype = {problemtype};
+        auto                         rocproblemtype
+            = reinterpret_cast<std::vector<rocblaslt::RocGemmProblemType>*>(&tmptype);
         auto status = RocBlasLtStatusToHIPStatus(rocblaslt_groupedgemm_create_cpp(m,
                                                                                   n,
                                                                                   batch_count,
@@ -405,7 +406,7 @@ namespace hipblaslt_ext
                                                                                   m_gemm_count));
         if(status == HIPBLAS_STATUS_SUCCESS)
         {
-            m_problem_types = problemtype;
+            m_problem_types = tmptype;
         }
         return status;
     }
