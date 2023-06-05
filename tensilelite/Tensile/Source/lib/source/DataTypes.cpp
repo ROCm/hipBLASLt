@@ -56,6 +56,8 @@ namespace Tensile
             return "BFloat16";
         case DataType::Int8:
             return "Int8";
+        case DataType::XFloat32:
+            return "XFloat32";
         case DataType::Count:;
         }
         return "Invalid";
@@ -83,6 +85,8 @@ namespace Tensile
             return "B";
         case DataType::Int8:
             return "I8";
+        case DataType::XFloat32:
+            return "X";
         case DataType::Count:;
         }
         return "Invalid";
@@ -110,6 +114,8 @@ namespace Tensile
             return TypeInfo<BFloat16>::ElementSize;
         case DataType::Int8:
             return TypeInfo<int8_t>::ElementSize;
+        case DataType::XFloat32:
+            return TypeInfo<XFloat32>::ElementSize;
         case DataType::Count:;
         }
         return 1;
@@ -147,6 +153,7 @@ namespace Tensile
         registerTypeInfo<int32_t>();
         registerTypeInfo<BFloat16>();
         registerTypeInfo<int8_t>();
+        registerTypeInfo<XFloat32>();
     }
 
     void DataTypeInfo::registerAllTypeInfoOnce()
@@ -222,6 +229,8 @@ namespace Tensile
             t = DataType::Int32;
         else if(strValue == ToString(DataType::Int8))
             t = DataType::Int8;
+        else if(strValue == ToString(DataType::XFloat32))
+            t = DataType::XFloat32;
         else if(std::all_of(strValue.begin(), strValue.end(), isdigit))
         {
             int value = atoi(strValue.c_str());
@@ -244,9 +253,8 @@ namespace Tensile
         return std::visit(
             [](const auto& cv) {
                 using T = std::decay_t<decltype(cv)>;
-                if constexpr(std::is_same_v<
-                                 T,
-                                 std::complex<float>> || std::is_same_v<T, std::complex<double>>)
+                if constexpr(std::is_same_v<T, std::complex<float>>
+                             || std::is_same_v<T, std::complex<double>>)
                     return "(" + std::to_string(cv.real()) + ", " + std::to_string(cv.imag()) + ")";
                 else
                     return std::to_string(cv);

@@ -3879,8 +3879,9 @@ class KernelWriterAssembly(KernelWriter):
     shiftK = Module("shiftK")
     m = (u) % (self.states.numVgprBuffer+1) # local to use for MACs
 
+    miInputType      = kernel["ProblemType"]["F32XdlMathOp"] if kernel["EnableF32XdlMathOp"] else kernel["ProblemType"]["DataType"]
     # calculate constant
-    numRegistersIn   = kernel["ProblemType"]["DataType"].numRegisters()
+    numRegistersIn   = miInputType.numRegisters()
     numRegistersOut  = kernel["MIRegPerOut"]
     loopCounterName  = self.loopCounterName(kernel, self.states.unrollIdx)
     accs_per_wave    = kernel["MatrixInstM"] * kernel["MatrixInstN"] * kernel["MatrixInstB"] \
@@ -3889,7 +3890,7 @@ class KernelWriterAssembly(KernelWriter):
     numMIInputA      = kernel["MIInputPerThreadA"]
     numMIInputB      = kernel["MIInputPerThreadB"]
     numMIInput       = max(numMIInputA,numMIInputB)
-    miInInstType, miOutInstType = dataTypeToMfmaInstTypePair(kernel["ProblemType"]["DataType"], \
+    miInInstType, miOutInstType = dataTypeToMfmaInstTypePair(miInputType, \
       kernel["ProblemType"]["Fp16AltImpl"])
     vgprPerInputA    = int(numMIInputA * numRegistersIn)
     vgprPerInputB    = int(numMIInputB * numRegistersIn)
@@ -4685,7 +4686,7 @@ class KernelWriterAssembly(KernelWriter):
     self.globalReadIncrement(kernel, incCodeA, loopIdx, tPA, prefetchIndex)
     self.globalReadIncrement(kernel, incCodeB, loopIdx, tPB, prefetchIndex)
     return imod
-  
+
   ##############################################################################
   # Global Read:
   # globalReadGuardK is called for loads in the tail loop
@@ -5089,7 +5090,7 @@ class KernelWriterAssembly(KernelWriter):
     globalReadGuardKBody(tP)
     if tP["isA"] and kernel["ProblemType"]["SparseA"] and not kernel["DirectToVgprSparseMetadata"]:
         globalReadGuardKBody(tP["tpsMetadata"])
-  
+
     if self.db["ConservativeWaitCnt"] & 0x1:
         module.add(SBarrier(comment="debug"))
         module.add(SWaitCnt(lgkmcnt=0, vmcnt=0, vscnt=0, comment=""))
@@ -5356,7 +5357,7 @@ class KernelWriterAssembly(KernelWriter):
 
     if tP["isA"] and kernel["ProblemType"]["SparseA"] and not kernel["DirectToVgprSparseMetadata"]:
         globalReadBody(tP["tpsMetadata"])
-  
+
     if self.db["ConservativeWaitCnt"] & 0x1:
         imod.footer.add(SBarrier(comment="debug"))
         imod.footer.add(SWaitCnt(lgkmcnt=0, vmcnt=0, vscnt=0, comment="conservative wait"))
@@ -5741,7 +5742,7 @@ class KernelWriterAssembly(KernelWriter):
 
       # using _ds_store_b8: need one more vgpr space to do lshr
       tmpVgprOffset = ((self.states.a.numVgprG2L if (tP['tensorChar'] == 'A') else self.states.m.numVgprG2L if tP["isM"] else self.states.b.numVgprG2L) / 2) if (blockWidth == 0.25) else 0
-      
+
       # if transposing, positions of sPerp and sPara are transposed
       instructionCnt = -1
       fp16AltMap = {}
@@ -5850,7 +5851,7 @@ class KernelWriterAssembly(KernelWriter):
               # TODO
               # if tP["glvw"]==1 and instructionCnt%2==1:
               #   isHigh16Bits = True
-            
+
             LocalWriteX = tP["localWriteInstruction"].getInst(isHigh16Bits)
             if numBlocks == 1:
               ds        = DSModifiers(na=1, offset=paramList[1])
@@ -8152,7 +8153,7 @@ class KernelWriterAssembly(KernelWriter):
     if dataType.isHalf():
       module.add(self.chooseGlobalRead(useBuffer, bps, data, \
                 addr0, addr1, soffset=0, offset=globalOffset, \
-                glc=isGlc, slc=isSlc, lds=False, 
+                glc=isGlc, slc=isSlc, lds=False,
                 memoryModifierFormat=kernel["MemoryModifierFormat"], \
                 hi16=vc0 % 2,
                 comment="load %s"%tc))

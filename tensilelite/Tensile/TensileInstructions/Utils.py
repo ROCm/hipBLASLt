@@ -110,6 +110,8 @@ def _dataTypeNameAbbrevToInstType(abbrev: str) -> InstType:
         return InstType.INST_I8
     elif abbrev == 'bf16':
         return InstType.INST_BF16
+    elif abbrev == 'xf32':
+        return InstType.INST_XF32
     else:
         assert("Unsupported data type.")
     return InstType.INST_NOTYPE

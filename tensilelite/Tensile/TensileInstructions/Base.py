@@ -235,6 +235,7 @@ def _initAsmCaps(isaVersion, assemblerPath, isDebug) -> dict:
     rv["HasMFMA_f64"]       = _tryAssembler(isaVersion, assemblerPath, "v_mfma_f64_16x16x4f64 v[0:7], v[32:33], v[36:37], v[0:7]", isDebug) or _tryAssembler(isaVersion, assemblerPath, "v_mfma_f64_16x16x4_f64 v[0:7], v[32:33], v[36:37], v[0:7]", isDebug)
     rv["HasMFMA_bf16_1k"]   = _tryAssembler(isaVersion, assemblerPath, "v_mfma_f32_32x32x4bf16_1k a[0:31], v[32:33], v[36:37], a[0:31]", isDebug)
 
+    rv["HasMFMA_xf32"]      = _tryAssembler(isaVersion, assemblerPath, "v_mfma_f32_32x32x4_xf32 a[0:15], v[32:33], v[36:37], a[0:15]", isDebug)
     rv["HasSMFMA"]          = _tryAssembler(isaVersion, assemblerPath, "v_smfmac_f32_32x32x16_f16 a[0:15], v[32:33], v[36:39], v[40]", isDebug)
 
     rv["v_mac_f16"]         = _tryAssembler(isaVersion, assemblerPath, "v_mac_f16 v47, v36, v34", isDebug)

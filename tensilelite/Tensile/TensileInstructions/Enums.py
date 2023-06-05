@@ -59,9 +59,10 @@ class InstType(Enum):
     INST_D16_HI_B8  = 30
     INST_D16_B16    = 31
     INST_D16_HI_B16 = 32
-    INST_CVT        = 33
-    INST_MACRO      = 34
-    INST_NOTYPE     = 35
+    INST_XF32       = 33
+    INST_CVT        = 34
+    INST_MACRO      = 35
+    INST_NOTYPE     = 36
 
 class SelectBit(Enum):
     DWORD  = 1

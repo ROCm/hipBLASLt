@@ -62,7 +62,10 @@ namespace Tensile
             throw std::runtime_error(msg.c_str());
         }
 
-        template <typename Accumulator, typename TypeL, typename TypeR>
+        template <typename Accumulator,
+                  typename MathOpAccum = Accumulator,
+                  typename TypeL,
+                  typename TypeR>
         inline Accumulator multiply(TypeL l, TypeR r)
         {
             /* Transform the data type from TypeL/TypeR to Accumulator if TypeL!=ACC or TypeR!=ACC, but filter out cases, I8/I32/I32 and I8x4/I32/I32
@@ -79,7 +82,13 @@ namespace Tensile
 
             using LMultT = std::conditional_t<needAccumCast, Accumulator, TypeL>;
             using RMultT = std::conditional_t<needAccumCast, Accumulator, TypeR>;
-            return static_cast<Accumulator>(static_cast<LMultT>(l) * static_cast<RMultT>(r));
+
+            constexpr bool needMathOpAccumCast = !std::is_same<Accumulator, MathOpAccum>();
+            using LMathOpMultT = std::conditional_t<needMathOpAccumCast, MathOpAccum, LMultT>;
+            using RMathOpMultT = std::conditional_t<needMathOpAccumCast, MathOpAccum, RMultT>;
+
+            return static_cast<Accumulator>(static_cast<LMultT>(static_cast<LMathOpMultT>(l))
+                                            * static_cast<RMultT>(static_cast<RMathOpMultT>(r)));
         }
 
         template <typename Accumulator, typename Type>
@@ -183,6 +192,7 @@ namespace Tensile
                 return cast<Accumulator>(Transform<int8_t>::Input(typedPtr[pos], aConjugate));
             }
             break;
+            case DataType::XFloat32:
             case DataType::ComplexFloat:
             case DataType::ComplexDouble:
             case DataType::Int8x4:
@@ -253,6 +263,7 @@ namespace Tensile
                 typedPtr[pos] = SaturateCast<int8_t>(src);
             }
             break;
+            case DataType::XFloat32:
             case DataType::ComplexFloat:
             case DataType::ComplexDouble:
             case DataType::Int8x4:
@@ -279,6 +290,7 @@ namespace Tensile
             case DataType::Int32:
             case DataType::BFloat16:
             case DataType::Int8:
+            case DataType::XFloat32:
                 break;
             case DataType::ComplexFloat:
             case DataType::ComplexDouble:
@@ -512,10 +524,11 @@ namespace Tensile
             throw std::runtime_error("Unsupported input type.");
         }
 
-        template <typename Inputs, typename Accumulator>
-        void ReferenceSolution<Inputs, Accumulator>::SolveCPU(ContractionProblemGemm const& problem,
-                                                              ContractionInputs const&      inputs,
-                                                              size_t elementsToValidate)
+        template <typename Inputs, typename Accumulator, typename MathOpAccum>
+        void ReferenceSolution<Inputs, Accumulator, MathOpAccum>::SolveCPU(
+            ContractionProblemGemm const& problem,
+            ContractionInputs const&      inputs,
+            size_t                        elementsToValidate)
         {
             Accumulator* ws                   = nullptr;
             size_t       validationStrideGemm = 1;
@@ -680,7 +693,7 @@ namespace Tensile
                             bVal = Transform<typename Inputs::BType>::Input(
                                 bPtr[bIndex + (bI * bStride)], bConjugate);
 
-                            value += multiply<Accumulator>(aVal, bVal);
+                            value += multiply<Accumulator, MathOpAccum>(aVal, bVal);
                         }
                     }
                 }
@@ -797,15 +810,15 @@ namespace Tensile
             }
         }
 
-        template <typename Inputs, typename Accumulator>
-        void ReferenceSolution<Inputs, Accumulator>::SolveCPU(
+        template <typename Inputs, typename Accumulator, typename MathOpAccum>
+        void ReferenceSolution<Inputs, Accumulator, MathOpAccum>::SolveCPU(
             ContractionProblemGroupedGemm const& problem,
             ContractionGroupedInputs const&      inputs,
             size_t                               elementsToValidate)
         {
             for(int idx = 0; idx < problem.gemms.size(); idx++)
             {
-                ReferenceSolution<Inputs, Accumulator>::SolveCPU(
+                ReferenceSolution<Inputs, Accumulator, MathOpAccum>::SolveCPU(
                     problem.gemms[idx], inputs.grouped[idx], elementsToValidate);
             }
         }
@@ -873,8 +886,12 @@ namespace Tensile
             {
             case TypedGemm_S_S_S::TypeId():
             {
-                return ReferenceSolution<TypedGemm_S_S_S>::SolveCPU(
-                    problem, inputs, elementsToValidate);
+                if(problem.f32XdlMathOp() == DataType::XFloat32)
+                    return ReferenceSolution<TypedGemm_S_S_S, float, XFloat32>::SolveCPU(
+                        problem, inputs, elementsToValidate);
+                else
+                    return ReferenceSolution<TypedGemm_S_S_S>::SolveCPU(
+                        problem, inputs, elementsToValidate);
             }
             case TypedGemm_D_D_D::TypeId():
             {

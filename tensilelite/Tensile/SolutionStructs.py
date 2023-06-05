@@ -128,6 +128,11 @@ class ProblemType(Mapping):
           printExit("NO compute data type, or dest data type, or data type specified")
           self["DataType"] = DataType(0)
 
+    if "F32XdlMathOp" in config:
+        self["F32XdlMathOp"] = DataType(config["F32XdlMathOp"])
+    else:
+        self["F32XdlMathOp"] = DataType(0)
+
     # Modifying ComputeDataType for HHH+HPA: if (HHH+HPA), convert it to HHS_BH by setting ComputeDataType to S.
     if self["ComputeDataType"].isHalf() and self["DataType"].isHalf() and self["HighPrecisionAccumulate"]:
       printWarning("Inconsistent DataTypes: DataType == f16, DestType == f16, ComputeDataType == f16, but HPA == True (HHH+HPA, no such a type); Converting HHH+HPA to HHS_BH by setting compute data type to f32.")
@@ -453,6 +458,11 @@ class ProblemType(Mapping):
     if gemmType in HPATypes:
       name += self["DestDataType"].toChar()    # Type of C/D
       name += self["ComputeDataType"].toChar() # Type of Alpha/Beta
+      name += "_"
+
+    if not self["F32XdlMathOp"].isSingle() and self["DataType"].isSingle():
+      name += "_M"
+      name += self["F32XdlMathOp"].toChar()
       name += "_"
 
     # Other
@@ -1583,13 +1593,14 @@ class Solution(collections.abc.Mapping):
 
       state["MFMA_BF16_1K"] = False
       if not state["ProblemType"]["SparseA"]:
-        if not (state["ProblemType"]["DataType"].toChar() in validMFMA and \
-          state["MatrixInstruction"] in validMFMA[state["ProblemType"]["DataType"].toChar()]):
-          if state["ProblemType"]["DataType"].isBFloat16() and \
+        miDataType = state["ProblemType"]["DataType"] if (not state["EnableF32XdlMathOp"]) else state["ProblemType"]["F32XdlMathOp"]
+        if not (miDataType.toChar() in validMFMA and \
+          state["MatrixInstruction"] in validMFMA[miDataType.toChar()]):
+          if miDataType.isBFloat16() and \
             state["MatrixInstruction"] in validMFMA["B1k"]:
             state["MFMA_BF16_1K"] = True
           else:
-            reject(state, "MatrixInstruction %s not valid for DataType %s" % (state["MatrixInstruction"], state["ProblemType"]["DataType"]))
+            reject(state, "MatrixInstruction %s not valid for DataType %s" % (state["MatrixInstruction"], miDataType))
       else:
         if not (state["ProblemType"]["DataType"].toChar() in validSMFMA and \
           state["MatrixInstruction"] in validSMFMA[state["ProblemType"]["DataType"].toChar()]):
@@ -1886,6 +1897,13 @@ class Solution(collections.abc.Mapping):
   # assign all derived parameters
   @staticmethod
   def assignDerivedParameters(state):
+
+    state["EnableF32XdlMathOp"] = False #ignore the F32 xDL MathOp by default.
+    #enable F32 xDL MathOp only when the input type is f32.
+    if "F32XdlMathOp" in state["ProblemType"] \
+       and (not state["ProblemType"]["F32XdlMathOp"].isSingle()) \
+       and (state["ProblemType"]["DataType"].isSingle()):
+      state["EnableF32XdlMathOp"] = True
 
     Solution.assignProblemIndependentDerivedParameters(state)
 

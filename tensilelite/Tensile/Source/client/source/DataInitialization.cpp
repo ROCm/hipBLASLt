@@ -235,94 +235,104 @@ namespace Tensile
         }
 
         template <typename T>
-        void compressSparseArray(T* dstCompressed, 
-                                unsigned char* dstMeta, 
-                                T const* src, 
-                                TensorDescriptor const& tensor, 
-                                TensorDescriptor const& tensorC,
-                                TensorDescriptor const& tensorMeta,
-                                size_t dim)
+        void compressSparseArray(T*                      dstCompressed,
+                                 unsigned char*          dstMeta,
+                                 T const*                src,
+                                 TensorDescriptor const& tensor,
+                                 TensorDescriptor const& tensorC,
+                                 TensorDescriptor const& tensorMeta,
+                                 size_t                  dim)
         {
-            auto const&         sizes = tensor.sizes();
-            auto const&         sizesC = tensorC.sizes();
-            auto                sizesMeta = tensorMeta.sizes();
-            auto                count = CoordCount(sizes.begin(), sizes.end());
-            size_t              dimSize = sizes[dim];
-            size_t              loop_count   = count / dimSize;
+            auto const& sizes      = tensor.sizes();
+            auto const& sizesC     = tensorC.sizes();
+            auto        sizesMeta  = tensorMeta.sizes();
+            auto        count      = CoordCount(sizes.begin(), sizes.end());
+            size_t      dimSize    = sizes[dim];
+            size_t      loop_count = count / dimSize;
 
-            if(dimSize%4 != 0)
-              throw std::runtime_error("compressed dimension size must be multiple of 4.");
+            if(dimSize % 4 != 0)
+                throw std::runtime_error("compressed dimension size must be multiple of 4.");
 
-            #pragma omp parallel for
+#pragma omp parallel for
             for(size_t loop = 0; loop < loop_count; loop++)
             {
                 std::vector<size_t> coord(tensor.dimensions());
                 std::vector<size_t> coordC(tensorC.dimensions());
                 std::vector<size_t> coordMeta(tensorMeta.dimensions());
-                CoordNumberedExclude(loop, coord.begin(), coord.end(), sizes.begin(), sizes.end(), dim);
-                CoordNumberedExclude(loop, coordC.begin(), coordC.end(), sizesC.begin(), sizesC.end(), dim);
+                CoordNumberedExclude(
+                    loop, coord.begin(), coord.end(), sizes.begin(), sizes.end(), dim);
+                CoordNumberedExclude(
+                    loop, coordC.begin(), coordC.end(), sizesC.begin(), sizesC.end(), dim);
                 //metadata is always a tranpose matrix, so the dimension will always at 0.
-                CoordNumberedExclude(loop, coordMeta.begin(), coordMeta.end(), sizesMeta.begin(), sizesMeta.end(), 0); 
+                CoordNumberedExclude(loop,
+                                     coordMeta.begin(),
+                                     coordMeta.end(),
+                                     sizesMeta.begin(),
+                                     sizesMeta.end(),
+                                     0);
 
                 coordMeta[0] = 0;
-  
-                for(size_t compressDimIdx = 0; compressDimIdx < dimSize; compressDimIdx += 4)//traverse along compressdim
+
+                for(size_t compressDimIdx = 0; compressDimIdx < dimSize;
+                    compressDimIdx += 4) //traverse along compressdim
                 {
-                    size_t metaData = 0;
-                    size_t metaIdx =  0;
-                    size_t dstDimCoord = compressDimIdx/4*2;
-    
+                    size_t metaData    = 0;
+                    size_t metaIdx     = 0;
+                    size_t dstDimCoord = compressDimIdx / 4 * 2;
+
                     for(size_t i = 0; i < 4; i++)
                     {
                         //src coord
                         coord[dim] = compressDimIdx + i;
-                        T srcData = src[tensor.index(coord)];
+                        T srcData  = src[tensor.index(coord)];
                         if(srcData != static_cast<T>(0))
                         {
-                          if(metaIdx > 2)
-                              throw std::runtime_error("Sparse matrix must contain 2 zero elements of each 4 elements.");
-      
-                          //dst coord
-                          coordC[dim] = dstDimCoord + metaIdx;
-                          dstCompressed[tensorC.index(coordC)] = srcData;
-                          metaData |= i << (2*metaIdx);
-                          metaIdx++;
+                            if(metaIdx > 2)
+                                throw std::runtime_error("Sparse matrix must contain 2 zero "
+                                                         "elements of each 4 elements.");
+
+                            //dst coord
+                            coordC[dim]                          = dstDimCoord + metaIdx;
+                            dstCompressed[tensorC.index(coordC)] = srcData;
+                            metaData |= i << (2 * metaIdx);
+                            metaIdx++;
                         }
 
                         if(i == 3 && metaIdx < 2)
                         {
-                           if(metaIdx == 0) //all zeros
-                           {
-                              coordC[dim] = dstDimCoord;
-                              dstCompressed[tensorC.index(coordC)] = static_cast<T>(0);
-                              metaData = 0;
-                              metaIdx++;
-                           }
-                           if(metaIdx == 1) //3 zeros at least
-                           {
-                              if(metaData != 3) //last element is zero
-                              {
-                                coordC[dim] = dstDimCoord + metaIdx;
+                            if(metaIdx == 0) //all zeros
+                            {
+                                coordC[dim]                          = dstDimCoord;
                                 dstCompressed[tensorC.index(coordC)] = static_cast<T>(0);
-                                metaData |= i << (2*metaIdx);
-                              }
-                              else //last element is not zero
-                              {
-                                coordC[dim] = dstDimCoord;
-                                dstCompressed[tensorC.index(coordC)] = static_cast<T>(0);
-                                coordC[dim] = dstDimCoord + metaIdx;
-                                dstCompressed[tensorC.index(coordC)] = srcData;
-                                metaData = (metaData << (2*metaIdx));
-                              }
-                              metaIdx++;
+                                metaData                             = 0;
+                                metaIdx++;
+                            }
+                            if(metaIdx == 1) //3 zeros at least
+                            {
+                                if(metaData != 3) //last element is zero
+                                {
+                                    coordC[dim]                          = dstDimCoord + metaIdx;
+                                    dstCompressed[tensorC.index(coordC)] = static_cast<T>(0);
+                                    metaData |= i << (2 * metaIdx);
+                                }
+                                else //last element is not zero
+                                {
+                                    coordC[dim]                          = dstDimCoord;
+                                    dstCompressed[tensorC.index(coordC)] = static_cast<T>(0);
+                                    coordC[dim]                          = dstDimCoord + metaIdx;
+                                    dstCompressed[tensorC.index(coordC)] = srcData;
+                                    metaData = (metaData << (2 * metaIdx));
+                                }
+                                metaIdx++;
                             }
                         }
                     }
                     //meta Data coord
-                    size_t shift4bit = (compressDimIdx/4 % 2) * 4;
-                    coordMeta[0] = compressDimIdx/8;
+                    size_t shift4bit = (compressDimIdx / 4 % 2) * 4;
+                    coordMeta[0]     = compressDimIdx / 8;
                     //calculate flatten index of dstMeta
-                    size_t flattenIdx = CoordFlattenIndex(coordMeta.begin(), coordMeta.end(), sizesMeta.begin(), sizesMeta.end());
+                    size_t flattenIdx = CoordFlattenIndex(
+                        coordMeta.begin(), coordMeta.end(), sizesMeta.begin(), sizesMeta.end());
                     // store metaData to dstMeta
                     dstMeta[flattenIdx] |= metaData << shift4bit;
                 }
@@ -330,70 +340,98 @@ namespace Tensile
         }
 
         template <>
-        void compressSparseArray<Int8x4>(Int8x4* dstCompressed, unsigned char* dstMeta, Int8x4 const* src, TensorDescriptor const& tensor, TensorDescriptor const& tensorC, TensorDescriptor const& tensorMeta, size_t dim)
+        void compressSparseArray<Int8x4>(Int8x4*                 dstCompressed,
+                                         unsigned char*          dstMeta,
+                                         Int8x4 const*           src,
+                                         TensorDescriptor const& tensor,
+                                         TensorDescriptor const& tensorC,
+                                         TensorDescriptor const& tensorMeta,
+                                         size_t                  dim)
         {
-              throw std::runtime_error("SparseMatrix don't support Int8x4.");
+            throw std::runtime_error("SparseMatrix don't support Int8x4.");
         }
 
-        template<typename T>
-        void initGPUSparseInputTemplate(T*                         dstCompressed,
-                                        unsigned char*             dstMeta,
-                                        T*                         srcBuffer,
-                                        TensorDescriptor const&    tensor,
-                                        TensorDescriptor const&    tensorC,
-                                        TensorDescriptor const&    tensorMeta,
-                                        size_t                     dim)
+        template <typename T>
+        void initGPUSparseInputTemplate(T*                      dstCompressed,
+                                        unsigned char*          dstMeta,
+                                        T*                      srcBuffer,
+                                        TensorDescriptor const& tensor,
+                                        TensorDescriptor const& tensorC,
+                                        TensorDescriptor const& tensorMeta,
+                                        size_t                  dim)
         {
-            T*    cpuCompressed =  (T*)std::malloc(TypeInfo<T>::ElementSize * tensorC.totalAllocatedElements());
-            unsigned char* cpuMeta       =  (unsigned char*)std::malloc(tensorMeta.totalLogicalElements());
+            T* cpuCompressed
+                = (T*)std::malloc(TypeInfo<T>::ElementSize * tensorC.totalAllocatedElements());
+            unsigned char* cpuMeta = (unsigned char*)std::malloc(tensorMeta.totalLogicalElements());
 
-            std::memset((void*) cpuCompressed, 0 , TypeInfo<T>::ElementSize * tensorC.totalAllocatedElements());
-            std::memset((void*) cpuMeta, 0 , tensorMeta.totalLogicalElements());
+            std::memset((void*)cpuCompressed,
+                        0,
+                        TypeInfo<T>::ElementSize * tensorC.totalAllocatedElements());
+            std::memset((void*)cpuMeta, 0, tensorMeta.totalLogicalElements());
 
             //convert pruned matrix to metadata matrix and compresed sparse matrix
-            compressSparseArray(cpuCompressed, cpuMeta, srcBuffer, tensor, tensorC, tensorMeta, dim);
+            compressSparseArray(
+                cpuCompressed, cpuMeta, srcBuffer, tensor, tensorC, tensorMeta, dim);
 
             //copy compressed sparse matrix and metadata matrix to GPU
             Tensile::hip::CopyTensor(dstCompressed, cpuCompressed, tensorC, hipMemcpyHostToDevice);
-            HIP_CHECK_EXC(hipMemcpy(dstMeta, cpuMeta, tensorMeta.totalLogicalElements(), hipMemcpyHostToDevice));
+            HIP_CHECK_EXC(hipMemcpy(
+                dstMeta, cpuMeta, tensorMeta.totalLogicalElements(), hipMemcpyHostToDevice));
 
             // free temp cpu memory
             std::free(cpuCompressed);
             std::free(cpuMeta);
         }
 
-        void initGPUSparseInput(void*                      dstCompressed,
-                                void*                      dstMeta,
-                                void*                      srcBuffer,
-                                TensorDescriptor const&    tensor,
-                                TensorDescriptor const&    tensorC,
-                                TensorDescriptor const&    tensorMeta,
-                                size_t                     dim)
+        void initGPUSparseInput(void*                   dstCompressed,
+                                void*                   dstMeta,
+                                void*                   srcBuffer,
+                                TensorDescriptor const& tensor,
+                                TensorDescriptor const& tensorC,
+                                TensorDescriptor const& tensorMeta,
+                                size_t                  dim)
         {
-      
+
             //alloc compressed sparse buffer
             switch(tensor.dataType())
             {
             case DataType::Half:
-                initGPUSparseInputTemplate((Half*)(dstCompressed), (unsigned char*)(dstMeta), (Half*)srcBuffer, tensor, tensorC, tensorMeta, dim);
+                initGPUSparseInputTemplate((Half*)(dstCompressed),
+                                           (unsigned char*)(dstMeta),
+                                           (Half*)srcBuffer,
+                                           tensor,
+                                           tensorC,
+                                           tensorMeta,
+                                           dim);
                 break;
             case DataType::BFloat16:
-                initGPUSparseInputTemplate((BFloat16*)(dstCompressed), (unsigned char*)(dstMeta), (BFloat16*)srcBuffer, tensor, tensorC, tensorMeta, dim);
+                initGPUSparseInputTemplate((BFloat16*)(dstCompressed),
+                                           (unsigned char*)(dstMeta),
+                                           (BFloat16*)srcBuffer,
+                                           tensor,
+                                           tensorC,
+                                           tensorMeta,
+                                           dim);
                 break;
             case DataType::Int8:
-                initGPUSparseInputTemplate((int8_t*)(dstCompressed), (unsigned char*)(dstMeta), (int8_t*)srcBuffer, tensor, tensorC, tensorMeta, dim);
+                initGPUSparseInputTemplate((int8_t*)(dstCompressed),
+                                           (unsigned char*)(dstMeta),
+                                           (int8_t*)srcBuffer,
+                                           tensor,
+                                           tensorC,
+                                           tensorMeta,
+                                           dim);
                 break;
             default:
                 throw std::runtime_error("SparseMatrix doesn't support");
             }
         }
 
-
         void initGPUBatchedInput(void*                      base,
                                  void**                     array,
                                  TensorDescriptor const&    tensor,
                                  const std::vector<size_t>& batchIdx)
-        {        
+        {
             std::vector<size_t> batchSizes;
             std::vector<size_t> batchStrides;
             for(auto& idx : batchIdx)
@@ -545,7 +583,7 @@ namespace Tensile
             : m_maxBatch(0)
             , m_stridedBatched(args["strided-batched"].as<bool>())
             , m_aSparse(args["sparse-a"].as<bool>())
-            , m_cEqualsD(args["c-equal-d"].as<bool>() || args["sparse-a"].as<bool>() )
+            , m_cEqualsD(args["c-equal-d"].as<bool>() || args["sparse-a"].as<bool>())
             , m_elementsToValidate(args["num-elements-to-validate"].as<int>())
             , m_keepPristineCopyOnGPU(args["pristine-on-gpu"].as<bool>())
             , m_workspaceSize(problemFactory.workspaceSize())
@@ -1098,11 +1136,18 @@ namespace Tensile
                                     pUnit.gpuInput.batch.get(),
                                     problem.tensors()[i],
                                     batchIdx);
-        
-                if (problem.sparseA() && i == ContractionProblemGemm::TENSOR::A)
+
+                if(problem.sparseA() && i == ContractionProblemGemm::TENSOR::A)
                 {
-                    auto& pUnitM = m_vdata[ContractionProblemGemm::TENSOR::METADATA].pristine[problem.metadata().dataType()];
-                    initGPUSparseInput(pUnit.gpuInput.current.get(), pUnitM.gpuInput.current.get(), (void*)(offset), problem.a(), problem.compressed(), problem.metadata(), problem.boundIndices()[0].a);
+                    auto& pUnitM = m_vdata[ContractionProblemGemm::TENSOR::METADATA]
+                                       .pristine[problem.metadata().dataType()];
+                    initGPUSparseInput(pUnit.gpuInput.current.get(),
+                                       pUnitM.gpuInput.current.get(),
+                                       (void*)(offset),
+                                       problem.a(),
+                                       problem.compressed(),
+                                       problem.metadata(),
+                                       problem.boundIndices()[0].a);
                 }
             }
         }
@@ -1125,18 +1170,24 @@ namespace Tensile
                                       m_vdata[i].init,
                                       p.second.cpuInput.valid.get(),
                                       tensors[i]);
-                            if (problem.sparseA() and i == ContractionProblemGemm::TENSOR::A)
+                            if(problem.sparseA() and i == ContractionProblemGemm::TENSOR::A)
                             {
                                 switch(problem.a().dataType())
                                 {
                                 case DataType::Half:
-                                    pruneSparseArray((Half*)p.second.cpuInput.valid.get(), problem.a(), problem.boundIndices()[0].a);
+                                    pruneSparseArray((Half*)p.second.cpuInput.valid.get(),
+                                                     problem.a(),
+                                                     problem.boundIndices()[0].a);
                                     break;
                                 case DataType::BFloat16:
-                                    pruneSparseArray((BFloat16*)p.second.cpuInput.valid.get(), problem.a(), problem.boundIndices()[0].a);
-                                    break;                                
+                                    pruneSparseArray((BFloat16*)p.second.cpuInput.valid.get(),
+                                                     problem.a(),
+                                                     problem.boundIndices()[0].a);
+                                    break;
                                 case DataType::Int8:
-                                    pruneSparseArray((int8_t*)p.second.cpuInput.valid.get(), problem.a(), problem.boundIndices()[0].a);
+                                    pruneSparseArray((int8_t*)p.second.cpuInput.valid.get(),
+                                                     problem.a(),
+                                                     problem.boundIndices()[0].a);
                                     break;
                                 default:
                                     throw std::runtime_error("SparseMatrix doesn't support");
@@ -1186,6 +1237,7 @@ namespace Tensile
                     case DataType::Int8x4:
                         prop.value = getValue<Int8x4>(prop.init, prop.freeValue);
                         break;
+                    case DataType::XFloat32:
                     case DataType::Count:;
                     }
                 }

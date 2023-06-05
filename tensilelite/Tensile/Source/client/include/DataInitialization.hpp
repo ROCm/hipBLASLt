@@ -106,12 +106,12 @@ namespace Tensile
         enum class PruneSparseMode
         {
             PruneRandom = 0, // random
-            PruneXX00,       // XX00  0x4
-            PruneX0X0,       // X0X0  0x8
-            Prune0XX0,       // 0XX0  0x9
-            PruneX00X,       // X00X  0xc
-            Prune0X0X,       // 0X0X  0xd
-            Prune00XX,       // 00XX  0xe
+            PruneXX00, // XX00  0x4
+            PruneX0X0, // X0X0  0x8
+            Prune0XX0, // 0XX0  0x9
+            PruneX00X, // X00X  0xc
+            Prune0X0X, // 0X0X  0xd
+            Prune00XX, // 00XX  0xe
             MaxPruneMode
         };
 
@@ -280,6 +280,7 @@ namespace Tensile
                 case DataType::Int8:
                     initArray<int8_t>(initMode, static_cast<int8_t*>(array), descriptor);
                     break;
+                case DataType::XFloat32:
                 case DataType::ComplexFloat:
                 case DataType::ComplexDouble:
                 case DataType::Int8x4:
@@ -560,7 +561,7 @@ namespace Tensile
                 for(size_t idx = 0; idx < count; idx++)
                 {
                     CoordNumbered(idx, coord.begin(), coord.end(), sizes.begin(), sizes.end());
-                    x.bits = static_cast<uint16_t>(coord[dim]);
+                    x.bits                     = static_cast<uint16_t>(coord[dim]);
                     array[tensor.index(coord)] = x.value;
                 }
             }
@@ -639,7 +640,7 @@ namespace Tensile
                     }
                 };
 
-                #pragma omp parallel for
+#pragma omp parallel for
                 for(size_t loop = 0; loop < loop_count; loop++)
                 {
                     std::vector<size_t> coord(tensor.dimensions(), 0);
@@ -835,7 +836,7 @@ namespace Tensile
 
             bool m_stridedBatched;
 
-            bool m_aSparse;
+            bool   m_aSparse;
             size_t m_aMaxLogicalElements; //for sparse
 
             bool m_cEqualsD;
@@ -864,7 +865,7 @@ namespace Tensile
             int             m_numRunsPerSolution = 0;
             int             m_numRunsInSolution  = 0;
 
-            PruneSparseMode m_pruneMode          = PruneSparseMode::PruneRandom;
+            PruneSparseMode m_pruneMode = PruneSparseMode::PruneRandom;
             /// If true, the data is dependent on the problem size (e.g. serial)
             /// and must be reinitialized for each problem. Pristine copy on GPU
             /// cannot be used with problem dependent data.

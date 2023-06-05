@@ -108,6 +108,16 @@ namespace Tensile
             return m_workspaceSizeGroupedGemm;
         }
 
+        void setF32XdlMathOp(DataType value)
+        {
+            m_f32XdlMathOp = value;
+        }
+
+        DataType f32XdlMathOp() const
+        {
+            return m_f32XdlMathOp;
+        }
+
     protected:
         friend class ContractionProblemGemm;
         std::vector<TensorDescriptor> m_tensors;
@@ -115,6 +125,8 @@ namespace Tensile
 
         size_t m_workspaceSize;
         size_t m_workspaceSizeGroupedGemm;
+
+        DataType m_f32XdlMathOp;
     };
 
     /**
@@ -867,8 +879,8 @@ namespace Tensile
         bool              m_activationNoGuard       = false;
         bool              m_aSparse                 = false;
 
-        KernelLanguage    m_kernelLanguage          = KernelLanguage::Any;
-        PerformanceMetric m_performanceMetric       = PerformanceMetric::DeviceEfficiency;
+        KernelLanguage    m_kernelLanguage    = KernelLanguage::Any;
+        PerformanceMetric m_performanceMetric = PerformanceMetric::DeviceEfficiency;
 
         DataType m_alphaType     = DataType::None; // if not assigned, will follow d-type
         DataType m_betaType      = DataType::None; // for bwd-compatible
@@ -975,7 +987,7 @@ namespace Tensile
         std::vector<ConstantVariant> activationArgs;
 
         // Workspace
-        void* ws = nullptr;
+        void*                ws       = nullptr;
         unsigned char const* metadata = nullptr;
 
         std::vector<size_t> maxElements;
