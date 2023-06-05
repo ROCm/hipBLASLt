@@ -368,7 +368,8 @@ rocblaslt_status rocblaslt_matmul_get_all_algos_cpp(
     rocblaslt_compute_type                          typeCompute,
     std::vector<rocblaslt_matmul_heuristic_result>& heuristicResults);
 
-rocblaslt_status rocblaslt_is_algo_supported_cpp(rocblaslt::RocGemmType gemmType,
+rocblaslt_status rocblaslt_is_algo_supported_cpp(rocblaslt_handle       handle,
+                                                 rocblaslt::RocGemmType gemmType,
                                                  std::shared_ptr<void>  gemmData,
                                                  rocblaslt_matmul_algo& algo,
                                                  size_t&                workspaceSizeInBytes);

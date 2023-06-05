@@ -95,6 +95,21 @@ namespace Tensile
             return coFileDependency;
         }
 
+        virtual std::shared_ptr<MySolution> getSolutionByIndex(MyProblem const& problem,
+                                                               Hardware const&  hardware,
+                                                               const int index) const override
+        {
+            if(!library)
+                loadPlaceholderLibrary();
+
+            auto solution = library->getSolutionByIndex(problem, hardware, index);
+
+            if(solution)
+                solution->codeObjectFilename = getCodeObjectFileName(hardware, *solution);
+
+            return solution;
+        }
+
         virtual std::shared_ptr<MySolution> findBestSolution(MyProblem const& problem,
                                                              Hardware const&  hardware,
                                                              double*          fitness

@@ -185,7 +185,8 @@ rocblaslt_status
                                      std::shared_ptr<void>&                      gemmData,
                                      size_t&                                     gemmCount);
 
-rocblaslt_status rocblaslt_makeArgument_cpp(const rocblaslt::RocGemmType gemmType,
+rocblaslt_status rocblaslt_makeArgument_cpp(rocblaslt_handle             handle,
+                                            const rocblaslt::RocGemmType gemmType,
                                             const rocblaslt_matmul_algo& algo,
                                             void*                        workspace,
                                             hipStream_t                  stream,

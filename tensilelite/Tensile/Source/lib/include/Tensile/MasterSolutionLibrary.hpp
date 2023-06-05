@@ -91,6 +91,13 @@ namespace Tensile
 
         MasterSolutionLibrary() = default;
 
+        virtual std::shared_ptr<MySolution> getSolutionByIndex(MyProblem const& problem,
+                                                               Hardware const&  hardware,
+                                                               const int index) const override
+        {
+            return solutions.at(index);
+        }
+
         virtual std::shared_ptr<MySolution> findBestSolution(MyProblem const& problem,
                                                              Hardware const&  hardware,
                                                              double*          fitness

@@ -1154,9 +1154,9 @@ rocblaslt_status runContractionProblem(rocblaslt_handle                         
         std::shared_ptr<TensileDataGemm> data = std::static_pointer_cast<TensileDataGemm>(gemmData);
         updateTensileProblem(algo->fallback, prob, data->problem);
 
-        std::shared_ptr<Tensile::ContractionSolution> solution
-            = std::static_pointer_cast<Tensile::ContractionSolution>(algo->data.ptr);
+        int* solutionIndex = (int*)algo->data;
 
+        auto solution = library->getSolutionByIndex(data->problem, *hardware, *solutionIndex);
         if(!solution)
         {
 #if 0
@@ -1332,7 +1332,8 @@ rocblaslt_status groupedGemmCreate(std::vector<RocblasltContractionProblem<Ti, T
     return status;
 }
 
-rocblaslt_status makeArgument(const rocblaslt::RocGemmType gemmType,
+rocblaslt_status makeArgument(rocblaslt_handle             handle,
+                              const rocblaslt::RocGemmType gemmType,
                               const rocblaslt_matmul_algo& algo,
                               void*                        workspace,
                               hipStream_t                  stream,
@@ -1341,15 +1342,20 @@ rocblaslt_status makeArgument(const rocblaslt::RocGemmType gemmType,
     rocblaslt_status status = rocblaslt_status_internal_error;
     try
     {
+        std::shared_ptr<Tensile::MasterSolutionLibrary<Tensile::ContractionProblemGemm>> library;
+        std::shared_ptr<hipDeviceProp_t>                                                 deviceProp;
+        std::shared_ptr<Tensile::Hardware>                                               hardware;
+
+        auto adapter = get_library_and_adapter(&library, &deviceProp, handle->device);
+        hardware     = Tensile::hip::GetDevice(*deviceProp);
+
+        int* solutionIndex = (int*)algo.data;
         if(gemmType == rocblaslt::RocGemmType::ROCBLASLT_GEMM)
         {
-            std::shared_ptr<Tensile::Hardware> hardware;
-
-            std::shared_ptr<Tensile::ContractionSolution> solution
-                = std::static_pointer_cast<Tensile::ContractionSolution>(algo.data.ptr);
-
             std::shared_ptr<TensileDataGemm> data
                 = std::static_pointer_cast<TensileDataGemm>(gemmData);
+
+            auto solution = library->getSolutionByIndex(data->problem, *hardware, *solutionIndex);
 
             data->inputs.ws = workspace;
 
@@ -1376,13 +1382,11 @@ rocblaslt_status makeArgument(const rocblaslt::RocGemmType gemmType,
         }
         else if(gemmType == rocblaslt::RocGemmType::ROCBLASLT_GROUPED_GEMM)
         {
-            std::shared_ptr<Tensile::Hardware> hardware;
-
-            std::shared_ptr<Tensile::ContractionSolution> solution
-                = std::static_pointer_cast<Tensile::ContractionSolution>(algo.data.ptr);
-
             std::shared_ptr<TensileDataGroupedGemm> data
                 = std::static_pointer_cast<TensileDataGroupedGemm>(gemmData);
+
+            auto solution
+                = library->getSolutionByIndex(data->problem.gemms[0], *hardware, *solutionIndex);
 
             for(int i = 0; i < data->inputs.grouped.size(); i++)
             {
@@ -1651,10 +1655,10 @@ void _convertToHeuristicResultArray(
     *returnAlgoCount = std::min((int)solutions.size(), requestedAlgoCount);
     for(size_t i = 0; i < *returnAlgoCount; i++)
     {
-        auto solution                          = solutions[i];
-        heuristicResultsArray[i].algo.data.ptr = std::static_pointer_cast<void>(solution);
-        // heuristicResultsArray[i].algo.data2.ptr = std::static_pointer_cast<void>(
-        //     std::make_shared<Tensile::ContractionProblemGemm>(problem));
+        auto solution = solutions[i];
+        memset(heuristicResultsArray[i].algo.data, 0, sizeof(heuristicResultsArray[i].algo.data));
+        int* solutionIndex = (int*)(heuristicResultsArray[i].algo.data);
+        *solutionIndex     = solution->index;
         heuristicResultsArray[i].algo.max_workspace_bytes = maxWorkSpaceBytes;
         heuristicResultsArray[i].algo.fallback            = fallbackCount-- > 0 ? true : false;
         heuristicResultsArray[i].state                    = rocblaslt_status_success;
@@ -1796,7 +1800,9 @@ rocblaslt_status getAllSolutions(MyProblem&                          prob,
     for(auto solution : solutions)
     {
         memset(&(*heuristicResults)[i], 0, sizeof(rocblaslt_matmul_heuristic_result));
-        (*heuristicResults)[i].algo.data.ptr            = std::static_pointer_cast<void>(solution);
+        memset((*heuristicResults)[i].algo.data, 0, sizeof((*heuristicResults)[i].algo.data));
+        int* solutionIndex                              = (int*)((*heuristicResults)[i].algo.data);
+        *solutionIndex                                  = solution->index;
         (*heuristicResults)[i].algo.max_workspace_bytes = maxWorkSpaceBytes;
         (*heuristicResults)[i].algo.fallback            = false;
         (*heuristicResults)[i].state                    = rocblaslt_status_success;
@@ -1842,7 +1848,9 @@ rocblaslt_status getAllSolutions(MyProblem&                                     
     for(auto solution : solutions)
     {
         memset(&heuristicResults[i], 0, sizeof(rocblaslt_matmul_heuristic_result));
-        heuristicResults[i].algo.data.ptr            = std::static_pointer_cast<void>(solution);
+        memset(heuristicResults[i].algo.data, 0, sizeof(heuristicResults[i].algo.data));
+        int* solutionIndex                           = (int*)(heuristicResults[i].algo.data);
+        *solutionIndex                               = solution->index;
         heuristicResults[i].algo.max_workspace_bytes = maxWorkSpaceBytes;
         heuristicResults[i].algo.fallback            = false;
         heuristicResults[i].state                    = rocblaslt_status_success;
@@ -1879,17 +1887,25 @@ rocblaslt_status getAllSolutions(std::vector<RocblasltContractionProblem<Ti, To,
 }
 
 template <typename MyProblem, typename Inputs>
-rocblaslt_status isSolutionSupported(MyProblem&             tensile_prob,
+rocblaslt_status isSolutionSupported(rocblaslt_handle       handle,
+                                     MyProblem&             tensile_prob,
                                      Inputs&                inputs,
                                      rocblaslt_matmul_algo* algo,
                                      size_t*                workspaceSizeInBytes)
 {
+    std::shared_ptr<Tensile::MasterSolutionLibrary<Tensile::ContractionProblemGemm>> library;
+    std::shared_ptr<hipDeviceProp_t>                                                 deviceProp;
+    std::shared_ptr<Tensile::Hardware>                                               hardware;
+
+    auto adapter          = get_library_and_adapter(&library, &deviceProp, handle->device);
+    hardware              = Tensile::hip::GetDevice(*deviceProp);
     *workspaceSizeInBytes = 0;
-    std::shared_ptr<Tensile::ContractionSolution> solution
-        = std::static_pointer_cast<Tensile::ContractionSolution>(algo->data.ptr);
+
+    int* solutionIndex = (int*)algo->data;
 
     if constexpr(std::is_same<MyProblem, Tensile::ContractionProblemGemm>::value)
     {
+        auto        solution = library->getSolutionByIndex(tensile_prob, *hardware, *solutionIndex);
         const void *scaleDVec = nullptr, *bias = nullptr, *E = nullptr;
         if constexpr(std::is_same<Inputs, Tensile::ContractionInputs>::value)
         {
@@ -1944,6 +1960,8 @@ rocblaslt_status isSolutionSupported(MyProblem&             tensile_prob,
     }
     else if constexpr(std::is_same<MyProblem, Tensile::ContractionProblemGroupedGemm>::value)
     {
+        auto solution
+            = library->getSolutionByIndex(tensile_prob.gemms[0], *hardware, *solutionIndex);
         bool isSupported  = true;
         bool isNormalGemm = true;
         for(int i = 0; i < tensile_prob.gemms.size(); i++)
@@ -2011,14 +2029,15 @@ rocblaslt_status isSolutionSupported(MyProblem&             tensile_prob,
 }
 
 template <typename Ti, typename To, typename Tc>
-rocblaslt_status isSolutionSupported(RocblasltContractionProblem<Ti, To, Tc>& prob,
+rocblaslt_status isSolutionSupported(rocblaslt_handle                         handle,
+                                     RocblasltContractionProblem<Ti, To, Tc>& prob,
                                      std::shared_ptr<void>                    gemmData,
                                      rocblaslt_matmul_algo*                   algo,
                                      size_t*                                  workspaceSizeInBytes)
 {
     std::shared_ptr<TensileDataGemm> data = std::static_pointer_cast<TensileDataGemm>(gemmData);
     updateTensileProblem(false, prob, data->problem);
-    return isSolutionSupported(data->problem, prob, algo, workspaceSizeInBytes);
+    return isSolutionSupported(handle, data->problem, prob, algo, workspaceSizeInBytes);
 }
 
 template <typename Tc>
@@ -2028,7 +2047,8 @@ void setRestrictions(Tensile::ContractionProblemGemm& tensile_prob, const Tc* al
     tensile_prob.setBetaRestriction(Tensile::toScalarValueEnum(*beta));
 }
 
-rocblaslt_status isSolutionSupported(const rocblaslt::RocGemmType& gemmType,
+rocblaslt_status isSolutionSupported(rocblaslt_handle              handle,
+                                     const rocblaslt::RocGemmType& gemmType,
                                      std::shared_ptr<void>         gemmData,
                                      rocblaslt_matmul_algo&        algo,
                                      size_t&                       workspaceSizeInBytes)
@@ -2046,7 +2066,8 @@ rocblaslt_status isSolutionSupported(const rocblaslt::RocGemmType& gemmType,
         {
             return rocblaslt_status_not_implemented;
         }
-        return isSolutionSupported(data->problem, data->inputs, &algo, &workspaceSizeInBytes);
+        return isSolutionSupported(
+            handle, data->problem, data->inputs, &algo, &workspaceSizeInBytes);
     }
     else if(gemmType == rocblaslt::RocGemmType::ROCBLASLT_GROUPED_GEMM)
     {
@@ -2066,7 +2087,8 @@ rocblaslt_status isSolutionSupported(const rocblaslt::RocGemmType& gemmType,
         {
             return rocblaslt_status_not_implemented;
         }
-        return isSolutionSupported(data->problem, data->inputs, &algo, &workspaceSizeInBytes);
+        return isSolutionSupported(
+            handle, data->problem, data->inputs, &algo, &workspaceSizeInBytes);
     }
     return rocblaslt_status_not_implemented;
 }
@@ -2220,7 +2242,8 @@ extern "C" void rocblaslt_createialize()
         rocblaslt_handle                                      handle,                                \
         std::vector<rocblaslt_matmul_heuristic_result>&       heuristicResults,                      \
         size_t                                                maxWorkSpaceBytes);                                                                   \
-    template rocblaslt_status isSolutionSupported(RocblasltContractionProblem<Ti, To, Tc>& prob,     \
+    template rocblaslt_status isSolutionSupported(rocblaslt_handle                         handle,   \
+                                                  RocblasltContractionProblem<Ti, To, Tc>& prob,     \
                                                   std::shared_ptr<void>                    gemmData, \
                                                   rocblaslt_matmul_algo*                   algo,     \
                                                   size_t* workspaceSizeInBytes);                     \

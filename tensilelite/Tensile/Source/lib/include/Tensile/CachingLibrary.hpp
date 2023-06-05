@@ -171,6 +171,13 @@ namespace Tensile
         {
         }
 
+        virtual std::shared_ptr<MySolution> getSolutionByIndex(MyProblem const& problem,
+                                                               Hardware const&  hardware,
+                                                               const int index) const override
+        {
+            return m_subLibrary->getSolutionByIndex(problem, hardware, index);
+        }
+
         virtual std::shared_ptr<MySolution> findBestSolution(MyProblem const& problem,
                                                              Hardware const&  hardware,
                                                              double*          fitness
