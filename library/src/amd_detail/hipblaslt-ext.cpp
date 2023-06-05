@@ -84,8 +84,8 @@ namespace hipblaslt_ext
     {
         auto gemmType = static_cast<rocblaslt::RocGemmType>(m_gemm_type);
         auto rocalgo  = reinterpret_cast<rocblaslt_matmul_algo*>(&algo);
-        return RocBlasLtStatusToHIPStatus(
-            rocblaslt_is_algo_supported_cpp(gemmType, m_data, *rocalgo, workspaceSizeInBytes));
+        return RocBlasLtStatusToHIPStatus(rocblaslt_is_algo_supported_cpp(
+            (rocblaslt_handle)m_handle, gemmType, m_data, *rocalgo, workspaceSizeInBytes));
     }
     catch(...)
     {
@@ -101,8 +101,8 @@ namespace hipblaslt_ext
             return HIPBLAS_STATUS_INVALID_VALUE;
         auto gemmType = static_cast<rocblaslt::RocGemmType>(m_gemm_type);
         auto rocalgo  = reinterpret_cast<const rocblaslt_matmul_algo*>(&algo);
-        return RocBlasLtStatusToHIPStatus(
-            rocblaslt_makeArgument_cpp(gemmType, *rocalgo, workspace, stream, m_data));
+        return RocBlasLtStatusToHIPStatus(rocblaslt_makeArgument_cpp(
+            (rocblaslt_handle)m_handle, gemmType, *rocalgo, workspace, stream, m_data));
     }
     catch(...)
     {

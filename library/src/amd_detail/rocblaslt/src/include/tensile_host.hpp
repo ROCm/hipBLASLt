@@ -228,7 +228,8 @@ rocblaslt_status groupedGemmCreate(std::vector<RocblasltContractionProblem<Ti, T
                                    std::shared_ptr<void>&                                gemmData,
                                    size_t&                                               gemmCount);
 
-rocblaslt_status makeArgument(const rocblaslt::RocGemmType gemmType,
+rocblaslt_status makeArgument(rocblaslt_handle             handle,
+                              const rocblaslt::RocGemmType gemmType,
                               const rocblaslt_matmul_algo& algo,
                               void*                        workspace,
                               hipStream_t                  stream,
@@ -283,12 +284,14 @@ rocblaslt_status getAllSolutions(std::vector<RocblasltContractionProblem<Ti, To,
                                  size_t                                          maxWorkSpaceBytes);
 
 template <typename Ti, typename To = Ti, typename Tc = To>
-rocblaslt_status isSolutionSupported(RocblasltContractionProblem<Ti, To, Tc>& prob,
+rocblaslt_status isSolutionSupported(rocblaslt_handle                         handle,
+                                     RocblasltContractionProblem<Ti, To, Tc>& prob,
                                      std::shared_ptr<void>                    gemmData,
                                      rocblaslt_matmul_algo*                   algo,
                                      size_t*                                  workspaceSizeInBytes);
 
-rocblaslt_status isSolutionSupported(const rocblaslt::RocGemmType& gemmType,
+rocblaslt_status isSolutionSupported(rocblaslt_handle              handle,
+                                     const rocblaslt::RocGemmType& gemmType,
                                      std::shared_ptr<void>         gemmData,
                                      rocblaslt_matmul_algo&        algo,
                                      size_t&                       workspaceSizeInBytes);
