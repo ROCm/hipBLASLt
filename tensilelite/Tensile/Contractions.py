@@ -67,7 +67,7 @@ class ProblemType:
     StateKeys = ['operationIdentifier', 'transA', 'transB', 'aType', 'bType', 'cType', 'dType', 'eType', 'computeType',
                  'useBeta', 'useBias', 'biasSrcWhiteList', 'useE', 'useScaleDVec', 'biasDataTypeWhiteList', 'highPrecisionAccumulate',
                  'useInitialStridesAB', 'useInitialStridesCD', 'stridedBatched', 'groupedGemm',
-                 'useGradient', 'activationType', 'activationHPA', 'activationNoGuard', 'sparseA']
+                 'useGradient', 'activationType', 'activationHPA', 'activationNoGuard', 'sparseA', 'f32XdlMathOp']
     @classmethod
     def FromOriginalState(cls, d):
         indices = [None]*d['TotalIndices']
@@ -217,6 +217,7 @@ class ProblemType:
         if 'SparseA' in d:
             rv.sparseA = d['SparseA']
 
+        rv.f32XdlMathOp = DataType(d['F32XdlMathOp']) if 'F32XdlMathOp' in d else DataType(0)
         return rv
 
     def __init__(self, freeIndices=None, batchIndices=None, boundIndices=None, aDims=None, bDims=None, cDims=None, dDims=None):
@@ -328,6 +329,7 @@ class ProblemType:
             predicates.append(ProblemPredicate("GroupedGemm", value=self.groupedGemm))
             predicates.append(ProblemPredicate("UseScaleDVec", value=self.useScaleDVec))
             predicates.append(ProblemPredicate("SparseA", value=self.sparseA))
+            predicates.append(ProblemPredicate("F32XdlMathOp", value=self.f32XdlMathOp))
 
         return predicates
 

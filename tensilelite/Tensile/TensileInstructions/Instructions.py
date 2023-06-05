@@ -281,6 +281,8 @@ class MFMAInstruction(Instruction):
             kStr = "i8"
         elif iType == InstType.INST_I32:
             kStr = "i32"
+        elif iType == InstType.INST_XF32:
+            kStr = "xf32"
         else:
             printExit("Type %s not found"%str(iType))
         return kStr

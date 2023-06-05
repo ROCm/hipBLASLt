@@ -1837,8 +1837,7 @@ namespace Tensile
                 }
             };
 
-            struct SparseA
-                : public Predicate_CRTP<SparseA, ContractionProblemGemm>
+            struct SparseA : public Predicate_CRTP<SparseA, ContractionProblemGemm>
             {
                 enum
                 {
@@ -1861,6 +1860,33 @@ namespace Tensile
                 virtual bool operator()(ContractionProblemGemm const& problem) const override
                 {
                     return problem.sparseA() == value;
+                }
+            };
+
+            struct F32XdlMathOpEqual
+                : public Predicate_CRTP<F32XdlMathOpEqual, ContractionProblemGemm>
+            {
+                enum
+                {
+                    HasIndex = false,
+                    HasValue = true
+                };
+                DataType value;
+
+                F32XdlMathOpEqual() = default;
+                F32XdlMathOpEqual(DataType value)
+                    : value(value)
+                {
+                }
+
+                static std::string Type()
+                {
+                    return "F32XdlMathOp";
+                }
+
+                virtual bool operator()(ContractionProblemGemm const& problem) const override
+                {
+                    return problem.f32XdlMathOp() == value;
                 }
             };
         } // namespace Contraction

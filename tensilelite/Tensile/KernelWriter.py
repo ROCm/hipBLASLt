@@ -2519,7 +2519,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
               module.add(localReadCodeB)
               pack[0].add(packCodeB)
             # adjustment for DirectToLds case
-            iuiParam = iui if kernel["ProblemType"]["SparseA"] else iui + tailLoopInnerUnroll * mValue 
+            iuiParam = iui if kernel["ProblemType"]["SparseA"] else iui + tailLoopInnerUnroll * mValue
             if doReadA:
               module.addComment1("local read inc a")
               module.add(self.localReadInc(kernel, iuiParam, tensorParametersA))
@@ -3008,6 +3008,9 @@ class KernelWriter(metaclass=abc.ABCMeta):
       if kernel["ProblemType"]["SparseA"] and not self.states.asmCaps["HasSMFMA"]:
         raise RuntimeError("Sparse MatrixInstruction not supported for {0}".format(self.states.version))
 
+      if (kernel["EnableF32XdlMathOp"] and kernel["ProblemType"]["F32XdlMathOp"].isXFloat32() and (not self.states.asmCaps["HasMFMA_xf32"])):
+        raise RuntimeError("XF32 MatrixInstruction not supported for {0}".format(self.states.version))
+
     if not self.states.asmCaps["HasDirectToLds"]:
       kernel["DirectToLdsA"] = False
       kernel["DirectToLdsB"] = False
@@ -3040,7 +3043,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
 
     assert self.states.bpeAB == tensorParametersA["bpe"]
     assert self.states.bpeAB == tensorParametersB["bpe"]
-  
+
     #######################################L
     # Available Memory Instructions
     ########################################
@@ -3795,7 +3798,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
     if kernel["EnableMatrixInstruction"]:
       mi_divisor = 2
 
-      if kernel["ProblemType"]["SparseA"]:
+      if kernel["ProblemType"]["SparseA"] or (kernel["EnableF32XdlMathOp"] and kernel["ProblemType"]["F32XdlMathOp"].isXFloat32()):
         mi_divisor = 4
       self.states.miLatency = kernel["MatrixInstM"] // mi_divisor
 
