@@ -109,6 +109,10 @@ void Arguments::init()
     use_e             = false;
     gradient          = false;
     norm_check_assert = true;
+
+    use_ext            = false;
+    use_ext_setproblem = false;
+    use_findallalgo    = false;
 }
 
 // Function to print Arguments out to stream in YAML format
