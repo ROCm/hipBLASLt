@@ -1,6 +1,6 @@
 ################################################################################
 #
-# Copyright (C) 2022 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -124,7 +124,7 @@ class PackData_INT8(PackData):
             d = destIdx + vi//4
 
             if vi%2 == 1:
-                for i in reserved(range(0, 2)):
+                for i in reversed(range(0, 2)):
                     module.add(VSaturateCastInt(sumIdxV-i, tmpVgpr, tmpS01, -128, 127, type=SaturateTypeInt8, initGpr=(i%2 == 1)))
                 module.add(VLShiftLeftB16(dst=vgpr(formatting(sumIdxV, inputPrefix, prefixOffset)), shiftHex=8, src=vgpr(formatting(sumIdxV, inputPrefix, prefixOffset))))
                 module.add(VOrB32(dst=vgpr(formatVgpr), src0=vgpr(formatVgpr), src1=vgpr(formatting(sumIdxV-1, inputPrefix, prefixOffset)), \
