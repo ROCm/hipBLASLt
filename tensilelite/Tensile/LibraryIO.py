@@ -1,6 +1,6 @@
 ################################################################################
 #
-# Copyright (C) 2022 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -111,6 +111,8 @@ def writeSolutions(filename, problemSizes, biasTypeArgs, activationArgs, solutio
                     solutionState["ProblemType"]["ActivationComputeDataType"].value
             solutionState["ProblemType"]["ActivationType"] = \
                     solutionState["ProblemType"]["ActivationType"].value
+            solutionState["ProblemType"]["F32XdlMathOp"] = \
+                solutionState["ProblemType"]["F32XdlMathOp"].value
             solutionStates.append(solutionState)
     # write dictionaries
     with open(filename, "w") as f:
@@ -337,7 +339,8 @@ def createLibraryLogic(schedulePrefix, architectureName, deviceNames, logicTuple
             problemTypeState["ActivationComputeDataType"].value
     problemTypeState["ActivationType"] = \
             problemTypeState["ActivationType"].value
-
+    problemTypeState["F32XdlMathOp"] = \
+            problemTypeState["F32XdlMathOp"].value
     data.append(problemTypeState)
     # solutions
     solutionList = []
@@ -356,6 +359,8 @@ def createLibraryLogic(schedulePrefix, architectureName, deviceNames, logicTuple
                 solutionState["ProblemType"]["ActivationComputeDataType"].value
         solutionState["ProblemType"]["ActivationType"] = \
                 solutionState["ProblemType"]["ActivationType"].value
+        solutionState["ProblemType"]["F32XdlMathOp"] = \
+                solutionState["ProblemType"]["F32XdlMathOp"].value
         solutionList.append(solutionState)
 
     if tileSelection:
@@ -375,6 +380,8 @@ def createLibraryLogic(schedulePrefix, architectureName, deviceNames, logicTuple
                     solutionState["ProblemType"]["ActivationComputeDataType"].value
             solutionState["ProblemType"]["ActivationType"] = \
                     solutionState["ProblemType"]["ActivationType"].value
+            solutionState["ProblemType"]["F32XdlMathOp"] = \
+                solutionState["ProblemType"]["F32XdlMathOp"].value
             solutionList.append(solutionState)
 
     data.append(solutionList)

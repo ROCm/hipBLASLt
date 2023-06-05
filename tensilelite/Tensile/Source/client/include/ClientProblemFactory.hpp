@@ -81,17 +81,17 @@ namespace Tensile
             bool m_useE;
             bool m_useGradient = false;
 
-            bool m_aSparse;
-            KernelLanguage              m_kernelLanguage;
-            PerformanceMetric           m_performanceMetric;
-            bool                        m_fp16AltImpl;
-            ActivationType              m_activationType;
-            std::vector<DataType>       m_biasTypeArgs;
-            bool                        m_activationHPA;
-            bool                        m_activationNoGuard;
-            std::vector<ActivationType> m_activationEnumArg;
-            size_t                      m_maxWorkspaceSize = 0;
-
+            bool                             m_aSparse;
+            KernelLanguage                   m_kernelLanguage;
+            PerformanceMetric                m_performanceMetric;
+            bool                             m_fp16AltImpl;
+            ActivationType                   m_activationType;
+            std::vector<DataType>            m_biasTypeArgs;
+            bool                             m_activationHPA;
+            bool                             m_activationNoGuard;
+            std::vector<ActivationType>      m_activationEnumArg;
+            size_t                           m_maxWorkspaceSize = 0;
+            DataType                         m_f32XdlMathOp;
             std::vector<std::vector<size_t>> m_problemSizes;
         };
 
