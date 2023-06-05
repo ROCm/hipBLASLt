@@ -126,6 +126,11 @@ struct Arguments
     bool                  gradient;
     bool                  norm_check_assert;
 
+    // API related
+    bool use_ext;
+    bool use_ext_setproblem;
+    bool use_findallalgo;
+
     /*************************************************************************
      *                     End Of Arguments                                  *
      *************************************************************************/
@@ -191,7 +196,10 @@ struct Arguments
     OPER(HMM) SEP                    \
     OPER(use_e) SEP                  \
     OPER(gradient) SEP               \
-    OPER(norm_check_assert) SEP
+    OPER(norm_check_assert) SEP      \
+    OPER(use_ext) SEP                \
+    OPER(use_ext_setproblem) SEP     \
+    OPER(use_findallalgo) SEP
 
     // clang-format on
 

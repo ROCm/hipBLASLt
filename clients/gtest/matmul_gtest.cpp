@@ -144,6 +144,14 @@ namespace
 
                 if(arg.grouped_gemm > 0)
                     name << "_GG" << arg.grouped_gemm;
+
+                // grouped gemm only supports ext
+                if(arg.use_ext || arg.grouped_gemm > 0)
+                    name << "_APIExt";
+                if(arg.use_ext_setproblem)
+                    name << "_APIExtSet";
+                if(arg.use_findallalgo)
+                    name << "_APIFindAllAlgo";
             }
 
             return std::move(name);
