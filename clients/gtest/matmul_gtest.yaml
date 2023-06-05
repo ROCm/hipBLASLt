@@ -643,4 +643,47 @@ Tests:
   unit_check: 1
   # norm_check: 1
 
+- name: matmul_extapi_findallalgo_gemm
+  category: pre_checkin
+  function:
+    matmul: *hpa_half_precision
+  M: [127, 129]
+  N: [127, 129]
+  K: [127, 129]
+  transA_transB: *transA_transB_range
+  use_findallalgo: [0, 1]
+  alpha: 1
+  beta: [ 0.0, 2.0 ]
+  unit_check: 1
+
+- name: matmul_extapi_gemm
+  category: pre_checkin
+  function:
+    matmul: *hpa_half_precision
+  M: [127, 129]
+  N: [127, 129]
+  K: [127, 129]
+  transA_transB: *transA_transB_range
+  use_ext: [1]
+  use_ext_setproblem: [0, 1]
+  use_findallalgo: [0, 1]
+  alpha: 1
+  beta: [ 0.0, 2.0 ]
+  unit_check: 1
+
+- name: matmul_extapi_groupedgemm
+  category: pre_checkin
+  function:
+    matmul: *hpa_half_precision
+  M: [127, 129]
+  N: [127, 129]
+  K: [127, 129]
+  transA_transB: *transA_transB_range
+  grouped_gemm: [2]
+  use_ext_setproblem: [0, 1]
+  # use_findallalgo: [0, 1]
+  alpha: 1
+  beta: [ 0.0, 2.0 ]
+  unit_check: 1
+
 ...

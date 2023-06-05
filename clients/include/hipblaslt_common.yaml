@@ -113,6 +113,9 @@ Arguments:
   - use_e: c_bool
   - gradient: c_bool
   - norm_check_assert: c_bool
+  - use_ext: c_bool
+  - use_ext_setproblem: c_bool
+  - use_findallalgo: c_bool
 
 # These named dictionary lists [ {dict1}, {dict2}, etc. ] supply subsets of
 # test arguments in a structured way. The dictionaries are applied to the test
@@ -189,3 +192,6 @@ Defaults:
   scaleD_vector: false
   grouped_gemm: 0
   norm_check_assert: true
+  use_ext: false
+  use_ext_setproblem: false
+  use_findallalgo: false
