@@ -174,7 +174,7 @@ generate_export_header(hipblaslt EXPORT_FILE_NAME ${PROJECT_BINARY_DIR}/include/
 
 if (BUILD_FILE_REORG_BACKWARD_COMPATIBILITY)
   rocm_wrap_header_file(
-    hipblaslt-version.h hipblaslt-export.h
+    hipblaslt-version.h hipblaslt-export.h hipblaslt-ext.hpp
     GUARDS SYMLINK WRAPPER
     WRAPPER_LOCATIONS include hipblaslt/include
   )
