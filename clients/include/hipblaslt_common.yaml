@@ -115,7 +115,7 @@ Arguments:
   - norm_check_assert: c_bool
   - use_ext: c_bool
   - use_ext_setproblem: c_bool
-  - use_findallalgo: c_bool
+  - algo_method: c_int32
 
 # These named dictionary lists [ {dict1}, {dict2}, etc. ] supply subsets of
 # test arguments in a structured way. The dictionaries are applied to the test
@@ -194,4 +194,4 @@ Defaults:
   norm_check_assert: true
   use_ext: false
   use_ext_setproblem: false
-  use_findallalgo: false
+  algo_method: 0

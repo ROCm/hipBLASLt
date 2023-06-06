@@ -68,6 +68,14 @@ getAllAlgos()
 ------------------------------------------
 .. doxygenfunction:: getAllAlgos
 
+getIndexFromAlgo()
+------------------------------------------
+.. doxygenfunction:: getIndexFromAlgo
+
+getAlgosFromIndex()
+------------------------------------------
+.. doxygenfunction:: getAlgosFromIndex
+
 matmulIsAlgoSupported()
 ------------------------------------------
 .. doxygenfunction:: matmulIsAlgoSupported
@@ -570,3 +578,35 @@ Grouped gemm
             groupedGemm.run(stream);
         }
     }
+
+Algorithm Index
+--------------
+
+The extension API lets user to get the algorithm index from hipblasLtMatmulAlgo_t.
+
+.. code-block:: c++
+
+    HIPBLASLT_EXPORT int getIndexFromAlgo(hipblasLtMatmulAlgo_t& algo);
+
+
+It also supports user to get the heuristic results by giving an index vector.
+
+.. code-block:: c++
+
+    HIPBLASLT_EXPORT
+    hipblasStatus_t
+        getAlgosFromIndex(hipblasLtHandle_t                              handle,
+                          std::vector<int>&                              algoIndex,
+                          std::vector<hipblasLtMatmulHeuristicResult_t>& heuristicResults);
+
+Example code
+^^^^^^^^^^^^
+
+.. code-block:: c++
+    int index = hipblaslt_ext::getIndexFromAlgo(testResults[i].algo);
+    // Save the index to disk or somewhere else for later use.
+
+    // Get the index from previous state.
+    std::vector<int> algoIndex(index);
+    std::vector<hipblasLtMatmulHeuristicResult_t> heuristicResults;
+    CHECK_HIPBLASLT_ERROR(hipblaslt_ext::getAlgosFromIndex(handle, algoIndex, heuristicResults));

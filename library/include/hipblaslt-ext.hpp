@@ -706,6 +706,48 @@ namespace hipblaslt_ext
                                 std::vector<hipblasLtMatmulHeuristicResult_t>& heuristicResults);
 
     /*! \ingroup library_module
+     *  \brief Retrieve the algorithm index
+     *
+     *  @param[in]
+     *  algo    The algorithm.
+     *
+     *  \retval int The index of the algorithm, can be used to get hueristic
+     * results from \ref getAlgosFromIndex. Returns -1 if the index stored
+     * in algo < 0. Note that the index may not be valid if the algo struct
+     * is not initialized properly.
+     */
+    HIPBLASLT_EXPORT int getIndexFromAlgo(hipblasLtMatmulAlgo_t& algo);
+
+    /*! \ingroup library_module
+     *  \brief Retrieve the possible algorithms
+     *
+     *  \details
+     *  This function retrieves the possible algorithms for the matrix multiply
+     * operation hipblasLtMatmul() function with the given index.
+     * The output is placed in heuristicResult in the order of increasing
+     * estimated compute time.
+     *
+     *  @param[in]
+     *  handle                  Pointer to the allocated hipBLASLt handle for the
+     * hipBLASLt context. See \ref hipblasLtHandle_t .
+     *  @param[in]
+     *  algoIndex               The algorithm index vector.
+     *  @param[out]
+     *  heuristicResult         The algorithm heuristic vector.
+     *
+     *  \retval HIPBLAS_STATUS_SUCCESS           If query was successful. Inspect
+     * heuristicResults.size() > 0.state for the status of the
+     * results. \retval HIPBLAS_STATUS_NOT_SUPPORTED     If no heuristic function
+     * available for current configuration. \retval HIPBLAS_STATUS_INVALID_VALUE If
+     * no solution is found.
+     */
+    HIPBLASLT_EXPORT
+    hipblasStatus_t
+        getAlgosFromIndex(hipblasLtHandle_t                              handle,
+                          std::vector<int>&                              algoIndex,
+                          std::vector<hipblasLtMatmulHeuristicResult_t>& heuristicResults);
+
+    /*! \ingroup library_module
      *  \brief Check if the algorithm supports the problem. (For hipblasLt API)
      *
      *  \details

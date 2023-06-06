@@ -533,4 +533,27 @@ namespace hipblaslt_ext
     {
         return exception_to_hipblas_status();
     }
+
+    int getIndexFromAlgo(hipblasLtMatmulAlgo_t& algo)
+    {
+        int* algo_ptr = (int*)algo.data;
+        if(*algo_ptr < 0)
+        {
+            return -1;
+        }
+        return *algo_ptr;
+    }
+
+    hipblasStatus_t
+        getAlgosFromIndex(hipblasLtHandle_t                              handle,
+                          std::vector<int>&                              algoIndex,
+                          std::vector<hipblasLtMatmulHeuristicResult_t>& heuristicResults)
+    {
+        auto results
+            = reinterpret_cast<std::vector<rocblaslt_matmul_heuristic_result>*>(&heuristicResults);
+        results->clear();
+        return RocBlasLtStatusToHIPStatus(rocblaslt_matmul_get_algos_from_index_cpp(
+            (rocblaslt_handle)handle, algoIndex, *results));
+    }
+
 } // End of namespace hipblasltext
