@@ -95,6 +95,19 @@ namespace Tensile
                                                                Hardware const&  hardware,
                                                                const int index) const override
         {
+            if(index >= solutions.size())
+            {
+                return std::shared_ptr<MySolution>();
+            }
+            return solutions.at(index);
+        }
+
+        virtual std::shared_ptr<MySolution> getSolutionByIndex(const int index) const override
+        {
+            if(index >= solutions.size())
+            {
+                return std::shared_ptr<MySolution>();
+            }
             return solutions.at(index);
         }
 

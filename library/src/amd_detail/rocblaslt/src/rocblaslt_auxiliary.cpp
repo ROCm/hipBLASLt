@@ -1334,6 +1334,30 @@ rocblaslt_status rocblaslt_matmul_get_all_algos_cpp(
     return rocblaslt_status_success;
 }
 
+rocblaslt_status rocblaslt_matmul_get_algos_from_index_cpp(
+    rocblaslt_handle                                handle,
+    std::vector<int>&                               solutionIndex,
+    std::vector<rocblaslt_matmul_heuristic_result>& heuristicResults)
+{
+    rocblaslt_status status = rocblaslt_status_success;
+    try
+    {
+        size_t maxWorkspaceSize = std::numeric_limits<size_t>::max();
+        status = getSolutionsFromIndex(handle, solutionIndex, heuristicResults, maxWorkspaceSize);
+
+        log_api(__func__, "returnAlogCount", heuristicResults.size());
+        if(status != rocblaslt_status_success)
+        {
+            throw status;
+        }
+    }
+    catch(const rocblaslt_status& status)
+    {
+        return status;
+    }
+    return rocblaslt_status_success;
+}
+
 rocblaslt_status rocblaslt_is_algo_supported_cpp(rocblaslt_handle       handle,
                                                  rocblaslt::RocGemmType gemmType,
                                                  std::shared_ptr<void>  gemmData,

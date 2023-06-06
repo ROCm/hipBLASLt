@@ -283,6 +283,12 @@ rocblaslt_status getAllSolutions(std::vector<RocblasltContractionProblem<Ti, To,
                                  std::vector<rocblaslt_matmul_heuristic_result>& heuristicResults,
                                  size_t                                          maxWorkSpaceBytes);
 
+rocblaslt_status
+    getSolutionsFromIndex(rocblaslt_handle                                handle,
+                          std::vector<int>&                               solutionIndex,
+                          std::vector<rocblaslt_matmul_heuristic_result>& heuristicResults,
+                          size_t                                          maxWorkSpaceBytes);
+
 template <typename Ti, typename To = Ti, typename Tc = To>
 rocblaslt_status isSolutionSupported(rocblaslt_handle                         handle,
                                      RocblasltContractionProblem<Ti, To, Tc>& prob,
