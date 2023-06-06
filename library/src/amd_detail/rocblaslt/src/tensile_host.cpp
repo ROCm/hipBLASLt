@@ -1886,6 +1886,41 @@ rocblaslt_status getAllSolutions(std::vector<RocblasltContractionProblem<Ti, To,
     return getAllSolutions(tensile_probs, handle, heuristicResults, maxWorkSpaceBytes);
 }
 
+rocblaslt_status
+    getSolutionsFromIndex(rocblaslt_handle                                handle,
+                          std::vector<int>&                               solutionIndex,
+                          std::vector<rocblaslt_matmul_heuristic_result>& heuristicResults,
+                          size_t                                          maxWorkSpaceBytes)
+{
+    std::shared_ptr<Tensile::MasterSolutionLibrary<Tensile::ContractionProblemGemm>> library;
+    std::shared_ptr<hipDeviceProp_t>                                                 deviceProp;
+    std::shared_ptr<Tensile::Hardware>                                               hardware;
+
+    auto adapter = get_library_and_adapter(&library, &deviceProp, handle->device);
+    hardware     = Tensile::hip::GetDevice(*deviceProp);
+
+    int i = 0;
+    for(auto index : solutionIndex)
+    {
+        auto solution = library->getSolutionByIndex(index);
+        if(!solution)
+            continue;
+        rocblaslt_matmul_heuristic_result result;
+        memset(&result, 0, sizeof(rocblaslt_matmul_heuristic_result));
+        memset(result.algo.data, 0, sizeof(result.algo.data));
+        int* solutionIndex              = (int*)(result.algo.data);
+        *solutionIndex                  = solution->index;
+        result.algo.max_workspace_bytes = maxWorkSpaceBytes;
+        result.algo.fallback            = false;
+        result.state                    = rocblaslt_status_success;
+        result.workspaceSize            = 0;
+        i++;
+        heuristicResults.push_back(result);
+    }
+
+    return rocblaslt_status_success;
+}
+
 template <typename MyProblem, typename Inputs>
 rocblaslt_status isSolutionSupported(rocblaslt_handle       handle,
                                      MyProblem&             tensile_prob,

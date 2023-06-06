@@ -150,7 +150,9 @@ namespace
                     name << "_APIExt";
                 if(arg.use_ext_setproblem)
                     name << "_APIExtSet";
-                if(arg.use_findallalgo)
+                if(arg.algo_method == 2)
+                    name << "_APIAlgoIndex";
+                else if(arg.algo_method == 1)
                     name << "_APIFindAllAlgo";
             }
 

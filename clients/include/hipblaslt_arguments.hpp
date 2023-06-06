@@ -129,7 +129,7 @@ struct Arguments
     // API related
     bool use_ext;
     bool use_ext_setproblem;
-    bool use_findallalgo;
+    int  algo_method; // 0 for getheuristic, 1 for get all algos, 2 for algo index
 
     /*************************************************************************
      *                     End Of Arguments                                  *
@@ -199,7 +199,7 @@ struct Arguments
     OPER(norm_check_assert) SEP      \
     OPER(use_ext) SEP                \
     OPER(use_ext_setproblem) SEP     \
-    OPER(use_findallalgo) SEP
+    OPER(algo_method) SEP
 
     // clang-format on
 

@@ -88,6 +88,12 @@ namespace Tensile
                                                                const int        index) const
             = 0;
 
+        virtual std::shared_ptr<MySolution> getSolutionByIndex(const int index) const
+        {
+            throw std::runtime_error("[getSolutionByIndex] You should not reach here.");
+            return std::shared_ptr<MySolution>();
+        }
+
         virtual std::shared_ptr<MySolution> findBestSolution(MyProblem const& problem,
                                                              Hardware const&  hardware,
                                                              double* fitness = nullptr) const
