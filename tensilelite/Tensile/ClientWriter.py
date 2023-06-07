@@ -111,7 +111,22 @@ def main( config ):
     functionNames.append("tensile_%s" % (problemType))
     problemSizes = ProblemSizesMock(exactLogic)
     biasTypeArgs   = BiasTypeArgs(problemType, [problemType["DataType"]])
-    activationArgs = ActivationArgs(problemType, [[{'Enum': 'relu'}]]) if problemType["ActivationType"] == 'all' else ""
+
+    activationEnums = [[{'Enum': 'relu'}]]
+
+    # Reading the activation args from the LibraryClient section in the config YAML.
+    # Example: enable relu and gelu activation and using none to run without activation
+    #    LibraryClient:
+    #      - ActivationArgs:
+    #        - [Enum: none]
+    #        - [Enum: gelu]
+    #        - [Enum: relu]
+    if len(config) > 0:
+      for lc in config[0:]:
+        if "ActivationArgs" in lc:
+          activationEnums = lc["ActivationArgs"]
+          break
+    activationArgs = ActivationArgs(problemType, activationEnums) if problemType["ActivationType"] == 'all' else ""
     clientParametersPaths.append(writeClientConfig(
                                   forBenchmark=False,
                                   solutions=None,
