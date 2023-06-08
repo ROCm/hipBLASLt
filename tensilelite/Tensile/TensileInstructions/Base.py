@@ -285,14 +285,14 @@ def _initAsmCaps(isaVersion, assemblerPath, isDebug) -> dict:
 
 def _initArchCaps(isaVersion) -> dict:
     rv = {}
-    rv["HasEccHalf"]         = (isaVersion==(9,0,6) or isaVersion==(9,0,8) or isaVersion==(9,0,10) or isaVersion==(9,4,0))
-    rv["Waitcnt0Disabled"]   = (isaVersion == (9,0,8) or isaVersion==(9,0,10) or isaVersion==(9,4,0))
+    rv["HasEccHalf"]         = (isaVersion in [(9,0,6), (9,0,8), (9,0,10), (9,4,0), (9,4,1), (9,4,2)])
+    rv["Waitcnt0Disabled"]   = (isaVersion in [(9,0,8), (9,0,10), (9,4,0), (9,4,1), (9,4,2)])
     rv["SeparateVscnt"]      = isaVersion[0] in (10, 11)
     rv["CMPXWritesSGPR"]     = isaVersion[0] not in (10, 11)
     rv["HasWave32"]          = isaVersion[0] in (10, 11)
-    rv["HasAccCD"]           = (isaVersion==(9,0,10) or isaVersion==(9,4,0))
-    rv["ArchAccUnifiedRegs"] = (isaVersion==(9,0,10) or isaVersion==(9,4,0))
-
+    rv["HasAccCD"]           = (isaVersion in [(9,0,10), (9,4,0), (9,4,1), (9,4,2)])
+    rv["ArchAccUnifiedRegs"] = (isaVersion in [(9,0,10), (9,4,0), (9,4,1), (9,4,2)])
+    rv["ForceStoreSC1"] = (isaVersion in [(9,4,0), (9,4,1)])
     return rv
 
 def _initAsmBugs(asmCaps) -> dict:

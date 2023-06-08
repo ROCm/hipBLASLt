@@ -3862,7 +3862,7 @@ class KernelWriterAssembly(KernelWriter):
     return module
 
   def mfmaIter_waitCount(self, kernel):
-    if self.states.version in [(9,4,0)]:
+    if self.states.version in [(9,4,0), (9,4,1), (9,4,2)]:
       dataType = kernel["ProblemType"]["DataType"]
       miM = kernel["MatrixInstM"]
       miN = kernel["MatrixInstN"]
@@ -4181,7 +4181,7 @@ class KernelWriterAssembly(KernelWriter):
               if inst is not None:
                 imod.add(inst)
             variant = [kernel["MatrixInstM"], kernel["MatrixInstN"], kernel["MatrixInstK"]]
-            if self.states.version in [(9,4,0)]:
+            if self.states.version in [(9,4,0), (9,4,1), (9,4,2)]:
               variant.append(kernel["MatrixInstB"])
             imod.add(MFMAInstruction(instType=miInInstType, accType=miOutInstType, variant=variant, mfma1k=False, \
                      acc=gprfunc(accStart, (accEnd-accStart+1)), a=src0, b=src1, acc2=gprfunc(accStartSrc1, (accEndSrc1-accStartSrc1+1)), \
@@ -4210,7 +4210,7 @@ class KernelWriterAssembly(KernelWriter):
               src1 = Str1
 
             variant = [kernel["MatrixInstM"], kernel["MatrixInstN"], kernel["MatrixInstK"]]
-            if (not mfma_1k) and self.states.version in [(9,4,0)]:
+            if (not mfma_1k) and self.states.version in [(9,4,0), (9,4,1), (9,4,2)]:
               variant.append(kernel["MatrixInstB"])
 
             waits = self.mfmaIter_waitCount(kernel)
@@ -6807,15 +6807,14 @@ class KernelWriterAssembly(KernelWriter):
     module.addSpaceLine()
 
     # Global Write
-    #Store SC1 WA for gfx940
-    forceSC1 = (globalParameters["CurrentISA"] == (9,4,0)) and (globalParameters["ForceStoreSC1WA"]) #Force SC1 WA
+    #Store SC1 WA for gfx940/gfx941
     ntStr = ""
     if kernel.enabledSetPrioSplitLDS:
       module.add(SSetPrior(prior=1))
-    if kernel["NonTemporalD"]%2==1 or forceSC1:
+    if kernel["NonTemporalD"]%2==1 or kernel["ForceStoreSC1"]:
       ntStr += " " + getGlcBitName(kernel["MemoryModifierFormat"])
 
-    if kernel["NonTemporalD"]//2==1 or forceSC1:
+    if kernel["NonTemporalD"]//2==1 or kernel["ForceStoreSC1"]:
       ntStr += " " + getSlcBitName(kernel["MemoryModifierFormat"])
 
     addr1 = sgpr("SrdD", 4)
@@ -6840,7 +6839,7 @@ class KernelWriterAssembly(KernelWriter):
         module.add(SWaitCnt(lgkmcnt=lgkmcnt, comment="wait for LDS read"))
 
         numStoreInst += 1
-        module.add(self.chooseGlobalWrite(True, bps, storeRegs[rIdx], rpv, addr0, addr1, 0, ntStr, comment="store D"))
+        module.add(self.chooseGlobalWrite(True, bps, storeRegs[rIdx], rpv, addr0, addr1, 0, ntStr, forceStoreSC1=kernel["ForceStoreSC1"], comment="store D"))
     else:
       tmpS23 = tmpS01+self.states.laneSGPRCount
       coord0 = tmpVgpr
@@ -6887,9 +6886,9 @@ class KernelWriterAssembly(KernelWriter):
           sumIdx = storeRegs[rIdx] + int(vi*rpe)
           numStoreInst += 1
           if bps == 2:
-            module.add(self.chooseGlobalWrite(True, bpe, sumIdx, rpe, addr0, addr1, 0, ntStr, hi16=vi%2, comment="store D"))
+            module.add(self.chooseGlobalWrite(True, bpe, sumIdx, rpe, addr0, addr1, 0, ntStr, forceStoreSC1=kernel["ForceStoreSC1"], hi16=vi%2, comment="store D"))
           else:
-            module.add(self.chooseGlobalWrite(True, bps, sumIdx, rpv, addr0, addr1, 0, ntStr, comment="store D"))
+            module.add(self.chooseGlobalWrite(True, bps, sumIdx, rpv, addr0, addr1, 0, ntStr, forceStoreSC1=kernel["ForceStoreSC1"], comment="store D"))
 
           if bps == 1:
             module.add(VAShiftRightI32(dst=vgpr("ValuC+%u"%sumIdx), shiftHex=8, src=vgpr("ValuC+%u"%sumIdx), comment=" shift 1 byte" ))
@@ -7884,7 +7883,7 @@ class KernelWriterAssembly(KernelWriter):
 
   ##############################################################################
   def chooseGlobalWrite(self, useBuffer, bps, srcVgpr, rpv, \
-                        addr0, addr1, offset, glc=False, slc=False, memoryModifierFormat="", hi16=0, comment="store"):
+                        addr0, addr1, offset, glc=False, slc=False, memoryModifierFormat="", forceStoreSC1=False, hi16=0, comment="store"):
     """
     create the store instruction for requested vector width and other parms
     rpv = regs per vector
@@ -7925,8 +7924,7 @@ class KernelWriterAssembly(KernelWriter):
         assert 0, "bad bps"
 
     if useBuffer:
-      forceSC1 = (globalParameters["CurrentISA"] == (9,4,0)) and (globalParameters["ForceStoreSC1WA"]) #Force SC1 WA
-      mubuf = MUBUFModifiers(offen=True, offset12=offset, glc=glc, slc=slc, memoryModifierFormat=memoryModifierFormat, forceSC1=forceSC1)
+      mubuf = MUBUFModifiers(offen=True, offset12=offset, glc=glc, slc=slc, memoryModifierFormat=memoryModifierFormat, forceStoreSC1=forceStoreSC1)
       # buffer_load offset field is 12-bit.
       # if offset >= 4096, use soffset instead
       if offset >= 4096:
@@ -7940,8 +7938,7 @@ class KernelWriterAssembly(KernelWriter):
         bufferStoreImpl(0, mubuf)
 
     else:
-      forceSC1 = (globalParameters["CurrentISA"] == (9,4,0)) and (globalParameters["ForceStoreSC1WA"]) #Force SC1 WA
-      flat = FLATModifiers(glc=glc, slc=slc, memoryModifierFormat=memoryModifierFormat, forceSC1=forceSC1)
+      flat = FLATModifiers(glc=glc, slc=slc, memoryModifierFormat=memoryModifierFormat, forceStoreSC1=forceStoreSC1)
       if bps==2 and hi16:
         module.add(FlatStoreD16HIB16(vaddr=addr0, src=vgpr(srcVgpr*2), flat=flat, comment=comment))
       elif bps==2 and not hi16:
@@ -8053,10 +8050,7 @@ class KernelWriterAssembly(KernelWriter):
       # if GWVW > Vw, might need to support loops to
       # implement wider stores
       isGlc = False
-
-      #Store SC1 WA for gfx940
-      forceSC1 = (globalParameters["CurrentISA"] == (9,4,0)) and (globalParameters["ForceStoreSC1WA"]) #Force SC1 WA
-      isSlc = forceSC1
+      isSlc = False
 
       if tc == 'D':
         if kernel["NonTemporalD"]%2==1:
@@ -8099,27 +8093,27 @@ class KernelWriterAssembly(KernelWriter):
         if not kernel["ProblemType"]["HighPrecisionAccumulate"]:
           # (H,H,H,H,H,H), internal H
           module.add(self.chooseGlobalWrite(useBuffer, bps, sumIdx//2, rpv, \
-                           addr0, addr1, globalOffset, isGlc, isSlc, kernel["MemoryModifierFormat"], hi16=sumIdx%2, comment=comment))
+                           addr0, addr1, globalOffset, isGlc, isSlc, kernel["MemoryModifierFormat"], forceStoreSC1=kernel["ForceStoreSC1"], hi16=sumIdx%2, comment=comment))
         else:
           # (B,B,B,B,S,S), internal S
           # (H,H,H,H,H,H), internal S
           # (H,H,H,H,S,S), internal S
           module.add(self.chooseGlobalWrite(useBuffer, bps, sumIdx, rpv, \
-                         addr0, addr1, globalOffset, isGlc, isSlc, kernel["MemoryModifierFormat"], hi16=0, comment=comment))
+                         addr0, addr1, globalOffset, isGlc, isSlc, kernel["MemoryModifierFormat"], forceStoreSC1=kernel["ForceStoreSC1"], hi16=0, comment=comment))
       elif dataType.isInt32() or dataType.isSingle():
         module.add(self.chooseGlobalWrite(useBuffer, bps, sumIdx, rpv, \
-                       addr0, addr1, globalOffset, isGlc, isSlc, kernel["MemoryModifierFormat"], comment=comment))
+                       addr0, addr1, globalOffset, isGlc, isSlc, kernel["MemoryModifierFormat"], forceStoreSC1=kernel["ForceStoreSC1"], comment=comment))
       elif dataType.isDouble() or dataType.isSingleComplex():
         module.add(self.chooseGlobalWrite(useBuffer, bps, sumIdx*2, rpv, \
-                       addr0, addr1, globalOffset, isGlc, isSlc, kernel["MemoryModifierFormat"], comment=comment))
+                       addr0, addr1, globalOffset, isGlc, isSlc, kernel["MemoryModifierFormat"], forceStoreSC1=kernel["ForceStoreSC1"], comment=comment))
       elif dataType.isDoubleComplex():
         rps = dataType.numRegisters()
         module.add(self.chooseGlobalWrite(useBuffer, bps, sumIdx*rps, rpv, \
-                       addr0, addr1, globalOffset, isGlc, isSlc, kernel["MemoryModifierFormat"], comment=comment))
+                       addr0, addr1, globalOffset, isGlc, isSlc, kernel["MemoryModifierFormat"], forceStoreSC1=kernel["ForceStoreSC1"], comment=comment))
       elif dataType.isInt8():
         if kernel["ProblemType"]["HighPrecisionAccumulate"]:
           module.add(self.chooseGlobalWrite(useBuffer, bps, sumIdx, rpv, \
-                         addr0, addr1, globalOffset, isGlc, isSlc, kernel["MemoryModifierFormat"], comment=comment))
+                         addr0, addr1, globalOffset, isGlc, isSlc, kernel["MemoryModifierFormat"], forceStoreSC1=kernel["ForceStoreSC1"], comment=comment))
     return module
 
   ##############################################################################
@@ -8549,13 +8543,13 @@ class KernelWriterAssembly(KernelWriter):
       rpv = rpe * gwvw
       if dataType.isHalf() or dataType.isBFloat16():
         module.add(self.chooseGlobalWrite(useBuffer, bps, tmpVgprN, rpv, \
-                          addr0, addr1, offset=0, hi16=0, comment="global store bias"))
+                          addr0, addr1, forceStoreSC1=kernel["ForceStoreSC1"], offset=0, hi16=0, comment="global store bias"))
       elif dataType.isInt32() or dataType.isSingle():
         module.add(self.chooseGlobalWrite(useBuffer, bps, tmpVgprN, rpv, \
-                          addr0, addr1, offset=0, comment="global store bias"))
+                          addr0, addr1, forceStoreSC1=kernel["ForceStoreSC1"], offset=0, comment="global store bias"))
       elif dataType.isDouble() or dataType.isSingleComplex() :
         module.add(self.chooseGlobalWrite(useBuffer, bps, tmpVgprN, rpv, \
-                          addr0, addr1, offset=0, comment="global store bias"))
+                          addr0, addr1, forceStoreSC1=kernel["ForceStoreSC1"], offset=0, comment="global store bias"))
     else: # edge
       tmpVgprNStep = max(1, biasDataType.numRegisters())
       globalOffset = 0
@@ -8565,13 +8559,13 @@ class KernelWriterAssembly(KernelWriter):
         rpv = rpe
         if dataType.isHalf() or dataType.isBFloat16():
           module.add(self.chooseGlobalWrite(useBuffer, bps, tmpVgprN, rpv, \
-                            addr0, addr1, offset=globalOffset, hi16=0, comment="global store bias"))
+                            addr0, addr1, forceStoreSC1=kernel["ForceStoreSC1"], offset=globalOffset, hi16=0, comment="global store bias"))
         elif dataType.isInt32() or dataType.isSingle():
           module.add(self.chooseGlobalWrite(useBuffer, bps, tmpVgprN, rpv, \
-                            addr0, addr1, offset=globalOffset, comment="global store bias"))
+                            addr0, addr1, forceStoreSC1=kernel["ForceStoreSC1"], offset=globalOffset, comment="global store bias"))
         elif dataType.isDouble() or dataType.isSingleComplex() :
           module.add(self.chooseGlobalWrite(useBuffer, bps, tmpVgprN, rpv, \
-                            addr0, addr1, offset=globalOffset, comment="global store bias"))
+                            addr0, addr1, forceStoreSC1=kernel["ForceStoreSC1"], offset=globalOffset, comment="global store bias"))
         tmpVgprN += tmpVgprNStep
         globalOffset += biasBpe
     module.add(SMovB64(dst=EXEC(), src=-1, comment="Reset exec mask"))

@@ -68,7 +68,7 @@ class FLATModifiers(Container):
     slc:      bool = False
     lds:      bool = False
     memoryModifierFormat: str = ""
-    forceSC1: bool = False
+    forceStoreSC1: bool = False
 
     def __post_init__(self):
         super().__init__()
@@ -81,9 +81,9 @@ class FLATModifiers(Container):
         kStr = ""
         if self.offset12 != 0:
             kStr += " offset:%u"%self.offset12
-        if self.glc or self.forceSC1:
+        if self.glc or self.forceStoreSC1:
             kStr += " " + getGlcBitName(self.memoryModifierFormat)
-        if self.slc or self.forceSC1:
+        if self.slc or self.forceStoreSC1:
             kStr += " " + getSlcBitName(self.memoryModifierFormat)
         if self.lds:
             kStr += " lds"
@@ -97,7 +97,7 @@ class MUBUFModifiers(Container):
     slc:      bool = False
     lds:      bool = False
     memoryModifierFormat: str = ""
-    forceSC1: bool = False
+    forceStoreSC1: bool = False
     def __post_init__(self):
         super().__init__()
 
@@ -109,11 +109,11 @@ class MUBUFModifiers(Container):
         kStr = ""
         if self.offen:
             kStr += " offen offset:%u"%self.offset12
-        if (self.glc or self.slc or self.lds):
+        if (self.glc or self.slc or self.lds or self.forceStoreSC1):
             kStr += ","
-        if self.glc or self.forceSC1:
+        if self.glc or self.forceStoreSC1:
             kStr += " " + getGlcBitName(self.memoryModifierFormat)
-        if self.slc or self.forceSC1:
+        if self.slc or self.forceStoreSC1:
             kStr += " " + getSlcBitName(self.memoryModifierFormat)
         if self.lds:
             kStr += " lds"

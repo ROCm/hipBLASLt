@@ -65,7 +65,7 @@ class SignatureCOV3(Signature):
                                     sgprWorkGroup=[1, 1, sgprWgZ],
                                     vgprWorkItem=0,
                                     flatWorkGroupSize=(kernel["NumThreads"]),
-                                    forceStoreSC1WA=globalParameters["ForceStoreSC1WA"])
+                                    ForceStoreSC1=kernel["ForceStoreSC1"])
 
         srcValueType  = kernel["ProblemType"]["DataType"].toNameAbbrev()
         dstValueType  = kernel["ProblemType"]["DestDataType"].toNameAbbrev()
