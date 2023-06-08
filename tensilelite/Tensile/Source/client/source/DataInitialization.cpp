@@ -936,7 +936,8 @@ namespace Tensile
 
                     if(!pUnit.cpuInput.current)
                     {
-                        auto ptr = std::shared_ptr<void>(std::malloc(size), std::free);
+                        auto ptr
+                            = std::shared_ptr<void>(std::malloc(size), [](auto p) { free(p); });
                         if(ptr == nullptr)
                         {
                             std::stringstream s;
@@ -947,7 +948,8 @@ namespace Tensile
                     }
                     if(!pUnit.cpuInput.valid)
                     {
-                        auto ptr = std::shared_ptr<void>(std::malloc(size), std::free);
+                        auto ptr
+                            = std::shared_ptr<void>(std::malloc(size), [](auto p) { free(p); });
                         if(ptr == nullptr)
                         {
                             std::stringstream s;
@@ -958,7 +960,8 @@ namespace Tensile
                     }
                     if(!pUnit.cpuInput.bad && m_curBoundsCheck == BoundsCheckMode::NaN)
                     {
-                        auto ptr = std::shared_ptr<void>(std::malloc(size), std::free);
+                        auto ptr
+                            = std::shared_ptr<void>(std::malloc(size), [](auto p) { free(p); });
                         if(ptr == nullptr)
                         {
                             std::stringstream s;
