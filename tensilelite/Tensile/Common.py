@@ -202,7 +202,7 @@ globalParameters["MergeFiles"] = True             # F=store every solution and k
 globalParameters["NumMergedFiles"] = 1            # The number of files that kernels should be split between when merging
 
 globalParameters["MaxFileName"] = 64              # If a file name would be longer than this, shorten it with a hash.
-globalParameters["SupportedISA"] = [(8,0,3), (9,0,0), (9,0,6), (9,0,8), (9,0,10), (9,4,0), (10,1,0), (10,1,1), (10,1,2), (10,3,0), (11,0,0), (11,0,1), (11,0,2)] # assembly kernels writer supports these architectures
+globalParameters["SupportedISA"] = [(8,0,3), (9,0,0), (9,0,6), (9,0,8), (9,0,10), (9,4,0), (9,4,1), (9,4,2), (10,1,0), (10,1,1), (10,1,2), (10,3,0), (11,0,0), (11,0,1), (11,0,2)] # assembly kernels writer supports these architectures
 
 globalParameters["GenerateManifestAndExit"] = False               # Output manifest file with list of expected library objects and exit
 globalParameters["NewClient"] = 2                                 # Old client deprecated: NewClient must be set to 2.
@@ -263,8 +263,6 @@ globalParameters["SeparateArchitectures"] = False # write Tensile library metada
 
 globalParameters["LazyLibraryLoading"] = False # Load library and code object files when needed instead of at startup
 
-globalParameters["ForceStoreSC1WA"] = True # Force store SC1 flag for gfx940 WA
-
 # Save a copy - since pytest doesn't re-run this initialization code and YAML files can override global settings - odd things can happen
 defaultGlobalParameters = deepcopy(globalParameters)
 
@@ -275,6 +273,8 @@ architectureMap = {
   'gfx908':'arcturus','gfx908:xnack+':'arcturus', 'gfx908:xnack-':'arcturus',
   'gfx90a':'aldebaran', 'gfx90a:xnack+':'aldebaran', 'gfx90a:xnack-':'aldebaran',
   'gfx940':'aquavanjaram', 'gfx940:xnack+':'aquavanjaram', 'gfx940:xnack-':'aquavanjaram',
+  'gfx941':'aquavanjaram', 'gfx941:xnack+':'aquavanjaram', 'gfx941:xnack-':'aquavanjaram',
+  'gfx942':'aquavanjaram', 'gfx942:xnack+':'aquavanjaram', 'gfx942:xnack-':'aquavanjaram',
   'gfx1010':'navi10', 'gfx1011':'navi12', 'gfx1012':'navi14', 'gfx1030':'navi21',
   'gfx1100':'navi31', 'gfx1101':'navi32', 'gfx1102':'navi33'
 }
@@ -936,6 +936,10 @@ validParameters = {
     "NonTemporalA":               list(range(0,4)),
     "NonTemporalB":               list(range(0,4)),
     "NonTemporalMetadata":        list(range(0,4)),
+
+    # force sc0/sc1 bits on all stores, -1 for auto select by arch
+    "ForceStoreSC1":              [-1, 0, 1],
+
     # Group together unroll iterations inside the unroll loop.
     # For example, InnerUnroll=2 will fetch LDS for two unroll iterations
     "InnerUnroll":                [1,2,4,8,16,32,64],
@@ -1055,6 +1059,7 @@ defaultBenchmarkCommonParameters = [
     {"NonTemporalA":              [ 0 ] },
     {"NonTemporalB":              [ 0 ] },
     {"NonTemporalMetadata":       [ 0 ] },
+    {"ForceStoreSC1":             [ -1 ] },
     {"CustomKernelName":          [ "" ] },
     {"NoReject":                  [ False ]},
     {"MinVgprNumber":             [0]},
@@ -1474,9 +1479,9 @@ def assignGlobalParameters( config ):
       globalParameters["CurrentISA"] = (9,0,6)
       printWarning("Failed to detect ISA so forcing (gfx906) on windows")
 
-  # TODO Remove this when rocm-smi supports gfx90a
-  if globalParameters["CurrentISA"] == (9,0,10) or globalParameters["CurrentISA"] == (9,4,0):
-    printWarning("HardwareMonitor currently disabled for gfx90a/gfx940")
+  # TODO Remove this when rocm-smi supports gfx940
+  if globalParameters["CurrentISA"] in [(9,4,0), (9,4,1), (9,4,2)]:
+    printWarning("HardwareMonitor currently disabled for gfx940")
     globalParameters["HardwareMonitor"] = False
 
   globalParameters["AsmCaps"] = {}

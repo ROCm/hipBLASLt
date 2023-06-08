@@ -1977,6 +1977,8 @@ class Solution(collections.abc.Mapping):
       else:
         state["MemoryModifierFormat"] = "SC0"
 
+    if "ForceStoreSC1" not in state or state["ForceStoreSC1"] not in validParameters["ForceStoreSC1"] or state["ForceStoreSC1"] == -1:
+      state["ForceStoreSC1"] = globalParameters["ArchCaps"][isa]["ForceStoreSC1"]
 
     if state["WavefrontSize"] == 32 and not globalParameters["ArchCaps"][isa]["HasWave32"]:
       reject(state, "WavefrontSize=32 not supported for ISA {}".format(isa))

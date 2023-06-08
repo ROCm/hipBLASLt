@@ -1,6 +1,6 @@
 ################################################################################
 #
-# Copyright (C) 2022 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -641,7 +641,7 @@ class _SignatureArgumentV3(_SignatureArgument):
 
 class _SignatureKernelDescriptorV3(Item):
     def __init__(self, name, groupSegSize, sgprWorkGroup, vgprWorkItem, \
-        totalVgprs: int=0, totalAgprs: int=0, totalSgprs: int =0, forceStoreSC1WA=False):
+        totalVgprs: int=0, totalAgprs: int=0, totalSgprs: int =0, ForceStoreSC1=False):
         super().__init__(name)
         # accumulator offset for Unified Register Files
         if self.archCaps["ArchAccUnifiedRegs"]:
@@ -656,7 +656,7 @@ class _SignatureKernelDescriptorV3(Item):
         self.groupSegSize = groupSegSize
         self.sgprWorkGroup = sgprWorkGroup
         self.vgprWorkItem = vgprWorkItem
-        self.forceStoreSC1WA = forceStoreSC1WA
+        self.ForceStoreSC1 = ForceStoreSC1
 
     def setGprs(self, totalVgprs: int, totalAgprs: int, totalSgprs: int):
         if self.archCaps["ArchAccUnifiedRegs"]:
@@ -674,8 +674,8 @@ class _SignatureKernelDescriptorV3(Item):
         kStr = ""
         # Temporary WA for gfx940
         forceStore = ""
-        if self.kernel.isa == (9,4,0):
-            if self.forceStoreSC1WA:
+        if self.kernel.isa in [(9,4,0),(9,4,1),(9,4,2)]:
+            if self.ForceStoreSC1:
                 forceStore = ":forcestoresc1+"
             else:
                 forceStore = ":forcestoresc1-"
@@ -778,7 +778,7 @@ class SignatureCodeMetaV3(Item):
 
 class SignatureBase(Item):
     def __init__(self, kernelName, codeObjectVersion, groupSegmentSize, sgprWorkGroup, \
-        vgprWorkItem, flatWorkGroupSize, totalVgprs: int=0, totalAgprs: int=0, totalSgprs: int=0, forceStoreSC1WA=False) -> None:
+        vgprWorkItem, flatWorkGroupSize, totalVgprs: int=0, totalAgprs: int=0, totalSgprs: int=0, ForceStoreSC1=False) -> None:
         super().__init__(kernelName)
         self.codeObjectVersion = codeObjectVersion
 
@@ -793,7 +793,7 @@ class SignatureBase(Item):
                                                                 groupSegSize=groupSegmentSize,
                                                                 sgprWorkGroup=sgprWorkGroup,
                                                                 vgprWorkItem=vgprWorkItem,
-                                                                forceStoreSC1WA=forceStoreSC1WA)
+                                                                ForceStoreSC1=ForceStoreSC1)
             self.codeMeta = SignatureCodeMetaV3(name=kernelName,
                                                 groupSegSize=groupSegmentSize,
                                                 totalVgprs=totalVgprs,
