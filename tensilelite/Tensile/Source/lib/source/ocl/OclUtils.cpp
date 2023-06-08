@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022 Advanced Micro Devices, Inc. All rights reserved.
+ * Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -152,6 +152,14 @@ namespace Tensile
             {
                 return AMDGPU::Processor::gfx940;
             }
+            else if(deviceString.find("gfx941") != std::string::npos)
+            {
+                return AMDGPU::Processor::gfx941;
+            }
+            else if(deviceString.find("gfx942") != std::string::npos)
+            {
+                return AMDGPU::Processor::gfx942;
+            }
             else if(deviceString.find("gfx1010") != std::string::npos)
             {
                 return AMDGPU::Processor::gfx1010;
@@ -201,8 +209,8 @@ namespace Tensile
                 (int)device.getInfo<CL_DEVICE_MAX_WORK_GROUP_SIZE_AMD>(), //int maxThreadsPerBlock;
                 {0, 0, 0}, //int maxThreadsDim[3];
                 {std::numeric_limits<int>::max(),
-                 std::numeric_limits<int>::max(),
-                 std::numeric_limits<int>::max()}, //int maxGridSize[3];
+                           std::numeric_limits<int>::max(),
+                           std::numeric_limits<int>::max()}, //int maxGridSize[3];
                 (int)device.getInfo<CL_DEVICE_MAX_CLOCK_FREQUENCY>()
                     * 1000, //int clockRate; CL_DEVICE_MAX_CLOCK_FREQUENCY
                 (int)device.getInfo<

@@ -171,7 +171,7 @@ def splitArchs():
   if "all" in wantedArchs:
     for arch in globalParameters['SupportedISA']:
       if isSupported(arch):
-        if (arch == (9,0,6) or arch == (9,0,8) or arch == (9,0,10) or arch == (9,4,0)):
+        if (arch in [(9,0,6), (9,0,8), (9,0,10), (9,4,0), (9,4,1), (9,4,2)]):
           if (arch == (9,0,10)):
             archs += [getGfxName(arch) + '-xnack+']
             cmdlineArchs += [getGfxName(arch) + ':xnack+']
