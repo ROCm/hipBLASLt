@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022 Advanced Micro Devices, Inc. All rights reserved.
+ * Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -60,6 +60,8 @@ namespace Tensile
             gfx908  = 908,
             gfx90a  = 910,
             gfx940  = 940,
+            gfx941  = 941,
+            gfx942  = 942,
             gfx1010 = 1010,
             gfx1011 = 1011,
             gfx1012 = 1012,
@@ -85,6 +87,10 @@ namespace Tensile
                 return "gfx90a";
             case AMDGPU::Processor::gfx940:
                 return "gfx940";
+            case AMDGPU::Processor::gfx941:
+                return "gfx941";
+            case AMDGPU::Processor::gfx942:
+                return "gfx942";
             case AMDGPU::Processor::gfx1010:
                 return "gfx1010";
             case AMDGPU::Processor::gfx1011:
