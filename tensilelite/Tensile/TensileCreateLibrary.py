@@ -996,7 +996,14 @@ def generateKernelObjectsFromSolutions(solutions):
 ################################################################################
 def generateLogicDataAndSolutions(logicFiles, args):
 
-  libraries = Common.ParallelMap(LibraryIO.parseLibraryLogicFile, logicFiles, "Reading logic files")
+  # skip the logic which architectureName is not in the build target.
+  if ";" in args.Architecture:
+    archs = args.Architecture.split(";") # user arg list format
+  else:
+    archs = args.Architecture.split("_") # workaround for cmake list in list issue
+
+  fIter = zip(logicFiles, itertools.repeat(archs))
+  libraries = Common.ParallelMap(LibraryIO.parseLibraryLogicFile, fIter, "Reading logic files", method=lambda x: x.starmap)
 
   solutions = []
 
@@ -1007,6 +1014,9 @@ def generateLogicDataAndSolutions(logicFiles, args):
 
   for logic in Utils.tqdm(libraries, "Processing logic data"):
     (_, architectureName, _, solutionsForSchedule, _, newLibrary) = logic
+
+    if architectureName == "":
+      continue
 
     if globalParameters["PackageLibrary"]:
       if architectureName in masterLibraries:

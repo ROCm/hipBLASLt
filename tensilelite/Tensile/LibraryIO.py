@@ -192,15 +192,25 @@ class LibraryLogic(NamedTuple):
     library: SolutionLibrary.MasterSolutionLibrary
 
 
-def parseLibraryLogicFile(filename):
+def parseLibraryLogicFile(filename, archs=None):
     """Wrapper function to read and parse a library logic file."""
-    return parseLibraryLogicData(readYAML(filename), filename)
+    return parseLibraryLogicData(readYAML(filename), filename, archs)
 
 
-def parseLibraryLogicData(data, srcFile="?"):
+def parseLibraryLogicData(data, srcFile="?", archs=None):
     """Parses the data of a library logic file."""
     if type(data) is list:
         data = parseLibraryLogicList(data, srcFile)
+
+    is_arch_valid = lambda cArch, tArch : (cArch == tArch or cArch == "all")
+    if not (archs == None) and "ArchitectureName" in data:
+        if type(archs) is list:
+            if len(archs) > 0 and not archs[0] == "all":
+                if not (any(is_arch_valid(arch.split(":")[0], data["ArchitectureName"]) for arch in archs)):
+                    return LibraryLogic("", "", None, [], [], None)
+        elif type(archs) is str:
+            if not is_arch_valid(arch.split(":")[0], data["ArchitectureName"]):
+                return LibraryLogic("", "", None, [], [], None)
 
     if "CUCount" not in data:
         data["CUCount"] = None
