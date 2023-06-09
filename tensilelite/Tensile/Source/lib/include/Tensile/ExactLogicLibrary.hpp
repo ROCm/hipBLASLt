@@ -113,12 +113,8 @@ namespace Tensile
 
             for(auto const& row : rows)
             {
-                if(row.first(problem, hardware))
-                {
-                    auto rowSolutions
-                        = row.second->findAllSolutions(problem, hardware, hardwareOnly);
-                    rv.insert(rowSolutions.begin(), rowSolutions.end());
-                }
+                auto rowSolutions = row.second->findAllSolutions(problem, hardware, hardwareOnly);
+                rv.insert(rowSolutions.begin(), rowSolutions.end());
             }
 
             return rv;
@@ -133,12 +129,9 @@ namespace Tensile
 
             for(auto const& row : rows)
             {
-                if(row.first(problems[0], hardware))
-                {
-                    auto rowSolutions
-                        = row.second->findAllSolutionsGroupedGemm(problems, hardware, hardwareOnly);
-                    rv.insert(rowSolutions.begin(), rowSolutions.end());
-                }
+                auto rowSolutions
+                    = row.second->findAllSolutionsGroupedGemm(problems, hardware, hardwareOnly);
+                rv.insert(rowSolutions.begin(), rowSolutions.end());
             }
 
             return rv;
