@@ -1938,6 +1938,8 @@ rocblaslt_status isSolutionSupported(rocblaslt_handle       handle,
                 tensile_prob.setUseScaleDVec(false);
                 tensile_prob.setUseE(false);
                 bool isSup = (*solution->problemPredicate)(tensile_prob);
+                if(isSup)
+                    *workspaceSizeInBytes = solution->requiredWorkspaceSize(tensile_prob);
                 tensile_prob.setUseBias(useBias);
                 tensile_prob.setActivationType(actType);
                 tensile_prob.setActivationHPA(actHPA);
@@ -1956,14 +1958,18 @@ rocblaslt_status isSolutionSupported(rocblaslt_handle       handle,
                 return rocblaslt_status_invalid_value;
             }
         }
-        *workspaceSizeInBytes = solution->requiredWorkspaceSize(tensile_prob);
+        else
+        {
+            *workspaceSizeInBytes = solution->requiredWorkspaceSize(tensile_prob);
+        }
     }
     else if constexpr(std::is_same<MyProblem, Tensile::ContractionProblemGroupedGemm>::value)
     {
         auto solution
             = library->getSolutionByIndex(tensile_prob.gemms[0], *hardware, *solutionIndex);
-        bool isSupported  = true;
-        bool isNormalGemm = true;
+        bool   isSupported      = true;
+        bool   isNormalGemm     = true;
+        size_t tmpWorkspaceSize = 0;
         for(int i = 0; i < tensile_prob.gemms.size(); i++)
         {
             tensile_prob.gemms[i].setWorkspaceSize(algo->max_workspace_bytes);
@@ -1972,6 +1978,7 @@ rocblaslt_status isSolutionSupported(rocblaslt_handle       handle,
                 isSupported = false;
                 break;
             }
+            tmpWorkspaceSize += solution->requiredWorkspaceSize(tensile_prob.gemms[i]);
         }
         for(int i = 0; i < tensile_prob.gemms.size(); i++)
         {
@@ -1997,6 +2004,7 @@ rocblaslt_status isSolutionSupported(rocblaslt_handle       handle,
         bool isFallbackSupported = true;
         if(isNormalGemm && !isSupported)
         {
+            tmpWorkspaceSize = 0;
             for(int i = 0; i < tensile_prob.gemms.size(); i++)
             {
                 auto useBias      = tensile_prob.gemms[i].useBias();
@@ -2011,6 +2019,10 @@ rocblaslt_status isSolutionSupported(rocblaslt_handle       handle,
                 {
                     isFallbackSupported = false;
                 }
+                else
+                {
+                    tmpWorkspaceSize += solution->requiredWorkspaceSize(tensile_prob.gemms[i]);
+                }
                 tensile_prob.gemms[i].setUseBias(useBias);
                 tensile_prob.gemms[i].setActivationType(actType);
                 tensile_prob.gemms[i].setActivationHPA(actHPA);
@@ -2024,6 +2036,7 @@ rocblaslt_status isSolutionSupported(rocblaslt_handle       handle,
             log_error(__func__, "Solution is not supported");
             return rocblaslt_status_invalid_value;
         }
+        *workspaceSizeInBytes = tmpWorkspaceSize;
     }
     return rocblaslt_status_success;
 }
