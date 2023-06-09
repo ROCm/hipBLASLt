@@ -64,7 +64,7 @@ class BoundIndex:
 
 
 class ProblemType:
-    StateKeys = ['operationIdentifier', 'aType', 'bType', 'cType', 'dType', 'eType',
+    StateKeys = ['operationIdentifier', 'transA', 'transB', 'aType', 'bType', 'cType', 'dType', 'eType', 'computeType',
                  'useBeta', 'useBias', 'biasSrcWhiteList', 'useE', 'useScaleDVec', 'biasDataTypeWhiteList', 'highPrecisionAccumulate',
                  'useInitialStridesAB', 'useInitialStridesCD', 'stridedBatched', 'groupedGemm',
                  'useGradient', 'activationType', 'activationHPA', 'activationNoGuard']
@@ -126,6 +126,8 @@ class ProblemType:
         dstType = DataType(d['DestDataType']) if 'DestDataType' in d else srcType
         computeType = DataType(d['ComputeDataType']) if 'ComputeDataType' in d else dstType
 
+        rv.transA = bool(d['TransposeA'])
+        rv.transB = bool(d['TransposeB'])
         rv.aType = srcType
         rv.bType = srcType
         rv.cType = dstType
@@ -134,6 +136,7 @@ class ProblemType:
         # we already checked the src/dst/compute types are supported and well-assigned in SolutionStruct
         rv.alphaType = computeType
         rv.betaType  = computeType
+        rv.computeType = computeType
 
         rv.highPrecisionAccumulate = False
         if 'HighPrecisionAccumulate' in d:

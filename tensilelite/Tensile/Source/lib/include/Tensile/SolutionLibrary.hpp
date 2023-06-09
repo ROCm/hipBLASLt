@@ -42,6 +42,50 @@ namespace Tensile
  * \copydoc Tensile::SolutionLibrary
  */
 
+    enum class SolutionLibrarySearchType
+    {
+        DEFAULT        = 1,
+        GEMM_TYPE_ONLY = 2,
+        HARDWARE_ONLY  = 3,
+        COUNT          = 4
+    };
+
+    template <typename MySolution, typename MyProblem>
+    inline bool isGemmTypeSame(const MySolution& solutions, const MyProblem& problem)
+    {
+        if(solutions.problemType.transA == problem.transA()
+           && solutions.problemType.transB == problem.transB()
+           && solutions.problemType.aType == problem.a().dataType()
+           && solutions.problemType.bType == problem.b().dataType()
+           && solutions.problemType.cType == problem.c().dataType()
+           && solutions.problemType.dType == problem.d().dataType()
+           && solutions.problemType.computeType == problem.computeType())
+            return true;
+        return false;
+    }
+
+    template <typename MySolution, typename MyProblem>
+    inline bool softwarePredicate(const SolutionLibrarySearchType& searchType,
+                                  const MySolution&                solutions,
+                                  const MyProblem&                 problem)
+    {
+        switch(searchType)
+        {
+        case SolutionLibrarySearchType::DEFAULT:
+            return (*solutions.problemPredicate)(problem);
+            break;
+        case SolutionLibrarySearchType::GEMM_TYPE_ONLY:
+            return isGemmTypeSame(solutions, problem);
+            break;
+        case SolutionLibrarySearchType::HARDWARE_ONLY:
+            return true;
+            break;
+        default:
+            break;
+        }
+        return false;
+    }
+
     template <typename MySolution>
     using SolutionSet = std::set<std::shared_ptr<MySolution>>;
     template <typename MySolution>
@@ -106,15 +150,17 @@ namespace Tensile
    *
    * May return an empty set if no such object exists.
    */
-        virtual SolutionSet<MySolution> findAllSolutions(MyProblem const& problem,
-                                                         Hardware const&  hardware,
-                                                         bool hardwareOnly = false) const
+        virtual SolutionSet<MySolution> findAllSolutions(MyProblem const&          problem,
+                                                         Hardware const&           hardware,
+                                                         SolutionLibrarySearchType searchType
+                                                         = SolutionLibrarySearchType::DEFAULT) const
             = 0;
 
         virtual SolutionSet<MySolution>
             findAllSolutionsGroupedGemm(std::vector<MyProblem> const& problems,
                                         Hardware const&               hardware,
-                                        bool                          hardwareOnly = false) const
+                                        SolutionLibrarySearchType     searchType
+                                        = SolutionLibrarySearchType::DEFAULT) const
             = 0;
 
         virtual std::string type() const        = 0;

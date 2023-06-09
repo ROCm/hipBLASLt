@@ -152,9 +152,11 @@ namespace Tensile
             return std::shared_ptr<MySolution>();
         }
 
-        virtual SolutionSet<MySolution> findAllSolutions(MyProblem const& problem,
-                                                         Hardware const&  hardware,
-                                                         bool hardwareOnly = false) const override
+        virtual SolutionSet<MySolution>
+            findAllSolutions(MyProblem const&          problem,
+                             Hardware const&           hardware,
+                             SolutionLibrarySearchType searchType
+                             = SolutionLibrarySearchType::DEFAULT) const override
         {
             bool debug = Debug::Instance().printPredicateEvaluation();
 
@@ -164,12 +166,12 @@ namespace Tensile
                 if(debug)
                 {
                     solution->hardwarePredicate->debugEval(hardware, std::cout);
-                    if(!hardwareOnly)
+                    if(searchType == SolutionLibrarySearchType::DEFAULT)
                         solution->problemPredicate->debugEval(problem, std::cout);
                 }
 
                 if((*solution->hardwarePredicate)(hardware)
-                   && (hardwareOnly || (*solution->problemPredicate)(problem)))
+                   && softwarePredicate(searchType, (*solution), problem))
                     useSolution = true;
             }
             else if(debug)
@@ -194,7 +196,8 @@ namespace Tensile
         virtual SolutionSet<MySolution>
             findAllSolutionsGroupedGemm(std::vector<MyProblem> const& problems,
                                         Hardware const&               hardware,
-                                        bool                          hardwareOnly) const override
+                                        SolutionLibrarySearchType     searchType
+                                        = SolutionLibrarySearchType::DEFAULT) const override
         {
             bool debug = Debug::Instance().printPredicateEvaluation();
 
@@ -204,7 +207,7 @@ namespace Tensile
                 if((*solution->hardwarePredicate)(hardware))
                     useSolution = true;
 
-                if(!hardwareOnly)
+                if(searchType == SolutionLibrarySearchType::DEFAULT)
                 {
                     size_t ws = (*solution).requiredWorkspaceSizeGroupedGemm(problems);
 
@@ -216,15 +219,21 @@ namespace Tensile
                             useSolution = false;
                     }
                 }
+                else if(searchType == SolutionLibrarySearchType::GEMM_TYPE_ONLY)
+                {
+                    if(!isGemmTypeSame((*solution), problems[0]))
+                        useSolution = false;
+                }
 
                 if(debug)
                 {
                     solution->hardwarePredicate->debugEval(hardware, std::cout);
-                    for(int idx = 0; idx < problems.size(); idx++)
-                    {
-                        auto problem = problems[idx];
-                        solution->problemPredicate->debugEval(problem, std::cout);
-                    }
+                    if(searchType == SolutionLibrarySearchType::DEFAULT)
+                        for(int idx = 0; idx < problems.size(); idx++)
+                        {
+                            auto problem = problems[idx];
+                            solution->problemPredicate->debugEval(problem, std::cout);
+                        }
                 }
             }
             else if(debug)

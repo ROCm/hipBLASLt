@@ -132,16 +132,18 @@ namespace Tensile
          *
          * May return an empty set if no such object exists.
          */
-        virtual SolutionSet<MySolution> findAllSolutions(MyProblem const& problem,
-                                                         Hardware const&  hardware,
-                                                         bool hardwareOnly = false) const override
+        virtual SolutionSet<MySolution>
+            findAllSolutions(MyProblem const&          problem,
+                             Hardware const&           hardware,
+                             SolutionLibrarySearchType searchType
+                             = SolutionLibrarySearchType::DEFAULT) const override
         {
             if(!library)
             {
                 loadPlaceholderLibrary();
             }
 
-            auto solutions = library->findAllSolutions(problem, hardware, hardwareOnly);
+            auto solutions = library->findAllSolutions(problem, hardware, searchType);
 
             for(auto& solution : solutions)
             {
@@ -154,14 +156,15 @@ namespace Tensile
         virtual SolutionSet<MySolution>
             findAllSolutionsGroupedGemm(std::vector<MyProblem> const& problems,
                                         Hardware const&               hardware,
-                                        bool                          hardwareOnly) const override
+                                        SolutionLibrarySearchType     searchType
+                                        = SolutionLibrarySearchType::DEFAULT) const override
         {
             if(!library)
             {
                 loadPlaceholderLibrary();
             }
 
-            auto solutions = library->findAllSolutionsGroupedGemm(problems, hardware, hardwareOnly);
+            auto solutions = library->findAllSolutionsGroupedGemm(problems, hardware, searchType);
 
             for(auto& solution : solutions)
             {

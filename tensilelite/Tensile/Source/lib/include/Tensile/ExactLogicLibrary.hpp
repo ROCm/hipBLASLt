@@ -105,15 +105,20 @@ namespace Tensile
             return rv;
         }
 
-        virtual SolutionSet<MySolution> findAllSolutions(MyProblem const& problem,
-                                                         Hardware const&  hardware,
-                                                         bool hardwareOnly) const override
+        virtual SolutionSet<MySolution>
+            findAllSolutions(MyProblem const&          problem,
+                             Hardware const&           hardware,
+                             SolutionLibrarySearchType searchType
+                             = SolutionLibrarySearchType::DEFAULT) const override
         {
             SolutionSet<MySolution> rv;
 
             for(auto const& row : rows)
             {
-                auto rowSolutions = row.second->findAllSolutions(problem, hardware, hardwareOnly);
+                if(row.first.value->type() == "AMDGPU" && !row.first(problem, hardware))
+                    continue;
+
+                auto rowSolutions = row.second->findAllSolutions(problem, hardware, searchType);
                 rv.insert(rowSolutions.begin(), rowSolutions.end());
             }
 
@@ -123,14 +128,18 @@ namespace Tensile
         virtual SolutionSet<MySolution>
             findAllSolutionsGroupedGemm(std::vector<MyProblem> const& problems,
                                         Hardware const&               hardware,
-                                        bool                          hardwareOnly) const override
+                                        SolutionLibrarySearchType     searchType
+                                        = SolutionLibrarySearchType::DEFAULT) const override
         {
             SolutionSet<MySolution> rv;
 
             for(auto const& row : rows)
             {
+                if(row.first.value->type() == "AMDGPU" && !row.first(problems[0], hardware))
+                    continue;
+
                 auto rowSolutions
-                    = row.second->findAllSolutionsGroupedGemm(problems, hardware, hardwareOnly);
+                    = row.second->findAllSolutionsGroupedGemm(problems, hardware, searchType);
                 rv.insert(rowSolutions.begin(), rowSolutions.end());
             }
 

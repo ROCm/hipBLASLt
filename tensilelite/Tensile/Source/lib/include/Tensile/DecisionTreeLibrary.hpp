@@ -91,13 +91,15 @@ namespace Tensile
             return forest->findBestMatch(problem, transform);
         }
 
-        virtual SolutionSet<MySolution> findAllSolutions(MyProblem const& problem,
-                                                         Hardware const&  hardware,
-                                                         bool hardwareOnly = false) const override
+        virtual SolutionSet<MySolution>
+            findAllSolutions(MyProblem const&          problem,
+                             Hardware const&           hardware,
+                             SolutionLibrarySearchType searchType
+                             = SolutionLibrarySearchType::DEFAULT) const override
         {
-            if(hardwareOnly)
+            if(searchType != SolutionLibrarySearchType::DEFAULT)
             {
-                throw std::runtime_error("Dicision tree does not support hardwareOnly mode.");
+                throw std::runtime_error("Dicision tree only supports default search mode.");
             }
             typename Forest::Transform transform
                 = [&](Element library) -> std::shared_ptr<MySolution> {
@@ -109,11 +111,12 @@ namespace Tensile
         virtual SolutionSet<MySolution>
             findAllSolutionsGroupedGemm(std::vector<MyProblem> const& problems,
                                         Hardware const&               hardware,
-                                        bool                          hardwareOnly) const override
+                                        SolutionLibrarySearchType     searchType
+                                        = SolutionLibrarySearchType::DEFAULT) const override
         {
-            if(hardwareOnly)
+            if(searchType != SolutionLibrarySearchType::DEFAULT)
             {
-                throw std::runtime_error("Dicision tree does not support hardwareOnly mode.");
+                throw std::runtime_error("Dicision tree only supports default search mode.");
             }
             typename Forest::Transform transform
                 = [&](Element library) -> std::shared_ptr<MySolution> {

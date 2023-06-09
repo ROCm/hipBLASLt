@@ -167,9 +167,11 @@ namespace Tensile
             return bestSolution;
         }
 
-        virtual SolutionSet<MySolution> findAllSolutions(MyProblem const& problem,
-                                                         Hardware const&  hardware,
-                                                         bool hardwareOnly = false) const override
+        virtual SolutionSet<MySolution>
+            findAllSolutions(MyProblem const&          problem,
+                             Hardware const&           hardware,
+                             SolutionLibrarySearchType searchType
+                             = SolutionLibrarySearchType::DEFAULT) const override
         {
             bool debug = Debug::Instance().printPropertyEvaluation();
 
@@ -182,7 +184,7 @@ namespace Tensile
                     std::cout << row.second->description() << ": ";
                 }
 
-                if((hardwareOnly || (*row.second->problemPredicate)(problem))
+                if(softwarePredicate(searchType, *(row.second), problem)
                    && (*row.second->hardwarePredicate)(hardware))
                 {
                     rv.insert(row.second);
@@ -198,7 +200,7 @@ namespace Tensile
 
                 if(debug)
                 {
-                    if(!hardwareOnly)
+                    if(searchType == SolutionLibrarySearchType::DEFAULT)
                     {
                         row.second->problemPredicate->debugEval(problem, std::cout);
                         std::cout << std::endl;
@@ -214,7 +216,8 @@ namespace Tensile
         virtual SolutionSet<MySolution>
             findAllSolutionsGroupedGemm(std::vector<MyProblem> const& problems,
                                         Hardware const&               hardware,
-                                        bool                          hardwareOnly) const override
+                                        SolutionLibrarySearchType     searchType
+                                        = SolutionLibrarySearchType::DEFAULT) const override
         {
             bool debug = Debug::Instance().printPropertyEvaluation();
 
@@ -231,7 +234,7 @@ namespace Tensile
                 if((*row.second->hardwarePredicate)(hardware))
                 {
                     useSolution = true;
-                    if(!hardwareOnly)
+                    if(searchType == SolutionLibrarySearchType::DEFAULT)
                     {
                         size_t ws = (*row.second).requiredWorkspaceSizeGroupedGemm(problems);
 
@@ -242,6 +245,11 @@ namespace Tensile
                             if(!(*row.second->problemPredicate)(problem))
                                 useSolution = false;
                         }
+                    }
+                    else if(searchType == SolutionLibrarySearchType::GEMM_TYPE_ONLY)
+                    {
+                        if(!isGemmTypeSame((*row.second), problems[0]))
+                            useSolution = false;
                     }
 
                     if(useSolution)
@@ -254,7 +262,7 @@ namespace Tensile
                     else
                         std::cout << " Predicate failed";
 
-                    if(!hardwareOnly)
+                    if(searchType == SolutionLibrarySearchType::DEFAULT)
                     {
                         for(int idx = 0; idx < problems.size(); idx++)
                         {

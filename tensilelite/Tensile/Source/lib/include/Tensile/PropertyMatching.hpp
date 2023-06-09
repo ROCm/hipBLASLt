@@ -80,16 +80,20 @@ namespace Tensile
             virtual ~MatchingTable() = default;
 
             virtual std::tuple<ReturnValue, double> findBestMatch(Object const& object,
-                                                                  Transform transform) const = 0;
+                                                                  Transform     transform) const
+                = 0;
 
             virtual std::vector<ReturnValue>
                 findTopMatch(Object const& object, Transform transform, int numSolutions) const = 0;
 
             virtual ReturnValue findBestEvaluationSolution(Object const&   object,
                                                            Hardware const& hardware,
-                                                           Transform       transform) const = 0;
+                                                           Transform       transform) const
+                = 0;
 
             virtual std::vector<Value> matchesInOrder(Object const& object) const = 0;
+
+            virtual std::vector<Value> GetAll() const = 0;
 
             virtual std::string description() const = 0;
 
@@ -136,7 +140,8 @@ namespace Tensile
             }
 
             virtual std::tuple<ReturnValue, double> findBestKeyMatch(Key const& key,
-                                                                     Transform transform) const = 0;
+                                                                     Transform  transform) const
+                = 0;
 
             virtual std::tuple<ReturnValue, double>
                 findBestMatch(Object const& object, Transform transform) const override
@@ -257,6 +262,17 @@ namespace Tensile
 
                 for(auto const& entry : indices)
                     result.push_back(this->table[entry.second].value);
+
+                return result;
+            }
+
+            std::vector<Value> GetAll() const override
+            {
+                std::vector<Value> result;
+                result.reserve(this->table.size());
+
+                for(auto& data : this->table)
+                    result.push_back(data.value);
 
                 return result;
             }

@@ -207,19 +207,22 @@ namespace Tensile
             }
         }
 
-        virtual SolutionSet<MySolution> findAllSolutions(MyProblem const& problem,
-                                                         Hardware const&  hardware,
-                                                         bool hardwareOnly = false) const override
+        virtual SolutionSet<MySolution>
+            findAllSolutions(MyProblem const&          problem,
+                             Hardware const&           hardware,
+                             SolutionLibrarySearchType searchType
+                             = SolutionLibrarySearchType::DEFAULT) const override
         {
-            return m_subLibrary->findAllSolutions(problem, hardware, hardwareOnly);
+            return m_subLibrary->findAllSolutions(problem, hardware, searchType);
         }
 
         virtual SolutionSet<MySolution>
             findAllSolutionsGroupedGemm(std::vector<MyProblem> const& problems,
                                         Hardware const&               hardware,
-                                        bool                          hardwareOnly) const override
+                                        SolutionLibrarySearchType     searchType
+                                        = SolutionLibrarySearchType::DEFAULT) const override
         {
-            return m_subLibrary->findAllSolutionsGroupedGemm(problems, hardware, hardwareOnly);
+            return m_subLibrary->findAllSolutionsGroupedGemm(problems, hardware, searchType);
         }
 
         std::shared_ptr<MySolution> findSolutionInCache(MyProblem const& problem,
