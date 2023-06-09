@@ -59,10 +59,15 @@
 #include <type_traits>
 #include <vector>
 
+#ifdef WIN32
+#include <windows.h>
+#include <io.h>
+#else
+#include <link.h>
 #include <glob.h>
 #include <libgen.h>
-#include <link.h>
 #include <unistd.h>
+#endif
 
 #define HIPBLASLT_LIB_PATH "/opt/rocm/hipblaslt/lib"
 
@@ -71,6 +76,16 @@
 #endif
 
 #define INTERNAL_HIPHOSTMEM_SIZE 32768
+
+#if __has_include(<filesystem>)
+#include <filesystem>
+namespace fs = std::filesystem;
+#elif __has_include(<experimental/filesystem>)
+#include <experimental/filesystem>
+namespace fs = std::experimental::filesystem;
+#else
+#error no filesystem found
+#endif
 
 namespace
 {
@@ -1027,10 +1042,24 @@ namespace
                 // Fall back on hard-coded path if static library or not found
 
 #ifndef HIPBLASLT_STATIC_LIB
+#ifdef WIN32
+                std::vector<TCHAR> dll_path(MAX_PATH + 1);
+                if(GetModuleFileNameA(
+                       GetModuleHandleA("hipblaslt.dll"), dll_path.data(), MAX_PATH + 1))
+                {
+                    std::string tmp(dll_path.begin(), dll_path.end());
+                    std::filesystem::path exepath = tmp;
+                    if(exepath.has_filename())
+                    {
+                        path = exepath.remove_filename().string();
+                    }
+                }
+#else
                 auto hipblaslt_so_path = getHipblasltSoPath();
 
                 if(hipblaslt_so_path.size())
                     path = std::string{dirname(&hipblaslt_so_path[0])};
+#endif
 #endif // ifndef HIPBLASLT_STATIC_LIB
 
                 // Find the location of the libraries

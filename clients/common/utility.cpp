@@ -32,7 +32,12 @@
 #include <stdexcept>
 #include <stdlib.h>
 
+#ifdef WIN32
+#include <windows.h>
+#include <libloaderapi.h>
+#else
 #include <fcntl.h>
+#endif
 
 #include "Tensile/Source/client/include/Utility.hpp"
 
@@ -50,6 +55,30 @@ namespace fs = std::experimental::filesystem;
 // Return path of this executable
 std::string hipblaslt_exepath()
 {
+#ifdef WIN32
+    std::vector<TCHAR> result(MAX_PATH + 1);
+    // Ensure result is large enough to accommodate the path
+    DWORD length = 0;
+    for(;;)
+    {
+        length = GetModuleFileNameA(nullptr, result.data(), result.size());
+        if(length < result.size() - 1)
+        {
+            result.resize(length + 1);
+            break;
+        }
+        result.resize(result.size() * 2);
+    }
+
+    // std::wstring          wspath(result.data());
+    // fs::path exepath(wspath.begin(), wspath.end());
+
+    fs::path exepath(result.begin(), result.end());
+    exepath = exepath.remove_filename();
+    // Add trailing "/" to exepath if required
+    exepath += exepath.empty() ? "" : "/";
+    return exepath.string();
+#else
     std::string pathstr;
     char*       path = realpath("/proc/self/exe", 0);
     if(path)
@@ -63,12 +92,26 @@ std::string hipblaslt_exepath()
         free(path);
     }
     return pathstr;
+#endif
 }
 
 /* ============================================================================================ */
 // Temp directory rooted random path
 std::string hipblaslt_tempname()
 {
+#ifdef WIN32
+    // Generate "/tmp/rocblas-XXXXXX" like file name
+    const std::string alphanum     = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuv";
+    int               stringlength = alphanum.length() - 1;
+    std::string       uniquestr    = "rocblas-";
+
+    for(auto n : {0, 1, 2, 3, 4, 5})
+        uniquestr += alphanum.at(rand() % stringlength);
+
+    fs::path tmpname = fs::temp_directory_path() / uniquestr;
+
+    return tmpname.string();
+#else
     char tmp[] = "/tmp/hipblaslt-XXXXXX";
     int  fd    = mkostemp(tmp, O_CLOEXEC);
     if(fd == -1)
@@ -78,6 +121,7 @@ std::string hipblaslt_tempname()
     }
 
     return std::string(tmp);
+#endif
 }
 
 /* ============================================================================================ */

@@ -45,6 +45,10 @@
 #include <map>
 #include <omp.h>
 #include <set>
+#ifdef WIN32
+#include <cstdlib>
+#include <numeric>
+#endif
 
 extern "C" __global__ void flush_icache()
 {

@@ -94,6 +94,12 @@ public:
         return std::uniform_int_distribution<T>{}(t_hipblaslt_rng);
     }
 
+    // Random unsigned char
+    explicit operator unsigned char()
+    {
+        return static_cast<unsigned char>(std::uniform_int_distribution<uint>{}(t_hipblaslt_rng));
+    }
+
     // Random signed char
     explicit operator signed char()
     {
