@@ -1,6 +1,6 @@
 ################################################################################
 #
-# Copyright (C) 2022 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -29,16 +29,16 @@ import sys
 
 def CPUThreadCount(enable=True):
   from .Common import globalParameters
-  if not enable or globalParameters["CpuThreads"] == 0:
-    return 0
+  if not enable:
+    return 1
   else:
     if os.name == "nt":
       cpu_count = os.cpu_count()
     else:
       cpu_count = len(os.sched_getaffinity(0))
     cpuThreads = globalParameters["CpuThreads"]
-    if cpuThreads < 0:
-        return cpu_count*abs(cpuThreads)
+    if cpuThreads < 1:
+        return cpu_count
     return min(cpu_count, cpuThreads)
 
 def starmap_apply(item):
