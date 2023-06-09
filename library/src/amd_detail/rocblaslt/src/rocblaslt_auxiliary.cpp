@@ -1121,20 +1121,21 @@ rocblaslt_status rocblaslt_matmul_get_all_algos_cpp(
         return rocblaslt_status_invalid_handle;
     }
     // Create dummy
-    auto initMat = [](_rocblaslt_matrix_layout& mat) {
-        mat.m  = 1;
-        mat.n  = 1;
-        mat.ld = 1;
+    auto initMat = [](_rocblaslt_matrix_layout& mat, hipblasDatatype_t type) {
+        mat.m    = 1;
+        mat.n    = 1;
+        mat.ld   = 1;
+        mat.type = type;
     };
     _rocblaslt_matmul_desc   matmul_desc;
     _rocblaslt_matrix_layout matA;
     _rocblaslt_matrix_layout matB;
     _rocblaslt_matrix_layout matC;
     _rocblaslt_matrix_layout matD;
-    initMat(matA);
-    initMat(matB);
-    initMat(matC);
-    initMat(matD);
+    initMat(matA, typeA);
+    initMat(matB, typeB);
+    initMat(matC, typeC);
+    initMat(matD, typeD);
     matmul_desc.op_A                  = opA;
     matmul_desc.op_B                  = opB;
     matmul_desc.compute_type          = typeCompute;
