@@ -1762,59 +1762,6 @@ rocblaslt_status getBestSolutions(RocblasltContractionProblem<Ti, To, Tc> prob,
 }
 
 template <typename MyProblem>
-rocblaslt_status getAllSolutions(MyProblem&                          prob,
-                                 rocblaslt_handle                    handle,
-                                 rocblaslt_matmul_heuristic_result** heuristicResults,
-                                 int*                                returnAlgoCount,
-                                 size_t                              maxWorkSpaceBytes)
-{
-    std::shared_ptr<Tensile::MasterSolutionLibrary<Tensile::ContractionProblemGemm>> library;
-    std::shared_ptr<hipDeviceProp_t>                                                 deviceProp;
-    std::shared_ptr<Tensile::Hardware>                                               hardware;
-
-    // auto &adapter =
-    static_cast<void>(get_library_and_adapter(&library, &deviceProp, handle->device));
-
-    hardware = Tensile::hip::GetDevice(*deviceProp);
-
-    std::set<std::shared_ptr<Tensile::ContractionSolution>> solutions;
-    std::shared_ptr<void>                                   tensile_prob;
-
-    if constexpr(std::is_same<MyProblem, Tensile::ContractionProblemGemm>::value)
-    {
-        solutions = library->findAllSolutions(prob, *hardware, true);
-    }
-    else if constexpr(std::is_same<MyProblem, Tensile::ContractionProblemGroupedGemm>::value)
-    {
-        solutions = library->findAllSolutionsGroupedGemm(prob.gemms, *hardware, true);
-    }
-    log_api(__func__, "Found hardware solutions: ", solutions.size());
-
-    if(solutions.size() > 0)
-        *heuristicResults = (rocblaslt_matmul_heuristic_result*)malloc(
-            solutions.size() * sizeof(rocblaslt_matmul_heuristic_result));
-    else
-        *heuristicResults = NULL;
-
-    int i = 0;
-    for(auto solution : solutions)
-    {
-        memset(&(*heuristicResults)[i], 0, sizeof(rocblaslt_matmul_heuristic_result));
-        memset((*heuristicResults)[i].algo.data, 0, sizeof((*heuristicResults)[i].algo.data));
-        int* solutionIndex                              = (int*)((*heuristicResults)[i].algo.data);
-        *solutionIndex                                  = solution->index;
-        (*heuristicResults)[i].algo.max_workspace_bytes = maxWorkSpaceBytes;
-        (*heuristicResults)[i].algo.fallback            = false;
-        (*heuristicResults)[i].state                    = rocblaslt_status_success;
-        (*heuristicResults)[i].workspaceSize            = 0;
-        i++;
-    }
-    *returnAlgoCount = solutions.size();
-
-    return rocblaslt_status_success;
-}
-
-template <typename MyProblem>
 rocblaslt_status getAllSolutions(MyProblem&                                      prob,
                                  rocblaslt_handle                                handle,
                                  std::vector<rocblaslt_matmul_heuristic_result>& heuristicResults,
@@ -1834,11 +1781,13 @@ rocblaslt_status getAllSolutions(MyProblem&                                     
 
     if constexpr(std::is_same<MyProblem, Tensile::ContractionProblemGemm>::value)
     {
-        solutions = library->findAllSolutions(prob, *hardware, true);
+        solutions = library->findAllSolutions(
+            prob, *hardware, Tensile::SolutionLibrarySearchType::GEMM_TYPE_ONLY);
     }
     else if constexpr(std::is_same<MyProblem, Tensile::ContractionProblemGroupedGemm>::value)
     {
-        solutions = library->findAllSolutionsGroupedGemm(prob.gemms, *hardware, true);
+        solutions = library->findAllSolutionsGroupedGemm(
+            prob.gemms, *hardware, Tensile::SolutionLibrarySearchType::GEMM_TYPE_ONLY);
     }
     log_api(__func__, "Found hardware solutions: ", solutions.size());
 
