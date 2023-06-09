@@ -106,22 +106,26 @@ namespace Tensile
             }
         }
 
-        virtual SolutionSet<MySolution> findAllSolutions(MyProblem const& problem,
-                                                         Hardware const&  hardware,
-                                                         bool hardwareOnly = false) const override
+        virtual SolutionSet<MySolution>
+            findAllSolutions(MyProblem const&          problem,
+                             Hardware const&           hardware,
+                             SolutionLibrarySearchType searchType
+                             = SolutionLibrarySearchType::DEFAULT) const override
         {
             bool debug = Debug::Instance().printPropertyEvaluation();
 
             SolutionSet<MySolution> rv;
 
-            auto matches = table->matchesInOrder(problem);
+            auto matches = searchType != SolutionLibrarySearchType::DEFAULT
+                               ? table->GetAll()
+                               : table->matchesInOrder(problem);
 
             for(auto const& row : matches)
             {
                 if(debug)
                     std::cout << row->description() << std::endl;
 
-                auto rowSolutions = row->findAllSolutions(problem, hardware, hardwareOnly);
+                auto rowSolutions = row->findAllSolutions(problem, hardware, searchType);
                 rv.insert(rowSolutions.begin(), rowSolutions.end());
 
                 if(debug)
@@ -134,13 +138,16 @@ namespace Tensile
         virtual SolutionSet<MySolution>
             findAllSolutionsGroupedGemm(std::vector<MyProblem> const& problems,
                                         Hardware const&               hardware,
-                                        bool                          hardwareOnly) const override
+                                        SolutionLibrarySearchType     searchType
+                                        = SolutionLibrarySearchType::DEFAULT) const override
         {
             bool debug = Debug::Instance().printPropertyEvaluation();
 
             SolutionSet<MySolution> rv;
 
-            auto matches = table->matchesInOrder(problems[0]);
+            auto matches = searchType != SolutionLibrarySearchType::DEFAULT
+                               ? table->GetAll()
+                               : table->matchesInOrder(problems[0]);
 
             for(auto const& row : matches)
             {
@@ -148,7 +155,7 @@ namespace Tensile
                     std::cout << row->description() << std::endl;
 
                 auto rowSolutions
-                    = row->findAllSolutionsGroupedGemm(problems, hardware, hardwareOnly);
+                    = row->findAllSolutionsGroupedGemm(problems, hardware, searchType);
                 rv.insert(rowSolutions.begin(), rowSolutions.end());
 
                 if(debug)

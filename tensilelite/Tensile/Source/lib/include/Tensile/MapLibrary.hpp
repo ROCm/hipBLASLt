@@ -129,29 +129,59 @@ namespace Tensile
             return library->findBestSolution(problem, hardware, fitness);
         }
 
-        virtual SolutionSet<MySolution> findAllSolutions(MyProblem const& problem,
-                                                         Hardware const&  hardware,
-                                                         bool hardwareOnly = false) const override
+        virtual SolutionSet<MySolution>
+            findAllSolutions(MyProblem const&          problem,
+                             Hardware const&           hardware,
+                             SolutionLibrarySearchType searchType
+                             = SolutionLibrarySearchType::DEFAULT) const override
         {
+            if(searchType == SolutionLibrarySearchType::HARDWARE_ONLY)
+            {
+                auto result = SolutionSet<MySolution>();
+                for(auto& pair : map)
+                {
+                    auto library = pair.second;
+                    if(library == nullptr)
+                        continue;
+                    auto solutions = library->findAllSolutions(problem, hardware, searchType);
+                    result.insert(solutions.begin(), solutions.end());
+                }
+                return result;
+            }
             auto library = lookup(problem, hardware);
 
             if(library == nullptr)
                 return SolutionSet<MySolution>();
 
-            return library->findAllSolutions(problem, hardware, hardwareOnly);
+            return library->findAllSolutions(problem, hardware, searchType);
         }
 
         virtual SolutionSet<MySolution>
             findAllSolutionsGroupedGemm(std::vector<MyProblem> const& problems,
                                         Hardware const&               hardware,
-                                        bool                          hardwareOnly) const override
+                                        SolutionLibrarySearchType     searchType
+                                        = SolutionLibrarySearchType::DEFAULT) const override
         {
+            if(searchType == SolutionLibrarySearchType::HARDWARE_ONLY)
+            {
+                auto result = SolutionSet<MySolution>();
+                for(auto& pair : map)
+                {
+                    auto library = pair.second;
+                    if(library == nullptr)
+                        continue;
+                    auto solutions
+                        = library->findAllSolutionsGroupedGemm(problems, hardware, searchType);
+                    result.insert(solutions.begin(), solutions.end());
+                }
+                return result;
+            }
             auto library = lookup(problems[0], hardware);
 
             if(library == nullptr)
                 return SolutionSet<MySolution>();
 
-            return library->findAllSolutionsGroupedGemm(problems, hardware, hardwareOnly);
+            return library->findAllSolutionsGroupedGemm(problems, hardware, searchType);
         }
 
         std::shared_ptr<Property<MyProblem, Key>> property;
