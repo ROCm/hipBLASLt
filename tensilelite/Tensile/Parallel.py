@@ -1,6 +1,6 @@
 ################################################################################
 #
-# Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2016-2023 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -22,9 +22,11 @@
 #
 ################################################################################
 
-import os
 import itertools
+import os
 import sys
+
+from joblib import Parallel, delayed
 
 
 def CPUThreadCount(enable=True):
@@ -41,9 +43,18 @@ def CPUThreadCount(enable=True):
         return cpu_count
     return min(cpu_count, cpuThreads)
 
-def starmap_apply(item):
-  func, item = item
-  return func(*item)
+def OverwriteGlobalParameters(newGlobalParameters):
+  from . import Common
+  Common.globalParameters.clear()
+  Common.globalParameters.update(newGlobalParameters)
+
+def pcallWithGlobalParamsMultiArg(f, args, newGlobalParameters):
+  OverwriteGlobalParameters(newGlobalParameters)
+  return f(*args)
+
+def pcallWithGlobalParamsSingleArg(f, arg, newGlobalParameters):
+  OverwriteGlobalParameters(newGlobalParameters)
+  return f(arg)
 
 def apply_print_exception(item, *args):
   #print(item, args)
@@ -135,4 +146,38 @@ def ParallelMap(function, objects, message="", enable=True, method=None, maxTask
   print("{0}Done.".format(message))
   sys.stdout.flush()
   pool.close()
+  return rv
+
+def ParallelMap2(function, objects, message="", enable=True, multiArg=True):
+  """
+  Generally equivalent to list(map(function, objects)), possibly executing in parallel.
+
+    message: A message describing the operation to be performed.
+    enable: May be set to false to disable parallelism.
+    multiArg: True if objects represent multiple arguments
+                (differentiates multi args vs single collection arg)
+  """
+  from .Common import globalParameters
+  from . import Utils
+  threadCount = CPUThreadCount(enable)
+
+  if threadCount <= 1 and globalParameters["ShowProgressBar"]:
+    # Provide a progress bar for single-threaded operation.
+    return list(map(function, Utils.tqdm(objects, message)))
+
+  countMessage = ""
+  try:
+    countMessage = " for {} tasks".format(len(objects))
+  except TypeError: pass
+
+  if message != "": message += ": "
+  print("{0}Launching {1} threads{2}...".format(message, threadCount, countMessage))
+  sys.stdout.flush()
+
+  pcall = pcallWithGlobalParamsMultiArg if multiArg else pcallWithGlobalParamsSingleArg
+  pargs = zip(objects, itertools.repeat(globalParameters))
+  rv = Parallel(n_jobs=threadCount)(delayed(pcall)(function, a, params) for a, params in pargs)
+
+  print("{0}Done.".format(message))
+  sys.stdout.flush()
   return rv
