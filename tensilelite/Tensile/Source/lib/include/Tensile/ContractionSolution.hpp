@@ -320,12 +320,15 @@ namespace Tensile
         struct ProblemType
         {
             std::string           operationIdentifier;
+            bool                  transA                  = false;
+            bool                  transB                  = false;
             DataType              aType                   = DataType::Float;
             DataType              bType                   = DataType::Float;
             DataType              cType                   = DataType::Float;
             DataType              dType                   = DataType::Float;
             DataType              eType                   = DataType::Float;
             DataType              f32XdlMathOp            = DataType::Float;
+            DataType              computeType             = DataType::Float;
             bool                  highPrecisionAccumulate = false;
             bool                  useBeta                 = true;
             bool                  useGradient             = false;
