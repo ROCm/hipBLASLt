@@ -1199,7 +1199,7 @@ void test_hipblaslt(hipblasDatatype_t  in_out_datatype,
     if(findAll)
     {
         for(int sol = 0; sol < validIdx.size(); sol++)
-            workspace_size = max(workspace_size, heuristicResult[sol].workspaceSize);
+            workspace_size = max(workspace_size, heuristicResult[validIdx[sol]].workspaceSize);
     }
     else
     {
@@ -1334,7 +1334,6 @@ void test_hipblaslt(hipblasDatatype_t  in_out_datatype,
             }
             else
             {
-                auto idx = (findAll) ? validIdx[0] : 0;
                 CHECK_HIPBLASLT_ERROR(
                     gemm.initialize(heuristicResult[idx].algo, d_workspace, stream));
 
@@ -1383,12 +1382,12 @@ void test_hipblaslt(hipblasDatatype_t  in_out_datatype,
             if(bestMs == eventMs)
             {
                 bestTflops = tflops;
-                bestIdx    = sol;
+                bestIdx    = idx;
             }
 
             if(returnedAlgoCount > 1)
             {
-                std::cout << std::setprecision(3) << "  Solution" << std::setw(3) << sol << ":"
+                std::cout << std::setprecision(3) << "  Solution" << std::setw(3) << idx << ":"
                           << std::setw(10) << eventMs * 1000 << " us, " << std::setw(7) << tflops
                           << " Tflops";
 
