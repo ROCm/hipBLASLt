@@ -346,6 +346,7 @@ class GlobalWriteBatchWriter:
           vgprIdx = bpm // 4
           module.add(self.parentWriter.chooseGlobalRead(useBuffer, bpm, dataV + vgprIdx, \
                     addr0, addr1, soffset=0, offset=addrCalc.globalOffset,
+                    memoryModifierFormat=kernel["MemoryModifierFormat"],
                     comment="load D (atomic) bpm=%u vaw=%u"%(bpm,self.atomicW)))
 
       if self.kernel["InterleaveAlpha"] and self.applyAlpha:
@@ -857,19 +858,19 @@ class GlobalWriteBatchWriter:
         if self.kernel["ProblemType"]["DestDataType"].isHalf() or self.kernel["ProblemType"]["DestDataType"].isBFloat16():
           if not self.kernel["ProblemType"]["HighPrecisionAccumulate"]:
             module.add(self.parentWriter.chooseGlobalRead(useBuffer, bps, sumIdx//2, \
-                                  addr0, addr1, soffset=0, offset=0, hi16=sumIdx%2))
+                                  addr0, addr1, soffset=0, offset=0, memoryModifierFormat=kernel["MemoryModifierFormat"], hi16=sumIdx%2))
           else:
             module.add(self.parentWriter.chooseGlobalRead(useBuffer, bps, sumIdx, \
-                                  addr0, addr1, soffset=0, offset=0, hi16=0))
+                                  addr0, addr1, soffset=0, offset=0, memoryModifierFormat=kernel["MemoryModifierFormat"], hi16=0))
         elif self.kernel["ProblemType"]["DestDataType"].isInt32() or self.kernel["ProblemType"]["DestDataType"].isSingle():
           module.add(self.parentWriter.chooseGlobalRead(useBuffer, bps, sumIdx, \
-                                addr0, addr1, soffset=0, offset=0))
+                                addr0, addr1, soffset=0, offset=0, memoryModifierFormat=kernel["MemoryModifierFormat"]))
         elif self.kernel["ProblemType"]["DestDataType"].isDouble() or self.kernel["ProblemType"]["DestDataType"].isSingleComplex() :
           module.add(self.parentWriter.chooseGlobalRead(useBuffer, bps, sumIdx*2, \
-                                addr0, addr1, soffset=0, offset=0))
+                                addr0, addr1, soffset=0, offset=0, memoryModifierFormat=kernel["MemoryModifierFormat"]))
         elif self.kernel["ProblemType"]["DestDataType"].isDoubleComplex():
           module.add(self.parentWriter.chooseGlobalRead(useBuffer, bps, sumIdx*4, \
-                                addr0, addr1, soffset=0, offset=0))
+                                addr0, addr1, soffset=0, offset=0, memoryModifierFormat=kernel["MemoryModifierFormat"]))
       module.add(SWaitCnt(vmcnt=0, vscnt=0, comment="CheckStoreC, wait for stores to complete"))
       # Add checks for expected values:
       module.add(SMovB32(sgpr(self.tmpS01), self.parentWriter.db["CheckStoreC"], "expected value"))
