@@ -309,6 +309,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
   def __init__( self, kernelMinNaming, kernelSerialNaming ):
     self.kernelMinNaming = kernelMinNaming
     self.kernelSerialNaming = kernelSerialNaming
+    self.ti = None
 
     self.do = {}
     self.do["PreLoop"]     = True
@@ -2657,8 +2658,11 @@ class KernelWriter(metaclass=abc.ABCMeta):
     self.language   = "ASM"
     # ISA version, such as 803
     version = tuple(kernel["ISA"])
-    ti = TensileInstructions()
-    ti.setKernelInfo(version, kernel["WavefrontSize"])
+    if self.ti == None:
+      self.ti = TensileInstructions()
+    if not self.ti.isInit():
+      self.ti.init(version, globalParameters["AssemblerPath"])
+    self.ti.setKernelInfo(version, kernel["WavefrontSize"])
 
     self.consts = ConstValues()
     self.states = StateValues(version=version, kernel=kernel, kernelName=self.getKernelName(kernel))
@@ -2678,8 +2682,8 @@ class KernelWriter(metaclass=abc.ABCMeta):
     self.exclasses.activation.setGuard(not kernel["ProblemType"]["ActivationNoGuard"])
     self.exclasses.activation.setAlt(kernel["ActivationAlt"])
 
-    self.states.asmCaps  = ti.getAsmCaps()
-    self.states.archCaps = ti.getArchCaps()
+    self.states.asmCaps  = self.ti.getAsmCaps()
+    self.states.archCaps = self.ti.getArchCaps()
 
     self.asmAssert = Assert(self.states.laneSGPRCount, kernel["WavefrontSize"], self.db["EnableAsserts"])
 
@@ -4726,3 +4730,6 @@ for codeObjectFileName in codeObjectFileNames:
   def getLinkCodeObjectArgs(self, objectFileNames, coFileName, *moreArgs):
     return getAsmLinkCodeObjectArgs(globalParameters['AssemblerPath'], \
       objectFileNames, coFileName, *moreArgs)
+
+  def setTensileInstructions(self, ti):
+    self.ti = ti

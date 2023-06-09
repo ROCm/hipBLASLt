@@ -38,7 +38,7 @@ import time
 startTime = time.time()
 
 ParallelMap = Parallel.ParallelMap
-
+ParallelMap2 = Parallel.ParallelMap2
 # print level
 # 0 - user wants no printing
 # 1 - user wants limited prints
