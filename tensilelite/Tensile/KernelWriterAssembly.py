@@ -6839,7 +6839,9 @@ class KernelWriterAssembly(KernelWriter):
         module.add(SWaitCnt(lgkmcnt=lgkmcnt, comment="wait for LDS read"))
 
         numStoreInst += 1
-        module.add(self.chooseGlobalWrite(True, bps, storeRegs[rIdx], rpv, addr0, addr1, 0, ntStr, forceStoreSC1=kernel["ForceStoreSC1"], comment="store D"))
+
+        module.add(self.chooseGlobalWrite(True, bps, storeRegs[rIdx], rpv, addr0, addr1, 0, ntStr, memoryModifierFormat=kernel["MemoryModifierFormat"], forceStoreSC1=kernel["ForceStoreSC1"], comment="store D"))
+
     else:
       tmpS23 = tmpS01+self.states.laneSGPRCount
       coord0 = tmpVgpr
@@ -6886,9 +6888,9 @@ class KernelWriterAssembly(KernelWriter):
           sumIdx = storeRegs[rIdx] + int(vi*rpe)
           numStoreInst += 1
           if bps == 2:
-            module.add(self.chooseGlobalWrite(True, bpe, sumIdx, rpe, addr0, addr1, 0, ntStr, forceStoreSC1=kernel["ForceStoreSC1"], hi16=vi%2, comment="store D"))
+            module.add(self.chooseGlobalWrite(True, bpe, sumIdx, rpe, addr0, addr1, 0, ntStr, memoryModifierFormat=kernel["MemoryModifierFormat"], forceStoreSC1=kernel["ForceStoreSC1"], hi16=vi%2, comment="store D"))
           else:
-            module.add(self.chooseGlobalWrite(True, bps, sumIdx, rpv, addr0, addr1, 0, ntStr, forceStoreSC1=kernel["ForceStoreSC1"], comment="store D"))
+            module.add(self.chooseGlobalWrite(True, bps, sumIdx, rpv, addr0, addr1, 0, ntStr, memoryModifierFormat=kernel["MemoryModifierFormat"], forceStoreSC1=kernel["ForceStoreSC1"], comment="store D"))
 
           if bps == 1:
             module.add(VAShiftRightI32(dst=vgpr("ValuC+%u"%sumIdx), shiftHex=8, src=vgpr("ValuC+%u"%sumIdx), comment=" shift 1 byte" ))
@@ -7967,13 +7969,13 @@ class KernelWriterAssembly(KernelWriter):
       useBuffer = kernel["BufferLoad"]
       if dataType.isHalf() or dataType.isBFloat16():
         module.add(self.chooseGlobalRead(useBuffer, bps, biasVgpr, \
-                          addr0, addr1, soffset=0, offset=offset, hi16=0, comment="load bias"))
+                          addr0, addr1, soffset=0, offset=offset, memoryModifierFormat=kernel["MemoryModifierFormat"], hi16=0, comment="load bias"))
       elif dataType.isInt32() or dataType.isSingle():
         module.add(self.chooseGlobalRead(useBuffer, bps, biasVgpr, \
-                          addr0, addr1, soffset=0, offset=offset, comment="load bias"))
+                          addr0, addr1, soffset=0, offset=offset, memoryModifierFormat=kernel["MemoryModifierFormat"], comment="load bias"))
       elif dataType.isDouble() or dataType.isSingleComplex() :
         module.add(self.chooseGlobalRead(useBuffer, bps, biasVgpr, \
-                          addr0, addr1, soffset=0, offset=offset, comment="load bias"))
+                          addr0, addr1, soffset=0, offset=offset, memoryModifierFormat=kernel["MemoryModifierFormat"], comment="load bias"))
       else:
         printExit("Unsupported bias type %s."%(str(dataType)))
     return module
@@ -7997,13 +7999,13 @@ class KernelWriterAssembly(KernelWriter):
 
       if kernel["ProblemType"]["ComputeDataType"].isHalf() or kernel["ProblemType"]["ComputeDataType"].isBFloat16():
         module.add(self.chooseGlobalRead(useBuffer, bps, scaleDVecVgpr, \
-                          addr0, addr1, soffset=0, offset=addrCalc.scaleDVecOffset, hi16=0, comment="load scaleDVecH"))
+                          addr0, addr1, soffset=0, offset=addrCalc.scaleDVecOffset, memoryModifierFormat=kernel["MemoryModifierFormat"], hi16=0, comment="load scaleDVecH"))
       elif kernel["ProblemType"]["ComputeDataType"].isInt32() or kernel["ProblemType"]["ComputeDataType"].isSingle():
         module.add(self.chooseGlobalRead(useBuffer, bps, scaleDVecVgpr, \
-                          addr0, addr1, soffset=0, offset=addrCalc.scaleDVecOffset, comment="load scaleDVecI"))
+                          addr0, addr1, soffset=0, offset=addrCalc.scaleDVecOffset, memoryModifierFormat=kernel["MemoryModifierFormat"], comment="load scaleDVecI"))
       elif kernel["ProblemType"]["ComputeDataType"].isDouble() or kernel["ProblemType"]["ComputeDataType"].isSingleComplex() :
         module.add(self.chooseGlobalRead(useBuffer, bps, scaleDVecVgpr, \
-                          addr0, addr1, soffset=0, offset=addrCalc.scaleDVecOffset, comment="load scaleDVec"))
+                          addr0, addr1, soffset=0, offset=addrCalc.scaleDVecOffset, memoryModifierFormat=kernel["MemoryModifierFormat"], comment="load scaleDVec"))
       else:
         printExit("Unsupported scaleDVec type %s."%(str(kernel["ProblemType"]["ComputeDataType"])))
 
@@ -8543,13 +8545,13 @@ class KernelWriterAssembly(KernelWriter):
       rpv = rpe * gwvw
       if dataType.isHalf() or dataType.isBFloat16():
         module.add(self.chooseGlobalWrite(useBuffer, bps, tmpVgprN, rpv, \
-                          addr0, addr1, forceStoreSC1=kernel["ForceStoreSC1"], offset=0, hi16=0, comment="global store bias"))
+                          addr0, addr1, memoryModifierFormat=kernel["MemoryModifierFormat"], forceStoreSC1=kernel["ForceStoreSC1"], offset=0, hi16=0, comment="global store bias"))
       elif dataType.isInt32() or dataType.isSingle():
         module.add(self.chooseGlobalWrite(useBuffer, bps, tmpVgprN, rpv, \
-                          addr0, addr1, forceStoreSC1=kernel["ForceStoreSC1"], offset=0, comment="global store bias"))
+                          addr0, addr1, memoryModifierFormat=kernel["MemoryModifierFormat"], forceStoreSC1=kernel["ForceStoreSC1"], offset=0, comment="global store bias"))
       elif dataType.isDouble() or dataType.isSingleComplex() :
         module.add(self.chooseGlobalWrite(useBuffer, bps, tmpVgprN, rpv, \
-                          addr0, addr1, forceStoreSC1=kernel["ForceStoreSC1"], offset=0, comment="global store bias"))
+                          addr0, addr1, memoryModifierFormat=kernel["MemoryModifierFormat"], forceStoreSC1=kernel["ForceStoreSC1"], offset=0, comment="global store bias"))
     else: # edge
       tmpVgprNStep = max(1, biasDataType.numRegisters())
       globalOffset = 0
@@ -8559,13 +8561,13 @@ class KernelWriterAssembly(KernelWriter):
         rpv = rpe
         if dataType.isHalf() or dataType.isBFloat16():
           module.add(self.chooseGlobalWrite(useBuffer, bps, tmpVgprN, rpv, \
-                            addr0, addr1, forceStoreSC1=kernel["ForceStoreSC1"], offset=globalOffset, hi16=0, comment="global store bias"))
+                            addr0, addr1, memoryModifierFormat=kernel["MemoryModifierFormat"], forceStoreSC1=kernel["ForceStoreSC1"], offset=globalOffset, hi16=0, comment="global store bias"))
         elif dataType.isInt32() or dataType.isSingle():
           module.add(self.chooseGlobalWrite(useBuffer, bps, tmpVgprN, rpv, \
-                            addr0, addr1, forceStoreSC1=kernel["ForceStoreSC1"], offset=globalOffset, comment="global store bias"))
+                            addr0, addr1, memoryModifierFormat=kernel["MemoryModifierFormat"], forceStoreSC1=kernel["ForceStoreSC1"], offset=globalOffset, comment="global store bias"))
         elif dataType.isDouble() or dataType.isSingleComplex() :
           module.add(self.chooseGlobalWrite(useBuffer, bps, tmpVgprN, rpv, \
-                            addr0, addr1, forceStoreSC1=kernel["ForceStoreSC1"], offset=globalOffset, comment="global store bias"))
+                            addr0, addr1, memoryModifierFormat=kernel["MemoryModifierFormat"], forceStoreSC1=kernel["ForceStoreSC1"], offset=globalOffset, comment="global store bias"))
         tmpVgprN += tmpVgprNStep
         globalOffset += biasBpe
     module.add(SMovB64(dst=EXEC(), src=-1, comment="Reset exec mask"))
