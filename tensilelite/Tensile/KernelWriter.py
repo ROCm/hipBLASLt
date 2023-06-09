@@ -4119,7 +4119,9 @@ for codeObjectFileName in codeObjectFileNames:
     if globalParameters["PrintCodeCommands"]:
       print (' '.join(args), " && ")
 
-    subprocess.check_call(args, cwd=self.getAssemblyDirectory())
+    #subprocess.check_call(args, cwd=self.getAssemblyDirectory())
+    # change to use  check_output to force windows cmd block util command finish
+    subprocess.check_output(args, stderr=subprocess.STDOUT, cwd=self.getAssemblyDirectory())
 
     return objectFileName
 
@@ -4133,7 +4135,9 @@ for codeObjectFileName in codeObjectFileNames:
     if globalParameters["PrintCodeCommands"]:
       print (' '.join(args))
 
-    subprocess.check_call(args, cwd=self.getAssemblyDirectory())
+    #subprocess.check_call(args, cwd=self.getAssemblyDirectory())
+    # change to use  check_output to force windows cmd block util command finish
+    subprocess.check_output(args, stderr=subprocess.STDOUT, cwd=self.getAssemblyDirectory())
 
     return coFileName
 

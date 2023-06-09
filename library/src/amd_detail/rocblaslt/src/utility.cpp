@@ -25,7 +25,11 @@
  *******************************************************************************/
 #include "utility.hpp"
 #include <sys/types.h>
+#ifdef WIN32
+#include <windows.h>
+#else
 #include <unistd.h>
+#endif
 LoggerSingleton LoggerSingleton::gInstance;
 std::ostream*   get_logger_os()
 {

@@ -29,9 +29,7 @@
 #include "Tensile/Debug.hpp"
 #include "Tensile/Utils.hpp"
 #include "TypedId.hpp"
-
 #include <cstddef>
-
 namespace Tensile
 {
     namespace Client
@@ -315,7 +313,11 @@ namespace Tensile
         {
             // Only cast to float in BFloat16
             constexpr bool needCast = std::is_same<BFloat16, T>();
+#ifndef _WIN32
             using castT             = std::conditional_t<needCast, float, T>;
+#else
+            using castT = float;  //temp WA
+#endif
             auto new_type
                 = activationType == ActivationType::All ? activationType2 : activationType;
             if(new_type == ActivationType::Abs)

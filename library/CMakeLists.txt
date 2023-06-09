@@ -152,7 +152,11 @@ endif()
 # Target link libraries
 if(NOT BUILD_CUDA)
 # Target link libraries
-  target_link_libraries(hipblaslt PRIVATE hip::device ${DL_LIB})
+  if (WIN32)
+    target_link_libraries(hipblaslt PRIVATE hip::device ${CMAKE_DL_LIBS})
+  else()
+    target_link_libraries(hipblaslt PRIVATE hip::device ${DL_LIB})
+  endif()
 else()
   target_link_libraries(hipblaslt PRIVATE ${CUDA_cublaslt_LIBRARY})
 endif()
@@ -163,6 +167,13 @@ set_target_properties(hipblaslt PROPERTIES CXX_EXTENSIONS NO)
 set_target_properties(hipblaslt PROPERTIES CXX_VISIBILITY_PRESET "hidden" VISIBILITY_INLINES_HIDDEN ON)
 set_target_properties(hipblaslt PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging")
 set_target_propertieS(hipblaslt PROPERTIES DEBUG_POSTFIX "-d")
+
+if (WIN32 AND BUILD_CLIENTS)
+  add_custom_command( TARGET hipblaslt POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy ${PROJECT_BINARY_DIR}/staging/$<TARGET_FILE_NAME:hipblaslt> ${PROJECT_BINARY_DIR}/clients/staging/$<TARGET_FILE_NAME:hipblaslt> )
+  if( ${CMAKE_BUILD_TYPE} MATCHES "Debug")
+    add_custom_command( TARGET hipblaslt POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy ${PROJECT_BINARY_DIR}/staging/hipblaslt.pdb ${PROJECT_BINARY_DIR}/clients/staging/hipblaslt.pdb )
+  endif()
+endif()
 
 # TODO ??
 # Following boost conventions of prefixing 'lib' on static built libraries

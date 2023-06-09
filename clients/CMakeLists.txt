@@ -49,7 +49,10 @@ find_package(OpenMP)
 
 if (TARGET OpenMP::OpenMP_CXX)
   set( COMMON_LINK_LIBS "OpenMP::OpenMP_CXX")
-  list( APPEND COMMON_LINK_LIBS "-L${HIP_CLANG_ROOT}/lib;-Wl,-rpath=${HIP_CLANG_ROOT}/lib")
+  list( APPEND COMMON_LINK_LIBS "-L\"${HIP_CLANG_ROOT}/lib\"")
+  if (NOT WIN32)
+    list( APPEND COMMON_LINK_LIBS "-Wl,-rpath=${HIP_CLANG_ROOT}/lib")
+  endif()
 endif()
 
 if (TARGET Threads::Threads)
@@ -85,14 +88,28 @@ endif( )
 if( BUILD_CLIENTS_BENCHMARKS OR BUILD_CLIENTS_TESTS)
 
   # Linking lapack library requires fortran flags
-  find_package( cblas REQUIRED CONFIG )
-  if (LINK_BLIS)
-    set( BLIS_INCLUDE_DIR ${BUILD_DIR}/deps/blis/include/blis )
-    set( BLIS_CPP ../common/blis_interface.cpp )
-    set( BLAS_LIBRARY ${BUILD_DIR}/deps/blis/lib/libblis.so )
-  else()
-    set( BLAS_LIBRARY "blas" )
+  if ( NOT WIN32 )
+    find_package( cblas REQUIRED CONFIG )
+    if (LINK_BLIS)
+      set( BLIS_INCLUDE_DIR ${BUILD_DIR}/deps/blis/include/blis )
+      set( BLIS_CPP ../common/blis_interface.cpp )
+      set( BLAS_LIBRARY ${BUILD_DIR}/deps/blis/lib/libblis.so )
+    else()
+      set( BLAS_LIBRARY "blas" )
+    endif()
+  else() #WIN32
+    set( BLAS_INCLUDE_DIR ${OPENBLAS_DIR}/include CACHE PATH "OpenBLAS library include path" )
+    find_library( BLAS_LIBRARY libopenblas
+                  PATHS ${OPENBLAS_DIR}/lib
+                  NO_DEFAULT_PATH
+                )
+    if (NOT BLAS_LIBRARY)
+      find_package( OPENBLAS CONFIG REQUIRED )
+      set( BLAS_LIBRARY OpenBLAS::OpenBLAS )
+      set( BLAS_INCLUDE_DIR "" )
+    endif()
   endif()
+
 
   # common source files used in subdirectories benchmarks and gtest thus ../common
   set( hipblaslt_test_bench_common

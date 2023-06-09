@@ -41,7 +41,10 @@ def CPUThreadCount(enable=True):
     cpuThreads = globalParameters["CpuThreads"]
     if cpuThreads < 1:
         return cpu_count
-    return min(cpu_count, cpuThreads)
+    if os.name == "nt":
+      return min(61, cpu_count, cpuThreads) #jobs > 61 may fail on windows python multiprocessing
+    else:
+      return min(cpu_count, cpuThreads)
 
 def OverwriteGlobalParameters(newGlobalParameters):
   from . import Common
