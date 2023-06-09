@@ -103,6 +103,9 @@ class TensileInstructions:
     def getKernel(self) -> kernelInfo:
         return self._kernelInfo[threading.get_ident()]
 
+    def isInit(self):
+        return len(self._isaInfo) > 0
+
 def printItemList(listOfItems, tag="__unnamed__") -> None:
     header = "="*40
     print("%s\nbegin list %s\n%s"%(header, tag, header))
