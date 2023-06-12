@@ -471,7 +471,7 @@ rocblaslt_status
     hipblasDatatype_t      type_d       = matD[0]->type;
 
     std::vector<const void*>        A_vec, B_vec, C_vec, alpha_vec, beta_vec;
-    std::vector<void*>              D_vec;
+    std::vector<void*>              D_vec, E_vec;
     std::vector<const void*>        bias_vec;
     std::vector<const void*>        scaleD_vec;
     std::vector<hipblasDatatype_t>  bias_type_vec;
@@ -481,6 +481,9 @@ rocblaslt_status
     std::vector<int64_t>            ldb_vec, batch_stride_b_vec, num_batches_b_vec;
     std::vector<int64_t>            ldc_vec, batch_stride_c_vec, num_batches_c_vec;
     std::vector<int64_t>            ldd_vec, batch_stride_d_vec, num_batches_d_vec;
+    std::vector<int64_t>            lde_vec, batch_stride_e_vec, num_batches_e_vec;
+
+    std::vector<bool> gradient_vec;
 
     std::vector<rocblaslt::RocGemmProblemType> tempprobemtype;
     for(int i = 0; i < matmul_descr.size(); i++)
@@ -602,6 +605,10 @@ rocblaslt_status
         batch_stride_d_vec.push_back(batch_stride_d);
         num_batches_d_vec.push_back(num_batches_d);
 
+        lde_vec.push_back(lde);
+        batch_stride_e_vec.push_back(batch_stride_e);
+        num_batches_e_vec.push_back(num_batches_d);
+
         m_vec.push_back(num_rows_d);
         n_vec.push_back(num_cols_d);
         k_vec.push_back((opA == HIPBLAS_OP_N) ? num_cols_a : num_rows_a);
@@ -610,8 +617,11 @@ rocblaslt_status
         B_vec.push_back(B[i]);
         C_vec.push_back(C[i]);
         D_vec.push_back(D[i]);
+        E_vec.push_back(E);
         alpha_vec.push_back(alpha[i]);
         beta_vec.push_back(beta[i]);
+
+        gradient_vec.push_back(gradient);
     }
 
     problemtype = tempprobemtype;
@@ -622,9 +632,9 @@ rocblaslt_status
 #define EX_PARM_GroupedGemm_CPP                                                                    \
     opA, opB, m_vec, n_vec, k_vec, alpha_vec, A_vec, type_a, lda_vec, batch_stride_a_vec, B_vec,   \
         type_b, ldb_vec, batch_stride_b_vec, beta_vec, C_vec, type_c, ldc_vec, batch_stride_c_vec, \
-        D_vec, type_d, ldd_vec, batch_stride_d_vec, num_batches_a_vec, strided_batch,              \
-        grouped_gemm, compute_type, bias_vec, scaleD_vec, bias_type_vec, epilogue_vec, gemmData,   \
-        gemmCount
+        D_vec, type_d, ldd_vec, batch_stride_d_vec, E_vec, lde_vec, batch_stride_e_vec,            \
+        num_batches_a_vec, strided_batch, grouped_gemm, gradient_vec, compute_type, bias_vec,      \
+        scaleD_vec, bias_type_vec, epilogue_vec, gemmData, gemmCount
 
     return rocblaslt_groupedgemm_create_template_cpp(EX_PARM_GroupedGemm_CPP);
 }
@@ -657,11 +667,14 @@ rocblaslt_status
     hipblasDatatype_t      type_d       = problemtype[0].type_d;
 
     std::vector<const void*>        A_vec, B_vec, C_vec, alpha_vec, beta_vec;
-    std::vector<void*>              D_vec;
+    std::vector<void*>              D_vec, E_vec;
     std::vector<const void*>        bias_vec;
     std::vector<const void*>        scaleD_vec;
     std::vector<hipblasDatatype_t>  bias_type_vec;
     std::vector<rocblaslt_epilogue> epilogue_vec;
+
+    std::vector<int64_t> lde_vec, batch_stride_e_vec, num_batches_e_vec;
+    std::vector<bool>    gradient_vec;
 
     for(int i = 0; i < m.size(); i++)
     {
@@ -725,18 +738,23 @@ rocblaslt_status
         B_vec.push_back(inputs[i].b);
         C_vec.push_back(inputs[i].c);
         D_vec.push_back(inputs[i].d);
+        E_vec.push_back(E);
         alpha_vec.push_back(inputs[i].alpha);
         beta_vec.push_back(inputs[i].beta);
+
+        lde_vec.push_back(lde);
+        batch_stride_e_vec.push_back(batch_stride_e);
+        gradient_vec.push_back(gradient);
     }
 
     bool strided_batch = true;
     bool grouped_gemm  = true;
 
-#define EX_PARM_GroupedGemm_CPP_2                                                                \
-    opA, opB, m, n, k, alpha_vec, A_vec, type_a, lda, strideA, B_vec, type_b, ldb, strideB,      \
-        beta_vec, C_vec, type_c, ldc, strideC, D_vec, type_d, ldd, strideD, b, strided_batch,    \
-        grouped_gemm, compute_type, bias_vec, scaleD_vec, bias_type_vec, epilogue_vec, gemmData, \
-        gemmCount
+#define EX_PARM_GroupedGemm_CPP_2                                                                 \
+    opA, opB, m, n, k, alpha_vec, A_vec, type_a, lda, strideA, B_vec, type_b, ldb, strideB,       \
+        beta_vec, C_vec, type_c, ldc, strideC, D_vec, type_d, ldd, strideD, E_vec, lde_vec,       \
+        batch_stride_e_vec, b, strided_batch, grouped_gemm, gradient_vec, compute_type, bias_vec, \
+        scaleD_vec, bias_type_vec, epilogue_vec, gemmData, gemmCount
 
     return rocblaslt_groupedgemm_create_template_cpp(EX_PARM_GroupedGemm_CPP_2);
 }
