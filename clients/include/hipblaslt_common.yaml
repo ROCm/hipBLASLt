@@ -12,6 +12,7 @@ Datatypes:
       bases: [ c_int ]
       attr:
         c_f32_r: 300
+        c_xf32_r: 301
   - { half: f16_r }
   - hipblaslt_initialization:
       bases: [ c_int ]
@@ -53,6 +54,10 @@ Real precisions: &real_precisions
 Real precisions 2 bytes: &real_precisions_2b
   - *hpa_half_precision
   - *hpa_bf16_precision
+
+Real precisions xf32: &real_precisions_intermeddiate
+  - &xf32_precision
+    { a_type: f32_r, b_type: f32_r, c_type: f32_r, d_type: f32_r, compute_type: c_xf32_r , scale_type: f32_r}
 
 # The Arguments struct passed directly to C++. See hipblaslt_arguments.hpp.
 # The order of the entries is significant, so it can't simply be a dictionary.

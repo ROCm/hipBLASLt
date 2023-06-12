@@ -64,6 +64,8 @@ constexpr const char* rocblaslt_compute_type_string(rocblaslt_compute_type type)
     {
     case rocblaslt_compute_f32:
         return "f32";
+    case rocblaslt_compute_f32_fast_xf32:
+        return "xf32";
     default:
         return "invalidType";
     }
@@ -320,6 +322,7 @@ inline bool rocblaslt_enum_utils::is_invalid(rocblaslt_compute_type value_)
     switch(value_)
     {
     case rocblaslt_compute_f32:
+    case rocblaslt_compute_f32_fast_xf32:
         return false;
     default:
         return true;
