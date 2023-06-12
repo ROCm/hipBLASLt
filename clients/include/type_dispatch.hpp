@@ -87,7 +87,7 @@ auto hipblaslt_matmul_dispatch(const Arguments& arg)
         {
             return TEST<hip_bfloat16, hip_bfloat16, float>{}(arg);
         }
-        else if(Ti == To && To == HIPBLAS_R_32F && Tc == HIPBLASLT_COMPUTE_F32)
+        else if(Ti == To && To == HIPBLAS_R_32F && (Tc == HIPBLASLT_COMPUTE_F32 || Tc == HIPBLASLT_COMPUTE_F32_FAST_XF32))
         {
             return TEST<float, float, float>{}(arg);
         }

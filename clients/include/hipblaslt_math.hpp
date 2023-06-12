@@ -29,6 +29,7 @@
 #include <cmath>
 #include <hip/hip_runtime.h>
 #include <hipblaslt/hipblaslt.h>
+#include <hipblaslt/hipblaslt_xfloat32.h>
 #include <immintrin.h>
 #include <type_traits>
 
@@ -65,4 +66,20 @@ inline hip_bfloat16 negate(hip_bfloat16 x)
     raw.x ^= 0x8000;
     return raw;
 #endif
+}
+
+// Helper function to reduce intermediate precision and the output type are the same as the input type.
+template <typename TxDLi, typename TxDLo, typename Ti>
+inline void type_to_xdl_math_op_type(Ti* in, size_t s)
+{
+    //To filter out the case that input type is not supported by xDL Math Op.
+    //Currently, xDL Math Op supports in:float -> intermediat:xf32 -> out:float
+    constexpr bool needCast = !std::is_same<TxDLi, Ti>() && std::is_same<TxDLo, Ti>();
+    if(!needCast)
+        return;
+
+    //Cast input type to xDl math op type, using type alians to avoid the casting error.
+    using castType = std::conditional_t<needCast, TxDLi, Ti>;
+    for(size_t i = 0; i < s; i++)
+        in[i] = static_cast<Ti>(static_cast<castType>(in[i]));
 }
