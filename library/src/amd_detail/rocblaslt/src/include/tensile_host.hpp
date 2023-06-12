@@ -260,21 +260,6 @@ inline bool& rocblaslt_suppress_tensile_error_messages()
     return t_suppress;
 }
 
-/*******************************************************************************
- * ConstructRocblasltProblem() construct a RocblasltContractionProblem for     *
- * findTopSolutions                                                            *
- *******************************************************************************/
-template <typename Ti, typename To = Ti, typename Tc = To>
-RocblasltContractionProblem<Ti, To, Tc>
-    ConstructRocblasltProblem(const rocblaslt_matmul_desc matmul_descr,
-                              rocblaslt_matrix_layout     matA,
-                              rocblaslt_matrix_layout     matB,
-                              rocblaslt_matrix_layout     matC,
-                              rocblaslt_matrix_layout     matD,
-                              const Tc*                   alpha,
-                              const Tc*                   beta,
-                              size_t                      maxWorkSpaceBytes);
-
 template <typename Ti, typename To = Ti, typename Tc = To>
 rocblaslt_status getAllSolutions(RocblasltContractionProblem<Ti, To, Tc>&        prob,
                                  rocblaslt_handle                                handle,
