@@ -1082,6 +1082,17 @@ void testing_matmul(const Arguments& arg)
             cpu_time_used = get_time_us_no_sync();
         }
 
+        // For the xf32 xdl math op, cast type of A/B from float to xfloat32 .
+        if constexpr(std::is_same<Ti, float>{} && std::is_same<To, float>{} && std::is_same<Tc, float>{})
+            if(arg.compute_type == HIPBLASLT_COMPUTE_F32_FAST_XF32)
+            {
+                for(int i = 0; i < gemm_count; i++)
+                {
+                    type_to_xdl_math_op_type<hipblasLtXfloat32, float>(hA[i]->data(), size_A[i]);
+                    type_to_xdl_math_op_type<hipblasLtXfloat32, float>(hB[i]->data(), size_B[i]);
+                }
+            }
+
 #define epilogue_param                                                                \
     M[gemmIdx], N[gemmIdx], ldd[gemmIdx], *(hD_gold_epl[gemmIdx]) + pos,              \
         *(hD_gold[gemmIdx]) + pos, *(hBias_gold_epl[gemmIdx]) + pos, ePos, applyBias, \

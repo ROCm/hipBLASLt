@@ -118,6 +118,8 @@ constexpr const char* hipblaslt_computetype_to_string(hipblasLtComputeType_t typ
     {
     case HIPBLASLT_COMPUTE_F32:
         return "f32_r";
+    case HIPBLASLT_COMPUTE_F32_FAST_XF32:
+        return "xf32_r";
     }
     return "invalid";
 }
@@ -138,6 +140,7 @@ constexpr hipblasLtComputeType_t string_to_hipblaslt_computetype(const std::stri
 {
     return
         value == "f32_r" || value == "s" ? HIPBLASLT_COMPUTE_F32  :
+        value == "xf32_r" || value == "x" ? HIPBLASLT_COMPUTE_F32_FAST_XF32 :
         static_cast<hipblasLtComputeType_t>(0);
 }
 // clang-format on
