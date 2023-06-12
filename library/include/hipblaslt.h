@@ -86,6 +86,7 @@ typedef enum {
  */
 typedef enum {
   HIPBLASLT_COMPUTE_F32 = 300,     /**<32-bit floating-point precision.*/
+  HIPBLASLT_COMPUTE_F32_FAST_XF32 = 301, /**< XF32 compute for 32-bit input and output matrices */
 } hipblasLtComputeType_t;
 
 /*! \ingroup types_module

@@ -349,7 +349,7 @@ try
 */
         ("compute_type",
          value<std::string>(&compute_type)->default_value("f32_r"), "Precision of computation. "
-         "Options: s,f32_r")
+         "Options: s,f32_r,x,xf32_r")
 
         ("scale_type",
          value<std::string>(&scale_type), "Precision of scalar. "

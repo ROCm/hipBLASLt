@@ -101,6 +101,8 @@ struct RocblasltContractionProblem
     bool   grouped_gemm;
     bool   gradient;
 
+    rocblaslt_compute_type compute_type;
+
     const void*        bias;
     const Tc*          scaleDVec;
     hipblasDatatype_t  bias_type;
@@ -143,6 +145,7 @@ struct RocblasltContractionProblem
                                 bool               strided_batch,
                                 bool               grouped_gemm,
                                 bool               gradient,
+                                rocblaslt_compute_type compute_type,
                                 const void*        bias,
                                 const Tc*          scaleDVec,
                                 hipblasDatatype_t  bias_type,
@@ -186,6 +189,7 @@ struct RocblasltContractionProblem
         , strided_batch(strided_batch)
         , grouped_gemm(grouped_gemm)
         , gradient(gradient)
+        , compute_type(compute_type)
         , bias(bias)
         , scaleDVec(scaleDVec)
         , bias_type(bias_type)
