@@ -61,6 +61,7 @@ rocblaslt_status rocblaslt_batched_template(rocblaslt_handle             handle,
                                             bool                         strided_batch,
                                             bool                         grouped_gemm,
                                             bool                         gradient,
+                                            rocblaslt_compute_type       compute_type,
                                             const rocblaslt_matmul_algo* algo,
                                             void*                        workspace,
                                             size_t                       workspaceSizeInBytes,
@@ -103,6 +104,7 @@ rocblaslt_status rocblaslt_batched_template(rocblaslt_handle             handle,
                                                     strided_batch,
                                                     grouped_gemm,
                                                     gradient,
+                                                    compute_type,
                                                     bias,
                                                     scaleDVec,
                                                     bias_type,
@@ -140,6 +142,7 @@ rocblaslt_status rocblaslt_gemm_create_batched_template(hipblasOperation_t     t
                                                         bool                   strided_batch,
                                                         bool                   grouped_gemm,
                                                         bool                   gradient,
+                                                        rocblaslt_compute_type compute_type,
                                                         const void*            bias,
                                                         const Tc*              scaleDVec,
                                                         hipblasDatatype_t      bias_type,
@@ -178,6 +181,7 @@ rocblaslt_status rocblaslt_gemm_create_batched_template(hipblasOperation_t     t
                                                     strided_batch,
                                                     grouped_gemm,
                                                     gradient,
+                                                    compute_type,
                                                     bias,
                                                     scaleDVec,
                                                     bias_type,
@@ -212,6 +216,7 @@ rocblaslt_status
                                                   std::vector<int64_t>&            batch_count,
                                                   bool                             strided_batch,
                                                   bool                             grouped_gemm,
+                                                  rocblaslt_compute_type           compute_type,
                                                   std::vector<const void*>&        bias,
                                                   std::vector<const Tc*>&          scaleDVec,
                                                   std::vector<hipblasDatatype_t>&  bias_type,
@@ -254,6 +259,7 @@ rocblaslt_status
                                                                    strided_batch,
                                                                    grouped_gemm,
                                                                    false,
+                                                                   compute_type,
                                                                    bias[i],
                                                                    scaleDVec[i],
                                                                    bias_type[i],
@@ -293,6 +299,7 @@ rocblaslt_status rocblaslt_matmul_typecasting(rocblaslt_handle             handl
                                               bool                         strided_batch,
                                               bool                         grouped_gemm,
                                               bool                         gradient,
+                                              rocblaslt_compute_type       compute_type,
                                               const rocblaslt_matmul_algo* algo,
                                               void*                        workspace,
                                               size_t                       workspaceSizeInBytes,
@@ -337,6 +344,7 @@ rocblaslt_status rocblaslt_matmul_typecasting(rocblaslt_handle             handl
                                       strided_batch,
                                       grouped_gemm,
                                       gradient,
+                                      compute_type,
                                       algo,
                                       workspace,
                                       workspaceSizeInBytes,
@@ -375,6 +383,7 @@ rocblaslt_status rocblaslt_gemm_create_typecasting(hipblasOperation_t     trans_
                                                    bool                   strided_batch,
                                                    bool                   grouped_gemm,
                                                    bool                   gradient,
+                                                   rocblaslt_compute_type compute_type,
                                                    const void*            bias,
                                                    const void*            scaleDVec,
                                                    hipblasDatatype_t      bias_type,
@@ -415,6 +424,7 @@ rocblaslt_status rocblaslt_gemm_create_typecasting(hipblasOperation_t     trans_
                                                   strided_batch,
                                                   grouped_gemm,
                                                   gradient,
+                                                  compute_type,
                                                   reinterpret_cast<const void*>(bias),
                                                   reinterpret_cast<const Tc*>(scaleDVec),
                                                   bias_type,
@@ -446,6 +456,7 @@ rocblaslt_status rocblaslt_groupedgemm_create_typecasting(hipblasOperation_t    
                                                           std::vector<int64_t>&     batch_count,
                                                           bool                      strided_batch,
                                                           bool                      grouped_gemm,
+                                                          rocblaslt_compute_type    compute_type,
                                                           std::vector<const void*>& bias,
                                                           std::vector<const void*>& scaleDVec,
                                                           std::vector<hipblasDatatype_t>& bias_type,
@@ -492,6 +503,7 @@ rocblaslt_status rocblaslt_groupedgemm_create_typecasting(hipblasOperation_t    
                                                          batch_count,
                                                          strided_batch,
                                                          grouped_gemm,
+                                                         compute_type,
                                                          bias,
                                                          groupedScaleDVec,
                                                          bias_type,
@@ -547,14 +559,14 @@ inline rocblaslt_status rocblaslt_matmul_template(rocblaslt_handle             h
 #define EX_TYPECASTING_PARM                                                                        \
     handle, trans_a, trans_b, m, n, k, alpha, a, ld_a, batch_stride_a, b, ld_b, batch_stride_b,    \
         beta, c, ld_c, batch_stride_c, d, ld_d, batch_stride_d, e, ld_e, batch_stride_e,           \
-        batch_count, strided_batch, grouped_gemm, gradient, algo, workspace, workspaceSizeInBytes, \
-        bias, scaleDVec, bias_type, epilogue, gemmData, stream
+        batch_count, strided_batch, grouped_gemm, gradient, compute_type, algo, workspace,         \
+        workspaceSizeInBytes, bias, scaleDVec, bias_type, epilogue, gemmData, stream
 
     if(a_type == HIPBLAS_R_32F && b_type == HIPBLAS_R_32F)
     {
         if(c_type == HIPBLAS_R_32F && d_type == HIPBLAS_R_32F)
         {
-            if(compute_type == rocblaslt_compute_f32)
+            if(compute_type == rocblaslt_compute_f32 || compute_type == rocblaslt_compute_f32_fast_xf32)
             {
                 rs_status = rocblaslt_matmul_typecasting<float, float, float>(EX_TYPECASTING_PARM);
             }
@@ -642,14 +654,14 @@ inline rocblaslt_status rocblaslt_gemm_create_template_cpp(hipblasOperation_t   
 #define EX_TYPECASTING_PARM_GEMM_CPP                                                             \
     trans_a, trans_b, m, n, k, alpha, a, ld_a, batch_stride_a, b, ld_b, batch_stride_b, beta, c, \
         ld_c, batch_stride_c, d, ld_d, batch_stride_d, e, ld_e, batch_stride_e, batch_count,     \
-        strided_batch, grouped_gemm, gradient, bias, scaleDVec, bias_type, epilogue, gemmData,   \
+        strided_batch, grouped_gemm, gradient, compute_type, bias, scaleDVec, bias_type, epilogue, gemmData,   \
         gemmCount
 
     if(a_type == HIPBLAS_R_32F && b_type == HIPBLAS_R_32F)
     {
         if(c_type == HIPBLAS_R_32F && d_type == HIPBLAS_R_32F)
         {
-            if(compute_type == rocblaslt_compute_f32)
+            if(compute_type == rocblaslt_compute_f32 || compute_type == rocblaslt_compute_f32_fast_xf32)
             {
                 rs_status = rocblaslt_gemm_create_typecasting<float, float, float>(
                     EX_TYPECASTING_PARM_GEMM_CPP);
@@ -737,13 +749,13 @@ inline rocblaslt_status
 #define EX_TYPECASTING_PARM_GroupedGemm_CPP                                                      \
     trans_a, trans_b, m, n, k, alpha, a, ld_a, batch_stride_a, b, ld_b, batch_stride_b, beta, c, \
         ld_c, batch_stride_c, d, ld_d, batch_stride_d, batch_count, strided_batch, grouped_gemm, \
-        bias, scaleDVec, bias_type, epilogue, gemmData, gemmCount
+        compute_type, bias, scaleDVec, bias_type, epilogue, gemmData, gemmCount
 
     if(a_type == HIPBLAS_R_32F && b_type == HIPBLAS_R_32F)
     {
         if(c_type == HIPBLAS_R_32F && d_type == HIPBLAS_R_32F)
         {
-            if(compute_type == rocblaslt_compute_f32)
+            if(compute_type == rocblaslt_compute_f32 || compute_type == rocblaslt_compute_f32_fast_xf32)
             {
                 rs_status = rocblaslt_groupedgemm_create_typecasting<float, float, float>(
                     EX_TYPECASTING_PARM_GroupedGemm_CPP);
