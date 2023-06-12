@@ -29,7 +29,6 @@
 #define ROCBLASLT_MAT_HPP
 
 #include "handle.h"
-#include "utility.hpp"
 
 #include "tensile_host.hpp"
 

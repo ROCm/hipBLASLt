@@ -27,6 +27,7 @@
 #include "definitions.h"
 #include "handle.h"
 #include "rocblaslt.h"
+#include "rocblaslt_mat_utils.hpp"
 #include "tensile_host.hpp"
 #include "utility.hpp"
 
@@ -34,6 +35,118 @@
 
 #define TO_STR2(x) #x
 #define TO_STR(x) TO_STR2(x)
+
+/******************************************************************************
+ * construct_rocblaslt_problem creates RocblasltContractionProblem from mat    *
+ * layout and descriptor for Tensile's findTopSolutions.                      *
+ ******************************************************************************/
+template <typename Ti, typename To = Ti, typename Tc = To>
+RocblasltContractionProblem<Ti, To, Tc>
+    construct_rocblaslt_problem(const rocblaslt_matmul_desc matmul_descr,
+                                rocblaslt_matrix_layout     matA,
+                                rocblaslt_matrix_layout     matB,
+                                rocblaslt_matrix_layout     matC,
+                                rocblaslt_matrix_layout     matD,
+                                const Tc*                   alpha,
+                                const Tc*                   beta,
+                                size_t                      maxWorkSpaceBytes)
+{
+    int8_t      dummy;
+    const void* dummy_ptr = &dummy;
+    int64_t     m, n, k, lda, ldb, ldc, ldd, lde, batch_stride_a, batch_stride_b, batch_stride_c,
+        batch_stride_d, batch_stride_e;
+    hipblasDatatype_t bias_type;
+    rocblaslt_compute_type compute_type;
+    void *            bias = nullptr, *scaleDVec = nullptr, *e = nullptr;
+    bool              gradient = false;
+    rocblaslt_status  isValid  = rocblaslt_matmul_valid_args(matmul_descr,
+                                                           dummy_ptr,
+                                                           dummy_ptr,
+                                                           dummy_ptr,
+                                                           dummy_ptr,
+                                                           matA,
+                                                           matB,
+                                                           matC,
+                                                           matD,
+                                                           alpha,
+                                                           beta,
+                                                           m,
+                                                           n,
+                                                           k,
+                                                           lda,
+                                                           batch_stride_a,
+                                                           ldb,
+                                                           batch_stride_b,
+                                                           ldc,
+                                                           batch_stride_c,
+                                                           ldd,
+                                                           batch_stride_d,
+                                                           lde,
+                                                           batch_stride_e,
+                                                           bias,
+                                                           bias_type,
+                                                           scaleDVec,
+                                                           e,
+                                                           gradient,
+                                                           compute_type);
+    if(isValid != rocblaslt_status_continue)
+    {
+        m = 0;
+        n = 0;
+        k = 0;
+    }
+
+    // Internal assign
+    hipblasOperation_t opA           = matmul_descr->op_A;
+    hipblasOperation_t opB           = matmul_descr->op_B;
+    int                num_batches_a = matA->batch_count;
+    rocblaslt_epilogue epilogue      = matmul_descr->epilogue;
+
+    // Others
+    constexpr bool strided_batch = true;
+    constexpr bool grouped_gemm  = false;
+
+    RocblasltContractionProblem<Ti, To, Tc> problem{opA,
+                                                    opB,
+                                                    m,
+                                                    n,
+                                                    k,
+                                                    alpha,
+                                                    nullptr,
+                                                    nullptr,
+                                                    lda,
+                                                    batch_stride_a,
+                                                    nullptr,
+                                                    nullptr,
+                                                    ldb,
+                                                    batch_stride_b,
+                                                    beta,
+                                                    nullptr,
+                                                    nullptr,
+                                                    ldc,
+                                                    batch_stride_c,
+                                                    nullptr,
+                                                    nullptr,
+                                                    ldd,
+                                                    batch_stride_d,
+                                                    (Tc*)e,
+                                                    nullptr,
+                                                    lde,
+                                                    batch_stride_e,
+                                                    num_batches_a,
+                                                    strided_batch,
+                                                    grouped_gemm,
+                                                    gradient,
+                                                    compute_type,
+                                                    bias,
+                                                    (const Tc*)scaleDVec,
+                                                    bias_type,
+                                                    epilogue,
+                                                    nullptr,
+                                                    maxWorkSpaceBytes,
+                                                    nullptr};
+    return problem;
+}
 
 #ifdef __cplusplus
 extern "C" {
@@ -864,15 +977,15 @@ rocblaslt_status rocblaslt_matmul_is_algo_supported(rocblaslt_handle        hand
                 {
                     float* alphaf = (float*)alpha;
                     float* betaf  = (float*)beta;
-                    auto   prob
-                        = ConstructRocblasltProblem<float, float, float>(matmul_descr,
-                                                                         matA,
-                                                                         matB,
-                                                                         matC,
-                                                                         matD,
-                                                                         alphaf,
-                                                                         betaf,
-                                                                         algo->max_workspace_bytes);
+                    auto   prob   = construct_rocblaslt_problem<float, float, float>(
+                        matmul_descr,
+                        matA,
+                        matB,
+                        matC,
+                        matD,
+                        alphaf,
+                        betaf,
+                        algo->max_workspace_bytes);
                     status = isSolutionSupported<float, float, float>(
                         handle, prob, gemmData, algo, workspaceSizeInBytes);
                 }
@@ -886,7 +999,7 @@ rocblaslt_status rocblaslt_matmul_is_algo_supported(rocblaslt_handle        hand
                 {
                     float* alphaf = (float*)alpha;
                     float* betaf  = (float*)beta;
-                    auto   prob = ConstructRocblasltProblem<rocblaslt_half, rocblaslt_half, float>(
+                    auto prob = construct_rocblaslt_problem<rocblaslt_half, rocblaslt_half, float>(
                         matmul_descr,
                         matA,
                         matB,
@@ -905,7 +1018,7 @@ rocblaslt_status rocblaslt_matmul_is_algo_supported(rocblaslt_handle        hand
                 {
                     float* alphaf = (float*)alpha;
                     float* betaf  = (float*)beta;
-                    auto   prob   = ConstructRocblasltProblem<rocblaslt_half, float, float>(
+                    auto   prob   = construct_rocblaslt_problem<rocblaslt_half, float, float>(
                         matmul_descr,
                         matA,
                         matB,
@@ -927,16 +1040,16 @@ rocblaslt_status rocblaslt_matmul_is_algo_supported(rocblaslt_handle        hand
                 {
                     float* alphaf = (float*)alpha;
                     float* betaf  = (float*)beta;
-                    auto   prob
-                        = ConstructRocblasltProblem<rocblaslt_bfloat16, rocblaslt_bfloat16, float>(
-                            matmul_descr,
-                            matA,
-                            matB,
-                            matC,
-                            matD,
-                            alphaf,
-                            betaf,
-                            algo->max_workspace_bytes);
+                    auto   prob   = construct_rocblaslt_problem<rocblaslt_bfloat16,
+                                                            rocblaslt_bfloat16,
+                                                            float>(matmul_descr,
+                                                                   matA,
+                                                                   matB,
+                                                                   matC,
+                                                                   matD,
+                                                                   alphaf,
+                                                                   betaf,
+                                                                   algo->max_workspace_bytes);
                     status = isSolutionSupported<rocblaslt_bfloat16, rocblaslt_bfloat16, float>(
                         handle, prob, gemmData, algo, workspaceSizeInBytes);
                 }
@@ -1005,15 +1118,15 @@ rocblaslt_status
                 {
                     float alpha = 1.0;
                     float beta  = 1.0;
-                    auto  prob
-                        = ConstructRocblasltProblem<float, float, float>(matmul_desc,
-                                                                         matA,
-                                                                         matB,
-                                                                         matC,
-                                                                         matD,
-                                                                         &alpha,
-                                                                         &beta,
-                                                                         pref->max_workspace_bytes);
+                    auto  prob  = construct_rocblaslt_problem<float, float, float>(
+                        matmul_desc,
+                        matA,
+                        matB,
+                        matC,
+                        matD,
+                        &alpha,
+                        &beta,
+                        pref->max_workspace_bytes);
                     status = getBestSolutions<float, float, float>(prob,
                                                                    handle,
                                                                    tensile_data,
@@ -1032,7 +1145,7 @@ rocblaslt_status
                 {
                     float alpha = 1.0;
                     float beta  = 1.0;
-                    auto  prob  = ConstructRocblasltProblem<rocblaslt_half, rocblaslt_half, float>(
+                    auto  prob = construct_rocblaslt_problem<rocblaslt_half, rocblaslt_half, float>(
                         matmul_desc,
                         matA,
                         matB,
@@ -1057,7 +1170,7 @@ rocblaslt_status
                 {
                     float alpha = 1.0;
                     float beta  = 1.0;
-                    auto  prob  = ConstructRocblasltProblem<rocblaslt_half, float, float>(
+                    auto  prob  = construct_rocblaslt_problem<rocblaslt_half, float, float>(
                         matmul_desc,
                         matA,
                         matB,
@@ -1085,17 +1198,17 @@ rocblaslt_status
                 {
                     float alpha = 1.0;
                     float beta  = 1.0;
-                    auto  prob
-                        = ConstructRocblasltProblem<rocblaslt_bfloat16, rocblaslt_bfloat16, float>(
-                            matmul_desc,
-                            matA,
-                            matB,
-                            matC,
-                            matD,
-                            &alpha,
-                            &beta,
-                            pref->max_workspace_bytes);
-                    status = getBestSolutions<rocblaslt_bfloat16, rocblaslt_bfloat16, float>(
+                    auto  prob  = construct_rocblaslt_problem<rocblaslt_bfloat16,
+                                                            rocblaslt_bfloat16,
+                                                            float>(matmul_desc,
+                                                                   matA,
+                                                                   matB,
+                                                                   matC,
+                                                                   matD,
+                                                                   &alpha,
+                                                                   &beta,
+                                                                   pref->max_workspace_bytes);
+                    status      = getBestSolutions<rocblaslt_bfloat16, rocblaslt_bfloat16, float>(
                         prob,
                         handle,
                         tensile_data,
@@ -1203,7 +1316,7 @@ rocblaslt_status rocblaslt_matmul_get_all_algos_cpp(
                 {
                     float alpha = 1.0;
                     float beta  = 1.0;
-                    auto  prob  = ConstructRocblasltProblem<float, float, float>(
+                    auto  prob  = construct_rocblaslt_problem<float, float, float>(
                         &matmul_desc, &matA, &matB, &matC, &matD, &alpha, &beta, maxWorkspaceSize);
                     if(typeGemm == rocblaslt::RocGemmType::ROCBLASLT_GEMM)
                     {
@@ -1233,7 +1346,7 @@ rocblaslt_status rocblaslt_matmul_get_all_algos_cpp(
                 {
                     float alpha = 1.0;
                     float beta  = 1.0;
-                    auto  prob  = ConstructRocblasltProblem<rocblaslt_half, rocblaslt_half, float>(
+                    auto  prob = construct_rocblaslt_problem<rocblaslt_half, rocblaslt_half, float>(
                         &matmul_desc, &matA, &matB, &matC, &matD, &alpha, &beta, maxWorkspaceSize);
                     if(typeGemm == rocblaslt::RocGemmType::ROCBLASLT_GEMM)
                     {
@@ -1261,7 +1374,7 @@ rocblaslt_status rocblaslt_matmul_get_all_algos_cpp(
                 {
                     float alpha = 1.0;
                     float beta  = 1.0;
-                    auto  prob  = ConstructRocblasltProblem<rocblaslt_half, float, float>(
+                    auto  prob  = construct_rocblaslt_problem<rocblaslt_half, float, float>(
                         &matmul_desc, &matA, &matB, &matC, &matD, &alpha, &beta, maxWorkspaceSize);
                     if(typeGemm == rocblaslt::RocGemmType::ROCBLASLT_GEMM)
                     {
@@ -1291,16 +1404,10 @@ rocblaslt_status rocblaslt_matmul_get_all_algos_cpp(
                 {
                     float alpha = 1.0;
                     float beta  = 1.0;
-                    auto  prob
-                        = ConstructRocblasltProblem<rocblaslt_bfloat16, rocblaslt_bfloat16, float>(
-                            &matmul_desc,
-                            &matA,
-                            &matB,
-                            &matC,
-                            &matD,
-                            &alpha,
-                            &beta,
-                            maxWorkspaceSize);
+                    auto  prob  = construct_rocblaslt_problem<rocblaslt_bfloat16,
+                                                            rocblaslt_bfloat16,
+                                                            float>(
+                        &matmul_desc, &matA, &matB, &matC, &matD, &alpha, &beta, maxWorkspaceSize);
                     if(typeGemm == rocblaslt::RocGemmType::ROCBLASLT_GEMM)
                     {
                         status = getAllSolutions<rocblaslt_bfloat16, rocblaslt_bfloat16, float>(
