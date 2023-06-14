@@ -208,6 +208,14 @@ class ActivationType:
             return self.value == other.value
         else:
             raise RuntimeError("Unrecognized type in rhs, should be string or ActivationType")
+    def __lt__(self, other):
+        if isinstance(other, str):
+            return self.value < other.lower()
+        elif isinstance(other, ActivationType):
+            return self.value < other.value
+        else:
+            raise RuntimeError("Unrecognized type in rhs, should be string or ActivationType")
+
     def toEnum(self):
         return self.value.capitalize()
 

@@ -1552,6 +1552,20 @@ namespace Tensile
                 {
                     return problem.activationType() == value;
                 }
+
+                virtual std::string toString() const override
+                {
+                    return concatenate(this->type(), ":", ToString(value));
+                }
+
+                virtual bool debugEval(ContractionProblemGemm const& problem,
+                                       std::ostream&                 stream) const override
+                {
+                    bool rv = (*this)(problem);
+                    stream << this->type() << "(" << ToString(problem.activationType())
+                           << " == " << ToString(value) << "): " << rv;
+                    return rv;
+                }
             };
 
             struct ActivationEnumWhiteList
