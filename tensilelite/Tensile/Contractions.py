@@ -309,7 +309,6 @@ class ProblemType:
                 predicates.append(ProblemPredicate("BetaZero"))
             predicates.append(ProblemPredicate("BiasDataTypeWhiteList", value=self.biasDataTypeWhiteList))
             predicates.append(ProblemPredicate("BiasSrcWhiteList", value=self.biasSrcWhiteList))
-            predicates.append(ProblemPredicate("Activation", value=self.activationType))
             if self.activationType == 'all':
                 exportType = ActivationType.Export.GRADONLY if self.useGradient else ActivationType.Export.NORMAL
                 enumList = [actEnum.capitalize() for actEnum in ActivationType.getEnumStrList(self.activationComputeDataType, exportType=exportType)]
@@ -320,6 +319,7 @@ class ProblemType:
         if includeType:
             predicates.append(ProblemPredicate("TypesEqual", value=(self.aType, self.bType, self.cType, self.dType)))
             predicates.append(ProblemPredicate("HighPrecisionAccumulate", value=self.highPrecisionAccumulate))
+            predicates.append(ProblemPredicate("Activation", value=self.activationType))
             predicates.append(ProblemPredicate("ActivationHPA", value=self.activationHPA))
             predicates.append(ProblemPredicate("ActivationNoGuard", value=self.activationNoGuard))
             predicates.append(ProblemPredicate("UseGradient", value=self.useGradient))
