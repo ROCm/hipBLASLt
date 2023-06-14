@@ -914,7 +914,7 @@ validParameters = {
     # With MatrixInstruciton: -1 means max(GRVW,MIInput) if TLU=0
     "LdsPadA":                     [ -1, 0, 1, 2, 3, 4, 8, 16, 32],
     "LdsPadB":                     [ -1, 0, 1, 2, 3, 4, 8, 16, 32],
-
+    "LdsPadMetadata":              [ -1, 0, 1, 2, 3, 4, 8],
     # Padding boundary for LDS. defines block-size for pad insertion. for every 'LdsBlockSizePerPad' bytes, LDS padding (pad value from LdsPad parameter)
     # is added (readOffset aware of the pad and adjusts offset value based on this parameter value).
     # Only support LdsBlockSizePerPad >= unrollDepth * BPE
@@ -996,6 +996,7 @@ defaultBenchmarkCommonParameters = [
     {"KernelLanguage":            [ "Assembly" ] },
     {"LdsPadA":                   [ 0 ] },
     {"LdsPadB":                   [ 0 ] },
+    {"LdsPadMetadata":            [ 0 ] },
     {"LdsBlockSizePerPad":        [ 0 ] },
     {"TransposeLDS":              [ 0 ] },
     {"MaxOccupancy":              [ 40 ] },
