@@ -201,7 +201,7 @@ class ProblemType:
 
         rv.activationType = ActivationType('none')
         if 'ActivationType' in d:
-            rv.activationType = d['ActivationType']
+            rv.activationType = ActivationType(d['ActivationType'])
         rv.activationHPA = False
         if 'ActivationHPA' in d:
             rv.activationHPA = d['ActivationHPA']
