@@ -2872,8 +2872,7 @@ class Solution(collections.abc.Mapping):
       assert(state["LdsPadB"] >= 0)
 
     if state["ProblemType"]["SparseA"] and not state["DirectToVgprSparseMetadata"]:
-      state["LdsPadMetadata"] = 0
-      optPadM = 1
+      optPadM = optPadA // 4
       if state["LdsPadMetadata"] == -1:
         if state["ProblemType"]["TLUMetadata"]:
           state["LdsPadMetadata"] = 0
@@ -2881,7 +2880,7 @@ class Solution(collections.abc.Mapping):
           if state["EnableMatrixInstruction"] and state["TransposeLDSMetadata"]:
             state["LdsPadMetadata"] = max(state["GlobalReadVectorWidth"] // 4, optPadM)
           else:
-            state["LdsPadMetadata"] = 1
+            state["LdsPadMetadata"] = state["VectorWidth"] // 4
           ## turn-off padding for directToLds
           if state["EnableMatrixInstruction"] and state["TransposeLDSMetadata"] and state["DirectToLdsMetadata"]:
             state["LdsPadMetadata"] = 0
@@ -2919,7 +2918,7 @@ class Solution(collections.abc.Mapping):
       ldsNumElementsAlignedB = 0
 
     if state["ProblemType"]["SparseA"] and not state["DirectToVgprSparseMetadata"]:
-      if state["UnrollMajorLDSA"]:
+      if state["UnrollMajorLDSMetadata"]:
         ldsNumElementsMetadata = (state["_DepthULdsMetadata"] + state["LdsPadMetadata"]) * state["MacroTileMetadata"]
       else:
         ldsNumElementsMetadata = state["_DepthULdsMetadata"] * (state["MacroTileMetadata"] + state["LdsPadMetadata"])
