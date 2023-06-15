@@ -1825,11 +1825,13 @@ rocblaslt_status getAllSolutions(MyProblem&                                     
         prob.setF32XdlMathOp(Tensile::DataType::Float);
         if constexpr(std::is_same<MyProblem, Tensile::ContractionProblemGemm>::value)
         {
-            solutions = library->findAllSolutions(prob, *hardware, true);
+            solutions = library->findAllSolutions(
+                 prob, *hardware, Tensile::SolutionLibrarySearchType::GEMM_TYPE_ONLY);
         }
         else if constexpr(std::is_same<MyProblem, Tensile::ContractionProblemGroupedGemm>::value)
         {
-            solutions = library->findAllSolutionsGroupedGemm(prob.gemms, *hardware, true);
+            solutions = library->findAllSolutionsGroupedGemm(
+                prob.gemms, *hardware, Tensile::SolutionLibrarySearchType::GEMM_TYPE_ONLY);
         }
     }
 
