@@ -586,7 +586,8 @@ int main(int argc, const char* argv[])
                         {
                             auto inputs = dataInit->prepareGPUInputs(problem);
 
-                            auto kernels = solution->solve((*problem), *inputs, *hardware, stream);
+                            auto kernels
+                                = solution->solve((*problem), *inputs, *hardware, nullptr, stream);
 
                             size_t       warmupInvocations = listeners.numWarmupRuns();
                             size_t       eventCount        = gpuTimer ? kernels.size() : 0;
