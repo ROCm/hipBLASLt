@@ -36,6 +36,10 @@
 #include <cstddef>
 #include <cstdlib>
 
+#ifdef ENABLE_ROCTX
+#include <roctracer/roctx.h>
+#endif
+
 namespace Tensile
 {
     PerfModel perf;
@@ -1361,7 +1365,8 @@ namespace Tensile
     std::vector<KernelInvocation> ContractionSolution::solve(ContractionProblem const& problem,
                                                              ProblemInputs const&      inputs,
                                                              Hardware const&           hardware,
-                                                             hipStream_t               stream) const
+                                                             void*       hipHostMemory,
+                                                             hipStream_t stream) const
     {
         if(auto gemmProblem = dynamic_cast<ContractionProblemGemm const*>(&problem))
         {
@@ -1372,7 +1377,7 @@ namespace Tensile
         {
             auto& gemms         = groupedProblem->gemms;
             auto  groupedInputs = dynamic_cast<ContractionGroupedInputs const*>(&inputs);
-            return solveGroupedGemm(gemms, (*groupedInputs), hardware, stream);
+            return solveGroupedGemm(gemms, (*groupedInputs), hardware, hipHostMemory, stream);
         }
         else
         {
@@ -1515,6 +1520,7 @@ namespace Tensile
         std::vector<ContractionSolution::Problem> const& problems,
         ContractionSolution::GroupedInputs const&        inputs,
         Hardware const&                                  hardware,
+        void*                                            hipHostMemory,
         hipStream_t                                      stream) const
     {
         if(Debug::Instance().printWinningKernelName())
@@ -1593,6 +1599,9 @@ namespace Tensile
 
         std::vector<KernelInvocation> rv;
         auto                          h_args = KernelArguments(debug);
+        size_t                        hipHostMemorySize;
+        static_cast<void>(hipMemPtrGetInfo(hipHostMemory, &hipHostMemorySize));
+        h_args.useExternalPointer(hipHostMemory, hipHostMemorySize);
         h_args.reserve(32768, 8192);
 
         // if(sizeMapping.globalSplitU > 1 && sizeMapping.globalAccumulation != 2)
@@ -1633,9 +1642,14 @@ namespace Tensile
             }
             std::cout << h_args;
         }
+
+        if(hipHostMemorySize < h_args.size() * sizeof(uint8_t))
+        {
+            throw std::runtime_error("Insufficient hipHostMemorySize.");
+        }
         uint8_t* d_args = (uint8_t*)inputs.ws + workspaceOffsetInByte;
         HIP_CHECK_EXC(hipMemcpyAsync(
-            d_args, h_args.data(), h_args.size() * sizeof(uint8_t), hipMemcpyHostToDevice, stream));
+            d_args, hipHostMemory, h_args.size() * sizeof(uint8_t), hipMemcpyHostToDevice, stream));
 
         return rv;
     }
