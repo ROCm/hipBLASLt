@@ -304,7 +304,7 @@ rocblaslt_status rocblaslt_matmul_typecasting(rocblaslt_handle             handl
                                               hipStream_t                  stream)
 {
     // check alignment of pointers before casting
-    if(!isAligned(a, sizeof(Ti)) || !isAligned(b, sizeof(Ti)) || !isAligned(c, sizeof(Ti))
+    if(!isAligned(a, sizeof(Ti)) || !isAligned(b, sizeof(Ti)) || !isAligned(c, sizeof(To))
        || !isAligned(d, sizeof(To)))
     {
         std::cerr << "memmory is not aligned" << std::endl;
@@ -383,7 +383,7 @@ rocblaslt_status rocblaslt_gemm_create_typecasting(hipblasOperation_t     trans_
                                                    size_t&                gemmCount)
 {
     // check alignment of pointers before casting
-    if(!isAligned(a, sizeof(Ti)) || !isAligned(b, sizeof(Ti)) || !isAligned(c, sizeof(Ti))
+    if(!isAligned(a, sizeof(Ti)) || !isAligned(b, sizeof(Ti)) || !isAligned(c, sizeof(To))
        || !isAligned(d, sizeof(To)))
     {
         std::cerr << "memmory is not aligned" << std::endl;
@@ -570,6 +570,14 @@ inline rocblaslt_status rocblaslt_matmul_template(rocblaslt_handle             h
                     EX_TYPECASTING_PARM);
             }
         }
+        else if(c_type == HIPBLAS_R_32F && d_type == HIPBLAS_R_32F)
+        {
+            if(compute_type == rocblaslt_compute_f32)
+            {
+                rs_status = rocblaslt_matmul_typecasting<rocblaslt_half, float, float>(
+                    EX_TYPECASTING_PARM);
+            }
+        }
     }
     else if(a_type == HIPBLAS_R_16B && b_type == HIPBLAS_R_16B)
     {
@@ -659,6 +667,15 @@ inline rocblaslt_status rocblaslt_gemm_create_template_cpp(hipblasOperation_t   
                         EX_TYPECASTING_PARM_GEMM_CPP);
             }
         }
+        else if(c_type == HIPBLAS_R_32F && d_type == HIPBLAS_R_32F)
+        {
+            if(compute_type == rocblaslt_compute_f32)
+            {
+                rs_status
+                    = rocblaslt_gemm_create_typecasting<rocblaslt_half, float, float>(
+                        EX_TYPECASTING_PARM_GEMM_CPP);
+            }
+        }
     }
     else if(a_type == HIPBLAS_R_16B && b_type == HIPBLAS_R_16B)
     {
@@ -741,6 +758,16 @@ inline rocblaslt_status
             {
                 rs_status = rocblaslt_groupedgemm_create_typecasting<rocblaslt_half,
                                                                      rocblaslt_half,
+                                                                     float>(
+                    EX_TYPECASTING_PARM_GroupedGemm_CPP);
+            }
+        }
+        else if(c_type == HIPBLAS_R_32F && d_type == HIPBLAS_R_32F)
+        {
+            if(compute_type == rocblaslt_compute_f32)
+            {
+                rs_status = rocblaslt_groupedgemm_create_typecasting<rocblaslt_half,
+                                                                     float,
                                                                      float>(
                     EX_TYPECASTING_PARM_GroupedGemm_CPP);
             }
