@@ -214,6 +214,7 @@ namespace Tensile
         virtual std::vector<KernelInvocation> solve(ContractionProblem const& problem,
                                                     ProblemInputs const&      inputs,
                                                     Hardware const&           hardware,
+                                                    void*                     hipHostMemory,
                                                     hipStream_t               stream) const;
 
         virtual std::vector<KernelInvocation>
@@ -222,6 +223,7 @@ namespace Tensile
         virtual std::vector<KernelInvocation> solveGroupedGemm(std::vector<Problem> const& problems,
                                                                GroupedInputs const&        inputs,
                                                                Hardware const&             hardware,
+                                                               void*       hipHostMemory,
                                                                hipStream_t stream) const;
 
         template <bool T_Debug>

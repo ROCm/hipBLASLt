@@ -64,6 +64,12 @@
 
 #define HIPBLASLT_LIB_PATH "/opt/rocm/hipblaslt/lib"
 
+#ifdef ENABLE_ROCTX
+#include <roctracer/roctx.h>
+#endif
+
+#define INTERNAL_HIPHOSTMEM_SIZE 32768
+
 namespace
 {
 #ifndef WIN32
@@ -1085,6 +1091,7 @@ struct TensileDataGroupedGemm
     Tensile::ContractionProblemGroupedGemm problem;
     Tensile::ContractionGroupedInputs      inputs;
     std::vector<Tensile::KernelInvocation> kernels;
+    std::shared_ptr<void>                  hipHostMemory;
 };
 
 void initTensileGemmData(rocblaslt_handle       handle,
@@ -1136,6 +1143,11 @@ void initTensileGemmData(rocblaslt_handle       handle,
                                                            true,
                                                            maxWorkspaceBytes));
         groupedInputs.grouped.resize(1);
+
+        void* tmp = nullptr;
+        static_cast<void>(hipHostMalloc(&tmp, INTERNAL_HIPHOSTMEM_SIZE, 0));
+        data.hipHostMemory
+            = std::shared_ptr<void>(tmp, [](auto p) { static_cast<void>(hipFree(p)); });
 
         gemmData = std::static_pointer_cast<void>(std::make_shared<TensileDataGroupedGemm>(data));
         return;
@@ -1421,8 +1433,8 @@ rocblaslt_status makeArgument(rocblaslt_handle             handle,
                 data->problem.gemms[i].setActivationHPA(solution->problemType.activationHPA);
                 data->problem.gemms[i].setUseScaleDVec(solution->problemType.useScaleDVec);
             }
-            data->kernels
-                = solution->solveGroupedGemm(data->problem.gemms, data->inputs, *hardware, stream);
+            data->kernels = solution->solveGroupedGemm(
+                data->problem.gemms, data->inputs, *hardware, data->hipHostMemory.get(), stream);
             for(int i = 0; i < data->problem.gemms.size(); i++)
             {
                 data->problem.gemms[i].setUseBias(useBias[i]);
