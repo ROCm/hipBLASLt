@@ -2271,6 +2271,7 @@ extern "C" void rocblaslt_createialize()
 
 CREATEFUNCTION(float, float, float)
 CREATEFUNCTION(rocblaslt_half, rocblaslt_half, float)
+CREATEFUNCTION(rocblaslt_half, float, float)
 CREATEFUNCTION(rocblaslt_bfloat16, rocblaslt_bfloat16, float)
 
 /***********************************************************************************
