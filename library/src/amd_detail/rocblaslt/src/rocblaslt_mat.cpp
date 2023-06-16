@@ -783,7 +783,7 @@ rocblaslt_status rocblaslt_matmul(rocblaslt_handle             handle,
         return rocblaslt_status_invalid_pointer;
     }
 
-    if(matA->type != matB->type || matA->type != matC->type || matA->type != matD->type)
+    if(matA->type != matB->type || matC->type != matD->type)
     {
         log_error(__func__, "invalid  matrix datatype");
         return rocblaslt_status_type_mismatch;
@@ -933,7 +933,7 @@ rocblaslt_status rocblaslt_gemm_create_cpp(rocblaslt_matmul_desc          matmul
         return rocblaslt_status_invalid_handle;
     }
 
-    if(matA->type != matB->type || matA->type != matC->type || matA->type != matD->type)
+    if(matA->type != matB->type || matC->type != matD->type)
     {
         log_error(__func__, "invalid matrix datatype");
         return rocblaslt_status_type_mismatch;
@@ -1024,8 +1024,8 @@ rocblaslt_status
             return rocblaslt_status_invalid_handle;
         }
 
-        if(matA[i]->type != matB[i]->type || matA[i]->type != matC[i]->type
-           || matA[i]->type != matD[i]->type || matA[0]->type != matA[i]->type)
+        if(matA[i]->type != matB[i]->type || matC[i]->type != matD[i]->type
+            || matA[0]->type != matA[i]->type || matC[0]->type != matC[i]->type)
         {
             log_error(__func__, "invalid  matrix datatype");
             return rocblaslt_status_type_mismatch;
