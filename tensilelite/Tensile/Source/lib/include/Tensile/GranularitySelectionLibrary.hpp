@@ -257,7 +257,15 @@ namespace Tensile
                     }
 
                     if(useSolution)
+                    {
+                        if((*row.second).requiredHostWorkspaceSizePerProblem
+                           == static_cast<size_t>(-1))
+                        {
+                            (*row.second).requiredHostWorkspaceSizePerProblem
+                                = (*row.second).requiredHostSizeGroupedGemmSingle(problems[0]);
+                        }
                         rv.insert(row.second);
+                    }
                 }
                 if(debug)
                 {

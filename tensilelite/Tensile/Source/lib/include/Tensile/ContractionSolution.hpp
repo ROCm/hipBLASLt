@@ -173,6 +173,7 @@ namespace Tensile
    */
         size_t requiredWorkspaceSize(Problem const& problem) const;
         size_t requiredWorkspaceSizeGroupedGemm(std::vector<Problem> const& problems) const;
+        size_t requiredHostSizeGroupedGemmSingle(Problem const& problem) const;
 
         static float computeGranularity(float x);
 
@@ -215,6 +216,7 @@ namespace Tensile
                                                     ProblemInputs const&      inputs,
                                                     Hardware const&           hardware,
                                                     void*                     hipHostMemory,
+                                                    size_t                    hipHostMemorySize,
                                                     hipStream_t               stream) const;
 
         virtual std::vector<KernelInvocation>
@@ -224,25 +226,26 @@ namespace Tensile
                                                                GroupedInputs const&        inputs,
                                                                Hardware const&             hardware,
                                                                void*       hipHostMemory,
+                                                               size_t      hipHostMemorySize,
                                                                hipStream_t stream) const;
 
-        template <bool T_Debug>
+        template <bool T_Debug, typename KA>
         void singleCallArgs(Problem const&           problem,
                             ContractionInputs const& inputs,
                             uint32_t const&          problemNumGroupTiles0,
                             uint32_t const&          problemNumGroupTiles1,
                             uint32_t const&          workspaceOffsetInByte,
                             bool const&              isGrouped,
-                            KernelArguments&         args) const;
+                            KA&                      args) const;
 
         template <bool T_Debug>
         KernelInvocation generateSingleCall(Problem const&           problem,
                                             ContractionInputs const& inputs) const;
 
-        template <bool T_Debug>
+        template <bool T_Debug, typename KA>
         KernelInvocation generateSingleCallGroupedGemm(std::vector<Problem> const& problems,
                                                        GroupedInputs const&        inputs,
-                                                       KernelArguments&            h_args) const;
+                                                       KA&                         h_args) const;
 
         template <bool T_Debug>
         KernelInvocation generateBetaOnlyCall(Problem const&           problem,
@@ -254,21 +257,19 @@ namespace Tensile
 
         std::string betaOnlyKernelName(Problem const& problem) const;
 
-        template <bool T_Debug>
+        template <bool T_Debug, typename KA>
         void outputConversionCallArgs(Problem const&           problem,
                                       ContractionInputs const& inputs,
                                       uint32_t const&          workspaceOffsetInByte,
-                                      KernelArguments&         args) const;
+                                      KA&                      args) const;
 
         template <bool T_Debug>
         KernelInvocation generateOutputConversionCall(Problem const&           problem,
                                                       ContractionInputs const& inputs) const;
 
-        template <bool T_Debug>
-        KernelInvocation
-            generateOutputConversionCallGroupedGemm(std::vector<Problem> const& problems,
-                                                    GroupedInputs const&        inputs,
-                                                    KernelArguments&            h_args) const;
+        template <bool T_Debug, typename KA>
+        KernelInvocation generateOutputConversionCallGroupedGemm(
+            std::vector<Problem> const& problems, GroupedInputs const& inputs, KA& h_args) const;
 
         std::string outputConversionKernelName(Problem const&           problem,
                                                ContractionInputs const& inputs,
@@ -371,6 +372,9 @@ namespace Tensile
         SizeMapping sizeMapping;
 
         ProblemType problemType;
+
+        // This will be calculated when getSolution is called
+        size_t requiredHostWorkspaceSizePerProblem = static_cast<size_t>(-1);
 
         /// Debugging purposes.  Shouldn't contain any vital information that isn't
         /// somewhere else.

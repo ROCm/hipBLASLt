@@ -398,4 +398,76 @@ namespace Tensile
         }
         return *reinterpret_cast<T*>(const_cast<void*>(m_value.first));
     }
+
+    class KernelArgumentsCounter
+    {
+    public:
+        KernelArgumentsCounter() {}
+        ~KernelArgumentsCounter() {}
+
+        // Dummy function
+        void reserve(size_t bytes, size_t count) {}
+
+        inline void append(std::string const& name, ConstantVariant const& value, DataType type)
+        {
+            switch(type)
+            {
+            case DataType::Float:
+                return append<float>(name, (*std::get_if<float>(&value)));
+            case DataType::Double:
+                return append<double>(name, (*std::get_if<double>(&value)));
+            case DataType::Half:
+                return append<Half>(name, (*std::get_if<Half>(&value)));
+            case DataType::Int32:
+                return append<int32_t>(name, (*std::get_if<int32_t>(&value)));
+            case DataType::BFloat16:
+                return append<BFloat16>(name, (*std::get_if<BFloat16>(&value)));
+            case DataType::Int8:
+                return append<int8_t>(name, (*std::get_if<int8_t>(&value)));
+            default:
+                throw std::runtime_error("Unsupported ConstantVariant append type.");
+            }
+        }
+
+        inline void append(std::string const& name, float const value, DataType type)
+        {
+            switch(type)
+            {
+            case DataType::Float:
+                return append<float>(name, value);
+            case DataType::Double:
+                return append<double>(name, (double const)value);
+            case DataType::Half:
+                return append<Half>(name, (Half const)value);
+            case DataType::Int32:
+                return append<int32_t>(name, (int32_t const)value);
+            case DataType::BFloat16:
+                return append<BFloat16>(name, (BFloat16 const)value);
+            case DataType::Int8:
+                return append<int8_t>(name, (int8_t const)value);
+            default:
+                throw std::runtime_error("Unsupported ConstantVariant append type.");
+            }
+        }
+
+        template <typename T>
+        inline void append(std::string const& name, T value)
+        {
+            counter += sizeof(value);
+        }
+
+        template <typename T>
+        inline void appendUnbound(std::string const& name)
+        {
+            append(name, static_cast<T>(0));
+        }
+
+        const size_t size() const
+        {
+            return counter;
+        }
+
+    private:
+        size_t counter = 0;
+    };
 } // namespace Tensile
