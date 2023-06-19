@@ -142,6 +142,12 @@ namespace Tensile
                         return std::shared_ptr<MySolution>();
                 }
 
+                if(solution->requiredHostWorkspaceSizePerProblem == static_cast<size_t>(-1))
+                {
+                    solution->requiredHostWorkspaceSizePerProblem
+                        = solution->requiredHostSizeGroupedGemmSingle(problems[0]);
+                }
+
                 return solution;
             }
             else if(debug)
@@ -250,7 +256,14 @@ namespace Tensile
             }
 
             if(useSolution)
+            {
+                if(solution->requiredHostWorkspaceSizePerProblem == static_cast<size_t>(-1))
+                {
+                    solution->requiredHostWorkspaceSizePerProblem
+                        = solution->requiredHostSizeGroupedGemmSingle(problems[0]);
+                }
                 return SolutionSet<MySolution>({solution});
+            }
 
             return SolutionSet<MySolution>();
         }

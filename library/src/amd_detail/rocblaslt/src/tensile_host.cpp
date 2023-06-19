@@ -1092,6 +1092,7 @@ struct TensileDataGroupedGemm
     Tensile::ContractionGroupedInputs      inputs;
     std::vector<Tensile::KernelInvocation> kernels;
     std::shared_ptr<void>                  hipHostMemory;
+    size_t                                 hipHostMemorySize;
 };
 
 void initTensileGemmData(rocblaslt_handle       handle,
@@ -1148,6 +1149,7 @@ void initTensileGemmData(rocblaslt_handle       handle,
         static_cast<void>(hipHostMalloc(&tmp, INTERNAL_HIPHOSTMEM_SIZE, 0));
         data.hipHostMemory
             = std::shared_ptr<void>(tmp, [](auto p) { static_cast<void>(hipFree(p)); });
+        data.hipHostMemorySize = INTERNAL_HIPHOSTMEM_SIZE;
 
         gemmData = std::static_pointer_cast<void>(std::make_shared<TensileDataGroupedGemm>(data));
         return;
@@ -1433,8 +1435,24 @@ rocblaslt_status makeArgument(rocblaslt_handle             handle,
                 data->problem.gemms[i].setActivationHPA(solution->problemType.activationHPA);
                 data->problem.gemms[i].setUseScaleDVec(solution->problemType.useScaleDVec);
             }
-            data->kernels = solution->solveGroupedGemm(
-                data->problem.gemms, data->inputs, *hardware, data->hipHostMemory.get(), stream);
+
+            size_t requiedHostSize
+                = solution->requiredHostWorkspaceSizePerProblem * data->problem.gemms.size();
+            if(requiedHostSize > data->hipHostMemorySize)
+            {
+                void* tmp = nullptr;
+                static_cast<void>(hipHostMalloc(&tmp, requiedHostSize, 0));
+                data->hipHostMemory
+                    = std::shared_ptr<void>(tmp, [](auto p) { static_cast<void>(hipFree(p)); });
+                data->hipHostMemorySize = requiedHostSize;
+            }
+
+            data->kernels = solution->solveGroupedGemm(data->problem.gemms,
+                                                       data->inputs,
+                                                       *hardware,
+                                                       data->hipHostMemory.get(),
+                                                       data->hipHostMemorySize,
+                                                       stream);
             for(int i = 0; i < data->problem.gemms.size(); i++)
             {
                 data->problem.gemms[i].setUseBias(useBias[i]);
