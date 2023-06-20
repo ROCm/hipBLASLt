@@ -1132,6 +1132,131 @@ namespace Tensile
         return rv.str();
     }
 
+    ContractionProblemGemm ContractionProblemGemm::createDefaultProblem(bool     transA,
+                                                                        bool     transB,
+                                                                        DataType typeA,
+                                                                        DataType typeB,
+                                                                        DataType typeC,
+                                                                        DataType typeD,
+                                                                        DataType typeAlpha,
+                                                                        DataType typeBeta,
+                                                                        DataType typeCompute,
+                                                                        double   alpha,
+                                                                        double   beta,
+                                                                        bool     isGroupedGemm,
+                                                                        size_t   maxWorkspaceBytes)
+    {
+        assert(typeBeta == typeCompute);
+        // Tensor descriptors for a, b
+        TensorDescriptor a, b;
+
+        // Tensile Indices for contraction problem
+        ContractionProblemGemm::FreeIndices  freeIndex(2);
+        ContractionProblemGemm::BoundIndices boundIndex(1);
+        ContractionProblemGemm::BatchIndices batchIndex{{2, 2, 2, 2}};
+
+        // Set up GEMM indices
+        freeIndex[0].isA = true;
+        freeIndex[1].isA = false;
+        freeIndex[0].c = freeIndex[0].d = 0;
+        freeIndex[1].c = freeIndex[1].d = 1;
+
+        size_t m = 1, n = 1, k = 1;
+        size_t batch_count = 1;
+
+        // clang-format off
+
+        // If A is transposed, swap the free and bound dimensions and their ranks
+        if(transA)
+        {
+            a = {
+                    "a",
+                    typeA,
+                    {k, m, batch_count},
+                    {1, k, k * m}
+                };
+            freeIndex[0].i  = 1;
+            boundIndex[0].a = 0;
+        }
+        else
+        {
+            a = {
+                    "a",
+                    typeA,
+                    {m, k, batch_count},
+                    {1, m, m * k}
+                };
+            freeIndex[0].i  = 0;
+            boundIndex[0].a = 1;
+        }
+
+        // If B is transposed, swap the free and bound dimensions and their ranks
+        if(transB)
+        {
+            b = {
+                    "b",
+                    typeB,
+                    {n, k, batch_count},
+                    {1, n, n * k}
+                };
+            freeIndex[1].i  = 0;
+            boundIndex[0].b = 1;
+        }
+        else
+        {
+            b = {
+                    "b",
+                    typeB,
+                    {k, n, batch_count},
+                    {1, k, k * n}
+                };
+            freeIndex[1].i  = 1;
+            boundIndex[0].b = 0;
+        }
+
+        // clang-format on
+
+        // Descriptor for input matrix C
+        Tensile::TensorDescriptor c{"c", typeC, {m, n, batch_count}, {1, m, m * n}};
+
+        // Descriptor for output matrix D
+        Tensile::TensorDescriptor d{"d", typeD, {m, n, batch_count}, {1, m, m * n}};
+
+        Tensile::TensorDescriptor e{"e"};
+        Tensile::TensorDescriptor bias{"bias"};
+        Tensile::TensorDescriptor scaleD{"scaleD"};
+
+        // The ContractionProblemGemm
+        Tensile::ContractionProblemGemm problem{a,
+                                                b,
+                                                c,
+                                                d,
+                                                e,
+                                                bias,
+                                                scaleD,
+                                                freeIndex,
+                                                batchIndex,
+                                                boundIndex,
+                                                beta,
+                                                maxWorkspaceBytes};
+
+        problem.setAlphaType(typeAlpha);
+        problem.setBetaType(typeBeta);
+
+        // HPA is active iff sizeof(compute type) > sizeof(input type)
+        problem.setHighPrecisionAccumulate(GetElementSize(typeCompute) > GetElementSize(typeA));
+
+        // set batch mode
+        problem.setStridedBatched(true);
+        problem.setGroupedGemm(isGroupedGemm);
+
+        problem.setAlphaRestriction(toScalarValueEnum(alpha));
+
+        // Add problem predicates for CEqualsD
+        problem.setCEqualsD(false);
+        return problem;
+    }
+
     TENSILE_API std::ostream& operator<<(std::ostream&                 stream,
                                          ContractionProblemGemm const& contraction)
     {

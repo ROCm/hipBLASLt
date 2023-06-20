@@ -217,6 +217,22 @@ namespace
         return Tensile::DataType::None;
     }
 
+    hipblasDatatype_t tensile2HipType(Tensile::DataType type)
+    {
+        switch(type)
+        {
+        case Tensile::DataType::Float:
+            return HIPBLAS_R_32F;
+        case Tensile::DataType::Half:
+            return HIPBLAS_R_16F;
+        case Tensile::DataType::BFloat16:
+            return HIPBLAS_R_16B;
+        default:
+            throw std::runtime_error("Unsupported type.");
+        }
+        return HIPBLAS_R_32F;
+    }
+
     Tensile::DataType roc2TensileType(rocblaslt_compute_type type)
     {
         switch(type)
@@ -231,131 +247,43 @@ namespace
         return Tensile::DataType::None;
     }
 
-    auto CreateTensileProblem(hipblasOperation_t     opA,
-                              hipblasOperation_t     opB,
-                              hipblasDatatype_t      typeA,
-                              hipblasDatatype_t      typeB,
-                              hipblasDatatype_t      typeC,
-                              hipblasDatatype_t      typeD,
-                              rocblaslt_compute_type typeCompute,
-                              float                  alpha,
-                              float                  beta,
-                              bool                   isGroupedGemm,
-                              size_t                 maxWorkspaceBytes)
+    rocblaslt_compute_type tensile2RocType(Tensile::DataType type)
     {
-        // Tensor descriptors for a, b
-        Tensile::TensorDescriptor a, b;
-
-        // Tensile Indices for contraction problem
-        Tensile::ContractionProblemGemm::FreeIndices  freeIndex(2);
-        Tensile::ContractionProblemGemm::BoundIndices boundIndex(1);
-        Tensile::ContractionProblemGemm::BatchIndices batchIndex{{2, 2, 2, 2}};
-
-        // Set up GEMM indices
-        freeIndex[0].isA = true;
-        freeIndex[1].isA = false;
-        freeIndex[0].c = freeIndex[0].d = 0;
-        freeIndex[1].c = freeIndex[1].d = 1;
-
-        size_t m = 1, n = 1, k = 1;
-        size_t batch_count = 1;
-
-        auto tensileAType = hip2TensileType(typeA);
-        // clang-format off
-
-        // If A is transposed, swap the free and bound dimensions and their ranks
-        if(opA != HIPBLAS_OP_N)
+        switch(type)
         {
-            a = {
-                    "a",
-                    tensileAType,
-                    {k, m, batch_count},
-                    {1, k, k * m}
-                };
-            freeIndex[0].i  = 1;
-            boundIndex[0].a = 0;
+        case Tensile::DataType::Float:
+            return rocblaslt_compute_f32;
+        default:
+            throw std::runtime_error("Unsupported type.");
         }
-        else
-        {
-            a = {
-                    "a",
-                    tensileAType,
-                    {m, k, batch_count},
-                    {1, m, m * k}
-                };
-            freeIndex[0].i  = 0;
-            boundIndex[0].a = 1;
-        }
+        return rocblaslt_compute_f32;
+    }
 
-        // If B is transposed, swap the free and bound dimensions and their ranks
-        if(opB != HIPBLAS_OP_N)
-        {
-            b = {
-                    "b",
-                    hip2TensileType(typeB),
-                    {n, k, batch_count},
-                    {1, n, n * k}
-                };
-            freeIndex[1].i  = 0;
-            boundIndex[0].b = 1;
-        }
-        else
-        {
-            b = {
-                    "b",
-                    hip2TensileType(typeB),
-                    {k, n, batch_count},
-                    {1, k, k * n}
-                };
-            freeIndex[1].i  = 1;
-            boundIndex[0].b = 0;
-        }
-
-        // clang-format on
-
-        // Descriptor for input matrix C
-        Tensile::TensorDescriptor c{
-            "c", hip2TensileType(typeC), {m, n, batch_count}, {1, m, m * n}};
-
-        // Descriptor for output matrix D
-        Tensile::TensorDescriptor d{
-            "d", hip2TensileType(typeD), {m, n, batch_count}, {1, m, m * n}};
-
-        Tensile::TensorDescriptor e{"e"};
-        Tensile::TensorDescriptor bias{"bias"};
-        Tensile::TensorDescriptor scaleD{"scaleD"};
-
-        // The ContractionProblemGemm
-        Tensile::ContractionProblemGemm tensileProblem{a,
-                                                       b,
-                                                       c,
-                                                       d,
-                                                       e,
-                                                       bias,
-                                                       scaleD,
-                                                       freeIndex,
-                                                       batchIndex,
-                                                       boundIndex,
-                                                       beta,
-                                                       maxWorkspaceBytes};
-
-        auto tensileComputeType = roc2TensileType(typeCompute);
-        tensileProblem.setAlphaType(tensileComputeType);
-        tensileProblem.setBetaType(tensileComputeType);
-
-        // HPA is active iff sizeof(compute type) > sizeof(input type)
-        tensileProblem.setHighPrecisionAccumulate(Tensile::GetElementSize(tensileComputeType)
-                                                  > Tensile::GetElementSize(tensileAType));
-
-        // set batch mode
-        tensileProblem.setStridedBatched(true);
-        tensileProblem.setGroupedGemm(isGroupedGemm);
-
-        tensileProblem.setAlphaRestriction(Tensile::toScalarValueEnum(alpha));
-
-        // Add problem predicates for CEqualsD
-        tensileProblem.setCEqualsD(false);
-        return tensileProblem;
+    inline auto CreateTensileProblem(hipblasOperation_t     opA,
+                                     hipblasOperation_t     opB,
+                                     hipblasDatatype_t      typeA,
+                                     hipblasDatatype_t      typeB,
+                                     hipblasDatatype_t      typeC,
+                                     hipblasDatatype_t      typeD,
+                                     rocblaslt_compute_type typeCompute,
+                                     float                  alpha,
+                                     float                  beta,
+                                     bool                   isGroupedGemm,
+                                     size_t                 maxWorkspaceBytes)
+    {
+        return Tensile::ContractionProblemGemm::createDefaultProblem((opA != HIPBLAS_OP_N),
+                                                                     (opB != HIPBLAS_OP_N),
+                                                                     hip2TensileType(typeA),
+                                                                     hip2TensileType(typeB),
+                                                                     hip2TensileType(typeC),
+                                                                     hip2TensileType(typeD),
+                                                                     roc2TensileType(typeCompute),
+                                                                     roc2TensileType(typeCompute),
+                                                                     roc2TensileType(typeCompute),
+                                                                     alpha,
+                                                                     beta,
+                                                                     isGroupedGemm,
+                                                                     maxWorkspaceBytes);
     }
 
     /****************************************************************
