@@ -1817,6 +1817,9 @@ namespace Tensile
 
     size_t ContractionSolution::requiredHostSizeGroupedGemmSingle(Problem const& problem) const
     {
+        if(!problemType.groupedGemm)
+            return 0;
+
         std::vector<Problem> tmpProblem;
         tmpProblem.emplace_back(problem);
         ContractionGroupedInputs inputs;
