@@ -858,6 +858,20 @@ namespace Tensile
                            double              beta,
                            size_t              workspaceSize);
 
+        static ContractionProblemGemm createDefaultProblem(bool     transA,
+                                                           bool     transB,
+                                                           DataType typeA,
+                                                           DataType typeB,
+                                                           DataType typeC,
+                                                           DataType typeD,
+                                                           DataType alphaType,
+                                                           DataType betaType,
+                                                           DataType typeCompute,
+                                                           double   alpha,
+                                                           double   beta,
+                                                           bool     isGroupedGemm,
+                                                           size_t   maxWorkspaceBytes);
+
     private:
         std::string m_sumNames;
         std::string m_operationIdentifier;
