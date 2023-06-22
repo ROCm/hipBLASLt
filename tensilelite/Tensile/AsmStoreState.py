@@ -97,7 +97,7 @@ class StoreState:
             # Really only used if gwvw=1 - edge cases
             # exception: data vgpr cannot be shared if UseInitialStridesCD is enabled and card enable EccHalf,
             #            since each buffer_load_short would overwrite undefined 16bit as zero.
-            self.halfDataRegPerVI = gwvw*self.numVgprsPerDataPerVI == 0.5 and not (kernel["ProblemType"]["UseInitialStridesCD"] and kernelWriter.states.archCaps["HasEccHalf"])
+            self.halfDataRegPerVI = gwvw*self.numVgprsPerDataPerVI == 0.5 and not (kernel["ProblemType"]["UseInitialStridesCD"] and kernelWriter.states.archCaps["HasEccHalf"]) and not (kernel["ProblemType"]["DestDataType"].numRegisters() == 0.25)
 
     # StoreState constructor:
     def __init__(self, kernelWriter, kernel, gwvw, edge, beta, atomic, elements):
