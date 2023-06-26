@@ -109,6 +109,7 @@ option(BUILD_CODE_COVERAGE "Build hipBLASLt with code coverage enabled" OFF)
 option(BUILD_ADDRESS_SANITIZER "Build hipBLASLt with address sanitizer enabled" OFF)
 # Find CUDA if the user wants a CUDA version.
 option(USE_CUDA "Look for CUDA and use that as a backend if found" OFF)
+option(WERROR "Treat warnings as errors" OFF)
 
 if(BUILD_CODE_COVERAGE)
   add_compile_options(-fprofile-arcs -ftest-coverage)
