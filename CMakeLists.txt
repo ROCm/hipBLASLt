@@ -320,7 +320,7 @@ set( HIPBLASLT_CONFIG_DIR "\${CPACK_PACKAGING_INSTALL_PREFIX}/${CMAKE_INSTALL_LI
 
 rocm_create_package(
     NAME ${package_name}
-    DESCRIPTION "Radeon Open Compute BLAS marshalling library"
+    DESCRIPTION "ROCm flexible GEMM library"
     MAINTAINER "hipBLASLt Maintainer <hipblaslt-maintainer@amd.com>"
     LDCONFIG
     LDCONFIG_DIR ${HIPBLASLT_CONFIG_DIR}
