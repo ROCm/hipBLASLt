@@ -296,6 +296,8 @@ def _initArchCaps(isaVersion) -> dict:
     rv["HasAccCD"]           = (isaVersion in [(9,0,10), (9,4,0), (9,4,1), (9,4,2)])
     rv["ArchAccUnifiedRegs"] = (isaVersion in [(9,0,10), (9,4,0), (9,4,1), (9,4,2)])
     rv["ForceStoreSC1"] = (isaVersion in [(9,4,0), (9,4,1)])
+    rv["TransOpWait"] = (isaVersion in [(9,4,0), (9,4,1), (9,4,2)])
+    rv["SDWAWait"] = (isaVersion in [(9,4,0), (9,4,1), (9,4,2)])
     return rv
 
 def _initAsmBugs(asmCaps) -> dict:
