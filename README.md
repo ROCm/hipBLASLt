@@ -81,7 +81,7 @@ Please use [the issue tracker][] for bugs and feature requests.
 The [license file][] can be found in the main repository.
 
 [ROCm]: https://github.com/RadeonOpenCompute/ROCm
-[HIP]: https://github.com/GPUOpen-ProfessionalCompute-Tools/HIP/
+[HIP]: https://github.com/ROCm-Developer-Tools/HIP
 [GTest]: https://github.com/google/googletest
-[the issue tracker]: TBD
-[license file]: TBD
+[the issue tracker]: https://github.com/ROCmSoftwarePlatform/hipBLASLt/issues
+[license file]: LICENSE.md
