@@ -231,6 +231,7 @@ def parseLibraryLogicData(data, srcFile="?", archs=None):
             solutionState["ISA"] = Common.gfxArch(data["ArchitectureName"])
         else:
             solutionState["ISA"] = (0, 0, 0)
+        solutionState["CUCount"] = data["CUCount"]
         # force redo the deriving of parameters, make sure old version logic yamls can be validated
         solutionState["AssignedProblemIndependentDerivedParameters"] = False
         solutionState["AssignedDerivedParameters"] = False
