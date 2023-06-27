@@ -117,7 +117,7 @@ if( BUILD_WITH_TENSILE )
   target_compile_definitions(hipblaslt PRIVATE ${TENSILE_DEFINES} )
 endif()
 
-    target_compile_options(hipblaslt PRIVATE -Wno-unused-command-line-argument -Werror)
+    target_compile_options(hipblaslt PRIVATE -Wno-unused-command-line-argument )
     target_compile_definitions(hipblaslt PRIVATE ROCM_USE_FLOAT16 __HIP_PLATFORM_HCC__)
 else()
     target_compile_definitions(hipblaslt PRIVATE __HIP_PLATFORM_NVCC__)
