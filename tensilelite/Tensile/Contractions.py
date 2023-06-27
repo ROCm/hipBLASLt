@@ -552,6 +552,10 @@ class Solution:
             else:
                 d['ISA'] = [0,0,0]
 
+        if 'CUCount' not in d:
+            d['CUCount'] = None
+
+        rv.hardwarePredicate = Hardware.HardwarePredicate.FromHardware(d['ISA'], d['CUCount'])
         rv.originalSolution = OriginalSolution(d)
 
         return rv
