@@ -32,9 +32,9 @@
 #ifndef _ROCBLASLT_AUXILIARY_H_
 #define _ROCBLASLT_AUXILIARY_H_
 
+#include "rocblaslt-types.h"
 #include <stdint.h>
 #include <vector>
-#include "rocblaslt-types.h"
 
 #include <hip/hip_runtime.h>
 

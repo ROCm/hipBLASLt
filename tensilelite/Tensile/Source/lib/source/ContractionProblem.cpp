@@ -500,15 +500,15 @@ namespace Tensile
     ContractionProblemGemm ContractionProblemGemm::GetDummy()
     {
         ContractionProblemGemm gemm;
-        gemm.m_tensors[ContractionProblemGemm::TENSOR::A]          = TensorDescriptor("a");
-        gemm.m_tensors[ContractionProblemGemm::TENSOR::B]          = TensorDescriptor("b");
-        gemm.m_tensors[ContractionProblemGemm::TENSOR::C]          = TensorDescriptor("c");
-        gemm.m_tensors[ContractionProblemGemm::TENSOR::D]          = TensorDescriptor("d");
-        gemm.m_tensors[ContractionProblemGemm::TENSOR::E]          = TensorDescriptor("e");
-        gemm.m_tensors[ContractionProblemGemm::TENSOR::BIAS]       = TensorDescriptor("bias");
-        gemm.m_tensors[ContractionProblemGemm::TENSOR::SCALEDVEC]  = TensorDescriptor("scaleDVec");
-        gemm.m_tensors[ContractionProblemGemm::TENSOR::METADATA]   = TensorDescriptor("metadata");
-        gemm.m_tensor_compressed = TensorDescriptor("compressed");
+        gemm.m_tensors[ContractionProblemGemm::TENSOR::A]         = TensorDescriptor("a");
+        gemm.m_tensors[ContractionProblemGemm::TENSOR::B]         = TensorDescriptor("b");
+        gemm.m_tensors[ContractionProblemGemm::TENSOR::C]         = TensorDescriptor("c");
+        gemm.m_tensors[ContractionProblemGemm::TENSOR::D]         = TensorDescriptor("d");
+        gemm.m_tensors[ContractionProblemGemm::TENSOR::E]         = TensorDescriptor("e");
+        gemm.m_tensors[ContractionProblemGemm::TENSOR::BIAS]      = TensorDescriptor("bias");
+        gemm.m_tensors[ContractionProblemGemm::TENSOR::SCALEDVEC] = TensorDescriptor("scaleDVec");
+        gemm.m_tensors[ContractionProblemGemm::TENSOR::METADATA]  = TensorDescriptor("metadata");
+        gemm.m_tensor_compressed                                  = TensorDescriptor("compressed");
         return gemm;
     }
 

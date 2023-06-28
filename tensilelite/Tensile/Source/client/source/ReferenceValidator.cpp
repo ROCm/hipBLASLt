@@ -392,7 +392,7 @@ namespace Tensile
             if(m_printTensorA)
             {
                 auto a = problem.a();
-                if (problem.sparseA())
+                if(problem.sparseA())
                 {
                     m_reporter->logTensor(
                         LogLevel::Verbose, "Ref A", reference.a, problem.a(), reference.a);
@@ -403,8 +403,7 @@ namespace Tensile
                                         result.a,
                                         a.totalAllocatedBytes(),
                                         hipMemcpyDeviceToHost));
-                m_reporter->logTensor(
-                    LogLevel::Verbose, "A", m_cpuResultBuffer.get(), a, result.a);
+                m_reporter->logTensor(LogLevel::Verbose, "A", m_cpuResultBuffer.get(), a, result.a);
 
                 if(problem.sparseA())
                 {

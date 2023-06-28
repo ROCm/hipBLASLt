@@ -355,11 +355,11 @@ namespace Tensile
         for(size_t i = startStrideAB; i < b.dimensions(); i++)
             args.append<uint32_t>(concatenate_if<T_Debug>("strideB", i), b.strides()[i]);
 
-
         if(problemType.sparseA)
         {
             for(size_t i = startStrideAB; i < a.dimensions(); i++)
-                args.append<uint32_t>(concatenate_if<T_Debug>("strideMetadata", i), metadata.strides()[i]);
+                args.append<uint32_t>(concatenate_if<T_Debug>("strideMetadata", i),
+                                      metadata.strides()[i]);
         }
 
         {
