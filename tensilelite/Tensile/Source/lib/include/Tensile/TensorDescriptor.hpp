@@ -57,11 +57,14 @@ namespace Tensile
     }
 
     template <typename CoordIter, typename SizeIter>
-    inline size_t CoordFlattenIndex(CoordIter coordBegin, CoordIter coordEnd, SizeIter sizeBegin, SizeIter sizeEnd)
+    inline size_t CoordFlattenIndex(CoordIter coordBegin,
+                                    CoordIter coordEnd,
+                                    SizeIter  sizeBegin,
+                                    SizeIter  sizeEnd)
     {
-        auto coord = coordEnd-1;
-        auto size  = sizeEnd-2;
-        size_t rv = 0;
+        auto   coord = coordEnd - 1;
+        auto   size  = sizeEnd - 2;
+        size_t rv    = 0;
 
         while(coord != coordBegin)
         {
@@ -97,18 +100,22 @@ namespace Tensile
     }
 
     template <typename CoordIter, typename SizeIter>
-    inline void CoordNumberedExclude(
-        size_t num, CoordIter coordBegin, CoordIter coordEnd, SizeIter sizeBegin, SizeIter sizeEnd, size_t excludeDim)
+    inline void CoordNumberedExclude(size_t    num,
+                                     CoordIter coordBegin,
+                                     CoordIter coordEnd,
+                                     SizeIter  sizeBegin,
+                                     SizeIter  sizeEnd,
+                                     size_t    excludeDim)
     {
-        auto coord = coordBegin;
-        auto size  = sizeBegin;
+        auto   coord      = coordBegin;
+        auto   size       = sizeBegin;
         size_t currentDim = 0;
         while(coord != coordEnd && size != sizeEnd)
         {
             if(currentDim != excludeDim)
             {
-              *coord = num % *size;
-              num /= *size;
+                *coord = num % *size;
+                num /= *size;
             }
             currentDim++;
             coord++;
@@ -118,7 +125,6 @@ namespace Tensile
         if(coord != coordEnd || size != sizeEnd)
             throw std::runtime_error("Inconsistent size of coordinates.");
     }
-
 
     template <typename CoordIter, typename SizeIter>
     inline bool IncrementCoord(CoordIter coordBegin,

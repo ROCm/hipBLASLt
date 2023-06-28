@@ -859,7 +859,8 @@ rocblaslt_status rocblaslt_matmul_is_algo_supported(rocblaslt_handle        hand
         {
             if(c_type == HIPBLAS_R_32F && d_type == HIPBLAS_R_32F)
             {
-                if(compute_type == rocblaslt_compute_f32 || compute_type == rocblaslt_compute_f32_fast_xf32)
+                if(compute_type == rocblaslt_compute_f32
+                   || compute_type == rocblaslt_compute_f32_fast_xf32)
                 {
                     float* alphaf = (float*)alpha;
                     float* betaf  = (float*)beta;
@@ -980,7 +981,8 @@ rocblaslt_status
         {
             if(c_type == HIPBLAS_R_32F && d_type == HIPBLAS_R_32F)
             {
-                if(compute_type == rocblaslt_compute_f32 || compute_type == rocblaslt_compute_f32_fast_xf32)
+                if(compute_type == rocblaslt_compute_f32
+                   || compute_type == rocblaslt_compute_f32_fast_xf32)
                 {
                     float alpha = 1.0;
                     float beta  = 1.0;
@@ -1152,7 +1154,8 @@ rocblaslt_status rocblaslt_matmul_get_all_algos_cpp(
         {
             if(typeC == HIPBLAS_R_32F && typeD == HIPBLAS_R_32F)
             {
-                if(typeCompute == rocblaslt_compute_f32 || typeCompute == rocblaslt_compute_f32_fast_xf32)
+                if(typeCompute == rocblaslt_compute_f32
+                   || typeCompute == rocblaslt_compute_f32_fast_xf32)
                 {
                     float alpha = 1.0;
                     float beta  = 1.0;

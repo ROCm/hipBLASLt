@@ -244,7 +244,7 @@ namespace Tensile
         if(!bound)
             return "<unbound>";
 
-        using castType= std::conditional_t<std::is_pointer<T>::value, void const*, T>;
+        using castType = std::conditional_t<std::is_pointer<T>::value, void const*, T>;
 
         std::ostringstream msg;
         msg << static_cast<castType>(value);
