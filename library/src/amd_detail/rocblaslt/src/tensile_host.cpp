@@ -528,7 +528,8 @@ namespace
         // set use gradient
         tensileProblem.setUseGradient(is_grad_enabled(prob.epilogue));
 
-        if constexpr(std::is_same<Ti, float>{} && std::is_same<To, float>{} && std::is_same<Tc, float>{})
+        if constexpr(std::is_same<Ti, float>{} && std::is_same<To, float>{}
+                     && std::is_same<Tc, float>{})
             if(prob.compute_type == rocblaslt_compute_f32_fast_xf32)
                 tensileProblem.setF32XdlMathOp(Tensile::DataType::XFloat32);
 
@@ -701,7 +702,8 @@ namespace
             tensileProblem.setUseGradient(is_grad_enabled(prob.epilogue));
         }
 
-        if constexpr(std::is_same<Ti, float>{} && std::is_same<To, float>{} && std::is_same<Tc, float>{})
+        if constexpr(std::is_same<Ti, float>{} && std::is_same<To, float>{}
+                     && std::is_same<Tc, float>{})
             if(prob.compute_type == rocblaslt_compute_f32_fast_xf32)
                 tensileProblem.setF32XdlMathOp(Tensile::DataType::XFloat32);
     }
@@ -1580,8 +1582,9 @@ RocblasltContractionProblem<Ti, To, Tc>
 
     rocblaslt_compute_type compute_type = matmul_descr->compute_type;
 
-    if constexpr(!(std::is_same<Ti, float>{} && std::is_same<To, float>{} && std::is_same<Tc, float>{}))
-        if (compute_type == rocblaslt_compute_f32_fast_xf32)
+    if constexpr(!(std::is_same<Ti, float>{} && std::is_same<To, float>{}
+                   && std::is_same<Tc, float>{}))
+        if(compute_type == rocblaslt_compute_f32_fast_xf32)
             isValid = rocblaslt_status_not_implemented;
 
     int64_t m = num_rows_d;
@@ -1768,14 +1771,15 @@ rocblaslt_status getBestSolutions(RocblasltContractionProblem<Ti, To, Tc> prob,
     auto solutions
         = getSolutions(prob, library, hardware, data->problem, requestedAlgoCount, fallbackSize);
 
-    // when there is no solution for xfloat32, fallback comput_type to fp32 
-    if constexpr(std::is_same<Ti, float>{} && std::is_same<To, float>{} && std::is_same<Tc, float>{})
-        if (solutions.size() == 0 && prob.compute_type == rocblaslt_compute_f32_fast_xf32)
+    // when there is no solution for xfloat32, fallback comput_type to fp32
+    if constexpr(std::is_same<Ti, float>{} && std::is_same<To, float>{}
+                 && std::is_same<Tc, float>{})
+        if(solutions.size() == 0 && prob.compute_type == rocblaslt_compute_f32_fast_xf32)
         {
-            log_api(__func__, "no solutions found, try to fallback"); 
+            log_api(__func__, "no solutions found, try to fallback");
             data->problem.setF32XdlMathOp(Tensile::DataType::Float);
-            solutions
-                = getSolutions(prob, library, hardware, data->problem, requestedAlgoCount, fallbackSize);
+            solutions = getSolutions(
+                prob, library, hardware, data->problem, requestedAlgoCount, fallbackSize);
         }
 
     _convertToHeuristicResultArray(solutions,
@@ -1819,14 +1823,14 @@ rocblaslt_status getAllSolutions(MyProblem&                                     
     }
     log_api(__func__, "Found hardware solutions: ", solutions.size());
 
-    // when there is no solution for xfloat32, fallback comput_type to fp32 
-    if (solutions.size() == 0 && prob.f32XdlMathOp() == Tensile::DataType::XFloat32)
+    // when there is no solution for xfloat32, fallback comput_type to fp32
+    if(solutions.size() == 0 && prob.f32XdlMathOp() == Tensile::DataType::XFloat32)
     {
         prob.setF32XdlMathOp(Tensile::DataType::Float);
         if constexpr(std::is_same<MyProblem, Tensile::ContractionProblemGemm>::value)
         {
             solutions = library->findAllSolutions(
-                 prob, *hardware, Tensile::SolutionLibrarySearchType::GEMM_TYPE_ONLY);
+                prob, *hardware, Tensile::SolutionLibrarySearchType::GEMM_TYPE_ONLY);
         }
         else if constexpr(std::is_same<MyProblem, Tensile::ContractionProblemGroupedGemm>::value)
         {
@@ -2122,12 +2126,12 @@ rocblaslt_status getBestSolutions(rocblaslt_handle       handle,
         auto                             solutions    = getSolutions(
             data->inputs, library, hardware, data->problem, requestedAlgoCount, fallbackSize);
 
-        // when there is no solution for xfloat32, fallback comput_type to fp32 
-        if (solutions.size() == 0 && data->problem.f32XdlMathOp() == Tensile::DataType::XFloat32)
+        // when there is no solution for xfloat32, fallback comput_type to fp32
+        if(solutions.size() == 0 && data->problem.f32XdlMathOp() == Tensile::DataType::XFloat32)
         {
             data->problem.setF32XdlMathOp(Tensile::DataType::Float);
-            solutions
-                = getSolutions(data->inputs, library, hardware, data->problem, requestedAlgoCount, fallbackSize);
+            solutions = getSolutions(
+                data->inputs, library, hardware, data->problem, requestedAlgoCount, fallbackSize);
         }
 
         auto algoCount       = min(requestedAlgoCount, solutions.size());

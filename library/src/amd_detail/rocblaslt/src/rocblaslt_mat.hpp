@@ -556,17 +556,18 @@ inline rocblaslt_status rocblaslt_matmul_template(rocblaslt_handle             h
 {
     rocblaslt_status rs_status = rocblaslt_status_not_implemented;
 
-#define EX_TYPECASTING_PARM                                                                        \
-    handle, trans_a, trans_b, m, n, k, alpha, a, ld_a, batch_stride_a, b, ld_b, batch_stride_b,    \
-        beta, c, ld_c, batch_stride_c, d, ld_d, batch_stride_d, e, ld_e, batch_stride_e,           \
-        batch_count, strided_batch, grouped_gemm, gradient, compute_type, algo, workspace,         \
+#define EX_TYPECASTING_PARM                                                                     \
+    handle, trans_a, trans_b, m, n, k, alpha, a, ld_a, batch_stride_a, b, ld_b, batch_stride_b, \
+        beta, c, ld_c, batch_stride_c, d, ld_d, batch_stride_d, e, ld_e, batch_stride_e,        \
+        batch_count, strided_batch, grouped_gemm, gradient, compute_type, algo, workspace,      \
         workspaceSizeInBytes, bias, scaleDVec, bias_type, epilogue, gemmData, stream
 
     if(a_type == HIPBLAS_R_32F && b_type == HIPBLAS_R_32F)
     {
         if(c_type == HIPBLAS_R_32F && d_type == HIPBLAS_R_32F)
         {
-            if(compute_type == rocblaslt_compute_f32 || compute_type == rocblaslt_compute_f32_fast_xf32)
+            if(compute_type == rocblaslt_compute_f32
+               || compute_type == rocblaslt_compute_f32_fast_xf32)
             {
                 rs_status = rocblaslt_matmul_typecasting<float, float, float>(EX_TYPECASTING_PARM);
             }
@@ -643,17 +644,18 @@ inline rocblaslt_status rocblaslt_gemm_create_template_cpp(hipblasOperation_t   
 {
     rocblaslt_status rs_status = rocblaslt_status_not_implemented;
 
-#define EX_TYPECASTING_PARM_GEMM_CPP                                                             \
-    trans_a, trans_b, m, n, k, alpha, a, ld_a, batch_stride_a, b, ld_b, batch_stride_b, beta, c, \
-        ld_c, batch_stride_c, d, ld_d, batch_stride_d, e, ld_e, batch_stride_e, batch_count,     \
-        strided_batch, grouped_gemm, gradient, compute_type, bias, scaleDVec, bias_type, epilogue, gemmData,   \
-        gemmCount
+#define EX_TYPECASTING_PARM_GEMM_CPP                                                               \
+    trans_a, trans_b, m, n, k, alpha, a, ld_a, batch_stride_a, b, ld_b, batch_stride_b, beta, c,   \
+        ld_c, batch_stride_c, d, ld_d, batch_stride_d, e, ld_e, batch_stride_e, batch_count,       \
+        strided_batch, grouped_gemm, gradient, compute_type, bias, scaleDVec, bias_type, epilogue, \
+        gemmData, gemmCount
 
     if(a_type == HIPBLAS_R_32F && b_type == HIPBLAS_R_32F)
     {
         if(c_type == HIPBLAS_R_32F && d_type == HIPBLAS_R_32F)
         {
-            if(compute_type == rocblaslt_compute_f32 || compute_type == rocblaslt_compute_f32_fast_xf32)
+            if(compute_type == rocblaslt_compute_f32
+               || compute_type == rocblaslt_compute_f32_fast_xf32)
             {
                 rs_status = rocblaslt_gemm_create_typecasting<float, float, float>(
                     EX_TYPECASTING_PARM_GEMM_CPP);
@@ -738,7 +740,8 @@ inline rocblaslt_status
     {
         if(c_type == HIPBLAS_R_32F && d_type == HIPBLAS_R_32F)
         {
-            if(compute_type == rocblaslt_compute_f32 || compute_type == rocblaslt_compute_f32_fast_xf32)
+            if(compute_type == rocblaslt_compute_f32
+               || compute_type == rocblaslt_compute_f32_fast_xf32)
             {
                 rs_status = rocblaslt_groupedgemm_create_typecasting<float, float, float>(
                     EX_TYPECASTING_PARM_GroupedGemm_CPP);

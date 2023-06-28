@@ -1083,7 +1083,8 @@ void testing_matmul(const Arguments& arg)
         }
 
         // For the xf32 xdl math op, cast type of A/B from float to xfloat32 .
-        if constexpr(std::is_same<Ti, float>{} && std::is_same<To, float>{} && std::is_same<Tc, float>{})
+        if constexpr(std::is_same<Ti, float>{} && std::is_same<To, float>{}
+                     && std::is_same<Tc, float>{})
             if(arg.compute_type == HIPBLASLT_COMPUTE_F32_FAST_XF32)
             {
                 for(int i = 0; i < gemm_count; i++)

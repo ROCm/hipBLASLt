@@ -862,22 +862,22 @@ namespace Tensile
         std::string m_sumNames;
         std::string m_operationIdentifier;
 
-        bool              m_cEqualsD                = false;
-        bool              m_stridedBatched          = true;
-        bool              m_groupedGemm             = false;
-        bool              m_highPrecisionAccumulate = false;
-        bool              m_deterministicMode       = false;
-        bool              m_eligibleForPK           = true;
-        bool              m_fp16AltImpl             = false;
-        bool              m_useGradient             = false;
-        bool              m_useE                    = false;
-        bool              m_useBias                 = false;
-        bool              m_useScaleDVec            = false;
-        ActivationType    m_activationType          = ActivationType::None;
-        ActivationType    m_activationEnumArg       = ActivationType::None;
-        bool              m_activationHPA           = false;
-        bool              m_activationNoGuard       = false;
-        bool              m_aSparse                 = false;
+        bool           m_cEqualsD                = false;
+        bool           m_stridedBatched          = true;
+        bool           m_groupedGemm             = false;
+        bool           m_highPrecisionAccumulate = false;
+        bool           m_deterministicMode       = false;
+        bool           m_eligibleForPK           = true;
+        bool           m_fp16AltImpl             = false;
+        bool           m_useGradient             = false;
+        bool           m_useE                    = false;
+        bool           m_useBias                 = false;
+        bool           m_useScaleDVec            = false;
+        ActivationType m_activationType          = ActivationType::None;
+        ActivationType m_activationEnumArg       = ActivationType::None;
+        bool           m_activationHPA           = false;
+        bool           m_activationNoGuard       = false;
+        bool           m_aSparse                 = false;
 
         KernelLanguage    m_kernelLanguage    = KernelLanguage::Any;
         PerformanceMetric m_performanceMetric = PerformanceMetric::DeviceEfficiency;

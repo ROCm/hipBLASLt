@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022 Advanced Micro Devices, Inc.
+ * Copyright (C) 2022-2023 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -87,7 +87,8 @@ auto hipblaslt_matmul_dispatch(const Arguments& arg)
         {
             return TEST<hip_bfloat16, hip_bfloat16, float>{}(arg);
         }
-        else if(Ti == To && To == HIPBLAS_R_32F && (Tc == HIPBLASLT_COMPUTE_F32 || Tc == HIPBLASLT_COMPUTE_F32_FAST_XF32))
+        else if(Ti == To && To == HIPBLAS_R_32F
+                && (Tc == HIPBLASLT_COMPUTE_F32 || Tc == HIPBLASLT_COMPUTE_F32_FAST_XF32))
         {
             return TEST<float, float, float>{}(arg);
         }
