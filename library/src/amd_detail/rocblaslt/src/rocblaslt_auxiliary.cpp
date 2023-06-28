@@ -859,7 +859,8 @@ rocblaslt_status rocblaslt_matmul_is_algo_supported(rocblaslt_handle        hand
         {
             if(c_type == HIPBLAS_R_32F && d_type == HIPBLAS_R_32F)
             {
-                if(compute_type == rocblaslt_compute_f32 || compute_type == rocblaslt_compute_f32_fast_xf32)
+                if(compute_type == rocblaslt_compute_f32
+                   || compute_type == rocblaslt_compute_f32_fast_xf32)
                 {
                     float* alphaf = (float*)alpha;
                     float* betaf  = (float*)beta;
@@ -904,7 +905,7 @@ rocblaslt_status rocblaslt_matmul_is_algo_supported(rocblaslt_handle        hand
                 {
                     float* alphaf = (float*)alpha;
                     float* betaf  = (float*)beta;
-                    auto   prob = ConstructRocblasltProblem<rocblaslt_half, float, float>(
+                    auto   prob   = ConstructRocblasltProblem<rocblaslt_half, float, float>(
                         matmul_descr,
                         matA,
                         matB,
@@ -999,7 +1000,8 @@ rocblaslt_status
         {
             if(c_type == HIPBLAS_R_32F && d_type == HIPBLAS_R_32F)
             {
-                if(compute_type == rocblaslt_compute_f32 || compute_type == rocblaslt_compute_f32_fast_xf32)
+                if(compute_type == rocblaslt_compute_f32
+                   || compute_type == rocblaslt_compute_f32_fast_xf32)
                 {
                     float alpha = 1.0;
                     float beta  = 1.0;
@@ -1064,14 +1066,14 @@ rocblaslt_status
                         &alpha,
                         &beta,
                         pref->max_workspace_bytes);
-                    status = getBestSolutions<rocblaslt_half, float, float>(
-                        prob,
-                        handle,
-                        tensile_data,
-                        requestedAlgoCount,
-                        heuristicResultsArray,
-                        returnAlgoCount,
-                        pref->max_workspace_bytes);
+                    status
+                        = getBestSolutions<rocblaslt_half, float, float>(prob,
+                                                                         handle,
+                                                                         tensile_data,
+                                                                         requestedAlgoCount,
+                                                                         heuristicResultsArray,
+                                                                         returnAlgoCount,
+                                                                         pref->max_workspace_bytes);
                 }
             }
         }
@@ -1196,7 +1198,8 @@ rocblaslt_status rocblaslt_matmul_get_all_algos_cpp(
         {
             if(typeC == HIPBLAS_R_32F && typeD == HIPBLAS_R_32F)
             {
-                if(typeCompute == rocblaslt_compute_f32 || typeCompute == rocblaslt_compute_f32_fast_xf32)
+                if(typeCompute == rocblaslt_compute_f32
+                   || typeCompute == rocblaslt_compute_f32_fast_xf32)
                 {
                     float alpha = 1.0;
                     float beta  = 1.0;
@@ -1267,10 +1270,9 @@ rocblaslt_status rocblaslt_matmul_get_all_algos_cpp(
                     }
                     else if(typeGemm == rocblaslt::RocGemmType::ROCBLASLT_GROUPED_GEMM)
                     {
-                        std::vector<
-                            RocblasltContractionProblem<rocblaslt_half, float, float>>
-                            probs = {prob};
-                        status    = getAllSolutions<rocblaslt_half, float, float>(
+                        std::vector<RocblasltContractionProblem<rocblaslt_half, float, float>> probs
+                            = {prob};
+                        status = getAllSolutions<rocblaslt_half, float, float>(
                             probs, handle, heuristicResults, maxWorkspaceSize);
                     }
                     else
