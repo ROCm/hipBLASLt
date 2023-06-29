@@ -217,9 +217,8 @@ class VCmpXInstruction(CommonInstruction):
 
     def getArgStr(self) -> str:
         kStr = ""
-        if self.archCaps["CMPXWritesSGPR"]:
-            if self.dst:
-                kStr += str(self.dst)
+        if self.dst:
+            kStr += str(self.dst)
         if self.dst1:
             if kStr:
                 kStr += ", "
