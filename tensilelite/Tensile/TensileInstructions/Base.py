@@ -169,13 +169,13 @@ def getGfxName(arch: Tuple[int, int, int]) -> str:
     name = str(arch[0]) + str(arch[1]) + ('%x' % arch[2])
     return 'gfx' + ''.join(map(str,name))
 
-def getGlcBitName(memoryModifierFormat):
-  if memoryModifierFormat == "GLC":
+def getGlcBitName(hasGLCModifier):
+  if hasGLCModifier:
     return "glc"
   return "sc0"
 
-def getSlcBitName(memoryModifierFormat):
-  if memoryModifierFormat == "GLC":
+def getSlcBitName(hasGLCModifier):
+  if hasGLCModifier:
     return "slc"
   return "sc1"
 

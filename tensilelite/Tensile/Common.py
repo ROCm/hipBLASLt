@@ -733,9 +733,6 @@ validParameters = {
 
     "WavefrontSize":              [32, 64],
 
-    # Which type of memory modifiers to use, GLC/SLC or SC0/SC1
-    "MemoryModifierFormat":         ["GLC", "SC0"],
-
     # MatrixInstruction: (M x N x K x B)
     # XDLOPS tile definition, only valid for gfx908, gfx90a
     # MxNxKxB specifies matrix instruction variants
@@ -937,9 +934,6 @@ validParameters = {
     "NonTemporalB":               list(range(0,4)),
     "NonTemporalMetadata":        list(range(0,4)),
 
-    # force sc0/sc1 bits on all stores, -1 for auto select by arch
-    "ForceStoreSC1":              [-1, 0, 1],
-
     # Group together unroll iterations inside the unroll loop.
     # For example, InnerUnroll=2 will fetch LDS for two unroll iterations
     "InnerUnroll":                [1,2,4,8,16,32,64],
@@ -1049,7 +1043,6 @@ defaultBenchmarkCommonParameters = [
     {"WorkGroupMapping":          [ 8 ] },
     {"ThreadTile":                [ [4,4] ] },
     {"WavefrontSize":             [ 64 ]},
-    {"MemoryModifierFormat":      [ "" ] },
     {"MatrixInstruction":         [ [] ] },
     {"1LDSBuffer":                [ 0 ] },
     {"DepthU":                    [ -1 ] },
@@ -1060,7 +1053,6 @@ defaultBenchmarkCommonParameters = [
     {"NonTemporalA":              [ 0 ] },
     {"NonTemporalB":              [ 0 ] },
     {"NonTemporalMetadata":       [ 0 ] },
-    {"ForceStoreSC1":             [ -1 ] },
     {"CustomKernelName":          [ "" ] },
     {"NoReject":                  [ False ]},
     {"MinVgprNumber":             [0]},

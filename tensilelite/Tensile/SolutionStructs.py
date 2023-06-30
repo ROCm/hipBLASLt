@@ -1971,15 +1971,6 @@ class Solution(collections.abc.Mapping):
 
     isa = tuple(state["ISA"])
 
-    if "MemoryModifierFormat" not in state or state["MemoryModifierFormat"] not in validParameters["MemoryModifierFormat"]:
-      if globalParameters["AsmCaps"][isa]["HasGLCModifier"]:
-        state["MemoryModifierFormat"] = "GLC"
-      else:
-        state["MemoryModifierFormat"] = "SC0"
-
-    if "ForceStoreSC1" not in state or state["ForceStoreSC1"] not in validParameters["ForceStoreSC1"] or state["ForceStoreSC1"] == -1:
-      state["ForceStoreSC1"] = globalParameters["ArchCaps"][isa]["ForceStoreSC1"]
-
     if state["WavefrontSize"] == 32 and not globalParameters["ArchCaps"][isa]["HasWave32"]:
       reject(state, "WavefrontSize=32 not supported for ISA {}".format(isa))
 
