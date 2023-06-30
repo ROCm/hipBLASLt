@@ -1427,10 +1427,11 @@ void testing_matmul(const Arguments& arg)
 
         if(!do_grouped_gemm)
         {
-            CHECK_HIPBLASLT_ERROR(gemm.initialize(heuristicResult[0].algo, *dWorkspace, stream));
 
             if(arg.use_ext)
             {
+                CHECK_HIPBLASLT_ERROR(
+                    gemm.initialize(heuristicResult[0].algo, *dWorkspace, stream));
                 for(int i = 0; i < number_cold_calls; i++)
                     CHECK_HIPBLASLT_ERROR(gemm.run(stream));
                 CHECK_HIP_ERROR(hipStreamSynchronize(stream));
