@@ -1,0 +1,226 @@
+
+  GlobalParameters:
+    MinimumRequiredVersion: 4.14.0
+    SleepPercent: 50
+    NumElementsToValidate: 0
+    DataInitTypeBeta: 0
+    DataInitTypeAlpha: 1
+    DataInitTypeBias: 0
+    NewClient: 2
+    CSVExportWinner: 1
+    CSVMergeSameProblemID: 1
+    Device: 12
+    # PrintSolutionRejectionReason: True
+    # SyncsPerBenchmark: 10
+    EnqueuesPerSync: 20
+    KernelTime: True
+    # ShortNames: True
+    # DataInitTypeScaleD: 0
+    NumWarmups: 10
+  
+  BenchmarkProblems:
+    ########################################
+    # NN - standard
+    ########################################
+    -
+      - # ProblemType
+        OperationType: GEMM
+        DataType: h
+        DestDataType: h
+        ComputeDataType: s
+        HighPrecisionAccumulate: True
+        TransposeA: 0
+        TransposeB: 0
+        # TransposeB: 1
+        UseBeta: True
+        Batched: True
+        # UseBias: True
+        # Activation: True
+        # ActivationHPA: True
+        # UseScaleD: True
+      - # BenchmarkProblemSizeGroup - Standard - All problem
+        InitialSolutionParameters:
+        BenchmarkCommonParameters:
+          - KernelLanguage: ["Assembly"]
+          # - EdgeType: ["ShiftPtr"]
+        ForkParameters:
+          - MatrixInstruction:
+              - [16, 16, 16, 1,  1, 2, 3, 2, 2]
+            # - [32, 32, 8, 1,  1,  1, 1,  1,1 ] #MT16x16
+            # - [32, 32, 8, 1,  1,  1, 1,  1,2 ] #1#MT16x32
+            # - [32, 32, 8, 1,  1,  1, 2,  1,1 ] #1#MT16x32X
+  #           - V[16, 16,16, 1,  1,  1, 3,  1,1 ] #1MT16x48X
+  #           #V- [16, 16,16, 1,  1,  1, 4,  1,1 ] #1MT16x64X
+            # - [32, 32, 8, 1,  1,  1, 1,  1,4 ] #1##MT16x64
+            # - [16, 16,16, 1,  1,  1, 2,  1,2 ] #1##MT16x64?X
+            # - [16, 16,16, 1,  1,  1, 3,  1,2 ] #1#MT16x96
+            # - [16, 16,16, 1,  1,  1, 2,  1,4 ] #1#MT16x128
+            # - [16, 16,16, 1,  1,  1, 4,  1,2 ] #1#MT16x128?X
+            # - [16, 16,16, 1,  1,  1, 3,  1,4 ] #1#MT16x192
+            # - [16, 16,16, 1,  1,  1, 4,  1,4 ] #1#MT16x256??X
+            # - [16, 16,16, 1,  1,  1, 1,  2,1 ] #MT32x16V
+            # - [16, 16,16, 1,  1,  1, 1,  2,2 ] #1MT32x32V
+            # - [16, 16,16, 1,  1,  1, 2,  2,1 ] #1MT32x32??
+            # - [16, 16,16, 1,  1,  1, 3,  2,1 ] #2#MT32x48?
+  #           - V[16, 16,16, 1,  1,  2, 3,  1,1 ] #MT32x48V
+            # - [16, 16,16, 1,  1,  1, 2,  2,2 ] #2#MT32x64
+            # - [16, 16,16, 1,  1,  2, 1,  1,4 ] #2#MT32x64?
+            # - [16, 16,16, 1,  1,  1, 4,  2,1 ] #2#MT32x64??
+  #           - V[16, 16,16, 1,  1,  2, 3,  1,2 ] #2#MT32x96
+            # - [16, 16,16, 1,  1,  1, 3,  2,2 ] #2#MT32x96?
+  #           - V[16, 16,16, 1,  1,  2, 4,  1,4 ] #MT32x96?
+            # - [16, 16,16, 1,  1,  2, 2,  1,4 ] #2#MT32x128
+            # - [16, 16,16, 1,  1,  1, 4,  2,2 ] #2#MT32x128?
+  #           - V[16, 16,16, 1,  1,  2, 3,  1,4 ] #2#MT32x192
+  #           - V[16, 16,16, 1,  1,  1, 6,  2,2 ] #2#MT32x192?
+  #           - V[16, 16,16, 1,  1,  3, 1,  1,1 ] #MT48x16X
+  #          - [32, 32, 8, 1,  1,  3, 1,  1,2 ] #MT48x32
+  #           - V[16, 16,16, 1,  1,  3, 2,  1,1 ] #MT48x32X
+  #           - V[16, 16,16, 1,  1,  3, 2,  1,2 ] #MT48x64
+  #          - [32, 32, 8, 1,  1,  3, 1,  1,4 ] #3#MT48x64
+  #           - V[16, 16,16, 1,  1,  3, 3,  1,2 ] #MT48x96?X
+  #           - V[16, 16,16, 1,  1,  3, 2,  1,4 ] #MT48x128
+  #           - V[16, 16,16, 1,  1,  3, 4,  1,2 ] #MT48x128?X
+  #           - [16, 16,16, 1,  1,  1, 1,  4,1 ] #MT64x16
+  #           - [16, 16,16, 1,  1,  2, 1,  2,2 ] #MT64x32
+  #           - [16, 16,16, 1,  1,  2, 2,  2,1 ] #MT64x32?X
+  #           - [16, 16,16, 1,  1,  1, 2,  4,1 ] #MT64x32??
+  #           - V[16, 16,16, 1,  1,  2, 3,  2,1 ] #MT64x48V
+  #           - [16, 16,16, 1,  1,  1, 3,  4,1 ] #MT64x48?
+  #           - [16, 16,16, 1,  1,  2, 2,  2,2 ] #1MT64x64V
+  #           - [16, 16,16, 1,  1,  1, 4,  4,1 ] #3MT64x64?
+  #           - [16, 16,16, 1,  1,  4, 1,  1,4 ] #3MT64x64?
+  #           - V[16, 16,16, 1,  1,  2, 3,  2,2 ] #2#MT64x96
+  #           - V[16, 16,16, 1,  1,  4, 3,  1,2 ] #2#MT64x96?X
+  #           - V[16, 16,16, 1,  1,  2, 4,  2,2 ] #2#MT64x128
+  #           - V[16, 16,16, 1,  1,  4, 2,  1,4 ] #2#MT64x128?
+  #           - V[16, 16,16, 1,  1,  4, 3,  1,4 ] #1MT64x192
+  #           - V[16, 16,16, 1,  1,  2, 6,  2,2 ] #1MT64x192?
+  #           - [16, 16,16, 1,  1,  3, 1,  2,1 ] #MT96x16?
+  #           - V[16, 16,16, 1,  1,  3, 2,  2,1 ] #MT96x32
+  #           - V[16, 16,16, 1,  1,  3, 2,  2,2 ] #MT96x64
+  #           - V[16, 16,16, 1,  1,  3, 3,  2,1 ] #MT96x48
+  #           - [16, 16,16, 1,  1,  3, 1,  2,2 ] #MT96x32
+  #           - V[16, 16,16, 1,  1,  3, 3,  2,2 ] #MT96x96
+  #           - [16, 16,16, 1,  1,  2, 1,  4,1 ] #MT128x16
+  #           - [16, 16,16, 1,  1,  2, 2,  4,1 ] #MT128x32
+  #           - [16, 16,16, 1,  1,  4, 1,  2,2 ] #MT128x32?
+  #           - V[16, 16,16, 1,  1,  2, 3,  4,1 ] #MT128x48V
+  #           - V[16, 16,16, 1,  1,  2, 4,  4,1 ] #MT128x64?
+  #           - V[16, 16,16, 1,  1,  4, 2,  2,2 ] #MT128x64?
+  #           - V[16, 16,16, 1,  1,  4, 3,  2,2 ] #MT128x96?
+  #           - [16, 16,16, 1,  1,  3, 1,  4,1 ] #MT192x16
+  #           - [16, 16,16, 1,  1,  3, 2,  4,1 ] #MT192x32
+  #           - [16, 16,16, 1,  1,  4, 1,  4,1 ] #MT256x16?
+  # ##############################################################################
+  #           - [16, 16,16, 1,  1,  3, 3,  4,1 ] #MT192x48?
+  #           - [16, 16,16, 1,  1,  2, 1,  1,1 ] #MT32x16?
+  #           - [16, 16,16, 1,  1,  2, 1,  1,2 ] #MT32x32?
+  #           - [16, 16,16, 1,  1,  2, 1,  2,1 ] #MT64x16?
+  #           - [16, 16,16, 1,  1,  2, 2,  1,1 ] #MT32x32?
+  #           - [16, 16,16, 1,  1,  2, 2,  1,2 ] #MT32x64?
+  #           - [16, 16,16, 1,  1,  2, 4,  1,1 ] #MT32x64?
+  #           - [16, 16,16, 1,  1,  2, 4,  1,2 ] #MT32x96?
+  #           - [16, 16,16, 1,  1,  2, 4,  2,1 ] #MT64x64?
+  #           - [16, 16,16, 1,  1,  3, 3,  1,1 ] #MT48x48?
+  #           - [16, 16,16, 1,  1,  3, 3,  1,4 ] #MT48x192?
+  #           - [16, 16,16, 1,  1,  3, 4,  1,1 ] #MT48x64?
+  #           - [16, 16,16, 1,  1,  3, 4,  1,4 ] #MT48x256?
+  #           - [16, 16,16, 1,  1,  3, 4,  2,1 ] #MT96x64?
+  #           - [16, 16,16, 1,  1,  3, 4,  2,2 ] #MT96x128?
+  #           - [16, 16,16, 1,  1,  3, 4,  4,1 ] #MT192x64?
+  #           - [16, 16,16, 1,  1,  4, 1,  1,1 ] #MT64x16?
+  #           - [16, 16,16, 1,  1,  4, 1,  1,2 ] #MT64x32?
+  #           - [16, 16,16, 1,  1,  4, 1,  2,1 ] #MT128x16?
+  #           - [16, 16,16, 1,  1,  4, 2,  1,1 ] #MT192x32?
+  #           - [16, 16,16, 1,  1,  4, 2,  1,2 ] #MT64x64?
+  #           - [16, 16,16, 1,  1,  4, 2,  2,1 ] #MT128x32?
+  #           - [16, 16,16, 1,  1,  4, 2,  4,1 ] #MT256x32?
+  #           - [16, 16,16, 1,  1,  4, 3,  1,1 ] #MT64x48?
+  #           - [16, 16,16, 1,  1,  4, 3,  2,1 ] #MT128x48?
+  #           - [16, 16,16, 1,  1,  4, 3,  4,1 ] #MT256x48?
+  #           - [16, 16,16, 1,  1,  4, 4,  1,1 ] #MT64x64?
+  #           - [16, 16,16, 1,  1,  4, 4,  1,2 ] #MT64x128?
+  #           - [16, 16,16, 1,  1,  4, 4,  1,4 ] #MT64x356?
+  #           - [16, 16,16, 1,  1,  4, 4,  2,1 ] #MT128x64?
+  #           - [16, 16,16, 1,  1,  4, 4,  2,2 ] #MT128x128?
+  #           - [16, 16,16, 1,  1,  4, 4,  4,1 ] #MT256x64?
+          # - AssertFree0ElementMultiple: [4,8]
+          - AssertFree0ElementMultiple: [8]
+          - PrefetchGlobalRead: [2] #1
+          # - PrefetchLocalRead: [3,5]
+          - PrefetchLocalRead: [1,3,5,9]
+          # - PrefetchLocalRead: [5,9]
+          # - PrefetchLocalRead: [5]
+          # - DepthU: [64,96]
+          - DepthU: [64]
+          # - DepthU: [16,32,64]
+          # - VectorWidth: [4]
+          # - VectorWidth: [1,2]
+          # - VectorWidth: [2]
+          - VectorWidth: [-1,2,4,8]
+          # - GlobalReadVectorWidth: [8]
+          # - GlobalReadVectorWidth: [8]
+          - GlobalReadVectorWidth: [-1,2,4,8]
+          - LocalReadVectorWidth: [-1,2,4,8]
+          # - LocalReadVectorWidth: [8]
+          # - LocalReadVectorWidth: [4]
+          - ScheduleIterAlg: [3]
+          - InnerUnroll: [1]
+          - ExpandPointerSwap: [0]
+          - TransposeLDS: [1] #NN
+          # - TransposeLDS: [0] #NT
+          - LdsBlockSizePerPad: [-1]
+          - LdsPadA: [-1]
+          - LdsPadB: [-1]
+          # - StaggerUStride: [128,256]
+          # - StaggerU: [0,4,32]
+          # - WorkGroupMapping: [1,4,8,16,32,64,110]
+          # - WorkGroupMapping: [jk_Ailk_Bljk_HHS_BH_MT64x96x64_MI16x16x16x1_SN_1LDSB1_GRVW8_K1_LPB16_LRVW8_MIWT2_3_PLR5_SS1_SRVW0_SVW2_VW2_WG32_8_1]
+          # - WorkGroupMapping: [1]
+          # - StaggerUMapping: [0,3]
+          # - WaveSeparateGlobalReadA: []
+          # - WaveSeparateGlobalReadA: [0,1]
+          # - WaveSeparateGlobalReadB: [0,1]
+          # - WaveSeparateGlobalReadB: []
+          # - MaxOccupancy: [40]
+          # - 1LDSBuffer: [0, 1]
+          - 1LDSBuffer: [1]
+          # - 1LDSBuffer: [1]
+          # - GlobalSplitU: [8]
+          - GlobalSplitU: [1]
+          # - GlobalSplitU: [2,3,4,5,15,16]
+          # - GlobalSplitU: [6,8,9]
+          # - GlobalSplitU: [1]
+          # - GlobalSplitUAlgorithm: ["MultipleBuffer"]
+          - GlobalSplitUAlgorithm: ["SingleBuffer"]
+          - GlobalReadPerMfma: [1]
+          - LocalWritePerMfma: [-1]
+          - StoreVectorWidth: [-1,2,4,8]
+          # - StoreVectorWidth: [2]
+          # - StoreVectorWidth: [1]
+          - SourceSwap: [0, 1]
+          # - SourceSwap: [1]
+          # - SourceSwap: [1]
+          # - NumElementsPerBatchStore: [2]
+          # - NumElementsPerBatchStore: [0, 2]
+          # - NumElementsPerBatchStore: [2]
+          - StorePriorityOpt: [1]
+          # - StorePriorityOpt: [0,1]X
+          # - NumLoadsCoalescedA: [1]
+          # - NumLoadsCoalescedA: [1,3]X
+          # - StoreRemapVectorWidth: [0]
+          - StoreRemapVectorWidth: [0,-1]
+        BenchmarkJoinParameters:
+        BenchmarkFinalParameters:
+          - ProblemSizes:
+            - Exact: [640,  2048,  1,  640]
+          - ActivationArgs:
+            - [Enum: none]
+          - BiasTypeArgs: ['s']
+  LibraryLogic:
+      ScheduleName: "aldebaran"
+      DeviceNames: ["Device 0050", "Device 0051", "Device 0052", "Device 0054", "Device 0062", "Device 7400", "Device 740c"]
+      ArchitectureName: "gfx90a"
+  
+  
