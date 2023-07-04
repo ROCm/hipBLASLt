@@ -82,6 +82,45 @@ def vectorStaticDivide(qReg, dReg, divisor, tmpVgprRes: Optional[RegisterPoolRes
     module.name = "vectorStaticDivide (reg=-1)"
     return module
 
+def vectorUInt32DivideAndRemainder(qReg, dReg, divReg, rReg, doRemainder=True, comment=""):
+    dComment = "%s = %s / %s"    % (vgpr(qReg), vgpr(dReg), vgpr(divReg)) if (comment=="") else comment
+    rComment = "%s = %s %% %s" % (vgpr(rReg), vgpr(dReg), vgpr(divReg)) if (comment=="") else comment
+
+    module = Module("vectorUInt32DivideAndRemainder")
+    module.add(VCvtU32toF32(dst=vgpr(qReg), src=vgpr(divReg), comment=dComment))
+    module.add(VRcpIFlagF32(dst=vgpr(qReg), src=vgpr(qReg), comment=dComment))
+    module.add(VCvtU32toF32(dst=vgpr(rReg), src=vgpr(dReg), comment=dComment))
+    module.add(VMulF32(dst=vgpr(qReg), src0=vgpr(qReg), src1=vgpr(rReg), comment=dComment))
+    module.add(VCvtF32toU32(dst=vgpr(qReg), src=vgpr(qReg), comment=dComment))
+    module.add(VMulU32U24(dst=vgpr(rReg), src0=vgpr(qReg), src1=vgpr(divReg), comment=dComment))
+    module.add(VSubU32(dst=vgpr(rReg), src0=vgpr(dReg), src1=vgpr(rReg), comment=dComment))
+    module.add(VCmpXEqU32(dst=EXEC(), src0=vgpr(rReg), src1=vgpr(divReg), comment=dComment))
+    module.add(VAddU32(dst=vgpr(qReg), src0=1, src1=vgpr(qReg), comment=dComment))
+    if doRemainder:
+        module.add(VMovB32(dst=vgpr(rReg), src=0, comment=rComment))
+    module.add(SMovB64(dst=EXEC(), src=-1, comment=dComment))
+    return module
+
+def vectorUInt32CeilDivideAndRemainder(qReg, dReg, divReg, rReg, doRemainder=True, comment=""):
+    dComment = "%s = ceil(%s / %s)"    % (vgpr(qReg), vgpr(dReg), vgpr(divReg)) if (comment=="") else comment
+    rComment = "%s = %s %% %s" % (vgpr(rReg), vgpr(dReg), vgpr(divReg)) if (comment=="") else comment
+
+    module = Module("vectorUInt32CeilDivideAndRemainder")
+    module.add(VCvtU32toF32(dst=vgpr(qReg), src=vgpr(divReg), comment=dComment))
+    module.add(VRcpIFlagF32(dst=vgpr(qReg), src=vgpr(qReg), comment=dComment))
+    module.add(VCvtU32toF32(dst=vgpr(rReg), src=vgpr(dReg), comment=dComment))
+    module.add(VMulF32(dst=vgpr(qReg), src0=vgpr(qReg), src1=vgpr(rReg), comment=dComment))
+    module.add(VCvtF32toU32(dst=vgpr(qReg), src=vgpr(qReg), comment=dComment))
+    module.add(VMulU32U24(dst=vgpr(rReg), src0=vgpr(qReg), src1=vgpr(divReg), comment=dComment))
+    module.add(VSubU32(dst=vgpr(rReg), src0=vgpr(dReg), src1=vgpr(rReg), comment=dComment))
+    module.add(VCmpXNeU32(dst=EXEC(), src0=vgpr(rReg), src1=0, comment=dComment))
+    module.add(VAddU32(dst=vgpr(qReg), src0=1, src1=vgpr(qReg), comment=dComment))
+    if doRemainder:
+        module.add(VCmpXEqU32(dst=EXEC(), src0=vgpr(rReg), src1=vgpr(divReg), comment=rComment))
+        module.add(VMovB32(dst=vgpr(rReg), src=0, comment=rComment))
+    module.add(SMovB64(dst=EXEC(), src=-1, comment=dComment))
+    return module
+
 def vectorStaticRemainder(qReg, rReg, dReg, divisor, tmpVgprRes: Optional[RegisterPoolResource], \
                         tmpSgprRes: Optional[RegisterPoolResource], comment=""):
     if comment == "":
@@ -226,6 +265,31 @@ def scalarStaticRemainder(qReg, rReg, dReg, divisor, tmpSgprRes: Optional[Regist
             module.add(SMovB32(dst=sgpr(tmpSgpr+2), src=hex(divisor), comment=comment))
             module.add(SMulLOU32(dst=sgpr(tmpSgpr), src0=sgpr(qReg), src1=sgpr(tmpSgpr+2), comment=comment))
         module.add(SSubU32(dst=sgpr(rReg), src0=sgpr(dReg), src1=sgpr(tmpSgpr), comment=comment))
+    return module
+
+def scalarUInt32DivideAndRemainder(qReg, dReg, divReg, rReg, tmpVgprRes: RegisterPoolResource, doRemainder=True, comment=""):
+    dComment = "%s = %s / %s"    % (sgpr(qReg), sgpr(dReg), sgpr(divReg)) if (comment=="") else comment
+    rComment = "%s = %s %% %s" % (sgpr(rReg), sgpr(dReg), sgpr(divReg)) if (comment=="") else comment
+
+    assert tmpVgprRes.size >= 2
+    tmpVgpr0 = tmpVgprRes.idx
+    tmpVgpr1 = tmpVgprRes.idx + 1
+
+    module = Module("vectorUInt32DivideAndRemainder")
+    module.add(VCvtU32toF32(dst=vgpr(tmpVgpr0), src=sgpr(divReg), comment=dComment))
+    module.add(VRcpIFlagF32(dst=vgpr(tmpVgpr0), src=vgpr(tmpVgpr0), comment=dComment))
+    module.add(VCvtU32toF32(dst=vgpr(tmpVgpr1), src=sgpr(dReg), comment=dComment))
+    module.add(VMulF32(dst=vgpr(tmpVgpr0), src0=vgpr(tmpVgpr0), src1=vgpr(tmpVgpr1), comment=dComment))
+    module.add(VCvtF32toU32(dst=vgpr(tmpVgpr0), src=vgpr(tmpVgpr0), comment=dComment))
+    module.add(VMulU32U24(dst=vgpr(tmpVgpr1), src0=vgpr(tmpVgpr0), src1=sgpr(divReg), comment=dComment))
+    module.add(VSubU32(dst=vgpr(tmpVgpr1), src0=sgpr(dReg), src1=vgpr(tmpVgpr1), comment=dComment))
+    module.add(VCmpXEqU32(dst=EXEC(), src0=vgpr(tmpVgpr1), src1=sgpr(divReg), comment=dComment))
+    module.add(VAddU32(dst=vgpr(tmpVgpr0), src0=1, src1=vgpr(tmpVgpr0), comment=dComment))
+    if doRemainder:
+        module.add(VMovB32(dst=vgpr(tmpVgpr1), src=0, comment=rComment))
+    module.add(SMovB64(dst=EXEC(), src=-1, comment=dComment))
+    module.add(VReadfirstlaneB32(dst=sgpr(qReg), src=vgpr(tmpVgpr0)))
+    module.add(VReadfirstlaneB32(dst=sgpr(rReg), src=vgpr(tmpVgpr1)))
     return module
 
 ########################################
