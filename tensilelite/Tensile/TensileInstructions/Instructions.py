@@ -1842,6 +1842,11 @@ class VRcpF32(CommonInstruction):
         super().__init__(InstType.INST_F32, dst, [src], None, None, comment)
         self.setInst("v_rcp_f32")
 
+class VRcpIFlagF32(CommonInstruction):
+    def __init__(self, dst, src, comment="") -> None:
+        super().__init__(InstType.INST_F32, dst, [src], None, None, comment)
+        self.setInst("v_rcp_iflag_f32")
+
 # Cmp
 class VCmpEQF32(VCmpInstruction):
     def __init__(self, dst, src0, src1, sdwa: Optional[SDWAModifiers] = None, comment="") -> None:

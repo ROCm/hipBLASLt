@@ -365,7 +365,7 @@ namespace Tensile
         {
             for(size_t i = startStrideAB; i < a.dimensions(); i++)
                 args.template append<uint32_t>(concatenate_if<T_Debug>("strideMetadata", i),
-                                      metadata.strides()[i]);
+                                               metadata.strides()[i]);
         }
 
         {
@@ -390,19 +390,6 @@ namespace Tensile
         uint32_t wgmRemainder1            = 0;
         uint32_t magicNumberWgmRemainder1 = 0;
 
-        if(sizeMapping.workGroupMapping > 1)
-        {
-            numFullBlocks = problemNumGroupTiles1 / sizeMapping.workGroupMapping;
-            wgmRemainder1 = problemNumGroupTiles1 % sizeMapping.workGroupMapping;
-            if(wgmRemainder1 == 0)
-                wgmRemainder1 = sizeMapping.workGroupMapping;
-            if constexpr(std::is_same<KA, KernelArguments>::value)
-                magicNumberWgmRemainder1 = smallMagicNumber(wgmRemainder1);
-            args.template append<uint32_t>("numFullBlocks", numFullBlocks);
-            args.template append<uint32_t>("wgmRemainder1", wgmRemainder1);
-            args.template append<uint32_t>("magicNumberWgmRemainder1", magicNumberWgmRemainder1);
-        }
-
         if(isGrouped)
         {
             uint32_t smallMagicNumberDivWg0 = 0, smallMagicNumberDivWg01 = 0;
@@ -415,10 +402,6 @@ namespace Tensile
             args.template append<uint32_t>("SmallMagicNumberDivWg0", smallMagicNumberDivWg0);
             args.template append<uint32_t>("SmallMagicNumberDivWg01", smallMagicNumberDivWg01);
         }
-
-        // address padding for epilogue alignment
-        // if(sizeMapping.workGroupMapping <= 1)
-        //     args.append<uint32_t>("PadNonUsed", 0);
 
         bool runActivation = false;
         if((problemType.activationType != ActivationType::None) && sizeMapping.activationFused
@@ -1698,19 +1681,10 @@ namespace Tensile
         if(hipHostMemory && hipHostMemorySize < h_args.size())
             throw std::runtime_error("Insufficient host memory size.");
 
-        uint8_t* d_args = (uint8_t*)inputs.ws + workspaceOffsetInByte;
-        if(hipHostMemory)
-            HIP_CHECK_EXC(hipMemcpyAsync(d_args,
-                                         hipHostMemory,
-                                         h_args.size() * sizeof(uint8_t),
-                                         hipMemcpyHostToDevice,
-                                         stream));
-        else
-            HIP_CHECK_EXC(hipMemcpyAsync(d_args,
-                                         h_args.data(),
-                                         h_args.size() * sizeof(uint8_t),
-                                         hipMemcpyHostToDevice,
-                                         stream));
+        uint8_t*    d_args = (uint8_t*)inputs.ws + workspaceOffsetInByte;
+        const void* tmpMem = hipHostMemory ? hipHostMemory : h_args.data();
+        HIP_CHECK_EXC(hipMemcpyAsync(
+            d_args, tmpMem, h_args.size() * sizeof(uint8_t), hipMemcpyHostToDevice, stream));
 
         return rv;
     }

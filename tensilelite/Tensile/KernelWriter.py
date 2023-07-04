@@ -3707,11 +3707,6 @@ class KernelWriter(metaclass=abc.ABCMeta):
     # Mostly impacts flat kernels and GSU edge since these need SGPR
     # for conditionals
     self.states.lastPostLoopSgpr = self.sgprPool.size()
-    if kernel["WorkGroupMapping"] > 1:
-      self.defineSgpr("NumFullBlocks", 1) # Magic number to use for div by (NumWorkGroups1 % WGM)
-      self.defineSgpr("WgmRemainder1", 1) # Magic number to use for div by (NumWorkGroups1 % WGM)
-      self.defineSgpr("MagicNumberWgmRemainder1", 1) # Magic number to use for div by (NumWorkGroups1 % WGM)
-
     if kernel["ProblemType"]["GroupedGemm"]:
       self.defineSgpr("SmallMagicNumberDivWg0", 1)
       self.defineSgpr("SmallMagicNumberDivWg01", 1)
@@ -3722,7 +3717,6 @@ class KernelWriter(metaclass=abc.ABCMeta):
       len(kernel["PackedC0IdxChars"][:-1])*2 + len(kernel["PackedC1IdxChars"][:-1])*2 + \
       1 + \
       2 + \
-      (3 if kernel["WorkGroupMapping"] > 1 else 0) + \
       (2 if kernel["ProblemType"]["GroupedGemm"] else 0)
     # Get kernel argument end here
     ###################################
