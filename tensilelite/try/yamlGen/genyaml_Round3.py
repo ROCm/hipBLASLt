@@ -363,8 +363,8 @@ for problemidx in range(0, problemnum):
           - GlobalSplitUAlgorithm: [\"SingleBuffer\"]\n\
           - GlobalReadPerMfma: [1]\n\
           - LocalWritePerMfma: [-1]\n\
-          - StoreVectorWidth: [-1,2,4,8]\n\
-          # - StoreVectorWidth: ["+str(StoreVectorWidth)+"]\n\
+          # - StoreVectorWidth: [-1,2,4,8]\n\
+          - StoreVectorWidth: ["+str(StoreVectorWidth)+"]\n\
           # - StoreVectorWidth: [1]\n\
           # - SourceSwap: [0, 1]\n\
           - SourceSwap: ["+str(SourceSwap)+"]\n\
