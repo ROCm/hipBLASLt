@@ -157,7 +157,7 @@ namespace Tensile
         {
             m_stop   = false;
             m_exit   = false;
-            m_thread = std::thread([=]() { this->runLoop(); });
+            m_thread = std::thread([=, this]() { this->runLoop(); });
         }
 
         void HardwareMonitor::addTempMonitor(rsmi_temperature_type_t   sensorType,
@@ -281,7 +281,7 @@ namespace Tensile
 
                 m_hasStopEvent = stopEvent != nullptr;
 
-                m_task   = std::move(Task([=]() { this->collect(startEvent, stopEvent); }));
+                m_task   = std::move(Task([=, this]() { this->collect(startEvent, stopEvent); }));
                 m_future = m_task.get_future();
 
                 m_stop = false;
