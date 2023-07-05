@@ -366,8 +366,10 @@ class KernelWriterConversion(KernelWriterBase):
     #TODO: workspace type is half precision
     if self.state["ProblemType"]["UseBias"] and self.state["ProblemType"]["Gradient"] and self.state["ProblemType"]["BiasSrc"] == "D":
       kStr += "  auto idxW_ori = idxW;%s"%self.endLine
-    loadTypeStr = "float%s" % ( "" if self.num_dword_load == 1 else self.num_dword_load)
-    storeTypeStr = "float%s" % (self.num_dword_store) if self.num_dword_store >= 1 else destTypeStr
+    
+    typeStr = "int" if self.state["ProblemType"]["DataType"].isInt8() or self.state["ProblemType"]["DataType"].isInt32() else "float"
+    loadTypeStr = "%s%s" % (typeStr, "" if self.num_dword_load == 1 else self.num_dword_load)
+    storeTypeStr = "%s%s" % (typeStr, self.num_dword_store) if self.num_dword_store >= 1 else destTypeStr
 
     #Bias A/B
     if self.state["ProblemType"]["UseBias"] and self.state["ProblemType"]["Gradient"] and (self.state["ProblemType"]["BiasSrc"] == "A" or self.state["ProblemType"]["BiasSrc"] == "B"):
@@ -402,17 +404,17 @@ class KernelWriterConversion(KernelWriterBase):
       kStr += "  buffer_load<%s, sizeof(%s), CacheOperation::Kind::Always>(temp[%d], arg.W, idxW * sizeof(%s), 0);%s" % (loadTypeStr, loadTypeStr, gsuIdx, self.datatype, self.endLine)
       kStr += "  idxW  += strideW;" + self.endLine
     kStr += self.endLine
-
+    castToIntermidate = ("(%s)" % intermediateDataType) if intermediateDataType != self.datatype else ""
     #Accumlate all D buffer
     for gsuIdx in range(self.state["GlobalSplitU"]):
       if self.num_dword_load == 1:
-        kStr += "  accum[0] += temp[%d];" % gsuIdx + self.endLine
+        kStr += "  accum[0] += %stemp[%d];" % (castToIntermidate, gsuIdx) + self.endLine
       elif self.num_dword_load >= 2:
-        kStr += "  accum[0] += temp[%d].x;" % gsuIdx + self.endLine
-        kStr += "  accum[1] += temp[%d].y;" % gsuIdx + self.endLine
+        kStr += "  accum[0] += %stemp[%d].x;" % (castToIntermidate, gsuIdx) + self.endLine
+        kStr += "  accum[1] += %stemp[%d].y;" % (castToIntermidate, gsuIdx) + self.endLine
       if self.num_dword_load == 4:
-        kStr += "  accum[2] += temp[%d].z;" % gsuIdx + self.endLine
-        kStr += "  accum[3] += temp[%d].w;" % gsuIdx + self.endLine
+        kStr += "  accum[2] += %stemp[%d].z;" % (castToIntermidate, gsuIdx) + self.endLine
+        kStr += "  accum[3] += %stemp[%d].w;" % (castToIntermidate, gsuIdx) + self.endLine
     kStr += self.endLine
 
     accumStr = "accum"
@@ -494,7 +496,7 @@ class KernelWriterConversion(KernelWriterBase):
     #Saturation
     if self.state["ProblemType"]["DestDataType"].isInt8() and self.state["ProblemType"]["HighPrecisionAccumulate"]:
       for vIdx in range(self.num_dword_load):
-        kStr += "  %s[%d] *= min(127, max(-128, (int32_t)std::nearbyint(%s[%d])));%s" % (accumStr, vIdx, accumStr, vIdx, self.endLine)
+        kStr += "  %s[%d] = min(127, max(-128, (int32_t)std::nearbyint(%s[%d])));%s" % (accumStr, vIdx, accumStr, vIdx, self.endLine)
       kStr += self.endLine
 
     #covert to output
