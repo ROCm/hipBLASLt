@@ -236,6 +236,7 @@ class StateValues:
   syncPlrMfmaIndex: int                  = -1
   numGlobalReadInsPerMfma: int           = 0
   numLocalWriteModPerMfma: int           = 0
+  HHH_WMMA: bool                         = False
 
   perIterLocalWriteCanSkip: List[int]    = field(init=False)
 
@@ -574,7 +575,10 @@ class KernelWriter(metaclass=abc.ABCMeta):
       # interleave pack code
       # BF16 or FP16: each packCode is for one 32-bit reg,  1 packing inst: half-to-single x1
       # INT8        : each packCode is for one 32-bit regs, 3 packing inst: byte-to-half x2 + half-to-single x1
-      instPerRegPack = 1 / kernel["ProblemType"]["DataType"].numRegisters() - 1
+      if self.states.archCaps["HasEccHalf"]:
+        instPerRegPack = 1 / kernel["ProblemType"]["DataType"].numRegisters() - 1
+      else:
+        instPerRegPack = 1 if (kernel["ProblemType"]["DataType"].numRegisters() == 0.25) else 0
       instPerPack    = int(kernel["MIInputPerThread"] * kernel["ProblemType"]["DataType"].numRegisters() * instPerRegPack)
       packItems = []
       for iui in range(kernel["InnerUnroll"]):
@@ -736,7 +740,10 @@ class KernelWriter(metaclass=abc.ABCMeta):
       # BF16 or FP16: each packCode is for one 32-bit reg,  1 packing inst: half-to-single x1
       # INT8        : each packCode is for one 32-bit regs, 3 packing inst: byte-to-half x2 + half-to-single x1
       ####
-      instPerRegPack = 1 / kernel["ProblemType"]["DataType"].numRegisters() - 1
+      if self.states.archCaps["HasEccHalf"]:
+        instPerRegPack = 1 / kernel["ProblemType"]["DataType"].numRegisters() - 1
+      else:
+        instPerRegPack = 1 if (kernel["ProblemType"]["DataType"].numRegisters() == 0.25) else 0
       instPerPackA    = int(kernel["MIInputPerThreadA"] * kernel["ProblemType"]["DataType"].numRegisters() * instPerRegPack)
       instPerPackB    = int(kernel["MIInputPerThreadB"] * kernel["ProblemType"]["DataType"].numRegisters() * instPerRegPack)
       packItems = []
@@ -2658,13 +2665,14 @@ class KernelWriter(metaclass=abc.ABCMeta):
     # the VGPRs that are used for the GRO offset checking
     assert not (kernel["_UseSgprForGRO"] and self.states.checkGRO)
 
-    if self.states.archCaps["ArchAccUnifiedRegs"]:
-      self.states.unifiedVgprRegs = True
+    self.states.doubleVgpr = False
+    if self.states.archCaps["ArchAccUnifiedRegs"] or (kernel["WavefrontSize"] == 32):
+      self.states.doubleVgpr = True
 
     if kernel["EnableMatrixInstruction"]:
       if (kernel["ProblemType"]["DataType"].MIOutputTypeNameAbbrev() == 'f64') and (not self.states.asmCaps["HasMFMA_f64"]):
         raise RuntimeError("FP64 MatrixInstruction not supported for {0}".format(self.states.version))
-      elif not self.states.asmCaps["HasMFMA"]:
+      elif not ( self.states.asmCaps["HasMFMA"] or self.states.asmCaps["HasWMMA"]):
         raise RuntimeError("MatrixInstruction not supported for {0}".format(self.states.version))
 
       if kernel["MFMA_BF16_1K"] and not self.states.asmCaps["HasMFMA_bf16_1k"]:
@@ -2700,15 +2708,30 @@ class KernelWriter(metaclass=abc.ABCMeta):
 
     self.states.bpeAB = int(self.states.bpr * kernel["ProblemType"]["DataType"].numRegisters())
     self.states.bpeCinternal = int(self.states.bpr * kernel["ProblemType"]["ComputeDataType"].numRegisters())
+
+    self.states.bpeCexternal = self.states.bpeCinternal if kernel["_GlobalAccumulation"] else \
+      int(self.states.bpr * kernel["ProblemType"]["DestDataType"].numRegisters())
+
+    # special case for wmma h and b
+    if (kernel["EnableMatrixInstruction"]
+            and self.states.asmCaps["HasWMMA"]
+            and (kernel["ProblemType"]["ComputeDataType"].numRegisters() == 0.5)):
+        self.states.bpeCinternal = 4
+        if kernel["_GlobalAccumulation"]:
+            self.states.bpeCexternal = 2
+
+    self.states.HHH_WMMA = kernel["EnableMatrixInstruction"] \
+                                and self.states.asmCaps["HasWMMA"] \
+                                and kernel["ProblemType"]["DestDataType"].isHalf() \
+                                and (not kernel["ProblemType"]["HighPrecisionAccumulate"])
+
     # HPA not allowed in dgemm, cgemm, zgemm, sgemm
     if kernel["ProblemType"]["HighPrecisionAccumulate"] and \
        not (kernel["ProblemType"]["DataType"].isHalf() or kernel["ProblemType"]["DataType"].isBFloat16() or \
           kernel["ProblemType"]["DataType"].isInt8x4() or kernel["ProblemType"]["DataType"].isInt8()):
         print("HighPrecisionAccumulate only valid when DataType is half, bf16, Int8x4, Int8. Forcing HPA to False")
         kernel["ProblemType"]["HighPrecisionAccumulate"] = False
-    self.states.bpeCexternal = self.states.bpeCinternal if kernel["_GlobalAccumulation"] else \
-      int(self.states.bpr * kernel["ProblemType"]["DestDataType"].numRegisters())
-
+  
     assert self.states.bpeAB == tensorParametersA["bpe"]
     assert self.states.bpeAB == tensorParametersB["bpe"]
 
@@ -2866,6 +2889,8 @@ class KernelWriter(metaclass=abc.ABCMeta):
         tpA = self.states.bpr if tensorParametersA["bpe"] * vwa < self.states.bpr else tensorParametersA["bpe"] * vwa
         self.states.a.numVgprG2LAllocated = roundUp((kernel["NumLoadsCoalescedA"] * kernel["NumLoadsPerpendicularA"] * \
           tpA) / (float)(self.states.bpr))
+      else:
+        self.states.a.numVgprG2LAllocated = self.states.a.numVgprG2L
     # using _ds_store_b8: need one more vgpr space to do lshr
     if tensorParametersA["localWriteInstruction"].blockWidth == 0.25:
       self.states.a.numVgprG2L = self.states.a.numVgprG2L * 2
@@ -2879,6 +2904,8 @@ class KernelWriter(metaclass=abc.ABCMeta):
         tpB = self.states.bpr if tensorParametersB["bpe"] * vwb < self.states.bpr else tensorParametersB["bpe"] * vwb
         self.states.b.numVgprG2LAllocated = roundUp((kernel["NumLoadsCoalescedB"] * kernel["NumLoadsPerpendicularB"] * \
           tpB) / (float)(self.states.bpr))
+      else:
+        self.states.b.numVgprG2LAllocated = self.states.b.numVgprG2L
     # using _ds_store_b8: need one more vgpr space to do lshr
     if tensorParametersB["localWriteInstruction"].blockWidth == 0.25:
       self.states.b.numVgprG2L = self.states.b.numVgprG2L * 2
@@ -3001,8 +3028,8 @@ class KernelWriter(metaclass=abc.ABCMeta):
     # TODO: alignment hack, figure out a better solution
     vgprIdx = ((vgprIdx+1)//2)*2
     # Avoid bank conflict between VgprA and VgprC
-    if (self.states.version[0] == 10) and ((vgprIdx % 4) == (self.states.c.startVgprValu % 4)):
-      vgprIdx += 1
+    if(self.states.archCaps["VgprBank"]):
+      vgprIdx += 2
     self.states.a.startVgprValu  = vgprIdx
     vgprIdx += self.states.a.numVgprValu
     numVgprValuPackA = 0
@@ -3013,7 +3040,6 @@ class KernelWriter(metaclass=abc.ABCMeta):
       else:
         numVgprValuPackA = self.states.a.numVgprValuPerBlock * kernel["InnerUnroll"] * self.states.numVgprBufferPackA * (int(4/tensorParametersA["bpe"]) - 1)
     vgprIdx += numVgprValuPackA
-
     self.states.a.startVgprG2L = None
     if not kernel["DirectToLdsA"] or self.do["KeepDirectToLdsAlloc"]:
       # if PGR = True, PAP could be possibly enabled, we move G2LA later to prevent it from being reclaimed
@@ -3025,6 +3051,8 @@ class KernelWriter(metaclass=abc.ABCMeta):
 
     # TODO: alignment hack, figure out a better solution
     vgprIdx = ((vgprIdx+1)//2)*2
+    if(self.states.archCaps["VgprBank"]):
+      vgprIdx += 1
     self.states.b.startVgprValu  = vgprIdx
     vgprIdx += self.states.b.numVgprValu
     numVgprValuPackB = 0
@@ -3035,7 +3063,6 @@ class KernelWriter(metaclass=abc.ABCMeta):
       else:
         numVgprValuPackB = self.states.b.numVgprValuPerBlock * kernel["InnerUnroll"] * self.states.numVgprBufferPackB * (int(4/tensorParametersB["bpe"]) - 1)
     vgprIdx += numVgprValuPackB
-
     self.states.b.startVgprG2L = None
     if not kernel["DirectToLdsB"] or self.do["KeepDirectToLdsAlloc"]:
       # if PGR = True, PAP could be possibly enabled, we move G2LB later to prevent it from being reclaimed
@@ -3167,7 +3194,9 @@ class KernelWriter(metaclass=abc.ABCMeta):
     vgprIdx += numVgprAddressDbg
 
     # for zgemm + (SCIU or MIAV) case, allocate 4 vgpr for alpha calculation (cannot use tmp vgpr in unroll loop or write batch)
-    if kernel["ProblemType"]["DataType"].isDoubleComplex() and kernel["MIArchVgpr"]:
+    if kernel["ProblemType"]["DataType"].isComplex() \
+        and (kernel["StoreCInUnroll"] or kernel["MIArchVgpr"]) \
+        and (kernel["_GlobalAccumulation"] != 'MultipleBuffer'):
       # need proper alignment
       vgprIdx = ((vgprIdx+2 - 1)//2)*2
       self.states.startVgprAlphaTmp = vgprIdx

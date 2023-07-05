@@ -74,7 +74,10 @@ class LocalReadMFMA(LocalRead):
         numVgpr  = int(ceil(blockWidth))
 
         # pack register
-        needPack = tP["bpe"] < 4 and not kernel["UnrollMajorLDS%s"%tc] and not tP["isM"]
+        if writer.states.archCaps["HasEccHalf"]:
+            needPack = tP["bpe"] < 4 and not kernel["UnrollMajorLDS%s"%tc] and not tP["isM"]
+        else:
+            needPack = blockWidth == 0.25
         pack     = Module("pack%s_I%s"%(tc,iui))
 
         valufIdx = 0
@@ -124,22 +127,35 @@ class LocalReadMFMA(LocalRead):
                     else:
                         # pack for blockWidth 0.5 type
                         highBitsForHalf = (blockWidth == 0.5) and ((rIdx % 2) == 1) # rIdx = 1,3
-                        if needPack and highBitsForHalf:
-                            highVgpr = vgpr("Valu%s_X%u_I%u_D%u+%u"%(tc, bufferIdx, iui, rIdx%2, valuiIdx), numVgpr)
-                            packCode.add(VOrB32(dst=baseLRVgpr, src0=baseLRVgpr, src1=highVgpr, comment="pack two half Vgpr to one Vgpr"))
-                            destVgpr = highVgpr
-                        # pack for blockWidth 0.25 type
-                        isHigh8Bits  = (blockWidth == 0.25) and ( ((rIdx % 4) % 2) == 1) # rIdx = 1,3
-                        isHigh16Bits = (blockWidth == 0.25) and ( ((rIdx % 4) //2) == 1) # rIdx = 2,3
-                        if needPack and rIdx != 0:
-                            if isHigh8Bits or isHigh16Bits:
-                                highVgpr = vgpr("Valu%s_X%u_I%u_D%u+%u"%(tc, bufferIdx, iui, rIdx%4, valuiIdx), numVgpr)
+                        if writer.states.archCaps["HasEccHalf"]: # ECC pack
+                            if needPack and highBitsForHalf:
+                                highVgpr = vgpr("Valu%s_X%u_I%u_D%u+%u"%(tc, bufferIdx, iui, rIdx%2, valuiIdx), numVgpr)
+                                packCode.add(VOrB32(dst=baseLRVgpr, src0=baseLRVgpr, src1=highVgpr, comment="pack two half Vgpr to one Vgpr"))
                                 destVgpr = highVgpr
-                            if isHigh8Bits:
-                                lowVgpr = vgpr("Valu%s_X%u_I%u_D%u+%u"%(tc, bufferIdx, iui, (rIdx%4)-1, valuiIdx), numVgpr) if isHigh16Bits else baseLRVgpr
-                                packCode.add(VLShiftLeftOrB32(dst=lowVgpr, src0=highVgpr, shiftHex=8, src1=lowVgpr, comment="pack two int8 Vgpr to one half Vgpr"))
-                                if isHigh16Bits:
-                                    packCode.add(VOrB32(dst=baseLRVgpr, src0=baseLRVgpr, src1=lowVgpr, comment="pack two half Vgpr to one Vgpr"))
+                            # pack for blockWidth 0.25 type
+                            isHigh8Bits  = (blockWidth == 0.25) and ( ((rIdx % 4) % 2) == 1) # rIdx = 1,3
+                            isHigh16Bits = (blockWidth == 0.25) and ( ((rIdx % 4) //2) == 1) # rIdx = 2,3
+                            if needPack and rIdx != 0:
+                                if isHigh8Bits or isHigh16Bits:
+                                    highVgpr = vgpr("Valu%s_X%u_I%u_D%u+%u"%(tc, bufferIdx, iui, rIdx%4, valuiIdx), numVgpr)
+                                    destVgpr = highVgpr
+                                if isHigh8Bits:
+                                    lowVgpr = vgpr("Valu%s_X%u_I%u_D%u+%u"%(tc, bufferIdx, iui, (rIdx%4)-1, valuiIdx), numVgpr) if isHigh16Bits else baseLRVgpr
+                                    packCode.add(VLShiftLeftOrB32(dst=lowVgpr, src0=highVgpr, shiftHex=8, src1=lowVgpr, comment="pack two int8 Vgpr to one half Vgpr"))
+                                    if isHigh16Bits:
+                                        packCode.add(VOrB32(dst=baseLRVgpr, src0=baseLRVgpr, src1=lowVgpr, comment="pack two half Vgpr to one Vgpr"))
+                        else: # no ECC pack
+                        # pack for No ECC blockwidth 0.25 type
+                            isHigh8Bits  = (blockWidth == 0.25) and ( ((rIdx % 4) % 2) == 1) # 1,3
+                            isHigh16Bits = (blockWidth == 0.25) and ( ((rIdx % 4) //2) == 1) # 2,3
+                            if needPack and rIdx != 0:
+                                if isHigh8Bits:
+                                    highVgpr = vgpr(tmpVgprIdx)
+                                    destVgpr = highVgpr
+                                if isHigh8Bits and isHigh16Bits:
+                                    packCode.add(VLShiftLeftOrB32(dst=baseLRVgpr, src0=highVgpr, shiftHex=hex(0x8), src1=baseLRVgpr, comment="pack two int8x2 Vgpr to one Vgpr"))
+                                    tmpVgprIdx += 1
+
                     valufIdx += blockWidth if not tP["isM"] else 1
 
                     # load read instrution
