@@ -1699,8 +1699,18 @@ namespace Tensile
             throw std::runtime_error("Insufficient host memory size.");
 
         uint8_t* d_args = (uint8_t*)inputs.ws + workspaceOffsetInByte;
-        HIP_CHECK_EXC(hipMemcpyAsync(
-            d_args, hipHostMemory, h_args.size() * sizeof(uint8_t), hipMemcpyHostToDevice, stream));
+        if(hipHostMemory)
+            HIP_CHECK_EXC(hipMemcpyAsync(d_args,
+                                         hipHostMemory,
+                                         h_args.size() * sizeof(uint8_t),
+                                         hipMemcpyHostToDevice,
+                                         stream));
+        else
+            HIP_CHECK_EXC(hipMemcpyAsync(d_args,
+                                         h_args.data(),
+                                         h_args.size() * sizeof(uint8_t),
+                                         hipMemcpyHostToDevice,
+                                         stream));
 
         return rv;
     }
