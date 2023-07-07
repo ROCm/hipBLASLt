@@ -234,7 +234,8 @@ def _initAsmCaps(isaVersion, assemblerPath, isDebug) -> dict:
     rv["HasSMulHi"]         = _tryAssembler(isaVersion, assemblerPath, "s_mul_hi_u32 s47, s36, s34", isDebug)
     rv["HasCodeObjectV3"]   = _tryAssembler(isaVersion, assemblerPath, "", isDebug, "-mcode-object-version=2")
 
-    rv["HasMFMA"]           = _tryAssembler(isaVersion, assemblerPath, "v_mfma_f32_32x32x2bf16 a[0:31], v32, v33, a[0:31]", isDebug) or _tryAssembler(isaVersion, assemblerPath, "v_mfma_f32_32x32x1_2b_f32 a[0:31], v0, v1, a[0:31]", isDebug)
+    rv["HasMFMA_explictB"]  = _tryAssembler(isaVersion, assemblerPath, "v_mfma_f32_32x32x1_2b_f32 a[0:31], v0, v1, a[0:31]", isDebug)
+    rv["HasMFMA"]           = _tryAssembler(isaVersion, assemblerPath, "v_mfma_f32_32x32x2bf16 a[0:31], v32, v33, a[0:31]", isDebug) or rv["HasMFMA_explictB"]
     rv["HasMFMA_f64"]       = _tryAssembler(isaVersion, assemblerPath, "v_mfma_f64_16x16x4f64 v[0:7], v[32:33], v[36:37], v[0:7]", isDebug) or _tryAssembler(isaVersion, assemblerPath, "v_mfma_f64_16x16x4_f64 v[0:7], v[32:33], v[36:37], v[0:7]", isDebug)
     rv["HasMFMA_bf16_1k"]   = _tryAssembler(isaVersion, assemblerPath, "v_mfma_f32_32x32x4bf16_1k a[0:31], v[32:33], v[36:37], a[0:31]", isDebug)
 

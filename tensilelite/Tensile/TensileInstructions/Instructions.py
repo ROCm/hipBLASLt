@@ -291,18 +291,15 @@ class MFMAInstruction(Instruction):
         return [self.acc, self.a, self.b, self.acc2]
 
     def preStr(self) -> None:
-        if len(self.variant) == 3:
-            variantStr = "{}x{}x{}".format(*self.variant)
-            mfma_1k = "_1k" if self.mfma1k else ""
-            self.setInst("v_mfma_%s_%s%s%s"%(self.typeConvert(self.accType), variantStr, \
-                self.typeConvert(self.instType), mfma_1k))
-        elif len(self.variant) == 4:
-            variantStr = "{}x{}x{}".format(*self.variant)
+        variantStr = "{}x{}x{}".format(*self.variant)
+        if self.asmCaps["HasMFMA_explictB"] and not self.mfma1k:
             strB = "%ub_" % self.variant[3] if self.variant[3] > 1 else ""
             self.setInst("v_mfma_%s_%s_%s%s"%(self.typeConvert(self.accType), variantStr, \
                 strB, self.typeConvert(self.instType)))
         else:
-            assert("Currently does not support mfma variant %u"%len(self.variant) and 0)
+            mfma_1k = "_1k" if self.mfma1k else ""
+            self.setInst("v_mfma_%s_%s%s%s"%(self.typeConvert(self.accType), variantStr, \
+                self.typeConvert(self.instType), mfma_1k))
 
     def getArgStr(self) -> str:
         return str(self.acc) + ", " + str(self.a) + ", " + str(self.b) + ", " + str(self.acc2)
