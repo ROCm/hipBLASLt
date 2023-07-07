@@ -4185,9 +4185,7 @@ class KernelWriterAssembly(KernelWriter):
             for inst in ccInsts:
               if inst is not None:
                 imod.add(inst)
-            variant = [kernel["MatrixInstM"], kernel["MatrixInstN"], kernel["MatrixInstK"]]
-            if self.states.version in [(9,4,0), (9,4,1), (9,4,2)]:
-              variant.append(kernel["MatrixInstB"])
+            variant = [kernel["MatrixInstM"], kernel["MatrixInstN"], kernel["MatrixInstK"], kernel["MatrixInstB"]]
             imod.add(MFMAInstruction(instType=miInInstType, accType=miOutInstType, variant=variant, mfma1k=False, \
                      acc=gprfunc(accStart, (accEnd-accStart+1)), a=src0, b=src1, acc2=gprfunc(accStartSrc1, (accEndSrc1-accStartSrc1+1)), \
                      comment="Cr += Ar*Br"))
@@ -4214,9 +4212,7 @@ class KernelWriterAssembly(KernelWriter):
               src0 = Str0
               src1 = Str1
 
-            variant = [kernel["MatrixInstM"], kernel["MatrixInstN"], kernel["MatrixInstK"]]
-            if (not mfma_1k) and self.states.version in [(9,4,0), (9,4,1), (9,4,2)]:
-              variant.append(kernel["MatrixInstB"])
+            variant = [kernel["MatrixInstM"], kernel["MatrixInstN"], kernel["MatrixInstK"], kernel["MatrixInstB"]]
 
             waits = self.mfmaIter_waitCount(kernel)
             if waits > 0 and prevAccIdx == accIdx:
