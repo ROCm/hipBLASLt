@@ -4917,7 +4917,7 @@ class KernelWriterAssembly(KernelWriter):
                     idx = g2lIdx + vregSetIdx * numVgprPerBlock
                     destVgpr="G2L%s+%u+%u"%(tc, idx, regIdx)
                   else:
-                    destVgpr="G2L%s+%u+%u"%(tc, g2lIdx, regIdx+eccOffset)
+                    destVgpr="G2L%s+%u+%u"%(tc, g2lIdx if not tP["isM"] else graIdx, regIdx+eccOffset)
 
                   offset = r * tP["bpe"] + instOffset
                   hi8 = 0
@@ -4932,7 +4932,7 @@ class KernelWriterAssembly(KernelWriter):
                       hi16=loopCnt%2 if tP["glvw"]==1 else r%2
                       comment="load one buffer value"
 
-                  if kernel["ProblemType"]["DataType"].isInt8() or tP["isM"]:
+                  if (kernel["ProblemType"]["DataType"].isInt8() and not tP["isM"]) or (tP["isM"] and destVgprHi != None):
                     # TODO-Int8, Check this:
                     # if numElementsPerLoad==2:
                     #   # Pack two FP16 values into a single load dword x2
@@ -5289,7 +5289,7 @@ class KernelWriterAssembly(KernelWriter):
                   # DirectToVgpr case. Need to toggle destination vreg set and adjust instOffset
                   destVgpr="G2L%s%u+%u"%(tc, vregSetIdx, g2lIdx)
                 else:
-                  destVgpr="G2L%s+%u"%(tc, (g2lIdx+eccOffset))
+                  destVgpr="G2L%s+%u"%(tc, (g2lIdx+eccOffset) if not tP["isM"] else graIdx)
 
                 # TODO: is it possible to load only hi16 when no in tail? (need to check INT8 too)
                 isHigh16Bits = (kernel["ProblemType"]["DataType"].isHalf() or kernel["ProblemType"]["DataType"].isBFloat16()) and loopCnt%2==1 if not tP["isM"] else False
@@ -5781,6 +5781,9 @@ class KernelWriterAssembly(KernelWriter):
               g2lIdx = int((i * kernel["DepthULdsDivisor"] + uDu) * blockWidth)
               #print("uDu=%u, g2lIdx = %u, offset: %u"%(uDu, g2lIdx, offset))
 
+            graIdx = i * self.states.rpgo if kernel["BufferLoad"] else i * self.states.rpga
+            if tP["isM"] : g2lIdx = graIdx
+
             # If g2lIdx is already in the dict and blockWidth < 1, the data may
             # be packed into one register.
             instHi = 0
@@ -5791,7 +5794,7 @@ class KernelWriterAssembly(KernelWriter):
             instHi = g2lIdxDict[g2lIdx]
 
             # TODO- INT8: check uDu
-            if (blockWidth == 0.25) and ((s % 4) == 0):
+            if (blockWidth == 0.25) and ((s % 4) == 0) and not tP["isM"]:
                 src = "G2L%s+%u" % (tc, g2lIdx)
                 dst = "G2L%s+%u+%u" % (tc, tmpVgprOffset, g2lIdx)
                 localWriteCode.add(VMovB32(dst=vgpr(dst), src=vgpr(src), comment="another VGPR storing lshr 8-bit value"))
