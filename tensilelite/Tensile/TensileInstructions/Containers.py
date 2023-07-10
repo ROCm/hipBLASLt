@@ -226,6 +226,21 @@ class VCC(Container):
         else:
             return "vcc_hi" if self.setHi else "vcc_lo"
 
+class HWRegContainer(Container):
+    def __init__(self, reg: str, value: List[int]) -> None:
+        super().__init__()
+        self.reg = reg
+        self.value = value
+
+    def __str__(self) -> str:
+        s = "hwreg("
+        s += self.reg
+        for v in self.value:
+            s += ("," + str(v))
+        s += ")"
+        return s
+
+
 ########################################
 # The class below does not inherit Item
 ########################################

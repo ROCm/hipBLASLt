@@ -29,7 +29,7 @@ from .TensileInstructions import KernelBody, Label, Macro, Module, RegSet, SrdUp
                           SBranchIfZero, SBranchIfNotZero, SMulInt64to32, DSInit, VCvtBF16toFP32, \
                           ArgumentLoader, bomb, vectorStaticDivideAndRemainder, \
                           vectorStaticDivide, vectorStaticRemainder, scalarStaticRemainder, \
-                          scalarUInt32DivideAndRemainder, \
+                          scalarUInt32RegDivide, scalarUInt32DivideAndRemainder, \
                           scalarStaticDivideAndRemainder, sMagicDiv, staticMultiply, \
                           scalarStaticMultiply, MacroVMagicDiv, MacroVDynamicScalarDiv, \
                           RegisterPool, allocTmpGpr, RegisterPoolResource, Holder, \
@@ -1158,11 +1158,17 @@ class KernelWriterAssembly(KernelWriter):
 
         module.add(moduleArgs)
 
-        with self.allocTmpSgpr(2, alignment = 2) as tmpSgpr:
+        with self.allocTmpSgpr(2) as tmpSgpr:
           module.addComment1("Grouped Gemm: remap wg from 1D(idxWG012) to 3D(wg2,wg1,wg0)")
           module.addComment0("wg2 = idxWG012 * smallMagicNumber(1/(numWG0*numWG1))")
-          module.add(self.sMagicDivWrapper(dest=tmpSgpr.idx, dividend=sgpr("WorkGroup0"), \
-                    magicNumber=sgpr("SmallMagicNumberDivWg01"), magicShift=31))
+          tmpVgpr     = self.vgprPool.checkOut(2)
+          regStateRes = RegisterPoolResource(idx=tmpSgpr.idx+1, size=1)
+          tmpVgprRes  = RegisterPoolResource(tmpVgpr, 2)
+          module.add(SMulI32(dst=sgpr(tmpSgpr.idx), src0=sgpr("NumWorkGroups0"), src1=sgpr("NumWorkGroups1")))
+          module.add(SMulI32(dst=sgpr(tmpSgpr.idx), src0=sgpr(tmpSgpr.idx), src1=kernel["GlobalSplitU"]))
+          module.add(scalarUInt32RegDivide(qReg=tmpSgpr.idx, dReg="WorkGroup0", divReg=tmpSgpr.idx, \
+                                           tmpSgprRes=regStateRes, tmpVgprRes=tmpVgprRes, \
+                                           TransOpWait=self.states.archCaps["TransOpWait"], setReg=True, restoreReg=False))
           module.add(SMovB32(dst=sgpr("WorkGroup2"), src=sgpr(tmpSgpr.idx)))
           module.addComment0("idxWG01 = idxWG012 - wg2 * numWG0 * numWG1")
           module.add(SMulI32(dst=sgpr(tmpSgpr.idx), src0=sgpr("WorkGroup2"), src1=sgpr("NumWorkGroups0")))
@@ -1171,16 +1177,16 @@ class KernelWriterAssembly(KernelWriter):
             module.add(SMulI32(dst=sgpr(tmpSgpr.idx), src0=sgpr(tmpSgpr.idx), src1=kernel["GlobalSplitU"]))
           module.add(SSubU32(dst=sgpr("WorkGroup0"), src0=sgpr("WorkGroup0"), src1=sgpr(tmpSgpr.idx)))
           module.addComment0("wg1 = idxWG01 * smallMagicNumber(1/numWG0)")
-          module.add(self.sMagicDivWrapper(dest=tmpSgpr.idx, dividend=sgpr("WorkGroup0"), \
-                    magicNumber=sgpr("SmallMagicNumberDivWg0"), magicShift=31))
+          module.add(scalarUInt32RegDivide(qReg=tmpSgpr.idx, dReg="WorkGroup0", divReg="NumWorkGroups0", \
+                                           tmpSgprRes=regStateRes, tmpVgprRes=tmpVgprRes, \
+                                           TransOpWait=self.states.archCaps["TransOpWait"], setReg=False, restoreReg=True))
+          self.vgprPool.checkIn(tmpVgpr)
           module.add(SMovB32(dst=sgpr("WorkGroup1"), src=sgpr(tmpSgpr.idx)))
           module.addComment0("wg0 = idxWG01 - wg1 * numWG0")
           module.add(SMulI32(dst=sgpr(tmpSgpr.idx), src0=sgpr("WorkGroup1"), src1=sgpr("NumWorkGroups0")))
           module.add(SSubU32(dst=sgpr("WorkGroup0"), src0=sgpr("WorkGroup0"), src1=sgpr(tmpSgpr.idx)))
 
         module.addSpaceLine()
-        module.add(self.undefineSgpr("SmallMagicNumberDivWg0"))
-        module.add(self.undefineSgpr("SmallMagicNumberDivWg01"))
       else:
         module.add(moduleArgs)
     else:

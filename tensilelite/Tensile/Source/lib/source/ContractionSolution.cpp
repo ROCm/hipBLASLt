@@ -390,19 +390,6 @@ namespace Tensile
         uint32_t wgmRemainder1            = 0;
         uint32_t magicNumberWgmRemainder1 = 0;
 
-        if(isGrouped)
-        {
-            uint32_t smallMagicNumberDivWg0 = 0, smallMagicNumberDivWg01 = 0;
-            if constexpr(std::is_same<KA, KernelArguments>::value)
-            {
-                smallMagicNumberDivWg0  = smallMagicNumber(problemNumGroupTiles0);
-                smallMagicNumberDivWg01 = smallMagicNumber(
-                    problemNumGroupTiles0 * problemNumGroupTiles1 * sizeMapping.globalSplitU);
-            }
-            args.template append<uint32_t>("SmallMagicNumberDivWg0", smallMagicNumberDivWg0);
-            args.template append<uint32_t>("SmallMagicNumberDivWg01", smallMagicNumberDivWg01);
-        }
-
         bool runActivation = false;
         if((problemType.activationType != ActivationType::None) && sizeMapping.activationFused
            && (sizeMapping.globalSplitU == 1))
