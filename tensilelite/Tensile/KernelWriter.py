@@ -3353,17 +3353,13 @@ class KernelWriter(metaclass=abc.ABCMeta):
     # Mostly impacts flat kernels and GSU edge since these need SGPR
     # for conditionals
     self.states.lastPostLoopSgpr = self.sgprPool.size()
-    if kernel["ProblemType"]["GroupedGemm"]:
-      self.defineSgpr("SmallMagicNumberDivWg0", 1)
-      self.defineSgpr("SmallMagicNumberDivWg01", 1)
 
     self.states.numSgprToLoad = numSgprAddressD + numSgprAddressC + numSgprAddressA + numSgprAddressB + numSgprAddressScaleDVec + numSgprAlpha + numSgprAddressMetadata + \
       (numSgprBeta if kernel["ProblemType"]["UseBeta"] else 0) + self.states.d.numSgprStrides + self.states.c.numSgprStrides + self.states.a.numSgprStrides + \
       self.states.b.numSgprStrides + self.states.m.numSgprStrides + self.states.numSgprSizesFree + self.states.numSgprSizesSum + \
       len(kernel["PackedC0IdxChars"][:-1])*2 + len(kernel["PackedC1IdxChars"][:-1])*2 + \
       1 + \
-      2 + \
-      (2 if kernel["ProblemType"]["GroupedGemm"] else 0)
+      2
     # Get kernel argument end here
     ###################################
 

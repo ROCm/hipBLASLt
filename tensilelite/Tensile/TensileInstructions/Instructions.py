@@ -1418,6 +1418,22 @@ class SSleep(Instruction):
     def __str__(self) -> str:
         return self.formatWithComment(f"{self.instStr} {self.simm16}")
 
+# S Reg
+class SGetRegB32(CommonInstruction):
+    def __init__(self, dst, src, comment="") -> None:
+        super().__init__(InstType.INST_B32, dst, [src], None, None, comment)
+        self.setInst("s_getreg_b32")
+
+class SSetRegB32(CommonInstruction):
+    def __init__(self, dst, src, comment="") -> None:
+        super().__init__(InstType.INST_B32, dst, [src], None, None, comment)
+        self.setInst("s_setreg_b32")
+
+class SSetRegIMM32B32(CommonInstruction):
+    def __init__(self, dst, src, comment="") -> None:
+        super().__init__(InstType.INST_B32, dst, [src], None, None, comment)
+        self.setInst("s_setreg_IMM32_b32")
+
 # S WaitCnt
 class _SWaitCnt(Instruction):
     def __init__(self, lgkmcnt: int=-1, vmcnt: int=-1, comment=""):
