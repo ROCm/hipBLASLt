@@ -22,7 +22,7 @@
 
 from typing import Optional
 from .Code import Module
-from .Containers import RegisterContainer
+from .Containers import HWRegContainer, RegisterContainer
 from .ExtInstructions import SMulInt64to32
 from .Instructions import *
 from .RegisterPool import RegisterPoolResource
@@ -267,6 +267,32 @@ def scalarStaticRemainder(qReg, rReg, dReg, divisor, tmpSgprRes: Optional[Regist
         module.add(SSubU32(dst=sgpr(rReg), src0=sgpr(dReg), src1=sgpr(tmpSgpr), comment=comment))
     return module
 
+def scalarUInt32RegDivide(qReg, dReg, divReg, tmpSgprRes: RegisterPoolResource, tmpVgprRes: RegisterPoolResource, TransOpWait: bool, setReg: bool = True, restoreReg: bool = True, comment=""):
+    dComment = "%s = %s / %s"    % (sgpr(qReg), sgpr(dReg), sgpr(divReg)) if (comment=="") else comment
+
+    assert tmpVgprRes.size >= 2
+    tmpVgpr0 = tmpVgprRes.idx
+    tmpVgpr1 = tmpVgprRes.idx + 1
+    assert tmpSgprRes.size >= 1
+    tmpSgpr = tmpSgprRes.idx
+
+    module = Module("scalarUInt32RegDivide")
+    if setReg:
+        module.add(SGetRegB32(dst=sgpr(tmpSgpr), src=HWRegContainer(reg="HW_REG_MODE", value=[0,4])))
+        module.add(SSetRegIMM32B32(dst=HWRegContainer(reg="HW_REG_MODE", value=[0,4]), src=1))
+    module.add(VCvtU32toF32(dst=vgpr(tmpVgpr0), src=sgpr(divReg), comment=dComment))
+    module.add(VRcpIFlagF32(dst=vgpr(tmpVgpr0), src=vgpr(tmpVgpr0), comment=dComment))
+    module.add(VCvtU32toF32(dst=vgpr(tmpVgpr1), src=sgpr(dReg), comment=dComment))
+    module.add(VMulF32(dst=vgpr(tmpVgpr0), src0=vgpr(tmpVgpr0), src1=vgpr(tmpVgpr1), comment=dComment))
+    module.add(VAddF32(dst=vgpr(tmpVgpr0), src0=vgpr(tmpVgpr0), src1=1, comment=dComment))
+    module.add(VCvtF32toU32(dst=vgpr(tmpVgpr0), src=vgpr(tmpVgpr0), comment=dComment))
+    if restoreReg:
+        module.add(SSetRegB32(dst=HWRegContainer(reg="HW_REG_MODE", value=[0,4]), src=sgpr(tmpSgpr)))
+    elif TransOpWait:
+        module.add(SNop(waitState=0, comment="trans op wait 0"))
+    module.add(VReadfirstlaneB32(dst=sgpr(qReg), src=vgpr(tmpVgpr0)))
+    return module
+
 def scalarUInt32DivideAndRemainder(qReg, dReg, divReg, rReg, tmpVgprRes: RegisterPoolResource, doRemainder=True, comment=""):
     dComment = "%s = %s / %s"    % (sgpr(qReg), sgpr(dReg), sgpr(divReg)) if (comment=="") else comment
     rComment = "%s = %s %% %s" % (sgpr(rReg), sgpr(dReg), sgpr(divReg)) if (comment=="") else comment
@@ -289,7 +315,8 @@ def scalarUInt32DivideAndRemainder(qReg, dReg, divReg, rReg, tmpVgprRes: Registe
         module.add(VMovB32(dst=vgpr(tmpVgpr1), src=0, comment=rComment))
     module.add(SMovB64(dst=EXEC(), src=-1, comment=dComment))
     module.add(VReadfirstlaneB32(dst=sgpr(qReg), src=vgpr(tmpVgpr0)))
-    module.add(VReadfirstlaneB32(dst=sgpr(rReg), src=vgpr(tmpVgpr1)))
+    if doRemainder:
+        module.add(VReadfirstlaneB32(dst=sgpr(rReg), src=vgpr(tmpVgpr1)))
     return module
 
 ########################################
