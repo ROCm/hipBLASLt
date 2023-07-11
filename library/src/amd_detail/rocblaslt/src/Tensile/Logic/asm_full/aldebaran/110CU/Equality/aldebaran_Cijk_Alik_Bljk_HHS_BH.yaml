@@ -82,10 +82,9 @@
     EdgeType: ShiftPtr
     EnableMatrixInstruction: true
     ExpandPointerSwap: 0
-    GlobalLoadVectorWidthA: 2
-    GlobalLoadVectorWidthB: 2
     GlobalReadPerMfma: 1
-    GlobalReadVectorWidth: 2
+    GlobalReadVectorWidthA: 2
+    GlobalReadVectorWidthB: 2
     GlobalSplitU: 1
     GlobalSplitUAlgorithm: SingleBuffer
     GlobalWriteVectorWidth: 2
@@ -263,6 +262,8 @@
     Valid: true
     VectorStore: -1
     VectorWidth: 2
+    VectorWidthA: 2
+    VectorWidthB: 1
     WaveSeparateGlobalReadA: 1
     WaveSeparateGlobalReadB: 1
     WavefrontSize: 64
@@ -286,6 +287,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    ClusterLocalRead: 1
     CodeObjectVersion: V3
     CustomKernelName: ''
     DepthU: 16
@@ -298,10 +300,9 @@
     EdgeType: ShiftPtr
     EnableMatrixInstruction: true
     ExpandPointerSwap: 0
-    GlobalLoadVectorWidthA: 2
-    GlobalLoadVectorWidthB: 2
     GlobalReadPerMfma: 1
-    GlobalReadVectorWidth: 2
+    GlobalReadVectorWidthA: 2
+    GlobalReadVectorWidthB: 2
     GlobalSplitU: 1
     GlobalSplitUAlgorithm: SingleBuffer
     GlobalWriteVectorWidth: 4
@@ -388,7 +389,7 @@
     PackedC1IdxChars: [J]
     PackedC1IndicesX: [1]
     PrefetchGlobalRead: 2
-    PrefetchLocalRead: 3
+    PrefetchLocalRead: 1
     ProblemType:
       Activation: false
       ActivationComputeDataType: 4
@@ -479,6 +480,8 @@
     Valid: true
     VectorStore: -1
     VectorWidth: 4
+    VectorWidthA: 4
+    VectorWidthB: 1
     WaveSeparateGlobalReadA: 1
     WaveSeparateGlobalReadB: 1
     WavefrontSize: 64
@@ -514,10 +517,9 @@
     EdgeType: ShiftPtr
     EnableMatrixInstruction: true
     ExpandPointerSwap: 0
-    GlobalLoadVectorWidthA: 2
-    GlobalLoadVectorWidthB: 2
     GlobalReadPerMfma: 1
-    GlobalReadVectorWidth: 2
+    GlobalReadVectorWidthA: 2
+    GlobalReadVectorWidthB: 2
     GlobalSplitU: 1
     GlobalSplitUAlgorithm: SingleBuffer
     GlobalWriteVectorWidth: 1
@@ -695,6 +697,8 @@
     Valid: true
     VectorStore: -1
     VectorWidth: 1
+    VectorWidthA: 1
+    VectorWidthB: 1
     WaveSeparateGlobalReadA: 1
     WaveSeparateGlobalReadB: 0
     WavefrontSize: 64
@@ -718,6 +722,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    ClusterLocalRead: 1
     CodeObjectVersion: V3
     CustomKernelName: ''
     DepthU: 16
@@ -730,10 +735,9 @@
     EdgeType: ShiftPtr
     EnableMatrixInstruction: true
     ExpandPointerSwap: 0
-    GlobalLoadVectorWidthA: 2
-    GlobalLoadVectorWidthB: 2
     GlobalReadPerMfma: 1
-    GlobalReadVectorWidth: 2
+    GlobalReadVectorWidthA: 2
+    GlobalReadVectorWidthB: 2
     GlobalSplitU: 1
     GlobalSplitUAlgorithm: SingleBuffer
     GlobalWriteVectorWidth: 1
@@ -820,7 +824,7 @@
     PackedC1IdxChars: [J]
     PackedC1IndicesX: [1]
     PrefetchGlobalRead: 2
-    PrefetchLocalRead: 3
+    PrefetchLocalRead: 1
     ProblemType:
       Activation: false
       ActivationComputeDataType: 4
@@ -911,6 +915,8 @@
     Valid: true
     VectorStore: -1
     VectorWidth: 1
+    VectorWidthA: 1
+    VectorWidthB: 1
     WaveSeparateGlobalReadA: 0
     WaveSeparateGlobalReadB: 1
     WavefrontSize: 64
@@ -934,6 +940,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    ClusterLocalRead: 1
     CodeObjectVersion: V3
     CustomKernelName: ''
     DepthU: 32
@@ -946,10 +953,9 @@
     EdgeType: ShiftPtr
     EnableMatrixInstruction: true
     ExpandPointerSwap: 0
-    GlobalLoadVectorWidthA: 4
-    GlobalLoadVectorWidthB: 4
     GlobalReadPerMfma: 1
-    GlobalReadVectorWidth: 4
+    GlobalReadVectorWidthA: 4
+    GlobalReadVectorWidthB: 4
     GlobalSplitU: 1
     GlobalSplitUAlgorithm: SingleBuffer
     GlobalWriteVectorWidth: 1
@@ -1036,7 +1042,7 @@
     PackedC1IdxChars: [J]
     PackedC1IndicesX: [1]
     PrefetchGlobalRead: 2
-    PrefetchLocalRead: 3
+    PrefetchLocalRead: 1
     ProblemType:
       Activation: false
       ActivationComputeDataType: 4
@@ -1127,6 +1133,8 @@
     Valid: true
     VectorStore: -1
     VectorWidth: 1
+    VectorWidthA: 1
+    VectorWidthB: 1
     WaveSeparateGlobalReadA: 1
     WaveSeparateGlobalReadB: 0
     WavefrontSize: 64

@@ -94,10 +94,9 @@
     EnableF32XdlMathOp: true
     EnableMatrixInstruction: true
     ExpandPointerSwap: true
-    GlobalLoadVectorWidthA: 4
-    GlobalLoadVectorWidthB: 4
     GlobalReadPerMfma: 1
-    GlobalReadVectorWidth: 4
+    GlobalReadVectorWidthA: 4
+    GlobalReadVectorWidthB: 4
     GlobalSplitU: 1
     GlobalSplitUAlgorithm: SingleBuffer
     GlobalWriteVectorWidth: 1
@@ -297,6 +296,8 @@
     Valid: true
     VectorStore: -1
     VectorWidth: 1
+    VectorWidthA: 1
+    VectorWidthB: 1
     WaveSeparateGlobalReadA: 0
     WaveSeparateGlobalReadB: 0
     WaveSeparateGlobalReadMetadata: 0
@@ -342,10 +343,9 @@
     EnableF32XdlMathOp: true
     EnableMatrixInstruction: true
     ExpandPointerSwap: true
-    GlobalLoadVectorWidthA: 4
-    GlobalLoadVectorWidthB: 4
     GlobalReadPerMfma: 1
-    GlobalReadVectorWidth: 4
+    GlobalReadVectorWidthA: 4
+    GlobalReadVectorWidthB: 4
     GlobalSplitU: 1
     GlobalSplitUAlgorithm: SingleBuffer
     GlobalWriteVectorWidth: 1
@@ -545,6 +545,8 @@
     Valid: true
     VectorStore: -1
     VectorWidth: 1
+    VectorWidthA: 1
+    VectorWidthB: 1
     WaveSeparateGlobalReadA: 0
     WaveSeparateGlobalReadB: 0
     WaveSeparateGlobalReadMetadata: 0
@@ -590,10 +592,9 @@
     EnableF32XdlMathOp: true
     EnableMatrixInstruction: true
     ExpandPointerSwap: true
-    GlobalLoadVectorWidthA: 4
-    GlobalLoadVectorWidthB: 4
     GlobalReadPerMfma: 1
-    GlobalReadVectorWidth: 4
+    GlobalReadVectorWidthA: 4
+    GlobalReadVectorWidthB: 4
     GlobalSplitU: 1
     GlobalSplitUAlgorithm: SingleBuffer
     GlobalWriteVectorWidth: 1
@@ -793,6 +794,8 @@
     Valid: true
     VectorStore: -1
     VectorWidth: 1
+    VectorWidthA: 1
+    VectorWidthB: 1
     WaveSeparateGlobalReadA: 0
     WaveSeparateGlobalReadB: 0
     WaveSeparateGlobalReadMetadata: 0
@@ -823,6 +826,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    ClusterLocalRead: 1
     CodeObjectVersion: V3
     CustomKernelName: ''
     DepthU: 32
@@ -838,10 +842,9 @@
     EnableF32XdlMathOp: true
     EnableMatrixInstruction: true
     ExpandPointerSwap: true
-    GlobalLoadVectorWidthA: 4
-    GlobalLoadVectorWidthB: 4
     GlobalReadPerMfma: 1
-    GlobalReadVectorWidth: 4
+    GlobalReadVectorWidthA: 4
+    GlobalReadVectorWidthB: 4
     GlobalSplitU: 1
     GlobalSplitUAlgorithm: SingleBuffer
     GlobalWriteVectorWidth: 1
@@ -939,7 +942,7 @@
     PackedC1IdxChars: [J]
     PackedC1IndicesX: [1]
     PrefetchGlobalRead: true
-    PrefetchLocalRead: 3
+    PrefetchLocalRead: 1
     ProblemType:
       Activation: true
       ActivationComputeDataType: 0
@@ -1041,6 +1044,8 @@
     Valid: true
     VectorStore: -1
     VectorWidth: 1
+    VectorWidthA: 1
+    VectorWidthB: 1
     WaveSeparateGlobalReadA: 0
     WaveSeparateGlobalReadB: 0
     WaveSeparateGlobalReadMetadata: 0

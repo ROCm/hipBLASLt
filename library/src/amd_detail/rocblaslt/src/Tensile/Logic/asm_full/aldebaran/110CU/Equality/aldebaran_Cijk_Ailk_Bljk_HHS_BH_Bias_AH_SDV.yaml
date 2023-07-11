@@ -56,9 +56,9 @@
   TransposeB: 0
   UseBeta: true
   UseBias: true
-  UseScaleDVec: true
   UseInitialStridesAB: false
   UseInitialStridesCD: false
+  UseScaleDVec: true
 - - 1LDSBuffer: 0
     ActivationFuncCall: 0
     ActivationFused: true
@@ -69,6 +69,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    ClusterLocalRead: 1
     CodeObjectVersion: V3
     CustomKernelName: ''
     DepthU: 32
@@ -81,10 +82,9 @@
     EdgeType: ShiftPtr
     EnableMatrixInstruction: true
     ExpandPointerSwap: 0
-    GlobalLoadVectorWidthA: 8
-    GlobalLoadVectorWidthB: 8
     GlobalReadPerMfma: 1
-    GlobalReadVectorWidth: 8
+    GlobalReadVectorWidthA: 8
+    GlobalReadVectorWidthB: 8
     GlobalSplitU: 1
     GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
@@ -171,7 +171,7 @@
     PackedC1IdxChars: [J]
     PackedC1IndicesX: [1]
     PrefetchGlobalRead: 2
-    PrefetchLocalRead: 5
+    PrefetchLocalRead: 1
     ProblemType:
       Activation: true
       ActivationComputeDataType: 0
@@ -226,9 +226,9 @@
       TransposeB: 0
       UseBeta: true
       UseBias: true
-      UseScaleDVec: true
       UseInitialStridesAB: false
       UseInitialStridesCD: false
+      UseScaleDVec: true
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
@@ -261,6 +261,8 @@
     Valid: true
     VectorStore: -1
     VectorWidth: 1
+    VectorWidthA: 1
+    VectorWidthB: 1
     WaveSeparateGlobalReadA: 0
     WaveSeparateGlobalReadB: 1
     WavefrontSize: 64
@@ -284,6 +286,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    ClusterLocalRead: 1
     CodeObjectVersion: V3
     CustomKernelName: ''
     DepthU: 64
@@ -296,10 +299,9 @@
     EdgeType: ShiftPtr
     EnableMatrixInstruction: true
     ExpandPointerSwap: 0
-    GlobalLoadVectorWidthA: 4
-    GlobalLoadVectorWidthB: 4
     GlobalReadPerMfma: 1
-    GlobalReadVectorWidth: 4
+    GlobalReadVectorWidthA: 4
+    GlobalReadVectorWidthB: 4
     GlobalSplitU: 1
     GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
@@ -319,7 +321,7 @@
     LVPA: 2
     LVPB: 1
     LdsBlockSizePerPad: 128
-    LdsBlockSizePerPadA: 0
+    LdsBlockSizePerPadA: 2048
     LdsBlockSizePerPadB: 128
     LdsInitCVgprs: false
     LdsNumElements: 25856
@@ -329,7 +331,7 @@
     LdsOffsetA_Blk: 16384
     LdsOffsetB: 8192
     LdsOffsetB_Blk: 24576
-    LdsPadA: 0
+    LdsPadA: 16
     LdsPadB: 16
     LocalReadVectorWidth: 8
     LocalSplitU: 1
@@ -386,7 +388,7 @@
     PackedC1IdxChars: [J]
     PackedC1IndicesX: [1]
     PrefetchGlobalRead: 2
-    PrefetchLocalRead: 5
+    PrefetchLocalRead: 1
     ProblemType:
       Activation: true
       ActivationComputeDataType: 0
@@ -441,9 +443,9 @@
       TransposeB: 0
       UseBeta: true
       UseBias: true
-      UseScaleDVec: true
       UseInitialStridesAB: false
       UseInitialStridesCD: false
+      UseScaleDVec: true
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
@@ -476,6 +478,8 @@
     Valid: true
     VectorStore: -1
     VectorWidth: 1
+    VectorWidthA: 1
+    VectorWidthB: 1
     WaveSeparateGlobalReadA: 0
     WaveSeparateGlobalReadB: 1
     WavefrontSize: 64
@@ -499,6 +503,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    ClusterLocalRead: 1
     CodeObjectVersion: V3
     CustomKernelName: ''
     DepthU: 64
@@ -511,10 +516,9 @@
     EdgeType: ShiftPtr
     EnableMatrixInstruction: true
     ExpandPointerSwap: 0
-    GlobalLoadVectorWidthA: 8
-    GlobalLoadVectorWidthB: 8
     GlobalReadPerMfma: 1
-    GlobalReadVectorWidth: 8
+    GlobalReadVectorWidthA: 8
+    GlobalReadVectorWidthB: 8
     GlobalSplitU: 1
     GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
@@ -534,7 +538,7 @@
     LVPA: 8
     LVPB: 1
     LdsBlockSizePerPad: 128
-    LdsBlockSizePerPadA: 0
+    LdsBlockSizePerPadA: 512
     LdsBlockSizePerPadB: 128
     LdsInitCVgprs: false
     LdsNumElements: 12800
@@ -544,7 +548,7 @@
     LdsOffsetA_Blk: 8192
     LdsOffsetB: 2048
     LdsOffsetB_Blk: 10240
-    LdsPadA: 0
+    LdsPadA: 16
     LdsPadB: 16
     LocalReadVectorWidth: 8
     LocalSplitU: 1
@@ -601,7 +605,7 @@
     PackedC1IdxChars: [J]
     PackedC1IndicesX: [1]
     PrefetchGlobalRead: 2
-    PrefetchLocalRead: 5
+    PrefetchLocalRead: 1
     ProblemType:
       Activation: true
       ActivationComputeDataType: 0
@@ -656,9 +660,9 @@
       TransposeB: 0
       UseBeta: true
       UseBias: true
-      UseScaleDVec: true
       UseInitialStridesAB: false
       UseInitialStridesCD: false
+      UseScaleDVec: true
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
@@ -691,6 +695,8 @@
     Valid: true
     VectorStore: -1
     VectorWidth: 1
+    VectorWidthA: 1
+    VectorWidthB: 1
     WaveSeparateGlobalReadA: 0
     WaveSeparateGlobalReadB: 1
     WavefrontSize: 64
@@ -714,6 +720,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    ClusterLocalRead: 1
     CodeObjectVersion: V3
     CustomKernelName: ''
     DepthU: 64
@@ -726,10 +733,9 @@
     EdgeType: ShiftPtr
     EnableMatrixInstruction: true
     ExpandPointerSwap: 0
-    GlobalLoadVectorWidthA: 8
-    GlobalLoadVectorWidthB: 8
     GlobalReadPerMfma: 1
-    GlobalReadVectorWidth: 8
+    GlobalReadVectorWidthA: 8
+    GlobalReadVectorWidthB: 8
     GlobalSplitU: 1
     GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
@@ -749,7 +755,7 @@
     LVPA: 8
     LVPB: 1
     LdsBlockSizePerPad: 128
-    LdsBlockSizePerPadA: 0
+    LdsBlockSizePerPadA: 512
     LdsBlockSizePerPadB: 128
     LdsInitCVgprs: false
     LdsNumElements: 12800
@@ -759,7 +765,7 @@
     LdsOffsetA_Blk: 8192
     LdsOffsetB: 2048
     LdsOffsetB_Blk: 10240
-    LdsPadA: 0
+    LdsPadA: 16
     LdsPadB: 16
     LocalReadVectorWidth: 8
     LocalSplitU: 1
@@ -816,7 +822,7 @@
     PackedC1IdxChars: [J]
     PackedC1IndicesX: [1]
     PrefetchGlobalRead: 2
-    PrefetchLocalRead: 5
+    PrefetchLocalRead: 1
     ProblemType:
       Activation: true
       ActivationComputeDataType: 0
@@ -871,9 +877,9 @@
       TransposeB: 0
       UseBeta: true
       UseBias: true
-      UseScaleDVec: true
       UseInitialStridesAB: false
       UseInitialStridesCD: false
+      UseScaleDVec: true
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
@@ -906,6 +912,8 @@
     Valid: true
     VectorStore: -1
     VectorWidth: 1
+    VectorWidthA: 1
+    VectorWidthB: 1
     WaveSeparateGlobalReadA: 0
     WaveSeparateGlobalReadB: 1
     WavefrontSize: 64
@@ -929,6 +937,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    ClusterLocalRead: 1
     CodeObjectVersion: V3
     CustomKernelName: ''
     DepthU: 64
@@ -941,10 +950,9 @@
     EdgeType: ShiftPtr
     EnableMatrixInstruction: true
     ExpandPointerSwap: 0
-    GlobalLoadVectorWidthA: 8
-    GlobalLoadVectorWidthB: 8
     GlobalReadPerMfma: 1
-    GlobalReadVectorWidth: 8
+    GlobalReadVectorWidthA: 8
+    GlobalReadVectorWidthB: 8
     GlobalSplitU: 7
     GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
@@ -964,7 +972,7 @@
     LVPA: 8
     LVPB: 1
     LdsBlockSizePerPad: 128
-    LdsBlockSizePerPadA: 0
+    LdsBlockSizePerPadA: 512
     LdsBlockSizePerPadB: 128
     LdsInitCVgprs: false
     LdsNumElements: 12800
@@ -974,7 +982,7 @@
     LdsOffsetA_Blk: 8192
     LdsOffsetB: 2048
     LdsOffsetB_Blk: 10240
-    LdsPadA: 0
+    LdsPadA: 16
     LdsPadB: 16
     LocalReadVectorWidth: 8
     LocalSplitU: 1
@@ -1031,7 +1039,7 @@
     PackedC1IdxChars: [J]
     PackedC1IndicesX: [1]
     PrefetchGlobalRead: 2
-    PrefetchLocalRead: 5
+    PrefetchLocalRead: 1
     ProblemType:
       Activation: true
       ActivationComputeDataType: 0
@@ -1086,9 +1094,9 @@
       TransposeB: 0
       UseBeta: true
       UseBias: true
-      UseScaleDVec: true
       UseInitialStridesAB: false
       UseInitialStridesCD: false
+      UseScaleDVec: true
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
@@ -1121,6 +1129,8 @@
     Valid: true
     VectorStore: -1
     VectorWidth: 1
+    VectorWidthA: 1
+    VectorWidthB: 1
     WaveSeparateGlobalReadA: 0
     WaveSeparateGlobalReadB: 1
     WavefrontSize: 64
@@ -1144,6 +1154,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    ClusterLocalRead: 1
     CodeObjectVersion: V3
     CustomKernelName: ''
     DepthU: 64
@@ -1156,10 +1167,9 @@
     EdgeType: ShiftPtr
     EnableMatrixInstruction: true
     ExpandPointerSwap: 0
-    GlobalLoadVectorWidthA: 8
-    GlobalLoadVectorWidthB: 8
     GlobalReadPerMfma: 1
-    GlobalReadVectorWidth: 8
+    GlobalReadVectorWidthA: 8
+    GlobalReadVectorWidthB: 8
     GlobalSplitU: 7
     GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
@@ -1179,7 +1189,7 @@
     LVPA: 8
     LVPB: 1
     LdsBlockSizePerPad: 128
-    LdsBlockSizePerPadA: 0
+    LdsBlockSizePerPadA: 512
     LdsBlockSizePerPadB: 128
     LdsInitCVgprs: false
     LdsNumElements: 12800
@@ -1189,7 +1199,7 @@
     LdsOffsetA_Blk: 8192
     LdsOffsetB: 2048
     LdsOffsetB_Blk: 10240
-    LdsPadA: 0
+    LdsPadA: 16
     LdsPadB: 16
     LocalReadVectorWidth: 8
     LocalSplitU: 1
@@ -1246,7 +1256,7 @@
     PackedC1IdxChars: [J]
     PackedC1IndicesX: [1]
     PrefetchGlobalRead: 2
-    PrefetchLocalRead: 5
+    PrefetchLocalRead: 1
     ProblemType:
       Activation: true
       ActivationComputeDataType: 0
@@ -1301,9 +1311,9 @@
       TransposeB: 0
       UseBeta: true
       UseBias: true
-      UseScaleDVec: true
       UseInitialStridesAB: false
       UseInitialStridesCD: false
+      UseScaleDVec: true
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
@@ -1336,6 +1346,8 @@
     Valid: true
     VectorStore: -1
     VectorWidth: 1
+    VectorWidthA: 1
+    VectorWidthB: 1
     WaveSeparateGlobalReadA: 0
     WaveSeparateGlobalReadB: 1
     WavefrontSize: 64
@@ -1359,6 +1371,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    ClusterLocalRead: 1
     CodeObjectVersion: V3
     CustomKernelName: ''
     DepthU: 64
@@ -1371,10 +1384,9 @@
     EdgeType: ShiftPtr
     EnableMatrixInstruction: true
     ExpandPointerSwap: 0
-    GlobalLoadVectorWidthA: 8
-    GlobalLoadVectorWidthB: 8
     GlobalReadPerMfma: 1
-    GlobalReadVectorWidth: 8
+    GlobalReadVectorWidthA: 8
+    GlobalReadVectorWidthB: 8
     GlobalSplitU: 1
     GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
@@ -1461,7 +1473,7 @@
     PackedC1IdxChars: [J]
     PackedC1IndicesX: [1]
     PrefetchGlobalRead: 2
-    PrefetchLocalRead: 9
+    PrefetchLocalRead: 1
     ProblemType:
       Activation: true
       ActivationComputeDataType: 0
@@ -1516,9 +1528,9 @@
       TransposeB: 0
       UseBeta: true
       UseBias: true
-      UseScaleDVec: true
       UseInitialStridesAB: false
       UseInitialStridesCD: false
+      UseScaleDVec: true
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
@@ -1551,6 +1563,8 @@
     Valid: true
     VectorStore: -1
     VectorWidth: 1
+    VectorWidthA: 1
+    VectorWidthB: 1
     WaveSeparateGlobalReadA: 0
     WaveSeparateGlobalReadB: 1
     WavefrontSize: 64
@@ -1574,6 +1588,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    ClusterLocalRead: 1
     CodeObjectVersion: V3
     CustomKernelName: ''
     DepthU: 32
@@ -1586,10 +1601,9 @@
     EdgeType: ShiftPtr
     EnableMatrixInstruction: true
     ExpandPointerSwap: 0
-    GlobalLoadVectorWidthA: 8
-    GlobalLoadVectorWidthB: 8
     GlobalReadPerMfma: 1
-    GlobalReadVectorWidth: 8
+    GlobalReadVectorWidthA: 8
+    GlobalReadVectorWidthB: 8
     GlobalSplitU: 1
     GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 2
@@ -1676,7 +1690,7 @@
     PackedC1IdxChars: [J]
     PackedC1IndicesX: [1]
     PrefetchGlobalRead: 2
-    PrefetchLocalRead: 5
+    PrefetchLocalRead: 1
     ProblemType:
       Activation: true
       ActivationComputeDataType: 0
@@ -1731,9 +1745,9 @@
       TransposeB: 0
       UseBeta: true
       UseBias: true
-      UseScaleDVec: true
       UseInitialStridesAB: false
       UseInitialStridesCD: false
+      UseScaleDVec: true
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
@@ -1766,6 +1780,8 @@
     Valid: true
     VectorStore: -1
     VectorWidth: 2
+    VectorWidthA: 2
+    VectorWidthB: 1
     WaveSeparateGlobalReadA: 0
     WaveSeparateGlobalReadB: 1
     WavefrontSize: 64
@@ -1789,6 +1805,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    ClusterLocalRead: 1
     CodeObjectVersion: V3
     CustomKernelName: ''
     DepthU: 32
@@ -1801,10 +1818,9 @@
     EdgeType: ShiftPtr
     EnableMatrixInstruction: true
     ExpandPointerSwap: 0
-    GlobalLoadVectorWidthA: 8
-    GlobalLoadVectorWidthB: 8
     GlobalReadPerMfma: 1
-    GlobalReadVectorWidth: 8
+    GlobalReadVectorWidthA: 8
+    GlobalReadVectorWidthB: 8
     GlobalSplitU: 1
     GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 2
@@ -1891,7 +1907,7 @@
     PackedC1IdxChars: [J]
     PackedC1IndicesX: [1]
     PrefetchGlobalRead: 2
-    PrefetchLocalRead: 5
+    PrefetchLocalRead: 1
     ProblemType:
       Activation: true
       ActivationComputeDataType: 0
@@ -1946,9 +1962,9 @@
       TransposeB: 0
       UseBeta: true
       UseBias: true
-      UseScaleDVec: true
       UseInitialStridesAB: false
       UseInitialStridesCD: false
+      UseScaleDVec: true
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
@@ -1981,6 +1997,8 @@
     Valid: true
     VectorStore: -1
     VectorWidth: 2
+    VectorWidthA: 2
+    VectorWidthB: 1
     WaveSeparateGlobalReadA: 0
     WaveSeparateGlobalReadB: 1
     WavefrontSize: 64
@@ -2004,6 +2022,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    ClusterLocalRead: 1
     CodeObjectVersion: V3
     CustomKernelName: ''
     DepthU: 32
@@ -2016,10 +2035,9 @@
     EdgeType: ShiftPtr
     EnableMatrixInstruction: true
     ExpandPointerSwap: 0
-    GlobalLoadVectorWidthA: 8
-    GlobalLoadVectorWidthB: 8
     GlobalReadPerMfma: 1
-    GlobalReadVectorWidth: 8
+    GlobalReadVectorWidthA: 8
+    GlobalReadVectorWidthB: 8
     GlobalSplitU: 1
     GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 2
@@ -2106,7 +2124,7 @@
     PackedC1IdxChars: [J]
     PackedC1IndicesX: [1]
     PrefetchGlobalRead: 2
-    PrefetchLocalRead: 5
+    PrefetchLocalRead: 1
     ProblemType:
       Activation: true
       ActivationComputeDataType: 0
@@ -2161,9 +2179,9 @@
       TransposeB: 0
       UseBeta: true
       UseBias: true
-      UseScaleDVec: true
       UseInitialStridesAB: false
       UseInitialStridesCD: false
+      UseScaleDVec: true
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
@@ -2196,6 +2214,8 @@
     Valid: true
     VectorStore: -1
     VectorWidth: 2
+    VectorWidthA: 2
+    VectorWidthB: 1
     WaveSeparateGlobalReadA: 0
     WaveSeparateGlobalReadB: 1
     WavefrontSize: 64
@@ -2219,6 +2239,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    ClusterLocalRead: 1
     CodeObjectVersion: V3
     CustomKernelName: ''
     DepthU: 32
@@ -2231,10 +2252,9 @@
     EdgeType: ShiftPtr
     EnableMatrixInstruction: true
     ExpandPointerSwap: 0
-    GlobalLoadVectorWidthA: 8
-    GlobalLoadVectorWidthB: 8
     GlobalReadPerMfma: 1
-    GlobalReadVectorWidth: 8
+    GlobalReadVectorWidthA: 8
+    GlobalReadVectorWidthB: 8
     GlobalSplitU: 1
     GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 2
@@ -2321,7 +2341,7 @@
     PackedC1IdxChars: [J]
     PackedC1IndicesX: [1]
     PrefetchGlobalRead: 2
-    PrefetchLocalRead: 5
+    PrefetchLocalRead: 1
     ProblemType:
       Activation: true
       ActivationComputeDataType: 0
@@ -2376,9 +2396,9 @@
       TransposeB: 0
       UseBeta: true
       UseBias: true
-      UseScaleDVec: true
       UseInitialStridesAB: false
       UseInitialStridesCD: false
+      UseScaleDVec: true
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
@@ -2411,6 +2431,8 @@
     Valid: true
     VectorStore: -1
     VectorWidth: 2
+    VectorWidthA: 2
+    VectorWidthB: 1
     WaveSeparateGlobalReadA: 0
     WaveSeparateGlobalReadB: 1
     WavefrontSize: 64
@@ -2434,6 +2456,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    ClusterLocalRead: 1
     CodeObjectVersion: V3
     CustomKernelName: ''
     DepthU: 64
@@ -2446,10 +2469,9 @@
     EdgeType: ShiftPtr
     EnableMatrixInstruction: true
     ExpandPointerSwap: 0
-    GlobalLoadVectorWidthA: 4
-    GlobalLoadVectorWidthB: 4
     GlobalReadPerMfma: 1
-    GlobalReadVectorWidth: 4
+    GlobalReadVectorWidthA: 4
+    GlobalReadVectorWidthB: 4
     GlobalSplitU: 1
     GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 2
@@ -2469,7 +2491,7 @@
     LVPA: 2
     LVPB: 1
     LdsBlockSizePerPad: 128
-    LdsBlockSizePerPadA: 0
+    LdsBlockSizePerPadA: 2048
     LdsBlockSizePerPadB: 128
     LdsInitCVgprs: false
     LdsNumElements: 25856
@@ -2479,7 +2501,7 @@
     LdsOffsetA_Blk: 16384
     LdsOffsetB: 8192
     LdsOffsetB_Blk: 24576
-    LdsPadA: 0
+    LdsPadA: 16
     LdsPadB: 16
     LocalReadVectorWidth: 8
     LocalSplitU: 1
@@ -2536,7 +2558,7 @@
     PackedC1IdxChars: [J]
     PackedC1IndicesX: [1]
     PrefetchGlobalRead: 2
-    PrefetchLocalRead: 5
+    PrefetchLocalRead: 1
     ProblemType:
       Activation: true
       ActivationComputeDataType: 0
@@ -2591,9 +2613,9 @@
       TransposeB: 0
       UseBeta: true
       UseBias: true
-      UseScaleDVec: true
       UseInitialStridesAB: false
       UseInitialStridesCD: false
+      UseScaleDVec: true
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
@@ -2626,6 +2648,8 @@
     Valid: true
     VectorStore: -1
     VectorWidth: 2
+    VectorWidthA: 2
+    VectorWidthB: 1
     WaveSeparateGlobalReadA: 0
     WaveSeparateGlobalReadB: 1
     WavefrontSize: 64
@@ -2649,6 +2673,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    ClusterLocalRead: 1
     CodeObjectVersion: V3
     CustomKernelName: ''
     DepthU: 64
@@ -2661,10 +2686,9 @@
     EdgeType: ShiftPtr
     EnableMatrixInstruction: true
     ExpandPointerSwap: 0
-    GlobalLoadVectorWidthA: 4
-    GlobalLoadVectorWidthB: 4
     GlobalReadPerMfma: 1
-    GlobalReadVectorWidth: 4
+    GlobalReadVectorWidthA: 4
+    GlobalReadVectorWidthB: 4
     GlobalSplitU: 7
     GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
@@ -2684,7 +2708,7 @@
     LVPA: 2
     LVPB: 1
     LdsBlockSizePerPad: 128
-    LdsBlockSizePerPadA: 0
+    LdsBlockSizePerPadA: 2048
     LdsBlockSizePerPadB: 128
     LdsInitCVgprs: false
     LdsNumElements: 25856
@@ -2694,7 +2718,7 @@
     LdsOffsetA_Blk: 16384
     LdsOffsetB: 8192
     LdsOffsetB_Blk: 24576
-    LdsPadA: 0
+    LdsPadA: 16
     LdsPadB: 16
     LocalReadVectorWidth: 8
     LocalSplitU: 1
@@ -2751,7 +2775,7 @@
     PackedC1IdxChars: [J]
     PackedC1IndicesX: [1]
     PrefetchGlobalRead: 2
-    PrefetchLocalRead: 5
+    PrefetchLocalRead: 1
     ProblemType:
       Activation: true
       ActivationComputeDataType: 0
@@ -2806,9 +2830,9 @@
       TransposeB: 0
       UseBeta: true
       UseBias: true
-      UseScaleDVec: true
       UseInitialStridesAB: false
       UseInitialStridesCD: false
+      UseScaleDVec: true
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
@@ -2841,6 +2865,8 @@
     Valid: true
     VectorStore: -1
     VectorWidth: 1
+    VectorWidthA: 2
+    VectorWidthB: 1
     WaveSeparateGlobalReadA: 0
     WaveSeparateGlobalReadB: 1
     WavefrontSize: 64
@@ -2864,6 +2890,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    ClusterLocalRead: 1
     CodeObjectVersion: V3
     CustomKernelName: ''
     DepthU: 64
@@ -2876,10 +2903,9 @@
     EdgeType: ShiftPtr
     EnableMatrixInstruction: true
     ExpandPointerSwap: 0
-    GlobalLoadVectorWidthA: 4
-    GlobalLoadVectorWidthB: 4
     GlobalReadPerMfma: 1
-    GlobalReadVectorWidth: 4
+    GlobalReadVectorWidthA: 4
+    GlobalReadVectorWidthB: 4
     GlobalSplitU: 1
     GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
@@ -2899,7 +2925,7 @@
     LVPA: 2
     LVPB: 1
     LdsBlockSizePerPad: 128
-    LdsBlockSizePerPadA: 0
+    LdsBlockSizePerPadA: 2048
     LdsBlockSizePerPadB: 128
     LdsInitCVgprs: false
     LdsNumElements: 25856
@@ -2909,7 +2935,7 @@
     LdsOffsetA_Blk: 16384
     LdsOffsetB: 8192
     LdsOffsetB_Blk: 24576
-    LdsPadA: 0
+    LdsPadA: 16
     LdsPadB: 16
     LocalReadVectorWidth: 8
     LocalSplitU: 1
@@ -2966,7 +2992,7 @@
     PackedC1IdxChars: [J]
     PackedC1IndicesX: [1]
     PrefetchGlobalRead: 2
-    PrefetchLocalRead: 5
+    PrefetchLocalRead: 1
     ProblemType:
       Activation: true
       ActivationComputeDataType: 0
@@ -3021,9 +3047,9 @@
       TransposeB: 0
       UseBeta: true
       UseBias: true
-      UseScaleDVec: true
       UseInitialStridesAB: false
       UseInitialStridesCD: false
+      UseScaleDVec: true
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
@@ -3056,6 +3082,8 @@
     Valid: true
     VectorStore: -1
     VectorWidth: 1
+    VectorWidthA: 2
+    VectorWidthB: 1
     WaveSeparateGlobalReadA: 0
     WaveSeparateGlobalReadB: 1
     WavefrontSize: 64
@@ -3079,6 +3107,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    ClusterLocalRead: 1
     CodeObjectVersion: V3
     CustomKernelName: ''
     DepthU: 64
@@ -3091,10 +3120,9 @@
     EdgeType: ShiftPtr
     EnableMatrixInstruction: true
     ExpandPointerSwap: 0
-    GlobalLoadVectorWidthA: 4
-    GlobalLoadVectorWidthB: 4
     GlobalReadPerMfma: 1
-    GlobalReadVectorWidth: 4
+    GlobalReadVectorWidthA: 4
+    GlobalReadVectorWidthB: 4
     GlobalSplitU: 8
     GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 2
@@ -3114,7 +3142,7 @@
     LVPA: 2
     LVPB: 1
     LdsBlockSizePerPad: 128
-    LdsBlockSizePerPadA: 0
+    LdsBlockSizePerPadA: 2048
     LdsBlockSizePerPadB: 128
     LdsInitCVgprs: false
     LdsNumElements: 25856
@@ -3124,7 +3152,7 @@
     LdsOffsetA_Blk: 16384
     LdsOffsetB: 8192
     LdsOffsetB_Blk: 24576
-    LdsPadA: 0
+    LdsPadA: 16
     LdsPadB: 16
     LocalReadVectorWidth: 8
     LocalSplitU: 1
@@ -3181,7 +3209,7 @@
     PackedC1IdxChars: [J]
     PackedC1IndicesX: [1]
     PrefetchGlobalRead: 2
-    PrefetchLocalRead: 5
+    PrefetchLocalRead: 1
     ProblemType:
       Activation: true
       ActivationComputeDataType: 0
@@ -3236,9 +3264,9 @@
       TransposeB: 0
       UseBeta: true
       UseBias: true
-      UseScaleDVec: true
       UseInitialStridesAB: false
       UseInitialStridesCD: false
+      UseScaleDVec: true
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
@@ -3271,6 +3299,8 @@
     Valid: true
     VectorStore: -1
     VectorWidth: 2
+    VectorWidthA: 2
+    VectorWidthB: 1
     WaveSeparateGlobalReadA: 0
     WaveSeparateGlobalReadB: 1
     WavefrontSize: 64
