@@ -194,8 +194,8 @@ class StateValues:
   totalAgprs: int                        = 0
   totalVgprs: int                        = 0
   totalSgprs: int                        = 0
-  lastValuAB: int                        = -1
-  lastVgprForReads: int                  = -1
+  lastValuAB: int                        = 0
+  lastVgprForReads: int                  = 0
   startVgprAddressDbg: int               = -1
   startVgprAlphaTmp: int                 = -1
   startVgprSerial: int                   = -1
@@ -3080,7 +3080,8 @@ class KernelWriter(metaclass=abc.ABCMeta):
     # Registers allocated above this point can be used as temps during setup
     # Registers above here are reserved in initC, near the end of the setup
     # code
-    self.states.lastValuAB = vgprIdx
+    if kernel["PrefetchGlobalRead"]:
+      self.states.lastValuAB = vgprIdx
     #----------------------------------
 
     if not kernel["LocalWriteUseSgprA"]:
@@ -3159,7 +3160,8 @@ class KernelWriter(metaclass=abc.ABCMeta):
       vgprIdx += self.states.m.numVgprLocalReadAddr
 
     # GlobalRead, LocalWrite, LocalRead, G2L can be reclaimed, extend the "lastVgprForReads" value
-    self.states.lastVgprForReads = vgprIdx
+    if kernel["PrefetchGlobalRead"]:
+      self.states.lastVgprForReads = vgprIdx
     #-----------
 
     self.states.startVgprAddressDbg = vgprIdx
