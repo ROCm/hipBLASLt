@@ -29,7 +29,7 @@ from .TensileInstructions import KernelBody, Label, Macro, Module, RegSet, SrdUp
                           SBranchIfZero, SBranchIfNotZero, SMulInt64to32, DSInit, VCvtBF16toFP32, \
                           ArgumentLoader, bomb, vectorStaticDivideAndRemainder, \
                           vectorStaticDivide, vectorStaticRemainder, scalarStaticRemainder, \
-                          scalarUInt32RegDivide, scalarUInt32DivideAndRemainder, \
+                          scalarUInt32RegDivide, scalarUInt32DivideAndRemainder, vectorUInt32CeilDivideAndRemainder, \
                           scalarStaticDivideAndRemainder, sMagicDiv, staticMultiply, \
                           scalarStaticMultiply, MacroVMagicDiv, MacroVDynamicScalarDiv, \
                           RegisterPool, allocTmpGpr, RegisterPoolResource, Holder, \
@@ -1098,6 +1098,23 @@ class KernelWriterAssembly(KernelWriter):
       moduleArgs.addModuleAsFlatItems(self.argLoader.loadAllKernArg(sgprStart, "KernArgAddress", load))
       moduleArgs.addModuleAsFlatItems(lralwaCode)
       moduleArgs.add(SWaitCnt(lgkmcnt=0, comment="wait for %u bytes of kern args" % self.argLoader.getOffset()))
+
+      #### calculate numWorkGroup ####
+      qReg = self.vgprPool.checkOut(4)
+      dReg = qReg + 1
+      divReg = qReg + 2
+      rReg = qReg + 3
+      moduleArgs.add(VMovB32(dst=vgpr(divReg), src="MT0", comment="set MT0 into sgpr"))
+      moduleArgs.add(VMovB32(dst=vgpr(dReg), src=sgpr("SizesFree+0"), comment="set Free0 size"))
+      moduleArgs.add(vectorUInt32CeilDivideAndRemainder(qReg=qReg, dReg=dReg, divReg=divReg, rReg=rReg, doRemainder=False))
+      moduleArgs.add(VMovB32(dst=vgpr(divReg), src="MT1", comment="set MT1 into sgpr"))
+      moduleArgs.add(VMovB32(dst=vgpr(dReg), src=sgpr("SizesFree+1"), comment="set Free1 size"))
+      moduleArgs.add(VReadfirstlaneB32(dst=sgpr("NumWorkGroups0"), src=vgpr(qReg), comment="set back to numWorkGroup0"))
+      moduleArgs.add(vectorUInt32CeilDivideAndRemainder(qReg=qReg, dReg=dReg, divReg=divReg, rReg=rReg, doRemainder=False))
+      if self.states.archCaps["TransOpWait"]:
+        moduleArgs.add(SNop(waitState=0, comment="1 wait states"))
+      moduleArgs.add(VReadfirstlaneB32(dst=sgpr("NumWorkGroups1"), src=vgpr(qReg), comment="set back to numWorkGroup1"))
+      self.vgprPool.checkIn(qReg)
 
       if not kernel["ProblemType"]["StridedBatched"]:
         with self.allocTmpSgpr(self.states.laneSGPRCount) as tmpSgpr:
