@@ -383,9 +383,6 @@ namespace Tensile
 
         args.template append<int32_t>("staggerUIter", staggerUIterValue);
 
-        args.template append<uint32_t>("problemNumGroupTiles0", problemNumGroupTiles0);
-        args.template append<uint32_t>("problemNumGroupTiles1", problemNumGroupTiles1);
-
         uint32_t numFullBlocks            = problemNumGroupTiles1;
         uint32_t wgmRemainder1            = 0;
         uint32_t magicNumberWgmRemainder1 = 0;

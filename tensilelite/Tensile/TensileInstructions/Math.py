@@ -113,12 +113,12 @@ def vectorUInt32CeilDivideAndRemainder(qReg, dReg, divReg, rReg, doRemainder=Tru
     module.add(VCvtF32toU32(dst=vgpr(qReg), src=vgpr(qReg), comment=dComment))
     module.add(VMulU32U24(dst=vgpr(rReg), src0=vgpr(qReg), src1=vgpr(divReg), comment=dComment))
     module.add(VSubU32(dst=vgpr(rReg), src0=vgpr(dReg), src1=vgpr(rReg), comment=dComment))
-    module.add(VCmpXNeU32(dst=EXEC(), src0=vgpr(rReg), src1=0, comment=dComment))
-    module.add(VAddU32(dst=vgpr(qReg), src0=1, src1=vgpr(qReg), comment=dComment))
+    module.add(VCmpNeU32(dst=VCC(), src0=vgpr(rReg), src1=0, comment=dComment))
+    module.add(VAddCCOU32(dst=vgpr(qReg), dst1=VCC(), src0=vgpr(qReg), src1=0, src2=VCC(), comment="ceil"))
     if doRemainder:
         module.add(VCmpXEqU32(dst=EXEC(), src0=vgpr(rReg), src1=vgpr(divReg), comment=rComment))
         module.add(VMovB32(dst=vgpr(rReg), src=0, comment=rComment))
-    module.add(SMovB64(dst=EXEC(), src=-1, comment=dComment))
+        module.add(SMovB64(dst=EXEC(), src=-1, comment=dComment))
     return module
 
 def vectorStaticRemainder(qReg, rReg, dReg, divisor, tmpVgprRes: Optional[RegisterPoolResource], \

@@ -3295,6 +3295,9 @@ class KernelWriter(metaclass=abc.ABCMeta):
       self.defineSgpr("SrdD", 4, 4)
       self.defineSgpr("SrdC", 4, 4)
 
+    self.defineSgpr("NumWorkGroups0", 1)
+    self.defineSgpr("NumWorkGroups1", 1)
+
     if kernel["ProblemType"]["UseScaleDVec"] and (kernel["GlobalSplitU"] == 1):
       self.defineSgpr("SrdScaleDVec", 4, 4)# asm input interface
     ###################################
@@ -3342,8 +3345,6 @@ class KernelWriter(metaclass=abc.ABCMeta):
       self.defineSgpr("MagicNumberSize%s"%idxChar, 1)
       self.defineSgpr("MagicShiftSize%s"%idxChar, 1)
     self.defineSgpr("OrigStaggerUIter", 1)  # Original stagger register.  Only needed for Persistent
-    self.defineSgpr("NumWorkGroups0", 1)
-    self.defineSgpr("NumWorkGroups1", 1)
 
     #------------------------
     # Registers defined below this point are not available in the post-loop
@@ -3357,8 +3358,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
       (numSgprBeta if kernel["ProblemType"]["UseBeta"] else 0) + self.states.d.numSgprStrides + self.states.c.numSgprStrides + self.states.a.numSgprStrides + \
       self.states.b.numSgprStrides + self.states.m.numSgprStrides + self.states.numSgprSizesFree + self.states.numSgprSizesSum + \
       len(kernel["PackedC0IdxChars"][:-1])*2 + len(kernel["PackedC1IdxChars"][:-1])*2 + \
-      1 + \
-      2
+      1
     # Get kernel argument end here
     ###################################
 
