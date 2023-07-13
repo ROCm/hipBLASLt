@@ -115,8 +115,6 @@ class SignatureCOV3(Signature):
             signature.addArg("MagicNumberSize%s"%idxChar, SVK.SIG_VALUE,               "u32")
             signature.addArg( "MagicShiftSize%s"%idxChar, SVK.SIG_VALUE,               "u32")
 
-        signature.addArg(             "OrigStaggerUIter", SVK.SIG_VALUE,              "i32")
-
         if writer.states.useBias == DataDirection.READ:
             signature.addArg("bias", SVK.SIG_GLOBALBUFFER, biasValueType, "generic")
         # We append the data in ws_d

@@ -2984,7 +2984,31 @@ class KernelWriterAssembly(KernelWriter):
       elif kernel["StaggerUMapping"] == 4:
         staggerInput = -1
 
-      module.add(SAndB32(dst=sgpr("StaggerUIter"), src0=sgpr("OrigStaggerUIter"), \
+      #Calculate StaggerUIter
+      with self.allocTmpSgpr(2) as tmpSgprInfo:
+        beginStaggerUIterLabel = Label("beginStaggerUIter",comment="")
+        endStaggerUIterLabel = Label("endStaggerUIter", comment="")
+        tmpSgpr = tmpSgprInfo.idx
+        currentStaggerU = tmpSgpr
+        shiftedStaggerU = tmpSgpr + 1
+        staggerUMask = tmpSgpr + 1
+        module.add(SMovB32(dst=sgpr(currentStaggerU), src=hex(kernel["StaggerU"]), comment="init staggerU"))
+        module.add(beginStaggerUIterLabel)
+        module.add(SLShiftLeftB32(dst=sgpr(shiftedStaggerU), src=sgpr(currentStaggerU), \
+                shiftHex=kernel["_staggerStrideShift"], comment="shift by StaggerUStride"))
+        module.add(SCmpGeU32(src0=sgpr("OrigLoopCounter"), src1=sgpr(shiftedStaggerU), \
+            comment="loopCount >= current shift Count" ))
+        module.add(SCBranchSCC1(labelName=endStaggerUIterLabel.getLabelName(), comment="jump to end"))
+        module.add(SLShiftRightB32(dst=sgpr(currentStaggerU), src=sgpr(currentStaggerU), \
+                shiftHex=1, comment="step down to smaller stagger"))
+        module.add(SBranch(labelName=beginStaggerUIterLabel.getLabelName(), comment="jump to begin"))
+        module.add(endStaggerUIterLabel)
+        module.add(SSubU32(dst=sgpr(staggerUMask), src0=sgpr(currentStaggerU), src1=1, comment="staggerU mask"))
+        module.add(SCmpGeU32(src0=sgpr(currentStaggerU), src1=1, \
+            comment="if current staggerU >= 1" ))
+        module.add(SCSelectB32(dst=sgpr("StaggerUIter"), src0=sgpr(staggerUMask), src1=0, comment="set Mask"))
+
+      module.add(SAndB32(dst=sgpr("StaggerUIter"), src0=sgpr("StaggerUIter"), \
                 src1=staggerInput, \
                 comment="Compute actual stagger start for this tile"))
       module.add(SLShiftLeftB32(dst=sgpr("StaggerUIter"), src=sgpr("StaggerUIter"), \

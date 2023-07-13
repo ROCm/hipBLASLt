@@ -382,8 +382,6 @@ namespace Tensile
         std::map<int, double> ideals;
         LinearModel           linearModel;
 
-        int32_t staggerUIter(Problem const& problem) const;
-
         uint32_t magicNumberAlg1(uint32_t x, uint32_t* magicShift) const;
         uint32_t magicNumberAlg2(uint32_t x, uint32_t* magicShift) const;
         uint32_t magicNumber(int magicDivAlg, uint32_t x, uint32_t* magicShift) const;
