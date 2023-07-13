@@ -44,32 +44,6 @@ namespace Tensile
 {
     PerfModel perf;
 
-    int32_t ContractionSolution::staggerUIter(ContractionSolution::Problem const& problem) const
-    {
-        uint32_t sizeL = problem.boundSize(0);
-
-        // how many stride-sized clicks to stagger start offset
-        unsigned int staggerUIter = sizeMapping.staggerU;
-
-        // /DepthU/GSU
-        int unrollLoopIters = sizeL / sizeMapping.depthU / sizeMapping.globalSplitU;
-
-        unsigned int shifted = 1 << sizeMapping.staggerStrideShift;
-
-        while(staggerUIter > 1)
-        {
-            if(unrollLoopIters >= (staggerUIter * shifted))
-                break;
-
-            staggerUIter /= 2; // step down to smaller stagger
-        }
-
-        if(staggerUIter >= 1)
-            staggerUIter -= 1;
-
-        return staggerUIter;
-    }
-
     // Return magic number.  If magicShift is 0, compute and return it.
     uint32_t ContractionSolution::magicNumberAlg1(uint32_t x, uint32_t* magicShift) const
     {
@@ -376,12 +350,6 @@ namespace Tensile
                 idx++;
             }
         }
-
-        int32_t staggerUIterValue = 0;
-        if constexpr(std::is_same<KA, KernelArguments>::value)
-            staggerUIterValue = staggerUIter(problem);
-
-        args.template append<int32_t>("staggerUIter", staggerUIterValue);
 
         uint32_t numFullBlocks            = problemNumGroupTiles1;
         uint32_t wgmRemainder1            = 0;
