@@ -3345,7 +3345,6 @@ class KernelWriter(metaclass=abc.ABCMeta):
     for idxChar in kernel["PackedC1IdxChars"][:-1]:
       self.defineSgpr("MagicNumberSize%s"%idxChar, 1)
       self.defineSgpr("MagicShiftSize%s"%idxChar, 1)
-    self.defineSgpr("OrigStaggerUIter", 1)  # Original stagger register.  Only needed for Persistent
 
     #------------------------
     # Registers defined below this point are not available in the post-loop
@@ -3358,8 +3357,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
     self.states.numSgprToLoad = numSgprAddressD + numSgprAddressC + numSgprAddressA + numSgprAddressB + numSgprAddressScaleDVec + numSgprAlpha + numSgprAddressMetadata + \
       (numSgprBeta if kernel["ProblemType"]["UseBeta"] else 0) + self.states.d.numSgprStrides + self.states.c.numSgprStrides + self.states.a.numSgprStrides + \
       self.states.b.numSgprStrides + self.states.m.numSgprStrides + self.states.numSgprSizesFree + self.states.numSgprSizesSum + \
-      len(kernel["PackedC0IdxChars"][:-1])*2 + len(kernel["PackedC1IdxChars"][:-1])*2 + \
-      1
+      len(kernel["PackedC0IdxChars"][:-1])*2 + len(kernel["PackedC1IdxChars"][:-1])*2
     # Get kernel argument end here
     ###################################
 
@@ -3367,8 +3365,6 @@ class KernelWriter(metaclass=abc.ABCMeta):
     while SgprSlot:
       tempSgpr = SgprSlot.pop(0)
       self.sgprPool.checkIn(tempSgpr)
-    if not self.states.staggerU:
-      self.undefineSgpr("OrigStaggerUIter")  # Original stagger register.  Only needed for Persistent
 
     ########################################
     # Register Pools
