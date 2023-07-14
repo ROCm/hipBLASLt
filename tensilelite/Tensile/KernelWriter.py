@@ -455,8 +455,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
   ##############################################################################
   def makeSchedule(self, kernel, tensorParametersA, tensorParametersB, localWriteEndIter, skipGlobalReadInc=False, firstIter=False, lastLoop=False, lastLc=False):
 
-    currentIsa = globalParameters["CurrentISA"]
-    maxVmcnt = globalParameters["AsmCaps"][currentIsa]["MaxVmcnt"]
+    maxVmcnt = self.states.asmCaps["MaxVmcnt"]
 
     self.codes.unrollLoopHeader = Module()
     # schedule of work for each local_read iteration:
