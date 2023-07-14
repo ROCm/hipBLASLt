@@ -27,7 +27,7 @@ from ..TensileInstructions import Module, SDWAModifiers, SelectBit, UnusedBit, \
                             VOrB32, VPackF16toB32, \
                             VAndOrB32, VBfeU32, VLShiftLeftB16, \
                             VRndneF32, SNop, SMovkI32, VMovB32, VMed3I32, \
-                            vgpr, sgpr, DataType
+                            vgpr, sgpr, DataType, TensileInstructions
 from ..Component import PackData
 from ..Common import globalParameters
 
@@ -93,7 +93,7 @@ class PackData_BF16(PackData):
 class PackData_INT8(PackData):
     kernel = {"ProblemType": {"DestDataType": DataType(DataType.int8)}}
     def __call__(self, gwvw, destIdx, elementSumIdx, tmpVgpr, tmpS01, SaturateTypeInt8 = SaturateCastType.NORMAL, inputPrefix="", prefixOffset=0):
-
+        ti = TensileInstructions()
         module = Module("PackData int8")
         gwvw4 = (gwvw // 4) * 4
         for vi in range(0, gwvw4):
@@ -110,19 +110,19 @@ class PackData_INT8(PackData):
                            src1=vgpr(formatting(sumIdxV-2, inputPrefix, prefixOffset)), \
                            sdwa=SDWAModifiers(dst_sel=SelectBit.DWORD, dst_unused=UnusedBit.UNUSED_PAD, \
                                               src0_sel=SelectBit.BYTE_0, src1_sel=SelectBit.DWORD)))
-                if globalParameters["ArchCaps"][globalParameters["CurrentISA"]]["SDWAWait"]:
+                if ti.getArchCaps()["SDWAWait"]:
                     module.add(SNop(waitState=0, comment="1 wait states"))
                 module.add(VOrB32(dst=vgpr(formatting(sumIdxV-2, inputPrefix, prefixOffset)), \
                            src0=vgpr(formatting(sumIdxV-1, inputPrefix, prefixOffset)), \
                            src1=vgpr(formatVgpr), \
                            sdwa=SDWAModifiers(dst_sel=SelectBit.WORD_1, dst_unused=UnusedBit.UNUSED_PAD, \
                                               src0_sel=SelectBit.BYTE_0, src1_sel=SelectBit.DWORD)))
-                if globalParameters["ArchCaps"][globalParameters["CurrentISA"]]["SDWAWait"]:
+                if ti.getArchCaps()["SDWAWait"]:
                     module.add(SNop(waitState=0, comment="1 wait states"))
                 module.add(VOrB32(dst=vgpr(d), src0=vgpr(formatting(sumIdxV-3, inputPrefix, prefixOffset)), src1=vgpr(formatting(sumIdxV-2, inputPrefix, prefixOffset)), \
                            sdwa=SDWAModifiers(dst_sel=SelectBit.DWORD, dst_unused=UnusedBit.UNUSED_PAD, \
                                               src0_sel=SelectBit.WORD_0, src1_sel=SelectBit.DWORD)))
-                if globalParameters["ArchCaps"][globalParameters["CurrentISA"]]["SDWAWait"]:
+                if ti.getArchCaps()["SDWAWait"]:
                     module.add(SNop(waitState=0, comment="1 wait states"))
         # Left
         for vi in range(gwvw4, gwvw):
@@ -138,7 +138,7 @@ class PackData_INT8(PackData):
                            src1=vgpr(formatting(sumIdxV, inputPrefix, prefixOffset)), \
                            sdwa=SDWAModifiers(dst_sel=SelectBit.DWORD, dst_unused=UnusedBit.UNUSED_PAD, \
                                               src0_sel=SelectBit.BYTE_0, src1_sel=SelectBit.DWORD)))
-                if globalParameters["ArchCaps"][globalParameters["CurrentISA"]]["SDWAWait"]:
+                if ti.getArchCaps()["SDWAWait"]:
                     module.add(SNop(waitState=0, comment="1 wait states"))
             elif vi + 1 >= gwvw:
                 module.add(VSaturateCastInt(sumIdxV, tmpVgpr, tmpS01, -128, 127, type=SaturateTypeInt8, initGpr=True))
