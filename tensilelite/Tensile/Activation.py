@@ -26,7 +26,8 @@ import struct
 from collections import OrderedDict
 
 from .TensileInstructions import Module, TextBlock, HolderContainer, RegisterContainer, \
-                          VCC, EXEC, vgpr, sgpr, Holder, fastdeepcopy, DataType, SNop
+                          VCC, EXEC, vgpr, sgpr, Holder, fastdeepcopy, DataType, SNop, \
+                          TensileInstructions
 from .TensileInstructions.Enums import *
 from .TensileInstructions.Instructions import *
 from .Common import printExit, printWarning, globalParameters
@@ -445,6 +446,7 @@ class ActivationModule:
         return module
 
     def getExpModule(self, cDataType, vgprIn, vgprOut):
+        ti = TensileInstructions()
         module = Module("Exp")
         if cDataType.isHalf():
             sgprMagic = self.getSgpr(1)
@@ -457,17 +459,17 @@ class ActivationModule:
                                        sdwa=SDWAModifiers(dst_sel=select_bit, dst_unused=UnusedBit.UNUSED_PRESERVE, \
                                                           src0_sel=select_bit), \
                                        comment="exp step 2"))
-                    if globalParameters["ArchCaps"][globalParameters["CurrentISA"]]["TransOpWait"]:
+                    if ti.getArchCaps()["TransOpWait"]:
                         module.add(SNop(waitState=0, comment="1 wait states"))
             else:
                 module.add(VMulF16(dst=self.vgprPrefix(vgprOut), src0=sgpr(Holder(idx=sgprMagic)), src1=self.vgprPrefix(vgprIn), comment="exp step 1"))
                 module.add(VExpF16(dst=self.vgprPrefix(vgprOut), src=self.vgprPrefix(vgprOut), comment="exp step 2"))
-                if globalParameters["ArchCaps"][globalParameters["CurrentISA"]]["TransOpWait"]:
+                if ti.getArchCaps()["TransOpWait"]:
                     module.add(SNop(waitState=0, comment="1 wait states"))
         elif cDataType.isSingle():
             module.add(VMulF32(dst=self.vgprPrefix(vgprOut), src0=math.log(math.e,2), src1=self.vgprPrefix(vgprIn), comment="exp step 1"))
             module.add(VExpF32(dst=self.vgprPrefix(vgprOut), src=self.vgprPrefix(vgprOut), comment="exp step 2" ))
-            if globalParameters["ArchCaps"][globalParameters["CurrentISA"]]["TransOpWait"]:
+            if ti.getArchCaps()["TransOpWait"]:
                 module.add(SNop(waitState=0, comment="1 wait states"))
         else:
             raise RuntimeError("Unsupported data type %s."%cDataType.toDevice("HIP"))
@@ -575,6 +577,7 @@ class ActivationModule:
         return module
 
     def getSigmoidModule(self, cDataType, vgprIn, vgprOut):
+        ti = TensileInstructions()
         self.needCombine = True
         module = Module("Sigmoid")
         if cDataType.isHalf():
@@ -588,27 +591,28 @@ class ActivationModule:
                     module.add(VRcpF16(dst=self.vgprPrefix(vgprOut), src=self.vgprPrefix(vgprOut), \
                                        sdwa=SDWAModifiers(dst_sel=select_bit, dst_unused=UnusedBit.UNUSED_PRESERVE, src0_sel=select_bit), \
                                        comment="1 / (1 + exp(-x))"))
-                if globalParameters["ArchCaps"][globalParameters["CurrentISA"]]["TransOpWait"]:
+                if ti.getArchCaps()["TransOpWait"]:
                     module.add(SNop(waitState=0, comment="1 wait states"))
             else:
                 module.add(VMulF16(dst=self.vgprPrefix(vgprOut), src0=-1.0, src1=self.vgprPrefix(vgprIn), comment=" x = -x"))
                 module.add(self.getExpModule(cDataType, vgprOut, vgprOut))
                 module.add(VAddF16(dst=self.vgprPrefix(vgprOut), src0=1.0, src1=self.vgprPrefix(vgprOut), comment="1 + exp(-x)"))
                 module.add(VRcpF16(dst=self.vgprPrefix(vgprOut), src=self.vgprPrefix(vgprOut), comment="1 / (1 + exp(-x))"))
-                if globalParameters["ArchCaps"][globalParameters["CurrentISA"]]["TransOpWait"]:
+                if ti.getArchCaps()["TransOpWait"]:
                     module.add(SNop(waitState=0, comment="1 wait states"))
         elif cDataType.isSingle():
             module.add(VMulF32(dst=self.vgprPrefix(vgprOut), src0=-1.0, src1=self.vgprPrefix(vgprIn), comment=" x = -x"))
             module.add(self.getExpModule(cDataType, vgprOut, vgprOut))
             module.add(VAddF32(dst=self.vgprPrefix(vgprOut), src0=1.0, src1=self.vgprPrefix(vgprOut), comment="1 + exp(-x)" ))
             module.add(VRcpF32(dst=self.vgprPrefix(vgprOut), src=self.vgprPrefix(vgprOut), comment="1 / (1 + exp(-x))" ))
-            if globalParameters["ArchCaps"][globalParameters["CurrentISA"]]["TransOpWait"]:
+            if ti.getArchCaps()["TransOpWait"]:
                 module.add(SNop(waitState=0, comment="1 wait states"))
         else:
             raise RuntimeError("Unsupported data type %s."%cDataType.toDevice("HIP"))
         return module
 
     def getTanhModule(self, cDataType, vgprIn, vgprOut, activationAlpha, activationBeta):
+        ti = TensileInstructions()
         self.needCombine = True
         module = Module("Tanh")
         if cDataType.isHalf():
@@ -629,7 +633,7 @@ class ActivationModule:
                                        sdwa=SDWAModifiers(dst_sel=select_bit, dst_unused=UnusedBit.UNUSED_PRESERVE, \
                                                           src0_sel=select_bit), \
                                        comment="1 / (1 + exp(-x))"))
-                    if globalParameters["ArchCaps"][globalParameters["CurrentISA"]]["TransOpWait"]:
+                    if ti.getArchCaps()["TransOpWait"]:
                         module.add(SNop(waitState=0, comment="1 wait states")) #workaround for emulator
                 module.add(VFmaPKF16(dst=self.vgprPrefix(vgprOut), src0=-2.0, src1=self.vgprPrefix(vgprOut), src2=1.0, \
                                      vop3=VOP3PModifiers(op_sel_hi=[0,1,0,1]), comment="tanh(x) = (1 / (e^2x + 1)) * (-2) + 1"))
@@ -644,7 +648,7 @@ class ActivationModule:
                 module.add(self.getExpModule(cDataType, vgprOut, vgprOut))
                 module.add(VAddF16(dst=self.vgprPrefix(vgprOut), src0=1.0, src1=self.vgprPrefix(vgprOut), comment="e^2x + 1"))
                 module.add(VRcpF16(dst=self.vgprPrefix(vgprOut), src=self.vgprPrefix(vgprOut), comment="1 / (1 + exp(-x))"))
-                if globalParameters["ArchCaps"][globalParameters["CurrentISA"]]["TransOpWait"]:
+                if ti.getArchCaps()["TransOpWait"]:
                     module.add(SNop(waitState=0, comment="1 wait states")) #workaround for emulator
                 module.add(VFmaF16(dst=self.vgprPrefix(vgprOut), src0=-2.0, src1=self.vgprPrefix(vgprOut), src2=1.0, comment="tanh(x) = (1 / (e^2x + 1)) * (-2) + 1"))
                 if activationBeta:
@@ -658,7 +662,7 @@ class ActivationModule:
             module.add(self.getExpModule(cDataType, vgprOut, vgprOut))
             module.add(VAddF32(dst=self.vgprPrefix(vgprOut), src0=1.0, src1=self.vgprPrefix(vgprOut), comment="e^2x + 1"))
             module.add(VRcpF32(dst=self.vgprPrefix(vgprOut), src=self.vgprPrefix(vgprOut), comment="1 / (e^2x + 1)"))
-            if globalParameters["ArchCaps"][globalParameters["CurrentISA"]]["TransOpWait"]:
+            if ti.getArchCaps()["TransOpWait"]:
                 module.add(SNop(waitState=0, comment="1 wait states")) #workaround for emulator
             module.add(VFmaF32(dst=self.vgprPrefix(vgprOut), src0=-2.0, src1=self.vgprPrefix(vgprOut), src2=1.0, comment="(-2) * (1 / (e^2x + 1)) + 1"))
             if activationBeta:
@@ -668,6 +672,7 @@ class ActivationModule:
         return module
 
     def getDGeluModule(self, cDataType, vgprIn, vgprOut):
+        ti = TensileInstructions()
         self.needCombine = True
         module = Module("Gradient Gelu")
         # x1 = (0.0535161 * pow(x, 3) + 0.398942 * x)
@@ -698,7 +703,7 @@ class ActivationModule:
                 module.add(VAddF32(dst=self.vgprPrefix(vgprOut), src0=vgpr(Holder(idx=vgprTemp3)), src1=vgpr(Holder(idx=vgprTemp1)), comment="out = e^xx + e^-xx"))
                 module.add(VSubF32(dst=vgpr(Holder(idx=vgprTemp1)), src0=vgpr(Holder(idx=vgprTemp3)), src1=vgpr(Holder(idx=vgprTemp1)), comment="tmp1 = e^xx - e^-xx"))
                 module.add(VRcpF32(dst=vgpr(Holder(idx=vgprTemp3)), src=self.vgprPrefix(vgprOut), comment="tmp3 = 1/out"))
-                if globalParameters["ArchCaps"][globalParameters["CurrentISA"]]["TransOpWait"]:
+                if ti.getArchCaps()["TransOpWait"]:
                     module.add(SNop(waitState=0, comment="1 wait states")) #workaround for emulator
                 module.add(VMulF32(dst=vgpr(Holder(idx=vgprTemp3)), src0=vgpr(Holder(idx=vgprTemp1)), src1=vgpr(Holder(idx=vgprTemp3)), comment="tmp3 = tmp1 * tmp3"))
                 if self.enableGuard:
@@ -711,7 +716,7 @@ class ActivationModule:
                 module.add(VMulF32(dst=vgpr(Holder(idx=vgprTemp1)), src0=0.5, src1=vgpr(Holder(idx=vgprTemp3)), comment="tmp1 = 0.5 * tmp1"))
                 module.add(VMulF32(dst=self.vgprPrefix(vgprOut), src0=self.vgprPrefix(vgprOut), src1=self.vgprPrefix(vgprOut), comment="out = out * out"))
                 module.add(VRcpF32(dst=self.vgprPrefix(vgprOut), src=self.vgprPrefix(vgprOut), comment="out = 1/out"))
-                if globalParameters["ArchCaps"][globalParameters["CurrentISA"]]["TransOpWait"]:
+                if ti.getArchCaps()["TransOpWait"]:
                     module.add(SNop(waitState=0, comment="1 wait states")) #workaround for emulator
             else:
                 module.add(self.getTanhModule(cDataType, Holder(idx=vgprTemp1), vgprOut, "", ""))
@@ -721,7 +726,7 @@ class ActivationModule:
                 module.add(VMulF32(dst=vgpr(Holder(idx=vgprTemp1)), src0=0.5, src1=self.vgprPrefix(vgprOut), comment="tmp1 = 0.5 * tmp1"))
                 module.add(VMulF32(dst=vgpr(Holder(idx=vgprTemp3)), src0=vgpr(Holder(idx=vgprTemp3)), src1=vgpr(Holder(idx=vgprTemp3)), comment="out = out * out"))
                 module.add(VRcpF32(dst=self.vgprPrefix(vgprOut), src=vgpr(Holder(idx=vgprTemp3)), comment="out = 1/out"))
-                if globalParameters["ArchCaps"][globalParameters["CurrentISA"]]["TransOpWait"]:
+                if ti.getArchCaps()["TransOpWait"]:
                     module.add(SNop(waitState=0, comment="1 wait states")) #workaround for emulator
             coef = floatUnion(f=4)
             module.add(VMulF32(dst=self.vgprPrefix(vgprOut), src0=hex(coef.u), src1=self.vgprPrefix(vgprOut), comment="out = 4 * out"))
