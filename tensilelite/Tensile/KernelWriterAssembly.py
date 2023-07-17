@@ -7717,7 +7717,7 @@ class KernelWriterAssembly(KernelWriter):
           rv = Module("emulated _buffer_load_b256")
           rv.add(BufferLoadB128(dst=vgpr(destVgpr, rpv/2), vaddr=addr0, saddr=addr1, \
                                 soffset=soffset, mubuf=mubuf, comment=comment))
-          mubuf2 = MUBUFModifiers(offen=True, offset12=offset+bpl/2, glc=glc, slc=slc, lds=lds)
+          mubuf2 = MUBUFModifiers(offen=True, offset12=offset+bpl/2, glc=glc, slc=slc, lds=lds, hasGLCModifier=hasGLCModifier)
           rv.add(BufferLoadB128(dst=vgpr(int(destVgpr + rpv/2), rpv/2), vaddr=addr0, saddr=addr1, \
                                 soffset=soffset, mubuf=mubuf2, comment=comment))
           return rv
@@ -7789,7 +7789,7 @@ class KernelWriterAssembly(KernelWriter):
         # split into two dwordx4 loads. Offset the second by +0.5 bps
         module.add(BufferStoreB128(src=vgpr(srcVgpr, rpv/2), vaddr=addr0, \
                                    saddr=addr1, soffset=tmpSgpr, mubuf=mubuf, comment=comment))
-        mubuf2 = MUBUFModifiers(offen=True, offset12=offset+bps/2, glc=glc, slc=slc)
+        mubuf2 = MUBUFModifiers(offen=True, offset12=offset+bps/2, glc=glc, slc=slc, hasGLCModifier=hasGLCModifier, forceStoreSC1=forceStoreSC1)
         module.add(BufferStoreB128(src=vgpr(int(srcVgpr +rpv/2), rpv/2), vaddr=addr0, \
                   saddr=addr1, soffset=tmpSgpr, mubuf=mubuf2, comment=comment))
       else:
