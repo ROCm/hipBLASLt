@@ -1735,8 +1735,9 @@ class KernelWriterAssembly(KernelWriter):
     # For metadata and using A's margin, shift extra tail offset
     if tP["isM"] and not marginO == -1:
       module.add(VAndB32(dst=vgpr(edge), src0=(margin-1), src1=vgpr(tP["gpr"]["tReg"]), comment="shifTailOffstet = tailOffset %% %d"%(margin)))
-      module.add(VAddU32(dst=vgpr(vDst+l), src0=vgpr(edge), src1=vgpr(vSrc+l),
-                      comment="offset += shifTailOffstet"))
+      for l in range(0, tP["nrt"]):
+        module.add(VAddU32(dst=vgpr(vDst+l), src0=vgpr(edge), src1=vgpr(vSrc+l),
+                        comment="offset += shifTailOffstet"))
     self.vgprPool.checkIn(edge)
     return module
 
