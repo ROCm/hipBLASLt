@@ -23481,7 +23481,7 @@
     NonTemporalB: 0
     NonTemporalC: 0
     NonTemporalD: 0
-    NumElementsPerBatchStore: 0
+    NumElementsPerBatchStore: 16
     NumElementsPerThread: 112
     NumGlobalWriteVectorsPerThread: 112
     NumLoadsA: 7
@@ -26097,7 +26097,7 @@
     NonTemporalB: 0
     NonTemporalC: 0
     NonTemporalD: 0
-    NumElementsPerBatchStore: 0
+    NumElementsPerBatchStore: 16
     NumElementsPerThread: 112
     NumGlobalWriteVectorsPerThread: 112
     NumLoadsA: 4
