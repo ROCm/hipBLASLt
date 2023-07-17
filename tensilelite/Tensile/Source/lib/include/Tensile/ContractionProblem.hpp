@@ -123,8 +123,8 @@ namespace Tensile
         std::vector<TensorDescriptor> m_tensors;
         std::vector<std::string>      m_names;
 
-        size_t m_workspaceSize;
-        size_t m_workspaceSizeGroupedGemm;
+        size_t m_workspaceSize            = std::numeric_limits<size_t>::max();
+        size_t m_workspaceSizeGroupedGemm = std::numeric_limits<size_t>::max();
 
         DataType m_f32XdlMathOp;
     };
