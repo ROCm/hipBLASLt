@@ -972,10 +972,12 @@ namespace Tensile
         KA&                                              h_args) const
     {
         KernelInvocation rv;
+        uint32_t         previousArgsSpaceOffsetInByte = 0;
 
         size_t vw = 1;
         if constexpr(std::is_same<KA, KernelArguments>::value)
         {
+            previousArgsSpaceOffsetInByte = h_args.size();
 
             rv.args = KernelArguments(T_Debug);
 
@@ -1074,7 +1076,6 @@ namespace Tensile
 
         if constexpr(std::is_same<KA, KernelArguments>::value)
         {
-            auto     previousArgsSpaceOffsetInByte = h_args.size();
             uint8_t* d_args
                 = (uint8_t*)(inputs.ws) + workspaceOffsetInByte + previousArgsSpaceOffsetInByte;
             rv.args.append<uint8_t*>("wiTablePtr", d_args);
