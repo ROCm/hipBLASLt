@@ -41,13 +41,16 @@ BenchmarkProblems:
       ForkParameters:
         - MatrixInstruction:
           - [32, 32, 16, 1,  1,  1, 1,  1, 1 ]
+          - [32, 32, 16, 1,  1,  2, 2,  2, 2 ]
+          - [32, 32, 16, 1,  1,  2, 4,  4, 2 ]
+          - [32, 32, 16, 1,  1,  7, 2,  1, 4 ]
         - GlobalReadVectorWidthA: [4]
         - DepthU: [32,64]
-        - TransposeLDS: [1]
+        - TransposeLDS: [0,1]
         - LdsPadA: [-1]
         - LdsPadB: [-1]
         - LdsPadMetadata: [-1]
-        - StaggerU: [0]
+        - StaggerU: [0,4]
         - ScheduleIterAlg: [3]
         - PrefetchLocalRead: [1]
         - ClusterLocalRead: [1]
@@ -56,7 +59,7 @@ BenchmarkProblems:
         - GlobalSplitU: [1,2]
         - GlobalSplitUAlgorithm: [MultipleBuffer]
         - 1LDSBuffer: [-1]
-        - DirectToVgprSparseMetadata: [0]
+        - DirectToVgprSparseMetadata: [0,1]
         - WorkGroupMapping: [18]
         - StoreVectorWidth: [-1]
       BenchmarkForkParameters:
@@ -65,18 +68,23 @@ BenchmarkProblems:
       BenchmarkFinalParameters:
         - ProblemSizes:
           - Exact: [15, 15, 1, 16] # classic format
+          - Exact: [15, 15, 1, 32] # classic format
+          - Exact: [15, 15, 1, 64] # classic format
+          - Exact: [15, 15, 1, 96] # classic format
+          - Exact: [15, 15, 1, 128] # classic format
+          - Exact: [15, 15, 1, 136] # classic format
           - Exact: [15, 15, 1, 256] # classic format
           - Exact: [15, 15, 1, 264] # classic format
           - Exact: [256, 256, 1, 16] # classic format
+          - Exact: [256, 256, 1, 24] # classic format
+          - Exact: [256, 256, 1, 32] # classic format
+          - Exact: [256, 256, 1, 64] # classic format
+          - Exact: [256, 256, 1, 96] # classic format
+          - Exact: [256, 256, 1, 128] # classic format
+          - Exact: [256, 256, 1, 136] # classic format
           - Exact: [256, 256, 1, 256] # classic format
         - ActivationArgs:
           - [Enum: none]
-          - [Enum: abs]
-          - [Enum: clippedrelu]
-          - [Enum: gelu]
-          - [Enum: leakyrelu]
-          - [Enum: relu]
-          - [Enum: sigmoid]
           - [Enum: tanh]
   
   #########################################
@@ -105,13 +113,16 @@ BenchmarkProblems:
       ForkParameters:
         - MatrixInstruction:
           - [32, 32, 16, 1,  1,  1, 1,  1, 1 ]
+          - [32, 32, 16, 1,  1,  2, 2,  2, 2 ]
+          - [32, 32, 16, 1,  1,  2, 4,  4, 2 ]
+          - [32, 32, 16, 1,  1,  7, 2,  1, 4 ]
         - GlobalReadVectorWidthA: [4]
         - DepthU: [32,64]
-        - TransposeLDS: [1]
+        - TransposeLDS: [0,1]
         - LdsPadA: [-1]
         - LdsPadB: [-1]
         - LdsPadMetadata: [-1]
-        - StaggerU: [0]
+        - StaggerU: [0,4]
         - ScheduleIterAlg: [3]
         - PrefetchLocalRead: [1]
         - ClusterLocalRead: [1]
@@ -120,7 +131,7 @@ BenchmarkProblems:
         - GlobalSplitU: [1,2]
         - GlobalSplitUAlgorithm: [MultipleBuffer]
         - 1LDSBuffer: [-1]
-        - DirectToVgprSparseMetadata: [0]
+        - DirectToVgprSparseMetadata: [0,1]
         - WorkGroupMapping: [18]
         - StoreVectorWidth: [-1]
       BenchmarkForkParameters:
@@ -129,18 +140,23 @@ BenchmarkProblems:
       BenchmarkFinalParameters:
         - ProblemSizes:
           - Exact: [15, 15, 1, 16] # classic format
+          - Exact: [15, 15, 1, 32] # classic format
+          - Exact: [15, 15, 1, 64] # classic format
+          - Exact: [15, 15, 1, 96] # classic format
+          - Exact: [15, 15, 1, 128] # classic format
+          - Exact: [15, 15, 1, 136] # classic format
           - Exact: [15, 15, 1, 256] # classic format
           - Exact: [15, 15, 1, 264] # classic format
           - Exact: [256, 256, 1, 16] # classic format
+          - Exact: [256, 256, 1, 24] # classic format
+          - Exact: [256, 256, 1, 32] # classic format
+          - Exact: [256, 256, 1, 64] # classic format
+          - Exact: [256, 256, 1, 96] # classic format
+          - Exact: [256, 256, 1, 128] # classic format
+          - Exact: [256, 256, 1, 136] # classic format
           - Exact: [256, 256, 1, 256] # classic format
         - ActivationArgs:
           - [Enum: none]
-          - [Enum: abs]
-          - [Enum: clippedrelu]
-          - [Enum: gelu]
-          - [Enum: leakyrelu]
-          - [Enum: relu]
-          - [Enum: sigmoid]
           - [Enum: tanh]
 
   #######################################
@@ -169,13 +185,16 @@ BenchmarkProblems:
       ForkParameters:
         - MatrixInstruction:
           - [32, 32, 16, 1,  1,  1, 1,  1, 1 ]
+          - [32, 32, 16, 1,  1,  2, 2,  2, 2 ]
+          - [32, 32, 16, 1,  1,  2, 4,  4, 2 ]
+          - [32, 32, 16, 1,  1,  7, 2,  1, 4 ]
         - GlobalReadVectorWidthA: [4]
         - DepthU: [32,64]
-        - TransposeLDS: [0]
+        - TransposeLDS: [0,1]
         - LdsPadA: [-1]
         - LdsPadB: [-1]
         - LdsPadMetadata: [-1]
-        - StaggerU: [0]
+        - StaggerU: [0,4]
         - ScheduleIterAlg: [3]
         - PrefetchLocalRead: [1]
         - ClusterLocalRead: [1]
@@ -184,7 +203,7 @@ BenchmarkProblems:
         - GlobalSplitU: [1,2]
         - GlobalSplitUAlgorithm: [MultipleBuffer]
         - 1LDSBuffer: [-1]
-        - DirectToVgprSparseMetadata: [0]
+        - DirectToVgprSparseMetadata: [0,1]
         - WorkGroupMapping: [18]
         - StoreVectorWidth: [-1]
       BenchmarkForkParameters:
@@ -193,18 +212,23 @@ BenchmarkProblems:
       BenchmarkFinalParameters:
         - ProblemSizes:
           - Exact: [15, 15, 1, 16] # classic format
+          - Exact: [15, 15, 1, 32] # classic format
+          - Exact: [15, 15, 1, 64] # classic format
+          - Exact: [15, 15, 1, 96] # classic format
+          - Exact: [15, 15, 1, 128] # classic format
+          - Exact: [15, 15, 1, 136] # classic format
           - Exact: [15, 15, 1, 256] # classic format
           - Exact: [15, 15, 1, 264] # classic format
           - Exact: [256, 256, 1, 16] # classic format
+          - Exact: [256, 256, 1, 24] # classic format
+          - Exact: [256, 256, 1, 32] # classic format
+          - Exact: [256, 256, 1, 64] # classic format
+          - Exact: [256, 256, 1, 96] # classic format
+          - Exact: [256, 256, 1, 128] # classic format
+          - Exact: [256, 256, 1, 136] # classic format
           - Exact: [256, 256, 1, 256] # classic format
         - ActivationArgs:
           - [Enum: none]
-          - [Enum: abs]
-          - [Enum: clippedrelu]
-          - [Enum: gelu]
-          - [Enum: leakyrelu]
-          - [Enum: relu]
-          - [Enum: sigmoid]
           - [Enum: tanh]
 
   #######################################
@@ -233,13 +257,16 @@ BenchmarkProblems:
       ForkParameters:
         - MatrixInstruction:
           - [32, 32, 16, 1,  1,  1, 1,  1, 1 ]
+          - [32, 32, 16, 1,  1,  2, 2,  2, 2 ]
+          - [32, 32, 16, 1,  1,  2, 4,  4, 2 ]
+          - [32, 32, 16, 1,  1,  7, 2,  1, 4 ]
         - GlobalReadVectorWidthA: [4]
         - DepthU: [32,64]
-        - TransposeLDS: [1]
+        - TransposeLDS: [0,1]
         - LdsPadA: [-1]
         - LdsPadB: [-1]
         - LdsPadMetadata: [-1]
-        - StaggerU: [0]
+        - StaggerU: [0,4]
         - ScheduleIterAlg: [3]
         - PrefetchLocalRead: [1]
         - ClusterLocalRead: [1]
@@ -248,7 +275,7 @@ BenchmarkProblems:
         - GlobalSplitU: [1,2]
         - GlobalSplitUAlgorithm: [MultipleBuffer]
         - 1LDSBuffer: [-1]
-        - DirectToVgprSparseMetadata: [0]
+        - DirectToVgprSparseMetadata: [0,1]
         - WorkGroupMapping: [18]
         - StoreVectorWidth: [-1]
       BenchmarkForkParameters:
@@ -257,16 +284,21 @@ BenchmarkProblems:
       BenchmarkFinalParameters:
         - ProblemSizes:
           - Exact: [15, 15, 1, 16] # classic format
+          - Exact: [15, 15, 1, 32] # classic format
+          - Exact: [15, 15, 1, 64] # classic format
+          - Exact: [15, 15, 1, 96] # classic format
+          - Exact: [15, 15, 1, 128] # classic format
+          - Exact: [15, 15, 1, 136] # classic format
           - Exact: [15, 15, 1, 256] # classic format
           - Exact: [15, 15, 1, 264] # classic format
           - Exact: [256, 256, 1, 16] # classic format
+          - Exact: [256, 256, 1, 24] # classic format
+          - Exact: [256, 256, 1, 32] # classic format
+          - Exact: [256, 256, 1, 64] # classic format
+          - Exact: [256, 256, 1, 96] # classic format
+          - Exact: [256, 256, 1, 128] # classic format
+          - Exact: [256, 256, 1, 136] # classic format
           - Exact: [256, 256, 1, 256] # classic format
         - ActivationArgs:
           - [Enum: none]
-          - [Enum: abs]
-          - [Enum: clippedrelu]
-          - [Enum: gelu]
-          - [Enum: leakyrelu]
-          - [Enum: relu]
-          - [Enum: sigmoid]
           - [Enum: tanh]
