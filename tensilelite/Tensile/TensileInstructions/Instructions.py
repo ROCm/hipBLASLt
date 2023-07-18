@@ -203,6 +203,11 @@ class VCmpXInstruction(CommonInstruction):
             l.append(self.comment)
         else:
             instStr = self.instStr.replace("_cmpx_", "_cmp_")
+            if isinstance(self.dst, EXEC):
+                if self.kernel.wavefrontSize == 64:
+                    self.dst = "vcc"
+                else:
+                    self.dst = "vcc_lo"
             l1 = [instStr, self.dst]
             if self.srcs:
                 l1.extend(self.srcs)
@@ -233,13 +238,18 @@ class VCmpXInstruction(CommonInstruction):
 
     def __str__(self) -> str:
         self.preStr()
-        if self.archCaps["CMPXWritesSGPR"] or isinstance(self.dst, EXEC):
+        if self.archCaps["CMPXWritesSGPR"]:
             kStr = self.instStr + " " + self.getArgStr()
             kStr += str(self.sdwa) if self.sdwa else ""
             kStr += str(self.vop3) if self.vop3 else ""
             kStr = self.formatWithComment(kStr)
         else:
             kStr = self.instStr.replace("_cmpx_", "_cmp_")
+            if isinstance(self.dst, EXEC):
+                if self.kernel.wavefrontSize == 64:
+                    self.dst = "vcc"
+                else:
+                    self.dst = "vcc_lo"
             kStr += " " + self.getArgStr()
             kStr += str(self.sdwa) if self.sdwa else ""
             kStr = self.formatWithComment(kStr)
