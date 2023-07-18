@@ -293,7 +293,7 @@ def scalarUInt32RegDivide(qReg, dReg, divReg, tmpSgprRes: RegisterPoolResource, 
     module.add(VReadfirstlaneB32(dst=sgpr(qReg), src=vgpr(tmpVgpr0)))
     return module
 
-def scalarUInt32DivideAndRemainder(qReg, dReg, divReg, rReg, tmpVgprRes: RegisterPoolResource, doRemainder=True, comment=""):
+def scalarUInt32DivideAndRemainder(qReg, dReg, divReg, rReg, tmpVgprRes: RegisterPoolResource, wavewidth, doRemainder=True, comment=""):
     dComment = "%s = %s / %s"    % (sgpr(qReg), sgpr(dReg), sgpr(divReg)) if (comment=="") else comment
     rComment = "%s = %s %% %s" % (sgpr(rReg), sgpr(dReg), sgpr(divReg)) if (comment=="") else comment
 
@@ -313,7 +313,8 @@ def scalarUInt32DivideAndRemainder(qReg, dReg, divReg, rReg, tmpVgprRes: Registe
     module.add(VAddU32(dst=vgpr(tmpVgpr0), src0=1, src1=vgpr(tmpVgpr0), comment=dComment))
     if doRemainder:
         module.add(VMovB32(dst=vgpr(tmpVgpr1), src=0, comment=rComment))
-    module.add(SMovB64(dst=EXEC(), src=-1, comment=dComment))
+    SMovBX = SMovB64 if wavewidth == 64 else SMovB32
+    module.add(SMovBX(dst=EXEC(), src=-1, comment=dComment))
     module.add(VReadfirstlaneB32(dst=sgpr(qReg), src=vgpr(tmpVgpr0)))
     if doRemainder:
         module.add(VReadfirstlaneB32(dst=sgpr(rReg), src=vgpr(tmpVgpr1)))
