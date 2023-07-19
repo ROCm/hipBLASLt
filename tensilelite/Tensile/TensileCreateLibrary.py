@@ -531,6 +531,7 @@ def writeSolutionsAndKernels(outputPath, CxxCompiler, problemTypes, solutions, k
     kernelSourceFile = open(kernelSourceFilename, "a", encoding="utf-8")
     kernelHeaderFile = open(kernelHeaderFilename, "a", encoding="utf-8")
 
+  HeaderText = ""
   # handle helper kernel function
   for ko in kernelHelperObjs:
     kernelName = ko.getKernelName()
@@ -554,11 +555,16 @@ def writeSolutionsAndKernels(outputPath, CxxCompiler, problemTypes, solutions, k
     if not globalParameters["MergeFiles"]:
       kernelHeaderFile = open(os.path.join(os.path.normcase(outputPath), "Kernels", kernelName + ".h"), "w")
       kernelHeaderFile.write(CHeader)
-
-    kernelHeaderFile.write(ko.getHeaderFileString())
+      kernelHeaderFile.write(ko.getHeaderFileString())
+    else:
+      HeaderText += ko.getHeaderFileString()
 
     if not globalParameters["MergeFiles"]:
       kernelHeaderFile.close()
+
+  # write kernel.h in one shot
+  if globalParameters["MergeFiles"]:
+    kernelHeaderFile.write(HeaderText)
 
   # close merged
   if globalParameters["MergeFiles"]:
