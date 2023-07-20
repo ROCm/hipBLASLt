@@ -123,9 +123,7 @@ class MUBUFModifiers(Container):
 class SMEMModifiers(Container):
     glc:      bool = False
     nv:       bool = False
-    dlc:      bool = False
     offset: int    = 0 # 20u 21s shaes the same
-    hasGLCModifier: bool = False
 
     def __post_init__(self):
         super().__init__()
@@ -136,14 +134,12 @@ class SMEMModifiers(Container):
 
     def __str__(self) -> str:
         kStr = ""
-        if self.glc:
-            kStr += " " + getGlcBitName(self.hasGLCModifier)
-        if self.nv:
-            kStr += " nv"
-        if self.dlc:
-            kStr += " dlc"
         if self.offset != 0:
             kStr += " offset:%d"%self.offset
+        if self.glc:
+            kStr += " glc"
+        if self.nv:
+            kStr += " nv"
         return kStr
 
 @dataclass

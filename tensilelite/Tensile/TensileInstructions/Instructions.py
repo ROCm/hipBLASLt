@@ -560,6 +560,34 @@ class GlobalWriteInstruction(ReadWriteInstruction):
         super().__init__(instType, ReadWriteInstruction.RWType.RW_TYPE0, comment)
         self.srcData = srcData
 
+class SMemStoreInstruction(GlobalWriteInstruction):
+    def __init__(self, instType: InstType, srcData, base, soffset,
+                 smem: Optional[SMEMModifiers]=None, comment="") -> None:
+        super().__init__(instType, srcData, comment)
+        self.instStr = "s_store_"
+        self.base    = base
+        self.soffset = soffset
+        self.smem    = smem
+
+    def getParams(self) -> list:
+        return [self.srcData, self.base, self.soffset]
+
+    def getArgStr(self) -> str:
+        return str(self.srcData) + ", " + str(self.base) + ", " + str(self.soffset)
+
+    def toList(self) -> list:
+        self.preStr()
+        l = [self.instStr, self.srcData, self.base, self.soffset]
+        l.extend(self.smem.toList()) if self.smem else ""
+        l.append(self.comment)
+        return l
+
+    def __str__(self) -> str:
+        self.preStr()
+        kStr = self.instStr + " " + self.getArgStr()
+        kStr += str(self.smem) if self.smem else ""
+        return self.formatWithComment(kStr)
+
 class FLATStoreInstruction(GlobalWriteInstruction):
     def __init__(self, instType: InstType, vaddr, srcData, \
                  flat: Optional[FLATModifiers] = None, \
@@ -1571,6 +1599,27 @@ class SLoadB256(SMemLoadInstruction):
 class SLoadB512(SMemLoadInstruction):
     def __init__(self, dst, base, soffset, smem: Optional[SMEMModifiers]=None, comment="") -> None:
         super().__init__(InstType.INST_B512, dst, base, soffset, smem, comment)
+
+# S Store
+class SStoreB32(SMemStoreInstruction):
+    def __init__(self, src, base, soffset, smem: Optional[SMEMModifiers]=None, comment="") -> None:
+        super().__init__(InstType.INST_B32, src, base, soffset, smem, comment)
+
+class SStoreB64(SMemStoreInstruction):
+    def __init__(self, src, base, soffset, smem: Optional[SMEMModifiers]=None, comment="") -> None:
+        super().__init__(InstType.INST_B64, src, base, soffset, smem, comment)
+
+class SStoreB128(SMemStoreInstruction):
+    def __init__(self, src, base, soffset, smem: Optional[SMEMModifiers]=None, comment="") -> None:
+        super().__init__(InstType.INST_B128, src, base, soffset, smem, comment)
+
+class SStoreB256(SMemStoreInstruction):
+    def __init__(self, src, base, soffset, smem: Optional[SMEMModifiers]=None, comment="") -> None:
+        super().__init__(InstType.INST_B256, src, base, soffset, smem, comment)
+
+class SStoreB512(SMemStoreInstruction):
+    def __init__(self, src, base, soffset, smem: Optional[SMEMModifiers]=None, comment="") -> None:
+        super().__init__(InstType.INST_B512, src, base, soffset, smem, comment)
 
 ################################################################################
 ###   VGPR instructions

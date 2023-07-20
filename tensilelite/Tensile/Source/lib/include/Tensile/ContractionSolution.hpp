@@ -232,10 +232,7 @@ namespace Tensile
         template <bool T_Debug, typename KA>
         void singleCallArgs(Problem const&           problem,
                             ContractionInputs const& inputs,
-                            uint32_t const&          problemNumGroupTiles0,
-                            uint32_t const&          problemNumGroupTiles1,
                             uint32_t const&          workspaceOffsetInByte,
-                            bool const&              isGrouped,
                             KA&                      args) const;
 
         template <bool T_Debug>
