@@ -1128,8 +1128,10 @@ class KernelWriterAssembly(KernelWriter):
         module.addComment1("Grouped Gemm: Load num of Gemms")
         module.add(self.argLoader.loadKernArg(tmpSgprNumGemm, "KernArgAddress", hex(0), dword=1))
         module.add(SMovB64(dst=sgpr(tmpSgprOrigKernelArgAddr0,2), src=sgpr("KernArgAddress",2)))
+        module.addComment1("Grouped Gemm: Load address of external kernel arguments")
+        module.add(self.argLoader.loadKernArg("ExternalArgAddress", "KernArgAddress", hex(4), dword=2))
         module.addComment1("Grouped Gemm: Load address of kernel arguments")
-        module.add(self.argLoader.loadKernArg("KernArgAddress", "KernArgAddress", hex(4), dword=2))
+        module.add(self.argLoader.loadKernArg("KernArgAddress", "KernArgAddress", hex(12), dword=2))
         module.add(SWaitCnt(lgkmcnt=0))
 
         #############
@@ -1197,11 +1199,11 @@ class KernelWriterAssembly(KernelWriter):
         tmpSgprSynchroniser = 6
         module.add(SMovB32(dst=sgpr(tmpSgprSynchroniser), src=1))
         module.add(SWaitCnt(0))
-        module.add(SStoreB32(src=sgpr(tmpSgprSynchroniser), base=sgpr(tmpSgprOrigKernelArgAddr0, 2), soffset=hex(12), smem=smodifier))
+        module.add(SStoreB32(src=sgpr(tmpSgprSynchroniser), base=sgpr(tmpSgprOrigKernelArgAddr0, 2), soffset=hex(20), smem=smodifier))
 
         # other WGs wait until WG0 set synchroniser to 1
         module.add(label_wait_wgTableGen)
-        module.add(SLoadB32(dst=sgpr(tmpSgprSynchroniser), base=sgpr(tmpSgprOrigKernelArgAddr0, 2), soffset=hex(12), smem=smodifier))
+        module.add(SLoadB32(dst=sgpr(tmpSgprSynchroniser), base=sgpr(tmpSgprOrigKernelArgAddr0, 2), soffset=hex(20), smem=smodifier))
         module.add(SWaitCnt(0))
         module.add(SCmpKEQU32(src=sgpr(tmpSgprSynchroniser), simm16=0))
         module.add(SCBranchSCC1(labelName=label_wait_wgTableGen.getLabelName()))

@@ -3289,6 +3289,9 @@ class KernelWriter(metaclass=abc.ABCMeta):
     # SGPR above are user SGPR which are set by GPU hardware when the kernel is launched
     self.states.firstInitSgpr = self.sgprPool.size()
 
+    if kernel["ProblemType"]["GroupedGemm"]:
+        self.defineSgpr("ExternalArgAddress", self.states.rpga, align=2)
+
     # To avoid corrupting tmp sgprs that may be used around the assert,
     # reserve some sgprs to save/restore the execmask
     if self.db["EnableAsserts"]:

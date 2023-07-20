@@ -591,6 +591,8 @@ namespace Tensile
         {
             uint8_t* d_args = (uint8_t*)(inputs.ws) + workspaceOffsetInByte;
             rv.args.append<uint32_t>("gemm_count", problems.size());
+            // For user input
+            rv.args.append<void const*>("DeviceUserArguments", nullptr);
             rv.args.append<void const*>("argsPtr", (void*)d_args);
             rv.args.append<uint32_t>("syncForWgTableGen", 0);
             rv.codeObjectFile = codeObjectFilename.load();
@@ -1027,6 +1029,8 @@ namespace Tensile
             uint8_t* d_args
                 = (uint8_t*)(inputs.ws) + workspaceOffsetInByte + previousArgsSpaceOffsetInByte;
             rv.args.append<uint8_t*>("wiTablePtr", d_args);
+            // For user input
+            rv.args.append<void const*>("DeviceUserArguments", nullptr);
             rv.args.append<uint8_t*>("argsPtr", d_args + problems.size() * sizeof(uint32_t));
             rv.args.append<uint32_t>("gemm_count", problems.size());
             rv.codeObjectFile = codeObjectFilename.load();
