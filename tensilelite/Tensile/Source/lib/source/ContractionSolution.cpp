@@ -231,10 +231,7 @@ namespace Tensile
     template <bool T_Debug, typename KA>
     void ContractionSolution::singleCallArgs(ContractionSolution::Problem const& problem,
                                              ContractionInputs const&            inputs,
-                                             uint32_t const& problemNumGroupTiles0,
-                                             uint32_t const& problemNumGroupTiles1,
                                              uint32_t const& workspaceOffsetInByte,
-                                             bool const&     isGrouped,
                                              KA&             args) const
     {
         if(debugKernel)
@@ -350,10 +347,6 @@ namespace Tensile
                 idx++;
             }
         }
-
-        uint32_t numFullBlocks            = problemNumGroupTiles1;
-        uint32_t wgmRemainder1            = 0;
-        uint32_t magicNumberWgmRemainder1 = 0;
 
         bool runActivation = false;
         if((problemType.activationType != ActivationType::None) && sizeMapping.activationFused
@@ -483,11 +476,6 @@ namespace Tensile
         rv.numWorkGroups.x = CeilDivide(rv.numWorkGroups.x, sizeMapping.macroTile.x);
         rv.numWorkGroups.y = CeilDivide(rv.numWorkGroups.y, sizeMapping.macroTile.y);
 
-        uint32_t problemNumGroupTiles0 = rv.numWorkGroups.x;
-        uint32_t problemNumGroupTiles1 = rv.numWorkGroups.y;
-        // used only when persistent kernel along batch
-        uint32_t problemNumGroupTiles2 = rv.numWorkGroups.z;
-
         rv.numWorkGroups.y *= sizeMapping.globalSplitU;
 
         rv.numWorkItems.x = rv.workGroupSize.x * rv.numWorkGroups.x;
@@ -497,7 +485,7 @@ namespace Tensile
         rv.sharedMemBytes = 0;
 
         singleCallArgs<T_Debug>(
-            problem, inputs, problemNumGroupTiles0, problemNumGroupTiles1, 0, false, rv.args);
+            problem, inputs, 0, rv.args);
 
         rv.codeObjectFile = codeObjectFilename.load();
 
@@ -529,8 +517,7 @@ namespace Tensile
 
             rv.sharedMemBytes = 0;
         }
-        std::vector<uint32_t> problemNumGroupTiles0;
-        std::vector<uint32_t> problemNumGroupTiles1;
+
         uint32_t              wgLeft  = 0;
         uint32_t              wgRight = 0;
 
@@ -570,9 +557,6 @@ namespace Tensile
                 rv.numWorkGroups.x = CeilDivide(rv.numWorkGroups.x, sizeMapping.macroTile.x);
                 rv.numWorkGroups.y = CeilDivide(rv.numWorkGroups.y, sizeMapping.macroTile.y);
 
-                problemNumGroupTiles0.push_back(rv.numWorkGroups.x);
-                problemNumGroupTiles1.push_back(rv.numWorkGroups.y);
-
                 rv.numWorkGroups.y *= sizeMapping.globalSplitU;
 
                 rv.numWorkItems.x
@@ -580,7 +564,7 @@ namespace Tensile
                         * rv.numWorkGroups.y * rv.workGroupSize.z * rv.numWorkGroups.z);
 
                 wgRight = rv.numWorkItems.x / rv.workGroupSize.x / rv.workGroupSize.y
-                          / rv.workGroupSize.y;
+                          / rv.workGroupSize.z;
                 h_args.template append<uint32_t>("wgTable", wgLeft);
                 wgLeft = wgRight;
             }
@@ -596,10 +580,7 @@ namespace Tensile
             auto problem = problems[idx];
             singleCallArgs<T_Debug>(problem,
                                     inputs.grouped[idx],
-                                    problemNumGroupTiles0[idx],
-                                    problemNumGroupTiles1[idx],
                                     workspaceOffsetInByte,
-                                    true,
                                     h_args);
             if constexpr(std::is_same<KA, KernelArguments>::value)
                 workspaceOffsetInByte += requiredWorkspaceSize(problem);
@@ -610,6 +591,7 @@ namespace Tensile
             uint8_t* d_args = (uint8_t*)(inputs.ws) + workspaceOffsetInByte;
             rv.args.append<uint32_t>("gemm_count", problems.size());
             rv.args.append<void const*>("argsPtr", (void*)d_args);
+            rv.args.append<uint32_t>("syncForWgTableGen", 0);
             rv.codeObjectFile = codeObjectFilename.load();
         }
 
