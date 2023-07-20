@@ -151,7 +151,7 @@ class KernelWriterConversion(KernelWriterBase):
 
     # kernel argument
     if self.state["ProblemType"]["GroupedGemm"]:
-      kStr += "  uint32_t* wiTablePtr, argument_%s* argsPtr, uint32_t gemm_count)" % ( self.kernelName ) + self.endLine
+      kStr += "  uint32_t* wiTablePtr, void* deviceUserArgsPtr, argument_%s* argsPtr, uint32_t gemm_count)" % ( self.kernelName ) + self.endLine
     else:
       kStr += "  argument_%s arg)" % ( self.kernelName ) + self.endLine
 
@@ -366,7 +366,7 @@ class KernelWriterConversion(KernelWriterBase):
     #TODO: workspace type is half precision
     if self.state["ProblemType"]["UseBias"] and self.state["ProblemType"]["Gradient"] and self.state["ProblemType"]["BiasSrc"] == "D":
       kStr += "  auto idxW_ori = idxW;%s"%self.endLine
-    
+
     typeStr = "int" if self.state["ProblemType"]["DataType"].isInt8() or self.state["ProblemType"]["DataType"].isInt32() else "float"
     loadTypeStr = "%s%s" % (typeStr, "" if self.num_dword_load == 1 else self.num_dword_load)
     storeTypeStr = "%s%s" % (typeStr, self.num_dword_store) if self.num_dword_store >= 1 else destTypeStr
