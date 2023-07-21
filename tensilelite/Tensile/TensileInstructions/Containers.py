@@ -67,8 +67,7 @@ class FLATModifiers(Container):
     glc:      bool = False
     slc:      bool = False
     lds:      bool = False
-    hasGLCModifier: bool = False
-    forceStoreSC1: bool = False
+    isStore:  bool = False
 
     def __post_init__(self):
         super().__init__()
@@ -78,13 +77,15 @@ class FLATModifiers(Container):
         return l
 
     def __str__(self) -> str:
+        hasGLCModifier = self.asmCaps["HasGLCModifier"]
+        forceStoreSC1 = self.archCaps["ForceStoreSC1"] and self.isStore
         kStr = ""
         if self.offset12 != 0:
             kStr += " offset:%u"%self.offset12
-        if self.glc or self.forceStoreSC1:
-            kStr += " " + getGlcBitName(self.hasGLCModifier)
-        if self.slc or self.forceStoreSC1:
-            kStr += " " + getSlcBitName(self.hasGLCModifier)
+        if self.glc or forceStoreSC1:
+            kStr += " " + getGlcBitName(hasGLCModifier)
+        if self.slc or forceStoreSC1:
+            kStr += " " + getSlcBitName(hasGLCModifier)
         if self.lds:
             kStr += " lds"
         return kStr
@@ -96,8 +97,8 @@ class MUBUFModifiers(Container):
     glc:      bool = False
     slc:      bool = False
     lds:      bool = False
-    hasGLCModifier: bool = False
-    forceStoreSC1: bool = False
+    isStore:  bool = False
+
     def __post_init__(self):
         super().__init__()
 
@@ -106,15 +107,17 @@ class MUBUFModifiers(Container):
         return l
 
     def __str__(self) -> str:
+        hasGLCModifier = self.asmCaps["HasGLCModifier"]
+        forceStoreSC1 = self.archCaps["ForceStoreSC1"] and self.isStore
         kStr = ""
         if self.offen:
             kStr += " offen offset:%u"%self.offset12
-        if (self.glc or self.slc or self.lds or self.forceStoreSC1):
+        if (self.glc or self.slc or self.lds or forceStoreSC1):
             kStr += ","
-        if self.glc or self.forceStoreSC1:
-            kStr += " " + getGlcBitName(self.hasGLCModifier)
-        if self.slc or self.forceStoreSC1:
-            kStr += " " + getSlcBitName(self.hasGLCModifier)
+        if self.glc or forceStoreSC1:
+            kStr += " " + getGlcBitName(hasGLCModifier)
+        if self.slc or forceStoreSC1:
+            kStr += " " + getSlcBitName(hasGLCModifier)
         if self.lds:
             kStr += " lds"
         return kStr

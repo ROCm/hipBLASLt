@@ -365,7 +365,6 @@ class GlobalWriteBatchWriter:
           vgprIdx = bpm // 4
           module.add(self.parentWriter.chooseGlobalRead(useBuffer, bpm, dataV + vgprIdx, \
                     addr0, addr1, soffset=0, offset=addrCalc.globalOffset,
-                    hasGLCModifier=kernel.states.asmCaps["HasGLCModifier"],
                     comment="load D (atomic) bpm=%u vaw=%u"%(bpm,self.atomicW)))
 
       if self.kernel["InterleaveAlpha"] and self.applyAlpha:
@@ -885,19 +884,19 @@ class GlobalWriteBatchWriter:
         if self.kernel["ProblemType"]["DestDataType"].isHalf() or self.kernel["ProblemType"]["DestDataType"].isBFloat16():
           if not self.kernel["ProblemType"]["HighPrecisionAccumulate"]:
             module.add(self.parentWriter.chooseGlobalRead(useBuffer, bps, sumIdx//2, \
-                                  addr0, addr1, soffset=0, offset=0, hasGLCModifier=kernel.states.asmCaps["HasGLCModifier"], hi16=sumIdx%2))
+                                  addr0, addr1, soffset=0, offset=0, hi16=sumIdx%2))
           else:
             module.add(self.parentWriter.chooseGlobalRead(useBuffer, bps, sumIdx, \
-                                  addr0, addr1, soffset=0, offset=0, hasGLCModifier=kernel.states.asmCaps["HasGLCModifier"], hi16=0))
+                                  addr0, addr1, soffset=0, offset=0, hi16=0))
         elif self.kernel["ProblemType"]["DestDataType"].isInt32() or self.kernel["ProblemType"]["DestDataType"].isSingle():
           module.add(self.parentWriter.chooseGlobalRead(useBuffer, bps, sumIdx, \
-                                addr0, addr1, soffset=0, offset=0, hasGLCModifier=kernel.states.asmCaps["HasGLCModifier"]))
+                                addr0, addr1, soffset=0, offset=0))
         elif self.kernel["ProblemType"]["DestDataType"].isDouble() or self.kernel["ProblemType"]["DestDataType"].isSingleComplex() :
           module.add(self.parentWriter.chooseGlobalRead(useBuffer, bps, sumIdx*2, \
-                                addr0, addr1, soffset=0, offset=0, hasGLCModifier=kernel.states.asmCaps["HasGLCModifier"]))
+                                addr0, addr1, soffset=0, offset=0))
         elif self.kernel["ProblemType"]["DestDataType"].isDoubleComplex():
           module.add(self.parentWriter.chooseGlobalRead(useBuffer, bps, sumIdx*4, \
-                                addr0, addr1, soffset=0, offset=0, hasGLCModifier=kernel.states.asmCaps["HasGLCModifier"]))
+                                addr0, addr1, soffset=0, offset=0))
       module.add(SWaitCnt(vmcnt=0, vscnt=0, comment="CheckStoreC, wait for stores to complete"))
       # Add checks for expected values:
       module.add(SMovB32(sgpr(self.tmpS01), self.parentWriter.db["CheckStoreC"], "expected value"))
@@ -940,7 +939,7 @@ class GlobalWriteBatchWriter:
                          vgpr(addrCalc.addrDVgpr,1), \
                          sgpr("SrdD", 4), \
                          0,
-                         MUBUFModifiers(offen=True, offset12=addrCalc.globalOffset, hasGLCModifier=self.kernel.states.asmCaps["HasGLCModifier"]),
+                         MUBUFModifiers(offen=True, offset12=addrCalc.globalOffset),
                          "attempt write avi=%u" % (avi)))
           else:
             pass # TODO:
@@ -1007,7 +1006,7 @@ class GlobalWriteBatchWriter:
                               vgpr(addrCalc.addrDVgpr,1), \
                               sgpr("SrdD", 4),  \
                               0,
-                              MUBUFModifiers(offen=True, offset12=addrCalc.globalOffset, glc=True, hasGLCModifier=self.kernel.states.asmCaps["HasGLCModifier"]),
+                              MUBUFModifiers(offen=True, offset12=addrCalc.globalOffset, glc=True),
                               "attempt write avi=%u"%(avi)))
             else:
             # use cmpswap for SGEMM in CAS loop
@@ -1015,13 +1014,13 @@ class GlobalWriteBatchWriter:
                            vgpr(addrCalc.addrDVgpr,1), \
                            sgpr("SrdD", 4), \
                            0, \
-                           MUBUFModifiers(offen=True, offset12=addrCalc.globalOffset, glc=True, hasGLCModifier=self.kernel.states.asmCaps["HasGLCModifier"]), \
+                           MUBUFModifiers(offen=True, offset12=addrCalc.globalOffset, glc=True), \
                            "attempt write avi=%u"%(avi)))
           else:
             module.add(FlatAtomicCmpswapB32(vgpr(atomicDestVgpr), \
                                             vgpr(addrCalc.addrDVgpr,2), \
                                             vgpr(dataV,2),
-                                            FLATModifiers(glc=True, hasGLCModifier=self.kernel.states.asmCaps["HasGLCModifier"]),
+                                            FLATModifiers(glc=True),
                                             "attempt write"))
         else:
             # Fake successful CAS swap
@@ -1127,7 +1126,7 @@ class GlobalWriteBatchWriter:
                           vgpr(addr,1), \
                           sgpr("SrdD", 4), \
                           0,
-                          MUBUFModifiers(offen=True, offset12=addrCalc.globalOffset, glc=True, hasGLCModifier=self.kernel.states.asmCaps["HasGLCModifier"]),
+                          MUBUFModifiers(offen=True, offset12=addrCalc.globalOffset, glc=True,),
                           "try again"))
             else:
               module.add(BufferAtomicCmpswapB32(
@@ -1135,13 +1134,13 @@ class GlobalWriteBatchWriter:
                           vgpr(addr,1), \
                           sgpr("SrdD", 4), \
                           0,
-                          MUBUFModifiers(offen=True, offset12=addrCalc.globalOffset, glc=True, hasGLCModifier=self.kernel.states.asmCaps["HasGLCModifier"]),
+                          MUBUFModifiers(offen=True, offset12=addrCalc.globalOffset, glc=True),
                           "try again"))
           else:
             module.add(FlatAtomicCmpswapB32(vgpr(atomicDestVgpr), \
                                             vgpr(addr,2), \
                                             vgpr(dataV,2), \
-                                            FLATModifiers(glc=True, hasGLCModifier=self.kernel.states.asmCaps["HasGLCModifier"]), \
+                                            FLATModifiers(glc=True), \
                                             "try again"))
 
     # wait for batched write
