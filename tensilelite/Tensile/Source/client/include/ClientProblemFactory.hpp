@@ -93,6 +93,7 @@ namespace Tensile
             size_t                           m_maxWorkspaceSize = 0;
             DataType                         m_f32XdlMathOp;
             std::vector<std::vector<size_t>> m_problemSizes;
+            bool                             m_useUserArgs;
         };
 
     } // namespace Client

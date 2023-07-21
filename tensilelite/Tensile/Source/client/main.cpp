@@ -241,6 +241,7 @@ namespace Tensile
                 ("bias-type-args",            po::value<std::vector<DataType>>()->default_value(std::vector<DataType>(1, DataType::None), "[]"), "Bias data type args.")
                 ("use-e",                     po::value<bool>()->default_value(false), "Use E.")
                 ("use-gradient",              po::value<bool>()->default_value(false), "Use gradient.")
+                ("use-user-args",             po::value<bool>()->default_value(false), "Use user argument structure as kernel input.")
                 ;
             // clang-format on
 
@@ -557,6 +558,10 @@ int main(int argc, const char* argv[])
 
     reporters->report(ResultKey::ProblemCount, problemFactory.problems().size());
 
+    bool  useUserArgs = args["use-user-args"].as<bool>();
+    void* dUA         = nullptr;
+    void* dUAHost     = nullptr;
+
     while(listeners.needMoreBenchmarkRuns())
     {
         listeners.preBenchmarkRun();
@@ -586,8 +591,18 @@ int main(int argc, const char* argv[])
                         {
                             auto inputs = dataInit->prepareGPUInputs(problem);
 
-                            auto kernels = solution->solve(
-                                (*problem), *inputs, *hardware, nullptr, 0, stream);
+                            auto kernels
+                                = useUserArgs
+                                      ? solution->solveTensileGPU((*problem),
+                                                                  *inputs,
+                                                                  *hardware,
+                                                                  &dUA,
+                                                                  &dUAHost,
+                                                                  nullptr,
+                                                                  0,
+                                                                  stream)
+                                      : solution->solve(
+                                          (*problem), *inputs, *hardware, nullptr, 0, stream);
 
                             size_t       warmupInvocations = listeners.numWarmupRuns();
                             size_t       eventCount        = gpuTimer ? kernels.size() : 0;
@@ -635,6 +650,11 @@ int main(int argc, const char* argv[])
                             }
 
                             listeners.postSyncs();
+
+                            if(useUserArgs)
+                            {
+                                solution->relaseDeviceUserArgs(dUA, dUAHost);
+                            }
                         }
                     }
                     catch(std::runtime_error const& err)

@@ -49,6 +49,7 @@ namespace Tensile
             , m_activationNoGuard(false)
             , m_activationEnumArg(std::vector<ActivationType>(1, ActivationType::None))
             , m_f32XdlMathOp(DataType::Float)
+            , m_useUserArgs(false)
         {
             std::vector<bool> isComplex;
             if(args.count("problem-identifier"))
@@ -166,6 +167,11 @@ namespace Tensile
             if(args.count("f32-xdl-math-op"))
             {
                 m_f32XdlMathOp = args["f32-xdl-math-op"].as<DataType>();
+            }
+
+            if(args.count("use-user-args"))
+            {
+                m_useUserArgs = args["use-user-args"].as<bool>();
             }
 
             if(m_groupedGemm)
@@ -313,6 +319,7 @@ namespace Tensile
 
                         rv.back().setGroupedGemm(m_groupedGemm);
                         rv.back().setF32XdlMathOp(m_f32XdlMathOp);
+                        rv.back().setUseDeviceUserArguments(m_useUserArgs);
                     }
                 }
             }

@@ -118,6 +118,16 @@ namespace Tensile
             return m_f32XdlMathOp;
         }
 
+        void setUseDeviceUserArguments(bool use)
+        {
+            m_useDeviceUserArguments = use;
+        }
+
+        bool getUseDeviceUserArguments() const
+        {
+            return m_useDeviceUserArguments;
+        }
+
     protected:
         friend class ContractionProblemGemm;
         std::vector<TensorDescriptor> m_tensors;
@@ -127,6 +137,8 @@ namespace Tensile
         size_t m_workspaceSizeGroupedGemm = std::numeric_limits<size_t>::max();
 
         DataType m_f32XdlMathOp;
+
+        bool m_useDeviceUserArguments = false;
     };
 
     /**
