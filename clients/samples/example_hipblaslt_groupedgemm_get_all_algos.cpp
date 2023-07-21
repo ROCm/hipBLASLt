@@ -182,7 +182,7 @@ void mat_mul_bias_activation(Tc             alpha,
                              int            Ds1,
                              int            Ds2,
                              int            Ds3,
-                             To*            bias,
+                             Tc*            bias,
                              Tc*            scaleDVec,
                              ActivationType actType)
 {
@@ -251,10 +251,8 @@ static void show_usage(char* argv[])
         << "\t-V, --validate\t\t\t\tVerify results\n"
         << "\t--bench_count\t\t\t\tNumber of benchmark runs (default is 1)\n"
         << "\t--sync_count\t\t\t\tNumber of sync runs (default is 1)\n"
-        << "\t--num_streams\t\t\t\tRun gemms by multi streams (default is 1)\n"
-        << "\t--grouped_gemm\t\t\t\tRun gemms by grouped gemm kernel (default is 0)\n"
-        << "\t--datatype \t\tdatatype \tGEMM_STRIDED argument in out: fp32, fp16, bf16 (default is "
-           "fp32)\n"
+        << "\t--in_datatype \t\tdatatype \tGEMM_STRIDED argument in: fp32, fp16, bf16 (default is fp32)\n"
+        << "\t--out_datatype \t\tdatatype \tGEMM_STRIDED argument out: fp32, fp16, bf16 (default is fp32)\n"
         << "\t--trans_a \t\ttrans_a \tGEMM_STRIDED argument trans_a: N or T (default is N)\n"
         << "\t--trans_b \t\ttrans_b \tGEMM_STRIDED argument trans_b: N or T (default is N)\n"
         << "\t-m \t\t\tm \t\tGEMM_STRIDED argument m\n"
@@ -275,14 +273,13 @@ static void show_usage(char* argv[])
            "none)\n"
         << "\t--bias \t\t\tbias \t\tGEMM_STRIDED set bias: 0 or 1 (default is 0)\n"
         << "\t--scaleDVec \t\tscaleDVec \t\tGEMM_STRIDED enable scaleDVec: 0 or 1 (default is 0)\n"
-        << "\t--cpu_time \t\tcpu_time \tBechmark timing using cpu time: 0 or 1 (default is 0)\n"
-        << "\t--all \t\t\tall \t\tGet all solutions\n"
         << std::endl;
 }
 
 static int parse_arguments(int                          argc,
                            char*                        argv[],
-                           hipblasDatatype_t&           in_out_datatype,
+                           hipblasDatatype_t&           in_datatype,
+                           hipblasDatatype_t&           out_datatype,
                            std::vector<int64_t>&        m,
                            std::vector<int64_t>&        n,
                            std::vector<int64_t>&        k,
@@ -294,7 +291,7 @@ static int parse_arguments(int                          argc,
                            std::vector<int64_t>&        stride_b,
                            std::vector<int64_t>&        stride_c,
                            std::vector<int64_t>&        stride_d,
-                           std::vector<int32_t>&        batch_count,
+                           std::vector<int64_t>&        batch_count,
                            std::vector<float>&          alpha,
                            std::vector<float>&          beta,
                            hipblasOperation_t&          trans_a,
@@ -302,13 +299,10 @@ static int parse_arguments(int                          argc,
                            std::vector<bool>&           enable_bias,
                            std::vector<bool>&           enable_scaleDVec,
                            std::vector<ActivationType>& actType,
-                           int32_t&                     grouped_gemm,
                            int32_t&                     bench_count,
                            int32_t&                     sync_count,
-                           int32_t&                     num_streams,
                            bool&                        verbose,
-                           bool&                        validate,
-                           bool&                        cpu_time)
+                           bool&                        validate)
 {
     if(argc >= 2)
     {
@@ -330,14 +324,6 @@ static int parse_arguments(int                          argc,
                 {
                     validate = true;
                 }
-                else if(arg == "--cpu_time")
-                {
-                    cpu_time = atoi(argv[++i]);
-                }
-                else if(arg == "--num_streams")
-                {
-                    num_streams = atoi(argv[++i]);
-                }
                 else if(arg == "--sync_count")
                 {
                     sync_count = atoi(argv[++i]);
@@ -345,10 +331,6 @@ static int parse_arguments(int                          argc,
                 else if(arg == "--bench_count")
                 {
                     bench_count = atoi(argv[++i]);
-                }
-                else if(arg == "--grouped_gemm")
-                {
-                    grouped_gemm = atoi(argv[++i]);
                 }
                 else if((arg == "-m") && (i + 1 < argc))
                 {
@@ -466,20 +448,42 @@ static int parse_arguments(int                          argc,
                         return EXIT_FAILURE;
                     }
                 }
-                else if((arg == "--datatype") && (i + 1 < argc))
+                else if((arg == "--in_datatype") && (i + 1 < argc))
                 {
                     ++i;
                     if(strncmp(argv[i], "fp32", 4) == 0)
                     {
-                        in_out_datatype = HIPBLAS_R_32F;
+                        in_datatype = HIPBLAS_R_32F;
                     }
                     else if(strncmp(argv[i], "fp16", 4) == 0)
                     {
-                        in_out_datatype = HIPBLAS_R_16F;
+                        in_datatype = HIPBLAS_R_16F;
                     }
                     else if(strncmp(argv[i], "bf16", 4) == 0)
                     {
-                        in_out_datatype = HIPBLAS_R_16B;
+                        in_datatype = HIPBLAS_R_16B;
+                    }
+                    else
+                    {
+                        std::cerr << "error with " << arg << std::endl;
+                        std::cerr << "do not recognize value " << argv[i];
+                        return EXIT_FAILURE;
+                    }
+                }
+                else if((arg == "--out_datatype") && (i + 1 < argc))
+                {
+                    ++i;
+                    if(strncmp(argv[i], "fp32", 4) == 0)
+                    {
+                        out_datatype = HIPBLAS_R_32F;
+                    }
+                    else if(strncmp(argv[i], "fp16", 4) == 0)
+                    {
+                        out_datatype = HIPBLAS_R_16F;
+                    }
+                    else if(strncmp(argv[i], "bf16", 4) == 0)
+                    {
+                        out_datatype = HIPBLAS_R_16B;
                     }
                     else
                     {
@@ -519,7 +523,7 @@ bool bad_argument(hipblasOperation_t trans_a,
                   int64_t            stride_b,
                   int64_t            stride_c,
                   int64_t            stride_d,
-                  int32_t            batch_count)
+                  int64_t            batch_count)
 {
     bool argument_error = false;
     if((trans_a == HIPBLAS_OP_N) && (lda < m))
@@ -581,14 +585,14 @@ bool bad_argument(hipblasOperation_t trans_a,
     return argument_error;
 }
 
-template <typename T>
-void initialize_a_b_c_bias(std::vector<T>&     ha,
+template <typename Tin, typename Tout>
+void initialize_a_b_c_bias(std::vector<Tin>&   ha,
                            int64_t             size_a,
-                           std::vector<T>&     hb,
+                           std::vector<Tin>&   hb,
                            int64_t             size_b,
-                           std::vector<T>&     hc,
+                           std::vector<Tout>&  hc,
                            int64_t             size_c,
-                           std::vector<T>&     h_bias,
+                           std::vector<float>& h_bias,
                            int64_t             size_bias,
                            std::vector<float>& h_scaleDVec,
                            int64_t             size_scaleDVec)
@@ -596,19 +600,19 @@ void initialize_a_b_c_bias(std::vector<T>&     ha,
     srand(1);
     for(int i = 0; i < size_a; ++i)
     {
-        ha[i] = static_cast<T>((rand() % 7) - 3);
+        ha[i] = static_cast<Tin>((rand() % 7) - 3);
     }
     for(int i = 0; i < size_b; ++i)
     {
-        hb[i] = static_cast<T>((rand() % 7) - 3);
+        hb[i] = static_cast<Tin>((rand() % 7) - 3);
     }
     for(int i = 0; i < size_c; ++i)
     {
-        hc[i] = static_cast<T>((rand() % 7) - 3);
+        hc[i] = static_cast<Tout>((rand() % 7) - 3);
     }
     for(int i = 0; i < size_bias; ++i)
     {
-        h_bias[i] = static_cast<T>((rand() % 7) - 3);
+        h_bias[i] = static_cast<Tout>((rand() % 7) - 3);
     }
     for(int i = 0; i < size_scaleDVec; ++i)
     {
@@ -616,8 +620,9 @@ void initialize_a_b_c_bias(std::vector<T>&     ha,
     }
 }
 
-template <typename T>
-void test_hipblaslt(hipblasDatatype_t           in_out_datatype,
+template <typename Tin, typename Tout>
+void test_hipblaslt(hipblasDatatype_t           in_datatype,
+                    hipblasDatatype_t           out_datatype,
                     hipblasOperation_t          trans_a,
                     hipblasOperation_t          trans_b,
                     std::vector<int64_t>        m,
@@ -631,26 +636,20 @@ void test_hipblaslt(hipblasDatatype_t           in_out_datatype,
                     std::vector<int64_t>        stride_b,
                     std::vector<int64_t>        stride_c,
                     std::vector<int64_t>        stride_d,
-                    std::vector<int32_t>        batch_count,
+                    std::vector<int64_t>        batch_count,
                     std::vector<float>          alpha,
                     std::vector<float>          beta,
                     std::vector<bool>           enable_bias,
                     std::vector<bool>           enable_scaleDVec,
                     std::vector<ActivationType> actType,
                     int32_t                     gemm_count,
-                    int32_t                     grouped_gemm,
                     int32_t                     bench_count,
                     int32_t                     sync_count,
-                    int32_t                     num_streams,
                     bool                        validate,
-                    bool                        verbose,
-                    bool                        cpu_time)
+                    bool                        verbose)
 {
     std::vector<int64_t> a_stride_1(gemm_count), a_stride_2(gemm_count), b_stride_1(gemm_count),
         b_stride_2(gemm_count);
-    std::vector<int64_t> row_a(gemm_count), col_a(gemm_count);
-    std::vector<int64_t> row_b(gemm_count), col_b(gemm_count);
-    std::vector<int64_t> row_c(gemm_count), col_c(gemm_count);
     std::vector<int>     size_a1(gemm_count), size_b1(gemm_count), size_c1(gemm_count),
         size_d1(gemm_count);
 
@@ -658,16 +657,13 @@ void test_hipblaslt(hipblasDatatype_t           in_out_datatype,
         size_bias(gemm_count), size_scaleDVec(gemm_count);
     std::vector<void*> da(gemm_count), db(gemm_count), dc(gemm_count), dd(gemm_count),
         d_bias(gemm_count), d_scaleDVec(gemm_count);
-    std::vector<std::vector<T>> ha(gemm_count), hb(gemm_count), hc(gemm_count), hd(gemm_count),
-        hd_gold(gemm_count), h_bias(gemm_count);
-    std::vector<std::vector<float>> h_scaleDVec(gemm_count);
+    std::vector<std::vector<Tin>> ha(gemm_count), hb(gemm_count);
+    std::vector<std::vector<Tout>> hc(gemm_count), hd(gemm_count), hd_gold(gemm_count);
+    std::vector<std::vector<float>> h_bias(gemm_count), h_scaleDVec(gemm_count);
 
     hipblasLtHandle_t handle;
     CHECK_HIPBLASLT_ERROR(hipblasLtCreate(&handle));
 
-    std::vector<hipblasLtMatrixLayout_t> matA(gemm_count), matB(gemm_count), matC(gemm_count),
-        matD(gemm_count);
-    std::vector<hipblasLtMatmulDesc_t> matmul(gemm_count);
     std::vector<hipblasLtEpilogue_t>   epilogue(gemm_count);
 
     for(int i = 0; i < gemm_count; i++)
@@ -676,38 +672,28 @@ void test_hipblaslt(hipblasDatatype_t           in_out_datatype,
         size_d1[i] = ldd[i] * n[i];
         if(trans_a == HIPBLAS_OP_N)
         {
-            row_a[i]      = m[i];
-            col_a[i]      = k[i];
             a_stride_1[i] = 1;
             a_stride_2[i] = lda[i];
             size_a1[i]    = lda[i] * k[i];
         }
         else
         {
-            row_a[i]      = k[i];
-            col_a[i]      = m[i];
             a_stride_1[i] = lda[i];
             a_stride_2[i] = 1;
             size_a1[i]    = lda[i] * m[i];
         }
         if(trans_b == HIPBLAS_OP_N)
         {
-            row_b[i]      = k[i];
-            col_b[i]      = n[i];
             b_stride_1[i] = 1;
             b_stride_2[i] = ldb[i];
             size_b1[i]    = ldb[i] * n[i];
         }
         else
         {
-            row_b[i]      = n[i];
-            col_b[i]      = k[i];
             b_stride_1[i] = ldb[i];
             b_stride_2[i] = 1;
             size_b1[i]    = ldb[i] * k[i];
         }
-        row_c[i] = m[i];
-        col_c[i] = n[i];
 
         size_a[i]         = size_a1[i] + stride_a[i] * (batch_count[i] - 1);
         size_b[i]         = size_b1[i] + stride_b[i] * (batch_count[i] - 1);
@@ -737,114 +723,30 @@ void test_hipblaslt(hipblasDatatype_t           in_out_datatype,
                               h_scaleDVec[i],
                               size_scaleDVec[i]);
 
-        CHECK_HIP_ERROR(hipMalloc(&da[i], size_a[i] * sizeof(T)));
-        CHECK_HIP_ERROR(hipMalloc(&db[i], size_b[i] * sizeof(T)));
-        CHECK_HIP_ERROR(hipMalloc(&dc[i], size_c[i] * sizeof(T)));
-        CHECK_HIP_ERROR(hipMalloc(&dd[i], size_d[i] * sizeof(T)));
+        CHECK_HIP_ERROR(hipMalloc(&da[i], size_a[i] * sizeof(Tin)));
+        CHECK_HIP_ERROR(hipMalloc(&db[i], size_b[i] * sizeof(Tin)));
+        CHECK_HIP_ERROR(hipMalloc(&dc[i], size_c[i] * sizeof(Tout)));
+        CHECK_HIP_ERROR(hipMalloc(&dd[i], size_d[i] * sizeof(Tout)));
         if(enable_bias[i])
-            CHECK_HIP_ERROR(hipMalloc(&d_bias[i], size_bias[i] * sizeof(T)));
+            CHECK_HIP_ERROR(hipMalloc(&d_bias[i], size_bias[i] * sizeof(float)));
         if(enable_scaleDVec[i])
             CHECK_HIP_ERROR(hipMalloc(&d_scaleDVec[i], size_scaleDVec[i] * sizeof(float)));
 
         // copy matrices from host to device
         CHECK_HIP_ERROR(
-            hipMemcpy(da[i], ha[i].data(), sizeof(T) * size_a[i], hipMemcpyHostToDevice));
+            hipMemcpy(da[i], ha[i].data(), sizeof(Tin) * size_a[i], hipMemcpyHostToDevice));
         CHECK_HIP_ERROR(
-            hipMemcpy(db[i], hb[i].data(), sizeof(T) * size_b[i], hipMemcpyHostToDevice));
+            hipMemcpy(db[i], hb[i].data(), sizeof(Tin) * size_b[i], hipMemcpyHostToDevice));
         CHECK_HIP_ERROR(
-            hipMemcpy(dc[i], hc[i].data(), sizeof(T) * size_c[i], hipMemcpyHostToDevice));
+            hipMemcpy(dc[i], hc[i].data(), sizeof(Tout) * size_c[i], hipMemcpyHostToDevice));
         if(enable_bias[i])
             CHECK_HIP_ERROR(hipMemcpy(
-                d_bias[i], h_bias[i].data(), sizeof(T) * size_bias[i], hipMemcpyHostToDevice));
+                d_bias[i], h_bias[i].data(), sizeof(float) * size_bias[i], hipMemcpyHostToDevice));
         if(enable_scaleDVec[i])
             CHECK_HIP_ERROR(hipMemcpy(d_scaleDVec[i],
                                       h_scaleDVec[i].data(),
                                       sizeof(float) * size_scaleDVec[i],
                                       hipMemcpyHostToDevice));
-
-        CHECK_HIPBLASLT_ERROR(
-            hipblasLtMatrixLayoutCreate(&matA[i], in_out_datatype, row_a[i], col_a[i], lda[i]));
-        CHECK_HIPBLASLT_ERROR(
-            hipblasLtMatrixLayoutCreate(&matB[i], in_out_datatype, row_b[i], col_b[i], ldb[i]));
-        CHECK_HIPBLASLT_ERROR(
-            hipblasLtMatrixLayoutCreate(&matC[i], in_out_datatype, row_c[i], col_c[i], ldc[i]));
-        CHECK_HIPBLASLT_ERROR(
-            hipblasLtMatrixLayoutCreate(&matD[i], in_out_datatype, row_c[i], col_c[i], ldd[i]));
-        if(batch_count[i] > 1)
-        {
-            CHECK_HIPBLASLT_ERROR(
-                hipblasLtMatrixLayoutSetAttribute(matA[i],
-                                                  HIPBLASLT_MATRIX_LAYOUT_BATCH_COUNT,
-                                                  &batch_count[i],
-                                                  sizeof(batch_count[i])));
-            CHECK_HIPBLASLT_ERROR(
-                hipblasLtMatrixLayoutSetAttribute(matA[i],
-                                                  HIPBLASLT_MATRIX_LAYOUT_STRIDED_BATCH_OFFSET,
-                                                  &stride_a[i],
-                                                  sizeof(stride_a[i])));
-            CHECK_HIPBLASLT_ERROR(
-                hipblasLtMatrixLayoutSetAttribute(matB[i],
-                                                  HIPBLASLT_MATRIX_LAYOUT_BATCH_COUNT,
-                                                  &batch_count[i],
-                                                  sizeof(batch_count[i])));
-            CHECK_HIPBLASLT_ERROR(
-                hipblasLtMatrixLayoutSetAttribute(matB[i],
-                                                  HIPBLASLT_MATRIX_LAYOUT_STRIDED_BATCH_OFFSET,
-                                                  &stride_b[i],
-                                                  sizeof(stride_b[i])));
-            CHECK_HIPBLASLT_ERROR(
-                hipblasLtMatrixLayoutSetAttribute(matC[i],
-                                                  HIPBLASLT_MATRIX_LAYOUT_BATCH_COUNT,
-                                                  &batch_count[i],
-                                                  sizeof(batch_count[i])));
-            CHECK_HIPBLASLT_ERROR(
-                hipblasLtMatrixLayoutSetAttribute(matC[i],
-                                                  HIPBLASLT_MATRIX_LAYOUT_STRIDED_BATCH_OFFSET,
-                                                  &stride_c[i],
-                                                  sizeof(stride_c[i])));
-            CHECK_HIPBLASLT_ERROR(
-                hipblasLtMatrixLayoutSetAttribute(matD[i],
-                                                  HIPBLASLT_MATRIX_LAYOUT_BATCH_COUNT,
-                                                  &batch_count[i],
-                                                  sizeof(batch_count[i])));
-            CHECK_HIPBLASLT_ERROR(
-                hipblasLtMatrixLayoutSetAttribute(matD[i],
-                                                  HIPBLASLT_MATRIX_LAYOUT_STRIDED_BATCH_OFFSET,
-                                                  &stride_d[i],
-                                                  sizeof(stride_d[i])));
-        }
-
-        CHECK_HIPBLASLT_ERROR(
-            hipblasLtMatmulDescCreate(&matmul[i], HIPBLASLT_COMPUTE_F32, HIPBLAS_R_32F));
-
-        CHECK_HIPBLASLT_ERROR(hipblasLtMatmulDescSetAttribute(
-            matmul[i], HIPBLASLT_MATMUL_DESC_TRANSA, &trans_a, sizeof(int32_t)));
-        CHECK_HIPBLASLT_ERROR(hipblasLtMatmulDescSetAttribute(
-            matmul[i], HIPBLASLT_MATMUL_DESC_TRANSB, &trans_b, sizeof(int32_t)));
-
-        if(enable_bias[i] && actType[i] == ActivationType::NONE)
-            epilogue[i] = HIPBLASLT_EPILOGUE_BIAS;
-        else if(enable_bias[i] && actType[i] == ActivationType::RELU)
-            epilogue[i] = HIPBLASLT_EPILOGUE_RELU_BIAS;
-        else if(enable_bias[i] && actType[i] == ActivationType::GELU)
-            epilogue[i] = HIPBLASLT_EPILOGUE_GELU_BIAS;
-        else if(!enable_bias[i] && actType[i] == ActivationType::NONE)
-            epilogue[i] = HIPBLASLT_EPILOGUE_DEFAULT;
-        else if(!enable_bias[i] && actType[i] == ActivationType::RELU)
-            epilogue[i] = HIPBLASLT_EPILOGUE_RELU;
-        else if(!enable_bias[i] && actType[i] == ActivationType::GELU)
-            epilogue[i] = HIPBLASLT_EPILOGUE_GELU;
-        CHECK_HIPBLASLT_ERROR(hipblasLtMatmulDescSetAttribute(
-            matmul[i], HIPBLASLT_MATMUL_DESC_EPILOGUE, &epilogue[i], sizeof(epilogue[i])));
-        if(enable_bias[i])
-            CHECK_HIPBLASLT_ERROR(hipblasLtMatmulDescSetAttribute(
-                matmul[i], HIPBLASLT_MATMUL_DESC_BIAS_POINTER, &d_bias[i], sizeof(void*)));
-        if(enable_scaleDVec[i])
-            CHECK_HIPBLASLT_ERROR(
-                hipblasLtMatmulDescSetAttribute(matmul[i],
-                                                HIPBLASLT_MATMUL_DESC_D_SCALE_VECTOR_POINTER,
-                                                &d_scaleDVec[i],
-                                                sizeof(void*)));
     }
 
     // Set User Preference attributes
@@ -857,25 +759,22 @@ void test_hipblaslt(hipblasDatatype_t           in_out_datatype,
     CHECK_HIPBLASLT_ERROR(hipblasLtMatmulPreferenceSetAttribute(
         pref, HIPBLASLT_MATMUL_PREF_MAX_WORKSPACE_BYTES, &workspace_size, sizeof(workspace_size)));
 
-    hipStream_t* stream = new hipStream_t[num_streams];
-    for(int i = 0; i < num_streams; i++)
-        hipStreamCreate(&stream[i]);
+    hipStream_t stream;
+    hipStreamCreate(&stream);
 
     // Get Heuristic results
     std::vector<hipblasLtMatmulHeuristicResult_t> heuristicResult;
 
     // Get all algorithms
-    hipblaslt_ext::GemmType gemmType = grouped_gemm
-                                           ? hipblaslt_ext::GemmType::HIPBLASLT_GROUPED_GEMM
-                                           : hipblaslt_ext::GemmType::HIPBLASLT_GEMM;
+    hipblaslt_ext::GemmType gemmType = hipblaslt_ext::GemmType::HIPBLASLT_GROUPED_GEMM;
     CHECK_HIPBLASLT_ERROR(hipblaslt_ext::getAllAlgos(handle,
                                                      gemmType,
                                                      trans_a,
                                                      trans_b,
-                                                     in_out_datatype,
-                                                     in_out_datatype,
-                                                     in_out_datatype,
-                                                     in_out_datatype,
+                                                     in_datatype,
+                                                     in_datatype,
+                                                     out_datatype,
+                                                     out_datatype,
                                                      HIPBLASLT_COMPUTE_F32,
                                                      heuristicResult));
 
@@ -885,505 +784,218 @@ void test_hipblaslt(hipblasDatatype_t           in_out_datatype,
     hipblaslt_ext::GroupedGemm groupedGemm(handle,
                                            trans_a,
                                            trans_b,
-                                           in_out_datatype,
-                                           in_out_datatype,
-                                           in_out_datatype,
-                                           in_out_datatype,
+                                           in_datatype,
+                                           in_datatype,
+                                           out_datatype,
+                                           out_datatype,
                                            HIPBLASLT_COMPUTE_F32);
 
     std::cout << "index, transAB, M, N, K, lda, ldb, ldc, stride_a, stride_b, "
                  "stride_c, batch_count, alpha, beta, bias, scaleDVec, activationType"
               << std::endl;
-    if(grouped_gemm)
+
+    for(int i = 0; i < gemm_count; i++)
     {
-        for(int i = 0; i < gemm_count; i++)
-        {
-            std::cout << i << ", " << (trans_a == HIPBLAS_OP_N ? "N" : "T")
-                      << (trans_b == HIPBLAS_OP_N ? "N" : "T") << ", " << m[i] << ", " << n[i]
-                      << ", " << k[i] << ", " << lda[i] << ", " << ldb[i] << ", " << ldc[i] << ", "
-                      << stride_a[i] << ", " << stride_b[i] << ", " << stride_c[i] << ", "
-                      << batch_count[i] << ", " << alpha[i] << ", " << beta[i] << ", "
-                      << enable_bias[i] << ", " << enable_scaleDVec[i] << ", "
-                      << ToString(actType[i]) << std::endl;
-        }
-
-        std::vector<hipblaslt_ext::GemmEpilogue> gemmEpilogue(gemm_count);
-        std::vector<hipblaslt_ext::GemmInputs>   gemmInputs(gemm_count);
-        std::vector<int64_t>                     batch_count64(gemm_count);
-        for(size_t i = 0; i < gemm_count; i++)
-        {
-            gemmEpilogue[i].mode           = epilogue[i];
-            gemmEpilogue[i].bias_data_type = static_cast<hipblasDatatype_t>(0);
-            gemmInputs[i].a                = da[i];
-            gemmInputs[i].b                = db[i];
-            gemmInputs[i].c                = dc[i];
-            gemmInputs[i].d                = dd[i];
-            gemmInputs[i].alpha            = static_cast<void*>(&alpha[i]);
-            gemmInputs[i].beta             = static_cast<void*>(&beta[i]);
-            gemmInputs[i].scaleDVec        = d_scaleDVec[i];
-            gemmInputs[i].bias             = d_bias[i];
-            batch_count64[i]               = batch_count[i];
-        }
-
-        auto gemmProblemType = hipblaslt_ext::GemmProblemType{trans_a,
-                                                              trans_b,
-                                                              in_out_datatype,
-                                                              in_out_datatype,
-                                                              in_out_datatype,
-                                                              in_out_datatype,
-                                                              HIPBLASLT_COMPUTE_F32};
-        CHECK_HIPBLASLT_ERROR(groupedGemm.setProblem(m,
-                                                     n,
-                                                     k,
-                                                     batch_count64,
-                                                     lda,
-                                                     ldb,
-                                                     ldc,
-                                                     ldd,
-                                                     stride_a,
-                                                     stride_b,
-                                                     stride_c,
-                                                     stride_d,
-                                                     gemmEpilogue,
-                                                     gemmInputs,
-                                                     gemmProblemType));
-
-        for(int i = 0; i < returnedAlgoCount; i++)
-        {
-            size_t workspace_size = 0;
-            if(groupedGemm.isAlgoSupported(heuristicResult[i].algo, workspace_size)
-               == HIPBLAS_STATUS_SUCCESS)
-            {
-                validIdx.push_back(i);
-                heuristicResult[i].workspaceSize = workspace_size;
-            }
-            else
-            {
-                heuristicResult[i].workspaceSize = 0;
-            }
-        }
-
-        std::cout << "Is supported " << validIdx.size()
-                  << " / Total solutions: " << returnedAlgoCount << std::endl;
-        if(validIdx.empty())
-        {
-            std::cerr << "No Solution found!" << std::endl;
-            return;
-        }
-
-        double bestMs = std::numeric_limits<double>::max();
-        for(int sol = 0; sol < validIdx.size(); sol++)
-        {
-            CHECK_HIPBLASLT_ERROR(groupedGemm.initialize(
-                heuristicResult[validIdx[sol]].algo, d_workspace, stream[0]));
-
-            double     eventMs;
-            hipEvent_t start, stop;
-            if(cpu_time)
-                eventMs = get_time_us_sync() / 1000;
-            else
-            {
-                hipEventCreate(&start);
-                hipEventCreate(&stop);
-                hipEventRecord(start, stream[0]);
-            }
-
-            for(int sync = 0; sync < sync_count; sync++)
-            {
-                for(int bench = 0; bench < bench_count; bench++)
-                {
-                    CHECK_HIPBLASLT_ERROR(groupedGemm.run(stream[0]));
-                }
-                hipDeviceSynchronize();
-            }
-
-            if(cpu_time)
-                eventMs = get_time_us_sync() / 1000 - eventMs;
-            else
-            {
-                hipEventRecord(stop, stream[0]);
-                hipEventSynchronize(stop);
-                float temp;
-                hipEventElapsedTime(&temp, start, stop);
-                eventMs = double(temp);
-                hipEventDestroy(start);
-                hipEventDestroy(stop);
-            }
-
-            eventMs /= (bench_count * sync_count);
-            bestMs       = std::min(bestMs, eventMs);
-            double flops = 0;
-            for(int i = 0; i < gemm_count; i++)
-                flops += 2 * m[i] * n[i] * k[i] * batch_count[i];
-            double tflops = flops / eventMs / 1000000000;
-
-            std::cout << "      Sol " << sol << ": Perf: " << std::to_string(eventMs) << " ms, "
-                      << std::to_string(tflops) << " Tflops";
-
-            if(bestMs == eventMs)
-                std::cout << " *" << std::endl;
-            else
-                std::cout << std::endl;
-        }
+        std::cout << i << ", " << (trans_a == HIPBLAS_OP_N ? "N" : "T")
+                    << (trans_b == HIPBLAS_OP_N ? "N" : "T") << ", " << m[i] << ", " << n[i]
+                    << ", " << k[i] << ", " << lda[i] << ", " << ldb[i] << ", " << ldc[i] << ", "
+                    << stride_a[i] << ", " << stride_b[i] << ", " << stride_c[i] << ", "
+                    << batch_count[i] << ", " << alpha[i] << ", " << beta[i] << ", "
+                    << enable_bias[i] << ", " << enable_scaleDVec[i] << ", "
+                    << ToString(actType[i]) << std::endl;
     }
-    else
+
+    std::vector<hipblaslt_ext::GemmEpilogue> gemmEpilogue(gemm_count);
+    std::vector<hipblaslt_ext::GemmInputs>   gemmInputs(gemm_count);
+    for(size_t i = 0; i < gemm_count; i++)
     {
-        if(num_streams == 1)
+        
+        if(enable_bias[i] && actType[i] == ActivationType::NONE)
+            epilogue[i] = HIPBLASLT_EPILOGUE_BIAS;
+        else if(enable_bias[i] && actType[i] == ActivationType::RELU)
+            epilogue[i] = HIPBLASLT_EPILOGUE_RELU_BIAS;
+        else if(enable_bias[i] && actType[i] == ActivationType::GELU)
+            epilogue[i] = HIPBLASLT_EPILOGUE_GELU_BIAS;
+        else if(!enable_bias[i] && actType[i] == ActivationType::NONE)
+            epilogue[i] = HIPBLASLT_EPILOGUE_DEFAULT;
+        else if(!enable_bias[i] && actType[i] == ActivationType::RELU)
+            epilogue[i] = HIPBLASLT_EPILOGUE_RELU;
+        else if(!enable_bias[i] && actType[i] == ActivationType::GELU)
+            epilogue[i] = HIPBLASLT_EPILOGUE_GELU;
+        gemmEpilogue[i].mode           = epilogue[i];
+        gemmEpilogue[i].bias_data_type = static_cast<hipblasDatatype_t>(HIPBLAS_R_32F);
+        gemmInputs[i].a                = da[i];
+        gemmInputs[i].b                = db[i];
+        gemmInputs[i].c                = dc[i];
+        gemmInputs[i].d                = dd[i];
+        gemmInputs[i].alpha            = static_cast<void*>(&alpha[i]);
+        gemmInputs[i].beta             = static_cast<void*>(&beta[i]);
+        gemmInputs[i].scaleDVec        = d_scaleDVec[i];
+        gemmInputs[i].bias             = d_bias[i];
+    }
+
+    auto gemmProblemType = hipblaslt_ext::GemmProblemType{trans_a,
+                                                          trans_b,
+                                                          in_datatype,
+                                                          in_datatype,
+                                                          out_datatype,
+                                                          out_datatype,
+                                                          HIPBLASLT_COMPUTE_F32};
+    CHECK_HIPBLASLT_ERROR(groupedGemm.setProblem(m,
+                                                 n,
+                                                 k,
+                                                 batch_count,
+                                                 lda,
+                                                 ldb,
+                                                 ldc,
+                                                 ldd,
+                                                 stride_a,
+                                                 stride_b,
+                                                 stride_c,
+                                                 stride_d,
+                                                 gemmEpilogue,
+                                                 gemmInputs,
+                                                 gemmProblemType));
+
+    for(int i = 0; i < returnedAlgoCount; i++)
+    {
+        size_t workspace_size = 0;
+        if(groupedGemm.isAlgoSupported(heuristicResult[i].algo, workspace_size)
+            == HIPBLAS_STATUS_SUCCESS)
         {
-            double totalFlops = 0;
-            int*   bestIndex  = new int[gemm_count];
-            for(int i = 0; i < gemm_count; i++)
-            {
-                validIdx.clear();
-                for(int j = 0; j < returnedAlgoCount; j++)
-                {
-                    size_t workspace_size = 0;
-                    if(hipblaslt_ext::matmulIsAlgoSupported(handle,
-                                                            matmul[i],
-                                                            &(alpha[i]),
-                                                            matA[i],
-                                                            matB[i],
-                                                            &(beta[i]),
-                                                            matC[i],
-                                                            matD[i],
-                                                            heuristicResult[j].algo,
-                                                            workspace_size)
-                       == HIPBLAS_STATUS_SUCCESS)
-                    {
-                        validIdx.push_back(j);
-                        heuristicResult[j].workspaceSize = workspace_size;
-                    }
-                    else
-                    {
-                        heuristicResult[j].workspaceSize = 0;
-                    }
-                }
-                std::cout << "Is supported " << validIdx.size()
-                          << " / Total solutions: " << returnedAlgoCount << std::endl;
-
-                std::cout << i << ", " << (trans_a == HIPBLAS_OP_N ? "N" : "T")
-                          << (trans_b == HIPBLAS_OP_N ? "N" : "T") << ", " << m[i] << ", " << n[i]
-                          << ", " << k[i] << ", " << lda[i] << ", " << ldb[i] << ", " << ldc[i]
-                          << ", " << stride_a[i] << ", " << stride_b[i] << ", " << stride_c[i]
-                          << ", " << batch_count[i] << ", " << alpha[i] << ", " << beta[i] << ", "
-                          << enable_bias[i] << ", " << enable_scaleDVec[i] << ", "
-                          << ToString(actType[i]) << std::endl;
-
-                double bestMs = std::numeric_limits<double>::max();
-                for(int sol = 0; sol < validIdx.size(); sol++)
-                {
-                    double     eventMs;
-                    hipEvent_t start, stop;
-                    if(cpu_time)
-                        eventMs = get_time_us_sync() / 1000;
-                    else
-                    {
-                        hipEventCreate(&start);
-                        hipEventCreate(&stop);
-                        hipEventRecord(start, stream[0]);
-                    }
-
-                    for(int sync = 0; sync < sync_count; sync++)
-                    {
-                        for(int bench = 0; bench < bench_count; bench++)
-                        {
-                            CHECK_HIPBLASLT_ERROR(
-                                hipblasLtMatmul(handle,
-                                                matmul[i],
-                                                &(alpha[i]),
-                                                da[i],
-                                                matA[i],
-                                                db[i],
-                                                matB[i],
-                                                &(beta[i]),
-                                                dc[i],
-                                                matC[i],
-                                                dd[i],
-                                                matD[i],
-                                                &heuristicResult[validIdx[sol]].algo,
-                                                d_workspace,
-                                                workspace_size,
-                                                stream[0]));
-                        }
-                        hipDeviceSynchronize();
-                    }
-
-                    if(cpu_time)
-                        eventMs = get_time_us_sync() / 1000 - eventMs;
-                    else
-                    {
-                        hipEventRecord(stop, stream[0]);
-                        hipEventSynchronize(stop);
-                        float temp;
-                        hipEventElapsedTime(&temp, start, stop);
-                        eventMs = double(temp);
-                        hipEventDestroy(start);
-                        hipEventDestroy(stop);
-                    }
-
-                    eventMs /= (bench_count * sync_count);
-                    double flops  = 2 * m[i] * n[i] * k[i] * batch_count[i];
-                    double tflops = flops / eventMs / 1000000000;
-
-                    std::cout << "      Sol " << sol << ": Perf: " << std::to_string(eventMs)
-                              << " ms, " << std::to_string(tflops) << " Tflops";
-
-                    if(bestMs > eventMs)
-                    {
-                        bestMs       = eventMs;
-                        bestIndex[i] = validIdx[sol];
-                        std::cout << " *" << std::endl;
-                    }
-                    else
-                        std::cout << std::endl;
-                }
-                totalFlops += (2 * m[i] * n[i] * k[i] * batch_count[i]);
-            }
-
-            double     eventMs;
-            hipEvent_t start, stop;
-            if(cpu_time)
-                eventMs = get_time_us_sync() / 1000;
-            else
-            {
-                hipEventCreate(&start);
-                hipEventCreate(&stop);
-                hipEventRecord(start, stream[0]);
-            }
-
-            for(int sync = 0; sync < sync_count; sync++)
-            {
-                for(int bench = 0; bench < bench_count; bench++)
-                {
-                    for(int i = 0; i < gemm_count; i++)
-                    {
-                        CHECK_HIPBLASLT_ERROR(hipblasLtMatmul(handle,
-                                                              matmul[i],
-                                                              &(alpha[i]),
-                                                              da[i],
-                                                              matA[i],
-                                                              db[i],
-                                                              matB[i],
-                                                              &(beta[i]),
-                                                              dc[i],
-                                                              matC[i],
-                                                              dd[i],
-                                                              matD[i],
-                                                              &heuristicResult[bestIndex[i]].algo,
-                                                              d_workspace,
-                                                              workspace_size,
-                                                              stream[0]));
-                    }
-                }
-                hipDeviceSynchronize();
-            }
-
-            if(cpu_time)
-                eventMs = get_time_us_sync() / 1000 - eventMs;
-            else
-            {
-                hipEventRecord(stop, stream[0]);
-                hipEventSynchronize(stop);
-                float temp;
-                hipEventElapsedTime(&temp, start, stop);
-                eventMs = double(temp);
-                hipEventDestroy(start);
-                hipEventDestroy(stop);
-            }
-
-            double totalTflops = totalFlops / eventMs / 1000000000;
-            std::cout << "TotalPerf: " << std::to_string(eventMs) << " ms, "
-                      << std::to_string(totalTflops) << " Tflops" << std::endl;
+            validIdx.push_back(i);
+            heuristicResult[i].workspaceSize = workspace_size;
         }
         else
         {
-            std::vector<std::vector<int>> multiValidIdx;
-            int                           minAlgoCount = std::numeric_limits<int>::max();
+            heuristicResult[i].workspaceSize = 0;
+        }
+    }
+
+    std::cout << "Is supported " << validIdx.size()
+                << " / Total solutions: " << returnedAlgoCount << std::endl;
+    if(validIdx.empty())
+    {
+        std::cerr << "No Solution found!" << std::endl;
+        return;
+    }
+
+    float bestMs = std::numeric_limits<float>::max();
+    for(int sol = 0; sol < validIdx.size(); sol++)
+    {
+        CHECK_HIPBLASLT_ERROR(groupedGemm.initialize(
+            heuristicResult[validIdx[sol]].algo, d_workspace, stream));
+
+        float     eventMs;
+        hipEvent_t start, stop;
+        hipEventCreate(&start);
+        hipEventCreate(&stop);
+        hipEventRecord(start, stream);
+
+        for(int sync = 0; sync < sync_count; sync++)
+        {
+            for(int bench = 0; bench < bench_count; bench++)
+            {
+                CHECK_HIPBLASLT_ERROR(groupedGemm.run(stream));
+            }
+            hipDeviceSynchronize();
+        }
+
+        hipEventRecord(stop, stream);
+        hipEventSynchronize(stop);
+        hipEventElapsedTime(&eventMs, start, stop);
+        hipEventDestroy(start);
+        hipEventDestroy(stop);
+
+        eventMs /= (bench_count * sync_count);
+        bestMs       = std::min(bestMs, eventMs);
+        double flops = 0;
+        for(int i = 0; i < gemm_count; i++)
+            flops += 2 * m[i] * n[i] * k[i] * batch_count[i];
+        double tflops = flops / eventMs / 1000000000;
+
+        std::cout << "      Sol " << sol << ": Perf: " << std::to_string(eventMs) << " ms, "
+                    << std::to_string(tflops) << " Tflops";
+
+        if(bestMs == eventMs)
+            std::cout << " *" << std::endl;
+        else
+            std::cout << std::endl;
+
+        // calculate golden or correct result
+        if(validate)
+        {
+            std::cout << "Start to validate (only last solution): " << std::endl;
             for(int i = 0; i < gemm_count; i++)
             {
+                std::cout << "GEMM " << i;
+                // copy output from device to CPU
+                CHECK_HIP_ERROR(
+                    hipMemcpy(hd[i].data(), dd[i], sizeof(Tout) * size_c[i], hipMemcpyDeviceToHost));
+                auto* a_ptr = &ha[i][0];
+                auto* b_ptr = &hb[i][0];
+                auto* c_ptr = &hc[i][0];
+                auto* d_ptr = &hd_gold[i][0];
+                float*    bias_ptr;
+                if(enable_bias[i])
+                    bias_ptr = &h_bias[i][0];
+                else
+                    bias_ptr = nullptr;
+                float* scaleDVec_ptr;
+                if(enable_scaleDVec[i])
+                    scaleDVec_ptr = &h_scaleDVec[i][0];
+                else
+                    scaleDVec_ptr = nullptr;
+                mat_mul_bias_activation<Tin, Tout, float>(alpha[i],
+                                                    beta[i],
+                                                    m[i],
+                                                    n[i],
+                                                    k[i],
+                                                    batch_count[i],
+                                                    a_ptr,
+                                                    a_stride_1[i],
+                                                    a_stride_2[i],
+                                                    stride_a[i],
+                                                    b_ptr,
+                                                    b_stride_1[i],
+                                                    b_stride_2[i],
+                                                    stride_b[i],
+                                                    c_ptr,
+                                                    1,
+                                                    ldc[i],
+                                                    stride_c[i],
+                                                    d_ptr,
+                                                    1,
+                                                    ldd[i],
+                                                    stride_d[i],
+                                                    bias_ptr,
+                                                    scaleDVec_ptr,
+                                                    actType[i]);
 
-                std::vector<int> idx;
-                for(int j = 0; j < returnedAlgoCount; j++)
+                bool passed = true;
+                for(int j = 0; j < size_c[i]; j++)
                 {
-                    size_t workspace_size = 0;
-                    if(hipblaslt_ext::matmulIsAlgoSupported(handle,
-                                                            matmul[i],
-                                                            &(alpha[i]),
-                                                            matA[i],
-                                                            matB[i],
-                                                            &(beta[i]),
-                                                            matC[i],
-                                                            matD[i],
-                                                            heuristicResult[j].algo,
-                                                            workspace_size)
-                       == HIPBLAS_STATUS_SUCCESS)
+                    if(!AlmostEqual(hd_gold[i][j], hd[i][j]))
                     {
-                        idx.push_back(j);
-                        heuristicResult[j].workspaceSize = workspace_size;
-                    }
-                    else
-                    {
-                        heuristicResult[j].workspaceSize = 0;
+                        printf("Err: Index %d: %f vs %f\n",
+                            j,
+                            static_cast<float>(hd_gold[i][j]),
+                            static_cast<float>(hd[i][j]));
+                        passed = false;
                     }
                 }
-                minAlgoCount = min(minAlgoCount, idx.size());
-                multiValidIdx.push_back(idx);
-                std::cout << "Is supported " << multiValidIdx[i].size()
-                          << " / Total solutions: " << returnedAlgoCount << std::endl;
-                std::cout << i << ", " << (trans_a == HIPBLAS_OP_N ? "N" : "T")
-                          << (trans_b == HIPBLAS_OP_N ? "N" : "T") << ", " << m[i] << ", " << n[i]
-                          << ", " << k[i] << ", " << lda[i] << ", " << ldb[i] << ", " << ldc[i]
-                          << ", " << stride_a[i] << ", " << stride_b[i] << ", " << stride_c[i]
-                          << ", " << batch_count[i] << ", " << alpha[i] << ", " << beta[i] << ", "
-                          << enable_bias[i] << ", " << enable_scaleDVec[i] << ", "
-                          << ToString(actType[i]) << std::endl;
-            }
-
-            double bestMs = std::numeric_limits<double>::max();
-            for(int sol = 0; sol < minAlgoCount; sol++)
-            {
-                double     eventMs;
-                hipEvent_t start, stop;
-                if(cpu_time)
-                    eventMs = get_time_us_sync() / 1000;
+                if(!passed)
+                {
+                    std::cout << " FAIL" << std::endl;
+                }
                 else
                 {
-                    hipEventCreate(&start);
-                    hipEventCreate(&stop);
-                    hipEventRecord(start, stream[0]);
+                    std::cout << " PASS" << std::endl;
                 }
-
-                for(int sync = 0; sync < sync_count; sync++)
-                {
-                    for(int bench = 0; bench < bench_count; bench++)
-                    {
-                        for(int i = 0; i < gemm_count; i++)
-                        {
-                            CHECK_HIPBLASLT_ERROR(
-                                hipblasLtMatmul(handle,
-                                                matmul[i],
-                                                &(alpha[i]),
-                                                da[i],
-                                                matA[i],
-                                                db[i],
-                                                matB[i],
-                                                &(beta[i]),
-                                                dc[i],
-                                                matC[i],
-                                                dd[i],
-                                                matD[i],
-                                                &heuristicResult[multiValidIdx[i][sol]].algo,
-                                                d_workspace,
-                                                workspace_size,
-                                                stream[i % num_streams]));
-                        }
-                    }
-                    hipDeviceSynchronize();
-                }
-
-                if(cpu_time)
-                    eventMs = get_time_us_sync() / 1000 - eventMs;
-                else
-                {
-                    hipEventRecord(stop, stream[0]);
-                    hipEventSynchronize(stop);
-                    float temp;
-                    hipEventElapsedTime(&temp, start, stop);
-                    eventMs = double(temp);
-                    hipEventDestroy(start);
-                    hipEventDestroy(stop);
-                }
-
-                eventMs /= (bench_count * sync_count);
-                bestMs       = std::min(bestMs, eventMs);
-                double flops = 0;
-                for(int i = 0; i < gemm_count; i++)
-                    flops += 2 * m[i] * n[i] * k[i] * batch_count[i];
-                double tflops = flops / eventMs / 1000000000;
-
-                std::cout << "      Sol " << sol << ": Perf: " << std::to_string(eventMs) << " ms, "
-                          << std::to_string(tflops) << " Tflops";
-
-                if(bestMs == eventMs)
-                    std::cout << " *" << std::endl;
-                else
-                    std::cout << std::endl;
             }
         }
     }
 
-    // calculate golden or correct result
-    if(validate)
-    {
-        std::cout << "Start to validate (only last solution): " << std::endl;
-        for(int i = 0; i < gemm_count; i++)
-        {
-            std::cout << "GEMM " << i;
-            // copy output from device to CPU
-            CHECK_HIP_ERROR(
-                hipMemcpy(hd[i].data(), dd[i], sizeof(T) * size_c[i], hipMemcpyDeviceToHost));
-            auto* a_ptr = &ha[i][0];
-            auto* b_ptr = &hb[i][0];
-            auto* c_ptr = &hc[i][0];
-            auto* d_ptr = &hd_gold[i][0];
-            T*    bias_ptr;
-            if(enable_bias[i])
-                bias_ptr = &h_bias[i][0];
-            else
-                bias_ptr = nullptr;
-            float* scaleDVec_ptr;
-            if(enable_scaleDVec[i])
-                scaleDVec_ptr = &h_scaleDVec[i][0];
-            else
-                scaleDVec_ptr = nullptr;
-            mat_mul_bias_activation<T, T, float>(alpha[i],
-                                                 beta[i],
-                                                 m[i],
-                                                 n[i],
-                                                 k[i],
-                                                 batch_count[i],
-                                                 a_ptr,
-                                                 a_stride_1[i],
-                                                 a_stride_2[i],
-                                                 stride_a[i],
-                                                 b_ptr,
-                                                 b_stride_1[i],
-                                                 b_stride_2[i],
-                                                 stride_b[i],
-                                                 c_ptr,
-                                                 1,
-                                                 ldc[i],
-                                                 stride_c[i],
-                                                 d_ptr,
-                                                 1,
-                                                 ldd[i],
-                                                 stride_d[i],
-                                                 bias_ptr,
-                                                 scaleDVec_ptr,
-                                                 actType[i]);
-
-            bool passed = true;
-            for(int j = 0; j < size_c[i]; j++)
-            {
-                if(!AlmostEqual(hd_gold[i][j], hd[i][j]))
-                {
-                    printf("Err: Index %d: %f vs %f\n",
-                           j,
-                           static_cast<float>(hd_gold[i][j]),
-                           static_cast<float>(hd[i][j]));
-                    passed = false;
-                }
-            }
-            if(!passed)
-            {
-                std::cout << " FAIL" << std::endl;
-            }
-            else
-            {
-                std::cout << " PASS" << std::endl;
-            }
-        }
-    }
 
     CHECK_HIPBLASLT_ERROR(hipblasLtDestroy(handle));
     CHECK_HIPBLASLT_ERROR(hipblasLtMatmulPreferenceDestroy(pref));
@@ -1399,14 +1011,8 @@ void test_hipblaslt(hipblasDatatype_t           in_out_datatype,
             CHECK_HIP_ERROR(hipFree(d_bias[i]));
         if(enable_scaleDVec[i])
             CHECK_HIP_ERROR(hipFree(d_scaleDVec[i]));
-        CHECK_HIPBLASLT_ERROR(hipblasLtMatmulDescDestroy(matmul[i]));
-        CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutDestroy(matA[i]));
-        CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutDestroy(matB[i]));
-        CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutDestroy(matC[i]));
-        CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutDestroy(matD[i]));
     }
-    for(int i = 0; i < num_streams; i++)
-        hipStreamDestroy(stream[i]);
+    hipStreamDestroy(stream);
 
     return;
 }
@@ -1416,13 +1022,14 @@ int main(int argc, char* argv[])
     // initialize parameters with default values
     hipblasOperation_t trans_a         = HIPBLAS_OP_N;
     hipblasOperation_t trans_b         = HIPBLAS_OP_N;
-    hipblasDatatype_t  in_out_datatype = HIPBLAS_R_32F;
+    hipblasDatatype_t  in_datatype = HIPBLAS_R_32F;
+    hipblasDatatype_t  out_datatype = HIPBLAS_R_32F;
 
     std::vector<int64_t> m, lda, stride_a;
     std::vector<int64_t> n, ldb, stride_b;
     std::vector<int64_t> k, ldc, stride_c;
     std::vector<int64_t> ldd, stride_d;
-    std::vector<int32_t> batch_count;
+    std::vector<int64_t> batch_count;
 
     std::vector<float>          alpha;
     std::vector<float>          beta;
@@ -1430,17 +1037,15 @@ int main(int argc, char* argv[])
     std::vector<bool>           enable_scaleDVec;
     std::vector<ActivationType> actType;
 
-    int32_t grouped_gemm = 0;
     bool    verbose      = false;
     bool    validate     = false;
-    bool    cpu_time     = false;
     int32_t bench_count  = 1;
     int32_t sync_count   = 1;
-    int32_t num_streams  = 1;
 
     if(parse_arguments(argc,
                        argv,
-                       in_out_datatype,
+                       in_datatype,
+                       out_datatype,
                        m,
                        n,
                        k,
@@ -1460,13 +1065,10 @@ int main(int argc, char* argv[])
                        enable_bias,
                        enable_scaleDVec,
                        actType,
-                       grouped_gemm,
                        bench_count,
                        sync_count,
-                       num_streams,
                        verbose,
-                       validate,
-                       cpu_time))
+                       validate))
     {
         show_usage(argv);
         return EXIT_FAILURE;
@@ -1531,93 +1133,114 @@ int main(int argc, char* argv[])
         }
     }
 
-    if(in_out_datatype == HIPBLAS_R_32F)
-        test_hipblaslt<hipblasLtFloat>(in_out_datatype,
-                                       trans_a,
-                                       trans_b,
-                                       m,
-                                       n,
-                                       k,
-                                       lda,
-                                       ldb,
-                                       ldc,
-                                       ldd,
-                                       stride_a,
-                                       stride_b,
-                                       stride_c,
-                                       stride_d,
-                                       batch_count,
-                                       alpha,
-                                       beta,
-                                       enable_bias,
-                                       enable_scaleDVec,
-                                       actType,
-                                       gemm_count,
-                                       grouped_gemm,
-                                       bench_count,
-                                       sync_count,
-                                       num_streams,
-                                       validate,
-                                       verbose,
-                                       cpu_time);
-    else if(in_out_datatype == HIPBLAS_R_16F)
-        test_hipblaslt<hipblasLtHalf>(in_out_datatype,
-                                      trans_a,
-                                      trans_b,
-                                      m,
-                                      n,
-                                      k,
-                                      lda,
-                                      ldb,
-                                      ldc,
-                                      ldd,
-                                      stride_a,
-                                      stride_b,
-                                      stride_c,
-                                      stride_d,
-                                      batch_count,
-                                      alpha,
-                                      beta,
-                                      enable_bias,
-                                      enable_scaleDVec,
-                                      actType,
-                                      gemm_count,
-                                      grouped_gemm,
-                                      bench_count,
-                                      sync_count,
-                                      num_streams,
-                                      validate,
-                                      verbose,
-                                      cpu_time);
-    else if(in_out_datatype == HIPBLAS_R_16B)
-        test_hipblaslt<hipblasLtBfloat16>(in_out_datatype,
-                                          trans_a,
-                                          trans_b,
-                                          m,
-                                          n,
-                                          k,
-                                          lda,
-                                          ldb,
-                                          ldc,
-                                          ldd,
-                                          stride_a,
-                                          stride_b,
-                                          stride_c,
-                                          stride_d,
-                                          batch_count,
-                                          alpha,
-                                          beta,
-                                          enable_bias,
-                                          enable_scaleDVec,
-                                          actType,
-                                          gemm_count,
-                                          grouped_gemm,
-                                          bench_count,
-                                          sync_count,
-                                          num_streams,
-                                          validate,
-                                          verbose,
-                                          cpu_time);
+    if(in_datatype == HIPBLAS_R_32F && out_datatype == HIPBLAS_R_32F)
+        test_hipblaslt<hipblasLtFloat,hipblasLtFloat>(in_datatype,
+                                                      out_datatype,
+                                                      trans_a,
+                                                      trans_b,
+                                                      m,
+                                                      n,
+                                                      k,
+                                                      lda,
+                                                      ldb,
+                                                      ldc,
+                                                      ldd,
+                                                      stride_a,
+                                                      stride_b,
+                                                      stride_c,
+                                                      stride_d,
+                                                      batch_count,
+                                                      alpha,
+                                                      beta,
+                                                      enable_bias,
+                                                      enable_scaleDVec,
+                                                      actType,
+                                                      gemm_count,
+                                                      bench_count,
+                                                      sync_count,
+                                                      validate,
+                                                      verbose);
+    else if(in_datatype == HIPBLAS_R_16F && out_datatype == HIPBLAS_R_32F)
+        test_hipblaslt<hipblasLtHalf, hipblasLtFloat>(in_datatype,
+                                                      out_datatype,
+                                                      trans_a,
+                                                      trans_b,
+                                                      m,
+                                                      n,
+                                                      k,
+                                                      lda,
+                                                      ldb,
+                                                      ldc,
+                                                      ldd,
+                                                      stride_a,
+                                                      stride_b,
+                                                      stride_c,
+                                                      stride_d,
+                                                      batch_count,
+                                                      alpha,
+                                                      beta,
+                                                      enable_bias,
+                                                      enable_scaleDVec,
+                                                      actType,
+                                                      gemm_count,
+                                                      bench_count,
+                                                      sync_count,
+                                                      validate,
+                                                      verbose);
+    else if(in_datatype == HIPBLAS_R_16F && out_datatype == HIPBLAS_R_16F)
+        test_hipblaslt<hipblasLtHalf, hipblasLtHalf> (in_datatype,
+                                                      out_datatype,
+                                                      trans_a,
+                                                      trans_b,
+                                                      m,
+                                                      n,
+                                                      k,
+                                                      lda,
+                                                      ldb,
+                                                      ldc,
+                                                      ldd,
+                                                      stride_a,
+                                                      stride_b,
+                                                      stride_c,
+                                                      stride_d,
+                                                      batch_count,
+                                                      alpha,
+                                                      beta,
+                                                      enable_bias,
+                                                      enable_scaleDVec,
+                                                      actType,
+                                                      gemm_count,
+                                                      bench_count,
+                                                      sync_count,
+                                                      validate,
+                                                      verbose);
+    else if(in_datatype == HIPBLAS_R_16B && out_datatype == HIPBLAS_R_16B)
+        test_hipblaslt<hipblasLtBfloat16, hipblasLtBfloat16> (in_datatype,
+                                                      out_datatype,
+                                                      trans_a,
+                                                      trans_b,
+                                                      m,
+                                                      n,
+                                                      k,
+                                                      lda,
+                                                      ldb,
+                                                      ldc,
+                                                      ldd,
+                                                      stride_a,
+                                                      stride_b,
+                                                      stride_c,
+                                                      stride_d,
+                                                      batch_count,
+                                                      alpha,
+                                                      beta,
+                                                      enable_bias,
+                                                      enable_scaleDVec,
+                                                      actType,
+                                                      gemm_count,
+                                                      bench_count,
+                                                      sync_count,
+                                                      validate,
+                                                      verbose);
 
     return EXIT_SUCCESS;
 }
