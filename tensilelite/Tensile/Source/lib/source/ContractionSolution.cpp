@@ -247,6 +247,16 @@ namespace Tensile
         TensorDescriptor const& ca       = problem.compressed();
         TensorDescriptor const& metadata = problem.metadata();
 
+
+        {
+            int idx = 0;
+            for(auto size : problem.problemSizes())
+            {
+                args.template append<uint32_t>(concatenate_if<T_Debug>("size_", idx), size);
+                idx++;
+            }
+        }
+
         if(sizeMapping.globalAccumulation)
         {
             args.template append<void const*>("ws_d", (uint8_t*)inputs.ws + workspaceOffsetInByte);
@@ -337,15 +347,6 @@ namespace Tensile
             for(size_t i = startStrideAB; i < a.dimensions(); i++)
                 args.template append<uint32_t>(concatenate_if<T_Debug>("strideMetadata", i),
                                                metadata.strides()[i]);
-        }
-
-        {
-            int idx = 0;
-            for(auto size : problem.problemSizes())
-            {
-                args.template append<uint32_t>(concatenate_if<T_Debug>("size_", idx), size);
-                idx++;
-            }
         }
 
         bool runActivation = false;
