@@ -580,6 +580,8 @@ def writeClientConfigIni(problemSizes, biasTypeArgs, activationArgs, problemType
         param("library-update-file",      globalParameters["LibraryUpdateFile"])
         param("library-update-comment",   globalParameters["LibraryUpdateComment"])
 
+        param("use-user-args",            globalParameters["UseUserArgs"])
+
 
 def writeClientConfig(forBenchmark, solutions, problemSizes, biasTypeArgs, activationArgs, stepName, stepBaseDir, newLibrary, codeObjectFiles, tileAwareSelection, configBase = "ClientParameters", libraryFile = None):
 

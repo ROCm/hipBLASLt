@@ -137,6 +137,7 @@ namespace Tensile
                 iot::mapOptional(io, "biasDataTypeWhiteList", s.biasDataTypeWhiteList);
                 iot::mapOptional(io, "sparseA", s.sparseA);
                 iot::mapOptional(io, "f32XdlMathOp", s.f32XdlMathOp);
+                iot::mapOptional(io, "supportDeviceUserArguments", s.supportDeviceUserArguments);
             }
 
             const static bool flow = false;

@@ -262,6 +262,8 @@ globalParameters["SeparateArchitectures"] = False # write Tensile library metada
 
 globalParameters["LazyLibraryLoading"] = False # Load library and code object files when needed instead of at startup
 
+globalParameters["UseUserArgs"] = False
+
 # Save a copy - since pytest doesn't re-run this initialization code and YAML files can override global settings - odd things can happen
 defaultGlobalParameters = deepcopy(globalParameters)
 
@@ -1157,7 +1159,9 @@ defaultProblemType = {
     # Activation
     "Activation":               False,
     "ActivationHPA":            False,
-    "ActivationNoGuard":        False
+    "ActivationNoGuard":        False,
+    # For kernels putting arguments in workspaces instead of kernel arguments, they can choose to support user arguments input instead.
+    "SupportUserArgs":          False
     }
 
 defaultProblemSizes = [{"Range": [ [2880], 0, 0 ]}]

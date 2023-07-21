@@ -500,6 +500,8 @@ class ProblemType(Mapping):
 
     if self["UseScaleDVec"]: name += "_SDV"
 
+    if self["SupportUserArgs"]: name += "_UserArgs"
+
     return name
 
   def keys(self):
@@ -3211,6 +3213,13 @@ class Solution(collections.abc.Mapping):
         reject(state, "Bias reduction does not support StoreRemapVectorWidth if GSU == 1.")
       if state["GroupLoadStore"]:
         reject(state, "Bias reduction does not support GroupLoadStore.")
+
+    if not state["ProblemType"]["GroupedGemm"]:
+      if state["ProblemType"]["SupportUserArgs"]:
+        reject(state, "Currently only grouped gemm supports SupportUserArgs.")
+    if state["GlobalSplitU"] > 1:
+      if state["ProblemType"]["SupportUserArgs"]:
+        reject(state, "Currently SupportUserArgs does not support GSU > 1.")
 
   ########################################
   # create a dictionary with booleans on whether to include parameter in name

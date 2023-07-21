@@ -1903,6 +1903,43 @@ namespace Tensile
                     return problem.f32XdlMathOp() == value;
                 }
             };
+
+            struct SupportDeviceUserArguments
+                : public Predicate_CRTP<SupportDeviceUserArguments, ContractionProblemGemm>
+            {
+                enum
+                {
+                    HasIndex = false,
+                    HasValue = true
+                };
+                bool value;
+
+                SupportDeviceUserArguments() = default;
+                SupportDeviceUserArguments(bool value)
+                    : value(value)
+                {
+                }
+
+                static std::string Type()
+                {
+                    return "SupportDeviceUserArguments";
+                }
+
+                virtual bool operator()(ContractionProblemGemm const& problem) const override
+                {
+                    if(problem.getUseDeviceUserArguments())
+                        return problem.getUseDeviceUserArguments() == value;
+                    return true;
+                }
+
+                virtual std::string toString() const override
+                {
+                    if(value)
+                        return "The solution supports DeviceUserArguments";
+                    else
+                        return "The solution does not support DeviceUserArguments";
+                }
+            };
         } // namespace Contraction
 
         /**
