@@ -3302,9 +3302,12 @@ class KernelWriter(metaclass=abc.ABCMeta):
 
     if kernel["ProblemType"]["UseScaleDVec"] and (kernel["GlobalSplitU"] == 1):
       self.defineSgpr("SrdScaleDVec", 4, 4)# asm input interface
+
     ###################################
     # Get kernel argument start here
-    self.defineSgpr("AddressD", numSgprAddressD,4)
+    ###################################
+    # get aligned Sgpr index for wider s_load
+    self.defineSgpr("SizesFree", self.states.numSgprSizesFree,4)
     # fill empty Sgpr slot caused by Sgpr alignment,
     # because we need following defineSgpr use continuous sgpr
     SgprSlot = []
@@ -3315,6 +3318,8 @@ class KernelWriter(metaclass=abc.ABCMeta):
         self.sgprPool.checkIn(tempSgpr)
         break
       SgprSlot.append(tempSgpr)
+    self.defineSgpr("SizesSum", self.states.numSgprSizesSum)
+    self.defineSgpr("AddressD", numSgprAddressD)
     self.defineSgpr("AddressC", numSgprAddressC)
     self.defineSgpr("AddressA", numSgprAddressA)
     self.defineSgpr("AddressB", numSgprAddressB)
@@ -3334,8 +3339,6 @@ class KernelWriter(metaclass=abc.ABCMeta):
     self.defineSgpr("StridesB", self.states.b.numSgprStrides)
     if kernel["ProblemType"]["SparseA"]:
         self.defineSgpr("StridesMetadata", self.states.m.numSgprStrides)
-    self.defineSgpr("SizesFree", self.states.numSgprSizesFree)
-    self.defineSgpr("SizesSum", self.states.numSgprSizesSum)
 
     # for packed batches without stride restrictions need to do something different here
     assert sorted(kernel["PackedC0IdxChars"]+kernel["PackedC1IdxChars"]) == \
@@ -3355,9 +3358,10 @@ class KernelWriter(metaclass=abc.ABCMeta):
     # for conditionals
     self.states.lastPostLoopSgpr = self.sgprPool.size()
 
-    self.states.numSgprToLoad = numSgprAddressD + numSgprAddressC + numSgprAddressA + numSgprAddressB + numSgprAddressScaleDVec + numSgprAlpha + numSgprAddressMetadata + \
-      (numSgprBeta if kernel["ProblemType"]["UseBeta"] else 0) + self.states.d.numSgprStrides + self.states.c.numSgprStrides + self.states.a.numSgprStrides + \
-      self.states.b.numSgprStrides + self.states.m.numSgprStrides + self.states.numSgprSizesFree + self.states.numSgprSizesSum + \
+    self.states.numSgprToLoad = self.states.numSgprSizesFree + self.states.numSgprSizesSum + \
+      numSgprAddressD + numSgprAddressC + numSgprAddressA + numSgprAddressB + numSgprAddressScaleDVec + numSgprAlpha + numSgprAddressMetadata + \
+      (numSgprBeta if kernel["ProblemType"]["UseBeta"] else 0) + \
+      self.states.d.numSgprStrides + self.states.c.numSgprStrides + self.states.a.numSgprStrides + self.states.b.numSgprStrides + self.states.m.numSgprStrides + \
       len(kernel["PackedC0IdxChars"][:-1])*2 + len(kernel["PackedC1IdxChars"][:-1])*2
     # Get kernel argument end here
     ###################################
