@@ -1283,6 +1283,16 @@ class KernelWriterAssembly(KernelWriter):
           module.add(SMulI32(dst=sgpr(tmpSgpr.idx), src0=sgpr("WorkGroup1"), src1=sgpr("NumWorkGroups0")))
           module.add(SSubU32(dst=sgpr("WorkGroup0"), src0=sgpr("WorkGroup0"), src1=sgpr(tmpSgpr.idx)))
 
+        # early stop if wgIdx exceed wg needed
+        module.addComment1("early stop if wgIdx exceed wg needed")
+        module.add(SCmpGeU32(src0=sgpr("WorkGroup2"), src1=sgpr("SizesFree+2")))
+        label_EarlyStop = Label("EarlyStop", "")
+        label_nonEarlyStop = Label("nonEarlyStop", "")
+        module.add(SCBranchSCC0(labelName=label_nonEarlyStop.getLabelName()))
+        module.add(label_EarlyStop)
+        module.add(SEndpgm())
+        module.add(label_nonEarlyStop)
+
         module.addSpaceLine()
       else:
         module.add(moduleArgs)
