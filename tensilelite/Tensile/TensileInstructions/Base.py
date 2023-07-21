@@ -241,6 +241,7 @@ def _initAsmCaps(isaVersion, assemblerPath, isDebug) -> dict:
 
     rv["HasMFMA_xf32"]      = _tryAssembler(isaVersion, assemblerPath, "v_mfma_f32_32x32x4_xf32 a[0:15], v[32:33], v[36:37], a[0:15]", isDebug)
     rv["HasSMFMA"]          = _tryAssembler(isaVersion, assemblerPath, "v_smfmac_f32_32x32x16_f16 a[0:15], v[32:33], v[36:39], v[40]", isDebug)
+    rv["HasWMMA"]           = _tryAssembler(isaVersion, assemblerPath,  "v_wmma_f32_16x16x16_f16 v[0:7], v[8:15], v[16:23], v[0:7]", isDebug)
 
     rv["v_mac_f16"]         = _tryAssembler(isaVersion, assemblerPath, "v_mac_f16 v47, v36, v34", isDebug)
 
@@ -299,6 +300,7 @@ def _initArchCaps(isaVersion) -> dict:
     rv["ForceStoreSC1"] = (isaVersion in [(9,4,0), (9,4,1)])
     rv["TransOpWait"] = (isaVersion in [(9,4,0), (9,4,1), (9,4,2)])
     rv["SDWAWait"] = (isaVersion in [(9,4,0), (9,4,1), (9,4,2)])
+    rv["VgprBank"]           = (isaVersion[0] in (10, 11))
     return rv
 
 def _initAsmBugs(asmCaps) -> dict:
