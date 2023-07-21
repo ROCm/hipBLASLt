@@ -473,17 +473,16 @@ namespace Tensile
                                                metadata.strides()[i]);
         }
 
+        if((sizeMapping.globalAccumulation == 2) && (sizeMapping.customKernelName != ""))
+        {
+            args.template append<void const*>("dstD", inputs.d);
+        }
+
         if(problemType.useScaleDVec
            && ((sizeMapping.globalSplitU == 1)
                || (sizeMapping.customKernelName != ""))) //kernel input data
         {
             args.template append<void const*>("scaleDVec", inputs.scaleDVec);
-        }
-
-        if((sizeMapping.globalAccumulation == 2) || (sizeMapping.customKernelName != ""))
-        {
-            args.template append<uint32_t>("GSUSync", 0);
-            args.template append<void const*>("ws_tc", inputs.d);
         }
 
         bool runActivation = false;
@@ -608,6 +607,11 @@ namespace Tensile
         rv.sharedMemBytes = 0;
 
         singleCallArgs<T_Debug>(problem, inputs, 0, rv.args);
+
+        if((sizeMapping.globalAccumulation == 2) && (sizeMapping.customKernelName != ""))
+        {
+            rv.args.append<uint32_t>("GSUSync", 0);
+        }
 
         rv.codeObjectFile = codeObjectFilename.load();
 
