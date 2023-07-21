@@ -126,39 +126,6 @@ inline bool AlmostEqual(T a, T b)
     return absDiff / (absA + absB + 1) < 0.001;
 }
 
-template <typename T>
-void print_strided_batched(
-    const char* name, T* A, int64_t n1, int64_t n2, int64_t n3, int64_t s1, int64_t s2, int64_t s3)
-{
-    // n1, n2, n3 are matrix dimensions, sometimes called m, n, batch_count
-    // s1, s1, s3 are matrix strides, sometimes called 1, lda, stride_a
-    printf("---------- %s (MxN=%ldx%ld, batch=%ld, stride=%ld"
-           ", batch stride=%ld)----------\n",
-           name,
-           n1,
-           n2,
-           n3,
-           s2,
-           s3);
-    int max_size = 128;
-
-    for(int i3 = 0; i3 < n3 && i3 < max_size; i3++)
-    {
-        for(int i1 = 0; i1 < n1 && i1 < max_size; i1++)
-        {
-            for(int i2 = 0; i2 < n2 && i2 < max_size; i2++)
-            {
-                printf("[%ld]\t%8.3f\t",
-                       (i1 * s1) + (i2 * s2) + (i3 * s3),
-                       static_cast<float>(A[(i1 * s1) + (i2 * s2) + (i3 * s3)]));
-            }
-            printf("\n");
-        }
-        if(i3 < (n3 - 1) && i3 < (max_size - 1))
-            printf("\n");
-    }
-}
-
 template <typename Ti, typename To, typename Tc>
 void mat_mul_bias_activation(Tc             alpha,
                              Tc             beta,
@@ -666,6 +633,30 @@ void test_hipblaslt(hipblasDatatype_t           in_datatype,
 
     std::vector<hipblasLtEpilogue_t>   epilogue(gemm_count);
 
+    //////
+    // simulate feeding arguments to groupedgemm by previous kernel
+    // 0. collect sum of N
+    // 1. set problem to {Ms, {sum of N, 1, 1, 1, ...}, Ks}
+    // 2. initialize()
+    // 3. launch kernel to modify Ns (simulate this by memcpy Ns to device)
+    // 4. launch groupedGemm kernel
+    /////
+    // use bias kernel, so arg offset is 120
+    enable_bias[0] = true;
+    int arg_offset_inByte_hardcode = 120;
+    int n_address_inByte_hardcode = 4;
+    // step 0: collect sum of n
+    int sum_of_n = 0;
+    std::vector<int64_t> sum_of_n_vec;
+    std::vector<int32_t> n_vec;
+    for(int i = 0; i < gemm_count; i++)
+    {
+        sum_of_n += n[i];
+        n_vec.push_back(n[i]);
+        sum_of_n_vec.push_back(1);
+    }
+    sum_of_n_vec[0] = sum_of_n;
+
     for(int i = 0; i < gemm_count; i++)
     {
         size_c1[i] = ldc[i] * n[i];
@@ -809,7 +800,6 @@ void test_hipblaslt(hipblasDatatype_t           in_datatype,
     std::vector<hipblaslt_ext::GemmInputs>   gemmInputs(gemm_count);
     for(size_t i = 0; i < gemm_count; i++)
     {
-        
         if(enable_bias[i] && actType[i] == ActivationType::NONE)
             epilogue[i] = HIPBLASLT_EPILOGUE_BIAS;
         else if(enable_bias[i] && actType[i] == ActivationType::RELU)
@@ -841,8 +831,10 @@ void test_hipblaslt(hipblasDatatype_t           in_datatype,
                                                           out_datatype,
                                                           out_datatype,
                                                           HIPBLASLT_COMPUTE_F32};
+
+    // step 1: set problem to {Ms, {sum of N, 1, 1, 1, ...}, Ks}
     CHECK_HIPBLASLT_ERROR(groupedGemm.setProblem(m,
-                                                 n,
+                                                 sum_of_n_vec,
                                                  k,
                                                  batch_count,
                                                  lda,
@@ -883,8 +875,15 @@ void test_hipblaslt(hipblasDatatype_t           in_datatype,
     float bestMs = std::numeric_limits<float>::max();
     for(int sol = 0; sol < validIdx.size(); sol++)
     {
+        // step 2: initialize()
         CHECK_HIPBLASLT_ERROR(groupedGemm.initialize(
             heuristicResult[validIdx[sol]].algo, d_workspace, stream));
+
+        // step 3: launch kernel to modify Ns (simulate this by memcpy Ns to device)
+        for(size_t i = 0; i < gemm_count; i++)
+        {
+            hipMemcpy(((uint8_t*)d_workspace + gemm_count*4 + n_address_inByte_hardcode + i*arg_offset_inByte_hardcode), &n_vec[i], sizeof(int), hipMemcpyHostToDevice);
+        }
 
         float     eventMs;
         hipEvent_t start, stop;
@@ -925,7 +924,7 @@ void test_hipblaslt(hipblasDatatype_t           in_datatype,
         // calculate golden or correct result
         if(validate)
         {
-            std::cout << "Start to validate (only last solution): " << std::endl;
+            std::cout << "Start to validate: " << std::endl;
             for(int i = 0; i < gemm_count; i++)
             {
                 std::cout << "GEMM " << i;
