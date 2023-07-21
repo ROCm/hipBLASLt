@@ -1094,7 +1094,7 @@ class KernelWriterAssembly(KernelWriter):
         moduleArgs.add(self.argLoader.loadKernArg("AddressDbg", "KernArgAddress", dword=2))
 
       load = self.states.numSgprToLoad
-      sgprStart = self.sgprs["AddressD"]
+      sgprStart = self.sgprs["SizesFree"]
       moduleArgs.addModuleAsFlatItems(self.argLoader.loadAllKernArg(sgprStart, "KernArgAddress", load))
       moduleArgs.addModuleAsFlatItems(lralwaCode)
       moduleArgs.add(SWaitCnt(lgkmcnt=0, comment="wait for %u bytes of kern args" % self.argLoader.getOffset()))
@@ -1153,7 +1153,7 @@ class KernelWriterAssembly(KernelWriter):
         module.add(SMovB32(dst=sgpr(tmpSgprLoopCounter), src=0))
 
         # offset KernArgAddress to address of M
-        hardcoded_argOffset_M = 18*4
+        hardcoded_argOffset_M = 0
         module.add(SMulI32(dst=sgpr(tmpSgprAddrM), src0=sgpr(tmpSgprNumGemm), src1=4)) # offset wgTable
         module.add(SAddU32(dst=sgpr(tmpSgprAddrM), src0=sgpr(tmpSgprAddrM), src1=hardcoded_argOffset_M)) # offset arg before M
 
