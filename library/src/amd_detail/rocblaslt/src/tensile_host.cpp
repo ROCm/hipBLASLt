@@ -1845,9 +1845,9 @@ rocblaslt_status isSolutionSupported(rocblaslt_handle       handle,
                 break;
             }
         }
-        bool isFallbackSupported = true;
         if(isNormalGemm && !isSupported)
         {
+            bool isSupported = true;
             tmpWorkspaceSize = 0;
             for(int i = 0; i < tensile_prob.gemms.size(); i++)
             {
@@ -1862,7 +1862,7 @@ rocblaslt_status isSolutionSupported(rocblaslt_handle       handle,
                 if(!((*solution->hardwarePredicate)(*hardware)
                      && (*solution->problemPredicate)(tensile_prob.gemms[i])))
                 {
-                    isFallbackSupported = false;
+                    isSupported = false;
                 }
                 else
                 {
@@ -1872,11 +1872,13 @@ rocblaslt_status isSolutionSupported(rocblaslt_handle       handle,
                 tensile_prob.gemms[i].setActivationType(actType);
                 tensile_prob.gemms[i].setActivationHPA(actHPA);
                 tensile_prob.gemms[i].setUseScaleDVec(useScaleDVec);
-                if(!isFallbackSupported)
+                if(!isSupported)
+                {
                     break;
+                }
             }
         }
-        if(!isSupported && !isFallbackSupported)
+        if(!isSupported)
         {
             log_error(__func__, "Solution is not supported");
             return rocblaslt_status_invalid_value;
