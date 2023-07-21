@@ -321,8 +321,7 @@ hipblasStatus_t hipblasLtMatrixLayoutDestroy(const hipblasLtMatrixLayout_t matLa
  *
  *  @param[in]
  *  matLayout  Pointer to the previously created structure holding the matrix
- * mdescriptor queried by this function. See \ref hipblasLtMatrixLayout_t
- * .
+ * mdescriptor queried by this function. See \ref hipblasLtMatrixLayout_t.
  *  @param[in]
  *  attr  	The attribute that will be set by this function. See \ref
  * hipblasLtMatrixLayoutAttribute_t.
@@ -350,8 +349,7 @@ hipblasStatus_t hipblasLtMatrixLayoutSetAttribute(hipblasLtMatrixLayout_t       
  *
  *  @param[in]
  *  matLayout  Pointer to the previously created structure holding the matrix
- * descriptor queried by this function. See \ref hipblasLtMatrixLayout_t
- * .
+ * descriptor queried by this function. See \ref hipblasLtMatrixLayout_t.
  *  @param[in]
  *  attr  	    The attribute that will be retrieved by this function. See
  * \ref hipblasLtMatrixLayoutAttribute_t.
@@ -429,8 +427,7 @@ hipblasStatus_t hipblasLtMatmulDescDestroy(const hipblasLtMatmulDesc_t matmulDes
  *
  *  @param[in]
  *  matmulDesc  Pointer to the previously created structure holding the matrix
- * multiply descriptor queried by this function. See \ref hipblasLtMatmulDesc_t
- * .
+ * multiply descriptor queried by this function. See \ref hipblasLtMatmulDesc_t.
  *  @param[in]
  *  attr  	The attribute that will be set by this function. See \ref
  * hipblasLtMatmulDescAttributes_t.
@@ -458,8 +455,7 @@ hipblasStatus_t hipblasLtMatmulDescSetAttribute(hipblasLtMatmulDesc_t           
  *
  *  @param[in]
  *  matmulDesc  Pointer to the previously created structure holding the matrix
- * multiply descriptor queried by this function. See \ref hipblasLtMatmulDesc_t
- * .
+ * multiply descriptor queried by this function. See \ref hipblasLtMatmulDesc_t.
  *  @param[in]
  *  attr  	    The attribute that will be retrieved by this function. See
  * \ref hipblasLtMatmulDescAttributes_t.
@@ -675,7 +671,7 @@ hipblasStatus_t
  * descriptor \p Ddesc .
  *  @param[in]
  *  algo                    Handle for matrix multiplication algorithm to be
- * used. See \ref hipblasLtMatmulAlgo_t. When NULL, an implicit heuritics query
+ * used. See \ref _hipblasLtMatmulAlgo_t . When NULL, an implicit heuristics query
  * with default search preferences will be performed to determine actual
  * algorithm to use.
  *  @param[in]
