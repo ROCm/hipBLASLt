@@ -398,6 +398,11 @@ class ArgumentLoader:
         module = Module("LoadAllKernArg")
         while numSgprToLoad > 0:
             i = 16 # 16, 8, 4, 2, 1
+            align = 4
+            while sgprStartIndex % align != 0:
+                i = i // 2
+                if i < 4:
+                    align = i
             while i >= 1:
                 if numSgprToLoad >= i:
                     numSgprToLoad -= i
