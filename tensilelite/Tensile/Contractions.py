@@ -218,7 +218,10 @@ class ProblemType:
             rv.sparseA = d['SparseA']
 
         rv.f32XdlMathOp = DataType(d['F32XdlMathOp']) if 'F32XdlMathOp' in d else DataType(0)
-        rv.supportDeviceUserArguments = d['SupportUserArgs']
+
+        rv.supportDeviceUserArguments = False
+        if 'SupportUserArgs' in d:
+            rv.supportDeviceUserArguments = d['SupportUserArgs']
         return rv
 
     def __init__(self, freeIndices=None, batchIndices=None, boundIndices=None, aDims=None, bDims=None, cDims=None, dDims=None):
