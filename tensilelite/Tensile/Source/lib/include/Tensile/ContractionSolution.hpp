@@ -63,8 +63,8 @@ namespace Tensile
         uint32_t strideA2;
         uint32_t strideB1;
         uint32_t strideB2;
-        void*    bias;
         void*    scaleDVec;
+        void*    bias;
         void*    e;
         int      biasType;
         uint32_t strideE1;

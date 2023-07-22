@@ -1027,9 +1027,11 @@ class KernelWriterAssembly(KernelWriter):
     runActivation = True if ((kernel["ProblemType"]["ActivationType"] != 'none') and (kernel["GlobalSplitU"] == 1) \
         and kernel["ActivationFused"]) else False
     storeSgprLoad = 0
+    if kernel["ProblemType"]["UseScaleDVec"] and (kernel["GlobalSplitU"] == 1):
+        storeSgprLoad += self.states.rpga
     if self.states.useBias != DataDirection.NONE and (kernel["GlobalSplitU"] == 1):
       # Does not support atomic yet
-      self.states.numSgprAddressBias = 2 # 64-bit
+      self.states.numSgprAddressBias = self.states.rpga # 64-bit
       self.states.BiasType = 0
       if self.states.needBiasType:
         if runActivation:
@@ -3919,6 +3921,9 @@ class KernelWriterAssembly(KernelWriter):
     self.defineSgpr("LoadStoreSgprs", storeSgprLoad, align=4)
     if storeSgprLoad:
       soffset = self.sgprs["LoadStoreSgprs"]
+      if kernel["ProblemType"]["UseScaleDVec"] and (kernel["GlobalSplitU"] == 1):
+        module.add(RegSet("s", "sgprAddressScaleDVec", soffset))
+        soffset += self.states.rpga
       if self.states.numSgprAddressBias:
         module.add(RegSet("s", "sgprAddressBias", soffset))
         soffset += self.states.numSgprAddressBias
@@ -3948,6 +3953,9 @@ class KernelWriterAssembly(KernelWriter):
       self.defineSgpr("SrdC", 4, 4)
       module.add(RegSet("s", "sgprSrdC", self.sgprs["SrdC"]))
       module.add(RegSet("s", "sgprSrdD", self.sgprs["SrdD"]))
+    if kernel["ProblemType"]["UseScaleDVec"] and (kernel["GlobalSplitU"] == 1):
+      self.defineSgpr("SrdScaleDVec", 4, 4)
+      module.add(RegSet("s", "sgprSrdScaleDVec", self.sgprs["SrdScaleDVec"]))
     if self.states.useBias != DataDirection.NONE:
       self.defineSgpr("SrdBias", 4, 4)
       module.add(RegSet("s", "sgprSrdBias", self.sgprs["SrdBias"]))
@@ -6572,10 +6580,6 @@ class KernelWriterAssembly(KernelWriter):
     if kernel["BufferStore"]:
       module.add(self.allocPostLoopSrd("D"))
       module.add(self.allocPostLoopSrd("C"))
-      if kernel["ProblemType"]["UseScaleDVec"] and (kernel["GlobalSplitU"] == 1):
-        labelStr = self.labels.getNameInc("ScaleDVec")
-        module.add(allocPostLoopSrdSuppress("ScaleDVec", labelStr, sgprLength=sgpr("SizeI")))
-        module.add(SMulI32(dst=sgpr("SrdScaleDVec+2"), src0=hex(self.states.bpeCinternal), src1=sgpr("SrdScaleDVec+2"), comment="ScaleDVec scaled by BPE"))# scaled by BPE
       module.add(self.computeStoreSrdStart(kernel, ["C", "D"]))
     return module
 
@@ -7296,6 +7300,11 @@ class KernelWriterAssembly(KernelWriter):
     '''
     ssslist = []
     useSize = []
+    # Init ScaleDVec address
+    if kernel["ProblemType"]["UseScaleDVec"] and (kernel["GlobalSplitU"] == 1):
+      labelStr = self.labels.getNameInc("ScaleDVec")
+      module.add(allocPostLoopSrdSuppress("ScaleDVec", labelStr, sgprLength=sgpr("SizeI")))
+      module.add(SMulI32(dst=sgpr("SrdScaleDVec+2"), src0=hex(self.states.bpeCinternal), src1=sgpr("SrdScaleDVec+2"), comment="ScaleDVec scaled by BPE"))# scaled by BPE
     # Add bias lds
     if self.states.useBias == DataDirection.READ:
       # Calculate max vgpr for bias read

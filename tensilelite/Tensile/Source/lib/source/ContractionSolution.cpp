@@ -247,7 +247,6 @@ namespace Tensile
         TensorDescriptor const& ca       = problem.compressed();
         TensorDescriptor const& metadata = problem.metadata();
 
-
         {
             int idx = 0;
             for(auto size : problem.problemSizes())
@@ -298,11 +297,6 @@ namespace Tensile
                 args.append("beta_2", inputs.beta, problem.betaType());
         }
 
-        if(problemType.useScaleDVec && (sizeMapping.globalSplitU == 1)) //kernel input data
-        {
-            args.template append<void const*>("scaleDVec", inputs.scaleDVec);
-        }
-
         size_t startStrideCD = problemType.useInitialStridesCD ? 0 : 1;
         size_t startStrideAB = problemType.useInitialStridesAB ? 0 : 1;
 
@@ -347,6 +341,11 @@ namespace Tensile
             for(size_t i = startStrideAB; i < a.dimensions(); i++)
                 args.template append<uint32_t>(concatenate_if<T_Debug>("strideMetadata", i),
                                                metadata.strides()[i]);
+        }
+
+        if(problemType.useScaleDVec && (sizeMapping.globalSplitU == 1)) //kernel input data
+        {
+            args.template append<void const*>("scaleDVec", inputs.scaleDVec);
         }
 
         bool runActivation = false;
