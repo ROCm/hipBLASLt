@@ -363,31 +363,19 @@ namespace Tensile
                 args.template append<void const*>("bias", inputs.bias);
         }
 
-        if(problemType.useE)
-        {
-            args.template append<void*>("e", inputs.e);
-        }
-
         if(problemType.useBias && (sizeMapping.globalSplitU == 1)
            && (!problemType.useGradient
                || (problemType.useGradient
                    && (problem.biasSrc() == ContractionProblemGemm::TENSOR::A
                        || problem.biasSrc() == ContractionProblemGemm::TENSOR::B))))
         {
-            if(runActivation)
-            {
-                size_t dummyInsertSize
-                    = max(DataTypeInfo::Get(problem.d().dataType()).elementSize, 4) / 4 - 1;
-                for(size_t i = 0; i < dummyInsertSize; i++)
-                {
-                    args.template append<uint32_t>("bias_type_dummy", static_cast<uint32_t>(0));
-                }
-            }
             args.template append<uint32_t>("bias_type", static_cast<uint32_t>(problem.biasType()));
+            args.template append<uint32_t>("strideBias", static_cast<uint32_t>(0)); // reserved
         }
 
         if(problemType.useE)
         {
+            args.template append<void*>("e", inputs.e);
             for(size_t i = startStrideCD; i < e.dimensions(); i++)
                 args.template append<uint32_t>(concatenate_if<T_Debug>("strideE", i),
                                                e.strides()[i]);
