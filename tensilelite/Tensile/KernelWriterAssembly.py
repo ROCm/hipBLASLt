@@ -1033,12 +1033,11 @@ class KernelWriterAssembly(KernelWriter):
       # Does not support atomic yet
       self.states.numSgprAddressBias = self.states.rpga # 64-bit
       self.states.BiasType = 0
+      self.states.BiasStride = 0
       if self.states.needBiasType:
-        if runActivation:
-          self.states.BiasType = max(1, kernel["ProblemType"]["DestDataType"].numRegisters())
-        else:
-          self.states.BiasType = 1
-      storeSgprLoad += self.states.numSgprAddressBias + self.states.BiasType
+        self.states.BiasType = 1
+        self.states.BiasStride = 1
+      storeSgprLoad += self.states.numSgprAddressBias + self.states.BiasType + self.states.BiasStride
     if kernel["ProblemType"]["UseE"] and (kernel["GlobalSplitU"] == 1):
       storeSgprLoad += self.states.rpga + self.states.e.numSgprStrides
     if runActivation:
@@ -1183,7 +1182,7 @@ class KernelWriterAssembly(KernelWriter):
           module.add(SMovB64(dst=sgpr(tmpSgprArgAddress0,2), src=sgpr("KernArgAddress",2)))
           module.add(SBranch(extValidLabelEnd.getLabelName()))
           module.add(extValidLabel)
-          module.add(SMovB32(dst=sgpr(tmpSgprArgOffsett), src=136)) # FIXME: magic number
+          module.add(SMovB32(dst=sgpr(tmpSgprArgOffsett), src=self.states.externalUserArgSize))
           module.add(SMovB32(dst=sgpr(tmpSgprAddrM), src=hardcoded_argOffset_M))
           module.add(SMovB64(dst=sgpr(tmpSgprArgAddress0,2), src=sgpr("ExternalArgAddress",2)))
           module.add(extValidLabelEnd)
@@ -1300,7 +1299,7 @@ class KernelWriterAssembly(KernelWriter):
           module.add(extLabel)
           module.addComment0("Grouped Gemm: offset address from args_start to gemm_start")
           # Currently a magic number cause the structure is fixed, should the structure gen by python so we can know the size?
-          module.add(SMulI32(dst=sgpr(tmpSgprGemmIdxLeft), src0=sgpr(tmpSgprGemmIdxLeft),src1=136))
+          module.add(SMulI32(dst=sgpr(tmpSgprGemmIdxLeft), src0=sgpr(tmpSgprGemmIdxLeft),src1=self.states.externalUserArgSize))
           module.add(SAddU32(dst=sgpr("ExternalArgAddress"), src0=sgpr("ExternalArgAddress"), src1=sgpr(tmpSgprGemmIdxLeft)))
           module.add(SAddCU32(dst=sgpr("ExternalArgAddress+1"), src0=sgpr("ExternalArgAddress+1"), src1=hex(0)))
           module.add(moduleExternalArgs)
@@ -3927,12 +3926,14 @@ class KernelWriterAssembly(KernelWriter):
       if self.states.numSgprAddressBias:
         module.add(RegSet("s", "sgprAddressBias", soffset))
         soffset += self.states.numSgprAddressBias
-      if kernel["ProblemType"]["UseE"] and (kernel["GlobalSplitU"] == 1):
-        module.add(RegSet("s", "sgprAddressE", soffset))
-        soffset += self.states.rpga
       if self.states.BiasType:
         module.add(RegSet("s", "sgprBiasType", soffset))
         soffset += self.states.BiasType
+        module.add(RegSet("s", "sgprBiasStride", soffset))
+        soffset += self.states.BiasStride
+      if kernel["ProblemType"]["UseE"] and (kernel["GlobalSplitU"] == 1):
+        module.add(RegSet("s", "sgprAddressE", soffset))
+        soffset += self.states.rpga
       if kernel["ProblemType"]["UseE"] and (kernel["GlobalSplitU"] == 1):
           module.add(RegSet("s", "sgprStridesE", soffset))
           soffset += self.states.e.numSgprStrides

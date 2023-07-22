@@ -123,11 +123,13 @@ class SignatureCOV3(Signature):
         elif writer.states.useBias == DataDirection.WRITE and (kernel["GlobalSplitU"] == 1):
             signature.addArg("ws_bias", SVK.SIG_GLOBALBUFFER, biasValueType, "generic")
 
-        if kernel["ProblemType"]["UseE"] and (kernel["GlobalSplitU"] == 1):
-            signature.addArg(      "E", SVK.SIG_GLOBALBUFFER, cptValueType, "generic")
-
         if writer.states.needBiasType:
             signature.addArg("biasType",    SVK.SIG_VALUE,        "u32")
+
+        signature.addArg("StrideBias",      SVK.SIG_VALUE,        "u32")
+
+        if kernel["ProblemType"]["UseE"] and (kernel["GlobalSplitU"] == 1):
+            signature.addArg(      "E", SVK.SIG_GLOBALBUFFER, cptValueType, "generic")
 
         if kernel["ProblemType"]["UseE"] and (kernel["GlobalSplitU"] == 1):
             for i in range(0, writer.states.e.numSgprStrides):
