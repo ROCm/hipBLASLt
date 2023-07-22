@@ -3926,7 +3926,6 @@ class KernelWriterAssembly(KernelWriter):
       if self.states.numSgprAddressBias:
         module.add(RegSet("s", "sgprAddressBias", soffset))
         soffset += self.states.numSgprAddressBias
-      if self.states.BiasType:
         module.add(RegSet("s", "sgprBiasType", soffset))
         soffset += self.states.BiasType
         module.add(RegSet("s", "sgprBiasStride", soffset))
@@ -3934,19 +3933,61 @@ class KernelWriterAssembly(KernelWriter):
       if kernel["ProblemType"]["UseE"] and (kernel["GlobalSplitU"] == 1):
         module.add(RegSet("s", "sgprAddressE", soffset))
         soffset += self.states.rpga
-      if kernel["ProblemType"]["UseE"] and (kernel["GlobalSplitU"] == 1):
-          module.add(RegSet("s", "sgprStridesE", soffset))
-          soffset += self.states.e.numSgprStrides
+        module.add(RegSet("s", "sgprStridesE", soffset))
+        soffset += self.states.e.numSgprStrides
       if runActivation:
         for name in kernel["ProblemType"]["ActivationType"].getAdditionalArgStringList():
           module.add(RegSet("s", "sgpr"+name, soffset))
           soffset += self.states.numActivationArgSize
       if self.states.numActivationTypeArgSize:
         module.add(RegSet("s", "sgprActivationType", soffset))
-      argOffset = self.argLoader.getOffset() # Backup offset
-      loadModule = module.addModuleAsFlatItems(self.argLoader.loadAllKernArg(self.sgprs["LoadStoreSgprs"], "KernArgAddress", storeSgprLoad))
-      self.states.numStoreSgprInst = loadModule.countType(SMemLoadInstruction)
-      self.argLoader.setOffset(argOffset) # Restore offset
+      if kernel["ProblemType"]["SupportUserArgs"]:
+        extReadEpilogueLabel    = Label(label=self.labels.getNameInc("LoadExternalEpilogueStruct"), comment="")
+        extReadEpilogueLabelEnd = Label(label=self.labels.getNameInc("LoadExternalEpilogueStructEnd"), comment="")
+        module.addComment0("Check if custom structure pointer is null")
+        module.add(SBranchIfNotZero("ExternalArgAddress", DataType('int64'), extReadEpilogueLabel))
+        argOffset = self.argLoader.getOffset() # Backup offset
+        loadModule = module.addModuleAsFlatItems(self.argLoader.loadAllKernArg(self.sgprs["LoadStoreSgprs"], "KernArgAddress", storeSgprLoad))
+        self.states.numStoreSgprInst = loadModule.countType(SMemLoadInstruction)
+        self.argLoader.setOffset(argOffset) # Restore offset
+        module.add(SBranch(extReadEpilogueLabelEnd.getLabelName()))
+        module.add(extReadEpilogueLabel)
+        extArgOffset = self.externalArgLoader.getOffset()
+        loadedArgs = 0
+        structAddressOffset = 0
+        loadModuleExt = Module("Count Inst")
+        if kernel["ProblemType"]["UseScaleDVec"] and (kernel["GlobalSplitU"] == 1):
+          loadModuleExt.addModuleAsFlatItems(module.addModuleAsFlatItems(self.externalArgLoader.loadAllKernArg(self.sgprs["LoadStoreSgprs"] + loadedArgs, "ExternalArgAddress", 2)))
+          loadedArgs += 2
+        structAddressOffset += (2 * self.states.bpr)
+        self.externalArgLoader.setOffset(extArgOffset + structAddressOffset)
+        biasLoadSize = self.states.numSgprAddressBias + self.states.BiasType + self.states.BiasStride
+        if self.states.numSgprAddressBias:
+          loadModuleExt.addModuleAsFlatItems(module.addModuleAsFlatItems(self.externalArgLoader.loadAllKernArg(self.sgprs["LoadStoreSgprs"] + loadedArgs, "ExternalArgAddress", biasLoadSize)))
+          loadedArgs += biasLoadSize
+        structAddressOffset += (biasLoadSize * self.states.bpr)
+        self.externalArgLoader.setOffset(extArgOffset + structAddressOffset)
+        eLoadSize = self.states.rpga + self.states.e.numSgprStrides
+        if kernel["ProblemType"]["UseE"] and (kernel["GlobalSplitU"] == 1):
+          loadModuleExt.addModuleAsFlatItems(module.addModuleAsFlatItems(self.externalArgLoader.loadAllKernArg(self.sgprs["LoadStoreSgprs"] + loadedArgs, "ExternalArgAddress", eLoadSize)))
+          loadedArgs += eLoadSize
+        structAddressOffset += (eLoadSize * self.states.bpr)
+        self.externalArgLoader.setOffset(extArgOffset + structAddressOffset)
+        needActTypeArg = 1 if self.states.numActivationTypeArgSize else 0
+        actLoadSize = len(kernel["ProblemType"]["ActivationType"].getAdditionalArgStringList()) * self.states.numActivationArgSize + needActTypeArg
+        if runActivation:
+          loadModuleExt.addModuleAsFlatItems(module.addModuleAsFlatItems(self.externalArgLoader.loadAllKernArg(self.sgprs["LoadStoreSgprs"] + loadedArgs, "ExternalArgAddress", actLoadSize)))
+          loadedArgs += actLoadSize
+        structAddressOffset += (actLoadSize * self.states.bpr)
+        self.externalArgLoader.setOffset(extArgOffset + structAddressOffset)
+        self.states.numStoreSgprInstExt = loadModuleExt.countType(SMemLoadInstruction)
+        self.externalArgLoader.setOffset(extArgOffset)
+        module.add(extReadEpilogueLabelEnd)
+      else:
+        argOffset = self.argLoader.getOffset() # Backup offset
+        loadModule = module.addModuleAsFlatItems(self.argLoader.loadAllKernArg(self.sgprs["LoadStoreSgprs"], "KernArgAddress", storeSgprLoad))
+        self.states.numStoreSgprInst = loadModule.countType(SMemLoadInstruction)
+        self.argLoader.setOffset(argOffset) # Restore offset
 
     # define the rest sgprs
     if (not self.states.doShadowInit) and kernel["BufferStore"]:

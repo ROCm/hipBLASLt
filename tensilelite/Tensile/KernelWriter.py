@@ -212,6 +212,7 @@ class StateValues:
   numSgprToLoad: int                     = 0 # For kernel args
   numStoreSgprToLoad: int                = 0 # For post-loop kernel args
   numStoreSgprInst: int                  = 0 # For pose-loop kernel args
+  numStoreSgprInstExt: int               = 0 # For pose-loop kernel args
   numSgprAddressBias: int                = 0
   BiasType: int                          = 0
 
