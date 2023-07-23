@@ -45,7 +45,6 @@ namespace Tensile
             , m_cEqualsD(args["c-equal-d"].as<bool>())
             , m_biasTypeArgs(std::vector<DataType>(1, DataType::Float))
             , m_activationType(ActivationType::None)
-            , m_activationHPA(false)
             , m_activationNoGuard(false)
             , m_activationEnumArg(std::vector<ActivationType>(1, ActivationType::None))
             , m_f32XdlMathOp(DataType::Float)
@@ -152,8 +151,6 @@ namespace Tensile
 
             if(args.count("activation-type"))
                 m_activationType = args["activation-type"].as<ActivationType>();
-            if(args.count("activation-hpa"))
-                m_activationHPA = args["activation-hpa"].as<bool>();
             if(args.count("activation-no-guard"))
                 m_activationNoGuard = args["activation-no-guard"].as<bool>();
             if(args.count("activation-enum-args"))
@@ -314,7 +311,6 @@ namespace Tensile
                         {
                             rv.back().setActivationType(m_activationType);
                         }
-                        rv.back().setActivationHPA(m_activationHPA);
                         rv.back().setActivationNoGuard(m_activationNoGuard);
                         rv.back().setUseScaleDVec(m_useScaleDVec);
                         rv.back().setScaleDVec(
