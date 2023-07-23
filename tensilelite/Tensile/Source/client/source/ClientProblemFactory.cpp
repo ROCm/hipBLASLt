@@ -49,6 +49,7 @@ namespace Tensile
             , m_activationNoGuard(false)
             , m_activationEnumArg(std::vector<ActivationType>(1, ActivationType::None))
             , m_f32XdlMathOp(DataType::Float)
+            , m_activationComputeType(DataType::Float)
             , m_useUserArgs(false)
         {
             std::vector<bool> isComplex;
@@ -136,6 +137,9 @@ namespace Tensile
                     m_constantValues[i] = 0;
                 }
             }
+
+            if(args.count("activation-compute-type"))
+                m_activationComputeType = args["activation-compute-type"].as<DataType>();
 
             if(args.count("use-e"))
                 m_useE = args["use-e"].as<bool>();
@@ -319,6 +323,7 @@ namespace Tensile
 
                         rv.back().setGroupedGemm(m_groupedGemm);
                         rv.back().setF32XdlMathOp(m_f32XdlMathOp);
+                        rv.back().setActivationComputeType(m_activationComputeType);
                         rv.back().setUseDeviceUserArguments(m_useUserArgs);
                     }
                 }
