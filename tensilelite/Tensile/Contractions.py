@@ -67,7 +67,7 @@ class ProblemType:
     StateKeys = ['operationIdentifier', 'transA', 'transB', 'aType', 'bType', 'cType', 'dType', 'eType', 'computeType',
                  'useBeta', 'useBias', 'biasSrcWhiteList', 'useE', 'useScaleDVec', 'biasDataTypeWhiteList', 'highPrecisionAccumulate',
                  'useInitialStridesAB', 'useInitialStridesCD', 'stridedBatched', 'groupedGemm',
-                 'useGradient', 'activationType', 'activationHPA', 'activationNoGuard', 'sparseA', 'f32XdlMathOp', 'supportDeviceUserArguments']
+                 'useGradient', 'activationType', 'activationHPA', 'activationComputeDataType', 'activationNoGuard', 'sparseA', 'f32XdlMathOp', 'supportDeviceUserArguments']
     @classmethod
     def FromOriginalState(cls, d):
         indices = [None]*d['TotalIndices']
@@ -202,9 +202,10 @@ class ProblemType:
         rv.activationType = ActivationType('none')
         if 'ActivationType' in d:
             rv.activationType = ActivationType(d['ActivationType'])
-        rv.activationHPA = False
+        rv.activationHPA = False # FIXME: Should be deprecated
         if 'ActivationHPA' in d:
             rv.activationHPA = d['ActivationHPA']
+        rv.activationComputeDataType = DataType(d['ActivationComputeDataType'])
         rv.activationNoGuard = False
         if 'ActivationNoGuard' in d:
             rv.activationNoGuard = d["ActivationNoGuard"]

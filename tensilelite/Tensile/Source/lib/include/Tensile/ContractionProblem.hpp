@@ -690,6 +690,16 @@ namespace Tensile
             return m_activationHPA;
         }
 
+        void setActivationComputeType(DataType value)
+        {
+            m_activationComputeType = value;
+        }
+
+        DataType activationComputeType() const
+        {
+            return m_activationComputeType;
+        }
+
         void setActivationNoGuard(bool value)
         {
             m_activationNoGuard = value;
@@ -912,6 +922,7 @@ namespace Tensile
         DataType m_betaType      = DataType::None; // for bwd-compatible
         DataType m_biasType      = DataType::None;
         DataType m_scaleDVecType = DataType::None; // if not assigned, will follow alpha-type
+        DataType m_activationComputeType = DataType::None;
 
         ContractionProblemGemm::TENSOR m_biasSrc = ContractionProblemGemm::TENSOR::D;
 

@@ -110,6 +110,7 @@ namespace Tensile
                 ("alpha-type",               po::value<DataType>()->default_value(DataType::None), "alpha data type")
                 ("beta-type",                po::value<DataType>()->default_value(DataType::None), "beta data type")
                 ("f32-xdl-math-op",          po::value<DataType>()->default_value(DataType::None), "Use xf32 compute for float input and output matrices.")
+                ("activation-compute-type",  po::value<DataType>()->default_value(DataType::None), "Activation compute type.")
                 ("high-precision-accumulate", po::value<bool>()->default_value(false), "Use high-precision accumulate.")
                 ("sparse-a",                 po::value<bool>()->default_value(false), "A matrix is sparse matrix.")
                 ("strided-batched",          po::value<bool>()->default_value(true), "Use strided-batched or general batched")

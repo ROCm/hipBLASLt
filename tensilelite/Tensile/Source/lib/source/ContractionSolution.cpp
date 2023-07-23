@@ -1932,7 +1932,7 @@ namespace Tensile
         if(problems[0].computeType() == DataType::Float
            && (problems[0].activationType() == ActivationType::None
                || (problems[0].activationType() != ActivationType::None
-                   && problems[0].activationHPA())))
+                   && problems[0].activationComputeType() == DataType::Float)))
         {
             auto requiredSize = sizeof(DeviceUserArguments<float, float>) * problems.size();
             static_cast<void>(hipHostMalloc(dUAHost, requiredSize, 0));
