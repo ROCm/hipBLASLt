@@ -680,16 +680,6 @@ namespace Tensile
             return m_activationType;
         }
 
-        void setActivationHPA(bool value)
-        {
-            m_activationHPA = value;
-        }
-
-        bool activationHPA() const
-        {
-            return m_activationHPA;
-        }
-
         void setActivationComputeType(DataType value)
         {
             m_activationComputeType = value;
@@ -857,7 +847,7 @@ namespace Tensile
             size_t                   numAll = getAdditionalArgNum(ActivationType::All);
             std::vector<std::string> s      = generateArgNameList(numAll, "activation");
             size_t                   i      = 0;
-            if(m_activationHPA)
+            if(m_activationComputeType == m_betaType)
             {
                 for(i = 0; i < num; i++)
                     c.push_back({s[i], m_betaType});
@@ -911,7 +901,6 @@ namespace Tensile
         bool           m_useScaleDVec            = false;
         ActivationType m_activationType          = ActivationType::None;
         ActivationType m_activationEnumArg       = ActivationType::None;
-        bool           m_activationHPA           = false;
         bool           m_activationNoGuard       = false;
         bool           m_aSparse                 = false;
 

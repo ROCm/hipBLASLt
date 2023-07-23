@@ -446,7 +446,6 @@ namespace Tensile
             bool                  groupedGemm               = false;
             bool                  fp16AltImpl               = false;
             ActivationType        activationType            = ActivationType::None;
-            bool                  activationHPA             = false;
             bool                  activationNoGuard         = false;
             std::vector<int>      biasSrcWhiteList;
             std::vector<DataType> biasDataTypeWhiteList;
