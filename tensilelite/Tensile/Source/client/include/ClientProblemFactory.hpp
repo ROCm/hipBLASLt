@@ -92,6 +92,7 @@ namespace Tensile
             std::vector<ActivationType>      m_activationEnumArg;
             size_t                           m_maxWorkspaceSize = 0;
             DataType                         m_f32XdlMathOp;
+            DataType                         m_activationComputeType;
             std::vector<std::vector<size_t>> m_problemSizes;
             bool                             m_useUserArgs;
         };
