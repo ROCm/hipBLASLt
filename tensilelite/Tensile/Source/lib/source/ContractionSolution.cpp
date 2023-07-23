@@ -386,26 +386,21 @@ namespace Tensile
             for(int i = 0; i < inputs.activationArgs.size(); i++)
             {
                 std::string name = "activation_" + std::to_string(i);
-                if(problemType.activationHPA) // Same as hpa type.
+
+                if(problemType.activationComputeDataType == DataType::Half)
                 {
-                    args.append(name.c_str(), inputs.activationArgs[i], problem.betaType());
+                    args.append((name + "_pk").c_str(),
+                                inputs.activationArgs[i],
+                                problemType.activationComputeDataType);
                 }
-                else if(problem.d().dataType() == DataType::Half)
+                else if(problemType.activationComputeDataType == DataType::BFloat16)
                 {
-                    args.append(
-                        (name + "_pk").c_str(), inputs.activationArgs[i], problem.d().dataType());
-                    args.append(name.c_str(), inputs.activationArgs[i], problem.d().dataType());
+                    // BFloat16 to float32.
+                    args.template append<uint16_t>((name + "_append").c_str(),
+                                                   static_cast<uint16_t>(0));
                 }
-                else
-                {
-                    if(problem.d().dataType() == DataType::BFloat16)
-                    {
-                        // BFloat16 to float32.
-                        args.template append<uint16_t>((name + "_append").c_str(),
-                                                       static_cast<uint16_t>(0));
-                    }
-                    args.append(name.c_str(), inputs.activationArgs[i], problem.d().dataType());
-                }
+                args.append(
+                    name.c_str(), inputs.activationArgs[i], problemType.activationComputeDataType);
             }
             if(problemType.activationType == ActivationType::All)
             {
@@ -846,11 +841,7 @@ namespace Tensile
             for(int i = 0; i < inputs.activationArgs.size(); i++)
             {
                 std::string name = "activation_" + std::to_string(i);
-                if(problemType.activationHPA) // Same as hpa type.
-                {
-                    args.append(name.c_str(), inputs.activationArgs[i], problem.betaType());
-                }
-                else if(problem.d().dataType() == DataType::BFloat16)
+                if(problemType.activationComputeDataType == DataType::BFloat16)
                 {
                     args.template append<float>(
                         name.c_str(),
@@ -858,7 +849,9 @@ namespace Tensile
                 }
                 else
                 {
-                    args.append(name.c_str(), inputs.activationArgs[i], problem.d().dataType());
+                    args.append(name.c_str(),
+                                inputs.activationArgs[i],
+                                problemType.activationComputeDataType);
                 }
             }
             if(problemType.activationType == ActivationType::All)
@@ -1200,7 +1193,8 @@ namespace Tensile
                 name += actName;
             }
         }
-        if(problemType.activationHPA)
+        if((problemType.activationComputeDataType == problemType.computeType)
+           && problemType.highPrecisionAccumulate)
         {
             name += "h";
         }
@@ -1273,11 +1267,7 @@ namespace Tensile
             for(int i = 0; i < inputs.activationArgs.size(); i++)
             {
                 std::string name = "activation_" + std::to_string(i);
-                if(problemType.activationHPA) // Same as hpa type.
-                {
-                    rv.args.append(name.c_str(), inputs.activationArgs[i], problem.betaType());
-                }
-                else if(problem.d().dataType() == DataType::BFloat16)
+                if(problemType.activationComputeDataType == DataType::BFloat16)
                 {
                     rv.args.append<float>(
                         name.c_str(),
@@ -1285,7 +1275,9 @@ namespace Tensile
                 }
                 else
                 {
-                    rv.args.append(name.c_str(), inputs.activationArgs[i], problem.d().dataType());
+                    rv.args.append(name.c_str(),
+                                   inputs.activationArgs[i],
+                                   problemType.activationComputeDataType);
                 }
             }
         }
@@ -1333,7 +1325,8 @@ namespace Tensile
                 name += actName;
             }
         }
-        if(problemType.activationHPA)
+        if((problemType.activationComputeDataType == problemType.computeType)
+           && problemType.highPrecisionAccumulate)
         {
             name += "h";
         }

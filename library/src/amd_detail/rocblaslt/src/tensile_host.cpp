@@ -450,13 +450,12 @@ namespace
         if(is_act_enabled(prob.epilogue))
         {
             tensileProblem.setActivationType(Tensile::ActivationType::All);
-            tensileProblem.setActivationHPA(sizeof(Tc) > sizeof(Ti));
+            tensileProblem.setActivationComputeType(Tensile_Tc);
             tensileProblem.setActivationEnumArg(getTensileActivationType(prob.epilogue));
         }
         else
         {
             tensileProblem.setActivationType(Tensile::ActivationType::None);
-            tensileProblem.setActivationHPA(false);
         }
 
         // set use gradient
@@ -587,7 +586,6 @@ namespace
         {
             tensileProblem.setUseBias(false);
             tensileProblem.setActivationType(Tensile::ActivationType::None);
-            tensileProblem.setActivationHPA(false);
             tensileProblem.setUseScaleDVec(false);
             tensileProblem.setUseE(false);
             tensileProblem.setUseGradient(false);
@@ -611,13 +609,12 @@ namespace
             if(is_act_enabled(prob.epilogue))
             {
                 tensileProblem.setActivationType(Tensile::ActivationType::All);
-                tensileProblem.setActivationHPA(sizeof(Tc) > sizeof(Ti));
+                tensileProblem.setActivationComputeType(Tensile_Tc);
                 tensileProblem.setActivationEnumArg(tensileAct);
             }
             else
             {
                 tensileProblem.setActivationType(Tensile::ActivationType::None);
-                tensileProblem.setActivationHPA(false);
                 tensileProblem.setActivationEnumArg(Tensile::ActivationType::None);
             }
 
@@ -1317,20 +1314,17 @@ rocblaslt_status makeArgument(rocblaslt_handle             handle,
             // Backup and restore settings
             bool                    useBias      = data->problem.useBias();
             Tensile::ActivationType actType      = data->problem.activationType();
-            bool                    useActHPA    = data->problem.activationHPA();
             bool                    useScaleDVec = data->problem.useScaleDVec();
             bool                    useE         = data->problem.useE();
             bool                    useGrad      = data->problem.useGradient();
             data->problem.setUseBias(solution->problemType.useBias);
             data->problem.setActivationType(solution->problemType.activationType);
-            data->problem.setActivationHPA(solution->problemType.activationHPA);
             data->problem.setUseScaleDVec(solution->problemType.useScaleDVec);
             data->problem.setUseE(solution->problemType.useE);
             data->problem.setUseGradient(solution->problemType.useGradient);
             data->kernels = solution->solve(data->problem, data->inputs, *hardware);
             data->problem.setUseBias(useBias);
             data->problem.setActivationType(actType);
-            data->problem.setActivationHPA(useActHPA);
             data->problem.setUseScaleDVec(useScaleDVec);
             data->problem.setUseE(useE);
             data->problem.setUseGradient(useGrad);
@@ -1356,11 +1350,9 @@ rocblaslt_status makeArgument(rocblaslt_handle             handle,
             {
                 useBias.push_back(data->problem.gemms[i].useBias());
                 actType.push_back(data->problem.gemms[i].activationType());
-                actHPA.push_back(data->problem.gemms[i].activationHPA());
                 useScaleDVec.push_back(data->problem.gemms[i].useScaleDVec());
                 data->problem.gemms[i].setUseBias(solution->problemType.useBias);
                 data->problem.gemms[i].setActivationType(solution->problemType.activationType);
-                data->problem.gemms[i].setActivationHPA(solution->problemType.activationHPA);
                 data->problem.gemms[i].setUseScaleDVec(solution->problemType.useScaleDVec);
             }
 
@@ -1385,7 +1377,6 @@ rocblaslt_status makeArgument(rocblaslt_handle             handle,
             {
                 data->problem.gemms[i].setUseBias(useBias[i]);
                 data->problem.gemms[i].setActivationType(actType[i]);
-                data->problem.gemms[i].setActivationHPA(actHPA[i]);
                 data->problem.gemms[i].setUseScaleDVec(useScaleDVec[i]);
             }
         }
@@ -1526,19 +1517,16 @@ inline auto getSolutions(
     {
         auto useBias      = tensile_prob.useBias();
         auto actType      = tensile_prob.activationType();
-        auto actHPA       = tensile_prob.activationHPA();
         auto useScaleDVec = tensile_prob.useScaleDVec();
         auto useE         = tensile_prob.useE();
         tensile_prob.setUseBias(false);
         tensile_prob.setActivationType(Tensile::ActivationType::None);
-        tensile_prob.setActivationHPA(false);
         tensile_prob.setUseScaleDVec(false);
         tensile_prob.setUseE(false);
         solutions_fallback = library->findTopSolutions(tensile_prob, *hardware, requestedAlgoCount);
         // restore
         tensile_prob.setUseBias(useBias);
         tensile_prob.setActivationType(actType);
-        tensile_prob.setActivationHPA(actHPA);
         tensile_prob.setUseScaleDVec(useScaleDVec);
         tensile_prob.setUseE(useE);
     }
@@ -1771,12 +1759,10 @@ rocblaslt_status isSolutionSupported(rocblaslt_handle       handle,
             {
                 auto useBias      = tensile_prob.useBias();
                 auto actType      = tensile_prob.activationType();
-                auto actHPA       = tensile_prob.activationHPA();
                 auto useScaleDVec = tensile_prob.useScaleDVec();
                 auto useE         = tensile_prob.useE();
                 tensile_prob.setUseBias(false);
                 tensile_prob.setActivationType(Tensile::ActivationType::None);
-                tensile_prob.setActivationHPA(false);
                 tensile_prob.setUseScaleDVec(false);
                 tensile_prob.setUseE(false);
                 bool isSup = (*solution->hardwarePredicate)(*hardware)
@@ -1785,7 +1771,6 @@ rocblaslt_status isSolutionSupported(rocblaslt_handle       handle,
                     *workspaceSizeInBytes = solution->requiredWorkspaceSize(tensile_prob);
                 tensile_prob.setUseBias(useBias);
                 tensile_prob.setActivationType(actType);
-                tensile_prob.setActivationHPA(actHPA);
                 tensile_prob.setUseScaleDVec(useScaleDVec);
                 tensile_prob.setUseE(useE);
                 if(!isSup)
@@ -1853,11 +1838,9 @@ rocblaslt_status isSolutionSupported(rocblaslt_handle       handle,
             {
                 auto useBias      = tensile_prob.gemms[i].useBias();
                 auto actType      = tensile_prob.gemms[i].activationType();
-                auto actHPA       = tensile_prob.gemms[i].activationHPA();
                 auto useScaleDVec = tensile_prob.gemms[i].useScaleDVec();
                 tensile_prob.gemms[i].setUseBias(false);
                 tensile_prob.gemms[i].setActivationType(Tensile::ActivationType::None);
-                tensile_prob.gemms[i].setActivationHPA(false);
                 tensile_prob.gemms[i].setUseScaleDVec(false);
                 if(!((*solution->hardwarePredicate)(*hardware)
                      && (*solution->problemPredicate)(tensile_prob.gemms[i])))
@@ -1870,7 +1853,6 @@ rocblaslt_status isSolutionSupported(rocblaslt_handle       handle,
                 }
                 tensile_prob.gemms[i].setUseBias(useBias);
                 tensile_prob.gemms[i].setActivationType(actType);
-                tensile_prob.gemms[i].setActivationHPA(actHPA);
                 tensile_prob.gemms[i].setUseScaleDVec(useScaleDVec);
                 if(!isSupported)
                 {
@@ -2026,11 +2008,9 @@ rocblaslt_status getBestSolutions(rocblaslt_handle       handle,
             {
                 useBias.push_back(data->problem.gemms[i].useBias());
                 actType.push_back(data->problem.gemms[i].activationType());
-                actHPA.push_back(data->problem.gemms[i].activationHPA());
                 useScaleDVec.push_back(data->problem.gemms[i].useScaleDVec());
                 data->problem.gemms[i].setUseBias(false);
                 data->problem.gemms[i].setActivationType(Tensile::ActivationType::None);
-                data->problem.gemms[i].setActivationHPA(false);
                 data->problem.gemms[i].setUseScaleDVec(false);
             }
             solutions_fallback = library->findTopSolutionsGroupedGemm(
@@ -2039,7 +2019,6 @@ rocblaslt_status getBestSolutions(rocblaslt_handle       handle,
             {
                 data->problem.gemms[i].setUseBias(useBias[i]);
                 data->problem.gemms[i].setActivationType(actType[i]);
-                data->problem.gemms[i].setActivationHPA(actHPA[i]);
                 data->problem.gemms[i].setUseScaleDVec(useScaleDVec[i]);
             }
         }

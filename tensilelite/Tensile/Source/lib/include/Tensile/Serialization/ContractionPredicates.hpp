@@ -98,7 +98,7 @@ namespace Tensile
                     Base::template Pair<Predicates::Contraction::EqualityMatching>(),
                     Base::template Pair<Predicates::Contraction::UseGradientEqual>(),
                     Base::template Pair<Predicates::Contraction::ActivationEqual>(),
-                    Base::template Pair<Predicates::Contraction::ActivationHPAEqual>(),
+                    Base::template Pair<Predicates::Contraction::ActivationComputeTypeEqual>(),
                     Base::template Pair<Predicates::Contraction::ActivationNoGuardEqual>(),
                     Base::template Pair<Predicates::Contraction::ActivationEnumWhiteList>(),
                     Base::template Pair<Predicates::Contraction::UseBiasEqual>(),
@@ -393,8 +393,8 @@ namespace Tensile
         };
 
         template <typename IO>
-        struct MappingTraits<Predicates::Contraction::ActivationHPAEqual, IO>
-            : public AutoMappingTraits<Predicates::Contraction::ActivationHPAEqual, IO>
+        struct MappingTraits<Predicates::Contraction::ActivationComputeTypeEqual, IO>
+            : public AutoMappingTraits<Predicates::Contraction::ActivationComputeTypeEqual, IO>
         {
         };
 

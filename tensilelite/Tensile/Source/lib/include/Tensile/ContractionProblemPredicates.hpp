@@ -1612,30 +1612,32 @@ namespace Tensile
                 }
             };
 
-            struct ActivationHPAEqual
-                : public Predicate_CRTP<ActivationHPAEqual, ContractionProblemGemm>
+            struct ActivationComputeTypeEqual
+                : public Predicate_CRTP<ActivationComputeTypeEqual, ContractionProblemGemm>
             {
                 enum
                 {
                     HasIndex = false,
                     HasValue = true
                 };
-                bool value;
+                DataType value;
 
-                ActivationHPAEqual() = default;
-                ActivationHPAEqual(bool value)
+                ActivationComputeTypeEqual() = default;
+                ActivationComputeTypeEqual(DataType value)
                     : value(value)
                 {
                 }
 
                 static std::string Type()
                 {
-                    return "ActivationHPA";
+                    return "ActivationComputeType";
                 }
 
                 virtual bool operator()(ContractionProblemGemm const& problem) const override
                 {
-                    return problem.activationHPA() == value;
+                    if(problem.activationType() == ActivationType::None)
+                        return true;
+                    return problem.activationComputeType() == value;
                 }
             };
 
