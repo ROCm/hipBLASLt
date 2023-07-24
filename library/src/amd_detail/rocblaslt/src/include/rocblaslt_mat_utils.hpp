@@ -168,14 +168,15 @@ inline rocblaslt_status validateMatmulArgs(int64_t     m,
     // quick return 0 is valid in BLAS
     // Note: k==0 is not a quick return, because C must still be multiplied by
     // beta
-    if(!m || !n || !num_batches_a)
+    // Note: we don't check n here since grouped gemm accept some n == 0
+    if(!m || !num_batches_a)
         return rocblaslt_status_success;
 
     if(!beta)
         return rocblaslt_status_invalid_pointer;
 
     // pointers must be valid
-    if((k && (!a || !b || !alpha)) || !c || !d)
+    if(n && ((k && (!a || !b || !alpha)) || !c || !d))
         return rocblaslt_status_invalid_pointer;
 
     return rocblaslt_status_continue;
