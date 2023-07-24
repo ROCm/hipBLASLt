@@ -1563,7 +1563,7 @@ namespace Tensile
                 {
                     bool rv = (*this)(problem);
                     stream << this->type() << "(" << ToString(problem.activationType())
-                           << " == " << ToString(value) << "): " << rv;
+                           << " == " << ToString(value) << "(solution)): " << rv;
                     return rv;
                 }
             };
@@ -1940,6 +1940,15 @@ namespace Tensile
                         return "The solution supports DeviceUserArguments";
                     else
                         return "The solution does not support DeviceUserArguments";
+                }
+
+                virtual bool debugEval(ContractionProblemGemm const& problem,
+                                       std::ostream&                 stream) const override
+                {
+                    bool rv = (*this)(problem);
+                    stream << this->type() << "(" << problem.getUseDeviceUserArguments()
+                           << " == " << value << "(solution)): " << rv;
+                    return rv;
                 }
             };
         } // namespace Contraction
