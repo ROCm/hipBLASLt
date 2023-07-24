@@ -409,6 +409,11 @@ namespace
         // set batch mode
         tensileProblem.setStridedBatched(prob.strided_batch);
         tensileProblem.setGroupedGemm(prob.grouped_gemm);
+        // FIXME: Hardcoded, fix prob.trans_b == HIPBLAS_OP_N when GSU is supported
+        if(prob.grouped_gemm && prob.trans_b == HIPBLAS_OP_N)
+            tensileProblem.setUseDeviceUserArguments(true);
+        else
+            tensileProblem.setUseDeviceUserArguments(false);
 
         // alpha and beta are stored by value in Tensile::TypedContractionInputs
         // alpha and beta are copied from host to Tensile::TypedContractionInputs
@@ -564,6 +569,11 @@ namespace
         // set batch mode
         tensileProblem.setStridedBatched(prob.strided_batch);
         tensileProblem.setGroupedGemm(prob.grouped_gemm);
+        // FIXME: Hardcoded, fix prob.trans_b == HIPBLAS_OP_N when GSU is supported
+        if(prob.grouped_gemm && prob.trans_b == HIPBLAS_OP_N)
+            tensileProblem.setUseDeviceUserArguments(true);
+        else
+            tensileProblem.setUseDeviceUserArguments(false);
 
         // alpha and beta are stored by value in Tensile::TypedContractionInputs
         // alpha and beta are copied from host to Tensile::TypedContractionInputs
@@ -1009,6 +1019,7 @@ struct TensileDataGemm
     Tensile::ContractionProblemGemm        problem;
     Tensile::ContractionInputs             inputs;
     std::vector<Tensile::KernelInvocation> kernels;
+    int                                    algoIndex = std::numeric_limits<int>::max();
 };
 
 struct TensileDataGroupedGemm
@@ -1016,6 +1027,7 @@ struct TensileDataGroupedGemm
     Tensile::ContractionProblemGroupedGemm problem;
     Tensile::ContractionGroupedInputs      inputs;
     std::vector<Tensile::KernelInvocation> kernels;
+    int                                    algoIndex = std::numeric_limits<int>::max();
     std::shared_ptr<void>                  hipHostMemory;
     size_t                                 hipHostMemorySize;
 };
@@ -1107,6 +1119,7 @@ rocblaslt_status runContractionProblem(rocblaslt_handle                         
         updateTensileProblem(algo->fallback, prob, data->problem);
 
         int* solutionIndex = (int*)algo->data;
+        data->algoIndex    = *solutionIndex;
 
         auto solution = library->getSolutionByIndex(data->problem, *hardware, *solutionIndex);
         if(!solution)
@@ -1307,7 +1320,8 @@ rocblaslt_status makeArgument(rocblaslt_handle             handle,
             std::shared_ptr<TensileDataGemm> data
                 = std::static_pointer_cast<TensileDataGemm>(gemmData);
 
-            auto solution = library->getSolutionByIndex(data->problem, *hardware, *solutionIndex);
+            data->algoIndex = *solutionIndex;
+            auto solution   = library->getSolutionByIndex(data->problem, *hardware, *solutionIndex);
 
             data->inputs.ws = workspace;
 
@@ -1334,6 +1348,7 @@ rocblaslt_status makeArgument(rocblaslt_handle             handle,
             std::shared_ptr<TensileDataGroupedGemm> data
                 = std::static_pointer_cast<TensileDataGroupedGemm>(gemmData);
 
+            data->algoIndex = *solutionIndex;
             auto solution
                 = library->getSolutionByIndex(data->problem.gemms[0], *hardware, *solutionIndex);
 
@@ -1431,6 +1446,123 @@ rocblaslt_status runKernelFromInvocation(rocblaslt_handle       handle,
         else
         {
             return rocblaslt_status_invalid_value;
+        }
+
+        status = rocblaslt_status_success;
+    }
+    catch(const std::exception& e)
+    {
+#if 0
+        std::ostream msg;
+        print_once(msg << "\nrocblaslt error: " << (solution ? "" : "No ")
+                       << "Tensile solution found, but exception thrown for " << prob << e.what());
+#endif
+    }
+    catch(...)
+    {
+#if 0
+        std::ostream msg;
+        print_once(msg << "\nrocblaslt error: " << (solution ? "" : "No ")
+                       << "Tensile solution found, but unknown exception thrown for " << prob);
+#endif
+    }
+
+    return status;
+}
+
+rocblaslt_status getDeviceUserArgumentsValuesFromContractionProblem(rocblaslt_handle       handle,
+                                                                    rocblaslt::RocGemmType gemmType,
+                                                                    std::shared_ptr<void>  gemmData,
+                                                                    void* hostDeviceUserArgs)
+{
+    rocblaslt_status status = rocblaslt_status_internal_error;
+    try
+    {
+        std::shared_ptr<Tensile::MasterSolutionLibrary<Tensile::ContractionProblemGemm>> library;
+        std::shared_ptr<hipDeviceProp_t>                                                 deviceProp;
+        std::shared_ptr<Tensile::Hardware>                                               hardware;
+
+        auto adapter = get_library_and_adapter(&library, &deviceProp, handle->device);
+
+        if(gemmType == rocblaslt::RocGemmType::ROCBLASLT_GROUPED_GEMM)
+        {
+            std::shared_ptr<TensileDataGroupedGemm> data
+                = std::static_pointer_cast<TensileDataGroupedGemm>(gemmData);
+            auto  solution = library->getSolutionByIndex(data->algoIndex);
+            auto& problem  = data->problem.gemms[0];
+            if(problem.alphaType() == Tensile::DataType::Float
+               && problem.betaType() == Tensile::DataType::Float
+               && problem.activationComputeType() == Tensile::DataType::Float)
+            {
+                solution->setDeviceUserArgs(
+                    data->problem.gemms,
+                    data->inputs,
+                    (Tensile::DeviceUserArguments<float, float, float>*)hostDeviceUserArgs);
+            }
+            else
+            {
+                throw std::runtime_error(
+                    "Currently only supports DeviceUserArguments<float, float, float>");
+            }
+        }
+        else
+        {
+            return rocblaslt_status_not_implemented;
+        }
+        status = rocblaslt_status_success;
+    }
+    catch(const std::exception& e)
+    {
+#if 0
+        std::ostream msg;
+        print_once(msg << "\nrocblaslt error: "
+                       << "Is hostDeviceUserArgs not match the size of the problem type? " << prob << e.what());
+#endif
+    }
+    catch(...)
+    {
+#if 0
+        std::ostream msg;
+        print_once(msg << "\nrocblaslt error: "
+                       << "Is hostDeviceUserArgs not match the size of the problem type? " << prob);
+#endif
+    }
+
+    return status;
+}
+
+rocblaslt_status runKernelFromDeviceUserArguments(rocblaslt_handle             handle,
+                                                  rocblaslt::RocGemmType       gemmType,
+                                                  size_t                       gemmCount,
+                                                  std::shared_ptr<void>        gemmData,
+                                                  const rocblaslt_matmul_algo& algo,
+                                                  void*                        deviceUserArgs,
+                                                  void*                        workspace,
+                                                  hipStream_t                  stream)
+{
+    rocblaslt_status status = rocblaslt_status_internal_error;
+    try
+    {
+        std::shared_ptr<Tensile::MasterSolutionLibrary<Tensile::ContractionProblemGemm>> library;
+        std::shared_ptr<hipDeviceProp_t>                                                 deviceProp;
+        std::shared_ptr<Tensile::Hardware>                                               hardware;
+
+        auto adapter = get_library_and_adapter(&library, &deviceProp, handle->device);
+
+        int* solutionIndex = (int*)algo.data;
+        // don't overwrite data->algoIndex = *solutionIndex; here
+        if(gemmType == rocblaslt::RocGemmType::ROCBLASLT_GROUPED_GEMM)
+        {
+            auto solution = library->getSolutionByIndex(*solutionIndex);
+            std::shared_ptr<TensileDataGroupedGemm> data
+                = std::static_pointer_cast<TensileDataGroupedGemm>(gemmData);
+            auto kernel = solution->solveGroupedGemmGPU(
+                data->problem.gemms, data->inputs, deviceUserArgs, workspace, stream);
+            static_cast<void>(adapter->launchKernels(kernel, stream, nullptr, nullptr));
+        }
+        else
+        {
+            return rocblaslt_status_not_implemented;
         }
 
         status = rocblaslt_status_success;
@@ -1727,7 +1859,7 @@ rocblaslt_status isSolutionSupported(rocblaslt_handle       handle,
     *workspaceSizeInBytes = 0;
 
     int* solutionIndex = (int*)algo->data;
-
+    // don't overwrite data->algoIndex = *solutionIndex; here
     if constexpr(std::is_same<MyProblem, Tensile::ContractionProblemGemm>::value)
     {
         auto        solution = library->getSolutionByIndex(tensile_prob, *hardware, *solutionIndex);
@@ -1804,6 +1936,11 @@ rocblaslt_status isSolutionSupported(rocblaslt_handle       handle,
             if(!((*solution->hardwarePredicate)(*hardware)
                  && (*solution->problemPredicate)(tensile_prob.gemms[i])))
             {
+#if 0
+                std::cout << "Match " << "[" << i << "]: " << solution->description();
+                solution->problemPredicate->debugEval(tensile_prob.gemms[i], std::cout);
+                std::cout << std::endl;
+#endif
                 isSupported = false;
                 break;
             }

@@ -245,6 +245,20 @@ rocblaslt_status runKernelFromInvocation(rocblaslt_handle       handle,
                                          std::shared_ptr<void>  gemmData,
                                          hipStream_t            stream);
 
+rocblaslt_status getDeviceUserArgumentsValuesFromContractionProblem(rocblaslt_handle       handle,
+                                                                    rocblaslt::RocGemmType gemmType,
+                                                                    std::shared_ptr<void>  gemmData,
+                                                                    void* hostDeviceUserArgs);
+
+rocblaslt_status runKernelFromDeviceUserArguments(rocblaslt_handle             handle,
+                                                  rocblaslt::RocGemmType       gemmType,
+                                                  size_t                       gemmCount,
+                                                  std::shared_ptr<void>        gemmData,
+                                                  const rocblaslt_matmul_algo& algo,
+                                                  void*                        deviceUserArgs,
+                                                  void*                        workspace,
+                                                  hipStream_t                  stream);
+
 /***********************************************************************************
  * Whether Tensile has been initialized for at least one device (used for
  *testing) *

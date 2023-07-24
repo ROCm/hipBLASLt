@@ -462,6 +462,33 @@ namespace hipblaslt_ext
         return m_problem_types;
     }
 
+    HIPBLASLT_EXPORT hipblasStatus_t
+        GroupedGemm::getDefaultValueForDeviceUserArguments(void* hostDeviceUserArgs)
+    {
+        auto gemmType = static_cast<rocblaslt::RocGemmType>(m_gemm_type);
+        return RocBlasLtStatusToHIPStatus(rocblaslt_get_default_user_args(
+            (rocblaslt_handle)m_handle, gemmType, m_data, hostDeviceUserArgs));
+    }
+
+    HIPBLASLT_EXPORT hipblasStatus_t GroupedGemm::runUserArgs(const hipblasLtMatmulAlgo_t& algo,
+                                                              void*       deviceUserArgs,
+                                                              void*       workspace,
+                                                              hipStream_t stream)
+    {
+        if(m_gemm_count == 0)
+            return HIPBLAS_STATUS_INVALID_VALUE;
+        auto gemmType = static_cast<rocblaslt::RocGemmType>(m_gemm_type);
+        auto rocalgo  = reinterpret_cast<const rocblaslt_matmul_algo*>(&algo);
+        return RocBlasLtStatusToHIPStatus(rocblaslt_run_user_args_cpp((rocblaslt_handle)m_handle,
+                                                                      gemmType,
+                                                                      m_gemm_count,
+                                                                      m_data,
+                                                                      *rocalgo,
+                                                                      deviceUserArgs,
+                                                                      workspace,
+                                                                      stream));
+    }
+
     hipblasStatus_t matmulIsAlgoSupported(hipblasLtHandle_t       handle,
                                           hipblasLtMatmulDesc_t   matmulDesc,
                                           const void*             alpha,

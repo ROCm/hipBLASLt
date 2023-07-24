@@ -482,58 +482,48 @@ namespace Tensile
                                                                Tensile::dim3&       numWorkItems,
                                                                KA&                  h_args) const
     {
-
-        uint32_t wgLeft  = 0;
-        uint32_t wgRight = 0;
-
         for(int idx = 0; idx < problems.size(); idx++)
         {
-            if constexpr(std::is_same<KA, KernelArguments>::value)
+            auto problem = problems[idx];
+
+            numWorkGroups.x = 1;
+            numWorkGroups.y = 1;
+            numWorkGroups.z = 1;
+
+            for(size_t i = 0; i < problem.freeIndicesA().size(); i++)
             {
-                auto problem = problems[idx];
-
-                numWorkGroups.x = 1;
-                numWorkGroups.y = 1;
-                numWorkGroups.z = 1;
-
-                for(size_t i = 0; i < problem.freeIndicesA().size(); i++)
-                {
-                    numWorkGroups.x *= problem.freeSizeA(i);
-                }
-
-                for(size_t i = 0; i < problem.freeIndicesB().size(); i++)
-                {
-                    numWorkGroups.y *= problem.freeSizeB(i);
-                }
-
-                for(size_t i = 0; i < problem.batchIndices().size(); i++)
-                {
-                    if(sizeMapping.packBatchDims & 0x1)
-                        numWorkGroups.x *= problem.batchSize(i);
-                    if(sizeMapping.packBatchDims & 0x2)
-                        numWorkGroups.y *= problem.batchSize(i);
-                    if(!sizeMapping.packBatchDims)
-                        numWorkGroups.z *= problem.batchSize(i);
-                }
-
-                if(problem.transposeC01())
-                    std::swap(numWorkGroups.x, numWorkGroups.y);
-
-                numWorkGroups.x = CeilDivide(numWorkGroups.x, sizeMapping.macroTile.x);
-                numWorkGroups.y = CeilDivide(numWorkGroups.y, sizeMapping.macroTile.y);
-
-                numWorkGroups.y *= sizeMapping.globalSplitU;
-
-                numWorkItems.x += (workGroupSize.x * numWorkGroups.x * workGroupSize.y
-                                   * numWorkGroups.y * workGroupSize.z * numWorkGroups.z);
-
-                wgRight = numWorkItems.x / workGroupSize.x / workGroupSize.y / workGroupSize.z;
-                h_args.template append<uint32_t>("wgTable", wgLeft);
-                wgLeft = wgRight;
+                numWorkGroups.x *= problem.freeSizeA(i);
             }
-            else
+
+            for(size_t i = 0; i < problem.freeIndicesB().size(); i++)
             {
-                h_args.template append<uint32_t>("wgTable", wgLeft);
+                numWorkGroups.y *= problem.freeSizeB(i);
+            }
+
+            for(size_t i = 0; i < problem.batchIndices().size(); i++)
+            {
+                if(sizeMapping.packBatchDims & 0x1)
+                    numWorkGroups.x *= problem.batchSize(i);
+                if(sizeMapping.packBatchDims & 0x2)
+                    numWorkGroups.y *= problem.batchSize(i);
+                if(!sizeMapping.packBatchDims)
+                    numWorkGroups.z *= problem.batchSize(i);
+            }
+
+            if(problem.transposeC01())
+                std::swap(numWorkGroups.x, numWorkGroups.y);
+
+            numWorkGroups.x = CeilDivide(numWorkGroups.x, sizeMapping.macroTile.x);
+            numWorkGroups.y = CeilDivide(numWorkGroups.y, sizeMapping.macroTile.y);
+
+            numWorkGroups.y *= sizeMapping.globalSplitU;
+
+            numWorkItems.x += (workGroupSize.x * numWorkGroups.x * workGroupSize.y * numWorkGroups.y
+                               * workGroupSize.z * numWorkGroups.z);
+
+            if constexpr(!std::is_same<KA, int>::value)
+            {
+                h_args.template append<uint32_t>("wgTable", 0);
             }
         }
     }
@@ -542,11 +532,12 @@ namespace Tensile
     KernelInvocation ContractionSolution::generateSingleCallGroupedGemm(
         std::vector<ContractionSolution::Problem> const& problems,
         ContractionSolution::GroupedInputs const&        inputs,
-        KA&                                              h_args) const
+        KA&                                              h_args,
+        void const*                                      userArgs) const
     {
         TENSILE_ASSERT_EXC(sizeMapping.workGroupMapping >= 0);
         KernelInvocation rv;
-        if constexpr(std::is_same<KA, KernelArguments>::value)
+        if constexpr(!std::is_same<KA, KernelArgumentsCounter>::value)
         {
             rv.kernelName = kernelName;
 
@@ -567,63 +558,28 @@ namespace Tensile
             problems, rv.workGroupSize, rv.numWorkGroups, rv.numWorkItems, h_args);
 
         uint32_t workspaceOffsetInByte = 0;
-        for(int idx = 0; idx < problems.size(); idx++)
+        if constexpr(!std::is_same<KA, int>::value)
         {
-            auto problem = problems[idx];
-            singleCallArgs<T_Debug>(problem, inputs.grouped[idx], workspaceOffsetInByte, h_args);
-            if constexpr(std::is_same<KA, KernelArguments>::value)
-                workspaceOffsetInByte += requiredWorkspaceSize(problem);
+            for(int idx = 0; idx < problems.size(); idx++)
+            {
+                auto problem = problems[idx];
+                singleCallArgs<T_Debug>(
+                    problem, inputs.grouped[idx], workspaceOffsetInByte, h_args);
+                if constexpr(std::is_same<KA, KernelArguments>::value)
+                    workspaceOffsetInByte += requiredWorkspaceSize(problem);
+            }
         }
 
-        if constexpr(std::is_same<KA, KernelArguments>::value)
+        if constexpr(!std::is_same<KA, KernelArgumentsCounter>::value)
         {
             uint8_t* d_args = (uint8_t*)(inputs.ws) + workspaceOffsetInByte;
             rv.args.append<uint32_t>("gemm_count", problems.size());
             // For user input
-            rv.args.append<void const*>("DeviceUserArguments", nullptr);
+            rv.args.append<void const*>("DeviceUserArguments", userArgs);
             rv.args.append<void const*>("argsPtr", (void*)d_args);
             rv.args.append<uint32_t>("syncForWgTableGen", 0);
             rv.codeObjectFile = codeObjectFilename.load();
         }
-
-        return rv;
-    }
-
-    template <bool T_Debug>
-    KernelInvocation
-        ContractionSolution::updateUserArgsSingleCallGroupedGemm(uint32_t             gemmCount,
-                                                                 const Tensile::dim3& workGroupSize,
-                                                                 const Tensile::dim3& numWorkGroups,
-                                                                 const Tensile::dim3& numWorkItems,
-                                                                 const void*          userArgs,
-                                                                 const void* workspace) const
-    {
-        TENSILE_ASSERT_EXC(sizeMapping.workGroupMapping >= 0);
-        KernelInvocation rv;
-
-        rv.kernelName      = kernelName;
-        rv.workGroupSize.x = workGroupSize.x;
-        rv.workGroupSize.y = workGroupSize.y;
-        rv.workGroupSize.z = workGroupSize.z;
-
-        rv.numWorkGroups.x = numWorkGroups.x;
-        rv.numWorkGroups.y = numWorkGroups.y;
-        rv.numWorkGroups.z = numWorkGroups.z;
-
-        rv.numWorkItems.x = numWorkItems.x;
-        rv.numWorkItems.y = numWorkItems.y;
-        rv.numWorkItems.z = numWorkItems.z;
-
-        rv.sharedMemBytes = 0;
-
-        rv.args = KernelArguments(T_Debug);
-
-        rv.args.append<uint32_t>("gemm_count", gemmCount);
-        // For user input
-        rv.args.append<void const*>("DeviceUserArguments", userArgs);
-        rv.args.append<void const*>("argsPtr", (void*)workspace);
-        rv.args.append<uint32_t>("syncForWgTableGen", 0);
-        rv.codeObjectFile = codeObjectFilename.load();
 
         return rv;
     }
@@ -987,7 +943,7 @@ namespace Tensile
         uint32_t wiRight = 0;
         for(int idx = 0; idx < problems.size(); idx++)
         {
-            if constexpr(std::is_same<KA, KernelArguments>::value)
+            if constexpr(!std::is_same<KA, KernelArgumentsCounter>::value)
             {
                 auto problem = problems[idx];
 
@@ -1005,9 +961,12 @@ namespace Tensile
 
                 numWorkItems.x += workGroupSize.x * numWorkGroups.x;
 
-                wiRight = numWorkItems.x;
-                h_args.template append<uint32_t>("wiTable", wiLeft);
-                wiLeft = wiRight;
+                if constexpr(std::is_same<KA, KernelArguments>::value)
+                {
+                    wiRight = numWorkItems.x;
+                    h_args.template append<uint32_t>("wiTable", wiLeft);
+                    wiLeft = wiRight;
+                }
             }
             else
             {
@@ -1085,12 +1044,9 @@ namespace Tensile
 
     template <bool T_Debug>
     KernelInvocation ContractionSolution::updateUserArgsOutputConversionCallGroupedGemm(
-        uint32_t             gemmCount,
-        const Tensile::dim3& workGroupSize,
-        const Tensile::dim3& numWorkGroups,
-        const Tensile::dim3& numWorkItems,
-        const void*          userArgs,
-        const void*          workspace) const
+        std::vector<ContractionSolution::Problem> const& problems,
+        const void*                                      userArgs,
+        const void*                                      workspace) const
     {
         KernelInvocation rv;
         uint32_t         previousArgsSpaceOffsetInByte = 0;
@@ -1100,17 +1056,17 @@ namespace Tensile
 
         rv.args.reserve(512, 64);
 
-        rv.workGroupSize.x = workGroupSize.x;
-        rv.workGroupSize.y = workGroupSize.y;
-        rv.workGroupSize.z = workGroupSize.z;
+        size_t vw = 1;
 
-        rv.numWorkGroups.x = numWorkGroups.x;
-        rv.numWorkGroups.y = numWorkGroups.y;
-        rv.numWorkGroups.z = numWorkGroups.z;
+        rv.workGroupSize.x = 256;
+        rv.workGroupSize.y = 1;
+        rv.workGroupSize.z = 1;
 
-        rv.numWorkItems.x = numWorkItems.x;
-        rv.numWorkItems.y = numWorkItems.y;
-        rv.numWorkItems.z = numWorkItems.z;
+        rv.numWorkItems.x = 0;
+
+        int h_args = 0; // Dummy value
+        calculateConversionCallWorkGroupItems(
+            problems, vw, rv.workGroupSize, rv.numWorkGroups, rv.numWorkItems, h_args);
 
         // FIXME: No problem and input for kernel name
         // rv.kernelName = outputConversionKernelName(
@@ -1120,8 +1076,8 @@ namespace Tensile
         rv.args.append<uint8_t*>("wiTablePtr", d_args);
         // For user input
         rv.args.append<void const*>("DeviceUserArguments", nullptr);
-        rv.args.append<uint8_t*>("argsPtr", d_args + gemmCount * sizeof(uint32_t));
-        rv.args.append<uint32_t>("gemm_count", gemmCount);
+        rv.args.append<uint8_t*>("argsPtr", d_args + problems.size() * sizeof(uint32_t));
+        rv.args.append<uint32_t>("gemm_count", problems.size());
         rv.codeObjectFile = codeObjectFilename.load();
 
         return rv;
@@ -1748,13 +1704,11 @@ namespace Tensile
     }
 
     std::vector<KernelInvocation>
-        ContractionSolution::solveGroupedGemmGPU(const uint32_t       gemmCount,
-                                                 const Tensile::dim3* workGroupSize,
-                                                 const Tensile::dim3* numWorkGroups,
-                                                 const Tensile::dim3* numWorkItems,
-                                                 const void*          dUA,
-                                                 const void*          workspace,
-                                                 hipStream_t          stream) const
+        ContractionSolution::solveGroupedGemmGPU(std::vector<Problem> const& problems,
+                                                 GroupedInputs const&        inputs,
+                                                 const void*                 dUA,
+                                                 const void*                 workspace,
+                                                 hipStream_t                 stream) const
     {
         if(!problemType.supportDeviceUserArguments)
         {
@@ -1765,38 +1719,30 @@ namespace Tensile
         bool debug = Debug::Instance().printKernelArguments() || this->kernelArgsLog;
 
         // Here we only update the pointer
+        int h_args = 1; // Dummy
         if(debug)
-            rv.push_back(updateUserArgsSingleCallGroupedGemm<true>(
-                gemmCount, workGroupSize[0], numWorkGroups[0], numWorkItems[0], dUA, workspace));
+            rv.push_back(generateSingleCallGroupedGemm<true>(problems, inputs, h_args, dUA));
         else
-            rv.push_back(updateUserArgsSingleCallGroupedGemm<false>(
-                gemmCount, workGroupSize[0], numWorkGroups[0], numWorkItems[0], dUA, workspace));
+            rv.push_back(generateSingleCallGroupedGemm<false>(problems, inputs, h_args, dUA));
 
         if(sizeMapping.globalAccumulation)
         {
             if(debug)
-                rv.push_back(updateUserArgsOutputConversionCallGroupedGemm<true>(gemmCount,
-                                                                                 workGroupSize[1],
-                                                                                 numWorkGroups[1],
-                                                                                 numWorkItems[1],
-                                                                                 dUA,
-                                                                                 workspace));
+                rv.push_back(
+                    updateUserArgsOutputConversionCallGroupedGemm<true>(problems, dUA, workspace));
             else
-                rv.push_back(updateUserArgsOutputConversionCallGroupedGemm<false>(gemmCount,
-                                                                                  workGroupSize[1],
-                                                                                  numWorkGroups[1],
-                                                                                  numWorkItems[1],
-                                                                                  dUA,
-                                                                                  workspace));
+                rv.push_back(
+                    updateUserArgsOutputConversionCallGroupedGemm<false>(problems, dUA, workspace));
         }
 
         return rv;
     }
 
-    template <typename Tc, typename ActTc>
-    void ContractionSolution::setDeviceUserArgs(std::vector<Problem> const&     problems,
-                                                GroupedInputs const&            inputs,
-                                                DeviceUserArguments<Tc, ActTc>* args) const
+    template <typename TAlpha, typename TBeta, typename TAct>
+    void
+        ContractionSolution::setDeviceUserArgs(std::vector<Problem> const&               problems,
+                                               GroupedInputs const&                      inputs,
+                                               DeviceUserArguments<TAlpha, TBeta, TAct>* args) const
     {
         for(int i = 0; i < problems.size(); i++)
         {
@@ -1814,8 +1760,8 @@ namespace Tensile
             arg.c         = const_cast<void*>(inputs.grouped[i].c);
             arg.b         = const_cast<void*>(inputs.grouped[i].b);
             arg.a         = const_cast<void*>(inputs.grouped[i].a);
-            arg.alpha     = (*std::get_if<Tc>(&inputs.grouped[i].alpha));
-            arg.beta      = (*std::get_if<Tc>(&inputs.grouped[i].beta));
+            arg.alpha     = (*std::get_if<TAlpha>(&inputs.grouped[i].alpha));
+            arg.beta      = (*std::get_if<TBeta>(&inputs.grouped[i].beta));
             arg.strideD1  = d.strides()[startStrideCD];
             arg.strideD2  = d.strides()[startStrideCD + 1];
             arg.strideC1  = c.strides()[startStrideCD];
@@ -1842,8 +1788,8 @@ namespace Tensile
                 arg.strideE1 = 0;
                 arg.strideE2 = 0;
             }
-            arg.act0           = (*std::get_if<ActTc>(&inputs.grouped[i].activationArgs[0]));
-            arg.act1           = (*std::get_if<ActTc>(&inputs.grouped[i].activationArgs[1]));
+            arg.act0           = (*std::get_if<TAct>(&inputs.grouped[i].activationArgs[0]));
+            arg.act1           = (*std::get_if<TAct>(&inputs.grouped[i].activationArgs[1]));
             arg.activationType = (uint32_t)problems[i].activationEnumArg();
         }
 
@@ -1927,9 +1873,10 @@ namespace Tensile
                || (problems[0].activationType() != ActivationType::None
                    && problems[0].activationComputeType() == DataType::Float)))
         {
-            auto requiredSize = sizeof(DeviceUserArguments<float, float>) * problems.size();
+            auto requiredSize = sizeof(DeviceUserArguments<float, float, float>) * problems.size();
             static_cast<void>(hipHostMalloc(dUAHost, requiredSize, 0));
-            setDeviceUserArgs(problems, inputs, (DeviceUserArguments<float, float>*)(*dUAHost));
+            setDeviceUserArgs(
+                problems, inputs, (DeviceUserArguments<float, float, float>*)(*dUAHost));
             static_cast<void>(hipMalloc(dUA, requiredSize));
             static_cast<void>(hipMemcpy(*dUA, *dUAHost, requiredSize, hipMemcpyHostToDevice));
             static_cast<void>(hipDeviceSynchronize());
@@ -1938,36 +1885,8 @@ namespace Tensile
         {
             throw std::runtime_error("Unsupported Device memory type.");
         }
-        // Calculate WG for GPU
-        KernelArguments ka(false);
-        Tensile::dim3   workGroupSize[2], numWorkGroups[2], numWorkItems[2];
-        // Asm kernel
-        workGroupSize[0].x = sizeMapping.workGroupSize.x * sizeMapping.workGroupSize.y
-                             * sizeMapping.workGroupSize.z;
-        workGroupSize[0].y = 1;
-        workGroupSize[0].z = 1;
 
-        numWorkItems[0].x = 0;
-        numWorkItems[0].y = 1;
-        numWorkItems[0].z = 1;
-
-        calculateSingleCallWorkGroupItems(
-            problems, workGroupSize[0], numWorkGroups[0], numWorkItems[0], ka);
-
-        // Conversion kernel
-        size_t vw = 1;
-
-        workGroupSize[1].x = 256;
-        workGroupSize[1].y = 1;
-        workGroupSize[1].z = 1;
-
-        numWorkItems[1].x = 0;
-
-        calculateConversionCallWorkGroupItems(
-            problems, vw, workGroupSize[1], numWorkGroups[1], numWorkItems[1], ka);
-
-        return solveGroupedGemmGPU(
-            problems.size(), workGroupSize, numWorkGroups, numWorkItems, *dUA, inputs.ws, stream);
+        return solveGroupedGemmGPU(problems, inputs, *dUA, inputs.ws, stream);
     }
 
     void ContractionSolution::relaseDeviceUserArgs(void* dUA, void* dUAHost)

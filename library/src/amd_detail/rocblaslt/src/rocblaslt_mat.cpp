@@ -58,11 +58,11 @@ rocblaslt_status rocblaslt_matmul_impl(const rocblaslt_handle       handle,
 {
     int64_t m, n, k, lda, ldb, ldc, ldd, lde, batch_stride_a, batch_stride_b, batch_stride_c,
         batch_stride_d, batch_stride_e;
-    hipblasDatatype_t bias_type;
+    hipblasDatatype_t      bias_type;
     rocblaslt_compute_type compute_type;
-    void *            bias = nullptr, *scaleDVec = nullptr, *E = nullptr;
-    bool              gradient = false;
-    rocblaslt_status  isValid  = rocblaslt_matmul_valid_args(matmul_descr,
+    void *                 bias = nullptr, *scaleDVec = nullptr, *E = nullptr;
+    bool                   gradient = false;
+    rocblaslt_status       isValid  = rocblaslt_matmul_valid_args(matmul_descr,
                                                            A,
                                                            B,
                                                            C,
@@ -96,14 +96,14 @@ rocblaslt_status rocblaslt_matmul_impl(const rocblaslt_handle       handle,
         return isValid;
 
     // Internal assign
-    hipblasOperation_t     opA           = matmul_descr->op_A;
-    hipblasOperation_t     opB           = matmul_descr->op_B;
-    hipblasDatatype_t      type_a        = matA->type;
-    hipblasDatatype_t      type_b        = matB->type;
-    hipblasDatatype_t      type_c        = matC->type;
-    hipblasDatatype_t      type_d        = matD->type;
-    int                    num_batches_a = matA->batch_count;
-    rocblaslt_epilogue     epilogue      = matmul_descr->epilogue;
+    hipblasOperation_t opA           = matmul_descr->op_A;
+    hipblasOperation_t opB           = matmul_descr->op_B;
+    hipblasDatatype_t  type_a        = matA->type;
+    hipblasDatatype_t  type_b        = matB->type;
+    hipblasDatatype_t  type_c        = matC->type;
+    hipblasDatatype_t  type_d        = matD->type;
+    int                num_batches_a = matA->batch_count;
+    rocblaslt_epilogue epilogue      = matmul_descr->epilogue;
 
     // Others
     bool strided_batch = true;
@@ -138,11 +138,11 @@ rocblaslt_status rocblaslt_gemm_create_cpp_impl(rocblaslt_matmul_desc          m
 {
     int64_t m, n, k, lda, ldb, ldc, ldd, lde, batch_stride_a, batch_stride_b, batch_stride_c,
         batch_stride_d, batch_stride_e;
-    hipblasDatatype_t bias_type;
+    hipblasDatatype_t      bias_type;
     rocblaslt_compute_type compute_type;
-    void *            bias = nullptr, *scaleDVec = nullptr, *E = nullptr;
-    bool              gradient = false;
-    rocblaslt_status  isValid  = rocblaslt_matmul_valid_args(matmul_descr,
+    void *                 bias = nullptr, *scaleDVec = nullptr, *E = nullptr;
+    bool                   gradient = false;
+    rocblaslt_status       isValid  = rocblaslt_matmul_valid_args(matmul_descr,
                                                            A,
                                                            B,
                                                            C,
@@ -176,14 +176,14 @@ rocblaslt_status rocblaslt_gemm_create_cpp_impl(rocblaslt_matmul_desc          m
         return isValid;
 
     // Internal assign
-    hipblasOperation_t     opA           = matmul_descr->op_A;
-    hipblasOperation_t     opB           = matmul_descr->op_B;
-    hipblasDatatype_t      type_a        = matA->type;
-    hipblasDatatype_t      type_b        = matB->type;
-    hipblasDatatype_t      type_c        = matC->type;
-    hipblasDatatype_t      type_d        = matD->type;
-    int                    num_batches_a = matA->batch_count;
-    rocblaslt_epilogue     epilogue      = matmul_descr->epilogue;
+    hipblasOperation_t opA           = matmul_descr->op_A;
+    hipblasOperation_t opB           = matmul_descr->op_B;
+    hipblasDatatype_t  type_a        = matA->type;
+    hipblasDatatype_t  type_b        = matB->type;
+    hipblasDatatype_t  type_c        = matC->type;
+    hipblasDatatype_t  type_d        = matD->type;
+    int                num_batches_a = matA->batch_count;
+    rocblaslt_epilogue epilogue      = matmul_descr->epilogue;
 
     // Others
     bool strided_batch = true;
@@ -896,7 +896,7 @@ rocblaslt_status
         }
 
         if(matA[i]->type != matB[i]->type || matC[i]->type != matD[i]->type
-            || matA[0]->type != matA[i]->type || matC[0]->type != matC[i]->type)
+           || matA[0]->type != matA[i]->type || matC[0]->type != matC[i]->type)
         {
             log_error(__func__, "invalid  matrix datatype");
             return rocblaslt_status_type_mismatch;
@@ -925,6 +925,28 @@ rocblaslt_status rocblaslt_run_cpp(rocblaslt_handle       handle,
                                    hipStream_t            stream)
 {
     return runKernelFromInvocation(handle, gemmType, gemmData, stream);
+}
+
+rocblaslt_status rocblaslt_run_user_args_cpp(rocblaslt_handle             handle,
+                                             rocblaslt::RocGemmType       gemmType,
+                                             size_t                       gemmCount,
+                                             std::shared_ptr<void>        gemmData,
+                                             const rocblaslt_matmul_algo& algo,
+                                             void*                        deviceUserArgs,
+                                             void*                        workspace,
+                                             hipStream_t                  stream)
+{
+    return runKernelFromDeviceUserArguments(
+        handle, gemmType, gemmCount, gemmData, algo, deviceUserArgs, workspace, stream);
+}
+
+rocblaslt_status rocblaslt_get_default_user_args(rocblaslt_handle       handle,
+                                                 rocblaslt::RocGemmType gemmType,
+                                                 std::shared_ptr<void>  gemmData,
+                                                 void*                  hostDeviceUserArgs)
+{
+    return getDeviceUserArgumentsValuesFromContractionProblem(
+        handle, gemmType, gemmData, hostDeviceUserArgs);
 }
 
 rocblaslt_status rocblaslt_makeArgument_cpp(rocblaslt_handle             handle,
