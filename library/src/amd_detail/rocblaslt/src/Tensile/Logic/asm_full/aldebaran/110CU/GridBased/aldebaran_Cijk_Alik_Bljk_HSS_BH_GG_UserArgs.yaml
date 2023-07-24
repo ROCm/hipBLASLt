@@ -16,9 +16,10 @@
   ComplexConjugateB: false
   ComputeDataType: 0
   DataType: 4
-  DestDataType: 4
+  DestDataType: 0
   Fp16AltImpl: false
   GroupedGemm: true
+  SupportUserArgs: true
   HighPrecisionAccumulate: true
   Index0: 0
   Index01A: 0
@@ -187,9 +188,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -405,9 +407,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -623,9 +626,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -841,9 +845,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -1059,9 +1064,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -1277,9 +1283,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -1495,9 +1502,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -1713,9 +1721,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -1931,9 +1940,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -2149,9 +2159,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -2367,9 +2378,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -2585,9 +2597,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -2803,9 +2816,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -3021,9 +3035,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -3239,9 +3254,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -3457,9 +3473,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -3675,9 +3692,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -3893,9 +3911,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -4111,9 +4130,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -4329,9 +4349,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -4547,9 +4568,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -4765,9 +4787,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -4983,9 +5006,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -5201,9 +5225,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -5419,9 +5444,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -5637,9 +5663,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -5855,9 +5882,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -6073,9 +6101,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -6291,9 +6320,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -6509,9 +6539,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -6727,9 +6758,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -6945,9 +6977,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -7163,9 +7196,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -7381,9 +7415,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -7599,9 +7634,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -7817,9 +7853,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -8035,9 +8072,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -8253,9 +8291,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -8471,9 +8510,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -8689,9 +8729,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -8907,9 +8948,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -9125,9 +9167,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -9343,9 +9386,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -9561,9 +9605,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -9779,9 +9824,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -9997,9 +10043,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -10215,9 +10262,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -10433,9 +10481,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -10651,9 +10700,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -10869,9 +10919,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -11087,9 +11138,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -11305,9 +11357,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -11523,9 +11576,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -11741,9 +11795,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -11959,9 +12014,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -12177,9 +12233,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -12395,9 +12452,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -12613,9 +12671,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -12831,9 +12890,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -13049,9 +13109,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -13267,9 +13328,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -13485,9 +13547,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -13703,9 +13766,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -13921,9 +13985,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -14139,9 +14204,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -14357,9 +14423,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -14575,9 +14642,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -14793,9 +14861,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -15011,9 +15080,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -15229,9 +15299,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -15447,9 +15518,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -15665,9 +15737,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -15883,9 +15956,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -16101,9 +16175,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -16319,9 +16394,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -16537,9 +16613,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -16755,9 +16832,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -16973,9 +17051,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -17191,9 +17270,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -17409,9 +17489,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -17627,9 +17708,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -17845,9 +17927,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -18063,9 +18146,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -18281,9 +18365,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -18499,9 +18584,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -18717,9 +18803,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -18935,9 +19022,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -19153,9 +19241,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -19371,9 +19460,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -19589,9 +19679,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -19807,9 +19898,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -20025,9 +20117,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -20243,9 +20336,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -20461,9 +20555,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -20679,9 +20774,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -20897,9 +20993,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -21115,9 +21212,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -21333,9 +21431,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -21551,9 +21650,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -21769,9 +21869,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -21987,9 +22088,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -22205,9 +22307,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -22423,9 +22526,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -22641,9 +22745,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -22859,9 +22964,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -23077,9 +23183,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -23295,9 +23402,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -23513,9 +23621,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -23731,9 +23840,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -23949,9 +24059,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -24167,9 +24278,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -24385,9 +24497,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -24603,9 +24716,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -24821,9 +24935,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -25039,9 +25154,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -25257,9 +25373,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -25475,9 +25592,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -25693,9 +25811,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -25911,9 +26030,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -26129,9 +26249,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -26347,9 +26468,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -26565,9 +26687,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -26783,9 +26906,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -27001,9 +27125,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -27219,9 +27344,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -27437,9 +27563,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -27655,9 +27782,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -27873,9 +28001,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -28091,9 +28220,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -28309,9 +28439,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -28527,9 +28658,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -28745,9 +28877,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -28963,9 +29096,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -29181,9 +29315,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -29399,9 +29534,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -29617,9 +29753,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -29835,9 +29972,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -30053,9 +30191,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -30271,9 +30410,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -30489,9 +30629,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -30707,9 +30848,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -30925,9 +31067,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -31143,9 +31286,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -31361,9 +31505,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -31579,9 +31724,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -31797,9 +31943,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -32015,9 +32162,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -32233,9 +32381,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -32451,9 +32600,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -32669,9 +32819,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -32887,9 +33038,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -33105,9 +33257,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -33323,9 +33476,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -33541,9 +33695,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -33759,9 +33914,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -33977,9 +34133,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -34195,9 +34352,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -34413,9 +34571,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -34631,9 +34790,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -34849,9 +35009,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -35067,9 +35228,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -35285,9 +35447,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -35503,9 +35666,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -35721,9 +35885,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -35939,9 +36104,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -36157,9 +36323,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -36375,9 +36542,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -36593,9 +36761,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -36811,9 +36980,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -37029,9 +37199,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -37247,9 +37418,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -37465,9 +37637,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -37683,9 +37856,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -37901,9 +38075,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -38119,9 +38294,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -38337,9 +38513,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -38555,9 +38732,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -38773,9 +38951,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -38991,9 +39170,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -39209,9 +39389,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -39427,9 +39608,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -39645,9 +39827,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -39863,9 +40046,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -40081,9 +40265,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -40299,9 +40484,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -40517,9 +40703,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -40735,9 +40922,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -40953,9 +41141,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -41171,9 +41360,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -41389,9 +41579,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -41607,9 +41798,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -41825,9 +42017,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -42043,9 +42236,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -42261,9 +42455,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -42479,9 +42674,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -42697,9 +42893,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -42915,9 +43112,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -43133,9 +43331,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -43351,9 +43550,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -43569,9 +43769,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -43787,9 +43988,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -44005,9 +44207,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -44223,9 +44426,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -44441,9 +44645,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -44659,9 +44864,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -44877,9 +45083,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -45095,9 +45302,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -45313,9 +45521,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -45531,9 +45740,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -45749,9 +45959,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -45967,9 +46178,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -46185,9 +46397,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -46403,9 +46616,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -46621,9 +46835,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -46839,9 +47054,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -47057,9 +47273,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -47275,9 +47492,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -47493,9 +47711,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -47711,9 +47930,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -47929,9 +48149,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -48147,9 +48368,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -48365,9 +48587,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -48583,9 +48806,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -48801,9 +49025,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -49019,9 +49244,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -49237,9 +49463,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -49455,9 +49682,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -49673,9 +49901,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -49891,9 +50120,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -50109,9 +50339,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -50327,9 +50558,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -50545,9 +50777,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -50763,9 +50996,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -50981,9 +51215,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -51199,9 +51434,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -51417,9 +51653,10 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -51639,10 +51876,11 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       Gradient: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -51864,10 +52102,11 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       Gradient: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
