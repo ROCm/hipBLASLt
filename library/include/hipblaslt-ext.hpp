@@ -135,6 +135,49 @@ namespace hipblaslt_ext
     };
 
     /*! \ingroup types_module
+     *  \brief hipblasLt extension GPU inputs for gemm problems.
+     *
+     * \details This strusture sets the input gpu pointers of a gemm problem.
+     * Only supports solutions loading arguments from global memory.
+     */
+
+    struct UserArguments
+    {
+        uint32_t m; //!< size m
+        uint32_t n; //!< size n
+        uint32_t batch; //!< size batch
+        uint32_t k; //!< size k
+        void*    d; //!< The d matrix input pointer.
+        void*    c; //!< The c matrix input pointer.
+        void*    a; //!< The a matrix input pointer.
+        void*    b; //!< The b matrix input pointer.
+        float    alpha; //!< The alpha value.
+        float    beta; //!< The beta value.
+        uint32_t strideD1; //!< The d leading dimension.
+        uint32_t strideD2; //!< The d batch stride
+        uint32_t strideC1; //!< The c leading dimension.
+        uint32_t strideC2; //!< The c batch stride
+        uint32_t strideA1; //!< The a leading dimension.
+        uint32_t strideA2; //!< The a batch stride
+        uint32_t strideB1; //!< The b leading dimension.
+        uint32_t strideB2; //!< The b batch stride
+        // Epilogue inputs
+        void* scaleDVec; //!< The scaleD vector input pointer.
+        void* bias; //!< The bias input pointer.
+        int   biasType; //!< The bias datatype. Only works if mode is set to bias related epilogues.
+        uint32_t reserved;
+        void*    e; //!< The aux input pointer. Only works if mode is set to aux related epilogues.
+        uint32_t
+            strideE1; //!< The aux leading dimension. Only works if mode is set to aux related epilogues.
+        uint32_t
+            strideE2; //!< The aux batch stride. Only works if mode is set to aux related epilogues.
+        float act0; //!< The activation value 1. Some activations might use it.
+        float act1; //!< The activation value 2.
+        int   activationType;
+    } __attribute__((
+        packed)); //!< The activation type.  Only works if mode is set to activation related epilogues.
+
+    /*! \ingroup types_module
      *  \brief hipblasLt extension instance for gemm problems.
      */
     class GemmInstance
@@ -656,6 +699,52 @@ namespace hipblaslt_ext
                        std::vector<hipblasLtMatrixLayout_t>& matD);
 
         HIPBLASLT_EXPORT std::vector<GemmProblemType> getProblemTypes();
+
+        /*! \ingroup library_module
+        *  \brief A helper function to initialize DeviceUserArguments using the set problem(s)
+        * saved in the gemm object.
+        *
+        *  @param[in]
+        *  hostDeviceUserArgs The DeviceUserArguments struture allocated in host. Note that
+        * the user must put the correct type of the DeviceUserArguments.
+        *
+        *  \retval HIPBLAS_STATUS_SUCCESS           If the operation completed successfully.
+        */
+        HIPBLASLT_EXPORT hipblasStatus_t
+            getDefaultValueForDeviceUserArguments(void* hostDeviceUserArgs);
+
+        /*! \ingroup library_module
+        *  \brief Run the kernel using DeviceUserArguments
+        *
+        *  \details
+        *  This function does not update any information saved inside the object, it
+        * use the information saved inside instead. Make sure the gemm object is
+        * initialized once before calling this function.
+        *
+        *  @param[in]
+        *  algo                    Handle for matrix multiplication algorithm to be
+        * used. See \ref hipblasLtMatmulAlgo_t. When NULL, an implicit heuritics query
+        * with default search preferences will be performed to determine actual
+        * algorithm to use.
+        *  @param[in]
+        *  workspace               Pointer to the DeviceUserArguments buffer allocated
+        * in the GPU memory. Pointer must be 16B aligned (that is, lowest 4 bits of
+        * address must be 0).
+        *  @param[in]
+        *  workspace               Pointer to the workspace buffer allocated in the GPU
+        * memory. Pointer must be 16B aligned (that is, lowest 4 bits of address must
+        * be 0).
+        *  @param[in]
+        *  stream                  The HIP stream where all the GPU work will be
+        * submitted.
+        *
+        *  \retval HIPBLAS_STATUS_SUCCESS           If the operation completed
+        * successfully. \retval HIPBLAS_STATUS_INVALID_VALUE If the gemm_count = 0.
+        */
+        HIPBLASLT_EXPORT hipblasStatus_t runUserArgs(const hipblasLtMatmulAlgo_t& algo,
+                                                     void*                        deviceUserArgs,
+                                                     void*                        workspace,
+                                                     hipStream_t                  stream);
     };
 
     /*******************************************************************************

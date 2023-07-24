@@ -1249,6 +1249,8 @@ namespace Tensile
         // set batch mode
         problem.setStridedBatched(true);
         problem.setGroupedGemm(isGroupedGemm);
+        if(isGroupedGemm)
+            problem.setUseDeviceUserArguments(true);
 
         problem.setAlphaRestriction(toScalarValueEnum(alpha));
 

@@ -42,7 +42,7 @@
 
 namespace Tensile
 {
-    template <typename Tc, typename ActTc>
+    template <typename TAlpha, typename TBeta, typename TAct>
     struct DeviceUserArguments
     {
         uint32_t m;
@@ -53,8 +53,8 @@ namespace Tensile
         void*    c;
         void*    a;
         void*    b;
-        Tc       alpha;
-        Tc       beta;
+        TAlpha   alpha;
+        TBeta    beta;
         uint32_t strideD1;
         uint32_t strideD2;
         uint32_t strideC1;
@@ -70,8 +70,8 @@ namespace Tensile
         void*    e;
         uint32_t strideE1;
         uint32_t strideE2;
-        ActTc    act0;
-        ActTc    act1;
+        TAct     act0;
+        TAct     act1;
         int      activationType;
     } __attribute__((packed));
 
@@ -264,18 +264,16 @@ namespace Tensile
 
         // The problems and inputs are passed by device memory
         virtual std::vector<KernelInvocation>
-            solveGroupedGemmGPU(const uint32_t       gemmCount,
-                                const Tensile::dim3* workGroupSize,
-                                const Tensile::dim3* numWorkGroups,
-                                const Tensile::dim3* numWorkItems,
-                                const void*          dUA,
-                                const void*          workspace,
-                                hipStream_t          stream) const;
+            solveGroupedGemmGPU(std::vector<Problem> const& problems,
+                                GroupedInputs const&        inputs,
+                                const void*                 dUA,
+                                const void*                 workspace,
+                                hipStream_t                 stream) const;
 
-        template <typename Tc, typename ActTc>
-        void setDeviceUserArgs(std::vector<Problem> const&     problems,
-                               GroupedInputs const&            inputs,
-                               DeviceUserArguments<Tc, ActTc>* args) const;
+        template <typename TAlpha, typename TBeta, typename TAct>
+        void setDeviceUserArgs(std::vector<Problem> const&               problems,
+                               GroupedInputs const&                      inputs,
+                               DeviceUserArguments<TAlpha, TBeta, TAct>* args) const;
 
         // For Tensile debugging, will allocate and initialize DeviceUserArguments with the problems and inputs.
         virtual std::vector<KernelInvocation> solveTensileGPU(ContractionProblem const& problem,
@@ -320,15 +318,8 @@ namespace Tensile
         template <bool T_Debug, typename KA>
         KernelInvocation generateSingleCallGroupedGemm(std::vector<Problem> const& problems,
                                                        GroupedInputs const&        inputs,
-                                                       KA&                         h_args) const;
-
-        template <bool T_Debug>
-        KernelInvocation updateUserArgsSingleCallGroupedGemm(uint32_t             gemmCount,
-                                                             const Tensile::dim3& workGroupSize,
-                                                             const Tensile::dim3& numWorkGroups,
-                                                             const Tensile::dim3& numWorkItems,
-                                                             const void*          userArgs,
-                                                             const void*          workspace) const;
+                                                       KA&                         h_args,
+                                                       void const* userArgs = nullptr) const;
 
         template <bool T_Debug>
         KernelInvocation generateBetaOnlyCall(Problem const&           problem,
@@ -364,13 +355,10 @@ namespace Tensile
             std::vector<Problem> const& problems, GroupedInputs const& inputs, KA& h_args) const;
 
         template <bool T_Debug>
-        KernelInvocation
-            updateUserArgsOutputConversionCallGroupedGemm(uint32_t             gemmCount,
-                                                          const Tensile::dim3& workGroupSize,
-                                                          const Tensile::dim3& numWorkGroups,
-                                                          const Tensile::dim3& numWorkItems,
-                                                          const void*          userArgs,
-                                                          const void*          workspace) const;
+        KernelInvocation updateUserArgsOutputConversionCallGroupedGemm(
+            std::vector<ContractionSolution::Problem> const& problems,
+            const void*                                      userArgs,
+            const void*                                      workspace) const;
 
         std::string outputConversionKernelName(Problem const&           problem,
                                                ContractionInputs const& inputs,
