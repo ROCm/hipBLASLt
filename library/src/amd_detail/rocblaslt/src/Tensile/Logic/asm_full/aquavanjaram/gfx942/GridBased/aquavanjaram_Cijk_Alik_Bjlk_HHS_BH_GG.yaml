@@ -18,6 +18,7 @@
   DestDataType: 4
   Fp16AltImpl: false
   GroupedGemm: true
+  SupportUserArgs: true
   HighPrecisionAccumulate: true
   Index0: 0
   Index01A: 0
@@ -189,6 +190,7 @@
       DestDataType: 4
       Fp16AltImpl: false
       GroupedGemm: true
+      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
