@@ -181,6 +181,10 @@ namespace hipblaslt_ext
                                      GemmEpilogue& epilogue,
                                      GemmInputs&   inputs)
     {
+        if (n == 0 || m == 0) {
+            return HIPBLAS_STATUS_INVALID_VALUE;
+        }
+
         int lda     = m_problem_types[0].op_a == HIPBLAS_OP_N ? m : k;
         int ldb     = m_problem_types[0].op_b == HIPBLAS_OP_N ? k : n;
         int ldc     = m;
