@@ -16,7 +16,7 @@
   ComplexConjugateB: false
   ComputeDataType: 0
   DataType: 4
-  DestDataType: 4
+  DestDataType: 0
   Fp16AltImpl: false
   GroupedGemm: true
   SupportUserArgs: true
@@ -188,7 +188,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -407,7 +407,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -626,7 +626,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -845,7 +845,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -1064,7 +1064,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -1283,7 +1283,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -1502,7 +1502,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -1721,7 +1721,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -1940,7 +1940,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -2159,7 +2159,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -2378,7 +2378,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -2597,7 +2597,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -2816,7 +2816,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -3035,7 +3035,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -3254,7 +3254,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -3473,7 +3473,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -3692,7 +3692,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -3911,7 +3911,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -4130,7 +4130,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -4349,7 +4349,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -4568,7 +4568,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -4787,7 +4787,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -5006,7 +5006,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -5225,7 +5225,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -5444,7 +5444,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -5663,7 +5663,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -5882,7 +5882,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -6101,7 +6101,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -6320,7 +6320,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -6539,7 +6539,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -6758,7 +6758,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -6977,7 +6977,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -7196,7 +7196,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -7415,7 +7415,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -7634,7 +7634,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -7853,7 +7853,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -8072,7 +8072,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -8291,7 +8291,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -8510,7 +8510,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -8729,7 +8729,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -8948,7 +8948,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -9167,7 +9167,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -9386,7 +9386,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -9605,7 +9605,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -9824,7 +9824,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -10043,7 +10043,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -10262,7 +10262,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -10481,7 +10481,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -10700,7 +10700,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -10919,7 +10919,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -11138,7 +11138,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -11357,7 +11357,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -11576,7 +11576,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -11795,7 +11795,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -12014,7 +12014,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -12233,7 +12233,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -12452,7 +12452,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -12671,7 +12671,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -12890,7 +12890,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -13109,7 +13109,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -13328,7 +13328,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -13547,7 +13547,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -13766,7 +13766,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -13985,7 +13985,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -14204,7 +14204,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -14423,7 +14423,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -14642,7 +14642,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -14861,7 +14861,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -15080,7 +15080,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -15299,7 +15299,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -15518,7 +15518,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -15737,7 +15737,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -15956,7 +15956,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -16175,7 +16175,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -16394,7 +16394,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -16613,7 +16613,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -16832,7 +16832,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -17051,7 +17051,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -17270,7 +17270,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -17489,7 +17489,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -17708,7 +17708,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -17927,7 +17927,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -18146,7 +18146,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -18365,7 +18365,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -18584,7 +18584,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -18803,7 +18803,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -19022,7 +19022,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -19241,7 +19241,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -19460,7 +19460,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -19679,7 +19679,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -19898,7 +19898,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -20117,7 +20117,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -20336,7 +20336,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -20555,7 +20555,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -20774,7 +20774,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -20993,7 +20993,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -21212,7 +21212,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -21431,7 +21431,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -21650,7 +21650,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -21869,7 +21869,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -22088,7 +22088,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -22307,7 +22307,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -22526,7 +22526,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -22745,7 +22745,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -22964,7 +22964,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -23183,7 +23183,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -23402,7 +23402,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -23621,7 +23621,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -23840,7 +23840,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -24059,7 +24059,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -24278,7 +24278,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -24497,7 +24497,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -24716,7 +24716,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -24935,7 +24935,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -25154,7 +25154,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -25373,7 +25373,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -25592,7 +25592,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -25811,7 +25811,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -26030,7 +26030,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -26249,7 +26249,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -26468,7 +26468,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -26687,7 +26687,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -26906,7 +26906,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -27125,7 +27125,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -27344,7 +27344,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -27563,7 +27563,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -27782,7 +27782,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -28001,7 +28001,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -28220,7 +28220,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -28439,7 +28439,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -28658,7 +28658,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -28877,7 +28877,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -29096,7 +29096,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -29315,7 +29315,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -29534,7 +29534,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -29753,7 +29753,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -29972,7 +29972,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -30191,7 +30191,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -30410,7 +30410,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -30629,7 +30629,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -30848,7 +30848,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -31067,7 +31067,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -31286,7 +31286,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -31505,7 +31505,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -31724,7 +31724,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -31943,7 +31943,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -32162,7 +32162,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -32381,7 +32381,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -32600,7 +32600,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -32819,7 +32819,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -33038,7 +33038,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -33257,7 +33257,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -33476,7 +33476,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -33695,7 +33695,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -33914,7 +33914,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -34133,7 +34133,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -34352,7 +34352,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -34571,7 +34571,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -34790,7 +34790,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -35009,7 +35009,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -35228,7 +35228,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -35447,7 +35447,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -35666,7 +35666,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -35885,7 +35885,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -36104,7 +36104,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -36323,7 +36323,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -36542,7 +36542,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -36761,7 +36761,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -36980,7 +36980,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -37199,7 +37199,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -37418,7 +37418,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -37637,7 +37637,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -37856,7 +37856,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -38075,7 +38075,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -38294,7 +38294,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -38513,7 +38513,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -38609,24 +38609,24 @@
     ActivationAlt: false
     ActivationFuncCall: true
     ActivationFused: true
-    AssertFree0ElementMultiple: 1
+    AssertFree0ElementMultiple: 8
     AssertFree1ElementMultiple: 1
     AssertSummationElementMultiple: 1
     AssignedDerivedParameters: true
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    CUCount: null
     ClusterLocalRead: 1
     CodeObjectVersion: V3
     CustomKernelName: ''
     DepthU: 64
-    DepthULdsDivisor: 1
     DirectToLds: false
     DirectToLdsA: false
     DirectToLdsB: false
-    DirectToVgprA: false
-    DirectToVgprB: false
+    DirectToVgprSparseMetadata: false
     EdgeType: ShiftPtr
+    EnableF32XdlMathOp: false
     EnableMatrixInstruction: true
     ExpandPointerSwap: 0
     GlobalReadPerMfma: 1
@@ -38636,84 +38636,94 @@
     GlobalSplitUAlgorithm: SingleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: false
-    GuaranteeNoPartialA: false
+    GuaranteeNoPartialA: true
     GuaranteeNoPartialB: true
     ISA: [9, 0, 10]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
-    LSCA: 32
+    LSCA: 128
     LSCB: 64
-    LSPA: 32
-    LSPB: 16
-    LVCA: 4
+    LSPA: 16
+    LSPB: 32
+    LVCA: 16
     LVCB: 8
-    LVPA: 4
-    LVPB: 2
-    LdsBlockSizePerPad: 128
-    LdsBlockSizePerPadA: 512
+    LVPA: 2
+    LVPB: 4
+    LdsBlockSizePerPadA: 0
     LdsBlockSizePerPadB: 128
+    LdsBlockSizePerPadMetadata: 0
     LdsInitCVgprs: false
-    LdsNumElements: 7424
-    LdsNumElementsAlignedA: 2048
-    LdsNumElementsAlignedB: 1280
+    LdsNumElements: 26880
+    LdsNumElementsAlignedA: 8192
+    LdsNumElementsAlignedB: 2304
+    LdsNumElementsAlignedMetadata: 0
     LdsOffsetA: 0
-    LdsOffsetA_Blk: 4096
-    LdsOffsetB: 2048
-    LdsOffsetB_Blk: 6144
+    LdsOffsetA_Blk: 16384
+    LdsOffsetB: 8192
+    LdsOffsetB_Blk: 24576
     LdsOffsetBias: 0
-    LdsPadA: 16
-    LdsPadB: 16
+    LdsOffsetMetadata: 8192
+    LdsOffsetMetadata_Blk: 24576
+    LdsPadA: 0
+    LdsPadB: 8
+    LdsPadMetadata: 0
     LocalReadVectorWidth: 8
     LocalSplitU: 1
     LocalWritePerMfma: -1
     LocalWriteUseSgprA: false
     LocalWriteUseSgprB: false
-    LoopIters: 4
+    LoopIters: 8
     LoopUnroll: 64
     MFMA_BF16_1K: false
     MIArchVgpr: false
-    MIBlock: [16, 16, 16, 1, 1, 1]
+    MIBlock: [32, 32, 8, 1, 1, 1]
     MIInputPerThread: 4
+    MIInputPerThreadA: 4
+    MIInputPerThreadB: 4
+    MIInputPerThreadMetadata: 4
     MIOutputVectorWidth: 4
     MIRegPerOut: 1
-    MIWaveGroup: [2, 1]
+    MIWaveGroup: [4, 1]
     MIWaveTile: [1, 1]
     MIWaveTileA: 1
     MIWaveTileB: 1
-    MacroTile0: 32
-    MacroTile1: 16
-    MacroTileA: 32
-    MacroTileB: 16
+    MIWaveTileMetadata: 0
+    MacroTile0: 128
+    MacroTile1: 32
+    MacroTileA: 128
+    MacroTileB: 32
     MagicDivAlg: 2
     MatrixInstB: 1
     MatrixInstBM: 1
     MatrixInstBN: 1
-    MatrixInstK: 16
-    MatrixInstM: 16
-    MatrixInstN: 16
-    MatrixInstruction: [16, 16, 16, 1]
+    MatrixInstK: 8
+    MatrixInstM: 32
+    MatrixInstN: 32
+    MatrixInstruction: [32, 32, 8, 1]
     MaxOccupancy: 40
     MaxVgprNumber: 256
     MinVgprNumber: 0
     NoLdsWriteCode: false
     NoReject: false
     NoTailLoop: false
+    NonTemporal: 3
     NonTemporalA: 3
     NonTemporalB: 3
     NonTemporalC: 3
     NonTemporalD: 3
     NonTemporalE: 0
-    NumElementsPerBatchStore: 0
-    NumElementsPerThread: 4
-    NumGlobalWriteVectorsPerThread: 4
-    NumLoadsA: 2
+    NonTemporalMetadata: 3
+    NumElementsPerBatchStore: 16
+    NumElementsPerThread: 16
+    NumGlobalWriteVectorsPerThread: 16
+    NumLoadsA: 4
     NumLoadsB: 1
     NumLoadsCoalescedA: 1
     NumLoadsCoalescedB: 1
-    NumLoadsPerpendicularA: 2
+    NumLoadsPerpendicularA: 4
     NumLoadsPerpendicularB: 1
-    NumThreads: 128
+    NumThreads: 256
     OptNoLoadLoop: 1
     PackedC0IdxChars: [I]
     PackedC0IndicesX: [0]
@@ -38737,7 +38747,8 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
+      F32XdlMathOp: 0
       Fp16AltImpl: false
       Gradient: false
       GroupedGemm: true
@@ -38750,14 +38761,17 @@
       IndexAssignmentsA: [0, 3, 2]
       IndexAssignmentsB: [3, 1, 2]
       IndexAssignmentsLD: [4, 5, 6, 7]
+      IndexAssignmentsMetadata: [3, 0, 2]
       IndexUnroll: 3
       IndexUnrollA: 1
       IndexUnrollB: 0
+      IndexUnrollM: 0
       IndicesBatch: [2]
       IndicesFree: [0, 1]
       IndicesSummation: [3]
       MirrorDimsA: []
       MirrorDimsB: []
+      MirrorDimsMetadata: []
       NumIndicesBatch: 1
       NumIndicesC: 3
       NumIndicesFree: 2
@@ -38767,6 +38781,7 @@
       SetConstStrideA: []
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
+      SparseA: false
       StridedBatched: true
       TLUA: true
       TLUB: false
@@ -38788,82 +38803,87 @@
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 176
-    SolutionNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_GG_AH_SDV_MT32x16x64_MI16x16x16x1_SN_1LDSB0_AFC1_GRVW8_GSU1_LPB16_MIWT1_1_NLCA1_PLR5_SVW1_VW1_WG32_4_1
-    SourceSwap: 1
-    StaggerU: 32
+    SolutionNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_GG_AH_SDV_MT128x32x64_MI32x32x8x1_SN_1LDSB0_GRVWA8_GRVWB8_LBSPPA0_LBSPPB128_LPA0_LPB8_LRVW8_MIWT1_1_NT3_NTA3_NTB3_NTC3_NTD3_NTM3_NEPBS16_NLCA1_SS0_SU0_SUS0_SRVW4_SVW4_VWA1_WG128_2_1_WGM1
+    SourceSwap: 0
+    StaggerU: 0
     StaggerUMapping: 0
-    StaggerUStride: 256
+    StaggerUStride: 0
     StorePriorityOpt: false
-    StoreRemapVectorWidth: 0
+    StoreRemapVectorWidth: 4
     StoreSyncOpt: 0
-    StoreVectorWidth: 1
+    StoreVectorWidth: 4
     SubGroup0: 8
-    SubGroup1: 16
+    SubGroup1: 32
     SubGroupA: 8
-    SubGroupB: 16
+    SubGroupB: 32
     SuppressNoLoadLoop: false
     ThreadTile: [1, 1]
-    ThreadTile0: 4
+    ThreadTile0: 16
     ThreadTile1: 1
-    ThreadTileA: 4
+    ThreadTileA: 16
     ThreadTileB: 1
     TransposeLDS: 1
+    TransposeLDSMetadata: true
     UnrollMajorLDSA: false
     UnrollMajorLDSB: true
+    UnrollMajorLDSMetadata: true
     Use64bShadowLimit: 1
     UseInstOffsetForGRO: 0
     UseSgprForGRO: -1
     Valid: true
     VectorStore: -1
-    VectorWidth: 1
     VectorWidthA: 1
     VectorWidthB: 1
     WaveSeparateGlobalReadA: 0
     WaveSeparateGlobalReadB: 0
+    WaveSeparateGlobalReadMetadata: 0
     WavefrontSize: 64
-    WorkGroup: [32, 4, 1]
-    WorkGroupMapping: 8
+    WorkGroup: [128, 2, 1]
+    WorkGroupMapping: 1
     WorkGroupReduction: false
-    _DepthULds: 64
+    WorkspaceCheck: [0, 0]
+    _DepthU: 64
+    _DepthUA: 64
+    _DepthUB: 64
+    _DepthUMetadata: 64
     _GlobalAccumulation: null
-    _UseSgprForGRO: false
+    _UseSgprForGRO: 1
     _VectorStore: 1
     _WorkspaceSizePerElemBias: 0
     _WorkspaceSizePerElemC: 0
-    _staggerStrideShift: 1
-    allowLRVWforTLUandMI: false
+    _staggerStrideShift: 0
   - 1LDSBuffer: 0
     ActivationAlt: false
     ActivationFuncCall: true
     ActivationFused: true
-    AssertFree0ElementMultiple: 1
+    AssertFree0ElementMultiple: 8
     AssertFree1ElementMultiple: 1
     AssertSummationElementMultiple: 1
     AssignedDerivedParameters: true
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
+    CUCount: null
     ClusterLocalRead: 1
     CodeObjectVersion: V3
     CustomKernelName: ''
     DepthU: 32
-    DepthULdsDivisor: 1
     DirectToLds: false
     DirectToLdsA: false
     DirectToLdsB: false
-    DirectToVgprA: false
-    DirectToVgprB: false
+    DirectToVgprSparseMetadata: false
     EdgeType: ShiftPtr
+    EnableF32XdlMathOp: false
     EnableMatrixInstruction: true
     ExpandPointerSwap: 0
     GlobalReadPerMfma: 1
-    GlobalReadVectorWidthA: 2
+    GlobalReadVectorWidthA: 8
     GlobalReadVectorWidthB: 1
     GlobalSplitU: 1
     GlobalSplitUAlgorithm: SingleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: false
-    GuaranteeNoPartialA: false
+    GuaranteeNoPartialA: true
     GuaranteeNoPartialB: true
     ISA: [9, 0, 10]
     InnerUnroll: 1
@@ -38871,26 +38891,30 @@
     KernelLanguage: Assembly
     LSCA: 128
     LSCB: 32
-    LSPA: 2
+    LSPA: 8
     LSPB: 4
-    LVCA: 64
+    LVCA: 16
     LVCB: 32
     LVPA: 1
     LVPB: 4
-    LdsBlockSizePerPad: 128
     LdsBlockSizePerPadA: 0
     LdsBlockSizePerPadB: 128
+    LdsBlockSizePerPadMetadata: 0
     LdsInitCVgprs: false
     LdsNumElements: 12432
     LdsNumElementsAlignedA: 4096
     LdsNumElementsAlignedB: 256
+    LdsNumElementsAlignedMetadata: 0
     LdsOffsetA: 0
     LdsOffsetA_Blk: 8192
     LdsOffsetB: 4096
     LdsOffsetB_Blk: 12288
     LdsOffsetBias: 0
+    LdsOffsetMetadata: 4096
+    LdsOffsetMetadata_Blk: 12288
     LdsPadA: 0
     LdsPadB: 8
+    LdsPadMetadata: 0
     LocalReadVectorWidth: 8
     LocalSplitU: 1
     LocalWritePerMfma: -1
@@ -38902,12 +38926,16 @@
     MIArchVgpr: false
     MIBlock: [4, 4, 4, 16, 16, 1]
     MIInputPerThread: 4
+    MIInputPerThreadA: 4
+    MIInputPerThreadB: 4
+    MIInputPerThreadMetadata: 4
     MIOutputVectorWidth: 4
     MIRegPerOut: 1
     MIWaveGroup: [2, 1]
     MIWaveTile: [1, 1]
     MIWaveTileA: 1
     MIWaveTileB: 1
+    MIWaveTileMetadata: 0
     MacroTile0: 128
     MacroTile1: 4
     MacroTileA: 128
@@ -38926,19 +38954,21 @@
     NoLdsWriteCode: false
     NoReject: false
     NoTailLoop: false
+    NonTemporal: 3
     NonTemporalA: 3
     NonTemporalB: 3
     NonTemporalC: 3
     NonTemporalD: 3
     NonTemporalE: 0
-    NumElementsPerBatchStore: 0
+    NonTemporalMetadata: 3
+    NumElementsPerBatchStore: 16
     NumElementsPerThread: 4
     NumGlobalWriteVectorsPerThread: 4
-    NumLoadsA: 16
+    NumLoadsA: 4
     NumLoadsB: 1
     NumLoadsCoalescedA: 1
     NumLoadsCoalescedB: 1
-    NumLoadsPerpendicularA: 16
+    NumLoadsPerpendicularA: 4
     NumLoadsPerpendicularB: 1
     NumThreads: 128
     OptNoLoadLoop: 1
@@ -38964,7 +38994,8 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
+      F32XdlMathOp: 0
       Fp16AltImpl: false
       Gradient: false
       GroupedGemm: true
@@ -38977,14 +39008,17 @@
       IndexAssignmentsA: [0, 3, 2]
       IndexAssignmentsB: [3, 1, 2]
       IndexAssignmentsLD: [4, 5, 6, 7]
+      IndexAssignmentsMetadata: [3, 0, 2]
       IndexUnroll: 3
       IndexUnrollA: 1
       IndexUnrollB: 0
+      IndexUnrollM: 0
       IndicesBatch: [2]
       IndicesFree: [0, 1]
       IndicesSummation: [3]
       MirrorDimsA: []
       MirrorDimsB: []
+      MirrorDimsMetadata: []
       NumIndicesBatch: 1
       NumIndicesC: 3
       NumIndicesFree: 2
@@ -38994,6 +39028,7 @@
       SetConstStrideA: []
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
+      SparseA: false
       StridedBatched: true
       TLUA: true
       TLUB: false
@@ -39015,11 +39050,11 @@
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 177
-    SolutionNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_GG_AH_SDV_MT128x4x32_MI4x4x4x16_SN_1LDSB0_AFC1_GRVW2_GSU1_LPB8_MIWT1_1_NLCA1_PLR9_SVW1_VW1_WG128_1_1
+    SolutionNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_GG_AH_SDV_MT128x4x32_MI4x4x4x16_SN_1LDSB0_GRVWA8_GRVWB1_LBSPPA0_LBSPPB128_LPA0_LPB8_LRVW8_MIWT1_1_NT3_NTA3_NTB3_NTC3_NTD3_NTM3_NEPBS16_NLCA1_SS1_SU0_SUS0_SRVW0_SVW1_VWA1_WG128_1_1_WGM1
     SourceSwap: 1
-    StaggerU: 32
+    StaggerU: 0
     StaggerUMapping: 0
-    StaggerUStride: 256
+    StaggerUStride: 0
     StorePriorityOpt: false
     StoreRemapVectorWidth: 0
     StoreSyncOpt: 0
@@ -39035,30 +39070,282 @@
     ThreadTileA: 4
     ThreadTileB: 1
     TransposeLDS: 1
+    TransposeLDSMetadata: true
     UnrollMajorLDSA: false
     UnrollMajorLDSB: true
+    UnrollMajorLDSMetadata: true
     Use64bShadowLimit: 1
     UseInstOffsetForGRO: 0
     UseSgprForGRO: -1
     Valid: true
     VectorStore: -1
-    VectorWidth: 1
     VectorWidthA: 1
     VectorWidthB: 1
     WaveSeparateGlobalReadA: 0
     WaveSeparateGlobalReadB: 0
+    WaveSeparateGlobalReadMetadata: 0
     WavefrontSize: 64
     WorkGroup: [128, 1, 1]
-    WorkGroupMapping: 8
+    WorkGroupMapping: 1
     WorkGroupReduction: false
-    _DepthULds: 32
+    WorkspaceCheck: [0, 0]
+    _DepthU: 32
+    _DepthUA: 32
+    _DepthUB: 32
+    _DepthUMetadata: 32
     _GlobalAccumulation: null
-    _UseSgprForGRO: false
+    _UseSgprForGRO: 1
     _VectorStore: 1
     _WorkspaceSizePerElemBias: 0
     _WorkspaceSizePerElemC: 0
-    _staggerStrideShift: 2
-    allowLRVWforTLUandMI: false
+    _staggerStrideShift: 0
+  - 1LDSBuffer: 1
+    ActivationAlt: false
+    ActivationFuncCall: true
+    ActivationFused: true
+    AssertFree0ElementMultiple: 8
+    AssertFree1ElementMultiple: 1
+    AssertSummationElementMultiple: 1
+    AssignedDerivedParameters: true
+    AssignedProblemIndependentDerivedParameters: true
+    BufferLoad: true
+    BufferStore: true
+    CUCount: null
+    ClusterLocalRead: 1
+    CodeObjectVersion: V3
+    CustomKernelName: ''
+    DepthU: 64
+    DirectToLds: false
+    DirectToLdsA: false
+    DirectToLdsB: false
+    DirectToVgprSparseMetadata: false
+    EdgeType: ShiftPtr
+    EnableF32XdlMathOp: false
+    EnableMatrixInstruction: true
+    ExpandPointerSwap: 0
+    GlobalReadPerMfma: 1
+    GlobalReadVectorWidthA: 8
+    GlobalReadVectorWidthB: 8
+    GlobalSplitU: 1
+    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalWriteVectorWidth: 1
+    GroupLoadStore: false
+    GuaranteeNoPartialA: true
+    GuaranteeNoPartialB: true
+    ISA: [9, 0, 10]
+    InnerUnroll: 1
+    InterleaveAlpha: 0
+    KernelLanguage: Assembly
+    LSCA: 128
+    LSCB: 64
+    LSPA: 16
+    LSPB: 32
+    LVCA: 16
+    LVCB: 8
+    LVPA: 2
+    LVPB: 4
+    LdsBlockSizePerPadA: 0
+    LdsBlockSizePerPadB: 128
+    LdsBlockSizePerPadMetadata: 0
+    LdsInitCVgprs: false
+    LdsNumElements: 15104
+    LdsNumElementsAlignedA: 8192
+    LdsNumElementsAlignedB: 6912
+    LdsNumElementsAlignedMetadata: 0
+    LdsOffsetA: 0
+    LdsOffsetA_Blk: 16384
+    LdsOffsetB: 8192
+    LdsOffsetB_Blk: 24576
+    LdsOffsetBias: 0
+    LdsOffsetMetadata: 15104
+    LdsOffsetMetadata_Blk: 24576
+    LdsPadA: 0
+    LdsPadB: 8
+    LdsPadMetadata: 0
+    LocalReadVectorWidth: 8
+    LocalSplitU: 1
+    LocalWritePerMfma: -1
+    LocalWriteUseSgprA: false
+    LocalWriteUseSgprB: false
+    LoopIters: 8
+    LoopUnroll: 64
+    MFMA_BF16_1K: false
+    MIArchVgpr: false
+    MIBlock: [32, 32, 8, 1, 1, 1]
+    MIInputPerThread: 4
+    MIInputPerThreadA: 4
+    MIInputPerThreadB: 4
+    MIInputPerThreadMetadata: 4
+    MIOutputVectorWidth: 4
+    MIRegPerOut: 1
+    MIWaveGroup: [4, 1]
+    MIWaveTile: [1, 3]
+    MIWaveTileA: 1
+    MIWaveTileB: 3
+    MIWaveTileMetadata: 0
+    MacroTile0: 128
+    MacroTile1: 96
+    MacroTileA: 128
+    MacroTileB: 96
+    MagicDivAlg: 2
+    MatrixInstB: 1
+    MatrixInstBM: 1
+    MatrixInstBN: 1
+    MatrixInstK: 8
+    MatrixInstM: 32
+    MatrixInstN: 32
+    MatrixInstruction: [32, 32, 8, 1]
+    MaxOccupancy: 40
+    MaxVgprNumber: 256
+    MinVgprNumber: 0
+    NoLdsWriteCode: false
+    NoReject: false
+    NoTailLoop: false
+    NonTemporal: 0
+    NonTemporalA: 0
+    NonTemporalB: 0
+    NonTemporalC: 0
+    NonTemporalD: 0
+    NonTemporalE: 0
+    NonTemporalMetadata: 0
+    NumElementsPerBatchStore: 0
+    NumElementsPerThread: 48
+    NumGlobalWriteVectorsPerThread: 48
+    NumLoadsA: 4
+    NumLoadsB: 3
+    NumLoadsCoalescedA: 1
+    NumLoadsCoalescedB: 1
+    NumLoadsPerpendicularA: 4
+    NumLoadsPerpendicularB: 3
+    NumThreads: 256
+    OptNoLoadLoop: 1
+    PackedC0IdxChars: [I]
+    PackedC0IndicesX: [0]
+    PackedC1IdxChars: [J]
+    PackedC1IndicesX: [1]
+    PrefetchGlobalRead: 2
+    PrefetchLocalRead: 1
+    ProblemType:
+      Activation: true
+      ActivationComputeDataType: 0
+      ActivationHPA: true
+      ActivationNoGuard: false
+      ActivationType: all
+      AllowNoFreeDims: false
+      AssignedDerivedParameters: true
+      Batched: true
+      BetaOnlyUseBias: false
+      BiasDataTypeList: [0, 4]
+      BiasSrc: D
+      ComplexConjugateA: false
+      ComplexConjugateB: false
+      ComputeDataType: 0
+      DataType: 4
+      DestDataType: 0
+      F32XdlMathOp: 0
+      Fp16AltImpl: false
+      Gradient: false
+      GroupedGemm: true
+      SupportUserArgs: true
+      HighPrecisionAccumulate: true
+      Index0: 0
+      Index01A: 0
+      Index01B: 1
+      Index1: 1
+      IndexAssignmentsA: [0, 3, 2]
+      IndexAssignmentsB: [3, 1, 2]
+      IndexAssignmentsLD: [4, 5, 6, 7]
+      IndexAssignmentsMetadata: [3, 0, 2]
+      IndexUnroll: 3
+      IndexUnrollA: 1
+      IndexUnrollB: 0
+      IndexUnrollM: 0
+      IndicesBatch: [2]
+      IndicesFree: [0, 1]
+      IndicesSummation: [3]
+      MirrorDimsA: []
+      MirrorDimsB: []
+      MirrorDimsMetadata: []
+      NumIndicesBatch: 1
+      NumIndicesC: 3
+      NumIndicesFree: 2
+      NumIndicesLD: 4
+      NumIndicesSummation: 1
+      OperationType: GEMM
+      SetConstStrideA: []
+      SetConstStrideB: []
+      SilentHighPrecisionAccumulate: false
+      SparseA: false
+      StridedBatched: true
+      TLUA: true
+      TLUB: false
+      Tensor0: 0
+      Tensor1: 1
+      TileA: 0
+      TileAwareSelection: false
+      TileB: 1
+      TotalIndices: 4
+      TransposeA: 0
+      TransposeB: 0
+      UseBeta: true
+      UseBias: true
+      UseE: false
+      UseInitialStridesAB: false
+      UseInitialStridesCD: false
+      UseScaleDVec: true
+    ScheduleGlobalRead: 1
+    ScheduleIterAlg: 3
+    ScheduleLocalWrite: 1
+    SolutionIndex: 178
+    SolutionNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_GG_AH_SDV_MT128x96x64_MI32x32x8x1_SN_1LDSB1_GRVWA8_GRVWB8_LBSPPA0_LBSPPB128_LPA0_LPB8_LRVW8_MIWT1_3_NT0_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS0_NLCA1_SS0_SU0_SUS0_SRVW4_SVW4_VWA1_WG128_2_1_WGM4
+    SourceSwap: 0
+    StaggerU: 0
+    StaggerUMapping: 0
+    StaggerUStride: 0
+    StorePriorityOpt: false
+    StoreRemapVectorWidth: 4
+    StoreSyncOpt: 0
+    StoreVectorWidth: 4
+    SubGroup0: 8
+    SubGroup1: 32
+    SubGroupA: 8
+    SubGroupB: 32
+    SuppressNoLoadLoop: false
+    ThreadTile: [1, 1]
+    ThreadTile0: 16
+    ThreadTile1: 3
+    ThreadTileA: 16
+    ThreadTileB: 3
+    TransposeLDS: 1
+    TransposeLDSMetadata: true
+    UnrollMajorLDSA: false
+    UnrollMajorLDSB: true
+    UnrollMajorLDSMetadata: true
+    Use64bShadowLimit: 1
+    UseInstOffsetForGRO: 0
+    UseSgprForGRO: -1
+    Valid: true
+    VectorStore: -1
+    VectorWidthA: 1
+    VectorWidthB: 1
+    WaveSeparateGlobalReadA: 0
+    WaveSeparateGlobalReadB: 0
+    WaveSeparateGlobalReadMetadata: 0
+    WavefrontSize: 64
+    WorkGroup: [128, 2, 1]
+    WorkGroupMapping: 4
+    WorkGroupReduction: false
+    WorkspaceCheck: [0, 0]
+    _DepthU: 64
+    _DepthUA: 64
+    _DepthUB: 64
+    _DepthUMetadata: 64
+    _GlobalAccumulation: null
+    _UseSgprForGRO: 1
+    _VectorStore: 1
+    _WorkspaceSizePerElemBias: 0
+    _WorkspaceSizePerElemC: 0
+    _staggerStrideShift: 0
 - [2, 3, 0, 1]
 - - - [8, 1, 1, 8, 512, 512, 512, 512]
     - [0, 0.0]
@@ -39416,6 +39703,8 @@
     - [176, 0.0]
   - - [9, 2, 1, 8, 512, 512, 512, 512]
     - [177, 0.0]
+  - - [9, 3, 1, 8, 512, 512, 512, 512]
+    - [178, 0.0]
 - null
 - null
 - DeviceEfficiency
