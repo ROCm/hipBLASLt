@@ -1133,8 +1133,8 @@ class KernelWriterAssembly(KernelWriter):
 
       if kernel["ProblemType"]["GroupedGemm"]:
         tmpSgprNumGemm = 5
-        tmpSgprOrigKernelArgAddr0 = 18
-        tmpSgprOrigKernelArgAddr1 = 19
+        tmpSgprOrigKernelArgAddr0 = 8
+        tmpSgprOrigKernelArgAddr1 = 9
         module.addComment1("Grouped Gemm: Load num of Gemms")
         module.add(self.argLoader.loadKernArg(tmpSgprNumGemm, "KernArgAddress", hex(0), dword=1))
         module.add(SMovB64(dst=sgpr(tmpSgprOrigKernelArgAddr0,2), src=sgpr("KernArgAddress",2)))
@@ -1148,18 +1148,20 @@ class KernelWriterAssembly(KernelWriter):
         # generatoe wgTable in kernel
         #############
         # FIXME: Need to fix these cause it may cause data hazard
-        tmpSgprM = 8
-        tmpSgprN = 9
-        tmpSgprAddrM = 10
-        tmpSgorNumWG0 = 11
-        tmpSgprNumWG1 = 12
-        tmpSgprNumTiles = 13
-        tmpSgprAccumTiles = 14
-        tmpSgprLoopCounter = 15
-        tmpSgprWgTableOffset = 16
-        tmpSgprArgOffsett = 17
-        tmpSgprArgAddress0 = 20
-        tmpSgprArgAddress1 = 21
+        tmpSgorNumWG0 = 10
+        tmpSgprNumWG1 = 11
+        tmpSgprM = 12
+        tmpSgprN = 13
+        tmpSgprB = 14
+        tmpSgprK = 15
+        tmpSgprAddrM = 16
+        tmpSgprNumTiles = 17
+        tmpSgprAccumTiles = 18
+        tmpSgprLoopCounter = 19
+        tmpSgprWgTableOffset = 20
+        tmpSgprArgOffsett = 21
+        tmpSgprArgAddress0 = 22
+        tmpSgprArgAddress1 = 23
 
         # generate wgTable by WG0
         label_wait_wgTableGen = Label("Wait_wgTableGen", "")
@@ -1193,7 +1195,7 @@ class KernelWriterAssembly(KernelWriter):
 
         label_Loop_gemm_count = Label("Loop_GemmCount", "")
         module.add(label_Loop_gemm_count)
-        module.add(self.argLoader.loadKernArg(tmpSgprM, tmpSgprArgAddress0, sgpr(tmpSgprAddrM), dword=2))
+        module.add(self.argLoader.loadKernArg(tmpSgprM, tmpSgprArgAddress0, sgpr(tmpSgprAddrM), dword=4))
         module.add(SWaitCnt(0))
         #### calculate numWorkGroup ####
         qReg = self.vgprPool.checkOut(4)
@@ -1217,6 +1219,7 @@ class KernelWriterAssembly(KernelWriter):
         module.add(SStoreB32(src=sgpr(tmpSgprAccumTiles), base=sgpr("KernArgAddress", 2), soffset=sgpr(tmpSgprWgTableOffset), smem=smodifier))
         # calculate numTiles
         module.add(SMulI32(dst=sgpr(tmpSgprNumTiles), src0=sgpr(tmpSgorNumWG0), src1=sgpr(tmpSgprNumWG1)))
+        module.add(SMulI32(dst=sgpr(tmpSgprNumTiles), src0=sgpr(tmpSgprNumTiles), src1=sgpr(tmpSgprB)))
         if kernel["GlobalSplitU"] > 1:
           module.add(SMulI32(dst=sgpr(tmpSgprNumTiles), src0=sgpr(tmpSgprNumTiles), src1=kernel["GlobalSplitU"]))
         module.add(SAddU32(dst=sgpr(tmpSgprAccumTiles), src0=sgpr(tmpSgprAccumTiles), src1=sgpr(tmpSgprNumTiles)))
@@ -1228,7 +1231,7 @@ class KernelWriterAssembly(KernelWriter):
         module.add(SCBranchSCC1(labelName=label_Loop_gemm_count.getLabelName()))
 
         # set synchroniser to 1
-        tmpSgprSynchroniser = 8
+        tmpSgprSynchroniser = 10
         module.add(SMovB32(dst=sgpr(tmpSgprSynchroniser), src=1))
         module.add(SWaitCnt(0))
         module.add(SStoreB32(src=sgpr(tmpSgprSynchroniser), base=sgpr(tmpSgprOrigKernelArgAddr0, 2), soffset=hex(20), smem=smodifier))
