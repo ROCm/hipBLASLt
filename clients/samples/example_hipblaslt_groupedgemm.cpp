@@ -254,9 +254,11 @@ static void show_usage(char* argv[])
         << "\t--request_solutions\t\t\tNumber of solutions to run (default is 1)\n"
         << "\t--num_streams\t\t\t\tRun gemms by multi streams (default is 1)\n"
         << "\t--grouped_gemm\t\t\t\tRun gemms by grouped gemm kernel (default is 0)\n"
-        << "\t--in_datatype \t\tdatatype \tGEMM_STRIDED argument in out: fp32, fp16, bf16 (default is "
+        << "\t--in_datatype \t\tdatatype \tGEMM_STRIDED argument in out: fp32, fp16, bf16 (default "
+           "is "
            "fp32)\n"
-        << "\t--out_datatype \t\tdatatype \tGEMM_STRIDED argument in out: fp32, fp16, bf16 (default is "
+        << "\t--out_datatype \t\tdatatype \tGEMM_STRIDED argument in out: fp32, fp16, bf16 "
+           "(default is "
            "fp32)\n"
         << "\t--trans_a \t\ttrans_a \tGEMM_STRIDED argument trans_a: N or T (default is N)\n"
         << "\t--trans_b \t\ttrans_b \tGEMM_STRIDED argument trans_b: N or T (default is N)\n"
@@ -618,13 +620,13 @@ bool bad_argument(hipblasOperation_t trans_a,
 }
 
 template <typename Tin, typename Tout>
-void initialize_a_b_c_bias(std::vector<Tin>&     ha,
+void initialize_a_b_c_bias(std::vector<Tin>&   ha,
                            int64_t             size_a,
-                           std::vector<Tin>&     hb,
+                           std::vector<Tin>&   hb,
                            int64_t             size_b,
-                           std::vector<Tout>&     hc,
+                           std::vector<Tout>&  hc,
                            int64_t             size_c,
-                           std::vector<Tout>&     h_bias,
+                           std::vector<Tout>&  h_bias,
                            int64_t             size_bias,
                            std::vector<float>& h_scaleDVec,
                            int64_t             size_scaleDVec)
@@ -697,8 +699,9 @@ void test_hipblaslt(hipblasDatatype_t           in_datatype,
         size_bias(gemm_count), size_scaleDVec(gemm_count);
     std::vector<void*> da(gemm_count), db(gemm_count), dc(gemm_count), dd(gemm_count),
         d_bias(gemm_count), d_scaleDVec(gemm_count);
-    std::vector<std::vector<Tin>> ha(gemm_count), hb(gemm_count);
-    std::vector<std::vector<Tout>> hc(gemm_count), hd(gemm_count), h_bias(gemm_count), hd_gold(gemm_count);
+    std::vector<std::vector<Tin>>  ha(gemm_count), hb(gemm_count);
+    std::vector<std::vector<Tout>> hc(gemm_count), hd(gemm_count), h_bias(gemm_count),
+        hd_gold(gemm_count);
     std::vector<std::vector<float>> h_scaleDVec(gemm_count);
 
     hipblasLtHandle_t handle;
@@ -879,8 +882,11 @@ void test_hipblaslt(hipblasDatatype_t           in_datatype,
         {
             CHECK_HIPBLASLT_ERROR(hipblasLtMatmulDescSetAttribute(
                 matmul[i], HIPBLASLT_MATMUL_DESC_BIAS_POINTER, &d_bias[i], sizeof(void*)));
-            CHECK_HIPBLASLT_ERROR(hipblasLtMatmulDescSetAttribute(
-                matmul[i], HIPBLASLT_MATMUL_DESC_BIAS_DATA_TYPE, &out_datatype, sizeof(out_datatype)));
+            CHECK_HIPBLASLT_ERROR(
+                hipblasLtMatmulDescSetAttribute(matmul[i],
+                                                HIPBLASLT_MATMUL_DESC_BIAS_DATA_TYPE,
+                                                &out_datatype,
+                                                sizeof(out_datatype)));
         }
         if(enable_scaleDVec[i])
             CHECK_HIPBLASLT_ERROR(
@@ -1007,8 +1013,8 @@ void test_hipblaslt(hipblasDatatype_t           in_datatype,
         for(int sol = 0; sol < algoNum; sol++)
         {
             auto solIdx = (findAll) ? validIdx[sol] : sol;
-            CHECK_HIPBLASLT_ERROR(
-                groupedGemm.initialize(heuristicResult[0][solIdx].algo, d_workspace, stream[0]));
+            CHECK_HIPBLASLT_ERROR(groupedGemm.initialize(
+                heuristicResult[0][solIdx].algo, d_workspace, false, stream[0]));
 
             double     eventMs;
             hipEvent_t start, stop;
@@ -1421,7 +1427,7 @@ void test_hipblaslt(hipblasDatatype_t           in_datatype,
             auto* b_ptr = &hb[i][0];
             auto* c_ptr = &hc[i][0];
             auto* d_ptr = &hd_gold[i][0];
-            Tout*    bias_ptr;
+            Tout* bias_ptr;
             if(enable_bias[i])
                 bias_ptr = &h_bias[i][0];
             else
@@ -1432,30 +1438,30 @@ void test_hipblaslt(hipblasDatatype_t           in_datatype,
             else
                 scaleDVec_ptr = nullptr;
             mat_mul_bias_activation<Tin, Tout, float>(alpha[i],
-                                                 beta[i],
-                                                 m[i],
-                                                 n[i],
-                                                 k[i],
-                                                 batch_count[i],
-                                                 a_ptr,
-                                                 a_stride_1[i],
-                                                 a_stride_2[i],
-                                                 stride_a[i],
-                                                 b_ptr,
-                                                 b_stride_1[i],
-                                                 b_stride_2[i],
-                                                 stride_b[i],
-                                                 c_ptr,
-                                                 1,
-                                                 ldc[i],
-                                                 stride_c[i],
-                                                 d_ptr,
-                                                 1,
-                                                 ldd[i],
-                                                 stride_d[i],
-                                                 bias_ptr,
-                                                 scaleDVec_ptr,
-                                                 actType[i]);
+                                                      beta[i],
+                                                      m[i],
+                                                      n[i],
+                                                      k[i],
+                                                      batch_count[i],
+                                                      a_ptr,
+                                                      a_stride_1[i],
+                                                      a_stride_2[i],
+                                                      stride_a[i],
+                                                      b_ptr,
+                                                      b_stride_1[i],
+                                                      b_stride_2[i],
+                                                      stride_b[i],
+                                                      c_ptr,
+                                                      1,
+                                                      ldc[i],
+                                                      stride_c[i],
+                                                      d_ptr,
+                                                      1,
+                                                      ldd[i],
+                                                      stride_d[i],
+                                                      bias_ptr,
+                                                      scaleDVec_ptr,
+                                                      actType[i]);
 
             bool passed = true;
             for(int j = 0; j < size_c[i]; j++)
@@ -1509,10 +1515,10 @@ void test_hipblaslt(hipblasDatatype_t           in_datatype,
 int main(int argc, char* argv[])
 {
     // initialize parameters with default values
-    hipblasOperation_t trans_a         = HIPBLAS_OP_N;
-    hipblasOperation_t trans_b         = HIPBLAS_OP_N;
-    hipblasDatatype_t  in_datatype     = HIPBLAS_R_32F;
-    hipblasDatatype_t  out_datatype    = HIPBLAS_R_32F;
+    hipblasOperation_t trans_a      = HIPBLAS_OP_N;
+    hipblasOperation_t trans_b      = HIPBLAS_OP_N;
+    hipblasDatatype_t  in_datatype  = HIPBLAS_R_32F;
+    hipblasDatatype_t  out_datatype = HIPBLAS_R_32F;
 
     std::vector<int64_t> m, lda, stride_a;
     std::vector<int64_t> n, ldb, stride_b;
@@ -1635,132 +1641,132 @@ int main(int argc, char* argv[])
 
     if(in_datatype == HIPBLAS_R_32F && out_datatype == HIPBLAS_R_32F)
         test_hipblaslt<hipblasLtFloat, hipblasLtFloat>(in_datatype,
-                                       out_datatype,
-                                       trans_a,
-                                       trans_b,
-                                       m,
-                                       n,
-                                       k,
-                                       lda,
-                                       ldb,
-                                       ldc,
-                                       ldd,
-                                       stride_a,
-                                       stride_b,
-                                       stride_c,
-                                       stride_d,
-                                       batch_count,
-                                       alpha,
-                                       beta,
-                                       enable_bias,
-                                       enable_scaleDVec,
-                                       actType,
-                                       gemm_count,
-                                       grouped_gemm,
-                                       bench_count,
-                                       sync_count,
-                                       request_solutions,
-                                       num_streams,
-                                       validate,
-                                       verbose,
-                                       cpu_time,
-                                       findAll);
+                                                       out_datatype,
+                                                       trans_a,
+                                                       trans_b,
+                                                       m,
+                                                       n,
+                                                       k,
+                                                       lda,
+                                                       ldb,
+                                                       ldc,
+                                                       ldd,
+                                                       stride_a,
+                                                       stride_b,
+                                                       stride_c,
+                                                       stride_d,
+                                                       batch_count,
+                                                       alpha,
+                                                       beta,
+                                                       enable_bias,
+                                                       enable_scaleDVec,
+                                                       actType,
+                                                       gemm_count,
+                                                       grouped_gemm,
+                                                       bench_count,
+                                                       sync_count,
+                                                       request_solutions,
+                                                       num_streams,
+                                                       validate,
+                                                       verbose,
+                                                       cpu_time,
+                                                       findAll);
     else if(in_datatype == HIPBLAS_R_16F && out_datatype == HIPBLAS_R_32F)
         test_hipblaslt<hipblasLtHalf, hipblasLtFloat>(in_datatype,
-                                       out_datatype,
-                                       trans_a,
-                                       trans_b,
-                                       m,
-                                       n,
-                                       k,
-                                       lda,
-                                       ldb,
-                                       ldc,
-                                       ldd,
-                                       stride_a,
-                                       stride_b,
-                                       stride_c,
-                                       stride_d,
-                                       batch_count,
-                                       alpha,
-                                       beta,
-                                       enable_bias,
-                                       enable_scaleDVec,
-                                       actType,
-                                       gemm_count,
-                                       grouped_gemm,
-                                       bench_count,
-                                       sync_count,
-                                       request_solutions,
-                                       num_streams,
-                                       validate,
-                                       verbose,
-                                       cpu_time,
-                                       findAll);
+                                                      out_datatype,
+                                                      trans_a,
+                                                      trans_b,
+                                                      m,
+                                                      n,
+                                                      k,
+                                                      lda,
+                                                      ldb,
+                                                      ldc,
+                                                      ldd,
+                                                      stride_a,
+                                                      stride_b,
+                                                      stride_c,
+                                                      stride_d,
+                                                      batch_count,
+                                                      alpha,
+                                                      beta,
+                                                      enable_bias,
+                                                      enable_scaleDVec,
+                                                      actType,
+                                                      gemm_count,
+                                                      grouped_gemm,
+                                                      bench_count,
+                                                      sync_count,
+                                                      request_solutions,
+                                                      num_streams,
+                                                      validate,
+                                                      verbose,
+                                                      cpu_time,
+                                                      findAll);
     else if(in_datatype == HIPBLAS_R_16F && out_datatype == HIPBLAS_R_16F)
         test_hipblaslt<hipblasLtHalf, hipblasLtHalf>(in_datatype,
-                                      out_datatype,
-                                      trans_a,
-                                      trans_b,
-                                      m,
-                                      n,
-                                      k,
-                                      lda,
-                                      ldb,
-                                      ldc,
-                                      ldd,
-                                      stride_a,
-                                      stride_b,
-                                      stride_c,
-                                      stride_d,
-                                      batch_count,
-                                      alpha,
-                                      beta,
-                                      enable_bias,
-                                      enable_scaleDVec,
-                                      actType,
-                                      gemm_count,
-                                      grouped_gemm,
-                                      bench_count,
-                                      sync_count,
-                                      request_solutions,
-                                      num_streams,
-                                      validate,
-                                      verbose,
-                                      cpu_time,
-                                      findAll);
+                                                     out_datatype,
+                                                     trans_a,
+                                                     trans_b,
+                                                     m,
+                                                     n,
+                                                     k,
+                                                     lda,
+                                                     ldb,
+                                                     ldc,
+                                                     ldd,
+                                                     stride_a,
+                                                     stride_b,
+                                                     stride_c,
+                                                     stride_d,
+                                                     batch_count,
+                                                     alpha,
+                                                     beta,
+                                                     enable_bias,
+                                                     enable_scaleDVec,
+                                                     actType,
+                                                     gemm_count,
+                                                     grouped_gemm,
+                                                     bench_count,
+                                                     sync_count,
+                                                     request_solutions,
+                                                     num_streams,
+                                                     validate,
+                                                     verbose,
+                                                     cpu_time,
+                                                     findAll);
     else if(in_datatype == HIPBLAS_R_16B && out_datatype == HIPBLAS_R_16B)
         test_hipblaslt<hipblasLtBfloat16, hipblasLtBfloat16>(in_datatype,
-                                          out_datatype,
-                                          trans_a,
-                                          trans_b,
-                                          m,
-                                          n,
-                                          k,
-                                          lda,
-                                          ldb,
-                                          ldc,
-                                          ldd,
-                                          stride_a,
-                                          stride_b,
-                                          stride_c,
-                                          stride_d,
-                                          batch_count,
-                                          alpha,
-                                          beta,
-                                          enable_bias,
-                                          enable_scaleDVec,
-                                          actType,
-                                          gemm_count,
-                                          grouped_gemm,
-                                          bench_count,
-                                          sync_count,
-                                          request_solutions,
-                                          num_streams,
-                                          validate,
-                                          verbose,
-                                          cpu_time,
-                                          findAll);
+                                                             out_datatype,
+                                                             trans_a,
+                                                             trans_b,
+                                                             m,
+                                                             n,
+                                                             k,
+                                                             lda,
+                                                             ldb,
+                                                             ldc,
+                                                             ldd,
+                                                             stride_a,
+                                                             stride_b,
+                                                             stride_c,
+                                                             stride_d,
+                                                             batch_count,
+                                                             alpha,
+                                                             beta,
+                                                             enable_bias,
+                                                             enable_scaleDVec,
+                                                             actType,
+                                                             gemm_count,
+                                                             grouped_gemm,
+                                                             bench_count,
+                                                             sync_count,
+                                                             request_solutions,
+                                                             num_streams,
+                                                             validate,
+                                                             verbose,
+                                                             cpu_time,
+                                                             findAll);
     else
         std::cout << "datatype not supported" << std::endl;
 

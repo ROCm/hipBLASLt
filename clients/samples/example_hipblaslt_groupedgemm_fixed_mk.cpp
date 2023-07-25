@@ -658,8 +658,8 @@ void test_hipblaslt(hipblasDatatype_t           in_datatype,
     // simulate feeding arguments to groupedgemm by previous kernel
     // 0. collect sum of N
     // 1. set problem to {Ms, {sum of N, 1, 1, 1, ...}, Ks}
-    // 2. initialize()
-    // 3. get default DeviceUserArguments from grouped gemm objects
+    // 2. get default DeviceUserArguments from grouped gemm objects
+    // 3. initialize if algo changes
     // 4. launch kernel to modify Ns (simulate this by memcpy Ns to device)
     // 5. launch groupedGemm kernel
     /////
@@ -894,11 +894,7 @@ void test_hipblaslt(hipblasDatatype_t           in_datatype,
         return;
     }
 
-    // step2: Initialize
-    CHECK_HIPBLASLT_ERROR(
-        groupedGemm.initialize(heuristicResult[validIdx[validIdx[0]]].algo, d_workspace, stream));
-
-    // step3: get default DeviceUserArguments from grouped gemm objects
+    // step2: get default DeviceUserArguments from grouped gemm objects
     hipblaslt_ext::UserArguments* dUAFloat = new hipblaslt_ext::UserArguments[gemm_count];
     groupedGemm.getDefaultValueForDeviceUserArguments((void*)dUAFloat);
     // Once you get the default value here, you can make several copies and change the values
@@ -915,6 +911,10 @@ void test_hipblaslt(hipblasDatatype_t           in_datatype,
     float bestMs = std::numeric_limits<float>::max();
     for(int sol = 0; sol < validIdx.size(); sol++)
     {
+        // step3: Initialize
+        CHECK_HIPBLASLT_ERROR(
+            groupedGemm.initialize(heuristicResult[validIdx[sol]].algo, d_workspace));
+
         float      eventMs;
         hipEvent_t start, stop;
         static_cast<void>(hipEventCreate(&start));
@@ -937,9 +937,9 @@ void test_hipblaslt(hipblasDatatype_t           in_datatype,
                                    gemm_count,
                                    d_dUAFloat,
                                    d_n_vec);
+
                 // step 5: launch grouped gemm kernel
-                CHECK_HIPBLASLT_ERROR(groupedGemm.runUserArgs(
-                    heuristicResult[validIdx[sol]].algo, d_dUAFloat, d_workspace, stream));
+                CHECK_HIPBLASLT_ERROR(groupedGemm.run(d_dUAFloat, stream));
             }
             static_cast<void>(hipDeviceSynchronize());
         }

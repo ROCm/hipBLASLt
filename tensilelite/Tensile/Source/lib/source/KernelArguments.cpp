@@ -120,6 +120,14 @@ namespace Tensile
         return reinterpret_cast<void const*>(m_data.data());
     }
 
+    uint8_t* KernelArguments::rawdata()
+    {
+        if(!isFullyBound())
+            throw std::runtime_error("Arguments not fully bound.");
+
+        return m_data.rawdata();
+    }
+
     size_t KernelArguments::size() const
     {
         return m_data.size();

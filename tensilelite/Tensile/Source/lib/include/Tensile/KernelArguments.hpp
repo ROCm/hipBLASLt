@@ -95,6 +95,16 @@ namespace Tensile
             return (const uint8_t*)m_data;
         }
 
+        uint8_t* rawdata()
+        {
+            if(!m_data)
+            {
+                T* ptr = m_vec_data.data();
+                return ptr;
+            }
+            return (uint8_t*)m_data;
+        }
+
         const T& operator[](unsigned int i) const
         {
             if(!m_data)
@@ -145,6 +155,7 @@ namespace Tensile
         bool isFullyBound() const;
 
         void const* data() const;
+        uint8_t*    rawdata();
         size_t      size() const;
 
         friend std::ostream& operator<<(std::ostream& stream, const KernelArguments& t);
