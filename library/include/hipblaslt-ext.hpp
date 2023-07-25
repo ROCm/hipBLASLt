@@ -173,9 +173,8 @@ namespace hipblaslt_ext
             strideE2; //!< The aux batch stride. Only works if mode is set to aux related epilogues.
         float act0; //!< The activation value 1. Some activations might use it.
         float act1; //!< The activation value 2.
-        int   activationType;
-    } __attribute__((
-        packed)); //!< The activation type.  Only works if mode is set to activation related epilogues.
+        int activationType; //!< The activation type.  Only works if mode is set to activation related epilogues.
+    } __attribute__((packed));
 
     /*! \ingroup types_module
      *  \brief hipblasLt extension instance for gemm problems.
@@ -247,15 +246,20 @@ namespace hipblaslt_ext
         * memory. Pointer must be 16B aligned (that is, lowest 4 bits of address must
         * be 0).
         *  @param[in]
+        *  userArgs                Use user args, this does not affect vanilla gemm.
+        * (May be deprecated in the future)
+        *  @param[in]
         *  stream                  The HIP stream where all the GPU work will be
-        * submitted.
+        * submitted. (May be deprecated in the future)
         *
         *  \retval HIPBLAS_STATUS_SUCCESS           If the operation completed
         * successfully. \retval HIPBLAS_STATUS_INVALID_VALUE If the gemm_count = 0.
         */
         HIPBLASLT_EXPORT
-        hipblasStatus_t
-            initialize(const hipblasLtMatmulAlgo_t& algo, void* workspace, hipStream_t stream);
+        hipblasStatus_t initialize(const hipblasLtMatmulAlgo_t& algo,
+                                   void*                        workspace,
+                                   bool                         useUserArgs = true,
+                                   hipStream_t                  stream      = 0);
 
         /*! \ingroup library_module
         *  \brief Execute the kernel arguments stored inside the hipblaslt_ext::Gemm
@@ -713,27 +717,14 @@ namespace hipblaslt_ext
         HIPBLASLT_EXPORT hipblasStatus_t
             getDefaultValueForDeviceUserArguments(void* hostDeviceUserArgs);
 
+        using GemmInstance::run;
+
         /*! \ingroup library_module
         *  \brief Run the kernel using DeviceUserArguments
         *
-        *  \details
-        *  This function does not update any information saved inside the object, it
-        * use the information saved inside instead. Make sure the gemm object is
-        * initialized once before calling this function.
-        *
         *  @param[in]
-        *  algo                    Handle for matrix multiplication algorithm to be
-        * used. See \ref hipblasLtMatmulAlgo_t. When NULL, an implicit heuritics query
-        * with default search preferences will be performed to determine actual
-        * algorithm to use.
-        *  @param[in]
-        *  workspace               Pointer to the DeviceUserArguments buffer allocated
+        *  deviceUserArgs          Pointer to the DeviceUserArguments buffer allocated
         * in the GPU memory. Pointer must be 16B aligned (that is, lowest 4 bits of
-        * address must be 0).
-        *  @param[in]
-        *  workspace               Pointer to the workspace buffer allocated in the GPU
-        * memory. Pointer must be 16B aligned (that is, lowest 4 bits of address must
-        * be 0).
         *  @param[in]
         *  stream                  The HIP stream where all the GPU work will be
         * submitted.
@@ -741,10 +732,7 @@ namespace hipblaslt_ext
         *  \retval HIPBLAS_STATUS_SUCCESS           If the operation completed
         * successfully. \retval HIPBLAS_STATUS_INVALID_VALUE If the gemm_count = 0.
         */
-        HIPBLASLT_EXPORT hipblasStatus_t runUserArgs(const hipblasLtMatmulAlgo_t& algo,
-                                                     void*                        deviceUserArgs,
-                                                     void*                        workspace,
-                                                     hipStream_t                  stream);
+        HIPBLASLT_EXPORT hipblasStatus_t run(void* deviceUserArgs, hipStream_t stream);
     };
 
     /*******************************************************************************

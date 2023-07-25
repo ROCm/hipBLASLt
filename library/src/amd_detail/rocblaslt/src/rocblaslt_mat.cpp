@@ -927,6 +927,15 @@ rocblaslt_status rocblaslt_run_cpp(rocblaslt_handle       handle,
     return runKernelFromInvocation(handle, gemmType, gemmData, stream);
 }
 
+rocblaslt_status rocblaslt_run_user_args_cpp(rocblaslt_handle       handle,
+                                             rocblaslt::RocGemmType gemmType,
+                                             std::shared_ptr<void>  gemmData,
+                                             void*                  deviceUserArgs,
+                                             hipStream_t            stream)
+{
+    return runKernelFromNewDeviceUserArguments(handle, gemmType, gemmData, deviceUserArgs, stream);
+}
+
 rocblaslt_status rocblaslt_run_user_args_cpp(rocblaslt_handle             handle,
                                              rocblaslt::RocGemmType       gemmType,
                                              size_t                       gemmCount,
@@ -953,8 +962,9 @@ rocblaslt_status rocblaslt_makeArgument_cpp(rocblaslt_handle             handle,
                                             const rocblaslt::RocGemmType gemmType,
                                             const rocblaslt_matmul_algo& algo,
                                             void*                        workspace,
+                                            bool                         useUserArgs,
                                             hipStream_t                  stream,
                                             std::shared_ptr<void>        gemmData)
 {
-    return makeArgument(handle, gemmType, algo, workspace, stream, gemmData);
+    return makeArgument(handle, gemmType, algo, workspace, useUserArgs, stream, gemmData);
 }

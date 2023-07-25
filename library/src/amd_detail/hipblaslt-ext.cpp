@@ -94,6 +94,7 @@ namespace hipblaslt_ext
 
     hipblasStatus_t GemmInstance::initialize(const hipblasLtMatmulAlgo_t& algo,
                                              void*                        workspace,
+                                             bool                         useUserArgs,
                                              hipStream_t                  stream)
     try
     {
@@ -101,8 +102,13 @@ namespace hipblaslt_ext
             return HIPBLAS_STATUS_INVALID_VALUE;
         auto gemmType = static_cast<rocblaslt::RocGemmType>(m_gemm_type);
         auto rocalgo  = reinterpret_cast<const rocblaslt_matmul_algo*>(&algo);
-        return RocBlasLtStatusToHIPStatus(rocblaslt_makeArgument_cpp(
-            (rocblaslt_handle)m_handle, gemmType, *rocalgo, workspace, stream, m_data));
+        return RocBlasLtStatusToHIPStatus(rocblaslt_makeArgument_cpp((rocblaslt_handle)m_handle,
+                                                                     gemmType,
+                                                                     *rocalgo,
+                                                                     workspace,
+                                                                     useUserArgs,
+                                                                     stream,
+                                                                     m_data));
     }
     catch(...)
     {
@@ -470,23 +476,13 @@ namespace hipblaslt_ext
             (rocblaslt_handle)m_handle, gemmType, m_data, hostDeviceUserArgs));
     }
 
-    HIPBLASLT_EXPORT hipblasStatus_t GroupedGemm::runUserArgs(const hipblasLtMatmulAlgo_t& algo,
-                                                              void*       deviceUserArgs,
-                                                              void*       workspace,
-                                                              hipStream_t stream)
+    HIPBLASLT_EXPORT hipblasStatus_t GroupedGemm::run(void* deviceUserArgs, hipStream_t stream)
     {
         if(m_gemm_count == 0)
             return HIPBLAS_STATUS_INVALID_VALUE;
         auto gemmType = static_cast<rocblaslt::RocGemmType>(m_gemm_type);
-        auto rocalgo  = reinterpret_cast<const rocblaslt_matmul_algo*>(&algo);
-        return RocBlasLtStatusToHIPStatus(rocblaslt_run_user_args_cpp((rocblaslt_handle)m_handle,
-                                                                      gemmType,
-                                                                      m_gemm_count,
-                                                                      m_data,
-                                                                      *rocalgo,
-                                                                      deviceUserArgs,
-                                                                      workspace,
-                                                                      stream));
+        return RocBlasLtStatusToHIPStatus(rocblaslt_run_user_args_cpp(
+            (rocblaslt_handle)m_handle, gemmType, m_data, deviceUserArgs, stream));
     }
 
     hipblasStatus_t matmulIsAlgoSupported(hipblasLtHandle_t       handle,

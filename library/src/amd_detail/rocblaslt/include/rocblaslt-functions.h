@@ -189,6 +189,7 @@ rocblaslt_status rocblaslt_makeArgument_cpp(rocblaslt_handle             handle,
                                             const rocblaslt::RocGemmType gemmType,
                                             const rocblaslt_matmul_algo& algo,
                                             void*                        workspace,
+                                            bool                         useUserArgs,
                                             hipStream_t                  stream,
                                             std::shared_ptr<void>        gemmData);
 
@@ -201,6 +202,12 @@ rocblaslt_status rocblaslt_run_cpp(rocblaslt_handle       handle,
                                    rocblaslt::RocGemmType gemmType,
                                    std::shared_ptr<void>  gemmData,
                                    hipStream_t            stream);
+
+rocblaslt_status rocblaslt_run_user_args_cpp(rocblaslt_handle       handle,
+                                             rocblaslt::RocGemmType gemmType,
+                                             std::shared_ptr<void>  gemmData,
+                                             void*                  deviceUserArgs,
+                                             hipStream_t            stream);
 
 rocblaslt_status rocblaslt_run_user_args_cpp(rocblaslt_handle             handle,
                                              rocblaslt::RocGemmType       gemmType,
