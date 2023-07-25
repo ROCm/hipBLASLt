@@ -1185,8 +1185,7 @@ void testing_matmul(const Arguments& arg)
         {
             if(arg.use_ext)
             {
-                CHECK_HIPBLASLT_ERROR(
-                    gemm.initialize(heuristicResult[0].algo, *dWorkspace, stream));
+                CHECK_HIPBLASLT_ERROR(gemm.initialize(heuristicResult[0].algo, *dWorkspace));
 
                 CHECK_HIPBLASLT_ERROR(gemm.run(stream));
             }
@@ -1216,7 +1215,7 @@ void testing_matmul(const Arguments& arg)
         {
             //grouped gemm
             CHECK_HIPBLASLT_ERROR(
-                groupedGemm.initialize(heuristicResult[0].algo, *dWorkspace, stream));
+                groupedGemm.initialize(heuristicResult[0].algo, *dWorkspace, false, stream));
 
             CHECK_HIPBLASLT_ERROR(groupedGemm.run(stream));
         }
@@ -1231,7 +1230,8 @@ void testing_matmul(const Arguments& arg)
         }
 
         // For the xf32 xdl math op, cast type of A/B from float to xfloat32 .
-        if constexpr(std::is_same<Ti, float>{} && std::is_same<To, float>{} && std::is_same<Tc, float>{})
+        if constexpr(std::is_same<Ti, float>{} && std::is_same<To, float>{}
+                     && std::is_same<Tc, float>{})
             if(arg.compute_type == HIPBLASLT_COMPUTE_F32_FAST_XF32)
             {
                 for(int i = 0; i < gemm_count; i++)
@@ -1577,8 +1577,7 @@ void testing_matmul(const Arguments& arg)
 
             if(arg.use_ext)
             {
-                CHECK_HIPBLASLT_ERROR(
-                    gemm.initialize(heuristicResult[0].algo, *dWorkspace, stream));
+                CHECK_HIPBLASLT_ERROR(gemm.initialize(heuristicResult[0].algo, *dWorkspace));
                 for(int i = 0; i < number_cold_calls; i++)
                     CHECK_HIPBLASLT_ERROR(gemm.run(stream));
                 CHECK_HIP_ERROR(hipStreamSynchronize(stream));
@@ -1640,7 +1639,7 @@ void testing_matmul(const Arguments& arg)
         {
             //grouped gemm
             CHECK_HIPBLASLT_ERROR(
-                groupedGemm.initialize(heuristicResult[0].algo, *dWorkspace, stream));
+                groupedGemm.initialize(heuristicResult[0].algo, *dWorkspace, false, stream));
 
             for(int i = 0; i < number_cold_calls; i++)
                 CHECK_HIPBLASLT_ERROR(groupedGemm.run(stream));

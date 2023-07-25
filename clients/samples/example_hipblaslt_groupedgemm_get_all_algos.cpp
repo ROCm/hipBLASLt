@@ -877,8 +877,8 @@ void test_hipblaslt(hipblasDatatype_t           in_datatype,
     for(int sol = 0; sol < validIdx.size(); sol++)
     {
         // step 2: initialize()
-        CHECK_HIPBLASLT_ERROR(
-            groupedGemm.initialize(heuristicResult[validIdx[sol]].algo, d_workspace, stream));
+        CHECK_HIPBLASLT_ERROR(groupedGemm.initialize(
+            heuristicResult[validIdx[sol]].algo, d_workspace, false, stream));
 
         // step 3: launch kernel to modify Ns (simulate this by memcpy Ns to device)
         for(size_t i = 0; i < gemm_count; i++)

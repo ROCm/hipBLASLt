@@ -1093,7 +1093,7 @@ void test_hipblaslt(hipblasDatatype_t  in_out_datatype,
         CHECK_HIP_ERROR(hipMalloc(&d_workspace, workspace_size));
 
     // Solve problem  // call gen function
-    CHECK_HIPBLASLT_ERROR(gemm.initialize(heuristicResult[0].algo, d_workspace, stream));
+    CHECK_HIPBLASLT_ERROR(gemm.initialize(heuristicResult[0].algo, d_workspace));
     CHECK_HIPBLASLT_ERROR(gemm.run(stream));
 
     hipStreamSynchronize(stream);
@@ -1119,7 +1119,7 @@ void test_hipblaslt(hipblasDatatype_t  in_out_datatype,
             hipEventCreate(&stop);
             double eventMs = 0;
 
-            CHECK_HIPBLASLT_ERROR(gemm.initialize(heuristicResult[sol].algo, d_workspace, stream));
+            CHECK_HIPBLASLT_ERROR(gemm.initialize(heuristicResult[sol].algo, d_workspace));
 
             for(int loop = 0; loop < cold_loop_count; loop++)
             {

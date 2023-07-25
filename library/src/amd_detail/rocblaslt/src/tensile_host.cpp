@@ -1030,6 +1030,7 @@ struct TensileDataGroupedGemm
     int                                    algoIndex = std::numeric_limits<int>::max();
     std::shared_ptr<void>                  hipHostMemory;
     size_t                                 hipHostMemorySize;
+    bool                                   useUserArgs = false;
 };
 
 void initTensileGemmData(rocblaslt_handle       handle,
@@ -1301,6 +1302,7 @@ rocblaslt_status makeArgument(rocblaslt_handle             handle,
                               const rocblaslt::RocGemmType gemmType,
                               const rocblaslt_matmul_algo& algo,
                               void*                        workspace,
+                              bool                         useUserArgs,
                               hipStream_t                  stream,
                               std::shared_ptr<void>        gemmData)
 {
@@ -1358,41 +1360,50 @@ rocblaslt_status makeArgument(rocblaslt_handle             handle,
             }
             data->inputs.ws = workspace;
 
-            // fallback to normal gemm if is normal kernel
-            std::vector<bool>                    useBias, actHPA, useScaleDVec;
-            std::vector<Tensile::ActivationType> actType;
-            for(int i = 0; i < data->problem.gemms.size(); i++)
+            data->useUserArgs = useUserArgs;
+            if(useUserArgs)
             {
-                useBias.push_back(data->problem.gemms[i].useBias());
-                actType.push_back(data->problem.gemms[i].activationType());
-                useScaleDVec.push_back(data->problem.gemms[i].useScaleDVec());
-                data->problem.gemms[i].setUseBias(solution->problemType.useBias);
-                data->problem.gemms[i].setActivationType(solution->problemType.activationType);
-                data->problem.gemms[i].setUseScaleDVec(solution->problemType.useScaleDVec);
+                data->kernels = solution->solveGroupedGemmGPU(
+                    data->problem.gemms, data->inputs, nullptr, workspace, stream);
             }
-
-            size_t requiedHostSize
-                = solution->requiredHostWorkspaceSizePerProblem * data->problem.gemms.size();
-            if(requiedHostSize > data->hipHostMemorySize)
+            else
             {
-                void* tmp = nullptr;
-                static_cast<void>(hipHostMalloc(&tmp, requiedHostSize, 0));
-                data->hipHostMemory
-                    = std::shared_ptr<void>(tmp, [](auto p) { static_cast<void>(hipFree(p)); });
-                data->hipHostMemorySize = requiedHostSize;
-            }
+                // fallback to normal gemm if is normal kernel
+                std::vector<bool>                    useBias, actHPA, useScaleDVec;
+                std::vector<Tensile::ActivationType> actType;
+                for(int i = 0; i < data->problem.gemms.size(); i++)
+                {
+                    useBias.push_back(data->problem.gemms[i].useBias());
+                    actType.push_back(data->problem.gemms[i].activationType());
+                    useScaleDVec.push_back(data->problem.gemms[i].useScaleDVec());
+                    data->problem.gemms[i].setUseBias(solution->problemType.useBias);
+                    data->problem.gemms[i].setActivationType(solution->problemType.activationType);
+                    data->problem.gemms[i].setUseScaleDVec(solution->problemType.useScaleDVec);
+                }
 
-            data->kernels = solution->solveGroupedGemm(data->problem.gemms,
-                                                       data->inputs,
-                                                       *hardware,
-                                                       data->hipHostMemory.get(),
-                                                       data->hipHostMemorySize,
-                                                       stream);
-            for(int i = 0; i < data->problem.gemms.size(); i++)
-            {
-                data->problem.gemms[i].setUseBias(useBias[i]);
-                data->problem.gemms[i].setActivationType(actType[i]);
-                data->problem.gemms[i].setUseScaleDVec(useScaleDVec[i]);
+                size_t requiedHostSize
+                    = solution->requiredHostWorkspaceSizePerProblem * data->problem.gemms.size();
+                if(requiedHostSize > data->hipHostMemorySize)
+                {
+                    void* tmp = nullptr;
+                    static_cast<void>(hipHostMalloc(&tmp, requiedHostSize, 0));
+                    data->hipHostMemory
+                        = std::shared_ptr<void>(tmp, [](auto p) { static_cast<void>(hipFree(p)); });
+                    data->hipHostMemorySize = requiedHostSize;
+                }
+
+                data->kernels = solution->solveGroupedGemm(data->problem.gemms,
+                                                           data->inputs,
+                                                           *hardware,
+                                                           data->hipHostMemory.get(),
+                                                           data->hipHostMemorySize,
+                                                           stream);
+                for(int i = 0; i < data->problem.gemms.size(); i++)
+                {
+                    data->problem.gemms[i].setUseBias(useBias[i]);
+                    data->problem.gemms[i].setActivationType(actType[i]);
+                    data->problem.gemms[i].setUseScaleDVec(useScaleDVec[i]);
+                }
             }
         }
         status = rocblaslt_status_success;
@@ -1441,6 +1452,12 @@ rocblaslt_status runKernelFromInvocation(rocblaslt_handle       handle,
         {
             std::shared_ptr<TensileDataGroupedGemm> data
                 = std::static_pointer_cast<TensileDataGroupedGemm>(gemmData);
+            if(data->useUserArgs)
+            {
+                log_error(__func__,
+                          "GG is initialized with useUserArgs = true, workspace has no arguments.");
+                return rocblaslt_status_not_initialized;
+            }
             static_cast<void>(adapter->launchKernels(data->kernels, stream, nullptr, nullptr));
         }
         else
@@ -1494,7 +1511,7 @@ rocblaslt_status getDeviceUserArgumentsValuesFromContractionProblem(rocblaslt_ha
                && problem.betaType() == Tensile::DataType::Float
                && problem.activationComputeType() == Tensile::DataType::Float)
             {
-                solution->setDeviceUserArgs(
+                setDeviceUserArgs(
                     data->problem.gemms,
                     data->inputs,
                     (Tensile::DeviceUserArguments<float, float, float>*)hostDeviceUserArgs);
@@ -1525,6 +1542,59 @@ rocblaslt_status getDeviceUserArgumentsValuesFromContractionProblem(rocblaslt_ha
         std::ostream msg;
         print_once(msg << "\nrocblaslt error: "
                        << "Is hostDeviceUserArgs not match the size of the problem type? " << prob);
+#endif
+    }
+
+    return status;
+}
+
+rocblaslt_status runKernelFromNewDeviceUserArguments(rocblaslt_handle       handle,
+                                                     rocblaslt::RocGemmType gemmType,
+                                                     std::shared_ptr<void>  gemmData,
+                                                     void*                  deviceUserArgs,
+                                                     hipStream_t            stream)
+{
+    rocblaslt_status status = rocblaslt_status_internal_error;
+    try
+    {
+        std::shared_ptr<Tensile::MasterSolutionLibrary<Tensile::ContractionProblemGemm>> library;
+        std::shared_ptr<hipDeviceProp_t>                                                 deviceProp;
+        std::shared_ptr<Tensile::Hardware>                                               hardware;
+
+        auto adapter = get_library_and_adapter(&library, &deviceProp, handle->device);
+
+        if(gemmType == rocblaslt::RocGemmType::ROCBLASLT_GROUPED_GEMM)
+        {
+            std::shared_ptr<TensileDataGroupedGemm> data
+                = std::static_pointer_cast<TensileDataGroupedGemm>(gemmData);
+            for(auto& it : data->kernels)
+            {
+                uint8_t* arg = it.args.rawdata();
+                memcpy(arg + 4, &deviceUserArgs, sizeof(void*));
+            }
+            static_cast<void>(adapter->launchKernels(data->kernels, stream, nullptr, nullptr));
+        }
+        else
+        {
+            return rocblaslt_status_not_implemented;
+        }
+
+        status = rocblaslt_status_success;
+    }
+    catch(const std::exception& e)
+    {
+#if 0
+        std::ostream msg;
+        print_once(msg << "\nrocblaslt error: " << (solution ? "" : "No ")
+                       << "Tensile solution found, but exception thrown for " << prob << e.what());
+#endif
+    }
+    catch(...)
+    {
+#if 0
+        std::ostream msg;
+        print_once(msg << "\nrocblaslt error: " << (solution ? "" : "No ")
+                       << "Tensile solution found, but unknown exception thrown for " << prob);
 #endif
     }
 

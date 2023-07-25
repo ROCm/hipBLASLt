@@ -236,6 +236,7 @@ rocblaslt_status makeArgument(rocblaslt_handle             handle,
                               const rocblaslt::RocGemmType gemmType,
                               const rocblaslt_matmul_algo& algo,
                               void*                        workspace,
+                              bool                         useUserArgs,
                               hipStream_t                  stream,
                               std::shared_ptr<void>        gemmData);
 
@@ -249,6 +250,12 @@ rocblaslt_status getDeviceUserArgumentsValuesFromContractionProblem(rocblaslt_ha
                                                                     rocblaslt::RocGemmType gemmType,
                                                                     std::shared_ptr<void>  gemmData,
                                                                     void* hostDeviceUserArgs);
+
+rocblaslt_status runKernelFromNewDeviceUserArguments(rocblaslt_handle       handle,
+                                                     rocblaslt::RocGemmType gemmType,
+                                                     std::shared_ptr<void>  gemmData,
+                                                     void*                  deviceUserArgs,
+                                                     hipStream_t            stream);
 
 rocblaslt_status runKernelFromDeviceUserArguments(rocblaslt_handle             handle,
                                                   rocblaslt::RocGemmType       gemmType,

@@ -1233,7 +1233,7 @@ void test_hipblaslt(hipblasDatatype_t  in_out_datatype,
     else
     {
         auto idx = (findAll) ? validIdx[0] : 0;
-        CHECK_HIPBLASLT_ERROR(gemm.initialize(heuristicResult[idx].algo, d_workspace, stream));
+        CHECK_HIPBLASLT_ERROR(gemm.initialize(heuristicResult[idx].algo, d_workspace));
 
         CHECK_HIPBLASLT_ERROR(gemm.run(stream));
     }
@@ -1334,8 +1334,7 @@ void test_hipblaslt(hipblasDatatype_t  in_out_datatype,
             }
             else
             {
-                CHECK_HIPBLASLT_ERROR(
-                    gemm.initialize(heuristicResult[idx].algo, d_workspace, stream));
+                CHECK_HIPBLASLT_ERROR(gemm.initialize(heuristicResult[idx].algo, d_workspace));
 
                 for(int loop = 0; loop < cold_loop_count; loop++)
                 {

@@ -42,6 +42,128 @@
 
 namespace Tensile
 {
+    template <typename TAlpha, typename TBeta, typename TAct>
+    void setDeviceUserArgs(std::vector<ContractionSolution::Problem> const& problems,
+                           ContractionSolution::GroupedInputs const&        inputs,
+                           DeviceUserArguments<TAlpha, TBeta, TAct>*        args)
+    {
+        for(int i = 0; i < problems.size(); i++)
+        {
+            const TensorDescriptor& e = problems[i].tensor(ContractionProblemGemm::TENSOR::E);
+            const TensorDescriptor& d = problems[i].d();
+            const TensorDescriptor& c = problems[i].c();
+            const TensorDescriptor& b = problems[i].b();
+            const TensorDescriptor& a = problems[i].a();
+
+            size_t startStrideCD = 1; // FIXME: Magic number
+            size_t startStrideAB = 1; // FIXME: Magic number
+
+            auto& arg     = args[i];
+            arg.d         = const_cast<void*>(inputs.grouped[i].d);
+            arg.c         = const_cast<void*>(inputs.grouped[i].c);
+            arg.b         = const_cast<void*>(inputs.grouped[i].b);
+            arg.a         = const_cast<void*>(inputs.grouped[i].a);
+            arg.alpha     = (*std::get_if<TAlpha>(&inputs.grouped[i].alpha));
+            arg.beta      = (*std::get_if<TBeta>(&inputs.grouped[i].beta));
+            arg.strideD1  = d.strides()[startStrideCD];
+            arg.strideD2  = d.strides()[startStrideCD + 1];
+            arg.strideC1  = c.strides()[startStrideCD];
+            arg.strideC2  = c.strides()[startStrideCD + 1];
+            arg.strideA1  = a.strides()[startStrideAB];
+            arg.strideA2  = a.strides()[startStrideAB + 1];
+            arg.strideB1  = b.strides()[startStrideAB];
+            arg.strideB2  = b.strides()[startStrideAB + 1];
+            arg.m         = problems[i].problemSizes()[0];
+            arg.n         = problems[i].problemSizes()[1];
+            arg.batch     = problems[i].problemSizes()[2];
+            arg.k         = problems[i].problemSizes()[3];
+            arg.bias      = const_cast<void*>(inputs.grouped[i].bias);
+            arg.scaleDVec = const_cast<void*>(inputs.grouped[i].scaleDVec);
+            arg.e         = const_cast<void*>(inputs.grouped[i].e);
+            arg.biasType  = (uint32_t)problems[i].biasType();
+            if(problems[i].useE())
+            {
+                arg.strideE1 = e.strides()[startStrideCD];
+                arg.strideE2 = e.strides()[startStrideCD + 1];
+            }
+            else
+            {
+                arg.strideE1 = 0;
+                arg.strideE2 = 0;
+            }
+            arg.act0           = (*std::get_if<TAct>(&inputs.grouped[i].activationArgs[0]));
+            arg.act1           = (*std::get_if<TAct>(&inputs.grouped[i].activationArgs[1]));
+            arg.activationType = (uint32_t)problems[i].activationEnumArg();
+        }
+
+        bool debug = Debug::Instance().printKernelArguments();
+        if(debug)
+        {
+            std::cout << "Grouped gemm argsPtr kernels: " << std::endl;
+            for(size_t i = 0; i < problems.size(); i++)
+            {
+                std::cout << "Gemm " << i << ":" << std::endl;
+                std::cout << "   "
+                          << "m: " << args[i].m << std::endl;
+                std::cout << "   "
+                          << "n: " << args[i].n << std::endl;
+                std::cout << "   "
+                          << "batch: " << args[i].batch << std::endl;
+                std::cout << "   "
+                          << "k: " << args[i].k << std::endl;
+                std::cout << "   "
+                          << "D: " << args[i].d << std::endl;
+                std::cout << "   "
+                          << "C: " << args[i].c << std::endl;
+                std::cout << "   "
+                          << "A: " << args[i].a << std::endl;
+                std::cout << "   "
+                          << "B: " << args[i].b << std::endl;
+                std::cout << "   "
+                          << "Alpha: " << args[i].alpha << std::endl;
+                std::cout << "   "
+                          << "Beta: " << args[i].beta << std::endl;
+                std::cout << "   "
+                          << "strideD1: " << args[i].strideD1 << std::endl;
+                std::cout << "   "
+                          << "strideD2: " << args[i].strideD2 << std::endl;
+                std::cout << "   "
+                          << "strideC1: " << args[i].strideC1 << std::endl;
+                std::cout << "   "
+                          << "strideC2: " << args[i].strideC2 << std::endl;
+                std::cout << "   "
+                          << "strideA1: " << args[i].strideA1 << std::endl;
+                std::cout << "   "
+                          << "strideA2: " << args[i].strideA2 << std::endl;
+                std::cout << "   "
+                          << "strideB1: " << args[i].strideB1 << std::endl;
+                std::cout << "   "
+                          << "strideB2: " << args[i].strideB2 << std::endl;
+                std::cout << "   "
+                          << "scaleDVec: " << args[i].scaleDVec << std::endl;
+                std::cout << "   "
+                          << "bias: " << args[i].bias << std::endl;
+                std::cout << "   "
+                          << "e: " << args[i].e << std::endl;
+                std::cout << "   "
+                          << "strideE1: " << args[i].strideE1 << std::endl;
+                std::cout << "   "
+                          << "strideE2: " << args[i].strideE2 << std::endl;
+                std::cout << "   "
+                          << "act0: " << args[i].act0 << std::endl;
+                std::cout << "   "
+                          << "act1: " << args[i].act1 << std::endl;
+                std::cout << "   "
+                          << "activationType: " << args[i].activationType << std::endl;
+            }
+        }
+    }
+
+    template void setDeviceUserArgs<float, float, float>(
+        std::vector<ContractionSolution::Problem> const& problems,
+        ContractionSolution::GroupedInputs const&        inputs,
+        DeviceUserArguments<float, float, float>*        args);
+
     PerfModel perf;
 
     // Return magic number.  If magicShift is 0, compute and return it.
@@ -1736,124 +1858,6 @@ namespace Tensile
         }
 
         return rv;
-    }
-
-    template <typename TAlpha, typename TBeta, typename TAct>
-    void
-        ContractionSolution::setDeviceUserArgs(std::vector<Problem> const&               problems,
-                                               GroupedInputs const&                      inputs,
-                                               DeviceUserArguments<TAlpha, TBeta, TAct>* args) const
-    {
-        for(int i = 0; i < problems.size(); i++)
-        {
-            const TensorDescriptor& e = problems[i].tensor(ContractionProblemGemm::TENSOR::E);
-            const TensorDescriptor& d = problems[i].d();
-            const TensorDescriptor& c = problems[i].c();
-            const TensorDescriptor& b = problems[i].b();
-            const TensorDescriptor& a = problems[i].a();
-
-            size_t startStrideCD = problemType.useInitialStridesCD ? 0 : 1;
-            size_t startStrideAB = problemType.useInitialStridesAB ? 0 : 1;
-
-            auto& arg     = args[i];
-            arg.d         = const_cast<void*>(inputs.grouped[i].d);
-            arg.c         = const_cast<void*>(inputs.grouped[i].c);
-            arg.b         = const_cast<void*>(inputs.grouped[i].b);
-            arg.a         = const_cast<void*>(inputs.grouped[i].a);
-            arg.alpha     = (*std::get_if<TAlpha>(&inputs.grouped[i].alpha));
-            arg.beta      = (*std::get_if<TBeta>(&inputs.grouped[i].beta));
-            arg.strideD1  = d.strides()[startStrideCD];
-            arg.strideD2  = d.strides()[startStrideCD + 1];
-            arg.strideC1  = c.strides()[startStrideCD];
-            arg.strideC2  = c.strides()[startStrideCD + 1];
-            arg.strideA1  = a.strides()[startStrideAB];
-            arg.strideA2  = a.strides()[startStrideAB + 1];
-            arg.strideB1  = b.strides()[startStrideAB];
-            arg.strideB2  = b.strides()[startStrideAB + 1];
-            arg.m         = problems[i].problemSizes()[0];
-            arg.n         = problems[i].problemSizes()[1];
-            arg.batch     = problems[i].problemSizes()[2];
-            arg.k         = problems[i].problemSizes()[3];
-            arg.bias      = const_cast<void*>(inputs.grouped[i].bias);
-            arg.scaleDVec = const_cast<void*>(inputs.grouped[i].scaleDVec);
-            arg.e         = const_cast<void*>(inputs.grouped[i].e);
-            arg.biasType  = (uint32_t)problems[i].biasType();
-            if(problems[i].useE())
-            {
-                arg.strideE1 = e.strides()[startStrideCD];
-                arg.strideE2 = e.strides()[startStrideCD + 1];
-            }
-            else
-            {
-                arg.strideE1 = 0;
-                arg.strideE2 = 0;
-            }
-            arg.act0           = (*std::get_if<TAct>(&inputs.grouped[i].activationArgs[0]));
-            arg.act1           = (*std::get_if<TAct>(&inputs.grouped[i].activationArgs[1]));
-            arg.activationType = (uint32_t)problems[i].activationEnumArg();
-        }
-
-        bool debug = Debug::Instance().printKernelArguments() || this->kernelArgsLog;
-        if(debug)
-        {
-            std::cout << "Grouped gemm argsPtr kernels: " << std::endl;
-            for(size_t i = 0; i < problems.size(); i++)
-            {
-                std::cout << "Gemm " << i << ":" << std::endl;
-                std::cout << "   "
-                          << "m: " << args[i].m << std::endl;
-                std::cout << "   "
-                          << "n: " << args[i].n << std::endl;
-                std::cout << "   "
-                          << "batch: " << args[i].batch << std::endl;
-                std::cout << "   "
-                          << "k: " << args[i].k << std::endl;
-                std::cout << "   "
-                          << "D: " << args[i].d << std::endl;
-                std::cout << "   "
-                          << "C: " << args[i].c << std::endl;
-                std::cout << "   "
-                          << "A: " << args[i].a << std::endl;
-                std::cout << "   "
-                          << "B: " << args[i].b << std::endl;
-                std::cout << "   "
-                          << "Alpha: " << args[i].alpha << std::endl;
-                std::cout << "   "
-                          << "Beta: " << args[i].beta << std::endl;
-                std::cout << "   "
-                          << "strideD1: " << args[i].strideD1 << std::endl;
-                std::cout << "   "
-                          << "strideD2: " << args[i].strideD2 << std::endl;
-                std::cout << "   "
-                          << "strideC1: " << args[i].strideC1 << std::endl;
-                std::cout << "   "
-                          << "strideC2: " << args[i].strideC2 << std::endl;
-                std::cout << "   "
-                          << "strideA1: " << args[i].strideA1 << std::endl;
-                std::cout << "   "
-                          << "strideA2: " << args[i].strideA2 << std::endl;
-                std::cout << "   "
-                          << "strideB1: " << args[i].strideB1 << std::endl;
-                std::cout << "   "
-                          << "strideB2: " << args[i].strideB2 << std::endl;
-                std::cout << "   "
-                          << "scaleDVec: " << args[i].scaleDVec << std::endl;
-                std::cout << "   "
-                          << "bias: " << args[i].bias << std::endl;
-                std::cout << "   "
-                          << "e: " << args[i].e << std::endl;
-                std::cout << "   "
-                          << "strideE1: " << args[i].strideE1 << std::endl;
-                std::cout << "   "
-                          << "strideE2: " << args[i].strideE2 << std::endl;
-                std::cout << "   "
-                          << "act0: " << args[i].act0 << std::endl;
-                std::cout << "   "
-                          << "act1: " << args[i].act1 << std::endl;
-                std::cout << "   "
-                          << "activationType: " << args[i].activationType << std::endl;
-            }
-        }
     }
 
     // For Tensile debugging, will allocate and initialize DeviceUserArguments with the problems and inputs.

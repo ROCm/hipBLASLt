@@ -270,11 +270,6 @@ namespace Tensile
                                 const void*                 workspace,
                                 hipStream_t                 stream) const;
 
-        template <typename TAlpha, typename TBeta, typename TAct>
-        void setDeviceUserArgs(std::vector<Problem> const&               problems,
-                               GroupedInputs const&                      inputs,
-                               DeviceUserArguments<TAlpha, TBeta, TAct>* args) const;
-
         // For Tensile debugging, will allocate and initialize DeviceUserArguments with the problems and inputs.
         virtual std::vector<KernelInvocation> solveTensileGPU(ContractionProblem const& problem,
                                                               ProblemInputs const&      inputs,
@@ -477,6 +472,11 @@ namespace Tensile
         uint32_t magicNumber(int magicDivAlg, uint32_t x, uint32_t* magicShift) const;
         uint32_t smallMagicNumber(uint32_t x) const;
     };
+
+    template <typename TAlpha, typename TBeta, typename TAct>
+    void setDeviceUserArgs(std::vector<ContractionSolution::Problem> const& problems,
+                           ContractionSolution::GroupedInputs const&        inputs,
+                           DeviceUserArguments<TAlpha, TBeta, TAct>*        args);
 
     std::ostream& operator<<(std::ostream&                                      stream,
                              ContractionSolution::StaticPerformanceModel const& spm);
