@@ -618,7 +618,7 @@ namespace Tensile
         return rv;
     }
 
-    template <typename KA>
+template <typename KA>
     void
         ContractionSolution::calculateSingleCallWorkGroupItems(std::vector<Problem> const& problems,
                                                                const Tensile::dim3& workGroupSize,
@@ -626,48 +626,62 @@ namespace Tensile
                                                                Tensile::dim3&       numWorkItems,
                                                                KA&                  h_args) const
     {
+
+        uint32_t wgLeft  = 0;
+        uint32_t wgRight = 0;
+
         for(int idx = 0; idx < problems.size(); idx++)
         {
-            auto problem = problems[idx];
-
-            numWorkGroups.x = 1;
-            numWorkGroups.y = 1;
-            numWorkGroups.z = 1;
-
-            for(size_t i = 0; i < problem.freeIndicesA().size(); i++)
+            if constexpr(!std::is_same<KA, KernelArgumentsCounter>::value)
             {
-                numWorkGroups.x *= problem.freeSizeA(i);
+                auto problem = problems[idx];
+
+                numWorkGroups.x = 1;
+                numWorkGroups.y = 1;
+                numWorkGroups.z = 1;
+
+                for(size_t i = 0; i < problem.freeIndicesA().size(); i++)
+                {
+                    numWorkGroups.x *= problem.freeSizeA(i);
+                }
+
+                for(size_t i = 0; i < problem.freeIndicesB().size(); i++)
+                {
+                    numWorkGroups.y *= problem.freeSizeB(i);
+                }
+
+                for(size_t i = 0; i < problem.batchIndices().size(); i++)
+                {
+                    if(sizeMapping.packBatchDims & 0x1)
+                        numWorkGroups.x *= problem.batchSize(i);
+                    if(sizeMapping.packBatchDims & 0x2)
+                        numWorkGroups.y *= problem.batchSize(i);
+                    if(!sizeMapping.packBatchDims)
+                        numWorkGroups.z *= problem.batchSize(i);
+                }
+
+                if(problem.transposeC01())
+                    std::swap(numWorkGroups.x, numWorkGroups.y);
+
+                numWorkGroups.x = CeilDivide(numWorkGroups.x, sizeMapping.macroTile.x);
+                numWorkGroups.y = CeilDivide(numWorkGroups.y, sizeMapping.macroTile.y);
+
+                numWorkGroups.y *= sizeMapping.globalSplitU;
+
+                numWorkItems.x += (workGroupSize.x * numWorkGroups.x * workGroupSize.y * numWorkGroups.y
+                                * workGroupSize.z * numWorkGroups.z);
+
+                if constexpr(std::is_same<KA, KernelArguments>::value)
+                {
+                    wgRight = numWorkItems.x / workGroupSize.x / workGroupSize.y / workGroupSize.z;
+                    h_args.template append<uint32_t>("wgTable", wgLeft);
+                    wgLeft = wgRight;
+                }
             }
-
-            for(size_t i = 0; i < problem.freeIndicesB().size(); i++)
+            else
             {
-                numWorkGroups.y *= problem.freeSizeB(i);
-            }
-
-            for(size_t i = 0; i < problem.batchIndices().size(); i++)
-            {
-                if(sizeMapping.packBatchDims & 0x1)
-                    numWorkGroups.x *= problem.batchSize(i);
-                if(sizeMapping.packBatchDims & 0x2)
-                    numWorkGroups.y *= problem.batchSize(i);
-                if(!sizeMapping.packBatchDims)
-                    numWorkGroups.z *= problem.batchSize(i);
-            }
-
-            if(problem.transposeC01())
-                std::swap(numWorkGroups.x, numWorkGroups.y);
-
-            numWorkGroups.x = CeilDivide(numWorkGroups.x, sizeMapping.macroTile.x);
-            numWorkGroups.y = CeilDivide(numWorkGroups.y, sizeMapping.macroTile.y);
-
-            numWorkGroups.y *= sizeMapping.globalSplitU;
-
-            numWorkItems.x += (workGroupSize.x * numWorkGroups.x * workGroupSize.y * numWorkGroups.y
-                               * workGroupSize.z * numWorkGroups.z);
-
-            if constexpr(!std::is_same<KA, int>::value)
-            {
-                h_args.template append<uint32_t>("wgTable", 0);
+                if constexpr(!std::is_same<KA, KernelArgumentsCounter>::value)
+                    h_args.template append<uint32_t>("wgTable", 0);
             }
         }
     }
