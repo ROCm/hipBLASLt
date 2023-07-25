@@ -1148,7 +1148,7 @@ class KernelWriterAssembly(KernelWriter):
         # generatoe wgTable in kernel
         #############
         # FIXME: Need to fix these cause it may cause data hazard
-        tmpSgorNumWG0 = 10
+        tmpSgprNumWG0 = 10
         tmpSgprNumWG1 = 11
         tmpSgprM = 12
         tmpSgprN = 13
@@ -1162,14 +1162,16 @@ class KernelWriterAssembly(KernelWriter):
         tmpSgprArgOffsett = 21
         tmpSgprArgAddress0 = 22
         tmpSgprArgAddress1 = 23
+        tmpSgpr0 = 24
+        tmpSgpr1 = 25
 
-        # generate wgTable by WG0
-        label_wait_wgTableGen = Label("Wait_wgTableGen", "")
-        module.add(SCmpKLGU32(src=sgpr("WorkGroup0"), simm16=0))
-        module.add(SCBranchSCC1(labelName=label_wait_wgTableGen.getLabelName()))
+        # # generate wgTable by WG0
+        # label_wait_wgTableGen = Label("Wait_wgTableGen", "")
+        # module.add(SCmpKLGU32(src=sgpr("WorkGroup0"), simm16=0))
+        # module.add(SCBranchSCC1(labelName=label_wait_wgTableGen.getLabelName()))
+
         module.add(SMovB32(dst=sgpr(tmpSgprAccumTiles), src=0))
         module.add(SMovB32(dst=sgpr(tmpSgprLoopCounter), src=0))
-
         # offset KernArgAddress to address of M
         hardcoded_argOffset_M = 0
         extValidLabel    = Label(label="IsExternalValid", comment="")
@@ -1197,28 +1199,19 @@ class KernelWriterAssembly(KernelWriter):
         module.add(label_Loop_gemm_count)
         module.add(self.argLoader.loadKernArg(tmpSgprM, tmpSgprArgAddress0, sgpr(tmpSgprAddrM), dword=4))
         module.add(SWaitCnt(0))
-        #### calculate numWorkGroup ####
-        qReg = self.vgprPool.checkOut(4)
-        dReg = qReg + 1
-        divReg = qReg + 2
-        rReg = qReg + 3
-        module.add(VMovB32(dst=vgpr(divReg), src="MT0", comment="set MT0 into sgpr"))
-        module.add(VMovB32(dst=vgpr(dReg), src=sgpr(tmpSgprM), comment="set Free0 size"))
-        module.add(vectorUInt32CeilDivideAndRemainder(qReg=qReg, dReg=dReg, divReg=divReg, rReg=rReg, doRemainder=False))
-        module.add(VMovB32(dst=vgpr(divReg), src="MT1", comment="set MT1 into sgpr"))
-        module.add(VMovB32(dst=vgpr(dReg), src=sgpr(tmpSgprN), comment="set Free1 size"))
-        module.add(VReadfirstlaneB32(dst=sgpr(tmpSgorNumWG0), src=vgpr(qReg), comment="set back to numWorkGroup0"))
-        module.add(vectorUInt32CeilDivideAndRemainder(qReg=qReg, dReg=dReg, divReg=divReg, rReg=rReg, doRemainder=False))
-        if self.states.archCaps["TransOpWait"]:
-          module.add(SNop(waitState=0, comment="1 wait states"))
-        module.add(VReadfirstlaneB32(dst=sgpr(tmpSgprNumWG1), src=vgpr(qReg), comment="set back to numWorkGroup1"))
-        self.vgprPool.checkIn(qReg)
         # store accumWg to wgTable
         module.add(SMulI32(dst=sgpr(tmpSgprWgTableOffset), src0=sgpr(tmpSgprLoopCounter), src1=4))
-        smodifier = SMEMModifiers(glc=1)
-        module.add(SStoreB32(src=sgpr(tmpSgprAccumTiles), base=sgpr("KernArgAddress", 2), soffset=sgpr(tmpSgprWgTableOffset), smem=smodifier))
+        module.add(SStoreB32(src=sgpr(tmpSgprAccumTiles), base=sgpr("KernArgAddress", 2), soffset=sgpr(tmpSgprWgTableOffset), smem=SMEMModifiers(glc=0)))
+        #### calculate numWorkGroup ####
+        regStateRes = RegisterPoolResource(idx=tmpSgpr0, size=2)
+        module.add(scalarStaticDivideAndRemainder(qReg=sgpr(tmpSgprNumWG0), dReg=sgpr(tmpSgprM), divisor=kernel["MacroTile0"], rReg=tmpSgpr0, tmpSgprRes=regStateRes))
+        module.add(SCmpKGtU32(src=sgpr(tmpSgpr0), simm16=0))
+        module.add(SAddCU32(dst=sgpr(tmpSgprNumWG0), src0=sgpr(tmpSgprNumWG0), src1=hex(0)))
+        module.add(scalarStaticDivideAndRemainder(qReg=sgpr(tmpSgprNumWG1), dReg=sgpr(tmpSgprN), divisor=kernel["MacroTile1"], rReg=tmpSgpr0, tmpSgprRes=regStateRes))
+        module.add(SCmpKGtU32(src=sgpr(tmpSgpr0), simm16=0))
+        module.add(SAddCU32(dst=sgpr(tmpSgprNumWG1), src0=sgpr(tmpSgprNumWG1), src1=hex(0)))
         # calculate numTiles
-        module.add(SMulI32(dst=sgpr(tmpSgprNumTiles), src0=sgpr(tmpSgorNumWG0), src1=sgpr(tmpSgprNumWG1)))
+        module.add(SMulI32(dst=sgpr(tmpSgprNumTiles), src0=sgpr(tmpSgprNumWG0), src1=sgpr(tmpSgprNumWG1)))
         module.add(SMulI32(dst=sgpr(tmpSgprNumTiles), src0=sgpr(tmpSgprNumTiles), src1=sgpr(tmpSgprB)))
         if kernel["GlobalSplitU"] > 1:
           module.add(SMulI32(dst=sgpr(tmpSgprNumTiles), src0=sgpr(tmpSgprNumTiles), src1=kernel["GlobalSplitU"]))
@@ -1229,19 +1222,19 @@ class KernelWriterAssembly(KernelWriter):
         module.add(SAddU32(dst=sgpr(tmpSgprLoopCounter), src0=sgpr(tmpSgprLoopCounter), src1=1))
         module.add(SCmpLtU32(src0=sgpr(tmpSgprLoopCounter), src1=sgpr(tmpSgprNumGemm)))
         module.add(SCBranchSCC1(labelName=label_Loop_gemm_count.getLabelName()))
-
-        # set synchroniser to 1
-        tmpSgprSynchroniser = 10
-        module.add(SMovB32(dst=sgpr(tmpSgprSynchroniser), src=1))
         module.add(SWaitCnt(0))
-        module.add(SStoreB32(src=sgpr(tmpSgprSynchroniser), base=sgpr(tmpSgprOrigKernelArgAddr0, 2), soffset=hex(20), smem=smodifier))
 
-        # other WGs wait until WG0 set synchroniser to 1
-        module.add(label_wait_wgTableGen)
-        module.add(SLoadB32(dst=sgpr(tmpSgprSynchroniser), base=sgpr(tmpSgprOrigKernelArgAddr0, 2), soffset=hex(20), smem=smodifier))
-        module.add(SWaitCnt(0))
-        module.add(SCmpKEQU32(src=sgpr(tmpSgprSynchroniser), simm16=0))
-        module.add(SCBranchSCC1(labelName=label_wait_wgTableGen.getLabelName()))
+        # # set synchroniser to 1
+        # tmpSgprSynchroniser = 10
+        # module.add(SMovB32(dst=sgpr(tmpSgprSynchroniser), src=1))
+        # module.add(SStoreB32(src=sgpr(tmpSgprSynchroniser), base=sgpr(tmpSgprOrigKernelArgAddr0, 2), soffset=hex(20), smem=SMEMModifiers(glc=1)))
+
+        # # other WGs wait until WG0 set synchroniser to 1
+        # module.add(label_wait_wgTableGen)
+        # module.add(SLoadB32(dst=sgpr(tmpSgprSynchroniser), base=sgpr(tmpSgprOrigKernelArgAddr0, 2), soffset=hex(20), smem=SMEMModifiers(glc=1)))
+        # module.add(SWaitCnt(0))
+        # module.add(SCmpKEQU32(src=sgpr(tmpSgprSynchroniser), simm16=0))
+        # module.add(SCBranchSCC1(labelName=label_wait_wgTableGen.getLabelName()))
 
         ########
         # Find Gemm Index
