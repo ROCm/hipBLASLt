@@ -402,6 +402,8 @@ namespace Tensile
             size_t workspaceSizePerElemBias = 0;
 
             bool activationFused = true;
+
+            std::string customKernelName;
         };
 
         struct ProblemType
