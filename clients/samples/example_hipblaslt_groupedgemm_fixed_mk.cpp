@@ -682,8 +682,8 @@ void test_hipblaslt(hipblasDatatype_t           in_datatype,
 
     for(int i = 0; i < gemm_count; i++)
     {
-        size_c1[i] = ldc[i] * n[i];
-        size_d1[i] = ldd[i] * n[i];
+        size_c1[i] = ldc[i] * sum_of_n;
+        size_d1[i] = ldd[i] * sum_of_n;
         if(trans_a == HIPBLAS_OP_N)
         {
             a_stride_1[i] = 1;
@@ -700,7 +700,7 @@ void test_hipblaslt(hipblasDatatype_t           in_datatype,
         {
             b_stride_1[i] = 1;
             b_stride_2[i] = ldb[i];
-            size_b1[i]    = ldb[i] * n[i];
+            size_b1[i]    = ldb[i] * sum_of_n;
         }
         else
         {
@@ -915,28 +915,28 @@ void test_hipblaslt(hipblasDatatype_t           in_datatype,
         CHECK_HIPBLASLT_ERROR(
             groupedGemm.initialize(heuristicResult[validIdx[sol]].algo, d_workspace));
 
+        // step 4: launch kernel to modify Ns
+        int threads = 256;
+        int blocks  = ceil((double)gemm_count / threads);
+        hipLaunchKernelGGL(kernelUpdateN,
+                            dim3(blocks),
+                            dim3(threads),
+                            0,
+                            stream,
+                            gemm_count,
+                            d_dUAFloat,
+                            d_n_vec);
+
         float      eventMs;
         hipEvent_t start, stop;
         static_cast<void>(hipEventCreate(&start));
         static_cast<void>(hipEventCreate(&stop));
         static_cast<void>(hipEventRecord(start, stream));
 
-        int threads = 256;
-        int blocks  = ceil((double)gemm_count / threads);
-
         for(int sync = 0; sync < sync_count; sync++)
         {
             for(int bench = 0; bench < bench_count; bench++)
             {
-                // step 4: launch kernel to modify Ns
-                hipLaunchKernelGGL(kernelUpdateN,
-                                   dim3(blocks),
-                                   dim3(threads),
-                                   0,
-                                   stream,
-                                   gemm_count,
-                                   d_dUAFloat,
-                                   d_n_vec);
 
                 // step 5: launch grouped gemm kernel
                 CHECK_HIPBLASLT_ERROR(groupedGemm.run(d_dUAFloat, stream));
@@ -1016,15 +1016,18 @@ void test_hipblaslt(hipblasDatatype_t           in_datatype,
                                                           actType[i]);
 
                 bool passed = true;
-                for(int j = 0; j < size_c[i]; j++)
-                {
-                    if(!AlmostEqual(hd_gold[i][j], hd[i][j]))
-                    {
-                        printf("Err: Index %d: %f vs %f\n",
-                               j,
-                               static_cast<float>(hd_gold[i][j]),
-                               static_cast<float>(hd[i][j]));
-                        passed = false;
+                for(int i3 = 0; i3 < batch_count[i]; i3++){
+                    for(int i2 = 0; i2 < n[i]; i2++){
+                        for(int i1 = 0; i1 < m[i]; i1++){
+                            if(!AlmostEqual(hd_gold[i][i1+i2*ldd[i]+i3*stride_d[i]], hd[i][i1+i2*ldd[i]+i3*stride_d[i]]))
+                            {
+                                printf("Err: Index %ld: %f vs %f\n",
+                                    i1+i2*ldd[i]+i3*stride_d[i],
+                                    static_cast<float>(hd_gold[i][i1+i2*ldd[i]+i3*stride_d[i]]),
+                                    static_cast<float>(hd[i][i1+i2*ldd[i]+i3*stride_d[i]]));
+                                passed = false;
+                            }
+                        }
                     }
                 }
                 if(!passed)
