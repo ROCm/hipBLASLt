@@ -1240,12 +1240,14 @@ rocblaslt_status groupedGemmCreate(std::vector<RocblasltContractionProblem<Ti, T
 
             for(int i = 0; i < probs.size(); i++)
             {
-                // Check if pointer is valid
-                if(probs[i].alpha == nullptr || probs[i].beta == nullptr || probs[i].A == nullptr
-                   || probs[i].B == nullptr || probs[i].C == nullptr || probs[i].D == nullptr)
-                {
-                    log_error(__func__, "invalid data pointer");
-                    return rocblaslt_status_invalid_pointer;
+                // Check if pointer is valid for n != 0
+                if (probs[i].n) {
+                    if(probs[i].alpha == nullptr || probs[i].beta == nullptr || probs[i].A == nullptr
+                    || probs[i].B == nullptr || probs[i].C == nullptr || probs[i].D == nullptr)
+                    {
+                        log_error(__func__, "invalid data pointer");
+                        return rocblaslt_status_invalid_pointer;
+                    }
                 }
                 if(tensile_probs.gemms.size() != probs.size())
                     tensile_probs.gemms.push_back(ConstructTensileProblem(probs[i]));
@@ -1262,12 +1264,14 @@ rocblaslt_status groupedGemmCreate(std::vector<RocblasltContractionProblem<Ti, T
 
             for(int i = 0; i < probs.size(); i++)
             {
-                // Check if pointer is valid
-                if(probs[i].alpha == nullptr || probs[i].beta == nullptr || probs[i].A == nullptr
-                   || probs[i].B == nullptr || probs[i].C == nullptr || probs[i].D == nullptr)
-                {
-                    log_error(__func__, "invalid data pointer");
-                    return rocblaslt_status_invalid_pointer;
+                // Check if pointer is valid for n != 0
+                if (probs[i].n) {
+                    if(probs[i].alpha == nullptr || probs[i].beta == nullptr || probs[i].A == nullptr
+                    || probs[i].B == nullptr || probs[i].C == nullptr || probs[i].D == nullptr)
+                    {
+                        log_error(__func__, "invalid data pointer");
+                        return rocblaslt_status_invalid_pointer;
+                    }
                 }
                 tensile_probs.gemms.push_back(ConstructTensileProblem(probs[i]));
                 groupedInputs.grouped.push_back(GetTensileInputs(probs[i]));

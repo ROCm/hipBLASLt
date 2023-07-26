@@ -1728,7 +1728,9 @@ namespace Tensile
             for(size_t i = 0; i < problems[idx].boundIndices().size(); i++)
                 boundSize *= problems[idx].boundSize(i);
 
-            if(((!CompareValue(inputs.grouped[idx].alpha, (double)0)) && (boundSize != 0))
+            const auto n = problems[idx].freeSizeB(0);
+
+            if(n && ((!CompareValue(inputs.grouped[idx].alpha, (double)0)) && (boundSize != 0))
                && ((problems[idx].stridedBatched()
                     && (inputs.grouped[idx].a == nullptr || inputs.grouped[idx].b == nullptr))))
             {
