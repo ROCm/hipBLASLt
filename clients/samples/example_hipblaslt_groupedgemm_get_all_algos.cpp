@@ -635,30 +635,6 @@ void test_hipblaslt(hipblasDatatype_t           in_datatype,
 
     std::vector<hipblasLtEpilogue_t> epilogue(gemm_count);
 
-    //////
-    // simulate feeding arguments to groupedgemm by previous kernel
-    // 0. collect sum of N
-    // 1. set problem to {Ms, {sum of N, 1, 1, 1, ...}, Ks}
-    // 2. initialize()
-    // 3. launch kernel to modify Ns (simulate this by memcpy Ns to device)
-    // 4. launch groupedGemm kernel
-    /////
-    // use bias kernel, so arg offset is 124
-    enable_bias[0]                 = true;
-    int arg_offset_inByte_hardcode = 124;
-    int n_address_inByte_hardcode  = 4;
-    // step 0: collect sum of n
-    int                  sum_of_n = 0;
-    std::vector<int64_t> sum_of_n_vec;
-    std::vector<int32_t> n_vec;
-    for(int i = 0; i < gemm_count; i++)
-    {
-        sum_of_n += n[i];
-        n_vec.push_back(n[i]);
-        sum_of_n_vec.push_back(1);
-    }
-    sum_of_n_vec[0] = sum_of_n;
-
     for(int i = 0; i < gemm_count; i++)
     {
         size_c1[i] = ldc[i] * n[i];
@@ -753,7 +729,7 @@ void test_hipblaslt(hipblasDatatype_t           in_datatype,
         pref, HIPBLASLT_MATMUL_PREF_MAX_WORKSPACE_BYTES, &workspace_size, sizeof(workspace_size)));
 
     hipStream_t stream;
-    hipStreamCreate(&stream);
+    CHECK_HIP_ERROR(hipStreamCreate(&stream));
 
     // Get Heuristic results
     std::vector<hipblasLtMatmulHeuristicResult_t> heuristicResult;
@@ -833,9 +809,8 @@ void test_hipblaslt(hipblasDatatype_t           in_datatype,
                                                           out_datatype,
                                                           HIPBLASLT_COMPUTE_F32};
 
-    // step 1: set problem to {Ms, {sum of N, 1, 1, 1, ...}, Ks}
     CHECK_HIPBLASLT_ERROR(groupedGemm.setProblem(m,
-                                                 sum_of_n_vec,
+                                                 n,
                                                  k,
                                                  batch_count,
                                                  lda,
@@ -876,25 +851,14 @@ void test_hipblaslt(hipblasDatatype_t           in_datatype,
     float bestMs = std::numeric_limits<float>::max();
     for(int sol = 0; sol < validIdx.size(); sol++)
     {
-        // step 2: initialize()
         CHECK_HIPBLASLT_ERROR(groupedGemm.initialize(
             heuristicResult[validIdx[sol]].algo, d_workspace, false, stream));
 
-        // step 3: launch kernel to modify Ns (simulate this by memcpy Ns to device)
-        for(size_t i = 0; i < gemm_count; i++)
-        {
-            hipMemcpy(((uint8_t*)d_workspace + gemm_count * 4 + n_address_inByte_hardcode
-                       + i * arg_offset_inByte_hardcode),
-                      &n_vec[i],
-                      sizeof(int),
-                      hipMemcpyHostToDevice);
-        }
-
         float      eventMs;
         hipEvent_t start, stop;
-        hipEventCreate(&start);
-        hipEventCreate(&stop);
-        hipEventRecord(start, stream);
+        static_cast<void>(hipEventCreate(&start));
+        static_cast<void>(hipEventCreate(&stop));
+        static_cast<void>(hipEventRecord(start, stream));
 
         for(int sync = 0; sync < sync_count; sync++)
         {
@@ -905,11 +869,11 @@ void test_hipblaslt(hipblasDatatype_t           in_datatype,
             hipDeviceSynchronize();
         }
 
-        hipEventRecord(stop, stream);
-        hipEventSynchronize(stop);
-        hipEventElapsedTime(&eventMs, start, stop);
-        hipEventDestroy(start);
-        hipEventDestroy(stop);
+        static_cast<void>(hipEventRecord(stop, stream));
+        static_cast<void>(hipEventSynchronize(stop));
+        static_cast<void>(hipEventElapsedTime(&eventMs, start, stop));
+        static_cast<void>(hipEventDestroy(start));
+        static_cast<void>(hipEventDestroy(stop));
 
         eventMs /= (bench_count * sync_count);
         bestMs       = std::min(bestMs, eventMs);
@@ -977,15 +941,18 @@ void test_hipblaslt(hipblasDatatype_t           in_datatype,
                                                           actType[i]);
 
                 bool passed = true;
-                for(int j = 0; j < size_c[i]; j++)
-                {
-                    if(!AlmostEqual(hd_gold[i][j], hd[i][j]))
-                    {
-                        printf("Err: Index %d: %f vs %f\n",
-                               j,
-                               static_cast<float>(hd_gold[i][j]),
-                               static_cast<float>(hd[i][j]));
-                        passed = false;
+                for(int i3 = 0; i3 < batch_count[i]; i3++){
+                    for(int i2 = 0; i2 < n[i]; i2++){
+                        for(int i1 = 0; i1 < m[i]; i1++){
+                            if(!AlmostEqual(hd_gold[i][i1+i2*ldd[i]+i3*stride_d[i]], hd[i][i1+i2*ldd[i]+i3*stride_d[i]]))
+                            {
+                                printf("Err: Index %ld: %f vs %f\n",
+                                    i1+i2*ldd[i]+i3*stride_d[i],
+                                    static_cast<float>(hd_gold[i][i1+i2*ldd[i]+i3*stride_d[i]]),
+                                    static_cast<float>(hd[i][i1+i2*ldd[i]+i3*stride_d[i]]));
+                                passed = false;
+                            }
+                        }
                     }
                 }
                 if(!passed)
@@ -1015,7 +982,7 @@ void test_hipblaslt(hipblasDatatype_t           in_datatype,
         if(enable_scaleDVec[i])
             CHECK_HIP_ERROR(hipFree(d_scaleDVec[i]));
     }
-    hipStreamDestroy(stream);
+    CHECK_HIP_ERROR(hipStreamDestroy(stream));
 
     return;
 }

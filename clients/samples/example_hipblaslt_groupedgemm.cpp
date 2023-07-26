@@ -1464,15 +1464,18 @@ void test_hipblaslt(hipblasDatatype_t           in_datatype,
                                                       actType[i]);
 
             bool passed = true;
-            for(int j = 0; j < size_c[i]; j++)
-            {
-                if(!AlmostEqual(hd_gold[i][j], hd[i][j]))
-                {
-                    printf("Err: Index %d: %f vs %f\n",
-                           j,
-                           static_cast<float>(hd_gold[i][j]),
-                           static_cast<float>(hd[i][j]));
-                    passed = false;
+            for(int i3 = 0; i3 < batch_count[i]; i3++){
+                for(int i2 = 0; i2 < n[i]; i2++){
+                    for(int i1 = 0; i1 < m[i]; i1++){
+                        if(!AlmostEqual(hd_gold[i][i1+i2*ldd[i]+i3*stride_d[i]], hd[i][i1+i2*ldd[i]+i3*stride_d[i]]))
+                        {
+                            printf("Err: Index %ld: %f vs %f\n",
+                                i1+i2*ldd[i]+i3*stride_d[i],
+                                static_cast<float>(hd_gold[i][i1+i2*ldd[i]+i3*stride_d[i]]),
+                                static_cast<float>(hd[i][i1+i2*ldd[i]+i3*stride_d[i]]));
+                            passed = false;
+                        }
+                    }
                 }
             }
             if(!passed)
