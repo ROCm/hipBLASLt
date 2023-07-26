@@ -1288,6 +1288,16 @@ class KernelWriterAssembly(KernelWriter):
 
         module.add(moduleWg)
 
+        earlyReturnModule = Module("Early return if N(SizeFreeJ) == 0")
+        earlyReturnModule.add(SCmpEQU32(sgpr("SizeJ"), hex(0)))
+        earlyReturnLabel = Label("EarlyReturn", "")
+        noEarlyReturnLabel = Label("NoEarlyReturn", "")
+        earlyReturnModule.add(SCBranchSCC0(noEarlyReturnLabel.getLabelName()))
+        earlyReturnModule.add(earlyReturnLabel)
+        earlyReturnModule.add(SEndpgm())
+        earlyReturnModule.add(noEarlyReturnLabel)
+        module.add(earlyReturnModule)
+
         with self.allocTmpSgpr(2) as tmpSgpr:
           module.addComment1("Grouped Gemm: remap wg from 1D(idxWG012) to 3D(wg2,wg1,wg0)")
           module.addComment0("wg2 = idxWG012 * smallMagicNumber(1/(numWG0*numWG1))")
