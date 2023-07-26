@@ -41,6 +41,7 @@ from .Activation import ActivationModule
 
 import abc
 import os
+import shutil
 import subprocess
 import copy
 import collections
@@ -4100,6 +4101,17 @@ for codeObjectFileName in codeObjectFileNames:
       os.chmod(bytearrayFileName, 0o777)
     return bytearrayFileName
 
+  def getReplacementKernelPath(self, kernel):
+    if not isCustomKernelConfig(kernel):
+      return None
+
+    kernelName = self.getKernelName(kernel)
+
+    if isCustomKernelConfig(kernel):
+      return os.path.join(globalParameters["CustomKernelDirectory"], (kernelName + ".s"))
+    else: # Replacement kernel
+      return ReplacementKernels.Get(kernelName)
+
   def _getKernelSource(self, kernel):
     """
     Returns the source of the kernel, either C++ or assembly.
@@ -4128,13 +4140,40 @@ for codeObjectFileName in codeObjectFileNames:
     fileBase = os.path.join(asmPath, kernelName )
     assemblyFileName = "%s.s" % fileBase
 
-    kernelSource = self._getKernelSource(kernel)
+    replacementKernel = self.getReplacementKernelPath(kernel)
 
-    if globalParameters["PrintLevel"] >= 2:
-      print("write_assemblyFilename %s" % assemblyFileName)
+    if replacementKernel is not None:
+      self.tPA = tensorParametersA = {}
+      self.tPB = tensorParametersB = {}
+      if isCustomKernelConfig(kernel):
+        kernelFoundMessage = "Custom kernel filename "
+        # ISA version, such as 803
+        self.states.kernel = kernel
+        self.states.language = "ASM"
+        self.states.version = globalParameters["CurrentISA"]
+        if "ISA" in kernel:
+          self.states.version = tuple(kernel["ISA"])
+        if not globalParameters["AsmCaps"][self.states.version]["SupportedISA"]:
+          defaultIsa = (9,0,0)
+          print("warning: ISA:", self.version, " is not supported; overriding with ", defaultIsa)
+          self.states.version = defaultIsa
+      else:
+        kernelFoundMessage = "replacement_assemblyFilename "
+        self.initKernel(kernel, tensorParametersA, tensorParametersB )
 
-    with open(assemblyFileName, 'w') as assemblyFile:
-      assemblyFile.write(kernelSource)
+      shutil.copyfile(replacementKernel, assemblyFileName)
+      if globalParameters["PrintLevel"] >= 2:
+        print(kernelFoundMessage + assemblyFileName)
+        print(self.states.kernel)
+    else:
+      kernelSource = self._getKernelSource(kernel)
+
+      if globalParameters["PrintLevel"] >= 2:
+        print("write_assemblyFilename %s" % assemblyFileName)
+        print(self.states.kernel)
+
+      with open(assemblyFileName, 'w') as assemblyFile:
+        assemblyFile.write(kernelSource)
 
     return assemblyFileName
 
