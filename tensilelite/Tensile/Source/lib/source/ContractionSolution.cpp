@@ -715,7 +715,8 @@ template <typename KA>
         calculateSingleCallWorkGroupItems(
             problems, rv.workGroupSize, rv.numWorkGroups, rv.numWorkItems, h_args);
 
-        uint32_t workspaceOffsetInByte = 0;
+        uint32_t workspaceOffsetInByte
+            = this->requiredHostWorkspaceSizePerProblem * problems.size();
         if constexpr(!std::is_same<KA, int>::value)
         {
             for(int idx = 0; idx < problems.size(); idx++)
@@ -730,11 +731,10 @@ template <typename KA>
 
         if constexpr(!std::is_same<KA, KernelArgumentsCounter>::value)
         {
-            uint8_t* d_args = (uint8_t*)(inputs.ws) + workspaceOffsetInByte;
             rv.args.append<uint32_t>("gemm_count", problems.size());
             // For user input
             rv.args.append<void const*>("DeviceUserArguments", userArgs);
-            rv.args.append<void const*>("argsPtr", (void*)d_args);
+            rv.args.append<void const*>("argsPtr", (void*)inputs.ws);
             rv.args.append<uint32_t>("syncForWgTableGen", 0);
             rv.codeObjectFile = codeObjectFilename.load();
         }
@@ -939,6 +939,7 @@ template <typename KA>
                 }
             }
         }
+
         if(problemType.useScaleDVec) // GSU dep
         {
             args.template append<void const*>("scaleDVec", inputs.scaleDVec);
@@ -956,20 +957,34 @@ template <typename KA>
 
         if((problemType.activationType != ActivationType::None) && sizeMapping.activationFused)
         {
-            for(int i = 0; i < inputs.activationArgs.size(); i++)
+            for(int i = 0; i < problemType.activationArgLength; i++)
             {
                 std::string name = "activation_" + std::to_string(i);
-                if(problemType.activationComputeDataType == DataType::BFloat16)
+                if(inputs.activationArgs.size() < problemType.activationArgLength)
                 {
-                    args.template append<float>(
-                        name.c_str(),
-                        static_cast<float>((*std::get_if<BFloat16>(&inputs.activationArgs[i]))));
+                    if(problemType.activationComputeDataType == DataType::BFloat16)
+                    {
+                        args.template append<float>(name.c_str(), 0.f);
+                    }
+                    else
+                    {
+                        args.append(name.c_str(), 0, problemType.activationComputeDataType);
+                    }
                 }
                 else
                 {
-                    args.append(name.c_str(),
-                                inputs.activationArgs[i],
-                                problemType.activationComputeDataType);
+                    if(problemType.activationComputeDataType == DataType::BFloat16)
+                    {
+                        args.template append<float>(name.c_str(),
+                                                    static_cast<float>((*std::get_if<BFloat16>(
+                                                        &inputs.activationArgs[i]))));
+                    }
+                    else
+                    {
+                        args.append(name.c_str(),
+                                    inputs.activationArgs[i],
+                                    problemType.activationComputeDataType);
+                    }
                 }
             }
             if(problemType.activationType == ActivationType::All)
@@ -1179,7 +1194,8 @@ template <typename KA>
                 problems[0], inputs.grouped[0], vw, sizeMapping.globalSplitU);
         }
 
-        uint32_t workspaceOffsetInByte = 0;
+        uint32_t workspaceOffsetInByte
+            = this->requiredHostWorkspaceSizePerProblem * problems.size();
         for(int idx = 0; idx < problems.size(); idx++)
         {
             auto problem = problems[idx];
@@ -1191,8 +1207,7 @@ template <typename KA>
 
         if constexpr(std::is_same<KA, KernelArguments>::value)
         {
-            uint8_t* d_args
-                = (uint8_t*)(inputs.ws) + workspaceOffsetInByte + previousArgsSpaceOffsetInByte;
+            uint8_t* d_args = (uint8_t*)(inputs.ws) + previousArgsSpaceOffsetInByte;
             rv.args.append<uint8_t*>("wiTablePtr", d_args);
             // For user input
             rv.args.append<void const*>("DeviceUserArguments", nullptr);
@@ -1840,12 +1855,6 @@ template <typename KA>
                     generateOutputConversionCallGroupedGemm<false>(problems, inputs, h_args));
         }
 
-        uint32_t workspaceOffsetInByte = 0;
-        for(int idx = 0; idx < problems.size(); idx++)
-        {
-            auto problem = problems[idx];
-            workspaceOffsetInByte += requiredWorkspaceSize(problem);
-        }
         if(debug)
         {
             std::cout << "Grouped gemm argsPtr kernels: " << std::endl;
@@ -1859,7 +1868,7 @@ template <typename KA>
         if(hipHostMemory && hipHostMemorySize < h_args.size())
             throw std::runtime_error("Insufficient host memory size.");
 
-        uint8_t*    d_args = (uint8_t*)inputs.ws + workspaceOffsetInByte;
+        uint8_t*    d_args = (uint8_t*)inputs.ws;
         const void* tmpMem = hipHostMemory ? hipHostMemory : h_args.data();
         HIP_CHECK_EXC(hipMemcpyAsync(
             d_args, tmpMem, h_args.size() * sizeof(uint8_t), hipMemcpyHostToDevice, stream));

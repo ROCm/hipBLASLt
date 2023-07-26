@@ -121,9 +121,9 @@ namespace Tensile
                              std::shared_ptr<Hardware> hardware,
                              bool                      printWinnerOnly);
 
-            virtual bool checkSolution(ContractionSolution const& solution,
-                                       ContractionProblemGemm&    problem);
-            virtual bool checkSolution(ContractionSolution const& solution);
+            virtual bool checkSolution(ContractionSolution&    solution,
+                                       ContractionProblemGemm& problem);
+            virtual bool checkSolution(ContractionSolution& solution);
 
             std::shared_ptr<MasterSolutionLibrary<ContractionProblemGemm>> m_library;
             std::shared_ptr<Hardware>                                      m_hardware;
