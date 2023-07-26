@@ -67,7 +67,8 @@ class ProblemType:
     StateKeys = ['operationIdentifier', 'transA', 'transB', 'aType', 'bType', 'cType', 'dType', 'eType', 'computeType',
                  'useBeta', 'useBias', 'biasSrcWhiteList', 'useE', 'useScaleDVec', 'biasDataTypeWhiteList', 'highPrecisionAccumulate',
                  'useInitialStridesAB', 'useInitialStridesCD', 'stridedBatched', 'groupedGemm',
-                 'useGradient', 'activationType', 'activationComputeDataType', 'activationNoGuard', 'sparseA', 'f32XdlMathOp', 'supportDeviceUserArguments']
+                 'useGradient', 'activationType', 'activationArgLength', 'activationComputeDataType', 'activationNoGuard',
+                 'sparseA', 'f32XdlMathOp', 'supportDeviceUserArguments']
     @classmethod
     def FromOriginalState(cls, d):
         indices = [None]*d['TotalIndices']
@@ -199,9 +200,11 @@ class ProblemType:
 
         rv.batched = d['Batched']
 
-        rv.activationType = ActivationType('none')
+        rv.activationType      = ActivationType('none')
+        rv.activationArgLength = 0
         if 'ActivationType' in d:
             rv.activationType = ActivationType(d['ActivationType'])
+            rv.activationArgLength = len(rv.activationType.getAdditionalArgStringList())
         rv.activationComputeDataType = DataType(d['ActivationComputeDataType'])
         rv.activationNoGuard = False
         if 'ActivationNoGuard' in d:
