@@ -342,6 +342,141 @@ Note that currently only supports problemtype size equals to 1 (Only one GemmPro
     problemtypes.push_back(problemtype);
     groupedgemm.setProblem(m, n, k, batch_count, lda, ldb, ldc, ldd, strideA, strideB, strideC, strideD, epilogue, inputs, problemtypes);
 
+UserArguments
+^^^^^^^^^^^^^^^^^^
+
+Grouped gemm supports using external device memory to run the kernel. This will be helpful if some of the arguments are from the output of the pervious kernel. Please refer to section Fixed MK if you want to change the size (m, n, k, batch) related arguments.
+
+.. code-block:: c++
+
+    struct UserArguments
+    {
+        uint32_t m; //!< size m
+        uint32_t n; //!< size n
+        uint32_t batch; //!< size batch
+        uint32_t k; //!< size k
+        void*    d; //!< The d matrix input pointer.
+        void*    c; //!< The c matrix input pointer.
+        void*    a; //!< The a matrix input pointer.
+        void*    b; //!< The b matrix input pointer.
+        float    alpha; //!< The alpha value.
+        float    beta; //!< The beta value.
+        uint32_t strideD1; //!< The d leading dimension.
+        uint32_t strideD2; //!< The d batch stride
+        uint32_t strideC1; //!< The c leading dimension.
+        uint32_t strideC2; //!< The c batch stride
+        uint32_t strideA1; //!< The a leading dimension.
+        uint32_t strideA2; //!< The a batch stride
+        uint32_t strideB1; //!< The b leading dimension.
+        uint32_t strideB2; //!< The b batch stride
+        // Epilogue inputs
+        void*    scaleDVec; //!< The scaleD vector input pointer.
+        void*    bias; //!< The bias input pointer.
+        int      biasType; //!< The bias datatype. Only works if mode is set to bias related epilogues.
+        uint32_t reserved;
+        void*    e; //!< The aux input pointer. Only works if mode is set to aux related epilogues.
+        uint32_t strideE1; //!< The aux leading dimension. Only works if mode is set to aux related epilogues.
+        uint32_t strideE2; //!< The aux batch stride. Only works if mode is set to aux related epilogues.
+        float    act0; //!< The activation value 1. Some activations might use it.
+        float    act1; //!< The activation value 2.
+        int      activationType; //!< The activation type.  Only works if mode is set to activation related epilogues.
+    } __attribute__((packed));
+
+We add the two functions for UserArguments related API. The first API is a helper function that helps the user to initialize the structure "UserArguments" from the saved problems inside the grouped gemm object. The second API is an overload function with an additional UserArguments device pointer input.
+
+.. code-block:: c++
+
+    HIPBLASLT_EXPORT hipblasStatus_t getDefaultValueForDeviceUserArguments(void* hostDeviceUserArgs);
+
+    HIPBLASLT_EXPORT hipblasStatus_t run(void* deviceUserArgs, hipStream_t stream);
+
+The following is a simple example of how this API works.
+
+.. code-block:: c++
+
+    // Pseudo code
+    // Step 1: Get all algorithms
+    std::vector<hipblasLtMatmulHeuristicResult_t> heuristicResult;
+    CHECK_HIPBLASLT_ERROR(hipblaslt_ext::getAllAlgos(handle,
+                                                     HIPBLASLT_GEMM,
+                                                     HIPBLAS_OP_N,
+                                                     HIPBLAS_OP_N,
+                                                     in_out_datatype,
+                                                     in_out_datatype,
+                                                     in_out_datatype,
+                                                     in_out_datatype,
+                                                     HIPBLASLT_COMPUTE_F32,
+                                                     heuristicResult));
+
+    hipblaslt_ext::GemmPreference pref;
+    pref.setMaxWorkspaceBytes(1000000);
+    // Step 2: Setup problem
+    std::vector<int64_t> m(gemm_count);
+    std::vector<int64_t> n(gemm_count);
+    std::vector<int64_t> k(gemm_count);
+    std::vector<int64_t> batch_count(gemm_count);
+    std::vector<hipblaslt_ext::GemmEpilogue> epilogue(gemm_count);
+    std::vector<hipblaslt_ext::GemmInputs> inputs(gemm_count);
+    for(int i = 0; i < gemm_count; i++)
+    {
+        m[i] = 1;
+        n[i] = 1;
+        k[i] = 1;
+        batch_count[i] = 1;
+        epilogue[i].mode = HIPBLASLT_EPILOGUE_GELU;
+        inputs[i].a = a[i];
+        inputs[i].b = b[i];
+        inputs[i].c = c[i];
+        inputs[i].d = d[i];
+        inputs[i].alpha = alpha[i];
+        inputs[i].beta = beta[i];
+    }
+
+    // Step 3: Create grouped gemm instance
+    hipblaslt_ext::GroupedGemm groupedGemm(handle,
+                                           HIPBLAS_OP_N,
+                                           HIPBLAS_OP_N,
+                                           HIPBLAS_R_16F,
+                                           HIPBLAS_R_16F,
+                                           HIPBLAS_R_16F,
+                                           HIPBLAS_R_16F,
+                                           HIPBLASLT_COMPUTE_F32);
+
+    // Step 4: Set problem
+    groupedGemm.setProblem(m, n, k, batch_count, epilogue, inputs); // m, n, k, batch
+
+    // Step 5: Get default value from the instance
+    hipblaslt_ext::UserArguments* dUAFloat = new hipblaslt_ext::UserArguments[gemm_count];
+    groupedGemm.getDefaultValueForDeviceUserArguments((void*)dUAFloat);
+    // Once you get the default value here, you can make several copies and change the values
+    // from the host
+
+    // Next Copy them to the device memory
+    hipblaslt_ext::UserArguments* d_dUAFloat = nullptr;
+    hipMalloc(&d_dUAFloat, sizeof(hipblaslt_ext::UserArguments) * gemm_count);
+    hipMemcpy(d_dUAFloat, dUAFloat, sizeof(hipblaslt_ext::UserArguments) * gemm_count, hipMemcpyHostToDevice);
+
+    validIdx.clear();
+    for(int j = 0; j < heuristicResult.size(); j++)
+    {
+        size_t workspace_size = 0;
+        if(groupedGemm.isAlgoSupported(heuristicResult[j].algo, workspace_size)
+           == HIPBLAS_STATUS_SUCCESS)
+        {
+            validIdx.push_back(j);
+        }
+    }
+
+    // Step 6: Initialize and run
+    if(validIdx.size() > 1)
+    {
+        groupedGemm.initialize(heuristicResult[validIdx[0]].algo, d_workspace, stream);
+        for(int i = 0; i < 10; i++)
+        {
+            groupedGemm.run(userArgs, stream);
+        }
+    }
+
 The base class (GemmInstance)
 --------------
 
@@ -358,7 +493,7 @@ This is the base class of class Gemm and GroupedGemm.
     HIPBLASLT_EXPORT hipblasStatus_t isAlgoSupported(hipblasLtMatmulAlgo_t& algo, size_t& workspaceSizeInBytes);
 
     // Initializes the instance before calling run. Requires every time the problem is set.
-    HIPBLASLT_EXPORT hipblasStatus_t initialize(const hipblasLtMatmulAlgo_t& algo, void* workspace, hipStream_t stream);
+    HIPBLASLT_EXPORT hipblasStatus_t initialize(const hipblasLtMatmulAlgo_t& algo, void* workspace, bool useUserArgs = true, hipStream_t stream = 0);
 
     // Run the problem.
     HIPBLASLT_EXPORT hipblasStatus_t run(hipStream_t stream);
@@ -562,11 +697,6 @@ Grouped gemm
            == HIPBLAS_STATUS_SUCCESS)
         {
             validIdx.push_back(j);
-            heuristicResult[j].workspaceSize = workspace_size;
-        }
-        else
-        {
-            heuristicResult[j].workspaceSize = 0;
         }
     }
 
@@ -610,3 +740,143 @@ Example code
     std::vector<int> algoIndex(index);
     std::vector<hipblasLtMatmulHeuristicResult_t> heuristicResults;
     CHECK_HIPBLASLT_ERROR(hipblaslt_ext::getAlgosFromIndex(handle, algoIndex, heuristicResults));
+
+
+[Grouped Gemm] Fixed MK
+--------------
+
+hipBLASLt extension supports changing the sizes (m, n, k, batch) from the device memory "UserArguments", but the setup is a bit different from the normal routing.
+
+Sum of n
+^^^^^^^^^^^^
+
+A sum of N is required to use as an input for the grouped gemm instance.
+
+.. code-block:: c++
+    {1000, 1, 1, 1}; // The array of N, the first element is the sum of N
+
+    // Below is the values stored in "UserArguments"
+    {256, 256, 1, 1}; // This is a valid configuration cause 256 + 256 + 1 + 1 < 1000
+    {512, 512, 1, 1}; // This is NOT a valid configuration cause 512 + 512 + 1 + 1 > 1000
+
+For example, we have a grouped gemm with gemm_count = 4. The sum of N must not exceed the "sum of N" set in setProblem API. In this mode, the first element is the "sum of n" in the array of Ns.
+
+.. code-block:: c++
+
+    // Pseudo code
+    // Step 1: Get all algorithms
+    std::vector<hipblasLtMatmulHeuristicResult_t> heuristicResult;
+    CHECK_HIPBLASLT_ERROR(hipblaslt_ext::getAllAlgos(handle,
+                                                     HIPBLASLT_GEMM,
+                                                     HIPBLAS_OP_N,
+                                                     HIPBLAS_OP_N,
+                                                     in_out_datatype,
+                                                     in_out_datatype,
+                                                     in_out_datatype,
+                                                     in_out_datatype,
+                                                     HIPBLASLT_COMPUTE_F32,
+                                                     heuristicResult));
+
+    hipblaslt_ext::GemmPreference pref;
+    pref.setMaxWorkspaceBytes(1000000);
+    // Step 2: Setup problem
+    std::vector<int64_t> m(gemm_count);
+    std::vector<int64_t> n(gemm_count);
+    std::vector<int64_t> k(gemm_count);
+    std::vector<int64_t> batch_count(gemm_count);
+    std::vector<hipblaslt_ext::GemmEpilogue> epilogue(gemm_count);
+    std::vector<hipblaslt_ext::GemmInputs> inputs(gemm_count);
+
+    // Step 2.1: Calculate sum of n
+    int64_t sum_of_n = 0;
+    for(int i = 0; i < gemm_count; i++)
+    {
+        sum_of_n += n_arr[i];
+    }
+
+    // {sum_of_n, 1, 1, 1, ...}; // The array of N, the first element is the sum of N
+    for(int i = 0; i < gemm_count; i++)
+    {
+        m[i] = m_arr[i];
+        if(i == 0)
+            n[i] = sum_of_n;
+        else
+            n[i] = 1;
+        k[i] = k_arr[i];
+        batch_count[i] = 1;
+        inputs[i].a = a[i];
+        inputs[i].b = b[i];
+        inputs[i].c = c[i];
+        inputs[i].d = d[i];
+        inputs[i].alpha = alpha[i];
+        inputs[i].beta = beta[i];
+    }
+
+    // Step 3: Create grouped gemm instance
+    hipblaslt_ext::GroupedGemm groupedGemm(handle,
+                                           HIPBLAS_OP_N,
+                                           HIPBLAS_OP_N,
+                                           HIPBLAS_R_16F,
+                                           HIPBLAS_R_16F,
+                                           HIPBLAS_R_16F,
+                                           HIPBLAS_R_16F,
+                                           HIPBLASLT_COMPUTE_F32);
+
+    // Step 4: Set problem
+    groupedGemm.setProblem(m, n, k, batch_count, epilogue, inputs); // m, n, k, batch
+
+    // Step 5: Get default value from the instance
+    hipblaslt_ext::UserArguments* dUAFloat = new hipblaslt_ext::UserArguments[gemm_count];
+    groupedGemm.getDefaultValueForDeviceUserArguments((void*)dUAFloat);
+    // Once you get the default value here, you can make several copies and change the values
+    // from the host
+
+    // Next Copy them to the device memory
+    hipblaslt_ext::UserArguments* d_dUAFloat = nullptr;
+    hipMalloc(&d_dUAFloat, sizeof(hipblaslt_ext::UserArguments) * gemm_count);
+    hipMemcpy(d_dUAFloat, dUAFloat, sizeof(hipblaslt_ext::UserArguments) * gemm_count, hipMemcpyHostToDevice);
+
+    validIdx.clear();
+    for(int j = 0; j < heuristicResult.size(); j++)
+    {
+        size_t workspace_size = 0;
+        if(groupedGemm.isAlgoSupported(heuristicResult[j].algo, workspace_size)
+           == HIPBLAS_STATUS_SUCCESS)
+        {
+            validIdx.push_back(j);
+        }
+    }
+
+    int threads = 256;
+    int blocks  = ceil((double)gemm_count / threads);
+
+    // Step 6: Initialize and run
+    if(validIdx.size() > 1)
+    {
+        groupedGemm.initialize(heuristicResult[validIdx[0]].algo, d_workspace);
+        for(int i = 0; i < 10; i++)
+        {
+            hipLaunchKernelGGL(kernelUpdateN,
+                                dim3(blocks),
+                                dim3(threads),
+                                0,
+                                stream,
+                                gemm_count,
+                                d_dUAFloat,
+                                d_n_vec);  // d_n_vec is a device pointer with Ns
+            groupedGemm.run(userArgs, stream);
+        }
+    }
+
+    // .....
+
+    __global__ void kernelUpdateN(uint32_t gemm_count, void* userArgs, int32_t* sizes_n)
+    {
+    uint64_t id = hipBlockIdx_x * 256 + hipThreadIdx_x;
+
+    if(id >= gemm_count)
+        return;
+
+    hipblaslt_ext::UserArguments* dUAFloat = static_cast<hipblaslt_ext::UserArguments*>(userArgs);
+    dUAFloat[id].n                         = sizes_n[id];
+    }

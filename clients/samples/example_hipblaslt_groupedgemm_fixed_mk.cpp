@@ -599,7 +599,7 @@ void initialize_a_b_c_bias(std::vector<Tin>&   ha,
 
 __global__ void kernelUpdateN(uint32_t gemm_count, void* userArgs, int32_t* sizes_n)
 {
-    uint64_t id = hipBlockIdx_x * 1024 + hipThreadIdx_x;
+    uint64_t id = hipBlockIdx_x * 256 + hipThreadIdx_x;
 
     if(id >= gemm_count)
         return;
@@ -764,14 +764,9 @@ void test_hipblaslt(hipblasDatatype_t           in_datatype,
     }
 
     // Set User Preference attributes
-    hipblasLtMatmulPreference_t pref;
-    uint64_t                    workspace_size = 32 * 1024 * 1024;
-    void*                       d_workspace;
-    CHECK_HIP_ERROR(hipMalloc(&d_workspace, workspace_size));
-
-    CHECK_HIPBLASLT_ERROR(hipblasLtMatmulPreferenceCreate(&pref));
-    CHECK_HIPBLASLT_ERROR(hipblasLtMatmulPreferenceSetAttribute(
-        pref, HIPBLASLT_MATMUL_PREF_MAX_WORKSPACE_BYTES, &workspace_size, sizeof(workspace_size)));
+    uint64_t max_workspace_size = 32 * 1024 * 1024;
+    void*    d_workspace;
+    CHECK_HIP_ERROR(hipMalloc(&d_workspace, max_workspace_size));
 
     hipStream_t stream;
     CHECK_HIP_ERROR(hipStreamCreate(&stream));
@@ -877,12 +872,8 @@ void test_hipblaslt(hipblasDatatype_t           in_datatype,
         if(groupedGemm.isAlgoSupported(heuristicResult[i].algo, workspace_size)
            == HIPBLAS_STATUS_SUCCESS)
         {
-            validIdx.push_back(i);
-            heuristicResult[i].workspaceSize = workspace_size;
-        }
-        else
-        {
-            heuristicResult[i].workspaceSize = 0;
+            if(workspace_size <= max_workspace_size)
+                validIdx.push_back(i);
         }
     }
 
@@ -918,14 +909,8 @@ void test_hipblaslt(hipblasDatatype_t           in_datatype,
         // step 4: launch kernel to modify Ns
         int threads = 256;
         int blocks  = ceil((double)gemm_count / threads);
-        hipLaunchKernelGGL(kernelUpdateN,
-                            dim3(blocks),
-                            dim3(threads),
-                            0,
-                            stream,
-                            gemm_count,
-                            d_dUAFloat,
-                            d_n_vec);
+        hipLaunchKernelGGL(
+            kernelUpdateN, dim3(blocks), dim3(threads), 0, stream, gemm_count, d_dUAFloat, d_n_vec);
 
         float      eventMs;
         hipEvent_t start, stop;
@@ -1016,15 +1001,21 @@ void test_hipblaslt(hipblasDatatype_t           in_datatype,
                                                           actType[i]);
 
                 bool passed = true;
-                for(int i3 = 0; i3 < batch_count[i]; i3++){
-                    for(int i2 = 0; i2 < n[i]; i2++){
-                        for(int i1 = 0; i1 < m[i]; i1++){
-                            if(!AlmostEqual(hd_gold[i][i1+i2*ldd[i]+i3*stride_d[i]], hd[i][i1+i2*ldd[i]+i3*stride_d[i]]))
+                for(int i3 = 0; i3 < batch_count[i]; i3++)
+                {
+                    for(int i2 = 0; i2 < n[i]; i2++)
+                    {
+                        for(int i1 = 0; i1 < m[i]; i1++)
+                        {
+                            if(!AlmostEqual(hd_gold[i][i1 + i2 * ldd[i] + i3 * stride_d[i]],
+                                            hd[i][i1 + i2 * ldd[i] + i3 * stride_d[i]]))
                             {
-                                printf("Err: Index %ld: %f vs %f\n",
-                                    i1+i2*ldd[i]+i3*stride_d[i],
-                                    static_cast<float>(hd_gold[i][i1+i2*ldd[i]+i3*stride_d[i]]),
-                                    static_cast<float>(hd[i][i1+i2*ldd[i]+i3*stride_d[i]]));
+                                printf(
+                                    "Err: Index %ld: %f vs %f\n",
+                                    i1 + i2 * ldd[i] + i3 * stride_d[i],
+                                    static_cast<float>(
+                                        hd_gold[i][i1 + i2 * ldd[i] + i3 * stride_d[i]]),
+                                    static_cast<float>(hd[i][i1 + i2 * ldd[i] + i3 * stride_d[i]]));
                                 passed = false;
                             }
                         }
@@ -1047,7 +1038,6 @@ void test_hipblaslt(hipblasDatatype_t           in_datatype,
     CHECK_HIP_ERROR(hipFree(d_n_vec));
 
     CHECK_HIPBLASLT_ERROR(hipblasLtDestroy(handle));
-    CHECK_HIPBLASLT_ERROR(hipblasLtMatmulPreferenceDestroy(pref));
     CHECK_HIP_ERROR(hipFree(d_workspace));
 
     for(int i = 0; i < gemm_count; i++)
