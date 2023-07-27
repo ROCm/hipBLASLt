@@ -24,7 +24,7 @@
  *
  *******************************************************************************/
 
-/*! \file
+/** \file
  *  \brief hipblaslt.h provides general matrix-matrix operations with
  *  flexible API to let user set attributes for solution selection.
  */
@@ -178,6 +178,7 @@ typedef hipblasLtMatrixLayoutOpaque_t* hipblasLtMatrixLayout_t;
 typedef hipblasLtMatmulPreferenceOpaque_t* hipblasLtMatmulPreference_t;
 
 /*! \ingroup types_module
+ *  \struct hipblasLtMatmulAlgo_t
  *  \brief Description of the matrix multiplication algorithm
  *
  *  \details
@@ -671,7 +672,7 @@ hipblasStatus_t
  * descriptor \p Ddesc .
  *  @param[in]
  *  algo                    Handle for matrix multiplication algorithm to be
- * used. See \ref _hipblasLtMatmulAlgo_t . When NULL, an implicit heuristics query
+ * used. See \ref hipblasLtMatmulAlgo_t . When NULL, an implicit heuristics query
  * with default search preferences will be performed to determine actual
  * algorithm to use.
  *  @param[in]
