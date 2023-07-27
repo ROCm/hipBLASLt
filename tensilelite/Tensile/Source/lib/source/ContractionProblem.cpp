@@ -1375,6 +1375,7 @@ namespace Tensile
                                          void const* const*   _batchC,
                                          void* const*         _batchD,
                                          void const*          _bias,
+                                         void const* const*   _batchBias,
                                          void const*          _scaleA,
                                          void const*          _scaleB,
                                          void const*          _scaleDVec,
@@ -1390,6 +1391,7 @@ namespace Tensile
         , batchC(_batchC)
         , batchD(_batchD)
         , bias(_bias)
+        , batchBias(_batchBias)
         , scaleA(_scaleA)
         , scaleB(_scaleB)
         , scaleDVec(_scaleDVec)

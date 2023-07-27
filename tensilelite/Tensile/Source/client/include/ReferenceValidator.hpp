@@ -143,6 +143,7 @@ namespace Tensile
             bool m_printTensorC;
             bool m_printTensorD;
             bool m_printTensorRef;
+            bool m_printTensorBias;
             bool m_printAny;
 
             int m_numBenchmarkRuns = 0;
