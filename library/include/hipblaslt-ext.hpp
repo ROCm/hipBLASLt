@@ -195,6 +195,8 @@ namespace hipblaslt_ext
         *
         *  @param[in]
         *  requestedAlgoCount  number of requested algorithms.
+        *  @param[in]
+        *  pref hipblasLt extension preference for gemm problems.
         *  @param[out]
         *  heuristicResults    The algorithm heuristic vector.
         *
@@ -238,7 +240,7 @@ namespace hipblaslt_ext
         *
         *  @param[in]
         *  algo                    Handle for matrix multiplication algorithm to be
-        * used. See \ref hipblasLtMatmulAlgo_t. When NULL, an implicit heuritics query
+        * used. See hipblaslt.h::hipblasLtMatmulAlgo_t . When NULL, an implicit heuristics query
         * with default search preferences will be performed to determine actual
         * algorithm to use.
         *  @param[in]
@@ -340,7 +342,7 @@ namespace hipblaslt_ext
         *  @param[in]
         *  handle                  The handle from hipBLASLt.
         *  @param[in]
-        *  matmulDesc              Handle to a previously created matrix multiplication
+        *  matmul_descr              Handle to a previously created matrix multiplication
         * descriptor of type \ref hipblasLtMatmulDesc_t .
         *  @param[in]
         *  alpha,beta              Pointers to the scalars used in the multiplication.
@@ -458,7 +460,7 @@ namespace hipblaslt_ext
         * about the structures, see hipblasLtMatmul for more information.
         *
         *  @param[in]
-        *  matmulDesc              Handle to a previously created matrix multiplication
+        *  matmul_descr              Handle to a previously created matrix multiplication
         * descriptor of type \ref hipblasLtMatmulDesc_t .
         *  @param[in]
         *  alpha,beta              Pointers to the scalars used in the multiplication.
@@ -545,7 +547,7 @@ namespace hipblaslt_ext
         *  @param[in]
         *  handle                  The handle from hipBLASLt.
         *  @param[in]
-        *  matmulDesc              Vectors of handle to a previously created matrix
+        *  matmul_descr              Vectors of handle to a previously created matrix
         * multiplication descriptor of type \ref hipblasLtMatmulDesc_t .
         *  @param[in]
         *  alpha,beta              Vectors of float used in the multiplication.
@@ -664,7 +666,7 @@ namespace hipblaslt_ext
         * about the structures, see hipblasLtMatmul for more information.
         *
         *  @param[in]
-        *  matmulDesc              Vectors of handle to a previously created matrix
+        *  matmul_descr              Vectors of handle to a previously created matrix
         * multiplication descriptor of type \ref hipblasLtMatmulDesc_t .
         *  @param[in]
         *  alpha,beta              Vectors of float used in the multiplication.
@@ -747,14 +749,14 @@ namespace hipblaslt_ext
      *  \details
      *  This function retrieves the possible algorithms for the matrix multiply
      * operation hipblasLtMatmul() function with the given data and compute tpye.
-     * The output is placed in heuristicResult in the order of increasing
+     * The output is placed in heuristicResults in the order of increasing
      * estimated compute time.
      *
      *  @param[in]
      *  handle                  Pointer to the allocated hipBLASLt handle for the
      * hipBLASLt context. See \ref hipblasLtHandle_t .
      *  @param[in]
-     *  hipblasLtExtGemmTypeEnum_t Gemm type. ex. GEMM, GROUPED_GEMM.
+     *  typeGemm Gemm type. ex. GEMM, GROUPED_GEMM.
      *  @param[in]
      *  opA, opB Transpose settings of A, B.
      *  @param[in]
@@ -762,7 +764,7 @@ namespace hipblaslt_ext
      *  @param[in]
      *  typeCompute             The compute type.
      *  @param[out]
-     *  heuristicResult The algorithm heuristic vector.
+     *  heuristicResults The algorithm heuristic vector.
      *
      *  \retval HIPBLAS_STATUS_SUCCESS           If query was successful. Inspect
      * returnedAlgoCount > 0.state for the status of the
@@ -810,7 +812,7 @@ namespace hipblaslt_ext
      *  @param[in]
      *  algoIndex               The algorithm index vector.
      *  @param[out]
-     *  heuristicResult         The algorithm heuristic vector.
+     *  heuristicResults         The algorithm heuristic vector.
      *
      *  \retval HIPBLAS_STATUS_SUCCESS           If query was successful. Inspect
      * heuristicResults.size() > 0.state for the status of the
