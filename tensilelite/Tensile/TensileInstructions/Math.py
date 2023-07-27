@@ -224,6 +224,53 @@ def scalarStaticDivideAndRemainder(qReg, rReg, dReg, divisor, tmpSgprRes: Option
             module.add(SSubU32(dst=sgpr(rReg), src0=dRegSgpr, src1=sgpr(tmpSgpr), comment="rReg = dividend - quotient*divisor"))
     return module
 
+def scalarStaticCeilDivide(qReg, dReg, divisor, tmpSgprRes: Optional[RegisterPoolResource]):
+
+    qRegSgpr = qReg if isinstance(qReg, RegisterContainer) and qReg.regType == 's' else sgpr(qReg)
+
+    dRegSgpr = dReg if isinstance(dReg, RegisterContainer) and dReg.regType == 's' else sgpr(dReg)
+
+    module = Module("scalarStaticDivideAndRemainder")
+    if ((divisor & (divisor - 1)) == 0): # pow of 2
+        divisor_log2 = log2(divisor)
+        module.add(SLShiftRightB32(dst=qRegSgpr, shiftHex=divisor_log2, src=dRegSgpr, \
+                comment="%s = %s / %u"%(qRegSgpr, dRegSgpr, divisor)))
+        module.add(SAndB32(dst=sgpr(tmpSgprRes.idx), src0=(divisor-1), src1=dRegSgpr, \
+                    comment="%s = %s %% %u"%(sgpr(tmpSgprRes.idx), dRegSgpr, divisor)))
+        module.add(SAddCU32(dst=qRegSgpr, src0=qRegSgpr, src1=hex(0)))
+    else:
+        assert tmpSgprRes and tmpSgprRes.size >= 2
+        tmpSgpr = tmpSgprRes.idx
+        assert qReg != tmpSgpr
+        """
+        if divisor == 30:
+            shift = 32+2
+        elif divisor >= 14:
+            shift = 32+4
+        elif divisor >= 6:
+            shift = 32+3
+        elif divisor >= 5:
+            shift = 32+2
+        elif divisor >= 3:
+            shift = 32+1
+        """
+        shift = 32+1
+        magic = ((2**shift) // divisor) + 1
+        magicHi = magic // (2**16)
+        magicLo = magic & (2**16-1)
+
+        module.add(SMovB32(dst=sgpr(tmpSgpr+1), src=hex(0), comment="STATIC_DIV: divisior=%s"%divisor))
+        module.add(SMulI32(dst=sgpr(tmpSgpr+0), src0=hex(magicHi), src1=dRegSgpr, comment="tmp1 = dividend * magic hi"))
+        module.add(SLShiftLeftB64(dst=sgpr(tmpSgpr,2), shiftHex=hex(16), src=sgpr(tmpSgpr,2), comment="left shift 16 bits"))
+        module.add(SMulI32(dst=qRegSgpr, src0=dRegSgpr, src1=hex(magicLo), comment="tmp0 = dividend * magic lo"))
+        module.add(SAddU32(dst=sgpr(tmpSgpr+0), src0=qRegSgpr, src1=sgpr(tmpSgpr+0), comment="add lo"))
+        module.add(SAddCU32(dst=sgpr(tmpSgpr+1), src0=sgpr(tmpSgpr+1), src1=hex(0), comment="add hi"))
+        module.add(SLShiftRightB64(dst=sgpr(tmpSgpr,2), shiftHex=hex(shift), src=sgpr(tmpSgpr,2), comment="tmp0 = quotient"))
+        module.add(SMulI32(dst=sgpr(tmpSgpr+1), src0=sgpr(tmpSgpr), src1=hex(divisor), comment="tmp1 = quotient * divisor"))
+        module.add(SCmpLgU32(src0=sgpr(tmpSgpr+1), src1=dRegSgpr, comment="if (quotient * divisor != dividend), result+=1"))
+        module.add(SAddCU32(dst=qRegSgpr, src0=sgpr(tmpSgpr), src1=hex(0), comment="if (quotient * divisor != dividend), result+=1"))
+    return module
+
 def scalarStaticRemainder(qReg, rReg, dReg, divisor, tmpSgprRes: Optional[RegisterPoolResource], comment=""):
     if comment == "":
         comment = "%s = %s %% %s" % (sgpr(rReg), sgpr(dReg), divisor)

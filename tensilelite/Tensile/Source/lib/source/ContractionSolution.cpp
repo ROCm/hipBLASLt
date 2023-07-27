@@ -742,7 +742,7 @@ namespace Tensile
             // For user input
             rv.args.append<void const*>("DeviceUserArguments", userArgs);
             rv.args.append<void const*>("argsPtr", (void*)inputs.ws);
-            rv.args.append<uint32_t>("syncForWgTableGen", 0);
+            rv.args.append<uint32_t>("skipWgTableGen", 0);
             rv.codeObjectFile = codeObjectFilename.load();
         }
 

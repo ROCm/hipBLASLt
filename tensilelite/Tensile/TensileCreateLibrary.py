@@ -350,7 +350,7 @@ def prepAsm(kernelWriterAssembly):
     assemblerFile.write(" ".join(lArgs) + "\n")
 
     assemblerFile.write("ERR=$?\n")
-    assemblerFile.write("if [[ $ERR -ne 0 ]]\n")
+    assemblerFile.write("if [ $ERR -ne 0 ]\n")
     assemblerFile.write("then\n")
     assemblerFile.write("    echo one\n")
     assemblerFile.write("    exit $ERR\n")
