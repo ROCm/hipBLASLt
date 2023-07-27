@@ -7406,7 +7406,13 @@ class KernelWriterAssembly(KernelWriter):
       tmpVgprRes = RegisterPoolResource(idx=tmpVgpr, size=4)
       # Init bias Srd
       labelStr = self.labels.getNameInc("Bias")
-      module.add(allocPostLoopSrdSuppress("Bias", labelStr, sgprLength=sgpr("SizeI")))
+      with self.allocTmpSgpr(1,1) as tmpSgprRes:
+        tmpSgpr = tmpSgprRes.idx
+        module.add(SAddU32(dst=sgpr(tmpSgpr), src0=sgpr("WorkGroup2"), src1=hex(1)))
+        module.add(SMulI32(dst=sgpr(tmpSgpr), src0=sgpr("BiasStride"), src1=sgpr(tmpSgpr), comment="stride * (wg+1)"))
+        module.add(SCmpEQU32(sgpr(tmpSgpr), hex(0), comment="bias stride = 0?"))
+        module.add(SCSelectB32(dst=sgpr(tmpSgpr), src0=sgpr("SizeI"), src1=sgpr(tmpSgpr)))
+        module.add(allocPostLoopSrdSuppress("Bias", labelStr, sgprLength=sgpr(tmpSgpr)))
       multiBiasTypeLabel = []
       for i in kernel["ProblemType"]["BiasDataTypeList"]:
         name = self.labels.getNameInc("Load_Bias%s"%i.toNameAbbrev())
@@ -8447,6 +8453,8 @@ class KernelWriterAssembly(KernelWriter):
     # Calculate global offset- macro tile 0 part
     module.add(SMulI32(dst=sgpr(tmpSgpr), src0=kernel["MacroTile0"], src1=sgpr("WorkGroup0"), comment="wgp0 * MT0"))
     module.add(VAddU32(dst=vgpr(offsetVgpr), src0=sgpr(tmpSgpr), src1=vgpr("Serial"), comment="coord 0 = wgp0 * MT0 + thread offset"))
+    module.add(SMulI32(dst=sgpr(tmpSgpr), src0=sgpr("BiasStride"), src1=sgpr("WorkGroup2"), comment="Stride * WG"))
+    module.add(VAddU32(dst=vgpr(offsetVgpr), src0=sgpr(tmpSgpr), src1=vgpr(offsetVgpr), comment="coord 0 = wgp0 * MT0 + thread offset + Stride * WG"))
     module.add(VLShiftLeftB32(dst=vgpr(offsetVgpr), \
                               shiftHex=hex(log2(biasBpe)), \
                               src=vgpr(offsetVgpr), \

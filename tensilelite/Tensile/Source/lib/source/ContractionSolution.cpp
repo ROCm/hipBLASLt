@@ -366,6 +366,7 @@ namespace Tensile
         TensorDescriptor const& c        = problem.c();
         TensorDescriptor const& d        = problem.d();
         TensorDescriptor const& e        = problem.tensor(ContractionProblemGemm::TENSOR::E);
+        TensorDescriptor const& bias     = problem.tensor(ContractionProblemGemm::TENSOR::BIAS);
         TensorDescriptor const& ca       = problem.compressed();
         TensorDescriptor const& metadata = problem.metadata();
 
@@ -511,7 +512,16 @@ namespace Tensile
                 args.template append<void const*>("ws_bias",
                                                   (uint8_t*)inputs.ws + workspaceOffsetInByte);
             else
-                args.template append<void const*>("bias", inputs.bias);
+            {
+                if(problemType.stridedBatched)
+                {
+                    args.template append<void const*>("bias", inputs.bias);
+                }
+                else
+                {
+                    args.template append<void const* const*>("batchBias", inputs.batchBias);
+                }
+            }
 
             if(!problemType.useGradient
                || (problemType.useGradient
@@ -520,7 +530,7 @@ namespace Tensile
             {
                 args.template append<uint32_t>("bias_type",
                                                static_cast<uint32_t>(problem.biasType()));
-                args.template append<uint32_t>("strideBias", static_cast<uint32_t>(0)); // reserved
+                args.template append<uint32_t>("strideBias", static_cast<uint32_t>(bias.strides()[bias.dimensions() - 1])); // reserved
             }
         }
 
@@ -808,7 +818,10 @@ namespace Tensile
            && (sizeMapping.globalAccumulation == 0 || (sizeMapping.customKernelName != ""))
            && (!problemType.useGradient))
         {
-            rv.args.append<void const*>("bias", inputs.bias);
+            if(problemType.stridedBatched)
+                rv.args.append<void const*>("bias", inputs.bias);
+            else
+                rv.args.append<void const* const*>("batchBias", inputs.batchBias);
         }
         if(problemType.useScaleAB && sizeMapping.globalAccumulation == 0)
         {
@@ -846,6 +859,14 @@ namespace Tensile
         for(size_t i = 1; i < c.dimensions(); i++)
             rv.args.append<uint32_t>(concatenate_if<T_Debug>("strideC", i),
                                      c.sizes()[i] == 1 ? 0 : c.strides()[i]);
+
+        if(problemType.useBias
+           && (sizeMapping.globalAccumulation == 0 || (sizeMapping.customKernelName != ""))
+           && (!problemType.useGradient))
+        {
+            TensorDescriptor const& bias = problem.tensor(ContractionProblemGemm::TENSOR::BIAS);
+            rv.args.append<uint32_t>("strideBias", bias.strides()[bias.dimensions() - 1]);
+        }
 
         int idx = 0;
         for(auto size : problem.d().sizes())
@@ -944,18 +965,29 @@ namespace Tensile
         else
             args.template append<void const* const*>("batchC", inputs.batchC);
 
+        bool useBias = false;
         if(problemType.useBias)
         {
             if(!problemType.useGradient)
-                args.template append<void const*>("bias", inputs.bias);
-            if(problemType.useGradient)
+            {
+                if(problemType.stridedBatched)
+                    args.template append<void const*>("bias", inputs.bias);
+                else
+                    args.template append<void const* const*>("batchBias", inputs.batchBias);
+                useBias = true;
+            }
+            else
             {
                 for(auto it : problemType.biasSrcWhiteList)
                 {
                     if(it == ContractionProblemGemm::TENSOR::A
                        || it == ContractionProblemGemm::TENSOR::B)
                     {
-                        args.template append<void*>("bias", const_cast<void*>(inputs.bias));
+                        if(problemType.stridedBatched)
+                            args.template append<void *>("bias", const_cast<void*>(inputs.bias));
+                        else
+                            args.template append<void **>("batchBias", const_cast<void **>(inputs.batchBias));
+                        useBias = true;
                         break;
                     }
                 }
@@ -1042,6 +1074,12 @@ namespace Tensile
 
         for(size_t i = 1; i < c.dimensions(); i++)
             args.template append<uint32_t>(concatenate_if<T_Debug>("strideC", i), c.strides()[i]);
+
+        if(useBias)
+        {
+            TensorDescriptor const& bias = problem.tensor(ContractionProblemGemm::TENSOR::BIAS);
+            args.template append<uint32_t>("strideBias", bias.strides()[bias.dimensions() - 1]);
+        }
 
         int i = 0;
         for(auto size : problem.d().sizes())
