@@ -580,10 +580,11 @@ namespace Tensile
             auto const& batchIndices = problem.batchIndices();
             auto const& boundIndices = problem.boundIndices();
 
-            auto const& a = problem.a();
-            auto const& b = problem.b();
-            auto const& c = problem.c();
-            auto const& d = problem.d();
+            auto const& a    = problem.a();
+            auto const& b    = problem.b();
+            auto const& c    = problem.c();
+            auto const& d    = problem.d();
+            auto const& bias = problem.bias();
 
             bool aConjugate = false;
             bool bConjugate = false;
@@ -639,7 +640,7 @@ namespace Tensile
                 std::vector<int64_t> bCoord(b.dimensions());
                 std::vector<int64_t> cCoord(c.dimensions());
                 std::vector<int64_t> dCoord(d.dimensions());
-
+                std::vector<int64_t> biasCoord(bias.dimensions());
                 CoordNumbered(
                     dNum, dCoord.begin(), dCoord.end(), d.sizes().begin(), d.sizes().end());
 
@@ -651,6 +652,8 @@ namespace Tensile
                     aCoord[idx.a] = coord;
                     bCoord[idx.b] = coord;
                     cCoord[idx.c] = coord;
+                    if(biasCoord.size() > 2)
+                        biasCoord[2] = coord;
                 }
 
                 for(size_t i = 0; i < problem.freeIndices().size(); i++)
@@ -755,7 +758,8 @@ namespace Tensile
                 // bias
                 if(problem.useBias() && inputs.bias && !problem.useGradient())
                 {
-                    int         pos = int(dNum % problem.d().sizes()[0]);
+                    auto        biasIndex = problem.bias().index(biasCoord);
+                    int         pos       = int(dNum % problem.d().sizes()[0]) + biasIndex;
                     Accumulator bias
                         = GetValue<Accumulator>(problem.biasType(), inputs.bias, pos, aConjugate);
                     resultD += bias;

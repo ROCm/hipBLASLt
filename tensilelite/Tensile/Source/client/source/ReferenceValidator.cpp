@@ -47,14 +47,15 @@ namespace Tensile
             m_printValids        = args["print-valids"].as<bool>();
             m_printMax           = args["print-max"].as<int>();
 
-            m_printTensorA   = args["print-tensor-a"].as<bool>();
-            m_printTensorB   = args["print-tensor-b"].as<bool>();
-            m_printTensorC   = args["print-tensor-c"].as<bool>();
-            m_printTensorD   = args["print-tensor-d"].as<bool>();
-            m_printTensorRef = args["print-tensor-ref"].as<bool>();
+            m_printTensorA    = args["print-tensor-a"].as<bool>();
+            m_printTensorB    = args["print-tensor-b"].as<bool>();
+            m_printTensorC    = args["print-tensor-c"].as<bool>();
+            m_printTensorD    = args["print-tensor-d"].as<bool>();
+            m_printTensorRef  = args["print-tensor-ref"].as<bool>();
+            m_printTensorBias = args["print-tensor-bias"].as<bool>();
 
             m_printAny = m_printTensorA || m_printTensorB || m_printTensorC || m_printTensorD
-                         || m_printTensorRef;
+                         || m_printTensorRef || m_printTensorBias;
 
             m_enabled = m_elementsToValidate != 0 || m_printAny;
         }
@@ -402,6 +403,9 @@ namespace Tensile
             if(m_printTensorRef)
                 requiredBufferSize
                     = std::max(requiredBufferSize, problem.d().totalAllocatedBytes());
+            if(m_printTensorBias)
+                requiredBufferSize
+                    = std::max(requiredBufferSize, problem.bias().totalAllocatedBytes());
 
             if(m_cpuResultBufferSize < requiredBufferSize)
                 allocateResultBuffer(requiredBufferSize);
@@ -484,6 +488,19 @@ namespace Tensile
             {
                 m_reporter->logTensor(
                     LogLevel::Verbose, "Ref", reference.d, problem.d(), reference.d);
+            }
+
+            if(m_printTensorBias)
+            {
+                HIP_CHECK_EXC(hipMemcpy(m_cpuResultBuffer.get(),
+                                        result.bias,
+                                        problem.bias().totalAllocatedBytes(),
+                                        hipMemcpyDeviceToHost));
+                m_reporter->logTensor(LogLevel::Verbose,
+                                      "bias",
+                                      m_cpuResultBuffer.get(),
+                                      problem.bias(),
+                                      result.bias);
             }
         }
 

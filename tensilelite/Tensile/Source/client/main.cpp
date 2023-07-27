@@ -154,6 +154,7 @@ namespace Tensile
                 ("print-tensor-c",           po::value<bool>()->default_value(false), "Print tensor C.")
                 ("print-tensor-d",           po::value<bool>()->default_value(false), "Print tensor D.")
                 ("print-tensor-ref",         po::value<bool>()->default_value(false), "Print reference tensor D.")
+                ("print-tensor-bias",         po::value<bool>()->default_value(false), "Print tensor Bias.")
 
                 ("dump-tensors",             po::value<bool>()->default_value(false), "Binary dump tensors instead of printing.")
 
@@ -208,7 +209,10 @@ namespace Tensile
                                                                                   "(prev_dim_stride*prev_dim_size)"
                                                                                   "specifying once applies to all problem sizes, "
                                                                                   "otherwise specify once per problem size.")
-
+                ("bias-strides",             vector_default_empty<std::string>(), "Unspecified means default stride "
+                                                                                  "(prev_dim_stride*prev_dim_size)"
+                                                                                  "specifying once applies to all problem sizes, "
+                                                                                  "otherwise specify once per problem size.")
                 ("problem-start-idx",        po::value<int>()->default_value(0),  "First problem to run")
                 ("num-problems",             po::value<int>()->default_value(-1), "Number of problems to run")
 
@@ -448,6 +452,7 @@ namespace Tensile
             parse_arg_ints(args, "c-strides");
             parse_arg_ints(args, "d-strides");
             parse_arg_ints(args, "e-strides");
+            parse_arg_ints(args, "bias-strides");
             parse_bias_type_args(args, "bias-type-args");
             parse_activation_int(args, "activation-type");
             parse_activation_enum_args(args, "activation-enum-args");

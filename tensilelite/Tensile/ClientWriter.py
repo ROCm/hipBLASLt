@@ -35,7 +35,7 @@ import shlex
 import shutil
 from enum import Enum
 
-from .Contractions import FreeIndex
+from .Contractions import FreeIndex, BatchIndex
 from .Contractions import ProblemType as ContractionsProblemType
 
 class DataInitName(Enum):
@@ -430,6 +430,18 @@ def problemSizeParams(problemType, problem):
       rv.append(('d-strides', ",".join(map(str, dstrides))))
       if problemType.useE:
           rv.append(('e-strides', ",".join(map(str, dstrides))))
+    if problemType.useBias:
+      biasstrides = [1, problem.sizes[0], 0]
+      for sc in problemType.setConstStrideBias:
+        index = problemType.indices[sc[0]]
+        if type(index) == BatchIndex:
+            biasstrides[2] = sc[1]
+      if biasstrides[2] == -1:
+        biasstrides[2] = problem.sizes[0]
+      elif biasstrides[2] != 0 and biasstrides[2] < problem.sizes[0]:
+        raise RuntimeError("problem-specified bias stride(%u) must >= M (%u)" % \
+              (biasstrides[2], problem.sizes[0]))
+      rv.append(('bias-strides', ",".join(map(str, biasstrides))))
 
     return rv
 
@@ -557,6 +569,8 @@ def writeClientConfigIni(problemSizes, biasTypeArgs, activationArgs, problemType
           param("print-tensor-d",         1)
         if globalParameters["PrintTensorRef"]:
           param("print-tensor-ref",       1)
+        if globalParameters["PrintTensorBias"]:
+          param("print-tensor-bias",      1)
         if globalParameters["DumpTensors"]:
           param("dump-tensors",           1)
         if globalParameters["ExitOnFails"] > 1:

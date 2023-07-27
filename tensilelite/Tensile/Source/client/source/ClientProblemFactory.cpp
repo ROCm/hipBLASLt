@@ -213,7 +213,7 @@ namespace Tensile
             int activationSize = std::max(1, (int)m_activationEnumArg.size());
             rv.reserve(m_problemSizes.size() * activationSize * biasSize);
 
-            std::vector<size_t> aStrides, bStrides, cStrides, dStrides, eStrides;
+            std::vector<size_t> aStrides, bStrides, cStrides, dStrides, eStrides, biasStrides;
 
             if(m_tensorStrides[ContractionProblemGemm::TENSOR::A].size() == 1)
                 aStrides = m_tensorStrides[ContractionProblemGemm::TENSOR::A][0];
@@ -225,6 +225,8 @@ namespace Tensile
                 dStrides = m_tensorStrides[ContractionProblemGemm::TENSOR::D][0];
             if(m_tensorStrides[ContractionProblemGemm::TENSOR::E].size() == 1)
                 eStrides = m_tensorStrides[ContractionProblemGemm::TENSOR::E][0];
+            if(m_tensorStrides[ContractionProblemGemm::TENSOR::BIAS].size() == 1)
+                biasStrides = m_tensorStrides[ContractionProblemGemm::TENSOR::BIAS][0];
 
             for(int k = 0; k < biasSize; k++)
             {
@@ -247,6 +249,9 @@ namespace Tensile
                         if(m_tensorStrides[ContractionProblemGemm::TENSOR::E].size()
                            == m_problemSizes.size())
                             eStrides = m_tensorStrides[ContractionProblemGemm::TENSOR::E][i];
+                        if(m_tensorStrides[ContractionProblemGemm::TENSOR::BIAS].size()
+                           == m_problemSizes.size())
+                            biasStrides = m_tensorStrides[ContractionProblemGemm::TENSOR::BIAS][i];
 
                         rv.push_back(ContractionProblemGemm::FromIndexSizes(
                             m_freeIndices,
@@ -287,15 +292,17 @@ namespace Tensile
                                                     ? rv.back().d().sizes()[1]
                                                     : rv.back().d().sizes()[0];
                             bool isBiasOutput = m_useGradient ? true : false;
+                            auto biasStride   = biasStrides.size() < 2 ? 0 : biasStrides[2];
                             rv.back().setBias(
                                 m_biasTypeArgs[k],
                                 length,
+                                biasStride,
                                 isBiasOutput,
                                 static_cast<ContractionProblemGemm::TENSOR>(m_biasSrc));
                         }
                         else
                         {
-                            rv.back().setBias(DataType::None, 0);
+                            rv.back().setBias(DataType::None, 0, 0);
                         }
                         if(m_useE)
                         {

@@ -481,7 +481,7 @@ namespace
             = (biasSrc == Tensile::ContractionProblemGemm::TENSOR::B) ? d.sizes()[1] : d.sizes()[0];
         tensileProblem.setUseBias(true);
         tensileProblem.setBias(
-            hipblasltDatatype_to_tensile_type(prob.bias_type), biasSize, prob.gradient, biasSrc);
+            hipblasltDatatype_to_tensile_type(prob.bias_type), biasSize, 0, prob.gradient, biasSrc);
 
         // ScaleAB is only supported on F8/BF8
         if(Tensile_TiA == Tensile::DataType::Float8 || Tensile_TiA == Tensile::DataType::BFloat8)
@@ -670,6 +670,7 @@ namespace
             tensileProblem.setUseBias(true);
             tensileProblem.setBias(hipblasltDatatype_to_tensile_type(prob.bias_type),
                                    biasSize,
+                                   0,
                                    prob.gradient,
                                    biasSrc);
 
