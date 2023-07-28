@@ -886,7 +886,15 @@ class ProblemSizes:
 ################################################################################
 
 def getBiasDataTypeListDefault(problem: ProblemType) -> List[DataType]:
-  biasDataTypeList = list(set([problem["DataType"], problem["ComputeDataType"], problem["DestDataType"]]))
+  bList = []
+  for d in ["DataType", "ComputeDataType", "DestDataType"]:
+    dtype = DataType(problem[d])
+    # filter out int8, because it is not supported by bias datatype
+    # TODO
+    if not dtype.isInt8():
+      bList.append(dtype)
+
+  biasDataTypeList = list(set(bList))
   biasDataTypeList.sort() # Make name unique
   return biasDataTypeList
 
