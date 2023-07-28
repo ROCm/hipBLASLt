@@ -394,7 +394,7 @@ class ProblemPredicate(Properties.Predicate):
             TLUB = state['ProblemType']['TLUB']
             minFree0 = state['GlobalReadVectorWidthA'] if TLUA else 1
             minFree1 = state['GlobalReadVectorWidthB'] if TLUB else 1
-            minFree1 = 0 if state['ProblemType']['GroupedGemm'] else minFree0
+            minFree1 = 0 if state['ProblemType']['GroupedGemm'] else minFree1
             rv += [cls('LeadingFree0SizesGreaterOrEqual', value=minFree0)]
             rv += [cls('LeadingFree1SizesGreaterOrEqual', value=minFree1)]
 
@@ -466,7 +466,7 @@ class SizeMapping:
                  'globalAccumulation',
                  'workspaceSizePerElemC',
                  'workspaceSizePerElemBias',
-                 'activationFused'
+                 'activationFused', 'CustomKernelName'
                  ]
 
     @classmethod
@@ -490,7 +490,8 @@ class SizeMapping:
                    globalAccumulation       = globalAccum,
                    workspaceSizePerElemC    = d['_WorkspaceSizePerElemC'],
                    workspaceSizePerElemBias = d['_WorkspaceSizePerElemBias'],
-                   activationFused          = d['ActivationFused']
+                   activationFused          = d['ActivationFused'],
+                   CustomKernelName         = d['CustomKernelName']
                    )
 
     @classmethod

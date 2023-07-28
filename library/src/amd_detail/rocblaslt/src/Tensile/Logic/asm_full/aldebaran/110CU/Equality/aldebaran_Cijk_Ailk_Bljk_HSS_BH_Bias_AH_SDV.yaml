@@ -16,7 +16,7 @@
   ComplexConjugateB: false
   ComputeDataType: 0
   DataType: 4
-  DestDataType: 4
+  DestDataType: 0
   Fp16AltImpl: false
   HighPrecisionAccumulate: true
   Index0: 0
@@ -186,7 +186,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       HighPrecisionAccumulate: true
       Index0: 0
@@ -233,7 +233,7 @@
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 0
-    SolutionNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_AH_SDV_MT128x128x32_MI32x32x8x1_SN_1LDSB0_GRVW8_GSU1_LPB8_LRVW8_MIWT2_2_NEPBS0_NLCA1_PLR5_SS0_SU4_SUS128_SVW4_VW1_WG64_4_1_WGM1
+    SolutionNameMin: Cijk_Ailk_Bljk_HSS_BH_Bias_AH_SDV_MT128x128x32_MI32x32x8x1_SN_1LDSB0_GRVW8_GSU1_LPB8_LRVW8_MIWT2_2_NEPBS0_NLCA1_PLR5_SS0_SU4_SUS128_SVW4_VW1_WG64_4_1_WGM1
     SourceSwap: 0
     StaggerU: 4
     StaggerUMapping: 0
@@ -403,7 +403,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       HighPrecisionAccumulate: true
       Index0: 0
@@ -450,7 +450,7 @@
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 1
-    SolutionNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_AH_SDV_MT128x16x64_MI16x16x16x1_SN_1LDSB0_GRVW4_GSU1_LPB16_LRVW8_MIWT2_1_NEPBS0_NLCA1_PLR5_SS0_SU0_SUS0_SVW4_VW1_WG64_4_1_WGM4
+    SolutionNameMin: Cijk_Ailk_Bljk_HSS_BH_Bias_AH_SDV_MT128x16x64_MI16x16x16x1_SN_1LDSB0_GRVW4_GSU1_LPB16_LRVW8_MIWT2_1_NEPBS0_NLCA1_PLR5_SS0_SU0_SUS0_SVW4_VW1_WG64_4_1_WGM4
     SourceSwap: 0
     StaggerU: 0
     StaggerUMapping: 0
@@ -620,7 +620,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       HighPrecisionAccumulate: true
       Index0: 0
@@ -667,7 +667,7 @@
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 2
-    SolutionNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_AH_SDV_MT32x32x64_MI16x16x16x1_SN_1LDSB0_GRVW8_GSU1_LPB16_LRVW8_MIWT1_1_NEPBS2_NLCA1_PLR5_SS0_SU4_SUS128_SVW4_VW1_WG32_8_1_WGM1
+    SolutionNameMin: Cijk_Ailk_Bljk_HSS_BH_Bias_AH_SDV_MT32x32x64_MI16x16x16x1_SN_1LDSB0_GRVW8_GSU1_LPB16_LRVW8_MIWT1_1_NEPBS2_NLCA1_PLR5_SS0_SU4_SUS128_SVW4_VW1_WG32_8_1_WGM1
     SourceSwap: 0
     StaggerU: 4
     StaggerUMapping: 0
@@ -837,7 +837,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       HighPrecisionAccumulate: true
       Index0: 0
@@ -884,7 +884,7 @@
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 3
-    SolutionNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_AH_SDV_MT32x32x64_MI16x16x16x1_SN_1LDSB0_GRVW8_GSU1_LPB16_LRVW8_MIWT1_1_NEPBS2_NLCA1_PLR5_SS0_SU32_SUS128_SVW4_VW1_WG32_8_1_WGM1
+    SolutionNameMin: Cijk_Ailk_Bljk_HSS_BH_Bias_AH_SDV_MT32x32x64_MI16x16x16x1_SN_1LDSB0_GRVW8_GSU1_LPB16_LRVW8_MIWT1_1_NEPBS2_NLCA1_PLR5_SS0_SU32_SUS128_SVW4_VW1_WG32_8_1_WGM1
     SourceSwap: 0
     StaggerU: 32
     StaggerUMapping: 0
@@ -939,7 +939,7 @@
     BufferStore: true
     ClusterLocalRead: 1
     CodeObjectVersion: V3
-    # CustomKernelName: 'Custom_Cijk_Ailk_Bljk_HHS_BH_Bias_AH_SDV_MT32x32x64_MI16x16x16x1_SN_GRVWA8_GRVWB8_GSU7_K1_LBSPPA512_LPA16_LPB16_LRVW8_MIWT1_1_NTA0_NTB0_NEPBS2_SU0_SUS0_WG32_8_1_WGM1'
+    # CustomKernelName: 'Custom_Cijk_Ailk_Bljk_HSS_BH_Bias_AH_SDV_MT32x32x64_MI16x16x16x1_SN_GRVWA8_GRVWB8_GSU7_K1_LBSPPA512_LPA16_LPB16_LRVW8_MIWT1_1_NTA0_NTB0_NEPBS2_SU0_SUS0_WG32_8_1_WGM1'
     CustomKernelName: ''
     DepthU: 64
     DepthULdsDivisor: 1
@@ -1055,7 +1055,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       HighPrecisionAccumulate: true
       Index0: 0
@@ -1102,7 +1102,7 @@
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 4
-    SolutionNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_AH_SDV_MT32x32x64_MI16x16x16x1_SN_1LDSB0_GRVW8_GSU7_LPB16_LRVW8_MIWT1_1_NEPBS2_NLCA1_PLR5_SS0_SU0_SUS0_SVW4_VW1_WG32_8_1_WGM1
+    SolutionNameMin: Cijk_Ailk_Bljk_HSS_BH_Bias_AH_SDV_MT32x32x64_MI16x16x16x1_SN_1LDSB0_GRVW8_GSU7_LPB16_LRVW8_MIWT1_1_NEPBS2_NLCA1_PLR5_SS0_SU0_SUS0_SVW4_VW1_WG32_8_1_WGM1
     SourceSwap: 0
     StaggerU: 0
     StaggerUMapping: 0
@@ -1157,7 +1157,7 @@
     BufferStore: true
     ClusterLocalRead: 1
     CodeObjectVersion: V3
-    # CustomKernelName: 'Custom_Cijk_Ailk_Bljk_HHS_BH_Bias_AH_SDV_MT32x32x64_MI16x16x16x1_SN_GRVWA8_GRVWB8_GSU7_K1_LBSPPA512_LPA16_LPB16_LRVW8_MIWT1_1_NTA0_NTB0_NEPBS2_SU4_SUS128_WG32_8_1_WGM2'
+    # CustomKernelName: 'Custom_Cijk_Ailk_Bljk_HSS_BH_Bias_AH_SDV_MT32x32x64_MI16x16x16x1_SN_GRVWA8_GRVWB8_GSU7_K1_LBSPPA512_LPA16_LPB16_LRVW8_MIWT1_1_NTA0_NTB0_NEPBS2_SU4_SUS128_WG32_8_1_WGM2'
     CustomKernelName: ''
     DepthU: 64
     DepthULdsDivisor: 1
@@ -1273,7 +1273,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       HighPrecisionAccumulate: true
       Index0: 0
@@ -1320,7 +1320,7 @@
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 5
-    SolutionNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_AH_SDV_MT32x32x64_MI16x16x16x1_SN_1LDSB0_GRVW8_GSU7_LPB16_LRVW8_MIWT1_1_NEPBS2_NLCA1_PLR5_SS0_SU4_SUS128_SVW4_VW1_WG32_8_1_WGM2
+    SolutionNameMin: Cijk_Ailk_Bljk_HSS_BH_Bias_AH_SDV_MT32x32x64_MI16x16x16x1_SN_1LDSB0_GRVW8_GSU7_LPB16_LRVW8_MIWT1_1_NEPBS2_NLCA1_PLR5_SS0_SU4_SUS128_SVW4_VW1_WG32_8_1_WGM2
     SourceSwap: 0
     StaggerU: 4
     StaggerUMapping: 0
@@ -1490,7 +1490,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       HighPrecisionAccumulate: true
       Index0: 0
@@ -1537,7 +1537,7 @@
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 6
-    SolutionNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_AH_SDV_MT128x96x64_MI32x32x8x1_SN_1LDSB0_GRVW8_GSU1_LPB8_LRVW8_MIWT1_3_NEPBS0_NLCA1_PLR9_SS0_SU4_SUS128_SVW4_VW1_WG128_2_1_WGM8
+    SolutionNameMin: Cijk_Ailk_Bljk_HSS_BH_Bias_AH_SDV_MT128x96x64_MI32x32x8x1_SN_1LDSB0_GRVW8_GSU1_LPB8_LRVW8_MIWT1_3_NEPBS0_NLCA1_PLR9_SS0_SU4_SUS128_SVW4_VW1_WG128_2_1_WGM8
     SourceSwap: 0
     StaggerU: 4
     StaggerUMapping: 0
@@ -1707,7 +1707,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       HighPrecisionAccumulate: true
       Index0: 0
@@ -1754,7 +1754,7 @@
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 7
-    SolutionNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_AH_SDV_MT128x64x32_MI32x32x8x1_SN_1LDSB0_GRVW8_GSU1_LPB8_LRVW8_MIWT2_1_NEPBS2_NLCA1_PLR5_SS1_SU0_SUS0_SVW2_VW2_WG64_4_1_WGM8
+    SolutionNameMin: Cijk_Ailk_Bljk_HSS_BH_Bias_AH_SDV_MT128x64x32_MI32x32x8x1_SN_1LDSB0_GRVW8_GSU1_LPB8_LRVW8_MIWT2_1_NEPBS2_NLCA1_PLR5_SS1_SU0_SUS0_SVW2_VW2_WG64_4_1_WGM8
     SourceSwap: 1
     StaggerU: 0
     StaggerUMapping: 0
@@ -1924,7 +1924,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       HighPrecisionAccumulate: true
       Index0: 0
@@ -1971,7 +1971,7 @@
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 8
-    SolutionNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_AH_SDV_MT128x128x32_MI32x32x8x1_SN_1LDSB1_GRVW8_GSU1_LPB8_LRVW8_MIWT2_2_NEPBS2_NLCA1_PLR5_SS1_SU0_SUS0_SVW2_VW2_WG64_4_1_WGM1
+    SolutionNameMin: Cijk_Ailk_Bljk_HSS_BH_Bias_AH_SDV_MT128x128x32_MI32x32x8x1_SN_1LDSB1_GRVW8_GSU1_LPB8_LRVW8_MIWT2_2_NEPBS2_NLCA1_PLR5_SS1_SU0_SUS0_SVW2_VW2_WG64_4_1_WGM1
     SourceSwap: 1
     StaggerU: 0
     StaggerUMapping: 0
@@ -2141,7 +2141,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       HighPrecisionAccumulate: true
       Index0: 0
@@ -2188,7 +2188,7 @@
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 9
-    SolutionNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_AH_SDV_MT128x128x32_MI32x32x8x1_SN_1LDSB1_GRVW8_GSU1_LPB8_LRVW8_MIWT2_2_NEPBS2_NLCA1_PLR5_SS1_SU4_SUS256_SVW2_VW2_WG64_4_1_WGM4
+    SolutionNameMin: Cijk_Ailk_Bljk_HSS_BH_Bias_AH_SDV_MT128x128x32_MI32x32x8x1_SN_1LDSB1_GRVW8_GSU1_LPB8_LRVW8_MIWT2_2_NEPBS2_NLCA1_PLR5_SS1_SU4_SUS256_SVW2_VW2_WG64_4_1_WGM4
     SourceSwap: 1
     StaggerU: 4
     StaggerUMapping: 0
@@ -2358,7 +2358,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       HighPrecisionAccumulate: true
       Index0: 0
@@ -2405,7 +2405,7 @@
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 10
-    SolutionNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_AH_SDV_MT128x128x32_MI32x32x8x1_SN_1LDSB1_GRVW8_GSU1_LPB8_LRVW8_MIWT2_2_NEPBS2_NLCA1_PLR5_SS1_SU32_SUS128_SVW2_VW2_WG64_4_1_WGM8
+    SolutionNameMin: Cijk_Ailk_Bljk_HSS_BH_Bias_AH_SDV_MT128x128x32_MI32x32x8x1_SN_1LDSB1_GRVW8_GSU1_LPB8_LRVW8_MIWT2_2_NEPBS2_NLCA1_PLR5_SS1_SU32_SUS128_SVW2_VW2_WG64_4_1_WGM8
     SourceSwap: 1
     StaggerU: 32
     StaggerUMapping: 0
@@ -2575,7 +2575,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       HighPrecisionAccumulate: true
       Index0: 0
@@ -2622,7 +2622,7 @@
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 11
-    SolutionNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_AH_SDV_MT128x16x64_MI16x16x16x1_SN_1LDSB0_GRVW4_GSU1_LPB16_LRVW8_MIWT2_1_NEPBS0_NLCA1_PLR5_SS1_SU0_SUS0_SVW2_VW2_WG64_4_1_WGM1
+    SolutionNameMin: Cijk_Ailk_Bljk_HSS_BH_Bias_AH_SDV_MT128x16x64_MI16x16x16x1_SN_1LDSB0_GRVW4_GSU1_LPB16_LRVW8_MIWT2_1_NEPBS0_NLCA1_PLR5_SS1_SU0_SUS0_SVW2_VW2_WG64_4_1_WGM1
     SourceSwap: 1
     StaggerU: 0
     StaggerUMapping: 0
@@ -2792,7 +2792,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       HighPrecisionAccumulate: true
       Index0: 0
@@ -2839,7 +2839,7 @@
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 12
-    SolutionNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_AH_SDV_MT128x16x64_MI16x16x16x1_SN_1LDSB0_GRVW4_GSU7_LPB16_LRVW8_MIWT2_1_NEPBS0_NLCA1_PLR5_SS1_SU4_SUS128_SVW1_VW1_WG64_4_1_WGM1
+    SolutionNameMin: Cijk_Ailk_Bljk_HSS_BH_Bias_AH_SDV_MT128x16x64_MI16x16x16x1_SN_1LDSB0_GRVW4_GSU7_LPB16_LRVW8_MIWT2_1_NEPBS0_NLCA1_PLR5_SS1_SU4_SUS128_SVW1_VW1_WG64_4_1_WGM1
     SourceSwap: 1
     StaggerU: 4
     StaggerUMapping: 0
@@ -3009,7 +3009,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       HighPrecisionAccumulate: true
       Index0: 0
@@ -3056,7 +3056,7 @@
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 13
-    SolutionNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_AH_SDV_MT128x16x64_MI16x16x16x1_SN_1LDSB0_GRVW4_GSU1_LPB16_LRVW8_MIWT2_1_NEPBS0_NLCA1_PLR5_SS1_SU0_SUS0_SVW1_VW1_WG64_4_1_WGM2
+    SolutionNameMin: Cijk_Ailk_Bljk_HSS_BH_Bias_AH_SDV_MT128x16x64_MI16x16x16x1_SN_1LDSB0_GRVW4_GSU1_LPB16_LRVW8_MIWT2_1_NEPBS0_NLCA1_PLR5_SS1_SU0_SUS0_SVW1_VW1_WG64_4_1_WGM2
     SourceSwap: 1
     StaggerU: 0
     StaggerUMapping: 0
@@ -3226,7 +3226,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       HighPrecisionAccumulate: true
       Index0: 0
@@ -3273,7 +3273,7 @@
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 14
-    SolutionNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_AH_SDV_MT128x16x64_MI16x16x16x1_SN_1LDSB0_GRVW4_GSU8_LPB16_LRVW8_MIWT2_1_NEPBS0_NLCA1_PLR5_SS1_SU0_SUS0_SVW2_VW2_WG64_4_1_WGM2
+    SolutionNameMin: Cijk_Ailk_Bljk_HSS_BH_Bias_AH_SDV_MT128x16x64_MI16x16x16x1_SN_1LDSB0_GRVW4_GSU8_LPB16_LRVW8_MIWT2_1_NEPBS0_NLCA1_PLR5_SS1_SU0_SUS0_SVW2_VW2_WG64_4_1_WGM2
     SourceSwap: 1
     StaggerU: 0
     StaggerUMapping: 0
@@ -3328,7 +3328,7 @@
     BufferStore: true
     ClusterLocalRead: 1
     CodeObjectVersion: V3
-    # CustomKernelName: 'Custom_Cijk_Ailk_Bljk_HHS_BH_Bias_AH_SDV_MT64x16x64_MI16x16x16x1_SN_GRVWA4_GRVWB4_GSU9_K1_LBSPPA0_LPA0_LPB16_LRVW8_MIWT1_1_NTA2_NTB0_NEPBS0_SU0_SUS0_WG64_4_1_WGM8'
+    # CustomKernelName: 'Custom_Cijk_Ailk_Bljk_HSS_BH_Bias_AH_SDV_MT64x16x64_MI16x16x16x1_SN_GRVWA4_GRVWB4_GSU9_K1_LBSPPA0_LPA0_LPB16_LRVW8_MIWT1_1_NTA2_NTB0_NEPBS0_SU0_SUS0_WG64_4_1_WGM8'
     CustomKernelName: ''
     DepthU: 64
     DepthULdsDivisor: 1
@@ -3444,7 +3444,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: false
       HighPrecisionAccumulate: true
@@ -3492,7 +3492,7 @@
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 15
-    SolutionNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_AH_SDV_MT64x16x64_MI16x16x16x1_SN_GRVW8_GSU9_LPB16_LRVW8_MIWT1_1_PLR5_SU0_SUS0_SVW4_VW4_WG64_4_1_WGM8
+    SolutionNameMin: Cijk_Ailk_Bljk_HSS_BH_Bias_AH_SDV_MT64x16x64_MI16x16x16x1_SN_GRVW8_GSU9_LPB16_LRVW8_MIWT1_1_PLR5_SU0_SUS0_SVW4_VW4_WG64_4_1_WGM8
     SourceSwap: false
     StaggerU: 0
     StaggerUMapping: 0
@@ -3547,7 +3547,7 @@
     BufferStore: true
     ClusterLocalRead: 1
     CodeObjectVersion: V3
-    # CustomKernelName: 'Custom_Cijk_Ailk_Bljk_HHS_BH_Bias_AH_SDV_MT64x16x64_MI16x16x16x1_SN_GRVWA2_GRVWB4_GSU9_K1_LBSPPA0_LPA0_LPB16_LRVW8_MIWT1_1_NTA2_NTB0_NEPBS0_SU0_SUS0_WG64_4_1_WGM15'
+    # CustomKernelName: 'Custom_Cijk_Ailk_Bljk_HSS_BH_Bias_AH_SDV_MT64x16x64_MI16x16x16x1_SN_GRVWA2_GRVWB4_GSU9_K1_LBSPPA0_LPA0_LPB16_LRVW8_MIWT1_1_NTA2_NTB0_NEPBS0_SU0_SUS0_WG64_4_1_WGM15'
     CustomKernelName: ''
     DepthU: 64
     DepthULdsDivisor: 1
@@ -3663,7 +3663,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: false
       HighPrecisionAccumulate: true
@@ -3711,7 +3711,7 @@
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 16
-    SolutionNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_AH_SDV_MT64x16x64_MI16x16x16x1_SN_GRVW2_GSU9_MIWT1_1_SU0_SUS0_SRVW0_SVW4_VW4_WG64_4_1_WGM15
+    SolutionNameMin: Cijk_Ailk_Bljk_HSS_BH_Bias_AH_SDV_MT64x16x64_MI16x16x16x1_SN_GRVW2_GSU9_MIWT1_1_SU0_SUS0_SRVW0_SVW4_VW4_WG64_4_1_WGM15
     SourceSwap: 0
     StaggerU: 0
     StaggerUMapping: 0
@@ -3767,7 +3767,7 @@
     BufferStore: true
     ClusterLocalRead: 1
     CodeObjectVersion: V3
-    # CustomKernelName: 'Custom_Cijk_Ailk_Bljk_HHS_BH_Bias_AH_SDV_MT16x32x64_MI16x16x16x1_SN_GRVWA8_GRVWB8_GSU5_K1_LBSPPA128_LPA16_LPB8_LRVW4_MIWT1_1_NTA0_NTB3_NEPBS0_SU0_SUS0_WG16_8_1_WGM0'
+    # CustomKernelName: 'Custom_Cijk_Ailk_Bljk_HSS_BH_Bias_AH_SDV_MT16x32x64_MI16x16x16x1_SN_GRVWA8_GRVWB8_GSU5_K1_LBSPPA128_LPA16_LPB8_LRVW4_MIWT1_1_NTA0_NTB3_NEPBS0_SU0_SUS0_WG16_8_1_WGM0'
     CustomKernelName: ''
     DepthU: 64
     DepthULdsDivisor: 1
@@ -3886,7 +3886,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       Gradient: false
       GroupedGemm: false
@@ -3936,7 +3936,7 @@
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 17
-    SolutionNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_AH_SDV_MT16x32x64_MI16x16x16x1_SN_GRVW8_LPB8_MIWT1_1_NTB3_NEPBS0_PGR2_PLR5_SPO1
+    SolutionNameMin: Cijk_Ailk_Bljk_HSS_Bias_AH_SDV_BH_MT16x32x64_MI16x16x16x1_SN_GRVW8_LPB8_MIWT1_1_NTB3_NEPBS0_PGR2_PLR5_SPO1
     SourceSwap: 0
     StaggerU: 0
     StaggerUMapping: 0
@@ -3994,7 +3994,7 @@
     BufferStore: true
     ClusterLocalRead: 1
     CodeObjectVersion: V3
-    # CustomKernelName: 'Custom_Cijk_Ailk_Bljk_HHS_BH_Bias_AH_SDV_MT16x32x64_MI16x16x16x1_SN_GRVWA8_GRVWB8_GSU5_K1_LBSPPA128_LPA16_LPB8_LRVW4_MIWT1_1_NTA0_NTB3_NEPBS1_SU0_SUS0_WG16_8_1_WGM0'
+    # CustomKernelName: 'Custom_Cijk_Ailk_Bljk_HSS_BH_Bias_AH_SDV_MT16x32x64_MI16x16x16x1_SN_GRVWA8_GRVWB8_GSU5_K1_LBSPPA128_LPA16_LPB8_LRVW4_MIWT1_1_NTA0_NTB3_NEPBS1_SU0_SUS0_WG16_8_1_WGM0'
     CustomKernelName: ''
     DepthU: 64
     DepthULdsDivisor: 1
@@ -4112,7 +4112,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       Gradient: false
       GroupedGemm: false
@@ -4162,7 +4162,7 @@
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 18
-    SolutionNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_AH_SDV_MT16x32x64_MI16x16x16x1_SN_GRVW8_LPB8_MIWT1_1_NTB3_NEPBS1_PGR2_PLR5_SPO1
+    SolutionNameMin: Cijk_Ailk_Bljk_HSS_Bias_AH_SDV_BH_MT16x32x64_MI16x16x16x1_SN_GRVW8_LPB8_MIWT1_1_NTB3_NEPBS1_PGR2_PLR5_SPO1
     SourceSwap: 0
     StaggerU: 0
     StaggerUMapping: 0
@@ -4219,7 +4219,7 @@
     BufferStore: true
     ClusterLocalRead: 1
     CodeObjectVersion: V3
-    # CustomKernelName: 'Custom_Cijk_Ailk_Bljk_HHS_BH_Bias_AH_SDV_MT64x16x64_MI16x16x16x1_SN_GRVWA2_GRVWB2_GSU6_K1_LBSPPA1024_LPA16_LPB16_LRVW8_MIWT1_1_NTA2_NTB0_NEPBS0_SU0_SUS0_WG64_4_1_WGM1'
+    # CustomKernelName: 'Custom_Cijk_Ailk_Bljk_HSS_BH_Bias_AH_SDV_MT64x16x64_MI16x16x16x1_SN_GRVWA2_GRVWB2_GSU6_K1_LBSPPA1024_LPA16_LPB16_LRVW8_MIWT1_1_NTA2_NTB0_NEPBS0_SU0_SUS0_WG64_4_1_WGM1'
     CustomKernelName: ''
     DepthU: 64
     DepthULdsDivisor: 1
@@ -4335,7 +4335,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: false
       HighPrecisionAccumulate: true
@@ -4383,7 +4383,7 @@
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 19
-    SolutionNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_AH_SDV_MT64x16x64_MI16x16x16x1_SN_GRVW2_GSU6_MIWT1_1_SU0_SUS0_SRVW0_SVW4_VW2_WG64_4_1_WGM1
+    SolutionNameMin: Cijk_Ailk_Bljk_HSS_BH_Bias_AH_SDV_MT64x16x64_MI16x16x16x1_SN_GRVW2_GSU6_MIWT1_1_SU0_SUS0_SRVW0_SVW4_VW2_WG64_4_1_WGM1
     SourceSwap: 0
     StaggerU: 0
     StaggerUMapping: 0
@@ -4438,7 +4438,7 @@
     BufferStore: true
     ClusterLocalRead: 1
     CodeObjectVersion: V3
-    # CustomKernelName: 'Custom_Cijk_Ailk_Bljk_HHS_BH_Bias_AH_SDV_MT32x16x64_MI16x16x16x1_SN_GRVWA8_GRVWB8_GSU25_K1_LBSPPA512_LPA16_LPB16_LRVW8_MIWT1_1_NTA2_NTB0_NEPBS0_SU0_SUS0_WG32_4_1_WGM8'
+    # CustomKernelName: 'Custom_Cijk_Ailk_Bljk_HSS_BH_Bias_AH_SDV_MT32x16x64_MI16x16x16x1_SN_GRVWA8_GRVWB8_GSU25_K1_LBSPPA512_LPA16_LPB16_LRVW8_MIWT1_1_NTA2_NTB0_NEPBS0_SU0_SUS0_WG32_4_1_WGM8'
     CustomKernelName: ''
     DepthU: 64
     DepthULdsDivisor: 1
@@ -4554,7 +4554,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: false
       HighPrecisionAccumulate: true
@@ -4602,7 +4602,7 @@
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 20
-    SolutionNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_AH_SDV_MT32x16x64_MI16x16x16x1_SN_GRVW8_GSU25_LPB16_LRVW8_MIWT1_1_PLR5_SU0_SUS0_SVW2_VW8_WG32_4_1_WGM8
+    SolutionNameMin: Cijk_Ailk_Bljk_HSS_BH_Bias_AH_SDV_MT32x16x64_MI16x16x16x1_SN_GRVW8_GSU25_LPB16_LRVW8_MIWT1_1_PLR5_SU0_SUS0_SVW2_VW8_WG32_4_1_WGM8
     SourceSwap: false
     StaggerU: 0
     StaggerUMapping: 0
@@ -4657,7 +4657,7 @@
     BufferStore: true
     ClusterLocalRead: 1
     CodeObjectVersion: V3
-    # CustomKernelName: 'Custom_Cijk_Ailk_Bljk_HHS_BH_Bias_AH_SDV_MT16x16x64_MI16x16x16x1_SN_GRVWA8_GRVWB8_GSU25_K1_LBSPPA256_LPA16_LPB16_LRVW8_MIWT1_1_NTA2_NTB2_NEPBS0_SU0_SUS0_WG16_4_1_WGM1'
+    # CustomKernelName: 'Custom_Cijk_Ailk_Bljk_HSS_BH_Bias_AH_SDV_MT16x16x64_MI16x16x16x1_SN_GRVWA8_GRVWB8_GSU25_K1_LBSPPA256_LPA16_LPB16_LRVW8_MIWT1_1_NTA2_NTB2_NEPBS0_SU0_SUS0_WG16_4_1_WGM1'
     CustomKernelName: ''
     DepthU: 64
     DepthULdsDivisor: 1
@@ -4773,7 +4773,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: false
       HighPrecisionAccumulate: true
@@ -4821,7 +4821,7 @@
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 21
-    SolutionNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_AH_SDV_MT16x16x64_MI16x16x16x1_SN_GRVW8_GSU25_LPB16_LRVW8_MIWT1_1_PLR5_SU0_SUS0_SVW4_VW8_WG16_4_1_WGM1
+    SolutionNameMin: Cijk_Ailk_Bljk_HSS_BH_Bias_AH_SDV_MT16x16x64_MI16x16x16x1_SN_GRVW8_GSU25_LPB16_LRVW8_MIWT1_1_PLR5_SU0_SUS0_SVW4_VW8_WG16_4_1_WGM1
     SourceSwap: false
     StaggerU: 0
     StaggerUMapping: 0
@@ -4991,7 +4991,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: false
       HighPrecisionAccumulate: true
@@ -5039,7 +5039,7 @@
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 22
-    SolutionNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_AH_SDV_MT128x128x32_MI32x32x8x1_SN_1LDSB0_GRVW8_LPB8_LRVW8_MIWT2_2_NEPBS0_NLCA1_PLR5_SS0_SU4_SUS128_SRVW4_SVW4_VW1_WG64_4_1_WGM21
+    SolutionNameMin: Cijk_Ailk_Bljk_HSS_BH_Bias_AH_SDV_MT128x128x32_MI32x32x8x1_SN_1LDSB0_GRVW8_LPB8_LRVW8_MIWT2_2_NEPBS0_NLCA1_PLR5_SS0_SU4_SUS128_SRVW4_SVW4_VW1_WG64_4_1_WGM21
     SourceSwap: 0
     StaggerU: 4
     StaggerUMapping: 0
@@ -5209,7 +5209,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: false
       HighPrecisionAccumulate: true
@@ -5257,7 +5257,7 @@
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 23
-    SolutionNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_AH_SDV_MT128x128x32_MI32x32x8x1_SN_1LDSB0_GRVW8_LPB8_LRVW8_MIWT2_2_NEPBS2_NLCA1_PLR5_SS0_SU4_SUS256_SRVW4_SVW4_VW2_WG64_4_1_WGM15
+    SolutionNameMin: Cijk_Ailk_Bljk_HSS_BH_Bias_AH_SDV_MT128x128x32_MI32x32x8x1_SN_1LDSB0_GRVW8_LPB8_LRVW8_MIWT2_2_NEPBS2_NLCA1_PLR5_SS0_SU4_SUS256_SRVW4_SVW4_VW2_WG64_4_1_WGM15
     SourceSwap: 0
     StaggerU: 4
     StaggerUMapping: 0
@@ -5427,7 +5427,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: false
       HighPrecisionAccumulate: true
@@ -5475,7 +5475,7 @@
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 24
-    SolutionNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_AH_SDV_MT64x16x64_MI16x16x16x1_SN_GRVW8_GSU1_LPB16_LRVW8_MIWT1_1_PLR5_SU0_SUS0_SVW4_VW2_WG64_4_1_WGM1
+    SolutionNameMin: Cijk_Ailk_Bljk_HSS_BH_Bias_AH_SDV_MT64x16x64_MI16x16x16x1_SN_GRVW8_GSU1_LPB16_LRVW8_MIWT1_1_PLR5_SU0_SUS0_SVW4_VW2_WG64_4_1_WGM1
     SourceSwap: false
     StaggerU: 0
     StaggerUMapping: 0
@@ -5645,7 +5645,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: false
       HighPrecisionAccumulate: true
@@ -5693,7 +5693,7 @@
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 25
-    SolutionNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_AH_SDV_MT64x16x64_MI16x16x16x1_SN_GRVW4_GSU1_LPB16_LRVW8_MIWT1_1_PLR5_SU0_SUS0_SVW4_VW8_WG64_4_1_WGM1
+    SolutionNameMin: Cijk_Ailk_Bljk_HSS_BH_Bias_AH_SDV_MT64x16x64_MI16x16x16x1_SN_GRVW4_GSU1_LPB16_LRVW8_MIWT1_1_PLR5_SU0_SUS0_SVW4_VW8_WG64_4_1_WGM1
     SourceSwap: false
     StaggerU: 0
     StaggerUMapping: 0
@@ -5863,7 +5863,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 4
+      DestDataType: 0
       Fp16AltImpl: false
       GroupedGemm: false
       HighPrecisionAccumulate: true
@@ -5911,7 +5911,7 @@
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 26
-    SolutionNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_AH_SDV_MT256x128x32_MI32x32x8x1_SN_1LDSB1_GRVW8_LPB8_LRVW8_MIWT4_2_NEPBS2_NLCA1_PLR5_SS1_SU0_SUS0_SRVW0_SVW4_VW4_WG64_4_1_WGM1
+    SolutionNameMin: Cijk_Ailk_Bljk_HSS_BH_Bias_AH_SDV_MT256x128x32_MI32x32x8x1_SN_1LDSB1_GRVW8_LPB8_LRVW8_MIWT4_2_NEPBS2_NLCA1_PLR5_SS1_SU0_SUS0_SRVW0_SVW4_VW4_WG64_4_1_WGM1
     SourceSwap: 1
     StaggerU: 0
     StaggerUMapping: 0
@@ -5980,7 +5980,7 @@
   - - [16, 1408, 1, 4608, 16, 16, 16, 4608]
     - [18, 4511.86]
   - - [768, 1, 1, 4608, 768, 768, 768, 4608]
-    - [15, 161.154]
+    - [16, 161.154]
   - - [768, 16, 1, 4608, 768, 768, 768, 4608]
     - [16, 2382.32]
   - - [768, 1335, 1, 4608, 768, 768, 768, 4608]
