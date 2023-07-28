@@ -599,7 +599,7 @@ Tests:
 - name: matmul_groupedgemm
   category: pre_checkin
   function:
-    matmul: *hpa_half_precision
+    matmul: *hpa_half_precisions_fp_16_32_dst
   M: [127, 129]
   N: [127, 129]
   K: [127, 129]
