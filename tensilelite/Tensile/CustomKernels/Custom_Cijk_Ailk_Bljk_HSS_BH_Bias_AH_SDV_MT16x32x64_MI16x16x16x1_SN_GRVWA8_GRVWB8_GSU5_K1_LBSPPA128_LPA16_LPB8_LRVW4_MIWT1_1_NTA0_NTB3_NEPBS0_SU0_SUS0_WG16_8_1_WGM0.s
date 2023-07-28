@@ -810,7 +810,109 @@ s_addc_u32 s[sgprSrdDd+1], s[sgprAddressD+1], s[sgprtmp3E]   // add hi to SRD
 
 buffer_store_dwordx4 v[0:3], v4, s[sgprSrdDd:sgprSrdDd+3], 0 offen offset:4*0 // zeroing
 
-buffer_store_dword v[0], v4, s[sgprSrdDd:sgprSrdDd+3], 0 offen offset:4*1 // 
+buffer_store_dwordx4 v[0:3], v4, s[sgprSrdDd:sgprSrdDd+3], 0 offen offset:4*1 // zeroing
+
+buffer_store_dwordx4 v[0:3], v4, s[sgprSrdDd:sgprSrdDd+3], 0 offen offset:4*2 // zeroing
+
+buffer_store_dwordx4 v[0:3], v4, s[sgprSrdDd:sgprSrdDd+3], 0 offen offset:4*3 // zeroing
+
+buffer_store_dwordx4 v[0:3], v4, s[sgprSrdDd:sgprSrdDd+3], 0 offen offset:4*4 // zeroing
+
+buffer_store_dwordx4 v[0:3], v4, s[sgprSrdDd:sgprSrdDd+3], 0 offen offset:4*5 // zeroing
+
+buffer_store_dwordx4 v[0:3], v4, s[sgprSrdDd:sgprSrdDd+3], 0 offen offset:4*6 // zeroing
+
+buffer_store_dwordx4 v[0:3], v4, s[sgprSrdDd:sgprSrdDd+3], 0 offen offset:4*7 // zeroing
+
+buffer_store_dwordx4 v[0:3], v4, s[sgprSrdDd:sgprSrdDd+3], 0 offen offset:4*8 // zeroing
+
+buffer_store_dwordx4 v[0:3], v4, s[sgprSrdDd:sgprSrdDd+3], 0 offen offset:4*9 // zeroing
+
+buffer_store_dwordx4 v[0:3], v4, s[sgprSrdDd:sgprSrdDd+3], 0 offen offset:4*10 // zeroing
+
+buffer_store_dwordx4 v[0:3], v4, s[sgprSrdDd:sgprSrdDd+3], 0 offen offset:4*11 // zeroing
+
+buffer_store_dwordx4 v[0:3], v4, s[sgprSrdDd:sgprSrdDd+3], 0 offen offset:4*12 // zeroing
+
+buffer_store_dwordx4 v[0:3], v4, s[sgprSrdDd:sgprSrdDd+3], 0 offen offset:4*13 // zeroing
+
+buffer_store_dwordx4 v[0:3], v4, s[sgprSrdDd:sgprSrdDd+3], 0 offen offset:4*14 // zeroing
+
+buffer_store_dwordx4 v[0:3], v4, s[sgprSrdDd:sgprSrdDd+3], 0 offen offset:4*15 // zeroing
+
+buffer_store_dwordx4 v[0:3], v4, s[sgprSrdDd:sgprSrdDd+3], 0 offen offset:4*16 // zeroing
+
+buffer_store_dwordx4 v[0:3], v4, s[sgprSrdDd:sgprSrdDd+3], 0 offen offset:4*17 // zeroing
+
+buffer_store_dwordx4 v[0:3], v4, s[sgprSrdDd:sgprSrdDd+3], 0 offen offset:4*18 // zeroing
+
+buffer_store_dwordx4 v[0:3], v4, s[sgprSrdDd:sgprSrdDd+3], 0 offen offset:4*19 // zeroing
+
+buffer_store_dwordx4 v[0:3], v4, s[sgprSrdDd:sgprSrdDd+3], 0 offen offset:4*20 // zeroing
+
+buffer_store_dwordx4 v[0:3], v4, s[sgprSrdDd:sgprSrdDd+3], 0 offen offset:4*21 // zeroing
+
+buffer_store_dwordx4 v[0:3], v4, s[sgprSrdDd:sgprSrdDd+3], 0 offen offset:4*22 // zeroing
+
+buffer_store_dwordx4 v[0:3], v4, s[sgprSrdDd:sgprSrdDd+3], 0 offen offset:4*23 // zeroing
+
+buffer_store_dwordx4 v[0:3], v4, s[sgprSrdDd:sgprSrdDd+3], 0 offen offset:4*24 // zeroing
+
+buffer_store_dwordx4 v[0:3], v4, s[sgprSrdDd:sgprSrdDd+3], 0 offen offset:4*25 // zeroing
+
+buffer_store_dwordx4 v[0:3], v4, s[sgprSrdDd:sgprSrdDd+3], 0 offen offset:4*26 // zeroing
+
+buffer_store_dwordx4 v[0:3], v4, s[sgprSrdDd:sgprSrdDd+3], 0 offen offset:4*27 // zeroing
+
+buffer_store_dwordx4 v[0:3], v4, s[sgprSrdDd:sgprSrdDd+3], 0 offen offset:4*28 // zeroing
+
+buffer_store_dwordx4 v[0:3], v4, s[sgprSrdDd:sgprSrdDd+3], 0 offen offset:4*29 // zeroing
+
+buffer_store_dwordx4 v[0:3], v4, s[sgprSrdDd:sgprSrdDd+3], 0 offen offset:4*30 // zeroing
+
+buffer_store_dwordx4 v[0:3], v4, s[sgprSrdDd:sgprSrdDd+3], 0 offen offset:4*31 // zeroing
+
+buffer_store_dwordx4 v[0:3], v4, s[sgprSrdDd:sgprSrdDd+3], 0 offen offset:4*32 // zeroing
+
+buffer_store_dwordx4 v[0:3], v4, s[sgprSrdDd:sgprSrdDd+3], 0 offen offset:4*33 // zeroing
+
+buffer_store_dwordx4 v[0:3], v4, s[sgprSrdDd:sgprSrdDd+3], 0 offen offset:4*34 // zeroing
+
+buffer_store_dwordx4 v[0:3], v4, s[sgprSrdDd:sgprSrdDd+3], 0 offen offset:4*35 // zeroing
+
+buffer_store_dwordx4 v[0:3], v4, s[sgprSrdDd:sgprSrdDd+3], 0 offen offset:4*36 // zeroing
+
+buffer_store_dwordx4 v[0:3], v4, s[sgprSrdDd:sgprSrdDd+3], 0 offen offset:4*37 // zeroing
+
+buffer_store_dwordx4 v[0:3], v4, s[sgprSrdDd:sgprSrdDd+3], 0 offen offset:4*38 // zeroing
+
+buffer_store_dwordx4 v[0:3], v4, s[sgprSrdDd:sgprSrdDd+3], 0 offen offset:4*39 // zeroing
+
+buffer_store_dwordx4 v[0:3], v4, s[sgprSrdDd:sgprSrdDd+3], 0 offen offset:4*40 // zeroing
+
+buffer_store_dwordx4 v[0:3], v4, s[sgprSrdDd:sgprSrdDd+3], 0 offen offset:4*41 // zeroing
+
+buffer_store_dwordx4 v[0:3], v4, s[sgprSrdDd:sgprSrdDd+3], 0 offen offset:4*42 // zeroing
+
+buffer_store_dwordx4 v[0:3], v4, s[sgprSrdDd:sgprSrdDd+3], 0 offen offset:4*43 // zeroing
+
+buffer_store_dwordx4 v[0:3], v4, s[sgprSrdDd:sgprSrdDd+3], 0 offen offset:4*44 // zeroing
+
+buffer_store_dwordx4 v[0:3], v4, s[sgprSrdDd:sgprSrdDd+3], 0 offen offset:4*45 // zeroing
+
+buffer_store_dwordx4 v[0:3], v4, s[sgprSrdDd:sgprSrdDd+3], 0 offen offset:4*46 // zeroing
+
+buffer_store_dwordx4 v[0:3], v4, s[sgprSrdDd:sgprSrdDd+3], 0 offen offset:4*47 // zeroing
+
+buffer_store_dwordx4 v[0:3], v4, s[sgprSrdDd:sgprSrdDd+3], 0 offen offset:4*48 // zeroing
+
+buffer_store_dwordx4 v[0:3], v4, s[sgprSrdDd:sgprSrdDd+3], 0 offen offset:4*49 // zeroing
+
+buffer_store_dwordx4 v[0:3], v4, s[sgprSrdDd:sgprSrdDd+3], 0 offen offset:4*50 // zeroing
+
+buffer_store_dwordx4 v[0:3], v4, s[sgprSrdDd:sgprSrdDd+3], 0 offen offset:4*51 // zeroing
+
+buffer_store_dwordx2 v[0:1], v4, s[sgprSrdDd:sgprSrdDd+3], 0 offen offset:4*52 // zeroing
 
 s_mov_b32 s[sgprGSUSync] 1
 s_atomic_add s[sgprGSUSync], s[sgprKernArgAddress:sgprKernArgAddress+1], 0x84 glc
@@ -1468,6 +1570,10 @@ s_mov_b32 s[sgprGSUSync] 0x1
 s_mov_b32 s[sgprtmp0E], s[sgprGSUSumIdx]                          //cal synchronizer position
 s_lshl_b32 s[sgprtmp0E], s[sgprtmp0E], 2
 
+v_lshrrev_b32 v0, 6, v[vgprSerial]
+v_readfirstlane_b32 s[sgprtmp1E], v0      // set back to numWorkGroup0
+s_lshl_b32 s[sgprtmp0E], s[sgprtmp0E], s[sgprtmp1E]
+
 s_mul_hi_u32 s[sgprtmp3E], s[sgprStrideDK], 5                   // Scale by Stride
 s_mul_i32 s[sgprtmp2E], s[sgprStrideDK], 5                      // Scale by Stride
 s_lshl_b64 s[sgprtmp2E:sgprtmp2E+1], s[sgprtmp2E:sgprtmp2E+1], 2  // scale by bpe
@@ -1497,8 +1603,8 @@ s_lshl_b64 s[sgprtmp0E:sgprtmp1E], s[sgprtmp0E:sgprtmp1E], 2          // scale b
 s_add_u32 s[sgprSrdD+0], s[sgprSrdD+0], s[sgprtmp0E]                  // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprSrdD+1], s[sgprtmp1E]                 // add hi to SRD
 
-s_waitcnt lgkmcnt(0)
-s_cmp_ge_u32 s[sgprGSUSync], 0x9                // s[sgprGSUSync] == GSU*WaveNum-1 ?
+s_waitcnt 0
+s_cmp_ge_u32 s[sgprGSUSync], 0x4                // s[sgprGSUSync] == GSU*WaveNum-1 ?
 s_cbranch_scc0 label_KernelEnd //label_GW_End_1 //label_AFTERsummary_Edge
 //synchronizer check
 
@@ -1645,6 +1751,10 @@ s_mov_b32 s[sgprGSUSync] 0x1
 s_mov_b32 s[sgprtmp0E], s[sgprGSUSumIdx]                          //cal synchronizer position
 s_lshl_b32 s[sgprtmp0E], s[sgprtmp0E], 2
 
+v_lshrrev_b32 v0, 6, v[vgprSerial]
+v_readfirstlane_b32 s[sgprtmp1E], v0      // set back to numWorkGroup0
+s_lshl_b32 s[sgprtmp0E], s[sgprtmp0E], s[sgprtmp1E]
+
 s_mul_hi_u32 s[sgprtmp3E], s[sgprStrideDK], 5                   // Scale by Stride
 s_mul_i32 s[sgprtmp2E], s[sgprStrideDK], 5                      // Scale by Stride
 s_lshl_b64 s[sgprtmp2E:sgprtmp2E+1], s[sgprtmp2E:sgprtmp2E+1], 2  // scale by bpe
@@ -1674,8 +1784,8 @@ s_lshl_b64 s[sgprtmp0E:sgprtmp1E], s[sgprtmp0E:sgprtmp1E], 2          // scale b
 s_add_u32 s[sgprSrdD+0], s[sgprSrdD+0], s[sgprtmp0E]                  // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprSrdD+1], s[sgprtmp1E]                 // add hi to SRD
 
-s_waitcnt lgkmcnt(0)
-s_cmp_ge_u32 s[sgprGSUSync], 0x9                // s[sgprGSUSync] == GSU*WaveNum-1 ?
+s_waitcnt 0
+s_cmp_ge_u32 s[sgprGSUSync], 0x4                // s[sgprGSUSync] == GSU*WaveNum-1 ?
 s_cbranch_scc0 label_KernelEnd //label_GW_End_1 //label_AFTERsummary_Edge
 //synchronizer check
 
@@ -1826,6 +1936,10 @@ s_mov_b32 s[sgprGSUSync] 0x1
 s_mov_b32 s[sgprtmp0E], s[sgprGSUSumIdx]                          //cal synchronizer position
 s_lshl_b32 s[sgprtmp0E], s[sgprtmp0E], 2
 
+v_lshrrev_b32 v0, 6, v[vgprSerial]
+v_readfirstlane_b32 s[sgprtmp1E], v0      // set back to numWorkGroup0
+s_lshl_b32 s[sgprtmp0E], s[sgprtmp0E], s[sgprtmp1E]
+
 s_mul_hi_u32 s[sgprtmp3E], s[sgprStrideDK], 5                   // Scale by Stride
 s_mul_i32 s[sgprtmp2E], s[sgprStrideDK], 5                      // Scale by Stride
 s_lshl_b64 s[sgprtmp2E:sgprtmp2E+1], s[sgprtmp2E:sgprtmp2E+1], 2  // scale by bpe
@@ -1855,8 +1969,8 @@ s_lshl_b64 s[sgprtmp0E:sgprtmp1E], s[sgprtmp0E:sgprtmp1E], 2          // scale b
 s_add_u32 s[sgprSrdD+0], s[sgprSrdD+0], s[sgprtmp0E]                  // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprSrdD+1], s[sgprtmp1E]                 // add hi to SRD
 
-s_waitcnt lgkmcnt(0)
-s_cmp_ge_u32 s[sgprGSUSync], 0x9                // s[sgprGSUSync] == GSU*WaveNum-1 ?
+s_waitcnt 0
+s_cmp_ge_u32 s[sgprGSUSync], 0x4                // s[sgprGSUSync] == GSU*WaveNum-1 ?
 s_cbranch_scc0 label_KernelEnd //label_GW_End_1 //label_AFTERsummary_Edge
 //synchronizer check
 
@@ -2015,6 +2129,10 @@ s_mov_b32 s[sgprGSUSync] 0x1
 s_mov_b32 s[sgprtmp0E], s[sgprGSUSumIdx]                          //cal synchronizer position
 s_lshl_b32 s[sgprtmp0E], s[sgprtmp0E], 2
 
+v_lshrrev_b32 v0, 6, v[vgprSerial]
+v_readfirstlane_b32 s[sgprtmp1E], v0      // set back to numWorkGroup0
+s_lshl_b32 s[sgprtmp0E], s[sgprtmp0E], s[sgprtmp1E]
+
 s_mul_hi_u32 s[sgprtmp3E], s[sgprStrideDK], 5                   // Scale by Stride
 s_mul_i32 s[sgprtmp2E], s[sgprStrideDK], 5                      // Scale by Stride
 s_lshl_b64 s[sgprtmp2E:sgprtmp2E+1], s[sgprtmp2E:sgprtmp2E+1], 2  // scale by bpe
@@ -2044,8 +2162,8 @@ s_lshl_b64 s[sgprtmp0E:sgprtmp1E], s[sgprtmp0E:sgprtmp1E], 2          // scale b
 s_add_u32 s[sgprSrdD+0], s[sgprSrdD+0], s[sgprtmp0E]                  // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprSrdD+1], s[sgprtmp1E]                 // add hi to SRD
 
-s_waitcnt lgkmcnt(0)
-s_cmp_ge_u32 s[sgprGSUSync], 0x9                // s[sgprGSUSync] == GSU*WaveNum-1 ?
+s_waitcnt 0
+s_cmp_ge_u32 s[sgprGSUSync], 0x4                // s[sgprGSUSync] == GSU*WaveNum-1 ?
 s_cbranch_scc0 label_KernelEnd //label_GW_End_1 //label_AFTERsummary_Edge
 //synchronizer check
 
@@ -2232,6 +2350,10 @@ s_mov_b32 s[sgprGSUSync] 0x1
 s_mov_b32 s[sgprtmp0E], s[sgprGSUSumIdx]                          //cal synchronizer position
 s_lshl_b32 s[sgprtmp0E], s[sgprtmp0E], 2
 
+v_lshrrev_b32 v0, 6, v[vgprSerial]
+v_readfirstlane_b32 s[sgprtmp1E], v0      // set back to numWorkGroup0
+s_lshl_b32 s[sgprtmp0E], s[sgprtmp0E], s[sgprtmp1E]
+
 s_mul_hi_u32 s[sgprtmp3E], s[sgprStrideDK], 5                   // Scale by Stride
 s_mul_i32 s[sgprtmp2E], s[sgprStrideDK], 5                      // Scale by Stride
 s_lshl_b64 s[sgprtmp2E:sgprtmp2E+1], s[sgprtmp2E:sgprtmp2E+1], 2  // scale by bpe
@@ -2261,8 +2383,8 @@ s_lshl_b64 s[sgprtmp0E:sgprtmp1E], s[sgprtmp0E:sgprtmp1E], 2          // scale b
 s_add_u32 s[sgprSrdD+0], s[sgprSrdD+0], s[sgprtmp0E]                  // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprSrdD+1], s[sgprtmp1E]                 // add hi to SRD
 
-s_waitcnt lgkmcnt(0)
-s_cmp_ge_u32 s[sgprGSUSync], 0x9                // s[sgprGSUSync] == GSU*WaveNum-1 ?
+s_waitcnt 0
+s_cmp_ge_u32 s[sgprGSUSync], 0x4                // s[sgprGSUSync] == GSU*WaveNum-1 ?
 s_cbranch_scc0 label_KernelEnd //label_GW_End_1 //label_AFTERsummary_Edge
 //synchronizer check
 
@@ -2421,6 +2543,10 @@ s_mov_b32 s[sgprGSUSync] 0x1
 s_mov_b32 s[sgprtmp0E], s[sgprGSUSumIdx]                          //cal synchronizer position
 s_lshl_b32 s[sgprtmp0E], s[sgprtmp0E], 2
 
+v_lshrrev_b32 v0, 6, v[vgprSerial]
+v_readfirstlane_b32 s[sgprtmp1E], v0      // set back to numWorkGroup0
+s_lshl_b32 s[sgprtmp0E], s[sgprtmp0E], s[sgprtmp1E]
+
 s_mul_hi_u32 s[sgprtmp3E], s[sgprStrideDK], 5                   // Scale by Stride
 s_mul_i32 s[sgprtmp2E], s[sgprStrideDK], 5                      // Scale by Stride
 s_lshl_b64 s[sgprtmp2E:sgprtmp2E+1], s[sgprtmp2E:sgprtmp2E+1], 2  // scale by bpe
@@ -2450,8 +2576,8 @@ s_lshl_b64 s[sgprtmp0E:sgprtmp1E], s[sgprtmp0E:sgprtmp1E], 2          // scale b
 s_add_u32 s[sgprSrdD+0], s[sgprSrdD+0], s[sgprtmp0E]                  // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprSrdD+1], s[sgprtmp1E]                 // add hi to SRD
 
-s_waitcnt lgkmcnt(0)
-s_cmp_ge_u32 s[sgprGSUSync], 0x9                // s[sgprGSUSync] == GSU*WaveNum-1 ?
+s_waitcnt 0
+s_cmp_ge_u32 s[sgprGSUSync], 0x4                // s[sgprGSUSync] == GSU*WaveNum-1 ?
 s_cbranch_scc0 label_KernelEnd //label_GW_End_1 //label_AFTERsummary_Edge
 //synchronizer check
 
@@ -2602,6 +2728,10 @@ s_mov_b32 s[sgprGSUSync] 0x1
 s_mov_b32 s[sgprtmp0E], s[sgprGSUSumIdx]                          //cal synchronizer position
 s_lshl_b32 s[sgprtmp0E], s[sgprtmp0E], 2
 
+v_lshrrev_b32 v0, 6, v[vgprSerial]
+v_readfirstlane_b32 s[sgprtmp1E], v0      // set back to numWorkGroup0
+s_lshl_b32 s[sgprtmp0E], s[sgprtmp0E], s[sgprtmp1E]
+
 s_mul_hi_u32 s[sgprtmp3E], s[sgprStrideDK], 5                   // Scale by Stride
 s_mul_i32 s[sgprtmp2E], s[sgprStrideDK], 5                      // Scale by Stride
 s_lshl_b64 s[sgprtmp2E:sgprtmp2E+1], s[sgprtmp2E:sgprtmp2E+1], 2  // scale by bpe
@@ -2631,8 +2761,8 @@ s_lshl_b64 s[sgprtmp0E:sgprtmp1E], s[sgprtmp0E:sgprtmp1E], 2          // scale b
 s_add_u32 s[sgprSrdD+0], s[sgprSrdD+0], s[sgprtmp0E]                  // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprSrdD+1], s[sgprtmp1E]                 // add hi to SRD
 
-s_waitcnt lgkmcnt(0)
-s_cmp_ge_u32 s[sgprGSUSync], 0x9                // s[sgprGSUSync] == GSU*WaveNum-1 ?
+s_waitcnt 0
+s_cmp_ge_u32 s[sgprGSUSync], 0x4                // s[sgprGSUSync] == GSU*WaveNum-1 ?
 s_cbranch_scc0 label_KernelEnd //label_GW_End_1 //label_AFTERsummary_Edge
 //synchronizer check
 
@@ -2795,6 +2925,10 @@ s_mov_b32 s[sgprGSUSync] 0x1
 s_mov_b32 s[sgprtmp0E], s[sgprGSUSumIdx]                          //cal synchronizer position
 s_lshl_b32 s[sgprtmp0E], s[sgprtmp0E], 2
 
+v_lshrrev_b32 v0, 6, v[vgprSerial]
+v_readfirstlane_b32 s[sgprtmp1E], v0      // set back to numWorkGroup0
+s_lshl_b32 s[sgprtmp0E], s[sgprtmp0E], s[sgprtmp1E]
+
 s_mul_hi_u32 s[sgprtmp3E], s[sgprStrideDK], 5                   // Scale by Stride
 s_mul_i32 s[sgprtmp2E], s[sgprStrideDK], 5                      // Scale by Stride
 s_lshl_b64 s[sgprtmp2E:sgprtmp2E+1], s[sgprtmp2E:sgprtmp2E+1], 2  // scale by bpe
@@ -2824,8 +2958,8 @@ s_lshl_b64 s[sgprtmp0E:sgprtmp1E], s[sgprtmp0E:sgprtmp1E], 2          // scale b
 s_add_u32 s[sgprSrdD+0], s[sgprSrdD+0], s[sgprtmp0E]                  // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprSrdD+1], s[sgprtmp1E]                 // add hi to SRD
 
-s_waitcnt lgkmcnt(0)
-s_cmp_ge_u32 s[sgprGSUSync], 0x9                // s[sgprGSUSync] == GSU*WaveNum-1 ?
+s_waitcnt 0
+s_cmp_ge_u32 s[sgprGSUSync], 0x4                // s[sgprGSUSync] == GSU*WaveNum-1 ?
 s_cbranch_scc0 label_KernelEnd //label_GW_End_1 //label_AFTERsummary_Edge
 //synchronizer check
 
@@ -3431,6 +3565,10 @@ s_mov_b32 s[sgprGSUSync] 0x1
 s_mov_b32 s[sgprtmp0E], s[sgprGSUSumIdx]                          //cal synchronizer position
 s_lshl_b32 s[sgprtmp0E], s[sgprtmp0E], 2
 
+v_lshrrev_b32 v0, 6, v[vgprSerial]
+v_readfirstlane_b32 s[sgprtmp1E], v0      // set back to numWorkGroup0
+s_lshl_b32 s[sgprtmp0E], s[sgprtmp0E], s[sgprtmp1E]
+
 s_mul_hi_u32 s[sgprtmp3E], s[sgprStrideDK], 5                   // Scale by Stride
 s_mul_i32 s[sgprtmp2E], s[sgprStrideDK], 5                      // Scale by Stride
 s_lshl_b64 s[sgprtmp2E:sgprtmp2E+1], s[sgprtmp2E:sgprtmp2E+1], 2  // scale by bpe
@@ -3460,8 +3598,8 @@ s_lshl_b64 s[sgprtmp0E:sgprtmp1E], s[sgprtmp0E:sgprtmp1E], 2          // scale b
 s_add_u32 s[sgprSrdD+0], s[sgprSrdD+0], s[sgprtmp0E]                  // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprSrdD+1], s[sgprtmp1E]                 // add hi to SRD
 
-s_waitcnt lgkmcnt(0)
-s_cmp_ge_u32 s[sgprGSUSync], 0x9                // s[sgprGSUSync] == GSU*WaveNum-1 ?
+s_waitcnt 0
+s_cmp_ge_u32 s[sgprGSUSync], 0x4                // s[sgprGSUSync] == GSU*WaveNum-1 ?
 s_cbranch_scc0 label_KernelEnd //label_GW_End_1 //label_AFTERsummary_Edge
 //synchronizer check
 
@@ -3614,6 +3752,10 @@ s_mov_b32 s[sgprGSUSync] 0x1
 s_mov_b32 s[sgprtmp0E], s[sgprGSUSumIdx]                          //cal synchronizer position
 s_lshl_b32 s[sgprtmp0E], s[sgprtmp0E], 2
 
+v_lshrrev_b32 v0, 6, v[vgprSerial]
+v_readfirstlane_b32 s[sgprtmp1E], v0      // set back to numWorkGroup0
+s_lshl_b32 s[sgprtmp0E], s[sgprtmp0E], s[sgprtmp1E]
+
 s_mul_hi_u32 s[sgprtmp3E], s[sgprStrideDK], 5                   // Scale by Stride
 s_mul_i32 s[sgprtmp2E], s[sgprStrideDK], 5                      // Scale by Stride
 s_lshl_b64 s[sgprtmp2E:sgprtmp2E+1], s[sgprtmp2E:sgprtmp2E+1], 2  // scale by bpe
@@ -3643,8 +3785,8 @@ s_lshl_b64 s[sgprtmp0E:sgprtmp1E], s[sgprtmp0E:sgprtmp1E], 2          // scale b
 s_add_u32 s[sgprSrdD+0], s[sgprSrdD+0], s[sgprtmp0E]                  // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprSrdD+1], s[sgprtmp1E]                 // add hi to SRD
 
-s_waitcnt lgkmcnt(0)
-s_cmp_ge_u32 s[sgprGSUSync], 0x9                // s[sgprGSUSync] == GSU*WaveNum-1 ?
+s_waitcnt 0
+s_cmp_ge_u32 s[sgprGSUSync], 0x4                // s[sgprGSUSync] == GSU*WaveNum-1 ?
 s_cbranch_scc0 label_KernelEnd //label_GW_End_1 //label_AFTERsummary_Edge
 //synchronizer check
 
@@ -3801,6 +3943,10 @@ s_mov_b32 s[sgprGSUSync] 0x1
 s_mov_b32 s[sgprtmp0E], s[sgprGSUSumIdx]                          //cal synchronizer position
 s_lshl_b32 s[sgprtmp0E], s[sgprtmp0E], 2
 
+v_lshrrev_b32 v0, 6, v[vgprSerial]
+v_readfirstlane_b32 s[sgprtmp1E], v0      // set back to numWorkGroup0
+s_lshl_b32 s[sgprtmp0E], s[sgprtmp0E], s[sgprtmp1E]
+
 s_mul_hi_u32 s[sgprtmp3E], s[sgprStrideDK], 5                   // Scale by Stride
 s_mul_i32 s[sgprtmp2E], s[sgprStrideDK], 5                      // Scale by Stride
 s_lshl_b64 s[sgprtmp2E:sgprtmp2E+1], s[sgprtmp2E:sgprtmp2E+1], 2  // scale by bpe
@@ -3830,8 +3976,8 @@ s_lshl_b64 s[sgprtmp0E:sgprtmp1E], s[sgprtmp0E:sgprtmp1E], 2          // scale b
 s_add_u32 s[sgprSrdD+0], s[sgprSrdD+0], s[sgprtmp0E]                  // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprSrdD+1], s[sgprtmp1E]                 // add hi to SRD
 
-s_waitcnt lgkmcnt(0)
-s_cmp_ge_u32 s[sgprGSUSync], 0x9                // s[sgprGSUSync] == GSU*WaveNum-1 ?
+s_waitcnt 0
+s_cmp_ge_u32 s[sgprGSUSync], 0x4                // s[sgprGSUSync] == GSU*WaveNum-1 ?
 s_cbranch_scc0 label_KernelEnd //label_GW_End_1 //label_AFTERsummary_Edge
 //synchronizer check
 
@@ -3996,6 +4142,10 @@ s_mov_b32 s[sgprGSUSync] 0x1
 s_mov_b32 s[sgprtmp0E], s[sgprGSUSumIdx]                          //cal synchronizer position
 s_lshl_b32 s[sgprtmp0E], s[sgprtmp0E], 2
 
+v_lshrrev_b32 v0, 6, v[vgprSerial]
+v_readfirstlane_b32 s[sgprtmp1E], v0      // set back to numWorkGroup0
+s_lshl_b32 s[sgprtmp0E], s[sgprtmp0E], s[sgprtmp1E]
+
 s_mul_hi_u32 s[sgprtmp3E], s[sgprStrideDK], 5                   // Scale by Stride
 s_mul_i32 s[sgprtmp2E], s[sgprStrideDK], 5                      // Scale by Stride
 s_lshl_b64 s[sgprtmp2E:sgprtmp2E+1], s[sgprtmp2E:sgprtmp2E+1], 2  // scale by bpe
@@ -4025,8 +4175,8 @@ s_lshl_b64 s[sgprtmp0E:sgprtmp1E], s[sgprtmp0E:sgprtmp1E], 2          // scale b
 s_add_u32 s[sgprSrdD+0], s[sgprSrdD+0], s[sgprtmp0E]                  // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprSrdD+1], s[sgprtmp1E]                 // add hi to SRD
 
-s_waitcnt lgkmcnt(0)
-s_cmp_ge_u32 s[sgprGSUSync], 0x9                // s[sgprGSUSync] == GSU*WaveNum-1 ?
+s_waitcnt 0
+s_cmp_ge_u32 s[sgprGSUSync], 0x4                // s[sgprGSUSync] == GSU*WaveNum-1 ?
 s_cbranch_scc0 label_KernelEnd //label_GW_End_1 //label_AFTERsummary_Edge
 //synchronizer check
 
@@ -4219,6 +4369,10 @@ s_mov_b32 s[sgprGSUSync] 0x1
 s_mov_b32 s[sgprtmp0E], s[sgprGSUSumIdx]                          //cal synchronizer position
 s_lshl_b32 s[sgprtmp0E], s[sgprtmp0E], 2
 
+v_lshrrev_b32 v0, 6, v[vgprSerial]
+v_readfirstlane_b32 s[sgprtmp1E], v0      // set back to numWorkGroup0
+s_lshl_b32 s[sgprtmp0E], s[sgprtmp0E], s[sgprtmp1E]
+
 s_mul_hi_u32 s[sgprtmp3E], s[sgprStrideDK], 5                   // Scale by Stride
 s_mul_i32 s[sgprtmp2E], s[sgprStrideDK], 5                      // Scale by Stride
 s_lshl_b64 s[sgprtmp2E:sgprtmp2E+1], s[sgprtmp2E:sgprtmp2E+1], 2  // scale by bpe
@@ -4248,8 +4402,8 @@ s_lshl_b64 s[sgprtmp0E:sgprtmp1E], s[sgprtmp0E:sgprtmp1E], 2          // scale b
 s_add_u32 s[sgprSrdD+0], s[sgprSrdD+0], s[sgprtmp0E]                  // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprSrdD+1], s[sgprtmp1E]                 // add hi to SRD
 
-s_waitcnt lgkmcnt(0)
-s_cmp_ge_u32 s[sgprGSUSync], 0x9                // s[sgprGSUSync] == GSU*WaveNum-1 ?
+s_waitcnt 0
+s_cmp_ge_u32 s[sgprGSUSync], 0x4                // s[sgprGSUSync] == GSU*WaveNum-1 ?
 s_cbranch_scc0 label_KernelEnd //label_GW_End_1 //label_AFTERsummary_Edge
 //synchronizer check
 
@@ -4414,6 +4568,10 @@ s_mov_b32 s[sgprGSUSync] 0x1
 s_mov_b32 s[sgprtmp0E], s[sgprGSUSumIdx]                          //cal synchronizer position
 s_lshl_b32 s[sgprtmp0E], s[sgprtmp0E], 2
 
+v_lshrrev_b32 v0, 6, v[vgprSerial]
+v_readfirstlane_b32 s[sgprtmp1E], v0      // set back to numWorkGroup0
+s_lshl_b32 s[sgprtmp0E], s[sgprtmp0E], s[sgprtmp1E]
+
 s_mul_hi_u32 s[sgprtmp3E], s[sgprStrideDK], 5                   // Scale by Stride
 s_mul_i32 s[sgprtmp2E], s[sgprStrideDK], 5                      // Scale by Stride
 s_lshl_b64 s[sgprtmp2E:sgprtmp2E+1], s[sgprtmp2E:sgprtmp2E+1], 2  // scale by bpe
@@ -4443,8 +4601,8 @@ s_lshl_b64 s[sgprtmp0E:sgprtmp1E], s[sgprtmp0E:sgprtmp1E], 2          // scale b
 s_add_u32 s[sgprSrdD+0], s[sgprSrdD+0], s[sgprtmp0E]                  // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprSrdD+1], s[sgprtmp1E]                 // add hi to SRD
 
-s_waitcnt lgkmcnt(0)
-s_cmp_ge_u32 s[sgprGSUSync], 0x9                // s[sgprGSUSync] == GSU*WaveNum-1 ?
+s_waitcnt 0
+s_cmp_ge_u32 s[sgprGSUSync], 0x4                // s[sgprGSUSync] == GSU*WaveNum-1 ?
 s_cbranch_scc0 label_KernelEnd //label_GW_End_1 //label_AFTERsummary_Edge
 //synchronizer check
 
@@ -4601,6 +4759,10 @@ s_mov_b32 s[sgprGSUSync] 0x1
 s_mov_b32 s[sgprtmp0E], s[sgprGSUSumIdx]                          //cal synchronizer position
 s_lshl_b32 s[sgprtmp0E], s[sgprtmp0E], 2
 
+v_lshrrev_b32 v0, 6, v[vgprSerial]
+v_readfirstlane_b32 s[sgprtmp1E], v0      // set back to numWorkGroup0
+s_lshl_b32 s[sgprtmp0E], s[sgprtmp0E], s[sgprtmp1E]
+
 s_mul_hi_u32 s[sgprtmp3E], s[sgprStrideDK], 5                   // Scale by Stride
 s_mul_i32 s[sgprtmp2E], s[sgprStrideDK], 5                      // Scale by Stride
 s_lshl_b64 s[sgprtmp2E:sgprtmp2E+1], s[sgprtmp2E:sgprtmp2E+1], 2  // scale by bpe
@@ -4630,8 +4792,8 @@ s_lshl_b64 s[sgprtmp0E:sgprtmp1E], s[sgprtmp0E:sgprtmp1E], 2          // scale b
 s_add_u32 s[sgprSrdD+0], s[sgprSrdD+0], s[sgprtmp0E]                  // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprSrdD+1], s[sgprtmp1E]                 // add hi to SRD
 
-s_waitcnt lgkmcnt(0)
-s_cmp_ge_u32 s[sgprGSUSync], 0x9                // s[sgprGSUSync] == GSU*WaveNum-1 ?
+s_waitcnt 0
+s_cmp_ge_u32 s[sgprGSUSync], 0x4                // s[sgprGSUSync] == GSU*WaveNum-1 ?
 s_cbranch_scc0 label_KernelEnd //label_GW_End_1 //label_AFTERsummary_Edge
 //synchronizer check
 
@@ -4800,6 +4962,10 @@ s_mov_b32 s[sgprGSUSync] 0x1
 s_mov_b32 s[sgprtmp0E], s[sgprGSUSumIdx]                          //cal synchronizer position
 s_lshl_b32 s[sgprtmp0E], s[sgprtmp0E], 2
 
+v_lshrrev_b32 v0, 6, v[vgprSerial]
+v_readfirstlane_b32 s[sgprtmp1E], v0      // set back to numWorkGroup0
+s_lshl_b32 s[sgprtmp0E], s[sgprtmp0E], s[sgprtmp1E]
+
 s_mul_hi_u32 s[sgprtmp3E], s[sgprStrideDK], 5                   // Scale by Stride
 s_mul_i32 s[sgprtmp2E], s[sgprStrideDK], 5                      // Scale by Stride
 s_lshl_b64 s[sgprtmp2E:sgprtmp2E+1], s[sgprtmp2E:sgprtmp2E+1], 2  // scale by bpe
@@ -4829,8 +4995,8 @@ s_lshl_b64 s[sgprtmp0E:sgprtmp1E], s[sgprtmp0E:sgprtmp1E], 2          // scale b
 s_add_u32 s[sgprSrdD+0], s[sgprSrdD+0], s[sgprtmp0E]                  // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprSrdD+1], s[sgprtmp1E]                 // add hi to SRD
 
-s_waitcnt lgkmcnt(0)
-s_cmp_ge_u32 s[sgprGSUSync], 0x9                // s[sgprGSUSync] == GSU*WaveNum-1 ?
+s_waitcnt 0
+s_cmp_ge_u32 s[sgprGSUSync], 0x4                // s[sgprGSUSync] == GSU*WaveNum-1 ?
 s_cbranch_scc0 label_KernelEnd //label_GW_End_1 //label_AFTERsummary_Edge
 //synchronizer check
 
@@ -5036,6 +5202,10 @@ s_mov_b32 s[sgprGSUSync] 0x1
 s_mov_b32 s[sgprtmp0E], s[sgprGSUSumIdx]                          //cal synchronizer position
 s_lshl_b32 s[sgprtmp0E], s[sgprtmp0E], 2
 
+v_lshrrev_b32 v0, 6, v[vgprSerial]
+v_readfirstlane_b32 s[sgprtmp1E], v0      // set back to numWorkGroup0
+s_lshl_b32 s[sgprtmp0E], s[sgprtmp0E], s[sgprtmp1E]
+
 s_mul_hi_u32 s[sgprtmp3E], s[sgprStrideDK], 5                   // Scale by Stride
 s_mul_i32 s[sgprtmp2E], s[sgprStrideDK], 5                      // Scale by Stride
 s_lshl_b64 s[sgprtmp2E:sgprtmp2E+1], s[sgprtmp2E:sgprtmp2E+1], 2  // scale by bpe
@@ -5065,8 +5235,8 @@ s_lshl_b64 s[sgprtmp0E:sgprtmp1E], s[sgprtmp0E:sgprtmp1E], 2          // scale b
 s_add_u32 s[sgprSrdD+0], s[sgprSrdD+0], s[sgprtmp0E]                  // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprSrdD+1], s[sgprtmp1E]                 // add hi to SRD
 
-s_waitcnt lgkmcnt(0)
-s_cmp_ge_u32 s[sgprGSUSync], 0x9                // s[sgprGSUSync] == GSU*WaveNum-1 ?
+s_waitcnt 0
+s_cmp_ge_u32 s[sgprGSUSync], 0x4                // s[sgprGSUSync] == GSU*WaveNum-1 ?
 s_cbranch_scc0 label_KernelEnd //label_GW_End_1 //label_AFTERsummary_Edge
 //synchronizer check
 
@@ -5222,6 +5392,10 @@ s_mov_b32 s[sgprGSUSync] 0x1
 s_mov_b32 s[sgprtmp0E], s[sgprGSUSumIdx]                          //cal synchronizer position
 s_lshl_b32 s[sgprtmp0E], s[sgprtmp0E], 2
 
+v_lshrrev_b32 v0, 6, v[vgprSerial]
+v_readfirstlane_b32 s[sgprtmp1E], v0      // set back to numWorkGroup0
+s_lshl_b32 s[sgprtmp0E], s[sgprtmp0E], s[sgprtmp1E]
+
 s_mul_hi_u32 s[sgprtmp3E], s[sgprStrideDK], 5                   // Scale by Stride
 s_mul_i32 s[sgprtmp2E], s[sgprStrideDK], 5                      // Scale by Stride
 s_lshl_b64 s[sgprtmp2E:sgprtmp2E+1], s[sgprtmp2E:sgprtmp2E+1], 2  // scale by bpe
@@ -5251,8 +5425,8 @@ s_lshl_b64 s[sgprtmp0E:sgprtmp1E], s[sgprtmp0E:sgprtmp1E], 2          // scale b
 s_add_u32 s[sgprSrdD+0], s[sgprSrdD+0], s[sgprtmp0E]                  // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprSrdD+1], s[sgprtmp1E]                 // add hi to SRD
 
-s_waitcnt lgkmcnt(0)
-s_cmp_ge_u32 s[sgprGSUSync], 0x9                // s[sgprGSUSync] == GSU*WaveNum-1 ?
+s_waitcnt 0
+s_cmp_ge_u32 s[sgprGSUSync], 0x4                // s[sgprGSUSync] == GSU*WaveNum-1 ?
 s_cbranch_scc0 label_KernelEnd //label_GW_End_1 //label_AFTERsummary_Edge
 //synchronizer check
 
@@ -5412,6 +5586,10 @@ s_mov_b32 s[sgprGSUSync] 0x1
 s_mov_b32 s[sgprtmp0E], s[sgprGSUSumIdx]                          //cal synchronizer position
 s_lshl_b32 s[sgprtmp0E], s[sgprtmp0E], 2
 
+v_lshrrev_b32 v0, 6, v[vgprSerial]
+v_readfirstlane_b32 s[sgprtmp1E], v0      // set back to numWorkGroup0
+s_lshl_b32 s[sgprtmp0E], s[sgprtmp0E], s[sgprtmp1E]
+
 s_mul_hi_u32 s[sgprtmp3E], s[sgprStrideDK], 5                   // Scale by Stride
 s_mul_i32 s[sgprtmp2E], s[sgprStrideDK], 5                      // Scale by Stride
 s_lshl_b64 s[sgprtmp2E:sgprtmp2E+1], s[sgprtmp2E:sgprtmp2E+1], 2  // scale by bpe
@@ -5441,8 +5619,8 @@ s_lshl_b64 s[sgprtmp0E:sgprtmp1E], s[sgprtmp0E:sgprtmp1E], 2          // scale b
 s_add_u32 s[sgprSrdD+0], s[sgprSrdD+0], s[sgprtmp0E]                  // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprSrdD+1], s[sgprtmp1E]                 // add hi to SRD
 
-s_waitcnt lgkmcnt(0)
-s_cmp_ge_u32 s[sgprGSUSync], 0x9                // s[sgprGSUSync] == GSU*WaveNum-1 ?
+s_waitcnt 0
+s_cmp_ge_u32 s[sgprGSUSync], 0x4                // s[sgprGSUSync] == GSU*WaveNum-1 ?
 s_cbranch_scc0 label_KernelEnd //label_GW_End_1 //label_AFTERsummary_Edge
 //synchronizer check
 
@@ -5610,6 +5788,10 @@ s_mov_b32 s[sgprGSUSync] 0x1
 s_mov_b32 s[sgprtmp0E], s[sgprGSUSumIdx]                          //cal synchronizer position
 s_lshl_b32 s[sgprtmp0E], s[sgprtmp0E], 2
 
+v_lshrrev_b32 v0, 6, v[vgprSerial]
+v_readfirstlane_b32 s[sgprtmp1E], v0      // set back to numWorkGroup0
+s_lshl_b32 s[sgprtmp0E], s[sgprtmp0E], s[sgprtmp1E]
+
 s_mul_hi_u32 s[sgprtmp3E], s[sgprStrideDK], 5                   // Scale by Stride
 s_mul_i32 s[sgprtmp2E], s[sgprStrideDK], 5                      // Scale by Stride
 s_lshl_b64 s[sgprtmp2E:sgprtmp2E+1], s[sgprtmp2E:sgprtmp2E+1], 2  // scale by bpe
@@ -5639,8 +5821,8 @@ s_lshl_b64 s[sgprtmp0E:sgprtmp1E], s[sgprtmp0E:sgprtmp1E], 2          // scale b
 s_add_u32 s[sgprSrdD+0], s[sgprSrdD+0], s[sgprtmp0E]                  // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprSrdD+1], s[sgprtmp1E]                 // add hi to SRD
 
-s_waitcnt lgkmcnt(0)
-s_cmp_ge_u32 s[sgprGSUSync], 0x9                // s[sgprGSUSync] == GSU*WaveNum-1 ?
+s_waitcnt 0
+s_cmp_ge_u32 s[sgprGSUSync], 0x4                // s[sgprGSUSync] == GSU*WaveNum-1 ?
 s_cbranch_scc0 label_KernelEnd //label_GW_End_1 //label_AFTERsummary_Edge
 //synchronizer check
 
@@ -5836,6 +6018,10 @@ s_mov_b32 s[sgprGSUSync] 0x1
 s_mov_b32 s[sgprtmp0E], s[sgprGSUSumIdx]                          //cal synchronizer position
 s_lshl_b32 s[sgprtmp0E], s[sgprtmp0E], 2
 
+v_lshrrev_b32 v0, 6, v[vgprSerial]
+v_readfirstlane_b32 s[sgprtmp1E], v0      // set back to numWorkGroup0
+s_lshl_b32 s[sgprtmp0E], s[sgprtmp0E], s[sgprtmp1E]
+
 s_mul_hi_u32 s[sgprtmp3E], s[sgprStrideDK], 5                   // Scale by Stride
 s_mul_i32 s[sgprtmp2E], s[sgprStrideDK], 5                      // Scale by Stride
 s_lshl_b64 s[sgprtmp2E:sgprtmp2E+1], s[sgprtmp2E:sgprtmp2E+1], 2  // scale by bpe
@@ -5865,8 +6051,8 @@ s_lshl_b64 s[sgprtmp0E:sgprtmp1E], s[sgprtmp0E:sgprtmp1E], 2          // scale b
 s_add_u32 s[sgprSrdD+0], s[sgprSrdD+0], s[sgprtmp0E]                  // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprSrdD+1], s[sgprtmp1E]                 // add hi to SRD
 
-s_waitcnt lgkmcnt(0)
-s_cmp_ge_u32 s[sgprGSUSync], 0x9                // s[sgprGSUSync] == GSU*WaveNum-1 ?
+s_waitcnt 0
+s_cmp_ge_u32 s[sgprGSUSync], 0x4                // s[sgprGSUSync] == GSU*WaveNum-1 ?
 s_cbranch_scc0 label_KernelEnd //label_GW_End_1 //label_AFTERsummary_Edge
 //synchronizer check
 
@@ -6034,6 +6220,10 @@ s_mov_b32 s[sgprGSUSync] 0x1
 s_mov_b32 s[sgprtmp0E], s[sgprGSUSumIdx]                          //cal synchronizer position
 s_lshl_b32 s[sgprtmp0E], s[sgprtmp0E], 2
 
+v_lshrrev_b32 v0, 6, v[vgprSerial]
+v_readfirstlane_b32 s[sgprtmp1E], v0      // set back to numWorkGroup0
+s_lshl_b32 s[sgprtmp0E], s[sgprtmp0E], s[sgprtmp1E]
+
 s_mul_hi_u32 s[sgprtmp3E], s[sgprStrideDK], 5                   // Scale by Stride
 s_mul_i32 s[sgprtmp2E], s[sgprStrideDK], 5                      // Scale by Stride
 s_lshl_b64 s[sgprtmp2E:sgprtmp2E+1], s[sgprtmp2E:sgprtmp2E+1], 2  // scale by bpe
@@ -6063,8 +6253,8 @@ s_lshl_b64 s[sgprtmp0E:sgprtmp1E], s[sgprtmp0E:sgprtmp1E], 2          // scale b
 s_add_u32 s[sgprSrdD+0], s[sgprSrdD+0], s[sgprtmp0E]                  // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprSrdD+1], s[sgprtmp1E]                 // add hi to SRD
 
-s_waitcnt lgkmcnt(0)
-s_cmp_ge_u32 s[sgprGSUSync], 0x9                // s[sgprGSUSync] == GSU*WaveNum-1 ?
+s_waitcnt 0
+s_cmp_ge_u32 s[sgprGSUSync], 0x4                // s[sgprGSUSync] == GSU*WaveNum-1 ?
 s_cbranch_scc0 label_KernelEnd //label_GW_End_1 //label_AFTERsummary_Edge
 //synchronizer check
 
@@ -6224,6 +6414,10 @@ s_mov_b32 s[sgprGSUSync] 0x1
 s_mov_b32 s[sgprtmp0E], s[sgprGSUSumIdx]                          //cal synchronizer position
 s_lshl_b32 s[sgprtmp0E], s[sgprtmp0E], 2
 
+v_lshrrev_b32 v0, 6, v[vgprSerial]
+v_readfirstlane_b32 s[sgprtmp1E], v0      // set back to numWorkGroup0
+s_lshl_b32 s[sgprtmp0E], s[sgprtmp0E], s[sgprtmp1E]
+
 s_mul_hi_u32 s[sgprtmp3E], s[sgprStrideDK], 5                   // Scale by Stride
 s_mul_i32 s[sgprtmp2E], s[sgprStrideDK], 5                      // Scale by Stride
 s_lshl_b64 s[sgprtmp2E:sgprtmp2E+1], s[sgprtmp2E:sgprtmp2E+1], 2  // scale by bpe
@@ -6253,8 +6447,8 @@ s_lshl_b64 s[sgprtmp0E:sgprtmp1E], s[sgprtmp0E:sgprtmp1E], 2          // scale b
 s_add_u32 s[sgprSrdD+0], s[sgprSrdD+0], s[sgprtmp0E]                  // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprSrdD+1], s[sgprtmp1E]                 // add hi to SRD
 
-s_waitcnt lgkmcnt(0)
-s_cmp_ge_u32 s[sgprGSUSync], 0x9                // s[sgprGSUSync] == GSU*WaveNum-1 ?
+s_waitcnt 0
+s_cmp_ge_u32 s[sgprGSUSync], 0x4                // s[sgprGSUSync] == GSU*WaveNum-1 ?
 s_cbranch_scc0 label_KernelEnd //label_GW_End_1 //label_AFTERsummary_Edge
 //synchronizer check
 
@@ -6426,6 +6620,10 @@ s_mov_b32 s[sgprGSUSync] 0x1
 s_mov_b32 s[sgprtmp0E], s[sgprGSUSumIdx]                          //cal synchronizer position
 s_lshl_b32 s[sgprtmp0E], s[sgprtmp0E], 2
 
+v_lshrrev_b32 v0, 6, v[vgprSerial]
+v_readfirstlane_b32 s[sgprtmp1E], v0      // set back to numWorkGroup0
+s_lshl_b32 s[sgprtmp0E], s[sgprtmp0E], s[sgprtmp1E]
+
 s_mul_hi_u32 s[sgprtmp3E], s[sgprStrideDK], 5                   // Scale by Stride
 s_mul_i32 s[sgprtmp2E], s[sgprStrideDK], 5                      // Scale by Stride
 s_lshl_b64 s[sgprtmp2E:sgprtmp2E+1], s[sgprtmp2E:sgprtmp2E+1], 2  // scale by bpe
@@ -6455,8 +6653,8 @@ s_lshl_b64 s[sgprtmp0E:sgprtmp1E], s[sgprtmp0E:sgprtmp1E], 2          // scale b
 s_add_u32 s[sgprSrdD+0], s[sgprSrdD+0], s[sgprtmp0E]                  // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprSrdD+1], s[sgprtmp1E]                 // add hi to SRD
 
-s_waitcnt lgkmcnt(0)
-s_cmp_ge_u32 s[sgprGSUSync], 0x9                // s[sgprGSUSync] == GSU*WaveNum-1 ?
+s_waitcnt 0
+s_cmp_ge_u32 s[sgprGSUSync], 0x4                // s[sgprGSUSync] == GSU*WaveNum-1 ?
 s_cbranch_scc0 label_KernelEnd //label_GW_End_1 //label_AFTERsummary_Edge
 //synchronizer check
 
@@ -6672,6 +6870,10 @@ s_mov_b32 s[sgprGSUSync] 0x1
 s_mov_b32 s[sgprtmp0E], s[sgprGSUSumIdx]                          //cal synchronizer position
 s_lshl_b32 s[sgprtmp0E], s[sgprtmp0E], 2
 
+v_lshrrev_b32 v0, 6, v[vgprSerial]
+v_readfirstlane_b32 s[sgprtmp1E], v0      // set back to numWorkGroup0
+s_lshl_b32 s[sgprtmp0E], s[sgprtmp0E], s[sgprtmp1E]
+
 s_mul_hi_u32 s[sgprtmp3E], s[sgprStrideDK], 5                   // Scale by Stride
 s_mul_i32 s[sgprtmp2E], s[sgprStrideDK], 5                      // Scale by Stride
 s_lshl_b64 s[sgprtmp2E:sgprtmp2E+1], s[sgprtmp2E:sgprtmp2E+1], 2  // scale by bpe
@@ -6701,8 +6903,8 @@ s_lshl_b64 s[sgprtmp0E:sgprtmp1E], s[sgprtmp0E:sgprtmp1E], 2          // scale b
 s_add_u32 s[sgprSrdD+0], s[sgprSrdD+0], s[sgprtmp0E]                  // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprSrdD+1], s[sgprtmp1E]                 // add hi to SRD
 
-s_waitcnt lgkmcnt(0)
-s_cmp_ge_u32 s[sgprGSUSync], 0x9                // s[sgprGSUSync] == GSU*WaveNum-1 ?
+s_waitcnt 0
+s_cmp_ge_u32 s[sgprGSUSync], 0x4                // s[sgprGSUSync] == GSU*WaveNum-1 ?
 s_cbranch_scc0 label_KernelEnd //label_GW_End_1 //label_AFTERsummary_Edge
 //synchronizer check
 
@@ -6863,6 +7065,10 @@ s_mov_b32 s[sgprGSUSync] 0x1
 s_mov_b32 s[sgprtmp0E], s[sgprGSUSumIdx]                          //cal synchronizer position
 s_lshl_b32 s[sgprtmp0E], s[sgprtmp0E], 2
 
+v_lshrrev_b32 v0, 6, v[vgprSerial]
+v_readfirstlane_b32 s[sgprtmp1E], v0      // set back to numWorkGroup0
+s_lshl_b32 s[sgprtmp0E], s[sgprtmp0E], s[sgprtmp1E]
+
 s_mul_hi_u32 s[sgprtmp3E], s[sgprStrideDK], 5                   // Scale by Stride
 s_mul_i32 s[sgprtmp2E], s[sgprStrideDK], 5                      // Scale by Stride
 s_lshl_b64 s[sgprtmp2E:sgprtmp2E+1], s[sgprtmp2E:sgprtmp2E+1], 2  // scale by bpe
@@ -6892,8 +7098,8 @@ s_lshl_b64 s[sgprtmp0E:sgprtmp1E], s[sgprtmp0E:sgprtmp1E], 2          // scale b
 s_add_u32 s[sgprSrdD+0], s[sgprSrdD+0], s[sgprtmp0E]                  // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprSrdD+1], s[sgprtmp1E]                 // add hi to SRD
 
-s_waitcnt lgkmcnt(0)
-s_cmp_ge_u32 s[sgprGSUSync], 0x9                // s[sgprGSUSync] == GSU*WaveNum-1 ?
+s_waitcnt 0
+s_cmp_ge_u32 s[sgprGSUSync], 0x4                // s[sgprGSUSync] == GSU*WaveNum-1 ?
 s_cbranch_scc0 label_KernelEnd //label_GW_End_1 //label_AFTERsummary_Edge
 //synchronizer check
 
@@ -7058,6 +7264,10 @@ s_mov_b32 s[sgprGSUSync] 0x1
 s_mov_b32 s[sgprtmp0E], s[sgprGSUSumIdx]                          //cal synchronizer position
 s_lshl_b32 s[sgprtmp0E], s[sgprtmp0E], 2
 
+v_lshrrev_b32 v0, 6, v[vgprSerial]
+v_readfirstlane_b32 s[sgprtmp1E], v0      // set back to numWorkGroup0
+s_lshl_b32 s[sgprtmp0E], s[sgprtmp0E], s[sgprtmp1E]
+
 s_mul_hi_u32 s[sgprtmp3E], s[sgprStrideDK], 5                   // Scale by Stride
 s_mul_i32 s[sgprtmp2E], s[sgprStrideDK], 5                      // Scale by Stride
 s_lshl_b64 s[sgprtmp2E:sgprtmp2E+1], s[sgprtmp2E:sgprtmp2E+1], 2  // scale by bpe
@@ -7087,8 +7297,8 @@ s_lshl_b64 s[sgprtmp0E:sgprtmp1E], s[sgprtmp0E:sgprtmp1E], 2          // scale b
 s_add_u32 s[sgprSrdD+0], s[sgprSrdD+0], s[sgprtmp0E]                  // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprSrdD+1], s[sgprtmp1E]                 // add hi to SRD
 
-s_waitcnt lgkmcnt(0)
-s_cmp_ge_u32 s[sgprGSUSync], 0x9                // s[sgprGSUSync] == GSU*WaveNum-1 ?
+s_waitcnt 0
+s_cmp_ge_u32 s[sgprGSUSync], 0x4                // s[sgprGSUSync] == GSU*WaveNum-1 ?
 s_cbranch_scc0 label_KernelEnd //label_GW_End_1 //label_AFTERsummary_Edge
 //synchronizer check
 
@@ -7261,6 +7471,10 @@ s_mov_b32 s[sgprGSUSync] 0x1
 s_mov_b32 s[sgprtmp0E], s[sgprGSUSumIdx]                          //cal synchronizer position
 s_lshl_b32 s[sgprtmp0E], s[sgprtmp0E], 2
 
+v_lshrrev_b32 v0, 6, v[vgprSerial]
+v_readfirstlane_b32 s[sgprtmp1E], v0      // set back to numWorkGroup0
+s_lshl_b32 s[sgprtmp0E], s[sgprtmp0E], s[sgprtmp1E]
+
 s_mul_hi_u32 s[sgprtmp3E], s[sgprStrideDK], 5                   // Scale by Stride
 s_mul_i32 s[sgprtmp2E], s[sgprStrideDK], 5                      // Scale by Stride
 s_lshl_b64 s[sgprtmp2E:sgprtmp2E+1], s[sgprtmp2E:sgprtmp2E+1], 2  // scale by bpe
@@ -7290,8 +7504,8 @@ s_lshl_b64 s[sgprtmp0E:sgprtmp1E], s[sgprtmp0E:sgprtmp1E], 2          // scale b
 s_add_u32 s[sgprSrdD+0], s[sgprSrdD+0], s[sgprtmp0E]                  // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprSrdD+1], s[sgprtmp1E]                 // add hi to SRD
 
-s_waitcnt lgkmcnt(0)
-s_cmp_ge_u32 s[sgprGSUSync], 0x9                // s[sgprGSUSync] == GSU*WaveNum-1 ?
+s_waitcnt 0
+s_cmp_ge_u32 s[sgprGSUSync], 0x4                // s[sgprGSUSync] == GSU*WaveNum-1 ?
 s_cbranch_scc0 label_KernelEnd //label_GW_End_1 //label_AFTERsummary_Edge
 //synchronizer check
 
@@ -7492,6 +7706,10 @@ s_mov_b32 s[sgprGSUSync] 0x1
 s_mov_b32 s[sgprtmp0E], s[sgprGSUSumIdx]                          //cal synchronizer position
 s_lshl_b32 s[sgprtmp0E], s[sgprtmp0E], 2
 
+v_lshrrev_b32 v0, 6, v[vgprSerial]
+v_readfirstlane_b32 s[sgprtmp1E], v0      // set back to numWorkGroup0
+s_lshl_b32 s[sgprtmp0E], s[sgprtmp0E], s[sgprtmp1E]
+
 s_mul_hi_u32 s[sgprtmp3E], s[sgprStrideDK], 5                   // Scale by Stride
 s_mul_i32 s[sgprtmp2E], s[sgprStrideDK], 5                      // Scale by Stride
 s_lshl_b64 s[sgprtmp2E:sgprtmp2E+1], s[sgprtmp2E:sgprtmp2E+1], 2  // scale by bpe
@@ -7521,8 +7739,8 @@ s_lshl_b64 s[sgprtmp0E:sgprtmp1E], s[sgprtmp0E:sgprtmp1E], 2          // scale b
 s_add_u32 s[sgprSrdD+0], s[sgprSrdD+0], s[sgprtmp0E]                  // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprSrdD+1], s[sgprtmp1E]                 // add hi to SRD
 
-s_waitcnt lgkmcnt(0)
-s_cmp_ge_u32 s[sgprGSUSync], 0x9                // s[sgprGSUSync] == GSU*WaveNum-1 ?
+s_waitcnt 0
+s_cmp_ge_u32 s[sgprGSUSync], 0x4                // s[sgprGSUSync] == GSU*WaveNum-1 ?
 s_cbranch_scc0 label_KernelEnd //label_GW_End_1 //label_AFTERsummary_Edge
 //synchronizer check
 
@@ -7695,6 +7913,10 @@ s_mov_b32 s[sgprGSUSync] 0x1
 s_mov_b32 s[sgprtmp0E], s[sgprGSUSumIdx]                          //cal synchronizer position
 s_lshl_b32 s[sgprtmp0E], s[sgprtmp0E], 2
 
+v_lshrrev_b32 v0, 6, v[vgprSerial]
+v_readfirstlane_b32 s[sgprtmp1E], v0      // set back to numWorkGroup0
+s_lshl_b32 s[sgprtmp0E], s[sgprtmp0E], s[sgprtmp1E]
+
 s_mul_hi_u32 s[sgprtmp3E], s[sgprStrideDK], 5                   // Scale by Stride
 s_mul_i32 s[sgprtmp2E], s[sgprStrideDK], 5                      // Scale by Stride
 s_lshl_b64 s[sgprtmp2E:sgprtmp2E+1], s[sgprtmp2E:sgprtmp2E+1], 2  // scale by bpe
@@ -7724,8 +7946,8 @@ s_lshl_b64 s[sgprtmp0E:sgprtmp1E], s[sgprtmp0E:sgprtmp1E], 2          // scale b
 s_add_u32 s[sgprSrdD+0], s[sgprSrdD+0], s[sgprtmp0E]                  // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprSrdD+1], s[sgprtmp1E]                 // add hi to SRD
 
-s_waitcnt lgkmcnt(0)
-s_cmp_ge_u32 s[sgprGSUSync], 0x9                // s[sgprGSUSync] == GSU*WaveNum-1 ?
+s_waitcnt 0
+s_cmp_ge_u32 s[sgprGSUSync], 0x4                // s[sgprGSUSync] == GSU*WaveNum-1 ?
 s_cbranch_scc0 label_KernelEnd //label_GW_End_1 //label_AFTERsummary_Edge
 //synchronizer check
 
@@ -7890,6 +8112,10 @@ s_mov_b32 s[sgprGSUSync] 0x1
 s_mov_b32 s[sgprtmp0E], s[sgprGSUSumIdx]                          //cal synchronizer position
 s_lshl_b32 s[sgprtmp0E], s[sgprtmp0E], 2
 
+v_lshrrev_b32 v0, 6, v[vgprSerial]
+v_readfirstlane_b32 s[sgprtmp1E], v0      // set back to numWorkGroup0
+s_lshl_b32 s[sgprtmp0E], s[sgprtmp0E], s[sgprtmp1E]
+
 s_mul_hi_u32 s[sgprtmp3E], s[sgprStrideDK], 5                   // Scale by Stride
 s_mul_i32 s[sgprtmp2E], s[sgprStrideDK], 5                      // Scale by Stride
 s_lshl_b64 s[sgprtmp2E:sgprtmp2E+1], s[sgprtmp2E:sgprtmp2E+1], 2  // scale by bpe
@@ -7919,8 +8145,8 @@ s_lshl_b64 s[sgprtmp0E:sgprtmp1E], s[sgprtmp0E:sgprtmp1E], 2          // scale b
 s_add_u32 s[sgprSrdD+0], s[sgprSrdD+0], s[sgprtmp0E]                  // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprSrdD+1], s[sgprtmp1E]                 // add hi to SRD
 
-s_waitcnt lgkmcnt(0)
-s_cmp_ge_u32 s[sgprGSUSync], 0x9                // s[sgprGSUSync] == GSU*WaveNum-1 ?
+s_waitcnt 0
+s_cmp_ge_u32 s[sgprGSUSync], 0x4                // s[sgprGSUSync] == GSU*WaveNum-1 ?
 s_cbranch_scc0 label_KernelEnd //label_GW_End_1 //label_AFTERsummary_Edge
 //synchronizer check
 
@@ -8097,6 +8323,10 @@ s_mov_b32 s[sgprGSUSync] 0x1
 s_mov_b32 s[sgprtmp0E], s[sgprGSUSumIdx]                          //cal synchronizer position
 s_lshl_b32 s[sgprtmp0E], s[sgprtmp0E], 2
 
+v_lshrrev_b32 v0, 6, v[vgprSerial]
+v_readfirstlane_b32 s[sgprtmp1E], v0      // set back to numWorkGroup0
+s_lshl_b32 s[sgprtmp0E], s[sgprtmp0E], s[sgprtmp1E]
+
 s_mul_hi_u32 s[sgprtmp3E], s[sgprStrideDK], 5                   // Scale by Stride
 s_mul_i32 s[sgprtmp2E], s[sgprStrideDK], 5                      // Scale by Stride
 s_lshl_b64 s[sgprtmp2E:sgprtmp2E+1], s[sgprtmp2E:sgprtmp2E+1], 2  // scale by bpe
@@ -8126,8 +8356,8 @@ s_lshl_b64 s[sgprtmp0E:sgprtmp1E], s[sgprtmp0E:sgprtmp1E], 2          // scale b
 s_add_u32 s[sgprSrdD+0], s[sgprSrdD+0], s[sgprtmp0E]                  // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprSrdD+1], s[sgprtmp1E]                 // add hi to SRD
 
-s_waitcnt lgkmcnt(0)
-s_cmp_ge_u32 s[sgprGSUSync], 0x9                // s[sgprGSUSync] == GSU*WaveNum-1 ?
+s_waitcnt 0
+s_cmp_ge_u32 s[sgprGSUSync], 0x4                // s[sgprGSUSync] == GSU*WaveNum-1 ?
 s_cbranch_scc0 label_KernelEnd //label_GW_End_1 //label_AFTERsummary_Edge
 //synchronizer check
 
@@ -8342,6 +8572,10 @@ s_mov_b32 s[sgprGSUSync] 0x1
 s_mov_b32 s[sgprtmp0E], s[sgprGSUSumIdx]                          //cal synchronizer position
 s_lshl_b32 s[sgprtmp0E], s[sgprtmp0E], 2
 
+v_lshrrev_b32 v0, 6, v[vgprSerial]
+v_readfirstlane_b32 s[sgprtmp1E], v0      // set back to numWorkGroup0
+s_lshl_b32 s[sgprtmp0E], s[sgprtmp0E], s[sgprtmp1E]
+
 s_mul_hi_u32 s[sgprtmp3E], s[sgprStrideDK], 5                   // Scale by Stride
 s_mul_i32 s[sgprtmp2E], s[sgprStrideDK], 5                      // Scale by Stride
 s_lshl_b64 s[sgprtmp2E:sgprtmp2E+1], s[sgprtmp2E:sgprtmp2E+1], 2  // scale by bpe
@@ -8371,8 +8605,8 @@ s_lshl_b64 s[sgprtmp0E:sgprtmp1E], s[sgprtmp0E:sgprtmp1E], 2          // scale b
 s_add_u32 s[sgprSrdD+0], s[sgprSrdD+0], s[sgprtmp0E]                  // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprSrdD+1], s[sgprtmp1E]                 // add hi to SRD
 
-s_waitcnt lgkmcnt(0)
-s_cmp_ge_u32 s[sgprGSUSync], 0x9                // s[sgprGSUSync] == GSU*WaveNum-1 ?
+s_waitcnt 0
+s_cmp_ge_u32 s[sgprGSUSync], 0x4                // s[sgprGSUSync] == GSU*WaveNum-1 ?
 s_cbranch_scc0 label_KernelEnd //label_GW_End_1 //label_AFTERsummary_Edge
 //synchronizer check
 
@@ -8537,6 +8771,10 @@ s_mov_b32 s[sgprGSUSync] 0x1
 s_mov_b32 s[sgprtmp0E], s[sgprGSUSumIdx]                          //cal synchronizer position
 s_lshl_b32 s[sgprtmp0E], s[sgprtmp0E], 2
 
+v_lshrrev_b32 v0, 6, v[vgprSerial]
+v_readfirstlane_b32 s[sgprtmp1E], v0      // set back to numWorkGroup0
+s_lshl_b32 s[sgprtmp0E], s[sgprtmp0E], s[sgprtmp1E]
+
 s_mul_hi_u32 s[sgprtmp3E], s[sgprStrideDK], 5                   // Scale by Stride
 s_mul_i32 s[sgprtmp2E], s[sgprStrideDK], 5                      // Scale by Stride
 s_lshl_b64 s[sgprtmp2E:sgprtmp2E+1], s[sgprtmp2E:sgprtmp2E+1], 2  // scale by bpe
@@ -8566,8 +8804,8 @@ s_lshl_b64 s[sgprtmp0E:sgprtmp1E], s[sgprtmp0E:sgprtmp1E], 2          // scale b
 s_add_u32 s[sgprSrdD+0], s[sgprSrdD+0], s[sgprtmp0E]                  // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprSrdD+1], s[sgprtmp1E]                 // add hi to SRD
 
-s_waitcnt lgkmcnt(0)
-s_cmp_ge_u32 s[sgprGSUSync], 0x9                // s[sgprGSUSync] == GSU*WaveNum-1 ?
+s_waitcnt 0
+s_cmp_ge_u32 s[sgprGSUSync], 0x4                // s[sgprGSUSync] == GSU*WaveNum-1 ?
 s_cbranch_scc0 label_KernelEnd //label_GW_End_1 //label_AFTERsummary_Edge
 //synchronizer check
 
@@ -8736,6 +8974,10 @@ s_mov_b32 s[sgprGSUSync] 0x1
 s_mov_b32 s[sgprtmp0E], s[sgprGSUSumIdx]                          //cal synchronizer position
 s_lshl_b32 s[sgprtmp0E], s[sgprtmp0E], 2
 
+v_lshrrev_b32 v0, 6, v[vgprSerial]
+v_readfirstlane_b32 s[sgprtmp1E], v0      // set back to numWorkGroup0
+s_lshl_b32 s[sgprtmp0E], s[sgprtmp0E], s[sgprtmp1E]
+
 s_mul_hi_u32 s[sgprtmp3E], s[sgprStrideDK], 5                   // Scale by Stride
 s_mul_i32 s[sgprtmp2E], s[sgprStrideDK], 5                      // Scale by Stride
 s_lshl_b64 s[sgprtmp2E:sgprtmp2E+1], s[sgprtmp2E:sgprtmp2E+1], 2  // scale by bpe
@@ -8765,8 +9007,8 @@ s_lshl_b64 s[sgprtmp0E:sgprtmp1E], s[sgprtmp0E:sgprtmp1E], 2          // scale b
 s_add_u32 s[sgprSrdD+0], s[sgprSrdD+0], s[sgprtmp0E]                  // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprSrdD+1], s[sgprtmp1E]                 // add hi to SRD
 
-s_waitcnt lgkmcnt(0)
-s_cmp_ge_u32 s[sgprGSUSync], 0x9                // s[sgprGSUSync] == GSU*WaveNum-1 ?
+s_waitcnt 0
+s_cmp_ge_u32 s[sgprGSUSync], 0x4                // s[sgprGSUSync] == GSU*WaveNum-1 ?
 s_cbranch_scc0 label_KernelEnd //label_GW_End_1 //label_AFTERsummary_Edge
 //synchronizer check
 
@@ -8943,6 +9185,10 @@ s_mov_b32 s[sgprGSUSync] 0x1
 s_mov_b32 s[sgprtmp0E], s[sgprGSUSumIdx]                          //cal synchronizer position
 s_lshl_b32 s[sgprtmp0E], s[sgprtmp0E], 2
 
+v_lshrrev_b32 v0, 6, v[vgprSerial]
+v_readfirstlane_b32 s[sgprtmp1E], v0      // set back to numWorkGroup0
+s_lshl_b32 s[sgprtmp0E], s[sgprtmp0E], s[sgprtmp1E]
+
 s_mul_hi_u32 s[sgprtmp3E], s[sgprStrideDK], 5                   // Scale by Stride
 s_mul_i32 s[sgprtmp2E], s[sgprStrideDK], 5                      // Scale by Stride
 s_lshl_b64 s[sgprtmp2E:sgprtmp2E+1], s[sgprtmp2E:sgprtmp2E+1], 2  // scale by bpe
@@ -8972,8 +9218,8 @@ s_lshl_b64 s[sgprtmp0E:sgprtmp1E], s[sgprtmp0E:sgprtmp1E], 2          // scale b
 s_add_u32 s[sgprSrdD+0], s[sgprSrdD+0], s[sgprtmp0E]                  // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprSrdD+1], s[sgprtmp1E]                 // add hi to SRD
 
-s_waitcnt lgkmcnt(0)
-s_cmp_ge_u32 s[sgprGSUSync], 0x9                // s[sgprGSUSync] == GSU*WaveNum-1 ?
+s_waitcnt 0
+s_cmp_ge_u32 s[sgprGSUSync], 0x4                // s[sgprGSUSync] == GSU*WaveNum-1 ?
 s_cbranch_scc0 label_KernelEnd //label_GW_End_1 //label_AFTERsummary_Edge
 //synchronizer check
 
@@ -9178,6 +9424,10 @@ s_mov_b32 s[sgprGSUSync] 0x1
 s_mov_b32 s[sgprtmp0E], s[sgprGSUSumIdx]                          //cal synchronizer position
 s_lshl_b32 s[sgprtmp0E], s[sgprtmp0E], 2
 
+v_lshrrev_b32 v0, 6, v[vgprSerial]
+v_readfirstlane_b32 s[sgprtmp1E], v0      // set back to numWorkGroup0
+s_lshl_b32 s[sgprtmp0E], s[sgprtmp0E], s[sgprtmp1E]
+
 s_mul_hi_u32 s[sgprtmp3E], s[sgprStrideDK], 5                   // Scale by Stride
 s_mul_i32 s[sgprtmp2E], s[sgprStrideDK], 5                      // Scale by Stride
 s_lshl_b64 s[sgprtmp2E:sgprtmp2E+1], s[sgprtmp2E:sgprtmp2E+1], 2  // scale by bpe
@@ -9207,8 +9457,8 @@ s_lshl_b64 s[sgprtmp0E:sgprtmp1E], s[sgprtmp0E:sgprtmp1E], 2          // scale b
 s_add_u32 s[sgprSrdD+0], s[sgprSrdD+0], s[sgprtmp0E]                  // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprSrdD+1], s[sgprtmp1E]                 // add hi to SRD
 
-s_waitcnt lgkmcnt(0)
-s_cmp_ge_u32 s[sgprGSUSync], 0x9                // s[sgprGSUSync] == GSU*WaveNum-1 ?
+s_waitcnt 0
+s_cmp_ge_u32 s[sgprGSUSync], 0x4                // s[sgprGSUSync] == GSU*WaveNum-1 ?
 s_cbranch_scc0 label_KernelEnd //label_GW_End_1 //label_AFTERsummary_Edge
 //synchronizer check
 
@@ -9385,6 +9635,10 @@ s_mov_b32 s[sgprGSUSync] 0x1
 s_mov_b32 s[sgprtmp0E], s[sgprGSUSumIdx]                          //cal synchronizer position
 s_lshl_b32 s[sgprtmp0E], s[sgprtmp0E], 2
 
+v_lshrrev_b32 v0, 6, v[vgprSerial]
+v_readfirstlane_b32 s[sgprtmp1E], v0      // set back to numWorkGroup0
+s_lshl_b32 s[sgprtmp0E], s[sgprtmp0E], s[sgprtmp1E]
+
 s_mul_hi_u32 s[sgprtmp3E], s[sgprStrideDK], 5                   // Scale by Stride
 s_mul_i32 s[sgprtmp2E], s[sgprStrideDK], 5                      // Scale by Stride
 s_lshl_b64 s[sgprtmp2E:sgprtmp2E+1], s[sgprtmp2E:sgprtmp2E+1], 2  // scale by bpe
@@ -9414,8 +9668,8 @@ s_lshl_b64 s[sgprtmp0E:sgprtmp1E], s[sgprtmp0E:sgprtmp1E], 2          // scale b
 s_add_u32 s[sgprSrdD+0], s[sgprSrdD+0], s[sgprtmp0E]                  // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprSrdD+1], s[sgprtmp1E]                 // add hi to SRD
 
-s_waitcnt lgkmcnt(0)
-s_cmp_ge_u32 s[sgprGSUSync], 0x9                // s[sgprGSUSync] == GSU*WaveNum-1 ?
+s_waitcnt 0
+s_cmp_ge_u32 s[sgprGSUSync], 0x4                // s[sgprGSUSync] == GSU*WaveNum-1 ?
 s_cbranch_scc0 label_KernelEnd //label_GW_End_1 //label_AFTERsummary_Edge
 //synchronizer check
 
@@ -9584,6 +9838,10 @@ s_mov_b32 s[sgprGSUSync] 0x1
 s_mov_b32 s[sgprtmp0E], s[sgprGSUSumIdx]                          //cal synchronizer position
 s_lshl_b32 s[sgprtmp0E], s[sgprtmp0E], 2
 
+v_lshrrev_b32 v0, 6, v[vgprSerial]
+v_readfirstlane_b32 s[sgprtmp1E], v0      // set back to numWorkGroup0
+s_lshl_b32 s[sgprtmp0E], s[sgprtmp0E], s[sgprtmp1E]
+
 s_mul_hi_u32 s[sgprtmp3E], s[sgprStrideDK], 5                   // Scale by Stride
 s_mul_i32 s[sgprtmp2E], s[sgprStrideDK], 5                      // Scale by Stride
 s_lshl_b64 s[sgprtmp2E:sgprtmp2E+1], s[sgprtmp2E:sgprtmp2E+1], 2  // scale by bpe
@@ -9613,8 +9871,8 @@ s_lshl_b64 s[sgprtmp0E:sgprtmp1E], s[sgprtmp0E:sgprtmp1E], 2          // scale b
 s_add_u32 s[sgprSrdD+0], s[sgprSrdD+0], s[sgprtmp0E]                  // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprSrdD+1], s[sgprtmp1E]                 // add hi to SRD
 
-s_waitcnt lgkmcnt(0)
-s_cmp_ge_u32 s[sgprGSUSync], 0x9                // s[sgprGSUSync] == GSU*WaveNum-1 ?
+s_waitcnt 0
+s_cmp_ge_u32 s[sgprGSUSync], 0x4                // s[sgprGSUSync] == GSU*WaveNum-1 ?
 s_cbranch_scc0 label_KernelEnd //label_GW_End_1 //label_AFTERsummary_Edge
 //synchronizer check
 
@@ -9795,6 +10053,10 @@ s_mov_b32 s[sgprGSUSync] 0x1
 s_mov_b32 s[sgprtmp0E], s[sgprGSUSumIdx]                          //cal synchronizer position
 s_lshl_b32 s[sgprtmp0E], s[sgprtmp0E], 2
 
+v_lshrrev_b32 v0, 6, v[vgprSerial]
+v_readfirstlane_b32 s[sgprtmp1E], v0      // set back to numWorkGroup0
+s_lshl_b32 s[sgprtmp0E], s[sgprtmp0E], s[sgprtmp1E]
+
 s_mul_hi_u32 s[sgprtmp3E], s[sgprStrideDK], 5                   // Scale by Stride
 s_mul_i32 s[sgprtmp2E], s[sgprStrideDK], 5                      // Scale by Stride
 s_lshl_b64 s[sgprtmp2E:sgprtmp2E+1], s[sgprtmp2E:sgprtmp2E+1], 2  // scale by bpe
@@ -9824,8 +10086,8 @@ s_lshl_b64 s[sgprtmp0E:sgprtmp1E], s[sgprtmp0E:sgprtmp1E], 2          // scale b
 s_add_u32 s[sgprSrdD+0], s[sgprSrdD+0], s[sgprtmp0E]                  // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprSrdD+1], s[sgprtmp1E]                 // add hi to SRD
 
-s_waitcnt lgkmcnt(0)
-s_cmp_ge_u32 s[sgprGSUSync], 0x9                // s[sgprGSUSync] == GSU*WaveNum-1 ?
+s_waitcnt 0
+s_cmp_ge_u32 s[sgprGSUSync], 0x4                // s[sgprGSUSync] == GSU*WaveNum-1 ?
 s_cbranch_scc0 label_KernelEnd //label_GW_End_1 //label_AFTERsummary_Edge
 //synchronizer check
 
