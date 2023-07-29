@@ -265,6 +265,11 @@ class AddrCalculation:
                                                 shiftHex=hex(log2(kw.states.bpeCinternal)), \
                                                 src=vgpr(self.addrBiasVgpr), \
                                                 comment="Bias address scaled by BPE"))
+                        if kernel["LdsOffsetBias"] != 0:
+                          module.add(VAddU32(dst=vgpr(self.addrBiasVgpr), \
+                                             src0=(kernel["LdsOffsetBias"]*kernel["ProblemType"]["DataType"].numBytes()), \
+                                             src1=vgpr(self.addrBiasVgpr), \
+                                             comment="add bias lds offset"))
                         return module
                     if tc == 'ScaleDVec' and kernel["ProblemType"]["UseScaleDVec"] and (kernel["GlobalSplitU"] == 1):
                         module.add(VLShiftLeftB32(dst=vgpr(self.addrScaleDVecVgpr), \
@@ -301,6 +306,11 @@ class AddrCalculation:
                                             shiftHex=hex(log2(kw.states.bpeCinternal)), \
                                             src=vgpr(self.addrBiasVgpr), \
                                             comment="Bias address scaled by BPE"))
+                    if kernel["LdsOffsetBias"] != 0:
+                        module.add(VAddU32(dst=vgpr(self.addrBiasVgpr), \
+                                           src0=(kernel["LdsOffsetBias"]*kernel["ProblemType"]["DataType"].numBytes()), \
+                                           src1=vgpr(self.addrBiasVgpr), \
+                                           comment="add bias lds offset"))
                     return module
                 if tc == 'ScaleDVec' and kernel["ProblemType"]["UseScaleDVec"] and (kernel["GlobalSplitU"] == 1):
                     module.add(VLShiftLeftB32(dst=vgpr(self.addrScaleDVecVgpr), \
@@ -337,6 +347,11 @@ class AddrCalculation:
                                         shiftHex=hex(log2(kw.states.bpeCinternal)), \
                                         src=vgpr(self.addrBiasVgpr), \
                                         comment="Bias address scaled by BPE"))
+                if kernel["LdsOffsetBias"] != 0:
+                    module.add(VAddU32(dst=vgpr(self.addrBiasVgpr), \
+                                       src0=(kernel["LdsOffsetBias"]*kernel["ProblemType"]["DataType"].numBytes()), \
+                                       src1=vgpr(self.addrBiasVgpr), \
+                                       comment="add bias lds offset"))
                 return module
             if tc == 'ScaleDVec' and kernel["ProblemType"]["UseScaleDVec"] and (kernel["GlobalSplitU"] == 1):
                 module.add(VLShiftLeftB32(dst=vgpr(self.addrScaleDVecVgpr), \
@@ -571,6 +586,11 @@ class AddrCalculation:
                                         shiftHex=hex(log2(self.kernelWriter.states.bpeCinternal)), \
                                         src=vgpr(self.addrBiasVgpr), \
                                         comment="Bias address scaled by BPE"))
+                if kernel["LdsOffsetBias"] != 0:
+                    module.add(VAddU32(dst=vgpr(self.addrBiasVgpr), \
+                                       src0=(kernel["LdsOffsetBias"]*kernel["ProblemType"]["DataType"].numBytes()), \
+                                       src1=vgpr(self.addrBiasVgpr), \
+                                       comment="add bias lds offset"))
             if tc == 'ScaleDVec' and kernel["ProblemType"]["UseScaleDVec"] and (kernel["GlobalSplitU"] == 1):
                 module.add(VLShiftLeftB32(dst=vgpr(self.addrScaleDVecVgpr), \
                                         shiftHex=hex(log2(self.kernelWriter.states.bpeCinternal)), \

@@ -2903,6 +2903,7 @@ class Solution(collections.abc.Mapping):
         return
 
     #check not support cases and calculate lds resources
+    ldsNumElementsRemapC = 0
     if state["StoreRemapVectorWidth"]:
       if not state["EnableMatrixInstruction"]:
         reject(state, "storeRemap only support MatrixInstruction kernel")
@@ -2976,7 +2977,7 @@ class Solution(collections.abc.Mapping):
 
     if state["ProblemType"]["UseBias"]:
       # Currently all offsets starts from 0
-      state["LdsOffsetBias"] = 0 # TODO: ldsBiasOffset = ldsNumElementsAB
+      state["LdsOffsetBias"] = 0  # TODO: ldsBiasOffset = ldsNumElementsAB
       ldsBiasMaxElements = 0
       if state["ProblemType"]["Gradient"]:
         if state["ProblemType"]["BiasSrc"] == "A":
@@ -2993,6 +2994,8 @@ class Solution(collections.abc.Mapping):
           for dataType in state["ProblemType"]["BiasDataTypeList"]:
             ldsBiasMaxElements = max(ldsBiasMaxElements, state["MacroTile%d"%tile01] * maxKId * dataType.numBytes())
       else:
+        if state["StoreRemapVectorWidth"] and state["GlobalSplitU"] == 1:
+          state["LdsOffsetBias"] = ldsNumElementsRemapC
         for dataType in state["ProblemType"]["BiasDataTypeList"]:
           ldsBiasMaxElements = max(ldsBiasMaxElements, state["MacroTile0"] * dataType.numBytes())
       ldsNumElements = max(ldsNumElements, state["LdsOffsetBias"] + ldsBiasMaxElements)

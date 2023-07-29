@@ -8430,6 +8430,11 @@ class KernelWriterAssembly(KernelWriter):
                               shiftHex=hex(log2(self.states.bpeCinternal)), \
                               src=vgpr("Serial"), \
                               comment="Local bias address scaled by BPE"))
+    if kernel["LdsOffsetBias"] != 0:
+      module.add(VAddU32(dst=vgpr(offsetVgpr), \
+                         src0=(kernel["LdsOffsetBias"]*kernel["ProblemType"]["DataType"].numBytes()), \
+                         src1=vgpr(offsetVgpr), \
+                         comment="add bias lds offset"))
 
     offset  = (divisor * gwvw) * self.states.bpeCinternal
     tmpVgprN = tmpVgpr1
@@ -8479,6 +8484,12 @@ class KernelWriterAssembly(KernelWriter):
                               shiftHex=hex(log2(self.states.bpeCinternal)), \
                               src=vgpr(offsetVgpr), \
                               comment="Local bias address scaled by BPE"))
+
+    if kernel["LdsOffsetBias"] != 0:
+      module.add(VAddU32(dst=vgpr(offsetVgpr), \
+                         src0=(kernel["LdsOffsetBias"]*kernel["ProblemType"]["DataType"].numBytes()), \
+                         src1=vgpr(offsetVgpr), \
+                         comment="add bias lds offset"))
 
     srcAddr = vgpr(offsetVgpr)
     outVgprN = outVgpr
