@@ -1430,6 +1430,21 @@ class SBarrier(Instruction):
 
     def __str__(self) -> str:
         return self.formatWithComment(self.instStr)
+
+class SDcacheWb(Instruction):
+    def __init__(self, comment="") -> None:
+        super().__init__(InstType.INST_NOTYPE, comment)
+        self.setInst("s_dcache_wb")
+
+    def getParams(self) -> list:
+        return []
+
+    def toList(self) -> list:
+        return [self.instStr, self.comment]
+
+    def __str__(self) -> str:
+        return self.formatWithComment(self.instStr)
+
 class SNop(Instruction):
     def __init__(self, waitState: int, comment="") -> None:
         super().__init__(InstType.INST_NOTYPE, comment)

@@ -1136,7 +1136,10 @@ class KernelWriterAssembly(KernelWriter):
 
       if kernel["ProblemType"]["GroupedGemm"]:
         tmpSgprNumGemm = 5
+        tmpSgprOrigKernArgAddress0 = 8
+        tmpSgprOrigKernArgAddress1 = 9
         tmpSgprSkipWgTableGen = 10
+        module.add(SMovB64(dst=sgpr(tmpSgprOrigKernArgAddress0,2), src=sgpr("KernArgAddress",2)))
         module.add(self.argLoader.loadKernArg(tmpSgprSkipWgTableGen, "KernArgAddress", hex(20), dword=1))
         module.addComment1("Grouped Gemm: Load num of Gemms")
         module.add(self.argLoader.loadKernArg(tmpSgprNumGemm, "KernArgAddress", hex(0), dword=1))
@@ -1277,7 +1280,10 @@ class KernelWriterAssembly(KernelWriter):
         module.add(SStoreB32(src=sgpr(tmpSgprAccumTiles), base=sgpr("KernArgAddress", 2), soffset=sgpr(tmpSgprWgTableOffset)))
 
         module.add(label_wgTable_end)
+        module.add(SDcacheWb())
         module.add(SWaitCnt(lgkmcnt=0))
+        module.add(SMovB32(dst=sgpr(tmpSgprSkipWgTableGen), src=1))
+        module.add(SStoreB32(src=sgpr(tmpSgprSkipWgTableGen), base=sgpr(tmpSgprOrigKernArgAddress0, 2), soffset=hex(20)))
 
         module.add(label_waitWave0)
         module.add(SBarrier())
