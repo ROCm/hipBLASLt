@@ -232,11 +232,11 @@ namespace hipblaslt_ext
         hipblasStatus_t isAlgoSupported(hipblasLtMatmulAlgo_t& algo, size_t& workspaceSizeInBytes);
 
         /*! \ingroup library_module
-        *  \brief Create kernel arguments from a given hipblaslt_ext::Gemm instance.
+        *  \brief Create kernel arguments from a given hipblaslt_ext::GemmInstance.
         *
         *  \details
-        *  This function creates kernel arguemtns from a given hipblaslt_ext::Gemm instance
-        * then saves the arguments inside the instance.
+        *  This function creates kernel arguments from a given hipblaslt_ext::GemmInstance
+        *  then saves the arguments inside the instance.
         *
         *  @param[in]
         *  algo                    Handle for matrix multiplication algorithm to be
@@ -248,7 +248,7 @@ namespace hipblaslt_ext
         * memory. Pointer must be 16B aligned (that is, lowest 4 bits of address must
         * be 0).
         *  @param[in]
-        *  userArgs                Use user args, this does not affect vanilla gemm.
+        *  useUserArgs                Use user args, this does not affect vanilla gemm.
         * (May be deprecated in the future)
         *  @param[in]
         *  stream                  The HIP stream where all the GPU work will be
@@ -264,8 +264,7 @@ namespace hipblaslt_ext
                                    hipStream_t                  stream      = 0);
 
         /*! \ingroup library_module
-        *  \brief Execute the kernel arguments stored inside the hipblaslt_ext::Gemm
-        * instance.
+        *  \brief Execute the kernel arguments stored inside the hipblaslt_ext::GemmInstance.
         *
         *  @param[in]
         *  stream                  The HIP stream where all the GPU work will be
