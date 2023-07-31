@@ -12,7 +12,6 @@ GlobalParameters:
   NewClient: 2
   CSVExportWinner: 1
   CSVMergeSameProblemID: 1
-  Device: 1
   MaxWorkspaceSize: 3355443200
   # PrintStoreRegisterDb: 1
   PrintSolutionRejectionReason: True
