@@ -440,6 +440,7 @@ def dataInitParams(problemType):
     initBeta  = globalParameters['DataInitTypeBeta']
     initBias  = globalParameters['DataInitTypeBias']
     initScaleDVec  = globalParameters['DataInitTypeScaleDVec']
+    initScaleAlphaVec  = globalParameters['DataInitTypeScaleAlphaVec']
 
     if not problemType.useBeta:
         initBeta = 0
@@ -455,7 +456,8 @@ def dataInitParams(problemType):
             ('init-alpha',        DataInitName(initAlpha).name),
             ('init-beta',         DataInitName(initBeta).name),
             ('init-bias',         DataInitName(initBias).name),
-            ('init-scaleDVec',         DataInitName(initScaleDVec).name)]
+            ('init-scaleDVec',         DataInitName(initScaleDVec).name),
+            ('init-scaleAlphaVec',         DataInitName(initScaleAlphaVec).name)]
 
 def boundsCheckName(mode):
     if mode == 0: return 'Disable'
@@ -507,6 +509,7 @@ def writeClientConfigIni(problemSizes, biasTypeArgs, activationArgs, problemType
         param('bias-source',   problemType.biasSrcWhiteList[0])
         param('use-e', problemType.useE)
         param('use-scaleDVec',   problemType.useScaleDVec)
+        param('use-scaleAlphaVec',   problemType.useScaleAlphaVec)
         if biasTypeArgs:
           for btype in biasTypeArgs.biasTypes:
             param('bias-type-args',  btype.toEnum())

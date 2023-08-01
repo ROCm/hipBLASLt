@@ -277,7 +277,7 @@ void testing_matmul(const Arguments& arg)
     std::vector<int>    num_batches(gemm_count);
     std::vector<size_t> size_A(gemm_count), size_B(gemm_count), size_C(gemm_count),
         size_D(gemm_count), size_D_copy(gemm_count), size_E(gemm_count), size_bias(gemm_count),
-        size_scaleDVec(gemm_count);
+        size_scaleDVec(gemm_count), size_scaleAlphaVec(gemm_count);
 
     std::vector<hipblasLtMatrixLayout_t> matA(gemm_count), matB(gemm_count), matC(gemm_count),
         matD(gemm_count);
@@ -286,14 +286,16 @@ void testing_matmul(const Arguments& arg)
 
     std::vector<device_vector<Ti>*>     dA(gemm_count), dB(gemm_count);
     std::vector<device_vector<To>*>     dC(gemm_count), dD(gemm_count), dBias(gemm_count);
-    std::vector<device_vector<Talpha>*> dScaleDVec(gemm_count), dBias_C(gemm_count);
-    std::vector<device_vector<Tc>*>     dE(gemm_count);
+    std::vector<device_vector<Talpha>*> dScaleDVec(gemm_count), dScaleAlphaVec(gemm_count),
+        dBias_C(gemm_count);
+    std::vector<device_vector<Tc>*> dE(gemm_count);
 
     std::vector<host_vector<Ti>*> hA(gemm_count), hB(gemm_count);
     std::vector<host_vector<To>*> hC(gemm_count), hD_gold(gemm_count), hD_1(gemm_count),
         hBias(gemm_count), hBias_gold(gemm_count);
     std::vector<host_vector<Talpha>*> hD_gold_epl(gemm_count), hScaleDVec(gemm_count),
-        hBias_C(gemm_count), hBias_gold_C(gemm_count), hBias_gold_epl(gemm_count);
+        hScaleAlphaVec(gemm_count), hD_gold_ScaleAlpha(gemm_count), hBias_C(gemm_count),
+        hBias_gold_C(gemm_count), hBias_gold_epl(gemm_count);
     std::vector<host_vector<Tc>*> hE(gemm_count, nullptr), hE_gold(gemm_count, nullptr);
 
     for(int i = 0; i < gemm_count; i++)
@@ -463,7 +465,7 @@ void testing_matmul(const Arguments& arg)
             }
         }
 
-        if(arg.scaleD_vector)
+        if(arg.scaleD_vector || arg.scaleAlpha_vector)
         {
             epilogue_on[i] = true;
         }
@@ -478,8 +480,9 @@ void testing_matmul(const Arguments& arg)
             = stride_d[i] == 0 ? ldd[i] * N[i] * num_batches[i] : stride_d[i] * num_batches[i];
         size_E[i]
             = stride_e[i] == 0 ? lde[i] * N[i] * num_batches[i] : stride_e[i] * num_batches[i];
-        size_D_copy[i]    = arg.unit_check || arg.norm_check ? size_D[i] : 0;
-        size_scaleDVec[i] = arg.scaleD_vector ? M[i] : 1;
+        size_D_copy[i]        = arg.unit_check || arg.norm_check ? size_D[i] : 0;
+        size_scaleDVec[i]     = arg.scaleD_vector ? M[i] : 1;
+        size_scaleAlphaVec[i] = arg.scaleAlpha_vector ? M[i] : 1;
         if(arg.bias_vector)
         {
             if(arg.bias_source == hipblaslt_bias_source::a
@@ -494,13 +497,14 @@ void testing_matmul(const Arguments& arg)
         }
 
         // allocate memory on device
-        dA[i]         = new device_vector<Ti>(size_A[i], 1, HMM);
-        dB[i]         = new device_vector<Ti>(size_B[i], 1, HMM);
-        dC[i]         = new device_vector<To>(size_C[i], 1, HMM);
-        dD[i]         = new device_vector<To>(size_D[i], 1, HMM);
-        dBias[i]      = new device_vector<To>(size_bias[i], 1, HMM);
-        dScaleDVec[i] = new device_vector<Talpha>(size_scaleDVec[i], 1, HMM);
-        dBias_C[i]    = new device_vector<Talpha>(size_bias[i], 1, HMM);
+        dA[i]             = new device_vector<Ti>(size_A[i], 1, HMM);
+        dB[i]             = new device_vector<Ti>(size_B[i], 1, HMM);
+        dC[i]             = new device_vector<To>(size_C[i], 1, HMM);
+        dD[i]             = new device_vector<To>(size_D[i], 1, HMM);
+        dBias[i]          = new device_vector<To>(size_bias[i], 1, HMM);
+        dScaleDVec[i]     = new device_vector<Talpha>(size_scaleDVec[i], 1, HMM);
+        dScaleAlphaVec[i] = new device_vector<Talpha>(size_scaleAlphaVec[i], 1, HMM);
+        dBias_C[i]        = new device_vector<Talpha>(size_bias[i], 1, HMM);
 
         CHECK_DEVICE_ALLOCATION(dA[i]->memcheck());
         CHECK_DEVICE_ALLOCATION(dB[i]->memcheck());
@@ -508,6 +512,7 @@ void testing_matmul(const Arguments& arg)
         CHECK_DEVICE_ALLOCATION(dD[i]->memcheck());
         CHECK_DEVICE_ALLOCATION(dBias[i]->memcheck());
         CHECK_DEVICE_ALLOCATION(dScaleDVec[i]->memcheck());
+        CHECK_DEVICE_ALLOCATION(dScaleAlphaVec[i]->memcheck());
         CHECK_DEVICE_ALLOCATION(dBias_C[i]->memcheck());
         if(arg.use_e)
         {
@@ -520,18 +525,20 @@ void testing_matmul(const Arguments& arg)
         }
 
         // Naming: dX is in GPU (device) memory. hK is in CPU (host) memory
-        hA[i]             = new host_vector<Ti>(size_A[i]);
-        hB[i]             = new host_vector<Ti>(size_B[i]);
-        hC[i]             = new host_vector<To>(size_C[i]);
-        hD_gold[i]        = new host_vector<To>(size_D_copy[i]);
-        hD_gold_epl[i]    = new host_vector<Talpha>(size_D_copy[i]);
-        hD_1[i]           = new host_vector<To>(size_D_copy[i]);
-        hBias[i]          = new host_vector<To>(size_bias[i]);
-        hBias_gold_epl[i] = new host_vector<Talpha>(size_D_copy[i]); // Reduction for matrix D
-        hBias_gold[i]     = new host_vector<To>(size_bias[i]);
-        hBias_gold_C[i]   = new host_vector<Talpha>(size_bias[i]);
-        hScaleDVec[i]     = new host_vector<Talpha>(size_scaleDVec[i]);
-        hBias_C[i]        = new host_vector<Talpha>(size_bias[i]);
+        hA[i]                 = new host_vector<Ti>(size_A[i]);
+        hB[i]                 = new host_vector<Ti>(size_B[i]);
+        hC[i]                 = new host_vector<To>(size_C[i]);
+        hD_gold[i]            = new host_vector<To>(size_D_copy[i]);
+        hD_gold_epl[i]        = new host_vector<Talpha>(size_D_copy[i]);
+        hD_gold_ScaleAlpha[i] = new host_vector<Talpha>(size_D_copy[i]);
+        hD_1[i]               = new host_vector<To>(size_D_copy[i]);
+        hBias[i]              = new host_vector<To>(size_bias[i]);
+        hBias_gold_epl[i]     = new host_vector<Talpha>(size_D_copy[i]); // Reduction for matrix D
+        hBias_gold[i]         = new host_vector<To>(size_bias[i]);
+        hBias_gold_C[i]       = new host_vector<Talpha>(size_bias[i]);
+        hScaleDVec[i]         = new host_vector<Talpha>(size_scaleDVec[i]);
+        hScaleAlphaVec[i]     = new host_vector<Talpha>(size_scaleAlphaVec[i]);
+        hBias_C[i]            = new host_vector<Talpha>(size_bias[i]);
 
         if(arg.use_e)
         {
@@ -608,6 +615,9 @@ void testing_matmul(const Arguments& arg)
         if(arg.scaleD_vector)
             hipblaslt_init<Talpha>(*hScaleDVec[i], M[i], 1, M[i]);
 
+        if(arg.scaleAlpha_vector)
+            hipblaslt_init<Talpha>(*hScaleAlphaVec[i], M[i], 1, M[i]);
+
         // copy data from CPU to device
         CHECK_HIP_ERROR(dA[i]->transfer_from(*hA[i]));
         CHECK_HIP_ERROR(dB[i]->transfer_from(*hB[i]));
@@ -624,6 +634,9 @@ void testing_matmul(const Arguments& arg)
 
         if(arg.scaleD_vector)
             CHECK_HIP_ERROR(dScaleDVec[i]->transfer_from(*hScaleDVec[i]));
+
+        if(arg.scaleAlpha_vector)
+            CHECK_HIP_ERROR(dScaleAlphaVec[i]->transfer_from(*hScaleAlphaVec[i]));
 
         if(size_D_copy[i])
         {
@@ -695,6 +708,18 @@ void testing_matmul(const Arguments& arg)
                                                 sizeof(void*)),
                 HIPBLAS_STATUS_SUCCESS);
         }
+
+        if(arg.scaleAlpha_vector)
+        {
+            const void* scaleAlphaVec_addr = *dScaleAlphaVec[i];
+            EXPECT_HIPBLAS_STATUS(
+                hipblasLtMatmulDescSetAttribute(
+                    matmul[i],
+                    HIPBLASLT_MATMUL_DESC_POINTER_MODE_ALPHA_DEVICE_VECTOR_BETA_HOST,
+                    &scaleAlphaVec_addr,
+                    sizeof(void*)),
+                HIPBLAS_STATUS_SUCCESS);
+        }
     }
 
     // set preference
@@ -762,6 +787,8 @@ void testing_matmul(const Arguments& arg)
             extinputs[gemmIdx].bias  = bias_addr;
             if(arg.scaleD_vector)
                 extinputs[gemmIdx].scaleDVec = *dScaleDVec[gemmIdx];
+            if(arg.scaleAlpha_vector)
+                extinputs[gemmIdx].scaleAlphaVec = *dScaleAlphaVec[gemmIdx];
         }
         extproblemtype.op_a         = transA;
         extproblemtype.op_b         = transB;
@@ -1251,21 +1278,43 @@ void testing_matmul(const Arguments& arg)
             {
                 if(epilogue_on[gemmIdx])
                 {
-                    cblas_gemm<Ti, Talpha, Talpha>(transA,
-                                                   transB,
-                                                   M[gemmIdx],
-                                                   N[gemmIdx],
-                                                   K[gemmIdx],
-                                                   h_alpha[gemmIdx],
-                                                   *(hA[gemmIdx]) + stride_a[gemmIdx] * batchIdx,
-                                                   lda[gemmIdx],
-                                                   *(hB[gemmIdx]) + stride_b[gemmIdx] * batchIdx,
-                                                   ldb[gemmIdx],
-                                                   h_beta[gemmIdx],
-                                                   *(hD_gold_epl[gemmIdx])
-                                                       + stride_d[gemmIdx] * batchIdx,
-                                                   ldd[gemmIdx],
-                                                   false);
+                    if(arg.scaleAlpha_vector)
+                    {
+                        cblas_gemm_alphascale<Ti, Talpha, Talpha>(
+                            transA,
+                            transB,
+                            M[gemmIdx],
+                            N[gemmIdx],
+                            K[gemmIdx],
+                            h_alpha[gemmIdx],
+                            *(hA[gemmIdx]) + stride_a[gemmIdx] * batchIdx,
+                            lda[gemmIdx],
+                            *(hB[gemmIdx]) + stride_b[gemmIdx] * batchIdx,
+                            ldb[gemmIdx],
+                            h_beta[gemmIdx],
+                            *(hD_gold_epl[gemmIdx]) + stride_d[gemmIdx] * batchIdx,
+                            ldd[gemmIdx],
+                            *(hScaleAlphaVec[gemmIdx]) + 0,
+                            false);
+                    }
+                    else
+                    {
+                        cblas_gemm<Ti, Talpha, Talpha>(
+                            transA,
+                            transB,
+                            M[gemmIdx],
+                            N[gemmIdx],
+                            K[gemmIdx],
+                            h_alpha[gemmIdx],
+                            *(hA[gemmIdx]) + stride_a[gemmIdx] * batchIdx,
+                            lda[gemmIdx],
+                            *(hB[gemmIdx]) + stride_b[gemmIdx] * batchIdx,
+                            ldb[gemmIdx],
+                            h_beta[gemmIdx],
+                            *(hD_gold_epl[gemmIdx]) + stride_d[gemmIdx] * batchIdx,
+                            ldd[gemmIdx],
+                            false);
+                    }
                     auto pos    = stride_d[gemmIdx] * batchIdx;
                     auto hEInst = arg.gradient ? hE : hE_gold;
                     auto ePos = (hEInst[gemmIdx] == nullptr) ? nullptr : (*(hEInst[gemmIdx]) + pos);
@@ -1694,12 +1743,14 @@ void testing_matmul(const Arguments& arg)
         delete hC[i];
         delete hD_gold[i];
         delete hD_gold_epl[i];
+        delete hD_gold_ScaleAlpha[i];
         delete hD_1[i];
         delete hBias[i];
         delete hBias_gold_epl[i];
         delete hBias_gold[i];
         delete hBias_gold_C[i];
         delete hScaleDVec[i];
+        delete hScaleAlphaVec[i];
         delete hBias_C[i];
         delete dA[i];
         delete dB[i];
@@ -1707,6 +1758,7 @@ void testing_matmul(const Arguments& arg)
         delete dD[i];
         delete dBias[i];
         delete dScaleDVec[i];
+        delete dScaleAlphaVec[i];
         delete dBias_C[i];
         if(arg.use_e)
         {

@@ -425,6 +425,7 @@ namespace Tensile
             bool                  useBias                   = false;
             bool                  useE                      = false;
             bool                  useScaleDVec              = false;
+            bool                  useScaleAlphaVec          = false;
             bool                  useInitialStridesAB       = false;
             bool                  useInitialStridesCD       = false;
             bool                  stridedBatched            = true;

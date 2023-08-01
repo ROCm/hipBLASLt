@@ -1478,14 +1478,15 @@ namespace Tensile
                                                       bool                isGPU,
                                                       ContractionInputs*  inputs)
         {
-            inputs->a         = (void*)ptrs[ContractionProblemGemm::TENSOR::A];
-            inputs->b         = (void*)ptrs[ContractionProblemGemm::TENSOR::B];
-            inputs->c         = (void*)ptrs[ContractionProblemGemm::TENSOR::C];
-            inputs->d         = (void*)ptrs[ContractionProblemGemm::TENSOR::D];
-            inputs->e         = (void*)ptrs[ContractionProblemGemm::TENSOR::E];
-            inputs->bias      = (void*)ptrs[ContractionProblemGemm::TENSOR::BIAS];
-            inputs->scaleDVec = (void*)ptrs[ContractionProblemGemm::TENSOR::SCALEDVEC];
-            inputs->metadata  = (unsigned char*)ptrs[ContractionProblemGemm::TENSOR::METADATA];
+            inputs->a             = (void*)ptrs[ContractionProblemGemm::TENSOR::A];
+            inputs->b             = (void*)ptrs[ContractionProblemGemm::TENSOR::B];
+            inputs->c             = (void*)ptrs[ContractionProblemGemm::TENSOR::C];
+            inputs->d             = (void*)ptrs[ContractionProblemGemm::TENSOR::D];
+            inputs->e             = (void*)ptrs[ContractionProblemGemm::TENSOR::E];
+            inputs->bias          = (void*)ptrs[ContractionProblemGemm::TENSOR::BIAS];
+            inputs->scaleDVec     = (void*)ptrs[ContractionProblemGemm::TENSOR::SCALEDVEC];
+            inputs->scaleAlphaVec = (void*)ptrs[ContractionProblemGemm::TENSOR::SCALEALPHAVEC];
+            inputs->metadata      = (unsigned char*)ptrs[ContractionProblemGemm::TENSOR::METADATA];
 
             inputs->batchA = (void**)batchPtrs[ContractionProblemGemm::TENSOR::A];
             inputs->batchB = (void**)batchPtrs[ContractionProblemGemm::TENSOR::B];
@@ -1566,6 +1567,13 @@ namespace Tensile
                     u8Ptr[ContractionProblemGemm::TENSOR::SCALEDVEC]
                         += offsets[ContractionProblemGemm::TENSOR::SCALEDVEC][idx]
                            * problem.tensors()[ContractionProblemGemm::TENSOR::SCALEDVEC]
+                                 .elementBytes();
+                }
+                if(u8Ptr[ContractionProblemGemm::TENSOR::SCALEALPHAVEC] != nullptr)
+                {
+                    u8Ptr[ContractionProblemGemm::TENSOR::SCALEALPHAVEC]
+                        += offsets[ContractionProblemGemm::TENSOR::SCALEALPHAVEC][idx]
+                           * problem.tensors()[ContractionProblemGemm::TENSOR::SCALEALPHAVEC]
                                  .elementBytes();
                 }
             }

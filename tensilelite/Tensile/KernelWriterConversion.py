@@ -97,6 +97,11 @@ class KernelWriterConversion(KernelWriterBase):
       scaleDVecPtrStr = self.state["ProblemType"]["ComputeDataType"].toDevice(self.language)
       kStr += "  " + scaleDVecPtrStr + " * " + "ScaleDVec;" + self.endLine
 
+    # interface: ScaleAlphaVec GSU>1 GSUA "MUL"
+    if self.state["ProblemType"]["UseScaleAlphaVec"]:
+      scaleAlphaVecPtrStr = self.state["ProblemType"]["ComputeDataType"].toDevice(self.language)
+      kStr += "  " + scaleAlphaVecPtrStr + " * " + "ScaleAlphaVec;" + self.endLine
+
     # alpha & beta
     kStr += "  %s alpha;%s" % (self.state["ProblemType"]["ComputeDataType"].toDevice(self.language), self.endLine)
     kStr += "  %s beta;%s" % (self.state["ProblemType"]["ComputeDataType"].toDevice(self.language), self.endLine)
@@ -425,6 +430,13 @@ class KernelWriterConversion(KernelWriterBase):
       kStr += "  %s[%d] *= (%s)arg.alpha;%s" % (accumStr, vIdx, intermediateDataType, self.endLine)
     kStr += self.endLine
 
+    if self.state["ProblemType"]["UseScaleAlphaVec"]:
+      kStr += "  if(arg.ScaleAlphaVec != nullptr){" + self.endLine
+      for vIdx in range(self.num_dword_load):
+        kStr += "  %s[%d] *= (%s)arg.ScaleAlphaVec[id0+%d];%s" % (accumStr, vIdx, intermediateDataType, vIdx, self.endLine)
+      kStr += "  }" + self.endLine
+      kStr += self.endLine
+
     #Beta
     kStr += "  if(arg.beta != (%s)0){%s" % (self.state["ProblemType"]["ComputeDataType"].toDevice(self.language), self.endLine)
     for vIdx in range(self.num_dword_load):
@@ -557,6 +569,7 @@ class KernelWriterConversion(KernelWriterBase):
       name += ("h" if self.state["ProblemType"]["ActivationHPA"] else "")
       name += ("ng" if self.state["ProblemType"]["ActivationNoGuard"] else "")
     name += "_ScaleDVec" if self.state["ProblemType"]["UseScaleDVec"] else ""
+    name += "_ScaleAlphaVec" if self.state["ProblemType"]["UseScaleAlphaVec"] else ""
     name += "_PostGSU" + str(self.state["GlobalSplitU"])
     if self.num_elements_load != None:
       name += "_VW" + str(self.num_elements_load)

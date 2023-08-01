@@ -119,6 +119,7 @@ Arguments:
   - bias_source: hipblaslt_bias_source
   - bias_vector: c_bool
   - scaleD_vector: c_bool
+  - scaleAlpha_vector: c_bool
   - c_noalias_d: c_bool
   - HMM: c_bool
   - use_e: c_bool
@@ -201,6 +202,7 @@ Defaults:
   gradient: false
   bias_vector: false
   scaleD_vector: false
+  scaleAlpha_vector: false
   grouped_gemm: 0
   norm_check_assert: true
   use_ext: false

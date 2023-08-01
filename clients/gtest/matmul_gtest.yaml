@@ -549,6 +549,7 @@ Tests:
   alpha: [ 1.0, 2.0 ]
   beta: [ 0.0, 2.0 ]
   bias_vector: [0, 1]
+  scaleAlpha_vector: [0, 1]
 
 - name: matmul_scaleDVec
   category: pre_checkin

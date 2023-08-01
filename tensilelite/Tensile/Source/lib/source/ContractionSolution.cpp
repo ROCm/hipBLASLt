@@ -485,6 +485,13 @@ namespace Tensile
             args.template append<void const*>("scaleDVec", inputs.scaleDVec);
         }
 
+        if(problemType.useScaleAlphaVec
+           && ((sizeMapping.globalSplitU == 1)
+               || (sizeMapping.customKernelName != ""))) //kernel input data
+        {
+            args.template append<void const*>("scaleAlphaVec", inputs.scaleAlphaVec);
+        }
+
         bool runActivation = false;
         if((problemType.activationType != ActivationType::None) && sizeMapping.activationFused
            && ((sizeMapping.globalSplitU == 1) || (sizeMapping.customKernelName != "")))
@@ -618,7 +625,7 @@ namespace Tensile
         return rv;
     }
 
-template <typename KA>
+    template <typename KA>
     void
         ContractionSolution::calculateSingleCallWorkGroupItems(std::vector<Problem> const& problems,
                                                                const Tensile::dim3& workGroupSize,
@@ -668,8 +675,8 @@ template <typename KA>
 
                 numWorkGroups.y *= sizeMapping.globalSplitU;
 
-                numWorkItems.x += (workGroupSize.x * numWorkGroups.x * workGroupSize.y * numWorkGroups.y
-                                * workGroupSize.z * numWorkGroups.z);
+                numWorkItems.x += (workGroupSize.x * numWorkGroups.x * workGroupSize.y
+                                   * numWorkGroups.y * workGroupSize.z * numWorkGroups.z);
 
                 if constexpr(std::is_same<KA, KernelArguments>::value)
                 {
@@ -802,6 +809,11 @@ template <typename KA>
            && (sizeMapping.globalAccumulation == 0 || (sizeMapping.customKernelName != "")))
         {
             rv.args.append<void const*>("scaleDVec", inputs.scaleDVec);
+        }
+        if(problemType.useScaleAlphaVec
+           && (sizeMapping.globalAccumulation == 0 || (sizeMapping.customKernelName != "")))
+        {
+            rv.args.append<void const*>("scaleAlphaVec", inputs.scaleAlphaVec);
         }
 
         if(sizeMapping.globalAccumulation)
@@ -943,6 +955,10 @@ template <typename KA>
         if(problemType.useScaleDVec) // GSU dep
         {
             args.template append<void const*>("scaleDVec", inputs.scaleDVec);
+        }
+        if(problemType.useScaleAlphaVec) // GSU dep
+        {
+            args.template append<void const*>("scaleAlphaVec", inputs.scaleAlphaVec);
         }
 
         if(sizeMapping.globalAccumulation == 2)
@@ -1339,6 +1355,10 @@ template <typename KA>
         if(problemType.useScaleDVec)
         {
             name += ("_ScaleDVec");
+        }
+        if(problemType.useScaleAlphaVec)
+        {
+            name += ("_ScaleAlphaVec");
         }
 
         name += "_PostGSU" + std::to_string(gsu);

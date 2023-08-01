@@ -231,6 +231,9 @@ class ProblemType(Mapping):
         # if self["UseScaleDVec"]:
         #   printWarning("Use scaleDVec is disabled cause Gradient is enabled.")
         #   self["UseScaleDVec"] = False
+        # if self["UseScaleAlphaVec"]:
+        #   printWarning("Use scaleAlphaVec is disabled cause Gradient is enabled.")
+        #   self["UseScaleAlphaVec"] = False
       self["Gradient"] = config["Gradient"]
 
     # Need gradient info
@@ -499,6 +502,7 @@ class ProblemType(Mapping):
     if self["ActivationNoGuard"]: name += "NG"
 
     if self["UseScaleDVec"]: name += "_SDV"
+    if self["UseScaleAlphaVec"]: name += "_SAV"
 
     if self["SupportUserArgs"]: name += "_UserArgs"
 
