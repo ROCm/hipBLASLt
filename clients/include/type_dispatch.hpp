@@ -91,6 +91,10 @@ auto hipblaslt_matmul_dispatch(const Arguments& arg)
         {
             return TEST<float, float, float>{}(arg);
         }
+        else if(Ti == HIPBLAS_R_16F && To == HIPBLAS_R_32F && Tc == HIPBLASLT_COMPUTE_F32)
+        {
+            return TEST<hipblasLtHalf, float, float>{}(arg);
+        }
     }
     return TEST<void>{}(arg);
 }

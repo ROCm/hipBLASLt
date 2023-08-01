@@ -72,6 +72,12 @@ class SignatureCOV3(Signature):
         biasValueType = "void"
         actValueType  = kernel["ProblemType"]["ActivationComputeDataType"].toNameAbbrev()
 
+        for i in range(0, writer.states.numSgprSizesFree):
+            signature.addArg(            "SizesFree%u"%i, SVK.SIG_VALUE,               "u32")
+
+        for i in range(0, writer.states.numSgprSizesSum):
+            signature.addArg(             "SizesSum%u"%i, SVK.SIG_VALUE,               "u32")
+
         if globalParameters["DebugKernel"]:
             signature.addArg("AddressDbg", SVK.SIG_GLOBALBUFFER, "struct", "generic")
         signature.addArg(    "D", SVK.SIG_GLOBALBUFFER, dstValueType, "generic")
@@ -104,18 +110,14 @@ class SignatureCOV3(Signature):
             for i in range(0, writer.states.m.numSgprStrides):
                 signature.addArg(   "strideMetadata%u"%i, SVK.SIG_VALUE,               "u32")
 
-        for i in range(0, writer.states.numSgprSizesFree):
-            signature.addArg(            "SizesFree%u"%i, SVK.SIG_VALUE,               "u32")
-
-        for i in range(0, writer.states.numSgprSizesSum):
-            signature.addArg(             "SizesSum%u"%i, SVK.SIG_VALUE,               "u32")
-
         for idxChar in kernel["PackedC0IdxChars"][:-1]:
             signature.addArg("MagicNumberSize%s"%idxChar, SVK.SIG_VALUE,               "u32")
             signature.addArg( "MagicShiftSize%s"%idxChar, SVK.SIG_VALUE,               "u32")
 
         if kernel["ProblemType"]["UseScaleDVec"] and (kernel["GlobalSplitU"] == 1):
             signature.addArg("AddressScaleDVec", SVK.SIG_GLOBALBUFFER, cptValueType, "generic")
+        if kernel["ProblemType"]["UseScaleAlphaVec"] and (kernel["GlobalSplitU"] == 1):
+            signature.addArg("AddressScaleAlphaVec", SVK.SIG_GLOBALBUFFER, cptValueType, "generic")
 
         if writer.states.useBias == DataDirection.READ:
             signature.addArg("bias", SVK.SIG_GLOBALBUFFER, biasValueType, "generic")
@@ -134,7 +136,6 @@ class SignatureCOV3(Signature):
         if kernel["ProblemType"]["UseE"] and (kernel["GlobalSplitU"] == 1):
             for i in range(0, writer.states.e.numSgprStrides):
                 signature.addArg("StrideE%u"%i,        SVK.SIG_VALUE,        "u32")
-
 
         if ((kernel["ProblemType"]["ActivationType"] != 'none') and (kernel["GlobalSplitU"] == 1) \
             and kernel["ActivationFused"]):

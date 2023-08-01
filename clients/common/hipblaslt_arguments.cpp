@@ -103,6 +103,7 @@ void Arguments::init()
     bias_source       = hipblaslt_bias_source::d;
     bias_vector       = false;
     scaleD_vector     = false;
+    scaleAlpha_vector = false;
     grouped_gemm      = 0;
     c_noalias_d       = false;
     HMM               = false;

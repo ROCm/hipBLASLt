@@ -26,7 +26,8 @@ options:
 	--ldd           ldd                     GEMM_STRIDED argument ldd
 	--trans_a       trans_a                 GEMM_STRIDED argument trans_a (N, T)
 	--trans_b       trans_b                 GEMM_STRIDED argument trans_b (N, T)
-	--datatype      datatype                GEMM_STRIDED argument in out datatype:fp32,fp16,bf16
+	--in_datatype   datatype                GEMM_STRIDED argument in datatype:fp32,fp16,bf16
+	--out_datatype  datatype                GEMM_STRIDED argument out datatype:fp32,fp16,bf16
 	--stride_a      stride_a                GEMM_STRIDED argument stride_a
 	--stride_b      stride_b                GEMM_STRIDED argument stride_b
 	--stride_c      stride_c                GEMM_STRIDED argument stride_c

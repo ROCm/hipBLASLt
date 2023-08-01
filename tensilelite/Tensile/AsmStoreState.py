@@ -198,6 +198,10 @@ class StoreState:
                 self.sharedColScaleDVecVgprs = kernelWriter.vgprPool.checkOut(self.numAddrVgpr, "sharedColScaleDVecVgprs for packed elements")
             else:
                 self.sharedColScaleDVecVgprs = None
+            if kernel["ProblemType"]["UseScaleAlphaVec"] and (kernel["GlobalSplitU"] == 1):
+                self.sharedColScaleAlphaVecVgprs = kernelWriter.vgprPool.checkOut(self.numAddrVgpr, "sharedColScaleAlphaVecVgprs for packed elements")
+            else:
+                self.sharedColScaleAlphaVecVgprs = None
         elif self.optSingleColVgpr:
             self.numAddrVgpr = 1
             self.sharedColDVgprs = kernelWriter.vgprPool.checkOut(1, "sharedColDVgprs")
@@ -221,6 +225,10 @@ class StoreState:
                 self.sharedColScaleDVecVgprs = kernelWriter.vgprPool.checkOut(1, "sharedColScaleDVecVgprs for packed elements")
             else:
                 self.sharedColScaleDVecVgprs = None
+            if kernel["ProblemType"]["UseScaleAlphaVec"] and (kernel["GlobalSplitU"] == 1):
+                self.sharedColScaleAlphaVecVgprs = kernelWriter.vgprPool.checkOut(1, "sharedColScaleAlphaVecVgprs for packed elements")
+            else:
+                self.sharedColScaleAlphaVecVgprs = None
         else:
             self.numAddrVgpr = 0
             self.sharedColEVgprs    = None
@@ -228,6 +236,7 @@ class StoreState:
             self.sharedColCVgprs    = None
             self.sharedColBiasVgprs = None
             self.sharedColScaleDVecVgprs = None
+            self.sharedColScaleAlphaVecVgprs = None
 
         # For detecting when we are running first batch
         self.firstBatch = True
@@ -251,6 +260,10 @@ class StoreState:
 
         if kernel["ProblemType"]["UseScaleDVec"] and (kernel["GlobalSplitU"] == 1):
             self.numVgprsPerElement += self.cfg.numVgprsPerAddr  # ScaleDVec address
+            numVgprs = int(ceil(kernel["ProblemType"]["DataType"].numRegisters()))
+            self.numVgprsPerElement += numVgprs * gwvw  # Loaded data
+        if kernel["ProblemType"]["UseScaleAlphaVec"] and (kernel["GlobalSplitU"] == 1):
+            self.numVgprsPerElement += self.cfg.numVgprsPerAddr  # ScaleAlphaVec address
             numVgprs = int(ceil(kernel["ProblemType"]["DataType"].numRegisters()))
             self.numVgprsPerElement += numVgprs * gwvw  # Loaded data
         # Calculate align
@@ -279,6 +292,7 @@ class StoreState:
         self.elementData     = []  # VGPR to use for element data, needed for atomic or beta
         self.elementDataBias = []
         self.elementDataScaleDVec = []
+        self.elementDataScaleAlphaVec = []
         self.elementMask     = []  # SGPR to use for element mask
         self.elementSumIdx = []
 
@@ -292,6 +306,7 @@ class StoreState:
 
         biasVgprMap = {}
         scaleDVecVgprMap = {}
+        scaleAlphaVecVgprMap = {}
         lastData = 0
         for elementIdx in range(0, len(batchElements)):
             # Create the AddrCalc for each memory load/store
@@ -356,6 +371,7 @@ class StoreState:
                 addrCVgpr    = self.sharedColCVgprs
                 addrBiasVgpr = self.sharedColBiasVgprs
                 addrScaleDVecVgpr = self.sharedColScaleDVecVgprs
+                addrScaleAlphaVecVgpr = self.sharedColScaleAlphaVecVgprs
             elif self.optSharedColVgpr:
                 if kernel["EnableMatrixInstruction"]:
                     elementCol = (d0 * kernel["MIOutputVectorWidth"] + vc0) / gwvw
@@ -379,6 +395,10 @@ class StoreState:
                     addrScaleDVecVgpr = self.sharedColScaleDVecVgprs+elementCol
                 else:
                     addrScaleDVecVgpr = None
+                if kernel["ProblemType"]["UseScaleAlphaVec"] and (kernel["GlobalSplitU"] == 1):
+                    addrScaleAlphaVecVgpr = self.sharedColScaleAlphaVecVgprs+elementCol
+                else:
+                    addrScaleAlphaVecVgpr = None
             else:
                 # allocate new VGPR for each element:
                 addrDVgpr = kw.vgprPool.checkOutAligned(self.cfg.numVgprsPerAddr, \
@@ -404,8 +424,13 @@ class StoreState:
                         int(ceil(self.cfg.numVgprsPerAddr)), "loadScaleDVecBatch-addr for ei=%u"%(elementIdx), preventOverflow=not isOptNLL)
                 else:
                     addrScaleDVecVgpr = None
+                if kernel["ProblemType"]["UseScaleAlphaVec"] and (kernel["GlobalSplitU"] == 1):
+                    addrScaleAlphaVecVgpr = kw.vgprPool.checkOutAligned(self.cfg.numVgprsPerAddr, \
+                        int(ceil(self.cfg.numVgprsPerAddr)), "loadScaleAlphaVecBatch-addr for ei=%u"%(elementIdx), preventOverflow=not isOptNLL)
+                else:
+                    addrScaleAlphaVecVgpr = None
 
-            self.elementAddr.append(AddrCalculation(kw, self, addrCVgpr, addrDVgpr, addrEVgpr, addrBiasVgpr, addrScaleDVecVgpr, element, coordOffset0, \
+            self.elementAddr.append(AddrCalculation(kw, self, addrCVgpr, addrDVgpr, addrEVgpr, addrBiasVgpr, addrScaleDVecVgpr, addrScaleAlphaVecVgpr, element, coordOffset0, \
               self.kernelWriter.vgprs.coord1, coordOffset1, coordOffset1 - self.lastCoordOffset1, newCoord1))
             # if numVgprsPerDataPerVI == 0.5, then two consecutive elements
             # should have same data pointer, next should move.
@@ -472,6 +497,18 @@ class StoreState:
             else:
                 dataScaleDVec = 0
             self.elementDataScaleDVec.append(dataScaleDVec)
+
+            if kernel["ProblemType"]["UseScaleAlphaVec"] and (kernel["GlobalSplitU"] == 1):
+                if coordOffset0 in scaleAlphaVecVgprMap:
+                    dataScaleAlphaVec = scaleAlphaVecVgprMap[coordOffset0]
+                else:
+                    numVgprs = int(ceil(kernel["ProblemType"]["ComputeDataType"].numRegisters()))
+                    dataScaleAlphaVec = kw.vgprPool.checkOutAligned(int(numVgprs*self.cfg.gwvw), \
+                                  int(ceil(numVgprs*self.cfg.gwvw)), "scaleAlphaVec data for ei=%u"%elementIdx, preventOverflow=False)
+                    scaleAlphaVecVgprMap[coordOffset0] = dataScaleAlphaVec
+            else:
+                dataScaleAlphaVec = 0
+            self.elementDataScaleAlphaVec.append(dataScaleAlphaVec)
 
             if batchElementSgprs != None:
                 if self.optSGPRUsage:
@@ -541,5 +578,7 @@ class StoreState:
 
         if (self.sharedColScaleDVecVgprs != None):
             self.kernelWriter.vgprPool.checkIn(self.sharedColScaleDVecVgprs)
+        if (self.sharedColScaleAlphaVecVgprs != None):
+            self.kernelWriter.vgprPool.checkIn(self.sharedColScaleAlphaVecVgprs)
         self.checkInTempVgprC()
         self.resetState()

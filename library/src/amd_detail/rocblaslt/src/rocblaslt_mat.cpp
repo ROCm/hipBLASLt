@@ -60,9 +60,9 @@ rocblaslt_status rocblaslt_matmul_impl(const rocblaslt_handle       handle,
         batch_stride_d, batch_stride_e;
     hipblasDatatype_t      bias_type;
     rocblaslt_compute_type compute_type;
-    void *                 bias = nullptr, *scaleDVec = nullptr, *E = nullptr;
-    bool                   gradient = false;
-    rocblaslt_status       isValid  = rocblaslt_matmul_valid_args(matmul_descr,
+    void *           bias = nullptr, *scaleDVec = nullptr, *scaleAlphaVec = nullptr, *E = nullptr;
+    bool             gradient = false;
+    rocblaslt_status isValid  = rocblaslt_matmul_valid_args(matmul_descr,
                                                            A,
                                                            B,
                                                            C,
@@ -89,6 +89,7 @@ rocblaslt_status rocblaslt_matmul_impl(const rocblaslt_handle       handle,
                                                            bias,
                                                            bias_type,
                                                            scaleDVec,
+                                                           scaleAlphaVec,
                                                            E,
                                                            gradient,
                                                            compute_type);
@@ -115,8 +116,8 @@ rocblaslt_status rocblaslt_matmul_impl(const rocblaslt_handle       handle,
     handle, opA, opB, m, n, k, alpha, A, type_a, lda, batch_stride_a, B, type_b, ldb,            \
         batch_stride_b, beta, C, type_c, ldc, batch_stride_c, D, type_d, ldd, batch_stride_d, E, \
         lde, batch_stride_e, num_batches_a, strided_batch, grouped_gemm, gradient, compute_type, \
-        algo, workspace, workspaceSizeInBytes, bias, scaleDVec, bias_type, epilogue, gemmData,   \
-        stream
+        algo, workspace, workspaceSizeInBytes, bias, scaleDVec, scaleAlphaVec, bias_type,        \
+        epilogue, gemmData, stream
 
     return rocblaslt_matmul_template(EX_PARM);
 }
@@ -140,9 +141,9 @@ rocblaslt_status rocblaslt_gemm_create_cpp_impl(rocblaslt_matmul_desc          m
         batch_stride_d, batch_stride_e;
     hipblasDatatype_t      bias_type;
     rocblaslt_compute_type compute_type;
-    void *                 bias = nullptr, *scaleDVec = nullptr, *E = nullptr;
-    bool                   gradient = false;
-    rocblaslt_status       isValid  = rocblaslt_matmul_valid_args(matmul_descr,
+    void *           bias = nullptr, *scaleDVec = nullptr, *scaleAlphaVec = nullptr, *E = nullptr;
+    bool             gradient = false;
+    rocblaslt_status isValid  = rocblaslt_matmul_valid_args(matmul_descr,
                                                            A,
                                                            B,
                                                            C,
@@ -169,6 +170,7 @@ rocblaslt_status rocblaslt_gemm_create_cpp_impl(rocblaslt_matmul_desc          m
                                                            bias,
                                                            bias_type,
                                                            scaleDVec,
+                                                           scaleAlphaVec,
                                                            E,
                                                            gradient,
                                                            compute_type);
@@ -193,7 +195,7 @@ rocblaslt_status rocblaslt_gemm_create_cpp_impl(rocblaslt_matmul_desc          m
     opA, opB, m, n, k, alpha, A, type_a, lda, batch_stride_a, B, type_b, ldb, batch_stride_b,     \
         beta, C, type_c, ldc, batch_stride_c, D, type_d, ldd, batch_stride_d, E, lde,             \
         batch_stride_e, num_batches_a, strided_batch, grouped_gemm, gradient, compute_type, bias, \
-        scaleDVec, bias_type, epilogue, gemmData, gemmCount
+        scaleDVec, scaleAlphaVec, bias_type, epilogue, gemmData, gemmCount
 
     return rocblaslt_gemm_create_template_cpp(EX_PARM_GEMM_CPP);
 }
@@ -235,7 +237,7 @@ rocblaslt_status rocblaslt_gemm_create_cpp_impl_2(int64_t                       
                                      batch_stride_c,
                                      batch_stride_d);
 
-    void *            bias = nullptr, *scaleDVec = nullptr, *E = nullptr;
+    void *            bias = nullptr, *scaleDVec = nullptr, *scaleAlphaVec = nullptr, *E = nullptr;
     int64_t           lde = 0, batch_stride_e = 0;
     hipblasDatatype_t bias_type = static_cast<hipblasDatatype_t>(0);
     bool              gradient  = false;
@@ -251,12 +253,14 @@ rocblaslt_status rocblaslt_gemm_create_cpp_impl_2(int64_t                       
                                                rocEpilogue.aux_stride,
                                                inputs.bias,
                                                inputs.scaleDVec,
+                                               inputs.scaleAlphaVec,
                                                E,
                                                lde,
                                                batch_stride_e,
                                                bias,
                                                bias_type,
                                                scaleDVec,
+                                               scaleAlphaVec,
                                                gradient);
     if(status != rocblaslt_status_continue)
         return status;
@@ -294,7 +298,7 @@ rocblaslt_status rocblaslt_gemm_create_cpp_impl_2(int64_t                       
     opA, opB, m, n, k, alpha, A, type_a, lda, batch_stride_a, B, type_b, ldb, batch_stride_b,     \
         beta, C, type_c, ldc, batch_stride_c, D, type_d, ldd, batch_stride_d, E, lde,             \
         batch_stride_e, num_batches_a, strided_batch, grouped_gemm, gradient, compute_type, bias, \
-        scaleDVec, bias_type, epilogue, gemmData, gemmCount
+        scaleDVec, scaleAlphaVec, bias_type, epilogue, gemmData, gemmCount
 
     return rocblaslt_gemm_create_template_cpp(EX_PARM_GEMM_CPP_2);
 }
@@ -327,6 +331,7 @@ rocblaslt_status
     std::vector<void*>              D_vec, E_vec;
     std::vector<const void*>        bias_vec;
     std::vector<const void*>        scaleD_vec;
+    std::vector<const void*>        scaleAlpha_vec;
     std::vector<hipblasDatatype_t>  bias_type_vec;
     std::vector<rocblaslt_epilogue> epilogue_vec;
     std::vector<int64_t>            m_vec, n_vec, k_vec;
@@ -395,8 +400,9 @@ rocblaslt_status
 
         void*              bias = nullptr;
         hipblasDatatype_t  bias_type;
-        void*              scaleDVec = nullptr;
-        void*              E         = nullptr;
+        void*              scaleDVec     = nullptr;
+        void*              scaleAlphaVec = nullptr;
+        void*              E             = nullptr;
         int64_t            lde, batch_stride_e;
         bool               gradient;
         rocblaslt_epilogue epilogue = matmul_descr[i]->epilogue;
@@ -411,12 +417,14 @@ rocblaslt_status
                                                       matmul_descr[i]->stride_e,
                                                       matmul_descr[i]->bias,
                                                       matmul_descr[i]->scaleDVec,
+                                                      matmul_descr[i]->scaleAlphaVec,
                                                       E,
                                                       lde,
                                                       batch_stride_e,
                                                       bias,
                                                       bias_type,
                                                       scaleDVec,
+                                                      scaleAlphaVec,
                                                       gradient);
         if(validArgs != rocblaslt_status_continue)
             return validArgs;
@@ -433,6 +441,7 @@ rocblaslt_status
         epilogue_vec.push_back(epilogue);
         bias_vec.push_back(bias);
         scaleD_vec.push_back(scaleDVec);
+        scaleAlpha_vec.push_back(scaleAlphaVec);
 
         // matrix A
         // int64_t           num_rows_a     = matA[i]->m;
@@ -487,7 +496,7 @@ rocblaslt_status
         type_b, ldb_vec, batch_stride_b_vec, beta_vec, C_vec, type_c, ldc_vec, batch_stride_c_vec, \
         D_vec, type_d, ldd_vec, batch_stride_d_vec, E_vec, lde_vec, batch_stride_e_vec,            \
         num_batches_a_vec, strided_batch, grouped_gemm, gradient_vec, compute_type, bias_vec,      \
-        scaleD_vec, bias_type_vec, epilogue_vec, gemmData, gemmCount
+        scaleD_vec, scaleAlpha_vec, bias_type_vec, epilogue_vec, gemmData, gemmCount
 
     return rocblaslt_groupedgemm_create_template_cpp(EX_PARM_GroupedGemm_CPP);
 }
@@ -523,6 +532,7 @@ rocblaslt_status
     std::vector<void*>              D_vec, E_vec;
     std::vector<const void*>        bias_vec;
     std::vector<const void*>        scaleD_vec;
+    std::vector<const void*>        scaleAlpha_vec;
     std::vector<hipblasDatatype_t>  bias_type_vec;
     std::vector<rocblaslt_epilogue> epilogue_vec;
 
@@ -553,8 +563,9 @@ rocblaslt_status
 
         void*             bias = nullptr;
         hipblasDatatype_t bias_type;
-        void*             scaleDVec = nullptr;
-        void*             E         = nullptr;
+        void*             scaleDVec     = nullptr;
+        void*             scaleAlphaVec = nullptr;
+        void*             E             = nullptr;
         int64_t           lde, batch_stride_e;
         bool              gradient;
 
@@ -572,12 +583,14 @@ rocblaslt_status
                                                       rocEpilogue[iIdx].aux_stride,
                                                       inputs[i].bias,
                                                       inputs[i].scaleDVec,
+                                                      inputs[i].scaleAlphaVec,
                                                       E,
                                                       lde,
                                                       batch_stride_e,
                                                       bias,
                                                       bias_type,
                                                       scaleDVec,
+                                                      scaleAlphaVec,
                                                       gradient);
         if(validArgs != rocblaslt_status_continue)
             return validArgs;
@@ -586,6 +599,7 @@ rocblaslt_status
         epilogue_vec.push_back(epilogue);
         bias_vec.push_back(bias);
         scaleD_vec.push_back(scaleDVec);
+        scaleAlpha_vec.push_back(scaleAlphaVec);
 
         A_vec.push_back(inputs[i].a);
         B_vec.push_back(inputs[i].b);
@@ -607,7 +621,7 @@ rocblaslt_status
     opA, opB, m, n, k, alpha_vec, A_vec, type_a, lda, strideA, B_vec, type_b, ldb, strideB,       \
         beta_vec, C_vec, type_c, ldc, strideC, D_vec, type_d, ldd, strideD, E_vec, lde_vec,       \
         batch_stride_e_vec, b, strided_batch, grouped_gemm, gradient_vec, compute_type, bias_vec, \
-        scaleD_vec, bias_type_vec, epilogue_vec, gemmData, gemmCount
+        scaleD_vec, scaleAlpha_vec, bias_type_vec, epilogue_vec, gemmData, gemmCount
 
     return rocblaslt_groupedgemm_create_template_cpp(EX_PARM_GroupedGemm_CPP_2);
 }

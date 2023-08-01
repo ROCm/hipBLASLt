@@ -65,7 +65,7 @@ class BoundIndex:
 
 class ProblemType:
     StateKeys = ['operationIdentifier', 'transA', 'transB', 'aType', 'bType', 'cType', 'dType', 'eType', 'computeType',
-                 'useBeta', 'useBias', 'biasSrcWhiteList', 'useE', 'useScaleDVec', 'biasDataTypeWhiteList', 'highPrecisionAccumulate',
+                 'useBeta', 'useBias', 'biasSrcWhiteList', 'useE', 'useScaleDVec', 'useScaleAlphaVec', 'biasDataTypeWhiteList', 'highPrecisionAccumulate',
                  'useInitialStridesAB', 'useInitialStridesCD', 'stridedBatched', 'groupedGemm',
                  'useGradient', 'activationType', 'activationArgLength', 'activationComputeDataType', 'activationNoGuard',
                  'sparseA', 'f32XdlMathOp', 'supportDeviceUserArguments']
@@ -198,6 +198,10 @@ class ProblemType:
         if 'UseScaleDVec' in d:
             rv.useScaleDVec = d['UseScaleDVec']
 
+        rv.useScaleAlphaVec = False
+        if 'UseScaleAlphaVec' in d:
+            rv.useScaleAlphaVec = d['UseScaleAlphaVec']
+
         rv.batched = d['Batched']
 
         rv.activationType      = ActivationType('none')
@@ -319,6 +323,7 @@ class ProblemType:
                 enumList = [actEnum.capitalize() for actEnum in ActivationType.getEnumStrList(self.activationComputeDataType, exportType=exportType)]
                 predicates.append(ProblemPredicate("ActivationEnumWhiteList", value=enumList))
             # predicates.append(ProblemPredicate("UseScaleDVec", value=self.useScaleDVec))
+            # predicates.append(ProblemPredicate("UseScaleAlphaVec", value=self.useScaleAlphaVec))
             # predicates.append(ProblemPredicate("GroupedGemm", value=self.groupedGemm))
 
         if includeType:
@@ -333,6 +338,7 @@ class ProblemType:
             predicates.append(ProblemPredicate("StridedBatched", value=self.stridedBatched))
             predicates.append(ProblemPredicate("GroupedGemm", value=self.groupedGemm))
             predicates.append(ProblemPredicate("UseScaleDVec", value=self.useScaleDVec))
+            predicates.append(ProblemPredicate("UseScaleAlphaVec", value=self.useScaleAlphaVec))
             predicates.append(ProblemPredicate("SparseA", value=self.sparseA))
             predicates.append(ProblemPredicate("F32XdlMathOp", value=self.f32XdlMathOp))
             predicates.append(ProblemPredicate("SupportDeviceUserArguments", value=self.supportDeviceUserArguments))
@@ -394,7 +400,7 @@ class ProblemPredicate(Properties.Predicate):
             TLUB = state['ProblemType']['TLUB']
             minFree0 = state['GlobalReadVectorWidthA'] if TLUA else 1
             minFree1 = state['GlobalReadVectorWidthB'] if TLUB else 1
-            minFree1 = 0 if state['ProblemType']['GroupedGemm'] else minFree0
+            minFree1 = 0 if state['ProblemType']['GroupedGemm'] else minFree1
             rv += [cls('LeadingFree0SizesGreaterOrEqual', value=minFree0)]
             rv += [cls('LeadingFree1SizesGreaterOrEqual', value=minFree1)]
 
@@ -466,7 +472,7 @@ class SizeMapping:
                  'globalAccumulation',
                  'workspaceSizePerElemC',
                  'workspaceSizePerElemBias',
-                 'activationFused'
+                 'activationFused', 'CustomKernelName'
                  ]
 
     @classmethod
@@ -490,7 +496,8 @@ class SizeMapping:
                    globalAccumulation       = globalAccum,
                    workspaceSizePerElemC    = d['_WorkspaceSizePerElemC'],
                    workspaceSizePerElemBias = d['_WorkspaceSizePerElemBias'],
-                   activationFused          = d['ActivationFused']
+                   activationFused          = d['ActivationFused'],
+                   CustomKernelName         = d['CustomKernelName']
                    )
 
     @classmethod

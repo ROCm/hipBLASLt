@@ -402,6 +402,8 @@ namespace Tensile
             size_t workspaceSizePerElemBias = 0;
 
             bool activationFused = true;
+
+            std::string customKernelName;
         };
 
         struct ProblemType
@@ -423,6 +425,7 @@ namespace Tensile
             bool                  useBias                   = false;
             bool                  useE                      = false;
             bool                  useScaleDVec              = false;
+            bool                  useScaleAlphaVec          = false;
             bool                  useInitialStridesAB       = false;
             bool                  useInitialStridesCD       = false;
             bool                  stridedBatched            = true;

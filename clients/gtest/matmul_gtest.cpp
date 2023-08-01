@@ -142,6 +142,9 @@ namespace
                 if(arg.scaleD_vector)
                     name << "_SDV";
 
+                if(arg.scaleAlpha_vector)
+                    name << "_SAV";
+
                 if(arg.grouped_gemm > 0)
                     name << "_GG" << arg.grouped_gemm;
 

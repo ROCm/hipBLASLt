@@ -120,6 +120,7 @@ struct Arguments
     hipblaslt_bias_source bias_source;
     bool                  bias_vector;
     bool                  scaleD_vector;
+    bool                  scaleAlpha_vector;
     bool                  c_noalias_d;
     bool                  HMM;
     bool                  use_e;
@@ -192,6 +193,7 @@ struct Arguments
     OPER(bias_source) SEP            \
     OPER(bias_vector) SEP            \
     OPER(scaleD_vector) SEP          \
+    OPER(scaleAlpha_vector) SEP          \
     OPER(c_noalias_d) SEP            \
     OPER(HMM) SEP                    \
     OPER(use_e) SEP                  \
@@ -344,7 +346,7 @@ namespace ArgumentsHelper
             func("beta", arg.get_beta<decltype(T)>());
         };
 };
-    // clang-format on
+// clang-format on
 
 #else
 

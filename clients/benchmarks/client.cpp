@@ -424,6 +424,10 @@ try
          bool_switch(&arg.scaleD_vector)->default_value(false),
          "Apply scaleD vector")
 
+        ("scaleAlpha_vector",
+         bool_switch(&arg.scaleAlpha_vector)->default_value(false),
+         "Apply scaleAlpha vector")
+
         ("use_e",
          bool_switch(&arg.use_e)->default_value(false),
          "Apply AUX output/ gradient input")
