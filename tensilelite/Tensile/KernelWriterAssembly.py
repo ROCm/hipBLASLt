@@ -4468,7 +4468,7 @@ class KernelWriterAssembly(KernelWriter):
           elif kernel["ProblemType"]["ComputeDataType"].isDouble():
             module.add(SMovB32(dst=sgpr(tmpSgpr+0), src=hex(0x00000000), comment="Low part of double 1.0"))
             module.add(SMovB32(dst=sgpr(tmpSgpr+1), src=hex(0x3ff00000), comment="High part of double 1.0"))
-            module.add(SCmpEQU64(dst=sgpr("Alpha",2), src=sgpr(tmpSgpr,2), comment="Alpha == 1.0 ?"))
+            module.add(SCmpEQU64(src0=sgpr("Alpha",2), src1=sgpr(tmpSgpr,2), comment="Alpha == 1.0 ?"))
 
           elif kernel["ProblemType"]["ComputeDataType"].isSingleComplex():
             module.add(SMovB32(dst=sgpr(tmpSgpr+0), src=hex(1.0), comment="Real part of 1.0"))

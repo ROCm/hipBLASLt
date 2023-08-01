@@ -1066,7 +1066,7 @@ class Solution(collections.abc.Mapping):
   # create Conversion Kernels
   def initConversionKernelObjects(self):
     self.conversionKernelObjects = []
-    load_vector_width = [1, 2, 4]
+    load_vector_width = [1, 2] if self["ProblemType"]["DataType"].isDouble() else [1, 2, 4]
     for vw in load_vector_width:
       if (self["GlobalSplitU"] > 1) and self["_GlobalAccumulation"]:
         if self["ProblemType"]["UseBias"]:
@@ -1918,6 +1918,10 @@ class Solution(collections.abc.Mapping):
       if state["InterleaveAlpha"]:
         reject(state, "Matrix unstruction doesn't support InterleaveAlpha")
         return
+      if state["ProblemType"]["ComputeDataType"].isDouble():
+        # See [4,4,4,4] snop for more info
+        if state["MatrixInstruction"] == [4,4,4,4]:
+          reject(state, "Currently Matrix instructions [4,4,4,4] is disabled.")
     else:
       if not state["ProblemType"]["HighPrecisionAccumulate"] \
          and state["ProblemType"]["ComputeDataType"].numRegisters() > state["ProblemType"]["DataType"].numRegisters() :

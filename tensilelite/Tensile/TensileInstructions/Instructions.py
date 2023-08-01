@@ -285,6 +285,8 @@ class MFMAInstruction(Instruction):
             kStr = "f16"
         elif iType == InstType.INST_F32:
             kStr = "f32"
+        elif iType == InstType.INST_F64:
+            kStr = "f64"
         elif iType == InstType.INST_BF16:
             kStr = "bf16"
         elif iType == InstType.INST_I8:

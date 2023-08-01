@@ -232,6 +232,10 @@ class KernelWriterConversion(KernelWriterBase):
 
     self.num_dword_load = int(self.num_elements_load * self.state["ProblemType"]["ComputeDataType"].numBytes() / 4)
     self.num_dword_store = int(self.num_elements_load * self.state["ProblemType"]["DestDataType"].numBytes() / 4)
+    if self.state["ProblemType"]["DataType"].isDouble():
+      self.num_dword_load  = self.num_dword_load // 2
+    if self.state["ProblemType"]["DestDataType"].isDouble():
+      self.num_dword_store = self.num_dword_store // 2
     kStr += "#define NUM_ELEMENT_LOAD %d%s" % ( self.num_elements_load, self.endLine)
     kStr += "#define NUM_GSU %d%s" % (self.state["GlobalSplitU"], self.endLine)
 
@@ -367,7 +371,7 @@ class KernelWriterConversion(KernelWriterBase):
     if self.state["ProblemType"]["UseBias"] and self.state["ProblemType"]["Gradient"] and self.state["ProblemType"]["BiasSrc"] == "D":
       kStr += "  auto idxW_ori = idxW;%s"%self.endLine
 
-    typeStr = "int" if self.state["ProblemType"]["DataType"].isInt8() or self.state["ProblemType"]["DataType"].isInt32() else "float"
+    typeStr = "int" if self.state["ProblemType"]["DataType"].isInt8() or self.state["ProblemType"]["DataType"].isInt32() else ("double" if self.state["ProblemType"]["DataType"].isDouble() else "float")
     loadTypeStr = "%s%s" % (typeStr, "" if self.num_dword_load == 1 else self.num_dword_load)
     storeTypeStr = "%s%s" % (typeStr, self.num_dword_store) if self.num_dword_store >= 1 else destTypeStr
 

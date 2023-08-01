@@ -596,7 +596,7 @@ namespace Tensile
         return rv;
     }
 
-template <typename KA>
+    template <typename KA>
     void
         ContractionSolution::calculateSingleCallWorkGroupItems(std::vector<Problem> const& problems,
                                                                const Tensile::dim3& workGroupSize,
@@ -646,8 +646,8 @@ template <typename KA>
 
                 numWorkGroups.y *= sizeMapping.globalSplitU;
 
-                numWorkItems.x += (workGroupSize.x * numWorkGroups.x * workGroupSize.y * numWorkGroups.y
-                                * workGroupSize.z * numWorkGroups.z);
+                numWorkItems.x += (workGroupSize.x * numWorkGroups.x * workGroupSize.y
+                                   * numWorkGroups.y * workGroupSize.z * numWorkGroups.z);
 
                 if constexpr(std::is_same<KA, KernelArguments>::value)
                 {
@@ -1023,7 +1023,9 @@ template <typename KA>
         if(wiX * wiY * wiZ > 2048)
         {
             //reach threashhold to trigger wider load
-            if(problem.freeSizeA(0) % 4 == 0)
+            if(problem.freeSizeA(0) % 4 == 0
+               && DataTypeInfo::Get(problemType.aType).elementSize
+                      < DataTypeInfo::Get(DataType::Double).elementSize)
                 vw = 4;
             else if(problem.freeSizeA(0) % 2 == 0)
                 vw = 2;
@@ -1077,7 +1079,9 @@ template <typename KA>
                 if(wiX * wiY * wiZ > 2048)
                 {
                     //reach threashhold to trigger wider load
-                    if(problem.freeSizeA(0) % 4 != 0)
+                    if(problem.freeSizeA(0) % 4 != 0
+                       && DataTypeInfo::Get(problemType.aType).elementSize
+                              < DataTypeInfo::Get(DataType::Double).elementSize)
                         not4 = true;
                     if(problem.freeSizeA(0) % 2 != 0)
                         not2 = true;
