@@ -1932,7 +1932,7 @@ class Solution(collections.abc.Mapping):
         return
       if state["ProblemType"]["ComputeDataType"].isDouble():
         # See [4,4,4,4] snop for more info
-        if state["MatrixInstruction"] == [4,4,4,4]:
+        if state["MatrixInstruction"] == [4,4,4,4] and (not state['ISA'] == [9,0,10]) and state["ScheduleIterAlg"] == 3:
           reject(state, "Currently Matrix instructions [4,4,4,4] is disabled.")
     else:
       if not state["ProblemType"]["HighPrecisionAccumulate"] \
