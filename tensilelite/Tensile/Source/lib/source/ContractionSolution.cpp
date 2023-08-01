@@ -512,17 +512,16 @@ namespace Tensile
                                                   (uint8_t*)inputs.ws + workspaceOffsetInByte);
             else
                 args.template append<void const*>("bias", inputs.bias);
-        }
 
-        if(problemType.useBias
-           && ((sizeMapping.globalSplitU == 1) || (sizeMapping.customKernelName != ""))
-           && (!problemType.useGradient
+            if(!problemType.useGradient
                || (problemType.useGradient
                    && (problem.biasSrc() == ContractionProblemGemm::TENSOR::A
-                       || problem.biasSrc() == ContractionProblemGemm::TENSOR::B))))
-        {
-            args.template append<uint32_t>("bias_type", static_cast<uint32_t>(problem.biasType()));
-            args.template append<uint32_t>("strideBias", static_cast<uint32_t>(0)); // reserved
+                       || problem.biasSrc() == ContractionProblemGemm::TENSOR::B)))
+            {
+                args.template append<uint32_t>("bias_type",
+                                               static_cast<uint32_t>(problem.biasType()));
+                args.template append<uint32_t>("strideBias", static_cast<uint32_t>(0)); // reserved
+            }
         }
 
         if(problemType.useE)
