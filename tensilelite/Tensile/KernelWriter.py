@@ -231,6 +231,7 @@ class StateValues:
   ## MFMA
   miLatency: int                         = 0
   miLatencyLeft: int                     = 0
+  miDependency: int                      = 0
   numMfmaForLR: int                      = 1
   grEndMfmaIndex: int                    = -1
   sync1LdsMfmaIndex: int                 = -1
@@ -822,6 +823,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
 
       for i in range(numMfmaPerIter):
         mfmaIndex = iteration * numMfmaPerIter + i
+        insertInst = iterCode.countType(Instruction)
         iterCode.addComment0(" mfmaIndex:%u " %(mfmaIndex))
 
         ####
@@ -1050,6 +1052,14 @@ class KernelWriter(metaclass=abc.ABCMeta):
         if i == numMfmaPerIter - 1:
           while packItems:
             iterCode.add(packItems.pop(0))
+
+        ####
+        # scheduled mfma dependency
+        ####
+        if mfmaIndex > 0:
+          currentInsertInst = iterCode.countType(Instruction) - insertInst
+          if currentInsertInst < self.states.miDependency:
+            iterCode.add(SNop(waitState=(self.states.miDependency-currentInsertInst-1), comment="Dependency"))
 
         ####
         # scheduled mfma
@@ -3474,6 +3484,13 @@ class KernelWriter(metaclass=abc.ABCMeta):
       # give 1 quad-cycle buffer to prevend bubble from sync
       miLatencyBuffer = 1
       self.states.miLatencyLeft = max(self.states.miLatency - miLatencyBuffer - miIssueLatency,0)
+
+      # Special dependency cases
+      if kernel["ProblemType"]["ComputeDataType"].isDouble():
+        if kernel["MatrixInstruction"] == [4, 4, 4, 4]:
+          if kernel['ISA'] == [9,0,10]:
+            self.states.miDependency = 4
+
 
     # shift vectors determined later
 
