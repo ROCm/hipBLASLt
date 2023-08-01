@@ -155,16 +155,11 @@ class SignatureCOV3(Signature):
         if kernel["ProblemType"]["UseScaleAlphaVec"] and (kernel["GlobalSplitU"] == 1):
             signature.addArg("AddressScaleAlphaVec", SVK.SIG_GLOBALBUFFER, cptValueType, "generic")
 
-        if writer.states.useBias == DataDirection.READ:
-            signature.addArg("bias", SVK.SIG_GLOBALBUFFER, biasValueType, "generic")
-        # We append the data in ws_d
-        elif writer.states.useBias == DataDirection.WRITE and (kernel["GlobalSplitU"] == 1):
-            signature.addArg("ws_bias", SVK.SIG_GLOBALBUFFER, biasValueType, "generic")
-
-        if writer.states.needBiasType:
-            signature.addArg("biasType",    SVK.SIG_VALUE,        "u32")
-
-        signature.addArg("StrideBias",      SVK.SIG_VALUE,        "u32")
+        if writer.states.useBias != DataDirection.NONE and (kernel["GlobalSplitU"] == 1):
+            signature.addArg("bias", SVK.SIG_GLOBALBUFFER, biasValueType, "generic")  # Note: We append the data in ws_d
+            if writer.states.needBiasType:
+                signature.addArg("biasType",        SVK.SIG_VALUE,        "u32")
+                signature.addArg("StrideBias",      SVK.SIG_VALUE,        "u32")
 
         if kernel["ProblemType"]["UseE"] and (kernel["GlobalSplitU"] == 1):
             signature.addArg(      "E", SVK.SIG_GLOBALBUFFER, cptValueType, "generic")
