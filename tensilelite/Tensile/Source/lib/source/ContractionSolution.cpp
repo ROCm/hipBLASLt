@@ -1065,7 +1065,9 @@ namespace Tensile
         if(wiX * wiY * wiZ > 2048)
         {
             //reach threashhold to trigger wider load
-            if(problem.freeSizeA(0) % 4 == 0)
+            if(problem.freeSizeA(0) % 4 == 0
+               && DataTypeInfo::Get(problemType.aType).elementSize
+                      < DataTypeInfo::Get(DataType::Double).elementSize)
                 vw = 4;
             else if(problem.freeSizeA(0) % 2 == 0)
                 vw = 2;
@@ -1119,7 +1121,9 @@ namespace Tensile
                 if(wiX * wiY * wiZ > 2048)
                 {
                     //reach threashhold to trigger wider load
-                    if(problem.freeSizeA(0) % 4 != 0)
+                    if(problem.freeSizeA(0) % 4 != 0
+                       && DataTypeInfo::Get(problemType.aType).elementSize
+                              < DataTypeInfo::Get(DataType::Double).elementSize)
                         not4 = true;
                     if(problem.freeSizeA(0) % 2 != 0)
                         not2 = true;
