@@ -1041,11 +1041,11 @@ class KernelWriterAssembly(KernelWriter):
         storeSgprLoad += self.states.rpga
     if self.states.useBias != DataDirection.NONE and (kernel["GlobalSplitU"] == 1):
       # Does not support atomic yet
-      self.states.numSgprAddressBias = self.states.rpga # 64-bit
-      self.states.BiasType = 0
+      self.states.BiasType   = 0
       self.states.BiasStride = 0
+      self.states.numSgprAddressBias = self.states.rpga # 64-bit
       if self.states.needBiasType:
-        self.states.BiasType = 1
+        self.states.BiasType   = 1
         self.states.BiasStride = 1
       storeSgprLoad += self.states.numSgprAddressBias + self.states.BiasType + self.states.BiasStride
     if kernel["ProblemType"]["UseE"] and (kernel["GlobalSplitU"] == 1):
@@ -3945,10 +3945,11 @@ class KernelWriterAssembly(KernelWriter):
       if self.states.numSgprAddressBias:
         module.add(RegSet("s", "sgprAddressBias", soffset))
         soffset += self.states.numSgprAddressBias
-        module.add(RegSet("s", "sgprBiasType", soffset))
-        soffset += self.states.BiasType
-        module.add(RegSet("s", "sgprBiasStride", soffset))
-        soffset += self.states.BiasStride
+        if self.states.needBiasType:
+          module.add(RegSet("s", "sgprBiasType", soffset))
+          soffset += self.states.BiasType
+          module.add(RegSet("s", "sgprBiasStride", soffset))
+          soffset += self.states.BiasStride
       if kernel["ProblemType"]["UseE"] and (kernel["GlobalSplitU"] == 1):
         module.add(RegSet("s", "sgprAddressE", soffset))
         soffset += self.states.rpga
