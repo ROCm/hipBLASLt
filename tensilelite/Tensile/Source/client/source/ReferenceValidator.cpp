@@ -331,6 +331,11 @@ namespace Tensile
                     refPtr = reference.scaleDVec;
                     resPtr = result.scaleDVec;
                 }
+                case ContractionProblemGemm::TENSOR::SCALEALPHAVEC:
+                {
+                    refPtr = reference.scaleAlphaVec;
+                    resPtr = result.scaleAlphaVec;
+                }
                 break;
                 default:
                     throw std::runtime_error("Unrecognized output tensor.");

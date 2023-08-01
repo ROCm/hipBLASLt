@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022 Advanced Micro Devices, Inc.
+ * Copyright (C) 2022-2023 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -51,3 +51,20 @@ void cblas_gemm(hipblasOperation_t     transA,
                 std::add_pointer_t<To> C,
                 int64_t                ldc,
                 bool                   alt = false);
+
+template <typename Ti, typename To, typename Tc>
+void cblas_gemm_alphascale(hipblasOperation_t     transA,
+                           hipblasOperation_t     transB,
+                           int64_t                m,
+                           int64_t                n,
+                           int64_t                k,
+                           Tc                     alpha,
+                           const Ti*              A,
+                           int64_t                lda,
+                           const Ti*              B,
+                           int64_t                ldb,
+                           Tc                     beta,
+                           std::add_pointer_t<To> C,
+                           int64_t                ldc,
+                           const Tc*              AlphaVec,
+                           bool                   alt = false);

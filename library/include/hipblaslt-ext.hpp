@@ -129,9 +129,10 @@ namespace hipblaslt_ext
         void* alpha = nullptr; //!< The alpha value.
         void* beta  = nullptr; //!< The beta value.
         // Epilogue inputs
-        void* bias      = nullptr; //!< The bias input pointer.
-        void* scaleDVec = nullptr; //!< The scaleD vector input pointer.
-        void* aux       = nullptr; //!< The aux input pointer.
+        void* bias          = nullptr; //!< The bias input pointer.
+        void* scaleDVec     = nullptr; //!< The scaleD vector input pointer.
+        void* scaleAlphaVec = nullptr; //!< The scaleD vector input pointer.
+        void* aux           = nullptr; //!< The aux input pointer.
     };
 
     /*! \ingroup types_module

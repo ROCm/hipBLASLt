@@ -1747,6 +1747,33 @@ namespace Tensile
                 }
             };
 
+            struct UseScaleAlphaVecEqual
+                : public Predicate_CRTP<UseScaleAlphaVecEqual, ContractionProblemGemm>
+            {
+                enum
+                {
+                    HasIndex = false,
+                    HasValue = true
+                };
+                bool value;
+
+                UseScaleAlphaVecEqual() = default;
+                UseScaleAlphaVecEqual(bool value)
+                    : value(value)
+                {
+                }
+
+                static std::string Type()
+                {
+                    return "UseScaleAlphaVec";
+                }
+
+                virtual bool operator()(ContractionProblemGemm const& problem) const override
+                {
+                    return problem.useScaleAlphaVec() == value;
+                }
+            };
+
             struct BiasDataTypeWhiteList
                 : public Predicate_CRTP<BiasDataTypeWhiteList, ContractionProblemGemm>
             {

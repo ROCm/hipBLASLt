@@ -109,6 +109,7 @@ typedef enum {
   HIPBLASLT_MATMUL_DESC_EPILOGUE_AUX_POINTER = 6,       /**<Epilogue auxiliary buffer pointer in the device memory. Data Type:void* /const void* */
   HIPBLASLT_MATMUL_DESC_EPILOGUE_AUX_LD = 7,            /**<The leading dimension of the epilogue auxiliary buffer pointer in the device memory. Data Type:int64_t */
   HIPBLASLT_MATMUL_DESC_EPILOGUE_AUX_BATCH_STRIDE = 8,  /**<The batch stride of the epilogue auxiliary buffer pointer in the device memory. Data Type:int64_t */
+  HIPBLASLT_MATMUL_DESC_POINTER_MODE_ALPHA_DEVICE_VECTOR_BETA_HOST = 9,/**<Alpha scale vector length must match matrix D rows. It must match Scale data type. Alpha scale vector is broadcast to all columns and multipied after final postprocssion. Data Type: void* /const void* */
   HIPBLASLT_MATMUL_DESC_D_SCALE_VECTOR_POINTER = 100,   /**<D scale vector length must match matrix D rows. It must match Scale data type. D scale vector is broadcast to all columns and multipied after final postprocssion. Data Type: void* /const void* */
   HIPBLASLT_MATMUL_DESC_MAX = 101
 } hipblasLtMatmulDescAttributes_t;

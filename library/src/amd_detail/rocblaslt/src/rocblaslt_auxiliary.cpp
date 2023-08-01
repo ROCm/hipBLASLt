@@ -55,11 +55,11 @@ RocblasltContractionProblem<Ti, To, Tc>
     const void* dummy_ptr = &dummy;
     int64_t     m, n, k, lda, ldb, ldc, ldd, lde, batch_stride_a, batch_stride_b, batch_stride_c,
         batch_stride_d, batch_stride_e;
-    hipblasDatatype_t bias_type;
+    hipblasDatatype_t      bias_type;
     rocblaslt_compute_type compute_type;
-    void *            bias = nullptr, *scaleDVec = nullptr, *e = nullptr;
-    bool              gradient = false;
-    rocblaslt_status  isValid  = rocblaslt_matmul_valid_args(matmul_descr,
+    void *           bias = nullptr, *scaleDVec = nullptr, *scaleAlphaVec = nullptr, *e = nullptr;
+    bool             gradient = false;
+    rocblaslt_status isValid  = rocblaslt_matmul_valid_args(matmul_descr,
                                                            dummy_ptr,
                                                            dummy_ptr,
                                                            dummy_ptr,
@@ -86,6 +86,7 @@ RocblasltContractionProblem<Ti, To, Tc>
                                                            bias,
                                                            bias_type,
                                                            scaleDVec,
+                                                           scaleAlphaVec,
                                                            e,
                                                            gradient,
                                                            compute_type);
@@ -140,6 +141,7 @@ RocblasltContractionProblem<Ti, To, Tc>
                                                     compute_type,
                                                     bias,
                                                     (const Tc*)scaleDVec,
+                                                    (const Tc*)scaleAlphaVec,
                                                     bias_type,
                                                     epilogue,
                                                     nullptr,
@@ -590,6 +592,15 @@ rocblaslt_status rocblaslt_matmul_desc_set_attribute(rocblaslt_matmul_desc      
                     return rocblaslt_status_invalid_value;
                 }
                 break;
+            case ROCBLASLT_MATMUL_DESC_POINTER_MODE_ALPHA_DEVICE_VECTOR_BETA_HOST:
+                if(sizeof(void*) <= sizeInBytes)
+                    memcpy(&matmulDesc->scaleAlphaVec, buf, sizeof(void*));
+                else
+                {
+                    log_error(__func__, "invalid scaleAlphaVec buf size", sizeInBytes);
+                    return rocblaslt_status_invalid_value;
+                }
+                break;
             case ROCBLASLT_MATMUL_DESC_BIAS_DATA_TYPE:
                 if(sizeof(int32_t) <= sizeInBytes)
                     memcpy(&matmulDesc->bias_type, buf, sizeof(int32_t));
@@ -722,6 +733,15 @@ rocblaslt_status rocblaslt_matmul_desc_get_attribute(rocblaslt_matmul_desc      
                     return rocblaslt_status_invalid_value;
                 }
                 memcpy(buf, &matmulDesc->scaleDVec, sizeof(void*));
+                break;
+            case ROCBLASLT_MATMUL_DESC_POINTER_MODE_ALPHA_DEVICE_VECTOR_BETA_HOST:
+                *sizeWritten = sizeof(void*);
+                if(sizeInBytes < sizeof(void*))
+                {
+                    log_error(__func__, "invalid buf size", sizeInBytes);
+                    return rocblaslt_status_invalid_value;
+                }
+                memcpy(buf, &matmulDesc->scaleAlphaVec, sizeof(void*));
                 break;
             case ROCBLASLT_MATMUL_DESC_BIAS_DATA_TYPE:
                 *sizeWritten = sizeof(int32_t);
