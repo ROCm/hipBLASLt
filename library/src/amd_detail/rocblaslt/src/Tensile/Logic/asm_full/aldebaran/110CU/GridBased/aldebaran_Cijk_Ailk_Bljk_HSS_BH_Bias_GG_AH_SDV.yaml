@@ -38645,11 +38645,11 @@
     LSCA: 128
     LSCB: 64
     LSPA: 16
-    LSPB: 32
+    LSPB: 4
     LVCA: 16
     LVCB: 8
     LVPA: 2
-    LVPB: 4
+    LVPB: 1
     LdsBlockSizePerPadA: 0
     LdsBlockSizePerPadB: 128
     LdsBlockSizePerPadMetadata: 0
@@ -38662,7 +38662,7 @@
     LdsOffsetA_Blk: 16384
     LdsOffsetB: 8192
     LdsOffsetB_Blk: 24576
-    LdsOffsetBias: 0
+    LdsOffsetBias: 4224
     LdsOffsetMetadata: 8192
     LdsOffsetMetadata_Blk: 24576
     LdsPadA: 0
@@ -38714,7 +38714,7 @@
     NonTemporalD: 3
     NonTemporalE: 0
     NonTemporalMetadata: 3
-    NumElementsPerBatchStore: 16
+    NumElementsPerBatchStore: 0
     NumElementsPerThread: 16
     NumGlobalWriteVectorsPerThread: 16
     NumLoadsA: 4
@@ -38752,7 +38752,6 @@
       Fp16AltImpl: false
       Gradient: false
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -38783,6 +38782,7 @@
       SilentHighPrecisionAccumulate: false
       SparseA: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -38798,12 +38798,13 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
+      UseScaleAlphaVec: false
       UseScaleDVec: true
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 176
-    SolutionNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_GG_AH_SDV_MT128x32x64_MI32x32x8x1_SN_1LDSB0_GRVWA8_GRVWB8_LBSPPA0_LBSPPB128_LPA0_LPB8_LRVW8_MIWT1_1_NT3_NTA3_NTB3_NTC3_NTD3_NTM3_NEPBS16_NLCA1_SS0_SU0_SUS0_SRVW4_SVW4_VWA1_WG128_2_1_WGM1
+    SolutionNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_GG_AH_SDV_UserArgs_MT128x32x64_MI32x32x8x1_SN_1LDSB0_GRVWA8_GRVWB8_LBSPPA0_LBSPPB128_LPA0_LPB8_LRVW8_MIWT1_1_NT3_NTA3_NTB3_NTC3_NTD3_NTM3_NEPBS0_NLCA1_SS0_SU0_SUS0_SRVW4_SVW4_VWA1_WSGRA0_WSGRB2_WG128_2_1
     SourceSwap: 0
     StaggerU: 0
     StaggerUMapping: 0
@@ -38835,11 +38836,11 @@
     VectorWidthA: 1
     VectorWidthB: 1
     WaveSeparateGlobalReadA: 0
-    WaveSeparateGlobalReadB: 0
+    WaveSeparateGlobalReadB: 2
     WaveSeparateGlobalReadMetadata: 0
     WavefrontSize: 64
     WorkGroup: [128, 2, 1]
-    WorkGroupMapping: 1
+    WorkGroupMapping: 8
     WorkGroupReduction: false
     WorkspaceCheck: [0, 0]
     _DepthU: 64
@@ -38878,10 +38879,10 @@
     ExpandPointerSwap: 0
     GlobalReadPerMfma: 1
     GlobalReadVectorWidthA: 8
-    GlobalReadVectorWidthB: 1
+    GlobalReadVectorWidthB: 2
     GlobalSplitU: 1
     GlobalSplitUAlgorithm: SingleBuffer
-    GlobalWriteVectorWidth: 1
+    GlobalWriteVectorWidth: 2
     GroupLoadStore: false
     GuaranteeNoPartialA: true
     GuaranteeNoPartialB: true
@@ -38891,63 +38892,63 @@
     KernelLanguage: Assembly
     LSCA: 128
     LSCB: 32
-    LSPA: 8
-    LSPB: 4
+    LSPA: 4
+    LSPB: 16
     LVCA: 16
-    LVCB: 32
+    LVCB: 16
     LVPA: 1
-    LVPB: 4
-    LdsBlockSizePerPadA: 0
+    LVPB: 8
+    LdsBlockSizePerPadA: 1024
     LdsBlockSizePerPadB: 128
     LdsBlockSizePerPadMetadata: 0
     LdsInitCVgprs: false
-    LdsNumElements: 12432
-    LdsNumElementsAlignedA: 4096
-    LdsNumElementsAlignedB: 256
+    LdsNumElements: 12960
+    LdsNumElementsAlignedA: 4224
+    LdsNumElementsAlignedB: 640
     LdsNumElementsAlignedMetadata: 0
     LdsOffsetA: 0
     LdsOffsetA_Blk: 8192
-    LdsOffsetB: 4096
-    LdsOffsetB_Blk: 12288
+    LdsOffsetB: 4224
+    LdsOffsetB_Blk: 12416
     LdsOffsetBias: 0
-    LdsOffsetMetadata: 4096
-    LdsOffsetMetadata_Blk: 12288
-    LdsPadA: 0
-    LdsPadB: 8
+    LdsOffsetMetadata: 4224
+    LdsOffsetMetadata_Blk: 12416
+    LdsPadA: 16
+    LdsPadB: 4
     LdsPadMetadata: 0
-    LocalReadVectorWidth: 8
+    LocalReadVectorWidth: 4
     LocalSplitU: 1
     LocalWritePerMfma: -1
     LocalWriteUseSgprA: false
     LocalWriteUseSgprB: false
-    LoopIters: 8
+    LoopIters: 2
     LoopUnroll: 32
     MFMA_BF16_1K: false
     MIArchVgpr: false
-    MIBlock: [4, 4, 4, 16, 16, 1]
+    MIBlock: [16, 16, 16, 1, 1, 1]
     MIInputPerThread: 4
     MIInputPerThreadA: 4
     MIInputPerThreadB: 4
     MIInputPerThreadMetadata: 4
     MIOutputVectorWidth: 4
     MIRegPerOut: 1
-    MIWaveGroup: [2, 1]
-    MIWaveTile: [1, 1]
-    MIWaveTileA: 1
+    MIWaveGroup: [4, 1]
+    MIWaveTile: [2, 1]
+    MIWaveTileA: 2
     MIWaveTileB: 1
     MIWaveTileMetadata: 0
     MacroTile0: 128
-    MacroTile1: 4
+    MacroTile1: 16
     MacroTileA: 128
-    MacroTileB: 4
+    MacroTileB: 16
     MagicDivAlg: 2
-    MatrixInstB: 16
-    MatrixInstBM: 16
+    MatrixInstB: 1
+    MatrixInstBM: 1
     MatrixInstBN: 1
-    MatrixInstK: 4
-    MatrixInstM: 4
-    MatrixInstN: 4
-    MatrixInstruction: [4, 4, 4, 16]
+    MatrixInstK: 16
+    MatrixInstM: 16
+    MatrixInstN: 16
+    MatrixInstruction: [16, 16, 16, 1]
     MaxOccupancy: 40
     MaxVgprNumber: 256
     MinVgprNumber: 0
@@ -38961,16 +38962,16 @@
     NonTemporalD: 3
     NonTemporalE: 0
     NonTemporalMetadata: 3
-    NumElementsPerBatchStore: 16
-    NumElementsPerThread: 4
+    NumElementsPerBatchStore: 0
+    NumElementsPerThread: 8
     NumGlobalWriteVectorsPerThread: 4
-    NumLoadsA: 4
+    NumLoadsA: 2
     NumLoadsB: 1
     NumLoadsCoalescedA: 1
     NumLoadsCoalescedB: 1
-    NumLoadsPerpendicularA: 4
+    NumLoadsPerpendicularA: 2
     NumLoadsPerpendicularB: 1
-    NumThreads: 128
+    NumThreads: 256
     OptNoLoadLoop: 1
     PackedC0IdxChars: [I]
     PackedC0IndicesX: [0]
@@ -38999,7 +39000,6 @@
       Fp16AltImpl: false
       Gradient: false
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -39030,6 +39030,7 @@
       SilentHighPrecisionAccumulate: false
       SparseA: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -39045,29 +39046,30 @@
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
+      UseScaleAlphaVec: false
       UseScaleDVec: true
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 177
-    SolutionNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_GG_AH_SDV_MT128x4x32_MI4x4x4x16_SN_1LDSB0_GRVWA8_GRVWB1_LBSPPA0_LBSPPB128_LPA0_LPB8_LRVW8_MIWT1_1_NT3_NTA3_NTB3_NTC3_NTD3_NTM3_NEPBS16_NLCA1_SS1_SU0_SUS0_SRVW0_SVW1_VWA1_WG128_1_1_WGM1
+    SolutionNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_GG_AH_SDV_UserArgs_MT128x16x32_MI16x16x16x1_SN_1LDSB0_GRVWA8_GRVWB2_LBSPPA1024_LBSPPB128_LPA16_LPB4_LRVW4_MIWT2_1_NT3_NTA3_NTB3_NTC3_NTD3_NTM3_NEPBS0_NLCA1_SS1_SRVW0_SVW2_VWA2_WSGRA2_WSGRB0_WG64_4_1
     SourceSwap: 1
-    StaggerU: 0
+    StaggerU: 32
     StaggerUMapping: 0
-    StaggerUStride: 0
+    StaggerUStride: 256
     StorePriorityOpt: false
     StoreRemapVectorWidth: 0
     StoreSyncOpt: 0
-    StoreVectorWidth: 1
-    SubGroup0: 32
-    SubGroup1: 4
-    SubGroupA: 32
-    SubGroupB: 4
+    StoreVectorWidth: 2
+    SubGroup0: 16
+    SubGroup1: 16
+    SubGroupA: 16
+    SubGroupB: 16
     SuppressNoLoadLoop: false
     ThreadTile: [1, 1]
-    ThreadTile0: 4
+    ThreadTile0: 8
     ThreadTile1: 1
-    ThreadTileA: 4
+    ThreadTileA: 8
     ThreadTileB: 1
     TransposeLDS: 1
     TransposeLDSMetadata: true
@@ -39079,14 +39081,14 @@
     UseSgprForGRO: -1
     Valid: true
     VectorStore: -1
-    VectorWidthA: 1
+    VectorWidthA: 2
     VectorWidthB: 1
-    WaveSeparateGlobalReadA: 0
+    WaveSeparateGlobalReadA: 2
     WaveSeparateGlobalReadB: 0
     WaveSeparateGlobalReadMetadata: 0
     WavefrontSize: 64
-    WorkGroup: [128, 1, 1]
-    WorkGroupMapping: 1
+    WorkGroup: [64, 4, 1]
+    WorkGroupMapping: 8
     WorkGroupReduction: false
     WorkspaceCheck: [0, 0]
     _DepthU: 32
@@ -39098,7 +39100,7 @@
     _VectorStore: 1
     _WorkspaceSizePerElemBias: 0
     _WorkspaceSizePerElemC: 0
-    _staggerStrideShift: 0
+    _staggerStrideShift: 2
   - 1LDSBuffer: 1
     ActivationAlt: false
     ActivationFuncCall: true
@@ -39201,14 +39203,14 @@
     NoLdsWriteCode: false
     NoReject: false
     NoTailLoop: false
-    NonTemporal: 0
+    NonTemporal: -1
     NonTemporalA: 0
     NonTemporalB: 0
     NonTemporalC: 0
     NonTemporalD: 0
     NonTemporalE: 0
     NonTemporalMetadata: 0
-    NumElementsPerBatchStore: 0
+    NumElementsPerBatchStore: 16
     NumElementsPerThread: 48
     NumGlobalWriteVectorsPerThread: 48
     NumLoadsA: 4
@@ -39246,7 +39248,6 @@
       Fp16AltImpl: false
       Gradient: false
       GroupedGemm: true
-      SupportUserArgs: true
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -39277,6 +39278,7 @@
       SilentHighPrecisionAccumulate: false
       SparseA: false
       StridedBatched: true
+      SupportUserArgs: true
       TLUA: true
       TLUB: false
       Tensor0: 0
@@ -39297,7 +39299,7 @@
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 178
-    SolutionNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_GG_AH_SDV_MT128x96x64_MI32x32x8x1_SN_1LDSB1_GRVWA8_GRVWB8_LBSPPA0_LBSPPB128_LPA0_LPB8_LRVW8_MIWT1_3_NT0_NTA0_NTB0_NTC0_NTD0_NTM0_NEPBS0_NLCA1_SS0_SU0_SUS0_SRVW4_SVW4_VWA1_WG128_2_1_WGM4
+    SolutionNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_GG_AH_SDV_UserArgs_MT128x96x64_MI32x32x8x1_SN_1LDSB1_GRVWA8_GRVWB8_LBSPPA0_LBSPPB128_LPA0_LPB8_LRVW8_MIWT1_3_NEPBS16_NLCA1_SS0_SU0_SUS0_SRVW4_SVW4_VWA1_WSGRA0_WSGRB0_WG128_2_1_WGM4
     SourceSwap: 0
     StaggerU: 0
     StaggerUMapping: 0
