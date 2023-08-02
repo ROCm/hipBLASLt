@@ -1222,6 +1222,7 @@ class KernelWriterAssembly(KernelWriter):
         module.add(SBarrier())
 
         # only wave0 to generate wgTable
+        module.addComment1("Grouped Gemm::only wave0 to generate wgTable")
         label_waitWave0 = Label("waitWave0", "")
         module.add(SAndB32(dst=sgpr(tmpSgpr0), src0=sgpr(tmpSgpr0), src1=hex(numWaves-1)))
         module.add(SCmpKLGU32(src=sgpr(tmpSgpr0), simm16=hex(0)))
@@ -1288,10 +1289,10 @@ class KernelWriterAssembly(KernelWriter):
         module.add(SStoreB32(src=sgpr(tmpSgprAccumTiles), base=sgpr("KernArgAddress", 2), soffset=sgpr(tmpSgprWgTableOffset)))
 
         module.add(label_wgTable_end)
-        module.add(SDcacheWb())
+        # module.add(SDcacheWb())
         module.add(SWaitCnt(lgkmcnt=0))
-        module.add(SMovB32(dst=sgpr(tmpSgprSkipWgTableGen), src=1))
-        module.add(SStoreB32(src=sgpr(tmpSgprSkipWgTableGen), base=sgpr(tmpSgprOrigKernArgAddress0, 2), soffset=hex(20)))
+        # module.add(SMovB32(dst=sgpr(tmpSgprSkipWgTableGen), src=1))
+        # module.add(SStoreB32(src=sgpr(tmpSgprSkipWgTableGen), base=sgpr(tmpSgprOrigKernArgAddress0, 2), soffset=hex(20)))
 
         module.add(label_waitWave0)
         module.add(SBarrier())
@@ -1394,9 +1395,8 @@ class KernelWriterAssembly(KernelWriter):
           module.add(SMulI32(dst=sgpr(tmpSgpr.idx), src0=sgpr("NumWorkGroups0"), src1=sgpr("NumWorkGroups1")))
           if kernel["GlobalSplitU"] > 1:
             module.add(SMulI32(dst=sgpr(tmpSgpr.idx), src0=sgpr(tmpSgpr.idx), src1=kernel["GlobalSplitU"]))
-          module.add(scalarUInt32RegDivide(qReg=tmpSgpr.idx, dReg="WorkGroup0", divReg=tmpSgpr.idx, \
-                                           tmpSgprRes=regStateRes, tmpVgprRes=tmpVgprRes, \
-                                           TransOpWait=self.states.archCaps["TransOpWait"], setReg=True, restoreReg=False))
+          module.add(scalarUInt32DivideAndRemainder(qReg=tmpSgpr.idx, dReg="WorkGroup0", divReg=tmpSgpr.idx, rReg=tmpSgpr.idx+1,\
+                                           tmpVgprRes=tmpVgprRes, wavewidth=kernel["WavefrontSize"], doRemainder=False))
           module.add(SMovB32(dst=sgpr("WorkGroup2"), src=sgpr(tmpSgpr.idx)))
           module.addComment0("idxWG01 = idxWG012 - wg2 * numWG0 * numWG1")
           module.add(SMulI32(dst=sgpr(tmpSgpr.idx), src0=sgpr("NumWorkGroups1"), src1=sgpr("NumWorkGroups0")))
@@ -1405,9 +1405,8 @@ class KernelWriterAssembly(KernelWriter):
             module.add(SMulI32(dst=sgpr(tmpSgpr.idx), src0=sgpr(tmpSgpr.idx), src1=kernel["GlobalSplitU"]))
           module.add(SSubU32(dst=sgpr("WorkGroup0"), src0=sgpr("WorkGroup0"), src1=sgpr(tmpSgpr.idx)))
           module.addComment0("wg1 = idxWG01 * smallMagicNumber(1/numWG0)")
-          module.add(scalarUInt32RegDivide(qReg=tmpSgpr.idx, dReg="WorkGroup0", divReg="NumWorkGroups0", \
-                                           tmpSgprRes=regStateRes, tmpVgprRes=tmpVgprRes, \
-                                           TransOpWait=self.states.archCaps["TransOpWait"], setReg=False, restoreReg=True))
+          module.add(scalarUInt32DivideAndRemainder(qReg=tmpSgpr.idx, dReg="WorkGroup0", divReg="NumWorkGroups0", rReg=tmpSgpr.idx+1,\
+                                           tmpVgprRes=tmpVgprRes, wavewidth=kernel["WavefrontSize"], doRemainder=False))
           self.vgprPool.checkIn(tmpVgpr)
           module.add(SMovB32(dst=sgpr("WorkGroup1"), src=sgpr(tmpSgpr.idx)))
           module.addComment0("wg0 = idxWG01 - wg1 * numWG0")
