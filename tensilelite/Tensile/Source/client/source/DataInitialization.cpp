@@ -878,8 +878,8 @@ namespace Tensile
                 m_problemDependentData
                     = m_problemDependentData || IsProblemDependent(m_vdata[i].init);
             }
-            m_problemDependentData |= m_aSparse;
-
+            m_problemDependentData
+                |= (m_aSparse | (args["bias-type-args"].as<std::vector<DataType>>().size() > 1));
             allocNewCPUInputs();
             allocNewGPUInputs();
 
@@ -1240,6 +1240,12 @@ namespace Tensile
                     case DataType::Int8x4:
                         prop.value = getValue<Int8x4>(prop.init, prop.freeValue);
                         break;
+                    case DataType::Float8:
+                        prop.value = getValue<Float8>(prop.init, prop.freeValue);
+                        break;
+                    case DataType::BFloat8:
+                        prop.value = getValue<BFloat8>(prop.init, prop.freeValue);
+                        break;
                     case DataType::XFloat32:
                     case DataType::Count:;
                     }
@@ -1484,6 +1490,8 @@ namespace Tensile
             inputs->d             = (void*)ptrs[ContractionProblemGemm::TENSOR::D];
             inputs->e             = (void*)ptrs[ContractionProblemGemm::TENSOR::E];
             inputs->bias          = (void*)ptrs[ContractionProblemGemm::TENSOR::BIAS];
+            inputs->scaleA        = (void*)ptrs[ContractionProblemGemm::TENSOR::SCALEA];
+            inputs->scaleB        = (void*)ptrs[ContractionProblemGemm::TENSOR::SCALEB];
             inputs->scaleDVec     = (void*)ptrs[ContractionProblemGemm::TENSOR::SCALEDVEC];
             inputs->scaleAlphaVec = (void*)ptrs[ContractionProblemGemm::TENSOR::SCALEALPHAVEC];
             inputs->metadata      = (unsigned char*)ptrs[ContractionProblemGemm::TENSOR::METADATA];
@@ -1561,6 +1569,20 @@ namespace Tensile
                     u8Ptr[ContractionProblemGemm::TENSOR::BIAS]
                         += offsets[ContractionProblemGemm::TENSOR::BIAS][idx]
                            * problem.tensors()[ContractionProblemGemm::TENSOR::BIAS].elementBytes();
+                }
+                if(u8Ptr[ContractionProblemGemm::TENSOR::SCALEA] != nullptr)
+                {
+                    u8Ptr[ContractionProblemGemm::TENSOR::SCALEA]
+                        += offsets[ContractionProblemGemm::TENSOR::SCALEA][idx]
+                           * problem.tensors()[ContractionProblemGemm::TENSOR::SCALEA]
+                                 .elementBytes();
+                }
+                if(u8Ptr[ContractionProblemGemm::TENSOR::SCALEB] != nullptr)
+                {
+                    u8Ptr[ContractionProblemGemm::TENSOR::SCALEB]
+                        += offsets[ContractionProblemGemm::TENSOR::SCALEB][idx]
+                           * problem.tensors()[ContractionProblemGemm::TENSOR::SCALEB]
+                                 .elementBytes();
                 }
                 if(u8Ptr[ContractionProblemGemm::TENSOR::SCALEDVEC] != nullptr)
                 {

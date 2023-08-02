@@ -37,6 +37,7 @@
 #include <Tensile/Comparison.hpp>
 
 #include <Tensile/DataTypes_BFloat16.hpp>
+#include <Tensile/DataTypes_Float8_BFloat8.hpp>
 #include <Tensile/DataTypes_Half.hpp>
 #include <Tensile/DataTypes_Int8.hpp>
 #include <Tensile/DataTypes_Int8x4.hpp>
@@ -70,6 +71,8 @@ namespace Tensile
         Int32,
         BFloat16,
         Int8,
+        Float8,
+        BFloat8,
         XFloat32,
         Count,
         None = Count
@@ -208,6 +211,16 @@ namespace Tensile
     };
 
     template <>
+    struct TypeInfo<Float8> : public BaseTypeInfo<Float8, DataType::Float8, 1, false, false>
+    {
+    };
+
+    template <>
+    struct TypeInfo<BFloat8> : public BaseTypeInfo<BFloat8, DataType::BFloat8, 1, false, false>
+    {
+    };
+
+    template <>
     struct TypeInfo<XFloat32> : public BaseTypeInfo<XFloat32, DataType::XFloat32, 1, false, false>
     {
     };
@@ -221,6 +234,8 @@ namespace Tensile
                                          Int8x4,
                                          int32_t,
                                          BFloat16,
+                                         Float8,
+                                         BFloat8,
                                          int8_t>;
 
     // Convert variants to type T
@@ -228,7 +243,8 @@ namespace Tensile
     typename std::enable_if<std::is_same<float, T>::value || std::is_same<double, T>::value
                                 || std::is_same<Half, T>::value || std::is_same<int32_t, T>::value
                                 || std::is_same<BFloat16, T>::value
-                                || std::is_same<int8_t, T>::value,
+                                || std::is_same<int8_t, T>::value || std::is_same<Float8, T>::value
+                                || std::is_same<BFloat8, T>::value,
                             T>::type
         constVariantCast(const ConstantVariant& val)
     {
@@ -246,6 +262,10 @@ namespace Tensile
             return static_cast<T>(*std::get_if<BFloat16>(&val));
         case static_cast<int>(DataType::Int8):
             return static_cast<T>(*std::get_if<int8_t>(&val));
+        case static_cast<int>(DataType::Float8):
+            return static_cast<T>(*std::get_if<Float8>(&val));
+        case static_cast<int>(DataType::BFloat8):
+            return static_cast<T>(*std::get_if<BFloat8>(&val));
         default:
             throw std::runtime_error("Unsupported variant cast type.");
         }

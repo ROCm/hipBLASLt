@@ -48,4 +48,17 @@ namespace Tensile
     template struct TypedGemm<BFloat16, BFloat16, BFloat16, BFloat16, float, float>;
     template struct TypedGemm<BFloat16, BFloat16, float, float>;
 #endif
+#ifdef TENSILE_USE_FP8_BF8
+    template struct TypedGemm<Float8, Float8, Float8, Float8, float, float>;
+    template struct TypedGemm<Float8, Float8, float, float>;
+    template struct TypedGemm<BFloat8, BFloat8, BFloat8, BFloat8, float, float>;
+    template struct TypedGemm<BFloat8, BFloat8, float, float>;
+    // hybrid
+    template struct TypedGemm<Float8, BFloat8, Float8, Float8, float, float>;
+    template struct TypedGemm<Float8, BFloat8, float, float>;
+    template struct TypedGemm<BFloat8, Float8, Float8, Float8, float, float>;
+    template struct TypedGemm<BFloat8, Float8, float, float>;
+    template struct TypedGemm<Float8, BFloat8, BFloat8, BFloat8, float, float>;
+    template struct TypedGemm<BFloat8, Float8, BFloat8, BFloat8, float, float>;
+#endif
 } // namespace Tensile

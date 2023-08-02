@@ -106,10 +106,10 @@ The user must assign the problem type when construct or import the problem from 
     HIPBLASLT_EXPORT explicit Gemm(hipblasLtHandle_t      handle,
                                    hipblasOperation_t     opA,
                                    hipblasOperation_t     opB,
-                                   hipblasDatatype_t      typeA,
-                                   hipblasDatatype_t      typeB,
-                                   hipblasDatatype_t      typeC,
-                                   hipblasDatatype_t      typeD,
+                                   hipblasltDatatype_t      typeA,
+                                   hipblasltDatatype_t      typeB,
+                                   hipblasltDatatype_t      typeC,
+                                   hipblasltDatatype_t      typeD,
                                    hipblasLtComputeType_t typeCompute);
 
     HIPBLASLT_EXPORT explicit Gemm(hipblasLtHandle_t       handle,
@@ -136,10 +136,10 @@ GemmProblemType lets user able to change the problem type after the instance is 
     {
         hipblasOperation_t     op_a;
         hipblasOperation_t     op_b;
-        hipblasDatatype_t      type_a;
-        hipblasDatatype_t      type_b;
-        hipblasDatatype_t      type_c;
-        hipblasDatatype_t      type_d;
+        hipblasltDatatype_t      type_a;
+        hipblasltDatatype_t      type_b;
+        hipblasltDatatype_t      type_c;
+        hipblasltDatatype_t      type_d;
         hipblasLtComputeType_t type_compute;
     };
 
@@ -150,7 +150,7 @@ GemmEpilogue lets user to control the epilogue of the problem.
     struct GemmEpilogue
     {
         hipblasLtEpilogue_t mode = HIPBLASLT_EPILOGUE_DEFAULT;
-        hipblasDatatype_t   bias_data_type;
+        hipblasltDatatype_t   bias_data_type;
         int                 aux_ld;
         int                 aux_stride;
     };
@@ -236,10 +236,10 @@ The user can get hueristic and make kernel arguments with the instance. If the p
     hipblaslt_ext::Gemm gemm(handle,
                              HIPBLAS_OP_N,
                              HIPBLAS_OP_N,
-                             HIPBLAS_R_16F,
-                             HIPBLAS_R_16F,
-                             HIPBLAS_R_16F,
-                             HIPBLAS_R_16F,
+                             HIPBLASLT_R_16F,
+                             HIPBLASLT_R_16F,
+                             HIPBLASLT_R_16F,
+                             HIPBLASLT_R_16F,
                              HIPBLASLT_COMPUTE_F32);
     std::vector<hipblasLtMatmulHeuristicResult_t> hueristic;
     gemm.setProblem(1, 1, 1, 1, epilogue, inputs); // m, n, k, batch
@@ -436,10 +436,10 @@ The following is a simple example of how this API works.
     hipblaslt_ext::GroupedGemm groupedGemm(handle,
                                            HIPBLAS_OP_N,
                                            HIPBLAS_OP_N,
-                                           HIPBLAS_R_16F,
-                                           HIPBLAS_R_16F,
-                                           HIPBLAS_R_16F,
-                                           HIPBLAS_R_16F,
+                                           HIPBLASLT_R_16F,
+                                           HIPBLASLT_R_16F,
+                                           HIPBLASLT_R_16F,
+                                           HIPBLASLT_R_16F,
                                            HIPBLASLT_COMPUTE_F32);
 
     // Step 4: Set problem
@@ -510,10 +510,10 @@ Get all algorithms lets users to get all the algorithms of a specific problem ty
                                                hipblasLtExtGemmTypeEnum_t                     typeGemm,
                                                hipblasOperation_t                             opA,
                                                hipblasOperation_t                             opB,
-                                               hipblasDatatype_t                              typeA,
-                                               hipblasDatatype_t                              typeB,
-                                               hipblasDatatype_t                              typeC,
-                                               hipblasDatatype_t                              typeD,
+                                               hipblasltDatatype_t                              typeA,
+                                               hipblasltDatatype_t                              typeB,
+                                               hipblasltDatatype_t                              typeC,
+                                               hipblasltDatatype_t                              typeD,
                                                hipblasLtComputeType_t                         typeCompute,
                                                std::vector<hipblasLtMatmulHeuristicResult_t>& heuristicResults);
 
@@ -601,10 +601,10 @@ Gemm
     hipblaslt_ext::Gemm gemm(handle,
                              HIPBLAS_OP_N,
                              HIPBLAS_OP_N,
-                             HIPBLAS_R_16F,
-                             HIPBLAS_R_16F,
-                             HIPBLAS_R_16F,
-                             HIPBLAS_R_16F,
+                             HIPBLASLT_R_16F,
+                             HIPBLASLT_R_16F,
+                             HIPBLASLT_R_16F,
+                             HIPBLASLT_R_16F,
                              HIPBLASLT_COMPUTE_F32);
 
     gemm.setProblem(1, 1, 1, 1, epilogue, inputs); // m, n, k, batch
@@ -681,10 +681,10 @@ Grouped gemm
     hipblaslt_ext::GroupedGemm groupedGemm(handle,
                                            HIPBLAS_OP_N,
                                            HIPBLAS_OP_N,
-                                           HIPBLAS_R_16F,
-                                           HIPBLAS_R_16F,
-                                           HIPBLAS_R_16F,
-                                           HIPBLAS_R_16F,
+                                           HIPBLASLT_R_16F,
+                                           HIPBLASLT_R_16F,
+                                           HIPBLASLT_R_16F,
+                                           HIPBLASLT_R_16F,
                                            HIPBLASLT_COMPUTE_F32);
 
     groupedGemm.setProblem(m, n, k, batch_count, epilogue, inputs); // m, n, k, batch
@@ -816,10 +816,10 @@ For example, we have a grouped gemm with gemm_count = 4. The sum of N must not e
     hipblaslt_ext::GroupedGemm groupedGemm(handle,
                                            HIPBLAS_OP_N,
                                            HIPBLAS_OP_N,
-                                           HIPBLAS_R_16F,
-                                           HIPBLAS_R_16F,
-                                           HIPBLAS_R_16F,
-                                           HIPBLAS_R_16F,
+                                           HIPBLASLT_R_16F,
+                                           HIPBLASLT_R_16F,
+                                           HIPBLASLT_R_16F,
+                                           HIPBLASLT_R_16F,
                                            HIPBLASLT_COMPUTE_F32);
 
     // Step 4: Set problem

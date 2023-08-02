@@ -684,7 +684,7 @@ void testing_matmul(const Arguments& arg)
                     hipblasLtMatmulDescSetAttribute(matmul[i],
                                                     HIPBLASLT_MATMUL_DESC_BIAS_DATA_TYPE,
                                                     &arg.bias_type,
-                                                    sizeof(hipblasDatatype_t)),
+                                                    sizeof(hipblasltDatatype_t)),
                     HIPBLAS_STATUS_SUCCESS);
             }
             else
@@ -759,7 +759,7 @@ void testing_matmul(const Arguments& arg)
 
         for(int gemmIdx = 0; gemmIdx < gemm_count; gemmIdx++)
         {
-            auto  bias_type = static_cast<hipblasDatatype_t>(0);
+            auto  bias_type = static_cast<hipblasltDatatype_t>(0);
             void* bias_addr = nullptr;
             if(arg.bias_vector)
             {

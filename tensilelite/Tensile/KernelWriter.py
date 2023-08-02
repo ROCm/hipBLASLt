@@ -206,6 +206,8 @@ class StateValues:
   numActivationTypeArgSize: int          = 0
   numActivationArgSize: int              = 0
   numactivationArgTotalSize: int         = 0
+  numSgprAddressScaleA: int              = 0
+  numSgprAddressScaleB: int              = 0
   numSgprAddressDbg: int                 = 0
 
   firstInitSgpr: int                     = -1
@@ -2507,10 +2509,12 @@ class KernelWriter(metaclass=abc.ABCMeta):
     if kernel["ProblemType"]["SparseA"] and not kernel["DirectToVgprSparseMetadata"]:
       self.states.lrvwTileMetadata = 1
 
-    if self.states.lrvwTileA > 1 and (kernel["ProblemType"]["DataType"].isHalf() or kernel["ProblemType"]["DataType"].isBFloat16() or kernel["ProblemType"]["DataType"].isInt8()):
+    if self.states.lrvwTileA > 1 and (kernel["ProblemType"]["DataType"].isHalf() or kernel["ProblemType"]["DataType"].isBFloat16() or \
+      kernel["ProblemType"]["DataType"].isInt8() or kernel["ProblemType"]["DataType"].is8bitFloat()):
       self.states.numVgprBufferPackA = 1
 
-    if self.states.lrvwTileB > 1 and (kernel["ProblemType"]["DataType"].isHalf() or kernel["ProblemType"]["DataType"].isBFloat16() or kernel["ProblemType"]["DataType"].isInt8()):
+    if self.states.lrvwTileB > 1 and (kernel["ProblemType"]["DataType"].isHalf() or kernel["ProblemType"]["DataType"].isBFloat16() or \
+      kernel["ProblemType"]["DataType"].isInt8() or kernel["ProblemType"]["DataType"].is8bitFloat()):
       self.states.numVgprBufferPackB = 1
 
     if kernel["UnrollMajorLDSA"]:
@@ -2731,10 +2735,11 @@ class KernelWriter(metaclass=abc.ABCMeta):
     # HPA not allowed in dgemm, cgemm, zgemm, sgemm
     if kernel["ProblemType"]["HighPrecisionAccumulate"] and \
        not (kernel["ProblemType"]["DataType"].isHalf() or kernel["ProblemType"]["DataType"].isBFloat16() or \
-          kernel["ProblemType"]["DataType"].isInt8x4() or kernel["ProblemType"]["DataType"].isInt8()):
-        print("HighPrecisionAccumulate only valid when DataType is half, bf16, Int8x4, Int8. Forcing HPA to False")
+          kernel["ProblemType"]["DataType"].isInt8x4() or kernel["ProblemType"]["DataType"].isInt8() or \
+          kernel["ProblemType"]["DataType"].is8bitFloat()):
+        print("HighPrecisionAccumulate only valid when DataType is half, bf16, Int8x4, Int8, fp8, bf8. Forcing HPA to False")
         kernel["ProblemType"]["HighPrecisionAccumulate"] = False
-  
+
     assert self.states.bpeAB == tensorParametersA["bpe"]
     assert self.states.bpeAB == tensorParametersB["bpe"]
 
@@ -3089,7 +3094,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
     vgprIdx += self.states.bias.numVgprValu
 
     if ((tensorParametersA["bpe"] < 4 and not kernel["UnrollMajorLDSA"]) or (tensorParametersB["bpe"] < 4 and not kernel["UnrollMajorLDSB"])) \
-        and kernel["ProblemType"]["DataType"].isInt8():
+        and (kernel["ProblemType"]["DataType"].isInt8() or kernel["ProblemType"]["DataType"].is8bitFloat()):
       self.states.a.startVgprValuPackTemp = vgprIdx
       self.states.b.startVgprValuPackTemp = vgprIdx
       vgprIdx += 1

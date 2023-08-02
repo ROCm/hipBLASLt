@@ -101,10 +101,10 @@ void simpleGemmExt(hipblasLtHandle_t  handle,
     hipblaslt_ext::Gemm gemm(handle,
                              trans_a,
                              trans_b,
-                             HIPBLAS_R_16F,
-                             HIPBLAS_R_16F,
-                             HIPBLAS_R_16F,
-                             HIPBLAS_R_16F,
+                             HIPBLASLT_R_16F,
+                             HIPBLASLT_R_16F,
+                             HIPBLASLT_R_16F,
+                             HIPBLASLT_R_16F,
                              HIPBLASLT_COMPUTE_F32);
 
     hipblaslt_ext::GemmEpilogue

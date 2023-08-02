@@ -160,6 +160,8 @@ namespace Tensile
                 m_useBias = args["use-bias"].as<bool>();
             if(args.count("bias-source"))
                 m_biasSrc = args["bias-source"].as<int>();
+            if(args.count("use-scaleAB"))
+                m_useScaleAB = args["use-scaleAB"].as<bool>();
             if(args.count("use-scaleDVec"))
                 m_useScaleDVec = args["use-scaleDVec"].as<bool>();
             if(args.count("use-scaleAlphaVec"))
@@ -209,7 +211,7 @@ namespace Tensile
             rv.clear();
             int biasSize       = std::max(1, (int)m_biasTypeArgs.size());
             int activationSize = std::max(1, (int)m_activationEnumArg.size());
-            rv.reserve(m_problemSizes.size() * activationSize);
+            rv.reserve(m_problemSizes.size() * activationSize * biasSize);
 
             std::vector<size_t> aStrides, bStrides, cStrides, dStrides, eStrides;
 
@@ -314,6 +316,14 @@ namespace Tensile
                             rv.back().setActivationType(m_activationType);
                         }
                         rv.back().setActivationNoGuard(m_activationNoGuard);
+                        rv.back().setUseScaleAB(m_useScaleAB);
+                        if(m_useScaleAB)
+                        {
+                            rv.back().setScaleA(
+                                m_constantTypes[ContractionProblemGemm::CONST::ALPHA]);
+                            rv.back().setScaleB(
+                                m_constantTypes[ContractionProblemGemm::CONST::ALPHA]);
+                        }
                         rv.back().setUseScaleDVec(m_useScaleDVec);
                         rv.back().setScaleDVec(
                             m_constantTypes[ContractionProblemGemm::CONST::ALPHA],

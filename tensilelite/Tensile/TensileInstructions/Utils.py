@@ -97,7 +97,7 @@ class Holder:
 # mfma
 ########################################
 
-def dataTypeNameAbbrevToInstType(abbrev: str) -> InstType:
+def dataTypeNameAbbrevToInstType(abbrev: str, sourceSwap: bool = False) -> InstType:
     if abbrev == 'f64':
         return InstType.INST_F64
     elif abbrev == 'f32':
@@ -112,13 +112,23 @@ def dataTypeNameAbbrevToInstType(abbrev: str) -> InstType:
         return InstType.INST_BF16
     elif abbrev == 'xf32':
         return InstType.INST_XF32
+    elif abbrev == 'fp8_fp8':
+        return InstType.INST_F8
+    elif abbrev == 'bf8_bf8':
+        return InstType.INST_BF8
+    elif (abbrev == 'fp8_bf8' and sourceSwap == False) or \
+        (abbrev == 'bf8_fp8' and sourceSwap == True):
+        return InstType.INST_F8_BF8
+    elif (abbrev == 'bf8_fp8' and sourceSwap == False) or \
+        (abbrev == 'fp8_bf8' and sourceSwap == True):
+        return InstType.INST_BF8_F8
     else:
         assert("Unsupported data type.")
     return InstType.INST_NOTYPE
 
-def dataTypeToMfmaInstTypePair(dataType: DataType, Fp16AltImpl: bool) -> Tuple[InstType, InstType]:
+def dataTypeToMfmaInstTypePair(dataType: DataType, Fp16AltImpl: bool, sourceSwap: bool) -> Tuple[InstType, InstType]:
     miInTypeStr      = "bf16" if Fp16AltImpl else dataType.toNameAbbrev()
-    miInInstType = dataTypeNameAbbrevToInstType(miInTypeStr) # v_mfma_[...xK]<InType>
+    miInInstType = dataTypeNameAbbrevToInstType(miInTypeStr, sourceSwap) # v_mfma_[...xK]<InType>
     miOutInstType = dataTypeNameAbbrevToInstType(dataType.MIOutputTypeNameAbbrev()) # v_mfma_<OutType>..
     return miInInstType, miOutInstType
 

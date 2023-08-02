@@ -60,16 +60,20 @@ std::string prefix(const char* layer, const char* caller)
     return std::string(buf.get());
 }
 
-const char* hipblasDatatype_to_string(hipblasDatatype_t type)
+const char* hipblasltDatatype_to_string(hipblasltDatatype_t type)
 {
     switch(type)
     {
-    case HIPBLAS_R_16F:
+    case HIPBLASLT_R_16F:
         return "R_16F";
-    case HIPBLAS_R_16B:
+    case HIPBLASLT_R_16B:
         return "R_16BF";
-    case HIPBLAS_R_32F:
+    case HIPBLASLT_R_32F:
         return "R_32F";
+    case HIPBLASLT_R_8F_E4M3:
+        return "R_8F_E4M3";
+    case HIPBLASLT_R_8F_E5M2:
+        return "R_8F_E5M2";
     default:
         return "Invalid";
     }
@@ -115,8 +119,18 @@ const char* rocblaslt_matmul_desc_attributes_to_string(rocblaslt_matmul_desc_att
         return "MATMUL_DESC_BIAS_POINTER";
     case ROCBLASLT_MATMUL_DESC_BIAS_DATA_TYPE:
         return "MATMUL_DESC_BIAS_DATA_TYPE";
+    case ROCBLASLT_MATMUL_DESC_A_SCALE_POINTER:
+        return "MATMUL_DESC_A_SCALE_POINTER";
+    case ROCBLASLT_MATMUL_DESC_B_SCALE_POINTER:
+        return "MATMUL_DESC_B_SCALE_POINTER";
     case ROCBLASLT_MATMUL_DESC_D_SCALE_VECTOR_POINTER:
         return "MATMUL_DESC_D_SCALE_VECTOR_POINTER";
+    case ROCBLASLT_MATMUL_DESC_EPILOGUE_AUX_POINTER:
+        return "MATMUL_DESC_EPILOGUE_AUX_POINTER";
+    case ROCBLASLT_MATMUL_DESC_EPILOGUE_AUX_LD:
+        return "MATMUL_DESC_EPILOGUE_AUX_LD";
+    case ROCBLASLT_MATMUL_DESC_EPILOGUE_AUX_BATCH_STRIDE:
+        return "MATMUL_DESC_EPILOGUE_AUX_BATCH_STRIDE";
     case ROCBLASLT_MATMUL_DESC_POINTER_MODE_ALPHA_DEVICE_VECTOR_BETA_HOST:
         return "MATMUL_DESC_POINTER_MODE_ALPHA_DEVICE_VECTOR_BETA_HOST";
     default:
@@ -181,6 +195,12 @@ const char* rocblaslt_epilogue_to_string(rocblaslt_epilogue epilogue)
         return "EPILOGUE_GELU_AUX";
     case ROCBLASLT_EPILOGUE_GELU_AUX_BIAS:
         return "EPILOGUE_GELU_AUX_BIAS";
+    case ROCBLASLT_EPILOGUE_DGELU_BGRAD:
+        return "EPILOGUE_DGELU_BGRAD";
+    case ROCBLASLT_EPILOGUE_BGRADA:
+        return "EPILOGUE_DGELU_BGRADA";
+    case ROCBLASLT_EPILOGUE_BGRADB:
+        return "EPILOGUE_DGELU_BGRADB";
     default:
         return "Invalid epilogue";
     }
@@ -195,14 +215,14 @@ std::string rocblaslt_matrix_layout_to_string(rocblaslt_matrix_layout mat)
     if(mat->batch_count <= 1)
         std::sprintf(buf.get(),
                      format.c_str(),
-                     hipblasDatatype_to_string(mat->type),
+                     hipblasltDatatype_to_string(mat->type),
                      mat->m,
                      mat->n,
                      mat->ld);
     else
         std::sprintf(buf.get(),
                      format.c_str(),
-                     hipblasDatatype_to_string(mat->type),
+                     hipblasltDatatype_to_string(mat->type),
                      mat->m,
                      mat->n,
                      mat->ld,
@@ -212,7 +232,7 @@ std::string rocblaslt_matrix_layout_to_string(rocblaslt_matrix_layout mat)
 }
 std::string rocblaslt_matmul_desc_to_string(rocblaslt_matmul_desc matmul_desc)
 {
-    std::string format = matmul_desc->bias_type == static_cast<hipblasDatatype_t>(0)
+    std::string format = matmul_desc->bias_type == static_cast<hipblasltDatatype_t>(0)
                              ? "[computeType=%s scaleType=%s transA=%s transB=%s "
                                "epilogue=%s biasPointer=0x%x]\0"
                              : "[computeType=%s scaleType=%s transA=%s transB=%s "
@@ -220,11 +240,11 @@ std::string rocblaslt_matmul_desc_to_string(rocblaslt_matmul_desc matmul_desc)
 
     std::unique_ptr<char[]> buf(new char[255]);
 
-    if(matmul_desc->bias_type == static_cast<hipblasDatatype_t>(0))
+    if(matmul_desc->bias_type == static_cast<hipblasltDatatype_t>(0))
         std::sprintf(buf.get(),
                      format.c_str(),
                      rocblaslt_compute_type_to_string(matmul_desc->compute_type),
-                     hipblasDatatype_to_string(matmul_desc->scale_type),
+                     hipblasltDatatype_to_string(matmul_desc->scale_type),
                      hipblasOperation_to_string(matmul_desc->op_A),
                      hipblasOperation_to_string(matmul_desc->op_B),
                      rocblaslt_epilogue_to_string(matmul_desc->epilogue),
@@ -233,11 +253,11 @@ std::string rocblaslt_matmul_desc_to_string(rocblaslt_matmul_desc matmul_desc)
         std::sprintf(buf.get(),
                      format.c_str(),
                      rocblaslt_compute_type_to_string(matmul_desc->compute_type),
-                     hipblasDatatype_to_string(matmul_desc->scale_type),
+                     hipblasltDatatype_to_string(matmul_desc->scale_type),
                      hipblasOperation_to_string(matmul_desc->op_A),
                      hipblasOperation_to_string(matmul_desc->op_B),
                      rocblaslt_epilogue_to_string(matmul_desc->epilogue),
                      matmul_desc->bias,
-                     hipblasDatatype_to_string(matmul_desc->bias_type));
+                     hipblasltDatatype_to_string(matmul_desc->bias_type));
     return std::string(buf.get());
 }
