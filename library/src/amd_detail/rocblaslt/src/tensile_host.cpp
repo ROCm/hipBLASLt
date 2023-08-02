@@ -2116,7 +2116,7 @@ rocblaslt_status isSolutionSupported(rocblaslt_handle       handle,
         }
         if(isNormalGemm && !isSupported)
         {
-            bool isSupported = true;
+            isSupported = true;
             tmpWorkspaceSize = 0;
             for(int i = 0; i < tensile_prob.gemms.size(); i++)
             {
@@ -2124,10 +2124,12 @@ rocblaslt_status isSolutionSupported(rocblaslt_handle       handle,
                 auto actType          = tensile_prob.gemms[i].activationType();
                 auto useScaleDVec     = tensile_prob.gemms[i].useScaleDVec();
                 auto useScaleAlphaVec = tensile_prob.gemms[i].useScaleAlphaVec();
+                auto useE             = tensile_prob.gemms[i].useE();
                 tensile_prob.gemms[i].setUseBias(false);
                 tensile_prob.gemms[i].setActivationType(Tensile::ActivationType::None);
                 tensile_prob.gemms[i].setUseScaleDVec(false);
                 tensile_prob.gemms[i].setUseScaleAlphaVec(false);
+                tensile_prob.gemms[i].setUseE(false);
                 if(!((*solution->hardwarePredicate)(*hardware)
                      && (*solution->problemPredicate)(tensile_prob.gemms[i])))
                 {
@@ -2141,7 +2143,7 @@ rocblaslt_status isSolutionSupported(rocblaslt_handle       handle,
                 tensile_prob.gemms[i].setActivationType(actType);
                 tensile_prob.gemms[i].setUseScaleDVec(useScaleDVec);
                 tensile_prob.gemms[i].setUseScaleAlphaVec(useScaleAlphaVec);
-
+                tensile_prob.gemms[i].setUseE(useE);
                 if(!isSupported)
                 {
                     break;
