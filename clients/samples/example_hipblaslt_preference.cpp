@@ -367,44 +367,44 @@ static void show_usage(char* argv[])
         << std::endl;
 }
 
-static int parse_arguments(int                 argc,
-                           char*               argv[],
-                           hipblasDatatype_t&  in_datatype,
-                           hipblasDatatype_t&  out_datatype,
-                           int64_t&            m,
-                           int64_t&            n,
-                           int64_t&            k,
-                           int64_t&            lda,
-                           int64_t&            ldb,
-                           int64_t&            ldc,
-                           int64_t&            ldd,
-                           int64_t&            lde,
-                           int64_t&            stride_a,
-                           int64_t&            stride_b,
-                           int64_t&            stride_c,
-                           int64_t&            stride_d,
-                           int64_t&            stride_e,
-                           int32_t&            batch_count,
-                           float&              alpha,
-                           float&              beta,
-                           hipblasOperation_t& trans_a,
-                           hipblasOperation_t& trans_b,
-                           bool&               enable_grad,
-                           bool&               enable_e,
-                           BiasSrc&            biasSrc,
-                           bool&               enable_scaleDVec,
-                           bool&               enable_scaleAlphaVec,
-                           ActivationType&     actType,
-                           bool&               header,
-                           bool&               verbose,
-                           bool&               validate,
-                           bool&               timing,
-                           int32_t&            request_solutions,
-                           int32_t&            sync_loop_count,
-                           int32_t&            bench_loop_count,
-                           int32_t&            cold_loop_count,
-                           bool&               useExt,
-                           bool&               findAll)
+static int parse_arguments(int                  argc,
+                           char*                argv[],
+                           hipblasltDatatype_t& in_datatype,
+                           hipblasltDatatype_t& out_datatype,
+                           int64_t&             m,
+                           int64_t&             n,
+                           int64_t&             k,
+                           int64_t&             lda,
+                           int64_t&             ldb,
+                           int64_t&             ldc,
+                           int64_t&             ldd,
+                           int64_t&             lde,
+                           int64_t&             stride_a,
+                           int64_t&             stride_b,
+                           int64_t&             stride_c,
+                           int64_t&             stride_d,
+                           int64_t&             stride_e,
+                           int32_t&             batch_count,
+                           float&               alpha,
+                           float&               beta,
+                           hipblasOperation_t&  trans_a,
+                           hipblasOperation_t&  trans_b,
+                           bool&                enable_grad,
+                           bool&                enable_e,
+                           BiasSrc&             biasSrc,
+                           bool&                enable_scaleDVec,
+                           bool&                enable_scaleAlphaVec,
+                           ActivationType&      actType,
+                           bool&                header,
+                           bool&                verbose,
+                           bool&                validate,
+                           bool&                timing,
+                           int32_t&             request_solutions,
+                           int32_t&             sync_loop_count,
+                           int32_t&             bench_loop_count,
+                           int32_t&             cold_loop_count,
+                           bool&                useExt,
+                           bool&                findAll)
 {
     if(argc >= 2)
     {
@@ -601,15 +601,15 @@ static int parse_arguments(int                 argc,
                     ++i;
                     if(strncmp(argv[i], "fp32", 4) == 0)
                     {
-                        in_datatype = HIPBLAS_R_32F;
+                        in_datatype = HIPBLASLT_R_32F;
                     }
                     else if(strncmp(argv[i], "fp16", 4) == 0)
                     {
-                        in_datatype = HIPBLAS_R_16F;
+                        in_datatype = HIPBLASLT_R_16F;
                     }
                     else if(strncmp(argv[i], "bf16", 4) == 0)
                     {
-                        in_datatype = HIPBLAS_R_16B;
+                        in_datatype = HIPBLASLT_R_16B;
                     }
                     else
                     {
@@ -623,15 +623,15 @@ static int parse_arguments(int                 argc,
                     ++i;
                     if(strncmp(argv[i], "fp32", 4) == 0)
                     {
-                        out_datatype = HIPBLAS_R_32F;
+                        out_datatype = HIPBLASLT_R_32F;
                     }
                     else if(strncmp(argv[i], "fp16", 4) == 0)
                     {
-                        out_datatype = HIPBLAS_R_16F;
+                        out_datatype = HIPBLASLT_R_16F;
                     }
                     else if(strncmp(argv[i], "bf16", 4) == 0)
                     {
-                        out_datatype = HIPBLAS_R_16B;
+                        out_datatype = HIPBLASLT_R_16B;
                     }
                     else
                     {
@@ -848,41 +848,41 @@ void initialize_a_b_c_e_bias(std::vector<Tin>&   ha,
 }
 
 template <typename Tin, typename Tout>
-void test_hipblaslt(hipblasDatatype_t  in_datatype,
-                    hipblasDatatype_t  out_datatype,
-                    hipblasOperation_t trans_a,
-                    hipblasOperation_t trans_b,
-                    int64_t            m,
-                    int64_t            n,
-                    int64_t            k,
-                    int64_t            lda,
-                    int64_t            ldb,
-                    int64_t            ldc,
-                    int64_t            ldd,
-                    int64_t            lde,
-                    int64_t            stride_a,
-                    int64_t            stride_b,
-                    int64_t            stride_c,
-                    int64_t            stride_d,
-                    int64_t            stride_e,
-                    int32_t            batch_count,
-                    float              alpha,
-                    float              beta,
-                    bool               enable_grad,
-                    bool               enable_e,
-                    BiasSrc            biasSrc,
-                    bool               enable_scaleDVec,
-                    bool               enable_scaleAlphaVec,
-                    ActivationType     actType,
-                    bool               validate,
-                    bool               verbose,
-                    bool               timing,
-                    int32_t            request_solutions,
-                    int32_t            sync_loop_count,
-                    int32_t            bench_loop_count,
-                    int32_t            cold_loop_count,
-                    bool               useExt,
-                    bool               findAll)
+void test_hipblaslt(hipblasltDatatype_t in_datatype,
+                    hipblasltDatatype_t out_datatype,
+                    hipblasOperation_t  trans_a,
+                    hipblasOperation_t  trans_b,
+                    int64_t             m,
+                    int64_t             n,
+                    int64_t             k,
+                    int64_t             lda,
+                    int64_t             ldb,
+                    int64_t             ldc,
+                    int64_t             ldd,
+                    int64_t             lde,
+                    int64_t             stride_a,
+                    int64_t             stride_b,
+                    int64_t             stride_c,
+                    int64_t             stride_d,
+                    int64_t             stride_e,
+                    int32_t             batch_count,
+                    float               alpha,
+                    float               beta,
+                    bool                enable_grad,
+                    bool                enable_e,
+                    BiasSrc             biasSrc,
+                    bool                enable_scaleDVec,
+                    bool                enable_scaleAlphaVec,
+                    ActivationType      actType,
+                    bool                validate,
+                    bool                verbose,
+                    bool                timing,
+                    int32_t             request_solutions,
+                    int32_t             sync_loop_count,
+                    int32_t             bench_loop_count,
+                    int32_t             cold_loop_count,
+                    bool                useExt,
+                    bool                findAll)
 {
     int64_t     a_stride_1, a_stride_2, b_stride_1, b_stride_2;
     int64_t     row_a, col_a, row_b, col_b, row_c, col_c;
@@ -1048,7 +1048,8 @@ void test_hipblaslt(hipblasDatatype_t  in_datatype,
             matD, HIPBLASLT_MATRIX_LAYOUT_STRIDED_BATCH_OFFSET, &stride_d, sizeof(stride_d)));
     }
 
-    CHECK_HIPBLASLT_ERROR(hipblasLtMatmulDescCreate(&matmul, HIPBLASLT_COMPUTE_F32, HIPBLAS_R_32F));
+    CHECK_HIPBLASLT_ERROR(
+        hipblasLtMatmulDescCreate(&matmul, HIPBLASLT_COMPUTE_F32, HIPBLASLT_R_32F));
 
     CHECK_HIPBLASLT_ERROR(hipblasLtMatmulDescSetAttribute(
         matmul, HIPBLASLT_MATMUL_DESC_TRANSA, &trans_a, sizeof(int32_t)));
@@ -1704,10 +1705,10 @@ int main(int argc, char* argv[])
     int deviceId = 0;
     CHECK_HIP_ERROR(hipSetDevice(deviceId));
     // initialize parameters with default values
-    hipblasOperation_t trans_a      = HIPBLAS_OP_N;
-    hipblasOperation_t trans_b      = HIPBLAS_OP_N;
-    hipblasDatatype_t  in_datatype  = HIPBLAS_R_32F;
-    hipblasDatatype_t  out_datatype = HIPBLAS_R_32F;
+    hipblasOperation_t  trans_a      = HIPBLAS_OP_N;
+    hipblasOperation_t  trans_b      = HIPBLAS_OP_N;
+    hipblasltDatatype_t in_datatype  = HIPBLASLT_R_32F;
+    hipblasltDatatype_t out_datatype = HIPBLASLT_R_32F;
 
     int64_t invalid_int   = std::numeric_limits<int64_t>::min() + 1;
     float   invalid_float = std::numeric_limits<float>::quiet_NaN();
@@ -1861,7 +1862,7 @@ int main(int argc, char* argv[])
         std::cout << std::endl;
     }
 
-    if(in_datatype == HIPBLAS_R_32F && out_datatype == HIPBLAS_R_32F)
+    if(in_datatype == HIPBLASLT_R_32F && out_datatype == HIPBLASLT_R_32F)
         test_hipblaslt<hipblasLtFloat, hipblasLtFloat>(in_datatype,
                                                        out_datatype,
                                                        trans_a,
@@ -1897,7 +1898,7 @@ int main(int argc, char* argv[])
                                                        cold_loop_count,
                                                        useExt,
                                                        findAll);
-    else if(in_datatype == HIPBLAS_R_16F && out_datatype == HIPBLAS_R_32F)
+    else if(in_datatype == HIPBLASLT_R_16F && out_datatype == HIPBLASLT_R_32F)
         test_hipblaslt<hipblasLtHalf, hipblasLtFloat>(in_datatype,
                                                       out_datatype,
                                                       trans_a,
@@ -1933,7 +1934,7 @@ int main(int argc, char* argv[])
                                                       cold_loop_count,
                                                       useExt,
                                                       findAll);
-    else if(in_datatype == HIPBLAS_R_16F && out_datatype == HIPBLAS_R_16F)
+    else if(in_datatype == HIPBLASLT_R_16F && out_datatype == HIPBLASLT_R_16F)
         test_hipblaslt<hipblasLtHalf, hipblasLtHalf>(in_datatype,
                                                      out_datatype,
                                                      trans_a,
@@ -1969,7 +1970,7 @@ int main(int argc, char* argv[])
                                                      cold_loop_count,
                                                      useExt,
                                                      findAll);
-    else if(in_datatype == HIPBLAS_R_16B && out_datatype == HIPBLAS_R_16B)
+    else if(in_datatype == HIPBLASLT_R_16B && out_datatype == HIPBLASLT_R_16B)
         test_hipblaslt<hipblasLtBfloat16, hipblasLtBfloat16>(in_datatype,
                                                              out_datatype,
                                                              trans_a,

@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022 Advanced Micro Devices, Inc.
+ * Copyright (C) 2022-2023 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -33,13 +33,13 @@ template <typename T>
 constexpr auto hipblaslt_type2datatype()
 {
     if(std::is_same<T, hipblasLtHalf>{})
-        return HIPBLAS_R_16F;
+        return HIPBLASLT_R_16F;
     if(std::is_same<T, hip_bfloat16>{})
-        return HIPBLAS_R_16B;
+        return HIPBLASLT_R_16B;
     if(std::is_same<T, float>{})
-        return HIPBLAS_R_32F;
+        return HIPBLASLT_R_32F;
 
-    return HIPBLAS_R_16F; // testing purposes we default to f32 ex
+    return HIPBLASLT_R_16F; // testing purposes we default to f32 ex
 }
 
 // ----------------------------------------------------------------------------
@@ -59,11 +59,11 @@ auto hipblaslt_simple_dispatch(const Arguments& arg)
 {
     switch(arg.a_type)
     {
-    case HIPBLAS_R_16F:
+    case HIPBLASLT_R_16F:
         return TEST<hipblasLtHalf>{}(arg);
-    case HIPBLAS_R_16B:
+    case HIPBLASLT_R_16B:
         return TEST<hip_bfloat16>{}(arg);
-    case HIPBLAS_R_32F:
+    case HIPBLASLT_R_32F:
         return TEST<float>{}(arg);
     default:
         return TEST<void>{}(arg);
@@ -79,19 +79,20 @@ auto hipblaslt_matmul_dispatch(const Arguments& arg)
 
     if(arg.b_type == Ti && arg.d_type == To)
     {
-        if(Ti == To && To == HIPBLAS_R_16F && Tc == HIPBLASLT_COMPUTE_F32)
+        if(Ti == To && To == HIPBLASLT_R_16F && Tc == HIPBLASLT_COMPUTE_F32)
         {
             return TEST<hipblasLtHalf, hipblasLtHalf, float>{}(arg);
         }
-        else if(Ti == To && To == HIPBLAS_R_16B && Tc == HIPBLASLT_COMPUTE_F32)
+        else if(Ti == To && To == HIPBLASLT_R_16B && Tc == HIPBLASLT_COMPUTE_F32)
         {
             return TEST<hip_bfloat16, hip_bfloat16, float>{}(arg);
         }
-        else if(Ti == To && To == HIPBLAS_R_32F && (Tc == HIPBLASLT_COMPUTE_F32 || Tc == HIPBLASLT_COMPUTE_F32_FAST_XF32))
+        else if(Ti == To && To == HIPBLASLT_R_32F
+                && (Tc == HIPBLASLT_COMPUTE_F32 || Tc == HIPBLASLT_COMPUTE_F32_FAST_XF32))
         {
             return TEST<float, float, float>{}(arg);
         }
-        else if(Ti == HIPBLAS_R_16F && To == HIPBLAS_R_32F && Tc == HIPBLASLT_COMPUTE_F32)
+        else if(Ti == HIPBLASLT_R_16F && To == HIPBLASLT_R_32F && Tc == HIPBLASLT_COMPUTE_F32)
         {
             return TEST<hipblasLtHalf, float, float>{}(arg);
         }

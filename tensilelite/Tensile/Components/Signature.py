@@ -30,6 +30,36 @@ from ..TensileInstructions import SignatureValueKind as SVK
 
 from math import ceil
 
+def getSrcValueType(kernel, cov, isTypeA):
+    # special cases for F8 datatypes
+    if kernel["ProblemType"]["DataType"].isFloat8():
+        srcValueType = "FP8"
+    elif kernel["ProblemType"]["DataType"].isBFloat8():
+        srcValueType = "BF8"
+    elif kernel["ProblemType"]["DataType"].isFloat8BFloat8():
+        srcValueType = "FP8" if isTypeA else "BF8"
+    elif kernel["ProblemType"]["DataType"].isBFloat8Float8():
+        srcValueType = "BF8" if isTypeA else "FP8"
+    else:
+        srcValueType = kernel["ProblemType"]["DataType"].toNameAbbrev().upper()
+
+    if cov == "V3":
+        srcValueType = srcValueType.lower()
+    return srcValueType
+
+def getDstValueType(kernel, cov):
+    # special cases for F8 datatypes
+    if kernel["ProblemType"]["DataType"].isFloat8():
+        dstValueType = "FP8"
+    elif kernel["ProblemType"]["DataType"].isBFloat8():
+        dstValueType = "BF8"
+    else:
+        dstValueType = kernel["ProblemType"]["DataType"].toNameAbbrev().upper()
+
+    if cov == "V3":
+        dstValueType = dstValueType.lower()
+    return dstValueType
+
 class SignatureCOV3(Signature):
     kernel = {"CodeObjectVersion": "V3"}
 
@@ -66,7 +96,8 @@ class SignatureCOV3(Signature):
                                     vgprWorkItem=0,
                                     flatWorkGroupSize=(kernel["NumThreads"]))
 
-        srcValueType  = kernel["ProblemType"]["DataType"].toNameAbbrev()
+        srcValueTypeA = getSrcValueType(kernel, "V3", True)
+        srcValueTypeB = getSrcValueType(kernel, "V3", False)
         dstValueType  = kernel["ProblemType"]["DestDataType"].toNameAbbrev()
         cptValueType  = kernel["ProblemType"]["ComputeDataType"].toNameAbbrev()
         biasValueType = "void"
@@ -82,11 +113,11 @@ class SignatureCOV3(Signature):
             signature.addArg("AddressDbg", SVK.SIG_GLOBALBUFFER, "struct", "generic")
         signature.addArg(    "D", SVK.SIG_GLOBALBUFFER, dstValueType, "generic")
         signature.addArg(    "C", SVK.SIG_GLOBALBUFFER, dstValueType, "generic")
-        signature.addArg(    "A", SVK.SIG_GLOBALBUFFER, srcValueType, "generic")
-        signature.addArg(    "B", SVK.SIG_GLOBALBUFFER, srcValueType, "generic")
+        signature.addArg(    "A", SVK.SIG_GLOBALBUFFER, srcValueTypeA, "generic")
+        signature.addArg(    "B", SVK.SIG_GLOBALBUFFER, srcValueTypeB, "generic")
 
         if kernel["ProblemType"]["SparseA"]:
-            signature.addArg("MetaData", SVK.SIG_GLOBALBUFFER, srcValueType, "generic")
+            signature.addArg("MetaData", SVK.SIG_GLOBALBUFFER, "void" , "generic")
         # Note: We use packed f16 if alpha and beta are f16
         if kernel["ProblemType"]["ComputeDataType"].isHalf():
             cptValueType = 'pkf16'
@@ -116,6 +147,11 @@ class SignatureCOV3(Signature):
 
         if kernel["ProblemType"]["UseScaleDVec"] and (kernel["GlobalSplitU"] == 1):
             signature.addArg("AddressScaleDVec", SVK.SIG_GLOBALBUFFER, cptValueType, "generic")
+
+        if kernel["ProblemType"]["UseScaleAB"] and (kernel["GlobalSplitU"] == 1):
+            signature.addArg("AddressScaleA", SVK.SIG_GLOBALBUFFER, cptValueType, "generic")
+            signature.addArg("AddressScaleB", SVK.SIG_GLOBALBUFFER, cptValueType, "generic")
+
         if kernel["ProblemType"]["UseScaleAlphaVec"] and (kernel["GlobalSplitU"] == 1):
             signature.addArg("AddressScaleAlphaVec", SVK.SIG_GLOBALBUFFER, cptValueType, "generic")
 

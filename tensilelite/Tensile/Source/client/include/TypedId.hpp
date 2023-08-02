@@ -100,4 +100,17 @@ namespace Tensile
     using TypedGemm_B_B_S = TypedGemm<BFloat16, BFloat16, BFloat16, BFloat16, float, float>;
     using TypedGemm_B_S_S = TypedGemm<BFloat16, BFloat16, float, float>;
 #endif // TENSILE_USE_BF16
+#ifdef TENSILE_USE_FP8_BF8
+    using TypedGemm_F8_F8_S = TypedGemm<Float8, Float8, Float8, Float8, float, float>;
+    using TypedGemm_F8_S_S  = TypedGemm<Float8, Float8, float, float>;
+    using TypedGemm_B8_B8_S = TypedGemm<BFloat8, BFloat8, BFloat8, BFloat8, float, float>;
+    using TypedGemm_B8_S_S  = TypedGemm<BFloat8, BFloat8, float, float>;
+    // hybrid
+    using TypedGemm_F8B8_F8_S = TypedGemm<Float8, BFloat8, Float8, Float8, float, float>;
+    using TypedGemm_F8B8_S_S  = TypedGemm<Float8, BFloat8, float, float>;
+    using TypedGemm_B8F8_F8_S = TypedGemm<BFloat8, Float8, Float8, Float8, float, float>;
+    using TypedGemm_B8F8_S_S  = TypedGemm<BFloat8, Float8, float, float>;
+    using TypedGemm_F8B8_B8_S = TypedGemm<Float8, BFloat8, BFloat8, BFloat8, float, float>;
+    using TypedGemm_B8F8_B8_S = TypedGemm<BFloat8, Float8, BFloat8, BFloat8, float, float>;
+#endif // TENSILE_USE_FP8_BF8
 } // namespace Tensile

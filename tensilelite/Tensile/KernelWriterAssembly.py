@@ -391,10 +391,12 @@ class KernelWriterAssembly(KernelWriter):
       self.defineSgpr("GlobalReadIncsMetadata", self.states.m.numSgprGlobalReadIncs)
 
     if self.states.lrvwTileA > 1 or self.states.lrvwTileB > 1:
-      if kernel["ProblemType"]["DataType"].isHalf() or kernel["ProblemType"]["DataType"].isBFloat16() or kernel["ProblemType"]["DataType"].isInt8():
+      if kernel["ProblemType"]["DataType"].isHalf() or kernel["ProblemType"]["DataType"].isBFloat16() \
+         or kernel["ProblemType"]["DataType"].isInt8() or kernel["ProblemType"]["DataType"].is8bitFloat():
         self.defineSgpr("PackKForV0", 1)
         self.defineSgpr("PackKForV1", 1)
-        if (self.states.lrvwTileA > 2 or self.states.lrvwTileB > 2) and kernel["ProblemType"]["DataType"].isInt8():
+        if (self.states.lrvwTileA > 2 or self.states.lrvwTileB > 2) and \
+            (kernel["ProblemType"]["DataType"].isInt8() or kernel["ProblemType"]["DataType"].is8bitFloat()):
           self.defineSgpr("PackKForV2", 1)
           self.defineSgpr("PackKForV3", 1)
 
@@ -573,7 +575,7 @@ class KernelWriterAssembly(KernelWriter):
         module.add(RegSet("v", "vgprG2LMetadata", self.states.m.startVgprG2L))
 
     if ((tPA["bpe"] < 4 and not kernel["UnrollMajorLDSA"]) or (tPB["bpe"] < 4 and not kernel["UnrollMajorLDSB"])) \
-        and kernel["ProblemType"]["DataType"].isInt8():
+        and (kernel["ProblemType"]["DataType"].isInt8() or kernel["ProblemType"]["DataType"].is8bitFloat()):
       module.add(RegSet("v", "vgprPackTemp", self.states.a.startVgprValuPackTemp))
 
 
@@ -1028,6 +1030,12 @@ class KernelWriterAssembly(KernelWriter):
     storeSgprLoad = 0
     if kernel["ProblemType"]["UseScaleDVec"] and (kernel["GlobalSplitU"] == 1):
         storeSgprLoad += self.states.rpga
+
+    if kernel["ProblemType"]["UseScaleAB"] and (kernel["GlobalSplitU"] == 1):
+      self.states.numSgprAddressScaleA = self.states.rpga
+      self.states.numSgprAddressScaleB = self.states.rpga
+      storeSgprLoad += self.states.numSgprAddressScaleA + self.states.numSgprAddressScaleB
+
     if kernel["ProblemType"]["UseScaleAlphaVec"] and (kernel["GlobalSplitU"] == 1):
         storeSgprLoad += self.states.rpga
     if self.states.useBias != DataDirection.NONE and (kernel["GlobalSplitU"] == 1):
@@ -1053,7 +1061,7 @@ class KernelWriterAssembly(KernelWriter):
       if kernel["ProblemType"]["DataType"].isHalf() or kernel["ProblemType"]["DataType"].isBFloat16():
         module.add(SMovB32(dst=sgpr("PackKForV0"), src="0x05040100", comment=""))
         module.add(SMovB32(dst=sgpr("PackKForV1"), src="0x07060302", comment=""))
-      if kernel["ProblemType"]["DataType"].isInt8():
+      if kernel["ProblemType"]["DataType"].isInt8() or kernel["ProblemType"]["DataType"].is8bitFloat():
         module.add(SMovB32(dst=sgpr("PackKForV0"), src="0x0c0c0400", comment=""))
         module.add(SMovB32(dst=sgpr("PackKForV1"), src="0x0c0c0501", comment=""))
         if self.states.lrvwTileA > 2 or self.states.lrvwTileB > 2:
@@ -3919,6 +3927,12 @@ class KernelWriterAssembly(KernelWriter):
       if kernel["ProblemType"]["UseScaleDVec"] and (kernel["GlobalSplitU"] == 1):
         module.add(RegSet("s", "sgprAddressScaleDVec", soffset))
         soffset += self.states.rpga
+      if self.states.numSgprAddressScaleA:
+        module.add(RegSet("s", "sgprAddressScaleA", soffset))
+        soffset += self.states.numSgprAddressScaleA
+      if self.states.numSgprAddressScaleB:
+        module.add(RegSet("s", "sgprAddressScaleB", soffset))
+        soffset += self.states.numSgprAddressScaleB
       if kernel["ProblemType"]["UseScaleAlphaVec"] and (kernel["GlobalSplitU"] == 1):
         module.add(RegSet("s", "sgprAddressScaleAlphaVec", soffset))
         soffset += self.states.rpga
@@ -4073,7 +4087,7 @@ class KernelWriterAssembly(KernelWriter):
     numMIInputB      = kernel["MIInputPerThreadB"]
     numMIInput       = max(numMIInputA,numMIInputB)
     miInInstType, miOutInstType = dataTypeToMfmaInstTypePair(miInputType, \
-      kernel["ProblemType"]["Fp16AltImpl"])
+      kernel["ProblemType"]["Fp16AltImpl"], kernel["SourceSwap"])
     neg_flag         = True if ((not is_mfma) and (miInInstType == InstType.INST_I8)) else False
     miInInstType     = InstType.INST_U8 if ((not is_mfma) and miInInstType == InstType.INST_I8) else miInInstType
     miOutInstType    = miOutInstType if is_mfma else dataTypeNameAbbrevToInstType(kernel["ProblemType"]["ComputeDataType"].toNameAbbrev())
@@ -4952,7 +4966,7 @@ class KernelWriterAssembly(KernelWriter):
               g2lIdx = i * loadWidth
 
               destVgprHi = None
-              dataIsI8 = False
+              dataIsByte = False
               packInt8Code = None
               eccOffset = 0
 
@@ -4971,7 +4985,7 @@ class KernelWriterAssembly(KernelWriter):
               # for each component in vector
               while r < numLoadVectorComp:
                 numElementsPerLoad = 1
-                if kernel["ProblemType"]["DataType"].isInt8() or tP["isM"]:
+                if kernel["ProblemType"]["DataType"].isInt8() or kernel["ProblemType"]["DataType"].is8bitFloat() or tP["isM"]:
                   # TODO-Int8, Check this:
                   # if tP["glvw"]>1 and kernel["AssertSummationElementMultiple"] % 2 == 0:
                   # # Pack two FP16 values into a single load dword x2
@@ -4983,7 +4997,7 @@ class KernelWriterAssembly(KernelWriter):
                   if r == 1:
                     packInt8Code = Module()
                     destVgprHi = self.vgprPool.checkOut( int8TempVgpr , 'destVgprHi')
-                  dataIsI8 = True
+                  dataIsByte = True
                   regIdx = r // 4
                 elif kernel["ProblemType"]["DataType"].isHalf() or \
                   kernel["ProblemType"]["DataType"].isBFloat16():
@@ -5099,7 +5113,8 @@ class KernelWriterAssembly(KernelWriter):
                       hi16=loopCnt%2 if tP["glvw"]==1 else r%2
                       comment="load one buffer value"
 
-                  if (kernel["ProblemType"]["DataType"].isInt8() and not tP["isM"]) or (tP["isM"] and destVgprHi != None):
+                  if ((kernel["ProblemType"]["DataType"].isInt8() or kernel["ProblemType"]["DataType"].is8bitFloat()) \
+                               and not tP["isM"]) or (tP["isM"] and destVgprHi != None):
                     # TODO-Int8, Check this:
                     # if numElementsPerLoad==2:
                     #   # Pack two FP16 values into a single load dword x2
@@ -5115,7 +5130,7 @@ class KernelWriterAssembly(KernelWriter):
                   # if hi8=1 or hi16=1 (component 1,2,3 for int8) or (component 1 for half), use the temp destVgprHi
                   # but only when hi16=1 we use the _d16_hi version instruction, see the below visualized int8 comment
                   loadVgpr = destVgprHi if ((hi16 or hi8) and destVgprHi != None) else destVgpr
-                  if (kernel["ProblemType"]["DataType"].isInt8() or tP["isM"]) and (not self.states.archCaps["HasEccHalf"]):
+                  if (kernel["ProblemType"]["DataType"].isInt8() or kernel["ProblemType"]["DataType"].is8bitFloat() or tP["isM"]) and (not self.states.archCaps["HasEccHalf"]):
                     module.add(VMovB32(dst=vgpr(loadVgpr), src=0, comment="set to zero to avoid unexpected value"))
                   module.add(self.chooseGlobalRead(True, \
                             bpl, destVgpr=loadVgpr, \
@@ -5176,7 +5191,7 @@ class KernelWriterAssembly(KernelWriter):
                 # V1, V3 -> shift left 8 bits, or 4 regs (pack)
                 # DestV0|=(V1 << 8), DestV0|= V2, DestV0|=(V3 << 8)
                 # Int8 (byte)
-                if dataIsI8 and (destVgprHi != None):
+                if dataIsByte and (destVgprHi != None):
                   # hi8  -> r = 1,3
                   # hi16 -> r = 2,3
                   if hi8 or hi16:
@@ -5196,7 +5211,7 @@ class KernelWriterAssembly(KernelWriter):
                   module.add(VOrB32(dst=vgpr(destVgpr), src0=vgpr(destVgpr), src1=vgpr(destVgprHi), comment="HasEccHalf: pack"))
 
                 # For half (bf16). Note: for int8, we will checkin after loading all components
-                if (destVgprHi != None) and (not dataIsI8):
+                if (destVgprHi != None) and (not dataIsByte):
                   self.vgprPool.checkIn(destVgprHi)
                   destVgprHi = None
 
@@ -5210,7 +5225,7 @@ class KernelWriterAssembly(KernelWriter):
 
               # for int8:
               # we do the 3 packs, and checking the 3 extra vgprs after loading all components
-              if dataIsI8 and int8TempVgpr:
+              if dataIsByte and int8TempVgpr:
                 assert packInt8Code != None and destVgprHi != None
                 module.add(packInt8Code)
                 self.vgprPool.checkIn(destVgprHi - int8TempVgpr)
@@ -5976,7 +5991,7 @@ class KernelWriterAssembly(KernelWriter):
             #############################################
             # VGPR: |---w4---|---w3---|---w2---|---w1---| -> b8_d16: get w1 / _b8_d16_hi: get w3
             # LSHR: |--------|---w4---|--------|---w2---| -> b8_d16: get w2 / _b8_d16_hi: get w4
-            elif kernel["ProblemType"]["DataType"].isInt8() or tP["isM"]:
+            elif kernel["ProblemType"]["DataType"].isInt8() or kernel["ProblemType"]["DataType"].is8bitFloat() or tP["isM"]:
               isHigh16Bits = (s % 4) > 1 # 2,3
               # TODO
               # if tP["glvw"]==1 and instructionCnt%2==1:
@@ -7468,6 +7483,25 @@ class KernelWriterAssembly(KernelWriter):
         ssslist.append("Bias")
         useSize.append(True)
 
+    if kernel["ProblemType"]["UseScaleAB"] and (kernel["GlobalSplitU"] == 1):
+      assert(kernel["ProblemType"]["ComputeDataType"].isSingle())
+      newAlphaVgpr = self.vgprPool.checkOut(1)
+      module.add(VMovB32(dst=vgpr(newAlphaVgpr), src=sgpr("Alpha")))
+      with self.allocTmpSgpr(2, 1) as tmpSgpr:
+        for i,name in enumerate(['A','B']):
+          module.add(SMovB32(dst=sgpr(tmpSgpr.idx+i), src=1.0 , comment="init as 1" ))
+          label  = Label(self.labels.getNameInc("Scale%sValid"%name), "")
+          module.add(SBranchIfZero("AddressScale%s"%name, DataType('int64'), None, kernel["WavefrontSize"]/32, label, kernel["WavefrontSize"]))
+          # load scale data
+          module.add(SLoadB32(dst=sgpr(tmpSgpr.idx+i), base=sgpr("AddressScale%s"%name,2), soffset=0, comment="load scale%s"%name))
+          module.add(label)
+        module.add(SWaitCnt(lgkmcnt=0, comment="wait for scaleAB load"))
+        module.add(VMulF32(dst=vgpr(newAlphaVgpr), src0=vgpr(newAlphaVgpr), src1=sgpr(tmpSgpr.idx)))
+        module.add(VMulF32(dst=vgpr(newAlphaVgpr), src0=vgpr(newAlphaVgpr), src1=sgpr(tmpSgpr.idx+1)))
+        module.add(SNop(waitState=0, comment="1 wait states"))
+        module.add(VReadfirstlaneB32(dst=sgpr("Alpha"), src=vgpr(newAlphaVgpr), comment="Update Alpha"))
+        self.vgprPool.checkIn(newAlphaVgpr)
+
     if kernel["ProblemType"]["UseE"] and (kernel["GlobalSplitU"] == 1):
       # Update E offset1
       strideE1 = "StrideE%s" % (self.states.indexChars[kernel["PackedC1IndicesX"][0]])
@@ -7560,6 +7594,9 @@ class KernelWriterAssembly(KernelWriter):
       bf16CVTVgpr = self.vgprPool.checkOut(4)
       bf16CVTVgprStruct = self.BF16CVTVgprStruct(vgprBf16Temp=bf16CVTVgpr, vgprBf16Mask=(bf16CVTVgpr+1), \
                                                  vgprFp32Nan=(bf16CVTVgpr+2), vgprBf16Inc=(bf16CVTVgpr+3))
+
+    if kernel["ProblemType"]["DestDataType"].isFloat8() or kernel["ProblemType"]["DestDataType"].isBFloat8():
+      assert(0) #TODO
 
     activationSetPCStruct = None
     activationLabelList = None
@@ -8295,7 +8332,7 @@ class KernelWriterAssembly(KernelWriter):
         rps = dataType.numRegisters()
         module.add(self.chooseGlobalWrite(useBuffer, bps, sumIdx*rps, rpv, \
                        addr0, addr1, globalOffset, isGlc, isSlc, comment=comment))
-      elif dataType.isInt8():
+      elif dataType.isInt8() or dataType.isFloat8() or dataType.isBFloat8():
         if kernel["ProblemType"]["HighPrecisionAccumulate"]:
           module.add(self.chooseGlobalWrite(useBuffer, bps, sumIdx, rpv, \
                          addr0, addr1, globalOffset, isGlc, isSlc, comment=comment))
@@ -8338,7 +8375,7 @@ class KernelWriterAssembly(KernelWriter):
                 glc=isGlc, slc=isSlc, lds=False,
                 hi16=hi16,
                 comment="load %s"%tc))
-    elif dataType.isInt8():
+    elif dataType.isInt8() or dataType.is8bitFloat():
      module.add(self.chooseGlobalRead(useBuffer, bps, data, \
                 addr0, addr1, soffset=0, offset=globalOffset, \
                 glc=isGlc, slc=isSlc, lds=False, \
@@ -8699,11 +8736,32 @@ class KernelWriterAssembly(KernelWriter):
     enablePack = True if (freeElementMultiple % gwvw == 0) else False
     tmpVgprN = tmpVgpr1
     if biasDataType != kernel["ProblemType"]["ComputeDataType"]:
+      bf16CVTVgprStruct = None
+      bf16CVTVgpr       = None
+      if biasDataType.isBFloat16():
+        bf16CVTVgpr = self.vgprPool.checkOut(4)
+        bf16CVTVgprStruct = self.BF16CVTVgprStruct(vgprBf16Temp=bf16CVTVgpr, vgprBf16Mask=(bf16CVTVgpr+1), \
+                                           vgprFp32Nan=(bf16CVTVgpr+2), vgprBf16Inc=(bf16CVTVgpr+3))
+        module.add(VMovB32(vgpr(bf16CVTVgprStruct.vgprBf16Mask), "0xffff0000", "mask for pack two bfloat16 element to 32bit" ))
+        module.add(VMovB32(vgpr(bf16CVTVgprStruct.vgprFp32Nan), "0x7fff0000", "fp32 Nan" ))
+        module.add(VMovB32(vgpr(bf16CVTVgprStruct.vgprBf16Inc), "0x7fff", "rounding bias for bfloat16" ))
       for vi in range(gwvw):
         # Does not support hi/lo yet
         if kernel["ProblemType"]["ComputeDataType"].isSingle():
           if biasDataType.isHalf():
             module.add(VCvtF32toF16(dst=vgpr(tmpVgprN), src=vgpr(tmpVgprN), comment="convert to FP16"))
+            if vi % 2 == 1 and enablePack:
+              module.add(VPackF16toB32(dst=vgpr(tmpVgprN - 1), src0=vgpr(tmpVgprN - 1), src1=vgpr(tmpVgprN), \
+                         comment="Pack with neighbor"))
+          elif biasDataType.isBFloat16():
+            module.add(VCmpUF32(dst=sgpr(tmpSgprRes.idx,2), src0=vgpr(tmpVgprN), src1=vgpr(tmpVgprN), comment="check Nan"))
+            module.add(VBfeU32(dst=vgpr(bf16CVTVgprStruct.vgprBf16Temp), src0=vgpr(tmpVgprN), src1=16, src2=1, \
+                         comment="Non-Nan case: store lsb of bf16" ))
+            module.add(VAdd3U32(dst=vgpr(bf16CVTVgprStruct.vgprBf16Temp), src0=vgpr(tmpVgprN), src1=vgpr(bf16CVTVgprStruct.vgprBf16Temp), \
+                         src2=vgpr(bf16CVTVgprStruct.vgprBf16Inc), comment="Non-Nan case: add lsb and the increment for rounding" ))
+            module.add(VCndMaskB32(dst=vgpr(tmpVgprN), src0=vgpr(bf16CVTVgprStruct.vgprBf16Temp), \
+                         src1=vgpr(bf16CVTVgprStruct.vgprFp32Nan), src2=sgpr(tmpSgprRes.idx,2)))
+            module.add(VLShiftRightB32(dst=vgpr(tmpVgprN), shiftHex=16, src=vgpr(tmpVgprN), comment="convert to bf16"))
             if vi % 2 == 1 and enablePack:
               module.add(VPackF16toB32(dst=vgpr(tmpVgprN - 1), src0=vgpr(tmpVgprN - 1), src1=vgpr(tmpVgprN), \
                          comment="Pack with neighbor"))
@@ -8714,6 +8772,8 @@ class KernelWriterAssembly(KernelWriter):
           tmpVgprN += 1
         else:
           printExit("Does not support ComputeDataType != float")
+      if bf16CVTVgpr != None:
+        self.vgprPool.checkIn(bf16CVTVgpr)
     # Global write
     # Calculate global offset- macro tile 0 part
     tmpSgpr = tmpSgprRes.idx

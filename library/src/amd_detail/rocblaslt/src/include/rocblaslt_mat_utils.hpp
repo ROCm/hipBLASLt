@@ -84,10 +84,10 @@ inline rocblaslt_status validateMatmulDescrArgs(rocblaslt_handle       handle,
                                                 int64_t                num_rows_d,
                                                 int64_t                num_cols_d,
                                                 int64_t                ldd,
-                                                hipblasDatatype_t      type_a,
-                                                hipblasDatatype_t      type_b,
-                                                hipblasDatatype_t      type_c,
-                                                hipblasDatatype_t      type_d,
+                                                hipblasltDatatype_t    type_a,
+                                                hipblasltDatatype_t    type_b,
+                                                hipblasltDatatype_t    type_c,
+                                                hipblasltDatatype_t    type_d,
                                                 rocblaslt_compute_type compute_type)
 {
     // handle must be valid
@@ -116,7 +116,7 @@ inline rocblaslt_status validateMatmulDescrArgs(rocblaslt_handle       handle,
 
     switch(type_a)
     {
-    case HIPBLAS_R_32F:
+    case HIPBLASLT_R_32F:
         if(compute_type != rocblaslt_compute_f32)
             return rocblaslt_status_invalid_value;
         break;
@@ -182,25 +182,25 @@ inline rocblaslt_status validateMatmulArgs(int64_t     m,
     return rocblaslt_status_continue;
 }
 
-inline rocblaslt_status rocblaslt_epilogue_valid_args(const rocblaslt_epilogue& epilogue,
-                                                      const int64_t&            num_rows_e,
-                                                      const int64_t&            num_cols_e,
-                                                      const hipblasDatatype_t&  d_type,
-                                                      const hipblasDatatype_t&  original_bias_type,
-                                                      const void*               e_ptr,
-                                                      const int64_t&            original_lde,
-                                                      const int64_t&            original_stride_e,
-                                                      const void*               original_bias,
-                                                      const void*               original_scaleDVec,
-                                                      const void*        original_scaleAlphaVec,
-                                                      void*&             E,
-                                                      int64_t&           lde,
-                                                      int64_t&           batch_stride_e,
-                                                      void*&             bias,
-                                                      hipblasDatatype_t& bias_type,
-                                                      void*&             scaleDVec,
-                                                      void*&             scaleAlphaVec,
-                                                      bool&              gradient)
+inline rocblaslt_status rocblaslt_epilogue_valid_args(const rocblaslt_epilogue&  epilogue,
+                                                      const int64_t&             num_rows_e,
+                                                      const int64_t&             num_cols_e,
+                                                      const hipblasltDatatype_t& d_type,
+                                                      const hipblasltDatatype_t& original_bias_type,
+                                                      const void*                e_ptr,
+                                                      const int64_t&             original_lde,
+                                                      const int64_t&             original_stride_e,
+                                                      const void*                original_bias,
+                                                      const void*                original_scaleDVec,
+                                                      const void*          original_scaleAlphaVec,
+                                                      void*&               E,
+                                                      int64_t&             lde,
+                                                      int64_t&             batch_stride_e,
+                                                      void*&               bias,
+                                                      hipblasltDatatype_t& bias_type,
+                                                      void*&               scaleDVec,
+                                                      void*&               scaleAlphaVec,
+                                                      bool&                gradient)
 {
     // Set status
     rocblaslt_status status = rocblaslt_status_continue;
@@ -263,7 +263,7 @@ inline rocblaslt_status rocblaslt_matmul_valid_args(const rocblaslt_matmul_desc 
                                                     int64_t&                    lde,
                                                     int64_t&                    batch_stride_e,
                                                     void*&                      bias,
-                                                    hipblasDatatype_t&          bias_type,
+                                                    hipblasltDatatype_t&        bias_type,
                                                     void*&                      scaleDVec,
                                                     void*&                      scaleAlphaVec,
                                                     void*&                      E,
@@ -322,8 +322,8 @@ inline rocblaslt_status rocblaslt_matmul_valid_args(const rocblaslt_matmul_desc 
                                      batch_stride_d);
 
     if(status == rocblaslt_status_continue)
-        if(!(matA->type == HIPBLAS_R_32F && matB->type == HIPBLAS_R_32F
-             && matC->type == HIPBLAS_R_32F && matD->type == HIPBLAS_R_32F)
+        if(!(matA->type == HIPBLASLT_R_32F && matB->type == HIPBLASLT_R_32F
+             && matC->type == HIPBLASLT_R_32F && matD->type == HIPBLASLT_R_32F)
            && compute_type == rocblaslt_compute_f32_fast_xf32)
             status = rocblaslt_status_not_implemented;
 
@@ -350,7 +350,7 @@ inline rocblaslt_status rocblaslt_matmul_valid_args(const rocblaslt_matmul_desc 
     return status;
 }
 
-template <typename Ti, typename To, typename Tc>
+template <typename TiA, typename TiB, typename To, typename Tc>
 inline int rocblaslt_get_matmul_alg_config_max_id(hipblasOperation_t opA, hipblasOperation_t opB)
 {
     // TODO
