@@ -24,6 +24,8 @@
  *
  *******************************************************************************/
 #pragma once
+#include <functional>
+
 #include <hip/hip_runtime.h>
 #include <hipblaslt/hipblaslt.h>
 
