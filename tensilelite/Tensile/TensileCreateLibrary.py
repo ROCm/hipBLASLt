@@ -747,6 +747,8 @@ def copyStaticFiles(outputPath=None):
   libraryStaticFiles = [
     "TensileTypes.h",
     "tensile_bfloat16.h",
+    "tensile_float8_bfloat8.h",
+    "hip_f8_impl.h",
     "KernelHeader.h",
     "ReductionTemplate.h",
     "memory_gfx.h" ]

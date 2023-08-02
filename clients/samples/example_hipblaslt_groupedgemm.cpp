@@ -287,8 +287,8 @@ static void show_usage(char* argv[])
 
 static int parse_arguments(int                          argc,
                            char*                        argv[],
-                           hipblasDatatype_t&           in_datatype,
-                           hipblasDatatype_t&           out_datatype,
+                           hipblasltDatatype_t&         in_datatype,
+                           hipblasltDatatype_t&         out_datatype,
                            std::vector<int64_t>&        m,
                            std::vector<int64_t>&        n,
                            std::vector<int64_t>&        k,
@@ -487,15 +487,15 @@ static int parse_arguments(int                          argc,
                     ++i;
                     if(strncmp(argv[i], "fp32", 4) == 0)
                     {
-                        in_datatype = HIPBLAS_R_32F;
+                        in_datatype = HIPBLASLT_R_32F;
                     }
                     else if(strncmp(argv[i], "fp16", 4) == 0)
                     {
-                        in_datatype = HIPBLAS_R_16F;
+                        in_datatype = HIPBLASLT_R_16F;
                     }
                     else if(strncmp(argv[i], "bf16", 4) == 0)
                     {
-                        in_datatype = HIPBLAS_R_16B;
+                        in_datatype = HIPBLASLT_R_16B;
                     }
                     else
                     {
@@ -509,15 +509,15 @@ static int parse_arguments(int                          argc,
                     ++i;
                     if(strncmp(argv[i], "fp32", 4) == 0)
                     {
-                        out_datatype = HIPBLAS_R_32F;
+                        out_datatype = HIPBLASLT_R_32F;
                     }
                     else if(strncmp(argv[i], "fp16", 4) == 0)
                     {
-                        out_datatype = HIPBLAS_R_16F;
+                        out_datatype = HIPBLASLT_R_16F;
                     }
                     else if(strncmp(argv[i], "bf16", 4) == 0)
                     {
-                        out_datatype = HIPBLAS_R_16B;
+                        out_datatype = HIPBLASLT_R_16B;
                     }
                     else
                     {
@@ -655,8 +655,8 @@ void initialize_a_b_c_bias(std::vector<Tin>&   ha,
 }
 
 template <typename Tin, typename Tout>
-void test_hipblaslt(hipblasDatatype_t           in_datatype,
-                    hipblasDatatype_t           out_datatype,
+void test_hipblaslt(hipblasltDatatype_t         in_datatype,
+                    hipblasltDatatype_t         out_datatype,
                     hipblasOperation_t          trans_a,
                     hipblasOperation_t          trans_b,
                     std::vector<int64_t>        m,
@@ -857,7 +857,7 @@ void test_hipblaslt(hipblasDatatype_t           in_datatype,
         }
 
         CHECK_HIPBLASLT_ERROR(
-            hipblasLtMatmulDescCreate(&matmul[i], HIPBLASLT_COMPUTE_F32, HIPBLAS_R_32F));
+            hipblasLtMatmulDescCreate(&matmul[i], HIPBLASLT_COMPUTE_F32, HIPBLASLT_R_32F));
 
         CHECK_HIPBLASLT_ERROR(hipblasLtMatmulDescSetAttribute(
             matmul[i], HIPBLASLT_MATMUL_DESC_TRANSA, &trans_a, sizeof(int32_t)));
@@ -1464,15 +1464,20 @@ void test_hipblaslt(hipblasDatatype_t           in_datatype,
                                                       actType[i]);
 
             bool passed = true;
-            for(int i3 = 0; i3 < batch_count[i]; i3++){
-                for(int i2 = 0; i2 < n[i]; i2++){
-                    for(int i1 = 0; i1 < m[i]; i1++){
-                        if(!AlmostEqual(hd_gold[i][i1+i2*ldd[i]+i3*stride_d[i]], hd[i][i1+i2*ldd[i]+i3*stride_d[i]]))
+            for(int i3 = 0; i3 < batch_count[i]; i3++)
+            {
+                for(int i2 = 0; i2 < n[i]; i2++)
+                {
+                    for(int i1 = 0; i1 < m[i]; i1++)
+                    {
+                        if(!AlmostEqual(hd_gold[i][i1 + i2 * ldd[i] + i3 * stride_d[i]],
+                                        hd[i][i1 + i2 * ldd[i] + i3 * stride_d[i]]))
                         {
-                            printf("Err: Index %ld: %f vs %f\n",
-                                i1+i2*ldd[i]+i3*stride_d[i],
-                                static_cast<float>(hd_gold[i][i1+i2*ldd[i]+i3*stride_d[i]]),
-                                static_cast<float>(hd[i][i1+i2*ldd[i]+i3*stride_d[i]]));
+                            printf(
+                                "Err: Index %ld: %f vs %f\n",
+                                i1 + i2 * ldd[i] + i3 * stride_d[i],
+                                static_cast<float>(hd_gold[i][i1 + i2 * ldd[i] + i3 * stride_d[i]]),
+                                static_cast<float>(hd[i][i1 + i2 * ldd[i] + i3 * stride_d[i]]));
                             passed = false;
                         }
                     }
@@ -1518,10 +1523,10 @@ void test_hipblaslt(hipblasDatatype_t           in_datatype,
 int main(int argc, char* argv[])
 {
     // initialize parameters with default values
-    hipblasOperation_t trans_a      = HIPBLAS_OP_N;
-    hipblasOperation_t trans_b      = HIPBLAS_OP_N;
-    hipblasDatatype_t  in_datatype  = HIPBLAS_R_32F;
-    hipblasDatatype_t  out_datatype = HIPBLAS_R_32F;
+    hipblasOperation_t  trans_a      = HIPBLAS_OP_N;
+    hipblasOperation_t  trans_b      = HIPBLAS_OP_N;
+    hipblasltDatatype_t in_datatype  = HIPBLASLT_R_32F;
+    hipblasltDatatype_t out_datatype = HIPBLASLT_R_32F;
 
     std::vector<int64_t> m, lda, stride_a;
     std::vector<int64_t> n, ldb, stride_b;
@@ -1642,7 +1647,7 @@ int main(int argc, char* argv[])
         }
     }
 
-    if(in_datatype == HIPBLAS_R_32F && out_datatype == HIPBLAS_R_32F)
+    if(in_datatype == HIPBLASLT_R_32F && out_datatype == HIPBLASLT_R_32F)
         test_hipblaslt<hipblasLtFloat, hipblasLtFloat>(in_datatype,
                                                        out_datatype,
                                                        trans_a,
@@ -1674,7 +1679,7 @@ int main(int argc, char* argv[])
                                                        verbose,
                                                        cpu_time,
                                                        findAll);
-    else if(in_datatype == HIPBLAS_R_16F && out_datatype == HIPBLAS_R_32F)
+    else if(in_datatype == HIPBLASLT_R_16F && out_datatype == HIPBLASLT_R_32F)
         test_hipblaslt<hipblasLtHalf, hipblasLtFloat>(in_datatype,
                                                       out_datatype,
                                                       trans_a,
@@ -1706,7 +1711,7 @@ int main(int argc, char* argv[])
                                                       verbose,
                                                       cpu_time,
                                                       findAll);
-    else if(in_datatype == HIPBLAS_R_16F && out_datatype == HIPBLAS_R_16F)
+    else if(in_datatype == HIPBLASLT_R_16F && out_datatype == HIPBLASLT_R_16F)
         test_hipblaslt<hipblasLtHalf, hipblasLtHalf>(in_datatype,
                                                      out_datatype,
                                                      trans_a,
@@ -1738,7 +1743,7 @@ int main(int argc, char* argv[])
                                                      verbose,
                                                      cpu_time,
                                                      findAll);
-    else if(in_datatype == HIPBLAS_R_16B && out_datatype == HIPBLAS_R_16B)
+    else if(in_datatype == HIPBLASLT_R_16B && out_datatype == HIPBLASLT_R_16B)
         test_hipblaslt<hipblasLtBfloat16, hipblasLtBfloat16>(in_datatype,
                                                              out_datatype,
                                                              trans_a,

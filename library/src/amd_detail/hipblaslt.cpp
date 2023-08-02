@@ -145,7 +145,7 @@ catch(...)
 }
 
 hipblasStatus_t hipblasLtMatrixLayoutCreate(hipblasLtMatrixLayout_t* matDescr,
-                                            hipblasDatatype_t        valueType,
+                                            hipblasltDatatype_t      valueType,
                                             uint64_t                 rows,
                                             uint64_t                 cols,
                                             int64_t                  ld)
@@ -172,7 +172,7 @@ catch(...)
 
 hipblasStatus_t hipblasLtMatmulDescCreate(hipblasLtMatmulDesc_t* matmulDesc,
                                           hipblasLtComputeType_t computeType,
-                                          hipblasDatatype_t      scaleType)
+                                          hipblasltDatatype_t    scaleType)
 try
 {
     return RocBlasLtStatusToHIPStatus(rocblaslt_matmul_desc_create(

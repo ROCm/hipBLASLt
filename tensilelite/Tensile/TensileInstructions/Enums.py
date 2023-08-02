@@ -60,9 +60,12 @@ class InstType(Enum):
     INST_D16_B16    = 31
     INST_D16_HI_B16 = 32
     INST_XF32       = 33
-    INST_CVT        = 34
-    INST_MACRO      = 35
-    INST_NOTYPE     = 36
+    INST_BF8        = 34
+    INST_F8_BF8     = 35
+    INST_BF8_F8     = 36
+    INST_CVT        = 37
+    INST_MACRO      = 38
+    INST_NOTYPE     = 39
 
 class SelectBit(Enum):
     DWORD  = 1
@@ -79,12 +82,16 @@ class UnusedBit(Enum):
     UNUSED_PRESERVE = 3
 
 class CvtType(Enum):
-    CVT_F16_to_F32 = 1
-    CVT_F32_to_F16 = 2
-    CVT_U32_to_F32 = 3
-    CVT_F32_to_U32 = 4
-    CVT_I32_to_F32 = 5
-    CVT_F32_to_I32 = 6
+    CVT_F16_to_F32    =  1
+    CVT_F32_to_F16    =  2
+    CVT_U32_to_F32    =  3
+    CVT_F32_to_U32    =  4
+    CVT_I32_to_F32    =  5
+    CVT_F32_to_I32    =  6
+    CVT_FP8_to_F32    =  7
+    CVT_BF8_to_F32    =  8
+    CVT_PK_FP8_to_F32 =  9
+    CVT_PK_BF8_to_F32 = 10
 
 class RoundType(Enum):
     ROUND_UP = 0

@@ -34,6 +34,7 @@
 
 #include <hip/hip_bfloat16.h>
 #include <hipblas/hipblas.h>
+#include <hipblaslt/hipblaslt.h>
 #include <memory>
 #include <stddef.h>
 #include <stdint.h>
@@ -129,6 +130,16 @@ typedef struct rocblaslt_half
     uint16_t data;
 } rocblaslt_half;
 #endif
+
+typedef struct
+{
+    uint8_t data;
+} rocblaslt_f8;
+
+typedef struct
+{
+    uint8_t data;
+} rocblaslt_bf8;
 
 /*! \ingroup types_module
  *  \brief Specify the postprocessing options for the epilogue
@@ -270,10 +281,12 @@ typedef enum rocblaslt_matmul_desc_attributes_
     ROCBLASLT_MATMUL_DESC_EPILOGUE                                   = 2,
     ROCBLASLT_MATMUL_DESC_BIAS_POINTER                               = 3,
     ROCBLASLT_MATMUL_DESC_BIAS_DATA_TYPE                             = 4,
-    ROCBLASLT_MATMUL_DESC_EPILOGUE_AUX_POINTER                       = 6,
-    ROCBLASLT_MATMUL_DESC_EPILOGUE_AUX_LD                            = 7,
-    ROCBLASLT_MATMUL_DESC_EPILOGUE_AUX_BATCH_STRIDE                  = 8,
-    ROCBLASLT_MATMUL_DESC_POINTER_MODE_ALPHA_DEVICE_VECTOR_BETA_HOST = 9,
+    ROCBLASLT_MATMUL_DESC_A_SCALE_POINTER                            = 5,
+    ROCBLASLT_MATMUL_DESC_B_SCALE_POINTER                            = 6,
+    ROCBLASLT_MATMUL_DESC_EPILOGUE_AUX_POINTER                       = 7,
+    ROCBLASLT_MATMUL_DESC_EPILOGUE_AUX_LD                            = 8,
+    ROCBLASLT_MATMUL_DESC_EPILOGUE_AUX_BATCH_STRIDE                  = 9,
+    ROCBLASLT_MATMUL_DESC_POINTER_MODE_ALPHA_DEVICE_VECTOR_BETA_HOST = 10,
     ROCBLASLT_MATMUL_DESC_D_SCALE_VECTOR_POINTER                     = 100,
     ROCBLASLT_MATMUL_DESC_MAX                                        = 101
 } rocblaslt_matmul_desc_attributes;
@@ -340,19 +353,19 @@ namespace rocblaslt
     {
         hipblasOperation_t     op_a;
         hipblasOperation_t     op_b;
-        hipblasDatatype_t      type_a;
-        hipblasDatatype_t      type_b;
-        hipblasDatatype_t      type_c;
-        hipblasDatatype_t      type_d;
+        hipblasltDatatype_t    type_a;
+        hipblasltDatatype_t    type_b;
+        hipblasltDatatype_t    type_c;
+        hipblasltDatatype_t    type_d;
         rocblaslt_compute_type type_compute;
     };
 
     struct RocGemmEpilogue
     {
-        rocblaslt_epilogue mode           = ROCBLASLT_EPILOGUE_DEFAULT;
-        hipblasDatatype_t  bias_data_type = static_cast<hipblasDatatype_t>(0);
-        int                aux_ld         = 0;
-        int                aux_stride     = 0;
+        rocblaslt_epilogue  mode           = ROCBLASLT_EPILOGUE_DEFAULT;
+        hipblasltDatatype_t bias_data_type = static_cast<hipblasltDatatype_t>(0);
+        int                 aux_ld         = 0;
+        int                 aux_stride     = 0;
     };
 
     struct RocGemmInputs
@@ -365,6 +378,8 @@ namespace rocblaslt
         void* beta  = nullptr;
         // Epilogue inputs
         void* bias          = nullptr;
+        void* scaleA        = nullptr;
+        void* scaleB        = nullptr;
         void* scaleDVec     = nullptr;
         void* scaleAlphaVec = nullptr;
         void* aux           = nullptr;

@@ -153,6 +153,8 @@ globalParameters["DataInitTypeE"]  = 0
 globalParameters["DataInitTypeAlpha"] = 2
 globalParameters["DataInitTypeBeta"] = 2
 globalParameters["DataInitTypeBias"] = 3
+globalParameters["DataInitTypeScaleA"] = 2
+globalParameters["DataInitTypeScaleB"] = 2
 globalParameters["DataInitTypeScaleDVec"] = 3
 globalParameters["DataInitTypeScaleAlphaVec"] = 3
 globalParameters["DataInitValueActivationArgs"] = [2.0, 2.0]
@@ -330,11 +332,15 @@ validMFMA["C"] = validMFMA["S"]
 validMFMA["Z"] = validMFMA["D"]
 validMFMA["I8"] = [[32,32,4,2], [32,32,8,1], [16,16,4,4], [16,16,16,1], [4,4,4,16]] + [[32,32,16,1], [16,16,32,1]]
 validMFMA["X"] = [[32,32,4,1], [16,16,8,1]]
+validMFMA["F8"] = [[32,32,16,1], [16,16,32,1]]
+validMFMA["B8"] = validMFMA["F8"]
+validMFMA["F8B8"] = validMFMA["F8"]
+validMFMA["B8F8"] = validMFMA["F8"]
 validWMMA = [[16,16,16,1], ]
 validTT = 16
 validMFMA["_format9"] = []
 
-for MFMA in [validMFMA["H"], validMFMA["S"], validMFMA["B"], validMFMA["D"], validMFMA["X"], validWMMA]:
+for MFMA in [validMFMA["H"], validMFMA["S"], validMFMA["B"], validMFMA["D"], validMFMA["X"], validMFMA["F8"], validWMMA]:
   for MI in MFMA:
     for bm in range(int(math.log(MI[3],2))+1):
       for tt0 in range(1,validTT+1):
@@ -390,12 +396,23 @@ validGEMMTypes = [ ('H','H','H'), ('S','S','S'), ('D','D','D'), ('C','C','C'), (
                    ('H','H','S'), ('H','S','S'), \
                    ('B','B','S'), ('B','S','S'), \
                    ('I8','I','I'), ('4xi8','I','I'), ('I8','I8','I'), \
-                   ('I8','I','S'), ('I8','I8','S')]
+                   ('I8','I','S'), ('I8','I8','S'), \
+                   ('F8','S','S'), ('B8','S','S'), \
+                   ('F8B8','S','S'), ('B8F8', 'S', 'S'), \
+                   ('F8','F8','S'), ('B8','B8','S'), \
+                   ('F8B8','B8','S'), ('B8F8', 'B8', 'S'), \
+                   ('F8','H','S'), ('B8','H','S'), \
+                   ('F8B8','H','S'), ('B8F8','H','S') ]
 
 # All HPA types are listed here (HPA=T). The name of the library logic files for these types is:
 # *_TiToTc_BH*.yaml where Ti, Tc, and To are the data types of A/B, C/D, and computation, respectively.
 # The name of the library logic files for non-HPA (HPA=F) types is: *_TiB*.yaml.
-HPATypes = [ ('H','S','S'), ('H','H','S'), ('B','B','S'), ('B','S','S'), ('I8','I','I'), ('4xi8','I','I'), ('I8','I','S'), ('I8','I8','S')]
+HPATypes = [ ('H','S','S'), ('H','H','S'), ('B','B','S'), ('B','S','S'), ('I8','I','I'), \
+             ('4xi8','I','I'), ('I8','I','S'), ('I8','I8','S'), \
+             ('F8','S','S'), ('B8','S','S'), ('F8B8','S','S'), ('B8F8', 'S', 'S'), \
+             ('F8B8','B8','S'), ('B8F8', 'B8', 'S'), \
+             ('F8','H','S'), ('B8','H','S'), ('F8B8','H','S'), ('B8F8','H','S'), \
+             ('F8','F8', 'S'), ('B8', 'B8', 'S') ]
 
 validParameters = {
     # 0: Global read is along parallel direction in thread level,
@@ -1086,8 +1103,9 @@ defaultProblemType = {
     "Gradient":                 False,            # =True set globalWriteElements to gradient mode
     "UseBias":                  False,            # =True use bias vector
     "BiasSrc":                  "D",              # This parameter is used in gradient + bias. Support A, B, D.
-    "UseScaleDVec":                False,            # =True use scaleD vector
-    "UseScaleAlphaVec":                False,            # =True use scaleAlpha vector
+    "UseScaleAB":               False,            # =True use scaleA, scaleB
+    "UseScaleDVec":             False,            # =True use scaleD vector
+    "UseScaleAlphaVec":         False,            # =True use scaleAlpha vector
     "HighPrecisionAccumulate":  False,            # f32 += f16*f16
     "SilentHighPrecisionAccumulate": False,       # Keep kernel names the same for HPA mode.  Useful for testing.
 

@@ -213,6 +213,9 @@ def SBranchIfZero(sgprName, computeDataType: DataType, tmpSgpr, laneSC, label, w
     elif computeDataType.isInt32(): # int32
         module.add(SCmpEQU32(src0=sgpr(sgprName), src1=0, comment="%s == 0 ?" % sgprStr))
         module.add(SCBranchSCC1(labelName=label.getLabelName(), comment="branch if %s == 0" % sgprStr))
+    elif computeDataType.isInt64(): # int64
+        module.add(SCmpEQU64(src0=sgpr(sgprName,2), src1=0, comment="%s == 0 ?" % sgprStr))
+        module.add(SCBranchSCC1(labelName=label.getLabelName(), comment="branch if %s == 0" % sgprStr))
     else:
         print("Unsupported compute data type: %s" % str(computeDataType))
         sys.stdout.flush()

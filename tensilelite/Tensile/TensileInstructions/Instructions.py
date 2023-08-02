@@ -297,6 +297,14 @@ class MFMAInstruction(Instruction):
             kStr = "i32"
         elif iType == InstType.INST_XF32:
             kStr = "xf32"
+        elif iType == InstType.INST_F8:
+            kStr = "fp8_fp8"
+        elif iType == InstType.INST_BF8:
+            kStr = "bf8_bf8"
+        elif iType == InstType.INST_F8_BF8:
+            kStr = "fp8_bf8"
+        elif iType == InstType.INST_BF8_F8:
+            kStr = "bf8_fp8"
         else:
             printExit("Type %s not found"%str(iType))
         return kStr
@@ -356,6 +364,14 @@ class SMFMAInstruction(Instruction):
             kStr = "i8"
         elif iType == InstType.INST_I32:
             kStr = "i32"
+        elif iType == InstType.INST_F8:
+            kStr = "fp8_fp8"
+        elif iType == InstType.INST_BF8:
+            kStr = "bf8_bf8"
+        elif iType == InstType.INST_F8_BF8:
+            kStr = "fp8_bf8"
+        elif iType == InstType.INST_BF8_F8:
+            kStr = "bf8_fp8"
         else:
             printExit("Type %s not found"%str(iType))
         return kStr
@@ -2229,6 +2245,26 @@ class VCvtF32toI32(VCvtInstruction):
     def __init__(self, dst, src, sdwa: Optional[SDWAModifiers] = None, comment="") -> None:
         super().__init__(CvtType.CVT_F32_to_I32, dst, src, sdwa, comment)
         self.setInst("v_cvt_i32_f32")
+
+class VCvtFP8toF32(VCvtInstruction):
+    def __init__(self, dst, src, sdwa: Optional[SDWAModifiers] = None, comment="") -> None:
+        super().__init__(CvtType.CVT_FP8_to_F32, dst, src, sdwa, comment)
+        self.setInst("v_cvt_f32_fp8")
+
+class VCvtBF8toF32(VCvtInstruction):
+    def __init__(self, dst, src, sdwa: Optional[SDWAModifiers] = None, comment="") -> None:
+        super().__init__(CvtType.CVT_BF8_to_F32, dst, src, sdwa, comment)
+        self.setInst("v_cvt_f32_bf8")
+
+class VCvtPkFP8toF32(VCvtInstruction):
+    def __init__(self, dst, src, sdwa: Optional[SDWAModifiers] = None, comment="") -> None:
+        super().__init__(CvtType.CVT_PK_FP8_to_F32, dst, src, sdwa, comment)
+        self.setInst("v_cvt_pk_f32_fp8")
+
+class VCvtPkBF8toF32(VCvtInstruction):
+    def __init__(self, dst, src, sdwa: Optional[SDWAModifiers] = None, comment="") -> None:
+        super().__init__(CvtType.CVT_PK_BF8_to_F32, dst, src, sdwa, comment)
+        self.setInst("v_cvt_pk_f32_bf8")
 
 # V Mask
 class VCndMaskB32(CommonInstruction):

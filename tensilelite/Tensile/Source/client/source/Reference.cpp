@@ -192,6 +192,18 @@ namespace Tensile
                 return cast<Accumulator>(Transform<int8_t>::Input(typedPtr[pos], aConjugate));
             }
             break;
+            case DataType::Float8:
+            {
+                auto typedPtr = static_cast<Float8 const*>(voidPtr);
+                return cast<Accumulator>(Transform<Float8>::Input(typedPtr[pos], aConjugate));
+            }
+            break;
+            case DataType::BFloat8:
+            {
+                auto typedPtr = static_cast<BFloat8 const*>(voidPtr);
+                return cast<Accumulator>(Transform<BFloat8>::Input(typedPtr[pos], aConjugate));
+            }
+            break;
             case DataType::XFloat32:
             case DataType::ComplexFloat:
             case DataType::ComplexDouble:
@@ -207,7 +219,9 @@ namespace Tensile
                                     && !std::is_same<double, Accumulator>::value
                                     && !std::is_same<BFloat16, Accumulator>::value
                                     && !std::is_same<int32_t, Accumulator>::value
-                                    && !std::is_same<int8_t, Accumulator>::value,
+                                    && !std::is_same<int8_t, Accumulator>::value
+                                    && !std::is_same<Float8, Accumulator>::value
+                                    && !std::is_same<BFloat8, Accumulator>::value,
                                 Accumulator>::type
             GetValue(DataType biasType, void const* biasptr, int pos, bool aConjugate)
         {
@@ -267,6 +281,8 @@ namespace Tensile
             case DataType::ComplexFloat:
             case DataType::ComplexDouble:
             case DataType::Int8x4:
+            case DataType::Float8:
+            case DataType::BFloat8:
             case DataType::Count:;
             }
         }
@@ -277,7 +293,9 @@ namespace Tensile
                                        && !std::is_same<double, Accumulator>::value
                                        && !std::is_same<BFloat16, Accumulator>::value
                                        && !std::is_same<int32_t, Accumulator>::value
-                                       && !std::is_same<int8_t, Accumulator>::value,
+                                       && !std::is_same<int8_t, Accumulator>::value
+                                       && !std::is_same<Float8, Accumulator>::value
+                                       && !std::is_same<BFloat8, Accumulator>::value,
                                    bool>
                   = true>
         void SetValue(DataType dataType, Accumulator& src, void* dstPtr, size_t pos)
@@ -290,6 +308,8 @@ namespace Tensile
             case DataType::Int32:
             case DataType::BFloat16:
             case DataType::Int8:
+            case DataType::Float8:
+            case DataType::BFloat8:
             case DataType::XFloat32:
                 break;
             case DataType::ComplexFloat:
@@ -447,7 +467,8 @@ namespace Tensile
             std::enable_if_t<
                 std::is_same<Half, Input>::value || std::is_same<float, Input>::value
                     || std::is_same<double, Input>::value || std::is_same<BFloat16, Input>::value
-                    || std::is_same<int32_t, Input>::value || std::is_same<int8_t, Input>::value,
+                    || std::is_same<int32_t, Input>::value || std::is_same<int8_t, Input>::value
+                    || std::is_same<Float8, Input>::value || std::is_same<BFloat8, Input>::value,
                 bool>
             = true>
         std::string ReductionCPU(TensorDescriptor const&  biasTensor,
@@ -511,7 +532,8 @@ namespace Tensile
             std::enable_if_t<
                 !std::is_same<Half, Input>::value && !std::is_same<float, Input>::value
                     && !std::is_same<double, Input>::value && !std::is_same<BFloat16, Input>::value
-                    && !std::is_same<int32_t, Input>::value && !std::is_same<int8_t, Input>::value,
+                    && !std::is_same<int32_t, Input>::value && !std::is_same<int8_t, Input>::value
+                    && !std::is_same<Float8, Input>::value && !std::is_same<BFloat8, Input>::value,
                 bool>
             = true>
         std::string ReductionCPU(TensorDescriptor const&  biasTensor,
@@ -705,6 +727,15 @@ namespace Tensile
                 Accumulator alpha = constVariantCast<Accumulator>(inputs.alpha);
                 Accumulator beta  = constVariantCast<Accumulator>(inputs.beta);
                 auto        zero  = static_cast<Accumulator>(0);
+
+                if(problem.useScaleAB())
+                {
+                    Accumulator scaleA
+                        = GetValue<Accumulator>(problem.alphaType(), inputs.scaleA, 0, aConjugate);
+                    Accumulator scaleB
+                        = GetValue<Accumulator>(problem.alphaType(), inputs.scaleB, 0, aConjugate);
+                    alpha *= scaleA * scaleB;
+                }
 
                 auto resultD = multiply<Accumulator>(alpha, value);
 
@@ -994,6 +1025,59 @@ namespace Tensile
                     problem, inputs, elementsToValidate);
             }
 #endif // TENSILE_USE_BF16
+#ifdef TENSILE_USE_FP8_BF8
+            case TypedGemm_F8_S_S::TypeId():
+            {
+                return ReferenceSolution<TypedGemm_F8_S_S, float>::SolveCPU(
+                    problem, inputs, elementsToValidate);
+            }
+            case TypedGemm_F8_F8_S::TypeId():
+            {
+                return ReferenceSolution<TypedGemm_F8_F8_S, float>::SolveCPU(
+                    problem, inputs, elementsToValidate);
+            }
+            case TypedGemm_B8_S_S::TypeId():
+            {
+                return ReferenceSolution<TypedGemm_B8_S_S, float>::SolveCPU(
+                    problem, inputs, elementsToValidate);
+            }
+            case TypedGemm_B8_B8_S::TypeId():
+            {
+                return ReferenceSolution<TypedGemm_B8_B8_S, float>::SolveCPU(
+                    problem, inputs, elementsToValidate);
+            }
+            // hybrid
+            case TypedGemm_F8B8_S_S::TypeId():
+            {
+                return ReferenceSolution<TypedGemm_F8B8_S_S, float>::SolveCPU(
+                    problem, inputs, elementsToValidate);
+            }
+            case TypedGemm_F8B8_F8_S::TypeId():
+            {
+                return ReferenceSolution<TypedGemm_F8B8_F8_S, float>::SolveCPU(
+                    problem, inputs, elementsToValidate);
+            }
+            case TypedGemm_B8F8_S_S::TypeId():
+            {
+                return ReferenceSolution<TypedGemm_B8F8_S_S, float>::SolveCPU(
+                    problem, inputs, elementsToValidate);
+            }
+            case TypedGemm_B8F8_B8_S::TypeId():
+            {
+                return ReferenceSolution<TypedGemm_B8F8_B8_S, float>::SolveCPU(
+                    problem, inputs, elementsToValidate);
+            }
+            case TypedGemm_F8B8_B8_S::TypeId():
+            {
+                return ReferenceSolution<TypedGemm_F8B8_B8_S, float>::SolveCPU(
+                    problem, inputs, elementsToValidate);
+            }
+            case TypedGemm_B8F8_F8_S::TypeId():
+            {
+                return ReferenceSolution<TypedGemm_B8F8_F8_S, float>::SolveCPU(
+                    problem, inputs, elementsToValidate);
+            }
+#endif // TENSILE_USE_FP8_BF8
 
             default:;
             }

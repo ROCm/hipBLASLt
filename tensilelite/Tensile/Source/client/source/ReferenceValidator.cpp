@@ -326,6 +326,18 @@ namespace Tensile
                     resPtr = result.bias;
                 }
                 break;
+                case ContractionProblemGemm::TENSOR::SCALEA:
+                {
+                    refPtr = reference.scaleA;
+                    resPtr = result.scaleA;
+                }
+                break;
+                case ContractionProblemGemm::TENSOR::SCALEB:
+                {
+                    refPtr = reference.scaleB;
+                    resPtr = result.scaleB;
+                }
+                break;
                 case ContractionProblemGemm::TENSOR::SCALEDVEC:
                 {
                     refPtr = reference.scaleDVec;

@@ -475,7 +475,10 @@ class ProblemType(Mapping):
     if self["UseInitialStridesAB"]: name += "I"
     if self["UseInitialStridesCD"]: name += "Ic"
     if self["UseBias"]:
-      name += "_Bias" # Not showing bias types
+      name += "_Bias"
+      if self["BiasDataTypeList"] != getBiasDataTypeListDefault(self):
+        for i in self["BiasDataTypeList"]:
+          name += i.toChar()
       if self["BiasSrc"] and self["Gradient"]: # Show bias src if gradient = True
         name += "_BiasSrc%s"%self["BiasSrc"]
     if self["UseE"]:
@@ -501,6 +504,7 @@ class ProblemType(Mapping):
     if self["ActivationHPA"]: name += "H"
     if self["ActivationNoGuard"]: name += "NG"
 
+    if self["UseScaleAB"]: name += "_SAB"
     if self["UseScaleDVec"]: name += "_SDV"
     if self["UseScaleAlphaVec"]: name += "_SAV"
 
@@ -1093,8 +1097,6 @@ class Solution(collections.abc.Mapping):
             state["_GlobalAccumulation"] = self["_GlobalAccumulation"]
             state["ActivationFused"] = self["ActivationFused"]
             self.conversionKernelObjects.append(KernelWriterConversion(state, vw))
-            # bias type list
-            typeList = [self["ProblemType"]["ComputeDataType"]]
           for btype in typeList:
             state = {}
             state["ProblemType"] = deepcopy(self["ProblemType"])
@@ -1901,6 +1903,7 @@ class Solution(collections.abc.Mapping):
               or state["ProblemType"]["DataType"].isBFloat16() \
               or state["ProblemType"]["DataType"].isHalf() \
               or state["ProblemType"]["DataType"].isComplex() \
+              or state["ProblemType"]["DataType"].is8bitFloat() \
               or state["ProblemType"]["DataType"].isInt8()):
         reject(state, "didn't support Matrix Instruction with type %s" % str(state["ProblemType"]["DataType"]))
         return
@@ -3232,6 +3235,13 @@ class Solution(collections.abc.Mapping):
         reject(state, "Bias reduction does not support StoreRemapVectorWidth if GSU == 1.")
       if state["GroupLoadStore"]:
         reject(state, "Bias reduction does not support GroupLoadStore.")
+
+    # ScaleAB
+    if state["ProblemType"]["UseScaleAB"] and state["OptNoLoadLoop"]:
+      # Hard to check alpha == 1.0 directly
+      # Turn off ONLL for now
+      # TODO: support ONLL if necessary
+      state["OptNoLoadLoop"] = 0
 
     if not state["ProblemType"]["GroupedGemm"]:
       if state["ProblemType"]["SupportUserArgs"]:

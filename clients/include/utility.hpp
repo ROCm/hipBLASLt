@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022 Advanced Micro Devices, Inc.
+ * Copyright (C) 2022-2023 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -110,10 +110,10 @@ public:
 
     ~hipblaslt_local_handle();
 
-    hipblaslt_local_handle(const hipblaslt_local_handle&) = delete;
-    hipblaslt_local_handle(hipblaslt_local_handle&&)      = delete;
+    hipblaslt_local_handle(const hipblaslt_local_handle&)            = delete;
+    hipblaslt_local_handle(hipblaslt_local_handle&&)                 = delete;
     hipblaslt_local_handle& operator=(const hipblaslt_local_handle&) = delete;
-    hipblaslt_local_handle& operator=(hipblaslt_local_handle&&) = delete;
+    hipblaslt_local_handle& operator=(hipblaslt_local_handle&&)      = delete;
 
     // Allow hipblaslt_local_handle to be used anywhere hipblasLtHandle_t is expected
     operator hipblasLtHandle_t&()
@@ -143,7 +143,7 @@ class hipblaslt_local_matrix_layout
     static constexpr int    alignment = 16;
 
 public:
-    hipblaslt_local_matrix_layout(int64_t row, int64_t col, int64_t ld, hipblasDatatype_t type)
+    hipblaslt_local_matrix_layout(int64_t row, int64_t col, int64_t ld, hipblasltDatatype_t type)
     {
         this->m_status = hipblasLtMatrixLayoutCreate(&this->m_descr, type, row, col, ld);
     }
@@ -154,10 +154,10 @@ public:
             hipblasLtMatrixLayoutDestroy(this->m_descr);
     }
 
-    hipblaslt_local_matrix_layout(const hipblaslt_local_matrix_layout&) = delete;
-    hipblaslt_local_matrix_layout(hipblaslt_local_matrix_layout&&)      = delete;
+    hipblaslt_local_matrix_layout(const hipblaslt_local_matrix_layout&)            = delete;
+    hipblaslt_local_matrix_layout(hipblaslt_local_matrix_layout&&)                 = delete;
     hipblaslt_local_matrix_layout& operator=(const hipblaslt_local_matrix_layout&) = delete;
-    hipblaslt_local_matrix_layout& operator=(hipblaslt_local_matrix_layout&&) = delete;
+    hipblaslt_local_matrix_layout& operator=(hipblaslt_local_matrix_layout&&)      = delete;
 
     hipblasStatus_t status()
     {
@@ -194,7 +194,7 @@ public:
     hipblaslt_local_matmul_descr(hipblasOperation_t     opA,
                                  hipblasOperation_t     opB,
                                  hipblasLtComputeType_t compute_type,
-                                 hipblasDatatype_t      scale_type)
+                                 hipblasltDatatype_t    scale_type)
     {
         this->m_status = hipblasLtMatmulDescCreate(&this->m_descr, compute_type, scale_type);
 
@@ -206,10 +206,10 @@ public:
 
     ~hipblaslt_local_matmul_descr() {}
 
-    hipblaslt_local_matmul_descr(const hipblaslt_local_matmul_descr&) = delete;
-    hipblaslt_local_matmul_descr(hipblaslt_local_matmul_descr&&)      = delete;
+    hipblaslt_local_matmul_descr(const hipblaslt_local_matmul_descr&)            = delete;
+    hipblaslt_local_matmul_descr(hipblaslt_local_matmul_descr&&)                 = delete;
     hipblaslt_local_matmul_descr& operator=(const hipblaslt_local_matmul_descr&) = delete;
-    hipblaslt_local_matmul_descr& operator=(hipblaslt_local_matmul_descr&&) = delete;
+    hipblaslt_local_matmul_descr& operator=(hipblaslt_local_matmul_descr&&)      = delete;
 
     hipblasStatus_t status()
     {
@@ -255,10 +255,10 @@ public:
             hipblasLtMatmulPreferenceDestroy(this->m_pref);
     }
 
-    hipblaslt_local_preference(const hipblaslt_local_preference&) = delete;
-    hipblaslt_local_preference(hipblaslt_local_preference&&)      = delete;
+    hipblaslt_local_preference(const hipblaslt_local_preference&)            = delete;
+    hipblaslt_local_preference(hipblaslt_local_preference&&)                 = delete;
     hipblaslt_local_preference& operator=(const hipblaslt_local_preference&) = delete;
-    hipblaslt_local_preference& operator=(hipblaslt_local_preference&&) = delete;
+    hipblaslt_local_preference& operator=(hipblaslt_local_preference&&)      = delete;
 
     hipblasStatus_t status()
     {

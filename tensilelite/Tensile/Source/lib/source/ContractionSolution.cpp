@@ -485,6 +485,12 @@ namespace Tensile
             args.template append<void const*>("scaleDVec", inputs.scaleDVec);
         }
 
+        if(problemType.useScaleAB && (sizeMapping.globalSplitU == 1)) //kernel input data
+        {
+            args.template append<void const*>("scaleA", inputs.scaleA);
+            args.template append<void const*>("scaleB", inputs.scaleB);
+        }
+
         if(problemType.useScaleAlphaVec
            && ((sizeMapping.globalSplitU == 1)
                || (sizeMapping.customKernelName != ""))) //kernel input data
@@ -805,6 +811,11 @@ namespace Tensile
         {
             rv.args.append<void const*>("bias", inputs.bias);
         }
+        if(problemType.useScaleAB && sizeMapping.globalAccumulation == 0)
+        {
+            rv.args.append<void const*>("scaleA", inputs.scaleA);
+            rv.args.append<void const*>("scaleB", inputs.scaleB);
+        }
         if(problemType.useScaleDVec
            && (sizeMapping.globalAccumulation == 0 || (sizeMapping.customKernelName != "")))
         {
@@ -952,6 +963,11 @@ namespace Tensile
             }
         }
 
+        if(problemType.useScaleAB) // GSU dep
+        {
+            args.template append<void const*>("scaleA", inputs.scaleA);
+            args.template append<void const*>("scaleB", inputs.scaleB);
+        }
         if(problemType.useScaleDVec) // GSU dep
         {
             args.template append<void const*>("scaleDVec", inputs.scaleDVec);
@@ -1315,7 +1331,7 @@ namespace Tensile
                             ss += alpha[it];
                         }
                     }
-                    name += ("_DBias" + ss + s);
+                    name += ("_DBias" + s + "_BiasSrc" + ss);
                 }
             }
             else
@@ -1354,6 +1370,11 @@ namespace Tensile
         if(problemType.activationNoGuard)
         {
             name += "g";
+        }
+
+        if(problemType.useScaleAB)
+        {
+            name += ("_ScaleAB");
         }
 
         if(problemType.useScaleDVec)

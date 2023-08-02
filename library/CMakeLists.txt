@@ -40,12 +40,16 @@ configure_file( "${CMAKE_CURRENT_SOURCE_DIR}/include/hipblaslt.h" "${PROJECT_BIN
 configure_file( "${CMAKE_CURRENT_SOURCE_DIR}/include/hipblaslt-ext.hpp" "${PROJECT_BINARY_DIR}/include/hipblaslt/hipblaslt-ext.hpp" COPYONLY)
 configure_file( "${CMAKE_CURRENT_SOURCE_DIR}/include/hipblaslt-types.h" "${PROJECT_BINARY_DIR}/include/hipblaslt/hipblaslt-types.h" COPYONLY)
 configure_file( "${CMAKE_CURRENT_SOURCE_DIR}/include/hipblaslt_xfloat32.h" "${PROJECT_BINARY_DIR}/include/hipblaslt/hipblaslt_xfloat32.h" COPYONLY)
+configure_file( "${CMAKE_CURRENT_SOURCE_DIR}/include/hipblaslt_float8.h" "${PROJECT_BINARY_DIR}/include/hipblaslt/hipblaslt_float8.h" COPYONLY)
+configure_file( "${CMAKE_CURRENT_SOURCE_DIR}/include/hipblaslt_hip_f8_impl.h" "${PROJECT_BINARY_DIR}/include/hipblaslt/hipblaslt_hip_f8_impl.h" COPYONLY)
 
 # Public hipBLASLt headers
 set(hipblaslt_headers_public
   include/hipblaslt.h
   include/hipblaslt-ext.hpp
   include/hipblaslt_xfloat32.h
+  include/hipblaslt_float8.h
+  include/hipblaslt_hip_f8_impl.h
   ${PROJECT_BINARY_DIR}/include/hipblaslt/hipblaslt-version.h
 )
 
