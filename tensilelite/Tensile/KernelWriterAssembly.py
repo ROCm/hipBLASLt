@@ -8421,7 +8421,7 @@ class KernelWriterAssembly(KernelWriter):
     offset  = (divisor * gwvw) * biasBpe
     tmpVgprN = tmpVgpr1
     for i in range(turn):
-      if i != (turn - 1):
+      if i != 0:
         module.add(VAddU32(dst=vgpr(offsetVgpr), src0=offset, src1=vgpr(offsetVgpr), comment="add subgroup offset"))
       module.add(self.addBiasGlobalLoad(biasDataType, kernel, tmpVgprN + shiftOffset, addr0, addr1, 0, gwvw))
       tmpVgprN += 1
@@ -8438,10 +8438,10 @@ class KernelWriterAssembly(KernelWriter):
 
     offset  = (divisor * gwvw) * self.states.bpeCinternal
     tmpVgprN = tmpVgpr1
-    for i in reversed(range(turn)):
-      if i != (turn - 1):
+    for i in range(turn):
+      if i != 0:
         module.add(VAddU32(dst=vgpr(offsetVgpr), src0=offset, src1=vgpr(offsetVgpr), comment="add subgroup offset"))
-      module.add(SWaitCnt(vmcnt=i, comment="wait for bias load"))
+      module.add(SWaitCnt(vmcnt=(turn-i-1), comment="wait for bias load"))
       if i == 0:
         # Add barrier here to avoid race condition if lds offset starts from 0
         if kernel["LdsOffsetBias"] == 0:
@@ -8454,9 +8454,9 @@ class KernelWriterAssembly(KernelWriter):
         shiftOffset2 = shiftOffset + int(vi * biasDataType.numRegisters())
         if kernel["ProblemType"]["ComputeDataType"].isSingle():
           if biasDataType.isHalf():
-            module.add(VCvtF16toF32(dst=vgpr(tmpVgprN + vi), src=vgpr(tmpVgprN + shiftOffset2), comment="convert to FP32"))
+            module.add(VCvtF16toF32(dst=vgpr(tmpVgprN + vi + i * gwvw), src=vgpr(tmpVgprN + shiftOffset2+ i * gwvw), comment="convert to FP32"))
           elif biasDataType.isBFloat16():
-            module.add(VCvtBF16toFP32(dst=(tmpVgprN + vi), src=(tmpVgprN + shiftOffset2), vgprMask=None, vi=0))
+            module.add(VCvtBF16toFP32(dst=(tmpVgprN + vi + i * gwvw), src=(tmpVgprN + shiftOffset2+ i * gwvw), vgprMask=None, vi=0))
           elif biasDataType == kernel["ProblemType"]["ComputeDataType"]:
             pass # Same, no need to convert
           else:
@@ -8464,11 +8464,11 @@ class KernelWriterAssembly(KernelWriter):
         else:
           printExit("Does not support ComputeDataType != float")
       if bps==2:
-        module.add(DSStoreB16(dstAddr=dst, src=vgpr(tmpVgprN), ds=ds, comment="store bias"))
+        module.add(DSStoreB16(dstAddr=dst, src=vgpr(tmpVgprN + i * gwvw), ds=ds, comment="store bias"))
       elif bps==4:
-        module.add(DSStoreB32(dstAddr=dst, src=vgpr(tmpVgprN), ds=ds, comment="store bias"))
+        module.add(DSStoreB32(dstAddr=dst, src=vgpr(tmpVgprN + i * gwvw), ds=ds, comment="store bias"))
       elif bps==8:
-        module.add(DSStoreB64(dstAddr=dst, src=vgpr(tmpVgprN, 2), ds=ds, comment="store bias"))
+        module.add(DSStoreB64(dstAddr=dst, src=vgpr(tmpVgprN + i * gwvw * 2, 2), ds=ds, comment="store bias"))
       else:
         assert 0
     # We move lgkmcnt and s_barrier before local load
