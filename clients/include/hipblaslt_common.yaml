@@ -8,6 +8,8 @@ Datatypes:
         f16_r: 150
         f32_r: 151
         f64_r: 152
+        i8_r: 160
+        i32_r: 162
         bf16_r: 168
         f8_r: 170
         bf8_r: 171
@@ -17,6 +19,7 @@ Datatypes:
         c_f32_r: 300
         c_xf32_r: 301
         c_f64_r: 302
+        c_i32_r: 303
   - { half: f16_r }
   - hipblaslt_initialization:
       bases: [ c_int ]
@@ -68,6 +71,10 @@ Real precisions 2 bytes: &real_precisions_2b
 Real precisions xf32: &real_precisions_intermeddiate
   - &xf32_precision
     { a_type: f32_r, b_type: f32_r, c_type: f32_r, d_type: f32_r, compute_type: c_xf32_r , scale_type: f32_r}
+
+Real precisions i8: &interger_precisions_i8
+  - &interger8_precisions
+    { a_type: i8_r, b_type: i8_r, c_type: i32_r, d_type: i32_r, compute_type: c_i32_r , scale_type: f32_r}
 
 Real precisions dstf32: &hpa_half_precisions_fp_16_32_dst
   - &hpa_half_fp16dst_precision

@@ -268,5 +268,9 @@ bool norm_check(double norm_error)
         return norm_error < 0.01;
     if(std::is_same<T, hip_bfloat16>{})
         return norm_error < 0.1;
+    if(std::is_same<T, hipblasLtInt8>{})
+        return norm_error < 0.01;
+    if(std::is_same<T, hipblasLtInt32>{})
+        return norm_error < 0.0001;
     return false;
 }

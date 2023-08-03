@@ -437,6 +437,65 @@ void cblas_gemm<double, double, double>(hipblasOperation_t transA,
                 ldc);
 }
 
+template <>
+void cblas_gemm<int8_t, int32_t, int32_t>(hipblasOperation_t transA,
+                                          hipblasOperation_t transB,
+                                          int64_t            m,
+                                          int64_t            n,
+                                          int64_t            k,
+                                          int32_t            alpha,
+                                          const int8_t*      A,
+                                          int64_t            lda,
+                                          const int8_t*      B,
+                                          int64_t            ldb,
+                                          int32_t            beta,
+                                          int32_t*           C,
+                                          int64_t            ldc,
+                                          bool               alt)
+{
+
+    // cblas does not support int8_t input / int32_t output, however non-overflowing
+    // 32-bit integer operations can be represented accurately with double-precision
+    // floats, so convert to doubles and downcast result down to int32_t.
+    // NOTE: This will not properly account for 32-bit integer overflow, however
+    //       the result should be acceptable for testing.
+
+    size_t sizeA = (transA == HIPBLAS_OP_N ? k : m) * size_t(lda);
+    size_t sizeB = (transB == HIPBLAS_OP_N ? n : k) * size_t(ldb);
+    size_t sizeC = n * size_t(ldc);
+
+    host_vector<double> A_double(sizeA);
+    host_vector<double> B_double(sizeB);
+    host_vector<double> C_double(sizeC);
+
+    for(size_t i = 0; i < sizeA; i++)
+        A_double[i] = static_cast<double>(A[i]);
+    for(size_t i = 0; i < sizeB; i++)
+        B_double[i] = static_cast<double>(B[i]);
+    for(size_t i = 0; i < sizeC; i++)
+        C_double[i] = static_cast<double>(C[i]);
+
+    // just directly cast, since transA, transB are integers in the enum
+    // printf("transA: hipblaslt =%d, cblas=%d\n", transA, HIPOperationToCBLASTanspose(transA) );
+    cblas_dgemm(CblasColMajor,
+                HIPOperationToCBLASTanspose(transA),
+                HIPOperationToCBLASTanspose(transB),
+                m,
+                n,
+                k,
+                alpha,
+                A_double,
+                lda,
+                B_double,
+                ldb,
+                beta,
+                C_double,
+                ldc);
+
+    for(size_t i = 0; i < sizeC; i++)
+        C[i] = static_cast<int32_t>(C_double[i]);
+}
+
 // AlphaVec gemm
 template <>
 void cblas_gemm_alphascale<hip_bfloat16, hip_bfloat16, float>(hipblasOperation_t  transA,
@@ -875,4 +934,60 @@ void cblas_gemm_alphascale<double, double, double>(hipblasOperation_t transA,
                 beta,
                 C,
                 ldc);
+}
+
+template <>
+void cblas_gemm_alphascale<int8_t, int32_t, int32_t>(hipblasOperation_t transA,
+                                                     hipblasOperation_t transB,
+                                                     int64_t            m,
+                                                     int64_t            n,
+                                                     int64_t            k,
+                                                     int32_t            alpha,
+                                                     const int8_t*      A,
+                                                     int64_t            lda,
+                                                     const int8_t*      B,
+                                                     int64_t            ldb,
+                                                     int32_t            beta,
+                                                     int32_t*           C,
+                                                     int64_t            ldc,
+                                                     const int32_t*     AlphaVec, //cm review
+                                                     bool               alt)
+{
+    size_t sizeA = (transA == HIPBLAS_OP_N ? k : m) * size_t(lda);
+    size_t sizeB = (transB == HIPBLAS_OP_N ? n : k) * size_t(ldb);
+    size_t sizeC = n * size_t(ldc);
+
+    host_vector<double> A_double(sizeA);
+    host_vector<double> B_double(sizeB);
+    host_vector<double> C_double(sizeC);
+
+    for(size_t i = 0; i < sizeA; i++)
+    {
+        A_double[i] = static_cast<double>(A[i]);
+        A_double[i] *= static_cast<double>(AlphaVec[i % m]);
+    }
+    for(size_t i = 0; i < sizeB; i++)
+        B_double[i] = static_cast<double>(B[i]);
+    for(size_t i = 0; i < sizeC; i++)
+        C_double[i] = static_cast<double>(C[i]);
+
+    // just directly cast, since transA, transB are integers in the enum
+    // printf("transA: hipblaslt =%d, cblas=%d\n", transA, HIPOperationToCBLASTanspose(transA) );
+    cblas_dgemm(CblasColMajor,
+                HIPOperationToCBLASTanspose(transA),
+                HIPOperationToCBLASTanspose(transB),
+                m,
+                n,
+                k,
+                alpha,
+                A_double,
+                lda,
+                B_double,
+                ldb,
+                beta,
+                C_double,
+                ldc);
+
+    for(size_t i = 0; i < sizeC; i++)
+        C[i] = static_cast<int32_t>(C_double[i]);
 }

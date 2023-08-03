@@ -105,6 +105,10 @@ namespace
             return Tensile::DataType::Float8;
         case HIPBLASLT_R_8F_E5M2:
             return Tensile::DataType::BFloat8;
+        case HIPBLASLT_R_8I:
+            return Tensile::DataType::Int8;
+        case HIPBLASLT_R_32I:
+            return Tensile::DataType::Int32;
         default:
             assert(!"hipblasltDatatype_to_tensile_type: non-supported type");
             return Tensile::DataType::None;
@@ -143,6 +147,12 @@ namespace
     {
         using tensile_type = Tensile::BFloat8;
     };
+
+    template <>
+    struct rocblaslt_to_tensile_type<rocblasltInt8>
+    {
+        using tensile_type = Tensile::Int8;
+    };
     /********************************************************************
  * Variable template to map a rocblaslt type into a Tensile::DataType *
  ********************************************************************/
@@ -166,6 +176,12 @@ namespace
 
     template <>
     constexpr auto tensile_datatype<rocblaslt_bf8> = Tensile::DataType::BFloat8;
+
+    template <>
+    constexpr auto tensile_datatype<rocblasltInt8> = Tensile::DataType::Int8;
+
+    template <>
+    constexpr auto tensile_datatype<int32_t> = Tensile::DataType::Int32;
 
     /*************************************************************************
  * Class for converting alpha and beta between rocblaslt and Tensile types *
@@ -243,6 +259,10 @@ namespace
             return Tensile::DataType::Float8;
         case HIPBLASLT_R_8F_E5M2:
             return Tensile::DataType::BFloat8;
+        case HIPBLASLT_R_8I:
+            return Tensile::DataType::Int8;
+        case HIPBLASLT_R_32I:
+            return Tensile::DataType::Int32;
         default:
             throw std::runtime_error("Unsupported type.");
         }
@@ -265,6 +285,10 @@ namespace
             return HIPBLASLT_R_8F_E4M3;
         case Tensile::DataType::BFloat8:
             return HIPBLASLT_R_8F_E5M2;
+        case Tensile::DataType::Int8:
+            return HIPBLASLT_R_8I;
+        case Tensile::DataType::Int32:
+            return HIPBLASLT_R_32I;
         default:
             throw std::runtime_error("Unsupported type.");
         }
@@ -281,6 +305,8 @@ namespace
             return Tensile::DataType::XFloat32;
         case rocblaslt_compute_f64:
             return Tensile::DataType::Double;
+        case rocblaslt_compute_i32:
+            return Tensile::DataType::Int32;
         default:
             throw std::runtime_error("Unsupported type.");
         }
@@ -295,6 +321,8 @@ namespace
             return rocblaslt_compute_f32;
         case Tensile::DataType::Double:
             return rocblaslt_compute_f64;
+        case Tensile::DataType::Int32:
+            return rocblaslt_compute_i32;
         default:
             throw std::runtime_error("Unsupported type.");
         }
@@ -446,7 +474,7 @@ namespace
                                                        freeIndex,
                                                        batchIndex,
                                                        boundIndex,
-                                                       *prob.beta,
+                                                       value_category(*prob.beta),
                                                        prob.workspaceSize};
 
         tensileProblem.setAlphaType(Tensile_Tc);
@@ -2449,6 +2477,8 @@ CREATEFUNCTION(rocblaslt_bf8, rocblaslt_f8, float, float)
 CREATEFUNCTION(rocblaslt_f8, rocblaslt_f8, rocblaslt_half, float)
 CREATEFUNCTION(rocblaslt_f8, rocblaslt_bf8, rocblaslt_half, float)
 CREATEFUNCTION(rocblaslt_bf8, rocblaslt_f8, rocblaslt_half, float)
+CREATEFUNCTION(rocblasltInt8, rocblasltInt8, int32_t, int32_t)
+CREATEFUNCTION(rocblasltInt8, rocblasltInt8, rocblasltInt8, int32_t)
 
 /***********************************************************************************
  * Whether Tensile has been initialized for at least one device (used for

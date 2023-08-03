@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022 Advanced Micro Devices, Inc.
+ * Copyright (C) 2022-2023 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -252,6 +252,18 @@ inline void unit_check_general(int64_t       M,
                                const int8_t* hCPU,
                                const int8_t* hGPU,
                                int64_t       batch_count)
+{
+    UNIT_CHECK(M, N, lda, strideA, hCPU, hGPU, batch_count, ASSERT_EQ);
+}
+
+template <>
+inline void unit_check_general(int64_t        M,
+                               int64_t        N,
+                               int64_t        lda,
+                               int64_t        strideA,
+                               const int32_t* hCPU,
+                               const int32_t* hGPU,
+                               int64_t        batch_count)
 {
     UNIT_CHECK(M, N, lda, strideA, hCPU, hGPU, batch_count, ASSERT_EQ);
 }

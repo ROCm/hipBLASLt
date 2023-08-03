@@ -52,6 +52,10 @@ constexpr const char* rocblaslt_datatype_string(hipblasltDatatype_t type)
         return "f32_r";
     case HIPBLASLT_R_16B:
         return "b16_r";
+    case HIPBLASLT_R_32I:
+        return "i32_r";
+    case HIPBLASLT_R_8I:
+        return "i8_r";
     default:
         return "invalidType";
     }
@@ -66,6 +70,8 @@ constexpr const char* rocblaslt_compute_type_string(rocblaslt_compute_type type)
         return "f32";
     case rocblaslt_compute_f32_fast_xf32:
         return "xf32";
+    case rocblaslt_compute_i32:
+        return "i32";
     default:
         return "invalidType";
     }
@@ -323,6 +329,7 @@ inline bool rocblaslt_enum_utils::is_invalid(rocblaslt_compute_type value_)
     {
     case rocblaslt_compute_f32:
     case rocblaslt_compute_f32_fast_xf32:
+    case rocblaslt_compute_i32:
         return false;
     default:
         return true;
