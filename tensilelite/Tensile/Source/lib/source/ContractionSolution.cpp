@@ -1361,15 +1361,17 @@ namespace Tensile
                 std::transform(actName.begin(), actName.end(), actName.begin(), ::toupper);
                 name += actName;
             }
-        }
-        if((problemType.activationComputeDataType == problemType.computeType)
-           && problemType.highPrecisionAccumulate)
-        {
-            name += "h";
-        }
-        if(problemType.activationNoGuard)
-        {
-            name += "g";
+        
+            if((problemType.activationComputeDataType == problemType.computeType)
+               && problemType.highPrecisionAccumulate)
+            {
+                name += "h";
+            }
+
+            if(problemType.activationNoGuard)
+            {
+                name += "ng";
+            }
         }
 
         if(problemType.useScaleAB)
@@ -1746,7 +1748,7 @@ namespace Tensile
         else
             rv.push_back(generateSingleCall<false>(problem, inputs));
 
-        if((sizeMapping.customKernelName == "") && sizeMapping.globalAccumulation)
+        if((sizeMapping.customKernelName == "") || sizeMapping.globalAccumulation)
         {
             if(debug)
                 rv.push_back(generateOutputConversionCall<true>(problem, inputs));
@@ -1890,7 +1892,7 @@ namespace Tensile
         else
             rv.push_back(generateSingleCallGroupedGemm<false>(problems, inputs, h_args));
 
-        if((sizeMapping.customKernelName == "") && sizeMapping.globalAccumulation)
+        if((sizeMapping.customKernelName == "") || sizeMapping.globalAccumulation)
         {
             if(debug)
                 rv.push_back(

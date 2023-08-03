@@ -122,6 +122,12 @@ typedef enum {
   HIPBLASLT_MATRIX_LAYOUT_STRIDED_BATCH_OFFSET = 1 /**<Stride (in elements) to the next matrix for the strided batch operation. Default value is 0. Data Type: int64_t*/
 } hipblasLtMatrixLayoutAttribute_t;
 
+/** Pointer mode to use for alpha */
+typedef enum {
+    HIPBLASLT_POINTER_MODE_HOST = 0,                          /** targets host memory */
+    HIPBLASLT_POINTER_MODE_ALPHA_DEVICE_VECTOR_BETA_HOST = 1, /** alpha pointer targets a device memory vector of length equal to the number of rows of matrix D, and beta is a single value in host memory. */
+} hipblasLtPointerMode_t;
+
 /*! \ingroup types_module
  *  \brief Specify the attributes that define the specifics of the matrix multiply operation.
  */
@@ -136,7 +142,7 @@ typedef enum {
   HIPBLASLT_MATMUL_DESC_EPILOGUE_AUX_POINTER = 7,       /**<Epilogue auxiliary buffer pointer in the device memory. Data Type:void* /const void* */
   HIPBLASLT_MATMUL_DESC_EPILOGUE_AUX_LD = 8,            /**<The leading dimension of the epilogue auxiliary buffer pointer in the device memory. Data Type:int64_t */
   HIPBLASLT_MATMUL_DESC_EPILOGUE_AUX_BATCH_STRIDE = 9,  /**<The batch stride of the epilogue auxiliary buffer pointer in the device memory. Data Type:int64_t */
-  HIPBLASLT_MATMUL_DESC_POINTER_MODE_ALPHA_DEVICE_VECTOR_BETA_HOST = 10,/**<Alpha scale vector length must match matrix D rows. It must match Scale data type. Alpha scale vector is broadcast to all columns and multipied after final postprocssion. Data Type: void* /const void* */
+  HIPBLASLT_MATMUL_DESC_POINTER_MODE = 10,              /**<Specifies alpha and beta are passed by reference, whether they are scalars on the host or on the device, or device vectors. Default value is: HIPBLASLT_POINTER_MODE_HOST (i.e., on the host). Data Type: int32_t based on hipblasLtPointerMode_t*/
   HIPBLASLT_MATMUL_DESC_D_SCALE_VECTOR_POINTER = 100,   /**<D scale vector length must match matrix D rows. It must match Scale data type. D scale vector is broadcast to all columns and multipied after final postprocssion. Data Type: void* /const void* */
   HIPBLASLT_MATMUL_DESC_MAX = 101
 } hipblasLtMatmulDescAttributes_t;
