@@ -16,7 +16,7 @@
   ComplexConjugateB: false
   ComputeDataType: 0
   DataType: 4
-  DestDataType: 0
+  DestDataType: 4
   Fp16AltImpl: false
   GroupedGemm: true
   SupportUserArgs: true
@@ -61,6 +61,7 @@
   UseInitialStridesAB: false
   UseInitialStridesCD: false
   UseScaleDVec: true
+  UseScaleAlphaVec: true
 - - 1LDSBuffer: 0
     ActivationFuncCall: true
     ActivationFused: true
@@ -188,7 +189,7 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DestDataType: 0
+      DestDataType: 4
       Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
@@ -233,11 +234,12 @@
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleDVec: true
+      UseScaleAlphaVec: true
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 0
-    SolutionNameMin: Cijk_Alik_Bjlk_HHS_BH_Bias_GG_AH_SDV_MT64x64x32_MI32x32x8x1_SN_MIWT1_1
+    SolutionNameMin: Cijk_Alik_Bjlk_HHS_BH_Bias_GG_AH_SDV_SAV_MT64x64x32_MI32x32x8x1_SN_MIWT1_1
     SourceSwap: 1
     StaggerU: 0
     StaggerUMapping: 0
