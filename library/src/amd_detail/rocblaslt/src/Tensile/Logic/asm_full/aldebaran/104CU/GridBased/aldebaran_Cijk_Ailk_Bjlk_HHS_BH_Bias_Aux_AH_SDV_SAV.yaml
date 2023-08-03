@@ -3,24 +3,24 @@
 - gfx90a
 - [Device 0050, Device 0051, Device 0052, Device 0054, Device 0062, Device 7400, Device
     740c]
-- Activation: false
-  ActivationComputeDataType: 4
-  ActivationHPA: false
+- Activation: true
+  ActivationComputeDataType: 0
+  ActivationHPA: true
   ActivationNoGuard: false
-  ActivationType: none
+  ActivationType: all
   AllowNoFreeDims: false
   AssignedDerivedParameters: true
   Batched: true
   BetaOnlyUseBias: false
   BiasDataTypeList: [0, 4]
-  BiasSrc: B
+  BiasSrc: D
   ComplexConjugateA: false
   ComplexConjugateB: false
   ComputeDataType: 0
   DataType: 4
   DestDataType: 4
   Fp16AltImpl: false
-  Gradient: true
+  Gradient: false
   GroupedGemm: false
   HighPrecisionAccumulate: true
   Index0: 0
@@ -60,13 +60,14 @@
   TransposeB: 1
   UseBeta: true
   UseBias: true
-  UseE: false
+  UseE: true
   UseInitialStridesAB: false
   UseInitialStridesCD: false
   UseScaleDVec: true
-- - 1LDSBuffer: 0
+  UseScaleAlphaVec: true
+- - 1LDSBuffer: 1
     ActivationAlt: false
-    ActivationFuncCall: false
+    ActivationFuncCall: 0
     ActivationFused: true
     AssertFree0ElementMultiple: 8
     AssertFree1ElementMultiple: 1
@@ -78,7 +79,7 @@
     ClusterLocalRead: 1
     CodeObjectVersion: V3
     CustomKernelName: ''
-    DepthU: 16
+    DepthU: 32
     DepthULdsDivisor: 1
     DirectToLds: false
     DirectToLdsA: false
@@ -113,13 +114,13 @@
     LdsBlockSizePerPadA: 0
     LdsBlockSizePerPadB: 0
     LdsInitCVgprs: false
-    LdsNumElements: 14336
-    LdsNumElementsAlignedA: 2048
-    LdsNumElementsAlignedB: 4096
+    LdsNumElements: 12288
+    LdsNumElementsAlignedA: 4096
+    LdsNumElementsAlignedB: 8192
     LdsOffsetA: 0
-    LdsOffsetA_Blk: 8192
-    LdsOffsetB: 2048
-    LdsOffsetB_Blk: 10240
+    LdsOffsetA_Blk: 16384
+    LdsOffsetB: 4096
+    LdsOffsetB_Blk: 20480
     LdsOffsetBias: 0
     LdsPadA: 0
     LdsPadB: 0
@@ -129,14 +130,14 @@
     LocalWriteUseSgprA: false
     LocalWriteUseSgprB: false
     LoopIters: 4
-    LoopUnroll: 16
+    LoopUnroll: 32
     MFMA_BF16_1K: false
     MIArchVgpr: false
-    MIBlock: [16, 16, 4, 4, 4, 1]
+    MIBlock: [32, 32, 8, 1, 1, 1]
     MIInputPerThread: 4
     MIOutputVectorWidth: 4
     MIRegPerOut: 1
-    MIWaveGroup: [1, 4]
+    MIWaveGroup: [2, 2]
     MIWaveTile: [2, 4]
     MIWaveTileA: 2
     MIWaveTileB: 4
@@ -145,13 +146,13 @@
     MacroTileA: 128
     MacroTileB: 256
     MagicDivAlg: 2
-    MatrixInstB: 4
-    MatrixInstBM: 4
+    MatrixInstB: 1
+    MatrixInstBM: 1
     MatrixInstBN: 1
-    MatrixInstK: 4
-    MatrixInstM: 16
-    MatrixInstN: 16
-    MatrixInstruction: [16, 16, 4, 4]
+    MatrixInstK: 8
+    MatrixInstM: 32
+    MatrixInstN: 32
+    MatrixInstruction: [32, 32, 8, 1]
     MaxOccupancy: 40
     MaxVgprNumber: 256
     MinVgprNumber: 0
@@ -166,12 +167,12 @@
     NumElementsPerBatchStore: 2
     NumElementsPerThread: 128
     NumGlobalWriteVectorsPerThread: 64
-    NumLoadsA: 1
-    NumLoadsB: 2
+    NumLoadsA: 2
+    NumLoadsB: 4
     NumLoadsCoalescedA: 1
     NumLoadsCoalescedB: 1
-    NumLoadsPerpendicularA: 1
-    NumLoadsPerpendicularB: 2
+    NumLoadsPerpendicularA: 2
+    NumLoadsPerpendicularB: 4
     NumThreads: 256
     OptNoLoadLoop: 1
     PackedC0IdxChars: [I]
@@ -181,24 +182,24 @@
     PrefetchGlobalRead: 2
     PrefetchLocalRead: 1
     ProblemType:
-      Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      Activation: true
+      ActivationComputeDataType: 0
+      ActivationHPA: true
       ActivationNoGuard: false
-      ActivationType: none
+      ActivationType: all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
       Batched: true
       BetaOnlyUseBias: false
       BiasDataTypeList: [0, 4]
-      BiasSrc: B
+      BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
       DestDataType: 4
       Fp16AltImpl: false
-      Gradient: true
+      Gradient: false
       GroupedGemm: false
       HighPrecisionAccumulate: true
       Index0: 0
@@ -238,15 +239,16 @@
       TransposeB: 1
       UseBeta: true
       UseBias: true
-      UseE: false
+      UseE: true
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleDVec: true
+      UseScaleAlphaVec: true
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 0
-    SolutionNameMin: Cijk_Ailk_Bjlk_HHS_BH_Bias_BiasSrcB_SDV_MT128x256x16_MI16x16x4x4_SN_1LDSB0_AF0EM8_GSU1_MIWT2_4
+    SolutionNameMin: Cijk_Ailk_Bjlk_HHS_BH_Bias_Aux_AH_SDV_SAV_MT128x256x32_MI32x32x8x1_SN_AFC0_AF0EM8_GSU1_MIWT2_4
     SourceSwap: 1
     StaggerU: 32
     StaggerUMapping: 0
@@ -282,16 +284,17 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 8
     WorkGroupReduction: false
-    _DepthULds: 16
+    _DepthULds: 32
     _GlobalAccumulation: null
     _UseSgprForGRO: false
     _VectorStore: 1
+    _WorkspaceSizePerElemBias: 0
     _WorkspaceSizePerElemC: 0
-    _staggerStrideShift: 3
+    _staggerStrideShift: 2
     allowLRVWforTLUandMI: false
   - 1LDSBuffer: 1
     ActivationAlt: false
-    ActivationFuncCall: false
+    ActivationFuncCall: 1
     ActivationFused: true
     AssertFree0ElementMultiple: 1
     AssertFree1ElementMultiple: 1
@@ -406,24 +409,24 @@
     PrefetchGlobalRead: 2
     PrefetchLocalRead: 1
     ProblemType:
-      Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      Activation: true
+      ActivationComputeDataType: 0
+      ActivationHPA: true
       ActivationNoGuard: false
-      ActivationType: none
+      ActivationType: all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
       Batched: true
       BetaOnlyUseBias: false
       BiasDataTypeList: [0, 4]
-      BiasSrc: B
+      BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
       DestDataType: 4
       Fp16AltImpl: false
-      Gradient: true
+      Gradient: false
       GroupedGemm: false
       HighPrecisionAccumulate: true
       Index0: 0
@@ -463,15 +466,16 @@
       TransposeB: 1
       UseBeta: true
       UseBias: true
-      UseE: false
+      UseE: true
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleDVec: true
+      UseScaleAlphaVec: true
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 1
-    SolutionNameMin: Cijk_Ailk_Bjlk_HHS_BH_Bias_BiasSrcB_SDV_MT128x256x32_MI32x32x8x1_SN_1LDSB1_AF0EM1_GSU1_MIWT2_4
+    SolutionNameMin: Cijk_Ailk_Bjlk_HHS_BH_Bias_Aux_AH_SDV_SAV_MT128x256x32_MI32x32x8x1_SN_AFC1_AF0EM1_GSU1_MIWT2_4
     SourceSwap: 1
     StaggerU: 32
     StaggerUMapping: 0
@@ -511,12 +515,13 @@
     _GlobalAccumulation: null
     _UseSgprForGRO: false
     _VectorStore: 1
+    _WorkspaceSizePerElemBias: 0
     _WorkspaceSizePerElemC: 0
     _staggerStrideShift: 2
     allowLRVWforTLUandMI: false
   - 1LDSBuffer: 1
     ActivationAlt: false
-    ActivationFuncCall: false
+    ActivationFuncCall: 1
     ActivationFused: true
     AssertFree0ElementMultiple: 8
     AssertFree1ElementMultiple: 1
@@ -631,24 +636,24 @@
     PrefetchGlobalRead: 2
     PrefetchLocalRead: 1
     ProblemType:
-      Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      Activation: true
+      ActivationComputeDataType: 0
+      ActivationHPA: true
       ActivationNoGuard: false
-      ActivationType: none
+      ActivationType: all
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
       Batched: true
       BetaOnlyUseBias: false
       BiasDataTypeList: [0, 4]
-      BiasSrc: B
+      BiasSrc: D
       ComplexConjugateA: false
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
       DestDataType: 4
       Fp16AltImpl: false
-      Gradient: true
+      Gradient: false
       GroupedGemm: false
       HighPrecisionAccumulate: true
       Index0: 0
@@ -688,15 +693,16 @@
       TransposeB: 1
       UseBeta: true
       UseBias: true
-      UseE: false
+      UseE: true
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleDVec: true
+      UseScaleAlphaVec: true
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 2
-    SolutionNameMin: Cijk_Ailk_Bjlk_HHS_BH_Bias_BiasSrcB_SDV_MT128x256x32_MI32x32x8x1_SN_1LDSB1_AF0EM8_GSU1_MIWT2_4
+    SolutionNameMin: Cijk_Ailk_Bjlk_HHS_BH_Bias_Aux_AH_SDV_SAV_MT128x256x32_MI32x32x8x1_SN_AFC1_AF0EM8_GSU1_MIWT2_4
     SourceSwap: 1
     StaggerU: 32
     StaggerUMapping: 0
@@ -736,16 +742,19 @@
     _GlobalAccumulation: null
     _UseSgprForGRO: false
     _VectorStore: 1
+    _WorkspaceSizePerElemBias: 0
     _WorkspaceSizePerElemC: 0
     _staggerStrideShift: 2
     allowLRVWforTLUandMI: false
 - [2, 3, 0, 1]
-- - - [511, 256, 1, 1024, 511, 511, 511, 256]
-    - [1, 600.388]
-  - - [512, 256, 1, 511, 512, 512, 512, 256]
-    - [0, 301.186]
-  - - [512, 256, 1, 1023, 512, 512, 512, 256]
-    - [2, 603.763]
+- - - [4607, 1335, 1, 320, 4607, 4607, 4607, 1335]
+    - [1, 19321.7]
+  - - [4608, 1335, 1, 320, 4608, 4608, 4608, 1335]
+    - [0, 26464.2]
+  - - [4608, 1408, 1, 320, 4608, 4608, 4608, 1408]
+    - [0, 30225.4]
+  - - [128, 128, 1, 320, 128, 128, 128, 128]
+    - [2, 125.428]
 - null
 - null
 - DeviceEfficiency
