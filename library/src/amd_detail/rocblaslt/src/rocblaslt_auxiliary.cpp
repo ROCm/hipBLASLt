@@ -109,6 +109,12 @@ RocblasltContractionProblem<TiA, TiB, To, Tc>
     constexpr bool strided_batch = true;
     constexpr bool grouped_gemm  = false;
 
+    float alpha_1 = 1.0; // use dScaleAlphaVec instead, original alpha => 1.0
+    if(scaleAlphaVec)
+    {
+        alpha = &alpha_1;
+    }
+
     RocblasltContractionProblem<TiA, TiB, To, Tc> problem{opA,
                                                           opB,
                                                           m,
@@ -151,6 +157,7 @@ RocblasltContractionProblem<TiA, TiB, To, Tc>
                                                           nullptr,
                                                           maxWorkSpaceBytes,
                                                           nullptr};
+
     return problem;
 }
 
@@ -614,12 +621,12 @@ rocblaslt_status rocblaslt_matmul_desc_set_attribute(rocblaslt_matmul_desc      
                     return rocblaslt_status_invalid_value;
                 }
                 break;
-            case ROCBLASLT_MATMUL_DESC_POINTER_MODE_ALPHA_DEVICE_VECTOR_BETA_HOST:
-                if(sizeof(void*) <= sizeInBytes)
-                    memcpy(&matmulDesc->scaleAlphaVec, buf, sizeof(void*));
+            case ROCBLASLT_MATMUL_DESC_POINTER_MODE:
+                if(sizeof(int32_t) <= sizeInBytes)
+                    memcpy(&matmulDesc->pointermode, buf, sizeof(int32_t));
                 else
                 {
-                    log_error(__func__, "invalid scaleAlphaVec buf size", sizeInBytes);
+                    log_error(__func__, "invalid pointermode buf size", sizeInBytes);
                     return rocblaslt_status_invalid_value;
                 }
                 break;
@@ -774,14 +781,14 @@ rocblaslt_status rocblaslt_matmul_desc_get_attribute(rocblaslt_matmul_desc      
                 }
                 memcpy(buf, &matmulDesc->scaleDVec, sizeof(void*));
                 break;
-            case ROCBLASLT_MATMUL_DESC_POINTER_MODE_ALPHA_DEVICE_VECTOR_BETA_HOST:
-                *sizeWritten = sizeof(void*);
-                if(sizeInBytes < sizeof(void*))
+            case ROCBLASLT_MATMUL_DESC_POINTER_MODE:
+                *sizeWritten = sizeof(int32_t);
+                if(sizeInBytes < sizeof(int32_t))
                 {
                     log_error(__func__, "invalid buf size", sizeInBytes);
                     return rocblaslt_status_invalid_value;
                 }
-                memcpy(buf, &matmulDesc->scaleAlphaVec, sizeof(void*));
+                memcpy(buf, &matmulDesc->pointermode, sizeof(void*));
                 break;
             case ROCBLASLT_MATMUL_DESC_BIAS_DATA_TYPE:
                 *sizeWritten = sizeof(int32_t);

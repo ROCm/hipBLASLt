@@ -1360,15 +1360,17 @@ namespace Tensile
                 std::transform(actName.begin(), actName.end(), actName.begin(), ::toupper);
                 name += actName;
             }
-        }
-        if((problemType.activationComputeDataType == problemType.computeType)
-           && problemType.highPrecisionAccumulate)
-        {
-            name += "h";
-        }
-        if(problemType.activationNoGuard)
-        {
-            name += "g";
+        
+            if((problemType.activationComputeDataType == problemType.computeType)
+               && problemType.highPrecisionAccumulate)
+            {
+                name += "h";
+            }
+
+            if(problemType.activationNoGuard)
+            {
+                name += "ng";
+            }
         }
 
         if(problemType.useScaleAB)

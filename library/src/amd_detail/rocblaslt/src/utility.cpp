@@ -131,8 +131,8 @@ const char* rocblaslt_matmul_desc_attributes_to_string(rocblaslt_matmul_desc_att
         return "MATMUL_DESC_EPILOGUE_AUX_LD";
     case ROCBLASLT_MATMUL_DESC_EPILOGUE_AUX_BATCH_STRIDE:
         return "MATMUL_DESC_EPILOGUE_AUX_BATCH_STRIDE";
-    case ROCBLASLT_MATMUL_DESC_POINTER_MODE_ALPHA_DEVICE_VECTOR_BETA_HOST:
-        return "MATMUL_DESC_POINTER_MODE_ALPHA_DEVICE_VECTOR_BETA_HOST";
+    case ROCBLASLT_MATMUL_DESC_POINTER_MODE:
+        return "MATMUL_DESC_POINTER_MODE";
     default:
         return "Invalid";
     }

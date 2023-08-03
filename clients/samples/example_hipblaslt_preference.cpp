@@ -979,7 +979,7 @@ void test_hipblaslt(hipblasltDatatype_t in_datatype,
 
     // allocate memory on device
     void *da, *db, *dc, *dd, *de = nullptr, *d_bias = nullptr, *d_scaleDVec = nullptr,
-                             *d_scaleAlphaVec = nullptr;
+                             *d_scaleAlphaVec = nullptr, *p_alpha = nullptr;;
     int         num_streams                   = 1;
     hipStream_t stream                        = nullptr;
 
@@ -994,7 +994,16 @@ void test_hipblaslt(hipblasltDatatype_t in_datatype,
     if(enable_scaleDVec)
         CHECK_HIP_ERROR(hipMalloc(&d_scaleDVec, size_scaleDVec * sizeof(float)));
     if(enable_scaleAlphaVec)
+    {
         CHECK_HIP_ERROR(hipMalloc(&d_scaleAlphaVec, size_scaleAlphaVec * sizeof(float)));
+        p_alpha = d_scaleAlphaVec;
+        alpha = 1.0; // use dScaleAlphaVec instead, original alpha = 1.0 for verify
+    }
+    else
+    {
+        p_alpha = &alpha;
+        d_scaleAlphaVec = &alpha;
+    }
     // copy matrices from host to device
     CHECK_HIP_ERROR(hipMemcpy(da, ha.data(), sizeof(Tin) * size_a, hipMemcpyHostToDevice));
     CHECK_HIP_ERROR(hipMemcpy(db, hb.data(), sizeof(Tin) * size_b, hipMemcpyHostToDevice));
@@ -1010,7 +1019,7 @@ void test_hipblaslt(hipblasltDatatype_t in_datatype,
                                   sizeof(float) * size_scaleDVec,
                                   hipMemcpyHostToDevice));
     if(enable_scaleAlphaVec)
-        CHECK_HIP_ERROR(hipMemcpy(d_scaleAlphaVec,
+        CHECK_HIP_ERROR(hipMemcpy(p_alpha,
                                   h_scaleAlphaVec.data(),
                                   sizeof(float) * size_scaleAlphaVec,
                                   hipMemcpyHostToDevice));
@@ -1105,11 +1114,14 @@ void test_hipblaslt(hipblasltDatatype_t in_datatype,
         CHECK_HIPBLASLT_ERROR(hipblasLtMatmulDescSetAttribute(
             matmul, HIPBLASLT_MATMUL_DESC_D_SCALE_VECTOR_POINTER, &d_scaleDVec, sizeof(void*)));
     if(enable_scaleAlphaVec)
+    {
+        hipblasLtPointerMode_t scale_mode = HIPBLASLT_POINTER_MODE_ALPHA_DEVICE_VECTOR_BETA_HOST;
         CHECK_HIPBLASLT_ERROR(hipblasLtMatmulDescSetAttribute(
             matmul,
-            HIPBLASLT_MATMUL_DESC_POINTER_MODE_ALPHA_DEVICE_VECTOR_BETA_HOST,
-            &d_scaleAlphaVec,
-            sizeof(void*)));
+            HIPBLASLT_MATMUL_DESC_POINTER_MODE,
+            &scale_mode,
+            sizeof(scale_mode)));
+    }
 
     // Set User Preference attributes
     CHECK_HIPBLASLT_ERROR(hipblasLtMatmulPreferenceCreate(&pref));
@@ -1162,7 +1174,7 @@ void test_hipblaslt(hipblasltDatatype_t in_datatype,
                 size_t workspace_size = 0;
                 if(hipblaslt_ext::matmulIsAlgoSupported(handle,
                                                         matmul,
-                                                        &alpha,
+                                                        p_alpha,
                                                         matA,
                                                         matB,
                                                         &beta,
@@ -1198,7 +1210,7 @@ void test_hipblaslt(hipblasltDatatype_t in_datatype,
     else
     {
         CHECK_HIPBLASLT_ERROR(
-            gemm.setProblem(matmul, &alpha, da, matA, db, matB, &beta, dc, matC, dd, matD));
+            gemm.setProblem(matmul, p_alpha, da, matA, db, matB, &beta, dc, matC, dd, matD));
         std::cout << "gemm type " << hipblaslt_ext::gemmType2String(gemm.getGemmType())
                   << ". problems: " << gemm.getGemmCount() << std::endl;
 
@@ -1281,7 +1293,7 @@ void test_hipblaslt(hipblasltDatatype_t in_datatype,
         auto idx = (findAll) ? validIdx[0] : 0;
         CHECK_HIPBLASLT_ERROR(hipblasLtMatmul(handle,
                                               matmul,
-                                              &alpha,
+                                              p_alpha,
                                               da,
                                               matA,
                                               db,
@@ -1334,7 +1346,7 @@ void test_hipblaslt(hipblasltDatatype_t in_datatype,
                 {
                     CHECK_HIPBLASLT_ERROR(hipblasLtMatmul(handle,
                                                           matmul,
-                                                          &alpha,
+                                                          p_alpha,
                                                           da,
                                                           matA,
                                                           db,
@@ -1361,7 +1373,7 @@ void test_hipblaslt(hipblasltDatatype_t in_datatype,
                     {
                         CHECK_HIPBLASLT_ERROR(hipblasLtMatmul(handle,
                                                               matmul,
-                                                              &alpha,
+                                                              p_alpha,
                                                               da,
                                                               matA,
                                                               db,

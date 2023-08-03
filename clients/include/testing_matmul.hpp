@@ -297,6 +297,7 @@ void testing_matmul(const Arguments& arg)
         hScaleAlphaVec(gemm_count), hD_gold_ScaleAlpha(gemm_count), hBias_C(gemm_count),
         hBias_gold_C(gemm_count), hBias_gold_epl(gemm_count);
     std::vector<host_vector<Tc>*> hE(gemm_count, nullptr), hE_gold(gemm_count, nullptr);
+    std::vector<void*> alpha_in(gemm_count);
 
     for(int i = 0; i < gemm_count; i++)
     {
@@ -636,7 +637,15 @@ void testing_matmul(const Arguments& arg)
             CHECK_HIP_ERROR(dScaleDVec[i]->transfer_from(*hScaleDVec[i]));
 
         if(arg.scaleAlpha_vector)
+        {
             CHECK_HIP_ERROR(dScaleAlphaVec[i]->transfer_from(*hScaleAlphaVec[i]));
+            alpha_in[i] = *(dScaleAlphaVec[i]);
+            h_alpha[i] = 1.0; // use dScaleAlphaVec instead, original alpha = 1.0 for verify
+        }
+        else
+        {
+            alpha_in[i] = &(h_alpha[i]);
+        }
 
         if(size_D_copy[i])
         {
@@ -711,13 +720,13 @@ void testing_matmul(const Arguments& arg)
 
         if(arg.scaleAlpha_vector)
         {
-            const void* scaleAlphaVec_addr = *dScaleAlphaVec[i];
+            hipblasLtPointerMode_t scale_mode = HIPBLASLT_POINTER_MODE_ALPHA_DEVICE_VECTOR_BETA_HOST;
             EXPECT_HIPBLAS_STATUS(
                 hipblasLtMatmulDescSetAttribute(
                     matmul[i],
-                    HIPBLASLT_MATMUL_DESC_POINTER_MODE_ALPHA_DEVICE_VECTOR_BETA_HOST,
-                    &scaleAlphaVec_addr,
-                    sizeof(void*)),
+                    HIPBLASLT_MATMUL_DESC_POINTER_MODE,
+                    &scale_mode,
+                    sizeof(scale_mode)),
                 HIPBLAS_STATUS_SUCCESS);
         }
     }
@@ -849,7 +858,7 @@ void testing_matmul(const Arguments& arg)
                     else
                     {
                         CHECK_HIPBLASLT_ERROR(gemm.setProblem(matmul[0],
-                                                              &h_alpha[0],
+                                                              alpha_in[0],
                                                               *(dA[0]),
                                                               matA[0],
                                                               *(dB[0]),
@@ -880,7 +889,7 @@ void testing_matmul(const Arguments& arg)
                         size_t tmpWorkspaceSize = 0;
                         if(hipblaslt_ext::matmulIsAlgoSupported(handle,
                                                                 matmul[0],
-                                                                &h_alpha[0],
+                                                                alpha_in[0],
                                                                 matA[0],
                                                                 matB[0],
                                                                 &h_beta[0],
@@ -995,7 +1004,7 @@ void testing_matmul(const Arguments& arg)
                 else
                 {
                     CHECK_HIPBLASLT_ERROR(gemm.setProblem(matmul[0],
-                                                          &h_alpha[0],
+                                                          alpha_in[0],
                                                           *(dA[0]),
                                                           matA[0],
                                                           *(dB[0]),
@@ -1029,7 +1038,7 @@ void testing_matmul(const Arguments& arg)
                     size_t tmpWorkspaceSize = 0;
                     if(hipblaslt_ext::matmulIsAlgoSupported(handle,
                                                             matmul[0],
-                                                            &h_alpha[0],
+                                                            alpha_in[0],
                                                             matA[0],
                                                             matB[0],
                                                             &h_beta[0],
@@ -1128,7 +1137,7 @@ void testing_matmul(const Arguments& arg)
                 else
                 {
                     CHECK_HIPBLASLT_ERROR(gemm.setProblem(matmul[0],
-                                                          &h_alpha[0],
+                                                          alpha_in[0],
                                                           *(dA[0]),
                                                           matA[0],
                                                           *(dB[0]),
@@ -1221,7 +1230,7 @@ void testing_matmul(const Arguments& arg)
                 CHECK_HIP_ERROR(hipStreamSynchronize(stream));
                 EXPECT_HIPBLAS_STATUS(hipblasLtMatmul(handle,
                                                       matmul[0],
-                                                      &(h_alpha[0]),
+                                                      alpha_in[0],
                                                       *(dA[0]),
                                                       matA[0],
                                                       *(dB[0]),
@@ -1641,7 +1650,7 @@ void testing_matmul(const Arguments& arg)
                 {
                     EXPECT_HIPBLAS_STATUS(hipblasLtMatmul(handle,
                                                           matmul[0],
-                                                          &(h_alpha[0]),
+                                                          alpha_in[0],
                                                           *(dA[0]),
                                                           matA[0],
                                                           *(dB[0]),
@@ -1664,7 +1673,7 @@ void testing_matmul(const Arguments& arg)
                 {
                     EXPECT_HIPBLAS_STATUS(hipblasLtMatmul(handle,
                                                           matmul[0],
-                                                          &(h_alpha[0]),
+                                                          alpha_in[0],
                                                           *(dA[0]),
                                                           matA[0],
                                                           *(dB[0]),
