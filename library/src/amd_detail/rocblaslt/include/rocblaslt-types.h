@@ -286,7 +286,7 @@ typedef enum rocblaslt_matmul_desc_attributes_
     ROCBLASLT_MATMUL_DESC_EPILOGUE_AUX_POINTER                       = 7,
     ROCBLASLT_MATMUL_DESC_EPILOGUE_AUX_LD                            = 8,
     ROCBLASLT_MATMUL_DESC_EPILOGUE_AUX_BATCH_STRIDE                  = 9,
-    ROCBLASLT_MATMUL_DESC_POINTER_MODE_ALPHA_DEVICE_VECTOR_BETA_HOST = 10,
+    ROCBLASLT_MATMUL_DESC_POINTER_MODE = 10,
     ROCBLASLT_MATMUL_DESC_D_SCALE_VECTOR_POINTER                     = 100,
     ROCBLASLT_MATMUL_DESC_MAX                                        = 101
 } rocblaslt_matmul_desc_attributes;

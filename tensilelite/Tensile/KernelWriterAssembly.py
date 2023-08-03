@@ -7611,8 +7611,8 @@ class KernelWriterAssembly(KernelWriter):
     toActModuleList = None
     isInsertActFunctionCallAddrCalc = True
     if kernel["ActivationFuncCall"]:
-      sgprOffsetActivation = self.sgprPool.checkOutAligned(2, 2)
-      sgprOffsetBack = self.sgprPool.checkOutAligned(2, 2)
+      sgprOffsetActivation = self.sgprPool.checkOutAligned(2, 2, preventOverflow=0)
+      sgprOffsetBack = self.sgprPool.checkOutAligned(2, 2, preventOverflow=0)
       activationSetPCStruct = self.ActivationSetPCStruct(sgprOffsetActivation=sgprOffsetActivation, \
         sgprOffsetBack=sgprOffsetBack, vgprActCopy=tmpVgpr)
       activationCDataType = kernel["ProblemType"]["ActivationComputeDataType"]

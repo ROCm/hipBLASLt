@@ -114,6 +114,12 @@ rocblaslt_status rocblaslt_matmul_impl(const rocblaslt_handle       handle,
 
     auto& gemmData = matmul_descr->m_data;
 
+    float alpha_1 = 1.0; // use dScaleAlphaVec instead, original alpha => 1.0
+    if(scaleAlphaVec)
+    {
+        alpha = &alpha_1;
+    }
+
 #define EX_PARM                                                                                  \
     handle, opA, opB, m, n, k, alpha, A, type_a, lda, batch_stride_a, B, type_b, ldb,            \
         batch_stride_b, beta, C, type_c, ldc, batch_stride_c, D, type_d, ldd, batch_stride_d, E, \
@@ -195,6 +201,12 @@ rocblaslt_status rocblaslt_gemm_create_cpp_impl(rocblaslt_matmul_desc          m
     bool strided_batch = true;
     bool grouped_gemm  = false;
 
+    float alpha_1 = 1.0; // use dScaleAlphaVec instead, original alpha => 1.0
+    if(scaleAlphaVec)
+    {
+        alpha = &alpha_1;
+    }
+
 #define EX_PARM_GEMM_CPP                                                                          \
     opA, opB, m, n, k, alpha, A, type_a, lda, batch_stride_a, B, type_b, ldb, batch_stride_b,     \
         beta, C, type_c, ldc, batch_stride_c, D, type_d, ldd, batch_stride_d, E, lde,             \
@@ -258,6 +270,7 @@ rocblaslt_status rocblaslt_gemm_create_cpp_impl_2(int64_t                       
                                                inputs.bias,
                                                inputs.scaleDVec,
                                                inputs.scaleAlphaVec,
+                                               inputs.alpha,
                                                E,
                                                lde,
                                                batch_stride_e,
@@ -415,7 +428,7 @@ rocblaslt_status
         bool                gradient;
         rocblaslt_epilogue  epilogue = matmul_descr[i]->epilogue;
         if(validArgs == rocblaslt_status_continue)
-            validArgs = rocblaslt_epilogue_valid_args(epilogue,
+            validArgs = rocblaslt_epilogue_valid_args(epilogue,// add alpha
                                                       num_rows_d,
                                                       num_cols_d,
                                                       matD[i]->type,
@@ -425,7 +438,8 @@ rocblaslt_status
                                                       matmul_descr[i]->stride_e,
                                                       matmul_descr[i]->bias,
                                                       matmul_descr[i]->scaleDVec,
-                                                      matmul_descr[i]->scaleAlphaVec,
+                                                      matmul_descr[i]->pointermode,
+                                                      alpha[i],
                                                       E,
                                                       lde,
                                                       batch_stride_e,
@@ -597,6 +611,7 @@ rocblaslt_status
                                                       inputs[i].bias,
                                                       inputs[i].scaleDVec,
                                                       inputs[i].scaleAlphaVec,
+                                                      inputs[i].alpha,
                                                       E,
                                                       lde,
                                                       batch_stride_e,
@@ -746,7 +761,7 @@ rocblaslt_status rocblaslt_matmul(rocblaslt_handle             handle,
                   workspace,
                   "workSpaceSizeInBytes",
                   workspaceSizeInBytes,
-                  "alpha",
+                  (matmul_descr->pointermode)? "alphaVector" : "alpha",
                   *(reinterpret_cast<const float*>(alpha)),
                   "beta",
                   *(reinterpret_cast<const float*>(beta)),
