@@ -745,6 +745,28 @@ inline rocblaslt_status rocblaslt_matmul_template(rocblaslt_handle             h
             }
         }
     }
+    else if(a_type == HIPBLASLT_R_8I && b_type == HIPBLASLT_R_8I) //int8
+    {
+        if(c_type == HIPBLASLT_R_8I && d_type == HIPBLASLT_R_8I)
+        {
+            if(compute_type == rocblaslt_compute_i32)
+            {
+                rs_status = rocblaslt_matmul_typecasting<hipblasLtInt8,
+                                                         hipblasLtInt8,
+                                                         hipblasLtInt8,
+                                                         int32_t>(EX_TYPECASTING_PARM);
+            }
+        }
+        else if(c_type == HIPBLASLT_R_32I && d_type == HIPBLASLT_R_32I)
+        {
+            if(compute_type == rocblaslt_compute_i32)
+            {
+                rs_status
+                    = rocblaslt_matmul_typecasting<hipblasLtInt8, hipblasLtInt8, int32_t, int32_t>(
+                        EX_TYPECASTING_PARM);
+            }
+        }
+    }
     else
     {
         rs_status = rocblaslt_status_not_implemented;
@@ -858,6 +880,31 @@ inline rocblaslt_status rocblaslt_gemm_create_template_cpp(hipblasOperation_t   
             {
                 rs_status = rocblaslt_gemm_create_typecasting<double, double, double, double>(
                     EX_TYPECASTING_PARM_GEMM_CPP);
+            }
+        }
+    }
+    else if(a_type == HIPBLASLT_R_8I && b_type == HIPBLASLT_R_8I) //int8
+    {
+        if(c_type == HIPBLASLT_R_8I && d_type == HIPBLASLT_R_8I)
+        {
+            if(compute_type == rocblaslt_compute_i32)
+            {
+                rs_status
+                    = rocblaslt_gemm_create_typecasting<hipblasLtInt8,
+                                                        hipblasLtInt8,
+                                                        hipblasLtInt8,
+                                                        int32_t>(EX_TYPECASTING_PARM_GEMM_CPP);
+            }
+        }
+        else if(c_type == HIPBLASLT_R_32I && d_type == HIPBLASLT_R_32I)
+        {
+            if(compute_type == rocblaslt_compute_i32)
+            {
+                rs_status
+                    = rocblaslt_gemm_create_typecasting<hipblasLtInt8,
+                                                        hipblasLtInt8,
+                                                        int32_t,
+                                                        int32_t>(EX_TYPECASTING_PARM_GEMM_CPP);
             }
         }
     }
@@ -980,6 +1027,31 @@ inline rocblaslt_status
                                                                      rocblaslt_bfloat16,
                                                                      rocblaslt_bfloat16,
                                                                      float>(
+                    EX_TYPECASTING_PARM_GroupedGemm_CPP);
+            }
+        }
+    }
+    else if(a_type == HIPBLASLT_R_8I && b_type == HIPBLASLT_R_8I) //int8
+    {
+        if(c_type == HIPBLASLT_R_8I && d_type == HIPBLASLT_R_8I)
+        {
+            if(compute_type == rocblaslt_compute_i32)
+            {
+                rs_status = rocblaslt_groupedgemm_create_typecasting<hipblasLtInt8,
+                                                                     hipblasLtInt8,
+                                                                     hipblasLtInt8,
+                                                                     int32_t>(
+                    EX_TYPECASTING_PARM_GroupedGemm_CPP);
+            }
+        }
+        else if(c_type == HIPBLASLT_R_32I && d_type == HIPBLASLT_R_32I)
+        {
+            if(compute_type == rocblaslt_compute_i32)
+            {
+                rs_status = rocblaslt_groupedgemm_create_typecasting<hipblasLtInt8,
+                                                                     hipblasLtInt8,
+                                                                     int32_t,
+                                                                     int32_t>(
                     EX_TYPECASTING_PARM_GroupedGemm_CPP);
             }
         }

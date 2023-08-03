@@ -141,6 +141,9 @@ typedef struct
     uint8_t data;
 } rocblaslt_bf8;
 
+typedef int8_t  rocblasltInt8;
+typedef int32_t rocblasltInt32;
+
 /*! \ingroup types_module
  *  \brief Specify the postprocessing options for the epilogue
  *
@@ -247,6 +250,7 @@ typedef enum rocblaslt_compute_type_
     rocblaslt_compute_f32           = 300, /**< 32-bit floating-point precision. */
     rocblaslt_compute_f32_fast_xf32 = 301, /**< XF32 compute for 32-bit input and output matrices */
     rocblaslt_compute_f64           = 302, /**< 64-bit floating-point precision. */
+    rocblaslt_compute_i32           = 303, /**< 32-bit integer precision. */
 } rocblaslt_compute_type;
 
 /*! \ingroup types_module

@@ -42,6 +42,10 @@ constexpr auto hipblaslt_type2datatype()
         return HIPBLASLT_R_8F_E4M3;
     if(std::is_same<T, hipblaslt_bf8>{})
         return HIPBLASLT_R_8F_E5M2;
+    if(std::is_same<T, int32_t>{})
+        return HIPBLASLT_R_32I;
+    if(std::is_same<T, hipblasLtInt8>{})
+        return HIPBLASLT_R_8I;
 
     return HIPBLASLT_R_16F; // testing purposes we default to f32 ex
 }
@@ -73,6 +77,10 @@ auto hipblaslt_simple_dispatch(const Arguments& arg)
         return TEST<hipblaslt_f8>{}(arg);
     case HIPBLASLT_R_8F_E5M2:
         return TEST<hipblaslt_bf8>{}(arg);
+    case HIPBLASLT_R_8I:
+        return TEST<hipblasLtInt8>{}(arg);
+    case HIPBLASLT_R_32I:
+        return TEST<int32_t>{}(arg);
     default:
         return TEST<void>{}(arg);
     }
@@ -115,6 +123,16 @@ auto hipblaslt_matmul_dispatch(const Arguments& arg)
         else if(Ti == HIPBLASLT_R_8F_E4M3 && To == HIPBLASLT_R_16F && Tc == HIPBLASLT_COMPUTE_F32)
         {
             return TEST<hipblaslt_f8, hipblasLtHalf, float>{}(arg);
+	}
+        /*
+        else if(Ti == HIPBLASLT_R_8I && To == HIPBLASLT_R_8I && Tc == HIPBLASLT_COMPUTE_I32)
+        {
+            return TEST<hipblasLtInt8, hipblasLtInt8, int32_t>{}(arg);
+        }
+        */
+        else if(Ti == HIPBLASLT_R_8I && To == HIPBLASLT_R_32I && Tc == HIPBLASLT_COMPUTE_I32)
+        {
+            return TEST<hipblasLtInt8, int32_t, int32_t>{}(arg);
         }
     }
     return TEST<void>{}(arg);

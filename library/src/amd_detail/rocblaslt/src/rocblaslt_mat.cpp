@@ -122,6 +122,11 @@ rocblaslt_status rocblaslt_matmul_impl(const rocblaslt_handle       handle,
             *((double*)alpha_1) = 1.f;
             alpha               = alpha_1;
         }
+        else if(matmul_descr->compute_type == rocblaslt_compute_i32)
+        {
+            *((int32_t*)alpha_1) = 1.f;
+            alpha                = alpha_1;
+        }
         else
         {
             *((float*)alpha_1) = 1.f;
@@ -217,6 +222,11 @@ rocblaslt_status rocblaslt_gemm_create_cpp_impl(rocblaslt_matmul_desc          m
         {
             *((double*)alpha_1) = 1.f;
             alpha               = alpha_1;
+        }
+        else if(matmul_descr->compute_type == rocblaslt_compute_i32)
+        {
+            *((int32_t*)alpha_1) = 1.f;
+            alpha                = alpha_1;
         }
         else
         {
