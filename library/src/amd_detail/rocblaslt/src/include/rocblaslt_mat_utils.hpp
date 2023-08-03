@@ -192,7 +192,8 @@ inline rocblaslt_status rocblaslt_epilogue_valid_args(const rocblaslt_epilogue& 
                                                       const int64_t&             original_stride_e,
                                                       const void*                original_bias,
                                                       const void*                original_scaleDVec,
-                                                      const void*          original_scaleAlphaVec,
+                                                      const void*                original_scaleAlphaVec,
+                                                      const void*                alpha,
                                                       void*&               E,
                                                       int64_t&             lde,
                                                       int64_t&             batch_stride_e,
@@ -219,9 +220,13 @@ inline rocblaslt_status rocblaslt_epilogue_valid_args(const rocblaslt_epilogue& 
         scaleDVec = nullptr;
 
     if(original_scaleAlphaVec)
-        scaleAlphaVec = (void*)original_scaleAlphaVec;
+    {
+        scaleAlphaVec = (void*)alpha; //pointer mode alpha vector pass by alpha
+    }
     else
+    {
         scaleAlphaVec = nullptr;
+    }
 
     // matrix E
     E = nullptr;
@@ -326,7 +331,6 @@ inline rocblaslt_status rocblaslt_matmul_valid_args(const rocblaslt_matmul_desc 
              && matC->type == HIPBLASLT_R_32F && matD->type == HIPBLASLT_R_32F)
            && compute_type == rocblaslt_compute_f32_fast_xf32)
             status = rocblaslt_status_not_implemented;
-
     if(status == rocblaslt_status_continue)
         status = rocblaslt_epilogue_valid_args(matmul_descr->epilogue,
                                                num_rows_d,
@@ -338,7 +342,8 @@ inline rocblaslt_status rocblaslt_matmul_valid_args(const rocblaslt_matmul_desc 
                                                matmul_descr->stride_e,
                                                matmul_descr->bias,
                                                matmul_descr->scaleDVec,
-                                               matmul_descr->scaleAlphaVec,
+                                               matmul_descr->pointermode,
+                                               alpha,
                                                E,
                                                lde,
                                                batch_stride_e,
