@@ -332,7 +332,7 @@ try
 
         ("precision,r",
          value<std::string>(&precision)->default_value("f16_r"), "Precision of matrix A,B,C,D  "
-         "Options: f32_r,f16_r,bf16_r,f64_r")
+         "Options: f32_r,f16_r,bf16_r,f64_r,i32_r,i8_r")
 
 /*TODO: Enable individual matrix type option once input/output can support different data type.
         ("a_type",
@@ -353,7 +353,7 @@ try
 */
         ("compute_type",
          value<std::string>(&compute_type)->default_value("f32_r"), "Precision of computation. "
-         "Options: s,f32_r,x,xf32_r,f64_r")
+         "Options: s,f32_r,x,xf32_r,f64_r,i32_r")
 
         ("scale_type",
          value<std::string>(&scale_type), "Precision of scalar. "

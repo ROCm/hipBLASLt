@@ -120,6 +120,10 @@ inline rocblaslt_status validateMatmulDescrArgs(rocblaslt_handle       handle,
         if(compute_type != rocblaslt_compute_f32)
             return rocblaslt_status_invalid_value;
         break;
+    case HIPBLASLT_R_32I:
+        if(compute_type != rocblaslt_compute_i32)
+            return rocblaslt_status_invalid_value;
+        break;
     default:
         return rocblaslt_status_invalid_value;
         break;
@@ -192,8 +196,8 @@ inline rocblaslt_status rocblaslt_epilogue_valid_args(const rocblaslt_epilogue& 
                                                       const int64_t&             original_stride_e,
                                                       const void*                original_bias,
                                                       const void*                original_scaleDVec,
-                                                      const void*                original_scaleAlphaVec,
-                                                      const void*                alpha,
+                                                      const void*          original_scaleAlphaVec,
+                                                      const void*          alpha,
                                                       void*&               E,
                                                       int64_t&             lde,
                                                       int64_t&             batch_stride_e,
@@ -323,10 +327,16 @@ inline rocblaslt_status rocblaslt_matmul_valid_args(const rocblaslt_matmul_desc 
                                      batch_stride_d);
 
     if(status == rocblaslt_status_continue)
+    {
         if(!(matA->type == HIPBLASLT_R_32F && matB->type == HIPBLASLT_R_32F
              && matC->type == HIPBLASLT_R_32F && matD->type == HIPBLASLT_R_32F)
            && compute_type == rocblaslt_compute_f32_fast_xf32)
             status = rocblaslt_status_not_implemented;
+        if(!(matA->type == HIPBLASLT_R_8I && matB->type == HIPBLASLT_R_8I
+             && matC->type == HIPBLASLT_R_32I && matD->type == HIPBLASLT_R_32I)
+           && compute_type == rocblaslt_compute_i32)
+            status = rocblaslt_status_not_implemented;
+    }
     const void* alphaVecPtr = matmul_descr->pointermode ? alpha : nullptr;
     if(status == rocblaslt_status_continue)
         status = rocblaslt_epilogue_valid_args(matmul_descr->epilogue,
