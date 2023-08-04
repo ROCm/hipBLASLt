@@ -1,6 +1,6 @@
 ################################################################################
 #
-# Copyright (C) 2022 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -30,7 +30,7 @@ from .Utils import vgpr, sgpr, roundUpToNearestMultiple
 from contextlib import contextmanager
 from dataclasses import dataclass
 from enum import Enum
-from typing import Optional
+from typing import List, Optional
 
 import traceback
 
@@ -44,6 +44,7 @@ import traceback
 # - checkout returns vgpr index that was returned - can search disasm to see where
 #   this vgpr is used.
 ################################################################################
+
 class RegisterPool:
   class Status(Enum):
     Unavailable = 0
@@ -203,6 +204,23 @@ class RegisterPool:
         print(self.state())
         print("RP::checkOut' %s' (%u,%u) @ %u (overflow)"%(tag, size, alignment, start))
       return start
+
+  def checkOutMulti(self, sizes: List[int], alignment, tags: List[str]):
+      assert len(sizes) == len(tags)
+      size = 0
+      for s in sizes:
+        size += s
+      idx = self.checkOutAligned(size, alignment, tag="", preventOverflow=0)
+      # Overwrite the checkOutSize in formation
+      self.checkOutSize.pop(idx)
+      idxVec = []
+      for sIdx, s in enumerate(sizes):
+        idxVec.append(idx)
+        self.checkOutSize[idx] = s
+        for i in range(idx, idx+s):
+          self.pool[i].tag = tags[sIdx]
+        idx += s
+      return idxVec
 
   def initTmps(self, initValue, start=0, stop=-1):
     module = Module("initTmps from RegisterPool")

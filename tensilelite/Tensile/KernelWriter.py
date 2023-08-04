@@ -213,11 +213,14 @@ class StateValues:
   firstInitSgpr: int                     = -1
   lastPostLoopSgpr: int                  = 0
   numSgprToLoad: int                     = 0 # For kernel args
+  numStoreSgprNames: List[str]           = field(init=False) # For post-loop kernel args
+  numStoreSgprNameSizes: List[int]       = field(init=False) # For post-loop kernel args
   numStoreSgprToLoad: int                = 0 # For post-loop kernel args
   numStoreSgprInst: int                  = 0 # For pose-loop kernel args
   numStoreSgprInstExt: int               = 0 # For pose-loop kernel args
   numSgprAddressBias: int                = 0
   BiasType: int                          = 0
+  BiasStride: int                        = 0
 
   numReadsPerIterA: int                  = 0
   numReadsPerIterB: int                  = 0
@@ -265,6 +268,9 @@ class StateValues:
     self.perIterLocalWriteCanSkip = []
 
     self.lraTileProperties = {}  # Workaround
+
+    self.numStoreSgprNames = []
+    self.numStoreSgprNameSizes = []
 
 @dataclass
 class StateVgprs:
