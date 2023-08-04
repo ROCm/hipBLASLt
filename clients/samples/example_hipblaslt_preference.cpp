@@ -979,9 +979,10 @@ void test_hipblaslt(hipblasltDatatype_t in_datatype,
 
     // allocate memory on device
     void *da, *db, *dc, *dd, *de = nullptr, *d_bias = nullptr, *d_scaleDVec = nullptr,
-                             *d_scaleAlphaVec = nullptr, *p_alpha = nullptr;;
-    int         num_streams                   = 1;
-    hipStream_t stream                        = nullptr;
+                             *d_scaleAlphaVec = nullptr, *p_alpha = nullptr;
+    ;
+    int         num_streams = 1;
+    hipStream_t stream      = nullptr;
 
     CHECK_HIP_ERROR(hipMalloc(&da, size_a * sizeof(Tin)));
     CHECK_HIP_ERROR(hipMalloc(&db, size_b * sizeof(Tin)));
@@ -997,11 +998,11 @@ void test_hipblaslt(hipblasltDatatype_t in_datatype,
     {
         CHECK_HIP_ERROR(hipMalloc(&d_scaleAlphaVec, size_scaleAlphaVec * sizeof(float)));
         p_alpha = d_scaleAlphaVec;
-        alpha = 1.0; // use dScaleAlphaVec instead, original alpha = 1.0 for verify
+        alpha   = 1.0; // use dScaleAlphaVec instead, original alpha = 1.0 for verify
     }
     else
     {
-        p_alpha = &alpha;
+        p_alpha         = &alpha;
         d_scaleAlphaVec = &alpha;
     }
     // copy matrices from host to device
@@ -1117,10 +1118,7 @@ void test_hipblaslt(hipblasltDatatype_t in_datatype,
     {
         hipblasLtPointerMode_t scale_mode = HIPBLASLT_POINTER_MODE_ALPHA_DEVICE_VECTOR_BETA_HOST;
         CHECK_HIPBLASLT_ERROR(hipblasLtMatmulDescSetAttribute(
-            matmul,
-            HIPBLASLT_MATMUL_DESC_POINTER_MODE,
-            &scale_mode,
-            sizeof(scale_mode)));
+            matmul, HIPBLASLT_MATMUL_DESC_POINTER_MODE, &scale_mode, sizeof(scale_mode)));
     }
 
     // Set User Preference attributes
@@ -1288,42 +1286,46 @@ void test_hipblaslt(hipblasltDatatype_t in_datatype,
         CHECK_HIP_ERROR(hipMalloc(&d_workspace, workspace_size));
 
     // Solve problem  // call gen function
-    if(!useExt)
+    if(validate)
     {
-        auto idx = (findAll) ? validIdx[0] : 0;
-        CHECK_HIPBLASLT_ERROR(hipblasLtMatmul(handle,
-                                              matmul,
-                                              p_alpha,
-                                              da,
-                                              matA,
-                                              db,
-                                              matB,
-                                              &beta,
-                                              dc,
-                                              matC,
-                                              dd,
-                                              matD,
-                                              &heuristicResult[idx].algo,
-                                              d_workspace,
-                                              workspace_size,
-                                              stream));
-    }
-    else
-    {
-        auto idx = (findAll) ? validIdx[0] : 0;
-        CHECK_HIPBLASLT_ERROR(gemm.initialize(heuristicResult[idx].algo, d_workspace));
+        if(!useExt)
+        {
+            auto idx = (findAll) ? validIdx[0] : 0;
+            CHECK_HIPBLASLT_ERROR(hipblasLtMatmul(handle,
+                                                  matmul,
+                                                  p_alpha,
+                                                  da,
+                                                  matA,
+                                                  db,
+                                                  matB,
+                                                  &beta,
+                                                  dc,
+                                                  matC,
+                                                  dd,
+                                                  matD,
+                                                  &heuristicResult[idx].algo,
+                                                  d_workspace,
+                                                  workspace_size,
+                                                  stream));
+        }
+        else
+        {
+            auto idx = (findAll) ? validIdx[0] : 0;
+            CHECK_HIPBLASLT_ERROR(gemm.initialize(heuristicResult[idx].algo, d_workspace));
 
-        CHECK_HIPBLASLT_ERROR(gemm.run(stream));
-    }
+            CHECK_HIPBLASLT_ERROR(gemm.run(stream));
+        }
 
-    hipStreamSynchronize(stream);
-    // copy output from device to CPU
-    CHECK_HIP_ERROR(hipMemcpy(hd.data(), dd, sizeof(Tout) * size_c, hipMemcpyDeviceToHost));
-    if(enable_grad && biasSrc != BiasSrc::NONE)
-        CHECK_HIP_ERROR(
-            hipMemcpy(h_bias.data(), d_bias, sizeof(Tout) * size_bias, hipMemcpyDeviceToHost));
-    if(!enable_grad && enable_e)
-        CHECK_HIP_ERROR(hipMemcpy(he.data(), de, sizeof(float) * size_e, hipMemcpyDeviceToHost));
+        hipStreamSynchronize(stream);
+        // copy output from device to CPU
+        CHECK_HIP_ERROR(hipMemcpy(hd.data(), dd, sizeof(Tout) * size_c, hipMemcpyDeviceToHost));
+        if(enable_grad && biasSrc != BiasSrc::NONE)
+            CHECK_HIP_ERROR(
+                hipMemcpy(h_bias.data(), d_bias, sizeof(Tout) * size_bias, hipMemcpyDeviceToHost));
+        if(!enable_grad && enable_e)
+            CHECK_HIP_ERROR(
+                hipMemcpy(he.data(), de, sizeof(float) * size_e, hipMemcpyDeviceToHost));
+    }
 
     double   bestMs = std::numeric_limits<double>::max();
     double   bestTflops;
