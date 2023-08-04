@@ -3981,13 +3981,15 @@ class KernelWriterAssembly(KernelWriter):
         extArgOffset = self.externalArgLoader.getOffset()
         structAddressOffset = 0
         loadModuleExt = Module("Count Inst")
+        module.add(SMovB64(dst=sgpr(self.sgprs["AddressScaleAlphaVec"], 2), src=0, comment="UserArgs does not support AddressScaleAlphaVec."))
         if kernel["ProblemType"]["UseScaleDVec"] and (kernel["GlobalSplitU"] == 1):
           loadModuleExt.addModuleAsFlatItems(module.addModuleAsFlatItems(self.externalArgLoader.loadAllKernArg(self.sgprs["AddressScaleDVec"], "ExternalArgAddress", 2)))
         structAddressOffset += (2 * self.states.bpr)
-        self.externalArgLoader.setOffset(extArgOffset + structAddressOffset)
-        if kernel["ProblemType"]["UseScaleAlphaVec"] and (kernel["GlobalSplitU"] == 1):
-          loadModuleExt.addModuleAsFlatItems(module.addModuleAsFlatItems(self.externalArgLoader.loadAllKernArg(self.sgprs["AddressScaleAlphaVec"], "ExternalArgAddress", 2)))
-          structAddressOffset += (2 * self.states.bpr)
+        # Structure not changed yet comment out.
+        # self.externalArgLoader.setOffset(extArgOffset + structAddressOffset)
+        # if kernel["ProblemType"]["UseScaleAlphaVec"] and (kernel["GlobalSplitU"] == 1):
+        #   loadModuleExt.addModuleAsFlatItems(module.addModuleAsFlatItems(self.externalArgLoader.loadAllKernArg(self.sgprs["AddressScaleAlphaVec"], "ExternalArgAddress", 2)))
+        #   structAddressOffset += (2 * self.states.bpr)
         self.externalArgLoader.setOffset(extArgOffset + structAddressOffset)
         biasLoadSize = self.states.numSgprAddressBias + self.states.BiasType + self.states.BiasStride
         if self.states.numSgprAddressBias:
