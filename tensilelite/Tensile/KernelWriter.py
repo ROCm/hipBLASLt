@@ -254,7 +254,7 @@ class StateValues:
   useBias      = DataDirection.NONE
   needBiasType = False
 
-  externalUserArgSize: int               = 140  # FIXME: magic number
+  externalUserArgSize: int               = 148  # FIXME: magic number
 
   def __post_init__(self):
     """ How many SGPRs does it take to have one bit per lane? """

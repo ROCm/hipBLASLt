@@ -166,6 +166,7 @@ namespace hipblaslt_ext
         uint32_t strideB2; //!< The b batch stride
         // Epilogue inputs
         void* scaleDVec; //!< The scaleD vector input pointer.
+        void* scaleAlphaVec; //!< The scaleAlpha vector input pointer.
         void* bias; //!< The bias input pointer.
         int   biasType; //!< The bias datatype. Only works if mode is set to bias related epilogues.
         uint32_t reserved;

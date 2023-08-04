@@ -58,29 +58,30 @@ namespace Tensile
             size_t startStrideCD = 1; // FIXME: Magic number
             size_t startStrideAB = 1; // FIXME: Magic number
 
-            auto& arg     = args[i];
-            arg.d         = const_cast<void*>(inputs.grouped[i].d);
-            arg.c         = const_cast<void*>(inputs.grouped[i].c);
-            arg.b         = const_cast<void*>(inputs.grouped[i].b);
-            arg.a         = const_cast<void*>(inputs.grouped[i].a);
-            arg.alpha     = (*std::get_if<TAlpha>(&inputs.grouped[i].alpha));
-            arg.beta      = (*std::get_if<TBeta>(&inputs.grouped[i].beta));
-            arg.strideD1  = d.strides()[startStrideCD];
-            arg.strideD2  = d.strides()[startStrideCD + 1];
-            arg.strideC1  = c.strides()[startStrideCD];
-            arg.strideC2  = c.strides()[startStrideCD + 1];
-            arg.strideA1  = a.strides()[startStrideAB];
-            arg.strideA2  = a.strides()[startStrideAB + 1];
-            arg.strideB1  = b.strides()[startStrideAB];
-            arg.strideB2  = b.strides()[startStrideAB + 1];
-            arg.m         = problems[i].problemSizes()[0];
-            arg.n         = problems[i].problemSizes()[1];
-            arg.batch     = problems[i].problemSizes()[2];
-            arg.k         = problems[i].problemSizes()[3];
-            arg.bias      = const_cast<void*>(inputs.grouped[i].bias);
-            arg.scaleDVec = const_cast<void*>(inputs.grouped[i].scaleDVec);
-            arg.e         = const_cast<void*>(inputs.grouped[i].e);
-            arg.biasType  = (uint32_t)problems[i].biasType();
+            auto& arg         = args[i];
+            arg.d             = const_cast<void*>(inputs.grouped[i].d);
+            arg.c             = const_cast<void*>(inputs.grouped[i].c);
+            arg.b             = const_cast<void*>(inputs.grouped[i].b);
+            arg.a             = const_cast<void*>(inputs.grouped[i].a);
+            arg.alpha         = (*std::get_if<TAlpha>(&inputs.grouped[i].alpha));
+            arg.beta          = (*std::get_if<TBeta>(&inputs.grouped[i].beta));
+            arg.strideD1      = d.strides()[startStrideCD];
+            arg.strideD2      = d.strides()[startStrideCD + 1];
+            arg.strideC1      = c.strides()[startStrideCD];
+            arg.strideC2      = c.strides()[startStrideCD + 1];
+            arg.strideA1      = a.strides()[startStrideAB];
+            arg.strideA2      = a.strides()[startStrideAB + 1];
+            arg.strideB1      = b.strides()[startStrideAB];
+            arg.strideB2      = b.strides()[startStrideAB + 1];
+            arg.m             = problems[i].problemSizes()[0];
+            arg.n             = problems[i].problemSizes()[1];
+            arg.batch         = problems[i].problemSizes()[2];
+            arg.k             = problems[i].problemSizes()[3];
+            arg.bias          = const_cast<void*>(inputs.grouped[i].bias);
+            arg.scaleDVec     = const_cast<void*>(inputs.grouped[i].scaleDVec);
+            arg.scaleAlphaVec = const_cast<void*>(inputs.grouped[i].scaleAlphaVec);
+            arg.e             = const_cast<void*>(inputs.grouped[i].e);
+            arg.biasType      = (uint32_t)problems[i].biasType();
             if(problems[i].useE())
             {
                 arg.strideE1 = e.strides()[startStrideCD];
@@ -141,6 +142,8 @@ namespace Tensile
                           << "strideB2: " << args[i].strideB2 << std::endl;
                 std::cout << "   "
                           << "scaleDVec: " << args[i].scaleDVec << std::endl;
+                std::cout << "   "
+                          << "scaleAlphaVec: " << args[i].scaleAlphaVec << std::endl;
                 std::cout << "   "
                           << "bias: " << args[i].bias << std::endl;
                 std::cout << "   "
@@ -1360,7 +1363,7 @@ namespace Tensile
                 std::transform(actName.begin(), actName.end(), actName.begin(), ::toupper);
                 name += actName;
             }
-        
+
             if((problemType.activationComputeDataType == problemType.computeType)
                && problemType.highPrecisionAccumulate)
             {
