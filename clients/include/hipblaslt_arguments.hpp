@@ -119,6 +119,8 @@ struct Arguments
     hipblasltDatatype_t   bias_type;
     hipblaslt_bias_source bias_source;
     bool                  bias_vector;
+    bool                  scaleA;
+    bool                  scaleB;
     bool                  scaleD_vector;
     bool                  scaleAlpha_vector;
     bool                  c_noalias_d;
@@ -193,6 +195,8 @@ struct Arguments
     OPER(bias_type) SEP              \
     OPER(bias_source) SEP            \
     OPER(bias_vector) SEP            \
+    OPER(scaleA) SEP                 \
+    OPER(scaleB) SEP                 \
     OPER(scaleD_vector) SEP          \
     OPER(scaleAlpha_vector) SEP          \
     OPER(c_noalias_d) SEP            \

@@ -564,6 +564,22 @@ Tests:
   scaleD_vector: 1
   unit_check: 1
 
+- name: matmul_f8
+  category: pre_checkin
+  function:
+    matmul: *f8_precision_dst_fp32
+  M: [128, 129]
+  N: [128, 129]
+  K: [128, 129]
+  transA_transB: *transA_transB_range
+  alpha: 1
+  beta: [ 0.0, 2.0 ]
+  scaleA: [ 0, 1]
+  scaleB: [ 0, 1]
+  bias_vector: [0, 1]
+  bias_type: f32_r
+  unit_check: 1
+
 - name: matmul_fallback_equality_NN_batch16
   category: pre_checkin
   function:
@@ -671,7 +687,25 @@ Tests:
   unit_check: 0
   norm_check: 1
 
-- name: matmul_bgrada
+- name: matmul_bgradb_f8
+  category: pre_checkin
+  function:
+    matmul: *f8_precision_dst_fp32
+  M: [128, 129]
+  N: [128, 129]
+  K: [128, 129]
+  transA_transB: *transA_transB_range
+  alpha: 1
+  beta: [ 0.0, 2.0 ]
+  gradient: 1
+  bias_vector: 1
+  bias_type: f32_r
+  bias_source: b
+  scaleA: [ 0, 1]
+  scaleB: [ 0, 1]
+  unit_check: 1
+
+- name: matmul_bgrada_f16
   category: pre_checkin
   function:
     matmul: *hpa_half_precision
