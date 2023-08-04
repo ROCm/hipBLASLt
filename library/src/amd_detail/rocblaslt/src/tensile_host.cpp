@@ -503,7 +503,10 @@ namespace
             tensileProblem.setUseScaleDVec(true);
             tensileProblem.setScaleDVec(Tensile_Tc, d.sizes()[0]);
             // set ScaleAlphaVec mode
-            tensileProblem.setUseScaleAlphaVec(true);
+            if(prob.grouped_gemm)
+                tensileProblem.setUseScaleAlphaVec(false);
+            else
+                tensileProblem.setUseScaleAlphaVec(true);
             tensileProblem.setScaleAlphaVec(Tensile_Tc, d.sizes()[0]);
         }
 
@@ -694,7 +697,10 @@ namespace
                 tensileProblem.setUseScaleDVec(true);
                 tensileProblem.setScaleDVec(Tensile_Tc, d.sizes()[0]);
                 // set ScaleAlphaVec mode
-                tensileProblem.setUseScaleAlphaVec(true);
+                if(prob.grouped_gemm)
+                    tensileProblem.setUseScaleAlphaVec(false);
+                else
+                    tensileProblem.setUseScaleAlphaVec(true);
                 tensileProblem.setScaleAlphaVec(Tensile_Tc, d.sizes()[0]);
             }
 

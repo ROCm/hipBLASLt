@@ -1,7 +1,7 @@
 - {MinimumRequiredVersion: 4.33.0}
 - aquavanjaram
-- gfx940
-- [Device 0049, Device 0050]
+- gfx941
+- [Device 0049]
 - Activation: true
   ActivationComputeDataType: 0
   ActivationHPA: true
@@ -60,7 +60,7 @@
   UseInitialStridesAB: false
   UseInitialStridesCD: false
   UseScaleDVec: true
-  UseScaleAlphaVec: true
+  UseScaleAlphaVec: false
 - - 1LDSBuffer: 0
     ActivationFuncCall: true
     ActivationFused: true
@@ -233,7 +233,7 @@
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleDVec: true
-      UseScaleAlphaVec: true
+      UseScaleAlphaVec: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
