@@ -38,6 +38,10 @@ constexpr auto hipblaslt_type2datatype()
         return HIPBLASLT_R_16B;
     if(std::is_same<T, float>{})
         return HIPBLASLT_R_32F;
+    if(std::is_same<T, hipblaslt_f8>{})
+        return HIPBLASLT_R_8F_E4M3;
+    if(std::is_same<T, hipblaslt_bf8>{})
+        return HIPBLASLT_R_8F_E5M2;
 
     return HIPBLASLT_R_16F; // testing purposes we default to f32 ex
 }
@@ -65,6 +69,10 @@ auto hipblaslt_simple_dispatch(const Arguments& arg)
         return TEST<hip_bfloat16>{}(arg);
     case HIPBLASLT_R_32F:
         return TEST<float>{}(arg);
+    case HIPBLASLT_R_8F_E4M3:
+        return TEST<hipblaslt_f8>{}(arg);
+    case HIPBLASLT_R_8F_E5M2:
+        return TEST<hipblaslt_bf8>{}(arg);
     default:
         return TEST<void>{}(arg);
     }
@@ -95,6 +103,10 @@ auto hipblaslt_matmul_dispatch(const Arguments& arg)
         else if(Ti == HIPBLASLT_R_16F && To == HIPBLASLT_R_32F && Tc == HIPBLASLT_COMPUTE_F32)
         {
             return TEST<hipblasLtHalf, float, float>{}(arg);
+        }
+        else if(Ti == HIPBLASLT_R_8F_E4M3 && To == HIPBLASLT_R_32F && Tc == HIPBLASLT_COMPUTE_F32)
+        {
+            return TEST<hipblaslt_f8, float, float>{}(arg);
         }
     }
     return TEST<void>{}(arg);

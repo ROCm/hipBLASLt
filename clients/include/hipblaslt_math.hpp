@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022 Advanced Micro Devices, Inc.
+ * Copyright (C) 2022-2023 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -68,6 +68,19 @@ inline hip_bfloat16 negate(hip_bfloat16 x)
 #endif
 }
 
+template <>
+inline hipblaslt_f8 negate(hipblaslt_f8 x)
+{
+    x.data ^= 0x80;
+    return x;
+}
+
+template <>
+inline hipblaslt_bf8 negate(hipblaslt_bf8 x)
+{
+    x.data ^= 0x80;
+    return x;
+}
 // Helper function to reduce intermediate precision and the output type are the same as the input type.
 template <typename TxDLi, typename TxDLo, typename Ti>
 inline void type_to_xdl_math_op_type(Ti* in, size_t s)
