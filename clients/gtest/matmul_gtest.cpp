@@ -55,7 +55,8 @@ namespace
         To,
         Tc,
         std::enable_if_t<std::is_same<Ti, hipblasLtHalf>{} || std::is_same<Ti, hip_bfloat16>{}
-                         || std::is_same<Ti, float>{}>> : hipblaslt_test_valid
+                         || std::is_same<Ti, float>{} || std::is_same<Ti, hipblaslt_f8>{}>>
+        : hipblaslt_test_valid
     {
         void operator()(const Arguments& arg)
         {
@@ -138,6 +139,12 @@ namespace
                 }
 
                 name << '_' << arg.batch_count;
+
+                if(arg.scaleA)
+                    name << "_SA";
+
+                if(arg.scaleB)
+                    name << "_SB";
 
                 if(arg.scaleD_vector)
                     name << "_SDV";
