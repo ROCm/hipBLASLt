@@ -579,6 +579,7 @@ Tests:
   bias_vector: [0, 1]
   bias_type: f32_r
   unit_check: 1
+  gpu_arch: '94?'
 
 - name: matmul_fallback_equality_NN_batch16
   category: pre_checkin
@@ -704,6 +705,7 @@ Tests:
   scaleA: [ 0, 1]
   scaleB: [ 0, 1]
   unit_check: 1
+  gpu_arch: '94?'
 
 - name: matmul_bgrada_f16
   category: pre_checkin

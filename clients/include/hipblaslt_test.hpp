@@ -325,6 +325,8 @@ public:
     RocBlasLt_TestName& operator=(const RocBlasLt_TestName&) = delete;
 };
 
+bool hipblaslt_client_global_filters(const Arguments& args);
+
 // ----------------------------------------------------------------------------
 // RocBlasLt_Test base class. All non-legacy hipBLASLt Google tests derive from it.
 // It defines a type_filter_functor() and a PrintToStringParamName class
@@ -339,8 +341,12 @@ protected:
     template <typename... T>
     struct type_filter_functor
     {
-        bool operator()(const Arguments&)
+        bool operator()(const Arguments& args)
         {
+            // additional global filters applied first
+            if(!hipblaslt_client_global_filters(args))
+                return false;
+
             return static_cast<bool>(FILTER<T...>{});
         }
     };
