@@ -1150,7 +1150,15 @@ class KernelWriterAssembly(KernelWriter):
 
       moduleExternalArgs = Module("Load external Arguments")
       if kernel["ProblemType"]["SupportUserArgs"]:
+        # Here alpha and beta in user args are fixed sizes, so we need to exclude beta and read it with a different offset
+        load = load - self.states.numSgprBeta
         moduleExternalArgs.addModuleAsFlatItems(self.externalArgLoader.loadAllKernArg(sgprStart, "ExternalArgAddress", load))
+        offset = self.externalArgLoader.getOffset() + self.states.bpr * (self.states.maxSgprAlpha - self.states.numSgprAlpha)
+        self.externalArgLoader.setOffset(offset)
+        moduleExternalArgs.addComment("Read Beta")
+        moduleExternalArgs.addModuleAsFlatItems(self.externalArgLoader.loadAllKernArg(self.sgprs["Beta"], "ExternalArgAddress", self.states.numSgprBeta))
+        offset = self.externalArgLoader.getOffset() + self.states.bpr * (self.states.maxSgprBeta - self.states.numSgprBeta)
+        self.externalArgLoader.setOffset(offset)
 
       moduleWg = Module("Calculate Workgroup")
       moduleWg.addModuleAsFlatItems(lralwaCode)

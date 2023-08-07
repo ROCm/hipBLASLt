@@ -97,62 +97,62 @@ amdhsa.kernels:
         .value_kind:      global_buffer
         .value_type:      f16
         .address_space:   generic
-      - .name:            alpha
-        .size:            4
-        .offset:          48
-        .value_kind:      by_value
-        .value_type:      f32
-      - .name:            beta
-        .size:            4
-        .offset:          52
-        .value_kind:      by_value
-        .value_type:      f32
       - .name:            strideD0
         .size:            4
-        .offset:          56
+        .offset:          48
         .value_kind:      by_value
         .value_type:      u32
       - .name:            strideD1
         .size:            4
-        .offset:          60
+        .offset:          52
         .value_kind:      by_value
         .value_type:      u32
       - .name:            strideC0
         .size:            4
-        .offset:          64
+        .offset:          56
         .value_kind:      by_value
         .value_type:      u32
       - .name:            strideC1
         .size:            4
-        .offset:          68
+        .offset:          60
         .value_kind:      by_value
         .value_type:      u32
       - .name:            strideA0
         .size:            4
-        .offset:          72
+        .offset:          64
         .value_kind:      by_value
         .value_type:      u32
       - .name:            strideA1
         .size:            4
-        .offset:          76
+        .offset:          68
         .value_kind:      by_value
         .value_type:      u32
       - .name:            strideB0
         .size:            4
-        .offset:          80
+        .offset:          72
         .value_kind:      by_value
         .value_type:      u32
       - .name:            strideB1
         .size:            4
-        .offset:          84
+        .offset:          76
         .value_kind:      by_value
         .value_type:      u32
       - .name:            dstD
         .size:            8
-        .offset:          88
+        .offset:          80
         .value_kind:      global_buffer
         .value_type:      f16
         .address_space:   generic
+      - .name:            alpha
+        .size:            4
+        .offset:          88
+        .value_kind:      by_value
+        .value_type:      f32
+      - .name:            beta
+        .size:            4
+        .offset:          92
+        .value_kind:      by_value
+        .value_type:      f32
       - .name:            AddressScaleDVec
         .size:            8
         .offset:          96
@@ -271,13 +271,13 @@ Custom_Cijk_Ailk_Bljk_HHS_BH_Bias_AH_SDV_SAV_MT16x16x64_MI16x16x16x1_SN_GRVWA8_G
 .set sgprAddressC, 26
 .set sgprAddressA, 28
 .set sgprAddressB, 30
-.set sgprAlpha, 32
-.set sgprBeta, 33
-.set sgprStridesD, 34
-.set sgprStridesC, 36
-.set sgprStridesA, 38
-.set sgprStridesB, 40
-.set sgprAddressTC, 42
+.set sgprStridesD, 32
+.set sgprStridesC, 34
+.set sgprStridesA, 36
+.set sgprStridesB, 38
+.set sgprAddressTC, 40
+.set sgprAlpha, 42
+.set sgprBeta, 43
 .set sgprGSUSync, 44
 .set sgprSrdA, 48
 .set sgprSrdB, 52
@@ -300,7 +300,7 @@ Custom_Cijk_Ailk_Bljk_HHS_BH_Bias_AH_SDV_SAV_MT16x16x64_MI16x16x16x1_SN_GRVWA8_G
 .set sgprSrdDd, sgprtmp0E+8
 .set sgprSrdtmp, sgprSrdDd+4 //sgprtmp0E+12(+4)
 //Fusion spgr
-    
+
 /* Size Assignments */
 .set sgprSizeI, sgprSizesFree+0
 .set sgprSizeJ, sgprSizesFree+1
@@ -786,17 +786,17 @@ s_add_u32 s[sgprSrdD+0], s[sgprSrdD+0], s60        // add lo GSU offset to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprSrdD+1], s61       // add hi GSU offset to SRD
 
 //zeroing
-v_mov_b32 v0, 0x0 
-v_mov_b32 v1, 0x0 
-v_mov_b32 v2, 0x0 
-v_mov_b32 v3, 0x0 
-v_mov_b32 v4, 0 
+v_mov_b32 v0, 0x0
+v_mov_b32 v1, 0x0
+v_mov_b32 v2, 0x0
+v_mov_b32 v3, 0x0
+v_mov_b32 v4, 0
 
 S_OR_B32 s[sgprSrdDd], s[sgprWorkGroup0], s[sgprWorkGroup1]
 s_cmp_eq_u32 s[sgprSrdDd], 0              // specific WG
-s_cbranch_scc0 label_ZEROINGEND           // 
+s_cbranch_scc0 label_ZEROINGEND           //
 
-s_cmp_eq_u32 s[sgprGSUSumIdx], 0          // 
+s_cmp_eq_u32 s[sgprGSUSumIdx], 0          //
 s_cbranch_scc0 label_ZEROINGEND           // jump if not
 
 s_mul_hi_u32 s[sgprtmp3E], s[sgprStrideCK], 25            // cal zeroing start position
@@ -1474,7 +1474,7 @@ s_atomic_add s[sgprGSUSync], s[sgprKernArgAddress:sgprKernArgAddress+1], 0x8C gl
 
 
 s_waitcnt lgkmcnt(0)
-s_cmp_eq_u32 s[sgprGSUSync], 1    // 
+s_cmp_eq_u32 s[sgprGSUSync], 1    //
 s_cbranch_scc0 Summation_End_OptNLL           // jump if XX required
 //check done
 
@@ -1495,7 +1495,7 @@ s_mul_i32 s[sgprtmp2E], s[sgprStrideDK], 25                      // Scale by Str
 s_lshl_b64 s[sgprtmp2E:sgprtmp2E+1], s[sgprtmp2E:sgprtmp2E+1], 2  // scale by bpe
 
 s_mov_b32 s[sgprSrdDd+2], 0x80000000
-s_mov_b32 s[sgprSrdDd+3], Srd127_96                               // 
+s_mov_b32 s[sgprSrdDd+3], Srd127_96                               //
 
 s_add_u32 s[sgprSrdDd+0], s[sgprAddressD+0], s[sgprtmp2E]         // add lo to SRD
 s_addc_u32 s[sgprSrdDd+1], s[sgprAddressD+1], s[sgprtmp3E]        // add hi to SRD
@@ -1506,15 +1506,15 @@ s_buffer_atomic_add s[sgprGSUSync], s[sgprSrdDd:sgprSrdDd+3], glc
 
 
 //s_mov_b32 s[sgprGSUSumIdx] 1
-s_mul_i32 s[sgprtmp2E], MT1, s[sgprWorkGroup1]                        // 
+s_mul_i32 s[sgprtmp2E], MT1, s[sgprWorkGroup1]                        //
 s_mul_hi_u32 s[sgprtmp1E], s[sgprtmp2E], s[sgprStrideD1J]             // cal GSU D position
-s_mul_i32 s[sgprtmp0E], s[sgprtmp2E], s[sgprStrideD1J]                // 
+s_mul_i32 s[sgprtmp0E], s[sgprtmp2E], s[sgprStrideD1J]                //
 s_lshl_b64 s[sgprtmp0E:sgprtmp1E], s[sgprtmp0E:sgprtmp1E], 2          // scale by bpe
 s_add_u32 s[sgprSrdD+0], s[sgprAddressD+0], s[sgprtmp0E]              // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprAddressD+1], s[sgprtmp1E]             // add hi to SRD
 
-s_mul_hi_u32 s[sgprtmp1E], s[sgprWorkGroup2], s[sgprStrideDK]         // 
-s_mul_i32 s[sgprtmp0E], s[sgprWorkGroup2], s[sgprStrideDK]            // 
+s_mul_hi_u32 s[sgprtmp1E], s[sgprWorkGroup2], s[sgprStrideDK]         //
+s_mul_i32 s[sgprtmp0E], s[sgprWorkGroup2], s[sgprStrideDK]            //
 s_lshl_b64 s[sgprtmp0E:sgprtmp1E], s[sgprtmp0E:sgprtmp1E], 2          // scale by bpe
 s_add_u32 s[sgprSrdD+0], s[sgprSrdD+0], s[sgprtmp0E]                  // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprSrdD+1], s[sgprtmp1E]                 // add hi to SRD
@@ -1529,20 +1529,20 @@ s_cbranch_scc0 label_KernelEnd //label_GW_End_1 //label_AFTERsummary_Edge
 buffer_load_dwordx4 v[28+4*0:28+3+4*0], v9, s[sgprSrdD:sgprSrdD+3], 0 offen offset:0 // load GSU D
 
 // GSU Output Buffer offset: Free0 + (Free1-1)*StrideC1J + (Free2-1)*StrideCK * GSUIdx * bpe%s
-//s_mul_hi_u32 s[sgprtmp1E], s[sgprSizesFree+0], s[sgprGSUSumIdx]   // 
-//s_mul_i32 s[sgprtmp0E], s[sgprSizesFree+0], s[sgprGSUSumIdx]      // 
+//s_mul_hi_u32 s[sgprtmp1E], s[sgprSizesFree+0], s[sgprGSUSumIdx]   //
+//s_mul_i32 s[sgprtmp0E], s[sgprSizesFree+0], s[sgprGSUSumIdx]      //
 s_sub_u32 s[sgprtmp5E], s[sgprSizesFree+1], 1                       // cal GSU D offset
-//s_mul_i32 s[sgprtmp5E], s[sgprtmp5E], s[sgprGSUSumIdx]            // 
-s_mul_hi_u32 s[sgprtmp3E], s[sgprtmp5E], s[sgprStrideC1J]           // 
-s_mul_i32 s[sgprtmp2E], s[sgprtmp5E], s[sgprStrideC1J]              // 
-s_add_u32 s[sgprtmp0E], s[sgprSizesFree+0], s[sgprtmp2E]            // 
-s_addc_u32 s[sgprtmp1E], 0, s[sgprtmp3E]                            // 
-s_sub_u32 s[sgprtmp5E], s[sgprSizesFree+2], 1                       // 
-//s_mul_i32 s[sgprtmp5E], s[sgprtmp5E], s[sgprGSUSumIdx]            // 
-s_mul_hi_u32 s[sgprtmp3E], s[sgprtmp5E], s[sgprStrideCK]            // 
-s_mul_i32 s[sgprtmp2E], s[sgprtmp5E], s[sgprStrideCK]               // 
-s_add_u32 s[sgprtmp0E], s[sgprtmp0E], s[sgprtmp2E]                  // 
-s_addc_u32 s[sgprtmp1E], s[sgprtmp1E], s[sgprtmp3E]                 // 
+//s_mul_i32 s[sgprtmp5E], s[sgprtmp5E], s[sgprGSUSumIdx]            //
+s_mul_hi_u32 s[sgprtmp3E], s[sgprtmp5E], s[sgprStrideC1J]           //
+s_mul_i32 s[sgprtmp2E], s[sgprtmp5E], s[sgprStrideC1J]              //
+s_add_u32 s[sgprtmp0E], s[sgprSizesFree+0], s[sgprtmp2E]            //
+s_addc_u32 s[sgprtmp1E], 0, s[sgprtmp3E]                            //
+s_sub_u32 s[sgprtmp5E], s[sgprSizesFree+2], 1                       //
+//s_mul_i32 s[sgprtmp5E], s[sgprtmp5E], s[sgprGSUSumIdx]            //
+s_mul_hi_u32 s[sgprtmp3E], s[sgprtmp5E], s[sgprStrideCK]            //
+s_mul_i32 s[sgprtmp2E], s[sgprtmp5E], s[sgprStrideCK]               //
+s_add_u32 s[sgprtmp0E], s[sgprtmp0E], s[sgprtmp2E]                  //
+s_addc_u32 s[sgprtmp1E], s[sgprtmp1E], s[sgprtmp3E]                 //
 s_lshl_b64 s[sgprtmp2E:sgprtmp3E], s[sgprtmp0E:sgprtmp1E], 2        // scale by bpe
 
 
@@ -1767,20 +1767,20 @@ v_pk_mul_f32 v[vgprValuC+30:vgprValuC+30+1], v[22:23], v[vgprValuC+30:vgprValuC+
 //synchronizer store
 
 V_LSHRREV_B32 v9, 0x1, v9
-    
+
 
 s_mov_b32 s[sgprSrdD+2], 0x80000000
-s_mov_b32 s[sgprSrdD+3], Srd127_96                 // 
+s_mov_b32 s[sgprSrdD+3], Srd127_96                 //
 
 s_mul_i32 s[sgprtmp2E], MT1, s[sgprWorkGroup1]                    // cal store position
-s_mul_hi_u32 s[sgprtmp1E], s[sgprtmp2E], s[sgprStrideC1J]         // 
-s_mul_i32 s[sgprtmp0E], s[sgprtmp2E], s[sgprStrideC1J]            // 
+s_mul_hi_u32 s[sgprtmp1E], s[sgprtmp2E], s[sgprStrideC1J]         //
+s_mul_i32 s[sgprtmp0E], s[sgprtmp2E], s[sgprStrideC1J]            //
 s_lshl_b64 s[sgprtmp0E:sgprtmp0E+1], s[sgprtmp0E:sgprtmp0E+1], 1  // scale by bpe
 s_add_u32 s[sgprSrdD+0], s[sgprAddressTC+0], s[sgprtmp0E]         // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprAddressTC+1], s[sgprtmp1E]        // add hi to SRD
 
-s_mul_hi_u32 s[sgprtmp1E], s[sgprWorkGroup2], s[sgprStrideCK]     // 
-s_mul_i32 s[sgprtmp0E], s[sgprWorkGroup2], s[sgprStrideCK]        // 
+s_mul_hi_u32 s[sgprtmp1E], s[sgprWorkGroup2], s[sgprStrideCK]     //
+s_mul_i32 s[sgprtmp0E], s[sgprWorkGroup2], s[sgprStrideCK]        //
 s_lshl_b64 s[sgprtmp0E:sgprtmp0E+1], s[sgprtmp0E:sgprtmp0E+1], 1  // scale by bpe
 s_add_u32 s[sgprSrdD+0], s[sgprSrdD+0], s[sgprtmp0E]              // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprSrdD+1], s[sgprtmp1E]             // add hi to SRD
@@ -1837,7 +1837,7 @@ s_atomic_add s[sgprGSUSync], s[sgprKernArgAddress:sgprKernArgAddress+1], 0x8C gl
 
 
 s_waitcnt lgkmcnt(0)
-s_cmp_eq_u32 s[sgprGSUSync], 1    // 
+s_cmp_eq_u32 s[sgprGSUSync], 1    //
 s_cbranch_scc0 Summation_End_OptNLL_1           // jump if XX required
 //check done
 
@@ -1858,7 +1858,7 @@ s_mul_i32 s[sgprtmp2E], s[sgprStrideDK], 25                      // Scale by Str
 s_lshl_b64 s[sgprtmp2E:sgprtmp2E+1], s[sgprtmp2E:sgprtmp2E+1], 2  // scale by bpe
 
 s_mov_b32 s[sgprSrdDd+2], 0x80000000
-s_mov_b32 s[sgprSrdDd+3], Srd127_96                               // 
+s_mov_b32 s[sgprSrdDd+3], Srd127_96                               //
 
 s_add_u32 s[sgprSrdDd+0], s[sgprAddressD+0], s[sgprtmp2E]         // add lo to SRD
 s_addc_u32 s[sgprSrdDd+1], s[sgprAddressD+1], s[sgprtmp3E]        // add hi to SRD
@@ -1869,15 +1869,15 @@ s_buffer_atomic_add s[sgprGSUSync], s[sgprSrdDd:sgprSrdDd+3], glc
 
 
 //s_mov_b32 s[sgprGSUSumIdx] 1
-s_mul_i32 s[sgprtmp2E], MT1, s[sgprWorkGroup1]                        // 
+s_mul_i32 s[sgprtmp2E], MT1, s[sgprWorkGroup1]                        //
 s_mul_hi_u32 s[sgprtmp1E], s[sgprtmp2E], s[sgprStrideD1J]             // cal GSU D position
-s_mul_i32 s[sgprtmp0E], s[sgprtmp2E], s[sgprStrideD1J]                // 
+s_mul_i32 s[sgprtmp0E], s[sgprtmp2E], s[sgprStrideD1J]                //
 s_lshl_b64 s[sgprtmp0E:sgprtmp1E], s[sgprtmp0E:sgprtmp1E], 2          // scale by bpe
 s_add_u32 s[sgprSrdD+0], s[sgprAddressD+0], s[sgprtmp0E]              // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprAddressD+1], s[sgprtmp1E]             // add hi to SRD
 
-s_mul_hi_u32 s[sgprtmp1E], s[sgprWorkGroup2], s[sgprStrideDK]         // 
-s_mul_i32 s[sgprtmp0E], s[sgprWorkGroup2], s[sgprStrideDK]            // 
+s_mul_hi_u32 s[sgprtmp1E], s[sgprWorkGroup2], s[sgprStrideDK]         //
+s_mul_i32 s[sgprtmp0E], s[sgprWorkGroup2], s[sgprStrideDK]            //
 s_lshl_b64 s[sgprtmp0E:sgprtmp1E], s[sgprtmp0E:sgprtmp1E], 2          // scale by bpe
 s_add_u32 s[sgprSrdD+0], s[sgprSrdD+0], s[sgprtmp0E]                  // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprSrdD+1], s[sgprtmp1E]                 // add hi to SRD
@@ -1892,20 +1892,20 @@ s_cbranch_scc0 label_KernelEnd //label_GW_End_1 //label_AFTERsummary_Edge
 buffer_load_dwordx4 v[28+4*0:28+3+4*0], v9, s[sgprSrdD:sgprSrdD+3], 0 offen offset:0 // load GSU D
 
 // GSU Output Buffer offset: Free0 + (Free1-1)*StrideC1J + (Free2-1)*StrideCK * GSUIdx * bpe%s
-//s_mul_hi_u32 s[sgprtmp1E], s[sgprSizesFree+0], s[sgprGSUSumIdx]   // 
-//s_mul_i32 s[sgprtmp0E], s[sgprSizesFree+0], s[sgprGSUSumIdx]      // 
+//s_mul_hi_u32 s[sgprtmp1E], s[sgprSizesFree+0], s[sgprGSUSumIdx]   //
+//s_mul_i32 s[sgprtmp0E], s[sgprSizesFree+0], s[sgprGSUSumIdx]      //
 s_sub_u32 s[sgprtmp5E], s[sgprSizesFree+1], 1                       // cal GSU D offset
-//s_mul_i32 s[sgprtmp5E], s[sgprtmp5E], s[sgprGSUSumIdx]            // 
-s_mul_hi_u32 s[sgprtmp3E], s[sgprtmp5E], s[sgprStrideC1J]           // 
-s_mul_i32 s[sgprtmp2E], s[sgprtmp5E], s[sgprStrideC1J]              // 
-s_add_u32 s[sgprtmp0E], s[sgprSizesFree+0], s[sgprtmp2E]            // 
-s_addc_u32 s[sgprtmp1E], 0, s[sgprtmp3E]                            // 
-s_sub_u32 s[sgprtmp5E], s[sgprSizesFree+2], 1                       // 
-//s_mul_i32 s[sgprtmp5E], s[sgprtmp5E], s[sgprGSUSumIdx]            // 
-s_mul_hi_u32 s[sgprtmp3E], s[sgprtmp5E], s[sgprStrideCK]            // 
-s_mul_i32 s[sgprtmp2E], s[sgprtmp5E], s[sgprStrideCK]               // 
-s_add_u32 s[sgprtmp0E], s[sgprtmp0E], s[sgprtmp2E]                  // 
-s_addc_u32 s[sgprtmp1E], s[sgprtmp1E], s[sgprtmp3E]                 // 
+//s_mul_i32 s[sgprtmp5E], s[sgprtmp5E], s[sgprGSUSumIdx]            //
+s_mul_hi_u32 s[sgprtmp3E], s[sgprtmp5E], s[sgprStrideC1J]           //
+s_mul_i32 s[sgprtmp2E], s[sgprtmp5E], s[sgprStrideC1J]              //
+s_add_u32 s[sgprtmp0E], s[sgprSizesFree+0], s[sgprtmp2E]            //
+s_addc_u32 s[sgprtmp1E], 0, s[sgprtmp3E]                            //
+s_sub_u32 s[sgprtmp5E], s[sgprSizesFree+2], 1                       //
+//s_mul_i32 s[sgprtmp5E], s[sgprtmp5E], s[sgprGSUSumIdx]            //
+s_mul_hi_u32 s[sgprtmp3E], s[sgprtmp5E], s[sgprStrideCK]            //
+s_mul_i32 s[sgprtmp2E], s[sgprtmp5E], s[sgprStrideCK]               //
+s_add_u32 s[sgprtmp0E], s[sgprtmp0E], s[sgprtmp2E]                  //
+s_addc_u32 s[sgprtmp1E], s[sgprtmp1E], s[sgprtmp3E]                 //
 s_lshl_b64 s[sgprtmp2E:sgprtmp3E], s[sgprtmp0E:sgprtmp1E], 2        // scale by bpe
 
 
@@ -2134,20 +2134,20 @@ v_pk_mul_f32 v[vgprValuC+30:vgprValuC+30+1], v[22:23], v[vgprValuC+30:vgprValuC+
 //synchronizer store
 
 V_LSHRREV_B32 v9, 0x1, v9
-    
+
 
 s_mov_b32 s[sgprSrdD+2], 0x80000000
-s_mov_b32 s[sgprSrdD+3], Srd127_96                 // 
+s_mov_b32 s[sgprSrdD+3], Srd127_96                 //
 
 s_mul_i32 s[sgprtmp2E], MT1, s[sgprWorkGroup1]                    // cal store position
-s_mul_hi_u32 s[sgprtmp1E], s[sgprtmp2E], s[sgprStrideC1J]         // 
-s_mul_i32 s[sgprtmp0E], s[sgprtmp2E], s[sgprStrideC1J]            // 
+s_mul_hi_u32 s[sgprtmp1E], s[sgprtmp2E], s[sgprStrideC1J]         //
+s_mul_i32 s[sgprtmp0E], s[sgprtmp2E], s[sgprStrideC1J]            //
 s_lshl_b64 s[sgprtmp0E:sgprtmp0E+1], s[sgprtmp0E:sgprtmp0E+1], 1  // scale by bpe
 s_add_u32 s[sgprSrdD+0], s[sgprAddressTC+0], s[sgprtmp0E]         // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprAddressTC+1], s[sgprtmp1E]        // add hi to SRD
 
-s_mul_hi_u32 s[sgprtmp1E], s[sgprWorkGroup2], s[sgprStrideCK]     // 
-s_mul_i32 s[sgprtmp0E], s[sgprWorkGroup2], s[sgprStrideCK]        // 
+s_mul_hi_u32 s[sgprtmp1E], s[sgprWorkGroup2], s[sgprStrideCK]     //
+s_mul_i32 s[sgprtmp0E], s[sgprWorkGroup2], s[sgprStrideCK]        //
 s_lshl_b64 s[sgprtmp0E:sgprtmp0E+1], s[sgprtmp0E:sgprtmp0E+1], 1  // scale by bpe
 s_add_u32 s[sgprSrdD+0], s[sgprSrdD+0], s[sgprtmp0E]              // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprSrdD+1], s[sgprtmp1E]             // add hi to SRD
@@ -2204,7 +2204,7 @@ s_atomic_add s[sgprGSUSync], s[sgprKernArgAddress:sgprKernArgAddress+1], 0x8C gl
 
 
 s_waitcnt lgkmcnt(0)
-s_cmp_eq_u32 s[sgprGSUSync], 1    // 
+s_cmp_eq_u32 s[sgprGSUSync], 1    //
 s_cbranch_scc0 Summation_End_OptNLL_2           // jump if XX required
 //check done
 
@@ -2225,7 +2225,7 @@ s_mul_i32 s[sgprtmp2E], s[sgprStrideDK], 25                      // Scale by Str
 s_lshl_b64 s[sgprtmp2E:sgprtmp2E+1], s[sgprtmp2E:sgprtmp2E+1], 2  // scale by bpe
 
 s_mov_b32 s[sgprSrdDd+2], 0x80000000
-s_mov_b32 s[sgprSrdDd+3], Srd127_96                               // 
+s_mov_b32 s[sgprSrdDd+3], Srd127_96                               //
 
 s_add_u32 s[sgprSrdDd+0], s[sgprAddressD+0], s[sgprtmp2E]         // add lo to SRD
 s_addc_u32 s[sgprSrdDd+1], s[sgprAddressD+1], s[sgprtmp3E]        // add hi to SRD
@@ -2236,15 +2236,15 @@ s_buffer_atomic_add s[sgprGSUSync], s[sgprSrdDd:sgprSrdDd+3], glc
 
 
 //s_mov_b32 s[sgprGSUSumIdx] 1
-s_mul_i32 s[sgprtmp2E], MT1, s[sgprWorkGroup1]                        // 
+s_mul_i32 s[sgprtmp2E], MT1, s[sgprWorkGroup1]                        //
 s_mul_hi_u32 s[sgprtmp1E], s[sgprtmp2E], s[sgprStrideD1J]             // cal GSU D position
-s_mul_i32 s[sgprtmp0E], s[sgprtmp2E], s[sgprStrideD1J]                // 
+s_mul_i32 s[sgprtmp0E], s[sgprtmp2E], s[sgprStrideD1J]                //
 s_lshl_b64 s[sgprtmp0E:sgprtmp1E], s[sgprtmp0E:sgprtmp1E], 2          // scale by bpe
 s_add_u32 s[sgprSrdD+0], s[sgprAddressD+0], s[sgprtmp0E]              // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprAddressD+1], s[sgprtmp1E]             // add hi to SRD
 
-s_mul_hi_u32 s[sgprtmp1E], s[sgprWorkGroup2], s[sgprStrideDK]         // 
-s_mul_i32 s[sgprtmp0E], s[sgprWorkGroup2], s[sgprStrideDK]            // 
+s_mul_hi_u32 s[sgprtmp1E], s[sgprWorkGroup2], s[sgprStrideDK]         //
+s_mul_i32 s[sgprtmp0E], s[sgprWorkGroup2], s[sgprStrideDK]            //
 s_lshl_b64 s[sgprtmp0E:sgprtmp1E], s[sgprtmp0E:sgprtmp1E], 2          // scale by bpe
 s_add_u32 s[sgprSrdD+0], s[sgprSrdD+0], s[sgprtmp0E]                  // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprSrdD+1], s[sgprtmp1E]                 // add hi to SRD
@@ -2259,20 +2259,20 @@ s_cbranch_scc0 label_KernelEnd //label_GW_End_1 //label_AFTERsummary_Edge
 buffer_load_dwordx4 v[28+4*0:28+3+4*0], v9, s[sgprSrdD:sgprSrdD+3], 0 offen offset:0 // load GSU D
 
 // GSU Output Buffer offset: Free0 + (Free1-1)*StrideC1J + (Free2-1)*StrideCK * GSUIdx * bpe%s
-//s_mul_hi_u32 s[sgprtmp1E], s[sgprSizesFree+0], s[sgprGSUSumIdx]   // 
-//s_mul_i32 s[sgprtmp0E], s[sgprSizesFree+0], s[sgprGSUSumIdx]      // 
+//s_mul_hi_u32 s[sgprtmp1E], s[sgprSizesFree+0], s[sgprGSUSumIdx]   //
+//s_mul_i32 s[sgprtmp0E], s[sgprSizesFree+0], s[sgprGSUSumIdx]      //
 s_sub_u32 s[sgprtmp5E], s[sgprSizesFree+1], 1                       // cal GSU D offset
-//s_mul_i32 s[sgprtmp5E], s[sgprtmp5E], s[sgprGSUSumIdx]            // 
-s_mul_hi_u32 s[sgprtmp3E], s[sgprtmp5E], s[sgprStrideC1J]           // 
-s_mul_i32 s[sgprtmp2E], s[sgprtmp5E], s[sgprStrideC1J]              // 
-s_add_u32 s[sgprtmp0E], s[sgprSizesFree+0], s[sgprtmp2E]            // 
-s_addc_u32 s[sgprtmp1E], 0, s[sgprtmp3E]                            // 
-s_sub_u32 s[sgprtmp5E], s[sgprSizesFree+2], 1                       // 
-//s_mul_i32 s[sgprtmp5E], s[sgprtmp5E], s[sgprGSUSumIdx]            // 
-s_mul_hi_u32 s[sgprtmp3E], s[sgprtmp5E], s[sgprStrideCK]            // 
-s_mul_i32 s[sgprtmp2E], s[sgprtmp5E], s[sgprStrideCK]               // 
-s_add_u32 s[sgprtmp0E], s[sgprtmp0E], s[sgprtmp2E]                  // 
-s_addc_u32 s[sgprtmp1E], s[sgprtmp1E], s[sgprtmp3E]                 // 
+//s_mul_i32 s[sgprtmp5E], s[sgprtmp5E], s[sgprGSUSumIdx]            //
+s_mul_hi_u32 s[sgprtmp3E], s[sgprtmp5E], s[sgprStrideC1J]           //
+s_mul_i32 s[sgprtmp2E], s[sgprtmp5E], s[sgprStrideC1J]              //
+s_add_u32 s[sgprtmp0E], s[sgprSizesFree+0], s[sgprtmp2E]            //
+s_addc_u32 s[sgprtmp1E], 0, s[sgprtmp3E]                            //
+s_sub_u32 s[sgprtmp5E], s[sgprSizesFree+2], 1                       //
+//s_mul_i32 s[sgprtmp5E], s[sgprtmp5E], s[sgprGSUSumIdx]            //
+s_mul_hi_u32 s[sgprtmp3E], s[sgprtmp5E], s[sgprStrideCK]            //
+s_mul_i32 s[sgprtmp2E], s[sgprtmp5E], s[sgprStrideCK]               //
+s_add_u32 s[sgprtmp0E], s[sgprtmp0E], s[sgprtmp2E]                  //
+s_addc_u32 s[sgprtmp1E], s[sgprtmp1E], s[sgprtmp3E]                 //
 s_lshl_b64 s[sgprtmp2E:sgprtmp3E], s[sgprtmp0E:sgprtmp1E], 2        // scale by bpe
 
 
@@ -2509,20 +2509,20 @@ v_pk_mul_f32 v[vgprValuC+30:vgprValuC+30+1], v[22:23], v[vgprValuC+30:vgprValuC+
 //synchronizer store
 
 V_LSHRREV_B32 v9, 0x1, v9
-    
+
 
 s_mov_b32 s[sgprSrdD+2], 0x80000000
-s_mov_b32 s[sgprSrdD+3], Srd127_96                 // 
+s_mov_b32 s[sgprSrdD+3], Srd127_96                 //
 
 s_mul_i32 s[sgprtmp2E], MT1, s[sgprWorkGroup1]                    // cal store position
-s_mul_hi_u32 s[sgprtmp1E], s[sgprtmp2E], s[sgprStrideC1J]         // 
-s_mul_i32 s[sgprtmp0E], s[sgprtmp2E], s[sgprStrideC1J]            // 
+s_mul_hi_u32 s[sgprtmp1E], s[sgprtmp2E], s[sgprStrideC1J]         //
+s_mul_i32 s[sgprtmp0E], s[sgprtmp2E], s[sgprStrideC1J]            //
 s_lshl_b64 s[sgprtmp0E:sgprtmp0E+1], s[sgprtmp0E:sgprtmp0E+1], 1  // scale by bpe
 s_add_u32 s[sgprSrdD+0], s[sgprAddressTC+0], s[sgprtmp0E]         // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprAddressTC+1], s[sgprtmp1E]        // add hi to SRD
 
-s_mul_hi_u32 s[sgprtmp1E], s[sgprWorkGroup2], s[sgprStrideCK]     // 
-s_mul_i32 s[sgprtmp0E], s[sgprWorkGroup2], s[sgprStrideCK]        // 
+s_mul_hi_u32 s[sgprtmp1E], s[sgprWorkGroup2], s[sgprStrideCK]     //
+s_mul_i32 s[sgprtmp0E], s[sgprWorkGroup2], s[sgprStrideCK]        //
 s_lshl_b64 s[sgprtmp0E:sgprtmp0E+1], s[sgprtmp0E:sgprtmp0E+1], 1  // scale by bpe
 s_add_u32 s[sgprSrdD+0], s[sgprSrdD+0], s[sgprtmp0E]              // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprSrdD+1], s[sgprtmp1E]             // add hi to SRD
@@ -2579,7 +2579,7 @@ s_atomic_add s[sgprGSUSync], s[sgprKernArgAddress:sgprKernArgAddress+1], 0x8C gl
 
 
 s_waitcnt lgkmcnt(0)
-s_cmp_eq_u32 s[sgprGSUSync], 1    // 
+s_cmp_eq_u32 s[sgprGSUSync], 1    //
 s_cbranch_scc0 Summation_End_OptNLL_3           // jump if XX required
 //check done
 
@@ -2600,7 +2600,7 @@ s_mul_i32 s[sgprtmp2E], s[sgprStrideDK], 25                      // Scale by Str
 s_lshl_b64 s[sgprtmp2E:sgprtmp2E+1], s[sgprtmp2E:sgprtmp2E+1], 2  // scale by bpe
 
 s_mov_b32 s[sgprSrdDd+2], 0x80000000
-s_mov_b32 s[sgprSrdDd+3], Srd127_96                               // 
+s_mov_b32 s[sgprSrdDd+3], Srd127_96                               //
 
 s_add_u32 s[sgprSrdDd+0], s[sgprAddressD+0], s[sgprtmp2E]         // add lo to SRD
 s_addc_u32 s[sgprSrdDd+1], s[sgprAddressD+1], s[sgprtmp3E]        // add hi to SRD
@@ -2611,15 +2611,15 @@ s_buffer_atomic_add s[sgprGSUSync], s[sgprSrdDd:sgprSrdDd+3], glc
 
 
 //s_mov_b32 s[sgprGSUSumIdx] 1
-s_mul_i32 s[sgprtmp2E], MT1, s[sgprWorkGroup1]                        // 
+s_mul_i32 s[sgprtmp2E], MT1, s[sgprWorkGroup1]                        //
 s_mul_hi_u32 s[sgprtmp1E], s[sgprtmp2E], s[sgprStrideD1J]             // cal GSU D position
-s_mul_i32 s[sgprtmp0E], s[sgprtmp2E], s[sgprStrideD1J]                // 
+s_mul_i32 s[sgprtmp0E], s[sgprtmp2E], s[sgprStrideD1J]                //
 s_lshl_b64 s[sgprtmp0E:sgprtmp1E], s[sgprtmp0E:sgprtmp1E], 2          // scale by bpe
 s_add_u32 s[sgprSrdD+0], s[sgprAddressD+0], s[sgprtmp0E]              // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprAddressD+1], s[sgprtmp1E]             // add hi to SRD
 
-s_mul_hi_u32 s[sgprtmp1E], s[sgprWorkGroup2], s[sgprStrideDK]         // 
-s_mul_i32 s[sgprtmp0E], s[sgprWorkGroup2], s[sgprStrideDK]            // 
+s_mul_hi_u32 s[sgprtmp1E], s[sgprWorkGroup2], s[sgprStrideDK]         //
+s_mul_i32 s[sgprtmp0E], s[sgprWorkGroup2], s[sgprStrideDK]            //
 s_lshl_b64 s[sgprtmp0E:sgprtmp1E], s[sgprtmp0E:sgprtmp1E], 2          // scale by bpe
 s_add_u32 s[sgprSrdD+0], s[sgprSrdD+0], s[sgprtmp0E]                  // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprSrdD+1], s[sgprtmp1E]                 // add hi to SRD
@@ -2634,20 +2634,20 @@ s_cbranch_scc0 label_KernelEnd //label_GW_End_1 //label_AFTERsummary_Edge
 buffer_load_dwordx4 v[28+4*0:28+3+4*0], v9, s[sgprSrdD:sgprSrdD+3], 0 offen offset:0 // load GSU D
 
 // GSU Output Buffer offset: Free0 + (Free1-1)*StrideC1J + (Free2-1)*StrideCK * GSUIdx * bpe%s
-//s_mul_hi_u32 s[sgprtmp1E], s[sgprSizesFree+0], s[sgprGSUSumIdx]   // 
-//s_mul_i32 s[sgprtmp0E], s[sgprSizesFree+0], s[sgprGSUSumIdx]      // 
+//s_mul_hi_u32 s[sgprtmp1E], s[sgprSizesFree+0], s[sgprGSUSumIdx]   //
+//s_mul_i32 s[sgprtmp0E], s[sgprSizesFree+0], s[sgprGSUSumIdx]      //
 s_sub_u32 s[sgprtmp5E], s[sgprSizesFree+1], 1                       // cal GSU D offset
-//s_mul_i32 s[sgprtmp5E], s[sgprtmp5E], s[sgprGSUSumIdx]            // 
-s_mul_hi_u32 s[sgprtmp3E], s[sgprtmp5E], s[sgprStrideC1J]           // 
-s_mul_i32 s[sgprtmp2E], s[sgprtmp5E], s[sgprStrideC1J]              // 
-s_add_u32 s[sgprtmp0E], s[sgprSizesFree+0], s[sgprtmp2E]            // 
-s_addc_u32 s[sgprtmp1E], 0, s[sgprtmp3E]                            // 
-s_sub_u32 s[sgprtmp5E], s[sgprSizesFree+2], 1                       // 
-//s_mul_i32 s[sgprtmp5E], s[sgprtmp5E], s[sgprGSUSumIdx]            // 
-s_mul_hi_u32 s[sgprtmp3E], s[sgprtmp5E], s[sgprStrideCK]            // 
-s_mul_i32 s[sgprtmp2E], s[sgprtmp5E], s[sgprStrideCK]               // 
-s_add_u32 s[sgprtmp0E], s[sgprtmp0E], s[sgprtmp2E]                  // 
-s_addc_u32 s[sgprtmp1E], s[sgprtmp1E], s[sgprtmp3E]                 // 
+//s_mul_i32 s[sgprtmp5E], s[sgprtmp5E], s[sgprGSUSumIdx]            //
+s_mul_hi_u32 s[sgprtmp3E], s[sgprtmp5E], s[sgprStrideC1J]           //
+s_mul_i32 s[sgprtmp2E], s[sgprtmp5E], s[sgprStrideC1J]              //
+s_add_u32 s[sgprtmp0E], s[sgprSizesFree+0], s[sgprtmp2E]            //
+s_addc_u32 s[sgprtmp1E], 0, s[sgprtmp3E]                            //
+s_sub_u32 s[sgprtmp5E], s[sgprSizesFree+2], 1                       //
+//s_mul_i32 s[sgprtmp5E], s[sgprtmp5E], s[sgprGSUSumIdx]            //
+s_mul_hi_u32 s[sgprtmp3E], s[sgprtmp5E], s[sgprStrideCK]            //
+s_mul_i32 s[sgprtmp2E], s[sgprtmp5E], s[sgprStrideCK]               //
+s_add_u32 s[sgprtmp0E], s[sgprtmp0E], s[sgprtmp2E]                  //
+s_addc_u32 s[sgprtmp1E], s[sgprtmp1E], s[sgprtmp3E]                 //
 s_lshl_b64 s[sgprtmp2E:sgprtmp3E], s[sgprtmp0E:sgprtmp1E], 2        // scale by bpe
 
 
@@ -2912,20 +2912,20 @@ v_pk_mul_f32 v[vgprValuC+30:vgprValuC+30+1], v[22:23], v[vgprValuC+30:vgprValuC+
 //synchronizer store
 
 V_LSHRREV_B32 v9, 0x1, v9
-    
+
 
 s_mov_b32 s[sgprSrdD+2], 0x80000000
-s_mov_b32 s[sgprSrdD+3], Srd127_96                 // 
+s_mov_b32 s[sgprSrdD+3], Srd127_96                 //
 
 s_mul_i32 s[sgprtmp2E], MT1, s[sgprWorkGroup1]                    // cal store position
-s_mul_hi_u32 s[sgprtmp1E], s[sgprtmp2E], s[sgprStrideC1J]         // 
-s_mul_i32 s[sgprtmp0E], s[sgprtmp2E], s[sgprStrideC1J]            // 
+s_mul_hi_u32 s[sgprtmp1E], s[sgprtmp2E], s[sgprStrideC1J]         //
+s_mul_i32 s[sgprtmp0E], s[sgprtmp2E], s[sgprStrideC1J]            //
 s_lshl_b64 s[sgprtmp0E:sgprtmp0E+1], s[sgprtmp0E:sgprtmp0E+1], 1  // scale by bpe
 s_add_u32 s[sgprSrdD+0], s[sgprAddressTC+0], s[sgprtmp0E]         // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprAddressTC+1], s[sgprtmp1E]        // add hi to SRD
 
-s_mul_hi_u32 s[sgprtmp1E], s[sgprWorkGroup2], s[sgprStrideCK]     // 
-s_mul_i32 s[sgprtmp0E], s[sgprWorkGroup2], s[sgprStrideCK]        // 
+s_mul_hi_u32 s[sgprtmp1E], s[sgprWorkGroup2], s[sgprStrideCK]     //
+s_mul_i32 s[sgprtmp0E], s[sgprWorkGroup2], s[sgprStrideCK]        //
 s_lshl_b64 s[sgprtmp0E:sgprtmp0E+1], s[sgprtmp0E:sgprtmp0E+1], 1  // scale by bpe
 s_add_u32 s[sgprSrdD+0], s[sgprSrdD+0], s[sgprtmp0E]              // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprSrdD+1], s[sgprtmp1E]             // add hi to SRD
@@ -2982,7 +2982,7 @@ s_atomic_add s[sgprGSUSync], s[sgprKernArgAddress:sgprKernArgAddress+1], 0x8C gl
 
 
 s_waitcnt lgkmcnt(0)
-s_cmp_eq_u32 s[sgprGSUSync], 1    // 
+s_cmp_eq_u32 s[sgprGSUSync], 1    //
 s_cbranch_scc0 Summation_End_OptNLL_4           // jump if XX required
 //check done
 
@@ -3003,7 +3003,7 @@ s_mul_i32 s[sgprtmp2E], s[sgprStrideDK], 25                      // Scale by Str
 s_lshl_b64 s[sgprtmp2E:sgprtmp2E+1], s[sgprtmp2E:sgprtmp2E+1], 2  // scale by bpe
 
 s_mov_b32 s[sgprSrdDd+2], 0x80000000
-s_mov_b32 s[sgprSrdDd+3], Srd127_96                               // 
+s_mov_b32 s[sgprSrdDd+3], Srd127_96                               //
 
 s_add_u32 s[sgprSrdDd+0], s[sgprAddressD+0], s[sgprtmp2E]         // add lo to SRD
 s_addc_u32 s[sgprSrdDd+1], s[sgprAddressD+1], s[sgprtmp3E]        // add hi to SRD
@@ -3014,15 +3014,15 @@ s_buffer_atomic_add s[sgprGSUSync], s[sgprSrdDd:sgprSrdDd+3], glc
 
 
 //s_mov_b32 s[sgprGSUSumIdx] 1
-s_mul_i32 s[sgprtmp2E], MT1, s[sgprWorkGroup1]                        // 
+s_mul_i32 s[sgprtmp2E], MT1, s[sgprWorkGroup1]                        //
 s_mul_hi_u32 s[sgprtmp1E], s[sgprtmp2E], s[sgprStrideD1J]             // cal GSU D position
-s_mul_i32 s[sgprtmp0E], s[sgprtmp2E], s[sgprStrideD1J]                // 
+s_mul_i32 s[sgprtmp0E], s[sgprtmp2E], s[sgprStrideD1J]                //
 s_lshl_b64 s[sgprtmp0E:sgprtmp1E], s[sgprtmp0E:sgprtmp1E], 2          // scale by bpe
 s_add_u32 s[sgprSrdD+0], s[sgprAddressD+0], s[sgprtmp0E]              // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprAddressD+1], s[sgprtmp1E]             // add hi to SRD
 
-s_mul_hi_u32 s[sgprtmp1E], s[sgprWorkGroup2], s[sgprStrideDK]         // 
-s_mul_i32 s[sgprtmp0E], s[sgprWorkGroup2], s[sgprStrideDK]            // 
+s_mul_hi_u32 s[sgprtmp1E], s[sgprWorkGroup2], s[sgprStrideDK]         //
+s_mul_i32 s[sgprtmp0E], s[sgprWorkGroup2], s[sgprStrideDK]            //
 s_lshl_b64 s[sgprtmp0E:sgprtmp1E], s[sgprtmp0E:sgprtmp1E], 2          // scale by bpe
 s_add_u32 s[sgprSrdD+0], s[sgprSrdD+0], s[sgprtmp0E]                  // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprSrdD+1], s[sgprtmp1E]                 // add hi to SRD
@@ -3037,20 +3037,20 @@ s_cbranch_scc0 label_KernelEnd //label_GW_End_1 //label_AFTERsummary_Edge
 buffer_load_dwordx4 v[28+4*0:28+3+4*0], v9, s[sgprSrdD:sgprSrdD+3], 0 offen offset:0 // load GSU D
 
 // GSU Output Buffer offset: Free0 + (Free1-1)*StrideC1J + (Free2-1)*StrideCK * GSUIdx * bpe%s
-//s_mul_hi_u32 s[sgprtmp1E], s[sgprSizesFree+0], s[sgprGSUSumIdx]   // 
-//s_mul_i32 s[sgprtmp0E], s[sgprSizesFree+0], s[sgprGSUSumIdx]      // 
+//s_mul_hi_u32 s[sgprtmp1E], s[sgprSizesFree+0], s[sgprGSUSumIdx]   //
+//s_mul_i32 s[sgprtmp0E], s[sgprSizesFree+0], s[sgprGSUSumIdx]      //
 s_sub_u32 s[sgprtmp5E], s[sgprSizesFree+1], 1                       // cal GSU D offset
-//s_mul_i32 s[sgprtmp5E], s[sgprtmp5E], s[sgprGSUSumIdx]            // 
-s_mul_hi_u32 s[sgprtmp3E], s[sgprtmp5E], s[sgprStrideC1J]           // 
-s_mul_i32 s[sgprtmp2E], s[sgprtmp5E], s[sgprStrideC1J]              // 
-s_add_u32 s[sgprtmp0E], s[sgprSizesFree+0], s[sgprtmp2E]            // 
-s_addc_u32 s[sgprtmp1E], 0, s[sgprtmp3E]                            // 
-s_sub_u32 s[sgprtmp5E], s[sgprSizesFree+2], 1                       // 
-//s_mul_i32 s[sgprtmp5E], s[sgprtmp5E], s[sgprGSUSumIdx]            // 
-s_mul_hi_u32 s[sgprtmp3E], s[sgprtmp5E], s[sgprStrideCK]            // 
-s_mul_i32 s[sgprtmp2E], s[sgprtmp5E], s[sgprStrideCK]               // 
-s_add_u32 s[sgprtmp0E], s[sgprtmp0E], s[sgprtmp2E]                  // 
-s_addc_u32 s[sgprtmp1E], s[sgprtmp1E], s[sgprtmp3E]                 // 
+//s_mul_i32 s[sgprtmp5E], s[sgprtmp5E], s[sgprGSUSumIdx]            //
+s_mul_hi_u32 s[sgprtmp3E], s[sgprtmp5E], s[sgprStrideC1J]           //
+s_mul_i32 s[sgprtmp2E], s[sgprtmp5E], s[sgprStrideC1J]              //
+s_add_u32 s[sgprtmp0E], s[sgprSizesFree+0], s[sgprtmp2E]            //
+s_addc_u32 s[sgprtmp1E], 0, s[sgprtmp3E]                            //
+s_sub_u32 s[sgprtmp5E], s[sgprSizesFree+2], 1                       //
+//s_mul_i32 s[sgprtmp5E], s[sgprtmp5E], s[sgprGSUSumIdx]            //
+s_mul_hi_u32 s[sgprtmp3E], s[sgprtmp5E], s[sgprStrideCK]            //
+s_mul_i32 s[sgprtmp2E], s[sgprtmp5E], s[sgprStrideCK]               //
+s_add_u32 s[sgprtmp0E], s[sgprtmp0E], s[sgprtmp2E]                  //
+s_addc_u32 s[sgprtmp1E], s[sgprtmp1E], s[sgprtmp3E]                 //
 s_lshl_b64 s[sgprtmp2E:sgprtmp3E], s[sgprtmp0E:sgprtmp1E], 2        // scale by bpe
 
 
@@ -3287,20 +3287,20 @@ v_pk_mul_f32 v[vgprValuC+30:vgprValuC+30+1], v[22:23], v[vgprValuC+30:vgprValuC+
 //synchronizer store
 
 V_LSHRREV_B32 v9, 0x1, v9
-    
+
 
 s_mov_b32 s[sgprSrdD+2], 0x80000000
-s_mov_b32 s[sgprSrdD+3], Srd127_96                 // 
+s_mov_b32 s[sgprSrdD+3], Srd127_96                 //
 
 s_mul_i32 s[sgprtmp2E], MT1, s[sgprWorkGroup1]                    // cal store position
-s_mul_hi_u32 s[sgprtmp1E], s[sgprtmp2E], s[sgprStrideC1J]         // 
-s_mul_i32 s[sgprtmp0E], s[sgprtmp2E], s[sgprStrideC1J]            // 
+s_mul_hi_u32 s[sgprtmp1E], s[sgprtmp2E], s[sgprStrideC1J]         //
+s_mul_i32 s[sgprtmp0E], s[sgprtmp2E], s[sgprStrideC1J]            //
 s_lshl_b64 s[sgprtmp0E:sgprtmp0E+1], s[sgprtmp0E:sgprtmp0E+1], 1  // scale by bpe
 s_add_u32 s[sgprSrdD+0], s[sgprAddressTC+0], s[sgprtmp0E]         // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprAddressTC+1], s[sgprtmp1E]        // add hi to SRD
 
-s_mul_hi_u32 s[sgprtmp1E], s[sgprWorkGroup2], s[sgprStrideCK]     // 
-s_mul_i32 s[sgprtmp0E], s[sgprWorkGroup2], s[sgprStrideCK]        // 
+s_mul_hi_u32 s[sgprtmp1E], s[sgprWorkGroup2], s[sgprStrideCK]     //
+s_mul_i32 s[sgprtmp0E], s[sgprWorkGroup2], s[sgprStrideCK]        //
 s_lshl_b64 s[sgprtmp0E:sgprtmp0E+1], s[sgprtmp0E:sgprtmp0E+1], 1  // scale by bpe
 s_add_u32 s[sgprSrdD+0], s[sgprSrdD+0], s[sgprtmp0E]              // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprSrdD+1], s[sgprtmp1E]             // add hi to SRD
@@ -3357,7 +3357,7 @@ s_atomic_add s[sgprGSUSync], s[sgprKernArgAddress:sgprKernArgAddress+1], 0x8C gl
 
 
 s_waitcnt lgkmcnt(0)
-s_cmp_eq_u32 s[sgprGSUSync], 1    // 
+s_cmp_eq_u32 s[sgprGSUSync], 1    //
 s_cbranch_scc0 Summation_End_OptNLL_5           // jump if XX required
 //check done
 
@@ -3378,7 +3378,7 @@ s_mul_i32 s[sgprtmp2E], s[sgprStrideDK], 25                      // Scale by Str
 s_lshl_b64 s[sgprtmp2E:sgprtmp2E+1], s[sgprtmp2E:sgprtmp2E+1], 2  // scale by bpe
 
 s_mov_b32 s[sgprSrdDd+2], 0x80000000
-s_mov_b32 s[sgprSrdDd+3], Srd127_96                               // 
+s_mov_b32 s[sgprSrdDd+3], Srd127_96                               //
 
 s_add_u32 s[sgprSrdDd+0], s[sgprAddressD+0], s[sgprtmp2E]         // add lo to SRD
 s_addc_u32 s[sgprSrdDd+1], s[sgprAddressD+1], s[sgprtmp3E]        // add hi to SRD
@@ -3389,15 +3389,15 @@ s_buffer_atomic_add s[sgprGSUSync], s[sgprSrdDd:sgprSrdDd+3], glc
 
 
 //s_mov_b32 s[sgprGSUSumIdx] 1
-s_mul_i32 s[sgprtmp2E], MT1, s[sgprWorkGroup1]                        // 
+s_mul_i32 s[sgprtmp2E], MT1, s[sgprWorkGroup1]                        //
 s_mul_hi_u32 s[sgprtmp1E], s[sgprtmp2E], s[sgprStrideD1J]             // cal GSU D position
-s_mul_i32 s[sgprtmp0E], s[sgprtmp2E], s[sgprStrideD1J]                // 
+s_mul_i32 s[sgprtmp0E], s[sgprtmp2E], s[sgprStrideD1J]                //
 s_lshl_b64 s[sgprtmp0E:sgprtmp1E], s[sgprtmp0E:sgprtmp1E], 2          // scale by bpe
 s_add_u32 s[sgprSrdD+0], s[sgprAddressD+0], s[sgprtmp0E]              // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprAddressD+1], s[sgprtmp1E]             // add hi to SRD
 
-s_mul_hi_u32 s[sgprtmp1E], s[sgprWorkGroup2], s[sgprStrideDK]         // 
-s_mul_i32 s[sgprtmp0E], s[sgprWorkGroup2], s[sgprStrideDK]            // 
+s_mul_hi_u32 s[sgprtmp1E], s[sgprWorkGroup2], s[sgprStrideDK]         //
+s_mul_i32 s[sgprtmp0E], s[sgprWorkGroup2], s[sgprStrideDK]            //
 s_lshl_b64 s[sgprtmp0E:sgprtmp1E], s[sgprtmp0E:sgprtmp1E], 2          // scale by bpe
 s_add_u32 s[sgprSrdD+0], s[sgprSrdD+0], s[sgprtmp0E]                  // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprSrdD+1], s[sgprtmp1E]                 // add hi to SRD
@@ -3412,20 +3412,20 @@ s_cbranch_scc0 label_KernelEnd //label_GW_End_1 //label_AFTERsummary_Edge
 buffer_load_dwordx4 v[28+4*0:28+3+4*0], v9, s[sgprSrdD:sgprSrdD+3], 0 offen offset:0 // load GSU D
 
 // GSU Output Buffer offset: Free0 + (Free1-1)*StrideC1J + (Free2-1)*StrideCK * GSUIdx * bpe%s
-//s_mul_hi_u32 s[sgprtmp1E], s[sgprSizesFree+0], s[sgprGSUSumIdx]   // 
-//s_mul_i32 s[sgprtmp0E], s[sgprSizesFree+0], s[sgprGSUSumIdx]      // 
+//s_mul_hi_u32 s[sgprtmp1E], s[sgprSizesFree+0], s[sgprGSUSumIdx]   //
+//s_mul_i32 s[sgprtmp0E], s[sgprSizesFree+0], s[sgprGSUSumIdx]      //
 s_sub_u32 s[sgprtmp5E], s[sgprSizesFree+1], 1                       // cal GSU D offset
-//s_mul_i32 s[sgprtmp5E], s[sgprtmp5E], s[sgprGSUSumIdx]            // 
-s_mul_hi_u32 s[sgprtmp3E], s[sgprtmp5E], s[sgprStrideC1J]           // 
-s_mul_i32 s[sgprtmp2E], s[sgprtmp5E], s[sgprStrideC1J]              // 
-s_add_u32 s[sgprtmp0E], s[sgprSizesFree+0], s[sgprtmp2E]            // 
-s_addc_u32 s[sgprtmp1E], 0, s[sgprtmp3E]                            // 
-s_sub_u32 s[sgprtmp5E], s[sgprSizesFree+2], 1                       // 
-//s_mul_i32 s[sgprtmp5E], s[sgprtmp5E], s[sgprGSUSumIdx]            // 
-s_mul_hi_u32 s[sgprtmp3E], s[sgprtmp5E], s[sgprStrideCK]            // 
-s_mul_i32 s[sgprtmp2E], s[sgprtmp5E], s[sgprStrideCK]               // 
-s_add_u32 s[sgprtmp0E], s[sgprtmp0E], s[sgprtmp2E]                  // 
-s_addc_u32 s[sgprtmp1E], s[sgprtmp1E], s[sgprtmp3E]                 // 
+//s_mul_i32 s[sgprtmp5E], s[sgprtmp5E], s[sgprGSUSumIdx]            //
+s_mul_hi_u32 s[sgprtmp3E], s[sgprtmp5E], s[sgprStrideC1J]           //
+s_mul_i32 s[sgprtmp2E], s[sgprtmp5E], s[sgprStrideC1J]              //
+s_add_u32 s[sgprtmp0E], s[sgprSizesFree+0], s[sgprtmp2E]            //
+s_addc_u32 s[sgprtmp1E], 0, s[sgprtmp3E]                            //
+s_sub_u32 s[sgprtmp5E], s[sgprSizesFree+2], 1                       //
+//s_mul_i32 s[sgprtmp5E], s[sgprtmp5E], s[sgprGSUSumIdx]            //
+s_mul_hi_u32 s[sgprtmp3E], s[sgprtmp5E], s[sgprStrideCK]            //
+s_mul_i32 s[sgprtmp2E], s[sgprtmp5E], s[sgprStrideCK]               //
+s_add_u32 s[sgprtmp0E], s[sgprtmp0E], s[sgprtmp2E]                  //
+s_addc_u32 s[sgprtmp1E], s[sgprtmp1E], s[sgprtmp3E]                 //
 s_lshl_b64 s[sgprtmp2E:sgprtmp3E], s[sgprtmp0E:sgprtmp1E], 2        // scale by bpe
 
 
@@ -3654,20 +3654,20 @@ v_pk_mul_f32 v[vgprValuC+30:vgprValuC+30+1], v[22:23], v[vgprValuC+30:vgprValuC+
 //synchronizer store
 
 V_LSHRREV_B32 v9, 0x1, v9
-    
+
 
 s_mov_b32 s[sgprSrdD+2], 0x80000000
-s_mov_b32 s[sgprSrdD+3], Srd127_96                 // 
+s_mov_b32 s[sgprSrdD+3], Srd127_96                 //
 
 s_mul_i32 s[sgprtmp2E], MT1, s[sgprWorkGroup1]                    // cal store position
-s_mul_hi_u32 s[sgprtmp1E], s[sgprtmp2E], s[sgprStrideC1J]         // 
-s_mul_i32 s[sgprtmp0E], s[sgprtmp2E], s[sgprStrideC1J]            // 
+s_mul_hi_u32 s[sgprtmp1E], s[sgprtmp2E], s[sgprStrideC1J]         //
+s_mul_i32 s[sgprtmp0E], s[sgprtmp2E], s[sgprStrideC1J]            //
 s_lshl_b64 s[sgprtmp0E:sgprtmp0E+1], s[sgprtmp0E:sgprtmp0E+1], 1  // scale by bpe
 s_add_u32 s[sgprSrdD+0], s[sgprAddressTC+0], s[sgprtmp0E]         // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprAddressTC+1], s[sgprtmp1E]        // add hi to SRD
 
-s_mul_hi_u32 s[sgprtmp1E], s[sgprWorkGroup2], s[sgprStrideCK]     // 
-s_mul_i32 s[sgprtmp0E], s[sgprWorkGroup2], s[sgprStrideCK]        // 
+s_mul_hi_u32 s[sgprtmp1E], s[sgprWorkGroup2], s[sgprStrideCK]     //
+s_mul_i32 s[sgprtmp0E], s[sgprWorkGroup2], s[sgprStrideCK]        //
 s_lshl_b64 s[sgprtmp0E:sgprtmp0E+1], s[sgprtmp0E:sgprtmp0E+1], 1  // scale by bpe
 s_add_u32 s[sgprSrdD+0], s[sgprSrdD+0], s[sgprtmp0E]              // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprSrdD+1], s[sgprtmp1E]             // add hi to SRD
@@ -3724,7 +3724,7 @@ s_atomic_add s[sgprGSUSync], s[sgprKernArgAddress:sgprKernArgAddress+1], 0x8C gl
 
 
 s_waitcnt lgkmcnt(0)
-s_cmp_eq_u32 s[sgprGSUSync], 1    // 
+s_cmp_eq_u32 s[sgprGSUSync], 1    //
 s_cbranch_scc0 Summation_End_OptNLL_6           // jump if XX required
 //check done
 
@@ -3745,7 +3745,7 @@ s_mul_i32 s[sgprtmp2E], s[sgprStrideDK], 25                      // Scale by Str
 s_lshl_b64 s[sgprtmp2E:sgprtmp2E+1], s[sgprtmp2E:sgprtmp2E+1], 2  // scale by bpe
 
 s_mov_b32 s[sgprSrdDd+2], 0x80000000
-s_mov_b32 s[sgprSrdDd+3], Srd127_96                               // 
+s_mov_b32 s[sgprSrdDd+3], Srd127_96                               //
 
 s_add_u32 s[sgprSrdDd+0], s[sgprAddressD+0], s[sgprtmp2E]         // add lo to SRD
 s_addc_u32 s[sgprSrdDd+1], s[sgprAddressD+1], s[sgprtmp3E]        // add hi to SRD
@@ -3756,15 +3756,15 @@ s_buffer_atomic_add s[sgprGSUSync], s[sgprSrdDd:sgprSrdDd+3], glc
 
 
 //s_mov_b32 s[sgprGSUSumIdx] 1
-s_mul_i32 s[sgprtmp2E], MT1, s[sgprWorkGroup1]                        // 
+s_mul_i32 s[sgprtmp2E], MT1, s[sgprWorkGroup1]                        //
 s_mul_hi_u32 s[sgprtmp1E], s[sgprtmp2E], s[sgprStrideD1J]             // cal GSU D position
-s_mul_i32 s[sgprtmp0E], s[sgprtmp2E], s[sgprStrideD1J]                // 
+s_mul_i32 s[sgprtmp0E], s[sgprtmp2E], s[sgprStrideD1J]                //
 s_lshl_b64 s[sgprtmp0E:sgprtmp1E], s[sgprtmp0E:sgprtmp1E], 2          // scale by bpe
 s_add_u32 s[sgprSrdD+0], s[sgprAddressD+0], s[sgprtmp0E]              // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprAddressD+1], s[sgprtmp1E]             // add hi to SRD
 
-s_mul_hi_u32 s[sgprtmp1E], s[sgprWorkGroup2], s[sgprStrideDK]         // 
-s_mul_i32 s[sgprtmp0E], s[sgprWorkGroup2], s[sgprStrideDK]            // 
+s_mul_hi_u32 s[sgprtmp1E], s[sgprWorkGroup2], s[sgprStrideDK]         //
+s_mul_i32 s[sgprtmp0E], s[sgprWorkGroup2], s[sgprStrideDK]            //
 s_lshl_b64 s[sgprtmp0E:sgprtmp1E], s[sgprtmp0E:sgprtmp1E], 2          // scale by bpe
 s_add_u32 s[sgprSrdD+0], s[sgprSrdD+0], s[sgprtmp0E]                  // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprSrdD+1], s[sgprtmp1E]                 // add hi to SRD
@@ -3779,20 +3779,20 @@ s_cbranch_scc0 label_KernelEnd //label_GW_End_1 //label_AFTERsummary_Edge
 buffer_load_dwordx4 v[28+4*0:28+3+4*0], v9, s[sgprSrdD:sgprSrdD+3], 0 offen offset:0 // load GSU D
 
 // GSU Output Buffer offset: Free0 + (Free1-1)*StrideC1J + (Free2-1)*StrideCK * GSUIdx * bpe%s
-//s_mul_hi_u32 s[sgprtmp1E], s[sgprSizesFree+0], s[sgprGSUSumIdx]   // 
-//s_mul_i32 s[sgprtmp0E], s[sgprSizesFree+0], s[sgprGSUSumIdx]      // 
+//s_mul_hi_u32 s[sgprtmp1E], s[sgprSizesFree+0], s[sgprGSUSumIdx]   //
+//s_mul_i32 s[sgprtmp0E], s[sgprSizesFree+0], s[sgprGSUSumIdx]      //
 s_sub_u32 s[sgprtmp5E], s[sgprSizesFree+1], 1                       // cal GSU D offset
-//s_mul_i32 s[sgprtmp5E], s[sgprtmp5E], s[sgprGSUSumIdx]            // 
-s_mul_hi_u32 s[sgprtmp3E], s[sgprtmp5E], s[sgprStrideC1J]           // 
-s_mul_i32 s[sgprtmp2E], s[sgprtmp5E], s[sgprStrideC1J]              // 
-s_add_u32 s[sgprtmp0E], s[sgprSizesFree+0], s[sgprtmp2E]            // 
-s_addc_u32 s[sgprtmp1E], 0, s[sgprtmp3E]                            // 
-s_sub_u32 s[sgprtmp5E], s[sgprSizesFree+2], 1                       // 
-//s_mul_i32 s[sgprtmp5E], s[sgprtmp5E], s[sgprGSUSumIdx]            // 
-s_mul_hi_u32 s[sgprtmp3E], s[sgprtmp5E], s[sgprStrideCK]            // 
-s_mul_i32 s[sgprtmp2E], s[sgprtmp5E], s[sgprStrideCK]               // 
-s_add_u32 s[sgprtmp0E], s[sgprtmp0E], s[sgprtmp2E]                  // 
-s_addc_u32 s[sgprtmp1E], s[sgprtmp1E], s[sgprtmp3E]                 // 
+//s_mul_i32 s[sgprtmp5E], s[sgprtmp5E], s[sgprGSUSumIdx]            //
+s_mul_hi_u32 s[sgprtmp3E], s[sgprtmp5E], s[sgprStrideC1J]           //
+s_mul_i32 s[sgprtmp2E], s[sgprtmp5E], s[sgprStrideC1J]              //
+s_add_u32 s[sgprtmp0E], s[sgprSizesFree+0], s[sgprtmp2E]            //
+s_addc_u32 s[sgprtmp1E], 0, s[sgprtmp3E]                            //
+s_sub_u32 s[sgprtmp5E], s[sgprSizesFree+2], 1                       //
+//s_mul_i32 s[sgprtmp5E], s[sgprtmp5E], s[sgprGSUSumIdx]            //
+s_mul_hi_u32 s[sgprtmp3E], s[sgprtmp5E], s[sgprStrideCK]            //
+s_mul_i32 s[sgprtmp2E], s[sgprtmp5E], s[sgprStrideCK]               //
+s_add_u32 s[sgprtmp0E], s[sgprtmp0E], s[sgprtmp2E]                  //
+s_addc_u32 s[sgprtmp1E], s[sgprtmp1E], s[sgprtmp3E]                 //
 s_lshl_b64 s[sgprtmp2E:sgprtmp3E], s[sgprtmp0E:sgprtmp1E], 2        // scale by bpe
 
 
@@ -4033,20 +4033,20 @@ v_pk_mul_f32 v[vgprValuC+30:vgprValuC+30+1], v[22:23], v[vgprValuC+30:vgprValuC+
 //synchronizer store
 
 V_LSHRREV_B32 v9, 0x1, v9
-    
+
 
 s_mov_b32 s[sgprSrdD+2], 0x80000000
-s_mov_b32 s[sgprSrdD+3], Srd127_96                 // 
+s_mov_b32 s[sgprSrdD+3], Srd127_96                 //
 
 s_mul_i32 s[sgprtmp2E], MT1, s[sgprWorkGroup1]                    // cal store position
-s_mul_hi_u32 s[sgprtmp1E], s[sgprtmp2E], s[sgprStrideC1J]         // 
-s_mul_i32 s[sgprtmp0E], s[sgprtmp2E], s[sgprStrideC1J]            // 
+s_mul_hi_u32 s[sgprtmp1E], s[sgprtmp2E], s[sgprStrideC1J]         //
+s_mul_i32 s[sgprtmp0E], s[sgprtmp2E], s[sgprStrideC1J]            //
 s_lshl_b64 s[sgprtmp0E:sgprtmp0E+1], s[sgprtmp0E:sgprtmp0E+1], 1  // scale by bpe
 s_add_u32 s[sgprSrdD+0], s[sgprAddressTC+0], s[sgprtmp0E]         // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprAddressTC+1], s[sgprtmp1E]        // add hi to SRD
 
-s_mul_hi_u32 s[sgprtmp1E], s[sgprWorkGroup2], s[sgprStrideCK]     // 
-s_mul_i32 s[sgprtmp0E], s[sgprWorkGroup2], s[sgprStrideCK]        // 
+s_mul_hi_u32 s[sgprtmp1E], s[sgprWorkGroup2], s[sgprStrideCK]     //
+s_mul_i32 s[sgprtmp0E], s[sgprWorkGroup2], s[sgprStrideCK]        //
 s_lshl_b64 s[sgprtmp0E:sgprtmp0E+1], s[sgprtmp0E:sgprtmp0E+1], 1  // scale by bpe
 s_add_u32 s[sgprSrdD+0], s[sgprSrdD+0], s[sgprtmp0E]              // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprSrdD+1], s[sgprtmp1E]             // add hi to SRD
@@ -4103,7 +4103,7 @@ s_atomic_add s[sgprGSUSync], s[sgprKernArgAddress:sgprKernArgAddress+1], 0x8C gl
 
 
 s_waitcnt lgkmcnt(0)
-s_cmp_eq_u32 s[sgprGSUSync], 1    // 
+s_cmp_eq_u32 s[sgprGSUSync], 1    //
 s_cbranch_scc0 Summation_End_OptNLL_7           // jump if XX required
 //check done
 
@@ -4124,7 +4124,7 @@ s_mul_i32 s[sgprtmp2E], s[sgprStrideDK], 25                      // Scale by Str
 s_lshl_b64 s[sgprtmp2E:sgprtmp2E+1], s[sgprtmp2E:sgprtmp2E+1], 2  // scale by bpe
 
 s_mov_b32 s[sgprSrdDd+2], 0x80000000
-s_mov_b32 s[sgprSrdDd+3], Srd127_96                               // 
+s_mov_b32 s[sgprSrdDd+3], Srd127_96                               //
 
 s_add_u32 s[sgprSrdDd+0], s[sgprAddressD+0], s[sgprtmp2E]         // add lo to SRD
 s_addc_u32 s[sgprSrdDd+1], s[sgprAddressD+1], s[sgprtmp3E]        // add hi to SRD
@@ -4135,15 +4135,15 @@ s_buffer_atomic_add s[sgprGSUSync], s[sgprSrdDd:sgprSrdDd+3], glc
 
 
 //s_mov_b32 s[sgprGSUSumIdx] 1
-s_mul_i32 s[sgprtmp2E], MT1, s[sgprWorkGroup1]                        // 
+s_mul_i32 s[sgprtmp2E], MT1, s[sgprWorkGroup1]                        //
 s_mul_hi_u32 s[sgprtmp1E], s[sgprtmp2E], s[sgprStrideD1J]             // cal GSU D position
-s_mul_i32 s[sgprtmp0E], s[sgprtmp2E], s[sgprStrideD1J]                // 
+s_mul_i32 s[sgprtmp0E], s[sgprtmp2E], s[sgprStrideD1J]                //
 s_lshl_b64 s[sgprtmp0E:sgprtmp1E], s[sgprtmp0E:sgprtmp1E], 2          // scale by bpe
 s_add_u32 s[sgprSrdD+0], s[sgprAddressD+0], s[sgprtmp0E]              // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprAddressD+1], s[sgprtmp1E]             // add hi to SRD
 
-s_mul_hi_u32 s[sgprtmp1E], s[sgprWorkGroup2], s[sgprStrideDK]         // 
-s_mul_i32 s[sgprtmp0E], s[sgprWorkGroup2], s[sgprStrideDK]            // 
+s_mul_hi_u32 s[sgprtmp1E], s[sgprWorkGroup2], s[sgprStrideDK]         //
+s_mul_i32 s[sgprtmp0E], s[sgprWorkGroup2], s[sgprStrideDK]            //
 s_lshl_b64 s[sgprtmp0E:sgprtmp1E], s[sgprtmp0E:sgprtmp1E], 2          // scale by bpe
 s_add_u32 s[sgprSrdD+0], s[sgprSrdD+0], s[sgprtmp0E]                  // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprSrdD+1], s[sgprtmp1E]                 // add hi to SRD
@@ -4158,20 +4158,20 @@ s_cbranch_scc0 label_KernelEnd //label_GW_End_1 //label_AFTERsummary_Edge
 buffer_load_dwordx4 v[28+4*0:28+3+4*0], v9, s[sgprSrdD:sgprSrdD+3], 0 offen offset:0 // load GSU D
 
 // GSU Output Buffer offset: Free0 + (Free1-1)*StrideC1J + (Free2-1)*StrideCK * GSUIdx * bpe%s
-//s_mul_hi_u32 s[sgprtmp1E], s[sgprSizesFree+0], s[sgprGSUSumIdx]   // 
-//s_mul_i32 s[sgprtmp0E], s[sgprSizesFree+0], s[sgprGSUSumIdx]      // 
+//s_mul_hi_u32 s[sgprtmp1E], s[sgprSizesFree+0], s[sgprGSUSumIdx]   //
+//s_mul_i32 s[sgprtmp0E], s[sgprSizesFree+0], s[sgprGSUSumIdx]      //
 s_sub_u32 s[sgprtmp5E], s[sgprSizesFree+1], 1                       // cal GSU D offset
-//s_mul_i32 s[sgprtmp5E], s[sgprtmp5E], s[sgprGSUSumIdx]            // 
-s_mul_hi_u32 s[sgprtmp3E], s[sgprtmp5E], s[sgprStrideC1J]           // 
-s_mul_i32 s[sgprtmp2E], s[sgprtmp5E], s[sgprStrideC1J]              // 
-s_add_u32 s[sgprtmp0E], s[sgprSizesFree+0], s[sgprtmp2E]            // 
-s_addc_u32 s[sgprtmp1E], 0, s[sgprtmp3E]                            // 
-s_sub_u32 s[sgprtmp5E], s[sgprSizesFree+2], 1                       // 
-//s_mul_i32 s[sgprtmp5E], s[sgprtmp5E], s[sgprGSUSumIdx]            // 
-s_mul_hi_u32 s[sgprtmp3E], s[sgprtmp5E], s[sgprStrideCK]            // 
-s_mul_i32 s[sgprtmp2E], s[sgprtmp5E], s[sgprStrideCK]               // 
-s_add_u32 s[sgprtmp0E], s[sgprtmp0E], s[sgprtmp2E]                  // 
-s_addc_u32 s[sgprtmp1E], s[sgprtmp1E], s[sgprtmp3E]                 // 
+//s_mul_i32 s[sgprtmp5E], s[sgprtmp5E], s[sgprGSUSumIdx]            //
+s_mul_hi_u32 s[sgprtmp3E], s[sgprtmp5E], s[sgprStrideC1J]           //
+s_mul_i32 s[sgprtmp2E], s[sgprtmp5E], s[sgprStrideC1J]              //
+s_add_u32 s[sgprtmp0E], s[sgprSizesFree+0], s[sgprtmp2E]            //
+s_addc_u32 s[sgprtmp1E], 0, s[sgprtmp3E]                            //
+s_sub_u32 s[sgprtmp5E], s[sgprSizesFree+2], 1                       //
+//s_mul_i32 s[sgprtmp5E], s[sgprtmp5E], s[sgprGSUSumIdx]            //
+s_mul_hi_u32 s[sgprtmp3E], s[sgprtmp5E], s[sgprStrideCK]            //
+s_mul_i32 s[sgprtmp2E], s[sgprtmp5E], s[sgprStrideCK]               //
+s_add_u32 s[sgprtmp0E], s[sgprtmp0E], s[sgprtmp2E]                  //
+s_addc_u32 s[sgprtmp1E], s[sgprtmp1E], s[sgprtmp3E]                 //
 s_lshl_b64 s[sgprtmp2E:sgprtmp3E], s[sgprtmp0E:sgprtmp1E], 2        // scale by bpe
 
 
@@ -4424,20 +4424,20 @@ v_pk_mul_f32 v[vgprValuC+30:vgprValuC+30+1], v[22:23], v[vgprValuC+30:vgprValuC+
 //synchronizer store
 
 V_LSHRREV_B32 v9, 0x1, v9
-    
+
 
 s_mov_b32 s[sgprSrdD+2], 0x80000000
-s_mov_b32 s[sgprSrdD+3], Srd127_96                 // 
+s_mov_b32 s[sgprSrdD+3], Srd127_96                 //
 
 s_mul_i32 s[sgprtmp2E], MT1, s[sgprWorkGroup1]                    // cal store position
-s_mul_hi_u32 s[sgprtmp1E], s[sgprtmp2E], s[sgprStrideC1J]         // 
-s_mul_i32 s[sgprtmp0E], s[sgprtmp2E], s[sgprStrideC1J]            // 
+s_mul_hi_u32 s[sgprtmp1E], s[sgprtmp2E], s[sgprStrideC1J]         //
+s_mul_i32 s[sgprtmp0E], s[sgprtmp2E], s[sgprStrideC1J]            //
 s_lshl_b64 s[sgprtmp0E:sgprtmp0E+1], s[sgprtmp0E:sgprtmp0E+1], 1  // scale by bpe
 s_add_u32 s[sgprSrdD+0], s[sgprAddressTC+0], s[sgprtmp0E]         // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprAddressTC+1], s[sgprtmp1E]        // add hi to SRD
 
-s_mul_hi_u32 s[sgprtmp1E], s[sgprWorkGroup2], s[sgprStrideCK]     // 
-s_mul_i32 s[sgprtmp0E], s[sgprWorkGroup2], s[sgprStrideCK]        // 
+s_mul_hi_u32 s[sgprtmp1E], s[sgprWorkGroup2], s[sgprStrideCK]     //
+s_mul_i32 s[sgprtmp0E], s[sgprWorkGroup2], s[sgprStrideCK]        //
 s_lshl_b64 s[sgprtmp0E:sgprtmp0E+1], s[sgprtmp0E:sgprtmp0E+1], 1  // scale by bpe
 s_add_u32 s[sgprSrdD+0], s[sgprSrdD+0], s[sgprtmp0E]              // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprSrdD+1], s[sgprtmp1E]             // add hi to SRD
@@ -5003,7 +5003,7 @@ s_atomic_add s[sgprGSUSync], s[sgprKernArgAddress:sgprKernArgAddress+1], 0x8C gl
 
 
 s_waitcnt lgkmcnt(0)
-s_cmp_eq_u32 s[sgprGSUSync], 1    // 
+s_cmp_eq_u32 s[sgprGSUSync], 1    //
 s_cbranch_scc0 Summation_End_OptNLL2_24           // jump if XX required
 //check done
 
@@ -5024,7 +5024,7 @@ s_mul_i32 s[sgprtmp2E], s[sgprStrideDK], 25                      // Scale by Str
 s_lshl_b64 s[sgprtmp2E:sgprtmp2E+1], s[sgprtmp2E:sgprtmp2E+1], 2  // scale by bpe
 
 s_mov_b32 s[sgprSrdDd+2], 0x80000000
-s_mov_b32 s[sgprSrdDd+3], Srd127_96                               // 
+s_mov_b32 s[sgprSrdDd+3], Srd127_96                               //
 
 s_add_u32 s[sgprSrdDd+0], s[sgprAddressD+0], s[sgprtmp2E]         // add lo to SRD
 s_addc_u32 s[sgprSrdDd+1], s[sgprAddressD+1], s[sgprtmp3E]        // add hi to SRD
@@ -5035,15 +5035,15 @@ s_buffer_atomic_add s[sgprGSUSync], s[sgprSrdDd:sgprSrdDd+3], glc
 
 
 //s_mov_b32 s[sgprGSUSumIdx] 1
-s_mul_i32 s[sgprtmp2E], MT1, s[sgprWorkGroup1]                        // 
+s_mul_i32 s[sgprtmp2E], MT1, s[sgprWorkGroup1]                        //
 s_mul_hi_u32 s[sgprtmp1E], s[sgprtmp2E], s[sgprStrideD1J]             // cal GSU D position
-s_mul_i32 s[sgprtmp0E], s[sgprtmp2E], s[sgprStrideD1J]                // 
+s_mul_i32 s[sgprtmp0E], s[sgprtmp2E], s[sgprStrideD1J]                //
 s_lshl_b64 s[sgprtmp0E:sgprtmp1E], s[sgprtmp0E:sgprtmp1E], 2          // scale by bpe
 s_add_u32 s[sgprSrdD+0], s[sgprAddressD+0], s[sgprtmp0E]              // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprAddressD+1], s[sgprtmp1E]             // add hi to SRD
 
-s_mul_hi_u32 s[sgprtmp1E], s[sgprWorkGroup2], s[sgprStrideDK]         // 
-s_mul_i32 s[sgprtmp0E], s[sgprWorkGroup2], s[sgprStrideDK]            // 
+s_mul_hi_u32 s[sgprtmp1E], s[sgprWorkGroup2], s[sgprStrideDK]         //
+s_mul_i32 s[sgprtmp0E], s[sgprWorkGroup2], s[sgprStrideDK]            //
 s_lshl_b64 s[sgprtmp0E:sgprtmp1E], s[sgprtmp0E:sgprtmp1E], 2          // scale by bpe
 s_add_u32 s[sgprSrdD+0], s[sgprSrdD+0], s[sgprtmp0E]                  // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprSrdD+1], s[sgprtmp1E]                 // add hi to SRD
@@ -5058,20 +5058,20 @@ s_cbranch_scc0 label_KernelEnd //label_GW_End_1 //label_AFTERsummary_Edge
 buffer_load_dwordx4 v[28+4*0:28+3+4*0], v9, s[sgprSrdD:sgprSrdD+3], 0 offen offset:0 // load GSU D
 
 // GSU Output Buffer offset: Free0 + (Free1-1)*StrideC1J + (Free2-1)*StrideCK * GSUIdx * bpe%s
-//s_mul_hi_u32 s[sgprtmp1E], s[sgprSizesFree+0], s[sgprGSUSumIdx]   // 
-//s_mul_i32 s[sgprtmp0E], s[sgprSizesFree+0], s[sgprGSUSumIdx]      // 
+//s_mul_hi_u32 s[sgprtmp1E], s[sgprSizesFree+0], s[sgprGSUSumIdx]   //
+//s_mul_i32 s[sgprtmp0E], s[sgprSizesFree+0], s[sgprGSUSumIdx]      //
 s_sub_u32 s[sgprtmp5E], s[sgprSizesFree+1], 1                       // cal GSU D offset
-//s_mul_i32 s[sgprtmp5E], s[sgprtmp5E], s[sgprGSUSumIdx]            // 
-s_mul_hi_u32 s[sgprtmp3E], s[sgprtmp5E], s[sgprStrideC1J]           // 
-s_mul_i32 s[sgprtmp2E], s[sgprtmp5E], s[sgprStrideC1J]              // 
-s_add_u32 s[sgprtmp0E], s[sgprSizesFree+0], s[sgprtmp2E]            // 
-s_addc_u32 s[sgprtmp1E], 0, s[sgprtmp3E]                            // 
-s_sub_u32 s[sgprtmp5E], s[sgprSizesFree+2], 1                       // 
-//s_mul_i32 s[sgprtmp5E], s[sgprtmp5E], s[sgprGSUSumIdx]            // 
-s_mul_hi_u32 s[sgprtmp3E], s[sgprtmp5E], s[sgprStrideCK]            // 
-s_mul_i32 s[sgprtmp2E], s[sgprtmp5E], s[sgprStrideCK]               // 
-s_add_u32 s[sgprtmp0E], s[sgprtmp0E], s[sgprtmp2E]                  // 
-s_addc_u32 s[sgprtmp1E], s[sgprtmp1E], s[sgprtmp3E]                 // 
+//s_mul_i32 s[sgprtmp5E], s[sgprtmp5E], s[sgprGSUSumIdx]            //
+s_mul_hi_u32 s[sgprtmp3E], s[sgprtmp5E], s[sgprStrideC1J]           //
+s_mul_i32 s[sgprtmp2E], s[sgprtmp5E], s[sgprStrideC1J]              //
+s_add_u32 s[sgprtmp0E], s[sgprSizesFree+0], s[sgprtmp2E]            //
+s_addc_u32 s[sgprtmp1E], 0, s[sgprtmp3E]                            //
+s_sub_u32 s[sgprtmp5E], s[sgprSizesFree+2], 1                       //
+//s_mul_i32 s[sgprtmp5E], s[sgprtmp5E], s[sgprGSUSumIdx]            //
+s_mul_hi_u32 s[sgprtmp3E], s[sgprtmp5E], s[sgprStrideCK]            //
+s_mul_i32 s[sgprtmp2E], s[sgprtmp5E], s[sgprStrideCK]               //
+s_add_u32 s[sgprtmp0E], s[sgprtmp0E], s[sgprtmp2E]                  //
+s_addc_u32 s[sgprtmp1E], s[sgprtmp1E], s[sgprtmp3E]                 //
 s_lshl_b64 s[sgprtmp2E:sgprtmp3E], s[sgprtmp0E:sgprtmp1E], 2        // scale by bpe
 
 
@@ -5302,20 +5302,20 @@ v_pk_mul_f32 v[vgprValuC+30:vgprValuC+30+1], v[22:23], v[vgprValuC+30:vgprValuC+
 //synchronizer store
 
 V_LSHRREV_B32 v9, 0x1, v9
-    
+
 
 s_mov_b32 s[sgprSrdD+2], 0x80000000
-s_mov_b32 s[sgprSrdD+3], Srd127_96                 // 
+s_mov_b32 s[sgprSrdD+3], Srd127_96                 //
 
 s_mul_i32 s[sgprtmp2E], MT1, s[sgprWorkGroup1]                    // cal store position
-s_mul_hi_u32 s[sgprtmp1E], s[sgprtmp2E], s[sgprStrideC1J]         // 
-s_mul_i32 s[sgprtmp0E], s[sgprtmp2E], s[sgprStrideC1J]            // 
+s_mul_hi_u32 s[sgprtmp1E], s[sgprtmp2E], s[sgprStrideC1J]         //
+s_mul_i32 s[sgprtmp0E], s[sgprtmp2E], s[sgprStrideC1J]            //
 s_lshl_b64 s[sgprtmp0E:sgprtmp0E+1], s[sgprtmp0E:sgprtmp0E+1], 1  // scale by bpe
 s_add_u32 s[sgprSrdD+0], s[sgprAddressTC+0], s[sgprtmp0E]         // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprAddressTC+1], s[sgprtmp1E]        // add hi to SRD
 
-s_mul_hi_u32 s[sgprtmp1E], s[sgprWorkGroup2], s[sgprStrideCK]     // 
-s_mul_i32 s[sgprtmp0E], s[sgprWorkGroup2], s[sgprStrideCK]        // 
+s_mul_hi_u32 s[sgprtmp1E], s[sgprWorkGroup2], s[sgprStrideCK]     //
+s_mul_i32 s[sgprtmp0E], s[sgprWorkGroup2], s[sgprStrideCK]        //
 s_lshl_b64 s[sgprtmp0E:sgprtmp0E+1], s[sgprtmp0E:sgprtmp0E+1], 1  // scale by bpe
 s_add_u32 s[sgprSrdD+0], s[sgprSrdD+0], s[sgprtmp0E]              // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprSrdD+1], s[sgprtmp1E]             // add hi to SRD
@@ -5372,7 +5372,7 @@ s_atomic_add s[sgprGSUSync], s[sgprKernArgAddress:sgprKernArgAddress+1], 0x8C gl
 
 
 s_waitcnt lgkmcnt(0)
-s_cmp_eq_u32 s[sgprGSUSync], 1    // 
+s_cmp_eq_u32 s[sgprGSUSync], 1    //
 s_cbranch_scc0 Summation_End_OptNLL2_25           // jump if XX required
 //check done
 
@@ -5393,7 +5393,7 @@ s_mul_i32 s[sgprtmp2E], s[sgprStrideDK], 25                      // Scale by Str
 s_lshl_b64 s[sgprtmp2E:sgprtmp2E+1], s[sgprtmp2E:sgprtmp2E+1], 2  // scale by bpe
 
 s_mov_b32 s[sgprSrdDd+2], 0x80000000
-s_mov_b32 s[sgprSrdDd+3], Srd127_96                               // 
+s_mov_b32 s[sgprSrdDd+3], Srd127_96                               //
 
 s_add_u32 s[sgprSrdDd+0], s[sgprAddressD+0], s[sgprtmp2E]         // add lo to SRD
 s_addc_u32 s[sgprSrdDd+1], s[sgprAddressD+1], s[sgprtmp3E]        // add hi to SRD
@@ -5404,15 +5404,15 @@ s_buffer_atomic_add s[sgprGSUSync], s[sgprSrdDd:sgprSrdDd+3], glc
 
 
 //s_mov_b32 s[sgprGSUSumIdx] 1
-s_mul_i32 s[sgprtmp2E], MT1, s[sgprWorkGroup1]                        // 
+s_mul_i32 s[sgprtmp2E], MT1, s[sgprWorkGroup1]                        //
 s_mul_hi_u32 s[sgprtmp1E], s[sgprtmp2E], s[sgprStrideD1J]             // cal GSU D position
-s_mul_i32 s[sgprtmp0E], s[sgprtmp2E], s[sgprStrideD1J]                // 
+s_mul_i32 s[sgprtmp0E], s[sgprtmp2E], s[sgprStrideD1J]                //
 s_lshl_b64 s[sgprtmp0E:sgprtmp1E], s[sgprtmp0E:sgprtmp1E], 2          // scale by bpe
 s_add_u32 s[sgprSrdD+0], s[sgprAddressD+0], s[sgprtmp0E]              // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprAddressD+1], s[sgprtmp1E]             // add hi to SRD
 
-s_mul_hi_u32 s[sgprtmp1E], s[sgprWorkGroup2], s[sgprStrideDK]         // 
-s_mul_i32 s[sgprtmp0E], s[sgprWorkGroup2], s[sgprStrideDK]            // 
+s_mul_hi_u32 s[sgprtmp1E], s[sgprWorkGroup2], s[sgprStrideDK]         //
+s_mul_i32 s[sgprtmp0E], s[sgprWorkGroup2], s[sgprStrideDK]            //
 s_lshl_b64 s[sgprtmp0E:sgprtmp1E], s[sgprtmp0E:sgprtmp1E], 2          // scale by bpe
 s_add_u32 s[sgprSrdD+0], s[sgprSrdD+0], s[sgprtmp0E]                  // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprSrdD+1], s[sgprtmp1E]                 // add hi to SRD
@@ -5427,20 +5427,20 @@ s_cbranch_scc0 label_KernelEnd //label_GW_End_1 //label_AFTERsummary_Edge
 buffer_load_dwordx4 v[28+4*0:28+3+4*0], v9, s[sgprSrdD:sgprSrdD+3], 0 offen offset:0 // load GSU D
 
 // GSU Output Buffer offset: Free0 + (Free1-1)*StrideC1J + (Free2-1)*StrideCK * GSUIdx * bpe%s
-//s_mul_hi_u32 s[sgprtmp1E], s[sgprSizesFree+0], s[sgprGSUSumIdx]   // 
-//s_mul_i32 s[sgprtmp0E], s[sgprSizesFree+0], s[sgprGSUSumIdx]      // 
+//s_mul_hi_u32 s[sgprtmp1E], s[sgprSizesFree+0], s[sgprGSUSumIdx]   //
+//s_mul_i32 s[sgprtmp0E], s[sgprSizesFree+0], s[sgprGSUSumIdx]      //
 s_sub_u32 s[sgprtmp5E], s[sgprSizesFree+1], 1                       // cal GSU D offset
-//s_mul_i32 s[sgprtmp5E], s[sgprtmp5E], s[sgprGSUSumIdx]            // 
-s_mul_hi_u32 s[sgprtmp3E], s[sgprtmp5E], s[sgprStrideC1J]           // 
-s_mul_i32 s[sgprtmp2E], s[sgprtmp5E], s[sgprStrideC1J]              // 
-s_add_u32 s[sgprtmp0E], s[sgprSizesFree+0], s[sgprtmp2E]            // 
-s_addc_u32 s[sgprtmp1E], 0, s[sgprtmp3E]                            // 
-s_sub_u32 s[sgprtmp5E], s[sgprSizesFree+2], 1                       // 
-//s_mul_i32 s[sgprtmp5E], s[sgprtmp5E], s[sgprGSUSumIdx]            // 
-s_mul_hi_u32 s[sgprtmp3E], s[sgprtmp5E], s[sgprStrideCK]            // 
-s_mul_i32 s[sgprtmp2E], s[sgprtmp5E], s[sgprStrideCK]               // 
-s_add_u32 s[sgprtmp0E], s[sgprtmp0E], s[sgprtmp2E]                  // 
-s_addc_u32 s[sgprtmp1E], s[sgprtmp1E], s[sgprtmp3E]                 // 
+//s_mul_i32 s[sgprtmp5E], s[sgprtmp5E], s[sgprGSUSumIdx]            //
+s_mul_hi_u32 s[sgprtmp3E], s[sgprtmp5E], s[sgprStrideC1J]           //
+s_mul_i32 s[sgprtmp2E], s[sgprtmp5E], s[sgprStrideC1J]              //
+s_add_u32 s[sgprtmp0E], s[sgprSizesFree+0], s[sgprtmp2E]            //
+s_addc_u32 s[sgprtmp1E], 0, s[sgprtmp3E]                            //
+s_sub_u32 s[sgprtmp5E], s[sgprSizesFree+2], 1                       //
+//s_mul_i32 s[sgprtmp5E], s[sgprtmp5E], s[sgprGSUSumIdx]            //
+s_mul_hi_u32 s[sgprtmp3E], s[sgprtmp5E], s[sgprStrideCK]            //
+s_mul_i32 s[sgprtmp2E], s[sgprtmp5E], s[sgprStrideCK]               //
+s_add_u32 s[sgprtmp0E], s[sgprtmp0E], s[sgprtmp2E]                  //
+s_addc_u32 s[sgprtmp1E], s[sgprtmp1E], s[sgprtmp3E]                 //
 s_lshl_b64 s[sgprtmp2E:sgprtmp3E], s[sgprtmp0E:sgprtmp1E], 2        // scale by bpe
 
 
@@ -5675,20 +5675,20 @@ v_pk_mul_f32 v[vgprValuC+30:vgprValuC+30+1], v[22:23], v[vgprValuC+30:vgprValuC+
 //synchronizer store
 
 V_LSHRREV_B32 v9, 0x1, v9
-    
+
 
 s_mov_b32 s[sgprSrdD+2], 0x80000000
-s_mov_b32 s[sgprSrdD+3], Srd127_96                 // 
+s_mov_b32 s[sgprSrdD+3], Srd127_96                 //
 
 s_mul_i32 s[sgprtmp2E], MT1, s[sgprWorkGroup1]                    // cal store position
-s_mul_hi_u32 s[sgprtmp1E], s[sgprtmp2E], s[sgprStrideC1J]         // 
-s_mul_i32 s[sgprtmp0E], s[sgprtmp2E], s[sgprStrideC1J]            // 
+s_mul_hi_u32 s[sgprtmp1E], s[sgprtmp2E], s[sgprStrideC1J]         //
+s_mul_i32 s[sgprtmp0E], s[sgprtmp2E], s[sgprStrideC1J]            //
 s_lshl_b64 s[sgprtmp0E:sgprtmp0E+1], s[sgprtmp0E:sgprtmp0E+1], 1  // scale by bpe
 s_add_u32 s[sgprSrdD+0], s[sgprAddressTC+0], s[sgprtmp0E]         // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprAddressTC+1], s[sgprtmp1E]        // add hi to SRD
 
-s_mul_hi_u32 s[sgprtmp1E], s[sgprWorkGroup2], s[sgprStrideCK]     // 
-s_mul_i32 s[sgprtmp0E], s[sgprWorkGroup2], s[sgprStrideCK]        // 
+s_mul_hi_u32 s[sgprtmp1E], s[sgprWorkGroup2], s[sgprStrideCK]     //
+s_mul_i32 s[sgprtmp0E], s[sgprWorkGroup2], s[sgprStrideCK]        //
 s_lshl_b64 s[sgprtmp0E:sgprtmp0E+1], s[sgprtmp0E:sgprtmp0E+1], 1  // scale by bpe
 s_add_u32 s[sgprSrdD+0], s[sgprSrdD+0], s[sgprtmp0E]              // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprSrdD+1], s[sgprtmp1E]             // add hi to SRD
@@ -5745,7 +5745,7 @@ s_atomic_add s[sgprGSUSync], s[sgprKernArgAddress:sgprKernArgAddress+1], 0x8C gl
 
 
 s_waitcnt lgkmcnt(0)
-s_cmp_eq_u32 s[sgprGSUSync], 1    // 
+s_cmp_eq_u32 s[sgprGSUSync], 1    //
 s_cbranch_scc0 Summation_End_OptNLL2_26           // jump if XX required
 //check done
 
@@ -5766,7 +5766,7 @@ s_mul_i32 s[sgprtmp2E], s[sgprStrideDK], 25                      // Scale by Str
 s_lshl_b64 s[sgprtmp2E:sgprtmp2E+1], s[sgprtmp2E:sgprtmp2E+1], 2  // scale by bpe
 
 s_mov_b32 s[sgprSrdDd+2], 0x80000000
-s_mov_b32 s[sgprSrdDd+3], Srd127_96                               // 
+s_mov_b32 s[sgprSrdDd+3], Srd127_96                               //
 
 s_add_u32 s[sgprSrdDd+0], s[sgprAddressD+0], s[sgprtmp2E]         // add lo to SRD
 s_addc_u32 s[sgprSrdDd+1], s[sgprAddressD+1], s[sgprtmp3E]        // add hi to SRD
@@ -5777,15 +5777,15 @@ s_buffer_atomic_add s[sgprGSUSync], s[sgprSrdDd:sgprSrdDd+3], glc
 
 
 //s_mov_b32 s[sgprGSUSumIdx] 1
-s_mul_i32 s[sgprtmp2E], MT1, s[sgprWorkGroup1]                        // 
+s_mul_i32 s[sgprtmp2E], MT1, s[sgprWorkGroup1]                        //
 s_mul_hi_u32 s[sgprtmp1E], s[sgprtmp2E], s[sgprStrideD1J]             // cal GSU D position
-s_mul_i32 s[sgprtmp0E], s[sgprtmp2E], s[sgprStrideD1J]                // 
+s_mul_i32 s[sgprtmp0E], s[sgprtmp2E], s[sgprStrideD1J]                //
 s_lshl_b64 s[sgprtmp0E:sgprtmp1E], s[sgprtmp0E:sgprtmp1E], 2          // scale by bpe
 s_add_u32 s[sgprSrdD+0], s[sgprAddressD+0], s[sgprtmp0E]              // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprAddressD+1], s[sgprtmp1E]             // add hi to SRD
 
-s_mul_hi_u32 s[sgprtmp1E], s[sgprWorkGroup2], s[sgprStrideDK]         // 
-s_mul_i32 s[sgprtmp0E], s[sgprWorkGroup2], s[sgprStrideDK]            // 
+s_mul_hi_u32 s[sgprtmp1E], s[sgprWorkGroup2], s[sgprStrideDK]         //
+s_mul_i32 s[sgprtmp0E], s[sgprWorkGroup2], s[sgprStrideDK]            //
 s_lshl_b64 s[sgprtmp0E:sgprtmp1E], s[sgprtmp0E:sgprtmp1E], 2          // scale by bpe
 s_add_u32 s[sgprSrdD+0], s[sgprSrdD+0], s[sgprtmp0E]                  // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprSrdD+1], s[sgprtmp1E]                 // add hi to SRD
@@ -5800,20 +5800,20 @@ s_cbranch_scc0 label_KernelEnd //label_GW_End_1 //label_AFTERsummary_Edge
 buffer_load_dwordx4 v[28+4*0:28+3+4*0], v9, s[sgprSrdD:sgprSrdD+3], 0 offen offset:0 // load GSU D
 
 // GSU Output Buffer offset: Free0 + (Free1-1)*StrideC1J + (Free2-1)*StrideCK * GSUIdx * bpe%s
-//s_mul_hi_u32 s[sgprtmp1E], s[sgprSizesFree+0], s[sgprGSUSumIdx]   // 
-//s_mul_i32 s[sgprtmp0E], s[sgprSizesFree+0], s[sgprGSUSumIdx]      // 
+//s_mul_hi_u32 s[sgprtmp1E], s[sgprSizesFree+0], s[sgprGSUSumIdx]   //
+//s_mul_i32 s[sgprtmp0E], s[sgprSizesFree+0], s[sgprGSUSumIdx]      //
 s_sub_u32 s[sgprtmp5E], s[sgprSizesFree+1], 1                       // cal GSU D offset
-//s_mul_i32 s[sgprtmp5E], s[sgprtmp5E], s[sgprGSUSumIdx]            // 
-s_mul_hi_u32 s[sgprtmp3E], s[sgprtmp5E], s[sgprStrideC1J]           // 
-s_mul_i32 s[sgprtmp2E], s[sgprtmp5E], s[sgprStrideC1J]              // 
-s_add_u32 s[sgprtmp0E], s[sgprSizesFree+0], s[sgprtmp2E]            // 
-s_addc_u32 s[sgprtmp1E], 0, s[sgprtmp3E]                            // 
-s_sub_u32 s[sgprtmp5E], s[sgprSizesFree+2], 1                       // 
-//s_mul_i32 s[sgprtmp5E], s[sgprtmp5E], s[sgprGSUSumIdx]            // 
-s_mul_hi_u32 s[sgprtmp3E], s[sgprtmp5E], s[sgprStrideCK]            // 
-s_mul_i32 s[sgprtmp2E], s[sgprtmp5E], s[sgprStrideCK]               // 
-s_add_u32 s[sgprtmp0E], s[sgprtmp0E], s[sgprtmp2E]                  // 
-s_addc_u32 s[sgprtmp1E], s[sgprtmp1E], s[sgprtmp3E]                 // 
+//s_mul_i32 s[sgprtmp5E], s[sgprtmp5E], s[sgprGSUSumIdx]            //
+s_mul_hi_u32 s[sgprtmp3E], s[sgprtmp5E], s[sgprStrideC1J]           //
+s_mul_i32 s[sgprtmp2E], s[sgprtmp5E], s[sgprStrideC1J]              //
+s_add_u32 s[sgprtmp0E], s[sgprSizesFree+0], s[sgprtmp2E]            //
+s_addc_u32 s[sgprtmp1E], 0, s[sgprtmp3E]                            //
+s_sub_u32 s[sgprtmp5E], s[sgprSizesFree+2], 1                       //
+//s_mul_i32 s[sgprtmp5E], s[sgprtmp5E], s[sgprGSUSumIdx]            //
+s_mul_hi_u32 s[sgprtmp3E], s[sgprtmp5E], s[sgprStrideCK]            //
+s_mul_i32 s[sgprtmp2E], s[sgprtmp5E], s[sgprStrideCK]               //
+s_add_u32 s[sgprtmp0E], s[sgprtmp0E], s[sgprtmp2E]                  //
+s_addc_u32 s[sgprtmp1E], s[sgprtmp1E], s[sgprtmp3E]                 //
 s_lshl_b64 s[sgprtmp2E:sgprtmp3E], s[sgprtmp0E:sgprtmp1E], 2        // scale by bpe
 
 
@@ -6056,20 +6056,20 @@ v_pk_mul_f32 v[vgprValuC+30:vgprValuC+30+1], v[22:23], v[vgprValuC+30:vgprValuC+
 //synchronizer store
 
 V_LSHRREV_B32 v9, 0x1, v9
-    
+
 
 s_mov_b32 s[sgprSrdD+2], 0x80000000
-s_mov_b32 s[sgprSrdD+3], Srd127_96                 // 
+s_mov_b32 s[sgprSrdD+3], Srd127_96                 //
 
 s_mul_i32 s[sgprtmp2E], MT1, s[sgprWorkGroup1]                    // cal store position
-s_mul_hi_u32 s[sgprtmp1E], s[sgprtmp2E], s[sgprStrideC1J]         // 
-s_mul_i32 s[sgprtmp0E], s[sgprtmp2E], s[sgprStrideC1J]            // 
+s_mul_hi_u32 s[sgprtmp1E], s[sgprtmp2E], s[sgprStrideC1J]         //
+s_mul_i32 s[sgprtmp0E], s[sgprtmp2E], s[sgprStrideC1J]            //
 s_lshl_b64 s[sgprtmp0E:sgprtmp0E+1], s[sgprtmp0E:sgprtmp0E+1], 1  // scale by bpe
 s_add_u32 s[sgprSrdD+0], s[sgprAddressTC+0], s[sgprtmp0E]         // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprAddressTC+1], s[sgprtmp1E]        // add hi to SRD
 
-s_mul_hi_u32 s[sgprtmp1E], s[sgprWorkGroup2], s[sgprStrideCK]     // 
-s_mul_i32 s[sgprtmp0E], s[sgprWorkGroup2], s[sgprStrideCK]        // 
+s_mul_hi_u32 s[sgprtmp1E], s[sgprWorkGroup2], s[sgprStrideCK]     //
+s_mul_i32 s[sgprtmp0E], s[sgprWorkGroup2], s[sgprStrideCK]        //
 s_lshl_b64 s[sgprtmp0E:sgprtmp0E+1], s[sgprtmp0E:sgprtmp0E+1], 1  // scale by bpe
 s_add_u32 s[sgprSrdD+0], s[sgprSrdD+0], s[sgprtmp0E]              // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprSrdD+1], s[sgprtmp1E]             // add hi to SRD
@@ -6126,7 +6126,7 @@ s_atomic_add s[sgprGSUSync], s[sgprKernArgAddress:sgprKernArgAddress+1], 0x8C gl
 
 
 s_waitcnt lgkmcnt(0)
-s_cmp_eq_u32 s[sgprGSUSync], 1    // 
+s_cmp_eq_u32 s[sgprGSUSync], 1    //
 s_cbranch_scc0 Summation_End_OptNLL2_27           // jump if XX required
 //check done
 
@@ -6147,7 +6147,7 @@ s_mul_i32 s[sgprtmp2E], s[sgprStrideDK], 25                      // Scale by Str
 s_lshl_b64 s[sgprtmp2E:sgprtmp2E+1], s[sgprtmp2E:sgprtmp2E+1], 2  // scale by bpe
 
 s_mov_b32 s[sgprSrdDd+2], 0x80000000
-s_mov_b32 s[sgprSrdDd+3], Srd127_96                               // 
+s_mov_b32 s[sgprSrdDd+3], Srd127_96                               //
 
 s_add_u32 s[sgprSrdDd+0], s[sgprAddressD+0], s[sgprtmp2E]         // add lo to SRD
 s_addc_u32 s[sgprSrdDd+1], s[sgprAddressD+1], s[sgprtmp3E]        // add hi to SRD
@@ -6158,15 +6158,15 @@ s_buffer_atomic_add s[sgprGSUSync], s[sgprSrdDd:sgprSrdDd+3], glc
 
 
 //s_mov_b32 s[sgprGSUSumIdx] 1
-s_mul_i32 s[sgprtmp2E], MT1, s[sgprWorkGroup1]                        // 
+s_mul_i32 s[sgprtmp2E], MT1, s[sgprWorkGroup1]                        //
 s_mul_hi_u32 s[sgprtmp1E], s[sgprtmp2E], s[sgprStrideD1J]             // cal GSU D position
-s_mul_i32 s[sgprtmp0E], s[sgprtmp2E], s[sgprStrideD1J]                // 
+s_mul_i32 s[sgprtmp0E], s[sgprtmp2E], s[sgprStrideD1J]                //
 s_lshl_b64 s[sgprtmp0E:sgprtmp1E], s[sgprtmp0E:sgprtmp1E], 2          // scale by bpe
 s_add_u32 s[sgprSrdD+0], s[sgprAddressD+0], s[sgprtmp0E]              // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprAddressD+1], s[sgprtmp1E]             // add hi to SRD
 
-s_mul_hi_u32 s[sgprtmp1E], s[sgprWorkGroup2], s[sgprStrideDK]         // 
-s_mul_i32 s[sgprtmp0E], s[sgprWorkGroup2], s[sgprStrideDK]            // 
+s_mul_hi_u32 s[sgprtmp1E], s[sgprWorkGroup2], s[sgprStrideDK]         //
+s_mul_i32 s[sgprtmp0E], s[sgprWorkGroup2], s[sgprStrideDK]            //
 s_lshl_b64 s[sgprtmp0E:sgprtmp1E], s[sgprtmp0E:sgprtmp1E], 2          // scale by bpe
 s_add_u32 s[sgprSrdD+0], s[sgprSrdD+0], s[sgprtmp0E]                  // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprSrdD+1], s[sgprtmp1E]                 // add hi to SRD
@@ -6181,20 +6181,20 @@ s_cbranch_scc0 label_KernelEnd //label_GW_End_1 //label_AFTERsummary_Edge
 buffer_load_dwordx4 v[28+4*0:28+3+4*0], v9, s[sgprSrdD:sgprSrdD+3], 0 offen offset:0 // load GSU D
 
 // GSU Output Buffer offset: Free0 + (Free1-1)*StrideC1J + (Free2-1)*StrideCK * GSUIdx * bpe%s
-//s_mul_hi_u32 s[sgprtmp1E], s[sgprSizesFree+0], s[sgprGSUSumIdx]   // 
-//s_mul_i32 s[sgprtmp0E], s[sgprSizesFree+0], s[sgprGSUSumIdx]      // 
+//s_mul_hi_u32 s[sgprtmp1E], s[sgprSizesFree+0], s[sgprGSUSumIdx]   //
+//s_mul_i32 s[sgprtmp0E], s[sgprSizesFree+0], s[sgprGSUSumIdx]      //
 s_sub_u32 s[sgprtmp5E], s[sgprSizesFree+1], 1                       // cal GSU D offset
-//s_mul_i32 s[sgprtmp5E], s[sgprtmp5E], s[sgprGSUSumIdx]            // 
-s_mul_hi_u32 s[sgprtmp3E], s[sgprtmp5E], s[sgprStrideC1J]           // 
-s_mul_i32 s[sgprtmp2E], s[sgprtmp5E], s[sgprStrideC1J]              // 
-s_add_u32 s[sgprtmp0E], s[sgprSizesFree+0], s[sgprtmp2E]            // 
-s_addc_u32 s[sgprtmp1E], 0, s[sgprtmp3E]                            // 
-s_sub_u32 s[sgprtmp5E], s[sgprSizesFree+2], 1                       // 
-//s_mul_i32 s[sgprtmp5E], s[sgprtmp5E], s[sgprGSUSumIdx]            // 
-s_mul_hi_u32 s[sgprtmp3E], s[sgprtmp5E], s[sgprStrideCK]            // 
-s_mul_i32 s[sgprtmp2E], s[sgprtmp5E], s[sgprStrideCK]               // 
-s_add_u32 s[sgprtmp0E], s[sgprtmp0E], s[sgprtmp2E]                  // 
-s_addc_u32 s[sgprtmp1E], s[sgprtmp1E], s[sgprtmp3E]                 // 
+//s_mul_i32 s[sgprtmp5E], s[sgprtmp5E], s[sgprGSUSumIdx]            //
+s_mul_hi_u32 s[sgprtmp3E], s[sgprtmp5E], s[sgprStrideC1J]           //
+s_mul_i32 s[sgprtmp2E], s[sgprtmp5E], s[sgprStrideC1J]              //
+s_add_u32 s[sgprtmp0E], s[sgprSizesFree+0], s[sgprtmp2E]            //
+s_addc_u32 s[sgprtmp1E], 0, s[sgprtmp3E]                            //
+s_sub_u32 s[sgprtmp5E], s[sgprSizesFree+2], 1                       //
+//s_mul_i32 s[sgprtmp5E], s[sgprtmp5E], s[sgprGSUSumIdx]            //
+s_mul_hi_u32 s[sgprtmp3E], s[sgprtmp5E], s[sgprStrideCK]            //
+s_mul_i32 s[sgprtmp2E], s[sgprtmp5E], s[sgprStrideCK]               //
+s_add_u32 s[sgprtmp0E], s[sgprtmp0E], s[sgprtmp2E]                  //
+s_addc_u32 s[sgprtmp1E], s[sgprtmp1E], s[sgprtmp3E]                 //
 s_lshl_b64 s[sgprtmp2E:sgprtmp3E], s[sgprtmp0E:sgprtmp1E], 2        // scale by bpe
 
 
@@ -6465,20 +6465,20 @@ v_pk_mul_f32 v[vgprValuC+30:vgprValuC+30+1], v[22:23], v[vgprValuC+30:vgprValuC+
 //synchronizer store
 
 V_LSHRREV_B32 v9, 0x1, v9
-    
+
 
 s_mov_b32 s[sgprSrdD+2], 0x80000000
-s_mov_b32 s[sgprSrdD+3], Srd127_96                 // 
+s_mov_b32 s[sgprSrdD+3], Srd127_96                 //
 
 s_mul_i32 s[sgprtmp2E], MT1, s[sgprWorkGroup1]                    // cal store position
-s_mul_hi_u32 s[sgprtmp1E], s[sgprtmp2E], s[sgprStrideC1J]         // 
-s_mul_i32 s[sgprtmp0E], s[sgprtmp2E], s[sgprStrideC1J]            // 
+s_mul_hi_u32 s[sgprtmp1E], s[sgprtmp2E], s[sgprStrideC1J]         //
+s_mul_i32 s[sgprtmp0E], s[sgprtmp2E], s[sgprStrideC1J]            //
 s_lshl_b64 s[sgprtmp0E:sgprtmp0E+1], s[sgprtmp0E:sgprtmp0E+1], 1  // scale by bpe
 s_add_u32 s[sgprSrdD+0], s[sgprAddressTC+0], s[sgprtmp0E]         // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprAddressTC+1], s[sgprtmp1E]        // add hi to SRD
 
-s_mul_hi_u32 s[sgprtmp1E], s[sgprWorkGroup2], s[sgprStrideCK]     // 
-s_mul_i32 s[sgprtmp0E], s[sgprWorkGroup2], s[sgprStrideCK]        // 
+s_mul_hi_u32 s[sgprtmp1E], s[sgprWorkGroup2], s[sgprStrideCK]     //
+s_mul_i32 s[sgprtmp0E], s[sgprWorkGroup2], s[sgprStrideCK]        //
 s_lshl_b64 s[sgprtmp0E:sgprtmp0E+1], s[sgprtmp0E:sgprtmp0E+1], 1  // scale by bpe
 s_add_u32 s[sgprSrdD+0], s[sgprSrdD+0], s[sgprtmp0E]              // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprSrdD+1], s[sgprtmp1E]             // add hi to SRD
@@ -6535,7 +6535,7 @@ s_atomic_add s[sgprGSUSync], s[sgprKernArgAddress:sgprKernArgAddress+1], 0x8C gl
 
 
 s_waitcnt lgkmcnt(0)
-s_cmp_eq_u32 s[sgprGSUSync], 1    // 
+s_cmp_eq_u32 s[sgprGSUSync], 1    //
 s_cbranch_scc0 Summation_End_OptNLL2_28           // jump if XX required
 //check done
 
@@ -6556,7 +6556,7 @@ s_mul_i32 s[sgprtmp2E], s[sgprStrideDK], 25                      // Scale by Str
 s_lshl_b64 s[sgprtmp2E:sgprtmp2E+1], s[sgprtmp2E:sgprtmp2E+1], 2  // scale by bpe
 
 s_mov_b32 s[sgprSrdDd+2], 0x80000000
-s_mov_b32 s[sgprSrdDd+3], Srd127_96                               // 
+s_mov_b32 s[sgprSrdDd+3], Srd127_96                               //
 
 s_add_u32 s[sgprSrdDd+0], s[sgprAddressD+0], s[sgprtmp2E]         // add lo to SRD
 s_addc_u32 s[sgprSrdDd+1], s[sgprAddressD+1], s[sgprtmp3E]        // add hi to SRD
@@ -6567,15 +6567,15 @@ s_buffer_atomic_add s[sgprGSUSync], s[sgprSrdDd:sgprSrdDd+3], glc
 
 
 //s_mov_b32 s[sgprGSUSumIdx] 1
-s_mul_i32 s[sgprtmp2E], MT1, s[sgprWorkGroup1]                        // 
+s_mul_i32 s[sgprtmp2E], MT1, s[sgprWorkGroup1]                        //
 s_mul_hi_u32 s[sgprtmp1E], s[sgprtmp2E], s[sgprStrideD1J]             // cal GSU D position
-s_mul_i32 s[sgprtmp0E], s[sgprtmp2E], s[sgprStrideD1J]                // 
+s_mul_i32 s[sgprtmp0E], s[sgprtmp2E], s[sgprStrideD1J]                //
 s_lshl_b64 s[sgprtmp0E:sgprtmp1E], s[sgprtmp0E:sgprtmp1E], 2          // scale by bpe
 s_add_u32 s[sgprSrdD+0], s[sgprAddressD+0], s[sgprtmp0E]              // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprAddressD+1], s[sgprtmp1E]             // add hi to SRD
 
-s_mul_hi_u32 s[sgprtmp1E], s[sgprWorkGroup2], s[sgprStrideDK]         // 
-s_mul_i32 s[sgprtmp0E], s[sgprWorkGroup2], s[sgprStrideDK]            // 
+s_mul_hi_u32 s[sgprtmp1E], s[sgprWorkGroup2], s[sgprStrideDK]         //
+s_mul_i32 s[sgprtmp0E], s[sgprWorkGroup2], s[sgprStrideDK]            //
 s_lshl_b64 s[sgprtmp0E:sgprtmp1E], s[sgprtmp0E:sgprtmp1E], 2          // scale by bpe
 s_add_u32 s[sgprSrdD+0], s[sgprSrdD+0], s[sgprtmp0E]                  // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprSrdD+1], s[sgprtmp1E]                 // add hi to SRD
@@ -6590,20 +6590,20 @@ s_cbranch_scc0 label_KernelEnd //label_GW_End_1 //label_AFTERsummary_Edge
 buffer_load_dwordx4 v[28+4*0:28+3+4*0], v9, s[sgprSrdD:sgprSrdD+3], 0 offen offset:0 // load GSU D
 
 // GSU Output Buffer offset: Free0 + (Free1-1)*StrideC1J + (Free2-1)*StrideCK * GSUIdx * bpe%s
-//s_mul_hi_u32 s[sgprtmp1E], s[sgprSizesFree+0], s[sgprGSUSumIdx]   // 
-//s_mul_i32 s[sgprtmp0E], s[sgprSizesFree+0], s[sgprGSUSumIdx]      // 
+//s_mul_hi_u32 s[sgprtmp1E], s[sgprSizesFree+0], s[sgprGSUSumIdx]   //
+//s_mul_i32 s[sgprtmp0E], s[sgprSizesFree+0], s[sgprGSUSumIdx]      //
 s_sub_u32 s[sgprtmp5E], s[sgprSizesFree+1], 1                       // cal GSU D offset
-//s_mul_i32 s[sgprtmp5E], s[sgprtmp5E], s[sgprGSUSumIdx]            // 
-s_mul_hi_u32 s[sgprtmp3E], s[sgprtmp5E], s[sgprStrideC1J]           // 
-s_mul_i32 s[sgprtmp2E], s[sgprtmp5E], s[sgprStrideC1J]              // 
-s_add_u32 s[sgprtmp0E], s[sgprSizesFree+0], s[sgprtmp2E]            // 
-s_addc_u32 s[sgprtmp1E], 0, s[sgprtmp3E]                            // 
-s_sub_u32 s[sgprtmp5E], s[sgprSizesFree+2], 1                       // 
-//s_mul_i32 s[sgprtmp5E], s[sgprtmp5E], s[sgprGSUSumIdx]            // 
-s_mul_hi_u32 s[sgprtmp3E], s[sgprtmp5E], s[sgprStrideCK]            // 
-s_mul_i32 s[sgprtmp2E], s[sgprtmp5E], s[sgprStrideCK]               // 
-s_add_u32 s[sgprtmp0E], s[sgprtmp0E], s[sgprtmp2E]                  // 
-s_addc_u32 s[sgprtmp1E], s[sgprtmp1E], s[sgprtmp3E]                 // 
+//s_mul_i32 s[sgprtmp5E], s[sgprtmp5E], s[sgprGSUSumIdx]            //
+s_mul_hi_u32 s[sgprtmp3E], s[sgprtmp5E], s[sgprStrideC1J]           //
+s_mul_i32 s[sgprtmp2E], s[sgprtmp5E], s[sgprStrideC1J]              //
+s_add_u32 s[sgprtmp0E], s[sgprSizesFree+0], s[sgprtmp2E]            //
+s_addc_u32 s[sgprtmp1E], 0, s[sgprtmp3E]                            //
+s_sub_u32 s[sgprtmp5E], s[sgprSizesFree+2], 1                       //
+//s_mul_i32 s[sgprtmp5E], s[sgprtmp5E], s[sgprGSUSumIdx]            //
+s_mul_hi_u32 s[sgprtmp3E], s[sgprtmp5E], s[sgprStrideCK]            //
+s_mul_i32 s[sgprtmp2E], s[sgprtmp5E], s[sgprStrideCK]               //
+s_add_u32 s[sgprtmp0E], s[sgprtmp0E], s[sgprtmp2E]                  //
+s_addc_u32 s[sgprtmp1E], s[sgprtmp1E], s[sgprtmp3E]                 //
 s_lshl_b64 s[sgprtmp2E:sgprtmp3E], s[sgprtmp0E:sgprtmp1E], 2        // scale by bpe
 
 
@@ -6846,20 +6846,20 @@ v_pk_mul_f32 v[vgprValuC+30:vgprValuC+30+1], v[22:23], v[vgprValuC+30:vgprValuC+
 //synchronizer store
 
 V_LSHRREV_B32 v9, 0x1, v9
-    
+
 
 s_mov_b32 s[sgprSrdD+2], 0x80000000
-s_mov_b32 s[sgprSrdD+3], Srd127_96                 // 
+s_mov_b32 s[sgprSrdD+3], Srd127_96                 //
 
 s_mul_i32 s[sgprtmp2E], MT1, s[sgprWorkGroup1]                    // cal store position
-s_mul_hi_u32 s[sgprtmp1E], s[sgprtmp2E], s[sgprStrideC1J]         // 
-s_mul_i32 s[sgprtmp0E], s[sgprtmp2E], s[sgprStrideC1J]            // 
+s_mul_hi_u32 s[sgprtmp1E], s[sgprtmp2E], s[sgprStrideC1J]         //
+s_mul_i32 s[sgprtmp0E], s[sgprtmp2E], s[sgprStrideC1J]            //
 s_lshl_b64 s[sgprtmp0E:sgprtmp0E+1], s[sgprtmp0E:sgprtmp0E+1], 1  // scale by bpe
 s_add_u32 s[sgprSrdD+0], s[sgprAddressTC+0], s[sgprtmp0E]         // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprAddressTC+1], s[sgprtmp1E]        // add hi to SRD
 
-s_mul_hi_u32 s[sgprtmp1E], s[sgprWorkGroup2], s[sgprStrideCK]     // 
-s_mul_i32 s[sgprtmp0E], s[sgprWorkGroup2], s[sgprStrideCK]        // 
+s_mul_hi_u32 s[sgprtmp1E], s[sgprWorkGroup2], s[sgprStrideCK]     //
+s_mul_i32 s[sgprtmp0E], s[sgprWorkGroup2], s[sgprStrideCK]        //
 s_lshl_b64 s[sgprtmp0E:sgprtmp0E+1], s[sgprtmp0E:sgprtmp0E+1], 1  // scale by bpe
 s_add_u32 s[sgprSrdD+0], s[sgprSrdD+0], s[sgprtmp0E]              // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprSrdD+1], s[sgprtmp1E]             // add hi to SRD
@@ -6916,7 +6916,7 @@ s_atomic_add s[sgprGSUSync], s[sgprKernArgAddress:sgprKernArgAddress+1], 0x8C gl
 
 
 s_waitcnt lgkmcnt(0)
-s_cmp_eq_u32 s[sgprGSUSync], 1    // 
+s_cmp_eq_u32 s[sgprGSUSync], 1    //
 s_cbranch_scc0 Summation_End_OptNLL2_29           // jump if XX required
 //check done
 
@@ -6937,7 +6937,7 @@ s_mul_i32 s[sgprtmp2E], s[sgprStrideDK], 25                      // Scale by Str
 s_lshl_b64 s[sgprtmp2E:sgprtmp2E+1], s[sgprtmp2E:sgprtmp2E+1], 2  // scale by bpe
 
 s_mov_b32 s[sgprSrdDd+2], 0x80000000
-s_mov_b32 s[sgprSrdDd+3], Srd127_96                               // 
+s_mov_b32 s[sgprSrdDd+3], Srd127_96                               //
 
 s_add_u32 s[sgprSrdDd+0], s[sgprAddressD+0], s[sgprtmp2E]         // add lo to SRD
 s_addc_u32 s[sgprSrdDd+1], s[sgprAddressD+1], s[sgprtmp3E]        // add hi to SRD
@@ -6948,15 +6948,15 @@ s_buffer_atomic_add s[sgprGSUSync], s[sgprSrdDd:sgprSrdDd+3], glc
 
 
 //s_mov_b32 s[sgprGSUSumIdx] 1
-s_mul_i32 s[sgprtmp2E], MT1, s[sgprWorkGroup1]                        // 
+s_mul_i32 s[sgprtmp2E], MT1, s[sgprWorkGroup1]                        //
 s_mul_hi_u32 s[sgprtmp1E], s[sgprtmp2E], s[sgprStrideD1J]             // cal GSU D position
-s_mul_i32 s[sgprtmp0E], s[sgprtmp2E], s[sgprStrideD1J]                // 
+s_mul_i32 s[sgprtmp0E], s[sgprtmp2E], s[sgprStrideD1J]                //
 s_lshl_b64 s[sgprtmp0E:sgprtmp1E], s[sgprtmp0E:sgprtmp1E], 2          // scale by bpe
 s_add_u32 s[sgprSrdD+0], s[sgprAddressD+0], s[sgprtmp0E]              // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprAddressD+1], s[sgprtmp1E]             // add hi to SRD
 
-s_mul_hi_u32 s[sgprtmp1E], s[sgprWorkGroup2], s[sgprStrideDK]         // 
-s_mul_i32 s[sgprtmp0E], s[sgprWorkGroup2], s[sgprStrideDK]            // 
+s_mul_hi_u32 s[sgprtmp1E], s[sgprWorkGroup2], s[sgprStrideDK]         //
+s_mul_i32 s[sgprtmp0E], s[sgprWorkGroup2], s[sgprStrideDK]            //
 s_lshl_b64 s[sgprtmp0E:sgprtmp1E], s[sgprtmp0E:sgprtmp1E], 2          // scale by bpe
 s_add_u32 s[sgprSrdD+0], s[sgprSrdD+0], s[sgprtmp0E]                  // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprSrdD+1], s[sgprtmp1E]                 // add hi to SRD
@@ -6971,20 +6971,20 @@ s_cbranch_scc0 label_KernelEnd //label_GW_End_1 //label_AFTERsummary_Edge
 buffer_load_dwordx4 v[28+4*0:28+3+4*0], v9, s[sgprSrdD:sgprSrdD+3], 0 offen offset:0 // load GSU D
 
 // GSU Output Buffer offset: Free0 + (Free1-1)*StrideC1J + (Free2-1)*StrideCK * GSUIdx * bpe%s
-//s_mul_hi_u32 s[sgprtmp1E], s[sgprSizesFree+0], s[sgprGSUSumIdx]   // 
-//s_mul_i32 s[sgprtmp0E], s[sgprSizesFree+0], s[sgprGSUSumIdx]      // 
+//s_mul_hi_u32 s[sgprtmp1E], s[sgprSizesFree+0], s[sgprGSUSumIdx]   //
+//s_mul_i32 s[sgprtmp0E], s[sgprSizesFree+0], s[sgprGSUSumIdx]      //
 s_sub_u32 s[sgprtmp5E], s[sgprSizesFree+1], 1                       // cal GSU D offset
-//s_mul_i32 s[sgprtmp5E], s[sgprtmp5E], s[sgprGSUSumIdx]            // 
-s_mul_hi_u32 s[sgprtmp3E], s[sgprtmp5E], s[sgprStrideC1J]           // 
-s_mul_i32 s[sgprtmp2E], s[sgprtmp5E], s[sgprStrideC1J]              // 
-s_add_u32 s[sgprtmp0E], s[sgprSizesFree+0], s[sgprtmp2E]            // 
-s_addc_u32 s[sgprtmp1E], 0, s[sgprtmp3E]                            // 
-s_sub_u32 s[sgprtmp5E], s[sgprSizesFree+2], 1                       // 
-//s_mul_i32 s[sgprtmp5E], s[sgprtmp5E], s[sgprGSUSumIdx]            // 
-s_mul_hi_u32 s[sgprtmp3E], s[sgprtmp5E], s[sgprStrideCK]            // 
-s_mul_i32 s[sgprtmp2E], s[sgprtmp5E], s[sgprStrideCK]               // 
-s_add_u32 s[sgprtmp0E], s[sgprtmp0E], s[sgprtmp2E]                  // 
-s_addc_u32 s[sgprtmp1E], s[sgprtmp1E], s[sgprtmp3E]                 // 
+//s_mul_i32 s[sgprtmp5E], s[sgprtmp5E], s[sgprGSUSumIdx]            //
+s_mul_hi_u32 s[sgprtmp3E], s[sgprtmp5E], s[sgprStrideC1J]           //
+s_mul_i32 s[sgprtmp2E], s[sgprtmp5E], s[sgprStrideC1J]              //
+s_add_u32 s[sgprtmp0E], s[sgprSizesFree+0], s[sgprtmp2E]            //
+s_addc_u32 s[sgprtmp1E], 0, s[sgprtmp3E]                            //
+s_sub_u32 s[sgprtmp5E], s[sgprSizesFree+2], 1                       //
+//s_mul_i32 s[sgprtmp5E], s[sgprtmp5E], s[sgprGSUSumIdx]            //
+s_mul_hi_u32 s[sgprtmp3E], s[sgprtmp5E], s[sgprStrideCK]            //
+s_mul_i32 s[sgprtmp2E], s[sgprtmp5E], s[sgprStrideCK]               //
+s_add_u32 s[sgprtmp0E], s[sgprtmp0E], s[sgprtmp2E]                  //
+s_addc_u32 s[sgprtmp1E], s[sgprtmp1E], s[sgprtmp3E]                 //
 s_lshl_b64 s[sgprtmp2E:sgprtmp3E], s[sgprtmp0E:sgprtmp1E], 2        // scale by bpe
 
 
@@ -7219,20 +7219,20 @@ v_pk_mul_f32 v[vgprValuC+30:vgprValuC+30+1], v[22:23], v[vgprValuC+30:vgprValuC+
 //synchronizer store
 
 V_LSHRREV_B32 v9, 0x1, v9
-    
+
 
 s_mov_b32 s[sgprSrdD+2], 0x80000000
-s_mov_b32 s[sgprSrdD+3], Srd127_96                 // 
+s_mov_b32 s[sgprSrdD+3], Srd127_96                 //
 
 s_mul_i32 s[sgprtmp2E], MT1, s[sgprWorkGroup1]                    // cal store position
-s_mul_hi_u32 s[sgprtmp1E], s[sgprtmp2E], s[sgprStrideC1J]         // 
-s_mul_i32 s[sgprtmp0E], s[sgprtmp2E], s[sgprStrideC1J]            // 
+s_mul_hi_u32 s[sgprtmp1E], s[sgprtmp2E], s[sgprStrideC1J]         //
+s_mul_i32 s[sgprtmp0E], s[sgprtmp2E], s[sgprStrideC1J]            //
 s_lshl_b64 s[sgprtmp0E:sgprtmp0E+1], s[sgprtmp0E:sgprtmp0E+1], 1  // scale by bpe
 s_add_u32 s[sgprSrdD+0], s[sgprAddressTC+0], s[sgprtmp0E]         // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprAddressTC+1], s[sgprtmp1E]        // add hi to SRD
 
-s_mul_hi_u32 s[sgprtmp1E], s[sgprWorkGroup2], s[sgprStrideCK]     // 
-s_mul_i32 s[sgprtmp0E], s[sgprWorkGroup2], s[sgprStrideCK]        // 
+s_mul_hi_u32 s[sgprtmp1E], s[sgprWorkGroup2], s[sgprStrideCK]     //
+s_mul_i32 s[sgprtmp0E], s[sgprWorkGroup2], s[sgprStrideCK]        //
 s_lshl_b64 s[sgprtmp0E:sgprtmp0E+1], s[sgprtmp0E:sgprtmp0E+1], 1  // scale by bpe
 s_add_u32 s[sgprSrdD+0], s[sgprSrdD+0], s[sgprtmp0E]              // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprSrdD+1], s[sgprtmp1E]             // add hi to SRD
@@ -7289,7 +7289,7 @@ s_atomic_add s[sgprGSUSync], s[sgprKernArgAddress:sgprKernArgAddress+1], 0x8C gl
 
 
 s_waitcnt lgkmcnt(0)
-s_cmp_eq_u32 s[sgprGSUSync], 1    // 
+s_cmp_eq_u32 s[sgprGSUSync], 1    //
 s_cbranch_scc0 Summation_End_OptNLL2_30           // jump if XX required
 //check done
 
@@ -7310,7 +7310,7 @@ s_mul_i32 s[sgprtmp2E], s[sgprStrideDK], 25                      // Scale by Str
 s_lshl_b64 s[sgprtmp2E:sgprtmp2E+1], s[sgprtmp2E:sgprtmp2E+1], 2  // scale by bpe
 
 s_mov_b32 s[sgprSrdDd+2], 0x80000000
-s_mov_b32 s[sgprSrdDd+3], Srd127_96                               // 
+s_mov_b32 s[sgprSrdDd+3], Srd127_96                               //
 
 s_add_u32 s[sgprSrdDd+0], s[sgprAddressD+0], s[sgprtmp2E]         // add lo to SRD
 s_addc_u32 s[sgprSrdDd+1], s[sgprAddressD+1], s[sgprtmp3E]        // add hi to SRD
@@ -7321,15 +7321,15 @@ s_buffer_atomic_add s[sgprGSUSync], s[sgprSrdDd:sgprSrdDd+3], glc
 
 
 //s_mov_b32 s[sgprGSUSumIdx] 1
-s_mul_i32 s[sgprtmp2E], MT1, s[sgprWorkGroup1]                        // 
+s_mul_i32 s[sgprtmp2E], MT1, s[sgprWorkGroup1]                        //
 s_mul_hi_u32 s[sgprtmp1E], s[sgprtmp2E], s[sgprStrideD1J]             // cal GSU D position
-s_mul_i32 s[sgprtmp0E], s[sgprtmp2E], s[sgprStrideD1J]                // 
+s_mul_i32 s[sgprtmp0E], s[sgprtmp2E], s[sgprStrideD1J]                //
 s_lshl_b64 s[sgprtmp0E:sgprtmp1E], s[sgprtmp0E:sgprtmp1E], 2          // scale by bpe
 s_add_u32 s[sgprSrdD+0], s[sgprAddressD+0], s[sgprtmp0E]              // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprAddressD+1], s[sgprtmp1E]             // add hi to SRD
 
-s_mul_hi_u32 s[sgprtmp1E], s[sgprWorkGroup2], s[sgprStrideDK]         // 
-s_mul_i32 s[sgprtmp0E], s[sgprWorkGroup2], s[sgprStrideDK]            // 
+s_mul_hi_u32 s[sgprtmp1E], s[sgprWorkGroup2], s[sgprStrideDK]         //
+s_mul_i32 s[sgprtmp0E], s[sgprWorkGroup2], s[sgprStrideDK]            //
 s_lshl_b64 s[sgprtmp0E:sgprtmp1E], s[sgprtmp0E:sgprtmp1E], 2          // scale by bpe
 s_add_u32 s[sgprSrdD+0], s[sgprSrdD+0], s[sgprtmp0E]                  // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprSrdD+1], s[sgprtmp1E]                 // add hi to SRD
@@ -7344,20 +7344,20 @@ s_cbranch_scc0 label_KernelEnd //label_GW_End_1 //label_AFTERsummary_Edge
 buffer_load_dwordx4 v[28+4*0:28+3+4*0], v9, s[sgprSrdD:sgprSrdD+3], 0 offen offset:0 // load GSU D
 
 // GSU Output Buffer offset: Free0 + (Free1-1)*StrideC1J + (Free2-1)*StrideCK * GSUIdx * bpe%s
-//s_mul_hi_u32 s[sgprtmp1E], s[sgprSizesFree+0], s[sgprGSUSumIdx]   // 
-//s_mul_i32 s[sgprtmp0E], s[sgprSizesFree+0], s[sgprGSUSumIdx]      // 
+//s_mul_hi_u32 s[sgprtmp1E], s[sgprSizesFree+0], s[sgprGSUSumIdx]   //
+//s_mul_i32 s[sgprtmp0E], s[sgprSizesFree+0], s[sgprGSUSumIdx]      //
 s_sub_u32 s[sgprtmp5E], s[sgprSizesFree+1], 1                       // cal GSU D offset
-//s_mul_i32 s[sgprtmp5E], s[sgprtmp5E], s[sgprGSUSumIdx]            // 
-s_mul_hi_u32 s[sgprtmp3E], s[sgprtmp5E], s[sgprStrideC1J]           // 
-s_mul_i32 s[sgprtmp2E], s[sgprtmp5E], s[sgprStrideC1J]              // 
-s_add_u32 s[sgprtmp0E], s[sgprSizesFree+0], s[sgprtmp2E]            // 
-s_addc_u32 s[sgprtmp1E], 0, s[sgprtmp3E]                            // 
-s_sub_u32 s[sgprtmp5E], s[sgprSizesFree+2], 1                       // 
-//s_mul_i32 s[sgprtmp5E], s[sgprtmp5E], s[sgprGSUSumIdx]            // 
-s_mul_hi_u32 s[sgprtmp3E], s[sgprtmp5E], s[sgprStrideCK]            // 
-s_mul_i32 s[sgprtmp2E], s[sgprtmp5E], s[sgprStrideCK]               // 
-s_add_u32 s[sgprtmp0E], s[sgprtmp0E], s[sgprtmp2E]                  // 
-s_addc_u32 s[sgprtmp1E], s[sgprtmp1E], s[sgprtmp3E]                 // 
+//s_mul_i32 s[sgprtmp5E], s[sgprtmp5E], s[sgprGSUSumIdx]            //
+s_mul_hi_u32 s[sgprtmp3E], s[sgprtmp5E], s[sgprStrideC1J]           //
+s_mul_i32 s[sgprtmp2E], s[sgprtmp5E], s[sgprStrideC1J]              //
+s_add_u32 s[sgprtmp0E], s[sgprSizesFree+0], s[sgprtmp2E]            //
+s_addc_u32 s[sgprtmp1E], 0, s[sgprtmp3E]                            //
+s_sub_u32 s[sgprtmp5E], s[sgprSizesFree+2], 1                       //
+//s_mul_i32 s[sgprtmp5E], s[sgprtmp5E], s[sgprGSUSumIdx]            //
+s_mul_hi_u32 s[sgprtmp3E], s[sgprtmp5E], s[sgprStrideCK]            //
+s_mul_i32 s[sgprtmp2E], s[sgprtmp5E], s[sgprStrideCK]               //
+s_add_u32 s[sgprtmp0E], s[sgprtmp0E], s[sgprtmp2E]                  //
+s_addc_u32 s[sgprtmp1E], s[sgprtmp1E], s[sgprtmp3E]                 //
 s_lshl_b64 s[sgprtmp2E:sgprtmp3E], s[sgprtmp0E:sgprtmp1E], 2        // scale by bpe
 
 
@@ -7604,20 +7604,20 @@ v_pk_mul_f32 v[vgprValuC+30:vgprValuC+30+1], v[22:23], v[vgprValuC+30:vgprValuC+
 //synchronizer store
 
 V_LSHRREV_B32 v9, 0x1, v9
-    
+
 
 s_mov_b32 s[sgprSrdD+2], 0x80000000
-s_mov_b32 s[sgprSrdD+3], Srd127_96                 // 
+s_mov_b32 s[sgprSrdD+3], Srd127_96                 //
 
 s_mul_i32 s[sgprtmp2E], MT1, s[sgprWorkGroup1]                    // cal store position
-s_mul_hi_u32 s[sgprtmp1E], s[sgprtmp2E], s[sgprStrideC1J]         // 
-s_mul_i32 s[sgprtmp0E], s[sgprtmp2E], s[sgprStrideC1J]            // 
+s_mul_hi_u32 s[sgprtmp1E], s[sgprtmp2E], s[sgprStrideC1J]         //
+s_mul_i32 s[sgprtmp0E], s[sgprtmp2E], s[sgprStrideC1J]            //
 s_lshl_b64 s[sgprtmp0E:sgprtmp0E+1], s[sgprtmp0E:sgprtmp0E+1], 1  // scale by bpe
 s_add_u32 s[sgprSrdD+0], s[sgprAddressTC+0], s[sgprtmp0E]         // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprAddressTC+1], s[sgprtmp1E]        // add hi to SRD
 
-s_mul_hi_u32 s[sgprtmp1E], s[sgprWorkGroup2], s[sgprStrideCK]     // 
-s_mul_i32 s[sgprtmp0E], s[sgprWorkGroup2], s[sgprStrideCK]        // 
+s_mul_hi_u32 s[sgprtmp1E], s[sgprWorkGroup2], s[sgprStrideCK]     //
+s_mul_i32 s[sgprtmp0E], s[sgprWorkGroup2], s[sgprStrideCK]        //
 s_lshl_b64 s[sgprtmp0E:sgprtmp0E+1], s[sgprtmp0E:sgprtmp0E+1], 1  // scale by bpe
 s_add_u32 s[sgprSrdD+0], s[sgprSrdD+0], s[sgprtmp0E]              // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprSrdD+1], s[sgprtmp1E]             // add hi to SRD
@@ -7674,7 +7674,7 @@ s_atomic_add s[sgprGSUSync], s[sgprKernArgAddress:sgprKernArgAddress+1], 0x8C gl
 
 
 s_waitcnt lgkmcnt(0)
-s_cmp_eq_u32 s[sgprGSUSync], 1    // 
+s_cmp_eq_u32 s[sgprGSUSync], 1    //
 s_cbranch_scc0 Summation_End_OptNLL2_31           // jump if XX required
 //check done
 
@@ -7695,7 +7695,7 @@ s_mul_i32 s[sgprtmp2E], s[sgprStrideDK], 25                      // Scale by Str
 s_lshl_b64 s[sgprtmp2E:sgprtmp2E+1], s[sgprtmp2E:sgprtmp2E+1], 2  // scale by bpe
 
 s_mov_b32 s[sgprSrdDd+2], 0x80000000
-s_mov_b32 s[sgprSrdDd+3], Srd127_96                               // 
+s_mov_b32 s[sgprSrdDd+3], Srd127_96                               //
 
 s_add_u32 s[sgprSrdDd+0], s[sgprAddressD+0], s[sgprtmp2E]         // add lo to SRD
 s_addc_u32 s[sgprSrdDd+1], s[sgprAddressD+1], s[sgprtmp3E]        // add hi to SRD
@@ -7706,15 +7706,15 @@ s_buffer_atomic_add s[sgprGSUSync], s[sgprSrdDd:sgprSrdDd+3], glc
 
 
 //s_mov_b32 s[sgprGSUSumIdx] 1
-s_mul_i32 s[sgprtmp2E], MT1, s[sgprWorkGroup1]                        // 
+s_mul_i32 s[sgprtmp2E], MT1, s[sgprWorkGroup1]                        //
 s_mul_hi_u32 s[sgprtmp1E], s[sgprtmp2E], s[sgprStrideD1J]             // cal GSU D position
-s_mul_i32 s[sgprtmp0E], s[sgprtmp2E], s[sgprStrideD1J]                // 
+s_mul_i32 s[sgprtmp0E], s[sgprtmp2E], s[sgprStrideD1J]                //
 s_lshl_b64 s[sgprtmp0E:sgprtmp1E], s[sgprtmp0E:sgprtmp1E], 2          // scale by bpe
 s_add_u32 s[sgprSrdD+0], s[sgprAddressD+0], s[sgprtmp0E]              // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprAddressD+1], s[sgprtmp1E]             // add hi to SRD
 
-s_mul_hi_u32 s[sgprtmp1E], s[sgprWorkGroup2], s[sgprStrideDK]         // 
-s_mul_i32 s[sgprtmp0E], s[sgprWorkGroup2], s[sgprStrideDK]            // 
+s_mul_hi_u32 s[sgprtmp1E], s[sgprWorkGroup2], s[sgprStrideDK]         //
+s_mul_i32 s[sgprtmp0E], s[sgprWorkGroup2], s[sgprStrideDK]            //
 s_lshl_b64 s[sgprtmp0E:sgprtmp1E], s[sgprtmp0E:sgprtmp1E], 2          // scale by bpe
 s_add_u32 s[sgprSrdD+0], s[sgprSrdD+0], s[sgprtmp0E]                  // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprSrdD+1], s[sgprtmp1E]                 // add hi to SRD
@@ -7729,20 +7729,20 @@ s_cbranch_scc0 label_KernelEnd //label_GW_End_1 //label_AFTERsummary_Edge
 buffer_load_dwordx4 v[28+4*0:28+3+4*0], v9, s[sgprSrdD:sgprSrdD+3], 0 offen offset:0 // load GSU D
 
 // GSU Output Buffer offset: Free0 + (Free1-1)*StrideC1J + (Free2-1)*StrideCK * GSUIdx * bpe%s
-//s_mul_hi_u32 s[sgprtmp1E], s[sgprSizesFree+0], s[sgprGSUSumIdx]   // 
-//s_mul_i32 s[sgprtmp0E], s[sgprSizesFree+0], s[sgprGSUSumIdx]      // 
+//s_mul_hi_u32 s[sgprtmp1E], s[sgprSizesFree+0], s[sgprGSUSumIdx]   //
+//s_mul_i32 s[sgprtmp0E], s[sgprSizesFree+0], s[sgprGSUSumIdx]      //
 s_sub_u32 s[sgprtmp5E], s[sgprSizesFree+1], 1                       // cal GSU D offset
-//s_mul_i32 s[sgprtmp5E], s[sgprtmp5E], s[sgprGSUSumIdx]            // 
-s_mul_hi_u32 s[sgprtmp3E], s[sgprtmp5E], s[sgprStrideC1J]           // 
-s_mul_i32 s[sgprtmp2E], s[sgprtmp5E], s[sgprStrideC1J]              // 
-s_add_u32 s[sgprtmp0E], s[sgprSizesFree+0], s[sgprtmp2E]            // 
-s_addc_u32 s[sgprtmp1E], 0, s[sgprtmp3E]                            // 
-s_sub_u32 s[sgprtmp5E], s[sgprSizesFree+2], 1                       // 
-//s_mul_i32 s[sgprtmp5E], s[sgprtmp5E], s[sgprGSUSumIdx]            // 
-s_mul_hi_u32 s[sgprtmp3E], s[sgprtmp5E], s[sgprStrideCK]            // 
-s_mul_i32 s[sgprtmp2E], s[sgprtmp5E], s[sgprStrideCK]               // 
-s_add_u32 s[sgprtmp0E], s[sgprtmp0E], s[sgprtmp2E]                  // 
-s_addc_u32 s[sgprtmp1E], s[sgprtmp1E], s[sgprtmp3E]                 // 
+//s_mul_i32 s[sgprtmp5E], s[sgprtmp5E], s[sgprGSUSumIdx]            //
+s_mul_hi_u32 s[sgprtmp3E], s[sgprtmp5E], s[sgprStrideC1J]           //
+s_mul_i32 s[sgprtmp2E], s[sgprtmp5E], s[sgprStrideC1J]              //
+s_add_u32 s[sgprtmp0E], s[sgprSizesFree+0], s[sgprtmp2E]            //
+s_addc_u32 s[sgprtmp1E], 0, s[sgprtmp3E]                            //
+s_sub_u32 s[sgprtmp5E], s[sgprSizesFree+2], 1                       //
+//s_mul_i32 s[sgprtmp5E], s[sgprtmp5E], s[sgprGSUSumIdx]            //
+s_mul_hi_u32 s[sgprtmp3E], s[sgprtmp5E], s[sgprStrideCK]            //
+s_mul_i32 s[sgprtmp2E], s[sgprtmp5E], s[sgprStrideCK]               //
+s_add_u32 s[sgprtmp0E], s[sgprtmp0E], s[sgprtmp2E]                  //
+s_addc_u32 s[sgprtmp1E], s[sgprtmp1E], s[sgprtmp3E]                 //
 s_lshl_b64 s[sgprtmp2E:sgprtmp3E], s[sgprtmp0E:sgprtmp1E], 2        // scale by bpe
 
 
@@ -8001,20 +8001,20 @@ v_pk_mul_f32 v[vgprValuC+30:vgprValuC+30+1], v[22:23], v[vgprValuC+30:vgprValuC+
 //synchronizer store
 
 V_LSHRREV_B32 v9, 0x1, v9
-    
+
 
 s_mov_b32 s[sgprSrdD+2], 0x80000000
-s_mov_b32 s[sgprSrdD+3], Srd127_96                 // 
+s_mov_b32 s[sgprSrdD+3], Srd127_96                 //
 
 s_mul_i32 s[sgprtmp2E], MT1, s[sgprWorkGroup1]                    // cal store position
-s_mul_hi_u32 s[sgprtmp1E], s[sgprtmp2E], s[sgprStrideC1J]         // 
-s_mul_i32 s[sgprtmp0E], s[sgprtmp2E], s[sgprStrideC1J]            // 
+s_mul_hi_u32 s[sgprtmp1E], s[sgprtmp2E], s[sgprStrideC1J]         //
+s_mul_i32 s[sgprtmp0E], s[sgprtmp2E], s[sgprStrideC1J]            //
 s_lshl_b64 s[sgprtmp0E:sgprtmp0E+1], s[sgprtmp0E:sgprtmp0E+1], 1  // scale by bpe
 s_add_u32 s[sgprSrdD+0], s[sgprAddressTC+0], s[sgprtmp0E]         // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprAddressTC+1], s[sgprtmp1E]        // add hi to SRD
 
-s_mul_hi_u32 s[sgprtmp1E], s[sgprWorkGroup2], s[sgprStrideCK]     // 
-s_mul_i32 s[sgprtmp0E], s[sgprWorkGroup2], s[sgprStrideCK]        // 
+s_mul_hi_u32 s[sgprtmp1E], s[sgprWorkGroup2], s[sgprStrideCK]     //
+s_mul_i32 s[sgprtmp0E], s[sgprWorkGroup2], s[sgprStrideCK]        //
 s_lshl_b64 s[sgprtmp0E:sgprtmp0E+1], s[sgprtmp0E:sgprtmp0E+1], 1  // scale by bpe
 s_add_u32 s[sgprSrdD+0], s[sgprSrdD+0], s[sgprtmp0E]              // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprSrdD+1], s[sgprtmp1E]             // add hi to SRD
@@ -8096,7 +8096,7 @@ s_atomic_add s[sgprGSUSync], s[sgprKernArgAddress:sgprKernArgAddress+1], 0x8C gl
 
 
 s_waitcnt lgkmcnt(0)
-s_cmp_eq_u32 s[sgprGSUSync], 1    // 
+s_cmp_eq_u32 s[sgprGSUSync], 1    //
 s_cbranch_scc0 Summation_End_OptNLL2_16           // jump if XX required
 //check done
 
@@ -8117,7 +8117,7 @@ s_mul_i32 s[sgprtmp2E], s[sgprStrideDK], 25                      // Scale by Str
 s_lshl_b64 s[sgprtmp2E:sgprtmp2E+1], s[sgprtmp2E:sgprtmp2E+1], 2  // scale by bpe
 
 s_mov_b32 s[sgprSrdDd+2], 0x80000000
-s_mov_b32 s[sgprSrdDd+3], Srd127_96                               // 
+s_mov_b32 s[sgprSrdDd+3], Srd127_96                               //
 
 s_add_u32 s[sgprSrdDd+0], s[sgprAddressD+0], s[sgprtmp2E]         // add lo to SRD
 s_addc_u32 s[sgprSrdDd+1], s[sgprAddressD+1], s[sgprtmp3E]        // add hi to SRD
@@ -8128,15 +8128,15 @@ s_buffer_atomic_add s[sgprGSUSync], s[sgprSrdDd:sgprSrdDd+3], glc
 
 
 //s_mov_b32 s[sgprGSUSumIdx] 1
-s_mul_i32 s[sgprtmp2E], MT1, s[sgprWorkGroup1]                        // 
+s_mul_i32 s[sgprtmp2E], MT1, s[sgprWorkGroup1]                        //
 s_mul_hi_u32 s[sgprtmp1E], s[sgprtmp2E], s[sgprStrideD1J]             // cal GSU D position
-s_mul_i32 s[sgprtmp0E], s[sgprtmp2E], s[sgprStrideD1J]                // 
+s_mul_i32 s[sgprtmp0E], s[sgprtmp2E], s[sgprStrideD1J]                //
 s_lshl_b64 s[sgprtmp0E:sgprtmp1E], s[sgprtmp0E:sgprtmp1E], 2          // scale by bpe
 s_add_u32 s[sgprSrdD+0], s[sgprAddressD+0], s[sgprtmp0E]              // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprAddressD+1], s[sgprtmp1E]             // add hi to SRD
 
-s_mul_hi_u32 s[sgprtmp1E], s[sgprWorkGroup2], s[sgprStrideDK]         // 
-s_mul_i32 s[sgprtmp0E], s[sgprWorkGroup2], s[sgprStrideDK]            // 
+s_mul_hi_u32 s[sgprtmp1E], s[sgprWorkGroup2], s[sgprStrideDK]         //
+s_mul_i32 s[sgprtmp0E], s[sgprWorkGroup2], s[sgprStrideDK]            //
 s_lshl_b64 s[sgprtmp0E:sgprtmp1E], s[sgprtmp0E:sgprtmp1E], 2          // scale by bpe
 s_add_u32 s[sgprSrdD+0], s[sgprSrdD+0], s[sgprtmp0E]                  // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprSrdD+1], s[sgprtmp1E]                 // add hi to SRD
@@ -8151,20 +8151,20 @@ s_cbranch_scc0 label_KernelEnd //label_GW_End_1 //label_AFTERsummary_Edge
 buffer_load_dwordx4 v[28+4*0:28+3+4*0], v9, s[sgprSrdD:sgprSrdD+3], 0 offen offset:0 // load GSU D
 
 // GSU Output Buffer offset: Free0 + (Free1-1)*StrideC1J + (Free2-1)*StrideCK * GSUIdx * bpe%s
-//s_mul_hi_u32 s[sgprtmp1E], s[sgprSizesFree+0], s[sgprGSUSumIdx]   // 
-//s_mul_i32 s[sgprtmp0E], s[sgprSizesFree+0], s[sgprGSUSumIdx]      // 
+//s_mul_hi_u32 s[sgprtmp1E], s[sgprSizesFree+0], s[sgprGSUSumIdx]   //
+//s_mul_i32 s[sgprtmp0E], s[sgprSizesFree+0], s[sgprGSUSumIdx]      //
 s_sub_u32 s[sgprtmp5E], s[sgprSizesFree+1], 1                       // cal GSU D offset
-//s_mul_i32 s[sgprtmp5E], s[sgprtmp5E], s[sgprGSUSumIdx]            // 
-s_mul_hi_u32 s[sgprtmp3E], s[sgprtmp5E], s[sgprStrideC1J]           // 
-s_mul_i32 s[sgprtmp2E], s[sgprtmp5E], s[sgprStrideC1J]              // 
-s_add_u32 s[sgprtmp0E], s[sgprSizesFree+0], s[sgprtmp2E]            // 
-s_addc_u32 s[sgprtmp1E], 0, s[sgprtmp3E]                            // 
-s_sub_u32 s[sgprtmp5E], s[sgprSizesFree+2], 1                       // 
-//s_mul_i32 s[sgprtmp5E], s[sgprtmp5E], s[sgprGSUSumIdx]            // 
-s_mul_hi_u32 s[sgprtmp3E], s[sgprtmp5E], s[sgprStrideCK]            // 
-s_mul_i32 s[sgprtmp2E], s[sgprtmp5E], s[sgprStrideCK]               // 
-s_add_u32 s[sgprtmp0E], s[sgprtmp0E], s[sgprtmp2E]                  // 
-s_addc_u32 s[sgprtmp1E], s[sgprtmp1E], s[sgprtmp3E]                 // 
+//s_mul_i32 s[sgprtmp5E], s[sgprtmp5E], s[sgprGSUSumIdx]            //
+s_mul_hi_u32 s[sgprtmp3E], s[sgprtmp5E], s[sgprStrideC1J]           //
+s_mul_i32 s[sgprtmp2E], s[sgprtmp5E], s[sgprStrideC1J]              //
+s_add_u32 s[sgprtmp0E], s[sgprSizesFree+0], s[sgprtmp2E]            //
+s_addc_u32 s[sgprtmp1E], 0, s[sgprtmp3E]                            //
+s_sub_u32 s[sgprtmp5E], s[sgprSizesFree+2], 1                       //
+//s_mul_i32 s[sgprtmp5E], s[sgprtmp5E], s[sgprGSUSumIdx]            //
+s_mul_hi_u32 s[sgprtmp3E], s[sgprtmp5E], s[sgprStrideCK]            //
+s_mul_i32 s[sgprtmp2E], s[sgprtmp5E], s[sgprStrideCK]               //
+s_add_u32 s[sgprtmp0E], s[sgprtmp0E], s[sgprtmp2E]                  //
+s_addc_u32 s[sgprtmp1E], s[sgprtmp1E], s[sgprtmp3E]                 //
 s_lshl_b64 s[sgprtmp2E:sgprtmp3E], s[sgprtmp0E:sgprtmp1E], 2        // scale by bpe
 
 
@@ -8393,20 +8393,20 @@ v_pk_mul_f32 v[vgprValuC+30:vgprValuC+30+1], v[22:23], v[vgprValuC+30:vgprValuC+
 //synchronizer store
 
 V_LSHRREV_B32 v9, 0x1, v9
-    
+
 
 s_mov_b32 s[sgprSrdD+2], 0x80000000
-s_mov_b32 s[sgprSrdD+3], Srd127_96                 // 
+s_mov_b32 s[sgprSrdD+3], Srd127_96                 //
 
 s_mul_i32 s[sgprtmp2E], MT1, s[sgprWorkGroup1]                    // cal store position
-s_mul_hi_u32 s[sgprtmp1E], s[sgprtmp2E], s[sgprStrideC1J]         // 
-s_mul_i32 s[sgprtmp0E], s[sgprtmp2E], s[sgprStrideC1J]            // 
+s_mul_hi_u32 s[sgprtmp1E], s[sgprtmp2E], s[sgprStrideC1J]         //
+s_mul_i32 s[sgprtmp0E], s[sgprtmp2E], s[sgprStrideC1J]            //
 s_lshl_b64 s[sgprtmp0E:sgprtmp0E+1], s[sgprtmp0E:sgprtmp0E+1], 1  // scale by bpe
 s_add_u32 s[sgprSrdD+0], s[sgprAddressTC+0], s[sgprtmp0E]         // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprAddressTC+1], s[sgprtmp1E]        // add hi to SRD
 
-s_mul_hi_u32 s[sgprtmp1E], s[sgprWorkGroup2], s[sgprStrideCK]     // 
-s_mul_i32 s[sgprtmp0E], s[sgprWorkGroup2], s[sgprStrideCK]        // 
+s_mul_hi_u32 s[sgprtmp1E], s[sgprWorkGroup2], s[sgprStrideCK]     //
+s_mul_i32 s[sgprtmp0E], s[sgprWorkGroup2], s[sgprStrideCK]        //
 s_lshl_b64 s[sgprtmp0E:sgprtmp0E+1], s[sgprtmp0E:sgprtmp0E+1], 1  // scale by bpe
 s_add_u32 s[sgprSrdD+0], s[sgprSrdD+0], s[sgprtmp0E]              // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprSrdD+1], s[sgprtmp1E]             // add hi to SRD
@@ -8468,7 +8468,7 @@ s_atomic_add s[sgprGSUSync], s[sgprKernArgAddress:sgprKernArgAddress+1], 0x8C gl
 
 
 s_waitcnt lgkmcnt(0)
-s_cmp_eq_u32 s[sgprGSUSync], 1    // 
+s_cmp_eq_u32 s[sgprGSUSync], 1    //
 s_cbranch_scc0 Summation_End_OptNLL2_17           // jump if XX required
 //check done
 
@@ -8489,7 +8489,7 @@ s_mul_i32 s[sgprtmp2E], s[sgprStrideDK], 25                      // Scale by Str
 s_lshl_b64 s[sgprtmp2E:sgprtmp2E+1], s[sgprtmp2E:sgprtmp2E+1], 2  // scale by bpe
 
 s_mov_b32 s[sgprSrdDd+2], 0x80000000
-s_mov_b32 s[sgprSrdDd+3], Srd127_96                               // 
+s_mov_b32 s[sgprSrdDd+3], Srd127_96                               //
 
 s_add_u32 s[sgprSrdDd+0], s[sgprAddressD+0], s[sgprtmp2E]         // add lo to SRD
 s_addc_u32 s[sgprSrdDd+1], s[sgprAddressD+1], s[sgprtmp3E]        // add hi to SRD
@@ -8500,15 +8500,15 @@ s_buffer_atomic_add s[sgprGSUSync], s[sgprSrdDd:sgprSrdDd+3], glc
 
 
 //s_mov_b32 s[sgprGSUSumIdx] 1
-s_mul_i32 s[sgprtmp2E], MT1, s[sgprWorkGroup1]                        // 
+s_mul_i32 s[sgprtmp2E], MT1, s[sgprWorkGroup1]                        //
 s_mul_hi_u32 s[sgprtmp1E], s[sgprtmp2E], s[sgprStrideD1J]             // cal GSU D position
-s_mul_i32 s[sgprtmp0E], s[sgprtmp2E], s[sgprStrideD1J]                // 
+s_mul_i32 s[sgprtmp0E], s[sgprtmp2E], s[sgprStrideD1J]                //
 s_lshl_b64 s[sgprtmp0E:sgprtmp1E], s[sgprtmp0E:sgprtmp1E], 2          // scale by bpe
 s_add_u32 s[sgprSrdD+0], s[sgprAddressD+0], s[sgprtmp0E]              // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprAddressD+1], s[sgprtmp1E]             // add hi to SRD
 
-s_mul_hi_u32 s[sgprtmp1E], s[sgprWorkGroup2], s[sgprStrideDK]         // 
-s_mul_i32 s[sgprtmp0E], s[sgprWorkGroup2], s[sgprStrideDK]            // 
+s_mul_hi_u32 s[sgprtmp1E], s[sgprWorkGroup2], s[sgprStrideDK]         //
+s_mul_i32 s[sgprtmp0E], s[sgprWorkGroup2], s[sgprStrideDK]            //
 s_lshl_b64 s[sgprtmp0E:sgprtmp1E], s[sgprtmp0E:sgprtmp1E], 2          // scale by bpe
 s_add_u32 s[sgprSrdD+0], s[sgprSrdD+0], s[sgprtmp0E]                  // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprSrdD+1], s[sgprtmp1E]                 // add hi to SRD
@@ -8523,20 +8523,20 @@ s_cbranch_scc0 label_KernelEnd //label_GW_End_1 //label_AFTERsummary_Edge
 buffer_load_dwordx4 v[28+4*0:28+3+4*0], v9, s[sgprSrdD:sgprSrdD+3], 0 offen offset:0 // load GSU D
 
 // GSU Output Buffer offset: Free0 + (Free1-1)*StrideC1J + (Free2-1)*StrideCK * GSUIdx * bpe%s
-//s_mul_hi_u32 s[sgprtmp1E], s[sgprSizesFree+0], s[sgprGSUSumIdx]   // 
-//s_mul_i32 s[sgprtmp0E], s[sgprSizesFree+0], s[sgprGSUSumIdx]      // 
+//s_mul_hi_u32 s[sgprtmp1E], s[sgprSizesFree+0], s[sgprGSUSumIdx]   //
+//s_mul_i32 s[sgprtmp0E], s[sgprSizesFree+0], s[sgprGSUSumIdx]      //
 s_sub_u32 s[sgprtmp5E], s[sgprSizesFree+1], 1                       // cal GSU D offset
-//s_mul_i32 s[sgprtmp5E], s[sgprtmp5E], s[sgprGSUSumIdx]            // 
-s_mul_hi_u32 s[sgprtmp3E], s[sgprtmp5E], s[sgprStrideC1J]           // 
-s_mul_i32 s[sgprtmp2E], s[sgprtmp5E], s[sgprStrideC1J]              // 
-s_add_u32 s[sgprtmp0E], s[sgprSizesFree+0], s[sgprtmp2E]            // 
-s_addc_u32 s[sgprtmp1E], 0, s[sgprtmp3E]                            // 
-s_sub_u32 s[sgprtmp5E], s[sgprSizesFree+2], 1                       // 
-//s_mul_i32 s[sgprtmp5E], s[sgprtmp5E], s[sgprGSUSumIdx]            // 
-s_mul_hi_u32 s[sgprtmp3E], s[sgprtmp5E], s[sgprStrideCK]            // 
-s_mul_i32 s[sgprtmp2E], s[sgprtmp5E], s[sgprStrideCK]               // 
-s_add_u32 s[sgprtmp0E], s[sgprtmp0E], s[sgprtmp2E]                  // 
-s_addc_u32 s[sgprtmp1E], s[sgprtmp1E], s[sgprtmp3E]                 // 
+//s_mul_i32 s[sgprtmp5E], s[sgprtmp5E], s[sgprGSUSumIdx]            //
+s_mul_hi_u32 s[sgprtmp3E], s[sgprtmp5E], s[sgprStrideC1J]           //
+s_mul_i32 s[sgprtmp2E], s[sgprtmp5E], s[sgprStrideC1J]              //
+s_add_u32 s[sgprtmp0E], s[sgprSizesFree+0], s[sgprtmp2E]            //
+s_addc_u32 s[sgprtmp1E], 0, s[sgprtmp3E]                            //
+s_sub_u32 s[sgprtmp5E], s[sgprSizesFree+2], 1                       //
+//s_mul_i32 s[sgprtmp5E], s[sgprtmp5E], s[sgprGSUSumIdx]            //
+s_mul_hi_u32 s[sgprtmp3E], s[sgprtmp5E], s[sgprStrideCK]            //
+s_mul_i32 s[sgprtmp2E], s[sgprtmp5E], s[sgprStrideCK]               //
+s_add_u32 s[sgprtmp0E], s[sgprtmp0E], s[sgprtmp2E]                  //
+s_addc_u32 s[sgprtmp1E], s[sgprtmp1E], s[sgprtmp3E]                 //
 s_lshl_b64 s[sgprtmp2E:sgprtmp3E], s[sgprtmp0E:sgprtmp1E], 2        // scale by bpe
 
 
@@ -8769,20 +8769,20 @@ v_pk_mul_f32 v[vgprValuC+30:vgprValuC+30+1], v[22:23], v[vgprValuC+30:vgprValuC+
 //synchronizer store
 
 V_LSHRREV_B32 v9, 0x1, v9
-    
+
 
 s_mov_b32 s[sgprSrdD+2], 0x80000000
-s_mov_b32 s[sgprSrdD+3], Srd127_96                 // 
+s_mov_b32 s[sgprSrdD+3], Srd127_96                 //
 
 s_mul_i32 s[sgprtmp2E], MT1, s[sgprWorkGroup1]                    // cal store position
-s_mul_hi_u32 s[sgprtmp1E], s[sgprtmp2E], s[sgprStrideC1J]         // 
-s_mul_i32 s[sgprtmp0E], s[sgprtmp2E], s[sgprStrideC1J]            // 
+s_mul_hi_u32 s[sgprtmp1E], s[sgprtmp2E], s[sgprStrideC1J]         //
+s_mul_i32 s[sgprtmp0E], s[sgprtmp2E], s[sgprStrideC1J]            //
 s_lshl_b64 s[sgprtmp0E:sgprtmp0E+1], s[sgprtmp0E:sgprtmp0E+1], 1  // scale by bpe
 s_add_u32 s[sgprSrdD+0], s[sgprAddressTC+0], s[sgprtmp0E]         // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprAddressTC+1], s[sgprtmp1E]        // add hi to SRD
 
-s_mul_hi_u32 s[sgprtmp1E], s[sgprWorkGroup2], s[sgprStrideCK]     // 
-s_mul_i32 s[sgprtmp0E], s[sgprWorkGroup2], s[sgprStrideCK]        // 
+s_mul_hi_u32 s[sgprtmp1E], s[sgprWorkGroup2], s[sgprStrideCK]     //
+s_mul_i32 s[sgprtmp0E], s[sgprWorkGroup2], s[sgprStrideCK]        //
 s_lshl_b64 s[sgprtmp0E:sgprtmp0E+1], s[sgprtmp0E:sgprtmp0E+1], 1  // scale by bpe
 s_add_u32 s[sgprSrdD+0], s[sgprSrdD+0], s[sgprtmp0E]              // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprSrdD+1], s[sgprtmp1E]             // add hi to SRD
@@ -8844,7 +8844,7 @@ s_atomic_add s[sgprGSUSync], s[sgprKernArgAddress:sgprKernArgAddress+1], 0x8C gl
 
 
 s_waitcnt lgkmcnt(0)
-s_cmp_eq_u32 s[sgprGSUSync], 1    // 
+s_cmp_eq_u32 s[sgprGSUSync], 1    //
 s_cbranch_scc0 Summation_End_OptNLL2_18           // jump if XX required
 //check done
 
@@ -8865,7 +8865,7 @@ s_mul_i32 s[sgprtmp2E], s[sgprStrideDK], 25                      // Scale by Str
 s_lshl_b64 s[sgprtmp2E:sgprtmp2E+1], s[sgprtmp2E:sgprtmp2E+1], 2  // scale by bpe
 
 s_mov_b32 s[sgprSrdDd+2], 0x80000000
-s_mov_b32 s[sgprSrdDd+3], Srd127_96                               // 
+s_mov_b32 s[sgprSrdDd+3], Srd127_96                               //
 
 s_add_u32 s[sgprSrdDd+0], s[sgprAddressD+0], s[sgprtmp2E]         // add lo to SRD
 s_addc_u32 s[sgprSrdDd+1], s[sgprAddressD+1], s[sgprtmp3E]        // add hi to SRD
@@ -8876,15 +8876,15 @@ s_buffer_atomic_add s[sgprGSUSync], s[sgprSrdDd:sgprSrdDd+3], glc
 
 
 //s_mov_b32 s[sgprGSUSumIdx] 1
-s_mul_i32 s[sgprtmp2E], MT1, s[sgprWorkGroup1]                        // 
+s_mul_i32 s[sgprtmp2E], MT1, s[sgprWorkGroup1]                        //
 s_mul_hi_u32 s[sgprtmp1E], s[sgprtmp2E], s[sgprStrideD1J]             // cal GSU D position
-s_mul_i32 s[sgprtmp0E], s[sgprtmp2E], s[sgprStrideD1J]                // 
+s_mul_i32 s[sgprtmp0E], s[sgprtmp2E], s[sgprStrideD1J]                //
 s_lshl_b64 s[sgprtmp0E:sgprtmp1E], s[sgprtmp0E:sgprtmp1E], 2          // scale by bpe
 s_add_u32 s[sgprSrdD+0], s[sgprAddressD+0], s[sgprtmp0E]              // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprAddressD+1], s[sgprtmp1E]             // add hi to SRD
 
-s_mul_hi_u32 s[sgprtmp1E], s[sgprWorkGroup2], s[sgprStrideDK]         // 
-s_mul_i32 s[sgprtmp0E], s[sgprWorkGroup2], s[sgprStrideDK]            // 
+s_mul_hi_u32 s[sgprtmp1E], s[sgprWorkGroup2], s[sgprStrideDK]         //
+s_mul_i32 s[sgprtmp0E], s[sgprWorkGroup2], s[sgprStrideDK]            //
 s_lshl_b64 s[sgprtmp0E:sgprtmp1E], s[sgprtmp0E:sgprtmp1E], 2          // scale by bpe
 s_add_u32 s[sgprSrdD+0], s[sgprSrdD+0], s[sgprtmp0E]                  // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprSrdD+1], s[sgprtmp1E]                 // add hi to SRD
@@ -8899,20 +8899,20 @@ s_cbranch_scc0 label_KernelEnd //label_GW_End_1 //label_AFTERsummary_Edge
 buffer_load_dwordx4 v[28+4*0:28+3+4*0], v9, s[sgprSrdD:sgprSrdD+3], 0 offen offset:0 // load GSU D
 
 // GSU Output Buffer offset: Free0 + (Free1-1)*StrideC1J + (Free2-1)*StrideCK * GSUIdx * bpe%s
-//s_mul_hi_u32 s[sgprtmp1E], s[sgprSizesFree+0], s[sgprGSUSumIdx]   // 
-//s_mul_i32 s[sgprtmp0E], s[sgprSizesFree+0], s[sgprGSUSumIdx]      // 
+//s_mul_hi_u32 s[sgprtmp1E], s[sgprSizesFree+0], s[sgprGSUSumIdx]   //
+//s_mul_i32 s[sgprtmp0E], s[sgprSizesFree+0], s[sgprGSUSumIdx]      //
 s_sub_u32 s[sgprtmp5E], s[sgprSizesFree+1], 1                       // cal GSU D offset
-//s_mul_i32 s[sgprtmp5E], s[sgprtmp5E], s[sgprGSUSumIdx]            // 
-s_mul_hi_u32 s[sgprtmp3E], s[sgprtmp5E], s[sgprStrideC1J]           // 
-s_mul_i32 s[sgprtmp2E], s[sgprtmp5E], s[sgprStrideC1J]              // 
-s_add_u32 s[sgprtmp0E], s[sgprSizesFree+0], s[sgprtmp2E]            // 
-s_addc_u32 s[sgprtmp1E], 0, s[sgprtmp3E]                            // 
-s_sub_u32 s[sgprtmp5E], s[sgprSizesFree+2], 1                       // 
-//s_mul_i32 s[sgprtmp5E], s[sgprtmp5E], s[sgprGSUSumIdx]            // 
-s_mul_hi_u32 s[sgprtmp3E], s[sgprtmp5E], s[sgprStrideCK]            // 
-s_mul_i32 s[sgprtmp2E], s[sgprtmp5E], s[sgprStrideCK]               // 
-s_add_u32 s[sgprtmp0E], s[sgprtmp0E], s[sgprtmp2E]                  // 
-s_addc_u32 s[sgprtmp1E], s[sgprtmp1E], s[sgprtmp3E]                 // 
+//s_mul_i32 s[sgprtmp5E], s[sgprtmp5E], s[sgprGSUSumIdx]            //
+s_mul_hi_u32 s[sgprtmp3E], s[sgprtmp5E], s[sgprStrideC1J]           //
+s_mul_i32 s[sgprtmp2E], s[sgprtmp5E], s[sgprStrideC1J]              //
+s_add_u32 s[sgprtmp0E], s[sgprSizesFree+0], s[sgprtmp2E]            //
+s_addc_u32 s[sgprtmp1E], 0, s[sgprtmp3E]                            //
+s_sub_u32 s[sgprtmp5E], s[sgprSizesFree+2], 1                       //
+//s_mul_i32 s[sgprtmp5E], s[sgprtmp5E], s[sgprGSUSumIdx]            //
+s_mul_hi_u32 s[sgprtmp3E], s[sgprtmp5E], s[sgprStrideCK]            //
+s_mul_i32 s[sgprtmp2E], s[sgprtmp5E], s[sgprStrideCK]               //
+s_add_u32 s[sgprtmp0E], s[sgprtmp0E], s[sgprtmp2E]                  //
+s_addc_u32 s[sgprtmp1E], s[sgprtmp1E], s[sgprtmp3E]                 //
 s_lshl_b64 s[sgprtmp2E:sgprtmp3E], s[sgprtmp0E:sgprtmp1E], 2        // scale by bpe
 
 
@@ -9153,20 +9153,20 @@ v_pk_mul_f32 v[vgprValuC+30:vgprValuC+30+1], v[22:23], v[vgprValuC+30:vgprValuC+
 //synchronizer store
 
 V_LSHRREV_B32 v9, 0x1, v9
-    
+
 
 s_mov_b32 s[sgprSrdD+2], 0x80000000
-s_mov_b32 s[sgprSrdD+3], Srd127_96                 // 
+s_mov_b32 s[sgprSrdD+3], Srd127_96                 //
 
 s_mul_i32 s[sgprtmp2E], MT1, s[sgprWorkGroup1]                    // cal store position
-s_mul_hi_u32 s[sgprtmp1E], s[sgprtmp2E], s[sgprStrideC1J]         // 
-s_mul_i32 s[sgprtmp0E], s[sgprtmp2E], s[sgprStrideC1J]            // 
+s_mul_hi_u32 s[sgprtmp1E], s[sgprtmp2E], s[sgprStrideC1J]         //
+s_mul_i32 s[sgprtmp0E], s[sgprtmp2E], s[sgprStrideC1J]            //
 s_lshl_b64 s[sgprtmp0E:sgprtmp0E+1], s[sgprtmp0E:sgprtmp0E+1], 1  // scale by bpe
 s_add_u32 s[sgprSrdD+0], s[sgprAddressTC+0], s[sgprtmp0E]         // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprAddressTC+1], s[sgprtmp1E]        // add hi to SRD
 
-s_mul_hi_u32 s[sgprtmp1E], s[sgprWorkGroup2], s[sgprStrideCK]     // 
-s_mul_i32 s[sgprtmp0E], s[sgprWorkGroup2], s[sgprStrideCK]        // 
+s_mul_hi_u32 s[sgprtmp1E], s[sgprWorkGroup2], s[sgprStrideCK]     //
+s_mul_i32 s[sgprtmp0E], s[sgprWorkGroup2], s[sgprStrideCK]        //
 s_lshl_b64 s[sgprtmp0E:sgprtmp0E+1], s[sgprtmp0E:sgprtmp0E+1], 1  // scale by bpe
 s_add_u32 s[sgprSrdD+0], s[sgprSrdD+0], s[sgprtmp0E]              // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprSrdD+1], s[sgprtmp1E]             // add hi to SRD
@@ -9228,7 +9228,7 @@ s_atomic_add s[sgprGSUSync], s[sgprKernArgAddress:sgprKernArgAddress+1], 0x8C gl
 
 
 s_waitcnt lgkmcnt(0)
-s_cmp_eq_u32 s[sgprGSUSync], 1    // 
+s_cmp_eq_u32 s[sgprGSUSync], 1    //
 s_cbranch_scc0 Summation_End_OptNLL2_19           // jump if XX required
 //check done
 
@@ -9249,7 +9249,7 @@ s_mul_i32 s[sgprtmp2E], s[sgprStrideDK], 25                      // Scale by Str
 s_lshl_b64 s[sgprtmp2E:sgprtmp2E+1], s[sgprtmp2E:sgprtmp2E+1], 2  // scale by bpe
 
 s_mov_b32 s[sgprSrdDd+2], 0x80000000
-s_mov_b32 s[sgprSrdDd+3], Srd127_96                               // 
+s_mov_b32 s[sgprSrdDd+3], Srd127_96                               //
 
 s_add_u32 s[sgprSrdDd+0], s[sgprAddressD+0], s[sgprtmp2E]         // add lo to SRD
 s_addc_u32 s[sgprSrdDd+1], s[sgprAddressD+1], s[sgprtmp3E]        // add hi to SRD
@@ -9260,15 +9260,15 @@ s_buffer_atomic_add s[sgprGSUSync], s[sgprSrdDd:sgprSrdDd+3], glc
 
 
 //s_mov_b32 s[sgprGSUSumIdx] 1
-s_mul_i32 s[sgprtmp2E], MT1, s[sgprWorkGroup1]                        // 
+s_mul_i32 s[sgprtmp2E], MT1, s[sgprWorkGroup1]                        //
 s_mul_hi_u32 s[sgprtmp1E], s[sgprtmp2E], s[sgprStrideD1J]             // cal GSU D position
-s_mul_i32 s[sgprtmp0E], s[sgprtmp2E], s[sgprStrideD1J]                // 
+s_mul_i32 s[sgprtmp0E], s[sgprtmp2E], s[sgprStrideD1J]                //
 s_lshl_b64 s[sgprtmp0E:sgprtmp1E], s[sgprtmp0E:sgprtmp1E], 2          // scale by bpe
 s_add_u32 s[sgprSrdD+0], s[sgprAddressD+0], s[sgprtmp0E]              // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprAddressD+1], s[sgprtmp1E]             // add hi to SRD
 
-s_mul_hi_u32 s[sgprtmp1E], s[sgprWorkGroup2], s[sgprStrideDK]         // 
-s_mul_i32 s[sgprtmp0E], s[sgprWorkGroup2], s[sgprStrideDK]            // 
+s_mul_hi_u32 s[sgprtmp1E], s[sgprWorkGroup2], s[sgprStrideDK]         //
+s_mul_i32 s[sgprtmp0E], s[sgprWorkGroup2], s[sgprStrideDK]            //
 s_lshl_b64 s[sgprtmp0E:sgprtmp1E], s[sgprtmp0E:sgprtmp1E], 2          // scale by bpe
 s_add_u32 s[sgprSrdD+0], s[sgprSrdD+0], s[sgprtmp0E]                  // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprSrdD+1], s[sgprtmp1E]                 // add hi to SRD
@@ -9283,20 +9283,20 @@ s_cbranch_scc0 label_KernelEnd //label_GW_End_1 //label_AFTERsummary_Edge
 buffer_load_dwordx4 v[28+4*0:28+3+4*0], v9, s[sgprSrdD:sgprSrdD+3], 0 offen offset:0 // load GSU D
 
 // GSU Output Buffer offset: Free0 + (Free1-1)*StrideC1J + (Free2-1)*StrideCK * GSUIdx * bpe%s
-//s_mul_hi_u32 s[sgprtmp1E], s[sgprSizesFree+0], s[sgprGSUSumIdx]   // 
-//s_mul_i32 s[sgprtmp0E], s[sgprSizesFree+0], s[sgprGSUSumIdx]      // 
+//s_mul_hi_u32 s[sgprtmp1E], s[sgprSizesFree+0], s[sgprGSUSumIdx]   //
+//s_mul_i32 s[sgprtmp0E], s[sgprSizesFree+0], s[sgprGSUSumIdx]      //
 s_sub_u32 s[sgprtmp5E], s[sgprSizesFree+1], 1                       // cal GSU D offset
-//s_mul_i32 s[sgprtmp5E], s[sgprtmp5E], s[sgprGSUSumIdx]            // 
-s_mul_hi_u32 s[sgprtmp3E], s[sgprtmp5E], s[sgprStrideC1J]           // 
-s_mul_i32 s[sgprtmp2E], s[sgprtmp5E], s[sgprStrideC1J]              // 
-s_add_u32 s[sgprtmp0E], s[sgprSizesFree+0], s[sgprtmp2E]            // 
-s_addc_u32 s[sgprtmp1E], 0, s[sgprtmp3E]                            // 
-s_sub_u32 s[sgprtmp5E], s[sgprSizesFree+2], 1                       // 
-//s_mul_i32 s[sgprtmp5E], s[sgprtmp5E], s[sgprGSUSumIdx]            // 
-s_mul_hi_u32 s[sgprtmp3E], s[sgprtmp5E], s[sgprStrideCK]            // 
-s_mul_i32 s[sgprtmp2E], s[sgprtmp5E], s[sgprStrideCK]               // 
-s_add_u32 s[sgprtmp0E], s[sgprtmp0E], s[sgprtmp2E]                  // 
-s_addc_u32 s[sgprtmp1E], s[sgprtmp1E], s[sgprtmp3E]                 // 
+//s_mul_i32 s[sgprtmp5E], s[sgprtmp5E], s[sgprGSUSumIdx]            //
+s_mul_hi_u32 s[sgprtmp3E], s[sgprtmp5E], s[sgprStrideC1J]           //
+s_mul_i32 s[sgprtmp2E], s[sgprtmp5E], s[sgprStrideC1J]              //
+s_add_u32 s[sgprtmp0E], s[sgprSizesFree+0], s[sgprtmp2E]            //
+s_addc_u32 s[sgprtmp1E], 0, s[sgprtmp3E]                            //
+s_sub_u32 s[sgprtmp5E], s[sgprSizesFree+2], 1                       //
+//s_mul_i32 s[sgprtmp5E], s[sgprtmp5E], s[sgprGSUSumIdx]            //
+s_mul_hi_u32 s[sgprtmp3E], s[sgprtmp5E], s[sgprStrideCK]            //
+s_mul_i32 s[sgprtmp2E], s[sgprtmp5E], s[sgprStrideCK]               //
+s_add_u32 s[sgprtmp0E], s[sgprtmp0E], s[sgprtmp2E]                  //
+s_addc_u32 s[sgprtmp1E], s[sgprtmp1E], s[sgprtmp3E]                 //
 s_lshl_b64 s[sgprtmp2E:sgprtmp3E], s[sgprtmp0E:sgprtmp1E], 2        // scale by bpe
 
 
@@ -9565,20 +9565,20 @@ v_pk_mul_f32 v[vgprValuC+30:vgprValuC+30+1], v[22:23], v[vgprValuC+30:vgprValuC+
 //synchronizer store
 
 V_LSHRREV_B32 v9, 0x1, v9
-    
+
 
 s_mov_b32 s[sgprSrdD+2], 0x80000000
-s_mov_b32 s[sgprSrdD+3], Srd127_96                 // 
+s_mov_b32 s[sgprSrdD+3], Srd127_96                 //
 
 s_mul_i32 s[sgprtmp2E], MT1, s[sgprWorkGroup1]                    // cal store position
-s_mul_hi_u32 s[sgprtmp1E], s[sgprtmp2E], s[sgprStrideC1J]         // 
-s_mul_i32 s[sgprtmp0E], s[sgprtmp2E], s[sgprStrideC1J]            // 
+s_mul_hi_u32 s[sgprtmp1E], s[sgprtmp2E], s[sgprStrideC1J]         //
+s_mul_i32 s[sgprtmp0E], s[sgprtmp2E], s[sgprStrideC1J]            //
 s_lshl_b64 s[sgprtmp0E:sgprtmp0E+1], s[sgprtmp0E:sgprtmp0E+1], 1  // scale by bpe
 s_add_u32 s[sgprSrdD+0], s[sgprAddressTC+0], s[sgprtmp0E]         // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprAddressTC+1], s[sgprtmp1E]        // add hi to SRD
 
-s_mul_hi_u32 s[sgprtmp1E], s[sgprWorkGroup2], s[sgprStrideCK]     // 
-s_mul_i32 s[sgprtmp0E], s[sgprWorkGroup2], s[sgprStrideCK]        // 
+s_mul_hi_u32 s[sgprtmp1E], s[sgprWorkGroup2], s[sgprStrideCK]     //
+s_mul_i32 s[sgprtmp0E], s[sgprWorkGroup2], s[sgprStrideCK]        //
 s_lshl_b64 s[sgprtmp0E:sgprtmp0E+1], s[sgprtmp0E:sgprtmp0E+1], 1  // scale by bpe
 s_add_u32 s[sgprSrdD+0], s[sgprSrdD+0], s[sgprtmp0E]              // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprSrdD+1], s[sgprtmp1E]             // add hi to SRD
@@ -9640,7 +9640,7 @@ s_atomic_add s[sgprGSUSync], s[sgprKernArgAddress:sgprKernArgAddress+1], 0x8C gl
 
 
 s_waitcnt lgkmcnt(0)
-s_cmp_eq_u32 s[sgprGSUSync], 1    // 
+s_cmp_eq_u32 s[sgprGSUSync], 1    //
 s_cbranch_scc0 Summation_End_OptNLL2_20           // jump if XX required
 //check done
 
@@ -9661,7 +9661,7 @@ s_mul_i32 s[sgprtmp2E], s[sgprStrideDK], 25                      // Scale by Str
 s_lshl_b64 s[sgprtmp2E:sgprtmp2E+1], s[sgprtmp2E:sgprtmp2E+1], 2  // scale by bpe
 
 s_mov_b32 s[sgprSrdDd+2], 0x80000000
-s_mov_b32 s[sgprSrdDd+3], Srd127_96                               // 
+s_mov_b32 s[sgprSrdDd+3], Srd127_96                               //
 
 s_add_u32 s[sgprSrdDd+0], s[sgprAddressD+0], s[sgprtmp2E]         // add lo to SRD
 s_addc_u32 s[sgprSrdDd+1], s[sgprAddressD+1], s[sgprtmp3E]        // add hi to SRD
@@ -9672,15 +9672,15 @@ s_buffer_atomic_add s[sgprGSUSync], s[sgprSrdDd:sgprSrdDd+3], glc
 
 
 //s_mov_b32 s[sgprGSUSumIdx] 1
-s_mul_i32 s[sgprtmp2E], MT1, s[sgprWorkGroup1]                        // 
+s_mul_i32 s[sgprtmp2E], MT1, s[sgprWorkGroup1]                        //
 s_mul_hi_u32 s[sgprtmp1E], s[sgprtmp2E], s[sgprStrideD1J]             // cal GSU D position
-s_mul_i32 s[sgprtmp0E], s[sgprtmp2E], s[sgprStrideD1J]                // 
+s_mul_i32 s[sgprtmp0E], s[sgprtmp2E], s[sgprStrideD1J]                //
 s_lshl_b64 s[sgprtmp0E:sgprtmp1E], s[sgprtmp0E:sgprtmp1E], 2          // scale by bpe
 s_add_u32 s[sgprSrdD+0], s[sgprAddressD+0], s[sgprtmp0E]              // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprAddressD+1], s[sgprtmp1E]             // add hi to SRD
 
-s_mul_hi_u32 s[sgprtmp1E], s[sgprWorkGroup2], s[sgprStrideDK]         // 
-s_mul_i32 s[sgprtmp0E], s[sgprWorkGroup2], s[sgprStrideDK]            // 
+s_mul_hi_u32 s[sgprtmp1E], s[sgprWorkGroup2], s[sgprStrideDK]         //
+s_mul_i32 s[sgprtmp0E], s[sgprWorkGroup2], s[sgprStrideDK]            //
 s_lshl_b64 s[sgprtmp0E:sgprtmp1E], s[sgprtmp0E:sgprtmp1E], 2          // scale by bpe
 s_add_u32 s[sgprSrdD+0], s[sgprSrdD+0], s[sgprtmp0E]                  // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprSrdD+1], s[sgprtmp1E]                 // add hi to SRD
@@ -9695,20 +9695,20 @@ s_cbranch_scc0 label_KernelEnd //label_GW_End_1 //label_AFTERsummary_Edge
 buffer_load_dwordx4 v[28+4*0:28+3+4*0], v9, s[sgprSrdD:sgprSrdD+3], 0 offen offset:0 // load GSU D
 
 // GSU Output Buffer offset: Free0 + (Free1-1)*StrideC1J + (Free2-1)*StrideCK * GSUIdx * bpe%s
-//s_mul_hi_u32 s[sgprtmp1E], s[sgprSizesFree+0], s[sgprGSUSumIdx]   // 
-//s_mul_i32 s[sgprtmp0E], s[sgprSizesFree+0], s[sgprGSUSumIdx]      // 
+//s_mul_hi_u32 s[sgprtmp1E], s[sgprSizesFree+0], s[sgprGSUSumIdx]   //
+//s_mul_i32 s[sgprtmp0E], s[sgprSizesFree+0], s[sgprGSUSumIdx]      //
 s_sub_u32 s[sgprtmp5E], s[sgprSizesFree+1], 1                       // cal GSU D offset
-//s_mul_i32 s[sgprtmp5E], s[sgprtmp5E], s[sgprGSUSumIdx]            // 
-s_mul_hi_u32 s[sgprtmp3E], s[sgprtmp5E], s[sgprStrideC1J]           // 
-s_mul_i32 s[sgprtmp2E], s[sgprtmp5E], s[sgprStrideC1J]              // 
-s_add_u32 s[sgprtmp0E], s[sgprSizesFree+0], s[sgprtmp2E]            // 
-s_addc_u32 s[sgprtmp1E], 0, s[sgprtmp3E]                            // 
-s_sub_u32 s[sgprtmp5E], s[sgprSizesFree+2], 1                       // 
-//s_mul_i32 s[sgprtmp5E], s[sgprtmp5E], s[sgprGSUSumIdx]            // 
-s_mul_hi_u32 s[sgprtmp3E], s[sgprtmp5E], s[sgprStrideCK]            // 
-s_mul_i32 s[sgprtmp2E], s[sgprtmp5E], s[sgprStrideCK]               // 
-s_add_u32 s[sgprtmp0E], s[sgprtmp0E], s[sgprtmp2E]                  // 
-s_addc_u32 s[sgprtmp1E], s[sgprtmp1E], s[sgprtmp3E]                 // 
+//s_mul_i32 s[sgprtmp5E], s[sgprtmp5E], s[sgprGSUSumIdx]            //
+s_mul_hi_u32 s[sgprtmp3E], s[sgprtmp5E], s[sgprStrideC1J]           //
+s_mul_i32 s[sgprtmp2E], s[sgprtmp5E], s[sgprStrideC1J]              //
+s_add_u32 s[sgprtmp0E], s[sgprSizesFree+0], s[sgprtmp2E]            //
+s_addc_u32 s[sgprtmp1E], 0, s[sgprtmp3E]                            //
+s_sub_u32 s[sgprtmp5E], s[sgprSizesFree+2], 1                       //
+//s_mul_i32 s[sgprtmp5E], s[sgprtmp5E], s[sgprGSUSumIdx]            //
+s_mul_hi_u32 s[sgprtmp3E], s[sgprtmp5E], s[sgprStrideCK]            //
+s_mul_i32 s[sgprtmp2E], s[sgprtmp5E], s[sgprStrideCK]               //
+s_add_u32 s[sgprtmp0E], s[sgprtmp0E], s[sgprtmp2E]                  //
+s_addc_u32 s[sgprtmp1E], s[sgprtmp1E], s[sgprtmp3E]                 //
 s_lshl_b64 s[sgprtmp2E:sgprtmp3E], s[sgprtmp0E:sgprtmp1E], 2        // scale by bpe
 
 
@@ -9949,20 +9949,20 @@ v_pk_mul_f32 v[vgprValuC+30:vgprValuC+30+1], v[22:23], v[vgprValuC+30:vgprValuC+
 //synchronizer store
 
 V_LSHRREV_B32 v9, 0x1, v9
-    
+
 
 s_mov_b32 s[sgprSrdD+2], 0x80000000
-s_mov_b32 s[sgprSrdD+3], Srd127_96                 // 
+s_mov_b32 s[sgprSrdD+3], Srd127_96                 //
 
 s_mul_i32 s[sgprtmp2E], MT1, s[sgprWorkGroup1]                    // cal store position
-s_mul_hi_u32 s[sgprtmp1E], s[sgprtmp2E], s[sgprStrideC1J]         // 
-s_mul_i32 s[sgprtmp0E], s[sgprtmp2E], s[sgprStrideC1J]            // 
+s_mul_hi_u32 s[sgprtmp1E], s[sgprtmp2E], s[sgprStrideC1J]         //
+s_mul_i32 s[sgprtmp0E], s[sgprtmp2E], s[sgprStrideC1J]            //
 s_lshl_b64 s[sgprtmp0E:sgprtmp0E+1], s[sgprtmp0E:sgprtmp0E+1], 1  // scale by bpe
 s_add_u32 s[sgprSrdD+0], s[sgprAddressTC+0], s[sgprtmp0E]         // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprAddressTC+1], s[sgprtmp1E]        // add hi to SRD
 
-s_mul_hi_u32 s[sgprtmp1E], s[sgprWorkGroup2], s[sgprStrideCK]     // 
-s_mul_i32 s[sgprtmp0E], s[sgprWorkGroup2], s[sgprStrideCK]        // 
+s_mul_hi_u32 s[sgprtmp1E], s[sgprWorkGroup2], s[sgprStrideCK]     //
+s_mul_i32 s[sgprtmp0E], s[sgprWorkGroup2], s[sgprStrideCK]        //
 s_lshl_b64 s[sgprtmp0E:sgprtmp0E+1], s[sgprtmp0E:sgprtmp0E+1], 1  // scale by bpe
 s_add_u32 s[sgprSrdD+0], s[sgprSrdD+0], s[sgprtmp0E]              // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprSrdD+1], s[sgprtmp1E]             // add hi to SRD
@@ -10024,7 +10024,7 @@ s_atomic_add s[sgprGSUSync], s[sgprKernArgAddress:sgprKernArgAddress+1], 0x8C gl
 
 
 s_waitcnt lgkmcnt(0)
-s_cmp_eq_u32 s[sgprGSUSync], 1    // 
+s_cmp_eq_u32 s[sgprGSUSync], 1    //
 s_cbranch_scc0 Summation_End_OptNLL2_21           // jump if XX required
 //check done
 
@@ -10045,7 +10045,7 @@ s_mul_i32 s[sgprtmp2E], s[sgprStrideDK], 25                      // Scale by Str
 s_lshl_b64 s[sgprtmp2E:sgprtmp2E+1], s[sgprtmp2E:sgprtmp2E+1], 2  // scale by bpe
 
 s_mov_b32 s[sgprSrdDd+2], 0x80000000
-s_mov_b32 s[sgprSrdDd+3], Srd127_96                               // 
+s_mov_b32 s[sgprSrdDd+3], Srd127_96                               //
 
 s_add_u32 s[sgprSrdDd+0], s[sgprAddressD+0], s[sgprtmp2E]         // add lo to SRD
 s_addc_u32 s[sgprSrdDd+1], s[sgprAddressD+1], s[sgprtmp3E]        // add hi to SRD
@@ -10056,15 +10056,15 @@ s_buffer_atomic_add s[sgprGSUSync], s[sgprSrdDd:sgprSrdDd+3], glc
 
 
 //s_mov_b32 s[sgprGSUSumIdx] 1
-s_mul_i32 s[sgprtmp2E], MT1, s[sgprWorkGroup1]                        // 
+s_mul_i32 s[sgprtmp2E], MT1, s[sgprWorkGroup1]                        //
 s_mul_hi_u32 s[sgprtmp1E], s[sgprtmp2E], s[sgprStrideD1J]             // cal GSU D position
-s_mul_i32 s[sgprtmp0E], s[sgprtmp2E], s[sgprStrideD1J]                // 
+s_mul_i32 s[sgprtmp0E], s[sgprtmp2E], s[sgprStrideD1J]                //
 s_lshl_b64 s[sgprtmp0E:sgprtmp1E], s[sgprtmp0E:sgprtmp1E], 2          // scale by bpe
 s_add_u32 s[sgprSrdD+0], s[sgprAddressD+0], s[sgprtmp0E]              // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprAddressD+1], s[sgprtmp1E]             // add hi to SRD
 
-s_mul_hi_u32 s[sgprtmp1E], s[sgprWorkGroup2], s[sgprStrideDK]         // 
-s_mul_i32 s[sgprtmp0E], s[sgprWorkGroup2], s[sgprStrideDK]            // 
+s_mul_hi_u32 s[sgprtmp1E], s[sgprWorkGroup2], s[sgprStrideDK]         //
+s_mul_i32 s[sgprtmp0E], s[sgprWorkGroup2], s[sgprStrideDK]            //
 s_lshl_b64 s[sgprtmp0E:sgprtmp1E], s[sgprtmp0E:sgprtmp1E], 2          // scale by bpe
 s_add_u32 s[sgprSrdD+0], s[sgprSrdD+0], s[sgprtmp0E]                  // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprSrdD+1], s[sgprtmp1E]                 // add hi to SRD
@@ -10079,20 +10079,20 @@ s_cbranch_scc0 label_KernelEnd //label_GW_End_1 //label_AFTERsummary_Edge
 buffer_load_dwordx4 v[28+4*0:28+3+4*0], v9, s[sgprSrdD:sgprSrdD+3], 0 offen offset:0 // load GSU D
 
 // GSU Output Buffer offset: Free0 + (Free1-1)*StrideC1J + (Free2-1)*StrideCK * GSUIdx * bpe%s
-//s_mul_hi_u32 s[sgprtmp1E], s[sgprSizesFree+0], s[sgprGSUSumIdx]   // 
-//s_mul_i32 s[sgprtmp0E], s[sgprSizesFree+0], s[sgprGSUSumIdx]      // 
+//s_mul_hi_u32 s[sgprtmp1E], s[sgprSizesFree+0], s[sgprGSUSumIdx]   //
+//s_mul_i32 s[sgprtmp0E], s[sgprSizesFree+0], s[sgprGSUSumIdx]      //
 s_sub_u32 s[sgprtmp5E], s[sgprSizesFree+1], 1                       // cal GSU D offset
-//s_mul_i32 s[sgprtmp5E], s[sgprtmp5E], s[sgprGSUSumIdx]            // 
-s_mul_hi_u32 s[sgprtmp3E], s[sgprtmp5E], s[sgprStrideC1J]           // 
-s_mul_i32 s[sgprtmp2E], s[sgprtmp5E], s[sgprStrideC1J]              // 
-s_add_u32 s[sgprtmp0E], s[sgprSizesFree+0], s[sgprtmp2E]            // 
-s_addc_u32 s[sgprtmp1E], 0, s[sgprtmp3E]                            // 
-s_sub_u32 s[sgprtmp5E], s[sgprSizesFree+2], 1                       // 
-//s_mul_i32 s[sgprtmp5E], s[sgprtmp5E], s[sgprGSUSumIdx]            // 
-s_mul_hi_u32 s[sgprtmp3E], s[sgprtmp5E], s[sgprStrideCK]            // 
-s_mul_i32 s[sgprtmp2E], s[sgprtmp5E], s[sgprStrideCK]               // 
-s_add_u32 s[sgprtmp0E], s[sgprtmp0E], s[sgprtmp2E]                  // 
-s_addc_u32 s[sgprtmp1E], s[sgprtmp1E], s[sgprtmp3E]                 // 
+//s_mul_i32 s[sgprtmp5E], s[sgprtmp5E], s[sgprGSUSumIdx]            //
+s_mul_hi_u32 s[sgprtmp3E], s[sgprtmp5E], s[sgprStrideC1J]           //
+s_mul_i32 s[sgprtmp2E], s[sgprtmp5E], s[sgprStrideC1J]              //
+s_add_u32 s[sgprtmp0E], s[sgprSizesFree+0], s[sgprtmp2E]            //
+s_addc_u32 s[sgprtmp1E], 0, s[sgprtmp3E]                            //
+s_sub_u32 s[sgprtmp5E], s[sgprSizesFree+2], 1                       //
+//s_mul_i32 s[sgprtmp5E], s[sgprtmp5E], s[sgprGSUSumIdx]            //
+s_mul_hi_u32 s[sgprtmp3E], s[sgprtmp5E], s[sgprStrideCK]            //
+s_mul_i32 s[sgprtmp2E], s[sgprtmp5E], s[sgprStrideCK]               //
+s_add_u32 s[sgprtmp0E], s[sgprtmp0E], s[sgprtmp2E]                  //
+s_addc_u32 s[sgprtmp1E], s[sgprtmp1E], s[sgprtmp3E]                 //
 s_lshl_b64 s[sgprtmp2E:sgprtmp3E], s[sgprtmp0E:sgprtmp1E], 2        // scale by bpe
 
 
@@ -10325,20 +10325,20 @@ v_pk_mul_f32 v[vgprValuC+30:vgprValuC+30+1], v[22:23], v[vgprValuC+30:vgprValuC+
 //synchronizer store
 
 V_LSHRREV_B32 v9, 0x1, v9
-    
+
 
 s_mov_b32 s[sgprSrdD+2], 0x80000000
-s_mov_b32 s[sgprSrdD+3], Srd127_96                 // 
+s_mov_b32 s[sgprSrdD+3], Srd127_96                 //
 
 s_mul_i32 s[sgprtmp2E], MT1, s[sgprWorkGroup1]                    // cal store position
-s_mul_hi_u32 s[sgprtmp1E], s[sgprtmp2E], s[sgprStrideC1J]         // 
-s_mul_i32 s[sgprtmp0E], s[sgprtmp2E], s[sgprStrideC1J]            // 
+s_mul_hi_u32 s[sgprtmp1E], s[sgprtmp2E], s[sgprStrideC1J]         //
+s_mul_i32 s[sgprtmp0E], s[sgprtmp2E], s[sgprStrideC1J]            //
 s_lshl_b64 s[sgprtmp0E:sgprtmp0E+1], s[sgprtmp0E:sgprtmp0E+1], 1  // scale by bpe
 s_add_u32 s[sgprSrdD+0], s[sgprAddressTC+0], s[sgprtmp0E]         // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprAddressTC+1], s[sgprtmp1E]        // add hi to SRD
 
-s_mul_hi_u32 s[sgprtmp1E], s[sgprWorkGroup2], s[sgprStrideCK]     // 
-s_mul_i32 s[sgprtmp0E], s[sgprWorkGroup2], s[sgprStrideCK]        // 
+s_mul_hi_u32 s[sgprtmp1E], s[sgprWorkGroup2], s[sgprStrideCK]     //
+s_mul_i32 s[sgprtmp0E], s[sgprWorkGroup2], s[sgprStrideCK]        //
 s_lshl_b64 s[sgprtmp0E:sgprtmp0E+1], s[sgprtmp0E:sgprtmp0E+1], 1  // scale by bpe
 s_add_u32 s[sgprSrdD+0], s[sgprSrdD+0], s[sgprtmp0E]              // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprSrdD+1], s[sgprtmp1E]             // add hi to SRD
@@ -10400,7 +10400,7 @@ s_atomic_add s[sgprGSUSync], s[sgprKernArgAddress:sgprKernArgAddress+1], 0x8C gl
 
 
 s_waitcnt lgkmcnt(0)
-s_cmp_eq_u32 s[sgprGSUSync], 1    // 
+s_cmp_eq_u32 s[sgprGSUSync], 1    //
 s_cbranch_scc0 Summation_End_OptNLL2_22           // jump if XX required
 //check done
 
@@ -10421,7 +10421,7 @@ s_mul_i32 s[sgprtmp2E], s[sgprStrideDK], 25                      // Scale by Str
 s_lshl_b64 s[sgprtmp2E:sgprtmp2E+1], s[sgprtmp2E:sgprtmp2E+1], 2  // scale by bpe
 
 s_mov_b32 s[sgprSrdDd+2], 0x80000000
-s_mov_b32 s[sgprSrdDd+3], Srd127_96                               // 
+s_mov_b32 s[sgprSrdDd+3], Srd127_96                               //
 
 s_add_u32 s[sgprSrdDd+0], s[sgprAddressD+0], s[sgprtmp2E]         // add lo to SRD
 s_addc_u32 s[sgprSrdDd+1], s[sgprAddressD+1], s[sgprtmp3E]        // add hi to SRD
@@ -10432,15 +10432,15 @@ s_buffer_atomic_add s[sgprGSUSync], s[sgprSrdDd:sgprSrdDd+3], glc
 
 
 //s_mov_b32 s[sgprGSUSumIdx] 1
-s_mul_i32 s[sgprtmp2E], MT1, s[sgprWorkGroup1]                        // 
+s_mul_i32 s[sgprtmp2E], MT1, s[sgprWorkGroup1]                        //
 s_mul_hi_u32 s[sgprtmp1E], s[sgprtmp2E], s[sgprStrideD1J]             // cal GSU D position
-s_mul_i32 s[sgprtmp0E], s[sgprtmp2E], s[sgprStrideD1J]                // 
+s_mul_i32 s[sgprtmp0E], s[sgprtmp2E], s[sgprStrideD1J]                //
 s_lshl_b64 s[sgprtmp0E:sgprtmp1E], s[sgprtmp0E:sgprtmp1E], 2          // scale by bpe
 s_add_u32 s[sgprSrdD+0], s[sgprAddressD+0], s[sgprtmp0E]              // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprAddressD+1], s[sgprtmp1E]             // add hi to SRD
 
-s_mul_hi_u32 s[sgprtmp1E], s[sgprWorkGroup2], s[sgprStrideDK]         // 
-s_mul_i32 s[sgprtmp0E], s[sgprWorkGroup2], s[sgprStrideDK]            // 
+s_mul_hi_u32 s[sgprtmp1E], s[sgprWorkGroup2], s[sgprStrideDK]         //
+s_mul_i32 s[sgprtmp0E], s[sgprWorkGroup2], s[sgprStrideDK]            //
 s_lshl_b64 s[sgprtmp0E:sgprtmp1E], s[sgprtmp0E:sgprtmp1E], 2          // scale by bpe
 s_add_u32 s[sgprSrdD+0], s[sgprSrdD+0], s[sgprtmp0E]                  // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprSrdD+1], s[sgprtmp1E]                 // add hi to SRD
@@ -10455,20 +10455,20 @@ s_cbranch_scc0 label_KernelEnd //label_GW_End_1 //label_AFTERsummary_Edge
 buffer_load_dwordx4 v[28+4*0:28+3+4*0], v9, s[sgprSrdD:sgprSrdD+3], 0 offen offset:0 // load GSU D
 
 // GSU Output Buffer offset: Free0 + (Free1-1)*StrideC1J + (Free2-1)*StrideCK * GSUIdx * bpe%s
-//s_mul_hi_u32 s[sgprtmp1E], s[sgprSizesFree+0], s[sgprGSUSumIdx]   // 
-//s_mul_i32 s[sgprtmp0E], s[sgprSizesFree+0], s[sgprGSUSumIdx]      // 
+//s_mul_hi_u32 s[sgprtmp1E], s[sgprSizesFree+0], s[sgprGSUSumIdx]   //
+//s_mul_i32 s[sgprtmp0E], s[sgprSizesFree+0], s[sgprGSUSumIdx]      //
 s_sub_u32 s[sgprtmp5E], s[sgprSizesFree+1], 1                       // cal GSU D offset
-//s_mul_i32 s[sgprtmp5E], s[sgprtmp5E], s[sgprGSUSumIdx]            // 
-s_mul_hi_u32 s[sgprtmp3E], s[sgprtmp5E], s[sgprStrideC1J]           // 
-s_mul_i32 s[sgprtmp2E], s[sgprtmp5E], s[sgprStrideC1J]              // 
-s_add_u32 s[sgprtmp0E], s[sgprSizesFree+0], s[sgprtmp2E]            // 
-s_addc_u32 s[sgprtmp1E], 0, s[sgprtmp3E]                            // 
-s_sub_u32 s[sgprtmp5E], s[sgprSizesFree+2], 1                       // 
-//s_mul_i32 s[sgprtmp5E], s[sgprtmp5E], s[sgprGSUSumIdx]            // 
-s_mul_hi_u32 s[sgprtmp3E], s[sgprtmp5E], s[sgprStrideCK]            // 
-s_mul_i32 s[sgprtmp2E], s[sgprtmp5E], s[sgprStrideCK]               // 
-s_add_u32 s[sgprtmp0E], s[sgprtmp0E], s[sgprtmp2E]                  // 
-s_addc_u32 s[sgprtmp1E], s[sgprtmp1E], s[sgprtmp3E]                 // 
+//s_mul_i32 s[sgprtmp5E], s[sgprtmp5E], s[sgprGSUSumIdx]            //
+s_mul_hi_u32 s[sgprtmp3E], s[sgprtmp5E], s[sgprStrideC1J]           //
+s_mul_i32 s[sgprtmp2E], s[sgprtmp5E], s[sgprStrideC1J]              //
+s_add_u32 s[sgprtmp0E], s[sgprSizesFree+0], s[sgprtmp2E]            //
+s_addc_u32 s[sgprtmp1E], 0, s[sgprtmp3E]                            //
+s_sub_u32 s[sgprtmp5E], s[sgprSizesFree+2], 1                       //
+//s_mul_i32 s[sgprtmp5E], s[sgprtmp5E], s[sgprGSUSumIdx]            //
+s_mul_hi_u32 s[sgprtmp3E], s[sgprtmp5E], s[sgprStrideCK]            //
+s_mul_i32 s[sgprtmp2E], s[sgprtmp5E], s[sgprStrideCK]               //
+s_add_u32 s[sgprtmp0E], s[sgprtmp0E], s[sgprtmp2E]                  //
+s_addc_u32 s[sgprtmp1E], s[sgprtmp1E], s[sgprtmp3E]                 //
 s_lshl_b64 s[sgprtmp2E:sgprtmp3E], s[sgprtmp0E:sgprtmp1E], 2        // scale by bpe
 
 
@@ -10713,20 +10713,20 @@ v_pk_mul_f32 v[vgprValuC+30:vgprValuC+30+1], v[22:23], v[vgprValuC+30:vgprValuC+
 //synchronizer store
 
 V_LSHRREV_B32 v9, 0x1, v9
-    
+
 
 s_mov_b32 s[sgprSrdD+2], 0x80000000
-s_mov_b32 s[sgprSrdD+3], Srd127_96                 // 
+s_mov_b32 s[sgprSrdD+3], Srd127_96                 //
 
 s_mul_i32 s[sgprtmp2E], MT1, s[sgprWorkGroup1]                    // cal store position
-s_mul_hi_u32 s[sgprtmp1E], s[sgprtmp2E], s[sgprStrideC1J]         // 
-s_mul_i32 s[sgprtmp0E], s[sgprtmp2E], s[sgprStrideC1J]            // 
+s_mul_hi_u32 s[sgprtmp1E], s[sgprtmp2E], s[sgprStrideC1J]         //
+s_mul_i32 s[sgprtmp0E], s[sgprtmp2E], s[sgprStrideC1J]            //
 s_lshl_b64 s[sgprtmp0E:sgprtmp0E+1], s[sgprtmp0E:sgprtmp0E+1], 1  // scale by bpe
 s_add_u32 s[sgprSrdD+0], s[sgprAddressTC+0], s[sgprtmp0E]         // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprAddressTC+1], s[sgprtmp1E]        // add hi to SRD
 
-s_mul_hi_u32 s[sgprtmp1E], s[sgprWorkGroup2], s[sgprStrideCK]     // 
-s_mul_i32 s[sgprtmp0E], s[sgprWorkGroup2], s[sgprStrideCK]        // 
+s_mul_hi_u32 s[sgprtmp1E], s[sgprWorkGroup2], s[sgprStrideCK]     //
+s_mul_i32 s[sgprtmp0E], s[sgprWorkGroup2], s[sgprStrideCK]        //
 s_lshl_b64 s[sgprtmp0E:sgprtmp0E+1], s[sgprtmp0E:sgprtmp0E+1], 1  // scale by bpe
 s_add_u32 s[sgprSrdD+0], s[sgprSrdD+0], s[sgprtmp0E]              // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprSrdD+1], s[sgprtmp1E]             // add hi to SRD
@@ -10788,7 +10788,7 @@ s_atomic_add s[sgprGSUSync], s[sgprKernArgAddress:sgprKernArgAddress+1], 0x8C gl
 
 
 s_waitcnt lgkmcnt(0)
-s_cmp_eq_u32 s[sgprGSUSync], 1    // 
+s_cmp_eq_u32 s[sgprGSUSync], 1    //
 s_cbranch_scc0 Summation_End_OptNLL2_23           // jump if XX required
 //check done
 
@@ -10809,7 +10809,7 @@ s_mul_i32 s[sgprtmp2E], s[sgprStrideDK], 25                      // Scale by Str
 s_lshl_b64 s[sgprtmp2E:sgprtmp2E+1], s[sgprtmp2E:sgprtmp2E+1], 2  // scale by bpe
 
 s_mov_b32 s[sgprSrdDd+2], 0x80000000
-s_mov_b32 s[sgprSrdDd+3], Srd127_96                               // 
+s_mov_b32 s[sgprSrdDd+3], Srd127_96                               //
 
 s_add_u32 s[sgprSrdDd+0], s[sgprAddressD+0], s[sgprtmp2E]         // add lo to SRD
 s_addc_u32 s[sgprSrdDd+1], s[sgprAddressD+1], s[sgprtmp3E]        // add hi to SRD
@@ -10820,15 +10820,15 @@ s_buffer_atomic_add s[sgprGSUSync], s[sgprSrdDd:sgprSrdDd+3], glc
 
 
 //s_mov_b32 s[sgprGSUSumIdx] 1
-s_mul_i32 s[sgprtmp2E], MT1, s[sgprWorkGroup1]                        // 
+s_mul_i32 s[sgprtmp2E], MT1, s[sgprWorkGroup1]                        //
 s_mul_hi_u32 s[sgprtmp1E], s[sgprtmp2E], s[sgprStrideD1J]             // cal GSU D position
-s_mul_i32 s[sgprtmp0E], s[sgprtmp2E], s[sgprStrideD1J]                // 
+s_mul_i32 s[sgprtmp0E], s[sgprtmp2E], s[sgprStrideD1J]                //
 s_lshl_b64 s[sgprtmp0E:sgprtmp1E], s[sgprtmp0E:sgprtmp1E], 2          // scale by bpe
 s_add_u32 s[sgprSrdD+0], s[sgprAddressD+0], s[sgprtmp0E]              // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprAddressD+1], s[sgprtmp1E]             // add hi to SRD
 
-s_mul_hi_u32 s[sgprtmp1E], s[sgprWorkGroup2], s[sgprStrideDK]         // 
-s_mul_i32 s[sgprtmp0E], s[sgprWorkGroup2], s[sgprStrideDK]            // 
+s_mul_hi_u32 s[sgprtmp1E], s[sgprWorkGroup2], s[sgprStrideDK]         //
+s_mul_i32 s[sgprtmp0E], s[sgprWorkGroup2], s[sgprStrideDK]            //
 s_lshl_b64 s[sgprtmp0E:sgprtmp1E], s[sgprtmp0E:sgprtmp1E], 2          // scale by bpe
 s_add_u32 s[sgprSrdD+0], s[sgprSrdD+0], s[sgprtmp0E]                  // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprSrdD+1], s[sgprtmp1E]                 // add hi to SRD
@@ -10843,20 +10843,20 @@ s_cbranch_scc0 label_KernelEnd //label_GW_End_1 //label_AFTERsummary_Edge
 buffer_load_dwordx4 v[28+4*0:28+3+4*0], v9, s[sgprSrdD:sgprSrdD+3], 0 offen offset:0 // load GSU D
 
 // GSU Output Buffer offset: Free0 + (Free1-1)*StrideC1J + (Free2-1)*StrideCK * GSUIdx * bpe%s
-//s_mul_hi_u32 s[sgprtmp1E], s[sgprSizesFree+0], s[sgprGSUSumIdx]   // 
-//s_mul_i32 s[sgprtmp0E], s[sgprSizesFree+0], s[sgprGSUSumIdx]      // 
+//s_mul_hi_u32 s[sgprtmp1E], s[sgprSizesFree+0], s[sgprGSUSumIdx]   //
+//s_mul_i32 s[sgprtmp0E], s[sgprSizesFree+0], s[sgprGSUSumIdx]      //
 s_sub_u32 s[sgprtmp5E], s[sgprSizesFree+1], 1                       // cal GSU D offset
-//s_mul_i32 s[sgprtmp5E], s[sgprtmp5E], s[sgprGSUSumIdx]            // 
-s_mul_hi_u32 s[sgprtmp3E], s[sgprtmp5E], s[sgprStrideC1J]           // 
-s_mul_i32 s[sgprtmp2E], s[sgprtmp5E], s[sgprStrideC1J]              // 
-s_add_u32 s[sgprtmp0E], s[sgprSizesFree+0], s[sgprtmp2E]            // 
-s_addc_u32 s[sgprtmp1E], 0, s[sgprtmp3E]                            // 
-s_sub_u32 s[sgprtmp5E], s[sgprSizesFree+2], 1                       // 
-//s_mul_i32 s[sgprtmp5E], s[sgprtmp5E], s[sgprGSUSumIdx]            // 
-s_mul_hi_u32 s[sgprtmp3E], s[sgprtmp5E], s[sgprStrideCK]            // 
-s_mul_i32 s[sgprtmp2E], s[sgprtmp5E], s[sgprStrideCK]               // 
-s_add_u32 s[sgprtmp0E], s[sgprtmp0E], s[sgprtmp2E]                  // 
-s_addc_u32 s[sgprtmp1E], s[sgprtmp1E], s[sgprtmp3E]                 // 
+//s_mul_i32 s[sgprtmp5E], s[sgprtmp5E], s[sgprGSUSumIdx]            //
+s_mul_hi_u32 s[sgprtmp3E], s[sgprtmp5E], s[sgprStrideC1J]           //
+s_mul_i32 s[sgprtmp2E], s[sgprtmp5E], s[sgprStrideC1J]              //
+s_add_u32 s[sgprtmp0E], s[sgprSizesFree+0], s[sgprtmp2E]            //
+s_addc_u32 s[sgprtmp1E], 0, s[sgprtmp3E]                            //
+s_sub_u32 s[sgprtmp5E], s[sgprSizesFree+2], 1                       //
+//s_mul_i32 s[sgprtmp5E], s[sgprtmp5E], s[sgprGSUSumIdx]            //
+s_mul_hi_u32 s[sgprtmp3E], s[sgprtmp5E], s[sgprStrideCK]            //
+s_mul_i32 s[sgprtmp2E], s[sgprtmp5E], s[sgprStrideCK]               //
+s_add_u32 s[sgprtmp0E], s[sgprtmp0E], s[sgprtmp2E]                  //
+s_addc_u32 s[sgprtmp1E], s[sgprtmp1E], s[sgprtmp3E]                 //
 s_lshl_b64 s[sgprtmp2E:sgprtmp3E], s[sgprtmp0E:sgprtmp1E], 2        // scale by bpe
 
 
@@ -11113,20 +11113,20 @@ v_pk_mul_f32 v[vgprValuC+30:vgprValuC+30+1], v[22:23], v[vgprValuC+30:vgprValuC+
 //synchronizer store
 
 V_LSHRREV_B32 v9, 0x1, v9
-    
+
 
 s_mov_b32 s[sgprSrdD+2], 0x80000000
-s_mov_b32 s[sgprSrdD+3], Srd127_96                 // 
+s_mov_b32 s[sgprSrdD+3], Srd127_96                 //
 
 s_mul_i32 s[sgprtmp2E], MT1, s[sgprWorkGroup1]                    // cal store position
-s_mul_hi_u32 s[sgprtmp1E], s[sgprtmp2E], s[sgprStrideC1J]         // 
-s_mul_i32 s[sgprtmp0E], s[sgprtmp2E], s[sgprStrideC1J]            // 
+s_mul_hi_u32 s[sgprtmp1E], s[sgprtmp2E], s[sgprStrideC1J]         //
+s_mul_i32 s[sgprtmp0E], s[sgprtmp2E], s[sgprStrideC1J]            //
 s_lshl_b64 s[sgprtmp0E:sgprtmp0E+1], s[sgprtmp0E:sgprtmp0E+1], 1  // scale by bpe
 s_add_u32 s[sgprSrdD+0], s[sgprAddressTC+0], s[sgprtmp0E]         // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprAddressTC+1], s[sgprtmp1E]        // add hi to SRD
 
-s_mul_hi_u32 s[sgprtmp1E], s[sgprWorkGroup2], s[sgprStrideCK]     // 
-s_mul_i32 s[sgprtmp0E], s[sgprWorkGroup2], s[sgprStrideCK]        // 
+s_mul_hi_u32 s[sgprtmp1E], s[sgprWorkGroup2], s[sgprStrideCK]     //
+s_mul_i32 s[sgprtmp0E], s[sgprWorkGroup2], s[sgprStrideCK]        //
 s_lshl_b64 s[sgprtmp0E:sgprtmp0E+1], s[sgprtmp0E:sgprtmp0E+1], 1  // scale by bpe
 s_add_u32 s[sgprSrdD+0], s[sgprSrdD+0], s[sgprtmp0E]              // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprSrdD+1], s[sgprtmp1E]             // add hi to SRD
@@ -11221,7 +11221,7 @@ s_atomic_add s[sgprGSUSync], s[sgprKernArgAddress:sgprKernArgAddress+1], 0x8C gl
 
 
 s_waitcnt lgkmcnt(0)
-s_cmp_eq_u32 s[sgprGSUSync], 1    // 
+s_cmp_eq_u32 s[sgprGSUSync], 1    //
 s_cbranch_scc0 Summation_End_OptNLL2_8           // jump if XX required
 //check done
 
@@ -11242,7 +11242,7 @@ s_mul_i32 s[sgprtmp2E], s[sgprStrideDK], 25                      // Scale by Str
 s_lshl_b64 s[sgprtmp2E:sgprtmp2E+1], s[sgprtmp2E:sgprtmp2E+1], 2  // scale by bpe
 
 s_mov_b32 s[sgprSrdDd+2], 0x80000000
-s_mov_b32 s[sgprSrdDd+3], Srd127_96                               // 
+s_mov_b32 s[sgprSrdDd+3], Srd127_96                               //
 
 s_add_u32 s[sgprSrdDd+0], s[sgprAddressD+0], s[sgprtmp2E]         // add lo to SRD
 s_addc_u32 s[sgprSrdDd+1], s[sgprAddressD+1], s[sgprtmp3E]        // add hi to SRD
@@ -11253,15 +11253,15 @@ s_buffer_atomic_add s[sgprGSUSync], s[sgprSrdDd:sgprSrdDd+3], glc
 
 
 //s_mov_b32 s[sgprGSUSumIdx] 1
-s_mul_i32 s[sgprtmp2E], MT1, s[sgprWorkGroup1]                        // 
+s_mul_i32 s[sgprtmp2E], MT1, s[sgprWorkGroup1]                        //
 s_mul_hi_u32 s[sgprtmp1E], s[sgprtmp2E], s[sgprStrideD1J]             // cal GSU D position
-s_mul_i32 s[sgprtmp0E], s[sgprtmp2E], s[sgprStrideD1J]                // 
+s_mul_i32 s[sgprtmp0E], s[sgprtmp2E], s[sgprStrideD1J]                //
 s_lshl_b64 s[sgprtmp0E:sgprtmp1E], s[sgprtmp0E:sgprtmp1E], 2          // scale by bpe
 s_add_u32 s[sgprSrdD+0], s[sgprAddressD+0], s[sgprtmp0E]              // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprAddressD+1], s[sgprtmp1E]             // add hi to SRD
 
-s_mul_hi_u32 s[sgprtmp1E], s[sgprWorkGroup2], s[sgprStrideDK]         // 
-s_mul_i32 s[sgprtmp0E], s[sgprWorkGroup2], s[sgprStrideDK]            // 
+s_mul_hi_u32 s[sgprtmp1E], s[sgprWorkGroup2], s[sgprStrideDK]         //
+s_mul_i32 s[sgprtmp0E], s[sgprWorkGroup2], s[sgprStrideDK]            //
 s_lshl_b64 s[sgprtmp0E:sgprtmp1E], s[sgprtmp0E:sgprtmp1E], 2          // scale by bpe
 s_add_u32 s[sgprSrdD+0], s[sgprSrdD+0], s[sgprtmp0E]                  // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprSrdD+1], s[sgprtmp1E]                 // add hi to SRD
@@ -11276,20 +11276,20 @@ s_cbranch_scc0 label_KernelEnd //label_GW_End_1 //label_AFTERsummary_Edge
 buffer_load_dwordx4 v[32+4*0:32+3+4*0], v9, s[sgprSrdD:sgprSrdD+3], 0 offen offset:0 // load GSU D
 
 // GSU Output Buffer offset: Free0 + (Free1-1)*StrideC1J + (Free2-1)*StrideCK * GSUIdx * bpe%s
-//s_mul_hi_u32 s[sgprtmp1E], s[sgprSizesFree+0], s[sgprGSUSumIdx]   // 
-//s_mul_i32 s[sgprtmp0E], s[sgprSizesFree+0], s[sgprGSUSumIdx]      // 
+//s_mul_hi_u32 s[sgprtmp1E], s[sgprSizesFree+0], s[sgprGSUSumIdx]   //
+//s_mul_i32 s[sgprtmp0E], s[sgprSizesFree+0], s[sgprGSUSumIdx]      //
 s_sub_u32 s[sgprtmp5E], s[sgprSizesFree+1], 1                       // cal GSU D offset
-//s_mul_i32 s[sgprtmp5E], s[sgprtmp5E], s[sgprGSUSumIdx]            // 
-s_mul_hi_u32 s[sgprtmp3E], s[sgprtmp5E], s[sgprStrideC1J]           // 
-s_mul_i32 s[sgprtmp2E], s[sgprtmp5E], s[sgprStrideC1J]              // 
-s_add_u32 s[sgprtmp0E], s[sgprSizesFree+0], s[sgprtmp2E]            // 
-s_addc_u32 s[sgprtmp1E], 0, s[sgprtmp3E]                            // 
-s_sub_u32 s[sgprtmp5E], s[sgprSizesFree+2], 1                       // 
-//s_mul_i32 s[sgprtmp5E], s[sgprtmp5E], s[sgprGSUSumIdx]            // 
-s_mul_hi_u32 s[sgprtmp3E], s[sgprtmp5E], s[sgprStrideCK]            // 
-s_mul_i32 s[sgprtmp2E], s[sgprtmp5E], s[sgprStrideCK]               // 
-s_add_u32 s[sgprtmp0E], s[sgprtmp0E], s[sgprtmp2E]                  // 
-s_addc_u32 s[sgprtmp1E], s[sgprtmp1E], s[sgprtmp3E]                 // 
+//s_mul_i32 s[sgprtmp5E], s[sgprtmp5E], s[sgprGSUSumIdx]            //
+s_mul_hi_u32 s[sgprtmp3E], s[sgprtmp5E], s[sgprStrideC1J]           //
+s_mul_i32 s[sgprtmp2E], s[sgprtmp5E], s[sgprStrideC1J]              //
+s_add_u32 s[sgprtmp0E], s[sgprSizesFree+0], s[sgprtmp2E]            //
+s_addc_u32 s[sgprtmp1E], 0, s[sgprtmp3E]                            //
+s_sub_u32 s[sgprtmp5E], s[sgprSizesFree+2], 1                       //
+//s_mul_i32 s[sgprtmp5E], s[sgprtmp5E], s[sgprGSUSumIdx]            //
+s_mul_hi_u32 s[sgprtmp3E], s[sgprtmp5E], s[sgprStrideCK]            //
+s_mul_i32 s[sgprtmp2E], s[sgprtmp5E], s[sgprStrideCK]               //
+s_add_u32 s[sgprtmp0E], s[sgprtmp0E], s[sgprtmp2E]                  //
+s_addc_u32 s[sgprtmp1E], s[sgprtmp1E], s[sgprtmp3E]                 //
 s_lshl_b64 s[sgprtmp2E:sgprtmp3E], s[sgprtmp0E:sgprtmp1E], 2        // scale by bpe
 
 
@@ -11524,20 +11524,20 @@ v_pk_mul_f32 v[vgprValuC+34:vgprValuC+34+1], v[26:27], v[vgprValuC+34:vgprValuC+
 //synchronizer store
 
 V_LSHRREV_B32 v9, 0x1, v9
-    
+
 
 s_mov_b32 s[sgprSrdD+2], 0x80000000
-s_mov_b32 s[sgprSrdD+3], Srd127_96                 // 
+s_mov_b32 s[sgprSrdD+3], Srd127_96                 //
 
 s_mul_i32 s[sgprtmp2E], MT1, s[sgprWorkGroup1]                    // cal store position
-s_mul_hi_u32 s[sgprtmp1E], s[sgprtmp2E], s[sgprStrideC1J]         // 
-s_mul_i32 s[sgprtmp0E], s[sgprtmp2E], s[sgprStrideC1J]            // 
+s_mul_hi_u32 s[sgprtmp1E], s[sgprtmp2E], s[sgprStrideC1J]         //
+s_mul_i32 s[sgprtmp0E], s[sgprtmp2E], s[sgprStrideC1J]            //
 s_lshl_b64 s[sgprtmp0E:sgprtmp0E+1], s[sgprtmp0E:sgprtmp0E+1], 1  // scale by bpe
 s_add_u32 s[sgprSrdD+0], s[sgprAddressTC+0], s[sgprtmp0E]         // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprAddressTC+1], s[sgprtmp1E]        // add hi to SRD
 
-s_mul_hi_u32 s[sgprtmp1E], s[sgprWorkGroup2], s[sgprStrideCK]     // 
-s_mul_i32 s[sgprtmp0E], s[sgprWorkGroup2], s[sgprStrideCK]        // 
+s_mul_hi_u32 s[sgprtmp1E], s[sgprWorkGroup2], s[sgprStrideCK]     //
+s_mul_i32 s[sgprtmp0E], s[sgprWorkGroup2], s[sgprStrideCK]        //
 s_lshl_b64 s[sgprtmp0E:sgprtmp0E+1], s[sgprtmp0E:sgprtmp0E+1], 1  // scale by bpe
 s_add_u32 s[sgprSrdD+0], s[sgprSrdD+0], s[sgprtmp0E]              // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprSrdD+1], s[sgprtmp1E]             // add hi to SRD
@@ -11599,7 +11599,7 @@ s_atomic_add s[sgprGSUSync], s[sgprKernArgAddress:sgprKernArgAddress+1], 0x8C gl
 
 
 s_waitcnt lgkmcnt(0)
-s_cmp_eq_u32 s[sgprGSUSync], 1    // 
+s_cmp_eq_u32 s[sgprGSUSync], 1    //
 s_cbranch_scc0 Summation_End_OptNLL2_9           // jump if XX required
 //check done
 
@@ -11620,7 +11620,7 @@ s_mul_i32 s[sgprtmp2E], s[sgprStrideDK], 25                      // Scale by Str
 s_lshl_b64 s[sgprtmp2E:sgprtmp2E+1], s[sgprtmp2E:sgprtmp2E+1], 2  // scale by bpe
 
 s_mov_b32 s[sgprSrdDd+2], 0x80000000
-s_mov_b32 s[sgprSrdDd+3], Srd127_96                               // 
+s_mov_b32 s[sgprSrdDd+3], Srd127_96                               //
 
 s_add_u32 s[sgprSrdDd+0], s[sgprAddressD+0], s[sgprtmp2E]         // add lo to SRD
 s_addc_u32 s[sgprSrdDd+1], s[sgprAddressD+1], s[sgprtmp3E]        // add hi to SRD
@@ -11631,15 +11631,15 @@ s_buffer_atomic_add s[sgprGSUSync], s[sgprSrdDd:sgprSrdDd+3], glc
 
 
 //s_mov_b32 s[sgprGSUSumIdx] 1
-s_mul_i32 s[sgprtmp2E], MT1, s[sgprWorkGroup1]                        // 
+s_mul_i32 s[sgprtmp2E], MT1, s[sgprWorkGroup1]                        //
 s_mul_hi_u32 s[sgprtmp1E], s[sgprtmp2E], s[sgprStrideD1J]             // cal GSU D position
-s_mul_i32 s[sgprtmp0E], s[sgprtmp2E], s[sgprStrideD1J]                // 
+s_mul_i32 s[sgprtmp0E], s[sgprtmp2E], s[sgprStrideD1J]                //
 s_lshl_b64 s[sgprtmp0E:sgprtmp1E], s[sgprtmp0E:sgprtmp1E], 2          // scale by bpe
 s_add_u32 s[sgprSrdD+0], s[sgprAddressD+0], s[sgprtmp0E]              // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprAddressD+1], s[sgprtmp1E]             // add hi to SRD
 
-s_mul_hi_u32 s[sgprtmp1E], s[sgprWorkGroup2], s[sgprStrideDK]         // 
-s_mul_i32 s[sgprtmp0E], s[sgprWorkGroup2], s[sgprStrideDK]            // 
+s_mul_hi_u32 s[sgprtmp1E], s[sgprWorkGroup2], s[sgprStrideDK]         //
+s_mul_i32 s[sgprtmp0E], s[sgprWorkGroup2], s[sgprStrideDK]            //
 s_lshl_b64 s[sgprtmp0E:sgprtmp1E], s[sgprtmp0E:sgprtmp1E], 2          // scale by bpe
 s_add_u32 s[sgprSrdD+0], s[sgprSrdD+0], s[sgprtmp0E]                  // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprSrdD+1], s[sgprtmp1E]                 // add hi to SRD
@@ -11654,20 +11654,20 @@ s_cbranch_scc0 label_KernelEnd //label_GW_End_1 //label_AFTERsummary_Edge
 buffer_load_dwordx4 v[32+4*0:32+3+4*0], v9, s[sgprSrdD:sgprSrdD+3], 0 offen offset:0 // load GSU D
 
 // GSU Output Buffer offset: Free0 + (Free1-1)*StrideC1J + (Free2-1)*StrideCK * GSUIdx * bpe%s
-//s_mul_hi_u32 s[sgprtmp1E], s[sgprSizesFree+0], s[sgprGSUSumIdx]   // 
-//s_mul_i32 s[sgprtmp0E], s[sgprSizesFree+0], s[sgprGSUSumIdx]      // 
+//s_mul_hi_u32 s[sgprtmp1E], s[sgprSizesFree+0], s[sgprGSUSumIdx]   //
+//s_mul_i32 s[sgprtmp0E], s[sgprSizesFree+0], s[sgprGSUSumIdx]      //
 s_sub_u32 s[sgprtmp5E], s[sgprSizesFree+1], 1                       // cal GSU D offset
-//s_mul_i32 s[sgprtmp5E], s[sgprtmp5E], s[sgprGSUSumIdx]            // 
-s_mul_hi_u32 s[sgprtmp3E], s[sgprtmp5E], s[sgprStrideC1J]           // 
-s_mul_i32 s[sgprtmp2E], s[sgprtmp5E], s[sgprStrideC1J]              // 
-s_add_u32 s[sgprtmp0E], s[sgprSizesFree+0], s[sgprtmp2E]            // 
-s_addc_u32 s[sgprtmp1E], 0, s[sgprtmp3E]                            // 
-s_sub_u32 s[sgprtmp5E], s[sgprSizesFree+2], 1                       // 
-//s_mul_i32 s[sgprtmp5E], s[sgprtmp5E], s[sgprGSUSumIdx]            // 
-s_mul_hi_u32 s[sgprtmp3E], s[sgprtmp5E], s[sgprStrideCK]            // 
-s_mul_i32 s[sgprtmp2E], s[sgprtmp5E], s[sgprStrideCK]               // 
-s_add_u32 s[sgprtmp0E], s[sgprtmp0E], s[sgprtmp2E]                  // 
-s_addc_u32 s[sgprtmp1E], s[sgprtmp1E], s[sgprtmp3E]                 // 
+//s_mul_i32 s[sgprtmp5E], s[sgprtmp5E], s[sgprGSUSumIdx]            //
+s_mul_hi_u32 s[sgprtmp3E], s[sgprtmp5E], s[sgprStrideC1J]           //
+s_mul_i32 s[sgprtmp2E], s[sgprtmp5E], s[sgprStrideC1J]              //
+s_add_u32 s[sgprtmp0E], s[sgprSizesFree+0], s[sgprtmp2E]            //
+s_addc_u32 s[sgprtmp1E], 0, s[sgprtmp3E]                            //
+s_sub_u32 s[sgprtmp5E], s[sgprSizesFree+2], 1                       //
+//s_mul_i32 s[sgprtmp5E], s[sgprtmp5E], s[sgprGSUSumIdx]            //
+s_mul_hi_u32 s[sgprtmp3E], s[sgprtmp5E], s[sgprStrideCK]            //
+s_mul_i32 s[sgprtmp2E], s[sgprtmp5E], s[sgprStrideCK]               //
+s_add_u32 s[sgprtmp0E], s[sgprtmp0E], s[sgprtmp2E]                  //
+s_addc_u32 s[sgprtmp1E], s[sgprtmp1E], s[sgprtmp3E]                 //
 s_lshl_b64 s[sgprtmp2E:sgprtmp3E], s[sgprtmp0E:sgprtmp1E], 2        // scale by bpe
 
 
@@ -11906,20 +11906,20 @@ v_pk_mul_f32 v[vgprValuC+34:vgprValuC+34+1], v[26:27], v[vgprValuC+34:vgprValuC+
 //synchronizer store
 
 V_LSHRREV_B32 v9, 0x1, v9
-    
+
 
 s_mov_b32 s[sgprSrdD+2], 0x80000000
-s_mov_b32 s[sgprSrdD+3], Srd127_96                 // 
+s_mov_b32 s[sgprSrdD+3], Srd127_96                 //
 
 s_mul_i32 s[sgprtmp2E], MT1, s[sgprWorkGroup1]                    // cal store position
-s_mul_hi_u32 s[sgprtmp1E], s[sgprtmp2E], s[sgprStrideC1J]         // 
-s_mul_i32 s[sgprtmp0E], s[sgprtmp2E], s[sgprStrideC1J]            // 
+s_mul_hi_u32 s[sgprtmp1E], s[sgprtmp2E], s[sgprStrideC1J]         //
+s_mul_i32 s[sgprtmp0E], s[sgprtmp2E], s[sgprStrideC1J]            //
 s_lshl_b64 s[sgprtmp0E:sgprtmp0E+1], s[sgprtmp0E:sgprtmp0E+1], 1  // scale by bpe
 s_add_u32 s[sgprSrdD+0], s[sgprAddressTC+0], s[sgprtmp0E]         // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprAddressTC+1], s[sgprtmp1E]        // add hi to SRD
 
-s_mul_hi_u32 s[sgprtmp1E], s[sgprWorkGroup2], s[sgprStrideCK]     // 
-s_mul_i32 s[sgprtmp0E], s[sgprWorkGroup2], s[sgprStrideCK]        // 
+s_mul_hi_u32 s[sgprtmp1E], s[sgprWorkGroup2], s[sgprStrideCK]     //
+s_mul_i32 s[sgprtmp0E], s[sgprWorkGroup2], s[sgprStrideCK]        //
 s_lshl_b64 s[sgprtmp0E:sgprtmp0E+1], s[sgprtmp0E:sgprtmp0E+1], 1  // scale by bpe
 s_add_u32 s[sgprSrdD+0], s[sgprSrdD+0], s[sgprtmp0E]              // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprSrdD+1], s[sgprtmp1E]             // add hi to SRD
@@ -11981,7 +11981,7 @@ s_atomic_add s[sgprGSUSync], s[sgprKernArgAddress:sgprKernArgAddress+1], 0x8C gl
 
 
 s_waitcnt lgkmcnt(0)
-s_cmp_eq_u32 s[sgprGSUSync], 1    // 
+s_cmp_eq_u32 s[sgprGSUSync], 1    //
 s_cbranch_scc0 Summation_End_OptNLL2_10           // jump if XX required
 //check done
 
@@ -12002,7 +12002,7 @@ s_mul_i32 s[sgprtmp2E], s[sgprStrideDK], 25                      // Scale by Str
 s_lshl_b64 s[sgprtmp2E:sgprtmp2E+1], s[sgprtmp2E:sgprtmp2E+1], 2  // scale by bpe
 
 s_mov_b32 s[sgprSrdDd+2], 0x80000000
-s_mov_b32 s[sgprSrdDd+3], Srd127_96                               // 
+s_mov_b32 s[sgprSrdDd+3], Srd127_96                               //
 
 s_add_u32 s[sgprSrdDd+0], s[sgprAddressD+0], s[sgprtmp2E]         // add lo to SRD
 s_addc_u32 s[sgprSrdDd+1], s[sgprAddressD+1], s[sgprtmp3E]        // add hi to SRD
@@ -12013,15 +12013,15 @@ s_buffer_atomic_add s[sgprGSUSync], s[sgprSrdDd:sgprSrdDd+3], glc
 
 
 //s_mov_b32 s[sgprGSUSumIdx] 1
-s_mul_i32 s[sgprtmp2E], MT1, s[sgprWorkGroup1]                        // 
+s_mul_i32 s[sgprtmp2E], MT1, s[sgprWorkGroup1]                        //
 s_mul_hi_u32 s[sgprtmp1E], s[sgprtmp2E], s[sgprStrideD1J]             // cal GSU D position
-s_mul_i32 s[sgprtmp0E], s[sgprtmp2E], s[sgprStrideD1J]                // 
+s_mul_i32 s[sgprtmp0E], s[sgprtmp2E], s[sgprStrideD1J]                //
 s_lshl_b64 s[sgprtmp0E:sgprtmp1E], s[sgprtmp0E:sgprtmp1E], 2          // scale by bpe
 s_add_u32 s[sgprSrdD+0], s[sgprAddressD+0], s[sgprtmp0E]              // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprAddressD+1], s[sgprtmp1E]             // add hi to SRD
 
-s_mul_hi_u32 s[sgprtmp1E], s[sgprWorkGroup2], s[sgprStrideDK]         // 
-s_mul_i32 s[sgprtmp0E], s[sgprWorkGroup2], s[sgprStrideDK]            // 
+s_mul_hi_u32 s[sgprtmp1E], s[sgprWorkGroup2], s[sgprStrideDK]         //
+s_mul_i32 s[sgprtmp0E], s[sgprWorkGroup2], s[sgprStrideDK]            //
 s_lshl_b64 s[sgprtmp0E:sgprtmp1E], s[sgprtmp0E:sgprtmp1E], 2          // scale by bpe
 s_add_u32 s[sgprSrdD+0], s[sgprSrdD+0], s[sgprtmp0E]                  // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprSrdD+1], s[sgprtmp1E]                 // add hi to SRD
@@ -12036,20 +12036,20 @@ s_cbranch_scc0 label_KernelEnd //label_GW_End_1 //label_AFTERsummary_Edge
 buffer_load_dwordx4 v[32+4*0:32+3+4*0], v9, s[sgprSrdD:sgprSrdD+3], 0 offen offset:0 // load GSU D
 
 // GSU Output Buffer offset: Free0 + (Free1-1)*StrideC1J + (Free2-1)*StrideCK * GSUIdx * bpe%s
-//s_mul_hi_u32 s[sgprtmp1E], s[sgprSizesFree+0], s[sgprGSUSumIdx]   // 
-//s_mul_i32 s[sgprtmp0E], s[sgprSizesFree+0], s[sgprGSUSumIdx]      // 
+//s_mul_hi_u32 s[sgprtmp1E], s[sgprSizesFree+0], s[sgprGSUSumIdx]   //
+//s_mul_i32 s[sgprtmp0E], s[sgprSizesFree+0], s[sgprGSUSumIdx]      //
 s_sub_u32 s[sgprtmp5E], s[sgprSizesFree+1], 1                       // cal GSU D offset
-//s_mul_i32 s[sgprtmp5E], s[sgprtmp5E], s[sgprGSUSumIdx]            // 
-s_mul_hi_u32 s[sgprtmp3E], s[sgprtmp5E], s[sgprStrideC1J]           // 
-s_mul_i32 s[sgprtmp2E], s[sgprtmp5E], s[sgprStrideC1J]              // 
-s_add_u32 s[sgprtmp0E], s[sgprSizesFree+0], s[sgprtmp2E]            // 
-s_addc_u32 s[sgprtmp1E], 0, s[sgprtmp3E]                            // 
-s_sub_u32 s[sgprtmp5E], s[sgprSizesFree+2], 1                       // 
-//s_mul_i32 s[sgprtmp5E], s[sgprtmp5E], s[sgprGSUSumIdx]            // 
-s_mul_hi_u32 s[sgprtmp3E], s[sgprtmp5E], s[sgprStrideCK]            // 
-s_mul_i32 s[sgprtmp2E], s[sgprtmp5E], s[sgprStrideCK]               // 
-s_add_u32 s[sgprtmp0E], s[sgprtmp0E], s[sgprtmp2E]                  // 
-s_addc_u32 s[sgprtmp1E], s[sgprtmp1E], s[sgprtmp3E]                 // 
+//s_mul_i32 s[sgprtmp5E], s[sgprtmp5E], s[sgprGSUSumIdx]            //
+s_mul_hi_u32 s[sgprtmp3E], s[sgprtmp5E], s[sgprStrideC1J]           //
+s_mul_i32 s[sgprtmp2E], s[sgprtmp5E], s[sgprStrideC1J]              //
+s_add_u32 s[sgprtmp0E], s[sgprSizesFree+0], s[sgprtmp2E]            //
+s_addc_u32 s[sgprtmp1E], 0, s[sgprtmp3E]                            //
+s_sub_u32 s[sgprtmp5E], s[sgprSizesFree+2], 1                       //
+//s_mul_i32 s[sgprtmp5E], s[sgprtmp5E], s[sgprGSUSumIdx]            //
+s_mul_hi_u32 s[sgprtmp3E], s[sgprtmp5E], s[sgprStrideCK]            //
+s_mul_i32 s[sgprtmp2E], s[sgprtmp5E], s[sgprStrideCK]               //
+s_add_u32 s[sgprtmp0E], s[sgprtmp0E], s[sgprtmp2E]                  //
+s_addc_u32 s[sgprtmp1E], s[sgprtmp1E], s[sgprtmp3E]                 //
 s_lshl_b64 s[sgprtmp2E:sgprtmp3E], s[sgprtmp0E:sgprtmp1E], 2        // scale by bpe
 
 
@@ -12296,20 +12296,20 @@ v_pk_mul_f32 v[vgprValuC+34:vgprValuC+34+1], v[26:27], v[vgprValuC+34:vgprValuC+
 //synchronizer store
 
 V_LSHRREV_B32 v9, 0x1, v9
-    
+
 
 s_mov_b32 s[sgprSrdD+2], 0x80000000
-s_mov_b32 s[sgprSrdD+3], Srd127_96                 // 
+s_mov_b32 s[sgprSrdD+3], Srd127_96                 //
 
 s_mul_i32 s[sgprtmp2E], MT1, s[sgprWorkGroup1]                    // cal store position
-s_mul_hi_u32 s[sgprtmp1E], s[sgprtmp2E], s[sgprStrideC1J]         // 
-s_mul_i32 s[sgprtmp0E], s[sgprtmp2E], s[sgprStrideC1J]            // 
+s_mul_hi_u32 s[sgprtmp1E], s[sgprtmp2E], s[sgprStrideC1J]         //
+s_mul_i32 s[sgprtmp0E], s[sgprtmp2E], s[sgprStrideC1J]            //
 s_lshl_b64 s[sgprtmp0E:sgprtmp0E+1], s[sgprtmp0E:sgprtmp0E+1], 1  // scale by bpe
 s_add_u32 s[sgprSrdD+0], s[sgprAddressTC+0], s[sgprtmp0E]         // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprAddressTC+1], s[sgprtmp1E]        // add hi to SRD
 
-s_mul_hi_u32 s[sgprtmp1E], s[sgprWorkGroup2], s[sgprStrideCK]     // 
-s_mul_i32 s[sgprtmp0E], s[sgprWorkGroup2], s[sgprStrideCK]        // 
+s_mul_hi_u32 s[sgprtmp1E], s[sgprWorkGroup2], s[sgprStrideCK]     //
+s_mul_i32 s[sgprtmp0E], s[sgprWorkGroup2], s[sgprStrideCK]        //
 s_lshl_b64 s[sgprtmp0E:sgprtmp0E+1], s[sgprtmp0E:sgprtmp0E+1], 1  // scale by bpe
 s_add_u32 s[sgprSrdD+0], s[sgprSrdD+0], s[sgprtmp0E]              // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprSrdD+1], s[sgprtmp1E]             // add hi to SRD
@@ -12371,7 +12371,7 @@ s_atomic_add s[sgprGSUSync], s[sgprKernArgAddress:sgprKernArgAddress+1], 0x8C gl
 
 
 s_waitcnt lgkmcnt(0)
-s_cmp_eq_u32 s[sgprGSUSync], 1    // 
+s_cmp_eq_u32 s[sgprGSUSync], 1    //
 s_cbranch_scc0 Summation_End_OptNLL2_11           // jump if XX required
 //check done
 
@@ -12392,7 +12392,7 @@ s_mul_i32 s[sgprtmp2E], s[sgprStrideDK], 25                      // Scale by Str
 s_lshl_b64 s[sgprtmp2E:sgprtmp2E+1], s[sgprtmp2E:sgprtmp2E+1], 2  // scale by bpe
 
 s_mov_b32 s[sgprSrdDd+2], 0x80000000
-s_mov_b32 s[sgprSrdDd+3], Srd127_96                               // 
+s_mov_b32 s[sgprSrdDd+3], Srd127_96                               //
 
 s_add_u32 s[sgprSrdDd+0], s[sgprAddressD+0], s[sgprtmp2E]         // add lo to SRD
 s_addc_u32 s[sgprSrdDd+1], s[sgprAddressD+1], s[sgprtmp3E]        // add hi to SRD
@@ -12403,15 +12403,15 @@ s_buffer_atomic_add s[sgprGSUSync], s[sgprSrdDd:sgprSrdDd+3], glc
 
 
 //s_mov_b32 s[sgprGSUSumIdx] 1
-s_mul_i32 s[sgprtmp2E], MT1, s[sgprWorkGroup1]                        // 
+s_mul_i32 s[sgprtmp2E], MT1, s[sgprWorkGroup1]                        //
 s_mul_hi_u32 s[sgprtmp1E], s[sgprtmp2E], s[sgprStrideD1J]             // cal GSU D position
-s_mul_i32 s[sgprtmp0E], s[sgprtmp2E], s[sgprStrideD1J]                // 
+s_mul_i32 s[sgprtmp0E], s[sgprtmp2E], s[sgprStrideD1J]                //
 s_lshl_b64 s[sgprtmp0E:sgprtmp1E], s[sgprtmp0E:sgprtmp1E], 2          // scale by bpe
 s_add_u32 s[sgprSrdD+0], s[sgprAddressD+0], s[sgprtmp0E]              // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprAddressD+1], s[sgprtmp1E]             // add hi to SRD
 
-s_mul_hi_u32 s[sgprtmp1E], s[sgprWorkGroup2], s[sgprStrideDK]         // 
-s_mul_i32 s[sgprtmp0E], s[sgprWorkGroup2], s[sgprStrideDK]            // 
+s_mul_hi_u32 s[sgprtmp1E], s[sgprWorkGroup2], s[sgprStrideDK]         //
+s_mul_i32 s[sgprtmp0E], s[sgprWorkGroup2], s[sgprStrideDK]            //
 s_lshl_b64 s[sgprtmp0E:sgprtmp1E], s[sgprtmp0E:sgprtmp1E], 2          // scale by bpe
 s_add_u32 s[sgprSrdD+0], s[sgprSrdD+0], s[sgprtmp0E]                  // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprSrdD+1], s[sgprtmp1E]                 // add hi to SRD
@@ -12426,20 +12426,20 @@ s_cbranch_scc0 label_KernelEnd //label_GW_End_1 //label_AFTERsummary_Edge
 buffer_load_dwordx4 v[32+4*0:32+3+4*0], v9, s[sgprSrdD:sgprSrdD+3], 0 offen offset:0 // load GSU D
 
 // GSU Output Buffer offset: Free0 + (Free1-1)*StrideC1J + (Free2-1)*StrideCK * GSUIdx * bpe%s
-//s_mul_hi_u32 s[sgprtmp1E], s[sgprSizesFree+0], s[sgprGSUSumIdx]   // 
-//s_mul_i32 s[sgprtmp0E], s[sgprSizesFree+0], s[sgprGSUSumIdx]      // 
+//s_mul_hi_u32 s[sgprtmp1E], s[sgprSizesFree+0], s[sgprGSUSumIdx]   //
+//s_mul_i32 s[sgprtmp0E], s[sgprSizesFree+0], s[sgprGSUSumIdx]      //
 s_sub_u32 s[sgprtmp5E], s[sgprSizesFree+1], 1                       // cal GSU D offset
-//s_mul_i32 s[sgprtmp5E], s[sgprtmp5E], s[sgprGSUSumIdx]            // 
-s_mul_hi_u32 s[sgprtmp3E], s[sgprtmp5E], s[sgprStrideC1J]           // 
-s_mul_i32 s[sgprtmp2E], s[sgprtmp5E], s[sgprStrideC1J]              // 
-s_add_u32 s[sgprtmp0E], s[sgprSizesFree+0], s[sgprtmp2E]            // 
-s_addc_u32 s[sgprtmp1E], 0, s[sgprtmp3E]                            // 
-s_sub_u32 s[sgprtmp5E], s[sgprSizesFree+2], 1                       // 
-//s_mul_i32 s[sgprtmp5E], s[sgprtmp5E], s[sgprGSUSumIdx]            // 
-s_mul_hi_u32 s[sgprtmp3E], s[sgprtmp5E], s[sgprStrideCK]            // 
-s_mul_i32 s[sgprtmp2E], s[sgprtmp5E], s[sgprStrideCK]               // 
-s_add_u32 s[sgprtmp0E], s[sgprtmp0E], s[sgprtmp2E]                  // 
-s_addc_u32 s[sgprtmp1E], s[sgprtmp1E], s[sgprtmp3E]                 // 
+//s_mul_i32 s[sgprtmp5E], s[sgprtmp5E], s[sgprGSUSumIdx]            //
+s_mul_hi_u32 s[sgprtmp3E], s[sgprtmp5E], s[sgprStrideC1J]           //
+s_mul_i32 s[sgprtmp2E], s[sgprtmp5E], s[sgprStrideC1J]              //
+s_add_u32 s[sgprtmp0E], s[sgprSizesFree+0], s[sgprtmp2E]            //
+s_addc_u32 s[sgprtmp1E], 0, s[sgprtmp3E]                            //
+s_sub_u32 s[sgprtmp5E], s[sgprSizesFree+2], 1                       //
+//s_mul_i32 s[sgprtmp5E], s[sgprtmp5E], s[sgprGSUSumIdx]            //
+s_mul_hi_u32 s[sgprtmp3E], s[sgprtmp5E], s[sgprStrideCK]            //
+s_mul_i32 s[sgprtmp2E], s[sgprtmp5E], s[sgprStrideCK]               //
+s_add_u32 s[sgprtmp0E], s[sgprtmp0E], s[sgprtmp2E]                  //
+s_addc_u32 s[sgprtmp1E], s[sgprtmp1E], s[sgprtmp3E]                 //
 s_lshl_b64 s[sgprtmp2E:sgprtmp3E], s[sgprtmp0E:sgprtmp1E], 2        // scale by bpe
 
 
@@ -12714,20 +12714,20 @@ v_pk_mul_f32 v[vgprValuC+34:vgprValuC+34+1], v[26:27], v[vgprValuC+34:vgprValuC+
 //synchronizer store
 
 V_LSHRREV_B32 v9, 0x1, v9
-    
+
 
 s_mov_b32 s[sgprSrdD+2], 0x80000000
-s_mov_b32 s[sgprSrdD+3], Srd127_96                 // 
+s_mov_b32 s[sgprSrdD+3], Srd127_96                 //
 
 s_mul_i32 s[sgprtmp2E], MT1, s[sgprWorkGroup1]                    // cal store position
-s_mul_hi_u32 s[sgprtmp1E], s[sgprtmp2E], s[sgprStrideC1J]         // 
-s_mul_i32 s[sgprtmp0E], s[sgprtmp2E], s[sgprStrideC1J]            // 
+s_mul_hi_u32 s[sgprtmp1E], s[sgprtmp2E], s[sgprStrideC1J]         //
+s_mul_i32 s[sgprtmp0E], s[sgprtmp2E], s[sgprStrideC1J]            //
 s_lshl_b64 s[sgprtmp0E:sgprtmp0E+1], s[sgprtmp0E:sgprtmp0E+1], 1  // scale by bpe
 s_add_u32 s[sgprSrdD+0], s[sgprAddressTC+0], s[sgprtmp0E]         // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprAddressTC+1], s[sgprtmp1E]        // add hi to SRD
 
-s_mul_hi_u32 s[sgprtmp1E], s[sgprWorkGroup2], s[sgprStrideCK]     // 
-s_mul_i32 s[sgprtmp0E], s[sgprWorkGroup2], s[sgprStrideCK]        // 
+s_mul_hi_u32 s[sgprtmp1E], s[sgprWorkGroup2], s[sgprStrideCK]     //
+s_mul_i32 s[sgprtmp0E], s[sgprWorkGroup2], s[sgprStrideCK]        //
 s_lshl_b64 s[sgprtmp0E:sgprtmp0E+1], s[sgprtmp0E:sgprtmp0E+1], 1  // scale by bpe
 s_add_u32 s[sgprSrdD+0], s[sgprSrdD+0], s[sgprtmp0E]              // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprSrdD+1], s[sgprtmp1E]             // add hi to SRD
@@ -12789,7 +12789,7 @@ s_atomic_add s[sgprGSUSync], s[sgprKernArgAddress:sgprKernArgAddress+1], 0x8C gl
 
 
 s_waitcnt lgkmcnt(0)
-s_cmp_eq_u32 s[sgprGSUSync], 1    // 
+s_cmp_eq_u32 s[sgprGSUSync], 1    //
 s_cbranch_scc0 Summation_End_OptNLL2_12           // jump if XX required
 //check done
 
@@ -12810,7 +12810,7 @@ s_mul_i32 s[sgprtmp2E], s[sgprStrideDK], 25                      // Scale by Str
 s_lshl_b64 s[sgprtmp2E:sgprtmp2E+1], s[sgprtmp2E:sgprtmp2E+1], 2  // scale by bpe
 
 s_mov_b32 s[sgprSrdDd+2], 0x80000000
-s_mov_b32 s[sgprSrdDd+3], Srd127_96                               // 
+s_mov_b32 s[sgprSrdDd+3], Srd127_96                               //
 
 s_add_u32 s[sgprSrdDd+0], s[sgprAddressD+0], s[sgprtmp2E]         // add lo to SRD
 s_addc_u32 s[sgprSrdDd+1], s[sgprAddressD+1], s[sgprtmp3E]        // add hi to SRD
@@ -12821,15 +12821,15 @@ s_buffer_atomic_add s[sgprGSUSync], s[sgprSrdDd:sgprSrdDd+3], glc
 
 
 //s_mov_b32 s[sgprGSUSumIdx] 1
-s_mul_i32 s[sgprtmp2E], MT1, s[sgprWorkGroup1]                        // 
+s_mul_i32 s[sgprtmp2E], MT1, s[sgprWorkGroup1]                        //
 s_mul_hi_u32 s[sgprtmp1E], s[sgprtmp2E], s[sgprStrideD1J]             // cal GSU D position
-s_mul_i32 s[sgprtmp0E], s[sgprtmp2E], s[sgprStrideD1J]                // 
+s_mul_i32 s[sgprtmp0E], s[sgprtmp2E], s[sgprStrideD1J]                //
 s_lshl_b64 s[sgprtmp0E:sgprtmp1E], s[sgprtmp0E:sgprtmp1E], 2          // scale by bpe
 s_add_u32 s[sgprSrdD+0], s[sgprAddressD+0], s[sgprtmp0E]              // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprAddressD+1], s[sgprtmp1E]             // add hi to SRD
 
-s_mul_hi_u32 s[sgprtmp1E], s[sgprWorkGroup2], s[sgprStrideDK]         // 
-s_mul_i32 s[sgprtmp0E], s[sgprWorkGroup2], s[sgprStrideDK]            // 
+s_mul_hi_u32 s[sgprtmp1E], s[sgprWorkGroup2], s[sgprStrideDK]         //
+s_mul_i32 s[sgprtmp0E], s[sgprWorkGroup2], s[sgprStrideDK]            //
 s_lshl_b64 s[sgprtmp0E:sgprtmp1E], s[sgprtmp0E:sgprtmp1E], 2          // scale by bpe
 s_add_u32 s[sgprSrdD+0], s[sgprSrdD+0], s[sgprtmp0E]                  // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprSrdD+1], s[sgprtmp1E]                 // add hi to SRD
@@ -12844,20 +12844,20 @@ s_cbranch_scc0 label_KernelEnd //label_GW_End_1 //label_AFTERsummary_Edge
 buffer_load_dwordx4 v[32+4*0:32+3+4*0], v9, s[sgprSrdD:sgprSrdD+3], 0 offen offset:0 // load GSU D
 
 // GSU Output Buffer offset: Free0 + (Free1-1)*StrideC1J + (Free2-1)*StrideCK * GSUIdx * bpe%s
-//s_mul_hi_u32 s[sgprtmp1E], s[sgprSizesFree+0], s[sgprGSUSumIdx]   // 
-//s_mul_i32 s[sgprtmp0E], s[sgprSizesFree+0], s[sgprGSUSumIdx]      // 
+//s_mul_hi_u32 s[sgprtmp1E], s[sgprSizesFree+0], s[sgprGSUSumIdx]   //
+//s_mul_i32 s[sgprtmp0E], s[sgprSizesFree+0], s[sgprGSUSumIdx]      //
 s_sub_u32 s[sgprtmp5E], s[sgprSizesFree+1], 1                       // cal GSU D offset
-//s_mul_i32 s[sgprtmp5E], s[sgprtmp5E], s[sgprGSUSumIdx]            // 
-s_mul_hi_u32 s[sgprtmp3E], s[sgprtmp5E], s[sgprStrideC1J]           // 
-s_mul_i32 s[sgprtmp2E], s[sgprtmp5E], s[sgprStrideC1J]              // 
-s_add_u32 s[sgprtmp0E], s[sgprSizesFree+0], s[sgprtmp2E]            // 
-s_addc_u32 s[sgprtmp1E], 0, s[sgprtmp3E]                            // 
-s_sub_u32 s[sgprtmp5E], s[sgprSizesFree+2], 1                       // 
-//s_mul_i32 s[sgprtmp5E], s[sgprtmp5E], s[sgprGSUSumIdx]            // 
-s_mul_hi_u32 s[sgprtmp3E], s[sgprtmp5E], s[sgprStrideCK]            // 
-s_mul_i32 s[sgprtmp2E], s[sgprtmp5E], s[sgprStrideCK]               // 
-s_add_u32 s[sgprtmp0E], s[sgprtmp0E], s[sgprtmp2E]                  // 
-s_addc_u32 s[sgprtmp1E], s[sgprtmp1E], s[sgprtmp3E]                 // 
+//s_mul_i32 s[sgprtmp5E], s[sgprtmp5E], s[sgprGSUSumIdx]            //
+s_mul_hi_u32 s[sgprtmp3E], s[sgprtmp5E], s[sgprStrideC1J]           //
+s_mul_i32 s[sgprtmp2E], s[sgprtmp5E], s[sgprStrideC1J]              //
+s_add_u32 s[sgprtmp0E], s[sgprSizesFree+0], s[sgprtmp2E]            //
+s_addc_u32 s[sgprtmp1E], 0, s[sgprtmp3E]                            //
+s_sub_u32 s[sgprtmp5E], s[sgprSizesFree+2], 1                       //
+//s_mul_i32 s[sgprtmp5E], s[sgprtmp5E], s[sgprGSUSumIdx]            //
+s_mul_hi_u32 s[sgprtmp3E], s[sgprtmp5E], s[sgprStrideCK]            //
+s_mul_i32 s[sgprtmp2E], s[sgprtmp5E], s[sgprStrideCK]               //
+s_add_u32 s[sgprtmp0E], s[sgprtmp0E], s[sgprtmp2E]                  //
+s_addc_u32 s[sgprtmp1E], s[sgprtmp1E], s[sgprtmp3E]                 //
 s_lshl_b64 s[sgprtmp2E:sgprtmp3E], s[sgprtmp0E:sgprtmp1E], 2        // scale by bpe
 
 
@@ -13104,20 +13104,20 @@ v_pk_mul_f32 v[vgprValuC+34:vgprValuC+34+1], v[26:27], v[vgprValuC+34:vgprValuC+
 //synchronizer store
 
 V_LSHRREV_B32 v9, 0x1, v9
-    
+
 
 s_mov_b32 s[sgprSrdD+2], 0x80000000
-s_mov_b32 s[sgprSrdD+3], Srd127_96                 // 
+s_mov_b32 s[sgprSrdD+3], Srd127_96                 //
 
 s_mul_i32 s[sgprtmp2E], MT1, s[sgprWorkGroup1]                    // cal store position
-s_mul_hi_u32 s[sgprtmp1E], s[sgprtmp2E], s[sgprStrideC1J]         // 
-s_mul_i32 s[sgprtmp0E], s[sgprtmp2E], s[sgprStrideC1J]            // 
+s_mul_hi_u32 s[sgprtmp1E], s[sgprtmp2E], s[sgprStrideC1J]         //
+s_mul_i32 s[sgprtmp0E], s[sgprtmp2E], s[sgprStrideC1J]            //
 s_lshl_b64 s[sgprtmp0E:sgprtmp0E+1], s[sgprtmp0E:sgprtmp0E+1], 1  // scale by bpe
 s_add_u32 s[sgprSrdD+0], s[sgprAddressTC+0], s[sgprtmp0E]         // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprAddressTC+1], s[sgprtmp1E]        // add hi to SRD
 
-s_mul_hi_u32 s[sgprtmp1E], s[sgprWorkGroup2], s[sgprStrideCK]     // 
-s_mul_i32 s[sgprtmp0E], s[sgprWorkGroup2], s[sgprStrideCK]        // 
+s_mul_hi_u32 s[sgprtmp1E], s[sgprWorkGroup2], s[sgprStrideCK]     //
+s_mul_i32 s[sgprtmp0E], s[sgprWorkGroup2], s[sgprStrideCK]        //
 s_lshl_b64 s[sgprtmp0E:sgprtmp0E+1], s[sgprtmp0E:sgprtmp0E+1], 1  // scale by bpe
 s_add_u32 s[sgprSrdD+0], s[sgprSrdD+0], s[sgprtmp0E]              // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprSrdD+1], s[sgprtmp1E]             // add hi to SRD
@@ -13179,7 +13179,7 @@ s_atomic_add s[sgprGSUSync], s[sgprKernArgAddress:sgprKernArgAddress+1], 0x8C gl
 
 
 s_waitcnt lgkmcnt(0)
-s_cmp_eq_u32 s[sgprGSUSync], 1    // 
+s_cmp_eq_u32 s[sgprGSUSync], 1    //
 s_cbranch_scc0 Summation_End_OptNLL2_13           // jump if XX required
 //check done
 
@@ -13200,7 +13200,7 @@ s_mul_i32 s[sgprtmp2E], s[sgprStrideDK], 25                      // Scale by Str
 s_lshl_b64 s[sgprtmp2E:sgprtmp2E+1], s[sgprtmp2E:sgprtmp2E+1], 2  // scale by bpe
 
 s_mov_b32 s[sgprSrdDd+2], 0x80000000
-s_mov_b32 s[sgprSrdDd+3], Srd127_96                               // 
+s_mov_b32 s[sgprSrdDd+3], Srd127_96                               //
 
 s_add_u32 s[sgprSrdDd+0], s[sgprAddressD+0], s[sgprtmp2E]         // add lo to SRD
 s_addc_u32 s[sgprSrdDd+1], s[sgprAddressD+1], s[sgprtmp3E]        // add hi to SRD
@@ -13211,15 +13211,15 @@ s_buffer_atomic_add s[sgprGSUSync], s[sgprSrdDd:sgprSrdDd+3], glc
 
 
 //s_mov_b32 s[sgprGSUSumIdx] 1
-s_mul_i32 s[sgprtmp2E], MT1, s[sgprWorkGroup1]                        // 
+s_mul_i32 s[sgprtmp2E], MT1, s[sgprWorkGroup1]                        //
 s_mul_hi_u32 s[sgprtmp1E], s[sgprtmp2E], s[sgprStrideD1J]             // cal GSU D position
-s_mul_i32 s[sgprtmp0E], s[sgprtmp2E], s[sgprStrideD1J]                // 
+s_mul_i32 s[sgprtmp0E], s[sgprtmp2E], s[sgprStrideD1J]                //
 s_lshl_b64 s[sgprtmp0E:sgprtmp1E], s[sgprtmp0E:sgprtmp1E], 2          // scale by bpe
 s_add_u32 s[sgprSrdD+0], s[sgprAddressD+0], s[sgprtmp0E]              // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprAddressD+1], s[sgprtmp1E]             // add hi to SRD
 
-s_mul_hi_u32 s[sgprtmp1E], s[sgprWorkGroup2], s[sgprStrideDK]         // 
-s_mul_i32 s[sgprtmp0E], s[sgprWorkGroup2], s[sgprStrideDK]            // 
+s_mul_hi_u32 s[sgprtmp1E], s[sgprWorkGroup2], s[sgprStrideDK]         //
+s_mul_i32 s[sgprtmp0E], s[sgprWorkGroup2], s[sgprStrideDK]            //
 s_lshl_b64 s[sgprtmp0E:sgprtmp1E], s[sgprtmp0E:sgprtmp1E], 2          // scale by bpe
 s_add_u32 s[sgprSrdD+0], s[sgprSrdD+0], s[sgprtmp0E]                  // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprSrdD+1], s[sgprtmp1E]                 // add hi to SRD
@@ -13234,20 +13234,20 @@ s_cbranch_scc0 label_KernelEnd //label_GW_End_1 //label_AFTERsummary_Edge
 buffer_load_dwordx4 v[32+4*0:32+3+4*0], v9, s[sgprSrdD:sgprSrdD+3], 0 offen offset:0 // load GSU D
 
 // GSU Output Buffer offset: Free0 + (Free1-1)*StrideC1J + (Free2-1)*StrideCK * GSUIdx * bpe%s
-//s_mul_hi_u32 s[sgprtmp1E], s[sgprSizesFree+0], s[sgprGSUSumIdx]   // 
-//s_mul_i32 s[sgprtmp0E], s[sgprSizesFree+0], s[sgprGSUSumIdx]      // 
+//s_mul_hi_u32 s[sgprtmp1E], s[sgprSizesFree+0], s[sgprGSUSumIdx]   //
+//s_mul_i32 s[sgprtmp0E], s[sgprSizesFree+0], s[sgprGSUSumIdx]      //
 s_sub_u32 s[sgprtmp5E], s[sgprSizesFree+1], 1                       // cal GSU D offset
-//s_mul_i32 s[sgprtmp5E], s[sgprtmp5E], s[sgprGSUSumIdx]            // 
-s_mul_hi_u32 s[sgprtmp3E], s[sgprtmp5E], s[sgprStrideC1J]           // 
-s_mul_i32 s[sgprtmp2E], s[sgprtmp5E], s[sgprStrideC1J]              // 
-s_add_u32 s[sgprtmp0E], s[sgprSizesFree+0], s[sgprtmp2E]            // 
-s_addc_u32 s[sgprtmp1E], 0, s[sgprtmp3E]                            // 
-s_sub_u32 s[sgprtmp5E], s[sgprSizesFree+2], 1                       // 
-//s_mul_i32 s[sgprtmp5E], s[sgprtmp5E], s[sgprGSUSumIdx]            // 
-s_mul_hi_u32 s[sgprtmp3E], s[sgprtmp5E], s[sgprStrideCK]            // 
-s_mul_i32 s[sgprtmp2E], s[sgprtmp5E], s[sgprStrideCK]               // 
-s_add_u32 s[sgprtmp0E], s[sgprtmp0E], s[sgprtmp2E]                  // 
-s_addc_u32 s[sgprtmp1E], s[sgprtmp1E], s[sgprtmp3E]                 // 
+//s_mul_i32 s[sgprtmp5E], s[sgprtmp5E], s[sgprGSUSumIdx]            //
+s_mul_hi_u32 s[sgprtmp3E], s[sgprtmp5E], s[sgprStrideC1J]           //
+s_mul_i32 s[sgprtmp2E], s[sgprtmp5E], s[sgprStrideC1J]              //
+s_add_u32 s[sgprtmp0E], s[sgprSizesFree+0], s[sgprtmp2E]            //
+s_addc_u32 s[sgprtmp1E], 0, s[sgprtmp3E]                            //
+s_sub_u32 s[sgprtmp5E], s[sgprSizesFree+2], 1                       //
+//s_mul_i32 s[sgprtmp5E], s[sgprtmp5E], s[sgprGSUSumIdx]            //
+s_mul_hi_u32 s[sgprtmp3E], s[sgprtmp5E], s[sgprStrideCK]            //
+s_mul_i32 s[sgprtmp2E], s[sgprtmp5E], s[sgprStrideCK]               //
+s_add_u32 s[sgprtmp0E], s[sgprtmp0E], s[sgprtmp2E]                  //
+s_addc_u32 s[sgprtmp1E], s[sgprtmp1E], s[sgprtmp3E]                 //
 s_lshl_b64 s[sgprtmp2E:sgprtmp3E], s[sgprtmp0E:sgprtmp1E], 2        // scale by bpe
 
 
@@ -13486,20 +13486,20 @@ v_pk_mul_f32 v[vgprValuC+34:vgprValuC+34+1], v[26:27], v[vgprValuC+34:vgprValuC+
 //synchronizer store
 
 V_LSHRREV_B32 v9, 0x1, v9
-    
+
 
 s_mov_b32 s[sgprSrdD+2], 0x80000000
-s_mov_b32 s[sgprSrdD+3], Srd127_96                 // 
+s_mov_b32 s[sgprSrdD+3], Srd127_96                 //
 
 s_mul_i32 s[sgprtmp2E], MT1, s[sgprWorkGroup1]                    // cal store position
-s_mul_hi_u32 s[sgprtmp1E], s[sgprtmp2E], s[sgprStrideC1J]         // 
-s_mul_i32 s[sgprtmp0E], s[sgprtmp2E], s[sgprStrideC1J]            // 
+s_mul_hi_u32 s[sgprtmp1E], s[sgprtmp2E], s[sgprStrideC1J]         //
+s_mul_i32 s[sgprtmp0E], s[sgprtmp2E], s[sgprStrideC1J]            //
 s_lshl_b64 s[sgprtmp0E:sgprtmp0E+1], s[sgprtmp0E:sgprtmp0E+1], 1  // scale by bpe
 s_add_u32 s[sgprSrdD+0], s[sgprAddressTC+0], s[sgprtmp0E]         // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprAddressTC+1], s[sgprtmp1E]        // add hi to SRD
 
-s_mul_hi_u32 s[sgprtmp1E], s[sgprWorkGroup2], s[sgprStrideCK]     // 
-s_mul_i32 s[sgprtmp0E], s[sgprWorkGroup2], s[sgprStrideCK]        // 
+s_mul_hi_u32 s[sgprtmp1E], s[sgprWorkGroup2], s[sgprStrideCK]     //
+s_mul_i32 s[sgprtmp0E], s[sgprWorkGroup2], s[sgprStrideCK]        //
 s_lshl_b64 s[sgprtmp0E:sgprtmp0E+1], s[sgprtmp0E:sgprtmp0E+1], 1  // scale by bpe
 s_add_u32 s[sgprSrdD+0], s[sgprSrdD+0], s[sgprtmp0E]              // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprSrdD+1], s[sgprtmp1E]             // add hi to SRD
@@ -13561,7 +13561,7 @@ s_atomic_add s[sgprGSUSync], s[sgprKernArgAddress:sgprKernArgAddress+1], 0x8C gl
 
 
 s_waitcnt lgkmcnt(0)
-s_cmp_eq_u32 s[sgprGSUSync], 1    // 
+s_cmp_eq_u32 s[sgprGSUSync], 1    //
 s_cbranch_scc0 Summation_End_OptNLL2_14           // jump if XX required
 //check done
 
@@ -13582,7 +13582,7 @@ s_mul_i32 s[sgprtmp2E], s[sgprStrideDK], 25                      // Scale by Str
 s_lshl_b64 s[sgprtmp2E:sgprtmp2E+1], s[sgprtmp2E:sgprtmp2E+1], 2  // scale by bpe
 
 s_mov_b32 s[sgprSrdDd+2], 0x80000000
-s_mov_b32 s[sgprSrdDd+3], Srd127_96                               // 
+s_mov_b32 s[sgprSrdDd+3], Srd127_96                               //
 
 s_add_u32 s[sgprSrdDd+0], s[sgprAddressD+0], s[sgprtmp2E]         // add lo to SRD
 s_addc_u32 s[sgprSrdDd+1], s[sgprAddressD+1], s[sgprtmp3E]        // add hi to SRD
@@ -13593,15 +13593,15 @@ s_buffer_atomic_add s[sgprGSUSync], s[sgprSrdDd:sgprSrdDd+3], glc
 
 
 //s_mov_b32 s[sgprGSUSumIdx] 1
-s_mul_i32 s[sgprtmp2E], MT1, s[sgprWorkGroup1]                        // 
+s_mul_i32 s[sgprtmp2E], MT1, s[sgprWorkGroup1]                        //
 s_mul_hi_u32 s[sgprtmp1E], s[sgprtmp2E], s[sgprStrideD1J]             // cal GSU D position
-s_mul_i32 s[sgprtmp0E], s[sgprtmp2E], s[sgprStrideD1J]                // 
+s_mul_i32 s[sgprtmp0E], s[sgprtmp2E], s[sgprStrideD1J]                //
 s_lshl_b64 s[sgprtmp0E:sgprtmp1E], s[sgprtmp0E:sgprtmp1E], 2          // scale by bpe
 s_add_u32 s[sgprSrdD+0], s[sgprAddressD+0], s[sgprtmp0E]              // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprAddressD+1], s[sgprtmp1E]             // add hi to SRD
 
-s_mul_hi_u32 s[sgprtmp1E], s[sgprWorkGroup2], s[sgprStrideDK]         // 
-s_mul_i32 s[sgprtmp0E], s[sgprWorkGroup2], s[sgprStrideDK]            // 
+s_mul_hi_u32 s[sgprtmp1E], s[sgprWorkGroup2], s[sgprStrideDK]         //
+s_mul_i32 s[sgprtmp0E], s[sgprWorkGroup2], s[sgprStrideDK]            //
 s_lshl_b64 s[sgprtmp0E:sgprtmp1E], s[sgprtmp0E:sgprtmp1E], 2          // scale by bpe
 s_add_u32 s[sgprSrdD+0], s[sgprSrdD+0], s[sgprtmp0E]                  // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprSrdD+1], s[sgprtmp1E]                 // add hi to SRD
@@ -13616,20 +13616,20 @@ s_cbranch_scc0 label_KernelEnd //label_GW_End_1 //label_AFTERsummary_Edge
 buffer_load_dwordx4 v[32+4*0:32+3+4*0], v9, s[sgprSrdD:sgprSrdD+3], 0 offen offset:0 // load GSU D
 
 // GSU Output Buffer offset: Free0 + (Free1-1)*StrideC1J + (Free2-1)*StrideCK * GSUIdx * bpe%s
-//s_mul_hi_u32 s[sgprtmp1E], s[sgprSizesFree+0], s[sgprGSUSumIdx]   // 
-//s_mul_i32 s[sgprtmp0E], s[sgprSizesFree+0], s[sgprGSUSumIdx]      // 
+//s_mul_hi_u32 s[sgprtmp1E], s[sgprSizesFree+0], s[sgprGSUSumIdx]   //
+//s_mul_i32 s[sgprtmp0E], s[sgprSizesFree+0], s[sgprGSUSumIdx]      //
 s_sub_u32 s[sgprtmp5E], s[sgprSizesFree+1], 1                       // cal GSU D offset
-//s_mul_i32 s[sgprtmp5E], s[sgprtmp5E], s[sgprGSUSumIdx]            // 
-s_mul_hi_u32 s[sgprtmp3E], s[sgprtmp5E], s[sgprStrideC1J]           // 
-s_mul_i32 s[sgprtmp2E], s[sgprtmp5E], s[sgprStrideC1J]              // 
-s_add_u32 s[sgprtmp0E], s[sgprSizesFree+0], s[sgprtmp2E]            // 
-s_addc_u32 s[sgprtmp1E], 0, s[sgprtmp3E]                            // 
-s_sub_u32 s[sgprtmp5E], s[sgprSizesFree+2], 1                       // 
-//s_mul_i32 s[sgprtmp5E], s[sgprtmp5E], s[sgprGSUSumIdx]            // 
-s_mul_hi_u32 s[sgprtmp3E], s[sgprtmp5E], s[sgprStrideCK]            // 
-s_mul_i32 s[sgprtmp2E], s[sgprtmp5E], s[sgprStrideCK]               // 
-s_add_u32 s[sgprtmp0E], s[sgprtmp0E], s[sgprtmp2E]                  // 
-s_addc_u32 s[sgprtmp1E], s[sgprtmp1E], s[sgprtmp3E]                 // 
+//s_mul_i32 s[sgprtmp5E], s[sgprtmp5E], s[sgprGSUSumIdx]            //
+s_mul_hi_u32 s[sgprtmp3E], s[sgprtmp5E], s[sgprStrideC1J]           //
+s_mul_i32 s[sgprtmp2E], s[sgprtmp5E], s[sgprStrideC1J]              //
+s_add_u32 s[sgprtmp0E], s[sgprSizesFree+0], s[sgprtmp2E]            //
+s_addc_u32 s[sgprtmp1E], 0, s[sgprtmp3E]                            //
+s_sub_u32 s[sgprtmp5E], s[sgprSizesFree+2], 1                       //
+//s_mul_i32 s[sgprtmp5E], s[sgprtmp5E], s[sgprGSUSumIdx]            //
+s_mul_hi_u32 s[sgprtmp3E], s[sgprtmp5E], s[sgprStrideCK]            //
+s_mul_i32 s[sgprtmp2E], s[sgprtmp5E], s[sgprStrideCK]               //
+s_add_u32 s[sgprtmp0E], s[sgprtmp0E], s[sgprtmp2E]                  //
+s_addc_u32 s[sgprtmp1E], s[sgprtmp1E], s[sgprtmp3E]                 //
 s_lshl_b64 s[sgprtmp2E:sgprtmp3E], s[sgprtmp0E:sgprtmp1E], 2        // scale by bpe
 
 
@@ -13880,20 +13880,20 @@ v_pk_mul_f32 v[vgprValuC+34:vgprValuC+34+1], v[26:27], v[vgprValuC+34:vgprValuC+
 //synchronizer store
 
 V_LSHRREV_B32 v9, 0x1, v9
-    
+
 
 s_mov_b32 s[sgprSrdD+2], 0x80000000
-s_mov_b32 s[sgprSrdD+3], Srd127_96                 // 
+s_mov_b32 s[sgprSrdD+3], Srd127_96                 //
 
 s_mul_i32 s[sgprtmp2E], MT1, s[sgprWorkGroup1]                    // cal store position
-s_mul_hi_u32 s[sgprtmp1E], s[sgprtmp2E], s[sgprStrideC1J]         // 
-s_mul_i32 s[sgprtmp0E], s[sgprtmp2E], s[sgprStrideC1J]            // 
+s_mul_hi_u32 s[sgprtmp1E], s[sgprtmp2E], s[sgprStrideC1J]         //
+s_mul_i32 s[sgprtmp0E], s[sgprtmp2E], s[sgprStrideC1J]            //
 s_lshl_b64 s[sgprtmp0E:sgprtmp0E+1], s[sgprtmp0E:sgprtmp0E+1], 1  // scale by bpe
 s_add_u32 s[sgprSrdD+0], s[sgprAddressTC+0], s[sgprtmp0E]         // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprAddressTC+1], s[sgprtmp1E]        // add hi to SRD
 
-s_mul_hi_u32 s[sgprtmp1E], s[sgprWorkGroup2], s[sgprStrideCK]     // 
-s_mul_i32 s[sgprtmp0E], s[sgprWorkGroup2], s[sgprStrideCK]        // 
+s_mul_hi_u32 s[sgprtmp1E], s[sgprWorkGroup2], s[sgprStrideCK]     //
+s_mul_i32 s[sgprtmp0E], s[sgprWorkGroup2], s[sgprStrideCK]        //
 s_lshl_b64 s[sgprtmp0E:sgprtmp0E+1], s[sgprtmp0E:sgprtmp0E+1], 1  // scale by bpe
 s_add_u32 s[sgprSrdD+0], s[sgprSrdD+0], s[sgprtmp0E]              // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprSrdD+1], s[sgprtmp1E]             // add hi to SRD
@@ -13955,7 +13955,7 @@ s_atomic_add s[sgprGSUSync], s[sgprKernArgAddress:sgprKernArgAddress+1], 0x8C gl
 
 
 s_waitcnt lgkmcnt(0)
-s_cmp_eq_u32 s[sgprGSUSync], 1    // 
+s_cmp_eq_u32 s[sgprGSUSync], 1    //
 s_cbranch_scc0 Summation_End_OptNLL2_15           // jump if XX required
 //check done
 
@@ -13976,7 +13976,7 @@ s_mul_i32 s[sgprtmp2E], s[sgprStrideDK], 25                      // Scale by Str
 s_lshl_b64 s[sgprtmp2E:sgprtmp2E+1], s[sgprtmp2E:sgprtmp2E+1], 2  // scale by bpe
 
 s_mov_b32 s[sgprSrdDd+2], 0x80000000
-s_mov_b32 s[sgprSrdDd+3], Srd127_96                               // 
+s_mov_b32 s[sgprSrdDd+3], Srd127_96                               //
 
 s_add_u32 s[sgprSrdDd+0], s[sgprAddressD+0], s[sgprtmp2E]         // add lo to SRD
 s_addc_u32 s[sgprSrdDd+1], s[sgprAddressD+1], s[sgprtmp3E]        // add hi to SRD
@@ -13987,15 +13987,15 @@ s_buffer_atomic_add s[sgprGSUSync], s[sgprSrdDd:sgprSrdDd+3], glc
 
 
 //s_mov_b32 s[sgprGSUSumIdx] 1
-s_mul_i32 s[sgprtmp2E], MT1, s[sgprWorkGroup1]                        // 
+s_mul_i32 s[sgprtmp2E], MT1, s[sgprWorkGroup1]                        //
 s_mul_hi_u32 s[sgprtmp1E], s[sgprtmp2E], s[sgprStrideD1J]             // cal GSU D position
-s_mul_i32 s[sgprtmp0E], s[sgprtmp2E], s[sgprStrideD1J]                // 
+s_mul_i32 s[sgprtmp0E], s[sgprtmp2E], s[sgprStrideD1J]                //
 s_lshl_b64 s[sgprtmp0E:sgprtmp1E], s[sgprtmp0E:sgprtmp1E], 2          // scale by bpe
 s_add_u32 s[sgprSrdD+0], s[sgprAddressD+0], s[sgprtmp0E]              // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprAddressD+1], s[sgprtmp1E]             // add hi to SRD
 
-s_mul_hi_u32 s[sgprtmp1E], s[sgprWorkGroup2], s[sgprStrideDK]         // 
-s_mul_i32 s[sgprtmp0E], s[sgprWorkGroup2], s[sgprStrideDK]            // 
+s_mul_hi_u32 s[sgprtmp1E], s[sgprWorkGroup2], s[sgprStrideDK]         //
+s_mul_i32 s[sgprtmp0E], s[sgprWorkGroup2], s[sgprStrideDK]            //
 s_lshl_b64 s[sgprtmp0E:sgprtmp1E], s[sgprtmp0E:sgprtmp1E], 2          // scale by bpe
 s_add_u32 s[sgprSrdD+0], s[sgprSrdD+0], s[sgprtmp0E]                  // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprSrdD+1], s[sgprtmp1E]                 // add hi to SRD
@@ -14010,20 +14010,20 @@ s_cbranch_scc0 label_KernelEnd //label_GW_End_1 //label_AFTERsummary_Edge
 buffer_load_dwordx4 v[32+4*0:32+3+4*0], v9, s[sgprSrdD:sgprSrdD+3], 0 offen offset:0 // load GSU D
 
 // GSU Output Buffer offset: Free0 + (Free1-1)*StrideC1J + (Free2-1)*StrideCK * GSUIdx * bpe%s
-//s_mul_hi_u32 s[sgprtmp1E], s[sgprSizesFree+0], s[sgprGSUSumIdx]   // 
-//s_mul_i32 s[sgprtmp0E], s[sgprSizesFree+0], s[sgprGSUSumIdx]      // 
+//s_mul_hi_u32 s[sgprtmp1E], s[sgprSizesFree+0], s[sgprGSUSumIdx]   //
+//s_mul_i32 s[sgprtmp0E], s[sgprSizesFree+0], s[sgprGSUSumIdx]      //
 s_sub_u32 s[sgprtmp5E], s[sgprSizesFree+1], 1                       // cal GSU D offset
-//s_mul_i32 s[sgprtmp5E], s[sgprtmp5E], s[sgprGSUSumIdx]            // 
-s_mul_hi_u32 s[sgprtmp3E], s[sgprtmp5E], s[sgprStrideC1J]           // 
-s_mul_i32 s[sgprtmp2E], s[sgprtmp5E], s[sgprStrideC1J]              // 
-s_add_u32 s[sgprtmp0E], s[sgprSizesFree+0], s[sgprtmp2E]            // 
-s_addc_u32 s[sgprtmp1E], 0, s[sgprtmp3E]                            // 
-s_sub_u32 s[sgprtmp5E], s[sgprSizesFree+2], 1                       // 
-//s_mul_i32 s[sgprtmp5E], s[sgprtmp5E], s[sgprGSUSumIdx]            // 
-s_mul_hi_u32 s[sgprtmp3E], s[sgprtmp5E], s[sgprStrideCK]            // 
-s_mul_i32 s[sgprtmp2E], s[sgprtmp5E], s[sgprStrideCK]               // 
-s_add_u32 s[sgprtmp0E], s[sgprtmp0E], s[sgprtmp2E]                  // 
-s_addc_u32 s[sgprtmp1E], s[sgprtmp1E], s[sgprtmp3E]                 // 
+//s_mul_i32 s[sgprtmp5E], s[sgprtmp5E], s[sgprGSUSumIdx]            //
+s_mul_hi_u32 s[sgprtmp3E], s[sgprtmp5E], s[sgprStrideC1J]           //
+s_mul_i32 s[sgprtmp2E], s[sgprtmp5E], s[sgprStrideC1J]              //
+s_add_u32 s[sgprtmp0E], s[sgprSizesFree+0], s[sgprtmp2E]            //
+s_addc_u32 s[sgprtmp1E], 0, s[sgprtmp3E]                            //
+s_sub_u32 s[sgprtmp5E], s[sgprSizesFree+2], 1                       //
+//s_mul_i32 s[sgprtmp5E], s[sgprtmp5E], s[sgprGSUSumIdx]            //
+s_mul_hi_u32 s[sgprtmp3E], s[sgprtmp5E], s[sgprStrideCK]            //
+s_mul_i32 s[sgprtmp2E], s[sgprtmp5E], s[sgprStrideCK]               //
+s_add_u32 s[sgprtmp0E], s[sgprtmp0E], s[sgprtmp2E]                  //
+s_addc_u32 s[sgprtmp1E], s[sgprtmp1E], s[sgprtmp3E]                 //
 s_lshl_b64 s[sgprtmp2E:sgprtmp3E], s[sgprtmp0E:sgprtmp1E], 2        // scale by bpe
 
 
@@ -14286,20 +14286,20 @@ v_pk_mul_f32 v[vgprValuC+34:vgprValuC+34+1], v[26:27], v[vgprValuC+34:vgprValuC+
 //synchronizer store
 
 V_LSHRREV_B32 v9, 0x1, v9
-    
+
 
 s_mov_b32 s[sgprSrdD+2], 0x80000000
-s_mov_b32 s[sgprSrdD+3], Srd127_96                 // 
+s_mov_b32 s[sgprSrdD+3], Srd127_96                 //
 
 s_mul_i32 s[sgprtmp2E], MT1, s[sgprWorkGroup1]                    // cal store position
-s_mul_hi_u32 s[sgprtmp1E], s[sgprtmp2E], s[sgprStrideC1J]         // 
-s_mul_i32 s[sgprtmp0E], s[sgprtmp2E], s[sgprStrideC1J]            // 
+s_mul_hi_u32 s[sgprtmp1E], s[sgprtmp2E], s[sgprStrideC1J]         //
+s_mul_i32 s[sgprtmp0E], s[sgprtmp2E], s[sgprStrideC1J]            //
 s_lshl_b64 s[sgprtmp0E:sgprtmp0E+1], s[sgprtmp0E:sgprtmp0E+1], 1  // scale by bpe
 s_add_u32 s[sgprSrdD+0], s[sgprAddressTC+0], s[sgprtmp0E]         // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprAddressTC+1], s[sgprtmp1E]        // add hi to SRD
 
-s_mul_hi_u32 s[sgprtmp1E], s[sgprWorkGroup2], s[sgprStrideCK]     // 
-s_mul_i32 s[sgprtmp0E], s[sgprWorkGroup2], s[sgprStrideCK]        // 
+s_mul_hi_u32 s[sgprtmp1E], s[sgprWorkGroup2], s[sgprStrideCK]     //
+s_mul_i32 s[sgprtmp0E], s[sgprWorkGroup2], s[sgprStrideCK]        //
 s_lshl_b64 s[sgprtmp0E:sgprtmp0E+1], s[sgprtmp0E:sgprtmp0E+1], 1  // scale by bpe
 s_add_u32 s[sgprSrdD+0], s[sgprSrdD+0], s[sgprtmp0E]              // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprSrdD+1], s[sgprtmp1E]             // add hi to SRD
@@ -14387,7 +14387,7 @@ s_atomic_add s[sgprGSUSync], s[sgprKernArgAddress:sgprKernArgAddress+1], 0x8C gl
 
 
 s_waitcnt lgkmcnt(0)
-s_cmp_eq_u32 s[sgprGSUSync], 1    // 
+s_cmp_eq_u32 s[sgprGSUSync], 1    //
 s_cbranch_scc0 Summation_End_OptNLL2           // jump if XX required
 //check done
 
@@ -14408,7 +14408,7 @@ s_mul_i32 s[sgprtmp2E], s[sgprStrideDK], 25                      // Scale by Str
 s_lshl_b64 s[sgprtmp2E:sgprtmp2E+1], s[sgprtmp2E:sgprtmp2E+1], 2  // scale by bpe
 
 s_mov_b32 s[sgprSrdDd+2], 0x80000000
-s_mov_b32 s[sgprSrdDd+3], Srd127_96                               // 
+s_mov_b32 s[sgprSrdDd+3], Srd127_96                               //
 
 s_add_u32 s[sgprSrdDd+0], s[sgprAddressD+0], s[sgprtmp2E]         // add lo to SRD
 s_addc_u32 s[sgprSrdDd+1], s[sgprAddressD+1], s[sgprtmp3E]        // add hi to SRD
@@ -14419,15 +14419,15 @@ s_buffer_atomic_add s[sgprGSUSync], s[sgprSrdDd:sgprSrdDd+3], glc
 
 
 //s_mov_b32 s[sgprGSUSumIdx] 1
-s_mul_i32 s[sgprtmp2E], MT1, s[sgprWorkGroup1]                        // 
+s_mul_i32 s[sgprtmp2E], MT1, s[sgprWorkGroup1]                        //
 s_mul_hi_u32 s[sgprtmp1E], s[sgprtmp2E], s[sgprStrideD1J]             // cal GSU D position
-s_mul_i32 s[sgprtmp0E], s[sgprtmp2E], s[sgprStrideD1J]                // 
+s_mul_i32 s[sgprtmp0E], s[sgprtmp2E], s[sgprStrideD1J]                //
 s_lshl_b64 s[sgprtmp0E:sgprtmp1E], s[sgprtmp0E:sgprtmp1E], 2          // scale by bpe
 s_add_u32 s[sgprSrdD+0], s[sgprAddressD+0], s[sgprtmp0E]              // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprAddressD+1], s[sgprtmp1E]             // add hi to SRD
 
-s_mul_hi_u32 s[sgprtmp1E], s[sgprWorkGroup2], s[sgprStrideDK]         // 
-s_mul_i32 s[sgprtmp0E], s[sgprWorkGroup2], s[sgprStrideDK]            // 
+s_mul_hi_u32 s[sgprtmp1E], s[sgprWorkGroup2], s[sgprStrideDK]         //
+s_mul_i32 s[sgprtmp0E], s[sgprWorkGroup2], s[sgprStrideDK]            //
 s_lshl_b64 s[sgprtmp0E:sgprtmp1E], s[sgprtmp0E:sgprtmp1E], 2          // scale by bpe
 s_add_u32 s[sgprSrdD+0], s[sgprSrdD+0], s[sgprtmp0E]                  // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprSrdD+1], s[sgprtmp1E]                 // add hi to SRD
@@ -14442,20 +14442,20 @@ s_cbranch_scc0 label_KernelEnd //label_GW_End_1 //label_AFTERsummary_Edge
 buffer_load_dwordx4 v[32+4*0:32+3+4*0], v9, s[sgprSrdD:sgprSrdD+3], 0 offen offset:0 // load GSU D
 
 // GSU Output Buffer offset: Free0 + (Free1-1)*StrideC1J + (Free2-1)*StrideCK * GSUIdx * bpe%s
-//s_mul_hi_u32 s[sgprtmp1E], s[sgprSizesFree+0], s[sgprGSUSumIdx]   // 
-//s_mul_i32 s[sgprtmp0E], s[sgprSizesFree+0], s[sgprGSUSumIdx]      // 
+//s_mul_hi_u32 s[sgprtmp1E], s[sgprSizesFree+0], s[sgprGSUSumIdx]   //
+//s_mul_i32 s[sgprtmp0E], s[sgprSizesFree+0], s[sgprGSUSumIdx]      //
 s_sub_u32 s[sgprtmp5E], s[sgprSizesFree+1], 1                       // cal GSU D offset
-//s_mul_i32 s[sgprtmp5E], s[sgprtmp5E], s[sgprGSUSumIdx]            // 
-s_mul_hi_u32 s[sgprtmp3E], s[sgprtmp5E], s[sgprStrideC1J]           // 
-s_mul_i32 s[sgprtmp2E], s[sgprtmp5E], s[sgprStrideC1J]              // 
-s_add_u32 s[sgprtmp0E], s[sgprSizesFree+0], s[sgprtmp2E]            // 
-s_addc_u32 s[sgprtmp1E], 0, s[sgprtmp3E]                            // 
-s_sub_u32 s[sgprtmp5E], s[sgprSizesFree+2], 1                       // 
-//s_mul_i32 s[sgprtmp5E], s[sgprtmp5E], s[sgprGSUSumIdx]            // 
-s_mul_hi_u32 s[sgprtmp3E], s[sgprtmp5E], s[sgprStrideCK]            // 
-s_mul_i32 s[sgprtmp2E], s[sgprtmp5E], s[sgprStrideCK]               // 
-s_add_u32 s[sgprtmp0E], s[sgprtmp0E], s[sgprtmp2E]                  // 
-s_addc_u32 s[sgprtmp1E], s[sgprtmp1E], s[sgprtmp3E]                 // 
+//s_mul_i32 s[sgprtmp5E], s[sgprtmp5E], s[sgprGSUSumIdx]            //
+s_mul_hi_u32 s[sgprtmp3E], s[sgprtmp5E], s[sgprStrideC1J]           //
+s_mul_i32 s[sgprtmp2E], s[sgprtmp5E], s[sgprStrideC1J]              //
+s_add_u32 s[sgprtmp0E], s[sgprSizesFree+0], s[sgprtmp2E]            //
+s_addc_u32 s[sgprtmp1E], 0, s[sgprtmp3E]                            //
+s_sub_u32 s[sgprtmp5E], s[sgprSizesFree+2], 1                       //
+//s_mul_i32 s[sgprtmp5E], s[sgprtmp5E], s[sgprGSUSumIdx]            //
+s_mul_hi_u32 s[sgprtmp3E], s[sgprtmp5E], s[sgprStrideCK]            //
+s_mul_i32 s[sgprtmp2E], s[sgprtmp5E], s[sgprStrideCK]               //
+s_add_u32 s[sgprtmp0E], s[sgprtmp0E], s[sgprtmp2E]                  //
+s_addc_u32 s[sgprtmp1E], s[sgprtmp1E], s[sgprtmp3E]                 //
 s_lshl_b64 s[sgprtmp2E:sgprtmp3E], s[sgprtmp0E:sgprtmp1E], 2        // scale by bpe
 
 
@@ -14688,20 +14688,20 @@ v_pk_mul_f32 v[vgprValuC+34:vgprValuC+34+1], v[26:27], v[vgprValuC+34:vgprValuC+
 //synchronizer store
 
 V_LSHRREV_B32 v9, 0x1, v9
-    
+
 
 s_mov_b32 s[sgprSrdD+2], 0x80000000
-s_mov_b32 s[sgprSrdD+3], Srd127_96                 // 
+s_mov_b32 s[sgprSrdD+3], Srd127_96                 //
 
 s_mul_i32 s[sgprtmp2E], MT1, s[sgprWorkGroup1]                    // cal store position
-s_mul_hi_u32 s[sgprtmp1E], s[sgprtmp2E], s[sgprStrideC1J]         // 
-s_mul_i32 s[sgprtmp0E], s[sgprtmp2E], s[sgprStrideC1J]            // 
+s_mul_hi_u32 s[sgprtmp1E], s[sgprtmp2E], s[sgprStrideC1J]         //
+s_mul_i32 s[sgprtmp0E], s[sgprtmp2E], s[sgprStrideC1J]            //
 s_lshl_b64 s[sgprtmp0E:sgprtmp0E+1], s[sgprtmp0E:sgprtmp0E+1], 1  // scale by bpe
 s_add_u32 s[sgprSrdD+0], s[sgprAddressTC+0], s[sgprtmp0E]         // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprAddressTC+1], s[sgprtmp1E]        // add hi to SRD
 
-s_mul_hi_u32 s[sgprtmp1E], s[sgprWorkGroup2], s[sgprStrideCK]     // 
-s_mul_i32 s[sgprtmp0E], s[sgprWorkGroup2], s[sgprStrideCK]        // 
+s_mul_hi_u32 s[sgprtmp1E], s[sgprWorkGroup2], s[sgprStrideCK]     //
+s_mul_i32 s[sgprtmp0E], s[sgprWorkGroup2], s[sgprStrideCK]        //
 s_lshl_b64 s[sgprtmp0E:sgprtmp0E+1], s[sgprtmp0E:sgprtmp0E+1], 1  // scale by bpe
 s_add_u32 s[sgprSrdD+0], s[sgprSrdD+0], s[sgprtmp0E]              // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprSrdD+1], s[sgprtmp1E]             // add hi to SRD
@@ -14769,7 +14769,7 @@ s_atomic_add s[sgprGSUSync], s[sgprKernArgAddress:sgprKernArgAddress+1], 0x8C gl
 
 
 s_waitcnt lgkmcnt(0)
-s_cmp_eq_u32 s[sgprGSUSync], 1    // 
+s_cmp_eq_u32 s[sgprGSUSync], 1    //
 s_cbranch_scc0 Summation_End_OptNLL2_1           // jump if XX required
 //check done
 
@@ -14790,7 +14790,7 @@ s_mul_i32 s[sgprtmp2E], s[sgprStrideDK], 25                      // Scale by Str
 s_lshl_b64 s[sgprtmp2E:sgprtmp2E+1], s[sgprtmp2E:sgprtmp2E+1], 2  // scale by bpe
 
 s_mov_b32 s[sgprSrdDd+2], 0x80000000
-s_mov_b32 s[sgprSrdDd+3], Srd127_96                               // 
+s_mov_b32 s[sgprSrdDd+3], Srd127_96                               //
 
 s_add_u32 s[sgprSrdDd+0], s[sgprAddressD+0], s[sgprtmp2E]         // add lo to SRD
 s_addc_u32 s[sgprSrdDd+1], s[sgprAddressD+1], s[sgprtmp3E]        // add hi to SRD
@@ -14801,15 +14801,15 @@ s_buffer_atomic_add s[sgprGSUSync], s[sgprSrdDd:sgprSrdDd+3], glc
 
 
 //s_mov_b32 s[sgprGSUSumIdx] 1
-s_mul_i32 s[sgprtmp2E], MT1, s[sgprWorkGroup1]                        // 
+s_mul_i32 s[sgprtmp2E], MT1, s[sgprWorkGroup1]                        //
 s_mul_hi_u32 s[sgprtmp1E], s[sgprtmp2E], s[sgprStrideD1J]             // cal GSU D position
-s_mul_i32 s[sgprtmp0E], s[sgprtmp2E], s[sgprStrideD1J]                // 
+s_mul_i32 s[sgprtmp0E], s[sgprtmp2E], s[sgprStrideD1J]                //
 s_lshl_b64 s[sgprtmp0E:sgprtmp1E], s[sgprtmp0E:sgprtmp1E], 2          // scale by bpe
 s_add_u32 s[sgprSrdD+0], s[sgprAddressD+0], s[sgprtmp0E]              // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprAddressD+1], s[sgprtmp1E]             // add hi to SRD
 
-s_mul_hi_u32 s[sgprtmp1E], s[sgprWorkGroup2], s[sgprStrideDK]         // 
-s_mul_i32 s[sgprtmp0E], s[sgprWorkGroup2], s[sgprStrideDK]            // 
+s_mul_hi_u32 s[sgprtmp1E], s[sgprWorkGroup2], s[sgprStrideDK]         //
+s_mul_i32 s[sgprtmp0E], s[sgprWorkGroup2], s[sgprStrideDK]            //
 s_lshl_b64 s[sgprtmp0E:sgprtmp1E], s[sgprtmp0E:sgprtmp1E], 2          // scale by bpe
 s_add_u32 s[sgprSrdD+0], s[sgprSrdD+0], s[sgprtmp0E]                  // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprSrdD+1], s[sgprtmp1E]                 // add hi to SRD
@@ -14824,20 +14824,20 @@ s_cbranch_scc0 label_KernelEnd //label_GW_End_1 //label_AFTERsummary_Edge
 buffer_load_dwordx4 v[32+4*0:32+3+4*0], v9, s[sgprSrdD:sgprSrdD+3], 0 offen offset:0 // load GSU D
 
 // GSU Output Buffer offset: Free0 + (Free1-1)*StrideC1J + (Free2-1)*StrideCK * GSUIdx * bpe%s
-//s_mul_hi_u32 s[sgprtmp1E], s[sgprSizesFree+0], s[sgprGSUSumIdx]   // 
-//s_mul_i32 s[sgprtmp0E], s[sgprSizesFree+0], s[sgprGSUSumIdx]      // 
+//s_mul_hi_u32 s[sgprtmp1E], s[sgprSizesFree+0], s[sgprGSUSumIdx]   //
+//s_mul_i32 s[sgprtmp0E], s[sgprSizesFree+0], s[sgprGSUSumIdx]      //
 s_sub_u32 s[sgprtmp5E], s[sgprSizesFree+1], 1                       // cal GSU D offset
-//s_mul_i32 s[sgprtmp5E], s[sgprtmp5E], s[sgprGSUSumIdx]            // 
-s_mul_hi_u32 s[sgprtmp3E], s[sgprtmp5E], s[sgprStrideC1J]           // 
-s_mul_i32 s[sgprtmp2E], s[sgprtmp5E], s[sgprStrideC1J]              // 
-s_add_u32 s[sgprtmp0E], s[sgprSizesFree+0], s[sgprtmp2E]            // 
-s_addc_u32 s[sgprtmp1E], 0, s[sgprtmp3E]                            // 
-s_sub_u32 s[sgprtmp5E], s[sgprSizesFree+2], 1                       // 
-//s_mul_i32 s[sgprtmp5E], s[sgprtmp5E], s[sgprGSUSumIdx]            // 
-s_mul_hi_u32 s[sgprtmp3E], s[sgprtmp5E], s[sgprStrideCK]            // 
-s_mul_i32 s[sgprtmp2E], s[sgprtmp5E], s[sgprStrideCK]               // 
-s_add_u32 s[sgprtmp0E], s[sgprtmp0E], s[sgprtmp2E]                  // 
-s_addc_u32 s[sgprtmp1E], s[sgprtmp1E], s[sgprtmp3E]                 // 
+//s_mul_i32 s[sgprtmp5E], s[sgprtmp5E], s[sgprGSUSumIdx]            //
+s_mul_hi_u32 s[sgprtmp3E], s[sgprtmp5E], s[sgprStrideC1J]           //
+s_mul_i32 s[sgprtmp2E], s[sgprtmp5E], s[sgprStrideC1J]              //
+s_add_u32 s[sgprtmp0E], s[sgprSizesFree+0], s[sgprtmp2E]            //
+s_addc_u32 s[sgprtmp1E], 0, s[sgprtmp3E]                            //
+s_sub_u32 s[sgprtmp5E], s[sgprSizesFree+2], 1                       //
+//s_mul_i32 s[sgprtmp5E], s[sgprtmp5E], s[sgprGSUSumIdx]            //
+s_mul_hi_u32 s[sgprtmp3E], s[sgprtmp5E], s[sgprStrideCK]            //
+s_mul_i32 s[sgprtmp2E], s[sgprtmp5E], s[sgprStrideCK]               //
+s_add_u32 s[sgprtmp0E], s[sgprtmp0E], s[sgprtmp2E]                  //
+s_addc_u32 s[sgprtmp1E], s[sgprtmp1E], s[sgprtmp3E]                 //
 s_lshl_b64 s[sgprtmp2E:sgprtmp3E], s[sgprtmp0E:sgprtmp1E], 2        // scale by bpe
 
 
@@ -15074,20 +15074,20 @@ v_pk_mul_f32 v[vgprValuC+34:vgprValuC+34+1], v[26:27], v[vgprValuC+34:vgprValuC+
 //synchronizer store
 
 V_LSHRREV_B32 v9, 0x1, v9
-    
+
 
 s_mov_b32 s[sgprSrdD+2], 0x80000000
-s_mov_b32 s[sgprSrdD+3], Srd127_96                 // 
+s_mov_b32 s[sgprSrdD+3], Srd127_96                 //
 
 s_mul_i32 s[sgprtmp2E], MT1, s[sgprWorkGroup1]                    // cal store position
-s_mul_hi_u32 s[sgprtmp1E], s[sgprtmp2E], s[sgprStrideC1J]         // 
-s_mul_i32 s[sgprtmp0E], s[sgprtmp2E], s[sgprStrideC1J]            // 
+s_mul_hi_u32 s[sgprtmp1E], s[sgprtmp2E], s[sgprStrideC1J]         //
+s_mul_i32 s[sgprtmp0E], s[sgprtmp2E], s[sgprStrideC1J]            //
 s_lshl_b64 s[sgprtmp0E:sgprtmp0E+1], s[sgprtmp0E:sgprtmp0E+1], 1  // scale by bpe
 s_add_u32 s[sgprSrdD+0], s[sgprAddressTC+0], s[sgprtmp0E]         // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprAddressTC+1], s[sgprtmp1E]        // add hi to SRD
 
-s_mul_hi_u32 s[sgprtmp1E], s[sgprWorkGroup2], s[sgprStrideCK]     // 
-s_mul_i32 s[sgprtmp0E], s[sgprWorkGroup2], s[sgprStrideCK]        // 
+s_mul_hi_u32 s[sgprtmp1E], s[sgprWorkGroup2], s[sgprStrideCK]     //
+s_mul_i32 s[sgprtmp0E], s[sgprWorkGroup2], s[sgprStrideCK]        //
 s_lshl_b64 s[sgprtmp0E:sgprtmp0E+1], s[sgprtmp0E:sgprtmp0E+1], 1  // scale by bpe
 s_add_u32 s[sgprSrdD+0], s[sgprSrdD+0], s[sgprtmp0E]              // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprSrdD+1], s[sgprtmp1E]             // add hi to SRD
@@ -15155,7 +15155,7 @@ s_atomic_add s[sgprGSUSync], s[sgprKernArgAddress:sgprKernArgAddress+1], 0x8C gl
 
 
 s_waitcnt lgkmcnt(0)
-s_cmp_eq_u32 s[sgprGSUSync], 1    // 
+s_cmp_eq_u32 s[sgprGSUSync], 1    //
 s_cbranch_scc0 Summation_End_OptNLL2_2           // jump if XX required
 //check done
 
@@ -15176,7 +15176,7 @@ s_mul_i32 s[sgprtmp2E], s[sgprStrideDK], 25                      // Scale by Str
 s_lshl_b64 s[sgprtmp2E:sgprtmp2E+1], s[sgprtmp2E:sgprtmp2E+1], 2  // scale by bpe
 
 s_mov_b32 s[sgprSrdDd+2], 0x80000000
-s_mov_b32 s[sgprSrdDd+3], Srd127_96                               // 
+s_mov_b32 s[sgprSrdDd+3], Srd127_96                               //
 
 s_add_u32 s[sgprSrdDd+0], s[sgprAddressD+0], s[sgprtmp2E]         // add lo to SRD
 s_addc_u32 s[sgprSrdDd+1], s[sgprAddressD+1], s[sgprtmp3E]        // add hi to SRD
@@ -15187,15 +15187,15 @@ s_buffer_atomic_add s[sgprGSUSync], s[sgprSrdDd:sgprSrdDd+3], glc
 
 
 //s_mov_b32 s[sgprGSUSumIdx] 1
-s_mul_i32 s[sgprtmp2E], MT1, s[sgprWorkGroup1]                        // 
+s_mul_i32 s[sgprtmp2E], MT1, s[sgprWorkGroup1]                        //
 s_mul_hi_u32 s[sgprtmp1E], s[sgprtmp2E], s[sgprStrideD1J]             // cal GSU D position
-s_mul_i32 s[sgprtmp0E], s[sgprtmp2E], s[sgprStrideD1J]                // 
+s_mul_i32 s[sgprtmp0E], s[sgprtmp2E], s[sgprStrideD1J]                //
 s_lshl_b64 s[sgprtmp0E:sgprtmp1E], s[sgprtmp0E:sgprtmp1E], 2          // scale by bpe
 s_add_u32 s[sgprSrdD+0], s[sgprAddressD+0], s[sgprtmp0E]              // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprAddressD+1], s[sgprtmp1E]             // add hi to SRD
 
-s_mul_hi_u32 s[sgprtmp1E], s[sgprWorkGroup2], s[sgprStrideDK]         // 
-s_mul_i32 s[sgprtmp0E], s[sgprWorkGroup2], s[sgprStrideDK]            // 
+s_mul_hi_u32 s[sgprtmp1E], s[sgprWorkGroup2], s[sgprStrideDK]         //
+s_mul_i32 s[sgprtmp0E], s[sgprWorkGroup2], s[sgprStrideDK]            //
 s_lshl_b64 s[sgprtmp0E:sgprtmp1E], s[sgprtmp0E:sgprtmp1E], 2          // scale by bpe
 s_add_u32 s[sgprSrdD+0], s[sgprSrdD+0], s[sgprtmp0E]                  // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprSrdD+1], s[sgprtmp1E]                 // add hi to SRD
@@ -15210,20 +15210,20 @@ s_cbranch_scc0 label_KernelEnd //label_GW_End_1 //label_AFTERsummary_Edge
 buffer_load_dwordx4 v[32+4*0:32+3+4*0], v9, s[sgprSrdD:sgprSrdD+3], 0 offen offset:0 // load GSU D
 
 // GSU Output Buffer offset: Free0 + (Free1-1)*StrideC1J + (Free2-1)*StrideCK * GSUIdx * bpe%s
-//s_mul_hi_u32 s[sgprtmp1E], s[sgprSizesFree+0], s[sgprGSUSumIdx]   // 
-//s_mul_i32 s[sgprtmp0E], s[sgprSizesFree+0], s[sgprGSUSumIdx]      // 
+//s_mul_hi_u32 s[sgprtmp1E], s[sgprSizesFree+0], s[sgprGSUSumIdx]   //
+//s_mul_i32 s[sgprtmp0E], s[sgprSizesFree+0], s[sgprGSUSumIdx]      //
 s_sub_u32 s[sgprtmp5E], s[sgprSizesFree+1], 1                       // cal GSU D offset
-//s_mul_i32 s[sgprtmp5E], s[sgprtmp5E], s[sgprGSUSumIdx]            // 
-s_mul_hi_u32 s[sgprtmp3E], s[sgprtmp5E], s[sgprStrideC1J]           // 
-s_mul_i32 s[sgprtmp2E], s[sgprtmp5E], s[sgprStrideC1J]              // 
-s_add_u32 s[sgprtmp0E], s[sgprSizesFree+0], s[sgprtmp2E]            // 
-s_addc_u32 s[sgprtmp1E], 0, s[sgprtmp3E]                            // 
-s_sub_u32 s[sgprtmp5E], s[sgprSizesFree+2], 1                       // 
-//s_mul_i32 s[sgprtmp5E], s[sgprtmp5E], s[sgprGSUSumIdx]            // 
-s_mul_hi_u32 s[sgprtmp3E], s[sgprtmp5E], s[sgprStrideCK]            // 
-s_mul_i32 s[sgprtmp2E], s[sgprtmp5E], s[sgprStrideCK]               // 
-s_add_u32 s[sgprtmp0E], s[sgprtmp0E], s[sgprtmp2E]                  // 
-s_addc_u32 s[sgprtmp1E], s[sgprtmp1E], s[sgprtmp3E]                 // 
+//s_mul_i32 s[sgprtmp5E], s[sgprtmp5E], s[sgprGSUSumIdx]            //
+s_mul_hi_u32 s[sgprtmp3E], s[sgprtmp5E], s[sgprStrideC1J]           //
+s_mul_i32 s[sgprtmp2E], s[sgprtmp5E], s[sgprStrideC1J]              //
+s_add_u32 s[sgprtmp0E], s[sgprSizesFree+0], s[sgprtmp2E]            //
+s_addc_u32 s[sgprtmp1E], 0, s[sgprtmp3E]                            //
+s_sub_u32 s[sgprtmp5E], s[sgprSizesFree+2], 1                       //
+//s_mul_i32 s[sgprtmp5E], s[sgprtmp5E], s[sgprGSUSumIdx]            //
+s_mul_hi_u32 s[sgprtmp3E], s[sgprtmp5E], s[sgprStrideCK]            //
+s_mul_i32 s[sgprtmp2E], s[sgprtmp5E], s[sgprStrideCK]               //
+s_add_u32 s[sgprtmp0E], s[sgprtmp0E], s[sgprtmp2E]                  //
+s_addc_u32 s[sgprtmp1E], s[sgprtmp1E], s[sgprtmp3E]                 //
 s_lshl_b64 s[sgprtmp2E:sgprtmp3E], s[sgprtmp0E:sgprtmp1E], 2        // scale by bpe
 
 
@@ -15468,20 +15468,20 @@ v_pk_mul_f32 v[vgprValuC+34:vgprValuC+34+1], v[26:27], v[vgprValuC+34:vgprValuC+
 //synchronizer store
 
 V_LSHRREV_B32 v9, 0x1, v9
-    
+
 
 s_mov_b32 s[sgprSrdD+2], 0x80000000
-s_mov_b32 s[sgprSrdD+3], Srd127_96                 // 
+s_mov_b32 s[sgprSrdD+3], Srd127_96                 //
 
 s_mul_i32 s[sgprtmp2E], MT1, s[sgprWorkGroup1]                    // cal store position
-s_mul_hi_u32 s[sgprtmp1E], s[sgprtmp2E], s[sgprStrideC1J]         // 
-s_mul_i32 s[sgprtmp0E], s[sgprtmp2E], s[sgprStrideC1J]            // 
+s_mul_hi_u32 s[sgprtmp1E], s[sgprtmp2E], s[sgprStrideC1J]         //
+s_mul_i32 s[sgprtmp0E], s[sgprtmp2E], s[sgprStrideC1J]            //
 s_lshl_b64 s[sgprtmp0E:sgprtmp0E+1], s[sgprtmp0E:sgprtmp0E+1], 1  // scale by bpe
 s_add_u32 s[sgprSrdD+0], s[sgprAddressTC+0], s[sgprtmp0E]         // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprAddressTC+1], s[sgprtmp1E]        // add hi to SRD
 
-s_mul_hi_u32 s[sgprtmp1E], s[sgprWorkGroup2], s[sgprStrideCK]     // 
-s_mul_i32 s[sgprtmp0E], s[sgprWorkGroup2], s[sgprStrideCK]        // 
+s_mul_hi_u32 s[sgprtmp1E], s[sgprWorkGroup2], s[sgprStrideCK]     //
+s_mul_i32 s[sgprtmp0E], s[sgprWorkGroup2], s[sgprStrideCK]        //
 s_lshl_b64 s[sgprtmp0E:sgprtmp0E+1], s[sgprtmp0E:sgprtmp0E+1], 1  // scale by bpe
 s_add_u32 s[sgprSrdD+0], s[sgprSrdD+0], s[sgprtmp0E]              // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprSrdD+1], s[sgprtmp1E]             // add hi to SRD
@@ -15549,7 +15549,7 @@ s_atomic_add s[sgprGSUSync], s[sgprKernArgAddress:sgprKernArgAddress+1], 0x8C gl
 
 
 s_waitcnt lgkmcnt(0)
-s_cmp_eq_u32 s[sgprGSUSync], 1    // 
+s_cmp_eq_u32 s[sgprGSUSync], 1    //
 s_cbranch_scc0 Summation_End_OptNLL2_3           // jump if XX required
 //check done
 
@@ -15570,7 +15570,7 @@ s_mul_i32 s[sgprtmp2E], s[sgprStrideDK], 25                      // Scale by Str
 s_lshl_b64 s[sgprtmp2E:sgprtmp2E+1], s[sgprtmp2E:sgprtmp2E+1], 2  // scale by bpe
 
 s_mov_b32 s[sgprSrdDd+2], 0x80000000
-s_mov_b32 s[sgprSrdDd+3], Srd127_96                               // 
+s_mov_b32 s[sgprSrdDd+3], Srd127_96                               //
 
 s_add_u32 s[sgprSrdDd+0], s[sgprAddressD+0], s[sgprtmp2E]         // add lo to SRD
 s_addc_u32 s[sgprSrdDd+1], s[sgprAddressD+1], s[sgprtmp3E]        // add hi to SRD
@@ -15581,15 +15581,15 @@ s_buffer_atomic_add s[sgprGSUSync], s[sgprSrdDd:sgprSrdDd+3], glc
 
 
 //s_mov_b32 s[sgprGSUSumIdx] 1
-s_mul_i32 s[sgprtmp2E], MT1, s[sgprWorkGroup1]                        // 
+s_mul_i32 s[sgprtmp2E], MT1, s[sgprWorkGroup1]                        //
 s_mul_hi_u32 s[sgprtmp1E], s[sgprtmp2E], s[sgprStrideD1J]             // cal GSU D position
-s_mul_i32 s[sgprtmp0E], s[sgprtmp2E], s[sgprStrideD1J]                // 
+s_mul_i32 s[sgprtmp0E], s[sgprtmp2E], s[sgprStrideD1J]                //
 s_lshl_b64 s[sgprtmp0E:sgprtmp1E], s[sgprtmp0E:sgprtmp1E], 2          // scale by bpe
 s_add_u32 s[sgprSrdD+0], s[sgprAddressD+0], s[sgprtmp0E]              // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprAddressD+1], s[sgprtmp1E]             // add hi to SRD
 
-s_mul_hi_u32 s[sgprtmp1E], s[sgprWorkGroup2], s[sgprStrideDK]         // 
-s_mul_i32 s[sgprtmp0E], s[sgprWorkGroup2], s[sgprStrideDK]            // 
+s_mul_hi_u32 s[sgprtmp1E], s[sgprWorkGroup2], s[sgprStrideDK]         //
+s_mul_i32 s[sgprtmp0E], s[sgprWorkGroup2], s[sgprStrideDK]            //
 s_lshl_b64 s[sgprtmp0E:sgprtmp1E], s[sgprtmp0E:sgprtmp1E], 2          // scale by bpe
 s_add_u32 s[sgprSrdD+0], s[sgprSrdD+0], s[sgprtmp0E]                  // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprSrdD+1], s[sgprtmp1E]                 // add hi to SRD
@@ -15604,20 +15604,20 @@ s_cbranch_scc0 label_KernelEnd //label_GW_End_1 //label_AFTERsummary_Edge
 buffer_load_dwordx4 v[32+4*0:32+3+4*0], v9, s[sgprSrdD:sgprSrdD+3], 0 offen offset:0 // load GSU D
 
 // GSU Output Buffer offset: Free0 + (Free1-1)*StrideC1J + (Free2-1)*StrideCK * GSUIdx * bpe%s
-//s_mul_hi_u32 s[sgprtmp1E], s[sgprSizesFree+0], s[sgprGSUSumIdx]   // 
-//s_mul_i32 s[sgprtmp0E], s[sgprSizesFree+0], s[sgprGSUSumIdx]      // 
+//s_mul_hi_u32 s[sgprtmp1E], s[sgprSizesFree+0], s[sgprGSUSumIdx]   //
+//s_mul_i32 s[sgprtmp0E], s[sgprSizesFree+0], s[sgprGSUSumIdx]      //
 s_sub_u32 s[sgprtmp5E], s[sgprSizesFree+1], 1                       // cal GSU D offset
-//s_mul_i32 s[sgprtmp5E], s[sgprtmp5E], s[sgprGSUSumIdx]            // 
-s_mul_hi_u32 s[sgprtmp3E], s[sgprtmp5E], s[sgprStrideC1J]           // 
-s_mul_i32 s[sgprtmp2E], s[sgprtmp5E], s[sgprStrideC1J]              // 
-s_add_u32 s[sgprtmp0E], s[sgprSizesFree+0], s[sgprtmp2E]            // 
-s_addc_u32 s[sgprtmp1E], 0, s[sgprtmp3E]                            // 
-s_sub_u32 s[sgprtmp5E], s[sgprSizesFree+2], 1                       // 
-//s_mul_i32 s[sgprtmp5E], s[sgprtmp5E], s[sgprGSUSumIdx]            // 
-s_mul_hi_u32 s[sgprtmp3E], s[sgprtmp5E], s[sgprStrideCK]            // 
-s_mul_i32 s[sgprtmp2E], s[sgprtmp5E], s[sgprStrideCK]               // 
-s_add_u32 s[sgprtmp0E], s[sgprtmp0E], s[sgprtmp2E]                  // 
-s_addc_u32 s[sgprtmp1E], s[sgprtmp1E], s[sgprtmp3E]                 // 
+//s_mul_i32 s[sgprtmp5E], s[sgprtmp5E], s[sgprGSUSumIdx]            //
+s_mul_hi_u32 s[sgprtmp3E], s[sgprtmp5E], s[sgprStrideC1J]           //
+s_mul_i32 s[sgprtmp2E], s[sgprtmp5E], s[sgprStrideC1J]              //
+s_add_u32 s[sgprtmp0E], s[sgprSizesFree+0], s[sgprtmp2E]            //
+s_addc_u32 s[sgprtmp1E], 0, s[sgprtmp3E]                            //
+s_sub_u32 s[sgprtmp5E], s[sgprSizesFree+2], 1                       //
+//s_mul_i32 s[sgprtmp5E], s[sgprtmp5E], s[sgprGSUSumIdx]            //
+s_mul_hi_u32 s[sgprtmp3E], s[sgprtmp5E], s[sgprStrideCK]            //
+s_mul_i32 s[sgprtmp2E], s[sgprtmp5E], s[sgprStrideCK]               //
+s_add_u32 s[sgprtmp0E], s[sgprtmp0E], s[sgprtmp2E]                  //
+s_addc_u32 s[sgprtmp1E], s[sgprtmp1E], s[sgprtmp3E]                 //
 s_lshl_b64 s[sgprtmp2E:sgprtmp3E], s[sgprtmp0E:sgprtmp1E], 2        // scale by bpe
 
 
@@ -15890,20 +15890,20 @@ v_pk_mul_f32 v[vgprValuC+34:vgprValuC+34+1], v[26:27], v[vgprValuC+34:vgprValuC+
 //synchronizer store
 
 V_LSHRREV_B32 v9, 0x1, v9
-    
+
 
 s_mov_b32 s[sgprSrdD+2], 0x80000000
-s_mov_b32 s[sgprSrdD+3], Srd127_96                 // 
+s_mov_b32 s[sgprSrdD+3], Srd127_96                 //
 
 s_mul_i32 s[sgprtmp2E], MT1, s[sgprWorkGroup1]                    // cal store position
-s_mul_hi_u32 s[sgprtmp1E], s[sgprtmp2E], s[sgprStrideC1J]         // 
-s_mul_i32 s[sgprtmp0E], s[sgprtmp2E], s[sgprStrideC1J]            // 
+s_mul_hi_u32 s[sgprtmp1E], s[sgprtmp2E], s[sgprStrideC1J]         //
+s_mul_i32 s[sgprtmp0E], s[sgprtmp2E], s[sgprStrideC1J]            //
 s_lshl_b64 s[sgprtmp0E:sgprtmp0E+1], s[sgprtmp0E:sgprtmp0E+1], 1  // scale by bpe
 s_add_u32 s[sgprSrdD+0], s[sgprAddressTC+0], s[sgprtmp0E]         // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprAddressTC+1], s[sgprtmp1E]        // add hi to SRD
 
-s_mul_hi_u32 s[sgprtmp1E], s[sgprWorkGroup2], s[sgprStrideCK]     // 
-s_mul_i32 s[sgprtmp0E], s[sgprWorkGroup2], s[sgprStrideCK]        // 
+s_mul_hi_u32 s[sgprtmp1E], s[sgprWorkGroup2], s[sgprStrideCK]     //
+s_mul_i32 s[sgprtmp0E], s[sgprWorkGroup2], s[sgprStrideCK]        //
 s_lshl_b64 s[sgprtmp0E:sgprtmp0E+1], s[sgprtmp0E:sgprtmp0E+1], 1  // scale by bpe
 s_add_u32 s[sgprSrdD+0], s[sgprSrdD+0], s[sgprtmp0E]              // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprSrdD+1], s[sgprtmp1E]             // add hi to SRD
@@ -15971,7 +15971,7 @@ s_atomic_add s[sgprGSUSync], s[sgprKernArgAddress:sgprKernArgAddress+1], 0x8C gl
 
 
 s_waitcnt lgkmcnt(0)
-s_cmp_eq_u32 s[sgprGSUSync], 1    // 
+s_cmp_eq_u32 s[sgprGSUSync], 1    //
 s_cbranch_scc0 Summation_End_OptNLL2_4           // jump if XX required
 //check done
 
@@ -15992,7 +15992,7 @@ s_mul_i32 s[sgprtmp2E], s[sgprStrideDK], 25                      // Scale by Str
 s_lshl_b64 s[sgprtmp2E:sgprtmp2E+1], s[sgprtmp2E:sgprtmp2E+1], 2  // scale by bpe
 
 s_mov_b32 s[sgprSrdDd+2], 0x80000000
-s_mov_b32 s[sgprSrdDd+3], Srd127_96                               // 
+s_mov_b32 s[sgprSrdDd+3], Srd127_96                               //
 
 s_add_u32 s[sgprSrdDd+0], s[sgprAddressD+0], s[sgprtmp2E]         // add lo to SRD
 s_addc_u32 s[sgprSrdDd+1], s[sgprAddressD+1], s[sgprtmp3E]        // add hi to SRD
@@ -16003,15 +16003,15 @@ s_buffer_atomic_add s[sgprGSUSync], s[sgprSrdDd:sgprSrdDd+3], glc
 
 
 //s_mov_b32 s[sgprGSUSumIdx] 1
-s_mul_i32 s[sgprtmp2E], MT1, s[sgprWorkGroup1]                        // 
+s_mul_i32 s[sgprtmp2E], MT1, s[sgprWorkGroup1]                        //
 s_mul_hi_u32 s[sgprtmp1E], s[sgprtmp2E], s[sgprStrideD1J]             // cal GSU D position
-s_mul_i32 s[sgprtmp0E], s[sgprtmp2E], s[sgprStrideD1J]                // 
+s_mul_i32 s[sgprtmp0E], s[sgprtmp2E], s[sgprStrideD1J]                //
 s_lshl_b64 s[sgprtmp0E:sgprtmp1E], s[sgprtmp0E:sgprtmp1E], 2          // scale by bpe
 s_add_u32 s[sgprSrdD+0], s[sgprAddressD+0], s[sgprtmp0E]              // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprAddressD+1], s[sgprtmp1E]             // add hi to SRD
 
-s_mul_hi_u32 s[sgprtmp1E], s[sgprWorkGroup2], s[sgprStrideDK]         // 
-s_mul_i32 s[sgprtmp0E], s[sgprWorkGroup2], s[sgprStrideDK]            // 
+s_mul_hi_u32 s[sgprtmp1E], s[sgprWorkGroup2], s[sgprStrideDK]         //
+s_mul_i32 s[sgprtmp0E], s[sgprWorkGroup2], s[sgprStrideDK]            //
 s_lshl_b64 s[sgprtmp0E:sgprtmp1E], s[sgprtmp0E:sgprtmp1E], 2          // scale by bpe
 s_add_u32 s[sgprSrdD+0], s[sgprSrdD+0], s[sgprtmp0E]                  // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprSrdD+1], s[sgprtmp1E]                 // add hi to SRD
@@ -16026,20 +16026,20 @@ s_cbranch_scc0 label_KernelEnd //label_GW_End_1 //label_AFTERsummary_Edge
 buffer_load_dwordx4 v[32+4*0:32+3+4*0], v9, s[sgprSrdD:sgprSrdD+3], 0 offen offset:0 // load GSU D
 
 // GSU Output Buffer offset: Free0 + (Free1-1)*StrideC1J + (Free2-1)*StrideCK * GSUIdx * bpe%s
-//s_mul_hi_u32 s[sgprtmp1E], s[sgprSizesFree+0], s[sgprGSUSumIdx]   // 
-//s_mul_i32 s[sgprtmp0E], s[sgprSizesFree+0], s[sgprGSUSumIdx]      // 
+//s_mul_hi_u32 s[sgprtmp1E], s[sgprSizesFree+0], s[sgprGSUSumIdx]   //
+//s_mul_i32 s[sgprtmp0E], s[sgprSizesFree+0], s[sgprGSUSumIdx]      //
 s_sub_u32 s[sgprtmp5E], s[sgprSizesFree+1], 1                       // cal GSU D offset
-//s_mul_i32 s[sgprtmp5E], s[sgprtmp5E], s[sgprGSUSumIdx]            // 
-s_mul_hi_u32 s[sgprtmp3E], s[sgprtmp5E], s[sgprStrideC1J]           // 
-s_mul_i32 s[sgprtmp2E], s[sgprtmp5E], s[sgprStrideC1J]              // 
-s_add_u32 s[sgprtmp0E], s[sgprSizesFree+0], s[sgprtmp2E]            // 
-s_addc_u32 s[sgprtmp1E], 0, s[sgprtmp3E]                            // 
-s_sub_u32 s[sgprtmp5E], s[sgprSizesFree+2], 1                       // 
-//s_mul_i32 s[sgprtmp5E], s[sgprtmp5E], s[sgprGSUSumIdx]            // 
-s_mul_hi_u32 s[sgprtmp3E], s[sgprtmp5E], s[sgprStrideCK]            // 
-s_mul_i32 s[sgprtmp2E], s[sgprtmp5E], s[sgprStrideCK]               // 
-s_add_u32 s[sgprtmp0E], s[sgprtmp0E], s[sgprtmp2E]                  // 
-s_addc_u32 s[sgprtmp1E], s[sgprtmp1E], s[sgprtmp3E]                 // 
+//s_mul_i32 s[sgprtmp5E], s[sgprtmp5E], s[sgprGSUSumIdx]            //
+s_mul_hi_u32 s[sgprtmp3E], s[sgprtmp5E], s[sgprStrideC1J]           //
+s_mul_i32 s[sgprtmp2E], s[sgprtmp5E], s[sgprStrideC1J]              //
+s_add_u32 s[sgprtmp0E], s[sgprSizesFree+0], s[sgprtmp2E]            //
+s_addc_u32 s[sgprtmp1E], 0, s[sgprtmp3E]                            //
+s_sub_u32 s[sgprtmp5E], s[sgprSizesFree+2], 1                       //
+//s_mul_i32 s[sgprtmp5E], s[sgprtmp5E], s[sgprGSUSumIdx]            //
+s_mul_hi_u32 s[sgprtmp3E], s[sgprtmp5E], s[sgprStrideCK]            //
+s_mul_i32 s[sgprtmp2E], s[sgprtmp5E], s[sgprStrideCK]               //
+s_add_u32 s[sgprtmp0E], s[sgprtmp0E], s[sgprtmp2E]                  //
+s_addc_u32 s[sgprtmp1E], s[sgprtmp1E], s[sgprtmp3E]                 //
 s_lshl_b64 s[sgprtmp2E:sgprtmp3E], s[sgprtmp0E:sgprtmp1E], 2        // scale by bpe
 
 
@@ -16284,20 +16284,20 @@ v_pk_mul_f32 v[vgprValuC+34:vgprValuC+34+1], v[26:27], v[vgprValuC+34:vgprValuC+
 //synchronizer store
 
 V_LSHRREV_B32 v9, 0x1, v9
-    
+
 
 s_mov_b32 s[sgprSrdD+2], 0x80000000
-s_mov_b32 s[sgprSrdD+3], Srd127_96                 // 
+s_mov_b32 s[sgprSrdD+3], Srd127_96                 //
 
 s_mul_i32 s[sgprtmp2E], MT1, s[sgprWorkGroup1]                    // cal store position
-s_mul_hi_u32 s[sgprtmp1E], s[sgprtmp2E], s[sgprStrideC1J]         // 
-s_mul_i32 s[sgprtmp0E], s[sgprtmp2E], s[sgprStrideC1J]            // 
+s_mul_hi_u32 s[sgprtmp1E], s[sgprtmp2E], s[sgprStrideC1J]         //
+s_mul_i32 s[sgprtmp0E], s[sgprtmp2E], s[sgprStrideC1J]            //
 s_lshl_b64 s[sgprtmp0E:sgprtmp0E+1], s[sgprtmp0E:sgprtmp0E+1], 1  // scale by bpe
 s_add_u32 s[sgprSrdD+0], s[sgprAddressTC+0], s[sgprtmp0E]         // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprAddressTC+1], s[sgprtmp1E]        // add hi to SRD
 
-s_mul_hi_u32 s[sgprtmp1E], s[sgprWorkGroup2], s[sgprStrideCK]     // 
-s_mul_i32 s[sgprtmp0E], s[sgprWorkGroup2], s[sgprStrideCK]        // 
+s_mul_hi_u32 s[sgprtmp1E], s[sgprWorkGroup2], s[sgprStrideCK]     //
+s_mul_i32 s[sgprtmp0E], s[sgprWorkGroup2], s[sgprStrideCK]        //
 s_lshl_b64 s[sgprtmp0E:sgprtmp0E+1], s[sgprtmp0E:sgprtmp0E+1], 1  // scale by bpe
 s_add_u32 s[sgprSrdD+0], s[sgprSrdD+0], s[sgprtmp0E]              // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprSrdD+1], s[sgprtmp1E]             // add hi to SRD
@@ -16365,7 +16365,7 @@ s_atomic_add s[sgprGSUSync], s[sgprKernArgAddress:sgprKernArgAddress+1], 0x8C gl
 
 
 s_waitcnt lgkmcnt(0)
-s_cmp_eq_u32 s[sgprGSUSync], 1    // 
+s_cmp_eq_u32 s[sgprGSUSync], 1    //
 s_cbranch_scc0 Summation_End_OptNLL2_5           // jump if XX required
 //check done
 
@@ -16386,7 +16386,7 @@ s_mul_i32 s[sgprtmp2E], s[sgprStrideDK], 25                      // Scale by Str
 s_lshl_b64 s[sgprtmp2E:sgprtmp2E+1], s[sgprtmp2E:sgprtmp2E+1], 2  // scale by bpe
 
 s_mov_b32 s[sgprSrdDd+2], 0x80000000
-s_mov_b32 s[sgprSrdDd+3], Srd127_96                               // 
+s_mov_b32 s[sgprSrdDd+3], Srd127_96                               //
 
 s_add_u32 s[sgprSrdDd+0], s[sgprAddressD+0], s[sgprtmp2E]         // add lo to SRD
 s_addc_u32 s[sgprSrdDd+1], s[sgprAddressD+1], s[sgprtmp3E]        // add hi to SRD
@@ -16397,15 +16397,15 @@ s_buffer_atomic_add s[sgprGSUSync], s[sgprSrdDd:sgprSrdDd+3], glc
 
 
 //s_mov_b32 s[sgprGSUSumIdx] 1
-s_mul_i32 s[sgprtmp2E], MT1, s[sgprWorkGroup1]                        // 
+s_mul_i32 s[sgprtmp2E], MT1, s[sgprWorkGroup1]                        //
 s_mul_hi_u32 s[sgprtmp1E], s[sgprtmp2E], s[sgprStrideD1J]             // cal GSU D position
-s_mul_i32 s[sgprtmp0E], s[sgprtmp2E], s[sgprStrideD1J]                // 
+s_mul_i32 s[sgprtmp0E], s[sgprtmp2E], s[sgprStrideD1J]                //
 s_lshl_b64 s[sgprtmp0E:sgprtmp1E], s[sgprtmp0E:sgprtmp1E], 2          // scale by bpe
 s_add_u32 s[sgprSrdD+0], s[sgprAddressD+0], s[sgprtmp0E]              // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprAddressD+1], s[sgprtmp1E]             // add hi to SRD
 
-s_mul_hi_u32 s[sgprtmp1E], s[sgprWorkGroup2], s[sgprStrideDK]         // 
-s_mul_i32 s[sgprtmp0E], s[sgprWorkGroup2], s[sgprStrideDK]            // 
+s_mul_hi_u32 s[sgprtmp1E], s[sgprWorkGroup2], s[sgprStrideDK]         //
+s_mul_i32 s[sgprtmp0E], s[sgprWorkGroup2], s[sgprStrideDK]            //
 s_lshl_b64 s[sgprtmp0E:sgprtmp1E], s[sgprtmp0E:sgprtmp1E], 2          // scale by bpe
 s_add_u32 s[sgprSrdD+0], s[sgprSrdD+0], s[sgprtmp0E]                  // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprSrdD+1], s[sgprtmp1E]                 // add hi to SRD
@@ -16420,20 +16420,20 @@ s_cbranch_scc0 label_KernelEnd //label_GW_End_1 //label_AFTERsummary_Edge
 buffer_load_dwordx4 v[32+4*0:32+3+4*0], v9, s[sgprSrdD:sgprSrdD+3], 0 offen offset:0 // load GSU D
 
 // GSU Output Buffer offset: Free0 + (Free1-1)*StrideC1J + (Free2-1)*StrideCK * GSUIdx * bpe%s
-//s_mul_hi_u32 s[sgprtmp1E], s[sgprSizesFree+0], s[sgprGSUSumIdx]   // 
-//s_mul_i32 s[sgprtmp0E], s[sgprSizesFree+0], s[sgprGSUSumIdx]      // 
+//s_mul_hi_u32 s[sgprtmp1E], s[sgprSizesFree+0], s[sgprGSUSumIdx]   //
+//s_mul_i32 s[sgprtmp0E], s[sgprSizesFree+0], s[sgprGSUSumIdx]      //
 s_sub_u32 s[sgprtmp5E], s[sgprSizesFree+1], 1                       // cal GSU D offset
-//s_mul_i32 s[sgprtmp5E], s[sgprtmp5E], s[sgprGSUSumIdx]            // 
-s_mul_hi_u32 s[sgprtmp3E], s[sgprtmp5E], s[sgprStrideC1J]           // 
-s_mul_i32 s[sgprtmp2E], s[sgprtmp5E], s[sgprStrideC1J]              // 
-s_add_u32 s[sgprtmp0E], s[sgprSizesFree+0], s[sgprtmp2E]            // 
-s_addc_u32 s[sgprtmp1E], 0, s[sgprtmp3E]                            // 
-s_sub_u32 s[sgprtmp5E], s[sgprSizesFree+2], 1                       // 
-//s_mul_i32 s[sgprtmp5E], s[sgprtmp5E], s[sgprGSUSumIdx]            // 
-s_mul_hi_u32 s[sgprtmp3E], s[sgprtmp5E], s[sgprStrideCK]            // 
-s_mul_i32 s[sgprtmp2E], s[sgprtmp5E], s[sgprStrideCK]               // 
-s_add_u32 s[sgprtmp0E], s[sgprtmp0E], s[sgprtmp2E]                  // 
-s_addc_u32 s[sgprtmp1E], s[sgprtmp1E], s[sgprtmp3E]                 // 
+//s_mul_i32 s[sgprtmp5E], s[sgprtmp5E], s[sgprGSUSumIdx]            //
+s_mul_hi_u32 s[sgprtmp3E], s[sgprtmp5E], s[sgprStrideC1J]           //
+s_mul_i32 s[sgprtmp2E], s[sgprtmp5E], s[sgprStrideC1J]              //
+s_add_u32 s[sgprtmp0E], s[sgprSizesFree+0], s[sgprtmp2E]            //
+s_addc_u32 s[sgprtmp1E], 0, s[sgprtmp3E]                            //
+s_sub_u32 s[sgprtmp5E], s[sgprSizesFree+2], 1                       //
+//s_mul_i32 s[sgprtmp5E], s[sgprtmp5E], s[sgprGSUSumIdx]            //
+s_mul_hi_u32 s[sgprtmp3E], s[sgprtmp5E], s[sgprStrideCK]            //
+s_mul_i32 s[sgprtmp2E], s[sgprtmp5E], s[sgprStrideCK]               //
+s_add_u32 s[sgprtmp0E], s[sgprtmp0E], s[sgprtmp2E]                  //
+s_addc_u32 s[sgprtmp1E], s[sgprtmp1E], s[sgprtmp3E]                 //
 s_lshl_b64 s[sgprtmp2E:sgprtmp3E], s[sgprtmp0E:sgprtmp1E], 2        // scale by bpe
 
 
@@ -16670,20 +16670,20 @@ v_pk_mul_f32 v[vgprValuC+34:vgprValuC+34+1], v[26:27], v[vgprValuC+34:vgprValuC+
 //synchronizer store
 
 V_LSHRREV_B32 v9, 0x1, v9
-    
+
 
 s_mov_b32 s[sgprSrdD+2], 0x80000000
-s_mov_b32 s[sgprSrdD+3], Srd127_96                 // 
+s_mov_b32 s[sgprSrdD+3], Srd127_96                 //
 
 s_mul_i32 s[sgprtmp2E], MT1, s[sgprWorkGroup1]                    // cal store position
-s_mul_hi_u32 s[sgprtmp1E], s[sgprtmp2E], s[sgprStrideC1J]         // 
-s_mul_i32 s[sgprtmp0E], s[sgprtmp2E], s[sgprStrideC1J]            // 
+s_mul_hi_u32 s[sgprtmp1E], s[sgprtmp2E], s[sgprStrideC1J]         //
+s_mul_i32 s[sgprtmp0E], s[sgprtmp2E], s[sgprStrideC1J]            //
 s_lshl_b64 s[sgprtmp0E:sgprtmp0E+1], s[sgprtmp0E:sgprtmp0E+1], 1  // scale by bpe
 s_add_u32 s[sgprSrdD+0], s[sgprAddressTC+0], s[sgprtmp0E]         // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprAddressTC+1], s[sgprtmp1E]        // add hi to SRD
 
-s_mul_hi_u32 s[sgprtmp1E], s[sgprWorkGroup2], s[sgprStrideCK]     // 
-s_mul_i32 s[sgprtmp0E], s[sgprWorkGroup2], s[sgprStrideCK]        // 
+s_mul_hi_u32 s[sgprtmp1E], s[sgprWorkGroup2], s[sgprStrideCK]     //
+s_mul_i32 s[sgprtmp0E], s[sgprWorkGroup2], s[sgprStrideCK]        //
 s_lshl_b64 s[sgprtmp0E:sgprtmp0E+1], s[sgprtmp0E:sgprtmp0E+1], 1  // scale by bpe
 s_add_u32 s[sgprSrdD+0], s[sgprSrdD+0], s[sgprtmp0E]              // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprSrdD+1], s[sgprtmp1E]             // add hi to SRD
@@ -16751,7 +16751,7 @@ s_atomic_add s[sgprGSUSync], s[sgprKernArgAddress:sgprKernArgAddress+1], 0x8C gl
 
 
 s_waitcnt lgkmcnt(0)
-s_cmp_eq_u32 s[sgprGSUSync], 1    // 
+s_cmp_eq_u32 s[sgprGSUSync], 1    //
 s_cbranch_scc0 Summation_End_OptNLL2_6           // jump if XX required
 //check done
 
@@ -16772,7 +16772,7 @@ s_mul_i32 s[sgprtmp2E], s[sgprStrideDK], 25                      // Scale by Str
 s_lshl_b64 s[sgprtmp2E:sgprtmp2E+1], s[sgprtmp2E:sgprtmp2E+1], 2  // scale by bpe
 
 s_mov_b32 s[sgprSrdDd+2], 0x80000000
-s_mov_b32 s[sgprSrdDd+3], Srd127_96                               // 
+s_mov_b32 s[sgprSrdDd+3], Srd127_96                               //
 
 s_add_u32 s[sgprSrdDd+0], s[sgprAddressD+0], s[sgprtmp2E]         // add lo to SRD
 s_addc_u32 s[sgprSrdDd+1], s[sgprAddressD+1], s[sgprtmp3E]        // add hi to SRD
@@ -16783,15 +16783,15 @@ s_buffer_atomic_add s[sgprGSUSync], s[sgprSrdDd:sgprSrdDd+3], glc
 
 
 //s_mov_b32 s[sgprGSUSumIdx] 1
-s_mul_i32 s[sgprtmp2E], MT1, s[sgprWorkGroup1]                        // 
+s_mul_i32 s[sgprtmp2E], MT1, s[sgprWorkGroup1]                        //
 s_mul_hi_u32 s[sgprtmp1E], s[sgprtmp2E], s[sgprStrideD1J]             // cal GSU D position
-s_mul_i32 s[sgprtmp0E], s[sgprtmp2E], s[sgprStrideD1J]                // 
+s_mul_i32 s[sgprtmp0E], s[sgprtmp2E], s[sgprStrideD1J]                //
 s_lshl_b64 s[sgprtmp0E:sgprtmp1E], s[sgprtmp0E:sgprtmp1E], 2          // scale by bpe
 s_add_u32 s[sgprSrdD+0], s[sgprAddressD+0], s[sgprtmp0E]              // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprAddressD+1], s[sgprtmp1E]             // add hi to SRD
 
-s_mul_hi_u32 s[sgprtmp1E], s[sgprWorkGroup2], s[sgprStrideDK]         // 
-s_mul_i32 s[sgprtmp0E], s[sgprWorkGroup2], s[sgprStrideDK]            // 
+s_mul_hi_u32 s[sgprtmp1E], s[sgprWorkGroup2], s[sgprStrideDK]         //
+s_mul_i32 s[sgprtmp0E], s[sgprWorkGroup2], s[sgprStrideDK]            //
 s_lshl_b64 s[sgprtmp0E:sgprtmp1E], s[sgprtmp0E:sgprtmp1E], 2          // scale by bpe
 s_add_u32 s[sgprSrdD+0], s[sgprSrdD+0], s[sgprtmp0E]                  // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprSrdD+1], s[sgprtmp1E]                 // add hi to SRD
@@ -16806,20 +16806,20 @@ s_cbranch_scc0 label_KernelEnd //label_GW_End_1 //label_AFTERsummary_Edge
 buffer_load_dwordx4 v[32+4*0:32+3+4*0], v9, s[sgprSrdD:sgprSrdD+3], 0 offen offset:0 // load GSU D
 
 // GSU Output Buffer offset: Free0 + (Free1-1)*StrideC1J + (Free2-1)*StrideCK * GSUIdx * bpe%s
-//s_mul_hi_u32 s[sgprtmp1E], s[sgprSizesFree+0], s[sgprGSUSumIdx]   // 
-//s_mul_i32 s[sgprtmp0E], s[sgprSizesFree+0], s[sgprGSUSumIdx]      // 
+//s_mul_hi_u32 s[sgprtmp1E], s[sgprSizesFree+0], s[sgprGSUSumIdx]   //
+//s_mul_i32 s[sgprtmp0E], s[sgprSizesFree+0], s[sgprGSUSumIdx]      //
 s_sub_u32 s[sgprtmp5E], s[sgprSizesFree+1], 1                       // cal GSU D offset
-//s_mul_i32 s[sgprtmp5E], s[sgprtmp5E], s[sgprGSUSumIdx]            // 
-s_mul_hi_u32 s[sgprtmp3E], s[sgprtmp5E], s[sgprStrideC1J]           // 
-s_mul_i32 s[sgprtmp2E], s[sgprtmp5E], s[sgprStrideC1J]              // 
-s_add_u32 s[sgprtmp0E], s[sgprSizesFree+0], s[sgprtmp2E]            // 
-s_addc_u32 s[sgprtmp1E], 0, s[sgprtmp3E]                            // 
-s_sub_u32 s[sgprtmp5E], s[sgprSizesFree+2], 1                       // 
-//s_mul_i32 s[sgprtmp5E], s[sgprtmp5E], s[sgprGSUSumIdx]            // 
-s_mul_hi_u32 s[sgprtmp3E], s[sgprtmp5E], s[sgprStrideCK]            // 
-s_mul_i32 s[sgprtmp2E], s[sgprtmp5E], s[sgprStrideCK]               // 
-s_add_u32 s[sgprtmp0E], s[sgprtmp0E], s[sgprtmp2E]                  // 
-s_addc_u32 s[sgprtmp1E], s[sgprtmp1E], s[sgprtmp3E]                 // 
+//s_mul_i32 s[sgprtmp5E], s[sgprtmp5E], s[sgprGSUSumIdx]            //
+s_mul_hi_u32 s[sgprtmp3E], s[sgprtmp5E], s[sgprStrideC1J]           //
+s_mul_i32 s[sgprtmp2E], s[sgprtmp5E], s[sgprStrideC1J]              //
+s_add_u32 s[sgprtmp0E], s[sgprSizesFree+0], s[sgprtmp2E]            //
+s_addc_u32 s[sgprtmp1E], 0, s[sgprtmp3E]                            //
+s_sub_u32 s[sgprtmp5E], s[sgprSizesFree+2], 1                       //
+//s_mul_i32 s[sgprtmp5E], s[sgprtmp5E], s[sgprGSUSumIdx]            //
+s_mul_hi_u32 s[sgprtmp3E], s[sgprtmp5E], s[sgprStrideCK]            //
+s_mul_i32 s[sgprtmp2E], s[sgprtmp5E], s[sgprStrideCK]               //
+s_add_u32 s[sgprtmp0E], s[sgprtmp0E], s[sgprtmp2E]                  //
+s_addc_u32 s[sgprtmp1E], s[sgprtmp1E], s[sgprtmp3E]                 //
 s_lshl_b64 s[sgprtmp2E:sgprtmp3E], s[sgprtmp0E:sgprtmp1E], 2        // scale by bpe
 
 
@@ -17068,20 +17068,20 @@ v_pk_mul_f32 v[vgprValuC+34:vgprValuC+34+1], v[26:27], v[vgprValuC+34:vgprValuC+
 //synchronizer store
 
 V_LSHRREV_B32 v9, 0x1, v9
-    
+
 
 s_mov_b32 s[sgprSrdD+2], 0x80000000
-s_mov_b32 s[sgprSrdD+3], Srd127_96                 // 
+s_mov_b32 s[sgprSrdD+3], Srd127_96                 //
 
 s_mul_i32 s[sgprtmp2E], MT1, s[sgprWorkGroup1]                    // cal store position
-s_mul_hi_u32 s[sgprtmp1E], s[sgprtmp2E], s[sgprStrideC1J]         // 
-s_mul_i32 s[sgprtmp0E], s[sgprtmp2E], s[sgprStrideC1J]            // 
+s_mul_hi_u32 s[sgprtmp1E], s[sgprtmp2E], s[sgprStrideC1J]         //
+s_mul_i32 s[sgprtmp0E], s[sgprtmp2E], s[sgprStrideC1J]            //
 s_lshl_b64 s[sgprtmp0E:sgprtmp0E+1], s[sgprtmp0E:sgprtmp0E+1], 1  // scale by bpe
 s_add_u32 s[sgprSrdD+0], s[sgprAddressTC+0], s[sgprtmp0E]         // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprAddressTC+1], s[sgprtmp1E]        // add hi to SRD
 
-s_mul_hi_u32 s[sgprtmp1E], s[sgprWorkGroup2], s[sgprStrideCK]     // 
-s_mul_i32 s[sgprtmp0E], s[sgprWorkGroup2], s[sgprStrideCK]        // 
+s_mul_hi_u32 s[sgprtmp1E], s[sgprWorkGroup2], s[sgprStrideCK]     //
+s_mul_i32 s[sgprtmp0E], s[sgprWorkGroup2], s[sgprStrideCK]        //
 s_lshl_b64 s[sgprtmp0E:sgprtmp0E+1], s[sgprtmp0E:sgprtmp0E+1], 1  // scale by bpe
 s_add_u32 s[sgprSrdD+0], s[sgprSrdD+0], s[sgprtmp0E]              // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprSrdD+1], s[sgprtmp1E]             // add hi to SRD
@@ -17149,7 +17149,7 @@ s_atomic_add s[sgprGSUSync], s[sgprKernArgAddress:sgprKernArgAddress+1], 0x8C gl
 
 
 s_waitcnt lgkmcnt(0)
-s_cmp_eq_u32 s[sgprGSUSync], 1    // 
+s_cmp_eq_u32 s[sgprGSUSync], 1    //
 s_cbranch_scc0 Summation_End_OptNLL2_7           // jump if XX required
 //check done
 
@@ -17170,7 +17170,7 @@ s_mul_i32 s[sgprtmp2E], s[sgprStrideDK], 25                      // Scale by Str
 s_lshl_b64 s[sgprtmp2E:sgprtmp2E+1], s[sgprtmp2E:sgprtmp2E+1], 2  // scale by bpe
 
 s_mov_b32 s[sgprSrdDd+2], 0x80000000
-s_mov_b32 s[sgprSrdDd+3], Srd127_96                               // 
+s_mov_b32 s[sgprSrdDd+3], Srd127_96                               //
 
 s_add_u32 s[sgprSrdDd+0], s[sgprAddressD+0], s[sgprtmp2E]         // add lo to SRD
 s_addc_u32 s[sgprSrdDd+1], s[sgprAddressD+1], s[sgprtmp3E]        // add hi to SRD
@@ -17181,15 +17181,15 @@ s_buffer_atomic_add s[sgprGSUSync], s[sgprSrdDd:sgprSrdDd+3], glc
 
 
 //s_mov_b32 s[sgprGSUSumIdx] 1
-s_mul_i32 s[sgprtmp2E], MT1, s[sgprWorkGroup1]                        // 
+s_mul_i32 s[sgprtmp2E], MT1, s[sgprWorkGroup1]                        //
 s_mul_hi_u32 s[sgprtmp1E], s[sgprtmp2E], s[sgprStrideD1J]             // cal GSU D position
-s_mul_i32 s[sgprtmp0E], s[sgprtmp2E], s[sgprStrideD1J]                // 
+s_mul_i32 s[sgprtmp0E], s[sgprtmp2E], s[sgprStrideD1J]                //
 s_lshl_b64 s[sgprtmp0E:sgprtmp1E], s[sgprtmp0E:sgprtmp1E], 2          // scale by bpe
 s_add_u32 s[sgprSrdD+0], s[sgprAddressD+0], s[sgprtmp0E]              // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprAddressD+1], s[sgprtmp1E]             // add hi to SRD
 
-s_mul_hi_u32 s[sgprtmp1E], s[sgprWorkGroup2], s[sgprStrideDK]         // 
-s_mul_i32 s[sgprtmp0E], s[sgprWorkGroup2], s[sgprStrideDK]            // 
+s_mul_hi_u32 s[sgprtmp1E], s[sgprWorkGroup2], s[sgprStrideDK]         //
+s_mul_i32 s[sgprtmp0E], s[sgprWorkGroup2], s[sgprStrideDK]            //
 s_lshl_b64 s[sgprtmp0E:sgprtmp1E], s[sgprtmp0E:sgprtmp1E], 2          // scale by bpe
 s_add_u32 s[sgprSrdD+0], s[sgprSrdD+0], s[sgprtmp0E]                  // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprSrdD+1], s[sgprtmp1E]                 // add hi to SRD
@@ -17204,20 +17204,20 @@ s_cbranch_scc0 label_KernelEnd //label_GW_End_1 //label_AFTERsummary_Edge
 buffer_load_dwordx4 v[32+4*0:32+3+4*0], v9, s[sgprSrdD:sgprSrdD+3], 0 offen offset:0 // load GSU D
 
 // GSU Output Buffer offset: Free0 + (Free1-1)*StrideC1J + (Free2-1)*StrideCK * GSUIdx * bpe%s
-//s_mul_hi_u32 s[sgprtmp1E], s[sgprSizesFree+0], s[sgprGSUSumIdx]   // 
-//s_mul_i32 s[sgprtmp0E], s[sgprSizesFree+0], s[sgprGSUSumIdx]      // 
+//s_mul_hi_u32 s[sgprtmp1E], s[sgprSizesFree+0], s[sgprGSUSumIdx]   //
+//s_mul_i32 s[sgprtmp0E], s[sgprSizesFree+0], s[sgprGSUSumIdx]      //
 s_sub_u32 s[sgprtmp5E], s[sgprSizesFree+1], 1                       // cal GSU D offset
-//s_mul_i32 s[sgprtmp5E], s[sgprtmp5E], s[sgprGSUSumIdx]            // 
-s_mul_hi_u32 s[sgprtmp3E], s[sgprtmp5E], s[sgprStrideC1J]           // 
-s_mul_i32 s[sgprtmp2E], s[sgprtmp5E], s[sgprStrideC1J]              // 
-s_add_u32 s[sgprtmp0E], s[sgprSizesFree+0], s[sgprtmp2E]            // 
-s_addc_u32 s[sgprtmp1E], 0, s[sgprtmp3E]                            // 
-s_sub_u32 s[sgprtmp5E], s[sgprSizesFree+2], 1                       // 
-//s_mul_i32 s[sgprtmp5E], s[sgprtmp5E], s[sgprGSUSumIdx]            // 
-s_mul_hi_u32 s[sgprtmp3E], s[sgprtmp5E], s[sgprStrideCK]            // 
-s_mul_i32 s[sgprtmp2E], s[sgprtmp5E], s[sgprStrideCK]               // 
-s_add_u32 s[sgprtmp0E], s[sgprtmp0E], s[sgprtmp2E]                  // 
-s_addc_u32 s[sgprtmp1E], s[sgprtmp1E], s[sgprtmp3E]                 // 
+//s_mul_i32 s[sgprtmp5E], s[sgprtmp5E], s[sgprGSUSumIdx]            //
+s_mul_hi_u32 s[sgprtmp3E], s[sgprtmp5E], s[sgprStrideC1J]           //
+s_mul_i32 s[sgprtmp2E], s[sgprtmp5E], s[sgprStrideC1J]              //
+s_add_u32 s[sgprtmp0E], s[sgprSizesFree+0], s[sgprtmp2E]            //
+s_addc_u32 s[sgprtmp1E], 0, s[sgprtmp3E]                            //
+s_sub_u32 s[sgprtmp5E], s[sgprSizesFree+2], 1                       //
+//s_mul_i32 s[sgprtmp5E], s[sgprtmp5E], s[sgprGSUSumIdx]            //
+s_mul_hi_u32 s[sgprtmp3E], s[sgprtmp5E], s[sgprStrideCK]            //
+s_mul_i32 s[sgprtmp2E], s[sgprtmp5E], s[sgprStrideCK]               //
+s_add_u32 s[sgprtmp0E], s[sgprtmp0E], s[sgprtmp2E]                  //
+s_addc_u32 s[sgprtmp1E], s[sgprtmp1E], s[sgprtmp3E]                 //
 s_lshl_b64 s[sgprtmp2E:sgprtmp3E], s[sgprtmp0E:sgprtmp1E], 2        // scale by bpe
 
 
@@ -17478,20 +17478,20 @@ v_pk_mul_f32 v[vgprValuC+34:vgprValuC+34+1], v[26:27], v[vgprValuC+34:vgprValuC+
 //synchronizer store
 
 V_LSHRREV_B32 v9, 0x1, v9
-    
+
 
 s_mov_b32 s[sgprSrdD+2], 0x80000000
-s_mov_b32 s[sgprSrdD+3], Srd127_96                 // 
+s_mov_b32 s[sgprSrdD+3], Srd127_96                 //
 
 s_mul_i32 s[sgprtmp2E], MT1, s[sgprWorkGroup1]                    // cal store position
-s_mul_hi_u32 s[sgprtmp1E], s[sgprtmp2E], s[sgprStrideC1J]         // 
-s_mul_i32 s[sgprtmp0E], s[sgprtmp2E], s[sgprStrideC1J]            // 
+s_mul_hi_u32 s[sgprtmp1E], s[sgprtmp2E], s[sgprStrideC1J]         //
+s_mul_i32 s[sgprtmp0E], s[sgprtmp2E], s[sgprStrideC1J]            //
 s_lshl_b64 s[sgprtmp0E:sgprtmp0E+1], s[sgprtmp0E:sgprtmp0E+1], 1  // scale by bpe
 s_add_u32 s[sgprSrdD+0], s[sgprAddressTC+0], s[sgprtmp0E]         // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprAddressTC+1], s[sgprtmp1E]        // add hi to SRD
 
-s_mul_hi_u32 s[sgprtmp1E], s[sgprWorkGroup2], s[sgprStrideCK]     // 
-s_mul_i32 s[sgprtmp0E], s[sgprWorkGroup2], s[sgprStrideCK]        // 
+s_mul_hi_u32 s[sgprtmp1E], s[sgprWorkGroup2], s[sgprStrideCK]     //
+s_mul_i32 s[sgprtmp0E], s[sgprWorkGroup2], s[sgprStrideCK]        //
 s_lshl_b64 s[sgprtmp0E:sgprtmp0E+1], s[sgprtmp0E:sgprtmp0E+1], 1  // scale by bpe
 s_add_u32 s[sgprSrdD+0], s[sgprSrdD+0], s[sgprtmp0E]              // add lo to SRD
 s_addc_u32 s[sgprSrdD+1], s[sgprSrdD+1], s[sgprtmp1E]             // add hi to SRD

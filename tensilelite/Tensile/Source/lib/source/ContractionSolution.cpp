@@ -42,10 +42,156 @@
 
 namespace Tensile
 {
-    template <typename TAlpha, typename TBeta, typename TAct>
+    void setVariantToBuffer(ConstantVariant const& value,
+                            void*                  buffer,
+                            size_t                 bufferLength,
+                            DataType               type)
+    {
+        switch(type)
+        {
+        case DataType::Float:
+        {
+            float* f_buffer = (float*)buffer;
+            *f_buffer       = *std::get_if<float>(&value);
+        }
+        break;
+        case DataType::Double:
+        {
+            double* d_buffer = (double*)buffer;
+            *d_buffer        = *std::get_if<double>(&value);
+        }
+        break;
+        case DataType::Half:
+        {
+            Half* fp16_buffer = (Half*)buffer;
+            *fp16_buffer      = *std::get_if<Half>(&value);
+        }
+        break;
+        case DataType::Int32:
+        {
+            int32_t* i32_buffer = (int32_t*)buffer;
+            *i32_buffer         = *std::get_if<int32_t>(&value);
+        }
+        break;
+        case DataType::BFloat16:
+        {
+            BFloat16* bf16_buffer = (BFloat16*)buffer;
+            *bf16_buffer          = *std::get_if<BFloat16>(&value);
+        }
+        break;
+        case DataType::Int8:
+        {
+            int8_t* i8_buffer = (int8_t*)buffer;
+            *i8_buffer        = *std::get_if<int8_t>(&value);
+        }
+        break;
+        default:
+        {
+            if(bufferLength >= 16) // For complex
+            {
+                if(type == DataType::ComplexFloat)
+                {
+                    std::complex<float>* c_buffer = (std::complex<float>*)buffer;
+                    *c_buffer                     = *std::get_if<std::complex<float>>(&value);
+                    return;
+                }
+                else if(type == DataType::ComplexDouble)
+                {
+                    std::complex<double>* z_buffer = (std::complex<double>*)buffer;
+                    *z_buffer                      = *std::get_if<std::complex<double>>(&value);
+                    return;
+                }
+            }
+            throw std::runtime_error("Unsupported ConstantVariant append type.");
+        }
+        }
+    }
+
+    class PrintBufferValueClass
+    {
+    public:
+        explicit PrintBufferValueClass(void* buffer, size_t bufferLength, DataType type)
+            : m_buffer(buffer)
+            , m_bufferLength(bufferLength)
+            , m_type(type)
+        {
+        }
+
+        friend std::ostream& operator<<(std::ostream& os, const PrintBufferValueClass& buf)
+        {
+            buf.printBufferValue(os);
+            return os;
+        }
+
+    private:
+        void printBufferValue(std::ostream& os) const
+        {
+            switch(m_type)
+            {
+            case DataType::Float:
+            {
+                float* f_buffer = (float*)m_buffer;
+                os << *f_buffer;
+            }
+            break;
+            case DataType::Double:
+            {
+                double* d_buffer = (double*)m_buffer;
+                os << *d_buffer;
+            }
+            break;
+            case DataType::Half:
+            {
+                Half* fp16_buffer = (Half*)m_buffer;
+                os << *fp16_buffer;
+            }
+            break;
+            case DataType::Int32:
+            {
+                int32_t* i32_buffer = (int32_t*)m_buffer;
+                os << *i32_buffer;
+            }
+            break;
+            case DataType::BFloat16:
+            {
+                BFloat16* bf16_buffer = (BFloat16*)m_buffer;
+                os << *bf16_buffer;
+            }
+            break;
+            case DataType::Int8:
+            {
+                int8_t* i8_buffer = (int8_t*)m_buffer;
+                os << *i8_buffer;
+            }
+            break;
+            default:
+            {
+                if(m_bufferLength >= 16) // For complex
+                {
+                    if(m_type == DataType::ComplexFloat)
+                    {
+                        std::complex<float>* c_buffer = (std::complex<float>*)m_buffer;
+                        os << *c_buffer;
+                    }
+                    else if(m_type == DataType::ComplexDouble)
+                    {
+                        std::complex<double>* z_buffer = (std::complex<double>*)m_buffer;
+                        os << *z_buffer;
+                    }
+                }
+                throw std::runtime_error("Unsupported ConstantVariant append type.");
+            }
+            }
+        }
+        void*    m_buffer;
+        size_t   m_bufferLength;
+        DataType m_type;
+    };
+
+    template <typename TAct>
     void setDeviceUserArgs(std::vector<ContractionSolution::Problem> const& problems,
                            ContractionSolution::GroupedInputs const&        inputs,
-                           DeviceUserArguments<TAlpha, TBeta, TAct>*        args)
+                           DeviceUserArguments<TAct>*                       args)
     {
         for(int i = 0; i < problems.size(); i++)
         {
@@ -58,25 +204,27 @@ namespace Tensile
             size_t startStrideCD = 1; // FIXME: Magic number
             size_t startStrideAB = 1; // FIXME: Magic number
 
-            auto& arg         = args[i];
-            arg.d             = const_cast<void*>(inputs.grouped[i].d);
-            arg.c             = const_cast<void*>(inputs.grouped[i].c);
-            arg.b             = const_cast<void*>(inputs.grouped[i].b);
-            arg.a             = const_cast<void*>(inputs.grouped[i].a);
-            arg.alpha         = (*std::get_if<TAlpha>(&inputs.grouped[i].alpha));
-            arg.beta          = (*std::get_if<TBeta>(&inputs.grouped[i].beta));
-            arg.strideD1      = d.strides()[startStrideCD];
-            arg.strideD2      = d.strides()[startStrideCD + 1];
-            arg.strideC1      = c.strides()[startStrideCD];
-            arg.strideC2      = c.strides()[startStrideCD + 1];
-            arg.strideA1      = a.strides()[startStrideAB];
-            arg.strideA2      = a.strides()[startStrideAB + 1];
-            arg.strideB1      = b.strides()[startStrideAB];
-            arg.strideB2      = b.strides()[startStrideAB + 1];
-            arg.m             = problems[i].problemSizes()[0];
-            arg.n             = problems[i].problemSizes()[1];
-            arg.batch         = problems[i].problemSizes()[2];
-            arg.k             = problems[i].problemSizes()[3];
+            auto& arg    = args[i];
+            arg.m        = problems[i].problemSizes()[0];
+            arg.n        = problems[i].problemSizes()[1];
+            arg.batch    = problems[i].problemSizes()[2];
+            arg.k        = problems[i].problemSizes()[3];
+            arg.d        = const_cast<void*>(inputs.grouped[i].d);
+            arg.c        = const_cast<void*>(inputs.grouped[i].c);
+            arg.b        = const_cast<void*>(inputs.grouped[i].b);
+            arg.a        = const_cast<void*>(inputs.grouped[i].a);
+            arg.strideD1 = d.strides()[startStrideCD];
+            arg.strideD2 = d.strides()[startStrideCD + 1];
+            arg.strideC1 = c.strides()[startStrideCD];
+            arg.strideC2 = c.strides()[startStrideCD + 1];
+            arg.strideA1 = a.strides()[startStrideAB];
+            arg.strideA2 = a.strides()[startStrideAB + 1];
+            arg.strideB1 = b.strides()[startStrideAB];
+            arg.strideB2 = b.strides()[startStrideAB + 1];
+            setVariantToBuffer(
+                inputs.grouped[i].alpha, arg.alpha, sizeof(arg.alpha), problems[i].alphaType());
+            setVariantToBuffer(
+                inputs.grouped[i].beta, arg.beta, sizeof(arg.beta), problems[i].betaType());
             arg.bias          = const_cast<void*>(inputs.grouped[i].bias);
             arg.scaleDVec     = const_cast<void*>(inputs.grouped[i].scaleDVec);
             arg.scaleAlphaVec = const_cast<void*>(inputs.grouped[i].scaleAlphaVec);
@@ -103,6 +251,10 @@ namespace Tensile
             std::cout << "Grouped gemm argsPtr kernels: " << std::endl;
             for(size_t i = 0; i < problems.size(); i++)
             {
+                PrintBufferValueClass alphaPrint(
+                    (void*)args[i].alpha, sizeof(args[i].alpha), problems[i].alphaType());
+                PrintBufferValueClass betaPrint(
+                    (void*)args[i].beta, sizeof(args[i].beta), problems[i].betaType());
                 std::cout << "Gemm " << i << ":" << std::endl;
                 std::cout << "   "
                           << "m: " << args[i].m << std::endl;
@@ -121,10 +273,6 @@ namespace Tensile
                 std::cout << "   "
                           << "B: " << args[i].b << std::endl;
                 std::cout << "   "
-                          << "Alpha: " << args[i].alpha << std::endl;
-                std::cout << "   "
-                          << "Beta: " << args[i].beta << std::endl;
-                std::cout << "   "
                           << "strideD1: " << args[i].strideD1 << std::endl;
                 std::cout << "   "
                           << "strideD2: " << args[i].strideD2 << std::endl;
@@ -140,6 +288,10 @@ namespace Tensile
                           << "strideB1: " << args[i].strideB1 << std::endl;
                 std::cout << "   "
                           << "strideB2: " << args[i].strideB2 << std::endl;
+                std::cout << "   "
+                          << "Alpha: " << alphaPrint << std::endl;
+                std::cout << "   "
+                          << "Beta: " << betaPrint << std::endl;
                 std::cout << "   "
                           << "scaleDVec: " << args[i].scaleDVec << std::endl;
                 std::cout << "   "
@@ -162,10 +314,10 @@ namespace Tensile
         }
     }
 
-    template void setDeviceUserArgs<float, float, float>(
-        std::vector<ContractionSolution::Problem> const& problems,
-        ContractionSolution::GroupedInputs const&        inputs,
-        DeviceUserArguments<float, float, float>*        args);
+    template void
+        setDeviceUserArgs<float>(std::vector<ContractionSolution::Problem> const& problems,
+                                 ContractionSolution::GroupedInputs const&        inputs,
+                                 DeviceUserArguments<float>*                      args);
 
     PerfModel perf;
 
@@ -420,17 +572,6 @@ namespace Tensile
         if(problemType.sparseA)
             args.template append<unsigned char const*>("metadata", inputs.metadata);
 
-        args.append("alpha", inputs.alpha, problem.alphaType());
-        if(problem.alphaType() == DataType::Half)
-            args.append("alpha_2", inputs.alpha, problem.alphaType());
-
-        if(problemType.useBeta)
-        {
-            args.append("beta", inputs.beta, problem.betaType());
-            if(problem.betaType() == DataType::Half)
-                args.append("beta_2", inputs.beta, problem.betaType());
-        }
-
         size_t startStrideCD = problemType.useInitialStridesCD ? 0 : 1;
         size_t startStrideAB = problemType.useInitialStridesAB ? 0 : 1;
 
@@ -480,6 +621,17 @@ namespace Tensile
         if((sizeMapping.globalAccumulation == 2) && (sizeMapping.customKernelName != ""))
         {
             args.template append<void const*>("dstD", inputs.d);
+        }
+
+        args.append("alpha", inputs.alpha, problem.alphaType());
+        if(problem.alphaType() == DataType::Half)
+            args.append("alpha_2", inputs.alpha, problem.alphaType());
+
+        if(problemType.useBeta)
+        {
+            args.append("beta", inputs.beta, problem.betaType());
+            if(problem.betaType() == DataType::Half)
+                args.append("beta_2", inputs.beta, problem.betaType());
         }
 
         if(problemType.useScaleDVec
@@ -2010,15 +2162,13 @@ namespace Tensile
                                                         hipStream_t stream) const
     {
         // Allocate and copy data to dUA
-        if(problems[0].computeType() == DataType::Float
-           && (problems[0].activationType() == ActivationType::None
-               || (problems[0].activationType() != ActivationType::None
-                   && problems[0].activationComputeType() == DataType::Float)))
+        if(problems[0].activationType() == ActivationType::None
+           || (problems[0].activationType() != ActivationType::None
+               && problems[0].activationComputeType() == DataType::Float))
         {
-            auto requiredSize = sizeof(DeviceUserArguments<float, float, float>) * problems.size();
+            auto requiredSize = sizeof(DeviceUserArguments<float>) * problems.size();
             static_cast<void>(hipHostMalloc(dUAHost, requiredSize, 0));
-            setDeviceUserArgs(
-                problems, inputs, (DeviceUserArguments<float, float, float>*)(*dUAHost));
+            setDeviceUserArgs(problems, inputs, (DeviceUserArguments<float>*)(*dUAHost));
             static_cast<void>(hipMalloc(dUA, requiredSize));
             static_cast<void>(hipMemcpy(*dUA, *dUAHost, requiredSize, hipMemcpyHostToDevice));
             static_cast<void>(hipDeviceSynchronize());

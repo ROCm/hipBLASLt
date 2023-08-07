@@ -118,12 +118,6 @@ class SignatureCOV3(Signature):
 
         if kernel["ProblemType"]["SparseA"]:
             signature.addArg("MetaData", SVK.SIG_GLOBALBUFFER, "void" , "generic")
-        # Note: We use packed f16 if alpha and beta are f16
-        if kernel["ProblemType"]["ComputeDataType"].isHalf():
-            cptValueType = 'pkf16'
-        signature.addArg(   "alpha",        SVK.SIG_VALUE, cptValueType)
-        if kernel["ProblemType"]["UseBeta"]:
-            signature.addArg("beta",        SVK.SIG_VALUE, cptValueType)
 
         for i in range(0, writer.states.d.numSgprStrides):
             signature.addArg(              "strideD%u"%i, SVK.SIG_VALUE,               "u32")
@@ -144,6 +138,12 @@ class SignatureCOV3(Signature):
         for idxChar in kernel["PackedC0IdxChars"][:-1]:
             signature.addArg("MagicNumberSize%s"%idxChar, SVK.SIG_VALUE,               "u32")
             signature.addArg( "MagicShiftSize%s"%idxChar, SVK.SIG_VALUE,               "u32")
+
+        # Note: We use packed f16 if alpha and beta are f16
+        pack_cptValueType = 'pkf16' if kernel["ProblemType"]["ComputeDataType"].isHalf() else cptValueType
+        signature.addArg(   "alpha",        SVK.SIG_VALUE, pack_cptValueType)
+        if kernel["ProblemType"]["UseBeta"]:
+            signature.addArg("beta",        SVK.SIG_VALUE, pack_cptValueType)
 
         if kernel["ProblemType"]["UseScaleDVec"] and (kernel["GlobalSplitU"] == 1):
             signature.addArg("AddressScaleDVec", SVK.SIG_GLOBALBUFFER, cptValueType, "generic")
