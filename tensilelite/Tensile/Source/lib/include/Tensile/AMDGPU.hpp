@@ -50,7 +50,7 @@ namespace Tensile
         {
             // matching enum used in hipGcnArch
             // only including supported types
-            //gfx000  =  0,
+            gfx000 = 0,
             //gfx701  =  1,
             //gfx801  =  2,
             //gfx802  =  3,
@@ -70,6 +70,71 @@ namespace Tensile
             gfx1101 = 1101,
             gfx1102 = 1102
         };
+
+        static Processor toProcessor(std::string archName)
+        {
+            if(archName.find("gfx803") != std::string::npos)
+            {
+                return Processor::gfx803;
+            }
+            else if(archName.find("gfx900") != std::string::npos)
+            {
+                return Processor::gfx900;
+            }
+            else if(archName.find("gfx906") != std::string::npos)
+            {
+                return Processor::gfx906;
+            }
+            else if(archName.find("gfx908") != std::string::npos)
+            {
+                return Processor::gfx908;
+            }
+            else if(archName.find("gfx90a") != std::string::npos)
+            {
+                return Processor::gfx90a;
+            }
+            else if(archName.find("gfx940") != std::string::npos)
+            {
+                return Processor::gfx940;
+            }
+            else if(archName.find("gfx941") != std::string::npos)
+            {
+                return Processor::gfx941;
+            }
+            else if(archName.find("gfx942") != std::string::npos)
+            {
+                return Processor::gfx942;
+            }
+            else if(archName.find("gfx1010") != std::string::npos)
+            {
+                return Processor::gfx1010;
+            }
+            else if(archName.find("gfx1011") != std::string::npos)
+            {
+                return Processor::gfx1011;
+            }
+            else if(archName.find("gfx1012") != std::string::npos)
+            {
+                return Processor::gfx1012;
+            }
+            else if(archName.find("gfx1030") != std::string::npos)
+            {
+                return Processor::gfx1030;
+            }
+            else if(archName.find("gfx1100") != std::string::npos)
+            {
+                return Processor::gfx1100;
+            }
+            else if(archName.find("gfx1101") != std::string::npos)
+            {
+                return Processor::gfx1101;
+            }
+            else if(archName.find("gfx1102") != std::string::npos)
+            {
+                return Processor::gfx1102;
+            }
+            return static_cast<Processor>(0);
+        }
 
         static std::string toString(Processor p)
         {
@@ -105,6 +170,8 @@ namespace Tensile
                 return "gfx1101";
             case AMDGPU::Processor::gfx1102:
                 return "gfx1102";
+            case AMDGPU::Processor::gfx000:
+                return "gfx000";
             }
             return "";
         }

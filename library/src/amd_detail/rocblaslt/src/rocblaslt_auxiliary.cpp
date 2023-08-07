@@ -1813,25 +1813,9 @@ rocblaslt_status
  * GPU architecture-related functions
  ******************************************************************************/
 
-// Emulate C++17 std::void_t
-template <typename...>
-using void_t = void;
-
-// By default, use gcnArch converted to a string prepended by gfx
-template <typename PROP, typename = void>
 struct ArchName
 {
-    std::string operator()(const PROP& prop) const
-    {
-        return "gfx" + std::to_string(prop.gcnArch);
-    }
-};
-
-// If gcnArchName exists as a member, use it instead
-template <typename PROP>
-struct ArchName<PROP, void_t<decltype(PROP::gcnArchName)>>
-{
-    std::string operator()(const PROP& prop) const
+    std::string operator()(const hipDeviceProp_t& prop) const
     {
         // strip out xnack/ecc from name
         std::string gcnArchName(prop.gcnArchName);
@@ -1847,5 +1831,5 @@ std::string rocblaslt_internal_get_arch_name()
     static_cast<void>(hipGetDevice(&deviceId));
     hipDeviceProp_t deviceProperties;
     static_cast<void>(hipGetDeviceProperties(&deviceProperties, deviceId));
-    return ArchName<hipDeviceProp_t>{}(deviceProperties);
+    return ArchName{}(deviceProperties);
 }
