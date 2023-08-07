@@ -213,6 +213,10 @@ class StateValues:
   firstInitSgpr: int                     = -1
   lastPostLoopSgpr: int                  = 0
   numSgprToLoad: int                     = 0 # For kernel args
+  maxSgprAlpha: int                      = 4 # For user arguments, max complex double
+  numSgprAlpha: int                      = 0 # For user arguments
+  maxSgprBeta: int                      = 4 # For user arguments, max complex double
+  numSgprBeta: int                       = 0 # For user arguments
   numStoreSgprNames: List[str]           = field(init=False) # For post-loop kernel args
   numStoreSgprNameSizes: List[int]       = field(init=False) # For post-loop kernel args
   numStoreSgprToLoad: int                = 0 # For post-loop kernel args
@@ -254,7 +258,7 @@ class StateValues:
   useBias      = DataDirection.NONE
   needBiasType = False
 
-  externalUserArgSize: int               = 148  # FIXME: magic number
+  externalUserArgSize: int               = 172  # FIXME: magic number
 
   def __post_init__(self):
     """ How many SGPRs does it take to have one bit per lane? """
@@ -3379,9 +3383,6 @@ class KernelWriter(metaclass=abc.ABCMeta):
     self.defineSgpr("AddressB", numSgprAddressB)
     if kernel["ProblemType"]["SparseA"]:
       self.defineSgpr("AddressMetadata", numSgprAddressMetadata)
-    self.defineSgpr("Alpha", numSgprAlpha, numSgprAlpha)
-    if kernel["ProblemType"]["UseBeta"]:
-      self.defineSgpr("Beta", numSgprBeta, numSgprBeta)
     #asm input interface depen
     self.defineSgpr("StridesD", self.states.d.numSgprStrides)
     self.defineSgpr("StridesC", self.states.c.numSgprStrides)
@@ -3399,6 +3400,12 @@ class KernelWriter(metaclass=abc.ABCMeta):
     for idxChar in kernel["PackedC1IdxChars"][:-1]:
       self.defineSgpr("MagicNumberSize%s"%idxChar, 1)
       self.defineSgpr("MagicShiftSize%s"%idxChar, 1)
+    self.defineSgpr("Alpha", numSgprAlpha, numSgprAlpha)
+    self.states.numSgprAlpha = numSgprAlpha
+    if kernel["ProblemType"]["UseBeta"]:
+      self.defineSgpr("Beta", numSgprBeta, numSgprBeta)
+      self.states.numSgprBeta = numSgprBeta
+
 
     #------------------------
     # Registers defined below this point are not available in the post-loop
