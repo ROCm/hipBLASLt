@@ -114,6 +114,7 @@ void Arguments::init()
     use_ext            = false;
     use_ext_setproblem = false;
     algo_method        = 0;
+    use_user_args      = false;
 }
 
 // Function to print Arguments out to stream in YAML format

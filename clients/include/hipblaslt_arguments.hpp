@@ -131,6 +131,7 @@ struct Arguments
     bool use_ext;
     bool use_ext_setproblem;
     int  algo_method; // 0 for getheuristic, 1 for get all algos, 2 for algo index
+    bool use_user_args;
 
     /*************************************************************************
      *                     End Of Arguments                                  *
@@ -201,7 +202,8 @@ struct Arguments
     OPER(norm_check_assert) SEP      \
     OPER(use_ext) SEP                \
     OPER(use_ext_setproblem) SEP     \
-    OPER(algo_method) SEP
+    OPER(algo_method) SEP            \
+    OPER(use_user_args) SEP
 
     // clang-format on
 
@@ -346,7 +348,7 @@ namespace ArgumentsHelper
             func("beta", arg.get_beta<decltype(T)>());
         };
 };
-// clang-format on
+    // clang-format on
 
 #else
 

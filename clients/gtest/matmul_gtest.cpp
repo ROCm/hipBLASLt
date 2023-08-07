@@ -157,6 +157,8 @@ namespace
                     name << "_APIAlgoIndex";
                 else if(arg.algo_method == 1)
                     name << "_APIFindAllAlgo";
+                if(arg.use_user_args)
+                    name << "_UserArgs";
             }
 
             return std::move(name);
