@@ -39,6 +39,9 @@
 // Predeclare enumerator
 enum hipblaslt_argument : int;
 
+/*! \brief device matches pattern */
+bool gpu_arch_match(const std::string& gpu_arch, const char pattern[4]);
+
 /***************************************************************************
  *! \brief Class used to parse command arguments in both client & gtest    *
  * WARNING: If this data is changed, then hipblaslt_common.yaml must also be *
@@ -93,6 +96,10 @@ struct Arguments
     hipblasltDatatype_t    scale_type;
 
     hipblaslt_initialization initialization;
+
+    // the gpu arch string after "gfx" for which the test is valid
+    // '?' is wildcard char, empty string is default as valid on all
+    char gpu_arch[4];
 
     // memory padding for testing write out of bounds
     uint32_t pad;
@@ -178,6 +185,7 @@ struct Arguments
     OPER(compute_type) SEP           \
     OPER(scale_type) SEP             \
     OPER(initialization) SEP         \
+    OPER(gpu_arch) SEP               \
     OPER(pad) SEP                    \
     OPER(grouped_gemm) SEP           \
     OPER(threads) SEP                \

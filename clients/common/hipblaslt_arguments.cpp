@@ -32,6 +32,25 @@
 #include <ostream>
 #include <utility>
 
+/*! \brief device matches pattern */
+bool gpu_arch_match(const std::string& gpu_arch, const char pattern[4])
+{
+    int         gpu_len = gpu_arch.length();
+    const char* gpu     = gpu_arch.c_str();
+
+    for(int i = 0; i < 4; i++)
+    {
+        //hipblaslt_cout << pattern[i];
+        if(!pattern[i])
+            break;
+        else if(pattern[i] == '?')
+            continue;
+        else if(i >= gpu_len || pattern[i] != gpu[i])
+            return false;
+    }
+    //hipblaslt_cout << " : match gpu_arch " << gpu_arch << std:: endl;
+    return true;
+};
 void Arguments::init()
 {
     // match python in hipblaslt_common.py
