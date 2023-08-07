@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022 Advanced Micro Devices, Inc.
+ * Copyright (C) 2022-2023 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -361,6 +361,18 @@ static bool valid_category(const char* category)
             return true;
     }
     return false;
+}
+
+bool hipblaslt_client_global_filters(const Arguments& args)
+{
+    int             deviceId;
+    hipDeviceProp_t deviceProperties;
+    static_cast<void>(hipGetDevice(&deviceId));
+    static_cast<void>(hipGetDeviceProperties(&deviceProperties, deviceId));
+    if(args.gpu_arch[0] && !gpu_arch_match(deviceProperties.gcnArchName, args.gpu_arch))
+        return false;
+
+    return true;
 }
 
 /********************************************************************************************
