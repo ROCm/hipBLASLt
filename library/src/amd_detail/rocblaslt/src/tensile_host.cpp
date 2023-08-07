@@ -1611,19 +1611,15 @@ rocblaslt_status getDeviceUserArgumentsValuesFromContractionProblem(rocblaslt_ha
                 = std::static_pointer_cast<TensileDataGroupedGemm>(gemmData);
             auto  solution = library->getSolutionByIndex(data->algoIndex);
             auto& problem  = data->problem.gemms[0];
-            if(problem.alphaType() == Tensile::DataType::Float
-               && problem.betaType() == Tensile::DataType::Float
-               && problem.activationComputeType() == Tensile::DataType::Float)
+            if(problem.activationComputeType() == Tensile::DataType::Float)
             {
-                setDeviceUserArgs(
-                    data->problem.gemms,
-                    data->inputs,
-                    (Tensile::DeviceUserArguments<float, float, float>*)hostDeviceUserArgs);
+                setDeviceUserArgs(data->problem.gemms,
+                                  data->inputs,
+                                  (Tensile::DeviceUserArguments<float>*)hostDeviceUserArgs);
             }
             else
             {
-                throw std::runtime_error(
-                    "Currently only supports DeviceUserArguments<float, float, float>");
+                throw std::runtime_error("Currently only supports DeviceUserArguments<float>");
             }
         }
         else
@@ -1820,8 +1816,7 @@ inline auto getSolutions(
 
     std::vector<std::shared_ptr<Tensile::ContractionSolution>> solutions_fallback;
     // Fallback to original kernels
-    if(scaleDVec == nullptr && scaleAlphaVec == nullptr && bias == nullptr
-       && E == nullptr
+    if(scaleDVec == nullptr && scaleAlphaVec == nullptr && bias == nullptr && E == nullptr
        && tensile_prob.activationEnumArg() == Tensile::ActivationType::None)
     {
         auto useBias          = tensile_prob.useBias();
@@ -2069,8 +2064,7 @@ rocblaslt_status isSolutionSupported(rocblaslt_handle       handle,
         if(!(*solution->problemPredicate)(tensile_prob))
         {
             // Try fallback
-            if(scaleAlphaVec == nullptr && scaleDVec == nullptr && bias == nullptr
-               && E == nullptr
+            if(scaleAlphaVec == nullptr && scaleDVec == nullptr && bias == nullptr && E == nullptr
                && tensile_prob.activationEnumArg() == Tensile::ActivationType::None)
             {
                 auto useBias          = tensile_prob.useBias();
@@ -2158,7 +2152,7 @@ rocblaslt_status isSolutionSupported(rocblaslt_handle       handle,
         }
         if(isNormalGemm && !isSupported)
         {
-            isSupported = true;
+            isSupported      = true;
             tmpWorkspaceSize = 0;
             for(int i = 0; i < tensile_prob.gemms.size(); i++)
             {

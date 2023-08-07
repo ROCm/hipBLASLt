@@ -42,7 +42,7 @@
 
 namespace Tensile
 {
-    template <typename TAlpha, typename TBeta, typename TAct>
+    template <typename TAct>
     struct DeviceUserArguments
     {
         uint32_t m;
@@ -53,8 +53,6 @@ namespace Tensile
         void*    c;
         void*    a;
         void*    b;
-        TAlpha   alpha;
-        TBeta    beta;
         uint32_t strideD1;
         uint32_t strideD2;
         uint32_t strideC1;
@@ -63,6 +61,8 @@ namespace Tensile
         uint32_t strideA2;
         uint32_t strideB1;
         uint32_t strideB2;
+        int8_t   alpha[16];
+        int8_t   beta[16];
         void*    scaleDVec;
         void*    scaleAlphaVec;
         void*    bias;
@@ -479,10 +479,10 @@ namespace Tensile
         uint32_t smallMagicNumber(uint32_t x) const;
     };
 
-    template <typename TAlpha, typename TBeta, typename TAct>
+    template <typename TAct>
     void setDeviceUserArgs(std::vector<ContractionSolution::Problem> const& problems,
                            ContractionSolution::GroupedInputs const&        inputs,
-                           DeviceUserArguments<TAlpha, TBeta, TAct>*        args);
+                           DeviceUserArguments<TAct>*                       args);
 
     std::ostream& operator<<(std::ostream&                                      stream,
                              ContractionSolution::StaticPerformanceModel const& spm);
