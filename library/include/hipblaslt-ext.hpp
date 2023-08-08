@@ -133,7 +133,7 @@ namespace hipblaslt_ext
         void* scaleA        = nullptr; //!< The Scale A input pointer.
         void* scaleB        = nullptr; //!< The Scale B input pointer.
         void* scaleDVec     = nullptr; //!< The scaleD vector input pointer.
-        void* scaleAlphaVec = nullptr; //!< The scaleD vector input pointer.
+        void* scaleAlphaVec = nullptr; //!< The scaleAlpha vector input pointer.
         void* aux           = nullptr; //!< The aux input pointer.
     };
 

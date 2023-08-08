@@ -672,9 +672,7 @@ void testing_matmul(const Arguments& arg)
             h_alpha[i]  = 1.0; // use dScaleAlphaVec instead, original alpha = 1.0 for verify
         }
         else
-        {
             alpha_in[i] = &(h_alpha[i]);
-        }
 
         if(size_D_copy[i])
         {
