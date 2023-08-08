@@ -220,13 +220,9 @@ inline rocblaslt_status rocblaslt_epilogue_valid_args(const rocblaslt_epilogue& 
         scaleDVec = nullptr;
 
     if(original_scaleAlphaVec)
-    {
-        scaleAlphaVec = (void*)alpha; //pointer mode alpha vector pass by alpha
-    }
+        scaleAlphaVec = (void*)original_scaleAlphaVec; //pointer mode alpha vector pass by alpha
     else
-    {
         scaleAlphaVec = nullptr;
-    }
 
     // matrix E
     E = nullptr;
@@ -331,6 +327,7 @@ inline rocblaslt_status rocblaslt_matmul_valid_args(const rocblaslt_matmul_desc 
              && matC->type == HIPBLASLT_R_32F && matD->type == HIPBLASLT_R_32F)
            && compute_type == rocblaslt_compute_f32_fast_xf32)
             status = rocblaslt_status_not_implemented;
+    const void* alphaVecPtr = matmul_descr->pointermode ? alpha : nullptr;
     if(status == rocblaslt_status_continue)
         status = rocblaslt_epilogue_valid_args(matmul_descr->epilogue,
                                                num_rows_d,
@@ -342,7 +339,7 @@ inline rocblaslt_status rocblaslt_matmul_valid_args(const rocblaslt_matmul_desc 
                                                matmul_descr->stride_e,
                                                matmul_descr->bias,
                                                matmul_descr->scaleDVec,
-                                               matmul_descr->pointermode,
+                                               alphaVecPtr,
                                                alpha,
                                                E,
                                                lde,

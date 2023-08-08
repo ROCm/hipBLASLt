@@ -111,9 +111,7 @@ RocblasltContractionProblem<TiA, TiB, To, Tc>
 
     float alpha_1 = 1.0; // use dScaleAlphaVec instead, original alpha => 1.0
     if(scaleAlphaVec)
-    {
         alpha = &alpha_1;
-    }
 
     RocblasltContractionProblem<TiA, TiB, To, Tc> problem{opA,
                                                           opB,
