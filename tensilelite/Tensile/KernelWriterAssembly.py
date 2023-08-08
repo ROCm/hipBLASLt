@@ -1153,11 +1153,11 @@ class KernelWriterAssembly(KernelWriter):
         # Here alpha and beta in user args are fixed sizes, so we need to exclude beta and read it with a different offset
         load = load - self.states.numSgprBeta
         moduleExternalArgs.addModuleAsFlatItems(self.externalArgLoader.loadAllKernArg(sgprStart, "ExternalArgAddress", load))
-        offset = self.externalArgLoader.getOffset() + self.states.bpr * (self.states.maxSgprAlpha - self.states.numSgprAlpha)
+        offset = self.externalArgLoader.getOffset() + self.states.bpr * (self.states.userArgsInfo.alphaMaxRegisterSize - self.states.numSgprAlpha)
         self.externalArgLoader.setOffset(offset)
         moduleExternalArgs.addComment("Read Beta")
         moduleExternalArgs.addModuleAsFlatItems(self.externalArgLoader.loadAllKernArg(self.sgprs["Beta"], "ExternalArgAddress", self.states.numSgprBeta))
-        offset = self.externalArgLoader.getOffset() + self.states.bpr * (self.states.maxSgprBeta - self.states.numSgprBeta)
+        offset = self.externalArgLoader.getOffset() + self.states.bpr * (self.states.userArgsInfo.betaMaxRegisterSize - self.states.numSgprBeta)
         self.externalArgLoader.setOffset(offset)
 
       moduleWg = Module("Calculate Workgroup")
@@ -1233,7 +1233,7 @@ class KernelWriterAssembly(KernelWriter):
           module.add(SMovB64(dst=sgpr(tmpSgprArgAddress0,2), src=sgpr("KernArgAddress",2)))
           module.add(SBranch(extValidLabelEnd.getLabelName()))
           module.add(extValidLabel)
-          module.add(SMovB32(dst=sgpr(tmpSgprArgOffsett), src=self.states.externalUserArgSize))
+          module.add(SMovB32(dst=sgpr(tmpSgprArgOffsett), src=self.states.userArgsInfo.totalSize))
           module.add(SMovB32(dst=sgpr(tmpSgprAddrM), src=hex(0)))
           module.add(SMovB64(dst=sgpr(tmpSgprArgAddress0,2), src=sgpr("ExternalArgAddress",2)))
           module.add(extValidLabelEnd)
@@ -1340,7 +1340,7 @@ class KernelWriterAssembly(KernelWriter):
           module.add(extLabel)
           module.addComment0("Grouped Gemm: offset address from args_start to gemm_start")
           # Currently a magic number cause the structure is fixed, should the structure gen by python so we can know the size?
-          module.add(SMulI32(dst=sgpr(tmpSgprGemmIdxLeft), src0=sgpr(tmpSgprGemmIdxLeft),src1=self.states.externalUserArgSize))
+          module.add(SMulI32(dst=sgpr(tmpSgprGemmIdxLeft), src0=sgpr(tmpSgprGemmIdxLeft),src1=self.states.userArgsInfo.totalSize))
           module.add(SAddU32(dst=sgpr("ExternalArgAddress"), src0=sgpr("ExternalArgAddress"), src1=sgpr(tmpSgprGemmIdxLeft)))
           module.add(SAddCU32(dst=sgpr("ExternalArgAddress+1"), src0=sgpr("ExternalArgAddress+1"), src1=hex(0)))
           module.add(moduleExternalArgs)

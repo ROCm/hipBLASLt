@@ -27,8 +27,35 @@ from ..Common import globalParameters
 from ..Utils import DataDirection
 from ..TensileInstructions import SignatureBase
 from ..TensileInstructions import SignatureValueKind as SVK
+from ..Activation import ActivationType
 
 from math import ceil
+from dataclasses import dataclass, field
+
+@dataclass
+class UserArgumentsInfo:
+    # variable related fixed parameters
+    alphaMaxSize: int = 16
+    alphaMaxRegisterSize: int = field(init=False)
+    betaMaxSize: int = 16
+    betaMaxRegisterSize: int = field(init=False)
+    actMaxSize: int = 4
+    actMaxRegisterSize: int = field(init=False)
+    # gemm related
+    gemmArgumentSize: int = 0
+    # Epilogue related
+    scaleDVecSize: int = 0
+    scaleAlphaVecSize: int = 0
+    biasSize: int = 0
+    eSize: int = 0
+    activationSize: int = 0
+    # Total argument size
+    totalSize: int = 0
+
+    def __post_init__(self):
+        self.alphaMaxRegisterSize = self.alphaMaxSize // 4
+        self.betaMaxRegisterSize  = self.betaMaxSize // 4
+        self.actMaxRegisterSize   = self.actMaxSize // 4
 
 def getSrcValueType(kernel, cov, isTypeA):
     # special cases for F8 datatypes
@@ -65,6 +92,8 @@ class SignatureCOV3(Signature):
 
     def __call__(self, writer) -> SignatureBase:
         kernel = writer.states.kernel
+
+        userArgumentsInfo = UserArgumentsInfo()
 
         # kern arg size
         kernArgReg = 0
@@ -105,9 +134,11 @@ class SignatureCOV3(Signature):
 
         for i in range(0, writer.states.numSgprSizesFree):
             signature.addArg(            "SizesFree%u"%i, SVK.SIG_VALUE,               "u32")
+            userArgumentsInfo.gemmArgumentSize += 4
 
         for i in range(0, writer.states.numSgprSizesSum):
             signature.addArg(             "SizesSum%u"%i, SVK.SIG_VALUE,               "u32")
+            userArgumentsInfo.gemmArgumentSize += 4
 
         if globalParameters["DebugKernel"]:
             signature.addArg("AddressDbg", SVK.SIG_GLOBALBUFFER, "struct", "generic")
@@ -115,21 +146,26 @@ class SignatureCOV3(Signature):
         signature.addArg(    "C", SVK.SIG_GLOBALBUFFER, dstValueType, "generic")
         signature.addArg(    "A", SVK.SIG_GLOBALBUFFER, srcValueTypeA, "generic")
         signature.addArg(    "B", SVK.SIG_GLOBALBUFFER, srcValueTypeB, "generic")
+        userArgumentsInfo.gemmArgumentSize += (8 + 8 + 8 + 8)  # A, B, C, D buffer
 
         if kernel["ProblemType"]["SparseA"]:
             signature.addArg("MetaData", SVK.SIG_GLOBALBUFFER, "void" , "generic")
 
         for i in range(0, writer.states.d.numSgprStrides):
             signature.addArg(              "strideD%u"%i, SVK.SIG_VALUE,               "u32")
+            userArgumentsInfo.gemmArgumentSize += 4
 
         for i in range(0, writer.states.c.numSgprStrides):
             signature.addArg(              "strideC%u"%i, SVK.SIG_VALUE,               "u32")
+            userArgumentsInfo.gemmArgumentSize += 4
 
         for i in range(0, writer.states.a.numSgprStrides):
             signature.addArg(              "strideA%u"%i, SVK.SIG_VALUE,               "u32")
+            userArgumentsInfo.gemmArgumentSize += 4
 
         for i in range(0, writer.states.b.numSgprStrides):
             signature.addArg(              "strideB%u"%i, SVK.SIG_VALUE,               "u32")
+            userArgumentsInfo.gemmArgumentSize += 4
 
         if kernel["ProblemType"]["SparseA"]:
             for i in range(0, writer.states.m.numSgprStrides):
@@ -144,9 +180,13 @@ class SignatureCOV3(Signature):
         signature.addArg(   "alpha",        SVK.SIG_VALUE, pack_cptValueType)
         if kernel["ProblemType"]["UseBeta"]:
             signature.addArg("beta",        SVK.SIG_VALUE, pack_cptValueType)
+        # These are fixed sizes
+        userArgumentsInfo.gemmArgumentSize += userArgumentsInfo.alphaMaxSize
+        userArgumentsInfo.gemmArgumentSize += userArgumentsInfo.betaMaxSize
 
         if kernel["ProblemType"]["UseScaleDVec"] and (kernel["GlobalSplitU"] == 1):
             signature.addArg("AddressScaleDVec", SVK.SIG_GLOBALBUFFER, cptValueType, "generic")
+        userArgumentsInfo.scaleDVecSize += 8
 
         if kernel["ProblemType"]["UseScaleAB"] and (kernel["GlobalSplitU"] == 1):
             signature.addArg("AddressScaleA", SVK.SIG_GLOBALBUFFER, cptValueType, "generic")
@@ -154,19 +194,22 @@ class SignatureCOV3(Signature):
 
         if kernel["ProblemType"]["UseScaleAlphaVec"] and (kernel["GlobalSplitU"] == 1):
             signature.addArg("AddressScaleAlphaVec", SVK.SIG_GLOBALBUFFER, cptValueType, "generic")
+        userArgumentsInfo.scaleAlphaVecSize += 8
 
         if writer.states.useBias != DataDirection.NONE and (kernel["GlobalSplitU"] == 1):
             signature.addArg("bias", SVK.SIG_GLOBALBUFFER, biasValueType, "generic")  # Note: We append the data in ws_d
             if writer.states.needBiasType:
                 signature.addArg("biasType",        SVK.SIG_VALUE,        "u32")
                 signature.addArg("StrideBias",      SVK.SIG_VALUE,        "u32")
+        userArgumentsInfo.biasSize += (8 + 4 + 4)
 
         if kernel["ProblemType"]["UseE"] and (kernel["GlobalSplitU"] == 1):
             signature.addArg(      "E", SVK.SIG_GLOBALBUFFER, cptValueType, "generic")
-
-        if kernel["ProblemType"]["UseE"] and (kernel["GlobalSplitU"] == 1):
             for i in range(0, writer.states.e.numSgprStrides):
                 signature.addArg("StrideE%u"%i,        SVK.SIG_VALUE,        "u32")
+        userArgumentsInfo.eSize += 8
+        for i in range(0, writer.states.e.numSgprStrides):
+            userArgumentsInfo.eSize += 4
 
         if ((kernel["ProblemType"]["ActivationType"] != 'none') and (kernel["GlobalSplitU"] == 1) \
             and kernel["ActivationFused"]):
@@ -176,6 +219,20 @@ class SignatureCOV3(Signature):
                 signature.addArg(                   name, SVK.SIG_VALUE,        actValueType)
             if kernel["ProblemType"]["ActivationType"] == 'all':
                 signature.addArg(       "activationType", SVK.SIG_VALUE,               "u32")
+        activationType = ActivationType("all")
+        for name in activationType.getAdditionalArgStringList():
+            userArgumentsInfo.activationSize += userArgumentsInfo.actMaxSize
+        userArgumentsInfo.activationSize += 4  # Type size
+
+        # Calculate total size
+        userArgumentsInfo.totalSize = userArgumentsInfo.gemmArgumentSize + \
+                                      userArgumentsInfo.scaleDVecSize + \
+                                      userArgumentsInfo.scaleAlphaVecSize + \
+                                      userArgumentsInfo.biasSize + \
+                                      userArgumentsInfo.eSize + \
+                                      userArgumentsInfo.activationSize
+
+        writer.states.userArgsInfo = userArgumentsInfo
 
         self.addOptConfigComment(signature,
                                 tt=[kernel["ThreadTile0"], kernel["ThreadTile1"]],
