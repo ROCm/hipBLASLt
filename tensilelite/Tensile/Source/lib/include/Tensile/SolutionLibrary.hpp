@@ -59,7 +59,8 @@ namespace Tensile
            && solutions.problemType.bType == problem.b().dataType()
            && solutions.problemType.cType == problem.c().dataType()
            && solutions.problemType.dType == problem.d().dataType()
-           && solutions.problemType.computeType == problem.computeType())
+           && solutions.problemType.computeType == problem.computeType()
+           && solutions.problemType.groupedGemm == problem.groupedGemm())
             return true;
         return false;
     }
