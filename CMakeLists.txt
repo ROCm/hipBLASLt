@@ -30,6 +30,8 @@ set(CMAKE_CXX_STANDARD 17 )
 set(CMAKE_CXX_EXTENSIONS OFF )
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+enable_testing()
+
 # Consider removing this in the future
 # This should appear before the project command, because it does not use FORCE
 if(WIN32)
