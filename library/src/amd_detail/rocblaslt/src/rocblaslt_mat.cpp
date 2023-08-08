@@ -116,9 +116,7 @@ rocblaslt_status rocblaslt_matmul_impl(const rocblaslt_handle       handle,
 
     float alpha_1 = 1.0; // use dScaleAlphaVec instead, original alpha => 1.0
     if(scaleAlphaVec)
-    {
         alpha = &alpha_1;
-    }
 
 #define EX_PARM                                                                                  \
     handle, opA, opB, m, n, k, alpha, A, type_a, lda, batch_stride_a, B, type_b, ldb,            \
@@ -203,9 +201,7 @@ rocblaslt_status rocblaslt_gemm_create_cpp_impl(rocblaslt_matmul_desc          m
 
     float alpha_1 = 1.0; // use dScaleAlphaVec instead, original alpha => 1.0
     if(scaleAlphaVec)
-    {
         alpha = &alpha_1;
-    }
 
 #define EX_PARM_GEMM_CPP                                                                          \
     opA, opB, m, n, k, alpha, A, type_a, lda, batch_stride_a, B, type_b, ldb, batch_stride_b,     \
@@ -234,7 +230,6 @@ rocblaslt_status rocblaslt_gemm_create_cpp_impl_2(int64_t                       
                                                   std::shared_ptr<void>&         gemmData,
                                                   size_t&                        gemmCount)
 {
-
     auto status = validateMatmulArgs(m,
                                      n,
                                      k,
@@ -427,6 +422,7 @@ rocblaslt_status
         int64_t             lde, batch_stride_e;
         bool                gradient;
         rocblaslt_epilogue  epilogue = matmul_descr[i]->epilogue;
+        const void* alphaVecPtr = matmul_descr[i]->pointermode ? alpha[i] : nullptr;
         if(validArgs == rocblaslt_status_continue)
             validArgs = rocblaslt_epilogue_valid_args(epilogue,// add alpha
                                                       num_rows_d,
@@ -438,7 +434,7 @@ rocblaslt_status
                                                       matmul_descr[i]->stride_e,
                                                       matmul_descr[i]->bias,
                                                       matmul_descr[i]->scaleDVec,
-                                                      matmul_descr[i]->pointermode,
+                                                      alphaVecPtr,
                                                       alpha[i],
                                                       E,
                                                       lde,
