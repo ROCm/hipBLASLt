@@ -148,7 +148,8 @@ void simpleGroupedGemmExt(hipblasLtHandle_t     handle,
     for(size_t i = 0; i < heuristicResult.size(); i++)
     {
         size_t workspaceSizeInBytes = 0;
-        if(groupedgemm.isAlgoSupported(heuristicResult[i].algo, workspaceSizeInBytes))
+        if(groupedgemm.isAlgoSupported(heuristicResult[i].algo, workspaceSizeInBytes)
+           == HIPBLAS_STATUS_SUCCESS)
         {
             if(workspaceSizeInBytes <= max_workspace_size)
             {
