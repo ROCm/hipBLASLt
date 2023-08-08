@@ -32,6 +32,7 @@ from .KernelWriterModules import *
 from .TensilePass import TensilePass, TensilePassOptions
 from .Common import globalParameters, CHeader, roundUp, Backup, print2, printExit
 from .Component import Component, LraTileProperties
+from .Components.Signature import UserArgumentsInfo
 from .CustomKernels import isCustomKernelConfig
 from .SolutionStructs import Solution, isPackedIndex
 from .AsmMemoryInstruction import MemoryInstruction
@@ -212,10 +213,9 @@ class StateValues:
 
   firstInitSgpr: int                     = -1
   lastPostLoopSgpr: int                  = 0
+  userArgsInfo: UserArgumentsInfo         = UserArgumentsInfo()
   numSgprToLoad: int                     = 0 # For kernel args
-  maxSgprAlpha: int                      = 4 # For user arguments, max complex double
   numSgprAlpha: int                      = 0 # For user arguments
-  maxSgprBeta: int                      = 4 # For user arguments, max complex double
   numSgprBeta: int                       = 0 # For user arguments
   numStoreSgprNames: List[str]           = field(init=False) # For post-loop kernel args
   numStoreSgprNameSizes: List[int]       = field(init=False) # For post-loop kernel args
@@ -257,8 +257,6 @@ class StateValues:
   # Epilogue states
   useBias      = DataDirection.NONE
   needBiasType = False
-
-  externalUserArgSize: int               = 172  # FIXME: magic number
 
   def __post_init__(self):
     """ How many SGPRs does it take to have one bit per lane? """
