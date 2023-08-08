@@ -177,7 +177,8 @@ void simpleGemmGetAllAlgos(hipblasLtHandle_t  handle,
                                                 matC,
                                                 matD,
                                                 heuristicResult[i].algo,
-                                                workspaceSizeInBytes))
+                                                workspaceSizeInBytes)
+           == HIPBLAS_STATUS_SUCCESS)
         {
             if(workspaceSizeInBytes <= max_workspace_size)
             {
