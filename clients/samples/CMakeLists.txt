@@ -88,3 +88,8 @@ endforeach( )
 foreach( exe ${sample_list_all} )
   rocm_install(TARGETS ${exe} COMPONENT samples)
 endforeach( )
+
+# Add tests for samples
+foreach( exe ${samples} )
+  add_test(NAME ${exe} COMMAND ${exe})
+endforeach()
