@@ -98,6 +98,8 @@ constexpr const char* hipblaslt_datatype_to_string(hipblasltDatatype_t type)
     {
     case HIPBLASLT_R_32F:
         return "f32_r";
+    case HIPBLASLT_R_64F:
+        return "f64_r";
     case HIPBLASLT_R_16F:
         return "f16_r";
     case HIPBLASLT_R_16B:
@@ -124,6 +126,8 @@ constexpr const char* hipblaslt_computetype_to_string(hipblasLtComputeType_t typ
         return "f32_r";
     case HIPBLASLT_COMPUTE_F32_FAST_XF32:
         return "xf32_r";
+    case HIPBLASLT_COMPUTE_F64:
+        return "f64_r";
     }
     return "invalid";
 }
@@ -134,6 +138,7 @@ constexpr hipblasltDatatype_t string_to_hipblaslt_datatype(const std::string& va
 {
     return
         value == "f32_r" || value == "s" ? HIPBLASLT_R_32F  :
+        value == "f64_r" || value == "d" ? HIPBLASLT_R_64F  :
         value == "f16_r" || value == "h" ? HIPBLASLT_R_16F  :
         value == "bf16_r"                ? HIPBLASLT_R_16B  :
         value == "f8_r"                ? HIPBLASLT_R_8F_E4M3  :
@@ -147,6 +152,7 @@ constexpr hipblasLtComputeType_t string_to_hipblaslt_computetype(const std::stri
     return
         value == "f32_r" || value == "s" ? HIPBLASLT_COMPUTE_F32  :
         value == "xf32_r" || value == "x" ? HIPBLASLT_COMPUTE_F32_FAST_XF32 :
+        value == "f64_r" || value == "d" ? HIPBLASLT_COMPUTE_F64 :
         static_cast<hipblasLtComputeType_t>(0);
 }
 // clang-format on

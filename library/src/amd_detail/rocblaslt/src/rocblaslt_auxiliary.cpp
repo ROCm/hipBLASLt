@@ -109,7 +109,7 @@ RocblasltContractionProblem<TiA, TiB, To, Tc>
     constexpr bool strided_batch = true;
     constexpr bool grouped_gemm  = false;
 
-    float alpha_1 = 1.0; // use dScaleAlphaVec instead, original alpha => 1.0
+    Tc alpha_1 = 1.0; // use dScaleAlphaVec instead, original alpha => 1.0
     if(scaleAlphaVec)
         alpha = &alpha_1;
 
@@ -457,13 +457,14 @@ rocblaslt_status rocblaslt_matmul_desc_create(rocblaslt_matmul_desc* matmulDesc,
             {
             case rocblaslt_compute_f32:
             case rocblaslt_compute_f32_fast_xf32:
+            case rocblaslt_compute_f64:
                 break;
             default:
                 log_error(__func__, "invalid compute type", computeType);
                 throw rocblaslt_status_invalid_value;
             }
 
-            if(scaleType != HIPBLASLT_R_32F)
+            if(scaleType != HIPBLASLT_R_32F && scaleType != HIPBLASLT_R_64F)
             {
                 log_error(__func__, "invalid scale type", scaleType);
                 throw rocblaslt_status_invalid_value;
@@ -472,17 +473,25 @@ rocblaslt_status rocblaslt_matmul_desc_create(rocblaslt_matmul_desc* matmulDesc,
             *matmulDesc                 = new _rocblaslt_matmul_desc();
             (*matmulDesc)->compute_type = computeType;
             (*matmulDesc)->scale_type   = scaleType;
+            auto computeTypeInit        = computeType == rocblaslt_compute_f32_fast_xf32
+                                              ? rocblaslt_compute_f32
+                                              : computeType;
+            auto dataType               = HIPBLASLT_R_32F;
+            if(computeTypeInit == rocblaslt_compute_f64)
+                dataType = HIPBLASLT_R_64F;
+
             initTensileGemmData(nullptr,
                                 rocblaslt::RocGemmType::ROCBLASLT_GEMM,
                                 HIPBLAS_OP_N,
                                 HIPBLAS_OP_N,
-                                HIPBLASLT_R_32F,
-                                HIPBLASLT_R_32F,
-                                HIPBLASLT_R_32F,
-                                HIPBLASLT_R_32F,
-                                rocblaslt_compute_f32,
+                                dataType,
+                                dataType,
+                                dataType,
+                                dataType,
+                                computeTypeInit,
                                 0,
                                 (*matmulDesc)->m_data);
+
             log_api(__func__,
                     "matmulDesc[out]",
                     matmulDesc,
@@ -1396,6 +1405,34 @@ rocblaslt_status
                             &beta,
                             pref->max_workspace_bytes);
                     status = getBestSolutions<rocblaslt_f8, rocblaslt_bf8, float, float>(
+                        prob,
+                        handle,
+                        tensile_data,
+                        requestedAlgoCount,
+                        heuristicResultsArray,
+                        returnAlgoCount,
+                        pref->max_workspace_bytes);
+                }
+            }
+        }
+        else if(a_type == HIPBLASLT_R_64F && b_type == HIPBLASLT_R_64F)
+        {
+            if(c_type == HIPBLASLT_R_64F && d_type == HIPBLASLT_R_64F)
+            {
+                if(compute_type == rocblaslt_compute_f64)
+                {
+                    double alpha = 1.0;
+                    double beta  = 1.0;
+                    auto   prob  = construct_rocblaslt_problem<double, double, double, double>(
+                        matmul_desc,
+                        matA,
+                        matB,
+                        matC,
+                        matD,
+                        &alpha,
+                        &beta,
+                        pref->max_workspace_bytes);
+                    status = getBestSolutions<double, double, double, double>(
                         prob,
                         handle,
                         tensile_data,

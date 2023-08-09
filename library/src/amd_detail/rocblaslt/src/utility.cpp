@@ -70,6 +70,8 @@ const char* hipblasltDatatype_to_string(hipblasltDatatype_t type)
         return "R_16BF";
     case HIPBLASLT_R_32F:
         return "R_32F";
+    case HIPBLASLT_R_64F:
+        return "R_64F";
     case HIPBLASLT_R_8F_E4M3:
         return "R_8F_E4M3";
     case HIPBLASLT_R_8F_E5M2:
@@ -87,6 +89,8 @@ const char* rocblaslt_compute_type_to_string(rocblaslt_compute_type type)
         return "COMPUTE_32F";
     case rocblaslt_compute_f32_fast_xf32:
         return "COMPUTE_32XF";
+    case rocblaslt_compute_f64:
+        return "COMPUTE_64F";
     default:
         return "Invalid";
     }

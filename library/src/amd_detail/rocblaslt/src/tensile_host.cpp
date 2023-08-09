@@ -97,6 +97,8 @@ namespace
             return Tensile::DataType::Half;
         case HIPBLASLT_R_32F:
             return Tensile::DataType::Float;
+        case HIPBLASLT_R_64F:
+            return Tensile::DataType::Double;
         case HIPBLASLT_R_16B:
             return Tensile::DataType::BFloat16;
         case HIPBLASLT_R_8F_E4M3:
@@ -152,6 +154,9 @@ namespace
 
     template <>
     constexpr auto tensile_datatype<float> = Tensile::DataType::Float;
+
+    template <>
+    constexpr auto tensile_datatype<double> = Tensile::DataType::Double;
 
     template <>
     constexpr auto tensile_datatype<rocblaslt_bfloat16> = Tensile::DataType::BFloat16;
@@ -230,6 +235,8 @@ namespace
             return Tensile::DataType::Float;
         case HIPBLASLT_R_16F:
             return Tensile::DataType::Half;
+        case HIPBLASLT_R_64F:
+            return Tensile::DataType::Double;
         case HIPBLASLT_R_16B:
             return Tensile::DataType::BFloat16;
         case HIPBLASLT_R_8F_E4M3:
@@ -250,6 +257,8 @@ namespace
             return HIPBLASLT_R_32F;
         case Tensile::DataType::Half:
             return HIPBLASLT_R_16F;
+        case Tensile::DataType::Double:
+            return HIPBLASLT_R_64F;
         case Tensile::DataType::BFloat16:
             return HIPBLASLT_R_16B;
         case Tensile::DataType::Float8:
@@ -270,6 +279,8 @@ namespace
             return Tensile::DataType::Float;
         case rocblaslt_compute_f32_fast_xf32:
             return Tensile::DataType::XFloat32;
+        case rocblaslt_compute_f64:
+            return Tensile::DataType::Double;
         default:
             throw std::runtime_error("Unsupported type.");
         }
@@ -282,6 +293,8 @@ namespace
         {
         case Tensile::DataType::Float:
             return rocblaslt_compute_f32;
+        case Tensile::DataType::Double:
+            return rocblaslt_compute_f64;
         default:
             throw std::runtime_error("Unsupported type.");
         }
@@ -2428,6 +2441,7 @@ extern "C" void rocblaslt_createialize()
         size_t                                        maxWorkSpaceBytes);
 
 CREATEFUNCTION(float, float, float, float)
+CREATEFUNCTION(double, double, double, double)
 CREATEFUNCTION(rocblaslt_half, rocblaslt_half, rocblaslt_half, float)
 CREATEFUNCTION(rocblaslt_half, rocblaslt_half, float, float)
 CREATEFUNCTION(rocblaslt_bfloat16, rocblaslt_bfloat16, rocblaslt_bfloat16, float)

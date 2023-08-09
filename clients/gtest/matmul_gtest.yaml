@@ -797,4 +797,17 @@ Tests:
   beta: [ 0.0, 2.0 ]
   unit_check: 1
 
+- name: matmul_gemm_double
+  category: pre_checkin
+  function:
+    matmul: *double_precision
+  matrix_size:
+    - { M:  128,  N:  128,  K:  1024 }
+    - { M:  4608, N:  1335, K:  640  }
+  transA_transB: *transA_transB_range
+  alpha: 1
+  beta: [ 0.0, 2.0 ]
+  unit_check: 1
+  gpu_arch: '90a'
+
 ...

@@ -96,7 +96,8 @@ struct perf_matmul<
          && ((std::is_same<Ti, hipblasLtHalf>{} && std::is_same<Tc, hipblasLtHalf>{})
              || (std::is_same<Ti, hip_bfloat16>{} && std::is_same<Tc, hip_bfloat16>{})))
 #endif
-        || (std::is_same<Ti, To>{} && (std::is_same<Ti, int8_t>{}) && std::is_same<Tc, int32_t>{})>>
+        || (std::is_same<Ti, To>{} && (std::is_same<Ti, int8_t>{}) && std::is_same<Tc, int32_t>{})
+        || (std::is_same<Ti, To>{} && (std::is_same<Ti, double>{}) && std::is_same<Tc, double>{})>>
     : hipblaslt_test_valid
 {
     void operator()(const Arguments& arg)
@@ -256,6 +257,8 @@ try
     bool        log_function_name = false;
     bool        any_stride        = false;
 
+    int api_method = 0;
+
     arg.init(); // set all defaults
 
     options_description desc("hipblaslt-bench command line options");
@@ -329,7 +332,7 @@ try
 
         ("precision,r",
          value<std::string>(&precision)->default_value("f16_r"), "Precision of matrix A,B,C,D  "
-         "Options: f32_r,f16_r,bf16_r")
+         "Options: f32_r,f16_r,bf16_r,f64_r")
 
 /*TODO: Enable individual matrix type option once input/output can support different data type.
         ("a_type",
@@ -350,7 +353,7 @@ try
 */
         ("compute_type",
          value<std::string>(&compute_type)->default_value("f32_r"), "Precision of computation. "
-         "Options: s,f32_r,x,xf32_r")
+         "Options: s,f32_r,x,xf32_r,f64_r")
 
         ("scale_type",
          value<std::string>(&scale_type), "Precision of scalar. "
@@ -461,6 +464,11 @@ try
          value<std::string>(&filter),
          "Simple strstr filter on function name only without wildcards")
 
+        ("api_method",
+         value<int>(&api_method)->default_value(0),
+         "Use extension API. 0: C style API. 1: declaration with C hipblasLtMatmul Layout/Desc but set, initialize, and run the problem with C++ extension API. 2: Using C++ extension API only. "
+         "Options: 0, 1, 2. (default: 0)")
+
         ("help,h", "produces this help message")
 
         ("version", "Prints the version number");
@@ -558,6 +566,25 @@ try
     int copied = snprintf(arg.function, sizeof(arg.function), "%s", function.c_str());
     if(copied <= 0 || copied >= sizeof(arg.function))
         throw std::invalid_argument("Invalid value for --function");
+
+    switch(api_method)
+    {
+    case 0:
+        arg.use_ext            = false;
+        arg.use_ext_setproblem = false;
+        break;
+    case 1:
+        arg.use_ext            = true;
+        arg.use_ext_setproblem = false;
+        break;
+    case 2:
+        arg.use_ext            = true;
+        arg.use_ext_setproblem = true;
+        break;
+    default:
+        throw std::invalid_argument("Invalid value for api_method: " + std::to_string(api_method));
+        break;
+    }
 
     arg.norm_check_assert = false;
     return run_bench_test(arg, filter, any_stride);

@@ -952,8 +952,15 @@ void test_hipblaslt(hipblasltDatatype_t         in_datatype,
                       << ToString(actType[i]) << std::endl;
         }
 
-        CHECK_HIPBLASLT_ERROR(
-            groupedGemm.setProblem(matmul, alpha, da, matA, db, matB, beta, dc, matC, dd, matD));
+        std::vector<void*> alpha_void, beta_void;
+        for(size_t i = 0; i < alpha.size(); i++)
+        {
+            alpha_void.push_back(&alpha[i]);
+            beta_void.push_back(&beta[i]);
+        }
+
+        CHECK_HIPBLASLT_ERROR(groupedGemm.setProblem(
+            matmul, beta_void, da, matA, db, matB, alpha_void, dc, matC, dd, matD));
 
         if(findAll)
         {
