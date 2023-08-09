@@ -350,6 +350,41 @@ void cblas_gemm<float, float, float>(hipblasOperation_t transA,
                 ldc);
 }
 
+template <>
+void cblas_gemm<double, double, double>(hipblasOperation_t transA,
+                                        hipblasOperation_t transB,
+                                        int64_t            m,
+                                        int64_t            n,
+                                        int64_t            k,
+                                        double             alpha,
+                                        const double*      A,
+                                        int64_t            lda,
+                                        const double*      B,
+                                        int64_t            ldb,
+                                        double             beta,
+                                        double*            C,
+                                        int64_t            ldc,
+                                        bool               alt)
+{
+
+    // just directly cast, since transA, transB are integers in the enum
+    // printf("transA: hipblaslt =%d, cblas=%d\n", transA, HIPOperationToCBLASTanspose(transA) );
+    cblas_dgemm(CblasColMajor,
+                HIPOperationToCBLASTanspose(transA),
+                HIPOperationToCBLASTanspose(transB),
+                m,
+                n,
+                k,
+                alpha,
+                A,
+                lda,
+                B,
+                ldb,
+                beta,
+                C,
+                ldc);
+}
+
 // AlphaVec gemm
 template <>
 void cblas_gemm_alphascale<hip_bfloat16, hip_bfloat16, float>(hipblasOperation_t  transA,
@@ -673,6 +708,52 @@ void cblas_gemm_alphascale<float, float, float>(hipblasOperation_t transA,
     // just directly cast, since transA, transB are integers in the enum
     // printf("transA: hipblaslt =%d, cblas=%d\n", transA, HIPOperationToCBLASTanspose(transA) );
     cblas_sgemm(CblasColMajor,
+                HIPOperationToCBLASTanspose(transA),
+                HIPOperationToCBLASTanspose(transB),
+                m,
+                n,
+                k,
+                alpha,
+                A,
+                lda,
+                B,
+                ldb,
+                beta,
+                C,
+                ldc);
+}
+
+template <>
+void cblas_gemm_alphascale<double, double, double>(hipblasOperation_t transA,
+                                                   hipblasOperation_t transB,
+                                                   int64_t            m,
+                                                   int64_t            n,
+                                                   int64_t            k,
+                                                   double             alpha,
+                                                   const double*      A,
+                                                   int64_t            lda,
+                                                   const double*      B,
+                                                   int64_t            ldb,
+                                                   double             beta,
+                                                   double*            C,
+                                                   int64_t            ldc,
+                                                   const double*      AlphaVec,
+                                                   bool               alt)
+{
+    size_t sizeA = (transA == HIPBLAS_OP_N ? k : m) * size_t(lda);
+    size_t sizeB = (transB == HIPBLAS_OP_N ? n : k) * size_t(ldb);
+
+    host_vector<double> A_double(sizeA);
+
+    for(size_t i = 0; i < sizeA; i++)
+    {
+        A_double[i] = A[i];
+        A_double[i] *= AlphaVec[i % m];
+    }
+
+    // just directly cast, since transA, transB are integers in the enum
+    // printf("transA: hipblaslt =%d, cblas=%d\n", transA, HIPOperationToCBLASTanspose(transA) );
+    cblas_dgemm(CblasColMajor,
                 HIPOperationToCBLASTanspose(transA),
                 HIPOperationToCBLASTanspose(transB),
                 m,

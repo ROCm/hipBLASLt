@@ -261,7 +261,7 @@ void testing_matmul(const Arguments& arg)
     hipblasOperation_t transA(char_to_hipblas_operation(arg.transA));
     hipblasOperation_t transB(char_to_hipblas_operation(arg.transB));
 
-    using Talpha = float;
+    using Talpha = Tc;
 
     bool    do_grouped_gemm = arg.grouped_gemm > 0;
     int32_t gemm_count      = std::max(1, arg.grouped_gemm);
@@ -981,8 +981,16 @@ void testing_matmul(const Arguments& arg)
                         dc[gemmIdx] = *dC[gemmIdx];
                         dd[gemmIdx] = *dD[gemmIdx];
                     }
+
+                    std::vector<void*> h_alpha_void, h_beta_void;
+                    for(size_t i = 0; i < h_alpha.size(); i++)
+                    {
+                        h_alpha_void.push_back(&h_alpha[i]);
+                        h_beta_void.push_back(&h_beta[i]);
+                    }
+
                     CHECK_HIPBLASLT_ERROR(groupedGemm.setProblem(
-                        matmul, h_alpha, da, matA, db, matB, h_beta, dc, matC, dd, matD));
+                        matmul, h_alpha_void, da, matA, db, matB, h_beta_void, dc, matC, dd, matD));
                 }
 
                 for(int j = 0; j < returnedAlgoCount; j++)
@@ -1132,8 +1140,16 @@ void testing_matmul(const Arguments& arg)
                     dc[gemmIdx] = *dC[gemmIdx];
                     dd[gemmIdx] = *dD[gemmIdx];
                 }
+
+                std::vector<void*> h_alpha_void, h_beta_void;
+                for(size_t i = 0; i < h_alpha.size(); i++)
+                {
+                    h_alpha_void.push_back(&h_alpha[i]);
+                    h_beta_void.push_back(&h_beta[i]);
+                }
+
                 CHECK_HIPBLASLT_ERROR(groupedGemm.setProblem(
-                    matmul, h_alpha, da, matA, db, matB, h_beta, dc, matC, dd, matD));
+                    matmul, h_alpha_void, da, matA, db, matB, h_beta_void, dc, matC, dd, matD));
             }
 
             for(int j = 0; j < returnedAlgoCount; j++)
@@ -1244,8 +1260,16 @@ void testing_matmul(const Arguments& arg)
                     dc[gemmIdx] = *dC[gemmIdx];
                     dd[gemmIdx] = *dD[gemmIdx];
                 }
+
+                std::vector<void*> h_alpha_void, h_beta_void;
+                for(size_t i = 0; i < h_alpha.size(); i++)
+                {
+                    h_alpha_void.push_back(&h_alpha[i]);
+                    h_beta_void.push_back(&h_beta[i]);
+                }
+
                 CHECK_HIPBLASLT_ERROR(groupedGemm.setProblem(
-                    matmul, h_alpha, da, matA, db, matB, h_beta, dc, matC, dd, matD));
+                    matmul, h_alpha_void, da, matA, db, matB, h_beta_void, dc, matC, dd, matD));
             }
 
             CHECK_HIPBLASLT_ERROR(
@@ -1817,14 +1841,14 @@ void testing_matmul(const Arguments& arg)
         double flops = 0;
         for(int gemmIdx = 0; gemmIdx < gemm_count; gemmIdx++)
         {
-            flops += gemm_gflop_count<float>(M[gemmIdx], N[gemmIdx], K[gemmIdx]);
+            flops += gemm_gflop_count<Tc>(M[gemmIdx], N[gemmIdx], K[gemmIdx]);
             switch(arg.activation_type)
             {
             case hipblaslt_activation_type::relu:
-                flops += relu_gflop_count<float>(M[gemmIdx], N[gemmIdx]);
+                flops += relu_gflop_count<Tc>(M[gemmIdx], N[gemmIdx]);
                 break;
             case hipblaslt_activation_type::gelu:
-                flops += gelu_gflop_count<float>(M[gemmIdx], N[gemmIdx]);
+                flops += gelu_gflop_count<Tc>(M[gemmIdx], N[gemmIdx]);
                 break;
             default:
                 break;
@@ -1836,13 +1860,13 @@ void testing_matmul(const Arguments& arg)
         e_beta, e_ldb, e_stride_b, e_ldc, e_stride_c, e_ldd, e_stride_d, e_d_type, e_compute_type, \
         e_activation_type, e_bias_vector
 
-        ArgumentModel<argument_param>{}.log_args<float>(hipblaslt_cout,
-                                                        arg,
-                                                        gpu_time_used,
-                                                        flops,
-                                                        ArgumentLogging::NA_value,
-                                                        cpu_time_used,
-                                                        hipblaslt_error);
+        ArgumentModel<argument_param>{}.log_args<Tc>(hipblaslt_cout,
+                                                     arg,
+                                                     gpu_time_used,
+                                                     flops,
+                                                     ArgumentLogging::NA_value,
+                                                     cpu_time_used,
+                                                     hipblaslt_error);
         if(dWorkspace != nullptr)
             delete dWorkspace;
 

@@ -246,6 +246,7 @@ typedef enum rocblaslt_compute_type_
 {
     rocblaslt_compute_f32           = 300, /**< 32-bit floating-point precision. */
     rocblaslt_compute_f32_fast_xf32 = 301, /**< XF32 compute for 32-bit input and output matrices */
+    rocblaslt_compute_f64           = 302, /**< 64-bit floating-point precision. */
 } rocblaslt_compute_type;
 
 /*! \ingroup types_module
@@ -276,19 +277,19 @@ typedef enum rocblaslt_matrix_layout_attribute_
  */
 typedef enum rocblaslt_matmul_desc_attributes_
 {
-    ROCBLASLT_MATMUL_DESC_TRANSA                                     = 0,
-    ROCBLASLT_MATMUL_DESC_TRANSB                                     = 1,
-    ROCBLASLT_MATMUL_DESC_EPILOGUE                                   = 2,
-    ROCBLASLT_MATMUL_DESC_BIAS_POINTER                               = 3,
-    ROCBLASLT_MATMUL_DESC_BIAS_DATA_TYPE                             = 4,
-    ROCBLASLT_MATMUL_DESC_A_SCALE_POINTER                            = 5,
-    ROCBLASLT_MATMUL_DESC_B_SCALE_POINTER                            = 6,
-    ROCBLASLT_MATMUL_DESC_EPILOGUE_AUX_POINTER                       = 7,
-    ROCBLASLT_MATMUL_DESC_EPILOGUE_AUX_LD                            = 8,
-    ROCBLASLT_MATMUL_DESC_EPILOGUE_AUX_BATCH_STRIDE                  = 9,
-    ROCBLASLT_MATMUL_DESC_POINTER_MODE = 10,
-    ROCBLASLT_MATMUL_DESC_D_SCALE_VECTOR_POINTER                     = 100,
-    ROCBLASLT_MATMUL_DESC_MAX                                        = 101
+    ROCBLASLT_MATMUL_DESC_TRANSA                    = 0,
+    ROCBLASLT_MATMUL_DESC_TRANSB                    = 1,
+    ROCBLASLT_MATMUL_DESC_EPILOGUE                  = 2,
+    ROCBLASLT_MATMUL_DESC_BIAS_POINTER              = 3,
+    ROCBLASLT_MATMUL_DESC_BIAS_DATA_TYPE            = 4,
+    ROCBLASLT_MATMUL_DESC_A_SCALE_POINTER           = 5,
+    ROCBLASLT_MATMUL_DESC_B_SCALE_POINTER           = 6,
+    ROCBLASLT_MATMUL_DESC_EPILOGUE_AUX_POINTER      = 7,
+    ROCBLASLT_MATMUL_DESC_EPILOGUE_AUX_LD           = 8,
+    ROCBLASLT_MATMUL_DESC_EPILOGUE_AUX_BATCH_STRIDE = 9,
+    ROCBLASLT_MATMUL_DESC_POINTER_MODE              = 10,
+    ROCBLASLT_MATMUL_DESC_D_SCALE_VECTOR_POINTER    = 100,
+    ROCBLASLT_MATMUL_DESC_MAX                       = 101
 } rocblaslt_matmul_desc_attributes;
 
 /*! \ingroup types_module

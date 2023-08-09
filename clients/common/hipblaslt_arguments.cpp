@@ -121,6 +121,8 @@ void Arguments::init()
     bias_type         = static_cast<hipblasltDatatype_t>(-1);
     bias_source       = hipblaslt_bias_source::d;
     bias_vector       = false;
+    scaleA            = false;
+    scaleB            = false;
     scaleD_vector     = false;
     scaleAlpha_vector = false;
     grouped_gemm      = 0;
