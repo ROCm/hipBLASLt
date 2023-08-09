@@ -262,6 +262,8 @@ bool norm_check(double norm_error)
 {
     if(std::is_same<T, float>{})
         return norm_error < 0.00001;
+    if(std::is_same<T, double>{})
+        return norm_error < 0.000000000001;
     if(std::is_same<T, hipblasLtHalf>{})
         return norm_error < 0.01;
     if(std::is_same<T, hip_bfloat16>{})

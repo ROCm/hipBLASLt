@@ -314,12 +314,12 @@ namespace hipblaslt_ext
 
     HIPBLASLT_EXPORT GroupedGemm::GroupedGemm(hipblasLtHandle_t                     handle,
                                               std::vector<hipblasLtMatmulDesc_t>&   matmul_descr,
-                                              std::vector<float>&                   alpha,
+                                              std::vector<void*>&                   alpha,
                                               std::vector<void*>&                   A,
                                               std::vector<hipblasLtMatrixLayout_t>& matA,
                                               std::vector<void*>&                   B,
                                               std::vector<hipblasLtMatrixLayout_t>& matB,
-                                              std::vector<float>&                   beta,
+                                              std::vector<void*>&                   beta,
                                               std::vector<void*>&                   C,
                                               std::vector<hipblasLtMatrixLayout_t>& matC,
                                               std::vector<void*>&                   D,
@@ -423,12 +423,12 @@ namespace hipblaslt_ext
     }
 
     hipblasStatus_t GroupedGemm::setProblem(std::vector<hipblasLtMatmulDesc_t>&   matmul_descr,
-                                            std::vector<float>&                   alpha,
+                                            std::vector<void*>&                   alpha,
                                             std::vector<void*>&                   A,
                                             std::vector<hipblasLtMatrixLayout_t>& matA,
                                             std::vector<void*>&                   B,
                                             std::vector<hipblasLtMatrixLayout_t>& matB,
-                                            std::vector<float>&                   beta,
+                                            std::vector<void*>&                   beta,
                                             std::vector<void*>&                   C,
                                             std::vector<hipblasLtMatrixLayout_t>& matC,
                                             std::vector<void*>&                   D,
@@ -436,29 +436,25 @@ namespace hipblaslt_ext
     {
         auto matmul_descr_groupedGemm
             = reinterpret_cast<std::vector<rocblaslt_matmul_desc>*>(&matmul_descr);
-        auto matA_groupedGemm = reinterpret_cast<std::vector<rocblaslt_matrix_layout>*>(&matA);
-        auto matB_groupedGemm = reinterpret_cast<std::vector<rocblaslt_matrix_layout>*>(&matB);
-        auto matC_groupedGemm = reinterpret_cast<std::vector<rocblaslt_matrix_layout>*>(&matC);
-        auto matD_groupedGemm = reinterpret_cast<std::vector<rocblaslt_matrix_layout>*>(&matD);
-        auto A_groupedGemm    = reinterpret_cast<std::vector<const void*>*>(&A);
-        auto B_groupedGemm    = reinterpret_cast<std::vector<const void*>*>(&B);
-        auto C_groupedGemm    = reinterpret_cast<std::vector<const void*>*>(&C);
-        std::vector<const void*> alpha_groupedGemm, beta_groupedGemm;
-        for(int i = 0; i < matmul_descr.size(); i++)
-        {
-            alpha_groupedGemm.push_back((const void*)(&(alpha[i])));
-            beta_groupedGemm.push_back((const void*)(&(beta[i])));
-        }
+        auto matA_groupedGemm  = reinterpret_cast<std::vector<rocblaslt_matrix_layout>*>(&matA);
+        auto matB_groupedGemm  = reinterpret_cast<std::vector<rocblaslt_matrix_layout>*>(&matB);
+        auto matC_groupedGemm  = reinterpret_cast<std::vector<rocblaslt_matrix_layout>*>(&matC);
+        auto matD_groupedGemm  = reinterpret_cast<std::vector<rocblaslt_matrix_layout>*>(&matD);
+        auto A_groupedGemm     = reinterpret_cast<std::vector<const void*>*>(&A);
+        auto B_groupedGemm     = reinterpret_cast<std::vector<const void*>*>(&B);
+        auto C_groupedGemm     = reinterpret_cast<std::vector<const void*>*>(&C);
+        auto alpha_groupedGemm = reinterpret_cast<std::vector<const void*>*>(&alpha);
+        auto beta_groupedGemm  = reinterpret_cast<std::vector<const void*>*>(&beta);
         auto rocproblemtypes
             = reinterpret_cast<std::vector<rocblaslt::RocGemmProblemType>*>(&m_problem_types);
         return RocBlasLtStatusToHIPStatus(
             rocblaslt_groupedgemm_create_cpp(*matmul_descr_groupedGemm,
-                                             alpha_groupedGemm,
+                                             *alpha_groupedGemm,
                                              *A_groupedGemm,
                                              *matA_groupedGemm,
                                              *B_groupedGemm,
                                              *matB_groupedGemm,
-                                             beta_groupedGemm,
+                                             *beta_groupedGemm,
                                              *C_groupedGemm,
                                              *matC_groupedGemm,
                                              D,
