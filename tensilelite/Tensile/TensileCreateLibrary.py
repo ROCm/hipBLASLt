@@ -50,7 +50,7 @@ import shlex
 import shutil
 import subprocess
 import sys
-import time
+from timeit import default_timer as timer
 from copy import deepcopy
 
 ################################################################################
@@ -447,7 +447,6 @@ def buildKernelSourceAndHeaderFiles(results, outputPath, kernelsWithBuildErrs):
 ################################################################################
 def writeSolutionsAndKernels(outputPath, CxxCompiler, problemTypes, solutions, kernels, kernelHelperObjs, \
     kernelWriterAssembly, errorTolerant=False):
-  start = time.time()
 
   codeObjectFiles = []
 
@@ -488,6 +487,7 @@ def writeSolutionsAndKernels(outputPath, CxxCompiler, problemTypes, solutions, k
         kernel.duplicate = False
 
   kIter   = zip(kernels, itertools.repeat(kernelWriterAssembly), itertools.repeat(TensileInstructions()))
+  pStart = timer()
   results = Common.ParallelMap2(processKernelSource, kIter, "Generating kernels")
 
   removeKernels = []
@@ -576,12 +576,15 @@ def writeSolutionsAndKernels(outputPath, CxxCompiler, problemTypes, solutions, k
       kernelSourceFile.close()
     if kernelHeaderFile:
       kernelHeaderFile.close()
+  pEnd = timer()
+  print(f"Kernel generating took {pEnd - pStart} seconds")
 
+  start = timer()
   if not globalParameters["GenerateSourcesAndExit"]:
     codeObjectFiles += buildSourceCodeObjectFiles(CxxCompiler, kernelFiles, outputPath)
     codeObjectFiles += getAssemblyCodeObjectFiles(kernelsToBuild, kernelWriterAssembly, outputPath)
 
-  stop = time.time()
+  stop = timer()
   print("# Kernel Building elapsed time = %.1f secs" % (stop-start))
 
   Common.popWorkingPath() # build_tmp
@@ -1019,7 +1022,10 @@ def generateLogicDataAndSolutions(logicFiles, args):
     archs = args.Architecture.split("_") # workaround for cmake list in list issue
 
   fIter = zip(logicFiles, itertools.repeat(archs))
+  start = timer()
   libraries = Common.ParallelMap(LibraryIO.parseLibraryLogicFile, fIter, "Reading logic files", method=lambda x: x.starmap)
+  end = timer()
+  print(f'Reading logic tooks {end - start} seconds, total {len(logicFiles)} logics')
 
   solutions = []
 
@@ -1028,21 +1034,20 @@ def generateLogicDataAndSolutions(logicFiles, args):
 
   nextSolIndex = 0
 
-  for logic in Utils.tqdm(libraries, "Processing logic data"):
-    (_, architectureName, _, solutionsForSchedule, _, newLibrary) = logic
+  start = timer()
 
-    if architectureName == "":
-      continue
+  for logic in filter(lambda i: i[1] != "", Utils.tqdm(libraries, "Processing logic data")):
+    (_, architectureName, _, _, _, newLibrary) = logic
 
     if globalParameters["PackageLibrary"]:
       if architectureName in masterLibraries:
-        masterLibraries[architectureName].merge(deepcopy(newLibrary))
+        masterLibraries[architectureName].merge(newLibrary)
       else:
         masterLibraries[architectureName] = deepcopy(newLibrary)
         masterLibraries[architectureName].version = args.version
     elif globalParameters["SeparateArchitectures"] or globalParameters["LazyLibraryLoading"]:
       if architectureName in masterLibraries:
-        nextSolIndex = masterLibraries[architectureName].merge(deepcopy(newLibrary), nextSolIndex)
+        nextSolIndex = masterLibraries[architectureName].merge(newLibrary, nextSolIndex)
       else:
         masterLibraries[architectureName] = deepcopy(newLibrary)
         masterLibraries[architectureName].version = args.version
@@ -1051,12 +1056,16 @@ def generateLogicDataAndSolutions(logicFiles, args):
         fullMasterLibrary = deepcopy(newLibrary)
         fullMasterLibrary.version = args.version
       else:
-        fullMasterLibrary.merge(deepcopy(newLibrary))
+        fullMasterLibrary.merge(newLibrary)
 
     # if problemType not in logicData:
     #   logicData[problemType] = []
     # logicData[problemType].append((scheduleName, deviceNames, \
     #     solutionsForSchedule, indexOrder, exactLogic, rangeLogic ))
+  end = timer()
+  print(f'Processing logics tooks {end - start} seconds')
+
+  start = timer()
 
   if globalParameters["SeparateArchitectures"] or globalParameters["LazyLibraryLoading"]:
     if "fallback" in masterLibraries.keys():
@@ -1079,6 +1088,8 @@ def generateLogicDataAndSolutions(logicFiles, args):
 
   # remove duplicates while preserving order
   solutions = list(dict.fromkeys(solutions))
+  end = timer()
+  print(f'Generate solutions took {end - start} seconds')
   return solutions, masterLibraries, fullMasterLibrary
 
 ################################################################################
@@ -1135,6 +1146,7 @@ def WriteClientLibraryFromSolutions(solutionList, libraryWorkingPath, tensileSou
 # Tensile Create Library
 ################################################################################
 def TensileCreateLibrary():
+  start = timer()
   print1("")
   print1(HR)
   print1("# Tensile Create Library")
@@ -1421,3 +1433,5 @@ def TensileCreateLibrary():
   print1("# Tensile Library Writer DONE")
   print1(HR)
   print1("")
+  end = timer()
+  print(f'Whole TensileCreateLibrary tooks: {end - start} seconds')

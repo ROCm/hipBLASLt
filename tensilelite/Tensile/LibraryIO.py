@@ -28,7 +28,7 @@ from . import __version__
 from . import Common
 from . import SolutionLibrary
 
-from typing import NamedTuple
+from typing import NamedTuple, List
 
 try:
     import yaml
@@ -199,17 +199,17 @@ def parseLibraryLogicFile(filename, archs=None):
 
 def parseLibraryLogicData(data, srcFile="?", archs=None):
     """Parses the data of a library logic file."""
-    if type(data) is list:
+    if isinstance(data, List):
         data = parseLibraryLogicList(data, srcFile)
 
     is_arch_valid = lambda cArch, tArch : (cArch == tArch or cArch == "all")
-    if not (archs == None) and "ArchitectureName" in data:
-        if type(archs) is list:
+    if not (archs is None) and "ArchitectureName" in data:
+        if isinstance(archs, List):
             if len(archs) > 0 and not archs[0] == "all":
                 if not (any(is_arch_valid(arch.split(":")[0], data["ArchitectureName"]) for arch in archs)):
                     return LibraryLogic("", "", None, [], [], None)
-        elif type(archs) is str:
-            if not is_arch_valid(arch.split(":")[0], data["ArchitectureName"]):
+        elif isinstance(archs, str):
+            if not is_arch_valid(archs.split(":")[0], data["ArchitectureName"]):
                 return LibraryLogic("", "", None, [], [], None)
 
     if "CUCount" not in data:
@@ -224,9 +224,9 @@ def parseLibraryLogicData(data, srcFile="?", archs=None):
 
     # unpack problemType
     problemType = ProblemType(data["ProblemType"])
-    # unpack solutions
-    solutions = []
-    for solutionState in data["Solutions"]:
+
+    # unpack solution
+    def solutionStateToSolution(solutionState) -> Solution:
         if solutionState["KernelLanguage"] == "Assembly":
             solutionState["ISA"] = Common.gfxArch(data["ArchitectureName"])
         else:
@@ -236,11 +236,11 @@ def parseLibraryLogicData(data, srcFile="?", archs=None):
         solutionState["AssignedProblemIndependentDerivedParameters"] = False
         solutionState["AssignedDerivedParameters"] = False
         solutionObject = Solution(solutionState)
-
         if solutionObject["ProblemType"] != problemType:
-            printExit("ProblemType in library logic file {} doesn't match solution: {} != {}" \
-                    .format(srcFile, problemType, solutionObject["ProblemType"]))
-        solutions.append(solutionObject)
+            printExit(f"ProblemType in library logic file {srcFile} doesn't match solution: {problemType} != {solutionObject['ProblemType']}")
+        return solutionObject
+
+    solutions = [solutionStateToSolution(solutionState) for solutionState in data["Solutions"]]
 
     newLibrary = SolutionLibrary.MasterSolutionLibrary.FromOriginalState(data, solutions)
 
