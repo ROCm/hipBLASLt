@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022 Advanced Micro Devices, Inc.
+ * Copyright (C) 2022-2023 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -137,6 +137,80 @@ namespace roc
     // bool_switch is a value<bool>, which is handled specially
     using bool_switch = value<bool>;
 
+    // Value parameters
+    template <typename T>
+    class valueVec : public value_base
+    {
+        std::vector<T>  m_var{}; // Variable to be modified if no pointer provided
+        std::vector<T>* m_var_ptr; // Pointer to variable to be modified
+
+    public:
+        // Constructor
+        explicit valueVec()
+            : m_var_ptr(nullptr)
+        {
+        }
+
+        explicit valueVec(std::vector<T>* var_ptr)
+            : m_var_ptr(var_ptr)
+        {
+        }
+
+        // Allows actual_value() and default_value()
+        valueVec* operator->()
+        {
+            return this;
+        }
+
+        // Get the value
+        const std::vector<T>& get_value() const
+        {
+            if(m_var_ptr)
+                return *m_var_ptr;
+            else
+                return m_var;
+        }
+
+        // Set actual value
+        valueVec& actual_value(T val)
+        {
+            if(m_var_ptr)
+            {
+                if(!m_has_actual && m_has_default)
+                    (*m_var_ptr).clear();
+                (*m_var_ptr).push_back(val);
+            }
+            else
+            {
+                if(!m_has_actual && m_has_default)
+                    m_var.clear();
+                m_var.push_back(val);
+            }
+            m_has_actual = true;
+            return *this;
+        }
+
+        // Set default value
+        valueVec& default_value(T val)
+        {
+            if(!m_has_actual)
+            {
+                if(m_var_ptr)
+                {
+                    (*m_var_ptr).clear();
+                    (*m_var_ptr).push_back(val);
+                }
+                else
+                {
+                    m_var.clear();
+                    m_var.push_back(val);
+                }
+                m_has_default = true;
+            }
+            return *this;
+        }
+    };
+
     class variable_value
     {
         std::shared_ptr<value_base> m_val;
@@ -192,6 +266,14 @@ namespace roc
             // Constructor with options, value and description
             template <typename T>
             desc_option(std::string opts, value<T> val, std::string desc)
+                : m_opts(std::move(opts))
+                , m_val(new auto(std::move(val)))
+                , m_desc(std::move(desc))
+            {
+            }
+
+            template <typename T>
+            desc_option(std::string opts, valueVec<T> val, std::string desc)
                 : m_opts(std::move(opts))
                 , m_val(new auto(std::move(val)))
                 , m_desc(std::move(desc))
@@ -294,6 +376,12 @@ namespace roc
                         ptr->actual_value(*argv);
                         match = true;
                     }
+                }
+                else if(auto* ptr = dynamic_cast<valueVec<int64_t>*>(m_val.get()))
+                {
+                    int64_t val;
+                    match = argc && sscanf(*argv, "%" SCNd64, &val) == 1;
+                    ptr->actual_value(val);
                 }
                 else
                 {
@@ -479,6 +567,15 @@ namespace roc
                             left << dynamic_cast<const value<int8_t>*>(val)->get_value();
                         else if(dynamic_cast<const value<std::string>*>(val))
                             left << dynamic_cast<const value<std::string>*>(val)->get_value();
+                        else if(dynamic_cast<const valueVec<int64_t>*>(val))
+                        {
+                            auto& vec = dynamic_cast<const valueVec<int64_t>*>(val)->get_value();
+                            left << vec[0];
+                            for(size_t i = 1; i < vec.size(); i++)
+                            {
+                                left << ", " << vec[i];
+                            }
+                        }
                         else
                             throw std::logic_error(
                                 "Internal error: Unsupported data type (printing value)");

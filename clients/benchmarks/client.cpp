@@ -135,70 +135,74 @@ int run_bench_test(Arguments& arg, const std::string& filter, bool any_stride, b
     }
 
     // adjust dimension for GEMM routines
-    int64_t min_lda = arg.transA == 'N' ? arg.M[0] : arg.K[0];
-    int64_t min_ldb = arg.transB == 'N' ? arg.K[0] : arg.N[0];
-    int64_t min_ldc = arg.M[0];
-    int64_t min_ldd = arg.M[0];
-    int64_t min_lde = arg.M[0];
-    if(arg.lda[0] < min_lda)
+    size_t gemmNum = arg.grouped_gemm == 0 ? 1 : arg.grouped_gemm;
+    for(size_t i = 0; i < gemmNum; i++)
     {
-        //hipblaslt_cout << "hipblaslt-bench INFO: lda < min_lda, set lda = " << min_lda << std::endl;
-        arg.lda[0] = min_lda;
-    }
-    if(arg.ldb[0] < min_ldb)
-    {
-        //hipblaslt_cout << "hipblaslt-bench INFO: ldb < min_ldb, set ldb = " << min_ldb << std::endl;
-        arg.ldb[0] = min_ldb;
-    }
-    if(arg.ldc[0] < min_ldc)
-    {
-        //hipblaslt_cout << "hipblaslt-bench INFO: ldc < min_ldc, set ldc = " << min_ldc << std::endl;
-        arg.ldc[0] = min_ldc;
-    }
-    if(arg.ldd[0] < min_ldd)
-    {
-        //hipblaslt_cout << "hipblaslt-bench INFO: ldd < min_ldd, set ldd = " << min_ldc << std::endl;
-        arg.ldd[0] = min_ldd;
-    }
-    if(arg.lde[0] < min_lde)
-    {
-        //hipblaslt_cout << "hipblaslt-bench INFO: lde < min_lde, set lde = " << min_lde << std::endl;
-        arg.lde[0] = min_lde;
-    }
-    int64_t min_stride_a = arg.lda[0] * (arg.transA == 'N' ? arg.K[0] : arg.M[0]);
-    int64_t min_stride_b = arg.ldb[0] * (arg.transB == 'N' ? arg.N[0] : arg.K[0]);
-    int64_t min_stride_c = arg.ldc[0] * arg.N[0];
-    int64_t min_stride_d = arg.ldd[0] * arg.N[0];
-    int64_t min_stride_e = arg.lde[0] * arg.N[0];
-    if(!any_stride && arg.stride_a[0] < min_stride_a)
-    {
-        //hipblaslt_cout << "hipblaslt-bench INFO: stride_a < min_stride_a, set stride_a = "
-        //               << min_stride_a << std::endl;
-        arg.stride_a[0] = min_stride_a;
-    }
-    if(!any_stride && arg.stride_b[0] < min_stride_b)
-    {
-        //hipblaslt_cout << "hipblaslt-bench INFO: stride_b < min_stride_b, set stride_b = "
-        //               << min_stride_b << std::endl;
-        arg.stride_b[0] = min_stride_b;
-    }
-    if(!any_stride && arg.stride_c[0] < min_stride_c)
-    {
-        //hipblaslt_cout << "hipblaslt-bench INFO: stride_c < min_stride_c, set stride_c = "
-        //               << min_stride_c << std::endl;
-        arg.stride_c[0] = min_stride_c;
-    }
-    if(!any_stride && arg.stride_d[0] < min_stride_d)
-    {
-        //hipblaslt_cout << "hipblaslt-bench INFO: stride_d < min_stride_d, set stride_d = "
-        //               << min_stride_d << std::endl;
-        arg.stride_d[0] = min_stride_d;
-    }
-    if(!any_stride && arg.stride_e[0] < min_stride_e)
-    {
-        //hipblaslt_cout << "hipblaslt-bench INFO: stride_e < min_stride_e, set stride_e = "
-        //               << min_stride_e << std::endl;
-        arg.stride_e[0] = min_stride_e;
+        int64_t min_lda = arg.transA == 'N' ? arg.M[i] : arg.K[i];
+        int64_t min_ldb = arg.transB == 'N' ? arg.K[i] : arg.N[i];
+        int64_t min_ldc = arg.M[i];
+        int64_t min_ldd = arg.M[i];
+        int64_t min_lde = arg.M[i];
+        if(arg.lda[i] < min_lda)
+        {
+            //hipblaslt_cout << "hipblaslt-bench INFO: lda < min_lda, set lda = " << min_lda << std::endl;
+            arg.lda[i] = min_lda;
+        }
+        if(arg.ldb[i] < min_ldb)
+        {
+            //hipblaslt_cout << "hipblaslt-bench INFO: ldb < min_ldb, set ldb = " << min_ldb << std::endl;
+            arg.ldb[i] = min_ldb;
+        }
+        if(arg.ldc[i] < min_ldc)
+        {
+            //hipblaslt_cout << "hipblaslt-bench INFO: ldc < min_ldc, set ldc = " << min_ldc << std::endl;
+            arg.ldc[i] = min_ldc;
+        }
+        if(arg.ldd[i] < min_ldd)
+        {
+            //hipblaslt_cout << "hipblaslt-bench INFO: ldd < min_ldd, set ldd = " << min_ldc << std::endl;
+            arg.ldd[i] = min_ldd;
+        }
+        if(arg.lde[i] < min_lde)
+        {
+            //hipblaslt_cout << "hipblaslt-bench INFO: lde < min_lde, set lde = " << min_lde << std::endl;
+            arg.lde[i] = min_lde;
+        }
+        int64_t min_stride_a = arg.lda[i] * (arg.transA == 'N' ? arg.K[i] : arg.M[i]);
+        int64_t min_stride_b = arg.ldb[i] * (arg.transB == 'N' ? arg.N[i] : arg.K[i]);
+        int64_t min_stride_c = arg.ldc[i] * arg.N[i];
+        int64_t min_stride_d = arg.ldd[i] * arg.N[i];
+        int64_t min_stride_e = arg.lde[i] * arg.N[i];
+        if(!any_stride && arg.stride_a[i] < min_stride_a)
+        {
+            //hipblaslt_cout << "hipblaslt-bench INFO: stride_a < min_stride_a, set stride_a = "
+            //               << min_stride_a << std::endl;
+            arg.stride_a[i] = min_stride_a;
+        }
+        if(!any_stride && arg.stride_b[i] < min_stride_b)
+        {
+            //hipblaslt_cout << "hipblaslt-bench INFO: stride_b < min_stride_b, set stride_b = "
+            //               << min_stride_b << std::endl;
+            arg.stride_b[i] = min_stride_b;
+        }
+        if(!any_stride && arg.stride_c[i] < min_stride_c)
+        {
+            //hipblaslt_cout << "hipblaslt-bench INFO: stride_c < min_stride_c, set stride_c = "
+            //               << min_stride_c << std::endl;
+            arg.stride_c[i] = min_stride_c;
+        }
+        if(!any_stride && arg.stride_d[i] < min_stride_d)
+        {
+            //hipblaslt_cout << "hipblaslt-bench INFO: stride_d < min_stride_d, set stride_d = "
+            //               << min_stride_d << std::endl;
+            arg.stride_d[i] = min_stride_d;
+        }
+        if(!any_stride && arg.stride_e[i] < min_stride_e)
+        {
+            //hipblaslt_cout << "hipblaslt-bench INFO: stride_e < min_stride_e, set stride_e = "
+            //               << min_stride_e << std::endl;
+            arg.stride_e[i] = min_stride_e;
+        }
     }
 
     hipblaslt_matmul_dispatch<perf_matmul>(arg);
@@ -257,41 +261,45 @@ try
 
     int api_method = 0;
 
+    bool                 grouped_gemm;
+    std::vector<int64_t> m, n, k;
+    std::vector<int64_t> lda, ldb, ldc, ldd, lde;
+    std::vector<int64_t> stride_a, stride_b, stride_c, stride_d, stride_e;
     arg.init(); // set all defaults
 
     options_description desc("hipblaslt-bench command line options");
     desc.add_options()
         // clang-format off
         ("sizem,m",
-         value<int64_t>(&arg.M[0])->default_value(128),
+         valueVec<int64_t>(&m)->default_value(128),
          "Specific matrix size: the number of rows or columns in matrix.")
 
         ("sizen,n",
-         value<int64_t>(&arg.N[0])->default_value(128),
+         valueVec<int64_t>(&n)->default_value(128),
          "Specific matrix the number of rows or columns in matrix")
 
         ("sizek,k",
-         value<int64_t>(&arg.K[0])->default_value(128),
+         valueVec<int64_t>(&k)->default_value(128),
          "Specific matrix size: the number of columns in A and rows in B.")
 
         ("lda",
-         value<int64_t>(&arg.lda[0]),
+         valueVec<int64_t>(&lda),
          "Leading dimension of matrix A.")
 
         ("ldb",
-         value<int64_t>(&arg.ldb[0]),
+         valueVec<int64_t>(&ldb),
          "Leading dimension of matrix B.")
 
         ("ldc",
-         value<int64_t>(&arg.ldc[0]),
+         valueVec<int64_t>(&ldc),
          "Leading dimension of matrix C.")
 
         ("ldd",
-         value<int64_t>(&arg.ldd[0]),
+         valueVec<int64_t>(&ldd),
          "Leading dimension of matrix D.")
 
         ("lde",
-         value<int64_t>(&arg.lde[0]),
+         valueVec<int64_t>(&lde),
          "Leading dimension of matrix E.")
 
         ("any_stride",
@@ -299,23 +307,23 @@ try
          "Do not modify input strides based on leading dimensions")
 
         ("stride_a",
-         value<int64_t>(&arg.stride_a[0]),
+         valueVec<int64_t>(&stride_a),
          "Specific stride of strided_batched matrix A, second dimension * leading dimension.")
 
         ("stride_b",
-         value<int64_t>(&arg.stride_b[0]),
+         valueVec<int64_t>(&stride_b),
          "Specific stride of strided_batched matrix B, second dimension * leading dimension.")
 
         ("stride_c",
-         value<int64_t>(&arg.stride_c[0]),
+         valueVec<int64_t>(&stride_c),
          "Specific stride of strided_batched matrix C, second dimension * leading dimension.")
 
         ("stride_d",
-         value<int64_t>(&arg.stride_d[0]),
+         valueVec<int64_t>(&stride_d),
          "Specific stride of strided_batched matrix D, second dimension * leading dimension.")
 
         ("stride_e",
-         value<int64_t>(&arg.stride_e[0]),
+         valueVec<int64_t>(&stride_e),
          "Specific stride of strided_batched matrix E, second dimension * leading dimension.")
 
         ("alpha",
@@ -357,7 +365,7 @@ try
         "Options: f16_r,bf16_r")
 
         ("initialization",
-         value<std::string>(&initialization)->default_value("hpl"),
+         value<std::string>(&initialization)->default_value("rand_int"),
          "Intialize matrix data."
          "Options: rand_int, trig_float, hpl(floating)")
 
@@ -434,7 +442,7 @@ try
          "Enable gradient")
 
         ("grouped_gemm",
-         value<int32_t>(&arg.grouped_gemm)->default_value(0),
+         value<bool>(&grouped_gemm)->default_value(false),
          "Use grouped_gemm if non-zero. Number of gemms to run")
 
         ("device",
@@ -489,6 +497,66 @@ try
 
     // transfer local variable state
     ArgumentModel_set_log_function_name(log_function_name);
+
+    // Fill in the sizes to arguments
+    size_t length = 1;
+    if(grouped_gemm)
+    {
+        length           = std::max(m.size(), n.size());
+        length           = std::max(length, k.size());
+        length           = std::max(length, lda.size());
+        length           = std::max(length, ldb.size());
+        length           = std::max(length, ldc.size());
+        length           = std::max(length, ldd.size());
+        length           = std::max(length, lde.size());
+        length           = std::max(length, stride_a.size());
+        length           = std::max(length, stride_b.size());
+        length           = std::max(length, stride_c.size());
+        length           = std::max(length, stride_d.size());
+        length           = std::max(length, stride_e.size());
+        length           = std::min(length, MAX_SUPPORTED_NUM_PROBLEMS);
+        arg.grouped_gemm = length;
+    }
+    else
+    {
+        arg.grouped_gemm = 0;
+    }
+    for(size_t i = 0; i < length; i++)
+    {
+        if(m.size() > 0)
+            arg.M[i] = m.size() >= length ? m[i] : m[m.size() - 1];
+        if(n.size() > 0)
+            arg.N[i] = n.size() >= length ? n[i] : n[n.size() - 1];
+        if(k.size() > 0)
+            arg.K[i] = k.size() >= length ? k[i] : k[k.size() - 1];
+
+        if(lda.size() > 0)
+            arg.lda[i] = lda.size() >= length ? lda[i] : lda[lda.size() - 1];
+        if(ldb.size() > 0)
+            arg.ldb[i] = ldb.size() >= length ? ldb[i] : ldb[ldb.size() - 1];
+        if(ldc.size() > 0)
+            arg.ldc[i] = ldc.size() >= length ? ldc[i] : ldc[ldc.size() - 1];
+        if(ldd.size() > 0)
+            arg.ldd[i] = ldd.size() >= length ? ldd[i] : ldd[ldd.size() - 1];
+        if(lde.size() > 0)
+            arg.lde[i] = lde.size() >= length ? lde[i] : lde[lde.size() - 1];
+
+        if(stride_a.size() > 0)
+            arg.stride_a[i]
+                = stride_a.size() >= length ? stride_a[i] : stride_a[stride_a.size() - 1];
+        if(stride_b.size() > 0)
+            arg.stride_b[i]
+                = stride_b.size() >= length ? stride_b[i] : stride_b[stride_b.size() - 1];
+        if(stride_c.size() > 0)
+            arg.stride_c[i]
+                = stride_c.size() >= length ? stride_c[i] : stride_c[stride_c.size() - 1];
+        if(stride_d.size() > 0)
+            arg.stride_d[i]
+                = stride_d.size() >= length ? stride_d[i] : stride_d[stride_d.size() - 1];
+        if(stride_e.size() > 0)
+            arg.stride_e[i]
+                = stride_e.size() >= length ? stride_e[i] : stride_e[stride_e.size() - 1];
+    }
 
     // Device Query
     int64_t device_count = query_device_property();
