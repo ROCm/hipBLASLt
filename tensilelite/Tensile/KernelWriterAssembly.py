@@ -739,7 +739,6 @@ class KernelWriterAssembly(KernelWriter):
     module.add(ValueSet("MT0", kernel["MacroTile0"]))
     module.add(ValueSet("MT1", kernel["MacroTile1"]))
     module.add(ValueSet("DepthU", kernel["DepthU"]))
-    module.add(ValueSet("GSU", kernel["GlobalSplitU"]))
     module.add(ValueSet("BpeA", tPA["bpe"]))
     module.add(ValueSet("BpeALog2", log2(tPA["bpe"])))
     module.add(ValueSet("BpeB", tPB["bpe"]))
@@ -1604,7 +1603,7 @@ class KernelWriterAssembly(KernelWriter):
           tmpVgprRes  = RegisterPoolResource(tmpVgpr, 2)
           module.add(SMulI32(dst=sgpr(tmpSgpr.idx), src0=sgpr("NumWorkGroups0"), src1=sgpr("NumWorkGroups1")))
           if kernel["GlobalSplitU"] > 1:
-            module.add(SMulI32(dst=sgpr(tmpSgpr.idx), src0=sgpr(tmpSgpr.idx), src1=kernel["GlobalSplitU"]))
+            module.add(SMulI32(dst=sgpr(tmpSgpr.idx), src0=sgpr(tmpSgpr.idx), src1=sgpr("GSU")))
           module.add(scalarUInt32DivideAndRemainder(qReg=tmpSgpr.idx, dReg="WorkGroup0", divReg=tmpSgpr.idx, rReg=tmpSgpr.idx+1,\
                                            tmpVgprRes=tmpVgprRes, wavewidth=kernel["WavefrontSize"], doRemainder=False))
           module.add(SMovB32(dst=sgpr("WorkGroup2"), src=sgpr(tmpSgpr.idx)))
@@ -1612,7 +1611,7 @@ class KernelWriterAssembly(KernelWriter):
           module.add(SMulI32(dst=sgpr(tmpSgpr.idx), src0=sgpr("NumWorkGroups1"), src1=sgpr("NumWorkGroups0")))
           module.add(SMulI32(dst=sgpr(tmpSgpr.idx), src0=sgpr(tmpSgpr.idx), src1=sgpr("WorkGroup2")))
           if kernel["GlobalSplitU"] > 1:
-            module.add(SMulI32(dst=sgpr(tmpSgpr.idx), src0=sgpr(tmpSgpr.idx), src1=kernel["GlobalSplitU"]))
+            module.add(SMulI32(dst=sgpr(tmpSgpr.idx), src0=sgpr(tmpSgpr.idx), src1=sgpr("GSU")))
           module.add(SSubU32(dst=sgpr("WorkGroup0"), src0=sgpr("WorkGroup0"), src1=sgpr(tmpSgpr.idx)))
           module.addComment0("wg1 = idxWG01 * smallMagicNumber(1/numWG0)")
           module.add(scalarUInt32DivideAndRemainder(qReg=tmpSgpr.idx, dReg="WorkGroup0", divReg="NumWorkGroups0", rReg=tmpSgpr.idx+1,\
@@ -1637,6 +1636,7 @@ class KernelWriterAssembly(KernelWriter):
       else:
         module.add(moduleArgs)
         module.add(moduleWg)
+      module.add(SMovB32(dst=sgpr("GSU"), src=kernel["GlobalSplitU"]))
     else:
       module.add(ValueIf(0))
 
@@ -1784,14 +1784,11 @@ class KernelWriterAssembly(KernelWriter):
 
       # gsuSumIdx = wg1 % GSU
       # wg1       = wg1 / GSU
-      with self.allocTmpSgpr(3) as tmpSgprInfo:# needs 3
-        tmpSgpr = tmpSgprInfo.idx
-        divisor = tmpSgpr+2
-        module.add(SMovB32(dst=sgpr(divisor), src=sgpr("WorkGroup1"), \
-            comment="copying for divisor"))
-
-        module.add(scalarStaticDivideAndRemainder("WorkGroup1", "GSUSumIdx", \
-            divisor, kernel["GlobalSplitU"], tmpSgprInfo, 1))
+      divisor = "WorkGroup1"
+      tmpVgpr = self.vgprPool.checkOut(2, "tmp")
+      tmpVgprRes = RegisterPoolResource(idx=tmpVgpr, size=2)
+      module.add(scalarUInt32DivideAndRemainder("WorkGroup1", divisor, "GSU", "GSUSumIdx", tmpVgprRes, wavewidth=kernel["WavefrontSize"]))
+      self.vgprPool.checkIn(tmpVgpr)
 
     ########################################
     # Blocked rows or columns
@@ -2769,17 +2766,15 @@ class KernelWriterAssembly(KernelWriter):
 
     #print (tc, ": loopIdx=", loopIdx, "dimIdx=", dimIdx, "strideIdx=", strideIdx)
 
-    gsu = 1
-    if kernel["GlobalSplitU"] > 1:
-      gsu = kernel["GlobalSplitU"]
-
     assert(self.states.unrollIdx == kernel["ProblemType"]["NumIndicesSummation"]-1)
     if loopIdx==self.states.unrollIdx:
       if self.states.globalReadIncsUseVgpr:
-        with self.allocTmpSgpr(2) as tmpSgprInfo:
+        with self.allocTmpSgpr(3) as tmpSgprInfo:
           tmpSgpr = tmpSgprInfo.idx
+          gsuSgpr = tmpSgpr + 2
+          module.add(SMulI32(dst=sgpr(gsuSgpr), src0=sgpr("GSU"), src1="DepthU*%d"%(tP["bpe"])))
           module.add(SMulI32(dst=sgpr(tmpSgpr+0), \
-              src0="DepthU*%d"%(gsu*tP["bpe"]), src1=stride, \
+              src0=sgpr(gsuSgpr), src1=stride, \
               comment="incr%s%s = %s*DepthU*bpe (unrollIdx)"%(tc, loopChar, stride) ))
           # TODO - this should be mul-H??
           module.add(SMovB32(
@@ -2793,25 +2788,30 @@ class KernelWriterAssembly(KernelWriter):
               dst=vgpr("GlobalReadIncs%s+%u+1"%(tc, 2*loopIdx)), \
               src=sgpr(tmpSgpr+1)))
       else: # not globalReadIncsUseVgpr, ie use SGPR
+        with self.allocTmpSgpr(1) as tmpSgprInfo:
+          gsuSgpr = tmpSgprInfo.idx
 
-        m = "DepthU*Bpe%s"%(tc)
-        if gsu>1:
-          m += "*%d"%gsu
+          module.add(SMulI32(dst=sgpr(gsuSgpr), src0=sgpr("GSU"), src1="DepthU*Bpe%s"%(tc)))
 
-        if kernel["ProblemType"]["SparseA"] and not tP["isB"]:
-          m += ("/2" if tP["isA"] else "/8")
+          if kernel["ProblemType"]["SparseA"] and not tP["isB"]:
+            if tP["isA"]:
+              module.add(SLShiftRightB32(dst=sgpr(gsuSgpr), shiftHex=hex(log2(2)), src=sgpr(gsuSgpr)))
+            else:
+              module.add(SLShiftRightB32(dst=sgpr(gsuSgpr), shiftHex=hex(log2(8)), src=sgpr(gsuSgpr)))
 
-        if isMirrorIdx:
-          m = "-%s"%(m)
+          m = sgpr(gsuSgpr)
 
-        # multiply by stride, optimizing if unit stride
-        if self.isConstUnitStride(stride):
-          module.add(SMovB32(dst=sgpr("GlobalReadIncs%s+%u"%(tc, loopIdx)), src=m, \
-              comment="incr%s (unrollIdx)"%(tc) ))
-        else:
-          module.add(SMulI32(dst=sgpr("GlobalReadIncs%s+%u"%(tc, loopIdx)), \
-              src0=m, src1=stride, \
-              comment="incr%s unrollIdx)"%(tc) ))
+          if isMirrorIdx:
+            m.setMinus(True)
+
+          # multiply by stride, optimizing if unit stride
+          if self.isConstUnitStride(stride):
+            module.add(SMovB32(dst=sgpr("GlobalReadIncs%s+%u"%(tc, loopIdx)), src=m, \
+                comment="incr%s (unrollIdx)"%(tc) ))
+          else:
+            module.add(SMulI32(dst=sgpr("GlobalReadIncs%s+%u"%(tc, loopIdx)), \
+                src0=m, src1=stride, \
+                comment="incr%s unrollIdx)"%(tc) ))
     else:
       # other summation
       if self.states.globalReadIncsUseVgpr:
@@ -2851,9 +2851,11 @@ class KernelWriterAssembly(KernelWriter):
               if kernel["GlobalSplitU"] > 1:
                 module.add(self.calculateLoopNumIterGsu(kernel, loopCounterName, tmpSgprInfo))
 
-              module.add(SMulI32(dst=sgpr(loopCounterName), src0=sgpr(loopCounterName), \
-                        src1=kernel["GlobalSplitU"]*kernel["DepthU"], \
-                        comment="=loopCounterName*DepthU"))
+              with self.allocTmpSgpr(1) as tmpSgprInfo:
+                gsuSgpr = tmpSgprInfo.idx
+                module.add(SMulI32(dst=sgpr(gsuSgpr), src0=sgpr("GSU"), src1=kernel["DepthU"]))
+                module.add(SMulI32(dst=sgpr(loopCounterName), src0=sgpr(loopCounterName), \
+                                   src1=sgpr(gsuSgpr), comment="=loopCounterName*DepthU"))
             module.add(SMulI32(dst=sgpr(graInc), src0=stridePrev, src1=sgpr(loopCounterName), \
                   comment="tmp <- stride%s%s * myWgUnrollIters" %(tc, loopCharPrev)))
           else:
@@ -3457,8 +3459,9 @@ class KernelWriterAssembly(KernelWriter):
     if self.states.staggerU:
       assert (kernel["BufferLoad"])
 
-      with self.allocTmpSgpr(2) as tmpSgprInfo:
-        staggerTmp = tmpSgprInfo.idx
+      with self.allocTmpSgpr(3) as tmpSgprInfo:
+        staggerTmp    = tmpSgprInfo.idx
+        incSparseSgpr = tmpSgprInfo.idx + 2
 
         #---
         imod.addComment1("SRDs += (StaggerUIter) * GlobalReadIncs%s+%u"% (tc, self.states.unrollIdx))
@@ -3491,23 +3494,21 @@ class KernelWriterAssembly(KernelWriter):
 
           tc = "Metadata"
           if kernel["DirectToVgprSparseMetadata"]:
-            gsu = 1
-            if kernel["GlobalSplitU"] > 1:
-              gsu = kernel["GlobalSplitU"]
-            incSparse = hex(kernel["DepthU"] * gsu // 8)
+            incSparse = incSparseSgpr
+            imod.add(self.calculateIncrementMetadata(kernel, incSparse))
           else:
-            incSparse = sgpr("GlobalReadIncsMetadata+%u"%(self.states.unrollIdx))
+            incSparse = "GlobalReadIncsMetadata+%u"%(self.states.unrollIdx)
           imod.addModuleAsFlatItems(self.s_mul_i64_i32( \
                           sgpr(staggerTmp), sgpr(staggerTmp+1), \
-                          sgpr("StaggerUIter"), incSparse, " stagger byte offset of metadata"))
+                          sgpr("StaggerUIter"), sgpr(incSparse), " stagger byte offset of metadata"))
           # Amount of bytes to add to get back to start.
           # on the llop iteration which matches StaggerUIter, this offset added instead of GlobalReadInc
           imod.addModuleAsFlatItems(self.s_mul_i64_i32( \
                     sgpr("WrapU%s+0"%tc), sgpr("WrapU%s+1"%tc), \
-                    self.loopCounter(kernel, self.states.unrollIdx), incSparse, \
+                    self.loopCounter(kernel, self.states.unrollIdx), sgpr(incSparse), \
                     "Number of bytes accessed by the unroll loop"))
 
-          imod.add(SSubU32(sgpr("WrapU%s+0"%tc), incSparse, sgpr("WrapU%s+0"%tc), " remove one iteration"))
+          imod.add(SSubU32(sgpr("WrapU%s+0"%tc), sgpr(incSparse), sgpr("WrapU%s+0"%tc), " remove one iteration"))
           imod.add(SSubBU32(sgpr("WrapU%s+1"%tc), 0, sgpr("WrapU%s+1"%tc), " remove one iteration"))
 
           if kernel["DirectToVgprSparseMetadata"]:
@@ -3552,8 +3553,9 @@ class KernelWriterAssembly(KernelWriter):
     imod = Module("removeStagger")
     if self.states.staggerU:
       tc = tP["tensorChar"]
-      with self.allocTmpSgpr(2) as tmpSgprInfo:
+      with self.allocTmpSgpr(3) as tmpSgprInfo:
         tmp = tmpSgprInfo.idx
+        tmpIncSparse = tmpSgprInfo.idx + 2
         # might be able to refactor this to eliminate signed math
         imod.add(SSubI32(dst=sgpr(tmp), src0=3 if kernel["PrefetchGlobalRead"] else 2, \
                 src1=sgpr("StaggerUIter")))
@@ -3568,14 +3570,16 @@ class KernelWriterAssembly(KernelWriter):
         if kernel["ProblemType"]["SparseA"] and tP["isA"]:
           tc = "Metadata"
           if kernel["DirectToVgprSparseMetadata"]:
-            incSparse = self.calculateIncrementMetadata(kernel)
+            incSparse = tmpIncSparse
+            imod.add(self.calculateIncrementMetadata(kernel, incSparse))
           else:
-            incSparse = sgpr("GlobalReadIncs%s+%u"%(tc,self.states.unrollIdx))
+            incSparse = "GlobalReadIncs%s+%u"%(tc,self.states.unrollIdx)
+
           # might be able to refactor this to eliminate signed math
           imod.add(SSubI32(dst=sgpr(tmp), src0=3 if kernel["PrefetchGlobalRead"] else 2, \
                   src1=sgpr("StaggerUIter")))
           imod.addModuleAsFlatItems(self.s_mul_i64_i32(sgpr(tmp), sgpr(tmp+1), \
-                      sgpr(tmp), incSparse, \
+                      sgpr(tmp), sgpr(incSparse), \
                        "start offset S in bytes"))
           imod.add(SSubU32(sgpr(tmp), sgpr(tmp), sgpr("WrapU%s"%tc), "S - WrapU"))
           imod.add(SSubBU32(sgpr(tmp+1), sgpr(tmp+1), sgpr("WrapU%s+1"%(tc)), "S - WrapU"))
@@ -3606,25 +3610,12 @@ class KernelWriterAssembly(KernelWriter):
     loopCounter = sgpr(destName)
     quotient = destName
     remainder = "GSUSumIdx+1" # numIterPerWgRemainder
-    dividend = tmpSgprRes.idx + 2 # numIterMyWg
-    divisor = kernel["GlobalSplitU"]
-    if log(divisor,2).is_integer():
-      module.add(SMovB32(dst=sgpr(dividend), src=loopCounter, comment="copy for divide IterGsu"))
-      module.add(scalarStaticDivideAndRemainder(quotient, remainder, dividend, divisor, tmpSgprRes , 1))
-    else:
-      qReg = self.vgprPool.checkOut(1,"qReg")
-      rReg = self.vgprPool.checkOut(1,"rReg")
-      dReg = self.vgprPool.checkOut(1,"dReg")
-      tmpVgpr = self.vgprPool.checkOutAligned(2,2,"tmpReg")
-      tmpVgprRes = RegisterPoolResource(tmpVgpr, 2)
-      module.add(VMovB32(dst=vgpr(dReg), src=loopCounter, comment="copy for divide IterGsu"))
-      module.add(vectorStaticDivideAndRemainder(qReg, rReg, dReg, divisor, tmpVgprRes))
-      module.add(VReadfirstlaneB32(dst=sgpr(quotient), src=vgpr(qReg)))
-      module.add(VReadfirstlaneB32(dst=sgpr(remainder), src=vgpr(rReg)))
-      self.vgprPool.checkIn(tmpVgpr)
-      self.vgprPool.checkIn(dReg)
-      self.vgprPool.checkIn(rReg)
-      self.vgprPool.checkIn(qReg)
+    dividend = destName
+
+    tmpVgpr = self.vgprPool.checkOut(2,"tmp")
+    tmpVgprRes = RegisterPoolResource(idx=tmpVgpr, size=2)
+    module.add(scalarUInt32DivideAndRemainder(quotient, dividend, "GSU", remainder, tmpVgprRes, wavewidth=kernel["WavefrontSize"]))
+    self.vgprPool.checkIn(tmpVgpr)
 
     # if gsuSumIdx < numIterPerWgRemainder
     module.add(SAddU32(dst=sgpr(tmpSgprRes.idx), src0=1, \
@@ -3747,12 +3738,11 @@ class KernelWriterAssembly(KernelWriter):
   ##############################################################################
   # Calculate Metadata offset
   ##############################################################################
-  def calculateIncrementMetadata(self, kernel):
-    inc = hex(kernel["DepthU"] // 8)
-    if kernel["GlobalSplitU"] > 1:
-      inc = hex(kernel["DepthU"] * kernel["GlobalSplitU"] // 8)
-
-    return inc
+  def calculateIncrementMetadata(self, kernel, sgprOut):
+    module = Module("calculateIncrementMetadata")
+    module.add(SMulI32(dst=sgpr(sgprOut), src0=kernel["DepthU"], src1=sgpr("GSU")))
+    module.add(SLShiftRightB32(dst=sgpr(sgprOut), shiftHex=hex(log2(8)), src=sgpr(sgprOut)))
+    return module
 
   ##############################################################################
   # Open Loop
@@ -5012,10 +5002,11 @@ class KernelWriterAssembly(KernelWriter):
       #  module.add(SMovB32(dst=sgpr("OffsetB"), src=sgpr("SrdB+0"), comment="hack to save"))
       if self.states.staggerU and loopIdx == self.states.unrollIdx:
         # add a wrap increment, if needed:
-        with self.allocTmpSgpr(3) as tmpSgprInfo:
+        with self.allocTmpSgpr(4) as tmpSgprInfo:
           incLower = tmpSgprInfo.idx
           incUpper = incLower + 1
           tmpS =    incLower + 2
+          tmpIncSparse = incLower + 3
           if prefetchIndex:
             imod.add(SAddU32(dst=sgpr(tmpS), src0=self.loopCounter(kernel, self.states.unrollIdx), src1=prefetchIndex, comment="remove pf(%u)"%prefetchIndex))
             imod.add(SCmpEQU32(src0=sgpr("StaggerUIter"), src1=sgpr(tmpS), comment="Is this wrapIter? (pf)"))
@@ -5031,15 +5022,16 @@ class KernelWriterAssembly(KernelWriter):
           if kernel["ProblemType"]["SparseA"] and tP["isA"]:
             tc = "Metadata"
             if kernel["DirectToVgprSparseMetadata"]:
-              incSparse = self.calculateIncrementMetadata(kernel)
+              incSparse = tmpIncSparse
+              imod.add(self.calculateIncrementMetadata(kernel, incSparse))
             else:
-              incSparse = sgpr("GlobalReadIncs%s+%u"%(tc,self.states.unrollIdx))
+              incSparse = "GlobalReadIncs%s+%u"%(tc,self.states.unrollIdx)
             if prefetchIndex:
               imod.add(SCmpEQU32(src0=sgpr("StaggerUIter"), src1=sgpr(tmpS), comment="Is this wrapIter? (pf)"))
             else:
               imod.add(SCmpEQU32(src0=self.loopCounter(kernel, self.states.unrollIdx), \
                       src1=sgpr("StaggerUIter"), comment="Is this the wrapIter?"))
-            imod.add(SCSelectB32(dst=sgpr(incLower), src0=sgpr("WrapU%s+0"%tc), src1=incSparse, \
+            imod.add(SCSelectB32(dst=sgpr(incLower), src0=sgpr("WrapU%s+0"%tc), src1=sgpr(incSparse), \
                         comment="incLower <- ?"))
             imod.add(SCSelectB32(dst=sgpr(incUpper), src0=sgpr("WrapU%s+1"%tc), src1=0,
                         comment="incUpper <- ?"))
@@ -5063,19 +5055,21 @@ class KernelWriterAssembly(KernelWriter):
           tc = "Metadata"
           imod.addComment1("global read inc metadata loop%s"%(loopChar))
           if kernel["DirectToVgprSparseMetadata"]:
-            incSparse = self.calculateIncrementMetadata(kernel)
-            imod.add(self.incrementMetadataSrd(incSparse, hex(0)))
+            with self.allocTmpSgpr(1) as tmpSgprInfo:
+              incSparse = tmpSgprInfo.idx
+              imod.add(self.calculateIncrementMetadata(kernel, incSparse))
+              imod.add(self.incrementMetadataSrd(sgpr(incSparse), hex(0)))
           else:
-            incSparse = sgpr("GlobalReadIncs%s+%u"%(tc,loopIdx))
+            incSparse = "GlobalReadIncs%s+%u"%(tc,loopIdx)
             if loopIdx != self.states.unrollIdx or (kernel["ProblemType"]["IndicesSummation"][self.states.unrollIdx] in kernel["ProblemType"]["MirrorDims%s"%tc]):
               with self.allocTmpSgpr(1) as tmpSgprInfo:
                 incUpper = tmpSgprInfo.idx
                 # GRO may be negative for other summation if stride-other < stride-unroll or if mirror dim.
-                imod.add(SAShiftRightI32(dst=sgpr(incUpper), shiftHex=31, src=incSparse, comment="sign-extend"))
-                imod.add(self.incrementMetadataSrd(incSparse, sgpr(incUpper)))
+                imod.add(SAShiftRightI32(dst=sgpr(incUpper), shiftHex=31, src=sgpr(incSparse), comment="sign-extend"))
+                imod.add(self.incrementMetadataSrd(sgpr(incSparse), sgpr(incUpper)))
             else:
               incUpper = 0 # GRO is positive for loop unroll
-              imod.add(self.incrementSrd(tP["tpsMetadata"], incSparse, hex(incUpper)))
+              imod.add(self.incrementSrd(tP["tpsMetadata"], sgpr(incSparse), hex(incUpper)))
 
     else:
       graIdx = 0

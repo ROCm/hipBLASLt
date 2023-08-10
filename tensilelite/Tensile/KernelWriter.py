@@ -3404,6 +3404,8 @@ class KernelWriter(metaclass=abc.ABCMeta):
       self.defineSgpr("Beta", numSgprBeta, numSgprBeta)
       self.states.numSgprBeta = numSgprBeta
 
+    self.defineSgpr("GSU", 1)
+
 
     #------------------------
     # Registers defined below this point are not available in the post-loop
