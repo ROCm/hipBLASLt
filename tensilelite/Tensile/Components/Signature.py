@@ -123,7 +123,8 @@ class SignatureCOV3(Signature):
                                     groupSegmentSize=group_segment_size,
                                     sgprWorkGroup=[1, 1, sgprWgZ],
                                     vgprWorkItem=0,
-                                    flatWorkGroupSize=(kernel["NumThreads"]))
+                                    flatWorkGroupSize=(kernel["NumThreads"]),
+                                    preloadKernArgs=kernel["PreloadKernArgs"])
 
         srcValueTypeA = getSrcValueType(kernel, "V3", True)
         srcValueTypeB = getSrcValueType(kernel, "V3", False)
