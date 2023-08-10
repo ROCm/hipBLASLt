@@ -199,7 +199,8 @@ namespace Tensile
                 double flopCount = 0;
                 if(auto problem = dynamic_cast<ContractionProblemGroupedGemm*>(m_problem))
                 {
-                    flopCount = problem->gemms[0].flopCount();
+                    for(int i = 0; i < problem->gemms.size(); i++)
+                        flopCount += problem->gemms[i].flopCount();
                 }
                 else if(auto problem = dynamic_cast<ContractionProblemGemm*>(m_problem))
                 {
