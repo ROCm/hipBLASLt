@@ -296,12 +296,12 @@ The grouped gemm class also has the setProblem APIs.
                                                 GemmProblemType&           problemtype);
 
     HIPBLASLT_EXPORT hipblasStatus_t setProblem(std::vector<hipblasLtMatmulDesc_t>&   matmul_descr,
-                                                std::vector<float>&                   alpha,
+                                                std::vector<void*>&                   alpha,
                                                 std::vector<void*>&                   A,
                                                 std::vector<hipblasLtMatrixLayout_t>& matA,
                                                 std::vector<void*>&                   B,
                                                 std::vector<hipblasLtMatrixLayout_t>& matB,
-                                                std::vector<float>&                   beta,
+                                                std::vector<void*>&                   beta,
                                                 std::vector<void*>&                   C,
                                                 std::vector<hipblasLtMatrixLayout_t>& matC,
                                                 std::vector<void*>&                   D,
@@ -359,8 +359,6 @@ Grouped gemm supports using external device memory to run the kernel. This will 
         void*    c; //!< The c matrix input pointer.
         void*    a; //!< The a matrix input pointer.
         void*    b; //!< The b matrix input pointer.
-        float    alpha; //!< The alpha value.
-        float    beta; //!< The beta value.
         uint32_t strideD1; //!< The d leading dimension.
         uint32_t strideD2; //!< The d batch stride
         uint32_t strideC1; //!< The c leading dimension.
@@ -369,6 +367,8 @@ Grouped gemm supports using external device memory to run the kernel. This will 
         uint32_t strideA2; //!< The a batch stride
         uint32_t strideB1; //!< The b leading dimension.
         uint32_t strideB2; //!< The b batch stride
+        int8_t   alpha[16]; //!< The alpha value.
+        int8_t   beta[16]; //!< The beta value.
         // Epilogue inputs
         void*    scaleDVec; //!< The scaleD vector input pointer.
         void*    bias; //!< The bias input pointer.
