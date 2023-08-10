@@ -215,6 +215,7 @@ class StateValues:
   lastPostLoopSgpr: int                  = 0
   userArgsInfo: UserArgumentsInfo         = UserArgumentsInfo()
   numSgprToLoad: int                     = 0 # For kernel args
+  numSgprPreload: int                    = 0 # For kernel args
   numSgprAlpha: int                      = 0 # For user arguments
   numSgprBeta: int                       = 0 # For user arguments
   numStoreSgprNames: List[str]           = field(init=False) # For post-loop kernel args
@@ -3409,6 +3410,15 @@ class KernelWriter(metaclass=abc.ABCMeta):
     if not kernel["ProblemType"]["GroupedGemm"]:
       self.states.numSgprGSU = 1
 
+
+    # Calculate numSgpr preload
+    self.states.numSgprPreload = 0
+    if kernel["PreloadKernArgs"]:
+      # Max num spgrs can be setup by CP is only 16 for now
+      # kernel argument buffer address needs 2 sgprs
+      # Workgroup ID x, y, z need 3 sgprs
+      numWorkgroupIDSgpr = kernel["ProblemType"]["NumIndicesC"]
+      self.states.numSgprPreload = 16 - self.states.rpga - kernel["ProblemType"]["NumIndicesC"]
 
     #------------------------
     # Registers defined below this point are not available in the post-loop
