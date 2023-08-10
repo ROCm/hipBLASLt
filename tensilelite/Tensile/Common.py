@@ -945,6 +945,10 @@ validParameters = {
     # For example, InnerUnroll=2 will fetch LDS for two unroll iterations
     "InnerUnroll":                [1,2,4,8,16,32,64],
 
+    # Enable CP preload kernel arguments feature
+    # It can reduce time of loading kernel arguments by s_load.
+    # It needs new complier and vbios to support this feature. 
+    "PreloadKernArgs":            [False, True],
     # Kernels should be written in assembly or source
     # if assembly, ISA will determine architecture
     # if source, Runtime will determine language
@@ -1062,6 +1066,7 @@ defaultBenchmarkCommonParameters = [
     {"NonTemporalB":              [ 0 ] },
     {"NonTemporalMetadata":       [ 0 ] },
     {"NonTemporal":               [ -1 ] },
+    {"PreloadKernArgs":           [ False ] },
     {"CustomKernelName":          [ "" ] },
     {"NoReject":                  [ False ]},
     {"MinVgprNumber":             [0]},

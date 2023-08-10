@@ -397,18 +397,24 @@ class ArgumentLoader:
         return item
 
     def loadAllKernArg(self, sgprStartIndex: int, srcAddr: Union[int, str], \
-                    numSgprToLoad: int) -> Module:
+                    numSgprToLoad: int, numSgprPreload: int=0) -> Module:
         module = Module("LoadAllKernArg")
-        while numSgprToLoad > 0:
+        actualLoad = numSgprToLoad - numSgprPreload
+        sgprStartIndex += numSgprPreload
+        self.kernArgOffset += numSgprPreload * 4
+        while actualLoad > 0:
             i = 16 # 16, 8, 4, 2, 1
-            align = 4
-            while sgprStartIndex % align != 0:
-                i = i // 2
-                if i < 4:
-                    align = i
             while i >= 1:
-                if numSgprToLoad >= i:
-                    numSgprToLoad -= i
+                isSgprAligned = False
+                if (i >= 4) and (sgprStartIndex % 4 == 0):
+                  isSgprAligned = True
+                elif (i == 2) and (sgprStartIndex % 2 == 0):
+                  isSgprAligned = True
+                elif i == 1:
+                  isSgprAligned = True
+
+                if isSgprAligned and actualLoad >= i:
+                    actualLoad -= i
                     SLoadBX = { 512: SLoadB512,
                                 256: SLoadB256,
                                 128: SLoadB128,

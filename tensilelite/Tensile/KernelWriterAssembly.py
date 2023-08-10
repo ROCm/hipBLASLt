@@ -1145,7 +1145,10 @@ class KernelWriterAssembly(KernelWriter):
 
       load = self.states.numSgprToLoad
       sgprStart = self.sgprs["SizesFree"]
-      moduleArgs.addModuleAsFlatItems(self.argLoader.loadAllKernArg(sgprStart, "KernArgAddress", load))
+
+      #For groupgemm, the preload happened prior to this stage
+      numSgprPreload = self.states.numSgprPreload if not kernel["ProblemType"]["GroupedGemm"] else 0
+      moduleArgs.addModuleAsFlatItems(self.argLoader.loadAllKernArg(sgprStart, "KernArgAddress", load, numSgprPreload))
 
       moduleExternalArgs = Module("Load external Arguments")
       if kernel["ProblemType"]["SupportUserArgs"]:
@@ -1159,12 +1162,22 @@ class KernelWriterAssembly(KernelWriter):
         offset = self.externalArgLoader.getOffset() + self.states.bpr * (self.states.userArgsInfo.betaMaxRegisterSize - self.states.numSgprBeta)
         self.externalArgLoader.setOffset(offset)
 
+      if numSgprPreload > 0:
+        preloadSgprStartIdx = self.states.rpga  #number sgprs of kernel argument buffer address
+        for i in range(numSgprPreload):
+          moduleArgs.add(SMovB32(dst=sgpr(sgprStart+i), src=sgpr(preloadSgprStartIdx+i), comment="move preload data to correct sgpr"))
+        for i in range(kernel["ProblemType"]["NumIndicesC"]):
+          moduleArgs.add(SMovB32(dst=sgpr("WorkGroup0+%u"%i), src=sgpr(preloadSgprStartIdx+numSgprPreload+i), \
+                      comment="restore workgroup id"))
+
       moduleWg = Module("Calculate Workgroup")
       moduleWg.addModuleAsFlatItems(lralwaCode)
       if kernel["ProblemType"]["SupportUserArgs"]:
-        moduleWg.add(SWaitCnt(lgkmcnt=0, comment="wait for %u/%u bytes of kern args" % (self.argLoader.getOffset(), self.externalArgLoader.getOffset())))
+        moduleWg.add(SWaitCnt(lgkmcnt=0, comment="wait for %u/%u bytes of kern args" % \
+                       (self.argLoader.getOffset() - (numSgprPreload*4), self.externalArgLoader.getOffset())))
       else:
-        moduleWg.add(SWaitCnt(lgkmcnt=0, comment="wait for %u bytes of kern args" % (self.argLoader.getOffset())))
+        moduleWg.add(SWaitCnt(lgkmcnt=0, comment="wait for %u bytes of kern args" % \
+                            (self.argLoader.getOffset() - (numSgprPreload*4))))
       moduleWg.add(Label(label="stop", comment=""))
       #### calculate numWorkGroup ####
       qReg = self.vgprPool.checkOut(4)
@@ -1193,21 +1206,36 @@ class KernelWriterAssembly(KernelWriter):
         # linear search
         ######
         if (1):
-          tmpSgprNumGemm = 5
-          tmpSgprOrigKernArgAddress0 = 8
-          tmpSgprOrigKernArgAddress1 = 9
-          tmpSgprSkipArgPreload = 10
+          tmpSgprNumGemm = 27
+          tmpSgprOrigKernArgAddress0 = 10
+          tmpSgprOrigKernArgAddress1 = 11
+          tmpSgprSkipArgPreload = 9
           module.add(SMovB64(dst=sgpr(tmpSgprOrigKernArgAddress0,2), src=sgpr("KernArgAddress",2)))
-          module.addComment1("Grouped Gemm: Load num of Gemms")
-          module.add(self.argLoader.loadKernArg(tmpSgprNumGemm, "KernArgAddress", hex(0), dword=1))
-          module.addComment1("Grouped Gemm: Load address of external kernel arguments")
-          module.add(self.argLoader.loadKernArg("ExternalArgAddress", "KernArgAddress", hex(4), dword=2))
-          module.addComment1("Grouped Gemm: Load address of kernel arguments")
-          module.add(self.argLoader.loadKernArg("KernArgAddress", "KernArgAddress", hex(12), dword=2))
-          module.add(SLoadB32(dst=sgpr(tmpSgprSkipArgPreload), base=sgpr(tmpSgprOrigKernArgAddress0,2), soffset=hex(20)))
-          module.addComment1("Grouped Gemm: Load GSU data")
-          module.add(self.argLoader.loadKernArg("GSU", tmpSgprOrigKernArgAddress0, hex(24), dword=1))
-          module.add(SWaitCnt(lgkmcnt=0))
+          if self.states.numSgprPreload > 0:
+            preloadSgprStartIdx = self.states.rpga  #number sgprs of kernel argument buffer address
+            #TODO: remove hardcode once destination SGPRs are in-order
+            module.add(SMovB32(dst=sgpr(tmpSgprNumGemm), src=sgpr(preloadSgprStartIdx), comment="Grouped Gemm: Load num of Gemms"))
+            module.add(SMovB32(dst=sgpr("GSU"), src=sgpr(preloadSgprStartIdx+6), comment="Load GSU data"))
+            module.add(SMovB32(dst=sgpr(tmpSgprSkipArgPreload), src=sgpr(preloadSgprStartIdx+5)))
+            module.add(SMovB32(dst=sgpr("KernArgAddress+1"), src=sgpr(preloadSgprStartIdx+4), comment="Load address of kernel arguments"))
+            module.add(SMovB32(dst=sgpr("KernArgAddress"), src=sgpr(preloadSgprStartIdx+3), comment="Load address of kernel arguments"))
+            module.add(SMovB32(dst=sgpr("ExternalArgAddress+1"), src=sgpr(preloadSgprStartIdx+2), comment="Load address of external kernel arguments"))
+            module.add(SMovB32(dst=sgpr("ExternalArgAddress"), src=sgpr(preloadSgprStartIdx+1), comment="Load address of external kernel arguments"))
+            for i in range(kernel["ProblemType"]["NumIndicesC"]):
+              module.add(SMovB32(dst=sgpr("WorkGroup0+%u"%i), src=sgpr(preloadSgprStartIdx+self.states.numSgprPreload+i), \
+                        comment="restore workgroup id"))
+
+          else:
+            module.addComment1("Grouped Gemm: Load num of Gemms")
+            module.add(self.argLoader.loadKernArg(tmpSgprNumGemm, "KernArgAddress", hex(0), dword=1))
+            module.addComment1("Grouped Gemm: Load address of external kernel arguments")
+            module.add(self.argLoader.loadKernArg("ExternalArgAddress", "KernArgAddress", hex(4), dword=2))
+            module.addComment1("Grouped Gemm: Load address of kernel arguments")
+            module.add(self.argLoader.loadKernArg("KernArgAddress", "KernArgAddress", hex(12), dword=2))
+            module.add(SLoadB32(dst=sgpr(tmpSgprSkipArgPreload), base=sgpr(tmpSgprOrigKernArgAddress0,2), soffset=hex(20)))
+            module.addComment1("Grouped Gemm: Load GSU data")
+            module.add(self.argLoader.loadKernArg("GSU", tmpSgprOrigKernArgAddress0, hex(24), dword=1))
+            module.add(SWaitCnt(lgkmcnt=0))
 
           # FIXME: Need to fix these cause it may cause data hazard
           tmpSgprM = 12
