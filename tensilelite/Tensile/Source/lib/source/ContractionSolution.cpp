@@ -505,7 +505,7 @@ namespace Tensile
         return packedIndices;
     }
 
-    template <bool T_Debug, typename KA>
+    template <bool T_Debug, bool insertKernelArgs, typename KA>
     void ContractionSolution::singleCallArgs(ContractionSolution::Problem const& problem,
                                              ContractionInputs const&            inputs,
                                              uint32_t const& workspaceOffsetInByte,
@@ -634,6 +634,9 @@ namespace Tensile
                 args.append("beta_2", inputs.beta, problem.betaType());
         }
 
+        if constexpr(insertKernelArgs)
+            kernelArgs<T_Debug>(args);
+
         if(problemType.useScaleDVec
            && ((sizeMapping.globalSplitU == 1)
                || (sizeMapping.customKernelName != ""))) //kernel input data
@@ -726,6 +729,13 @@ namespace Tensile
         }
     }
 
+    template <bool T_Debug, typename KA>
+    void ContractionSolution::kernelArgs(KA&             args) const
+    {
+        // GSU
+        args.template append<uint32_t>("gsu", sizeMapping.globalSplitU);
+    }
+
     template <bool T_Debug>
     KernelInvocation
         ContractionSolution::generateSingleCall(ContractionSolution::Problem const& problem,
@@ -783,7 +793,7 @@ namespace Tensile
 
         rv.sharedMemBytes = 0;
 
-        singleCallArgs<T_Debug>(problem, inputs, 0, rv.args);
+        singleCallArgs<T_Debug, true>(problem, inputs, 0, rv.args);
 
         if((sizeMapping.globalAccumulation == 2) && (sizeMapping.customKernelName != ""))
         {
@@ -899,7 +909,7 @@ namespace Tensile
             for(int idx = 0; idx < problems.size(); idx++)
             {
                 auto problem = problems[idx];
-                singleCallArgs<T_Debug>(
+                singleCallArgs<T_Debug, false>(
                     problem, inputs.grouped[idx], workspaceOffsetInByte, h_args);
                 if constexpr(std::is_same<KA, KernelArguments>::value)
                     workspaceOffsetInByte += requiredWorkspaceSize(problem);
@@ -913,6 +923,7 @@ namespace Tensile
             rv.args.append<void const*>("DeviceUserArguments", userArgs);
             rv.args.append<void const*>("argsPtr", (void*)inputs.ws);
             rv.args.append<uint32_t>("skipWgTableGen", 0);
+            kernelArgs<T_Debug>(rv.args);
             rv.codeObjectFile = codeObjectFilename.load();
         }
 

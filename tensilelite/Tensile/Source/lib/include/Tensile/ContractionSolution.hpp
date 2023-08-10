@@ -129,7 +129,12 @@ namespace Tensile
         }
         virtual std::string name() const
         {
-            return kernelName;
+            auto        tmp = kernelName;
+            std::string gsu = "GSU" + std::to_string(sizeMapping.globalSplitU);
+            size_t      pos = tmp.find("GSUM");
+            if(pos != std::string::npos)
+                tmp.replace(pos, 4, gsu);
+            return tmp;
         }
         virtual std::string description() const
         {
@@ -294,11 +299,15 @@ namespace Tensile
 
         virtual void relaseDeviceUserArgs(void* dUA, void* dUAHost);
 
-        template <bool T_Debug, typename KA>
+        template <bool T_Debug, bool insertKernelArgs, typename KA>
         void singleCallArgs(Problem const&           problem,
                             ContractionInputs const& inputs,
                             uint32_t const&          workspaceOffsetInByte,
                             KA&                      args) const;
+
+        // Kernel related arguments (e.g. MT, GSU...)
+        template <bool T_Debug, typename KA>
+        void kernelArgs(KA& args) const;
 
         template <typename KA>
         inline void calculateSingleCallWorkGroupItems(std::vector<Problem> const& problems,

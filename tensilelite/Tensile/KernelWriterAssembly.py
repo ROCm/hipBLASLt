@@ -1205,6 +1205,8 @@ class KernelWriterAssembly(KernelWriter):
           module.addComment1("Grouped Gemm: Load address of kernel arguments")
           module.add(self.argLoader.loadKernArg("KernArgAddress", "KernArgAddress", hex(12), dword=2))
           module.add(SLoadB32(dst=sgpr(tmpSgprSkipArgPreload), base=sgpr(tmpSgprOrigKernArgAddress0,2), soffset=hex(20)))
+          module.addComment1("Grouped Gemm: Load GSU data")
+          module.add(self.argLoader.loadKernArg("GSU", tmpSgprOrigKernArgAddress0, hex(24), dword=1))
           module.add(SWaitCnt(lgkmcnt=0))
 
           # FIXME: Need to fix these cause it may cause data hazard
@@ -1346,6 +1348,8 @@ class KernelWriterAssembly(KernelWriter):
           module.addComment1("Grouped Gemm: Load address of kernel arguments")
           module.add(self.argLoader.loadKernArg("KernArgAddress", "KernArgAddress", hex(12), dword=2))
           module.add(SLoadB32(dst=sgpr(tmpSgprSkipWgTableGen), base=sgpr(tmpSgprOrigKernArgAddress0,2), soffset=hex(20)))
+          module.addComment1("Grouped Gemm: Load GSU data")
+          module.add(self.argLoader.loadKernArg("GSU", tmpSgprOrigKernArgAddress0, hex(24), dword=1))
           module.add(SWaitCnt(lgkmcnt=0))
           #############
           # generatoe wgTable in kernel
@@ -1636,7 +1640,6 @@ class KernelWriterAssembly(KernelWriter):
       else:
         module.add(moduleArgs)
         module.add(moduleWg)
-      module.add(SMovB32(dst=sgpr("GSU"), src=kernel["GlobalSplitU"]))
     else:
       module.add(ValueIf(0))
 

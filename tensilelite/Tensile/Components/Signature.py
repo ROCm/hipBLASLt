@@ -184,6 +184,10 @@ class SignatureCOV3(Signature):
         userArgumentsInfo.gemmArgumentSize += userArgumentsInfo.alphaMaxSize
         userArgumentsInfo.gemmArgumentSize += userArgumentsInfo.betaMaxSize
 
+        # Kernel related arguments
+        if not kernel["ProblemType"]["GroupedGemm"]:
+            signature.addArg(       "gsu",                SVK.SIG_VALUE,               "u32")
+
         if kernel["ProblemType"]["UseScaleDVec"] and (kernel["GlobalSplitU"] == 1):
             signature.addArg("AddressScaleDVec", SVK.SIG_GLOBALBUFFER, cptValueType, "generic")
         userArgumentsInfo.scaleDVecSize += 8
