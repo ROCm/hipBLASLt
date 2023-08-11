@@ -3404,6 +3404,11 @@ class KernelWriter(metaclass=abc.ABCMeta):
       self.defineSgpr("Beta", numSgprBeta, numSgprBeta)
       self.states.numSgprBeta = numSgprBeta
 
+    self.defineSgpr("GSU", 1)
+    self.states.numSgprGSU = 0
+    if not kernel["ProblemType"]["GroupedGemm"]:
+      self.states.numSgprGSU = 1
+
 
     #------------------------
     # Registers defined below this point are not available in the post-loop
@@ -3417,7 +3422,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
       numSgprAddressD + numSgprAddressC + numSgprAddressA + numSgprAddressB + numSgprAlpha + numSgprAddressMetadata + \
       (numSgprBeta if kernel["ProblemType"]["UseBeta"] else 0) + \
       self.states.d.numSgprStrides + self.states.c.numSgprStrides + self.states.a.numSgprStrides + self.states.b.numSgprStrides + self.states.m.numSgprStrides + \
-      len(kernel["PackedC0IdxChars"][:-1])*2 + len(kernel["PackedC1IdxChars"][:-1])*2
+      len(kernel["PackedC0IdxChars"][:-1])*2 + len(kernel["PackedC1IdxChars"][:-1])*2 + self.states.numSgprGSU
     # Get kernel argument end here
     ###################################
 
@@ -4257,7 +4262,7 @@ for codeObjectFileName in codeObjectFileNames:
     return fileBase
 
   def getKernelName(self, kernel):
-    kernelName = Solution.getNameMin(kernel, self.kernelMinNaming)
+    kernelName = Solution.getNameMin(kernel, self.kernelMinNaming, True)
     return kernelName
 
   def getAssemblyDirectory(self):
