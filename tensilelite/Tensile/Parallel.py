@@ -193,6 +193,6 @@ def parallelApply(n_jobs: int, func, objects: collections.Sequence, multiArg: bo
   print(f'{message}: Launching {threadCount} threads...')
 
   if multiArg:
-    Parallel(n_jobs=threadCount)(delayed(func)(*obj) for obj in objects)
+    Parallel(n_jobs=threadCount, backend="threading")(delayed(func)(*obj) for obj in objects)
   else:
-    Parallel(n_jobs=threadCount)(delayed(func)(obj) for obj in objects)
+    Parallel(n_jobs=threadCount, backend="threading")(delayed(func)(obj) for obj in objects)

@@ -425,7 +425,7 @@ class MasterSolutionLibrary:
 
     def state(self):
         rv = {
-            "solutions": state(iter(list(self.solutions.values()))),
+            "solutions": state(self.solutions.values()),
             "library": state(self.library)
         }
 
@@ -433,20 +433,13 @@ class MasterSolutionLibrary:
             rv["version"] = self.version
         return rv
 
-    def applyNaming(self, naming=None, parallel=False):
+    def applyNaming(self, naming=None):
         if naming is None:
             kernels = itertools.chain(s.originalSolution.getKernels() for s in self.solutions.values())
             naming = OriginalSolution.getMinNaming(kernels)
 
-        if parallel:
-            def applyNameFunc(s):
-                s.name = OriginalSolution.getNameMin(s.originalSolution.getKernels()[0], naming, True)
-
-            parallelApply(4, applyNameFunc, self.solutions.values(), False, 'Applying naming')
-            
-        else:
-            for s in self.solutions.values():
-                s.name = OriginalSolution.getNameMin(s.originalSolution.getKernels()[0], naming, True)
+        for s in self.solutions.values():
+            s.name = OriginalSolution.getNameMin(s.originalSolution.getKernels()[0], naming, True)
 
     def remapSolutionIndicesStartingFrom(self, curIndex):
         reIndexMap = {}
