@@ -4262,7 +4262,7 @@ for codeObjectFileName in codeObjectFileNames:
     return fileBase
 
   def getKernelName(self, kernel):
-    kernelName = Solution.getNameMin(kernel, self.kernelMinNaming)
+    kernelName = Solution.getNameMin(kernel, self.kernelMinNaming, True)
     return kernelName
 
   def getAssemblyDirectory(self):
