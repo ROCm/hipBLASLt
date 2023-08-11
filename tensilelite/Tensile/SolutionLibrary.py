@@ -30,6 +30,7 @@ from . import Common
 from . import Contractions
 from .SolutionStructs import Solution as OriginalSolution
 from .Utils import state
+from .Parallel import parallelApply
 
 
 class SingleSolutionLibrary:
@@ -432,16 +433,20 @@ class MasterSolutionLibrary:
             rv["version"] = self.version
         return rv
 
-    def applyNaming(self, naming=None):
+    def applyNaming(self, naming=None, parallel=False):
         if naming is None:
-            #allSolutions = itertools.chain(iter(list(self.solutions.values())), iter(list(self.sourceSolutions.values())))
-            kernels = list(
-                itertools.chain(*[s.originalSolution.getKernels()
-                                  for s in self.solutions.values()]))
+            kernels = itertools.chain(s.originalSolution.getKernels() for s in self.solutions.values())
             naming = OriginalSolution.getMinNaming(kernels)
 
-        for s in list(self.solutions.values()):
-            s.name = OriginalSolution.getNameMin(s.originalSolution.getKernels()[0], naming, True)
+        if parallel:
+            def applyNameFunc(s):
+                s.name = OriginalSolution.getNameMin(s.originalSolution.getKernels()[0], naming, True)
+
+            parallelApply(4, applyNameFunc, self.solutions.values(), False, 'Applying naming')
+            
+        else:
+            for s in self.solutions.values():
+                s.name = OriginalSolution.getNameMin(s.originalSolution.getKernels()[0], naming, True)
 
     def remapSolutionIndicesStartingFrom(self, curIndex):
         reIndexMap = {}

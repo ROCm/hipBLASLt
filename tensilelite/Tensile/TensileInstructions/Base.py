@@ -29,6 +29,7 @@ from typing import Tuple
 import pickle
 import subprocess
 import threading
+from functools import lru_cache
 
 def fastdeepcopy(x):
     # Note: Some object can't be pickled
@@ -220,6 +221,7 @@ def _tryAssembler(isaVersion: Tuple[int, int, int], assemblerPath: str, asmStrin
 # Get Caps
 ########################################
 
+@lru_cache()
 def _initAsmCaps(isaVersion, assemblerPath, isDebug) -> dict:
     """ Determine assembler capabilities by testing short instructions sequences """
     rv = {}
@@ -290,6 +292,7 @@ def _initAsmCaps(isaVersion, assemblerPath, isDebug) -> dict:
 
     return rv
 
+@lru_cache()
 def _initArchCaps(isaVersion) -> dict:
     rv = {}
     rv["HasEccHalf"]         = (isaVersion in [(9,0,6), (9,0,8), (9,0,10), (9,4,0), (9,4,1), (9,4,2)])
