@@ -1389,7 +1389,7 @@ def TensileCreateLibrary():
   else:
     masterFile = os.path.join(newLibraryDir, "TensileLibrary")
     fullMasterLibrary.applyNaming = timing(fullMasterLibrary.applyNaming)
-    fullMasterLibrary.applyNaming(kernelMinNaming, True)
+    fullMasterLibrary.applyNaming(kernelMinNaming)
     LibraryIO.write(masterFile, Utils.state(fullMasterLibrary), args.LibraryFormat)
 
   theMasterLibrary = fullMasterLibrary
