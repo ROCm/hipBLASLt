@@ -3309,6 +3309,12 @@ class Solution(collections.abc.Mapping):
 
   ########################################
   @ staticmethod
+  def getKeyNoInternalArgs(state):
+    state_copy = deepcopy(state)
+    state_copy["GlobalSplitU"] = "M" if state_copy["GlobalSplitU"] > 1 else state_copy["GlobalSplitU"]
+    return state_copy
+
+  @ staticmethod
   def getNameFull(state):
     requiredParameters = {}
     for key in state:
@@ -3323,7 +3329,7 @@ class Solution(collections.abc.Mapping):
   ########################################
   # Get Name Min
   @ staticmethod
-  def getNameMin(state, requiredParameters):
+  def getNameMin(state, requiredParameters, ignoreInternalArgs = False):
     if isCustomKernelConfig(state):
       return state["CustomKernelName"]
 
@@ -3343,6 +3349,9 @@ class Solution(collections.abc.Mapping):
           % ( Solution.getParameterNameAbbreviation("MatrixInstruction"), \
           state["MatrixInstM"], state["MatrixInstN"], state["MatrixInstK"], state["MatrixInstB"])
     name += "SN_" # LdcEqualsLdd Removed
+    backup = state["GlobalSplitU"]
+    if ignoreInternalArgs:
+      state["GlobalSplitU"] = "M" if state["GlobalSplitU"] > 1 else state["GlobalSplitU"]
     for key in sorted(state.keys()):
       if key in requiredParameters and key[0] != '_':
         if requiredParameters[key] and key != "CustomKernelName":
@@ -3352,6 +3361,7 @@ class Solution(collections.abc.Mapping):
             first = False
           name += "%s%s" % ( Solution.getParameterNameAbbreviation(key), \
               Solution.getParameterValueAbbreviation(key, state[key]) )
+    state["GlobalSplitU"] = backup
     return name
 
   ########################################

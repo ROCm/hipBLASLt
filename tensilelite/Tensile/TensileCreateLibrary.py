@@ -988,17 +988,22 @@ def generateKernelObjectsFromSolutions(solutions):
   # create solution writer and kernel writer
   kernels = []
   kernelHelperObjs = []
+  kernelNames = set()
   kernelHelperNames = set()
 
   for solution in solutions:
-    kernels += solution.getKernels()
+    solutionKernels = solution.getKernels()
+    for kernel in solutionKernels:
+        kName = Solution.getKeyNoInternalArgs(kernel)
+        if kName not in kernelNames:
+            kernels.append(kernel)
+            kernelNames.add(kName)
     solutionHelperKernels = solution.getHelperKernelObjects()
     kernelHelperObjs += solutionHelperKernels
     for ko in solutionHelperKernels:
       kernelHelperNames.add(ko.getKernelName())
 
   # remove duplicates while preserving order
-  kernels = list(dict.fromkeys(kernels))
   kernelHelperObjs = list(dict.fromkeys(kernelHelperObjs))
   return (kernels, kernelHelperObjs, kernelHelperNames)
 
