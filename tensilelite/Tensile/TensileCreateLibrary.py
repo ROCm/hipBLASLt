@@ -88,30 +88,25 @@ def processKernelSource(kernel, kernelWriterAssembly, ti):
 def getAssemblyCodeObjectFiles(kernels, kernelWriterAssembly, outputPath):
     destDir = ensurePath(os.path.join(outputPath, 'library'))
     asmDir = kernelWriterAssembly.getAssemblyDirectory()
-    assemblyKernels = [k for k in kernels if k['KernelLanguage'] == 'Assembly']
-    if len(assemblyKernels) == 0:
-        return []
-
     archs = collections.defaultdict(list)
-    for k in assemblyKernels:
+
+    for k in filter(lambda k: k['KernelLanguage'] == 'Assembly', kernels):
       archs[tuple(k['ISA'])].append(k)
+
     coFiles = []
+
     for arch, archKernels in archs.items():
-      archName = getGfxName(arch)
-      objectFiles = list([kernelWriterAssembly.getKernelFileBase(k) + '.o' \
-                          for k in archKernels if 'codeObjectFile' not in k])
-
-      numObjectFiles = len([1 for k in archKernels if k['KernelLanguage'] == 'Assembly'])
-
-      if numObjectFiles == 0:
+      if len(archKernels) == 0:
         continue
+
+      archName = getGfxName(arch)
+
       if globalParameters["MergeFiles"] or globalParameters["NumMergedFiles"] > 1 or globalParameters["LazyLibraryLoading"]:
+        objectFiles = [kernelWriterAssembly.getKernelFileBase(k) + '.o' for k in archKernels if 'codeObjectFile' not in k]
 
         #Group kernels from placeholder libraries
         coFileMap = collections.defaultdict(list)
-
-        if len(objectFiles):
-          coFileMap[os.path.join(destDir, "TensileLibrary_"+archName+".co")] = objectFiles
+        coFileMap[os.path.join(destDir, "TensileLibrary_"+archName+".co")] = objectFiles
 
         for kernel in archKernels:
           coName = kernel.get("codeObjectFile", None)
@@ -141,19 +136,19 @@ def getAssemblyCodeObjectFiles(kernels, kernelWriterAssembly, outputPath):
           coFiles.append(coFile)
       else:
         # no mergefiles
+        def newCoFileName(kName):
+          if globalParameters["PackageLibrary"]:
+            return os.path.join(destDir, archName, kName + '.co')
+          else:
+            return os.path.join(destDir, kName + '_' + archName + '.co')
 
-        assemblyKernelNames = [kernelWriterAssembly.getKernelFileBase(k) for k in archKernels]
-        origCOFiles = [os.path.join(asmDir,  k + '.co') for k in assemblyKernelNames]
-        newCOFiles  = []
-        if globalParameters["PackageLibrary"]:
-          newCOFiles = [os.path.join(destDir, archName, k + '.co') for k in assemblyKernelNames]
-        else:
-          newCOFiles = [os.path.join(destDir, k + '_' + archName + '.co') for k in assemblyKernelNames]
+        def orgCoFileName(kName):
+          return os.path.join(asmDir, kName + '.co')
 
-        for src, dst in Utils.tqdm(zip(origCOFiles, newCOFiles), "Copying code objects"):
+        for src, dst in Utils.tqdm(((orgCoFileName(kName), newCoFileName(kName)) for kName in \
+                                    map(lambda k: kernelWriterAssembly.getKernelFileBase(k), archKernels)), "Copying code objects"):
           shutil.copyfile(src, dst)
-        coFiles += newCOFiles
-
+          coFiles.append(dst)
     return coFiles
 
 def which(p):
