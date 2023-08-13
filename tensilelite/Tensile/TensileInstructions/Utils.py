@@ -28,6 +28,7 @@ from .Enums import InstType
 from .Formatting import printExit
 from .Instructions import Instruction, SWaitCnt
 
+from functools import lru_cache
 from math import log
 from typing import List, Tuple
 import os
@@ -75,6 +76,7 @@ def accvgpr(*args):
 def mgpr(*args):
     return _gpr("m", args)
 
+@lru_cache(maxsize=None)
 def _generateRegName(rawText):
     splitTxt = rawText.split("+")
     offsets = []
