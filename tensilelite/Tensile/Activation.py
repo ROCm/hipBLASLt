@@ -841,23 +841,22 @@ def RemoveEmptyBlocks(module):
     return module
 
 def FuseInstruction(currentInst, moduleAndIndex, fuseDebug):
-    assert(isinstance(currentInst, Instruction))
+    assert isinstance(currentInst, Instruction)
     newInst = None
     # Fuses if v_add_f16 to v_fma_f16 if v_add_f16 is a self adding instruction.
     # Currently, we only fuse when the vgpr is add by 1 in both instructions.
     # ex. v_add_f16 v0, 1.0, v0
     #     +  v_fma_f16 v0, -2.0, v0, 1.0
     #     => v_fma_f16 v0, -2.0, v0, 2.0
-    if isinstance(currentInst, VAddF16) or isinstance(currentInst, VAddPKF16) or \
-       isinstance(currentInst, VAddF32):
-        isPK = isinstance(currentInst, VAddPKF16)
+    if type(currentInst) in {VAddF16, VAddPKF16, VAddF32}:
+        isPK = type(currentInst) is VAddPKF16
         outVgpr = currentInst.dst
         addConst = ""
         isSelfAddConst = False
         for param in currentInst.srcs:
             if param == outVgpr:
                 isSelfAddConst = True
-            if (isinstance(param, float) or isinstance(param, int)):
+            if isinstance(param, (float, int)):
                 if param == 1:
                     addConst = param
 
@@ -870,20 +869,19 @@ def FuseInstruction(currentInst, moduleAndIndex, fuseDebug):
                     func = VFmaF32
                 else:
                     assert("You should not reach here.")
-                if isinstance(oldInst, func) and oldInst.srcs[2] == 1.0:
+                if type(oldInst) is func and oldInst.srcs[2] == 1.0:
                     # Cannot fuse if the target instruction has any rvalue reassigned or its lvalue
                     # used before the current instruction
                     if not FindAssignAndUse(oldInst, currentInst, outVgpr, outVgpr):
-                        newInst = fastdeepcopy(oldInst)
+                        newInst = type(oldInst)(oldInst.dst, *oldInst.srcs, oldInst.sdwa)
                         newInst.srcs[2] = addConst + newInst.srcs[2]
                         newInst.comment += " ( + 1 (fused))"
                         replaceInst(currentInst, newInst, fuseDebug)
                         removeOldInst(oldInst, currentInst, newInst, fuseDebug)
     # Fuses if v_mul_f16 to v_mul_f16 if the later one is a self multiplying instruction.
     # Only fuses when both instructions multiply constant
-    elif isinstance(currentInst, VMulF16) or isinstance(currentInst, VMulPKF16) or \
-         isinstance(currentInst, VMulF32) or isinstance(currentInst, VMulF64):
-        isPK = isinstance(currentInst, VMulPKF16)
+    elif type(currentInst) in {VMulF16, VMulPKF16, VMulF32, VMulF64}:
+        isPK = type(currentInst) is VMulPKF16
         outVgpr = currentInst.dst
         mulConst = ""
         newFuseInst = ""
@@ -892,16 +890,16 @@ def FuseInstruction(currentInst, moduleAndIndex, fuseDebug):
             if param == outVgpr:
                 isSelfMulConst = True
             # The constant may be an sgpr
-            if isinstance(param, RegisterContainer) and param.regType == 's':
+            if type(param) is RegisterContainer and param.regType == 's':
                 oldInst = moduleAndIndex.get(param)
-                if isinstance(oldInst, SMovB32):
+                if type(oldInst) is SMovB32:
                     oldparam = oldInst.srcs[0]
-                    if oldInst.dst == param and (isinstance(oldparam, float) or isinstance(oldparam, int)):
+                    if oldInst.dst == param and isinstance(oldparam, (float, int)):
                         # Cannot fuse if another instruction is using the same sgpr before a new assignment occurs
                         if not FindUse(oldInst, currentInst, param):
                             mulConst = oldparam
                             newFuseInst = oldInst
-            if (isinstance(param, float) or isinstance(param, int)):
+            if isinstance(param, (float, int)):
                 mulConst = param
 
         if isSelfMulConst and mulConst:
@@ -916,13 +914,13 @@ def FuseInstruction(currentInst, moduleAndIndex, fuseDebug):
                 else:
                     assert("You should not reach here.")
 
-                if isinstance(oldInst, func):
+                if type(oldInst) is func:
                     # Cannot fuse if the target instruction has any rvalue reassigned or its lvalue
                     # used before the current instruction
                     if not FindAssignAndUse(oldInst, currentInst, outVgpr, outVgpr):
                         for paramIdx, param in enumerate(oldInst.srcs):
-                            if (isinstance(param, float) or isinstance(param, int)):
-                                newInst = fastdeepcopy(oldInst)
+                            if isinstance(param, (float, int)):
+                                newInst = type(oldInst)(oldInst.dst, *oldInst.srcs, oldInst.sdwa)
                                 newValue = param * mulConst
                                 formatting = " (fused %f)" if isinstance(param, float) else " (fused %d)"
                                 if newFuseInst:
@@ -985,18 +983,20 @@ def FindAssignAndUseIter(startItem, endInst, assignVar, useVar):
     idx = -1
     isEnd = False
     isUse = False
-    if isinstance(startItem, Instruction):
+    if issubclass(type(startItem), Instruction):
         module = startItem.parent
         idx = module.items().index(startItem)
-    assert(isinstance(module, Module))
-    if idx + 1 < len(module.items()[idx + 1:]):
-        for item in module.items()[idx + 1:]:
+    assert issubclass(type(module), Module)
+    moduleToIter = module.items()[idx + 1:]
+    if idx + 1 < len(moduleToIter):
+        for item in moduleToIter:
             # Use
+            itemType = type(item)
             if item is endInst:
                 isEnd = True
-            elif isinstance(item, SNop):
+            elif itemType is SNop:
                 pass
-            elif isinstance(item, Instruction):
+            elif issubclass(itemType, Instruction):
                 if item.dst == assignVar:
                     isEnd = True
                     isUse = True
@@ -1007,7 +1007,7 @@ def FindAssignAndUseIter(startItem, endInst, assignVar, useVar):
                             isEnd = True
                             isUse = True
                             break
-            elif isinstance(item, Module):
+            elif issubclass(itemType, Module):
                 isEnd, isUse = FindAssignAndUseIter(item, endInst, assignVar, useVar)
             if isEnd:
                 return isEnd, isUse
