@@ -129,12 +129,7 @@ namespace Tensile
         }
         virtual std::string name() const
         {
-            auto        tmp = kernelName;
-            std::string gsu = "GSU" + std::to_string(sizeMapping.globalSplitU);
-            size_t      pos = tmp.find("GSUM");
-            if(pos != std::string::npos)
-                tmp.replace(pos, 4, gsu);
-            return tmp;
+            return solutionName;
         }
         virtual std::string description() const
         {
@@ -460,6 +455,7 @@ namespace Tensile
 
         int                          index = 0;
         std::string                  kernelName;
+        std::string                  solutionName;
         ThreadSafeValue<std::string> codeObjectFilename;
         bool                         debugKernel   = false;
         bool                         kernelArgsLog = false;
