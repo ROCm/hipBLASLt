@@ -3432,9 +3432,7 @@ class Solution(collections.abc.Mapping):
   @ staticmethod
   @ lru_cache(maxsize=None)
   def getPrimitiveParameterValueAbbreviation(key, value):
-    if key == "ISA":
-      return f"{value[0]}{value[1]}{value[2]:x}"
-    elif isinstance(value, str):
+    if isinstance(value, str):
       return Solution.getParameterNameAbbreviation(value)
     elif isinstance(value, bool):
       return "1" if value else "0"
@@ -3458,6 +3456,9 @@ class Solution(collections.abc.Mapping):
 
   @ staticmethod
   def getParameterValueAbbreviation( key, value ):
+    if key == "ISA":
+      return f"{value[0]}{value[1]}{value[2]:x}"
+
     compositieTypes = (dict, list, tuple,)
 
     if not isinstance(value, compositieTypes):
