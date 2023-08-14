@@ -30,8 +30,6 @@ from . import Common
 from . import Contractions
 from .SolutionStructs import Solution as OriginalSolution
 from .Utils import state
-from .Parallel import parallelApply
-
 
 class SingleSolutionLibrary:
     Tag = "Single"
