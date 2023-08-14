@@ -183,16 +183,3 @@ def ParallelMap2(function, objects, message="", enable=True, multiArg=True):
   print("{0}Done.".format(message))
   sys.stdout.flush()
   return rv
-
-def parallelApply(n_jobs: int, func, objects: collections.Sequence, multiArg: bool, message: str):
-  threadCount = n_jobs if n_jobs is not None else CPUThreadCount(True)
-
-  if len(objects) == 0:
-    return
-
-  print(f'{message}: Launching {threadCount} threads...')
-
-  if multiArg:
-    Parallel(n_jobs=threadCount, backend="threading")(delayed(func)(*obj) for obj in objects)
-  else:
-    Parallel(n_jobs=threadCount, backend="threading")(delayed(func)(obj) for obj in objects)
