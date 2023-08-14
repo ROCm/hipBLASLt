@@ -688,7 +688,9 @@ namespace Tensile
             {
                 args.template append<uint32_t>("bias_type",
                                                static_cast<uint32_t>(problem.biasType()));
-                args.template append<uint32_t>("strideBias", static_cast<uint32_t>(bias.strides()[bias.dimensions() - 1])); // reserved
+                args.template append<uint32_t>(
+                    "strideBias",
+                    static_cast<uint32_t>(bias.strides()[bias.dimensions() - 1])); // reserved
             }
         }
 
@@ -702,24 +704,35 @@ namespace Tensile
 
         if(runActivation)
         {
-            for(int i = 0; i < inputs.activationArgs.size(); i++)
+            for(int i = 0; i < problemType.activationArgLength; i++)
             {
                 std::string name = "activation_" + std::to_string(i);
-
-                if(problemType.activationComputeDataType == DataType::Half)
+                if(inputs.activationArgs.size() < problemType.activationArgLength)
                 {
-                    args.append((name + "_pk").c_str(),
-                                inputs.activationArgs[i],
-                                problemType.activationComputeDataType);
+                    if(problemType.activationComputeDataType == DataType::BFloat16)
+                    {
+                        args.template append<float>(name.c_str(), 0.f);
+                    }
+                    else
+                    {
+                        args.append(name.c_str(), 0, problemType.activationComputeDataType);
+                    }
                 }
-                else if(problemType.activationComputeDataType == DataType::BFloat16)
+                else
                 {
-                    // BFloat16 to float32.
-                    args.template append<uint16_t>((name + "_append").c_str(),
-                                                   static_cast<uint16_t>(0));
+                    if(problemType.activationComputeDataType == DataType::BFloat16)
+                    {
+                        args.template append<float>(name.c_str(),
+                                                    static_cast<float>((*std::get_if<BFloat16>(
+                                                        &inputs.activationArgs[i]))));
+                    }
+                    else
+                    {
+                        args.append(name.c_str(),
+                                    inputs.activationArgs[i],
+                                    problemType.activationComputeDataType);
+                    }
                 }
-                args.append(
-                    name.c_str(), inputs.activationArgs[i], problemType.activationComputeDataType);
             }
             if(problemType.activationType == ActivationType::All)
             {
@@ -730,7 +743,7 @@ namespace Tensile
     }
 
     template <bool T_Debug, typename KA>
-    void ContractionSolution::kernelArgs(KA&             args) const
+    void ContractionSolution::kernelArgs(KA& args) const
     {
         // GSU
         args.template append<uint32_t>("gsu", sizeMapping.globalSplitU);
@@ -867,7 +880,7 @@ namespace Tensile
             }
             else
             {
-                if constexpr(!std::is_same<KA, KernelArgumentsCounter>::value)
+                if constexpr(!std::is_same<KA, int>::value)
                     h_args.template append<uint32_t>("wgTable", 0);
             }
         }
@@ -1150,9 +1163,10 @@ namespace Tensile
                        || it == ContractionProblemGemm::TENSOR::B)
                     {
                         if(problemType.stridedBatched)
-                            args.template append<void *>("bias", const_cast<void*>(inputs.bias));
+                            args.template append<void*>("bias", const_cast<void*>(inputs.bias));
                         else
-                            args.template append<void **>("batchBias", const_cast<void **>(inputs.batchBias));
+                            args.template append<void**>("batchBias",
+                                                         const_cast<void**>(inputs.batchBias));
                         useBias = true;
                         break;
                     }
@@ -2323,7 +2337,8 @@ namespace Tensile
         }
         auto h_args = KernelArgumentsCounter();
         generateSingleCallGroupedGemm<false>(tmpProblem, inputs, h_args);
-        generateOutputConversionCallGroupedGemm<false>(tmpProblem, inputs, h_args);
+        if(sizeMapping.globalAccumulation)
+            generateOutputConversionCallGroupedGemm<false>(tmpProblem, inputs, h_args);
         return h_args.size();
     }
 
