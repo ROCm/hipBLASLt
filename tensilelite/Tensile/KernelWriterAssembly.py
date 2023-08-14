@@ -4236,36 +4236,62 @@ class KernelWriterAssembly(KernelWriter):
         module.add(SBranch(extReadEpilogueLabelEnd.getLabelName()))
         module.add(extReadEpilogueLabel)
         extArgOffset = self.externalArgLoader.getOffset()
-        structAddressOffset = 0
-        loadModuleExt = Module("Count Inst")
+        backupExtArgOffset = extArgOffset
+        loadList = [[-1, 0, extArgOffset]]
+        extArgOffset += self.states.userArgsInfo.scaleDVecSize
         if kernel["ProblemType"]["UseScaleDVec"] and (kernel["GlobalSplitU"] == 1):
-          loadModuleExt.addModuleAsFlatItems(module.addModuleAsFlatItems(self.externalArgLoader.loadAllKernArg(self.sgprs["AddressScaleDVec"], "ExternalArgAddress", 2)))
-        structAddressOffset += (2 * self.states.bpr)
-        self.externalArgLoader.setOffset(extArgOffset + structAddressOffset)
+          loadList[-1][0] = self.sgprs["AddressScaleDVec"]
+          loadList[-1][1] += self.states.userArgsInfo.scaleDVecSize
+        else:
+          loadList.append([-1, 0, extArgOffset])  # Need to start a new loadAllKernArg cause the argument is not consecutively anymore.
+        extArgOffset += self.states.userArgsInfo.scaleAlphaVecSize
         if kernel["ProblemType"]["UseScaleAlphaVec"] and (kernel["GlobalSplitU"] == 1):
-          loadModuleExt.addModuleAsFlatItems(module.addModuleAsFlatItems(self.externalArgLoader.loadAllKernArg(self.sgprs["AddressScaleAlphaVec"], "ExternalArgAddress", 2)))
-        structAddressOffset += (2 * self.states.bpr)
-        self.externalArgLoader.setOffset(extArgOffset + structAddressOffset)
-        biasLoadSize = self.states.numSgprAddressBias + self.states.BiasType + self.states.BiasStride
+          if loadList[-1][0] == -1:
+            loadList[-1][0] = self.sgprs["UseScaleAlphaVec"]
+          loadList[-1][1] += self.states.userArgsInfo.scaleAlphaVecSize
+        else:
+          loadList.append([-1, 0, extArgOffset])  # Need to start a new loadAllKernArg cause the argument is not consecutively anymore.
+        extArgOffset += self.states.userArgsInfo.biasSize
         if self.states.numSgprAddressBias:
-          loadModuleExt.addModuleAsFlatItems(module.addModuleAsFlatItems(self.externalArgLoader.loadAllKernArg(self.sgprs["AddressBias"], "ExternalArgAddress", biasLoadSize)))
-        structAddressOffset += (biasLoadSize * self.states.bpr)
-        self.externalArgLoader.setOffset(extArgOffset + structAddressOffset)
-        eLoadSize = self.states.rpga + self.states.e.numSgprStrides
+          biasLoadSize = (self.states.numSgprAddressBias + self.states.BiasType + self.states.BiasStride) * 4
+          if loadList[-1][0] == -1:
+            loadList[-1][0] = self.sgprs["AddressBias"]
+          loadList[-1][1] += biasLoadSize
+          if biasLoadSize < self.states.userArgsInfo.biasSize:
+            loadList.append([-1, 0, extArgOffset])  # Need to start a new loadAllKernArg cause the argument is not consecutively anymore.
+        else:
+            loadList.append([-1, 0, extArgOffset])  # Need to start a new loadAllKernArg cause the argument is not consecutively anymore.
+        extArgOffset += self.states.userArgsInfo.eSize
         if kernel["ProblemType"]["UseE"] and (kernel["GlobalSplitU"] == 1):
-          loadModuleExt.addModuleAsFlatItems(module.addModuleAsFlatItems(self.externalArgLoader.loadAllKernArg(self.sgprs["AddressE"], "ExternalArgAddress", eLoadSize)))
-        structAddressOffset += (eLoadSize * self.states.bpr)
-        self.externalArgLoader.setOffset(extArgOffset + structAddressOffset)
-        needActTypeArg = 1 if self.states.numActivationTypeArgSize else 0
-        actNames = kernel["ProblemType"]["ActivationType"].getAdditionalArgStringList()
-        actLoadSize = len(actNames) * self.states.numActivationArgSize + needActTypeArg
-        if runActivation and actLoadSize > 0:
-          actStr = actNames[0] if len(actNames) > 0 else "ActivationType"
-          loadModuleExt.addModuleAsFlatItems(module.addModuleAsFlatItems(self.externalArgLoader.loadAllKernArg(self.sgprs[actStr], "ExternalArgAddress", actLoadSize)))
-        structAddressOffset += (actLoadSize * self.states.bpr)
-        self.externalArgLoader.setOffset(extArgOffset + structAddressOffset)
+          if loadList[-1][0] == -1:
+            loadList[-1][0] = self.sgprs["AddressE"]
+          loadList[-1][1] += self.states.userArgsInfo.eSize
+        else:
+          loadList.append([-1, 0, extArgOffset])  # Need to start a new loadAllKernArg cause the argument is not consecutively anymore.
+        extArgOffset += self.states.userArgsInfo.activationSize
+        if runActivation:
+          needActTypeArg = 1 if self.states.numActivationTypeArgSize else 0
+          actNames = kernel["ProblemType"]["ActivationType"].getAdditionalArgStringList()
+          actLoadSize = (len(actNames) * self.states.numActivationArgSize + needActTypeArg) * 4
+          if (actLoadSize == self.states.userArgsInfo.activationSize) or len(actNames) > 0:
+            if loadList[-1][0] == -1:
+              loadList[-1][0] = self.sgprs[actNames[0]]
+            loadList[-1][1] += actLoadSize
+          else:
+            loadList.append(["ActivationType", actLoadSize])  # Need to start a new loadAllKernArg cause no AdditionalArgStringList is needed
+            loadList.append([-1, 0, extArgOffset - (needActTypeArg * 4)])  # Need to start a new loadAllKernArg cause the argument is not consecutively anymore.
+        else:
+          loadList.append([-1, 0, extArgOffset])   # Need to start a new loadAllKernArg cause the argument is not consecutively anymore.
+        # Start reading arguments
+        loadModuleExt = Module("Count Inst")
+        for loadInfo in loadList:
+          if loadInfo[0] == -1:
+            continue
+          dwordLen = loadInfo[1] // 4
+          self.externalArgLoader.setOffset(loadInfo[2])
+          loadModuleExt.addModuleAsFlatItems(module.addModuleAsFlatItems(self.externalArgLoader.loadAllKernArg(loadInfo[0], "ExternalArgAddress", dwordLen)))
         self.states.numStoreSgprInstExt = loadModuleExt.countType(SMemLoadInstruction)
-        self.externalArgLoader.setOffset(extArgOffset)
+        self.externalArgLoader.setOffset(backupExtArgOffset)
         module.add(extReadEpilogueLabelEnd)
       else:
         argOffset = self.argLoader.getOffset() # Backup offset
