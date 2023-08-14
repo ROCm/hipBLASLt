@@ -49,4 +49,7 @@ docBin/
 *.mtx
 
 # Python
-__pycache__
+**/__pycache__
+
+#clangd
+.cache

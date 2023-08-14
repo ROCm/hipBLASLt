@@ -29,6 +29,7 @@ from .Common import assignParameterWithDefault, \
                     validMFMA, validSMFMA, validParameters, \
                     validGEMMTypes, HPATypes, roundUp, validWMMA
 from .TensileInstructions import DataType, roundUpToNearestMultiple
+from .TensileInstructions.Base import fastdeepcopy as deepcopy
 
 from .KernelWriterBetaOnly import KernelWriterBetaOnly
 from .KernelWriterConversion import KernelWriterConversion
@@ -43,8 +44,8 @@ from .CustomKernels import isCustomKernelConfig
 
 from collections import OrderedDict
 from collections.abc import Mapping
-from copy import deepcopy
 from enum import Enum
+from functools import lru_cache
 from typing import List
 
 import collections
@@ -3336,36 +3337,34 @@ class Solution(collections.abc.Mapping):
     if isCustomKernelConfig(state):
       return state["CustomKernelName"]
 
-    name = ""
-    first = True
-    # put problem first
+    components = []
+
     if "ProblemType" in state:
-      name += str(state["ProblemType"]) + "_"
+      components.append(f'{str(state["ProblemType"])}')
+      # name += str(state["ProblemType"]) + "_"
+
     if "MacroTile0" in state \
         and "MacroTile1" in state \
         and "DepthU" in state:
-      name += "%s%ux%ux%u_" \
-          % ( Solution.getParameterNameAbbreviation("MacroTile"), \
-          state["MacroTile0"], state["MacroTile1"], state["DepthU"] )
+      components.append(f'{Solution.getParameterNameAbbreviation("MacroTile")}{state["MacroTile0"]}x{state["MacroTile1"]}x{state["DepthU"]}')
+
     if "MatrixInstM" in state:
-      name += "%s%ux%ux%ux%u_" \
-          % ( Solution.getParameterNameAbbreviation("MatrixInstruction"), \
-          state["MatrixInstM"], state["MatrixInstN"], state["MatrixInstK"], state["MatrixInstB"])
-    name += "SN_" # LdcEqualsLdd Removed
+      components.append(f'{Solution.getParameterNameAbbreviation("MatrixInstruction")}{state["MatrixInstM"]}x{state["MatrixInstN"]}x{state["MatrixInstB"]}')
+
     backup = state["GlobalSplitU"]
+
     if ignoreInternalArgs:
       state["GlobalSplitU"] = "M" if state["GlobalSplitU"] > 1 else state["GlobalSplitU"]
+
+    components.append('SN')
     for key in sorted(state.keys()):
       if key in requiredParameters and key[0] != '_':
         if requiredParameters[key] and key != "CustomKernelName":
-          if not first:
-            name += "_"
-          else:
-            first = False
-          name += "%s%s" % ( Solution.getParameterNameAbbreviation(key), \
-              Solution.getParameterValueAbbreviation(key, state[key]) )
+          components.append(f'{Solution.getParameterNameAbbreviation(key)}{Solution.getParameterValueAbbreviation(key, state[key])}')
+
     state["GlobalSplitU"] = backup
-    return name
+
+    return '_'.join(components)
 
   ########################################
   # create a dictionary of lists of parameter values
@@ -3424,16 +3423,20 @@ class Solution(collections.abc.Mapping):
 
   ########################################
   @ staticmethod
-  def getParameterNameAbbreviation( name ):
-    return ''.join([c for c in name if not c.islower()])
+  @ lru_cache(maxsize=None)
+  def getParameterNameAbbreviation( name: str ):
+    return ''.join(c for c in name if c.isupper())
 
   ########################################
+
+  class NonprimitiveParameterValueException(Exception):
+    pass
+
   @ staticmethod
-  def getParameterValueAbbreviation( key, value ):
-    if key == 'ISA':
-      return str(value[0]) + str(value[1]) + ('%x' % value[2])
-    elif isinstance(value, str):
-      return ''.join([c for c in value if c.isupper()])
+  @ lru_cache(maxsize=None)
+  def getPrimitiveParameterValueAbbreviation(key, value):
+    if isinstance(value, str):
+      return Solution.getParameterNameAbbreviation(value)
     elif isinstance(value, bool):
       return "1" if value else "0"
     elif isinstance(value, int):
@@ -3443,21 +3446,6 @@ class Solution(collections.abc.Mapping):
         return "n%01u" % abs(value)
     elif isinstance(value, ProblemType):
       return str(value)
-    elif isinstance(value, tuple):
-      abbrev = ""
-      for i in range(0, len(value)):
-        abbrev += str(value[i])
-      return abbrev
-    elif isinstance(value, list):
-      abbrev = ""
-      for i in range(0, len(value)):
-        abbrev += Solution.getParameterValueAbbreviation(key, value[i])
-        if i < len(value)-1:
-          abbrev += "_"
-      return abbrev
-    elif isinstance(value, dict):
-      s =  "_".join(["%d%d"%(pos,k) for pos,k in value.items()])
-      return s
     elif isinstance(value, float):
       val1 = int(value)
       val2 = int(round(value*100)) - int(value)*100
@@ -3466,10 +3454,27 @@ class Solution(collections.abc.Mapping):
       else:
         s = "%d" % (val1)
       return s
+
+  ########################################
+
+  @ staticmethod
+  def getParameterValueAbbreviation( key, value ):
+    if key == "ISA":
+      return f"{value[0]}{value[1]}{value[2]:x}"
+
+    compositieTypes = (dict, list, tuple,)
+
+    if not isinstance(value, compositieTypes):
+      return Solution.getPrimitiveParameterValueAbbreviation(key, value)
+    elif isinstance(value, tuple):
+      return ''.join(str(v) for v in value)
+    elif isinstance(value, list):
+      return '_'.join(Solution.getParameterValueAbbreviation(key, v) for v in value)
+    elif isinstance(value, dict):
+      return "_".join(f"{pos:d}{k:d}" for pos,k in value.items())
     else:
       printExit('Parameter {key}={value} is new object type ({t})'.format(key=key, value=value, t=type(value)))
       return str(value)
-
 
   ##########################
   # make class look like dict
