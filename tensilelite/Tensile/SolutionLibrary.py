@@ -31,7 +31,6 @@ from . import Contractions
 from .SolutionStructs import Solution as OriginalSolution
 from .Utils import state
 
-
 class SingleSolutionLibrary:
     Tag = "Single"
 
@@ -424,7 +423,7 @@ class MasterSolutionLibrary:
 
     def state(self):
         rv = {
-            "solutions": state(iter(list(self.solutions.values()))),
+            "solutions": state(self.solutions.values()),
             "library": state(self.library)
         }
 
@@ -434,10 +433,7 @@ class MasterSolutionLibrary:
 
     def applyNaming(self, naming=None):
         if naming is None:
-            #allSolutions = itertools.chain(iter(list(self.solutions.values())), iter(list(self.sourceSolutions.values())))
-            kernels = list(
-                itertools.chain(*[s.originalSolution.getKernels()
-                                  for s in self.solutions.values()]))
+            kernels = itertools.chain(s.originalSolution.getKernels() for s in self.solutions.values())
             naming = OriginalSolution.getMinNaming(kernels)
 
         for s in list(self.solutions.values()):
