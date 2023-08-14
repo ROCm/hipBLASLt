@@ -207,7 +207,6 @@ endif()
 # Export targets
 if(NOT BUILD_CUDA)
   rocm_export_targets(TARGETS roc::hipblaslt
-                      PREFIX hipblaslt
                       DEPENDS PACKAGE hip
                       NAMESPACE roc::)
 else()
