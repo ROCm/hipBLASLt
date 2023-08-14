@@ -3284,6 +3284,9 @@ class Solution(collections.abc.Mapping):
         else:
           requiredParameters[key] = False
 
+    # FIXME: Remove this when GSU = 1 and GSU > 1 use the same kernel
+    requiredParameters["GlobalSplitU"] = True
+
     if "MatrixInstM" in nonCKObjs[0]._state:
       # Use MIWaveGroup and MIWaveTile instead of WG and MT
       requiredParameters["MIWaveTile"]  = True
