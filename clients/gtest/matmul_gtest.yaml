@@ -910,4 +910,5 @@ Tests:
   alpha: 1
   beta: [ 0, 2 ]
   unit_check: 1
+  gpu_arch: '90a'
 ...
