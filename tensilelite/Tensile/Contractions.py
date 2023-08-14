@@ -529,6 +529,7 @@ class SizeMapping:
 
 class Solution:
     StateKeys = ['name',
+                 'kernelName',
                 'problemType',
                 'hardwarePredicate',
                 'problemPredicate',
@@ -551,6 +552,9 @@ class Solution:
 
         if 'SolutionNameMin' in d:
             rv.name = d['SolutionNameMin']
+
+        if 'KernelNameMin' in d:
+            rv.kernelName = d['KernelNameMin']
 
         rv.problemType = ProblemType.FromOriginalState(d['ProblemType'])
 

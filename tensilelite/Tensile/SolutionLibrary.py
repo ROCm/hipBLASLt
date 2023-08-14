@@ -441,7 +441,8 @@ class MasterSolutionLibrary:
             naming = OriginalSolution.getMinNaming(kernels)
 
         for s in list(self.solutions.values()):
-            s.name = OriginalSolution.getNameMin(s.originalSolution.getKernels()[0], naming, True)
+            s.name = OriginalSolution.getNameMin(s.originalSolution.getKernels()[0], naming)
+            s.kernelName = OriginalSolution.getNameMin(s.originalSolution.getKernels()[0], naming, True)
 
     def remapSolutionIndicesStartingFrom(self, curIndex):
         reIndexMap = {}

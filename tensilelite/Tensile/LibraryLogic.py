@@ -1,6 +1,6 @@
 ################################################################################
 #
-# Copyright (C) 2022 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -122,6 +122,7 @@ def analyzeProblemType( problemType, problemSizeGroups, inputParameters ):
     s = logicAnalyzer.solutions[i]
     s["SolutionIndex"] = i
     s["SolutionNameMin"] = Solution.getNameMin(s, solutionMinNaming)
+    s["KernelNameMin"]   = Solution.getNameMin(s, solutionMinNaming, True)
     print1("(%2u) %s : %s" % (i, Solution.getNameMin(s, solutionMinNaming), Solution.getNameFull(s)))
 
   if enableTileSelection:
@@ -155,6 +156,7 @@ def analyzeProblemType( problemType, problemSizeGroups, inputParameters ):
       selectionSolutionIndex = solutionsStartIndex + i
       selectionSolutionsIds.add(selectionSolutionIndex)
       validSolution["SolutionNameMin"] = Solution.getNameMin(validSolution, solutionMinNaming)
+      validSolution["KernelNameMin"]   = Solution.getNameMin(validSolution, solutionMinNaming, True)
       validSolution["Ideals"] = validSolutionInfo
       selectionSolutions.append(validSolution)
 
