@@ -436,8 +436,9 @@ class MasterSolutionLibrary:
             kernels = itertools.chain(s.originalSolution.getKernels() for s in self.solutions.values())
             naming = OriginalSolution.getMinNaming(kernels)
 
-        for s in self.solutions.values():
-            s.name = OriginalSolution.getNameMin(s.originalSolution.getKernels()[0], naming, True)
+        for s in list(self.solutions.values()):
+            s.name = OriginalSolution.getNameMin(s.originalSolution.getKernels()[0], naming)
+            s.kernelName = OriginalSolution.getNameMin(s.originalSolution.getKernels()[0], naming, True)
 
     def remapSolutionIndicesStartingFrom(self, curIndex):
         reIndexMap = {}

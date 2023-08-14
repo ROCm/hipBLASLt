@@ -327,6 +327,7 @@ def benchmarkProblemType(problemTypeConfig, problemSizeGroupConfig, problemSizeG
                 solution = solutions[i]
                 solution["SolutionIndex"] = i
                 solution["SolutionNameMin"] = Solution.getNameMin(solution, solutionMinNaming)
+                solution["KernelNameMin"]   = Solution.getNameMin(solution, solutionMinNaming, True)
         else:
             solutions = None
             print1("# Using cached solution data")
