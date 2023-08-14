@@ -52,7 +52,8 @@ namespace Tensile
             using iot = IOTraits<IO>;
             static void mapping(IO& io, ContractionSolution& s)
             {
-                iot::mapRequired(io, "name", s.kernelName);
+                iot::mapRequired(io, "name", s.solutionName);
+                iot::mapRequired(io, "kernelName", s.kernelName);
                 iot::mapRequired(io, "index", s.index);
 
                 iot::mapRequired(io, "hardwarePredicate", s.hardwarePredicate);

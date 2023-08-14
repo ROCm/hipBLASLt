@@ -1,6 +1,6 @@
 ################################################################################
 #
-# Copyright (C) 2022 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -90,6 +90,7 @@ def updateValidSolutions(validSolutions, analyzerSolutions, solutionMinNaming):
     selectionSolutionIndex = solutionsStartIndex + i
     selectionSolutionsIds.add(selectionSolutionIndex)
     validSolution["SolutionNameMin"] = Solution.getNameMin(validSolution, solutionMinNaming)
+    validSolution["KernelNameMin"]   = Solution.getNameMin(validSolution, solutionMinNaming, True)
     validSolution["Ideals"] = validSolutionInfo
     selectionSolutions.append(validSolution)
 
