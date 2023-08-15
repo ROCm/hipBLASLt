@@ -1335,8 +1335,7 @@ namespace Tensile
     {
         if constexpr(std::is_same<KA, KernelArguments>::value)
         {
-            bool not4 = false;
-            bool not2 = false;
+            size_t wi_count = 0;
             for(int idx = 0; idx < problems.size(); idx++)
             {
                 auto problem = problems[idx];
@@ -1351,9 +1350,17 @@ namespace Tensile
                 for(size_t i = 0; i < problem.batchIndices().size(); i++)
                     wiZ *= problem.batchSize(i);
 
-                if(wiX * wiY * wiZ > 2048)
+                wi_count += (wiX * wiY * wiZ);
+            }
+
+            //reach threashhold to trigger wider load
+            if(wi_count > 2048)
+            {
+                bool not4 = false;
+                bool not2 = false;
+                for(int idx = 0; idx < problems.size(); idx++)
                 {
-                    //reach threashhold to trigger wider load
+                    auto problem = problems[idx];
                     if(problem.freeSizeA(0) % 4 != 0
                        && DataTypeInfo::Get(problemType.aType).elementSize
                               < DataTypeInfo::Get(DataType::Double).elementSize)
@@ -1361,12 +1368,12 @@ namespace Tensile
                     if(problem.freeSizeA(0) % 2 != 0)
                         not2 = true;
                 }
-            }
 
-            if(!not4)
-                vw = 4;
-            else if(!not2)
-                vw = 2;
+                if(!not4)
+                    vw = 4;
+                else if(!not2)
+                    vw = 2;
+            }
         }
 
         int32_t  wiLeft  = 0;
@@ -2316,7 +2323,8 @@ namespace Tensile
         }
         auto h_args = KernelArgumentsCounter();
         generateSingleCallGroupedGemm<false>(problems, inputs, h_args);
-        generateOutputConversionCallGroupedGemm<false>(problems, inputs, h_args);
+        if(sizeMapping.globalAccumulation)
+            generateOutputConversionCallGroupedGemm<false>(problems, inputs, h_args);
         sizeInByte += h_args.size();
 
         return sizeInByte;
