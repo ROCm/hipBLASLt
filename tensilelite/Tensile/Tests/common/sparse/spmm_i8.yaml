@@ -32,7 +32,7 @@ BenchmarkProblems:
       Batched: True
       Activation: True
       ActivationHPA: True
-  
+
     - # BenchmarkProblemSizeGroup - Standard
       InitialSolutionParameters:
       BenchmarkCommonParameters:
@@ -43,16 +43,17 @@ BenchmarkProblems:
           - [32, 32, 32, 1,  1,  1, 1,  1, 1 ]
           - [32, 32, 32, 1,  1,  2, 2,  2, 2 ]
           - [32, 32, 32, 1,  1,  2, 4,  4, 2 ]
+          - [32, 32, 32, 1,  1,  4, 4,  2, 2 ]
           - [32, 32, 32, 1,  1,  7, 2,  1, 4 ]
         - GlobalReadVectorWidthA: [8]
-        - DepthU: [32,64]
+        - DepthU: [32,64,128]
         - TransposeLDS: [0,1]
         - LdsPadA: [-1]
         - LdsPadB: [-1]
         - LdsPadMetadata: [-1]
         - StaggerU: [0,4]
         - ScheduleIterAlg: [3]
-        - PrefetchLocalRead: [1]
+        - PrefetchLocalRead: [1,2,3]
         - ClusterLocalRead: [1]
         - PrefetchGlobalRead: [2]
         - StoreRemapVectorWidth: [-1]
@@ -62,6 +63,7 @@ BenchmarkProblems:
         - DirectToVgprSparseMetadata: [0,1]
         - WorkGroupMapping: [18]
         - StoreVectorWidth: [-1]
+        - AssertFree0ElementMultiple: [1,8]
       BenchmarkForkParameters:
       JoinParameters:
       BenchmarkJoinParameters:
@@ -75,6 +77,14 @@ BenchmarkProblems:
           - Exact: [15, 15, 1, 136] # classic format
           - Exact: [15, 15, 1, 256] # classic format
           - Exact: [15, 15, 1, 264] # classic format
+          - Exact: [16, 16, 1, 16] # classic format
+          - Exact: [16, 16, 1, 32] # classic format
+          - Exact: [16, 16, 1, 64] # classic format
+          - Exact: [16, 16, 1, 96] # classic format
+          - Exact: [16, 16, 1, 128] # classic format
+          - Exact: [16, 16, 1, 136] # classic format
+          - Exact: [16, 16, 1, 256] # classic format
+          - Exact: [16, 16, 1, 264] # classic format
           - Exact: [256, 256, 1, 16] # classic format
           - Exact: [256, 256, 1, 24] # classic format
           - Exact: [256, 256, 1, 32] # classic format
@@ -85,7 +95,7 @@ BenchmarkProblems:
           - Exact: [256, 256, 1, 256] # classic format
         - ActivationArgs:
           - [Enum: none]
-  
+
   #########################################
   ## TN - standard
   #########################################
@@ -103,7 +113,7 @@ BenchmarkProblems:
       Batched: True
       Activation: True
       ActivationHPA: True
-  
+
     - # BenchmarkProblemSizeGroup - Standard
       InitialSolutionParameters:
       BenchmarkCommonParameters:
@@ -114,16 +124,17 @@ BenchmarkProblems:
           - [32, 32, 32, 1,  1,  1, 1,  1, 1 ]
           - [32, 32, 32, 1,  1,  2, 2,  2, 2 ]
           - [32, 32, 32, 1,  1,  2, 4,  4, 2 ]
+          - [32, 32, 32, 1,  1,  4, 4,  2, 2 ]
           - [32, 32, 32, 1,  1,  7, 2,  1, 4 ]
-        - GlobalReadVectorWidthA: [8]
-        - DepthU: [32,64]
+        - GlobalReadVectorWidthA: [8,16]
+        - DepthU: [32,64,128]
         - TransposeLDS: [0,1]
         - LdsPadA: [-1]
         - LdsPadB: [-1]
         - LdsPadMetadata: [-1]
         - StaggerU: [0,4]
         - ScheduleIterAlg: [3]
-        - PrefetchLocalRead: [1]
+        - PrefetchLocalRead: [1,2,3]
         - ClusterLocalRead: [1]
         - PrefetchGlobalRead: [2]
         - StoreRemapVectorWidth: [-1]
@@ -133,6 +144,7 @@ BenchmarkProblems:
         - DirectToVgprSparseMetadata: [0,1]
         - WorkGroupMapping: [18]
         - StoreVectorWidth: [-1]
+        - AssertFree0ElementMultiple: [1,8]
       BenchmarkForkParameters:
       JoinParameters:
       BenchmarkJoinParameters:
@@ -146,6 +158,14 @@ BenchmarkProblems:
           - Exact: [15, 15, 1, 136] # classic format
           - Exact: [15, 15, 1, 256] # classic format
           - Exact: [15, 15, 1, 264] # classic format
+          - Exact: [16, 16, 1, 16] # classic format
+          - Exact: [16, 16, 1, 32] # classic format
+          - Exact: [16, 16, 1, 64] # classic format
+          - Exact: [16, 16, 1, 96] # classic format
+          - Exact: [16, 16, 1, 128] # classic format
+          - Exact: [16, 16, 1, 136] # classic format
+          - Exact: [16, 16, 1, 256] # classic format
+          - Exact: [16, 16, 1, 264] # classic format
           - Exact: [256, 256, 1, 16] # classic format
           - Exact: [256, 256, 1, 24] # classic format
           - Exact: [256, 256, 1, 32] # classic format
@@ -175,7 +195,7 @@ BenchmarkProblems:
       Batched: True
       Activation: True
       ActivationHPA: True
-  
+
     - # BenchmarkProblemSizeGroup - Standard
       InitialSolutionParameters:
       BenchmarkCommonParameters:
@@ -186,16 +206,17 @@ BenchmarkProblems:
           - [32, 32, 32, 1,  1,  1, 1,  1, 1 ]
           - [32, 32, 32, 1,  1,  2, 2,  2, 2 ]
           - [32, 32, 32, 1,  1,  2, 4,  4, 2 ]
+          - [32, 32, 32, 1,  1,  4, 4,  2, 2 ]
           - [32, 32, 32, 1,  1,  7, 2,  1, 4 ]
         - GlobalReadVectorWidthA: [8]
-        - DepthU: [32,64]
+        - DepthU: [32,64,128]
         - TransposeLDS: [0,1]
         - LdsPadA: [-1]
         - LdsPadB: [-1]
         - LdsPadMetadata: [-1]
         - StaggerU: [0,4]
         - ScheduleIterAlg: [3]
-        - PrefetchLocalRead: [1]
+        - PrefetchLocalRead: [1,2,3]
         - ClusterLocalRead: [1]
         - PrefetchGlobalRead: [2]
         - StoreRemapVectorWidth: [-1]
@@ -205,6 +226,7 @@ BenchmarkProblems:
         - DirectToVgprSparseMetadata: [0,1]
         - WorkGroupMapping: [18]
         - StoreVectorWidth: [-1]
+        - AssertFree0ElementMultiple: [1,8]
       BenchmarkForkParameters:
       JoinParameters:
       BenchmarkJoinParameters:
@@ -218,6 +240,14 @@ BenchmarkProblems:
           - Exact: [15, 15, 1, 136] # classic format
           - Exact: [15, 15, 1, 256] # classic format
           - Exact: [15, 15, 1, 264] # classic format
+          - Exact: [16, 16, 1, 16] # classic format
+          - Exact: [16, 16, 1, 32] # classic format
+          - Exact: [16, 16, 1, 64] # classic format
+          - Exact: [16, 16, 1, 96] # classic format
+          - Exact: [16, 16, 1, 128] # classic format
+          - Exact: [16, 16, 1, 136] # classic format
+          - Exact: [16, 16, 1, 256] # classic format
+          - Exact: [16, 16, 1, 264] # classic format
           - Exact: [256, 256, 1, 16] # classic format
           - Exact: [256, 256, 1, 24] # classic format
           - Exact: [256, 256, 1, 32] # classic format
@@ -247,7 +277,7 @@ BenchmarkProblems:
       Batched: True
       Activation: True
       ActivationHPA: True
-  
+
     - # BenchmarkProblemSizeGroup - Standard
       InitialSolutionParameters:
       BenchmarkCommonParameters:
@@ -258,16 +288,17 @@ BenchmarkProblems:
           - [32, 32, 32, 1,  1,  1, 1,  1, 1 ]
           - [32, 32, 32, 1,  1,  2, 2,  2, 2 ]
           - [32, 32, 32, 1,  1,  2, 4,  4, 2 ]
+          - [32, 32, 32, 1,  1,  4, 4,  2, 2 ]
           - [32, 32, 32, 1,  1,  7, 2,  1, 4 ]
         - GlobalReadVectorWidthA: [8]
-        - DepthU: [32,64]
+        - DepthU: [32,64,128]
         - TransposeLDS: [0,1]
         - LdsPadA: [-1]
         - LdsPadB: [-1]
         - LdsPadMetadata: [-1]
         - StaggerU: [0,4]
         - ScheduleIterAlg: [3]
-        - PrefetchLocalRead: [1]
+        - PrefetchLocalRead: [1,2,3]
         - ClusterLocalRead: [1]
         - PrefetchGlobalRead: [2]
         - StoreRemapVectorWidth: [-1]
@@ -277,6 +308,7 @@ BenchmarkProblems:
         - DirectToVgprSparseMetadata: [0,1]
         - WorkGroupMapping: [18]
         - StoreVectorWidth: [-1]
+        - AssertFree0ElementMultiple: [1,8]
       BenchmarkForkParameters:
       JoinParameters:
       BenchmarkJoinParameters:
@@ -290,6 +322,14 @@ BenchmarkProblems:
           - Exact: [15, 15, 1, 136] # classic format
           - Exact: [15, 15, 1, 256] # classic format
           - Exact: [15, 15, 1, 264] # classic format
+          - Exact: [16, 16, 1, 16] # classic format
+          - Exact: [16, 16, 1, 32] # classic format
+          - Exact: [16, 16, 1, 64] # classic format
+          - Exact: [16, 16, 1, 96] # classic format
+          - Exact: [16, 16, 1, 128] # classic format
+          - Exact: [16, 16, 1, 136] # classic format
+          - Exact: [16, 16, 1, 256] # classic format
+          - Exact: [16, 16, 1, 264] # classic format
           - Exact: [256, 256, 1, 16] # classic format
           - Exact: [256, 256, 1, 24] # classic format
           - Exact: [256, 256, 1, 32] # classic format

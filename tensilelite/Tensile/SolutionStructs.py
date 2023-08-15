@@ -2859,6 +2859,8 @@ class Solution(collections.abc.Mapping):
     else:
       state["GuaranteeNoPartialB"] = True
 
+    state["GuaranteeNoPartialMetadata"] = False if state["ProblemType"]["SparseA"] else True
+
     # SourceSwap
     if state["StoreRemapVectorWidth"]:
       if state["SourceSwap"]:
@@ -3121,7 +3123,7 @@ class Solution(collections.abc.Mapping):
     #--
     # ShiftPtr can't use UseSgprForGRO since it needs to modify the VGPR pointers
     if bufferLoad and state["_UseSgprForGRO"] and state["EdgeType"]=="ShiftPtr":
-      if not state["GuaranteeNoPartialA"] or not state["GuaranteeNoPartialB"]:
+      if not state["GuaranteeNoPartialA"] or not state["GuaranteeNoPartialB"] or not state["GuaranteeNoPartialMetadata"]:
         state["_UseSgprForGRO"] = False
         #reject(state, "PBC with wide load has insufficient overlap guarantees- try GRVW=1 or adding appropriate Assert*ElementMultiple")
 
