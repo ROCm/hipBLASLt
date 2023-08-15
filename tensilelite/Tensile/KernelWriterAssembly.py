@@ -1205,18 +1205,15 @@ class KernelWriterAssembly(KernelWriter):
         ######
         # linear search
         ######
-        if (1):
+        if(1):
           tmpSgprNumGemm = 27
-          tmpSgprOrigKernArgAddress0 = 10
-          tmpSgprOrigKernArgAddress1 = 11
-          tmpSgprSkipArgPreload = 9
-          module.add(SMovB64(dst=sgpr(tmpSgprOrigKernArgAddress0,2), src=sgpr("KernArgAddress",2)))
+          tmpSgprSkipWgTableGen = 9
           if self.states.numSgprPreload > 0:
             preloadSgprStartIdx = self.states.rpga  #number sgprs of kernel argument buffer address
             #TODO: remove hardcode once destination SGPRs are in-order
             module.add(SMovB32(dst=sgpr(tmpSgprNumGemm), src=sgpr(preloadSgprStartIdx), comment="Grouped Gemm: Load num of Gemms"))
             module.add(SMovB32(dst=sgpr("GSU"), src=sgpr(preloadSgprStartIdx+6), comment="Load GSU data"))
-            module.add(SMovB32(dst=sgpr(tmpSgprSkipArgPreload), src=sgpr(preloadSgprStartIdx+5)))
+            module.add(SMovB32(dst=sgpr(tmpSgprSkipWgTableGen), src=sgpr(preloadSgprStartIdx+5)))
             module.add(SMovB32(dst=sgpr("KernArgAddress+1"), src=sgpr(preloadSgprStartIdx+4), comment="Load address of kernel arguments"))
             module.add(SMovB32(dst=sgpr("KernArgAddress"), src=sgpr(preloadSgprStartIdx+3), comment="Load address of kernel arguments"))
             module.add(SMovB32(dst=sgpr("ExternalArgAddress+1"), src=sgpr(preloadSgprStartIdx+2), comment="Load address of external kernel arguments"))
@@ -1228,13 +1225,12 @@ class KernelWriterAssembly(KernelWriter):
           else:
             module.addComment1("Grouped Gemm: Load num of Gemms")
             module.add(self.argLoader.loadKernArg(tmpSgprNumGemm, "KernArgAddress", hex(0), dword=1))
+            module.addComment1("Grouped Gemm: Load GSU data")
+            module.add(self.argLoader.loadKernArg("GSU", "KernArgAddress", hex(24), dword=1))
             module.addComment1("Grouped Gemm: Load address of external kernel arguments")
             module.add(self.argLoader.loadKernArg("ExternalArgAddress", "KernArgAddress", hex(4), dword=2))
             module.addComment1("Grouped Gemm: Load address of kernel arguments")
             module.add(self.argLoader.loadKernArg("KernArgAddress", "KernArgAddress", hex(12), dword=2))
-            module.add(SLoadB32(dst=sgpr(tmpSgprSkipArgPreload), base=sgpr(tmpSgprOrigKernArgAddress0,2), soffset=hex(20)))
-            module.addComment1("Grouped Gemm: Load GSU data")
-            module.add(self.argLoader.loadKernArg("GSU", tmpSgprOrigKernArgAddress0, hex(24), dword=1))
             module.add(SWaitCnt(lgkmcnt=0))
 
           # FIXME: Need to fix these cause it may cause data hazard
@@ -1275,31 +1271,30 @@ class KernelWriterAssembly(KernelWriter):
             module.add(SMovB64(dst=sgpr(tmpSgprArgAddress0,2), src=sgpr("KernArgAddress",2)))
 
           # preload all args to L1
-          module.add(SCmpKEQU32(src=sgpr(tmpSgprSkipArgPreload), simm16=1, comment="check skipWgTableGen"))
-          label_skipArgPreload = Label("skipWgTableGen", "")
-          module.add(SCBranchSCC1(labelName=label_skipArgPreload.getLabelName()))
-          numWaves = self.states.kernel["MIWaveGroup"][0] * self.states.kernel["MIWaveGroup"][1]
-          module.addComment1("Grouped Gemm:: preload all args to L1 by %d waves"%numWaves)
-          tmpVgpr = self.vgprPool.checkOut(1)
-          module.add(VLShiftRightB32(dst=vgpr(tmpVgpr), shiftHex=hex(log2(self.states.kernel["WavefrontSize"])), src=vgpr("Serial")))
-          module.add(VReadfirstlaneB32(dst=sgpr(tmpSgpr0), src=vgpr(tmpVgpr)))
-          self.vgprPool.checkIn(tmpVgpr)
-          label_argPreloads = Label("argPreloads", "")
-          module.add(label_argPreloads)
-          module.add(SMulI32(dst=sgpr(tmpSgpr1), src0=sgpr(tmpSgpr0), src1=sgpr(tmpSgprArgOffsett)))
-          module.add(SAddU32(dst=sgpr(tmpSgpr1), src0=sgpr(tmpSgpr1), src1=sgpr(tmpSgprAddrM)))
-          module.add(SCmpLtU32(src0=sgpr(tmpSgpr0), src1=sgpr(tmpSgprNumGemm)))
-          module.add(SCSelectB32(dst=sgpr(tmpSgpr1), src0=sgpr(tmpSgpr1), src1=sgpr(tmpSgprAddrM)))
-          module.add(self.argLoader.loadKernArg(tmpSgprM, tmpSgprArgAddress0, sgpr(tmpSgpr1), dword=4))
-          module.add(SAddU32(dst=sgpr(tmpSgpr0), src0=sgpr(tmpSgpr0), src1=hex(numWaves)))
-          module.add(SCmpLtU32(src0=sgpr(tmpSgpr0), src1=sgpr(tmpSgprNumGemm)))
-          module.add(SCBranchSCC1(labelName=label_argPreloads.getLabelName()))
-          module.add(SWaitCnt(lgkmcnt=0))
-          module.add(SBarrier())
-          module.add(SMovB32(dst=sgpr(tmpSgprSkipArgPreload), src=1))
-          module.add(SStoreB32(src=sgpr(tmpSgprSkipArgPreload), base=sgpr(tmpSgprOrigKernArgAddress0,2), soffset=hex(20)))
-          module.add(label_skipArgPreload)
-
+          # module.add(SCmpKEQU32(src=sgpr(tmpSgprSkipArgPreload), simm16=1, comment="check skipWgTableGen"))
+          # label_skipArgPreload = Label("skipWgTableGen", "")
+          # module.add(SCBranchSCC1(labelName=label_skipArgPreload.getLabelName()))
+          # numWaves = self.states.kernel["MIWaveGroup"][0] * self.states.kernel["MIWaveGroup"][1]
+          # module.addComment1("Grouped Gemm:: preload all args to L1 by %d waves"%numWaves)
+          # tmpVgpr = self.vgprPool.checkOut(1)
+          # module.add(VLShiftRightB32(dst=vgpr(tmpVgpr), shiftHex=hex(log2(self.states.kernel["WavefrontSize"])), src=vgpr("Serial")))
+          # module.add(VReadfirstlaneB32(dst=sgpr(tmpSgpr0), src=vgpr(tmpVgpr)))
+          # self.vgprPool.checkIn(tmpVgpr)
+          # label_argPreloads = Label("argPreloads", "")
+          # module.add(label_argPreloads)
+          # module.add(SMulI32(dst=sgpr(tmpSgpr1), src0=sgpr(tmpSgpr0), src1=sgpr(tmpSgprArgOffsett)))
+          # module.add(SAddU32(dst=sgpr(tmpSgpr1), src0=sgpr(tmpSgpr1), src1=sgpr(tmpSgprAddrM)))
+          # module.add(SCmpLtU32(src0=sgpr(tmpSgpr0), src1=sgpr(tmpSgprNumGemm)))
+          # module.add(SCSelectB32(dst=sgpr(tmpSgpr1), src0=sgpr(tmpSgpr1), src1=sgpr(tmpSgprAddrM)))
+          # module.add(self.argLoader.loadKernArg(tmpSgprM, tmpSgprArgAddress0, sgpr(tmpSgpr1), dword=4))
+          # module.add(SAddU32(dst=sgpr(tmpSgpr0), src0=sgpr(tmpSgpr0), src1=hex(numWaves)))
+          # module.add(SCmpLtU32(src0=sgpr(tmpSgpr0), src1=sgpr(tmpSgprNumGemm)))
+          # module.add(SCBranchSCC1(labelName=label_argPreloads.getLabelName()))
+          # module.add(SWaitCnt(lgkmcnt=0))
+          # module.add(SBarrier())
+          # module.add(SMovB32(dst=sgpr(tmpSgprSkipArgPreload), src=1))
+          # module.add(SStoreB32(src=sgpr(tmpSgprSkipArgPreload), base=sgpr(tmpSgprOrigKernArgAddress0,2), soffset=hex(20)))
+          # module.add(label_skipArgPreload)
 
           # prefetch 1 arg load
           module.addComment1("Grouped Gemm:: prefetch 1 arg load")
@@ -1362,20 +1357,21 @@ class KernelWriterAssembly(KernelWriter):
         # binary search
         ######
         else:
-          tmpSgprNumGemm = 5
-          tmpSgprOrigKernArgAddress0 = 8
-          tmpSgprOrigKernArgAddress1 = 9
-          tmpSgprSkipWgTableGen = 10
+          tmpSgprNumGemm = 27
+          tmpSgprOrigKernArgAddress0 = 10
+          tmpSgprOrigKernArgAddress1 = 11
+          tmpSgprSkipWgTableGen = 9
           module.add(SMovB64(dst=sgpr(tmpSgprOrigKernArgAddress0,2), src=sgpr("KernArgAddress",2)))
           module.addComment1("Grouped Gemm: Load num of Gemms")
           module.add(self.argLoader.loadKernArg(tmpSgprNumGemm, "KernArgAddress", hex(0), dword=1))
+          module.addComment1("Grouped Gemm: Load GSU data")
+          module.add(self.argLoader.loadKernArg("GSU", "KernArgAddress", hex(24), dword=1))
+          module.addComment1("Grouped Gemm: Load skipWgTableGen")
+          module.add(self.argLoader.loadKernArg(tmpSgprSkipWgTableGen, "KernArgAddress", hex(20), dword=1))
           module.addComment1("Grouped Gemm: Load address of external kernel arguments")
           module.add(self.argLoader.loadKernArg("ExternalArgAddress", "KernArgAddress", hex(4), dword=2))
           module.addComment1("Grouped Gemm: Load address of kernel arguments")
           module.add(self.argLoader.loadKernArg("KernArgAddress", "KernArgAddress", hex(12), dword=2))
-          module.add(SLoadB32(dst=sgpr(tmpSgprSkipWgTableGen), base=sgpr(tmpSgprOrigKernArgAddress0,2), soffset=hex(20)))
-          module.addComment1("Grouped Gemm: Load GSU data")
-          module.add(self.argLoader.loadKernArg("GSU", tmpSgprOrigKernArgAddress0, hex(24), dword=1))
           module.add(SWaitCnt(lgkmcnt=0))
           #############
           # generatoe wgTable in kernel
