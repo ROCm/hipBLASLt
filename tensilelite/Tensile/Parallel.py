@@ -26,6 +26,7 @@ import collections
 import itertools
 import os
 import sys
+import time
 
 from joblib import Parallel, delayed
 
@@ -143,8 +144,10 @@ def ParallelMap(function, objects, message="", enable=True, method=None, maxTask
 
   print("{0}Launching {1} threads{2}...".format(message, threadCount, countMessage))
   sys.stdout.flush()
+  currentTime = time.time()
   rv = mapFunc(function, objects)
-  print("{0}Done.".format(message))
+  totalTime = time.time() - currentTime
+  print("{0}Done. ({1:.1f} secs elapsed)".format(message, totalTime))
   sys.stdout.flush()
   pool.close()
   return rv
@@ -175,11 +178,13 @@ def ParallelMap2(function, objects, message="", enable=True, multiArg=True):
   if message != "": message += ": "
   print("{0}Launching {1} threads{2}...".format(message, threadCount, countMessage))
   sys.stdout.flush()
+  currentTime = time.time()
 
   pcall = pcallWithGlobalParamsMultiArg if multiArg else pcallWithGlobalParamsSingleArg
   pargs = zip(objects, itertools.repeat(globalParameters))
   rv = Parallel(n_jobs=threadCount)(delayed(pcall)(function, a, params) for a, params in pargs)
 
-  print("{0}Done.".format(message))
+  totalTime = time.time() - currentTime
+  print("{0}Done. ({1:.1f} secs elapsed)".format(message, totalTime))
   sys.stdout.flush()
   return rv
