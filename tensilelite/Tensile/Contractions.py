@@ -228,11 +228,6 @@ class ProblemType:
         rv.activationNoGuard = False
         if 'ActivationNoGuard' in d:
             rv.activationNoGuard = d["ActivationNoGuard"]
-        if 'ActivationComputeDataType' in d:
-            rv.activationComputeDataType = DataType(d['ActivationComputeDataType'])
-        else:
-            rv.activationComputeDataType = DataType(d['ComputeDataType'] if rv.activationHPA else \
-                                                    d['DestDataType'])
         rv.sparseA = False
         if 'SparseA' in d:
             rv.sparseA = d['SparseA']

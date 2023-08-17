@@ -187,26 +187,24 @@ class ProblemType(Mapping):
       self["ActivationType"] = ActivationType(typeStr)
     else:
       self["ActivationType"] = ActivationType('none')
-    if "ActivationHPA" in config:
-      self["ActivationHPA"] = config["ActivationHPA"]
+    if "ActivationComputeDataType" in config:
+      self["ActivationComputeDataType"] = DataType(config["ActivationComputeDataType"])
     else:
-      self["ActivationHPA"] = False
+      self["ActivationComputeDataType"] = self["ComputeDataType"]
 
     if self["ActivationType"] != 'none':
-      if ((not self["HighPrecisionAccumulate"]) and self["ActivationHPA"]):
-          printExit("Must enable HighPrecisionAccumulate to use ActivationHPA.")
-      if (not self["ActivationHPA"]) and \
+      # This is a dummy guard in case we currently don't have a converter to convert data from compute type to activation compute type
+      if self["ActivationComputeDataType"] not in [self["ComputeDataType"], self["DestDataType"]]:
+        printWarning("TensileLite currently only supports ActivationComputeDataType (%s) = ComputeDataType (%s) or DestDataType (%s). \
+                      ActivationComputeDataType will be set to ComputeDataType automatically."%(self["ActivationComputeDataType"].toChar(), \
+                                                                                                self["ComputeDataType"], \
+                                                                                                self["DestDataType"]))
+        self["ActivationComputeDataType"] = self["ComputeDataType"]
+      if (self["ActivationComputeDataType"].numRegisters() != self["ComputeDataType"].numRegisters()) and \
         (self["DataType"].numRegisters() < self["DestDataType"].numRegisters()):
-          printWarning("TensileLite only supports ActivationHPA = True if DestDataType > DataType. \
-                        ActivationHPA will be set to True automatically.")
-          self["ActivationHPA"] = True
-      if self["ActivationHPA"] and (self["DataType"] == self["DestDataType"]) and \
-        (self["DestDataType"].isSingle() or self["DestDataType"].isDouble()):
-        printWarning("Single and Double does not support ActivationHPA. ActivationHPA will be set to False automatically.")
-        self["ActivationHPA"] = False
-
-    self["ActivationComputeDataType"] = self["ComputeDataType"] if self["ActivationHPA"] else \
-                                        self["DestDataType"]
+        printWarning("TensileLite only supports ActivationComputeDataType = ComputeDataType if DestDataType > DataType. \
+                      ActivationComputeDataType will be set to ComputeDataType automatically.")
+        self["ActivationComputeDataType"] = self["ComputeDataType"]
 
     if "UseE" in config:
       if config["UseE"]:
@@ -502,7 +500,7 @@ class ProblemType(Mapping):
         name += "_A"
       else:
         name += "_%s"%str(self["ActivationType"]).upper()
-    if self["ActivationHPA"]: name += "H"
+      name += self["ActivationComputeDataType"].toChar()
     if self["ActivationNoGuard"]: name += "NG"
 
     if self["UseScaleAB"]: name += "_SAB"

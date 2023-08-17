@@ -948,7 +948,7 @@ validParameters = {
 
     # Enable CP preload kernel arguments feature
     # It can reduce time of loading kernel arguments by s_load.
-    # It needs new complier and vbios to support this feature. 
+    # It needs new complier and vbios to support this feature.
     "PreloadKernArgs":            [False, True],
     # Kernels should be written in assembly or source
     # if assembly, ISA will determine architecture
@@ -1186,7 +1186,6 @@ defaultProblemType = {
 
     # Activation
     "Activation":               False,
-    "ActivationHPA":            False,
     "ActivationNoGuard":        False,
     # For kernels putting arguments in workspaces instead of kernel arguments, they can choose to support user arguments input instead.
     "SupportUserArgs":          False
