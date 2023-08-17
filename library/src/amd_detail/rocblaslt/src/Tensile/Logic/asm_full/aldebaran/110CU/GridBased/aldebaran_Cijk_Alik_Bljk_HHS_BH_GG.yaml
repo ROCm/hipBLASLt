@@ -4,8 +4,7 @@
 - [Device 0050, Device 0051, Device 0052, Device 0054, Device 0062, Device 7400, Device
     740c]
 - Activation: false
-  ActivationComputeDataType: 4
-  ActivationHPA: false
+  ActivationComputeDataType: 0
   ActivationType: none
   AllowNoFreeDims: false
   AssignedDerivedParameters: true
@@ -176,8 +175,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -395,8 +393,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -614,8 +611,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -833,8 +829,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -1052,8 +1047,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -1271,8 +1265,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -1490,8 +1483,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -1709,8 +1701,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -1928,8 +1919,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -2147,8 +2137,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -2366,8 +2355,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -2585,8 +2573,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -2804,8 +2791,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -3023,8 +3009,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -3242,8 +3227,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -3461,8 +3445,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -3680,8 +3663,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -3899,8 +3881,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -4118,8 +4099,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -4337,8 +4317,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -4556,8 +4535,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -4775,8 +4753,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -4994,8 +4971,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -5213,8 +5189,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -5432,8 +5407,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -5651,8 +5625,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -5870,8 +5843,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -6089,8 +6061,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -6308,8 +6279,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -6527,8 +6497,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -6746,8 +6715,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -6965,8 +6933,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -7184,8 +7151,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -7403,8 +7369,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -7622,8 +7587,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -7841,8 +7805,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -8060,8 +8023,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -8279,8 +8241,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -8498,8 +8459,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -8717,8 +8677,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -8936,8 +8895,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -9155,8 +9113,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -9374,8 +9331,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -9593,8 +9549,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -9812,8 +9767,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -10031,8 +9985,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -10250,8 +10203,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -10469,8 +10421,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -10688,8 +10639,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -10907,8 +10857,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -11126,8 +11075,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -11345,8 +11293,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -11564,8 +11511,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -11783,8 +11729,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -12002,8 +11947,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -12221,8 +12165,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -12440,8 +12383,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -12659,8 +12601,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -12878,8 +12819,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -13097,8 +13037,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -13316,8 +13255,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -13535,8 +13473,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -13754,8 +13691,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -13973,8 +13909,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -14192,8 +14127,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -14411,8 +14345,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -14630,8 +14563,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -14849,8 +14781,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -15068,8 +14999,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -15287,8 +15217,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -15506,8 +15435,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -15725,8 +15653,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -15944,8 +15871,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -16163,8 +16089,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -16382,8 +16307,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -16601,8 +16525,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -16820,8 +16743,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -17039,8 +16961,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -17258,8 +17179,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -17477,8 +17397,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -17696,8 +17615,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -17915,8 +17833,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -18134,8 +18051,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -18353,8 +18269,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -18572,8 +18487,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -18791,8 +18705,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -19010,8 +18923,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -19229,8 +19141,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -19448,8 +19359,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -19667,8 +19577,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -19886,8 +19795,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -20105,8 +20013,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -20324,8 +20231,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -20543,8 +20449,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -20762,8 +20667,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -20981,8 +20885,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -21200,8 +21103,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -21419,8 +21321,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -21638,8 +21539,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -21857,8 +21757,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -22076,8 +21975,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -22295,8 +22193,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -22514,8 +22411,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -22733,8 +22629,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -22952,8 +22847,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -23171,8 +23065,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -23390,8 +23283,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -23609,8 +23501,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -23828,8 +23719,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -24047,8 +23937,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -24266,8 +24155,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -24485,8 +24373,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -24704,8 +24591,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -24923,8 +24809,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -25142,8 +25027,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -25361,8 +25245,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -25580,8 +25463,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -25799,8 +25681,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -26018,8 +25899,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -26237,8 +26117,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -26456,8 +26335,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -26675,8 +26553,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -26894,8 +26771,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -27113,8 +26989,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -27332,8 +27207,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -27551,8 +27425,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -27770,8 +27643,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -27989,8 +27861,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -28208,8 +28079,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -28427,8 +28297,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -28646,8 +28515,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -28865,8 +28733,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -29084,8 +28951,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -29303,8 +29169,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -29522,8 +29387,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -29741,8 +29605,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -29960,8 +29823,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -30179,8 +30041,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -30398,8 +30259,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -30617,8 +30477,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -30836,8 +30695,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -31055,8 +30913,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -31274,8 +31131,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -31493,8 +31349,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -31712,8 +31567,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -31931,8 +31785,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -32150,8 +32003,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -32369,8 +32221,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -32588,8 +32439,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -32807,8 +32657,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -33026,8 +32875,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -33245,8 +33093,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -33464,8 +33311,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -33683,8 +33529,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -33902,8 +33747,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -34121,8 +33965,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -34340,8 +34183,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -34559,8 +34401,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -34778,8 +34619,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -34997,8 +34837,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -35216,8 +35055,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -35435,8 +35273,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -35654,8 +35491,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -35873,8 +35709,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -36092,8 +35927,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -36311,8 +36145,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -36530,8 +36363,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -36749,8 +36581,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -36968,8 +36799,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -37187,8 +37017,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -37406,8 +37235,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -37625,8 +37453,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -37844,8 +37671,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -38063,8 +37889,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -38282,8 +38107,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -38501,8 +38325,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -38720,8 +38543,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -38939,8 +38761,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -39158,8 +38979,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -39377,8 +39197,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -39596,8 +39415,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -39815,8 +39633,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -40034,8 +39851,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -40253,8 +40069,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -40472,8 +40287,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -40691,8 +40505,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -40910,8 +40723,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -41129,8 +40941,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -41348,8 +41159,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -41567,8 +41377,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -41786,8 +41595,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -42005,8 +41813,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -42224,8 +42031,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -42443,8 +42249,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -42662,8 +42467,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -42881,8 +42685,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -43100,8 +42903,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -43319,8 +43121,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -43538,8 +43339,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -43757,8 +43557,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -43976,8 +43775,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -44195,8 +43993,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -44414,8 +44211,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -44633,8 +44429,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -44852,8 +44647,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -45071,8 +44865,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -45290,8 +45083,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -45509,8 +45301,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -45728,8 +45519,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -45947,8 +45737,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -46166,8 +45955,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -46385,8 +46173,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -46604,8 +46391,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -46823,8 +46609,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -47042,8 +46827,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -47261,8 +47045,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -47480,8 +47263,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -47699,8 +47481,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -47918,8 +47699,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -48137,8 +47917,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -48356,8 +48135,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -48575,8 +48353,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -48794,8 +48571,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -49013,8 +48789,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -49232,8 +49007,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -49451,8 +49225,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -49670,8 +49443,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -49889,8 +49661,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -50108,8 +49879,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -50327,8 +50097,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -50546,8 +50315,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -50765,8 +50533,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -50984,8 +50751,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -51203,8 +50969,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -51422,8 +51187,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -51641,8 +51405,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
@@ -51872,8 +51635,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationNoGuard: false
       ActivationType: none
       AllowNoFreeDims: false
@@ -52119,8 +51881,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationNoGuard: false
       ActivationType: none
       AllowNoFreeDims: false
@@ -52366,8 +52127,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationNoGuard: false
       ActivationType: none
       AllowNoFreeDims: false
@@ -52612,8 +52372,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationNoGuard: false
       ActivationType: none
       AllowNoFreeDims: false
