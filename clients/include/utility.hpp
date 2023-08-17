@@ -73,7 +73,7 @@
 #undef stderr
 #pragma GCC poison cout cerr clog stdout stderr gets puts putchar fputs fprintf printf sprintf    \
     vfprintf vprintf vsprintf perror strerror strtok gmtime ctime asctime localtime tmpnam putenv \
-        clearenv fcloseall ecvt fcvt sleep abort strsignal
+    clearenv fcloseall ecvt fcvt sleep abort strsignal
 #else
 // Suppress warnings about hipMalloc(), hipFree() except in hipblaslt-test and hipblaslt-bench
 #undef hipMalloc
@@ -472,3 +472,4 @@ void print_strided_batched(
 }
 
 std::vector<void*> benchmark_allocation();
+int32_t hipblaslt_get_arch_major();
