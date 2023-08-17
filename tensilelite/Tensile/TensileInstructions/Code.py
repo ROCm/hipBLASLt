@@ -87,6 +87,9 @@ class Macro(Item):
         """
         self.add(TextBlock("/* %s */\n"%comment))
 
+    def addGSUSYNC(self, comment):
+        self.add(TextBlock(comment))
+
     def prettyPrint(self,indent=""):
         ostream = ""
         ostream += '%s%s "%s"\n'%(indent, type(self).__name__, self.name)
@@ -234,6 +237,9 @@ class Module(Item):
 
     def addComment2(self, comment):
         self.add(TextBlock(block3Line(comment)))
+
+    def addGSUSYNC(self, comment):
+        self.add(TextBlock(comment))
 
     def prettyPrint(self,indent=""):
         ostream = ""

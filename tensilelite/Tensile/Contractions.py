@@ -498,6 +498,8 @@ class SizeMapping:
             globalAccum = 1
         if d['_GlobalAccumulation'] == 'MultipleBuffer':
             globalAccum = 2
+        if d['_GlobalAccumulation'] == 'MultipleBufferSingleKernel':
+            globalAccum = 3
         return cls(workGroup                = d['WorkGroup'],
                    macroTile                = cls.ReadOriginalMacroTile(d),
                    threadTile               = d['ThreadTile'],

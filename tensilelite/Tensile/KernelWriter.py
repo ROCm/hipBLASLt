@@ -1882,6 +1882,81 @@ class KernelWriter(metaclass=abc.ABCMeta):
     module.add(self.closeLoop(kernel, tensorParametersA, tensorParametersB, self.states.unrollIdx, finalLoop, oddLabel=oddLabel))
     return module
 
+  def GSUSYNCzero(self, kernel, GSU):
+    module = Module("GSUSYNCzero")
+    # module.addComment1("Magic div and mod functions")
+    # macro = Macro("GSUSYNCzero")
+    # macro.add(VCvtU32toF32(dst="v[\\vQuotient]", src="v[\\vDivisor]"))
+    contents = \
+    "\n\
+//zeroing\n\
+v_mov_b32 v0, 0x0 \n\
+v_mov_b32 v1, 0x0 \n\
+v_mov_b32 v2, 0x0 \n\
+v_mov_b32 v3, 0x0 \n\
+v_mov_b32 v4, 0 \n\
+\n\
+S_OR_B32 s[sgprSrdDd], s[sgprWorkGroup0], s[sgprWorkGroup1]\n\
+s_cmp_eq_u32 s[sgprSrdDd], 0              // specific WG\n\
+s_cbranch_scc0 label_ZEROINGEND           // \n\
+\n\
+s_cmp_eq_u32 s[sgprGSUSumIdx], 0          // \n\
+s_cbranch_scc0 label_ZEROINGEND           // jump if not\n\
+\n\
+s_mul_hi_u32 s[sgprtmp3E], s[sgprStrideCK], "+str(GSU)+"            // cal zeroing start position\n\
+s_mul_i32 s[sgprtmp2E], s[sgprStrideCK], "+str(GSU)+"               //\n\
+s_lshl_b64 s[sgprtmp2E:sgprtmp2E+1], s[sgprtmp2E:sgprtmp2E+1], 2    // scale by bpe\n\
+\n\
+s_mov_b32 s[sgprSrdDd+2], 0x80000000\n\
+s_mov_b32 s[sgprSrdDd+3], Srd127_96\n\
+\n\
+s_add_u32 s[sgprSrdDd+0], s[sgprAddressD+0], s[sgprtmp2E]    // add lo to SRD\n\
+s_addc_u32 s[sgprSrdDd+1], s[sgprAddressD+1], s[sgprtmp3E]   // add hi to SRD\n"
+    module.addGSUSYNC(contents)
+
+    r, mod = divmod(GSU, 4)
+    print("sdgdfpghk[rk[pkdhkdf[gpldp]]]")
+    print(GSU)
+    print(r)
+    print(mod)
+
+    for i in range(GSU//4):
+        contents = \
+        "\n\
+buffer_store_dwordx4 v[0:3], v4, s[sgprSrdDd:sgprSrdDd+3], 0 offen offset:4*"+str(i)+" // zeroing\n"
+        module.addGSUSYNC(contents)
+    i = GSU//4
+    if mod == 1:
+        contents = \
+        "\n\
+buffer_store_dword v[0], v4, s[sgprSrdDd:sgprSrdDd+3], 0 offen offset:4*"+str(i)+" // \n"
+    if mod == 2:
+        contents = \
+        "\n\
+buffer_store_dwordx2 v[0:1], v4, s[sgprSrdDd:sgprSrdDd+3], 0 offen offset:4*"+str(i)+" // \n"
+    if mod == 3:
+        contents = \
+        "\n\
+buffer_store_dwordx2 v[0:1], v4, s[sgprSrdDd:sgprSrdDd+3], 0 offen offset:4*"+str(i)+" // \n\
+buffer_store_dword v[0], v4, s[sgprSrdDd:sgprSrdDd+3], 0 offen offset:4*"+str(i)+"+2 // \n"
+    module.addGSUSYNC(contents)
+
+    if kernel["ProblemType"]["UseScaleDVec"]:
+      offset = "0x84"
+    else:
+      offset = "0x60"
+
+    contents = \
+    "\n\
+s_mov_b32 s[sgprGSUSync] 1\n\
+s_atomic_add s[sgprGSUSync], s[sgprKernArgAddress:sgprKernArgAddress+1], "+offset+" glc\n\
+s_waitcnt vmcnt(0)                                 // 8wait for global read\n\
+\n\
+label_ZEROINGEND:                              // jump to end\n\
+//zeroing\n"
+    module.addGSUSYNC(contents)
+    return module
+
   ##############################################################################
   # Kernel Body
   ##############################################################################
@@ -1984,6 +2059,9 @@ class KernelWriter(metaclass=abc.ABCMeta):
       if self.states.doShadowInit:
         module.add(self.openShadowInit())
         module.add(self.globalWriteWorkGroupInit(kernel))
+        # module.addComment("GSUSYNCzero") #GSUSYNC
+        # module.add(MacroInstruction("GSUSYNCzero", args=[]))
+        module.add(self.GSUSYNCzero(kernel, kernel["GlobalSplitU"]))
         if self.states.doShadowInit == 2:
           module.add(self.initC(kernel)) # initC while waiting for global reads
           if kernel["ProblemType"]["Gradient"] and kernel["ProblemType"]["UseBias"] and (kernel["ProblemType"]["BiasSrc"] == "A" or kernel["ProblemType"]["BiasSrc"] == "B"):
@@ -2102,7 +2180,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
       if not kernel["SuppressNoLoadLoop"]:
         if kernel["KernelLanguage"] == "Assembly" and kernel["OptNoLoadLoop"] and \
            kernel["BufferLoad"] and kernel["BufferStore"] and self.states.doShadowInit and \
-           kernel["LocalSplitU"]==1 and kernel["GlobalSplitU"] == 1 and \
+           kernel["LocalSplitU"]==1 and (kernel["GlobalSplitU"] == 1 or kernel["GlobalSplitUAlgorithm"] == 'MultipleBufferSingleKernel') and \
            self.states.actualSummationLoops==1:
 
           # two different noLoadLoops:
@@ -2295,7 +2373,8 @@ class KernelWriter(metaclass=abc.ABCMeta):
       module.add(self.globalReadIncrementAB(kernel, tensorParametersA, tensorParametersB, i, 0))
       module.add(self.closeLoop(kernel, tensorParametersA, tensorParametersB, i, True))
 
-    module.add(self.endSummation(kernel, tensorParametersA, tensorParametersB))
+    endSumLabel = "Summation_End_OptNLL2"
+    module.add(self.endSummation(kernel, tensorParametersA, tensorParametersB, endSumLabel))
     if not self.states.doShadowInit:
       module.add(self.globalWriteWorkGroupInit(kernel))
 
@@ -3398,13 +3477,34 @@ class KernelWriter(metaclass=abc.ABCMeta):
     for idxChar in kernel["PackedC1IdxChars"][:-1]:
       self.defineSgpr("MagicNumberSize%s"%idxChar, 1)
       self.defineSgpr("MagicShiftSize%s"%idxChar, 1)
+
+    GSUFusion = 0
+    # activation??
+    # if kernel["ProblemType"]["UseScaleDVec"] == False \
+    # and kernel["ProblemType"]["UseBias"] == False \
+    # and kernel["_GlobalAccumulation"] == 'MultipleBuffer' \
+    # and kernel["GlobalSplitU"] > 1:
+    if (kernel["GlobalSplitU"] > 1) and (kernel["GlobalSplitUAlgorithm"] == 'MultipleBufferSingleKernel'):
+      self.defineSgpr("AddressTC", numSgprAddressD)
+      # self.defineSgpr("GSUSync", 1)
+      # self.defineSgpr("AddressDd", 2)
+      # self.defineSgpr("AddressCc", 2)
+      GSUFusion = 1
+    # self.defineSgpr("GSUSync", 1)
+
     self.defineSgpr("Alpha", numSgprAlpha, numSgprAlpha)
     self.states.numSgprAlpha = numSgprAlpha
     if kernel["ProblemType"]["UseBeta"]:
       self.defineSgpr("Beta", numSgprBeta, numSgprBeta)
       self.states.numSgprBeta = numSgprBeta
 
-
+    if (kernel["GlobalSplitU"] > 1) and (kernel["GlobalSplitUAlgorithm"] == 'MultipleBufferSingleKernel'):
+      # self.defineSgpr("AddressTC", numSgprAddressD)
+      self.defineSgpr("GSUSync", 1)
+      # self.defineSgpr("AddressDd", 2)
+      # self.defineSgpr("AddressCc", 2)
+      GSUFusion = 1
+    # self.defineSgpr("GSUSync", 1)
     #------------------------
     # Registers defined below this point are not available in the post-loop
     # Post-loop is after tail loop exits, ie the store code.
@@ -3417,7 +3517,8 @@ class KernelWriter(metaclass=abc.ABCMeta):
       numSgprAddressD + numSgprAddressC + numSgprAddressA + numSgprAddressB + numSgprAlpha + numSgprAddressMetadata + \
       (numSgprBeta if kernel["ProblemType"]["UseBeta"] else 0) + \
       self.states.d.numSgprStrides + self.states.c.numSgprStrides + self.states.a.numSgprStrides + self.states.b.numSgprStrides + self.states.m.numSgprStrides + \
-      len(kernel["PackedC0IdxChars"][:-1])*2 + len(kernel["PackedC1IdxChars"][:-1])*2
+      len(kernel["PackedC0IdxChars"][:-1])*2 + len(kernel["PackedC1IdxChars"][:-1])*2 + \
+      (numSgprAddressD if GSUFusion == 1 else 0)
     # Get kernel argument end here
     ###################################
 
@@ -3520,10 +3621,10 @@ class KernelWriter(metaclass=abc.ABCMeta):
           self.states.useBias = DataDirection.WRITE
         elif kernel["ProblemType"]["BiasSrc"] == "A" or kernel["ProblemType"]["BiasSrc"] == "B":
           self.states.useBias = DataDirection.WRITE
-      elif kernel["GlobalSplitU"] == 1:
+      elif kernel["GlobalSplitU"] == 1 or (kernel["GlobalSplitUAlgorithm"] == 'MultipleBufferSingleKernel'): 
         self.states.useBias = DataDirection.READ
       # Need bias type if the kernel supports multiple bias type.
-    if self.states.useBias == DataDirection.READ or (self.states.useBias == DataDirection.WRITE and (kernel["ProblemType"]["BiasSrc"] == "A" or kernel["ProblemType"]["BiasSrc"] == "B") and kernel["GlobalSplitU"] == 1):
+    if self.states.useBias == DataDirection.READ or (self.states.useBias == DataDirection.WRITE and (kernel["ProblemType"]["BiasSrc"] == "A" or kernel["ProblemType"]["BiasSrc"] == "B") and (kernel["GlobalSplitU"] == 1 or (kernel["GlobalSplitUAlgorithm"] == 'MultipleBufferSingleKernel'))):
       self.states.needBiasType = True
     else:
       self.states.needBiasType = False

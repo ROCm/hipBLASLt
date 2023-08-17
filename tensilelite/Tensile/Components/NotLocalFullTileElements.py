@@ -27,7 +27,6 @@ from math import ceil
 
 class NotLocalFullTileElementsMFMA(NotLocalFullTileElements):
     kernel = {"EnableMatrixInstruction": True}
-
     """
     Partition thread-tile into writeElements for store code
     This function creates the writeElement mapping for full tiles
@@ -36,13 +35,18 @@ class NotLocalFullTileElementsMFMA(NotLocalFullTileElements):
     def __call__(self, writer, kernel, edge):
         elements        = []
         storeVectorWidth = 0
-
+        print("NotLocalFullTileElementsMFMA kernel[StoreVectorWidth]", kernel["StoreVectorWidth"])
+        print("NotLocalFullTileElementsMFMA kernel[_VectorStore]", kernel["_VectorStore"])
         if edge:
             storeVectorWidth = kernel["StoreVectorWidth"] if kernel["_VectorStore"] else 1
+            print("NotLocalFullTileElementsMFMA storeVectorWidth0.0", storeVectorWidth)
             storeVectorWidth = min(storeVectorWidth, writer.maxGwvw(kernel), kernel["AssertFree0ElementMultiple"])
+            print("NotLocalFullTileElementsMFMA storeVectorWidth0.1", storeVectorWidth)
         else:
             storeVectorWidth = kernel["StoreVectorWidth"] if kernel["_VectorStore"] else 1
+            print("NotLocalFullTileElementsMFMA storeVectorWidth1.0", storeVectorWidth)
             storeVectorWidth = min(storeVectorWidth, writer.maxGwvw(kernel))
+            print("NotLocalFullTileElementsMFMA storeVectorWidth1.1", storeVectorWidth)
 
         # handle mfma 4x4 instruction
         matrixInstM  = kernel["MatrixInstM"] * kernel["MatrixInstBM"] if (kernel["MatrixInstM"] == 4) else kernel["MatrixInstM"]
@@ -67,5 +71,5 @@ class NotLocalFullTileElementsMFMA(NotLocalFullTileElements):
                     for vc0 in range(0, vectorWidth0, storeVectorWidth): # note step by storeVectorWidth
                         element = (tt1, tt0, vc1, vc0)
                         elements.append(element)
-
+        print("NotLocalFullTileElementsMFMA storeVectorWidth", storeVectorWidth)
         return (storeVectorWidth, elements)

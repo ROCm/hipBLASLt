@@ -487,7 +487,7 @@ validParameters = {
     # choose how to do GlobalSplitU
     # 1: use atomic operation to accumlate on one buffer
     # 2: each GSU group write to each own buffer and accumulate by another kernel
-    "GlobalSplitUAlgorithm":      ["SingleBuffer", "MultipleBuffer"],
+    "GlobalSplitUAlgorithm":      ["SingleBuffer", "MultipleBuffer", "MultipleBufferSingleKernel"],
 
     # don't create a whole copy of the Unroll loop with loads removed - instead
     # use buffer limits to suppress global loads and ignore unnecessary ds_reads

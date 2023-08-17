@@ -1145,6 +1145,10 @@ class Solution(collections.abc.Mapping):
       state["KernelLanguage"] = "Source"
       state["_GlobalAccumulation"] = self["_GlobalAccumulation"]
       state["ActivationFused"] = self["ActivationFused"]
+      print("GlobalSplitU", self["GlobalSplitU"])
+      print("_GlobalAccumulation", self["_GlobalAccumulation"])
+      print("ActivationFused", self["ActivationFused"])
+      print("ActivationType", self["ProblemType"]["ActivationType"])
       self.activationOnlyKernelObjects.append(KernelWriterActivationOnly(state))
 
   def initReductionKernelObjects(self):
@@ -1180,14 +1184,18 @@ class Solution(collections.abc.Mapping):
   def getMIOutputInfo(state):
     outputVectorWidth = 4
     RegsPerOut = 1
-
+    print("getMIOutputInfo")
     isa = tuple(state["ISA"])
     if globalParameters["AsmCaps"][isa]['HasMFMA']:
+      print("HasMFMA")
       if state["ProblemType"]["DataType"].MIOutputTypeNameAbbrev() == 'f64':
         outputVectorWidth, RegsPerOut = 1, 2
+        print("f64")
       else:
         outputVectorWidth, RegsPerOut = 4, 1
+        print("not f64")
     elif globalParameters["AsmCaps"][isa]['HasWMMA']:
+      print("HasWMMA")
       outputVectorWidth, RegsPerOut = 1, 1
     else:
       print("WARNING: unexpect code flow")
@@ -1845,10 +1853,12 @@ class Solution(collections.abc.Mapping):
             state["_GlobalAccumulation"] = 'SingleBuffer'
         elif state["GlobalSplitUAlgorithm"] == 'MultipleBuffer':
           state["_GlobalAccumulation"] = 'MultipleBuffer'
+        elif state["GlobalSplitUAlgorithm"] == 'MultipleBufferSingleKernel':
+          state["_GlobalAccumulation"] = 'MultipleBufferSingleKernel'
 
         if state["_GlobalAccumulation"] == 'SingleBuffer':
           state["_WorkspaceSizePerElemC"] = computeBytes
-        elif state["_GlobalAccumulation"] == 'MultipleBuffer':
+        elif state["_GlobalAccumulation"] == 'MultipleBuffer' or state["_GlobalAccumulation"] == 'MultipleBufferSingleKernel':
           state["_WorkspaceSizePerElemC"] = computeBytes * state["GlobalSplitU"]
 
     if("_WorkspaceSizePerElemBias" not in state):
@@ -3212,7 +3222,7 @@ class Solution(collections.abc.Mapping):
 
     # Activation
     # Function call is set to false if GSU != 1 or Activation is not fused or ActivationType is not All.
-    if not ((state["GlobalSplitU"] == 1) and state["ActivationFused"] and state["ProblemType"]["ActivationType"] == 'all') \
+    if not ((state["GlobalSplitU"] == 1 or (state["GlobalSplitUAlgorithm"] == 'MultipleBufferSingleKernel')) and state["ActivationFused"] and state["ProblemType"]["ActivationType"] == 'all') \
       and state["ActivationFuncCall"]:
       state["ActivationFuncCall"] = False
 

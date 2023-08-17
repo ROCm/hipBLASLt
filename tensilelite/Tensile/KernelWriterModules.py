@@ -194,6 +194,10 @@ def mapAcctoArchRegs(kernel):
   imod = Module("AccVgprRead")
   imod.itemList = [None] * kernel["MIRegPerOut"] * complexMultiplier * len(acc2arch)
   accImOffset = accVgprImagNumOffset(kernel)
+  print("Victor acc2arch ", acc2arch)
+  print("Victor complexMultiplier ", complexMultiplier)
+  print("Victor kernel[MIRegPerOut] ", kernel["MIRegPerOut"])
+  print("Victor accImOffset ", accImOffset)
   for i in range(len(acc2arch)):
     for cm in range(complexMultiplier):
       for r in range(kernel["MIRegPerOut"]):
@@ -201,9 +205,12 @@ def mapAcctoArchRegs(kernel):
         srcIdx = ((i * kernel["MIRegPerOut"] + r) + (cm*accImOffset))
         if not kernel["MIArchVgpr"]:
           accStr = accvgpr(srcIdx)
+          print("Victor accStr ", accStr)
+          print("Victor destIdx ", destIdx)
           imod.itemList[destIdx] =  VAccvgprReadB32(dst=vgpr(Holder(name="ValuC")),
                                                             src=accStr,
                                                             comment="copy acc to vreg[%u]" % destIdx)
+          # print("Victor imod.itemList[destIdx] ", imod.itemList[destIdx])
         else:
           imod.itemList[destIdx] =  VMovB32(dst=vgpr(Holder(name="ValuC")),
                                                             src=vgpr("ValuC+%u"%srcIdx),

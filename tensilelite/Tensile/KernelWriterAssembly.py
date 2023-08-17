@@ -34,7 +34,7 @@ from .TensileInstructions import KernelBody, Label, Macro, Module, RegSet, SrdUp
                           scalarStaticMultiply, MacroVMagicDiv, MacroVDynamicScalarDiv, \
                           RegisterPool, allocTmpGpr, RegisterPoolResource, Holder, \
                           vgpr, sgpr, accvgpr, mgpr, log2, ceilDivide, DataType, \
-                          dataTypeToMfmaInstTypePair, getGlcBitName, getSlcBitName, dataTypeNameAbbrevToInstType
+                          dataTypeToMfmaInstTypePair, getGlcBitName, getSlcBitName, dataTypeNameAbbrevToInstType, SYNCHRONIZERLSHRREV, GSUSYNC2, GSUSYNC, GSUSYNCzero, GSUSYNC1, GSUSYNC0
 from .TensileInstructions.Instructions import *
 from .TensilePass import getActivationFunctionModuleName, getActivationBranchModuleName
 from .Common import globalParameters, print2, printExit, printWarning, roundUp
@@ -448,7 +448,7 @@ class KernelWriterAssembly(KernelWriter):
     self.states.numStoreSgprNames = []
     self.states.numStoreSgprNameSizes = []
     storeSgprLoad = 0
-    if kernel["ProblemType"]["UseScaleDVec"] and (kernel["GlobalSplitU"] == 1):
+    if kernel["ProblemType"]["UseScaleDVec"] and (kernel["GlobalSplitU"] == 1 or (kernel["GlobalSplitUAlgorithm"] == 'MultipleBufferSingleKernel')):
         storeSgprLoad += self.states.rpga
         self.states.numStoreSgprNames.append("AddressScaleDVec")
         self.states.numStoreSgprNameSizes.append(self.states.rpga)
@@ -462,11 +462,11 @@ class KernelWriterAssembly(KernelWriter):
       if self.states.numSgprAddressScaleB:
         self.states.numStoreSgprNames.append("AddressScaleB")
         self.states.numStoreSgprNameSizes.append(self.states.numSgprAddressScaleB)
-    if kernel["ProblemType"]["UseScaleAlphaVec"] and (kernel["GlobalSplitU"] == 1):
+    if kernel["ProblemType"]["UseScaleAlphaVec"] and (kernel["GlobalSplitU"] == 1 or (kernel["GlobalSplitUAlgorithm"] == 'MultipleBufferSingleKernel')):
         storeSgprLoad += self.states.rpga
         self.states.numStoreSgprNames.append("AddressScaleAlphaVec")
         self.states.numStoreSgprNameSizes.append(self.states.rpga)
-    if self.states.useBias != DataDirection.NONE and (kernel["GlobalSplitU"] == 1):
+    if self.states.useBias != DataDirection.NONE and (kernel["GlobalSplitU"] == 1 or (kernel["GlobalSplitUAlgorithm"] == 'MultipleBufferSingleKernel')):
       # Does not support atomic yet
       self.states.BiasType   = 0
       self.states.BiasStride = 0
@@ -487,7 +487,7 @@ class KernelWriterAssembly(KernelWriter):
       self.states.numStoreSgprNameSizes.append(self.states.rpga)
       self.states.numStoreSgprNames.append("StridesE")
       self.states.numStoreSgprNameSizes.append(self.states.e.numSgprStrides)
-    runActivation = True if ((kernel["ProblemType"]["ActivationType"] != 'none') and (kernel["GlobalSplitU"] == 1) \
+    runActivation = True if ((kernel["ProblemType"]["ActivationType"] != 'none') and (kernel["GlobalSplitU"] == 1 or (kernel["GlobalSplitUAlgorithm"] == 'MultipleBufferSingleKernel')) \
         and kernel["ActivationFused"]) else False
     if runActivation:
       for name in kernel["ProblemType"]["ActivationType"].getAdditionalArgStringList():
@@ -498,6 +498,9 @@ class KernelWriterAssembly(KernelWriter):
         self.states.numStoreSgprNames.append("ActivationType")
         self.states.numStoreSgprNameSizes.append(1)
       storeSgprLoad += self.states.numActivationTypeArgSize + self.states.numactivationArgTotalSize
+    if kernel["_GlobalAccumulation"] == 'MultipleBufferSingleKernel' \
+      and kernel["GlobalSplitU"] > 1:
+      storeSgprLoad += 1
     self.states.numStoreSgprToLoad = storeSgprLoad
 
   ##############################################################################
@@ -691,6 +694,24 @@ class KernelWriterAssembly(KernelWriter):
       module.add(RegSet("s", "sgpr"+skey, self.sgprs[skey]))
     # module.addComment0("max SGPR=%u"%self.sgprPool.size())
 
+    contents = \
+    "\n\
+//Fusion spgr\n\
+.set sgprtmp0E, 88\n\
+.set sgprtmp1E, sgprtmp0E+1\n\
+.set sgprtmp2E, sgprtmp0E+2\n\
+.set sgprtmp3E, sgprtmp0E+3\n\
+.set sgprtmp4E, sgprtmp0E+4\n\
+.set sgprtmp5E, sgprtmp0E+5\n\
+.set sgprtmp6E, sgprtmp0E+6\n\
+.set sgprtmp7E, sgprtmp0E+7\n\
+.set sgprSrdDd, sgprtmp0E+8\n\
+.set sgprSrdtmp, sgprSrdDd+4 //sgprtmp0E+12(+4)\n\
+//Fusion spgr\n\
+    "
+
+    module.addGSUSYNC(contents)
+
     module.addSpaceLine()
     module.addComment0("Size Assignments")
     problemType = kernel["ProblemType"]
@@ -758,11 +779,19 @@ class KernelWriterAssembly(KernelWriter):
       #TODO-64 : This is max 32-bit negative value, the tail loop
       # does incrementally step through the GRO and increment GRO
       # which are initialized with this value
-      module.add(ValueSet("BufferOOB", 0x80000000, format=1))
-
+      # module.add(ValueSet("BufferOOB", 0x80000000, format=1))
+      module.add(ValueSet("BufferOOB", -1))
       srdUpperValue = SrdUpperValue(self.states.version)
       module.addComment2("Bits 127:96 of SRD.\n" + srdUpperValue.desc())
       module.add(ValueSet("Srd127_96", srdUpperValue.getValue(), format=1))
+
+    # module.add(GSUSYNC(kernel["GlobalSplitU"], kernel["MIWaveGroup"][0], kernel["MIWaveGroup"][1], kernel["StoreVectorWidth"]))
+    # module.add(GSUSYNC2(kernel["StoreVectorWidth"], kernel["ProblemType"]["DestDataType"].isSingle()))
+    module.add(SYNCHRONIZERLSHRREV())
+    # module.add(GSUSYNCspgr())
+    # module.add(GSUSYNCzero(kernel["GlobalSplitU"]))
+    # module.add(GSUSYNC1(kernel["GlobalSplitU"], kernel["MacroTile0"], kernel["MacroTile1"]))
+    # module.add(GSUSYNC0(kernel["GlobalSplitU"], kernel["MacroTile0"], kernel["MacroTile1"]))
 
     ########################################
     # Global Offsets
@@ -1012,9 +1041,15 @@ class KernelWriterAssembly(KernelWriter):
 
   def checkResources(self, mkb: KernelBody):
     # register allocation
-    totalVgprs = self.vgprPool.size()
+    if 0:
+      totalVgprs = self.vgprPool.size()
+    else:
+      totalVgprs = 124
     totalAgprs = self.agprPool.size()
-    totalSgprs = self.sgprPool.size()
+    if 0:
+      totalSgprs = self.sgprPool.size()
+    else:
+      totalSgprs = 100
 
     mkb.setGprs(totalVgprs=totalVgprs, totalAgprs=totalAgprs, totalSgprs=totalSgprs)
     module = mkb.body
@@ -3905,7 +3940,7 @@ class KernelWriterAssembly(KernelWriter):
   ##############################################################################
   # End Summation
   ##############################################################################
-  def endSummation(self, kernel, tPA, tPB, label = None):
+  def endSummation(self, kernel, tPA, tPB, label2 = None, label = None):
     module = Module("endSummation")
 
     module.add(Label((self.labels.getUniqueNamePrefix("Summation_End") if label is None else label), ""))
@@ -3941,7 +3976,7 @@ class KernelWriterAssembly(KernelWriter):
       if regTag != lastRegTag:
         lastRegTag = regTag
         if self.sgprPool.pool[i].status == RegisterPool.Status.InUse:
-          if label == "Summation_End_OptNLL":
+          if 0: #label == "Summation_End_OptNLL":
             self.undefineSgpr(regTag)
           else:
             module.add(self.undefineSgpr(regTag))
@@ -3968,8 +4003,22 @@ class KernelWriterAssembly(KernelWriter):
     ########################################
     # Load kernel args needed by global write batch
     module.addComment0("load store sgprs")
+
+    # labelname1 = "label_BUSYWAIT" \
+    #   % ("_Beta" if self.beta else "", "_Edge" if self.edge else "")
+
+    # labelname1 += self.activationTypeStr
+    # labelname1 = self.parentWriter.labels.getNameInc(labelname1)
+    labelname1 = "label_BUSYWAIT"
+    labelname1 = self.labels.getNameInc(labelname1)
+    # module.addComment("GSUSYNC1") #GSUSYNC
+    # module.addGSUSYNC("\n") #GSUSYNC
+    # module.add(MacroInstruction("GSUSYNC1", \
+    #        args=[labelname1, "label_KernelEnd"]))
+    # module.addGSUSYNC("\n") #GSUSYNC
+
     # Define sgprs for kernel args
-    runActivation = True if ((kernel["ProblemType"]["ActivationType"] != 'none') and (kernel["GlobalSplitU"] == 1) \
+    runActivation = True if ((kernel["ProblemType"]["ActivationType"] != 'none') and (kernel["GlobalSplitU"] == 1 or (kernel["GlobalSplitUAlgorithm"] == 'MultipleBufferSingleKernel')) \
         and kernel["ActivationFused"]) else False
     if self.states.numStoreSgprToLoad:
       sgpxIdxVec = self.defineMultiSgprs(self.states.numStoreSgprNames, self.states.numStoreSgprNameSizes, align=4)
@@ -3989,11 +4038,11 @@ class KernelWriterAssembly(KernelWriter):
         extArgOffset = self.externalArgLoader.getOffset()
         structAddressOffset = 0
         loadModuleExt = Module("Count Inst")
-        if kernel["ProblemType"]["UseScaleDVec"] and (kernel["GlobalSplitU"] == 1):
+        if kernel["ProblemType"]["UseScaleDVec"] and (kernel["GlobalSplitU"] == 1 or (kernel["GlobalSplitUAlgorithm"] == 'MultipleBufferSingleKernel')):
           loadModuleExt.addModuleAsFlatItems(module.addModuleAsFlatItems(self.externalArgLoader.loadAllKernArg(self.sgprs["AddressScaleDVec"], "ExternalArgAddress", 2)))
         structAddressOffset += (2 * self.states.bpr)
         self.externalArgLoader.setOffset(extArgOffset + structAddressOffset)
-        if kernel["ProblemType"]["UseScaleAlphaVec"] and (kernel["GlobalSplitU"] == 1):
+        if kernel["ProblemType"]["UseScaleAlphaVec"] and (kernel["GlobalSplitU"] == 1 or (kernel["GlobalSplitUAlgorithm"] == 'MultipleBufferSingleKernel')):
           loadModuleExt.addModuleAsFlatItems(module.addModuleAsFlatItems(self.externalArgLoader.loadAllKernArg(self.sgprs["AddressScaleAlphaVec"], "ExternalArgAddress", 2)))
         structAddressOffset += (2 * self.states.bpr)
         self.externalArgLoader.setOffset(extArgOffset + structAddressOffset)
@@ -4030,10 +4079,10 @@ class KernelWriterAssembly(KernelWriter):
       self.defineSgpr("SrdC", 4, 4)
       module.add(RegSet("s", "sgprSrdC", self.sgprs["SrdC"]))
       module.add(RegSet("s", "sgprSrdD", self.sgprs["SrdD"]))
-    if kernel["ProblemType"]["UseScaleDVec"] and (kernel["GlobalSplitU"] == 1):
+    if kernel["ProblemType"]["UseScaleDVec"] and (kernel["GlobalSplitU"] == 1 or (kernel["GlobalSplitUAlgorithm"] == 'MultipleBufferSingleKernel')):
       self.defineSgpr("SrdScaleDVec", 4, 4)
       module.add(RegSet("s", "sgprSrdScaleDVec", self.sgprs["SrdScaleDVec"]))
-    if kernel["ProblemType"]["UseScaleAlphaVec"] and (kernel["GlobalSplitU"] == 1):
+    if kernel["ProblemType"]["UseScaleAlphaVec"] and (kernel["GlobalSplitU"] == 1 or (kernel["GlobalSplitUAlgorithm"] == 'MultipleBufferSingleKernel')):
       self.defineSgpr("SrdScaleAlphaVec", 4, 4)
       module.add(RegSet("s", "sgprSrdScaleAlphaVec", self.sgprs["SrdScaleAlphaVec"]))
     if self.states.useBias != DataDirection.NONE:
@@ -4611,7 +4660,8 @@ class KernelWriterAssembly(KernelWriter):
             (fullVw, elements) = self.notLocalFullTileElements(kernel, False)
             alpha = False
             beta = False
-            module.add(self.globalWriteElements(kernel, tPA, tPB, [fullVw], [elements], applyAlpha=alpha, betas=[beta], edges=[False]))
+            print("closeSumAtLeastUnroll globalWriteElements", fullVw)
+            module.add(self.globalWriteElements(kernel, tPA, tPB, [fullVw], [elements], endSumLabel, applyAlpha=alpha, betas=[beta], edges=[False]))
 
             self.cleanupGlobalWrite(kernel)
             module.addSpaceLine()
@@ -6573,7 +6623,7 @@ class KernelWriterAssembly(KernelWriter):
         if addToSrd:
           for mat, us in zip(srdTcList, useSize):
             bpe = self.states.bpeCinternal if mat == "E" or mat =="Bias" else self.states.bpeCexternal
-            bpe = int(self.states.bpr * kernel["ProblemType"]["DestDataType"].numRegisters()) if kernel["_GlobalAccumulation"]  == 'MultipleBuffer'  and mat =="C" else bpe
+            bpe = int(self.states.bpr * kernel["ProblemType"]["DestDataType"].numRegisters()) if (kernel["_GlobalAccumulation"]  == 'MultipleBuffer' or (kernel["GlobalSplitUAlgorithm"] == 'MultipleBufferSingleKernel')) and mat =="C" else bpe
             # These are constant across all workitems, just add to the SRD:
             if us:
               if i == 0:
@@ -6605,7 +6655,7 @@ class KernelWriterAssembly(KernelWriter):
     if noMultipleBuffer:
       return module
 
-    if kernel["_GlobalAccumulation"] == 'MultipleBuffer':
+    if kernel["_GlobalAccumulation"] == 'MultipleBuffer' or kernel["_GlobalAccumulation"] == 'MultipleBufferSingleKernel':
       # GSU algorithm 2: adjust output buffer address to per GSU buffer
       with self.allocTmpSgpr(5) as tmpSgprInfo:
         tmpSgpr = tmpSgprInfo.idx
@@ -6716,7 +6766,7 @@ class KernelWriterAssembly(KernelWriter):
             dst=vgpr(self.vgprs.addrBias+1), \
             src=sgpr("AddressBias+1"), \
             comment="sgpr -> vgpr"))
-      if kernel["ProblemType"]["UseScaleDVec"] and (kernel["GlobalSplitU"] == 1):
+      if kernel["ProblemType"]["UseScaleDVec"] and (kernel["GlobalSplitU"] == 1 or (kernel["GlobalSplitUAlgorithm"] == 'MultipleBufferSingleKernel')):
         self.vgprs.addrScaleDVec = self.vgprPool.checkOut(2, 'addrScaleDVec')
         module.add(VMovB32( \
             dst=vgpr(self.vgprs.addrScaleDVec+0), \
@@ -6726,7 +6776,7 @@ class KernelWriterAssembly(KernelWriter):
             dst=vgpr(self.vgprs.addrScaleDVec+1), \
             src=sgpr("AddressScaleDVec+1"), \
             comment="sgpr -> vgpr"))
-      if kernel["ProblemType"]["UseScaleAlphaVec"] and (kernel["GlobalSplitU"] == 1):
+      if kernel["ProblemType"]["UseScaleAlphaVec"] and (kernel["GlobalSplitU"] == 1 or (kernel["GlobalSplitUAlgorithm"] == 'MultipleBufferSingleKernel')):
         self.vgprs.addrScaleAlphaVec = self.vgprPool.checkOut(2, 'addrScaleAlphaVec')
         module.add(VMovB32( \
             dst=vgpr(self.vgprs.addrScaleAlphaVec+0), \
@@ -6808,7 +6858,7 @@ class KernelWriterAssembly(KernelWriter):
             dst=vgpr(self.vgprs.addrBias+1), \
             src=sgpr("AddressBias+1"), \
             comment="sgpr -> vgpr"))
-      if kernel["ProblemType"]["UseScaleDVec"] and (kernel["GlobalSplitU"] == 1):
+      if kernel["ProblemType"]["UseScaleDVec"] and (kernel["GlobalSplitU"] == 1 or (kernel["GlobalSplitUAlgorithm"] == 'MultipleBufferSingleKernel')):
         self.vgprs.addrScaleDVec = self.vgprPool.checkOut(2, 'addrScaleDVec')
         module.add(VMovB32( \
             dst=vgpr(self.vgprs.addrScaleDVec+0), \
@@ -6818,7 +6868,7 @@ class KernelWriterAssembly(KernelWriter):
             dst=vgpr(self.vgprs.addrScaleDVec+1), \
             src=sgpr("AddressScaleDVec+1"), \
             comment="sgpr -> vgpr"))
-      if kernel["ProblemType"]["UseScaleAlphaVec"] and (kernel["GlobalSplitU"] == 1):
+      if kernel["ProblemType"]["UseScaleAlphaVec"] and (kernel["GlobalSplitU"] == 1 or (kernel["GlobalSplitUAlgorithm"] == 'MultipleBufferSingleKernel')):
         self.vgprs.addrScaleAlphaVec = self.vgprPool.checkOut(2, 'addrScaleAlphaVec')
         module.add(VMovB32( \
             dst=vgpr(self.vgprs.addrScaleAlphaVec+0), \
@@ -6856,15 +6906,15 @@ class KernelWriterAssembly(KernelWriter):
         self.vgprPool.checkIn(self.vgprs.addrE)
       if self.states.useBias == DataDirection.READ:
         self.vgprPool.checkIn(self.vgprs.addrBias)
-      if kernel["ProblemType"]["UseScaleDVec"] and (kernel["GlobalSplitU"] == 1):
+      if kernel["ProblemType"]["UseScaleDVec"] and (kernel["GlobalSplitU"] == 1 or (kernel["GlobalSplitUAlgorithm"] == 'MultipleBufferSingleKernel')):
         self.vgprPool.checkIn(self.vgprs.addrScaleDVec)
-      if kernel["ProblemType"]["UseScaleAlphaVec"] and (kernel["GlobalSplitU"] == 1):
+      if kernel["ProblemType"]["UseScaleAlphaVec"] and (kernel["GlobalSplitU"] == 1 or (kernel["GlobalSplitUAlgorithm"] == 'MultipleBufferSingleKernel')):
         self.vgprPool.checkIn(self.vgprs.addrScaleAlphaVec)
 
   ##############################################################################
   # Return max global write vector width, in elements
   def maxGwvw(self, kernel):
-    atomic = (kernel["GlobalSplitU"] > 1) and (kernel["_GlobalAccumulation"] != 'MultipleBuffer')
+    atomic = (kernel["GlobalSplitU"] > 1) and (kernel["_GlobalAccumulation"] != 'MultipleBuffer' and kernel["_GlobalAccumulation"] != 'MultipleBufferSingleKernel')
 
     if kernel["BufferStore"]:
       if atomic:
@@ -7234,7 +7284,9 @@ class KernelWriterAssembly(KernelWriter):
     vectorWidths = [fullVw, edgeVw]
 
     module = Module("notLocalSplitUGlobalWrite")
-    module.add(self.globalWriteElements(kernel, tPA, tPB, vectorWidths, elements))
+    endSumLabel = "Summation_End_OptNLL2"
+    print("notLocalSplitUGlobalWrite globalWriteElements", fullVw)
+    module.add(self.globalWriteElements(kernel, tPA, tPB, vectorWidths, elements, endSumLabel))
 
     self.cleanupGlobalWrite(kernel)
 
@@ -7247,6 +7299,7 @@ class KernelWriterAssembly(KernelWriter):
     if not self.do["PostLoop"]: return ""
 
     fullVw = kernel["GlobalWriteVectorWidth"] if kernel["_VectorStore"] else 1
+    print("localSplitUGlobalWrite fullVw", fullVw, kernel["GlobalWriteVectorWidth"])
     fullVw = min(fullVw, self.maxGwvw(kernel))
     elements = [[] for y in range(2)] # 2D array for Full, Edge
     # Full tile loop:
@@ -7272,7 +7325,8 @@ class KernelWriterAssembly(KernelWriter):
 
     vectorWidths = [fullVw, edgeVw]
     module = Module("localSplitUGlobalWrite")
-    module.add(self.globalWriteElements(kernel, tPA, tPB, vectorWidths, elements))
+    print("localSplitUGlobalWrite globalWriteElements", fullVw)
+    module.add(self.globalWriteElements(kernel, tPA, tPB, vectorWidths, elements, endSumLabel))
     self.cleanupGlobalWrite(kernel)
     return module
 
@@ -7385,7 +7439,7 @@ class KernelWriterAssembly(KernelWriter):
     sgprOffsetBack: int = -1
     vgprActCopy: int = -1
 
-  def globalWriteElements(self, kernel, tPA, tPB, vectorWidths, elements,
+  def globalWriteElements(self, kernel, tPA, tPB, vectorWidths, elements, label2,
                           applyAlpha=True, # defaults to generating *=alpha codes
                           betas=None, # if left unspecified, then let global parameter decide
                           edges=None):
@@ -7401,11 +7455,11 @@ class KernelWriterAssembly(KernelWriter):
     ssslist = []
     useSize = []
     # Init ScaleDVec address
-    if kernel["ProblemType"]["UseScaleDVec"] and (kernel["GlobalSplitU"] == 1):
+    if kernel["ProblemType"]["UseScaleDVec"] and (kernel["GlobalSplitU"] == 1 or (kernel["GlobalSplitUAlgorithm"] == 'MultipleBufferSingleKernel')):
       labelStr = self.labels.getNameInc("ScaleDVec")
       module.add(allocPostLoopSrdSuppress("ScaleDVec", labelStr, sgprLength=sgpr("SizeI")))
       module.add(SMulI32(dst=sgpr("SrdScaleDVec+2"), src0=hex(self.states.bpeCinternal), src1=sgpr("SrdScaleDVec+2"), comment="ScaleDVec scaled by BPE"))# scaled by BPE
-    if kernel["ProblemType"]["UseScaleAlphaVec"] and (kernel["GlobalSplitU"] == 1):
+    if kernel["ProblemType"]["UseScaleAlphaVec"] and (kernel["GlobalSplitU"] == 1 or (kernel["GlobalSplitUAlgorithm"] == 'MultipleBufferSingleKernel')):
       labelStr = self.labels.getNameInc("ScaleAlphaVec")
       module.add(allocPostLoopSrdSuppress("ScaleAlphaVec", labelStr, sgprLength=sgpr("SizeI")))
       module.add(SMulI32(dst=sgpr("SrdScaleAlphaVec+2"), src0=hex(self.states.bpeCinternal), src1=sgpr("SrdScaleAlphaVec+2"), comment="ScaleAlphaVec scaled by BPE"))# scaled by BPE
@@ -7541,13 +7595,13 @@ class KernelWriterAssembly(KernelWriter):
     Post process for loop end
     '''
 
-    atomic = (kernel["GlobalSplitU"] > 1) and (kernel["_GlobalAccumulation"] != 'MultipleBuffer')
+    atomic = (kernel["GlobalSplitU"] > 1) and (kernel["_GlobalAccumulation"] != 'MultipleBuffer' and kernel["_GlobalAccumulation"] != 'MultipleBufferSingleKernel')
     activation = self.exclasses.activation
 
     # write possibilities and labels
     # if beta/edge combo not specified fall back to global param definition
     if betas is None:
-      hasBeta = kernel["ProblemType"]["UseBeta"] and (kernel["_GlobalAccumulation"] != 'MultipleBuffer')
+      hasBeta = kernel["ProblemType"]["UseBeta"] and (kernel["_GlobalAccumulation"] != 'MultipleBuffer' or (kernel["GlobalSplitUAlgorithm"] == 'MultipleBufferSingleKernel'))
       betas = [False, True] if hasBeta else [False]
     if edges is None:
       edges = [False, True] if self.do["EdgeWrite"] else [False]
@@ -7680,6 +7734,8 @@ class KernelWriterAssembly(KernelWriter):
           edgeI = edge
         #edgeI = True  # set to True to disable vector stores
         gwvw = vectorWidths[edgeI]
+        print("vectorWidths", vectorWidths)
+        print("vectorWidths[edgeI]", vectorWidths[edgeI])
 
         #print "globalWriteElements: edge=", edge, "beta=", beta, "atomic=", atomic
 
@@ -7881,12 +7937,12 @@ class KernelWriterAssembly(KernelWriter):
               if kernel["StoreRemapVectorWidth"]:
                 #Indication if this batch is last batch for this column block shape
                 self.StoreRemapLastBatch = 1 if (batchIdx+1) % nBatchesPerRow == 0 else 0
-
+              print("gwvw", gwvw)
               actLoopModule.add(self.globalWriteBatch(kernel, tPA, tPB, activation, ss, batchIdx, \
                   applyAlpha, beta, edge, atomic, gwvw, atomicW, \
                   elementsThisBatch, self.vgprs.addrE, self.vgprs.addrD, self.vgprs.addrC, self.vgprs.addrBias, self.vgprs.addrScaleDVec, self.vgprs.addrScaleAlphaVec, \
                   biasLocalBarrierInit, tmpVgpr, bf16CVTVgprStruct, activationSetPCStruct, \
-                  activationTypeStr, elementSgprs, tmpSgpr, codeAccVgprRead, codeMulAlpha))
+                  activationTypeStr, elementSgprs, tmpSgpr, codeAccVgprRead, codeMulAlpha, label2))
               biasLocalBarrierInit = True
 
             ss.resetState()
@@ -8188,7 +8244,7 @@ class KernelWriterAssembly(KernelWriter):
     scaleDVecVgpr is one or more vgpr :temp vGPR ( = gwvw * numbytes // 4 + 1 if cvt is needed)
     """
     module = Module("addScaleDVec")
-    if kernel["ProblemType"]["UseScaleDVec"] and (kernel["GlobalSplitU"] == 1):
+    if kernel["ProblemType"]["UseScaleDVec"] and (kernel["GlobalSplitU"] == 1 or (kernel["GlobalSplitUAlgorithm"] == 'MultipleBufferSingleKernel')):
       bps = kernel["ProblemType"]["ComputeDataType"].numBytes() * ss.cfg.gwvw
       if kernel["BufferLoad"]:
         addr0 = vgpr(addrCalc.addrScaleDVecVgpr)
@@ -8219,7 +8275,7 @@ class KernelWriterAssembly(KernelWriter):
     scaleAlphaVecVgpr is one or more vgpr :temp vGPR ( = gwvw * numbytes // 4 + 1 if cvt is needed)
     """
     module = Module("addScaleAlphaVec")
-    if kernel["ProblemType"]["UseScaleAlphaVec"] and (kernel["GlobalSplitU"] == 1):
+    if kernel["ProblemType"]["UseScaleAlphaVec"] and (kernel["GlobalSplitU"] == 1 or (kernel["GlobalSplitUAlgorithm"] == 'MultipleBufferSingleKernel')):
       bps = kernel["ProblemType"]["ComputeDataType"].numBytes() * ss.cfg.gwvw
       if kernel["BufferLoad"]:
         addr0 = vgpr(addrCalc.addrScaleAlphaVecVgpr)
@@ -8424,14 +8480,14 @@ class KernelWriterAssembly(KernelWriter):
       applyAlpha, beta, edge, atomic, gwvw, atomicW, \
       batchElements, addrE, addrD, addrC, addrBias, addrScaleDVec, addrScaleAlphaVec, biasLocalBarrierInit: bool, \
       tmpVgpr, bf16CVTVgprStruct, activationSetPCStruct, activationTypeStr, \
-      batchElementSgprs, tmpSgpr, codeAccVgprRead, codeMulAlpha) -> Module:
+      batchElementSgprs, tmpSgpr, codeAccVgprRead, codeMulAlpha, label2, ) -> Module:
       packdata = Component.PackData.find(self)
       gwriter  = Component.GlobalWriteComponents.find(self)
       return gwriter(kernel, tPA, tPB, activation, ss, \
         batchIdx, applyAlpha, beta, edge, atomic, gwvw, atomicW, \
         batchElements, addrE, addrD, addrC, addrBias, addrScaleDVec, addrScaleAlphaVec, biasLocalBarrierInit, \
         tmpVgpr, bf16CVTVgprStruct, activationSetPCStruct, activationTypeStr, \
-        batchElementSgprs, tmpSgpr, codeAccVgprRead, codeMulAlpha, packdata, self)
+        batchElementSgprs, tmpSgpr, codeAccVgprRead, codeMulAlpha, packdata, label2, self)
 
   ##############################################################################
   def openPrefetchGlobalRead2(self, kernel):
@@ -8866,7 +8922,7 @@ class KernelWriterAssembly(KernelWriter):
     if kernel["ActivationFuncCall"]:
       activationLabelModules.append("")
       activationEnumStrList.append("none")
-    elif ((kernel["GlobalSplitU"] == 1) and kernel["ActivationFused"]) and \
+    elif ((kernel["GlobalSplitU"] == 1 or (kernel["GlobalSplitUAlgorithm"] == 'MultipleBufferSingleKernel')) and kernel["ActivationFused"]) and \
       (kernel["ProblemType"]["ActivationType"] != 'none'):
       if kernel["ProblemType"]["ActivationType"] == 'all':
         exportType = ActivationType.Export.GRADONLY if kernel["ProblemType"]["Gradient"] else ActivationType.Export.NORMAL
@@ -8907,7 +8963,7 @@ class KernelWriterAssembly(KernelWriter):
   def insertActivationAfterPacked(self, kernel, activationTypeStr):
     result = False
     if ((kernel["ProblemType"]["ActivationType"] != 'none') and \
-      (kernel["GlobalSplitU"] == 1) and kernel["ActivationFused"]):
+      (kernel["GlobalSplitU"] == 1 or (kernel["GlobalSplitUAlgorithm"] == 'MultipleBufferSingleKernel')) and kernel["ActivationFused"]):
       if kernel["ActivationFuncCall"]:
         return (not kernel["ProblemType"]["ActivationHPA"])
       elif kernel["ProblemType"]["ActivationHPA"]:
