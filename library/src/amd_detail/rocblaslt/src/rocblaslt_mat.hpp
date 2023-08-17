@@ -681,6 +681,16 @@ inline rocblaslt_status rocblaslt_matmul_template(rocblaslt_handle             h
                     EX_TYPECASTING_PARM);
             }
         }
+        else if(c_type == HIPBLASLT_R_16F && d_type == HIPBLASLT_R_16F)
+        {
+            if(compute_type == rocblaslt_compute_f32)
+            {
+                rs_status = rocblaslt_matmul_typecasting<rocblaslt_f8,
+                                                         rocblaslt_f8,
+                                                         rocblaslt_half,
+                                                         float>(EX_TYPECASTING_PARM);
+            }
+        }
     }
     else if(a_type == HIPBLASLT_R_8F_E4M3 && b_type == HIPBLASLT_R_8F_E5M2)
     {
@@ -701,6 +711,37 @@ inline rocblaslt_status rocblaslt_matmul_template(rocblaslt_handle             h
             {
                 rs_status = rocblaslt_matmul_typecasting<double, double, double, double>(
                     EX_TYPECASTING_PARM);
+            }
+        }
+        else if(c_type == HIPBLASLT_R_16F && d_type == HIPBLASLT_R_16F)
+        {
+            if(compute_type == rocblaslt_compute_f32)
+            {
+                rs_status = rocblaslt_matmul_typecasting<rocblaslt_f8,
+                                                         rocblaslt_bf8,
+                                                         rocblaslt_half,
+                                                         float>(EX_TYPECASTING_PARM);
+            }
+        }
+    }
+    else if(a_type == HIPBLASLT_R_8F_E5M2 && b_type == HIPBLASLT_R_8F_E4M3)
+    {
+        if(c_type == HIPBLASLT_R_32F && d_type == HIPBLASLT_R_32F)
+        {
+            if(compute_type == rocblaslt_compute_f32)
+            {
+                rs_status = rocblaslt_matmul_typecasting<rocblaslt_bf8, rocblaslt_f8, float, float>(
+                    EX_TYPECASTING_PARM);
+            }
+        }
+        else if(c_type == HIPBLASLT_R_16F && d_type == HIPBLASLT_R_16F)
+        {
+            if(compute_type == rocblaslt_compute_f32)
+            {
+                rs_status = rocblaslt_matmul_typecasting<rocblaslt_bf8,
+                                                         rocblaslt_f8,
+                                                         rocblaslt_half,
+                                                         float>(EX_TYPECASTING_PARM);
             }
         }
     }

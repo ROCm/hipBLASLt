@@ -1161,6 +1161,27 @@ rocblaslt_status rocblaslt_matmul_is_algo_supported(rocblaslt_handle        hand
                         handle, prob, gemmData, algo, workspaceSizeInBytes);
                 }
             }
+            else if(c_type == HIPBLASLT_R_16F && d_type == HIPBLASLT_R_16F)
+            {
+                if(compute_type == rocblaslt_compute_f32)
+                {
+                    float* alphaf = (float*)alpha;
+                    float* betaf  = (float*)beta;
+                    auto   prob   = construct_rocblaslt_problem<rocblaslt_f8,
+                                                            rocblaslt_f8,
+                                                            rocblaslt_half,
+                                                            float>(matmul_descr,
+                                                                   matA,
+                                                                   matB,
+                                                                   matC,
+                                                                   matD,
+                                                                   alphaf,
+                                                                   betaf,
+                                                                   algo->max_workspace_bytes);
+                    status = isSolutionSupported<rocblaslt_f8, rocblaslt_f8, rocblaslt_half, float>(
+                        handle, prob, gemmData, algo, workspaceSizeInBytes);
+                }
+            }
         }
         else if(a_type == HIPBLASLT_R_8F_E4M3 && b_type == HIPBLASLT_R_8F_E5M2)
         {
@@ -1182,6 +1203,73 @@ rocblaslt_status rocblaslt_matmul_is_algo_supported(rocblaslt_handle        hand
                             algo->max_workspace_bytes);
                     status = isSolutionSupported<rocblaslt_f8, rocblaslt_bf8, float, float>(
                         handle, prob, gemmData, algo, workspaceSizeInBytes);
+                }
+            }
+            else if(c_type == HIPBLASLT_R_16F && d_type == HIPBLASLT_R_16F)
+            {
+                if(compute_type == rocblaslt_compute_f32)
+                {
+                    float* alphaf = (float*)alpha;
+                    float* betaf  = (float*)beta;
+                    auto   prob   = construct_rocblaslt_problem<rocblaslt_f8,
+                                                            rocblaslt_bf8,
+                                                            rocblaslt_half,
+                                                            float>(matmul_descr,
+                                                                   matA,
+                                                                   matB,
+                                                                   matC,
+                                                                   matD,
+                                                                   alphaf,
+                                                                   betaf,
+                                                                   algo->max_workspace_bytes);
+                    status
+                        = isSolutionSupported<rocblaslt_f8, rocblaslt_bf8, rocblaslt_half, float>(
+                            handle, prob, gemmData, algo, workspaceSizeInBytes);
+                }
+            }
+        }
+        else if(a_type == HIPBLASLT_R_8F_E5M2 && b_type == HIPBLASLT_R_8F_E4M3)
+        {
+            if(c_type == HIPBLASLT_R_32F && d_type == HIPBLASLT_R_32F)
+            {
+                if(compute_type == rocblaslt_compute_f32)
+                {
+                    float* alphaf = (float*)alpha;
+                    float* betaf  = (float*)beta;
+                    auto   prob
+                        = construct_rocblaslt_problem<rocblaslt_bf8, rocblaslt_f8, float, float>(
+                            matmul_descr,
+                            matA,
+                            matB,
+                            matC,
+                            matD,
+                            alphaf,
+                            betaf,
+                            algo->max_workspace_bytes);
+                    status = isSolutionSupported<rocblaslt_bf8, rocblaslt_f8, float, float>(
+                        handle, prob, gemmData, algo, workspaceSizeInBytes);
+                }
+            }
+            else if(c_type == HIPBLASLT_R_16F && d_type == HIPBLASLT_R_16F)
+            {
+                if(compute_type == rocblaslt_compute_f32)
+                {
+                    float* alphaf = (float*)alpha;
+                    float* betaf  = (float*)beta;
+                    auto   prob   = construct_rocblaslt_problem<rocblaslt_bf8,
+                                                            rocblaslt_f8,
+                                                            rocblaslt_half,
+                                                            float>(matmul_descr,
+                                                                   matA,
+                                                                   matB,
+                                                                   matC,
+                                                                   matD,
+                                                                   alphaf,
+                                                                   betaf,
+                                                                   algo->max_workspace_bytes);
+                    status
+                        = isSolutionSupported<rocblaslt_bf8, rocblaslt_f8, rocblaslt_half, float>(
+                            handle, prob, gemmData, algo, workspaceSizeInBytes);
                 }
             }
         }
@@ -1385,6 +1473,33 @@ rocblaslt_status
                         pref->max_workspace_bytes);
                 }
             }
+            else if(c_type == HIPBLASLT_R_16F && d_type == HIPBLASLT_R_16F)
+            {
+                if(compute_type == rocblaslt_compute_f32)
+                {
+                    float alpha = 1.0;
+                    float beta  = 1.0;
+                    auto  prob  = construct_rocblaslt_problem<rocblaslt_f8,
+                                                            rocblaslt_f8,
+                                                            rocblaslt_half,
+                                                            float>(matmul_desc,
+                                                                   matA,
+                                                                   matB,
+                                                                   matC,
+                                                                   matD,
+                                                                   &alpha,
+                                                                   &beta,
+                                                                   pref->max_workspace_bytes);
+                    status = getBestSolutions<rocblaslt_f8, rocblaslt_f8, rocblaslt_half, float>(
+                        prob,
+                        handle,
+                        tensile_data,
+                        requestedAlgoCount,
+                        heuristicResultsArray,
+                        returnAlgoCount,
+                        pref->max_workspace_bytes);
+                }
+            }
         }
         else if(a_type == HIPBLASLT_R_8F_E4M3 && b_type == HIPBLASLT_R_8F_E5M2)
         {
@@ -1433,6 +1548,89 @@ rocblaslt_status
                         &beta,
                         pref->max_workspace_bytes);
                     status = getBestSolutions<double, double, double, double>(
+                        prob,
+                        handle,
+                        tensile_data,
+                        requestedAlgoCount,
+                        heuristicResultsArray,
+                        returnAlgoCount,
+                        pref->max_workspace_bytes);
+                }
+            }
+            else if(c_type == HIPBLASLT_R_16F && d_type == HIPBLASLT_R_16F)
+            {
+                if(compute_type == rocblaslt_compute_f32)
+                {
+                    float alpha = 1.0;
+                    float beta  = 1.0;
+                    auto  prob  = construct_rocblaslt_problem<rocblaslt_f8,
+                                                            rocblaslt_bf8,
+                                                            rocblaslt_half,
+                                                            float>(matmul_desc,
+                                                                   matA,
+                                                                   matB,
+                                                                   matC,
+                                                                   matD,
+                                                                   &alpha,
+                                                                   &beta,
+                                                                   pref->max_workspace_bytes);
+                    status = getBestSolutions<rocblaslt_f8, rocblaslt_bf8, rocblaslt_half, float>(
+                        prob,
+                        handle,
+                        tensile_data,
+                        requestedAlgoCount,
+                        heuristicResultsArray,
+                        returnAlgoCount,
+                        pref->max_workspace_bytes);
+                }
+            }
+        }
+        else if(a_type == HIPBLASLT_R_8F_E5M2 && b_type == HIPBLASLT_R_8F_E4M3)
+        {
+            if(c_type == HIPBLASLT_R_32F && d_type == HIPBLASLT_R_32F)
+            {
+                if(compute_type == rocblaslt_compute_f32)
+                {
+                    float alpha = 1.0;
+                    float beta  = 1.0;
+                    auto  prob
+                        = construct_rocblaslt_problem<rocblaslt_bf8, rocblaslt_f8, float, float>(
+                            matmul_desc,
+                            matA,
+                            matB,
+                            matC,
+                            matD,
+                            &alpha,
+                            &beta,
+                            pref->max_workspace_bytes);
+                    status = getBestSolutions<rocblaslt_bf8, rocblaslt_f8, float, float>(
+                        prob,
+                        handle,
+                        tensile_data,
+                        requestedAlgoCount,
+                        heuristicResultsArray,
+                        returnAlgoCount,
+                        pref->max_workspace_bytes);
+                }
+            }
+            else if(c_type == HIPBLASLT_R_16F && d_type == HIPBLASLT_R_16F)
+            {
+                if(compute_type == rocblaslt_compute_f32)
+                {
+                    float alpha = 1.0;
+                    float beta  = 1.0;
+                    auto  prob  = construct_rocblaslt_problem<rocblaslt_bf8,
+                                                            rocblaslt_f8,
+                                                            rocblaslt_half,
+                                                            float>(matmul_desc,
+                                                                   matA,
+                                                                   matB,
+                                                                   matC,
+                                                                   matD,
+                                                                   &alpha,
+                                                                   &beta,
+                                                                   pref->max_workspace_bytes);
+                    status = getBestSolutions<rocblaslt_bf8, rocblaslt_f8, rocblaslt_half, float>(
                         prob,
                         handle,
                         tensile_data,
@@ -1722,6 +1920,39 @@ rocblaslt_status rocblaslt_matmul_get_all_algos_cpp(
                     }
                 }
             }
+            else if(typeC == HIPBLASLT_R_16F && typeD == HIPBLASLT_R_16F)
+            {
+                if(typeCompute == rocblaslt_compute_f32)
+                {
+                    float alpha = 1.0;
+                    float beta  = 1.0;
+                    auto  prob  = construct_rocblaslt_problem<rocblaslt_f8,
+                                                            rocblaslt_f8,
+                                                            rocblaslt_half,
+                                                            float>(
+                        &matmul_desc, &matA, &matB, &matC, &matD, &alpha, &beta, maxWorkspaceSize);
+                    if(typeGemm == rocblaslt::RocGemmType::ROCBLASLT_GEMM)
+                    {
+                        status = getAllSolutions<rocblaslt_f8, rocblaslt_f8, rocblaslt_half, float>(
+                            prob, handle, heuristicResults, maxWorkspaceSize);
+                    }
+                    else if(typeGemm == rocblaslt::RocGemmType::ROCBLASLT_GROUPED_GEMM)
+                    {
+                        std::vector<RocblasltContractionProblem<rocblaslt_f8,
+                                                                rocblaslt_f8,
+                                                                rocblaslt_half,
+                                                                float>>
+                            probs = {prob};
+                        status = getAllSolutions<rocblaslt_f8, rocblaslt_f8, rocblaslt_half, float>(
+                            probs, handle, heuristicResults, maxWorkspaceSize);
+                    }
+                    else
+                    {
+                        log_api(__func__, "Invalid gemm type", static_cast<int>(typeGemm));
+                        status = rocblaslt_status_not_implemented;
+                    }
+                }
+            }
         }
         else if(typeA == HIPBLASLT_R_8F_E4M3 && typeB == HIPBLASLT_R_8F_E5M2)
         {
@@ -1753,6 +1984,115 @@ rocblaslt_status rocblaslt_matmul_get_all_algos_cpp(
                             probs = {prob};
                         status    = getAllSolutions<rocblaslt_f8, rocblaslt_bf8, float, float>(
                             probs, handle, heuristicResults, maxWorkspaceSize);
+                    }
+                    else
+                    {
+                        log_api(__func__, "Invalid gemm type", static_cast<int>(typeGemm));
+                        status = rocblaslt_status_not_implemented;
+                    }
+                }
+            }
+            else if(typeC == HIPBLASLT_R_16F && typeD == HIPBLASLT_R_16F)
+            {
+                if(typeCompute == rocblaslt_compute_f32)
+                {
+                    float alpha = 1.0;
+                    float beta  = 1.0;
+                    auto  prob  = construct_rocblaslt_problem<rocblaslt_f8,
+                                                            rocblaslt_bf8,
+                                                            rocblaslt_half,
+                                                            float>(
+                        &matmul_desc, &matA, &matB, &matC, &matD, &alpha, &beta, maxWorkspaceSize);
+                    if(typeGemm == rocblaslt::RocGemmType::ROCBLASLT_GEMM)
+                    {
+                        status
+                            = getAllSolutions<rocblaslt_f8, rocblaslt_bf8, rocblaslt_half, float>(
+                                prob, handle, heuristicResults, maxWorkspaceSize);
+                    }
+                    else if(typeGemm == rocblaslt::RocGemmType::ROCBLASLT_GROUPED_GEMM)
+                    {
+                        std::vector<RocblasltContractionProblem<rocblaslt_f8,
+                                                                rocblaslt_bf8,
+                                                                rocblaslt_half,
+                                                                float>>
+                            probs = {prob};
+                        status
+                            = getAllSolutions<rocblaslt_f8, rocblaslt_bf8, rocblaslt_half, float>(
+                                probs, handle, heuristicResults, maxWorkspaceSize);
+                    }
+                    else
+                    {
+                        log_api(__func__, "Invalid gemm type", static_cast<int>(typeGemm));
+                        status = rocblaslt_status_not_implemented;
+                    }
+                }
+            }
+        }
+        else if(typeA == HIPBLASLT_R_8F_E5M2 && typeB == HIPBLASLT_R_8F_E4M3)
+        {
+            if(typeC == HIPBLASLT_R_32F && typeD == HIPBLASLT_R_32F)
+            {
+                if(typeCompute == rocblaslt_compute_f32)
+                {
+                    float alpha = 1.0;
+                    float beta  = 1.0;
+                    auto  prob
+                        = construct_rocblaslt_problem<rocblaslt_bf8, rocblaslt_f8, float, float>(
+                            &matmul_desc,
+                            &matA,
+                            &matB,
+                            &matC,
+                            &matD,
+                            &alpha,
+                            &beta,
+                            maxWorkspaceSize);
+                    if(typeGemm == rocblaslt::RocGemmType::ROCBLASLT_GEMM)
+                    {
+                        status = getAllSolutions<rocblaslt_bf8, rocblaslt_f8, float, float>(
+                            prob, handle, heuristicResults, maxWorkspaceSize);
+                    }
+                    else if(typeGemm == rocblaslt::RocGemmType::ROCBLASLT_GROUPED_GEMM)
+                    {
+                        std::vector<
+                            RocblasltContractionProblem<rocblaslt_bf8, rocblaslt_f8, float, float>>
+                            probs = {prob};
+                        status    = getAllSolutions<rocblaslt_bf8, rocblaslt_f8, float, float>(
+                            probs, handle, heuristicResults, maxWorkspaceSize);
+                    }
+                    else
+                    {
+                        log_api(__func__, "Invalid gemm type", static_cast<int>(typeGemm));
+                        status = rocblaslt_status_not_implemented;
+                    }
+                }
+            }
+            else if(typeC == HIPBLASLT_R_16F && typeD == HIPBLASLT_R_16F)
+            {
+                if(typeCompute == rocblaslt_compute_f32)
+                {
+                    float alpha = 1.0;
+                    float beta  = 1.0;
+                    auto  prob  = construct_rocblaslt_problem<rocblaslt_bf8,
+                                                            rocblaslt_f8,
+                                                            rocblaslt_half,
+                                                            float>(
+                        &matmul_desc, &matA, &matB, &matC, &matD, &alpha, &beta, maxWorkspaceSize);
+                    if(typeGemm == rocblaslt::RocGemmType::ROCBLASLT_GEMM)
+                    {
+                        status
+                            = getAllSolutions<rocblaslt_bf8, rocblaslt_f8, rocblaslt_half, float>(
+                                prob, handle, heuristicResults, maxWorkspaceSize);
+                    }
+                    else if(typeGemm == rocblaslt::RocGemmType::ROCBLASLT_GROUPED_GEMM)
+                    {
+                        std::vector<RocblasltContractionProblem<rocblaslt_bf8,
+                                                                rocblaslt_f8,
+                                                                rocblaslt_half,
+                                                                float>>
+                            probs = {prob};
+                        status
+                            = getAllSolutions<rocblaslt_bf8, rocblaslt_f8, rocblaslt_half, float>(
+                                probs, handle, heuristicResults, maxWorkspaceSize);
                     }
                     else
                     {

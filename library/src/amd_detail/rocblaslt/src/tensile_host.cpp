@@ -505,9 +505,8 @@ namespace
             tensileProblem.setUseScaleDVec(prob.scaleDVec == nullptr ? false : true);
             if(prob.scaleDVec)
                 tensileProblem.setScaleDVec(Tensile_Tc, d.sizes()[0]);
-            tensileProblem.setUseScaleAlphaVec(prob.scaleAlphaVec == nullptr ? false : true);
-            if(prob.scaleAlphaVec)
-                tensileProblem.setScaleAlphaVec(Tensile_Tc, d.sizes()[0]);
+            tensileProblem.setUseScaleAlphaVec(true);
+            tensileProblem.setScaleAlphaVec(Tensile_Tc, d.sizes()[0]);
         }
         else
         {
@@ -697,9 +696,8 @@ namespace
                 tensileProblem.setUseScaleDVec(prob.scaleDVec == nullptr ? false : true);
                 if(prob.scaleDVec)
                     tensileProblem.setScaleDVec(Tensile_Tc, d.sizes()[0]);
-                tensileProblem.setUseScaleAlphaVec(prob.scaleAlphaVec == nullptr ? false : true);
-                if(prob.scaleAlphaVec)
-                    tensileProblem.setScaleAlphaVec(Tensile_Tc, d.sizes()[0]);
+                tensileProblem.setUseScaleAlphaVec(true);
+                tensileProblem.setScaleAlphaVec(Tensile_Tc, d.sizes()[0]);
             }
             else
             {
@@ -2446,8 +2444,11 @@ CREATEFUNCTION(rocblaslt_half, rocblaslt_half, rocblaslt_half, float)
 CREATEFUNCTION(rocblaslt_half, rocblaslt_half, float, float)
 CREATEFUNCTION(rocblaslt_bfloat16, rocblaslt_bfloat16, rocblaslt_bfloat16, float)
 CREATEFUNCTION(rocblaslt_f8, rocblaslt_f8, float, float)
-CREATEFUNCTION(rocblaslt_bf8, rocblaslt_bf8, float, float)
 CREATEFUNCTION(rocblaslt_f8, rocblaslt_bf8, float, float)
+CREATEFUNCTION(rocblaslt_bf8, rocblaslt_f8, float, float)
+CREATEFUNCTION(rocblaslt_f8, rocblaslt_f8, rocblaslt_half, float)
+CREATEFUNCTION(rocblaslt_f8, rocblaslt_bf8, rocblaslt_half, float)
+CREATEFUNCTION(rocblaslt_bf8, rocblaslt_f8, rocblaslt_half, float)
 
 /***********************************************************************************
  * Whether Tensile has been initialized for at least one device (used for

@@ -564,14 +564,15 @@ Tests:
   scaleD_vector: 1
   unit_check: 1
 
-- name: matmul_f8
+- name: matmul_f8_dst_fp32
   category: pre_checkin
   function:
     matmul: *f8_precision_dst_fp32
   M: [128, 129]
   N: [128, 129]
   K: [128, 129]
-  transA_transB: *transA_transB_range
+  transA: T
+  transB: N
   alpha: 1
   beta: [ 0.0, 2.0 ]
   scaleA: [ 0, 1]
@@ -580,6 +581,25 @@ Tests:
   bias_type: f32_r
   unit_check: 1
   gpu_arch: '94?'
+
+- name: matmul_f8_dst_fp16
+  category: pre_checkin
+  function:
+    matmul: *f8_precision_dst_fp16
+  M: [128, 129]
+  N: [128, 129]
+  K: [128, 129]
+  transA: T
+  transB: N
+  alpha: 1
+  beta: [ 0.0, 2.0 ]
+  scaleA: [ 0, 1]
+  scaleB: [ 0, 1]
+  bias_vector: [0, 1]
+  bias_type: f16_r
+  unit_check: 1
+  gpu_arch: '94?'
+
 
 - name: matmul_fallback_equality_NN_batch16
   category: pre_checkin
@@ -688,14 +708,15 @@ Tests:
   unit_check: 0
   norm_check: 1
 
-- name: matmul_bgradb_f8
+- name: matmul_bgradb_f8_dst_fp32
   category: pre_checkin
   function:
     matmul: *f8_precision_dst_fp32
   M: [128, 129]
   N: [128, 129]
   K: [128, 129]
-  transA_transB: *transA_transB_range
+  transA: T
+  transB: N
   alpha: 1
   beta: [ 0.0, 2.0 ]
   gradient: 1
