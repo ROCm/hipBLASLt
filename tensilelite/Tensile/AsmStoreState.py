@@ -439,7 +439,7 @@ class StoreState:
                 if self.cfg.halfDataRegPerVI:
                     # TODO- check (H,H,H,H,S,S)
                     if kernel["ProblemType"]["HighPrecisionAccumulate"] and \
-                       (kernel["ProblemType"]["DataType"].isBFloat16() or kernel["ProblemType"]["DataType"].isHalf()):
+                       (kernel["ProblemType"]["DestDataType"].isBFloat16() or kernel["ProblemType"]["DestDataType"].isHalf()):
                         data = kw.vgprPool.checkOutAligned(int(2*self.cfg.numVgprsPerDataPerVI*self.cfg.gwvw), \
                               int(ceil(int(2*self.cfg.numVgprsPerDataPerVI*self.cfg.gwvw))), "writeBatch-data for ei=%u and ei=%u"%(elementIdx,elementIdx+1), preventOverflow=not isOptNLL)
                     else:
