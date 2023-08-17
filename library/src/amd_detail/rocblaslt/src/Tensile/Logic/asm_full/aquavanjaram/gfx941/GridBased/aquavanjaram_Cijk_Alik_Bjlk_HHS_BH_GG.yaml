@@ -3,8 +3,7 @@
 - gfx941
 - [Device 0049]
 - Activation: false
-  ActivationComputeDataType: 4
-  ActivationHPA: false
+  ActivationComputeDataType: 0
   ActivationType: none
   AllowNoFreeDims: false
   AssignedDerivedParameters: true
@@ -175,8 +174,7 @@
     PrefetchLocalRead: 1
     ProblemType:
       Activation: false
-      ActivationComputeDataType: 4
-      ActivationHPA: false
+      ActivationComputeDataType: 0
       ActivationType: none
       AllowNoFreeDims: false
       AssignedDerivedParameters: true
