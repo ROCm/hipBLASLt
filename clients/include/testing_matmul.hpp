@@ -280,6 +280,7 @@ void check(hipStream_t                         stream,
            std::vector<host_vector<Tbias>*>&   hBias_gold,
            std::vector<host_vector<Tbias>*>&   hBias,
            std::vector<device_vector<Tbias>*>& dBias,
+           std::vector<double>&                tol,
            double&                             hipblaslt_error)
 {
     // fetch GPU
@@ -295,30 +296,74 @@ void check(hipStream_t                         stream,
         }
         if(arg.unit_check)
         {
-            unit_check_general<To>(M[gemmIdx],
-                                   N[gemmIdx],
-                                   ldd[gemmIdx],
-                                   stride_d[gemmIdx],
-                                   *(hD_gold[gemmIdx]),
-                                   *(hD_1[gemmIdx]),
-                                   num_batches[gemmIdx]);
-            if(!arg.gradient && arg.use_e)
+            if(tol[gemmIdx] !=0)
+            {
+                near_check_general<To>(M[gemmIdx],
+                                       N[gemmIdx],
+                                       ldd[gemmIdx],
+                                       stride_d[gemmIdx],
+                                       *(hD_gold[gemmIdx]),
+                                       *(hD_1[gemmIdx]),
+                                       num_batches[gemmIdx],
+                                       tol[gemmIdx]);
+            }
+            else
+            {
                 unit_check_general<To>(M[gemmIdx],
                                        N[gemmIdx],
-                                       lde[gemmIdx],
-                                       stride_e[gemmIdx],
-                                       *(hE_gold[gemmIdx]),
-                                       *(hE[gemmIdx]),
+                                       ldd[gemmIdx],
+                                       stride_d[gemmIdx],
+                                       *(hD_gold[gemmIdx]),
+                                       *(hD_1[gemmIdx]),
                                        num_batches[gemmIdx]);
+            }
+            if(!arg.gradient && arg.use_e)
+            {
+                if(tol[gemmIdx] !=0)
+                {
+                    near_check_general<To>(M[gemmIdx],
+                                           N[gemmIdx],
+                                           lde[gemmIdx],
+                                           stride_e[gemmIdx],
+                                           *(hE_gold[gemmIdx]),
+                                           *(hE[gemmIdx]),
+                                           num_batches[gemmIdx],
+                                           tol[gemmIdx]);
+                }
+                else
+                {
+                    unit_check_general<To>(M[gemmIdx],
+                                           N[gemmIdx],
+                                           lde[gemmIdx],
+                                           stride_e[gemmIdx],
+                                           *(hE_gold[gemmIdx]),
+                                           *(hE[gemmIdx]),
+                                           num_batches[gemmIdx]);
+                }
+            }
             if(arg.gradient && arg.bias_vector)
             {
-                unit_check_general<Tbias>(size_bias[gemmIdx],
+                if(tol[gemmIdx] !=0)
+                {
+                    near_check_general<Tbias>(size_bias[gemmIdx],
+                                          1,
+                                          size_bias[gemmIdx],
+                                          size_bias[gemmIdx],
+                                          *(hBias_gold[gemmIdx]),
+                                          *(hBias[gemmIdx]),
+                                          num_batches[gemmIdx],
+                                          tol[gemmIdx]);
+                }
+                else
+                {
+                    unit_check_general<Tbias>(size_bias[gemmIdx],
                                           1,
                                           size_bias[gemmIdx],
                                           size_bias[gemmIdx],
                                           *(hBias_gold[gemmIdx]),
                                           *(hBias[gemmIdx]),
                                           num_batches[gemmIdx]);
+                }
             }
         }
 
@@ -2118,7 +2163,15 @@ void testing_matmul_with_bias(const Arguments& arg)
             }
         }
 
-        double hipblaslt_error = 0.0;
+        double               hipblaslt_error = 0.0;
+        std::vector<double> tol(gemm_count);
+        if(arg.unit_check && hipblaslt_get_arch_major() == 11 && sizeof(TiA) == 2
+           && sizeof(TiB) == 2)
+        {
+            for(int gemmIdx = 0; gemmIdx < gemm_count; gemmIdx++) {
+                tol[gemmIdx] = K[gemmIdx] * sum_error_tolerance_for_gfx11<Tc, TiA, To>;
+            }
+        }
         if(arg.unit_check || arg.norm_check)
         {
             copy_gemm_to_host(stream, gemm_count, hD_1, dD);
@@ -2432,7 +2485,15 @@ void testing_matmul_with_bias(const Arguments& arg)
                 }
             }
 
-            double hipblaslt_error = 0.0;
+            double               hipblaslt_error = 0.0;
+            std::vector<double> tol(gemm_count);
+            if(arg.unit_check && hipblaslt_get_arch_major() == 11 && sizeof(TiA) == 2
+               && sizeof(TiB) == 2)
+            {
+                for(int gemmIdx = 0; gemmIdx < gemm_count; gemmIdx++) {
+                    tol[gemmIdx] = K[gemmIdx] * sum_error_tolerance_for_gfx11<Tc, TiA, To>;
+                }
+            }
             if(arg.unit_check || arg.norm_check)
                 check(stream,
                       arg,

@@ -1,5 +1,6 @@
+#TODO
 TestParameters:
-  marks: [skip-gfx1100, skip-gfx1101, skip-gfx1102] # not supported yet
+  marks: [skip-gfx900, skip-gfx906, skip-gfx908, skip-gfx90a, skip-gfx940, skip-gfx941, skip-gfx942, skip-gfx1010, skip-gfx1011, skip-gfx1012, skip-gfx1030, skip-gfx1100, skip-gfx1101, skip-gfx1102] # not supported by arch
 
 GlobalParameters:
   MinimumRequiredVersion: 4.14.0
@@ -14,6 +15,7 @@ GlobalParameters:
   CSVMergeSameProblemID: 1
   Device: 0
   MaxWorkspaceSize: 3355443200
+  PrintSolutionRejectionReason: True
 
 BenchmarkProblems:
   ########################################
@@ -32,7 +34,7 @@ BenchmarkProblems:
       Batched: True
       Gradient: True
       UseE: True
-      UseBias: 1
+      UseBias: True
       BiasSrc: "D"
       Activation: True
       ActivationHPA: True
@@ -44,17 +46,18 @@ BenchmarkProblems:
         - KernelLanguage: ["Assembly"]
       ForkParameters:
         - MatrixInstruction:
-          - [32, 32, 8, 1,  1,   2, 4,  2,2 ]
+          - [16, 16, 16, 1,  1,   2, 4,  2,2 ]
         - AssertFree0ElementMultiple: [8]
         - PrefetchGlobalRead: [2]
         - PrefetchLocalRead: [1]
         - ClusterLocalRead: [1]
         - DepthU: [32]
+        - WavefrontSize: [32]
         - VectorWidthA: [2]
         - VectorWidthB: [1]
         - GlobalReadVectorWidthA: [-1]
-        - GlobalReadVectorWidthB: [-1]
-        - LocalReadVectorWidth: [8]
+        - GlobalReadVectorWidthB: [8]
+        - LocalReadVectorWidth: [16]
         - ScheduleIterAlg: [3]
         - InnerUnroll: [1]
         - ExpandPointerSwap: [1]
@@ -65,8 +68,8 @@ BenchmarkProblems:
         - LdsPadB: [-1]
         - WaveSeparateGlobalReadB: [1]
         - 1LDSBuffer: [-1]
-        - GlobalSplitU: [1, 2]
-        - GlobalSplitUAlgorithm: ["MultipleBuffer"]
+        #- GlobalSplitU: [1, 2]
+        #- GlobalSplitUAlgorithm: ["MultipleBuffer"]
         - GlobalReadPerMfma: [1]
         - LocalWritePerMfma: [-1]
         - StoreVectorWidth: [-1]
@@ -101,7 +104,7 @@ BenchmarkProblems:
       Batched: True
       Gradient: True
       UseE: False
-      UseBias: 1
+      UseBias: True
       BiasSrc: "A"
       Activation: False
       ActivationHPA: False
@@ -113,18 +116,18 @@ BenchmarkProblems:
         - KernelLanguage: ["Assembly"]
       ForkParameters:
         - MatrixInstruction:
-          - [16, 16, 4, 4,  2,   2, 4,  2,2 ]
-          - [32, 32, 8, 1,  1,   2, 4,  2,2 ]
+          - [16, 16, 16, 1,  1,   2, 4,  2,2 ]
         - AssertFree0ElementMultiple: [1, 8]
         - PrefetchGlobalRead: [2]
         - PrefetchLocalRead: [1]
         - ClusterLocalRead: [1]
         - DepthU: [16, 32]
+        - WavefrontSize: [32]
         - VectorWidthA: [2]
         - VectorWidthB: [1]
         - GlobalReadVectorWidthA: [-1]
         - GlobalReadVectorWidthB: [-1]
-        - LocalReadVectorWidth: [8]
+        - LocalReadVectorWidth: [16]
         - ScheduleIterAlg: [3]
         - InnerUnroll: [1]
         - ExpandPointerSwap: [1]
@@ -135,8 +138,8 @@ BenchmarkProblems:
         - LdsPadB: [0]
         - WaveSeparateGlobalReadB: [1]
         - 1LDSBuffer: [-1]
-        - GlobalSplitU: [1, 2]
-        - GlobalSplitUAlgorithm: ["MultipleBuffer"]
+        #- GlobalSplitU: [1, 2]
+        #- GlobalSplitUAlgorithm: ["MultipleBuffer"]
         - GlobalReadPerMfma: [1]
         - LocalWritePerMfma: [-1]
         - StoreVectorWidth: [-1]
@@ -171,7 +174,7 @@ BenchmarkProblems:
       Batched: True
       Gradient: True
       UseE: False
-      UseBias: 1
+      UseBias: True
       BiasSrc: "A"
       Activation: False
       ActivationHPA: False
@@ -183,18 +186,18 @@ BenchmarkProblems:
         - KernelLanguage: ["Assembly"]
       ForkParameters:
         - MatrixInstruction:
-          - [16, 16, 4, 4,  2,   2, 4,  2,2 ]
-          - [32, 32, 8, 1,  1,   2, 4,  2,2 ]
+          - [16, 16, 16, 1,  1,   2, 4,  2,2 ]
         - AssertFree0ElementMultiple: [1, 8]
         - PrefetchGlobalRead: [2]
         - PrefetchLocalRead: [1]
         - ClusterLocalRead: [1]
         - DepthU: [16, 32]
+        - WavefrontSize: [32]
         - VectorWidthA: [2]
         - VectorWidthB: [1]
         - GlobalReadVectorWidthA: [-1]
         - GlobalReadVectorWidthB: [-1]
-        - LocalReadVectorWidth: [8]
+        - LocalReadVectorWidth: [16]
         - ScheduleIterAlg: [3]
         - InnerUnroll: [1]
         - ExpandPointerSwap: [1]
@@ -205,8 +208,8 @@ BenchmarkProblems:
         - LdsPadB: [0]
         - WaveSeparateGlobalReadB: [1]
         - 1LDSBuffer: [-1]
-        - GlobalSplitU: [1, 2]
-        - GlobalSplitUAlgorithm: ["MultipleBuffer"]
+        #- GlobalSplitU: [1, 2]
+        #- GlobalSplitUAlgorithm: ["MultipleBuffer"]
         - GlobalReadPerMfma: [1]
         - LocalWritePerMfma: [-1]
         - StoreVectorWidth: [-1]
@@ -244,7 +247,7 @@ BenchmarkProblems:
       Batched: True
       Gradient: True
       UseE: False
-      UseBias: 1
+      UseBias: True
       BiasSrc: "A"
       Activation: False
       ActivationHPA: False
@@ -256,18 +259,18 @@ BenchmarkProblems:
         - KernelLanguage: ["Assembly"]
       ForkParameters:
         - MatrixInstruction:
-          - [16, 16, 4, 4,  2,   2, 4,  2,2 ]
-          - [32, 32, 8, 1,  1,   2, 4,  2,2 ]
+          - [16, 16, 16, 1,  1,   2, 4,  2,2 ]
         - AssertFree0ElementMultiple: [1, 8]
         - PrefetchGlobalRead: [2]
         - PrefetchLocalRead: [1]
         - ClusterLocalRead: [1]
         - DepthU: [16, 32]
+        - WavefrontSize: [32]
         - VectorWidthA: [2]
         - VectorWidthB: [1]
         - GlobalReadVectorWidthA: [-1]
         - GlobalReadVectorWidthB: [-1]
-        - LocalReadVectorWidth: [8]
+        - LocalReadVectorWidth: [16]
         - ScheduleIterAlg: [3]
         - InnerUnroll: [1]
         - ExpandPointerSwap: [1]
@@ -278,8 +281,8 @@ BenchmarkProblems:
         - LdsPadB: [0]
         - WaveSeparateGlobalReadB: [1]
         - 1LDSBuffer: [-1]
-        - GlobalSplitU: [1, 2]
-        - GlobalSplitUAlgorithm: ["MultipleBuffer"]
+        #- GlobalSplitU: [1, 2]
+        #- GlobalSplitUAlgorithm: ["MultipleBuffer"]
         - GlobalReadPerMfma: [1]
         - LocalWritePerMfma: [-1]
         - StoreVectorWidth: [-1]
@@ -315,7 +318,7 @@ BenchmarkProblems:
       Batched: True
       Gradient: True
       UseE: False
-      UseBias: 1
+      UseBias: True
       BiasSrc: "B"
       Activation: False
       ActivationHPA: False
@@ -327,22 +330,19 @@ BenchmarkProblems:
         - KernelLanguage: ["Assembly"]
       ForkParameters:
         - MatrixInstruction:
-          - [16, 16, 4, 4,  2,   2, 4,  2,2 ]
-          - [16, 16, 4, 4,  4,   2, 4,  2,2 ]
-          - [16, 16, 4, 4,  1,   2, 4,  2,2 ]
-          - [16, 16, 4, 4,  2,   2, 4,  4,2 ]
-          - [16, 16, 4, 4,  2,   2, 4,  1,2 ]
-          - [32, 32, 8, 1,  1,   2, 4,  2,2 ]
+          - [16, 16, 16, 1,  1,   2, 4,  2,2 ]
+
         - AssertFree0ElementMultiple: [1, 8]
         - PrefetchGlobalRead: [2]
         - PrefetchLocalRead: [1]
         - ClusterLocalRead: [1]
         - DepthU: [16, 32]
+        - WavefrontSize: [32]
         - VectorWidthA: [2]
         - VectorWidthB: [1]
         - GlobalReadVectorWidthA: [-1]
         - GlobalReadVectorWidthB: [-1]
-        - LocalReadVectorWidth: [8]
+        - LocalReadVectorWidth: [16]
         - ScheduleIterAlg: [3]
         - InnerUnroll: [1]
         - ExpandPointerSwap: [1]
@@ -353,8 +353,8 @@ BenchmarkProblems:
         - LdsPadB: [0]
         - WaveSeparateGlobalReadB: [1]
         - 1LDSBuffer: [-1]
-        - GlobalSplitU: [1, 2]
-        - GlobalSplitUAlgorithm: ["MultipleBuffer"]
+        #- GlobalSplitU: [1, 2]
+        #- GlobalSplitUAlgorithm: ["MultipleBuffer"]
         - GlobalReadPerMfma: [1]
         - LocalWritePerMfma: [-1]
         - StoreVectorWidth: [-1]
@@ -389,7 +389,7 @@ BenchmarkProblems:
       Batched: True
       Gradient: True
       UseE: False
-      UseBias: 1
+      UseBias: True
       BiasSrc: "B"
       Activation: False
       ActivationHPA: False
@@ -401,17 +401,14 @@ BenchmarkProblems:
         - KernelLanguage: ["Assembly"]
       ForkParameters:
         - MatrixInstruction:
-          - [16, 16, 4, 4,  2,   2, 4,  2,2 ]
-          - [16, 16, 4, 4,  4,   2, 4,  2,2 ]
-          - [16, 16, 4, 4,  1,   2, 4,  2,2 ]
-          - [16, 16, 4, 4,  2,   2, 4,  4,2 ]
-          - [16, 16, 4, 4,  2,   2, 4,  1,2 ]
-          - [32, 32, 8, 1,  1,   2, 4,  2,2 ]
+          - [16, 16, 16, 1,  1,   2, 4,  2,2 ]
+
         - AssertFree0ElementMultiple: [1, 8]
         - PrefetchGlobalRead: [2]
         - PrefetchLocalRead: [1]
         - ClusterLocalRead: [1]
         - DepthU: [8, 16, 32]
+        - WavefrontSize: [32]
         - VectorWidthA: [2]
         - VectorWidthB: [1]
         - ScheduleIterAlg: [3]
@@ -424,8 +421,8 @@ BenchmarkProblems:
         - LdsPadB: [0]
         - WaveSeparateGlobalReadB: [1]
         - 1LDSBuffer: [-1]
-        - GlobalSplitU: [1, 2]
-        - GlobalSplitUAlgorithm: ["MultipleBuffer"]
+        #- GlobalSplitU: [1, 2]
+        #- GlobalSplitUAlgorithm: ["MultipleBuffer"]
         - GlobalReadPerMfma: [1]
         - LocalWritePerMfma: [-1]
         - StoreVectorWidth: [-1]

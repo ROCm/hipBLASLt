@@ -1967,8 +1967,9 @@ class Solution(collections.abc.Mapping):
         reject(state, "didn't support Matrix Instruction with type %s" % str(state["ProblemType"]["DataType"]))
         return
       if (not globalParameters["AsmCaps"][isa]["HasMFMA"] and globalParameters["AsmCaps"][isa]["HasWMMA"] and (state["WavefrontSize"] == 64)):
-        reject(state, "WMMA only suppport on WGP mode, wave size = 32")
-        return
+         print2("!! Warning: WMMA only well tune on WGP mode, wave size = 32")
+      #  reject(state, "WMMA only suppport on WGP mode, wave size = 32")
+      #  return
       if not state["MIBlock"] or len(state["MIBlock"]) != 6:
         reject(state, "invalid MIBlock")
         return

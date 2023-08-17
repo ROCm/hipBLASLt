@@ -1,5 +1,5 @@
 TestParameters:
-  marks: [skip-gfx1100, skip-gfx1101, skip-gfx1102] # not supported by arch
+  marks: [skip-gfx1100, skip-gfx1101, skip-gfx1102] # not supported yet
 
 GlobalParameters:
   MinimumRequiredVersion: 4.14.0

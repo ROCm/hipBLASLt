@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022-2023 Advanced Micro Devices, Inc.
+ * Copyright (C) 2022-2024 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -262,4 +262,23 @@ std::vector<void*> benchmark_allocation()
         hipblaslt_cout << ss.str();
     }
     return ptrs;
+}
+int32_t hipblaslt_get_arch_major()
+{
+    int             deviceId;
+    hipDeviceProp_t deviceProperties;
+
+    auto removePrefix = [](const std::string& s) {
+        size_t pos = s.find("gfx");
+        if(pos != std::string::npos)
+        {
+            return s.substr(pos + 3);
+        }
+        return s;
+    };
+
+    static_cast<void>(hipGetDevice(&deviceId));
+    static_cast<void>(hipGetDeviceProperties(&deviceProperties, deviceId));
+    auto        gpu_arch_no_prefix = removePrefix(deviceProperties.gcnArchName);
+    return stoi(gpu_arch_no_prefix) /100;
 }
