@@ -1,5 +1,5 @@
 TestParameters:
-  marks: [skip-gfx940, skip-gfx941, skip-gfx942] # not supported by arch
+  marks: [skip-gfx940, skip-gfx941, skip-gfx942, skip-gfx1100, skip-gfx1101, skip-gfx1102] # not supported by arch
 
 GlobalParameters:
   NumElementsToValidate: -1
@@ -37,7 +37,7 @@ BenchmarkProblems:
       Batched: True
       Activation: True
       ActivationHPA: True
-  
+
     - # BenchmarkProblemSizeGroup - Standard
       InitialSolutionParameters:
       BenchmarkCommonParameters:
@@ -86,7 +86,7 @@ BenchmarkProblems:
       Batched: True
       Activation: True
       ActivationHPA: True
-  
+
     - # BenchmarkProblemSizeGroup - Standard
       InitialSolutionParameters:
       BenchmarkCommonParameters:
@@ -135,7 +135,7 @@ BenchmarkProblems:
       Batched: True
       Activation: True
       ActivationHPA: True
-  
+
     - # BenchmarkProblemSizeGroup - Standard
       InitialSolutionParameters:
       BenchmarkCommonParameters:
@@ -184,7 +184,7 @@ BenchmarkProblems:
       Batched: True
       Activation: True
       ActivationHPA: True
-  
+
     - # BenchmarkProblemSizeGroup - Standard
       InitialSolutionParameters:
       BenchmarkCommonParameters:
