@@ -1586,11 +1586,7 @@ namespace Tensile
                 name += actName;
             }
 
-            if((problemType.activationComputeDataType == problemType.computeType)
-               && problemType.highPrecisionAccumulate)
-            {
-                name += "h";
-            }
+            name += TypeAbbrev(problemType.activationComputeDataType);
 
             if(problemType.activationNoGuard)
             {
