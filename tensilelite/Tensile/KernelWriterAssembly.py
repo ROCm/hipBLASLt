@@ -9184,15 +9184,13 @@ class KernelWriterAssembly(KernelWriter):
     if ((kernel["ProblemType"]["ActivationType"] != 'none') and \
       (kernel["GlobalSplitU"] == 1) and kernel["ActivationFused"]):
       if kernel["ActivationFuncCall"]:
-        return (not kernel["ProblemType"]["ActivationHPA"])
-      elif kernel["ProblemType"]["ActivationHPA"]:
-        # Still use BFloat16 for abs.
-        if kernel["ProblemType"]["DestDataType"].isBFloat16() and (activationTypeStr == 'abs'):
-          result = True
-        elif kernel["ProblemType"]["DestDataType"].isHalf() and \
-           ((activationTypeStr == 'abs') or (activationTypeStr == 'relu')):
-          result = True
-      else:
+        return (kernel["ProblemType"]["ActivationComputeDataType"] == kernel["ProblemType"]["DestDataType"])
+      elif kernel["ProblemType"]["DestDataType"].isBFloat16() and (activationTypeStr == 'abs'):
+        result = True
+      elif kernel["ProblemType"]["DestDataType"].isHalf() and \
+        ((activationTypeStr == 'abs') or (activationTypeStr == 'relu')):
+        result = True
+      elif kernel["ProblemType"]["ActivationComputeDataType"] == kernel["ProblemType"]["DestDataType"]:
         result = True
     return result
 

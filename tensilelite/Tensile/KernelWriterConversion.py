@@ -116,10 +116,8 @@ class KernelWriterConversion(KernelWriterBase):
     activationCDataType = self.state["ProblemType"]["ActivationComputeDataType"]
     enumName = "Tensile::%sActivationType_%s"%(self.actGradientPrefix, activationCDataType.toChar())
     if ((self.state["ProblemType"]["ActivationType"] != 'none') and self.state["ActivationFused"]):
-      activationCDataType = self.state["ProblemType"]["ComputeDataType"] if self.state["ProblemType"]["ActivationHPA"] else \
-                            self.state["ProblemType"]["DestDataType"]
       for name in self.state["ProblemType"]["ActivationType"].getAdditionalArgStringList():
-        kStr += "  %s %s;%s" % (activationCDataType.toDevice(self.language), name, self.endLine)
+        kStr += "  %s %s;%s" % (self.state["ProblemType"]["ActivationComputeDataType"].toDevice(self.language), name, self.endLine)
       if self.state["ProblemType"]["ActivationType"] == 'all':
         kStr += "  %s activationType;%s" % (enumName, self.endLine)
 
@@ -526,8 +524,7 @@ class KernelWriterConversion(KernelWriterBase):
 
     #Activation
     if ((self.state["ProblemType"]["ActivationType"] != 'none') and self.state["ActivationFused"]):
-      typeActivationStr = self.state["ProblemType"]["ComputeDataType"].toDevice(self.language) if self.state["ProblemType"]["ActivationHPA"] else \
-                          self.state["ProblemType"]["DestDataType"].toDevice(self.language)
+      typeActivationStr = self.state["ProblemType"]["ActivationComputeDataType"].toDevice(self.language)
       actArgs = ""
       if self.state["ProblemType"]["ActivationType"] == 'all':
         actArgs += ", arg.activationType"
@@ -617,7 +614,7 @@ class KernelWriterConversion(KernelWriterBase):
         name += "_A"
       else:
         name += "_%s"%str(self.state["ProblemType"]["ActivationType"]).upper()
-      name += ("h" if self.state["ProblemType"]["ActivationHPA"] else "")
+      name += self.state["ProblemType"]["ActivationComputeDataType"].toChar()
       name += ("ng" if self.state["ProblemType"]["ActivationNoGuard"] else "")
     name += "_ScaleAB" if self.state["ProblemType"]["UseScaleAB"] else ""
     name += "_ScaleDVec" if self.state["ProblemType"]["UseScaleDVec"] else ""
