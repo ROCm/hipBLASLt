@@ -97,108 +97,113 @@ amdhsa.kernels:
         .value_kind:      global_buffer
         .value_type:      f16
         .address_space:   generic
-      - .name:            alpha
-        .size:            4
-        .offset:          48
-        .value_kind:      by_value
-        .value_type:      f32
-      - .name:            beta
-        .size:            4
-        .offset:          52
-        .value_kind:      by_value
-        .value_type:      f32
       - .name:            strideD0
         .size:            4
-        .offset:          56
+        .offset:          48
         .value_kind:      by_value
         .value_type:      u32
       - .name:            strideD1
         .size:            4
-        .offset:          60
+        .offset:          52
         .value_kind:      by_value
         .value_type:      u32
       - .name:            strideC0
         .size:            4
-        .offset:          64
+        .offset:          56
         .value_kind:      by_value
         .value_type:      u32
       - .name:            strideC1
         .size:            4
-        .offset:          68
+        .offset:          60
         .value_kind:      by_value
         .value_type:      u32
       - .name:            strideA0
         .size:            4
-        .offset:          72
+        .offset:          64
         .value_kind:      by_value
         .value_type:      u32
       - .name:            strideA1
         .size:            4
-        .offset:          76
+        .offset:          68
         .value_kind:      by_value
         .value_type:      u32
       - .name:            strideB0
         .size:            4
-        .offset:          80
+        .offset:          72
         .value_kind:      by_value
         .value_type:      u32
       - .name:            strideB1
         .size:            4
-        .offset:          84
+        .offset:          76
         .value_kind:      by_value
         .value_type:      u32
       - .name:            dstD
         .size:            8
-        .offset:          88
+        .offset:          80
         .value_kind:      global_buffer
-        .value_type:      f32
+        .value_type:      f16
         .address_space:   generic
+      - .name:            alpha
+        .size:            4
+        .offset:          88
+        .value_kind:      by_value
+        .value_type:      f32
+      - .name:            beta
+        .size:            4
+        .offset:          92
+        .value_kind:      by_value
+        .value_type:      f32
+      - .name:            gsu
+        .size:            4
+        .offset:          96
+        .value_kind:      by_value
+        .value_type:      f32
       - .name:            AddressScaleDVec
         .size:            8
-        .offset:          96
+        .offset:          100
         .value_kind:      global_buffer
         .value_type:      f32
         .address_space:   generic
       - .name:            AddressScaleAlphaVec
         .size:            8
-        .offset:          104
+        .offset:          108
         .value_kind:      global_buffer
         .value_type:      f32
         .address_space:   generic
       - .name:            bias
         .size:            8
-        .offset:          112
+        .offset:          116
         .value_kind:      global_buffer
         .value_type:      void
         .address_space:   generic
       - .name:            biasType
         .size:            4
-        .offset:          120
+        .offset:          124
         .value_kind:      by_value
         .value_type:      u32
       - .name:            StrideBias
         .size:            4
-        .offset:          124
+        .offset:          128
         .value_kind:      by_value
         .value_type:      u32
       - .name:            activationAlpha
         .size:            4
-        .offset:          128
+        .offset:          132
         .value_kind:      by_value
         .value_type:      f32
       - .name:            activationBeta
         .size:            4
-        .offset:          132
+        .offset:          136
         .value_kind:      by_value
         .value_type:      f32
       - .name:            activationType
         .size:            4
-        .offset:          136
+        .offset:          140
         .value_kind:      by_value
         .value_type:      u32
       - .name:            GSUSync
         .size:            4
-        .offset:          140
+        .offset:          144
         .value_kind:      by_value
         .value_type:      u32
     .group_segment_fixed_size:   27136
