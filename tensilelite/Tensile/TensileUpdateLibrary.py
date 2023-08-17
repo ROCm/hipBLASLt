@@ -22,56 +22,23 @@
 #
 ################################################################################
 
-from . import Common
 from . import LibraryIO
-from .Common import assignGlobalParameters, print1, restoreDefaultGlobalParameters, HR
+from .Common import assignGlobalParameters, print1, restoreDefaultGlobalParameters, HR, \
+                    globalParameters, architectureMap, ensurePath, ParallelMap
 from .Tensile import addCommonArguments, argUpdatedGlobalParameters
 from . import __version__
 
 import argparse
 import copy
+import itertools
 import os
 import sys
 
 
-def TensileUpdateLibrary(userArgs):
-    print1("")
-    print1(HR)
-    print1("#")
-    print1("#  Tensile Update Library v{}".format(__version__))
-
-    # argument parsing and related setup
-    argParser = argparse.ArgumentParser()
-    argParser.add_argument("LogicFile", type=os.path.realpath,
-                           help="Library logic file to update")
-    argParser.add_argument("OutputPath", type=os.path.realpath,
-                           help="Where to place updated logic file")
-
-    addCommonArguments(argParser)
-    args = argParser.parse_args(userArgs)
-
-    libPath = args.LogicFile
-    print1("#  Library Logic: {}".format(libPath))
-    print1("#")
-    print1(HR)
-    print1("")
-
-    # setup global parameters
-    restoreDefaultGlobalParameters()
-    assignGlobalParameters({})
-    overrideParameters = argUpdatedGlobalParameters(args)
-    for key, value in overrideParameters.items():
-        print1("Overriding {0}={1}".format(key, value))
-        Common.globalParameters[key] = value
-
-    # update logic file
-    outPath = Common.ensurePath(os.path.abspath(args.OutputPath))
-    filename = os.path.basename(libPath)
-    outFile = os.path.join(outPath, filename)
-
-    libYaml = LibraryIO.readYAML(libPath)
+def UpdateLogic(filename, logicPath, outputPath):
+    libYaml = LibraryIO.readYAML(filename)
     # parseLibraryLogicData mutates the original data, so make a copy
-    fields = LibraryIO.parseLibraryLogicData(copy.deepcopy(libYaml), libPath)
+    fields = LibraryIO.parseLibraryLogicData(copy.deepcopy(libYaml), filename)
     (_, _, problemType, solutions, _, _) = fields
 
     # problem type object to state
@@ -79,6 +46,10 @@ def TensileUpdateLibrary(userArgs):
     problemTypeState["DataType"] = problemTypeState["DataType"].value
     problemTypeState["DestDataType"] = problemTypeState["DestDataType"].value
     problemTypeState["ComputeDataType"] = problemTypeState["ComputeDataType"].value
+    problemTypeState["BiasDataTypeList"] = [btype.value for btype in problemTypeState["BiasDataTypeList"]]
+    problemTypeState["ActivationComputeDataType"] = problemTypeState["ActivationComputeDataType"].value
+    problemTypeState["ActivationType"] = problemTypeState["ActivationType"].value
+    problemTypeState["F32XdlMathOp"] = problemTypeState["F32XdlMathOp"].value
 
     # solution objects to state
     solutionList = []
@@ -91,6 +62,14 @@ def TensileUpdateLibrary(userArgs):
                 solutionState["ProblemType"]["DestDataType"].value
         solutionState["ProblemType"]["ComputeDataType"] = \
                 solutionState["ProblemType"]["ComputeDataType"].value
+        solutionState["ProblemType"]["BiasDataTypeList"] = \
+                [btype.value for btype in solutionState["ProblemType"]["BiasDataTypeList"]]
+        solutionState["ProblemType"]["ActivationComputeDataType"] = \
+                solutionState["ProblemType"]["ActivationComputeDataType"].value
+        solutionState["ProblemType"]["ActivationType"] = \
+                solutionState["ProblemType"]["ActivationType"].value
+        solutionState["ProblemType"]["F32XdlMathOp"] = \
+            solutionState["ProblemType"]["F32XdlMathOp"].value
 
         solutionState["ISA"] = list(solutionState["ISA"])
         solutionList.append(solutionState)
@@ -99,7 +78,61 @@ def TensileUpdateLibrary(userArgs):
     libYaml[0] = {"MinimumRequiredVersion":__version__}
     libYaml[4] = problemTypeState
     libYaml[5] = solutionList
-    LibraryIO.writeYAML(outFile, libYaml, explicit_start=False, explicit_end=False)
+
+    if outputPath != "":
+        filename = filename.replace(logicPath, outputPath)
+    ensurePath(os.path.dirname(filename))
+    LibraryIO.writeYAML(filename, libYaml, explicit_start=False, explicit_end=False)
+
+def TensileUpdateLibrary(userArgs):
+    print1("")
+    print1(HR)
+    print1("#")
+    print1("#  Tensile Update Library v{}".format(__version__))
+
+    # argument parsing and related setup
+    argParser = argparse.ArgumentParser()
+    argParser.add_argument("--logic_path",  type=os.path.realpath, help="Path to LibraryLogic.yaml files.")
+    argParser.add_argument("--output_path", type=os.path.realpath, default=None, help="Where to place updated logic file.")
+
+    addCommonArguments(argParser)
+    args = argParser.parse_args(userArgs)
+
+    libPath = args.logic_path
+    print1("#  Library Logic: {}".format(libPath))
+    print1("#")
+    print1(HR)
+    print1("")
+
+    # setup global parameters
+    restoreDefaultGlobalParameters()
+    assignGlobalParameters({})
+    overrideParameters = argUpdatedGlobalParameters(args)
+    for key, value in overrideParameters.items():
+        print1("Overriding {0}={1}".format(key, value))
+        globalParameters[key] = value
+
+    # Recursive directory search
+    logicArchs = set()
+    for key, name in architectureMap.items():
+        logicArchs.add(name)
+    logicFiles = []
+    for root, dirs, files in os.walk(args.logic_path):
+        logicFiles += [os.path.join(root, f) for f in files
+                        if os.path.splitext(f)[1]==".yaml" \
+                        and (any(logicArch in os.path.splitext(f)[0] for logicArch in logicArchs) \
+                        or "hip" in os.path.splitext(f)[0]) ]
+
+    # update logic file
+    outputPath = ""
+    if args.output_path:
+        outputPath = ensurePath(os.path.abspath(args.output_path))
+
+    print("# LibraryLogicFiles:" % logicFiles)
+    for logicFile in logicFiles:
+        print("#   %s" % logicFile)
+    fIter = zip(logicFiles, itertools.repeat(args.logic_path), itertools.repeat(outputPath))
+    libraries = ParallelMap(UpdateLogic, fIter, "Updating logic files", method=lambda x: x.starmap)
 
 
 def main():
