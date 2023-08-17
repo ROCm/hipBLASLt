@@ -365,9 +365,10 @@ class KernelWriterAssembly(KernelWriter):
 
   def undefineSgpr(self, name):
     self.sgprPool.checkIn(self.sgprs[name])
-    # undefine a sgpr string twice will cause compiler error.
-    # User must not add the UNDEF code module except it is the last one.
-    return ValueSet(name="sgpr"+name, value="UNDEF", format = -1)
+    # later references will result in compile-time error (with odd 'error: expected relocatable expression')
+    # and 'Kernel ... not found in any loaded module'
+    # TODO: temporarily disable undef as it seems to have issues
+    return ValueSet(name=name, value="UNDEF", format = -1)
 
   def defineVariableSgprs(self, kernel):
     #------------------------
@@ -3976,10 +3977,7 @@ class KernelWriterAssembly(KernelWriter):
       if regTag != lastRegTag:
         lastRegTag = regTag
         if self.sgprPool.pool[i].status == RegisterPool.Status.InUse:
-          if 0: #label == "Summation_End_OptNLL":
-            self.undefineSgpr(regTag)
-          else:
-            module.add(self.undefineSgpr(regTag))
+          module.add(self.undefineSgpr(regTag))
 
     if self.db["InitVgpr"] & 0x2:
       module.add(self.vgprPool.initTmps(self.consts.initVgprValue,start=0, stop=100))
@@ -4115,7 +4113,7 @@ class KernelWriterAssembly(KernelWriter):
       self.codes.accVgprRead = mapAcctoArchRegs(kernel)
       if kernel["MIArchVgpr"]:
         module.addComment1("Multiply MI out register with Alpha -> C Vgpr register")
-        if kernel["_GlobalAccumulation"] == 'MultipleBuffer':
+        if kernel["_GlobalAccumulation"] == 'MultipleBuffer' or kernel["_GlobalAccumulation"] == 'MultipleBufferSingleKernel':
           self.codes.mulAlpha = moveMIoutToArch(kernel, self.states.startVgprAlphaTmp)
         else:
           self.codes.mulAlpha = mulMIoutAlphaToArch(kernel, self.states.startVgprAlphaTmp)

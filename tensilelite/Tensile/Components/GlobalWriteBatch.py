@@ -193,7 +193,7 @@ class GlobalWriteBatchWriter:
         WaveNum = "MT0/MT1"
 
     if self.kernel["ProblemType"]["UseScaleDVec"]:
-      offset = "0x84"
+      offset = "0x8C"
     else:
       offset = "0x60"
     contents = \

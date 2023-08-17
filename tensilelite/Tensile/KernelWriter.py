@@ -1942,7 +1942,7 @@ buffer_store_dword v[0], v4, s[sgprSrdDd:sgprSrdDd+3], 0 offen offset:4*"+str(i)
     module.addGSUSYNC(contents)
 
     if kernel["ProblemType"]["UseScaleDVec"]:
-      offset = "0x84"
+      offset = "0x8C"
     else:
       offset = "0x60"
 

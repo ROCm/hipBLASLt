@@ -618,7 +618,7 @@ namespace Tensile
                                                metadata.strides()[i]);
         }
 
-        if((sizeMapping.globalAccumulation == 2) && (sizeMapping.customKernelName != "" || (sizeMapping.globalAccumulation == 3)))
+        if(((sizeMapping.globalAccumulation == 2) && (sizeMapping.customKernelName != "")) || (sizeMapping.globalAccumulation == 3))
         {
             args.template append<void const*>("dstD", inputs.d);
         }
@@ -785,7 +785,7 @@ namespace Tensile
 
         singleCallArgs<T_Debug>(problem, inputs, 0, rv.args);
 
-        if((sizeMapping.globalAccumulation == 2) && (sizeMapping.customKernelName != "" || (sizeMapping.globalAccumulation == 3)))
+        if(((sizeMapping.globalAccumulation == 2) && (sizeMapping.customKernelName != "")) || (sizeMapping.globalAccumulation == 3))
         {
             rv.args.append<uint32_t>("GSUSync", 0);
         }
@@ -1927,7 +1927,7 @@ namespace Tensile
 
         std::vector<KernelInvocation> rv;
 
-        if(sizeMapping.globalSplitU > 1 && sizeMapping.globalAccumulation != 2)
+        if(sizeMapping.globalSplitU > 1 && sizeMapping.globalAccumulation != 2 && sizeMapping.globalAccumulation != 3)
         {
             if(debug)
                 rv.push_back(generateBetaOnlyCall<true>(problem, inputs));
@@ -1940,8 +1940,11 @@ namespace Tensile
         else
             rv.push_back(generateSingleCall<false>(problem, inputs));
 
-        if((sizeMapping.customKernelName == "" || (sizeMapping.globalAccumulation == 3)) && sizeMapping.globalAccumulation)
+        if((sizeMapping.customKernelName == "" && (sizeMapping.globalAccumulation != 3)) && sizeMapping.globalAccumulation)
         {
+            std::cout << "Running post kernel: " << std::endl;
+            std::cout << "Running post kernel: " << sizeMapping.customKernelName << std::endl;
+            std::cout << "Running post kernel: " << sizeMapping.globalAccumulation << std::endl;
             if(debug)
                 rv.push_back(generateOutputConversionCall<true>(problem, inputs));
             else
