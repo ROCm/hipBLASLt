@@ -708,7 +708,7 @@ class KernelWriterAssembly(KernelWriter):
 .set sgprSrdDd, sgprtmp0E+8\n\
 .set sgprSrdtmp, sgprSrdDd+4 //sgprtmp0E+12(+4)\n\
 //Fusion spgr\n\
-    "
+"
 
     module.addGSUSYNC(contents)
 
@@ -3978,10 +3978,10 @@ class KernelWriterAssembly(KernelWriter):
         if self.sgprPool.pool[i].status == RegisterPool.Status.InUse:
           if label == "Summation_End_OptNLL":
             self.undefineSgpr(regTag)
-            print("undefineSgpr")
+            # print("undefineSgpr")
           else:
             module.add(self.undefineSgpr(regTag))
-            print("module.add undefineSgpr")
+            # print("module.add undefineSgpr")
 
     if self.db["InitVgpr"] & 0x2:
       module.add(self.vgprPool.initTmps(self.consts.initVgprValue,start=0, stop=100))
@@ -4652,7 +4652,7 @@ class KernelWriterAssembly(KernelWriter):
             endSumLabel = "Summation_End_OptNLL"
 
             module.addComment0("Stores for OptNLL")
-            print("KernelWriterAssembly endSummation")
+            # print("KernelWriterAssembly endSummation")
             module.add(self.endSummation(kernel, tPA, tPB, None ,endSumLabel))
 
             # perhaps could work with LSU>1 by adding other indices here, but not tested
@@ -4663,7 +4663,7 @@ class KernelWriterAssembly(KernelWriter):
             (fullVw, elements) = self.notLocalFullTileElements(kernel, False)
             alpha = False
             beta = False
-            print("closeSumAtLeastUnroll globalWriteElements", fullVw)
+            # print("closeSumAtLeastUnroll globalWriteElements", fullVw)
             module.add(self.globalWriteElements(kernel, tPA, tPB, [fullVw], [elements], endSumLabel, applyAlpha=alpha, betas=[beta], edges=[False]))
 
             self.cleanupGlobalWrite(kernel)
@@ -7288,7 +7288,7 @@ class KernelWriterAssembly(KernelWriter):
 
     module = Module("notLocalSplitUGlobalWrite")
     endSumLabel = "Summation_End_OptNLL2"
-    print("notLocalSplitUGlobalWrite globalWriteElements", fullVw)
+    # print("notLocalSplitUGlobalWrite globalWriteElements", fullVw)
     module.add(self.globalWriteElements(kernel, tPA, tPB, vectorWidths, elements, endSumLabel))
 
     self.cleanupGlobalWrite(kernel)
@@ -7737,8 +7737,8 @@ class KernelWriterAssembly(KernelWriter):
           edgeI = edge
         #edgeI = True  # set to True to disable vector stores
         gwvw = vectorWidths[edgeI]
-        print("vectorWidths", vectorWidths)
-        print("vectorWidths[edgeI]", vectorWidths[edgeI])
+        # print("vectorWidths", vectorWidths)
+        # print("vectorWidths[edgeI]", vectorWidths[edgeI])
 
         #print "globalWriteElements: edge=", edge, "beta=", beta, "atomic=", atomic
 
@@ -7940,7 +7940,7 @@ class KernelWriterAssembly(KernelWriter):
               if kernel["StoreRemapVectorWidth"]:
                 #Indication if this batch is last batch for this column block shape
                 self.StoreRemapLastBatch = 1 if (batchIdx+1) % nBatchesPerRow == 0 else 0
-              print("gwvw", gwvw)
+              # print("gwvw", gwvw)
               actLoopModule.add(self.globalWriteBatch(kernel, tPA, tPB, activation, ss, batchIdx, \
                   applyAlpha, beta, edge, atomic, gwvw, atomicW, \
                   elementsThisBatch, self.vgprs.addrE, self.vgprs.addrD, self.vgprs.addrC, self.vgprs.addrBias, self.vgprs.addrScaleDVec, self.vgprs.addrScaleAlphaVec, \

@@ -1883,7 +1883,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
     return module
 
   def GSUSYNCzero(self, kernel, GSU):
-    print("GSUSYNCzero: ", GSU)
+    # print("GSUSYNCzero: ", GSU)
     module = Module("GSUSYNCzero")
     # module.addComment1("Magic div and mod functions")
     # macro = Macro("GSUSYNCzero")
@@ -1916,10 +1916,10 @@ s_addc_u32 s[sgprSrdDd+1], s[sgprAddressD+1], s[sgprtmp3E]   // add hi to SRD\n"
     module.addGSUSYNC(contents)
 
     r, mod = divmod(GSU, 4)
-    print("sdgdfpghk[rk[pkdhkdf[gpldp]]]")
-    print(GSU)
-    print(r)
-    print(mod)
+    # print("sdgdfpghk[rk[pkdhkdf[gpldp]]]")
+    # print(GSU)
+    # print(r)
+    # print(mod)
 
     for i in range(GSU//4):
         contents = \
@@ -2376,7 +2376,7 @@ label_ZEROINGEND:                              // jump to end\n\
 
     endSumLabel = "Summation_End_OptNLL2"
     # endSumLabel = "Summation_End_OptNLL"
-    print("KernelWriter endSummation")
+    # print("KernelWriter endSummation")
     module.add(self.endSummation(kernel, tensorParametersA, tensorParametersB, None, endSumLabel))
     if not self.states.doShadowInit:
       module.add(self.globalWriteWorkGroupInit(kernel))

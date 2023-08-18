@@ -234,9 +234,17 @@ s_cbranch_scc0 "+str(labelname)+"           // jump if XX required\n\
 //check done\n\
 \n\
 //synchronizer check\n\
-s_mov_b32 s[sgprGSUSync] 0x1\n\
+s_mov_b32 s[sgprGSUSync] "+hex(GSU-1)+"\n\
 \n\
-s_mov_b32 s[sgprtmp0E], s[sgprGSUSumIdx]                          //cal synchronizer position\n\
+//s_mov_b32 s[sgprtmp0E], s[sgprGSUSumIdx]                          //cal synchronizer position\n\
+s_mul_i32 s[sgprtmp0E], s[sgprWorkGroup1], s[sgprNumWorkGroups0]\n\
+s_add_u32 s[sgprtmp0E], s[sgprtmp0E], s[sgprWorkGroup0]\n\
+\n\
+v_lshrrev_b32 v0, 6, v[vgprSerial]\n\
+v_readfirstlane_b32 s[sgprtmp1E], v0      // set back to numWorkGroup0\n\
+s_mul_i32 s[sgprtmp2E], s[sgprNumWorkGroups0], s[sgprNumWorkGroups1]\n\
+s_mul_i32 s[sgprtmp2E], s[sgprtmp2E], s[sgprtmp1E]\n\
+s_add_u32 s[sgprtmp0E], s[sgprtmp0E], s[sgprtmp2E]\n\
 s_lshl_b32 s[sgprtmp0E], s[sgprtmp0E], 2\n\
 \n\
 s_mul_hi_u32 s[sgprtmp3E], s[sgprStrideDK], "+str(GSU)+"                   // Scale by Stride\n\
@@ -251,8 +259,7 @@ s_addc_u32 s[sgprSrdDd+1], s[sgprAddressD+1], s[sgprtmp3E]        // add hi to S
 \n\
 s_add_u32 s[sgprSrdDd+0], s[sgprSrdDd+0], s[sgprtmp0E]            // add lo to SRD\n\
 s_addc_u32 s[sgprSrdDd+1], s[sgprSrdDd+1], 0                      // add hi to SRD\n\
-//s_buffer_atomic_add s[sgprGSUSync], s[sgprSrdDd:sgprSrdDd+3], offset:0 glc\n\
-s_buffer_atomic_add s[sgprGSUSync], s[sgprSrdDd:sgprSrdDd+3], glc\n\
+s_buffer_atomic_dec s[sgprGSUSync], s[sgprSrdDd:sgprSrdDd+3], glc\n\
 \n\
 \n\
 //s_mov_b32 s[sgprGSUSumIdx] 1\n\
@@ -270,7 +277,7 @@ s_add_u32 s[sgprSrdD+0], s[sgprSrdD+0], s[sgprtmp0E]                  // add lo 
 s_addc_u32 s[sgprSrdD+1], s[sgprSrdD+1], s[sgprtmp1E]                 // add hi to SRD\n\
 \n\
 s_waitcnt lgkmcnt(0)\n\
-s_cmp_ge_u32 s[sgprGSUSync], "+GSUxWaveNum+"                // s[sgprGSUSync] == GSU*WaveNum-1 ?\n\
+s_cmp_eq_u32 s[sgprGSUSync], 0x1                // s[sgprGSUSync] == GSU*WaveNum-1 ?\n\
 s_cbranch_scc0 "+str(labelendname)+" //label_GW_End_1 //label_AFTERsummary_Edge\n\
 //synchronizer check\n\
 \n\
@@ -298,7 +305,7 @@ s_lshl_b64 s[sgprtmp2E:sgprtmp3E], s[sgprtmp0E:sgprtmp1E], 2        // scale by 
     module.addGSUSYNC(contents)
 
     for i in range(1,GSU):
-        print(i)
+        # print(i)
         contents = \
         "\n\
 s_add_u32 s[sgprSrdD+0], s[sgprSrdD+0], s[sgprtmp2E]        // add lo synchronizer offset to SRD\n\
@@ -315,7 +322,7 @@ s_cbranch_scc0 "+str(labelendname)+" //label_GW_End_1 //label_AFTERsummary_Edge\
     # module.addGSUSYNC(contents)
 
     for i in range(1,GSU):
-        print(i)
+        # print(i)
         contents = \
         "\n\
 s_waitcnt vmcnt("+str(GSU-1-i)+")\n\
@@ -1435,7 +1442,7 @@ buffer_store_dwordx2 v["+str(vgprstart)+":"+str(vgprstart)+"+1], "+str(vgproffse
     module.add(storeCode)
 
     # module.addComment("GSUSYNC2 24 v9") #GSUSYNC
-    print("GSUSYNC2 ", "addrVgpr: ", addrCalc.addrDVgpr, " ", self.tmpS01, " ", sumIdx)
+    # print("GSUSYNC2 ", "addrVgpr: ", addrCalc.addrDVgpr, " ", self.tmpS01, " ", sumIdx)
     module.addGSUSYNC("\n") #GSUSYNC
 
     if self.kernel["StoreVectorWidth"]==2:

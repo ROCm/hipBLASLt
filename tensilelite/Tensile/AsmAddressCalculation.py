@@ -587,10 +587,10 @@ class AddrCalculation:
             if 1 and (edge or singleUpdate) and (tc == 'C'):
             # if 1 and (tc == 'C'):
                   # module.addComment("GSUSYNCc1 %u"%(singleUpdate)) #GSUSYNC
-                  print("GSUSYNCc ", "addrVgpr: ", addrVgpr, " ", tmpVgpr)
+                  # print("GSUSYNCc ", "addrVgpr: ", addrVgpr, " ", tmpVgpr)
                   module.addGSUSYNC("\n") #GSUSYNC
                   # module.add(self.SYNCHRONIZERLSHRREV(vgpr(addrVgpr)))
-                  print("VICTOR", kernel["ProblemType"]["DestDataType"])
+                  # print("VICTOR", kernel["ProblemType"]["DestDataType"])
                   if kernel["ProblemType"]["DestDataType"].isHalf():
                     print("VICTOR=H")
                     module.add(MacroInstruction("SYNCHRONIZERLSHRREV", \
