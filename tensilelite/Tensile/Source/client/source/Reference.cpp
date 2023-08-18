@@ -978,6 +978,16 @@ namespace Tensile
                 return ReferenceSolution<TypedGemm_H_H_S, float>::SolveCPU(
                     problem, inputs, elementsToValidate);
             }
+            case TypedGemm_SH_H_S::TypeId():
+            {
+                return ReferenceSolution<TypedGemm_SH_H_S, float>::SolveCPU(
+                    problem, inputs, elementsToValidate);
+            }
+            case TypedGemm_HS_H_S::TypeId():
+            {
+                return ReferenceSolution<TypedGemm_HS_H_S, float>::SolveCPU(
+                    problem, inputs, elementsToValidate);
+            }
 #endif // TENSILE_USE_HALF
             case TypedGemm_I8x4_I32_I32::TypeId():
             {

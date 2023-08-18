@@ -103,10 +103,24 @@ class ProblemType(Mapping):
 
     # adjusting all data types
     if "DataType" in config:
-      self["DataType"] = DataType(config["DataType"])
+      self["DataType"]  = DataType(config["DataType"])
+      self["DataTypeA"] = self["DataType"]
+      self["DataTypeB"] = self["DataType"]
     else:
       printExit("NO data type specified")
-      self["DataType"] = DataType(0)
+      self["DataType"]  = DataType(0)
+      self["DataTypeA"] = DataType(0)
+      self["DataTypeB"] = DataType(0)
+
+    if "DataTypeA" in config:
+      self["DataTypeA"] = DataType(config["DataTypeA"])
+      if self["DataTypeA"].numRegisters() < self["DataType"].numRegisters():
+        printExit("Currently does not support DataTypeA < DataType")
+
+    if "DataTypeB" in config:
+      self["DataTypeB"] = DataType(config["DataTypeB"])
+      if self["DataTypeB"].numRegisters() < self["DataType"].numRegisters():
+        printExit("Currently does not support DataTypeB < DataType")
 
     if "DestDataType" in config:
       self["DestDataType"] = DataType(config["DestDataType"])
@@ -450,6 +464,9 @@ class ProblemType(Mapping):
       name += "C"
 
     # DataTypes
+    if self["DataType"] != self["DataTypeA"] or self["DataType"] != self["DataTypeB"]:
+      name += "_"
+      name += self["DataTypeA"].toChar() + self["DataTypeB"].toChar()
     name += "_"
     name += self["DataType"].toChar() # Type of A/B
 
@@ -2193,7 +2210,7 @@ class Solution(collections.abc.Mapping):
     if state["GlobalReadVectorWidthA"] == -1:
       curGRVW = 1
       # with UnrollMajorLDS, GRVW need to less or equal than LRVW to have conflict free LDS read with padding.
-      optGRVW = state["LocalReadVectorWidth"] if state["UnrollMajorLDSA"] else 4/state["ProblemType"]["DataType"].numRegisters()
+      optGRVW = state["LocalReadVectorWidth"] if state["UnrollMajorLDSA"] else 4/state["ProblemType"]["DataTypeA"].numRegisters()
       state["GlobalReadVectorWidthA"] = int(curGRVW)
       while (curGRVW <= optGRVW):
         if (state["MacroTile0"]*state["_DepthUA"]//state["NumThreads"]) % curGRVW == 0:
@@ -2204,7 +2221,7 @@ class Solution(collections.abc.Mapping):
     if state["GlobalReadVectorWidthB"] == -1:
       curGRVW = 1
       # with UnrollMajorLDS, GRVW need to less or equal than LRVW to have conflict free LDS read with padding.
-      optGRVW = state["LocalReadVectorWidth"] if state["UnrollMajorLDSB"] else 4/state["ProblemType"]["DataType"].numRegisters()
+      optGRVW = state["LocalReadVectorWidth"] if state["UnrollMajorLDSB"] else 4/state["ProblemType"]["DataTypeB"].numRegisters()
       state["GlobalReadVectorWidthB"] = int(curGRVW)
       while (curGRVW <= optGRVW):
         if (state["MacroTile1"]*state["_DepthUB"]//state["NumThreads"]) % curGRVW == 0:

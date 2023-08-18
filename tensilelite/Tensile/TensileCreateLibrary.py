@@ -1080,7 +1080,7 @@ def generateLogicDataAndSolutions(logicFiles, args):
           sol.originalSolution._state["codeObjectFile"] = name
           solutions.append(sol.originalSolution)
   else:
-    solutions = [sol.originalSolution for _, sol in fullMasterLibrary.solutions.items()] 
+    solutions = [sol.originalSolution for _, sol in fullMasterLibrary.solutions.items()]
 
   # remove duplicates while preserving order
   solutions = dict.fromkeys(solutions).keys()
@@ -1120,6 +1120,8 @@ def WriteClientLibraryFromSolutions(solutionList, libraryWorkingPath, tensileSou
   firstSolution = deepcopy(solutionList[0])
   problemType = firstSolution["ProblemType"].state
   problemType["DataType"] = problemType["DataType"].value
+  problemType["DataTypeA"] = problemType["DataTypeA"].value
+  problemType["DataTypeB"] = problemType["DataTypeB"].value
   problemType["DestDataType"] = problemType["DestDataType"].value
   problemType["ComputeDataType"] = problemType["ComputeDataType"].value
   problemType["F32XdlMathOp"] = problemType["F32XdlMathOp"].value
