@@ -20,7 +20,7 @@ import pandas as pd
 
 # print(dic[1])
 
-problemnum = 23
+problemnum = 12
 
 list = []
 for problemidx in range(0, problemnum):
@@ -34,12 +34,12 @@ WinnerKernelTime = [[] for _ in range(problemnum)]
 # print(WinnerKernelList)
 
 idx = 1
-df = pd.read_csv('/operator/hipBLASLt/tensilelite/try32/yamlGen/tunning_BFVF_Round1/tunning_BFVF_Round1_'+str(idx)+'/2_BenchmarkData/Cijk_Ailk_Bljk_HHS_BH_00_CSVWinner.csv', encoding='gbk')
+df = pd.read_csv('/home/victorwu/hipBLASLt/tensilelite/try32/yamlGen/tunning_BFVF_Round1/tunning_BFVF_Round1_'+str(idx)+'/2_BenchmarkData/Cijk_Ailk_Bljk_HHS_BH_00_CSVWinner.csv', encoding='gbk')
 for problemidx in range(0, problemnum):
 	ProblemList.append(str(df[' SizeI'][problemidx])+", "+str(df[' SizeJ'][problemidx])+", "+str(df[' SizeK'][problemidx])+", "+str(df[' SizeL'][problemidx]))
 	
 for idx in range(1,23+1):
-	df = pd.read_csv('/operator/hipBLASLt/tensilelite/try32/yamlGen/tunning_BFVF_Round1/tunning_BFVF_Round1_'+str(idx)+'/2_BenchmarkData/Cijk_Ailk_Bljk_HHS_BH_00_CSVWinner.csv', encoding='gbk')
+	df = pd.read_csv('/home/victorwu/hipBLASLt/tensilelite/try32/yamlGen/tunning_BFVF_Round1/tunning_BFVF_Round1_'+str(idx)+'/2_BenchmarkData/Cijk_Ailk_Bljk_HHS_BH_00_CSVWinner.csv', encoding='gbk')
 	for problemidx in range(0, problemnum):
 		# print(df[' WinnerTimeUS'][problemidx])
 		list[problemidx][idx] = df[' WinnerGFlops'][problemidx]
@@ -73,7 +73,7 @@ for problemidx in range(0, problemnum):
 	print(dfout)
 
 print(dfout)
-dfout.to_csv('/operator/hipBLASLt/tensilelite/try32/yamlGen/chcek.csv', encoding='gbk', index=False)
+dfout.to_csv('/home/victorwu/hipBLASLt/tensilelite/try32/yamlGen/chcek.csv', encoding='gbk', index=False)
 # max_key = max(list[1], key=lambda key: list[1][key])
 # print(max_key)
 

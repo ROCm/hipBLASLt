@@ -18,15 +18,15 @@ def Convert(string):
     li = list(string.split(","))
     return li
 
-problemnum = 23
+problemnum = 12
 
 idx=1
-df = pd.read_csv('/operator/hipBLASLt/tensilelite/try32/yamlGen/chcek.csv', encoding='gbk')
+df = pd.read_csv('/home/victorwu/hipBLASLt/tensilelite/try32/yamlGen/chcek.csv', encoding='gbk')
 # print(list(df))
 # print(df['kernelname'])
 for problemidx in range(0, problemnum):
   print(problemidx)
-  file1 = open("/operator/hipBLASLt/tensilelite/try32/yamlGen/FP16_NN_MI250X_testBFVF_Round2_"+str(problemidx)+".yaml","w")
+  file1 = open("/home/victorwu/hipBLASLt/tensilelite/try32/yamlGen/FP16_NN_MI250X_testBFVF_Round2_"+str(problemidx)+".yaml","w")
   WinnerName = df['kernelname'][problemidx]
   print(WinnerName)
   # WinnerName = " Cijk_Ailk_Bljk_HHS_BH_MT32x64x64_MI32x32x8x1_SN_1LDSB0_GRVW7_K1_LPB8_LRVW8_MIWT1_1_PLR10_SRVW4_SVW4_VW8_WG32_4_1_WGM16"#df[' WinnerName'][problemidx]
@@ -148,7 +148,7 @@ for problemidx in range(0, problemnum):
     NewClient: 2\n\
     CSVExportWinner: 1\n\
     CSVMergeSameProblemID: 1\n\
-    Device: 12\n\
+    Device: 0\n\
     # PrintSolutionRejectionReason: True\n\
     # SyncsPerBenchmark: 10\n\
     EnqueuesPerSync: 20\n\

@@ -1,4 +1,4 @@
-cd /operator/hipBLASLt
+cd /home/victorwu/hipBLASLt
 
 # filename='tensilelite/try/yamlGen/tunning_BFVF_Round1/tunning_BFVF_Round1*'
 # rm -r $filename

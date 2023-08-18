@@ -1,6 +1,6 @@
-cd /operator/hipBLASLt
+cd /home/victorwu/hipBLASLt
 
-for i in {0..22}
+for i in {0..11}
 do
     read -r ID <<< "${i}"
 

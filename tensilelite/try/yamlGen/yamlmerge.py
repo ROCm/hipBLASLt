@@ -6,14 +6,14 @@ import pickle
 arg = []
 prob = []
 
-problemnum=23
+problemnum=12
 
 problemidxoffset = 2+1
 
 for problemidx in range(0, problemnum):
 	# file=open("tunning_BFVF_Round2/tunning_BFVF_Round2_"+str(idx)+"/3_LibraryLogic/aldebaran_Cijk_Ailk_Bljk_HHS_BH.yaml",'r')
 	lines = None
-	with open("/operator/hipBLASLt/tensilelite/try/yamlGen/tunning_BFVF_Round3/tunning_BFVF_Round3_"+str(problemidx)+"/3_LibraryLogic/aldebaran_Cijk_Ailk_Bljk_HHS_BH.yaml","rt") as txtfile:
+	with open("/home/victorwu/hipBLASLt/tensilelite/try/yamlGen/tunning_BFVF_Round3/tunning_BFVF_Round3_"+str(problemidx)+"/3_LibraryLogic/aldebaran_Cijk_Ailk_Bljk_HHS_BH.yaml","rt") as txtfile:
 	    lines = txtfile.readlines()
 	    
 	berry_idx = [i for i, item in enumerate(lines) if re.search('1LDSBuffer', item)]
@@ -59,13 +59,13 @@ for problemidx in range(0, problemnum):
 		# print(result2[0][2])
 	prob = prob+result2
 	# print(result2)
-with open(r'/operator/hipBLASLt/tensilelite/try/yamlGen/merge.yaml', 'w') as fp:
+with open(r'/home/victorwu/hipBLASLt/tensilelite/try/yamlGen/merge.yaml', 'w') as fp:
     fp.write(''.join(startsection))
-with open(r'/operator/hipBLASLt/tensilelite/try/yamlGen/merge.yaml', 'a') as fp:
+with open(r'/home/victorwu/hipBLASLt/tensilelite/try/yamlGen/merge.yaml', 'a') as fp:
     fp.write(''.join(arg))
-with open(r'/operator/hipBLASLt/tensilelite/try/yamlGen/merge.yaml', 'a') as fp:
+with open(r'/home/victorwu/hipBLASLt/tensilelite/try/yamlGen/merge.yaml', 'a') as fp:
     fp.write(''.join(prob))
-with open(r'/operator/hipBLASLt/tensilelite/try/yamlGen/merge.yaml', 'a') as fp:
+with open(r'/home/victorwu/hipBLASLt/tensilelite/try/yamlGen/merge.yaml', 'a') as fp:
     fp.write(''.join(endsection))
 
 # with open('listfile', 'wb') as fp:

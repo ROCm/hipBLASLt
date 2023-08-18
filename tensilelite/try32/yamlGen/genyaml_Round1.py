@@ -53,7 +53,7 @@ list = [
 
 for idx in range(1,23+1):
   # print(idx)
-  file1 = open("/operator/hipBLASLt/tensilelite/try32/yamlGen/FP16_NN_MI250X_testBFVF_"+str(idx)+".yaml","w")
+  file1 = open("/home/victorwu/hipBLASLt/tensilelite/try32/yamlGen/FP16_NN_MI250X_testBFVF_"+str(idx)+".yaml","w")
 
   file1.write(
 "\
@@ -67,7 +67,7 @@ GlobalParameters:\n\
   NewClient: 2\n\
   CSVExportWinner: 1\n\
   CSVMergeSameProblemID: 1\n\
-  Device: 12\n\
+  Device: 0\n\
   # PrintSolutionRejectionReason: True\n\
   # SyncsPerBenchmark: 10\n\
   EnqueuesPerSync: 10\n\
@@ -178,8 +178,8 @@ BenchmarkProblems:\n\
         - ProblemSizes:\n\
           # - Exact: [1104, 1, 1, 4608]\n\
           # - Exact: [1104, 16, 1, 4608]\n\
-          - Exact: [1104, 1335, 1, 4608]\n\
-          - Exact: [1104, 1408, 1, 4608]\n\
+          - Exact: [2208, 1335, 1, 4608]\n\
+          - Exact: [2208, 1408, 1, 4608]\n\
           - Exact: [4608, 1, 1, 320]\n\
           - Exact: [4608, 16, 1, 320]\n\
           - Exact: [4608, 1335, 1, 320]\n\
@@ -190,23 +190,23 @@ BenchmarkProblems:\n\
           # - Exact: [16, 1408, 1, 4608]\n\
           # - Exact: [768, 1, 1, 4608]\n\
           # - Exact: [768, 16, 1, 4608]\n\
-          - Exact: [768, 1335, 1, 4608]\n\
-          - Exact: [768, 1408, 1, 4608]\n\
-          - Exact: [4608, 1, 1, 768]\n\
-          - Exact: [4608, 16, 1, 768]\n\
-          - Exact: [4608, 1335, 1, 768]\n\
-          - Exact: [4608, 1408, 1, 768]\n\
-          - Exact: [320, 8192, 1, 320]\n\
-          - Exact: [640, 2048, 1, 640]\n\
-          - Exact: [320, 8192, 1, 1280]\n\
-          - Exact: [1280, 512, 1, 1280]\n\
-          - Exact: [10240, 512, 1, 1280]\n\
-          - Exact: [2560, 8192, 1, 320]\n\
-          - Exact: [5120, 2048, 1, 640]\n\
-          - Exact: [1280, 512, 1, 5120]\n\
-          - Exact: [640, 2048, 1, 2560]\n\
-          - Exact: [320, 154, 1, 768]\n\
-          - Exact: [1280, 154, 1, 768]\n\
+          - Exact: [1536, 1335, 1, 4608]\n\
+          - Exact: [1536, 1408, 1, 4608]\n\
+          - Exact: [4608, 1, 1, 1536]\n\
+          - Exact: [4608, 16, 1, 1536]\n\
+          - Exact: [4608, 1335, 1, 1536]\n\
+          - Exact: [4608, 1408, 1, 1536]\n\
+          # - Exact: [320, 8192, 1, 320]\n\
+          # - Exact: [640, 2048, 1, 640]\n\
+          # - Exact: [320, 8192, 1, 1280]\n\
+          # - Exact: [1280, 512, 1, 1280]\n\
+          # - Exact: [10240, 512, 1, 1280]\n\
+          # - Exact: [2560, 8192, 1, 320]\n\
+          # - Exact: [5120, 2048, 1, 640]\n\
+          # - Exact: [1280, 512, 1, 5120]\n\
+          # - Exact: [640, 2048, 1, 2560]\n\
+          # - Exact: [320, 154, 1, 768]\n\
+          # - Exact: [1280, 154, 1, 768]\n\
         - ActivationArgs:\n\
           - [Enum: none]\n\
         - BiasTypeArgs: ['s']\n\
