@@ -1904,6 +1904,19 @@ namespace Tensile
                     }
                     return std::string("The supported bias source are: " + biasString);
                 }
+                virtual bool debugEval(ContractionProblemGemm const& problem,
+                                       std::ostream&                 stream) const override
+                {
+                    bool rv = (*this)(problem);
+                    std::string biasString = "";
+                    for(size_t i = 0; i < value.size(); i++)
+                    {
+                        biasString += ToString(value[i]) + ", ";
+                    }
+                    stream << this->type() << "(Problem: " << problem.biasSrc()
+                           << ". Solution: " << biasString << "): " << rv;
+                    return rv;
+                }
             };
 
             struct SparseA : public Predicate_CRTP<SparseA, ContractionProblemGemm>
