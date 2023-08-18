@@ -165,7 +165,6 @@ class SumUnrollMfma(SumUnroll):
         # get constant parameter
         tile01         = tP["tile01Idx"]
         waveWidth      = writer.states.kernel["WavefrontSize"]
-        mt             = kernel["MacroTile%u" % tile01]
 
         wReg    = writer.vgprPool.checkOut(1,"wReg") # quotient
         tReg    = writer.vgprPool.checkOut(1,"tReg") # remainder
@@ -267,9 +266,9 @@ class SumUnrollMfma(SumUnroll):
         if kernel["LdsOffsetBias"] == 0:
           imod.add(SBarrier(comment="Wait for all wavefronts"))
 
-        MIWaveGroupShape = [ kernel["MatrixInstM"] * kernel["MatrixInstBM"] * kernel["MIWaveGroup"][0] * vectorWidth, \
-                            kernel["MatrixInstN"] * kernel["MatrixInstBN"] * kernel["MIWaveGroup"][1] * 1]
-        numReadPerTileVector = vectorWidth if (tile01 == 0) else 1
+        MIWaveGroupShape = [ kernel["MatrixInstM"] * kernel["MatrixInstBM"] * kernel["MIWaveGroup"][0] * kernel["VectorWidthA"], \
+                            kernel["MatrixInstN"] * kernel["MatrixInstBN"] * kernel["MIWaveGroup"][1] * kernel["VectorWidthB"]]
+        numReadPerTileVector = vectorWidth
         numVectorsPerTile    = kernel["MIWaveTile"][tile01] // numReadPerTileVector
         idx = 0
         for vIdx in range(0, numVectorsPerTile):
