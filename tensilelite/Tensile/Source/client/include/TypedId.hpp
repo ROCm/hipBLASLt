@@ -89,6 +89,9 @@ namespace Tensile
     using TypedGemm_H_H_H = TypedGemm<Half>;
     using TypedGemm_H_H_S = TypedGemm<Half, Half, Half, Half, float, float>;
     using TypedGemm_H_S_S = TypedGemm<Half, Half, float, float>;
+    // hybrid
+    using TypedGemm_HS_H_S = TypedGemm<Half, float, Half, Half, float, float>;
+    using TypedGemm_SH_H_S = TypedGemm<float, Half, Half, Half, float, float>;
 #endif // TENSILE_USE_HALF
     using TypedGemm_I8x4_I32_I32 = TypedGemm<Int8x4, Int8x4, int32_t, int32_t>;
     using TypedGemm_I8_I8_I32    = TypedGemm<int8_t, int8_t, int8_t, int8_t, int32_t, int32_t>;

@@ -2865,8 +2865,8 @@ class KernelWriter(metaclass=abc.ABCMeta):
       self.initLocalReadMemoryInstruction(instructions, kernel, tensorParametersM, self.states.bpr)
 
     # global reads per instruction
-    tensorParametersA["nrcvpi"] = int((tensorParametersA["globalReadInstruction"].totalWidth*self.states.bpr)/tensorParametersA["bpe"])
-    tensorParametersB["nrcvpi"] = int((tensorParametersB["globalReadInstruction"].totalWidth*self.states.bpr)/tensorParametersB["bpe"])
+    tensorParametersA["nrcvpi"] = int((tensorParametersA["globalReadInstruction"].totalWidth*self.states.bpr)/tensorParametersA["bpeGR"])
+    tensorParametersB["nrcvpi"] = int((tensorParametersB["globalReadInstruction"].totalWidth*self.states.bpr)/tensorParametersB["bpeGR"])
     tensorParametersA["nwcvpi"] = int((tensorParametersA["localWriteInstruction"].totalWidth*self.states.bpr)/tensorParametersA["bpe"])
     tensorParametersB["nwcvpi"] = int((tensorParametersB["localWriteInstruction"].totalWidth*self.states.bpr)/tensorParametersB["bpe"])
 
@@ -2913,10 +2913,11 @@ class KernelWriter(metaclass=abc.ABCMeta):
     # num vgprs: global -> local elements
     self.states.a.numVgprG2L = 0
     if not kernel["DirectToLdsA"] or self.do["KeepDirectToLdsAlloc"]:
+      bpeMax = max(tensorParametersA["bpeGR"], tensorParametersA["bpe"])
       self.states.a.numVgprG2L = roundUp((kernel["NumLoadsCoalescedA"] * kernel["NumLoadsPerpendicularA"] * \
-        kernel["GlobalReadVectorWidthA"] * tensorParametersA["bpe"]) / (float)(self.states.bpr))
+        kernel["GlobalReadVectorWidthA"] * bpeMax) / (float)(self.states.bpr))
       if self.states.archCaps["HasEccHalf"]:
-        tpA = self.states.bpr if tensorParametersA["bpe"] * vwa < self.states.bpr else tensorParametersA["bpe"] * vwa
+        tpA = self.states.bpr if bpeMax * vwa < self.states.bpr else bpeMax * vwa
         self.states.a.numVgprG2LAllocated = roundUp((kernel["NumLoadsCoalescedA"] * kernel["NumLoadsPerpendicularA"] * \
           tpA) / (float)(self.states.bpr))
       else:
@@ -2928,10 +2929,11 @@ class KernelWriter(metaclass=abc.ABCMeta):
 
     self.states.b.numVgprG2L = 0
     if not kernel["DirectToLdsB"] or self.do["KeepDirectToLdsAlloc"]:
+      bpeMax = max(tensorParametersB["bpeGR"], tensorParametersB["bpe"])
       self.states.b.numVgprG2L = roundUp((kernel["NumLoadsCoalescedB"] * kernel["NumLoadsPerpendicularB"] * \
-        kernel["GlobalReadVectorWidthB"] * tensorParametersB["bpe"]) / (float)(self.states.bpr))
+        kernel["GlobalReadVectorWidthB"] * bpeMax) / (float)(self.states.bpr))
       if self.states.archCaps["HasEccHalf"]:
-        tpB = self.states.bpr if tensorParametersB["bpe"] * vwb < self.states.bpr else tensorParametersB["bpe"] * vwb
+        tpB = self.states.bpr if bpeMax * vwb < self.states.bpr else bpeMax * vwb
         self.states.b.numVgprG2LAllocated = roundUp((kernel["NumLoadsCoalescedB"] * kernel["NumLoadsPerpendicularB"] * \
           tpB) / (float)(self.states.bpr))
       else:
@@ -2984,7 +2986,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
     # num vgprs: global read addresses
     numGlobalReadsA = kernel["NumLoadsCoalescedA"] \
         * kernel["NumLoadsPerpendicularA"] * kernel["GlobalReadVectorWidthA"]
-    numGlobalReadInstructionsA = (numGlobalReadsA * tensorParametersA["bpe"])//\
+    numGlobalReadInstructionsA = (numGlobalReadsA * tensorParametersA["bpeGR"])//\
         (tensorParametersA["globalReadInstruction"].blockWidth * 4)
 
     if kernel["BufferLoad"]:
@@ -2994,7 +2996,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
 
     numGlobalReadsB = kernel["NumLoadsCoalescedB"] \
         * kernel["NumLoadsPerpendicularB"] * kernel["GlobalReadVectorWidthB"]
-    numGlobalReadInstructionsB = (numGlobalReadsB * tensorParametersB["bpe"])// \
+    numGlobalReadInstructionsB = (numGlobalReadsB * tensorParametersB["bpeGR"])// \
         (tensorParametersB["globalReadInstruction"].blockWidth * 4)
     if kernel["BufferLoad"]:
       self.states.b.numVgprGlobalReadOffsets = roundUp(numGlobalReadInstructionsB * self.states.rpgo)
@@ -3610,6 +3612,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
     tP["isB"] = (cM == "B")                                      # is this tensor B
     tP["isM"] = (cM == "Metadata")                               # is this tensor Metadata
     tP["bpe"] = int(4*kernel["ProblemType"]["DataType"].numRegisters()) if not tP["isM"] else 1
+    tP["bpeGR"] = int(4*kernel["ProblemType"]["DataType%s"%cM].numRegisters()) if not tP["isM"] else 1
     tP["tensorChar"] = cM                                        # tensor character A/B
     tP["tileIdx"] = kernel["ProblemType"]["Index01%s"%cM]        # is the tile dimension of A the 0th or 1th index, i.e. Aki, tileIdx=0
     tP["tile01Idx"] = 1 if tP["tileIdx"] else 0

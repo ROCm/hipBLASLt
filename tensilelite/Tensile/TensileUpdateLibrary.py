@@ -44,6 +44,8 @@ def UpdateLogic(filename, logicPath, outputPath):
     # problem type object to state
     problemTypeState = problemType.state
     problemTypeState["DataType"] = problemTypeState["DataType"].value
+    problemTypeState["DataTypeA"] = problemTypeState["DataTypeA"].value
+    problemTypeState["DataTypeB"] = problemTypeState["DataTypeB"].value
     problemTypeState["DestDataType"] = problemTypeState["DestDataType"].value
     problemTypeState["ComputeDataType"] = problemTypeState["ComputeDataType"].value
     problemTypeState["BiasDataTypeList"] = [btype.value for btype in problemTypeState["BiasDataTypeList"]]
@@ -58,6 +60,10 @@ def UpdateLogic(filename, logicPath, outputPath):
         solutionState["ProblemType"] = solutionState["ProblemType"].state
         solutionState["ProblemType"]["DataType"] = \
                 solutionState["ProblemType"]["DataType"].value
+        solutionState["ProblemType"]["DataTypeA"] = \
+                solutionState["ProblemType"]["DataTypeA"].value
+        solutionState["ProblemType"]["DataTypeB"] = \
+                solutionState["ProblemType"]["DataTypeB"].value
         solutionState["ProblemType"]["DestDataType"] = \
                 solutionState["ProblemType"]["DestDataType"].value
         solutionState["ProblemType"]["ComputeDataType"] = \

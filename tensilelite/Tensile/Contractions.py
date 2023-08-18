@@ -129,8 +129,14 @@ class ProblemType:
 
         rv.transA = bool(d['TransposeA'])
         rv.transB = bool(d['TransposeB'])
-        rv.aType = srcType
-        rv.bType = srcType
+        if 'DataTypeA' in d:
+            rv.aType = DataType(d['DataTypeA'])
+        else:
+            rv.aType = srcType
+        if 'DataTypeB' in d:
+            rv.bType = DataType(d['DataTypeB'])
+        else:
+            rv.bType = srcType
         # for hybrid 8bit float types, we need to split the type into a_type and b_type
         if srcType.isFloat8BFloat8():
             rv.aType = DataType("F8")

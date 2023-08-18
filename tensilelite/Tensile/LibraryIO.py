@@ -101,6 +101,10 @@ def writeSolutions(filename, problemSizes, biasTypeArgs, activationArgs, solutio
             solutionState["ProblemType"] = solutionState["ProblemType"].state
             solutionState["ProblemType"]["DataType"] = \
                     solutionState["ProblemType"]["DataType"].value
+            solutionState["ProblemType"]["DataTypeA"] = \
+                    solutionState["ProblemType"]["DataTypeA"].value
+            solutionState["ProblemType"]["DataTypeB"] = \
+                    solutionState["ProblemType"]["DataTypeB"].value
             solutionState["ProblemType"]["DestDataType"] = \
                     solutionState["ProblemType"]["DestDataType"].value
             solutionState["ProblemType"]["ComputeDataType"] = \
@@ -340,6 +344,10 @@ def createLibraryLogic(schedulePrefix, architectureName, deviceNames, logicTuple
     problemTypeState = problemType.state
     problemTypeState["DataType"] = \
             problemTypeState["DataType"].value
+    problemTypeState["DataTypeA"] = \
+            problemTypeState["DataTypeA"].value
+    problemTypeState["DataTypeB"] = \
+            problemTypeState["DataTypeB"].value
     problemTypeState["DestDataType"] = \
             problemTypeState["DestDataType"].value
     problemTypeState["ComputeDataType"] = \
@@ -360,6 +368,10 @@ def createLibraryLogic(schedulePrefix, architectureName, deviceNames, logicTuple
         solutionState["ProblemType"] = solutionState["ProblemType"].state
         solutionState["ProblemType"]["DataType"] = \
                 solutionState["ProblemType"]["DataType"].value
+        solutionState["ProblemType"]["DataTypeA"] = \
+                solutionState["ProblemType"]["DataTypeA"].value
+        solutionState["ProblemType"]["DataTypeB"] = \
+                solutionState["ProblemType"]["DataTypeB"].value
         solutionState["ProblemType"]["DestDataType"] = \
                 solutionState["ProblemType"]["DestDataType"].value
         solutionState["ProblemType"]["ComputeDataType"] = \
@@ -381,6 +393,10 @@ def createLibraryLogic(schedulePrefix, architectureName, deviceNames, logicTuple
             solutionState["ProblemType"] = solutionState["ProblemType"].state
             solutionState["ProblemType"]["DataType"] = \
                     solutionState["ProblemType"]["DataType"].value
+            solutionState["ProblemType"]["DataTypeA"] = \
+                    solutionState["ProblemType"]["DataTypeA"].value
+            solutionState["ProblemType"]["DataTypeB"] = \
+                    solutionState["ProblemType"]["DataTypeB"].value
             solutionState["ProblemType"]["DestDataType"] = \
                     solutionState["ProblemType"]["DestDataType"].value
             solutionState["ProblemType"]["ComputeDataType"] = \
