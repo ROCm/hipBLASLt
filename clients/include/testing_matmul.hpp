@@ -1282,6 +1282,8 @@ void testing_matmul(const Arguments& arg)
     dWorkspace = new device_vector<unsigned char>(workspace_size, 1, HMM);
     CHECK_DEVICE_ALLOCATION(dWorkspace->memcheck());
 
+    CHECK_SOLUTION_FOUND(returnedAlgoCount);
+
     if(arg.unit_check || arg.norm_check)
     {
         if(!do_grouped_gemm)
