@@ -316,7 +316,7 @@
     GlobalReadPerMfma: 1
     GlobalReadVectorWidthA: 8
     GlobalReadVectorWidthB: 8
-    GlobalSplitU: 2
+    GlobalSplitU: 1
     GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 2
     GroupLoadStore: false
@@ -471,7 +471,7 @@
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 1
-    SolutionNameMin: Cijk_Alik_Bljk_HHS_BH_Bias_BiasSrcB_SDV_SAV_MT128x256x16_MI16x16x4x4_SN_1LDSB0_AF0EM1_GSU2_MIWT2_4
+    SolutionNameMin: Cijk_Alik_Bljk_HHS_BH_Bias_BiasSrcB_SDV_SAV_MT128x256x16_MI16x16x4x4_SN_1LDSB0_AF0EM1_GSU1_MIWT2_4
     SourceSwap: 1
     StaggerU: 32
     StaggerUMapping: 0
@@ -508,7 +508,7 @@
     WorkGroupMapping: 8
     WorkGroupReduction: false
     _DepthULds: 16
-    _GlobalAccumulation: MultipleBuffer
+    _GlobalAccumulation: null
     _UseSgprForGRO: 1
     _VectorStore: 1
     _WorkspaceSizePerElemBias: 4
