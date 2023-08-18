@@ -158,7 +158,7 @@ class SumUnrollMfma(SumUnroll):
         # Unregister defined sgpr
         if kernel["ProblemType"]["DataType"].numRegisters() < 1:
             if kernel["ProblemType"]["DataType"].isHalf():
-                imod.add(writer.undefineSgpr("SumUnrollConstOne"))
+                writer.undefineSgpr("SumUnrollConstOne")
 
         # bias data type
         diasBpe        = kernel["ProblemType"]["ComputeDataType"].numBytes()

@@ -1883,6 +1883,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
     return module
 
   def GSUSYNCzero(self, kernel, GSU):
+    print("GSUSYNCzero: ", GSU)
     module = Module("GSUSYNCzero")
     # module.addComment1("Magic div and mod functions")
     # macro = Macro("GSUSYNCzero")
@@ -1890,17 +1891,17 @@ class KernelWriter(metaclass=abc.ABCMeta):
     contents = \
     "\n\
 //zeroing\n\
-v_mov_b32 v0, 0x0 \n\
-v_mov_b32 v1, 0x0 \n\
-v_mov_b32 v2, 0x0 \n\
-v_mov_b32 v3, 0x0 \n\
-v_mov_b32 v4, 0 \n\
+v_mov_b32 v0, 0x0\n\
+v_mov_b32 v1, 0x0\n\
+v_mov_b32 v2, 0x0\n\
+v_mov_b32 v3, 0x0\n\
+v_mov_b32 v4, 0\n\
 \n\
 S_OR_B32 s[sgprSrdDd], s[sgprWorkGroup0], s[sgprWorkGroup1]\n\
 s_cmp_eq_u32 s[sgprSrdDd], 0              // specific WG\n\
-s_cbranch_scc0 label_ZEROINGEND           // \n\
+s_cbranch_scc0 label_ZEROINGEND           //\n\
 \n\
-s_cmp_eq_u32 s[sgprGSUSumIdx], 0          // \n\
+s_cmp_eq_u32 s[sgprGSUSumIdx], 0          //\n\
 s_cbranch_scc0 label_ZEROINGEND           // jump if not\n\
 \n\
 s_mul_hi_u32 s[sgprtmp3E], s[sgprStrideCK], "+str(GSU)+"            // cal zeroing start position\n\
@@ -1929,16 +1930,16 @@ buffer_store_dwordx4 v[0:3], v4, s[sgprSrdDd:sgprSrdDd+3], 0 offen offset:4*"+st
     if mod == 1:
         contents = \
         "\n\
-buffer_store_dword v[0], v4, s[sgprSrdDd:sgprSrdDd+3], 0 offen offset:4*"+str(i)+" // \n"
+buffer_store_dword v[0], v4, s[sgprSrdDd:sgprSrdDd+3], 0 offen offset:4*"+str(i)+" //\n"
     if mod == 2:
         contents = \
         "\n\
-buffer_store_dwordx2 v[0:1], v4, s[sgprSrdDd:sgprSrdDd+3], 0 offen offset:4*"+str(i)+" // \n"
+buffer_store_dwordx2 v[0:1], v4, s[sgprSrdDd:sgprSrdDd+3], 0 offen offset:4*"+str(i)+" //\n"
     if mod == 3:
         contents = \
         "\n\
-buffer_store_dwordx2 v[0:1], v4, s[sgprSrdDd:sgprSrdDd+3], 0 offen offset:4*"+str(i)+" // \n\
-buffer_store_dword v[0], v4, s[sgprSrdDd:sgprSrdDd+3], 0 offen offset:4*"+str(i)+"+2 // \n"
+buffer_store_dwordx2 v[0:1], v4, s[sgprSrdDd:sgprSrdDd+3], 0 offen offset:4*"+str(i)+" //\n\
+buffer_store_dword v[0], v4, s[sgprSrdDd:sgprSrdDd+3], 0 offen offset:4*"+str(i)+"+2 //\n"
     module.addGSUSYNC(contents)
 
     if kernel["ProblemType"]["UseScaleDVec"]:
@@ -2374,7 +2375,9 @@ label_ZEROINGEND:                              // jump to end\n\
       module.add(self.closeLoop(kernel, tensorParametersA, tensorParametersB, i, True))
 
     endSumLabel = "Summation_End_OptNLL2"
-    module.add(self.endSummation(kernel, tensorParametersA, tensorParametersB, endSumLabel))
+    # endSumLabel = "Summation_End_OptNLL"
+    print("KernelWriter endSummation")
+    module.add(self.endSummation(kernel, tensorParametersA, tensorParametersB, None, endSumLabel))
     if not self.states.doShadowInit:
       module.add(self.globalWriteWorkGroupInit(kernel))
 

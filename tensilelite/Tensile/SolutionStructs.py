@@ -1870,7 +1870,7 @@ class Solution(collections.abc.Mapping):
         elif state["GlobalSplitU"] > 1:
           if state["_GlobalAccumulation"] == 'SingleBuffer':
             state["_WorkspaceSizePerElemBias"] = computeBytes
-          elif state["_GlobalAccumulation"] == 'MultipleBuffer':
+          elif state["_GlobalAccumulation"] == 'MultipleBuffer' or kernel["_GlobalAccumulation"] == 'MultipleBufferSingleKernel':
             state["_WorkspaceSizePerElemBias"] = computeBytes * state["GlobalSplitU"]
 
     state["WorkspaceCheck"] = [state["_WorkspaceSizePerElemC"], state["_WorkspaceSizePerElemBias"]]
@@ -3259,6 +3259,17 @@ class Solution(collections.abc.Mapping):
     if state["GlobalSplitU"] > 1:
       if state["ProblemType"]["SupportUserArgs"]:
         reject(state, "Currently SupportUserArgs does not support GSU > 1.")
+
+    if state["_GlobalAccumulation"] == 'MultipleBufferSingleKernel':
+      print(state["MatrixInstruction"])
+      if state["MatrixInstruction"] != [16, 16, 16, 1]:
+        reject(state, "Victor reject MatrixInstruction.")
+      if state["StoreRemapVectorWidth"]:
+        reject(state, "Victor reject StoreRemapVectorWidth.")
+      if state["SourceSwap"]:
+        reject(state, "Victor reject SourceSwap.")
+      if state["StoreVectorWidth"] != 4:
+        reject(state, "Victor reject StoreVectorWidth.")
 
   ########################################
   # create a dictionary with booleans on whether to include parameter in name
