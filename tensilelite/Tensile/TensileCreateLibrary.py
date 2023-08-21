@@ -506,12 +506,17 @@ def writeSolutionsAndKernels(outputPath, CxxCompiler, problemTypes, solutions, k
         print("\nKernel generation failed for kernel: {}".format(kernels[kernIdx]["SolutionIndex"]))
         print(kernels[kernIdx]["SolutionNameMin"])
       removeKernels.append(kernels[kernIdx])
-      removeSolutions.append(solutions[kernIdx])
       removeResults.append(results[kernIdx])
   if len(removeKernels) > 0 and not errorTolerant:
     printExit("** kernel generation failure **")
   for kern in removeKernels:
       kernels.remove(kern)
+  for solution in Utils.tqdm(solutions, "Finding invalid solutions"):
+    solutionKernels = solution.getKernels()
+    for kernel in solutionKernels:
+        if kernel in removeKernels:
+          removeSolutions.append(solution)
+          break
   for solut in removeSolutions:
       solutions.remove(solut)
   for rel in removeResults:
