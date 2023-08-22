@@ -122,7 +122,46 @@ typedef enum {
  */
 typedef enum {
   HIPBLASLT_MATRIX_LAYOUT_BATCH_COUNT = 0,         /**<Number of batch of this matrix. Default value is 1. Data Type: int32_t*/
-  HIPBLASLT_MATRIX_LAYOUT_STRIDED_BATCH_OFFSET = 1 /**<Stride (in elements) to the next matrix for the strided batch operation. Default value is 0. Data Type: int64_t*/
+  HIPBLASLT_MATRIX_LAYOUT_STRIDED_BATCH_OFFSET = 1, /**<Stride (in elements) to the next matrix for the strided batch operation. Default value is 0. Data Type: int64_t*/
+  /** Data type, see hipblasltDataType_t.
+   *
+   * uint32_t
+   */
+  HIPBLASLT_MATRIX_LAYOUT_TYPE = 2,
+
+  /** Memory order of the data, see cublasLtOrder_t.
+   *
+   * int32_t, default: HIPBLASLT_ORDER_COL
+   */
+  HIPBLASLT_MATRIX_LAYOUT_ORDER = 3,
+
+  /** Number of rows.
+   *
+   * Usually only values that can be expressed as int32_t are supported.
+   *
+   * uint64_t
+   */
+  HIPBLASLT_MATRIX_LAYOUT_ROWS = 4,
+
+  /** Number of columns.
+   *
+   * Usually only values that can be expressed as int32_t are supported.
+   *
+   * uint64_t
+   */
+  HIPBLASLT_MATRIX_LAYOUT_COLS = 5,
+
+  /** Matrix leading dimension.
+   *
+   * For HIPBLASLT_ORDER_COL this is stride (in elements) of matrix column, for more details and documentation for
+   * other memory orders see documentation for cublasLtOrder_t values.
+   *
+   * Currently only non-negative values are supported, must be large enough so that matrix memory locations are not
+   * overlapping (e.g. greater or equal to HIPBLASLT_MATRIX_LAYOUT_ROWS in case of HIPBLASLT_ORDER_COL).
+   *
+   * int64_t;
+   */
+  HIPBLASLT_MATRIX_LAYOUT_LD = 6,
 } hipblasLtMatrixLayoutAttribute_t;
 
 /** Pointer mode to use for alpha */
@@ -159,6 +198,49 @@ typedef enum {
   HIPBLASLT_MATMUL_PREF_MAX = 2
 } hipblasLtMatmulPreferenceAttributes_t;
 
+/** Enum for data ordering */
+typedef enum {
+  /** Column-major
+   *
+   * Leading dimension is the stride (in elements) to the beginning of next column in memory.
+   */
+  HIPBLASLT_ORDER_COL = 0,
+  /** Row major
+   *
+   * Leading dimension is the stride (in elements) to the beginning of next row in memory.
+   */
+  HIPBLASLT_ORDER_ROW = 1,
+} hipblasLtOrder_t;
+
+/** Matrix transform descriptor attributes to define details of the operation.
+ */
+typedef enum {
+  /** Scale type, see hipDataType. Inputs are converted to scale type for scaling and summation and results are then
+   * converted to output type to store in memory.
+   *
+   * int32_t
+   */
+  HIPBLASLT_MATRIX_TRANSFORM_DESC_SCALE_TYPE,
+
+  /** Pointer mode of alpha and beta, see cublasLtPointerMode_t.
+   *
+   * int32_t, default: HIPBLASLT_POINTER_MODE_HOST
+   */
+  HIPBLASLT_MATRIX_TRANSFORM_DESC_POINTER_MODE,
+
+  /** Transform of matrix A, see cublasOperation_t.
+   *
+   * int32_t, default: HIPBLAS_OP_N
+   */
+  HIPBLASLT_MATRIX_TRANSFORM_DESC_TRANSA,
+
+  /** Transform of matrix B, see cublasOperation_t.
+   *
+   * int32_t, default: HIPBLAS_OP_N
+   */
+  HIPBLASLT_MATRIX_TRANSFORM_DESC_TRANSB,
+} hipblasLtMatrixTransformDescAttributes_t;
+
 #if defined(__HIP_PLATFORM_HCC__)
 typedef struct {
   uint64_t data[4];
@@ -169,6 +251,15 @@ typedef struct {
 typedef struct {
   uint64_t data[5];
 } hipblasLtMatmulPreferenceOpaque_t;
+/*! Semi-opaque descriptor for hipblasLtMatrixTransform() operation details
+ */
+typedef struct {
+  uint64_t data[8];
+} hipblasLtMatrixTransformDescOpaque_t;
+
+/*! Opaque descriptor for hipblasLtMatrixTransform() operation details
+ */
+typedef hipblasLtMatrixTransformDescOpaque_t* hipblasLtMatrixTransformDesc_t;
 /*! \ingroup types_module
  *  \brief Handle to the hipBLASLt library context queue
  *
@@ -752,6 +843,87 @@ hipblasStatus_t hipblasLtMatmul(hipblasLtHandle_t            handle,
                                 size_t                       workspaceSizeInBytes,
                                 hipStream_t                  stream);
 
+/** Create new matrix transform operation descriptor.
+ *
+ * \retval     HIPBLAS_STATUS_ALLOC_FAILED  if memory could not be allocated
+ * \retval     HIPBLAS_STATUS_SUCCESS       if desciptor was created successfully
+ */
+HIPBLASLT_EXPORT
+hipblasStatus_t hipblasLtMatrixTransformDescCreate(hipblasLtMatrixTransformDesc_t* transformDesc,
+                                                   hipblasltDatatype_t scaleType);
+
+/** Destroy matrix transform operation descriptor.
+ *
+ * \retval     HIPBLAS_STATUS_SUCCESS  if operation was successful
+ */
+HIPBLASLT_EXPORT
+hipblasStatus_t hipblasLtMatrixTransformDescDestroy(hipblasLtMatrixTransformDesc_t transformDesc);
+
+/** Set matrix transform operation descriptor attribute.
+ *
+ * \param[in]  transformDesc  The descriptor
+ * \param[in]  attr           The attribute
+ * \param[in]  buf            memory address containing the new value
+ * \param[in]  sizeInBytes    size of buf buffer for verification (in bytes)
+ *
+ * \retval     HIPBLAS_STATUS_INVALID_VALUE  if buf is NULL or sizeInBytes doesn't match size of internal storage for
+ *                                          selected attribute
+ * \retval     HIPBLAS_STATUS_SUCCESS        if attribute was set successfully
+ */
+HIPBLASLT_EXPORT
+hipblasStatus_t hipblasLtMatrixTransformDescSetAttribute(  //
+    hipblasLtMatrixTransformDesc_t transformDesc,
+    hipblasLtMatrixTransformDescAttributes_t attr,
+    const void* buf,
+    size_t sizeInBytes);
+
+/*! Get matrix transform operation descriptor attribute.
+ *
+ * \param[in]  transformDesc  The descriptor
+ * \param[in]  attr           The attribute
+ * \param[out] buf            memory address containing the new value
+ * \param[in]  sizeInBytes    size of buf buffer for verification (in bytes)
+ * \param[out] sizeWritten    only valid when return value is CUBLAS_STATUS_SUCCESS. If sizeInBytes is non-zero: number
+ * of bytes actually written, if sizeInBytes is 0: number of bytes needed to write full contents
+ *
+ * \retval     HIPBLAS_STATUS_INVALID_VALUE  if sizeInBytes is 0 and sizeWritten is NULL, or if  sizeInBytes is non-zero
+ *                                          and buf is NULL or sizeInBytes doesn't match size of internal storage for
+ *                                          selected attribute
+ * \retval     HIPBLAS_STATUS_SUCCESS        if attribute's value was successfully written to user memory
+ */
+HIPBLASLT_EXPORT
+hipblasStatus_t hipblasLtMatrixTransformDescGetAttribute(  //
+    hipblasLtMatrixTransformDesc_t transformDesc,
+    hipblasLtMatrixTransformDescAttributes_t attr,
+    void* buf,
+    size_t sizeInBytes,
+    size_t* sizeWritten);
+
+/*! Matrix layout conversion helper (C = alpha * op(A) + beta * op(B))
+ *
+ * Can be used to change memory order of data or to scale and shift the values.
+ *
+ * \retval     HIPBLAS_STATUS_NOT_INITIALIZED   if hipBLASLt handle has not been initialized
+ * \retval     HIPBLAS_STATUS_INVALID_VALUE     if parameters are in conflict or in an impossible configuration; e.g.
+ *                                              when A is not NULL, but Adesc is NULL
+ * \retval     HIPBLAS_STATUS_NOT_SUPPORTED     if current implementation on selected device doesn't support configured
+ *                                              operation
+ * \retval     HIPBLAS_STATUS_ARCH_MISMATCH     if configured operation cannot be run using selected device
+ * \retval     HIPBLAS_STATUS_EXECUTION_FAILED  if cuda reported execution error from the device
+ * \retval     HIPBLAS_STATUS_SUCCESS           if the operation completed successfully
+ */
+HIPBLASLT_EXPORT
+hipblasStatus_t hipblasLtMatrixTransform(hipblasLtHandle_t lightHandle,
+                                         hipblasLtMatrixTransformDesc_t transformDesc,
+                                         const void* alpha, /* host or device pointer */
+                                         const void* A,
+                                         hipblasLtMatrixLayout_t Adesc,
+                                         const void* beta, /* host or device pointer */
+                                         const void* B,
+                                         hipblasLtMatrixLayout_t Bdesc,
+                                         void* C,
+                                         hipblasLtMatrixLayout_t Cdesc,
+                                         hipStream_t stream);
 #ifdef __cplusplus
 }
 #endif
