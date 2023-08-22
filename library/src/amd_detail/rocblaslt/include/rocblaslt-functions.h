@@ -114,6 +114,18 @@ rocblaslt_status rocblaslt_matmul(rocblaslt_handle             handle,
                                   void*                        workspace,
                                   size_t                       workspaceSizeInBytes,
                                   hipStream_t                  stream);
+
+rocblaslt_status rocblaslt_matrix_transform(rocblaslt_handle handle,
+                                            rocblaslt_matrix_transform_desc *transformDesc,
+                                            const void* alpha, /* host or device pointer */
+                                            const void* A,
+                                            rocblaslt_matrix_layout Adesc,
+                                            const void* beta, /* host or device pointer */
+                                            const void* B,
+                                            rocblaslt_matrix_layout Bdesc,
+                                            void* C,
+                                            rocblaslt_matrix_layout Cdesc,
+                                            hipStream_t stream);
 #ifdef __cplusplus
 }
 
