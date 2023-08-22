@@ -34,6 +34,7 @@ from ..AsmAddressCalculation import AddrCalculation
 from ..Components.PackData import formatting
 
 from math import ceil
+from ..TensileInstructions import log2
 
 class GlobalWriteBatchComponent(GlobalWriteComponents):
   kernel = {"ProblemType": {"OperationType": "GEMM" }}
@@ -208,6 +209,176 @@ s_atomic_add s[sgprGSUSync], s[sgprKernArgAddress:sgprKernArgAddress+1], "+offse
 
     return module
 
+  def GSUSYNCcodegen(self, GSU, MT0, MT1, StoreVectorWidth, labelname, labelendname, vgprstart, vgprstart2, vgproffset):
+    module = Module("GSUSYNC")
+
+    WaveNum = str(MT1*MT0)
+
+    GSUxWaveNum = str(hex(self.kernel["GlobalSplitU"]*MT1*MT0-1))
+
+    # module.addGSUSYNC("/*\n")
+
+    module.add(SWaitCnt(waitAll=True, comment=""))
+    module.add(SCmpEQU32(
+        src0=sgpr("GSUSync"), \
+        src1=hex(int(WaveNum)), \
+        comment=""))
+    module.add(SCBranchSCC0(labelName=labelname, comment=""))
+    module.addComment("check done start")
+    # print("GSUSYNCcodegen checkout")
+    module.addComment("synchronizer check")
+    module.add(SMovB32(dst=sgpr("GSUSync"), src=hex(GSU-1), comment=""))
+    tmpS01 = self.parentWriter.sgprPool.checkOut(1, preventOverflow=False) #overflow?
+    module.add(SMulI32(dst=sgpr(tmpS01), src0=sgpr("WorkGroup1"), src1=sgpr("NumWorkGroups0"), comment=""))
+    module.add(SAddU32(dst=sgpr(tmpS01), src0=sgpr(tmpS01), src1=sgpr("WorkGroup0")))
+
+    tmpV01 = self.parentWriter.vgprPool.checkOut(1)
+    module.add(VLShiftRightB32(dst=vgpr(tmpV01), shiftHex=hex(log2(self.kernel["WavefrontSize"])), src=vgpr("Serial")))
+    tmpS02 = self.parentWriter.sgprPool.checkOut(1, preventOverflow=False) #overflow?
+    module.add(VReadfirstlaneB32(dst=sgpr(tmpS02), src=vgpr(tmpV01)))
+
+    tmpS03 = self.parentWriter.sgprPool.checkOut(1, preventOverflow=False) #overflow?
+    module.add(SMulI32(dst=sgpr(tmpS03), src0=sgpr("NumWorkGroups0"), src1=sgpr("NumWorkGroups1"), comment=""))
+    module.add(SMulI32(dst=sgpr(tmpS03), src0=sgpr(tmpS03), src1=sgpr(tmpS02), comment=""))
+    module.add(SAddU32(dst=sgpr(tmpS01), src0=sgpr(tmpS01), src1=sgpr(tmpS03)))
+    beptmp = 2
+    module.add(SLShiftLeftB32(dst=sgpr(tmpS01), src=sgpr(tmpS01), shiftHex=hex(beptmp), comment=""))
+    
+    module.add(SAddU32(dst=sgpr("SrdSync+0"), \
+                                    src0=sgpr("SrdSync+0"), \
+                                    src1=sgpr(tmpS01), \
+                                    comment="" ))
+    module.add(SAddCU32(dst=sgpr("SrdSync+1"), \
+                        src0=sgpr("SrdSync+1"), \
+                        src1=hex(0), \
+                        comment="" ))
+    module.addGSUSYNC("s_buffer_atomic_dec s[sgprGSUSync], s[sgprSrdSync:sgprSrdSync+3], glc\n")
+    
+    module.add(SSubU32(dst=sgpr(tmpS01), src0=sgpr("SizesFree+1"), src1=hex(1)))
+    tmpS04 = self.parentWriter.sgprPool.checkOutAligned(2,2, preventOverflow=False) #overflow?
+    module.add(SMulHIU32(dst=sgpr(tmpS04+1), src0=sgpr(tmpS01), src1=sgpr("StrideC1J"), comment=""))
+    module.add(SMulI32(dst=sgpr(tmpS04+0), src0=sgpr(tmpS01), src1=sgpr("StrideC1J"), comment=""))
+
+    tmpS05 = self.parentWriter.sgprPool.checkOutAligned(2,2, preventOverflow=False) #overflow?
+    module.add(SAddU32(dst=sgpr(tmpS05+0), \
+                                    src0=sgpr("SizesFree+0"), \
+                                    src1=sgpr(tmpS04+0), \
+                                    comment="" ))
+    module.add(SAddCU32(dst=sgpr(tmpS05+1), \
+                        src0=hex(0), \
+                        src1=sgpr(tmpS04+1), \
+                        comment="" ))
+
+    module.add(SSubU32(dst=sgpr(tmpS01), src0=sgpr("SizesFree+2"), src1=hex(1)))
+    module.add(SMulHIU32(dst=sgpr(tmpS04+1), src0=sgpr(tmpS01), src1=sgpr("StrideCK"), comment=""))
+    module.add(SMulI32(dst=sgpr(tmpS04+0), src0=sgpr(tmpS01), src1=sgpr("StrideCK"), comment=""))
+
+    module.add(SAddU32(dst=sgpr(tmpS05+0), \
+                                    src0=sgpr(tmpS05+0), \
+                                    src1=sgpr(tmpS04+0), \
+                                    comment="" ))
+    module.add(SAddCU32(dst=sgpr(tmpS05+1), \
+                        src0=sgpr(tmpS05+1), \
+                        src1=sgpr(tmpS04+1), \
+                        comment="" ))
+
+    bpe = self.parentWriter.states.bpeCinternal
+    module.add(SLShiftLeftB64(dst=sgpr("tmp2E",2), src=sgpr(tmpS05,2), shiftHex=log2(bpe), comment="scale by bpe"))
+
+    module.add(SSubU32(dst=sgpr(tmpS02), src0=sgpr("GSUSumIdx"), src1=hex(0), comment=""))
+    module.add(SMulHIU32(dst=sgpr(tmpS05+1), src0=sgpr(tmpS02), src1=sgpr("tmp3E"), comment=""))
+    module.add(SMulI32(dst=sgpr(tmpS05+0), src0=sgpr(tmpS02), src1=sgpr("tmp2E"), comment=""))
+    module.add(SMulHIU32(dst=sgpr(tmpS01), src0=sgpr(tmpS02), src1=sgpr("tmp2E"), comment=""))
+    module.add(SAddU32(dst=sgpr(tmpS05+1), \
+                                    src0=sgpr(tmpS05+1), \
+                                    src1=sgpr(tmpS01), \
+                                    comment="" ))
+
+    module.add(SSubU32(dst=sgpr("SrdD+0"), \
+                                    src0=sgpr("SrdD+0"), \
+                                    src1=sgpr(tmpS05+0), \
+                                    comment="" ))
+    module.add(SSubBU32(dst=sgpr("SrdD+1"), \
+                        src0=sgpr("SrdD+1"), \
+                        src1=sgpr(tmpS05+1), \
+                        comment="" ))
+
+    module.addSpaceLine()
+
+
+    module.add(SWaitCnt(waitAll=True, comment=""))
+    module.add(SCmpEQU32(
+        src0=sgpr("GSUSync"), \
+        src1=hex(1), \
+        comment=""))
+    module.add(SCBranchSCC0(labelName=labelendname, comment=""))
+    module.addComment("check done end")
+
+    module.addSpaceLine()
+
+    SyncloadedData = 0
+    module.addGSUSYNC("buffer_load_dwordx4 v["+str(vgprstart)+"+4*0:"+str(vgprstart)+"+3+4*0], "+str(vgproffset)+", s[sgprSrdD:sgprSrdD+3], 0 offen offset:0 // load GSU D\n")
+    SyncloadedData += 1
+
+    for i in range(1,GSU):
+      module.add(SAddU32(dst=sgpr("SrdD+0"), \
+                                      src0=sgpr("SrdD+0"), \
+                                      src1=sgpr("tmp2E+0"), \
+                                      comment="" ))
+      module.add(SAddCU32(dst=sgpr("SrdD+1"), \
+                          src0=sgpr("SrdD+1"), \
+                          src1=sgpr("tmp2E+1"), \
+                          comment="" ))
+      module.addGSUSYNC("buffer_load_dwordx4 v["+str(vgprstart)+"+4*"+str(i)+":"+str(vgprstart)+"+3+4*"+str(i)+"], "+str(vgproffset)+", s[sgprSrdD:sgprSrdD+3], 0 offen offset:0 // load GSU D\n")
+      SyncloadedData += 1
+      # # if GWVW=1 the half path still assumes we have
+      # # at least two stores so does some combining across VI -
+      # # for example assuming we can have two elements and can use pk_mul
+      # # here:
+    vscnt = 0
+    lgkmcnt = -1
+    
+    # module.add(SWaitCnt(lgkmcnt=lgkmcnt, vmcnt=vmcnt, vscnt=vscnt, comment="(Victor yes)"))
+    vmcnt = SyncloadedData = SyncloadedData -1
+
+    # module.addGSUSYNC("/*\n")
+
+    for i in range(1, self.kernel["GlobalSplitU"]):
+      module.addSpaceLine()
+      vmcnt = SyncloadedData = SyncloadedData -1
+      module.add(SWaitCnt(lgkmcnt=lgkmcnt, vmcnt=vmcnt, vscnt=vscnt, comment="(Victor yes)"))
+      module.add(VAddPKF32(dst=vgpr(vgprstart, 2), src0=vgpr(vgprstart, 2), \
+                                     src1=vgpr(vgprstart+0+4*i, 2), comment="C += bias"))
+      module.add(VAddPKF32(dst=vgpr(vgprstart+2, 2), src0=vgpr(vgprstart+2, 2), \
+                                     src1=vgpr(vgprstart+2+4*i, 2), comment="C += bias"))
+
+      # module.addGSUSYNC("*/\n")
+
+    # module.add(SSubU32(dst=sgpr("SrdD+0"), src0=sgpr("SrdD+0"), src1=prePad, comment="pre-pad to make room for possible pointer shift"))
+    # module.add(SSubBU32(dst=sgpr("SrdD+1"), src0=sgpr("SrdD+1"), src1=0, comment="pre-pad to make room for possible pointer shift"))
+    # s_sub_u32 s[sgprAddressA+0], s[sgprAddressA+0], 4  // pre-pad to make room for possible pointer shift
+    # s_subb_u32 s[sgprAddressA+1], s[sgprAddressA+1], 0 // pre-pad to make room for possible pointer shift
+    # print("GSUSYNCcodegen checkin")
+    self.parentWriter.sgprPool.checkIn(tmpS05)
+    self.parentWriter.sgprPool.checkIn(tmpS04)
+    self.parentWriter.sgprPool.checkIn(tmpS03)
+    self.parentWriter.sgprPool.checkIn(tmpS02)
+    self.parentWriter.vgprPool.checkIn(tmpV01)
+    self.parentWriter.sgprPool.checkIn(tmpS01)
+
+    if StoreVectorWidth==2:
+        contents = \
+    "\n\
+v_mov_b32 v["+str(vgprstart)+"2+0], v["+str(vgprstart)+"+0]\n\
+v_mov_b32 v["+str(vgprstart)+"2+1], v["+str(vgprstart)+"+1]\n\
+v_mov_b32 v["+str(vgprstart)+"+0], v["+str(vgprstart)+"+2]\n\
+v_mov_b32 v["+str(vgprstart)+"+1], v["+str(vgprstart)+"+3]\n"
+        # module.addGSUSYNC(contents)
+
+    # module.addGSUSYNC("*/\n")
+
+    return module
+
   def GSUSYNC(self, GSU, MT0, MT1, StoreVectorWidth, labelname, labelendname, vgprstart, vgprstart2, vgproffset):
     module = Module("GSUSYNC")
     #module.addComment1("Magic div and 2mod functions")
@@ -263,9 +434,9 @@ s_buffer_atomic_dec s[sgprGSUSync], s[sgprSrdDd:sgprSrdDd+3], glc\n\
 \n\
 \n\
 //s_mov_b32 s[sgprGSUSumIdx] 1\n\
-s_mul_i32 s[sgprtmp2E], MT1, s[sgprWorkGroup1]                        //\n\
-s_mul_hi_u32 s[sgprtmp1E], s[sgprtmp2E], s[sgprStrideD1J]             // cal GSU D position\n\
-s_mul_i32 s[sgprtmp0E], s[sgprtmp2E], s[sgprStrideD1J]                //\n\
+s_mul_i32 s[sgprtmp4E], MT1, s[sgprWorkGroup1]                        //\n\
+s_mul_hi_u32 s[sgprtmp1E], s[sgprtmp4E], s[sgprStrideD1J]             // cal GSU D position\n\
+s_mul_i32 s[sgprtmp0E], s[sgprtmp4E], s[sgprStrideD1J]                //\n\
 s_lshl_b64 s[sgprtmp0E:sgprtmp1E], s[sgprtmp0E:sgprtmp1E], 2          // scale by bpe\n\
 s_add_u32 s[sgprSrdD+0], s[sgprAddressD+0], s[sgprtmp0E]              // add lo to SRD\n\
 s_addc_u32 s[sgprSrdD+1], s[sgprAddressD+1], s[sgprtmp1E]             // add hi to SRD\n\
@@ -786,14 +957,17 @@ s_cbranch_scc0 "+str(labelendname)+" //label_GW_End_1 //label_AFTERsummary_Edge\
       module.add(self.GSUSYNC0(self.kernel["GlobalSplitU"], self.kernel["MIWaveGroup"][0], self.kernel["MIWaveGroup"][1], self.kernel["StoreVectorWidth"], labelname, "label_KernelEnd"))
       # module.add(MacroInstruction("GSUSYNC0", args=[labelname, "label_KernelEnd"]))
       # module.add(MacroInstruction("GSUSYNC1", args=[labelname, "label_KernelEnd"]))
-      module.add(self.GSUSYNC(self.kernel["GlobalSplitU"], self.kernel["MacroTile0"], self.kernel["MacroTile1"], labelname, "label_KernelEnd", sumIdxGSUSYNC, self.ss.elementSumIdx[elementIdx-1], vgpr(self.ss.elementAddr[elementIdx-1].addrDVgpr)))
+      module.add(self.GSUSYNCcodegen(self.kernel["GlobalSplitU"], self.kernel["MacroTile0"], self.kernel["MacroTile1"], labelname, "label_KernelEnd", sumIdxGSUSYNC, self.ss.elementSumIdx[elementIdx-1], vgpr(self.ss.elementAddr[elementIdx-1].addrDVgpr)))
+      # module.add(self.GSUSYNC(self.kernel["GlobalSplitU"], self.kernel["MacroTile0"], self.kernel["MacroTile1"], labelname, "label_KernelEnd", sumIdxGSUSYNC, self.ss.elementSumIdx[elementIdx-1], vgpr(self.ss.elementAddr[elementIdx-1].addrDVgpr)))
       # module.add(MacroInstruction("GSUSYNC", args=[labelname, "label_KernelEnd", sumIdxGSUSYNC, self.ss.elementSumIdx[elementIdx-1], vgpr(self.ss.elementAddr[elementIdx-1].addrDVgpr)]))
     else:
-      module.add(self.GSUSYNC0(self.kernel["GlobalSplitU"], self.kernel["MacroTile0"], self.kernel["MacroTile1"], labelname, "label_KernelEnd"))
-      # module.add(MacroInstruction("GSUSYNC0", args=[labelname, "label_KernelEnd"]))
-      # module.add(MacroInstruction("GSUSYNC1", args=[labelname, "label_KernelEnd"]))
-      module.add(self.GSUSYNC(self.kernel["GlobalSplitU"], self.kernel["MIWaveGroup"][0], self.kernel["MIWaveGroup"][1], self.kernel["StoreVectorWidth"], labelname, "label_KernelEnd", sumIdxGSUSYNC, 0, vgpr(addrCalc.addrDVgpr)))
-      # module.add(MacroInstruction("GSUSYNC", args=[labelname, "label_KernelEnd", sumIdxGSUSYNC, vgpr(addrCalc.addrDVgpr)]))
+      if (self.kernel["GlobalSplitU"] != 1 and self.kernel["GlobalSplitUAlgorithm"] == 'MultipleBufferSingleKernel'):
+        module.add(self.GSUSYNC0(self.kernel["GlobalSplitU"], self.kernel["MacroTile0"], self.kernel["MacroTile1"], labelname, "label_KernelEnd"))
+        # module.add(MacroInstruction("GSUSYNC0", args=[labelname, "label_KernelEnd"]))
+        # module.add(MacroInstruction("GSUSYNC1", args=[labelname, "label_KernelEnd"]))
+        module.add(self.GSUSYNCcodegen(self.kernel["GlobalSplitU"], self.kernel["MIWaveGroup"][0], self.kernel["MIWaveGroup"][1], self.kernel["StoreVectorWidth"], labelname, "label_KernelEnd", sumIdxGSUSYNC, 0, vgpr(addrCalc.addrDVgpr)))
+        # module.add(self.GSUSYNC(self.kernel["GlobalSplitU"], self.kernel["MIWaveGroup"][0], self.kernel["MIWaveGroup"][1], self.kernel["StoreVectorWidth"], labelname, "label_KernelEnd", sumIdxGSUSYNC, 0, vgpr(addrCalc.addrDVgpr)))
+        # module.add(MacroInstruction("GSUSYNC", args=[labelname, "label_KernelEnd", sumIdxGSUSYNC, vgpr(addrCalc.addrDVgpr)]))
     # module.addGSUSYNC("\n") #GSUSYNC
 
     # rC *= alpha
@@ -1449,7 +1623,8 @@ buffer_store_dwordx2 v["+str(vgprstart)+":"+str(vgprstart)+"+1], "+str(vgproffse
       module.add(self.GSUSYNC2(self.kernel["StoreVectorWidth"], self.kernel["ProblemType"]["DestDataType"].isSingle(), sumIdx , self.ss.elementSumIdx[elementIdx-1], vgpr(self.ss.elementAddr[elementIdx-1].addrDVgpr)))
       # module.add(MacroInstruction("GSUSYNC2", args=[sumIdx , self.ss.elementSumIdx[elementIdx-1], vgpr(self.ss.elementAddr[elementIdx-1].addrDVgpr)]))
     else:
-      module.add(self.GSUSYNC2(self.kernel["StoreVectorWidth"], self.kernel["ProblemType"]["DestDataType"].isSingle(), sumIdx ,0 ,vgpr(addrCalc.addrDVgpr)))
+      if (self.kernel["GlobalSplitU"] != 1 and self.kernel["GlobalSplitUAlgorithm"] == 'MultipleBufferSingleKernel'):
+        module.add(self.GSUSYNC2(self.kernel["StoreVectorWidth"], self.kernel["ProblemType"]["DestDataType"].isSingle(), sumIdx ,0 ,vgpr(addrCalc.addrDVgpr)))
       # module.add(MacroInstruction("GSUSYNC2", args=[sumIdx ,vgpr(addrCalc.addrDVgpr)]))
 
     module.addGSUSYNC("\n") #GSUSYNC

@@ -3262,7 +3262,7 @@ class Solution(collections.abc.Mapping):
 
     if state["_GlobalAccumulation"] == 'MultipleBufferSingleKernel':
       print(state["MatrixInstruction"])
-      if state["MatrixInstruction"] != [16, 16, 16, 1]:
+      if state["MatrixInstruction"] != [16, 16, 16, 1] and state["MatrixInstruction"] != [16, 16, 4, 1]:
         reject(state, "Victor reject MatrixInstruction.")
       if state["StoreRemapVectorWidth"]:
         reject(state, "Victor reject StoreRemapVectorWidth.")

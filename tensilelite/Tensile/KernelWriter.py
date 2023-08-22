@@ -1882,6 +1882,69 @@ class KernelWriter(metaclass=abc.ABCMeta):
     module.add(self.closeLoop(kernel, tensorParametersA, tensorParametersB, self.states.unrollIdx, finalLoop, oddLabel=oddLabel))
     return module
 
+  def GSUSYNCzerocodegen(self, kernel, GSU):
+    module = Module("GSUSYNCzerocodegen")
+    # module.addGSUSYNC("/*\n")
+    module.addComment("zeroingstart")
+    NumZeroingVgpr = 4
+    zeroingVgpr = self.vgprPool.checkOut(NumZeroingVgpr)
+    vaddr = self.vgprPool.checkOut(1)
+    for i in range(NumZeroingVgpr):
+      module.add(VMovB32(dst=vgpr(zeroingVgpr+i), src="0x0", comment=""))
+    module.addSpaceLine()
+    print("zeroingVgpr", zeroingVgpr)
+    # print("len(zeroingVgpr)", len(zeroingVgpr))
+
+    tmpSgpr = self.sgprPool.checkOut(1)
+    ZEROINGEND = Label("ZEROINGEND", "")
+
+    module.add(SOrB32(dst=sgpr(tmpSgpr), src0=sgpr("WorkGroup0"), src1=sgpr("WorkGroup1"), comment=""))
+    module.add(SCmpEQU32(src0=sgpr(tmpSgpr), src1=hex(0), comment=""))
+    module.add(SCBranchSCC0(labelName=ZEROINGEND.getLabelName(), comment=""))
+
+    module.add(SCmpEQU32(src0=sgpr("GSUSumIdx"), src1=hex(0), comment=""))
+    module.add(SCBranchSCC0(labelName=ZEROINGEND.getLabelName(), comment="")) 
+    module.addSpaceLine()
+
+    ZEROtmpSgpr = self.sgprPool.checkOut(1)
+    module.add(SMovB32(dst=sgpr(ZEROtmpSgpr), src=GSU, comment=""))
+    ZEROINGLabel = Label("ZEROING", "" )
+    module.add(ZEROINGLabel)
+
+    addr1 = sgpr("SrdSync", 4)
+    addr0 = vgpr(vaddr)
+    bps = 16
+    rpv = 4
+    module.add(self.chooseGlobalWrite(True, bps, zeroingVgpr, rpv, addr0, addr1, 0, "123", comment="zeroing"))
+
+    module.add(SSubU32(
+            dst=sgpr(ZEROtmpSgpr), src0=sgpr(ZEROtmpSgpr), \
+            src1=1, \
+            comment=""))
+
+    module.add(SCmpEQI32(
+        src0=sgpr(ZEROtmpSgpr), \
+        src1=hex(0), \
+        comment=""))
+    
+    module.add(SCBranchSCC0(labelName=ZEROINGLabel.getLabelName(), comment=""))
+
+    self.sgprPool.checkIn(ZEROtmpSgpr)
+    self.vgprPool.checkIn(zeroingVgpr)
+    self.vgprPool.checkIn(vaddr)
+    self.sgprPool.checkIn(tmpSgpr)
+    
+
+    module.add(SMovB32(dst=sgpr("GSUSync"), src="0x1", comment=""))
+    module.addGSUSYNC("s_atomic_add s[sgprGSUSync], s[sgprKernArgAddress:sgprKernArgAddress+1], 0x8C glc\n")
+    module.add(SWaitCnt(waitAll=True, comment=""))
+    ZEROINGENDLabel = Label("ZEROINGEND", "" )
+    module.add(ZEROINGENDLabel)
+    module.addComment("zeroingend")
+    
+    # module.addGSUSYNC("*/\n")
+    return module
+
   def GSUSYNCzero(self, kernel, GSU):
     # print("GSUSYNCzero: ", GSU)
     module = Module("GSUSYNCzero")
@@ -1899,10 +1962,10 @@ v_mov_b32 v4, 0\n\
 \n\
 S_OR_B32 s[sgprSrdDd], s[sgprWorkGroup0], s[sgprWorkGroup1]\n\
 s_cmp_eq_u32 s[sgprSrdDd], 0              // specific WG\n\
-s_cbranch_scc0 label_ZEROINGEND           //\n\
+s_cbranch_scc0 label_ZEROINGENDtmp           //\n\
 \n\
 s_cmp_eq_u32 s[sgprGSUSumIdx], 0          //\n\
-s_cbranch_scc0 label_ZEROINGEND           // jump if not\n\
+s_cbranch_scc0 label_ZEROINGENDtmp           // jump if not\n\
 \n\
 s_mul_hi_u32 s[sgprtmp3E], s[sgprStrideCK], "+str(GSU)+"            // cal zeroing start position\n\
 s_mul_i32 s[sgprtmp2E], s[sgprStrideCK], "+str(GSU)+"               //\n\
@@ -1953,7 +2016,7 @@ s_mov_b32 s[sgprGSUSync] 1\n\
 s_atomic_add s[sgprGSUSync], s[sgprKernArgAddress:sgprKernArgAddress+1], "+offset+" glc\n\
 s_waitcnt vmcnt(0)                                 // 8wait for global read\n\
 \n\
-label_ZEROINGEND:                              // jump to end\n\
+label_ZEROINGENDtmp:                              // jump to end\n\
 //zeroing\n"
     module.addGSUSYNC(contents)
     return module
@@ -2062,7 +2125,9 @@ label_ZEROINGEND:                              // jump to end\n\
         module.add(self.globalWriteWorkGroupInit(kernel))
         # module.addComment("GSUSYNCzero") #GSUSYNC
         # module.add(MacroInstruction("GSUSYNCzero", args=[]))
-        module.add(self.GSUSYNCzero(kernel, kernel["GlobalSplitU"]))
+        if (kernel["GlobalSplitU"] != 1 and kernel["GlobalSplitUAlgorithm"] == 'MultipleBufferSingleKernel'):
+          module.add(self.GSUSYNCzerocodegen(kernel, kernel["GlobalSplitU"]))
+          # module.add(self.GSUSYNCzero(kernel, kernel["GlobalSplitU"]))
         if self.states.doShadowInit == 2:
           module.add(self.initC(kernel)) # initC while waiting for global reads
           if kernel["ProblemType"]["Gradient"] and kernel["ProblemType"]["UseBias"] and (kernel["ProblemType"]["BiasSrc"] == "A" or kernel["ProblemType"]["BiasSrc"] == "B"):
@@ -3441,6 +3506,8 @@ label_ZEROINGEND:                              // jump to end\n\
     self.defineSgpr("NumWorkGroups0", 1)
     self.defineSgpr("NumWorkGroups1", 1)
 
+    if self.states.doShadowInit and kernel["BufferStore"] and (kernel["GlobalSplitU"] > 1) and (kernel["GlobalSplitUAlgorithm"] == 'MultipleBufferSingleKernel'):
+      self.defineSgpr("SrdSync", 4, 4)
     ###################################
     # Get kernel argument start here
     ###################################

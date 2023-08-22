@@ -169,7 +169,7 @@ class RegisterPool:
       return found
     # need overflow
     else:
-      #print "RegisterPool::checkOutAligned(%u,%u) overflowing past %u" % (size, alignment, len(self.pool))
+      # print("RegisterPool::checkOutAligned(%u,%u) overflowing past %u" % (size, alignment, len(self.pool)))
       # where does tail sequence of available registers begin
       assert (not preventOverflow)
       start = len(self.pool)

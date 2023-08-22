@@ -6704,12 +6704,59 @@ class KernelWriterAssembly(KernelWriter):
   ##############################################################################
   # globalWriteWorkGroupInit:
   ##############################################################################
+  def SrdSync(self, kernel):
+    module = Module("SrdSync")
+    # module.add(self.allocPostLoopSrd("sgprSrdSync"))
+    module.addSpaceLine()
+    labelStr = self.labels.getNameInc("sgprSrdSync")
+    module.add(allocPostLoopSrdSuppressRaw("Sync", "D", labelStr, sgprLength=hex(0x80000000)))
+    # module.add(self.allocPostLoopSrd("Zeroing"))
+
+    tmpspgr = self.sgprPool.checkOut(2)
+    module.add(SMulHIU32(dst=sgpr(tmpspgr+1), src0=sgpr("StrideCK"), src1=hex(kernel["GlobalSplitU"]), comment=""))
+    module.add(SMulI32(dst=sgpr(tmpspgr+0), src0=sgpr("StrideCK"), src1=hex(kernel["GlobalSplitU"]), comment=""))
+
+    bpe = self.states.bpeCinternal
+    module.add(SLShiftLeftB64(dst=sgpr(tmpspgr,2), src=sgpr(tmpspgr,2), shiftHex=log2(bpe), comment="scale by bpe"))
+    
+    module.add(SAddU32(dst=sgpr("SrdSync+0"), \
+                                    src0=sgpr("SrdSync+0"), \
+                                    src1=sgpr(tmpspgr+0), \
+                                    comment="" ))
+    module.add(SAddCU32(dst=sgpr("SrdSync+1"), \
+                        src0=sgpr("SrdSync+1"), \
+                        src1=sgpr(tmpspgr+1), \
+                        comment="" ))
+
+    self.sgprPool.checkIn(tmpspgr)
+
+#     "S_OR_B32 s[sgprSrdDd], s[sgprWorkGroup0], s[sgprWorkGroup1]
+# s_cmp_eq_u32 s[sgprSrdDd], 0              // specific WG
+# s_cbranch_scc0 label_ZEROINGEND           //
+
+# s_cmp_eq_u32 s[sgprGSUSumIdx], 0          //
+# s_cbranch_scc0 label_ZEROINGEND           // jump if not
+
+# s_mul_hi_u32 s[sgprtmp3E], s[sgprStrideCK], 6            // cal zeroing start position
+# s_mul_i32 s[sgprtmp2E], s[sgprStrideCK], 6               //
+# s_lshl_b64 s[sgprtmp2E:sgprtmp2E+1], s[sgprtmp2E:sgprtmp2E+1], 2    // scale by bpe
+
+# s_mov_b32 s[sgprSrdDd+2], 0x80000000
+# s_mov_b32 s[sgprSrdDd+3], Srd127_96
+
+# s_add_u32 s[sgprSrdDd+0], s[sgprAddressD+0], s[sgprtmp2E]    // add lo to SRD
+# s_addc_u32 s[sgprSrdDd+1], s[sgprAddressD+1], s[sgprtmp3E]   // add hi to SRD"
+    return module
+
   def globalWriteWorkGroupInit(self, kernel):
     module = Module("globalWriteWorkGroupInit")
     if kernel["BufferStore"]:
       module.add(self.allocPostLoopSrd("D"))
       module.add(self.allocPostLoopSrd("C"))
       module.add(self.computeStoreSrdStart(kernel, ["C", "D"]))
+
+      if (kernel["GlobalSplitU"] > 1 and (kernel["GlobalSplitUAlgorithm"] == 'MultipleBufferSingleKernel')):
+        module.add(self.SrdSync(kernel))
     return module
 
   ##############################################################################
