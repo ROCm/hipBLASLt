@@ -1,6 +1,6 @@
 ################################################################################
 #
-# Copyright (C) 2022 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -48,13 +48,6 @@ class ShiftVectorComponentsMFMA(ShiftVectorComponents):
             else
                 use partial thread algorithm
         """
-
-        # TODO: use this for non SourceSwap for B?
-        # this part can  support non SourceSwap for B
-        # But let non SourceSwap for B go original shiftptr path
-        #if (not kernel["SourceSwap"]) and tP["isB"]:
-        #    return Module("ShiftVectorComponentsMFMA (Empty)")
-
         # common parameter
         tc              = tP["tensorChar"]
         glvw            = tP["glvw"]
@@ -354,9 +347,10 @@ class ShiftVectorComponentsMFMA(ShiftVectorComponents):
         """
         """
         # common parameter
+        tc              = tP["tensorChar"]
         glvw            = tP["glvw"]
         numThreadInWave = kernel["WavefrontSize"]
-        vectorWidth     = kernel["VectorWidth"] if (kernel["SourceSwap"] and tP["isA"]) else 1
+        vectorWidth     = kernel["VectorWidth%s"%tc]
 
         # use to handle MatrixInst 4x4
         matrixInstM     = kernel["MatrixInstM"] * kernel["MatrixInstBM"] if (kernel["MatrixInstM"] == 4) else kernel["MatrixInstM"]
@@ -453,18 +447,18 @@ class ShiftVectorComponentsMFMA(ShiftVectorComponents):
             glvwblkidReg = writer.vgprPool.checkOut(1)
             module.add(VMulI32I24(dst=vgpr(glvwblkidReg), src0=hex(-MIBShapeCoal), src1=vgpr(wReg), comment="wg * MIB"))
             module.add(VAddCOU32(dst=vgpr(glvwblkidReg), dst1=VCC(), src0=vgpr(glvwblkidReg), src1=vgpr(wgMT), comment="wgMT = Size - wg*MIB"))
-            module.add(vectorStaticDivide(glvwblkidReg, glvwblkidReg, glvw, tmpVgpr, "glvw block id"))
+            module.add(vectorStaticDivide(glvwblkidReg, glvwblkidReg, glvw, tmpVgprRes, "glvw block id"))
             module.addSpaceLine()
 
             # rReg : reminder of M_size % vectorwidth
             # decide to jump to block which handle this case, M_size % vector width
             module.addComment1("dispatch to differet shift block for shift")
             rReg = writer.vgprPool.checkOut(1)
-            module.add(vectorStaticRemainder(dummy, rReg, wgMT, glvw, tmpVgpr, tmpSgpr))
+            module.add(vectorStaticRemainder(dummy, rReg, wgMT, glvw, tmpVgprRes, tmpSgprInfo))
             for r in range(1, glvw):
                 module.add(VCmpEQU32(dst=VCC(), src0=vgpr(rReg), src1=hex(r), comment="wgMT%%VW == %u"%r ))
                 module.add(SCBranchVCCNZ(labelName=shiftLabels[(r-1)].getLabelName(), comment="branch to shift d%u r=%u"%(tP["idx"], r)))
-            module.add(SBranch(labelName=shiftLabels[(r-1)].getLabelName(), comment="no shifting"))
+            module.add(SBranch(labelName=shiftLabels[(glvw-1)].getLabelName(), comment="no shifting"))
             writer.vgprPool.checkIn(rReg)
 
         # blocks for handle M_size % vector width
@@ -481,7 +475,7 @@ class ShiftVectorComponentsMFMA(ShiftVectorComponents):
                         module.add(VCmpEQU32(dst=VCC(), src0=vgpr(glvwblkidReg), src1=hex(target)))
                         module.add(SCBranchVCCNZ(labelName=GLVWBLKLabels[r-1][label].getLabelName(), comment="branch to shift d%u shift%u glvwblk%u" % (tP["idx"], r, label)))
 
-            _, arch2acc = accToArchMapper(kernel, writer.states.lrvwB)
+            _, arch2acc = accToArchMapper(kernel)
 
             permuteIndexReg = writer.vgprPool.checkOut(1)
             threadIdInCoalReg = writer.vgprPool.checkOut(1)
@@ -495,8 +489,8 @@ class ShiftVectorComponentsMFMA(ShiftVectorComponents):
                         module.add(GLVWBLKLabels[shift-1][label])
                         module.add(VAndB32(dst=vgpr(permuteIndexReg), src0=kernel["WavefrontSize"]-1, src1=vgpr("Serial"), comment="permute register between threads"))
                         module.add(staticMultiply(vgpr(permuteIndexReg), vgpr(permuteIndexReg), writer.states.bpr, sgpr(tmpSgpr), "permute register between threads"))
-                        module.add(vectorStaticDivide(threadIdInCoalReg, "Serial", threadInterval, tmpVgpr))
-                        module.add(vectorStaticRemainder(dummy, threadIdInCoalReg, threadIdInCoalReg, numThreadInCoal, tmpVgpr, tmpSgpr))
+                        module.add(vectorStaticDivide(threadIdInCoalReg, "Serial", threadInterval, tmpVgprRes))
+                        module.add(vectorStaticRemainder(dummy, threadIdInCoalReg, threadIdInCoalReg, numThreadInCoal, tmpVgprRes, tmpSgprInfo))
 
                         for dstMbblkId in range(glvw//(numContOutCoal*numThreadInCoal)):
                             for dstThreadId in range(numThreadInCoal):
