@@ -106,9 +106,9 @@ struct _rocblaslt_handle
 struct _rocblaslt_matrix_layout
 {
     // constructor
-    _rocblaslt_matrix_layout(){};
+    _rocblaslt_matrix_layout() = default;
     // destructor
-    ~_rocblaslt_matrix_layout(){};
+    ~_rocblaslt_matrix_layout() = default;
 
     // num rows
     uint64_t m = 0;
@@ -120,6 +120,7 @@ struct _rocblaslt_matrix_layout
     hipblasltDatatype_t type;
     int32_t             batch_count  = 1;
     int64_t             batch_stride = 0;
+    hipblasLtOrder_t    order = HIPBLASLT_ORDER_COL;
 };
 
 /********************************************************************************

@@ -341,6 +341,51 @@ rocblaslt_status rocblaslt_matrix_layout_set_attribute(rocblaslt_matrix_layout  
                     return rocblaslt_status_invalid_value;
                 }
                 break;
+            case ROCBLASLT_MATRIX_LAYOUT_TYPE:
+                if(sizeof(uint32_t) <= sizeInBytes)
+                    memcpy(&matLayout->type, buf, sizeof(uint32_t));
+                else
+                {
+                    log_error(__func__, "invalid buf size", sizeInBytes);
+                    return rocblaslt_status_invalid_value;
+                }
+                break;
+            case ROCBLASLT_MATRIX_LAYOUT_ORDER:
+                if(sizeof(int32_t) <= sizeInBytes)
+                    memcpy(&matLayout->order, buf, sizeof(int32_t));
+                else
+                {
+                    log_error(__func__, "invalid buf size", sizeInBytes);
+                    return rocblaslt_status_invalid_value;
+                }
+                break;
+            case ROCBLASLT_MATRIX_LAYOUT_ROWS:
+                if(sizeof(uint64_t) <= sizeInBytes)
+                    memcpy(&matLayout->m, buf, sizeof(uint64_t));
+                else
+                {
+                    log_error(__func__, "invalid buf size", sizeInBytes);
+                    return rocblaslt_status_invalid_value;
+                }
+                break;
+            case ROCBLASLT_MATRIX_LAYOUT_COLS:
+                if(sizeof(uint64_t) <= sizeInBytes)
+                    memcpy(&matLayout->n, buf, sizeof(uint64_t));
+                else
+                {
+                    log_error(__func__, "invalid buf size", sizeInBytes);
+                    return rocblaslt_status_invalid_value;
+                }
+                break;
+            case ROCBLASLT_MATRIX_LAYOUT_LD:
+                if(sizeof(int64_t) <= sizeInBytes)
+                    memcpy(&matLayout->ld, buf, sizeof(int64_t));
+                else
+                {
+                    log_error(__func__, "invalid buf size", sizeInBytes);
+                    return rocblaslt_status_invalid_value;
+                }
+                break;
             default:
                 log_error(__func__, "invalid attribute", attr);
                 return rocblaslt_status_invalid_value;

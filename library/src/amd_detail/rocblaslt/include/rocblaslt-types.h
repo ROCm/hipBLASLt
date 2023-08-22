@@ -268,8 +268,26 @@ typedef enum rocblaslt_matrix_layout_attribute_
     ROCBLASLT_MATRIX_LAYOUT_STRIDED_BATCH_OFFSET
     = 1, /**< stride between consecutive matrices in a batch expressed in terms
             of matrix elements. */
-    ROCBLASLT_MATRIX_LAYOUT_MAX = 2
+    ROCBLASLT_MATRIX_LAYOUT_TYPE = 2,
+    ROCBLASLT_MATRIX_LAYOUT_ORDER = 3,
+    ROCBLASLT_MATRIX_LAYOUT_ROWS = 4,
+    ROCBLASLT_MATRIX_LAYOUT_COLS = 5,
+    ROCBLASLT_MATRIX_LAYOUT_LD = 6,
+    ROCBLASLT_MATRIX_LAYOUT_MAX = 7
 } rocblaslt_matrix_layout_attribute;
+
+typedef enum {
+  /** Column-major
+   *
+   * Leading dimension is the stride (in elements) to the beginning of next column in memory.
+   */
+  ROCBLASLT_ORDER_COL = 0,
+  /** Row major
+   *
+   * Leading dimension is the stride (in elements) to the beginning of next row in memory.
+   */
+  ROCBLASLT_ORDER_ROW = 1,
+} rocblasLtOrder_t;
 
 /*! \ingroup types_module
  *  \brief Specify the additional attributes of a matrix multiplication
@@ -341,6 +359,14 @@ typedef struct _rocblaslt_solutions
     rocblaslt_matmul_heuristic_result* heuristicResults;
     int                                algoCount;
 } rocblaslt_solutions;
+
+typedef struct _rocblaslt_matrix_transform_desc
+{
+    hipblasltDatatype_t scaleType;
+    hipblasLtPointerMode_t pointerMode{HIPBLASLT_POINTER_MODE_HOST};
+    hipblasOperation_t opA{HIPBLAS_OP_N};
+    hipblasOperation_t opB{HIPBLAS_OP_N};
+} rocblaslt_matrix_transform_desc;
 #ifdef __cplusplus
 }
 #endif
