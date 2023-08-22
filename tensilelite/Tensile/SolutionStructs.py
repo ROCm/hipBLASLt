@@ -2497,6 +2497,8 @@ class Solution(collections.abc.Mapping):
           else:
             matrixInstN = (state["MatrixInstN"] * state["MatrixInstBN"]) if (state["MatrixInstN"] == 4) else state["MatrixInstN"]
             glvwAlimit  = state["MIOutputVectorWidth"] * (state["WavefrontSize"] // matrixInstN)
+          if state["ProblemType"]["DataType"].numRegisters() == 0.25:
+            glvwAlimit = max(glvwAlimit, 4)
 
           # reduce GLVA if GLVA larger than MIOVW
           if state["GlobalReadVectorWidthA"] > glvwAlimit:
@@ -2513,6 +2515,8 @@ class Solution(collections.abc.Mapping):
             glvwBlimit  = state["MIOutputVectorWidth"] * (state["WavefrontSize"] // matrixInstM)
           # else:  # use origin shiftptr for B
           #   matrixInstN = (state["MatrixInstN"] * state["MatrixInstBN"]) if (state["MatrixInstN"] == 4) else state["MatrixInstN"]
+          if state["ProblemType"]["DataType"].numRegisters() == 0.25:
+            glvwBlimit = max(glvwBlimit, 4)
 
           # reduce GLVB if GLVB larger than MIOVW
           if state["GlobalReadVectorWidthB"] > glvwBlimit:
