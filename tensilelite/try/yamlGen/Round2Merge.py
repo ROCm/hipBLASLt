@@ -12,15 +12,19 @@ import pandas as pd
 # dic[0] = df[' WinnerTimeUS'][0]
 
 # df = pd.read_csv('tensilelite/try/tunning_BFVF_2/2_BenchmarkData/Cijk_Ailk_Bljk_HHS_BH_00_CSVWinner.csv', encoding='gbk')
-
-
+import argparse
+parser = argparse.ArgumentParser(description='manual to this script')
+parser.add_argument('--prob', type=str, default = None)
+args = parser.parse_args()
+print(args.prob)
+dirpath = "/hipBLASLt/tensilelite/try/yamlGen/"+args.prob+"/"
 # print(df[' WinnerTimeUS'][0])
 
 # dic[1] = df[' WinnerTimeUS'][0]
 
 # print(dic[1])
 
-problemnum = 12
+problemnum = 1
 
 list = []
 for problemidx in range(0, problemnum):
@@ -40,7 +44,7 @@ idx = 1
 
 for problemidx in range(0, problemnum):
 	# print(problemidx)
-	df = pd.read_csv('/home/victorwu/hipBLASLt/tensilelite/try/yamlGen/tunning_BFVF_Round2/tunning_BFVF_Round2_'+str(problemidx)+'/2_BenchmarkData/Cijk_Ailk_Bljk_HHS_BH_00_CSVWinner.csv', encoding='gbk')
+	df = pd.read_csv(dirpath+'/tunning_BFVF_Round2/tunning_BFVF_Round2_'+str(problemidx)+'/2_BenchmarkData/Cijk_Ailk_Bljk_HHS_BH_00_CSVWinner.csv', encoding='gbk')
 	ProblemList.append(str(df[' SizeI'][0])+", "+str(df[' SizeJ'][0])+", "+str(df[' SizeK'][0])+", "+str(df[' SizeL'][0]))
 	gflops.append(str(df[' WinnerGFlops'][0]))
 	WinnerKernelList.append(str(df[' WinnerName'][0]))
@@ -68,7 +72,7 @@ for problemidx in range(0, problemnum):
 	print(dfout)
 
 print(dfout)
-dfout.to_csv('/home/victorwu/hipBLASLt/tensilelite/try/yamlGen/chcekRound2.csv', encoding='gbk', index=False)
+dfout.to_csv(dirpath+'chcekRound2.csv', encoding='gbk', index=False)
 # max_key = max(list[1], key=lambda key: list[1][key])
 # print(max_key)
 
