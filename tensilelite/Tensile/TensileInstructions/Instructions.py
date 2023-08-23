@@ -1771,6 +1771,42 @@ class VAddPKF32(CompositeInstruction):
 
         assert all(inst.vop3 is None for inst in self.instructions), "Currently does not support with vop3 enabled"
 
+class _VAddPKI32(CommonInstruction):
+    def __init__(self, dst, src0, src1, vop3: Optional[VOP3PModifiers] = None, comment="") -> None:
+        super().__init__(InstType.INST_I32, dst, [src0, src1], None, vop3, comment)
+        self.setInst("v_pk_add_i32")
+
+class VAddPKI32(CompositeInstruction):
+    def __init__(self, dst, src0, src1, comment="") -> None:
+        super().__init__(InstType.INST_F32, dst, [src0, src1], comment)
+        self.setInst("v_pk_add_i32")
+
+    def toList(self) -> list:
+        assert 0 and "Not supported."
+        return []
+
+    def setupInstructions(self):
+        super().setupInstructions()
+        assert isinstance(self.srcs, List)
+        if self.asmCaps["v_pk_add_i32"]:
+            self.instructions = [_VAddPKI32(self.dst, self.srcs[0], self.srcs[1], None, self.comment)]
+        else:
+            dst1, dst2 = self.dst.splitRegContainer()
+            srcs1 = []
+            srcs2 = []
+            for s in self.srcs:
+                if isinstance(s, RegisterContainer) or isinstance(s, HolderContainer):
+                    r1, r2 = s.splitRegContainer()
+                    srcs1.append(r1)
+                    srcs2.append(r2)
+                else:
+                    srcs1.append(s)
+                    srcs2.append(s)
+            self.instructions = [VAddI32(dst1, srcs1[0], srcs1[1], None, self.comment),
+                                VAddI32(dst2, srcs2[0], srcs2[1], None, self.comment)]
+
+        assert all(inst.vop3 is None for inst in self.instructions), "Currently does not support with vop3 enabled"
+
 class VAdd3U32(CommonInstruction):
     def __init__(self, dst, src0, src1, src2, vop3: Optional[VOP3PModifiers] = None, comment="") -> None:
         super().__init__(InstType.INST_U32, dst, [src0, src1, src2], None, vop3, comment)
@@ -2253,6 +2289,11 @@ class VCvtI32toF32(VCvtInstruction):
     def __init__(self, dst, src, sdwa: Optional[SDWAModifiers] = None, comment="") -> None:
         super().__init__(CvtType.CVT_I32_to_F32, dst, src, sdwa, comment)
         self.setInst("v_cvt_f32_i32")
+
+class VCvtF16toI16(VCvtInstruction):
+    def __init__(self, dst, src, sdwa: Optional[SDWAModifiers] = None, comment="") -> None:
+        super().__init__(CvtType.CVT_F16_to_I16, dst, src, sdwa, comment)
+        self.setInst("v_cvt_i16_f16")
 
 class VCvtF32toI32(VCvtInstruction):
     def __init__(self, dst, src, sdwa: Optional[SDWAModifiers] = None, comment="") -> None:
