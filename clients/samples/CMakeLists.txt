@@ -26,6 +26,7 @@ add_executable( sample_hipblaslt_gemm gemm/sample_hipblaslt_gemm.cpp)
 add_executable( sample_hipblaslt_gemm_ext gemm/sample_hipblaslt_gemm_ext.cpp)
 add_executable( sample_hipblaslt_gemm_get_all_algos gemm_get_all_algos/sample_hipblaslt_gemm_get_all_algos.cpp)
 add_executable( sample_hipblaslt_gemm_get_all_algos_ext gemm_get_all_algos/sample_hipblaslt_gemm_get_all_algos_ext.cpp)
+add_executable( sample_hipblaslt_gemm_get_algo_by_index_ext gemm_get_algo_by_index/sample_hipblaslt_gemm_get_algo_by_index_ext.cpp)
 add_executable( sample_hipblaslt_groupedgemm_ext groupedgemm/sample_hipblaslt_groupedgemm_ext.cpp)
 add_executable( sample_hipblaslt_groupedgemm_fixed_mk_ext groupedgemm_fixed_mk/sample_hipblaslt_groupedgemm_fixed_mk_ext.cpp)
 add_executable( sample_hipblaslt_groupedgemm_get_all_algos_ext groupedgemm_get_all_algos/sample_hipblaslt_groupedgemm_get_all_algos_ext.cpp)
@@ -33,6 +34,7 @@ set(samples sample_hipblaslt_gemm
             sample_hipblaslt_gemm_ext
             sample_hipblaslt_gemm_get_all_algos
             sample_hipblaslt_gemm_get_all_algos_ext
+            sample_hipblaslt_gemm_get_algo_by_index_ext
             sample_hipblaslt_groupedgemm_ext
             sample_hipblaslt_groupedgemm_fixed_mk_ext
             sample_hipblaslt_groupedgemm_get_all_algos_ext)
