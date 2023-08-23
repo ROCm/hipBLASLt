@@ -92,6 +92,7 @@ class CvtType(Enum):
     CVT_BF8_to_F32    =  8
     CVT_PK_FP8_to_F32 =  9
     CVT_PK_BF8_to_F32 = 10
+    CVT_PK_F32_to_FP8 = 11
 
 class RoundType(Enum):
     ROUND_UP = 0

@@ -6314,11 +6314,26 @@ class KernelWriterAssembly(KernelWriter):
                     new_src.regName.offsets.append(1)
                   localWriteCode.add(VCvtF32toF16(dst=paramList[0], src=new_src, sdwa=SDWAModifiers(dst_sel=dst_sel), comment="convert C to fp16"))
                 else:
-                  assert (newBlockWidth % 2 == 0)
                   for vi in range(0, newBlockWidth):
                     dst_sel = SelectBit.WORD_1 if vi%2==1 else SelectBit.WORD_0
                     localWriteCode.add(VCvtF32toF16(dst=vgpr("G2L%s+%u+%u"%(tP["tensorChar"], g2lIdx, vi//2)), src=vgpr("G2L%s+%u+%u"%(tP["tensorChar"], g2lIdx, vi)), sdwa=SDWAModifiers(dst_sel=dst_sel), comment="convert C to fp16"))
-
+              elif (kernel["ProblemType"]["DataType%s"%tc].isHalf() and kernel["ProblemType"]["DataType"].isFloat8()):
+                if newBlockWidth == 0.5:
+                  vgprTmp = self.vgprPool.checkOut(1)
+                  src_sel = SelectBit.WORD_1 if isHigh16Bits else SelectBit.WORD_0
+                  localWriteCode.add(VCvtF16toF32(dst=vgpr(vgprTmp), src=vgpr("G2L%s+%u"%(tP["tensorChar"], g2lIdx)), sdwa=SDWAModifiers(src0_sel=src_sel), comment="convert to F32"))
+                  localWriteCode.add(VCvtPkF32toFP8(dst=paramList[0], src0=vgpr(vgprTmp), src1=vgpr(vgprTmp), vop3=VOP3PModifiers(op_sel=[0,0,0,0]), comment="Convert to FP8"))
+                  self.vgprPool.checkIn(vgprTmp)
+                else:
+                  vgprTmp = self.vgprPool.checkOut(1)
+                  vgprTmp2 = self.vgprPool.checkOut(1)
+                  for vi in range(0, newBlockWidth):
+                    sel = 1 if vi %2 == 1 else 0
+                    localWriteCode.add(VCvtF16toF32(dst=vgpr(vgprTmp), src=vgpr("G2L%s+%u+%u"%(tP["tensorChar"], g2lIdx, vi)), sdwa=SDWAModifiers(src0_sel=SelectBit.WORD_0), comment="convert to F32"))
+                    localWriteCode.add(VCvtF16toF32(dst=vgpr(vgprTmp2), src=vgpr("G2L%s+%u+%u"%(tP["tensorChar"], g2lIdx, vi)), sdwa=SDWAModifiers(src0_sel=SelectBit.WORD_1), comment="convert to F32"))
+                    localWriteCode.add(VCvtPkF32toFP8(dst=vgpr("G2L%s+%u+%u"%(tP["tensorChar"], g2lIdx, vi//2)), src0=vgpr(vgprTmp), src1=vgpr(vgprTmp2), vop3=VOP3PModifiers(op_sel=[0,0,sel]), comment="Convert to FP8"))
+                  self.vgprPool.checkIn(vgprTmp)
+                  self.vgprPool.checkIn(vgprTmp2)
               else:
                 printExit("Unsupported combination DataType%s (%s) -> DataType (%s)"%(tc, kernel["ProblemType"]["DataType%s"%tc].toChar(), kernel["ProblemType"]["DataType"].toChar()))
 
