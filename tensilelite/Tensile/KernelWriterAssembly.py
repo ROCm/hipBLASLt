@@ -2797,7 +2797,7 @@ class KernelWriterAssembly(KernelWriter):
         with self.allocTmpSgpr(3) as tmpSgprInfo:
           tmpSgpr = tmpSgprInfo.idx
           gsuSgpr = tmpSgpr + 2
-          module.add(SMulI32(dst=sgpr(gsuSgpr), src0=sgpr("GSU"), src1="DepthU*%d"%(tP["bpe"])))
+          module.add(SMulI32(dst=sgpr(gsuSgpr), src0=sgpr("GSU"), src1="DepthU*%d"%(tP["bpeGR"])))
           module.add(SMulI32(dst=sgpr(tmpSgpr+0), \
               src0=sgpr(gsuSgpr), src1=stride, \
               comment="incr%s%s = %s*DepthU*bpeGR (unrollIdx)"%(tc, loopChar, stride) ))
@@ -2816,7 +2816,8 @@ class KernelWriterAssembly(KernelWriter):
         with self.allocTmpSgpr(1) as tmpSgprInfo:
           gsuSgpr = tmpSgprInfo.idx
 
-          module.add(SMulI32(dst=sgpr(gsuSgpr), src0=sgpr("GSU"), src1="DepthU*Bpe%sGR"%(tc)))
+          tcGR = tc if tc == "Metadata" else (tc + "GR")
+          module.add(SMulI32(dst=sgpr(gsuSgpr), src0=sgpr("GSU"), src1="DepthU*Bpe%s"%(tcGR)))
 
           if kernel["ProblemType"]["SparseA"] and not tP["isB"]:
             if tP["isA"]:
@@ -5237,6 +5238,7 @@ class KernelWriterAssembly(KernelWriter):
 
     def globalReadGuardKBody(tP):
       tc = tP["tensorChar"]
+      tcDataType = "" if tc == "Metadata" else tc
       graIdx = 0
       g2lIdx = 0
       loadWidth = tP["globalReadInstruction"].totalWidth
@@ -5270,7 +5272,7 @@ class KernelWriterAssembly(KernelWriter):
 
               r = 0
               numLoadVectorComp = int(loadWidth*self.states.bpr//tP["bpeGR"])
-              if kernel["ProblemType"]["DataType%s"%tc].isDouble() and kernel["BufferLoad"]:
+              if kernel["ProblemType"]["DataType%s"%tcDataType].isDouble() and kernel["BufferLoad"]:
                 # adjustment for dgemm + BufferLoad
                 # use same buffer_load instruction for tail loop as out of tail loop
                 # this is mandatory for DirectToLds case. Also, it improves tail loop performance.
@@ -5281,7 +5283,7 @@ class KernelWriterAssembly(KernelWriter):
               # for each component in vector
               while r < numLoadVectorComp:
                 numElementsPerLoad = 1
-                if kernel["ProblemType"]["DataType%s"%tc].isInt8() or kernel["ProblemType"]["DataType%s"%tc].is8bitFloat() or tP["isM"]:
+                if kernel["ProblemType"]["DataType%s"%tcDataType].isInt8() or kernel["ProblemType"]["DataType%s"%tcDataType].is8bitFloat() or tP["isM"]:
                   # TODO-Int8, Check this:
                   # if tP["glvw"]>1 and kernel["AssertSummationElementMultiple"] % 2 == 0:
                   # # Pack two FP16 values into a single load dword x2
@@ -5295,8 +5297,8 @@ class KernelWriterAssembly(KernelWriter):
                     destVgprHi = self.vgprPool.checkOut( int8TempVgpr , 'destVgprHi')
                   dataIsByte = True
                   regIdx = r // 4
-                elif kernel["ProblemType"]["DataType%s"%tc].isHalf() or \
-                  kernel["ProblemType"]["DataType%s"%tc].isBFloat16():
+                elif kernel["ProblemType"]["DataType%s"%tcDataType].isHalf() or \
+                  kernel["ProblemType"]["DataType%s"%tcDataType].isBFloat16():
                   if tP["glvw"]>1 and kernel["AssertSummationElementMultiple"] % 2 == 0:
                   # Pack two FP16 values into a single load dword x2
                     numElementsPerLoad = 2
@@ -5312,15 +5314,15 @@ class KernelWriterAssembly(KernelWriter):
                       destVgprHi = self.vgprPool.checkOut(1, 'destVgprHi')
 
                   regIdx = r // 2
-                elif kernel["ProblemType"]["DataType%s"%tc].isInt8x4() or \
-                    kernel["ProblemType"]["DataType%s"%tc].isSingle():
+                elif kernel["ProblemType"]["DataType%s"%tcDataType].isInt8x4() or \
+                    kernel["ProblemType"]["DataType%s"%tcDataType].isSingle():
                   regIdx = r
-                elif kernel["ProblemType"]["DataType%s"%tc].isDouble():
+                elif kernel["ProblemType"]["DataType%s"%tcDataType].isDouble():
                   numElementsPerLoad = kernel["GlobalReadVectorWidth%c"%tc] # adjust numElementsPerLoad for DGEMM
                   regIdx = r*2
-                elif kernel["ProblemType"]["DataType%s"%tc].isSingleComplex():
+                elif kernel["ProblemType"]["DataType%s"%tcDataType].isSingleComplex():
                   regIdx = r*2
-                elif kernel["ProblemType"]["DataType%s"%tc].isDoubleComplex() :
+                elif kernel["ProblemType"]["DataType%s"%tcDataType].isDoubleComplex() :
                   regIdx = r*4
                 else:
                   printWarning("DataType unsupported")
@@ -5400,7 +5402,7 @@ class KernelWriterAssembly(KernelWriter):
 
                   offset = r * tP["bpeGR"] + instOffset
                   comment = "load one buffer value"
-                  if (kernel["ProblemType"]["DataType%s"%tc].isHalf() or kernel["ProblemType"]["DataType%s"%tc].isBFloat16()) and not tP["isM"]:
+                  if (kernel["ProblemType"]["DataType%s"%tcDataType].isHalf() or kernel["ProblemType"]["DataType%s"%tcDataType].isBFloat16()) and not tP["isM"]:
                     if numElementsPerLoad==2:
                       # Pack two FP16 values into a single load dword x2
                       r += 1 # skip next element since we loaded 2X here
@@ -5409,7 +5411,7 @@ class KernelWriterAssembly(KernelWriter):
                       hi16=loopCnt%2 if tP["glvw"]==1 else r%2
                       comment="load one buffer value"
 
-                  if ((kernel["ProblemType"]["DataType%s"%tc].isInt8() or kernel["ProblemType"]["DataType%s"%tc].is8bitFloat()) \
+                  if ((kernel["ProblemType"]["DataType%s"%tcDataType].isInt8() or kernel["ProblemType"]["DataType%s"%tcDataType].is8bitFloat()) \
                                and not tP["isM"]) or (tP["isM"] and destVgprHi != None):
                     # TODO-Int8, Check this:
                     # if numElementsPerLoad==2:
@@ -5426,7 +5428,7 @@ class KernelWriterAssembly(KernelWriter):
                   # if hi8=1 or hi16=1 (component 1,2,3 for int8) or (component 1 for half), use the temp destVgprHi
                   # but only when hi16=1 we use the _d16_hi version instruction, see the below visualized int8 comment
                   loadVgpr = destVgprHi if ((hi16 or hi8) and destVgprHi != None) else destVgpr
-                  if (kernel["ProblemType"]["DataType%s"%tc].isInt8() or kernel["ProblemType"]["DataType%s"%tc].is8bitFloat() or tP["isM"]) and (not self.states.archCaps["HasEccHalf"]):
+                  if (kernel["ProblemType"]["DataType%s"%tcDataType].isInt8() or kernel["ProblemType"]["DataType%s"%tcDataType].is8bitFloat() or tP["isM"]) and (not self.states.archCaps["HasEccHalf"]):
                     module.add(VMovB32(dst=vgpr(loadVgpr), src=0, comment="set to zero to avoid unexpected value"))
                   module.add(self.chooseGlobalRead(True, \
                             bpl, destVgpr=loadVgpr, \
@@ -5451,7 +5453,7 @@ class KernelWriterAssembly(KernelWriter):
                       src0=vgpr("GlobalReadAddr%s+%u"%(tP["tensorChar"], graIdx),2), \
                       src1=vgpr(maxAddrVgpr,2), \
                       comment="addr < maxAddr"))
-                  hi16=(kernel["ProblemType"]["DataType%s"%tc].isHalf() or kernel["ProblemType"]["DataType%s"%tc].isBFloat16()) and r%2==1
+                  hi16=(kernel["ProblemType"]["DataType%s"%tcDataType].isHalf() or kernel["ProblemType"]["DataType%s"%tcDataType].isBFloat16()) and r%2==1
                   destVgpr="G2L%s+%u+%u"%(tc, g2lIdx, regIdx)
                   # load one element from address
                   module.add(self.chooseGlobalRead(False, \
