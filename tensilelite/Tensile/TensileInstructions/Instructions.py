@@ -264,7 +264,10 @@ class VCmpXInstruction(CommonInstruction):
 class VCvtInstruction(CommonInstruction):
     def __init__(self, cvtType: CvtType, dst, src, sdwa: Optional[SDWAModifiers] = None, \
                  comment="") -> None:
-        super().__init__(InstType.INST_CVT, dst, [src], sdwa, None, comment)
+        if isinstance(src, list):
+            super().__init__(InstType.INST_CVT, dst, src, sdwa, None, comment)
+        else:
+            super().__init__(InstType.INST_CVT, dst, [src], sdwa, None, comment)
         self.cvtType = cvtType
 
 class MFMAInstruction(Instruction):
@@ -2265,6 +2268,11 @@ class VCvtPkBF8toF32(VCvtInstruction):
     def __init__(self, dst, src, sdwa: Optional[SDWAModifiers] = None, comment="") -> None:
         super().__init__(CvtType.CVT_PK_BF8_to_F32, dst, src, sdwa, comment)
         self.setInst("v_cvt_pk_f32_bf8")
+
+class VCvtPkF32toFP8(VCvtInstruction):
+    def __init__(self, dst, src0, src1, vop3: Optional[VOP3PModifiers] = None, comment="") -> None:
+        super().__init__(CvtType.CVT_PK_F32_to_FP8, dst, [src0, src1], vop3, comment)
+        self.setInst("v_cvt_pk_fp8_f32")
 
 # V Mask
 class VCndMaskB32(CommonInstruction):
