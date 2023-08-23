@@ -8926,6 +8926,13 @@ class KernelWriterAssembly(KernelWriter):
             pass # Same, no need to convert
           else:
             printExit("Unrecognized bias type %s."%str(biasDataType))
+        elif kernel["ProblemType"]["ComputeDataType"].isInt32():
+          if biasDataType.isSingle():
+            module.add(VCvtF32toI32(dst=vgpr(tmpVgprN + vi + i * gwvw), src=vgpr(tmpVgprN + shiftOffset2+ i * gwvw), comment="convert to I32"))
+          elif biasDataType.isHalf(): #test
+            module.add(VCvtF16toI16(dst=vgpr(tmpVgprN + vi + i * gwvw), src=vgpr(tmpVgprN + shiftOffset2+ i * gwvw), comment="convert to FP32"))
+          else:
+            printExit("Unrecognized bias type %s."%str(biasDataType))
         else:
           printExit("Does not support ComputeDataType != float")
       if bps==2:
@@ -9156,6 +9163,8 @@ class KernelWriterAssembly(KernelWriter):
         for idx in range(1, maxKId):
           if kernel["ProblemType"]["ComputeDataType"].isSingle():
             module.add(VAddF32(dst=vgpr(tmpVgprAccum), src0=vgpr(tmpVgprN), src1=vgpr(tmpVgprAccum), comment="Sum K"))
+          elif kernel["ProblemType"]["ComputeDataType"].isInt32():
+            module.add(VAddI32(dst=vgpr(tmpVgprAccum), src0=vgpr(tmpVgprN), src1=vgpr(tmpVgprAccum), comment="Sum K"))
           else:
             assert 0
           tmpVgprN += 1
@@ -9195,6 +9204,12 @@ class KernelWriterAssembly(KernelWriter):
                          comment="Pack with neighbor"))
           elif biasDataType == kernel["ProblemType"]["ComputeDataType"]:
             pass # Same, no need to convert
+          else:
+            printExit("Unrecognized bias type %s."%str(biasDataType))
+          tmpVgprN += 1
+        elif kernel["ProblemType"]["ComputeDataType"].isInt32():
+          if biasDataType.isSingle():
+            module.add(VCvtI32toF32(dst=vgpr(tmpVgprN), src=vgpr(tmpVgprN), comment="convert to FP32"))
           else:
             printExit("Unrecognized bias type %s."%str(biasDataType))
           tmpVgprN += 1

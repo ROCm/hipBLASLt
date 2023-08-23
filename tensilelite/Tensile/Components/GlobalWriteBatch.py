@@ -312,13 +312,23 @@ class GlobalWriteBatchWriter:
               loadInputCode.add(SWaitCnt(lgkmcnt=0, comment="Wait for Bias LDS write"))
               loadInputCode.add(SBarrier("Bias LDS write barrier"))
               self.biasLocalBarrierInit = True
-            loadInputCode.add(self.parentWriter.addBiasLoad(self.kernel["ProblemType"]["ComputeDataType"], self.kernel, self.ss, addrCalc, dataBias, True))
+            if self.kernel["ProblemType"]["ComputeDataType"].isInt32() and len(self.kernel["ProblemType"]["BiasDataTypeList"]) == 1:
+              loadInputCode.add(self.parentWriter.addBiasLoad(self.kernel["ProblemType"]["BiasDataTypeList"][0], self.kernel, self.ss, addrCalc, dataBias, True))
+            elif not self.kernel["ProblemType"]["ComputeDataType"].isInt32():
+              loadInputCode.add(self.parentWriter.addBiasLoad(self.kernel["ProblemType"]["ComputeDataType"], self.kernel, self.ss, addrCalc, dataBias, True))
+            else:
+              printExit("I32 ComputDataType needs F32 BiasDate type so far")
           else:
             if (self.kernel["GlobalSplitU"] == 1) and (not self.biasLocalBarrierInit):
               module.add(SWaitCnt(lgkmcnt=0, comment="Wait for Bias LDS write"))
               module.add(SBarrier("Bias LDS write barrier"))
               self.biasLocalBarrierInit = True
-            module.add(self.parentWriter.addBiasLoad(self.kernel["ProblemType"]["ComputeDataType"], self.kernel, self.ss, addrCalc, dataBias, True))
+            if len(self.kernel["ProblemType"]["BiasDataTypeList"]) == 1:
+              module.add(self.parentWriter.addBiasLoad(self.kernel["ProblemType"]["BiasDataTypeList"][0], self.kernel, self.ss, addrCalc, dataBias, True))
+            elif not self.kernel["ProblemType"]["ComputeDataType"].isInt32():
+              module.add(self.parentWriter.addBiasLoad(self.kernel["ProblemType"]["ComputeDataType"], self.kernel, self.ss, addrCalc, dataBias, True))
+            else:
+              printExit("I32 ComputDataType needs F32 BiasDate type so far")
           loadedDataBias[dataBias] = ceil(self.kernel["ProblemType"]["ComputeDataType"].numBytes() * self.ss.cfg.gwvw / 16)
           self.localLoadsBiasIssued += ceil(self.kernel["ProblemType"]["ComputeDataType"].numBytes() * self.ss.cfg.gwvw / 16)
       self.biasLoadIssued.append(len(loadedDataBias) * ceil(self.kernel["ProblemType"]["ComputeDataType"].numBytes() * self.ss.cfg.gwvw / 16))
@@ -744,6 +754,19 @@ class GlobalWriteBatchWriter:
               assert (self.gwvw % 2 == 0)
             else:
               module.add(VAddPKF32(dst=vgpr(vgprDst, 2), src0=vgpr(inputVgpr, 2), \
+                                   src1=vgpr("ValuC+%d"%vgprIdx, 2), comment="C += bias"))
+          elif self.kernel["ProblemType"]["ComputeDataType"].isInt32():
+            vgprIdx = sumIdxV - self.parentWriter.states.c.startVgprValu
+            vgprDst = (self.activationSetPCStruct.vgprActCopy + vi) if mergeActFuncCall else "ValuC+%d"%vgprIdx
+            # Generate single i32 code if edge is detected.
+            if ((vi + 1) == self.gwvw) and ((self.gwvw % 2) == 1):
+              module.add(VAddI32(dst=vgpr(vgprDst), src0=vgpr(inputVgpr), src1=vgpr("ValuC+%d"%vgprIdx), \
+                                 comment="C += bias"))
+            # Original packed route
+            elif vi%2 == 1:
+              assert (self.gwvw % 2 == 0)
+            else:
+              module.add(VAddPKI32(dst=vgpr(vgprDst, 2), src0=vgpr(inputVgpr, 2), \
                                    src1=vgpr("ValuC+%d"%vgprIdx, 2), comment="C += bias"))
           else:
             raise RuntimeError("Unsupported bias compute data type %s."%str(self.kernel["ProblemType"]["ComputeDataType"]))
