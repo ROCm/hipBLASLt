@@ -497,6 +497,7 @@ def writeSolutionsAndKernels(outputPath, CxxCompiler, problemTypes, solutions, k
   results = Common.ParallelMap2(processKernelSource, kIter, "Generating kernels")
 
   removeKernels = []
+  removeKernelNames = []
   removeSolutions = []
   removeResults = []
   for kernIdx, res in Utils.tqdm(enumerate(results)):
@@ -506,6 +507,9 @@ def writeSolutionsAndKernels(outputPath, CxxCompiler, problemTypes, solutions, k
         print("\nKernel generation failed for kernel: {}".format(kernels[kernIdx]["SolutionIndex"]))
         print(kernels[kernIdx]["SolutionNameMin"])
       removeKernels.append(kernels[kernIdx])
+      kName = Solution.getKeyNoInternalArgs(kernels[kernIdx])
+      if kName not in removeKernelNames:
+        removeKernelNames.append(kName)
       removeResults.append(results[kernIdx])
   if len(removeKernels) > 0 and not errorTolerant:
     printExit("** kernel generation failure **")
@@ -514,7 +518,8 @@ def writeSolutionsAndKernels(outputPath, CxxCompiler, problemTypes, solutions, k
   for solution in Utils.tqdm(solutions, "Finding invalid solutions"):
     solutionKernels = solution.getKernels()
     for kernel in solutionKernels:
-        if kernel in removeKernels:
+        kName = Solution.getKeyNoInternalArgs(kernel)
+        if kName in removeKernelNames:
           removeSolutions.append(solution)
           break
   for solut in removeSolutions:
