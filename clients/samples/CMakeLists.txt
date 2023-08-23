@@ -89,6 +89,10 @@ foreach( exe ${sample_list_all} )
   rocm_install(TARGETS ${exe} COMPONENT samples)
 endforeach( )
 
+# Add tests for special cases
+add_test(NAME example_hipblaslt_groupedgemm_fixed_mk
+         COMMAND example_hipblaslt_groupedgemm_fixed_mk --trans_a N --trans_b N --in_datatype fp16 --out_datatype fp16 -m 2048 -k 2048 -n 0 -n 1 -n 1 -n 0 -n 1 -n 0 -n 1 -n 0 -n 0 -n 0 -n 0 -n 0 -n 0 -n 0 -n 0 -n 0 -V)
+
 # Add tests for samples
 foreach( exe ${samples} )
   add_test(NAME ${exe} COMMAND ${exe})
