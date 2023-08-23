@@ -1099,47 +1099,13 @@ class KernelWriterAssembly(KernelWriter):
     module.add(self.macroAndSet(kernel, tPA, tPB))
 
     module.addComment2("Allocate Resources")
+    moduleArgs = Module("load arguments")
+    moduleRegInit = Module("Init regs")
 
-    if self.states.lrvwTileA > 1 or self.states.lrvwTileB > 1:
-      if kernel["ProblemType"]["DataType"].isHalf() or kernel["ProblemType"]["DataType"].isBFloat16():
-        module.add(SMovB32(dst=sgpr("PackKForV0"), src="0x05040100", comment=""))
-        module.add(SMovB32(dst=sgpr("PackKForV1"), src="0x07060302", comment=""))
-      if kernel["ProblemType"]["DataType"].isInt8() or kernel["ProblemType"]["DataType"].is8bitFloat():
-        module.add(SMovB32(dst=sgpr("PackKForV0"), src="0x0c0c0400", comment=""))
-        module.add(SMovB32(dst=sgpr("PackKForV1"), src="0x0c0c0501", comment=""))
-        if self.states.lrvwTileA > 2 or self.states.lrvwTileB > 2:
-          module.add(SMovB32(dst=sgpr("PackKForV2"), src="0x0c0c0602", comment=""))
-          module.add(SMovB32(dst=sgpr("PackKForV3"), src="0x0c0c0703", comment=""))
-
-    if kernel["StorePriorityOpt"]:
-      module.add(SSetPrior(prior=3, comment="optimization store"))
-
+    common_kern_entry  = Label(label="common_kernel_entry", comment="for both preload/non-preload common code")
     if self.do["PreLoop"]:
-      if self.db["InitSgpr"] & 0x1:
-        module.addComment1("Init SGPRs")
-        for i in range(self.states.firstInitSgpr, self.sgprPool.size()):
-          module.add(SMovB32(dst=sgpr(i), src=hex(self.consts.initSgprValue), comment="InitSgpr&0x1"))
-        module.addSpaceLine()
-
-      if self.db["InitVgpr"] & 0x1:
-        module.addComment1("Init VGPRs")
-        for i in range(1, self.states.totalVgprs):
-          module.add(VMovB32(dst=vgpr(i), src=hex(self.consts.initVgprValue), comment="InitVgpr&0x1"))
-        module.addSpaceLine()
-
-      # set m0
-      module.add(SMovB32(dst=mgpr(0), src=hex(kernel["LdsNumElements"] * self.states.bpeAB),
-          comment="LDS clamp at %u bytes"%(kernel["LdsNumElements"] * self.states.bpeAB)))
-
-      # set Serial id vgpr
-      module.add(VMovB32(dst=vgpr("Serial"), src=vgpr(0), comment="thread serial id"))
-
-      if self.states.kernel["WavefrontSize"] == 32:
-        module.add(SMovB32(dst=VCC(setHi=True), src=0, comment="Ensure hi bits are zero"))
-
       ########################################
       # load kernel args
-      moduleArgs = Module("load arguments")
       self.kernArgOffset = 0
       self.argLoader = ArgumentLoader()
       self.externalArgLoader = ArgumentLoader()
@@ -1149,39 +1115,76 @@ class KernelWriterAssembly(KernelWriter):
 
       load = self.states.numSgprToLoad
       sgprStart = self.sgprs["SizesFree"]
+      moduleLoadAllKernArg = self.argLoader.loadAllKernArg(sgprStart, "KernArgAddress", load, 0)
+      moduleArgs.addModuleAsFlatItems(moduleLoadAllKernArg)
+      if self.states.numSgprPreload > 0:
+        # add common kern entry label in the begining of common reg init code
+        moduleRegInit.add(common_kern_entry)
+        #For groupgemm, the preload happened prior to this stage
+        if not kernel["ProblemType"]["GroupedGemm"]:
+          # Handle backward compability path first
+          moduleArgs.add(SBranch(common_kern_entry.getLabelName())) # jump to common path
+          sload_inst_dwords = moduleLoadAllKernArg.count() * 2
+          sbranch_inst_dwords = 1 * 1
+          total_inst_dwords = sload_inst_dwords + sbranch_inst_dwords
+          moduleArgs.addComment1("pad %u snops to satisfy 0x100 code size for Preload Backward Compatibility Prologue" % (64 - total_inst_dwords))
+          for i in range(64 - total_inst_dwords):
+            moduleArgs.add(SNop(waitState=0, comment=""))
+          #handle preload path started from code size 0x100
+          self.argLoader.resetOffset()
+          moduleArgs.addModuleAsFlatItems(self.argLoader.loadAllKernArg(sgprStart, "KernArgAddress", load, self.states.numSgprPreload))
+          preloadSgprStartIdx = self.states.rpga  #number sgprs of kernel argument buffer address
+          for i in range(self.states.numSgprPreload):
+            moduleArgs.add(SMovB32(dst=sgpr(sgprStart+i), src=sgpr(preloadSgprStartIdx+i), comment="move preload data to correct sgpr"))
+          for i in range(kernel["ProblemType"]["NumIndicesC"]):
+            moduleRegInit.add(SMovB32(dst=sgpr("WorkGroup0+%u"%i), src=sgpr(preloadSgprStartIdx+self.states.numSgprPreload+i), \
+                        comment="restore workgroup id"))
 
-      #For groupgemm, the preload happened prior to this stage
-      numSgprPreload = self.states.numSgprPreload if not kernel["ProblemType"]["GroupedGemm"] else 0
-      moduleArgs.addModuleAsFlatItems(self.argLoader.loadAllKernArg(sgprStart, "KernArgAddress", load, numSgprPreload))
+    if self.states.lrvwTileA > 1 or self.states.lrvwTileB > 1:
+      if kernel["ProblemType"]["DataType"].isHalf() or kernel["ProblemType"]["DataType"].isBFloat16():
+        moduleRegInit.add(SMovB32(dst=sgpr("PackKForV0"), src="0x05040100", comment=""))
+        moduleRegInit.add(SMovB32(dst=sgpr("PackKForV1"), src="0x07060302", comment=""))
+      if kernel["ProblemType"]["DataType"].isInt8() or kernel["ProblemType"]["DataType"].is8bitFloat():
+        moduleRegInit.add(SMovB32(dst=sgpr("PackKForV0"), src="0x0c0c0400", comment=""))
+        moduleRegInit.add(SMovB32(dst=sgpr("PackKForV1"), src="0x0c0c0501", comment=""))
+        if self.states.lrvwTileA > 2 or self.states.lrvwTileB > 2:
+          moduleRegInit.add(SMovB32(dst=sgpr("PackKForV2"), src="0x0c0c0602", comment=""))
+          moduleRegInit.add(SMovB32(dst=sgpr("PackKForV3"), src="0x0c0c0703", comment=""))
 
-      moduleExternalArgs = Module("Load external Arguments")
-      if kernel["ProblemType"]["SupportUserArgs"]:
-        # Here alpha and beta in user args are fixed sizes, so we need to exclude beta and read it with a different offset
-        load = load - self.states.numSgprBeta
-        moduleExternalArgs.addModuleAsFlatItems(self.externalArgLoader.loadAllKernArg(sgprStart, "ExternalArgAddress", load))
-        offset = self.externalArgLoader.getOffset() + self.states.bpr * (self.states.userArgsInfo.alphaMaxRegisterSize - self.states.numSgprAlpha)
-        self.externalArgLoader.setOffset(offset)
-        moduleExternalArgs.addComment("Read Beta")
-        moduleExternalArgs.addModuleAsFlatItems(self.externalArgLoader.loadAllKernArg(self.sgprs["Beta"], "ExternalArgAddress", self.states.numSgprBeta))
-        offset = self.externalArgLoader.getOffset() + self.states.bpr * (self.states.userArgsInfo.betaMaxRegisterSize - self.states.numSgprBeta)
-        self.externalArgLoader.setOffset(offset)
+    if kernel["StorePriorityOpt"]:
+      moduleRegInit.add(SSetPrior(prior=3, comment="optimization store"))
 
-      if numSgprPreload > 0:
-        preloadSgprStartIdx = self.states.rpga  #number sgprs of kernel argument buffer address
-        for i in range(numSgprPreload):
-          moduleArgs.add(SMovB32(dst=sgpr(sgprStart+i), src=sgpr(preloadSgprStartIdx+i), comment="move preload data to correct sgpr"))
-        for i in range(kernel["ProblemType"]["NumIndicesC"]):
-          moduleArgs.add(SMovB32(dst=sgpr("WorkGroup0+%u"%i), src=sgpr(preloadSgprStartIdx+numSgprPreload+i), \
-                      comment="restore workgroup id"))
+    if self.do["PreLoop"]:
+      if self.db["InitSgpr"] & 0x1:
+        moduleRegInit.addComment1("Init SGPRs")
+        for i in range(self.states.firstInitSgpr, self.sgprPool.size()):
+          moduleRegInit.add(SMovB32(dst=sgpr(i), src=hex(self.consts.initSgprValue), comment="InitSgpr&0x1"))
+        moduleRegInit.addSpaceLine()
+
+      if self.db["InitVgpr"] & 0x1:
+        moduleRegInit.addComment1("Init VGPRs")
+        for i in range(1, self.states.totalVgprs):
+          moduleRegInit.add(VMovB32(dst=vgpr(i), src=hex(self.consts.initVgprValue), comment="InitVgpr&0x1"))
+        moduleRegInit.addSpaceLine()
+
+      # set m0
+      moduleRegInit.add(SMovB32(dst=mgpr(0), src=hex(kernel["LdsNumElements"] * self.states.bpeAB),
+          comment="LDS clamp at %u bytes"%(kernel["LdsNumElements"] * self.states.bpeAB)))
+
+      # set Serial id vgpr
+      moduleRegInit.add(VMovB32(dst=vgpr("Serial"), src=vgpr(0), comment="thread serial id"))
+
+      if self.states.kernel["WavefrontSize"] == 32:
+        moduleRegInit.add(SMovB32(dst=VCC(setHi=True), src=0, comment="Ensure hi bits are zero"))
 
       moduleWg = Module("Calculate Workgroup")
       moduleWg.addModuleAsFlatItems(lralwaCode)
       if kernel["ProblemType"]["SupportUserArgs"]:
         moduleWg.add(SWaitCnt(lgkmcnt=0, comment="wait for %u/%u bytes of kern args" % \
-                       (self.argLoader.getOffset() - (numSgprPreload*4), self.externalArgLoader.getOffset())))
+                       (self.argLoader.getOffset() - (self.states.numSgprPreload*4), self.externalArgLoader.getOffset())))
       else:
         moduleWg.add(SWaitCnt(lgkmcnt=0, comment="wait for %u bytes of kern args" % \
-                            (self.argLoader.getOffset() - (numSgprPreload*4))))
+                            (self.argLoader.getOffset() - (self.states.numSgprPreload*4))))
       moduleWg.add(Label(label="stop", comment=""))
       #### calculate numWorkGroup ####
       qReg = self.vgprPool.checkOut(4)
@@ -1205,14 +1208,39 @@ class KernelWriterAssembly(KernelWriter):
           moduleWg.add(self.loadBatchedAddress(kernel, "WorkGroup2", tmpSgpr))
         moduleWg.add(SWaitCnt(lgkmcnt=0, comment="wait global buffer address ready"))
 
-      if kernel["ProblemType"]["GroupedGemm"]:
+      if not kernel["ProblemType"]["GroupedGemm"]:
+        ###### SingleGemm  ############
+        module.add(moduleArgs)
+        module.add(moduleRegInit)
+        module.add(moduleWg)
+      else:
+        ###### GroupedGemm  ############
         ######
         # linear search
         ######
         if(1):
           tmpSgprNumGemm = 27
           tmpSgprSkipWgTableGen = 9
+          module.addComment1("Grouped Gemm: Load num of Gemms")
+          module.add(self.argLoader.loadKernArg(tmpSgprNumGemm, "KernArgAddress", hex(0), dword=1))
+          module.addComment1("Grouped Gemm: Load GSU data")
+          module.add(self.argLoader.loadKernArg("GSU", "KernArgAddress", hex(24), dword=1))
+          module.addComment1("Grouped Gemm: Load address of external kernel arguments")
+          module.add(self.argLoader.loadKernArg("ExternalArgAddress", "KernArgAddress", hex(4), dword=2))
+          module.addComment1("Grouped Gemm: Load address of kernel arguments")
+          module.add(self.argLoader.loadKernArg("KernArgAddress", "KernArgAddress", hex(12), dword=2))
+          #### if remove any loadKernArg() from above, please also modify sload_inst_dwords variable,###
+          module.add(SWaitCnt(lgkmcnt=0))
           if self.states.numSgprPreload > 0:
+            ## backward compability path###
+            module.add(SBranch(common_kern_entry.getLabelName()))
+            sload_inst_dwords = 4 * 2
+            swait_branch_inst_dwords = 2 * 1
+            total_inst_dwords = sload_inst_dwords + swait_branch_inst_dwords
+            module.addComment1("pad %u snops to satisfy 0x100 code size for Preload Backward Compatibility Prologue" % (64 - total_inst_dwords))
+            for i in range(64 - total_inst_dwords):
+              module.add(SNop(waitState=0, comment=""))
+            ##### Preload path #####
             preloadSgprStartIdx = self.states.rpga  #number sgprs of kernel argument buffer address
             #TODO: remove hardcode once destination SGPRs are in-order
             module.add(SMovB32(dst=sgpr(tmpSgprNumGemm), src=sgpr(preloadSgprStartIdx), comment="Grouped Gemm: Load num of Gemms"))
@@ -1223,20 +1251,10 @@ class KernelWriterAssembly(KernelWriter):
             module.add(SMovB32(dst=sgpr("ExternalArgAddress+1"), src=sgpr(preloadSgprStartIdx+2), comment="Load address of external kernel arguments"))
             module.add(SMovB32(dst=sgpr("ExternalArgAddress"), src=sgpr(preloadSgprStartIdx+1), comment="Load address of external kernel arguments"))
             for i in range(kernel["ProblemType"]["NumIndicesC"]):
-              module.add(SMovB32(dst=sgpr("WorkGroup0+%u"%i), src=sgpr(preloadSgprStartIdx+self.states.numSgprPreload+i), \
+              moduleRegInit.add(SMovB32(dst=sgpr("WorkGroup0+%u"%i), src=sgpr(preloadSgprStartIdx+self.states.numSgprPreload+i), \
                         comment="restore workgroup id"))
 
-          else:
-            module.addComment1("Grouped Gemm: Load num of Gemms")
-            module.add(self.argLoader.loadKernArg(tmpSgprNumGemm, "KernArgAddress", hex(0), dword=1))
-            module.addComment1("Grouped Gemm: Load GSU data")
-            module.add(self.argLoader.loadKernArg("GSU", "KernArgAddress", hex(24), dword=1))
-            module.addComment1("Grouped Gemm: Load address of external kernel arguments")
-            module.add(self.argLoader.loadKernArg("ExternalArgAddress", "KernArgAddress", hex(4), dword=2))
-            module.addComment1("Grouped Gemm: Load address of kernel arguments")
-            module.add(self.argLoader.loadKernArg("KernArgAddress", "KernArgAddress", hex(12), dword=2))
-            module.add(SWaitCnt(lgkmcnt=0))
-
+          module.add(moduleRegInit)
           # FIXME: Need to fix these cause it may cause data hazard
           tmpSgprM = 12
           tmpSgprN = 13
@@ -1377,6 +1395,9 @@ class KernelWriterAssembly(KernelWriter):
           module.addComment1("Grouped Gemm: Load address of kernel arguments")
           module.add(self.argLoader.loadKernArg("KernArgAddress", "KernArgAddress", hex(12), dword=2))
           module.add(SWaitCnt(lgkmcnt=0))
+          module.add(moduleRegInit)
+          # Need to add preload handle for binary search if necessary
+          assert (self.states.numSgprPreload == 0)
           #############
           # generatoe wgTable in kernel
           #############
@@ -1604,6 +1625,16 @@ class KernelWriterAssembly(KernelWriter):
           module.add(SMulI32(dst=sgpr(tmpSgprGemmIdxLeft), src0=sgpr(tmpSgprGemmIdxLeft),src1=self.states.userArgsInfo.totalSize))
           module.add(SAddU32(dst=sgpr("ExternalArgAddress"), src0=sgpr("ExternalArgAddress"), src1=sgpr(tmpSgprGemmIdxLeft)))
           module.add(SAddCU32(dst=sgpr("ExternalArgAddress+1"), src0=sgpr("ExternalArgAddress+1"), src1=hex(0)))
+          moduleExternalArgs = Module("Load external Arguments")
+        # Here alpha and beta in user args are fixed sizes, so we need to exclude beta and read it with a different offset
+          load = load - self.states.numSgprBeta
+          moduleExternalArgs.addModuleAsFlatItems(self.externalArgLoader.loadAllKernArg(sgprStart, "ExternalArgAddress", load))
+          offset = self.externalArgLoader.getOffset() + self.states.bpr * (self.states.userArgsInfo.alphaMaxRegisterSize - self.states.numSgprAlpha)
+          self.externalArgLoader.setOffset(offset)
+          moduleExternalArgs.addComment("Read Beta")
+          moduleExternalArgs.addModuleAsFlatItems(self.externalArgLoader.loadAllKernArg(self.sgprs["Beta"], "ExternalArgAddress", self.states.numSgprBeta))
+          offset = self.externalArgLoader.getOffset() + self.states.bpr * (self.states.userArgsInfo.betaMaxRegisterSize - self.states.numSgprBeta)
+          self.externalArgLoader.setOffset(offset)
           module.add(moduleExternalArgs)
           module.add(extLabelEnd)
 
@@ -1659,9 +1690,6 @@ class KernelWriterAssembly(KernelWriter):
         module.add(label_nonEarlyStop)
 
         module.addSpaceLine()
-      else:
-        module.add(moduleArgs)
-        module.add(moduleWg)
     else:
       module.add(ValueIf(0))
 
