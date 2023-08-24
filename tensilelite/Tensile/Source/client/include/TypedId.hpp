@@ -121,6 +121,8 @@ namespace Tensile
 #ifdef TENSILE_USE_HALF
     using TypedGemm_HF8_S_S = TypedGemm<Half, Float8, float, float, float, float>;
     using TypedGemm_F8H_S_S = TypedGemm<Float8, Half, float, float, float, float>;
+    using TypedGemm_HF8_H_S = TypedGemm<Half, Float8, Half, Half, float, float>;
+    using TypedGemm_F8H_H_S = TypedGemm<Float8, Half, Half, Half, float, float>;
 #endif // TENSILE_USE_HALF
 #endif // TENSILE_USE_FP8_BF8
 } // namespace Tensile
