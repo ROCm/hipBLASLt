@@ -114,13 +114,9 @@ class ProblemType(Mapping):
 
     if "DataTypeA" in config:
       self["DataTypeA"] = DataType(config["DataTypeA"])
-      if self["DataTypeA"].numRegisters() < self["DataType"].numRegisters():
-        printExit("Currently does not support DataTypeA < DataType")
 
     if "DataTypeB" in config:
       self["DataTypeB"] = DataType(config["DataTypeB"])
-      if self["DataTypeB"].numRegisters() < self["DataType"].numRegisters():
-        printExit("Currently does not support DataTypeB < DataType")
 
     if "DestDataType" in config:
       self["DestDataType"] = DataType(config["DestDataType"])
@@ -2256,11 +2252,11 @@ class Solution(collections.abc.Mapping):
       return
 
     # reject - GRVW too big
-    if (state["GlobalReadVectorWidthA"] * state["ProblemType"]["DataType"].numBytes()) > 16:
-      reject(state, "GRVWA * DataType.numBytes() > 16")
+    if (state["GlobalReadVectorWidthA"] * state["ProblemType"]["DataTypeA"].numBytes()) > 16:
+      reject(state, "GRVWA * DataTypeA.numBytes() > 16")
       return
-    if (state["GlobalReadVectorWidthB"] * state["ProblemType"]["DataType"].numBytes()) > 16:
-      reject(state, "GRVWB * DataType.numBytes() > 16")
+    if (state["GlobalReadVectorWidthB"] * state["ProblemType"]["DataTypeB"].numBytes()) > 16:
+      reject(state, "GRVWB * DataTypeB.numBytes() > 16")
       return
 
     # LocalSplitU too large?
