@@ -148,11 +148,10 @@ class Module(Item):
                 item.setInlineAsm(mode)
 
     def __str__(self):
-        prefix = f"// {self.name}{'{'}" if printModuleNames else ""
-        suffix = f"// {'}'} {self.name}" if printModuleNames else ""
-        comp = [str(x) for x in self.itemList]
-        s = "".join(comp)
-        return '\n'.join((prefix, s, suffix))
+        prefix = f"// {self.name}{{\n" if printModuleNames else ""
+        suffix = f"// }} {self.name}\n" if printModuleNames else ""
+        s = "".join(str(x) for x in self.itemList)
+        return "".join((prefix, s, suffix))
 
     def addSpaceLine(self):
         self.itemList.append(TextBlock("\n"))
