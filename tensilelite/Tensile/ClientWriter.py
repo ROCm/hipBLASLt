@@ -513,6 +513,7 @@ def writeClientConfigIni(problemSizes, biasTypeArgs, activationArgs, problemType
         param('results-file', resultsFileName)
         param('performance-metric', globalParameters["PerformanceMetric"])
         param('problem-identifier', problemType.operationIdentifier)
+        param('compute-input-type', problemType.computeInputType.toEnum())
         param('a-type',     problemType.aType.toEnum())
         param('b-type',     problemType.bType.toEnum())
         param('c-type',     problemType.cType.toEnum())

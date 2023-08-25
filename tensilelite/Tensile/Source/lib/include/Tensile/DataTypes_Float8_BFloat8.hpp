@@ -59,8 +59,10 @@ namespace Tensile
 {
     enum class hip_f8_type
     {
-        bf8 = 0, // 1:5:2
-        fp8 = 1 // 1:4:3
+        bf8    = 0, // 1:5:2
+        fp8    = 1, // 1:4:3
+        fp8bf8 = 2, // Only use for computeInputType
+        bf8fp8 = 3, // Only use for computeInputType
     };
 
     enum class hip_f8_rounding_mode
@@ -531,8 +533,10 @@ namespace Tensile
     };
 
     // TODO: place it in appropriate header
-    typedef Float8_BFloat8<hip_f8_type::fp8> Float8;
-    typedef Float8_BFloat8<hip_f8_type::bf8> BFloat8;
+    typedef Float8_BFloat8<hip_f8_type::fp8>    Float8;
+    typedef Float8_BFloat8<hip_f8_type::bf8>    BFloat8;
+    typedef Float8_BFloat8<hip_f8_type::fp8bf8> Float8BFloat8;
+    typedef Float8_BFloat8<hip_f8_type::bf8fp8> BFloat8Float8;
 
     //  Other operator overloading
     inline std::ostream& operator<<(std::ostream& os, const Float8& f8)

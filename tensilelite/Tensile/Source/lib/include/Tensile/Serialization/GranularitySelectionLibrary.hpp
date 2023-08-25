@@ -3,7 +3,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022 Advanced Micro Devices, Inc. All rights reserved.
+ * Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -99,7 +99,11 @@ namespace Tensile
                         auto slnIter = ctx->solutions->find(index);
                         if(slnIter == ctx->solutions->end())
                         {
-                            iot::setError(io, concatenate("Invalid solution index: ", index));
+                            iot::setError(
+                                io,
+                                concatenate(
+                                    "[GranularitySelectionLibrary] Invalid solution index: ",
+                                    index));
                         }
                         else
                         {

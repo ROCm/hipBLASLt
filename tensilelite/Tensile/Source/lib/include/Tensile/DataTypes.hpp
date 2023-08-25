@@ -74,6 +74,8 @@ namespace Tensile
         Float8,
         BFloat8,
         XFloat32,
+        Float8BFloat8,
+        BFloat8Float8,
         Count,
         None = Count
     };
@@ -222,6 +224,18 @@ namespace Tensile
 
     template <>
     struct TypeInfo<XFloat32> : public BaseTypeInfo<XFloat32, DataType::XFloat32, 1, false, false>
+    {
+    };
+
+    template <>
+    struct TypeInfo<Float8BFloat8>
+        : public BaseTypeInfo<Float8BFloat8, DataType::Float8BFloat8, 1, false, false>
+    {
+    };
+
+    template <>
+    struct TypeInfo<BFloat8Float8>
+        : public BaseTypeInfo<BFloat8Float8, DataType::BFloat8Float8, 1, false, false>
     {
     };
 

@@ -62,6 +62,10 @@ namespace Tensile
             return "BFloat8";
         case DataType::XFloat32:
             return "XFloat32";
+        case DataType::Float8BFloat8:
+            return "Float8BFloat8";
+        case DataType::BFloat8Float8:
+            return "BFloat8Float8";
         case DataType::Count:;
         }
         return "Invalid";
@@ -95,6 +99,10 @@ namespace Tensile
             return "B8";
         case DataType::XFloat32:
             return "X";
+        case DataType::Float8BFloat8:
+            return "F8B8";
+        case DataType::BFloat8Float8:
+            return "B8F8";
         case DataType::Count:;
         }
         return "Invalid";
@@ -128,6 +136,10 @@ namespace Tensile
             return TypeInfo<BFloat8>::ElementSize;
         case DataType::XFloat32:
             return TypeInfo<XFloat32>::ElementSize;
+        case DataType::Float8BFloat8:
+            return TypeInfo<Float8BFloat8>::ElementSize;
+        case DataType::BFloat8Float8:
+            return TypeInfo<BFloat8Float8>::ElementSize;
         case DataType::Count:;
         }
         return 1;
@@ -168,6 +180,8 @@ namespace Tensile
         registerTypeInfo<Float8>();
         registerTypeInfo<BFloat8>();
         registerTypeInfo<XFloat32>();
+        registerTypeInfo<Float8BFloat8>();
+        registerTypeInfo<BFloat8Float8>();
     }
 
     void DataTypeInfo::registerAllTypeInfoOnce()

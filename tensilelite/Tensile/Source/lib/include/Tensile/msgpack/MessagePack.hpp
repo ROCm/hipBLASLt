@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022 Advanced Micro Devices, Inc. All rights reserved.
+ * Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -229,7 +229,11 @@ namespace Tensile
                 EnumTraits<T, MessagePackInput>::enumeration(*this, obj);
 
                 if(enumFound != 1)
-                    addError(concatenate("Enum not found!", obj));
+                {
+                    std::string s;
+                    object.convert(s);
+                    addError(concatenate("Enum not found! ", s));
+                }
             }
 
             template <typename T, typename Context>
