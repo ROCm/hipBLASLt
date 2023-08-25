@@ -3,10 +3,13 @@ parser = argparse.ArgumentParser(description='manual to this script')
 parser.add_argument('--prob', type=str, default = None)
 parser.add_argument('--first', type=str, default = None)
 parser.add_argument('--justPrechoose', type=str, default = None)
+parser.add_argument('--homepath', type=str, default = None)
+parser.add_argument('--MI16', type=str, default = None)
+parser.add_argument('--MI32', type=str, default = None)
 args = parser.parse_args()
 print(args.prob)
 
-dirpath = "/hipBLASLt/tensilelite/try/yamlGen/"
+dirpath = args.homepath+"tensilelite/try/yamlGen/"
 print("HELLORound1 try")
 
 from prechoose import prechoose
@@ -47,7 +50,11 @@ problist = [
 [int(M), int(N), int(B), int(K)]
 ]
 
-prelist = prechoose(problist)
+print("args.MI16.MI32:",args.MI16,args.MI32)
+
+prelist = prechoose(problist, args.MI16, args.MI32)
+
+print("prelist",prelist)
 
 list = [
         "- "+str(i[1])+""for i in prelist
@@ -112,7 +119,10 @@ import pandas as pd
 #           "- [16, 16,16, 1,  1,  4, 1,  4,1 ] #MT256x16?",
 # ]
 
-if args.justPrechoose:
+print("args.justPrechoose:",args.justPrechoose)
+
+if not int(args.justPrechoose):
+  print("args.justPrechoose:",args.justPrechoose)
   import os
 
   for probidx in range(1,len(problist)+1):
@@ -138,7 +148,7 @@ if args.justPrechoose:
       NewClient: 2\n\
       CSVExportWinner: 1\n\
       CSVMergeSameProblemID: 1\n\
-      Device: 3\n\
+      Device: 0\n\
       # PrintSolutionRejectionReason: True\n\
       # SyncsPerBenchmark: 10\n\
       EnqueuesPerSync: 10\n\
@@ -163,10 +173,11 @@ if args.justPrechoose:
           # TransposeB: 1\n\
           UseBeta: True\n\
           Batched: True\n\
-          # UseBias: True\n\
-          # Activation: True\n\
-          # ActivationHPA: True\n\
-          # UseScaleD: True\n\
+          UseBias: True\n\
+          Activation: True\n\
+          ActivationHPA: True\n\
+          UseScaleDVec: True\n\
+          UseScaleAlphaVec: True\n\
         - # BenchmarkProblemSizeGroup - Standard - All problem\n\
           InitialSolutionParameters:\n\
           BenchmarkCommonParameters:\n\

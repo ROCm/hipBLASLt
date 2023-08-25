@@ -1,3 +1,11 @@
+import argparse
+parser = argparse.ArgumentParser(description='manual to this script')
+parser.add_argument('--prob', type=str, default = None)
+parser.add_argument('--homepath', type=str, default = None)
+args = parser.parse_args()
+print(args.prob)
+
+dirpath = args.homepath+"tensilelite/try32/yamlGen/"+args.prob+"/"
 print("HELLORound2\n")
 
 import pandas as pd
@@ -18,15 +26,15 @@ def Convert(string):
     li = list(string.split(","))
     return li
 
-problemnum = 12
+problemnum = 1
 
 idx=1
-df = pd.read_csv('/home/victorwu/hipBLASLt/tensilelite/try32/yamlGen/chcek.csv', encoding='gbk')
+df = pd.read_csv(dirpath+'chcek.csv', encoding='gbk')
 # print(list(df))
 # print(df['kernelname'])
 for problemidx in range(0, problemnum):
   print(problemidx)
-  file1 = open("/home/victorwu/hipBLASLt/tensilelite/try32/yamlGen/FP16_NN_MI250X_testBFVF_Round2_"+str(problemidx)+".yaml","w")
+  file1 = open(dirpath+"FP16_NN_MI250X_Round2_"+str(problemidx)+".yaml","w")
   WinnerName = df['kernelname'][problemidx]
   print(WinnerName)
   # WinnerName = " Cijk_Ailk_Bljk_HHS_BH_MT32x64x64_MI32x32x8x1_SN_1LDSB0_GRVW7_K1_LPB8_LRVW8_MIWT1_1_PLR10_SRVW4_SVW4_VW8_WG32_4_1_WGM16"#df[' WinnerName'][problemidx]
@@ -81,21 +89,24 @@ for problemidx in range(0, problemnum):
   start_MI_M = start
   end_MI_M = start_MI_M + WinnerName[start_MI_M:end_MI_M].find('x')
   MI_M = WinnerName[start_MI_M:end_MI_M]
-  # print(MI_M)
+  print(MI_M)
   start = end_MI_M + 1
   # print(WinnerName[start:end])
   end_MI_N = end
   start_MI_N = start
   end_MI_N = start_MI_N + WinnerName[start_MI_N:end_MI_N].find('x')
   MI_N = WinnerName[start_MI_N:end_MI_N]
-  # print(MI_N)
+  print(MI_N)
   start = end_MI_N + 1
   # print(WinnerName[start:end])
-  end_MI_K = end
-  start_MI_K = start
-  end_MI_K = start_MI_K + WinnerName[start_MI_K:end_MI_K].find('x')
-  MI_K = WinnerName[start_MI_K:end_MI_K]
-  # print(MI_K)
+  end_MI_B = end
+  start_MI_B = start
+  # print(WinnerName[start_MI_B:end_MI_B])
+  # end_MI_B = start_MI_B + WinnerName[start_MI_B:end_MI_B].find('_')
+  MI_B = WinnerName[start_MI_B:end_MI_B]
+  print(MI_B)
+
+  MI_K = int((int(256)/int(MI_M))/int(MI_B))
 
   WG0 = int((int(MT0)/int(WT0))/int(MI_M))
   WG1 = int((int(MT1)/int(WT1))/int(MI_N))
@@ -113,7 +124,7 @@ for problemidx in range(0, problemnum):
   #   LocalReadVectorWidth = '-1,2,4,8'
   WorkGroupMapping = get_arg('_WGM')
   # print(WorkGroupMapping,"\n")
-  LDSBuffer = get_arg('1LDSB')
+  LDSBuffer = get_arg('LDSB')
   StoreVectorWidth = get_arg('_SVW')
   SourceSwap = get_arg('_SS')
   # print(SourceSwap,"\n")
@@ -136,6 +147,9 @@ for problemidx in range(0, problemnum):
 
   listproblemSize = Convert(problemSize)
   print(listproblemSize)
+
+  GSU = get_arg('_GSU')
+  print("GSU",GSU)
 
   yaml = "\n\
   GlobalParameters:\n\
@@ -173,10 +187,11 @@ for problemidx in range(0, problemnum):
         # TransposeB: 1\n\
         UseBeta: True\n\
         Batched: True\n\
-        # UseBias: True\n\
-        # Activation: True\n\
-        # ActivationHPA: True\n\
-        # UseScaleD: True\n\
+        UseBias: True\n\
+        Activation: True\n\
+        ActivationHPA: True\n\
+        UseScaleDVec: True\n\
+        UseScaleAlphaVec: True\n\
       - # BenchmarkProblemSizeGroup - Standard - All problem\n\
         InitialSolutionParameters:\n\
         BenchmarkCommonParameters:\n\
@@ -184,7 +199,7 @@ for problemidx in range(0, problemnum):
           # - EdgeType: [\"ShiftPtr\"]\n\
         ForkParameters:\n\
           - MatrixInstruction:\n\
-              - ["+str(MI_M)+", "+str(MI_N)+", "+str(MI_K)+", 1,  1, "+str(WT0)+", "+str(WT1)+", "+str(WG0)+", "+str(WG1)+"]\n\
+            - ["+str(MI_M)+", "+str(MI_N)+", "+str(MI_K)+", "+str(MI_B)+",  1, "+str(WT0)+", "+str(WT1)+", "+str(WG0)+", "+str(WG1)+"]\n\
             # - [32, 32, 8, 1,  1,  1, 1,  1,1 ] #MT16x16\n\
             # - [32, 32, 8, 1,  1,  1, 1,  1,2 ] #1#MT16x32\n\
             # - [32, 32, 8, 1,  1,  1, 2,  1,1 ] #1#MT16x32X\n\
@@ -297,10 +312,14 @@ for problemidx in range(0, problemnum):
           # - VectorWidth: [4]\n\
           # - VectorWidth: [1,2]\n\
           # - VectorWidth: ["+str(VectorWidth)+"]\n\
-          - VectorWidth: [-1,2,4,8]\n\
+          # - VectorWidth: [-1,2,4,8]\n\
+          - VectorWidthA: [-1]\n\
+          - VectorWidthB: [-1]\n\
           # - GlobalReadVectorWidth: [8]\n\
           # - GlobalReadVectorWidth: ["+str(GlobalReadVectorWidth)+"]\n\
-          - GlobalReadVectorWidth: [-1,2,4,8]\n\
+          # - GlobalReadVectorWidth: [-1,2,4,8]\n\
+          - GlobalReadVectorWidthA: [-1,2,4,8]\n\
+          - GlobalReadVectorWidthB: [-1,2,4,8]\n\
           - LocalReadVectorWidth: [-1,2,4,8]\n\
           # - LocalReadVectorWidth: ["+str(LocalReadVectorWidth)+"]\n\
           # - LocalReadVectorWidth: [4]\n\
@@ -309,7 +328,9 @@ for problemidx in range(0, problemnum):
           - ExpandPointerSwap: [0]\n\
           - TransposeLDS: [1] #NN\n\
           # - TransposeLDS: [0] #NT\n\
-          - LdsBlockSizePerPad: [-1]\n\
+          # - LdsBlockSizePerPad: [-1]\n\
+          - LdsBlockSizePerPadA: [-1]\n\
+          - LdsBlockSizePerPadB: [-1]\n\
           - LdsPadA: [-1]\n\
           - LdsPadB: [-1]\n"
 
@@ -341,9 +362,9 @@ for problemidx in range(0, problemnum):
           - GlobalSplitU: [1]\n\
           # - GlobalSplitU: [2,3,4,5,15,16]\n\
           # - GlobalSplitU: [6,8,9]\n\
-          # - GlobalSplitU: [1]\n\
-          # - GlobalSplitUAlgorithm: [\"MultipleBuffer\"]\n\
-          - GlobalSplitUAlgorithm: [\"SingleBuffer\"]\n\
+          - GlobalSplitU: ["+str(GSU)+"]\n\
+          - GlobalSplitUAlgorithm: [\"MultipleBuffer\"]\n\
+          # - GlobalSplitUAlgorithm: [\"SingleBuffer\"]\n\
           - GlobalReadPerMfma: [1]\n\
           - LocalWritePerMfma: [-1]\n\
           - StoreVectorWidth: [-1,2,4,8]\n\
@@ -361,6 +382,7 @@ for problemidx in range(0, problemnum):
           # - NumLoadsCoalescedA: [1,3]X\n\
           # - StoreRemapVectorWidth: ["+str(StoreRemapVectorWidth)+"]\n\
           - StoreRemapVectorWidth: [0,-1]\n\
+          - ClusterLocalRead: [1]\n\
         BenchmarkJoinParameters:\n\
         BenchmarkFinalParameters:\n\
           - ProblemSizes:\n\

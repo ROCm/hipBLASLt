@@ -16,9 +16,10 @@ import argparse
 parser = argparse.ArgumentParser(description='manual to this script')
 parser.add_argument('--prob', type=str, default = None)
 parser.add_argument('--first', type=str, default = None)
+parser.add_argument('--homepath', type=str, default = None)
 args = parser.parse_args()
 print("args.prob",args.prob)
-dirpath = "/hipBLASLt/tensilelite/try/yamlGen/"+args.prob+"/"
+dirpath = args.homepath+"tensilelite/try/yamlGen/"+args.prob+"/"
 # print(df[' WinnerTimeUS'][0])
 
 # dic[1] = df[' WinnerTimeUS'][0]
@@ -39,13 +40,13 @@ WinnerKernelTime = [[] for _ in range(problemnum)]
 # print(WinnerKernelList)
 
 idx = 1
-df = pd.read_csv(dirpath+'tunning_BFVF_Round1/tunning_BFVF_Round1_'+str(idx)+'/2_BenchmarkData/Cijk_Ailk_Bljk_HHS_BH_00_CSVWinner.csv', encoding='gbk')
+df = pd.read_csv(dirpath+'tunning_BFVF_Round1/tunning_BFVF_Round1_'+str(idx)+'/2_BenchmarkData/Cijk_Ailk_Bljk_HHS_BH_Bias_AH_SDV_SAV_00_CSVWinner.csv', encoding='gbk')
 for problemidx in range(0, problemnum):
 	ProblemList.append(str(df[' SizeI'][problemidx])+", "+str(df[' SizeJ'][problemidx])+", "+str(df[' SizeK'][problemidx])+", "+str(df[' SizeL'][problemidx]))
 	
 for idx in range(1,int(int(args.first)/2)+1):
 	# print("args.first", args.first)
-	df = pd.read_csv(dirpath+'tunning_BFVF_Round1/tunning_BFVF_Round1_'+str(idx)+'/2_BenchmarkData/Cijk_Ailk_Bljk_HHS_BH_00_CSVWinner.csv', encoding='gbk')
+	df = pd.read_csv(dirpath+'tunning_BFVF_Round1/tunning_BFVF_Round1_'+str(idx)+'/2_BenchmarkData/Cijk_Ailk_Bljk_HHS_BH_Bias_AH_SDV_SAV_00_CSVWinner.csv', encoding='gbk')
 	for problemidx in range(0, problemnum):
 		# print(df[' WinnerTimeUS'][problemidx])
 		list[problemidx][idx] = df[' WinnerGFlops'][problemidx]

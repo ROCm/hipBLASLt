@@ -1,4 +1,16 @@
 
+echo "The script you are running has:"
+echo "basename: [$(basename "$0")]"
+echo "dirname : [$(dirname "$0")]"
+echo "pwd     : [$(pwd)]"
+
+echo $(pwd)/../../../
+
+name1=$(pwd)
+echo $name1
+homepath=${name1%"tensilelite/try/yamlGen"}
+echo $homepath
+
 problemMI250=(
     "1104_1_1_4608"
     "1104_16_1_4608"
@@ -54,25 +66,34 @@ problem=(
     "8192_8192_1_65536"
 )
 
-first=100
+first=50 # must more than two
 justPrechoose=0
+
+MI16=1
+MI32=0
 
 for prob in ${problem[@]}
 do
 	echo $prob
-	./Round1_gen_run_start.sh $prob $first $justPrechoose
-	./Round2_gen_run_start.sh $prob $first
-	./Round3_gen_run_start.sh $prob $first
+	./Round1_gen_run_start.sh $prob $first $justPrechoose $homepath $MI16 $MI32
+	if [ "$justPrechoose" = "0" ]; then
+		./Round2_gen_run_start.sh $prob $homepath
+		./Round3_gen_run_start.sh $prob $homepath
+	fi
 done
 
-for N in "${problem[@]}"
-do
-FILE=/hipBLASLt/tensilelite/try/aldebaran_Cijk_Ailk_Bljk_HHS_BH.yaml
-if test -f "$FILE"; then
-    echo "$FILE exists."
-    python3 /hipBLASLt/tensilelite/Tensile/Utilities/archive/merge_rocblas_yaml_files.py /hipBLASLt/tensilelite/try/ ./$N/tunning_BFVF_Round3/tunning_BFVF_Round3_0/3_LibraryLogic/ /hipBLASLt/tensilelite/try/
-else
-	echo "$FILE not exists."
-	cp ./$N/tunning_BFVF_Round3/tunning_BFVF_Round3_0/3_LibraryLogic/aldebaran_Cijk_Ailk_Bljk_HHS_BH.yaml /hipBLASLt/tensilelite/try/
+if [ "$justPrechoose" = "0" ]; then
+
+    for N in "${problem[@]}"
+    do
+        FILE="$homepath"tensilelite/try/aldebaran_Cijk_Ailk_Bljk_HHS_BH_Bias_AH_SDV_SAV.yaml
+    if test -f "$FILE"; then
+        echo "$FILE exists."
+        python3 "$homepath"tensilelite/Tensile/Utilities/archive/merge_rocblas_yaml_files.py "$homepath"tensilelite/try/ ./$N/tunning_BFVF_Round3/tunning_BFVF_Round3_0/3_LibraryLogic/ "$homepath"tensilelite/try/
+    else
+        echo "$FILE not exists."
+        cp ./$N/tunning_BFVF_Round3/tunning_BFVF_Round3_0/3_LibraryLogic/aldebaran_Cijk_Ailk_Bljk_HHS_BH_Bias_AH_SDV_SAV.yaml "$homepath"tensilelite/try/
+    fi
+    done
+
 fi
-done

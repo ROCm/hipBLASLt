@@ -1,4 +1,4 @@
-cd /hipBLASLt/
+cd $2
 
 echo $1
 
@@ -25,8 +25,8 @@ do
     rm -r $filename
     echo "$filename is removed"
 
-    #mkdir tensilelite/try32/16x16/tunning_BFVF_${ID}; cp -r tensilelite/try32/tunning_BFVF_${ID}/3_LibraryLogic/ tensilelite/try32/16x16/tunning_BFVF_${ID}/; cp -r tensilelite/try32/tunning_BFVF_${ID}/2_BenchmarkData/ tensilelite/try32/16x16/tunning_BFVF_${ID}/
-    # rm -rf tensilelite/try32/tunning_BFVF_${ID}/1_BenchmarkProblems/
+    #mkdir tensilelite/try/16x16/tunning_BFVF_${ID}; cp -r tensilelite/try/tunning_BFVF_${ID}/3_LibraryLogic/ tensilelite/try/16x16/tunning_BFVF_${ID}/; cp -r tensilelite/try/tunning_BFVF_${ID}/2_BenchmarkData/ tensilelite/try/16x16/tunning_BFVF_${ID}/
+    # rm -rf tensilelite/try/tunning_BFVF_${ID}/1_BenchmarkProblems/
 # stdout=$(
     tensilelite/Tensile/bin/Tensile \
         tensilelite/try/yamlGen/$1/FP16_NN_MI250X_Round2_${ID}.yaml \

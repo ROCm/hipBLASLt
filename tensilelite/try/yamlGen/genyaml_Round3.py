@@ -1,10 +1,11 @@
 import argparse
 parser = argparse.ArgumentParser(description='manual to this script')
 parser.add_argument('--prob', type=str, default = None)
+parser.add_argument('--homepath', type=str, default = None)
 args = parser.parse_args()
 print(args.prob)
 
-dirpath = "/hipBLASLt/tensilelite/try/yamlGen/"+args.prob+"/"
+dirpath = args.homepath+"tensilelite/try/yamlGen/"+args.prob+"/"
 print("HELLORound3\n")
 
 import pandas as pd
@@ -119,7 +120,7 @@ for problemidx in range(0, problemnum):
   MI_B = WinnerName[start_MI_B:end_MI_B]
   print(MI_B)
 
-  MI_K = int(int(MI_M)/int(MI_B))
+  MI_K = int((int(256)/int(MI_M))/int(MI_B))
 
   WG0 = int((int(MT0)/int(WT0))/int(MI_M))
   WG1 = int((int(MT1)/int(WT1))/int(MI_N))
@@ -181,7 +182,7 @@ for problemidx in range(0, problemnum):
     NewClient: 2\n\
     CSVExportWinner: 1\n\
     CSVMergeSameProblemID: 1\n\
-    Device: 3\n\
+    Device: 0\n\
     # PrintSolutionRejectionReason: True\n\
     # SyncsPerBenchmark: 10\n\
     EnqueuesPerSync: 20\n\
@@ -206,10 +207,11 @@ for problemidx in range(0, problemnum):
         # TransposeB: 1\n\
         UseBeta: True\n\
         Batched: True\n\
-        # UseBias: True\n\
-        # Activation: True\n\
-        # ActivationHPA: True\n\
-        # UseScaleD: True\n\
+        UseBias: True\n\
+        Activation: True\n\
+        ActivationHPA: True\n\
+        UseScaleDVec: True\n\
+        UseScaleAlphaVec: True\n\
       - # BenchmarkProblemSizeGroup - Standard - All problem\n\
         InitialSolutionParameters:\n\
         BenchmarkCommonParameters:\n\

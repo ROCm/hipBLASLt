@@ -20,8 +20,9 @@ print(len(TTWT))
 # for i in TTWT:
 #     print(str(i))
 
-CUs = 110
+CUs = 304
 MinKForGSU = 128 #define at Common.py
+WorkspaceCheck = 33554432
 
 sizes = [
 			[1104, 1, 1, 4608],
@@ -36,11 +37,11 @@ MI = [
 
 print(MI)
 
-for i in range(len(TTWT)):
-    # create a new list
-    lst = [16, 16,1 6, 1, 1] + [TTWT[i][0]] + [TTWT[i][1]] + TTWT[i][2]
-    # append new list to nested list
-    MI.append(lst)
+# for i in range(len(TTWT)):
+#     # create a new list
+#     lst = [16, 16, 16, 1, 1] + [TTWT[i][0]] + [TTWT[i][1]] + TTWT[i][2]
+#     # append new list to nested list
+#     MI.append(lst)
 
 # for i in range(len(TTWT)):
 #     # create a new list
@@ -48,7 +49,7 @@ for i in range(len(TTWT)):
 #     # append new list to nested list
 #     MI.append(lst)
 
-print(MI)
+# print(MI)
 
 for (i, item) in enumerate(MI, start=1):
     print(i, item)
@@ -57,12 +58,65 @@ for (i, item) in enumerate(MI, start=1):
 GSU = [i for i in range(1, CUs+1)]
 # GSU = [1]
 
-def prechoose(problist):
+def prechoose(problist, MI16, MI32):
+	print("MI16,MI32:",MI16,MI32)
+	if int(MI16):
+		for i in range(len(TTWT)):
+		    # create a new list
+		    lst = [16, 16, 16, 1, 1] + [TTWT[i][0]] + [TTWT[i][1]] + TTWT[i][2]
+		    # append new list to nested list
+		    MI.append(lst)
+
+	if int(MI32):
+		for i in range(len(TTWT)):
+		    # create a new list
+		    lst = [32, 32, 8, 1, 1] + [TTWT[i][0]] + [TTWT[i][1]] + TTWT[i][2]
+		    # append new list to nested list
+		    MI.append(lst)
+
+	print(MI)
+
 	global GSU
 	print("len(sizes)", len(sizes))
 	print("len(MI)", len(MI))
-	print("GSU", GSU)
-	print("problist", problist)
+	# print("GSU", GSU)
+	# print("problist", problist)
+
+	idx = 0
+	# for i in sizes:
+	i = problist[0]
+
+	if int(MI16):
+		if 0: #(math.ceil(i[0]/(16*4))*math.ceil(i[1]/(16*4))/CUs) >= 1.0:
+			noGSU = [1]
+			GSU = noGSU
+			print("no GSU", GSU, math.ceil(i[0]/(16*4)), math.ceil(i[1]/(16*4)))
+			IFGSU = 0
+		else:
+			GSUTOP = int(i[3]/MinKForGSU)
+			GSUTOPafterCheck = int(WorkspaceCheck/(i[0]*i[1]*4)) # *4 = bytes per elements
+			if GSUTOP > GSUTOPafterCheck:
+				GSUTOP = max(1, GSUTOPafterCheck)
+			MinKGSU = [i for i in range(1, GSUTOP+1)]
+			GSU = MinKGSU
+			print("GSU", GSU, math.ceil(i[0]/(16*4)), math.ceil(i[1]/(16*4)))
+			IFGSU = 1
+
+	if int(MI32):
+		if 0: #(math.ceil(i[0]/(32*4))*math.ceil(i[1]/(32*4))/CUs) >= 1.0:
+			noGSU = [1]
+			GSU = noGSU
+			print("no GSU", GSU, math.ceil(i[0]/(32*4)), math.ceil(i[1]/(32*4)))
+			IFGSU = 0
+		else:
+			GSUTOP = int(i[3]/MinKForGSU)
+			GSUTOPafterCheck = int(WorkspaceCheck/(i[0]*i[1]*4)) # *4 = bytes per elements
+			if GSUTOP > GSUTOPafterCheck:
+				GSUTOP = max(1, GSUTOPafterCheck)
+			MinKGSU = [i for i in range(1, GSUTOP+1)]
+			GSU = MinKGSU
+			print("GSU", GSU, math.ceil(i[0]/(32*4)), math.ceil(i[1]/(32*4)))
+			IFGSU = 1
 
 	listx = []
 	# for solutionidx in range(0, len(sizes)*len(MI)*len(GSU)):
@@ -71,33 +125,24 @@ def prechoose(problist):
 		listin = []
 		listx.append(listin)
 
-	idx = 0
-	# for i in sizes:
-	i = problist[0]
-
-	if (math.ceil(i[0]/(16*4))*math.ceil(i[1]/(16*4))/CUs) >= 1.0:
-		noGSU = [1]
-		GSU = noGSU
-		print("no GSU", GSU, math.ceil(i[0]/(16*4)), math.ceil(i[1]/(16*4)))
-		IFGSU = 0
-	else:
-		MinKGSU = [i for i in range(1, int(i[3]/MinKForGSU)+1)]
-		GSU = MinKGSU
-		print("GSU", GSU, math.ceil(i[0]/(16*4)), math.ceil(i[1]/(16*4)))
-		IFGSU = 1
-
 	for j in MI:
 		for k in GSU:
 			# print("tiles0", (math.ceil(i[0]/(j[0]*j[5]*j[7]))))
 			# print("tiles1", (math.ceil(i[1]/(j[1]*j[6]*j[8]))*k))
 			# print("tiles", (math.ceil(i[0]/(j[0]*j[5]*j[7]))*math.ceil(i[1]/(j[1]*j[6]*j[8]))*k))
 			# tiles_Cus = ((i[0]/(j[0]*j[5]*j[7]))*(i[1]/(j[1]*j[6]*j[8]))*k)/CUs
+			if IFGSU and (j[5]*j[6] > 2): # because WT not good at GSU use mode
+				k = 1
 			tiles_Cus = (math.ceil(i[0]/(j[0]*j[5]*j[7]))*math.ceil(i[1]/(j[1]*j[6]*j[8]))*k)/CUs
 			# print("tiles/CUs", tiles_Cus)
 			tiles_Cus_absToOne = tiles_Cus
-			while tiles_Cus_absToOne >= 1 and (IFGSU and tiles_Cus_absToOne <=4):
-				tiles_Cus_absToOne = abs(1-tiles_Cus_absToOne)
-			if tiles_Cus_absToOne > 0.5:
+
+			if tiles_Cus_absToOne >= 1:
+				while tiles_Cus_absToOne >= 1 and (IFGSU and tiles_Cus_absToOne <=4):
+					tiles_Cus_absToOne = abs(1-tiles_Cus_absToOne)
+				if tiles_Cus_absToOne > 0.5:
+					tiles_Cus_absToOne = abs(1-tiles_Cus_absToOne)
+			else:
 				tiles_Cus_absToOne = abs(1-tiles_Cus_absToOne)
 			Ceil_tiles_Cus = math.ceil(tiles_Cus)
 			# print("ceil(tiles/CUs)", Ceil_tiles_Cus)
@@ -133,7 +178,7 @@ def prechoose(problist):
 		listx.sort(key=itemgetter(3), reverse=True)
 	else:
 		listx.sort(key=itemgetter(5))
-	print("listx after sort", listx)
+	# print("listx after sort", listx)
 
 	for idx in listx:
 		print(listx.index(idx), idx)

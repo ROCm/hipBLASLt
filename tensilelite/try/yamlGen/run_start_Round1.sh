@@ -1,4 +1,7 @@
-cd /hipBLASLt/
+echo Victor
+echo $3
+
+cd $3
 
 echo $1
 
@@ -16,7 +19,7 @@ echo FIRST
 echo $2
 
 # for i in {1..$($2/2)}
-for ((i=1;i<=$2;i=i+1))
+for ((i=1;i<=($2/2);i=i+1))
 do
     read -r ID <<< "${i}"
 
