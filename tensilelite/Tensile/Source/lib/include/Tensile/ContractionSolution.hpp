@@ -421,6 +421,7 @@ namespace Tensile
             DataType              cType                     = DataType::Float;
             DataType              dType                     = DataType::Float;
             DataType              eType                     = DataType::Float;
+            DataType              computeInputType          = DataType::Float;
             DataType              computeType               = DataType::Float;
             DataType              f32XdlMathOp              = DataType::Float;
             DataType              activationComputeDataType = DataType::Float;
