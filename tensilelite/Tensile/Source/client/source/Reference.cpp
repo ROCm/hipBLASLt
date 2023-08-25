@@ -208,7 +208,9 @@ namespace Tensile
             case DataType::ComplexFloat:
             case DataType::ComplexDouble:
             case DataType::Int8x4:
-            case DataType::Count:;
+            case DataType::Count:
+            case DataType::Float8BFloat8:
+            case DataType::BFloat8Float8:;
             }
             return DataInitialization::getValue<Accumulator, InitMode::Zero>();
         }
@@ -283,7 +285,9 @@ namespace Tensile
             case DataType::Int8x4:
             case DataType::Float8:
             case DataType::BFloat8:
-            case DataType::Count:;
+            case DataType::Count:
+            case DataType::Float8BFloat8:
+            case DataType::BFloat8Float8:;
             }
         }
 
@@ -320,7 +324,9 @@ namespace Tensile
                 throw std::runtime_error("Not supported yet.");
             }
             break;
-            case DataType::Count:;
+            case DataType::Count:
+            case DataType::Float8BFloat8:
+            case DataType::BFloat8Float8:;
             }
         }
 

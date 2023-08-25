@@ -109,6 +109,7 @@ namespace Tensile
                 ("e-type",                   po::value<DataType>()->default_value(DataType::None), "E data type")
                 ("alpha-type",               po::value<DataType>()->default_value(DataType::None), "alpha data type")
                 ("beta-type",                po::value<DataType>()->default_value(DataType::None), "beta data type")
+                ("compute-input-type",       po::value<DataType>()->default_value(DataType::None), "compute input data type")
                 ("f32-xdl-math-op",          po::value<DataType>()->default_value(DataType::None), "Use xf32 compute for float input and output matrices.")
                 ("activation-compute-type",  po::value<DataType>()->default_value(DataType::None), "Activation compute type.")
                 ("high-precision-accumulate", po::value<bool>()->default_value(false), "Use high-precision accumulate.")

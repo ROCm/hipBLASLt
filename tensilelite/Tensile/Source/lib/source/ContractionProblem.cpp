@@ -1194,7 +1194,8 @@ namespace Tensile
                                                                         DataType typeD,
                                                                         DataType typeAlpha,
                                                                         DataType typeBeta,
-                                                                        DataType typeCompute,
+                                                                        DataType typeComputeInput,
+                                                                        DataType typeComputeAccum,
                                                                         double   alpha,
                                                                         double   beta,
                                                                         bool     isGroupedGemm,
@@ -1300,11 +1301,12 @@ namespace Tensile
                                                 beta,
                                                 maxWorkspaceBytes};
 
+        problem.setComputeInputType(typeComputeInput);
         problem.setAlphaType(typeAlpha);
         problem.setBetaType(typeBeta);
 
         // HPA is active iff sizeof(compute type) > sizeof(input type)
-        problem.setHighPrecisionAccumulate(GetElementSize(typeCompute) > GetElementSize(typeA));
+        problem.setHighPrecisionAccumulate(GetElementSize(typeComputeAccum) > GetElementSize(typeA));
 
         // set batch mode
         problem.setStridedBatched(true);

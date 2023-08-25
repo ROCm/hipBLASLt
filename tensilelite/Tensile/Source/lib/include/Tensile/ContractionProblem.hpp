@@ -118,6 +118,16 @@ namespace Tensile
             return m_f32XdlMathOp;
         }
 
+        void setComputeInputType(DataType value)
+        {
+            m_computeInputType = value;
+        }
+
+        DataType computeInputType() const
+        {
+            return m_computeInputType;
+        }
+
         void setUseDeviceUserArguments(bool use)
         {
             m_useDeviceUserArguments = use;
@@ -137,6 +147,7 @@ namespace Tensile
         size_t m_workspaceSizeGroupedGemm = std::numeric_limits<size_t>::max();
 
         DataType m_f32XdlMathOp;
+        DataType m_computeInputType;
 
         bool m_useDeviceUserArguments = false;
     };
@@ -962,7 +973,8 @@ namespace Tensile
                                                            DataType typeD,
                                                            DataType alphaType,
                                                            DataType betaType,
-                                                           DataType typeCompute,
+                                                           DataType typeComputeInput,
+                                                           DataType typeComputeAccum,
                                                            double   alpha,
                                                            double   beta,
                                                            bool     isGroupedGemm,

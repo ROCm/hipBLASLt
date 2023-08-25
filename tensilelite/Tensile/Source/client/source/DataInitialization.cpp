@@ -1275,7 +1275,9 @@ namespace Tensile
                         prop.value = getValue<BFloat8>(prop.init, prop.freeValue);
                         break;
                     case DataType::XFloat32:
-                    case DataType::Count:;
+                    case DataType::Count:
+                    case DataType::Float8BFloat8:
+                    case DataType::BFloat8Float8:;
                     }
                 }
                 if(Debug::Instance().printTensorInfo() && prop.dataType != DataType::None)

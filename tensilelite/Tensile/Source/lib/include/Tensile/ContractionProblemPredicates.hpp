@@ -958,7 +958,7 @@ namespace Tensile
                 };
                 TypesEqual() = default;
 
-                std::array<DataType, 4> value;
+                std::array<DataType, 5> value;
 
                 static std::string Type()
                 {
@@ -969,7 +969,8 @@ namespace Tensile
                 {
                     return problem.a().dataType() == value[0] && problem.b().dataType() == value[1]
                            && problem.c().dataType() == value[2]
-                           && problem.d().dataType() == value[3];
+                           && problem.d().dataType() == value[3]
+                           && problem.computeInputType() == value[4];
                 }
 
                 virtual std::string toString() const override
@@ -982,7 +983,9 @@ namespace Tensile
                                        ", c:",
                                        value[2],
                                        ", d:",
-                                       value[3]);
+                                       value[3],
+                                       ", compute input type:",
+                                       value[4]);
                 }
 
                 virtual bool debugEval(ContractionProblemGemm const& problem,
@@ -994,6 +997,7 @@ namespace Tensile
                            << "&& b:" << problem.b().dataType() << " == " << value[1]
                            << "&& c:" << problem.c().dataType() << " == " << value[2]
                            << "&& d:" << problem.d().dataType() << " == " << value[3]
+                           << "&& compute input type:" << problem.computeInputType() << " == " << value[4]
                            << "): " << rv;
                     ;
 

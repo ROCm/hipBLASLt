@@ -307,25 +307,36 @@ namespace
                                      hipblasltDatatype_t    typeB,
                                      hipblasltDatatype_t    typeC,
                                      hipblasltDatatype_t    typeD,
-                                     rocblaslt_compute_type typeCompute,
+                                     rocblaslt_compute_type typeComputeAccum,
                                      float                  alpha,
                                      float                  beta,
                                      bool                   isGroupedGemm,
                                      size_t                 maxWorkspaceBytes)
     {
-        return Tensile::ContractionProblemGemm::createDefaultProblem((opA != HIPBLAS_OP_N),
-                                                                     (opB != HIPBLAS_OP_N),
-                                                                     hip2TensileType(typeA),
-                                                                     hip2TensileType(typeB),
-                                                                     hip2TensileType(typeC),
-                                                                     hip2TensileType(typeD),
-                                                                     roc2TensileType(typeCompute),
-                                                                     roc2TensileType(typeCompute),
-                                                                     roc2TensileType(typeCompute),
-                                                                     alpha,
-                                                                     beta,
-                                                                     isGroupedGemm,
-                                                                     maxWorkspaceBytes);
+        Tensile::DataType computeInputType = hip2TensileType(typeA);
+        if(typeA == HIPBLASLT_R_8F_E5M2 && typeB == HIPBLASLT_R_8F_E4M3)
+        {
+            computeInputType = Tensile::DataType::BFloat8Float8;
+        }
+        else if(typeB == HIPBLASLT_R_8F_E4M3 && typeB == HIPBLASLT_R_8F_E5M2)
+        {
+            computeInputType = Tensile::DataType::Float8BFloat8;
+        }
+        return Tensile::ContractionProblemGemm::createDefaultProblem(
+            (opA != HIPBLAS_OP_N),
+            (opB != HIPBLAS_OP_N),
+            hip2TensileType(typeA),
+            hip2TensileType(typeB),
+            hip2TensileType(typeC),
+            hip2TensileType(typeD),
+            roc2TensileType(typeComputeAccum),
+            roc2TensileType(typeComputeAccum),
+            computeInputType,
+            roc2TensileType(typeComputeAccum),
+            alpha,
+            beta,
+            isGroupedGemm,
+            maxWorkspaceBytes);
     }
 
     /****************************************************************
@@ -449,6 +460,18 @@ namespace
                                                        *prob.beta,
                                                        prob.workspaceSize};
 
+        Tensile::DataType computeInputType = Tensile_TiA;
+        if constexpr(std::is_same<TiA, rocblaslt_bf8>::value
+                     && std::is_same<TiB, rocblaslt_f8>::value)
+        {
+            computeInputType = Tensile::DataType::BFloat8Float8;
+        }
+        else if constexpr(std::is_same<TiA, rocblaslt_f8>::value
+                          && std::is_same<TiB, rocblaslt_bf8>::value)
+        {
+            computeInputType = Tensile::DataType::Float8BFloat8;
+        }
+        tensileProblem.setComputeInputType(computeInputType);
         tensileProblem.setAlphaType(Tensile_Tc);
         tensileProblem.setBetaType(Tensile_Tc);
 
@@ -630,6 +653,18 @@ namespace
         tensileProblem.updateProblem(
             freeIndex, batchIndex, boundIndex, (double)(*prob.beta), prob.workspaceSize);
 
+        Tensile::DataType computeInputType = Tensile_TiA;
+        if constexpr(std::is_same<TiA, rocblaslt_bf8>::value
+                     && std::is_same<TiB, rocblaslt_f8>::value)
+        {
+            computeInputType = Tensile::DataType::BFloat8Float8;
+        }
+        else if constexpr(std::is_same<TiA, rocblaslt_f8>::value
+                          && std::is_same<TiB, rocblaslt_bf8>::value)
+        {
+            computeInputType = Tensile::DataType::Float8BFloat8;
+        }
+        tensileProblem.setComputeInputType(computeInputType);
         tensileProblem.setAlphaType(Tensile_Tc);
         tensileProblem.setBetaType(Tensile_Tc);
 
@@ -1141,7 +1176,7 @@ void initTensileGemmData(rocblaslt_handle       handle,
                          hipblasltDatatype_t    typeB,
                          hipblasltDatatype_t    typeC,
                          hipblasltDatatype_t    typeD,
-                         rocblaslt_compute_type typeCompute,
+                         rocblaslt_compute_type typeComputeAccum,
                          size_t                 maxWorkspaceBytes,
                          std::shared_ptr<void>& gemmData)
 {
@@ -1156,7 +1191,7 @@ void initTensileGemmData(rocblaslt_handle       handle,
                                             typeB,
                                             typeC,
                                             typeD,
-                                            typeCompute,
+                                            typeComputeAccum,
                                             alpha,
                                             beta,
                                             false,
@@ -1176,7 +1211,7 @@ void initTensileGemmData(rocblaslt_handle       handle,
                                                            typeB,
                                                            typeC,
                                                            typeD,
-                                                           typeCompute,
+                                                           typeComputeAccum,
                                                            alpha,
                                                            beta,
                                                            true,
