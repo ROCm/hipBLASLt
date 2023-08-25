@@ -47,6 +47,7 @@ namespace Tensile
             , m_activationType(ActivationType::None)
             , m_activationNoGuard(false)
             , m_activationEnumArg(std::vector<ActivationType>(1, ActivationType::None))
+            , m_computeInputType(DataType::Float)
             , m_f32XdlMathOp(DataType::Float)
             , m_activationComputeType(DataType::Float)
             , m_useUserArgs(false)
@@ -169,6 +170,11 @@ namespace Tensile
             if(args.count("max-workspace-size"))
                 m_maxWorkspaceSize = args["max-workspace-size"].as<size_t>();
 
+            if(args.count("compute-input-type"))
+            {
+                m_computeInputType = args["compute-input-type"].as<DataType>();
+            }
+
             if(args.count("f32-xdl-math-op"))
             {
                 m_f32XdlMathOp = args["f32-xdl-math-op"].as<DataType>();
@@ -268,6 +274,7 @@ namespace Tensile
                             dStrides,
                             m_constantValues[ContractionProblemGemm::CONST::BETA]));
 
+                        rv.back().setComputeInputType(m_computeInputType);
                         rv.back().setAlphaRestriction(toScalarValueEnum(
                             m_constantValues[ContractionProblemGemm::CONST::ALPHA]));
                         rv.back().setCEqualsD(m_cEqualsD);

@@ -290,7 +290,9 @@ namespace Tensile
                 case DataType::ComplexFloat:
                 case DataType::ComplexDouble:
                 case DataType::Int8x4:
-                case DataType::Count:;
+                case DataType::Count:
+                case DataType::Float8BFloat8:
+                case DataType::BFloat8Float8:;
                 }
             }
 
