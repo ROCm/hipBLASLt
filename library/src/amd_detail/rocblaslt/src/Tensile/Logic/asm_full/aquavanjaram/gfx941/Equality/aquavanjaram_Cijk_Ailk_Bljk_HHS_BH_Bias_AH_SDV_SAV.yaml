@@ -604,7 +604,8 @@
     GlobalReadVectorWidthA: 8
     GlobalReadVectorWidthB: 4
     GlobalSplitU: 303
-    GlobalSplitUAlgorithm: MultipleBuffer
+    # GlobalSplitUAlgorithm: MultipleBuffer
+    GlobalSplitUAlgorithm: MultipleBufferSingleKernel
     GlobalWriteVectorWidth: 1
     GroupLoadStore: false
     GuaranteeNoPartialA: true
@@ -822,7 +823,8 @@
     _DepthUA: 128
     _DepthUB: 128
     _DepthUMetadata: 128
-    _GlobalAccumulation: MultipleBuffer
+    # _GlobalAccumulation: MultipleBuffer
+    _GlobalAccumulation: MultipleBufferSingleKernel
     _UseSgprForGRO: 1
     _VectorStore: 1
     _WorkspaceSizePerElemBias: 0

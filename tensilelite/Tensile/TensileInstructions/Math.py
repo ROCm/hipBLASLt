@@ -63,8 +63,9 @@ def vectorStaticDivideAndRemainder(qReg, rReg, dReg, divisor, tmpVgprRes: Option
         shift = 32+1
         magic = ((2**shift) // divisor) + 1
         if magic <= 64 and magic >= -16:
-            module.add(VMulHIU32(dst=vgpr(tmpVgpr+1), src0=vgpr(dReg), src1=hex(magic), comment=dComment))
-            module.add(VMulLOU32(dst=vgpr(tmpVgpr+0), src0=vgpr(dReg), src1=hex(magic), comment=dComment))
+            module.add(VMovB32(dst=vgpr(tmpVgpr+0), src=hex(magic)))
+            module.add(VMulHIU32(dst=vgpr(tmpVgpr+1), src0=vgpr(dReg), src1=vgpr(tmpVgpr+0), comment=dComment))
+            module.add(VMulLOU32(dst=vgpr(tmpVgpr+0), src0=vgpr(dReg), src1=vgpr(tmpVgpr+0), comment=dComment))
         else:
             module.add(VMovB32(dst=vgpr(tmpVgpr+0), src=hex(magic)))
             module.add(VMulHIU32(dst=vgpr(tmpVgpr+1), src0=vgpr(dReg), src1=vgpr(tmpVgpr+0), comment=dComment))
@@ -72,7 +73,8 @@ def vectorStaticDivideAndRemainder(qReg, rReg, dReg, divisor, tmpVgprRes: Option
         module.add(VLShiftRightB64(dst=vgpr(tmpVgpr,2), shiftHex=hex(shift), src=vgpr(tmpVgpr,2), comment=dComment))
         module.add(VMovB32(dst=vgpr(qReg), src=vgpr(tmpVgpr), comment=dComment))
         if doRemainder:
-            module.add(VMulLOU32(dst=vgpr(tmpVgpr), src0=vgpr(qReg), src1=hex(divisor), comment=rComment))
+            module.add(VMovB32(dst=vgpr(tmpVgpr), src=hex(divisor)))
+            module.add(VMulLOU32(dst=vgpr(tmpVgpr), src0=vgpr(qReg), src1=vgpr(tmpVgpr), comment=rComment))
             module.add(VSubU32(dst=vgpr(rReg), src0=vgpr(dReg), src1=vgpr(tmpVgpr), comment=rComment))
     return module
 

@@ -1891,6 +1891,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
     vaddr = self.vgprPool.checkOut(1)
     for i in range(NumZeroingVgpr):
       module.add(VMovB32(dst=vgpr(zeroingVgpr+i), src="0x0", comment=""))
+    module.add(VMovB32(dst=vgpr(vaddr), src="0x0", comment=""))
     module.addSpaceLine()
     print("zeroingVgpr", zeroingVgpr)
     # print("len(zeroingVgpr)", len(zeroingVgpr))
@@ -1987,22 +1988,22 @@ s_addc_u32 s[sgprSrdDd+1], s[sgprAddressD+1], s[sgprtmp3E]   // add hi to SRD\n"
     for i in range(GSU//4):
         contents = \
         "\n\
-buffer_store_dwordx4 v[0:3], v4, s[sgprSrdDd:sgprSrdDd+3], 0 offen offset:4*"+str(i)+" // zeroing\n"
+buffer_store_dwordx4 v[0:3], v4, s[sgprSrdDd:sgprSrdDd+3], 0 offen offset:4*"+str(i)+", sc0 sc1// zeroing\n"
         module.addGSUSYNC(contents)
     i = GSU//4
     if mod == 1:
         contents = \
         "\n\
-buffer_store_dword v[0], v4, s[sgprSrdDd:sgprSrdDd+3], 0 offen offset:4*"+str(i)+" //\n"
+buffer_store_dword v[0], v4, s[sgprSrdDd:sgprSrdDd+3], 0 offen offset:4*"+str(i)+", sc0 sc1//\n"
     if mod == 2:
         contents = \
         "\n\
-buffer_store_dwordx2 v[0:1], v4, s[sgprSrdDd:sgprSrdDd+3], 0 offen offset:4*"+str(i)+" //\n"
+buffer_store_dwordx2 v[0:1], v4, s[sgprSrdDd:sgprSrdDd+3], 0 offen offset:4*"+str(i)+", sc0 sc1//\n"
     if mod == 3:
         contents = \
         "\n\
-buffer_store_dwordx2 v[0:1], v4, s[sgprSrdDd:sgprSrdDd+3], 0 offen offset:4*"+str(i)+" //\n\
-buffer_store_dword v[0], v4, s[sgprSrdDd:sgprSrdDd+3], 0 offen offset:4*"+str(i)+"+2 //\n"
+buffer_store_dwordx2 v[0:1], v4, s[sgprSrdDd:sgprSrdDd+3], 0 offen offset:4*"+str(i)+", sc0 sc1//\n\
+buffer_store_dword v[0], v4, s[sgprSrdDd:sgprSrdDd+3], 0 offen offset:4*"+str(i)+"+2, sc0 sc1//\n"
     module.addGSUSYNC(contents)
 
     if kernel["ProblemType"]["UseScaleDVec"]:

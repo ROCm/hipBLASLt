@@ -1184,18 +1184,18 @@ class Solution(collections.abc.Mapping):
   def getMIOutputInfo(state):
     outputVectorWidth = 4
     RegsPerOut = 1
-    print("getMIOutputInfo")
+    # print("getMIOutputInfo")
     isa = tuple(state["ISA"])
     if globalParameters["AsmCaps"][isa]['HasMFMA']:
-      print("HasMFMA")
+      # print("HasMFMA")
       if state["ProblemType"]["DataType"].MIOutputTypeNameAbbrev() == 'f64':
         outputVectorWidth, RegsPerOut = 1, 2
-        print("f64")
+        # print("f64")
       else:
         outputVectorWidth, RegsPerOut = 4, 1
-        print("not f64")
+        # print("not f64")
     elif globalParameters["AsmCaps"][isa]['HasWMMA']:
-      print("HasWMMA")
+      # print("HasWMMA")
       outputVectorWidth, RegsPerOut = 1, 1
     else:
       print("WARNING: unexpect code flow")

@@ -592,7 +592,7 @@ class AddrCalculation:
                   # module.add(self.SYNCHRONIZERLSHRREV(vgpr(addrVgpr)))
                   # print("VICTOR", kernel["ProblemType"]["DestDataType"])
                   if kernel["ProblemType"]["DestDataType"].isHalf():
-                    print("VICTOR=H")
+                    # print("VICTOR=H")
                     module.add(MacroInstruction("SYNCHRONIZERLSHRREV", \
                              args=[vgpr(addrVgpr)]))
                   module.addGSUSYNC("\n") #GSUSYNC

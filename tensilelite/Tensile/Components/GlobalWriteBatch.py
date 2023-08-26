@@ -228,30 +228,38 @@ s_atomic_add s[sgprGSUSync], s[sgprKernArgAddress:sgprKernArgAddress+1], "+offse
     # print("GSUSYNCcodegen checkout")
     module.addComment("synchronizer check")
     module.add(SMovB32(dst=sgpr("GSUSync"), src=hex(GSU-1), comment=""))
+    # module.add(SNop(8))
     tmpS01 = self.parentWriter.sgprPool.checkOut(1, preventOverflow=False) #overflow?
     module.add(SMulI32(dst=sgpr(tmpS01), src0=sgpr("WorkGroup1"), src1=sgpr("NumWorkGroups0"), comment=""))
+    # module.add(SNop(8))
     module.add(SAddU32(dst=sgpr(tmpS01), src0=sgpr(tmpS01), src1=sgpr("WorkGroup0")))
-
+    # module.add(SNop(8))
     tmpV01 = self.parentWriter.vgprPool.checkOut(1)
     module.add(VLShiftRightB32(dst=vgpr(tmpV01), shiftHex=hex(log2(self.kernel["WavefrontSize"])), src=vgpr("Serial")))
+    module.add(SNop(0))
     tmpS02 = self.parentWriter.sgprPool.checkOut(1, preventOverflow=False) #overflow?
     module.add(VReadfirstlaneB32(dst=sgpr(tmpS02), src=vgpr(tmpV01)))
-
+    # module.add(SNop(8))
     tmpS03 = self.parentWriter.sgprPool.checkOut(1, preventOverflow=False) #overflow?
     module.add(SMulI32(dst=sgpr(tmpS03), src0=sgpr("NumWorkGroups0"), src1=sgpr("NumWorkGroups1"), comment=""))
+    # module.add(SNop(8))
     module.add(SMulI32(dst=sgpr(tmpS03), src0=sgpr(tmpS03), src1=sgpr(tmpS02), comment=""))
+    # module.add(SNop(8))
     module.add(SAddU32(dst=sgpr(tmpS01), src0=sgpr(tmpS01), src1=sgpr(tmpS03)))
     beptmp = 2
+    # module.add(SNop(8))
     module.add(SLShiftLeftB32(dst=sgpr(tmpS01), src=sgpr(tmpS01), shiftHex=hex(beptmp), comment=""))
-    
+    # module.add(SNop(8))
     module.add(SAddU32(dst=sgpr("SrdSync+0"), \
                                     src0=sgpr("SrdSync+0"), \
                                     src1=sgpr(tmpS01), \
                                     comment="" ))
+    # module.add(SNop(8))
     module.add(SAddCU32(dst=sgpr("SrdSync+1"), \
                         src0=sgpr("SrdSync+1"), \
                         src1=hex(0), \
                         comment="" ))
+    # module.add(SNop(8))  
     module.addGSUSYNC("s_buffer_atomic_dec s[sgprGSUSync], s[sgprSrdSync:sgprSrdSync+3], glc\n")
     
     module.add(SSubU32(dst=sgpr(tmpS01), src0=sgpr("SizesFree+1"), src1=hex(1)))
@@ -286,7 +294,7 @@ s_atomic_add s[sgprGSUSync], s[sgprKernArgAddress:sgprKernArgAddress+1], "+offse
     module.add(SLShiftLeftB64(dst=sgpr("tmp2E",2), src=sgpr(tmpS05,2), shiftHex=log2(bpe), comment="scale by bpe"))
 
     module.add(SSubU32(dst=sgpr(tmpS02), src0=sgpr("GSUSumIdx"), src1=hex(0), comment=""))
-    module.add(SMulHIU32(dst=sgpr(tmpS05+1), src0=sgpr(tmpS02), src1=sgpr("tmp3E"), comment=""))
+    module.add(SMulI32(dst=sgpr(tmpS05+1), src0=sgpr(tmpS02), src1=sgpr("tmp3E"), comment=""))
     module.add(SMulI32(dst=sgpr(tmpS05+0), src0=sgpr(tmpS02), src1=sgpr("tmp2E"), comment=""))
     module.add(SMulHIU32(dst=sgpr(tmpS01), src0=sgpr(tmpS02), src1=sgpr("tmp2E"), comment=""))
     module.add(SAddU32(dst=sgpr(tmpS05+1), \
@@ -317,7 +325,7 @@ s_atomic_add s[sgprGSUSync], s[sgprKernArgAddress:sgprKernArgAddress+1], "+offse
     module.addSpaceLine()
 
     SyncloadedData = 0
-    module.addGSUSYNC("buffer_load_dwordx4 v["+str(vgprstart)+"+4*0:"+str(vgprstart)+"+3+4*0], "+str(vgproffset)+", s[sgprSrdD:sgprSrdD+3], 0 offen offset:0 // load GSU D\n")
+    module.addGSUSYNC("buffer_load_dwordx4 v["+str(vgprstart)+"+4*0:"+str(vgprstart)+"+3+4*0], "+str(vgproffset)+", s[sgprSrdD:sgprSrdD+3], 0 offen offset:0, sc0 sc1 // load GSU D\n")
     SyncloadedData += 1
 
     for i in range(1,GSU):
@@ -329,7 +337,7 @@ s_atomic_add s[sgprGSUSync], s[sgprKernArgAddress:sgprKernArgAddress+1], "+offse
                           src0=sgpr("SrdD+1"), \
                           src1=sgpr("tmp2E+1"), \
                           comment="" ))
-      module.addGSUSYNC("buffer_load_dwordx4 v["+str(vgprstart)+"+4*"+str(i)+":"+str(vgprstart)+"+3+4*"+str(i)+"], "+str(vgproffset)+", s[sgprSrdD:sgprSrdD+3], 0 offen offset:0 // load GSU D\n")
+      module.addGSUSYNC("buffer_load_dwordx4 v["+str(vgprstart)+"+4*"+str(i)+":"+str(vgprstart)+"+3+4*"+str(i)+"], "+str(vgproffset)+", s[sgprSrdD:sgprSrdD+3], 0 offen offset:0, sc0 sc1 // load GSU D\n")
       SyncloadedData += 1
       # # if GWVW=1 the half path still assumes we have
       # # at least two stores so does some combining across VI -
@@ -454,7 +462,7 @@ s_cbranch_scc0 "+str(labelendname)+" //label_GW_End_1 //label_AFTERsummary_Edge\
 \n\
 //synchronizer\n\
 \n\
-buffer_load_dwordx4 v["+str(vgprstart)+"+4*0:"+str(vgprstart)+"+3+4*0], "+str(vgproffset)+", s[sgprSrdD:sgprSrdD+3], 0 offen offset:0 // load GSU D\n\
+buffer_load_dwordx4 v["+str(vgprstart)+"+4*0:"+str(vgprstart)+"+3+4*0], "+str(vgproffset)+", s[sgprSrdD:sgprSrdD+3], 0 offen offset:0, sc0 sc1 // load GSU D\n\
 \n\
 // GSU Output Buffer offset: Free0 + (Free1-1)*StrideC1J + (Free2-1)*StrideCK * GSUIdx * bpe%s\n\
 //s_mul_hi_u32 s[sgprtmp1E], s[sgprSizesFree+0], s[sgprGSUSumIdx]   //\n\
@@ -481,7 +489,7 @@ s_lshl_b64 s[sgprtmp2E:sgprtmp3E], s[sgprtmp0E:sgprtmp1E], 2        // scale by 
         "\n\
 s_add_u32 s[sgprSrdD+0], s[sgprSrdD+0], s[sgprtmp2E]        // add lo synchronizer offset to SRD\n\
 s_addc_u32 s[sgprSrdD+1], s[sgprSrdD+1], s[sgprtmp3E]       // add hi synchronizer offset to SRD\n\
-buffer_load_dwordx4 v["+str(vgprstart)+"+4*"+str(i)+":"+str(vgprstart)+"+3+4*"+str(i)+"], "+str(vgproffset)+", s[sgprSrdD:sgprSrdD+3], 0 offen offset:0 // load GSU D\n"
+buffer_load_dwordx4 v["+str(vgprstart)+"+4*"+str(i)+":"+str(vgprstart)+"+3+4*"+str(i)+"], "+str(vgproffset)+", s[sgprSrdD:sgprSrdD+3], 0 offen offset:0, sc0 sc1 // load GSU D\n"
         module.addGSUSYNC(contents)
 
     contents = \
@@ -953,7 +961,7 @@ s_cbranch_scc0 "+str(labelendname)+" //label_GW_End_1 //label_AFTERsummary_Edge\
     module.addGSUSYNC("\n") #GSUSYNC
     labelname = self.parentWriter.labels.getNameInc(self.label2)
     # labelname = self.label2
-    if self.kernel["StoreVectorWidth"]==2:
+    if 0: #self.kernel["StoreVectorWidth"]==2:
       module.add(self.GSUSYNC0(self.kernel["GlobalSplitU"], self.kernel["MIWaveGroup"][0], self.kernel["MIWaveGroup"][1], self.kernel["StoreVectorWidth"], labelname, "label_KernelEnd"))
       # module.add(MacroInstruction("GSUSYNC0", args=[labelname, "label_KernelEnd"]))
       # module.add(MacroInstruction("GSUSYNC1", args=[labelname, "label_KernelEnd"]))
@@ -1137,12 +1145,16 @@ s_addc_u32 s[sgprSrdD+1], s[sgprSrdD+1], s[sgprtmp1E]             // add hi to S
         contents = \
         "\n\
 \n\
-buffer_store_dwordx4 v["+str(vgprstart)+":"+str(vgprstart)+"+3], "+str(vgproffset)+", s[sgprSrdD:sgprSrdD+3], 0 offen offset:0 // store D\n\
+buffer_store_dwordx4 v["+str(vgprstart)+":"+str(vgprstart)+"+3], "+str(vgproffset)+", s[sgprSrdD:sgprSrdD+3], 0 offen offset:0, sc0 sc1// store D\n\
 \n\
 //synchronizer store\n"
     else:
         contents = \
         "\n\
+# v_mov_b32 v["+str(vgprstart)+"+0], 1.0\n\
+# v_mov_b32 v["+str(vgprstart)+"+1], 2.0\n\
+# v_mov_b32 v["+str(vgprstart)+"+2], 3.0\n\
+# v_mov_b32 v["+str(vgprstart)+"+3], 4.0\n\
 v_cvt_f16_f32 v["+str(vgprstart)+"+0], v["+str(vgprstart)+"+0]\n\
 v_cvt_f16_f32 v["+str(vgprstart)+"+1], v["+str(vgprstart)+"+1]\n\
 v_cvt_f16_f32 v["+str(vgprstart)+"+2], v["+str(vgprstart)+"+2]\n\
@@ -1151,7 +1163,7 @@ v_cvt_f16_f32 v["+str(vgprstart)+"+3], v["+str(vgprstart)+"+3]\n\
 v_pack_b32_f16 v["+str(vgprstart)+"+0], v["+str(vgprstart)+"+0], v["+str(vgprstart)+"+1]\n\
 v_pack_b32_f16 v["+str(vgprstart)+"+1], v["+str(vgprstart)+"+2], v["+str(vgprstart)+"+3]\n\
 \n\
-buffer_store_dwordx2 v["+str(vgprstart)+":"+str(vgprstart)+"+1], "+str(vgproffset)+", s[sgprSrdD:sgprSrdD+3], 0 offen offset:0 // store D\n\
+buffer_store_dwordx2 v["+str(vgprstart)+":"+str(vgprstart)+"+1], "+str(vgproffset)+", s[sgprSrdD:sgprSrdD+3], 0 offen offset:0, sc0 sc1// store D\n\
 \n\
 //synchronizer store\n"
     module.addGSUSYNC(contents)
@@ -1479,21 +1491,27 @@ buffer_store_dwordx2 v["+str(vgprstart)+":"+str(vgprstart)+"+1], "+str(vgproffse
       # pack stores, beta and non-beta reach here:
       packModule = Module("Empty pack module")
       convertModule = Module("Empty convert module")
-      if self.kernel["ProblemType"]["HighPrecisionAccumulate"] and (self.kernel["_GlobalAccumulation"] != 'MultipleBuffer'):
+      print("self.kernel[_GlobalAccumulation] != 'MultipleBuffer'", self.kernel["_GlobalAccumulation"] != 'MultipleBuffer')
+      # if self.kernel["ProblemType"]["HighPrecisionAccumulate"] and (self.kernel["_GlobalAccumulation"] != 'MultipleBuffer'):
+      if self.kernel["ProblemType"]["HighPrecisionAccumulate"] and (self.kernel["_GlobalAccumulation"] != 'MultipleBuffer') and (self.kernel["_GlobalAccumulation"] != 'MultipleBufferSingleKernel'):
         if self.kernel["ActivationFuncCall"] and activationCDataType == self.kernel["ProblemType"]["DestDataType"]:
           destIdx = self.activationSetPCStruct.vgprActCopy
         else:
           destIdx = self.ss.elementSumIdx[elementIdx]
         if self.kernel["ProblemType"]["DestDataType"].isHalf():
+          print("DestDataType isHalf", self.kernel["ProblemType"]["DestDataType"].isHalf())
           packModule = self.packdata(self.gwvw, destIdx, self.ss.elementSumIdx[elementIdx], inputPrefix="ValuC+", prefixOffset=self.parentWriter.states.c.startVgprValu)
         elif self.kernel["ProblemType"]["DestDataType"].isBFloat16():
+          print("DestDataType isBFloat16", self.kernel["ProblemType"]["DestDataType"].isBFloat16())
           packModule = self.packdata(self.gwvw, destIdx, self.ss.elementSumIdx[elementIdx], bf16CVTVgprStruct=self.bf16CVTVgprStruct,
                                      tmpS01=self.tmpS01, laneSGPRC=self.laneSGPRC, inputPrefix="ValuC+", prefixOffset=self.parentWriter.states.c.startVgprValu)
         elif self.kernel["ProblemType"]["DestDataType"].isInt32():
+          print("DestDataType isInt32", self.kernel["ProblemType"]["DestDataType"].isInt32())
           if self.kernel["ProblemType"]["ComputeDataType"].isSingle() and ((self.parentWriter.states.useBias == DataDirection.READ) or self.kernel["ActivationFuncCall"] or self.applyAlpha or self.beta):
             convertModule = convertData(self.gwvw, self.ss.elementSumIdx[elementIdx], cvtType=CvtType.CVT_F32_to_I32, \
                                         inputPrefix="ValuC+", prefixOffset=self.parentWriter.states.c.startVgprValu)
         elif self.kernel["ProblemType"]["DestDataType"].isInt8():
+          print("DestDataType isInt8", self.kernel["ProblemType"]["DestDataType"].isInt8())
           if self.kernel["ProblemType"]["ComputeDataType"].isSingle() and ((self.parentWriter.states.useBias == DataDirection.READ) or self.kernel["ActivationFuncCall"] or self.applyAlpha or self.beta):
             convertModule = convertData(self.gwvw, self.ss.elementSumIdx[elementIdx], cvtType=CvtType.CVT_F32_to_I32, roundType=RoundType.ROUND_TO_NEAREST_EVEN, \
                                         inputPrefix="ValuC+", prefixOffset=self.parentWriter.states.c.startVgprValu)
@@ -1619,7 +1637,7 @@ buffer_store_dwordx2 v["+str(vgprstart)+":"+str(vgprstart)+"+1], "+str(vgproffse
     # print("GSUSYNC2 ", "addrVgpr: ", addrCalc.addrDVgpr, " ", self.tmpS01, " ", sumIdx)
     module.addGSUSYNC("\n") #GSUSYNC
 
-    if self.kernel["StoreVectorWidth"]==2:
+    if 0: #self.kernel["StoreVectorWidth"]==2:
       module.add(self.GSUSYNC2(self.kernel["StoreVectorWidth"], self.kernel["ProblemType"]["DestDataType"].isSingle(), sumIdx , self.ss.elementSumIdx[elementIdx-1], vgpr(self.ss.elementAddr[elementIdx-1].addrDVgpr)))
       # module.add(MacroInstruction("GSUSYNC2", args=[sumIdx , self.ss.elementSumIdx[elementIdx-1], vgpr(self.ss.elementAddr[elementIdx-1].addrDVgpr)]))
     else:

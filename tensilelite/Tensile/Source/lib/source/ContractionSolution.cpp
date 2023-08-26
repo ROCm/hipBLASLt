@@ -1942,9 +1942,9 @@ namespace Tensile
 
         if((sizeMapping.customKernelName == "" && (sizeMapping.globalAccumulation != 3)) && sizeMapping.globalAccumulation)
         {
-            std::cout << "Running post kernel: " << std::endl;
-            std::cout << "Running post kernel: " << sizeMapping.customKernelName << std::endl;
-            std::cout << "Running post kernel: " << sizeMapping.globalAccumulation << std::endl;
+            // std::cout << "Running post kernel: " << std::endl;
+            // std::cout << "Running post kernel: " << sizeMapping.customKernelName << std::endl;
+            // std::cout << "Running post kernel: " << sizeMapping.globalAccumulation << std::endl;
             if(debug)
                 rv.push_back(generateOutputConversionCall<true>(problem, inputs));
             else

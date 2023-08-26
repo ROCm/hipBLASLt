@@ -6712,7 +6712,7 @@ class KernelWriterAssembly(KernelWriter):
     module.add(allocPostLoopSrdSuppressRaw("Sync", "D", labelStr, sgprLength=hex(0x80000000)))
     # module.add(self.allocPostLoopSrd("Zeroing"))
 
-    tmpspgr = self.sgprPool.checkOut(2)
+    tmpspgr = self.sgprPool.checkOutAligned(2, 4)
     module.add(SMulHIU32(dst=sgpr(tmpspgr+1), src0=sgpr("StrideCK"), src1=hex(kernel["GlobalSplitU"]), comment=""))
     module.add(SMulI32(dst=sgpr(tmpspgr+0), src0=sgpr("StrideCK"), src1=hex(kernel["GlobalSplitU"]), comment=""))
 
