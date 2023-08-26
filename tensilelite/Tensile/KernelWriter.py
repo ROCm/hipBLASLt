@@ -1937,7 +1937,8 @@ class KernelWriter(metaclass=abc.ABCMeta):
     
 
     module.add(SMovB32(dst=sgpr("GSUSync"), src="0x1", comment=""))
-    module.addGSUSYNC("s_atomic_add s[sgprGSUSync], s[sgprKernArgAddress:sgprKernArgAddress+1], 0x8C glc\n")
+    # module.addGSUSYNC("s_atomic_add s[sgprGSUSync], s[sgprKernArgAddress:sgprKernArgAddress+1], 0x8C\n")
+    module.addGSUSYNC("s_store_dword s[sgprGSUSync], s[sgprKernArgAddress:sgprKernArgAddress+1], 0x8C \n")
     module.add(SWaitCnt(waitAll=True, comment=""))
     ZEROINGENDLabel = Label("ZEROINGEND", "" )
     module.add(ZEROINGENDLabel)

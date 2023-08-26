@@ -604,8 +604,7 @@
     GlobalReadVectorWidthA: 8
     GlobalReadVectorWidthB: 4
     GlobalSplitU: 303
-    # GlobalSplitUAlgorithm: MultipleBuffer
-    GlobalSplitUAlgorithm: MultipleBufferSingleKernel
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: false
     GuaranteeNoPartialA: true
@@ -823,8 +822,7 @@
     _DepthUA: 128
     _DepthUB: 128
     _DepthUMetadata: 128
-    # _GlobalAccumulation: MultipleBuffer
-    _GlobalAccumulation: MultipleBufferSingleKernel
+    _GlobalAccumulation: MultipleBuffer
     _UseSgprForGRO: 1
     _VectorStore: 1
     _WorkspaceSizePerElemBias: 0
@@ -858,7 +856,8 @@
     GlobalReadVectorWidthA: 8
     GlobalReadVectorWidthB: 4
     GlobalSplitU: 4
-    GlobalSplitUAlgorithm: MultipleBuffer
+    # GlobalSplitUAlgorithm: MultipleBuffer
+    GlobalSplitUAlgorithm: MultipleBufferSingleKernel
     GlobalWriteVectorWidth: 1
     GroupLoadStore: false
     GuaranteeNoPartialA: true
@@ -1034,14 +1033,16 @@
     ScheduleLocalWrite: 1
     SolutionIndex: 3
     SolutionNameMin: Cijk_Ailk_Bljk_HHS_BH_Bias_AH_SDV_SAV_MT16x64x128_MI16x16x1_SN_GSU4_MIWT1_1_NT0_NTA0_NTB0_NTC0_NTD0_NTM0_SU4_SUS256_WSGRA1_WSGRB1_WGM1
-    SourceSwap: 1
+    # SourceSwap: 1
+    SourceSwap: 0
     StaggerU: 4
     StaggerUMapping: 0
     StaggerUStride: 256
     StorePriorityOpt: 1
     StoreRemapVectorWidth: 0
     StoreSyncOpt: 0
-    StoreVectorWidth: 1
+    # StoreVectorWidth: 1
+    StoreVectorWidth: 4
     SubGroup0: 4
     SubGroup1: 64
     SubGroupA: 4
@@ -1076,7 +1077,8 @@
     _DepthUA: 128
     _DepthUB: 128
     _DepthUMetadata: 128
-    _GlobalAccumulation: MultipleBuffer
+    # _GlobalAccumulation: MultipleBuffer
+    _GlobalAccumulation: MultipleBufferSingleKernel
     _UseSgprForGRO: 1
     _VectorStore: 1
     _WorkspaceSizePerElemBias: 0
@@ -1110,7 +1112,8 @@
     GlobalReadVectorWidthA: 8
     GlobalReadVectorWidthB: 8
     GlobalSplitU: 5
-    GlobalSplitUAlgorithm: MultipleBuffer
+    # GlobalSplitUAlgorithm: MultipleBuffer
+    GlobalSplitUAlgorithm: MultipleBufferSingleKernel
     GlobalWriteVectorWidth: 1
     GroupLoadStore: false
     GuaranteeNoPartialA: true
@@ -1291,7 +1294,8 @@
     StaggerUMapping: 0
     StaggerUStride: 0
     StorePriorityOpt: 1
-    StoreRemapVectorWidth: 4
+    # StoreRemapVectorWidth: 4
+    StoreRemapVectorWidth: 0
     StoreSyncOpt: 0
     StoreVectorWidth: 4
     SubGroup0: 4
@@ -1328,7 +1332,8 @@
     _DepthUA: 128
     _DepthUB: 128
     _DepthUMetadata: 128
-    _GlobalAccumulation: MultipleBuffer
+    # _GlobalAccumulation: MultipleBuffer
+    _GlobalAccumulation: MultipleBufferSingleKernel
     _UseSgprForGRO: 1
     _VectorStore: 1
     _WorkspaceSizePerElemBias: 0

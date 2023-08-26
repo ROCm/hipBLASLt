@@ -1041,7 +1041,7 @@ class KernelWriterAssembly(KernelWriter):
 
   def checkResources(self, mkb: KernelBody):
     # register allocation
-    if 0:
+    if 1:
       totalVgprs = self.vgprPool.size()
     else:
       totalVgprs = 124
