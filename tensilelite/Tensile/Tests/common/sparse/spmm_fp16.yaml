@@ -44,7 +44,11 @@ BenchmarkProblems:
           - [32, 32, 16, 1,  1,  2, 2,  2, 2 ]
           - [32, 32, 16, 1,  1,  2, 4,  4, 2 ]
           - [32, 32, 16, 1,  1,  7, 2,  1, 4 ]
-        - GlobalReadVectorWidthA: [4]
+          - [32, 32, 16, 1,  1,  4, 4,  2, 2 ]
+          - [32, 32, 16, 1,  1,  4, 2,  2, 4 ]
+        - GlobalReadVectorWidthA: [4,8]
+        - VectorWidthA: [1,2,4]
+        - VectorWidthB: [1,2,4]
         - DepthU: [32,64]
         - TransposeLDS: [0,1]
         - LdsPadA: [-1]
@@ -92,6 +96,14 @@ BenchmarkProblems:
           - Exact: [256, 256, 1, 128] # classic format
           - Exact: [256, 256, 1, 136] # classic format
           - Exact: [256, 256, 1, 256] # classic format
+          - Exact: [384, 384, 1, 16] # classic format
+          - Exact: [384, 384, 1, 24] # classic format
+          - Exact: [384, 384, 1, 32] # classic format
+          - Exact: [384, 384, 1, 64] # classic format
+          - Exact: [384, 384, 1, 96] # classic format
+          - Exact: [384, 384, 1, 128] # classic format
+          - Exact: [384, 384, 1, 136] # classic format
+          - Exact: [384, 384, 1, 256] # classic format
         - ActivationArgs:
           - [Enum: none]
           - [Enum: tanh]
@@ -125,7 +137,11 @@ BenchmarkProblems:
           - [32, 32, 16, 1,  1,  2, 2,  2, 2 ]
           - [32, 32, 16, 1,  1,  2, 4,  4, 2 ]
           - [32, 32, 16, 1,  1,  7, 2,  1, 4 ]
-        - GlobalReadVectorWidthA: [4]
+          - [32, 32, 16, 1,  1,  4, 4,  2, 2 ]
+          - [32, 32, 16, 1,  1,  4, 2,  2, 4 ]
+        - GlobalReadVectorWidthA: [4,8]
+        - VectorWidthA: [1,2,4]
+        - VectorWidthB: [1,2,4]
         - DepthU: [32,64]
         - TransposeLDS: [0,1]
         - LdsPadA: [-1]
@@ -173,6 +189,14 @@ BenchmarkProblems:
           - Exact: [256, 256, 1, 128] # classic format
           - Exact: [256, 256, 1, 136] # classic format
           - Exact: [256, 256, 1, 256] # classic format
+          - Exact: [384, 384, 1, 16] # classic format
+          - Exact: [384, 384, 1, 24] # classic format
+          - Exact: [384, 384, 1, 32] # classic format
+          - Exact: [384, 384, 1, 64] # classic format
+          - Exact: [384, 384, 1, 96] # classic format
+          - Exact: [384, 384, 1, 128] # classic format
+          - Exact: [384, 384, 1, 136] # classic format
+          - Exact: [384, 384, 1, 256] # classic format
         - ActivationArgs:
           - [Enum: none]
           - [Enum: tanh]
@@ -206,7 +230,11 @@ BenchmarkProblems:
           - [32, 32, 16, 1,  1,  2, 2,  2, 2 ]
           - [32, 32, 16, 1,  1,  2, 4,  4, 2 ]
           - [32, 32, 16, 1,  1,  7, 2,  1, 4 ]
-        - GlobalReadVectorWidthA: [4]
+          - [32, 32, 16, 1,  1,  4, 4,  2, 2 ]
+          - [32, 32, 16, 1,  1,  4, 2,  2, 4 ]
+        - GlobalReadVectorWidthA: [4,8]
+        - VectorWidthA: [1,2,4]
+        - VectorWidthB: [1,2,4]
         - DepthU: [32,64]
         - TransposeLDS: [0,1]
         - LdsPadA: [-1]
@@ -254,6 +282,14 @@ BenchmarkProblems:
           - Exact: [256, 256, 1, 128] # classic format
           - Exact: [256, 256, 1, 136] # classic format
           - Exact: [256, 256, 1, 256] # classic format
+          - Exact: [384, 384, 1, 16] # classic format
+          - Exact: [384, 384, 1, 24] # classic format
+          - Exact: [384, 384, 1, 32] # classic format
+          - Exact: [384, 384, 1, 64] # classic format
+          - Exact: [384, 384, 1, 96] # classic format
+          - Exact: [384, 384, 1, 128] # classic format
+          - Exact: [384, 384, 1, 136] # classic format
+          - Exact: [384, 384, 1, 256] # classic format
         - ActivationArgs:
           - [Enum: none]
           - [Enum: tanh]
@@ -287,7 +323,11 @@ BenchmarkProblems:
           - [32, 32, 16, 1,  1,  2, 2,  2, 2 ]
           - [32, 32, 16, 1,  1,  2, 4,  4, 2 ]
           - [32, 32, 16, 1,  1,  7, 2,  1, 4 ]
-        - GlobalReadVectorWidthA: [4]
+          - [32, 32, 16, 1,  1,  4, 4,  2, 2 ]
+          - [32, 32, 16, 1,  1,  4, 2,  2, 4 ]
+        - GlobalReadVectorWidthA: [4,8]
+        - VectorWidthA: [1,2,4]
+        - VectorWidthB: [1,2,4]
         - DepthU: [32,64]
         - TransposeLDS: [0,1]
         - LdsPadA: [-1]
@@ -335,6 +375,14 @@ BenchmarkProblems:
           - Exact: [256, 256, 1, 128] # classic format
           - Exact: [256, 256, 1, 136] # classic format
           - Exact: [256, 256, 1, 256] # classic format
+          - Exact: [384, 384, 1, 16] # classic format
+          - Exact: [384, 384, 1, 24] # classic format
+          - Exact: [384, 384, 1, 32] # classic format
+          - Exact: [384, 384, 1, 64] # classic format
+          - Exact: [384, 384, 1, 96] # classic format
+          - Exact: [384, 384, 1, 128] # classic format
+          - Exact: [384, 384, 1, 136] # classic format
+          - Exact: [384, 384, 1, 256] # classic format
         - ActivationArgs:
           - [Enum: none]
           - [Enum: tanh]

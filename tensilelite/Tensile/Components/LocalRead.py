@@ -102,28 +102,27 @@ class LocalReadMFMA(LocalRead):
                             for i in range(0, numVgpr):
                                 # convert from [tile][MiInputPerThread][vector] to [tile][vector][MiInputPerThread]
                                 vgprIdx = (vIdx*numVgpr+i)*tP["bpe"]*kernel["MIInputPerThread%s"%tc]//writer.states.bpr*min(writer.states.bpr//tP["bpe"],vectorWidth)
-                                if kernel["ProblemType"]["DataType"].isHalf() or kernel["MFMA_BF16_1K"]:
-                                    packCode.add(VPermB32(dst=vgpr("Valu%s_X%u_I%u+%u"%(tc, bufferIdx, iui, vgprIdx + 0)), src0=vgpr("Valu%s_X%u_I%u_D1+%u"%(tc, bufferIdx, iui, i+vIdx*numVgpr)), src1=vgpr("Valu%s_X%u_I%u_D0+%u"%(tc, bufferIdx, iui, i+vIdx*numVgpr)), src2=sgpr("PackKForV0"), comment="select K=01 for vector=0"))
-                                    packCode.add(VPermB32(dst=vgpr("Valu%s_X%u_I%u+%u"%(tc, bufferIdx, iui, vgprIdx + 1)), src0=vgpr("Valu%s_X%u_I%u_D3+%u"%(tc, bufferIdx, iui, i+vIdx*numVgpr)), src1=vgpr("Valu%s_X%u_I%u_D2+%u"%(tc, bufferIdx, iui, i+vIdx*numVgpr)), src2=sgpr("PackKForV0"), comment="select K=23 for vector=0"))
-                                    packCode.add(VPermB32(dst=vgpr("Valu%s_X%u_I%u+%u"%(tc, bufferIdx, iui, vgprIdx + 2)), src0=vgpr("Valu%s_X%u_I%u_D1+%u"%(tc, bufferIdx, iui, i+vIdx*numVgpr)), src1=vgpr("Valu%s_X%u_I%u_D0+%u"%(tc, bufferIdx, iui, i+vIdx*numVgpr)), src2=sgpr("PackKForV1"), comment="select K=01 for vector=1"))
-                                    packCode.add(VPermB32(dst=vgpr("Valu%s_X%u_I%u+%u"%(tc, bufferIdx, iui, vgprIdx + 3)), src0=vgpr("Valu%s_X%u_I%u_D3+%u"%(tc, bufferIdx, iui, i+vIdx*numVgpr)), src1=vgpr("Valu%s_X%u_I%u_D2+%u"%(tc, bufferIdx, iui, i+vIdx*numVgpr)), src2=sgpr("PackKForV1"), comment="select K=23 for vector=1"))
-                                elif kernel["ProblemType"]["DataType"].isBFloat16():
-                                    packCode.add(VPermB32(dst=vgpr("Valu%s_X%u_I%u+%u"%(tc, bufferIdx, iui, vgprIdx + 0)), src0=vgpr("Valu%s_X%u_I%u_D1+%u"%(tc, bufferIdx, iui, i+vIdx*numVgpr)), src1=vgpr("Valu%s_X%u_I%u_D0+%u"%(tc, bufferIdx, iui, i+vIdx*numVgpr)), src2=sgpr("PackKForV0"), comment="select K=01 for vector=0"))
-                                    packCode.add(VPermB32(dst=vgpr("Valu%s_X%u_I%u+%u"%(tc, bufferIdx, iui, vgprIdx + 1)), src0=vgpr("Valu%s_X%u_I%u_D1+%u"%(tc, bufferIdx, iui, i+vIdx*numVgpr)), src1=vgpr("Valu%s_X%u_I%u_D0+%u"%(tc, bufferIdx, iui, i+vIdx*numVgpr)), src2=sgpr("PackKForV1"), comment="select K=01 for vector=1"))
+                                if kernel["ProblemType"]["DataType"].isHalf() or kernel["MFMA_BF16_1K"] or kernel["ProblemType"]["DataType"].isBFloat16():
+                                    vgprOffset = 0
+                                    for vectorIdx in range(0, 2):
+                                        for elementIdx in range(0, tP["bpe"]*kernel["MIInputPerThread%s"%tc]//writer.states.bpr):
+                                            packCode.add(VPermB32(dst=vgpr("Valu%s_X%u_I%u+%u"%(tc, bufferIdx, iui, vgprIdx+vgprOffset)), src0=vgpr("Valu%s_X%u_I%u_D%u+%u"%(tc, bufferIdx, iui, elementIdx*2+1, i+vIdx*numVgpr)), src1=vgpr("Valu%s_X%u_I%u_D%u+%u"%(tc, bufferIdx, iui, elementIdx*2, i+vIdx*numVgpr)), src2=sgpr("PackKForV%u"%vectorIdx), \
+                                                                  comment="select K=%u%u for vector=%u"%(elementIdx*2,  elementIdx*2+1, vectorIdx)))
+                                            vgprOffset += 1
                                 elif kernel["ProblemType"]["DataType"].isInt8() or kernel["ProblemType"]["DataType"].is8bitFloat():
-                                    packCode.add(VPermB32(dst=vgpr("Valu%s_X%u_I%u+%u"%(tc, bufferIdx, iui, vgprIdx + 0)), src0=vgpr("Valu%s_X%u_I%u_D1+%u"%(tc, bufferIdx, iui, i+vIdx*numVgpr)), src1=vgpr("Valu%s_X%u_I%u_D0+%u"%(tc, bufferIdx, iui, i+vIdx*numVgpr)), src2=sgpr("PackKForV0"), comment="select K=01 for vector=0"))
-                                    packCode.add(VPermB32(dst=vgpr("PackTemp"), src0=vgpr("Valu%s_X%u_I%u_D3+%u"%(tc, bufferIdx, iui, i+vIdx*numVgpr)), src1=vgpr("Valu%s_X%u_I%u_D2+%u"%(tc, bufferIdx, iui, i+vIdx*numVgpr)), src2=sgpr("PackKForV0"), comment="select K=23 for vector=0"))
-                                    packCode.add(VLShiftLeftOrB32(dst=vgpr("Valu%s_X%u_I%u+%u"%(tc, bufferIdx, iui, vgprIdx + 0)), src0=vgpr("PackTemp"), shiftHex=16, src1=vgpr("Valu%s_X%u_I%u+%u"%(tc, bufferIdx, iui, vgprIdx + 0)), comment="pack two half Vgpr to one Vgpr"))
-                                    packCode.add(VPermB32(dst=vgpr("Valu%s_X%u_I%u+%u"%(tc, bufferIdx, iui, vgprIdx + 1)), src0=vgpr("Valu%s_X%u_I%u_D1+%u"%(tc, bufferIdx, iui, i+vIdx*numVgpr)), src1=vgpr("Valu%s_X%u_I%u_D0+%u"%(tc, bufferIdx, iui, i+vIdx*numVgpr)), src2=sgpr("PackKForV1"), comment="select K=01 for vector=1"))
-                                    packCode.add(VPermB32(dst=vgpr("PackTemp"), src0=vgpr("Valu%s_X%u_I%u_D3+%u"%(tc, bufferIdx, iui, i+vIdx*numVgpr)), src1=vgpr("Valu%s_X%u_I%u_D2+%u"%(tc, bufferIdx, iui, i+vIdx*numVgpr)), src2=sgpr("PackKForV1"), comment="select K=23 for vector=1"))
-                                    packCode.add(VLShiftLeftOrB32(dst=vgpr("Valu%s_X%u_I%u+%u"%(tc, bufferIdx, iui, vgprIdx + 1)), src0=vgpr("PackTemp"), shiftHex=16, src1=vgpr("Valu%s_X%u_I%u+%u"%(tc, bufferIdx, iui, vgprIdx + 1)), comment="pack two half Vgpr to one Vgpr"))
-                                    if vectorWidth > 2:
-                                        packCode.add(VPermB32(dst=vgpr("Valu%s_X%u_I%u+%u"%(tc, bufferIdx, iui, vgprIdx + 2)), src0=vgpr("Valu%s_X%u_I%u_D1+%u"%(tc, bufferIdx, iui, i+vIdx*numVgpr)), src1=vgpr("Valu%s_X%u_I%u_D0+%u"%(tc, bufferIdx, iui, i+vIdx*numVgpr)), src2=sgpr("PackKForV2"), comment="select K=01 for vector=2"))
-                                        packCode.add(VPermB32(dst=vgpr("PackTemp"), src0=vgpr("Valu%s_X%u_I%u_D3+%u"%(tc, bufferIdx, iui, i+vIdx*numVgpr)), src1=vgpr("Valu%s_X%u_I%u_D2+%u"%(tc, bufferIdx, iui, i+vIdx*numVgpr)), src2=sgpr("PackKForV2"), comment="select K=23 for vector=2"))
-                                        packCode.add(VLShiftLeftOrB32(dst=vgpr("Valu%s_X%u_I%u+%u"%(tc, bufferIdx, iui, vgprIdx + 2)), src0=vgpr("PackTemp"), shiftHex=16, src1=vgpr("Valu%s_X%u_I%u+%u"%(tc, bufferIdx, iui, vgprIdx + 2)), comment="pack two half Vgpr to one Vgpr"))
-                                        packCode.add(VPermB32(dst=vgpr("Valu%s_X%u_I%u+%u"%(tc, bufferIdx, iui, vgprIdx + 3)), src0=vgpr("Valu%s_X%u_I%u_D1+%u"%(tc, bufferIdx, iui, i+vIdx*numVgpr)), src1=vgpr("Valu%s_X%u_I%u_D0+%u"%(tc, bufferIdx, iui, i+vIdx*numVgpr)), src2=sgpr("PackKForV3"), comment="select K=01 for vector=3"))
-                                        packCode.add(VPermB32(dst=vgpr("PackTemp"), src0=vgpr("Valu%s_X%u_I%u_D3+%u"%(tc, bufferIdx, iui, i+vIdx*numVgpr)), src1=vgpr("Valu%s_X%u_I%u_D2+%u"%(tc, bufferIdx, iui, i+vIdx*numVgpr)), src2=sgpr("PackKForV3"), comment="select K=23 for vector=3"))
-                                        packCode.add(VLShiftLeftOrB32(dst=vgpr("Valu%s_X%u_I%u+%u"%(tc, bufferIdx, iui, vgprIdx + 3)), src0=vgpr("PackTemp"), shiftHex=16, src1=vgpr("Valu%s_X%u_I%u+%u"%(tc, bufferIdx, iui, vgprIdx + 3)), comment="pack two half Vgpr to one Vgpr"))
+                                    vgprOffset = 0
+                                    # vertorIdx 2,3 is for the case vectorWidth > 2
+                                    for vectorIdx in range(0, 4):
+                                        if vectorWidth <= 2 and vectorIdx > 1:
+                                            break
+                                        for elementIdx in range(0, tP["bpe"]*kernel["MIInputPerThread%s"%tc]//writer.states.bpr):
+                                            packCode.add(VPermB32(dst=vgpr("Valu%s_X%u_I%u+%u"%(tc, bufferIdx, iui, vgprIdx+vgprOffset)), src0=vgpr("Valu%s_X%u_I%u_D%u+%u"%(tc, bufferIdx, iui, elementIdx*4+1, i+vIdx*numVgpr)), src1=vgpr("Valu%s_X%u_I%u_D%u+%u"%(tc, bufferIdx, iui, elementIdx*4, i+vIdx*numVgpr)), src2=sgpr("PackKForV%u"%vectorIdx), \
+                                                                  comment="select K=%u%u for vector=%u"%(elementIdx*4,  elementIdx*4+1, vectorIdx)))
+                                            packCode.add(VPermB32(dst=vgpr("PackTemp"), src0=vgpr("Valu%s_X%u_I%u_D%u+%u"%(tc, bufferIdx, iui, elementIdx*4+3, i+vIdx*numVgpr)), src1=vgpr("Valu%s_X%u_I%u_D%u+%u"%(tc, bufferIdx, iui, elementIdx*4+2, i+vIdx*numVgpr)), src2=sgpr("PackKForV%u"%vectorIdx), \
+                                                                  comment="select K=%u%u for vector=%u"%(elementIdx*4+2,  elementIdx*4+3, vectorIdx)))
+                                            packCode.add(VLShiftLeftOrB32(dst=vgpr("Valu%s_X%u_I%u+%u"%(tc, bufferIdx, iui, vgprIdx + vgprOffset)), src0=vgpr("PackTemp"), shiftHex=16, src1=vgpr("Valu%s_X%u_I%u+%u"%(tc, bufferIdx, iui, vgprIdx + vgprOffset)), comment="pack two half Vgpr to one Vgpr"))
+                                            vgprOffset += 1
+
                     else:
                         # pack for blockWidth 0.5 type
                         highBitsForHalf = (blockWidth == 0.5) and ((rIdx % 2) == 1) # rIdx = 1,3
