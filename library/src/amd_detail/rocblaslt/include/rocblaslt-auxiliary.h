@@ -352,7 +352,7 @@ void rocblaslt_init_gemmData(rocblaslt_handle       handle,
                              hipblasltDatatype_t    typeB,
                              hipblasltDatatype_t    typeC,
                              hipblasltDatatype_t    typeD,
-                             rocblaslt_compute_type typeComputeAccum,
+                             rocblaslt_compute_type typeCompute,
                              size_t                 maxWorkspaceBytes,
                              std::shared_ptr<void>& gemmData);
 
