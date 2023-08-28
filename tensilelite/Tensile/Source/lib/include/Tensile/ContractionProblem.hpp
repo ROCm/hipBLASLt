@@ -974,7 +974,7 @@ namespace Tensile
                                                            DataType alphaType,
                                                            DataType betaType,
                                                            DataType typeComputeInput,
-                                                           DataType typeComputeAccum,
+                                                           DataType typeCompute,
                                                            double   alpha,
                                                            double   beta,
                                                            bool     isGroupedGemm,

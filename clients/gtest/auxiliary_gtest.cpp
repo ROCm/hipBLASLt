@@ -64,8 +64,9 @@ namespace
                          || (std::is_same<TiA, float>{} && std::is_same<TiB, float>{})
                          || (std::is_same<TiA, hipblaslt_f8>{} && std::is_same<TiB, hipblaslt_f8>{})
                          || (std::is_same<TiA, double>{} && std::is_same<TiB, double>{})
-                         || (std::is_same<TiA, hipblasLtInt8>{}
-                             && std::is_same<TiB, hipblasLtInt8>{})>> : hipblaslt_test_valid
+                         || (std::is_same<TiA, hipblasLtInt8>{} && std::is_same<TiB, hipblasLtInt8>{})
+                         || (std::is_same<TiA, hipblaslt_f8>{} && std::is_same<TiB, hipblasLtHalf>{})
+                         || (std::is_same<TiA, hipblasLtHalf>{} && std::is_same<TiB, hipblaslt_f8>{})>> : hipblaslt_test_valid
     {
         void operator()(const Arguments& arg)
         {
