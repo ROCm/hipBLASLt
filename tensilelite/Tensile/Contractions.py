@@ -411,6 +411,9 @@ class ProblemPredicate(Properties.Predicate):
     def CompoundPredicates(cls, state, problemType):
         rv = []
 
+        if "BatchSizeEqual" in state:
+            rv += [cls('BatchSizeEqual', index=0, value=state["BatchSizeEqual"])]
+
         if not problemType.aType.isInt8x4():
             # calculate the minimum supported free dimension size
             TLUA = state['ProblemType']['TLUA']
