@@ -459,6 +459,7 @@ rocblaslt_status rocblaslt_matmul_desc_create(rocblaslt_matmul_desc* matmulDesc,
             case rocblaslt_compute_f32_fast_xf32:
             case rocblaslt_compute_f64:
             case rocblaslt_compute_i32:
+            case rocblaslt_compute_f32_fast_f16:
                 break;
             default:
                 log_error(__func__, "invalid compute type", computeType);
@@ -1323,6 +1324,60 @@ rocblaslt_status rocblaslt_matmul_is_algo_supported(rocblaslt_handle        hand
                 }
             }
         }
+        else if(a_type == HIPBLASLT_R_16F && b_type == HIPBLASLT_R_8F_E4M3)  // mix types
+        {
+            if(c_type == HIPBLASLT_R_16F && d_type == HIPBLASLT_R_16F)
+            {
+                if(compute_type == rocblaslt_compute_f32_fast_f16)
+                {
+                    float* alphaf = (float*)alpha;
+                    float* betaf  = (float*)beta;
+                    auto   prob   = construct_rocblaslt_problem<rocblaslt_half,
+                                                            rocblaslt_f8,
+                                                            rocblaslt_half,
+                                                            float>(matmul_descr,
+                                                                   matA,
+                                                                   matB,
+                                                                   matC,
+                                                                   matD,
+                                                                   alphaf,
+                                                                   betaf,
+                                                                   algo->max_workspace_bytes);
+                    status        = isSolutionSupported<rocblaslt_half,
+                                                 rocblaslt_f8,
+                                                 rocblaslt_half,
+                                                 float>(
+                        handle, prob, gemmData, algo, workspaceSizeInBytes);
+                }
+            }
+        }
+        else if(a_type == HIPBLASLT_R_8F_E4M3 && b_type == HIPBLASLT_R_16F)  // mix types
+        {
+            if(c_type == HIPBLASLT_R_16F && d_type == HIPBLASLT_R_16F)
+            {
+                if(compute_type == rocblaslt_compute_f32_fast_f16)
+                {
+                    float* alphaf = (float*)alpha;
+                    float* betaf  = (float*)beta;
+                    auto   prob   = construct_rocblaslt_problem<rocblaslt_f8,
+                                                            rocblaslt_half,
+                                                            rocblaslt_half,
+                                                            float>(matmul_descr,
+                                                                   matA,
+                                                                   matB,
+                                                                   matC,
+                                                                   matD,
+                                                                   alphaf,
+                                                                   betaf,
+                                                                   algo->max_workspace_bytes);
+                    status        = isSolutionSupported<rocblaslt_f8,
+                                                 rocblaslt_half,
+                                                 rocblaslt_half,
+                                                 float>(
+                        handle, prob, gemmData, algo, workspaceSizeInBytes);
+                }
+            }
+        }
         else
         {
             status = rocblaslt_status_not_implemented;
@@ -1748,6 +1803,66 @@ rocblaslt_status
                 }
             }
         }
+        else if(a_type == HIPBLASLT_R_16F && b_type == HIPBLASLT_R_8F_E4M3)  // mix types
+        {
+            if(c_type == HIPBLASLT_R_16F && d_type == HIPBLASLT_R_16F)
+            {
+                if(compute_type == rocblaslt_compute_f32_fast_f16)
+                {
+                    float alpha = 1.0;
+                    float beta  = 1.0;
+                    auto  prob  = construct_rocblaslt_problem<rocblaslt_half,
+                                                            rocblaslt_f8,
+                                                            rocblaslt_half,
+                                                            float>(matmul_desc,
+                                                                   matA,
+                                                                   matB,
+                                                                   matC,
+                                                                   matD,
+                                                                   &alpha,
+                                                                   &beta,
+                                                                   pref->max_workspace_bytes);
+                    status = getBestSolutions<rocblaslt_half, rocblaslt_f8, rocblaslt_half, float>(
+                        prob,
+                        handle,
+                        tensile_data,
+                        requestedAlgoCount,
+                        heuristicResultsArray,
+                        returnAlgoCount,
+                        pref->max_workspace_bytes);
+                }
+            }
+        }
+        else if(a_type == HIPBLASLT_R_8F_E4M3 && b_type == HIPBLASLT_R_16F)  // mix types
+        {
+            if(c_type == HIPBLASLT_R_16F && d_type == HIPBLASLT_R_16F)
+            {
+                if(compute_type == rocblaslt_compute_f32_fast_f16)
+                {
+                    float alpha = 1.0;
+                    float beta  = 1.0;
+                    auto  prob  = construct_rocblaslt_problem<rocblaslt_f8,
+                                                            rocblaslt_half,
+                                                            rocblaslt_half,
+                                                            float>(matmul_desc,
+                                                                   matA,
+                                                                   matB,
+                                                                   matC,
+                                                                   matD,
+                                                                   &alpha,
+                                                                   &beta,
+                                                                   pref->max_workspace_bytes);
+                    status = getBestSolutions<rocblaslt_f8, rocblaslt_half, rocblaslt_half, float>(
+                        prob,
+                        handle,
+                        tensile_data,
+                        requestedAlgoCount,
+                        heuristicResultsArray,
+                        returnAlgoCount,
+                        pref->max_workspace_bytes);
+                }
+            }
+        }
         else
         {
             status = rocblaslt_status_not_implemented;
@@ -1777,7 +1892,7 @@ void rocblaslt_init_gemmData(rocblaslt_handle       handle,
                              hipblasltDatatype_t    typeB,
                              hipblasltDatatype_t    typeC,
                              hipblasltDatatype_t    typeD,
-                             rocblaslt_compute_type typeComputeAccum,
+                             rocblaslt_compute_type typeCompute,
                              size_t                 maxWorkspaceBytes,
                              std::shared_ptr<void>& gemmData)
 {
@@ -1789,7 +1904,7 @@ void rocblaslt_init_gemmData(rocblaslt_handle       handle,
                         typeB,
                         typeC,
                         typeD,
-                        typeComputeAccum,
+                        typeCompute,
                         maxWorkspaceBytes,
                         gemmData);
 }

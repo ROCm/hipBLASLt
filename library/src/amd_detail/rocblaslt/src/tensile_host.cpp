@@ -307,26 +307,34 @@ namespace
             return Tensile::DataType::Double;
         case rocblaslt_compute_i32:
             return Tensile::DataType::Int32;
+        case rocblaslt_compute_f32_fast_f16:
+            return Tensile::DataType::Float;
         default:
             throw std::runtime_error("Unsupported type.");
         }
         return Tensile::DataType::None;
     }
 
-    rocblaslt_compute_type tensile2RocType(Tensile::DataType type)
+    inline const Tensile::DataType roc2TensileComputeInputType(const Tensile::DataType&      typeA,
+                                                               const Tensile::DataType&      typeB,
+                                                               const rocblaslt_compute_type& typeCompute)
     {
-        switch(type)
+        switch(typeCompute)
         {
-        case Tensile::DataType::Float:
-            return rocblaslt_compute_f32;
-        case Tensile::DataType::Double:
-            return rocblaslt_compute_f64;
-        case Tensile::DataType::Int32:
-            return rocblaslt_compute_i32;
-        default:
-            throw std::runtime_error("Unsupported type.");
+        case rocblaslt_compute_f32_fast_f16:
+            return Tensile::DataType::Half;
+        default:;
         }
-        return rocblaslt_compute_f32;
+
+        if(typeA == Tensile::DataType::Float8 && typeB == Tensile::DataType::BFloat8)
+        {
+            return Tensile::DataType::Float8BFloat8;
+        }
+        else if(typeA == Tensile::DataType::BFloat8 && typeB == Tensile::DataType::Float8)
+        {
+            return Tensile::DataType::BFloat8Float8;
+        }
+        return Tensile::DataTypeInfo::Get(typeA).elementSize <= Tensile::DataTypeInfo::Get(typeB).elementSize ? typeA : typeB;
     }
 
     inline auto CreateTensileProblem(hipblasOperation_t     opA,
@@ -335,32 +343,25 @@ namespace
                                      hipblasltDatatype_t    typeB,
                                      hipblasltDatatype_t    typeC,
                                      hipblasltDatatype_t    typeD,
-                                     rocblaslt_compute_type typeComputeAccum,
+                                     rocblaslt_compute_type typeCompute,
                                      float                  alpha,
                                      float                  beta,
                                      bool                   isGroupedGemm,
                                      size_t                 maxWorkspaceBytes)
     {
-        Tensile::DataType computeInputType = hip2TensileType(typeA);
-        if(typeA == HIPBLASLT_R_8F_E5M2 && typeB == HIPBLASLT_R_8F_E4M3)
-        {
-            computeInputType = Tensile::DataType::BFloat8Float8;
-        }
-        else if(typeA == HIPBLASLT_R_8F_E4M3 && typeB == HIPBLASLT_R_8F_E5M2)
-        {
-            computeInputType = Tensile::DataType::Float8BFloat8;
-        }
+        auto typeATensile = hip2TensileType(typeA);
+        auto typeBTensile = hip2TensileType(typeB);
         return Tensile::ContractionProblemGemm::createDefaultProblem(
             (opA != HIPBLAS_OP_N),
             (opB != HIPBLAS_OP_N),
-            hip2TensileType(typeA),
-            hip2TensileType(typeB),
+            typeATensile,
+            typeBTensile,
             hip2TensileType(typeC),
             hip2TensileType(typeD),
-            roc2TensileType(typeComputeAccum),
-            roc2TensileType(typeComputeAccum),
-            computeInputType,
-            roc2TensileType(typeComputeAccum),
+            roc2TensileType(typeCompute),
+            roc2TensileType(typeCompute),
+            roc2TensileComputeInputType(typeATensile, typeBTensile, typeCompute),
+            roc2TensileType(typeCompute),
             alpha,
             beta,
             isGroupedGemm,
@@ -488,18 +489,7 @@ namespace
                                                        value_category(*prob.beta),
                                                        prob.workspaceSize};
 
-        Tensile::DataType computeInputType = Tensile_TiA;
-        if constexpr(std::is_same<TiA, rocblaslt_bf8>::value
-                     && std::is_same<TiB, rocblaslt_f8>::value)
-        {
-            computeInputType = Tensile::DataType::BFloat8Float8;
-        }
-        else if constexpr(std::is_same<TiA, rocblaslt_f8>::value
-                          && std::is_same<TiB, rocblaslt_bf8>::value)
-        {
-            computeInputType = Tensile::DataType::Float8BFloat8;
-        }
-        tensileProblem.setComputeInputType(computeInputType);
+        tensileProblem.setComputeInputType(roc2TensileComputeInputType(Tensile_TiA, Tensile_TiB, prob.compute_type));
         tensileProblem.setAlphaType(Tensile_Tc);
         tensileProblem.setBetaType(Tensile_Tc);
 
@@ -548,7 +538,7 @@ namespace
             hipblasltDatatype_to_tensile_type(prob.bias_type), biasSize, 0, prob.gradient, biasSrc);
 
         // ScaleAB is only supported on F8/BF8
-        if(Tensile_TiA == Tensile::DataType::Float8 || Tensile_TiA == Tensile::DataType::BFloat8)
+        if((Tensile_TiA == Tensile::DataType::Float8 || Tensile_TiA == Tensile::DataType::BFloat8) && prob.compute_type != rocblaslt_compute_f32_fast_f16)
         {
             tensileProblem.setUseScaleAB(true);
             tensileProblem.setScaleA(Tensile_Tc);
@@ -681,18 +671,7 @@ namespace
         tensileProblem.updateProblem(
             freeIndex, batchIndex, boundIndex, (double)(*prob.beta), prob.workspaceSize);
 
-        Tensile::DataType computeInputType = Tensile_TiA;
-        if constexpr(std::is_same<TiA, rocblaslt_bf8>::value
-                     && std::is_same<TiB, rocblaslt_f8>::value)
-        {
-            computeInputType = Tensile::DataType::BFloat8Float8;
-        }
-        else if constexpr(std::is_same<TiA, rocblaslt_f8>::value
-                          && std::is_same<TiB, rocblaslt_bf8>::value)
-        {
-            computeInputType = Tensile::DataType::Float8BFloat8;
-        }
-        tensileProblem.setComputeInputType(computeInputType);
+        tensileProblem.setComputeInputType(roc2TensileComputeInputType(Tensile_TiA, Tensile_TiB, prob.compute_type));
         tensileProblem.setAlphaType(Tensile_Tc);
         tensileProblem.setBetaType(Tensile_Tc);
 
@@ -750,8 +729,8 @@ namespace
                                    biasSrc);
 
             // ScaleAB is only supported on F8/BF8
-            if(Tensile_TiA == Tensile::DataType::Float8
-               || Tensile_TiA == Tensile::DataType::BFloat8)
+            if((Tensile_TiA == Tensile::DataType::Float8
+               || Tensile_TiA == Tensile::DataType::BFloat8) && prob.compute_type != rocblaslt_compute_f32_fast_f16)
             {
                 tensileProblem.setUseScaleAB(true);
                 tensileProblem.setScaleA(Tensile_Tc);
@@ -1204,7 +1183,7 @@ void initTensileGemmData(rocblaslt_handle       handle,
                          hipblasltDatatype_t    typeB,
                          hipblasltDatatype_t    typeC,
                          hipblasltDatatype_t    typeD,
-                         rocblaslt_compute_type typeComputeAccum,
+                         rocblaslt_compute_type typeCompute,
                          size_t                 maxWorkspaceBytes,
                          std::shared_ptr<void>& gemmData)
 {
@@ -1219,7 +1198,7 @@ void initTensileGemmData(rocblaslt_handle       handle,
                                             typeB,
                                             typeC,
                                             typeD,
-                                            typeComputeAccum,
+                                            typeCompute,
                                             alpha,
                                             beta,
                                             false,
@@ -1239,7 +1218,7 @@ void initTensileGemmData(rocblaslt_handle       handle,
                                                            typeB,
                                                            typeC,
                                                            typeD,
-                                                           typeComputeAccum,
+                                                           typeCompute,
                                                            alpha,
                                                            beta,
                                                            true,
@@ -2514,6 +2493,8 @@ CREATEFUNCTION(rocblaslt_f8, rocblaslt_bf8, rocblaslt_half, float)
 CREATEFUNCTION(rocblaslt_bf8, rocblaslt_f8, rocblaslt_half, float)
 CREATEFUNCTION(rocblasltInt8, rocblasltInt8, int32_t, int32_t)
 CREATEFUNCTION(rocblasltInt8, rocblasltInt8, rocblasltInt8, int32_t)
+CREATEFUNCTION(rocblaslt_f8, rocblaslt_half, rocblaslt_half, float)
+CREATEFUNCTION(rocblaslt_half, rocblaslt_f8, rocblaslt_half, float)
 
 /***********************************************************************************
  * Whether Tensile has been initialized for at least one device (used for
