@@ -86,7 +86,7 @@ endif()
 list( APPEND COMMON_LINK_LIBS "-lm -lstdc++fs")
 
 if (NOT BUILD_FORTRAN_CLIENTS)
-  list( APPEND COMMON_LINK_LIBS "-lgfortran") # for lapack
+  list( APPEND COMMON_LINK_LIBS "-lgfortran -lflang -lflangrti") # for lapack
 endif()
 
 #if (NOT WIN32)
