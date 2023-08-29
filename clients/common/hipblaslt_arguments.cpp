@@ -35,8 +35,19 @@
 /*! \brief device matches pattern */
 bool gpu_arch_match(const std::string& gpu_arch, const char pattern[4])
 {
-    int         gpu_len = gpu_arch.length();
-    const char* gpu     = gpu_arch.c_str();
+    auto removePrefix = [](const std::string& s)
+    {
+        size_t pos = s.find("gfx");
+        if (pos!=std::string::npos)
+        {
+            return s.substr(pos+3);
+        }
+        return s;
+    };
+
+    auto gpu_arch_no_prefix = removePrefix(gpu_arch);
+    int         gpu_len = gpu_arch_no_prefix.length();
+    const char* gpu     = gpu_arch_no_prefix.c_str();
 
     for(int i = 0; i < 4; i++)
     {
