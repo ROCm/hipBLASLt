@@ -26,6 +26,7 @@
 #include <hip/hip_runtime.h>
 #include <hipblaslt/hipblaslt.h>
 #include <hipblaslt/hipblaslt-types.h>
+#include <algorithm>
 #include <iostream>
 #include <numeric>
 #include <memory>
@@ -71,8 +72,13 @@ struct TypedMatrixTransformIO : public MatrixTransformIO {
 
 private:
     void init(DType *buf, size_t len) {
+        srand(time(nullptr));
         std::vector<DType> ref(len);
-        std::iota(begin(ref), end(ref), DType(0));
+
+        for (auto &i : ref) {
+            i = DType(rand() % 7 - 3);
+        }
+
         hipMemcpy(buf, ref.data(), len * sizeof(DType), hipMemcpyHostToDevice);
     }
 
@@ -132,7 +138,8 @@ static int parseArguments(int argc,
                           bool &rowMajB,
                           bool &rowMajC,
                           int32_t &batchSize,
-                          int64_t &batchStride)
+                          int64_t &batchStride,
+                          bool &runValidation)
 {
     if (argc >= 2)
     {
@@ -190,6 +197,9 @@ static int parseArguments(int argc,
                 } else if (arg == "--row_maj_c")
                 {
                     rowMajC = (atoi(argv[++i]) > 0);
+                } else if (arg == "--validation" || arg == "-V")
+                {
+                    runValidation = true;
                 }
             } else {
                 std::cerr << "error with " << arg << std::endl;
@@ -225,7 +235,7 @@ template<typename DType, typename ScaleType, bool RowMajA, bool RowMajB, bool Ro
 void cpuTransform(DType *c, const DType *a, const DType *b, ScaleType alpha, ScaleType beta, bool transA, bool transB, uint32_t m, uint32_t n, uint32_t ldA, uint32_t ldB, uint32_t ldC, uint32_t batchSize, uint32_t batchStride)
 {
     for (uint32_t k = 0; k < batchSize; ++k) {
-        const uint32_t batchOffset = k * batchStride;
+        const int64_t batchOffset = k * int64_t(batchStride);
 
         for (uint32_t i = 0; i < m; ++i) {
             for (uint32_t j = 0; j < n; ++j) {
@@ -234,6 +244,65 @@ void cpuTransform(DType *c, const DType *a, const DType *b, ScaleType alpha, Sca
                 const auto offsetC = getOffset<RowMajC>(i, j, ldC);
                 c[batchOffset + offsetC] = a[batchOffset + offsetA] * alpha + b[batchOffset + offsetB] * beta;
             }
+        }
+    }
+}
+
+template<typename DType>
+void validation(void *c,
+                void *a, void *b, float alpha, float beta,
+                uint32_t m, uint32_t n,
+                uint32_t ldA, uint32_t ldB, uint32_t ldC,
+                uint32_t batchSize, uint32_t batchStride,
+                bool rowMajA, bool rowMajB, bool rowMajC,
+                bool transA, bool transB)
+{
+    using std::begin;
+    using std::end;
+    std::vector<float> hC(m * n * batchSize, 0);
+    std::vector<float> hA(m * n * batchSize, 0);
+    std::vector<float> hB(m * n * batchSize, 0);
+    std::vector<float> cpuRef(m * n * batchSize, 0);
+    std::vector<DType> dA(m * n * batchSize);
+    std::vector<DType> dB(m * n * batchSize);
+    std::vector<DType> dC(m * n * batchSize);
+    hipMemcpyDtoH(dA.data(), a, m * n * batchSize * sizeof(DType));
+    hipMemcpyDtoH(dB.data(), b, m * n * batchSize * sizeof(DType));
+    hipMemcpyDtoH(dC.data(), c, m * n * batchSize * sizeof(DType));
+
+    std::transform(begin(dC), end(dC), begin(hC), [](auto i) {
+        return float(i);
+    });
+
+    std::transform(begin(dA), end(dA), begin(hA), [](auto i) {
+        return float(i);
+    });
+
+    std::transform(begin(dB), end(dB), begin(hB), [](auto i) {
+        return float(i);
+    });
+
+    if (rowMajA && rowMajB && rowMajC) {
+        cpuTransform<float, float, true, true, true>(cpuRef.data(), hA.data(), hB.data(), alpha, beta, transA, transB, m, n, ldA, ldB, ldC, batchSize, batchStride);
+    } else if (!rowMajA && rowMajB && rowMajC) {
+        cpuTransform<float, float, false, true, true>(cpuRef.data(), hA.data(), hB.data(), alpha, beta, transA, transB, m, n, ldA, ldB, ldC, batchSize, batchStride);
+    } else if (rowMajA && !rowMajB && rowMajC) {
+        cpuTransform<float, float, true, false, true>(cpuRef.data(), hA.data(), hB.data(), alpha, beta, transA, transB, m, n, ldA, ldB, ldC, batchSize, batchStride);
+    } else if (rowMajA && rowMajB && !rowMajC) {
+        cpuTransform<float, float, true, true, false>(cpuRef.data(), hA.data(), hB.data(), alpha, beta, transA, transB, m, n, ldA, ldB, ldC, batchSize, batchStride);
+    } else if (!rowMajA && !rowMajB && rowMajC) {
+        cpuTransform<float, float, false, false, true>(cpuRef.data(), hA.data(), hB.data(), alpha, beta, transA, transB, m, n, ldA, ldB, ldC, batchSize, batchStride);
+    } else if (!rowMajA && rowMajB && !rowMajC) {
+        cpuTransform<float, float, false, true, false>(cpuRef.data(), hA.data(), hB.data(), alpha, beta, transA, transB, m, n, ldA, ldB, ldC, batchSize, batchStride);
+    } else if (rowMajA && !rowMajB && !rowMajC) {
+        cpuTransform<float, float, true, false, false>(cpuRef.data(), hA.data(), hB.data(), alpha, beta, transA, transB, m, n, ldA, ldB, ldC, batchSize, batchStride);
+    } else if (!rowMajA && !rowMajB && !rowMajC) {
+        cpuTransform<float, float, false, false, false>(cpuRef.data(), hA.data(), hB.data(), alpha, beta, transA, transB, m, n, ldA, ldB, ldC, batchSize, batchStride);
+    }
+
+    for (size_t i = 0; i < cpuRef.size(); ++i) {
+        if (cpuRef[i] != hC[i]) {
+            std::cerr << "cpuRef != hC at index " << i << ", " << cpuRef[i] << " != " << hC[i] << '\n';
         }
     }
 }
@@ -254,9 +323,10 @@ int main(int argc, char **argv)
     uint32_t ldA{};
     uint32_t ldB{};
     uint32_t ldC{};
+    bool runValidation{};
     hipblasltDatatype_t datatype{HIPBLASLT_R_32F};
     hipblasltDatatype_t scaleDatatype{HIPBLASLT_R_32F};
-    parseArguments(argc, argv, datatype, scaleDatatype, m, n, alpha, beta, transA, transB, ldA, ldB, ldC, rowMajA, rowMajB, rowMajC, batchSize, batchStride);
+    parseArguments(argc, argv, datatype, scaleDatatype, m, n, alpha, beta, transA, transB, ldA, ldB, ldC, rowMajA, rowMajB, rowMajC, batchSize, batchStride, runValidation);
 
     if (!ldA || !ldB || !ldC) {
         ldA = rowMajA ? getLeadingDimSize<true>(m, n) : getLeadingDimSize<false>(m, n);
@@ -275,9 +345,9 @@ int main(int argc, char **argv)
     auto tB = transB ? HIPBLAS_OP_T : HIPBLAS_OP_N;
 
     auto inputs = makeMatrixTransformIOPtr(datatype, m, n, batchSize);
-    void *dA = static_cast<float *>(inputs->getBuf(0));
-    void *dB = static_cast<float *>(inputs->getBuf(1));
-    void *dC = static_cast<float *>(inputs->getBuf(2));
+    void *dA = inputs->getBuf(0);
+    void *dB = inputs->getBuf(1);
+    void *dC = inputs->getBuf(2);
 
     hipblasLtMatrixTransformDesc_t desc;
     auto hipblasLtErr = hipblasLtMatrixTransformDescCreate(&desc, scaleDatatype);
@@ -311,6 +381,12 @@ int main(int argc, char **argv)
     hipblasLtErr = hipblasLtCreate(&handle);
     //warmup
     hipblasLtErr = hipblasLtMatrixTransform(handle, desc, &alpha, dA, layoutA, &beta, dB, layoutB, dC, layoutC, nullptr);
+
+    if (hipblasLtErr) {
+        std::cerr << "Unable to launch hipblasLtMatrixTransform\n";
+        return EXIT_FAILURE;
+    }
+
     hipEvent_t start, stop;
     auto err = hipEventCreate(&start);
     err = hipEventCreate(&stop);
@@ -330,34 +406,18 @@ int main(int argc, char **argv)
     const auto avgDur = dur / numRuns;
     std::cout << "hipblasLtMatrixTransform elapsed time: " << std::to_string(avgDur) << " ms\n";
     std::cout << "Throughput: " << 3. * m * n * batchSize * inputs->elemNumBytes() / std::pow(1024, 4) / avgDur * 1e3 << " TB/s\n";
-    // err = hipMemcpy(hC.data(), dC, sizeof(float) * hC.size(), hipMemcpyDeviceToHost);
 
-    // std::vector<float> cpuRef(m * n, 0.f);
-
-    // if (rowMajA && rowMajB && rowMajC) {
-    //     cpuTransform<float, float, true, true, true>(cpuRef.data(), hA.data(), hB.data(), alpha, beta, transA, transB, m, n, ldA, ldB, ldC, batchSize, batchStride);
-    // } else if (!rowMajA && rowMajB && rowMajC) {
-    //     cpuTransform<float, float, false, true, true>(cpuRef.data(), hA.data(), hB.data(), alpha, beta, transA, transB, m, n, ldA, ldB, ldC, batchSize, batchStride);
-    // } else if (rowMajA && !rowMajB && rowMajC) {
-    //     cpuTransform<float, float, true, false, true>(cpuRef.data(), hA.data(), hB.data(), alpha, beta, transA, transB, m, n, ldA, ldB, ldC, batchSize, batchStride);
-    // } else if (rowMajA && rowMajB && !rowMajC) {
-    //     cpuTransform<float, float, true, true, false>(cpuRef.data(), hA.data(), hB.data(), alpha, beta, transA, transB, m, n, ldA, ldB, ldC, batchSize, batchStride);
-    // } else if (!rowMajA && !rowMajB && rowMajC) {
-    //     cpuTransform<float, float, false, false, true>(cpuRef.data(), hA.data(), hB.data(), alpha, beta, transA, transB, m, n, ldA, ldB, ldC, batchSize, batchStride);
-    // } else if (!rowMajA && rowMajB && !rowMajC) {
-    //     cpuTransform<float, float, false, true, false>(cpuRef.data(), hA.data(), hB.data(), alpha, beta, transA, transB, m, n, ldA, ldB, ldC, batchSize, batchStride);
-    // } else if (rowMajA && !rowMajB && !rowMajC) {
-    //     cpuTransform<float, float, true, false, false>(cpuRef.data(), hA.data(), hB.data(), alpha, beta, transA, transB, m, n, ldA, ldB, ldC, batchSize, batchStride);
-    // } else if (!rowMajA && !rowMajB && !rowMajC) {
-    //     cpuTransform<float, float, false, false, false>(cpuRef.data(), hA.data(), hB.data(), alpha, beta, transA, transB, m, n, ldA, ldB, ldC, batchSize, batchStride);
-    // }
-
-    // for (size_t i = 0; i < cpuRef.size(); ++i) {
-    //     if (cpuRef[i] != hC[i]) {
-    //         std::cerr << "cpuRef != hC at index " << i << ", " << cpuRef[i] << " != " << hC[i] << '\n';
-    //         return EXIT_FAILURE;
-    //     }
-    // }
+    if (runValidation) {
+        if (datatype == HIPBLASLT_R_32F) {
+            validation<float>(dC, dA, dB, alpha, beta, m, n, ldA, ldB, ldC, batchSize, batchStride, rowMajA, rowMajB, rowMajC, transA, transB);
+        } else if (datatype == HIPBLASLT_R_16F) {
+            validation<hipblasLtHalf>(dC, dA, dB, alpha, beta, m, n, ldA, ldB, ldC, batchSize, batchStride, rowMajA, rowMajB, rowMajC, transA, transB);
+        } else if (datatype == HIPBLASLT_R_16B) {
+            validation<hipblasLtBfloat16>(dC, dA, dB, alpha, beta, m, n, ldA, ldB, ldC, batchSize, batchStride, rowMajA, rowMajB, rowMajC, transA, transB);
+        } else if (datatype == HIPBLASLT_R_8I) {
+            validation<int8_t>(dC, dA, dB, alpha, beta, m, n, ldA, ldB, ldC, batchSize, batchStride, rowMajA, rowMajB, rowMajC, transA, transB);
+        }
+    }
 
 releaseResource:
     hipblasLtErr = hipblasLtMatrixTransformDescDestroy(desc);
