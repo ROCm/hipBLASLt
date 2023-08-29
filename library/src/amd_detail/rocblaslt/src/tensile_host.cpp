@@ -467,8 +467,7 @@ namespace
         // set batch mode
         tensileProblem.setStridedBatched(prob.strided_batch);
         tensileProblem.setGroupedGemm(prob.grouped_gemm);
-        // FIXME: Hardcoded, fix prob.trans_b == HIPBLAS_OP_N when GSU is supported
-        if(prob.grouped_gemm && prob.trans_b == HIPBLAS_OP_N)
+        if(prob.grouped_gemm)
             tensileProblem.setUseDeviceUserArguments(true);
         else
             tensileProblem.setUseDeviceUserArguments(false);
@@ -645,8 +644,7 @@ namespace
         // set batch mode
         tensileProblem.setStridedBatched(prob.strided_batch);
         tensileProblem.setGroupedGemm(prob.grouped_gemm);
-        // FIXME: Hardcoded, fix prob.trans_b == HIPBLAS_OP_N when GSU is supported
-        if(prob.grouped_gemm && prob.trans_b == HIPBLAS_OP_N)
+        if(prob.grouped_gemm)
             tensileProblem.setUseDeviceUserArguments(true);
         else
             tensileProblem.setUseDeviceUserArguments(false);
