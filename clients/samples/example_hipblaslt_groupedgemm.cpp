@@ -920,7 +920,7 @@ void test_hipblaslt(hipblasltDatatype_t         in_datatype,
         }
 
         CHECK_HIPBLASLT_ERROR(groupedGemm.setProblem(
-            matmul, beta_void, da, matA, db, matB, alpha_void, dc, matC, dd, matD));
+            matmul, alpha_void, da, matA, db, matB, beta_void, dc, matC, dd, matD));
 
         if(findAll)
         {
