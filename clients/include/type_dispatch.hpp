@@ -90,49 +90,51 @@ auto hipblaslt_simple_dispatch(const Arguments& arg)
 template <template <typename...> class TEST>
 auto hipblaslt_matmul_dispatch(const Arguments& arg)
 {
-    const auto Ti = arg.a_type, To = arg.c_type;
-    auto       Tc = arg.compute_type;
+    const auto TiA = arg.a_type;
+    const auto TiB = arg.b_type;
+    auto       To  = arg.c_type;
+    auto       Tc  = arg.compute_type;
 
-    if(arg.b_type == Ti && arg.d_type == To)
+    if(TiB == TiA && arg.d_type == To)
     {
-        if(Ti == To && To == HIPBLASLT_R_16F && Tc == HIPBLASLT_COMPUTE_F32)
+        if(TiA == To && To == HIPBLASLT_R_16F && Tc == HIPBLASLT_COMPUTE_F32)
         {
-            return TEST<hipblasLtHalf, hipblasLtHalf, float>{}(arg);
+            return TEST<hipblasLtHalf, hipblasLtHalf, hipblasLtHalf, float>{}(arg);
         }
-        else if(Ti == To && To == HIPBLASLT_R_16B && Tc == HIPBLASLT_COMPUTE_F32)
+        else if(TiA == To && To == HIPBLASLT_R_16B && Tc == HIPBLASLT_COMPUTE_F32)
         {
-            return TEST<hip_bfloat16, hip_bfloat16, float>{}(arg);
+            return TEST<hip_bfloat16, hip_bfloat16, hip_bfloat16, float>{}(arg);
         }
-        else if(Ti == To && To == HIPBLASLT_R_32F
+        else if(TiA == To && To == HIPBLASLT_R_32F
                 && (Tc == HIPBLASLT_COMPUTE_F32 || Tc == HIPBLASLT_COMPUTE_F32_FAST_XF32))
         {
-            return TEST<float, float, float>{}(arg);
+            return TEST<float, float, float, float>{}(arg);
         }
-        else if(Ti == To && To == HIPBLASLT_R_64F && (Tc == HIPBLASLT_COMPUTE_F64))
+        else if(TiA == To && To == HIPBLASLT_R_64F && (Tc == HIPBLASLT_COMPUTE_F64))
         {
-            return TEST<double, double, double>{}(arg);
+            return TEST<double, double, double, double>{}(arg);
         }
-        else if(Ti == HIPBLASLT_R_16F && To == HIPBLASLT_R_32F && Tc == HIPBLASLT_COMPUTE_F32)
+        else if(TiA == HIPBLASLT_R_16F && To == HIPBLASLT_R_32F && Tc == HIPBLASLT_COMPUTE_F32)
         {
-            return TEST<hipblasLtHalf, float, float>{}(arg);
+            return TEST<hipblasLtHalf, hipblasLtHalf, float, float>{}(arg);
         }
-        else if(Ti == HIPBLASLT_R_8F_E4M3 && To == HIPBLASLT_R_32F && Tc == HIPBLASLT_COMPUTE_F32)
+        else if(TiA == HIPBLASLT_R_8F_E4M3 && To == HIPBLASLT_R_32F && Tc == HIPBLASLT_COMPUTE_F32)
         {
-            return TEST<hipblaslt_f8, float, float>{}(arg);
+            return TEST<hipblaslt_f8, hipblaslt_f8, float, float>{}(arg);
         }
-        else if(Ti == HIPBLASLT_R_8F_E4M3 && To == HIPBLASLT_R_16F && Tc == HIPBLASLT_COMPUTE_F32)
+        else if(TiA == HIPBLASLT_R_8F_E4M3 && To == HIPBLASLT_R_16F && Tc == HIPBLASLT_COMPUTE_F32)
         {
-            return TEST<hipblaslt_f8, hipblasLtHalf, float>{}(arg);
-	}
+            return TEST<hipblaslt_f8, hipblaslt_f8, hipblasLtHalf, float>{}(arg);
+        }
         /*
         else if(Ti == HIPBLASLT_R_8I && To == HIPBLASLT_R_8I && Tc == HIPBLASLT_COMPUTE_I32)
         {
             return TEST<hipblasLtInt8, hipblasLtInt8, int32_t>{}(arg);
         }
         */
-        else if(Ti == HIPBLASLT_R_8I && To == HIPBLASLT_R_32I && Tc == HIPBLASLT_COMPUTE_I32)
+        else if(TiA == HIPBLASLT_R_8I && To == HIPBLASLT_R_32I && Tc == HIPBLASLT_COMPUTE_I32)
         {
-            return TEST<hipblasLtInt8, int32_t, int32_t>{}(arg);
+            return TEST<hipblasLtInt8, hipblasLtInt8, int32_t, int32_t>{}(arg);
         }
     }
     return TEST<void>{}(arg);

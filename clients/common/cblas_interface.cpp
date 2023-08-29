@@ -45,7 +45,7 @@ CBLAS_TRANSPOSE HIPOperationToCBLASTanspose(hipblasOperation_t trans)
 
 // gemm
 template <>
-void cblas_gemm<hip_bfloat16, hip_bfloat16, float>(hipblasOperation_t  transA,
+void cblas_gemm<hip_bfloat16, hip_bfloat16, hip_bfloat16, float>(hipblasOperation_t  transA,
                                                    hipblasOperation_t  transB,
                                                    int64_t             m,
                                                    int64_t             n,
@@ -98,7 +98,7 @@ void cblas_gemm<hip_bfloat16, hip_bfloat16, float>(hipblasOperation_t  transA,
 }
 
 template <>
-void cblas_gemm<hip_bfloat16, float, float>(hipblasOperation_t  transA,
+void cblas_gemm<hip_bfloat16, hip_bfloat16, float, float>(hipblasOperation_t  transA,
                                             hipblasOperation_t  transB,
                                             int64_t             m,
                                             int64_t             n,
@@ -146,7 +146,7 @@ void cblas_gemm<hip_bfloat16, float, float>(hipblasOperation_t  transA,
 }
 
 template <>
-void cblas_gemm<hipblaslt_f8, float, float>(hipblasOperation_t  transA,
+void cblas_gemm<hipblaslt_f8, hipblaslt_f8, float, float>(hipblasOperation_t  transA,
                                             hipblasOperation_t  transB,
                                             int64_t             m,
                                             int64_t             n,
@@ -193,7 +193,7 @@ void cblas_gemm<hipblaslt_f8, float, float>(hipblasOperation_t  transA,
 }
 
 template <>
-void cblas_gemm<hipblaslt_f8, hipblasLtHalf, float>(hipblasOperation_t  transA,
+void cblas_gemm<hipblaslt_f8, hipblaslt_f8, hipblasLtHalf, float>(hipblasOperation_t  transA,
                                                     hipblasOperation_t  transB,
                                                     int64_t             m,
                                                     int64_t             n,
@@ -246,7 +246,7 @@ void cblas_gemm<hipblaslt_f8, hipblasLtHalf, float>(hipblasOperation_t  transA,
 }
 
 template <>
-void cblas_gemm<hipblasLtHalf, hipblasLtHalf, float>(hipblasOperation_t   transA,
+void cblas_gemm<hipblasLtHalf, hipblasLtHalf, hipblasLtHalf, float>(hipblasOperation_t   transA,
                                                      hipblasOperation_t   transB,
                                                      int64_t              m,
                                                      int64_t              n,
@@ -311,7 +311,7 @@ void cblas_gemm<hipblasLtHalf, hipblasLtHalf, float>(hipblasOperation_t   transA
 }
 
 template <>
-void cblas_gemm<hipblasLtHalf, float, float>(hipblasOperation_t   transA,
+void cblas_gemm<hipblasLtHalf, hipblasLtHalf, float, float>(hipblasOperation_t   transA,
                                              hipblasOperation_t   transB,
                                              int64_t              m,
                                              int64_t              n,
@@ -368,7 +368,7 @@ void cblas_gemm<hipblasLtHalf, float, float>(hipblasOperation_t   transA,
 }
 
 template <>
-void cblas_gemm<float, float, float>(hipblasOperation_t transA,
+void cblas_gemm<float, float, float, float>(hipblasOperation_t transA,
                                      hipblasOperation_t transB,
                                      int64_t            m,
                                      int64_t            n,
@@ -403,7 +403,7 @@ void cblas_gemm<float, float, float>(hipblasOperation_t transA,
 }
 
 template <>
-void cblas_gemm<double, double, double>(hipblasOperation_t transA,
+void cblas_gemm<double, double, double, double>(hipblasOperation_t transA,
                                         hipblasOperation_t transB,
                                         int64_t            m,
                                         int64_t            n,
@@ -438,7 +438,7 @@ void cblas_gemm<double, double, double>(hipblasOperation_t transA,
 }
 
 template <>
-void cblas_gemm<int8_t, int32_t, int32_t>(hipblasOperation_t transA,
+void cblas_gemm<int8_t, int8_t, int32_t, int32_t>(hipblasOperation_t transA,
                                           hipblasOperation_t transB,
                                           int64_t            m,
                                           int64_t            n,
@@ -498,7 +498,7 @@ void cblas_gemm<int8_t, int32_t, int32_t>(hipblasOperation_t transA,
 
 // AlphaVec gemm
 template <>
-void cblas_gemm_alphascale<hip_bfloat16, hip_bfloat16, float>(hipblasOperation_t  transA,
+void cblas_gemm_alphascale<hip_bfloat16, hip_bfloat16, hip_bfloat16, float>(hipblasOperation_t  transA,
                                                               hipblasOperation_t  transB,
                                                               int64_t             m,
                                                               int64_t             n,
@@ -555,7 +555,7 @@ void cblas_gemm_alphascale<hip_bfloat16, hip_bfloat16, float>(hipblasOperation_t
 }
 
 template <>
-void cblas_gemm_alphascale<hip_bfloat16, float, float>(hipblasOperation_t  transA,
+void cblas_gemm_alphascale<hip_bfloat16, hip_bfloat16, float, float>(hipblasOperation_t  transA,
                                                        hipblasOperation_t  transB,
                                                        int64_t             m,
                                                        int64_t             n,
@@ -606,7 +606,7 @@ void cblas_gemm_alphascale<hip_bfloat16, float, float>(hipblasOperation_t  trans
 }
 
 template <>
-void cblas_gemm_alphascale<hipblaslt_f8, float, float>(hipblasOperation_t  transA,
+void cblas_gemm_alphascale<hipblaslt_f8, hipblaslt_f8, float, float>(hipblasOperation_t  transA,
                                                        hipblasOperation_t  transB,
                                                        int64_t             m,
                                                        int64_t             n,
@@ -658,7 +658,7 @@ void cblas_gemm_alphascale<hipblaslt_f8, float, float>(hipblasOperation_t  trans
 }
 
 template <>
-void cblas_gemm_alphascale<hipblaslt_f8, hipblasLtHalf, float>(hipblasOperation_t  transA,
+void cblas_gemm_alphascale<hipblaslt_f8, hipblaslt_f8, hipblasLtHalf, float>(hipblasOperation_t  transA,
                                                                hipblasOperation_t  transB,
                                                                int64_t             m,
                                                                int64_t             n,
@@ -715,7 +715,7 @@ void cblas_gemm_alphascale<hipblaslt_f8, hipblasLtHalf, float>(hipblasOperation_
 }
 
 template <>
-void cblas_gemm_alphascale<hipblasLtHalf, hipblasLtHalf, float>(hipblasOperation_t   transA,
+void cblas_gemm_alphascale<hipblasLtHalf, hipblasLtHalf, hipblasLtHalf, float>(hipblasOperation_t   transA,
                                                                 hipblasOperation_t   transB,
                                                                 int64_t              m,
                                                                 int64_t              n,
@@ -784,7 +784,7 @@ void cblas_gemm_alphascale<hipblasLtHalf, hipblasLtHalf, float>(hipblasOperation
 }
 
 template <>
-void cblas_gemm_alphascale<hipblasLtHalf, float, float>(hipblasOperation_t   transA,
+void cblas_gemm_alphascale<hipblasLtHalf, hipblasLtHalf, float, float>(hipblasOperation_t   transA,
                                                         hipblasOperation_t   transB,
                                                         int64_t              m,
                                                         int64_t              n,
@@ -845,7 +845,7 @@ void cblas_gemm_alphascale<hipblasLtHalf, float, float>(hipblasOperation_t   tra
 }
 
 template <>
-void cblas_gemm_alphascale<float, float, float>(hipblasOperation_t transA,
+void cblas_gemm_alphascale<float, float, float, float>(hipblasOperation_t transA,
                                                 hipblasOperation_t transB,
                                                 int64_t            m,
                                                 int64_t            n,
@@ -891,7 +891,7 @@ void cblas_gemm_alphascale<float, float, float>(hipblasOperation_t transA,
 }
 
 template <>
-void cblas_gemm_alphascale<double, double, double>(hipblasOperation_t transA,
+void cblas_gemm_alphascale<double, double, double, double>(hipblasOperation_t transA,
                                                    hipblasOperation_t transB,
                                                    int64_t            m,
                                                    int64_t            n,
@@ -937,7 +937,7 @@ void cblas_gemm_alphascale<double, double, double>(hipblasOperation_t transA,
 }
 
 template <>
-void cblas_gemm_alphascale<int8_t, int32_t, int32_t>(hipblasOperation_t transA,
+void cblas_gemm_alphascale<int8_t, int8_t, int32_t, int32_t>(hipblasOperation_t transA,
                                                      hipblasOperation_t transB,
                                                      int64_t            m,
                                                      int64_t            n,

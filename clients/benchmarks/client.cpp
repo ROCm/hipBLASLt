@@ -102,7 +102,7 @@ struct perf_matmul<
 {
     void operator()(const Arguments& arg)
     {
-        static const func_map map = {{"matmul", testing_matmul<Ti, To, Tc>}};
+        static const func_map map = {{"matmul", testing_matmul<Ti, Ti, To, Tc>}};
         run_function(map, arg);
     }
 };

@@ -36,32 +36,32 @@
  */
 
 // gemm
-template <typename Ti, typename To, typename Tc>
+template <typename TiA, typename TiB, typename To, typename Tc>
 void cblas_gemm(hipblasOperation_t     transA,
                 hipblasOperation_t     transB,
                 int64_t                m,
                 int64_t                n,
                 int64_t                k,
                 Tc                     alpha,
-                const Ti*              A,
+                const TiA*              A,
                 int64_t                lda,
-                const Ti*              B,
+                const TiB*              B,
                 int64_t                ldb,
                 Tc                     beta,
                 std::add_pointer_t<To> C,
                 int64_t                ldc,
                 bool                   alt = false);
 
-template <typename Ti, typename To, typename Tc>
+template <typename TiA, typename TiB, typename To, typename Tc>
 void cblas_gemm_alphascale(hipblasOperation_t     transA,
                            hipblasOperation_t     transB,
                            int64_t                m,
                            int64_t                n,
                            int64_t                k,
                            Tc                     alpha,
-                           const Ti*              A,
+                           const TiA*              A,
                            int64_t                lda,
-                           const Ti*              B,
+                           const TiB*              B,
                            int64_t                ldb,
                            Tc                     beta,
                            std::add_pointer_t<To> C,
