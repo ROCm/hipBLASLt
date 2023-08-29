@@ -8519,28 +8519,24 @@ class KernelWriterAssembly(KernelWriter):
       elif bps==16:
         module.add(BufferStoreB128(src=vgpr(srcVgpr, rpv), vaddr=addr0, \
                                    saddr=addr1, soffset=tmpSgpr, mubuf=mubuf, comment=comment))
-      elif bps == 32:
-        # split into two dwordx4 loads. Offset the second by +0.5 bps
-        module.add(BufferStoreB128(src=vgpr(srcVgpr, rpv/2), vaddr=addr0, \
-                                   saddr=addr1, soffset=tmpSgpr, mubuf=mubuf, comment=comment))
-        mubuf2 = MUBUFModifiers(offen=True, offset12=offset+bps/2, glc=glc, slc=slc, isStore=True)
-        module.add(BufferStoreB128(src=vgpr(int(srcVgpr +rpv/2), rpv/2), vaddr=addr0, \
-                  saddr=addr1, soffset=tmpSgpr, mubuf=mubuf2, comment=comment))
-      elif bps == 64:
-        # split into four dwordx4 loads. Offset the next by +0.5 bps
-        module.add(BufferStoreB128(src=vgpr(srcVgpr, rpv/4), vaddr=addr0, \
-                                   saddr=addr1, soffset=tmpSgpr, mubuf=mubuf, comment=comment))
-        shiftByte = bps / 4
-        shiftRpv = rpv / 4
-        mubuf2 = MUBUFModifiers(offen=True, offset12=offset+shiftByte, glc=glc, slc=slc, isStore=True)
-        module.add(BufferStoreB128(src=vgpr(int(srcVgpr +shiftRpv), rpv/4), vaddr=addr0, \
-                  saddr=addr1, soffset=tmpSgpr, mubuf=mubuf2, comment=comment))
-        mubuf2 = MUBUFModifiers(offen=True, offset12=offset+shiftByte*2, glc=glc, slc=slc, isStore=True)
-        module.add(BufferStoreB128(src=vgpr(int(srcVgpr +shiftRpv*2), rpv/4), vaddr=addr0, \
-                  saddr=addr1, soffset=tmpSgpr, mubuf=mubuf2, comment=comment))
-        mubuf2 = MUBUFModifiers(offen=True, offset12=offset+shiftByte*3, glc=glc, slc=slc, isStore=True)
-        module.add(BufferStoreB128(src=vgpr(int(srcVgpr +shiftRpv*3), rpv/4), vaddr=addr0, \
-                  saddr=addr1, soffset=tmpSgpr, mubuf=mubuf2, comment=comment))
+
+      elif bps >= 32 and bps % 32 == 0:
+        # split into several dwordx4 loads. Offset the next by +0.5 bps
+        rounds = bps // 16
+        shiftByte = bps // rounds
+        shiftRpv = rpv // rounds
+        module.add(BufferStoreB128(src=vgpr(srcVgpr, shiftRpv), vaddr=addr0, \
+                                  saddr=addr1, soffset=tmpSgpr, mubuf=mubuf, comment=comment))
+        for i in range(1, rounds):
+          offset2 = offset+shiftByte*i
+          mubuf2 = MUBUFModifiers(offen=True, offset12=offset2, glc=glc, slc=slc, isStore=True)
+          if offset2 >= 4096:
+            mubuf2.offen = False
+            mubuf2.offset12 = 0
+            module.add(SMovB32(dst=tmpSgpr, src=offset2, comment="large offset"))
+          module.add(BufferStoreB128(src=vgpr(int(srcVgpr +shiftRpv*i), shiftRpv), vaddr=addr0, \
+            saddr=addr1, soffset=tmpSgpr, mubuf=mubuf2, comment=comment))
+
       else:
         assert 0, "bad bps"
 
@@ -8548,12 +8544,14 @@ class KernelWriterAssembly(KernelWriter):
       mubuf = MUBUFModifiers(offen=True, offset12=offset, glc=glc, slc=slc, isStore=True)
       # buffer_load offset field is 12-bit.
       # if offset >= 4096, use soffset instead
-      if offset >= 4096:
+      maxShift = max(bps - 16, 0) #if bps = 32 or bps = 64
+      if (offset + maxShift) > 4096:
         with self.allocTmpSgpr(1) as tmpSgprInfo:
           tmpSgpr = sgpr(tmpSgprInfo.idx)
-          module.add(SMovB32(dst=tmpSgpr, src=offset, comment="large offset"))
-          mubuf.offen = False
-          mubuf.offset12 = 0
+          if offset > 4096:
+            module.add(SMovB32(dst=tmpSgpr, src=offset, comment="large offset"))
+            mubuf.offen = False
+            mubuf.offset12 = 0
           bufferStoreImpl(tmpSgpr, mubuf)
       else:
         bufferStoreImpl(0, mubuf)
