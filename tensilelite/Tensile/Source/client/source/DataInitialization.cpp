@@ -1498,8 +1498,8 @@ namespace Tensile
                                        p.cpuInput.valid.get(),
                                        p.maxElements,
                                        hipMemcpyHostToDevice);
-                if(ptr == nullptr)
-                    std::__throw_runtime_error("error");
+                //if(ptr == nullptr)
+                //    std::__throw_runtime_error("error");
             }
         }
 

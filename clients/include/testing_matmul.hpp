@@ -43,6 +43,11 @@
 #include <hipblaslt/hipblaslt.h>
 #include <omp.h>
 
+#ifdef WIN32
+#include <cstdlib>
+#include <numeric>
+#endif
+
 template <typename Ti,
           typename Tc,
           typename To,
