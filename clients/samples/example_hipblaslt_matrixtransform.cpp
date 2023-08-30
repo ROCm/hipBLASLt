@@ -387,8 +387,10 @@ int main(int argc, char **argv)
         return EXIT_FAILURE;
     }
 
+    auto err = hipStreamSynchronize(nullptr);
+
     hipEvent_t start, stop;
-    auto err = hipEventCreate(&start);
+    err = hipEventCreate(&start);
     err = hipEventCreate(&stop);
     err = hipEventRecord(start);
 
