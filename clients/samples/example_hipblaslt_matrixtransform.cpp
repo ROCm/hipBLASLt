@@ -62,7 +62,7 @@ struct TypedMatrixTransformIO : public MatrixTransformIO {
     }
 
     void *getBuf(size_t i) override {
-        static void *buf[] = {a, b, c};
+        void *buf[] = {a, b, c};
         return buf[i];
     }
 
@@ -362,11 +362,18 @@ int main(int argc, char **argv)
         return EXIT_FAILURE;
     }
 
+    std::pair<int64_t, int64_t> shapeA;
+    std::pair<int64_t, int64_t> shapeB;
+    shapeA.first = transA ? n : m;
+    shapeA.second = transA ? m : n;
+    shapeB.first = transB ? n : m;
+    shapeB.second = transB ? m : n;
+
     hipblasLtErr = hipblasLtMatrixTransformDescSetAttribute(desc, HIPBLASLT_MATRIX_TRANSFORM_DESC_TRANSA, &tA, sizeof(tA));
     hipblasLtErr = hipblasLtMatrixTransformDescSetAttribute(desc, HIPBLASLT_MATRIX_TRANSFORM_DESC_TRANSB, &tB, sizeof(tB));
     hipblasLtMatrixLayout_t layoutA, layoutB, layoutC;
-    hipblasLtErr = hipblasLtMatrixLayoutCreate(&layoutA, datatype, m, n, ldA);
-    hipblasLtErr = hipblasLtMatrixLayoutCreate(&layoutB, datatype, m, n, ldB);
+    hipblasLtErr = hipblasLtMatrixLayoutCreate(&layoutA, datatype, shapeA.first, shapeA.second, ldA);
+    hipblasLtErr = hipblasLtMatrixLayoutCreate(&layoutB, datatype, shapeB.first, shapeB.second, ldB);
     hipblasLtErr = hipblasLtMatrixLayoutCreate(&layoutC, datatype, m, n, ldC);
     hipblasLtErr = hipblasLtMatrixLayoutSetAttribute(layoutA, hipblasLtMatrixLayoutAttribute_t::HIPBLASLT_MATRIX_LAYOUT_ORDER, &orderA, sizeof(orderA));
     hipblasLtErr = hipblasLtMatrixLayoutSetAttribute(layoutB, hipblasLtMatrixLayoutAttribute_t::HIPBLASLT_MATRIX_LAYOUT_ORDER, &orderB, sizeof(orderB));
