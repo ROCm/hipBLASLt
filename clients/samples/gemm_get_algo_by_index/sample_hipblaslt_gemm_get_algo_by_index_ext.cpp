@@ -162,15 +162,15 @@ void simpleGemmGetAlgoByIndexExt(hipblasLtHandle_t  handle,
         }
     }
 
-    // In this sample, the workspace is already allocated with max_workspace_size
-    // If not, allocate d_workspace here
-    // CHECK_HIP_ERRORhipMalloc(&d_workspace, workspace_size));
-
     if(heuristicResult.empty())
     {
         std::cerr << "No valid solution found!" << std::endl;
         return;
     }
+
+    // In this sample, the workspace is already allocated with max_workspace_size
+    // If not, allocate d_workspace here
+    // CHECK_HIP_ERRORhipMalloc(&d_workspace, workspace_size));
 
     // Make sure to initialize everytime the algo changes
     CHECK_HIPBLASLT_ERROR(gemm.initialize(heuristicResult[0].algo, d_workspace));

@@ -26,6 +26,7 @@
 
 #include <hip/hip_runtime.h>
 #include <hipblaslt/hipblaslt-ext.hpp>
+#include <iostream>
 
 #include "helper.h"
 
@@ -121,6 +122,12 @@ void simpleGemmExt(hipblasLtHandle_t  handle,
     const int                                     request_solutions = 1;
     std::vector<hipblasLtMatmulHeuristicResult_t> heuristicResult;
     CHECK_HIPBLASLT_ERROR(gemm.algoGetHeuristic(request_solutions, gemmPref, heuristicResult));
+
+    if(heuristicResult.empty())
+    {
+        std::cerr << "No valid solution found!" << std::endl;
+        return;
+    }
 
     // In this sample, the workspace is already allocated with max_workspace_size
     // If not, calculate the needed workspace_size and allocate d_workspace here

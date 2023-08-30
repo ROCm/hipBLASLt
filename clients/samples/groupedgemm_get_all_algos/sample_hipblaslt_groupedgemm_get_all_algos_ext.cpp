@@ -158,6 +158,13 @@ void simpleGroupedGemmExt(hipblasLtHandle_t     handle,
             }
         }
     }
+
+    if(validIdx.empty())
+    {
+        std::cerr << "No valid solution found!" << std::endl;
+        return;
+    }
+
     // In this sample, the workspace is already allocated with max_workspace_size
     // If not, allocate d_workspace here
     // CHECK_HIP_ERRORhipMalloc(&d_workspace, workspace_size));
