@@ -1,12 +1,37 @@
+/*******************************************************************************
+ *
+ * MIT License
+ *
+ * Copyright (C) 2023 Advanced Micro Devices, Inc.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ *
+ *******************************************************************************/
 #include <gtest/gtest.h>
 #include <algorithm>
 #include <numeric>
 #include <tuple>
 #include <vector>
+#include <utility>
 #include <cstdlib>
 #include <hip/hip_runtime.h>
 #include <hip/hip_runtime_api.h>
-#include "../include/hipblaslt_random.hpp"
 #include <hipblaslt/hipblaslt.h>
 
 namespace {
@@ -44,7 +69,7 @@ struct TypedMatrixTransformIO : public MatrixTransformIO {
     }
 
     void *getBuf(size_t i) override {
-        static void *buf[] = {a, b, c};
+        void *buf[] = {a, b, c};
         return buf[i];
     }
 
@@ -120,6 +145,7 @@ void cpuTransform(DType *c, const DType *a, const DType *b, ScaleType alpha, Sca
         }
     }
 }
+
 template<typename DType>
 void validation(void *c,
                 void *a, void *b, float alpha, float beta,
@@ -196,8 +222,14 @@ TEST_P(MatrixTransformTest, Basic) {
     float alpha = 1;
     float beta = 1;
     int64_t batchStride = m * n;
-    uint32_t ldA = (orderA == HIPBLASLT_ORDER_ROW) ? getLeadingDimSize<true>(m, n): getLeadingDimSize<false>(m, n);
-    uint32_t ldB = (orderB == HIPBLASLT_ORDER_ROW) ? getLeadingDimSize<true>(m, n): getLeadingDimSize<false>(m, n);
+    std::pair<int64_t, int64_t> shapeA;
+    std::pair<int64_t, int64_t> shapeB;
+    shapeA.first = opA == HIPBLAS_OP_T ? n : m;
+    shapeA.second = opA == HIPBLAS_OP_T ? m : n;
+    shapeB.first = opB == HIPBLAS_OP_T ? n : m;
+    shapeB.second = opB == HIPBLAS_OP_T ? m : n;
+    uint32_t ldA = (orderA == HIPBLASLT_ORDER_ROW) ? getLeadingDimSize<true>(shapeA.first, shapeA.second): getLeadingDimSize<false>(shapeA.first, shapeA.second);
+    uint32_t ldB = (orderB == HIPBLASLT_ORDER_ROW) ? getLeadingDimSize<true>(shapeB.first, shapeB.second): getLeadingDimSize<false>(shapeB.first, shapeB.second);
     uint32_t ldC = (orderC == HIPBLASLT_ORDER_ROW) ? getLeadingDimSize<true>(m, n): getLeadingDimSize<false>(m, n);
 
     auto inputs = makeMatrixTransformIOPtr(datatype, m, n, batchSize);
@@ -219,8 +251,8 @@ TEST_P(MatrixTransformTest, Basic) {
     hipblasLtErr = hipblasLtMatrixTransformDescSetAttribute(desc, HIPBLASLT_MATRIX_TRANSFORM_DESC_TRANSA, &opA, sizeof(opA));
     hipblasLtErr = hipblasLtMatrixTransformDescSetAttribute(desc, HIPBLASLT_MATRIX_TRANSFORM_DESC_TRANSB, &opB, sizeof(opB));
     hipblasLtMatrixLayout_t layoutA, layoutB, layoutC;
-    hipblasLtErr = hipblasLtMatrixLayoutCreate(&layoutA, datatype, m, n, ldA);
-    hipblasLtErr = hipblasLtMatrixLayoutCreate(&layoutB, datatype, m, n, ldB);
+    hipblasLtErr = hipblasLtMatrixLayoutCreate(&layoutA, datatype, shapeA.first, shapeA.second, ldA);
+    hipblasLtErr = hipblasLtMatrixLayoutCreate(&layoutB, datatype, shapeB.first, shapeB.second, ldB);
     hipblasLtErr = hipblasLtMatrixLayoutCreate(&layoutC, datatype, m, n, ldC);
     hipblasLtErr = hipblasLtMatrixLayoutSetAttribute(layoutA, hipblasLtMatrixLayoutAttribute_t::HIPBLASLT_MATRIX_LAYOUT_ORDER, &orderA, sizeof(orderA));
     hipblasLtErr = hipblasLtMatrixLayoutSetAttribute(layoutB, hipblasLtMatrixLayoutAttribute_t::HIPBLASLT_MATRIX_LAYOUT_ORDER, &orderB, sizeof(orderB));
@@ -235,7 +267,7 @@ TEST_P(MatrixTransformTest, Basic) {
     hipblasLtErr = hipblasLtCreate(&handle);
     hipblasLtErr = hipblasLtMatrixTransform(handle, desc, &alpha, dA, layoutA, &beta, dB, layoutB, dC, layoutC, nullptr);
     ASSERT_EQ(hipblasLtErr, HIPBLAS_STATUS_SUCCESS);
-    EXPECT_EQ(hipDeviceSynchronize(), hipSuccess);
+    ASSERT_EQ(hipDeviceSynchronize(), hipSuccess);
     auto rowMajA = (orderA == HIPBLASLT_ORDER_ROW);
     auto rowMajB = (orderB == HIPBLASLT_ORDER_ROW);
     auto rowMajC = (orderC == HIPBLASLT_ORDER_ROW);
@@ -261,7 +293,7 @@ TEST_P(MatrixTransformTest, Basic) {
 
 INSTANTIATE_TEST_SUITE_P(AllCombinations,
                          MatrixTransformTest,
-                         ::testing::Combine(::testing::ValuesIn({HIPBLASLT_R_32F}),
+                         ::testing::Combine(::testing::ValuesIn({HIPBLASLT_R_32F, HIPBLASLT_R_16F, HIPBLASLT_R_16B, HIPBLASLT_R_8I}),
                                             ::testing::ValuesIn({HIPBLASLT_R_32F}),
                                             ::testing::ValuesIn({HIPBLAS_OP_N, HIPBLAS_OP_T}),
                                             ::testing::ValuesIn({HIPBLAS_OP_N, HIPBLAS_OP_T}),
