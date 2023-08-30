@@ -187,15 +187,16 @@ void simpleGemmGetAllAlgos(hipblasLtHandle_t  handle,
             }
         }
     }
-    // In this sample, the workspace is already allocated with max_workspace_size
-    // If not, allocate d_workspace here
-    // CHECK_HIP_ERRORhipMalloc(&d_workspace, workspace_size));
 
     if(validIdx.empty())
     {
         std::cerr << "No valid solution found!" << std::endl;
         return;
     }
+
+    // In this sample, the workspace is already allocated with max_workspace_size
+    // If not, allocate d_workspace here
+    // CHECK_HIP_ERRORhipMalloc(&d_workspace, workspace_size));
 
     CHECK_HIPBLASLT_ERROR(hipblasLtMatmul(handle,
                                           matmul,

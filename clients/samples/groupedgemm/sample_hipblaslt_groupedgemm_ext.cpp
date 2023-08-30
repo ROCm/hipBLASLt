@@ -134,6 +134,12 @@ void simpleGroupedGemmExt(hipblasLtHandle_t     handle,
     CHECK_HIPBLASLT_ERROR(
         groupedgemm.algoGetHeuristic(request_solutions, gemmPref, heuristicResult));
 
+    if(heuristicResult.empty())
+    {
+        std::cerr << "No valid solution found!" << std::endl;
+        return;
+    }
+
     // In this sample, the workspace is already allocated with max_workspace_size
     // If not, calculate the needed workspace_size and allocate d_workspace here
     // uint64_t workspace_size = 0;
