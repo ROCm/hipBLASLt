@@ -26,6 +26,7 @@
 
 #include <hip/hip_runtime.h>
 #include <hipblaslt/hipblaslt.h>
+#include <iostream>
 
 #include "helper.h"
 
@@ -159,6 +160,13 @@ void simpleGemm(hipblasLtHandle_t  handle,
                                                           request_solutions,
                                                           heuristicResult,
                                                           &returnedAlgoCount));
+
+    if(returnedAlgoCount == 0)
+    {
+        std::cerr << "No valid solution found!" << std::endl;
+        return;
+    }
+
     uint64_t workspace_size = 0;
     for(int i = 0; i < returnedAlgoCount; i++)
         workspace_size = max(workspace_size, heuristicResult[i].workspaceSize);
