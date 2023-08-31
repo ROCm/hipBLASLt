@@ -1,6 +1,6 @@
 - {MinimumRequiredVersion: 4.33.0}
 - aquavanjaram
-- gfx940
+- gfx942
 - [Device 0049, Device 0050]
 - Activation: true
   ActivationComputeDataType: 0
@@ -16,8 +16,8 @@
   ComplexConjugateB: false
   ComputeDataType: 0
   DataType: 4
-  DataTypeA: 11
-  DataTypeB: 4
+  DataTypeA: 4
+  DataTypeB: 11
   DestDataType: 4
   F32XdlMathOp: 0
   Fp16AltImpl: false
@@ -29,12 +29,12 @@
   Index01B: 1
   Index1: 1
   IndexAssignmentsA: [3, 0, 2]
-  IndexAssignmentsB: [1, 3, 2]
+  IndexAssignmentsB: [3, 1, 2]
   IndexAssignmentsLD: [4, 5, 6, 7]
   IndexAssignmentsMetadata: [3, 0, 2]
   IndexUnroll: 3
   IndexUnrollA: 0
-  IndexUnrollB: 1
+  IndexUnrollB: 0
   IndexUnrollM: 0
   IndicesBatch: [2]
   IndicesFree: [0, 1]
@@ -56,7 +56,7 @@
   StridedBatched: true
   SupportUserArgs: false
   TLUA: false
-  TLUB: true
+  TLUB: false
   Tensor0: 0
   Tensor1: 1
   TileA: 0
@@ -64,15 +64,15 @@
   TileB: 1
   TotalIndices: 4
   TransposeA: 1
-  TransposeB: 1
+  TransposeB: 0
   UseBeta: true
   UseBias: true
   UseE: false
   UseInitialStridesAB: false
   UseInitialStridesCD: false
-  UseScaleAB: false
+  UseScaleAB: true
   UseScaleAlphaVec: true
-  UseScaleDVec: true
+  UseScaleDVec: false
 - - 1LDSBuffer: 0
     ActivationAlt: false
     ActivationFuncCall: true
@@ -105,21 +105,21 @@
     GlobalWriteVectorWidth: 1
     GroupLoadStore: false
     GuaranteeNoPartialA: true
-    GuaranteeNoPartialB: false
+    GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
     ISA: [9, 4, 0]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bjlk_F8H_HHS_BH_BiasSB_AS_SDV_SAV_MT16x16x64_MI16x16x1_SN_GSU1_MIWT1_1
+    KernelNameMin: Cijk_Alik_Bljk_HF8_HHS_BH_BiasSB_AS_SDV_SAV_MT16x16x64_MI16x16x1_SN_GSU1_MIWT1_1
     LSCA: 64
-    LSCB: 16
+    LSCB: 64
     LSPA: 4
-    LSPB: 16
+    LSPB: 4
     LVCA: 16
-    LVCB: 4
+    LVCB: 16
     LVPA: 1
-    LVPB: 4
+    LVPB: 1
     LdsBlockSizePerPadA: 0
     LdsBlockSizePerPadB: 0
     LdsBlockSizePerPadMetadata: 0
@@ -217,8 +217,8 @@
       ComplexConjugateB: false
       ComputeDataType: 0
       DataType: 4
-      DataTypeA: 11
-      DataTypeB: 4
+      DataTypeA: 4
+      DataTypeB: 11
       DestDataType: 4
       F32XdlMathOp: 0
       Fp16AltImpl: false
@@ -230,12 +230,12 @@
       Index01B: 1
       Index1: 1
       IndexAssignmentsA: [3, 0, 2]
-      IndexAssignmentsB: [1, 3, 2]
+      IndexAssignmentsB: [3, 1, 2]
       IndexAssignmentsLD: [4, 5, 6, 7]
       IndexAssignmentsMetadata: [3, 0, 2]
       IndexUnroll: 3
       IndexUnrollA: 0
-      IndexUnrollB: 1
+      IndexUnrollB: 0
       IndexUnrollM: 0
       IndicesBatch: [2]
       IndicesFree: [0, 1]
@@ -257,7 +257,7 @@
       StridedBatched: true
       SupportUserArgs: false
       TLUA: false
-      TLUB: true
+      TLUB: false
       Tensor0: 0
       Tensor1: 1
       TileA: 0
@@ -265,20 +265,20 @@
       TileB: 1
       TotalIndices: 4
       TransposeA: 1
-      TransposeB: 1
+      TransposeB: 0
       UseBeta: true
       UseBias: true
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
-      UseScaleAB: false
+      UseScaleAB: true
       UseScaleAlphaVec: true
-      UseScaleDVec: true
+      UseScaleDVec: false
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 0
-    SolutionNameMin: Cijk_Alik_Bjlk_F8H_HHS_BH_BiasSB_AS_SDV_SAV_MT16x16x64_MI16x16x1_SN_GSU1_MIWT1_1
+    SolutionNameMin: Cijk_Alik_Bljk_HF8_HHS_BH_BiasSB_AS_SDV_SAV_MT16x16x64_MI16x16x1_SN_GSU1_MIWT1_1
     SourceSwap: 1
     StaggerU: 32
     StaggerUMapping: 0
@@ -300,7 +300,7 @@
     TransposeLDS: 1
     TransposeLDSMetadata: true
     UnrollMajorLDSA: true
-    UnrollMajorLDSB: false
+    UnrollMajorLDSB: true
     UnrollMajorLDSMetadata: true
     Use64bShadowLimit: 1
     UseInstOffsetForGRO: 0
@@ -322,18 +322,18 @@
     _DepthUB: 64
     _DepthUMetadata: 64
     _GlobalAccumulation: null
-    _UseSgprForGRO: false
+    _UseSgprForGRO: 1
     _VectorStore: 1
     _WorkspaceSizePerElemBias: 0
     _WorkspaceSizePerElemC: 0
     _staggerStrideShift: 1
 - [2, 3, 0, 1]
-- - - [127, 128, 1, 640, 127, 127, 640, 128]
-    - [0, 204.468]
+- - - [127, 128, 1, 640, 127, 127, 640, 640]
+    - [0, 176.786]
   - - [128, 128, 1, 128, 128, 128, 128, 128]
-    - [0, 36.4675]
-  - - [129, 128, 1, 640, 129, 129, 640, 128]
-    - [0, 26.2212]
+    - [0, 6.63566]
+  - - [129, 128, 1, 640, 129, 129, 640, 640]
+    - [0, 13.9862]
 - null
 - null
 - DeviceEfficiency
