@@ -8545,10 +8545,10 @@ class KernelWriterAssembly(KernelWriter):
       # buffer_load offset field is 12-bit.
       # if offset >= 4096, use soffset instead
       maxShift = max(bps - 16, 0) #if bps = 32 or bps = 64
-      if (offset + maxShift) > 4096:
+      if (offset + maxShift) >= 4096:
         with self.allocTmpSgpr(1) as tmpSgprInfo:
           tmpSgpr = sgpr(tmpSgprInfo.idx)
-          if offset > 4096:
+          if offset >= 4096:
             module.add(SMovB32(dst=tmpSgpr, src=offset, comment="large offset"))
             mubuf.offen = False
             mubuf.offset12 = 0
