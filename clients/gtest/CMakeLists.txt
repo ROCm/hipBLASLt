@@ -22,8 +22,16 @@
 # ########################################################################
 
 #enable_testing()
+# Version not working for GTestConfig.cmake
 find_package( GTest REQUIRED )
-
+# So we check manually
+string(REGEX MATCH "^([0-9]+)\\.([0-9]+)\\.([0-9]+)" _ "${GTest_VERSION}")
+set(GTest_VERSION_MAJOR ${CMAKE_MATCH_1})
+set(GTest_VERSION_MINOR ${CMAKE_MATCH_2})
+set(GTest_VERSION_PATCH ${CMAKE_MATCH_3})
+if(${GTest_VERSION_MAJOR} EQUAL 1 AND ${GTest_VERSION_MINOR} LESS 14)
+    message(FATAL_ERROR "GTest requires at least version 1.14.0")
+endif()
 
 set(hipblaslt_test_source
     hipblaslt_gtest_main.cpp
