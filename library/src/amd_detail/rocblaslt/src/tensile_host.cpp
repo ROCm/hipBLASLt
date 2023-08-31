@@ -538,7 +538,7 @@ namespace
             hipblasltDatatype_to_tensile_type(prob.bias_type), biasSize, 0, prob.gradient, biasSrc);
 
         // ScaleAB is only supported on F8/BF8
-        if((Tensile_TiA == Tensile::DataType::Float8 || Tensile_TiA == Tensile::DataType::BFloat8) && prob.compute_type != rocblaslt_compute_f32_fast_f16)
+        if(Tensile_TiA == Tensile::DataType::Float8 || Tensile_TiA == Tensile::DataType::BFloat8 || Tensile_TiB == Tensile::DataType::Float8 || Tensile_TiB == Tensile::DataType::BFloat8)
         {
             tensileProblem.setUseScaleAB(true);
             tensileProblem.setScaleA(Tensile_Tc);
@@ -729,8 +729,8 @@ namespace
                                    biasSrc);
 
             // ScaleAB is only supported on F8/BF8
-            if((Tensile_TiA == Tensile::DataType::Float8
-               || Tensile_TiA == Tensile::DataType::BFloat8) && prob.compute_type != rocblaslt_compute_f32_fast_f16)
+            if(Tensile_TiA == Tensile::DataType::Float8
+               || Tensile_TiA == Tensile::DataType::BFloat8 || Tensile_TiB == Tensile::DataType::Float8 || Tensile_TiB == Tensile::DataType::BFloat8)
             {
                 tensileProblem.setUseScaleAB(true);
                 tensileProblem.setScaleA(Tensile_Tc);
