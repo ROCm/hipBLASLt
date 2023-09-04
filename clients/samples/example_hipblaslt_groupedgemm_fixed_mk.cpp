@@ -150,7 +150,6 @@ void mat_mul_bias_activation(Tc             alpha,
                              int            Ds2,
                              int            Ds3,
                              Tc*            bias,
-                             Tc*            scaleDVec,
                              ActivationType actType)
 {
     std::function<Tc(Tc)> actFunc;
@@ -175,7 +174,6 @@ void mat_mul_bias_activation(Tc             alpha,
                     + (bias == nullptr ? 0 : bias[i1]);
                 if(actType != ActivationType::NONE)
                     t = actFunc(t);
-                t = t * (scaleDVec == nullptr ? 1.0 : scaleDVec[i1]);
                 D[i1 * Ds1 + i2 * Ds2 + batch * Ds3] = static_cast<To>(t);
             }
         }
@@ -243,7 +241,6 @@ static void show_usage(char* argv[])
         << "\t--act \t\t\tact \t\tGEMM_STRIDED set activation type: relu, gelu, none (default is "
            "none)\n"
         << "\t--bias \t\t\tbias \t\tGEMM_STRIDED set bias: 0 or 1 (default is 0)\n"
-        << "\t--scaleDVec \t\tscaleDVec \t\tGEMM_STRIDED enable scaleDVec: 0 or 1 (default is 0)\n"
         << std::endl;
 }
 
@@ -268,7 +265,6 @@ static int parse_arguments(int                          argc,
                            hipblasOperation_t&          trans_a,
                            hipblasOperation_t&          trans_b,
                            std::vector<bool>&           enable_bias,
-                           std::vector<bool>&           enable_scaleDVec,
                            std::vector<ActivationType>& actType,
                            int32_t&                     bench_count,
                            int32_t&                     sync_count,
@@ -368,10 +364,6 @@ static int parse_arguments(int                          argc,
                 else if((arg == "--bias") && (i + 1 < argc))
                 {
                     enable_bias.push_back(atoi(argv[++i]));
-                }
-                else if((arg == "--scaleDVec") && (i + 1 < argc))
-                {
-                    enable_scaleDVec.push_back(atoi(argv[++i]));
                 }
                 else if((arg == "--act") && (i + 1 < argc))
                 {
@@ -570,9 +562,7 @@ void initialize_a_b_c_bias(std::vector<Tin>&   ha,
                            std::vector<Tout>&  hc,
                            int64_t             size_c,
                            std::vector<float>& h_bias,
-                           int64_t             size_bias,
-                           std::vector<float>& h_scaleDVec,
-                           int64_t             size_scaleDVec)
+                           int64_t             size_bias)
 {
     srand(1);
     for(int i = 0; i < size_a; ++i)
@@ -590,10 +580,6 @@ void initialize_a_b_c_bias(std::vector<Tin>&   ha,
     for(int i = 0; i < size_bias; ++i)
     {
         h_bias[i] = static_cast<Tout>((rand() % 7) - 3);
-    }
-    for(int i = 0; i < size_scaleDVec; ++i)
-    {
-        h_scaleDVec[i] = static_cast<float>((rand() % 7) - 3);
     }
 }
 
@@ -628,7 +614,6 @@ int test_hipblaslt(hipblasltDatatype_t         in_datatype,
                    std::vector<float>          alpha,
                    std::vector<float>          beta,
                    std::vector<bool>           enable_bias,
-                   std::vector<bool>           enable_scaleDVec,
                    std::vector<ActivationType> actType,
                    int32_t                     gemm_count,
                    int32_t                     bench_count,
@@ -643,12 +628,12 @@ int test_hipblaslt(hipblasltDatatype_t         in_datatype,
         size_d1(gemm_count);
 
     std::vector<int> size_a(gemm_count), size_b(gemm_count), size_c(gemm_count), size_d(gemm_count),
-        size_bias(gemm_count), size_scaleDVec(gemm_count);
+        size_bias(gemm_count);
     std::vector<void*> da(gemm_count), db(gemm_count), dc(gemm_count), dd(gemm_count),
-        d_bias(gemm_count), d_scaleDVec(gemm_count);
+        d_bias(gemm_count);
     std::vector<std::vector<Tin>>   ha(gemm_count), hb(gemm_count);
     std::vector<std::vector<Tout>>  hc(gemm_count), hd(gemm_count), hd_gold(gemm_count);
-    std::vector<std::vector<float>> h_bias(gemm_count), h_scaleDVec(gemm_count);
+    std::vector<std::vector<float>> h_bias(gemm_count);
 
     hipblasLtHandle_t handle;
     CHECK_HIPBLASLT_ERROR(hipblasLtCreate(&handle));
@@ -710,12 +695,11 @@ int test_hipblaslt(hipblasltDatatype_t         in_datatype,
             size_b1[i]    = ldb[i] * k[i];
         }
 
-        size_a[i]         = size_a1[i] + stride_a[i] * (batch_count[i] - 1);
-        size_b[i]         = size_b1[i] + stride_b[i] * (batch_count[i] - 1);
-        size_c[i]         = size_c1[i] + stride_c[i] * (batch_count[i] - 1);
-        size_d[i]         = size_d1[i] + stride_d[i] * (batch_count[i] - 1);
-        size_bias[i]      = enable_bias[i] ? m[i] : 0;
-        size_scaleDVec[i] = enable_scaleDVec[i] ? m[i] : 0;
+        size_a[i]    = size_a1[i] + stride_a[i] * (batch_count[i] - 1);
+        size_b[i]    = size_b1[i] + stride_b[i] * (batch_count[i] - 1);
+        size_c[i]    = size_c1[i] + stride_c[i] * (batch_count[i] - 1);
+        size_d[i]    = size_d1[i] + stride_d[i] * (batch_count[i] - 1);
+        size_bias[i] = enable_bias[i] ? m[i] : 0;
 
         // Naming: da is in GPU (device) memory. ha is in CPU (host) memory
         ha[i].resize(size_a[i]);
@@ -724,19 +708,10 @@ int test_hipblaslt(hipblasltDatatype_t         in_datatype,
         hd[i].resize(size_d[i]);
         hd_gold[i].resize(size_d[i]);
         h_bias[i].resize(size_bias[i]);
-        h_scaleDVec[i].resize(size_scaleDVec[i]);
 
         // initial data on host
-        initialize_a_b_c_bias(ha[i],
-                              size_a[i],
-                              hb[i],
-                              size_b[i],
-                              hc[i],
-                              size_c[i],
-                              h_bias[i],
-                              size_bias[i],
-                              h_scaleDVec[i],
-                              size_scaleDVec[i]);
+        initialize_a_b_c_bias(
+            ha[i], size_a[i], hb[i], size_b[i], hc[i], size_c[i], h_bias[i], size_bias[i]);
 
         CHECK_HIP_ERROR(hipMalloc(&da[i], size_a[i] * sizeof(Tin)));
         CHECK_HIP_ERROR(hipMalloc(&db[i], size_b[i] * sizeof(Tin)));
@@ -744,8 +719,6 @@ int test_hipblaslt(hipblasltDatatype_t         in_datatype,
         CHECK_HIP_ERROR(hipMalloc(&dd[i], size_d[i] * sizeof(Tout)));
         if(enable_bias[i])
             CHECK_HIP_ERROR(hipMalloc(&d_bias[i], size_bias[i] * sizeof(float)));
-        if(enable_scaleDVec[i])
-            CHECK_HIP_ERROR(hipMalloc(&d_scaleDVec[i], size_scaleDVec[i] * sizeof(float)));
 
         // copy matrices from host to device
         CHECK_HIP_ERROR(
@@ -757,11 +730,6 @@ int test_hipblaslt(hipblasltDatatype_t         in_datatype,
         if(enable_bias[i])
             CHECK_HIP_ERROR(hipMemcpy(
                 d_bias[i], h_bias[i].data(), sizeof(float) * size_bias[i], hipMemcpyHostToDevice));
-        if(enable_scaleDVec[i])
-            CHECK_HIP_ERROR(hipMemcpy(d_scaleDVec[i],
-                                      h_scaleDVec[i].data(),
-                                      sizeof(float) * size_scaleDVec[i],
-                                      hipMemcpyHostToDevice));
     }
 
     // Set User Preference attributes
@@ -801,7 +769,7 @@ int test_hipblaslt(hipblasltDatatype_t         in_datatype,
                                            HIPBLASLT_COMPUTE_F32);
 
     std::cout << "index, transAB, M, N, K, lda, ldb, ldc, stride_a, stride_b, "
-                 "stride_c, batch_count, alpha, beta, bias, scaleDVec, activationType"
+                 "stride_c, batch_count, alpha, beta, bias, activationType"
               << std::endl;
 
     for(int i = 0; i < gemm_count; i++)
@@ -811,7 +779,7 @@ int test_hipblaslt(hipblasltDatatype_t         in_datatype,
                   << k[i] << ", " << lda[i] << ", " << ldb[i] << ", " << ldc[i] << ", "
                   << stride_a[i] << ", " << stride_b[i] << ", " << stride_c[i] << ", "
                   << batch_count[i] << ", " << alpha[i] << ", " << beta[i] << ", " << enable_bias[i]
-                  << ", " << enable_scaleDVec[i] << ", " << ToString(actType[i]) << std::endl;
+                  << ", " << ToString(actType[i]) << std::endl;
     }
 
     std::vector<hipblaslt_ext::GemmEpilogue> gemmEpilogue(gemm_count);
@@ -838,7 +806,6 @@ int test_hipblaslt(hipblasltDatatype_t         in_datatype,
         gemmInputs[i].d                = dd[i];
         gemmInputs[i].alpha            = static_cast<void*>(&alpha[i]);
         gemmInputs[i].beta             = static_cast<void*>(&beta[i]);
-        gemmInputs[i].scaleDVec        = d_scaleDVec[i];
         gemmInputs[i].bias             = d_bias[i];
     }
 
@@ -970,11 +937,6 @@ int test_hipblaslt(hipblasltDatatype_t         in_datatype,
                     bias_ptr = &h_bias[i][0];
                 else
                     bias_ptr = nullptr;
-                float* scaleDVec_ptr;
-                if(enable_scaleDVec[i])
-                    scaleDVec_ptr = &h_scaleDVec[i][0];
-                else
-                    scaleDVec_ptr = nullptr;
                 mat_mul_bias_activation<Tin, Tout, float>(alpha[i],
                                                           beta[i],
                                                           m[i],
@@ -998,7 +960,6 @@ int test_hipblaslt(hipblasltDatatype_t         in_datatype,
                                                           ldd[i],
                                                           stride_d[i],
                                                           bias_ptr,
-                                                          scaleDVec_ptr,
                                                           actType[i]);
 
                 bool passed = true;
@@ -1050,8 +1011,6 @@ int test_hipblaslt(hipblasltDatatype_t         in_datatype,
         CHECK_HIP_ERROR(hipFree(dd[i]));
         if(enable_bias[i])
             CHECK_HIP_ERROR(hipFree(d_bias[i]));
-        if(enable_scaleDVec[i])
-            CHECK_HIP_ERROR(hipFree(d_scaleDVec[i]));
     }
     CHECK_HIP_ERROR(hipStreamDestroy(stream));
 
@@ -1075,7 +1034,6 @@ int main(int argc, char* argv[])
     std::vector<float>          alpha;
     std::vector<float>          beta;
     std::vector<bool>           enable_bias;
-    std::vector<bool>           enable_scaleDVec;
     std::vector<ActivationType> actType;
 
     bool    verbose     = false;
@@ -1104,7 +1062,6 @@ int main(int argc, char* argv[])
                        trans_a,
                        trans_b,
                        enable_bias,
-                       enable_scaleDVec,
                        actType,
                        bench_count,
                        sync_count,
@@ -1154,8 +1111,6 @@ int main(int argc, char* argv[])
             beta.push_back(BETA);
         if(i == enable_bias.size())
             enable_bias.push_back(0);
-        if(i == enable_scaleDVec.size())
-            enable_scaleDVec.push_back(0);
         if(i == actType.size())
             actType.push_back(ActivationType::NONE);
 
@@ -1201,7 +1156,6 @@ int main(int argc, char* argv[])
                                                                 alpha,
                                                                 beta,
                                                                 enable_bias,
-                                                                enable_scaleDVec,
                                                                 actType,
                                                                 gemm_count,
                                                                 bench_count,
@@ -1228,7 +1182,6 @@ int main(int argc, char* argv[])
                                                                alpha,
                                                                beta,
                                                                enable_bias,
-                                                               enable_scaleDVec,
                                                                actType,
                                                                gemm_count,
                                                                bench_count,
@@ -1255,7 +1208,6 @@ int main(int argc, char* argv[])
                                                               alpha,
                                                               beta,
                                                               enable_bias,
-                                                              enable_scaleDVec,
                                                               actType,
                                                               gemm_count,
                                                               bench_count,
@@ -1282,7 +1234,6 @@ int main(int argc, char* argv[])
                                                                       alpha,
                                                                       beta,
                                                                       enable_bias,
-                                                                      enable_scaleDVec,
                                                                       actType,
                                                                       gemm_count,
                                                                       bench_count,

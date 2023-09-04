@@ -424,10 +424,6 @@ try
          bool_switch(&arg.bias_vector)->default_value(false),
          "Apply bias vector")
 
-        ("scaleD_vector",
-         bool_switch(&arg.scaleD_vector)->default_value(false),
-         "Apply scaleD vector")
-
         ("scaleAlpha_vector",
          bool_switch(&arg.scaleAlpha_vector)->default_value(false),
          "Apply scaleAlpha vector")
