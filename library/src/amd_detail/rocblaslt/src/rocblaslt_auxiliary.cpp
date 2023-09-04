@@ -57,9 +57,9 @@ RocblasltContractionProblem<TiA, TiB, To, Tc>
         batch_stride_d, batch_stride_e;
     hipblasltDatatype_t    bias_type;
     rocblaslt_compute_type compute_type;
-    void *           bias = nullptr, *scaleDVec = nullptr, *scaleAlphaVec = nullptr, *e = nullptr;
-    bool             gradient = false;
-    rocblaslt_status isValid  = rocblaslt_matmul_valid_args(matmul_descr,
+    void *                 bias = nullptr, *scaleAlphaVec = nullptr, *e = nullptr;
+    bool                   gradient = false;
+    rocblaslt_status       isValid  = rocblaslt_matmul_valid_args(matmul_descr,
                                                            dummy_ptr,
                                                            dummy_ptr,
                                                            dummy_ptr,
@@ -85,7 +85,6 @@ RocblasltContractionProblem<TiA, TiB, To, Tc>
                                                            batch_stride_e,
                                                            bias,
                                                            bias_type,
-                                                           scaleDVec,
                                                            scaleAlphaVec,
                                                            e,
                                                            gradient,
@@ -148,7 +147,6 @@ RocblasltContractionProblem<TiA, TiB, To, Tc>
                                                           bias,
                                                           (const Tc*)scaleA,
                                                           (const Tc*)scaleB,
-                                                          (const Tc*)scaleDVec,
                                                           (const Tc*)scaleAlphaVec,
                                                           bias_type,
                                                           epilogue,
@@ -669,15 +667,6 @@ rocblaslt_status rocblaslt_matmul_desc_set_attribute(rocblaslt_matmul_desc      
                     return rocblaslt_status_invalid_value;
                 }
                 break;
-            case ROCBLASLT_MATMUL_DESC_D_SCALE_VECTOR_POINTER:
-                if(sizeof(void*) <= sizeInBytes)
-                    memcpy(&matmulDesc->scaleDVec, buf, sizeof(void*));
-                else
-                {
-                    log_error(__func__, "invalid scaleDVec buf size", sizeInBytes);
-                    return rocblaslt_status_invalid_value;
-                }
-                break;
             case ROCBLASLT_MATMUL_DESC_POINTER_MODE:
                 if(sizeof(int32_t) <= sizeInBytes)
                     memcpy(&matmulDesc->pointermode, buf, sizeof(int32_t));
@@ -828,15 +817,6 @@ rocblaslt_status rocblaslt_matmul_desc_get_attribute(rocblaslt_matmul_desc      
                     return rocblaslt_status_invalid_value;
                 }
                 memcpy(buf, &matmulDesc->scaleB, sizeof(void*));
-                break;
-            case ROCBLASLT_MATMUL_DESC_D_SCALE_VECTOR_POINTER:
-                *sizeWritten = sizeof(void*);
-                if(sizeInBytes < sizeof(void*))
-                {
-                    log_error(__func__, "invalid buf size", sizeInBytes);
-                    return rocblaslt_status_invalid_value;
-                }
-                memcpy(buf, &matmulDesc->scaleDVec, sizeof(void*));
                 break;
             case ROCBLASLT_MATMUL_DESC_POINTER_MODE:
                 *sizeWritten = sizeof(int32_t);

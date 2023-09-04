@@ -91,7 +91,6 @@ For more information:
    --activation_arg2 <value>  Reserved.                                                                           (Default value is: inf)
    --bias_type <value>        Precision of bias vector.Options: f16_r,bf16_r,f32_r,default(same with D type)
    --bias_vector              Apply bias vector
-   --scaleD_vector            Apply scaleD vector
    --device <value>           Set default device to be used for subsequent program runs                           (Default value is: 0)
    --c_noalias_d              C and D are stored in separate memory
    --workspace <value>        Set fixed workspace memory size instead of using hipblaslt managed memory           (Default value is: 0)
@@ -136,7 +135,6 @@ For more information:
         --grad          grad                    GEMM_STRIDED enable grad: 0 or 1 (default is 0)
         --use_e         use_e                   GEMM_STRIDED enable use_e: 0 or 1 (default is 0)
         --bias          bias                    GEMM_STRIDED enable bias and choose bias src: A, B, D
-        --scaleDVec     scaleDVec               GEMM_STRIDED enable scaleDVec: 0 or 1 (default is 0)
         --header        header                  Print header for output (default is enabled)
         --timing        timing                  Bechmark GPU kernel performance:0 or 1 (default is 1)
         --bench_count   bench_count             Number of benchmark runs (default is 3)
@@ -204,7 +202,6 @@ For more information:
         --beta                  beta            GEMM_STRIDED argument beta (default is 0)
         --act                   act             GEMM_STRIDED set activation type: relu, gelu, none (default is none)
         --bias                  bias            GEMM_STRIDED set bias: 0 or 1 (default is 0)
-        --scaleDVec             scaleDVec       GEMM_STRIDED enable scaleDVec: 0 or 1 (default is 0)
         --cpu_time              cpu_time        Bechmark timing using cpu time: 0 or 1 (default is 0)
         --all                   all             Get all solutions
 
@@ -251,7 +248,6 @@ For more information:
         --beta                  beta            GEMM_STRIDED argument beta (default is 0)
         --act                   act             GEMM_STRIDED set activation type: relu, gelu, none (default is none)
         --bias                  bias            GEMM_STRIDED set bias: 0 or 1 (default is 0)
-        --scaleDVec             scaleDVec       GEMM_STRIDED enable scaleDVec: 0 or 1 (default is 0)
         --cpu_time              cpu_time        Bechmark timing using cpu time: 0 or 1 (default is 0)
 
 For example, to solve 3 gemms by groupgemm sample app:

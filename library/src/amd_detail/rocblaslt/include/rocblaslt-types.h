@@ -251,7 +251,8 @@ typedef enum rocblaslt_compute_type_
     rocblaslt_compute_f32_fast_xf32 = 301, /**< XF32 compute for 32-bit input and output matrices */
     rocblaslt_compute_f64           = 302, /**< 64-bit floating-point precision. */
     rocblaslt_compute_i32           = 303, /**< 32-bit integer precision. */
-    rocblaslt_compute_f32_fast_f16  = 304, /**< F16 compute for 16-bit input and 32-bit output matrices */
+    rocblaslt_compute_f32_fast_f16
+    = 304, /**< F16 compute for 16-bit input and 32-bit output matrices */
 } rocblaslt_compute_type;
 
 /*! \ingroup types_module
@@ -268,25 +269,26 @@ typedef enum rocblaslt_matrix_layout_attribute_
     ROCBLASLT_MATRIX_LAYOUT_STRIDED_BATCH_OFFSET
     = 1, /**< stride between consecutive matrices in a batch expressed in terms
             of matrix elements. */
-    ROCBLASLT_MATRIX_LAYOUT_TYPE = 2,
+    ROCBLASLT_MATRIX_LAYOUT_TYPE  = 2,
     ROCBLASLT_MATRIX_LAYOUT_ORDER = 3,
-    ROCBLASLT_MATRIX_LAYOUT_ROWS = 4,
-    ROCBLASLT_MATRIX_LAYOUT_COLS = 5,
-    ROCBLASLT_MATRIX_LAYOUT_LD = 6,
-    ROCBLASLT_MATRIX_LAYOUT_MAX = 7
+    ROCBLASLT_MATRIX_LAYOUT_ROWS  = 4,
+    ROCBLASLT_MATRIX_LAYOUT_COLS  = 5,
+    ROCBLASLT_MATRIX_LAYOUT_LD    = 6,
+    ROCBLASLT_MATRIX_LAYOUT_MAX   = 7
 } rocblaslt_matrix_layout_attribute;
 
-typedef enum {
-  /** Column-major
+typedef enum
+{
+    /** Column-major
    *
    * Leading dimension is the stride (in elements) to the beginning of next column in memory.
    */
-  ROCBLASLT_ORDER_COL = 0,
-  /** Row major
+    ROCBLASLT_ORDER_COL = 0,
+    /** Row major
    *
    * Leading dimension is the stride (in elements) to the beginning of next row in memory.
    */
-  ROCBLASLT_ORDER_ROW = 1,
+    ROCBLASLT_ORDER_ROW = 1,
 } rocblasLtOrder_t;
 
 /*! \ingroup types_module
@@ -311,7 +313,6 @@ typedef enum rocblaslt_matmul_desc_attributes_
     ROCBLASLT_MATMUL_DESC_EPILOGUE_AUX_LD           = 8,
     ROCBLASLT_MATMUL_DESC_EPILOGUE_AUX_BATCH_STRIDE = 9,
     ROCBLASLT_MATMUL_DESC_POINTER_MODE              = 10,
-    ROCBLASLT_MATMUL_DESC_D_SCALE_VECTOR_POINTER    = 100,
     ROCBLASLT_MATMUL_DESC_MAX                       = 101
 } rocblaslt_matmul_desc_attributes;
 
@@ -362,10 +363,10 @@ typedef struct _rocblaslt_solutions
 
 typedef struct _rocblaslt_matrix_transform_desc
 {
-    hipblasltDatatype_t scaleType;
+    hipblasltDatatype_t    scaleType;
     hipblasLtPointerMode_t pointerMode{HIPBLASLT_POINTER_MODE_HOST};
-    hipblasOperation_t opA{HIPBLAS_OP_N};
-    hipblasOperation_t opB{HIPBLAS_OP_N};
+    hipblasOperation_t     opA{HIPBLAS_OP_N};
+    hipblasOperation_t     opB{HIPBLAS_OP_N};
 } rocblaslt_matrix_transform_desc;
 #ifdef __cplusplus
 }
@@ -412,7 +413,6 @@ namespace rocblaslt
         void* bias          = nullptr;
         void* scaleA        = nullptr;
         void* scaleB        = nullptr;
-        void* scaleDVec     = nullptr;
         void* scaleAlphaVec = nullptr;
         void* aux           = nullptr;
     };

@@ -67,7 +67,6 @@ rocblaslt_status rocblaslt_batched_template(rocblaslt_handle             handle,
                                             const void*                  bias,
                                             const Tc*                    scaleA,
                                             const Tc*                    scaleB,
-                                            const Tc*                    scaleDVec,
                                             const Tc*                    scaleAlphaVec,
                                             hipblasltDatatype_t          bias_type,
                                             rocblaslt_epilogue           epilogue,
@@ -110,7 +109,6 @@ rocblaslt_status rocblaslt_batched_template(rocblaslt_handle             handle,
                                                           bias,
                                                           scaleA,
                                                           scaleB,
-                                                          scaleDVec,
                                                           scaleAlphaVec,
                                                           bias_type,
                                                           epilogue,
@@ -151,7 +149,6 @@ rocblaslt_status rocblaslt_gemm_create_batched_template(hipblasOperation_t     t
                                                         const void*            bias,
                                                         const Tc*              scaleA,
                                                         const Tc*              scaleB,
-                                                        const Tc*              scaleDVec,
                                                         const Tc*              scaleAlphaVec,
                                                         hipblasltDatatype_t    bias_type,
                                                         rocblaslt_epilogue     epilogue,
@@ -196,7 +193,6 @@ rocblaslt_status rocblaslt_gemm_create_batched_template(hipblasOperation_t     t
                                                           bias,
                                                           scaleA,
                                                           scaleB,
-                                                          scaleDVec,
                                                           scaleAlphaVec,
                                                           bias_type,
                                                           epilogue,
@@ -238,7 +234,6 @@ rocblaslt_status
                                                   std::vector<const void*>&         bias,
                                                   std::vector<const Tc*>&           scaleAVec,
                                                   std::vector<const Tc*>&           scaleBVec,
-                                                  std::vector<const Tc*>&           scaleDVec,
                                                   std::vector<const Tc*>&           scaleAlphaVec,
                                                   std::vector<hipblasltDatatype_t>& bias_type,
                                                   std::vector<rocblaslt_epilogue>&  epilogue,
@@ -284,7 +279,6 @@ rocblaslt_status
                                                                          bias[i],
                                                                          scaleAVec[i],
                                                                          scaleBVec[i],
-                                                                         scaleDVec[i],
                                                                          scaleAlphaVec[i],
                                                                          bias_type[i],
                                                                          epilogue[i],
@@ -330,7 +324,6 @@ rocblaslt_status rocblaslt_matmul_typecasting(rocblaslt_handle             handl
                                               const void*                  bias,
                                               const void*                  scaleA,
                                               const void*                  scaleB,
-                                              const void*                  scaleDVec,
                                               const void*                  scaleAlphaVec,
                                               hipblasltDatatype_t          bias_type,
                                               rocblaslt_epilogue           epilogue,
@@ -378,7 +371,6 @@ rocblaslt_status rocblaslt_matmul_typecasting(rocblaslt_handle             handl
                                       reinterpret_cast<const void*>(bias),
                                       reinterpret_cast<const Tc*>(scaleA),
                                       reinterpret_cast<const Tc*>(scaleB),
-                                      reinterpret_cast<const Tc*>(scaleDVec),
                                       reinterpret_cast<const Tc*>(scaleAlphaVec),
                                       bias_type,
                                       epilogue,
@@ -417,7 +409,6 @@ rocblaslt_status rocblaslt_gemm_create_typecasting(hipblasOperation_t     trans_
                                                    const void*            bias,
                                                    const void*            scaleA,
                                                    const void*            scaleB,
-                                                   const void*            scaleDVec,
                                                    const void*            scaleAlphaVec,
                                                    hipblasltDatatype_t    bias_type,
                                                    rocblaslt_epilogue     epilogue,
@@ -459,7 +450,6 @@ rocblaslt_status rocblaslt_gemm_create_typecasting(hipblasOperation_t     trans_
                                                   gradient,
                                                   compute_type,
                                                   reinterpret_cast<const void*>(bias),
-                                                  reinterpret_cast<const Tc*>(scaleDVec),
                                                   reinterpret_cast<const Tc*>(scaleA),
                                                   reinterpret_cast<const Tc*>(scaleB),
                                                   reinterpret_cast<const Tc*>(scaleAlphaVec),
@@ -501,7 +491,6 @@ rocblaslt_status
                                              std::vector<const void*>&         bias,
                                              std::vector<const void*>&         scaleA,
                                              std::vector<const void*>&         scaleB,
-                                             std::vector<const void*>&         scaleDVec,
                                              std::vector<const void*>&         scaleAlphaVec,
                                              std::vector<hipblasltDatatype_t>& bias_type,
                                              std::vector<rocblaslt_epilogue>&  epilogue,
@@ -515,7 +504,6 @@ rocblaslt_status
     std::vector<To*>        groupedD;
     std::vector<const Tc*>  groupedScaleA;
     std::vector<const Tc*>  groupedScaleB;
-    std::vector<const Tc*>  groupedScaleDVec;
     std::vector<const Tc*>  groupedScaleAlphaVec;
 
     for(int i = 0; i < alpha.size(); i++)
@@ -528,7 +516,6 @@ rocblaslt_status
         groupedD.push_back(reinterpret_cast<To*>(d[i]));
         groupedScaleA.push_back(reinterpret_cast<const Tc*>(scaleA[i]));
         groupedScaleB.push_back(reinterpret_cast<const Tc*>(scaleB[i]));
-        groupedScaleDVec.push_back(reinterpret_cast<const Tc*>(scaleDVec[i]));
         groupedScaleAlphaVec.push_back(reinterpret_cast<const Tc*>(scaleAlphaVec[i]));
     }
 
@@ -562,7 +549,6 @@ rocblaslt_status
                                                          bias,
                                                          groupedScaleA,
                                                          groupedScaleB,
-                                                         groupedScaleDVec,
                                                          groupedScaleAlphaVec,
                                                          bias_type,
                                                          epilogue,
@@ -608,7 +594,6 @@ inline rocblaslt_status rocblaslt_matmul_template(rocblaslt_handle             h
                                                   const void*                  bias,
                                                   const void*                  scaleA,
                                                   const void*                  scaleB,
-                                                  const void*                  scaleDVec,
                                                   const void*                  scaleAlphaVec,
                                                   hipblasltDatatype_t          bias_type,
                                                   rocblaslt_epilogue           epilogue,
@@ -617,12 +602,12 @@ inline rocblaslt_status rocblaslt_matmul_template(rocblaslt_handle             h
 {
     rocblaslt_status rs_status = rocblaslt_status_not_implemented;
 
-#define EX_TYPECASTING_PARM                                                                        \
-    handle, trans_a, trans_b, m, n, k, alpha, a, ld_a, batch_stride_a, b, ld_b, batch_stride_b,    \
-        beta, c, ld_c, batch_stride_c, d, ld_d, batch_stride_d, e, ld_e, batch_stride_e,           \
-        batch_count, strided_batch, grouped_gemm, gradient, compute_type, algo, workspace,         \
-        workspaceSizeInBytes, bias, scaleA, scaleB, scaleDVec, scaleAlphaVec, bias_type, epilogue, \
-        gemmData, stream
+#define EX_TYPECASTING_PARM                                                                       \
+    handle, trans_a, trans_b, m, n, k, alpha, a, ld_a, batch_stride_a, b, ld_b, batch_stride_b,   \
+        beta, c, ld_c, batch_stride_c, d, ld_d, batch_stride_d, e, ld_e, batch_stride_e,          \
+        batch_count, strided_batch, grouped_gemm, gradient, compute_type, algo, workspace,        \
+        workspaceSizeInBytes, bias, scaleA, scaleB, scaleAlphaVec, bias_type, epilogue, gemmData, \
+        stream
 
     if(a_type == HIPBLASLT_R_32F && b_type == HIPBLASLT_R_32F)
     {
@@ -845,7 +830,6 @@ inline rocblaslt_status rocblaslt_gemm_create_template_cpp(hipblasOperation_t   
                                                            const void*            bias,
                                                            const void*            scaleA,
                                                            const void*            scaleB,
-                                                           const void*            scaleDVec,
                                                            const void*            scaleAlphaVec,
                                                            hipblasltDatatype_t    bias_type,
                                                            rocblaslt_epilogue     epilogue,
@@ -854,11 +838,11 @@ inline rocblaslt_status rocblaslt_gemm_create_template_cpp(hipblasOperation_t   
 {
     rocblaslt_status rs_status = rocblaslt_status_not_implemented;
 
-#define EX_TYPECASTING_PARM_GEMM_CPP                                                             \
-    trans_a, trans_b, m, n, k, alpha, a, ld_a, batch_stride_a, b, ld_b, batch_stride_b, beta, c, \
-        ld_c, batch_stride_c, d, ld_d, batch_stride_d, e, ld_e, batch_stride_e, batch_count,     \
-        strided_batch, grouped_gemm, gradient, compute_type, bias, scaleA, scaleB, scaleDVec,    \
-        scaleAlphaVec, bias_type, epilogue, gemmData, gemmCount
+#define EX_TYPECASTING_PARM_GEMM_CPP                                                              \
+    trans_a, trans_b, m, n, k, alpha, a, ld_a, batch_stride_a, b, ld_b, batch_stride_b, beta, c,  \
+        ld_c, batch_stride_c, d, ld_d, batch_stride_d, e, ld_e, batch_stride_e, batch_count,      \
+        strided_batch, grouped_gemm, gradient, compute_type, bias, scaleA, scaleB, scaleAlphaVec, \
+        bias_type, epilogue, gemmData, gemmCount
 
     if(a_type == HIPBLASLT_R_32F && b_type == HIPBLASLT_R_32F)
     {
@@ -1013,7 +997,6 @@ inline rocblaslt_status
                                               std::vector<const void*>&         bias,
                                               std::vector<const void*>&         scaleA,
                                               std::vector<const void*>&         scaleB,
-                                              std::vector<const void*>&         scaleDVec,
                                               std::vector<const void*>&         scaleAlphaVec,
                                               std::vector<hipblasltDatatype_t>& bias_type,
                                               std::vector<rocblaslt_epilogue>&  epilogue,
@@ -1022,11 +1005,11 @@ inline rocblaslt_status
 {
     rocblaslt_status rs_status = rocblaslt_status_not_implemented;
 
-#define EX_TYPECASTING_PARM_GroupedGemm_CPP                                                      \
-    trans_a, trans_b, m, n, k, alpha, a, ld_a, batch_stride_a, b, ld_b, batch_stride_b, beta, c, \
-        ld_c, batch_stride_c, d, ld_d, batch_stride_d, e, ld_e, batch_stride_e, batch_count,     \
-        strided_batch, grouped_gemm, compute_type, gradient, bias, scaleA, scaleB, scaleDVec,    \
-        scaleAlphaVec, bias_type, epilogue, gemmData, gemmCount
+#define EX_TYPECASTING_PARM_GroupedGemm_CPP                                                       \
+    trans_a, trans_b, m, n, k, alpha, a, ld_a, batch_stride_a, b, ld_b, batch_stride_b, beta, c,  \
+        ld_c, batch_stride_c, d, ld_d, batch_stride_d, e, ld_e, batch_stride_e, batch_count,      \
+        strided_batch, grouped_gemm, compute_type, gradient, bias, scaleA, scaleB, scaleAlphaVec, \
+        bias_type, epilogue, gemmData, gemmCount
 
     if(a_type == HIPBLASLT_R_32F && b_type == HIPBLASLT_R_32F)
     {

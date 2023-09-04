@@ -116,7 +116,6 @@ struct RocblasltContractionProblem
     const void*         bias;
     const Tc*           scaleA;
     const Tc*           scaleB;
-    const Tc*           scaleDVec;
     const Tc*           scaleAlphaVec;
     hipblasltDatatype_t bias_type;
     rocblaslt_epilogue  epilogue;
@@ -162,7 +161,6 @@ struct RocblasltContractionProblem
                                 const void*            bias,
                                 const Tc*              scaleA,
                                 const Tc*              scaleB,
-                                const Tc*              scaleDVec,
                                 const Tc*              scaleAlphaVec,
                                 hipblasltDatatype_t    bias_type,
                                 rocblaslt_epilogue     epilogue,
@@ -209,7 +207,6 @@ struct RocblasltContractionProblem
         , bias(bias)
         , scaleA(scaleA)
         , scaleB(scaleB)
-        , scaleDVec(scaleDVec)
         , scaleAlphaVec(scaleAlphaVec)
         , bias_type(bias_type)
         , epilogue(epilogue)

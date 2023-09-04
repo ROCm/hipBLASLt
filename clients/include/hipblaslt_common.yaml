@@ -167,7 +167,6 @@ Arguments:
   - bias_vector: c_bool
   - scaleA: c_bool
   - scaleB: c_bool
-  - scaleD_vector: c_bool
   - scaleAlpha_vector: c_bool
   - c_noalias_d: c_bool
   - HMM: c_bool
@@ -254,7 +253,6 @@ Defaults:
   bias_vector: false
   scaleA: false
   scaleB: false
-  scaleD_vector: false
   scaleAlpha_vector: false
   grouped_gemm: 0
   norm_check_assert: true

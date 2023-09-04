@@ -41,7 +41,6 @@ cd hipBLASLt; cd build/release
 --bias_type <value>        Precision of bias vector.Options: f16_r,bf16_r,f32_r,default(same with D type)
 --bias_source <value>      Choose bias source (A, B, D)                                                        (Defaulr value is: D)
 --bias_vector              Apply bias vector
---scaleD_vector            Apply scaleD vector
 --use_e                    Apply AUX output/ gradient input
 --gradient                 Enable gradient
 --grouped_gemm <value>     Apply grouped_gemm                                                                  (Default value is: 0)

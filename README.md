@@ -8,11 +8,11 @@ The GEMM operation of hipBLASLt is performed by hipblasLtMatmul API.
 
 The equation is as below:
 ```math
-D = Activation(alpha \cdot op(A) \cdot op(B) + beta \cdot op(C) + bias) \cdot scaleD_{vector}
+D = Activation(alpha \cdot op(A) \cdot op(B) + beta \cdot op(C) + bias)
 ```
 Where op(A)/op(B) refers to in-place operations such as transpose/non-transpose, and alpha, beta are scalars.
 Acitivation function supports Gelu, Relu.
-Bias vector and scaleD vector match matrix D rows and broadcast to all D columns.
+Bias vector match matrix D rows and broadcast to all D columns.
 
 Here are data type supported list:
 | A | B | C | D | Compute(Scale) |

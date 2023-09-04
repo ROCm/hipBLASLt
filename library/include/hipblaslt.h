@@ -185,7 +185,6 @@ typedef enum {
   HIPBLASLT_MATMUL_DESC_EPILOGUE_AUX_LD = 8,            /**<The leading dimension of the epilogue auxiliary buffer pointer in the device memory. Data Type:int64_t */
   HIPBLASLT_MATMUL_DESC_EPILOGUE_AUX_BATCH_STRIDE = 9,  /**<The batch stride of the epilogue auxiliary buffer pointer in the device memory. Data Type:int64_t */
   HIPBLASLT_MATMUL_DESC_POINTER_MODE = 10,              /**<Specifies alpha and beta are passed by reference, whether they are scalars on the host or on the device, or device vectors. Default value is: HIPBLASLT_POINTER_MODE_HOST (i.e., on the host). Data Type: int32_t based on hipblasLtPointerMode_t*/
-  HIPBLASLT_MATMUL_DESC_D_SCALE_VECTOR_POINTER = 100,   /**<D scale vector length must match matrix D rows. It must match Scale data type. D scale vector is broadcast to all columns and multipied after final postprocssion. Data Type: void* /const void* */
   HIPBLASLT_MATMUL_DESC_MAX = 101
 } hipblasLtMatmulDescAttributes_t;
 
@@ -850,7 +849,7 @@ hipblasStatus_t hipblasLtMatmul(hipblasLtHandle_t            handle,
  */
 HIPBLASLT_EXPORT
 hipblasStatus_t hipblasLtMatrixTransformDescCreate(hipblasLtMatrixTransformDesc_t* transformDesc,
-                                                   hipblasltDatatype_t scaleType);
+                                                   hipblasltDatatype_t             scaleType);
 
 /** Destroy matrix transform operation descriptor.
  *
@@ -871,11 +870,11 @@ hipblasStatus_t hipblasLtMatrixTransformDescDestroy(hipblasLtMatrixTransformDesc
  * \retval     HIPBLAS_STATUS_SUCCESS        if attribute was set successfully
  */
 HIPBLASLT_EXPORT
-hipblasStatus_t hipblasLtMatrixTransformDescSetAttribute(  //
-    hipblasLtMatrixTransformDesc_t transformDesc,
+hipblasStatus_t hipblasLtMatrixTransformDescSetAttribute( //
+    hipblasLtMatrixTransformDesc_t           transformDesc,
     hipblasLtMatrixTransformDescAttributes_t attr,
-    const void* buf,
-    size_t sizeInBytes);
+    const void*                              buf,
+    size_t                                   sizeInBytes);
 
 /*! Get matrix transform operation descriptor attribute.
  *
@@ -892,12 +891,12 @@ hipblasStatus_t hipblasLtMatrixTransformDescSetAttribute(  //
  * \retval     HIPBLAS_STATUS_SUCCESS        if attribute's value was successfully written to user memory
  */
 HIPBLASLT_EXPORT
-hipblasStatus_t hipblasLtMatrixTransformDescGetAttribute(  //
-    hipblasLtMatrixTransformDesc_t transformDesc,
+hipblasStatus_t hipblasLtMatrixTransformDescGetAttribute( //
+    hipblasLtMatrixTransformDesc_t           transformDesc,
     hipblasLtMatrixTransformDescAttributes_t attr,
-    void* buf,
-    size_t sizeInBytes,
-    size_t* sizeWritten);
+    void*                                    buf,
+    size_t                                   sizeInBytes,
+    size_t*                                  sizeWritten);
 
 /*! Matrix layout conversion helper (C = alpha * op(A) + beta * op(B))
  *
@@ -913,17 +912,17 @@ hipblasStatus_t hipblasLtMatrixTransformDescGetAttribute(  //
  * \retval     HIPBLAS_STATUS_SUCCESS           if the operation completed successfully
  */
 HIPBLASLT_EXPORT
-hipblasStatus_t hipblasLtMatrixTransform(hipblasLtHandle_t lightHandle,
+hipblasStatus_t hipblasLtMatrixTransform(hipblasLtHandle_t              lightHandle,
                                          hipblasLtMatrixTransformDesc_t transformDesc,
-                                         const void* alpha, /* host or device pointer */
-                                         const void* A,
+                                         const void*             alpha, /* host or device pointer */
+                                         const void*             A,
                                          hipblasLtMatrixLayout_t Adesc,
-                                         const void* beta, /* host or device pointer */
-                                         const void* B,
+                                         const void*             beta, /* host or device pointer */
+                                         const void*             B,
                                          hipblasLtMatrixLayout_t Bdesc,
-                                         void* C,
+                                         void*                   C,
                                          hipblasLtMatrixLayout_t Cdesc,
-                                         hipStream_t stream);
+                                         hipStream_t             stream);
 #ifdef __cplusplus
 }
 #endif
