@@ -564,10 +564,10 @@ Tests:
   scaleD_vector: 1
   unit_check: 1
 
-- name: matmul_f8_dst_fp32
+- name: matmul_f8_bf8_dst_fp32
   category: pre_checkin
   function:
-    matmul: *f8_precision_dst_fp32
+    matmul: *real_precisions_1b_dst_f32
   M: [128, 129]
   N: [128, 129]
   K: [128, 129]
@@ -582,10 +582,10 @@ Tests:
   unit_check: 1
   gpu_arch: '94?'
 
-- name: matmul_f8_dst_fp16
+- name: matmul_f8_bf8_dst_fp16
   category: pre_checkin
   function:
-    matmul: *f8_precision_dst_fp16
+    matmul: *real_precisions_1b_dst_f16
   M: [128, 129]
   N: [128, 129]
   K: [128, 129]
@@ -708,10 +708,10 @@ Tests:
   unit_check: 0
   norm_check: 1
 
-- name: matmul_bgradb_f8_dst_fp32
+- name: matmul_bgradb_f8_bf8_dst_fp32
   category: pre_checkin
   function:
-    matmul: *f8_precision_dst_fp32
+    matmul: *real_precisions_1b_dst_f32
   M: [128, 129]
   N: [128, 129]
   K: [128, 129]
