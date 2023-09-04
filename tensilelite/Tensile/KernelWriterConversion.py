@@ -98,6 +98,12 @@ class KernelWriterConversion(KernelWriterBase):
       kStr += "  " + scalePtrStr + " * " + "ScaleA;" + self.endLine
       kStr += "  " + scalePtrStr + " * " + "ScaleB;" + self.endLine
 
+    # ScaleCD
+    if self.state["ProblemType"]["UseScaleCD"]:
+      scalePtrStr = self.state["ProblemType"]["ComputeDataType"].toDevice(self.language)
+      kStr += "  " + scalePtrStr + " * " + "ScaleC;" + self.endLine
+      kStr += "  " + scalePtrStr + " * " + "ScaleD;" + self.endLine
+
     # interface: ScaleDVec GSU>1 GSUA "MUL"
     if self.state["ProblemType"]["UseScaleDVec"]:
       scaleDVecPtrStr = self.state["ProblemType"]["ComputeDataType"].toDevice(self.language)
@@ -409,6 +415,12 @@ class KernelWriterConversion(KernelWriterBase):
       kStr += "  " + "scaleA_data = arg.ScaleA == nullptr ? 1 : *(arg.ScaleA);" + self.endLine
       kStr += "  " + "scaleB_data = arg.ScaleB == nullptr ? 1 : *(arg.ScaleB);" + self.endLine
 
+    #Load scaleCD
+    if self.state["ProblemType"]["UseScaleCD"]:
+      kStr += "  " + intermediateDataType + " scaleC_data, scaleD_data;" + self.endLine
+      kStr += "  " + "scaleC_data = arg.ScaleC == nullptr ? 1 : *(arg.ScaleC);" + self.endLine
+      kStr += "  " + "scaleD_data = arg.ScaleD == nullptr ? 1 : *(arg.ScaleD);" + self.endLine
+
     #TODO: workspace type is half precision
     if self.state["ProblemType"]["UseBias"] and self.state["ProblemType"]["Gradient"] and self.state["ProblemType"]["BiasSrc"] == "D":
       kStr += "  auto idxW_ori = idxW;%s"%self.endLine
@@ -483,6 +495,11 @@ class KernelWriterConversion(KernelWriterBase):
       kStr += "  }" + self.endLine
       kStr += self.endLine
 
+    #scaleC
+    if self.state["ProblemType"]["UseScaleCD"]:
+      kStr += "  arg.beta = arg.beta*scaleC_data;%s" % (self.endLine)
+    kStr += self.endLine
+
     #Beta
     kStr += "  if(arg.beta != (%s)0){%s" % (self.state["ProblemType"]["ComputeDataType"].toDevice(self.language), self.endLine)
     for vIdx in range(self.num_dword_load):
@@ -544,6 +561,12 @@ class KernelWriterConversion(KernelWriterBase):
         kStr += "    %s[%d] *= (%s)arg.ScaleDVec[id0+%d];%s" % (accumStr, vIdx, intermediateDataType, vIdx, self.endLine)
       kStr += "  }" + self.endLine
       kStr += self.endLine
+
+    #scaleD
+    if self.state["ProblemType"]["UseScaleCD"]:
+      for vIdx in range(self.num_dword_load):
+        kStr += "  %s[%d] *= scaleD_data;%s" % (accumStr, vIdx, self.endLine)
+    kStr += self.endLine
 
     #Output high precision D to WS
     if self.state["ProblemType"]["UseBias"] and self.state["ProblemType"]["Gradient"] and self.state["ProblemType"]["BiasSrc"] == "D":
@@ -617,6 +640,7 @@ class KernelWriterConversion(KernelWriterBase):
       name += self.state["ProblemType"]["ActivationComputeDataType"].toChar()
       name += ("ng" if self.state["ProblemType"]["ActivationNoGuard"] else "")
     name += "_ScaleAB" if self.state["ProblemType"]["UseScaleAB"] else ""
+    name += "_ScaleCD" if self.state["ProblemType"]["UseScaleCD"] else ""
     name += "_ScaleDVec" if self.state["ProblemType"]["UseScaleDVec"] else ""
     name += "_ScaleAlphaVec" if self.state["ProblemType"]["UseScaleAlphaVec"] else ""
     name += "_PostGSU" + str(self.state["GlobalSplitU"])

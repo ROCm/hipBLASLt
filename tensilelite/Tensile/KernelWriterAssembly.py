@@ -462,6 +462,16 @@ class KernelWriterAssembly(KernelWriter):
       if self.states.numSgprAddressScaleB:
         self.states.numStoreSgprNames.append("AddressScaleB")
         self.states.numStoreSgprNameSizes.append(self.states.numSgprAddressScaleB)
+    if kernel["ProblemType"]["UseScaleCD"] and (kernel["GlobalSplitU"] == 1):
+      self.states.numSgprAddressScaleC = self.states.rpga
+      self.states.numSgprAddressScaleD = self.states.rpga
+      storeSgprLoad += self.states.numSgprAddressScaleA + self.states.numSgprAddressScaleD
+      if self.states.numSgprAddressScaleC:
+        self.states.numStoreSgprNames.append("AddressScaleC")
+        self.states.numStoreSgprNameSizes.append(self.states.numSgprAddressScaleC)
+      if self.states.numSgprAddressScaleD:
+        self.states.numStoreSgprNames.append("AddressScaleD")
+        self.states.numStoreSgprNameSizes.append(self.states.numSgprAddressScaleD)
     if kernel["ProblemType"]["UseScaleAlphaVec"] and (kernel["GlobalSplitU"] == 1):
         storeSgprLoad += self.states.rpga
         self.states.numStoreSgprNames.append("AddressScaleAlphaVec")
@@ -4357,6 +4367,10 @@ class KernelWriterAssembly(KernelWriter):
             i = i-1
           module.add(RegSet("s", "sgprStrideE%s"%idxChar, \
                     "sgprStridesE", i))
+    if kernel["ProblemType"]["UseScaleCD"] and (kernel["GlobalSplitU"] == 1):
+      assert kernel["ProblemType"]["ComputeDataType"].isSingle()
+      self.defineSgpr("ScaleD", 2, 2)
+      module.add(RegSet("s", "sgprScaleD", self.sgprs["ScaleD"]))
 
     # Load kernel args end
     ########################################
@@ -7798,6 +7812,36 @@ class KernelWriterAssembly(KernelWriter):
     '''
     ssslist = []
     useSize = []
+
+    # Issue read scale A/B value for later use
+    if kernel["ProblemType"]["UseScaleAB"] and (kernel["GlobalSplitU"] == 1):
+      assert(kernel["ProblemType"]["ComputeDataType"].isSingle())
+      sgprScaleAB = self.sgprPool.checkOut(1)
+      for i,name in enumerate(['A','B']):
+        module.add(SMovB32(dst=sgpr(sgprScaleAB+i), src=1.0 , comment="init as 1" ))
+        label  = Label(self.labels.getNameInc("Scale%sValid"%name), "")
+        module.add(SBranchIfZero("AddressScale%s"%name, DataType('int64'), None, kernel["WavefrontSize"]/32, label, kernel["WavefrontSize"]))
+        # load scale data
+        module.add(SLoadB32(dst=sgpr(sgprScaleAB+i), base=sgpr("AddressScale%s"%name,2), soffset=0, comment="load scale%s"%name))
+        module.add(label)
+
+    # Issue read scale C/D value for later use
+    if kernel["ProblemType"]["UseScaleCD"] and (kernel["GlobalSplitU"] == 1):
+      module.add(SMovB32(dst=sgpr("ScaleD"), src=1.0 , comment="init as 1" ))
+      module.add(SMovB32(dst=sgpr("ScaleD+1"), src=1.0 , comment="init as 1" ))
+      label  = Label(self.labels.getNameInc("ScaleDValid"), "")
+      module.add(SBranchIfZero("AddressScaleD", DataType('int64'), None, kernel["WavefrontSize"]/32, label, kernel["WavefrontSize"]))
+      # load scale data
+      module.add(SLoadB32(dst=sgpr("ScaleD"), base=sgpr("AddressScaleD",2), soffset=0, comment="load scaleD"))
+      module.add(label)
+      sgprScaleC = self.sgprPool.checkOut(1)
+      module.add(SMovB32(dst=sgpr(sgprScaleC), src=1.0 , comment="init as 1" ))
+      label  = Label(self.labels.getNameInc("ScaleCValid"), "")
+      module.add(SBranchIfZero("AddressScaleC", DataType('int64'), None, kernel["WavefrontSize"]/32, label, kernel["WavefrontSize"]))
+      # load scale data
+      module.add(SLoadB32(dst=sgpr(sgprScaleC), base=sgpr("AddressScaleC",2), soffset=0, comment="load scaleC"))
+      module.add(label)
+
     # Init ScaleDVec address
     if kernel["ProblemType"]["UseScaleDVec"] and (kernel["GlobalSplitU"] == 1):
       labelStr = self.labels.getNameInc("ScaleDVec")
@@ -7908,20 +7952,28 @@ class KernelWriterAssembly(KernelWriter):
       assert(kernel["ProblemType"]["ComputeDataType"].isSingle())
       newAlphaVgpr = self.vgprPool.checkOut(1)
       module.add(VMovB32(dst=vgpr(newAlphaVgpr), src=sgpr("Alpha")))
-      with self.allocTmpSgpr(2, 1) as tmpSgpr:
-        for i,name in enumerate(['A','B']):
-          module.add(SMovB32(dst=sgpr(tmpSgpr.idx+i), src=1.0 , comment="init as 1" ))
-          label  = Label(self.labels.getNameInc("Scale%sValid"%name), "")
-          module.add(SBranchIfZero("AddressScale%s"%name, DataType('int64'), None, kernel["WavefrontSize"]/32, label, kernel["WavefrontSize"]))
-          # load scale data
-          module.add(SLoadB32(dst=sgpr(tmpSgpr.idx+i), base=sgpr("AddressScale%s"%name,2), soffset=0, comment="load scale%s"%name))
-          module.add(label)
-        module.add(SWaitCnt(lgkmcnt=0, comment="wait for scaleAB load"))
-        module.add(VMulF32(dst=vgpr(newAlphaVgpr), src0=vgpr(newAlphaVgpr), src1=sgpr(tmpSgpr.idx)))
-        module.add(VMulF32(dst=vgpr(newAlphaVgpr), src0=vgpr(newAlphaVgpr), src1=sgpr(tmpSgpr.idx+1)))
-        module.add(SNop(waitState=0, comment="1 wait states"))
-        module.add(VReadfirstlaneB32(dst=sgpr("Alpha"), src=vgpr(newAlphaVgpr), comment="Update Alpha"))
-        self.vgprPool.checkIn(newAlphaVgpr)
+      module.add(SWaitCnt(lgkmcnt=0, comment="wait for scaleAB load"))
+      module.add(VMulF32(dst=vgpr(newAlphaVgpr), src0=vgpr(newAlphaVgpr), src1=sgpr(sgprScaleAB)))
+      module.add(VMulF32(dst=vgpr(newAlphaVgpr), src0=vgpr(newAlphaVgpr), src1=sgpr(sgprScaleAB+1)))
+      module.add(SNop(waitState=0, comment="1 wait states"))
+      module.add(VReadfirstlaneB32(dst=sgpr("Alpha"), src=vgpr(newAlphaVgpr), comment="Update Alpha"))
+      self.vgprPool.checkIn(newAlphaVgpr)
+      self.sgprPool.checkIn(sgprScaleAB)
+
+    # Update beta
+    if kernel["ProblemType"]["UseScaleCD"] and (kernel["GlobalSplitU"] == 1):
+      assert(kernel["ProblemType"]["ComputeDataType"].isSingle())
+      newBetaVgpr = self.vgprPool.checkOut(1)
+      module.add(VMovB32(dst=vgpr(newBetaVgpr), src=sgpr("Beta")))
+      if not (kernel["ProblemType"]["UseScaleAB"] and (kernel["GlobalSplitU"] == 1)):
+        module.add(SWaitCnt(lgkmcnt=0, comment="wait for scaleC load"))
+      module.add(VMulF32(dst=vgpr(newBetaVgpr), src0=vgpr(newBetaVgpr), src1=sgpr(sgprScaleC)))
+      module.add(SNop(waitState=0, comment="1 wait states"))
+      module.add(VReadfirstlaneB32(dst=sgpr("Beta"), src=vgpr(newBetaVgpr), comment="Update Beta"))
+      self.vgprPool.checkIn(newBetaVgpr)
+      self.sgprPool.checkIn(sgprScaleC)
+      # Copy scaleD for PK calculations
+      module.add(SMovB32(dst=sgpr("ScaleD+1"), src=sgpr("ScaleD")))
 
     if kernel["ProblemType"]["UseE"] and (kernel["GlobalSplitU"] == 1):
       # Update E offset1
@@ -9321,7 +9373,9 @@ class KernelWriterAssembly(KernelWriter):
 
   def insertActivationAfterPacked(self, kernel, activationTypeStr):
     result = False
-    if ((kernel["ProblemType"]["ActivationType"] != 'none') and \
+    if kernel["ProblemType"]["UseScaleCD"] and (kernel["GlobalSplitU"] == 1):
+      return result
+    elif ((kernel["ProblemType"]["ActivationType"] != 'none') and \
       (kernel["GlobalSplitU"] == 1) and kernel["ActivationFused"]):
       if kernel["ActivationFuncCall"]:
         return (kernel["ProblemType"]["ActivationComputeDataType"] == kernel["ProblemType"]["DestDataType"])

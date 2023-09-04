@@ -649,6 +649,11 @@ namespace Tensile
             args.template append<void const*>("scaleA", inputs.scaleA);
             args.template append<void const*>("scaleB", inputs.scaleB);
         }
+        if(problemType.useScaleCD && (sizeMapping.globalSplitU == 1)) //kernel input data
+        {
+            args.template append<void const*>("scaleC", inputs.scaleC);
+            args.template append<void const*>("scaleD", inputs.scaleD);
+        }
 
         if(problemType.useScaleAlphaVec
            && ((sizeMapping.globalSplitU == 1)
@@ -1007,6 +1012,11 @@ namespace Tensile
             rv.args.append<void const*>("scaleA", inputs.scaleA);
             rv.args.append<void const*>("scaleB", inputs.scaleB);
         }
+        if(problemType.useScaleCD && sizeMapping.globalAccumulation == 0)
+        {
+            rv.args.append<void const*>("scaleC", inputs.scaleC);
+            rv.args.append<void const*>("scaleD", inputs.scaleD);
+        }
         if(problemType.useScaleDVec
            && (sizeMapping.globalAccumulation == 0 || (sizeMapping.customKernelName != "")))
         {
@@ -1178,6 +1188,11 @@ namespace Tensile
         {
             args.template append<void const*>("scaleA", inputs.scaleA);
             args.template append<void const*>("scaleB", inputs.scaleB);
+        }
+        if(problemType.useScaleCD) // GSU dep
+        {
+            args.template append<void const*>("scaleC", inputs.scaleC);
+            args.template append<void const*>("scaleD", inputs.scaleD);
         }
         if(problemType.useScaleDVec) // GSU dep
         {
@@ -1597,6 +1612,10 @@ namespace Tensile
         if(problemType.useScaleAB)
         {
             name += ("_ScaleAB");
+        }
+        if(problemType.useScaleCD)
+        {
+            name += ("_ScaleCD");
         }
 
         if(problemType.useScaleDVec)

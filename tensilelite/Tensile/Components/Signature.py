@@ -196,6 +196,9 @@ class SignatureCOV3(Signature):
         if kernel["ProblemType"]["UseScaleAB"] and (kernel["GlobalSplitU"] == 1):
             signature.addArg("AddressScaleA", SVK.SIG_GLOBALBUFFER, cptValueType, "generic")
             signature.addArg("AddressScaleB", SVK.SIG_GLOBALBUFFER, cptValueType, "generic")
+        if kernel["ProblemType"]["UseScaleCD"] and (kernel["GlobalSplitU"] == 1):
+            signature.addArg("AddressScaleC", SVK.SIG_GLOBALBUFFER, cptValueType, "generic")
+            signature.addArg("AddressScaleD", SVK.SIG_GLOBALBUFFER, cptValueType, "generic")
 
         if kernel["ProblemType"]["UseScaleAlphaVec"] and (kernel["GlobalSplitU"] == 1):
             signature.addArg("AddressScaleAlphaVec", SVK.SIG_GLOBALBUFFER, cptValueType, "generic")
