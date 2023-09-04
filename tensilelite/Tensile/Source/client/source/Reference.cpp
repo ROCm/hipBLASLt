@@ -359,7 +359,7 @@ namespace Tensile
             {
                 return static_cast<T>(exp(static_cast<castT>(val)));
             }
-            else if(new_type == ActivationType::Gelu)
+            else if(new_type == ActivationType::Gelu || new_type == ActivationType::Geluscaling )
             {
                 auto castedVal = static_cast<castT>(val);
                 auto k0        = static_cast<castT>(0.7978845608028654);
@@ -369,7 +369,9 @@ namespace Tensile
                             + multiply<castT>(k1, multiply<castT>(castedVal, castedVal)));
                 tmp      = multiply<castT>(k0, multiply<castT>(castedVal, tmp));
                 tmp      = static_cast<castT>(1) + static_cast<castT>(tanh(tmp));
-                tmp = multiply<castT>(static_cast<castT>(0.5f), multiply<castT>(castedVal, tmp));
+                tmp      = multiply<castT>(static_cast<castT>(0.5f), multiply<castT>(castedVal, tmp));
+                if(new_type == ActivationType::Geluscaling)
+                    tmp  = multiply<castT>(tmp, static_cast<castT>(args[0]));
                 return static_cast<T>(tmp);
             }
             else if(new_type == ActivationType::Leakyrelu)
