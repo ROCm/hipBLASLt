@@ -73,23 +73,23 @@ void Arguments::init()
     alpha = 1.0;
     beta  = 0.0;
 
-    stride_a = 0;
-    stride_b = 0;
-    stride_c = 0;
-    stride_d = 0;
-    stride_e = 0;
+    memset(stride_a, 0, sizeof(int64_t) * MAX_SUPPORTED_NUM_PROBLEMS);
+    memset(stride_b, 0, sizeof(int64_t) * MAX_SUPPORTED_NUM_PROBLEMS);
+    memset(stride_c, 0, sizeof(int64_t) * MAX_SUPPORTED_NUM_PROBLEMS);
+    memset(stride_d, 0, sizeof(int64_t) * MAX_SUPPORTED_NUM_PROBLEMS);
+    memset(stride_e, 0, sizeof(int64_t) * MAX_SUPPORTED_NUM_PROBLEMS);
 
     user_allocated_workspace = 0;
 
-    M = 128;
-    N = 128;
-    K = 128;
+    M[0] = 128;
+    N[0] = 128;
+    K[0] = 128;
 
-    lda = 0;
-    ldb = 0;
-    ldc = 0;
-    ldd = 0;
-    lde = 0;
+    memset(lda, 0, sizeof(int64_t) * MAX_SUPPORTED_NUM_PROBLEMS);
+    memset(ldb, 0, sizeof(int64_t) * MAX_SUPPORTED_NUM_PROBLEMS);
+    memset(ldc, 0, sizeof(int64_t) * MAX_SUPPORTED_NUM_PROBLEMS);
+    memset(ldd, 0, sizeof(int64_t) * MAX_SUPPORTED_NUM_PROBLEMS);
+    memset(lde, 0, sizeof(int64_t) * MAX_SUPPORTED_NUM_PROBLEMS);
 
     batch_count = 1;
 

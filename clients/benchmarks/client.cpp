@@ -135,70 +135,70 @@ int run_bench_test(Arguments& arg, const std::string& filter, bool any_stride, b
     }
 
     // adjust dimension for GEMM routines
-    int64_t min_lda = arg.transA == 'N' ? arg.M : arg.K;
-    int64_t min_ldb = arg.transB == 'N' ? arg.K : arg.N;
-    int64_t min_ldc = arg.M;
-    int64_t min_ldd = arg.M;
-    int64_t min_lde = arg.M;
-    if(arg.lda < min_lda)
+    int64_t min_lda = arg.transA == 'N' ? arg.M[0] : arg.K[0];
+    int64_t min_ldb = arg.transB == 'N' ? arg.K[0] : arg.N[0];
+    int64_t min_ldc = arg.M[0];
+    int64_t min_ldd = arg.M[0];
+    int64_t min_lde = arg.M[0];
+    if(arg.lda[0] < min_lda)
     {
         //hipblaslt_cout << "hipblaslt-bench INFO: lda < min_lda, set lda = " << min_lda << std::endl;
-        arg.lda = min_lda;
+        arg.lda[0] = min_lda;
     }
-    if(arg.ldb < min_ldb)
+    if(arg.ldb[0] < min_ldb)
     {
         //hipblaslt_cout << "hipblaslt-bench INFO: ldb < min_ldb, set ldb = " << min_ldb << std::endl;
-        arg.ldb = min_ldb;
+        arg.ldb[0] = min_ldb;
     }
-    if(arg.ldc < min_ldc)
+    if(arg.ldc[0] < min_ldc)
     {
         //hipblaslt_cout << "hipblaslt-bench INFO: ldc < min_ldc, set ldc = " << min_ldc << std::endl;
-        arg.ldc = min_ldc;
+        arg.ldc[0] = min_ldc;
     }
-    if(arg.ldd < min_ldd)
+    if(arg.ldd[0] < min_ldd)
     {
         //hipblaslt_cout << "hipblaslt-bench INFO: ldd < min_ldd, set ldd = " << min_ldc << std::endl;
-        arg.ldd = min_ldd;
+        arg.ldd[0] = min_ldd;
     }
-    if(arg.lde < min_lde)
+    if(arg.lde[0] < min_lde)
     {
         //hipblaslt_cout << "hipblaslt-bench INFO: lde < min_lde, set lde = " << min_lde << std::endl;
-        arg.lde = min_lde;
+        arg.lde[0] = min_lde;
     }
-    int64_t min_stride_a = arg.lda * (arg.transA == 'N' ? arg.K : arg.M);
-    int64_t min_stride_b = arg.ldb * (arg.transB == 'N' ? arg.N : arg.K);
-    int64_t min_stride_c = arg.ldc * arg.N;
-    int64_t min_stride_d = arg.ldd * arg.N;
-    int64_t min_stride_e = arg.lde * arg.N;
-    if(!any_stride && arg.stride_a < min_stride_a)
+    int64_t min_stride_a = arg.lda[0] * (arg.transA == 'N' ? arg.K[0] : arg.M[0]);
+    int64_t min_stride_b = arg.ldb[0] * (arg.transB == 'N' ? arg.N[0] : arg.K[0]);
+    int64_t min_stride_c = arg.ldc[0] * arg.N[0];
+    int64_t min_stride_d = arg.ldd[0] * arg.N[0];
+    int64_t min_stride_e = arg.lde[0] * arg.N[0];
+    if(!any_stride && arg.stride_a[0] < min_stride_a)
     {
         //hipblaslt_cout << "hipblaslt-bench INFO: stride_a < min_stride_a, set stride_a = "
         //               << min_stride_a << std::endl;
-        arg.stride_a = min_stride_a;
+        arg.stride_a[0] = min_stride_a;
     }
-    if(!any_stride && arg.stride_b < min_stride_b)
+    if(!any_stride && arg.stride_b[0] < min_stride_b)
     {
         //hipblaslt_cout << "hipblaslt-bench INFO: stride_b < min_stride_b, set stride_b = "
         //               << min_stride_b << std::endl;
-        arg.stride_b = min_stride_b;
+        arg.stride_b[0] = min_stride_b;
     }
-    if(!any_stride && arg.stride_c < min_stride_c)
+    if(!any_stride && arg.stride_c[0] < min_stride_c)
     {
         //hipblaslt_cout << "hipblaslt-bench INFO: stride_c < min_stride_c, set stride_c = "
         //               << min_stride_c << std::endl;
-        arg.stride_c = min_stride_c;
+        arg.stride_c[0] = min_stride_c;
     }
-    if(!any_stride && arg.stride_d < min_stride_d)
+    if(!any_stride && arg.stride_d[0] < min_stride_d)
     {
         //hipblaslt_cout << "hipblaslt-bench INFO: stride_d < min_stride_d, set stride_d = "
         //               << min_stride_d << std::endl;
-        arg.stride_d = min_stride_d;
+        arg.stride_d[0] = min_stride_d;
     }
-    if(!any_stride && arg.stride_e < min_stride_e)
+    if(!any_stride && arg.stride_e[0] < min_stride_e)
     {
         //hipblaslt_cout << "hipblaslt-bench INFO: stride_e < min_stride_e, set stride_e = "
         //               << min_stride_e << std::endl;
-        arg.stride_e = min_stride_e;
+        arg.stride_e[0] = min_stride_e;
     }
 
     hipblaslt_matmul_dispatch<perf_matmul>(arg);
@@ -263,35 +263,35 @@ try
     desc.add_options()
         // clang-format off
         ("sizem,m",
-         value<int64_t>(&arg.M)->default_value(128),
+         value<int64_t>(&arg.M[0])->default_value(128),
          "Specific matrix size: the number of rows or columns in matrix.")
 
         ("sizen,n",
-         value<int64_t>(&arg.N)->default_value(128),
+         value<int64_t>(&arg.N[0])->default_value(128),
          "Specific matrix the number of rows or columns in matrix")
 
         ("sizek,k",
-         value<int64_t>(&arg.K)->default_value(128),
+         value<int64_t>(&arg.K[0])->default_value(128),
          "Specific matrix size: the number of columns in A and rows in B.")
 
         ("lda",
-         value<int64_t>(&arg.lda),
+         value<int64_t>(&arg.lda[0]),
          "Leading dimension of matrix A.")
 
         ("ldb",
-         value<int64_t>(&arg.ldb),
+         value<int64_t>(&arg.ldb[0]),
          "Leading dimension of matrix B.")
 
         ("ldc",
-         value<int64_t>(&arg.ldc),
+         value<int64_t>(&arg.ldc[0]),
          "Leading dimension of matrix C.")
 
         ("ldd",
-         value<int64_t>(&arg.ldd),
+         value<int64_t>(&arg.ldd[0]),
          "Leading dimension of matrix D.")
 
         ("lde",
-         value<int64_t>(&arg.lde),
+         value<int64_t>(&arg.lde[0]),
          "Leading dimension of matrix E.")
 
         ("any_stride",
@@ -299,23 +299,23 @@ try
          "Do not modify input strides based on leading dimensions")
 
         ("stride_a",
-         value<int64_t>(&arg.stride_a),
+         value<int64_t>(&arg.stride_a[0]),
          "Specific stride of strided_batched matrix A, second dimension * leading dimension.")
 
         ("stride_b",
-         value<int64_t>(&arg.stride_b),
+         value<int64_t>(&arg.stride_b[0]),
          "Specific stride of strided_batched matrix B, second dimension * leading dimension.")
 
         ("stride_c",
-         value<int64_t>(&arg.stride_c),
+         value<int64_t>(&arg.stride_c[0]),
          "Specific stride of strided_batched matrix C, second dimension * leading dimension.")
 
         ("stride_d",
-         value<int64_t>(&arg.stride_d),
+         value<int64_t>(&arg.stride_d[0]),
          "Specific stride of strided_batched matrix D, second dimension * leading dimension.")
 
         ("stride_e",
-         value<int64_t>(&arg.stride_e),
+         value<int64_t>(&arg.stride_e[0]),
          "Specific stride of strided_batched matrix E, second dimension * leading dimension.")
 
         ("alpha",
@@ -549,12 +549,12 @@ try
 
     arg.bias_source = string_to_hipblaslt_bias_source(bias_source);
 
-    if(arg.M < 0)
-        throw std::invalid_argument("Invalid value for -m " + std::to_string(arg.M));
-    if(arg.N < 0)
-        throw std::invalid_argument("Invalid value for -n " + std::to_string(arg.N));
-    if(arg.K < 0)
-        throw std::invalid_argument("Invalid value for -k " + std::to_string(arg.K));
+    if(arg.M[0] < 0)
+        throw std::invalid_argument("Invalid value for -m " + std::to_string(arg.M[0]));
+    if(arg.N[0] < 0)
+        throw std::invalid_argument("Invalid value for -n " + std::to_string(arg.N[0]));
+    if(arg.K[0] < 0)
+        throw std::invalid_argument("Invalid value for -k " + std::to_string(arg.K[0]));
 
     int copied = snprintf(arg.function, sizeof(arg.function), "%s", function.c_str());
     if(copied <= 0 || copied >= sizeof(arg.function))

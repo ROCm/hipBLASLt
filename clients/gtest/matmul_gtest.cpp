@@ -143,13 +143,13 @@ namespace
 
                 name << '_' << (char)std::toupper(arg.transA) << (char)std::toupper(arg.transB);
 
-                name << '_' << arg.M << '_' << arg.N << '_' << arg.K << '_' << arg.alpha << '_'
-                     << arg.lda << '_' << arg.ldb << '_' << arg.beta << '_' << arg.ldc << '_'
-                     << arg.ldd;
+                name << '_' << arg.M[0] << '_' << arg.N[0] << '_' << arg.K[0] << '_' << arg.alpha << '_'
+                     << arg.lda[0] << '_' << arg.ldb[0] << '_' << arg.beta << '_' << arg.ldc[0] << '_'
+                     << arg.ldd[0];
 
                 if(arg.use_e)
                 {
-                    name << '_' << arg.lde;
+                    name << '_' << arg.lde[0];
                 }
 
                 name << '_' << arg.batch_count;
