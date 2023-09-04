@@ -46,19 +46,19 @@ CBLAS_TRANSPOSE HIPOperationToCBLASTanspose(hipblasOperation_t trans)
 // gemm
 template <>
 void cblas_gemm<hip_bfloat16, hip_bfloat16, hip_bfloat16, float>(hipblasOperation_t  transA,
-                                                   hipblasOperation_t  transB,
-                                                   int64_t             m,
-                                                   int64_t             n,
-                                                   int64_t             k,
-                                                   float               alpha,
-                                                   const hip_bfloat16* A,
-                                                   int64_t             lda,
-                                                   const hip_bfloat16* B,
-                                                   int64_t             ldb,
-                                                   float               beta,
-                                                   hip_bfloat16*       C,
-                                                   int64_t             ldc,
-                                                   bool                alt)
+                                                                 hipblasOperation_t  transB,
+                                                                 int64_t             m,
+                                                                 int64_t             n,
+                                                                 int64_t             k,
+                                                                 float               alpha,
+                                                                 const hip_bfloat16* A,
+                                                                 int64_t             lda,
+                                                                 const hip_bfloat16* B,
+                                                                 int64_t             ldb,
+                                                                 float               beta,
+                                                                 hip_bfloat16*       C,
+                                                                 int64_t             ldc,
+                                                                 bool                alt)
 {
     // cblas does not support hip_bfloat16, so convert to higher precision float
     // This will give more precise result which is acceptable for testing
@@ -99,19 +99,19 @@ void cblas_gemm<hip_bfloat16, hip_bfloat16, hip_bfloat16, float>(hipblasOperatio
 
 template <>
 void cblas_gemm<hip_bfloat16, hip_bfloat16, float, float>(hipblasOperation_t  transA,
-                                            hipblasOperation_t  transB,
-                                            int64_t             m,
-                                            int64_t             n,
-                                            int64_t             k,
-                                            float               alpha,
-                                            const hip_bfloat16* A,
-                                            int64_t             lda,
-                                            const hip_bfloat16* B,
-                                            int64_t             ldb,
-                                            float               beta,
-                                            float*              C,
-                                            int64_t             ldc,
-                                            bool                alt)
+                                                          hipblasOperation_t  transB,
+                                                          int64_t             m,
+                                                          int64_t             n,
+                                                          int64_t             k,
+                                                          float               alpha,
+                                                          const hip_bfloat16* A,
+                                                          int64_t             lda,
+                                                          const hip_bfloat16* B,
+                                                          int64_t             ldb,
+                                                          float               beta,
+                                                          float*              C,
+                                                          int64_t             ldc,
+                                                          bool                alt)
 {
     // cblas does not support hip_bfloat16, so convert to higher precision float
     // This will give more precise result which is acceptable for testing
@@ -147,23 +147,108 @@ void cblas_gemm<hip_bfloat16, hip_bfloat16, float, float>(hipblasOperation_t  tr
 
 template <>
 void cblas_gemm<hipblaslt_f8, hipblaslt_f8, float, float>(hipblasOperation_t  transA,
-                                            hipblasOperation_t  transB,
-                                            int64_t             m,
-                                            int64_t             n,
-                                            int64_t             k,
-                                            float               alpha,
-                                            const hipblaslt_f8* A,
-                                            int64_t             lda,
-                                            const hipblaslt_f8* B,
-                                            int64_t             ldb,
-                                            float               beta,
-                                            float*              C,
-                                            int64_t             ldc,
-                                            bool                alt)
+                                                          hipblasOperation_t  transB,
+                                                          int64_t             m,
+                                                          int64_t             n,
+                                                          int64_t             k,
+                                                          float               alpha,
+                                                          const hipblaslt_f8* A,
+                                                          int64_t             lda,
+                                                          const hipblaslt_f8* B,
+                                                          int64_t             ldb,
+                                                          float               beta,
+                                                          float*              C,
+                                                          int64_t             ldc,
+                                                          bool                alt)
 {
-    // cblas does not support hip_bfloat16, so convert to higher precision float
-    // This will give more precise result which is acceptable for testing
+    size_t sizeA = (transA == HIPBLAS_OP_N ? k : m) * size_t(lda);
+    size_t sizeB = (transB == HIPBLAS_OP_N ? n : k) * size_t(ldb);
 
+    host_vector<float> A_float(sizeA), B_float(sizeB);
+
+    for(size_t i = 0; i < sizeA; i++)
+        A_float[i] = static_cast<float>(A[i]);
+    for(size_t i = 0; i < sizeB; i++)
+        B_float[i] = static_cast<float>(B[i]);
+
+    // just directly cast, since transA, transB are integers in the enum
+    // printf("transA: hipblaslt =%d, cblas=%d\n", transA, HIPOperationToCBLASTanspose(transA) );
+    cblas_sgemm(CblasColMajor,
+                HIPOperationToCBLASTanspose(transA),
+                HIPOperationToCBLASTanspose(transB),
+                m,
+                n,
+                k,
+                alpha,
+                A_float,
+                lda,
+                B_float,
+                ldb,
+                beta,
+                C,
+                ldc);
+}
+
+template <>
+void cblas_gemm<hipblaslt_bf8, hipblaslt_f8, float, float>(hipblasOperation_t   transA,
+                                                           hipblasOperation_t   transB,
+                                                           int64_t              m,
+                                                           int64_t              n,
+                                                           int64_t              k,
+                                                           float                alpha,
+                                                           const hipblaslt_bf8* A,
+                                                           int64_t              lda,
+                                                           const hipblaslt_f8*  B,
+                                                           int64_t              ldb,
+                                                           float                beta,
+                                                           float*               C,
+                                                           int64_t              ldc,
+                                                           bool                 alt)
+{
+    size_t sizeA = (transA == HIPBLAS_OP_N ? k : m) * size_t(lda);
+    size_t sizeB = (transB == HIPBLAS_OP_N ? n : k) * size_t(ldb);
+
+    host_vector<float> A_float(sizeA), B_float(sizeB);
+
+    for(size_t i = 0; i < sizeA; i++)
+        A_float[i] = static_cast<float>(A[i]);
+    for(size_t i = 0; i < sizeB; i++)
+        B_float[i] = static_cast<float>(B[i]);
+
+    // just directly cast, since transA, transB are integers in the enum
+    // printf("transA: hipblaslt =%d, cblas=%d\n", transA, HIPOperationToCBLASTanspose(transA) );
+    cblas_sgemm(CblasColMajor,
+                HIPOperationToCBLASTanspose(transA),
+                HIPOperationToCBLASTanspose(transB),
+                m,
+                n,
+                k,
+                alpha,
+                A_float,
+                lda,
+                B_float,
+                ldb,
+                beta,
+                C,
+                ldc);
+}
+
+template <>
+void cblas_gemm<hipblaslt_f8, hipblaslt_bf8, float, float>(hipblasOperation_t   transA,
+                                                           hipblasOperation_t   transB,
+                                                           int64_t              m,
+                                                           int64_t              n,
+                                                           int64_t              k,
+                                                           float                alpha,
+                                                           const hipblaslt_f8*  A,
+                                                           int64_t              lda,
+                                                           const hipblaslt_bf8* B,
+                                                           int64_t              ldb,
+                                                           float                beta,
+                                                           float*               C,
+                                                           int64_t              ldc,
+                                                           bool                 alt)
+{
     size_t sizeA = (transA == HIPBLAS_OP_N ? k : m) * size_t(lda);
     size_t sizeB = (transB == HIPBLAS_OP_N ? n : k) * size_t(ldb);
 
@@ -194,19 +279,169 @@ void cblas_gemm<hipblaslt_f8, hipblaslt_f8, float, float>(hipblasOperation_t  tr
 
 template <>
 void cblas_gemm<hipblaslt_f8, hipblaslt_f8, hipblasLtHalf, float>(hipblasOperation_t  transA,
-                                                    hipblasOperation_t  transB,
-                                                    int64_t             m,
-                                                    int64_t             n,
-                                                    int64_t             k,
-                                                    float               alpha,
-                                                    const hipblaslt_f8* A,
-                                                    int64_t             lda,
-                                                    const hipblaslt_f8* B,
-                                                    int64_t             ldb,
-                                                    float               beta,
-                                                    hipblasLtHalf*      C,
-                                                    int64_t             ldc,
-                                                    bool                alt)
+                                                                  hipblasOperation_t  transB,
+                                                                  int64_t             m,
+                                                                  int64_t             n,
+                                                                  int64_t             k,
+                                                                  float               alpha,
+                                                                  const hipblaslt_f8* A,
+                                                                  int64_t             lda,
+                                                                  const hipblaslt_f8* B,
+                                                                  int64_t             ldb,
+                                                                  float               beta,
+                                                                  hipblasLtHalf*      C,
+                                                                  int64_t             ldc,
+                                                                  bool                alt)
+{
+    size_t sizeA = (transA == HIPBLAS_OP_N ? k : m) * size_t(lda);
+    size_t sizeB = (transB == HIPBLAS_OP_N ? n : k) * size_t(ldb);
+    size_t sizeC = n * size_t(ldc);
+
+    host_vector<float> A_float(sizeA), B_float(sizeB), C_float(sizeC);
+
+    for(size_t i = 0; i < sizeA; i++)
+        A_float[i] = static_cast<float>(A[i]);
+    for(size_t i = 0; i < sizeB; i++)
+        B_float[i] = static_cast<float>(B[i]);
+    for(size_t i = 0; i < sizeC; i++)
+        C_float[i] = static_cast<float>(C[i]);
+
+    // just directly cast, since transA, transB are integers in the enum
+    // printf("transA: hipblaslt =%d, cblas=%d\n", transA, HIPOperationToCBLASTanspose(transA) );
+    cblas_sgemm(CblasColMajor,
+                HIPOperationToCBLASTanspose(transA),
+                HIPOperationToCBLASTanspose(transB),
+                m,
+                n,
+                k,
+                alpha,
+                A_float,
+                lda,
+                B_float,
+                ldb,
+                beta,
+                C_float,
+                ldc);
+
+    for(size_t i = 0; i < sizeC; i++)
+        C[i] = static_cast<hipblasLtHalf>(C_float[i]);
+}
+
+template <>
+void cblas_gemm<hipblaslt_bf8, hipblaslt_f8, hipblasLtHalf, float>(hipblasOperation_t   transA,
+                                                                   hipblasOperation_t   transB,
+                                                                   int64_t              m,
+                                                                   int64_t              n,
+                                                                   int64_t              k,
+                                                                   float                alpha,
+                                                                   const hipblaslt_bf8* A,
+                                                                   int64_t              lda,
+                                                                   const hipblaslt_f8*  B,
+                                                                   int64_t              ldb,
+                                                                   float                beta,
+                                                                   hipblasLtHalf*       C,
+                                                                   int64_t              ldc,
+                                                                   bool                 alt)
+{
+    size_t sizeA = (transA == HIPBLAS_OP_N ? k : m) * size_t(lda);
+    size_t sizeB = (transB == HIPBLAS_OP_N ? n : k) * size_t(ldb);
+    size_t sizeC = n * size_t(ldc);
+
+    host_vector<float> A_float(sizeA), B_float(sizeB), C_float(sizeC);
+
+    for(size_t i = 0; i < sizeA; i++)
+        A_float[i] = static_cast<float>(A[i]);
+    for(size_t i = 0; i < sizeB; i++)
+        B_float[i] = static_cast<float>(B[i]);
+    for(size_t i = 0; i < sizeC; i++)
+        C_float[i] = static_cast<float>(C[i]);
+
+    // just directly cast, since transA, transB are integers in the enum
+    // printf("transA: hipblaslt =%d, cblas=%d\n", transA, HIPOperationToCBLASTanspose(transA) );
+    cblas_sgemm(CblasColMajor,
+                HIPOperationToCBLASTanspose(transA),
+                HIPOperationToCBLASTanspose(transB),
+                m,
+                n,
+                k,
+                alpha,
+                A_float,
+                lda,
+                B_float,
+                ldb,
+                beta,
+                C_float,
+                ldc);
+
+    for(size_t i = 0; i < sizeC; i++)
+        C[i] = static_cast<hipblasLtHalf>(C_float[i]);
+}
+
+template <>
+void cblas_gemm<hipblaslt_f8, hipblaslt_bf8, hipblasLtHalf, float>(hipblasOperation_t   transA,
+                                                                   hipblasOperation_t   transB,
+                                                                   int64_t              m,
+                                                                   int64_t              n,
+                                                                   int64_t              k,
+                                                                   float                alpha,
+                                                                   const hipblaslt_f8*  A,
+                                                                   int64_t              lda,
+                                                                   const hipblaslt_bf8* B,
+                                                                   int64_t              ldb,
+                                                                   float                beta,
+                                                                   hipblasLtHalf*       C,
+                                                                   int64_t              ldc,
+                                                                   bool                 alt)
+{
+    size_t sizeA = (transA == HIPBLAS_OP_N ? k : m) * size_t(lda);
+    size_t sizeB = (transB == HIPBLAS_OP_N ? n : k) * size_t(ldb);
+    size_t sizeC = n * size_t(ldc);
+
+    host_vector<float> A_float(sizeA), B_float(sizeB), C_float(sizeC);
+
+    for(size_t i = 0; i < sizeA; i++)
+        A_float[i] = static_cast<float>(A[i]);
+    for(size_t i = 0; i < sizeB; i++)
+        B_float[i] = static_cast<float>(B[i]);
+    for(size_t i = 0; i < sizeC; i++)
+        C_float[i] = static_cast<float>(C[i]);
+
+    // just directly cast, since transA, transB are integers in the enum
+    // printf("transA: hipblaslt =%d, cblas=%d\n", transA, HIPOperationToCBLASTanspose(transA) );
+    cblas_sgemm(CblasColMajor,
+                HIPOperationToCBLASTanspose(transA),
+                HIPOperationToCBLASTanspose(transB),
+                m,
+                n,
+                k,
+                alpha,
+                A_float,
+                lda,
+                B_float,
+                ldb,
+                beta,
+                C_float,
+                ldc);
+
+    for(size_t i = 0; i < sizeC; i++)
+        C[i] = static_cast<hipblasLtHalf>(C_float[i]);
+}
+
+template <>
+void cblas_gemm<hipblaslt_f8, hipblasLtHalf, hipblasLtHalf, float>(hipblasOperation_t   transA,
+                                                                   hipblasOperation_t   transB,
+                                                                   int64_t              m,
+                                                                   int64_t              n,
+                                                                   int64_t              k,
+                                                                   float                alpha,
+                                                                   const hipblaslt_f8*  A,
+                                                                   int64_t              lda,
+                                                                   const hipblasLtHalf* B,
+                                                                   int64_t              ldb,
+                                                                   float                beta,
+                                                                   hipblasLtHalf*       C,
+                                                                   int64_t              ldc,
+                                                                   bool                 alt)
 {
     // cblas does not support hip_bfloat16, so convert to higher precision float
     // This will give more precise result which is acceptable for testing
@@ -246,20 +481,20 @@ void cblas_gemm<hipblaslt_f8, hipblaslt_f8, hipblasLtHalf, float>(hipblasOperati
 }
 
 template <>
-void cblas_gemm<hipblaslt_f8, hipblasLtHalf, hipblasLtHalf, float>(hipblasOperation_t  transA,
-                                                    hipblasOperation_t  transB,
-                                                    int64_t             m,
-                                                    int64_t             n,
-                                                    int64_t             k,
-                                                    float               alpha,
-                                                    const hipblaslt_f8* A,
-                                                    int64_t             lda,
-                                                    const hipblasLtHalf* B,
-                                                    int64_t             ldb,
-                                                    float               beta,
-                                                    hipblasLtHalf*      C,
-                                                    int64_t             ldc,
-                                                    bool                alt)
+void cblas_gemm<hipblasLtHalf, hipblaslt_f8, hipblasLtHalf, float>(hipblasOperation_t   transA,
+                                                                   hipblasOperation_t   transB,
+                                                                   int64_t              m,
+                                                                   int64_t              n,
+                                                                   int64_t              k,
+                                                                   float                alpha,
+                                                                   const hipblasLtHalf* A,
+                                                                   int64_t              lda,
+                                                                   const hipblaslt_f8*  B,
+                                                                   int64_t              ldb,
+                                                                   float                beta,
+                                                                   hipblasLtHalf*       C,
+                                                                   int64_t              ldc,
+                                                                   bool                 alt)
 {
     // cblas does not support hip_bfloat16, so convert to higher precision float
     // This will give more precise result which is acceptable for testing
@@ -299,73 +534,20 @@ void cblas_gemm<hipblaslt_f8, hipblasLtHalf, hipblasLtHalf, float>(hipblasOperat
 }
 
 template <>
-void cblas_gemm<hipblasLtHalf, hipblaslt_f8, hipblasLtHalf, float>(hipblasOperation_t  transA,
-                                                    hipblasOperation_t  transB,
-                                                    int64_t             m,
-                                                    int64_t             n,
-                                                    int64_t             k,
-                                                    float               alpha,
-                                                    const hipblasLtHalf* A,
-                                                    int64_t             lda,
-                                                    const hipblaslt_f8* B,
-                                                    int64_t             ldb,
-                                                    float               beta,
-                                                    hipblasLtHalf*      C,
-                                                    int64_t             ldc,
-                                                    bool                alt)
-{
-    // cblas does not support hip_bfloat16, so convert to higher precision float
-    // This will give more precise result which is acceptable for testing
-
-    size_t sizeA = (transA == HIPBLAS_OP_N ? k : m) * size_t(lda);
-    size_t sizeB = (transB == HIPBLAS_OP_N ? n : k) * size_t(ldb);
-    size_t sizeC = n * size_t(ldc);
-
-    host_vector<float> A_float(sizeA), B_float(sizeB), C_float(sizeC);
-
-    for(size_t i = 0; i < sizeA; i++)
-        A_float[i] = static_cast<float>(A[i]);
-    for(size_t i = 0; i < sizeB; i++)
-        B_float[i] = static_cast<float>(B[i]);
-    for(size_t i = 0; i < sizeC; i++)
-        C_float[i] = static_cast<float>(C[i]);
-
-    // just directly cast, since transA, transB are integers in the enum
-    // printf("transA: hipblaslt =%d, cblas=%d\n", transA, HIPOperationToCBLASTanspose(transA) );
-    cblas_sgemm(CblasColMajor,
-                HIPOperationToCBLASTanspose(transA),
-                HIPOperationToCBLASTanspose(transB),
-                m,
-                n,
-                k,
-                alpha,
-                A_float,
-                lda,
-                B_float,
-                ldb,
-                beta,
-                C_float,
-                ldc);
-
-    for(size_t i = 0; i < sizeC; i++)
-        C[i] = static_cast<hipblasLtHalf>(C_float[i]);
-}
-
-template <>
-void cblas_gemm<hipblaslt_f8, hipblasLtHalf, float, float>(hipblasOperation_t  transA,
-                                                    hipblasOperation_t  transB,
-                                                    int64_t             m,
-                                                    int64_t             n,
-                                                    int64_t             k,
-                                                    float               alpha,
-                                                    const hipblaslt_f8* A,
-                                                    int64_t             lda,
-                                                    const hipblasLtHalf* B,
-                                                    int64_t             ldb,
-                                                    float               beta,
-                                                    float*      C,
-                                                    int64_t             ldc,
-                                                    bool                alt)
+void cblas_gemm<hipblaslt_f8, hipblasLtHalf, float, float>(hipblasOperation_t   transA,
+                                                           hipblasOperation_t   transB,
+                                                           int64_t              m,
+                                                           int64_t              n,
+                                                           int64_t              k,
+                                                           float                alpha,
+                                                           const hipblaslt_f8*  A,
+                                                           int64_t              lda,
+                                                           const hipblasLtHalf* B,
+                                                           int64_t              ldb,
+                                                           float                beta,
+                                                           float*               C,
+                                                           int64_t              ldc,
+                                                           bool                 alt)
 {
     // cblas does not support hip_bfloat16, so convert to higher precision float
     // This will give more precise result which is acceptable for testing
@@ -400,20 +582,20 @@ void cblas_gemm<hipblaslt_f8, hipblasLtHalf, float, float>(hipblasOperation_t  t
 }
 
 template <>
-void cblas_gemm<hipblasLtHalf, hipblaslt_f8, float, float>(hipblasOperation_t  transA,
-                                                    hipblasOperation_t  transB,
-                                                    int64_t             m,
-                                                    int64_t             n,
-                                                    int64_t             k,
-                                                    float               alpha,
-                                                    const hipblasLtHalf* A,
-                                                    int64_t             lda,
-                                                    const hipblaslt_f8* B,
-                                                    int64_t             ldb,
-                                                    float               beta,
-                                                    float*      C,
-                                                    int64_t             ldc,
-                                                    bool                alt)
+void cblas_gemm<hipblasLtHalf, hipblaslt_f8, float, float>(hipblasOperation_t   transA,
+                                                           hipblasOperation_t   transB,
+                                                           int64_t              m,
+                                                           int64_t              n,
+                                                           int64_t              k,
+                                                           float                alpha,
+                                                           const hipblasLtHalf* A,
+                                                           int64_t              lda,
+                                                           const hipblaslt_f8*  B,
+                                                           int64_t              ldb,
+                                                           float                beta,
+                                                           float*               C,
+                                                           int64_t              ldc,
+                                                           bool                 alt)
 {
     // cblas does not support hip_bfloat16, so convert to higher precision float
     // This will give more precise result which is acceptable for testing
@@ -449,19 +631,19 @@ void cblas_gemm<hipblasLtHalf, hipblaslt_f8, float, float>(hipblasOperation_t  t
 
 template <>
 void cblas_gemm<hipblasLtHalf, hipblasLtHalf, hipblasLtHalf, float>(hipblasOperation_t   transA,
-                                                     hipblasOperation_t   transB,
-                                                     int64_t              m,
-                                                     int64_t              n,
-                                                     int64_t              k,
-                                                     float                alpha,
-                                                     const hipblasLtHalf* A,
-                                                     int64_t              lda,
-                                                     const hipblasLtHalf* B,
-                                                     int64_t              ldb,
-                                                     float                beta,
-                                                     hipblasLtHalf*       C,
-                                                     int64_t              ldc,
-                                                     bool                 alt)
+                                                                    hipblasOperation_t   transB,
+                                                                    int64_t              m,
+                                                                    int64_t              n,
+                                                                    int64_t              k,
+                                                                    float                alpha,
+                                                                    const hipblasLtHalf* A,
+                                                                    int64_t              lda,
+                                                                    const hipblasLtHalf* B,
+                                                                    int64_t              ldb,
+                                                                    float                beta,
+                                                                    hipblasLtHalf*       C,
+                                                                    int64_t              ldc,
+                                                                    bool                 alt)
 {
     // cblas does not support hipblasLtHalf, so convert to higher precision float
     // This will give more precise result which is acceptable for testing
@@ -514,19 +696,19 @@ void cblas_gemm<hipblasLtHalf, hipblasLtHalf, hipblasLtHalf, float>(hipblasOpera
 
 template <>
 void cblas_gemm<hipblasLtHalf, hipblasLtHalf, float, float>(hipblasOperation_t   transA,
-                                             hipblasOperation_t   transB,
-                                             int64_t              m,
-                                             int64_t              n,
-                                             int64_t              k,
-                                             float                alpha,
-                                             const hipblasLtHalf* A,
-                                             int64_t              lda,
-                                             const hipblasLtHalf* B,
-                                             int64_t              ldb,
-                                             float                beta,
-                                             float*               C,
-                                             int64_t              ldc,
-                                             bool                 alt)
+                                                            hipblasOperation_t   transB,
+                                                            int64_t              m,
+                                                            int64_t              n,
+                                                            int64_t              k,
+                                                            float                alpha,
+                                                            const hipblasLtHalf* A,
+                                                            int64_t              lda,
+                                                            const hipblasLtHalf* B,
+                                                            int64_t              ldb,
+                                                            float                beta,
+                                                            float*               C,
+                                                            int64_t              ldc,
+                                                            bool                 alt)
 {
     // cblas does not support hipblasLtHalf, so convert to higher precision float
     // This will give more precise result which is acceptable for testing
@@ -571,19 +753,19 @@ void cblas_gemm<hipblasLtHalf, hipblasLtHalf, float, float>(hipblasOperation_t  
 
 template <>
 void cblas_gemm<float, float, float, float>(hipblasOperation_t transA,
-                                     hipblasOperation_t transB,
-                                     int64_t            m,
-                                     int64_t            n,
-                                     int64_t            k,
-                                     float              alpha,
-                                     const float*       A,
-                                     int64_t            lda,
-                                     const float*       B,
-                                     int64_t            ldb,
-                                     float              beta,
-                                     float*             C,
-                                     int64_t            ldc,
-                                     bool               alt)
+                                            hipblasOperation_t transB,
+                                            int64_t            m,
+                                            int64_t            n,
+                                            int64_t            k,
+                                            float              alpha,
+                                            const float*       A,
+                                            int64_t            lda,
+                                            const float*       B,
+                                            int64_t            ldb,
+                                            float              beta,
+                                            float*             C,
+                                            int64_t            ldc,
+                                            bool               alt)
 {
 
     // just directly cast, since transA, transB are integers in the enum
@@ -606,19 +788,19 @@ void cblas_gemm<float, float, float, float>(hipblasOperation_t transA,
 
 template <>
 void cblas_gemm<double, double, double, double>(hipblasOperation_t transA,
-                                        hipblasOperation_t transB,
-                                        int64_t            m,
-                                        int64_t            n,
-                                        int64_t            k,
-                                        double             alpha,
-                                        const double*      A,
-                                        int64_t            lda,
-                                        const double*      B,
-                                        int64_t            ldb,
-                                        double             beta,
-                                        double*            C,
-                                        int64_t            ldc,
-                                        bool               alt)
+                                                hipblasOperation_t transB,
+                                                int64_t            m,
+                                                int64_t            n,
+                                                int64_t            k,
+                                                double             alpha,
+                                                const double*      A,
+                                                int64_t            lda,
+                                                const double*      B,
+                                                int64_t            ldb,
+                                                double             beta,
+                                                double*            C,
+                                                int64_t            ldc,
+                                                bool               alt)
 {
 
     // just directly cast, since transA, transB are integers in the enum
@@ -641,19 +823,19 @@ void cblas_gemm<double, double, double, double>(hipblasOperation_t transA,
 
 template <>
 void cblas_gemm<int8_t, int8_t, int32_t, int32_t>(hipblasOperation_t transA,
-                                          hipblasOperation_t transB,
-                                          int64_t            m,
-                                          int64_t            n,
-                                          int64_t            k,
-                                          int32_t            alpha,
-                                          const int8_t*      A,
-                                          int64_t            lda,
-                                          const int8_t*      B,
-                                          int64_t            ldb,
-                                          int32_t            beta,
-                                          int32_t*           C,
-                                          int64_t            ldc,
-                                          bool               alt)
+                                                  hipblasOperation_t transB,
+                                                  int64_t            m,
+                                                  int64_t            n,
+                                                  int64_t            k,
+                                                  int32_t            alpha,
+                                                  const int8_t*      A,
+                                                  int64_t            lda,
+                                                  const int8_t*      B,
+                                                  int64_t            ldb,
+                                                  int32_t            beta,
+                                                  int32_t*           C,
+                                                  int64_t            ldc,
+                                                  bool               alt)
 {
 
     // cblas does not support int8_t input / int32_t output, however non-overflowing
@@ -700,21 +882,22 @@ void cblas_gemm<int8_t, int8_t, int32_t, int32_t>(hipblasOperation_t transA,
 
 // AlphaVec gemm
 template <>
-void cblas_gemm_alphascale<hip_bfloat16, hip_bfloat16, hip_bfloat16, float>(hipblasOperation_t  transA,
-                                                              hipblasOperation_t  transB,
-                                                              int64_t             m,
-                                                              int64_t             n,
-                                                              int64_t             k,
-                                                              float               alpha,
-                                                              const hip_bfloat16* A,
-                                                              int64_t             lda,
-                                                              const hip_bfloat16* B,
-                                                              int64_t             ldb,
-                                                              float               beta,
-                                                              hip_bfloat16*       C,
-                                                              int64_t             ldc,
-                                                              const float*        AlphaVec,
-                                                              bool                alt)
+void cblas_gemm_alphascale<hip_bfloat16, hip_bfloat16, hip_bfloat16, float>(
+    hipblasOperation_t  transA,
+    hipblasOperation_t  transB,
+    int64_t             m,
+    int64_t             n,
+    int64_t             k,
+    float               alpha,
+    const hip_bfloat16* A,
+    int64_t             lda,
+    const hip_bfloat16* B,
+    int64_t             ldb,
+    float               beta,
+    hip_bfloat16*       C,
+    int64_t             ldc,
+    const float*        AlphaVec,
+    bool                alt)
 {
     // cblas does not support hip_bfloat16, so convert to higher precision float
     // This will give more precise result which is acceptable for testing
@@ -758,20 +941,20 @@ void cblas_gemm_alphascale<hip_bfloat16, hip_bfloat16, hip_bfloat16, float>(hipb
 
 template <>
 void cblas_gemm_alphascale<hip_bfloat16, hip_bfloat16, float, float>(hipblasOperation_t  transA,
-                                                       hipblasOperation_t  transB,
-                                                       int64_t             m,
-                                                       int64_t             n,
-                                                       int64_t             k,
-                                                       float               alpha,
-                                                       const hip_bfloat16* A,
-                                                       int64_t             lda,
-                                                       const hip_bfloat16* B,
-                                                       int64_t             ldb,
-                                                       float               beta,
-                                                       float*              C,
-                                                       int64_t             ldc,
-                                                       const float*        AlphaVec,
-                                                       bool                alt)
+                                                                     hipblasOperation_t  transB,
+                                                                     int64_t             m,
+                                                                     int64_t             n,
+                                                                     int64_t             k,
+                                                                     float               alpha,
+                                                                     const hip_bfloat16* A,
+                                                                     int64_t             lda,
+                                                                     const hip_bfloat16* B,
+                                                                     int64_t             ldb,
+                                                                     float               beta,
+                                                                     float*              C,
+                                                                     int64_t             ldc,
+                                                                     const float*        AlphaVec,
+                                                                     bool                alt)
 {
     // cblas does not support hip_bfloat16, so convert to higher precision float
     // This will give more precise result which is acceptable for testing
@@ -809,24 +992,21 @@ void cblas_gemm_alphascale<hip_bfloat16, hip_bfloat16, float, float>(hipblasOper
 
 template <>
 void cblas_gemm_alphascale<hipblaslt_f8, hipblaslt_f8, float, float>(hipblasOperation_t  transA,
-                                                       hipblasOperation_t  transB,
-                                                       int64_t             m,
-                                                       int64_t             n,
-                                                       int64_t             k,
-                                                       float               alpha,
-                                                       const hipblaslt_f8* A,
-                                                       int64_t             lda,
-                                                       const hipblaslt_f8* B,
-                                                       int64_t             ldb,
-                                                       float               beta,
-                                                       float*              C,
-                                                       int64_t             ldc,
-                                                       const float*        AlphaVec,
-                                                       bool                alt)
+                                                                     hipblasOperation_t  transB,
+                                                                     int64_t             m,
+                                                                     int64_t             n,
+                                                                     int64_t             k,
+                                                                     float               alpha,
+                                                                     const hipblaslt_f8* A,
+                                                                     int64_t             lda,
+                                                                     const hipblaslt_f8* B,
+                                                                     int64_t             ldb,
+                                                                     float               beta,
+                                                                     float*              C,
+                                                                     int64_t             ldc,
+                                                                     const float*        AlphaVec,
+                                                                     bool                alt)
 {
-    // cblas does not support hip_bfloat16, so convert to higher precision float
-    // This will give more precise result which is acceptable for testing
-
     size_t sizeA = (transA == HIPBLAS_OP_N ? k : m) * size_t(lda);
     size_t sizeB = (transB == HIPBLAS_OP_N ? n : k) * size_t(ldb);
     size_t sizeC = n * size_t(ldc);
@@ -860,21 +1040,283 @@ void cblas_gemm_alphascale<hipblaslt_f8, hipblaslt_f8, float, float>(hipblasOper
 }
 
 template <>
-void cblas_gemm_alphascale<hipblaslt_f8, hipblaslt_f8, hipblasLtHalf, float>(hipblasOperation_t  transA,
-                                                               hipblasOperation_t  transB,
-                                                               int64_t             m,
-                                                               int64_t             n,
-                                                               int64_t             k,
-                                                               float               alpha,
-                                                               const hipblaslt_f8* A,
-                                                               int64_t             lda,
-                                                               const hipblaslt_f8* B,
-                                                               int64_t             ldb,
-                                                               float               beta,
-                                                               hipblasLtHalf*      C,
-                                                               int64_t             ldc,
-                                                               const float*        AlphaVec,
-                                                               bool                alt)
+void cblas_gemm_alphascale<hipblaslt_bf8, hipblaslt_f8, float, float>(hipblasOperation_t   transA,
+                                                                      hipblasOperation_t   transB,
+                                                                      int64_t              m,
+                                                                      int64_t              n,
+                                                                      int64_t              k,
+                                                                      float                alpha,
+                                                                      const hipblaslt_bf8* A,
+                                                                      int64_t              lda,
+                                                                      const hipblaslt_f8*  B,
+                                                                      int64_t              ldb,
+                                                                      float                beta,
+                                                                      float*               C,
+                                                                      int64_t              ldc,
+                                                                      const float*         AlphaVec,
+                                                                      bool                 alt)
+{
+    size_t sizeA = (transA == HIPBLAS_OP_N ? k : m) * size_t(lda);
+    size_t sizeB = (transB == HIPBLAS_OP_N ? n : k) * size_t(ldb);
+    size_t sizeC = n * size_t(ldc);
+
+    host_vector<float> A_float(sizeA), B_float(sizeB), C_float(sizeC);
+
+    for(size_t i = 0; i < sizeA; i++)
+    {
+        A_float[i] = static_cast<float>(A[i]);
+        A_float[i] *= AlphaVec[i % m];
+    }
+    for(size_t i = 0; i < sizeB; i++)
+        B_float[i] = static_cast<float>(B[i]);
+
+    // just directly cast, since transA, transB are integers in the enum
+    // printf("transA: hipblaslt =%d, cblas=%d\n", transA, HIPOperationToCBLASTanspose(transA) );
+    cblas_sgemm(CblasColMajor,
+                HIPOperationToCBLASTanspose(transA),
+                HIPOperationToCBLASTanspose(transB),
+                m,
+                n,
+                k,
+                alpha,
+                A_float,
+                lda,
+                B_float,
+                ldb,
+                beta,
+                C,
+                ldc);
+}
+
+template <>
+void cblas_gemm_alphascale<hipblaslt_f8, hipblaslt_bf8, float, float>(hipblasOperation_t   transA,
+                                                                      hipblasOperation_t   transB,
+                                                                      int64_t              m,
+                                                                      int64_t              n,
+                                                                      int64_t              k,
+                                                                      float                alpha,
+                                                                      const hipblaslt_f8*  A,
+                                                                      int64_t              lda,
+                                                                      const hipblaslt_bf8* B,
+                                                                      int64_t              ldb,
+                                                                      float                beta,
+                                                                      float*               C,
+                                                                      int64_t              ldc,
+                                                                      const float*         AlphaVec,
+                                                                      bool                 alt)
+{
+    size_t sizeA = (transA == HIPBLAS_OP_N ? k : m) * size_t(lda);
+    size_t sizeB = (transB == HIPBLAS_OP_N ? n : k) * size_t(ldb);
+    size_t sizeC = n * size_t(ldc);
+
+    host_vector<float> A_float(sizeA), B_float(sizeB), C_float(sizeC);
+
+    for(size_t i = 0; i < sizeA; i++)
+    {
+        A_float[i] = static_cast<float>(A[i]);
+        A_float[i] *= AlphaVec[i % m];
+    }
+    for(size_t i = 0; i < sizeB; i++)
+        B_float[i] = static_cast<float>(B[i]);
+
+    // just directly cast, since transA, transB are integers in the enum
+    // printf("transA: hipblaslt =%d, cblas=%d\n", transA, HIPOperationToCBLASTanspose(transA) );
+    cblas_sgemm(CblasColMajor,
+                HIPOperationToCBLASTanspose(transA),
+                HIPOperationToCBLASTanspose(transB),
+                m,
+                n,
+                k,
+                alpha,
+                A_float,
+                lda,
+                B_float,
+                ldb,
+                beta,
+                C,
+                ldc);
+}
+template <>
+void cblas_gemm_alphascale<hipblaslt_f8, hipblaslt_f8, hipblasLtHalf, float>(
+    hipblasOperation_t  transA,
+    hipblasOperation_t  transB,
+    int64_t             m,
+    int64_t             n,
+    int64_t             k,
+    float               alpha,
+    const hipblaslt_f8* A,
+    int64_t             lda,
+    const hipblaslt_f8* B,
+    int64_t             ldb,
+    float               beta,
+    hipblasLtHalf*      C,
+    int64_t             ldc,
+    const float*        AlphaVec,
+    bool                alt)
+{
+    size_t sizeA = (transA == HIPBLAS_OP_N ? k : m) * size_t(lda);
+    size_t sizeB = (transB == HIPBLAS_OP_N ? n : k) * size_t(ldb);
+    size_t sizeC = n * size_t(ldc);
+
+    host_vector<float> A_float(sizeA), B_float(sizeB), C_float(sizeC);
+
+    for(size_t i = 0; i < sizeA; i++)
+    {
+        A_float[i] = static_cast<float>(A[i]);
+        A_float[i] *= AlphaVec[i % m];
+    }
+    for(size_t i = 0; i < sizeB; i++)
+        B_float[i] = static_cast<float>(B[i]);
+    for(size_t i = 0; i < sizeC; i++)
+        C_float[i] = static_cast<float>(C[i]);
+
+    // just directly cast, since transA, transB are integers in the enum
+    //printf("transA: hipblaslt =%d, cblas=%d\n", transA, HIPOperationToCBLASTanspose(transA) );
+    cblas_sgemm(CblasColMajor,
+                HIPOperationToCBLASTanspose(transA),
+                HIPOperationToCBLASTanspose(transB),
+                m,
+                n,
+                k,
+                alpha,
+                A_float,
+                lda,
+                B_float,
+                ldb,
+                beta,
+                C_float,
+                ldc);
+
+    for(size_t i = 0; i < sizeC; i++)
+        C[i] = hipblasLtHalf(C_float[i]);
+}
+
+template <>
+void cblas_gemm_alphascale<hipblaslt_bf8, hipblaslt_f8, hipblasLtHalf, float>(
+    hipblasOperation_t   transA,
+    hipblasOperation_t   transB,
+    int64_t              m,
+    int64_t              n,
+    int64_t              k,
+    float                alpha,
+    const hipblaslt_bf8* A,
+    int64_t              lda,
+    const hipblaslt_f8*  B,
+    int64_t              ldb,
+    float                beta,
+    hipblasLtHalf*       C,
+    int64_t              ldc,
+    const float*         AlphaVec,
+    bool                 alt)
+{
+    size_t sizeA = (transA == HIPBLAS_OP_N ? k : m) * size_t(lda);
+    size_t sizeB = (transB == HIPBLAS_OP_N ? n : k) * size_t(ldb);
+    size_t sizeC = n * size_t(ldc);
+
+    host_vector<float> A_float(sizeA), B_float(sizeB), C_float(sizeC);
+
+    for(size_t i = 0; i < sizeA; i++)
+    {
+        A_float[i] = static_cast<float>(A[i]);
+        A_float[i] *= AlphaVec[i % m];
+    }
+    for(size_t i = 0; i < sizeB; i++)
+        B_float[i] = static_cast<float>(B[i]);
+    for(size_t i = 0; i < sizeC; i++)
+        C_float[i] = static_cast<float>(C[i]);
+
+    // just directly cast, since transA, transB are integers in the enum
+    //printf("transA: hipblaslt =%d, cblas=%d\n", transA, HIPOperationToCBLASTanspose(transA) );
+    cblas_sgemm(CblasColMajor,
+                HIPOperationToCBLASTanspose(transA),
+                HIPOperationToCBLASTanspose(transB),
+                m,
+                n,
+                k,
+                alpha,
+                A_float,
+                lda,
+                B_float,
+                ldb,
+                beta,
+                C_float,
+                ldc);
+
+    for(size_t i = 0; i < sizeC; i++)
+        C[i] = hipblasLtHalf(C_float[i]);
+}
+
+template <>
+void cblas_gemm_alphascale<hipblaslt_f8, hipblaslt_bf8, hipblasLtHalf, float>(
+    hipblasOperation_t   transA,
+    hipblasOperation_t   transB,
+    int64_t              m,
+    int64_t              n,
+    int64_t              k,
+    float                alpha,
+    const hipblaslt_f8*  A,
+    int64_t              lda,
+    const hipblaslt_bf8* B,
+    int64_t              ldb,
+    float                beta,
+    hipblasLtHalf*       C,
+    int64_t              ldc,
+    const float*         AlphaVec,
+    bool                 alt)
+{
+    size_t sizeA = (transA == HIPBLAS_OP_N ? k : m) * size_t(lda);
+    size_t sizeB = (transB == HIPBLAS_OP_N ? n : k) * size_t(ldb);
+    size_t sizeC = n * size_t(ldc);
+
+    host_vector<float> A_float(sizeA), B_float(sizeB), C_float(sizeC);
+
+    for(size_t i = 0; i < sizeA; i++)
+    {
+        A_float[i] = static_cast<float>(A[i]);
+        A_float[i] *= AlphaVec[i % m];
+    }
+    for(size_t i = 0; i < sizeB; i++)
+        B_float[i] = static_cast<float>(B[i]);
+    for(size_t i = 0; i < sizeC; i++)
+        C_float[i] = static_cast<float>(C[i]);
+
+    // just directly cast, since transA, transB are integers in the enum
+    //printf("transA: hipblaslt =%d, cblas=%d\n", transA, HIPOperationToCBLASTanspose(transA) );
+    cblas_sgemm(CblasColMajor,
+                HIPOperationToCBLASTanspose(transA),
+                HIPOperationToCBLASTanspose(transB),
+                m,
+                n,
+                k,
+                alpha,
+                A_float,
+                lda,
+                B_float,
+                ldb,
+                beta,
+                C_float,
+                ldc);
+
+    for(size_t i = 0; i < sizeC; i++)
+        C[i] = hipblasLtHalf(C_float[i]);
+}
+template <>
+void cblas_gemm_alphascale<hipblasLtHalf, hipblaslt_f8, hipblasLtHalf, float>(
+    hipblasOperation_t   transA,
+    hipblasOperation_t   transB,
+    int64_t              m,
+    int64_t              n,
+    int64_t              k,
+    float                alpha,
+    const hipblasLtHalf* A,
+    int64_t              lda,
+    const hipblaslt_f8*  B,
+    int64_t              ldb,
+    float                beta,
+    hipblasLtHalf*       C,
+    int64_t              ldc,
+    const float*         AlphaVec,
+    bool                 alt)
 {
     // cblas does not support hipblasLtHalf, so convert to higher precision float
     // This will give more precise result which is acceptable for testing
@@ -917,21 +1359,22 @@ void cblas_gemm_alphascale<hipblaslt_f8, hipblaslt_f8, hipblasLtHalf, float>(hip
 }
 
 template <>
-void cblas_gemm_alphascale<hipblasLtHalf, hipblaslt_f8, hipblasLtHalf, float>(hipblasOperation_t  transA,
-                                                               hipblasOperation_t  transB,
-                                                               int64_t             m,
-                                                               int64_t             n,
-                                                               int64_t             k,
-                                                               float               alpha,
-                                                               const hipblasLtHalf* A,
-                                                               int64_t             lda,
-                                                               const hipblaslt_f8* B,
-                                                               int64_t             ldb,
-                                                               float               beta,
-                                                               hipblasLtHalf*      C,
-                                                               int64_t             ldc,
-                                                               const float*        AlphaVec,
-                                                               bool                alt)
+void cblas_gemm_alphascale<hipblaslt_f8, hipblasLtHalf, hipblasLtHalf, float>(
+    hipblasOperation_t   transA,
+    hipblasOperation_t   transB,
+    int64_t              m,
+    int64_t              n,
+    int64_t              k,
+    float                alpha,
+    const hipblaslt_f8*  A,
+    int64_t              lda,
+    const hipblasLtHalf* B,
+    int64_t              ldb,
+    float                beta,
+    hipblasLtHalf*       C,
+    int64_t              ldc,
+    const float*         AlphaVec,
+    bool                 alt)
 {
     // cblas does not support hipblasLtHalf, so convert to higher precision float
     // This will give more precise result which is acceptable for testing
@@ -974,78 +1417,21 @@ void cblas_gemm_alphascale<hipblasLtHalf, hipblaslt_f8, hipblasLtHalf, float>(hi
 }
 
 template <>
-void cblas_gemm_alphascale<hipblaslt_f8, hipblasLtHalf, hipblasLtHalf, float>(hipblasOperation_t  transA,
-                                                               hipblasOperation_t  transB,
-                                                               int64_t             m,
-                                                               int64_t             n,
-                                                               int64_t             k,
-                                                               float               alpha,
-                                                               const hipblaslt_f8* A,
-                                                               int64_t             lda,
-                                                               const hipblasLtHalf* B,
-                                                               int64_t             ldb,
-                                                               float               beta,
-                                                               hipblasLtHalf*      C,
-                                                               int64_t             ldc,
-                                                               const float*        AlphaVec,
-                                                               bool                alt)
-{
-    // cblas does not support hipblasLtHalf, so convert to higher precision float
-    // This will give more precise result which is acceptable for testing
-
-    size_t sizeA = (transA == HIPBLAS_OP_N ? k : m) * size_t(lda);
-    size_t sizeB = (transB == HIPBLAS_OP_N ? n : k) * size_t(ldb);
-    size_t sizeC = n * size_t(ldc);
-
-    host_vector<float> A_float(sizeA), B_float(sizeB), C_float(sizeC);
-
-    for(size_t i = 0; i < sizeA; i++)
-    {
-        A_float[i] = static_cast<float>(A[i]);
-        A_float[i] *= AlphaVec[i % m];
-    }
-    for(size_t i = 0; i < sizeB; i++)
-        B_float[i] = static_cast<float>(B[i]);
-    for(size_t i = 0; i < sizeC; i++)
-        C_float[i] = static_cast<float>(C[i]);
-
-    // just directly cast, since transA, transB are integers in the enum
-    //printf("transA: hipblaslt =%d, cblas=%d\n", transA, HIPOperationToCBLASTanspose(transA) );
-    cblas_sgemm(CblasColMajor,
-                HIPOperationToCBLASTanspose(transA),
-                HIPOperationToCBLASTanspose(transB),
-                m,
-                n,
-                k,
-                alpha,
-                A_float,
-                lda,
-                B_float,
-                ldb,
-                beta,
-                C_float,
-                ldc);
-
-    for(size_t i = 0; i < sizeC; i++)
-        C[i] = hipblasLtHalf(C_float[i]);
-}
-
-template <>
-void cblas_gemm_alphascale<hipblasLtHalf, hipblaslt_f8, float, float>(hipblasOperation_t  transA,
-                                                               hipblasOperation_t  transB,
-                                                               int64_t             m,
-                                                               int64_t             n,
-                                                               int64_t             k,
-                                                               float               alpha,
-                                                               const hipblasLtHalf* A,
-                                                               int64_t             lda,
-                                                               const hipblaslt_f8* B,
-                                                               int64_t             ldb,
-                                                               float               beta,
-                                                               float*      C,
-                                                               int64_t             ldc,
-                                                               const float*        AlphaVec,
-                                                               bool                alt)
+void cblas_gemm_alphascale<hipblasLtHalf, hipblaslt_f8, float, float>(hipblasOperation_t   transA,
+                                                                      hipblasOperation_t   transB,
+                                                                      int64_t              m,
+                                                                      int64_t              n,
+                                                                      int64_t              k,
+                                                                      float                alpha,
+                                                                      const hipblasLtHalf* A,
+                                                                      int64_t              lda,
+                                                                      const hipblaslt_f8*  B,
+                                                                      int64_t              ldb,
+                                                                      float                beta,
+                                                                      float*               C,
+                                                                      int64_t              ldc,
+                                                                      const float*         AlphaVec,
+                                                                      bool                 alt)
 {
     // cblas does not support hipblasLtHalf, so convert to higher precision float
     // This will give more precise result which is acceptable for testing
@@ -1083,21 +1469,21 @@ void cblas_gemm_alphascale<hipblasLtHalf, hipblaslt_f8, float, float>(hipblasOpe
 }
 
 template <>
-void cblas_gemm_alphascale<hipblaslt_f8, hipblasLtHalf, float, float>(hipblasOperation_t  transA,
-                                                               hipblasOperation_t  transB,
-                                                               int64_t             m,
-                                                               int64_t             n,
-                                                               int64_t             k,
-                                                               float               alpha,
-                                                               const hipblaslt_f8* A,
-                                                               int64_t             lda,
-                                                               const hipblasLtHalf* B,
-                                                               int64_t             ldb,
-                                                               float               beta,
-                                                               float*      C,
-                                                               int64_t             ldc,
-                                                               const float*        AlphaVec,
-                                                               bool                alt)
+void cblas_gemm_alphascale<hipblaslt_f8, hipblasLtHalf, float, float>(hipblasOperation_t   transA,
+                                                                      hipblasOperation_t   transB,
+                                                                      int64_t              m,
+                                                                      int64_t              n,
+                                                                      int64_t              k,
+                                                                      float                alpha,
+                                                                      const hipblaslt_f8*  A,
+                                                                      int64_t              lda,
+                                                                      const hipblasLtHalf* B,
+                                                                      int64_t              ldb,
+                                                                      float                beta,
+                                                                      float*               C,
+                                                                      int64_t              ldc,
+                                                                      const float*         AlphaVec,
+                                                                      bool                 alt)
 {
     // cblas does not support hipblasLtHalf, so convert to higher precision float
     // This will give more precise result which is acceptable for testing
@@ -1135,21 +1521,22 @@ void cblas_gemm_alphascale<hipblaslt_f8, hipblasLtHalf, float, float>(hipblasOpe
 }
 
 template <>
-void cblas_gemm_alphascale<hipblasLtHalf, hipblasLtHalf, hipblasLtHalf, float>(hipblasOperation_t   transA,
-                                                                hipblasOperation_t   transB,
-                                                                int64_t              m,
-                                                                int64_t              n,
-                                                                int64_t              k,
-                                                                float                alpha,
-                                                                const hipblasLtHalf* A,
-                                                                int64_t              lda,
-                                                                const hipblasLtHalf* B,
-                                                                int64_t              ldb,
-                                                                float                beta,
-                                                                hipblasLtHalf*       C,
-                                                                int64_t              ldc,
-                                                                const float*         AlphaVec,
-                                                                bool                 alt)
+void cblas_gemm_alphascale<hipblasLtHalf, hipblasLtHalf, hipblasLtHalf, float>(
+    hipblasOperation_t   transA,
+    hipblasOperation_t   transB,
+    int64_t              m,
+    int64_t              n,
+    int64_t              k,
+    float                alpha,
+    const hipblasLtHalf* A,
+    int64_t              lda,
+    const hipblasLtHalf* B,
+    int64_t              ldb,
+    float                beta,
+    hipblasLtHalf*       C,
+    int64_t              ldc,
+    const float*         AlphaVec,
+    bool                 alt)
 {
     // cblas does not support hipblasLtHalf, so convert to higher precision float
     // This will give more precise result which is acceptable for testing
@@ -1205,20 +1592,20 @@ void cblas_gemm_alphascale<hipblasLtHalf, hipblasLtHalf, hipblasLtHalf, float>(h
 
 template <>
 void cblas_gemm_alphascale<hipblasLtHalf, hipblasLtHalf, float, float>(hipblasOperation_t   transA,
-                                                        hipblasOperation_t   transB,
-                                                        int64_t              m,
-                                                        int64_t              n,
-                                                        int64_t              k,
-                                                        float                alpha,
-                                                        const hipblasLtHalf* A,
-                                                        int64_t              lda,
-                                                        const hipblasLtHalf* B,
-                                                        int64_t              ldb,
-                                                        float                beta,
-                                                        float*               C,
-                                                        int64_t              ldc,
-                                                        const float*         AlphaVec,
-                                                        bool                 alt)
+                                                                       hipblasOperation_t   transB,
+                                                                       int64_t              m,
+                                                                       int64_t              n,
+                                                                       int64_t              k,
+                                                                       float                alpha,
+                                                                       const hipblasLtHalf* A,
+                                                                       int64_t              lda,
+                                                                       const hipblasLtHalf* B,
+                                                                       int64_t              ldb,
+                                                                       float                beta,
+                                                                       float*               C,
+                                                                       int64_t              ldc,
+                                                                       const float* AlphaVec,
+                                                                       bool         alt)
 {
     // cblas does not support hipblasLtHalf, so convert to higher precision float
     // This will give more precise result which is acceptable for testing
@@ -1266,20 +1653,20 @@ void cblas_gemm_alphascale<hipblasLtHalf, hipblasLtHalf, float, float>(hipblasOp
 
 template <>
 void cblas_gemm_alphascale<float, float, float, float>(hipblasOperation_t transA,
-                                                hipblasOperation_t transB,
-                                                int64_t            m,
-                                                int64_t            n,
-                                                int64_t            k,
-                                                float              alpha,
-                                                const float*       A,
-                                                int64_t            lda,
-                                                const float*       B,
-                                                int64_t            ldb,
-                                                float              beta,
-                                                float*             C,
-                                                int64_t            ldc,
-                                                const float*       AlphaVec,
-                                                bool               alt)
+                                                       hipblasOperation_t transB,
+                                                       int64_t            m,
+                                                       int64_t            n,
+                                                       int64_t            k,
+                                                       float              alpha,
+                                                       const float*       A,
+                                                       int64_t            lda,
+                                                       const float*       B,
+                                                       int64_t            ldb,
+                                                       float              beta,
+                                                       float*             C,
+                                                       int64_t            ldc,
+                                                       const float*       AlphaVec,
+                                                       bool               alt)
 {
     size_t sizeA = (transA == HIPBLAS_OP_N ? k : m) * size_t(lda);
     size_t sizeB = (transB == HIPBLAS_OP_N ? n : k) * size_t(ldb);
@@ -1312,20 +1699,20 @@ void cblas_gemm_alphascale<float, float, float, float>(hipblasOperation_t transA
 
 template <>
 void cblas_gemm_alphascale<double, double, double, double>(hipblasOperation_t transA,
-                                                   hipblasOperation_t transB,
-                                                   int64_t            m,
-                                                   int64_t            n,
-                                                   int64_t            k,
-                                                   double             alpha,
-                                                   const double*      A,
-                                                   int64_t            lda,
-                                                   const double*      B,
-                                                   int64_t            ldb,
-                                                   double             beta,
-                                                   double*            C,
-                                                   int64_t            ldc,
-                                                   const double*      AlphaVec,
-                                                   bool               alt)
+                                                           hipblasOperation_t transB,
+                                                           int64_t            m,
+                                                           int64_t            n,
+                                                           int64_t            k,
+                                                           double             alpha,
+                                                           const double*      A,
+                                                           int64_t            lda,
+                                                           const double*      B,
+                                                           int64_t            ldb,
+                                                           double             beta,
+                                                           double*            C,
+                                                           int64_t            ldc,
+                                                           const double*      AlphaVec,
+                                                           bool               alt)
 {
     size_t sizeA = (transA == HIPBLAS_OP_N ? k : m) * size_t(lda);
     size_t sizeB = (transB == HIPBLAS_OP_N ? n : k) * size_t(ldb);
@@ -1358,20 +1745,20 @@ void cblas_gemm_alphascale<double, double, double, double>(hipblasOperation_t tr
 
 template <>
 void cblas_gemm_alphascale<int8_t, int8_t, int32_t, int32_t>(hipblasOperation_t transA,
-                                                     hipblasOperation_t transB,
-                                                     int64_t            m,
-                                                     int64_t            n,
-                                                     int64_t            k,
-                                                     int32_t            alpha,
-                                                     const int8_t*      A,
-                                                     int64_t            lda,
-                                                     const int8_t*      B,
-                                                     int64_t            ldb,
-                                                     int32_t            beta,
-                                                     int32_t*           C,
-                                                     int64_t            ldc,
-                                                     const int32_t*     AlphaVec, //cm review
-                                                     bool               alt)
+                                                             hipblasOperation_t transB,
+                                                             int64_t            m,
+                                                             int64_t            n,
+                                                             int64_t            k,
+                                                             int32_t            alpha,
+                                                             const int8_t*      A,
+                                                             int64_t            lda,
+                                                             const int8_t*      B,
+                                                             int64_t            ldb,
+                                                             int32_t            beta,
+                                                             int32_t*           C,
+                                                             int64_t            ldc,
+                                                             const int32_t* AlphaVec, //cm review
+                                                             bool           alt)
 {
     size_t sizeA = (transA == HIPBLAS_OP_N ? k : m) * size_t(lda);
     size_t sizeB = (transB == HIPBLAS_OP_N ? n : k) * size_t(ldb);
