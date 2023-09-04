@@ -130,6 +130,8 @@ namespace Tensile
                                         rhs.biasSrc(),
                                         lhs.useE(),
                                         rhs.useE(),
+                                        lhs.useScaleAB(),
+                                        rhs.useScaleAB(),
                                         lhs.useScaleDVec(),
                                         rhs.useScaleDVec(),
                                         lhs.useScaleAlphaVec(),
@@ -168,6 +170,7 @@ namespace std
                                          problem.useBias(),
                                          problem.biasSrc(),
                                          problem.useE(),
+                                         problem.useScaleAB(),
                                          problem.useScaleDVec(),
                                          problem.useScaleAlphaVec(),
                                          problem.f32XdlMathOp());
@@ -204,6 +207,7 @@ namespace std
                                               problem.useBias(),
                                               problem.biasSrc(),
                                               problem.useE(),
+                                              problem.useScaleAB(),
                                               problem.useScaleDVec(),
                                               problem.useScaleAlphaVec(),
                                               problem.f32XdlMathOp());

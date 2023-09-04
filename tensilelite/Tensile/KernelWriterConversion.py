@@ -406,8 +406,8 @@ class KernelWriterConversion(KernelWriterBase):
     #Load scaleAB
     if self.state["ProblemType"]["UseScaleAB"]:
       kStr += "  " + intermediateDataType + " scaleA_data, scaleB_data;" + self.endLine
-      kStr += "  " + "scaleA_data = *(arg.ScaleA);" + self.endLine
-      kStr += "  " + "scaleB_data = *(arg.ScaleB);" + self.endLine
+      kStr += "  " + "scaleA_data = arg.ScaleA == nullptr ? 1 : *(arg.ScaleA);" + self.endLine
+      kStr += "  " + "scaleB_data = arg.ScaleB == nullptr ? 1 : *(arg.ScaleB);" + self.endLine
 
     #TODO: workspace type is half precision
     if self.state["ProblemType"]["UseBias"] and self.state["ProblemType"]["Gradient"] and self.state["ProblemType"]["BiasSrc"] == "D":
