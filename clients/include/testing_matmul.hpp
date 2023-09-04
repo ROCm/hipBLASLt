@@ -278,16 +278,16 @@ void testing_matmul(const Arguments& arg)
 
     for(int i = 0; i < gemm_count; i++)
     {
-        M[i]       = arg.M;
-        N[i]       = arg.N;
-        K[i]       = arg.K;
+        M[i]       = arg.M[i];
+        N[i]       = arg.N[i];
+        K[i]       = arg.K[i];
         h_alpha[i] = arg.get_alpha<Talpha>();
         h_beta[i]  = arg.get_beta<Talpha>();
-        lda[i]     = arg.lda;
-        ldb[i]     = arg.ldb;
-        ldc[i]     = arg.ldc;
-        ldd[i]     = arg.ldd;
-        lde[i]     = arg.lde;
+        lda[i]     = arg.lda[i];
+        ldb[i]     = arg.ldb[i];
+        ldc[i]     = arg.ldc[i];
+        ldd[i]     = arg.ldd[i];
+        lde[i]     = arg.lde[i];
 
         A_row[i] = transA == HIPBLAS_OP_N ? M[i] : K[i];
         A_col[i] = transA == HIPBLAS_OP_N ? K[i] : M[i];
@@ -297,11 +297,11 @@ void testing_matmul(const Arguments& arg)
         do_batched[i]  = (arg.batch_count > 1);
         num_batches[i] = (do_batched[i] ? arg.batch_count : 1);
 
-        stride_a[i] = do_batched[i] ? arg.stride_a : lda[i] * A_col[i];
-        stride_b[i] = do_batched[i] ? arg.stride_b : ldb[i] * B_col[i];
-        stride_c[i] = do_batched[i] ? arg.stride_c : ldc[i] * N[i];
-        stride_d[i] = do_batched[i] ? arg.stride_c : ldd[i] * N[i];
-        stride_e[i] = do_batched[i] ? arg.stride_e : lde[i] * N[i];
+        stride_a[i] = do_batched[i] ? arg.stride_a[i] : lda[i] * A_col[i];
+        stride_b[i] = do_batched[i] ? arg.stride_b[i] : ldb[i] * B_col[i];
+        stride_c[i] = do_batched[i] ? arg.stride_c[i] : ldc[i] * N[i];
+        stride_d[i] = do_batched[i] ? arg.stride_c[i] : ldd[i] * N[i];
+        stride_e[i] = do_batched[i] ? arg.stride_e[i] : lde[i] * N[i];
 
         CHECK_HIPBLASLT_ERROR(
             hipblasLtMatrixLayoutCreate(&(matA[i]), arg.a_type, A_row[i], A_col[i], lda[i]));
