@@ -47,6 +47,7 @@ bool gpu_arch_match(const std::string& gpu_arch, const char pattern[4]);
  * WARNING: If this data is changed, then hipblaslt_common.yaml must also be *
  * changed.                                                                *
  ***************************************************************************/
+constexpr std::size_t MAX_SUPPORTED_NUM_PROBLEMS{32};
 struct Arguments
 {
     /*************************************************************************
@@ -62,23 +63,23 @@ struct Arguments
     float alpha;
     float beta;
 
-    int64_t stride_a; //  stride_a > transA == 'N' ? lda * K : lda * M
-    int64_t stride_b; //  stride_b > transB == 'N' ? ldb * N : ldb * K
-    int64_t stride_c; //  stride_c > ldc * N
-    int64_t stride_d; //  stride_d > ldd * N
-    int64_t stride_e; //  stride_e > lde * N
+    int64_t stride_a[MAX_SUPPORTED_NUM_PROBLEMS]; //  stride_a > transA == 'N' ? lda * K : lda * M
+    int64_t stride_b[MAX_SUPPORTED_NUM_PROBLEMS]; //  stride_b > transB == 'N' ? ldb * N : ldb * K
+    int64_t stride_c[MAX_SUPPORTED_NUM_PROBLEMS]; //  stride_c > ldc * N
+    int64_t stride_d[MAX_SUPPORTED_NUM_PROBLEMS]; //  stride_d > ldd * N
+    int64_t stride_e[MAX_SUPPORTED_NUM_PROBLEMS]; //  stride_e > lde * N
 
     size_t user_allocated_workspace;
 
-    int64_t M;
-    int64_t N;
-    int64_t K;
+    int64_t M[MAX_SUPPORTED_NUM_PROBLEMS];
+    int64_t N[MAX_SUPPORTED_NUM_PROBLEMS];
+    int64_t K[MAX_SUPPORTED_NUM_PROBLEMS];
 
-    int64_t lda;
-    int64_t ldb;
-    int64_t ldc;
-    int64_t ldd;
-    int64_t lde;
+    int64_t lda[MAX_SUPPORTED_NUM_PROBLEMS];
+    int64_t ldb[MAX_SUPPORTED_NUM_PROBLEMS];
+    int64_t ldc[MAX_SUPPORTED_NUM_PROBLEMS];
+    int64_t ldd[MAX_SUPPORTED_NUM_PROBLEMS];
+    int64_t lde[MAX_SUPPORTED_NUM_PROBLEMS];
 
     int32_t batch_count;
 
@@ -336,13 +337,286 @@ namespace ArgumentsHelper
     // clang-format off
 #define APPLY(NAME)                                                                         \
     template <>                                                                             \
-    HIPBLASLT_CLANG_STATIC constexpr auto                                                     \
-        apply<e_##NAME == e_alpha ? hipblaslt_argument(-1)                                    \
-                                  : e_##NAME == e_beta ? hipblaslt_argument(-2) : e_##NAME> = \
+    HIPBLASLT_CLANG_STATIC constexpr auto                                                   \
+        apply<e_##NAME == e_M ? hipblaslt_argument(-1) :                                    \
+              e_##NAME == e_N ? hipblaslt_argument(-2) :                                    \
+              e_##NAME == e_K ? hipblaslt_argument(-3) :                                    \
+              e_##NAME == e_lda ? hipblaslt_argument(-4) :                                  \
+              e_##NAME == e_stride_a ? hipblaslt_argument(-5) :                             \
+              e_##NAME == e_ldb ? hipblaslt_argument(-6) :                                  \
+              e_##NAME == e_stride_b ? hipblaslt_argument(-7) :                             \
+              e_##NAME == e_ldc ? hipblaslt_argument(-8) :                                  \
+              e_##NAME == e_stride_c ? hipblaslt_argument(-9) :                             \
+              e_##NAME == e_ldd ? hipblaslt_argument(-10) :                                 \
+              e_##NAME == e_stride_d ? hipblaslt_argument(-11) :                            \
+              e_##NAME == e_lde ? hipblaslt_argument(-12) :                                 \
+              e_##NAME == e_stride_e ? hipblaslt_argument(-13) :                            \
+              e_##NAME == e_alpha ? hipblaslt_argument(-14) :                               \
+              e_##NAME == e_beta ? hipblaslt_argument(-15) : e_##NAME> = \
             [](auto&& func, const Arguments& arg, auto) { func(#NAME, arg.NAME); }
 
     // Specialize apply for each Argument
     FOR_EACH_ARGUMENT(APPLY, ;);
+
+    // Specialization for e_M
+    template <>
+    HIPBLASLT_CLANG_STATIC constexpr auto apply<e_M> =
+        [](auto&& func, const Arguments& arg, auto T) {
+            if(arg.grouped_gemm <= 1)
+            {
+                func("m", arg.M[0]);
+            }
+            else
+            {
+                std::string s = "(" + std::to_string(arg.M[0]);
+                for(size_t i = 1; i < arg.grouped_gemm; i++)
+                {
+                    s += "," + std::to_string(arg.M[i]);
+                }
+                s += ")";
+                func("m", s.c_str());
+            }
+        };
+
+    // Specialization for e_N
+    template <>
+    HIPBLASLT_CLANG_STATIC constexpr auto apply<e_N> =
+        [](auto&& func, const Arguments& arg, auto T) {
+            if(arg.grouped_gemm <= 1)
+            {
+                func("n", arg.N[0]);
+            }
+            else
+            {
+                std::string s = "(" + std::to_string(arg.N[0]);
+                for(size_t i = 1; i < arg.grouped_gemm; i++)
+                {
+                    s += "," + std::to_string(arg.N[i]);
+                }
+                s += ")";
+                func("n", s.c_str());
+            }
+        };
+
+    // Specialization for e_K
+    template <>
+    HIPBLASLT_CLANG_STATIC constexpr auto apply<e_K> =
+        [](auto&& func, const Arguments& arg, auto T) {
+            if(arg.grouped_gemm <= 1)
+            {
+                func("k", arg.K[0]);
+            }
+            else
+            {
+                std::string s = "(" + std::to_string(arg.K[0]);
+                for(size_t i = 1; i < arg.grouped_gemm; i++)
+                {
+                    s += "," + std::to_string(arg.K[i]);
+                }
+                s += ")";
+                func("k", s.c_str());
+            }
+        };
+
+    // Specialization for e_lda
+    template <>
+    HIPBLASLT_CLANG_STATIC constexpr auto apply<e_lda> =
+        [](auto&& func, const Arguments& arg, auto T) {
+            if(arg.grouped_gemm <= 1)
+            {
+                func("k", arg.lda[0]);
+            }
+            else
+            {
+                std::string s = "(" + std::to_string(arg.lda[0]);
+                for(size_t i = 1; i < arg.grouped_gemm; i++)
+                {
+                    s += "," + std::to_string(arg.lda[i]);
+                }
+                s += ")";
+                func("k", s.c_str());
+            }
+        };
+
+    // Specialization for e_stride_a
+    template <>
+    HIPBLASLT_CLANG_STATIC constexpr auto apply<e_stride_a> =
+        [](auto&& func, const Arguments& arg, auto T) {
+            if(arg.grouped_gemm <= 1)
+            {
+                func("k", arg.stride_a[0]);
+            }
+            else
+            {
+                std::string s = "(" + std::to_string(arg.stride_a[0]);
+                for(size_t i = 1; i < arg.grouped_gemm; i++)
+                {
+                    s += "," + std::to_string(arg.stride_a[i]);
+                }
+                s += ")";
+                func("k", s.c_str());
+            }
+        };
+
+    // Specialization for e_ldb
+    template <>
+    HIPBLASLT_CLANG_STATIC constexpr auto apply<e_ldb> =
+        [](auto&& func, const Arguments& arg, auto T) {
+            if(arg.grouped_gemm <= 1)
+            {
+                func("k", arg.ldb[0]);
+            }
+            else
+            {
+                std::string s = "(" + std::to_string(arg.ldb[0]);
+                for(size_t i = 1; i < arg.grouped_gemm; i++)
+                {
+                    s += "," + std::to_string(arg.ldb[i]);
+                }
+                s += ")";
+                func("k", s.c_str());
+            }
+        };
+
+    // Specialization for e_stride_b
+    template <>
+    HIPBLASLT_CLANG_STATIC constexpr auto apply<e_stride_b> =
+        [](auto&& func, const Arguments& arg, auto T) {
+            if(arg.grouped_gemm <= 1)
+            {
+                func("k", arg.stride_b[0]);
+            }
+            else
+            {
+                std::string s = "(" + std::to_string(arg.stride_b[0]);
+                for(size_t i = 1; i < arg.grouped_gemm; i++)
+                {
+                    s += "," + std::to_string(arg.stride_b[i]);
+                }
+                s += ")";
+                func("k", s.c_str());
+            }
+        };
+
+    // Specialization for e_ldc
+    template <>
+    HIPBLASLT_CLANG_STATIC constexpr auto apply<e_ldc> =
+        [](auto&& func, const Arguments& arg, auto T) {
+            if(arg.grouped_gemm <= 1)
+            {
+                func("k", arg.ldc[0]);
+            }
+            else
+            {
+                std::string s = "(" + std::to_string(arg.ldc[0]);
+                for(size_t i = 1; i < arg.grouped_gemm; i++)
+                {
+                    s += "," + std::to_string(arg.ldc[i]);
+                }
+                s += ")";
+                func("k", s.c_str());
+            }
+        };
+
+    // Specialization for e_stride_c
+    template <>
+    HIPBLASLT_CLANG_STATIC constexpr auto apply<e_stride_c> =
+        [](auto&& func, const Arguments& arg, auto T) {
+            if(arg.grouped_gemm <= 1)
+            {
+                func("k", arg.stride_c[0]);
+            }
+            else
+            {
+                std::string s = "(" + std::to_string(arg.stride_c[0]);
+                for(size_t i = 1; i < arg.grouped_gemm; i++)
+                {
+                    s += "," + std::to_string(arg.stride_c[i]);
+                }
+                s += ")";
+                func("k", s.c_str());
+            }
+        };
+
+    // Specialization for e_ldd
+    template <>
+    HIPBLASLT_CLANG_STATIC constexpr auto apply<e_ldd> =
+        [](auto&& func, const Arguments& arg, auto T) {
+            if(arg.grouped_gemm <= 1)
+            {
+                func("k", arg.ldd[0]);
+            }
+            else
+            {
+                std::string s = "(" + std::to_string(arg.ldd[0]);
+                for(size_t i = 1; i < arg.grouped_gemm; i++)
+                {
+                    s += "," + std::to_string(arg.ldd[i]);
+                }
+                s += ")";
+                func("k", s.c_str());
+            }
+        };
+
+    // Specialization for e_stride_d
+    template <>
+    HIPBLASLT_CLANG_STATIC constexpr auto apply<e_stride_d> =
+        [](auto&& func, const Arguments& arg, auto T) {
+            if(arg.grouped_gemm <= 1)
+            {
+                func("k", arg.stride_d[0]);
+            }
+            else
+            {
+                std::string s = "(" + std::to_string(arg.stride_d[0]);
+                for(size_t i = 1; i < arg.grouped_gemm; i++)
+                {
+                    s += "," + std::to_string(arg.stride_d[i]);
+                }
+                s += ")";
+                func("k", s.c_str());
+            }
+        };
+
+    // Specialization for e_lde
+    template <>
+    HIPBLASLT_CLANG_STATIC constexpr auto apply<e_lde> =
+        [](auto&& func, const Arguments& arg, auto T) {
+            if(arg.grouped_gemm <= 1)
+            {
+                func("k", arg.lde[0]);
+            }
+            else
+            {
+                std::string s = "(" + std::to_string(arg.lde[0]);
+                for(size_t i = 1; i < arg.grouped_gemm; i++)
+                {
+                    s += "," + std::to_string(arg.lde[i]);
+                }
+                s += ")";
+                func("k", s.c_str());
+            }
+        };
+
+    // Specialization for e_stride_e
+    template <>
+    HIPBLASLT_CLANG_STATIC constexpr auto apply<e_stride_e> =
+        [](auto&& func, const Arguments& arg, auto T) {
+            if(arg.grouped_gemm <= 1)
+            {
+                func("k", arg.stride_e[0]);
+            }
+            else
+            {
+                std::string s = "(" + std::to_string(arg.stride_e[0]);
+                for(size_t i = 1; i < arg.grouped_gemm; i++)
+                {
+                    s += "," + std::to_string(arg.stride_e[i]);
+                }
+                s += ")";
+                func("k", s.c_str());
+            }
+        };
 
     // Specialization for e_alpha
     template <>
@@ -361,64 +635,7 @@ namespace ArgumentsHelper
     // clang-format on
 
 #else
-
-// C++14. TODO: Remove when C++17 is used
-// clang-format off
-namespace ArgumentsHelper
-{
-#define APPLY(NAME)                                             \
-    template <>                                                 \
-    struct apply<e_##NAME == e_alpha ? hipblaslt_argument(-1) :   \
-                 e_##NAME == e_beta  ? hipblaslt_argument(-2) :   \
-                 e_##NAME>                                      \
-    {                                                           \
-        auto operator()()                                       \
-        {                                                       \
-            return                                              \
-                [](auto&& func, const Arguments& arg, auto)     \
-                {                                               \
-                    func(#NAME, arg.NAME);                      \
-                };                                              \
-        }                                                       \
-    };
-
-    template <hipblaslt_argument>
-    struct apply
-    {
-    };
-
-    // Go through every argument and define specializations
-    FOR_EACH_ARGUMENT(APPLY, ;);
-
-    // Specialization for e_alpha
-    template <>
-    struct apply<e_alpha>
-    {
-        auto operator()()
-        {
-            return
-                [](auto&& func, const Arguments& arg, auto T)
-                {
-                    func("alpha", arg.get_alpha<decltype(T)>());
-                };
-        }
-    };
-
-    // Specialization for e_beta
-    template <>
-    struct apply<e_beta>
-    {
-        auto operator()()
-        {
-            return
-                [](auto&& func, const Arguments& arg, auto T)
-                {
-                    func("beta", arg.get_beta<decltype(T)>());
-                };
-        }
-    };
-};
-// clang-format on
+#error "Unsupported C++ version"
 #endif
 
 #undef APPLY

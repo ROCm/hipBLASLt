@@ -122,20 +122,20 @@ Arguments:
   - known_bug_platforms: c_char*64
   - alpha: c_float
   - beta: c_float
-  - stride_a: c_int64
-  - stride_b: c_int64
-  - stride_c: c_int64
-  - stride_d: c_int64
-  - stride_e: c_int64
+  - stride_a: c_int64*32
+  - stride_b: c_int64*32
+  - stride_c: c_int64*32
+  - stride_d: c_int64*32
+  - stride_e: c_int64*32
   - user_allocated_workspace: c_size_t
-  - M: c_int64
-  - N: c_int64
-  - K: c_int64
-  - lda: c_int64
-  - ldb: c_int64
-  - ldc: c_int64
-  - ldd: c_int64
-  - lde: c_int64
+  - M: c_int64*32
+  - N: c_int64*32
+  - K: c_int64*32
+  - lda: c_int64*32
+  - ldb: c_int64*32
+  - ldc: c_int64*32
+  - ldd: c_int64*32
+  - lde: c_int64*32
   - batch_count: c_int32
   - iters: c_int32
   - cold_iters: c_int32

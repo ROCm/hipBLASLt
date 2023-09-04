@@ -30,6 +30,7 @@ import os
 import argparse
 import ctypes
 from fnmatch import fnmatchcase
+from typing import List, Tuple
 try:  # Import either the C or pure-Python YAML parser
     from yaml import CLoader as Loader
 except ImportError:
@@ -235,25 +236,50 @@ def setdefaults(test):
         test.setdefault('ldc', 0)
         test.setdefault('ldd', 0)
         test.setdefault('lde', 0)
-    else: #catered to gemm default behaviour
-        test.setdefault('lda', (test['M'] if test['M'] != 0 else 1) if test['transA'].upper() == 'N'
-                        else test['K'] if test['K'] != 0 else 1)
-        test.setdefault('ldb', (test['K'] if test['K'] != 0 else 1) if test['transB'].upper() == 'N'
-                        else test['N'] if test['N'] != 0 else 1)
-        test.setdefault('ldc', test['M'] if test['M'] != 0 else 1)
-        test.setdefault('ldd', test['M'] if test['M'] != 0 else 1)
-        test.setdefault('lde', test['M'] if test['M'] != 0 else 1)
+    elif not test['grouped_gemm']: #catered to gemm default behaviour
+        M = test['M'][0] if isinstance(test['M'], list) else test['M']
+        N = test['N'][0] if isinstance(test['N'], list) else test['N']
+        K = test['K'][0] if isinstance(test['K'], list) else test['K']
+        test.setdefault('lda', (M if M != 0 else 1) if test['transA'].upper() == 'N'
+                        else K if K != 0 else 1)
+        test.setdefault('ldb', (K if K != 0 else 1) if test['transB'].upper() == 'N'
+                        else N if N != 0 else 1)
+        test.setdefault('ldc', M if M != 0 else 1)
+        test.setdefault('ldd', M if M != 0 else 1)
+        test.setdefault('lde', M if M != 0 else 1)
         if test['batch_count'] > 0:
             test.setdefault('stride_a', test['lda'] *
-                            (test['K'] if test['transA'].upper() == 'N' else
-                             test['M']))
+                            (K if test['transA'].upper() == 'N' else
+                             M))
             test.setdefault('stride_b', test['ldb'] *
-                            (test['N'] if test['transB'].upper() == 'N' else
-                             test['K']))
-            test.setdefault('stride_c', test['ldc'] * test['N'])
-            test.setdefault('stride_d', test['ldd'] * test['N'])
-            test.setdefault('stride_e', test['lde'] * test['N'])
+                            (N if test['transB'].upper() == 'N' else
+                             K))
+            test.setdefault('stride_c', test['ldc'] * N)
+            test.setdefault('stride_d', test['ldd'] * N)
+            test.setdefault('stride_e', test['lde'] * N)
             return
+    else:
+        Ms = test['M']
+        Ns = test['N']
+        Ks = test['K']
+        test.setdefault('lda', [(M if M != 0 else 1) if test['transA'].upper() == 'N'
+                        else K if K != 0 else 1 for M, K in zip(Ms, Ks)])
+        test.setdefault('ldb', [(K if K != 0 else 1) if test['transB'].upper() == 'N'
+                        else N if N != 0 else 1 for K, N in zip(Ks, Ns)])
+        test.setdefault('ldc', [M if M != 0 else 1 for M in Ms])
+        test.setdefault('ldd', [M if M != 0 else 1 for M in Ms])
+        test.setdefault('lde', [M if M != 0 else 1 for M in Ms])
+
+        if test['batch_count'] > 0:
+            test.setdefault('stride_a', [lda * K if test['transA'].upper() == 'N' else lda * M for K, M, lda in zip(Ks, Ms, test['lda'])])
+            test.setdefault('stride_b', 
+                            [N * ldb if test['transB'].upper() == 'N' else
+                             K * ldb for N, K, ldb in zip(Ns, Ks, test['ldb'])])
+            test.setdefault('stride_c', [ldc * N for ldc, N in zip(test['ldc'], Ns)])
+            test.setdefault('stride_d', [ldd * N for ldd, N in zip(test['ldd'], Ns)])
+            test.setdefault('stride_e', [lde * N for lde, N in zip(test['lde'], Ns)])
+            return
+
 
     test.setdefault('stride_a', 0)
     test.setdefault('stride_b', 0)
@@ -284,6 +310,21 @@ def write_signature(out):
         out.write(byt)
         args['signature_written'] = True
 
+def gen_shape_combinations(M: List, N: List, K: List) -> Tuple[List, List, List]:
+    """Generate all shape combinations. This suitable for grouped gemm case."""
+    from itertools import product
+
+    if not isinstance(M, List):
+        M = [M,]
+
+    if not isinstance(N, List):
+        N = [N,]
+
+    if not isinstance(K, List):
+        K = [K,]
+
+    problem_sizes = list(product(M, N, K))
+    return tuple(tuple(s[i] for s in problem_sizes) for i in range(len(problem_sizes[0])))
 
 def write_test(test):
     """Write the test case out to the binary file if not seen already"""
@@ -300,7 +341,10 @@ def write_test(test):
                 if issubclass(ctype._type_, ctypes.c_char):
                     arg.append(bytes(test[name], 'utf_8'))
                 else:
-                    arg.append(ctype(*test[name]))
+                    try:
+                        arg.append(ctype(*test[name]))
+                    except TypeError:
+                        arg.append(ctype(test[name]))
             elif issubclass(ctype, ctypes.c_char):
                 arg.append(bytes(test[name], 'utf_8'))
             else:
@@ -318,6 +362,17 @@ def write_test(test):
 def instantiate(test):
     """Instantiate a given test case"""
     test = test.copy()
+
+    if test['grouped_gemm']:
+        if 'matrix_size' in test:
+            sizes = test.pop('matrix_size')
+            for s in ('M', 'N', 'K'):
+                test[s] = tuple(l[s] for l in sizes)
+        else:
+            M, N, K = gen_shape_combinations(test['M'], test['N'], test['K'])
+            test['M'] = M
+            test['N'] = N
+            test['K'] = K
 
     # Any Arguments fields declared as enums (a_type, b_type, etc.)
     enum_args = [decl[0] for decl in param['Arguments']._fields_
@@ -375,6 +430,24 @@ def generate(test, function):
     """Generate test combinations by iterating across lists recursively"""
     test = test.copy()
 
+    def should_expand(key):
+        grouped_gemm_cond = (test['grouped_gemm'] and key not in ('M', 'N', 'K'))
+        normal_cond = type(test[key]) in (tuple, list) and\
+                      key not in param['lists_to_not_expand'] and\
+                      key != 'matrix_size'
+
+        if test['grouped_gemm']:
+            return grouped_gemm_cond and normal_cond
+        return normal_cond
+
+    def should_expand_dict_lists(argname):
+        normal_cond = argname in test and type(test[argname]) in (tuple, list, dict)
+        grouped_gemm_cond = argname != 'matrix_size'
+
+        if test['grouped_gemm']:
+            return normal_cond and grouped_gemm_cond
+        return normal_cond
+
     # For specially named lists, they are expanded and merged into the test
     # argument list. When the list name is a dictionary of length 1, its pairs
     # indicate that the argument named by its key takes on values paired with
@@ -390,7 +463,7 @@ def generate(test, function):
                     for test[arg], test[target] in pairs:
                         generate(test, function)
                     return
-        elif argname in test and type(test[argname]) in (tuple, list, dict):
+        elif should_expand_dict_lists(argname):#argname in test and type(test[argname]) in (tuple, list, dict):
             # Pop the list and iterate across it
             ilist = test.pop(argname)
 
@@ -402,9 +475,9 @@ def generate(test, function):
                     generate(case, function)
                 except TypeError as err:
                     sys.exit("TypeError: " + str(err) + " for " + argname +
-                             ", which has type " + str(type(item)) +
-                             "\nA name listed in \"Dictionary lists to "
-                             "expand\" must be a defined as a dictionary.\n")
+                            ", which has type " + str(type(item)) +
+                            "\nA name listed in \"Dictionary lists to "
+                            "expand\" must be a defined as a dictionary.\n")
             return
 
     for key in sorted(list(test)):
@@ -419,8 +492,7 @@ def generate(test, function):
                 return
 
         # For sequence arguments, they are expanded into scalars
-        elif (type(test[key]) in (tuple, list) and
-              key not in param['lists_to_not_expand']):
+        elif should_expand(key):
             for test[key] in test[key]:
                 generate(test, function)
             return
