@@ -120,7 +120,7 @@ struct _rocblaslt_matrix_layout
     hipblasltDatatype_t type;
     int32_t             batch_count  = 1;
     int64_t             batch_stride = 0;
-    hipblasLtOrder_t    order = HIPBLASLT_ORDER_COL;
+    hipblasLtOrder_t    order        = HIPBLASLT_ORDER_COL;
 };
 
 /********************************************************************************
@@ -143,12 +143,11 @@ struct _rocblaslt_matmul_desc
     // epilogue operation
     rocblaslt_epilogue epilogue = ROCBLASLT_EPILOGUE_DEFAULT;
     // bias vector pointer
-    void*               bias          = nullptr;
-    void*               scaleA        = nullptr;
-    void*               scaleB        = nullptr;
-    void*               scaleDVec     = nullptr;
+    void*               bias        = nullptr;
+    void*               scaleA      = nullptr;
+    void*               scaleB      = nullptr;
     void*               pointermode = nullptr;
-    hipblasltDatatype_t bias_type     = static_cast<hipblasltDatatype_t>(0);
+    hipblasltDatatype_t bias_type   = static_cast<hipblasltDatatype_t>(0);
     // E
     void*   e        = nullptr;
     int64_t lde      = 0;

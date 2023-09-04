@@ -4286,7 +4286,7 @@ class KernelWriterAssembly(KernelWriter):
         extArgOffset += self.states.userArgsInfo.scaleAlphaVecSize
         if kernel["ProblemType"]["UseScaleAlphaVec"] and (kernel["GlobalSplitU"] == 1):
           if loadList[-1][0] == -1:
-            loadList[-1][0] = self.sgprs["UseScaleAlphaVec"]
+            loadList[-1][0] = self.sgprs["AddressScaleAlphaVec"]
           loadList[-1][1] += self.states.userArgsInfo.scaleAlphaVecSize
         else:
           loadList.append([-1, 0, extArgOffset])  # Need to start a new loadAllKernArg cause the argument is not consecutively anymore.

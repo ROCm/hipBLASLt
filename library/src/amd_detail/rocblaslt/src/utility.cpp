@@ -143,8 +143,6 @@ const char* rocblaslt_matmul_desc_attributes_to_string(rocblaslt_matmul_desc_att
         return "MATMUL_DESC_A_SCALE_POINTER";
     case ROCBLASLT_MATMUL_DESC_B_SCALE_POINTER:
         return "MATMUL_DESC_B_SCALE_POINTER";
-    case ROCBLASLT_MATMUL_DESC_D_SCALE_VECTOR_POINTER:
-        return "MATMUL_DESC_D_SCALE_VECTOR_POINTER";
     case ROCBLASLT_MATMUL_DESC_EPILOGUE_AUX_POINTER:
         return "MATMUL_DESC_EPILOGUE_AUX_POINTER";
     case ROCBLASLT_MATMUL_DESC_EPILOGUE_AUX_LD:
