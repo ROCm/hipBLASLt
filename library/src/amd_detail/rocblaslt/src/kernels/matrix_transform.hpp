@@ -24,11 +24,31 @@
  *
  * ************************************************************************ */
 #pragma once
-#include <hip/hip_runtime.h>
 #include <cstdint>
+#include <hip/hip_bfloat16.h>
+#include <hip/hip_fp16.h>
+#include <hip/hip_runtime.h>
 
 namespace amd_detail
 {
+    template <typename DType, size_t VectorWidth>
+    struct VectorIOType
+    {
+        using vtype = void;
+        constexpr static size_t vw{VectorWidth};
+    };
+
+    template <>
+    struct VectorIOType<int8_t, 4>
+    {
+        using vtype = char4;
+    };
+
+    template <>
+    struct VectorIOType<float, 4>
+    {
+        using vtype = float4;
+    };
 
     template <bool RowMaj>
     __device__ uint32_t getOffset(uint32_t row, uint32_t col, uint32_t ld)
@@ -75,20 +95,19 @@ namespace amd_detail
               uint32_t NumThreadsM,
               uint32_t NumThreadsN,
               uint32_t VectorWidth>
-    __global__ void __launch_bounds__(256, 4) transform(
-                              DType*       c,
-                              const DType* a,
-                              const DType* b,
-                              ScaleType    alpha,
-                              ScaleType    beta,
-                              uint32_t     numRows,
-                              uint32_t     numCols,
-                              uint32_t     ldA,
-                              uint32_t     ldB,
-                              uint32_t     ldC,
-                              uint32_t     batchStride,
-                              bool         transA,
-                              bool         transB)
+    __global__ void __launch_bounds__(256, 4) transform(DType*       c,
+                                                        const DType* a,
+                                                        const DType* b,
+                                                        ScaleType    alpha,
+                                                        ScaleType    beta,
+                                                        uint32_t     numRows,
+                                                        uint32_t     numCols,
+                                                        uint32_t     ldA,
+                                                        uint32_t     ldB,
+                                                        uint32_t     ldC,
+                                                        uint32_t     batchStride,
+                                                        bool         transA,
+                                                        bool         transB)
     {
         constexpr auto TileM              = RowMajC ? NumThreadsM : NumThreadsM * VectorWidth;
         constexpr auto TileN              = RowMajC ? NumThreadsN * VectorWidth : NumThreadsN;
@@ -129,8 +148,14 @@ namespace amd_detail
         }
         else
         {
-            ScaleType aData[VectorWidth];
-            ScaleType bData[VectorWidth];
+            const auto vectorWriteDirSize = RowMajC ? numCols : numRows;
+            const auto blockVectorWriteEndBound
+                = RowMajC ? (col + VectorWidth) : (row + VectorWidth);
+            const auto vectorShift = blockVectorWriteEndBound > vectorWriteDirSize
+                                         ? (blockVectorWriteEndBound - vectorWriteDirSize)
+                                         : 0;
+            ScaleType  aData[VectorWidth];
+            ScaleType  bData[VectorWidth];
 
 #pragma unroll
             for(uint32_t i = 0; i < VectorWidth; ++i)
@@ -139,20 +164,20 @@ namespace amd_detail
 
                 if constexpr(RowMajC)
                 {
-                    offsetA = (transA ? getOffset<RowMajA>(col + i, row, ldA)
-                                      : getOffset<RowMajA>(row, col + i, ldA))
+                    offsetA = (transA ? getOffset<RowMajA>(col + i - vectorShift, row, ldA)
+                                      : getOffset<RowMajA>(row, col + i - vectorShift, ldA))
                               + batchOffset;
-                    offsetB = (transB ? getOffset<RowMajB>(col + i, row, ldB)
-                                      : getOffset<RowMajB>(row, col + i, ldB))
+                    offsetB = (transB ? getOffset<RowMajB>(col + i - vectorShift, row, ldB)
+                                      : getOffset<RowMajB>(row, col + i - vectorShift, ldB))
                               + batchOffset;
                 }
                 else
                 {
-                    offsetA = (transA ? getOffset<RowMajA>(col, row + i, ldA)
-                                      : getOffset<RowMajA>(row + i, col, ldA))
+                    offsetA = (transA ? getOffset<RowMajA>(col, row + i - vectorShift, ldA)
+                                      : getOffset<RowMajA>(row + i - vectorShift, col, ldA))
                               + batchOffset;
-                    offsetB = (transB ? getOffset<RowMajB>(col, row + i, ldB)
-                                      : getOffset<RowMajB>(row + i, col, ldB))
+                    offsetB = (transB ? getOffset<RowMajB>(col, row + i - vectorShift, ldB)
+                                      : getOffset<RowMajB>(row + i - vectorShift, col, ldB))
                               + batchOffset;
                 }
 
@@ -160,25 +185,71 @@ namespace amd_detail
                 bData[i] = static_cast<ScaleType>(b[offsetB]);
             }
 
-            DType    cData[VectorWidth];
-            uint32_t offsetC;
+            //only begin index is required, since vector write always along continuous direction
+            uint32_t cOffset{};
 
-#pragma unroll
-            for(uint32_t i = 0; i < VectorWidth; ++i)
+            if constexpr(RowMajC)
             {
-                if constexpr(RowMajC)
+                cOffset = getOffset<RowMajC>(tRow + blockRow, tCol + blockCol - vectorShift, ldC)
+                          + batchOffset;
+            }
+            else
+            {
+                cOffset = getOffset<RowMajC>(tRow + blockRow - vectorShift, tCol + blockCol, ldC)
+                          + batchOffset;
+            }
+
+            using VectorType = typename VectorIOType<DType, VectorWidth>::vtype;
+
+            if constexpr(std::is_same<VectorType, void>::value)
+            {
+                DType cData[VectorWidth];
+#pragma unroll
+                for(uint32_t i = 0; i < VectorWidth; ++i)
                 {
-                    offsetC = getOffset<RowMajC>(tRow + blockRow, tCol + blockCol + i, ldC)
-                              + batchOffset;
+                    cData[i] = static_cast<DType>(alpha * aData[i] + beta * bData[i]);
+                }
+
+                if(!vectorShift)
+                {
+#pragma unroll
+                    for(uint32_t i = 0; i < VectorWidth; ++i)
+                    {
+                        c[cOffset + i] = cData[i];
+                    }
                 }
                 else
                 {
-                    offsetC = getOffset<RowMajC>(tRow + blockRow + i, tCol + blockCol, ldC)
-                              + batchOffset;
+                    for(uint32_t i = vectorShift; i < VectorWidth; ++i)
+                    {
+                        c[cOffset + i] = cData[i];
+                    }
+                }
+            }
+            else
+            {
+                VectorType cData;
+#pragma unroll
+                for(uint32_t i = 0; i < VectorWidth; ++i)
+                {
+                    cData.data[i] = static_cast<DType>(alpha * aData[i] + beta * bData[i]);
                 }
 
-                cData[i]   = static_cast<DType>(alpha * aData[i] + beta * bData[i]);
-                c[offsetC] = cData[i];
+                if(!vectorShift)
+                {
+#pragma unroll
+                    for(uint32_t i = 0; i < VectorWidth; ++i)
+                    {
+                        c[cOffset + i] = cData.data[i];
+                    }
+                }
+                else
+                {
+                    for(uint32_t i = vectorShift; i < VectorWidth; ++i)
+                    {
+                        c[cOffset + i] = cData.data[i];
+                    }
+                }
             }
         }
     }
