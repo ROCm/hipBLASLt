@@ -758,7 +758,15 @@ namespace Tensile
 
                 if(beta != zero)
                 {
-                    resultD += multiply<Accumulator>(beta, cPtr[cIndex]);
+                    Accumulator cValue = multiply<Accumulator>(beta, cPtr[cIndex]);
+                    if(problem.useScaleCD())
+                    {
+                        Accumulator scaleC
+                            = GetValue<Accumulator>(problem.betaType(), inputs.scaleC, 0, aConjugate);
+                        cValue *= scaleC;
+                    }
+
+                    resultD += cValue;
                 }
 
                 // bias
@@ -810,6 +818,12 @@ namespace Tensile
                     Accumulator scaleDVec = GetValue<Accumulator>(
                         problem.alphaType(), inputs.scaleDVec, pos, aConjugate);
                     resultD *= scaleDVec;
+                }
+                if(problem.useScaleCD())
+                {
+                    Accumulator scaleD
+                        = GetValue<Accumulator>(problem.betaType(), inputs.scaleD, 0, aConjugate);
+                    resultD *= scaleD;
                 }
                 if(problem.useBias() && problem.useGradient()
                    && (problem.biasSrc() == ContractionProblemGemm::D))

@@ -163,6 +163,8 @@ namespace Tensile
                 m_biasSrc = args["bias-source"].as<int>();
             if(args.count("use-scaleAB"))
                 m_useScaleAB = args["use-scaleAB"].as<bool>();
+            if(args.count("use-scaleCD"))
+                m_useScaleCD = args["use-scaleCD"].as<bool>();
             if(args.count("use-scaleDVec"))
                 m_useScaleDVec = args["use-scaleDVec"].as<bool>();
             if(args.count("use-scaleAlphaVec"))
@@ -337,6 +339,14 @@ namespace Tensile
                                 m_constantTypes[ContractionProblemGemm::CONST::ALPHA]);
                             rv.back().setScaleB(
                                 m_constantTypes[ContractionProblemGemm::CONST::ALPHA]);
+                        }
+                        rv.back().setUseScaleCD(m_useScaleCD);
+                        if(m_useScaleCD)
+                        {
+                            rv.back().setScaleC(
+                                m_constantTypes[ContractionProblemGemm::CONST::BETA]);
+                            rv.back().setScaleD(
+                                m_constantTypes[ContractionProblemGemm::CONST::BETA]);
                         }
                         rv.back().setUseScaleDVec(m_useScaleDVec);
                         rv.back().setScaleDVec(

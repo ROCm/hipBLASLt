@@ -469,6 +469,8 @@ namespace
         Tensile::TensorDescriptor bias{"bias"};
         Tensile::TensorDescriptor scaleA{"scaleA"};
         Tensile::TensorDescriptor scaleB{"scaleB"};
+        Tensile::TensorDescriptor scaleC{"scaleC"};
+        Tensile::TensorDescriptor scaleD{"scaleD"};
         Tensile::TensorDescriptor scaleDVec{"scaleDVec"};
         Tensile::TensorDescriptor scaleAlphaVec{"scaleAlphaVec"};
 
@@ -481,6 +483,8 @@ namespace
                                                        bias,
                                                        scaleA,
                                                        scaleB,
+                                                       scaleC,
+                                                       scaleD,
                                                        scaleDVec,
                                                        scaleAlphaVec,
                                                        freeIndex,
@@ -733,6 +737,7 @@ namespace
                || Tensile_TiA == Tensile::DataType::BFloat8 || Tensile_TiB == Tensile::DataType::Float8 || Tensile_TiB == Tensile::DataType::BFloat8)
             {
                 tensileProblem.setUseScaleAB(true);
+                tensileProblem.setUseScaleCD(false);  // Currently disabled.
                 tensileProblem.setScaleA(Tensile_Tc);
                 tensileProblem.setScaleB(Tensile_Tc);
                 tensileProblem.setUseScaleDVec(prob.scaleDVec == nullptr ? false : true);
@@ -744,6 +749,7 @@ namespace
             else
             {
                 tensileProblem.setUseScaleAB(false);
+                tensileProblem.setUseScaleCD(false);
                 // set ScaleDVec mode
                 tensileProblem.setUseScaleDVec(true);
                 tensileProblem.setScaleDVec(Tensile_Tc, d.sizes()[0]);
@@ -830,6 +836,8 @@ namespace
         inputs.bias          = reinterpret_cast<const void*>(prob.bias);
         inputs.scaleA        = reinterpret_cast<const void*>(prob.scaleA);
         inputs.scaleB        = reinterpret_cast<const void*>(prob.scaleB);
+        inputs.scaleC        = nullptr;
+        inputs.scaleD        = nullptr;
         inputs.scaleDVec     = reinterpret_cast<const void*>(prob.scaleDVec);
         inputs.scaleAlphaVec = reinterpret_cast<const void*>(prob.scaleAlphaVec);
 

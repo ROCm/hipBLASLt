@@ -794,7 +794,7 @@ class GlobalWriteBatchWriter:
       gradientInput = dataE if self.kernel["ProblemType"]["Gradient"] and (self.kernel["GlobalSplitU"] == 1) else self.ss.elementSumIdx[elementIdx]
       if self.kernel["ActivationFuncCall"]:
         if (activationCDataType == self.kernel["ProblemType"]["DestDataType"]) and \
-          (activationCDataType != self.kernel["ProblemType"]["ComputeDataType"]) and ((self.kernel["ProblemType"]["UseScaleDVec"] == False) or (self.kernel["ProblemType"]["UseScaleAlphaVec"] == False)):
+          (activationCDataType != self.kernel["ProblemType"]["ComputeDataType"]) and ((self.kernel["ProblemType"]["UseScaleCD"] == False) or (self.kernel["ProblemType"]["UseScaleDVec"] == False) or (self.kernel["ProblemType"]["UseScaleAlphaVec"] == False)):
           isActivationInsertAfter = True
         activationModule = Module("ActivationFuncCall")
         if (not mergeActFuncCall) and (not isActivationInsertAfter):
@@ -835,6 +835,24 @@ class GlobalWriteBatchWriter:
               activationModule.add(VMulPKF32(dst=vgpr("ValuC+%d"%vgprIdx, 2), src0=vgpr("ValuC+%d"%vgprIdx, 2), src1=vgpr(dataEV, 2), comment="C *= GradAct"))
           else:
             assert 0, "Unsupported gradient type"
+
+      scaleDModule = Module("Empty scaleDModule")
+      if self.kernel["ProblemType"]["UseScaleCD"] and (self.kernel["GlobalSplitU"] == 1):
+        for vi in range(0, self.gwvw):
+          sumIdxV = self.ss.elementSumIdx[elementIdx] + vi
+          if self.kernel["ProblemType"]["ComputeDataType"].isSingle():
+            vgprIdx = sumIdxV - self.parentWriter.states.c.startVgprValu
+            # Generate single f32 code if edge is detected.
+            if ((vi + 1) == self.gwvw) and ((self.gwvw % 2) == 1):
+              activationModule.add(VMulF32(dst=vgpr("ValuC+%d"%vgprIdx), src0=vgpr("ValuC+%d"%vgprIdx), src1=sgpr("ScaleD"), comment="result *= ScaleD"))
+            # Original packed route
+            elif vi%2 == 1:
+              assert (self.gwvw % 2 == 0)
+            else:
+              activationModule.add(VMulPKF32(dst=vgpr("ValuC+%d"%vgprIdx, 2), src0=vgpr("ValuC+%d"%vgprIdx, 2), src1=sgpr("ScaleD", 2), comment="result *= ScaleD"))
+          else:
+            assert 0, "Unsupported scaleD type"
+
 
       # pack stores, beta and non-beta reach here:
       packModule = Module("Empty pack module")
@@ -946,6 +964,7 @@ class GlobalWriteBatchWriter:
       else:
         module.add(activationModule)
         module.add(scaleDVecModule)
+        module.add(scaleDModule)
         module.add(biasReductionModule)
         module.add(convertModule)
         module.add(packModule)

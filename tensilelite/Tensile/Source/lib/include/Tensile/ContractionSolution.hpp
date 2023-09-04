@@ -431,6 +431,7 @@ namespace Tensile
             bool                  useBias                   = false;
             bool                  useE                      = false;
             bool                  useScaleAB                = false;
+            bool                  useScaleCD                = false;
             bool                  useScaleDVec              = false;
             bool                  useScaleAlphaVec          = false;
             bool                  useInitialStridesAB       = false;

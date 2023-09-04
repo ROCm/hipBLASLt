@@ -156,6 +156,8 @@ globalParameters["DataInitTypeBeta"] = 2
 globalParameters["DataInitTypeBias"] = 3
 globalParameters["DataInitTypeScaleA"] = 2
 globalParameters["DataInitTypeScaleB"] = 2
+globalParameters["DataInitTypeScaleC"] = 2
+globalParameters["DataInitTypeScaleD"] = 2
 globalParameters["DataInitTypeScaleDVec"] = 3
 globalParameters["DataInitTypeScaleAlphaVec"] = 3
 globalParameters["DataInitValueActivationArgs"] = [2.0, 2.0]
@@ -1113,6 +1115,7 @@ defaultProblemType = {
     "UseBias":                  False,            # =True use bias vector
     "BiasSrc":                  "D",              # This parameter is used in gradient + bias. Support A, B, D.
     "UseScaleAB":               False,            # =True use scaleA, scaleB
+    "UseScaleCD":               False,            # =True use scaleC, scaleD
     "UseScaleDVec":             False,            # =True use scaleD vector
     "UseScaleAlphaVec":         False,            # =True use scaleAlpha vector
     "HighPrecisionAccumulate":  False,            # f32 += f16*f16

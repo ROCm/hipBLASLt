@@ -517,6 +517,7 @@ class ProblemType(Mapping):
     if self["ActivationNoGuard"]: name += "NG"
 
     if self["UseScaleAB"]: name += "_SAB"
+    if self["UseScaleCD"]: name += "_SCD"
     if self["UseScaleDVec"]: name += "_SDV"
     if self["UseScaleAlphaVec"]: name += "_SAV"
 
