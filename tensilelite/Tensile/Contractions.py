@@ -65,7 +65,7 @@ class BoundIndex:
 
 class ProblemType:
     StateKeys = ['operationIdentifier', 'transA', 'transB', 'computeInputType', 'aType', 'bType', 'cType', 'dType', 'eType', 'computeType',
-                 'useBeta', 'useBias', 'biasSrcWhiteList', 'useE', 'useScaleAB', 'useScaleDVec', 'useScaleAlphaVec', 'biasDataTypeWhiteList',
+                 'useBeta', 'useBias', 'biasSrcWhiteList', 'useE', 'useScaleAB', 'useScaleCD', 'useScaleDVec', 'useScaleAlphaVec', 'biasDataTypeWhiteList',
                  'highPrecisionAccumulate', 'useInitialStridesAB', 'useInitialStridesCD', 'stridedBatched', 'groupedGemm',
                  'useGradient', 'activationType', 'activationArgLength', 'activationComputeDataType', 'activationNoGuard',
                  'sparseA', 'f32XdlMathOp', 'supportDeviceUserArguments']
@@ -215,6 +215,9 @@ class ProblemType:
         rv.useScaleAB = False
         if 'UseScaleAB' in d:
             rv.useScaleAB = d['UseScaleAB']
+        rv.useScaleCD = False
+        if 'UseScaleCD' in d:
+            rv.useScaleCD = d['UseScaleCD']
 
         rv.useScaleDVec = False
         if 'UseScaleDVec' in d:
@@ -355,6 +358,7 @@ class ProblemType:
             predicates.append(ProblemPredicate("StridedBatched", value=self.stridedBatched))
             predicates.append(ProblemPredicate("GroupedGemm", value=self.groupedGemm))
             predicates.append(ProblemPredicate("UseScaleAB", value=self.useScaleAB))
+            predicates.append(ProblemPredicate("UseScaleCD", value=self.useScaleCD))
             predicates.append(ProblemPredicate("UseScaleDVec", value=self.useScaleDVec))
             predicates.append(ProblemPredicate("UseScaleAlphaVec", value=self.useScaleAlphaVec))
             predicates.append(ProblemPredicate("SparseA", value=self.sparseA))

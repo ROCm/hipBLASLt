@@ -456,6 +456,8 @@ def dataInitParams(problemType):
     initBias  = globalParameters['DataInitTypeBias']
     initScaleA  = globalParameters['DataInitTypeScaleA']
     initScaleB  = globalParameters['DataInitTypeScaleB']
+    initScaleC  = globalParameters['DataInitTypeScaleC']
+    initScaleD  = globalParameters['DataInitTypeScaleD']
     initScaleDVec  = globalParameters['DataInitTypeScaleDVec']
     initScaleAlphaVec  = globalParameters['DataInitTypeScaleAlphaVec']
 
@@ -475,6 +477,8 @@ def dataInitParams(problemType):
             ('init-bias',         DataInitName(initBias).name),
             ('init-scaleA',         DataInitName(initScaleA).name),
             ('init-scaleB',         DataInitName(initScaleB).name),
+            ('init-scaleC',         DataInitName(initScaleC).name),
+            ('init-scaleD',         DataInitName(initScaleD).name),
             ('init-scaleDVec',         DataInitName(initScaleDVec).name),
             ('init-scaleAlphaVec',         DataInitName(initScaleAlphaVec).name)]
 
@@ -529,6 +533,7 @@ def writeClientConfigIni(problemSizes, biasTypeArgs, activationArgs, problemType
         param('bias-source',   problemType.biasSrcWhiteList[0])
         param('use-e', problemType.useE)
         param('use-scaleAB',   problemType.useScaleAB)
+        param('use-scaleCD',   problemType.useScaleCD)
         param('use-scaleDVec',   problemType.useScaleDVec)
         param('use-scaleAlphaVec',   problemType.useScaleAlphaVec)
         if biasTypeArgs:

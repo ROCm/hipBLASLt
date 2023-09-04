@@ -209,6 +209,8 @@ class StateValues:
   numactivationArgTotalSize: int         = 0
   numSgprAddressScaleA: int              = 0
   numSgprAddressScaleB: int              = 0
+  numSgprAddressScaleC: int              = 0
+  numSgprAddressScaleD: int              = 0
   numSgprAddressDbg: int                 = 0
 
   firstInitSgpr: int                     = -1

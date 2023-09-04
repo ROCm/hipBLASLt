@@ -110,6 +110,8 @@ namespace Tensile
         TensorDescriptor bias("bias");
         TensorDescriptor scaleA("scaleA");
         TensorDescriptor scaleB("scaleB");
+        TensorDescriptor scaleC("scaleC");
+        TensorDescriptor scaleD("scaleD");
         TensorDescriptor scaleDVec("scaleDVec");
         TensorDescriptor scaleAlphaVec("scaleAlphaVec");
 
@@ -121,6 +123,8 @@ namespace Tensile
                                        bias,
                                        scaleA,
                                        scaleB,
+                                       scaleC,
+                                       scaleD,
                                        scaleDVec,
                                        scaleAlphaVec,
                                        free,
@@ -215,6 +219,8 @@ namespace Tensile
         TensorDescriptor bias("bias");
         TensorDescriptor scaleA("scaleA");
         TensorDescriptor scaleB("scaleB");
+        TensorDescriptor scaleC("scaleC");
+        TensorDescriptor scaleD("scaleD");
         TensorDescriptor scaleDVec("scaleDVec");
         TensorDescriptor scaleAlphaVec("scaleAlphaVec");
 
@@ -226,6 +232,8 @@ namespace Tensile
                                       bias,
                                       scaleA,
                                       scaleB,
+                                      scaleC,
+                                      scaleD,
                                       scaleDVec,
                                       scaleAlphaVec,
                                       freeIndices,
@@ -524,6 +532,8 @@ namespace Tensile
         TensorDescriptor bias("bias");
         TensorDescriptor scaleA("scaleA");
         TensorDescriptor scaleB("scaleB");
+        TensorDescriptor scaleC("scaleC");
+        TensorDescriptor scaleD("scaleD");
         TensorDescriptor scaleDVec("scaleDVec");
         TensorDescriptor scaleAlphaVec("scaleAlphaVec");
 
@@ -535,6 +545,8 @@ namespace Tensile
                                       bias,
                                       scaleA,
                                       scaleB,
+                                      scaleC,
+                                      scaleD,
                                       scaleDVec,
                                       scaleAlphaVec,
                                       freeIndices,
@@ -554,6 +566,8 @@ namespace Tensile
         gemm.m_tensors[ContractionProblemGemm::TENSOR::BIAS]      = TensorDescriptor("bias");
         gemm.m_tensors[ContractionProblemGemm::TENSOR::SCALEA]    = TensorDescriptor("scaleA");
         gemm.m_tensors[ContractionProblemGemm::TENSOR::SCALEB]    = TensorDescriptor("scaleB");
+        gemm.m_tensors[ContractionProblemGemm::TENSOR::SCALEC]    = TensorDescriptor("scaleC");
+        gemm.m_tensors[ContractionProblemGemm::TENSOR::SCALED]    = TensorDescriptor("scaleD");
         gemm.m_tensors[ContractionProblemGemm::TENSOR::SCALEDVEC] = TensorDescriptor("scaleDVec");
         gemm.m_tensors[ContractionProblemGemm::TENSOR::SCALEALPHAVEC]
             = TensorDescriptor("scaleAlphaVec");
@@ -570,6 +584,8 @@ namespace Tensile
                                                    TensorDescriptor const& bias,
                                                    TensorDescriptor const& scaleA,
                                                    TensorDescriptor const& scaleB,
+                                                   TensorDescriptor const& scaleC,
+                                                   TensorDescriptor const& scaleD,
                                                    TensorDescriptor const& scaleDVec,
                                                    TensorDescriptor const& scaleAlphaVec,
                                                    FreeIndices const&      freeIndices,
@@ -590,6 +606,10 @@ namespace Tensile
         m_tensors[ContractionProblemGemm::TENSOR::D]             = d;
         m_tensors[ContractionProblemGemm::TENSOR::E]             = e;
         m_tensors[ContractionProblemGemm::TENSOR::BIAS]          = bias;
+        m_tensors[ContractionProblemGemm::TENSOR::SCALEA]        = scaleA;
+        m_tensors[ContractionProblemGemm::TENSOR::SCALEB]        = scaleB;
+        m_tensors[ContractionProblemGemm::TENSOR::SCALEC]        = scaleC;
+        m_tensors[ContractionProblemGemm::TENSOR::SCALED]        = scaleD;
         m_tensors[ContractionProblemGemm::TENSOR::SCALEDVEC]     = scaleDVec;
         m_tensors[ContractionProblemGemm::TENSOR::SCALEALPHAVEC] = scaleAlphaVec;
         m_tensors[ContractionProblemGemm::TENSOR::D].setAsOutput(true); // Set d as output
@@ -1281,7 +1301,9 @@ namespace Tensile
         Tensile::TensorDescriptor bias{"bias"};
         Tensile::TensorDescriptor scaleA("scaleA");
         Tensile::TensorDescriptor scaleB("scaleB");
-        Tensile::TensorDescriptor scaleD{"scaleD"};
+        Tensile::TensorDescriptor scaleC("scaleC");
+        Tensile::TensorDescriptor scaleD("scaleD");
+        Tensile::TensorDescriptor scaleDVec("scaleDVec");
         Tensile::TensorDescriptor scaleAlpha{"scaleAlpha"};
 
         // The ContractionProblemGemm
@@ -1293,7 +1315,9 @@ namespace Tensile
                                                 bias,
                                                 scaleA,
                                                 scaleB,
+                                                scaleC,
                                                 scaleD,
+                                                scaleDVec,
                                                 scaleAlpha,
                                                 freeIndex,
                                                 batchIndex,
@@ -1380,6 +1404,8 @@ namespace Tensile
                                          void const* const*   _batchBias,
                                          void const*          _scaleA,
                                          void const*          _scaleB,
+                                         void const*          _scaleC,
+                                         void const*          _scaleD,
                                          void const*          _scaleDVec,
                                          void const*          _scaleAlphaVec,
                                          void*                _ws,
@@ -1396,6 +1422,8 @@ namespace Tensile
         , batchBias(_batchBias)
         , scaleA(_scaleA)
         , scaleB(_scaleB)
+        , scaleC(_scaleC)
+        , scaleD(_scaleD)
         , scaleDVec(_scaleDVec)
         , scaleAlphaVec(_scaleAlphaVec)
         , ws(_ws)
