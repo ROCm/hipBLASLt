@@ -3509,8 +3509,15 @@ class KernelWriter(metaclass=abc.ABCMeta):
     if kernel["EnableMatrixInstruction"]:
       mi_divisor = 2
 
+      if (self.states.version == (9,4,0) or self.states.version == (9,4,1) or self.states.version == (9,4,2)) and kernel["MatrixInstB"] == 1 and \
+         (kernel["ProblemType"]["DataType"].isHalf() or \
+          kernel["ProblemType"]["DataType"].isBFloat16() or \
+          kernel["ProblemType"]["DataType"].isInt8()):
+        mi_divisor = 4
+
       if kernel["ProblemType"]["SparseA"] or (kernel["EnableF32XdlMathOp"] and kernel["ProblemType"]["F32XdlMathOp"].isXFloat32()):
         mi_divisor = 4
+
       self.states.miLatency = kernel["MatrixInstM"] // mi_divisor
 
       miIssueLatency = 2
