@@ -1324,7 +1324,7 @@ rocblaslt_status rocblaslt_matmul_is_algo_supported(rocblaslt_handle        hand
                 }
             }
         }
-        else if(a_type == HIPBLASLT_R_16F && b_type == HIPBLASLT_R_8F_E4M3)  // mix types
+        else if(a_type == HIPBLASLT_R_16F && b_type == HIPBLASLT_R_8F_E4M3) // mix types
         {
             if(c_type == HIPBLASLT_R_16F && d_type == HIPBLASLT_R_16F)
             {
@@ -1343,15 +1343,13 @@ rocblaslt_status rocblaslt_matmul_is_algo_supported(rocblaslt_handle        hand
                                                                    alphaf,
                                                                    betaf,
                                                                    algo->max_workspace_bytes);
-                    status        = isSolutionSupported<rocblaslt_half,
-                                                 rocblaslt_f8,
-                                                 rocblaslt_half,
-                                                 float>(
-                        handle, prob, gemmData, algo, workspaceSizeInBytes);
+                    status
+                        = isSolutionSupported<rocblaslt_half, rocblaslt_f8, rocblaslt_half, float>(
+                            handle, prob, gemmData, algo, workspaceSizeInBytes);
                 }
             }
         }
-        else if(a_type == HIPBLASLT_R_8F_E4M3 && b_type == HIPBLASLT_R_16F)  // mix types
+        else if(a_type == HIPBLASLT_R_8F_E4M3 && b_type == HIPBLASLT_R_16F) // mix types
         {
             if(c_type == HIPBLASLT_R_16F && d_type == HIPBLASLT_R_16F)
             {
@@ -1370,11 +1368,9 @@ rocblaslt_status rocblaslt_matmul_is_algo_supported(rocblaslt_handle        hand
                                                                    alphaf,
                                                                    betaf,
                                                                    algo->max_workspace_bytes);
-                    status        = isSolutionSupported<rocblaslt_f8,
-                                                 rocblaslt_half,
-                                                 rocblaslt_half,
-                                                 float>(
-                        handle, prob, gemmData, algo, workspaceSizeInBytes);
+                    status
+                        = isSolutionSupported<rocblaslt_f8, rocblaslt_half, rocblaslt_half, float>(
+                            handle, prob, gemmData, algo, workspaceSizeInBytes);
                 }
             }
         }
@@ -1634,6 +1630,33 @@ rocblaslt_status
                         pref->max_workspace_bytes);
                 }
             }
+            else if(c_type == HIPBLASLT_R_16F && d_type == HIPBLASLT_R_16F)
+            {
+                if(compute_type == rocblaslt_compute_f32)
+                {
+                    float alpha = 1.0;
+                    float beta  = 1.0;
+                    auto  prob  = construct_rocblaslt_problem<rocblaslt_f8,
+                                                            rocblaslt_bf8,
+                                                            rocblaslt_half,
+                                                            float>(matmul_desc,
+                                                                   matA,
+                                                                   matB,
+                                                                   matC,
+                                                                   matD,
+                                                                   &alpha,
+                                                                   &beta,
+                                                                   pref->max_workspace_bytes);
+                    status = getBestSolutions<rocblaslt_f8, rocblaslt_bf8, rocblaslt_half, float>(
+                        prob,
+                        handle,
+                        tensile_data,
+                        requestedAlgoCount,
+                        heuristicResultsArray,
+                        returnAlgoCount,
+                        pref->max_workspace_bytes);
+                }
+            }
         }
         else if(a_type == HIPBLASLT_R_64F && b_type == HIPBLASLT_R_64F)
         {
@@ -1803,7 +1826,7 @@ rocblaslt_status
                 }
             }
         }
-        else if(a_type == HIPBLASLT_R_16F && b_type == HIPBLASLT_R_8F_E4M3)  // mix types
+        else if(a_type == HIPBLASLT_R_16F && b_type == HIPBLASLT_R_8F_E4M3) // mix types
         {
             if(c_type == HIPBLASLT_R_16F && d_type == HIPBLASLT_R_16F)
             {
@@ -1833,7 +1856,7 @@ rocblaslt_status
                 }
             }
         }
-        else if(a_type == HIPBLASLT_R_8F_E4M3 && b_type == HIPBLASLT_R_16F)  // mix types
+        else if(a_type == HIPBLASLT_R_8F_E4M3 && b_type == HIPBLASLT_R_16F) // mix types
         {
             if(c_type == HIPBLASLT_R_16F && d_type == HIPBLASLT_R_16F)
             {
