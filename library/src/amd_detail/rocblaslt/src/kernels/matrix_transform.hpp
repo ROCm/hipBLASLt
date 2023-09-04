@@ -45,6 +45,12 @@ namespace amd_detail
     };
 
     template <>
+    struct VectorIOType<int32_t, 4>
+    {
+        using vtype = int4;
+    };
+
+    template <>
     struct VectorIOType<float, 4>
     {
         using vtype = float4;
