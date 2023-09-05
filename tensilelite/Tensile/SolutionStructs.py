@@ -2294,6 +2294,9 @@ class Solution(collections.abc.Mapping):
 
     # GlobalSplitU doesn't work with some other things:
     if state["GlobalSplitU"] > 1:
+      if state["ProblemType"]["DestDataType"].isFloat8():
+        reject(state, "GlobalSplitU currently does not support GSU > 1.")
+        return
       # added GSU support for DGEMM
       supported = \
         (state["ProblemType"]["DataType"].isSingle()) or \

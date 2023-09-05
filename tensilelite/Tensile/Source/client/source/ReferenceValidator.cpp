@@ -219,6 +219,16 @@ namespace Tensile
                                        validationStride);
             }
             break;
+            case DataType::Float8:
+            {
+                rv = checkResultsTyped(tensor,
+                                       (Float8 const*)refPtr,
+                                       (Float8 const*)resPtr,
+                                       maxElements,
+                                       isgpu,
+                                       validationStride);
+            }
+            break;
             case DataType::Int8x4:
             {
                 throw std::runtime_error("Unsupported validator data type Int8x4 for output.");

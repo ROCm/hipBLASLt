@@ -553,6 +553,14 @@ namespace Tensile
     {
         return static_cast<Float8>(static_cast<float>(a) + static_cast<float>(b));
     }
+    inline Float8 operator+(Float8 a, float b)
+    {
+        return static_cast<Float8>(static_cast<float>(a) + b);
+    }
+    inline Float8 operator+(float a, Float8 b)
+    {
+        return static_cast<Float8>(a + static_cast<float>(b));
+    }
     inline BFloat8 operator+(BFloat8 a, BFloat8 b)
     {
         return static_cast<BFloat8>(static_cast<float>(a) + static_cast<float>(b));
@@ -570,6 +578,14 @@ namespace Tensile
     {
         return static_cast<Float8>(static_cast<float>(a) * static_cast<float>(b));
     }
+    inline Float8 operator*(float a, Float8 b)
+    {
+        return static_cast<Float8>(a * static_cast<float>(b));
+    }
+    inline Float8 operator*(Float8 a, float b)
+    {
+        return static_cast<Float8>(static_cast<float>(a) * b);
+    }
     inline BFloat8 operator*(BFloat8 a, BFloat8 b)
     {
         return static_cast<BFloat8>(static_cast<float>(a) * static_cast<float>(b));
@@ -586,6 +602,14 @@ namespace Tensile
     inline bool operator<(Float8 a, Float8 b)
     {
         return static_cast<float>(a) < static_cast<float>(b);
+    }
+    inline bool operator<(float a, Float8 b)
+    {
+        return a < static_cast<float>(b);
+    }
+    inline bool operator<(Float8 a, float b)
+    {
+        return static_cast<float>(a) < b;
     }
     inline bool operator<(BFloat8 a, BFloat8 b)
     {
@@ -618,6 +642,14 @@ namespace Tensile
     inline bool operator>(Float8 a, Float8 b)
     {
         return static_cast<float>(a) > static_cast<float>(b);
+    }
+    inline bool operator>(float a, Float8 b)
+    {
+        return a > static_cast<float>(b);
+    }
+    inline bool operator>(Float8 a, float b)
+    {
+        return static_cast<float>(a) > b;
     }
     inline bool operator>(BFloat8 a, BFloat8 b)
     {

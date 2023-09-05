@@ -2085,10 +2085,15 @@ class VCmpNeU64(VCmpInstruction):
         super().__init__(InstType.INST_U64, dst, src0, src1, sdwa, comment)
         self.setInst("v_cmp_ne_u64")
 
+class VCmpClassF32(VCmpXInstruction):
+    def __init__(self, dst, src0, src1, sdwa: Optional[SDWAModifiers] = None, comment="") -> None:
+        super().__init__(InstType.INST_F32, dst, src0, src1, sdwa, comment)
+        self.setInst("v_cmp_class_f32")
+
 # CmpX
 class VCmpXClassF32(VCmpXInstruction):
     def __init__(self, dst, src0, src1, sdwa: Optional[SDWAModifiers] = None, comment="") -> None:
-        super().__init__(InstType.INST_U32, dst, src0, src1, sdwa, comment)
+        super().__init__(InstType.INST_F32, dst, src0, src1, sdwa, comment)
         self.setInst("v_cmpx_class_f32")
 
 class VCmpXEqU32(VCmpXInstruction):
@@ -2171,6 +2176,11 @@ class VMed3I32(CommonInstruction):
     def __init__(self, dst, src0, src1, src2, comment="") -> None:
         super().__init__(InstType.INST_I32, dst, [src0, src1, src2], None, None, comment)
         self.setInst("v_med3_i32")
+
+class VMed3F32(CommonInstruction):
+    def __init__(self, dst, src0, src1, src2, comment="") -> None:
+        super().__init__(InstType.INST_F32, dst, [src0, src1, src2], None, None, comment)
+        self.setInst("v_med3_f32")
 
 class VMinF16(CommonInstruction):
     def __init__(self, dst, src0, src1, sdwa: Optional[SDWAModifiers] = None, comment="") -> None:

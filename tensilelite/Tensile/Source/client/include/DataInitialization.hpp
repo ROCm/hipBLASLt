@@ -1892,6 +1892,13 @@ namespace Tensile
         }
 
         template <>
+        inline bool DataInitialization::isBadOutput<Float8>(Float8 value)
+        {
+            return std::isinf(static_cast<float>(value));
+        }
+
+
+        template <>
         inline bool DataInitialization::isBadOutput<BFloat16>(BFloat16 value)
         {
             return std::isinf(value);
