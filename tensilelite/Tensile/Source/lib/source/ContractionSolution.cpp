@@ -967,7 +967,7 @@ namespace Tensile
             // For user input
             rv.args.append<void const*>("DeviceUserArguments", userArgs);
             rv.args.append<void const*>("argsPtr", (void*)inputs.ws);
-            rv.args.append<uint32_t>("skipWgTableGen", 0);
+            rv.args.append<uint32_t>("numWorkGroups", rv.numWorkGroups.x);
             kernelArgs<T_Debug>(rv.args, problems[0].getParams());
             rv.args.append<void const*>(
                 "Workspace",
