@@ -186,13 +186,13 @@ class StateValues:
   useAtomicAdd: bool                     = False
   serializedStore: bool                  = False
 
-  a: ABMatrixInfo = ABMatrixInfo()
-  b: ABMatrixInfo = ABMatrixInfo()
-  c: MatrixInfo = MatrixInfo()
-  d: MatrixInfo = MatrixInfo()
-  e: MatrixInfo = MatrixInfo()
-  bias: MatrixInfo = MatrixInfo()
-  m: ABMatrixInfo = ABMatrixInfo()       # For Sparse Metadata
+  a: ABMatrixInfo                        = field(default_factory=ABMatrixInfo)
+  b: ABMatrixInfo                        = field(default_factory=ABMatrixInfo)
+  c: MatrixInfo                          = field(default_factory=MatrixInfo)
+  d: MatrixInfo                          = field(default_factory=MatrixInfo)
+  e: MatrixInfo                          = field(default_factory=MatrixInfo)
+  bias: MatrixInfo                       = field(default_factory=MatrixInfo)
+  m: ABMatrixInfo                        = field(default_factory=ABMatrixInfo)       # For Sparse Metadata
   totalAgprs: int                        = 0
   totalVgprs: int                        = 0
   totalSgprs: int                        = 0
@@ -215,7 +215,7 @@ class StateValues:
 
   firstInitSgpr: int                     = -1
   lastPostLoopSgpr: int                  = 0
-  userArgsInfo: UserArgumentsInfo         = UserArgumentsInfo()
+  userArgsInfo: UserArgumentsInfo        = field(default_factory=UserArgumentsInfo)
   numSgprToLoad: int                     = 0 # For kernel args
   numSgprPreload: int                    = 0 # For kernel args
   numSgprAlpha: int                      = 0 # For user arguments
