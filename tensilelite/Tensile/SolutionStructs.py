@@ -2054,6 +2054,7 @@ class Solution(collections.abc.Mapping):
     state["LocalWriteUseSgprB"] = False
 
     state["WorkGroupMapping" ] = abs(state["WorkGroupMapping"])
+    state["WorkGroupMappingXCC" ] = abs(state["WorkGroupMappingXCC"])
 
     problemType = state["ProblemType"]
 

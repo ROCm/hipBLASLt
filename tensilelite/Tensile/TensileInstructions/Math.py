@@ -299,18 +299,18 @@ def scalarStaticRemainder(qReg, rReg, dReg, divisor, tmpSgprRes: Optional[Regist
         magic = ((2**shift) // divisor) + 1
         if magic <= 64 and magic >= -16:
             module.add(SMulHIU32(dst=sgpr(tmpSgpr+1), src0=sgpr(dReg), src1=hex(magic), comment=comment))
-            module.add(SMulLOU32(dst=sgpr(tmpSgpr+0), src0=sgpr(dReg), src1=hex(magic), comment=comment))
+            module.add(SMulI32(dst=sgpr(tmpSgpr+0), src0=sgpr(dReg), src1=hex(magic), comment=comment))
         else:
             module.add(SMovB32(dst=sgpr(tmpSgpr+2), src=hex(magic), comment=comment))
             module.add(SMulHIU32(dst=sgpr(tmpSgpr+1), src0=sgpr(dReg), src1=sgpr(tmpSgpr+2), comment=comment))
-            module.add(SMulLOU32(dst=sgpr(tmpSgpr+0), src0=sgpr(dReg), src1=sgpr(tmpSgpr+2), comment=comment))
+            module.add(SMulI32(dst=sgpr(tmpSgpr+0), src0=sgpr(dReg), src1=sgpr(tmpSgpr+2), comment=comment))
         module.add(SLShiftRightB64(dst=sgpr(tmpSgpr,2), shiftHex=hex(shift), src=sgpr(tmpSgpr,2), comment=comment))
         module.add(SMovB32(dst=sgpr(qReg), src=sgpr(tmpSgpr), comment=comment))
         if divisor <= 64 and divisor >= -16:
-            module.add(SMulLOU32(dst=sgpr(tmpSgpr), src0=sgpr(qReg), src1=hex(divisor), comment=comment))
+            module.add(SMulI32(dst=sgpr(tmpSgpr), src0=sgpr(qReg), src1=hex(divisor), comment=comment))
         else:
             module.add(SMovB32(dst=sgpr(tmpSgpr+2), src=hex(divisor), comment=comment))
-            module.add(SMulLOU32(dst=sgpr(tmpSgpr), src0=sgpr(qReg), src1=sgpr(tmpSgpr+2), comment=comment))
+            module.add(SMulI32(dst=sgpr(tmpSgpr), src0=sgpr(qReg), src1=sgpr(tmpSgpr+2), comment=comment))
         module.add(SSubU32(dst=sgpr(rReg), src0=sgpr(dReg), src1=sgpr(tmpSgpr), comment=comment))
     return module
 

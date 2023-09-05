@@ -106,6 +106,8 @@ namespace Tensile
                 iot::mapOptional(io, "activationFused", s.activationFused);
 
                 iot::mapOptional(io, "CustomKernelName", s.customKernelName);
+
+                iot::mapRequired(io, "workGroupMappingXCC", s.workGroupMappingXCC);
             }
 
             const static bool flow = false;

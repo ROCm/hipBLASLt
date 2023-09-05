@@ -761,6 +761,7 @@ validParameters = {
     "WorkGroupMapping":           list(range(0,1024+1)),  # change a workgroup's id so that the all the workgroups on the gpu at a time are hitting L2 cache the best
     "MaxOccupancy":               list(range(1, 40+1)),       # wg / CU; if cache thrashing is hurting performance, this allocates extra lds to artificially limit occupancy
     "WorkGroup":                  validWorkGroups,      # ( wg0 x wg1 x LocalSplitU ) dimensions of the workgroup which will operate on a tile and share lds
+    "WorkGroupMappingXCC":        list(range(1,1024+1)),  # change a workgroup's id so that the all the workgroups on the gpu at a time are hitting L2 cache the best
 
     #ThreadTile: ( tt0 x tt1 ) dimensions of the C tile that each thread works on,
     # TT=4 and VW=4 means a thread will work on a tight 4x4 tile of C, where VW=1 means the tile will work on 16 spread out values
@@ -1076,6 +1077,7 @@ defaultBenchmarkCommonParameters = [
     {"NumLoadsCoalescedB":        [ 1 ] },
     {"WorkGroup":                 [ [16,16,1]] },
     {"WorkGroupMapping":          [ 8 ] },
+    {"WorkGroupMappingXCC":       [ 1 ] },
     {"ThreadTile":                [ [4,4] ] },
     {"WavefrontSize":             [ 64 ]},
     {"MatrixInstruction":         [ [] ] },

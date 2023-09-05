@@ -420,6 +420,8 @@ namespace Tensile
             bool activationFused = true;
 
             std::string customKernelName;
+
+            int workGroupMappingXCC = 1;
         };
 
         struct InternalArgsSupport
