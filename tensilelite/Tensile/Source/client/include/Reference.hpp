@@ -59,6 +59,27 @@ namespace Tensile
         }
 
         template <>
+        inline bool AlmostEqual(Float8 a, Float8 b)
+        {
+            Float8 absA = (a > 0) ? a : (a * -1.f);
+            Float8 absB = (b > 0) ? b : (b * -1.f);
+            // this avoids NaN when inf is compared against inf in the alternative code
+            // path
+            if(static_cast<float>(absA) == std::numeric_limits<float>::infinity()
+               || // numeric_limits is yet to
+               // support _Float16 type
+               // properly;
+               static_cast<float>(absB)
+                   == std::numeric_limits<float>::infinity()) // however promoting it to
+            // float works just as fine
+            {
+                return a == b;
+            }
+            Float8 absDiff = (a - b > 0) ? a - b : b - a;
+            return absDiff / (absA + absB + 1.f) < 0.01f;
+        }
+
+        template <>
         inline bool AlmostEqual(BFloat16 a, BFloat16 b)
         {
             BFloat16 absA = (a > static_cast<BFloat16>(0.0f)) ? a : static_cast<BFloat16>(0.0f) - a;

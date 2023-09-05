@@ -7792,6 +7792,12 @@ class KernelWriterAssembly(KernelWriter):
     vgprFp32Nan: int = -1
     vgprBf16Inc: int = -1
 
+  class FP8CVTVgprStruct(NamedTuple):
+    vgprFp8NanInf: int = -1
+    vgprFp8Temp: int   = -1
+    vgprFp8Min: int    = -1
+    vgprFp8Max: int    = -1
+
   class ActivationSetPCStruct(NamedTuple):
     sgprOffsetActivation: int = -1
     sgprOffsetBack: int = -1
@@ -8061,14 +8067,17 @@ class KernelWriterAssembly(KernelWriter):
       numTmpVgpr = max(numTmpVgpr, actPCMaxTempVgpr + actPCGwvwVgpr)
     tmpVgpr = self.vgprPool.checkOutAligned(numTmpVgpr, maxAlign, "store tmps")
 
-    bf16CVTVgprStruct = None
-    bf16CVTVgpr       = None
+    cvtVgprStruct  = None
+    cvtVgpr        = None
     if kernel["ProblemType"]["DestDataType"].isBFloat16() and kernel["ProblemType"]["HighPrecisionAccumulate"]:
-      bf16CVTVgpr = self.vgprPool.checkOut(4)
-      bf16CVTVgprStruct = self.BF16CVTVgprStruct(vgprBf16Temp=bf16CVTVgpr, vgprBf16Mask=(bf16CVTVgpr+1), \
-                                                 vgprFp32Nan=(bf16CVTVgpr+2), vgprBf16Inc=(bf16CVTVgpr+3))
-
-    if kernel["ProblemType"]["DestDataType"].isFloat8() or kernel["ProblemType"]["DestDataType"].isBFloat8():
+      cvtVgpr = self.vgprPool.checkOut(4)
+      cvtVgprStruct = self.BF16CVTVgprStruct(vgprBf16Temp=cvtVgpr, vgprBf16Mask=(cvtVgpr+1), \
+                                                 vgprFp32Nan=(cvtVgpr+2), vgprBf16Inc=(cvtVgpr+3))
+    elif kernel["ProblemType"]["DestDataType"].isFloat8() and kernel["ProblemType"]["HighPrecisionAccumulate"]:
+      cvtVgpr = self.vgprPool.checkOut(4)
+      cvtVgprStruct = self.FP8CVTVgprStruct(vgprFp8Temp=cvtVgpr, vgprFp8NanInf=(cvtVgpr+1), \
+                                            vgprFp8Min=(cvtVgpr+2), vgprFp8Max=(cvtVgpr+3))
+    elif kernel["ProblemType"]["DestDataType"].isBFloat8():
       assert(0) #TODO
 
     activationSetPCStruct = None
@@ -8335,7 +8344,7 @@ class KernelWriterAssembly(KernelWriter):
               actLoopModule.add(self.globalWriteBatch(kernel, tPA, tPB, activation, ss, batchIdx, \
                   applyAlpha, beta, edge, atomic, gwvw, atomicW, \
                   elementsThisBatch, self.vgprs.addrE, self.vgprs.addrD, self.vgprs.addrC, self.vgprs.addrBias, self.vgprs.addrScaleDVec, self.vgprs.addrScaleAlphaVec, \
-                  biasLocalBarrierInit, tmpVgpr, bf16CVTVgprStruct, activationSetPCStruct, \
+                  biasLocalBarrierInit, tmpVgpr, cvtVgprStruct, activationSetPCStruct, \
                   activationTypeStr, elementSgprs, tmpSgpr, codeAccVgprRead, codeMulAlpha))
               biasLocalBarrierInit = True
 
@@ -8441,8 +8450,8 @@ class KernelWriterAssembly(KernelWriter):
     # End label
     module.add(endLabel)
     self.vgprPool.checkIn(tmpVgpr)
-    if bf16CVTVgpr is not None:
-      self.vgprPool.checkIn(bf16CVTVgpr)
+    if cvtVgpr is not None:
+      self.vgprPool.checkIn(cvtVgpr)
     return module
 
   ##############################################################################
@@ -8890,14 +8899,14 @@ class KernelWriterAssembly(KernelWriter):
   def globalWriteBatch(self, kernel, tPA, tPB, activation, ss: StoreState, batchIdx, \
       applyAlpha, beta, edge, atomic, gwvw, atomicW, \
       batchElements, addrE, addrD, addrC, addrBias, addrScaleDVec, addrScaleAlphaVec, biasLocalBarrierInit: bool, \
-      tmpVgpr, bf16CVTVgprStruct, activationSetPCStruct, activationTypeStr, \
+      tmpVgpr, cvtVgprStruct, activationSetPCStruct, activationTypeStr, \
       batchElementSgprs, tmpSgpr, codeAccVgprRead, codeMulAlpha) -> Module:
       packdata = Component.PackData.find(self)
       gwriter  = Component.GlobalWriteComponents.find(self)
       return gwriter(kernel, tPA, tPB, activation, ss, \
         batchIdx, applyAlpha, beta, edge, atomic, gwvw, atomicW, \
         batchElements, addrE, addrD, addrC, addrBias, addrScaleDVec, addrScaleAlphaVec, biasLocalBarrierInit, \
-        tmpVgpr, bf16CVTVgprStruct, activationSetPCStruct, activationTypeStr, \
+        tmpVgpr, cvtVgprStruct, activationSetPCStruct, activationTypeStr, \
         batchElementSgprs, tmpSgpr, codeAccVgprRead, codeMulAlpha, packdata, self)
 
   ##############################################################################
