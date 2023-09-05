@@ -673,12 +673,12 @@ class GlobalWriteBatchWriter:
             # Generate single f32 code if edge is detected.
             if ((vi + 1) == self.gwvw) and ((self.gwvw % 2) == 1):
 
-              scaleAlphaVecModule.add(VCmpGtU32(dst=sgpr("AddressScaleAlphaVec",2), src0=sgpr("SrdScaleAlphaVec+2"), src1=0, comment=" == 0 ?"))
+              scaleAlphaVecModule.add(VCmpGtU32(dst=sgpr("AddressScaleAlphaVec", self.parentWriter.states.laneSGPRCount), src0=sgpr("SrdScaleAlphaVec+2"), src1=0, comment=" == 0 ?"))
               scaleAlphaVecModule.add(VCndMaskB32(
                 dst=vgpr(inputScaleAlphaVecVgpr), \
                 src1=vgpr(inputScaleAlphaVecVgpr), \
                 src0=1.0, \
-                src2=sgpr("AddressScaleAlphaVec",2), \
+                src2=sgpr("AddressScaleAlphaVec", self.parentWriter.states.laneSGPRCount), \
                 comment="1. mul 1 if 0"))
 
               if 0: #isActivationInsertAfter:
@@ -696,19 +696,19 @@ class GlobalWriteBatchWriter:
             elif vi%2 == 1:
               assert (self.gwvw % 2 == 0)
             else:
-              scaleAlphaVecModule.add(VCmpGtU32(dst=sgpr("AddressScaleAlphaVec",2), src0=sgpr("SrdScaleAlphaVec+2"), src1=0, comment=" == 0 ?"))
+              scaleAlphaVecModule.add(VCmpGtU32(dst=sgpr("AddressScaleAlphaVec", self.parentWriter.states.laneSGPRCount), src0=sgpr("SrdScaleAlphaVec+2"), src1=0, comment=" == 0 ?"))
               scaleAlphaVecModule.add(VCndMaskB32(
                 dst=vgpr(inputScaleAlphaVecVgpr), \
                 src1=vgpr(inputScaleAlphaVecVgpr), \
                 src0=1.0, \
-                src2=sgpr("AddressScaleAlphaVec",2), \
+                src2=sgpr("AddressScaleAlphaVec", self.parentWriter.states.laneSGPRCount), \
                 comment="1. mul 1 if 0"))
 
               scaleAlphaVecModule.add(VCndMaskB32(
                 dst=vgpr(inputScaleAlphaVecVgpr+1), \
                 src1=vgpr(inputScaleAlphaVecVgpr+1), \
                 src0=1.0, \
-                src2=sgpr("AddressScaleAlphaVec",2), \
+                src2=sgpr("AddressScaleAlphaVec", self.parentWriter.states.laneSGPRCount), \
                 comment="1. mul 1 if 0"))
 
               if 0: #isActivationInsertAfter:
@@ -730,30 +730,30 @@ class GlobalWriteBatchWriter:
             # Generate single i32 code if edge is detected.
             if ((vi + 1) == self.gwvw) and ((self.gwvw % 2) == 1):
 
-              scaleAlphaVecModule.add(VCmpGtU32(dst=sgpr("AddressScaleAlphaVec",2), src0=sgpr("SrdScaleAlphaVec+2"), src1=0, comment=" == 0 ?"))
+              scaleAlphaVecModule.add(VCmpGtU32(dst=sgpr("AddressScaleAlphaVec",self.parentWriter.states.laneSGPRCount), src0=sgpr("SrdScaleAlphaVec+2"), src1=0, comment=" == 0 ?"))
               scaleAlphaVecModule.add(VCndMaskB32(
                 dst=vgpr(inputScaleAlphaVecVgpr), \
                 src1=vgpr(inputScaleAlphaVecVgpr), \
                 src0=1, \
-                src2=sgpr("AddressScaleAlphaVec",2), \
+                src2=sgpr("AddressScaleAlphaVec",self.parentWriter.states.laneSGPRCount), \
                 comment="1. mul 1 if 0"))
               scaleAlphaVecModule.add(VMulLOU32(dst=vgpr("ValuC+%d"%vgprIdx), src0=vgpr(inputScaleAlphaVecVgpr), src1=vgpr("ValuC+%d"%vgprIdx), comment="*= scaleAlphaVecVMul" ))
             elif vi%2 == 1:
               assert (self.gwvw % 2 == 0)
             else:
-              scaleAlphaVecModule.add(VCmpGtU32(dst=sgpr("AddressScaleAlphaVec",2), src0=sgpr("SrdScaleAlphaVec+2"), src1=0, comment=" == 0 ?"))
+              scaleAlphaVecModule.add(VCmpGtU32(dst=sgpr("AddressScaleAlphaVec",self.parentWriter.states.laneSGPRCount), src0=sgpr("SrdScaleAlphaVec+2"), src1=0, comment=" == 0 ?"))
               scaleAlphaVecModule.add(VCndMaskB32(
                 dst=vgpr(inputScaleAlphaVecVgpr), \
                 src1=vgpr(inputScaleAlphaVecVgpr), \
                 src0=1, \
-                src2=sgpr("AddressScaleAlphaVec",2), \
+                src2=sgpr("AddressScaleAlphaVec",self.parentWriter.states.laneSGPRCount), \
                 comment="1. mul 1 if 0"))
 
               scaleAlphaVecModule.add(VCndMaskB32(
                 dst=vgpr(inputScaleAlphaVecVgpr+1), \
                 src1=vgpr(inputScaleAlphaVecVgpr+1), \
                 src0=1, \
-                src2=sgpr("AddressScaleAlphaVec",2), \
+                src2=sgpr("AddressScaleAlphaVec",self.parentWriter.states.laneSGPRCount), \
                 comment="1. mul 1 if 0"))
               scaleAlphaVecModule.add(VMulLOU32(dst=vgpr("ValuC+%d"%vgprIdx), src0=vgpr(inputScaleAlphaVecVgpr), src1=vgpr("ValuC+%d"%vgprIdx), comment="*= scaleAlphaVecVMulPK(%d)(%d)"%(dataScaleAlphaVec,vi)))
               scaleAlphaVecModule.add(VMulLOU32(dst=vgpr("ValuC+%d"%(vgprIdx+1)), src0=vgpr(inputScaleAlphaVecVgpr+1), src1=vgpr("ValuC+%d"%(vgprIdx+1)), comment="*= scaleAlphaVecVMulPK(%d)(%d)"%(dataScaleAlphaVec,vi)))
