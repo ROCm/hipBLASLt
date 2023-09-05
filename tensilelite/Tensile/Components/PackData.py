@@ -22,11 +22,10 @@
 
 from ..TensileInstructions import Module, SDWAModifiers, SelectBit, UnusedBit, \
                             SaturateCastType, VSaturateCastInt, \
-                            VAdd3U32, VCvtF32toF16, VCvtF32toI32, VLShiftRightB32, \
-                            VCmpUF32, VCndMaskB32, \
-                            VOrB32, VPackF16toB32, \
-                            VAndOrB32, VBfeU32, VLShiftLeftB16, \
-                            VRndneF32, SNop, SMovkI32, VMovB32, VMed3I32, \
+                            VAdd3U32, VCvtF32toF16, VLShiftRightB32, \
+                            VCmpUF32, VCndMaskB32, VCvtPkF32toFP8, VOP3PModifiers, \
+                            VCmpClassF32, VOrB32, VPackF16toB32, \
+                            VAndOrB32, VBfeU32, VLShiftLeftB16, SNop, VMed3F32, \
                             vgpr, sgpr, DataType, TensileInstructions
 from ..Component import PackData
 from ..Common import globalParameters
@@ -88,6 +87,36 @@ class PackData_BF16(PackData):
             elif vi%2 == 1:
                 d = destIdx + vi//2
                 module.add(VAndOrB32(dst=vgpr(d), src0=vgpr(formatVgpr), src1=vgpr(vgprBf16Mask), src2=vgpr(formatting(sumIdxV-1, inputPrefix, prefixOffset)), comment="pack two bf16 to dword"))
+        return module
+
+class PackData_FLOAT8(PackData):
+    kernel = {"ProblemType": {"ComputeDataType": DataType(DataType.single), "DestDataType": DataType(DataType.float8)}}
+    def __call__(self, gwvw, destIdx, elementSumIdx, fp8CVTVgprStruct, tmpS01, laneSGPRC, inputPrefix="", prefixOffset=0):
+        vgprFp8NanInf = fp8CVTVgprStruct.vgprFp8NanInf
+        vgprFp8Temp   = fp8CVTVgprStruct.vgprFp8Temp
+        vgprFp8Min    = fp8CVTVgprStruct.vgprFp8Min
+        vgprFp8Max    = fp8CVTVgprStruct.vgprFp8Max
+
+        module = Module("PackData float8")
+        pos = 0
+        for vi in range(0, gwvw):
+            sumIdxV = elementSumIdx + vi
+            formatVgpr = formatting(sumIdxV, inputPrefix, prefixOffset)
+            d = destIdx + vi//4
+            if (vi + 1 >= gwvw) and (gwvw % 2 == 1):
+                module.add(VCmpClassF32(dst=sgpr(tmpS01,laneSGPRC), src0=vgpr(formatVgpr), src1=vgpr(vgprFp8NanInf), comment="Nan and +/- inf"))
+                module.add(VMed3F32(dst=vgpr(vgprFp8Temp), src0=vgpr(formatVgpr), src1= vgpr(vgprFp8Min),src2=vgpr(vgprFp8Max)))
+                module.add(VCndMaskB32(dst=vgpr(formatVgpr), src0=vgpr(vgprFp8Temp), src1=vgpr(formatVgpr), src2=sgpr(tmpS01,laneSGPRC)))
+                module.add(VCvtPkF32toFP8(dst=vgpr(d), src0=vgpr(formatVgpr), src1=vgpr(formatVgpr), vop3=VOP3PModifiers(op_sel=[0,0,0])))
+            if vi%2 == 1:
+                module.add(VCmpClassF32(dst=sgpr(tmpS01,laneSGPRC), src0=vgpr(formatting(sumIdxV-1, inputPrefix, prefixOffset)), src1=vgpr(vgprFp8NanInf), comment="Nan and +/- inf"))
+                module.add(VMed3F32(dst=vgpr(vgprFp8Temp), src0=vgpr(formatting(sumIdxV-1, inputPrefix, prefixOffset)), src1= vgpr(vgprFp8Min),src2=vgpr(vgprFp8Max)))
+                module.add(VCndMaskB32(dst=vgpr(formatting(sumIdxV-1, inputPrefix, prefixOffset)), src0=vgpr(vgprFp8Temp), src1=vgpr(formatting(sumIdxV-1, inputPrefix, prefixOffset)), src2=sgpr(tmpS01,laneSGPRC)))
+                module.add(VCmpClassF32(dst=sgpr(tmpS01,laneSGPRC), src0=vgpr(formatVgpr), src1=vgpr(vgprFp8NanInf), comment="Nan and +/- inf"))
+                module.add(VMed3F32(dst=vgpr(vgprFp8Temp), src0=vgpr(formatVgpr), src1= vgpr(vgprFp8Min),src2=vgpr(vgprFp8Max)))
+                module.add(VCndMaskB32(dst=vgpr(formatVgpr), src0=vgpr(vgprFp8Temp), src1=vgpr(formatVgpr), src2=sgpr(tmpS01,laneSGPRC)))
+                module.add(VCvtPkF32toFP8(dst=vgpr(d), src0=vgpr(formatting(sumIdxV-1, inputPrefix, prefixOffset)), src1=vgpr(formatVgpr), vop3=VOP3PModifiers(op_sel=[0,0,pos])))
+                pos = ~pos
         return module
 
 class PackData_INT8(PackData):
