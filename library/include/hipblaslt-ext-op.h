@@ -51,32 +51,80 @@ extern "C" {
  *  This function computes softmax on given 2D-tensor along specified dimension.
  *
  *  @param[in]
- *  datatype Datatype of input/output tensor, currently support HIPBLAS_R_32F only.
+ *  datatype Datatype of input/output tensor, currently support HIPBLASLT_R_32F only.
  *
  *  @param[in]
  *  m The first dimension of input/output tensor.
- * 
+ *
  *  @param[in]
  *  n The second dimension of input/output tensor. Currently only values less than or equal to 256 are supported.
- * 
+ *
  *  @param[in]
  *  dim Specified dimension to perform softmax on. Currently 1 is the only valid value.
- * 
+ *
  *  @param[in]
  *  input input tensor buffer.
- * 
+ *
  *  @param[in]
  *  stream The HIP stream where all the GPU work will be submitted.
- * 
+ *
  *  @param[out]
  *  output output tensor buffer.
- * 
+ *
  *  \retval HIPBLAS_STATUS_SUCCESS If it runs successfully.
  *  \retval HIPBLAS_STATUS_INVALID_VALUE If \p n is greater than 256.
- *  \retval HIPBLAS_STATUS_NOT_SUPPORTED If \p dim is not 1 or \p datatype is not HIPBLAS_R_32F.
+ *  \retval HIPBLAS_STATUS_NOT_SUPPORTED If \p dim is not 1 or \p datatype is not HIPBLASLT_R_32F.
  */
     HIPBLASLT_EXPORT hipblasStatus_t hipblasltExtSoftmax(hipblasltDatatype_t datatype, uint32_t m, uint32_t n, uint32_t dim,
         void *output, void *input, hipStream_t stream);
+
+
+/*! \ingroup library_module
+ *  \brief Perform layernorm on given tensor.
+ *
+ *  \details
+ *  This function computes layernorm on given 2D-tensor.
+ *
+ *  @param[in]
+ *  datatype Datatype of input/output tensor, currently support HIPBLASLT_R_32F only.
+ *
+ *  @param[out]
+ *  output output tensor buffer. can't be nullptr.
+ *
+ *  @param[out]
+ *  mean tensor buffer. can't be nullptr.
+ *
+ *  @param[out]
+ *  invvar tensor buffer. 1 / sqrt(std).  can't be nullptr.
+ *
+ *  @param[in]
+ *  input tensor buffer. can't be nullptr.
+ *
+ *  @param[in]
+ *  m The first dimension of input/output tensor.
+ *
+ *  @param[in]
+ *  n The second dimension of input/output tensor.
+ *
+ *  @param[in]
+ *  eps for sqrt to avoid inf value.
+ *
+ *  @param[in]
+ *  gamma tensor buffer. nullptr means calculation doesn't involve gamma.
+ *
+ *  @param[in]
+ *  beta tensor buffer. nullptr means calculation doesn't involve beta.
+ *
+ *  @param[in]
+ *  stream The HIP stream where all the GPU work will be submitted.
+ *
+ *
+ *  \retval HIPBLAS_STATUS_SUCCESS If it runs successfully.
+ *  \retval HIPBLAS_STATUS_INVALID_VALUE If \p m is greater than 4096.
+ *  \retval HIPBLAS_STATUS_NOT_SUPPORTED if \p datatype is not HIPBLASLT_R_32F.
+ */
+    HIPBLASLT_EXPORT hipblasStatus_t hipblasltExtLayerNorm(hipblasltDatatype_t datatype, void *output, void* mean, void* invvar,
+        void *input, uint32_t m, uint32_t n, float eps, void *gamma, void *beta, hipStream_t stream);
 #ifdef __cplusplus
 }
 #endif
