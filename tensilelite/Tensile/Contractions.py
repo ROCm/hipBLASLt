@@ -505,7 +505,9 @@ class SizeMapping:
                  'globalAccumulation',
                  'workspaceSizePerElemC',
                  'workspaceSizePerElemBias',
-                 'activationFused', 'CustomKernelName'
+                 'activationFused',
+                 'CustomKernelName',
+                 'workGroupMappingXCC'
                  ]
 
     @classmethod
@@ -537,7 +539,8 @@ class SizeMapping:
                    workspaceSizePerElemC    = d['_WorkspaceSizePerElemC'],
                    workspaceSizePerElemBias = d['_WorkspaceSizePerElemBias'],
                    activationFused          = d['ActivationFused'],
-                   CustomKernelName         = d['CustomKernelName']
+                   CustomKernelName         = d['CustomKernelName'],
+                   workGroupMappingXCC      = d['WorkGroupMappingXCC']
                    )
 
     @classmethod
