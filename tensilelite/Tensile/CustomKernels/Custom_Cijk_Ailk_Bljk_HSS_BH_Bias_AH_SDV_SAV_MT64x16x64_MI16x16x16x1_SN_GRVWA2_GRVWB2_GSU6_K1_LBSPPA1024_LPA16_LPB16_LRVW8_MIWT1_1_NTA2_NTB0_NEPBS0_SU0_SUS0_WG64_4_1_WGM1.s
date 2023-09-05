@@ -856,7 +856,7 @@ buffer_store_dwordx4 v[0:3], v4, s[sgprSrdDd:sgprSrdDd+3], 0 offen offset:4*16 /
 buffer_store_dwordx4 v[0:3], v4, s[sgprSrdDd:sgprSrdDd+3], 0 offen offset:4*17 // zeroing
 
 s_mov_b32 s[sgprGSUSync] 1
-s_atomic_add s[sgprGSUSync], s[sgprKernArgAddress:sgprKernArgAddress+1], 0x90 glc
+s_atomic_add s[sgprGSUSync], s[sgprKernArgAddress:sgprKernArgAddress+1], 0x88 glc
 s_waitcnt vmcnt(0)                                 // 8wait for global read
 
 label_ZEROINGEND:                              // jump to end
@@ -1416,8 +1416,13 @@ s_setprio 0                                        // optimization store
 .set sgpractivationBeta, 57
 .set sgprActivationType, 58
 .set GSUSynctmp, 59
-s_load_dwordx8 s[48:55], s[sgprKernArgAddress:sgprKernArgAddress+1], 0x64
-s_load_dwordx4 s[56:59], s[sgprKernArgAddress:sgprKernArgAddress+1], 0x84
+s_mov_b32 s[sgprAddressScaleDVec+0] 0x0
+s_mov_b32 s[sgprAddressScaleDVec+1] 0x0
+//s_load_dwordx8 s[48+2:55+2], s[sgprKernArgAddress:sgprKernArgAddress+1], 0x64
+s_load_dwordx2 s[48+2:49+2], s[sgprKernArgAddress:sgprKernArgAddress+1], 0x64
+s_load_dwordx4 s[50+2:53+2], s[sgprKernArgAddress:sgprKernArgAddress+1], 0x6C
+s_load_dwordx2 s[54+2:55+2], s[sgprKernArgAddress:sgprKernArgAddress+1], 0x7C
+s_load_dwordx2 s[56+2:59], s[sgprKernArgAddress:sgprKernArgAddress+1], 0x84
 .set sgprSrdScaleDVec, 60
 .set sgprSrdScaleAlphaVec, 64
 .set sgprSrdBias, 68
@@ -1571,7 +1576,7 @@ s_waitcnt vmcnt(0)
 //check done
 Summation_End_OptNLL:
 s_mov_b32 s[sgprGSUSync], 0
-s_atomic_add s[sgprGSUSync], s[sgprKernArgAddress:sgprKernArgAddress+1], 0x90 glc
+s_atomic_add s[sgprGSUSync], s[sgprKernArgAddress:sgprKernArgAddress+1], 0x88 glc
 
 
 s_waitcnt lgkmcnt(0)
@@ -1773,7 +1778,7 @@ s_waitcnt vmcnt(0)
 //check done
 Summation_End_OptNLL_1:
 s_mov_b32 s[sgprGSUSync], 0
-s_atomic_add s[sgprGSUSync], s[sgprKernArgAddress:sgprKernArgAddress+1], 0x90 glc
+s_atomic_add s[sgprGSUSync], s[sgprKernArgAddress:sgprKernArgAddress+1], 0x88 glc
 
 
 s_waitcnt lgkmcnt(0)
@@ -1979,7 +1984,7 @@ s_waitcnt vmcnt(0)
 //check done
 Summation_End_OptNLL_2:
 s_mov_b32 s[sgprGSUSync], 0
-s_atomic_add s[sgprGSUSync], s[sgprKernArgAddress:sgprKernArgAddress+1], 0x90 glc
+s_atomic_add s[sgprGSUSync], s[sgprKernArgAddress:sgprKernArgAddress+1], 0x88 glc
 
 
 s_waitcnt lgkmcnt(0)
@@ -2193,7 +2198,7 @@ s_waitcnt vmcnt(0)
 //check done
 Summation_End_OptNLL_3:
 s_mov_b32 s[sgprGSUSync], 0
-s_atomic_add s[sgprGSUSync], s[sgprKernArgAddress:sgprKernArgAddress+1], 0x90 glc
+s_atomic_add s[sgprGSUSync], s[sgprKernArgAddress:sgprKernArgAddress+1], 0x88 glc
 
 
 s_waitcnt lgkmcnt(0)
@@ -2435,7 +2440,7 @@ s_waitcnt vmcnt(0)
 //check done
 Summation_End_OptNLL_4:
 s_mov_b32 s[sgprGSUSync], 0
-s_atomic_add s[sgprGSUSync], s[sgprKernArgAddress:sgprKernArgAddress+1], 0x90 glc
+s_atomic_add s[sgprGSUSync], s[sgprKernArgAddress:sgprKernArgAddress+1], 0x88 glc
 
 
 s_waitcnt lgkmcnt(0)
@@ -2649,7 +2654,7 @@ s_waitcnt vmcnt(0)
 //check done
 Summation_End_OptNLL_5:
 s_mov_b32 s[sgprGSUSync], 0
-s_atomic_add s[sgprGSUSync], s[sgprKernArgAddress:sgprKernArgAddress+1], 0x90 glc
+s_atomic_add s[sgprGSUSync], s[sgprKernArgAddress:sgprKernArgAddress+1], 0x88 glc
 
 
 s_waitcnt lgkmcnt(0)
@@ -2855,7 +2860,7 @@ s_waitcnt vmcnt(0)
 //check done
 Summation_End_OptNLL_6:
 s_mov_b32 s[sgprGSUSync], 0
-s_atomic_add s[sgprGSUSync], s[sgprKernArgAddress:sgprKernArgAddress+1], 0x90 glc
+s_atomic_add s[sgprGSUSync], s[sgprKernArgAddress:sgprKernArgAddress+1], 0x88 glc
 
 
 s_waitcnt lgkmcnt(0)
@@ -3073,7 +3078,7 @@ s_waitcnt vmcnt(0)
 //check done
 Summation_End_OptNLL_7:
 s_mov_b32 s[sgprGSUSync], 0
-s_atomic_add s[sgprGSUSync], s[sgprKernArgAddress:sgprKernArgAddress+1], 0x90 glc
+s_atomic_add s[sgprGSUSync], s[sgprKernArgAddress:sgprKernArgAddress+1], 0x88 glc
 
 
 s_waitcnt lgkmcnt(0)
@@ -3614,8 +3619,13 @@ s_setprio 0                                        // optimization store
 .set sgpractivationBeta, 57
 .set sgprActivationType, 58
 .set GSUSynctmp, 59
-s_load_dwordx8 s[48:55], s[sgprKernArgAddress:sgprKernArgAddress+1], 0x64
-s_load_dwordx4 s[56:59], s[sgprKernArgAddress:sgprKernArgAddress+1], 0x84
+s_mov_b32 s[sgprAddressScaleDVec+0] 0x0
+s_mov_b32 s[sgprAddressScaleDVec+1] 0x0
+//s_load_dwordx8 s[48+2:55+2], s[sgprKernArgAddress:sgprKernArgAddress+1], 0x64
+s_load_dwordx2 s[48+2:49+2], s[sgprKernArgAddress:sgprKernArgAddress+1], 0x64
+s_load_dwordx4 s[50+2:53+2], s[sgprKernArgAddress:sgprKernArgAddress+1], 0x6C
+s_load_dwordx2 s[54+2:55+2], s[sgprKernArgAddress:sgprKernArgAddress+1], 0x7C
+s_load_dwordx2 s[56+2:59], s[sgprKernArgAddress:sgprKernArgAddress+1], 0x84
 .set sgprSrdScaleDVec, 60
 .set sgprSrdScaleAlphaVec, 64
 .set sgprSrdBias, 68
@@ -3788,7 +3798,7 @@ s_waitcnt vmcnt(0)
 //check done
 Summation_End_OptNLL2_24:
 s_mov_b32 s[sgprGSUSync], 0
-s_atomic_add s[sgprGSUSync], s[sgprKernArgAddress:sgprKernArgAddress+1], 0x90 glc
+s_atomic_add s[sgprGSUSync], s[sgprKernArgAddress:sgprKernArgAddress+1], 0x88 glc
 
 
 s_waitcnt lgkmcnt(0)
@@ -3996,7 +4006,7 @@ s_waitcnt vmcnt(0)
 //check done
 Summation_End_OptNLL2_25:
 s_mov_b32 s[sgprGSUSync], 0
-s_atomic_add s[sgprGSUSync], s[sgprKernArgAddress:sgprKernArgAddress+1], 0x90 glc
+s_atomic_add s[sgprGSUSync], s[sgprKernArgAddress:sgprKernArgAddress+1], 0x88 glc
 
 
 s_waitcnt lgkmcnt(0)
@@ -4208,7 +4218,7 @@ s_waitcnt vmcnt(0)
 //check done
 Summation_End_OptNLL2_26:
 s_mov_b32 s[sgprGSUSync], 0
-s_atomic_add s[sgprGSUSync], s[sgprKernArgAddress:sgprKernArgAddress+1], 0x90 glc
+s_atomic_add s[sgprGSUSync], s[sgprKernArgAddress:sgprKernArgAddress+1], 0x88 glc
 
 
 s_waitcnt lgkmcnt(0)
@@ -4428,7 +4438,7 @@ s_waitcnt vmcnt(0)
 //check done
 Summation_End_OptNLL2_27:
 s_mov_b32 s[sgprGSUSync], 0
-s_atomic_add s[sgprGSUSync], s[sgprKernArgAddress:sgprKernArgAddress+1], 0x90 glc
+s_atomic_add s[sgprGSUSync], s[sgprKernArgAddress:sgprKernArgAddress+1], 0x88 glc
 
 
 s_waitcnt lgkmcnt(0)
@@ -4676,7 +4686,7 @@ s_waitcnt vmcnt(0)
 //check done
 Summation_End_OptNLL2_28:
 s_mov_b32 s[sgprGSUSync], 0
-s_atomic_add s[sgprGSUSync], s[sgprKernArgAddress:sgprKernArgAddress+1], 0x90 glc
+s_atomic_add s[sgprGSUSync], s[sgprKernArgAddress:sgprKernArgAddress+1], 0x88 glc
 
 
 s_waitcnt lgkmcnt(0)
@@ -4896,7 +4906,7 @@ s_waitcnt vmcnt(0)
 //check done
 Summation_End_OptNLL2_29:
 s_mov_b32 s[sgprGSUSync], 0
-s_atomic_add s[sgprGSUSync], s[sgprKernArgAddress:sgprKernArgAddress+1], 0x90 glc
+s_atomic_add s[sgprGSUSync], s[sgprKernArgAddress:sgprKernArgAddress+1], 0x88 glc
 
 
 s_waitcnt lgkmcnt(0)
@@ -5108,7 +5118,7 @@ s_waitcnt vmcnt(0)
 //check done
 Summation_End_OptNLL2_30:
 s_mov_b32 s[sgprGSUSync], 0
-s_atomic_add s[sgprGSUSync], s[sgprKernArgAddress:sgprKernArgAddress+1], 0x90 glc
+s_atomic_add s[sgprGSUSync], s[sgprKernArgAddress:sgprKernArgAddress+1], 0x88 glc
 
 
 s_waitcnt lgkmcnt(0)
@@ -5332,7 +5342,7 @@ s_waitcnt vmcnt(0)
 //check done
 Summation_End_OptNLL2_31:
 s_mov_b32 s[sgprGSUSync], 0
-s_atomic_add s[sgprGSUSync], s[sgprKernArgAddress:sgprKernArgAddress+1], 0x90 glc
+s_atomic_add s[sgprGSUSync], s[sgprKernArgAddress:sgprKernArgAddress+1], 0x88 glc
 
 
 s_waitcnt lgkmcnt(0)
@@ -5593,7 +5603,7 @@ s_waitcnt vmcnt(0)
 //check done
 Summation_End_OptNLL2_16:
 s_mov_b32 s[sgprGSUSync], 0
-s_atomic_add s[sgprGSUSync], s[sgprKernArgAddress:sgprKernArgAddress+1], 0x90 glc
+s_atomic_add s[sgprGSUSync], s[sgprKernArgAddress:sgprKernArgAddress+1], 0x88 glc
 
 
 s_waitcnt lgkmcnt(0)
@@ -5804,7 +5814,7 @@ s_waitcnt vmcnt(0)
 //check done
 Summation_End_OptNLL2_17:
 s_mov_b32 s[sgprGSUSync], 0
-s_atomic_add s[sgprGSUSync], s[sgprKernArgAddress:sgprKernArgAddress+1], 0x90 glc
+s_atomic_add s[sgprGSUSync], s[sgprKernArgAddress:sgprKernArgAddress+1], 0x88 glc
 
 
 s_waitcnt lgkmcnt(0)
@@ -6019,7 +6029,7 @@ s_waitcnt vmcnt(0)
 //check done
 Summation_End_OptNLL2_18:
 s_mov_b32 s[sgprGSUSync], 0
-s_atomic_add s[sgprGSUSync], s[sgprKernArgAddress:sgprKernArgAddress+1], 0x90 glc
+s_atomic_add s[sgprGSUSync], s[sgprKernArgAddress:sgprKernArgAddress+1], 0x88 glc
 
 
 s_waitcnt lgkmcnt(0)
@@ -6242,7 +6252,7 @@ s_waitcnt vmcnt(0)
 //check done
 Summation_End_OptNLL2_19:
 s_mov_b32 s[sgprGSUSync], 0
-s_atomic_add s[sgprGSUSync], s[sgprKernArgAddress:sgprKernArgAddress+1], 0x90 glc
+s_atomic_add s[sgprGSUSync], s[sgprKernArgAddress:sgprKernArgAddress+1], 0x88 glc
 
 
 s_waitcnt lgkmcnt(0)
@@ -6493,7 +6503,7 @@ s_waitcnt vmcnt(0)
 //check done
 Summation_End_OptNLL2_20:
 s_mov_b32 s[sgprGSUSync], 0
-s_atomic_add s[sgprGSUSync], s[sgprKernArgAddress:sgprKernArgAddress+1], 0x90 glc
+s_atomic_add s[sgprGSUSync], s[sgprKernArgAddress:sgprKernArgAddress+1], 0x88 glc
 
 
 s_waitcnt lgkmcnt(0)
@@ -6716,7 +6726,7 @@ s_waitcnt vmcnt(0)
 //check done
 Summation_End_OptNLL2_21:
 s_mov_b32 s[sgprGSUSync], 0
-s_atomic_add s[sgprGSUSync], s[sgprKernArgAddress:sgprKernArgAddress+1], 0x90 glc
+s_atomic_add s[sgprGSUSync], s[sgprKernArgAddress:sgprKernArgAddress+1], 0x88 glc
 
 
 s_waitcnt lgkmcnt(0)
@@ -6931,7 +6941,7 @@ s_waitcnt vmcnt(0)
 //check done
 Summation_End_OptNLL2_22:
 s_mov_b32 s[sgprGSUSync], 0
-s_atomic_add s[sgprGSUSync], s[sgprKernArgAddress:sgprKernArgAddress+1], 0x90 glc
+s_atomic_add s[sgprGSUSync], s[sgprKernArgAddress:sgprKernArgAddress+1], 0x88 glc
 
 
 s_waitcnt lgkmcnt(0)
@@ -7158,7 +7168,7 @@ s_waitcnt vmcnt(0)
 //check done
 Summation_End_OptNLL2_23:
 s_mov_b32 s[sgprGSUSync], 0
-s_atomic_add s[sgprGSUSync], s[sgprKernArgAddress:sgprKernArgAddress+1], 0x90 glc
+s_atomic_add s[sgprGSUSync], s[sgprKernArgAddress:sgprKernArgAddress+1], 0x88 glc
 
 
 s_waitcnt lgkmcnt(0)
@@ -7429,7 +7439,7 @@ s_waitcnt vmcnt(0)
 //check done
 Summation_End_OptNLL2_8:
 s_mov_b32 s[sgprGSUSync], 0
-s_atomic_add s[sgprGSUSync], s[sgprKernArgAddress:sgprKernArgAddress+1], 0x90 glc
+s_atomic_add s[sgprGSUSync], s[sgprKernArgAddress:sgprKernArgAddress+1], 0x88 glc
 
 
 s_waitcnt lgkmcnt(0)
@@ -7645,7 +7655,7 @@ s_waitcnt vmcnt(0)
 //check done
 Summation_End_OptNLL2_9:
 s_mov_b32 s[sgprGSUSync], 0
-s_atomic_add s[sgprGSUSync], s[sgprKernArgAddress:sgprKernArgAddress+1], 0x90 glc
+s_atomic_add s[sgprGSUSync], s[sgprKernArgAddress:sgprKernArgAddress+1], 0x88 glc
 
 
 s_waitcnt lgkmcnt(0)
@@ -7865,7 +7875,7 @@ s_waitcnt vmcnt(0)
 //check done
 Summation_End_OptNLL2_10:
 s_mov_b32 s[sgprGSUSync], 0
-s_atomic_add s[sgprGSUSync], s[sgprKernArgAddress:sgprKernArgAddress+1], 0x90 glc
+s_atomic_add s[sgprGSUSync], s[sgprKernArgAddress:sgprKernArgAddress+1], 0x88 glc
 
 
 s_waitcnt lgkmcnt(0)
@@ -8093,7 +8103,7 @@ s_waitcnt vmcnt(0)
 //check done
 Summation_End_OptNLL2_11:
 s_mov_b32 s[sgprGSUSync], 0
-s_atomic_add s[sgprGSUSync], s[sgprKernArgAddress:sgprKernArgAddress+1], 0x90 glc
+s_atomic_add s[sgprGSUSync], s[sgprKernArgAddress:sgprKernArgAddress+1], 0x88 glc
 
 
 s_waitcnt lgkmcnt(0)
@@ -8349,7 +8359,7 @@ s_waitcnt vmcnt(0)
 //check done
 Summation_End_OptNLL2_12:
 s_mov_b32 s[sgprGSUSync], 0
-s_atomic_add s[sgprGSUSync], s[sgprKernArgAddress:sgprKernArgAddress+1], 0x90 glc
+s_atomic_add s[sgprGSUSync], s[sgprKernArgAddress:sgprKernArgAddress+1], 0x88 glc
 
 
 s_waitcnt lgkmcnt(0)
@@ -8577,7 +8587,7 @@ s_waitcnt vmcnt(0)
 //check done
 Summation_End_OptNLL2_13:
 s_mov_b32 s[sgprGSUSync], 0
-s_atomic_add s[sgprGSUSync], s[sgprKernArgAddress:sgprKernArgAddress+1], 0x90 glc
+s_atomic_add s[sgprGSUSync], s[sgprKernArgAddress:sgprKernArgAddress+1], 0x88 glc
 
 
 s_waitcnt lgkmcnt(0)
@@ -8797,7 +8807,7 @@ s_waitcnt vmcnt(0)
 //check done
 Summation_End_OptNLL2_14:
 s_mov_b32 s[sgprGSUSync], 0
-s_atomic_add s[sgprGSUSync], s[sgprKernArgAddress:sgprKernArgAddress+1], 0x90 glc
+s_atomic_add s[sgprGSUSync], s[sgprKernArgAddress:sgprKernArgAddress+1], 0x88 glc
 
 
 s_waitcnt lgkmcnt(0)
@@ -9029,7 +9039,7 @@ s_waitcnt vmcnt(0)
 //check done
 Summation_End_OptNLL2_15:
 s_mov_b32 s[sgprGSUSync], 0
-s_atomic_add s[sgprGSUSync], s[sgprKernArgAddress:sgprKernArgAddress+1], 0x90 glc
+s_atomic_add s[sgprGSUSync], s[sgprKernArgAddress:sgprKernArgAddress+1], 0x88 glc
 
 
 s_waitcnt lgkmcnt(0)
@@ -9299,7 +9309,7 @@ s_waitcnt vmcnt(0)
 //check done
 Summation_End_OptNLL2:
 s_mov_b32 s[sgprGSUSync], 0
-s_atomic_add s[sgprGSUSync], s[sgprKernArgAddress:sgprKernArgAddress+1], 0x90 glc
+s_atomic_add s[sgprGSUSync], s[sgprKernArgAddress:sgprKernArgAddress+1], 0x88 glc
 
 
 s_waitcnt lgkmcnt(0)
@@ -9519,7 +9529,7 @@ s_waitcnt vmcnt(0)
 //check done
 Summation_End_OptNLL2_1:
 s_mov_b32 s[sgprGSUSync], 0
-s_atomic_add s[sgprGSUSync], s[sgprKernArgAddress:sgprKernArgAddress+1], 0x90 glc
+s_atomic_add s[sgprGSUSync], s[sgprKernArgAddress:sgprKernArgAddress+1], 0x88 glc
 
 
 s_waitcnt lgkmcnt(0)
@@ -9743,7 +9753,7 @@ s_waitcnt vmcnt(0)
 //check done
 Summation_End_OptNLL2_2:
 s_mov_b32 s[sgprGSUSync], 0
-s_atomic_add s[sgprGSUSync], s[sgprKernArgAddress:sgprKernArgAddress+1], 0x90 glc
+s_atomic_add s[sgprGSUSync], s[sgprKernArgAddress:sgprKernArgAddress+1], 0x88 glc
 
 
 s_waitcnt lgkmcnt(0)
@@ -9975,7 +9985,7 @@ s_waitcnt vmcnt(0)
 //check done
 Summation_End_OptNLL2_3:
 s_mov_b32 s[sgprGSUSync], 0
-s_atomic_add s[sgprGSUSync], s[sgprKernArgAddress:sgprKernArgAddress+1], 0x90 glc
+s_atomic_add s[sgprGSUSync], s[sgprKernArgAddress:sgprKernArgAddress+1], 0x88 glc
 
 
 s_waitcnt lgkmcnt(0)
@@ -10235,7 +10245,7 @@ s_waitcnt vmcnt(0)
 //check done
 Summation_End_OptNLL2_4:
 s_mov_b32 s[sgprGSUSync], 0
-s_atomic_add s[sgprGSUSync], s[sgprKernArgAddress:sgprKernArgAddress+1], 0x90 glc
+s_atomic_add s[sgprGSUSync], s[sgprKernArgAddress:sgprKernArgAddress+1], 0x88 glc
 
 
 s_waitcnt lgkmcnt(0)
@@ -10467,7 +10477,7 @@ s_waitcnt vmcnt(0)
 //check done
 Summation_End_OptNLL2_5:
 s_mov_b32 s[sgprGSUSync], 0
-s_atomic_add s[sgprGSUSync], s[sgprKernArgAddress:sgprKernArgAddress+1], 0x90 glc
+s_atomic_add s[sgprGSUSync], s[sgprKernArgAddress:sgprKernArgAddress+1], 0x88 glc
 
 
 s_waitcnt lgkmcnt(0)
@@ -10691,7 +10701,7 @@ s_waitcnt vmcnt(0)
 //check done
 Summation_End_OptNLL2_6:
 s_mov_b32 s[sgprGSUSync], 0
-s_atomic_add s[sgprGSUSync], s[sgprKernArgAddress:sgprKernArgAddress+1], 0x90 glc
+s_atomic_add s[sgprGSUSync], s[sgprKernArgAddress:sgprKernArgAddress+1], 0x88 glc
 
 
 s_waitcnt lgkmcnt(0)
@@ -10927,7 +10937,7 @@ s_waitcnt vmcnt(0)
 //check done
 Summation_End_OptNLL2_7:
 s_mov_b32 s[sgprGSUSync], 0
-s_atomic_add s[sgprGSUSync], s[sgprKernArgAddress:sgprKernArgAddress+1], 0x90 glc
+s_atomic_add s[sgprGSUSync], s[sgprKernArgAddress:sgprKernArgAddress+1], 0x88 glc
 
 
 s_waitcnt lgkmcnt(0)
