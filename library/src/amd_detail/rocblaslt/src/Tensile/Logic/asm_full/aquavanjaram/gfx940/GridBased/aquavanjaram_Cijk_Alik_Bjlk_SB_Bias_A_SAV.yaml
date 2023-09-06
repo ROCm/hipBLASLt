@@ -232,7 +232,7 @@
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 0
-    SolutionNameMin: Cijk_Alik_Bjlk_SBBias_A_SDV_SAV_MT32x32x32_MI16x16x4x1_SN_MIWT1_1
+    SolutionNameMin: Cijk_Alik_Bjlk_SBBias_A_SAV_MT32x32x32_MI16x16x4x1_SN_MIWT1_1
     SourceSwap: 1
     StaggerU: 32
     StaggerUMapping: 0

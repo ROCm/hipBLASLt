@@ -238,7 +238,7 @@
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 0
-    SolutionNameMin: Cijk_Alik_Bjlk_HHS_BH_Bias_GG_AH_SDV_SAV_MT64x64x32_MI32x32x8x1_SN_MIWT1_1
+    SolutionNameMin: Cijk_Alik_Bjlk_HHS_BH_Bias_GG_AH_SAV_MT64x64x32_MI32x32x8x1_SN_MIWT1_1
     SourceSwap: 1
     StaggerU: 0
     StaggerUMapping: 0

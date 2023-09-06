@@ -111,7 +111,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bljk_F8H_HHS_BH_BiasSB_AS_SDV_SAV_MT16x16x64_MI16x16x1_SN_GSU1_MIWT1_1
+    KernelNameMin: Cijk_Alik_Bljk_F8H_HHS_BH_BiasSB_AS_SAV_MT16x16x64_MI16x16x1_SN_GSU1_MIWT1_1
     LSCA: 64
     LSCB: 64
     LSPA: 4
@@ -278,7 +278,7 @@
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 0
-    SolutionNameMin: Cijk_Alik_Bljk_F8H_HHS_BH_BiasSB_AS_SDV_SAV_MT16x16x64_MI16x16x1_SN_GSU1_MIWT1_1
+    SolutionNameMin: Cijk_Alik_Bljk_F8H_HHS_BH_BiasSB_AS_SAV_MT16x16x64_MI16x16x1_SN_GSU1_MIWT1_1
     SourceSwap: 1
     StaggerU: 32
     StaggerUMapping: 0
