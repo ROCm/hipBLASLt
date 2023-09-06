@@ -31,6 +31,7 @@ set(hipblaslt_test_source
     matmul_gtest.cpp
     auxiliary_gtest.cpp
     matrix_transform_gtest.cpp
+    hipblaslt_gtest_ext_op.cpp
   )
 
 add_executable( hipblaslt-test ${hipblaslt_test_source} ${hipblaslt_test_bench_common} )

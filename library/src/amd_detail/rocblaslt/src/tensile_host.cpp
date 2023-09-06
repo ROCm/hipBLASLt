@@ -72,20 +72,10 @@
 
 namespace
 {
-#ifndef WIN32
-    std::string hipblaslt_so_path;
-
-    int hipblaslt_dl_iterate_phdr_callback(struct dl_phdr_info* hdr_info, size_t size, void* data)
+    std::string getHipblasltSoPath()
     {
-        // uncomment to see all dependent .so files
-        // fprintf(stderr, "hipblaslt so file: %s\n", hdr_info->dlpi_name);
-        if(hdr_info->dlpi_name && strstr(hdr_info->dlpi_name, "libhipblaslt"))
-        {
-            hipblaslt_so_path = hdr_info->dlpi_name;
-        }
-        return 0;
+        return rocblaslt_internal_get_so_path("libhipblaslt");
     }
-#endif
     /******************************************************
  * Map a hipblas data type to a corresponding Tensile type *
  ******************************************************/
@@ -925,11 +915,7 @@ namespace
    *******************************************************/
         static bool TestPath(const std::string& path)
         {
-#ifdef WIN32
-            return ((_access(path.c_str(), 4) != -1) || (_access(path.c_str(), 6) != -1));
-#else
-            return access(path.c_str(), R_OK) == 0;
-#endif
+            return rocblaslt_internal_test_path(path);
         }
 
         /*********************************************************************
@@ -959,7 +945,8 @@ namespace
                 // Fall back on hard-coded path if static library or not found
 
 #ifndef HIPBLASLT_STATIC_LIB
-                dl_iterate_phdr(hipblaslt_dl_iterate_phdr_callback, NULL);
+                auto hipblaslt_so_path = getHipblasltSoPath();
+
                 if(hipblaslt_so_path.size())
                     path = std::string{dirname(&hipblaslt_so_path[0])};
 #endif // ifndef HIPBLASLT_STATIC_LIB
@@ -1157,6 +1144,25 @@ namespace
     }
 #endif
 } // namespace
+
+/******************************************************
+* Map a hipblas data type to a corresponding Tensile type *
+******************************************************/
+Tensile::DataType hipblasDatatype_to_tensile_type(hipblasDatatype_t type)
+{
+    switch(type)
+    {
+    case HIPBLAS_R_16F:
+        return Tensile::DataType::Half;
+    case HIPBLAS_R_32F:
+        return Tensile::DataType::Float;
+    case HIPBLAS_R_16B:
+        return Tensile::DataType::BFloat16;
+    default:
+        assert(!"hipblasDatatype_to_tensile_type: non-supported type");
+        return Tensile::DataType::None;
+    }
+}
 
 struct TensileDataGemm
 {
