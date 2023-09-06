@@ -43,6 +43,7 @@
 //#include "tuple_helper.hpp"
 #include "utility.hpp"
 #include <atomic>
+#include <Tensile/DataTypes.hpp>
 
 // Return the value category for a value, as a double precision value, such
 // such as whether it's 0, 1, -1 or some other value. Tensile uses a double
@@ -348,3 +349,5 @@ rocblaslt_status getBestSolutions(rocblaslt_handle       handle,
                                   const int              workspaceBytes,
                                   const int              requestedAlgoCount,
                                   std::vector<rocblaslt_matmul_heuristic_result>& heuristicResults);
+
+Tensile::DataType hipblasDatatype_to_tensile_type(hipblasDatatype_t type);

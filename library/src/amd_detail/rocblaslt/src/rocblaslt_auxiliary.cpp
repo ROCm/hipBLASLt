@@ -31,7 +31,13 @@
 #include "tensile_host.hpp"
 #include "utility.hpp"
 
+#ifndef WIN32
+#include <link.h>
+#endif
+
+#include <unistd.h>
 #include <hip/hip_runtime_api.h>
+#include <utility>
 
 #define TO_STR2(x) #x
 #define TO_STR(x) TO_STR2(x)
@@ -2548,4 +2554,36 @@ std::string rocblaslt_internal_get_arch_name()
     hipDeviceProp_t deviceProperties;
     static_cast<void>(hipGetDeviceProperties(&deviceProperties, deviceId));
     return ArchName{}(deviceProperties);
+}
+
+bool rocblaslt_internal_test_path(const std::string &path)
+{
+#ifdef WIN32
+    return ((_access(path.c_str(), 4) != -1) || (_access(path.c_str(), 6) != -1));
+#else
+    return access(path.c_str(), R_OK) == 0;
+#endif
+
+}
+
+#ifndef WIN32
+int hipblaslt_dl_iterate_phdr_callback(struct dl_phdr_info* hdr_info, size_t size, void* data)
+{
+    // uncomment to see all dependent .so files
+    // fprintf(stderr, "hipblaslt so file: %s\n", hdr_info->dlpi_name);
+    std::pair<std::string, std::string> *typedData = reinterpret_cast<std::pair<std::string, std::string> *>(data);
+    if(hdr_info->dlpi_name && strstr(hdr_info->dlpi_name, typedData->second.c_str()))
+    {
+        typedData->first.assign(hdr_info->dlpi_name);
+        return 1;
+    }
+    return 0;
+}
+#endif
+
+std::string rocblaslt_internal_get_so_path(const std::string &keyword)
+{
+    std::pair<std::string, std::string> result{"", keyword};
+    dl_iterate_phdr(hipblaslt_dl_iterate_phdr_callback, &result);
+    return result.first;
 }

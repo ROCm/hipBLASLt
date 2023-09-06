@@ -389,6 +389,11 @@ rocblaslt_status
 
 // for internal use during testing, fetch arch name
 std::string rocblaslt_internal_get_arch_name();
+
+// for internal use of testing existence of path
+bool rocblaslt_internal_test_path(const std::string &);
+
+std::string rocblaslt_internal_get_so_path(const std::string &keyword);
 #endif
 
 #endif /* _ROCBLASLT_AUXILIARY_H_ */
