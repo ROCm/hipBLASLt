@@ -253,3 +253,29 @@ function(TensileCreateLibraryFiles
 
 endfunction()
 
+function(TensileCreateExtOpLibraries OutputFolder ArchStr)
+  string(REGEX MATCHALL "gfx[a-z0-9]+" Archs "${ArchStr}")
+  list(REMOVE_DUPLICATES Archs)
+  set(build_tmp_dir /tmp/tensilelite/ops)
+  set(Tensile_PACKAGE_DIR ${Tensile_SOURCE_DIR}/../)
+  set(cwd "${Tensile_PACKAGE_DIR}/Ops")
+  set(script "${cwd}/gen_assembly.sh")
+  set(ext_op_library_path ${build_tmp_dir}/hipblasltExtOpLibrary.dat)
+  file(REMOVE ${ext_op_library_path})
+
+  add_custom_command(
+    OUTPUT ${build_tmp_dir}/hipblasltExtOpLibrary.dat
+    WORKING_DIRECTORY "${cwd}"
+    COMMENT "Creating ExtOp Libraries"
+    COMMAND ${CMAKE_COMMAND} -E make_directory ${build_tmp_dir}
+    COMMAND ${CMAKE_COMMAND} -E make_directory ${OutputFolder}
+    COMMAND bash "${script}" "\"${Archs}\"" "${build_tmp_dir}" "${VIRTUALENV_HOME_DIR}"
+    COMMAND ${CMAKE_COMMAND} -E copy ${ext_op_library_path} ${build_tmp_dir}/softmax_*.co ${OutputFolder}
+  )
+
+  add_custom_target(
+    build_ext_op_library ALL
+    WORKING_DIRECTORY "${cwd}"
+    DEPENDS ${build_tmp_dir}/hipblasltExtOpLibrary.dat)
+
+endfunction()

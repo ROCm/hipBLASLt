@@ -1,5 +1,7 @@
-# ########################################################################
-# Copyright (C) 2022-2023 Advanced Micro Devices, Inc.
+#!/bin/bash
+################################################################################
+#
+# Copyright (C) 2023 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -16,23 +18,32 @@
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
 # AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-# THE SOFTWARE.
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
 #
-# ########################################################################
+################################################################################
 
-set(hipblaslt_source_common  src/hipblaslt_ostream.cpp)
+archStr=$1
+dst=$2
+venv=$3
 
-if(NOT BUILD_CUDA)
-  # hipBLASLt source
-  include(src/amd_detail/rocblaslt/CMakeLists.txt)
-  set(hipblaslt_source src/amd_detail/hipblaslt.cpp
-                       src/amd_detail/hipblaslt-ext.cpp
-                       src/amd_detail/hipblaslt-ext-op.cpp
-                         ${hipblaslt_source_common}
-                         ${rocblaslt_source})
-else()
-  # hipBLASLt CUDA source
-  # TODO
-  #set(hipblaslt_source src/nvcc_detail/hipblaslt.cpp)
-endif()
+. ${venv}/bin/activate
+
+IFS=';' read -r -a archs <<< "$archStr"
+
+for arch in "${archs[@]}"; do
+    objs=()
+    echo "Creating code object for arch ${arch}"
+    for i in "16 16" "8 32" "4 64" "2 128" "1 256"; do
+        set -- $i
+        s=$dst/S_$1_$2_$arch.s
+        o=$dst/S_$1_$2_$arch.o
+        python3 ./SoftmaxGenerator.py -o $s -m $1 -n $2 --arch $arch &
+        objs+=($o)
+    done
+    wait
+    /opt/rocm/llvm/bin/clang++ -target amdgcn-amdhsa -o $dst/softmax_$arch.co ${objs[@]}
+    python3 ./ExtOpCreateLibrary.py --src=$dst --co=$dst/softmax_$arch.co --output=$dst
+done
+
+deactivate
