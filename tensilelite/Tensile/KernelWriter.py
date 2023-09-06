@@ -44,7 +44,7 @@ import abc
 import os
 import shutil
 import subprocess
-import copy
+import sys
 import collections
 from dataclasses import dataclass, field
 from typing import Dict, NamedTuple, Tuple, Type
@@ -875,11 +875,25 @@ class KernelWriter(metaclass=abc.ABCMeta):
         if not self.states.numItersPLR and iteration < isBarrier:
           for j in range(len(localReadItemsThisLoop)):
             latencyLeft -= localReadItemsThisLoop[j].issueLatency()*2
+        # force to schedule all remaining localreads before start to schedule localwrite.
+        if mfmaIndex == self.states.sync1LdsMfmaIndex and kernel["1LDSBuffer"]:
+          iterCode.addComment0("schedule remaining localreads for 1LDSB")
+          while (localReadItemsThisLoop):
+            item = localReadItemsThisLoop.pop(0)
+            iterCode.add(item)
+            if (i == 0):
+              localReadsWaitcnt += 1
+          item = Module()
+          iterCode.add(item)
+          self.localReadsVacancy.append({ "items": item, \
+                                          "latencyLeft": sys.maxsize, \
+                                          "atIter": iteration, \
+                                          "atMfmaIndex": mfmaIndex, \
+                                          "noReadsAtThisIter": numReadsInst == 0, \
+                                        })
         # if start to schedule localwrite, but still have localreads not scheduled yet,
         # reject to use 1LDSB, since it will write and read same lds buffer at same time.
-        # TODO: force to schedule all remaining localreads before start to schedule localwrite.
         if mfmaIndex > self.states.sync1LdsMfmaIndex and localReadItemsThisLoop and kernel["1LDSBuffer"]:
-            # and mfmaIndex <= max(self.states.lwEndMfmaIndex,self.states.syncPlrMfmaIndex) and localWriteCode.countType(LocalWriteInstruction):
           self.states.overflowedResources = 5
         for j in range(readLeft):
           if localReadItemsThisLoop:
