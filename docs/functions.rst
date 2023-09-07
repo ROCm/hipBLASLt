@@ -79,5 +79,6 @@ computeType             scaleType/Bias Type Atype/Btype   Ctype/Dtype
 ======================= =================== ============= ==============
 HIPBLASLT_COMPUTE_F32   HIPBLASLT_R_32F       HIPBLASLT_R_32F HIPBLASLT_R_32F
 HIPBLASLT_COMPUTE_F32   HIPBLASLT_R_32F       HIPBLASLT_R_16F HIPBLASLT_R_16F
+HIPBLASLT_COMPUTE_F32   HIPBLASLT_R_32F       HIPBLASLT_R_16F HIPBLASLT_R_32F
 HIPBLASLT_COMPUTE_F32   HIPBLASLT_R_32F       HIPBLASLT_R_16B HIPBLASLT_R_16B
 ======================= =================== ============= ==============

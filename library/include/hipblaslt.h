@@ -63,8 +63,10 @@
 /* Opaque structures holding information */
 // clang-format off
 
-// Workaround: define hipblas data type here until hipblas or hip runtime has FP8/BF8
-/*! \brief Indicates the precision width of data stored in a blas type. */
+// Workaround: define hipblaslt data type here until hipblas or hip runtime has FP8/BF8
+/*! \ingroup types_module
+ *  \brief Indicates the precision width of data stored in a blas type.
+ */
 typedef enum
 {
     HIPBLASLT_R_16F            = 150, /**< 16 bit floating point, real */
@@ -164,7 +166,9 @@ typedef enum {
   HIPBLASLT_MATRIX_LAYOUT_LD = 6,
 } hipblasLtMatrixLayoutAttribute_t;
 
-/** Pointer mode to use for alpha */
+/*! \ingroup types_module
+ *  \brief Pointer mode to use for alpha.
+ */
 typedef enum {
     HIPBLASLT_POINTER_MODE_HOST = 0,                          /** targets host memory */
     HIPBLASLT_POINTER_MODE_ALPHA_DEVICE_VECTOR_BETA_HOST = 1, /** alpha pointer targets a device memory vector of length equal to the number of rows of matrix D, and beta is a single value in host memory. */

@@ -2,7 +2,7 @@
 hipBLASLt Changelog
 *****************************
 
-ROCm 6.0
+hipblaslt 0.6.0
 =============
 
 General
@@ -14,3 +14,4 @@ hipBLASLtExt
 -------------
 
 1. The alpha and beta arguments in API `setProblem` for grouped gemm have changed from `std::vector<float>` to `std::vector<void*>`.
+2. Add UserArguments for GroupedGemm
