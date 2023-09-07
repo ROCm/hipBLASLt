@@ -19,11 +19,16 @@ cd hipBLASLt; cd build/release
 --stride_b <value>         Specific stride of strided_batched matrix B, second dimension * leading dimension.
 --stride_c <value>         Specific stride of strided_batched matrix C, second dimension * leading dimension.
 --stride_d <value>         Specific stride of strided_batched matrix D, second dimension * leading dimension.
+--stride_e <value>         Specific stride of strided_batched matrix E, second dimension * leading dimension.
 --alpha <value>            specifies the scalar alpha                                                          (Default value is: 1)
 --beta <value>             specifies the scalar beta                                                           (Default value is: 0)
 --function |-f <value>     BLASLt function to test. Options: matmul                                            (Default value is: matmul)
---precision |-r <value>    Precision of matrix A,B,C,D  Options: f32_r,f16_r,bf16_r                            (Default value is: f16_r)
---compute_type <value>     Precision of computation. Options: s,f32_r                                          (Default value is: f32_r)
+--precision |-r <value>    Precision of matrix A,B,C,D  Options: f32_r,f16_r,bf16_r,f64_r,i32_r,i8_r           (Default value is: f16_r)
+--a_type <value>           Precision of matrix A. Options: f32_r,f16_r,bf16_r
+--b_type <value>           Precision of matrix B. Options: f32_r,f16_r,bf16_r
+--c_type <value>           Precision of matrix C. Options: f32_r,f16_r,bf16_r
+--d_type <value>           Precision of matrix D. Options: f32_r,f16_r,bf16_r
+--compute_type <value>     Precision of computation. Options: s,f32_r,x,xf32_r,f64_r,i32_r                     (Default value is: f32_r)
 --scale_type <value>       Precision of scalar. Options: f16_r,bf16_r
 --initialization <value>   Intialize matrix data.Options: rand_int, trig_float, hpl(floating)                  (Default value is: hpl)
 --transA <value>           N = no transpose, T = transpose, C = conjugate transpose                            (Default value is: N)
@@ -39,16 +44,18 @@ cd hipBLASLt; cd build/release
 --activation_arg1 <value>  Reserved.                                                                           (Default value is: 0)
 --activation_arg2 <value>  Reserved.                                                                           (Default value is: inf)
 --bias_type <value>        Precision of bias vector.Options: f16_r,bf16_r,f32_r,default(same with D type)
---bias_source <value>      Choose bias source (A, B, D)                                                        (Defaulr value is: D)
+--bias_source <value>      Choose bias source: a, b, d                                                         (Default value is: d)
 --bias_vector              Apply bias vector
+--scaleAlpha_vector        Apply scaleAlpha vector
 --use_e                    Apply AUX output/ gradient input
 --gradient                 Enable gradient
---grouped_gemm <value>     Apply grouped_gemm                                                                  (Default value is: 0)
+--grouped_gemm <value>     Use grouped_gemm if non-zero. Number of gemms to run                                (Default value is: 0)
 --device <value>           Set default device to be used for subsequent program runs                           (Default value is: 0)
 --c_noalias_d              C and D are stored in separate memory
 --workspace <value>        Set fixed workspace memory size instead of using hipblaslt managed memory           (Default value is: 0)
 --log_function_name        Function name precedes other itmes.
 --function_filter <value>  Simple strstr filter on function name only without wildcards
+--api_method <value>       Use extension API. 0: C style API. 1: declaration with C hipblasLtMatmul Layout/Desc but set, initialize, and run the problem with C++ extension API. 2: Using C++ extension API only. Options: 0, 1, 2. (default: 0)  (Default value is: 0)
 --help |-h                 produces this help message
 --version <value>          Prints the version number
 ```
