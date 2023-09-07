@@ -74,35 +74,33 @@ void run_function(const func_map& map, const Arguments& arg, const std::string& 
 }
 
 // Template to dispatch testing_matmul for performance tests
-// the test is marked invalid when (Ti, To, Tc) not in (H/H/S, B/B/S)
-template <typename Ti, typename To = Ti, typename Tc = To, typename = void>
+// the test is marked invalid when (TiA, TiB, To, Tc) not in (H/H/S, B/B/S)
+template <typename TiA, typename TiB = TiA, typename To = TiB, typename Tc = To, typename = void>
 struct perf_matmul : hipblaslt_test_invalid
 {
 };
 
-template <typename Ti, typename To, typename Tc>
+template <typename TiA, typename TiB, typename To, typename Tc>
 struct perf_matmul<
-    Ti,
+    TiA,
+    TiB,
     To,
     Tc,
-    std::enable_if_t<
-#ifdef __HIP_PLATFORM_HCC__
-        (std::is_same<Ti, To>{}
-         && (std::is_same<Ti, hipblasLtHalf>{} || std::is_same<Ti, hip_bfloat16>{}
-             || std::is_same<Ti, float>{})
-         && std::is_same<Tc, float>{})
-#else
-        (std::is_same<Ti, To>{}
-         && ((std::is_same<Ti, hipblasLtHalf>{} && std::is_same<Tc, hipblasLtHalf>{})
-             || (std::is_same<Ti, hip_bfloat16>{} && std::is_same<Tc, hip_bfloat16>{})))
-#endif
-        || (std::is_same<Ti, To>{} && (std::is_same<Ti, int8_t>{}) && std::is_same<Tc, int32_t>{})
-        || (std::is_same<Ti, To>{} && (std::is_same<Ti, double>{}) && std::is_same<Tc, double>{})>>
+    std::enable_if_t<(std::is_same<TiA, hipblasLtHalf>{} && std::is_same<TiB, hipblasLtHalf>{})
+                     || (std::is_same<TiA, hip_bfloat16>{} && std::is_same<TiB, hip_bfloat16>{})
+                     || (std::is_same<TiA, float>{} && std::is_same<TiB, float>{})
+                     || (std::is_same<TiA, hipblaslt_f8>{} && std::is_same<TiB, hipblaslt_f8>{})
+                     || (std::is_same<TiA, hipblaslt_f8>{} && std::is_same<TiB, hipblaslt_bf8>{})
+                     || (std::is_same<TiA, hipblaslt_bf8>{} && std::is_same<TiB, hipblaslt_f8>{})
+                     || (std::is_same<TiA, double>{} && std::is_same<TiB, double>{})
+                     || (std::is_same<TiA, hipblasLtInt8>{} && std::is_same<TiB, hipblasLtInt8>{})
+                     || (std::is_same<TiA, hipblaslt_f8>{} && std::is_same<TiB, hipblasLtHalf>{})
+                     || (std::is_same<TiA, hipblasLtHalf>{} && std::is_same<TiB, hipblaslt_f8>{})>>
     : hipblaslt_test_valid
 {
     void operator()(const Arguments& arg)
     {
-        static const func_map map = {{"matmul", testing_matmul<Ti, Ti, To, Tc>}};
+        static const func_map map = {{"matmul", testing_matmul<TiA, TiB, To, Tc>}};
         run_function(map, arg);
     }
 };
@@ -334,7 +332,6 @@ try
          value<std::string>(&precision)->default_value("f16_r"), "Precision of matrix A,B,C,D  "
          "Options: f32_r,f16_r,bf16_r,f64_r,i32_r,i8_r")
 
-/*TODO: Enable individual matrix type option once input/output can support different data type.
         ("a_type",
          value<std::string>(&a_type), "Precision of matrix A. "
         "Options: f32_r,f16_r,bf16_r")
@@ -350,7 +347,7 @@ try
         ("d_type",
          value<std::string>(&d_type), "Precision of matrix D. "
         "Options: f32_r,f16_r,bf16_r")
-*/
+
         ("compute_type",
          value<std::string>(&compute_type)->default_value("f32_r"), "Precision of computation. "
          "Options: s,f32_r,x,xf32_r,f64_r,i32_r")
