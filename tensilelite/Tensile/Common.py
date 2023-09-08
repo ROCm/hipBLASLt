@@ -406,7 +406,8 @@ validGEMMTypes = [ ('H','H','H'), ('S','S','S'), ('D','D','D'), ('C','C','C'), (
                    ('F8','F8','S'), ('B8','B8','S'), \
                    ('F8B8','B8','S'), ('B8F8', 'B8', 'S'), \
                    ('F8','H','S'), ('B8','H','S'), \
-                   ('F8B8','H','S'), ('B8F8','H','S') ]
+                   ('F8B8','H','S'), ('B8F8','H','S'),
+                   ('H','F8','S') ]
 
 # All HPA types are listed here (HPA=T). The name of the library logic files for these types is:
 # *_TiToTc_BH*.yaml where Ti, Tc, and To are the data types of A/B, C/D, and computation, respectively.
@@ -416,7 +417,7 @@ HPATypes = [ ('H','S','S'), ('H','H','S'), ('B','B','S'), ('B','S','S'), ('I8','
              ('F8','S','S'), ('B8','S','S'), ('F8B8','S','S'), ('B8F8', 'S', 'S'), \
              ('F8B8','B8','S'), ('B8F8', 'B8', 'S'), \
              ('F8','H','S'), ('B8','H','S'), ('F8B8','H','S'), ('B8F8','H','S'), \
-             ('F8','F8', 'S'), ('B8', 'B8', 'S') ]
+             ('F8','F8', 'S'), ('B8', 'B8', 'S'), ('H','F8','S') ]
 
 validParameters = {
     # 0: Global read is along parallel direction in thread level,
