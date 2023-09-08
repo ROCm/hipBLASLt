@@ -133,6 +133,9 @@ void Arguments::init()
     bias_vector       = false;
     scaleA            = false;
     scaleB            = false;
+    scaleC            = false;
+    scaleD            = false;
+    scaleE            = false;
     scaleAlpha_vector = false;
     grouped_gemm      = 0;
     c_noalias_d       = false;

@@ -76,6 +76,7 @@
 
 #define ASSERT_HALF_EQ(a, b) ASSERT_FLOAT_EQ(float(a), float(b))
 #define ASSERT_BF16_EQ(a, b) ASSERT_FLOAT_EQ(float(a), float(b))
+#define ASSERT_F8_EQ(a, b) ASSERT_FLOAT_EQ(float(a), float(b))
 
 // Compare float to hip_bfloat16
 // Allow the hip_bfloat16 to match the rounded or truncated value of float
@@ -113,6 +114,13 @@
 template <typename T, typename T_hpa = T>
 void unit_check_general(
     int64_t M, int64_t N, int64_t lda, const std::remove_cv_t<T_hpa>* hCPU, const T* hGPU);
+
+template <>
+inline void unit_check_general(
+    int64_t M, int64_t N, int64_t lda, const hipblaslt_f8* hCPU, const hipblaslt_f8* hGPU)
+{
+    UNIT_CHECK(M, N, lda, 0, hCPU, hGPU, 1, ASSERT_F8_EQ);
+}
 
 template <>
 inline void unit_check_general(
@@ -182,6 +190,18 @@ inline void unit_check_general(int64_t             M,
                                int64_t             batch_count)
 {
     UNIT_CHECK(M, N, lda, strideA, hCPU, hGPU, batch_count, ASSERT_BF16_EQ);
+}
+
+template <>
+inline void unit_check_general(int64_t       M,
+                               int64_t       N,
+                               int64_t       lda,
+                               int64_t    strideA,
+                               const hipblaslt_f8* hCPU,
+                               const hipblaslt_f8* hGPU,
+                               int64_t       batch_count)
+{
+    UNIT_CHECK(M, N, lda, strideA, hCPU, hGPU, batch_count, ASSERT_F8_EQ);
 }
 
 template <>

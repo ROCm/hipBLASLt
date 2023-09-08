@@ -302,18 +302,21 @@ typedef enum
  */
 typedef enum rocblaslt_matmul_desc_attributes_
 {
-    ROCBLASLT_MATMUL_DESC_TRANSA                    = 0,
-    ROCBLASLT_MATMUL_DESC_TRANSB                    = 1,
-    ROCBLASLT_MATMUL_DESC_EPILOGUE                  = 2,
-    ROCBLASLT_MATMUL_DESC_BIAS_POINTER              = 3,
-    ROCBLASLT_MATMUL_DESC_BIAS_DATA_TYPE            = 4,
-    ROCBLASLT_MATMUL_DESC_A_SCALE_POINTER           = 5,
-    ROCBLASLT_MATMUL_DESC_B_SCALE_POINTER           = 6,
-    ROCBLASLT_MATMUL_DESC_EPILOGUE_AUX_POINTER      = 7,
-    ROCBLASLT_MATMUL_DESC_EPILOGUE_AUX_LD           = 8,
-    ROCBLASLT_MATMUL_DESC_EPILOGUE_AUX_BATCH_STRIDE = 9,
-    ROCBLASLT_MATMUL_DESC_POINTER_MODE              = 10,
-    ROCBLASLT_MATMUL_DESC_MAX                       = 101
+    ROCBLASLT_MATMUL_DESC_TRANSA                     = 0,
+    ROCBLASLT_MATMUL_DESC_TRANSB                     = 1,
+    ROCBLASLT_MATMUL_DESC_EPILOGUE                   = 2,
+    ROCBLASLT_MATMUL_DESC_BIAS_POINTER               = 3,
+    ROCBLASLT_MATMUL_DESC_BIAS_DATA_TYPE             = 4,
+    ROCBLASLT_MATMUL_DESC_A_SCALE_POINTER            = 5,
+    ROCBLASLT_MATMUL_DESC_B_SCALE_POINTER            = 6,
+    ROCBLASLT_MATMUL_DESC_C_SCALE_POINTER            = 7,
+    ROCBLASLT_MATMUL_DESC_D_SCALE_POINTER            = 8,
+    ROCBLASLT_MATMUL_DESC_EPILOGUE_AUX_SCALE_POINTER = 9,
+    ROCBLASLT_MATMUL_DESC_EPILOGUE_AUX_POINTER       = 10,
+    ROCBLASLT_MATMUL_DESC_EPILOGUE_AUX_LD            = 11,
+    ROCBLASLT_MATMUL_DESC_EPILOGUE_AUX_BATCH_STRIDE  = 12,
+    ROCBLASLT_MATMUL_DESC_POINTER_MODE               = 13,
+    ROCBLASLT_MATMUL_DESC_MAX                        = 101
 } rocblaslt_matmul_desc_attributes;
 
 /*! \ingroup types_module
@@ -413,6 +416,9 @@ namespace rocblaslt
         void* bias          = nullptr;
         void* scaleA        = nullptr;
         void* scaleB        = nullptr;
+        void* scaleC        = nullptr;
+        void* scaleD        = nullptr;
+        void* scaleE        = nullptr;
         void* scaleAlphaVec = nullptr;
         void* aux           = nullptr;
     };

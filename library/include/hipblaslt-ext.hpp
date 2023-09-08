@@ -132,6 +132,9 @@ namespace hipblaslt_ext
         void* bias          = nullptr; //!< The bias input pointer.
         void* scaleA        = nullptr; //!< The Scale A input pointer.
         void* scaleB        = nullptr; //!< The Scale B input pointer.
+        void* scaleC        = nullptr; //!< The Scale C input pointer.
+        void* scaleD        = nullptr; //!< The Scale D input pointer.
+        void* scaleAux      = nullptr; //!< The Scale AUX input pointer.
         void* scaleAlphaVec = nullptr; //!< The scaleAlpha vector input pointer.
         void* aux           = nullptr; //!< The aux input pointer.
     };

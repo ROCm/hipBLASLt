@@ -160,6 +160,15 @@ namespace
                 if(arg.scaleB)
                     name << "_SB";
 
+                if(arg.scaleC)
+                    name << "_SC";
+                
+                if(arg.scaleD)
+                    name << "_SD";
+
+                if (arg.scaleE)
+                    name << "_SAux";
+
                 if(arg.scaleAlpha_vector)
                     name << "_SAV";
 

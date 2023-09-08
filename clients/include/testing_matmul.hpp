@@ -51,6 +51,8 @@ void epilogue_func(int64_t m,
                    To*     out,
                    Tc*     out_raw,
                    Tc*     e,
+                   Tc      scaleD,
+                   Tc      scaleE,
                    bool    enable_bias,
                    Tbias*  bias,
                    Tact    arg1,
@@ -70,13 +72,14 @@ void epilogue_func(int64_t m,
             auto in_Tact = static_cast<Tact>(*(in + pos)) + bias_data;
             if(e && !gradient)
             {
-                *(e + pos) = static_cast<Tc>(in_Tact);
+                *(e + pos) = static_cast<Tc>(in_Tact * scaleE);
             }
             Tact in_Tact_act = 0;
             if(gradient)
-                in_Tact_act = act_func(static_cast<Tact>(*(e + pos)), arg1, arg2) * in_Tact;
+                in_Tact_act
+                    = act_func(static_cast<Tact>(*(e + pos)), arg1, arg2) * in_Tact * scaleD;
             else
-                in_Tact_act = act_func(in_Tact, arg1, arg2);
+                in_Tact_act = act_func(in_Tact, arg1, arg2) * scaleD;
             *(out + pos)     = saturate_o(in_Tact_act);
             *(out_raw + pos) = static_cast<Tc>(in_Tact_act);
         }
@@ -90,6 +93,8 @@ void epilogue_func(int64_t m,
                    To*     out,
                    Tc*     out_raw,
                    Tc*     e,
+                   Tc      scaleD,
+                   Tc      scaleE,
                    bool    enable_bias,
                    Tbias*  bias,
                    bool    gradient)
@@ -106,8 +111,9 @@ void epilogue_func(int64_t m,
             auto temp = static_cast<Ti>(*(in + pos)) + bias_data;
             if(e)
             {
-                *(e + pos) = static_cast<Tc>(temp);
+                *(e + pos) = static_cast<Tc>(temp * scaleE);
             }
+            temp *= scaleD;
             *(out + pos)     = saturate_o(temp);
             *(out_raw + pos) = static_cast<Tc>(temp);
         }
@@ -255,7 +261,8 @@ void testing_matmul(const Arguments& arg)
     std::vector<device_vector<TiB>*>    dB(gemm_count);
     std::vector<device_vector<To>*>     dC(gemm_count), dD(gemm_count), dBias(gemm_count);
     std::vector<device_vector<Talpha>*> dScaleAlphaVec(gemm_count), dBias_C(gemm_count),
-        dScaleA(gemm_count), dScaleB(gemm_count);
+        dScaleA(gemm_count), dScaleB(gemm_count), dScaleC(gemm_count), dScaleD(gemm_count),
+        dScaleE(gemm_count);
     std::vector<device_vector<Tc>*> dE(gemm_count);
 
     std::vector<host_vector<TiA>*> hA(gemm_count);
@@ -264,7 +271,8 @@ void testing_matmul(const Arguments& arg)
         hBias(gemm_count), hBias_gold(gemm_count);
     std::vector<host_vector<Talpha>*> hD_gold_epl(gemm_count), hScaleAlphaVec(gemm_count),
         hD_gold_ScaleAlpha(gemm_count), hBias_C(gemm_count), hBias_gold_C(gemm_count),
-        hBias_gold_epl(gemm_count), hScaleA(gemm_count), hScaleB(gemm_count);
+        hBias_gold_epl(gemm_count), hScaleA(gemm_count), hScaleB(gemm_count), hScaleC(gemm_count),
+        hScaleD(gemm_count), hScaleE(gemm_count);
     std::vector<host_vector<Tc>*> hE(gemm_count, nullptr), hE_gold(gemm_count, nullptr);
     std::vector<void*>            alpha_in(gemm_count);
 
@@ -491,6 +499,21 @@ void testing_matmul(const Arguments& arg)
             dScaleB[i] = new device_vector<Talpha>(1, 1, HMM);
             CHECK_DEVICE_ALLOCATION(dScaleB[i]->memcheck());
         }
+        if(arg.scaleC)
+        {
+            dScaleC[i] = new device_vector<Talpha>(1, 1, HMM);
+            CHECK_DEVICE_ALLOCATION(dScaleC[i]->memcheck());
+        }
+        if(arg.scaleD)
+        {
+            dScaleD[i] = new device_vector<Talpha>(1, 1, HMM);
+            CHECK_DEVICE_ALLOCATION(dScaleD[i]->memcheck());
+        }
+        if(arg.scaleE)
+        {
+            dScaleB[i] = new device_vector<Talpha>(1, 1, HMM);
+            CHECK_DEVICE_ALLOCATION(dScaleE[i]->memcheck());
+        }
 
         if(arg.use_e)
         {
@@ -521,6 +544,12 @@ void testing_matmul(const Arguments& arg)
             hScaleA[i] = new host_vector<Talpha>(1);
         if(arg.scaleB)
             hScaleB[i] = new host_vector<Talpha>(1);
+        if(arg.scaleC)
+            hScaleC[i] = new host_vector<Talpha>(1);
+        if(arg.scaleD)
+            hScaleD[i] = new host_vector<Talpha>(1);
+        if(arg.scaleE)
+            hScaleE[i] = new host_vector<Talpha>(1);
 
         if(arg.use_e)
         {
@@ -604,6 +633,35 @@ void testing_matmul(const Arguments& arg)
         if(arg.scaleB)
             hipblaslt_init<Talpha>(*hScaleB[i], 1, 1, 1);
 
+        if(arg.scaleC)
+        {
+            if constexpr(std::is_same<To, hipblaslt_f8>::value
+                         || std::is_same<To, hipblaslt_bf8>::value)
+            {
+                hipblaslt_init_small<Talpha>(*hScaleC[i], 1, 1, 1);
+            }
+            else
+            {
+                hipblaslt_init<Talpha>(*hScaleC[i], 1, 1, 1);
+            }
+        }
+
+        if(arg.scaleD)
+        {
+            if constexpr(std::is_same<To, hipblaslt_f8>::value
+                         || std::is_same<To, hipblaslt_bf8>::value)
+            {
+                hipblaslt_init_small<Talpha>(*hScaleD[i], 1, 1, 1);
+            }
+            else
+            {
+                hipblaslt_init<Talpha>(*hScaleD[i], 1, 1, 1);
+            }
+        }
+
+        if(arg.scaleE)
+            hipblaslt_init<Talpha>(*hScaleE[i], 1, 1, 1);
+
         if(arg.scaleAlpha_vector)
             hipblaslt_init<Talpha>(*hScaleAlphaVec[i], M[i], 1, M[i]);
 
@@ -626,6 +684,15 @@ void testing_matmul(const Arguments& arg)
 
         if(arg.scaleB)
             CHECK_HIP_ERROR(dScaleB[i]->transfer_from(*hScaleB[i]));
+
+        if(arg.scaleC)
+            CHECK_HIP_ERROR(dScaleC[i]->transfer_from(*hScaleC[i]));
+
+        if(arg.scaleD)
+            CHECK_HIP_ERROR(dScaleD[i]->transfer_from(*hScaleD[i]));
+
+        if(arg.scaleE)
+            CHECK_HIP_ERROR(dScaleE[i]->transfer_from(*hScaleE[i]));
 
         if(arg.scaleAlpha_vector)
         {
@@ -710,6 +777,30 @@ void testing_matmul(const Arguments& arg)
                 matmul[i], HIPBLASLT_MATMUL_DESC_B_SCALE_POINTER, &scaleB_addr, sizeof(void*)));
         }
 
+        if(arg.scaleC)
+        {
+            void* scaleC_addr = *dScaleC[i];
+            CHECK_HIPBLASLT_ERROR(hipblasLtMatmulDescSetAttribute(
+                matmul[i], HIPBLASLT_MATMUL_DESC_C_SCALE_POINTER, &scaleC_addr, sizeof(void*)));
+        }
+
+        if(arg.scaleD)
+        {
+            void* scaleD_addr = *dScaleD[i];
+            CHECK_HIPBLASLT_ERROR(hipblasLtMatmulDescSetAttribute(
+                matmul[i], HIPBLASLT_MATMUL_DESC_D_SCALE_POINTER, &scaleD_addr, sizeof(void*)));
+        }
+
+        if(arg.scaleE)
+        {
+            void* scaleE_addr = *dScaleE[i];
+            CHECK_HIPBLASLT_ERROR(
+                hipblasLtMatmulDescSetAttribute(matmul[i],
+                                                HIPBLASLT_MATMUL_DESC_EPILOGUE_AUX_SCALE_POINTER,
+                                                &scaleE_addr,
+                                                sizeof(void*)));
+        }
+
         if(arg.scaleAlpha_vector)
         {
             hipblasLtPointerMode_t scale_mode
@@ -781,13 +872,18 @@ void testing_matmul(const Arguments& arg)
             extepilogue[gemmIdx].aux_ld         = lde[gemmIdx];
             extepilogue[gemmIdx].aux_stride     = stride_e[gemmIdx];
 
-            extinputs[gemmIdx].a     = *dA[gemmIdx];
-            extinputs[gemmIdx].b     = *dB[gemmIdx];
-            extinputs[gemmIdx].c     = *dC[gemmIdx];
-            extinputs[gemmIdx].d     = *dD[gemmIdx];
-            extinputs[gemmIdx].alpha = &h_alpha[gemmIdx];
-            extinputs[gemmIdx].beta  = &h_beta[gemmIdx];
-            extinputs[gemmIdx].bias  = bias_addr;
+            extinputs[gemmIdx].a        = *dA[gemmIdx];
+            extinputs[gemmIdx].b        = *dB[gemmIdx];
+            extinputs[gemmIdx].c        = *dC[gemmIdx];
+            extinputs[gemmIdx].d        = *dD[gemmIdx];
+            extinputs[gemmIdx].alpha    = &h_alpha[gemmIdx];
+            extinputs[gemmIdx].beta     = &h_beta[gemmIdx];
+            extinputs[gemmIdx].bias     = bias_addr;
+            extinputs[gemmIdx].scaleA   = arg.scaleA ? *dScaleA[gemmIdx] : nullptr;
+            extinputs[gemmIdx].scaleB   = arg.scaleB ? *dScaleB[gemmIdx] : nullptr;
+            extinputs[gemmIdx].scaleC   = arg.scaleC ? *dScaleC[gemmIdx] : nullptr;
+            extinputs[gemmIdx].scaleD   = arg.scaleD ? *dScaleD[gemmIdx] : nullptr;
+            extinputs[gemmIdx].scaleAux = arg.scaleE ? *dScaleE[gemmIdx] : nullptr;
             if(arg.scaleAlpha_vector)
                 extinputs[gemmIdx].scaleAlphaVec = *dScaleAlphaVec[gemmIdx];
         }
@@ -1228,6 +1324,7 @@ void testing_matmul(const Arguments& arg)
             workspace_size = max_workspace_size;
         }
     }
+
     dWorkspace = new device_vector<unsigned char>(workspace_size, 1, HMM);
     CHECK_DEVICE_ALLOCATION(dWorkspace->memcheck());
 
@@ -1315,16 +1412,20 @@ void testing_matmul(const Arguments& arg)
                 }
             }
 
-#define epilogue_param                                                   \
-    M[gemmIdx], N[gemmIdx], ldd[gemmIdx], *(hD_gold_epl[gemmIdx]) + pos, \
-        *(hD_gold[gemmIdx]) + pos, *(hBias_gold_epl[gemmIdx]) + pos, ePos, applyBias
+#define epilogue_param                                                                  \
+    M[gemmIdx], N[gemmIdx], ldd[gemmIdx], *(hD_gold_epl[gemmIdx]) + pos,                \
+        *(hD_gold[gemmIdx]) + pos, *(hBias_gold_epl[gemmIdx]) + pos, ePos, scaleDValue, \
+        scaleEValue, applyBias
         for(int gemmIdx = 0; gemmIdx < gemm_count; gemmIdx++)
         {
             auto alphaTemp = h_alpha[gemmIdx];
+            auto betaTemp  = h_beta[gemmIdx];
             if(arg.scaleA)
                 alphaTemp *= (*hScaleA[gemmIdx])[0];
             if(arg.scaleB)
                 alphaTemp *= (*hScaleB[gemmIdx])[0];
+            if(arg.scaleC)
+                betaTemp *= (*hScaleC[gemmIdx])[0];
 
             for(int batchIdx = 0; batchIdx < num_batches[gemmIdx]; batchIdx++)
             {
@@ -1343,10 +1444,11 @@ void testing_matmul(const Arguments& arg)
                             lda[gemmIdx],
                             *(hB[gemmIdx]) + stride_b[gemmIdx] * batchIdx,
                             ldb[gemmIdx],
-                            h_beta[gemmIdx],
+                            betaTemp,
                             *(hD_gold_epl[gemmIdx]) + stride_d[gemmIdx] * batchIdx,
                             ldd[gemmIdx],
                             *(hScaleAlphaVec[gemmIdx]) + 0,
+                            1,
                             false);
                     }
                     else
@@ -1362,15 +1464,18 @@ void testing_matmul(const Arguments& arg)
                             lda[gemmIdx],
                             *(hB[gemmIdx]) + stride_b[gemmIdx] * batchIdx,
                             ldb[gemmIdx],
-                            h_beta[gemmIdx],
+                            betaTemp,
                             *(hD_gold_epl[gemmIdx]) + stride_d[gemmIdx] * batchIdx,
                             ldd[gemmIdx],
+                            1,
                             false);
                     }
                     auto pos    = stride_d[gemmIdx] * batchIdx;
                     auto hEInst = arg.gradient ? hE : hE_gold;
                     auto ePos = (hEInst[gemmIdx] == nullptr) ? nullptr : (*(hEInst[gemmIdx]) + pos);
-                    auto applyBias = arg.gradient ? false : arg.bias_vector;
+                    auto scaleDValue = arg.scaleD ? (*hScaleD[gemmIdx])[0] : 1;
+                    auto scaleEValue = arg.scaleE ? (*hScaleE[gemmIdx])[0] : 1;
+                    auto applyBias   = arg.gradient ? false : arg.bias_vector;
 
                     if(change_bias_type[gemmIdx] == false)
                     {
@@ -1547,6 +1652,8 @@ void testing_matmul(const Arguments& arg)
                 }
                 else
                 {
+                    auto scaleDValue = arg.scaleD ? (*hScaleD[gemmIdx])[0] : 1;
+
                     cblas_gemm<TiA, TiB, To, Talpha>(transA,
                                                      transB,
                                                      M[gemmIdx],
@@ -1557,10 +1664,11 @@ void testing_matmul(const Arguments& arg)
                                                      lda[gemmIdx],
                                                      *(hB[gemmIdx]) + stride_b[gemmIdx] * batchIdx,
                                                      ldb[gemmIdx],
-                                                     h_beta[gemmIdx],
+                                                     betaTemp,
                                                      *(hD_gold[gemmIdx])
                                                          + stride_d[gemmIdx] * batchIdx,
                                                      ldd[gemmIdx],
+                                                     scaleDValue,
                                                      false);
                 }
             }
@@ -1875,6 +1983,21 @@ void testing_matmul(const Arguments& arg)
         {
             delete hScaleB[i];
             delete dScaleB[i];
+        }
+        if(arg.scaleC)
+        {
+            delete hScaleC[i];
+            delete dScaleC[i];
+        }
+        if(arg.scaleD)
+        {
+            delete hScaleD[i];
+            delete dScaleD[i];
+        }
+        if(arg.scaleE)
+        {
+            delete hScaleE[i];
+            delete dScaleE[i];
         }
         if(arg.use_e)
         {
