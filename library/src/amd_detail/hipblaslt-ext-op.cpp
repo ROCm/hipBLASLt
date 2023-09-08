@@ -44,10 +44,10 @@
 #include <vector>
 #include <unordered_map>
 
-hipblasStatus_t hipblasltSoftmaxRun(hipblasDatatype_t datatype, uint32_t m, uint32_t n, uint32_t dim,
+hipblasStatus_t hipblasltSoftmaxRun(hipblasltDatatype_t datatype, uint32_t m, uint32_t n, uint32_t dim,
                                     void *output, void *input, hipStream_t stream);
 
-hipblasStatus_t hipblasltExtSoftmax(hipblasDatatype_t datatype, uint32_t m, uint32_t n, uint32_t dim,
+hipblasStatus_t hipblasltExtSoftmax(hipblasltDatatype_t datatype, uint32_t m, uint32_t n, uint32_t dim,
     void *output, void *input, hipStream_t stream) {
     return hipblasltSoftmaxRun(datatype, m, n, dim, output, input, stream);
 }
@@ -111,17 +111,17 @@ namespace {
         return WORKGROUP_SIZE / tileM;
     }
 
-    uint32_t elementNumBytes(hipblasDatatype_t type) {
-        assert(type == HIPBLAS_R_32F);
+    uint32_t elementNumBytes(hipblasltDatatype_t type) {
+        assert(type == HIPBLASLT_R_32F);
 
-        if (type == HIPBLAS_R_32F) {
+        if (type == HIPBLASLT_R_32F) {
             return 4;
         }
 
         return 1;
     }
 
-    inline uint32_t getLdsUsageByte(hipblasDatatype_t datatype, uint32_t tileM, uint32_t tileN) {
+    inline uint32_t getLdsUsageByte(hipblasltDatatype_t datatype, uint32_t tileM, uint32_t tileN) {
         return elementNumBytes(datatype) * tileM * tileN;
     }
 
@@ -152,9 +152,9 @@ namespace {
     }();
 }
 
-hipblasStatus_t hipblasltSoftmaxRun(hipblasDatatype_t datatype, uint32_t m, uint32_t n, uint32_t dim,
+hipblasStatus_t hipblasltSoftmaxRun(hipblasltDatatype_t datatype, uint32_t m, uint32_t n, uint32_t dim,
                                     void *output, void *input, hipStream_t stream) {
-    if (datatype != HIPBLAS_R_32F) {
+    if (datatype != HIPBLASLT_R_32F) {
         return HIPBLAS_STATUS_NOT_SUPPORTED;
     }
 
@@ -176,10 +176,10 @@ hipblasStatus_t hipblasltSoftmaxRun(hipblasDatatype_t datatype, uint32_t m, uint
     const auto archName = trimArchName(gpu->archName());
     auto &masterLib = getExtOpMasterLibrary();
     const auto &lib = masterLib.getLibrary(archName, SoftmaxSolutionLibrary::opName)->as<SoftmaxSolutionLibrary>();
-    auto sol = lib.findBestSolution(SoftmaxProblem(m, n, hipblasDatatype_to_tensile_type(datatype)), *gpu);
+    auto sol = lib.findBestSolution(SoftmaxProblem(m, n, hipblasltDatatype_to_tensile_type(datatype)), *gpu);
     const auto kernelName = sol->name();
     err = adapter->initKernel(kernelName);
-    Tensile::KernelArguments kArgs;
+    Tensile::KernelArguments kArgs(false);
     kArgs.append("input", input);
     kArgs.append("output", output);
     kArgs.append("m", m);
