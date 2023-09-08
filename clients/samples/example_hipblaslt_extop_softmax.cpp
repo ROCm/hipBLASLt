@@ -72,7 +72,7 @@ int main(int argc, char **argv) {
     hipStream_t stream{};
     hipErr = hipStreamCreate(&stream);
     //warmup
-    auto hipblasltErr = hipblasltExtSoftmax(HIPBLAS_R_32F, m, n, 1, output, input, stream);
+    auto hipblasltErr = hipblasltExtSoftmax(HIPBLASLT_R_32F, m, n, 1, output, input, stream);
 
     if (hipblasltErr) {
         std::cerr << "Invalid shape (" << m << ", " << n << "), currently support n <= 256\n";
@@ -89,7 +89,7 @@ int main(int argc, char **argv) {
     hipErr = hipEventRecord(beg, stream);
 
     for (int i = 0; i < numRuns; ++i) {
-        hipblasltErr = hipblasltExtSoftmax(HIPBLAS_R_32F, m, n, 1, output, input, stream);
+        hipblasltErr = hipblasltExtSoftmax(HIPBLASLT_R_32F, m, n, 1, output, input, stream);
     }
 
     hipErr = hipEventRecord(end, stream);

@@ -28,7 +28,7 @@ namespace {
 }
 
 class ExtOpSoftmaxTest : public testing::TestWithParam<uint32_t> {};
-class ExtOpSoftmaxUnsupportedDatatypeTest : public testing::TestWithParam<hipblasDatatype_t> {};
+class ExtOpSoftmaxUnsupportedDatatypeTest : public testing::TestWithParam<hipblasltDatatype_t> {};
 
 TEST_P(ExtOpSoftmaxTest, softmaxSuccess) {
     uint32_t m = GetParam();
@@ -41,7 +41,7 @@ TEST_P(ExtOpSoftmaxTest, softmaxSuccess) {
     auto err = hipMalloc(&gpuInput, m * n * sizeof(float));
     err = hipMalloc(&gpuOutput, m * n * sizeof(float));
     err = hipMemcpyHtoD(gpuInput, input.data(), m * n * sizeof(float));
-    auto hipblasltErr = hipblasltExtSoftmax(HIPBLAS_R_32F, m, n, 1, gpuOutput, gpuInput, nullptr);
+    auto hipblasltErr = hipblasltExtSoftmax(HIPBLASLT_R_32F, m, n, 1, gpuOutput, gpuInput, nullptr);
     EXPECT_EQ(hipblasltErr, HIPBLAS_STATUS_SUCCESS);
     err = hipDeviceSynchronize();
     EXPECT_EQ(err, hipSuccess);
@@ -63,11 +63,11 @@ TEST_P(ExtOpSoftmaxUnsupportedDatatypeTest, softmaxFailureUnsupportedDatatype) {
 }
 
 TEST(ExtOpTest, softmaxFailureUnsupportedShapeOrReductionDim) {
-    auto hipblasltErr = hipblasltExtSoftmax(HIPBLAS_R_32F, 16, 512, 1, nullptr, nullptr, nullptr);
+    auto hipblasltErr = hipblasltExtSoftmax(HIPBLASLT_R_32F, 16, 512, 1, nullptr, nullptr, nullptr);
     EXPECT_EQ(hipblasltErr, HIPBLAS_STATUS_INVALID_VALUE);
-    hipblasltErr = hipblasltExtSoftmax(HIPBLAS_R_32F, 16, 16, 0, nullptr, nullptr, nullptr);
+    hipblasltErr = hipblasltExtSoftmax(HIPBLASLT_R_32F, 16, 16, 0, nullptr, nullptr, nullptr);
     EXPECT_EQ(hipblasltErr, HIPBLAS_STATUS_NOT_SUPPORTED);
 }
 
 INSTANTIATE_TEST_SUITE_P(ExtOpTest, ExtOpSoftmaxTest, testing::Values<uint32_t>(1, 16, 1335));
-INSTANTIATE_TEST_SUITE_P(ExtOpTest, ExtOpSoftmaxUnsupportedDatatypeTest, testing::Values<hipblasDatatype_t>(HIPBLAS_R_16F, HIPBLAS_R_16B));
+INSTANTIATE_TEST_SUITE_P(ExtOpTest, ExtOpSoftmaxUnsupportedDatatypeTest, testing::Values<hipblasltDatatype_t>(HIPBLASLT_R_16F, HIPBLASLT_R_16B));

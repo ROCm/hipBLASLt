@@ -350,4 +350,31 @@ rocblaslt_status getBestSolutions(rocblaslt_handle       handle,
                                   const int              requestedAlgoCount,
                                   std::vector<rocblaslt_matmul_heuristic_result>& heuristicResults);
 
-Tensile::DataType hipblasDatatype_to_tensile_type(hipblasDatatype_t type);
+/******************************************************
+ * Map a hipblaslt data type to a corresponding Tensile type *
+ ******************************************************/
+inline Tensile::DataType hipblasltDatatype_to_tensile_type(hipblasltDatatype_t type)
+{
+    switch(type)
+    {
+    case HIPBLASLT_R_16F:
+        return Tensile::DataType::Half;
+    case HIPBLASLT_R_32F:
+        return Tensile::DataType::Float;
+    case HIPBLASLT_R_64F:
+        return Tensile::DataType::Double;
+    case HIPBLASLT_R_16B:
+        return Tensile::DataType::BFloat16;
+    case HIPBLASLT_R_8F_E4M3:
+        return Tensile::DataType::Float8;
+    case HIPBLASLT_R_8F_E5M2:
+        return Tensile::DataType::BFloat8;
+    case HIPBLASLT_R_8I:
+        return Tensile::DataType::Int8;
+    case HIPBLASLT_R_32I:
+        return Tensile::DataType::Int32;
+    default:
+        assert(!"hipblasltDatatype_to_tensile_type: non-supported type");
+        return Tensile::DataType::None;
+    }
+}
