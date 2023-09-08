@@ -185,10 +185,13 @@ typedef enum {
   HIPBLASLT_MATMUL_DESC_BIAS_DATA_TYPE = 4,             /**<Type of the bias vector in the device memory. Can be set same as D matrix type or Scale type. Bias case: see HIPBLASLT_EPILOGUE_BIAS. Data Type:int32_t based on hipblasltDatatype_t*/
   HIPBLASLT_MATMUL_DESC_A_SCALE_POINTER = 5,            /**<Device pointer to the scale factor value that converts data in matrix A to the compute data type range. The scaling factor must have the same type as the compute type. If not specified, or set to NULL, the scaling factor is assumed to be 1. If set for an unsupported matrix data, scale, and compute type combination, calling hipblasLtMatmul() will return HIPBLAS_INVALID_VALUE. Default value: NULL Data Type: void* /const void* */
   HIPBLASLT_MATMUL_DESC_B_SCALE_POINTER = 6,            /**<Equivalent to HIPBLASLT_MATMUL_DESC_A_SCALE_POINTER for matrix B. Default value: NULL Type: void* /const void* */
-  HIPBLASLT_MATMUL_DESC_EPILOGUE_AUX_POINTER = 7,       /**<Epilogue auxiliary buffer pointer in the device memory. Data Type:void* /const void* */
-  HIPBLASLT_MATMUL_DESC_EPILOGUE_AUX_LD = 8,            /**<The leading dimension of the epilogue auxiliary buffer pointer in the device memory. Data Type:int64_t */
-  HIPBLASLT_MATMUL_DESC_EPILOGUE_AUX_BATCH_STRIDE = 9,  /**<The batch stride of the epilogue auxiliary buffer pointer in the device memory. Data Type:int64_t */
-  HIPBLASLT_MATMUL_DESC_POINTER_MODE = 10,              /**<Specifies alpha and beta are passed by reference, whether they are scalars on the host or on the device, or device vectors. Default value is: HIPBLASLT_POINTER_MODE_HOST (i.e., on the host). Data Type: int32_t based on hipblasLtPointerMode_t*/
+  HIPBLASLT_MATMUL_DESC_C_SCALE_POINTER = 7,            /**<Equivalent to HIPBLASLT_MATMUL_DESC_A_SCALE_POINTER for matrix C. Default value: NULL Type: void* /const void* */
+  HIPBLASLT_MATMUL_DESC_D_SCALE_POINTER = 8,            /**<Equivalent to HIPBLASLT_MATMUL_DESC_A_SCALE_POINTER for matrix D. Default value: NULL Type: void* /const void* */
+  HIPBLASLT_MATMUL_DESC_EPILOGUE_AUX_SCALE_POINTER = 9, /**<Equivalent to HIPBLASLT_MATMUL_DESC_A_SCALE_POINTER for matrix AUX. Default value: NULL Type: void* /const void* */
+  HIPBLASLT_MATMUL_DESC_EPILOGUE_AUX_POINTER = 10,      /**<Epilogue auxiliary buffer pointer in the device memory. Data Type:void* /const void* */
+  HIPBLASLT_MATMUL_DESC_EPILOGUE_AUX_LD = 11,           /**<The leading dimension of the epilogue auxiliary buffer pointer in the device memory. Data Type:int64_t */
+  HIPBLASLT_MATMUL_DESC_EPILOGUE_AUX_BATCH_STRIDE = 12, /**<The batch stride of the epilogue auxiliary buffer pointer in the device memory. Data Type:int64_t */
+  HIPBLASLT_MATMUL_DESC_POINTER_MODE = 13,              /**<Specifies alpha and beta are passed by reference, whether they are scalars on the host or on the device, or device vectors. Default value is: HIPBLASLT_POINTER_MODE_HOST (i.e., on the host). Data Type: int32_t based on hipblasLtPointerMode_t*/
   HIPBLASLT_MATMUL_DESC_MAX = 101
 } hipblasLtMatmulDescAttributes_t;
 

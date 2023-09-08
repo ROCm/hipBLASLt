@@ -146,6 +146,9 @@ struct _rocblaslt_matmul_desc
     void*               bias        = nullptr;
     void*               scaleA      = nullptr;
     void*               scaleB      = nullptr;
+    void*               scaleC      = nullptr;
+    void*               scaleD      = nullptr;
+    void*               scaleE      = nullptr;
     void*               pointermode = nullptr;
     hipblasltDatatype_t bias_type   = static_cast<hipblasltDatatype_t>(0);
     // E

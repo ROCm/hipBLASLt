@@ -128,6 +128,9 @@ struct Arguments
     bool                  bias_vector;
     bool                  scaleA;
     bool                  scaleB;
+    bool                  scaleC;
+    bool                  scaleD;
+    bool                  scaleE;
     bool                  scaleAlpha_vector;
     bool                  c_noalias_d;
     bool                  HMM;
@@ -204,6 +207,9 @@ struct Arguments
     OPER(bias_vector) SEP            \
     OPER(scaleA) SEP                 \
     OPER(scaleB) SEP                 \
+    OPER(scaleC) SEP                 \
+    OPER(scaleD) SEP                 \
+    OPER(scaleE) SEP                 \
     OPER(scaleAlpha_vector) SEP          \
     OPER(c_noalias_d) SEP            \
     OPER(HMM) SEP                    \

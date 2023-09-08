@@ -699,9 +699,14 @@ namespace
                || Tensile_TiB == Tensile::DataType::BFloat8)
             {
                 tensileProblem.setUseScaleAB(true);
-                tensileProblem.setUseScaleCD(false); // Currently disabled.
+                if(Tensile_To == Tensile::DataType::Float8 || Tensile_To == Tensile::DataType::BFloat8)
+                    tensileProblem.setUseScaleCD(true);
+                else
+                    tensileProblem.setUseScaleCD(false);
                 tensileProblem.setScaleA(Tensile_Tc);
                 tensileProblem.setScaleB(Tensile_Tc);
+                tensileProblem.setScaleC(Tensile_Tc);
+                tensileProblem.setScaleD(Tensile_Tc);
                 tensileProblem.setUseScaleAlphaVec(true);
                 tensileProblem.setScaleAlphaVec(Tensile_Tc, d.sizes()[0]);
             }
@@ -792,8 +797,8 @@ namespace
         inputs.bias          = reinterpret_cast<const void*>(prob.bias);
         inputs.scaleA        = reinterpret_cast<const void*>(prob.scaleA);
         inputs.scaleB        = reinterpret_cast<const void*>(prob.scaleB);
-        inputs.scaleC        = nullptr;
-        inputs.scaleD        = nullptr;
+        inputs.scaleC        = reinterpret_cast<const void*>(prob.scaleC);
+        inputs.scaleD        = reinterpret_cast<const void*>(prob.scaleD);
         inputs.scaleAlphaVec = reinterpret_cast<const void*>(prob.scaleAlphaVec);
 
         // push 2 activation arguments
@@ -2429,8 +2434,12 @@ CREATEFUNCTION(rocblaslt_f8, rocblaslt_bf8, rocblaslt_half, float)
 CREATEFUNCTION(rocblaslt_bf8, rocblaslt_f8, rocblaslt_half, float)
 CREATEFUNCTION(rocblasltInt8, rocblasltInt8, int32_t, int32_t)
 CREATEFUNCTION(rocblasltInt8, rocblasltInt8, rocblasltInt8, int32_t)
+CREATEFUNCTION(rocblaslt_f8, rocblaslt_half, rocblaslt_f8, float)
+CREATEFUNCTION(rocblaslt_half, rocblaslt_f8, rocblaslt_f8, float)
 CREATEFUNCTION(rocblaslt_f8, rocblaslt_half, rocblaslt_half, float)
 CREATEFUNCTION(rocblaslt_half, rocblaslt_f8, rocblaslt_half, float)
+CREATEFUNCTION(rocblaslt_f8, rocblaslt_half, float, float)
+CREATEFUNCTION(rocblaslt_half, rocblaslt_f8, float, float)
 
 /***********************************************************************************
  * Whether Tensile has been initialized for at least one device (used for

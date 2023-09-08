@@ -207,6 +207,11 @@ __host__ __device__ inline bool hipblaslt_isnan(hipblasLtHalf arg)
     return (~x.data & 0x7c00) == 0 && (x.data & 0x3ff) != 0;
 }
 
+__host__ __device__ inline bool hipblaslt_isnan(hipblaslt_f8 arg)
+{
+    return arg.is_nan();
+}
+
 /*******************************************************************************
  * \brief  returns true if arg is Infinity
  ********************************************************************************/

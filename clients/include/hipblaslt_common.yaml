@@ -110,6 +110,16 @@ Real mix precisions: &real_mix_precisions
     { a_type: f8_r, b_type: f16_r, c_type: f16_r, d_type: f16_r, compute_type: c_f32_fast_f16_r, scale_type: f32_r}
   - &fp16fp8_precision_dst_fp16
     { a_type: f16_r, b_type: f8_r, c_type: f16_r, d_type: f16_r, compute_type: c_f32_fast_f16_r, scale_type: f32_r}
+  - &fp8fp16_precision_dst_fp32
+    { a_type: f8_r, b_type: f16_r, c_type: f32_r, d_type: f32_r, compute_type: c_f32_fast_f16_r, scale_type: f32_r}
+  - &fp16fp8_precision_dst_fp32
+    { a_type: f16_r, b_type: f8_r, c_type: f32_r, d_type: f32_r, compute_type: c_f32_fast_f16_r, scale_type: f32_r}
+
+Real mix precisions fp8: &real_mix_precisions_fp8
+  - &fp8fp16_precision_dst_fp8
+    { a_type: f8_r, b_type: f16_r, c_type: f8_r, d_type: f8_r, compute_type: c_f32_fast_f16_r, scale_type: f32_r}
+  - &fp16fp8_precision_dst_fp8
+    { a_type: f16_r, b_type: f8_r, c_type: f8_r, d_type: f8_r, compute_type: c_f32_fast_f16_r, scale_type: f32_r}
 
 # The Arguments struct passed directly to C++. See hipblaslt_arguments.hpp.
 # The order of the entries is significant, so it can't simply be a dictionary.
@@ -167,6 +177,9 @@ Arguments:
   - bias_vector: c_bool
   - scaleA: c_bool
   - scaleB: c_bool
+  - scaleC: c_bool
+  - scaleD: c_bool
+  - scaleE: c_bool
   - scaleAlpha_vector: c_bool
   - c_noalias_d: c_bool
   - HMM: c_bool
@@ -253,6 +266,9 @@ Defaults:
   bias_vector: false
   scaleA: false
   scaleB: false
+  scaleC: false
+  scaleD: false
+  scaleE: false
   scaleAlpha_vector: false
   grouped_gemm: 0
   norm_check_assert: true
