@@ -43,7 +43,7 @@ for arch in "${archs[@]}"; do
     done
     wait
     /opt/rocm/llvm/bin/clang++ -target amdgcn-amdhsa -o $dst/softmax_$arch.co ${objs[@]}
-    python3 ./ExtOpCreateLibrary.py --src=$dst --co=$dst/softmax_$arch.co --output=$dst
+    python3 ./ExtOpCreateLibrary.py --src=$dst --co=$dst/softmax_$arch.co --output=$dst --arch=$arch
 done
 
 deactivate

@@ -35,18 +35,20 @@ if __name__ == '__main__':
     ap.add_argument('--input-format', type=str, default='yaml', choices=('yaml', 'json'), help='Input kernel meta format')
     ap.add_argument('--format', type=str, default='dat', choices=('yaml', 'json', 'dat'), help='Library format, default is dat')
     ap.add_argument('--output', type=str, default='./', help='Output folder')
+    ap.add_argument('--arch', type=str, required=True, help='GPU Architecture, e.g. gfx90a')
     args = ap.parse_args()
     src_folder: str = args.src
     lib_format: str = args.format
     input_format: str = args.input_format
     co_path: str = args.co
     output: str = args.output
+    opt_arch: str = args.arch
 
     src_folder = os.path.expandvars(os.path.expanduser(src_folder))
 
     lib_meta = defaultdict(lambda: defaultdict(list))
 
-    for p in glob.glob(f'{src_folder}/*.{input_format}'):
+    for p in glob.glob(f'{src_folder}/*{opt_arch}.{input_format}'):
         meta_dict = {}
 
         with open(p) as f:
@@ -74,7 +76,7 @@ if __name__ == '__main__':
         with open(output_lib_path, update_open_foramt) as f:
             org_content = output_format_2_writer[lib_format].load(f)
 
-        lib_meta = {**lib_meta, **org_content}
+        lib_meta = {**org_content, **lib_meta}
 
     with open(output_lib_path, output_open_foramt) as f:
         output_format_2_writer[lib_format].dump(lib_meta, f)
