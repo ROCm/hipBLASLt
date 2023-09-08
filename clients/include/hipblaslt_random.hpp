@@ -231,6 +231,13 @@ inline T random_generator()
     return T(hipblaslt_uniform_int_1_10());
 }
 
+/*! \brief  generate a random number in range [0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,0.10] */
+template <typename T>
+inline T random_generator_small()
+{
+    return T(hipblaslt_uniform_int_1_10() / 10.f);
+}
+
 template <>
 inline float random_generator()
 {
@@ -278,6 +285,16 @@ inline void random_run_generator(T* ptr, size_t num)
     for(size_t i = 0; i < num; i++)
     {
         ptr[i] = random_generator<T>();
+    }
+}
+
+/*! \brief  generate a sequence of random number in range [0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,0.10] */
+template <typename T>
+inline void random_run_generator_small(T* ptr, size_t num)
+{
+    for(size_t i = 0; i < num; i++)
+    {
+        ptr[i] = random_generator<T>() / 10.f;
     }
 }
 

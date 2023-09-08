@@ -95,6 +95,8 @@ const char* rocblaslt_compute_type_to_string(rocblaslt_compute_type type)
         return "COMPUTE_64F";
     case rocblaslt_compute_i32:
         return "COMPUTE_32I";
+    case rocblaslt_compute_f32_fast_f16:
+        return "COMPUTE_32F_16F";
     default:
         return "Invalid";
     }

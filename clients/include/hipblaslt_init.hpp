@@ -62,10 +62,38 @@ void hipblaslt_init(T* A, size_t M, size_t N, size_t lda, size_t stride = 0, siz
 
 // Initialize matrices with random values
 template <typename T>
+void hipblaslt_init_small(T* A, size_t M, size_t N, size_t lda, size_t stride = 0, size_t batch_count = 1)
+{
+    for(size_t i_batch = 0; i_batch < batch_count; i_batch++)
+    {
+        size_t b_idx = i_batch * stride;
+        for(size_t j = 0; j < N; ++j)
+        {
+            size_t col_idx = b_idx + j * lda;
+            if(M > 4)
+                random_run_generator_small<T>(A + col_idx, M);
+            else
+            {
+                for(size_t i = 0; i < M; ++i)
+                    A[col_idx + i] = random_generator_small<T>();
+            }
+        }
+    }
+}
+
+// Initialize matrices with random values
+template <typename T>
 inline void hipblaslt_init(
     std::vector<T>& A, size_t M, size_t N, size_t lda, size_t stride = 0, size_t batch_count = 1)
 {
     hipblaslt_init(A.data(), M, N, lda, stride, batch_count);
+}
+
+template <typename T>
+inline void hipblaslt_init_small(
+    std::vector<T>& A, size_t M, size_t N, size_t lda, size_t stride = 0, size_t batch_count = 1)
+{
+    hipblaslt_init_small(A.data(), M, N, lda, stride, batch_count);
 }
 
 template <typename T>

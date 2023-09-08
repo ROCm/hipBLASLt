@@ -102,7 +102,9 @@ void m_axpy(size_t* N, T* alpha, T* x, int* incx, T* y, int* incy)
 /*! \brief compare the norm error of two matrices hCPU & hGPU */
 
 // Real
-template <typename T>
+template <typename T,
+    std::enable_if_t<!(std::is_same<T, hipblaslt_f8>{} || std::is_same<T, hipblaslt_f8>{}),
+                     int> = 0>
 double norm_check_general(char norm_type, int64_t M, int64_t N, int64_t lda, T* hCPU, T* hGPU)
 {
     // norm type can be 'O', 'I', 'F', 'o', 'i', 'f' for one, infinity or Frobenius norm
@@ -121,6 +123,41 @@ double norm_check_general(char norm_type, int64_t M, int64_t N, int64_t lda, T* 
             size_t idx       = j + i * (size_t)lda;
             hCPU_double[idx] = double(hCPU[idx]);
             hGPU_double[idx] = double(hGPU[idx]);
+        }
+    }
+
+    double work[1];
+    int    incx  = 1;
+    double alpha = -1.0;
+    int    m     = static_cast<int>(M);
+    int    n     = static_cast<int>(N);
+    int    l     = static_cast<int>(lda);
+
+    double cpu_norm = xlange(&norm_type, &m, &n, hCPU_double.data(), &l, work);
+    m_axpy(&size, &alpha, hCPU_double.data(), &incx, hGPU_double.data(), &incx);
+    double error = xlange(&norm_type, &m, &n, hGPU_double.data(), &l, work) / cpu_norm;
+
+    return error;
+}
+
+template <
+    typename T,
+    std::enable_if_t<(std::is_same<T, hipblaslt_f8>{} || std::is_same<T, hipblaslt_f8>{}), int> = 0>
+double norm_check_general(
+    char norm_type, int64_t M, int64_t N, int64_t lda, T* hCPU, T* hGPU)
+{
+    size_t size = N * (size_t)lda;
+
+    host_vector<double> hCPU_double(size);
+    host_vector<double> hGPU_double(size);
+
+    for(int64_t i = 0; i < N; i++)
+    {
+        for(int64_t j = 0; j < M; j++)
+        {
+            size_t idx       = j + i * (size_t)lda;
+            hCPU_double[idx] = double(float(hCPU[idx]));
+            hGPU_double[idx] = double(float(hGPU[idx]));
         }
     }
 

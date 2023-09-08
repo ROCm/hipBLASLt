@@ -58,6 +58,7 @@ void cblas_gemm<hip_bfloat16, hip_bfloat16, hip_bfloat16, float>(hipblasOperatio
                                                                  float               beta,
                                                                  hip_bfloat16*       C,
                                                                  int64_t             ldc,
+                                                                 float               scaleD,
                                                                  bool                alt)
 {
     // cblas does not support hip_bfloat16, so convert to higher precision float
@@ -93,8 +94,16 @@ void cblas_gemm<hip_bfloat16, hip_bfloat16, hip_bfloat16, float>(hipblasOperatio
                 C_float,
                 ldc);
 
-    for(size_t i = 0; i < sizeC; i++)
-        C[i] = static_cast<hip_bfloat16>(C_float[i]);
+    if(scaleD != 1)
+    {
+        for(size_t i = 0; i < sizeC; i++)
+            C[i] = static_cast<hip_bfloat16>(C_float[i] * scaleD);
+    }
+    else
+    {
+        for(size_t i = 0; i < sizeC; i++)
+            C[i] = static_cast<hip_bfloat16>(C_float[i]);
+    }
 }
 
 template <>
@@ -111,6 +120,7 @@ void cblas_gemm<hip_bfloat16, hip_bfloat16, float, float>(hipblasOperation_t  tr
                                                           float               beta,
                                                           float*              C,
                                                           int64_t             ldc,
+                                                          float               scaleD,
                                                           bool                alt)
 {
     // cblas does not support hip_bfloat16, so convert to higher precision float
@@ -143,6 +153,12 @@ void cblas_gemm<hip_bfloat16, hip_bfloat16, float, float>(hipblasOperation_t  tr
                 beta,
                 C,
                 ldc);
+
+    if(scaleD != 1)
+    {
+        for(size_t i = 0; i < sizeC; i++)
+            C[i] = static_cast<float>(C[i] * scaleD);
+    }
 }
 
 template <>
@@ -159,10 +175,12 @@ void cblas_gemm<hipblaslt_f8, hipblaslt_f8, float, float>(hipblasOperation_t  tr
                                                           float               beta,
                                                           float*              C,
                                                           int64_t             ldc,
+                                                          float               scaleD,
                                                           bool                alt)
 {
     size_t sizeA = (transA == HIPBLAS_OP_N ? k : m) * size_t(lda);
     size_t sizeB = (transB == HIPBLAS_OP_N ? n : k) * size_t(ldb);
+    size_t sizeC = n * size_t(ldc);
 
     host_vector<float> A_float(sizeA), B_float(sizeB);
 
@@ -187,6 +205,11 @@ void cblas_gemm<hipblaslt_f8, hipblaslt_f8, float, float>(hipblasOperation_t  tr
                 beta,
                 C,
                 ldc);
+    if(scaleD != 1)
+    {
+        for(size_t i = 0; i < sizeC; i++)
+            C[i] = static_cast<float>(C[i] * scaleD);
+    }
 }
 
 template <>
@@ -203,10 +226,12 @@ void cblas_gemm<hipblaslt_bf8, hipblaslt_f8, float, float>(hipblasOperation_t   
                                                            float                beta,
                                                            float*               C,
                                                            int64_t              ldc,
+                                                           float                scaleD,
                                                            bool                 alt)
 {
     size_t sizeA = (transA == HIPBLAS_OP_N ? k : m) * size_t(lda);
     size_t sizeB = (transB == HIPBLAS_OP_N ? n : k) * size_t(ldb);
+    size_t sizeC = n * size_t(ldc);
 
     host_vector<float> A_float(sizeA), B_float(sizeB);
 
@@ -231,6 +256,11 @@ void cblas_gemm<hipblaslt_bf8, hipblaslt_f8, float, float>(hipblasOperation_t   
                 beta,
                 C,
                 ldc);
+    if(scaleD != 1)
+    {
+        for(size_t i = 0; i < sizeC; i++)
+            C[i] = static_cast<float>(C[i] * scaleD);
+    }
 }
 
 template <>
@@ -247,10 +277,12 @@ void cblas_gemm<hipblaslt_f8, hipblaslt_bf8, float, float>(hipblasOperation_t   
                                                            float                beta,
                                                            float*               C,
                                                            int64_t              ldc,
+                                                           float                scaleD,
                                                            bool                 alt)
 {
     size_t sizeA = (transA == HIPBLAS_OP_N ? k : m) * size_t(lda);
     size_t sizeB = (transB == HIPBLAS_OP_N ? n : k) * size_t(ldb);
+    size_t sizeC = n * size_t(ldc);
 
     host_vector<float> A_float(sizeA), B_float(sizeB);
 
@@ -275,6 +307,12 @@ void cblas_gemm<hipblaslt_f8, hipblaslt_bf8, float, float>(hipblasOperation_t   
                 beta,
                 C,
                 ldc);
+
+    if(scaleD != 1)
+    {
+        for(size_t i = 0; i < sizeC; i++)
+            C[i] = static_cast<float>(C[i] * scaleD);
+    }
 }
 
 template <>
@@ -291,6 +329,7 @@ void cblas_gemm<hipblaslt_f8, hipblaslt_f8, hipblasLtHalf, float>(hipblasOperati
                                                                   float               beta,
                                                                   hipblasLtHalf*      C,
                                                                   int64_t             ldc,
+                                                                  float               scaleD,
                                                                   bool                alt)
 {
     size_t sizeA = (transA == HIPBLAS_OP_N ? k : m) * size_t(lda);
@@ -323,8 +362,16 @@ void cblas_gemm<hipblaslt_f8, hipblaslt_f8, hipblasLtHalf, float>(hipblasOperati
                 C_float,
                 ldc);
 
-    for(size_t i = 0; i < sizeC; i++)
-        C[i] = static_cast<hipblasLtHalf>(C_float[i]);
+    if(scaleD != 1)
+    {
+        for(size_t i = 0; i < sizeC; i++)
+            C[i] = static_cast<hipblasLtHalf>(C_float[i] * scaleD);
+    }
+    else
+    {
+        for(size_t i = 0; i < sizeC; i++)
+            C[i] = static_cast<hipblasLtHalf>(C_float[i]);
+    }
 }
 
 template <>
@@ -341,6 +388,7 @@ void cblas_gemm<hipblaslt_bf8, hipblaslt_f8, hipblasLtHalf, float>(hipblasOperat
                                                                    float                beta,
                                                                    hipblasLtHalf*       C,
                                                                    int64_t              ldc,
+                                                                   float                scaleD,
                                                                    bool                 alt)
 {
     size_t sizeA = (transA == HIPBLAS_OP_N ? k : m) * size_t(lda);
@@ -373,8 +421,16 @@ void cblas_gemm<hipblaslt_bf8, hipblaslt_f8, hipblasLtHalf, float>(hipblasOperat
                 C_float,
                 ldc);
 
-    for(size_t i = 0; i < sizeC; i++)
-        C[i] = static_cast<hipblasLtHalf>(C_float[i]);
+    if(scaleD != 1)
+    {
+        for(size_t i = 0; i < sizeC; i++)
+            C[i] = static_cast<hipblasLtHalf>(C_float[i] * scaleD);
+    }
+    else
+    {
+        for(size_t i = 0; i < sizeC; i++)
+            C[i] = static_cast<hipblasLtHalf>(C_float[i]);
+    }
 }
 
 template <>
@@ -391,6 +447,7 @@ void cblas_gemm<hipblaslt_f8, hipblaslt_bf8, hipblasLtHalf, float>(hipblasOperat
                                                                    float                beta,
                                                                    hipblasLtHalf*       C,
                                                                    int64_t              ldc,
+                                                                   float                scaleD,
                                                                    bool                 alt)
 {
     size_t sizeA = (transA == HIPBLAS_OP_N ? k : m) * size_t(lda);
@@ -423,8 +480,140 @@ void cblas_gemm<hipblaslt_f8, hipblaslt_bf8, hipblasLtHalf, float>(hipblasOperat
                 C_float,
                 ldc);
 
+    if(scaleD != 1)
+    {
+        for(size_t i = 0; i < sizeC; i++)
+            C[i] = static_cast<hipblasLtHalf>(C_float[i] * scaleD);
+    }
+    else
+    {
+        for(size_t i = 0; i < sizeC; i++)
+            C[i] = static_cast<hipblasLtHalf>(C_float[i]);
+    }
+}
+
+template <>
+void cblas_gemm<hipblaslt_f8, hipblasLtHalf, hipblaslt_f8, float>(hipblasOperation_t   transA,
+                                                                  hipblasOperation_t   transB,
+                                                                  int64_t              m,
+                                                                  int64_t              n,
+                                                                  int64_t              k,
+                                                                  float                alpha,
+                                                                  const hipblaslt_f8*  A,
+                                                                  int64_t              lda,
+                                                                  const hipblasLtHalf* B,
+                                                                  int64_t              ldb,
+                                                                  float                beta,
+                                                                  hipblaslt_f8*        C,
+                                                                  int64_t              ldc,
+                                                                  float                scaleD,
+                                                                  bool                 alt)
+{
+    // cblas does not support hip_bfloat16, so convert to higher precision float
+    // This will give more precise result which is acceptable for testing
+
+    size_t sizeA = (transA == HIPBLAS_OP_N ? k : m) * size_t(lda);
+    size_t sizeB = (transB == HIPBLAS_OP_N ? n : k) * size_t(ldb);
+    size_t sizeC = n * size_t(ldc);
+
+    host_vector<float> A_float(sizeA), B_float(sizeB), C_float(sizeC);
+
+    for(size_t i = 0; i < sizeA; i++)
+        A_float[i] = static_cast<float>(A[i]);
+    for(size_t i = 0; i < sizeB; i++)
+        B_float[i] = static_cast<float>(B[i]);
     for(size_t i = 0; i < sizeC; i++)
-        C[i] = static_cast<hipblasLtHalf>(C_float[i]);
+        C_float[i] = static_cast<float>(C[i]);
+
+    // just directly cast, since transA, transB are integers in the enum
+    // printf("transA: hipblaslt =%d, cblas=%d\n", transA, HIPOperationToCBLASTanspose(transA) );
+    cblas_sgemm(CblasColMajor,
+                HIPOperationToCBLASTanspose(transA),
+                HIPOperationToCBLASTanspose(transB),
+                m,
+                n,
+                k,
+                alpha,
+                A_float,
+                lda,
+                B_float,
+                ldb,
+                beta,
+                C_float,
+                ldc);
+
+    if(scaleD != 1)
+    {
+        for(size_t i = 0; i < sizeC; i++)
+            C[i] = static_cast<hipblaslt_f8>(C_float[i] * scaleD);
+    }
+    else
+    {
+        for(size_t i = 0; i < sizeC; i++)
+            C[i] = static_cast<hipblaslt_f8>(C_float[i]);
+    }
+}
+
+template <>
+void cblas_gemm<hipblasLtHalf, hipblaslt_f8, hipblaslt_f8, float>(hipblasOperation_t   transA,
+                                                                  hipblasOperation_t   transB,
+                                                                  int64_t              m,
+                                                                  int64_t              n,
+                                                                  int64_t              k,
+                                                                  float                alpha,
+                                                                  const hipblasLtHalf* A,
+                                                                  int64_t              lda,
+                                                                  const hipblaslt_f8*  B,
+                                                                  int64_t              ldb,
+                                                                  float                beta,
+                                                                  hipblaslt_f8*        C,
+                                                                  int64_t              ldc,
+                                                                  float                scaleD,
+                                                                  bool                 alt)
+{
+    // cblas does not support hip_bfloat16, so convert to higher precision float
+    // This will give more precise result which is acceptable for testing
+
+    size_t sizeA = (transA == HIPBLAS_OP_N ? k : m) * size_t(lda);
+    size_t sizeB = (transB == HIPBLAS_OP_N ? n : k) * size_t(ldb);
+    size_t sizeC = n * size_t(ldc);
+
+    host_vector<float> A_float(sizeA), B_float(sizeB), C_float(sizeC);
+
+    for(size_t i = 0; i < sizeA; i++)
+        A_float[i] = static_cast<float>(A[i]);
+    for(size_t i = 0; i < sizeB; i++)
+        B_float[i] = static_cast<float>(B[i]);
+    for(size_t i = 0; i < sizeC; i++)
+        C_float[i] = static_cast<float>(C[i]);
+
+    // just directly cast, since transA, transB are integers in the enum
+    // printf("transA: hipblaslt =%d, cblas=%d\n", transA, HIPOperationToCBLASTanspose(transA) );
+    cblas_sgemm(CblasColMajor,
+                HIPOperationToCBLASTanspose(transA),
+                HIPOperationToCBLASTanspose(transB),
+                m,
+                n,
+                k,
+                alpha,
+                A_float,
+                lda,
+                B_float,
+                ldb,
+                beta,
+                C_float,
+                ldc);
+
+    if(scaleD != 1)
+    {
+        for(size_t i = 0; i < sizeC; i++)
+            C[i] = static_cast<hipblaslt_f8>(C_float[i] * scaleD);
+    }
+    else
+    {
+        for(size_t i = 0; i < sizeC; i++)
+            C[i] = static_cast<hipblaslt_f8>(C_float[i]);
+    }
 }
 
 template <>
@@ -441,6 +630,7 @@ void cblas_gemm<hipblaslt_f8, hipblasLtHalf, hipblasLtHalf, float>(hipblasOperat
                                                                    float                beta,
                                                                    hipblasLtHalf*       C,
                                                                    int64_t              ldc,
+                                                                   float                scaleD,
                                                                    bool                 alt)
 {
     // cblas does not support hip_bfloat16, so convert to higher precision float
@@ -476,8 +666,16 @@ void cblas_gemm<hipblaslt_f8, hipblasLtHalf, hipblasLtHalf, float>(hipblasOperat
                 C_float,
                 ldc);
 
-    for(size_t i = 0; i < sizeC; i++)
-        C[i] = static_cast<hipblasLtHalf>(C_float[i]);
+    if(scaleD != 1)
+    {
+        for(size_t i = 0; i < sizeC; i++)
+            C[i] = static_cast<hipblasLtHalf>(C_float[i] * scaleD);
+    }
+    else
+    {
+        for(size_t i = 0; i < sizeC; i++)
+            C[i] = static_cast<hipblasLtHalf>(C_float[i]);
+    }
 }
 
 template <>
@@ -494,6 +692,7 @@ void cblas_gemm<hipblasLtHalf, hipblaslt_f8, hipblasLtHalf, float>(hipblasOperat
                                                                    float                beta,
                                                                    hipblasLtHalf*       C,
                                                                    int64_t              ldc,
+                                                                   float                scaleD,
                                                                    bool                 alt)
 {
     // cblas does not support hip_bfloat16, so convert to higher precision float
@@ -529,8 +728,16 @@ void cblas_gemm<hipblasLtHalf, hipblaslt_f8, hipblasLtHalf, float>(hipblasOperat
                 C_float,
                 ldc);
 
-    for(size_t i = 0; i < sizeC; i++)
-        C[i] = static_cast<hipblasLtHalf>(C_float[i]);
+    if(scaleD != 1)
+    {
+        for(size_t i = 0; i < sizeC; i++)
+            C[i] = static_cast<hipblasLtHalf>(C_float[i] * scaleD);
+    }
+    else
+    {
+        for(size_t i = 0; i < sizeC; i++)
+            C[i] = static_cast<hipblasLtHalf>(C_float[i]);
+    }
 }
 
 template <>
@@ -547,6 +754,7 @@ void cblas_gemm<hipblaslt_f8, hipblasLtHalf, float, float>(hipblasOperation_t   
                                                            float                beta,
                                                            float*               C,
                                                            int64_t              ldc,
+                                                           float                scaleD,
                                                            bool                 alt)
 {
     // cblas does not support hip_bfloat16, so convert to higher precision float
@@ -579,6 +787,12 @@ void cblas_gemm<hipblaslt_f8, hipblasLtHalf, float, float>(hipblasOperation_t   
                 beta,
                 C,
                 ldc);
+
+    if(scaleD != 1)
+    {
+        for(size_t i = 0; i < sizeC; i++)
+            C[i] = static_cast<float>(C[i] * scaleD);
+    }
 }
 
 template <>
@@ -595,6 +809,7 @@ void cblas_gemm<hipblasLtHalf, hipblaslt_f8, float, float>(hipblasOperation_t   
                                                            float                beta,
                                                            float*               C,
                                                            int64_t              ldc,
+                                                           float                scaleD,
                                                            bool                 alt)
 {
     // cblas does not support hip_bfloat16, so convert to higher precision float
@@ -627,6 +842,12 @@ void cblas_gemm<hipblasLtHalf, hipblaslt_f8, float, float>(hipblasOperation_t   
                 beta,
                 C,
                 ldc);
+
+    if(scaleD != 1)
+    {
+        for(size_t i = 0; i < sizeC; i++)
+            C[i] = static_cast<float>(C[i] * scaleD);
+    }
 }
 
 template <>
@@ -643,6 +864,7 @@ void cblas_gemm<hipblasLtHalf, hipblasLtHalf, hipblasLtHalf, float>(hipblasOpera
                                                                     float                beta,
                                                                     hipblasLtHalf*       C,
                                                                     int64_t              ldc,
+                                                                    float                scaleD,
                                                                     bool                 alt)
 {
     // cblas does not support hipblasLtHalf, so convert to higher precision float
@@ -690,8 +912,16 @@ void cblas_gemm<hipblasLtHalf, hipblasLtHalf, hipblasLtHalf, float>(hipblasOpera
                 C_float,
                 ldc);
 
-    for(size_t i = 0; i < sizeC; i++)
-        C[i] = hipblasLtHalf(C_float[i]);
+    if(scaleD != 1)
+    {
+        for(size_t i = 0; i < sizeC; i++)
+            C[i] = static_cast<hipblasLtHalf>(C_float[i] * scaleD);
+    }
+    else
+    {
+        for(size_t i = 0; i < sizeC; i++)
+            C[i] = hipblasLtHalf(C_float[i]);
+    }
 }
 
 template <>
@@ -708,6 +938,7 @@ void cblas_gemm<hipblasLtHalf, hipblasLtHalf, float, float>(hipblasOperation_t  
                                                             float                beta,
                                                             float*               C,
                                                             int64_t              ldc,
+                                                            float                scaleD,
                                                             bool                 alt)
 {
     // cblas does not support hipblasLtHalf, so convert to higher precision float
@@ -715,6 +946,7 @@ void cblas_gemm<hipblasLtHalf, hipblasLtHalf, float, float>(hipblasOperation_t  
 
     size_t sizeA = (transA == HIPBLAS_OP_N ? k : m) * size_t(lda);
     size_t sizeB = (transB == HIPBLAS_OP_N ? n : k) * size_t(ldb);
+    size_t sizeC = n * size_t(ldc);
 
     host_vector<float> A_float(sizeA), B_float(sizeB);
 
@@ -749,6 +981,12 @@ void cblas_gemm<hipblasLtHalf, hipblasLtHalf, float, float>(hipblasOperation_t  
                 beta,
                 C,
                 ldc);
+
+    if(scaleD != 1)
+    {
+        for(size_t i = 0; i < sizeC; i++)
+            C[i] = static_cast<float>(C[i] * scaleD);
+    }
 }
 
 template <>
@@ -765,8 +1003,10 @@ void cblas_gemm<float, float, float, float>(hipblasOperation_t transA,
                                             float              beta,
                                             float*             C,
                                             int64_t            ldc,
+                                            float              scaleD,
                                             bool               alt)
 {
+    size_t sizeC = n * size_t(ldc);
 
     // just directly cast, since transA, transB are integers in the enum
     // printf("transA: hipblaslt =%d, cblas=%d\n", transA, HIPOperationToCBLASTanspose(transA) );
@@ -784,6 +1024,12 @@ void cblas_gemm<float, float, float, float>(hipblasOperation_t transA,
                 beta,
                 C,
                 ldc);
+
+    if(scaleD != 1)
+    {
+        for(size_t i = 0; i < sizeC; i++)
+            C[i] = static_cast<float>(C[i] * scaleD);
+    }
 }
 
 template <>
@@ -800,8 +1046,10 @@ void cblas_gemm<double, double, double, double>(hipblasOperation_t transA,
                                                 double             beta,
                                                 double*            C,
                                                 int64_t            ldc,
+                                                double             scaleD,
                                                 bool               alt)
 {
+    size_t sizeC = n * size_t(ldc);
 
     // just directly cast, since transA, transB are integers in the enum
     // printf("transA: hipblaslt =%d, cblas=%d\n", transA, HIPOperationToCBLASTanspose(transA) );
@@ -819,6 +1067,12 @@ void cblas_gemm<double, double, double, double>(hipblasOperation_t transA,
                 beta,
                 C,
                 ldc);
+
+    if(scaleD != 1)
+    {
+        for(size_t i = 0; i < sizeC; i++)
+            C[i] = static_cast<double>(C[i] * scaleD);
+    }
 }
 
 template <>
@@ -835,6 +1089,7 @@ void cblas_gemm<int8_t, int8_t, int32_t, int32_t>(hipblasOperation_t transA,
                                                   int32_t            beta,
                                                   int32_t*           C,
                                                   int64_t            ldc,
+                                                  int32_t            scaleD,
                                                   bool               alt)
 {
 
@@ -876,8 +1131,16 @@ void cblas_gemm<int8_t, int8_t, int32_t, int32_t>(hipblasOperation_t transA,
                 C_double,
                 ldc);
 
-    for(size_t i = 0; i < sizeC; i++)
-        C[i] = static_cast<int32_t>(C_double[i]);
+    if(scaleD != 1)
+    {
+        for(size_t i = 0; i < sizeC; i++)
+            C[i] = static_cast<int32_t>(C_double[i] * scaleD);
+    }
+    else
+    {
+        for(size_t i = 0; i < sizeC; i++)
+            C[i] = static_cast<int32_t>(C_double[i]);
+    }
 }
 
 // AlphaVec gemm
@@ -897,6 +1160,7 @@ void cblas_gemm_alphascale<hip_bfloat16, hip_bfloat16, hip_bfloat16, float>(
     hip_bfloat16*       C,
     int64_t             ldc,
     const float*        AlphaVec,
+    float               scaleD,
     bool                alt)
 {
     // cblas does not support hip_bfloat16, so convert to higher precision float
@@ -935,8 +1199,16 @@ void cblas_gemm_alphascale<hip_bfloat16, hip_bfloat16, hip_bfloat16, float>(
                 C_float,
                 ldc);
 
-    for(size_t i = 0; i < sizeC; i++)
-        C[i] = static_cast<hip_bfloat16>(C_float[i]);
+    if(scaleD != 1)
+    {
+        for(size_t i = 0; i < sizeC; i++)
+            C[i] = static_cast<hip_bfloat16>(C_float[i] * scaleD);
+    }
+    else
+    {
+        for(size_t i = 0; i < sizeC; i++)
+            C[i] = static_cast<hip_bfloat16>(C_float[i]);
+    }
 }
 
 template <>
@@ -954,6 +1226,7 @@ void cblas_gemm_alphascale<hip_bfloat16, hip_bfloat16, float, float>(hipblasOper
                                                                      float*              C,
                                                                      int64_t             ldc,
                                                                      const float*        AlphaVec,
+                                                                     float               scaleD,
                                                                      bool                alt)
 {
     // cblas does not support hip_bfloat16, so convert to higher precision float
@@ -961,6 +1234,7 @@ void cblas_gemm_alphascale<hip_bfloat16, hip_bfloat16, float, float>(hipblasOper
 
     size_t sizeA = (transA == HIPBLAS_OP_N ? k : m) * size_t(lda);
     size_t sizeB = (transB == HIPBLAS_OP_N ? n : k) * size_t(ldb);
+    size_t sizeC = n * size_t(ldc);
 
     host_vector<float> A_float(sizeA), B_float(sizeB);
 
@@ -988,6 +1262,12 @@ void cblas_gemm_alphascale<hip_bfloat16, hip_bfloat16, float, float>(hipblasOper
                 beta,
                 C,
                 ldc);
+
+    if(scaleD != 1)
+    {
+        for(size_t i = 0; i < sizeC; i++)
+            C[i] = static_cast<float>(C[i] * scaleD);
+    }
 }
 
 template <>
@@ -1005,6 +1285,7 @@ void cblas_gemm_alphascale<hipblaslt_f8, hipblaslt_f8, float, float>(hipblasOper
                                                                      float*              C,
                                                                      int64_t             ldc,
                                                                      const float*        AlphaVec,
+                                                                     float               scaleD,
                                                                      bool                alt)
 {
     size_t sizeA = (transA == HIPBLAS_OP_N ? k : m) * size_t(lda);
@@ -1037,6 +1318,12 @@ void cblas_gemm_alphascale<hipblaslt_f8, hipblaslt_f8, float, float>(hipblasOper
                 beta,
                 C,
                 ldc);
+
+    if(scaleD != 1)
+    {
+        for(size_t i = 0; i < sizeC; i++)
+            C[i] = static_cast<float>(C[i] * scaleD);
+    }
 }
 
 template <>
@@ -1054,6 +1341,7 @@ void cblas_gemm_alphascale<hipblaslt_bf8, hipblaslt_f8, float, float>(hipblasOpe
                                                                       float*               C,
                                                                       int64_t              ldc,
                                                                       const float*         AlphaVec,
+                                                                      float                scaleD,
                                                                       bool                 alt)
 {
     size_t sizeA = (transA == HIPBLAS_OP_N ? k : m) * size_t(lda);
@@ -1086,6 +1374,12 @@ void cblas_gemm_alphascale<hipblaslt_bf8, hipblaslt_f8, float, float>(hipblasOpe
                 beta,
                 C,
                 ldc);
+
+    if(scaleD != 1)
+    {
+        for(size_t i = 0; i < sizeC; i++)
+            C[i] = static_cast<float>(C[i] * scaleD);
+    }
 }
 
 template <>
@@ -1103,6 +1397,7 @@ void cblas_gemm_alphascale<hipblaslt_f8, hipblaslt_bf8, float, float>(hipblasOpe
                                                                       float*               C,
                                                                       int64_t              ldc,
                                                                       const float*         AlphaVec,
+                                                                      float                scaleD,
                                                                       bool                 alt)
 {
     size_t sizeA = (transA == HIPBLAS_OP_N ? k : m) * size_t(lda);
@@ -1135,6 +1430,12 @@ void cblas_gemm_alphascale<hipblaslt_f8, hipblaslt_bf8, float, float>(hipblasOpe
                 beta,
                 C,
                 ldc);
+
+    if(scaleD != 1)
+    {
+        for(size_t i = 0; i < sizeC; i++)
+            C[i] = static_cast<float>(C[i] * scaleD);
+    }
 }
 template <>
 void cblas_gemm_alphascale<hipblaslt_f8, hipblaslt_f8, hipblasLtHalf, float>(
@@ -1152,6 +1453,7 @@ void cblas_gemm_alphascale<hipblaslt_f8, hipblaslt_f8, hipblasLtHalf, float>(
     hipblasLtHalf*      C,
     int64_t             ldc,
     const float*        AlphaVec,
+    float               scaleD,
     bool                alt)
 {
     size_t sizeA = (transA == HIPBLAS_OP_N ? k : m) * size_t(lda);
@@ -1187,8 +1489,16 @@ void cblas_gemm_alphascale<hipblaslt_f8, hipblaslt_f8, hipblasLtHalf, float>(
                 C_float,
                 ldc);
 
-    for(size_t i = 0; i < sizeC; i++)
-        C[i] = hipblasLtHalf(C_float[i]);
+    if(scaleD != 1)
+    {
+        for(size_t i = 0; i < sizeC; i++)
+            C[i] = static_cast<hipblasLtHalf>(C_float[i] * scaleD);
+    }
+    else
+    {
+        for(size_t i = 0; i < sizeC; i++)
+            C[i] = hipblasLtHalf(C_float[i]);
+    }
 }
 
 template <>
@@ -1207,6 +1517,7 @@ void cblas_gemm_alphascale<hipblaslt_bf8, hipblaslt_f8, hipblasLtHalf, float>(
     hipblasLtHalf*       C,
     int64_t              ldc,
     const float*         AlphaVec,
+    float                scaleD,
     bool                 alt)
 {
     size_t sizeA = (transA == HIPBLAS_OP_N ? k : m) * size_t(lda);
@@ -1242,8 +1553,16 @@ void cblas_gemm_alphascale<hipblaslt_bf8, hipblaslt_f8, hipblasLtHalf, float>(
                 C_float,
                 ldc);
 
-    for(size_t i = 0; i < sizeC; i++)
-        C[i] = hipblasLtHalf(C_float[i]);
+    if(scaleD != 1)
+    {
+        for(size_t i = 0; i < sizeC; i++)
+            C[i] = static_cast<hipblasLtHalf>(C_float[i] * scaleD);
+    }
+    else
+    {
+        for(size_t i = 0; i < sizeC; i++)
+            C[i] = hipblasLtHalf(C_float[i]);
+    }
 }
 
 template <>
@@ -1262,6 +1581,7 @@ void cblas_gemm_alphascale<hipblaslt_f8, hipblaslt_bf8, hipblasLtHalf, float>(
     hipblasLtHalf*       C,
     int64_t              ldc,
     const float*         AlphaVec,
+    float                scaleD,
     bool                 alt)
 {
     size_t sizeA = (transA == HIPBLAS_OP_N ? k : m) * size_t(lda);
@@ -1297,11 +1617,20 @@ void cblas_gemm_alphascale<hipblaslt_f8, hipblaslt_bf8, hipblasLtHalf, float>(
                 C_float,
                 ldc);
 
-    for(size_t i = 0; i < sizeC; i++)
-        C[i] = hipblasLtHalf(C_float[i]);
+    if(scaleD != 1)
+    {
+        for(size_t i = 0; i < sizeC; i++)
+            C[i] = static_cast<hipblasLtHalf>(C_float[i] * scaleD);
+    }
+    else
+    {
+        for(size_t i = 0; i < sizeC; i++)
+            C[i] = hipblasLtHalf(C_float[i]);
+    }
 }
+
 template <>
-void cblas_gemm_alphascale<hipblasLtHalf, hipblaslt_f8, hipblasLtHalf, float>(
+void cblas_gemm_alphascale<hipblasLtHalf, hipblaslt_f8, hipblaslt_f8, float>(
     hipblasOperation_t   transA,
     hipblasOperation_t   transB,
     int64_t              m,
@@ -1313,9 +1642,10 @@ void cblas_gemm_alphascale<hipblasLtHalf, hipblaslt_f8, hipblasLtHalf, float>(
     const hipblaslt_f8*  B,
     int64_t              ldb,
     float                beta,
-    hipblasLtHalf*       C,
+    hipblaslt_f8*        C,
     int64_t              ldc,
     const float*         AlphaVec,
+    float                scaleD,
     bool                 alt)
 {
     // cblas does not support hipblasLtHalf, so convert to higher precision float
@@ -1354,8 +1684,150 @@ void cblas_gemm_alphascale<hipblasLtHalf, hipblaslt_f8, hipblasLtHalf, float>(
                 C_float,
                 ldc);
 
+    if(scaleD != 1)
+    {
+        for(size_t i = 0; i < sizeC; i++)
+            C[i] = static_cast<hipblaslt_f8>(C_float[i] * scaleD);
+    }
+    else
+    {
+        for(size_t i = 0; i < sizeC; i++)
+            C[i] = static_cast<hipblaslt_f8>(C_float[i]);
+    }
+}
+
+template <>
+void cblas_gemm_alphascale<hipblaslt_f8, hipblasLtHalf, hipblaslt_f8, float>(
+    hipblasOperation_t   transA,
+    hipblasOperation_t   transB,
+    int64_t              m,
+    int64_t              n,
+    int64_t              k,
+    float                alpha,
+    const hipblaslt_f8*  A,
+    int64_t              lda,
+    const hipblasLtHalf* B,
+    int64_t              ldb,
+    float                beta,
+    hipblaslt_f8*        C,
+    int64_t              ldc,
+    const float*         AlphaVec,
+    float                scaleD,
+    bool                 alt)
+{
+    // cblas does not support hipblasLtHalf, so convert to higher precision float
+    // This will give more precise result which is acceptable for testing
+
+    size_t sizeA = (transA == HIPBLAS_OP_N ? k : m) * size_t(lda);
+    size_t sizeB = (transB == HIPBLAS_OP_N ? n : k) * size_t(ldb);
+    size_t sizeC = n * size_t(ldc);
+
+    host_vector<float> A_float(sizeA), B_float(sizeB), C_float(sizeC);
+
+    for(size_t i = 0; i < sizeA; i++)
+    {
+        A_float[i] = static_cast<float>(A[i]);
+        A_float[i] *= AlphaVec[i % m];
+    }
+    for(size_t i = 0; i < sizeB; i++)
+        B_float[i] = static_cast<float>(B[i]);
     for(size_t i = 0; i < sizeC; i++)
-        C[i] = hipblasLtHalf(C_float[i]);
+        C_float[i] = static_cast<float>(C[i]);
+
+    // just directly cast, since transA, transB are integers in the enum
+    //printf("transA: hipblaslt =%d, cblas=%d\n", transA, HIPOperationToCBLASTanspose(transA) );
+    cblas_sgemm(CblasColMajor,
+                HIPOperationToCBLASTanspose(transA),
+                HIPOperationToCBLASTanspose(transB),
+                m,
+                n,
+                k,
+                alpha,
+                A_float,
+                lda,
+                B_float,
+                ldb,
+                beta,
+                C_float,
+                ldc);
+
+    if(scaleD != 1)
+    {
+        for(size_t i = 0; i < sizeC; i++)
+            C[i] = static_cast<hipblaslt_f8>(C_float[i] * scaleD);
+    }
+    else
+    {
+        for(size_t i = 0; i < sizeC; i++)
+            C[i] = static_cast<hipblaslt_f8>(C_float[i]);
+    }
+}
+
+template <>
+void cblas_gemm_alphascale<hipblasLtHalf, hipblaslt_f8, hipblasLtHalf, float>(
+    hipblasOperation_t   transA,
+    hipblasOperation_t   transB,
+    int64_t              m,
+    int64_t              n,
+    int64_t              k,
+    float                alpha,
+    const hipblasLtHalf* A,
+    int64_t              lda,
+    const hipblaslt_f8*  B,
+    int64_t              ldb,
+    float                beta,
+    hipblasLtHalf*       C,
+    int64_t              ldc,
+    const float*         AlphaVec,
+    float                scaleD,
+    bool                 alt)
+{
+    // cblas does not support hipblasLtHalf, so convert to higher precision float
+    // This will give more precise result which is acceptable for testing
+
+    size_t sizeA = (transA == HIPBLAS_OP_N ? k : m) * size_t(lda);
+    size_t sizeB = (transB == HIPBLAS_OP_N ? n : k) * size_t(ldb);
+    size_t sizeC = n * size_t(ldc);
+
+    host_vector<float> A_float(sizeA), B_float(sizeB), C_float(sizeC);
+
+    for(size_t i = 0; i < sizeA; i++)
+    {
+        A_float[i] = static_cast<float>(A[i]);
+        A_float[i] *= AlphaVec[i % m];
+    }
+    for(size_t i = 0; i < sizeB; i++)
+        B_float[i] = static_cast<float>(B[i]);
+    for(size_t i = 0; i < sizeC; i++)
+        C_float[i] = static_cast<float>(C[i]);
+
+    // just directly cast, since transA, transB are integers in the enum
+    //printf("transA: hipblaslt =%d, cblas=%d\n", transA, HIPOperationToCBLASTanspose(transA) );
+    cblas_sgemm(CblasColMajor,
+                HIPOperationToCBLASTanspose(transA),
+                HIPOperationToCBLASTanspose(transB),
+                m,
+                n,
+                k,
+                alpha,
+                A_float,
+                lda,
+                B_float,
+                ldb,
+                beta,
+                C_float,
+                ldc);
+
+    if(scaleD != 1)
+    {
+        for(size_t i = 0; i < sizeC; i++)
+            C[i] = static_cast<hipblasLtHalf>(C_float[i] * scaleD);
+    }
+    else
+    {
+        for(size_t i = 0; i < sizeC; i++)
+            C[i] = hipblasLtHalf(C_float[i]);
+    }
 }
 
 template <>
@@ -1374,6 +1846,7 @@ void cblas_gemm_alphascale<hipblaslt_f8, hipblasLtHalf, hipblasLtHalf, float>(
     hipblasLtHalf*       C,
     int64_t              ldc,
     const float*         AlphaVec,
+    float                scaleD,
     bool                 alt)
 {
     // cblas does not support hipblasLtHalf, so convert to higher precision float
@@ -1412,8 +1885,16 @@ void cblas_gemm_alphascale<hipblaslt_f8, hipblasLtHalf, hipblasLtHalf, float>(
                 C_float,
                 ldc);
 
-    for(size_t i = 0; i < sizeC; i++)
-        C[i] = hipblasLtHalf(C_float[i]);
+    if(scaleD != 1)
+    {
+        for(size_t i = 0; i < sizeC; i++)
+            C[i] = static_cast<hipblasLtHalf>(C_float[i] * scaleD);
+    }
+    else
+    {
+        for(size_t i = 0; i < sizeC; i++)
+            C[i] = hipblasLtHalf(C_float[i]);
+    }
 }
 
 template <>
@@ -1431,6 +1912,7 @@ void cblas_gemm_alphascale<hipblasLtHalf, hipblaslt_f8, float, float>(hipblasOpe
                                                                       float*               C,
                                                                       int64_t              ldc,
                                                                       const float*         AlphaVec,
+                                                                      float                scaleD,
                                                                       bool                 alt)
 {
     // cblas does not support hipblasLtHalf, so convert to higher precision float
@@ -1466,6 +1948,12 @@ void cblas_gemm_alphascale<hipblasLtHalf, hipblaslt_f8, float, float>(hipblasOpe
                 beta,
                 C,
                 ldc);
+
+    if(scaleD != 1)
+    {
+        for(size_t i = 0; i < sizeC; i++)
+            C[i] = static_cast<float>(C[i] * scaleD);
+    }
 }
 
 template <>
@@ -1483,6 +1971,7 @@ void cblas_gemm_alphascale<hipblaslt_f8, hipblasLtHalf, float, float>(hipblasOpe
                                                                       float*               C,
                                                                       int64_t              ldc,
                                                                       const float*         AlphaVec,
+                                                                      float                scaleD,
                                                                       bool                 alt)
 {
     // cblas does not support hipblasLtHalf, so convert to higher precision float
@@ -1518,6 +2007,12 @@ void cblas_gemm_alphascale<hipblaslt_f8, hipblasLtHalf, float, float>(hipblasOpe
                 beta,
                 C,
                 ldc);
+
+    if(scaleD != 1)
+    {
+        for(size_t i = 0; i < sizeC; i++)
+            C[i] = static_cast<float>(C[i] * scaleD);
+    }
 }
 
 template <>
@@ -1536,6 +2031,7 @@ void cblas_gemm_alphascale<hipblasLtHalf, hipblasLtHalf, hipblasLtHalf, float>(
     hipblasLtHalf*       C,
     int64_t              ldc,
     const float*         AlphaVec,
+    float                scaleD,
     bool                 alt)
 {
     // cblas does not support hipblasLtHalf, so convert to higher precision float
@@ -1586,8 +2082,16 @@ void cblas_gemm_alphascale<hipblasLtHalf, hipblasLtHalf, hipblasLtHalf, float>(
                 C_float,
                 ldc);
 
-    for(size_t i = 0; i < sizeC; i++)
-        C[i] = hipblasLtHalf(C_float[i]);
+    if(scaleD != 1)
+    {
+        for(size_t i = 0; i < sizeC; i++)
+            C[i] = static_cast<hipblasLtHalf>(C_float[i] * scaleD);
+    }
+    else
+    {
+        for(size_t i = 0; i < sizeC; i++)
+            C[i] = hipblasLtHalf(C_float[i]);
+    }
 }
 
 template <>
@@ -1605,6 +2109,7 @@ void cblas_gemm_alphascale<hipblasLtHalf, hipblasLtHalf, float, float>(hipblasOp
                                                                        float*               C,
                                                                        int64_t              ldc,
                                                                        const float* AlphaVec,
+                                                                       float        scaleD,
                                                                        bool         alt)
 {
     // cblas does not support hipblasLtHalf, so convert to higher precision float
@@ -1612,6 +2117,7 @@ void cblas_gemm_alphascale<hipblasLtHalf, hipblasLtHalf, float, float>(hipblasOp
 
     size_t sizeA = (transA == HIPBLAS_OP_N ? k : m) * size_t(lda);
     size_t sizeB = (transB == HIPBLAS_OP_N ? n : k) * size_t(ldb);
+    size_t sizeC = n * size_t(ldc);
 
     host_vector<float> A_float(sizeA), B_float(sizeB);
 
@@ -1649,6 +2155,12 @@ void cblas_gemm_alphascale<hipblasLtHalf, hipblasLtHalf, float, float>(hipblasOp
                 beta,
                 C,
                 ldc);
+
+    if(scaleD != 1)
+    {
+        for(size_t i = 0; i < sizeC; i++)
+            C[i] = static_cast<float>(C[i] * scaleD);
+    }
 }
 
 template <>
@@ -1666,10 +2178,12 @@ void cblas_gemm_alphascale<float, float, float, float>(hipblasOperation_t transA
                                                        float*             C,
                                                        int64_t            ldc,
                                                        const float*       AlphaVec,
+                                                       float              scaleD,
                                                        bool               alt)
 {
     size_t sizeA = (transA == HIPBLAS_OP_N ? k : m) * size_t(lda);
     size_t sizeB = (transB == HIPBLAS_OP_N ? n : k) * size_t(ldb);
+    size_t sizeC = n * size_t(ldc);
 
     host_vector<float> A_float(sizeA);
 
@@ -1695,6 +2209,12 @@ void cblas_gemm_alphascale<float, float, float, float>(hipblasOperation_t transA
                 beta,
                 C,
                 ldc);
+
+    if(scaleD != 1)
+    {
+        for(size_t i = 0; i < sizeC; i++)
+            C[i] = static_cast<float>(C[i] * scaleD);
+    }
 }
 
 template <>
@@ -1712,10 +2232,12 @@ void cblas_gemm_alphascale<double, double, double, double>(hipblasOperation_t tr
                                                            double*            C,
                                                            int64_t            ldc,
                                                            const double*      AlphaVec,
+                                                           double             scaleD,
                                                            bool               alt)
 {
     size_t sizeA = (transA == HIPBLAS_OP_N ? k : m) * size_t(lda);
     size_t sizeB = (transB == HIPBLAS_OP_N ? n : k) * size_t(ldb);
+    size_t sizeC = n * size_t(ldc);
 
     host_vector<double> A_double(sizeA);
 
@@ -1741,6 +2263,12 @@ void cblas_gemm_alphascale<double, double, double, double>(hipblasOperation_t tr
                 beta,
                 C,
                 ldc);
+
+    if(scaleD != 1)
+    {
+        for(size_t i = 0; i < sizeC; i++)
+            C[i] = static_cast<double>(C[i] * scaleD);
+    }
 }
 
 template <>
@@ -1758,6 +2286,7 @@ void cblas_gemm_alphascale<int8_t, int8_t, int32_t, int32_t>(hipblasOperation_t 
                                                              int32_t*           C,
                                                              int64_t            ldc,
                                                              const int32_t* AlphaVec, //cm review
+                                                             int32_t        scaleD,
                                                              bool           alt)
 {
     size_t sizeA = (transA == HIPBLAS_OP_N ? k : m) * size_t(lda);
@@ -1795,6 +2324,14 @@ void cblas_gemm_alphascale<int8_t, int8_t, int32_t, int32_t>(hipblasOperation_t 
                 C_double,
                 ldc);
 
-    for(size_t i = 0; i < sizeC; i++)
-        C[i] = static_cast<int32_t>(C_double[i]);
+    if(scaleD != 1)
+    {
+        for(size_t i = 0; i < sizeC; i++)
+            C[i] = static_cast<int32_t>(C_double[i] * scaleD);
+    }
+    else
+    {
+        for(size_t i = 0; i < sizeC; i++)
+            C[i] = static_cast<int32_t>(C_double[i]);
+    }
 }
