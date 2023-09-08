@@ -75,7 +75,7 @@ extern "C" {
  *  \retval HIPBLAS_STATUS_INVALID_VALUE If \p n is greater than 256.
  *  \retval HIPBLAS_STATUS_NOT_SUPPORTED If \p dim is not 1 or \p datatype is not HIPBLAS_R_32F.
  */
-    HIPBLASLT_EXPORT hipblasStatus_t hipblasltExtSoftmax(hipblasDatatype_t datatype, uint32_t m, uint32_t n, uint32_t dim,
+    HIPBLASLT_EXPORT hipblasStatus_t hipblasltExtSoftmax(hipblasltDatatype_t datatype, uint32_t m, uint32_t n, uint32_t dim,
         void *output, void *input, hipStream_t stream);
 #ifdef __cplusplus
 }
