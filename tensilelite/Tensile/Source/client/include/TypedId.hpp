@@ -35,9 +35,10 @@ namespace Tensile
                                   DataType cType,
                                   DataType dType,
                                   DataType alphaType,
-                                  DataType betaType)
+                                  DataType betaType,
+                                  DataType computeInputType)
     {
-        static_assert(BitFieldGenerator::ElementWidth((uint32_t)DataType::Count) * 6
+        static_assert(BitFieldGenerator::ElementWidth((uint32_t)DataType::Count) * 7
                           <= BitFieldGenerator::maxBitFieldWidth,
                       "Max bitfield width exceeded");
 
@@ -48,23 +49,26 @@ namespace Tensile
             (uint32_t)cType,
             (uint32_t)dType,
             (uint32_t)alphaType,
-            (uint32_t)betaType);
+            (uint32_t)betaType,
+            (uint32_t)computeInputType);
     }
 
-    template <typename A     = float,
-              typename B     = A,
-              typename C     = A,
-              typename D     = C,
-              typename Alpha = D,
-              typename Beta  = D>
+    template <typename A            = float,
+              typename B            = A,
+              typename C            = A,
+              typename D            = C,
+              typename Alpha        = D,
+              typename Beta         = D,
+              typename ComputeInput = A>
     struct TypedGemm
     {
-        using AType     = A;
-        using BType     = B;
-        using CType     = C;
-        using DType     = D;
-        using AlphaType = Alpha;
-        using BetaType  = Beta;
+        using AType            = A;
+        using BType            = B;
+        using CType            = C;
+        using DType            = D;
+        using AlphaType        = Alpha;
+        using BetaType         = Beta;
+        using ComputeInputType = ComputeInput;
 
         constexpr static uint32_t TypeId()
         {
@@ -73,7 +77,8 @@ namespace Tensile
                               TypeInfo<C>::Enum,
                               TypeInfo<D>::Enum,
                               TypeInfo<Alpha>::Enum,
-                              TypeInfo<Beta>::Enum);
+                              TypeInfo<Beta>::Enum,
+                              TypeInfo<ComputeInput>::Enum);
         }
     };
 
@@ -120,12 +125,19 @@ namespace Tensile
     using TypedGemm_F8B8_B8_S = TypedGemm<Float8, BFloat8, BFloat8, BFloat8, float, float>;
     using TypedGemm_B8F8_B8_S = TypedGemm<BFloat8, Float8, BFloat8, BFloat8, float, float>;
 #ifdef TENSILE_USE_HALF
-    using TypedGemm_HF8_S_S   = TypedGemm<Half, Float8, float, float, float, float>;
-    using TypedGemm_F8H_S_S   = TypedGemm<Float8, Half, float, float, float, float>;
-    using TypedGemm_HF8_H_S   = TypedGemm<Half, Float8, Half, Half, float, float>;
-    using TypedGemm_F8H_H_S   = TypedGemm<Float8, Half, Half, Half, float, float>;
-    using TypedGemm_HF8_FP8_S = TypedGemm<Half, Float8, Float8, Float8, float, float>;
-    using TypedGemm_F8H_FP8_S = TypedGemm<Float8, Half, Float8, Float8, float, float>;
+    // Mix precision
+    using TypedGemm_HF8_H_S_S     = TypedGemm<Half, Float8, float, float, float, float, Half>;
+    using TypedGemm_F8H_H_S_S     = TypedGemm<Float8, Half, float, float, float, float, Half>;
+    using TypedGemm_HF8_H_H_S     = TypedGemm<Half, Float8, Half, Half, float, float, Half>;
+    using TypedGemm_F8H_H_H_S     = TypedGemm<Float8, Half, Half, Half, float, float, Half>;
+    using TypedGemm_HF8_H_FP8_S   = TypedGemm<Half, Float8, Float8, Float8, float, float, Half>;
+    using TypedGemm_F8H_H_FP8_S   = TypedGemm<Float8, Half, Float8, Float8, float, float, Half>;
+    using TypedGemm_HF8_FP8_S_S   = TypedGemm<Half, Float8, float, float, float, float, Float8>;
+    using TypedGemm_F8H_FP8_S_S   = TypedGemm<Float8, Half, float, float, float, float, Float8>;
+    using TypedGemm_HF8_FP8_H_S   = TypedGemm<Half, Float8, Half, Half, float, float, Float8>;
+    using TypedGemm_F8H_FP8_H_S   = TypedGemm<Float8, Half, Half, Half, float, float, Float8>;
+    using TypedGemm_HF8_FP8_FP8_S = TypedGemm<Half, Float8, Float8, Float8, float, float, Float8>;
+    using TypedGemm_F8H_FP8_FP8_S = TypedGemm<Float8, Half, Float8, Float8, float, float, Float8>;
 #endif // TENSILE_USE_HALF
 #endif // TENSILE_USE_FP8_BF8
 } // namespace Tensile

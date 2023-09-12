@@ -3449,6 +3449,13 @@ class KernelWriter(metaclass=abc.ABCMeta):
     # for conditionals
     self.states.lastPostLoopSgpr = self.sgprPool.size()
 
+    if kernel["ProblemType"]["UseScaleAB"]:
+      for name in ['A','B']:
+        if kernel["ProblemType"]["DataType%s"%name].numRegisters() > kernel["ProblemType"]["DataType"].numRegisters():
+          self.defineSgpr("AddressScale%s"%name, 2, 2)
+          self.defineSgpr("Scale%s"%name, numSgprAlpha, numSgprAlpha if numSgprAlpha > 1 else 2)
+
+
     self.states.numSgprToLoad = self.states.numSgprSizesFree + self.states.numSgprSizesSum + \
       numSgprAddressD + numSgprAddressC + numSgprAddressA + numSgprAddressB + numSgprAlpha + numSgprAddressMetadata + \
       (numSgprBeta if kernel["ProblemType"]["UseBeta"] else 0) + \

@@ -634,10 +634,16 @@ namespace Tensile
         if constexpr(insertKernelArgs)
             kernelArgs<T_Debug>(args);
 
-        if(problemType.useScaleAB && (sizeMapping.globalSplitU == 1)) //kernel input data
+        if(problemType.useScaleAB) //kernel input data
         {
-            args.template append<void const*>("scaleA", inputs.scaleA);
-            args.template append<void const*>("scaleB", inputs.scaleB);
+            if(DataTypeInfo::Get(problemType.aType).elementSize
+                   > DataTypeInfo::Get(problemType.computeInputType).elementSize
+               || (sizeMapping.globalSplitU == 1))
+                args.template append<void const*>("scaleA", inputs.scaleA);
+            if(DataTypeInfo::Get(problemType.bType).elementSize
+                   > DataTypeInfo::Get(problemType.computeInputType).elementSize
+               || (sizeMapping.globalSplitU == 1))
+                args.template append<void const*>("scaleB", inputs.scaleB);
         }
         if(problemType.useScaleCD && (sizeMapping.globalSplitU == 1)) //kernel input data
         {
