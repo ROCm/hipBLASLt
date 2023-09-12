@@ -258,8 +258,10 @@ class StateValues:
   lraTileProperties: Dict[int, LraTileProperties] = field(init=False)
 
   # Epilogue states
-  useBias      = DataDirection.NONE
-  needBiasType = False
+  preloadScaleA = False
+  preloadScaleB = False
+  useBias       = DataDirection.NONE
+  needBiasType  = False
 
   def __post_init__(self):
     """ How many SGPRs does it take to have one bit per lane? """
@@ -3448,6 +3450,20 @@ class KernelWriter(metaclass=abc.ABCMeta):
     # Mostly impacts flat kernels and GSU edge since these need SGPR
     # for conditionals
     self.states.lastPostLoopSgpr = self.sgprPool.size()
+
+    self.states.preloadScaleA = False
+    self.states.preloadScaleB = False
+    if kernel["ProblemType"]["UseScaleAB"]:
+      if kernel["ProblemType"]["DataTypeA"].numRegisters() > kernel["ProblemType"]["DataType"].numRegisters():
+        self.states.preloadScaleA = True
+      if kernel["ProblemType"]["DataTypeB"].numRegisters() > kernel["ProblemType"]["DataType"].numRegisters():
+        self.states.preloadScaleB = True
+
+      for preloadScale, name in zip([self.states.preloadScaleA, self.states.preloadScaleB], ['A','B']):
+        if preloadScale:
+          self.defineSgpr("AddressScale%s"%name, 2, 2)
+          self.defineSgpr("Scale%s"%name, numSgprAlpha, numSgprAlpha if numSgprAlpha > 1 else 2)
+
 
     self.states.numSgprToLoad = self.states.numSgprSizesFree + self.states.numSgprSizesSum + \
       numSgprAddressD + numSgprAddressC + numSgprAddressA + numSgprAddressB + numSgprAlpha + numSgprAddressMetadata + \

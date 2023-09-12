@@ -39,6 +39,10 @@ class UserArgumentsInfo:
     alphaMaxRegisterSize: int = field(init=False)
     betaMaxSize: int = 16
     betaMaxRegisterSize: int = field(init=False)
+    scaleASize: int = 0
+    scaleBSize: int = 0
+    scaleCSize: int = 0
+    scaleDSize: int = 0
     actMaxSize: int = 4
     actMaxRegisterSize: int = field(init=False)
     # gemm related
@@ -188,12 +192,18 @@ class SignatureCOV3(Signature):
         if not kernel["ProblemType"]["GroupedGemm"]:
             signature.addArg(       "gsu",                SVK.SIG_VALUE,               "u32")
 
-        if kernel["ProblemType"]["UseScaleAB"] and (kernel["GlobalSplitU"] == 1):
-            signature.addArg("AddressScaleA", SVK.SIG_GLOBALBUFFER, cptValueType, "generic")
-            signature.addArg("AddressScaleB", SVK.SIG_GLOBALBUFFER, cptValueType, "generic")
+        if kernel["ProblemType"]["UseScaleAB"]:
+            if (kernel["GlobalSplitU"] == 1) or (kernel["ProblemType"]["DataTypeA"].numRegisters() > kernel["ProblemType"]["DataType"].numRegisters()):
+                signature.addArg("AddressScaleA", SVK.SIG_GLOBALBUFFER, cptValueType, "generic")
+            if (kernel["GlobalSplitU"] == 1) or (kernel["ProblemType"]["DataTypeB"].numRegisters() > kernel["ProblemType"]["DataType"].numRegisters()):
+                signature.addArg("AddressScaleB", SVK.SIG_GLOBALBUFFER, cptValueType, "generic")
+        userArgumentsInfo.scaleASize += 8
+        userArgumentsInfo.scaleBSize += 8
         if kernel["ProblemType"]["UseScaleCD"] and (kernel["GlobalSplitU"] == 1):
             signature.addArg("AddressScaleC", SVK.SIG_GLOBALBUFFER, cptValueType, "generic")
             signature.addArg("AddressScaleD", SVK.SIG_GLOBALBUFFER, cptValueType, "generic")
+        userArgumentsInfo.scaleCSize += 8
+        userArgumentsInfo.scaleDSize += 8
 
         if kernel["ProblemType"]["UseScaleAlphaVec"] and (kernel["GlobalSplitU"] == 1):
             signature.addArg("AddressScaleAlphaVec", SVK.SIG_GLOBALBUFFER, cptValueType, "generic")
@@ -229,6 +239,10 @@ class SignatureCOV3(Signature):
 
         # Calculate total size
         userArgumentsInfo.totalSize = userArgumentsInfo.gemmArgumentSize + \
+                                      userArgumentsInfo.scaleASize + \
+                                      userArgumentsInfo.scaleBSize + \
+                                      userArgumentsInfo.scaleCSize + \
+                                      userArgumentsInfo.scaleDSize + \
                                       userArgumentsInfo.scaleAlphaVecSize + \
                                       userArgumentsInfo.biasSize + \
                                       userArgumentsInfo.eSize + \
