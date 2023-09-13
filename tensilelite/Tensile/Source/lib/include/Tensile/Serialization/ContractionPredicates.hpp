@@ -105,7 +105,6 @@ namespace Tensile
                     Base::template Pair<Predicates::Contraction::UseEEqual>(),
                     Base::template Pair<Predicates::Contraction::UseScaleABEqual>(),
                     Base::template Pair<Predicates::Contraction::UseScaleCDEqual>(),
-                    Base::template Pair<Predicates::Contraction::UseScaleDVecEqual>(),
                     Base::template Pair<Predicates::Contraction::UseScaleAlphaVecEqual>(),
                     Base::template Pair<Predicates::Contraction::BiasDataTypeWhiteList>(),
                     Base::template Pair<Predicates::Contraction::BiasSrcWhiteList>(),
@@ -428,12 +427,6 @@ namespace Tensile
         template <typename IO>
         struct MappingTraits<Predicates::Contraction::UseScaleCDEqual, IO>
             : public AutoMappingTraits<Predicates::Contraction::UseScaleCDEqual, IO>
-        {
-        };
-
-        template <typename IO>
-        struct MappingTraits<Predicates::Contraction::UseScaleDVecEqual, IO>
-            : public AutoMappingTraits<Predicates::Contraction::UseScaleDVecEqual, IO>
         {
         };
 

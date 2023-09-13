@@ -814,13 +814,6 @@ namespace Tensile
                         problem.activationType(), resultD, problem.activationEnumArg(), actArgs);
                 }
 
-                if(problem.useScaleDVec())
-                {
-                    int         pos       = int(dNum % problem.d().sizes()[0]);
-                    Accumulator scaleDVec = GetValue<Accumulator>(
-                        problem.alphaType(), inputs.scaleDVec, pos, aConjugate);
-                    resultD *= scaleDVec;
-                }
                 if(problem.useScaleCD())
                 {
                     Accumulator scaleD

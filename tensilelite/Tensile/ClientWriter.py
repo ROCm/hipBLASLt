@@ -458,7 +458,6 @@ def dataInitParams(problemType):
     initScaleB  = globalParameters['DataInitTypeScaleB']
     initScaleC  = globalParameters['DataInitTypeScaleC']
     initScaleD  = globalParameters['DataInitTypeScaleD']
-    initScaleDVec  = globalParameters['DataInitTypeScaleDVec']
     initScaleAlphaVec  = globalParameters['DataInitTypeScaleAlphaVec']
 
     if not problemType.useBeta:
@@ -467,20 +466,19 @@ def dataInitParams(problemType):
     if initA == -1: initA = globalParameters['DataInitTypeAB']
     if initB == -1: initB = globalParameters['DataInitTypeAB']
 
-    return [('init-a',            DataInitName(initA).name),
-            ('init-b',            DataInitName(initB).name),
-            ('init-c',            DataInitName(initC).name),
-            ('init-d',            DataInitName(initD).name),
-            ('init-e',            DataInitName(initE).name),
-            ('init-alpha',        DataInitName(initAlpha).name),
-            ('init-beta',         DataInitName(initBeta).name),
-            ('init-bias',         DataInitName(initBias).name),
-            ('init-scaleA',         DataInitName(initScaleA).name),
-            ('init-scaleB',         DataInitName(initScaleB).name),
-            ('init-scaleC',         DataInitName(initScaleC).name),
-            ('init-scaleD',         DataInitName(initScaleD).name),
-            ('init-scaleDVec',         DataInitName(initScaleDVec).name),
-            ('init-scaleAlphaVec',         DataInitName(initScaleAlphaVec).name)]
+    return [('init-a',             DataInitName(initA).name),
+            ('init-b',             DataInitName(initB).name),
+            ('init-c',             DataInitName(initC).name),
+            ('init-d',             DataInitName(initD).name),
+            ('init-e',             DataInitName(initE).name),
+            ('init-alpha',         DataInitName(initAlpha).name),
+            ('init-beta',          DataInitName(initBeta).name),
+            ('init-bias',          DataInitName(initBias).name),
+            ('init-scaleA',        DataInitName(initScaleA).name),
+            ('init-scaleB',        DataInitName(initScaleB).name),
+            ('init-scaleC',        DataInitName(initScaleC).name),
+            ('init-scaleD',        DataInitName(initScaleD).name),
+            ('init-scaleAlphaVec', DataInitName(initScaleAlphaVec).name)]
 
 def boundsCheckName(mode):
     if mode == 0: return 'Disable'
@@ -534,7 +532,6 @@ def writeClientConfigIni(problemSizes, biasTypeArgs, activationArgs, problemType
         param('use-e', problemType.useE)
         param('use-scaleAB',   problemType.useScaleAB)
         param('use-scaleCD',   problemType.useScaleCD)
-        param('use-scaleDVec',   problemType.useScaleDVec)
         param('use-scaleAlphaVec',   problemType.useScaleAlphaVec)
         if biasTypeArgs:
           for btype in biasTypeArgs.biasTypes:

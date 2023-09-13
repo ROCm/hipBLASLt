@@ -173,9 +173,8 @@ namespace Tensile
             SCALEB        = 7,
             SCALEC        = 8,
             SCALED        = 9,
-            SCALEDVEC     = 10,
-            SCALEALPHAVEC = 11,
-            METADATA      = 12,
+            SCALEALPHAVEC = 10,
+            METADATA      = 11,
             TENSOR_COUNT
         };
 
@@ -410,7 +409,6 @@ namespace Tensile
                                TensorDescriptor const& scaleB,
                                TensorDescriptor const& scaleC,
                                TensorDescriptor const& scaleD,
-                               TensorDescriptor const& scaleDVec,
                                TensorDescriptor const& scaleAlphaVec,
                                FreeIndices const&      freeIndices,
                                BatchIndices const&     batchIndices,
@@ -532,11 +530,6 @@ namespace Tensile
             m_useScaleCD = useScaleCD;
         }
 
-        void setUseScaleDVec(bool useScaleDVec)
-        {
-            m_useScaleDVec = useScaleDVec;
-        }
-
         void setUseScaleAlphaVec(bool useScaleAlphaVec)
         {
             m_useScaleAlphaVec = useScaleAlphaVec;
@@ -560,11 +553,6 @@ namespace Tensile
         bool useScaleCD() const
         {
             return m_useScaleCD;
-        }
-
-        bool useScaleDVec() const
-        {
-            return m_useScaleDVec;
         }
 
         bool useScaleAlphaVec() const
@@ -673,16 +661,6 @@ namespace Tensile
             {
                 m_tensors[ContractionProblemGemm::TENSOR::SCALED]
                     = {"scaleD", m_scaleDType, {1}, {1, 1}};
-            }
-        }
-
-        void setScaleDVec(DataType type, size_t length)
-        {
-            m_scaleDVecType = type;
-            if(type != DataType::None && m_useScaleDVec)
-            {
-                m_tensors[ContractionProblemGemm::TENSOR::SCALEDVEC]
-                    = {"scaleDVec", m_scaleDVecType, {length}, {1, length}};
             }
         }
 
@@ -1030,7 +1008,6 @@ namespace Tensile
         bool           m_useBias                 = false;
         bool           m_useScaleAB              = false;
         bool           m_useScaleCD              = false;
-        bool           m_useScaleDVec            = false;
         bool           m_useScaleAlphaVec        = false;
         ActivationType m_activationType          = ActivationType::None;
         ActivationType m_activationEnumArg       = ActivationType::None;
@@ -1047,7 +1024,6 @@ namespace Tensile
         DataType m_scaleBType        = DataType::None; // if not assigned, will follow alpha-type
         DataType m_scaleCType        = DataType::None; // if not assigned, will follow beta-type
         DataType m_scaleDType        = DataType::None; // if not assigned, will follow beta-type
-        DataType m_scaleDVecType     = DataType::None; // if not assigned, will follow alpha-type
         DataType m_scaleAlphaVecType = DataType::None; // if not assigned, will follow alpha-type
         DataType m_activationComputeType = DataType::None;
 
@@ -1131,7 +1107,6 @@ namespace Tensile
                           void const*          _scaleB,
                           void const*          _scaleC,
                           void const*          _scaleD,
-                          void const*          _scaleDVec,
                           void const*          _scaleAlphaVec,
                           void*                _ws,
                           unsigned char const* _metadata);
@@ -1154,7 +1129,6 @@ namespace Tensile
         void const* scaleB        = nullptr;
         void const* scaleC        = nullptr;
         void const* scaleD        = nullptr;
-        void const* scaleDVec     = nullptr;
         void const* scaleAlphaVec = nullptr;
 
         // Constants

@@ -165,8 +165,6 @@ namespace Tensile
                 m_useScaleAB = args["use-scaleAB"].as<bool>();
             if(args.count("use-scaleCD"))
                 m_useScaleCD = args["use-scaleCD"].as<bool>();
-            if(args.count("use-scaleDVec"))
-                m_useScaleDVec = args["use-scaleDVec"].as<bool>();
             if(args.count("use-scaleAlphaVec"))
                 m_useScaleAlphaVec = args["use-scaleAlphaVec"].as<bool>();
             if(args.count("max-workspace-size"))
@@ -348,10 +346,6 @@ namespace Tensile
                             rv.back().setScaleD(
                                 m_constantTypes[ContractionProblemGemm::CONST::BETA]);
                         }
-                        rv.back().setUseScaleDVec(m_useScaleDVec);
-                        rv.back().setScaleDVec(
-                            m_constantTypes[ContractionProblemGemm::CONST::ALPHA],
-                            rv.back().d().sizes()[0]);
                         rv.back().setUseScaleAlphaVec(m_useScaleAlphaVec);
                         rv.back().setScaleAlphaVec(
                             m_constantTypes[ContractionProblemGemm::CONST::ALPHA],

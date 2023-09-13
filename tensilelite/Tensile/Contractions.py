@@ -65,7 +65,7 @@ class BoundIndex:
 
 class ProblemType:
     StateKeys = ['operationIdentifier', 'transA', 'transB', 'computeInputType', 'aType', 'bType', 'cType', 'dType', 'eType', 'computeType',
-                 'useBeta', 'useBias', 'biasSrcWhiteList', 'useE', 'useScaleAB', 'useScaleCD', 'useScaleDVec', 'useScaleAlphaVec', 'biasDataTypeWhiteList',
+                 'useBeta', 'useBias', 'biasSrcWhiteList', 'useE', 'useScaleAB', 'useScaleCD', 'useScaleAlphaVec', 'biasDataTypeWhiteList',
                  'highPrecisionAccumulate', 'useInitialStridesAB', 'useInitialStridesCD', 'stridedBatched', 'groupedGemm',
                  'useGradient', 'activationType', 'activationArgLength', 'activationComputeDataType', 'activationNoGuard',
                  'sparseA', 'f32XdlMathOp', 'supportDeviceUserArguments']
@@ -219,10 +219,6 @@ class ProblemType:
         if 'UseScaleCD' in d:
             rv.useScaleCD = d['UseScaleCD']
 
-        rv.useScaleDVec = False
-        if 'UseScaleDVec' in d:
-            rv.useScaleDVec = d['UseScaleDVec']
-
         rv.useScaleAlphaVec = False
         if 'UseScaleAlphaVec' in d:
             rv.useScaleAlphaVec = d['UseScaleAlphaVec']
@@ -342,7 +338,6 @@ class ProblemType:
                 exportType = ActivationType.Export.GRADONLY if self.useGradient else ActivationType.Export.NORMAL
                 enumList = [actEnum.capitalize() for actEnum in ActivationType.getEnumStrList(self.activationComputeDataType, exportType=exportType)]
                 predicates.append(ProblemPredicate("ActivationEnumWhiteList", value=enumList))
-            # predicates.append(ProblemPredicate("UseScaleDVec", value=self.useScaleDVec))
             # predicates.append(ProblemPredicate("UseScaleAlphaVec", value=self.useScaleAlphaVec))
             # predicates.append(ProblemPredicate("GroupedGemm", value=self.groupedGemm))
 
@@ -359,7 +354,6 @@ class ProblemType:
             predicates.append(ProblemPredicate("GroupedGemm", value=self.groupedGemm))
             predicates.append(ProblemPredicate("UseScaleAB", value=self.useScaleAB))
             predicates.append(ProblemPredicate("UseScaleCD", value=self.useScaleCD))
-            predicates.append(ProblemPredicate("UseScaleDVec", value=self.useScaleDVec))
             predicates.append(ProblemPredicate("UseScaleAlphaVec", value=self.useScaleAlphaVec))
             predicates.append(ProblemPredicate("SparseA", value=self.sparseA))
             predicates.append(ProblemPredicate("F32XdlMathOp", value=self.f32XdlMathOp))
