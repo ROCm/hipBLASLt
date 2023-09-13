@@ -6352,8 +6352,17 @@ class KernelWriterAssembly(KernelWriter):
             if (blockWidth == 0.25) and ((s % 4) == 0) and not tP["isM"]:
                 src = "G2L%s+%u" % (tc, g2lIdx)
                 dst = "G2L%s+%u+%u" % (tc, tmpVgprOffset, g2lIdx)
-                localWriteCode.add(VMovB32(dst=vgpr(dst), src=vgpr(src), comment="another VGPR storing lshr 8-bit value"))
-                localWriteCode.add(VLShiftRightB32(dst=vgpr(dst), shiftHex=hex(0x8), src=vgpr(dst), comment="G2L Vpgr >> 8"))
+                if tP["bpe"] != tP["bpeGR"]:
+                  if kernel["ProblemType"]["DataType%s"%tc].isHalf():
+                    localWriteCode.add(VPackF16toB32(dst=vgpr(dst), src0=vgpr(src), src1=vgpr("G2L%s+%u" % (tc, g2lIdx+1)), \
+                                       vop3=VOP3PModifiers(op_sel=[1,1,0]), comment="Pack with neighbor"))
+                    localWriteCode.add(VPackF16toB32(dst=vgpr(src), src0=vgpr(src), src1=vgpr("G2L%s+%u" % (tc, g2lIdx+1)), \
+                                       vop3=VOP3PModifiers(op_sel=[0,0,0]), comment="Pack with neighbor"))
+                  else:
+                    printExit("Unsupported combination DataType%s (%s) -> DataType (%s)"%(tc, kernel["ProblemType"]["DataType%s"%tc].toChar(), kernel["ProblemType"]["DataType"].toChar()))
+                else:
+                  localWriteCode.add(VMovB32(dst=vgpr(dst), src=vgpr(src), comment="another VGPR storing lshr 8-bit value"))
+                  localWriteCode.add(VLShiftRightB32(dst=vgpr(dst), shiftHex=hex(8), src=vgpr(dst), comment="G2L Vpgr >> 8"))
 
             if self.states.archCaps["HasEccHalf"]:
               numVgprG2L = self.states.a.numVgprG2L if tc == 'A' else self.states.b.numVgprG2L if tc == 'B' else self.states.m.numVgprG2L
@@ -6439,11 +6448,12 @@ class KernelWriterAssembly(KernelWriter):
                 if newBlockWidth == 0.5:
                   vgprTmp = self.vgprPool.checkOut(1)
                   src_sel = SelectBit.WORD_1 if isHigh16Bits else SelectBit.WORD_0
-                  localWriteCode.add(VCvtF16toF32(dst=vgpr(vgprTmp), src=vgpr("G2L%s+%u"%(tP["tensorChar"], g2lIdx)), sdwa=SDWAModifiers(src0_sel=src_sel), comment="convert to F32"))
+                  sel = 1 if isHigh16Bits else 0
+                  localWriteCode.add(VCvtF16toF32(dst=vgpr(vgprTmp), src=paramList[0], sdwa=SDWAModifiers(src0_sel=src_sel), comment="convert to F32"))
                   # ScaleA/B
                   if kernel["ProblemType"]["UseScaleAB"] and kernel["ProblemType"]["DataType%s"%tc].numRegisters() > kernel["ProblemType"]["DataType"].numRegisters():
                     localWriteCode.add(VMulF32(dst=vgpr(vgprTmp), src0=vgpr(vgprTmp), src1=sgpr("Scale%s"%tc), comment="Input *= scale %s"%tc))
-                  localWriteCode.add(VCvtPkF32toFP8(dst=paramList[0], src0=vgpr(vgprTmp), src1=vgpr(vgprTmp), vop3=VOP3PModifiers(op_sel=[0,0,0,0]), comment="Convert to FP8"))
+                  localWriteCode.add(VCvtPkF32toFP8(dst=paramList[0], src0=vgpr(vgprTmp), src1=vgpr(vgprTmp), vop3=VOP3PModifiers(op_sel=[0,0,sel]), comment="Convert to FP8"))
                   self.vgprPool.checkIn(vgprTmp)
                 else:
                   vgprTmp = self.vgprPool.checkOutAligned(2, 2)
