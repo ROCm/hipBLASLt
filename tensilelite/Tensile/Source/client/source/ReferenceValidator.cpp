@@ -361,11 +361,6 @@ namespace Tensile
                     resPtr = result.scaleD;
                 }
                 break;
-                case ContractionProblemGemm::TENSOR::SCALEDVEC:
-                {
-                    refPtr = reference.scaleDVec;
-                    resPtr = result.scaleDVec;
-                }
                 case ContractionProblemGemm::TENSOR::SCALEALPHAVEC:
                 {
                     refPtr = reference.scaleAlphaVec;

@@ -104,11 +104,6 @@ class KernelWriterConversion(KernelWriterBase):
       kStr += "  " + scalePtrStr + " * " + "ScaleC;" + self.endLine
       kStr += "  " + scalePtrStr + " * " + "ScaleD;" + self.endLine
 
-    # interface: ScaleDVec GSU>1 GSUA "MUL"
-    if self.state["ProblemType"]["UseScaleDVec"]:
-      scaleDVecPtrStr = self.state["ProblemType"]["ComputeDataType"].toDevice(self.language)
-      kStr += "  " + scaleDVecPtrStr + " * " + "ScaleDVec;" + self.endLine
-
     # interface: ScaleAlphaVec GSU>1 GSUA "MUL"
     if self.state["ProblemType"]["UseScaleAlphaVec"]:
       scaleAlphaVecPtrStr = self.state["ProblemType"]["ComputeDataType"].toDevice(self.language)
@@ -554,14 +549,6 @@ class KernelWriterConversion(KernelWriterBase):
           kStr += "  %s[%d] = activation%s((%s)%s[%d]%s);%s" % (accumStr, vIdx, self.gaurdStr, typeActivationStr, accumStr, vIdx, actArgs, self.endLine)
       kStr += self.endLine
 
-    #ScaleDVec
-    if self.state["ProblemType"]["UseScaleDVec"]:
-      kStr += "  if(arg.ScaleDVec != nullptr){" + self.endLine
-      for vIdx in range(self.num_dword_load):
-        kStr += "    %s[%d] *= (%s)arg.ScaleDVec[id0+%d];%s" % (accumStr, vIdx, intermediateDataType, vIdx, self.endLine)
-      kStr += "  }" + self.endLine
-      kStr += self.endLine
-
     #scaleD
     if self.state["ProblemType"]["UseScaleCD"]:
       for vIdx in range(self.num_dword_load):
@@ -641,7 +628,6 @@ class KernelWriterConversion(KernelWriterBase):
       name += ("ng" if self.state["ProblemType"]["ActivationNoGuard"] else "")
     name += "_ScaleAB" if self.state["ProblemType"]["UseScaleAB"] else ""
     name += "_ScaleCD" if self.state["ProblemType"]["UseScaleCD"] else ""
-    name += "_ScaleDVec" if self.state["ProblemType"]["UseScaleDVec"] else ""
     name += "_ScaleAlphaVec" if self.state["ProblemType"]["UseScaleAlphaVec"] else ""
     name += "_PostGSU" + str(self.state["GlobalSplitU"])
     if self.num_elements_load != None:

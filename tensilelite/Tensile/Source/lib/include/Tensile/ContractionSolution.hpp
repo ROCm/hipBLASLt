@@ -63,7 +63,6 @@ namespace Tensile
         uint32_t strideB2;
         int8_t   alpha[16];
         int8_t   beta[16];
-        void*    scaleDVec;
         void*    scaleAlphaVec;
         void*    bias;
         int      biasType;
@@ -432,7 +431,6 @@ namespace Tensile
             bool                  useE                      = false;
             bool                  useScaleAB                = false;
             bool                  useScaleCD                = false;
-            bool                  useScaleDVec              = false;
             bool                  useScaleAlphaVec          = false;
             bool                  useInitialStridesAB       = false;
             bool                  useInitialStridesCD       = false;

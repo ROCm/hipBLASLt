@@ -436,8 +436,6 @@ namespace
         Tensile::TensorDescriptor scaleB{"scaleB"};
         Tensile::TensorDescriptor scaleC{"scaleC"};
         Tensile::TensorDescriptor scaleD{"scaleD"};
-        //remove once scaleD is removed from tensile
-        Tensile::TensorDescriptor scaleDVec{"scaleDVec"};
         Tensile::TensorDescriptor scaleAlphaVec{"scaleAlphaVec"};
 
         // The ContractionProblemGemm
@@ -451,7 +449,6 @@ namespace
                                                        scaleB,
                                                        scaleC,
                                                        scaleD,
-                                                       scaleDVec,
                                                        scaleAlphaVec,
                                                        freeIndex,
                                                        batchIndex,
@@ -699,7 +696,8 @@ namespace
                || Tensile_TiB == Tensile::DataType::BFloat8)
             {
                 tensileProblem.setUseScaleAB(true);
-                if(Tensile_To == Tensile::DataType::Float8 || Tensile_To == Tensile::DataType::BFloat8)
+                if(Tensile_To == Tensile::DataType::Float8
+                   || Tensile_To == Tensile::DataType::BFloat8)
                     tensileProblem.setUseScaleCD(true);
                 else
                     tensileProblem.setUseScaleCD(false);
@@ -1120,7 +1118,6 @@ namespace
     }
 #endif
 } // namespace
-
 
 struct TensileDataGemm
 {

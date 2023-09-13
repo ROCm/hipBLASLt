@@ -167,7 +167,6 @@ namespace hipblaslt_ext
         int8_t   alpha[16]; //!< The alpha value.
         int8_t   beta[16]; //!< The beta value.
         // Epilogue inputs
-        void* scaleDVec; //!< The scaleD vector input pointer.
         void* scaleAlphaVec; //!< The scaleAlpha vector input pointer.
         void* bias; //!< The bias input pointer.
         int   biasType; //!< The bias datatype. Only works if mode is set to bias related epilogues.

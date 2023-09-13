@@ -1100,7 +1100,7 @@ namespace Tensile
         void DataInitialization::initializeGPUBatchedInputs(ContractionProblemGemm const& problem)
         {
             auto batchIdxs = problem.batchIndices();
-            // FIXME: batch not supported for bias and scaleDVec
+            // FIXME: batch not supported for bias
             for(size_t i = 0; i < 4 /*m_vdata.size()*/; i++)
             {
                 auto&               pUnit = m_vdata[i].pristine[problem.tensors()[i].dataType()];
@@ -1524,7 +1524,6 @@ namespace Tensile
             inputs->scaleB        = (void*)ptrs[ContractionProblemGemm::TENSOR::SCALEB];
             inputs->scaleC        = (void*)ptrs[ContractionProblemGemm::TENSOR::SCALEC];
             inputs->scaleD        = (void*)ptrs[ContractionProblemGemm::TENSOR::SCALED];
-            inputs->scaleDVec     = (void*)ptrs[ContractionProblemGemm::TENSOR::SCALEDVEC];
             inputs->scaleAlphaVec = (void*)ptrs[ContractionProblemGemm::TENSOR::SCALEALPHAVEC];
             inputs->metadata      = (unsigned char*)ptrs[ContractionProblemGemm::TENSOR::METADATA];
 
@@ -1629,13 +1628,6 @@ namespace Tensile
                     u8Ptr[ContractionProblemGemm::TENSOR::SCALED]
                         += offsets[ContractionProblemGemm::TENSOR::SCALED][idx]
                            * problem.tensors()[ContractionProblemGemm::TENSOR::SCALED]
-                                 .elementBytes();
-                }
-                if(u8Ptr[ContractionProblemGemm::TENSOR::SCALEDVEC] != nullptr)
-                {
-                    u8Ptr[ContractionProblemGemm::TENSOR::SCALEDVEC]
-                        += offsets[ContractionProblemGemm::TENSOR::SCALEDVEC][idx]
-                           * problem.tensors()[ContractionProblemGemm::TENSOR::SCALEDVEC]
                                  .elementBytes();
                 }
                 if(u8Ptr[ContractionProblemGemm::TENSOR::SCALEALPHAVEC] != nullptr)

@@ -237,9 +237,6 @@ class ProblemType(Mapping):
         elif self["ActivationType"] != 'none' and self["UseE"] == False:
           printWarning("Use E is disabled cause Activation is disabled.")
           self["UseE"] = False
-        # if self["UseScaleDVec"]:
-        #   printWarning("Use scaleDVec is disabled cause Gradient is enabled.")
-        #   self["UseScaleDVec"] = False
         # if self["UseScaleAlphaVec"]:
         #   printWarning("Use scaleAlphaVec is disabled cause Gradient is enabled.")
         #   self["UseScaleAlphaVec"] = False
@@ -518,7 +515,6 @@ class ProblemType(Mapping):
 
     if self["UseScaleAB"]: name += "_SAB"
     if self["UseScaleCD"]: name += "_SCD"
-    if self["UseScaleDVec"]: name += "_SDV"
     if self["UseScaleAlphaVec"]: name += "_SAV"
 
     if self["SupportUserArgs"]: name += "_UserArgs"

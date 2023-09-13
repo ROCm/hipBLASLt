@@ -44,7 +44,6 @@ class UserArgumentsInfo:
     # gemm related
     gemmArgumentSize: int = 0
     # Epilogue related
-    scaleDVecSize: int = 0
     scaleAlphaVecSize: int = 0
     biasSize: int = 0
     eSize: int = 0
@@ -189,10 +188,6 @@ class SignatureCOV3(Signature):
         if not kernel["ProblemType"]["GroupedGemm"]:
             signature.addArg(       "gsu",                SVK.SIG_VALUE,               "u32")
 
-        if kernel["ProblemType"]["UseScaleDVec"] and (kernel["GlobalSplitU"] == 1):
-            signature.addArg("AddressScaleDVec", SVK.SIG_GLOBALBUFFER, cptValueType, "generic")
-        userArgumentsInfo.scaleDVecSize += 8
-
         if kernel["ProblemType"]["UseScaleAB"] and (kernel["GlobalSplitU"] == 1):
             signature.addArg("AddressScaleA", SVK.SIG_GLOBALBUFFER, cptValueType, "generic")
             signature.addArg("AddressScaleB", SVK.SIG_GLOBALBUFFER, cptValueType, "generic")
@@ -234,7 +229,6 @@ class SignatureCOV3(Signature):
 
         # Calculate total size
         userArgumentsInfo.totalSize = userArgumentsInfo.gemmArgumentSize + \
-                                      userArgumentsInfo.scaleDVecSize + \
                                       userArgumentsInfo.scaleAlphaVecSize + \
                                       userArgumentsInfo.biasSize + \
                                       userArgumentsInfo.eSize + \
