@@ -594,7 +594,7 @@ class SoftmaxKernelGenerator:
             self.vgpr_pool.checkIn(local_offset_byte_offset_reg_idx)
         return mod
 
-def kernel_rodata(name: str):
+def kernel_rodata(name: str, gfx_arch: Tuple[int, int, int]):
     return f'''
 .rodata
 .p2align 6
@@ -602,6 +602,16 @@ def kernel_rodata(name: str):
 .amdhsa_user_sgpr_kernarg_segment_ptr 1
 .amdhsa_system_sgpr_workgroup_id_x 1
 .amdhsa_accum_offset 8
+.amdhsa_next_free_vgpr .amdgcn.next_free_vgpr
+.amdhsa_next_free_sgpr .amdgcn.next_free_sgpr
+.end_amdhsa_kernel
+''' if gfx_arch >= (9, 0, 10) else\
+f'''
+.rodata
+.p2align 6
+.amdhsa_kernel {name}
+.amdhsa_user_sgpr_kernarg_segment_ptr 1
+.amdhsa_system_sgpr_workgroup_id_x 1
 .amdhsa_next_free_vgpr .amdgcn.next_free_vgpr
 .amdhsa_next_free_sgpr .amdgcn.next_free_sgpr
 .end_amdhsa_kernel
@@ -704,7 +714,7 @@ if __name__ == '__main__':
     meta.update_args_offsets()
     k_str = '\n'.join([kernel_header(func_name, arch),
                        str(kernel_body),
-                       kernel_rodata(func_name),
+                       kernel_rodata(func_name, isa),
                        meta_str((meta,))])
 
     with open(output_path, 'w') as f:
