@@ -997,8 +997,8 @@ namespace Tensile
                            << "&& b:" << problem.b().dataType() << " == " << value[1]
                            << "&& c:" << problem.c().dataType() << " == " << value[2]
                            << "&& d:" << problem.d().dataType() << " == " << value[3]
-                           << "&& compute input type:" << problem.computeInputType() << " == " << value[4]
-                           << "): " << rv;
+                           << "&& compute input type:" << problem.computeInputType()
+                           << " == " << value[4] << "): " << rv;
                     ;
 
                     return rv;
@@ -1776,33 +1776,6 @@ namespace Tensile
                 }
             };
 
-            struct UseScaleDVecEqual
-                : public Predicate_CRTP<UseScaleDVecEqual, ContractionProblemGemm>
-            {
-                enum
-                {
-                    HasIndex = false,
-                    HasValue = true
-                };
-                bool value;
-
-                UseScaleDVecEqual() = default;
-                UseScaleDVecEqual(bool value)
-                    : value(value)
-                {
-                }
-
-                static std::string Type()
-                {
-                    return "UseScaleDVec";
-                }
-
-                virtual bool operator()(ContractionProblemGemm const& problem) const override
-                {
-                    return problem.useScaleDVec() == value;
-                }
-            };
-
             struct UseScaleAlphaVecEqual
                 : public Predicate_CRTP<UseScaleAlphaVecEqual, ContractionProblemGemm>
             {
@@ -1937,7 +1910,7 @@ namespace Tensile
                 virtual bool debugEval(ContractionProblemGemm const& problem,
                                        std::ostream&                 stream) const override
                 {
-                    bool rv = (*this)(problem);
+                    bool        rv         = (*this)(problem);
                     std::string biasString = "";
                     for(size_t i = 0; i < value.size(); i++)
                     {

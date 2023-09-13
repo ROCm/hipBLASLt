@@ -448,10 +448,6 @@ class KernelWriterAssembly(KernelWriter):
     self.states.numStoreSgprNames = []
     self.states.numStoreSgprNameSizes = []
     storeSgprLoad = 0
-    if kernel["ProblemType"]["UseScaleDVec"] and (kernel["GlobalSplitU"] == 1):
-        storeSgprLoad += self.states.rpga
-        self.states.numStoreSgprNames.append("AddressScaleDVec")
-        self.states.numStoreSgprNameSizes.append(self.states.rpga)
     if kernel["ProblemType"]["UseScaleAB"] and (kernel["GlobalSplitU"] == 1):
       self.states.numSgprAddressScaleA = self.states.rpga
       self.states.numSgprAddressScaleB = self.states.rpga
@@ -4277,12 +4273,6 @@ class KernelWriterAssembly(KernelWriter):
         extArgOffset = self.externalArgLoader.getOffset()
         backupExtArgOffset = extArgOffset
         loadList = [[-1, 0, extArgOffset]]
-        extArgOffset += self.states.userArgsInfo.scaleDVecSize
-        if kernel["ProblemType"]["UseScaleDVec"] and (kernel["GlobalSplitU"] == 1):
-          loadList[-1][0] = self.sgprs["AddressScaleDVec"]
-          loadList[-1][1] += self.states.userArgsInfo.scaleDVecSize
-        else:
-          loadList.append([-1, 0, extArgOffset])  # Need to start a new loadAllKernArg cause the argument is not consecutively anymore.
         extArgOffset += self.states.userArgsInfo.scaleAlphaVecSize
         if kernel["ProblemType"]["UseScaleAlphaVec"] and (kernel["GlobalSplitU"] == 1):
           if loadList[-1][0] == -1:
@@ -4344,9 +4334,6 @@ class KernelWriterAssembly(KernelWriter):
       self.defineSgpr("SrdC", 4, 4)
       module.add(RegSet("s", "sgprSrdC", self.sgprs["SrdC"]))
       module.add(RegSet("s", "sgprSrdD", self.sgprs["SrdD"]))
-    if kernel["ProblemType"]["UseScaleDVec"] and (kernel["GlobalSplitU"] == 1):
-      self.defineSgpr("SrdScaleDVec", 4, 4)
-      module.add(RegSet("s", "sgprSrdScaleDVec", self.sgprs["SrdScaleDVec"]))
     if kernel["ProblemType"]["UseScaleAlphaVec"] and (kernel["GlobalSplitU"] == 1):
       self.defineSgpr("SrdScaleAlphaVec", 4, 4)
       module.add(RegSet("s", "sgprSrdScaleAlphaVec", self.sgprs["SrdScaleAlphaVec"]))
@@ -7087,7 +7074,6 @@ class KernelWriterAssembly(KernelWriter):
       self.vgprs.addrD    = -1
       self.vgprs.addrC    = -1
       self.vgprs.addrBias = -1
-      self.vgprs.addrScaleDVec = -1
       self.vgprs.addrScaleAlphaVec = -1
     else:
       self.vgprs.addrD = self.vgprPool.checkOut(2)
@@ -7127,16 +7113,6 @@ class KernelWriterAssembly(KernelWriter):
         module.add(VMovB32( \
             dst=vgpr(self.vgprs.addrBias+1), \
             src=sgpr("AddressBias+1"), \
-            comment="sgpr -> vgpr"))
-      if kernel["ProblemType"]["UseScaleDVec"] and (kernel["GlobalSplitU"] == 1):
-        self.vgprs.addrScaleDVec = self.vgprPool.checkOut(2, 'addrScaleDVec')
-        module.add(VMovB32( \
-            dst=vgpr(self.vgprs.addrScaleDVec+0), \
-            src=sgpr("AddressScaleDVec+0"), \
-            comment="sgpr -> vgpr"))
-        module.add(VMovB32( \
-            dst=vgpr(self.vgprs.addrScaleDVec+1), \
-            src=sgpr("AddressScaleDVec+1"), \
             comment="sgpr -> vgpr"))
       if kernel["ProblemType"]["UseScaleAlphaVec"] and (kernel["GlobalSplitU"] == 1):
         self.vgprs.addrScaleAlphaVec = self.vgprPool.checkOut(2, 'addrScaleAlphaVec')
@@ -7179,7 +7155,6 @@ class KernelWriterAssembly(KernelWriter):
       self.vgprs.addrD    = -1
       self.vgprs.addrC    = -1
       self.vgprs.addrBias = -1
-      self.vgprs.addrScaleDVec = -1
       self.vgprs.addrScaleAlphaVec = -1
     else:
       self.vgprs.addrD = self.vgprPool.checkOut(2, 'addrD')
@@ -7220,16 +7195,6 @@ class KernelWriterAssembly(KernelWriter):
             dst=vgpr(self.vgprs.addrBias+1), \
             src=sgpr("AddressBias+1"), \
             comment="sgpr -> vgpr"))
-      if kernel["ProblemType"]["UseScaleDVec"] and (kernel["GlobalSplitU"] == 1):
-        self.vgprs.addrScaleDVec = self.vgprPool.checkOut(2, 'addrScaleDVec')
-        module.add(VMovB32( \
-            dst=vgpr(self.vgprs.addrScaleDVec+0), \
-            src=sgpr("AddressScaleDVec+0"), \
-            comment="sgpr -> vgpr"))
-        module.add(VMovB32( \
-            dst=vgpr(self.vgprs.addrScaleDVec+1), \
-            src=sgpr("AddressScaleDVec+1"), \
-            comment="sgpr -> vgpr"))
       if kernel["ProblemType"]["UseScaleAlphaVec"] and (kernel["GlobalSplitU"] == 1):
         self.vgprs.addrScaleAlphaVec = self.vgprPool.checkOut(2, 'addrScaleAlphaVec')
         module.add(VMovB32( \
@@ -7268,8 +7233,6 @@ class KernelWriterAssembly(KernelWriter):
         self.vgprPool.checkIn(self.vgprs.addrE)
       if self.states.useBias == DataDirection.READ:
         self.vgprPool.checkIn(self.vgprs.addrBias)
-      if kernel["ProblemType"]["UseScaleDVec"] and (kernel["GlobalSplitU"] == 1):
-        self.vgprPool.checkIn(self.vgprs.addrScaleDVec)
       if kernel["ProblemType"]["UseScaleAlphaVec"] and (kernel["GlobalSplitU"] == 1):
         self.vgprPool.checkIn(self.vgprs.addrScaleAlphaVec)
 
@@ -7848,11 +7811,6 @@ class KernelWriterAssembly(KernelWriter):
       module.add(SLoadB32(dst=sgpr(sgprScaleC), base=sgpr("AddressScaleC",2), soffset=0, comment="load scaleC"))
       module.add(label)
 
-    # Init ScaleDVec address
-    if kernel["ProblemType"]["UseScaleDVec"] and (kernel["GlobalSplitU"] == 1):
-      labelStr = self.labels.getNameInc("ScaleDVec")
-      module.add(allocPostLoopSrdSuppress("ScaleDVec", labelStr, sgprLength=sgpr("SizeI")))
-      module.add(SMulI32(dst=sgpr("SrdScaleDVec+2"), src0=hex(self.states.bpeCinternal), src1=sgpr("SrdScaleDVec+2"), comment="ScaleDVec scaled by BPE"))# scaled by BPE
     if kernel["ProblemType"]["UseScaleAlphaVec"] and (kernel["GlobalSplitU"] == 1):
       labelStr = self.labels.getNameInc("ScaleAlphaVec")
       module.add(allocPostLoopSrdSuppress("ScaleAlphaVec", labelStr, sgprLength=sgpr("SizeI")))
@@ -8343,7 +8301,7 @@ class KernelWriterAssembly(KernelWriter):
 
               actLoopModule.add(self.globalWriteBatch(kernel, tPA, tPB, activation, ss, batchIdx, \
                   applyAlpha, beta, edge, atomic, gwvw, atomicW, \
-                  elementsThisBatch, self.vgprs.addrE, self.vgprs.addrD, self.vgprs.addrC, self.vgprs.addrBias, self.vgprs.addrScaleDVec, self.vgprs.addrScaleAlphaVec, \
+                  elementsThisBatch, self.vgprs.addrE, self.vgprs.addrD, self.vgprs.addrC, self.vgprs.addrBias, self.vgprs.addrScaleAlphaVec, \
                   biasLocalBarrierInit, tmpVgpr, cvtVgprStruct, activationSetPCStruct, \
                   activationTypeStr, elementSgprs, tmpSgpr, codeAccVgprRead, codeMulAlpha))
               biasLocalBarrierInit = True
@@ -8658,37 +8616,6 @@ class KernelWriterAssembly(KernelWriter):
         printExit("Unsupported bias type %s."%(str(dataType)))
     return module
 
-  def addScaleDVecLoad(self, kernel, ss, addrCalc, scaleDVecVgpr):
-    """
-    Add scaleDVec for the element with addrCalc, elementIdx, and scaleDVecVgpr.
-    scaleDVecVgpr is one or more vgpr :temp vGPR ( = gwvw * numbytes // 4 + 1 if cvt is needed)
-    """
-    module = Module("addScaleDVec")
-    if kernel["ProblemType"]["UseScaleDVec"] and (kernel["GlobalSplitU"] == 1):
-      bps = kernel["ProblemType"]["ComputeDataType"].numBytes() * ss.cfg.gwvw
-      if kernel["BufferLoad"]:
-        addr0 = vgpr(addrCalc.addrScaleDVecVgpr)
-        addr1 = sgpr("SrdScaleDVec", 4)
-      else:
-        addr0 = vgpr(addrCalc.addrScaleDVecVgpr,2)
-        addr1 = ""
-
-      useBuffer = kernel["BufferLoad"]
-
-      if kernel["ProblemType"]["ComputeDataType"].isHalf() or kernel["ProblemType"]["ComputeDataType"].isBFloat16():
-        module.add(self.chooseGlobalRead(useBuffer, bps, scaleDVecVgpr, \
-                          addr0, addr1, soffset=0, offset=addrCalc.scaleDVecOffset, hi16=0, comment="load scaleDVecH"))
-      elif kernel["ProblemType"]["ComputeDataType"].isInt32() or kernel["ProblemType"]["ComputeDataType"].isSingle():
-        module.add(self.chooseGlobalRead(useBuffer, bps, scaleDVecVgpr, \
-                          addr0, addr1, soffset=0, offset=addrCalc.scaleDVecOffset, comment="load scaleDVecI"))
-      elif kernel["ProblemType"]["ComputeDataType"].isDouble() or kernel["ProblemType"]["ComputeDataType"].isSingleComplex() :
-        module.add(self.chooseGlobalRead(useBuffer, bps, scaleDVecVgpr, \
-                          addr0, addr1, soffset=0, offset=addrCalc.scaleDVecOffset, comment="load scaleDVec"))
-      else:
-        printExit("Unsupported scaleDVec type %s."%(str(kernel["ProblemType"]["ComputeDataType"])))
-
-    return module
-
   def addScaleAlphaVecLoad(self, kernel, ss, addrCalc, scaleAlphaVecVgpr):
     """
     Add scaleAlphaVec for the element with addrCalc, elementIdx, and scaleAlphaVecVgpr.
@@ -8898,14 +8825,14 @@ class KernelWriterAssembly(KernelWriter):
   ##############################################################################
   def globalWriteBatch(self, kernel, tPA, tPB, activation, ss: StoreState, batchIdx, \
       applyAlpha, beta, edge, atomic, gwvw, atomicW, \
-      batchElements, addrE, addrD, addrC, addrBias, addrScaleDVec, addrScaleAlphaVec, biasLocalBarrierInit: bool, \
+      batchElements, addrE, addrD, addrC, addrBias, addrScaleAlphaVec, biasLocalBarrierInit: bool, \
       tmpVgpr, cvtVgprStruct, activationSetPCStruct, activationTypeStr, \
       batchElementSgprs, tmpSgpr, codeAccVgprRead, codeMulAlpha) -> Module:
       packdata = Component.PackData.find(self)
       gwriter  = Component.GlobalWriteComponents.find(self)
       return gwriter(kernel, tPA, tPB, activation, ss, \
         batchIdx, applyAlpha, beta, edge, atomic, gwvw, atomicW, \
-        batchElements, addrE, addrD, addrC, addrBias, addrScaleDVec, addrScaleAlphaVec, biasLocalBarrierInit, \
+        batchElements, addrE, addrD, addrC, addrBias, addrScaleAlphaVec, biasLocalBarrierInit, \
         tmpVgpr, cvtVgprStruct, activationSetPCStruct, activationTypeStr, \
         batchElementSgprs, tmpSgpr, codeAccVgprRead, codeMulAlpha, packdata, self)
 

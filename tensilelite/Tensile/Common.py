@@ -158,7 +158,6 @@ globalParameters["DataInitTypeScaleA"] = 2
 globalParameters["DataInitTypeScaleB"] = 2
 globalParameters["DataInitTypeScaleC"] = 2
 globalParameters["DataInitTypeScaleD"] = 2
-globalParameters["DataInitTypeScaleDVec"] = 3
 globalParameters["DataInitTypeScaleAlphaVec"] = 3
 globalParameters["DataInitValueActivationArgs"] = [2.0, 2.0]
 globalParameters["CEqualD"] = False               # Set to true if testing for the case where the pointer to C is the same as D.
@@ -1117,7 +1116,6 @@ defaultProblemType = {
     "BiasSrc":                  "D",              # This parameter is used in gradient + bias. Support A, B, D.
     "UseScaleAB":               False,            # =True use scaleA, scaleB
     "UseScaleCD":               False,            # =True use scaleC, scaleD
-    "UseScaleDVec":             False,            # =True use scaleD vector
     "UseScaleAlphaVec":         False,            # =True use scaleAlpha vector
     "HighPrecisionAccumulate":  False,            # f32 += f16*f16
     "SilentHighPrecisionAccumulate": False,       # Keep kernel names the same for HPA mode.  Useful for testing.

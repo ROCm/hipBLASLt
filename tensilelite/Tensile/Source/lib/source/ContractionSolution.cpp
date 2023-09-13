@@ -226,7 +226,6 @@ namespace Tensile
             setVariantToBuffer(
                 inputs.grouped[i].beta, arg.beta, sizeof(arg.beta), problems[i].betaType());
             arg.bias          = const_cast<void*>(inputs.grouped[i].bias);
-            arg.scaleDVec     = const_cast<void*>(inputs.grouped[i].scaleDVec);
             arg.scaleAlphaVec = const_cast<void*>(inputs.grouped[i].scaleAlphaVec);
             arg.e             = const_cast<void*>(inputs.grouped[i].e);
             arg.biasType      = (uint32_t)problems[i].biasType();
@@ -292,8 +291,6 @@ namespace Tensile
                           << "Alpha: " << alphaPrint << std::endl;
                 std::cout << "   "
                           << "Beta: " << betaPrint << std::endl;
-                std::cout << "   "
-                          << "scaleDVec: " << args[i].scaleDVec << std::endl;
                 std::cout << "   "
                           << "scaleAlphaVec: " << args[i].scaleAlphaVec << std::endl;
                 std::cout << "   "
@@ -636,13 +633,6 @@ namespace Tensile
 
         if constexpr(insertKernelArgs)
             kernelArgs<T_Debug>(args);
-
-        if(problemType.useScaleDVec
-           && ((sizeMapping.globalSplitU == 1)
-               || (sizeMapping.customKernelName != ""))) //kernel input data
-        {
-            args.template append<void const*>("scaleDVec", inputs.scaleDVec);
-        }
 
         if(problemType.useScaleAB && (sizeMapping.globalSplitU == 1)) //kernel input data
         {
@@ -1017,11 +1007,6 @@ namespace Tensile
             rv.args.append<void const*>("scaleC", inputs.scaleC);
             rv.args.append<void const*>("scaleD", inputs.scaleD);
         }
-        if(problemType.useScaleDVec
-           && (sizeMapping.globalAccumulation == 0 || (sizeMapping.customKernelName != "")))
-        {
-            rv.args.append<void const*>("scaleDVec", inputs.scaleDVec);
-        }
         if(problemType.useScaleAlphaVec
            && (sizeMapping.globalAccumulation == 0 || (sizeMapping.customKernelName != "")))
         {
@@ -1193,10 +1178,6 @@ namespace Tensile
         {
             args.template append<void const*>("scaleC", inputs.scaleC);
             args.template append<void const*>("scaleD", inputs.scaleD);
-        }
-        if(problemType.useScaleDVec) // GSU dep
-        {
-            args.template append<void const*>("scaleDVec", inputs.scaleDVec);
         }
         if(problemType.useScaleAlphaVec) // GSU dep
         {
@@ -1618,10 +1599,6 @@ namespace Tensile
             name += ("_ScaleCD");
         }
 
-        if(problemType.useScaleDVec)
-        {
-            name += ("_ScaleDVec");
-        }
         if(problemType.useScaleAlphaVec)
         {
             name += ("_ScaleAlphaVec");
