@@ -75,17 +75,23 @@ void run_function(const func_map& map, const Arguments& arg, const std::string& 
 
 // Template to dispatch testing_matmul for performance tests
 // the test is marked invalid when (TiA, TiB, To, Tc) not in (H/H/S, B/B/S)
-template <typename TiA, typename TiB = TiA, typename To = TiB, typename Tc = To, typename = void>
+template <typename TiA,
+          typename TiB = TiA,
+          typename To  = TiB,
+          typename Tc  = To,
+          typename Tci = TiA,
+          typename     = void>
 struct perf_matmul : hipblaslt_test_invalid
 {
 };
 
-template <typename TiA, typename TiB, typename To, typename Tc>
+template <typename TiA, typename TiB, typename To, typename Tc, typename Tci>
 struct perf_matmul<
     TiA,
     TiB,
     To,
     Tc,
+    Tci,
     std::enable_if_t<(std::is_same<TiA, hipblasLtHalf>{} && std::is_same<TiB, hipblasLtHalf>{})
                      || (std::is_same<TiA, hip_bfloat16>{} && std::is_same<TiB, hip_bfloat16>{})
                      || (std::is_same<TiA, float>{} && std::is_same<TiB, float>{})
@@ -100,7 +106,7 @@ struct perf_matmul<
 {
     void operator()(const Arguments& arg)
     {
-        static const func_map map = {{"matmul", testing_matmul<TiA, TiB, To, Tc>}};
+        static const func_map map = {{"matmul", testing_matmul<TiA, TiB, To, Tc, Tci>}};
         run_function(map, arg);
     }
 };

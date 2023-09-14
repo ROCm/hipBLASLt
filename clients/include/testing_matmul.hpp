@@ -178,7 +178,7 @@ auto _dgelu = [](auto in, auto /*arg1*/, auto /*arg2*/) -> decltype(in) {
     return static_cast<decltype(in)>(0.5f * tanh(xx) + x1 * x2 + 0.5f);
 };
 
-template <typename TiA, typename TiB, typename To, typename Tc>
+template <typename TiA, typename TiB, typename To, typename Tc, typename Tci>
 void testing_matmul_bad_arg(const Arguments& arg)
 {
     const int64_t M = 128;
@@ -220,7 +220,7 @@ void testing_matmul_bad_arg(const Arguments& arg)
     hipStream_t stream = nullptr;
 }
 
-template <typename TiA, typename TiB, typename To, typename Tc>
+template <typename TiA, typename TiB, typename To, typename Tc, typename Tci>
 void testing_matmul(const Arguments& arg)
 {
     double gpu_time_used, cpu_time_used;
@@ -1418,14 +1418,14 @@ void testing_matmul(const Arguments& arg)
         scaleEValue, applyBias
         for(int gemmIdx = 0; gemmIdx < gemm_count; gemmIdx++)
         {
-            auto alphaTemp = h_alpha[gemmIdx];
-            auto betaTemp  = h_beta[gemmIdx];
-            if(arg.scaleA)
-                alphaTemp *= (*hScaleA[gemmIdx])[0];
-            if(arg.scaleB)
-                alphaTemp *= (*hScaleB[gemmIdx])[0];
+            auto alpha    = h_alpha[gemmIdx];
+            auto betaTemp = h_beta[gemmIdx];
             if(arg.scaleC)
                 betaTemp *= (*hScaleC[gemmIdx])[0];
+            auto scaleAValue = arg.scaleA ? (*hScaleA[gemmIdx])[0] : 1;
+            auto scaleBValue = arg.scaleB ? (*hScaleB[gemmIdx])[0] : 1;
+            auto scaleDValue = arg.scaleD ? (*hScaleD[gemmIdx])[0] : 1;
+            auto scaleEValue = arg.scaleE ? (*hScaleE[gemmIdx])[0] : 1;
 
             for(int batchIdx = 0; batchIdx < num_batches[gemmIdx]; batchIdx++)
             {
@@ -1433,13 +1433,13 @@ void testing_matmul(const Arguments& arg)
                 {
                     if(arg.scaleAlpha_vector)
                     {
-                        cblas_gemm_alphascale<TiA, TiB, Talpha, Talpha>(
+                        cblas_gemm<TiA, TiB, Talpha, Talpha, Tci>(
                             transA,
                             transB,
                             M[gemmIdx],
                             N[gemmIdx],
                             K[gemmIdx],
-                            alphaTemp,
+                            alpha,
                             *(hA[gemmIdx]) + stride_a[gemmIdx] * batchIdx,
                             lda[gemmIdx],
                             *(hB[gemmIdx]) + stride_b[gemmIdx] * batchIdx,
@@ -1448,18 +1448,20 @@ void testing_matmul(const Arguments& arg)
                             *(hD_gold_epl[gemmIdx]) + stride_d[gemmIdx] * batchIdx,
                             ldd[gemmIdx],
                             *(hScaleAlphaVec[gemmIdx]) + 0,
+                            scaleAValue,
+                            scaleBValue,
                             1,
                             false);
                     }
                     else
                     {
-                        cblas_gemm<TiA, TiB, Talpha, Talpha>(
+                        cblas_gemm<TiA, TiB, Talpha, Talpha, Tci>(
                             transA,
                             transB,
                             M[gemmIdx],
                             N[gemmIdx],
                             K[gemmIdx],
-                            alphaTemp,
+                            alpha,
                             *(hA[gemmIdx]) + stride_a[gemmIdx] * batchIdx,
                             lda[gemmIdx],
                             *(hB[gemmIdx]) + stride_b[gemmIdx] * batchIdx,
@@ -1467,15 +1469,16 @@ void testing_matmul(const Arguments& arg)
                             betaTemp,
                             *(hD_gold_epl[gemmIdx]) + stride_d[gemmIdx] * batchIdx,
                             ldd[gemmIdx],
+                            nullptr,
+                            scaleAValue,
+                            scaleBValue,
                             1,
                             false);
                     }
                     auto pos    = stride_d[gemmIdx] * batchIdx;
                     auto hEInst = arg.gradient ? hE : hE_gold;
                     auto ePos = (hEInst[gemmIdx] == nullptr) ? nullptr : (*(hEInst[gemmIdx]) + pos);
-                    auto scaleDValue = arg.scaleD ? (*hScaleD[gemmIdx])[0] : 1;
-                    auto scaleEValue = arg.scaleE ? (*hScaleE[gemmIdx])[0] : 1;
-                    auto applyBias   = arg.gradient ? false : arg.bias_vector;
+                    auto applyBias = arg.gradient ? false : arg.bias_vector;
 
                     if(change_bias_type[gemmIdx] == false)
                     {
@@ -1652,24 +1655,25 @@ void testing_matmul(const Arguments& arg)
                 }
                 else
                 {
-                    auto scaleDValue = arg.scaleD ? (*hScaleD[gemmIdx])[0] : 1;
-
-                    cblas_gemm<TiA, TiB, To, Talpha>(transA,
-                                                     transB,
-                                                     M[gemmIdx],
-                                                     N[gemmIdx],
-                                                     K[gemmIdx],
-                                                     alphaTemp,
-                                                     *(hA[gemmIdx]) + stride_a[gemmIdx] * batchIdx,
-                                                     lda[gemmIdx],
-                                                     *(hB[gemmIdx]) + stride_b[gemmIdx] * batchIdx,
-                                                     ldb[gemmIdx],
-                                                     betaTemp,
-                                                     *(hD_gold[gemmIdx])
-                                                         + stride_d[gemmIdx] * batchIdx,
-                                                     ldd[gemmIdx],
-                                                     scaleDValue,
-                                                     false);
+                    cblas_gemm<TiA, TiB, To, Talpha, Tci>(
+                        transA,
+                        transB,
+                        M[gemmIdx],
+                        N[gemmIdx],
+                        K[gemmIdx],
+                        alpha,
+                        *(hA[gemmIdx]) + stride_a[gemmIdx] * batchIdx,
+                        lda[gemmIdx],
+                        *(hB[gemmIdx]) + stride_b[gemmIdx] * batchIdx,
+                        ldb[gemmIdx],
+                        betaTemp,
+                        *(hD_gold[gemmIdx]) + stride_d[gemmIdx] * batchIdx,
+                        ldd[gemmIdx],
+                        nullptr,
+                        scaleAValue,
+                        scaleBValue,
+                        scaleDValue,
+                        false);
                 }
             }
         }
