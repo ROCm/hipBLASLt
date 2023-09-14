@@ -46,6 +46,7 @@ namespace
               typename TiB = TiA,
               typename To  = TiB,
               typename Tc  = To,
+              typename Tci = TiA,
               typename     = void>
     struct matmul_testing : hipblaslt_test_invalid
     {
@@ -53,12 +54,13 @@ namespace
 
     // When Ti = To = Tc != void, this test applies.
     // When converted to bool, this functor returns true.
-    template <typename TiA, typename TiB, typename To, typename Tc>
+    template <typename TiA, typename TiB, typename To, typename Tc, typename Tci>
     struct matmul_testing<
         TiA,
         TiB,
         To,
         Tc,
+        Tci,
         std::enable_if_t<
             (std::is_same<TiA, hipblasLtHalf>{} && std::is_same<TiB, hipblasLtHalf>{})
             || (std::is_same<TiA, hip_bfloat16>{} && std::is_same<TiB, hip_bfloat16>{})
@@ -75,9 +77,9 @@ namespace
         void operator()(const Arguments& arg)
         {
             if(!strcmp(arg.function, "matmul"))
-                testing_matmul<TiA, TiB, To, Tc>(arg);
+                testing_matmul<TiA, TiB, To, Tc, Tci>(arg);
             else if(!strcmp(arg.function, "matmul_bad_arg"))
-                testing_matmul_bad_arg<TiA, TiB, To, Tc>(arg);
+                testing_matmul_bad_arg<TiA, TiB, To, Tc, Tci>(arg);
             else
                 FAIL() << "Internal error: Test called with unknown function: " << arg.function;
         }
@@ -162,11 +164,11 @@ namespace
 
                 if(arg.scaleC)
                     name << "_SC";
-                
+
                 if(arg.scaleD)
                     name << "_SD";
 
-                if (arg.scaleE)
+                if(arg.scaleE)
                     name << "_SAux";
 
                 if(arg.scaleAlpha_vector)

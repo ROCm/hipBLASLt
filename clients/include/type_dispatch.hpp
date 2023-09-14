@@ -152,32 +152,32 @@ auto hipblaslt_matmul_dispatch(const Arguments& arg)
         else if(TiA == HIPBLASLT_R_8F_E4M3 && TiB == HIPBLASLT_R_16F && To == HIPBLASLT_R_8F_E4M3
                 && Tc == HIPBLASLT_COMPUTE_F32_FAST_F16)
         {
-            return TEST<hipblaslt_f8, hipblasLtHalf, hipblaslt_f8, float>{}(arg);
+            return TEST<hipblaslt_f8, hipblasLtHalf, hipblaslt_f8, float, hipblasLtHalf>{}(arg);
         }
         else if(TiA == HIPBLASLT_R_16F && TiB == HIPBLASLT_R_8F_E4M3 && To == HIPBLASLT_R_8F_E4M3
                 && Tc == HIPBLASLT_COMPUTE_F32_FAST_F16)
         {
-            return TEST<hipblasLtHalf, hipblaslt_f8, hipblaslt_f8, float>{}(arg);
+            return TEST<hipblasLtHalf, hipblaslt_f8, hipblaslt_f8, float, hipblasLtHalf>{}(arg);
         }
         else if(TiA == HIPBLASLT_R_8F_E4M3 && TiB == HIPBLASLT_R_16F && To == HIPBLASLT_R_16F
                 && Tc == HIPBLASLT_COMPUTE_F32_FAST_F16)
         {
-            return TEST<hipblaslt_f8, hipblasLtHalf, hipblasLtHalf, float>{}(arg);
+            return TEST<hipblaslt_f8, hipblasLtHalf, hipblasLtHalf, float, hipblasLtHalf>{}(arg);
         }
         else if(TiA == HIPBLASLT_R_16F && TiB == HIPBLASLT_R_8F_E4M3 && To == HIPBLASLT_R_16F
                 && Tc == HIPBLASLT_COMPUTE_F32_FAST_F16)
         {
-            return TEST<hipblasLtHalf, hipblaslt_f8, hipblasLtHalf, float>{}(arg);
+            return TEST<hipblasLtHalf, hipblaslt_f8, hipblasLtHalf, float, hipblasLtHalf>{}(arg);
         }
         else if(TiA == HIPBLASLT_R_8F_E4M3 && TiB == HIPBLASLT_R_16F && To == HIPBLASLT_R_32F
                 && Tc == HIPBLASLT_COMPUTE_F32_FAST_F16)
         {
-            return TEST<hipblaslt_f8, hipblasLtHalf, float, float>{}(arg);
+            return TEST<hipblaslt_f8, hipblasLtHalf, float, float, hipblasLtHalf>{}(arg);
         }
         else if(TiA == HIPBLASLT_R_16F && TiB == HIPBLASLT_R_8F_E4M3 && To == HIPBLASLT_R_32F
                 && Tc == HIPBLASLT_COMPUTE_F32_FAST_F16)
         {
-            return TEST<hipblasLtHalf, hipblaslt_f8, float, float>{}(arg);
+            return TEST<hipblasLtHalf, hipblaslt_f8, float, float, hipblasLtHalf>{}(arg);
         }
         /*
         else if(Ti == HIPBLASLT_R_8I && To == HIPBLASLT_R_8I && Tc == HIPBLASLT_COMPUTE_I32)
