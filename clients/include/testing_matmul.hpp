@@ -741,16 +741,16 @@ void testing_matmul(const Arguments& arg)
         if(arg.bias_vector)
         {
             const void* bias_addr;
+            EXPECT_HIPBLAS_STATUS(
+                hipblasLtMatmulDescSetAttribute(matmul[i],
+                                                HIPBLASLT_MATMUL_DESC_BIAS_DATA_TYPE,
+                                                &arg.bias_type,
+                                                sizeof(hipblasltDatatype_t)),
+                HIPBLAS_STATUS_SUCCESS);
             if(arg.d_type != arg.scale_type && arg.bias_type == arg.scale_type)
             {
                 bias_addr           = *dBias_C[i];
                 change_bias_type[i] = true;
-                EXPECT_HIPBLAS_STATUS(
-                    hipblasLtMatmulDescSetAttribute(matmul[i],
-                                                    HIPBLASLT_MATMUL_DESC_BIAS_DATA_TYPE,
-                                                    &arg.bias_type,
-                                                    sizeof(hipblasltDatatype_t)),
-                    HIPBLAS_STATUS_SUCCESS);
             }
             else
             {
@@ -853,13 +853,13 @@ void testing_matmul(const Arguments& arg)
 
         for(int gemmIdx = 0; gemmIdx < gemm_count; gemmIdx++)
         {
-            auto  bias_type = static_cast<hipblasltDatatype_t>(0);
+            auto  bias_type = HIPBLASLT_DATATYPE_INVALID;
             void* bias_addr = nullptr;
             if(arg.bias_vector)
             {
+                bias_type = arg.bias_type;
                 if(arg.d_type != arg.scale_type && arg.bias_type == arg.scale_type)
                 {
-                    bias_type = arg.bias_type;
                     bias_addr = (void*)*dBias_C[gemmIdx];
                 }
                 else

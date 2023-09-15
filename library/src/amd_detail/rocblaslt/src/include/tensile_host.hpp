@@ -42,8 +42,8 @@
 #include "handle.h"
 //#include "tuple_helper.hpp"
 #include "utility.hpp"
-#include <atomic>
 #include <Tensile/DataTypes.hpp>
+#include <atomic>
 
 // Return the value category for a value, as a double precision value, such
 // such as whether it's 0, 1, -1 or some other value. Tensile uses a double
@@ -234,7 +234,24 @@ struct RocblasltContractionProblem
         , workspace(workspace)
         , workspaceSize(workspaceSize)
         , stream(stream)
-    {}
+    {
+        if(this->bias_type == HIPBLASLT_DATATYPE_INVALID)
+        {
+            // FIXME: Currently the default bias_type is set to match the yamls' configuration, should add the default type when the yamls are fixed.
+            if(this->compute_type == rocblaslt_compute_i32)
+            {
+                this->bias_type = HIPBLASLT_R_32F;
+            }
+            else if(this->compute_type == rocblaslt_compute_f32_fast_xf32)
+            {
+                this->bias_type = HIPBLASLT_R_32F;
+            }
+            else
+            {
+                this->bias_type = this->d_type;
+            }
+        }
+    }
 };
 
 void initTensileGemmData(rocblaslt_handle       handle,
