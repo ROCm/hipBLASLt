@@ -258,8 +258,10 @@ class StateValues:
   lraTileProperties: Dict[int, LraTileProperties] = field(init=False)
 
   # Epilogue states
-  useBias      = DataDirection.NONE
-  needBiasType = False
+  preloadScaleA = False
+  preloadScaleB = False
+  useBias       = DataDirection.NONE
+  needBiasType  = False
 
   def __post_init__(self):
     """ How many SGPRs does it take to have one bit per lane? """
@@ -3562,6 +3564,13 @@ class KernelWriter(metaclass=abc.ABCMeta):
     assert not self.db["CheckValueC"] or canCheckValueC
 
     # Epilogue related
+    self.states.preloadScaleA = False
+    if kernel["ProblemType"]["UseScaleAB"]:
+      if kernel["ProblemType"]["DataTypeA"].numRegisters() > kernel["ProblemType"]["DataType"].numRegisters():
+        self.states.preloadScaleA = True
+      if kernel["ProblemType"]["DataTypeB"].numRegisters() > kernel["ProblemType"]["DataType"].numRegisters():
+        self.states.preloadScaleB = True
+
     self.states.useBias = DataDirection.NONE
     self.states.needBiasType = False
     if kernel["ProblemType"]["UseBias"]:

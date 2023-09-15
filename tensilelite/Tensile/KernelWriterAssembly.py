@@ -449,8 +449,8 @@ class KernelWriterAssembly(KernelWriter):
     self.states.numStoreSgprNameSizes = []
     storeSgprLoad = 0
     if kernel["ProblemType"]["UseScaleAB"] and (kernel["GlobalSplitU"] == 1):
-      self.states.numSgprAddressScaleA = self.states.rpga if kernel["ProblemType"]["DataTypeA"].numRegisters() <= kernel["ProblemType"]["DataType"].numRegisters() else 0
-      self.states.numSgprAddressScaleB = self.states.rpga if kernel["ProblemType"]["DataTypeB"].numRegisters() <= kernel["ProblemType"]["DataType"].numRegisters() else 0
+      self.states.numSgprAddressScaleA = self.states.rpga if (not self.states.preloadScaleA) else 0
+      self.states.numSgprAddressScaleB = self.states.rpga if (not self.states.preloadScaleB) else 0
       storeSgprLoad += self.states.numSgprAddressScaleA + self.states.numSgprAddressScaleB
       if self.states.numSgprAddressScaleA:
         self.states.numStoreSgprNames.append("AddressScaleA")
@@ -461,7 +461,7 @@ class KernelWriterAssembly(KernelWriter):
     if kernel["ProblemType"]["UseScaleCD"] and (kernel["GlobalSplitU"] == 1):
       self.states.numSgprAddressScaleC = self.states.rpga
       self.states.numSgprAddressScaleD = self.states.rpga
-      storeSgprLoad += self.states.numSgprAddressScaleA + self.states.numSgprAddressScaleD
+      storeSgprLoad += self.states.numSgprAddressScaleC + self.states.numSgprAddressScaleD
       if self.states.numSgprAddressScaleC:
         self.states.numStoreSgprNames.append("AddressScaleC")
         self.states.numStoreSgprNameSizes.append(self.states.numSgprAddressScaleC)
@@ -1686,6 +1686,12 @@ class KernelWriterAssembly(KernelWriter):
           moduleExternalArgs.addComment("Read Beta")
           moduleExternalArgs.addModuleAsFlatItems(self.externalArgLoader.loadAllKernArg(self.sgprs["Beta"], "ExternalArgAddress", self.states.numSgprBeta))
           offset = self.externalArgLoader.getOffset() + self.states.bpr * (self.states.userArgsInfo.betaMaxRegisterSize - self.states.numSgprBeta)
+          if kernel["ProblemType"]["UseScaleAB"]:
+            sgprOffset = self.externalArgLoader.getOffset()
+            for name in ['A','B']:
+              if kernel["ProblemType"]["DataType%s"%name].numRegisters() > kernel["ProblemType"]["DataType"].numRegisters():
+                moduleExternalArgs.add(self.externalArgLoader.loadKernArg("AddressScale%s"%name, "ExternalArgAddress", sgprOffset=hex(sgprOffset), dword=2))
+              sgprOffset += self.states.userArgsInfo.scaleASize
           self.externalArgLoader.setOffset(offset)
           module.add(moduleExternalArgs)
           module.add(extLabelEnd)
@@ -4319,6 +4325,27 @@ class KernelWriterAssembly(KernelWriter):
         extArgOffset = self.externalArgLoader.getOffset()
         backupExtArgOffset = extArgOffset
         loadList = [[-1, 0, extArgOffset]]
+        extArgOffset += self.states.userArgsInfo.scaleASize
+        if kernel["ProblemType"]["UseScaleAB"] and (not self.states.preloadScaleA) and (kernel["GlobalSplitU"] == 1):
+          if loadList[-1][0] == -1:
+            loadList[-1][0] = self.sgprs["AddressScaleA"]
+          loadList[-1][1] += self.states.userArgsInfo.scaleASize
+        else:
+          loadList.append([-1, 0, extArgOffset])  # Need to start a new loadAllKernArg cause the argument is not consecutively anymore.
+        extArgOffset += self.states.userArgsInfo.scaleBSize
+        if kernel["ProblemType"]["UseScaleAB"] and (not self.states.preloadScaleB) and (kernel["GlobalSplitU"] == 1):
+          if loadList[-1][0] == -1:
+            loadList[-1][0] = self.sgprs["AddressScaleB"]
+          loadList[-1][1] += self.states.userArgsInfo.scaleBSize
+        else:
+          loadList.append([-1, 0, extArgOffset])  # Need to start a new loadAllKernArg cause the argument is not consecutively anymore.
+        extArgOffset += self.states.userArgsInfo.scaleCSize + self.states.userArgsInfo.scaleDSize
+        if kernel["ProblemType"]["UseScaleCD"] and (kernel["GlobalSplitU"] == 1):
+          if loadList[-1][0] == -1:
+            loadList[-1][0] = self.sgprs["AddressScaleC"]
+          loadList[-1][1] += self.states.userArgsInfo.scaleCSize + self.states.userArgsInfo.scaleDSize
+        else:
+          loadList.append([-1, 0, extArgOffset])  # Need to start a new loadAllKernArg cause the argument is not consecutively anymore.
         extArgOffset += self.states.userArgsInfo.scaleAlphaVecSize
         if kernel["ProblemType"]["UseScaleAlphaVec"] and (kernel["GlobalSplitU"] == 1):
           if loadList[-1][0] == -1:

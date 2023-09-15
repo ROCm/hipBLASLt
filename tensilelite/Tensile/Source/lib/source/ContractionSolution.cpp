@@ -225,6 +225,10 @@ namespace Tensile
                 inputs.grouped[i].alpha, arg.alpha, sizeof(arg.alpha), problems[i].alphaType());
             setVariantToBuffer(
                 inputs.grouped[i].beta, arg.beta, sizeof(arg.beta), problems[i].betaType());
+            arg.scaleA        = const_cast<void*>(inputs.grouped[i].scaleA);
+            arg.scaleB        = const_cast<void*>(inputs.grouped[i].scaleB);
+            arg.scaleC        = const_cast<void*>(inputs.grouped[i].scaleC);
+            arg.scaleD        = const_cast<void*>(inputs.grouped[i].scaleD);
             arg.bias          = const_cast<void*>(inputs.grouped[i].bias);
             arg.scaleAlphaVec = const_cast<void*>(inputs.grouped[i].scaleAlphaVec);
             arg.e             = const_cast<void*>(inputs.grouped[i].e);
