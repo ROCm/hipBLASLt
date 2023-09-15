@@ -1266,6 +1266,12 @@ class KernelWriterAssembly(KernelWriter):
         module.add(moduleRegInit)
         module.add(moduleWg)
       else:
+        numStoreSgprToLoad = self.states.numStoreSgprToLoad
+        if kernel["ProblemType"]["UseScaleAB"]:
+          if self.states.preloadScaleA:
+            numStoreSgprToLoad += 2
+          if self.states.preloadScaleB:
+            numStoreSgprToLoad += 2
         ###### GroupedGemm  ############
         ######
         # linear search
@@ -1330,7 +1336,7 @@ class KernelWriterAssembly(KernelWriter):
           if kernel["ProblemType"]["SupportUserArgs"]:
             module.addComment0("Check if custom structure pointer is null")
             module.add(SBranchIfNotZero("ExternalArgAddress", DataType('int64'), extValidLabel))
-            module.add(SMovB32(dst=sgpr(tmpSgprArgOffsett), src=(self.argLoader.getOffset() + (self.states.numStoreSgprToLoad * 4))))
+            module.add(SMovB32(dst=sgpr(tmpSgprArgOffsett), src=(self.argLoader.getOffset() + (numStoreSgprToLoad * 4))))
             module.add(SMulI32(dst=sgpr(tmpSgprAddrM), src0=sgpr(tmpSgprNumGemm), src1=4)) # offset wgTable
             module.add(SMovB64(dst=sgpr(tmpSgprArgAddress0,2), src=sgpr("KernArgAddress",2)))
             module.add(SBranch(extValidLabelEnd.getLabelName()))
@@ -1340,7 +1346,7 @@ class KernelWriterAssembly(KernelWriter):
             module.add(SMovB64(dst=sgpr(tmpSgprArgAddress0,2), src=sgpr("ExternalArgAddress",2)))
             module.add(extValidLabelEnd)
           else:
-            module.add(SMovB32(dst=sgpr(tmpSgprArgOffsett), src=(self.argLoader.getOffset() + (self.states.numStoreSgprToLoad * 4))))
+            module.add(SMovB32(dst=sgpr(tmpSgprArgOffsett), src=(self.argLoader.getOffset() + (numStoreSgprToLoad * 4))))
             module.add(SMulI32(dst=sgpr(tmpSgprAddrM), src0=sgpr(tmpSgprNumGemm), src1=4)) # offset wgTable
             module.add(SMovB64(dst=sgpr(tmpSgprArgAddress0,2), src=sgpr("KernArgAddress",2)))
 
@@ -1486,7 +1492,7 @@ class KernelWriterAssembly(KernelWriter):
           if kernel["ProblemType"]["SupportUserArgs"]:
             module.addComment0("Check if custom structure pointer is null")
             module.add(SBranchIfNotZero("ExternalArgAddress", DataType('int64'), extValidLabel))
-            module.add(SMovB32(dst=sgpr(tmpSgprArgOffsett), src=(self.argLoader.getOffset() + (self.states.numStoreSgprToLoad * 4))))
+            module.add(SMovB32(dst=sgpr(tmpSgprArgOffsett), src=(self.argLoader.getOffset() + (numStoreSgprToLoad * 4))))
             module.add(SMulI32(dst=sgpr(tmpSgprAddrM), src0=sgpr(tmpSgprNumGemm), src1=4)) # offset wgTable
             module.add(SMovB64(dst=sgpr(tmpSgprArgAddress0,2), src=sgpr("KernArgAddress",2)))
             module.add(SBranch(extValidLabelEnd.getLabelName()))
@@ -1496,7 +1502,7 @@ class KernelWriterAssembly(KernelWriter):
             module.add(SMovB64(dst=sgpr(tmpSgprArgAddress0,2), src=sgpr("ExternalArgAddress",2)))
             module.add(extValidLabelEnd)
           else:
-            module.add(SMovB32(dst=sgpr(tmpSgprArgOffsett), src=(self.argLoader.getOffset() + (self.states.numStoreSgprToLoad * 4))))
+            module.add(SMovB32(dst=sgpr(tmpSgprArgOffsett), src=(self.argLoader.getOffset() + (numStoreSgprToLoad * 4))))
             module.add(SMulI32(dst=sgpr(tmpSgprAddrM), src0=sgpr(tmpSgprNumGemm), src1=4)) # offset wgTable
             module.add(SMovB64(dst=sgpr(tmpSgprArgAddress0,2), src=sgpr("KernArgAddress",2)))
 
@@ -1665,7 +1671,7 @@ class KernelWriterAssembly(KernelWriter):
         module.add(SAddCU32(dst=sgpr("KernArgAddress+1"), src0=sgpr("KernArgAddress+1"), src1=hex(0)))
         module.addComment0("Grouped Gemm: offset address from args_start to gemm_start")
         module.add(SMulI32(dst=sgpr(tmpSgprGemmIdxLeft), src0=sgpr(tmpSgprGemmIdxLeft),\
-                           src1=(self.argLoader.getOffset() + (self.states.numStoreSgprToLoad * 4))))
+                           src1=(self.argLoader.getOffset() + (numStoreSgprToLoad * 4))))
         module.add(SAddU32(dst=sgpr("KernArgAddress"), src0=sgpr("KernArgAddress"), src1=sgpr(tmpSgprGemmIdxLeft)))
         module.add(SAddCU32(dst=sgpr("KernArgAddress+1"), src0=sgpr("KernArgAddress+1"), src1=hex(0)))
         module.add(moduleArgs)
