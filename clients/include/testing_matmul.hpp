@@ -853,7 +853,7 @@ void testing_matmul(const Arguments& arg)
 
         for(int gemmIdx = 0; gemmIdx < gemm_count; gemmIdx++)
         {
-            auto  bias_type = static_cast<hipblasltDatatype_t>(0);
+            auto  bias_type = HIPBLASLT_DATATYPE_INVALID;
             void* bias_addr = nullptr;
             if(arg.bias_vector)
             {

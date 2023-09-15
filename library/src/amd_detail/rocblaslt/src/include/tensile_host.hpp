@@ -42,8 +42,8 @@
 #include "handle.h"
 //#include "tuple_helper.hpp"
 #include "utility.hpp"
-#include <atomic>
 #include <Tensile/DataTypes.hpp>
+#include <atomic>
 
 // Return the value category for a value, as a double precision value, such
 // such as whether it's 0, 1, -1 or some other value. Tensile uses a double
@@ -54,6 +54,33 @@ constexpr double value_category(const T& beta)
 {
     return beta == T(0) ? 0.0 : beta == T(1) ? 1.0 : beta == T(-1) ? -1.0 : 2.0;
 }
+
+template <typename>
+inline constexpr auto hipblaslt_datatype = nullptr;
+
+template <>
+inline constexpr auto hipblaslt_datatype<rocblaslt_half> = HIPBLASLT_R_16F;
+
+template <>
+inline constexpr auto hipblaslt_datatype<float> = HIPBLASLT_R_32F;
+
+template <>
+inline constexpr auto hipblaslt_datatype<double> = HIPBLASLT_R_64F;
+
+template <>
+inline constexpr auto hipblaslt_datatype<rocblaslt_bfloat16> = HIPBLASLT_R_16B;
+
+template <>
+inline constexpr auto hipblaslt_datatype<rocblaslt_f8> = HIPBLASLT_R_8F_E4M3;
+
+template <>
+inline constexpr auto hipblaslt_datatype<rocblaslt_bf8> = HIPBLASLT_R_8F_E5M2;
+
+template <>
+inline constexpr auto hipblaslt_datatype<rocblasltInt8> = HIPBLASLT_R_8I;
+
+template <>
+inline constexpr auto hipblaslt_datatype<int32_t> = HIPBLASLT_R_32I;
 
 /********************************************************************
  * RocblasltContractionProblem captures the arguments for a GEMM-like *
@@ -224,6 +251,31 @@ struct RocblasltContractionProblem
         , workspaceSize(workspaceSize)
         , stream(stream)
     {
+        // Tensile DataTypes corresponding to rocblaslt data types
+        static constexpr hipblasltDatatype_t dataType_TiA = hipblaslt_datatype<TiA>;
+        static constexpr hipblasltDatatype_t dataType_TiB = hipblaslt_datatype<TiB>;
+        static constexpr hipblasltDatatype_t dataType_To  = hipblaslt_datatype<To>;
+        static constexpr hipblasltDatatype_t dataType_Tc  = hipblaslt_datatype<Tc>;
+        if(this->bias_type == HIPBLASLT_DATATYPE_INVALID)
+        {
+            if((dataType_TiA == HIPBLASLT_R_8F_E4M3 && dataType_TiB == HIPBLASLT_R_16F)
+               || (dataType_TiA == HIPBLASLT_R_16F && dataType_TiB == HIPBLASLT_R_8F_E4M3))
+            {
+                this->bias_type = HIPBLASLT_R_32F;
+            }
+            else if(dataType_TiA == HIPBLASLT_R_8F_E4M3 || dataType_TiA == HIPBLASLT_R_8F_E5M2)
+            {
+                this->bias_type = HIPBLASLT_R_16F;
+            }
+            else if(dataType_Tc == HIPBLASLT_R_32I)
+            {
+                this->bias_type = HIPBLASLT_R_32F;
+            }
+            else
+            {
+                this->bias_type = dataType_To;
+            }
+        }
     }
 };
 
