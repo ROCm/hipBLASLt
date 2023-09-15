@@ -86,6 +86,7 @@ namespace
         switch(type)
         {
         case Tensile::DataType::Float:
+        case Tensile::DataType::XFloat32:
             *alpha = *(float*)alphaPtr;
             *beta  = *(float*)betaPtr;
             break;
