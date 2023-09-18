@@ -24,10 +24,10 @@
  *
  * ************************************************************************ */
 
-#include "rocblaslt_mat.hpp"
 #include "definitions.h"
 #include "handle.h"
 #include "rocblaslt_mat_utils.hpp"
+#include "tensile_host.hpp"
 
 #include <hip/hip_runtime_api.h>
 
@@ -59,6 +59,7 @@ rocblaslt_status rocblaslt_matmul_impl(const rocblaslt_handle       handle,
     int64_t m, n, k, lda, ldb, ldc, ldd, lde, batch_stride_a, batch_stride_b, batch_stride_c,
         batch_stride_d, batch_stride_e;
     hipblasltDatatype_t    bias_type;
+    hipblasltDatatype_t    type_a, type_b, type_c, type_d;
     rocblaslt_compute_type compute_type;
     void *                 bias = nullptr, *scaleAlphaVec = nullptr, *E = nullptr;
     bool                   gradient = false;
@@ -76,12 +77,16 @@ rocblaslt_status rocblaslt_matmul_impl(const rocblaslt_handle       handle,
                                                            m,
                                                            n,
                                                            k,
+                                                           type_a,
                                                            lda,
                                                            batch_stride_a,
+                                                           type_b,
                                                            ldb,
                                                            batch_stride_b,
+                                                           type_c,
                                                            ldc,
                                                            batch_stride_c,
+                                                           type_d,
                                                            ldd,
                                                            batch_stride_d,
                                                            lde,
@@ -96,19 +101,15 @@ rocblaslt_status rocblaslt_matmul_impl(const rocblaslt_handle       handle,
         return isValid;
 
     // Internal assign
-    hipblasOperation_t  opA           = matmul_descr->op_A;
-    hipblasOperation_t  opB           = matmul_descr->op_B;
-    hipblasltDatatype_t type_a        = matA->type;
-    hipblasltDatatype_t type_b        = matB->type;
-    hipblasltDatatype_t type_c        = matC->type;
-    hipblasltDatatype_t type_d        = matD->type;
-    int                 num_batches_a = matA->batch_count;
-    rocblaslt_epilogue  epilogue      = matmul_descr->epilogue;
-    void*               scaleA        = matmul_descr->scaleA;
-    void*               scaleB        = matmul_descr->scaleB;
-    void*               scaleC        = matmul_descr->scaleC;
-    void*               scaleD        = matmul_descr->scaleD;
-    void*               scaleE        = matmul_descr->scaleE;
+    hipblasOperation_t opA           = matmul_descr->op_A;
+    hipblasOperation_t opB           = matmul_descr->op_B;
+    int                num_batches_a = matA->batch_count;
+    rocblaslt_epilogue epilogue      = matmul_descr->epilogue;
+    void*              scaleA        = matmul_descr->scaleA;
+    void*              scaleB        = matmul_descr->scaleB;
+    void*              scaleC        = matmul_descr->scaleC;
+    void*              scaleD        = matmul_descr->scaleD;
+    void*              scaleE        = matmul_descr->scaleE;
 
     // Others
     bool strided_batch = true;
@@ -136,14 +137,65 @@ rocblaslt_status rocblaslt_matmul_impl(const rocblaslt_handle       handle,
         }
     }
 
-#define EX_PARM                                                                                  \
-    handle, opA, opB, m, n, k, alpha, A, type_a, lda, batch_stride_a, B, type_b, ldb,            \
-        batch_stride_b, beta, C, type_c, ldc, batch_stride_c, D, type_d, ldd, batch_stride_d, E, \
-        lde, batch_stride_e, num_batches_a, strided_batch, grouped_gemm, gradient, compute_type, \
-        algo, workspace, workspaceSizeInBytes, bias, scaleA, scaleB, scaleC, scaleD, scaleE,     \
-        scaleAlphaVec, bias_type, epilogue, gemmData, stream
+    // FIXME: Is this still needed?
+    // // check alignment of pointers before casting
+    // if(!isAligned(a, sizeof(TiA)) || !isAligned(b, sizeof(TiB)) || !isAligned(c, sizeof(To))
+    //    || !isAligned(d, sizeof(To)))
+    // {
+    //     std::cerr << "memmory is not aligned" << std::endl;
+    //     return rocblaslt_status_invalid_size;
+    // }
 
-    return rocblaslt_matmul_template(EX_PARM);
+    workspaceSizeInBytes = min(workspaceSizeInBytes, algo->max_workspace_bytes);
+    RocblasltContractionProblem problem{opA,
+                                        opB,
+                                        m,
+                                        n,
+                                        k,
+                                        alpha,
+                                        type_a,
+                                        A,
+                                        nullptr,
+                                        lda,
+                                        batch_stride_a,
+                                        type_b,
+                                        B,
+                                        nullptr,
+                                        ldb,
+                                        batch_stride_b,
+                                        beta,
+                                        type_c,
+                                        C,
+                                        nullptr,
+                                        ldc,
+                                        batch_stride_c,
+                                        type_d,
+                                        D,
+                                        nullptr,
+                                        ldd,
+                                        batch_stride_d,
+                                        E,
+                                        nullptr,
+                                        lde,
+                                        batch_stride_e,
+                                        num_batches_a,
+                                        strided_batch,
+                                        grouped_gemm,
+                                        gradient,
+                                        compute_type,
+                                        bias,
+                                        scaleA,
+                                        scaleB,
+                                        scaleC,
+                                        scaleD,
+                                        scaleE,
+                                        scaleAlphaVec,
+                                        bias_type,
+                                        epilogue,
+                                        workspace,
+                                        workspaceSizeInBytes,
+                                        stream};
+    return runContractionProblem(handle, algo, problem, gemmData);
 }
 
 rocblaslt_status rocblaslt_gemm_create_cpp_impl(rocblaslt_matmul_desc          matmul_descr,
@@ -164,6 +216,7 @@ rocblaslt_status rocblaslt_gemm_create_cpp_impl(rocblaslt_matmul_desc          m
     int64_t m, n, k, lda, ldb, ldc, ldd, lde, batch_stride_a, batch_stride_b, batch_stride_c,
         batch_stride_d, batch_stride_e;
     hipblasltDatatype_t    bias_type;
+    hipblasltDatatype_t    type_a, type_b, type_c, type_d;
     rocblaslt_compute_type compute_type;
     void *                 bias = nullptr, *scaleAlphaVec = nullptr, *E = nullptr;
     bool                   gradient = false;
@@ -181,12 +234,16 @@ rocblaslt_status rocblaslt_gemm_create_cpp_impl(rocblaslt_matmul_desc          m
                                                            m,
                                                            n,
                                                            k,
+                                                           type_a,
                                                            lda,
                                                            batch_stride_a,
+                                                           type_b,
                                                            ldb,
                                                            batch_stride_b,
+                                                           type_c,
                                                            ldc,
                                                            batch_stride_c,
+                                                           type_d,
                                                            ldd,
                                                            batch_stride_d,
                                                            lde,
@@ -201,19 +258,15 @@ rocblaslt_status rocblaslt_gemm_create_cpp_impl(rocblaslt_matmul_desc          m
         return isValid;
 
     // Internal assign
-    hipblasOperation_t  opA           = matmul_descr->op_A;
-    hipblasOperation_t  opB           = matmul_descr->op_B;
-    hipblasltDatatype_t type_a        = matA->type;
-    hipblasltDatatype_t type_b        = matB->type;
-    hipblasltDatatype_t type_c        = matC->type;
-    hipblasltDatatype_t type_d        = matD->type;
-    int                 num_batches_a = matA->batch_count;
-    rocblaslt_epilogue  epilogue      = matmul_descr->epilogue;
-    void*               scaleA        = matmul_descr->scaleA;
-    void*               scaleB        = matmul_descr->scaleB;
-    void*               scaleC        = matmul_descr->scaleC;
-    void*               scaleD        = matmul_descr->scaleD;
-    void*               scaleE        = matmul_descr->scaleE;
+    hipblasOperation_t opA           = matmul_descr->op_A;
+    hipblasOperation_t opB           = matmul_descr->op_B;
+    int                num_batches_a = matA->batch_count;
+    rocblaslt_epilogue epilogue      = matmul_descr->epilogue;
+    void*              scaleA        = matmul_descr->scaleA;
+    void*              scaleB        = matmul_descr->scaleB;
+    void*              scaleC        = matmul_descr->scaleC;
+    void*              scaleD        = matmul_descr->scaleD;
+    void*              scaleE        = matmul_descr->scaleE;
 
     // Others
     bool strided_batch = true;
@@ -222,31 +275,66 @@ rocblaslt_status rocblaslt_gemm_create_cpp_impl(rocblaslt_matmul_desc          m
     int8_t alpha_1[16] = {0}; // use dScaleAlphaVec instead, original alpha => 1.0
     if(scaleAlphaVec)
     {
-        if(matmul_descr->compute_type == rocblaslt_compute_f64)
-        {
-            *((double*)alpha_1) = 1.f;
-            alpha               = alpha_1;
-        }
-        else if(matmul_descr->compute_type == rocblaslt_compute_i32)
-        {
-            *((int32_t*)alpha_1) = 1.f;
-            alpha                = alpha_1;
-        }
-        else
-        {
-            *((float*)alpha_1) = 1.f;
-            alpha              = alpha_1;
-        }
+        setTo1(matmul_descr->compute_type, (void*)alpha_1, &alpha);
     }
 
-#define EX_PARM_GEMM_CPP                                                                          \
-    opA, opB, m, n, k, alpha, A, type_a, lda, batch_stride_a, B, type_b, ldb, batch_stride_b,     \
-        beta, C, type_c, ldc, batch_stride_c, D, type_d, ldd, batch_stride_d, E, lde,             \
-        batch_stride_e, num_batches_a, strided_batch, grouped_gemm, gradient, compute_type, bias, \
-        scaleA, scaleB, scaleC, scaleD ,scaleE, scaleAlphaVec, bias_type, epilogue, gemmData,     \
-        gemmCount
+    // // check alignment of pointers before casting
+    // if(!isAligned(a, sizeof(TiA)) || !isAligned(b, sizeof(TiB)) || !isAligned(c, sizeof(To))
+    //    || !isAligned(d, sizeof(To)))
+    // {
+    //     std::cerr << "memmory is not aligned" << std::endl;
+    //     return rocblaslt_status_invalid_size;
+    // }
 
-    return rocblaslt_gemm_create_template_cpp(EX_PARM_GEMM_CPP);
+    RocblasltContractionProblem problem{opA,
+                                        opB,
+                                        m,
+                                        n,
+                                        k,
+                                        alpha,
+                                        type_a,
+                                        A,
+                                        nullptr,
+                                        lda,
+                                        batch_stride_a,
+                                        type_b,
+                                        B,
+                                        nullptr,
+                                        ldb,
+                                        batch_stride_b,
+                                        beta,
+                                        type_c,
+                                        C,
+                                        nullptr,
+                                        ldc,
+                                        batch_stride_c,
+                                        type_d,
+                                        D,
+                                        nullptr,
+                                        ldd,
+                                        batch_stride_d,
+                                        E,
+                                        nullptr,
+                                        lde,
+                                        batch_stride_e,
+                                        num_batches_a,
+                                        strided_batch,
+                                        grouped_gemm,
+                                        gradient,
+                                        compute_type,
+                                        bias,
+                                        scaleA,
+                                        scaleB,
+                                        scaleC,
+                                        scaleD,
+                                        scaleE,
+                                        scaleAlphaVec,
+                                        bias_type,
+                                        epilogue,
+                                        nullptr,
+                                        0,
+                                        0};
+    return gemmCreate(problem, gemmData, gemmCount);
 }
 
 rocblaslt_status rocblaslt_gemm_create_cpp_impl_2(int64_t                        m,
@@ -338,22 +426,69 @@ rocblaslt_status rocblaslt_gemm_create_cpp_impl_2(int64_t                       
     bool strided_batch = true;
     bool grouped_gemm  = false;
 
-    problemtype.op_a         = opA;
-    problemtype.op_b         = opB;
-    problemtype.type_a       = type_a;
-    problemtype.type_b       = type_b;
-    problemtype.type_c       = type_c;
-    problemtype.type_d       = type_d;
-    problemtype.type_compute = compute_type;
+    int8_t alpha_1[16] = {0}; // use dScaleAlphaVec instead, original alpha => 1.0
+    if(scaleAlphaVec)
+    {
+        setTo1(compute_type, (void*)alpha_1, (const void**)&alpha);
+    }
 
-#define EX_PARM_GEMM_CPP_2                                                                        \
-    opA, opB, m, n, k, alpha, A, type_a, lda, batch_stride_a, B, type_b, ldb, batch_stride_b,     \
-        beta, C, type_c, ldc, batch_stride_c, D, type_d, ldd, batch_stride_d, E, lde,             \
-        batch_stride_e, num_batches_a, strided_batch, grouped_gemm, gradient, compute_type, bias, \
-        scaleA, scaleB, scaleC, scaleD, scaleE, scaleAlphaVec, bias_type, epilogue, gemmData,     \
-        gemmCount
+    // // check alignment of pointers before casting
+    // if(!isAligned(a, sizeof(TiA)) || !isAligned(b, sizeof(TiB)) || !isAligned(c, sizeof(To))
+    //    || !isAligned(d, sizeof(To)))
+    // {
+    //     std::cerr << "memmory is not aligned" << std::endl;
+    //     return rocblaslt_status_invalid_size;
+    // }
 
-    return rocblaslt_gemm_create_template_cpp(EX_PARM_GEMM_CPP_2);
+    RocblasltContractionProblem problem{opA,
+                                        opB,
+                                        m,
+                                        n,
+                                        k,
+                                        alpha,
+                                        type_a,
+                                        A,
+                                        nullptr,
+                                        lda,
+                                        batch_stride_a,
+                                        type_b,
+                                        B,
+                                        nullptr,
+                                        ldb,
+                                        batch_stride_b,
+                                        beta,
+                                        type_c,
+                                        C,
+                                        nullptr,
+                                        ldc,
+                                        batch_stride_c,
+                                        type_d,
+                                        D,
+                                        nullptr,
+                                        ldd,
+                                        batch_stride_d,
+                                        E,
+                                        nullptr,
+                                        lde,
+                                        batch_stride_e,
+                                        num_batches_a,
+                                        strided_batch,
+                                        grouped_gemm,
+                                        gradient,
+                                        compute_type,
+                                        bias,
+                                        scaleA,
+                                        scaleB,
+                                        scaleC,
+                                        scaleD,
+                                        scaleE,
+                                        scaleAlphaVec,
+                                        bias_type,
+                                        epilogue,
+                                        nullptr,
+                                        0,
+                                        0};
+    return gemmCreate(problem, gemmData, gemmCount);
 }
 
 rocblaslt_status
@@ -397,6 +532,7 @@ rocblaslt_status
     std::vector<int64_t>             ldc_vec, batch_stride_c_vec, num_batches_c_vec;
     std::vector<int64_t>             ldd_vec, batch_stride_d_vec, num_batches_d_vec;
     std::vector<int64_t>             lde_vec, batch_stride_e_vec, num_batches_e_vec;
+    std::vector<int8_t[16]>          alpha_1(matmul_descr.size());
 
     std::vector<bool> gradient_vec;
 
@@ -485,6 +621,17 @@ rocblaslt_status
         if(validArgs != rocblaslt_status_continue)
             return validArgs;
 
+        const void* alphaTmp = nullptr;
+        memset(alpha_1[i], 0, sizeof(int8_t) * 16);
+        if(scaleAlphaVec)
+        {
+            setTo1(compute_type, (void*)alpha_1[i], &alphaTmp);
+        }
+        else
+        {
+            alphaTmp = alpha[i];
+        }
+
         tempprobemtype.push_back({matmul_descr[i]->op_A,
                                   matmul_descr[i]->op_B,
                                   matA[i]->type,
@@ -540,7 +687,7 @@ rocblaslt_status
         C_vec.push_back(C[i]);
         D_vec.push_back(D[i]);
         E_vec.push_back(E);
-        alpha_vec.push_back(alpha[i]);
+        alpha_vec.push_back(alphaTmp);
         beta_vec.push_back(beta[i]);
 
         gradient_vec.push_back(gradient);
@@ -551,15 +698,59 @@ rocblaslt_status
     bool strided_batch = true;
     bool grouped_gemm  = true;
 
-#define EX_PARM_GroupedGemm_CPP                                                                    \
-    opA, opB, m_vec, n_vec, k_vec, alpha_vec, A_vec, type_a, lda_vec, batch_stride_a_vec, B_vec,   \
-        type_b, ldb_vec, batch_stride_b_vec, beta_vec, C_vec, type_c, ldc_vec, batch_stride_c_vec, \
-        D_vec, type_d, ldd_vec, batch_stride_d_vec, E_vec, lde_vec, batch_stride_e_vec,            \
-        num_batches_a_vec, strided_batch, grouped_gemm, gradient_vec, compute_type, bias_vec,      \
-        scaleA_vec, scaleB_vec, scaleC_vec, scaleD_vec, scaleE_vec, scaleAlpha_vec, bias_type_vec, \
-        epilogue_vec, gemmData, gemmCount
-
-    return rocblaslt_groupedgemm_create_template_cpp(EX_PARM_GroupedGemm_CPP);
+    std::vector<RocblasltContractionProblem> problems;
+    for(int i = 0; i < m_vec.size(); i++)
+    {
+        problems.push_back(RocblasltContractionProblem{opA,
+                                                       opB,
+                                                       m_vec[i],
+                                                       n_vec[i],
+                                                       k_vec[i],
+                                                       alpha_vec[i],
+                                                       type_a,
+                                                       A_vec[i],
+                                                       nullptr,
+                                                       lda_vec[i],
+                                                       batch_stride_a_vec[i],
+                                                       type_b,
+                                                       B_vec[i],
+                                                       nullptr,
+                                                       ldb_vec[i],
+                                                       batch_stride_b_vec[i],
+                                                       beta_vec[i],
+                                                       type_c,
+                                                       C_vec[i],
+                                                       nullptr,
+                                                       ldc_vec[i],
+                                                       batch_stride_c_vec[i],
+                                                       type_d,
+                                                       D_vec[i],
+                                                       nullptr,
+                                                       ldd_vec[i],
+                                                       batch_stride_d_vec[i],
+                                                       E_vec[i],
+                                                       nullptr,
+                                                       lde_vec[i],
+                                                       batch_stride_e_vec[i],
+                                                       num_batches_a_vec[i],
+                                                       strided_batch,
+                                                       grouped_gemm,
+                                                       gradient_vec[i],
+                                                       compute_type,
+                                                       bias_vec[i],
+                                                       scaleA_vec[i],
+                                                       scaleB_vec[i],
+                                                       scaleC_vec[i],
+                                                       scaleD_vec[i],
+                                                       scaleE_vec[i],
+                                                       scaleAlpha_vec[i],
+                                                       bias_type_vec[i],
+                                                       epilogue_vec[i],
+                                                       nullptr,
+                                                       0,
+                                                       0});
+    }
+    return groupedGemmCreate(problems, gemmData, gemmCount);
 }
 
 rocblaslt_status
@@ -603,6 +794,8 @@ rocblaslt_status
 
     std::vector<int64_t> lde_vec, batch_stride_e_vec, num_batches_e_vec;
     std::vector<bool>    gradient_vec;
+
+    std::vector<int8_t[16]> alpha_1(m.size());
 
     for(int i = 0; i < m.size(); i++)
     {
@@ -658,6 +851,17 @@ rocblaslt_status
         if(validArgs != rocblaslt_status_continue)
             return validArgs;
 
+        const void* alphaTmp = nullptr;
+        memset(alpha_1[i], 0, sizeof(int8_t) * 16);
+        if(scaleAlphaVec)
+        {
+            setTo1(compute_type, (void*)alpha_1[i], &alphaTmp);
+        }
+        else
+        {
+            alphaTmp = inputs[i].alpha;
+        }
+
         bias_type_vec.push_back(bias_type);
         epilogue_vec.push_back(epilogue);
         bias_vec.push_back(bias);
@@ -673,7 +877,7 @@ rocblaslt_status
         C_vec.push_back(inputs[i].c);
         D_vec.push_back(inputs[i].d);
         E_vec.push_back(E);
-        alpha_vec.push_back(inputs[i].alpha);
+        alpha_vec.push_back(alphaTmp);
         beta_vec.push_back(inputs[i].beta);
 
         lde_vec.push_back(lde);
@@ -684,14 +888,59 @@ rocblaslt_status
     bool strided_batch = true;
     bool grouped_gemm  = true;
 
-#define EX_PARM_GroupedGemm_CPP_2                                                                 \
-    opA, opB, m, n, k, alpha_vec, A_vec, type_a, lda, strideA, B_vec, type_b, ldb, strideB,       \
-        beta_vec, C_vec, type_c, ldc, strideC, D_vec, type_d, ldd, strideD, E_vec, lde_vec,       \
-        batch_stride_e_vec, b, strided_batch, grouped_gemm, gradient_vec, compute_type, bias_vec, \
-        scaleA_vec, scaleB_vec, scaleC_vec, scaleD_vec, scaleE_vec, scaleAlpha_vec, bias_type_vec,\
-        epilogue_vec, gemmData, gemmCount
-
-    return rocblaslt_groupedgemm_create_template_cpp(EX_PARM_GroupedGemm_CPP_2);
+    std::vector<RocblasltContractionProblem> problems;
+    for(int i = 0; i < m.size(); i++)
+    {
+        problems.push_back(RocblasltContractionProblem{opA,
+                                                       opB,
+                                                       m[i],
+                                                       n[i],
+                                                       k[i],
+                                                       alpha_vec[i],
+                                                       type_a,
+                                                       A_vec[i],
+                                                       nullptr,
+                                                       lda[i],
+                                                       strideA[i],
+                                                       type_b,
+                                                       B_vec[i],
+                                                       nullptr,
+                                                       ldb[i],
+                                                       strideB[i],
+                                                       beta_vec[i],
+                                                       type_c,
+                                                       C_vec[i],
+                                                       nullptr,
+                                                       ldc[i],
+                                                       strideC[i],
+                                                       type_d,
+                                                       D_vec[i],
+                                                       nullptr,
+                                                       ldd[i],
+                                                       strideD[i],
+                                                       E_vec[i],
+                                                       nullptr,
+                                                       lde_vec[i],
+                                                       batch_stride_e_vec[i],
+                                                       b[i],
+                                                       strided_batch,
+                                                       grouped_gemm,
+                                                       gradient_vec[i],
+                                                       compute_type,
+                                                       bias_vec[i],
+                                                       scaleA_vec[i],
+                                                       scaleB_vec[i],
+                                                       scaleC_vec[i],
+                                                       scaleD_vec[i],
+                                                       scaleE_vec[i],
+                                                       scaleAlpha_vec[i],
+                                                       bias_type_vec[i],
+                                                       epilogue_vec[i],
+                                                       nullptr,
+                                                       0,
+                                                       0});
+    }
+    return groupedGemmCreate(problems, gemmData, gemmCount);
 }
 
 /********************************************************************************
