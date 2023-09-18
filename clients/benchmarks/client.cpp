@@ -403,13 +403,18 @@ try
          value<int32_t>(&arg.cold_iters)->default_value(2),
          "Cold Iterations to run before entering the timing loop")
 
-        ("algo",
-         value<uint32_t>(&arg.algo)->default_value(0),
-         "Reserved.")
+        ("algo_method",
+         value<int32_t>(&arg.algo_method)->default_value(0),
+         "Use different algorithm search API. 0: Get heuristic, 1: Get all algorithm, 2: Get solutuion by index."
+         "Options: 0, 1, 2. (default: 0)")
 
         ("solution_index",
          value<int32_t>(&arg.solution_index)->default_value(0),
          "Reserved.")
+
+        ("requested_solution",
+         value<int32_t>(&arg.requested_solution_num)->default_value(1),
+         "Requested solution num. Set to -1 to get all solutions. Only valid when algo_method is set to 1.")
 
         ("activation_type",
          value<std::string>(&activation_type)->default_value("none"),
@@ -578,6 +583,14 @@ try
     // single bench run
 
     // validate arguments
+    if(arg.algo_method == 1)
+    {
+        arg.requested_solution_num = std::numeric_limits<int32_t>::max();
+    }
+    else if(arg.algo_method == 2)
+    {
+        arg.requested_solution_num = 1;
+    }
 
     std::transform(precision.begin(), precision.end(), precision.begin(), ::tolower);
     auto prec = string_to_hipblaslt_datatype(precision);
