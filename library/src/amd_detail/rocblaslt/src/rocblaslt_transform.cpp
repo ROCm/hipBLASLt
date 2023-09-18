@@ -30,10 +30,17 @@
 #include <functional>
 #include <hipblaslt/hipblaslt-types.h>
 #include <map>
+#include <memory>
 #include <tuple>
 
 namespace
 {
+    rocblaslt_matrix_layout dummyMatrixLayout()
+    {
+        static _rocblaslt_matrix_layout layout;
+        return &layout;
+    }
+
     template <typename DType,
               typename ScaleType,
               bool     RowMajA,
@@ -2077,6 +2084,26 @@ rocblaslt_status rocblaslt_matrix_transform(rocblaslt_handle                 han
                                             rocblaslt_matrix_layout layoutC,
                                             hipStream_t             stream)
 {
+    if (!handle) 
+    {
+        return rocblaslt_status_invalid_handle;
+    }
+
+    if ((A && !layoutA) || (B && !layoutB) || (!layoutA && !layoutB) || !C || !layoutC)
+    {
+        return rocblaslt_status_invalid_value;
+    }
+
+    if (!A && !layoutA)
+    {
+        layoutA = dummyMatrixLayout();
+    }
+
+    if (!B && !layoutB)
+    {
+        layoutB = dummyMatrixLayout();
+    }
+
     auto key = std::make_tuple(
         layoutA->type, desc->scaleType, layoutA->order, layoutB->order, layoutC->order);
 

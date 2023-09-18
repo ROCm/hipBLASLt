@@ -145,8 +145,8 @@ namespace amd_detail
             const auto offsetB
                 = (transB ? getOffset<RowMajB>(col, row, ldB) : getOffset<RowMajB>(row, col, ldB))
                   + batchOffset;
-            const ScaleType aData = static_cast<ScaleType>(a[offsetA]);
-            const ScaleType bData = static_cast<ScaleType>(b[offsetB]);
+            const ScaleType aData = a ? static_cast<ScaleType>(a[offsetA]) : 0;
+            const ScaleType bData = b ? static_cast<ScaleType>(b[offsetB]) : 0;
             const DType     cData = static_cast<DType>(aData * alpha + bData * beta);
             const auto      offsetC
                 = getOffset<RowMajC>(tRow + blockRow, tCol + blockCol, ldC) + batchOffset;
@@ -157,11 +157,11 @@ namespace amd_detail
             const auto vectorWriteDirSize = RowMajC ? numCols : numRows;
             const auto blockVectorWriteEndBound
                 = RowMajC ? (col + VectorWidth) : (row + VectorWidth);
-            const auto vectorShift = blockVectorWriteEndBound > vectorWriteDirSize
-                                         ? (blockVectorWriteEndBound - vectorWriteDirSize)
-                                         : 0;
-            ScaleType  aData[VectorWidth];
-            ScaleType  bData[VectorWidth];
+            const auto vectorShift        = blockVectorWriteEndBound > vectorWriteDirSize
+                                                ? (blockVectorWriteEndBound - vectorWriteDirSize)
+                                                : 0;
+            ScaleType  aData[VectorWidth] = {};
+            ScaleType  bData[VectorWidth] = {};
 
 #pragma unroll
             for(uint32_t i = 0; i < VectorWidth; ++i)
@@ -187,11 +187,11 @@ namespace amd_detail
                               + batchOffset;
                 }
 
-                aData[i] = static_cast<ScaleType>(a[offsetA]);
-                bData[i] = static_cast<ScaleType>(b[offsetB]);
+                aData[i] = a ? static_cast<ScaleType>(a[offsetA]) : 0;
+                bData[i] = b ? static_cast<ScaleType>(b[offsetB]) : 0;
             }
 
-            //only begin index is required, since vector write always along continuous direction
+            //only begin index is required, since vector write always along with continuous direction
             uint32_t cOffset{};
 
             if constexpr(RowMajC)
