@@ -884,19 +884,21 @@ hipblasStatus_t hipblasLtMatrixTransformDescSetAttribute( //
     const void*                              buf,
     size_t                                   sizeInBytes);
 
-/*! Get matrix transform operation descriptor attribute.
+/*! \ingroup library_module
+ *  \brief Matrix transform operation getter
+ *  \details Get matrix transform operation descriptor attribute.
  *
- * \param[in]  transformDesc  The descriptor
- * \param[in]  attr           The attribute
- * \param[out] buf            memory address containing the new value
- * \param[in]  sizeInBytes    size of buf buffer for verification (in bytes)
- * \param[out] sizeWritten    only valid when return value is CUBLAS_STATUS_SUCCESS. If sizeInBytes is non-zero: number
+ * @param[in]  transformDesc  The descriptor
+ * @param[in]  attr           The attribute
+ * @param[out] buf            memory address containing the new value
+ * @param[in]  sizeInBytes    size of buf buffer for verification (in bytes)
+ * @param[out] sizeWritten    only valid when return value is CUBLAS_STATUS_SUCCESS. If sizeInBytes is non-zero: number
  * of bytes actually written, if sizeInBytes is 0: number of bytes needed to write full contents
  *
- * \retval     HIPBLAS_STATUS_INVALID_VALUE  if sizeInBytes is 0 and sizeWritten is NULL, or if  sizeInBytes is non-zero
+ * \retval HIPBLAS_STATUS_INVALID_VALUE  if sizeInBytes is 0 and sizeWritten is NULL, or if  sizeInBytes is non-zero
  *                                          and buf is NULL or sizeInBytes doesn't match size of internal storage for
  *                                          selected attribute
- * \retval     HIPBLAS_STATUS_SUCCESS        if attribute's value was successfully written to user memory
+ * \retval HIPBLAS_STATUS_SUCCESS        if attribute's value was successfully written to user memory
  */
 HIPBLASLT_EXPORT
 hipblasStatus_t hipblasLtMatrixTransformDescGetAttribute( //
@@ -906,18 +908,32 @@ hipblasStatus_t hipblasLtMatrixTransformDescGetAttribute( //
     size_t                                   sizeInBytes,
     size_t*                                  sizeWritten);
 
-/*! Matrix layout conversion helper (C = alpha * op(A) + beta * op(B))
+/*! \ingroup library_module 
+ *  \brief Matrix layout conversion helper
+ *  \details 
+ *   Matrix layout conversion helper (C = alpha * op(A) + beta * op(B)),
+ * can be used to change memory order of data or to scale and shift the values.
+ * @param[in]  lightHandle   Pointer to the allocated hipBLASLt handle for the
+ * hipBLASLt context. See \ref hipblasLtHandle_t .
+ * @param[in]  transformDesc Pointer to allocated matrix transform descriptor.
+ * @param[in]  alpha         Pointer to scalar alpha, either pointer to host or device address.
+ * @param[in]  A             Pointer to matrix A, must be pointer to device address.
+ * @param[in]  Adesc         Pointer to layout for input matrix A.
+ * @param[in]  beta          Pointer to scalar beta, either pointer to host or device address.
+ * @param[in]  B             Pointer to layout for matrix B, must be pointer to device address
+ * @param[in]  Bdesc         Pointer to layout for inputmatrix B.
+ * @param[in]  C             Pointer to matrix C, must be pointer to device address
+ * @param[out] Cdesc         Pointer to layout for output matrix C.
+ * @param[in] stream         The HIP stream where all the GPU work will be submitted.
  *
- * Can be used to change memory order of data or to scale and shift the values.
- *
- * \retval     HIPBLAS_STATUS_NOT_INITIALIZED   if hipBLASLt handle has not been initialized
- * \retval     HIPBLAS_STATUS_INVALID_VALUE     if parameters are in conflict or in an impossible configuration; e.g.
+ * \retval HIPBLAS_STATUS_NOT_INITIALIZED   if hipBLASLt handle has not been initialized
+ * \retval HIPBLAS_STATUS_INVALID_VALUE     if parameters are in conflict or in an impossible configuration; e.g.
  *                                              when A is not NULL, but Adesc is NULL
- * \retval     HIPBLAS_STATUS_NOT_SUPPORTED     if current implementation on selected device doesn't support configured
+ * \retval HIPBLAS_STATUS_NOT_SUPPORTED     if current implementation on selected device doesn't support configured
  *                                              operation
- * \retval     HIPBLAS_STATUS_ARCH_MISMATCH     if configured operation cannot be run using selected device
- * \retval     HIPBLAS_STATUS_EXECUTION_FAILED  if cuda reported execution error from the device
- * \retval     HIPBLAS_STATUS_SUCCESS           if the operation completed successfully
+ * \retval HIPBLAS_STATUS_ARCH_MISMATCH     if configured operation cannot be run using selected device
+ * \retval HIPBLAS_STATUS_EXECUTION_FAILED  if HIP reported execution error from the device
+ * \retval HIPBLAS_STATUS_SUCCESS           if the operation completed successfully
  */
 HIPBLASLT_EXPORT
 hipblasStatus_t hipblasLtMatrixTransform(hipblasLtHandle_t              lightHandle,
