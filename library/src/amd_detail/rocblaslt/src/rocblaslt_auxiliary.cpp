@@ -35,8 +35,8 @@
 #include <link.h>
 #endif
 
-#include <unistd.h>
 #include <hip/hip_runtime_api.h>
+#include <unistd.h>
 #include <utility>
 
 #define TO_STR2(x) #x
@@ -1392,7 +1392,8 @@ rocblaslt_status rocblaslt_matmul_is_algo_supported(rocblaslt_handle        hand
         {
             if(c_type == HIPBLASLT_R_8F_E4M3 && d_type == HIPBLASLT_R_8F_E4M3)
             {
-                if(compute_type == rocblaslt_compute_f32_fast_f16)
+                if(compute_type == rocblaslt_compute_f32_fast_f16
+                   || compute_type == rocblaslt_compute_f32)
                 {
                     float* alphaf = (float*)alpha;
                     float* betaf  = (float*)beta;
@@ -1407,14 +1408,14 @@ rocblaslt_status rocblaslt_matmul_is_algo_supported(rocblaslt_handle        hand
                                                                    alphaf,
                                                                    betaf,
                                                                    algo->max_workspace_bytes);
-                    status
-                        = isSolutionSupported<rocblaslt_half, rocblaslt_f8, rocblaslt_f8, float>(
-                            handle, prob, gemmData, algo, workspaceSizeInBytes);
+                    status = isSolutionSupported<rocblaslt_half, rocblaslt_f8, rocblaslt_f8, float>(
+                        handle, prob, gemmData, algo, workspaceSizeInBytes);
                 }
             }
             else if(c_type == HIPBLASLT_R_16F && d_type == HIPBLASLT_R_16F)
             {
-                if(compute_type == rocblaslt_compute_f32_fast_f16)
+                if(compute_type == rocblaslt_compute_f32_fast_f16
+                   || compute_type == rocblaslt_compute_f32)
                 {
                     float* alphaf = (float*)alpha;
                     float* betaf  = (float*)beta;
@@ -1436,24 +1437,23 @@ rocblaslt_status rocblaslt_matmul_is_algo_supported(rocblaslt_handle        hand
             }
             else if(c_type == HIPBLASLT_R_32F && d_type == HIPBLASLT_R_32F)
             {
-                if(compute_type == rocblaslt_compute_f32_fast_f16)
+                if(compute_type == rocblaslt_compute_f32_fast_f16
+                   || compute_type == rocblaslt_compute_f32)
                 {
                     float* alphaf = (float*)alpha;
                     float* betaf  = (float*)beta;
-                    auto   prob   = construct_rocblaslt_problem<rocblaslt_half,
-                                                            rocblaslt_f8,
-                                                            float,
-                                                            float>(matmul_descr,
-                                                                   matA,
-                                                                   matB,
-                                                                   matC,
-                                                                   matD,
-                                                                   alphaf,
-                                                                   betaf,
-                                                                   algo->max_workspace_bytes);
-                    status
-                        = isSolutionSupported<rocblaslt_half, rocblaslt_f8, float, float>(
-                            handle, prob, gemmData, algo, workspaceSizeInBytes);
+                    auto   prob
+                        = construct_rocblaslt_problem<rocblaslt_half, rocblaslt_f8, float, float>(
+                            matmul_descr,
+                            matA,
+                            matB,
+                            matC,
+                            matD,
+                            alphaf,
+                            betaf,
+                            algo->max_workspace_bytes);
+                    status = isSolutionSupported<rocblaslt_half, rocblaslt_f8, float, float>(
+                        handle, prob, gemmData, algo, workspaceSizeInBytes);
                 }
             }
         }
@@ -1461,7 +1461,8 @@ rocblaslt_status rocblaslt_matmul_is_algo_supported(rocblaslt_handle        hand
         {
             if(c_type == HIPBLASLT_R_8F_E4M3 && d_type == HIPBLASLT_R_8F_E4M3)
             {
-                if(compute_type == rocblaslt_compute_f32_fast_f16)
+                if(compute_type == rocblaslt_compute_f32_fast_f16
+                   || compute_type == rocblaslt_compute_f32)
                 {
                     float* alphaf = (float*)alpha;
                     float* betaf  = (float*)beta;
@@ -1476,14 +1477,14 @@ rocblaslt_status rocblaslt_matmul_is_algo_supported(rocblaslt_handle        hand
                                                                    alphaf,
                                                                    betaf,
                                                                    algo->max_workspace_bytes);
-                    status
-                        = isSolutionSupported<rocblaslt_f8, rocblaslt_half, rocblaslt_f8, float>(
-                            handle, prob, gemmData, algo, workspaceSizeInBytes);
+                    status = isSolutionSupported<rocblaslt_f8, rocblaslt_half, rocblaslt_f8, float>(
+                        handle, prob, gemmData, algo, workspaceSizeInBytes);
                 }
             }
             else if(c_type == HIPBLASLT_R_16F && d_type == HIPBLASLT_R_16F)
             {
-                if(compute_type == rocblaslt_compute_f32_fast_f16)
+                if(compute_type == rocblaslt_compute_f32_fast_f16
+                   || compute_type == rocblaslt_compute_f32)
                 {
                     float* alphaf = (float*)alpha;
                     float* betaf  = (float*)beta;
@@ -1505,24 +1506,23 @@ rocblaslt_status rocblaslt_matmul_is_algo_supported(rocblaslt_handle        hand
             }
             else if(c_type == HIPBLASLT_R_32F && d_type == HIPBLASLT_R_32F)
             {
-                if(compute_type == rocblaslt_compute_f32_fast_f16)
+                if(compute_type == rocblaslt_compute_f32_fast_f16
+                   || compute_type == rocblaslt_compute_f32)
                 {
                     float* alphaf = (float*)alpha;
                     float* betaf  = (float*)beta;
-                    auto   prob   = construct_rocblaslt_problem<rocblaslt_f8,
-                                                            rocblaslt_half,
-                                                            float,
-                                                            float>(matmul_descr,
-                                                                   matA,
-                                                                   matB,
-                                                                   matC,
-                                                                   matD,
-                                                                   alphaf,
-                                                                   betaf,
-                                                                   algo->max_workspace_bytes);
-                    status
-                        = isSolutionSupported<rocblaslt_f8, rocblaslt_half, float, float>(
-                            handle, prob, gemmData, algo, workspaceSizeInBytes);
+                    auto   prob
+                        = construct_rocblaslt_problem<rocblaslt_f8, rocblaslt_half, float, float>(
+                            matmul_descr,
+                            matA,
+                            matB,
+                            matC,
+                            matD,
+                            alphaf,
+                            betaf,
+                            algo->max_workspace_bytes);
+                    status = isSolutionSupported<rocblaslt_f8, rocblaslt_half, float, float>(
+                        handle, prob, gemmData, algo, workspaceSizeInBytes);
                 }
             }
         }
@@ -1983,7 +1983,8 @@ rocblaslt_status
         {
             if(c_type == HIPBLASLT_R_8F_E4M3 && d_type == HIPBLASLT_R_8F_E4M3)
             {
-                if(compute_type == rocblaslt_compute_f32_fast_f16)
+                if(compute_type == rocblaslt_compute_f32_fast_f16
+                   || compute_type == rocblaslt_compute_f32)
                 {
                     float alpha = 1.0;
                     float beta  = 1.0;
@@ -2010,7 +2011,8 @@ rocblaslt_status
             }
             else if(c_type == HIPBLASLT_R_16F && d_type == HIPBLASLT_R_16F)
             {
-                if(compute_type == rocblaslt_compute_f32_fast_f16)
+                if(compute_type == rocblaslt_compute_f32_fast_f16
+                   || compute_type == rocblaslt_compute_f32)
                 {
                     float alpha = 1.0;
                     float beta  = 1.0;
@@ -2037,21 +2039,21 @@ rocblaslt_status
             }
             else if(c_type == HIPBLASLT_R_32F && d_type == HIPBLASLT_R_32F)
             {
-                if(compute_type == rocblaslt_compute_f32_fast_f16)
+                if(compute_type == rocblaslt_compute_f32_fast_f16
+                   || compute_type == rocblaslt_compute_f32)
                 {
                     float alpha = 1.0;
                     float beta  = 1.0;
-                    auto  prob  = construct_rocblaslt_problem<rocblaslt_half,
-                                                            rocblaslt_f8,
-                                                            float,
-                                                            float>(matmul_desc,
-                                                                   matA,
-                                                                   matB,
-                                                                   matC,
-                                                                   matD,
-                                                                   &alpha,
-                                                                   &beta,
-                                                                   pref->max_workspace_bytes);
+                    auto  prob
+                        = construct_rocblaslt_problem<rocblaslt_half, rocblaslt_f8, float, float>(
+                            matmul_desc,
+                            matA,
+                            matB,
+                            matC,
+                            matD,
+                            &alpha,
+                            &beta,
+                            pref->max_workspace_bytes);
                     status = getBestSolutions<rocblaslt_half, rocblaslt_f8, float, float>(
                         prob,
                         handle,
@@ -2067,7 +2069,8 @@ rocblaslt_status
         {
             if(c_type == HIPBLASLT_R_8F_E4M3 && d_type == HIPBLASLT_R_8F_E4M3)
             {
-                if(compute_type == rocblaslt_compute_f32_fast_f16)
+                if(compute_type == rocblaslt_compute_f32_fast_f16
+                   || compute_type == rocblaslt_compute_f32)
                 {
                     float alpha = 1.0;
                     float beta  = 1.0;
@@ -2094,7 +2097,8 @@ rocblaslt_status
             }
             else if(c_type == HIPBLASLT_R_16F && d_type == HIPBLASLT_R_16F)
             {
-                if(compute_type == rocblaslt_compute_f32_fast_f16)
+                if(compute_type == rocblaslt_compute_f32_fast_f16
+                   || compute_type == rocblaslt_compute_f32)
                 {
                     float alpha = 1.0;
                     float beta  = 1.0;
@@ -2121,21 +2125,21 @@ rocblaslt_status
             }
             else if(c_type == HIPBLASLT_R_32F && d_type == HIPBLASLT_R_32F)
             {
-                if(compute_type == rocblaslt_compute_f32_fast_f16)
+                if(compute_type == rocblaslt_compute_f32_fast_f16
+                   || compute_type == rocblaslt_compute_f32)
                 {
                     float alpha = 1.0;
                     float beta  = 1.0;
-                    auto  prob  = construct_rocblaslt_problem<rocblaslt_f8,
-                                                            rocblaslt_half,
-                                                            float,
-                                                            float>(matmul_desc,
-                                                                   matA,
-                                                                   matB,
-                                                                   matC,
-                                                                   matD,
-                                                                   &alpha,
-                                                                   &beta,
-                                                                   pref->max_workspace_bytes);
+                    auto  prob
+                        = construct_rocblaslt_problem<rocblaslt_f8, rocblaslt_half, float, float>(
+                            matmul_desc,
+                            matA,
+                            matB,
+                            matC,
+                            matD,
+                            &alpha,
+                            &beta,
+                            pref->max_workspace_bytes);
                     status = getBestSolutions<rocblaslt_f8, rocblaslt_half, float, float>(
                         prob,
                         handle,
@@ -2788,14 +2792,13 @@ std::string rocblaslt_internal_get_arch_name()
     return ArchName{}(deviceProperties);
 }
 
-bool rocblaslt_internal_test_path(const std::string &path)
+bool rocblaslt_internal_test_path(const std::string& path)
 {
 #ifdef WIN32
     return ((_access(path.c_str(), 4) != -1) || (_access(path.c_str(), 6) != -1));
 #else
     return access(path.c_str(), R_OK) == 0;
 #endif
-
 }
 
 #ifndef WIN32
@@ -2803,7 +2806,8 @@ int hipblaslt_dl_iterate_phdr_callback(struct dl_phdr_info* hdr_info, size_t siz
 {
     // uncomment to see all dependent .so files
     // fprintf(stderr, "hipblaslt so file: %s\n", hdr_info->dlpi_name);
-    std::pair<std::string, std::string> *typedData = reinterpret_cast<std::pair<std::string, std::string> *>(data);
+    std::pair<std::string, std::string>* typedData
+        = reinterpret_cast<std::pair<std::string, std::string>*>(data);
     if(hdr_info->dlpi_name && strstr(hdr_info->dlpi_name, typedData->second.c_str()))
     {
         typedData->first.assign(hdr_info->dlpi_name);
@@ -2813,7 +2817,7 @@ int hipblaslt_dl_iterate_phdr_callback(struct dl_phdr_info* hdr_info, size_t siz
 }
 #endif
 
-std::string rocblaslt_internal_get_so_path(const std::string &keyword)
+std::string rocblaslt_internal_get_so_path(const std::string& keyword)
 {
     std::pair<std::string, std::string> result{"", keyword};
     dl_iterate_phdr(hipblaslt_dl_iterate_phdr_callback, &result);
