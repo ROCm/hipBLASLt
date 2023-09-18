@@ -105,7 +105,9 @@ namespace amd_detail
                                                         const DType* a,
                                                         const DType* b,
                                                         ScaleType    alpha,
+                                                        const ScaleType*   alphaPtr,
                                                         ScaleType    beta,
+                                                        const ScaleType*   betaPtr,
                                                         uint32_t     numRows,
                                                         uint32_t     numCols,
                                                         uint32_t     ldA,
@@ -129,6 +131,16 @@ namespace amd_detail
         const auto tCol      = getThreadLocalColIdx<RowMajC, TileM, TileN, VectorWidth>(tId);
         const auto row       = blockRow + tRow;
         const auto col       = blockCol + tCol;
+        
+        if (alphaPtr)
+        {
+            alpha = *alphaPtr;
+        }
+
+        if (betaPtr)
+        {
+            beta = *betaPtr;
+        }
 
         if(row >= numRows || col >= numCols)
         {

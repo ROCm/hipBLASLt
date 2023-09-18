@@ -171,7 +171,8 @@ typedef enum {
  */
 typedef enum {
     HIPBLASLT_POINTER_MODE_HOST = 0,                          /** targets host memory */
-    HIPBLASLT_POINTER_MODE_ALPHA_DEVICE_VECTOR_BETA_HOST = 1, /** alpha pointer targets a device memory vector of length equal to the number of rows of matrix D, and beta is a single value in host memory. */
+    HIPBLASLT_POINTER_MODE_DEVICE = 1,                        /** targets device memory */
+    HIPBLASLT_POINTER_MODE_ALPHA_DEVICE_VECTOR_BETA_HOST = 4, /** alpha pointer targets a device memory vector of length equal to the number of rows of matrix D, and beta is a single value in host memory. */
 } hipblasLtPointerMode_t;
 
 /*! \ingroup types_module
