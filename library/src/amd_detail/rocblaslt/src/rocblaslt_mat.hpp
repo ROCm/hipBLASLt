@@ -647,11 +647,11 @@ inline rocblaslt_status rocblaslt_matmul_template(rocblaslt_handle             h
 {
     rocblaslt_status rs_status = rocblaslt_status_not_implemented;
 
-#define EX_TYPECASTING_PARM                                                                       \
-    handle, trans_a, trans_b, m, n, k, alpha, a, ld_a, batch_stride_a, b, ld_b, batch_stride_b,   \
-        beta, c, ld_c, batch_stride_c, d, ld_d, batch_stride_d, e, ld_e, batch_stride_e,          \
-        batch_count, strided_batch, grouped_gemm, gradient, compute_type, algo, workspace,        \
-        workspaceSizeInBytes, bias, scaleA, scaleB, scaleC, scaleD, scaleE, scaleAlphaVec,        \
+#define EX_TYPECASTING_PARM                                                                     \
+    handle, trans_a, trans_b, m, n, k, alpha, a, ld_a, batch_stride_a, b, ld_b, batch_stride_b, \
+        beta, c, ld_c, batch_stride_c, d, ld_d, batch_stride_d, e, ld_e, batch_stride_e,        \
+        batch_count, strided_batch, grouped_gemm, gradient, compute_type, algo, workspace,      \
+        workspaceSizeInBytes, bias, scaleA, scaleB, scaleC, scaleD, scaleE, scaleAlphaVec,      \
         bias_type, epilogue, gemmData, stream
 
     if(a_type == HIPBLASLT_R_32F && b_type == HIPBLASLT_R_32F)
@@ -811,7 +811,8 @@ inline rocblaslt_status rocblaslt_matmul_template(rocblaslt_handle             h
     {
         if(c_type == HIPBLASLT_R_8F_E4M3 && d_type == HIPBLASLT_R_8F_E4M3)
         {
-            if(compute_type == rocblaslt_compute_f32_fast_f16)
+            if(compute_type == rocblaslt_compute_f32_fast_f16
+               || compute_type == rocblaslt_compute_f32)
             {
                 rs_status = rocblaslt_matmul_typecasting<rocblaslt_half,
                                                          rocblaslt_f8,
@@ -821,7 +822,8 @@ inline rocblaslt_status rocblaslt_matmul_template(rocblaslt_handle             h
         }
         else if(c_type == HIPBLASLT_R_16F && d_type == HIPBLASLT_R_16F)
         {
-            if(compute_type == rocblaslt_compute_f32_fast_f16)
+            if(compute_type == rocblaslt_compute_f32_fast_f16
+               || compute_type == rocblaslt_compute_f32)
             {
                 rs_status = rocblaslt_matmul_typecasting<rocblaslt_half,
                                                          rocblaslt_f8,
@@ -831,12 +833,12 @@ inline rocblaslt_status rocblaslt_matmul_template(rocblaslt_handle             h
         }
         else if(c_type == HIPBLASLT_R_32F && d_type == HIPBLASLT_R_32F)
         {
-            if(compute_type == rocblaslt_compute_f32_fast_f16)
+            if(compute_type == rocblaslt_compute_f32_fast_f16
+               || compute_type == rocblaslt_compute_f32)
             {
-                rs_status = rocblaslt_matmul_typecasting<rocblaslt_half,
-                                                         rocblaslt_f8,
-                                                         float,
-                                                         float>(EX_TYPECASTING_PARM);
+                rs_status
+                    = rocblaslt_matmul_typecasting<rocblaslt_half, rocblaslt_f8, float, float>(
+                        EX_TYPECASTING_PARM);
             }
         }
     }
@@ -844,7 +846,8 @@ inline rocblaslt_status rocblaslt_matmul_template(rocblaslt_handle             h
     {
         if(c_type == HIPBLASLT_R_8F_E4M3 && d_type == HIPBLASLT_R_8F_E4M3)
         {
-            if(compute_type == rocblaslt_compute_f32_fast_f16)
+            if(compute_type == rocblaslt_compute_f32_fast_f16
+               || compute_type == rocblaslt_compute_f32)
             {
                 rs_status = rocblaslt_matmul_typecasting<rocblaslt_f8,
                                                          rocblaslt_half,
@@ -854,7 +857,8 @@ inline rocblaslt_status rocblaslt_matmul_template(rocblaslt_handle             h
         }
         else if(c_type == HIPBLASLT_R_16F && d_type == HIPBLASLT_R_16F)
         {
-            if(compute_type == rocblaslt_compute_f32_fast_f16)
+            if(compute_type == rocblaslt_compute_f32_fast_f16
+               || compute_type == rocblaslt_compute_f32)
             {
                 rs_status = rocblaslt_matmul_typecasting<rocblaslt_f8,
                                                          rocblaslt_half,
@@ -864,12 +868,12 @@ inline rocblaslt_status rocblaslt_matmul_template(rocblaslt_handle             h
         }
         else if(c_type == HIPBLASLT_R_32F && d_type == HIPBLASLT_R_32F)
         {
-            if(compute_type == rocblaslt_compute_f32_fast_f16)
+            if(compute_type == rocblaslt_compute_f32_fast_f16
+               || compute_type == rocblaslt_compute_f32)
             {
-                rs_status = rocblaslt_matmul_typecasting<rocblaslt_f8,
-                                                         rocblaslt_half,
-                                                         float,
-                                                         float>(EX_TYPECASTING_PARM);
+                rs_status
+                    = rocblaslt_matmul_typecasting<rocblaslt_f8, rocblaslt_half, float, float>(
+                        EX_TYPECASTING_PARM);
             }
         }
     }
@@ -927,10 +931,10 @@ inline rocblaslt_status rocblaslt_gemm_create_template_cpp(hipblasOperation_t   
 {
     rocblaslt_status rs_status = rocblaslt_status_not_implemented;
 
-#define EX_TYPECASTING_PARM_GEMM_CPP                                                              \
-    trans_a, trans_b, m, n, k, alpha, a, ld_a, batch_stride_a, b, ld_b, batch_stride_b, beta, c,  \
-        ld_c, batch_stride_c, d, ld_d, batch_stride_d, e, ld_e, batch_stride_e, batch_count,      \
-        strided_batch, grouped_gemm, gradient, compute_type, bias, scaleA, scaleB, scaleC, scaleD,\
+#define EX_TYPECASTING_PARM_GEMM_CPP                                                               \
+    trans_a, trans_b, m, n, k, alpha, a, ld_a, batch_stride_a, b, ld_b, batch_stride_b, beta, c,   \
+        ld_c, batch_stride_c, d, ld_d, batch_stride_d, e, ld_e, batch_stride_e, batch_count,       \
+        strided_batch, grouped_gemm, gradient, compute_type, bias, scaleA, scaleB, scaleC, scaleD, \
         scaleE, scaleAlphaVec, bias_type, epilogue, gemmData, gemmCount
 
     if(a_type == HIPBLASLT_R_32F && b_type == HIPBLASLT_R_32F)
@@ -1021,7 +1025,8 @@ inline rocblaslt_status rocblaslt_gemm_create_template_cpp(hipblasOperation_t   
     {
         if(c_type == HIPBLASLT_R_8F_E4M3 && d_type == HIPBLASLT_R_8F_E4M3)
         {
-            if(compute_type == rocblaslt_compute_f32_fast_f16)
+            if(compute_type == rocblaslt_compute_f32_fast_f16
+               || compute_type == rocblaslt_compute_f32)
             {
                 rs_status = rocblaslt_gemm_create_typecasting<rocblaslt_half,
                                                               rocblaslt_f8,
@@ -1031,7 +1036,8 @@ inline rocblaslt_status rocblaslt_gemm_create_template_cpp(hipblasOperation_t   
         }
         else if(c_type == HIPBLASLT_R_16F && d_type == HIPBLASLT_R_16F)
         {
-            if(compute_type == rocblaslt_compute_f32_fast_f16)
+            if(compute_type == rocblaslt_compute_f32_fast_f16
+               || compute_type == rocblaslt_compute_f32)
             {
                 rs_status = rocblaslt_gemm_create_typecasting<rocblaslt_half,
                                                               rocblaslt_f8,
@@ -1041,12 +1047,12 @@ inline rocblaslt_status rocblaslt_gemm_create_template_cpp(hipblasOperation_t   
         }
         else if(c_type == HIPBLASLT_R_32F && d_type == HIPBLASLT_R_32F)
         {
-            if(compute_type == rocblaslt_compute_f32_fast_f16)
+            if(compute_type == rocblaslt_compute_f32_fast_f16
+               || compute_type == rocblaslt_compute_f32)
             {
-                rs_status = rocblaslt_gemm_create_typecasting<rocblaslt_half,
-                                                              rocblaslt_f8,
-                                                              float,
-                                                              float>(EX_TYPECASTING_PARM_GEMM_CPP);
+                rs_status
+                    = rocblaslt_gemm_create_typecasting<rocblaslt_half, rocblaslt_f8, float, float>(
+                        EX_TYPECASTING_PARM_GEMM_CPP);
             }
         }
     }
@@ -1054,7 +1060,8 @@ inline rocblaslt_status rocblaslt_gemm_create_template_cpp(hipblasOperation_t   
     {
         if(c_type == HIPBLASLT_R_8F_E4M3 && d_type == HIPBLASLT_R_8F_E4M3)
         {
-            if(compute_type == rocblaslt_compute_f32_fast_f16)
+            if(compute_type == rocblaslt_compute_f32_fast_f16
+               || compute_type == rocblaslt_compute_f32)
             {
                 rs_status = rocblaslt_gemm_create_typecasting<rocblaslt_f8,
                                                               rocblaslt_half,
@@ -1064,7 +1071,8 @@ inline rocblaslt_status rocblaslt_gemm_create_template_cpp(hipblasOperation_t   
         }
         else if(c_type == HIPBLASLT_R_16F && d_type == HIPBLASLT_R_16F)
         {
-            if(compute_type == rocblaslt_compute_f32_fast_f16)
+            if(compute_type == rocblaslt_compute_f32_fast_f16
+               || compute_type == rocblaslt_compute_f32)
             {
                 rs_status = rocblaslt_gemm_create_typecasting<rocblaslt_f8,
                                                               rocblaslt_half,
@@ -1074,12 +1082,12 @@ inline rocblaslt_status rocblaslt_gemm_create_template_cpp(hipblasOperation_t   
         }
         else if(c_type == HIPBLASLT_R_32F && d_type == HIPBLASLT_R_32F)
         {
-            if(compute_type == rocblaslt_compute_f32_fast_f16)
+            if(compute_type == rocblaslt_compute_f32_fast_f16
+               || compute_type == rocblaslt_compute_f32)
             {
-                rs_status = rocblaslt_gemm_create_typecasting<rocblaslt_f8,
-                                                              rocblaslt_half,
-                                                              float,
-                                                              float>(EX_TYPECASTING_PARM_GEMM_CPP);
+                rs_status
+                    = rocblaslt_gemm_create_typecasting<rocblaslt_f8, rocblaslt_half, float, float>(
+                        EX_TYPECASTING_PARM_GEMM_CPP);
             }
         }
     }
@@ -1138,10 +1146,10 @@ inline rocblaslt_status
 {
     rocblaslt_status rs_status = rocblaslt_status_not_implemented;
 
-#define EX_TYPECASTING_PARM_GroupedGemm_CPP                                                       \
-    trans_a, trans_b, m, n, k, alpha, a, ld_a, batch_stride_a, b, ld_b, batch_stride_b, beta, c,  \
-        ld_c, batch_stride_c, d, ld_d, batch_stride_d, e, ld_e, batch_stride_e, batch_count,      \
-        strided_batch, grouped_gemm, compute_type, gradient, bias, scaleA, scaleB, scaleC, scaleD,\
+#define EX_TYPECASTING_PARM_GroupedGemm_CPP                                                        \
+    trans_a, trans_b, m, n, k, alpha, a, ld_a, batch_stride_a, b, ld_b, batch_stride_b, beta, c,   \
+        ld_c, batch_stride_c, d, ld_d, batch_stride_d, e, ld_e, batch_stride_e, batch_count,       \
+        strided_batch, grouped_gemm, compute_type, gradient, bias, scaleA, scaleB, scaleC, scaleD, \
         scaleE, scaleAlphaVec, bias_type, epilogue, gemmData, gemmCount
 
     if(a_type == HIPBLASLT_R_32F && b_type == HIPBLASLT_R_32F)
@@ -1238,7 +1246,8 @@ inline rocblaslt_status
     {
         if(c_type == HIPBLASLT_R_8F_E4M3 && d_type == HIPBLASLT_R_8F_E4M3)
         {
-            if(compute_type == rocblaslt_compute_f32_fast_f16)
+            if(compute_type == rocblaslt_compute_f32_fast_f16
+               || compute_type == rocblaslt_compute_f32)
             {
                 rs_status = rocblaslt_groupedgemm_create_typecasting<rocblaslt_half,
                                                                      rocblaslt_f8,
@@ -1249,7 +1258,8 @@ inline rocblaslt_status
         }
         else if(c_type == HIPBLASLT_R_16F && d_type == HIPBLASLT_R_16F)
         {
-            if(compute_type == rocblaslt_compute_f32_fast_f16)
+            if(compute_type == rocblaslt_compute_f32_fast_f16
+               || compute_type == rocblaslt_compute_f32)
             {
                 rs_status = rocblaslt_groupedgemm_create_typecasting<rocblaslt_half,
                                                                      rocblaslt_f8,
@@ -1260,7 +1270,8 @@ inline rocblaslt_status
         }
         else if(c_type == HIPBLASLT_R_32F && d_type == HIPBLASLT_R_32F)
         {
-            if(compute_type == rocblaslt_compute_f32_fast_f16)
+            if(compute_type == rocblaslt_compute_f32_fast_f16
+               || compute_type == rocblaslt_compute_f32)
             {
                 rs_status = rocblaslt_groupedgemm_create_typecasting<rocblaslt_half,
                                                                      rocblaslt_f8,
@@ -1274,7 +1285,8 @@ inline rocblaslt_status
     {
         if(c_type == HIPBLASLT_R_8F_E4M3 && d_type == HIPBLASLT_R_8F_E4M3)
         {
-            if(compute_type == rocblaslt_compute_f32_fast_f16)
+            if(compute_type == rocblaslt_compute_f32_fast_f16
+               || compute_type == rocblaslt_compute_f32)
             {
                 rs_status = rocblaslt_groupedgemm_create_typecasting<rocblaslt_f8,
                                                                      rocblaslt_half,
@@ -1285,7 +1297,8 @@ inline rocblaslt_status
         }
         else if(c_type == HIPBLASLT_R_16F && d_type == HIPBLASLT_R_16F)
         {
-            if(compute_type == rocblaslt_compute_f32_fast_f16)
+            if(compute_type == rocblaslt_compute_f32_fast_f16
+               || compute_type == rocblaslt_compute_f32)
             {
                 rs_status = rocblaslt_groupedgemm_create_typecasting<rocblaslt_f8,
                                                                      rocblaslt_half,
@@ -1296,7 +1309,8 @@ inline rocblaslt_status
         }
         else if(c_type == HIPBLASLT_R_32F && d_type == HIPBLASLT_R_32F)
         {
-            if(compute_type == rocblaslt_compute_f32_fast_f16)
+            if(compute_type == rocblaslt_compute_f32_fast_f16
+               || compute_type == rocblaslt_compute_f32)
             {
                 rs_status = rocblaslt_groupedgemm_create_typecasting<rocblaslt_f8,
                                                                      rocblaslt_half,
