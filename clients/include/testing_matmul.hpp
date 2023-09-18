@@ -831,9 +831,10 @@ void testing_matmul(const Arguments& arg)
     hipblaslt_ext::UserArguments* d_userArgs = nullptr;
 
     // Get Heuristic results
-    std::vector<hipblasLtMatmulHeuristicResult_t> heuristicResult{1};
-    int                                           requestAlgoCount  = 1;
-    int                                           returnedAlgoCount = 0;
+    int32_t requestAlgoCount  = arg.requested_solution_num < 0 ? std::numeric_limits<int32_t>::max()
+                                                               : arg.requested_solution_num;
+    int     returnedAlgoCount = 0;
+    std::vector<hipblasLtMatmulHeuristicResult_t> heuristicResult(requestAlgoCount);
 
     // grouped gemm
     hipblaslt_ext::GemmPreference gemmPref;
@@ -1804,157 +1805,162 @@ void testing_matmul(const Arguments& arg)
         int number_cold_calls = arg.cold_iters;
         int number_hot_calls  = arg.iters;
 
-        if(!do_grouped_gemm)
+        for(size_t sol = 0; sol < heuristicResult.size(); sol++)
         {
-
-            if(arg.use_ext)
+            if(!do_grouped_gemm)
             {
-                CHECK_HIPBLASLT_ERROR(gemm.initialize(heuristicResult[0].algo, *dWorkspace));
-                for(int i = 0; i < number_cold_calls; i++)
-                    CHECK_HIPBLASLT_ERROR(gemm.run(stream));
-                CHECK_HIP_ERROR(hipStreamSynchronize(stream));
-                gpu_time_used = get_time_us_sync(stream); // in microseconds
 
-                for(int i = 0; i < number_hot_calls; i++)
-                    CHECK_HIPBLASLT_ERROR(gemm.run(stream));
-            }
-            else
-            {
-                for(int i = 0; i < number_cold_calls; i++)
+                if(arg.use_ext)
                 {
-                    EXPECT_HIPBLAS_STATUS(hipblasLtMatmul(handle,
-                                                          matmul[0],
-                                                          alpha_in[0],
-                                                          *(dA[0]),
-                                                          matA[0],
-                                                          *(dB[0]),
-                                                          matB[0],
-                                                          &(h_beta[0]),
-                                                          *(dC[0]),
-                                                          matC[0],
-                                                          *(dD[0]),
-                                                          matD[0],
-                                                          &heuristicResult[0].algo,
-                                                          *dWorkspace,
-                                                          workspace_size,
-                                                          stream),
-                                          HIPBLAS_STATUS_SUCCESS);
-                }
+                    CHECK_HIPBLASLT_ERROR(gemm.initialize(heuristicResult[sol].algo, *dWorkspace));
+                    for(int i = 0; i < number_cold_calls; i++)
+                        CHECK_HIPBLASLT_ERROR(gemm.run(stream));
+                    CHECK_HIP_ERROR(hipStreamSynchronize(stream));
+                    gpu_time_used = get_time_us_sync(stream); // in microseconds
 
-                CHECK_HIP_ERROR(hipStreamSynchronize(stream));
-                gpu_time_used = get_time_us_sync(stream); // in microseconds
-                for(int i = 0; i < number_hot_calls; i++)
+                    for(int i = 0; i < number_hot_calls; i++)
+                        CHECK_HIPBLASLT_ERROR(gemm.run(stream));
+                }
+                else
                 {
-                    EXPECT_HIPBLAS_STATUS(hipblasLtMatmul(handle,
-                                                          matmul[0],
-                                                          alpha_in[0],
-                                                          *(dA[0]),
-                                                          matA[0],
-                                                          *(dB[0]),
-                                                          matB[0],
-                                                          &(h_beta[0]),
-                                                          *(dC[0]),
-                                                          matC[0],
-                                                          *(dD[0]),
-                                                          matD[0],
-                                                          &heuristicResult[0].algo,
-                                                          *dWorkspace,
-                                                          workspace_size,
-                                                          stream),
-                                          HIPBLAS_STATUS_SUCCESS);
+                    for(int i = 0; i < number_cold_calls; i++)
+                    {
+                        EXPECT_HIPBLAS_STATUS(hipblasLtMatmul(handle,
+                                                              matmul[0],
+                                                              alpha_in[0],
+                                                              *(dA[0]),
+                                                              matA[0],
+                                                              *(dB[0]),
+                                                              matB[0],
+                                                              &(h_beta[0]),
+                                                              *(dC[0]),
+                                                              matC[0],
+                                                              *(dD[0]),
+                                                              matD[0],
+                                                              &heuristicResult[sol].algo,
+                                                              *dWorkspace,
+                                                              workspace_size,
+                                                              stream),
+                                              HIPBLAS_STATUS_SUCCESS);
+                    }
+
+                    CHECK_HIP_ERROR(hipStreamSynchronize(stream));
+                    gpu_time_used = get_time_us_sync(stream); // in microseconds
+                    for(int i = 0; i < number_hot_calls; i++)
+                    {
+                        EXPECT_HIPBLAS_STATUS(hipblasLtMatmul(handle,
+                                                              matmul[0],
+                                                              alpha_in[0],
+                                                              *(dA[0]),
+                                                              matA[0],
+                                                              *(dB[0]),
+                                                              matB[0],
+                                                              &(h_beta[0]),
+                                                              *(dC[0]),
+                                                              matC[0],
+                                                              *(dD[0]),
+                                                              matD[0],
+                                                              &heuristicResult[sol].algo,
+                                                              *dWorkspace,
+                                                              workspace_size,
+                                                              stream),
+                                              HIPBLAS_STATUS_SUCCESS);
+                    }
                 }
-            }
-            CHECK_HIP_ERROR(hipStreamSynchronize(stream));
-            gpu_time_used = get_time_us_sync(stream) - gpu_time_used;
-        }
-        else
-        {
-            if(arg.use_user_args)
-            {
-                //grouped gemm
-                CHECK_HIPBLASLT_ERROR(groupedGemm.initialize(heuristicResult[0].algo, *dWorkspace));
-                if(userArgs != nullptr)
-                    CHECK_HIP_ERROR(hipHostMalloc(
-                        &userArgs, gemm_count * sizeof(hipblaslt_ext::UserArguments)));
-                groupedGemm.getDefaultValueForDeviceUserArguments(userArgs);
-                // Copy them to device memory
-                if(d_userArgs != nullptr)
-                    CHECK_HIP_ERROR(
-                        hipMalloc(&d_userArgs, gemm_count * sizeof(hipblaslt_ext::UserArguments)));
-                CHECK_HIP_ERROR(hipMemcpy(d_userArgs,
-                                          userArgs,
-                                          gemm_count * sizeof(hipblaslt_ext::UserArguments),
-                                          hipMemcpyHostToDevice));
-
-                for(int i = 0; i < number_cold_calls; i++)
-                    CHECK_HIPBLASLT_ERROR(groupedGemm.run(d_userArgs, stream));
-
-                CHECK_HIP_ERROR(hipStreamSynchronize(stream));
-                gpu_time_used = get_time_us_sync(stream); // in microseconds
-
-                for(int i = 0; i < number_hot_calls; i++)
-                    CHECK_HIPBLASLT_ERROR(groupedGemm.run(d_userArgs, stream));
-
                 CHECK_HIP_ERROR(hipStreamSynchronize(stream));
                 gpu_time_used = get_time_us_sync(stream) - gpu_time_used;
             }
             else
             {
-                //grouped gemm
-                CHECK_HIPBLASLT_ERROR(
-                    groupedGemm.initialize(heuristicResult[0].algo, *dWorkspace, false, stream));
+                if(arg.use_user_args)
+                {
+                    //grouped gemm
+                    CHECK_HIPBLASLT_ERROR(
+                        groupedGemm.initialize(heuristicResult[sol].algo, *dWorkspace));
+                    if(userArgs != nullptr)
+                        CHECK_HIP_ERROR(hipHostMalloc(
+                            &userArgs, gemm_count * sizeof(hipblaslt_ext::UserArguments)));
+                    groupedGemm.getDefaultValueForDeviceUserArguments(userArgs);
+                    // Copy them to device memory
+                    if(d_userArgs != nullptr)
+                        CHECK_HIP_ERROR(hipMalloc(
+                            &d_userArgs, gemm_count * sizeof(hipblaslt_ext::UserArguments)));
+                    CHECK_HIP_ERROR(hipMemcpy(d_userArgs,
+                                              userArgs,
+                                              gemm_count * sizeof(hipblaslt_ext::UserArguments),
+                                              hipMemcpyHostToDevice));
 
-                for(int i = 0; i < number_cold_calls; i++)
-                    CHECK_HIPBLASLT_ERROR(groupedGemm.run(stream));
+                    for(int i = 0; i < number_cold_calls; i++)
+                        CHECK_HIPBLASLT_ERROR(groupedGemm.run(d_userArgs, stream));
 
-                CHECK_HIP_ERROR(hipStreamSynchronize(stream));
-                gpu_time_used = get_time_us_sync(stream); // in microseconds
+                    CHECK_HIP_ERROR(hipStreamSynchronize(stream));
+                    gpu_time_used = get_time_us_sync(stream); // in microseconds
 
-                for(int i = 0; i < number_hot_calls; i++)
-                    CHECK_HIPBLASLT_ERROR(groupedGemm.run(stream));
+                    for(int i = 0; i < number_hot_calls; i++)
+                        CHECK_HIPBLASLT_ERROR(groupedGemm.run(d_userArgs, stream));
 
-                CHECK_HIP_ERROR(hipStreamSynchronize(stream));
-                gpu_time_used = get_time_us_sync(stream) - gpu_time_used;
+                    CHECK_HIP_ERROR(hipStreamSynchronize(stream));
+                    gpu_time_used = get_time_us_sync(stream) - gpu_time_used;
+                }
+                else
+                {
+                    //grouped gemm
+                    CHECK_HIPBLASLT_ERROR(groupedGemm.initialize(
+                        heuristicResult[sol].algo, *dWorkspace, false, stream));
+
+                    for(int i = 0; i < number_cold_calls; i++)
+                        CHECK_HIPBLASLT_ERROR(groupedGemm.run(stream));
+
+                    CHECK_HIP_ERROR(hipStreamSynchronize(stream));
+                    gpu_time_used = get_time_us_sync(stream); // in microseconds
+
+                    for(int i = 0; i < number_hot_calls; i++)
+                        CHECK_HIPBLASLT_ERROR(groupedGemm.run(stream));
+
+                    CHECK_HIP_ERROR(hipStreamSynchronize(stream));
+                    gpu_time_used = get_time_us_sync(stream) - gpu_time_used;
+                }
             }
-        }
 
-        double flops = 0;
-        for(int gemmIdx = 0; gemmIdx < gemm_count; gemmIdx++)
-        {
-            flops += gemm_gflop_count<Tc>(M[gemmIdx], N[gemmIdx], K[gemmIdx]);
-            switch(arg.activation_type)
+            double flops = 0;
+            for(int gemmIdx = 0; gemmIdx < gemm_count; gemmIdx++)
             {
-            case hipblaslt_activation_type::relu:
-                flops += relu_gflop_count<Tc>(M[gemmIdx], N[gemmIdx]);
-                break;
-            case hipblaslt_activation_type::gelu:
-                flops += gelu_gflop_count<Tc>(M[gemmIdx], N[gemmIdx]);
-                break;
-            default:
-                break;
+                flops += gemm_gflop_count<Tc>(M[gemmIdx], N[gemmIdx], K[gemmIdx]);
+                switch(arg.activation_type)
+                {
+                case hipblaslt_activation_type::relu:
+                    flops += relu_gflop_count<Tc>(M[gemmIdx], N[gemmIdx]);
+                    break;
+                case hipblaslt_activation_type::gelu:
+                    flops += gelu_gflop_count<Tc>(M[gemmIdx], N[gemmIdx]);
+                    break;
+                default:
+                    break;
+                }
             }
-        }
 
 #define argument_param                                                                             \
     e_transA, e_transB, e_grouped_gemm, e_batch_count, e_M, e_N, e_K, e_alpha, e_lda, e_stride_a,  \
         e_beta, e_ldb, e_stride_b, e_ldc, e_stride_c, e_ldd, e_stride_d, e_d_type, e_compute_type, \
         e_activation_type, e_bias_vector
 
-        ArgumentModel<argument_param>{}.log_args<Tc>(hipblaslt_cout,
-                                                     arg,
-                                                     gpu_time_used,
-                                                     flops,
-                                                     ArgumentLogging::NA_value,
-                                                     cpu_time_used,
-                                                     hipblaslt_error);
-        if(dWorkspace != nullptr)
-            delete dWorkspace;
-
-        if(userArgs != nullptr)
-            delete userArgs;
-        if(d_userArgs != nullptr)
-            CHECK_HIP_ERROR(hipFree(userArgs));
+            ArgumentModel<argument_param>{}.log_args<Tc>(hipblaslt_cout,
+                                                         sol,
+                                                         arg,
+                                                         gpu_time_used,
+                                                         flops,
+                                                         ArgumentLogging::NA_value,
+                                                         cpu_time_used,
+                                                         hipblaslt_error);
+        }
     }
+
+    if(dWorkspace != nullptr)
+        delete dWorkspace;
+    if(userArgs != nullptr)
+        CHECK_HIP_ERROR(hipFree(userArgs));
+    if(d_userArgs != nullptr)
+        CHECK_HIP_ERROR(hipFree(d_userArgs));
 
     for(int i = 0; i < gemm_count; i++)
     {
