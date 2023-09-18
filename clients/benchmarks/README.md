@@ -30,7 +30,7 @@ cd hipBLASLt; cd build/release
 --d_type <value>           Precision of matrix D. Options: f32_r,f16_r,bf16_r
 --compute_type <value>     Precision of computation. Options: s,f32_r,x,xf32_r,f64_r,i32_r                     (Default value is: f32_r)
 --scale_type <value>       Precision of scalar. Options: f16_r,bf16_r
---initialization <value>   Intialize matrix data.Options: rand_int, trig_float, hpl(floating)                  (Default value is: hpl)
+--initialization <value>   Intialize matrix data.Options: rand_int, trig_float, hpl(floating)                  (Default value is: rand_int)
 --transA <value>           N = no transpose, T = transpose, C = conjugate transpose                            (Default value is: N)
 --transB <value>           N = no transpose, T = transpose, C = conjugate transpose                            (Default value is: N)
 --batch_count <value>      Number of matrices. Only applicable to batched and strided_batched routines         (Default value is: 1)
@@ -38,8 +38,9 @@ cd hipBLASLt; cd build/release
 --verify |-v <value>       Validate GPU results with CPU? 0 = No, 1 = Yes (default: No)                        (Default value is: )
 --iters |-i <value>        Iterations to run inside timing loop                                                (Default value is: 10)
 --cold_iters |-j <value>   Cold Iterations to run before entering the timing loop                              (Default value is: 2)
---algo <value>             Reserved.                                                                           (Default value is: 0)
+--algo_method <value>      Use different algorithm search API. 0: Get heuristic, 1: Get all algorithm, 2: Get solutuion by index.Options: 0, 1, 2. (default: 0)  (Default value is: 0)
 --solution_index <value>   Reserved.                                                                           (Default value is: 0)
+--requested_solution <value> Requested solution num. Set to -1 to get all solutions. Only valid when algo_method is set to 1.  (Default value is: 1)
 --activation_type <value>  Options: None, gelu, relu                                                           (Default value is: none)
 --activation_arg1 <value>  Reserved.                                                                           (Default value is: 0)
 --activation_arg2 <value>  Reserved.                                                                           (Default value is: inf)
@@ -49,7 +50,7 @@ cd hipBLASLt; cd build/release
 --scaleAlpha_vector        Apply scaleAlpha vector
 --use_e                    Apply AUX output/ gradient input
 --gradient                 Enable gradient
---grouped_gemm <value>     Use grouped_gemm if non-zero. Number of gemms to run                                (Default value is: 0)
+--grouped_gemm             Use grouped_gemm if non-zero. Number of gemms to run
 --device <value>           Set default device to be used for subsequent program runs                           (Default value is: 0)
 --c_noalias_d              C and D are stored in separate memory
 --workspace <value>        Set fixed workspace memory size instead of using hipblaslt managed memory           (Default value is: 0)

@@ -454,7 +454,7 @@ try
 
         ("grouped_gemm",
          value<bool>(&grouped_gemm)->default_value(false),
-         "Use grouped_gemm if non-zero. Number of gemms to run")
+         "Use grouped_gemm.")
 
         ("device",
          value<int>(&device_id)->default_value(0),
