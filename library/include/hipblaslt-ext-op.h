@@ -125,6 +125,40 @@ extern "C" {
  */
     HIPBLASLT_EXPORT hipblasStatus_t hipblasltExtLayerNorm(hipblasltDatatype_t datatype, void *output, void* mean, void* invvar,
         void *input, uint32_t m, uint32_t n, float eps, void *gamma, void *beta, hipStream_t stream);
+
+/*! \ingroup library_module
+ *  \brief Perform amax on given tensor.
+ *
+ *  \details
+ *  This function computes amax on given 1D-tensor.
+ *
+ *  @param[in]
+ *  datatype Datatype of input/output tensor, currently support HIPBLASLT_R_32F and HIPBLASLT_R_16F only.
+ *
+ *  @param[in]
+ *  outDatatype Datatype of input/output tensor, currently support HIPBLASLT_R_32F and HIPBLASLT_R_16F only.
+ *
+ *  @param[out]
+ *  output output tensor buffer. can't be nullptr.
+ *
+ *  @param[in]
+ *  input tensor buffer. can't be nullptr.
+ *
+ *  @param[in]
+ *  m The first dimension of input/output tensor.
+ *
+ *  @param[in]
+ *  n The first dimension of input/output tensor.
+ *
+ *  @param[in]
+ *  stream The HIP stream where all the GPU work will be submitted.
+ *
+ *
+ *  \retval HIPBLAS_STATUS_SUCCESS If it runs successfully.
+ *  \retval HIPBLAS_STATUS_INVALID_VALUE If \p m is greater than 4096.
+ *  \retval HIPBLAS_STATUS_NOT_SUPPORTED if \p datatype is not HIPBLASLT_R_32F.
+ */
+    HIPBLASLT_EXPORT hipblasStatus_t hipblasltExtAMax(const hipblasltDatatype_t datatype, const hipblasltDatatype_t outDatatype, void *output, void *input, uint32_t m, uint32_t n, hipStream_t stream);
 #ifdef __cplusplus
 }
 #endif

@@ -37,6 +37,9 @@ from typing import List, Optional, Union
 ################################################################################
 ################################################################################
 
+def SrcAbs(val):
+    return f'abs({str(val)})'
+
 class Instruction(Item, abc.ABC):
     def __init__(self, instType: InstType, comment="") -> None:
         Item.__init__(self, "instruction")
