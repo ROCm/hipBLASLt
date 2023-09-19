@@ -116,7 +116,7 @@ inline hipblaslt_initialization string2hipblaslt_initialization(const std::strin
         value == "rand_int"   ? hipblaslt_initialization::rand_int   :
         value == "trig_float" ? hipblaslt_initialization::trig_float :
         value == "hpl"        ? hipblaslt_initialization::hpl        :
-        value == "special"    ? hipblaslt_initialization::special        :
+        value == "special"    ? hipblaslt_initialization::special    :
         static_cast<hipblaslt_initialization>(0);
 }
 // clang-format on

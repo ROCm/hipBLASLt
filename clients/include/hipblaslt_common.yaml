@@ -182,6 +182,8 @@ Arguments:
   - scaleD: c_bool
   - scaleE: c_bool
   - scaleAlpha_vector: c_bool
+  - amaxScaleA: c_bool
+  - amaxScaleB: c_bool
   - c_noalias_d: c_bool
   - HMM: c_bool
   - use_e: c_bool
@@ -274,6 +276,8 @@ Defaults:
   scaleD: false
   scaleE: false
   scaleAlpha_vector: false
+  amaxScaleA: false
+  amaxScaleB: false
   grouped_gemm: 0
   norm_check_assert: true
   use_ext: false

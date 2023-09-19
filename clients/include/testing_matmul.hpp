@@ -40,6 +40,7 @@
 #include "utility.hpp"
 #include <cstddef>
 #include <hipblaslt/hipblaslt-ext.hpp>
+#include <hipblaslt/hipblaslt-ext-op.h>
 #include <hipblaslt/hipblaslt.h>
 #include <omp.h>
 
@@ -821,10 +822,26 @@ void testing_matmul(const Arguments& arg)
         }
 
         if(arg.scaleA)
-            CHECK_HIP_ERROR(dScaleA[i]->transfer_from(*hScaleA[i]));
+        {
+            if (arg.amaxScaleA && (arg.a_type == HIPBLASLT_C_32F || arg.a_type == HIPBLASLT_C_16F))
+            {
+                CHECK_HIPBLASLT_ERROR(hipblasltExtAMax(arg.a_type, HIPBLASLT_C_32F, dScaleA[i], dA[i], A_row[i], A_col[i], stream));
+                CHECK_HIP_ERROR(hScaleA[i]->transfer_from(*dScaleA[i]));
+            }
+            else
+                CHECK_HIP_ERROR(dScaleA[i]->transfer_from(*hScaleA[i]));
+        }
 
         if(arg.scaleB)
-            CHECK_HIP_ERROR(dScaleB[i]->transfer_from(*hScaleB[i]));
+        {
+            if (arg.amaxScaleB && (arg.b_type == HIPBLASLT_C_32F || arg.b_type == HIPBLASLT_C_16F))
+            {
+                CHECK_HIPBLASLT_ERROR(hipblasltExtAMax(arg.b_type, HIPBLASLT_C_32F, dScaleB[i], dB[i], B_row[i], B_col[i], stream));
+                CHECK_HIP_ERROR(hScaleB[i]->transfer_from(*dScaleB[i]));
+            }
+            else
+                CHECK_HIP_ERROR(dScaleB[i]->transfer_from(*hScaleB[i]));
+        }
 
         if(arg.scaleC)
             CHECK_HIP_ERROR(dScaleC[i]->transfer_from(*hScaleC[i]));

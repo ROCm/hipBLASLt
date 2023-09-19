@@ -174,6 +174,12 @@ namespace
                 if(arg.scaleAlpha_vector)
                     name << "_SAV";
 
+                if(arg.amaxScaleA)
+                    name << "_ASA";
+
+                if(arg.amaxScaleB)
+                    name << "_ASB";
+
                 if(arg.grouped_gemm > 0)
                     name << "_GG" << arg.grouped_gemm;
 

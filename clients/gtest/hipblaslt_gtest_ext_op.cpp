@@ -57,13 +57,47 @@ namespace {
             }
         }
     }
+
+    template<typename T>
+    T abs(T a)
+    {
+      return (a > 0) ? a : -a;
+    }
+
+    template<typename T>
+    T max(T a, T b)
+    {
+        return (a > b) ? a : b;
+    }
+
+    template<typename Ti, typename To>
+    void cpuAMax(To *out, Ti *in, std::uint32_t length)
+    {
+        // calculate amax
+        Ti m = 0;
+        for(int j=0; j<length; j++) {
+            m = max(m, abs(in[j]));
+        }
+        out[0] = To(m);
+    }
 }
+
+struct AMaxTestData
+{
+    hipblasltDatatype_t type;
+    hipblasltDatatype_t dtype;
+    uint32_t m;
+    uint32_t n;
+};
 
 class ExtOpSoftmaxTest : public testing::TestWithParam<uint32_t> {};
 class ExtOpSoftmaxUnsupportedDatatypeTest : public testing::TestWithParam<hipblasltDatatype_t> {};
 
 class ExtOpLayerNormTest : public testing::TestWithParam<uint32_t> {};
 class ExtOpLayerNormUnsupportedDatatypeTest : public testing::TestWithParam<hipblasltDatatype_t> {};
+
+class ExtOpAMaxTest : public testing::TestWithParam<AMaxTestData> {};
+class ExtOpAMaxUnsupportedDatatypeTest : public testing::TestWithParam<hipblasltDatatype_t> {};
 
 TEST_P(ExtOpSoftmaxTest, softmaxSuccess) {
     uint32_t m = GetParam();
@@ -155,6 +189,55 @@ TEST_P(ExtOpLayerNormTest, layernormSuccess) {
     err = hipFree(gpuInput);
 }
 
+template<typename Ti, typename To>
+void AMaxTest(hipblasltDatatype_t type, hipblasltDatatype_t dtype, std::size_t m, std::size_t n) {
+
+    std::size_t numElements = m * n;
+    std::size_t inNumBytes = sizeof(Ti);
+    std::size_t outNumBytes = sizeof(To);
+
+    To *gpuOutput{nullptr};
+    Ti *gpuInput{nullptr};
+
+    auto hipErr = hipMalloc(&gpuOutput, outNumBytes);
+    hipErr = hipMalloc(&gpuInput, m * n * inNumBytes);
+
+    std::vector<To> cpuOutput(1, 0.f);
+    std::vector<Ti> cpuInput(m * n, 0.f);
+    std::vector<To> refOutput(1, 0.f);
+
+    hipblaslt_init_hpl(cpuInput, m * n, 1, m * n);
+
+    hipErr = hipMemcpyHtoD(gpuInput, cpuInput.data(), m * n * inNumBytes);
+
+    hipStream_t stream{};
+    hipErr = hipStreamCreate(&stream);
+
+    auto hipblasltErr = hipblasltExtAMax(type, dtype, gpuOutput, gpuInput, m, n, stream);
+
+    hipErr = hipMemcpyDtoH(cpuOutput.data(), gpuOutput, outNumBytes);
+
+    cpuAMax(refOutput.data(), cpuInput.data(), m * n);
+
+    EXPECT_NEAR(float(refOutput[0]), float(cpuOutput[0]), 1e-5);
+
+    hipErr = hipStreamDestroy(stream);
+    hipErr = hipFree(gpuOutput);
+    hipErr = hipFree(gpuInput);
+}
+
+TEST_P(ExtOpAMaxTest, amaxSuccess) {
+    AMaxTestData testdata = GetParam();
+    if (testdata.type == HIPBLASLT_R_32F && testdata.dtype == HIPBLASLT_R_32F)
+        AMaxTest<float, float>(testdata.type, testdata.dtype, testdata.m, testdata.n);
+    else if (testdata.type == HIPBLASLT_R_32F && testdata.dtype == HIPBLASLT_R_16F)
+        AMaxTest<float, hipblasLtHalf>(testdata.type, testdata.dtype, testdata.m, testdata.n);
+    else if (testdata.type == HIPBLASLT_R_16F && testdata.dtype == HIPBLASLT_R_32F)
+        AMaxTest<hipblasLtHalf, float>(testdata.type, testdata.dtype, testdata.m, testdata.n);
+    else if (testdata.type == HIPBLASLT_R_16F && testdata.dtype == HIPBLASLT_R_16F)
+        AMaxTest<hipblasLtHalf, hipblasLtHalf>(testdata.type, testdata.dtype, testdata.m, testdata.n);
+}
+
 TEST_P(ExtOpSoftmaxUnsupportedDatatypeTest, softmaxFailureUnsupportedDatatype) {
     auto hipblasltErr = hipblasltExtSoftmax(GetParam(), 16, 16, 1, nullptr, nullptr, nullptr);
     EXPECT_EQ(hipblasltErr, HIPBLAS_STATUS_NOT_SUPPORTED);
@@ -177,8 +260,25 @@ TEST(ExtOpTest, layernormFailureInvalidValue) {
     EXPECT_EQ(hipblasltErr, HIPBLAS_STATUS_INVALID_VALUE);
 }
 
+TEST_P(ExtOpAMaxUnsupportedDatatypeTest, amaxFailureUnsupportedDatatype) {
+    auto hipblasltErr = hipblasltExtAMax(GetParam(), GetParam(), nullptr, nullptr, 0, 0, nullptr);
+    EXPECT_EQ(hipblasltErr, HIPBLAS_STATUS_NOT_SUPPORTED);
+}
+
+TEST(ExtOpTest, amaxFailureInvalidValue) {
+    auto hipblasltErr = hipblasltExtAMax(HIPBLASLT_R_32F, HIPBLASLT_R_32F, nullptr, nullptr, 0, 0, nullptr);
+    EXPECT_EQ(hipblasltErr, HIPBLAS_STATUS_INVALID_VALUE);
+}
+
 INSTANTIATE_TEST_SUITE_P(ExtOpTest, ExtOpSoftmaxTest, testing::Values<uint32_t>(1, 16, 1335));
 INSTANTIATE_TEST_SUITE_P(ExtOpTest, ExtOpSoftmaxUnsupportedDatatypeTest, testing::Values<hipblasltDatatype_t>(HIPBLASLT_R_16F, HIPBLASLT_R_16B));
 
 INSTANTIATE_TEST_SUITE_P(ExtOpTest, ExtOpLayerNormTest, testing::Values<uint32_t>(1, 16, 1335, 6666));
 INSTANTIATE_TEST_SUITE_P(ExtOpTest, ExtOpLayerNormUnsupportedDatatypeTest, testing::Values<hipblasltDatatype_t>(HIPBLASLT_R_16F, HIPBLASLT_R_16B));
+
+INSTANTIATE_TEST_SUITE_P(ExtOpTest, ExtOpAMaxTest, testing::Values<AMaxTestData>(
+    AMaxTestData{HIPBLASLT_R_32F, HIPBLASLT_R_32F, 1, 1}, AMaxTestData{HIPBLASLT_R_32F, HIPBLASLT_R_32F, 16, 16}, AMaxTestData{HIPBLASLT_R_32F, HIPBLASLT_R_32F, 1335, 666},
+    AMaxTestData{HIPBLASLT_R_32F, HIPBLASLT_R_16F, 1, 1}, AMaxTestData{HIPBLASLT_R_32F, HIPBLASLT_R_16F, 16, 16}, AMaxTestData{HIPBLASLT_R_32F, HIPBLASLT_R_16F, 1335, 666},
+    AMaxTestData{HIPBLASLT_R_16F, HIPBLASLT_R_32F, 1, 1}, AMaxTestData{HIPBLASLT_R_16F, HIPBLASLT_R_32F, 16, 16}, AMaxTestData{HIPBLASLT_R_16F, HIPBLASLT_R_32F, 1335, 666},
+    AMaxTestData{HIPBLASLT_R_16F, HIPBLASLT_R_16F, 1, 1}, AMaxTestData{HIPBLASLT_R_16F, HIPBLASLT_R_16F, 16, 16}, AMaxTestData{HIPBLASLT_R_16F, HIPBLASLT_R_16F, 1335, 666}));
+INSTANTIATE_TEST_SUITE_P(ExtOpTest, ExtOpAMaxUnsupportedDatatypeTest, testing::Values<hipblasltDatatype_t>(HIPBLASLT_R_16B));

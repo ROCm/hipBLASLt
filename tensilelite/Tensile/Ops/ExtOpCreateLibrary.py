@@ -46,7 +46,7 @@ if __name__ == '__main__':
 
     src_folder = os.path.expandvars(os.path.expanduser(src_folder))
 
-    lib_meta = defaultdict(lambda: defaultdict(list))
+    lib_meta = defaultdict(lambda: defaultdict(lambda: defaultdict(list)))
 
     for p in glob.glob(f'{src_folder}/*{opt_arch}.{input_format}'):
         meta_dict = {}
@@ -60,7 +60,8 @@ if __name__ == '__main__':
         meta_dict['co_path'] = os.path.basename(co_path)
         arch = meta_dict.pop('arch')
         op = meta_dict.pop('op')
-        lib_meta[arch][op].append(meta_dict)
+        datatype = meta_dict['io_type']
+        lib_meta[arch][op][datatype].append(meta_dict)
 
     output_open_foramt = 'wb' if lib_format == 'dat' else 'w'
     output_format_2_writer = {
