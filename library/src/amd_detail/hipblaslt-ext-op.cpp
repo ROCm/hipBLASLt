@@ -59,6 +59,13 @@ hipblasStatus_t hipblasltExtLayerNorm(hipblasltDatatype_t datatype, void *output
     return hipblasltLayerNormRun(datatype, output, mean, invvar, input, m, n, eps, gamma, beta, stream);
 }
 
+hipblasStatus_t hipblasltAMaxRun(const hipblasltDatatype_t datatype, const hipblasltDatatype_t outDatatype, void *output, void *input, uint32_t m, uint32_t n, hipStream_t stream);
+
+hipblasStatus_t hipblasltExtAMax(const hipblasltDatatype_t datatype, const hipblasltDatatype_t outDatatype, void *output, void *input, uint32_t m, uint32_t n, hipStream_t stream)
+{
+    return hipblasltAMaxRun(datatype, outDatatype, output, input, m, n, stream);
+}
+
 namespace {
     constexpr char DEFAULT_EXT_OP_LIBRARY_PATH[] = "/opt/rocm/lib/hipblaslt/library/hipblasltExtOpLibrary.dat";
     constexpr uint32_t SUPPORTED_MAX_N = 256;
@@ -99,6 +106,15 @@ namespace {
 
     }
 
+    std::string hipblasltDatatype_to_char(hipblasltDatatype_t type)
+    {
+        if (type == HIPBLASLT_R_16F)
+            return std::string("H");
+        else if (type == HIPBLASLT_R_32F)
+            return std::string("S");
+        return std::string("S");
+    }
+
     inline uint32_t getSoftmaxNumWorkgroups(uint32_t m, uint32_t tileM) {
         return (m / tileM) + !!(m % tileM);
     }
@@ -113,13 +129,11 @@ namespace {
     }
 
     uint32_t elementNumBytes(hipblasltDatatype_t type) {
-        assert(type == HIPBLASLT_R_32F);
-
-        if (type == HIPBLASLT_R_32F) {
+        if (type == HIPBLASLT_R_16F)
+            return 2;
+        else if (type == HIPBLASLT_R_32F)
             return 4;
-        }
-
-        return 1;
+        return 4;
     }
 
     inline uint32_t getLdsUsageByte(hipblasltDatatype_t datatype, uint32_t tileM, uint32_t tileN) {
@@ -186,7 +200,7 @@ hipblasStatus_t hipblasltSoftmaxRun(hipblasltDatatype_t datatype, uint32_t m, ui
     auto gpu = Tensile::hip::GetCurrentDevice();
     const auto archName = trimArchName(gpu->archName());
     auto &masterLib = getExtOpMasterLibrary();
-    const auto &lib = masterLib.getLibrary(archName, SoftmaxSolutionLibrary::opName)->as<SoftmaxSolutionLibrary>();
+    const auto &lib = masterLib.getLibrary(archName, SoftmaxSolutionLibrary::opName, hipblasltDatatype_to_char(datatype))->as<SoftmaxSolutionLibrary>();
     auto sol = lib.findBestSolution(SoftmaxProblem(m, n, hipblasltDatatype_to_tensile_type(datatype)), *gpu);
     const auto kernelName = sol->name();
     err = adapter->initKernel(kernelName);
@@ -231,7 +245,7 @@ hipblasStatus_t hipblasltLayerNormRun(hipblasltDatatype_t datatype, void *output
     auto gpu = Tensile::hip::GetCurrentDevice();
     const auto archName = trimArchName(gpu->archName());
     auto &masterLib = getExtOpMasterLibrary();
-    const auto &lib = masterLib.getLibrary(archName, LayerNormSolutionLibrary::opName)->as<LayerNormSolutionLibrary>();
+    const auto &lib = masterLib.getLibrary(archName, LayerNormSolutionLibrary::opName, hipblasltDatatype_to_char(datatype))->as<LayerNormSolutionLibrary>();
     auto sol = lib.findBestSolution(LayerNormProblem(m, n, hipblasltDatatype_to_tensile_type(datatype)), *gpu);
     const auto kernelName = sol->name();
     err = adapter->initKernel(kernelName);
@@ -261,6 +275,56 @@ hipblasStatus_t hipblasltLayerNormRun(hipblasltDatatype_t datatype, void *output
     invocation.args.append("m", m);
     invocation.args.append("n", n);
     invocation.args.append("eps", eps);
+
+    err = adapter->launchKernel(invocation, stream, nullptr, nullptr);
+
+    if (err) {
+        return HIPBLAS_STATUS_INTERNAL_ERROR;
+    }
+
+    return HIPBLAS_STATUS_SUCCESS;
+}
+
+
+hipblasStatus_t hipblasltAMaxRun(const hipblasltDatatype_t datatype, const hipblasltDatatype_t outDatatype, void *output, void *input, uint32_t m, uint32_t n, hipStream_t stream)
+{
+    if (datatype != HIPBLASLT_R_32F && datatype != HIPBLASLT_R_16F) {
+        return HIPBLAS_STATUS_NOT_SUPPORTED;
+    }
+
+    if (output == nullptr || input == nullptr || m == 0 || n == 0)
+        return HIPBLAS_STATUS_INVALID_VALUE;
+
+    uint32_t len = m * n;
+    int currentDeviceId{};
+    auto err = hipGetDevice(&currentDeviceId);
+    auto &adapter = extOpLibraries().at(currentDeviceId);
+    auto gpu = Tensile::hip::GetCurrentDevice();
+    const auto archName = trimArchName(gpu->archName());
+    auto &masterLib = getExtOpMasterLibrary();
+    const auto &lib = masterLib.getLibrary(archName, AMaxSolutionLibrary::opName, hipblasltDatatype_to_char(datatype))->as<AMaxSolutionLibrary>();
+    auto sol = lib.findBestSolution(AMaxProblem(len, hipblasltDatatype_to_tensile_type(datatype), hipblasltDatatype_to_tensile_type(outDatatype)), *gpu);
+    const auto kernelName = sol->name();
+    err = adapter->initKernel(kernelName);
+
+    Tensile::KernelInvocation invocation;
+    invocation.kernelName = kernelName;
+    invocation.codeObjectFile = sol->getCodeObjectPath();
+    invocation.workGroupSize.x = sol->getNumWorkitems();
+    invocation.workGroupSize.y = 1;
+    invocation.workGroupSize.z = 1;
+    invocation.numWorkGroups.x = 1;
+    invocation.numWorkGroups.y = 1;
+    invocation.numWorkGroups.z = 1;
+    invocation.numWorkItems.x = sol->getNumWorkitems();
+    invocation.numWorkItems.y = 1;
+    invocation.numWorkItems.z = 1;
+    invocation.sharedMemBytes = 32 * sizeof(float);
+    invocation.args = Tensile::KernelArguments(false);
+    invocation.args.reserve(20,3);
+    invocation.args.append("output", output);
+    invocation.args.append("input", input);
+    invocation.args.append("length", len);
 
     err = adapter->launchKernel(invocation, stream, nullptr, nullptr);
 
