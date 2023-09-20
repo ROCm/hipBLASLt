@@ -2304,6 +2304,14 @@ namespace Tensile
             }
         }
 
+        // Custom kernel synchronizer
+        if(sizeMapping.customKernelName != "")
+        {
+            size += (int)ceil(problem.d().sizes()[0] / (float)sizeMapping.macroTile.x)
+                    * (int)ceil(problem.d().sizes()[1] / (float)sizeMapping.macroTile.y)
+                    * sizeMapping.waveNum * sizeof(int32_t);
+        }
+
         return size;
     }
 
