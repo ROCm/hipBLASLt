@@ -2046,9 +2046,8 @@ rocblaslt_status isSolutionSupported(rocblaslt_handle       handle,
     {
         auto solution
             = library->getSolutionByIndex(tensile_prob.gemms[0], *hardware, *solutionIndex);
-        bool   isSupported      = true;
-        bool   isNormalGemm     = true;
-        size_t tmpWorkspaceSize = 0;
+        bool isSupported  = true;
+        bool isNormalGemm = true;
         for(int i = 0; i < tensile_prob.gemms.size(); i++)
         {
             tensile_prob.gemms[i].setWorkspaceSize(algo->max_workspace_bytes);
@@ -2063,7 +2062,6 @@ rocblaslt_status isSolutionSupported(rocblaslt_handle       handle,
                 isSupported = false;
                 break;
             }
-            tmpWorkspaceSize += solution->requiredWorkspaceSize(tensile_prob.gemms[i]);
         }
         for(int i = 0; i < tensile_prob.gemms.size(); i++)
         {
@@ -2088,8 +2086,7 @@ rocblaslt_status isSolutionSupported(rocblaslt_handle       handle,
         }
         if(isNormalGemm && !isSupported)
         {
-            isSupported      = true;
-            tmpWorkspaceSize = 0;
+            isSupported = true;
             for(int i = 0; i < tensile_prob.gemms.size(); i++)
             {
                 auto useBias          = tensile_prob.gemms[i].useBias();
@@ -2104,10 +2101,6 @@ rocblaslt_status isSolutionSupported(rocblaslt_handle       handle,
                      && (*solution->problemPredicate)(tensile_prob.gemms[i])))
                 {
                     isSupported = false;
-                }
-                else
-                {
-                    tmpWorkspaceSize += solution->requiredWorkspaceSize(tensile_prob.gemms[i]);
                 }
                 tensile_prob.gemms[i].setUseBias(useBias);
                 tensile_prob.gemms[i].setActivationType(actType);
@@ -2124,7 +2117,7 @@ rocblaslt_status isSolutionSupported(rocblaslt_handle       handle,
             log_error(__func__, "Solution is not supported");
             return rocblaslt_status_invalid_value;
         }
-        *workspaceSizeInBytes = tmpWorkspaceSize;
+        *workspaceSizeInBytes = solution->requiredWorkspaceSizeGroupedGemm(tensile_prob.gemms);
     }
     return rocblaslt_status_success;
 }
