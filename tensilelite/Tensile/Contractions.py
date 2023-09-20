@@ -483,7 +483,8 @@ class ProblemPredicate(Properties.Predicate):
         return cls.And(predicates)
 
 class SizeMapping:
-    StateKeys = ['workGroup',
+    StateKeys = ['waveNum',
+                 'workGroup',
                  'macroTile',
                  'threadTile',
                  'depthU',
@@ -507,7 +508,8 @@ class SizeMapping:
             globalAccum = 1
         if d['_GlobalAccumulation'] == 'MultipleBuffer':
             globalAccum = 2
-        return cls(workGroup                = d['WorkGroup'],
+        return cls(waveNum                  = d['NumThreads'] // d['WavefrontSize'],
+                   workGroup                = d['WorkGroup'],
                    macroTile                = cls.ReadOriginalMacroTile(d),
                    threadTile               = d['ThreadTile'],
                    workGroupMapping         = d['WorkGroupMapping'],
