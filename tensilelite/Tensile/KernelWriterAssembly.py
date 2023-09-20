@@ -2240,7 +2240,7 @@ class KernelWriterAssembly(KernelWriter):
     # graShift requires a vgpr for each address component (so each component
     # can be examined and shifted if necessary) - therefore does not work
     # with UseSgprForGRO.
-    assert(not kernel["_UseSgprForGRO"])
+    assert(not kernel["_UseSgprForGRO"]), "%s"%self.states.kernelName
 
     module = Module("graShift")
     #tc = tP["tensorChar"]
@@ -6330,6 +6330,7 @@ class KernelWriterAssembly(KernelWriter):
   # Local Write in Prefetch Pass (PreLoop): Do It A/B
   ##############################################################################
   def preLoopLocalWriteDo(self, kernel, tPA, tPB):
+    if not self.do["LocalWrite"]: return Module()
     imod = Module()
 
     LWDoMod = imod.add(Module())
@@ -6345,7 +6346,7 @@ class KernelWriterAssembly(KernelWriter):
   # Local Write: Do It A/B
   ##############################################################################
   def localWriteDo(self, kernel, tP):
-    if not self.do["LocalWrite"]: return "", -1
+    if not self.do["LocalWrite"]: return Module()
 
     tc = tP["tensorChar"]
     imod = Module()

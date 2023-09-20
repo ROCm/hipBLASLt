@@ -777,10 +777,11 @@ def schedLocalWrite(writer, kernel, numLocalWriteModPerIter, numLocalWritesPerSc
 
     #For the sparse case, GR and LW are not in paired.
     #Hence, we must add all the remaining GRs into imod at the end.
-    while itemsGRToSchedLater:
-      itemGR = itemsGRToSchedLater[0]
-      imod.add(itemGR)
-      itemsGRToSchedLater.pop(0)
+    if kernel["ProblemType"]["Sparse"]:
+        while itemsGRToSchedLater:
+            itemGR = itemsGRToSchedLater[0]
+            imod.add(itemGR)
+            itemsGRToSchedLater.pop(0)
 
 ################################################################################
 ################################################################################
