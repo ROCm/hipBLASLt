@@ -846,7 +846,7 @@ s_mov_b32 s[sgprSrdDd+3], Srd127_96
 s_add_u32 s[sgprSrdDd+0], s[sgprAddressD+0], s[sgprtmp2E]    // add lo to SRD
 s_addc_u32 s[sgprSrdDd+1], s[sgprAddressD+1], s[sgprtmp3E]   // add hi to SRD
 
-buffer_store_dwordx4 v[0:3], v4, s[sgprSrdDd:sgprSrdDd+3], 0 offen offset:4*0 // zeroing
+buffer_store_dwordx2 v[0:1], v4, s[sgprSrdDd:sgprSrdDd+3], 0 offen offset:4*0 // zeroing
 
 s_mov_b32 s[sgprGSUSync] 1
 s_atomic_add s[sgprGSUSync], s[sgprKernArgAddress:sgprKernArgAddress+1], 0x88 glc
