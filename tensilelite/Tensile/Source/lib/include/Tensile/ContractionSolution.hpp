@@ -384,6 +384,8 @@ namespace Tensile
 
         struct SizeMapping
         {
+            size_t waveNum;
+
             dim3 workGroupSize;
             dim3 threadTile;
             dim3 macroTile;

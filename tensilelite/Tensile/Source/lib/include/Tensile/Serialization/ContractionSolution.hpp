@@ -77,6 +77,8 @@ namespace Tensile
             using iot = IOTraits<IO>;
             static void mapping(IO& io, ContractionSolution::SizeMapping& s)
             {
+                iot::mapRequired(io, "waveNum", s.waveNum);
+
                 iot::mapRequired(io, "workGroup", s.workGroupSize);
                 iot::mapRequired(io, "threadTile", s.threadTile);
                 iot::mapRequired(io, "macroTile", s.macroTile);
