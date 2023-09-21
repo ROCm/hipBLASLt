@@ -54,13 +54,13 @@ int main()
      *  b = (k, n). ldb = k
      *  c = d = (m, n). ldc = ldd = m
      */
-    std::vector<int64_t>                                  m           = {1024, 512};
-    std::vector<int64_t>                                  n           = {512, 512};
-    std::vector<int64_t>                                  k           = {1920, 128};
-    std::vector<int64_t>                                  batch_count = {1, 1};
-    std::vector<float>                                    alpha       = {1.0f, 1.0f};
-    std::vector<float>                                    beta        = {1.0f, 1.0f};
-    RunnerVec<hipblasLtHalf, hipblasLtHalf, float, float> runner(
+    std::vector<int64_t>                                                 m           = {1024, 512};
+    std::vector<int64_t>                                                 n           = {512, 512};
+    std::vector<int64_t>                                                 k           = {1920, 128};
+    std::vector<int64_t>                                                 batch_count = {1, 1};
+    std::vector<float>                                                   alpha       = {1.0f, 1.0f};
+    std::vector<float>                                                   beta        = {1.0f, 1.0f};
+    RunnerVec<hipblasLtHalf, hipblasLtHalf, hipblasLtHalf, float, float> runner(
         m, n, k, batch_count, alpha, beta, 32 * 1024 * 1024);
 
     runner.run([&runner] {
