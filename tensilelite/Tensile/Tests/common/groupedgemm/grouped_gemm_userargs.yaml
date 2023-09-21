@@ -64,6 +64,7 @@ BenchmarkProblems:
         - SourceSwap: [1]
         - NumElementsPerBatchStore: [-1]
         - GlobalSplitU: [1, 2]
+        - PreloadKernArgs: [0, 1]
         - GlobalSplitUAlgorithm: ["MultipleBuffer"]
       BenchmarkJoinParameters:
       BenchmarkFinalParameters:
