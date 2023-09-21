@@ -53,7 +53,11 @@
     }
 #endif
 
-template <typename InType, typename OutType, typename AlphaType, typename BetaType>
+template <typename InTypeA,
+          typename InTypeB,
+          typename OutType,
+          typename AlphaType,
+          typename BetaType>
 struct Runner
 {
     Runner(int64_t   m,
@@ -73,14 +77,14 @@ struct Runner
     {
         CHECK_HIP_ERROR(hipStreamCreate(&stream));
         CHECK_HIPBLASLT_ERROR(hipblasLtCreate(&handle));
-        CHECK_HIP_ERROR(hipMalloc(&d_a, m * k * batch_count * sizeof(InType)));
-        CHECK_HIP_ERROR(hipMalloc(&d_b, n * k * batch_count * sizeof(InType)));
+        CHECK_HIP_ERROR(hipMalloc(&d_a, m * k * batch_count * sizeof(InTypeA)));
+        CHECK_HIP_ERROR(hipMalloc(&d_b, n * k * batch_count * sizeof(InTypeB)));
         CHECK_HIP_ERROR(hipMalloc(&d_c, m * n * batch_count * sizeof(OutType)));
         CHECK_HIP_ERROR(hipMalloc(&d_d, m * n * batch_count * sizeof(OutType)));
         CHECK_HIP_ERROR(hipMalloc(&d_alphaVec, m * batch_count * sizeof(float)));
 
-        CHECK_HIP_ERROR(hipHostMalloc(&a, m * k * batch_count * sizeof(InType)));
-        CHECK_HIP_ERROR(hipHostMalloc(&b, n * k * batch_count * sizeof(InType)));
+        CHECK_HIP_ERROR(hipHostMalloc(&a, m * k * batch_count * sizeof(InTypeA)));
+        CHECK_HIP_ERROR(hipHostMalloc(&b, n * k * batch_count * sizeof(InTypeB)));
         CHECK_HIP_ERROR(hipHostMalloc(&c, m * n * batch_count * sizeof(OutType)));
         CHECK_HIP_ERROR(hipHostMalloc(&d, m * n * batch_count * sizeof(OutType)));
         CHECK_HIP_ERROR(hipHostMalloc(&alphaVec, m * batch_count * sizeof(float)));
@@ -89,9 +93,9 @@ struct Runner
             CHECK_HIP_ERROR(hipMalloc(&d_workspace, max_workspace_size));
 
         for(int i = 0; i < m * k * batch_count; i++)
-            ((InType*)a)[i] = static_cast<InType>((rand() % 7) - 3);
+            ((InTypeA*)a)[i] = static_cast<InTypeA>((rand() % 7) - 3);
         for(int i = 0; i < n * k * batch_count; i++)
-            ((InType*)b)[i] = static_cast<InType>((rand() % 7) - 3);
+            ((InTypeB*)b)[i] = static_cast<InTypeB>((rand() % 7) - 3);
         for(int i = 0; i < m * n * batch_count; i++)
             ((OutType*)c)[i] = static_cast<OutType>((rand() % 7) - 3);
         for(int i = 0; i < m * batch_count; ++i)
@@ -118,9 +122,9 @@ struct Runner
     void hostToDevice()
     {
         CHECK_HIP_ERROR(hipMemcpyAsync(
-            d_a, a, m * k * batch_count * sizeof(InType), hipMemcpyHostToDevice, stream));
+            d_a, a, m * k * batch_count * sizeof(InTypeA), hipMemcpyHostToDevice, stream));
         CHECK_HIP_ERROR(hipMemcpyAsync(
-            d_b, b, n * k * batch_count * sizeof(InType), hipMemcpyHostToDevice, stream));
+            d_b, b, n * k * batch_count * sizeof(InTypeB), hipMemcpyHostToDevice, stream));
         CHECK_HIP_ERROR(hipMemcpyAsync(
             d_c, c, m * n * batch_count * sizeof(OutType), hipMemcpyHostToDevice, stream));
         CHECK_HIP_ERROR(hipMemcpyAsync(
@@ -160,7 +164,11 @@ struct Runner
     hipblasLtHandle_t handle;
 };
 
-template <typename InType, typename OutType, typename AlphaType, typename BetaType>
+template <typename InTypeA,
+          typename InTypeB,
+          typename OutType,
+          typename AlphaType,
+          typename BetaType>
 struct RunnerVec
 {
     RunnerVec(const std::vector<int64_t>   m,
@@ -192,22 +200,22 @@ struct RunnerVec
         alphaVec.resize(m.size(), nullptr);
         for(int j = 0; j < m.size(); j++)
         {
-            CHECK_HIP_ERROR(hipMalloc(&d_a[j], m[j] * k[j] * batch_count[j] * sizeof(InType)));
-            CHECK_HIP_ERROR(hipMalloc(&d_b[j], n[j] * k[j] * batch_count[j] * sizeof(InType)));
+            CHECK_HIP_ERROR(hipMalloc(&d_a[j], m[j] * k[j] * batch_count[j] * sizeof(InTypeA)));
+            CHECK_HIP_ERROR(hipMalloc(&d_b[j], n[j] * k[j] * batch_count[j] * sizeof(InTypeB)));
             CHECK_HIP_ERROR(hipMalloc(&d_c[j], m[j] * n[j] * batch_count[j] * sizeof(OutType)));
             CHECK_HIP_ERROR(hipMalloc(&d_d[j], m[j] * n[j] * batch_count[j] * sizeof(OutType)));
             CHECK_HIP_ERROR(hipMalloc(&d_alphaVec[j], m[j] * batch_count[j] * sizeof(float)));
 
-            CHECK_HIP_ERROR(hipHostMalloc(&a[j], m[j] * k[j] * batch_count[j] * sizeof(InType)));
-            CHECK_HIP_ERROR(hipHostMalloc(&b[j], n[j] * k[j] * batch_count[j] * sizeof(InType)));
+            CHECK_HIP_ERROR(hipHostMalloc(&a[j], m[j] * k[j] * batch_count[j] * sizeof(InTypeA)));
+            CHECK_HIP_ERROR(hipHostMalloc(&b[j], n[j] * k[j] * batch_count[j] * sizeof(InTypeB)));
             CHECK_HIP_ERROR(hipHostMalloc(&c[j], m[j] * n[j] * batch_count[j] * sizeof(OutType)));
             CHECK_HIP_ERROR(hipHostMalloc(&d[j], m[j] * n[j] * batch_count[j] * sizeof(OutType)));
             CHECK_HIP_ERROR(hipHostMalloc(&alphaVec[j], m[j] * batch_count[j] * sizeof(float)));
 
             for(int i = 0; i < m[j] * k[j] * batch_count[j]; i++)
-                ((InType*)a[j])[i] = static_cast<InType>((rand() % 7) - 3);
+                ((InTypeA*)a[j])[i] = static_cast<InTypeA>((rand() % 7) - 3);
             for(int i = 0; i < n[j] * k[j] * batch_count[j]; i++)
-                ((InType*)b[j])[i] = static_cast<InType>((rand() % 7) - 3);
+                ((InTypeB*)b[j])[i] = static_cast<InTypeB>((rand() % 7) - 3);
             for(int i = 0; i < m[j] * n[j] * batch_count[j]; i++)
                 ((OutType*)c[j])[i] = static_cast<OutType>((rand() % 7) - 3);
             for(int i = 0; i < m[j] * batch_count[j]; i++)
@@ -243,12 +251,12 @@ struct RunnerVec
         {
             CHECK_HIP_ERROR(hipMemcpyAsync(d_a[j],
                                            a[j],
-                                           m[j] * k[j] * batch_count[j] * sizeof(InType),
+                                           m[j] * k[j] * batch_count[j] * sizeof(InTypeA),
                                            hipMemcpyHostToDevice,
                                            stream));
             CHECK_HIP_ERROR(hipMemcpyAsync(d_b[j],
                                            b[j],
-                                           n[j] * k[j] * batch_count[j] * sizeof(InType),
+                                           n[j] * k[j] * batch_count[j] * sizeof(InTypeB),
                                            hipMemcpyHostToDevice,
                                            stream));
             CHECK_HIP_ERROR(hipMemcpyAsync(d_c[j],

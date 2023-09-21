@@ -54,7 +54,7 @@ int main()
      *  b = (k, n). ldb = k
      *  c = d = (m, n). ldc = ldd = m
      */
-    Runner<hipblasLtHalf, hipblasLtHalf, float, float> runner(
+    Runner<hipblasLtHalf, hipblasLtHalf, hipblasLtHalf, float, float> runner(
         1024, 512, 1024, 1, 1.f, 1.f, 32 * 1024 * 1024);
 
     runner.run([&runner] {
