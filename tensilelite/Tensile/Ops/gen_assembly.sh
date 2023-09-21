@@ -34,6 +34,13 @@ IFS=';' read -r -a archs <<< "$archStr"
 for arch in "${archs[@]}"; do
     objs=()
     echo "Creating code object for arch ${arch}"
+    for i in "256 4 1" "256 4 0"; do
+        set -- $i
+        s=$dst/L_$1_$2_$3_$arch.s
+        o=$dst/L_$1_$2_$3_$arch.o
+        python3 ./LayerNormGenerator.py -o $s -w $1 -c $2 --sweep-once $3 --arch $arch &
+        objs+=($o)
+    done
     for i in "16 16" "8 32" "4 64" "2 128" "1 256"; do
         set -- $i
         s=$dst/S_$1_$2_$arch.s
@@ -42,8 +49,8 @@ for arch in "${archs[@]}"; do
         objs+=($o)
     done
     wait
-    /opt/rocm/llvm/bin/clang++ -target amdgcn-amdhsa -o $dst/softmax_$arch.co ${objs[@]}
-    python3 ./ExtOpCreateLibrary.py --src=$dst --co=$dst/softmax_$arch.co --output=$dst --arch=$arch
+    /opt/rocm/llvm/bin/clang++ -target amdgcn-amdhsa -o $dst/extop_$arch.co ${objs[@]}
+    python3 ./ExtOpCreateLibrary.py --src=$dst --co=$dst/extop_$arch.co --output=$dst --arch=$arch
 done
 
 deactivate

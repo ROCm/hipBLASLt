@@ -1973,6 +1973,22 @@ class VRcpIFlagF32(CommonInstruction):
         super().__init__(InstType.INST_F32, dst, [src], None, None, comment)
         self.setInst("v_rcp_iflag_f32")
 
+# Rsq,
+class VRsqF16(CommonInstruction):
+    def __init__(self, dst, src, sdwa: Optional[SDWAModifiers] = None, comment="") -> None:
+        super().__init__(InstType.INST_F16, dst, [src], sdwa, None, comment)
+        self.setInst("v_rsq_f16")
+
+class VRsqF32(CommonInstruction):
+    def __init__(self, dst, src, comment="") -> None:
+        super().__init__(InstType.INST_F32, dst, [src], None, None, comment)
+        self.setInst("v_rsq_f32")
+
+class VRsqIFlagF32(CommonInstruction):
+    def __init__(self, dst, src, comment="") -> None:
+        super().__init__(InstType.INST_F32, dst, [src], None, None, comment)
+        self.setInst("v_rsq_iflag_f32")
+
 # Cmp
 class VCmpEQF32(VCmpInstruction):
     def __init__(self, dst, src0, src1, sdwa: Optional[SDWAModifiers] = None, comment="") -> None:

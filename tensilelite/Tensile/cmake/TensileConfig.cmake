@@ -270,7 +270,7 @@ function(TensileCreateExtOpLibraries OutputFolder ArchStr)
     COMMAND ${CMAKE_COMMAND} -E make_directory ${build_tmp_dir}
     COMMAND ${CMAKE_COMMAND} -E make_directory ${OutputFolder}
     COMMAND bash "${script}" "\"${Archs}\"" "${build_tmp_dir}" "${VIRTUALENV_HOME_DIR}"
-    COMMAND ${CMAKE_COMMAND} -E copy ${ext_op_library_path} ${build_tmp_dir}/softmax_*.co ${OutputFolder}
+    COMMAND ${CMAKE_COMMAND} -E copy ${ext_op_library_path} ${build_tmp_dir}/extop_*.co ${OutputFolder}
   )
 
   add_custom_target(

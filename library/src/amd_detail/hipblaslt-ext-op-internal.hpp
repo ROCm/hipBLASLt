@@ -199,6 +199,144 @@ private:
     Tensile::SolutionVector<SoftmaxSolution> solutions;
 };
 
+
+class LayerNormProblem;
+class LayerNormSolution;
+
+class LayerNormSolution : public Tensile::Solution {
+public:
+    friend struct Tensile::Serialization::MappingTraits<LayerNormSolution, Tensile::Serialization::MessagePackInput>;
+
+    using Problem = LayerNormProblem;
+    std::string name() const override {
+        return kernelName;
+    }
+
+    std::string description() const override {
+        std::stringstream ss;
+        ss << "LayerNorm, (Datatype) = "
+           << "("
+           << Tensile::ToString(datatype)
+           << ")";
+        return ss.str();
+    }
+
+    std::uint32_t getNumWorkitems() const {
+        return numWorkitems;
+    }
+
+    std::uint32_t getLimit() const {
+        return limit;
+    }
+
+    std::string getCodeObjectPath() const {
+        return coPath;
+    }
+
+    Tensile::DataType getDatatype() const {
+        return datatype;
+    }
+
+private:
+    std::size_t numWorkitems{};
+    std::size_t limit;
+    std::string coPath;
+    std::string kernelName;
+    Tensile::DataType datatype;
+};
+
+template<typename IO>
+struct Tensile::Serialization::MappingTraits<LayerNormSolution, IO>
+{
+    using iot = IOTraits<IO>;
+    static void mapping(IO& io, LayerNormSolution& s)
+    {
+        std::string datatypeStr;
+
+        // add co_path, remove arch and op
+        iot::mapRequired(io, "co_path", s.coPath);
+        iot::mapRequired(io, "func_name", s.kernelName);
+        iot::mapRequired(io, "io_type", datatypeStr);
+        iot::mapRequired(io, "num_workitems", s.numWorkitems);
+        iot::mapRequired(io, "limit", s.limit);
+
+        if (datatypeStr == "S") {
+            s.datatype = Tensile::DataType::Float;
+        } else {
+            throw std::runtime_error("Invalid datatype in ext op library");
+        }
+
+    }
+
+    const static bool flow = false;
+};
+
+class LayerNormProblem : public Tensile::Problem {
+public:
+    using Solution = LayerNormSolution;
+    LayerNormProblem(uint32_t m, uint32_t n, Tensile::DataType datatype)
+    : m(m), n(n), datatype(datatype) {}
+
+    ~LayerNormProblem() override {}
+
+    std::string description() const override {
+        std::stringstream ss;
+        ss << "LayerNorm Problem(" << ToString(datatype) << ", " << m << ", " << n << ")";
+        return ss.str();
+    }
+
+    std::uint32_t getM() const {
+        return m;
+    }
+
+    std::uint32_t getN() const {
+        return n;
+    }
+private:
+    std::uint32_t m{};
+    std::uint32_t n{};
+    Tensile::DataType datatype{Tensile::DataType::Float};
+};
+
+class LayerNormSolutionLibrary : public ExtOpLibrary {
+public:
+    static constexpr char opName[] = "LayerNorm";
+
+    ~LayerNormSolutionLibrary() override {}
+    void addSolution(LayerNormSolution &sol) {
+        solutions.push_back(std::make_shared<LayerNormSolution>(sol));
+    }
+
+    std::string type() const override {
+        return "LayerNormSolutionLibrary";
+    }
+
+    std::string description() const override {
+        return "LayerNormSolutionLibrary";
+    }
+
+    std::shared_ptr<LayerNormSolution> findBestSolution(
+        const LayerNormProblem &problem,
+        const Tensile::Hardware &hardware,
+        double* fitness = nullptr) const {
+        auto bestSolIter = std::lower_bound(begin(solutions), end(solutions), problem.getN(), [](const auto &it, auto v) {
+            return it->getLimit() < v;
+        });
+
+        return *bestSolIter;
+    }
+
+    void sortSolutions() {
+        std::sort(begin(solutions), end(solutions), [](const auto &lhs, const auto &rhs) {
+            return lhs->getLimit() < rhs->getLimit();
+        });
+    }
+
+private:
+    Tensile::SolutionVector<LayerNormSolution> solutions;
+};
+
+
 class ExtOpMasterLibrary {
 public:
     using ExtOpLibraryPtr = std::unique_ptr<ExtOpLibrary>;
@@ -256,7 +394,6 @@ private:
 
             for (auto &opLib : opMap) {
                 auto &rawKernels = opLib.second;
-                libraries.at(archObj.first).emplace(opLib.first, std::make_unique<SoftmaxSolutionLibrary>());
 
                 if (rawKernels.type != msgpack::type::ARRAY) {
                     throw std::runtime_error("Invalid ext op lib format");
@@ -265,6 +402,7 @@ private:
                 const auto numKernels = rawKernels.via.array.size;
 
                 if (opLib.first == "Softmax") {
+                    libraries.at(archObj.first).emplace(opLib.first, std::make_unique<SoftmaxSolutionLibrary>());
                     auto &lib = libraries.at(archObj.first).at(opLib.first)->as<SoftmaxSolutionLibrary>();
 
                     for (uint32_t i = 0; i < numKernels; ++i) {
@@ -272,6 +410,21 @@ private:
                         SoftmaxSolution solution;
                         Tensile::Serialization::MessagePackInput msgInput(rawKernel);
                         Tensile::Serialization::MappingTraits<SoftmaxSolution,
+                            Tensile::Serialization::MessagePackInput>::mapping(msgInput, solution);
+
+                        lib.addSolution(solution);
+                    }
+
+                    lib.sortSolutions();
+                } else if (opLib.first == "LayerNorm"){
+                    libraries.at(archObj.first).emplace(opLib.first, std::make_unique<LayerNormSolutionLibrary>());
+                    auto &lib = libraries.at(archObj.first).at(opLib.first)->as<LayerNormSolutionLibrary>();
+
+                    for (uint32_t i = 0; i < numKernels; ++i) {
+                        auto &rawKernel = rawKernels.via.array.ptr[i];
+                        LayerNormSolution solution;
+                        Tensile::Serialization::MessagePackInput msgInput(rawKernel);
+                        Tensile::Serialization::MappingTraits<LayerNormSolution,
                             Tensile::Serialization::MessagePackInput>::mapping(msgInput, solution);
 
                         lib.addSolution(solution);

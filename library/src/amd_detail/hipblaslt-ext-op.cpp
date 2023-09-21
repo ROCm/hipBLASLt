@@ -52,6 +52,13 @@ hipblasStatus_t hipblasltExtSoftmax(hipblasltDatatype_t datatype, uint32_t m, ui
     return hipblasltSoftmaxRun(datatype, m, n, dim, output, input, stream);
 }
 
+hipblasStatus_t hipblasltLayerNormRun(hipblasltDatatype_t datatype, void *output, void* mean, void* invvar, void *input, uint32_t m, uint32_t n, float eps, void *gamma, void *beta, hipStream_t stream);
+
+hipblasStatus_t hipblasltExtLayerNorm(hipblasltDatatype_t datatype, void *output, void* mean, void* invvar, void *input, uint32_t m, uint32_t n, float eps, void *gamma, void *beta, hipStream_t stream)
+{
+    return hipblasltLayerNormRun(datatype, output, mean, invvar, input, m, n, eps, gamma, beta, stream);
+}
+
 namespace {
     constexpr char DEFAULT_EXT_OP_LIBRARY_PATH[] = "/opt/rocm/lib/hipblaslt/library/hipblasltExtOpLibrary.dat";
     constexpr uint32_t SUPPORTED_MAX_N = 256;
@@ -87,27 +94,21 @@ namespace {
         if (rocblaslt_internal_test_path(libPath)) {
             return libPath;
         }
-        
+
         return DEFAULT_EXT_OP_LIBRARY_PATH;
 
     }
 
-    inline uint32_t getNumWorkgroups(uint32_t m, uint32_t tileM) {
+    inline uint32_t getSoftmaxNumWorkgroups(uint32_t m, uint32_t tileM) {
         return (m / tileM) + !!(m % tileM);
     }
 
-    const std::string kernelFuncName(uint32_t tileM, uint32_t tileN) {
-        std::stringstream ss;
-        ss << "Softmax_DT_S_MT_" << tileM << "_" << tileN;
-        return ss.str();
-    }
-
-    inline uint32_t getBestKernelTileN(uint32_t n) {
+    inline uint32_t getSoftmaxBestKernelTileN(uint32_t n) {
         const uint32_t exponent = std::ceil(std::log2(n));
         return 1 << exponent;
     }
 
-    inline uint32_t getKernelTileM(uint32_t tileM) {
+    inline uint32_t getSoftmaxKernelTileM(uint32_t tileM) {
         return WORKGROUP_SIZE / tileM;
     }
 
@@ -162,8 +163,8 @@ hipblasStatus_t hipblasltSoftmaxRun(hipblasltDatatype_t datatype, uint32_t m, ui
         return HIPBLAS_STATUS_NOT_SUPPORTED;
     }
 
-    const auto tileN = getBestKernelTileN(n);
-    const auto tileM = getKernelTileM(tileN);
+    const auto tileN = getSoftmaxBestKernelTileN(n);
+    const auto tileM = getSoftmaxKernelTileM(tileN);
 
     if (tileN > SUPPORTED_MAX_N) {
         return HIPBLAS_STATUS_INVALID_VALUE;
@@ -184,7 +185,7 @@ hipblasStatus_t hipblasltSoftmaxRun(hipblasltDatatype_t datatype, uint32_t m, ui
     kArgs.append("output", output);
     kArgs.append("m", m);
     kArgs.append("n", n);
-    const auto numWorkgroups = getNumWorkgroups(m, tileM);
+    const auto numWorkgroups = getSoftmaxNumWorkgroups(m, tileM);
     Tensile::KernelInvocation invocation{
         kernelName,
         sol->getCodeObjectPath(),
@@ -194,6 +195,62 @@ hipblasStatus_t hipblasltSoftmaxRun(hipblasltDatatype_t datatype, uint32_t m, ui
         getLdsUsageByte(datatype, tileM, tileN),
         kArgs
     };
+
+    err = adapter->launchKernel(invocation, stream, nullptr, nullptr);
+
+    if (err) {
+        return HIPBLAS_STATUS_INTERNAL_ERROR;
+    }
+
+    return HIPBLAS_STATUS_SUCCESS;
+}
+
+
+hipblasStatus_t hipblasltLayerNormRun(hipblasltDatatype_t datatype, void *output, void* mean, void* invvar, void *input, uint32_t m, uint32_t n, float eps, void *gamma, void *beta, hipStream_t stream)
+{
+    if (datatype != HIPBLASLT_R_32F) {
+        return HIPBLAS_STATUS_NOT_SUPPORTED;
+    }
+
+    if (output == nullptr || mean == nullptr || invvar == nullptr || input == nullptr || m ==0 || n == 0)
+        return HIPBLAS_STATUS_INVALID_VALUE;
+
+    int currentDeviceId{};
+    auto err = hipGetDevice(&currentDeviceId);
+    auto &adapter = extOpLibraries.at(currentDeviceId);
+    auto gpu = Tensile::hip::GetCurrentDevice();
+    const auto archName = trimArchName(gpu->archName());
+    auto &masterLib = getExtOpMasterLibrary();
+    const auto &lib = masterLib.getLibrary(archName, LayerNormSolutionLibrary::opName)->as<LayerNormSolutionLibrary>();
+    auto sol = lib.findBestSolution(LayerNormProblem(m, n, hipblasltDatatype_to_tensile_type(datatype)), *gpu);
+    const auto kernelName = sol->name();
+    err = adapter->initKernel(kernelName);
+    const auto numWorkgroups = m;
+
+    Tensile::KernelInvocation invocation;
+    invocation.kernelName = kernelName;
+    invocation.codeObjectFile = sol->getCodeObjectPath();
+    invocation.workGroupSize.x = sol->getNumWorkitems();
+    invocation.workGroupSize.y = 1;
+    invocation.workGroupSize.z = 1;
+    invocation.numWorkGroups.x = 1;
+    invocation.numWorkGroups.y = numWorkgroups;
+    invocation.numWorkGroups.z = 1;
+    invocation.numWorkItems.x = sol->getNumWorkitems();
+    invocation.numWorkItems.y = numWorkgroups;
+    invocation.numWorkItems.z = 1;
+    invocation.sharedMemBytes = 32 * sizeof(float);
+    invocation.args = Tensile::KernelArguments(false);
+    invocation.args.reserve(60,9);
+    invocation.args.append("output", output);
+    invocation.args.append("mean", mean);
+    invocation.args.append("invvar", invvar);
+    invocation.args.append("input", input);
+    invocation.args.append("gamma", gamma);
+    invocation.args.append("beta", beta);
+    invocation.args.append("m", m);
+    invocation.args.append("n", n);
+    invocation.args.append("eps", eps);
 
     err = adapter->launchKernel(invocation, stream, nullptr, nullptr);
 
