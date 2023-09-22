@@ -1119,6 +1119,7 @@ namespace
 
 struct TensileDataGemm
 {
+    bool                                   enableEpilogue = true;
     Tensile::ContractionProblemGemm        problem;
     Tensile::ContractionInputs             inputs;
     std::vector<Tensile::KernelInvocation> kernels;
@@ -1127,6 +1128,7 @@ struct TensileDataGemm
 
 struct TensileDataGroupedGemm
 {
+    bool                                   enableEpilogue = true;
     Tensile::ContractionProblemGroupedGemm problem;
     Tensile::ContractionGroupedInputs      inputs;
     std::vector<Tensile::KernelInvocation> kernels;
@@ -1285,13 +1287,15 @@ rocblaslt_status gemmCreate(RocblasltContractionProblem<TiA, TiB, To, Tc> const&
             std::shared_ptr<TensileDataGemm> data
                 = std::static_pointer_cast<TensileDataGemm>(gemmData);
             updateTensileProblem(false, problem, data->problem);
-            data->inputs = GetTensileInputs(problem);
+            data->inputs         = GetTensileInputs(problem);
+            data->enableEpilogue = problem.epilogue == ROCBLASLT_EPILOGUE_DEFAULT ? false : true;
         }
         else
         {
             TensileDataGemm data;
-            data.problem = ConstructTensileProblem(problem);
-            data.inputs  = GetTensileInputs(problem);
+            data.problem        = ConstructTensileProblem(problem);
+            data.inputs         = GetTensileInputs(problem);
+            data.enableEpilogue = problem.epilogue == ROCBLASLT_EPILOGUE_DEFAULT ? false : true;
 
             gemmData = std::static_pointer_cast<void>(std::make_shared<TensileDataGemm>(data));
         }
@@ -1330,6 +1334,7 @@ rocblaslt_status
     rocblaslt_status status = rocblaslt_status_internal_error;
     try
     {
+        bool enableEpilogue = false;
         if(gemmData)
         {
             // Need to check if is same type?
@@ -1360,7 +1365,10 @@ rocblaslt_status
                 else
                     updateTensileProblem(false, probs[i], tensile_probs.gemms[i]);
                 groupedInputs.grouped.push_back(GetTensileInputs(probs[i]));
+                if(probs[i].epilogue != ROCBLASLT_EPILOGUE_DEFAULT)
+                    enableEpilogue = true;
             }
+            data->enableEpilogue = enableEpilogue;
         }
         else
         {
@@ -1383,7 +1391,10 @@ rocblaslt_status
                 }
                 tensile_probs.gemms.push_back(ConstructTensileProblem(probs[i]));
                 groupedInputs.grouped.push_back(GetTensileInputs(probs[i]));
+                if(probs[i].epilogue != ROCBLASLT_EPILOGUE_DEFAULT)
+                    enableEpilogue = true;
             }
+            data.enableEpilogue = enableEpilogue;
 
             gemmData
                 = std::static_pointer_cast<void>(std::make_shared<TensileDataGroupedGemm>(data));
@@ -1803,6 +1814,7 @@ inline auto getSolutions(
     const std::shared_ptr<Tensile::MasterSolutionLibrary<Tensile::ContractionProblemGemm>>& library,
     const std::shared_ptr<Tensile::Hardware>& hardware,
     Tensile::ContractionProblemGemm&          tensile_prob,
+    bool                                      enableEpilogue,
     const int&                                requestedAlgoCount,
     int&                                      fallbackSize)
 {
@@ -1822,7 +1834,7 @@ inline auto getSolutions(
 
     std::vector<std::shared_ptr<Tensile::ContractionSolution>> solutions_fallback;
     // Fallback to original kernels
-    if(scaleAlphaVec == nullptr && bias == nullptr && E == nullptr
+    if(!enableEpilogue && scaleAlphaVec == nullptr && bias == nullptr && E == nullptr
        && tensile_prob.activationEnumArg() == Tensile::ActivationType::None)
     {
         auto useBias          = tensile_prob.useBias();
@@ -1871,9 +1883,11 @@ rocblaslt_status getBestSolutions(RocblasltContractionProblem<TiA, TiB, To, Tc> 
     std::shared_ptr<TensileDataGemm> data = std::static_pointer_cast<TensileDataGemm>(gemmData);
     updateTensileProblem(false, prob, data->problem);
 
+    bool enableEpilogue = prob.epilogue == ROCBLASLT_EPILOGUE_DEFAULT ? false : true;
+
     int  fallbackSize = 0;
-    auto solutions
-        = getSolutions(prob, library, hardware, data->problem, requestedAlgoCount, fallbackSize);
+    auto solutions    = getSolutions(
+        prob, library, hardware, data->problem, enableEpilogue, requestedAlgoCount, fallbackSize);
 
     // when there is no solution for xfloat32, fallback comput_type to fp32
     if constexpr(std::is_same<TiA, float>{} && std::is_same<To, float>{}
@@ -1883,7 +1897,7 @@ rocblaslt_status getBestSolutions(RocblasltContractionProblem<TiA, TiB, To, Tc> 
             log_api(__func__, "no solutions found, try to fallback");
             data->problem.setF32XdlMathOp(Tensile::DataType::Float);
             solutions = getSolutions(
-                prob, library, hardware, data->problem, requestedAlgoCount, fallbackSize);
+                prob, library, hardware, data->problem, enableEpilogue, requestedAlgoCount, fallbackSize);
         }
 
     _convertToHeuristicResultArray(solutions,
@@ -2267,15 +2281,25 @@ rocblaslt_status getBestSolutions(rocblaslt_handle       handle,
     {
         std::shared_ptr<TensileDataGemm> data = std::static_pointer_cast<TensileDataGemm>(gemmData);
         int                              fallbackSize = 0;
-        auto                             solutions    = getSolutions(
-            data->inputs, library, hardware, data->problem, requestedAlgoCount, fallbackSize);
+        auto                             solutions    = getSolutions(data->inputs,
+                                      library,
+                                      hardware,
+                                      data->problem,
+                                      data->enableEpilogue,
+                                      requestedAlgoCount,
+                                      fallbackSize);
 
         // when there is no solution for xfloat32, fallback comput_type to fp32
         if(solutions.size() == 0 && data->problem.f32XdlMathOp() == Tensile::DataType::XFloat32)
         {
             data->problem.setF32XdlMathOp(Tensile::DataType::Float);
-            solutions = getSolutions(
-                data->inputs, library, hardware, data->problem, requestedAlgoCount, fallbackSize);
+            solutions = getSolutions(data->inputs,
+                                     library,
+                                     hardware,
+                                     data->problem,
+                                     data->enableEpilogue,
+                                     requestedAlgoCount,
+                                     fallbackSize);
         }
 
         auto algoCount       = min(requestedAlgoCount, solutions.size());
@@ -2303,35 +2327,38 @@ rocblaslt_status getBestSolutions(rocblaslt_handle       handle,
         std::vector<std::shared_ptr<Tensile::ContractionSolution>> solutions_fallback;
         std::vector<bool>                    useBias, actHPA, useScaleAlphaVec;
         std::vector<Tensile::ActivationType> actType;
-        bool                                 normal_gemm = 1;
-        for(int i = 0; i < data->problem.gemms.size(); i++)
+        if(!data->enableEpilogue)
         {
-            if(data->inputs.grouped[i].scaleAlphaVec != nullptr
-               || data->inputs.grouped[i].bias != nullptr
-               || data->problem.gemms[i].activationEnumArg() != Tensile::ActivationType::None)
-            {
-                normal_gemm = 0;
-                break;
-            }
-        }
-        if(normal_gemm)
-        {
+            bool enableEpilogue = true;
             for(int i = 0; i < data->problem.gemms.size(); i++)
             {
-                useBias.push_back(data->problem.gemms[i].useBias());
-                actType.push_back(data->problem.gemms[i].activationType());
-                useScaleAlphaVec.push_back(data->problem.gemms[i].useScaleAlphaVec());
-                data->problem.gemms[i].setUseBias(false);
-                data->problem.gemms[i].setActivationType(Tensile::ActivationType::None);
-                data->problem.gemms[i].setUseScaleAlphaVec(false);
+                if(data->inputs.grouped[i].scaleAlphaVec != nullptr
+                   || data->inputs.grouped[i].bias != nullptr
+                   || data->problem.gemms[i].activationEnumArg() != Tensile::ActivationType::None)
+                {
+                    enableEpilogue = false;
+                    break;
+                }
             }
-            solutions_fallback = library->findTopSolutionsGroupedGemm(
-                data->problem.gemms, *hardware, requestedAlgoCount);
-            for(int i = 0; i < data->problem.gemms.size(); i++)
+            if(enableEpilogue)
             {
-                data->problem.gemms[i].setUseBias(useBias[i]);
-                data->problem.gemms[i].setActivationType(actType[i]);
-                data->problem.gemms[i].setUseScaleAlphaVec(useScaleAlphaVec[i]);
+                for(int i = 0; i < data->problem.gemms.size(); i++)
+                {
+                    useBias.push_back(data->problem.gemms[i].useBias());
+                    actType.push_back(data->problem.gemms[i].activationType());
+                    useScaleAlphaVec.push_back(data->problem.gemms[i].useScaleAlphaVec());
+                    data->problem.gemms[i].setUseBias(false);
+                    data->problem.gemms[i].setActivationType(Tensile::ActivationType::None);
+                    data->problem.gemms[i].setUseScaleAlphaVec(false);
+                }
+                solutions_fallback = library->findTopSolutionsGroupedGemm(
+                    data->problem.gemms, *hardware, requestedAlgoCount);
+                for(int i = 0; i < data->problem.gemms.size(); i++)
+                {
+                    data->problem.gemms[i].setUseBias(useBias[i]);
+                    data->problem.gemms[i].setActivationType(actType[i]);
+                    data->problem.gemms[i].setUseScaleAlphaVec(useScaleAlphaVec[i]);
+                }
             }
         }
 
@@ -2350,7 +2377,7 @@ rocblaslt_status getBestSolutions(rocblaslt_handle       handle,
                                        &returnAlgoCount,
                                        workspaceBytes,
                                        data->problem.gemms[0],
-                                       0);
+                                       solutions_fallback.size());
     }
 
     return rocblaslt_status_success;
