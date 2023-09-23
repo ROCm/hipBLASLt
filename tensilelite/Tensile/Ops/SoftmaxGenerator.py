@@ -595,27 +595,24 @@ class SoftmaxKernelGenerator:
         return mod
 
 def kernel_rodata(name: str, gfx_arch: Tuple[int, int, int]):
-    return f'''
-.rodata
-.p2align 6
-.amdhsa_kernel {name}
-.amdhsa_user_sgpr_kernarg_segment_ptr 1
-.amdhsa_system_sgpr_workgroup_id_x 1
-.amdhsa_accum_offset 8
-.amdhsa_next_free_vgpr .amdgcn.next_free_vgpr
-.amdhsa_next_free_sgpr .amdgcn.next_free_sgpr
-.end_amdhsa_kernel
-''' if gfx_arch >= (9, 0, 10) else\
-f'''
-.rodata
-.p2align 6
-.amdhsa_kernel {name}
-.amdhsa_user_sgpr_kernarg_segment_ptr 1
-.amdhsa_system_sgpr_workgroup_id_x 1
-.amdhsa_next_free_vgpr .amdgcn.next_free_vgpr
-.amdhsa_next_free_sgpr .amdgcn.next_free_sgpr
-.end_amdhsa_kernel
-'''
+    def is_accum_offset_supported(arch: Tuple[int, int, int]):
+        return arch in ((9, 0, 10,), (9, 4, 0,), (9, 4, 1,), (9, 4, 2,))
+    prefix = '.rodata'
+    key_values = {
+        '.p2align': 6,
+        '.amdhsa_kernel': name,
+        '.amdhsa_user_sgpr_kernarg_segment_ptr': 1,
+        '.amdhsa_system_sgpr_workgroup_id_x': 1,
+        '.amdhsa_next_free_vgpr': '.amdgcn.next_free_vgpr',
+        '.amdhsa_next_free_sgpr': '.amdgcn.next_free_sgpr'
+    }
+
+    if is_accum_offset_supported(arch):
+        key_values['.amdhsa_accum_offset'] = 8
+
+    suffix = '.end_amdhsa_kernel'
+    key_values_str = '\n'.join(f'{k} {v}' for k, v in key_values.items())
+    return '\n'.join([prefix, key_values_str, suffix])
 
 @dataclass
 class KernelArgument:
