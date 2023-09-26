@@ -371,7 +371,7 @@ try
         "Options: f16_r,bf16_r")
 
         ("initialization",
-         value<std::string>(&initialization)->default_value("rand_int"),
+         value<std::string>(&initialization)->default_value("hpl"),
          "Intialize matrix data."
          "Options: rand_int, trig_float, hpl(floating)")
 
