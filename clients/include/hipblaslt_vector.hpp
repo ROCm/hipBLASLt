@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022 Advanced Micro Devices, Inc.
+ * Copyright (C) 2022-2023 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -109,6 +109,67 @@ inline void hipblaslt_init(host_vector<T>& that, bool seedReset = false)
     if(seedReset)
         hipblaslt_seedrand();
     hipblaslt_init(that, that.size(), 1, 1);
+}
+
+//!
+//! @brief Initialize a vector.
+//! @param that The vector.
+//! @param seedReset reset the seed if true, do not reset the seed otherwise.
+//!
+template <typename T>
+inline void hipblaslt_init(std::vector<T>& that, bool seedReset = false)
+{
+    if(seedReset)
+        hipblaslt_seedrand();
+    hipblaslt_init(that, that.size(), 1, 1);
+}
+
+template <typename T>
+inline void hipblaslt_init_alternating_sign(std::vector<T>& that, bool seedReset = false)
+{
+    if(seedReset)
+        hipblaslt_seedrand();
+    hipblaslt_init_alternating_sign(that, that.size(), 1, 1);
+}
+
+template <typename T>
+inline void hipblaslt_init_sin(std::vector<T>& that, bool seedReset = false)
+{
+    if(seedReset)
+        hipblaslt_seedrand();
+    hipblaslt_init_sin(that, that.size(), 1, 1);
+}
+
+template <typename T>
+inline void hipblaslt_init_cos(std::vector<T>& that, bool seedReset = false)
+{
+    if(seedReset)
+        hipblaslt_seedrand();
+    hipblaslt_init_cos(that, that.size(), 1, 1);
+}
+
+template <typename T>
+inline void hipblaslt_init_hpl(std::vector<T>& that, bool seedReset = false)
+{
+    if(seedReset)
+        hipblaslt_seedrand();
+    hipblaslt_init_hpl(that, that.size(), 1, 1);
+}
+
+template <typename T>
+inline void hipblaslt_init_alt_impl_big(std::vector<T>& that, bool seedReset = false)
+{
+    if(seedReset)
+        hipblaslt_seedrand();
+    hipblaslt_init_alt_impl_big(that, that.size(), 1, 1);
+}
+
+template <typename T>
+inline void hipblaslt_init_alt_impl_small(std::vector<T>& that, bool seedReset = false)
+{
+    if(seedReset)
+        hipblaslt_seedrand();
+    hipblaslt_init_alt_impl_small(that, that.size(), 1, 1);
 }
 
 //!

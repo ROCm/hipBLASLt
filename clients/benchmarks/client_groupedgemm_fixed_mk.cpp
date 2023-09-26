@@ -31,6 +31,7 @@
 #include <hip/hip_runtime.h>
 #include <hipblaslt/hipblaslt-ext.hpp>
 #include <hipblaslt/hipblaslt.h>
+#include <hipblaslt_vector.hpp>
 #include <iostream>
 #include <limits>
 #include <string>
@@ -214,6 +215,8 @@ static void show_usage(char* argv[])
         << "\t-h, --help\t\t\t\tShow this help message\n"
         << "\t-v, --verbose\t\t\t\tVerbose output\n"
         << "\t-V, --validate\t\t\t\tVerify results\n"
+        << "\t--initialization \t\t\t\tIntialize matrix data. Options: rand_int, trig_float, "
+           "hpl(floating). (default is hpl)\n"
         << "\t--bench_count\t\t\t\tNumber of benchmark runs (default is 1)\n"
         << "\t--sync_count\t\t\t\tNumber of sync runs (default is 1)\n"
         << "\t--in_datatype \t\tdatatype \tGEMM_STRIDED argument in: fp32, fp16, bf16 (default is "
@@ -268,6 +271,7 @@ static int parse_arguments(int                          argc,
                            std::vector<ActivationType>& actType,
                            int32_t&                     bench_count,
                            int32_t&                     sync_count,
+                           hipblaslt_initialization&    initialization,
                            bool&                        verbose,
                            bool&                        validate)
 {
@@ -290,6 +294,11 @@ static int parse_arguments(int                          argc,
                 else if((arg == "-V") || (arg == "--validate"))
                 {
                     validate = true;
+                }
+                else if(arg == "--initialization")
+                {
+                    std::string initializationStr = argv[++i];
+                    initialization = string2hipblaslt_initialization(initializationStr);
                 }
                 else if(arg == "--sync_count")
                 {
@@ -554,32 +563,44 @@ bool bad_argument(hipblasOperation_t trans_a,
     return argument_error;
 }
 
-template <typename Tin, typename Tout>
-void initialize_a_b_c_bias(std::vector<Tin>&   ha,
-                           int64_t             size_a,
-                           std::vector<Tin>&   hb,
-                           int64_t             size_b,
-                           std::vector<Tout>&  hc,
-                           int64_t             size_c,
-                           std::vector<float>& h_bias,
-                           int64_t             size_bias)
+template <typename TiA, typename TiB, typename Tout>
+void initialize_a_b_c_bias(std::vector<TiA>&        ha,
+                           int64_t                  size_a,
+                           std::vector<TiB>&        hb,
+                           int64_t                  size_b,
+                           std::vector<Tout>&       hc,
+                           int64_t                  size_c,
+                           std::vector<float>&      h_bias,
+                           int64_t                  size_bias,
+                           hipblaslt_initialization initialization)
 {
-    srand(1);
-    for(int i = 0; i < size_a; ++i)
+    if(initialization == hipblaslt_initialization::rand_int)
     {
-        ha[i] = static_cast<Tin>((rand() % 7) - 3);
+        hipblaslt_init<TiA>(ha, size_a);
+        hipblaslt_init_alternating_sign<TiB>(hb, size_b);
+        hipblaslt_init<Tout>(hc, size_c);
+        hipblaslt_init<float>(h_bias, size_bias);
     }
-    for(int i = 0; i < size_b; ++i)
+    else if(initialization == hipblaslt_initialization::trig_float)
     {
-        hb[i] = static_cast<Tin>((rand() % 7) - 3);
+        hipblaslt_init_sin<TiA>(ha, size_a);
+        hipblaslt_init_cos<TiB>(hb, size_b);
+        hipblaslt_init_sin<Tout>(hc, size_c);
+        hipblaslt_init_sin<float>(h_bias, size_bias);
     }
-    for(int i = 0; i < size_c; ++i)
+    else if(initialization == hipblaslt_initialization::hpl)
     {
-        hc[i] = static_cast<Tout>((rand() % 7) - 3);
+        hipblaslt_init_hpl<TiA>(ha, size_a);
+        hipblaslt_init_hpl<TiB>(hb, size_b);
+        hipblaslt_init_hpl<Tout>(hc, size_c);
+        hipblaslt_init_hpl<float>(h_bias, size_bias);
     }
-    for(int i = 0; i < size_bias; ++i)
+    else if(initialization == hipblaslt_initialization::special)
     {
-        h_bias[i] = static_cast<Tout>((rand() % 7) - 3);
+        hipblaslt_init_alt_impl_big<TiA>(ha, size_a);
+        hipblaslt_init_alt_impl_small<TiB>(hb, size_b);
+        hipblaslt_init_hpl<Tout>(hc, size_c);
+        hipblaslt_init_hpl<float>(h_bias, size_bias);
     }
 }
 
@@ -618,6 +639,7 @@ int test_hipblaslt(hipblasltDatatype_t         in_datatype,
                    int32_t                     gemm_count,
                    int32_t                     bench_count,
                    int32_t                     sync_count,
+                   hipblaslt_initialization    initialization,
                    bool                        validate,
                    bool                        verbose)
 {
@@ -710,8 +732,15 @@ int test_hipblaslt(hipblasltDatatype_t         in_datatype,
         h_bias[i].resize(size_bias[i]);
 
         // initial data on host
-        initialize_a_b_c_bias(
-            ha[i], size_a[i], hb[i], size_b[i], hc[i], size_c[i], h_bias[i], size_bias[i]);
+        initialize_a_b_c_bias(ha[i],
+                              size_a[i],
+                              hb[i],
+                              size_b[i],
+                              hc[i],
+                              size_c[i],
+                              h_bias[i],
+                              size_bias[i],
+                              initialization);
 
         CHECK_HIP_ERROR(hipMalloc(&da[i], size_a[i] * sizeof(Tin)));
         CHECK_HIP_ERROR(hipMalloc(&db[i], size_b[i] * sizeof(Tin)));
@@ -1041,6 +1070,8 @@ int main(int argc, char* argv[])
     int32_t bench_count = 1;
     int32_t sync_count  = 1;
 
+    hipblaslt_initialization initialization = hipblaslt_initialization::hpl;
+
     if(parse_arguments(argc,
                        argv,
                        in_datatype,
@@ -1065,6 +1096,7 @@ int main(int argc, char* argv[])
                        actType,
                        bench_count,
                        sync_count,
+                       initialization,
                        verbose,
                        validate))
     {
@@ -1160,6 +1192,7 @@ int main(int argc, char* argv[])
                                                                 gemm_count,
                                                                 bench_count,
                                                                 sync_count,
+                                                                initialization,
                                                                 validate,
                                                                 verbose);
     else if(in_datatype == HIPBLASLT_R_16F && out_datatype == HIPBLASLT_R_32F)
@@ -1186,6 +1219,7 @@ int main(int argc, char* argv[])
                                                                gemm_count,
                                                                bench_count,
                                                                sync_count,
+                                                               initialization,
                                                                validate,
                                                                verbose);
     else if(in_datatype == HIPBLASLT_R_16F && out_datatype == HIPBLASLT_R_16F)
@@ -1212,6 +1246,7 @@ int main(int argc, char* argv[])
                                                               gemm_count,
                                                               bench_count,
                                                               sync_count,
+                                                              initialization,
                                                               validate,
                                                               verbose);
     else if(in_datatype == HIPBLASLT_R_16B && out_datatype == HIPBLASLT_R_16B)
@@ -1238,6 +1273,7 @@ int main(int argc, char* argv[])
                                                                       gemm_count,
                                                                       bench_count,
                                                                       sync_count,
+                                                                      initialization,
                                                                       validate,
                                                                       verbose);
 
