@@ -254,7 +254,7 @@ globalParameters["PerfModelReadEfficiency"] = 0.85
 
 # limitation for training
 globalParameters["MaxWorkspaceSize"] = 32 * 1024 * 1024 # max workspace for training (32M)
-globalParameters["MinKForGSU"] = 128 # min K size to use GlobalSplitU algorithm (only for HPA now)
+globalParameters["MinKForGSU"] = 32 # min K size to use GlobalSplitU algorithm (only for HPA now)
 
 # control if a solution is run for a given problem
 globalParameters["GranularityThreshold"] = 0.0

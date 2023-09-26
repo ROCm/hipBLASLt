@@ -225,6 +225,10 @@ namespace Tensile
                 inputs.grouped[i].alpha, arg.alpha, sizeof(arg.alpha), problems[i].alphaType());
             setVariantToBuffer(
                 inputs.grouped[i].beta, arg.beta, sizeof(arg.beta), problems[i].betaType());
+            arg.scaleA        = const_cast<void*>(inputs.grouped[i].scaleA);
+            arg.scaleB        = const_cast<void*>(inputs.grouped[i].scaleB);
+            arg.scaleC        = const_cast<void*>(inputs.grouped[i].scaleC);
+            arg.scaleD        = const_cast<void*>(inputs.grouped[i].scaleD);
             arg.bias          = const_cast<void*>(inputs.grouped[i].bias);
             arg.scaleAlphaVec = const_cast<void*>(inputs.grouped[i].scaleAlphaVec);
             arg.e             = const_cast<void*>(inputs.grouped[i].e);
@@ -634,10 +638,16 @@ namespace Tensile
         if constexpr(insertKernelArgs)
             kernelArgs<T_Debug>(args);
 
-        if(problemType.useScaleAB && (sizeMapping.globalSplitU == 1)) //kernel input data
+        if(problemType.useScaleAB) //kernel input data
         {
-            args.template append<void const*>("scaleA", inputs.scaleA);
-            args.template append<void const*>("scaleB", inputs.scaleB);
+            if(DataTypeInfo::Get(problemType.aType).elementSize
+                   > DataTypeInfo::Get(problemType.computeInputType).elementSize
+               || (sizeMapping.globalSplitU == 1))
+                args.template append<void const*>("scaleA", inputs.scaleA);
+            if(DataTypeInfo::Get(problemType.bType).elementSize
+                   > DataTypeInfo::Get(problemType.computeInputType).elementSize
+               || (sizeMapping.globalSplitU == 1))
+                args.template append<void const*>("scaleB", inputs.scaleB);
         }
         if(problemType.useScaleCD && (sizeMapping.globalSplitU == 1)) //kernel input data
         {
@@ -2292,6 +2302,14 @@ namespace Tensile
             {
                 size += problem.d().totalLogicalElements() * sizeMapping.workspaceSizePerElemBias;
             }
+        }
+
+        // Custom kernel synchronizer
+        if(sizeMapping.customKernelName != "")
+        {
+            size += (int)ceil(problem.d().sizes()[0] / (float)sizeMapping.macroTile.x)
+                    * (int)ceil(problem.d().sizes()[1] / (float)sizeMapping.macroTile.y)
+                    * sizeMapping.waveNum * sizeof(int32_t);
         }
 
         return size;

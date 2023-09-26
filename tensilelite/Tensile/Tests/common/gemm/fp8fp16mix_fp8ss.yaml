@@ -12,7 +12,7 @@ GlobalParameters:
   KernelTime: True
   MaxWorkspaceSize: 13421772800
   DataInitTypeAlpha: 1
-  DataInitTypeBeta: 0
+  DataInitTypeBeta: 1
   NumElementsToValidate: -1
   BoundsCheck: 2
 
@@ -32,6 +32,12 @@ BenchmarkProblems:
       TransposeB: 0
       UseBeta: True
       Batched: True
+      Activation:    True
+      ActivationHPA: True
+      UseScaleAB: True
+      UseScaleCD: False
+      UseScaleAlphaVec: True
+      UseBias: True
       BiasDataTypeList: [s,b]
     - # BenchmarkProblemSizeGroup - Standard
       InitialSolutionParameters:
@@ -40,6 +46,7 @@ BenchmarkProblems:
       ForkParameters:
         - MatrixInstruction:
           - [16,16,32, 1, 1, 1,1, 1,1]  # 16x16
+          - [16,16,32, 1, 1, 2,2, 1,1]
         - DepthU: [ 64 ]
         - AssertFree0ElementMultiple: [1]
         - PrefetchGlobalRead: [2]
@@ -52,7 +59,7 @@ BenchmarkProblems:
         - ScheduleIterAlg: [3]
         - InnerUnroll: [1]
         - ExpandPointerSwap: [1]
-        - TransposeLDS: [1]
+        - TransposeLDS: [0,1]
         - LdsBlockSizePerPadA: [0]
         - LdsBlockSizePerPadB: [0]
         - LdsPadA: [0]
@@ -262,6 +269,12 @@ BenchmarkProblems:
       TransposeB: 0
       UseBeta: True
       Batched: True
+      Activation:    True
+      ActivationHPA: True
+      UseScaleAB: True
+      UseScaleCD: False
+      UseScaleAlphaVec: True
+      UseBias: True
       BiasDataTypeList: [s,b]
     - # BenchmarkProblemSizeGroup - Standard
       InitialSolutionParameters:
@@ -270,6 +283,7 @@ BenchmarkProblems:
       ForkParameters:
         - MatrixInstruction:
           - [16,16,32, 1, 1, 1,1, 1,1]  # 16x16
+          - [16,16,32, 1, 1, 2,2, 1,1]
         - DepthU: [ 64 ]
         - AssertFree0ElementMultiple: [1]
         - PrefetchGlobalRead: [2]
@@ -282,7 +296,7 @@ BenchmarkProblems:
         - ScheduleIterAlg: [3]
         - InnerUnroll: [1]
         - ExpandPointerSwap: [1]
-        - TransposeLDS: [1]
+        - TransposeLDS: [0,1]
         - LdsBlockSizePerPadA: [0]
         - LdsBlockSizePerPadB: [0]
         - LdsPadA: [0]

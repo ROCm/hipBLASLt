@@ -88,6 +88,7 @@ struct Arguments
 
     uint32_t algo;
     int32_t  solution_index;
+    int32_t  requested_solution_num;
 
     hipblasltDatatype_t    a_type;
     hipblasltDatatype_t    b_type;
@@ -182,6 +183,7 @@ struct Arguments
     OPER(cold_iters) SEP             \
     OPER(algo) SEP                   \
     OPER(solution_index) SEP         \
+    OPER(requested_solution_num) SEP \
     OPER(a_type) SEP                 \
     OPER(b_type) SEP                 \
     OPER(c_type) SEP                 \
@@ -638,7 +640,7 @@ namespace ArgumentsHelper
             func("beta", arg.get_beta<decltype(T)>());
         };
 };
-    // clang-format on
+// clang-format on
 
 #else
 #error "Unsupported C++ version"

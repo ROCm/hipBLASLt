@@ -75,17 +75,23 @@ void run_function(const func_map& map, const Arguments& arg, const std::string& 
 
 // Template to dispatch testing_matmul for performance tests
 // the test is marked invalid when (TiA, TiB, To, Tc) not in (H/H/S, B/B/S)
-template <typename TiA, typename TiB = TiA, typename To = TiB, typename Tc = To, typename = void>
+template <typename TiA,
+          typename TiB = TiA,
+          typename To  = TiB,
+          typename Tc  = To,
+          typename Tci = TiA,
+          typename     = void>
 struct perf_matmul : hipblaslt_test_invalid
 {
 };
 
-template <typename TiA, typename TiB, typename To, typename Tc>
+template <typename TiA, typename TiB, typename To, typename Tc, typename Tci>
 struct perf_matmul<
     TiA,
     TiB,
     To,
     Tc,
+    Tci,
     std::enable_if_t<(std::is_same<TiA, hipblasLtHalf>{} && std::is_same<TiB, hipblasLtHalf>{})
                      || (std::is_same<TiA, hip_bfloat16>{} && std::is_same<TiB, hip_bfloat16>{})
                      || (std::is_same<TiA, float>{} && std::is_same<TiB, float>{})
@@ -100,7 +106,7 @@ struct perf_matmul<
 {
     void operator()(const Arguments& arg)
     {
-        static const func_map map = {{"matmul", testing_matmul<TiA, TiB, To, Tc>}};
+        static const func_map map = {{"matmul", testing_matmul<TiA, TiB, To, Tc, Tci>}};
         run_function(map, arg);
     }
 };
@@ -397,13 +403,18 @@ try
          value<int32_t>(&arg.cold_iters)->default_value(2),
          "Cold Iterations to run before entering the timing loop")
 
-        ("algo",
-         value<uint32_t>(&arg.algo)->default_value(0),
-         "Reserved.")
+        ("algo_method",
+         value<int32_t>(&arg.algo_method)->default_value(0),
+         "Use different algorithm search API. 0: Get heuristic, 1: Get all algorithm, 2: Get solutuion by index."
+         "Options: 0, 1, 2. (default: 0)")
 
         ("solution_index",
          value<int32_t>(&arg.solution_index)->default_value(0),
          "Reserved.")
+
+        ("requested_solution",
+         value<int32_t>(&arg.requested_solution_num)->default_value(1),
+         "Requested solution num. Set to -1 to get all solutions. Only valid when algo_method is set to 1.")
 
         ("activation_type",
          value<std::string>(&activation_type)->default_value("none"),
@@ -443,7 +454,7 @@ try
 
         ("grouped_gemm",
          value<bool>(&grouped_gemm)->default_value(false),
-         "Use grouped_gemm if non-zero. Number of gemms to run")
+         "Use grouped_gemm.")
 
         ("device",
          value<int>(&device_id)->default_value(0),
@@ -572,6 +583,14 @@ try
     // single bench run
 
     // validate arguments
+    if(arg.algo_method == 1)
+    {
+        arg.requested_solution_num = std::numeric_limits<int32_t>::max();
+    }
+    else if(arg.algo_method == 2)
+    {
+        arg.requested_solution_num = 1;
+    }
 
     std::transform(precision.begin(), precision.end(), precision.begin(), ::tolower);
     auto prec = string_to_hipblaslt_datatype(precision);

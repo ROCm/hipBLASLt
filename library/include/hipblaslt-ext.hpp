@@ -107,8 +107,8 @@ namespace hipblaslt_ext
     {
         hipblasLtEpilogue_t mode
             = HIPBLASLT_EPILOGUE_DEFAULT; //!< The mode of epilogue. Default is gemm.
-        hipblasltDatatype_t bias_data_type = static_cast<hipblasltDatatype_t>(
-            0); //!< The bias datatype. Only works if mode is set to bias related epilogues.
+        hipblasltDatatype_t bias_data_type
+            = HIPBLASLT_DATATYPE_INVALID; //!< The bias datatype. Only works if mode is set to bias related epilogues.
         int aux_ld
             = 0; //!< The aux leading dimension. Only works if mode is set to aux related epilogues.
         int aux_stride
@@ -167,6 +167,10 @@ namespace hipblaslt_ext
         int8_t   alpha[16]; //!< The alpha value.
         int8_t   beta[16]; //!< The beta value.
         // Epilogue inputs
+        void* scaleA; //!< The scaleA input pointer.
+        void* scaleB; //!< The scaleA input pointer.
+        void* scaleC; //!< The scaleC input pointer.
+        void* scaleD; //!< The scaleD input pointer.
         void* scaleAlphaVec; //!< The scaleAlpha vector input pointer.
         void* bias; //!< The bias input pointer.
         int   biasType; //!< The bias datatype. Only works if mode is set to bias related epilogues.

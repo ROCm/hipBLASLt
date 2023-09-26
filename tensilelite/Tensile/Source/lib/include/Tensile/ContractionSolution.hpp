@@ -63,6 +63,10 @@ namespace Tensile
         uint32_t strideB2;
         int8_t   alpha[16];
         int8_t   beta[16];
+        void*    scaleA;
+        void*    scaleB;
+        void*    scaleC;
+        void*    scaleD;
         void*    scaleAlphaVec;
         void*    bias;
         int      biasType;
@@ -383,6 +387,8 @@ namespace Tensile
 
         struct SizeMapping
         {
+            size_t waveNum;
+
             dim3 workGroupSize;
             dim3 threadTile;
             dim3 macroTile;

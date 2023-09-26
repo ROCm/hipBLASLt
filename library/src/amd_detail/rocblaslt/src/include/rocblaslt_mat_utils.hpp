@@ -250,12 +250,16 @@ inline rocblaslt_status rocblaslt_matmul_valid_args(const rocblaslt_matmul_desc 
                                                     int64_t&                    m,
                                                     int64_t&                    n,
                                                     int64_t&                    k,
+                                                    hipblasltDatatype_t&        a_type,
                                                     int64_t&                    lda,
                                                     int64_t&                    batch_stride_a,
+                                                    hipblasltDatatype_t&        b_type,
                                                     int64_t&                    ldb,
                                                     int64_t&                    batch_stride_b,
+                                                    hipblasltDatatype_t&        c_type,
                                                     int64_t&                    ldc,
                                                     int64_t&                    batch_stride_c,
+                                                    hipblasltDatatype_t&        d_type,
                                                     int64_t&                    ldd,
                                                     int64_t&                    batch_stride_d,
                                                     int64_t&                    lde,
@@ -274,16 +278,19 @@ inline rocblaslt_status rocblaslt_matmul_valid_args(const rocblaslt_matmul_desc 
     int64_t num_rows_a    = matA->m;
     int64_t num_cols_a    = matA->n;
     int     num_batches_a = matA->batch_count;
+    a_type                = matA->type;
     lda                   = matA->ld;
     batch_stride_a        = matA->batch_stride;
 
     // matrix B
     int num_batches_b = matB->batch_count;
+    b_type            = matB->type;
     ldb               = matB->ld;
     batch_stride_b    = matB->batch_stride;
 
     // matrix C
     int num_batches_c = matC->batch_count;
+    c_type            = matC->type;
     ldc               = matC->ld;
     batch_stride_c    = matC->batch_stride;
 
@@ -291,6 +298,7 @@ inline rocblaslt_status rocblaslt_matmul_valid_args(const rocblaslt_matmul_desc 
     int64_t num_rows_d    = matD->m;
     int64_t num_cols_d    = matD->n;
     int     num_batches_d = matD->batch_count;
+    d_type                = matD->type;
     ldd                   = matD->ld;
     batch_stride_d        = matD->batch_stride;
 
@@ -352,10 +360,23 @@ inline rocblaslt_status rocblaslt_matmul_valid_args(const rocblaslt_matmul_desc 
     return status;
 }
 
-template <typename TiA, typename TiB, typename To, typename Tc>
-inline int rocblaslt_get_matmul_alg_config_max_id(hipblasOperation_t opA, hipblasOperation_t opB)
+// Assign 1 to onePtr then set set the address to dst.
+inline void setTo1(const rocblaslt_compute_type& compute_type, const void* onePtr, const void** dst)
 {
-    // TODO
-    return true;
+    if(compute_type == rocblaslt_compute_f64)
+    {
+        *((double*)onePtr) = 1.f;
+        *dst               = onePtr;
+    }
+    else if(compute_type == rocblaslt_compute_i32)
+    {
+        *((int32_t*)onePtr) = 1.f;
+        *dst                = onePtr;
+    }
+    else
+    {
+        *((float*)onePtr) = 1.f;
+        *dst              = onePtr;
+    }
 }
 #endif

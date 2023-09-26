@@ -96,8 +96,9 @@ void Arguments::init()
     iters      = 10;
     cold_iters = 2;
 
-    algo           = 0;
-    solution_index = 0;
+    algo                   = 0;
+    solution_index         = 0;
+    requested_solution_num = 1;
 
     a_type       = HIPBLASLT_R_16F;
     b_type       = HIPBLASLT_R_16F;

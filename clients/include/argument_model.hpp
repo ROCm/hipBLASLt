@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022 Advanced Micro Devices, Inc.
+ * Copyright (C) 2022-2023 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -134,6 +134,7 @@ public:
 
     template <typename T>
     void log_args(hipblaslt_internal_ostream& str,
+                  size_t                      index,
                   const Arguments&            arg,
                   double                      gpu_us,
                   double                      gflops,
@@ -146,6 +147,9 @@ public:
     {
         hipblaslt_internal_ostream name_list;
         hipblaslt_internal_ostream value_list;
+
+        name_list << "[" << index << "]";
+        value_list << "    ";
 
         if(ArgumentModel_get_log_function_name())
         {

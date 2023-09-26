@@ -151,6 +151,7 @@ Arguments:
   - cold_iters: c_int32
   - algo: c_uint32
   - solution_index: c_int32
+  - requested_solution_num: c_int32
   - a_type: hipblasltDatatype_t
   - b_type: hipblasltDatatype_t
   - c_type: hipblasltDatatype_t
@@ -249,6 +250,7 @@ Defaults:
   cold_iters: 2
   algo: 0
   solution_index: 0
+  requested_solution_num: 1
   workspace_size: 0
   initialization: rand_int
   category: nightly
