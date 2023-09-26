@@ -45,6 +45,8 @@
 
 namespace hipblaslt_ext
 {
+    using HipBufferDeleter = hipError_t(*)(void *);
+    using HipBufferPtr = std::unique_ptr<void, HipBufferDeleter>;
 
     /*! \ingroup types_module
      *  \brief It is an enumerated type used to specific the type of the gemm problem in hipblasLtExt APIs.
@@ -301,6 +303,8 @@ namespace hipblaslt_ext
 
         hipblasLtHandle_t     m_handle;
         std::shared_ptr<void> m_data;
+        using Conversions = std::tuple<void *, HipBufferPtr, hipblasltDatatype_t, hipblasltDatatype_t, std::size_t>;
+        std::vector<std::vector<Conversions>> m_auxiliary_conversion_buffers;
     };
 
     /*! \ingroup types_module
