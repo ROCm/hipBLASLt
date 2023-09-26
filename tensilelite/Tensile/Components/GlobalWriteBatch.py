@@ -709,6 +709,39 @@ class GlobalWriteBatchWriter:
                 scaleAlphaVecModule.add(VMulPKF32(dst=vgpr("ValuC+%d"%vgprIdx, 2), src0=vgpr(inputScaleAlphaVecVgpr, 2), src1=vgpr("ValuC+%d"%vgprIdx, 2), comment="*= scaleAlphaVecVMulPK(%d)(%d)"%(dataScaleAlphaVec,vi)))
               else:
                 scaleAlphaVecModule.add(VMulPKF32(dst=vgpr("ValuC+%d"%vgprIdx, 2), src0=vgpr(inputScaleAlphaVecVgpr, 2), src1=vgpr("ValuC+%d"%vgprIdx, 2), comment="*= scaleAlphaVecVMulPK(%d)(%d)"%(dataScaleAlphaVec,vi)))
+          elif self.kernel["ProblemType"]["ComputeDataType"].isInt32():
+            vgprIdx = sumIdxV - self.parentWriter.states.c.startVgprValu
+
+            # Generate single i32 code if edge is detected.
+            if ((vi + 1) == self.gwvw) and ((self.gwvw % 2) == 1):
+
+              scaleAlphaVecModule.add(VCmpGtU32(dst=sgpr("AddressScaleAlphaVec",2), src0=sgpr("SrdScaleAlphaVec+2"), src1=0, comment=" == 0 ?"))
+              scaleAlphaVecModule.add(VCndMaskB32(
+                dst=vgpr(inputScaleAlphaVecVgpr), \
+                src1=vgpr(inputScaleAlphaVecVgpr), \
+                src0=1, \
+                src2=sgpr("AddressScaleAlphaVec",2), \
+                comment="1. mul 1 if 0"))
+              scaleAlphaVecModule.add(VMulLOU32(dst=vgpr("ValuC+%d"%vgprIdx), src0=vgpr(inputScaleAlphaVecVgpr), src1=vgpr("ValuC+%d"%vgprIdx), comment="*= scaleAlphaVecVMul" ))
+            elif vi%2 == 1:
+              assert (self.gwvw % 2 == 0)
+            else:
+              scaleAlphaVecModule.add(VCmpGtU32(dst=sgpr("AddressScaleAlphaVec",2), src0=sgpr("SrdScaleAlphaVec+2"), src1=0, comment=" == 0 ?"))
+              scaleAlphaVecModule.add(VCndMaskB32(
+                dst=vgpr(inputScaleAlphaVecVgpr), \
+                src1=vgpr(inputScaleAlphaVecVgpr), \
+                src0=1, \
+                src2=sgpr("AddressScaleAlphaVec",2), \
+                comment="1. mul 1 if 0"))
+
+              scaleAlphaVecModule.add(VCndMaskB32(
+                dst=vgpr(inputScaleAlphaVecVgpr+1), \
+                src1=vgpr(inputScaleAlphaVecVgpr+1), \
+                src0=1, \
+                src2=sgpr("AddressScaleAlphaVec",2), \
+                comment="1. mul 1 if 0"))
+              scaleAlphaVecModule.add(VMulLOU32(dst=vgpr("ValuC+%d"%vgprIdx), src0=vgpr(inputScaleAlphaVecVgpr), src1=vgpr("ValuC+%d"%vgprIdx), comment="*= scaleAlphaVecVMulPK(%d)(%d)"%(dataScaleAlphaVec,vi)))
+              scaleAlphaVecModule.add(VMulLOU32(dst=vgpr("ValuC+%d"%(vgprIdx+1)), src0=vgpr(inputScaleAlphaVecVgpr+1), src1=vgpr("ValuC+%d"%(vgprIdx+1)), comment="*= scaleAlphaVecVMulPK(%d)(%d)"%(dataScaleAlphaVec,vi)))
           else:
             raise RuntimeError("Unsupported scaleAlphaVec compute data type %s."%str(self.kernel["ProblemType"]["ComputeDataType"]))
 
