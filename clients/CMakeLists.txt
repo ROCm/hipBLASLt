@@ -86,10 +86,9 @@ if( BUILD_CLIENTS_BENCHMARKS OR BUILD_CLIENTS_TESTS)
 
   # Linking lapack library requires fortran flags
   find_package( cblas REQUIRED CONFIG )
-  if (LINK_BLIS)
-    set( BLIS_INCLUDE_DIR ${BUILD_DIR}/deps/blis/include/blis )
+  if(${BLIS_FOUND})
+    set( BLAS_LIBRARY ${BLIS_LIB} )
     set( BLIS_CPP ../common/blis_interface.cpp )
-    set( BLAS_LIBRARY ${BUILD_DIR}/deps/blis/lib/libblis.so )
   else()
     set( BLAS_LIBRARY "blas" )
   endif()
