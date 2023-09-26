@@ -92,3 +92,53 @@ set_target_properties( hipblaslt-bench PROPERTIES
 add_dependencies( hipblaslt-bench hipblaslt-common )
 
 rocm_install(TARGETS hipblaslt-bench COMPONENT benchmarks)
+
+# Other bench files
+add_executable( hipblaslt-bench-groupedgemm-fixed-mk client_groupedgemm_fixed_mk.cpp)
+add_executable( hipblaslt-bench-extop-layernorm client_extop_layernorm.cpp)
+add_executable( hipblaslt-bench-extop-matrixtransform client_extop_matrixtransform.cpp)
+add_executable( hipblaslt-bench-extop-softmax client_extop_softmax.cpp)
+set(ext_bench_list_all hipblaslt-bench-groupedgemm-fixed-mk hipblaslt-bench-extop-layernorm hipblaslt-bench-extop-matrixtransform hipblaslt-bench-extop-softmax)
+
+foreach( exe ${ext_bench_list_all} )
+  target_link_libraries( ${exe} PRIVATE roc::hipblaslt )
+
+  set_target_properties( ${exe} PROPERTIES
+    CXX_STANDARD 17
+    CXX_STANDARD_REQUIRED ON
+    CXX_EXTENSIONS OFF
+    RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging"
+  )
+
+  target_compile_definitions( ${exe} PRIVATE ROCM_USE_FLOAT16 )
+
+  target_include_directories( ${exe}
+    PRIVATE
+      $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include>
+      $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/common>
+      $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../../library/include>
+      )
+
+  target_include_directories( ${exe}
+    SYSTEM PRIVATE
+      $<BUILD_INTERFACE:${HIP_INCLUDE_DIRS}>
+      )
+
+  if( CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+    # GCC or hip-clang needs specific flags to turn on f16c intrinsics
+    target_compile_options( ${exe} PRIVATE -mf16c -Wno-unused-result )
+    target_compile_definitions( ${exe} PRIVATE ROCBLASLT_INTERNAL_API )
+  endif( )
+endforeach( )
+
+foreach( exe ${ext_bench_list_all} )
+  target_link_libraries( ${exe} PRIVATE hip::device )
+endforeach( )
+
+foreach( exe ${ext_bench_list_all} )
+  rocm_install(TARGETS ${exe} COMPONENT samples)
+endforeach( )
+
+# Add tests for special cases
+add_test(NAME hipblaslt-bench-groupedgemm-fixed-mk
+         COMMAND hipblaslt-bench-groupedgemm-fixed-mk --trans_a N --trans_b N --in_datatype fp16 --out_datatype fp16 -m 2048 -k 2048 -n 0 -n 1 -n 1 -n 0 -n 1 -n 0 -n 1 -n 0 -n 0 -n 0 -n 0 -n 0 -n 0 -n 0 -n 0 -n 0 -V)

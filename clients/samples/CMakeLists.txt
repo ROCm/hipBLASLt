@@ -41,18 +41,7 @@ set(samples sample_hipblaslt_gemm
             sample_hipblaslt_groupedgemm_fixed_mk_ext
             sample_hipblaslt_groupedgemm_get_all_algos_ext)
 
-# Old examples
-add_executable( example_hipblaslt_preference example_hipblaslt_preference.cpp)
-add_executable( example_hipblaslt_fp8bf8 example_hipblaslt_fp8bf8.cpp)
-add_executable( example_hipblaslt_groupedgemm example_hipblaslt_groupedgemm.cpp)
-add_executable( example_hipblaslt_groupedgemm_fixed_mk example_hipblaslt_groupedgemm_fixed_mk.cpp)
-add_executable( example_hipblaslt_groupedgemm_get_all_algos example_hipblaslt_groupedgemm_get_all_algos.cpp)
-add_executable( example_hipblaslt_algo_index example_hipblaslt_algo_index.cpp)
-add_executable( example_hipblaslt_matrixtransform example_hipblaslt_matrixtransform.cpp)
-add_executable( example_hipblaslt_extop_softmax example_hipblaslt_extop_softmax.cpp)
-add_executable( example_hipblaslt_extop_layernorm example_hipblaslt_extop_layernorm.cpp)
-set( old_examples example_hipblaslt_preference  example_hipblaslt_fp8bf8 example_hipblaslt_groupedgemm example_hipblaslt_groupedgemm_fixed_mk example_hipblaslt_groupedgemm_get_all_algos example_hipblaslt_algo_index example_hipblaslt_matrixtransform example_hipblaslt_extop_softmax example_hipblaslt_extop_layernorm)
-set( sample_list_all ${samples} ${old_examples})
+set( sample_list_all ${samples})
 
 set( sample_list_hip_device ${sample_list_all} )
 
@@ -94,10 +83,6 @@ endforeach( )
 foreach( exe ${sample_list_all} )
   rocm_install(TARGETS ${exe} COMPONENT samples)
 endforeach( )
-
-# Add tests for special cases
-add_test(NAME example_hipblaslt_groupedgemm_fixed_mk
-         COMMAND example_hipblaslt_groupedgemm_fixed_mk --trans_a N --trans_b N --in_datatype fp16 --out_datatype fp16 -m 2048 -k 2048 -n 0 -n 1 -n 1 -n 0 -n 1 -n 0 -n 1 -n 0 -n 0 -n 0 -n 0 -n 0 -n 0 -n 0 -n 0 -n 0 -V)
 
 # Add tests for samples
 foreach( exe ${samples} )
