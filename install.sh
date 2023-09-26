@@ -37,6 +37,7 @@ function display_help()
   echo "    [-d|--dependencies] install build dependencies"
   echo "    [-t|--test_local_path] Specify a local path for Tensile instead of remote GIT repo"
   echo "    [-a|--architecture] Set GPU architecture target(s), e.g., all, gfx90a:xnack+;gfx90a:xnack-"
+  echo "    [--cpu_ref_lib <lib>] specify library to use for CPU reference code in testing (blis or lapack)"
   echo "    [-c|--clients] build library clients too (combines with -i & -d)"
   echo "    [-r]--relocatable] create a package to support relocatable ROCm"
   echo "    [-g|--debug] -DCMAKE_BUILD_TYPE=Debug (default is =Release)"
@@ -287,6 +288,32 @@ install_msgpack_from_source( )
     fi
 }
 
+install_blis()
+{
+    #Download prebuilt AMD multithreaded blis
+    if [[ ! -e "${build_dir}/deps/blis/lib/libblis.a" ]]; then
+      case "${ID}" in
+          centos|rhel|sles|opensuse-leap)
+              wget -nv -O blis.tar.gz https://github.com/amd/blis/releases/download/2.0/aocl-blis-mt-centos-2.0.tar.gz
+              ;;
+          ubuntu)
+              wget -nv -O blis.tar.gz https://github.com/amd/blis/releases/download/2.0/aocl-blis-mt-ubuntu-2.0.tar.gz
+              ;;
+          *)
+              echo "Unsupported OS for this script"
+              wget -nv -O blis.tar.gz https://github.com/amd/blis/releases/download/2.0/aocl-blis-mt-ubuntu-2.0.tar.gz
+              ;;
+      esac
+
+      tar -xvf blis.tar.gz
+      rm -rf blis/amd-blis-mt
+      mv amd-blis-mt blis
+      rm blis.tar.gz
+      cd blis/lib
+      ln -sf libblis-mt.a libblis.a
+    fi
+}
+
 # #################################################
 # Pre-requisites check
 # #################################################
@@ -330,7 +357,7 @@ build_dir=$(readlink -m ./build)
 matrices_dir=
 matrices_dir_install=
 gpu_architecture=all
-
+cpu_ref_lib=blis
 tensile_cov=
 tensile_fork=
 tensile_merge_files=
@@ -407,6 +434,9 @@ while true; do
         -a|--architecture)
             gpu_architecture=${2}
             shift 2 ;;
+        --cpu_ref_lib)
+            cpu_ref_lib=${2}
+            shift 2 ;;
         --prefix)
             install_prefix=${2}
             shift 2 ;;
@@ -463,6 +493,15 @@ if [[ -z $tensile_cov ]]; then
     else
         tensile_cov=V2
     fi
+fi
+
+if [[ "${cpu_ref_lib}" == blis ]]; then
+  LINK_BLIS=true
+elif [[ "${cpu_ref_lib}" == lapack ]]; then
+  LINK_BLIS=false
+else
+  echo "Currently the only CPU library options are blis and lapack"
+      exit 2
 fi
 
 #
@@ -617,7 +656,12 @@ pushd .
 
   # clients
   if [[ "${build_clients}" == true ]]; then
-      cmake_client_options="${cmake_client_options} -DBUILD_CLIENTS_SAMPLES=ON -DBUILD_CLIENTS_TESTS=ON -DBUILD_CLIENTS_BENCHMARKS=ON"
+      pushd .
+      mkdir -p ${build_dir}/deps && cd ${build_dir}/deps
+      install_blis
+      popd
+
+      cmake_client_options="${cmake_client_options} -DBUILD_CLIENTS_SAMPLES=ON -DBUILD_CLIENTS_TESTS=ON -DLINK_BLIS=${LINK_BLIS} -DBUILD_CLIENTS_BENCHMARKS=ON"
 
       #
       # Add matrices_dir if exists.

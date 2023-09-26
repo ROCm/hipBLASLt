@@ -137,6 +137,9 @@ if(NOT BUILD_CUDA)
 endif()
 # Dependencies
 include(cmake/Dependencies.cmake)
+if (LINK_BLIS)
+  include(cmake/findBLIS.cmake)
+endif()
 
 if (USE_CUDA)
 	find_package( CUDA REQUIRED )
