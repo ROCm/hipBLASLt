@@ -27,11 +27,56 @@
 #include "hipblaslt-ext.hpp"
 #include "exceptions.hpp"
 #include "hipblaslt_internal.hpp"
+#include <hip/hip_runtime.h>
+#include <hipblaslt/hipblaslt_float8.h>
 #include <iostream>
 #include <rocblaslt.h>
 
 namespace hipblaslt_ext
 {
+    template <typename SrcType, typename DstType>
+    __global__ void datatypeConversion(const SrcType* src, DstType* dst, std::size_t numElements)
+    {
+        const auto tId        = threadIdx.x;
+        const auto bId        = blockIdx.x;
+        const auto blockSize  = blockDim.x * blockDim.y * blockDim.z;
+        const auto elemOffset = bId * blockSize + tId;
+
+        if(elemOffset < numElements)
+        {
+            dst[elemOffset] = DstType(src[elemOffset]);
+        }
+    }
+
+    template <typename SrcType, typename DstType>
+    void datatypeConversionCpu(const SrcType* src, DstType* dst, std::size_t numElements)
+    {
+        for(std::size_t i = 0; i < numElements; ++i)
+        {
+            dst[i] = DstType(src[i]);
+        }
+    }
+
+    auto NullDeleter = [](void*) { return hipSuccess; };
+
+    HipBufferPtr makeHipBuffer(std::size_t numBytes)
+    {
+        if(!numBytes)
+        {
+            return HipBufferPtr(nullptr, NullDeleter);
+        }
+
+        void* ptr = nullptr;
+        auto  err = hipMalloc(&ptr, numBytes);
+
+        if(err != hipSuccess)
+        {
+            return HipBufferPtr(nullptr, NullDeleter);
+        }
+
+        return HipBufferPtr(ptr, &hipFree);
+    }
+
     void GemmPreference::setMaxWorkspaceBytes(size_t workspaceBytes)
     {
         m_workspace_bytes = workspaceBytes;
@@ -120,6 +165,62 @@ namespace hipblaslt_ext
     {
         if(m_gemm_count == 0)
             return HIPBLAS_STATUS_INVALID_VALUE;
+
+        if(m_auxiliary_conversion_buffers.size())
+        {
+            for(auto& conversions : m_auxiliary_conversion_buffers)
+            {
+                for(auto& conversion : conversions)
+                {
+                    //Only check dst since the existence garantees requirement of fp8/bf8 -> fp16 conversion
+                    if(auto& dst = std::get<1>(conversion))
+                    {
+                        auto src = std::get<0>(conversion);
+
+                        if(src)
+                        {
+                            auto           srcType           = std::get<2>(conversion);
+                            const auto     numElements       = std::get<4>(conversion);
+                            constexpr auto numWorkitemsPerWg = 256;
+                            const auto     numWg             = (numElements / numWorkitemsPerWg)
+                                               + !!(numElements % numWorkitemsPerWg);
+
+                            if(srcType == HIPBLASLT_R_8F_E4M3)
+                            {
+                                datatypeConversion<hipblaslt_f8, hipblasLtHalf>
+                                    <<<numWg, numWorkitemsPerWg, 0, stream>>>(
+                                        (const hipblaslt_f8*)src,
+                                        (hipblasLtHalf*)dst.get(),
+                                        numElements);
+
+                                // hipStreamSynchronize(stream);
+                                // std::vector<hipblaslt_f8> cpuSrc(numElements);
+                                // std::vector<hipblasLtHalf> cpuDst(numElements);
+                                // hipMemcpyDtoH(cpuSrc.data(), src, numElements);
+                                // hipMemcpyDtoH(cpuDst.data(), dst.get(), numElements * 2);
+
+                                // for (size_t i = 0; i < numElements; ++i) {
+                                //     auto a = float(cpuSrc[i]);
+                                //     auto b = float(cpuDst[i]);
+                                //     if (std::abs(a - b) > 1e-5) {
+                                //         std::cout << "values mismatched at " << i << " (a, b) == (" << a << ", " << b << ")\n";
+                                //     }
+                                // }
+                            }
+                            else if(srcType == HIPBLASLT_R_8F_E5M2)
+                            {
+                                datatypeConversion<hipblaslt_bf8, hipblasLtHalf>
+                                    <<<numWg, numWorkitemsPerWg, 0, stream>>>(
+                                        (const hipblaslt_bf8*)src,
+                                        (hipblasLtHalf*)dst.get(),
+                                        numElements);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
         auto gemmType = static_cast<rocblaslt::RocGemmType>(m_gemm_type);
         return RocBlasLtStatusToHIPStatus(
             rocblaslt_run_cpp((rocblaslt_handle)m_handle, gemmType, m_data, stream));
@@ -225,9 +326,71 @@ namespace hipblaslt_ext
                                      GemmInputs&      inputs,
                                      GemmProblemType& problemtype)
     {
+#ifndef __gfx940__
+        constexpr auto numGemms = 1;
+
+        if(m_auxiliary_conversion_buffers.size() != numGemms)
+        {
+            m_auxiliary_conversion_buffers.resize(numGemms);
+
+            for(std::size_t j = 0; j < m_auxiliary_conversion_buffers.size(); ++j)
+            {
+                const std::vector<std::int64_t> sizes{strideA, strideB};
+                const std::vector<void*>       gemmInputs{inputs.a, inputs.b};
+                auto&                          conversions = m_auxiliary_conversion_buffers.at(j);
+                auto&                          problem     = m_problem_types.at(j);
+                const std::vector<hipblasltDatatype_t> dtypes{
+                    problem.type_a, problem.type_b, problem.type_c};
+
+                for(std::size_t i = 0; i < sizes.size(); ++i)
+                {
+                    auto dtype = dtypes.at(i);
+
+                    if(dtype == HIPBLASLT_R_8F_E4M3 || dtype == HIPBLASLT_R_8F_E5M2)
+                    {
+                        const auto numElements = sizes.at(i) * batch_count;
+                        auto       numBytes    = numElements * sizeof(hipblasLtHalf);
+                        conversions.emplace_back(std::make_tuple(gemmInputs.at(i),
+                                                                 std::move(makeHipBuffer(numBytes)),
+                                                                 dtype,
+                                                                 HIPBLASLT_R_16F,
+                                                                 numElements));
+                    }
+                    else
+                    {
+                        conversions.emplace_back(std::make_tuple(gemmInputs.at(i),
+                                                                 std::move(makeHipBuffer(0)),
+                                                                 dtype,
+                                                                 HIPBLASLT_R_16F,
+                                                                 0));
+                    }
+                }
+            }
+        }
+
+        //Shallow copy
+        GemmInputs gemmInputs = inputs;
+        GemmProblemType gemmProblemType = problemtype;
+        auto&      problem    = m_problem_types.at(0);
+
+        if(auto& a = std::get<1>(m_auxiliary_conversion_buffers.at(0).at(0)))
+        {
+            gemmInputs.a   = a.get();
+            gemmProblemType.type_a = HIPBLASLT_R_16F;
+        }
+
+        if(auto& b = std::get<1>(m_auxiliary_conversion_buffers.at(0).at(1)))
+        {
+            gemmInputs.b   = b.get();
+            gemmProblemType.type_b = HIPBLASLT_R_16F;
+        }
+#else
+        GemmInputs& gemmInputs = inputs;
+        GemmProblemType &gemmProblemType = problemtype;
+#endif
         auto rocepilogue    = reinterpret_cast<rocblaslt::RocGemmEpilogue*>(&epilogue);
-        auto rocepinputs    = reinterpret_cast<rocblaslt::RocGemmInputs*>(&inputs);
-        auto rocproblemtype = reinterpret_cast<rocblaslt::RocGemmProblemType*>(&problemtype);
+        auto rocepinputs    = reinterpret_cast<rocblaslt::RocGemmInputs*>(&gemmInputs);
+        auto rocproblemtype = reinterpret_cast<rocblaslt::RocGemmProblemType*>(&gemmProblemType);
         auto status         = RocBlasLtStatusToHIPStatus(rocblaslt_gemm_create_cpp(m,
                                                                            n,
                                                                            batch_count,
