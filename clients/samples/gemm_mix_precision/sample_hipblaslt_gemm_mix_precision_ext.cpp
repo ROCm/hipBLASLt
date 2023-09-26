@@ -47,6 +47,53 @@ void simpleGemmMixPrecisionExt(hipblasLtHandle_t  handle,
                                int64_t            max_workspace_size,
                                hipStream_t        stream);
 
+template<typename TypeA, typename TypeB, typename TypeC, typename TypeD, typename ScalarType>
+int validate(const Runner<TypeA, TypeB, TypeC, TypeD, ScalarType> &runner)
+{
+    std::vector<float> ref(runner.m * runner.n * runner.batch_count, 0);
+
+    for (int64_t b = 0; b < runner.batch_count; ++b) {
+        const auto batchStrideA = runner.m * runner.k;
+        const auto batchStrideB = runner.k * runner.n;
+        const auto batchStrideC = runner.m * runner.n;
+        const auto batchStrideD = runner.m * runner.n;
+        const hipblaslt_f8 *aPtr = reinterpret_cast<const hipblaslt_f8 *>(runner.a);
+        const hipblasLtHalf *bPtr = reinterpret_cast<const hipblasLtHalf *>(runner.b);
+        const float *cPtr = reinterpret_cast<const float *>(runner.c);
+        for (int64_t i = 0; i < runner.m ; ++i) {
+            for (int64_t j = 0; j < runner.n; ++j) {
+                for (int64_t k = 0; k < runner.k; ++k) {
+                    ref[batchStrideD * b + j * runner.m + i] += float(aPtr[batchStrideA * b + runner.m * k + i]) * float(bPtr[batchStrideB * b + runner.k * j + k]);
+                }
+
+                ref[batchStrideD * b + j * runner.m + i] *= runner.alpha;
+                ref[batchStrideD * b + j * runner.m + i] += runner.beta * cPtr[batchStrideC * b + j * runner.m + i];
+            }
+        }
+    }
+
+    std::vector<float> gpuResult(runner.m * runner.n * runner.batch_count, 0);
+    hipMemcpyDtoH(gpuResult.data(), runner.d_d, runner.batch_count * runner.m * runner.n * sizeof(float));
+
+    for (int64_t b = 0; b < runner.batch_count; ++b) {
+        const auto batchStrideD = runner.m * runner.n;
+        for (int64_t i = 0; i < runner.m ; ++i) {
+            for (int64_t j = 0; j < runner.n; ++j) {
+                const auto lhs = ref[batchStrideD * b + j * runner.m + i];
+                const auto rhs = gpuResult[batchStrideD * b + j * runner.m + i];
+
+                if (std::abs(lhs - rhs) > 1e-5) {
+                    // std::cout << lhs << " vs " << rhs << '\n';
+                    // assert(ref[batchStrideD * b + j * runner.m + i] == gpuResult[batchStrideD * b + j * runner.m + i]);
+                    return -1;
+                }
+            }
+        }
+    }
+
+    return 0;
+}
+
 int main()
 {
     /** This is an example using hipblaslt extension API.
@@ -76,6 +123,10 @@ int main()
                                   runner.max_workspace_size,
                                   runner.stream);
     });
+
+    if (validate(runner)) {
+        std::cerr << "Validation failed\n";
+    }
 
     return 0;
 }
