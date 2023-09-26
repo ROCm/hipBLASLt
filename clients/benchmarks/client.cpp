@@ -267,6 +267,8 @@ try
 
     int api_method = 0;
 
+    bool verify = 0;
+
     bool                 grouped_gemm;
     std::vector<int64_t> m, n, k;
     std::vector<int64_t> lda, ldb, ldc, ldd, lde;
@@ -392,8 +394,8 @@ try
          "Parameter requesting the use of HipManagedMemory")
 
         ("verify,v",
-         value<int8_t>(&arg.norm_check)->default_value(0),
-         "Validate GPU results with CPU? 0 = No, 1 = Yes (default: No)")
+         value<bool>(&verify)->default_value(false),
+         "Validate GPU results with CPU?")
 
         ("iters,i",
          value<int32_t>(&arg.iters)->default_value(10),
@@ -646,6 +648,9 @@ try
     int copied = snprintf(arg.function, sizeof(arg.function), "%s", function.c_str());
     if(copied <= 0 || copied >= sizeof(arg.function))
         throw std::invalid_argument("Invalid value for --function");
+
+    if(verify)
+        arg.norm_check = 1;
 
     switch(api_method)
     {
