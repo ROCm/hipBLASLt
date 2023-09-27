@@ -7076,7 +7076,7 @@ class KernelWriterAssembly(KernelWriter):
 
         if addToSrd:
           for mat, us in zip(srdTcList, useSize):
-            bpe = self.states.bpeCinternal if mat == "E" or mat =="Bias" else self.states.bpeCexternal
+            bpe = self.states.bpeCinternal if mat =="Bias" else (self.states.bpeE if mat == "E" else self.states.bpeCexternal)
             bpe = int(self.states.bpr * kernel["ProblemType"]["DestDataType"].numRegisters()) if kernel["_GlobalAccumulation"]  == 'MultipleBuffer'  and mat =="C" else bpe
             # These are constant across all workitems, just add to the SRD:
             if us:
@@ -8138,6 +8138,12 @@ class KernelWriterAssembly(KernelWriter):
         actPCMaxTempSgpr = max(actPCMaxTempSgpr, gprs["sgpr"])
       actPCGwvwVgpr = int(ceil(maxVw * kernel["ProblemType"]["ActivationComputeDataType"].numRegisters()))
       numTmpVgpr = max(numTmpVgpr, actPCMaxTempVgpr + actPCGwvwVgpr)
+    if kernel["ProblemType"]["UseE"] and (not kernel["ProblemType"]["Gradient"]):
+      maxVw = max(vectorWidths)
+      gwvwVgpr = int(ceil(maxVw * kernel["ProblemType"]["ActivationComputeDataType"].numRegisters()))
+      if kernel["ActivationFuncCall"]:
+        gwvwVgpr += actPCMaxTempVgpr + actPCGwvwVgpr
+      numTmpVgpr = max(numTmpVgpr, gwvwVgpr)
     tmpVgpr = self.vgprPool.checkOutAligned(numTmpVgpr, maxAlign, "store tmps")
 
     cvtVgprStruct  = None
@@ -8830,9 +8836,23 @@ class KernelWriterAssembly(KernelWriter):
           module.add(addrCalc.incrementToNextRow(kernel, "D", ss, tmpS01))
         dataType     = kernel["ProblemType"]["DestDataType"]
         globalOffset = addrCalc.globalOffset
-      elif tc == 'E' or tc == 'Bias':
+      elif tc == 'Bias':
         bps = self.states.bpeCinternal * ss.cfg.gwvw
         rpv = self.states.bpeCinternal * ss.cfg.gwvw / self.states.bpr
+
+        if kernel["BufferStore"]:
+          addr0 = vgpr(addrCalc.addrBiasVgpr)
+          addr1 = sgpr("Srd%s"%tc, 4)
+        else:
+          addr0 = vgpr(addrCalc.addrBiasVgpr,2)
+          addr1 = ""
+        if ss.optSrdIncForRow and addrCalc.rowInc:
+          module.add(addrCalc.incrementToNextRow(kernel, tc, ss, tmpS01, bpeType=self.states.bpeCinternal))
+        dataType     = kernel["ProblemType"]["ComputeDataType"]
+        globalOffset = addrCalc.globalOffsetInternal
+      elif tc == 'E':
+        bps = self.states.bpeE * ss.cfg.gwvw
+        rpv = self.states.bpeE * ss.cfg.gwvw / self.states.bpr
 
         if kernel["BufferStore"]:
           addr0 = vgpr(addrCalc.addrEVgpr)
@@ -8841,9 +8861,9 @@ class KernelWriterAssembly(KernelWriter):
           addr0 = vgpr(addrCalc.addrEVgpr,2)
           addr1 = ""
         if ss.optSrdIncForRow and addrCalc.rowInc:
-          module.add(addrCalc.incrementToNextRow(kernel, tc, ss, tmpS01, isCompute=True))
-        dataType     = kernel["ProblemType"]["ComputeDataType"]
-        globalOffset = addrCalc.globalOffsetInternal
+          module.add(addrCalc.incrementToNextRow(kernel, tc, ss, tmpS01, bpeType=self.states.bpeE))
+        dataType     = kernel["ProblemType"]["DataTypeE"]
+        globalOffset = addrCalc.globalOffsetE
       else:
         printExit("Unsupported store tc %s"%tc)
 
@@ -8897,17 +8917,21 @@ class KernelWriterAssembly(KernelWriter):
     isGlc = True if kernel["NonTemporal%s"%tc]%2==1 else False
     isSlc = True if kernel["NonTemporal%s"%tc]//2==1 else False
 
-    if dataType == kernel["ProblemType"]["ComputeDataType"]:
-      globalOffset = addrCalc.globalOffsetInternal
-      isCompute    = True
+    if tc == 'E':
+        globalOffset = addrCalc.globalOffsetE
+        bpeType = self.states.bpeE
     else:
-      globalOffset = addrCalc.globalOffset #???
-      # if tc == 'C' and gwvw == 2:
-      #   globalOffset = globalOffset/2
-      isCompute    = False
+      if dataType == kernel["ProblemType"]["ComputeDataType"]:
+        globalOffset = addrCalc.globalOffsetInternal
+        bpeType = self.states.bpeCinternal
+      else:
+        globalOffset = addrCalc.globalOffset #???
+        bpeType = self.states.bpeCexternal
+        # if tc == 'C' and gwvw == 2:
+        #   globalOffset = globalOffset/2
 
     if ss.optSrdIncForRow and addrCalc.rowInc:
-      module.add(addrCalc.incrementToNextRow(kernel, tc, ss, tmpS01, isCompute=isCompute))
+      module.add(addrCalc.incrementToNextRow(kernel, tc, ss, tmpS01, bpeType=bpeType))
 
     if dataType.isHalf():
       hi16 = 0 if self.states.HHH_WMMA else (vc0 % 2)

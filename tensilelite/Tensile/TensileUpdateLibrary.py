@@ -1,6 +1,6 @@
 ###############################################################################
 #
-# Copyright (C) 2022 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -46,6 +46,7 @@ def UpdateLogic(filename, logicPath, outputPath):
     problemTypeState["DataType"] = problemTypeState["DataType"].value
     problemTypeState["DataTypeA"] = problemTypeState["DataTypeA"].value
     problemTypeState["DataTypeB"] = problemTypeState["DataTypeB"].value
+    problemTypeState["DataTypeE"] = problemTypeState["DataTypeE"].value
     problemTypeState["DestDataType"] = problemTypeState["DestDataType"].value
     problemTypeState["ComputeDataType"] = problemTypeState["ComputeDataType"].value
     problemTypeState["BiasDataTypeList"] = [btype.value for btype in problemTypeState["BiasDataTypeList"]]
@@ -64,6 +65,8 @@ def UpdateLogic(filename, logicPath, outputPath):
                 solutionState["ProblemType"]["DataTypeA"].value
         solutionState["ProblemType"]["DataTypeB"] = \
                 solutionState["ProblemType"]["DataTypeB"].value
+        solutionState["ProblemType"]["DataTypeE"] = \
+                solutionState["ProblemType"]["DataTypeE"].value
         solutionState["ProblemType"]["DestDataType"] = \
                 solutionState["ProblemType"]["DestDataType"].value
         solutionState["ProblemType"]["ComputeDataType"] = \

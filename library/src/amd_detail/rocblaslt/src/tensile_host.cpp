@@ -429,7 +429,7 @@ namespace
         {
             bool isOutput = prob.gradient ? false : true;
             tensileProblem.setUseE(true);
-            tensileProblem.setE(compute_type,
+            tensileProblem.setE(d_type,
                                 {prob.m, prob.n, prob.batch_count},
                                 {prob.row_stride_e, prob.col_stride_e, prob.batch_stride_e},
                                 isOutput);
@@ -693,7 +693,7 @@ namespace
             {
                 bool isOutput = prob.gradient ? false : true;
                 tensileProblem.setUseE(true);
-                tensileProblem.setE(compute_type,
+                tensileProblem.setE(d_type,
                                     {prob.m, prob.n, prob.batch_count},
                                     {prob.row_stride_e, prob.col_stride_e, prob.batch_stride_e},
                                     isOutput);

@@ -127,6 +127,10 @@ class ProblemType(Mapping):
         printExit("NO dest data type or data type specified")
         self["DataType"] = DataType(0)
 
+    self["DataTypeE"] = self["DestDataType"]
+    if "DataTypeE" in config:
+      self["DataTypeE"] = DataType(config["DataTypeE"])
+
     if "ComputeDataType" in config:
       self["ComputeDataType"] = DataType(config["ComputeDataType"])
     else:
@@ -492,9 +496,9 @@ class ProblemType(Mapping):
         name += "_BiasSrc%s"%self["BiasSrc"]
     if self["UseE"]:
       if self["Gradient"]:
-        name += "_Grad"
+        name += "_Grad%s"%self["DataTypeE"].toChar()
       else:
-        name += "_Aux" # Not showing aux types
+        name += "_Aux%s"%self["DataTypeE"].toChar() # Not showing aux types
     if self["SparseA"]: name += "_SA"
 
     # precision and other

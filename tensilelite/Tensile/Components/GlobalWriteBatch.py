@@ -31,7 +31,7 @@ from ..TensileInstructions import Label, Module, EXEC, SDWAModifiers, VCC, Selec
                             DataType, CvtType, RoundType
 from ..TensileInstructions.Instructions import *
 from ..AsmAddressCalculation import AddrCalculation
-from ..Components.PackData import formatting
+from ..Components.PackData import formatting, PackData_F16
 
 from math import ceil
 
@@ -292,16 +292,17 @@ class GlobalWriteBatchWriter:
       if (self.kernel["ProblemType"]["UseE"] and self.kernel["ProblemType"]["Gradient"] and self.kernel["ProblemType"]["ActivationType"] != 'none') and (self.kernel["GlobalSplitU"] == 1):
         module.add(addrCalc.emitLdChange(self.kernel, self.ss, 'E', self.edge, self.beta, mask, bufferOOB, (elementIdx == 0), self.tmpVgpr, self.tmpSgpr, addrEVgpr, self.addrE))
         if dataE not in loadedDataE:
+          loadOffset = int((self.kernel["ProblemType"]["ComputeDataType"].numRegisters() - self.kernel["ProblemType"]["DataTypeE"].numRegisters()) * self.ss.cfg.gwvw)
           if self.kernel["GroupLoadStore"]:
-            loadInputCode.add(self.parentWriter.readInput(self.kernel, self.ss, 'E', self.kernel["ProblemType"]["ComputeDataType"], addrCalc, vc0, dataE, self.gwvw, addrEVgpr, self.tmpS01))
+            loadInputCode.add(self.parentWriter.readInput(self.kernel, self.ss, 'E', self.kernel["ProblemType"]["DataTypeE"], addrCalc, vc0, dataE + loadOffset, self.gwvw, addrEVgpr, self.tmpS01))
           else:
-            module.add(self.parentWriter.readInput(self.kernel, self.ss, 'E', self.kernel["ProblemType"]["ComputeDataType"], addrCalc, vc0, dataE, self.gwvw, addrEVgpr, self.tmpS01))
-          loadedDataE[dataE] = ceil(self.kernel["ProblemType"]["ComputeDataType"].numBytes() * self.ss.cfg.gwvw / 16)
-          self.loadsEIssued += ceil(self.kernel["ProblemType"]["ComputeDataType"].numBytes() * self.gwvw / 16)
+            module.add(self.parentWriter.readInput(self.kernel, self.ss, 'E', self.kernel["ProblemType"]["DataTypeE"], addrCalc, vc0, dataE + loadOffset, self.gwvw, addrEVgpr, self.tmpS01))
+          loadedDataE[dataE] = ceil(self.kernel["ProblemType"]["DataTypeE"].numBytes() * self.ss.cfg.gwvw / 16)
+          self.loadsEIssued += ceil(self.kernel["ProblemType"]["DataTypeE"].numBytes() * self.gwvw / 16)
         self.loadE = True
       else:
         self.loadE = False
-      self.eLoadIssued.append(len(loadedDataE) * ceil(self.kernel["ProblemType"]["ComputeDataType"].numBytes() * self.ss.cfg.gwvw / 16))
+      self.eLoadIssued.append(len(loadedDataE) * ceil(self.kernel["ProblemType"]["DataTypeE"].numBytes() * self.ss.cfg.gwvw / 16))
 
       if self.parentWriter.states.useBias == DataDirection.READ:
         module.add(addrCalc.emitLdChange(self.kernel, self.ss, 'Bias', self.edge, self.beta, mask, bufferOOB, (elementIdx == 0), self.tmpVgpr, self.tmpSgpr, addrBiasVgpr, self.addrBias))
@@ -782,11 +783,44 @@ class GlobalWriteBatchWriter:
             raise RuntimeError("Unsupported bias compute data type %s."%str(self.kernel["ProblemType"]["ComputeDataType"]))
 
       if (self.kernel["ProblemType"]["UseE"] and not self.kernel["ProblemType"]["Gradient"]) and (self.kernel["GlobalSplitU"] == 1):
-        vgprIdx = self.ss.elementSumIdx[elementIdx] - self.parentWriter.states.c.startVgprValu
-        vgprDst = self.activationSetPCStruct.vgprActCopy if mergeActFuncCall else "ValuC+%d"%vgprIdx
+        vgprIdx   = self.ss.elementSumIdx[elementIdx] - self.parentWriter.states.c.startVgprValu
+        vgprDst   = self.activationSetPCStruct.vgprActCopy if mergeActFuncCall else vgprIdx
+        prefixStr = "" if mergeActFuncCall else "ValuC+"
+        prefixOffset = 0 if mergeActFuncCall else self.parentWriter.states.c.startVgprValu
+        # Packdata if needed
+        tmpVgpr = self.tmpVgpr
+        if mergeActFuncCall:
+          tmpVgpr += self.gwvw * self.kernel["ProblemType"]["ComputeDataType"].numRegisters()
+        if self.kernel["ProblemType"]["ComputeDataType"].isSingle():
+          if self.kernel["ProblemType"]["DataTypeE"].isHalf():
+            packdata = PackData_F16()
+            module.add(packdata(self.gwvw, tmpVgpr, vgprDst, tmpVgpr=tmpVgpr, inputPrefix=prefixStr, prefixOffset=prefixOffset))
+            vgprDst = tmpVgpr
+          elif self.kernel["ProblemType"]["DataTypeE"].isSingle():
+            if not mergeActFuncCall:
+              vgprDst = "ValuC+%d" % vgprDst
+          else:
+            printExit("Unsupport type for E output. (%s)"%self.kernel["ProblemType"]["DataTypeE"].toEnum())
+        else:
+          printExit("Unsupport compute type for E output. (%s)"%self.kernel["ProblemType"]["ComputeDataType"].toEnum())
+
         module.add(self.parentWriter.addStore(self.kernel, self.ss, 'E', addrCalc, vgprDst, self.tmpS01, self.edge, comment="store E"))
 
       SaturateTypeInt8 = SaturateCastType.NORMAL
+
+      gradientCvtModule = Module("gradientCvtModule")
+      if (self.kernel["ProblemType"]["UseE"] and self.kernel["ProblemType"]["Gradient"]) and (self.kernel["GlobalSplitU"] == 1):
+        loadOffset = int((self.kernel["ProblemType"]["ComputeDataType"].numRegisters() - self.kernel["ProblemType"]["DataTypeE"].numRegisters()) * self.ss.cfg.gwvw)
+        if activationCDataType != self.kernel["ProblemType"]["DataTypeE"]:
+          if activationCDataType.isSingle() and self.kernel["ProblemType"]["DataTypeE"].isHalf():
+            for vi in range(0, self.gwvw):
+              dataEV  = dataE + vi
+              dataEV2 = dataE + vi // 2
+              selectbit = SelectBit.WORD_0 if (self.gwvw != 1 and vi % 2 == 0) or (self.gwvw == 1 and elementIdx % 2 == 0) else SelectBit.WORD_1
+              gradientCvtModule.add(VCvtF16toF32(dst=vgpr(dataEV), src=vgpr(dataEV2+loadOffset), sdwa=SDWAModifiers(src0_sel=selectbit), comment="gwvw %d, elementIdx %d"%(self.gwvw, elementIdx)))
+          else:
+            printExit("[Gradient input] Unsupported conversion.")
+
       # Activation
       activationModule = None
       isActivationInsertAfter = False
@@ -897,8 +931,10 @@ class GlobalWriteBatchWriter:
       if isActivationInsertAfter:
         module.add(convertModule)
         module.add(packModule)
+        module.add(gradientCvtModule)
         module.add(activationModule)
       else:
+        module.add(gradientCvtModule)
         module.add(activationModule)
         module.add(scaleDModule)
         module.add(biasReductionModule)
