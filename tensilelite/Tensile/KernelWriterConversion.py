@@ -76,7 +76,7 @@ class KernelWriterConversion(KernelWriterBase):
     bStr = '' if self.state["ProblemType"]["StridedBatched"] else 'Batch'
 
     if self.state["ProblemType"]["UseE"]:
-      ptrCStr = self.state["ProblemType"]["ComputeDataType"].toDevice(self.language)
+      ptrCStr = self.state["ProblemType"]["DataTypeE"].toDevice(self.language)
       ptrCStr += '' if self.state["ProblemType"]["StridedBatched"] else '*'
       kStr += "  " + ptrCStr + " * " + bStr + "E;" + self.endLine
     kStr += "  " + ptrStr + " * " + bStr + "D;" + self.endLine
@@ -346,7 +346,7 @@ class KernelWriterConversion(KernelWriterBase):
       kStr += ";" + self.endLine
 
       if self.state["ProblemType"]["UseE"]:
-        ptrStr = self.state["ProblemType"]["ComputeDataType"].toDevice(self.language)
+        ptrStr = self.state["ProblemType"]["DataTypeE"].toDevice(self.language)
         kStr += "  " + ptrStr + " * arg.E = arg.BatchE[wg];" + self.endLine
       ptrStr = self.state["ProblemType"]["DestDataType"].toDevice(self.language)
       kStr += "  " + ptrStr + " * arg.D = arg.BatchD[wg];" + self.endLine
@@ -512,6 +512,7 @@ class KernelWriterConversion(KernelWriterBase):
 
     #Handle E
     if self.state["ProblemType"]["UseE"]:
+      dataTypeE = self.state["ProblemType"]["DataTypeE"].toDevice(self.language)
       if self.state["ProblemType"]["Gradient"]:
         kStr += "  %s idxE = GLOBAL_E( (%s)" % (self.uint64Str, self.uint64Str)
         for i in range(problemType["NumIndicesC"]):
@@ -531,7 +532,7 @@ class KernelWriterConversion(KernelWriterBase):
           kStr += '0'  if i in nonTileFreeIndices else ('id%d' % i)
         kStr += ");%s" % (self.endLine)
         for vIdx in range(self.num_dword_load):
-          kStr += "    arg.E[idxE+%d] = (%s)(accum[%d]);%s" % (vIdx, intermediateDataType, vIdx, self.endLine)
+          kStr += "    arg.E[idxE+%d] = (%s)(accum[%d]);%s" % (vIdx, dataTypeE, vIdx, self.endLine)
         kStr += "  }%s" % (self.endLine)
 
     #Activation
@@ -615,9 +616,9 @@ class KernelWriterConversion(KernelWriterBase):
         name += "_Bias%s"%self.state["ProblemType"]["BiasDataType"].toChar()
     if self.state["ProblemType"]["UseE"]:
       if self.state["ProblemType"]["Gradient"]:
-        name += "_Grad%s"%self.state["ProblemType"]["ComputeDataType"].toChar()
+        name += "_Grad%s"%self.state["ProblemType"]["DataTypeE"].toChar()
       else:
-        name += "_Aux%s"%self.state["ProblemType"]["ComputeDataType"].toChar()
+        name += "_Aux%s"%self.state["ProblemType"]["DataTypeE"].toChar()
 
     if ((self.state["ProblemType"]["ActivationType"] != 'none') and self.state["ActivationFused"]):
       if self.state["ProblemType"]["ActivationType"] == 'all':

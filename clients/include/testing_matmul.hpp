@@ -50,7 +50,7 @@ void epilogue_func(int64_t m,
                    Ti*     in,
                    To*     out,
                    Tc*     out_raw,
-                   Tc*     e,
+                   To*     e,
                    Tc      scaleD,
                    Tc      scaleE,
                    bool    enable_bias,
@@ -72,7 +72,7 @@ void epilogue_func(int64_t m,
             auto in_Tact = static_cast<Tact>(*(in + pos)) + bias_data;
             if(e && !gradient)
             {
-                *(e + pos) = static_cast<Tc>(in_Tact * scaleE);
+                *(e + pos) = static_cast<To>(in_Tact * scaleE);
             }
             Tact in_Tact_act = 0;
             if(gradient)
@@ -92,7 +92,7 @@ void epilogue_func(int64_t m,
                    Ti*     in,
                    To*     out,
                    Tc*     out_raw,
-                   Tc*     e,
+                   To*     e,
                    Tc      scaleD,
                    Tc      scaleE,
                    bool    enable_bias,
@@ -111,7 +111,7 @@ void epilogue_func(int64_t m,
             auto temp = static_cast<Ti>(*(in + pos)) + bias_data;
             if(e)
             {
-                *(e + pos) = static_cast<Tc>(temp * scaleE);
+                *(e + pos) = static_cast<To>(temp * scaleE);
             }
             temp *= scaleD;
             *(out + pos)     = saturate_o(temp);
@@ -263,7 +263,7 @@ void testing_matmul(const Arguments& arg)
     std::vector<device_vector<Talpha>*> dScaleAlphaVec(gemm_count), dBias_C(gemm_count),
         dScaleA(gemm_count), dScaleB(gemm_count), dScaleC(gemm_count), dScaleD(gemm_count),
         dScaleE(gemm_count);
-    std::vector<device_vector<Tc>*> dE(gemm_count);
+    std::vector<device_vector<To>*> dE(gemm_count);
 
     std::vector<host_vector<TiA>*> hA(gemm_count);
     std::vector<host_vector<TiB>*> hB(gemm_count);
@@ -273,7 +273,7 @@ void testing_matmul(const Arguments& arg)
         hD_gold_ScaleAlpha(gemm_count), hBias_C(gemm_count), hBias_gold_C(gemm_count),
         hBias_gold_epl(gemm_count), hScaleA(gemm_count), hScaleB(gemm_count), hScaleC(gemm_count),
         hScaleD(gemm_count), hScaleE(gemm_count);
-    std::vector<host_vector<Tc>*> hE(gemm_count, nullptr), hE_gold(gemm_count, nullptr);
+    std::vector<host_vector<To>*> hE(gemm_count, nullptr), hE_gold(gemm_count, nullptr);
     std::vector<void*>            alpha_in(gemm_count);
 
     for(int i = 0; i < gemm_count; i++)
@@ -517,7 +517,7 @@ void testing_matmul(const Arguments& arg)
 
         if(arg.use_e)
         {
-            dE[i] = new device_vector<Tc>(size_E[i], 1, HMM);
+            dE[i] = new device_vector<To>(size_E[i], 1, HMM);
             CHECK_DEVICE_ALLOCATION(dE[i]->memcheck());
         }
         else
@@ -553,9 +553,9 @@ void testing_matmul(const Arguments& arg)
 
         if(arg.use_e)
         {
-            hE[i] = new host_vector<Tc>(size_E[i]);
+            hE[i] = new host_vector<To>(size_E[i]);
             if(!arg.gradient)
-                hE_gold[i] = new host_vector<Tc>(size_E[i]);
+                hE_gold[i] = new host_vector<To>(size_E[i]);
         }
 
         hipblaslt_seedrand();
@@ -618,7 +618,7 @@ void testing_matmul(const Arguments& arg)
 
         if(arg.gradient && arg.use_e)
         {
-            hipblaslt_init<Tc>(*hE[i], M[i], N[i], lde[i], stride_e[i], num_batches[i]);
+            hipblaslt_init<To>(*hE[i], M[i], N[i], lde[i], stride_e[i], num_batches[i]);
         }
 
         if(arg.bias_vector)
@@ -1707,7 +1707,7 @@ void testing_matmul(const Arguments& arg)
                                        *(hD_1[gemmIdx]),
                                        num_batches[gemmIdx]);
                 if(!arg.gradient && arg.use_e)
-                    unit_check_general<Tc>(M[gemmIdx],
+                    unit_check_general<To>(M[gemmIdx],
                                            N[gemmIdx],
                                            lde[gemmIdx],
                                            stride_e[gemmIdx],
@@ -1752,7 +1752,7 @@ void testing_matmul(const Arguments& arg)
 
                 if(!arg.gradient && arg.use_e)
                 {
-                    double norm_error = std::abs(norm_check_general<Tc>('F',
+                    double norm_error = std::abs(norm_check_general<To>('F',
                                                                         M[gemmIdx],
                                                                         N[gemmIdx],
                                                                         lde[gemmIdx],
@@ -1762,7 +1762,7 @@ void testing_matmul(const Arguments& arg)
                                                                         num_batches[gemmIdx]));
                     hipblaslt_error += norm_error;
                     if(arg.norm_check_assert)
-                        CHECK_SUCCESS(norm_check<Tc>(norm_error));
+                        CHECK_SUCCESS(norm_check<To>(norm_error));
                 }
                 if(arg.gradient && arg.bias_vector)
                 {
