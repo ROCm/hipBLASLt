@@ -27,6 +27,7 @@
 #include "hipblaslt-ext.hpp"
 #include "exceptions.hpp"
 #include "hipblaslt_internal.hpp"
+#include <algorithm>
 #include <hip/hip_runtime.h>
 #include <hipblaslt/hipblaslt_float8.h>
 #include <iostream>
@@ -34,17 +35,21 @@
 
 namespace hipblaslt_ext
 {
-    template <typename SrcType, typename DstType>
-    __global__ void datatypeConversion(const SrcType* src, DstType* dst, std::size_t numElements)
+    template <typename SrcType, typename DstType, typename ScaleType = float>
+    __global__ void datatypeConversion(const SrcType*   src,
+                                       DstType*         dst,
+                                       const ScaleType* scale,
+                                       std::size_t      numElements)
     {
         const auto tId        = threadIdx.x;
         const auto bId        = blockIdx.x;
         const auto blockSize  = blockDim.x * blockDim.y * blockDim.z;
         const auto elemOffset = bId * blockSize + tId;
+        const auto scaleValue = scale ? *scale : 1.f;
 
         if(elemOffset < numElements)
         {
-            dst[elemOffset] = DstType(src[elemOffset]);
+            dst[elemOffset] = DstType(float(src[elemOffset]) * scaleValue);
         }
     }
 
@@ -166,55 +171,44 @@ namespace hipblaslt_ext
         if(m_gemm_count == 0)
             return HIPBLAS_STATUS_INVALID_VALUE;
 
+        //Input conversions
         if(m_auxiliary_conversion_buffers.size())
         {
             for(auto& conversions : m_auxiliary_conversion_buffers)
             {
-                for(auto& conversion : conversions)
+                for(size_t i = 0; i < 3; ++i)
                 {
-                    //Only check dst since the existence garantees requirement of fp8/bf8 -> fp16 conversion
-                    if(auto& dst = std::get<1>(conversion))
+                    auto& conversion = conversions.at(i);
+                    auto& dst        = std::get<1>(conversion);
+                    auto& src        = std::get<0>(conversion);
+
+                    if(src && dst)
                     {
-                        auto src = std::get<0>(conversion);
+                        auto           srcType           = std::get<2>(conversion);
+                        auto           dstType           = std::get<3>(conversion);
+                        const auto     numElements       = std::get<4>(conversion);
+                        auto&          scale             = std::get<5>(conversion);
+                        constexpr auto numWorkitemsPerWg = 256;
+                        const auto     numWg             = (numElements / numWorkitemsPerWg)
+                                           + !!(numElements % numWorkitemsPerWg);
 
-                        if(src)
+                        if(srcType == HIPBLASLT_R_8F_E4M3)
                         {
-                            auto           srcType           = std::get<2>(conversion);
-                            const auto     numElements       = std::get<4>(conversion);
-                            constexpr auto numWorkitemsPerWg = 256;
-                            const auto     numWg             = (numElements / numWorkitemsPerWg)
-                                               + !!(numElements % numWorkitemsPerWg);
-
-                            if(srcType == HIPBLASLT_R_8F_E4M3)
-                            {
-                                datatypeConversion<hipblaslt_f8, hipblasLtHalf>
-                                    <<<numWg, numWorkitemsPerWg, 0, stream>>>(
-                                        (const hipblaslt_f8*)src,
-                                        (hipblasLtHalf*)dst.get(),
-                                        numElements);
-
-                                // hipStreamSynchronize(stream);
-                                // std::vector<hipblaslt_f8> cpuSrc(numElements);
-                                // std::vector<hipblasLtHalf> cpuDst(numElements);
-                                // hipMemcpyDtoH(cpuSrc.data(), src, numElements);
-                                // hipMemcpyDtoH(cpuDst.data(), dst.get(), numElements * 2);
-
-                                // for (size_t i = 0; i < numElements; ++i) {
-                                //     auto a = float(cpuSrc[i]);
-                                //     auto b = float(cpuDst[i]);
-                                //     if (std::abs(a - b) > 1e-5) {
-                                //         std::cout << "values mismatched at " << i << " (a, b) == (" << a << ", " << b << ")\n";
-                                //     }
-                                // }
-                            }
-                            else if(srcType == HIPBLASLT_R_8F_E5M2)
-                            {
-                                datatypeConversion<hipblaslt_bf8, hipblasLtHalf>
-                                    <<<numWg, numWorkitemsPerWg, 0, stream>>>(
-                                        (const hipblaslt_bf8*)src,
-                                        (hipblasLtHalf*)dst.get(),
-                                        numElements);
-                            }
+                            datatypeConversion<hipblaslt_f8, hipblasLtHalf>
+                                <<<numWg, numWorkitemsPerWg, 0, stream>>>(
+                                    (const hipblaslt_f8*)src.get(),
+                                    (hipblasLtHalf*)dst.get(),
+                                    (const float*)scale.get(),
+                                    numElements);
+                        }
+                        else if(srcType == HIPBLASLT_R_8F_E5M2)
+                        {
+                            datatypeConversion<hipblaslt_bf8, hipblasLtHalf>
+                                <<<numWg, numWorkitemsPerWg, 0, stream>>>(
+                                    (const hipblaslt_bf8*)src.get(),
+                                    (hipblasLtHalf*)dst.get(),
+                                    (const float*)scale.get(),
+                                    numElements);
                         }
                     }
                 }
@@ -222,8 +216,81 @@ namespace hipblaslt_ext
         }
 
         auto gemmType = static_cast<rocblaslt::RocGemmType>(m_gemm_type);
-        return RocBlasLtStatusToHIPStatus(
+        auto status   = RocBlasLtStatusToHIPStatus(
             rocblaslt_run_cpp((rocblaslt_handle)m_handle, gemmType, m_data, stream));
+
+        if(m_auxiliary_conversion_buffers.size())
+        {
+            for(auto& conversions : m_auxiliary_conversion_buffers)
+            {
+                if(conversions.size() > 3)
+                {
+                    auto& conversion = conversions.at(3);
+                    auto& src        = std::get<0>(conversion);
+                    auto& dst        = std::get<1>(conversion);
+                    auto           srcType           = std::get<2>(conversion);
+                    auto           dstType           = std::get<3>(conversion);
+                    const auto     numElements       = std::get<4>(conversion);
+                    auto&          scale             = std::get<5>(conversion);
+                    constexpr auto numWorkitemsPerWg = 256;
+                    const auto     numWg             = (numElements / numWorkitemsPerWg)
+                                        + !!(numElements % numWorkitemsPerWg);
+                    //indicates d needs datatype conversion
+                    if(src && dst)
+                    {
+                        // std::cout << "d_src: " << src.get() << '\n';
+                        // std::cout << "d_dst: " << dst.get() << '\n';
+                        // std::cout << "d_scale" << scale.get() << '\n';
+                        if(dstType == HIPBLASLT_R_8F_E4M3)
+                        {
+                            datatypeConversion<hipblasLtHalf, hipblaslt_f8>
+                                <<<numWg, numWorkitemsPerWg, 0, stream>>>(
+                                    (const hipblasLtHalf*)src.get(),
+                                    (hipblaslt_f8*)dst.get(),
+                                    (const float*)scale.get(),
+                                    numElements);
+                        }
+                        else if(dstType == HIPBLASLT_R_8F_E5M2)
+                        {
+                            datatypeConversion<hipblasLtHalf, hipblaslt_bf8>
+                                <<<numWg, numWorkitemsPerWg, 0, stream>>>(
+                                    (const hipblasLtHalf*)src.get(),
+                                    (hipblaslt_bf8*)dst.get(),
+                                    (const float*)scale.get(),
+                                    numElements);
+                        }
+
+                        // auto                       err = hipStreamSynchronize(stream);
+                        // std::vector<hipblasLtHalf> cpuSrc(numElements);
+                        // std::vector<hipblaslt_f8>  cpuDst(numElements);
+                        // err = hipMemcpyDtoH(cpuSrc.data(), src.get(), numElements * 2);
+                        // err = hipMemcpyDtoH(cpuDst.data(), dst.get(), numElements);
+                        // std::vector<hipblaslt_f8> cpuRef(numElements);
+                        // datatypeConversionCpu<hipblasLtHalf, hipblaslt_f8>(cpuSrc.data(), cpuRef.data(), numElements);
+
+                        // if(err != hipSuccess)
+                        // {
+                        //     std::cout << hipGetErrorString(err);
+                        // }
+
+                        // for(size_t i = 0; i < numElements; ++i)
+                        // {
+                        //     auto a = float(cpuSrc[i]);
+                        //     auto b = float(cpuDst[i]);
+
+                        //     if(std::abs(a - b) > 1e-5)
+                        //     {
+                        //         std::cout << "values mismatched at " << i << " (a, b) == (" << a
+                        //                   << ", " << b << ")\n";
+                        //         std::cout << "CPU ref: " << cpuRef[i] << '\n';
+                        //     }
+                        // }
+                    }
+                }
+            }
+        }
+
+        return status;
     }
     catch(...)
     {
@@ -327,66 +394,124 @@ namespace hipblaslt_ext
                                      GemmProblemType& problemtype)
     {
 #ifndef __gfx940__
+        constexpr auto conversionDType = HIPBLASLT_R_16F;
+        auto           needConversion  = [&problemtype]() -> bool {
+            using std::begin;
+            using std::end;
+            const auto types = {problemtype.type_a, problemtype.type_b, problemtype.type_c};
+            return end(types)
+                   != std::adjacent_find(begin(types), end(types), std::not_equal_to<>());
+        }();
+
         constexpr auto numGemms = 1;
 
         if(m_auxiliary_conversion_buffers.size() != numGemms)
         {
             m_auxiliary_conversion_buffers.resize(numGemms);
 
-            for(std::size_t j = 0; j < m_auxiliary_conversion_buffers.size(); ++j)
+            if(needConversion)
             {
-                const std::vector<std::int64_t> sizes{strideA, strideB};
-                const std::vector<void*>       gemmInputs{inputs.a, inputs.b};
-                auto&                          conversions = m_auxiliary_conversion_buffers.at(j);
-                auto&                          problem     = m_problem_types.at(j);
-                const std::vector<hipblasltDatatype_t> dtypes{
-                    problem.type_a, problem.type_b, problem.type_c};
-
-                for(std::size_t i = 0; i < sizes.size(); ++i)
+                for(std::size_t j = 0; j < m_auxiliary_conversion_buffers.size(); ++j)
                 {
-                    auto dtype = dtypes.at(i);
+                    const std::vector<std::int64_t> sizes{strideA, strideB, strideC};
+                    const std::vector<void*>        gemmInputs{inputs.a, inputs.b, inputs.c};
+                    const std::vector<void*> scales{inputs.scaleA, inputs.scaleB, inputs.scaleC};
+                    auto&                    conversions = m_auxiliary_conversion_buffers.at(j);
+                    auto&                    problem     = m_problem_types.at(j);
+                    const std::vector<hipblasltDatatype_t> dtypes{
+                        problem.type_a, problem.type_b, problem.type_c};
 
-                    if(dtype == HIPBLASLT_R_8F_E4M3 || dtype == HIPBLASLT_R_8F_E5M2)
+                    //a, b and c
+                    for(std::size_t i = 0; i < sizes.size(); ++i)
                     {
-                        const auto numElements = sizes.at(i) * batch_count;
-                        auto       numBytes    = numElements * sizeof(hipblasLtHalf);
-                        conversions.emplace_back(std::make_tuple(gemmInputs.at(i),
-                                                                 std::move(makeHipBuffer(numBytes)),
-                                                                 dtype,
-                                                                 HIPBLASLT_R_16F,
-                                                                 numElements));
+                        auto dtype = dtypes.at(i);
+                        const auto numElements = sizes.at(i);
+
+                        if(dtype == HIPBLASLT_R_8F_E4M3 || dtype == HIPBLASLT_R_8F_E5M2)
+                        {
+                            const auto numBytes = numElements * 2;
+                            conversions.emplace_back(std::make_tuple(
+                                std::move(HipBufferPtr(gemmInputs.at(i), NullDeleter)),
+                                std::move(makeHipBuffer(numBytes)),
+                                dtype,
+                                conversionDType,
+                                numElements,
+                                std::move(HipBufferPtr(scales.at(i), NullDeleter))));
+                        } else {
+                            conversions.emplace_back(std::make_tuple(
+                                std::move(HipBufferPtr(gemmInputs.at(i), NullDeleter)),
+                                std::move(makeHipBuffer(0)),
+                                dtype,
+                                conversionDType,
+                                numElements,
+                                std::move(HipBufferPtr(scales.at(i), NullDeleter))));
+                        }
+                    }
+
+                    //for d
+                    auto       output      = inputs.d;
+                    const auto numElements = strideD * batch_count;
+
+                    if(problem.type_d == HIPBLASLT_R_8F_E4M3
+                       || problem.type_d == HIPBLASLT_R_8F_E5M2)
+                    {
+                        auto numBytes = numElements * 2;
+                        conversions.emplace_back(
+                            std::make_tuple(std::move(makeHipBuffer(numBytes)),
+                                            std::move(HipBufferPtr(output, NullDeleter)),
+                                            conversionDType,
+                                            problem.type_d,
+                                            numElements,
+                                            std::move(HipBufferPtr(inputs.scaleD, NullDeleter))));
                     }
                     else
                     {
-                        conversions.emplace_back(std::make_tuple(gemmInputs.at(i),
-                                                                 std::move(makeHipBuffer(0)),
-                                                                 dtype,
-                                                                 HIPBLASLT_R_16F,
-                                                                 0));
+                        conversions.emplace_back(
+                            std::make_tuple(std::move(makeHipBuffer(0)),
+                                            std::move(HipBufferPtr(output, NullDeleter)),
+                                            conversionDType,
+                                            problem.type_d,
+                                            numElements,
+                                            std::move(HipBufferPtr(inputs.scaleD, NullDeleter))));
                     }
                 }
             }
         }
 
         //Shallow copy
-        GemmInputs gemmInputs = inputs;
+        GemmInputs      gemmInputs      = inputs;
         GemmProblemType gemmProblemType = problemtype;
-        auto&      problem    = m_problem_types.at(0);
+        auto&           problem         = m_problem_types.at(0);
 
-        if(auto& a = std::get<1>(m_auxiliary_conversion_buffers.at(0).at(0)))
+        if(needConversion)
         {
-            gemmInputs.a   = a.get();
-            gemmProblemType.type_a = HIPBLASLT_R_16F;
-        }
+            if(auto& a = std::get<1>(m_auxiliary_conversion_buffers.at(0).at(0)))
+            {
+                gemmInputs.a           = a.get();
+                gemmProblemType.type_a = conversionDType;
+            }
 
-        if(auto& b = std::get<1>(m_auxiliary_conversion_buffers.at(0).at(1)))
-        {
-            gemmInputs.b   = b.get();
-            gemmProblemType.type_b = HIPBLASLT_R_16F;
+            if(auto& b = std::get<1>(m_auxiliary_conversion_buffers.at(0).at(1)))
+            {
+                gemmInputs.b           = b.get();
+                gemmProblemType.type_b = conversionDType;
+            }
+
+            if(auto& c = std::get<1>(m_auxiliary_conversion_buffers.at(0).at(2)))
+            {
+                gemmInputs.c           = c.get();
+                gemmProblemType.type_c = conversionDType;
+            }
+
+            if(auto& d = std::get<0>(m_auxiliary_conversion_buffers.at(0).at(3)))
+            {
+                gemmInputs.d           = d.get();
+                gemmProblemType.type_d = conversionDType;
+            }
         }
 #else
         GemmInputs& gemmInputs = inputs;
-        GemmProblemType &gemmProblemType = problemtype;
+        GemmProblemType& gemmProblemType = problemtype;
 #endif
         auto rocepilogue    = reinterpret_cast<rocblaslt::RocGemmEpilogue*>(&epilogue);
         auto rocepinputs    = reinterpret_cast<rocblaslt::RocGemmInputs*>(&gemmInputs);
