@@ -19,7 +19,13 @@ Here are data type supported list:
 | :---: | :---: | :---: | :---: | :---: |
 | fp32  | fp32  | fp32  | fp32  | fp32  |
 | fp16  | fp16  | fp16  | fp16  | fp32  |
+| fp16  | fp16  | fp16  | fp32  | fp32  |
 | bf16  | bf16  | bf16  | bf16  | fp32  |
+| fp8   | fp8/bf8  | fp32   | fp32  | fp32  |
+| fp8   | fp8/bf8  | fp16   | fp16  | fp32  |
+| bf8   | fp8  | fp32  | fp32  | fp32  |
+| bf8   | fp8  | fp16  | fp16  | fp32  |
+(fp8 and bf8 are only supported by gfx94x platform)
 
 ## Documentation
 
@@ -34,6 +40,7 @@ python3 -m sphinx -T -E -b html -d _build/doctrees -D language=en . _build/html
 ```
 ## Hardware Requirements
 * gfx90a card
+* gfx94x card
 
 ## Software Requirements
 * Git
