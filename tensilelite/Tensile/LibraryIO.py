@@ -105,6 +105,8 @@ def writeSolutions(filename, problemSizes, biasTypeArgs, activationArgs, solutio
                     solutionState["ProblemType"]["DataTypeA"].value
             solutionState["ProblemType"]["DataTypeB"] = \
                     solutionState["ProblemType"]["DataTypeB"].value
+            solutionState["ProblemType"]["DataTypeE"] = \
+                    solutionState["ProblemType"]["DataTypeE"].value
             solutionState["ProblemType"]["DestDataType"] = \
                     solutionState["ProblemType"]["DestDataType"].value
             solutionState["ProblemType"]["ComputeDataType"] = \
@@ -348,6 +350,8 @@ def createLibraryLogic(schedulePrefix, architectureName, deviceNames, logicTuple
             problemTypeState["DataTypeA"].value
     problemTypeState["DataTypeB"] = \
             problemTypeState["DataTypeB"].value
+    problemTypeState["DataTypeE"] = \
+            problemTypeState["DataTypeE"].value
     problemTypeState["DestDataType"] = \
             problemTypeState["DestDataType"].value
     problemTypeState["ComputeDataType"] = \
@@ -372,6 +376,8 @@ def createLibraryLogic(schedulePrefix, architectureName, deviceNames, logicTuple
                 solutionState["ProblemType"]["DataTypeA"].value
         solutionState["ProblemType"]["DataTypeB"] = \
                 solutionState["ProblemType"]["DataTypeB"].value
+        solutionState["ProblemType"]["DataTypeE"] = \
+                solutionState["ProblemType"]["DataTypeE"].value
         solutionState["ProblemType"]["DestDataType"] = \
                 solutionState["ProblemType"]["DestDataType"].value
         solutionState["ProblemType"]["ComputeDataType"] = \
@@ -397,6 +403,8 @@ def createLibraryLogic(schedulePrefix, architectureName, deviceNames, logicTuple
                     solutionState["ProblemType"]["DataTypeA"].value
             solutionState["ProblemType"]["DataTypeB"] = \
                     solutionState["ProblemType"]["DataTypeB"].value
+            solutionState["ProblemType"]["DataTypeE"] = \
+                    solutionState["ProblemType"]["DataTypeE"].value
             solutionState["ProblemType"]["DestDataType"] = \
                     solutionState["ProblemType"]["DestDataType"].value
             solutionState["ProblemType"]["ComputeDataType"] = \

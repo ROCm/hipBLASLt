@@ -137,6 +137,10 @@ class ProblemType:
             rv.bType = DataType(d['DataTypeB'])
         else:
             rv.bType = srcType
+        if 'DataTypeE' in d:
+            rv.eType = DataType(d['DataTypeE'])
+        else:
+            rv.eType = dstType
         # for hybrid 8bit float types, we need to split the type into a_type and b_type
         if srcType.isFloat8BFloat8():
             rv.aType = DataType("F8")
@@ -148,7 +152,6 @@ class ProblemType:
         rv.computeInputType = srcType
         rv.cType = dstType
         rv.dType = dstType
-        rv.eType = computeType
         # we already checked the src/dst/compute types are supported and well-assigned in SolutionStruct
         rv.alphaType = computeType
         rv.betaType  = computeType

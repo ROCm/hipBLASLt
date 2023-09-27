@@ -38,21 +38,27 @@ def formatting(idx, inputPrefix, prefixOffset):
 
 class PackData_F16(PackData):
     kernel = {"ProblemType": {"ComputeDataType": DataType(DataType.single), "DestDataType": DataType(DataType.half)}}
-    def __call__(self, gwvw, destIdx, elementSumIdx, inputPrefix="", prefixOffset=0):
+    def __call__(self, gwvw, destIdx, elementSumIdx, tmpVgpr=None, inputPrefix="", prefixOffset=0):
         module = Module("PackData F16")
         if gwvw == 1:
             formatVgpr = formatting(elementSumIdx, inputPrefix, prefixOffset)
-            module.add(VCvtF32toF16(dst=vgpr(formatVgpr), src=vgpr(formatVgpr), comment="convert C to fp16"))
+            module.add(VCvtF32toF16(dst=vgpr(destIdx), src=vgpr(formatVgpr), comment="convert C to fp16"))
             return module
 
         assert (gwvw % 2 == 0)
         for vi in range(0, gwvw):
             sumIdxV = elementSumIdx + vi
             formatVgpr = formatting(sumIdxV, inputPrefix, prefixOffset)
-            module.add(VCvtF32toF16(dst=vgpr(formatVgpr), src=vgpr(formatVgpr), comment="convert C to fp16"))
+            if tmpVgpr:
+                tmpDst   = tmpVgpr + vi
+                tmpDst_1 = tmpVgpr + vi - 1
+            else:
+                tmpDst   = formatVgpr
+                tmpDst_1 = formatting(sumIdxV-1, inputPrefix, prefixOffset)
+            module.add(VCvtF32toF16(dst=vgpr(tmpDst), src=vgpr(formatVgpr), comment="convert C to fp16"))
             if vi%2 == 1:
                 d = destIdx + vi//2
-                module.add(VPackF16toB32(dst=vgpr(d), src0=vgpr(formatting(sumIdxV-1, inputPrefix, prefixOffset)), src1=vgpr(formatVgpr), \
+                module.add(VPackF16toB32(dst=vgpr(d), src0=vgpr(tmpDst_1), src1=vgpr(tmpDst), \
                           comment="Pack with neighbor"))
         return module
 

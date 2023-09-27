@@ -2,7 +2,7 @@ GlobalParameters:
   MinimumRequiredVersion: 4.14.0
   SleepPercent: 50
   NumElementsToValidate: 128
-  DataInitTypeE: 16
+  DataInitTypeE: 21
   DataInitTypeBeta: 1
   DataInitTypeAlpha: 1
   NewClient: 2

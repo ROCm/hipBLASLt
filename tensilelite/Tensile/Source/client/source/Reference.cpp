@@ -432,7 +432,8 @@ namespace Tensile
                 auto k1        = 0.398942f;
                 auto k2        = 0.0356774f;
                 auto k3        = 0.797885f;
-                // Original: (0.0535161x3 + 0.398942x) x cosh-2(0.0356774x3 + 0.797885x)
+                // Original: x1 * x2 = (0.0535161x3 + 0.398942x) x cosh-2(0.0356774x3 + 0.797885x)
+                // 0.5 * tanh(0.0356774x3 + 0.797885x) + (0.0535161x3 + 0.398942x) * (4/pow(exp(-(0.0356774 * pow(x, 3)+ 0.797885 * x)) + exp((0.0356774 * pow(x, 3)+ 0.797885 * x)), 2)) + 0.5
                 // x1 = (0.0535161 * pow(x, 3) + 0.398942 * x)
                 // xx = 0.0356774 * pow(x, 3)+ 0.797885 * x
                 // x2 = 4/pow(math.exp(-xx) + math.exp(xx),2)
@@ -873,10 +874,13 @@ namespace Tensile
                 // E
                 if(problem.useE() && !problem.useGradient())
                 {
-                    typename Inputs::BetaType* ePtr = (typename Inputs::BetaType*)inputs.e;
-                    auto                       eIndex
+                    auto eIndex
                         = problem.tensors()[ContractionProblemGemm::TENSOR::E].index(dCoord);
-                    ePtr[eIndex] = SaturateCast<typename Inputs::BetaType>(resultD);
+                    SetValue<Accumulator>(
+                        problem.tensors()[ContractionProblemGemm::TENSOR::E].dataType(),
+                        resultD,
+                        inputs.e,
+                        eIndex);
                 }
                 // Activation adds here
                 std::vector<Accumulator> actArgs;
@@ -888,11 +892,13 @@ namespace Tensile
                     Accumulator dataE = static_cast<Accumulator>(0);
                     if(problem.useE())
                     {
-                        typename Inputs::BetaType* ePtr = (typename Inputs::BetaType*)inputs.e;
-                        auto                       eIndex
+                        auto eIndex
                             = problem.tensors()[ContractionProblemGemm::TENSOR::E].index(dCoord);
                         dataE = GetValue<Accumulator>(
-                            problem.betaType(), inputs.e, eIndex, aConjugate);
+                            problem.tensors()[ContractionProblemGemm::TENSOR::E].dataType(),
+                            inputs.e,
+                            eIndex,
+                            aConjugate);
                     }
                     dataE = Activation(
                         problem.activationType(), dataE, problem.activationEnumArg(), actArgs);
@@ -1002,10 +1008,6 @@ namespace Tensile
                 if(alphaType != betaType)
                 {
                     throw std::runtime_error("Alpha type and beta type must be the same.");
-                }
-                if(problem.tensors()[ContractionProblemGemm::TENSOR::E].dataType() != betaType)
-                {
-                    throw std::runtime_error("E type and beta type must be the same.");
                 }
             }
 

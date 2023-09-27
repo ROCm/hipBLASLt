@@ -58,12 +58,14 @@ class AddrCalculation:
             self.biasOffset   = coordOffset0 * kernelWriter.states.bpeCinternal
             self.scaleAlphaVecOffset   = coordOffset0 * kernelWriter.states.bpeCinternal
             self.globalOffset  = coordOffset0 * kernelWriter.states.bpeCexternal
+            self.globalOffsetE = coordOffset0 * kernelWriter.states.bpeE
             self.globalOffsetInternal = coordOffset0 * kernelWriter.states.bpeCinternal
         else:
             # else non-opt stores include the coord0 offset into VGPR address calcs
             self.biasOffset   = 0
             self.scaleAlphaVecOffset   = 0
             self.globalOffset = 0
+            self.globalOffsetE = 0
             self.globalOffsetInternal = 0
 
     def addScaled(self, destV, src0, src1, scale1, tmpS01, comment=""):
@@ -159,7 +161,7 @@ class AddrCalculation:
         packedBits = self.coord0Vgpr # start with coord0, will move to temp below
         rowPtr = self.getRowPtr(kw, storeChar)
         addrVgpr = self.getAddrVgpr(kw, storeChar)
-        bpe = kw.states.bpeCinternal if (storeChar == 'E') else kw.states.bpeCexternal
+        bpe = kw.states.bpeCinternal if (tc == 'Bias') else (kw.states.bpeE if (tc == 'E') else kw.states.bpeCexternal)
 
         for i,idx in enumerate(packedIndices[:-1]):
             # vgprTmp assignments:
@@ -222,7 +224,7 @@ class AddrCalculation:
         (d1,d0,vc1,vc0) = self.element
         rowPtr = self.getRowPtr(kw, tc)
         addrVgpr = self.getAddrVgpr(kw, tc)
-        bpe = kw.states.bpeCinternal if (tc == 'E') else kw.states.bpeCexternal
+        bpe = kw.states.bpeCinternal if (tc == 'Bias') else (kw.states.bpeE if (tc == 'E') else kw.states.bpeCexternal)
         # set when we generate code that updates the address
         # optSingleColVgpr and optSharedColVgpr attempt to minimize these updates
         updatedAddr = False
@@ -554,7 +556,7 @@ class AddrCalculation:
         if kernel["BufferStore"]:
             module.add(self.emitScaleToBpe(kernel, ss, tmpVgpr, tmpSgpr, singleUpdate, tc))
             if edge and (not kernel["StoreRemapVectorWidth"] or (kernel["StoreRemapVectorWidth"] and beta)) and \
-                ((tc != 'Bias') and (tc != 'ScaleAlphaVec')):
+                (tc != 'ScaleAlphaVec'):
                 module.add(VCndMaskB32(dst=vgpr(addrVgpr), src0=vgpr(bufferOOB), src1=vgpr(addrVgpr), \
                                src2=sgpr(mask,laneSGPRCount), comment="LD%s clip if OOB. offset" % tc ))
         else:
@@ -584,7 +586,7 @@ class AddrCalculation:
                             src2=VCC(), comment="addrVgpr = C(D) + index*bytes (hi)"))
         return module
 
-    def incrementToNextRow(self, kernel, tc, ss, stmp, isCompute=False):
+    def incrementToNextRow(self, kernel, tc, ss, stmp, bpeType=None):
         """
         Generate code to move to the next row(s)
         If optSrdIncForRow, this will move the SRD forward
@@ -593,7 +595,7 @@ class AddrCalculation:
 
         module = Module("incrementToNextRow")
         numRows = self.rowInc
-        tmpBpe = self.kernelWriter.states.bpeCinternal if isCompute else self.kernelWriter.states.bpeCexternal
+        tmpBpe = bpeType if bpeType else self.kernelWriter.states.bpeCexternal
         if ss.optSrdIncForRow:
             if numRows:
                 packedC1 = kernel["PackedC1IndicesX"]

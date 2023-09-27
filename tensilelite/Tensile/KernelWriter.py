@@ -111,6 +111,7 @@ class StateValues:
   # default setup
   # AB=DataType / Cexternal=DestDataType / Cinternal=Accumulation (MAC or MFMA)
   bpeAB: int = field(init=False)
+  bpeE: int = field(init=False)
   # Cexternal = the "current" kernel output type,
   # - default: the "current" kernel is a non-GSU-kernel,
   #     Cexternal (= DestDataType) and is the final gemm result
@@ -2754,6 +2755,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
 
 
     self.states.bpeAB = int(self.states.bpr * kernel["ProblemType"]["DataType"].numRegisters())
+    self.states.bpeE  = int(self.states.bpr * kernel["ProblemType"]["DataTypeE"].numRegisters())
     self.states.bpeCinternal = int(self.states.bpr * kernel["ProblemType"]["ComputeDataType"].numRegisters())
 
     self.states.bpeCexternal = self.states.bpeCinternal if kernel["_GlobalAccumulation"] else \
