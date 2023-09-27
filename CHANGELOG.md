@@ -5,6 +5,10 @@
 - Add UserArguments for GroupedGemm
 - Support datatype: fp16 in with fp32 out
 - Add samples
+- Support datatype: Int8 in Int32 out
+- Support platform gfx94x
+- Support fp8/bf8 datatype (only for gfx94x platform)
+- Support Scalar A,B,C,D for fp8/bf8 datatype
 ### Changed
 - Replace hipblasDatatype_t with hipblasltDatatype_t
 - Deprecate HIPBLASLT_MATMUL_DESC_D_SCALE_VECTOR_POINTER

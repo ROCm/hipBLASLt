@@ -10,5 +10,3 @@ subtrees:
     - file: functions
     - file: usage
     - file: clients
-    - file: changelog
-    - file: deprecation

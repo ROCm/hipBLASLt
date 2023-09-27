@@ -30,12 +30,12 @@ cd hipBLASLt; cd build/release
 --d_type <value>           Precision of matrix D. Options: f32_r,f16_r,bf16_r
 --compute_type <value>     Precision of computation. Options: s,f32_r,x,xf32_r,f64_r,i32_r                     (Default value is: f32_r)
 --scale_type <value>       Precision of scalar. Options: f16_r,bf16_r
---initialization <value>   Intialize matrix data.Options: rand_int, trig_float, hpl(floating)                  (Default value is: rand_int)
+--initialization <value>   Intialize matrix data.Options: rand_int, trig_float, hpl(floating)                  (Default value is: hpl)
 --transA <value>           N = no transpose, T = transpose, C = conjugate transpose                            (Default value is: N)
 --transB <value>           N = no transpose, T = transpose, C = conjugate transpose                            (Default value is: N)
 --batch_count <value>      Number of matrices. Only applicable to batched and strided_batched routines         (Default value is: 1)
 --HMM                      Parameter requesting the use of HipManagedMemory
---verify |-v <value>       Validate GPU results with CPU? 0 = No, 1 = Yes (default: No)                        (Default value is: )
+--verify |-v               Validate GPU results with CPU?
 --iters |-i <value>        Iterations to run inside timing loop                                                (Default value is: 10)
 --cold_iters |-j <value>   Cold Iterations to run before entering the timing loop                              (Default value is: 2)
 --algo_method <value>      Use different algorithm search API. 0: Get heuristic, 1: Get all algorithm, 2: Get solutuion by index.Options: 0, 1, 2. (default: 0)  (Default value is: 0)
@@ -50,7 +50,7 @@ cd hipBLASLt; cd build/release
 --scaleAlpha_vector        Apply scaleAlpha vector
 --use_e                    Apply AUX output/ gradient input
 --gradient                 Enable gradient
---grouped_gemm             Use grouped_gemm if non-zero. Number of gemms to run
+--grouped_gemm             Use grouped_gemm.
 --device <value>           Set default device to be used for subsequent program runs                           (Default value is: 0)
 --c_noalias_d              C and D are stored in separate memory
 --workspace <value>        Set fixed workspace memory size instead of using hipblaslt managed memory           (Default value is: 0)
@@ -64,7 +64,7 @@ cd hipBLASLt; cd build/release
 # demo
 Run fp32 GEMM with validation
 ```
-./clients/staging/hipblaslt-bench --precision f32_r -v 1
+./clients/staging/hipblaslt-bench --precision f32_r -v
 transA,transB,M,N,K,alpha,lda,stride_a,beta,ldb,stride_b,ldc,stride_c,ldd,stride_d,d_type,compute_type,activation_type,bias_vector,hipblaslt-Gflops,us
 N,N,128,128,128,1,128,16384,0,128,16384,128,16384,128,16384,f32_r,f32_r,none,0, 415.278, 10.1
 ```
