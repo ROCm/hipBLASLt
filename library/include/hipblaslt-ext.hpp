@@ -303,7 +303,8 @@ namespace hipblaslt_ext
 
         hipblasLtHandle_t     m_handle;
         std::shared_ptr<void> m_data;
-        using Conversions = std::tuple<void *, HipBufferPtr, hipblasltDatatype_t, hipblasltDatatype_t, std::size_t>;
+        //                             src           dst           srcType              dstType              numElements  scale
+        using Conversions = std::tuple<HipBufferPtr, HipBufferPtr, hipblasltDatatype_t, hipblasltDatatype_t, std::size_t, HipBufferPtr>;
         std::vector<std::vector<Conversions>> m_auxiliary_conversion_buffers;
     };
 
