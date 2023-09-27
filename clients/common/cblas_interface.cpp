@@ -115,15 +115,22 @@ void cblas_gemm(hipblasOperation_t     transA,
         {
             for(size_t i = 0; i < sizeA; i++)
             {
-                A_Tc[i]
-                    = static_cast<TcCast>(static_cast<TciCast>(A[i] / scaleA)) * AlphaVec[i % m];
+                if(transA == HIPBLAS_OP_N)
+                    A_Tc[i] = static_cast<TcCast>(static_cast<TciCast>(A[i] / scaleA))
+                              * AlphaVec[i % m];
+                else
+                    A_Tc[i] = static_cast<TcCast>(static_cast<TciCast>(A[i] / scaleA))
+                              * AlphaVec[i / m];
             }
         }
         else
         {
             for(size_t i = 0; i < sizeA; i++)
             {
-                A_Tc[i] = static_cast<TcCast>(A[i]) * AlphaVec[i % m];
+                if(transA == HIPBLAS_OP_N)
+                    A_Tc[i] = static_cast<TcCast>(A[i]) * AlphaVec[i % m];
+                else
+                    A_Tc[i] = static_cast<TcCast>(A[i]) * AlphaVec[i / m];
             }
         }
     }
