@@ -20,7 +20,7 @@
 # CTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ################################################################################
 
-from .Base import Item
+from .Base import Item, fastdeepcopy
 from .Enums import InstType, CvtType
 from .Containers import DSModifiers, FLATModifiers, MUBUFModifiers, SMEMModifiers, SDWAModifiers, VOP3PModifiers, VCC, \
                         RegisterContainer, HolderContainer, EXEC
@@ -1045,6 +1045,38 @@ class DSStoreB64(DSStoreInstruction):
     @staticmethod
     def issueLatency():
         return 3
+
+# Hack unofficial compound instruction
+class DSStoreB256(DSStoreInstruction):
+    def __init__(self, dstAddr, src: RegisterContainer, ds: Optional[DSModifiers] = None, comment="") -> None:
+        super().__init__(InstType.INST_B256, dstAddr, src, None, ds, comment)
+        if ds: ds.na = 1
+        self.setInst("ds_store_b256")
+
+    @staticmethod
+    def issueLatency():
+        return 10
+
+    def getArgStr2(self, upper=False) -> str:
+        src = fastdeepcopy(self.src0)
+        regNum = src.regNum // 2
+        if upper:
+            src.regName.offsets[-1] += regNum
+        src.regNum = regNum
+        kStr = str(self.dstAddr) + ", " + str(src)
+        return kStr
+
+    def __str__(self) -> str:
+        instStr = "ds_store_b128"
+        if self.kernel.isa[0] < 11:
+            instStr = instStr.replace("store", "write")
+        kStr = instStr + " " + self.getArgStr2()
+        kStr += str(self.ds) if self.ds else ""
+        kStr2 = instStr + " " + self.getArgStr2(True)
+        ds = fastdeepcopy(self.ds) if self.ds else DSModifiers()
+        ds.offset += 16
+        kStr2 += str(ds)
+        return self.formatWithComment(kStr) + self.formatWithComment(kStr2)
 
 class DSStoreB128(DSStoreInstruction):
     def __init__(self, dstAddr, src, ds: Optional[DSModifiers] = None, comment="") -> None:

@@ -974,18 +974,18 @@ class KernelWriter(metaclass=abc.ABCMeta):
               iterCode.add(writeItem)
               # if there is localWrite at first mfma, need to skip it in waitcnt.
               if i == 0:
-                skipLocalWriteWaitcnt += writeItem.countType(LocalWriteInstruction)
+                skipLocalWriteWaitcnt += writeItem.countType(LocalWriteInstruction) + writeItem.countType(DSStoreB256)
               if not localReadItemsThisLoop:
-                self.states.perIterLocalWriteCanSkip[iteration] += writeItem.countType(LocalWriteInstruction)
+                self.states.perIterLocalWriteCanSkip[iteration] += writeItem.countType(LocalWriteInstruction) + writeItem.countType(DSStoreB256)
         if mfmaIndex == self.states.lwEndMfmaIndex:
           while writeItems:
             writeItem = writeItems.pop(0)
             # generate all remaining pre code before the first Store C
             iterCode.add(writeItem)
             if i == 0:
-              skipLocalWriteWaitcnt += writeItem.countType(LocalWriteInstruction)
+              skipLocalWriteWaitcnt += writeItem.countType(LocalWriteInstruction) + writeItem.countType(DSStoreB256)
             if not localReadItemsThisLoop:
-              self.states.perIterLocalWriteCanSkip[iteration] += writeItem.countType(LocalWriteInstruction)
+              self.states.perIterLocalWriteCanSkip[iteration] += writeItem.countType(LocalWriteInstruction) + writeItem.countType(DSStoreB256)
 
         ####
         # scheduled pointer
@@ -1158,10 +1158,12 @@ class KernelWriter(metaclass=abc.ABCMeta):
         if kernel["ScheduleIterAlg"] == 0 or kernel["ScheduleIterAlg"] == 1:
           for i in range (max(dataAtIterA,dataAtIterB),iteration+1):
             localWrites += self.codes.perIterLocalWrite[i].countType(LocalWriteInstruction)
+            localWrites += self.codes.perIterLocalWrite[i].countType(DSStoreB256)
         # ScheduleIterAlg=2, localwrite is after waitCnt, no need to count it's current iteration.
         if kernel["ScheduleIterAlg"] == 3:
           for i in range (max(dataAtIterA,dataAtIterB)+1,iteration):
             localWrites += self.codes.perIterLocalWrite[i].countType(LocalWriteInstruction)
+            localWrites += self.codes.perIterLocalWrite[i].countType(DSStoreB256)
           if kernel["ScheduleLocalWrite"] > 0:
             # current iteration localWrite count
             localWrites += skipLocalWriteWaitcnt
@@ -1173,7 +1175,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
       else:
         for item in list(iterCode.items()):
           localReads  = item.countType(LocalReadInstruction)
-          localWrites = item.countType(LocalWriteInstruction)
+          localWrites = item.countType(LocalWriteInstruction) + item.countType(DSStoreB256)
           if self.states.numItersPLR:
             # SQ: If PrefetchLocalRead = 1 and DepthU == LocalSplitU, then there is no double
             #  buffering and we must wait for all localReads but not localWrites.
@@ -2801,6 +2803,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
     _ds_load_u8 = MemoryInstruction(DSLoadU8,      1, 1, 1, 0.25)
     ########################################
     # Local Write
+    _ds_store_b256 = MemoryInstruction(DSStoreB256,  1, 1, 8, 8)
     _ds_store_b128 = MemoryInstruction(DSStoreB128,  1, 1, 4, 4)
     _ds_store2_b64 = MemoryInstruction(DSStore2B64,  1, 2, 2, 2)
     _ds_store_b64 = MemoryInstruction(DSStoreB64,    1, 1, 2, 2)
@@ -2861,8 +2864,9 @@ class KernelWriter(metaclass=abc.ABCMeta):
           "GlobalWrite": [ chosen_store_b128, chosen_store_b64, chosen_store_b32 ],
           "LocalRead"  : [ _ds_load_b128, _ds_load2_b64, _ds_load_b64,
                            _ds_load2_b32, _ds_load_b32, _ds_load_u16, _ds_load_u8 ],
-          "LocalWrite" : [ _ds_store_b128, _ds_store2_b64, _ds_store_b64, _ds_store2_b32,
-                           _ds_store_b32, _ds_store_b16, _ds_store_b8 ]
+          "LocalWrite" : [ _ds_store_b256, _ds_store_b128, _ds_store2_b64,
+                           _ds_store_b64, _ds_store2_b32, _ds_store_b32,
+                           _ds_store_b16, _ds_store_b8 ]
         }
 
     ####################################
