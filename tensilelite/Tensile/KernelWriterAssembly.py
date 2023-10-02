@@ -6360,6 +6360,7 @@ class KernelWriterAssembly(KernelWriter):
                 dst = "G2L%s+%u+%u" % (tc, tmpVgprOffset, g2lIdx)
                 if tP["bpe"] != tP["bpeGR"]:
                   if kernel["ProblemType"]["DataType%s"%tc].isHalf():
+                    dst = "G2L%s+%u+%u" % (tc, tmpVgprOffset, g2lIdx // 2)
                     localWriteCode.add(VPackF16toB32(dst=vgpr(dst), src0=vgpr(src), src1=vgpr("G2L%s+%u" % (tc, g2lIdx+1)), \
                                        vop3=VOP3PModifiers(op_sel=[1,1,0]), comment="Pack with neighbor"))
                     localWriteCode.add(VPackF16toB32(dst=vgpr(src), src0=vgpr(src), src1=vgpr("G2L%s+%u" % (tc, g2lIdx+1)), \
@@ -6383,7 +6384,10 @@ class KernelWriterAssembly(KernelWriter):
                 paramList.append(vgpr("G2L%s+%u"%(tP["tensorChar"], g2lIdx)))
                 numsOfRegister.append(1)
               elif blockWidth == 0.25 and ((s % 2) == 1): # Int8, s = 1 or 3 (high8Bits)
-                paramList.append(vgpr("G2L%s+%u+%u"%(tc, tmpVgprOffset, g2lIdx)))
+                if tP["bpe"] != tP["bpeGR"] and tmpVgprOffset != 0:
+                  paramList.append(vgpr("G2L%s+%u+%u"%(tc, tmpVgprOffset, g2lIdx // 2)))
+                else:
+                  paramList.append(vgpr("G2L%s+%u+%u"%(tc, tmpVgprOffset, g2lIdx)))
                 numsOfRegister.append(1)
               else:
                 paramList.append(vgpr("G2L%s+%u"%(tP["tensorChar"], g2lIdx + eccOffset), blockWidth))
