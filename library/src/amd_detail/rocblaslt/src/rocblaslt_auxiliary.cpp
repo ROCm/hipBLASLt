@@ -1447,3 +1447,8 @@ std::string rocblaslt_internal_get_so_path(const std::string& keyword)
     dl_iterate_phdr(hipblaslt_dl_iterate_phdr_callback, &result);
     return result.first;
 }
+
+void rocblaslt_log_error(const char *func, const char *var, const char *msg)
+{
+    log_error(func, var, msg);
+}

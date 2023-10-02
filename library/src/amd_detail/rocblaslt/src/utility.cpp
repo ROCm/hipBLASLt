@@ -26,7 +26,6 @@
 #include "utility.hpp"
 #include <sys/types.h>
 #include <unistd.h>
-LoggerSingleton LoggerSingleton::gInstance;
 std::ostream*   get_logger_os()
 {
     LoggerSingleton& s = LoggerSingleton::getInstance();
