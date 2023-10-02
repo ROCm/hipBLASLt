@@ -264,9 +264,10 @@ function(TensileCreateExtOpLibraries OutputFolder ArchStr)
   file(REMOVE ${ext_op_library_path})
 
   add_custom_command(
-    OUTPUT ${build_tmp_dir}/hipblasltExtOpLibrary.dat
+    OUTPUT ${OutputFolder}/hipblasltExtOpLibrary.dat
     WORKING_DIRECTORY "${cwd}"
     COMMENT "Creating ExtOp Libraries"
+    COMMAND ${CMAKE_COMMAND} -E rm -rf ${build_tmp_dir}
     COMMAND ${CMAKE_COMMAND} -E make_directory ${build_tmp_dir}
     COMMAND ${CMAKE_COMMAND} -E make_directory ${OutputFolder}
     COMMAND bash "${script}" "\"${Archs}\"" "${build_tmp_dir}" "${VIRTUALENV_HOME_DIR}"
@@ -276,6 +277,6 @@ function(TensileCreateExtOpLibraries OutputFolder ArchStr)
   add_custom_target(
     build_ext_op_library ALL
     WORKING_DIRECTORY "${cwd}"
-    DEPENDS ${build_tmp_dir}/hipblasltExtOpLibrary.dat)
+    DEPENDS ${OutputFolder}/hipblasltExtOpLibrary.dat)
 
 endfunction()
