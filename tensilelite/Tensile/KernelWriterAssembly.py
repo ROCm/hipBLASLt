@@ -6501,18 +6501,21 @@ class KernelWriterAssembly(KernelWriter):
                     localWriteCode.add(VCvtF32toF16(dst=paramList[0], src=vgpr(vgprTmp), sdwa=SDWAModifiers(dst_sel=dst_sel), comment="convert C to fp16"))
                   self.vgprPool.checkIn(vgprTmp)
                 elif newBlockWidth == 0.5:
+                  vgprTmp = self.vgprPool.checkOutAligned(2, 2)
+                  src_sel = SelectBit.WORD_1 if isCvtHighBits else SelectBit.WORD_0
                   modNum = max(1, int(newBlockWidth / blockWidth))
                   if (not isHigh16Bits) and (g2lIdx % modNum == 0):
-                    vgprTmp = self.vgprPool.checkOutAligned(2, 2)
-                    src_sel = SelectBit.WORD_1 if isCvtHighBits else SelectBit.WORD_0
                     localWriteCode.add(VCvtPkFP8toF32(dst=vgpr(vgprTmp, 2), src=vgpr("G2L%s+%u"%(tP["tensorChar"], g2lIdx)), sdwa=SDWAModifiers(src0_sel=src_sel), comment="convert to F32"))
                     localWriteCode.add(VCvtF32toF16(dst=vgpr("G2L%s+%u"%(tP["tensorChar"], g2lIdx)), src=vgpr(vgprTmp), sdwa=SDWAModifiers(dst_sel=SelectBit.WORD_0), comment="Convert to FP16"))
+                    if (newBlockWidth <= blockWidth):
+                      localWriteCode.add(VCvtF32toF16(dst=vgpr("G2L%s+%u"%(tP["tensorChar"], g2lIdx)), src=vgpr(vgprTmp+1), sdwa=SDWAModifiers(dst_sel=SelectBit.WORD_1), comment="Convert to FP16"))
+                  elif (newBlockWidth > blockWidth):
                     localWriteCode.add(VCvtF32toF16(dst=vgpr("G2L%s+%u"%(tP["tensorChar"], g2lIdx)), src=vgpr(vgprTmp+1), sdwa=SDWAModifiers(dst_sel=SelectBit.WORD_1), comment="Convert to FP16"))
-                    self.vgprPool.checkIn(vgprTmp)
+                  self.vgprPool.checkIn(vgprTmp)
                 else:
                   modNum = max(1, int(newBlockWidth / blockWidth))
-                  if (not isHigh16Bits) and (g2lIdx % modNum == 0):
-                    vgprTmp = self.vgprPool.checkOutAligned(2, 2)
+                  vgprTmp = self.vgprPool.checkOutAligned(2, 2)
+                  if (not isHigh16Bits) and (newBlockWidth <= blockWidth):
                     for vi in range(0, int(newBlockWidth)):
                       localWriteCode.add(VCvtPkFP8toF32(dst=vgpr(vgprTmp, 2), src=vgpr("G2L%s+%u+%u"%(tP["tensorChar"], g2lIdx+tP["shiftGR"], vi)), sdwa=SDWAModifiers(src0_sel=SelectBit.WORD_0), comment="convert to F32"))
                       localWriteCode.add(VCvtF32toF16(dst=vgpr("G2L%s+%u+%u"%(tP["tensorChar"], g2lIdx, vi * 2)), src=vgpr(vgprTmp), sdwa=SDWAModifiers(dst_sel=SelectBit.WORD_0), comment="Convert to FP16"))
@@ -6520,7 +6523,20 @@ class KernelWriterAssembly(KernelWriter):
                       localWriteCode.add(VCvtPkFP8toF32(dst=vgpr(vgprTmp, 2), src=vgpr("G2L%s+%u+%u"%(tP["tensorChar"], g2lIdx+tP["shiftGR"], vi)), sdwa=SDWAModifiers(src0_sel=SelectBit.WORD_1), comment="convert to F32"))
                       localWriteCode.add(VCvtF32toF16(dst=vgpr("G2L%s+%u+%u"%(tP["tensorChar"], g2lIdx, vi * 2 + 1)), src=vgpr(vgprTmp), sdwa=SDWAModifiers(dst_sel=SelectBit.WORD_0), comment="Convert to FP16"))
                       localWriteCode.add(VCvtF32toF16(dst=vgpr("G2L%s+%u+%u"%(tP["tensorChar"], g2lIdx, vi * 2 + 1)), src=vgpr(vgprTmp+1), sdwa=SDWAModifiers(dst_sel=SelectBit.WORD_1), comment="Convert to FP16"))
-                    self.vgprPool.checkIn(vgprTmp)
+                  else:
+                    if (not isHigh16Bits):
+                      idxMod = g2lIdx % modNum
+                      g2lIdxTmp = g2lIdx - idxMod
+                      vi = idxMod // 2
+                      selectBit = SelectBit.WORD_0 if idxMod % 2 == 0 else SelectBit.WORD_1
+                      interOffset = 0 if idxMod % 2 == 0 else 1
+                      localWriteCode.add(VCvtPkFP8toF32(dst=vgpr(vgprTmp, 2), src=vgpr("G2L%s+%u+%u"%(tP["tensorChar"], g2lIdxTmp+tP["shiftGR"], vi)), sdwa=SDWAModifiers(src0_sel=selectBit), comment="convert to F32"))
+                      localWriteCode.add(VCvtF32toF16(dst=vgpr("G2L%s+%u+%u"%(tP["tensorChar"], g2lIdxTmp, vi * 2 + interOffset)), src=vgpr(vgprTmp), sdwa=SDWAModifiers(dst_sel=SelectBit.WORD_0), comment="Convert to FP16"))
+                      if blockWidth != 0.5:
+                        localWriteCode.add(VCvtF32toF16(dst=vgpr("G2L%s+%u+%u"%(tP["tensorChar"], g2lIdxTmp, vi * 2 + interOffset)), src=vgpr(vgprTmp+1), sdwa=SDWAModifiers(dst_sel=SelectBit.WORD_1), comment="Convert to FP16"))
+                    elif blockWidth == 0.5:
+                      localWriteCode.add(VCvtF32toF16(dst=vgpr("G2L%s+%u+%u"%(tP["tensorChar"], g2lIdxTmp, vi * 2 + interOffset)), src=vgpr(vgprTmp+1), sdwa=SDWAModifiers(dst_sel=SelectBit.WORD_1), comment="Convert to FP16"))
+                  self.vgprPool.checkIn(vgprTmp)
               else:
                 printExit("Unsupported combination DataType%s (%s) -> DataType (%s)"%(tc, kernel["ProblemType"]["DataType%s"%tc].toChar(), kernel["ProblemType"]["DataType"].toChar()))
 
