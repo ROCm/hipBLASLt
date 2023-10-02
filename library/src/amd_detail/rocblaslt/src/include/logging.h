@@ -105,6 +105,7 @@ public:
     uint32_t                env_layer_mode = 0;
     static LoggerSingleton& getInstance()
     {
+        static LoggerSingleton gInstance;
         return gInstance;
     }
 
@@ -114,7 +115,6 @@ public:
     LoggerSingleton& operator=(const LoggerSingleton&) = delete;
 
 private:
-    static LoggerSingleton gInstance;
 
     // logging streams
     std::ofstream log_file_ofs;

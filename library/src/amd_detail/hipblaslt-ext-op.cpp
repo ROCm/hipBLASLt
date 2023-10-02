@@ -151,9 +151,7 @@ namespace {
                 err = adapter->initializeLazyLoading("", lib.getLibraryFolder());
             }
         } catch (const std::runtime_error& e) {
-            std::cerr << "Warning: unable to load ext op library, reason: "
-                      << e.what() << '\n'
-                      << "ext ops may not work.\n";
+            rocblaslt_log_error("extOpLibraries", "ExtOpLibPath", getExtOpLibraryPath().c_str());
         }
 
         return adapters;
