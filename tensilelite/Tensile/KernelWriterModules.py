@@ -69,7 +69,7 @@ def wait(states, kernel, tPA, tPB, skipGlobalRead, skipLocalWrite, \
 
             numM = 0
             if kernel["ProblemType"]["SparseA"] and not kernel["DirectToVgprSparseMetadata"]:
-              tPM = tPA["tpsMetadata"]
+              tPM = tPA["tpsMetadata"] if tPA["is_sparse"] else tPB["tpsMetadata"]
               numM = tPM["nrp"]*tPM["nrc"]*max(tPM["nwcv"],tPM["nwpv"])//tPM["nwcvpi"]
             lgkmcnt += skipLocalWrite * (numA + numB + numM)
         if skipLocalRead > -1:

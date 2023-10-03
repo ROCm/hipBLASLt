@@ -37,7 +37,7 @@ namespace Tensile
             : m_problemSizes(args["problem-size"].as<std::vector<std::vector<size_t>>>())
             , m_stridedBatched(args["strided-batched"].as<bool>())
             , m_groupedGemm(args["grouped-gemm"].as<bool>())
-            , m_aSparse(args["sparse-a"].as<bool>())
+            , m_aSparse(args["sparse-a"].as<int>())
             , m_highPrecisionAccumulate(args["high-precision-accumulate"].as<bool>())
             , m_kernelLanguage(args["kernel-language"].as<KernelLanguage>())
             , m_performanceMetric(args["performance-metric"].as<PerformanceMetric>())
