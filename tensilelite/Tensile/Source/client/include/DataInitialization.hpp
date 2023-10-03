@@ -844,7 +844,7 @@ namespace Tensile
 
             bool m_stridedBatched;
 
-            bool   m_aSparse;
+            int m_aSparse;
             size_t m_aMaxLogicalElements; //for sparse
 
             bool m_cEqualsD;
