@@ -714,13 +714,13 @@ namespace Tensile
             return m_highPrecisionAccumulate;
         }
 
-        void setSparseA(bool value)
+        void setSparseA(int value)
         {
             m_aSparse = value;
             normalizeSparseA();
         }
 
-        bool sparseA() const
+        int sparseA() const
         {
             return m_aSparse;
         }
@@ -1012,7 +1012,7 @@ namespace Tensile
         ActivationType m_activationType          = ActivationType::None;
         ActivationType m_activationEnumArg       = ActivationType::None;
         bool           m_activationNoGuard       = false;
-        bool           m_aSparse                 = false;
+        int            m_aSparse                 = 0;
 
         KernelLanguage    m_kernelLanguage    = KernelLanguage::Any;
         PerformanceMetric m_performanceMetric = PerformanceMetric::DeviceEfficiency;

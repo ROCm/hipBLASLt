@@ -583,8 +583,8 @@ namespace Tensile
                                                ClientProblemFactory const& problemFactory)
             : m_maxBatch(0)
             , m_stridedBatched(args["strided-batched"].as<bool>())
-            , m_aSparse(args["sparse-a"].as<bool>())
-            , m_cEqualsD(args["c-equal-d"].as<bool>() || args["sparse-a"].as<bool>())
+            , m_aSparse(args["sparse-a"].as<int>())
+            , m_cEqualsD(args["c-equal-d"].as<bool>() || args["sparse-a"].as<int>())
             , m_elementsToValidate(args["num-elements-to-validate"].as<int>())
             , m_keepPristineCopyOnGPU(args["pristine-on-gpu"].as<bool>())
             , m_workspaceSize(problemFactory.workspaceSize())
@@ -1147,17 +1147,18 @@ namespace Tensile
                                         batchIdx);
                 }
 
-                if(problem.sparseA() && i == ContractionProblemGemm::TENSOR::A)
+                if((problem.sparseA() == 1 && i == ContractionProblemGemm::TENSOR::A) ||
+                   (problem.sparseA() == 2 && i == ContractionProblemGemm::TENSOR::B))
                 {
                     auto& pUnitM = m_vdata[ContractionProblemGemm::TENSOR::METADATA]
                                        .pristine[problem.metadata().dataType()];
                     initGPUSparseInput(pUnit.gpuInput.current.get(),
                                        pUnitM.gpuInput.current.get(),
                                        (void*)(offset),
-                                       problem.a(),
+                                       problem.sparseA() == 2 ? problem.b() : problem.a(),
                                        problem.compressed(),
                                        problem.metadata(),
-                                       problem.boundIndices()[0].a);
+                                       problem.sparseA() == 2 ? problem.boundIndices()[0].b : problem.boundIndices()[0].a);
                 }
             }
         }
@@ -1180,24 +1181,39 @@ namespace Tensile
                                       m_vdata[i].init,
                                       p.second.cpuInput.valid.get(),
                                       tensors[i]);
-                            if(problem.sparseA() and i == ContractionProblemGemm::TENSOR::A)
+                            if((problem.sparseA() == 1 && i == ContractionProblemGemm::TENSOR::A) ||
+                               (problem.sparseA() == 2 && i == ContractionProblemGemm::TENSOR::B))
                             {
-                                switch(problem.a().dataType())
+                                const TensorDescriptor &t = problem.sparseA()==2 ? problem.b() : problem.a();
+                                int tDim;
+                                DataType tDataType;
+                                if(problem.sparseA()==2)
+                                {
+                                    tDim = problem.boundIndices()[0].b;
+                                    tDataType = problem.b().dataType();
+                                }
+                                else
+                                {
+                                    tDim = problem.boundIndices()[0].a;
+                                    tDataType = problem.a().dataType();
+                                }
+
+                                switch(tDataType)
                                 {
                                 case DataType::Half:
                                     pruneSparseArray((Half*)p.second.cpuInput.valid.get(),
-                                                     problem.a(),
-                                                     problem.boundIndices()[0].a);
+                                                     t,
+                                                     tDim);
                                     break;
                                 case DataType::BFloat16:
                                     pruneSparseArray((BFloat16*)p.second.cpuInput.valid.get(),
-                                                     problem.a(),
-                                                     problem.boundIndices()[0].a);
+                                                     t,
+                                                     tDim);
                                     break;
                                 case DataType::Int8:
                                     pruneSparseArray((int8_t*)p.second.cpuInput.valid.get(),
-                                                     problem.a(),
-                                                     problem.boundIndices()[0].a);
+                                                     t,
+                                                     tDim);
                                     break;
                                 default:
                                     throw std::runtime_error("SparseMatrix doesn't support");

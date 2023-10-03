@@ -430,7 +430,7 @@ namespace Tensile
             if(m_printTensorA)
             {
                 auto a = problem.a();
-                if(problem.sparseA())
+                if(problem.sparseA() && problem.sparseA() != 2)
                 {
                     m_reporter->logTensor(
                         LogLevel::Verbose, "Ref A", reference.a, problem.a(), reference.a);
@@ -442,8 +442,29 @@ namespace Tensile
                                         a.totalAllocatedBytes(),
                                         hipMemcpyDeviceToHost));
                 m_reporter->logTensor(LogLevel::Verbose, "A", m_cpuResultBuffer.get(), a, result.a);
+            }
 
-                if(problem.sparseA())
+            if(m_printTensorB)
+            {
+                auto b = problem.b();
+                if(problem.sparseA() == 2)
+                {
+                    m_reporter->logTensor(
+                        LogLevel::Verbose, "Ref B", reference.b, problem.b(), reference.b);
+                    b = problem.compressed();
+                }
+
+                HIP_CHECK_EXC(hipMemcpy(m_cpuResultBuffer.get(),
+                                        result.b,
+                                        b.totalAllocatedBytes(),
+                                        hipMemcpyDeviceToHost));
+                m_reporter->logTensor(
+                    LogLevel::Verbose, "B", m_cpuResultBuffer.get(), b, result.b);
+            }
+
+            if(m_printTensorA || m_printTensorB)
+            {
+                if(problem.sparseA() )
                 {
                     auto metadata = problem.metadata();
                     HIP_CHECK_EXC(hipMemcpy(m_cpuResultBuffer.get(),
@@ -456,16 +477,6 @@ namespace Tensile
                                           problem.metadata(),
                                           result.metadata);
                 }
-            }
-
-            if(m_printTensorB)
-            {
-                HIP_CHECK_EXC(hipMemcpy(m_cpuResultBuffer.get(),
-                                        result.b,
-                                        problem.b().totalAllocatedBytes(),
-                                        hipMemcpyDeviceToHost));
-                m_reporter->logTensor(
-                    LogLevel::Verbose, "B", m_cpuResultBuffer.get(), problem.b(), result.b);
             }
 
             if(result.c == result.d && (m_printTensorC || m_printTensorD))

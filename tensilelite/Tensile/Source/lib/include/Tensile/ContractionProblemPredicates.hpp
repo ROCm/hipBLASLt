@@ -1951,10 +1951,10 @@ namespace Tensile
                     HasIndex = false,
                     HasValue = true
                 };
-                bool value;
+                int value;
 
                 SparseA() = default;
-                SparseA(bool value)
+                SparseA(int value)
                     : value(value)
                 {
                 }

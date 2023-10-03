@@ -237,9 +237,9 @@ class ProblemType:
         rv.activationNoGuard = False
         if 'ActivationNoGuard' in d:
             rv.activationNoGuard = d["ActivationNoGuard"]
-        rv.sparseA = False
+        rv.sparseA = 0
         if 'SparseA' in d:
-            rv.sparseA = d['SparseA']
+            rv.sparseA = int(d['SparseA'])
 
         rv.f32XdlMathOp = DataType(d['F32XdlMathOp']) if 'F32XdlMathOp' in d else DataType(0)
 

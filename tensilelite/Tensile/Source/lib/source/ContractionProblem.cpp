@@ -836,25 +836,48 @@ namespace Tensile
         if(m_aSparse)
         {
             auto& aTensor          = m_tensors[ContractionProblemGemm::TENSOR::A];
-            auto  ca_sizes         = aTensor.sizes();
-            auto  ca_strides       = aTensor.strides();
+            auto& bTensor          = m_tensors[ContractionProblemGemm::TENSOR::B];
+            auto  ca_sizes         = m_aSparse == 2 ? bTensor.sizes() : aTensor.sizes();
+            auto  ca_strides       = m_aSparse == 2 ? bTensor.strides() : aTensor.strides();
             auto  metadata_sizes   = ca_sizes;
             auto  metadata_strides = ca_strides;
-            if(m_freeIndices[0].i) // transpose
-            {
-                ca_sizes[0] /= 2;
-                ca_strides[1] = ca_sizes[0];
 
-                metadata_sizes[0]   = ca_sizes[0] / 4;
-                metadata_strides[1] = metadata_sizes[0];
-            }
+            if(m_aSparse != 2)
+            {
+                if(m_freeIndices[0].i) // transpose
+                {
+                    ca_sizes[0] /= 2;
+                    ca_strides[1] = ca_sizes[0];
+                    metadata_sizes[0]   = ca_sizes[0] / 4;
+                    metadata_strides[1] = metadata_sizes[0];
+                }
+                else
+                {
+                    ca_sizes[1] /= 2;
+                    metadata_sizes[1]   = ca_sizes[0];
+                    metadata_sizes[0]   = ca_sizes[1] / 4;
+                    metadata_strides[1] = metadata_sizes[0];
+                }
+            } 
             else
             {
-                ca_sizes[1] /= 2;
-                metadata_sizes[1]   = ca_sizes[0];
-                metadata_sizes[0]   = ca_sizes[1] / 4;
-                metadata_strides[1] = metadata_sizes[0];
+                if(m_freeIndices[1].i == 0) // transpose
+                {
+                    ca_sizes[1] /= 2;
+                    metadata_sizes[0]   = ca_sizes[1] / 4;
+                    metadata_sizes[1]   = ca_sizes[0];
+                    metadata_strides[1] = metadata_sizes[0];                    
+
+                }
+                else
+                {
+                    ca_sizes[0] /= 2;
+                    ca_strides[1] = ca_sizes[0];
+                    metadata_sizes[0]   = ca_sizes[0] / 4;
+                    metadata_strides[1] = metadata_sizes[0];
+                }
             }
+
             for(int i = 2; i < ca_sizes.size(); i++)
             {
                 ca_strides[i] = ca_strides[i] == 0 ? 0 : ca_strides[i - 1] * ca_sizes[i - 1];

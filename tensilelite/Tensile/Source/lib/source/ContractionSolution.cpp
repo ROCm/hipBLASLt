@@ -605,12 +605,15 @@ namespace Tensile
 
         for(size_t i = startStrideAB; i < a.dimensions(); i++)
         {
-            auto stride_a = problemType.sparseA ? ca.strides()[i] : a.strides()[i];
+            auto stride_a = problemType.sparseA && problemType.sparseA != 2 ? ca.strides()[i] : a.strides()[i];
             args.template append<uint32_t>(concatenate_if<T_Debug>("strideA", i), stride_a);
         }
 
         for(size_t i = startStrideAB; i < b.dimensions(); i++)
-            args.template append<uint32_t>(concatenate_if<T_Debug>("strideB", i), b.strides()[i]);
+        {
+            auto stride_b = problemType.sparseA && problemType.sparseA == 2 ? ca.strides()[i] : b.strides()[i];
+            args.template append<uint32_t>(concatenate_if<T_Debug>("strideB", i), stride_b);
+        }
 
         if(problemType.sparseA)
         {

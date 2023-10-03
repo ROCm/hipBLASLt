@@ -1231,6 +1231,14 @@ class KernelWriter(metaclass=abc.ABCMeta):
       module.add(self.graWorkGroup(kernel))
 
     self.dontAppendCode = forceNoTileCode
+
+    tPM = tensorParametersA["tpsMetadata"]
+    tPMRef = tensorParametersA
+
+    if kernel["ProblemType"]["SparseA"] == 2:
+      tPM = tensorParametersB["tpsMetadata"]
+      tPMRef = tensorParametersB
+  
     # tile assignments
     module.addComment1("global read addresses: tile offset assignment a")
     module.add(self.graTileAssignment(kernel, tensorParametersA))
@@ -1238,9 +1246,9 @@ class KernelWriter(metaclass=abc.ABCMeta):
       module.addComment1("global read addresses: tile offset assignment metadata")
       if kernel["DirectToVgprSparseMetadata"]:
         # calculate tile assignment and store into each vgprGlobalReadOffsetMetadata
-        module.add(self.graMetadataTileAssignment(kernel, tensorParametersA))
+        module.add(self.graMetadataTileAssignment(kernel, tPMRef))
       else:
-        module.add(self.graTileAssignment(kernel, tensorParametersA["tpsMetadata"]))
+        module.add(self.graTileAssignment(kernel, tPM))
     module.addComment1("global read addresses: tile offset assignment b")
     module.add(self.graTileAssignment(kernel, tensorParametersB))
 
@@ -1249,7 +1257,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
     module.add(self.graUnrollAssignment(kernel, tensorParametersA))
     if kernel["ProblemType"]["SparseA"] and not kernel["DirectToVgprSparseMetadata"]:
       module.addComment1("global read addresses: unroll assignment metadata")
-      module.add(self.graUnrollAssignment(kernel, tensorParametersA["tpsMetadata"]))
+      module.add(self.graUnrollAssignment(kernel, tPM))
     module.addComment1("global read addresses: unroll assignment b")
     module.add(self.graUnrollAssignment(kernel, tensorParametersB))
 
@@ -1268,8 +1276,8 @@ class KernelWriter(metaclass=abc.ABCMeta):
     module.add(self.graTileOffsets(kernel, tensorParametersA))
     if kernel["ProblemType"]["SparseA"] and not kernel["DirectToVgprSparseMetadata"]:
       module.addComment1("global read addresses: tile offsets metadata")
-      # Using A's margin to instead Metadata's margin
-      module.add(self.graTileOffsets(kernel, tensorParametersA["tpsMetadata"], tensorParametersA["glvw"] if tensorParametersA["rtv"] else 1))
+      # Using A or B's margin to instead Metadata's margin
+      module.add(self.graTileOffsets(kernel, tPM, tPMRef["glvw"] if tPMRef["rtv"] else 1))
     module.addComment1("global read addresses: tile offsets b")
     module.add(self.graTileOffsets(kernel, tensorParametersB))
 
@@ -1278,7 +1286,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
     module.add(self.graUnrollOffsets(kernel, tensorParametersA))
     if kernel["ProblemType"]["SparseA"] and not kernel["DirectToVgprSparseMetadata"]:
       module.addComment1("global read addresses: unroll offsets metadata")
-      module.add(self.graUnrollOffsets(kernel, tensorParametersA["tpsMetadata"]))
+      module.add(self.graUnrollOffsets(kernel, tPM))
     module.addComment1("global read addresses: unroll offsets b")
     module.add(self.graUnrollOffsets(kernel, tensorParametersB))
 
@@ -1297,7 +1305,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
       if not (kernel["BufferLoad"] and kernel["GuaranteeNoPartialA"]) and not forceNoTileCode:
         module.addComment1("global read addresses: shift a")
         module.add(self.graShift(kernel, tensorParametersA))
-        if kernel["ProblemType"]["SparseA"] and kernel["DirectToVgprSparseMetadata"]:
+        if tensorParametersA["is_sparse"] and kernel["DirectToVgprSparseMetadata"]:
           module.addComment1("global read addresses: shift metadata")
           module.add(self.graMetadataShift(kernel, tensorParametersA))
 
@@ -1305,11 +1313,14 @@ class KernelWriter(metaclass=abc.ABCMeta):
         and kernel["ProblemType"]["SparseA"] and not kernel["DirectToVgprSparseMetadata"]:
         module.addComment1("global read addresses: shift metadata")
         # Using A's margin to instead Metadata's margin
-        module.add(self.graShift(kernel, tensorParametersA["tpsMetadata"], tensorParametersA["glvw"] if tensorParametersA["rtv"] else 1))
+        module.add(self.graShift(kernel, tPM, tPMRef["glvw"] if tPMRef["rtv"] else 1))
 
       if not (kernel["BufferLoad"] and  kernel["GuaranteeNoPartialB"]) and not forceNoTileCode:
         module.addComment1("global read addresses: shift b")
         module.add(self.graShift(kernel, tensorParametersB))
+        if tensorParametersB["is_sparse"] and kernel["DirectToVgprSparseMetadata"]:
+          module.addComment1("global read addresses: shift metadata")
+          module.add(self.graMetadataShift(kernel, tensorParametersB))
 
     # final offsets
     module.addComment1("global read addresses: final offsets a")
@@ -1317,9 +1328,9 @@ class KernelWriter(metaclass=abc.ABCMeta):
     if kernel["ProblemType"]["SparseA"]:
       module.addComment1("global read addresses: final offsets metadata")
       if kernel["DirectToVgprSparseMetadata"]:
-        module.add(self.graMetadataFinalOffsets(kernel, tensorParametersA))
+        module.add(self.graMetadataFinalOffsets(kernel, tPMRef))
       else:
-        module.add(self.graFinalOffsets(kernel, tensorParametersA["tpsMetadata"]))
+        module.add(self.graFinalOffsets(kernel, tPM))
     module.addComment1("global read addresses: final offsets b")
     module.add(self.graFinalOffsets(kernel, tensorParametersB))
     self.dontAppendCode = False
@@ -1331,7 +1342,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
       module.add(self.graAddresses(kernel, tensorParametersA))
       if kernel["ProblemType"]["SparseA"] and not kernel["DirectToVgprSparseMetadata"]:
         module.addComment1("global read addresses: addresses metadata")
-        module.add(self.graAddresses(kernel, tensorParametersA["tpsMetadata"]))
+        module.add(self.graAddresses(kernel, tPM))
       module.addComment1("global read addresses: addresses b")
       module.add(self.graAddresses(kernel, tensorParametersB))
 
@@ -1342,7 +1353,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
     if kernel["ProblemType"]["SparseA"] and not kernel["DirectToVgprSparseMetadata"]:
       module.addComment1("global read addresses: increments metadata")
       for i in reversed(range(kernel["ProblemType"]["NumIndicesSummation"])):
-        module.add(self.graIncrements(kernel, i, tensorParametersA["tpsMetadata"]))
+        module.add(self.graIncrements(kernel, i, tPM))
     module.addComment1("global read addresses: increments b")
     for i in reversed(range(kernel["ProblemType"]["NumIndicesSummation"])):
       module.add(self.graIncrements(kernel, i, tensorParametersB))
@@ -1382,7 +1393,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
         module.add(self.declareStaggerParms(kernel))
         module.add(self.calculateStagger(kernel, tensorParametersA))
         if kernel["ProblemType"]["SparseA"] and not kernel["DirectToVgprSparseMetadata"]:
-          module.add(self.calculateStagger(kernel, tensorParametersA["tpsMetadata"]))
+          module.add(self.calculateStagger(kernel,tPM))
         module.add(self.calculateStagger(kernel, tensorParametersB))
 
     # LRO and LWA as assigned
@@ -1391,7 +1402,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
     module.add(self.localReadInitPointers(kernel, tensorParametersA, tensorParametersA))
     if kernel["ProblemType"]["SparseA"] and not kernel["DirectToVgprSparseMetadata"]:
       module.addComment0("local read addresses: init pointers metadata")
-      module.add(self.localReadInitPointers(kernel, tensorParametersA, tensorParametersA["tpsMetadata"]))
+      module.add(self.localReadInitPointers(kernel, tensorParametersA, tPM))
     module.addComment0("local read addresses: init pointers b")
     module.add(self.localReadInitPointers(kernel, tensorParametersA, tensorParametersB))
 
@@ -1424,6 +1435,8 @@ class KernelWriter(metaclass=abc.ABCMeta):
     pflr     = self.states.numItersPLR
     localWriteEndIter = kernel["LoopIters"] - self.states.numItersPLR - 1
 
+    tPM = tensorParametersA["tpsMetadata"] if tensorParametersA["is_sparse"] else tensorParametersB["tpsMetadata"]
+  
     for uIdx in range(0, kernel["LoopIters"]):
       u = uIdx % kernel["LoopIters"]    #   u: index in compute loop (in contrast to the notion of global read loop)
       isLastLoop = not isNGLL
@@ -1493,7 +1506,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
           pack[plrIdx*self.states.numIterPerCoalescedReadA].add(packCodeA)
         if doReadM:
           localReads.addComment1("local read metadata")
-          localReadCodeM, packCodeM = self.localReadDo(kernel, plrIdx*self.states.numIterPerCoalescedReadMetadata, iui*self.states.numReadsIterCoalescedMetadata, 0, tensorParametersA["tpsMetadata"])
+          localReadCodeM, packCodeM = self.localReadDo(kernel, plrIdx*self.states.numIterPerCoalescedReadMetadata, iui*self.states.numReadsIterCoalescedMetadata, 0, tPM)
           localReads.add(localReadCodeM)
           pack[plrIdx*self.states.numIterPerCoalescedReadMetadata].add(packCodeM)
         if doReadB:
@@ -1507,7 +1520,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
             localReads.add(self.localReadInc(kernel, iui, tensorParametersA))
           if doReadM:
             localReads.addComment1("local read increment metadata")
-            localReads.add(self.localReadInc(kernel, iui, tensorParametersA["tpsMetadata"]))
+            localReads.add(self.localReadInc(kernel, iui, tPM))
           if doReadB:
             localReads.addComment1("local read increment b")
             localReads.add(self.localReadInc(kernel, iui, tensorParametersB))
@@ -1537,7 +1550,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
             pointerLRCode.add(self.localReadSwapOffsets(kernel, internalPointerSwap, tensorParametersB))
             if kernel["ProblemType"]["SparseA"] and not kernel["DirectToVgprSparseMetadata"]:
               pointerLRCode.addComment1("local read swap offsets metadata")
-              pointerLRCode.add(self.localReadSwapOffsets(kernel, internalPointerSwap, tensorParametersA["tpsMetadata"]))
+              pointerLRCode.add(self.localReadSwapOffsets(kernel, internalPointerSwap, tPM))
 
         if isResetLroIter: # ResetLroIter
           pointerLRCode.addComment1("local read init pointers a")
@@ -1546,7 +1559,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
           pointerLRCode.add(self.localReadInitPointers(kernel, tensorParametersA, tensorParametersB))
           if kernel["ProblemType"]["SparseA"] and not kernel["DirectToVgprSparseMetadata"]:
             pointerLRCode.addComment1("local read init pointers metadata")
-            pointerLRCode.add(self.localReadInitPointers(kernel, tensorParametersA, tensorParametersA["tpsMetadata"]))
+            pointerLRCode.add(self.localReadInitPointers(kernel, tensorParametersA, tPM))
 
       # we initiate lgkmcnt to 0, then assigning it correct value in makeSubIterSchedule()
       waitCode = self._wait(kernel, tensorParametersA, tensorParametersB, \
@@ -1696,6 +1709,8 @@ class KernelWriter(metaclass=abc.ABCMeta):
       module.add("    }" + self.endLine)
       """
 
+    tPM = tensorParametersA["tpsMetadata"] if tensorParametersA["is_sparse"] else tensorParametersB["tpsMetadata"]
+  
     # unrolled loop: prefetch local
     if self.states.numItersPLR and not kernel["PrefetchGlobalRead"]:
       for plrIdx in range(0, self.states.numItersPLR):
@@ -1709,7 +1724,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
           if kernel["ProblemType"]["SparseA"] and not kernel["DirectToVgprSparseMetadata"]:
             if iui*self.states.numReadsIterCoalescedMetadata < kernel["InnerUnroll"]: # no local read code if DirectToVgpr is enabled
               module.addComment1("prefetch local metadata")
-              localReadCodeM, packCodeM = self.localReadDo(kernel, plrIdx*self.states.numIterPerCoalescedReadMetadata, iui*self.states.numReadsIterCoalescedMetadata, 0, tensorParametersA["tpsMetadata"])
+              localReadCodeM, packCodeM = self.localReadDo(kernel, plrIdx*self.states.numIterPerCoalescedReadMetadata, iui*self.states.numReadsIterCoalescedMetadata, 0, tPM)
               module.add(localReadCodeM)
               pack[plrIdx].add(packCodeM)
           if iui*self.states.numReadsIterCoalescedB < kernel["InnerUnroll"]:
@@ -1721,9 +1736,10 @@ class KernelWriter(metaclass=abc.ABCMeta):
             module.addComment0("local read increment a")
             module.add(self.localReadInc(kernel, iui, tensorParametersA))
           if kernel["ProblemType"]["SparseA"] and not kernel["DirectToVgprSparseMetadata"]:
-           if iui*self.states.numReadsIterCoalescedA < kernel["InnerUnroll"]:
-            module.addComment0("local read increment metadata")
-            module.add(self.localReadInc(kernel, iui, tensorParametersA["tpsMetadata"]))
+            numReadsIterCoalesced = self.states.numReadsIterCoalescedB if kernel["ProblemType"]["SparseA"] == 2 else self.states.numReadsIterCoalescedA
+            if iui*numReadsIterCoalesced < kernel["InnerUnroll"]:
+              module.addComment0("local read increment metadata")
+              module.add(self.localReadInc(kernel, iui, tPM))
           if iui*self.states.numReadsIterCoalescedB < kernel["InnerUnroll"]:
             module.addComment0("local read increment b")
             module.add(self.localReadInc(kernel, iui, tensorParametersB))
@@ -1807,7 +1823,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
           pack[plrIdx*self.states.numIterPerCoalescedReadA].add(packCodeA)
         if doReadM:
           localReads.addComment1("local read metadata")
-          localReadCodeM, packCodeM = self.localReadDo(kernel, plrIdxLR*self.states.numIterPerCoalescedReadMetadata, iui*self.states.numReadsIterCoalescedMetadata, 0, tensorParametersA["tpsMetadata"])
+          localReadCodeM, packCodeM = self.localReadDo(kernel, plrIdxLR*self.states.numIterPerCoalescedReadMetadata, iui*self.states.numReadsIterCoalescedMetadata, 0, tPM)
           localReads.add(localReadCodeM)
           localReadsM.add(localReadCodeM)
           pack[plrIdx*self.states.numIterPerCoalescedReadMetadata].add(packCodeM)
@@ -1824,7 +1840,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
             localReads.add(self.localReadInc(kernel, iui, tensorParametersA))
           if doReadM:
             localReads.addComment1("local read increment metadata")
-            localReads.add(self.localReadInc(kernel, iui, tensorParametersA["tpsMetadata"]))
+            localReads.add(self.localReadInc(kernel, iui, tPM))
           if doReadB:
             localReads.addComment1("local read increment b")
             localReads.add(self.localReadInc(kernel, iui, tensorParametersB))
@@ -1852,7 +1868,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
           pointerLRCode.add(self.localReadSwapOffsets(kernel, expand, tensorParametersA))
           if kernel["ProblemType"]["SparseA"] and not kernel["DirectToVgprSparseMetadata"]:
             pointerLRCode.addComment1("local read swap offsets metadata")
-            pointerLRCode.add(self.localReadSwapOffsets(kernel, expand, tensorParametersA["tpsMetadata"]))
+            pointerLRCode.add(self.localReadSwapOffsets(kernel, expand, tPM))
           pointerLRCode.addComment1("local read swap offsets b")
           pointerLRCode.add(self.localReadSwapOffsets(kernel, expand, tensorParametersB))
 
@@ -1861,7 +1877,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
         pointerLRCode.add(self.localReadInitPointers(kernel, tensorParametersA, tensorParametersA))
         if kernel["ProblemType"]["SparseA"] and not kernel["DirectToVgprSparseMetadata"]:
           pointerLRCode.addComment1("local read init pointers metadata")
-          pointerLRCode.add(self.localReadInitPointers(kernel, tensorParametersA, tensorParametersA["tpsMetadata"]))
+          pointerLRCode.add(self.localReadInitPointers(kernel, tensorParametersA, tPM))
         pointerLRCode.addComment1("local read init pointers b")
         pointerLRCode.add(self.localReadInitPointers(kernel, tensorParametersA, tensorParametersB))
 
@@ -1959,12 +1975,14 @@ class KernelWriter(metaclass=abc.ABCMeta):
     lralwaMod.addComment1("local read addresses: tile assignments a/b")
     lralwaMod.add(self.lraTileAssignment(kernel, tensorParametersA, tensorParametersB))
 
+    tPM = tensorParametersA["tpsMetadata"] if tensorParametersA["is_sparse"] else tensorParametersB["tpsMetadata"]
+
     # final offsets
     lralwaMod.addComment1("local read addresses: final offsets a")
     lralwaMod.add(self.lraFinalOffset(kernel, tensorParametersA))
     if kernel["ProblemType"]["SparseA"] and not kernel["DirectToVgprSparseMetadata"]:
       lralwaMod.addComment1("local read addresses: final offsets metadata")
-      lralwaMod.add(self.lraFinalOffset(kernel, tensorParametersA["tpsMetadata"]))
+      lralwaMod.add(self.lraFinalOffset(kernel, tPM))
     lralwaMod.addComment1("local read addresses: final offsets b")
     lralwaMod.add(self.lraFinalOffset(kernel, tensorParametersB))
 
@@ -1973,7 +1991,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
     lralwaMod.add(self.lraDeclareAddresses(kernel, tensorParametersA))
     if kernel["ProblemType"]["SparseA"] and not kernel["DirectToVgprSparseMetadata"]:
       lralwaMod.addComment1("local read addresses: declare addresses metadata")
-      lralwaMod.add(self.lraDeclareAddresses(kernel, tensorParametersA["tpsMetadata"]))
+      lralwaMod.add(self.lraDeclareAddresses(kernel, tPM))
     lralwaMod.addComment1("local read addresses: declare addresses b")
     lralwaMod.add(self.lraDeclareAddresses(kernel, tensorParametersB))
 
@@ -1986,13 +2004,13 @@ class KernelWriter(metaclass=abc.ABCMeta):
     # tile assignments
     lralwaMod.add(self.lwaTileAssignment(kernel, tensorParametersA))
     if kernel["ProblemType"]["SparseA"] and not kernel["DirectToVgprSparseMetadata"]:
-      lralwaMod.add(self.lwaTileAssignment(kernel, tensorParametersA["tpsMetadata"]))
+      lralwaMod.add(self.lwaTileAssignment(kernel, tPM))
     lralwaMod.add(self.lwaTileAssignment(kernel, tensorParametersB))
 
     # unroll assignments
     lralwaMod.add(self.lwaUnrollAssignment(kernel, tensorParametersA))
     if kernel["ProblemType"]["SparseA"] and not kernel["DirectToVgprSparseMetadata"]:
-      lralwaMod.add(self.lwaUnrollAssignment(kernel, tensorParametersA["tpsMetadata"]))
+      lralwaMod.add(self.lwaUnrollAssignment(kernel, tPM))
     lralwaMod.add(self.lwaUnrollAssignment(kernel, tensorParametersB))
 
     # first offsets
@@ -2000,7 +2018,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
     lralwaMod.add(self.lwaFirstOffset(kernel, tensorParametersA))
     if kernel["ProblemType"]["SparseA"] and not kernel["DirectToVgprSparseMetadata"]:
       lralwaMod.addComment1("local write addresses: first offset metadata")
-      lralwaMod.add(self.lwaFirstOffset(kernel, tensorParametersA["tpsMetadata"]))
+      lralwaMod.add(self.lwaFirstOffset(kernel, tPM))
     lralwaMod.addComment1("local write addresses: first offset b")
     lralwaMod.add(self.lwaFirstOffset(kernel, tensorParametersB))
 
@@ -2075,7 +2093,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
               if kernel["ProblemType"]["SparseA"] and not kernel["DirectToVgprSparseMetadata"]:
                 if iui*self.states.numReadsIterCoalescedMetadata < kernel["InnerUnroll"]:
                   module.addComment1("local read prefetch metadata")
-                  localReadCodeM, packCodeM = self.localReadDo(kernel, plrIdx*self.states.numIterPerCoalescedReadMetadata, iui*self.states.numReadsIterCoalescedMetadata, espi, tensorParametersA["tpsMetadata"])
+                  localReadCodeM, packCodeM = self.localReadDo(kernel, plrIdx*self.states.numIterPerCoalescedReadMetadata, iui*self.states.numReadsIterCoalescedMetadata, espi, tPM)
                   module.add(localReadCodeM)
                   pack[plrIdx].add(packCodeM)
               if iui*self.states.numReadsIterCoalescedB < kernel["InnerUnroll"]:
@@ -2089,7 +2107,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
               if kernel["ProblemType"]["SparseA"] and not kernel["DirectToVgprSparseMetadata"]:
                 if iui*self.states.numReadsIterCoalescedMetadata < kernel["InnerUnroll"]: # no local read code if DirectToVgpr is enabled
                   module.addComment1("local read inc metadata")
-                  module.add(self.localReadInc(kernel, iui, tensorParametersA["tpsMetadata"]))
+                  module.add(self.localReadInc(kernel, iui, tPM))
               if iui*self.states.numReadsIterCoalescedB < kernel["InnerUnroll"]:
                 module.addComment1("local read inc b")
                 module.add(self.localReadInc(kernel, iui, tensorParametersB))
@@ -2235,9 +2253,9 @@ class KernelWriter(metaclass=abc.ABCMeta):
         module.add(self.localReadInitPointers(kernel, tensorParametersA, tensorParametersB))
         if kernel["ProblemType"]["SparseA"] and not kernel["DirectToVgprSparseMetadata"]:
           module.addComment1("local read reset offsets metadata")
-          module.add(self.localReadResetOffsets(kernel, tensorParametersA["tpsMetadata"]))
+          module.add(self.localReadResetOffsets(kernel, tPM))
           module.addComment1("local read init pointers metadata")
-          module.add(self.localReadInitPointers(kernel, tensorParametersA, tensorParametersA["tpsMetadata"]))
+          module.add(self.localReadInitPointers(kernel, tensorParametersA, tPM))
       # tail: macs
       module.addComment1("tail loop: macs")
       module.add(self.openLoop(kernel, tensorParametersA, tensorParametersB, -1, None))
@@ -2282,7 +2300,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
           pack[0].add(packCodeA)
           if kernel["ProblemType"]["SparseA"] and not kernel["DirectToVgprSparseMetadata"]:
             module.addComment1("local read metadata")
-            localReadCodeM, packCodeM = self.localReadDo(kernel, 0, iui, 0, tensorParametersA["tpsMetadata"])
+            localReadCodeM, packCodeM = self.localReadDo(kernel, 0, iui, 0, tPM)
             module.add(localReadCodeM)
             pack[0].add(packCodeM)
           module.addComment1("local read b")
@@ -2295,7 +2313,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
           module.add(self.localReadInc(kernel, iuiParam, tensorParametersA))
           if kernel["ProblemType"]["SparseA"] and not kernel["DirectToVgprSparseMetadata"]:
             module.addComment1("local read inc metadata")
-            module.add(self.localReadInc(kernel, iuiParam, tensorParametersA["tpsMetadata"]))
+            module.add(self.localReadInc(kernel, iuiParam, tPM))
           module.addComment1("local read inc b")
           module.add(self.localReadInc(kernel, iuiParam, tensorParametersB))
         module.add(self._wait(kernel, tensorParametersA, tensorParametersB, -1, -1, 0, "4wait for local read"))
@@ -2568,12 +2586,14 @@ class KernelWriter(metaclass=abc.ABCMeta):
       self.states.numVgprBufferPackB = 1
 
     if kernel["UnrollMajorLDSA"]:
-      self.states.lrvwUnrollA = kernel["LocalReadVectorWidth"] if not kernel["ProblemType"]["SparseA"] else kernel["LocalReadVectorWidth"]//2
+      divider = 2 if (kernel["ProblemType"]["SparseA"] and kernel["ProblemType"]["SparseA"] != 2) else 1
+      self.states.lrvwUnrollA = kernel["LocalReadVectorWidth"] // divider
     else:
       self.states.lrvwUnrollA = 1
 
     if kernel["UnrollMajorLDSB"]:
-      self.states.lrvwUnrollB = kernel["LocalReadVectorWidth"]
+      divider = 2 if (kernel["ProblemType"]["SparseA"] == 2 ) else 1
+      self.states.lrvwUnrollB = kernel["LocalReadVectorWidth"] // divider
     else:
       self.states.lrvwUnrollB = 1
 
@@ -2660,13 +2680,20 @@ class KernelWriter(metaclass=abc.ABCMeta):
     tensorParametersB["PackedIndices"] = kernel["PackedC%uIndicesX"%tensorParametersB["tile01Idx"]]
 
     tensorParametersM = None
-    if kernel["ProblemType"]["SparseA"] and not kernel["DirectToVgprSparseMetadata"]:
-      itP["Metadata"] = readWriteVectors("Metadata", vwm, kernel)
-      tensorParametersM = {}
-      self.getTensorParameters(tensorParametersM, kernel, itP, "Metadata")
-      tensorParametersM["localReadOffset"] = 0
-      tensorParametersM["PackedIndices"] = kernel["PackedC%uIndicesX"%tensorParametersM["tile01Idx"]]
-      tensorParametersA["tpsMetadata"] = tensorParametersM
+    tensorParametersA["tpsMetadata"] = None
+    tensorParametersB["tpsMetadata"] = None
+
+    if kernel["ProblemType"]["SparseA"]:
+      if not kernel["DirectToVgprSparseMetadata"]:
+        itP["Metadata"] = readWriteVectors("Metadata", vwm, kernel)
+        tensorParametersM = {}
+        self.getTensorParameters(tensorParametersM, kernel, itP, "Metadata")
+        tensorParametersM["localReadOffset"] = 0
+        tensorParametersM["PackedIndices"] = kernel["PackedC%uIndicesX"%tensorParametersM["tile01Idx"]]
+        if  kernel["ProblemType"]["SparseA"] == 2:
+          tensorParametersB["tpsMetadata"] = tensorParametersM
+        else:
+          tensorParametersA["tpsMetadata"] = tensorParametersM
 
     # init these here in case some kernel pieces are disabled for performance exploration:
     tensorParametersA["localReadOffset"] = 0
@@ -2933,7 +2960,8 @@ class KernelWriter(metaclass=abc.ABCMeta):
 
     if kernel["ProblemType"]["SparseA"]:
       if kernel["DirectToVgprSparseMetadata"]:
-        self.states.m.numVgprValuPerBlock = kernel["MIWaveTileA"] * kernel["LoopIters"] #every 8bit need 1 register
+        miWaveTile = kernel["MIWaveTileB"] if kernel["ProblemType"]["SparseA"] == 2 else kernel["MIWaveTileA"]
+        self.states.m.numVgprValuPerBlock = miWaveTile * kernel["LoopIters"] #every 8bit need 1 register
         valuBlocks = (kernel["PrefetchGlobalRead"] + 1)
       else:
         self.states.m.numVgprValuPerBlock = int(kernel["MIWaveTileMetadata"] * kernel["MIInputPerThreadMetadata"])
@@ -3218,7 +3246,8 @@ class KernelWriter(metaclass=abc.ABCMeta):
       if kernel["ProblemType"]["SparseA"]:
         self.startVgprGlobalReadOffsetMetadata = vgprIdx
         if kernel["DirectToVgprSparseMetadata"]:
-          vgprIdx += kernel["MIWaveTileA"]
+          miWaveTile = kernel["MIWaveTileB"] if kernel["ProblemType"]["SparseA"] == 2 else kernel["MIWaveTileA"]
+          vgprIdx += miWaveTile
         else:
           vgprIdx += 1 if kernel["_UseSgprForGRO"] else self.states.m.numVgprGlobalReadOffsets
     else:
@@ -3531,8 +3560,11 @@ class KernelWriter(metaclass=abc.ABCMeta):
 
       if kernel["ProblemType"]["SparseA"] and not kernel["DirectToVgprSparseMetadata"]:
         if kernel["UnrollMajorLDSMetadata"]:
-          self.states.numReadsPerUnrollMetadata = ceil(tensorParametersA["tpsMetadata"]["bpe"] * kernel["MIInputPerThreadMetadata"] / int(tensorParametersA["tpsMetadata"]["localReadInstruction"].blockWidth * 4))
-        numM = kernel["InnerUnroll"]*(kernel["MIWaveTile"][0] * self.states.numReadsPerUnrollMetadata) // tensorParametersA["tpsMetadata"]["localReadInstruction"].numOffsets
+          self.states.numReadsPerUnrollMetadata = ceil(tensorParametersM["bpe"] * kernel["MIInputPerThreadMetadata"] / int(tensorParametersM["localReadInstruction"].blockWidth * 4))
+        else:
+          self.states.numReadsPerUnrollMetadata = kernel["MIInputPerThreadMetadata"]
+        tileM = kernel["MIWaveTile"][1] if kernel["ProblemType"]["SparseA"] == 2 else kernel["MIWaveTile"][0]
+        numM = kernel["InnerUnroll"]*(tileM * self.states.numReadsPerUnrollMetadata) // tensorParametersM["localReadInstruction"].numOffsets
 
       if kernel["UnrollMajorLDSB"]:
         self.states.numReadsPerUnrollB = ceil(tensorParametersB["bpe"] * kernel["MIInputPerThreadB"] / int(tensorParametersB["localReadInstruction"].blockWidth * 4))
@@ -3666,11 +3698,11 @@ class KernelWriter(metaclass=abc.ABCMeta):
   def getTensorParameters(self, tP, kernel, itP, cM):
     tP["mirror"] = bool(kernel["ProblemType"]["MirrorDims%s" % (cM)])
 
-    if cM == "A" or cM == "Metadata": # A
+    if cM == "A" or (kernel["ProblemType"]["SparseA"] and kernel["ProblemType"]["SparseA"] !=2 and cM == "Metadata"): # A
       tP["tensorIdx"] = 0                                   # tensor index A=0, B=1
       tP["tileChar"] = self.states.tileChar0 if (kernel["ProblemType"]["Tensor0"]==0) \
         else self.states.tileChar1                       # tile char I0 or J1
-    else: # B
+    elif cM == "B" or (kernel["ProblemType"]["SparseA"] ==2 and cM == "Metadata"): # B
       tP["tensorIdx"] = 1
       tP["tileChar"] = self.states.tileChar0 if (kernel["ProblemType"]["Tensor0"]==1) \
         else self.states.tileChar1
@@ -3708,7 +3740,8 @@ class KernelWriter(metaclass=abc.ABCMeta):
     tP["NonTemporal"] = kernel["NonTemporal%s"%cM]               # non-temporal read type
     tP["shiftGR"] = 0 if (tP["bpeGR"] >= tP["bpe"]) else int(tP["glvw"] // 2 * (tP["bpe"] / self.states.bpr))  # Shift global read register for cvt spaces
     tP["bpeRatio"] = tP["bpe"] // tP["bpeGR"] if tP["bpeGR"] < tP["bpe"] else 1                                # g2lIdx multiplier
-
+    
+    tP["is_sparse"] = (kernel["ProblemType"]["SparseA"] == 2 and tP["isB"]) or (kernel["ProblemType"]["SparseA"] and kernel["ProblemType"]["SparseA"] != 2 and tP["isA"])
     # KernelWriterAssembly
     tP["localReadSwapByteOffset"]  = 0
     tP["localWriteSwapByteOffset"] = 0
