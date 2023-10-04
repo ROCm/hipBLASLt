@@ -146,6 +146,9 @@ struct Arguments
     int  algo_method; // 0 for getheuristic, 1 for get all algos, 2 for algo index
     bool use_user_args;
 
+    // print
+    bool print_solution_found;
+
     /*************************************************************************
      *                     End Of Arguments                                  *
      *************************************************************************/
@@ -222,7 +225,8 @@ struct Arguments
     OPER(use_ext) SEP                \
     OPER(use_ext_setproblem) SEP     \
     OPER(algo_method) SEP            \
-    OPER(use_user_args) SEP
+    OPER(use_user_args) SEP          \
+    OPER(print_solution_found) SEP
 
     // clang-format on
 
