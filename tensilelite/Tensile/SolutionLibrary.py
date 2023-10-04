@@ -97,19 +97,31 @@ class MatchingLibrary:
 
         table = []
 
-        for row in origTable:
+        if distance == "FreeSize":
             try:
-                index = row[1][0]
-                value = IndexSolutionLibrary(solutions[index])
-                key = list([row[0][i] for i in keyOrder])
-                if distance == "GridBased":
+                indexStart  = origTable[0][0]
+                indexOffset = origTable[0][1]
+                for index in range(indexStart, indexStart + indexOffset):
+                    value = IndexSolutionLibrary(solutions[index])
+                    key = list([0 for i in keyOrder])
                     entry = {"key": key, "index": value}
-                else:
-                    entry = {"key": key, "index": value, "speed": row[1][1]}
-
-                table.append(entry)
+                    table.append(entry)
             except KeyError:
                 pass
+        else:
+            for row in origTable:
+                try:
+                    index = row[1][0]
+                    value = IndexSolutionLibrary(solutions[index])
+                    key = list([row[0][i] for i in keyOrder])
+                    if distance == "GridBased":
+                        entry = {"key": key, "index": value}
+                    else:
+                        entry = {"key": key, "index": value, "speed": row[1][1]}
+
+                    table.append(entry)
+                except KeyError:
+                    pass
 
         table.sort(key=lambda r: r["key"])
 
@@ -331,6 +343,8 @@ class MasterSolutionLibrary:
             if d["LibraryType"] == "Matching":
                 if d["Library"]["distance"] == "Equality":
                     predicate = Properties.Predicate(tag="EqualityMatching")
+                elif d["Library"]["distance"] == "FreeSize":
+                    predicate = Properties.Predicate(tag="FreeSizeMatching")
                 else:
                     predicate = Properties.Predicate(tag="TruePred")
 

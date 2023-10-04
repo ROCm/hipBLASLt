@@ -191,6 +191,7 @@ Arguments:
   - use_ext_setproblem: c_bool
   - algo_method: c_int32
   - use_user_args: c_bool
+  - print_solution_found: c_bool
 
 # These named dictionary lists [ {dict1}, {dict2}, etc. ] supply subsets of
 # test arguments in a structured way. The dictionaries are applied to the test
@@ -278,3 +279,4 @@ Defaults:
   use_ext_setproblem: false
   algo_method: 0
   use_user_args: false
+  print_solution_found: false

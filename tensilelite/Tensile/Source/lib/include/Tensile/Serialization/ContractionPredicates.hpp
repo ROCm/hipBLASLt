@@ -96,6 +96,7 @@ namespace Tensile
                     Base::template Pair<Predicates::Contraction::Experimental>(),
                     Base::template Pair<Predicates::Contraction::Fp16AltImpl>(),
                     Base::template Pair<Predicates::Contraction::EqualityMatching>(),
+                    Base::template Pair<Predicates::Contraction::FreeSizeMatching>(),
                     Base::template Pair<Predicates::Contraction::UseGradientEqual>(),
                     Base::template Pair<Predicates::Contraction::ActivationEqual>(),
                     Base::template Pair<Predicates::Contraction::ActivationComputeTypeEqual>(),
@@ -367,6 +368,12 @@ namespace Tensile
         template <typename IO>
         struct MappingTraits<Predicates::Contraction::EqualityMatching, IO>
             : public AutoMappingTraits<Predicates::Contraction::EqualityMatching, IO>
+        {
+        };
+
+        template <typename IO>
+        struct MappingTraits<Predicates::Contraction::FreeSizeMatching, IO>
+            : public AutoMappingTraits<Predicates::Contraction::FreeSizeMatching, IO>
         {
         };
 

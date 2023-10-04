@@ -1011,5 +1011,82 @@ namespace Tensile
                 return bestmatches;
             }
         };
+
+        template <typename Key, typename Object, typename Value, typename ReturnValue>
+        struct DistanceMatchingTable<Key,
+                                     Object,
+                                     Value,
+                                     ReturnValue,
+                                     Matching::FreeSizeDistance<Key>>
+            : public DistanceMatchingCommon<Key,
+                                            Object,
+                                            Value,
+                                            ReturnValue,
+                                            Matching::FreeSizeDistance<Key>>
+        {
+            using Base             = MatchingTable<Object, Value, ReturnValue>;
+            using Entry            = MatchingTableEntry<Key, Value>;
+            using Transform        = typename Base::Transform;
+            using Properties       = typename Base::Properties;
+            using FreeSizeDistance = Matching::FreeSizeDistance<Key>;
+            using Common           = DistanceMatchingCommon<Key,
+                                                  Object,
+                                                  Value,
+                                                  ReturnValue,
+                                                  Matching::FreeSizeDistance<Key>>;
+            using Common::distance;
+            using Common::nullValue;
+            using Common::table;
+
+            DistanceMatchingTable(ReturnValue nullValue = ReturnValue())
+                : Common(nullValue)
+            {
+            }
+
+            DistanceMatchingTable(Properties const& properties,
+                                  ReturnValue       nullValue = ReturnValue())
+                : Common(properties, nullValue)
+            {
+            }
+
+            DistanceMatchingTable(FreeSizeDistance const& distance,
+                                  Properties const&       properties,
+                                  ReturnValue             nullValue = ReturnValue())
+                : Common(distance, properties, nullValue)
+            {
+            }
+
+            std::vector<Value> GetAll() const override
+            {
+                std::vector<Value> result;
+                result.reserve(this->table.size());
+
+                for(auto& data : this->table)
+                    result.push_back(data.value);
+
+                return result;
+            }
+
+            std::vector<Value> matchesInOrder(Object const& object) const override
+            {
+                std::vector<Value> result;
+                return result;
+            }
+
+            std::tuple<ReturnValue, double> findBestKeyMatch(Key const& key,
+                                                             Transform  transform) const override
+            {
+                ReturnValue solution = this->nullValue;
+                return std::make_tuple(solution, std::numeric_limits<double>::max());
+            }
+
+            std::vector<ReturnValue> findTopKeyMatch(Key const& key,
+                                                     Transform  transform,
+                                                     int        numSolutions) const override
+            {
+                std::vector<ReturnValue> result;
+                return result;
+            }
+        };
     } // namespace Matching
 } // namespace Tensile

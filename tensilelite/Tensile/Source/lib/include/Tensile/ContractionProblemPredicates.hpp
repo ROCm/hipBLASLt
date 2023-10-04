@@ -1504,6 +1504,28 @@ namespace Tensile
                 }
             };
 
+            struct FreeSizeMatching
+                : public Predicate_CRTP<FreeSizeMatching, ContractionProblemGemm>
+            {
+                enum
+                {
+                    HasIndex = false,
+                    HasValue = false
+                };
+
+                FreeSizeMatching() = default;
+
+                static std::string Type()
+                {
+                    return "FreeSizeMatching";
+                }
+
+                virtual bool operator()(ContractionProblemGemm const& problem) const override
+                {
+                    return true;
+                }
+            };
+
             struct UseGradientEqual
                 : public Predicate_CRTP<UseGradientEqual, ContractionProblemGemm>
             {
