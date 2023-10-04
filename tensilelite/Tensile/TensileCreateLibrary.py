@@ -106,7 +106,8 @@ def getAssemblyCodeObjectFiles(kernels, kernelWriterAssembly, outputPath):
 
         #Group kernels from placeholder libraries
         coFileMap = collections.defaultdict(list)
-        coFileMap[os.path.join(destDir, "TensileLibrary_"+archName+".co")] = objectFiles
+        if len(objectFiles):
+          coFileMap[os.path.join(destDir, "TensileLibrary_"+archName+".co")] = objectFiles
 
         for kernel in archKernels:
           coName = kernel.get("codeObjectFile", None)
