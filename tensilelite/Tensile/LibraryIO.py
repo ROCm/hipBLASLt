@@ -290,9 +290,12 @@ def parseLibraryLogicList(data, srcFile="?"):
     rv["Library"] = {}
     rv["Library"]["indexOrder"] = data[6]
     rv["Library"]["table"] = data[7]
-    rv["Library"]["distance"] = "Euclidean"
+    rv["Library"]["distance"] = None
     if len(data) > 12 and data[12]:
         rv["Library"]["distance"] = data[12]
+    else:
+        printExit("Library logic file {} is missing required field matching property." \
+                .format(srcFile))
 
     return rv
 
