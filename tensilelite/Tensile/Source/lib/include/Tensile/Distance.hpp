@@ -392,38 +392,6 @@ namespace Tensile
                 return true;
             }
         };
-
-        template <typename Key>
-        struct FreeSizeDistance : public Distance<Key>
-        {
-            enum
-            {
-                HasIndex = false,
-                HasValue = false
-            };
-
-            static std::string Type()
-            {
-                return "FreeSize";
-            }
-            virtual std::string type() const override
-            {
-                return Type();
-            }
-
-            inline double operator()(Key const& p1, Key const& p2) const
-            {
-                return 0.0;
-            }
-
-            inline bool improvementPossible(Key const& p1,
-                                            Key const& p2,
-                                            size_t     idx,
-                                            double     bestDistance) const
-            {
-                return true;
-            }
-        };
         /**
  * @}
  */

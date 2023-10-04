@@ -286,16 +286,24 @@ def parseLibraryLogicList(data, srcFile="?"):
         rv["Fp16AltImpl"] = True
 
     # library logic fields
-    rv["LibraryType"] = "Matching"
-    rv["Library"] = {}
-    rv["Library"]["indexOrder"] = data[6]
-    rv["Library"]["table"] = data[7]
-    rv["Library"]["distance"] = None
+    libraryType = None
     if len(data) > 12 and data[12]:
-        rv["Library"]["distance"] = data[12]
+        libraryType = data[12]
     else:
         printExit("Library logic file {} is missing required field matching property." \
                 .format(srcFile))
+    if libraryType == "FreeSize":
+        rv["LibraryType"] = "FreeSize"
+        rv["Library"] = {}
+        rv["Library"]["indexOrder"] = None
+        rv["Library"]["table"] = [0, len(data[5])]
+        rv["Library"]["distance"] = None
+    else:
+        rv["LibraryType"] = "Matching"
+        rv["Library"] = {}
+        rv["Library"]["indexOrder"] = data[6]
+        rv["Library"]["table"] = data[7]
+        rv["Library"]["distance"] = libraryType
 
     return rv
 

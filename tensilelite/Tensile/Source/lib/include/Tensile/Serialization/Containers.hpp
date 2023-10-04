@@ -32,6 +32,7 @@
 #include <Tensile/ContractionProblemPredicates.hpp>
 #include <Tensile/DecisionTreeLibrary.hpp>
 #include <Tensile/ExactLogicLibrary.hpp>
+#include <Tensile/FreeSizeLibrary.hpp>
 #include <Tensile/GranularitySelectionLibrary.hpp>
 #include <Tensile/PropertyMatching.hpp>
 
@@ -189,6 +190,12 @@ namespace Tensile
             true, std::shared_ptr<Tensile::MLFeatures::MLFeature<Tensile::ContractionProblemGemm>>);
 
         TENSILE_SERIALIZE_VECTOR(false, std::shared_ptr<Tensile::ContractionSolution>);
+
+        template <typename Value, typename IO>
+        struct SequenceTraits<std::vector<Tensile::FreeSizeEntry<Value>>, IO>
+            : public DefaultSequenceTraits<std::vector<Tensile::FreeSizeEntry<Value>>, IO, false>
+        {
+        };
 
         template <typename Key, typename Value, typename IO>
         struct SequenceTraits<std::vector<Tensile::Matching::MatchingTableEntry<Key, Value>>, IO>

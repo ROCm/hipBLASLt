@@ -29,6 +29,7 @@
 #include <Tensile/ContractionProblem.hpp>
 #include <Tensile/ContractionSolution.hpp>
 #include <Tensile/ExactLogicLibrary.hpp>
+#include <Tensile/FreeSizeLibrary.hpp>
 #include <Tensile/GranularitySelectionLibrary.hpp>
 #include <Tensile/MapLibrary.hpp>
 #include <Tensile/MasterSolutionLibrary.hpp>
@@ -47,6 +48,8 @@ namespace Tensile
         = HardwareSelectionLibrary<ContractionProblemGemm, ContractionSolution>;
     using ContractionProblemSelectionLibrary
         = ProblemSelectionLibrary<ContractionProblemGemm, ContractionSolution>;
+    using ContractionProblemFreeSizeLibrary
+        = ProblemFreeSizeLibrary<ContractionProblemGemm, ContractionSolution>;
     using ContractionProblemMatchingLibrary
         = ProblemMatchingLibrary<ContractionProblemGemm, ContractionSolution>;
     using ContractionProblemMapLibrary
