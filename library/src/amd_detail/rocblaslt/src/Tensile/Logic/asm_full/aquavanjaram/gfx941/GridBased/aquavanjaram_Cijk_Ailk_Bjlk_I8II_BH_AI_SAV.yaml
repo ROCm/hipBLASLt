@@ -1,6 +1,6 @@
 - {MinimumRequiredVersion: 4.33.0}
 - aquavanjaram
-- gfx942
+- gfx941
 - [Device 0049]
 - Activation: true
   ActivationComputeDataType: 6
@@ -107,7 +107,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: false
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -360,7 +360,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: false
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -613,7 +613,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: false
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -866,7 +866,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: false
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -1119,7 +1119,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: false
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -1352,3 +1352,5 @@
 - null
 - null
 - DeviceEfficiency
+- null
+- GridBased
