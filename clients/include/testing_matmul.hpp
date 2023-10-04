@@ -1329,6 +1329,9 @@ void testing_matmul(const Arguments& arg)
     dWorkspace = new device_vector<unsigned char>(workspace_size, 1, HMM);
     CHECK_DEVICE_ALLOCATION(dWorkspace->memcheck());
 
+    if(arg.print_solution_found)
+        hipblaslt_cout << "Is supported " << heuristicResult.size()
+                       << " / Total solutions: " << returnedAlgoCount << std::endl;
     CHECK_SOLUTION_FOUND(returnedAlgoCount);
 
     if(arg.unit_check || arg.norm_check)

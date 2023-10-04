@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022 Advanced Micro Devices, Inc. All rights reserved.
+ * Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -393,6 +393,37 @@ namespace Tensile
             }
         };
 
+        template <typename Key>
+        struct FreeSizeDistance : public Distance<Key>
+        {
+            enum
+            {
+                HasIndex = false,
+                HasValue = false
+            };
+
+            static std::string Type()
+            {
+                return "FreeSize";
+            }
+            virtual std::string type() const override
+            {
+                return Type();
+            }
+
+            inline double operator()(Key const& p1, Key const& p2) const
+            {
+                return 0.0;
+            }
+
+            inline bool improvementPossible(Key const& p1,
+                                            Key const& p2,
+                                            size_t     idx,
+                                            double     bestDistance) const
+            {
+                return true;
+            }
+        };
         /**
  * @}
  */

@@ -126,6 +126,9 @@ int run_bench_test(Arguments& arg, const std::string& filter, bool any_stride, b
     arg.streams = 0;
     arg.threads = 0;
 
+    // Enable information cout
+    arg.print_solution_found = true;
+
     // Skip past any testing_ prefix in function
     static constexpr char prefix[] = "testing_";
     const char*           function = arg.function;
