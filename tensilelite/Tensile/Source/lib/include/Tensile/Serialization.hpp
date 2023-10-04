@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022 Advanced Micro Devices, Inc. All rights reserved.
+ * Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -34,6 +34,7 @@
 #include <Tensile/Serialization/ContractionPredicates.hpp>
 #include <Tensile/Serialization/ContractionSolution.hpp>
 #include <Tensile/Serialization/ExactLogicLibrary.hpp>
+#include <Tensile/Serialization/FreeSizeLibrary.hpp>
 #include <Tensile/Serialization/GranularitySelectionLibrary.hpp>
 #include <Tensile/Serialization/HasTraits.hpp>
 #include <Tensile/Serialization/MLFeatures.hpp>

@@ -97,31 +97,19 @@ class MatchingLibrary:
 
         table = []
 
-        if distance == "FreeSize":
+        for row in origTable:
             try:
-                indexStart  = origTable[0][0]
-                indexOffset = origTable[0][1]
-                for index in range(indexStart, indexStart + indexOffset):
-                    value = IndexSolutionLibrary(solutions[index])
-                    key = list([0 for i in keyOrder])
+                index = row[1][0]
+                value = IndexSolutionLibrary(solutions[index])
+                key = list([row[0][i] for i in keyOrder])
+                if distance == "GridBased":
                     entry = {"key": key, "index": value}
-                    table.append(entry)
+                else:
+                    entry = {"key": key, "index": value, "speed": row[1][1]}
+
+                table.append(entry)
             except KeyError:
                 pass
-        else:
-            for row in origTable:
-                try:
-                    index = row[1][0]
-                    value = IndexSolutionLibrary(solutions[index])
-                    key = list([row[0][i] for i in keyOrder])
-                    if distance == "GridBased":
-                        entry = {"key": key, "index": value}
-                    else:
-                        entry = {"key": key, "index": value, "speed": row[1][1]}
-
-                    table.append(entry)
-                except KeyError:
-                    pass
 
         table.sort(key=lambda r: r["key"])
 
@@ -148,6 +136,42 @@ class MatchingLibrary:
         self.table = table
         self.distance = distance
 
+class FreeSizeLibrary:
+    Tag = "FreeSize"
+    StateKeys = [("type", "tag"), "table"]
+
+    @classmethod
+    def FromOriginalState(cls, d, solutions):
+        origTable = d["table"]
+
+        table = []
+
+        try:
+            indexStart  = origTable[0]
+            indexOffset = origTable[1]
+            for index in range(indexStart, indexStart + indexOffset):
+                value = IndexSolutionLibrary(solutions[index])
+                entry = {"index": value}
+                table.append(entry)
+        except KeyError:
+            pass
+
+        return cls(table)
+
+    @property
+    def tag(self):
+        return self.__class__.Tag
+
+    def merge(self, other):
+        assert self.__class__ == other.__class__
+
+        self.table += other.table
+
+    def remapSolutionIndices(self, indexMap):
+        pass
+
+    def __init__(self, table):
+        self.table = table
 
 class DecisionTreeLibrary:
     Tag = "DecisionTree"
@@ -343,15 +367,18 @@ class MasterSolutionLibrary:
             if d["LibraryType"] == "Matching":
                 if d["Library"]["distance"] == "Equality":
                     predicate = Properties.Predicate(tag="EqualityMatching")
-                elif d["Library"]["distance"] == "FreeSize":
-                    predicate = Properties.Predicate(tag="FreeSizeMatching")
                 else:
                     predicate = Properties.Predicate(tag="TruePred")
 
                 matchingLib = MatchingLibrary.FromOriginalState(d["Library"], solutions)
                 library = PredicateLibrary(tag="Problem")
                 library.rows.append({"predicate": predicate, "library": matchingLib})
+            elif d["LibraryType"] == "FreeSize":
+                predicate = Properties.Predicate(tag="FreeSizeMatching")
 
+                freesizeLib = FreeSizeLibrary.FromOriginalState(d["Library"], solutions)
+                library = PredicateLibrary(tag="Problem")
+                library.rows.append({"predicate": predicate, "library": freesizeLib})
             elif d["LibraryType"] == "DecisionTree":
                 library = PredicateLibrary(tag="Problem")
                 for lib in d["Library"]:
