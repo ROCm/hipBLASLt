@@ -2919,7 +2919,7 @@ class KernelWriterAssembly(KernelWriter):
           module.add(SMulI32(dst=sgpr(gsuSgpr), src0=sgpr("GSU"), src1="DepthU*Bpe%s"%(tcGR)))
 
           if kernel["ProblemType"]["SparseA"]:
-            if (kernel["ProblemType"]["SparseA"] !=2 and tP["isA"]) or (kernel["ProblemType"]["SparseA"] ==2 and tP["isB"]):
+            if tP["is_sparse"]:
               module.add(SLShiftRightB32(dst=sgpr(gsuSgpr), shiftHex=hex(log2(2)), src=sgpr(gsuSgpr)))
             elif tP["isM"]:
               module.add(SLShiftRightB32(dst=sgpr(gsuSgpr), shiftHex=hex(log2(8)), src=sgpr(gsuSgpr)))
@@ -4568,7 +4568,7 @@ class KernelWriterAssembly(KernelWriter):
         with self.allocTmpSgpr(3) as tmpSgprInfo:
           tmpSgpr = tmpSgprInfo.idx
           # replace 0 for differnet thread
-          if kernel["ProblemType"]["SparseA"] and numMIInput//8 >= 1:
+          if kernel["ProblemType"]["SparseA"] and  kernel["ProblemType"]["SparseA"] != 2 and numMIInput//8 >= 1:
             vgprPerSet0Group = 1
           elif vgprPerInputA <= 2:
             shiftK.add(staticMultiply(vgpr(kReg), vgpr(kReg), numMIInput, tmpSgprInfo))
@@ -4590,7 +4590,11 @@ class KernelWriterAssembly(KernelWriter):
                   aStr = vgpr("ValuA_X%u_I%u+%u+%u" % (m, iui, a*vgprPerInputA, bk + group * vgprPerSet0Group), 1)
                   shiftK.add(VCndMaskB32(dst=aStr, src0=aStr, src1=hex(0), src2=sgpr(tmpSgpr, 2), comment="set 0 if K_idx >= sizeL"))
 
-          if vgprPerInputB <= 2:
+          if kernel["ProblemType"]["SparseA"] == 2 and numMIInput//8 >= 1:
+            shiftK.add(vectorStaticRemainder(dummy, kReg, "Serial", kernel["WavefrontSize"], tmpVgpr, tmpSgprInfo))
+            shiftK.add(vectorStaticDivide(kReg, kReg, dividerFortidInK, tmpVgpr))
+            vgprPerSet0Group = 1
+          elif vgprPerInputB <= 2:
             vgprPerSet0Group = vgprPerInputB
           else:
             shiftK.add(vectorStaticRemainder(dummy, kReg, "Serial", kernel["WavefrontSize"], tmpVgpr, tmpSgprInfo))
