@@ -1,7 +1,33 @@
+/*******************************************************************************
+ *
+ * MIT License
+ *
+ * Copyright (C) 2023 Advanced Micro Devices, Inc.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ *
+ *******************************************************************************/
 #include <hip/hip_runtime.h>
 #include <hip/hip_runtime_api.h>
 #include <hipblaslt/hipblaslt-ext-op.h>
 #include <hipblaslt/hipblaslt.h>
+#include <hipblaslt_datatype2string.hpp>
 #include <hipblaslt_init.hpp>
 #include <iostream>
 #include <numeric>
@@ -16,7 +42,9 @@ void printUsage(char* programName)
               << "\t-h, --help\t\t\tShow this help message\n"
               << "\t-m, --m\t\t\t\tSize of dim 0, default is 1335\n"
               << "\t-n, --n\t\t\t\tSize of dim 1, default is 16\n"
-              << "\t-a, --affine\t\t\t\tEnable Gamma and Beta, default is false\n";
+              << "\t-a, --affine\t\t\t\tEnable Gamma and Beta, default is false\n"
+              << "\t--initialization \t\tIntialize matrix data. Options: rand_int, trig_float, "
+                 "hpl(floating). (default is hpl)\n";
 }
 
 static std::random_device                    rd;
@@ -74,7 +102,8 @@ void cpuLayerNorm(float*        out,
     }
 }
 
-int parseArgs(int argc, char** argv, size_t* m, size_t* n, bool* affine)
+int parseArgs(
+    int argc, char** argv, size_t* m, size_t* n, bool* affine, hipblaslt_initialization* init)
 {
     if(argc <= 1)
     {
@@ -103,6 +132,18 @@ int parseArgs(int argc, char** argv, size_t* m, size_t* n, bool* affine)
             else if(arg == "-a" || arg == "--affine")
             {
                 *affine = std::stoul(argv[++i]);
+            }
+            else if(arg == "--initialization" || arg == "--init")
+            {
+                const std::string initStr{argv[++i]};
+
+                if(initStr != "rand_int" && initStr != "trig_float" && initStr != "hpl")
+                {
+                    std::cerr << "Invalid initialization type: " << initStr << '\n';
+                    return EXIT_FAILURE;
+                }
+
+                *init = string2hipblaslt_initialization(initStr);
             }
         }
         else
@@ -173,13 +214,36 @@ void compare(const char* title, const std::vector<T>& cpuOutput, const std::vect
     std::cout << "max error : " << maxErr << std::endl;
 }
 
+template <typename DType>
+void initData(DType* data, std::size_t numElements, hipblaslt_initialization initMethod)
+{
+    switch(initMethod)
+    {
+    case hipblaslt_initialization::rand_int:
+        hipblaslt_init<DType>(data, numElements, 1, 1);
+        break;
+    case hipblaslt_initialization::trig_float:
+        hipblaslt_init_cos<DType>(data, numElements, 1, 1);
+        break;
+    case hipblaslt_initialization::hpl:
+        hipblaslt_init_hpl<DType>(data, numElements, 1, 1);
+        break;
+    case hipblaslt_initialization::special:
+        hipblaslt_init_alt_impl_big<DType>(data, numElements, 1, 1);
+        break;
+    default:
+        break;
+    }
+}
+
 int main(int argc, char** argv)
 {
-    std::size_t m{1};
-    std::size_t n{64};
-    bool        affine{false};
+    std::size_t              m{1};
+    std::size_t              n{64};
+    bool                     affine{false};
+    hipblaslt_initialization init{hipblaslt_initialization::hpl};
 
-    if(auto err = parseArgs(argc, argv, &m, &n, &affine))
+    if(auto err = parseArgs(argc, argv, &m, &n, &affine, &init))
     {
         printUsage(argv[0]);
         return err;
@@ -216,11 +280,12 @@ int main(int argc, char** argv)
     std::vector<float> refMean(m, 0.f);
     std::vector<float> refInvvar(m, 0.f);
 
-    randomize(begin(cpuInput), end(cpuInput));
+    initData(cpuInput.data(), cpuInput.size(), init);
+
     if(affine)
     {
-        randomize(begin(cpuGamma), end(cpuGamma));
-        randomize(begin(cpuBeta), end(cpuBeta));
+        initData(cpuGamma.data(), cpuGamma.size(), init);
+        initData(cpuBeta.data(), cpuBeta.size(), init);
     }
 
     hipErr = hipMemcpyHtoD(gpuInput, cpuInput.data(), numElements * elementNumBytes);
