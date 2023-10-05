@@ -26,7 +26,7 @@ from . import ClientExecutable
 from . import LibraryIO
 from .TensileInstructions import getGfxName, DataType
 from .Common import globalParameters, pushWorkingPath, popWorkingPath, print1, printExit, CHeader, printWarning, listToInitializer, ClientExecutionLock
-from .SolutionStructs import ProblemType, ProblemSizesMock, ActivationArgs, BiasTypeArgs
+from .SolutionStructs import Problem, ProblemType, ProblemSizesMock, ProblemSizesMockDummy, ActivationArgs, BiasTypeArgs
 from .TensileCreateLibrary import copyStaticFiles
 
 import os
@@ -109,7 +109,7 @@ def main( config ):
         enableHalf = True
     functions.append((scheduleName, problemType))
     functionNames.append("tensile_%s" % (problemType))
-    problemSizes = ProblemSizesMock(exactLogic)
+    problemSizes = ProblemSizesMock(exactLogic) if exactLogic else ProblemSizesMockDummy()
     if len(problemType["BiasDataTypeList"]) > 0:
       biasTypeArgs = BiasTypeArgs(problemType, [problemType["BiasDataTypeList"][0]])
     else:

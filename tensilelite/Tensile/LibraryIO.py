@@ -325,7 +325,7 @@ def rawLibraryLogic(data):
 #################
 # Other functions
 #################
-def createLibraryLogic(schedulePrefix, architectureName, deviceNames, logicTuple):
+def createLibraryLogic(schedulePrefix, architectureName, deviceNames, libraryType, logicTuple):
     """Creates the data for a library logic file suitable for writing to YAML."""
     problemType = logicTuple[0]
     solutions = logicTuple[1]
@@ -428,9 +428,12 @@ def createLibraryLogic(schedulePrefix, architectureName, deviceNames, logicTuple
 
     # exactLogic
     exactLogicList = []
-    for key in exactLogic:
-        exactLogicList.append([list(key), exactLogic[key]])
-    data.append(exactLogicList)
+    if exactLogic:
+        for key in exactLogic:
+            exactLogicList.append([list(key), exactLogic[key]])
+        data.append(exactLogicList)
+    else:
+        data.append(None)
 
     # rangeLogic
     data.append(rangeLogic)
@@ -443,5 +446,7 @@ def createLibraryLogic(schedulePrefix, architectureName, deviceNames, logicTuple
     else:
         data.append(None)
 
-    data.append(logicTuple[7])
+    data.append(logicTuple[7]) # PerfMetric
+    data.append(logicTuple[8]) # Fp16AltImpl
+    data.append(libraryType) # LibraryType
     return data
