@@ -94,7 +94,9 @@ def analyzeProblemType( problemType, problemSizeGroups, inputParameters ):
 
   ######################################
   # Remove least important solutions
-  if globalParameters["SolutionSelectionAlg"] == 0:
+  if inputParameters["LibraryType"] == "FreeSize":
+    logicAnalyzer.deReferenceSolutions()
+  elif globalParameters["SolutionSelectionAlg"] == 0:
     logicAnalyzer.removeLeastImportantSolutions()
   elif globalParameters["SolutionSelectionAlg"] == 1:
     logicAnalyzer.keepWinnerSolutions()
@@ -191,26 +193,40 @@ def analyzeProblemType( problemType, problemSizeGroups, inputParameters ):
 
   ######################################
   # Range Logic
-  rangeLogic = logicAnalyzer.enRule(0, logicAnalyzer.globalIndexRange)
-  print2("# Final Range Logic:")
-  print2(rangeLogic)
-  logicComplexity = [0]*logicAnalyzer.numIndices
-  logicAnalyzer.scoreLogicComplexity(rangeLogic, logicComplexity)
-  print2("# Range Logic Complexity: %s" % logicComplexity)
-  score = logicAnalyzer.scoreRangeForLogic( \
-      logicAnalyzer.globalIndexRange, rangeLogic)
-  print1("\n# Score: %.0f ms" % (score/1000))
-  logicAnalyzer.prepareLogic(rangeLogic) # convert indices to sizes, -1
+  if inputParameters["LibraryType"] != "FreeSize":
+    indexOrder = logicAnalyzer.indexOrder
+  else:
+    indexOrder = None
 
   ######################################
   # Range Logic
-  exactLogic = logicAnalyzer.exactWinners
-  print1("# Exact Logic:\n")
-  print1("%s"%exactLogic)
+  if inputParameters["LibraryType"] != "FreeSize":
+    rangeLogic = logicAnalyzer.enRule(0, logicAnalyzer.globalIndexRange)
+    print2("# Final Range Logic:")
+    print2(rangeLogic)
+    logicComplexity = [0]*logicAnalyzer.numIndices
+    logicAnalyzer.scoreLogicComplexity(rangeLogic, logicComplexity)
+    print2("# Range Logic Complexity: %s" % logicComplexity)
+    score = logicAnalyzer.scoreRangeForLogic( \
+        logicAnalyzer.globalIndexRange, rangeLogic)
+    print1("\n# Score: %.0f ms" % (score/1000))
+    logicAnalyzer.prepareLogic(rangeLogic) # convert indices to sizes, -1
+  else:
+    rangeLogic = None
+
+  ######################################
+  # Exact Logic
+  if inputParameters["LibraryType"] != "FreeSize":
+    exactLogic = logicAnalyzer.exactWinners
+    print1("# Exact Logic:\n")
+    print1("%s"%exactLogic)
+  else:
+    exactLogic = None
 
   #selectionSolutionsIdsList = list(selectionSolutionsIds)
-  return (problemType, logicAnalyzer.solutions, logicAnalyzer.indexOrder, \
-       exactLogic, rangeLogic, selectionSolutions, selectionSolutionsIdsList, logicAnalyzer.perfMetric)
+  return (problemType, logicAnalyzer.solutions, indexOrder, \
+       exactLogic, rangeLogic, selectionSolutions, selectionSolutionsIdsList, logicAnalyzer.perfMetric, \
+       None)
 
 
 
@@ -538,6 +554,11 @@ class LogicAnalyzer:
       else:
         allSolutionValid = True
 
+  ##############################################################################
+  # ENTRY: Dereference ProblemType and Solutions
+  ##############################################################################
+  def deReferenceSolutions(self):
+    self.solutions = deepcopy(self.solutions)
 
   ##############################################################################
   # ENTRY: Original KeepLogic algorithm: Remove Least Important Solutions,
@@ -1401,6 +1422,7 @@ class LogicAnalyzer:
 
 
 def generateLogic(config, benchmarkDataPath, libraryLogicPath):
+
   print2("# LibraryLogic config: %s" % config)
   print2("# DefaultAnalysisParameters: " % defaultAnalysisParameters)
 
@@ -1411,6 +1433,9 @@ def generateLogic(config, benchmarkDataPath, libraryLogicPath):
   for parameter in defaultAnalysisParameters:
     assignParameterWithDefault(analysisParameters, parameter, config, \
         defaultAnalysisParameters)
+
+  if ("LibraryType" not in analysisParameters) or (analysisParameters["LibraryType"] == None):
+    printExit("LibraryType is empty!")
 
   print1("")
   print1(HR)
@@ -1459,7 +1484,7 @@ def generateLogic(config, benchmarkDataPath, libraryLogicPath):
 
     print2("# writing library logic YAML {}".format(filename))
     data = LibraryIO.createLibraryLogic(analysisParameters["ScheduleName"], \
-        analysisParameters["ArchitectureName"], analysisParameters["DeviceNames"], logicTuple)
+        analysisParameters["ArchitectureName"], analysisParameters["DeviceNames"], analysisParameters["LibraryType"], logicTuple)
 
     LibraryIO.writeYAML(filename, data, explicit_start=False, explicit_end=False)
 

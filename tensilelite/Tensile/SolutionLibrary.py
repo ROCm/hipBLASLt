@@ -351,6 +351,8 @@ class MasterSolutionLibrary:
 
                     treeLib = DecisionTreeLibrary.FromOriginalState(lib, solutions)
                     library.rows.append({"predicate": predicate, "library": treeLib})
+            else:
+                assert 0 and "Unrecognized LibraryType."
 
             return library, placeholderName
 

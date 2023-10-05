@@ -797,6 +797,10 @@ class ProblemSizesMock:
   def __init__(self, exactLogic):
     self.problems = [Problem(problem) for problem, solution in exactLogic]
 
+class ProblemSizesMockDummy:
+  def __init__(self):
+    self.problems = [Problem(sizes=[128, 128, 1, 512])]
+
 class ProblemSizes:
 
   ########################################

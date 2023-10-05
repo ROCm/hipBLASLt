@@ -1214,6 +1214,7 @@ defaultAnalysisParameters = {
     "ScheduleName":       "Tensile",
     "DeviceNames":  "fallback",
     "ArchitectureName": "gfx000",
+    "LibraryType": None,
     "SolutionImportanceMin":      0.01, # = 0.01=1% total time saved by keeping this solution
     }
 
