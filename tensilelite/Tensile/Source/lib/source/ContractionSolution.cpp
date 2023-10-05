@@ -1531,8 +1531,18 @@ namespace Tensile
                                                                 size_t                   vw,
                                                                 size_t                   gsu) const
     {
-        std::string name = concatenate(
-            "C", problem.cNames(), "_", DataTypeInfo::Get(problem.d().dataType()).abbrev);
+        auto inputTypeStr = (problem.a().dataType() == DataType::Int8
+                             || problem.a().dataType() == DataType::Int32)
+                                ? DataTypeInfo::Get(DataType::Int32).abbrev
+                            : problem.a().dataType() == DataType::Double
+                                ? DataTypeInfo::Get(DataType::Double).abbrev
+                                : DataTypeInfo::Get(DataType::Float).abbrev;
+
+        std::string name = concatenate("C",
+                                       problem.cNames(),
+                                       "_",
+                                       inputTypeStr,
+                                       DataTypeInfo::Get(problem.d().dataType()).abbrev);
 
         if(problemType.groupedGemm)
         {
