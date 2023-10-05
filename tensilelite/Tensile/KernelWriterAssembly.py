@@ -7999,7 +7999,7 @@ class KernelWriterAssembly(KernelWriter):
         mt     = kernel["MacroTile%u" % tile01]
         gwvw   = max(mt // kernel["NumThreads"], kernel["VectorWidthA"])
         offsetVgpr  = self.vgprPool.checkOut(gwvw, 1)
-        with self.allocTmpSgpr(5, 1) as tmpSgprRes:
+        with self.allocTmpSgpr(5, 2) as tmpSgprRes:
           if kernel["GlobalSplitU"] > 1:
             module.add(self.writeBiasToGlobal(kernel["ProblemType"]["ComputeDataType"], kernel, tP, gwvw, offsetVgpr, tmpSgprRes, tmpVgprRes))
           elif len(kernel["ProblemType"]["BiasDataTypeList"]) == 1:
