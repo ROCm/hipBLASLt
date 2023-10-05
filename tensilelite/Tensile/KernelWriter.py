@@ -773,11 +773,13 @@ class KernelWriter(metaclass=abc.ABCMeta):
         instPerRegPack = 1 if (kernel["ProblemType"]["DataType"].numRegisters() == 0.25) else 0
       instPerPackA    = int(kernel["MIInputPerThreadA"] * kernel["ProblemType"]["DataType"].numRegisters() * instPerRegPack)
       instPerPackB    = int(kernel["MIInputPerThreadB"] * kernel["ProblemType"]["DataType"].numRegisters() * instPerRegPack)
+      instPerPackM    = 1 #int(kernel["MIInputPerThreadMetadata"])
       packItems = []
       for iui in range(kernel["InnerUnroll"]):
-        packINtems = [ [] for j in range(max(self.states.numReadsIterCoalescedA,self.states.numReadsIterCoalescedB)) ]
+        packINtems = [ [] for j in range(max(self.states.numReadsIterCoalescedA,self.states.numReadsIterCoalescedB,self.states.numReadsIterCoalescedMetadata)) ]
         packA = packCode.findNamedItem("packA_I%s"%(iui))
         packB = packCode.findNamedItem("packB_I%s"%(iui))
+        packM = packCode.findNamedItem("packMetadata_I%s"%(iui))
         # In case localReadDo not generate pack Module
         # and findNamedItem will return None type
         # TODO: let all type have pack Module
@@ -787,10 +789,18 @@ class KernelWriter(metaclass=abc.ABCMeta):
         if not packB:
           packB = Module()
         packBItems = packB.flatitems()
+        if not packM:
+          packM = Module()
+        packMItems = packM.flatitems()
         if packAItems:
           for j in range(self.states.numReadsIterCoalescedA):
             for n in range(instPerPackA):
               packINtems[j].append(packAItems.pop(0))
+        if kernel["ProblemType"]["SparseA"] and not kernel["DirectToVgprSparseMetadata"]:
+          if packMItems:
+            for j in range(self.states.numReadsIterCoalescedMetadata):
+              for n in range(instPerPackM):
+                packINtems[j].append(packMItems.pop(0))
         if packBItems:
           for j in range(self.states.numReadsIterCoalescedB):
             for n in range(instPerPackB):
@@ -803,6 +813,11 @@ class KernelWriter(metaclass=abc.ABCMeta):
           for j in range(self.states.numReadsIterCoalescedB):
             for n in range(instPerPackB):
               packINtems[j].append(packBItems.pop(0))
+        if kernel["ProblemType"]["SparseA"] and not kernel["DirectToVgprSparseMetadata"]:
+          while packMItems:
+            for j in range(self.states.numReadsIterCoalescedMetadata):
+              for n in range(instPerPackM):
+                packINtems[j].append(packMItems.pop(0))
         for j in range(max(self.states.numReadsIterCoalescedA,self.states.numReadsIterCoalescedB)):
           packItems += packINtems.pop(0)
 
@@ -1061,13 +1076,27 @@ class KernelWriter(metaclass=abc.ABCMeta):
           # if i % kernel["MIWaveTile"][0]==0, mfma will use new B
           packAIdx += instPerPackA if i//(kernel["MIWaveTileA"]+kernel["MIWaveTileA"]*kernel["MIWaveTileB"]*(i//(kernel["MIWaveTileA"]*kernel["MIWaveTileB"]))) == 0 else 0
           packBIdx += instPerPackB if i % kernel["MIWaveTileA"] == 0 else 0
+          packMIdx = 0
+          if kernel["ProblemType"]["SparseA"] and not kernel["DirectToVgprSparseMetadata"]:
+            if kernel["ProblemType"]["SparseA"] == 2:
+              packMIdx += instPerPackM if i % kernel["MIWaveTileA"] == 0 else 0
+            else:
+              packMIdx += instPerPackM if i//(kernel["MIWaveTileA"]+kernel["MIWaveTileA"]*kernel["MIWaveTileB"]*(i//(kernel["MIWaveTileA"]*kernel["MIWaveTileB"]))) == 0 else 0
           # blockWidth < 1, means 0.5 or 0.25 (BF,H,Int8)
           packAIdx = packAIdx if tPA["bpe"] < 4 and not kernel["UnrollMajorLDSA"] else 0
           packBIdx = packBIdx if tPB["bpe"] < 4 and not kernel["UnrollMajorLDSB"] else 0
-          numPack = (packAIdx + packBIdx)
-          iterCode.addComment0("pack scheduling: packAIdx:%u, packBIdx:%u" %(packAIdx,packBIdx))
+          packMIdx = packMIdx if not kernel["UnrollMajorLDSMetadata"] else 0
+          numPack = (packAIdx + packBIdx+ packMIdx)
+          if kernel["ProblemType"]["SparseA"] and not kernel["DirectToVgprSparseMetadata"]:
+            iterCode.addComment0("pack scheduling: packAIdx:%u, packBIdx:%u, packMIdx:%u" %(packAIdx,packBIdx,packMIdx))
+          else:
+            iterCode.addComment0("pack scheduling: packAIdx:%u, packBIdx:%u" %(packAIdx,packBIdx))            
           # we put 2 pack in each mfma
           for j in range(instPerPackA):
+            if packItems:
+              iterCode.add(packItems.pop(0))
+              curPackIdx += 1
+          for j in range(instPerPackM):
             if packItems:
               iterCode.add(packItems.pop(0))
               curPackIdx += 1
