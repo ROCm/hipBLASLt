@@ -603,7 +603,13 @@ class KernelWriterConversion(KernelWriterBase):
     for i in range(0, self.state["ProblemType"]["NumIndicesC"]):
       name += indexChars[i].lower()
     name += "_"
-    name += self.state["ProblemType"]["DestDataType"].toChar()
+
+    # add input datatype into kernel name (the datatype of workspace)
+    inputTypeStr = DataType("I").toChar() if self.state["ProblemType"]["DataType"].isInt8() or self.state["ProblemType"]["DataType"].isInt32() else \
+                                  (DataType("D").toChar() if self.state["ProblemType"]["DataType"].isDouble() else DataType("S").toChar())
+
+    name += (inputTypeStr + self.state["ProblemType"]["DestDataType"].toChar())
+
     if self.state["ProblemType"]["GroupedGemm"]:
       name += "_GG"
     else:
