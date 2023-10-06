@@ -150,6 +150,13 @@ void testing_aux_mat_get_attr_bad_arg(const Arguments& arg)
         hipblasLtMatrixLayoutGetAttribute(
             mat, HIPBLASLT_MATRIX_LAYOUT_STRIDED_BATCH_OFFSET, &data64, sizeof(int), &sizeWritten),
         HIPBLAS_STATUS_INVALID_VALUE);
+    // test sizeWritten is nullptr, and the return state should be success
+    data = 0;
+    EXPECT_HIPBLAS_STATUS(
+        hipblasLtMatrixLayoutGetAttribute(
+            mat, HIPBLASLT_MATRIX_LAYOUT_BATCH_COUNT, &data, sizeof(int), nullptr),
+        HIPBLAS_STATUS_SUCCESS);
+    EXPECT_EQ(data, 1);
 }
 
 void testing_aux_mat_set_get_attr(const Arguments& arg)
@@ -258,6 +265,14 @@ void testing_aux_matmul_get_attr_bad_arg(const Arguments& arg)
     EXPECT_HIPBLAS_STATUS(hipblasLtMatmulDescGetAttribute(
                               matmul, HIPBLASLT_MATMUL_DESC_BIAS_POINTER, &dBias, 4, &sizeWritten),
                           HIPBLAS_STATUS_INVALID_VALUE);
+    // test sizeWritten is nullptr, and the return state should be success
+    data = HIPBLASLT_EPILOGUE_RELU;
+    EXPECT_HIPBLAS_STATUS(
+        hipblasLtMatmulDescGetAttribute(
+            matmul, HIPBLASLT_MATMUL_DESC_EPILOGUE, &data, sizeof(data), nullptr),
+        HIPBLAS_STATUS_SUCCESS);
+    // test return buffer value equals HIPBLASLT_EPILOGUE_DEFAULT
+    EXPECT_EQ(data, HIPBLASLT_EPILOGUE_DEFAULT);
 }
 
 void testing_aux_matmul_set_get_attr(const Arguments& arg)
