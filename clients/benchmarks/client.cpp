@@ -241,6 +241,17 @@ void fix_batch(int argc, char* argv[])
         }
 }
 
+void hipblaslt_print_version(void)
+{
+    int                    version;
+    char          git_version[128];
+    hipblaslt_local_handle handle;
+    hipblasLtGetVersion(handle, &version);
+    hipblasLtGetGitRevision(handle, &git_version[0]);
+    hipblaslt_cout << "hipBLASLt version: " << version << std::endl;
+    hipblaslt_cout << "hipBLASLt git version: " << git_version << std::endl;
+}
+
 int main(int argc, char* argv[])
 try
 {
@@ -499,12 +510,9 @@ try
         return 0;
     }
 
+    hipblaslt_print_version();
     if(vm.find("version") != vm.end())
     {
-        int                    version;
-        hipblaslt_local_handle handle;
-        hipblasLtGetVersion(handle, &version);
-        hipblaslt_cout << "hipBLASLt version: " << version << std::endl;
         return 0;
     }
 
