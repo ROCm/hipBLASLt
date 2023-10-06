@@ -438,7 +438,7 @@ namespace ArgumentsHelper
         [](auto&& func, const Arguments& arg, auto T) {
             if(arg.grouped_gemm <= 1)
             {
-                func("k", arg.lda[0]);
+                func("lda", arg.lda[0]);
             }
             else
             {
@@ -448,7 +448,7 @@ namespace ArgumentsHelper
                     s += "," + std::to_string(arg.lda[i]);
                 }
                 s += ")";
-                func("k", s.c_str());
+                func("lda", s.c_str());
             }
         };
 
@@ -458,7 +458,7 @@ namespace ArgumentsHelper
         [](auto&& func, const Arguments& arg, auto T) {
             if(arg.grouped_gemm <= 1)
             {
-                func("k", arg.stride_a[0]);
+                func("stride_a", arg.stride_a[0]);
             }
             else
             {
@@ -468,7 +468,7 @@ namespace ArgumentsHelper
                     s += "," + std::to_string(arg.stride_a[i]);
                 }
                 s += ")";
-                func("k", s.c_str());
+                func("stride_a", s.c_str());
             }
         };
 
@@ -478,7 +478,7 @@ namespace ArgumentsHelper
         [](auto&& func, const Arguments& arg, auto T) {
             if(arg.grouped_gemm <= 1)
             {
-                func("k", arg.ldb[0]);
+                func("ldb", arg.ldb[0]);
             }
             else
             {
@@ -488,7 +488,7 @@ namespace ArgumentsHelper
                     s += "," + std::to_string(arg.ldb[i]);
                 }
                 s += ")";
-                func("k", s.c_str());
+                func("ldb", s.c_str());
             }
         };
 
@@ -498,7 +498,7 @@ namespace ArgumentsHelper
         [](auto&& func, const Arguments& arg, auto T) {
             if(arg.grouped_gemm <= 1)
             {
-                func("k", arg.stride_b[0]);
+                func("stride_b", arg.stride_b[0]);
             }
             else
             {
@@ -508,7 +508,7 @@ namespace ArgumentsHelper
                     s += "," + std::to_string(arg.stride_b[i]);
                 }
                 s += ")";
-                func("k", s.c_str());
+                func("stride_b", s.c_str());
             }
         };
 
@@ -518,7 +518,7 @@ namespace ArgumentsHelper
         [](auto&& func, const Arguments& arg, auto T) {
             if(arg.grouped_gemm <= 1)
             {
-                func("k", arg.ldc[0]);
+                func("ldc", arg.ldc[0]);
             }
             else
             {
@@ -528,7 +528,7 @@ namespace ArgumentsHelper
                     s += "," + std::to_string(arg.ldc[i]);
                 }
                 s += ")";
-                func("k", s.c_str());
+                func("ldc", s.c_str());
             }
         };
 
@@ -538,7 +538,7 @@ namespace ArgumentsHelper
         [](auto&& func, const Arguments& arg, auto T) {
             if(arg.grouped_gemm <= 1)
             {
-                func("k", arg.stride_c[0]);
+                func("stride_c", arg.stride_c[0]);
             }
             else
             {
@@ -548,7 +548,7 @@ namespace ArgumentsHelper
                     s += "," + std::to_string(arg.stride_c[i]);
                 }
                 s += ")";
-                func("k", s.c_str());
+                func("stride_c", s.c_str());
             }
         };
 
@@ -558,7 +558,7 @@ namespace ArgumentsHelper
         [](auto&& func, const Arguments& arg, auto T) {
             if(arg.grouped_gemm <= 1)
             {
-                func("k", arg.ldd[0]);
+                func("ldd", arg.ldd[0]);
             }
             else
             {
@@ -568,7 +568,7 @@ namespace ArgumentsHelper
                     s += "," + std::to_string(arg.ldd[i]);
                 }
                 s += ")";
-                func("k", s.c_str());
+                func("ldd", s.c_str());
             }
         };
 
@@ -578,7 +578,7 @@ namespace ArgumentsHelper
         [](auto&& func, const Arguments& arg, auto T) {
             if(arg.grouped_gemm <= 1)
             {
-                func("k", arg.stride_d[0]);
+                func("stride_d", arg.stride_d[0]);
             }
             else
             {
@@ -588,7 +588,7 @@ namespace ArgumentsHelper
                     s += "," + std::to_string(arg.stride_d[i]);
                 }
                 s += ")";
-                func("k", s.c_str());
+                func("stride_d", s.c_str());
             }
         };
 
@@ -598,7 +598,7 @@ namespace ArgumentsHelper
         [](auto&& func, const Arguments& arg, auto T) {
             if(arg.grouped_gemm <= 1)
             {
-                func("k", arg.lde[0]);
+                func("lde", arg.lde[0]);
             }
             else
             {
@@ -608,7 +608,7 @@ namespace ArgumentsHelper
                     s += "," + std::to_string(arg.lde[i]);
                 }
                 s += ")";
-                func("k", s.c_str());
+                func("lde", s.c_str());
             }
         };
 
@@ -618,7 +618,7 @@ namespace ArgumentsHelper
         [](auto&& func, const Arguments& arg, auto T) {
             if(arg.grouped_gemm <= 1)
             {
-                func("k", arg.stride_e[0]);
+                func("stride_e", arg.stride_e[0]);
             }
             else
             {
@@ -628,7 +628,7 @@ namespace ArgumentsHelper
                     s += "," + std::to_string(arg.stride_e[i]);
                 }
                 s += ")";
-                func("k", s.c_str());
+                func("stride_e", s.c_str());
             }
         };
 
