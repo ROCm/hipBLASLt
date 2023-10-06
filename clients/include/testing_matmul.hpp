@@ -296,7 +296,7 @@ void check(hipStream_t                         stream,
         }
         if(arg.unit_check)
         {
-            if(tol[gemmIdx] !=0)
+            if(tol[gemmIdx] != 0)
             {
                 near_check_general<To>(M[gemmIdx],
                                        N[gemmIdx],
@@ -319,7 +319,7 @@ void check(hipStream_t                         stream,
             }
             if(!arg.gradient && arg.use_e)
             {
-                if(tol[gemmIdx] !=0)
+                if(tol[gemmIdx] != 0)
                 {
                     near_check_general<To>(M[gemmIdx],
                                            N[gemmIdx],
@@ -343,26 +343,26 @@ void check(hipStream_t                         stream,
             }
             if(arg.gradient && arg.bias_vector)
             {
-                if(tol[gemmIdx] !=0)
+                if(tol[gemmIdx] != 0)
                 {
                     near_check_general<Tbias>(size_bias[gemmIdx],
-                                          1,
-                                          size_bias[gemmIdx],
-                                          size_bias[gemmIdx],
-                                          *(hBias_gold[gemmIdx]),
-                                          *(hBias[gemmIdx]),
-                                          num_batches[gemmIdx],
-                                          tol[gemmIdx]);
+                                              1,
+                                              size_bias[gemmIdx],
+                                              size_bias[gemmIdx],
+                                              *(hBias_gold[gemmIdx]),
+                                              *(hBias[gemmIdx]),
+                                              num_batches[gemmIdx],
+                                              tol[gemmIdx]);
                 }
                 else
                 {
                     unit_check_general<Tbias>(size_bias[gemmIdx],
-                                          1,
-                                          size_bias[gemmIdx],
-                                          size_bias[gemmIdx],
-                                          *(hBias_gold[gemmIdx]),
-                                          *(hBias[gemmIdx]),
-                                          num_batches[gemmIdx]);
+                                              1,
+                                              size_bias[gemmIdx],
+                                              size_bias[gemmIdx],
+                                              *(hBias_gold[gemmIdx]),
+                                              *(hBias[gemmIdx]),
+                                              num_batches[gemmIdx]);
                 }
             }
         }
@@ -2168,7 +2168,8 @@ void testing_matmul_with_bias(const Arguments& arg)
         if(arg.unit_check && hipblaslt_get_arch_major() == 11 && sizeof(TiA) == 2
            && sizeof(TiB) == 2)
         {
-            for(int gemmIdx = 0; gemmIdx < gemm_count; gemmIdx++) {
+            for(int gemmIdx = 0; gemmIdx < gemm_count; gemmIdx++)
+            {
                 tol[gemmIdx] = K[gemmIdx] * sum_error_tolerance_for_gfx11<Tc, TiA, To>;
             }
         }
@@ -2195,6 +2196,7 @@ void testing_matmul_with_bias(const Arguments& arg)
                   hBias_gold,
                   hBias,
                   dBias,
+                  tol,
                   hipblaslt_error);
         }
     }
@@ -2490,7 +2492,8 @@ void testing_matmul_with_bias(const Arguments& arg)
             if(arg.unit_check && hipblaslt_get_arch_major() == 11 && sizeof(TiA) == 2
                && sizeof(TiB) == 2)
             {
-                for(int gemmIdx = 0; gemmIdx < gemm_count; gemmIdx++) {
+                for(int gemmIdx = 0; gemmIdx < gemm_count; gemmIdx++)
+                {
                     tol[gemmIdx] = K[gemmIdx] * sum_error_tolerance_for_gfx11<Tc, TiA, To>;
                 }
             }
@@ -2515,6 +2518,7 @@ void testing_matmul_with_bias(const Arguments& arg)
                       hBias_gold,
                       hBias,
                       dBias,
+                      tol,
                       hipblaslt_error);
 
 #define argument_param                                                                             \
