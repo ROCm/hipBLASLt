@@ -464,9 +464,14 @@ rocblaslt_status rocblaslt_matrix_layout_get_attribute(rocblaslt_matrix_layout  
         log_error(__func__, "invalid matLayout pointer", matLayout);
         return rocblaslt_status_invalid_handle;
     }
-    else if(buf == nullptr or sizeWritten == nullptr)
+    else if(sizeInBytes == 0 && sizeWritten == nullptr)
     {
-        log_error(__func__, "invalid pointer: buf", buf, "sizeWritten", sizeWritten);
+        log_error(__func__, "invalid pointer: sizeWritten can't be nullptr if sizeInBytes is 0");
+        return rocblaslt_status_invalid_pointer;
+    }
+    else if(sizeInBytes != 0 && buf == nullptr)
+    {
+        log_error(__func__, "invalid pointer: buf can't be nullptr if sizeInBytes isn't 0");
         return rocblaslt_status_invalid_pointer;
     }
     else
@@ -476,7 +481,7 @@ rocblaslt_status rocblaslt_matrix_layout_get_attribute(rocblaslt_matrix_layout  
             switch(attr)
             {
             case ROCBLASLT_MATRIX_LAYOUT_BATCH_COUNT:
-                *sizeWritten = sizeof(int32_t);
+                if(sizeWritten) *sizeWritten = sizeof(int32_t);
                 if(sizeInBytes < sizeof(int32_t))
                 {
                     log_error(__func__, "invalid buf size", sizeInBytes);
@@ -485,7 +490,7 @@ rocblaslt_status rocblaslt_matrix_layout_get_attribute(rocblaslt_matrix_layout  
                 memcpy(buf, &matLayout->batch_count, sizeof(int32_t));
                 break;
             case ROCBLASLT_MATRIX_LAYOUT_STRIDED_BATCH_OFFSET:
-                *sizeWritten = sizeof(int64_t);
+                if(sizeWritten) *sizeWritten = sizeof(int64_t);
                 if(sizeInBytes < sizeof(int64_t))
                 {
                     log_error(__func__, "invalid buf size", sizeInBytes);
@@ -820,9 +825,14 @@ rocblaslt_status rocblaslt_matmul_desc_get_attribute(rocblaslt_matmul_desc      
         log_error(__func__, "invalid matmulDescr pointer", matmulDesc);
         return rocblaslt_status_invalid_handle;
     }
-    else if(buf == nullptr or sizeWritten == nullptr)
+    else if(sizeInBytes == 0 && sizeWritten == nullptr)
     {
-        log_error(__func__, "invalid pointer: buf", buf, "sizeWritten", sizeWritten);
+        log_error(__func__, "invalid pointer: sizeWritten can't be nullptr if sizeInBytes is 0");
+        return rocblaslt_status_invalid_pointer;
+    }
+    else if(sizeInBytes != 0 && buf == nullptr)
+    {
+        log_error(__func__, "invalid pointer: buf can't be nullptr if sizeInBytes isn't 0");
         return rocblaslt_status_invalid_pointer;
     }
     else
@@ -832,7 +842,7 @@ rocblaslt_status rocblaslt_matmul_desc_get_attribute(rocblaslt_matmul_desc      
             switch(matmulAttr)
             {
             case ROCBLASLT_MATMUL_DESC_TRANSA:
-                *sizeWritten = sizeof(int32_t);
+                if(sizeWritten) *sizeWritten = sizeof(int32_t);
                 if(sizeInBytes < sizeof(int32_t))
                 {
                     log_error(__func__, "invalid buf size", sizeInBytes);
@@ -841,7 +851,7 @@ rocblaslt_status rocblaslt_matmul_desc_get_attribute(rocblaslt_matmul_desc      
                 memcpy(buf, &matmulDesc->op_A, sizeof(int32_t));
                 break;
             case ROCBLASLT_MATMUL_DESC_TRANSB:
-                *sizeWritten = sizeof(int32_t);
+                if(sizeWritten) *sizeWritten = sizeof(int32_t);
                 if(sizeInBytes < sizeof(int32_t))
                 {
                     log_error(__func__, "invalid buf size", sizeInBytes);
@@ -850,7 +860,7 @@ rocblaslt_status rocblaslt_matmul_desc_get_attribute(rocblaslt_matmul_desc      
                 memcpy(buf, &matmulDesc->op_B, sizeof(int32_t));
                 break;
             case ROCBLASLT_MATMUL_DESC_EPILOGUE:
-                *sizeWritten = sizeof(int32_t);
+                if(sizeWritten) *sizeWritten = sizeof(int32_t);
                 if(sizeInBytes < sizeof(int32_t))
                 {
                     log_error(__func__, "invalid buf size", sizeInBytes);
@@ -859,7 +869,7 @@ rocblaslt_status rocblaslt_matmul_desc_get_attribute(rocblaslt_matmul_desc      
                 memcpy(buf, &matmulDesc->epilogue, sizeof(int32_t));
                 break;
             case ROCBLASLT_MATMUL_DESC_BIAS_POINTER:
-                *sizeWritten = sizeof(void*);
+                if(sizeWritten) *sizeWritten = sizeof(void*);
                 if(sizeInBytes < sizeof(void*))
                 {
                     log_error(__func__, "invalid buf size", sizeInBytes);
@@ -868,7 +878,7 @@ rocblaslt_status rocblaslt_matmul_desc_get_attribute(rocblaslt_matmul_desc      
                 memcpy(buf, &matmulDesc->bias, sizeof(void*));
                 break;
             case ROCBLASLT_MATMUL_DESC_A_SCALE_POINTER:
-                *sizeWritten = sizeof(void*);
+                if(sizeWritten) *sizeWritten = sizeof(void*);
                 if(sizeInBytes < sizeof(void*))
                 {
                     log_error(__func__, "invalid buf size", sizeInBytes);
@@ -877,7 +887,7 @@ rocblaslt_status rocblaslt_matmul_desc_get_attribute(rocblaslt_matmul_desc      
                 memcpy(buf, &matmulDesc->scaleA, sizeof(void*));
                 break;
             case ROCBLASLT_MATMUL_DESC_B_SCALE_POINTER:
-                *sizeWritten = sizeof(void*);
+                if(sizeWritten) *sizeWritten = sizeof(void*);
                 if(sizeInBytes < sizeof(void*))
                 {
                     log_error(__func__, "invalid buf size", sizeInBytes);
@@ -886,7 +896,7 @@ rocblaslt_status rocblaslt_matmul_desc_get_attribute(rocblaslt_matmul_desc      
                 memcpy(buf, &matmulDesc->scaleB, sizeof(void*));
                 break;
             case ROCBLASLT_MATMUL_DESC_POINTER_MODE:
-                *sizeWritten = sizeof(int32_t);
+                if(sizeWritten) *sizeWritten = sizeof(int32_t);
                 if(sizeInBytes < sizeof(int32_t))
                 {
                     log_error(__func__, "invalid buf size", sizeInBytes);
@@ -895,7 +905,7 @@ rocblaslt_status rocblaslt_matmul_desc_get_attribute(rocblaslt_matmul_desc      
                 memcpy(buf, &matmulDesc->pointermode, sizeof(void*));
                 break;
             case ROCBLASLT_MATMUL_DESC_BIAS_DATA_TYPE:
-                *sizeWritten = sizeof(int32_t);
+                if(sizeWritten) *sizeWritten = sizeof(int32_t);
                 if(sizeInBytes < sizeof(int32_t))
                 {
                     log_error(__func__, "invalid buf size", sizeInBytes);
