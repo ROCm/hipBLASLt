@@ -407,12 +407,12 @@ try
 
         ("algo_method",
          value<int32_t>(&arg.algo_method)->default_value(0),
-         "Use different algorithm search API. 0: Get heuristic, 1: Get all algorithm, 2: Get solutuion by index."
+         "Use different algorithm search API. 0: Get heuristic, 1: Get all algorithm, 2: Get solution by index."
          "Options: 0, 1, 2. (default: 0)")
 
         ("solution_index",
-         value<int32_t>(&arg.solution_index)->default_value(0),
-         "Reserved.")
+         value<int32_t>(&arg.solution_index)->default_value(-1),
+         "Used with --algo_method 2.  Specify solution index to use in benchmark.")
 
         ("requested_solution",
          value<int32_t>(&arg.requested_solution_num)->default_value(1),
@@ -591,6 +591,8 @@ try
     }
     else if(arg.algo_method == 2)
     {
+        if (arg.solution_index == -1)
+             throw std::invalid_argument("Invalid Combination --algo_method==2 specified without --solution_index ");
         arg.requested_solution_num = 1;
     }
 

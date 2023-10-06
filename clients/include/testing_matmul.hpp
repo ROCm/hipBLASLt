@@ -905,145 +905,55 @@ void testing_matmul(const Arguments& arg)
     {
         std::vector<hipblasLtMatmulHeuristicResult_t> tmpAlgo;
         heuristicResult.clear();
+        std::vector<int> algoIndex(1);
+        algoIndex[0]=arg.solution_index;
 
-        int algoIndexCount = 0;
-        int algoIndexInc   = 100;
-        while(1)
+        CHECK_HIPBLASLT_ERROR(hipblaslt_ext::getAlgosFromIndex(handle, algoIndex, tmpAlgo));
+        returnedAlgoCount = tmpAlgo.size();
+
+        bool foundAlgo = false;
+
+        if(!do_grouped_gemm)
         {
-            // Get algos by index
-            // In real cases, the user can use the saved algo index to get the algorithm.
-            // isAlgoSupported is not necessary if the user is sure that the algo supports the problem.
-            std::vector<int> algoIndex(algoIndexInc);
-            std::iota(std::begin(algoIndex), std::end(algoIndex), algoIndexCount);
-            algoIndexCount += algoIndexInc;
-            std::vector<hipblasLtMatmulHeuristicResult_t> tmpAlgo;
-            CHECK_HIPBLASLT_ERROR(hipblaslt_ext::getAlgosFromIndex(handle, algoIndex, tmpAlgo));
-            returnedAlgoCount = tmpAlgo.size();
-
-            bool foundAlgo = false;
-
-            if(!do_grouped_gemm)
-            {
-                if(arg.use_ext)
-                {
-                    if(arg.use_ext_setproblem)
-                    {
-                        CHECK_HIPBLASLT_ERROR(gemm.setProblem(M[0],
-                                                              N[0],
-                                                              K[0],
-                                                              num_batches[0],
-                                                              lda[0],
-                                                              ldb[0],
-                                                              ldc[0],
-                                                              ldd[0],
-                                                              stride_a[0],
-                                                              stride_b[0],
-                                                              stride_c[0],
-                                                              stride_d[0],
-                                                              extepilogue[0],
-                                                              extinputs[0],
-                                                              extproblemtype));
-                    }
-                    else
-                    {
-                        CHECK_HIPBLASLT_ERROR(gemm.setProblem(matmul[0],
-                                                              alpha_in[0],
-                                                              *(dA[0]),
-                                                              matA[0],
-                                                              *(dB[0]),
-                                                              matB[0],
-                                                              &h_beta[0],
-                                                              *(dC[0]),
-                                                              matC[0],
-                                                              *(dD[0]),
-                                                              matD[0]));
-                    }
-                    for(int j = 0; j < returnedAlgoCount; j++)
-                    {
-                        size_t tmpWorkspaceSize = 0;
-                        if(gemm.isAlgoSupported(tmpAlgo[j].algo, tmpWorkspaceSize)
-                           == HIPBLAS_STATUS_SUCCESS)
-                        {
-                            heuristicResult.push_back(tmpAlgo[j]);
-                            workspace_size = std::max(workspace_size, tmpWorkspaceSize);
-                            foundAlgo      = true;
-                            break;
-                        }
-                    }
-                }
-                else
-                {
-                    for(int j = 0; j < returnedAlgoCount; j++)
-                    {
-                        size_t tmpWorkspaceSize = 0;
-                        if(hipblaslt_ext::matmulIsAlgoSupported(handle,
-                                                                matmul[0],
-                                                                alpha_in[0],
-                                                                matA[0],
-                                                                matB[0],
-                                                                &h_beta[0],
-                                                                matC[0],
-                                                                matD[0],
-                                                                tmpAlgo[j].algo,
-                                                                tmpWorkspaceSize)
-                           == HIPBLAS_STATUS_SUCCESS)
-                        {
-                            heuristicResult.push_back(tmpAlgo[j]);
-                            workspace_size = std::max(workspace_size, tmpWorkspaceSize);
-                            foundAlgo      = true;
-                            break;
-                        }
-                    }
-                }
-            }
-            else
+            if(arg.use_ext)
             {
                 if(arg.use_ext_setproblem)
                 {
-                    auto num_batches_64
-                        = std::vector<int64_t>{num_batches.begin(), num_batches.end()};
-                    CHECK_HIPBLASLT_ERROR(groupedGemm.setProblem(M,
-                                                                 N,
-                                                                 K,
-                                                                 num_batches_64,
-                                                                 lda,
-                                                                 ldb,
-                                                                 ldc,
-                                                                 ldd,
-                                                                 stride_a,
-                                                                 stride_b,
-                                                                 stride_c,
-                                                                 stride_d,
-                                                                 extepilogue,
-                                                                 extinputs,
-                                                                 extproblemtype));
+                    CHECK_HIPBLASLT_ERROR(gemm.setProblem(M[0],
+                                                            N[0],
+                                                            K[0],
+                                                            num_batches[0],
+                                                            lda[0],
+                                                            ldb[0],
+                                                            ldc[0],
+                                                            ldd[0],
+                                                            stride_a[0],
+                                                            stride_b[0],
+                                                            stride_c[0],
+                                                            stride_d[0],
+                                                            extepilogue[0],
+                                                            extinputs[0],
+                                                            extproblemtype));
                 }
                 else
                 {
-                    for(int gemmIdx = 0; gemmIdx < gemm_count; gemmIdx++)
-                    {
-                        da[gemmIdx] = *dA[gemmIdx];
-                        db[gemmIdx] = *dB[gemmIdx];
-                        dc[gemmIdx] = *dC[gemmIdx];
-                        dd[gemmIdx] = *dD[gemmIdx];
-                    }
-
-                    std::vector<void*> h_alpha_void, h_beta_void;
-                    for(size_t i = 0; i < h_alpha.size(); i++)
-                    {
-                        h_alpha_void.push_back(&h_alpha[i]);
-                        h_beta_void.push_back(&h_beta[i]);
-                    }
-
-                    CHECK_HIPBLASLT_ERROR(groupedGemm.setProblem(
-                        matmul, h_alpha_void, da, matA, db, matB, h_beta_void, dc, matC, dd, matD));
+                    CHECK_HIPBLASLT_ERROR(gemm.setProblem(matmul[0],
+                                                            alpha_in[0],
+                                                            *(dA[0]),
+                                                            matA[0],
+                                                            *(dB[0]),
+                                                            matB[0],
+                                                            &h_beta[0],
+                                                            *(dC[0]),
+                                                            matC[0],
+                                                            *(dD[0]),
+                                                            matD[0]));
                 }
-
                 for(int j = 0; j < returnedAlgoCount; j++)
                 {
                     size_t tmpWorkspaceSize = 0;
-                    if(groupedGemm.isAlgoSupported(tmpAlgo[j].algo, tmpWorkspaceSize)
-                       == HIPBLAS_STATUS_SUCCESS)
+                    if(gemm.isAlgoSupported(tmpAlgo[j].algo, tmpWorkspaceSize)
+                        == HIPBLAS_STATUS_SUCCESS)
                     {
                         heuristicResult.push_back(tmpAlgo[j]);
                         workspace_size = std::max(workspace_size, tmpWorkspaceSize);
@@ -1052,10 +962,85 @@ void testing_matmul(const Arguments& arg)
                     }
                 }
             }
-
-            if(foundAlgo || (tmpAlgo.size() == 0))
+            else
             {
-                break;
+                for(int j = 0; j < returnedAlgoCount; j++)
+                {
+                    size_t tmpWorkspaceSize = 0;
+                    if(hipblaslt_ext::matmulIsAlgoSupported(handle,
+                                                            matmul[0],
+                                                            alpha_in[0],
+                                                            matA[0],
+                                                            matB[0],
+                                                            &h_beta[0],
+                                                            matC[0],
+                                                            matD[0],
+                                                            tmpAlgo[j].algo,
+                                                            tmpWorkspaceSize)
+                        == HIPBLAS_STATUS_SUCCESS)
+                    {
+                        heuristicResult.push_back(tmpAlgo[j]);
+                        workspace_size = std::max(workspace_size, tmpWorkspaceSize);
+                        foundAlgo      = true;
+                        break;
+                    }
+                }
+            }
+        }
+        else
+        {
+            if(arg.use_ext_setproblem)
+            {
+                auto num_batches_64
+                    = std::vector<int64_t>{num_batches.begin(), num_batches.end()};
+                CHECK_HIPBLASLT_ERROR(groupedGemm.setProblem(M,
+                                                                N,
+                                                                K,
+                                                                num_batches_64,
+                                                                lda,
+                                                                ldb,
+                                                                ldc,
+                                                                ldd,
+                                                                stride_a,
+                                                                stride_b,
+                                                                stride_c,
+                                                                stride_d,
+                                                                extepilogue,
+                                                                extinputs,
+                                                                extproblemtype));
+            }
+            else
+            {
+                for(int gemmIdx = 0; gemmIdx < gemm_count; gemmIdx++)
+                {
+                    da[gemmIdx] = *dA[gemmIdx];
+                    db[gemmIdx] = *dB[gemmIdx];
+                    dc[gemmIdx] = *dC[gemmIdx];
+                    dd[gemmIdx] = *dD[gemmIdx];
+                }
+
+                std::vector<void*> h_alpha_void, h_beta_void;
+                for(size_t i = 0; i < h_alpha.size(); i++)
+                {
+                    h_alpha_void.push_back(&h_alpha[i]);
+                    h_beta_void.push_back(&h_beta[i]);
+                }
+
+                CHECK_HIPBLASLT_ERROR(groupedGemm.setProblem(
+                    matmul, h_alpha_void, da, matA, db, matB, h_beta_void, dc, matC, dd, matD));
+            }
+
+            for(int j = 0; j < returnedAlgoCount; j++)
+            {
+                size_t tmpWorkspaceSize = 0;
+                if(groupedGemm.isAlgoSupported(tmpAlgo[j].algo, tmpWorkspaceSize)
+                    == HIPBLAS_STATUS_SUCCESS)
+                {
+                    heuristicResult.push_back(tmpAlgo[j]);
+                    workspace_size = std::max(workspace_size, tmpWorkspaceSize);
+                    foundAlgo      = true;
+                    break;
+                }
             }
         }
     }
