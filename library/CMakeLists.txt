@@ -126,9 +126,9 @@ if( BUILD_WITH_TENSILE )
 endif()
 
     target_compile_options(hipblaslt PRIVATE -Wno-unused-command-line-argument )
-    target_compile_definitions(hipblaslt PRIVATE ROCM_USE_FLOAT16 __HIP_PLATFORM_HCC__)
+    target_compile_definitions(hipblaslt PRIVATE ROCM_USE_FLOAT16 __HIP_PLATFORM_AMD__)
 else()
-    target_compile_definitions(hipblaslt PRIVATE __HIP_PLATFORM_NVCC__)
+    target_compile_definitions(hipblaslt PRIVATE __HIP_PLATFORM_NVIDIA__)
 endif()
 
 # Target compile features
