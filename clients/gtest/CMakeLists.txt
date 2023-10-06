@@ -60,7 +60,7 @@ target_link_libraries( hipblaslt-test PRIVATE ${BLAS_LIBRARY} ${GTEST_BOTH_LIBRA
 if( NOT BUILD_CUDA )
   target_link_libraries( hipblaslt-test PRIVATE hip::host hip::device )
 else()
-  target_compile_definitions( hipblaslt-test PRIVATE __HIP_PLATFORM_NVCC__ )
+  target_compile_definitions( hipblaslt-test PRIVATE __HIP_PLATFORM_NVIDIA__ )
   target_include_directories( hipblaslt-test
     PRIVATE
       $<BUILD_INTERFACE:${CUDA_INCLUDE_DIRS}>

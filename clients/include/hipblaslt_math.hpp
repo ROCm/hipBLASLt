@@ -38,7 +38,7 @@
 
 inline __host__ hip_bfloat16 float_to_bfloat16_truncate(float val)
 {
-#if defined(__HIP_PLATFORM_HCC__)
+#if defined(__HIP_PLATFORM_AMD__)
     return hip_bfloat16(val, hip_bfloat16::truncate_t::truncate);
 #else
     return __float2bfloat16_rd(val);
@@ -58,7 +58,7 @@ template <>
 inline hip_bfloat16 negate(hip_bfloat16 x)
 {
 
-#if defined(__HIP_PLATFORM_HCC__)
+#if defined(__HIP_PLATFORM_AMD__)
     x.data ^= 0x8000;
     return x;
 #else
