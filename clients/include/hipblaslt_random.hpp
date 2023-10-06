@@ -249,7 +249,7 @@ inline float random_generator()
 template <>
 inline hipblasLtHalf random_generator<hipblasLtHalf>()
 {
-#if defined(__HIP_PLATFORM_HCC__)
+#if defined(__HIP_PLATFORM_AMD__)
 #define CAST
 #else
 #define CAST static_cast<float>
@@ -262,7 +262,7 @@ inline hipblasLtHalf random_generator<hipblasLtHalf>()
 template <>
 inline hip_bfloat16 random_generator<hip_bfloat16>()
 {
-#if defined(__HIP_PLATFORM_HCC__)
+#if defined(__HIP_PLATFORM_AMD__)
 #define CAST
 #else
 #define CAST static_cast<float>

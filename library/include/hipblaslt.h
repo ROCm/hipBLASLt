@@ -56,7 +56,7 @@
 #include <hip/hip_runtime.h>
 #include <hip/hip_runtime_api.h>
 
-#if defined(__HIP_PLATFORM_HCC__)
+#if defined(__HIP_PLATFORM_AMD__)
 #include "hipblaslt-types.h"
 #endif
 
@@ -247,7 +247,7 @@ typedef enum {
   HIPBLASLT_MATRIX_TRANSFORM_DESC_TRANSB,
 } hipblasLtMatrixTransformDescAttributes_t;
 
-#if defined(__HIP_PLATFORM_HCC__)
+#if defined(__HIP_PLATFORM_AMD__)
 typedef struct {
   uint64_t data[4];
 } hipblasLtMatmulDescOpaque_t;
@@ -343,7 +343,7 @@ typedef struct _hipblasLtMatmulHeuristicResult_t{
   float wavesCount = 1.0;                          /**<Waves count is a device utilization metric. A wavesCount value of 1.0f suggests that when the kernel is launched it will fully occupy the GPU.*/
   int reserved[4];                                 /**<Reserved.*/
 } hipblasLtMatmulHeuristicResult_t;
-#elif defined(__HIP_PLATFORM_NVCC__)
+#elif defined(__HIP_PLATFORM_NVIDIA__)
 #endif
 // clang-format on
 
