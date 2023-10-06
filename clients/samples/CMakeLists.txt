@@ -33,6 +33,7 @@ add_executable( sample_hipblaslt_gemm_mix_precision_with_amax_ext gemm_mix_preci
 add_executable( sample_hipblaslt_groupedgemm_ext groupedgemm/sample_hipblaslt_groupedgemm_ext.cpp)
 add_executable( sample_hipblaslt_groupedgemm_fixed_mk_ext groupedgemm_fixed_mk/sample_hipblaslt_groupedgemm_fixed_mk_ext.cpp)
 add_executable( sample_hipblaslt_groupedgemm_get_all_algos_ext groupedgemm_get_all_algos/sample_hipblaslt_groupedgemm_get_all_algos_ext.cpp)
+add_executable( sample_hipblaslt_ext_op_layernorm ext_op/sample_hipblaslt_ext_op_layernorm.cpp)
 add_executable( sample_hipblaslt_ext_op_amax ext_op/sample_hipblaslt_ext_op_amax.cpp)
 
 set(samples sample_hipblaslt_gemm
@@ -46,6 +47,7 @@ set(samples sample_hipblaslt_gemm
             sample_hipblaslt_groupedgemm_ext
             sample_hipblaslt_groupedgemm_fixed_mk_ext
             sample_hipblaslt_groupedgemm_get_all_algos_ext
+            sample_hipblaslt_ext_op_layernorm
             sample_hipblaslt_ext_op_amax)
 
 set( sample_list_all ${samples})
