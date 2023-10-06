@@ -3272,6 +3272,16 @@ class Solution(collections.abc.Mapping):
       if state["ProblemType"]["SupportUserArgs"]:
         reject(state, "Currently SupportUserArgs does not support GSU > 1.")
 
+    #Need to force disabling PreloadKernArgs if compiler does not support
+    #Can not just reject the solution since the user library may find any solutions
+    if state["PreloadKernArgs"]:
+      hipccver = globalParameters['HipClangVersion'].split(".")
+      hipccMaj = int(hipccver[0])
+      hipccPatch = int(hipccver[2].split("-")[0])
+      if not (hipccMaj >= 6 and hipccPatch >= 32650):
+        #print("Force to Disable PreloadKernArgs since this hipcc version doesn't support",)
+        state["PreloadKernArgs"] = 0
+
   ########################################
   # create a dictionary with booleans on whether to include parameter in name
   @staticmethod
