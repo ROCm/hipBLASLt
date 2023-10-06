@@ -1434,9 +1434,6 @@ def generateLogic(config, benchmarkDataPath, libraryLogicPath):
     assignParameterWithDefault(analysisParameters, parameter, config, \
         defaultAnalysisParameters)
 
-  if ("LibraryType" not in analysisParameters) or (analysisParameters["LibraryType"] == None):
-    printExit("LibraryType is empty!")
-
   print1("")
   print1(HR)
   currentTime = time.time()
