@@ -247,7 +247,7 @@ void fix_batch(int argc, char* argv[])
 void hipblaslt_print_version(void)
 {
     int                    version;
-    char          git_version[128];
+    char                   git_version[128];
     hipblaslt_local_handle handle;
     hipblasLtGetVersion(handle, &version);
     hipblasLtGetGitRevision(handle, &git_version[0]);
@@ -279,7 +279,9 @@ try
     bool        log_function_name = false;
     bool        any_stride        = false;
 
-    int api_method = 0;
+    int         api_method      = 0;
+    std::string api_method_str  = "";
+    std::string algo_method_str = "";
 
     bool verify = 0;
 
@@ -420,9 +422,8 @@ try
          "Cold Iterations to run before entering the timing loop")
 
         ("algo_method",
-         value<int32_t>(&arg.algo_method)->default_value(0),
-         "Use different algorithm search API. 0: Get heuristic, 1: Get all algorithm, 2: Get solutuion by index."
-         "Options: 0, 1, 2. (default: 0)")
+         value<std::string>(&algo_method_str)->default_value("heuristic"),
+         "Use different algorithm search API. Options: heuristic, all, index.")
 
         ("solution_index",
          value<int32_t>(&arg.solution_index)->default_value(0),
@@ -430,7 +431,7 @@ try
 
         ("requested_solution",
          value<int32_t>(&arg.requested_solution_num)->default_value(1),
-         "Requested solution num. Set to -1 to get all solutions. Only valid when algo_method is set to 1.")
+         "Requested solution num. Set to -1 to get all solutions. Only valid when algo_method is set to heuristic.")
 
         ("activation_type",
          value<std::string>(&activation_type)->default_value("none"),
@@ -493,9 +494,9 @@ try
          "Simple strstr filter on function name only without wildcards")
 
         ("api_method",
-         value<int>(&api_method)->default_value(0),
-         "Use extension API. 0: C style API. 1: declaration with C hipblasLtMatmul Layout/Desc but set, initialize, and run the problem with C++ extension API. 2: Using C++ extension API only. "
-         "Options: 0, 1, 2. (default: 0)")
+         value<std::string>(&api_method_str)->default_value("c"),
+         "Use extension API. c: C style API. mix: declaration with C hipblasLtMatmul Layout/Desc but set, initialize, and run the problem with C++ extension API. cpp: Using C++ extension API only. "
+         "Options: c, mix, cpp.")
 
         ("help,h", "produces this help message")
 
@@ -517,6 +518,42 @@ try
     if(vm.find("version") != vm.end())
     {
         return 0;
+    }
+
+    if(api_method_str.compare("c") == 0)
+    {
+        api_method = 0;
+    }
+    else if(api_method_str.compare("mix") == 0)
+    {
+        api_method = 1;
+    }
+    else if(api_method_str.compare("cpp") == 0)
+    {
+        api_method = 2;
+    }
+    else
+    {
+        hipblaslt_cerr << "Invalid api method: " << api_method_str << std::endl;
+        return 1;
+    }
+
+    if(algo_method_str.compare("heuristic") == 0)
+    {
+        arg.algo_method = 0;
+    }
+    else if(algo_method_str.compare("all") == 0)
+    {
+        arg.algo_method = 1;
+    }
+    else if(algo_method_str.compare("index") == 0)
+    {
+        arg.algo_method = 2;
+    }
+    else
+    {
+        hipblaslt_cerr << "Invalid algo method: " << algo_method_str << std::endl;
+        return 1;
     }
 
     // transfer local variable state
