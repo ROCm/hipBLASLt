@@ -220,13 +220,154 @@ void testing_matmul_bad_arg(const Arguments& arg)
     hipStream_t stream = nullptr;
 }
 
+template <typename Talpha, typename To>
+void check(hipStream_t                          stream,
+           const Arguments&                     arg,
+           const uint32_t&                      gemm_count,
+           const std::vector<int64_t>&          M,
+           const std::vector<int64_t>&          N,
+           const std::vector<int64_t>&          ldd,
+           const std::vector<int64_t>&          lde,
+           const std::vector<int64_t>&          stride_d,
+           const std::vector<int64_t>&          stride_e,
+           const std::vector<int>&              num_batches,
+           const std::vector<size_t>&           size_bias,
+           std::vector<host_vector<To>*>&       hD_gold,
+           std::vector<host_vector<To>*>&       hD_1,
+           std::vector<device_vector<To>*>&     dD,
+           std::vector<host_vector<To>*>&       hE_gold,
+           std::vector<host_vector<To>*>&       hE,
+           std::vector<device_vector<To>*>&     dE,
+           std::vector<host_vector<To>*>&       hBias_gold,
+           std::vector<host_vector<To>*>&       hBias,
+           std::vector<device_vector<To>*>&     dBias,
+           std::vector<host_vector<Talpha>*>&   hBias_gold_C,
+           std::vector<host_vector<Talpha>*>&   hBias_C,
+           std::vector<device_vector<Talpha>*>& dBias_C,
+           double&                              hipblaslt_error)
+{
+    // fetch GPU
+    CHECK_HIP_ERROR(hipStreamSynchronize(stream));
+
+    for(int gemmIdx = 0; gemmIdx < gemm_count; gemmIdx++)
+    {
+        CHECK_HIP_ERROR(hD_1[gemmIdx]->transfer_from(*(dD[gemmIdx])));
+        if(!arg.gradient && arg.use_e)
+            CHECK_HIP_ERROR(hE[gemmIdx]->transfer_from(*(dE[gemmIdx])));
+        if(arg.gradient && arg.bias_vector)
+        {
+            CHECK_HIP_ERROR(hBias[gemmIdx]->transfer_from(*(dBias[gemmIdx])));
+            CHECK_HIP_ERROR(hBias_C[gemmIdx]->transfer_from(*(dBias_C[gemmIdx])));
+        }
+        if(arg.unit_check)
+        {
+            unit_check_general<To>(M[gemmIdx],
+                                   N[gemmIdx],
+                                   ldd[gemmIdx],
+                                   stride_d[gemmIdx],
+                                   *(hD_gold[gemmIdx]),
+                                   *(hD_1[gemmIdx]),
+                                   num_batches[gemmIdx]);
+            if(!arg.gradient && arg.use_e)
+                unit_check_general<To>(M[gemmIdx],
+                                       N[gemmIdx],
+                                       lde[gemmIdx],
+                                       stride_e[gemmIdx],
+                                       *(hE_gold[gemmIdx]),
+                                       *(hE[gemmIdx]),
+                                       num_batches[gemmIdx]);
+            if(arg.gradient && arg.bias_vector)
+            {
+                if(arg.d_type != arg.scale_type && arg.bias_type == arg.scale_type)
+                    unit_check_general<Talpha>(size_bias[gemmIdx],
+                                               1,
+                                               size_bias[gemmIdx],
+                                               size_bias[gemmIdx],
+                                               *(hBias_gold_C[gemmIdx]),
+                                               *(hBias_C[gemmIdx]),
+                                               num_batches[gemmIdx]);
+
+                else
+                    unit_check_general<To>(size_bias[gemmIdx],
+                                           1,
+                                           size_bias[gemmIdx],
+                                           size_bias[gemmIdx],
+                                           *(hBias_gold[gemmIdx]),
+                                           *(hBias[gemmIdx]),
+                                           num_batches[gemmIdx]);
+            }
+        }
+
+        if(arg.norm_check)
+        {
+            double norm_error = std::abs(norm_check_general<To>('F',
+                                                                M[gemmIdx],
+                                                                N[gemmIdx],
+                                                                ldd[gemmIdx],
+                                                                stride_d[gemmIdx],
+                                                                *(hD_gold[gemmIdx]),
+                                                                *(hD_1[gemmIdx]),
+                                                                num_batches[gemmIdx]));
+            hipblaslt_error += norm_error;
+            if(arg.norm_check_assert)
+                CHECK_SUCCESS(norm_check<To>(norm_error));
+
+            if(!arg.gradient && arg.use_e)
+            {
+                double norm_error = std::abs(norm_check_general<To>('F',
+                                                                    M[gemmIdx],
+                                                                    N[gemmIdx],
+                                                                    lde[gemmIdx],
+                                                                    stride_e[gemmIdx],
+                                                                    *(hE_gold[gemmIdx]),
+                                                                    *(hE[gemmIdx]),
+                                                                    num_batches[gemmIdx]));
+                hipblaslt_error += norm_error;
+                if(arg.norm_check_assert)
+                    CHECK_SUCCESS(norm_check<To>(norm_error));
+            }
+            if(arg.gradient && arg.bias_vector)
+            {
+                if(arg.d_type != arg.scale_type && arg.bias_type == arg.scale_type)
+                {
+                    double norm_error
+                        = std::abs(norm_check_general<Talpha>('F',
+                                                              M[gemmIdx],
+                                                              1,
+                                                              M[gemmIdx],
+                                                              M[gemmIdx],
+                                                              *(hBias_gold_C[gemmIdx]),
+                                                              *(hBias_C[gemmIdx]),
+                                                              num_batches[gemmIdx]));
+                    hipblaslt_error += norm_error;
+                    if(arg.norm_check_assert)
+                        CHECK_SUCCESS(norm_check<Talpha>(norm_error));
+                }
+                else
+                {
+                    double norm_error = std::abs(norm_check_general<To>('F',
+                                                                        M[gemmIdx],
+                                                                        1,
+                                                                        M[gemmIdx],
+                                                                        M[gemmIdx],
+                                                                        *(hBias_gold[gemmIdx]),
+                                                                        *(hBias[gemmIdx]),
+                                                                        num_batches[gemmIdx]));
+                    hipblaslt_error += norm_error;
+                    if(arg.norm_check_assert)
+                        CHECK_SUCCESS(norm_check<To>(norm_error));
+                }
+            }
+        }
+    }
+}
+
 template <typename TiA, typename TiB, typename To, typename Tc, typename Tci>
 void testing_matmul(const Arguments& arg)
 {
     double gpu_time_used, cpu_time_used;
-    gpu_time_used = cpu_time_used          = 0.0;
-    double                 hipblaslt_error = 0.0;
-    bool                   HMM             = arg.HMM;
+    gpu_time_used = cpu_time_used = 0.0;
+    bool                   HMM    = arg.HMM;
     hipblaslt_local_handle handle{arg};
     hipStream_t            stream;
     CHECK_HIP_ERROR(hipStreamCreate(&stream));
@@ -1334,68 +1475,6 @@ void testing_matmul(const Arguments& arg)
                        << " / Total solutions: " << returnedAlgoCount << std::endl;
     CHECK_SOLUTION_FOUND(returnedAlgoCount);
 
-    if(arg.unit_check || arg.norm_check)
-    {
-        if(!do_grouped_gemm)
-        {
-            if(arg.use_ext)
-            {
-                CHECK_HIPBLASLT_ERROR(gemm.initialize(heuristicResult[0].algo, *dWorkspace));
-
-                CHECK_HIPBLASLT_ERROR(gemm.run(stream));
-            }
-            else
-            {
-                CHECK_HIP_ERROR(hipStreamSynchronize(stream));
-                EXPECT_HIPBLAS_STATUS(hipblasLtMatmul(handle,
-                                                      matmul[0],
-                                                      alpha_in[0],
-                                                      *(dA[0]),
-                                                      matA[0],
-                                                      *(dB[0]),
-                                                      matB[0],
-                                                      &(h_beta[0]),
-                                                      *(dC[0]),
-                                                      matC[0],
-                                                      *(dD[0]),
-                                                      matD[0],
-                                                      &heuristicResult[0].algo,
-                                                      *dWorkspace,
-                                                      workspace_size,
-                                                      stream),
-                                      HIPBLAS_STATUS_SUCCESS);
-            }
-        }
-        else
-        {
-            if(arg.use_user_args)
-            {
-                //grouped gemm
-                CHECK_HIPBLASLT_ERROR(groupedGemm.initialize(heuristicResult[0].algo, *dWorkspace));
-                CHECK_HIP_ERROR(
-                    hipHostMalloc(&userArgs, gemm_count * sizeof(hipblaslt_ext::UserArguments)));
-                groupedGemm.getDefaultValueForDeviceUserArguments(userArgs);
-                // Copy them to device memory
-                CHECK_HIP_ERROR(
-                    hipMalloc(&d_userArgs, gemm_count * sizeof(hipblaslt_ext::UserArguments)));
-                CHECK_HIP_ERROR(hipMemcpy(d_userArgs,
-                                          userArgs,
-                                          gemm_count * sizeof(hipblaslt_ext::UserArguments),
-                                          hipMemcpyHostToDevice));
-
-                CHECK_HIPBLASLT_ERROR(groupedGemm.run(d_userArgs, stream));
-            }
-            else
-            {
-                //grouped gemm
-                CHECK_HIPBLASLT_ERROR(
-                    groupedGemm.initialize(heuristicResult[0].algo, *dWorkspace, false, stream));
-
-                CHECK_HIPBLASLT_ERROR(groupedGemm.run(stream));
-            }
-        }
-    }
-
     // get CPU result
     if(arg.unit_check || arg.norm_check)
     {
@@ -1686,124 +1765,97 @@ void testing_matmul(const Arguments& arg)
         {
             cpu_time_used = get_time_us_no_sync() - cpu_time_used;
         }
-
-        // fetch GPU
-        CHECK_HIP_ERROR(hipStreamSynchronize(stream));
-
-        for(int gemmIdx = 0; gemmIdx < gemm_count; gemmIdx++)
-        {
-            CHECK_HIP_ERROR(hD_1[gemmIdx]->transfer_from(*(dD[gemmIdx])));
-            if(!arg.gradient && arg.use_e)
-                CHECK_HIP_ERROR(hE[gemmIdx]->transfer_from(*(dE[gemmIdx])));
-            if(arg.gradient && arg.bias_vector)
-            {
-                CHECK_HIP_ERROR(hBias[gemmIdx]->transfer_from(*(dBias[gemmIdx])));
-                CHECK_HIP_ERROR(hBias_C[gemmIdx]->transfer_from(*(dBias_C[gemmIdx])));
-            }
-            if(arg.unit_check)
-            {
-                unit_check_general<To>(M[gemmIdx],
-                                       N[gemmIdx],
-                                       ldd[gemmIdx],
-                                       stride_d[gemmIdx],
-                                       *(hD_gold[gemmIdx]),
-                                       *(hD_1[gemmIdx]),
-                                       num_batches[gemmIdx]);
-                if(!arg.gradient && arg.use_e)
-                    unit_check_general<To>(M[gemmIdx],
-                                           N[gemmIdx],
-                                           lde[gemmIdx],
-                                           stride_e[gemmIdx],
-                                           *(hE_gold[gemmIdx]),
-                                           *(hE[gemmIdx]),
-                                           num_batches[gemmIdx]);
-                if(arg.gradient && arg.bias_vector)
-                {
-                    if(arg.d_type != arg.scale_type && arg.bias_type == arg.scale_type)
-                        unit_check_general<Talpha>(size_bias[gemmIdx],
-                                                   1,
-                                                   size_bias[gemmIdx],
-                                                   size_bias[gemmIdx],
-                                                   *(hBias_gold_C[gemmIdx]),
-                                                   *(hBias_C[gemmIdx]),
-                                                   num_batches[gemmIdx]);
-
-                    else
-                        unit_check_general<To>(size_bias[gemmIdx],
-                                               1,
-                                               size_bias[gemmIdx],
-                                               size_bias[gemmIdx],
-                                               *(hBias_gold[gemmIdx]),
-                                               *(hBias[gemmIdx]),
-                                               num_batches[gemmIdx]);
-                }
-            }
-
-            if(arg.norm_check)
-            {
-                double norm_error = std::abs(norm_check_general<To>('F',
-                                                                    M[gemmIdx],
-                                                                    N[gemmIdx],
-                                                                    ldd[gemmIdx],
-                                                                    stride_d[gemmIdx],
-                                                                    *(hD_gold[gemmIdx]),
-                                                                    *(hD_1[gemmIdx]),
-                                                                    num_batches[gemmIdx]));
-                hipblaslt_error += norm_error;
-                if(arg.norm_check_assert)
-                    CHECK_SUCCESS(norm_check<To>(norm_error));
-
-                if(!arg.gradient && arg.use_e)
-                {
-                    double norm_error = std::abs(norm_check_general<To>('F',
-                                                                        M[gemmIdx],
-                                                                        N[gemmIdx],
-                                                                        lde[gemmIdx],
-                                                                        stride_e[gemmIdx],
-                                                                        *(hE_gold[gemmIdx]),
-                                                                        *(hE[gemmIdx]),
-                                                                        num_batches[gemmIdx]));
-                    hipblaslt_error += norm_error;
-                    if(arg.norm_check_assert)
-                        CHECK_SUCCESS(norm_check<To>(norm_error));
-                }
-                if(arg.gradient && arg.bias_vector)
-                {
-                    if(arg.d_type != arg.scale_type && arg.bias_type == arg.scale_type)
-                    {
-                        double norm_error
-                            = std::abs(norm_check_general<Talpha>('F',
-                                                                  M[gemmIdx],
-                                                                  1,
-                                                                  M[gemmIdx],
-                                                                  M[gemmIdx],
-                                                                  *(hBias_gold_C[gemmIdx]),
-                                                                  *(hBias_C[gemmIdx]),
-                                                                  num_batches[gemmIdx]));
-                        hipblaslt_error += norm_error;
-                        if(arg.norm_check_assert)
-                            CHECK_SUCCESS(norm_check<Talpha>(norm_error));
-                    }
-                    else
-                    {
-                        double norm_error = std::abs(norm_check_general<To>('F',
-                                                                            M[gemmIdx],
-                                                                            1,
-                                                                            M[gemmIdx],
-                                                                            M[gemmIdx],
-                                                                            *(hBias_gold[gemmIdx]),
-                                                                            *(hBias[gemmIdx]),
-                                                                            num_batches[gemmIdx]));
-                        hipblaslt_error += norm_error;
-                        if(arg.norm_check_assert)
-                            CHECK_SUCCESS(norm_check<To>(norm_error));
-                    }
-                }
-            }
-        }
     }
 
-    if(arg.timing)
+    if(!arg.timing)
+    {
+        if(!do_grouped_gemm)
+        {
+            if(arg.use_ext)
+            {
+                CHECK_HIPBLASLT_ERROR(gemm.initialize(heuristicResult[0].algo, *dWorkspace));
+
+                CHECK_HIPBLASLT_ERROR(gemm.run(stream));
+            }
+            else
+            {
+                CHECK_HIP_ERROR(hipStreamSynchronize(stream));
+                EXPECT_HIPBLAS_STATUS(hipblasLtMatmul(handle,
+                                                      matmul[0],
+                                                      alpha_in[0],
+                                                      *(dA[0]),
+                                                      matA[0],
+                                                      *(dB[0]),
+                                                      matB[0],
+                                                      &(h_beta[0]),
+                                                      *(dC[0]),
+                                                      matC[0],
+                                                      *(dD[0]),
+                                                      matD[0],
+                                                      &heuristicResult[0].algo,
+                                                      *dWorkspace,
+                                                      workspace_size,
+                                                      stream),
+                                      HIPBLAS_STATUS_SUCCESS);
+            }
+        }
+        else
+        {
+            if(arg.use_user_args)
+            {
+                //grouped gemm
+                CHECK_HIPBLASLT_ERROR(groupedGemm.initialize(heuristicResult[0].algo, *dWorkspace));
+                CHECK_HIP_ERROR(
+                    hipHostMalloc(&userArgs, gemm_count * sizeof(hipblaslt_ext::UserArguments)));
+                groupedGemm.getDefaultValueForDeviceUserArguments(userArgs);
+                // Copy them to device memory
+                CHECK_HIP_ERROR(
+                    hipMalloc(&d_userArgs, gemm_count * sizeof(hipblaslt_ext::UserArguments)));
+                CHECK_HIP_ERROR(hipMemcpy(d_userArgs,
+                                          userArgs,
+                                          gemm_count * sizeof(hipblaslt_ext::UserArguments),
+                                          hipMemcpyHostToDevice));
+
+                CHECK_HIPBLASLT_ERROR(groupedGemm.run(d_userArgs, stream));
+            }
+            else
+            {
+                //grouped gemm
+                CHECK_HIPBLASLT_ERROR(
+                    groupedGemm.initialize(heuristicResult[0].algo, *dWorkspace, false, stream));
+
+                CHECK_HIPBLASLT_ERROR(groupedGemm.run(stream));
+            }
+        }
+
+        double hipblaslt_error = 0.0;
+        if(arg.unit_check || arg.norm_check)
+            check(stream,
+                  arg,
+                  gemm_count,
+                  M,
+                  N,
+                  ldd,
+                  lde,
+                  stride_d,
+                  stride_e,
+                  num_batches,
+                  size_bias,
+                  hD_gold,
+                  hD_1,
+                  dD,
+                  hE_gold,
+                  hE,
+                  dE,
+                  hBias_gold,
+                  hBias,
+                  dBias,
+                  hBias_gold_C,
+                  hBias_C,
+                  dBias_C,
+                  hipblaslt_error);
+    }
+    else
     {
         int number_cold_calls = arg.cold_iters;
         int number_hot_calls  = arg.iters;
@@ -1941,6 +1993,33 @@ void testing_matmul(const Arguments& arg)
                     break;
                 }
             }
+
+            double hipblaslt_error = 0.0;
+            if(arg.unit_check || arg.norm_check)
+                check(stream,
+                      arg,
+                      gemm_count,
+                      M,
+                      N,
+                      ldd,
+                      lde,
+                      stride_d,
+                      stride_e,
+                      num_batches,
+                      size_bias,
+                      hD_gold,
+                      hD_1,
+                      dD,
+                      hE_gold,
+                      hE,
+                      dE,
+                      hBias_gold,
+                      hBias,
+                      dBias,
+                      hBias_gold_C,
+                      hBias_C,
+                      dBias_C,
+                      hipblaslt_error);
 
 #define argument_param                                                                             \
     e_transA, e_transB, e_grouped_gemm, e_batch_count, e_M, e_N, e_K, e_alpha, e_lda, e_stride_a,  \
