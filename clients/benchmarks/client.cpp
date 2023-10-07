@@ -426,8 +426,8 @@ try
          "Use different algorithm search API. Options: heuristic, all, index.")
 
         ("solution_index",
-         value<int32_t>(&arg.solution_index)->default_value(0),
-         "Reserved.")
+         value<int32_t>(&arg.solution_index)->default_value(-1),
+         "Used with --algo_method 2.  Specify solution index to use in benchmark.")
 
         ("requested_solution",
          value<int32_t>(&arg.requested_solution_num)->default_value(1),
