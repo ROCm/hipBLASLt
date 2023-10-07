@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022 Advanced Micro Devices, Inc.
+ * Copyright (C) 2022-2023 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -43,8 +43,9 @@ struct host_vector : std::vector<T>
     //! @brief Constructor.
     //!
     host_vector(size_t n, ptrdiff_t inc)
-        : std::vector<T>(n * std::abs(inc))
+        : std::vector<T>(n * std::abs(inc) ? n * std::abs(inc) : 1)
         , m_n(n)
+        , m_bytes(m_n ? m_n * sizeof(T) : sizeof(T))
         , m_inc(inc)
     {
     }
@@ -54,8 +55,9 @@ struct host_vector : std::vector<T>
     //!
     template <typename U, std::enable_if_t<std::is_convertible<U, T>{}, int> = 0>
     host_vector(const host_vector<U>& x)
-        : std::vector<T>(x.size())
+        : std::vector<T>(x.size() ? x.size() : 1)
         , m_n(x.size())
+        , m_bytes(x.size() ? x.size() * sizeof(T) : sizeof(T))
         , m_inc(1)
     {
         for(size_t i = 0; i < m_n; ++i)
@@ -137,6 +139,7 @@ struct host_vector : std::vector<T>
     }
 
 private:
-    size_t    m_n   = 0;
-    ptrdiff_t m_inc = 0;
+    size_t    m_n     = 0;
+    size_t    m_bytes = 0;
+    ptrdiff_t m_inc   = 0;
 };
