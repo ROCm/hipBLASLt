@@ -250,7 +250,7 @@ Defaults:
   iters: 10
   cold_iters: 2
   algo: 0
-  solution_index: 0
+  solution_index: -1
   requested_solution_num: 1
   workspace_size: 0
   initialization: rand_int

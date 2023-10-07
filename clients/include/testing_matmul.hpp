@@ -1051,17 +1051,27 @@ void testing_matmul(const Arguments& arg)
         int algoIndexInc   = 100;
         while(1)
         {
-            // Get algos by index
-            // In real cases, the user can use the saved algo index to get the algorithm.
-            // isAlgoSupported is not necessary if the user is sure that the algo supports the problem.
-            std::vector<int> algoIndex(algoIndexInc);
-            std::iota(std::begin(algoIndex), std::end(algoIndex), algoIndexCount);
-            algoIndexCount += algoIndexInc;
+            std::vector<int> algoIndex;
             std::vector<hipblasLtMatmulHeuristicResult_t> tmpAlgo;
+            bool foundAlgo = false;
+            if(arg.solution_index == -1)
+            {
+                // Get algos by index
+                // In real cases, the user can use the saved algo index to get the algorithm.
+                // isAlgoSupported is not necessary if the user is sure that the algo supports the problem.
+                algoIndex.resize(algoIndexInc);
+                std::iota(std::begin(algoIndex), std::end(algoIndex), algoIndexCount);
+                algoIndexCount += algoIndexInc;
+            }
+            else
+            {
+                // Specify the index
+                algoIndex.resize(1);
+                algoIndex[0] = arg.solution_index;
+            }
             CHECK_HIPBLASLT_ERROR(hipblaslt_ext::getAlgosFromIndex(handle, algoIndex, tmpAlgo));
             returnedAlgoCount = tmpAlgo.size();
 
-            bool foundAlgo = false;
 
             if(!do_grouped_gemm)
             {
@@ -1194,6 +1204,11 @@ void testing_matmul(const Arguments& arg)
                 }
             }
 
+            if(arg.solution_index != -1)
+            {
+                CHECK_SOLUTION_FOUND(foundAlgo);
+                foundAlgo = true;
+            }
             if(foundAlgo || (tmpAlgo.size() == 0))
             {
                 break;
