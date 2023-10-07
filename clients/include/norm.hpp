@@ -102,11 +102,14 @@ void m_axpy(size_t* N, T* alpha, T* x, int* incx, T* y, int* incy)
 /*! \brief compare the norm error of two matrices hCPU & hGPU */
 
 // Real
-template <typename T,
-    std::enable_if_t<!(std::is_same<T, hipblaslt_f8>{} || std::is_same<T, hipblaslt_f8>{}),
-                     int> = 0>
+template <
+    typename T,
+    std::enable_if_t<!(std::is_same<T, hipblaslt_f8>{} || std::is_same<T, hipblaslt_f8>{}), int>
+    = 0>
 double norm_check_general(char norm_type, int64_t M, int64_t N, int64_t lda, T* hCPU, T* hGPU)
 {
+    if(M * N == 0)
+        return 0;
     // norm type can be 'O', 'I', 'F', 'o', 'i', 'f' for one, infinity or Frobenius norm
     // one norm is max column sum
     // infinity norm is max row sum
@@ -143,9 +146,10 @@ double norm_check_general(char norm_type, int64_t M, int64_t N, int64_t lda, T* 
 template <
     typename T,
     std::enable_if_t<(std::is_same<T, hipblaslt_f8>{} || std::is_same<T, hipblaslt_f8>{}), int> = 0>
-double norm_check_general(
-    char norm_type, int64_t M, int64_t N, int64_t lda, T* hCPU, T* hGPU)
+double norm_check_general(char norm_type, int64_t M, int64_t N, int64_t lda, T* hCPU, T* hGPU)
 {
+    if(M * N == 0)
+        return 0;
     size_t size = N * (size_t)lda;
 
     host_vector<double> hCPU_double(size);
@@ -182,6 +186,8 @@ template <typename T,
           = 0>
 double norm_check_general(char norm_type, int64_t M, int64_t N, int64_t lda, VEC&& hCPU, T* hGPU)
 {
+    if(M * N == 0)
+        return 0;
     size_t              size = N * (size_t)lda;
     host_vector<double> hCPU_double(size);
     host_vector<double> hGPU_double(size);
@@ -203,6 +209,8 @@ double norm_check_general(char norm_type, int64_t M, int64_t N, int64_t lda, VEC
 template <typename T, typename VEC, std::enable_if_t<std::is_same<T, int8_t>{}, int> = 0>
 double norm_check_general(char norm_type, int64_t M, int64_t N, int64_t lda, VEC&& hCPU, T* hGPU)
 {
+    if(M * N == 0)
+        return 0;
     size_t           size = N * (size_t)lda;
     host_vector<int> hCPU_int(size);
     host_vector<int> hGPU_int(size);
@@ -231,6 +239,8 @@ double norm_check_general(char        norm_type,
                           T*          hGPU,
                           int64_t     batch_count)
 {
+    if(M * N == 0)
+        return 0;
     // norm type can be O', 'I', 'F', 'o', 'i', 'f' for one, infinity or Frobenius norm
     // one norm is max column sum
     // infinity norm is max row sum
@@ -265,6 +275,8 @@ template <typename T>
 double norm_check_general(
     char norm_type, int64_t M, int64_t N, int64_t lda, T* hCPU[], T* hGPU[], int64_t batch_count)
 {
+    if(M * N == 0)
+        return 0;
     // norm type can be O', 'I', 'F', 'o', 'i', 'f' for one, infinity or Frobenius norm
     // one norm is max column sum
     // infinity norm is max row sum
