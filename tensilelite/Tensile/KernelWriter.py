@@ -153,6 +153,7 @@ class StateValues:
   numVgprBuffer: int                     = 0
   numVgprBufferPackA: int                = 0
   numVgprBufferPackB: int                = 0
+  numVgprBufferPackMetadata: int         = 0
   lrvwTileA: int                         = 0
   lrvwTileB: int                         = 0
   lrvwTileMetadata: int                         = 0 # For Sparse Metadat
@@ -1090,7 +1091,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
           if kernel["ProblemType"]["SparseA"] and not kernel["DirectToVgprSparseMetadata"]:
             iterCode.addComment0("pack scheduling: packAIdx:%u, packBIdx:%u, packMIdx:%u" %(packAIdx,packBIdx,packMIdx))
           else:
-            iterCode.addComment0("pack scheduling: packAIdx:%u, packBIdx:%u" %(packAIdx,packBIdx))            
+            iterCode.addComment0("pack scheduling: packAIdx:%u, packBIdx:%u" %(packAIdx,packBIdx))
           # we put 2 pack in each mfma
           for j in range(instPerPackA):
             if packItems:
@@ -1267,7 +1268,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
     if kernel["ProblemType"]["SparseA"] == 2:
       tPM = tensorParametersB["tpsMetadata"]
       tPMRef = tensorParametersB
-  
+
     # tile assignments
     module.addComment1("global read addresses: tile offset assignment a")
     module.add(self.graTileAssignment(kernel, tensorParametersA))
@@ -1465,7 +1466,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
     localWriteEndIter = kernel["LoopIters"] - self.states.numItersPLR - 1
 
     tPM = tensorParametersA["tpsMetadata"] if tensorParametersA["is_sparse"] else tensorParametersB["tpsMetadata"]
-  
+
     for uIdx in range(0, kernel["LoopIters"]):
       u = uIdx % kernel["LoopIters"]    #   u: index in compute loop (in contrast to the notion of global read loop)
       isLastLoop = not isNGLL
@@ -1739,7 +1740,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
       """
 
     tPM = tensorParametersA["tpsMetadata"] if tensorParametersA["is_sparse"] else tensorParametersB["tpsMetadata"]
-  
+
     # unrolled loop: prefetch local
     if self.states.numItersPLR and not kernel["PrefetchGlobalRead"]:
       for plrIdx in range(0, self.states.numItersPLR):
@@ -2604,7 +2605,16 @@ class KernelWriter(metaclass=abc.ABCMeta):
       self.states.lrvwTileB = 1
 
     if kernel["ProblemType"]["SparseA"] and not kernel["DirectToVgprSparseMetadata"]:
-      self.states.lrvwTileMetadata = 1
+      if kernel["ClusterLocalRead"]:
+        self.states.numVgprBufferPackMetadata = kernel["LoopIters"]
+      else:
+        self.states.numVgprBufferPackMetadata = self.states.numItersPLR + 1
+      if not kernel["UnrollMajorLDSMetadata"]:
+        self.states.lrvwTileMetadata = kernel["VectorWidthMetadata"]
+      else:
+        self.states.lrvwTileMetadata = 1
+      if self.states.lrvwTileMetadata > 1:
+        self.states.numVgprBufferPackB = 1
 
     if self.states.lrvwTileA > 1 and (kernel["ProblemType"]["DataType"].isHalf() or kernel["ProblemType"]["DataType"].isBFloat16() or \
       kernel["ProblemType"]["DataType"].isInt8() or kernel["ProblemType"]["DataType"].is8bitFloat()):
@@ -2627,7 +2637,10 @@ class KernelWriter(metaclass=abc.ABCMeta):
       self.states.lrvwUnrollB = 1
 
     if kernel["ProblemType"]["SparseA"] and not kernel["DirectToVgprSparseMetadata"]:
-      self.states.lrvwUnrollMetadata = kernel["MIInputPerThreadMetadata"]
+      if kernel["UnrollMajorLDSMetadata"]:
+        self.states.lrvwUnrollMetadata = kernel["MIInputPerThreadMetadata"]
+      else:
+        self.states.lrvwUnrollMetadata = 1
 
     # Wider LocalRead
     if kernel["EnableMatrixInstruction"]:
@@ -2992,9 +3005,12 @@ class KernelWriter(metaclass=abc.ABCMeta):
         miWaveTile = kernel["MIWaveTileB"] if kernel["ProblemType"]["SparseA"] == 2 else kernel["MIWaveTileA"]
         self.states.m.numVgprValuPerBlock = miWaveTile * kernel["LoopIters"] #every 8bit need 1 register
         valuBlocks = (kernel["PrefetchGlobalRead"] + 1)
+        self.states.m.numVgprValu = self.states.m.numVgprValuPerBlock * valuBlocks
       else:
-        self.states.m.numVgprValuPerBlock = int(kernel["MIWaveTileMetadata"] * kernel["MIInputPerThreadMetadata"])
-      self.states.m.numVgprValu = self.states.m.numVgprValuPerBlock * valuBlocks
+        self.states.m.numVgprValuPerBlock = kernel["MIWaveTileMetadata"] * kernel["MIInputPerThreadMetadata"]
+        self.states.m.numVgprValu = self.states.m.numVgprValuPerBlock * valuBlocks
+        if self.states.lrvwTileMetadata > 1 and tensorParametersM["bpe"] < 4:
+          self.states.m.numVgprValu = self.states.m.numVgprValuPerBlock * kernel["InnerUnroll"]
 
 
     ####################################
@@ -3232,12 +3248,24 @@ class KernelWriter(metaclass=abc.ABCMeta):
       else:
         # TODO: alignment hack, figure out a better solution
         vgprIdx = ((vgprIdx+1)//2)*2
-        self.states.m.startVgprValu  = vgprIdx; vgprIdx += self.states.m.numVgprValu
+        if(self.states.archCaps["VgprBank"]):
+          vgprIdx += 1
+        self.states.m.startVgprValu  = vgprIdx
+        vgprIdx += self.states.m.numVgprValu
+        numVgprValuPackMetadata = 0
+        if not kernel["UnrollMajorLDSMetadata"]:
+          self.states.m.startVgprValuPack = vgprIdx
+          if self.states.lrvwTileMetadata > 1:
+            miWaveTile = kernel["MIWaveTileB"] if kernel["ProblemType"]["SparseA"] == 2 else kernel["MIWaveTileA"]
+            numVgprValuPackMetadata = roundUp(kernel["VectorWidthMetadata"] * tensorParametersM["bpe"] / self.states.bpr) * miWaveTile // kernel["VectorWidthMetadata"] * kernel["InnerUnroll"] * self.states.numVgprBuffer * kernel["MIInputPerThread"]
+          else:
+            numVgprValuPackMetadata = self.states.m.numVgprValuPerBlock * kernel["InnerUnroll"] * self.states.numVgprBufferPackMetadata * (int(4/tensorParametersM["bpe"]) - 1)
+        vgprIdx += numVgprValuPackMetadata
         self.states.m.startVgprG2L = None
         if not kernel["PrefetchGlobalRead"]: # g2l can overlap valu
           self.states.m.startVgprG2L = self.states.m.startVgprValu
           vgprIdx = self.states.m.startVgprValu  \
-              + max(self.states.m.numVgprValu, self.states.m.numVgprG2LAllocated)
+              + max(self.states.m.numVgprValu + numVgprValuPackMetadata, self.states.m.numVgprG2LAllocated)
 
     # Registers allocated above this point can be used as temps during setup
     # Registers above here are reserved in initC, near the end of the setup
@@ -3769,7 +3797,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
     tP["NonTemporal"] = kernel["NonTemporal%s"%cM]               # non-temporal read type
     tP["shiftGR"] = 0 if (tP["bpeGR"] >= tP["bpe"]) else int(tP["glvw"] // 2 * (tP["bpe"] / self.states.bpr))  # Shift global read register for cvt spaces
     tP["bpeRatio"] = tP["bpe"] // tP["bpeGR"] if tP["bpeGR"] < tP["bpe"] else 1                                # g2lIdx multiplier
-    
+
     tP["is_sparse"] = (kernel["ProblemType"]["SparseA"] == 2 and tP["isB"]) or (kernel["ProblemType"]["SparseA"] and kernel["ProblemType"]["SparseA"] != 2 and tP["isA"])
     # KernelWriterAssembly
     tP["localReadSwapByteOffset"]  = 0
