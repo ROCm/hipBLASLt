@@ -402,12 +402,12 @@ class KernelWriterAssembly(KernelWriter):
     if kernel["ProblemType"]["SparseA"] and not kernel["DirectToVgprSparseMetadata"]:
       self.defineSgpr("GlobalReadIncsMetadata", self.states.m.numSgprGlobalReadIncs)
 
-    if self.states.lrvwTileA > 1 or self.states.lrvwTileB > 1:
+    if self.states.lrvwTileA > 1 or self.states.lrvwTileB > 1 or self.states.lrvwTileMetadata > 1:
       if kernel["ProblemType"]["DataType"].isHalf() or kernel["ProblemType"]["DataType"].isBFloat16() \
          or kernel["ProblemType"]["DataType"].isInt8() or kernel["ProblemType"]["DataType"].is8bitFloat():
         self.defineSgpr("PackKForV0", 1)
         self.defineSgpr("PackKForV1", 1)
-        if (self.states.lrvwTileA > 2 or self.states.lrvwTileB > 2) and \
+        if (self.states.lrvwTileA > 2 or self.states.lrvwTileB > 2 or self.states.lrvwTileMetadata > 2) and \
             (kernel["ProblemType"]["DataType"].isInt8() or kernel["ProblemType"]["DataType"].is8bitFloat()):
           self.defineSgpr("PackKForV2", 1)
           self.defineSgpr("PackKForV3", 1)
@@ -607,10 +607,23 @@ class KernelWriterAssembly(KernelWriter):
       else:
         ri = 0
         if self.states.m.numVgprValu > 0: # Do not generate vgprValuA if numVgprValuA is 0
-          for bi in range(0,PLR): # buffer indices
-            for iui in range(0, kernel["InnerUnroll"]):
-              module.add(RegSet("v", "vgprValuMetadata_X%u_I%u"%(bi,iui), self.states.m.startVgprValu+ri))
-              ri += self.states.m.numVgprValuPerBlock
+          if self.states.lrvwTileMetadata > 1:
+            for bi in range(0,PLR): # buffer indices
+              for iui in range(0, kernel["InnerUnroll"]):
+                module.add(RegSet("v", "vgprValuMetadata_X%u_I%u"%(bi,iui), self.states.m.startVgprValu+ri))
+                ri += self.states.m.numVgprValuPerBlock
+            if not kernel["UnrollMajorLDSMetadata"]:
+              miWaveTile = kernel["MIWaveTileB"] if kernel["ProblemType"]["SparseA"] == 2 else kernel["MIWaveTileA"]
+              for data in range(0,kernel["MIInputPerThreadMetadata"]):
+                for bi in range(0,PLR): # buffer indices
+                  for iui in range(0, kernel["InnerUnroll"]):
+                    module.add(RegSet("v", "vgprValuMetadata_X%u_I%u_D%u"%(bi,iui,data), self.states.m.startVgprValuPack+ri))
+                    ri += ceil(kernel["VectorWidthMetadata"] * tPM["bpe"] / self.states.bpr) * miWaveTile // kernel["VectorWidthMetadata"]
+          else:
+            for bi in range(0,PLR): # buffer indices
+              for iui in range(0, kernel["InnerUnroll"]):
+                module.add(RegSet("v", "vgprValuMetadata_X%u_I%u"%(bi,iui), self.states.m.startVgprValu+ri))
+                ri += self.states.m.numVgprValuPerBlock
 
     if not kernel["LocalWriteUseSgprA"] and self.states.a.numVgprLocalWriteAddr > 0:
       module.add(RegSet("v", "vgprLocalWriteAddrA", \
@@ -1156,14 +1169,14 @@ class KernelWriterAssembly(KernelWriter):
             moduleRegInit.add(SMovB32(dst=sgpr("WorkGroup0+%u"%i), src=sgpr(preloadSgprStartIdx+self.states.numSgprPreload+i), \
                         comment="restore workgroup id"))
 
-    if self.states.lrvwTileA > 1 or self.states.lrvwTileB > 1:
+    if self.states.lrvwTileA > 1 or self.states.lrvwTileB > 1 or self.states.lrvwTileMetadata > 1:
       if kernel["ProblemType"]["DataType"].isHalf() or kernel["ProblemType"]["DataType"].isBFloat16():
         moduleRegInit.add(SMovB32(dst=sgpr("PackKForV0"), src="0x05040100", comment=""))
         moduleRegInit.add(SMovB32(dst=sgpr("PackKForV1"), src="0x07060302", comment=""))
       if kernel["ProblemType"]["DataType"].isInt8() or kernel["ProblemType"]["DataType"].is8bitFloat():
         moduleRegInit.add(SMovB32(dst=sgpr("PackKForV0"), src="0x0c0c0400", comment=""))
         moduleRegInit.add(SMovB32(dst=sgpr("PackKForV1"), src="0x0c0c0501", comment=""))
-        if self.states.lrvwTileA > 2 or self.states.lrvwTileB > 2:
+        if self.states.lrvwTileA > 2 or self.states.lrvwTileB > 2 or self.states.lrvwTileMetadata > 2:
           moduleRegInit.add(SMovB32(dst=sgpr("PackKForV2"), src="0x0c0c0602", comment=""))
           moduleRegInit.add(SMovB32(dst=sgpr("PackKForV3"), src="0x0c0c0703", comment=""))
 
