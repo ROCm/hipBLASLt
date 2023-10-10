@@ -27,6 +27,13 @@ archStr=$1
 dst=$2
 venv=$3
 
+rocm_path=/opt/rocm
+if ! [ -z ${ROCM_PATH+x} ]; then
+    rocm_path=${ROCM_PATH}
+fi
+
+toolchain=${rocm_path}/llvm/bin/clang++
+
 . ${venv}/bin/activate
 
 IFS=';' read -r -a archs <<< "$archStr"
@@ -38,18 +45,18 @@ for arch in "${archs[@]}"; do
         set -- $i
         s=$dst/L_$1_$2_$3_$arch.s
         o=$dst/L_$1_$2_$3_$arch.o
-        python3 ./LayerNormGenerator.py -o $s -w $1 -c $2 --sweep-once $3 --arch $arch &
+        python3 ./LayerNormGenerator.py -o $s -w $1 -c $2 --sweep-once $3 --arch $arch --toolchain $toolchain &
         objs+=($o)
     done
     for i in "16 16" "8 32" "4 64" "2 128" "1 256"; do
         set -- $i
         s=$dst/S_$1_$2_$arch.s
         o=$dst/S_$1_$2_$arch.o
-        python3 ./SoftmaxGenerator.py -o $s -m $1 -n $2 --arch $arch &
+        python3 ./SoftmaxGenerator.py -o $s -m $1 -n $2 --arch $arch --toolchain $toolchain &
         objs+=($o)
     done
     wait
-    /opt/rocm/llvm/bin/clang++ -target amdgcn-amdhsa -o $dst/extop_$arch.co ${objs[@]}
+    ${toolchain} -target amdgcn-amdhsa -o $dst/extop_$arch.co ${objs[@]}
     python3 ./ExtOpCreateLibrary.py --src=$dst --co=$dst/extop_$arch.co --output=$dst --arch=$arch
 done
 
