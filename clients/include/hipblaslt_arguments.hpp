@@ -36,6 +36,8 @@
 #include <ostream>
 #include <tuple>
 
+#define HIPBLASLT_MAX_REQUESTED_SOLUTION_NUM 65536
+
 // Predeclare enumerator
 enum hipblaslt_argument : int;
 
