@@ -635,7 +635,7 @@ try
     // validate arguments
     if(arg.algo_method == 1)
     {
-        arg.requested_solution_num = std::numeric_limits<int32_t>::max();
+        arg.requested_solution_num = HIPBLASLT_MAX_REQUESTED_SOLUTION_NUM;
     }
     else if(arg.algo_method == 2)
     {

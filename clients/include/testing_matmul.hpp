@@ -972,7 +972,7 @@ void testing_matmul(const Arguments& arg)
     hipblaslt_ext::UserArguments* d_userArgs = nullptr;
 
     // Get Heuristic results
-    int32_t requestAlgoCount  = arg.requested_solution_num < 0 ? std::numeric_limits<int32_t>::max()
+    int32_t requestAlgoCount  = arg.requested_solution_num < 0 ? HIPBLASLT_MAX_REQUESTED_SOLUTION_NUM
                                                                : arg.requested_solution_num;
     int     returnedAlgoCount = 0;
     std::vector<hipblasLtMatmulHeuristicResult_t> heuristicResult(requestAlgoCount);
