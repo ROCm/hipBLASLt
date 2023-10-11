@@ -119,10 +119,10 @@ void simpleGroupedGemmFixedMKExt(hipblasLtHandle_t     handle,
                                            trans_a,
                                            trans_b,
                                            HIPBLASLT_R_16F,
+                                           HIPBLASLT_R_8F_E4M3,
                                            HIPBLASLT_R_16F,
                                            HIPBLASLT_R_16F,
-                                           HIPBLASLT_R_16F,
-                                           HIPBLASLT_COMPUTE_F32);
+                                           HIPBLASLT_COMPUTE_F32_FAST_F16);
 
     std::vector<hipblaslt_ext::GemmEpilogue> epilogue{
         hipblaslt_ext::
@@ -172,8 +172,31 @@ void simpleGroupedGemmFixedMKExt(hipblasLtHandle_t     handle,
 
     const int                                     request_solutions = 1;
     std::vector<hipblasLtMatmulHeuristicResult_t> heuristicResult;
-    CHECK_HIPBLASLT_ERROR(
-        groupedgemm.algoGetHeuristic(request_solutions, gemmPref, heuristicResult));
+    // Get all algorithms
+    hipblaslt_ext::GemmType gemmType = hipblaslt_ext::GemmType::HIPBLASLT_GROUPED_GEMM;
+    CHECK_HIPBLASLT_ERROR(hipblaslt_ext::getAllAlgos(handle,
+                                                     gemmType,
+                                                     trans_a,
+                                                     trans_b,
+                                                     HIPBLASLT_R_16F,
+                                                     HIPBLASLT_R_8F_E4M3,
+                                                     HIPBLASLT_R_16F,
+                                                     HIPBLASLT_R_16F,
+                                                     HIPBLASLT_COMPUTE_F32_FAST_F16,
+                                                     heuristicResult));
+
+    std::vector<int> validIdx;
+    int              returnedAlgoCount = heuristicResult.size();
+    for(int i = 0; i < returnedAlgoCount; i++)
+    {
+        size_t workspace_size = 0;
+        if(groupedgemm.isAlgoSupported(heuristicResult[i].algo, workspace_size)
+           == HIPBLAS_STATUS_SUCCESS)
+        {
+            if(workspace_size <= max_workspace_size)
+                validIdx.push_back(i);
+        }
+    }
 
     if(heuristicResult.empty())
     {
@@ -189,7 +212,7 @@ void simpleGroupedGemmFixedMKExt(hipblasLtHandle_t     handle,
     // CHECK_HIP_ERRORhipMalloc(&d_workspace, workspace_size));
 
     // Make sure to initialize everytime the algo changes
-    CHECK_HIPBLASLT_ERROR(groupedgemm.initialize(heuristicResult[0].algo, d_workspace));
+    CHECK_HIPBLASLT_ERROR(groupedgemm.initialize(heuristicResult[validIdx[0]].algo, d_workspace));
 
     // Then you can change the N in the previous kernel to whatever you want, just make sure the sum of N does not exceed the setup.
     int threads = 256;
