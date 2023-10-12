@@ -150,6 +150,7 @@ struct Arguments
 
     // print
     bool print_solution_found;
+    bool print_kernel_info;
 
     /*************************************************************************
      *                     End Of Arguments                                  *
@@ -228,7 +229,8 @@ struct Arguments
     OPER(use_ext_setproblem) SEP     \
     OPER(algo_method) SEP            \
     OPER(use_user_args) SEP          \
-    OPER(print_solution_found) SEP
+    OPER(print_solution_found) SEP   \
+    OPER(print_kernel_info) SEP
 
     // clang-format on
 

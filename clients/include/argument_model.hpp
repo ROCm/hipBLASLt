@@ -135,6 +135,9 @@ public:
     template <typename T>
     void log_args(hipblaslt_internal_ostream& str,
                   size_t                      index,
+                  int32_t                     solution_index,
+                  std::string&                solution_name,
+                  std::string&                kernel_name,
                   const Arguments&            arg,
                   double                      gpu_us,
                   double                      gflops,
@@ -186,6 +189,17 @@ public:
                      norm3,
                      norm4);
 
-        str << name_list << "\n" << value_list << std::endl;
+        if(solution_index > -1)
+        {
+            str << name_list << "\n"
+                << value_list << "\n"
+                << "    --Solution index: " << solution_index << "\n"
+                << "    --Solution name:  " << solution_name << "\n"
+                << "    --kernel name:    " << kernel_name << std::endl;
+        }
+        else
+        {
+            str << name_list << "\n" << value_list << std::endl;
+        }
     }
 };

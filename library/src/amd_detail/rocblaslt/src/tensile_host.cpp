@@ -2343,6 +2343,31 @@ rocblaslt_status getBestSolutions(rocblaslt_handle       handle,
 
     return rocblaslt_status_success;
 }
+
+std::string getKernelNameFromAlgoIndex(rocblaslt_handle handle, const rocblaslt_matmul_algo& algo)
+{
+    std::shared_ptr<Tensile::MasterSolutionLibrary<Tensile::ContractionProblemGemm>> library;
+    std::shared_ptr<hipDeviceProp_t>                                                 deviceProp;
+
+    auto adapter = get_library_and_adapter(&library, &deviceProp, handle->device);
+
+    int* solutionIndex = (int*)algo.data;
+    auto solution      = library->getSolutionByIndex(*solutionIndex);
+    return solution->kernelName;
+}
+
+std::string getSolutionNameFromAlgoIndex(rocblaslt_handle handle, const rocblaslt_matmul_algo& algo)
+{
+    std::shared_ptr<Tensile::MasterSolutionLibrary<Tensile::ContractionProblemGemm>> library;
+    std::shared_ptr<hipDeviceProp_t>                                                 deviceProp;
+
+    auto adapter = get_library_and_adapter(&library, &deviceProp, handle->device);
+
+    int* solutionIndex = (int*)algo.data;
+    auto solution      = library->getSolutionByIndex(*solutionIndex);
+    return solution->solutionName;
+}
+
 /***************************************************************
  * ! \brief  Initialize rocblaslt for the current HIP device, to *
  * avoid costly startup time at the first call on that device. *

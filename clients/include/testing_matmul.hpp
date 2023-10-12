@@ -972,8 +972,8 @@ void testing_matmul(const Arguments& arg)
     hipblaslt_ext::UserArguments* d_userArgs = nullptr;
 
     // Get Heuristic results
-    int32_t requestAlgoCount  = arg.requested_solution_num < 0 ? HIPBLASLT_MAX_REQUESTED_SOLUTION_NUM
-                                                               : arg.requested_solution_num;
+    int32_t requestAlgoCount = arg.requested_solution_num < 0 ? HIPBLASLT_MAX_REQUESTED_SOLUTION_NUM
+                                                              : arg.requested_solution_num;
     int     returnedAlgoCount = 0;
     std::vector<hipblasLtMatmulHeuristicResult_t> heuristicResult(requestAlgoCount);
 
@@ -1872,8 +1872,11 @@ void testing_matmul(const Arguments& arg)
     }
     else
     {
-        int number_cold_calls = arg.cold_iters;
-        int number_hot_calls  = arg.iters;
+        size_t best_sol          = -1;
+        double best_flops        = 0.0;
+        double best_gpu_time     = std::numeric_limits<double>::max();
+        int    number_cold_calls = arg.cold_iters;
+        int    number_hot_calls  = arg.iters;
 
         for(size_t sol = 0; sol < heuristicResult.size(); sol++)
         {
@@ -2041,14 +2044,62 @@ void testing_matmul(const Arguments& arg)
         e_beta, e_ldb, e_stride_b, e_ldc, e_stride_c, e_ldd, e_stride_d, e_d_type, e_compute_type, \
         e_activation_type, e_bias_vector
 
+            int32_t     solutionIndex = -1;
+            std::string solutionName  = "";
+            std::string kernelName    = "";
+            if(arg.print_kernel_info)
+            {
+                solutionIndex = hipblaslt_ext::getIndexFromAlgo(heuristicResult[sol].algo);
+                solutionName
+                    = hipblaslt_ext::getSolutionNameFromAlgo(handle, heuristicResult[sol].algo);
+                kernelName
+                    = hipblaslt_ext::getKernelNameFromAlgo(handle, heuristicResult[sol].algo);
+            }
             ArgumentModel<argument_param>{}.log_args<Tc>(hipblaslt_cout,
                                                          sol,
+                                                         solutionIndex,
+                                                         solutionName,
+                                                         kernelName,
                                                          arg,
                                                          gpu_time_used,
                                                          flops,
                                                          ArgumentLogging::NA_value,
                                                          cpu_time_used,
                                                          hipblaslt_error);
+            if(best_gpu_time > gpu_time_used)
+            {
+                best_sol      = sol;
+                best_flops    = flops;
+                best_gpu_time = gpu_time_used;
+            }
+        }
+
+        if(heuristicResult.size() > 1)
+        {
+            int32_t     solutionIndex = -1;
+            std::string solutionName  = "";
+            std::string kernelName    = "";
+            if(arg.print_kernel_info)
+            {
+                solutionIndex = hipblaslt_ext::getIndexFromAlgo(heuristicResult[best_sol].algo);
+                solutionName  = hipblaslt_ext::getSolutionNameFromAlgo(
+                    handle, heuristicResult[best_sol].algo);
+                kernelName
+                    = hipblaslt_ext::getKernelNameFromAlgo(handle, heuristicResult[best_sol].algo);
+            }
+
+            hipblaslt_cout << "Winner: " << std::endl;
+            ArgumentModel<argument_param>{}.log_args<Tc>(hipblaslt_cout,
+                                                         best_sol,
+                                                         solutionIndex,
+                                                         solutionName,
+                                                         kernelName,
+                                                         arg,
+                                                         best_gpu_time,
+                                                         best_flops,
+                                                         ArgumentLogging::NA_value,
+                                                         cpu_time_used,
+                                                         0.0);
         }
     }
 

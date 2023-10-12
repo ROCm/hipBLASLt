@@ -1299,3 +1299,15 @@ rocblaslt_status rocblaslt_makeArgument_cpp(rocblaslt_handle             handle,
 {
     return makeArgument(handle, gemmType, algo, workspace, useUserArgs, stream, gemmData);
 }
+
+std::string rocblaslt_get_kernel_name_from_algo(rocblaslt_handle             handle,
+                                                const rocblaslt_matmul_algo& algo)
+{
+    return getKernelNameFromAlgoIndex(handle, algo);
+}
+
+std::string rocblaslt_get_solution_name_from_algo(rocblaslt_handle             handle,
+                                                  const rocblaslt_matmul_algo& algo)
+{
+    return getSolutionNameFromAlgoIndex(handle, algo);
+}
