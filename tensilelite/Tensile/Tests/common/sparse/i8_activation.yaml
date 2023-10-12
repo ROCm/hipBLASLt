@@ -28,11 +28,11 @@ BenchmarkProblems:
       TransposeA: False
       TransposeB: False
       UseBeta: True
-      SparseA: True
+      Sparse: 1
       Batched: True
       Activation: True
       ActivationHPA: True
-  
+
     - # BenchmarkProblemSizeGroup - Standard
       InitialSolutionParameters:
       BenchmarkCommonParameters:
@@ -79,7 +79,7 @@ BenchmarkProblems:
           - [Enum: relu]
           - [Enum: sigmoid]
           - [Enum: tanh]
-  
+
   #########################################
   ## TN - standard
   #########################################
@@ -93,11 +93,11 @@ BenchmarkProblems:
       TransposeA: True
       TransposeB: False
       UseBeta: True
-      SparseA: True
+      Sparse: 1
       Batched: True
       Activation: True
       ActivationHPA: True
-  
+
     - # BenchmarkProblemSizeGroup - Standard
       InitialSolutionParameters:
       BenchmarkCommonParameters:
@@ -158,11 +158,11 @@ BenchmarkProblems:
       TransposeA: False
       TransposeB: True
       UseBeta: True
-      SparseA: True
+      Sparse: 1
       Batched: True
       Activation: True
       ActivationHPA: True
-  
+
     - # BenchmarkProblemSizeGroup - Standard
       InitialSolutionParameters:
       BenchmarkCommonParameters:
@@ -222,11 +222,11 @@ BenchmarkProblems:
       TransposeA: True
       TransposeB: True
       UseBeta: True
-      SparseA: True
+      Sparse: 1
       Batched: True
       Activation: True
       ActivationHPA: True
-  
+
     - # BenchmarkProblemSizeGroup - Standard
       InitialSolutionParameters:
       BenchmarkCommonParameters:

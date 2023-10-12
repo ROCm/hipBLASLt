@@ -110,7 +110,7 @@ namespace Tensile
                     Base::template Pair<Predicates::Contraction::BiasDataTypeWhiteList>(),
                     Base::template Pair<Predicates::Contraction::BiasSrcWhiteList>(),
                     Base::template Pair<Predicates::Contraction::SizeInRange>(),
-                    Base::template Pair<Predicates::Contraction::SparseA>(),
+                    Base::template Pair<Predicates::Contraction::Sparse>(),
                     Base::template Pair<Predicates::Contraction::F32XdlMathOpEqual>(),
                     Base::template Pair<Predicates::Contraction::SupportDeviceUserArguments>(),
                 });
@@ -469,8 +469,8 @@ namespace Tensile
         };
 
         template <typename IO>
-        struct MappingTraits<Predicates::Contraction::SparseA, IO>
-            : public AutoMappingTraits<Predicates::Contraction::SparseA, IO>
+        struct MappingTraits<Predicates::Contraction::Sparse, IO>
+            : public AutoMappingTraits<Predicates::Contraction::Sparse, IO>
         {
         };
 

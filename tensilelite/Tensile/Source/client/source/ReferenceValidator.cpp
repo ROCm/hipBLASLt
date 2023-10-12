@@ -430,7 +430,7 @@ namespace Tensile
             if(m_printTensorA)
             {
                 auto a = problem.a();
-                if(problem.sparseA() && problem.sparseA() != 2)
+                if(problem.sparse() && problem.sparse() != 2)
                 {
                     m_reporter->logTensor(
                         LogLevel::Verbose, "Ref A", reference.a, problem.a(), reference.a);
@@ -447,7 +447,7 @@ namespace Tensile
             if(m_printTensorB)
             {
                 auto b = problem.b();
-                if(problem.sparseA() == 2)
+                if(problem.sparse() == 2)
                 {
                     m_reporter->logTensor(
                         LogLevel::Verbose, "Ref B", reference.b, problem.b(), reference.b);
@@ -458,13 +458,12 @@ namespace Tensile
                                         result.b,
                                         b.totalAllocatedBytes(),
                                         hipMemcpyDeviceToHost));
-                m_reporter->logTensor(
-                    LogLevel::Verbose, "B", m_cpuResultBuffer.get(), b, result.b);
+                m_reporter->logTensor(LogLevel::Verbose, "B", m_cpuResultBuffer.get(), b, result.b);
             }
 
             if(m_printTensorA || m_printTensorB)
             {
-                if(problem.sparseA() )
+                if(problem.sparse())
                 {
                     auto metadata = problem.metadata();
                     HIP_CHECK_EXC(hipMemcpy(m_cpuResultBuffer.get(),

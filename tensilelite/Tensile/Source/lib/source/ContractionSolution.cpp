@@ -570,7 +570,7 @@ namespace Tensile
             args.template append<void const* const*>("batchB", inputs.batchB);
         }
 
-        if(problemType.sparseA)
+        if(problemType.sparse)
             args.template append<unsigned char const*>("metadata", inputs.metadata);
 
         size_t startStrideCD = problemType.useInitialStridesCD ? 0 : 1;
@@ -605,17 +605,19 @@ namespace Tensile
 
         for(size_t i = startStrideAB; i < a.dimensions(); i++)
         {
-            auto stride_a = problemType.sparseA && problemType.sparseA != 2 ? ca.strides()[i] : a.strides()[i];
+            auto stride_a
+                = problemType.sparse && problemType.sparse != 2 ? ca.strides()[i] : a.strides()[i];
             args.template append<uint32_t>(concatenate_if<T_Debug>("strideA", i), stride_a);
         }
 
         for(size_t i = startStrideAB; i < b.dimensions(); i++)
         {
-            auto stride_b = problemType.sparseA && problemType.sparseA == 2 ? ca.strides()[i] : b.strides()[i];
+            auto stride_b
+                = problemType.sparse && problemType.sparse == 2 ? ca.strides()[i] : b.strides()[i];
             args.template append<uint32_t>(concatenate_if<T_Debug>("strideB", i), stride_b);
         }
 
-        if(problemType.sparseA)
+        if(problemType.sparse)
         {
             for(size_t i = startStrideAB; i < a.dimensions(); i++)
                 args.template append<uint32_t>(concatenate_if<T_Debug>("strideMetadata", i),

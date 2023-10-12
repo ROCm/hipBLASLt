@@ -1944,7 +1944,7 @@ namespace Tensile
                 }
             };
 
-            struct SparseA : public Predicate_CRTP<SparseA, ContractionProblemGemm>
+            struct Sparse : public Predicate_CRTP<Sparse, ContractionProblemGemm>
             {
                 enum
                 {
@@ -1953,20 +1953,20 @@ namespace Tensile
                 };
                 int value;
 
-                SparseA() = default;
-                SparseA(int value)
+                Sparse() = default;
+                Sparse(int value)
                     : value(value)
                 {
                 }
 
                 static std::string Type()
                 {
-                    return "SparseA";
+                    return "Sparse";
                 }
 
                 virtual bool operator()(ContractionProblemGemm const& problem) const override
                 {
-                    return problem.sparseA() == value;
+                    return problem.sparse() == value;
                 }
             };
 
