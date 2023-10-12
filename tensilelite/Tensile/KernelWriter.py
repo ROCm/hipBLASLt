@@ -3007,7 +3007,10 @@ class KernelWriter(metaclass=abc.ABCMeta):
         valuBlocks = (kernel["PrefetchGlobalRead"] + 1)
         self.states.m.numVgprValu = self.states.m.numVgprValuPerBlock * valuBlocks
       else:
-        self.states.m.numVgprValuPerBlock = kernel["MIWaveTileMetadata"] * kernel["MIInputPerThreadMetadata"]
+        if self.states.lrvwTileMetadata > 1:
+          self.states.m.numVgprValuPerBlock = kernel["MIWaveTileMetadata"] * roundUp(kernel["MIInputPerThreadMetadata"] / self.states.bpr)
+        else:
+          self.states.m.numVgprValuPerBlock = kernel["MIWaveTileMetadata"] * kernel["MIInputPerThreadMetadata"]
         self.states.m.numVgprValu = self.states.m.numVgprValuPerBlock * valuBlocks
         if self.states.lrvwTileMetadata > 1 and tensorParametersM["bpe"] < 4:
           self.states.m.numVgprValu = self.states.m.numVgprValuPerBlock * kernel["InnerUnroll"]
@@ -3186,7 +3189,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
     if tensorParametersA["bpe"] < 4 and not kernel["UnrollMajorLDSA"]:
       self.states.a.startVgprValuPack = vgprIdx
       if self.states.lrvwTileA > 1:
-        numVgprValuPackA = ceil(kernel["VectorWidthA"] * tensorParametersA["bpe"] / self.states.bpr) * kernel["MIWaveTileA"] // kernel["VectorWidthA"] * kernel["InnerUnroll"] * self.states.numVgprBuffer * kernel["MIInputPerThread"]
+        numVgprValuPackA = ceil(kernel["VectorWidthA"] * tensorParametersA["bpe"] / self.states.bpr) * kernel["MIWaveTileA"] // kernel["VectorWidthA"] * kernel["InnerUnroll"] * self.states.numVgprBuffer * kernel["MIInputPerThreadA"]
       else:
         numVgprValuPackA = self.states.a.numVgprValuPerBlock * kernel["InnerUnroll"] * self.states.numVgprBufferPackA * (int(4/tensorParametersA["bpe"]) - 1)
     vgprIdx += numVgprValuPackA
@@ -3209,7 +3212,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
     if tensorParametersB["bpe"] < 4 and not kernel["UnrollMajorLDSB"]:
       self.states.b.startVgprValuPack = vgprIdx
       if self.states.lrvwTileB > 1:
-        numVgprValuPackB = ceil(kernel["VectorWidthB"] * tensorParametersB["bpe"] / self.states.bpr) * kernel["MIWaveTileB"] // kernel["VectorWidthB"] * kernel["InnerUnroll"] * self.states.numVgprBuffer * kernel["MIInputPerThread"]
+        numVgprValuPackB = ceil(kernel["VectorWidthB"] * tensorParametersB["bpe"] / self.states.bpr) * kernel["MIWaveTileB"] // kernel["VectorWidthB"] * kernel["InnerUnroll"] * self.states.numVgprBuffer * kernel["MIInputPerThreadB"]
       else:
         numVgprValuPackB = self.states.b.numVgprValuPerBlock * kernel["InnerUnroll"] * self.states.numVgprBufferPackB * (int(4/tensorParametersB["bpe"]) - 1)
     vgprIdx += numVgprValuPackB
@@ -3257,7 +3260,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
           self.states.m.startVgprValuPack = vgprIdx
           if self.states.lrvwTileMetadata > 1:
             miWaveTile = kernel["MIWaveTileB"] if kernel["ProblemType"]["SparseA"] == 2 else kernel["MIWaveTileA"]
-            numVgprValuPackMetadata = roundUp(kernel["VectorWidthMetadata"] * tensorParametersM["bpe"] / self.states.bpr) * miWaveTile // kernel["VectorWidthMetadata"] * kernel["InnerUnroll"] * self.states.numVgprBuffer * kernel["MIInputPerThread"]
+            numVgprValuPackMetadata = roundUp(kernel["VectorWidthMetadata"] * tensorParametersM["bpe"] / self.states.bpr) * miWaveTile // kernel["VectorWidthMetadata"] * kernel["InnerUnroll"] * self.states.numVgprBuffer * kernel["MIInputPerThreadMetadata"]
           else:
             numVgprValuPackMetadata = self.states.m.numVgprValuPerBlock * kernel["InnerUnroll"] * self.states.numVgprBufferPackMetadata * (int(4/tensorParametersM["bpe"]) - 1)
         vgprIdx += numVgprValuPackMetadata

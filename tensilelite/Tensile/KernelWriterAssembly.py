@@ -612,6 +612,9 @@ class KernelWriterAssembly(KernelWriter):
               for iui in range(0, kernel["InnerUnroll"]):
                 module.add(RegSet("v", "vgprValuMetadata_X%u_I%u"%(bi,iui), self.states.m.startVgprValu+ri))
                 ri += self.states.m.numVgprValuPerBlock
+              if not kernel["UnrollMajorLDSMetadata"]:
+                ri = 0
+            ri = 0
             if not kernel["UnrollMajorLDSMetadata"]:
               miWaveTile = kernel["MIWaveTileB"] if kernel["ProblemType"]["SparseA"] == 2 else kernel["MIWaveTileA"]
               for data in range(0,kernel["MIInputPerThreadMetadata"]):
