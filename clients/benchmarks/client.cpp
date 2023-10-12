@@ -498,6 +498,10 @@ try
          "Use extension API. c: C style API. mix: declaration with C hipblasLtMatmul Layout/Desc but set, initialize, and run the problem with C++ extension API. cpp: Using C++ extension API only. "
          "Options: c, mix, cpp.")
 
+        ("print_kernel_info",
+         value<bool>(&arg.print_kernel_info)->default_value(false),
+         "Print solution, kernel name and solution index.")
+
         ("help,h", "produces this help message")
 
         ("version", "Prints the version number");

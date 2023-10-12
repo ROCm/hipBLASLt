@@ -115,17 +115,17 @@ rocblaslt_status rocblaslt_matmul(rocblaslt_handle             handle,
                                   size_t                       workspaceSizeInBytes,
                                   hipStream_t                  stream);
 
-rocblaslt_status rocblaslt_matrix_transform(rocblaslt_handle handle,
-                                            rocblaslt_matrix_transform_desc *transformDesc,
+rocblaslt_status rocblaslt_matrix_transform(rocblaslt_handle                 handle,
+                                            rocblaslt_matrix_transform_desc* transformDesc,
                                             const void* alpha, /* host or device pointer */
                                             const void* A,
                                             rocblaslt_matrix_layout Adesc,
                                             const void* beta, /* host or device pointer */
                                             const void* B,
                                             rocblaslt_matrix_layout Bdesc,
-                                            void* C,
+                                            void*                   C,
                                             rocblaslt_matrix_layout Cdesc,
-                                            hipStream_t stream);
+                                            hipStream_t             stream);
 #ifdef __cplusplus
 }
 
@@ -229,6 +229,12 @@ rocblaslt_status rocblaslt_run_user_args_cpp(rocblaslt_handle             handle
                                              void*                        deviceUserArgs,
                                              void*                        workspace,
                                              hipStream_t                  stream);
+
+std::string rocblaslt_get_kernel_name_from_algo(rocblaslt_handle             handle,
+                                                const rocblaslt_matmul_algo& algo);
+
+std::string rocblaslt_get_solution_name_from_algo(rocblaslt_handle             handle,
+                                                  const rocblaslt_matmul_algo& algo);
 
 #endif
 

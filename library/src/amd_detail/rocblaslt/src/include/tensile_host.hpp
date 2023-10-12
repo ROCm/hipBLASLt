@@ -316,6 +316,11 @@ rocblaslt_status runKernelFromDeviceUserArguments(rocblaslt_handle             h
                                                   void*                        workspace,
                                                   hipStream_t                  stream);
 
+std::string getKernelNameFromAlgoIndex(rocblaslt_handle handle, const rocblaslt_matmul_algo& algo);
+
+std::string getSolutionNameFromAlgoIndex(rocblaslt_handle             handle,
+                                         const rocblaslt_matmul_algo& algo);
+
 /***********************************************************************************
  * Whether Tensile has been initialized for at least one device (used for
  *testing) *
