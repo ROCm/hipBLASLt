@@ -29,7 +29,7 @@ BenchmarkProblems:
       TransposeB: False
       UseBeta: True
       UseBias: True
-      SparseA: 2
+      Sparse: 2
       Batched: True
       Activation: True
       ActivationHPA: True
@@ -47,7 +47,7 @@ BenchmarkProblems:
           - [32, 32, 16, 1,  1,  4, 4,  2, 2 ]
           - [32, 32, 16, 1,  1,  4, 2,  2, 4 ]
           - [32, 32, 16, 1,  1,  7, 2,  1, 4 ]
-        - GlobalReadVectorWidthA: [4,8]
+        - GlobalReadVectorWidthB: [4,8]
         - VectorWidthA: [1,2,4]
         - VectorWidthB: [1,2,4]
         - DepthU: [32,64]
@@ -125,7 +125,7 @@ BenchmarkProblems:
       TransposeB: False
       UseBeta: True
       UseBias: True
-      SparseA: 2
+      Sparse: 2
       Batched: True
       Activation: True
       ActivationHPA: True
@@ -143,7 +143,7 @@ BenchmarkProblems:
           - [32, 32, 16, 1,  1,  4, 4,  2, 2 ]
           - [32, 32, 16, 1,  1,  4, 2,  2, 4 ]
           - [32, 32, 16, 1,  1,  7, 2,  1, 4 ]
-        - GlobalReadVectorWidthA: [4,8]
+        - GlobalReadVectorWidthB: [4,8]
         - VectorWidthA: [1,2,4]
         - VectorWidthB: [1,2,4]
         - DepthU: [32,64]
@@ -221,7 +221,7 @@ BenchmarkProblems:
       TransposeB: True
       UseBeta: True
       UseBias: True
-      SparseA: 2
+      Sparse: 2
       Batched: True
       Activation: True
       ActivationHPA: True
@@ -239,7 +239,7 @@ BenchmarkProblems:
           - [32, 32, 16, 1,  1,  4, 4,  2, 2 ]
           - [32, 32, 16, 1,  1,  4, 2,  2, 4 ]
           - [32, 32, 16, 1,  1,  7, 2,  1, 4 ]
-        - GlobalReadVectorWidthA: [4,8]
+        - GlobalReadVectorWidthB: [4,8]
         - VectorWidthA: [1,2,4]
         - VectorWidthB: [1,2,4]
         - DepthU: [32,64]
@@ -317,7 +317,7 @@ BenchmarkProblems:
       TransposeB: True
       UseBeta: True
       UseBias: True
-      SparseA: 2
+      Sparse: 2
       Batched: True
       Activation: True
       ActivationHPA: True
@@ -335,7 +335,7 @@ BenchmarkProblems:
           - [32, 32, 16, 1,  1,  4, 4,  2, 2 ]
           - [32, 32, 16, 1,  1,  4, 2,  2, 4 ]
           - [32, 32, 16, 1,  1,  7, 2,  1, 4 ]
-        - GlobalReadVectorWidthA: [4,8]
+        - GlobalReadVectorWidthB: [4,8]
         - VectorWidthA: [1,2,4]
         - VectorWidthB: [1,2,4]
         - DepthU: [32,64]

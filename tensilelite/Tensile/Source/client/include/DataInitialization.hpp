@@ -844,7 +844,7 @@ namespace Tensile
 
             bool m_stridedBatched;
 
-            int m_aSparse;
+            int    m_sparse;
             size_t m_aMaxLogicalElements; //for sparse
 
             bool m_cEqualsD;
@@ -1896,7 +1896,6 @@ namespace Tensile
         {
             return std::isinf(static_cast<float>(value));
         }
-
 
         template <>
         inline bool DataInitialization::isBadOutput<BFloat16>(BFloat16 value)
