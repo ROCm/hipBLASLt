@@ -568,6 +568,28 @@ namespace hipblaslt_ext
         return *algo_ptr;
     }
 
+    std::string getSolutionNameFromAlgo(hipblasLtHandle_t handle, hipblasLtMatmulAlgo_t& algo)
+    {
+        int* algo_ptr = (int*)algo.data;
+        if(*algo_ptr < 0)
+        {
+            return "";
+        }
+        auto rocalgo = reinterpret_cast<const rocblaslt_matmul_algo*>(&algo);
+        return rocblaslt_get_solution_name_from_algo((rocblaslt_handle)handle, *rocalgo);
+    }
+
+    std::string getKernelNameFromAlgo(hipblasLtHandle_t handle, hipblasLtMatmulAlgo_t& algo)
+    {
+        int* algo_ptr = (int*)algo.data;
+        if(*algo_ptr < 0)
+        {
+            return "";
+        }
+        auto rocalgo = reinterpret_cast<const rocblaslt_matmul_algo*>(&algo);
+        return rocblaslt_get_kernel_name_from_algo((rocblaslt_handle)handle, *rocalgo);
+    }
+
     hipblasStatus_t
         getAlgosFromIndex(hipblasLtHandle_t                              handle,
                           std::vector<int>&                              algoIndex,

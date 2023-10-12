@@ -806,6 +806,40 @@ namespace hipblaslt_ext
     HIPBLASLT_EXPORT int getIndexFromAlgo(hipblasLtMatmulAlgo_t& algo);
 
     /*! \ingroup library_module
+     *  \brief Retrieve the solution name
+     *
+     *  @param[in]
+     *  handle  Pointer to the allocated hipBLASLt handle for the
+     * hipBLASLt context. See \ref hipblasLtHandle_t .
+     *  @param[in]
+     *  algo    The algorithm.
+     *
+     *  \retval std::string The solution name of the algorithm, can be used to
+     * get hueristic results from \ref getAlgosFromIndex. Returns "" if the
+     * index stored in algo < 0. Note that the string may not be valid if the
+     * algo struct is not initialized properly.
+     */
+    HIPBLASLT_EXPORT std::string getSolutionNameFromAlgo(hipblasLtHandle_t      handle,
+                                                         hipblasLtMatmulAlgo_t& algo);
+
+    /*! \ingroup library_module
+     *  \brief Retrieve the kernel name
+     *
+     *  @param[in]
+     *  handle  Pointer to the allocated hipBLASLt handle for the
+     * hipBLASLt context. See \ref hipblasLtHandle_t .
+     *  @param[in]
+     *  algo    The algorithm.
+     *
+     *  \retval std::string The kernel name of the algorithm, can be used to
+     * get hueristic results from \ref getAlgosFromIndex. Returns "" if the
+     * index stored in algo < 0. Note that the string may not be valid if the
+     * algo struct is not initialized properly.
+     */
+    HIPBLASLT_EXPORT std::string getKernelNameFromAlgo(hipblasLtHandle_t      handle,
+                                                       hipblasLtMatmulAlgo_t& algo);
+
+    /*! \ingroup library_module
      *  \brief Retrieve the possible algorithms
      *
      *  \details
