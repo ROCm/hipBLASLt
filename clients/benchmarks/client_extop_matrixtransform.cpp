@@ -25,6 +25,8 @@
  *******************************************************************************/
 #include <algorithm>
 #include <hip/hip_runtime.h>
+#include <hipblaslt_datatype2string.hpp>
+#include <hipblaslt_init.hpp>
 #include <hipblaslt/hipblaslt.h>
 #include <iostream>
 #include <memory>
@@ -48,13 +50,13 @@ private:
 template <typename DType>
 struct TypedMatrixTransformIO : public MatrixTransformIO
 {
-    TypedMatrixTransformIO(int64_t m, int64_t n, int64_t b)
+    TypedMatrixTransformIO(int64_t m, int64_t n, int64_t b, hipblaslt_initialization initMethod)
     {
         hipMalloc(&this->a, m * n * b * sizeof(DType));
         hipMalloc(&this->b, m * n * b * sizeof(DType));
         hipMalloc(&this->c, m * n * b * sizeof(DType));
-        init(this->a, m * n * b);
-        init(this->b, m * n * b);
+        init(this->a, m * n * b, initMethod);
+        init(this->b, m * n * b, initMethod);
     }
 
     ~TypedMatrixTransformIO() override
@@ -76,14 +78,26 @@ struct TypedMatrixTransformIO : public MatrixTransformIO
     }
 
 private:
-    void init(DType* buf, size_t len)
+    void init(DType* buf, size_t len, hipblaslt_initialization initMethod)
     {
-        srand(time(nullptr));
         std::vector<DType> ref(len);
 
-        for(auto& i : ref)
+        switch(initMethod)
         {
-            i = DType(rand() % 7 - 3);
+        case hipblaslt_initialization::rand_int:
+            hipblaslt_init<DType>(ref.data(), ref.size(), 1, 1);
+            break;
+        case hipblaslt_initialization::trig_float:
+            hipblaslt_init_cos<DType>(ref.data(), ref.size(), 1, 1);
+            break;
+        case hipblaslt_initialization::hpl:
+            hipblaslt_init_hpl<DType>(ref.data(), ref.size(), 1, 1);
+            break;
+        case hipblaslt_initialization::special:
+            hipblaslt_init_alt_impl_big<DType>(ref.data(), ref.size(), 1, 1);
+            break;
+        default:
+            break;
         }
 
         hipMemcpy(buf, ref.data(), len * sizeof(DType), hipMemcpyHostToDevice);
@@ -97,23 +111,23 @@ private:
 
 using MatrixTransformIOPtr = std::unique_ptr<MatrixTransformIO>;
 MatrixTransformIOPtr
-    makeMatrixTransformIOPtr(hipblasltDatatype_t datatype, int64_t m, int64_t n, int64_t b)
+    makeMatrixTransformIOPtr(hipblasltDatatype_t datatype, int64_t m, int64_t n, int64_t b, hipblaslt_initialization init)
 {
     if(datatype == HIPBLASLT_R_32F)
     {
-        return std::make_unique<TypedMatrixTransformIO<hipblasLtFloat>>(m, n, b);
+        return std::make_unique<TypedMatrixTransformIO<hipblasLtFloat>>(m, n, b, init);
     }
     else if(datatype == HIPBLASLT_R_16F)
     {
-        return std::make_unique<TypedMatrixTransformIO<hipblasLtHalf>>(m, n, b);
+        return std::make_unique<TypedMatrixTransformIO<hipblasLtHalf>>(m, n, b, init);
     }
     else if(datatype == HIPBLASLT_R_16B)
     {
-        return std::make_unique<TypedMatrixTransformIO<hipblasLtBfloat16>>(m, n, b);
+        return std::make_unique<TypedMatrixTransformIO<hipblasLtBfloat16>>(m, n, b, init);
     }
     else if(datatype == HIPBLASLT_R_8I)
     {
-        return std::make_unique<TypedMatrixTransformIO<int8_t>>(m, n, b);
+        return std::make_unique<TypedMatrixTransformIO<int8_t>>(m, n, b, init);
     }
     return nullptr;
 }
@@ -162,7 +176,8 @@ static int parseArguments(int                  argc,
                           bool&                rowMajC,
                           int32_t&             batchSize,
                           int64_t&             batchStride,
-                          bool&                runValidation)
+                          bool&                runValidation,
+                          hipblaslt_initialization &init)
 {
     if(argc >= 2)
     {
@@ -239,6 +254,18 @@ static int parseArguments(int                  argc,
                 else if(arg == "--validation" || arg == "-V")
                 {
                     runValidation = true;
+                }
+                else if(arg == "--initialization" || arg == "--init")
+                {
+                    const std::string initStr{argv[++i]};
+
+                    if(initStr != "rand_int" && initStr != "trig_float" && initStr != "hpl")
+                    {
+                        std::cerr << "Invalid initialization type: " << initStr << '\n';
+                        return EXIT_FAILURE;
+                    }
+
+                    init = string2hipblaslt_initialization(initStr);
                 }
             }
             else
@@ -510,6 +537,7 @@ int main(int argc, char** argv)
     uint32_t            ldB{};
     uint32_t            ldC{};
     bool                runValidation{};
+    hipblaslt_initialization init{hipblaslt_initialization::hpl};
     hipblasltDatatype_t datatype{HIPBLASLT_R_32F};
     hipblasltDatatype_t scaleDatatype{HIPBLASLT_R_32F};
     parseArguments(argc,
@@ -530,7 +558,8 @@ int main(int argc, char** argv)
                    rowMajC,
                    batchSize,
                    batchStride,
-                   runValidation);
+                   runValidation,
+                   init);
 
     if(!ldA || !ldB || !ldC)
     {
@@ -550,7 +579,7 @@ int main(int argc, char** argv)
     auto             tA     = transA ? HIPBLAS_OP_T : HIPBLAS_OP_N;
     auto             tB     = transB ? HIPBLAS_OP_T : HIPBLAS_OP_N;
 
-    auto  inputs = makeMatrixTransformIOPtr(datatype, m, n, batchSize);
+    auto  inputs = makeMatrixTransformIOPtr(datatype, m, n, batchSize, init);
     void* dA     = inputs->getBuf(0);
     void* dB     = inputs->getBuf(1);
     void* dC     = inputs->getBuf(2);
