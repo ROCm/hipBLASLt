@@ -536,7 +536,7 @@ def writeClientConfigIni(problemSizes, biasTypeArgs, activationArgs, problemType
         if biasTypeArgs:
           for btype in biasTypeArgs.biasTypes:
             param('bias-type-args',  btype.toEnum())
-        param('sparse-a',   problemType.sparseA)
+        param('sparse',   problemType.sparse)
         param('high-precision-accumulate', problemType.highPrecisionAccumulate)
         param('strided-batched', problemType.stridedBatched)
         param('grouped-gemm', problemType.groupedGemm)

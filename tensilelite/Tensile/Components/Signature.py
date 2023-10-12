@@ -152,7 +152,7 @@ class SignatureCOV3(Signature):
         signature.addArg(    "B", SVK.SIG_GLOBALBUFFER, srcValueTypeB, "generic")
         userArgumentsInfo.gemmArgumentSize += (8 + 8 + 8 + 8)  # A, B, C, D buffer
 
-        if kernel["ProblemType"]["SparseA"]:
+        if kernel["ProblemType"]["Sparse"]:
             signature.addArg("MetaData", SVK.SIG_GLOBALBUFFER, "void" , "generic")
 
         for i in range(0, writer.states.d.numSgprStrides):
@@ -171,7 +171,7 @@ class SignatureCOV3(Signature):
             signature.addArg(              "strideB%u"%i, SVK.SIG_VALUE,               "u32")
             userArgumentsInfo.gemmArgumentSize += 4
 
-        if kernel["ProblemType"]["SparseA"]:
+        if kernel["ProblemType"]["Sparse"]:
             for i in range(0, writer.states.m.numSgprStrides):
                 signature.addArg(   "strideMetadata%u"%i, SVK.SIG_VALUE,               "u32")
 

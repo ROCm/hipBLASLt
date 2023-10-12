@@ -63,8 +63,8 @@ class LraTileAssignmentMFMA(LraTileAssignment):
         tile01           = tP["tile01Idx"]
         waveWidth        = writer.states.kernel["WavefrontSize"]
         inputPerThread   = kernel["LocalReadVectorWidth"] if not writer.states.inTailLoop else kernel["MIInputPerThread%s"%tc]
-        if kernel["ProblemType"]["SparseA"]:
-          if (kernel["ProblemType"]["SparseA"] == 2 and tP["isB"]) or (kernel["ProblemType"]["SparseA"] != 2 and  tP["isA"]):
+        if kernel["ProblemType"]["Sparse"]:
+          if (kernel["ProblemType"]["Sparse"] == 2 and tP["isB"]) or (kernel["ProblemType"]["Sparse"] != 2 and  tP["isA"]):
             inputPerThread = inputPerThread // 2
           elif tP["isM"]:
             inputPerThread = inputPerThread // 8

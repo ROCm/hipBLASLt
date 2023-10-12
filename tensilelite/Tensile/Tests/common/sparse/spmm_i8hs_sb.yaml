@@ -28,7 +28,7 @@ BenchmarkProblems:
       TransposeA: False
       TransposeB: False
       UseBeta: True
-      SparseA: 2
+      Sparse: 2
       Batched: True
       Activation: True
       ActivationHPA: True
@@ -47,7 +47,7 @@ BenchmarkProblems:
           - [32, 32, 32, 1,  1,  2, 4,  4, 2 ]
           - [32, 32, 32, 1,  1,  4, 4,  2, 2 ]
           - [32, 32, 32, 1,  1,  7, 2,  1, 4 ]
-        - GlobalReadVectorWidthA: [8]
+        - GlobalReadVectorWidthB: [8]
         - DepthU: [32,64,128]
         - TransposeLDS: [0,1]
         - LdsPadA: [-1]
@@ -106,7 +106,7 @@ BenchmarkProblems:
       TransposeA: True
       TransposeB: False
       UseBeta: True
-      SparseA: 2
+      Sparse: 2
       Batched: True
       Activation: True
       ActivationHPA: True
@@ -125,7 +125,7 @@ BenchmarkProblems:
           - [32, 32, 32, 1,  1,  2, 4,  4, 2 ]
           - [32, 32, 32, 1,  1,  4, 4,  2, 2 ]
           - [32, 32, 32, 1,  1,  7, 2,  1, 4 ]
-        - GlobalReadVectorWidthA: [8,16]
+        - GlobalReadVectorWidthB: [8,16]
         - DepthU: [32,64,128]
         - TransposeLDS: [0,1]
         - LdsPadA: [-1]
@@ -184,7 +184,7 @@ BenchmarkProblems:
       TransposeA: False
       TransposeB: True
       UseBeta: True
-      SparseA: 2
+      Sparse: 2
       Batched: True
       Activation: True
       ActivationHPA: True
@@ -203,7 +203,7 @@ BenchmarkProblems:
           - [32, 32, 32, 1,  1,  2, 4,  4, 2 ]
           - [32, 32, 32, 1,  1,  4, 4,  2, 2 ]
           - [32, 32, 32, 1,  1,  7, 2,  1, 4 ]
-        - GlobalReadVectorWidthA: [8]
+        - GlobalReadVectorWidthB: [8]
         - DepthU: [32,64,128]
         - TransposeLDS: [0,1]
         - LdsPadA: [-1]
@@ -262,7 +262,7 @@ BenchmarkProblems:
       TransposeA: True
       TransposeB: True
       UseBeta: True
-      SparseA: 2
+      Sparse: 2
       Batched: True
       Activation: True
       ActivationHPA: True
@@ -281,7 +281,7 @@ BenchmarkProblems:
           - [32, 32, 32, 1,  1,  2, 4,  4, 2 ]
           - [32, 32, 32, 1,  1,  4, 4,  2, 2 ]
           - [32, 32, 32, 1,  1,  7, 2,  1, 4 ]
-        - GlobalReadVectorWidthA: [8]
+        - GlobalReadVectorWidthB: [8]
         - DepthU: [32,64,128]
         - TransposeLDS: [0,1]
         - LdsPadA: [-1]

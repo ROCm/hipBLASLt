@@ -583,8 +583,8 @@ namespace Tensile
                                                ClientProblemFactory const& problemFactory)
             : m_maxBatch(0)
             , m_stridedBatched(args["strided-batched"].as<bool>())
-            , m_aSparse(args["sparse-a"].as<int>())
-            , m_cEqualsD(args["c-equal-d"].as<bool>() || args["sparse-a"].as<int>())
+            , m_sparse(args["sparse"].as<int>())
+            , m_cEqualsD(args["c-equal-d"].as<bool>() || args["sparse"].as<int>())
             , m_elementsToValidate(args["num-elements-to-validate"].as<int>())
             , m_keepPristineCopyOnGPU(args["pristine-on-gpu"].as<bool>())
             , m_workspaceSize(problemFactory.workspaceSize())
@@ -880,7 +880,7 @@ namespace Tensile
                     = m_problemDependentData || IsProblemDependent(m_vdata[i].init);
             }
             m_problemDependentData
-                |= (m_aSparse | (args["bias-type-args"].as<std::vector<DataType>>().size() > 1));
+                |= (m_sparse | (args["bias-type-args"].as<std::vector<DataType>>().size() > 1));
             allocNewCPUInputs();
             allocNewGPUInputs();
 
@@ -1147,18 +1147,19 @@ namespace Tensile
                                         batchIdx);
                 }
 
-                if((problem.sparseA() == 1 && i == ContractionProblemGemm::TENSOR::A) ||
-                   (problem.sparseA() == 2 && i == ContractionProblemGemm::TENSOR::B))
+                if((problem.sparse() == 1 && i == ContractionProblemGemm::TENSOR::A)
+                   || (problem.sparse() == 2 && i == ContractionProblemGemm::TENSOR::B))
                 {
                     auto& pUnitM = m_vdata[ContractionProblemGemm::TENSOR::METADATA]
                                        .pristine[problem.metadata().dataType()];
                     initGPUSparseInput(pUnit.gpuInput.current.get(),
                                        pUnitM.gpuInput.current.get(),
                                        (void*)(offset),
-                                       problem.sparseA() == 2 ? problem.b() : problem.a(),
+                                       problem.sparse() == 2 ? problem.b() : problem.a(),
                                        problem.compressed(),
                                        problem.metadata(),
-                                       problem.sparseA() == 2 ? problem.boundIndices()[0].b : problem.boundIndices()[0].a);
+                                       problem.sparse() == 2 ? problem.boundIndices()[0].b
+                                                             : problem.boundIndices()[0].a);
                 }
             }
         }
@@ -1181,39 +1182,36 @@ namespace Tensile
                                       m_vdata[i].init,
                                       p.second.cpuInput.valid.get(),
                                       tensors[i]);
-                            if((problem.sparseA() == 1 && i == ContractionProblemGemm::TENSOR::A) ||
-                               (problem.sparseA() == 2 && i == ContractionProblemGemm::TENSOR::B))
+                            if((problem.sparse() == 1 && i == ContractionProblemGemm::TENSOR::A)
+                               || (problem.sparse() == 2 && i == ContractionProblemGemm::TENSOR::B))
                             {
-                                const TensorDescriptor &t = problem.sparseA()==2 ? problem.b() : problem.a();
-                                int tDim;
+                                const TensorDescriptor& t
+                                    = problem.sparse() == 2 ? problem.b() : problem.a();
+                                int      tDim;
                                 DataType tDataType;
-                                if(problem.sparseA()==2)
+                                if(problem.sparse() == 2)
                                 {
-                                    tDim = problem.boundIndices()[0].b;
+                                    tDim      = problem.boundIndices()[0].b;
                                     tDataType = problem.b().dataType();
                                 }
                                 else
                                 {
-                                    tDim = problem.boundIndices()[0].a;
+                                    tDim      = problem.boundIndices()[0].a;
                                     tDataType = problem.a().dataType();
                                 }
 
                                 switch(tDataType)
                                 {
                                 case DataType::Half:
-                                    pruneSparseArray((Half*)p.second.cpuInput.valid.get(),
-                                                     t,
-                                                     tDim);
+                                    pruneSparseArray((Half*)p.second.cpuInput.valid.get(), t, tDim);
                                     break;
                                 case DataType::BFloat16:
-                                    pruneSparseArray((BFloat16*)p.second.cpuInput.valid.get(),
-                                                     t,
-                                                     tDim);
+                                    pruneSparseArray(
+                                        (BFloat16*)p.second.cpuInput.valid.get(), t, tDim);
                                     break;
                                 case DataType::Int8:
-                                    pruneSparseArray((int8_t*)p.second.cpuInput.valid.get(),
-                                                     t,
-                                                     tDim);
+                                    pruneSparseArray(
+                                        (int8_t*)p.second.cpuInput.valid.get(), t, tDim);
                                     break;
                                 default:
                                     throw std::runtime_error("SparseMatrix doesn't support");
