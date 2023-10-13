@@ -25,6 +25,7 @@
  *******************************************************************************/
 
 #include "DataInitialization.hpp"
+#include "Utility.hpp"
 // #include "DataInitializationTyped.hpp"
 
 #include <Tensile/Utils.hpp>
@@ -1068,31 +1069,9 @@ namespace Tensile
             // allocate remaining memory to prevend other user use GPU when benchmarking
             if(Debug::Instance().getBenchmark())
             {
-                void*           extra = nullptr;
-                size_t          remainingSize;
-                hipDeviceProp_t hipProps;
-                HIP_CHECK_EXC(hipGetDeviceProperties(&hipProps, 0));
-                remainingSize = size_t(hipProps.totalGlobalMem);
-                printf("Trying to allocate all GPU memory to prevend other user use GPU when "
-                       "benchmarking \n");
-                while(1)
-                {
-                    if(hipSuccess == hipMalloc(&extra, remainingSize))
-                    {
-                        printf("LOCAL: GPU benchmark protect, allocate %zu MB Success \n",
-                               remainingSize / (1024 * 1024));
-                    }
-                    else
-                    {
-                        printf("LOCAL: GPU benchmark protect, allocate %zu MB Fail \n",
-                               remainingSize / (1024 * 1024));
-                    }
-                    remainingSize = remainingSize / 2;
-                    if(remainingSize <= 0)
-                    {
-                        break;
-                    }
-                };
+                std::stringstream ss;
+                static_cast<void>(benchmarkAllocation(ss));
+                std::cout << ss.str();
             }
             return;
         }
