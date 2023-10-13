@@ -268,7 +268,7 @@ def findFastestCompatibleSolution(origDict, sizeMapping):
 
 
 # returns merged logic data as list
-def mergeLogic(origData, incData, forceMerge, trimSize=True, addSolutionTags=False):
+def mergeLogic(origData, incData, forceMerge, trimSize=True, addSolutionTags=False, noEff=False):
     origNumSizes = len(origData[7])
     origNumSolutions = len(origData[5])
 
@@ -318,6 +318,7 @@ def mergeLogic(origData, incData, forceMerge, trimSize=True, addSolutionTags=Fal
     for incSize, [incIndex, incEff] in incData[7]:
         incSolution = findSolutionWithIndex(incData[5], incIndex)
 
+        storeEff = incEff if noEff == False else 0.0
         try:
             j, origEff = origDict[tuple(incSize)]
             if incEff > origEff or forceMerge:
@@ -327,7 +328,7 @@ def mergeLogic(origData, incData, forceMerge, trimSize=True, addSolutionTags=Fal
                     verbose("[!]", incSize, "already exists but does not improve in performance.", end="")
                 verbose("Efficiency:", origEff, "->", incEff, "(force_merge=True)" if forceMerge else "")
                 solutionPool, index = addKernel(solutionPool, incSolution)
-                solutionMap[j][1] = [index, incEff]
+                solutionMap[j][1] = [index, storeEff]
             else:
                 verbose("[X]", incSize, "already exists but does not improve in performance.", end="")
                 verbose("Efficiency:", origEff, "->", incEff)
@@ -337,7 +338,7 @@ def mergeLogic(origData, incData, forceMerge, trimSize=True, addSolutionTags=Fal
             else:
                 verbose("[-]", incSize, "has been added to solution table, Efficiency: N/A ->", incEff)
                 solutionPool, index = addKernel(solutionPool, incSolution)
-                solutionMap.append([incSize,[index, incEff]])
+                solutionMap.append([incSize,[index, storeEff]])
 
     verbose(numOrigRemoved, "unused kernels removed from base logic file")
     verbose(numIncRemoved, "unused kernels removed from incremental logic file")
@@ -357,7 +358,7 @@ def mergeLogic(origData, incData, forceMerge, trimSize=True, addSolutionTags=Fal
 
     return [mergedData, numSizesAdded, numSolutionsAdded, numSolutionsRemoved]
 
-def avoidRegressions(originalDir, incrementalDir, outputPath, forceMerge, trimSize=True, addSolutionTags=False):
+def avoidRegressions(originalDir, incrementalDir, outputPath, forceMerge, trimSize=True, addSolutionTags=False, noEff=False):
     originalFiles = allFiles(originalDir)
     incrementalFiles = allFiles(incrementalDir)
     ensurePath(outputPath)
@@ -381,7 +382,7 @@ def avoidRegressions(originalDir, incrementalDir, outputPath, forceMerge, trimSi
         origData = reindexSolutions(origData)
         incData = reindexSolutions(incData)
 
-        mergedData, *stats = mergeLogic(origData, incData, forceMerge, trimSize, addSolutionTags)
+        mergedData, *stats = mergeLogic(origData, incData, forceMerge, trimSize, addSolutionTags, noEff)
         msg(stats[0], "size(s) and", stats[1], "kernel(s) added,", stats[2], "kernel(s) removed")
 
         with open(os.path.join(outputPath, basename), "w") as outFile:
@@ -443,6 +444,7 @@ if __name__ == "__main__":
     argParser.add_argument("--notrim", help="Do not trim long size format down to short format (m,n,b,k). Default is --trim", action="store_false")
     argParser.add_argument("--add_solution_tags", help="Add tags to the size key for solution properies, allowing for solutions with different requirements "
                            "to exist for the same size. Default doesn't add this tag.", action="store_true")
+    argParser.add_argument("--no_eff", help="force set eff as 0.0.", action="store_true")
 
     args = argParser.parse_args(sys.argv[1:])
     originalDir = args.original_dir
@@ -452,9 +454,10 @@ if __name__ == "__main__":
     forceMerge = args.force_merge.lower()
     trimSize = args.notrim
     add_solution_tags = args.add_solution_tags
+    no_eff = args.no_eff
 
     if forceMerge in ["none"]: forceMerge=None
     elif forceMerge in ["true", "1"]: forceMerge=True
     elif forceMerge in ["false", "0"]: forceMerge=False
 
-    avoidRegressions(originalDir, incrementalDir, outputPath, forceMerge, trimSize, add_solution_tags)
+    avoidRegressions(originalDir, incrementalDir, outputPath, forceMerge, trimSize, add_solution_tags, no_eff)
