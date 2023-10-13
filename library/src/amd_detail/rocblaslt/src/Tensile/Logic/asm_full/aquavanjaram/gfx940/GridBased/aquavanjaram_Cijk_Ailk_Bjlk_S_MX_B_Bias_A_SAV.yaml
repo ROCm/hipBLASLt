@@ -50,7 +50,7 @@
   SetConstStrideA: []
   SetConstStrideB: []
   SilentHighPrecisionAccumulate: false
-  SparseA: false
+  Sparse: 0
   StridedBatched: true
   TLUA: true
   TLUB: true
@@ -245,7 +245,7 @@
       SetConstStrideA: []
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
-      SparseA: false
+      Sparse: 0
       StridedBatched: true
       TLUA: true
       TLUB: true
@@ -496,7 +496,7 @@
       SetConstStrideA: []
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
-      SparseA: false
+      Sparse: 0
       StridedBatched: true
       TLUA: true
       TLUB: true
@@ -746,7 +746,7 @@
       SetConstStrideA: []
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
-      SparseA: false
+      Sparse: 0
       StridedBatched: true
       TLUA: true
       TLUB: true
@@ -997,7 +997,7 @@
       SetConstStrideA: []
       SetConstStrideB: []
       SilentHighPrecisionAccumulate: false
-      SparseA: false
+      Sparse: 0
       StridedBatched: true
       TLUA: true
       TLUB: true
