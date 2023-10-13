@@ -835,27 +835,27 @@ namespace Tensile
     {
         if(m_sparse)
         {
-            auto& aTensor          = m_tensors[ContractionProblemGemm::TENSOR::A];
-            auto& bTensor          = m_tensors[ContractionProblemGemm::TENSOR::B];
-            auto  ca_sizes         = m_sparse == 2 ? bTensor.sizes() : aTensor.sizes();
-            auto  ca_strides       = m_sparse == 2 ? bTensor.strides() : aTensor.strides();
-            auto  metadata_sizes   = ca_sizes;
-            auto  metadata_strides = ca_strides;
+            auto& aTensor            = m_tensors[ContractionProblemGemm::TENSOR::A];
+            auto& bTensor            = m_tensors[ContractionProblemGemm::TENSOR::B];
+            auto  compressed_sizes   = m_sparse == 2 ? bTensor.sizes() : aTensor.sizes();
+            auto  compressed_strides = m_sparse == 2 ? bTensor.strides() : aTensor.strides();
+            auto  metadata_sizes     = compressed_sizes;
+            auto  metadata_strides   = compressed_strides;
 
-            if(m_sparse != 2)
+            if(m_sparse == 1)
             {
                 if(m_freeIndices[0].i) // transpose
                 {
-                    ca_sizes[0] /= 2;
-                    ca_strides[1]       = ca_sizes[0];
-                    metadata_sizes[0]   = ca_sizes[0] / 4;
-                    metadata_strides[1] = metadata_sizes[0];
+                    compressed_sizes[0] /= 2;
+                    compressed_strides[1] = compressed_sizes[0];
+                    metadata_sizes[0]     = compressed_sizes[0] / 4;
+                    metadata_strides[1]   = metadata_sizes[0];
                 }
                 else
                 {
-                    ca_sizes[1] /= 2;
-                    metadata_sizes[1]   = ca_sizes[0];
-                    metadata_sizes[0]   = ca_sizes[1] / 4;
+                    compressed_sizes[1] /= 2;
+                    metadata_sizes[1]   = compressed_sizes[0];
+                    metadata_sizes[0]   = compressed_sizes[1] / 4;
                     metadata_strides[1] = metadata_sizes[0];
                 }
             }
@@ -863,32 +863,35 @@ namespace Tensile
             {
                 if(m_freeIndices[1].i == 0) // transpose
                 {
-                    ca_sizes[1] /= 2;
-                    metadata_sizes[0]   = ca_sizes[1] / 4;
-                    metadata_sizes[1]   = ca_sizes[0];
+                    compressed_sizes[1] /= 2;
+                    metadata_sizes[0]   = compressed_sizes[1] / 4;
+                    metadata_sizes[1]   = compressed_sizes[0];
                     metadata_strides[1] = metadata_sizes[0];
                 }
                 else
                 {
-                    ca_sizes[0] /= 2;
-                    ca_strides[1]       = ca_sizes[0];
-                    metadata_sizes[0]   = ca_sizes[0] / 4;
-                    metadata_strides[1] = metadata_sizes[0];
+                    compressed_sizes[0] /= 2;
+                    compressed_strides[1] = compressed_sizes[0];
+                    metadata_sizes[0]     = compressed_sizes[0] / 4;
+                    metadata_strides[1]   = metadata_sizes[0];
                 }
             }
 
-            for(int i = 2; i < ca_sizes.size(); i++)
+            for(int i = 2; i < compressed_sizes.size(); i++)
             {
-                ca_strides[i] = ca_strides[i] == 0 ? 0 : ca_strides[i - 1] * ca_sizes[i - 1];
-                metadata_strides[i]
-                    = ca_strides[i] == 0 ? 0 : metadata_strides[i - 1] * metadata_sizes[i - 1];
+                compressed_strides[i] = compressed_strides[i] == 0
+                                            ? 0
+                                            : compressed_strides[i - 1] * compressed_sizes[i - 1];
+                metadata_strides[i]   = compressed_strides[i] == 0
+                                            ? 0
+                                            : metadata_strides[i - 1] * metadata_sizes[i - 1];
             }
             m_tensor_compressed = TensorDescriptor("compressed",
                                                    aTensor.dataType(),
-                                                   ca_sizes.begin(),
-                                                   ca_sizes.end(),
-                                                   ca_strides.begin(),
-                                                   ca_strides.end());
+                                                   compressed_sizes.begin(),
+                                                   compressed_sizes.end(),
+                                                   compressed_strides.begin(),
+                                                   compressed_strides.end());
 
             m_tensors[ContractionProblemGemm::TENSOR::METADATA]
                 = TensorDescriptor("metadata",
