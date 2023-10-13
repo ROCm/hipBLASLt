@@ -994,7 +994,10 @@ validParameters = {
     "ActivationAlt":               [False, True],
 
     # Do workgroup reduction. Currently for DBias
-    "WorkGroupReduction":          [False]
+    "WorkGroupReduction":          [False],
+
+    # 4:2 Structured Sparse A Matrix, 0=Non Sparse, 1=Sparse Matrix A, 2=Sparse Matrix B
+    "Sparse":                      [0, 1, 2]
     }
 
 
