@@ -2625,13 +2625,13 @@ class KernelWriter(metaclass=abc.ABCMeta):
       self.states.numVgprBufferPackB = 1
 
     if kernel["UnrollMajorLDSA"]:
-      divider = 2 if (kernel["ProblemType"]["Sparse"] and kernel["ProblemType"]["Sparse"] != 2) else 1
+      divider = 2 if (kernel["ProblemType"]["Sparse"] == 1) else 1
       self.states.lrvwUnrollA = kernel["LocalReadVectorWidth"] // divider
     else:
       self.states.lrvwUnrollA = 1
 
     if kernel["UnrollMajorLDSB"]:
-      divider = 2 if (kernel["ProblemType"]["Sparse"] == 2 ) else 1
+      divider = 2 if (kernel["ProblemType"]["Sparse"] == 2) else 1
       self.states.lrvwUnrollB = kernel["LocalReadVectorWidth"] // divider
     else:
       self.states.lrvwUnrollB = 1
@@ -3758,7 +3758,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
   def getTensorParameters(self, tP, kernel, itP, cM):
     tP["mirror"] = bool(kernel["ProblemType"]["MirrorDims%s" % (cM)])
 
-    if cM == "A" or (kernel["ProblemType"]["Sparse"] and kernel["ProblemType"]["Sparse"] !=2 and cM == "Metadata"): # A
+    if cM == "A" or (kernel["ProblemType"]["Sparse"] == 1 and cM == "Metadata"): # A
       tP["tensorIdx"] = 0                                   # tensor index A=0, B=1
       tP["tileChar"] = self.states.tileChar0 if (kernel["ProblemType"]["Tensor0"]==0) \
         else self.states.tileChar1                       # tile char I0 or J1
@@ -3801,7 +3801,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
     tP["shiftGR"] = 0 if (tP["bpeGR"] >= tP["bpe"]) else int(tP["glvw"] // 2 * (tP["bpe"] / self.states.bpr))  # Shift global read register for cvt spaces
     tP["bpeRatio"] = tP["bpe"] // tP["bpeGR"] if tP["bpeGR"] < tP["bpe"] else 1                                # g2lIdx multiplier
 
-    tP["is_sparse"] = (kernel["ProblemType"]["Sparse"] == 2 and tP["isB"]) or (kernel["ProblemType"]["Sparse"] and kernel["ProblemType"]["Sparse"] != 2 and tP["isA"])
+    tP["is_sparse"] = (kernel["ProblemType"]["Sparse"] == 2 and tP["isB"]) or (kernel["ProblemType"]["Sparse"] == 1 and tP["isA"])
     # KernelWriterAssembly
     tP["localReadSwapByteOffset"]  = 0
     tP["localWriteSwapByteOffset"] = 0

@@ -2186,7 +2186,7 @@ class Solution(collections.abc.Mapping):
         state["VectorWidthB"] = 1
 
     if state["ProblemType"]["Sparse"] and not state["DirectToVgprSparseMetadata"]:
-      state["VectorWidthMetadata"] = state["VectorWidthA"] if state["ProblemType"]["Sparse"] != 2 else state["VectorWidthB"]
+      state["VectorWidthMetadata"] = state["VectorWidthA"] if state["ProblemType"]["Sparse"] == 1 else state["VectorWidthB"]
 
     # if state["EnableMatrixInstruction"] and not state["SourceSwap"] and (state["VectorWidthA"] > 1 or state["VectorWidthB"] > 1):
     #   reject(state, "not implement VectorWidth without SourceSwap")
@@ -2488,7 +2488,7 @@ class Solution(collections.abc.Mapping):
               matrixInstM = (state["MatrixInstM"] * state["MatrixInstBM"]) if (state["MatrixInstM"] == 4) else state["MatrixInstM"]
               glvwMlimit = matrixInstM * vw
             else:
-              if state["ProblemType"]["Sparse"] != 2:
+              if state["ProblemType"]["Sparse"] == 1:
                 matrixInstN = (state["MatrixInstN"] * state["MatrixInstBN"]) if (state["MatrixInstN"] == 4) else state["MatrixInstN"]
                 glvwMlimit  = state["MIOutputVectorWidth"] * (state["WavefrontSize"] // matrixInstN)
 
@@ -2962,7 +2962,7 @@ class Solution(collections.abc.Mapping):
         reject(state, "Sparse A kernel does not support MIArchVgpr yet.")
         return
       # Not Support Feature
-      if state["ProblemType"]["Sparse"] != 2 and state["SourceSwap"] :
+      if state["ProblemType"]["Sparse"] == 1 and state["SourceSwap"] :
         reject(state, "Sparse A kernel cannot support SourceSwap.")
         return
       else:
