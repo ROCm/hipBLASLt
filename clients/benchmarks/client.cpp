@@ -473,6 +473,10 @@ try
          value<bool>(&grouped_gemm)->default_value(false),
          "Use grouped_gemm.")
 
+        ("use_user_args",
+        value<bool>(&arg.use_user_args)->default_value(false),
+        "Use UserArguments located in device memory for grouped gemm.")
+
         ("device",
          value<int>(&device_id)->default_value(0),
          "Set default device to be used for subsequent program runs")
