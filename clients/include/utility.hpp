@@ -453,3 +453,5 @@ void print_strided_batched(
     }
     hipblaslt_cout << std::flush;
 }
+
+std::vector<void*> benchmark_allocation();

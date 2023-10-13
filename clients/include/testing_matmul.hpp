@@ -1485,10 +1485,20 @@ void testing_matmul(const Arguments& arg)
     dWorkspace = new device_vector<unsigned char>(workspace_size, 1, HMM);
     CHECK_DEVICE_ALLOCATION(dWorkspace->memcheck());
 
+    if(arg.use_user_args)
+    {
+        CHECK_HIP_ERROR(
+            hipHostMalloc(&userArgs, gemm_count * sizeof(hipblaslt_ext::UserArguments)));
+        CHECK_HIP_ERROR(hipMalloc(&d_userArgs, gemm_count * sizeof(hipblaslt_ext::UserArguments)));
+    }
+
+    CHECK_SOLUTION_FOUND(returnedAlgoCount);
+
+    auto ptrs = benchmark_allocation();
+
     if(arg.print_solution_found)
         hipblaslt_cout << "Is supported " << heuristicResult.size()
                        << " / Total solutions: " << returnedAlgoCount << std::endl;
-    CHECK_SOLUTION_FOUND(returnedAlgoCount);
 
     // get CPU result
     if(arg.unit_check || arg.norm_check)
@@ -1820,12 +1830,8 @@ void testing_matmul(const Arguments& arg)
             {
                 //grouped gemm
                 CHECK_HIPBLASLT_ERROR(groupedGemm.initialize(heuristicResult[0].algo, *dWorkspace));
-                CHECK_HIP_ERROR(
-                    hipHostMalloc(&userArgs, gemm_count * sizeof(hipblaslt_ext::UserArguments)));
                 groupedGemm.getDefaultValueForDeviceUserArguments(userArgs);
                 // Copy them to device memory
-                CHECK_HIP_ERROR(
-                    hipMalloc(&d_userArgs, gemm_count * sizeof(hipblaslt_ext::UserArguments)));
                 CHECK_HIP_ERROR(hipMemcpy(d_userArgs,
                                           userArgs,
                                           gemm_count * sizeof(hipblaslt_ext::UserArguments),
@@ -1950,14 +1956,8 @@ void testing_matmul(const Arguments& arg)
                     //grouped gemm
                     CHECK_HIPBLASLT_ERROR(
                         groupedGemm.initialize(heuristicResult[sol].algo, *dWorkspace));
-                    if(userArgs != nullptr)
-                        CHECK_HIP_ERROR(hipHostMalloc(
-                            &userArgs, gemm_count * sizeof(hipblaslt_ext::UserArguments)));
                     groupedGemm.getDefaultValueForDeviceUserArguments(userArgs);
                     // Copy them to device memory
-                    if(d_userArgs != nullptr)
-                        CHECK_HIP_ERROR(hipMalloc(
-                            &d_userArgs, gemm_count * sizeof(hipblaslt_ext::UserArguments)));
                     CHECK_HIP_ERROR(hipMemcpy(d_userArgs,
                                               userArgs,
                                               gemm_count * sizeof(hipblaslt_ext::UserArguments),
@@ -2101,6 +2101,11 @@ void testing_matmul(const Arguments& arg)
                                                          cpu_time_used,
                                                          0.0);
         }
+    }
+
+    for(auto it : ptrs)
+    {
+        CHECK_HIP_ERROR(hipFree(it));
     }
 
     if(dWorkspace != nullptr)

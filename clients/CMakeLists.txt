@@ -35,9 +35,11 @@ project( hipblaslt-clients LANGUAGES CXX C  )
 
 
 if( SKIP_LIBRARY )
-  include_directories(${HIPBLASLT_LIBRARY_DIR}/include)
+  include_directories(${HIPBLASLT_LIBRARY_DIR}/include
+                      ${CMAKE_SOURCE_DIR}/tensilelite)  # For benchmark allocation function
 else()
-  include_directories(${CMAKE_BINARY_DIR}/include)
+  include_directories(${CMAKE_BINARY_DIR}/include
+                      ${CMAKE_SOURCE_DIR}/tensilelite)
 endif()
 
 set(THREADS_PREFER_PTHREAD_FLAG ON)
