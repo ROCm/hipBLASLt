@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022 Advanced Micro Devices, Inc.
+ * Copyright (C) 2022-2023 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -33,6 +33,8 @@
 #include <stdlib.h>
 
 #include <fcntl.h>
+
+#include "Tensile/Source/client/include/Utility.hpp"
 
 #if __has_include(<filesystem>)
 #include <filesystem>
@@ -244,4 +246,20 @@ hipblaslt_local_handle::hipblaslt_local_handle(const Arguments& arg)
 hipblaslt_local_handle::~hipblaslt_local_handle()
 {
     hipblasLtDestroy(m_handle);
+}
+
+std::vector<void*> benchmark_allocation()
+{
+    const char* env          = std::getenv("HIPBLASLT_BENCHMARK");
+    bool        doAllocation = false;
+    if(env)
+        doAllocation = strtol(env, nullptr, 0) != 0;
+    std::vector<void*> ptrs;
+    if(doAllocation)
+    {
+        std::stringstream ss;
+        ptrs = Tensile::Client::benchmarkAllocation(ss);
+        hipblaslt_cout << ss.str();
+    }
+    return ptrs;
 }
