@@ -1771,6 +1771,48 @@ class VAddPKF32(CompositeInstruction):
 
         assert all(inst.vop3 is None for inst in self.instructions), "Currently does not support with vop3 enabled"
 
+class _VMulPKF32(CommonInstruction):
+    def __init__(self, dst, src0, src1, sdwa: Optional[SDWAModifiers] = None, vop3: Optional[VOP3PModifiers] = None, comment="") -> None:
+        super().__init__(InstType.INST_F32, dst, [src0, src1], sdwa, vop3, comment)
+        self.setInst("v_pk_mul_f32")
+
+class VMulPKF32(CompositeInstruction):
+    def __init__(self, dst, src0, src1, sdwa: Optional[SDWAModifiers] = None, vop3: Optional[VOP3PModifiers] = None, comment="") -> None:
+        super().__init__(InstType.INST_F32, dst, [src0, src1], comment)
+        self.setInst("v_pk_mul_f32")
+        self.sdwa = sdwa
+        self.vop3 = vop3
+
+    def toList(self) -> list:
+        assert 0 and "Not supported."
+        return []
+
+    def setupInstructions(self):
+        super().setupInstructions()
+        assert isinstance(self.srcs, List)
+        if self.asmCaps["v_pk_mul_f32"]:
+            self.instructions = [_VMulPKF32(self.dst, self.srcs[0], self.srcs[1], self.sdwa, self.vop3, self.comment)]
+        else:
+            dst1, dst2 = self.dst.splitRegContainer()
+            srcs1 = []
+            srcs2 = []
+
+            def srcsIter():
+                for s in self.srcs:
+                    if isinstance(s, (RegisterContainer, HolderContainer)):
+                        yield s.splitRegContainer()
+                    else:
+                        yield s, s
+
+            for s0, s1 in srcsIter():
+                srcs1.append(s0)
+                srcs2.append(s1)
+
+            self.instructions = [VMulF32(dst1, srcs1[0], srcs1[1], None, self.comment),
+                                 VMulF32(dst2, srcs2[0], srcs2[1], None, self.comment)]
+
+            assert all(inst.vop3 is None for inst in self.instructions), "Currently does not support with vop3 enabled"
+
 class VAdd3U32(CommonInstruction):
     def __init__(self, dst, src0, src1, src2, vop3: Optional[VOP3PModifiers] = None, comment="") -> None:
         super().__init__(InstType.INST_U32, dst, [src0, src1, src2], None, vop3, comment)
@@ -1795,11 +1837,6 @@ class VMulPKF16(CommonInstruction):
     def __init__(self, dst, src0, src1, sdwa: Optional[SDWAModifiers] = None, vop3: Optional[VOP3PModifiers] = None, comment="") -> None:
         super().__init__(InstType.INST_F16, dst, [src0, src1], sdwa, vop3, comment)
         self.setInst("v_pk_mul_f16")
-
-class VMulPKF32(CommonInstruction):
-    def __init__(self, dst, src0, src1, sdwa: Optional[SDWAModifiers] = None, vop3: Optional[VOP3PModifiers] = None, comment="") -> None:
-        super().__init__(InstType.INST_F32, dst, [src0, src1], sdwa, vop3, comment)
-        self.setInst("v_pk_mul_f32")
 
 class VMulLOU32(CommonInstruction):
     def __init__(self, dst, src0, src1, comment="") -> None:

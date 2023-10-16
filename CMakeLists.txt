@@ -151,7 +151,7 @@ else()
 
     #Set the AMDGPU_TARGETS with backward compatiblity
     rocm_check_target_ids(DEFAULT_AMDGPU_TARGETS
-        TARGETS "gfx90a:xnack+;gfx90a:xnack-;gfx940;gfx941;gfx942"
+        TARGETS "gfx908:xnack+;gfx908:xnack-;gfx90a:xnack+;gfx90a:xnack-;gfx940;gfx941;gfx942"
     )
 
     if (AMDGPU_TARGETS)

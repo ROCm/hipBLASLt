@@ -567,7 +567,7 @@ Tests:
   bias_vector: [0, 1]
   bias_type: f32_r
   unit_check: 1
-  gpu_arch: '94?'
+  gpu_arch: '94[0-2]'
 
 - name: matmul_f8_bf8_dst_fp16
   category: pre_checkin
@@ -585,7 +585,7 @@ Tests:
   bias_vector: [0, 1]
   bias_type: f16_r
   unit_check: 1
-  gpu_arch: '94?'
+  gpu_arch: '94[0-2]'
 
 
 - name: matmul_fallback_equality_NN_batch16
@@ -729,7 +729,7 @@ Tests:
   scaleA: [ 0, 1]
   scaleB: [ 0, 1]
   unit_check: 1
-  gpu_arch: '94?'
+  gpu_arch: '94[0-2]'
 
 - name: matmul_bgrada_f16
   category: pre_checkin
@@ -763,7 +763,7 @@ Tests:
   bias_vector: [0, 1]
   unit_check: 0
   norm_check: 1
-  gpu_arch: '94?'
+  gpu_arch: '94[0-2]'
 
 - name: matmul_dgelu_fp32
   category: pre_checkin
@@ -780,7 +780,7 @@ Tests:
   activation_type: gelu
   unit_check: 0
   norm_check: 1
-  gpu_arch: '94?'
+  gpu_arch: '94[0-2]'
 
 - name: matmul_bgradb_fp32
   category: pre_checkin
@@ -797,7 +797,7 @@ Tests:
   bias_type: f32_r
   bias_source: b
   unit_check: 1
-  gpu_arch: '94?'
+  gpu_arch: '94[0-2]'
 
 - name: matmul_bgradb_f16
   category: pre_checkin
@@ -871,7 +871,7 @@ Tests:
   alpha: 1
   beta: [ 0.0, 2.0 ]
   unit_check: 1
-  gpu_arch: '94?'
+  gpu_arch: '94[0-2]'
 
 - name: matmul_extapi_groupedgemm
   category: pre_checkin
@@ -900,6 +900,7 @@ Tests:
   alpha: 1
   beta: [ 0.0, 2.0 ]
   unit_check: 1
+  gpu_arch: '9(0a|4[0-2])'
 
 - name: matmul_gemm_i8
   category: pre_checkin
@@ -949,7 +950,7 @@ Tests:
   bias_vector: 1
   bias_type: [f32_r]
   unit_check: 1
-  gpu_arch: '94?'
+  gpu_arch: '94[0-2]'
 
 - name: matmul_gemm_mix_precisions_fp8
   category: pre_checkin
@@ -970,5 +971,5 @@ Tests:
   bias_vector: 1
   bias_type: [f32_r]
   unit_check: 1
-  gpu_arch: '94?'
+  gpu_arch: '94[0-2]'
 ...
