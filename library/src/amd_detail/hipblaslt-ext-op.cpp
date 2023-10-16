@@ -131,8 +131,13 @@ namespace {
         return lib;
     }
 
-    static auto extOpLibraries = []() {
-        std::vector<std::unique_ptr<Tensile::hip::SolutionAdapter>> adapters;
+    std::vector<std::unique_ptr<Tensile::hip::SolutionAdapter>> &extOpLibraries() {
+        static std::vector<std::unique_ptr<Tensile::hip::SolutionAdapter>> adapters;
+
+        if (adapters.size()) {
+            return adapters;
+        }
+
         int numDevices{};
         auto err = hipGetDeviceCount(&numDevices);
 
@@ -155,7 +160,7 @@ namespace {
         }
 
         return adapters;
-    }();
+    }
 }
 
 hipblasStatus_t hipblasltSoftmaxRun(hipblasltDatatype_t datatype, uint32_t m, uint32_t n, uint32_t dim,
@@ -177,7 +182,7 @@ hipblasStatus_t hipblasltSoftmaxRun(hipblasltDatatype_t datatype, uint32_t m, ui
 
     int currentDeviceId{};
     auto err = hipGetDevice(&currentDeviceId);
-    auto &adapter = extOpLibraries.at(currentDeviceId);
+    auto &adapter = extOpLibraries().at(currentDeviceId);
     auto gpu = Tensile::hip::GetCurrentDevice();
     const auto archName = trimArchName(gpu->archName());
     auto &masterLib = getExtOpMasterLibrary();
@@ -222,7 +227,7 @@ hipblasStatus_t hipblasltLayerNormRun(hipblasltDatatype_t datatype, void *output
 
     int currentDeviceId{};
     auto err = hipGetDevice(&currentDeviceId);
-    auto &adapter = extOpLibraries.at(currentDeviceId);
+    auto &adapter = extOpLibraries().at(currentDeviceId);
     auto gpu = Tensile::hip::GetCurrentDevice();
     const auto archName = trimArchName(gpu->archName());
     auto &masterLib = getExtOpMasterLibrary();
