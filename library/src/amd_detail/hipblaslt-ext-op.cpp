@@ -176,9 +176,14 @@ namespace
         return lib;
     }
 
-    static auto extOpLibraries = []() {
-        std::vector<std::unique_ptr<Tensile::hip::SolutionAdapter>> adapters;
-        int                                                         numDevices{};
+    std::vector<std::unique_ptr<Tensile::hip::SolutionAdapter>> &extOpLibraries() {
+        static std::vector<std::unique_ptr<Tensile::hip::SolutionAdapter>> adapters;
+
+        if (adapters.size()) {
+            return adapters;
+        }
+
+        int numDevices{};
         auto err = hipGetDeviceCount(&numDevices);
 
         for(std::size_t i = 0; i < numDevices; ++i)
@@ -197,7 +202,7 @@ namespace
         }
 
         return adapters;
-    }();
+    }
 }
 
 hipblasStatus_t hipblasltSoftmaxRun(hipDataType datatype,
@@ -226,16 +231,14 @@ hipblasStatus_t hipblasltSoftmaxRun(hipDataType datatype,
         return HIPBLAS_STATUS_INVALID_VALUE;
     }
 
-    int         currentDeviceId{};
-    auto        err       = hipGetDevice(&currentDeviceId);
-    auto&       adapter   = extOpLibraries.at(currentDeviceId);
-    auto        gpu       = Tensile::hip::GetCurrentDevice();
-    const auto  archName  = trimArchName(gpu->archName());
-    auto&       masterLib = getExtOpMasterLibrary();
-    const auto& lib       = masterLib.getLibrary(archName, SoftmaxSolutionLibrary::opName)
-                          ->as<SoftmaxSolutionLibrary>();
-    auto sol
-        = lib.findBestSolution(SoftmaxProblem(m, n, hipDataType_to_tensile_type(datatype)), *gpu);
+    int        currentDeviceId{};
+    auto       err        = hipGetDevice(&currentDeviceId);
+    auto       &adapter   = extOpLibraries().at(currentDeviceId);
+    auto       gpu        = Tensile::hip::GetCurrentDevice();
+    const auto archName   = trimArchName(gpu->archName());
+    auto       &masterLib = getExtOpMasterLibrary();
+    const auto &lib       = masterLib.getLibrary(archName, SoftmaxSolutionLibrary::opName)->as<SoftmaxSolutionLibrary>();
+    auto       sol        = lib.findBestSolution(SoftmaxProblem(m, n, hipblasltDatatype_to_tensile_type(datatype)), *gpu);
     const auto kernelName = sol->name();
     err                   = adapter->initKernel(kernelName);
     Tensile::KernelArguments kArgs(false);
@@ -283,18 +286,16 @@ hipblasStatus_t hipblasltLayerNormRun(hipDataType datatype,
        || n == 0)
         return HIPBLAS_STATUS_INVALID_VALUE;
 
-    int         currentDeviceId{};
-    auto        err       = hipGetDevice(&currentDeviceId);
-    auto&       adapter   = extOpLibraries.at(currentDeviceId);
-    auto        gpu       = Tensile::hip::GetCurrentDevice();
-    const auto  archName  = trimArchName(gpu->archName());
-    auto&       masterLib = getExtOpMasterLibrary();
-    const auto& lib       = masterLib.getLibrary(archName, LayerNormSolutionLibrary::opName)
-                          ->as<LayerNormSolutionLibrary>();
-    auto sol
-        = lib.findBestSolution(LayerNormProblem(m, n, hipDataType_to_tensile_type(datatype)), *gpu);
-    const auto kernelName    = sol->name();
-    err                      = adapter->initKernel(kernelName);
+    int currentDeviceId{};
+    auto err = hipGetDevice(&currentDeviceId);
+    auto &adapter = extOpLibraries().at(currentDeviceId);
+    auto gpu = Tensile::hip::GetCurrentDevice();
+    const auto archName = trimArchName(gpu->archName());
+    auto &masterLib = getExtOpMasterLibrary();
+    const auto &lib = masterLib.getLibrary(archName, LayerNormSolutionLibrary::opName)->as<LayerNormSolutionLibrary>();
+    auto sol = lib.findBestSolution(LayerNormProblem(m, n, hipblasltDatatype_to_tensile_type(datatype)), *gpu);
+    const auto kernelName = sol->name();
+    err = adapter->initKernel(kernelName);
     const auto numWorkgroups = m;
 
     Tensile::KernelInvocation invocation;
