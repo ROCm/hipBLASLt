@@ -522,6 +522,10 @@ try
          value<bool>(&arg.print_kernel_info)->default_value(false),
          "Print solution, kernel name and solution index.")
 
+        ("block_count",
+         value<int32_t>(&arg.block_count)->default_value(1),
+         "Use rotating memory blocks for each iteration. Only works for api_method = 0.")
+
         ("help,h", "produces this help message")
 
         ("version", "Prints the version number");

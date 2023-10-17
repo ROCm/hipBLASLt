@@ -149,6 +149,7 @@ struct Arguments
     bool use_ext_setproblem;
     int  algo_method; // 0 for getheuristic, 1 for get all algos, 2 for algo index
     bool use_user_args;
+    int32_t block_count;
 
     // print
     bool print_solution_found;
