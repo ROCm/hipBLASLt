@@ -823,11 +823,11 @@ void testing_matmul(const Arguments& arg)
         CHECK_HIP_ERROR(dB[i]->transfer_from(*hB[i]));
         CHECK_HIP_ERROR(dC[i]->transfer_from(*hC[i]));
         if (block_count > 1) {  // rotating blocks
-            hipblaslt_cout << "---- DEBUG: (alt_dA[i]->transfer_from(*hA[i], block_count - 1)\n";
+            // hipblaslt_cout << "---- DEBUG: (alt_dA[i]->transfer_from(*hA[i], block_count - 1)\n";
             CHECK_HIP_ERROR(alt_dA[i]->transfer_from(*hA[i], block_count - 1));
-            hipblaslt_cout << "---- DEBUG: (alt_dB[i]->transfer_from(*hB[i], block_count - 1)\n";
+            // hipblaslt_cout << "---- DEBUG: (alt_dB[i]->transfer_from(*hB[i], block_count - 1)\n";
             CHECK_HIP_ERROR(alt_dB[i]->transfer_from(*hB[i], block_count - 1));
-            hipblaslt_cout << "---- DEBUG: (alt_dC[i]->transfer_from(*hC[i], block_count - 1)\n";
+            // hipblaslt_cout << "---- DEBUG: (alt_dC[i]->transfer_from(*hC[i], block_count - 1)\n";
             CHECK_HIP_ERROR(alt_dC[i]->transfer_from(*hC[i], block_count - 1));
         }
         if(arg.gradient && arg.use_e)
@@ -1940,11 +1940,11 @@ void testing_matmul(const Arguments& arg)
                 {
                     for(int i = 0; i < number_cold_calls; i++)
                     {
-                        hipblaslt_cout << "---- DEBUG: cold_call " << i << "\n";
+                        // hipblaslt_cout << "---- DEBUG: cold_call " << i << "\n";
                         TiA *ptr_dA = i % block_count ? *(alt_dA[0]) + (i % block_count - 1) * size_A[0] : *(dA[0]);
                         TiB *ptr_dB = i % block_count ? *(alt_dB[0]) + (i % block_count - 1) * size_B[0] : *(dB[0]);
                         To *ptr_dC = i % block_count ? *(alt_dC[0]) + (i % block_count - 1) * size_C[0] : *(dC[0]);
-                        hipblaslt_cout << "          : ptr_dA = " << ptr_dA << ", ptr_dB = " << ptr_dB << ", ptr_dC = " << ptr_dC << "\n";
+                        // hipblaslt_cout << "          : ptr_dA = " << ptr_dA << ", ptr_dB = " << ptr_dB << ", ptr_dC = " << ptr_dC << "\n";
                         EXPECT_HIPBLAS_STATUS(hipblasLtMatmul(handle,
                                                               matmul[0],
                                                               alpha_in[0],
@@ -1971,11 +1971,11 @@ void testing_matmul(const Arguments& arg)
                     gpu_time_used = get_time_us_sync(stream); // in microseconds
                     for(int i = 0; i < number_hot_calls; i++)
                     {
-                        hipblaslt_cout << "---- DEBUG: hot_call " << i << "\n";
+                        // hipblaslt_cout << "---- DEBUG: hot_call " << i << "\n";
                         TiA *ptr_dA = i % block_count ? *(alt_dA[0]) + (i % block_count - 1) * size_A[0] : *(dA[0]);
                         TiB *ptr_dB = i % block_count ? *(alt_dB[0]) + (i % block_count - 1) * size_B[0] : *(dB[0]);
                         To *ptr_dC = i % block_count ? *(alt_dC[0]) + (i % block_count - 1) * size_C[0] : *(dC[0]);
-                        hipblaslt_cout << "          : ptr_dA = " << ptr_dA << ", ptr_dB = " << ptr_dB << ", ptr_dC = " << ptr_dC << "\n";
+                        // hipblaslt_cout << "          : ptr_dA = " << ptr_dA << ", ptr_dB = " << ptr_dB << ", ptr_dC = " << ptr_dC << "\n";
                         EXPECT_HIPBLAS_STATUS(hipblasLtMatmul(handle,
                                                               matmul[0],
                                                               alpha_in[0],
