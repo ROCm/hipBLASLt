@@ -380,6 +380,7 @@ void testing_matmul(const Arguments& arg)
 
     bool    do_grouped_gemm = arg.grouped_gemm > 0;
     int32_t gemm_count      = std::max(1, arg.grouped_gemm);
+    int32_t block_count     = arg.block_count;
 
     std::vector<int64_t> M(gemm_count), N(gemm_count), K(gemm_count), lda(gemm_count),
         ldb(gemm_count), ldc(gemm_count), ldd(gemm_count), lde(gemm_count);
@@ -399,9 +400,9 @@ void testing_matmul(const Arguments& arg)
     std::vector<hipblasLtMatmulDesc_t> matmul(gemm_count);
     std::vector<hipblasLtEpilogue_t>   epilogue(gemm_count, HIPBLASLT_EPILOGUE_DEFAULT);
 
-    std::vector<device_vector<TiA>*>    dA(gemm_count);
-    std::vector<device_vector<TiB>*>    dB(gemm_count);
-    std::vector<device_vector<To>*>     dC(gemm_count), dD(gemm_count), dBias(gemm_count);
+    std::vector<device_vector<TiA>*>    dA(gemm_count), alt_dA(gemm_count);
+    std::vector<device_vector<TiB>*>    dB(gemm_count), alt_dB(gemm_count);
+    std::vector<device_vector<To>*>     dC(gemm_count), alt_dC(gemm_count), dD(gemm_count), dBias(gemm_count);
     std::vector<device_vector<Talpha>*> dScaleAlphaVec(gemm_count), dBias_C(gemm_count),
         dScaleA(gemm_count), dScaleB(gemm_count), dScaleC(gemm_count), dScaleD(gemm_count),
         dScaleE(gemm_count);
@@ -619,6 +620,11 @@ void testing_matmul(const Arguments& arg)
         dA[i]             = new device_vector<TiA>(size_A[i], 1, HMM);
         dB[i]             = new device_vector<TiB>(size_B[i], 1, HMM);
         dC[i]             = new device_vector<To>(size_C[i], 1, HMM);
+        if (block_count > 1) {  // rotating blocks
+            alt_dA[i]         = new device_vector<TiA>(size_A[i] * (block_count - 1), 1, HMM);
+            alt_dB[i]         = new device_vector<TiB>(size_B[i] * (block_count - 1), 1, HMM);
+            alt_dC[i]         = new device_vector<To>(size_C[i] * (block_count - 1), 1, HMM);
+        }
         dD[i]             = new device_vector<To>(size_D[i], 1, HMM);
         dBias[i]          = new device_vector<To>(size_bias[i], 1, HMM);
         dScaleAlphaVec[i] = new device_vector<Talpha>(size_scaleAlphaVec[i], 1, HMM);
@@ -627,6 +633,11 @@ void testing_matmul(const Arguments& arg)
         CHECK_DEVICE_ALLOCATION(dA[i]->memcheck());
         CHECK_DEVICE_ALLOCATION(dB[i]->memcheck());
         CHECK_DEVICE_ALLOCATION(dC[i]->memcheck());
+        if (block_count > 1) {  // rotating blocks
+            CHECK_DEVICE_ALLOCATION(alt_dA[i]->memcheck());
+            CHECK_DEVICE_ALLOCATION(alt_dB[i]->memcheck());
+            CHECK_DEVICE_ALLOCATION(alt_dC[i]->memcheck());
+        }
         CHECK_DEVICE_ALLOCATION(dD[i]->memcheck());
         CHECK_DEVICE_ALLOCATION(dBias[i]->memcheck());
         CHECK_DEVICE_ALLOCATION(dScaleAlphaVec[i]->memcheck());
@@ -811,6 +822,14 @@ void testing_matmul(const Arguments& arg)
         CHECK_HIP_ERROR(dA[i]->transfer_from(*hA[i]));
         CHECK_HIP_ERROR(dB[i]->transfer_from(*hB[i]));
         CHECK_HIP_ERROR(dC[i]->transfer_from(*hC[i]));
+        if (block_count > 1) {  // rotating blocks
+            // hipblaslt_cout << "---- DEBUG: (alt_dA[i]->transfer_from(*hA[i], block_count - 1)\n";
+            CHECK_HIP_ERROR(alt_dA[i]->transfer_from(*hA[i], block_count - 1));
+            // hipblaslt_cout << "---- DEBUG: (alt_dB[i]->transfer_from(*hB[i], block_count - 1)\n";
+            CHECK_HIP_ERROR(alt_dB[i]->transfer_from(*hB[i], block_count - 1));
+            // hipblaslt_cout << "---- DEBUG: (alt_dC[i]->transfer_from(*hC[i], block_count - 1)\n";
+            CHECK_HIP_ERROR(alt_dC[i]->transfer_from(*hC[i], block_count - 1));
+        }
         if(arg.gradient && arg.use_e)
         {
             CHECK_HIP_ERROR(dE[i]->transfer_from(*hE[i]));
@@ -1921,15 +1940,23 @@ void testing_matmul(const Arguments& arg)
                 {
                     for(int i = 0; i < number_cold_calls; i++)
                     {
+                        // hipblaslt_cout << "---- DEBUG: cold_call " << i << "\n";
+                        TiA *ptr_dA = i % block_count ? *(alt_dA[0]) + (i % block_count - 1) * size_A[0] : *(dA[0]);
+                        TiB *ptr_dB = i % block_count ? *(alt_dB[0]) + (i % block_count - 1) * size_B[0] : *(dB[0]);
+                        To *ptr_dC = i % block_count ? *(alt_dC[0]) + (i % block_count - 1) * size_C[0] : *(dC[0]);
+                        // hipblaslt_cout << "          : ptr_dA = " << ptr_dA << ", ptr_dB = " << ptr_dB << ", ptr_dC = " << ptr_dC << "\n";
                         EXPECT_HIPBLAS_STATUS(hipblasLtMatmul(handle,
                                                               matmul[0],
                                                               alpha_in[0],
-                                                              *(dA[0]),
+                                                            //   i % 2 ? *(dA[0]) : *(alt_dA[0]),
+                                                              ptr_dA,
                                                               matA[0],
-                                                              *(dB[0]),
+                                                            //   i % 2 ? *(dB[0]) : *(alt_dB[0]),
+                                                              ptr_dB,
                                                               matB[0],
                                                               &(h_beta[0]),
-                                                              *(dC[0]),
+                                                            //   i % 2 ? *(dC[0]) : *(alt_dC[0]),
+                                                              ptr_dC,
                                                               matC[0],
                                                               *(dD[0]),
                                                               matD[0],
@@ -1944,15 +1971,23 @@ void testing_matmul(const Arguments& arg)
                     gpu_time_used = get_time_us_sync(stream); // in microseconds
                     for(int i = 0; i < number_hot_calls; i++)
                     {
+                        // hipblaslt_cout << "---- DEBUG: hot_call " << i << "\n";
+                        TiA *ptr_dA = i % block_count ? *(alt_dA[0]) + (i % block_count - 1) * size_A[0] : *(dA[0]);
+                        TiB *ptr_dB = i % block_count ? *(alt_dB[0]) + (i % block_count - 1) * size_B[0] : *(dB[0]);
+                        To *ptr_dC = i % block_count ? *(alt_dC[0]) + (i % block_count - 1) * size_C[0] : *(dC[0]);
+                        // hipblaslt_cout << "          : ptr_dA = " << ptr_dA << ", ptr_dB = " << ptr_dB << ", ptr_dC = " << ptr_dC << "\n";
                         EXPECT_HIPBLAS_STATUS(hipblasLtMatmul(handle,
                                                               matmul[0],
                                                               alpha_in[0],
-                                                              *(dA[0]),
+                                                            //   i % 2 ? *(dA[0]) : *(alt_dA[0]),
+                                                              ptr_dA,
                                                               matA[0],
-                                                              *(dB[0]),
+                                                            //   i % 2 ? *(dB[0]) : *(alt_dB[0]),
+                                                              ptr_dB,
                                                               matB[0],
                                                               &(h_beta[0]),
-                                                              *(dC[0]),
+                                                            //   i % 2 ? *(dC[0]) : *(alt_dC[0]),
+                                                              ptr_dC,
                                                               matC[0],
                                                               *(dD[0]),
                                                               matD[0],
@@ -2150,6 +2185,9 @@ void testing_matmul(const Arguments& arg)
         delete dA[i];
         delete dB[i];
         delete dC[i];
+        delete alt_dA[i];
+        delete alt_dB[i];
+        delete alt_dC[i];
         delete dD[i];
         delete dBias[i];
         delete dScaleAlphaVec[i];
