@@ -457,9 +457,25 @@ try
          bool_switch(&arg.bias_vector)->default_value(false),
          "Apply bias vector")
 
+        ("scaleA",
+         bool_switch(&arg.scaleA)->default_value(false),
+         "Apply scale for A buffer")
+
+        ("scaleB",
+         bool_switch(&arg.scaleB)->default_value(false),
+         "Apply scale for B buffer")
+
         ("scaleAlpha_vector",
          bool_switch(&arg.scaleAlpha_vector)->default_value(false),
          "Apply scaleAlpha vector")
+
+        ("amaxScaleA",
+         bool_switch(&arg.amaxScaleA)->default_value(false),
+         "Apple scale for A buffer by abs max of A bufer")
+
+        ("amaxScaleB",
+         bool_switch(&arg.amaxScaleB)->default_value(false),
+         "Apple scale for B buffer by abs max of B bufer")
 
         ("use_e",
          bool_switch(&arg.use_e)->default_value(false),
