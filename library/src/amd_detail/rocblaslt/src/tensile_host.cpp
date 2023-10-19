@@ -627,6 +627,11 @@ namespace
             tensileProblem.setUseScaleAlphaVec(false);
             tensileProblem.setUseE(false);
             tensileProblem.setUseGradient(false);
+            if(a_type == Tensile::DataType::Float8 || a_type == Tensile::DataType::BFloat8
+               || b_type == Tensile::DataType::Float8 || b_type == Tensile::DataType::BFloat8)
+            {
+                tensileProblem.setUseScaleAB(false);
+            }
         }
         else
         {
@@ -1803,16 +1808,19 @@ inline auto getSolutions(
         auto actType          = tensile_prob.activationType();
         auto useScaleAlphaVec = tensile_prob.useScaleAlphaVec();
         auto useE             = tensile_prob.useE();
+        auto useScaleAB       = tensile_prob.useScaleAB();
         tensile_prob.setUseBias(false);
         tensile_prob.setActivationType(Tensile::ActivationType::None);
         tensile_prob.setUseScaleAlphaVec(false);
         tensile_prob.setUseE(false);
+        tensile_prob.setUseScaleAB(false);
         solutions_fallback = library->findTopSolutions(tensile_prob, *hardware, requestedAlgoCount);
         // restore
         tensile_prob.setUseBias(useBias);
         tensile_prob.setActivationType(actType);
         tensile_prob.setUseScaleAlphaVec(useScaleAlphaVec);
         tensile_prob.setUseE(useE);
+        tensile_prob.setUseScaleAB(useScaleAB);
     }
 
     auto solutions = library->findTopSolutions(tensile_prob, *hardware, requestedAlgoCount);
