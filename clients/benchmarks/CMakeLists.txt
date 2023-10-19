@@ -138,7 +138,7 @@ foreach( exe ${ext_bench_list_all} )
 endforeach( )
 
 foreach( exe ${ext_bench_list_all} )
-  rocm_install(TARGETS ${exe} COMPONENT samples)
+  rocm_install(TARGETS ${exe} COMPONENT benchmarks)
 endforeach( )
 
 # Add tests for special cases
