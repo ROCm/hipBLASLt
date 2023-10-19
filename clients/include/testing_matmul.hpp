@@ -823,9 +823,9 @@ void testing_matmul(const Arguments& arg)
 
         if(arg.scaleA)
         {
-            if (arg.amaxScaleA && (arg.a_type == HIPBLASLT_C_32F || arg.a_type == HIPBLASLT_C_16F))
+            if (arg.amaxScaleA && (arg.a_type == HIPBLASLT_R_32F || arg.a_type == HIPBLASLT_R_16F))
             {
-                CHECK_HIPBLASLT_ERROR(hipblasltExtAMax(arg.a_type, HIPBLASLT_C_32F, dScaleA[i], dA[i], A_row[i], A_col[i], stream));
+                CHECK_HIPBLASLT_ERROR(hipblasltExtAMax(arg.a_type, HIPBLASLT_R_32F, *dScaleA[i], *dA[i], A_row[i], A_col[i], stream));
                 CHECK_HIP_ERROR(hScaleA[i]->transfer_from(*dScaleA[i]));
             }
             else
@@ -834,9 +834,9 @@ void testing_matmul(const Arguments& arg)
 
         if(arg.scaleB)
         {
-            if (arg.amaxScaleB && (arg.b_type == HIPBLASLT_C_32F || arg.b_type == HIPBLASLT_C_16F))
+            if (arg.amaxScaleB && (arg.b_type == HIPBLASLT_R_32F || arg.b_type == HIPBLASLT_R_16F))
             {
-                CHECK_HIPBLASLT_ERROR(hipblasltExtAMax(arg.b_type, HIPBLASLT_C_32F, dScaleB[i], dB[i], B_row[i], B_col[i], stream));
+                CHECK_HIPBLASLT_ERROR(hipblasltExtAMax(arg.b_type, HIPBLASLT_R_32F, *dScaleB[i], *dB[i], B_row[i], B_col[i], stream));
                 CHECK_HIP_ERROR(hScaleB[i]->transfer_from(*dScaleB[i]));
             }
             else
