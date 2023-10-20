@@ -5402,7 +5402,9 @@ class KernelWriterAssembly(KernelWriter):
               # for each component in vector
               while r < numLoadVectorComp:
                 numElementsPerLoad = 1
-                if kernel["ProblemType"]["DataType%s"%tcDataType].isInt8() or kernel["ProblemType"]["DataType%s"%tcDataType].is8bitFloat() or tP["isM"]:
+                # FIXME: Don't know why for grvw == 1, need further investigate
+                dataType = kernel["ProblemType"]["DataType"] if tP["glvw"] < 4 else kernel["ProblemType"]["DataType%s"%tcDataType]
+                if dataType.isInt8() or dataType.is8bitFloat() or tP["isM"]:
                   # TODO-Int8, Check this:
                   # if tP["glvw"]>1 and kernel["AssertSummationElementMultiple"] % 2 == 0:
                   # # Pack two FP16 values into a single load dword x2
@@ -5416,8 +5418,7 @@ class KernelWriterAssembly(KernelWriter):
                     destVgprHi = self.vgprPool.checkOut( int8TempVgpr , 'destVgprHi')
                   dataIsByte = True
                   regIdx = r // 4
-                elif kernel["ProblemType"]["DataType%s"%tcDataType].isHalf() or \
-                  kernel["ProblemType"]["DataType%s"%tcDataType].isBFloat16():
+                elif dataType.isHalf() or dataType.isBFloat16():
                   if tP["glvw"]>1 and kernel["AssertSummationElementMultiple"] % 2 == 0:
                   # Pack two FP16 values into a single load dword x2
                     numElementsPerLoad = 2
@@ -5433,15 +5434,14 @@ class KernelWriterAssembly(KernelWriter):
                       destVgprHi = self.vgprPool.checkOut(1, 'destVgprHi')
 
                   regIdx = r // 2
-                elif kernel["ProblemType"]["DataType%s"%tcDataType].isInt8x4() or \
-                    kernel["ProblemType"]["DataType%s"%tcDataType].isSingle():
+                elif dataType.isInt8x4() or dataType.isSingle():
                   regIdx = r
-                elif kernel["ProblemType"]["DataType%s"%tcDataType].isDouble():
+                elif dataType.isDouble():
                   numElementsPerLoad = kernel["GlobalReadVectorWidth%c"%tc] # adjust numElementsPerLoad for DGEMM
                   regIdx = r*2
-                elif kernel["ProblemType"]["DataType%s"%tcDataType].isSingleComplex():
+                elif dataType.isSingleComplex():
                   regIdx = r*2
-                elif kernel["ProblemType"]["DataType%s"%tcDataType].isDoubleComplex() :
+                elif dataType.isDoubleComplex() :
                   regIdx = r*4
                 else:
                   printWarning("DataType unsupported")
@@ -5521,7 +5521,7 @@ class KernelWriterAssembly(KernelWriter):
 
                   offset = r * tP["bpeGR"] + instOffset
                   comment = "load one buffer value"
-                  if (kernel["ProblemType"]["DataType%s"%tcDataType].isHalf() or kernel["ProblemType"]["DataType%s"%tcDataType].isBFloat16()) and not tP["isM"]:
+                  if (dataType.isHalf() or dataType.isBFloat16()) and not tP["isM"]:
                     if numElementsPerLoad==2:
                       # Pack two FP16 values into a single load dword x2
                       r += 1 # skip next element since we loaded 2X here
@@ -5530,7 +5530,7 @@ class KernelWriterAssembly(KernelWriter):
                       hi16=loopCnt%2 if tP["glvw"]==1 else r%2
                       comment="load one buffer value"
 
-                  if ((kernel["ProblemType"]["DataType%s"%tcDataType].isInt8() or kernel["ProblemType"]["DataType%s"%tcDataType].is8bitFloat()) \
+                  if ((dataType.isInt8() or dataType.is8bitFloat()) \
                                and not tP["isM"]) or (tP["isM"] and destVgprHi != None):
                     # TODO-Int8, Check this:
                     # if numElementsPerLoad==2:
@@ -5625,8 +5625,11 @@ class KernelWriterAssembly(KernelWriter):
                 # Half
                 elif destVgprHi != None and r % 2 == 1:
                   module.add(SWaitCnt(vmcnt=0, comment=""))
+                  if kernel["ProblemType"]["DataType%s"%tcDataType].is8bitFloat():
+                    module.add(VLShiftRightB32(dst=vgpr(destVgprHi), shiftHex=hex(8), src=vgpr(destVgprHi), comment="shift right to lower 8 bits"))
                   module.add(VOrB32(dst=vgpr(destVgpr), src0=vgpr(destVgpr), src1=vgpr(destVgprHi), comment="HasEccHalf: pack"))
-
+                  if kernel["ProblemType"]["DataType%s"%tcDataType].is8bitFloat() and (g2lIdx % 2 == 1):
+                    module.add(VLShiftLeftB32(dst=vgpr(destVgpr), shiftHex=hex(16), src=vgpr(destVgpr), comment="shift left to higher 16 bits"))
                 # For half (bf16). Note: for int8, we will checkin after loading all components
                 if (destVgprHi != None) and (not dataIsByte):
                   self.vgprPool.checkIn(destVgprHi)
