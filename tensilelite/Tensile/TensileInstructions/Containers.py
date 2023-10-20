@@ -273,7 +273,7 @@ class RegName:
     def __eq__(self, __o: object) -> bool:
         if not isinstance(__o, RegName):
             return False
-        return (self.name == __o.name) and (self.offsets == __o.offsets)
+        return (self.name == __o.name) and (sum(self.offsets) == sum(__o.offsets))
 
     def __str__(self) -> str:
         ss = self.name
