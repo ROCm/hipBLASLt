@@ -6317,6 +6317,7 @@ class KernelWriterAssembly(KernelWriter):
       instructionCnt = 0
       fp16AltMap = {}
       g2lIdxDict = {}
+      regTmpVgprBlock = None
       for perp in range(0, tP["nrp"]):
         localWriteCode = imod.add(Module("LocalWrite%u perp=%d"%(instructionCnt,perp)))
         lwa = "LocalWriteAddr%s"%tc  # default
@@ -6482,13 +6483,14 @@ class KernelWriterAssembly(KernelWriter):
                 newBlockWidth = tP["globalReadInstruction"].blockWidth
                 if newBlockWidth == 0.25:
                   new_src = fastdeepcopy(paramList[0])
-                  vgprTmp = self.vgprPool.checkOut(1)
                   if tP["glvw"] == 1:
+                    vgprTmp = self.vgprPool.checkOut(1)
                     new_src.regName.offsets.append(tP["shiftGR"])
                     src_sel = SelectBit.BYTE_2 if isHigh16Bits else SelectBit.BYTE_0
                     dst_sel = SelectBit.WORD_1 if isHigh16Bits else SelectBit.WORD_0
                     localWriteCode.add(VCvtFP8toF32(dst=vgpr(vgprTmp), src=new_src , sdwa=SDWAModifiers(src0_sel=src_sel), comment="convert C to fp32"))
                     localWriteCode.add(VCvtF32toF16(dst=paramList[0], src=vgpr(vgprTmp), sdwa=SDWAModifiers(dst_sel=dst_sel), comment="convert C to fp16"))
+                    self.vgprPool.checkIn(vgprTmp)
                   else:
                     if isCvtHighBits and isHigh16Bits:
                       src_sel = SelectBit.BYTE_3
@@ -6501,9 +6503,20 @@ class KernelWriterAssembly(KernelWriter):
                       new_src.regName.offsets.append(tP["shiftGR"])
                       src_sel = SelectBit.BYTE_0
                     dst_sel = SelectBit.WORD_1 if isHigh16Bits else SelectBit.WORD_0
-                    localWriteCode.add(VCvtFP8toF32(dst=vgpr(vgprTmp), src=new_src , sdwa=SDWAModifiers(src0_sel=src_sel), comment="convert C to fp32"))
-                    localWriteCode.add(VCvtF32toF16(dst=paramList[0], src=vgpr(vgprTmp), sdwa=SDWAModifiers(dst_sel=dst_sel), comment="convert C to fp16"))
-                  self.vgprPool.checkIn(vgprTmp)
+                    if new_src == paramList[0]:
+                      if src_sel == SelectBit.BYTE_0 or src_sel == SelectBit.BYTE_2:
+                        if regTmpVgprBlock == None:
+                          regTmpVgprBlock = self.vgprPool.checkOutAligned(2, 2)
+                        src_sel2 = SelectBit.WORD_0 if src_sel == SelectBit.BYTE_0 else SelectBit.WORD_1
+                        localWriteCode.add(VCvtPkFP8toF32(dst=vgpr(regTmpVgprBlock, 2), src=new_src , sdwa=SDWAModifiers(src0_sel=src_sel2), comment="convert C to fp32"))
+                        localWriteCode.add(VCvtF32toF16(dst=paramList[0], src=vgpr(regTmpVgprBlock), sdwa=SDWAModifiers(dst_sel=dst_sel), comment="convert C to fp16"))
+                      else:
+                        localWriteCode.add(VCvtF32toF16(dst=paramList[0], src=vgpr(regTmpVgprBlock + 1), sdwa=SDWAModifiers(dst_sel=dst_sel), comment="convert C to fp16"))
+                    else:
+                      vgprTmp = self.vgprPool.checkOut(1)
+                      localWriteCode.add(VCvtFP8toF32(dst=vgpr(vgprTmp), src=new_src , sdwa=SDWAModifiers(src0_sel=src_sel), comment="convert C to fp32"))
+                      localWriteCode.add(VCvtF32toF16(dst=paramList[0], src=vgpr(vgprTmp), sdwa=SDWAModifiers(dst_sel=dst_sel), comment="convert C to fp16"))
+                      self.vgprPool.checkIn(vgprTmp)
                 elif newBlockWidth == 0.5:
                   vgprTmp = self.vgprPool.checkOutAligned(2, 2)
                   src_sel = SelectBit.WORD_1 if isCvtHighBits else SelectBit.WORD_0
@@ -6553,6 +6566,9 @@ class KernelWriterAssembly(KernelWriter):
               writeInst = LocalWriteX(dstAddr=vgpr(lwa), src0=paramList[0], src1=paramList[1], ds=ds, comment=comment)
             localWriteCode.add(writeInst)
             instructionCnt += 1 if blockWidth < 8 else 2
+
+      if regTmpVgprBlock != None:
+        self.vgprPool.checkIn(regTmpVgprBlock)
 
       if tmpLocalWriteAddr != -1:
         self.vgprPool.checkIn(tmpLocalWriteAddr)
