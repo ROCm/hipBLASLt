@@ -965,6 +965,43 @@ Tests:
   unit_check: 1
   gpu_arch: '94?'
 
+- name: matmul_gemm_mix_precisions2
+  category: pre_checkin
+  function:
+    matmul: *real_mix_precisions
+  matrix_size:
+    - { M:  1,   N:  1,    K:  1    }
+    - { M:  1,   N:  1,    K:  127  }
+    - { M:  1,   N:  127,  K:  127  }
+    - { M:  2,   N:  127,  K:  127  }
+    - { M:  3,   N:  127,  K:  127  }
+    - { M:  127, N:  1,    K:  127  }
+    - { M:  127, N:  2,    K:  127  }
+    - { M:  127, N:  3,    K:  127  }
+    - { M:  1,   N:  1,    K:  128  }
+    - { M:  1,   N:  128,  K:  128  }
+    - { M:  2,   N:  128,  K:  128  }
+    - { M:  3,   N:  128,  K:  128  }
+    - { M:  128, N:  1,    K:  128  }
+    - { M:  128, N:  2,    K:  128  }
+    - { M:  128, N:  3,    K:  128  }
+    - { M:  1,   N:  1,    K:  129  }
+    - { M:  1,   N:  129,  K:  129  }
+    - { M:  2,   N:  129,  K:  129  }
+    - { M:  3,   N:  129,  K:  129  }
+    - { M:  129, N:  1,    K:  129  }
+    - { M:  129, N:  2,    K:  129  }
+    - { M:  129, N:  3,    K:  129  }
+  transA_transB: *transA_transB_range
+  alpha: 1
+  beta: [ 0, 2 ]
+  use_ext: [1]
+  use_ext_setproblem: [1]
+  bias_vector: 1
+  bias_type: [f32_r]
+  unit_check: 1
+  gpu_arch: '94?'
+
 - name: matmul_gemm_mix_precisions_fp8
   category: pre_checkin
   function:
