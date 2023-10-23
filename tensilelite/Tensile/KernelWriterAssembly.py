@@ -5420,7 +5420,7 @@ class KernelWriterAssembly(KernelWriter):
                     destVgprHi = self.vgprPool.checkOut( int8TempVgpr , 'destVgprHi')
                   dataIsByte = True
                   regIdx = r // 4
-                  if (tP["localWriteInstruction"].blockWidth <= 0.5) and (r%2 == 0):
+                  if (tP["localWriteInstruction"].blockWidth <= 0.5) and (r%2 == 0) and not tP["isM"]:
                       numVgprG2L = self.states.a.numVgprG2L if tc == 'A' else self.states.b.numVgprG2L
                       eccOffset = _getEccOffset(tP["globalReadInstruction"].totalWidth, bpr=self.states.bpr, bpe=max(tP["bpeGR"], tP["bpe"]), \
                         glvw=tP["glvw"], idx=loopCnt, numVgprG2L=numVgprG2L)
@@ -5525,7 +5525,7 @@ class KernelWriterAssembly(KernelWriter):
                     self.vgprs.globalReadRegisters[tc].append(0)
                   else:
                     destVgpr="G2L%s+%u+%u"%(tc, g2lIdx + tP["shiftGR"] if not tP["isM"] else graIdx, regIdx+eccOffset)
-                    self.vgprs.globalReadRegisters[tc].append(g2lIdx + tP["shiftGR"] + regIdx+eccOffset)
+                    self.vgprs.globalReadRegisters[tc].append( (g2lIdx + tP["shiftGR"] if not tP["isM"] else graIdx) + regIdx+eccOffset)
 
                   offset = r * tP["bpeGR"] + instOffset
                   comment = "load one buffer value"
@@ -5890,7 +5890,7 @@ class KernelWriterAssembly(KernelWriter):
                   self.vgprs.globalReadRegisters[tc].append(0)
                 else:
                   destVgpr="G2L%s+%u"%(tc, (g2lIdx+eccOffset+tP["shiftGR"]) if not tP["isM"] else graIdx)
-                  self.vgprs.globalReadRegisters[tc].append(g2lIdx+eccOffset+tP["shiftGR"])
+                  self.vgprs.globalReadRegisters[tc].append(g2lIdx+eccOffset+tP["shiftGR"] if not tP["isM"] else graIdx)
 
                 # TODO: is it possible to load only hi16 when no in tail? (need to check INT8 too)
                 isHigh16Bits = (kernel["ProblemType"]["DataType"].isHalf() or kernel["ProblemType"]["DataType"].isBFloat16()) and loopCnt%2==1 if not tP["isM"] else False
@@ -6367,7 +6367,8 @@ class KernelWriterAssembly(KernelWriter):
                 g2lIdx *= (tP["bpeGR"]// tP["bpe"])
 
             graIdx = i * self.states.rpgo if kernel["BufferLoad"] else i * self.states.rpga
-            if tP["isM"] : g2lIdx = graIdx
+            if tP["isM"] : 
+              g2lIdx = graIdx
 
             # If g2lIdx is already in the dict and blockWidth < 1, the data may
             # be packed into one register.
