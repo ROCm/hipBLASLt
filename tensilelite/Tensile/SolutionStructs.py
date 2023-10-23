@@ -2423,12 +2423,6 @@ class Solution(collections.abc.Mapping):
           if state["ProblemType"]["DataType"].numRegisters() == 0.5 and (not state["ProblemType"]["HighPrecisionAccumulate"]):
               if state["GlobalReadVectorWidthA"] == 1 or state["GlobalReadVectorWidthB"] == 1:
                 reject(state, "HalfEcc requires HPA if glvw = 1")
-        # FIXME: a transpose, b non-transpose local write, c load not supported
-        if state["ProblemType"]["DataType"].numRegisters() == 0.25:
-          if state["GlobalReadVectorWidthA"] < 4:
-            reject(state, "Int8 requires GLVWA >= 4, current is %u"%state["GlobalReadVectorWidthA"])
-          if state["GlobalReadVectorWidthB"] < 4:
-            reject(state, "Int8 requires GLVWB >= 4, current is %u"%state["GlobalReadVectorWidthB"])
 
       if state["ProblemType"]["SparseA"] and not state["DirectToVgprSparseMetadata"]:
         if state["GlobalReadVectorWidthA"] % 4 != 0:

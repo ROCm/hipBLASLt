@@ -304,6 +304,13 @@ class StateVgprs:
   addrC: int    = -1
   addrBias: int = -1
 
+  globalReadRegisters: Dict[str, int] = field(init=False)
+
+  def __post_init__(self):
+    self.globalReadRegisters = {}
+    self.globalReadRegisters['A'] = []
+    self.globalReadRegisters['B'] = []
+
 @dataclass
 class CodeModules:
   accVgprRead: Optional[Module]               = None
