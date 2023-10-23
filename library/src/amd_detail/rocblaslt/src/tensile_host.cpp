@@ -408,18 +408,13 @@ namespace
         // set batch mode
         tensileProblem.setStridedBatched(prob.strided_batch);
         tensileProblem.setGroupedGemm(prob.grouped_gemm);
-        if(prob.grouped_gemm)
-            tensileProblem.setUseDeviceUserArguments(true);
-        else
-            tensileProblem.setUseDeviceUserArguments(false);
+        tensileProblem.setUseDeviceUserArguments(prob.grouped_gemm);
 
         // alpha and beta are stored by value in Tensile::TypedContractionInputs
         // alpha and beta are copied from host to Tensile::TypedContractionInputs
         // If k==0, we do not need to dereference prob.alpha and can set
         // tensileAlpha=0 Not positive if this is necessary here as well
-        double alphaRestriction = 0;
-        if(prob.k)
-            alphaRestriction = alpha;
+        double alphaRestriction = prob.k ? alpha : 0;
         tensileProblem.setAlphaRestriction(Tensile::toScalarValueEnum(alphaRestriction));
 
         // Add problem predicates for CEqualsD
@@ -427,7 +422,7 @@ namespace
 
         if(is_e_enabled(prob.epilogue))
         {
-            bool isOutput = prob.gradient ? false : true;
+            bool isOutput = !prob.gradient;
             tensileProblem.setUseE(true);
             tensileProblem.setE(d_type,
                                 {prob.m, prob.n, prob.batch_count},
@@ -439,12 +434,10 @@ namespace
         auto biasSrc = getBiasSrc(prob.epilogue);
         auto biasSize
             = (biasSrc == Tensile::ContractionProblemGemm::TENSOR::B) ? d.sizes()[1] : d.sizes()[0];
-        if(a_type == Tensile::DataType::Int8 && b_type == Tensile::DataType::Int8)
+        tensileProblem.setUseBias(false);
+        if(a_type != Tensile::DataType::Int8 || b_type != Tensile::DataType::Int8)
         {
-            tensileProblem.setUseBias(false);
-        }
-        else
-        {
+            // bias is only enabled for float types
             tensileProblem.setUseBias(true);
             tensileProblem.setBias(hipblasltDatatype_to_tensile_type(prob.bias_type),
                                    biasSize,
@@ -453,41 +446,31 @@ namespace
                                    biasSrc);
         }
 
+        // set ScaleAB
+        tensileProblem.setUseScaleAB(false);
+        // set ScaleAlphaVec mode
+        tensileProblem.setUseScaleAlphaVec(true);
+        tensileProblem.setScaleAlphaVec(compute_type, d.sizes()[0]);
         // ScaleAB is only supported on F8/BF8
         if(a_type == Tensile::DataType::Float8 || a_type == Tensile::DataType::BFloat8
            || b_type == Tensile::DataType::Float8 || b_type == Tensile::DataType::BFloat8)
         {
             tensileProblem.setUseScaleAB(true);
-            if(d_type == Tensile::DataType::Float8 || d_type == Tensile::DataType::BFloat8)
-                tensileProblem.setUseScaleCD(true);
-            else
-                tensileProblem.setUseScaleCD(false);
+            tensileProblem.setUseScaleCD(d_type == Tensile::DataType::Float8 || d_type == Tensile::DataType::BFloat8);
             tensileProblem.setScaleA(compute_type);
             tensileProblem.setScaleB(compute_type);
             tensileProblem.setScaleC(compute_type);
             tensileProblem.setScaleD(compute_type);
-            tensileProblem.setUseScaleAlphaVec(true);
-            tensileProblem.setScaleAlphaVec(compute_type, d.sizes()[0]);
-        }
-        else
-        {
-            tensileProblem.setUseScaleAB(false);
-            // set ScaleAlphaVec mode
-            tensileProblem.setUseScaleAlphaVec(true);
-            tensileProblem.setScaleAlphaVec(compute_type, d.sizes()[0]);
         }
 
         // set Actvation
         // only bias src A/B cannot enabled Act
+        tensileProblem.setActivationType(Tensile::ActivationType::None);
         if(!is_biasSrc_AB(prob.epilogue))
         {
             tensileProblem.setActivationType(Tensile::ActivationType::All);
             tensileProblem.setActivationComputeType(compute_type);
             tensileProblem.setActivationEnumArg(getTensileActivationType(prob.epilogue));
-        }
-        else
-        {
-            tensileProblem.setActivationType(Tensile::ActivationType::None);
         }
 
         // set use gradient
@@ -600,18 +583,13 @@ namespace
         // set batch mode
         tensileProblem.setStridedBatched(prob.strided_batch);
         tensileProblem.setGroupedGemm(prob.grouped_gemm);
-        if(prob.grouped_gemm)
-            tensileProblem.setUseDeviceUserArguments(true);
-        else
-            tensileProblem.setUseDeviceUserArguments(false);
+        tensileProblem.setUseDeviceUserArguments(prob.grouped_gemm);
 
         // alpha and beta are stored by value in Tensile::TypedContractionInputs
         // alpha and beta are copied from host to Tensile::TypedContractionInputs
         // If k==0, we do not need to dereference prob.alpha and can set
         // tensileAlpha=0 Not positive if this is necessary here as well
-        double alphaRestriction = 0;
-        if(prob.k)
-            alphaRestriction = alpha;
+        double alphaRestriction = prob.k ? alpha : 0;
         tensileProblem.setAlphaRestriction(Tensile::toScalarValueEnum(alphaRestriction));
 
         // Add problem predicates for CEqualsD
@@ -622,6 +600,7 @@ namespace
         if(fallback && prob.bias == nullptr && prob.scaleAlphaVec == nullptr && prob.E == nullptr
            && tensileAct == Tensile::ActivationType::None)
         {
+            // Pure gemm
             tensileProblem.setUseBias(false);
             tensileProblem.setActivationType(Tensile::ActivationType::None);
             tensileProblem.setUseScaleAlphaVec(false);
@@ -630,6 +609,7 @@ namespace
         }
         else
         {
+            // Flexible gemm
             auto& d = tensileProblem.tensor(Tensile::ContractionProblemGemm::TENSOR::D);
             // set bias mode
             auto biasSrc  = getBiasSrc(prob.epilogue);
@@ -691,7 +671,7 @@ namespace
             // set E
             if(is_e_enabled(prob.epilogue))
             {
-                bool isOutput = prob.gradient ? false : true;
+                bool isOutput = !prob.gradient;
                 tensileProblem.setUseE(true);
                 tensileProblem.setE(d_type,
                                     {prob.m, prob.n, prob.batch_count},
@@ -1252,14 +1232,14 @@ rocblaslt_status gemmCreate(RocblasltContractionProblem const& problem,
                 = std::static_pointer_cast<TensileDataGemm>(gemmData);
             updateTensileProblem(false, problem, data->problem);
             data->inputs         = GetTensileInputs(problem);
-            data->enableEpilogue = problem.epilogue == ROCBLASLT_EPILOGUE_DEFAULT ? false : true;
+            data->enableEpilogue = problem.epilogue != ROCBLASLT_EPILOGUE_DEFAULT;
         }
         else
         {
             TensileDataGemm data;
             data.problem        = ConstructTensileProblem(problem);
             data.inputs         = GetTensileInputs(problem);
-            data.enableEpilogue = problem.epilogue == ROCBLASLT_EPILOGUE_DEFAULT ? false : true;
+            data.enableEpilogue = problem.epilogue != ROCBLASLT_EPILOGUE_DEFAULT;
 
             gemmData = std::static_pointer_cast<void>(std::make_shared<TensileDataGemm>(data));
         }
@@ -1760,7 +1740,7 @@ void _convertToHeuristicResultArray(
         int* solutionIndex = (int*)(heuristicResultsArray[i].algo.data);
         *solutionIndex     = solution->index;
         heuristicResultsArray[i].algo.max_workspace_bytes = maxWorkSpaceBytes;
-        heuristicResultsArray[i].algo.fallback            = fallbackCount-- > 0 ? true : false;
+        heuristicResultsArray[i].algo.fallback            = fallbackCount-- > 0;
         heuristicResultsArray[i].state                    = rocblaslt_status_success;
         heuristicResultsArray[i].workspaceSize = solution->requiredWorkspaceSize(problem);
     }
