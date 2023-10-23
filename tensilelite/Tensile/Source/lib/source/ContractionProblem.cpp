@@ -77,15 +77,31 @@ namespace Tensile
 
         TensorDescriptor a, b, c, d;
 
-        vector<size_t> dimA = transA ? {k, m} : {m, k};
-        a                   = TensorDescriptor("a", aType, {dimA[0], dimA[1], batchSize}, {1, lda, aStride});
-        free[0].i           = transA ? 1 : 0;
-        bound[0].a          = transA ? 0 : 1;
+        if(transA)
+        {
+            a          = TensorDescriptor("a", aType, {k, m, batchSize}, {1, lda, aStride});
+            free[0].i  = 1;
+            bound[0].a = 0;
+        }
+        else
+        {
+            a          = TensorDescriptor("a", aType, {m, k, batchSize}, {1, lda, aStride});
+            free[0].i  = 0;
+            bound[0].a = 1;
+        }
 
-        vector<size_t> dimB = transB ? {n, k} : {k, n};
-        b                   = TensorDescriptor("b", bType, {dimB[0], dimB[1], batchSize}, {1, ldb, bStride});
-        free[1].i           = transB ? 0 : 1;
-        bound[0].b          = transB ? 1 : 0;
+        if(transB)
+        {
+            b          = TensorDescriptor("b", bType, {n, k, batchSize}, {1, ldb, bStride});
+            free[1].i  = 0;
+            bound[0].b = 1;
+        }
+        else
+        {
+            b          = TensorDescriptor("b", bType, {k, n, batchSize}, {1, ldb, bStride});
+            free[1].i  = 1;
+            bound[0].b = 0;
+        }
 
         c = TensorDescriptor("c", cType, {m, n, batchSize}, {1, ldc, cStride});
         d = TensorDescriptor("d", dType, {m, n, batchSize}, {1, ldd, dStride});
@@ -169,11 +185,27 @@ namespace Tensile
         free[1].isA                       = false;
         free[1].i = free[1].c = free[1].d = 1;
 
-        free[0].i = transA ? 1 : 0;
-        bound.a   = transA ? 0 : 1;
+        if(transA)
+        {
+            free[0].i = 1;
+            bound.a   = 0;
+        }
+        else
+        {
+            free[0].i = 0;
+            bound.a   = 1;
+        }
 
-        free[1].i = transB ? 0 : 1;
-        bound.b   = transB ? 1 : 0;
+        if(transB)
+        {
+            free[1].i = 0;
+            bound.b   = 1;
+        }
+        else
+        {
+            free[1].i = 1;
+            bound.b   = 0;
+        }
 
         FreeIndices  freeIndices{free};
         BatchIndices batchIndices;

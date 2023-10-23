@@ -355,12 +355,20 @@ namespace Tensile
                                                   hipEvent_t                           startEvent,
                                                   hipEvent_t                           stopEvent)
         {
-            for(size_t i = 0; i < kernels.size(); i++)
-            {
-                hipEvent_t kStart = i == 0 ? startEvent : nullptr;
-                hipEvent_t kStop  = i == kernels.size() - 1 ? stopEvent : nullptr;
+            auto first = kernels.begin();
+            auto last  = kernels.end() - 1;
 
-                HIP_CHECK_RETURN(launchKernel(kernels[i], stream, kStart, kStop));
+            for(auto iter = kernels.begin(); iter != kernels.end(); iter++)
+            {
+                hipEvent_t kStart = nullptr;
+                hipEvent_t kStop  = nullptr;
+
+                if(iter == first)
+                    kStart = startEvent;
+                if(iter == last)
+                    kStop = stopEvent;
+
+                HIP_CHECK_RETURN(launchKernel(*iter, stream, kStart, kStop));
             }
             return hipSuccess;
         }
