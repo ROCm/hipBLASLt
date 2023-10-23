@@ -1844,7 +1844,7 @@ rocblaslt_status getBestSolutions(RocblasltContractionProblem const& prob,
     std::shared_ptr<TensileDataGemm> data = std::static_pointer_cast<TensileDataGemm>(gemmData);
     updateTensileProblem(false, prob, data->problem);
 
-    bool enableEpilogue = !(prob.epilogue == ROCBLASLT_EPILOGUE_DEFAULT);
+    bool enableEpilogue = prob.epilogue != ROCBLASLT_EPILOGUE_DEFAULT;
 
     int  fallbackSize = 0;
     auto solutions    = getSolutions(
