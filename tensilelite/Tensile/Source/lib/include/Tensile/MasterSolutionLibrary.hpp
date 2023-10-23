@@ -143,21 +143,15 @@ namespace Tensile
                                                              double*          fitness
                                                              = nullptr) const override
         {
-            if(Debug::Instance().printSolutionSelectionTime())
-            {
-                auto start  = std::chrono::steady_clock::now();
-                auto result = findBestSolution_runner(problem, hardware, fitness);
-                auto end    = std::chrono::steady_clock::now();
+            auto start  = std::chrono::steady_clock::now();
+            auto result = findBestSolution_runner(problem, hardware, fitness);
+            auto end    = std::chrono::steady_clock::now();
 
-                double time = std::chrono::duration<double, std::micro>(end - start).count();
+            double time = std::chrono::duration<double, std::micro>(end - start).count();
+            if(Debug::Instance().printSolutionSelectionTime())
                 std::cout << "Solution selection time: " << time << " us" << std::endl;
 
-                return result;
-            }
-            else
-            {
-                return findBestSolution_runner(problem, hardware, fitness);
-            }
+            return result;
         }
 
         std::shared_ptr<MySolution> findBestSolution_runner(MyProblem const& problem,
