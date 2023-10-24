@@ -1049,7 +1049,7 @@ def generateLogicDataAndSolutions(logicFiles, args):
   nextSolIndex = 0
 
   for logic in filter(lambda i: i[1] != "", Utils.tqdm(libraries, "Processing logic data")):
-    (_, architectureName, _, _, _, newLibrary) = logic
+    (_, architectureName, _, _, _, newLibrary, _) = logic
 
     if globalParameters["PackageLibrary"]:
       if architectureName in masterLibraries:
@@ -1095,6 +1095,21 @@ def generateLogicDataAndSolutions(logicFiles, args):
 
   # remove duplicates while preserving order
   solutions = dict.fromkeys(solutions).keys()
+
+  # Match yaml file solutions to solution index
+  if args.GenSolTable:
+    matchTable = []
+    counter = 0
+    for logic in filter(lambda i: i[1] != "", Utils.tqdm(libraries, "Match yaml file solutions to solution index")):
+      (_, architectureName, _, _, _, newLibrary, srcFile) = logic
+      fileCounter = 0
+      for _, s in newLibrary.solutions.items():
+        assert counter == s.index
+        matchTable.append([srcFile, fileCounter, s.index])
+        fileCounter += 1
+        counter += 1
+    LibraryIO.write("MatchTable", matchTable)
+
   return solutions, masterLibraries, fullMasterLibrary
 
 ################################################################################
@@ -1218,6 +1233,8 @@ def TensileCreateLibrary():
   argParser.add_argument("--client-config", dest="ClientConfig", action="store_true",
                          help="Create client config for setting the library and code object files")
   argParser.add_argument("--global-parameters", nargs="+", type=splitExtraParameters, default=[])
+  argParser.add_argument("--generate-solution-table", dest="GenSolTable", action="store_true", default=False,
+                         help="Generate solution-yaml matching table")
 
   args = argParser.parse_args()
 
