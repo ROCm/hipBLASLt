@@ -46,7 +46,8 @@
 
 #include "hipblaslt/hipblaslt-export.h"
 #include "hipblaslt/hipblaslt-version.h"
-#include <hipblas/hipblas.h>
+#include "hipblaslt/hipblas-enums.h"
+//#include <hipblas/hipblas.h>
 
 #include <memory>
 #include <vector>
