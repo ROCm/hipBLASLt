@@ -43,6 +43,7 @@ configure_file( "${CMAKE_CURRENT_SOURCE_DIR}/include/hipblaslt_xfloat32.h" "${PR
 configure_file( "${CMAKE_CURRENT_SOURCE_DIR}/include/hipblaslt_float8.h" "${PROJECT_BINARY_DIR}/include/hipblaslt/hipblaslt_float8.h" COPYONLY)
 configure_file( "${CMAKE_CURRENT_SOURCE_DIR}/include/hipblaslt_hip_f8_impl.h" "${PROJECT_BINARY_DIR}/include/hipblaslt/hipblaslt_hip_f8_impl.h" COPYONLY)
 configure_file( "${CMAKE_CURRENT_SOURCE_DIR}/include/hipblaslt-ext-op.h" "${PROJECT_BINARY_DIR}/include/hipblaslt/hipblaslt-ext-op.h" COPYONLY)
+configure_file( "${CMAKE_CURRENT_SOURCE_DIR}/include/hipblas-enums.h" "${PROJECT_BINARY_DIR}/include/hipblaslt/hipblas-enums.h" COPYONLY)
 
 # Public hipBLASLt headers
 set(hipblaslt_headers_public
@@ -52,6 +53,7 @@ set(hipblaslt_headers_public
   include/hipblaslt_float8.h
   include/hipblaslt_hip_f8_impl.h
   include/hipblaslt-ext-op.h
+  include/hipblas-enums.h
   ${PROJECT_BINARY_DIR}/include/hipblaslt/hipblaslt-version.h
 )
 

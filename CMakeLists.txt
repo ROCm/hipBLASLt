@@ -225,7 +225,8 @@ else()
     endif()
 endif()
 
-find_package( hipblas REQUIRED CONFIG PATHS ${HIP_DIR} ${ROCM_PATH} /opt/rocm)
+# remove hipblas dependency
+# find_package( hipblas REQUIRED CONFIG PATHS ${HIP_DIR} ${ROCM_PATH} /opt/rocm)
 
 # Setup version
 set(VERSION_STRING "0.7.0")
