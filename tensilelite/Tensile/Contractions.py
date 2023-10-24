@@ -622,3 +622,6 @@ class Solution:
                 raise KeyError("{0} is not a property of Solution.".format(key))
 
             setattr(self, key, value)
+
+    def getSolutionKeys(self):
+        return self.originalSolution.keys()

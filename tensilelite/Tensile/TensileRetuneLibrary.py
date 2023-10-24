@@ -1,6 +1,6 @@
 ###############################################################################
 #
-# Copyright (C) 2022 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -45,7 +45,7 @@ def parseCurrentLibrary(libPath, sizePath):
     libYaml = LibraryIO.readYAML(libPath)
     # parseLibraryLogicData mutates the original data, so make a copy
     fields = LibraryIO.parseLibraryLogicData(copy.deepcopy(libYaml), libPath)
-    (_, _, problemType, solutions, exactLogic, _) = fields
+    (_, _, problemType, solutions, exactLogic, _, _) = fields
 
     # get performance metric
     if len(libYaml) > 10:

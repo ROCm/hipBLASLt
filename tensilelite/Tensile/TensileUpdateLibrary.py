@@ -39,7 +39,7 @@ def UpdateLogic(filename, logicPath, outputPath):
     libYaml = LibraryIO.readYAML(filename)
     # parseLibraryLogicData mutates the original data, so make a copy
     fields = LibraryIO.parseLibraryLogicData(copy.deepcopy(libYaml), filename)
-    (_, _, problemType, solutions, _, _) = fields
+    (_, _, problemType, solutions, _, _, _) = fields
 
     # problem type object to state
     problemTypeState = problemType.state
