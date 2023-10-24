@@ -196,6 +196,7 @@ class LibraryLogic(NamedTuple):
     solutions: list
     exactLogic: list
     library: SolutionLibrary.MasterSolutionLibrary
+    srcFile: str
 
 
 def parseLibraryLogicFile(filename, archs=None):
@@ -213,10 +214,10 @@ def parseLibraryLogicData(data, srcFile="?", archs=None):
         if isinstance(archs, List):
             if len(archs) > 0 and not archs[0] == "all":
                 if not (any(is_arch_valid(arch.split(":")[0], data["ArchitectureName"]) for arch in archs)):
-                    return LibraryLogic("", "", None, [], [], None)
+                    return LibraryLogic("", "", None, [], [], None, srcFile)
         elif isinstance(archs, str):
             if not is_arch_valid(archs.split(":")[0], data["ArchitectureName"]):
-                return LibraryLogic("", "", None, [], [], None)
+                return LibraryLogic("", "", None, [], [], None, srcFile)
 
     if "CUCount" not in data:
         data["CUCount"] = None
@@ -251,7 +252,7 @@ def parseLibraryLogicData(data, srcFile="?", archs=None):
     newLibrary = SolutionLibrary.MasterSolutionLibrary.FromOriginalState(data, solutions)
 
     return LibraryLogic(data["ScheduleName"], data["ArchitectureName"], problemType, solutions, \
-            data.get("ExactLogic"), newLibrary)
+            data.get("ExactLogic"), newLibrary, srcFile)
 
 
 def parseLibraryLogicList(data, srcFile="?"):
