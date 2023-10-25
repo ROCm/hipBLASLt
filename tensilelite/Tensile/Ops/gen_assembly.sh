@@ -59,7 +59,7 @@ for arch in "${archs[@]}"; do
         set -- $i
         s=$dst/A_$1_$2_$3_$4_$arch.s
         o=$dst/A_$1_$2_$3_$4_$arch.o
-        python3 ./AMaxGenerator.py -o $s -t $1 -d $2 -w $3 -c $4 --arch $arch &
+        python3 ./AMaxGenerator.py -o $s -t $1 -d $2 -w $3 -c $4 --arch $arch --toolchain $toolchain &
         objs+=($o)
     done
     wait
