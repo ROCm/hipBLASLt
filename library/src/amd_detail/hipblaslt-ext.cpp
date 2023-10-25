@@ -35,6 +35,16 @@
 
 namespace hipblaslt_ext
 {
+    bool currentArchSupportsFp8()
+    {
+        using std::begin;
+        using std::end;
+
+        static const std::string fp8Archs[] = {"gfx940", "gfx941", "gfx942"};
+        const auto               archName   = rocblaslt_internal_get_arch_name();
+        return std::find(begin(fp8Archs), end(fp8Archs), archName) != end(fp8Archs);
+    }
+
     template <typename SrcType, typename DstType, typename ScaleType = float>
     __global__ void datatypeConversion(const SrcType*   src,
                                        DstType*         dst,
@@ -225,22 +235,19 @@ namespace hipblaslt_ext
             {
                 if(conversions.size() > 3)
                 {
-                    auto& conversion = conversions.at(3);
-                    auto& src        = std::get<0>(conversion);
-                    auto& dst        = std::get<1>(conversion);
+                    auto&          conversion        = conversions.at(3);
+                    auto&          src               = std::get<0>(conversion);
+                    auto&          dst               = std::get<1>(conversion);
                     auto           srcType           = std::get<2>(conversion);
                     auto           dstType           = std::get<3>(conversion);
                     const auto     numElements       = std::get<4>(conversion);
                     auto&          scale             = std::get<5>(conversion);
                     constexpr auto numWorkitemsPerWg = 256;
-                    const auto     numWg             = (numElements / numWorkitemsPerWg)
-                                        + !!(numElements % numWorkitemsPerWg);
+                    const auto     numWg
+                        = (numElements / numWorkitemsPerWg) + !!(numElements % numWorkitemsPerWg);
                     //indicates d needs datatype conversion
                     if(src && dst)
                     {
-                        // std::cout << "d_src: " << src.get() << '\n';
-                        // std::cout << "d_dst: " << dst.get() << '\n';
-                        // std::cout << "d_scale" << scale.get() << '\n';
                         if(dstType == HIPBLASLT_R_8F_E4M3)
                         {
                             datatypeConversion<hipblasLtHalf, hipblaslt_f8>
@@ -259,32 +266,6 @@ namespace hipblaslt_ext
                                     (const float*)scale.get(),
                                     numElements);
                         }
-
-                        // auto                       err = hipStreamSynchronize(stream);
-                        // std::vector<hipblasLtHalf> cpuSrc(numElements);
-                        // std::vector<hipblaslt_f8>  cpuDst(numElements);
-                        // err = hipMemcpyDtoH(cpuSrc.data(), src.get(), numElements * 2);
-                        // err = hipMemcpyDtoH(cpuDst.data(), dst.get(), numElements);
-                        // std::vector<hipblaslt_f8> cpuRef(numElements);
-                        // datatypeConversionCpu<hipblasLtHalf, hipblaslt_f8>(cpuSrc.data(), cpuRef.data(), numElements);
-
-                        // if(err != hipSuccess)
-                        // {
-                        //     std::cout << hipGetErrorString(err);
-                        // }
-
-                        // for(size_t i = 0; i < numElements; ++i)
-                        // {
-                        //     auto a = float(cpuSrc[i]);
-                        //     auto b = float(cpuDst[i]);
-
-                        //     if(std::abs(a - b) > 1e-5)
-                        //     {
-                        //         std::cout << "values mismatched at " << i << " (a, b) == (" << a
-                        //                   << ", " << b << ")\n";
-                        //         std::cout << "CPU ref: " << cpuRef[i] << '\n';
-                        //     }
-                        // }
                     }
                 }
             }
@@ -393,24 +374,24 @@ namespace hipblaslt_ext
                                      GemmInputs&      inputs,
                                      GemmProblemType& problemtype)
     {
-#ifndef __gfx940__
         constexpr auto conversionDType = HIPBLASLT_R_16F;
         auto           needConversion  = [&problemtype]() -> bool {
             using std::begin;
             using std::end;
             const auto types = {problemtype.type_a, problemtype.type_b, problemtype.type_c};
-            return end(types)
-                   != std::adjacent_find(begin(types), end(types), std::not_equal_to<>());
+            auto       mixedPrecision
+                = end(types) != std::adjacent_find(begin(types), end(types), std::not_equal_to<>());
+            return mixedPrecision && !currentArchSupportsFp8();
         }();
 
         constexpr auto numGemms = 1;
 
-        if(m_auxiliary_conversion_buffers.size() != numGemms)
+        if(needConversion)
         {
-            m_auxiliary_conversion_buffers.resize(numGemms);
-
-            if(needConversion)
+            if(m_auxiliary_conversion_buffers.size() != numGemms)
             {
+                m_auxiliary_conversion_buffers.resize(numGemms);
+
                 for(std::size_t j = 0; j < m_auxiliary_conversion_buffers.size(); ++j)
                 {
                     const std::vector<std::int64_t> sizes{strideA, strideB, strideC};
@@ -424,7 +405,7 @@ namespace hipblaslt_ext
                     //a, b and c
                     for(std::size_t i = 0; i < sizes.size(); ++i)
                     {
-                        auto dtype = dtypes.at(i);
+                        auto       dtype       = dtypes.at(i);
                         const auto numElements = sizes.at(i);
 
                         if(dtype == HIPBLASLT_R_8F_E4M3 || dtype == HIPBLASLT_R_8F_E5M2)
@@ -437,7 +418,9 @@ namespace hipblaslt_ext
                                 conversionDType,
                                 numElements,
                                 std::move(HipBufferPtr(scales.at(i), NullDeleter))));
-                        } else {
+                        }
+                        else
+                        {
                             conversions.emplace_back(std::make_tuple(
                                 std::move(HipBufferPtr(gemmInputs.at(i), NullDeleter)),
                                 std::move(makeHipBuffer(0)),
@@ -509,10 +492,7 @@ namespace hipblaslt_ext
                 gemmProblemType.type_d = conversionDType;
             }
         }
-#else
-        GemmInputs& gemmInputs = inputs;
-        GemmProblemType& gemmProblemType = problemtype;
-#endif
+
         auto rocepilogue    = reinterpret_cast<rocblaslt::RocGemmEpilogue*>(&epilogue);
         auto rocepinputs    = reinterpret_cast<rocblaslt::RocGemmInputs*>(&gemmInputs);
         auto rocproblemtype = reinterpret_cast<rocblaslt::RocGemmProblemType*>(&gemmProblemType);
