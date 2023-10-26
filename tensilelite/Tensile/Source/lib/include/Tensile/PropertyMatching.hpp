@@ -874,10 +874,11 @@ namespace Tensile
 
                         std::cout << "K start point: ";
                         streamJoin(std::cout, origIter_N_lower->key, ", ");
-                        std::cout << std::endl;
-                        std::cout << "K End point  : ";
+                        std::cout << std::endl << std::endl;
+
+                        std::cout << "K End point: ";
                         streamJoin(std::cout, (origIter_N_upper - 1)->key, ", ");
-                        std::cout << std::endl;
+                        std::cout << std::endl << std::endl;
                     }
 
                     for(auto iter = origIter_N_lower; iter != origIter_N_upper; iter++)
@@ -901,8 +902,8 @@ namespace Tensile
 
                         if(T_Debug)
                         {
-                            if(myDistance <= bestDistance)
-                                std::cout << std::endl;
+                            // if(myDistance <= bestDistance)
+                            //     std::cout << std::endl;
 
                             streamJoin(std::cout, iter->key, ", ");
                             std::cout << ": " << myDistance;
@@ -924,7 +925,7 @@ namespace Tensile
                                     std::cout << " <-- Best distance, but no matching solution";
                             }
 
-                            std::cout << std::endl;
+                            std::cout << std::endl << std::endl;
                         }
                     }
                     if(thisMatch or bestmatches.size())
