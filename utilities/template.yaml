@@ -1,0 +1,17 @@
+# Two steps, can comment out Bench or CreateLogic if you want to disable.
+Bench:
+  ProblemType:
+    ComputeDataType: s
+    ComputeInputDataType: h
+    DataTypeC: h
+    DataTypeD: h
+    TransposeA: 0
+    TransposeB: 0
+  TestConfig:
+    ColdIter: 20
+    Iter: 100
+    AlgoMethod: "all"
+  ProblemSizes:
+  - [128, 128, 128]
+  - [128, 128, 128]
+CreateLogic: {}
