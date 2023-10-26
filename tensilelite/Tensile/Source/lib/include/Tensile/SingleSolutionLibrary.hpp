@@ -94,8 +94,12 @@ namespace Tensile
             {
                 if(debug)
                 {
+                    std::cout << "hardwarePredicate:" << std::endl;
                     solution->hardwarePredicate->debugEval(hardware, std::cout);
+                    std::cout << std::endl;
+                    std::cout << "problemPredicate:" << std::endl;
                     solution->problemPredicate->debugEval(problem, std::cout);
+                    std::cout << std::endl;
                 }
 
                 if((*solution->hardwarePredicate)(hardware)

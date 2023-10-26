@@ -91,6 +91,14 @@ namespace Tensile
             {
                 return true;
             }
+
+            virtual bool debugEval(Object const& obj, std::ostream& stream) const
+            {
+                bool rv = (*this)(obj);
+                stream << this->type() << " {" << std::endl;
+                stream << "}: " << rv << std::endl;
+                return rv;
+            }
         };
 
         template <typename Object>
@@ -110,6 +118,14 @@ namespace Tensile
             virtual bool operator()(Object const&) const
             {
                 return false;
+            }
+
+            virtual bool debugEval(Object const& obj, std::ostream& stream) const
+            {
+                bool rv = (*this)(obj);
+                stream << this->type() << " {" << std::endl;
+                stream << "}: " << rv << std::endl;
+                return rv;
             }
         };
 
@@ -150,22 +166,13 @@ namespace Tensile
             virtual bool debugEval(Object const& obj, std::ostream& stream) const
             {
                 bool rv = (*this)(obj);
-
-                stream << this->type() << "(";
-
-                bool first = true;
+                stream << this->type() << " {" << std::endl;
                 for(auto const& term : value)
                 {
-                    if(!(*term)(obj))
-                    {
-                        if(!first)
-                            stream << ", ";
-                        first = false;
+                    if (!(*term)(obj))
                         term->debugEval(obj, stream);
-                    }
                 }
-
-                stream << "): " << rv << std::endl;
+                stream << "}: " << rv << std::endl;
                 return rv;
             }
         };
@@ -207,20 +214,12 @@ namespace Tensile
             virtual bool debugEval(Object const& obj, std::ostream& stream) const
             {
                 bool rv = (*this)(obj);
-
-                stream << this->type() << "(";
-
-                bool first = true;
+                stream << this->type() << " {" << std::endl;
                 for(auto const& term : value)
                 {
-                    if(!first)
-                        stream << ", ";
-                    first = false;
-
                     term->debugEval(obj, stream);
                 }
-
-                stream << "): " << rv << std::endl;
+                stream << "}: " << rv << std::endl;
                 return rv;
             }
         };
@@ -254,11 +253,9 @@ namespace Tensile
             virtual bool debugEval(Object const& obj, std::ostream& stream) const
             {
                 bool rv = (*this)(obj);
-
-                stream << this->type() << "(";
+                stream << this->type() << " {" << std::endl;
                 value->debugEval(obj, stream);
-                stream << "): " << rv << std::endl;
-
+                stream << "}: " << rv << std::endl;
                 return rv;
             }
         };
@@ -306,24 +303,18 @@ namespace Tensile
             virtual bool debugEval(Object const& obj, std::ostream& stream) const override
             {
                 bool rv = (*this)(obj);
-
-                stream << this->type() << "(";
-
+                stream << this->type() << " {" << std::endl;
                 auto const* sc = dynamic_cast<Subclass const*>(&obj);
-
                 if(sc)
                 {
-                    stream << "matches: ";
                     value->debugEval(*sc, stream);
                 }
                 else
                 {
                     stream << "no match. actual type: " << typeid(obj).hash_code() << ", expected "
-                           << typeid(Subclass).hash_code();
+                           << typeid(Subclass).hash_code() << std::endl;
                 }
-
-                stream << "): " << rv;
-
+                stream << "}: " << rv << std::endl;
                 return rv;
             }
         };

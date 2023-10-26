@@ -79,6 +79,16 @@ namespace Tensile
                                % value
                            == 0;
                 }
+
+                virtual bool debugEval(ContractionProblemGemm const& problem,
+                                       std::ostream&                 stream) const override
+                {
+                    bool rv = (*this)(problem);
+                    int freeSize = !problem.transposeC01() ? problem.freeSizeA(index)
+                                                           : problem.freeSizeB(index);
+                    DEBUG_EVAL_MOD(stream, this->type(), "prob", freeSize, "sol", value, rv);
+                    return rv;
+                }
             };
 
             struct Free1SizeMultiple
@@ -111,6 +121,16 @@ namespace Tensile
                                % value
                            == 0;
                 }
+
+                virtual bool debugEval(ContractionProblemGemm const& problem,
+                                       std::ostream&                 stream) const override
+                {
+                    bool rv = (*this)(problem);
+                    int freeSize = !problem.transposeC01() ? problem.freeSizeB(index)
+                                                           : problem.freeSizeA(index);
+                    DEBUG_EVAL_MOD(stream, this->type(), "prob", freeSize, "sol", value, rv);
+                    return rv;
+                }
             };
 
             struct BatchSizeMultiple
@@ -140,6 +160,15 @@ namespace Tensile
                 {
                     return problem.batchSize(index) % value == 0;
                 }
+
+                virtual bool debugEval(ContractionProblemGemm const& problem,
+                                       std::ostream&                 stream) const override
+                {
+                    bool rv = (*this)(problem);
+                    DEBUG_EVAL_MOD(stream, this->type(),
+                                   "prob", problem.batchSize(index), "sol", value, rv);
+                    return rv;
+                }
             };
 
             struct BatchSizeEqual : public Predicate_CRTP<BatchSizeEqual, ContractionProblemGemm>
@@ -167,6 +196,16 @@ namespace Tensile
                 virtual bool operator()(ContractionProblemGemm const& problem) const override
                 {
                     return problem.batchSize(index) == value;
+                }
+
+                virtual bool debugEval(ContractionProblemGemm const& problem,
+                                       std::ostream&                 stream) const override
+                {
+                    bool rv = (*this)(problem);
+                    DEBUG_EVAL_CMP(stream, this->type(),
+                                   "prob", problem.batchSize(index),
+                                   "sol", value, "==", rv);
+                    return rv;
                 }
             };
 
@@ -201,6 +240,16 @@ namespace Tensile
                     else
                         return problem.boundSize(index) % value == 0;
                 }
+
+                virtual bool debugEval(ContractionProblemGemm const& problem,
+                                       std::ostream&                 stream) const override
+                {
+                    bool rv = (*this)(problem);
+                    int index_mod = index < 0 ? problem.boundIndices().size() + index : index;
+                    DEBUG_EVAL_MOD(stream, this->type(),
+                                   "prob", problem.boundSize(index_mod), "sol", value, rv);
+                    return rv;
+                }
             };
 
             struct ProblemSizeEqual
@@ -229,6 +278,16 @@ namespace Tensile
                 virtual bool operator()(ContractionProblemGemm const& problem) const override
                 {
                     return problem.problemSizes()[index] == value;
+                }
+
+                virtual bool debugEval(ContractionProblemGemm const& problem,
+                                       std::ostream&                 stream) const override
+                {
+                    bool rv = (*this)(problem);
+                    DEBUG_EVAL_CMP(stream, this->type(),
+                                   "prob", problem.problemSizes()[index],
+                                   "sol", value, "==", rv);
+                    return rv;
                 }
             };
 
@@ -262,10 +321,9 @@ namespace Tensile
                                        std::ostream&                 stream) const override
                 {
                     bool rv = (*this)(problem);
-
-                    stream << *this << ": (" << problem.maxProblemSize() << " > " << value
-                           << ") == " << rv;
-
+                    DEBUG_EVAL_CMP(stream, this->type(),
+                                   "prob", problem.maxProblemSize(),
+                                   "sol", value, ">", rv);
                     return rv;
                 }
             };
@@ -304,17 +362,16 @@ namespace Tensile
                     return (problem.freeIndicesA().size() ? problem.freeSizeA(0) >= value
                                                           : problem.batchSize(0) >= value);
                 }
+
                 virtual bool debugEval(ContractionProblemGemm const& problem,
                                        std::ostream&                 stream) const override
                 {
                     bool rv = (*this)(problem);
-
-                    stream << *this << ": ("
-                           << (problem.freeIndicesA().size() ? "freeA0:" : "batchA0:")
-                           << (problem.freeIndicesA().size() ? problem.freeSizeA(0)
-                                                             : problem.batchSize(0))
-                           << " >= " << value << ") == " << rv;
-
+                    int size = problem.freeIndicesA().size() ? problem.freeSizeA(0)
+                                                             : problem.batchSize(0);
+                    DEBUG_EVAL_CMP(stream, this->type(),
+                                   "prob", size,
+                                   "sol", value, ">=", rv);
                     return rv;
                 }
             };
@@ -355,13 +412,11 @@ namespace Tensile
                                        std::ostream&                 stream) const override
                 {
                     bool rv = (*this)(problem);
-
-                    stream << *this << ": ("
-                           << (problem.freeIndicesB().size() ? "freeB0:" : "batchB0:")
-                           << (problem.freeIndicesB().size() ? problem.freeSizeB(0)
-                                                             : problem.batchSize(0))
-                           << " >= " << value << ") == " << rv;
-
+                    int size = problem.freeIndicesB().size() ? problem.freeSizeB(0)
+                                                             : problem.batchSize(0);
+                    DEBUG_EVAL_CMP(stream, this->type(),
+                                   "prob", size,
+                                   "sol", value, ">=", rv);
                     return rv;
                 }
             };
@@ -397,10 +452,9 @@ namespace Tensile
                                        std::ostream&                 stream) const override
                 {
                     bool rv = (*this)(problem);
-
-                    stream << *this << ": (" << problem.size(index) << " == " << value
-                           << ") == " << rv;
-
+                    DEBUG_EVAL_CMP(stream, this->type(),
+                                   "prob", problem.size(index),
+                                   "sol", value, "==", rv);
                     return rv;
                 }
             };
@@ -436,10 +490,9 @@ namespace Tensile
                                        std::ostream&                 stream) const override
                 {
                     bool rv = (*this)(problem);
-
-                    stream << *this << ": (" << problem.size(index) << " > " << value
-                           << ") == " << rv;
-
+                    DEBUG_EVAL_CMP(stream, this->type(),
+                                   "prob", problem.size(index),
+                                   "sol", value, ">", rv);
                     return rv;
                 }
             };
@@ -475,10 +528,9 @@ namespace Tensile
                                        std::ostream&                 stream) const override
                 {
                     bool rv = (*this)(problem);
-
-                    stream << *this << ": (" << problem.size(index) << " < " << value
-                           << ") == " << rv;
-
+                    DEBUG_EVAL_CMP(stream, this->type(),
+                                   "prob", problem.size(index),
+                                   "sol", value, "<", rv);
                     return rv;
                 }
             };
@@ -514,10 +566,8 @@ namespace Tensile
                                        std::ostream&                 stream) const override
                 {
                     bool rv = (*this)(problem);
-
-                    stream << *this << ": (" << problem.size(index) << " % " << value
-                           << " == 0) == " << rv;
-
+                    DEBUG_EVAL_MOD(stream, this->type(),
+                                   "prob", problem.size(index), "sol", value, rv);
                     return rv;
                 }
             };
@@ -564,9 +614,10 @@ namespace Tensile
                                        std::ostream&                 stream) const override
                 {
                     bool rv = (*this)(problem);
-                    stream << *this << ": (" << value.min << " <= " << problem.size(index)
-                           << " <= " << value.max << ") == " << rv;
-
+                    DEBUG_EVAL_CMP_TWO(stream, this->type(),
+                                       "prob0", problem.size(index), "sol0", value.min, ">=",
+                                       "prob1", problem.size(index), "sol1", value.max, "<",
+                                       "&&", rv);
                     return rv;
                 }
             };
@@ -602,10 +653,9 @@ namespace Tensile
                                        std::ostream&                 stream) const override
                 {
                     bool rv = (*this)(problem);
-
-                    stream << *this << ": (" << problem.a().strides()[index] << " == " << value
-                           << ") == " << rv;
-
+                    DEBUG_EVAL_CMP(stream, this->type(),
+                                   "prob", problem.a().strides()[index],
+                                   "sol", value, "==", rv);
                     return rv;
                 }
             };
@@ -641,10 +691,9 @@ namespace Tensile
                                        std::ostream&                 stream) const override
                 {
                     bool rv = (*this)(problem);
-
-                    stream << *this << ": (" << problem.b().strides()[index] << " == " << value
-                           << ") == " << rv;
-
+                    DEBUG_EVAL_CMP(stream, this->type(),
+                                   "prob", problem.b().strides()[index],
+                                   "sol", value, "==", rv);
                     return rv;
                 }
             };
@@ -680,10 +729,9 @@ namespace Tensile
                                        std::ostream&                 stream) const override
                 {
                     bool rv = (*this)(problem);
-
-                    stream << *this << ": (" << problem.c().strides()[index] << " == " << value
-                           << ") == " << rv;
-
+                    DEBUG_EVAL_CMP(stream, this->type(),
+                                   "prob", problem.c().strides()[index],
+                                   "sol", value, "==", rv);
                     return rv;
                 }
             };
@@ -719,10 +767,9 @@ namespace Tensile
                                        std::ostream&                 stream) const override
                 {
                     bool rv = (*this)(problem);
-
-                    stream << *this << ": (" << problem.d().strides()[index] << " == " << value
-                           << ") == " << rv;
-
+                    DEBUG_EVAL_CMP(stream, this->type(),
+                                   "prob", problem.d().strides()[index],
+                                   "sol", value, "==", rv);
                     return rv;
                 }
             };
@@ -742,6 +789,16 @@ namespace Tensile
                 virtual bool operator()(ContractionProblemGemm const& problem) const override
                 {
                     return problem.c().strides()[1] == problem.d().strides()[1];
+                }
+
+                virtual bool debugEval(ContractionProblemGemm const& problem,
+                                       std::ostream&                 stream) const override
+                {
+                    bool rv = (*this)(problem);
+                    DEBUG_EVAL_CMP(stream, this->type(),
+                                   "ldc", problem.c().strides()[1],
+                                   "ldd", problem.d().strides()[1], "==", rv);
+                    return rv;
                 }
             };
 
@@ -766,9 +823,9 @@ namespace Tensile
                                        std::ostream&                 stream) const override
                 {
                     bool rv = (*this)(problem);
-
-                    stream << this->type() << "(problem.cEqualsD() == True) == " << rv;
-
+                    DEBUG_EVAL_CMP(stream, this->type(),
+                                   "prob", problem.cEqualsD(),
+                                   "sol", true, "==", rv);
                     return rv;
                 }
             };
@@ -791,6 +848,16 @@ namespace Tensile
                 {
                     return problem.beta() == 0.0;
                 }
+
+                virtual bool debugEval(ContractionProblemGemm const& problem,
+                                       std::ostream&                 stream) const override
+                {
+                    bool rv = (*this)(problem);
+                    DEBUG_EVAL_CMP(stream, this->type(),
+                                   "prob", problem.beta(),
+                                   "sol", 0.0, "==", rv);
+                    return rv;
+                }
             };
 
             struct BetaOne : public Predicate_CRTP<BetaOne, ContractionProblemGemm>
@@ -810,6 +877,16 @@ namespace Tensile
                 virtual bool operator()(ContractionProblemGemm const& problem) const override
                 {
                     return problem.beta() == 1.0;
+                }
+
+                virtual bool debugEval(ContractionProblemGemm const& problem,
+                                       std::ostream&                 stream) const override
+                {
+                    bool rv = (*this)(problem);
+                    DEBUG_EVAL_CMP(stream, this->type(),
+                                   "prob", problem.beta(),
+                                   "sol", 1.0, "==", rv);
+                    return rv;
                 }
             };
 
@@ -837,6 +914,16 @@ namespace Tensile
                 virtual bool operator()(ContractionProblemGemm const& problem) const override
                 {
                     return problem.highPrecisionAccumulate() == value;
+                }
+
+                virtual bool debugEval(ContractionProblemGemm const& problem,
+                                       std::ostream&                 stream) const override
+                {
+                    bool rv = (*this)(problem);
+                    DEBUG_EVAL_CMP(stream, this->type(),
+                                   "prob", problem.highPrecisionAccumulate(),
+                                   "sol", value, "==", rv);
+                    return rv;
                 }
             };
 
@@ -866,6 +953,17 @@ namespace Tensile
                     return problem.kernelLanguage() == value
                            || problem.kernelLanguage() == KernelLanguage::Any;
                 }
+
+                virtual bool debugEval(ContractionProblemGemm const& problem,
+                                       std::ostream&                 stream) const override
+                {
+                    bool rv = (*this)(problem);
+                    DEBUG_EVAL_CMP_TWO(stream, this->type(),
+                                       "prob0", problem.kernelLanguage(), "sol", value, "==",
+                                       "prob1", problem.kernelLanguage(), "sol_any", KernelLanguage::Any, "==",
+                                       "||", rv);
+                    return rv;
+                }
             };
 
             struct DeterministicModeEqual
@@ -892,6 +990,16 @@ namespace Tensile
                 virtual bool operator()(ContractionProblemGemm const& problem) const override
                 {
                     return problem.deterministicMode() == value;
+                }
+
+                virtual bool debugEval(ContractionProblemGemm const& problem,
+                                       std::ostream&                 stream) const override
+                {
+                    bool rv = (*this)(problem);
+                    DEBUG_EVAL_CMP(stream, this->type(),
+                                   "prob", problem.deterministicMode(),
+                                   "sol", value, "==", rv);
+                    return rv;
                 }
             };
 
@@ -920,6 +1028,17 @@ namespace Tensile
                 {
                     return problem.alphaRestriction() == value || value == ScalarValue::Any;
                 }
+
+                virtual bool debugEval(ContractionProblemGemm const& problem,
+                                       std::ostream&                 stream) const override
+                {
+                    bool rv = (*this)(problem);
+                    DEBUG_EVAL_CMP_TWO(stream, this->type(),
+                                       "prob", problem.alphaRestriction(), "sol", value, "==",
+                                       "sol", value, "sol_any", ScalarValue::Any, "==",
+                                       "||", rv);
+                    return rv;
+                }
             };
 
             struct BetaValue : public Predicate_CRTP<BetaValue, ContractionProblemGemm>
@@ -947,6 +1066,17 @@ namespace Tensile
                 {
                     return problem.betaRestriction() == value || value == ScalarValue::Any;
                 }
+
+                virtual bool debugEval(ContractionProblemGemm const& problem,
+                                       std::ostream&                 stream) const override
+                {
+                    bool rv = (*this)(problem);
+                    DEBUG_EVAL_CMP_TWO(stream, this->type(),
+                                       "prob", problem.betaRestriction(), "sol", value, "==",
+                                       "sol", value, "sol_any", ScalarValue::Any, "==",
+                                       "||", rv);
+                    return rv;
+                }
             };
 
             struct TypesEqual : public Predicate_CRTP<TypesEqual, ContractionProblemGemm>
@@ -967,10 +1097,11 @@ namespace Tensile
 
                 virtual bool operator()(ContractionProblemGemm const& problem) const override
                 {
-                    return problem.a().dataType() == value[0] && problem.b().dataType() == value[1]
-                           && problem.c().dataType() == value[2]
-                           && problem.d().dataType() == value[3]
-                           && problem.computeInputType() == value[4];
+                    return problem.a().dataType() == value[0] &&
+                           problem.b().dataType() == value[1] &&
+                           problem.c().dataType() == value[2] &&
+                           problem.d().dataType() == value[3] &&
+                           problem.computeInputType() == value[4];
                 }
 
                 virtual std::string toString() const override
@@ -992,15 +1123,14 @@ namespace Tensile
                                        std::ostream&                 stream) const override
                 {
                     bool rv = (*this)(problem);
-
-                    stream << this->type() << "(a:" << problem.a().dataType() << " == " << value[0]
-                           << "&& b:" << problem.b().dataType() << " == " << value[1]
-                           << "&& c:" << problem.c().dataType() << " == " << value[2]
-                           << "&& d:" << problem.d().dataType() << " == " << value[3]
-                           << "&& compute input type:" << problem.computeInputType()
-                           << " == " << value[4] << "): " << rv;
-                    ;
-
+                    stream << rv << ": " << this->type() << " "
+                           << "("
+                           << "((prob0 = " << problem.a().dataType() << ") == (sol0 = " << value[0] <<  ")) && "
+                           << "((prob1 = " << problem.b().dataType() << ") == (sol1 = " << value[1] <<  ")) && "
+                           << "((prob2 = " << problem.c().dataType() << ") == (sol2 = " << value[2] <<  ")) && "
+                           << "((prob3 = " << problem.d().dataType() << ") == (sol3 = " << value[3] <<  ")) && "
+                           << "((prob4 = " << problem.computeInputType() << ") == (sol4 = " << value[4] <<  "))"
+                           << ")" << std::endl;
                     return rv;
                 }
             };
@@ -1025,6 +1155,16 @@ namespace Tensile
                 virtual bool operator()(ContractionProblemGemm const& problem) const override
                 {
                     return problem.operationIdentifier() == value;
+                }
+
+                virtual bool debugEval(ContractionProblemGemm const& problem,
+                                       std::ostream&                 stream) const override
+                {
+                    bool rv = (*this)(problem);
+                    DEBUG_EVAL_CMP(stream, this->type(),
+                                   "prob", problem.operationIdentifier(),
+                                   "sol", value, "==", rv);
+                    return rv;
                 }
             };
 
@@ -1079,14 +1219,14 @@ namespace Tensile
                 {
                     bool rv = (*this)(problem);
 
-                    stream << *this << ": ("
+                    stream << rv << ": " << *this << ": ("
                            << " (" << problem.a().strides()[1] << " * " << value.depthUorMT0
                            << " + " << value.shiftPtrElemA << ") * " << problem.a().elementBytes()
                            << " < 4294967296 && "
                            << " (" << problem.b().strides()[1] << " * " << value.depthUorMT1
                            << " + " << value.shiftPtrElemB << ") * " << problem.b().elementBytes()
                            << " < 4294967296"
-                           << ") == " << rv;
+                           << ")" << std::endl;
 
                     return rv;
                 }
@@ -1137,9 +1277,9 @@ namespace Tensile
                 {
                     bool rv = (*this)(problem);
 
-                    stream << *this << ": (" << problem.c().strides()[1] << " * "
+                    stream << rv << ": " << *this << ": (" << problem.c().strides()[1] << " * "
                            << problem.c().elementBytes() << " * " << value << " < 4294967296"
-                           << ") == " << rv;
+                           << ")" << std::endl;
 
                     return rv;
                 }
@@ -1182,11 +1322,9 @@ namespace Tensile
                                        std::ostream&                 stream) const override
                 {
                     bool rv = (*this)(problem);
-
-                    stream << *this << ": (" << problem.d().strides()[1] << " * "
+                    stream << rv << ": " << *this << ": (" << problem.d().strides()[1] << " * "
                            << problem.d().elementBytes() << " * " << value << " < 4294967296"
-                           << ") == " << rv;
-
+                           << ")" << std::endl;
                     return rv;
                 }
             };
@@ -1250,17 +1388,15 @@ namespace Tensile
                                        std::ostream&                 stream) const override
                 {
                     bool rv = (*this)(problem);
-
                     size_t rs = reductionSize(problem, value);
-
                     if(problem.groupedGemm())
-                        stream << *this << ": (" << problem.workspaceSizeGroupedGemm()
-                               << " <= " << problem.workspaceSize() << ") == " << rv;
+                        DEBUG_EVAL_CMP(stream, this->type(),
+                                       "prob", problem.workspaceSizeGroupedGemm(),
+                                       "max", problem.workspaceSize(), "<=", rv);
                     else
-                        stream << *this << ": (" << problem.d().totalLogicalElements() << " * "
-                               << value[0] << " + " << rs << " <= " << problem.workspaceSize()
-                               << ") == " << rv;
-
+                        DEBUG_EVAL_CMP(stream, this->type(),
+                                       "prob", problem.d().totalLogicalElements() * value[0] + rs,
+                                       "max", problem.workspaceSize(), "<=", rv);
                     return rv;
                 }
             };
@@ -1283,6 +1419,14 @@ namespace Tensile
                 virtual bool operator()(ContractionProblemGemm const& problem) const override
                 {
                     return problem.getPersistentKernelEligibility();
+                }
+
+                virtual bool debugEval(ContractionProblemGemm const& problem,
+                                       std::ostream&                 stream) const override
+                {
+                    bool rv = (*this)(problem);
+                    stream << rv << ": " << this->type() << std::endl;
+                    return rv;
                 }
             };
 
@@ -1313,19 +1457,13 @@ namespace Tensile
                     return problem.boundSize(0) >= value;
                 }
 
-                virtual std::string toString() const override
-                {
-                    return concatenate(this->type(), "(value:", value, ")");
-                }
-
                 virtual bool debugEval(ContractionProblemGemm const& problem,
                                        std::ostream&                 stream) const override
                 {
                     bool rv = (*this)(problem);
-
-                    stream << *this << ": (" << problem.boundSize(0) << " >= " << value
-                           << ") == " << rv;
-
+                    DEBUG_EVAL_CMP(stream, this->type(),
+                                   "prob", problem.boundSize(0),
+                                   "sol", value, ">=", rv);
                     return rv;
                 }
             };
@@ -1348,6 +1486,27 @@ namespace Tensile
                 virtual bool operator()(ContractionProblemGemm const& problem) const override
                 {
                     return problem.c().strides() == problem.d().strides();
+                }
+
+                virtual bool debugEval(ContractionProblemGemm const& problem,
+                                       std::ostream&                 stream) const override
+                {
+                    bool rv = (*this)(problem);
+                    std::string c_strides = "[", d_strides = "[";
+                    for (int i = 0; i < problem.c().strides().size(); i++) {
+                        c_strides += problem.c().strides()[i];
+                        d_strides += problem.d().strides()[i];
+                        if (i < problem.c().strides().size() - 1) {
+                            c_strides += ", ";
+                            d_strides += ", ";
+                        }
+                    }
+                    c_strides += "]";
+                    d_strides += "]";
+                    DEBUG_EVAL_CMP(stream, this->type(),
+                                   "c_stride", c_strides,
+                                   "d_stride", d_strides, "==", rv);
+                    return rv;
                 }
             };
 
@@ -1376,6 +1535,16 @@ namespace Tensile
                 {
                     return problem.stridedBatched() == value;
                 }
+
+                virtual bool debugEval(ContractionProblemGemm const& problem,
+                                       std::ostream&                 stream) const override
+                {
+                    bool rv = (*this)(problem);
+                    DEBUG_EVAL_CMP(stream, this->type(),
+                                   "prob", problem.stridedBatched(),
+                                   "sol", value, "==", rv);
+                    return rv;
+                }
             };
 
             struct GroupedGemmEqual
@@ -1402,6 +1571,16 @@ namespace Tensile
                 virtual bool operator()(ContractionProblemGemm const& problem) const override
                 {
                     return problem.groupedGemm() == value;
+                }
+
+                virtual bool debugEval(ContractionProblemGemm const& problem,
+                                       std::ostream&                 stream) const override
+                {
+                    bool rv = (*this)(problem);
+                    DEBUG_EVAL_CMP(stream, this->type(),
+                                   "prob", problem.groupedGemm(),
+                                   "sol", value, "==", rv);
+                    return rv;
                 }
             };
 
@@ -1438,6 +1617,27 @@ namespace Tensile
                         return false;
                     }
                 }
+
+                virtual bool debugEval(ContractionProblemGemm const& problem,
+                                       std::ostream&                 stream) const override
+                {
+                    bool rv = (*this)(problem);
+                    if(problem.performanceMetric() == PerformanceMetric::CUEfficiency)
+                        stream << rv << ": " << this->type()
+                               << " (problem.performanceMetric() == PerformanceMetric::CUEfficiency)"
+                               << std::endl;
+                    else if(problem.performanceMetric() == PerformanceMetric::Auto)
+                        stream << rv << ": " << this->type()
+                               << " ((problem.performanceMetric() == PerformanceMetric::Auto) &&"
+                               << " (problem.flopCount() < 1500 * 1500 * 1500 * 2))"
+                               << std::endl;
+                    else
+                        stream << rv << ": " << this->type()
+                               << " ((problem.performanceMetric() != PerformanceMetric::CUEfficiency) &&"
+                               << " (problem.performanceMetric() != PerformanceMetric::Auto))"
+                               << std::endl;
+                    return rv;
+                }
             };
 
             struct Experimental : public Predicate_CRTP<Experimental, ContractionProblemGemm>
@@ -1459,6 +1659,16 @@ namespace Tensile
                 {
                     return (problem.performanceMetric() == PerformanceMetric::Experimental);
                 }
+
+                virtual bool debugEval(ContractionProblemGemm const& problem,
+                                       std::ostream&                 stream) const override
+                {
+                    bool rv = (*this)(problem);
+                    DEBUG_EVAL_CMP(stream, this->type(),
+                                   "prob", problem.performanceMetric(),
+                                   "sol", PerformanceMetric::Experimental, "==", rv);
+                    return rv;
+                }
             };
 
             struct Fp16AltImpl : public Predicate_CRTP<Fp16AltImpl, ContractionProblemGemm>
@@ -1479,6 +1689,14 @@ namespace Tensile
                 virtual bool operator()(ContractionProblemGemm const& problem) const override
                 {
                     return problem.fp16AltImpl();
+                }
+
+                virtual bool debugEval(ContractionProblemGemm const& problem,
+                                       std::ostream&                 stream) const override
+                {
+                    bool rv = (*this)(problem);
+                    stream << rv << ": " << this->type() << std::endl;
+                    return rv;
                 }
             };
 
@@ -1502,6 +1720,14 @@ namespace Tensile
                 {
                     return true;
                 }
+
+                virtual bool debugEval(ContractionProblemGemm const& problem,
+                                       std::ostream&                 stream) const override
+                {
+                    bool rv = (*this)(problem);
+                    stream << rv << ": " << this->type() << std::endl;
+                    return rv;
+                }
             };
 
             struct FreeSizeMatching
@@ -1523,6 +1749,14 @@ namespace Tensile
                 virtual bool operator()(ContractionProblemGemm const& problem) const override
                 {
                     return true;
+                }
+
+                virtual bool debugEval(ContractionProblemGemm const& problem,
+                                       std::ostream&                 stream) const override
+                {
+                    bool rv = (*this)(problem);
+                    stream << rv << ": " << this->type() << std::endl;
+                    return rv;
                 }
             };
 
@@ -1550,6 +1784,16 @@ namespace Tensile
                 virtual bool operator()(ContractionProblemGemm const& problem) const override
                 {
                     return problem.useGradient() == value;
+                }
+
+                virtual bool debugEval(ContractionProblemGemm const& problem,
+                                       std::ostream&                 stream) const override
+                {
+                    bool rv = (*this)(problem);
+                    DEBUG_EVAL_CMP(stream, this->type(),
+                                   "prob", problem.useGradient(),
+                                   "sol", value, "==", rv);
+                    return rv;
                 }
             };
 
@@ -1579,17 +1823,13 @@ namespace Tensile
                     return problem.activationType() == value;
                 }
 
-                virtual std::string toString() const override
-                {
-                    return concatenate(this->type(), ":", ToString(value));
-                }
-
                 virtual bool debugEval(ContractionProblemGemm const& problem,
                                        std::ostream&                 stream) const override
                 {
                     bool rv = (*this)(problem);
-                    stream << this->type() << "(" << ToString(problem.activationType())
-                           << " == " << ToString(value) << "(solution)): " << rv;
+                    DEBUG_EVAL_CMP(stream, this->type(),
+                                   "prob", problem.activationType(),
+                                   "sol", value, "==", rv);
                     return rv;
                 }
             };
@@ -1627,14 +1867,18 @@ namespace Tensile
                     return true;
                 }
 
-                virtual std::string toString() const override
+                virtual bool debugEval(ContractionProblemGemm const& problem,
+                                       std::ostream&                 stream) const override
                 {
+                    bool rv = (*this)(problem);
                     std::string actString = "";
                     for(size_t i = 0; i < value.size(); i++)
                     {
-                        actString += ToString(value[i]) + ", ";
+                        actString += ToString(value[i]);
+                        if (i < value.size() - 1) actString += ", ";
                     }
-                    return std::string("The supported activations are: " + actString);
+                    stream << rv << ": " << this->type() << " (The supported activations are: " + actString << ")" << std::endl;
+                    return rv;
                 }
             };
 
@@ -1665,6 +1909,21 @@ namespace Tensile
                         return true;
                     return problem.activationComputeType() == value;
                 }
+
+                virtual bool debugEval(ContractionProblemGemm const& problem,
+                                       std::ostream&                 stream) const override
+                {
+                    bool rv = (*this)(problem);
+                    if(problem.activationType() == ActivationType::None)
+                        stream << rv << ": " << this->type()
+                               << " (ActivationType::None)"
+                               << std::endl;
+                    else
+                        DEBUG_EVAL_CMP(stream, this->type(),
+                                       "prob", problem.activationComputeType(),
+                                       "sol", value, "==", rv);
+                    return rv;
+                }
             };
 
             struct ActivationNoGuardEqual
@@ -1692,6 +1951,16 @@ namespace Tensile
                 {
                     return problem.activationNoGuard() == value;
                 }
+
+                virtual bool debugEval(ContractionProblemGemm const& problem,
+                                       std::ostream&                 stream) const override
+                {
+                    bool rv = (*this)(problem);
+                    DEBUG_EVAL_CMP(stream, this->type(),
+                                    "prob", problem.activationNoGuard(),
+                                    "sol", value, "==", rv);
+                    return rv;
+                }
             };
 
             struct UseBiasEqual : public Predicate_CRTP<UseBiasEqual, ContractionProblemGemm>
@@ -1717,6 +1986,16 @@ namespace Tensile
                 virtual bool operator()(ContractionProblemGemm const& problem) const override
                 {
                     return problem.useBias() == value;
+                }
+
+                virtual bool debugEval(ContractionProblemGemm const& problem,
+                                       std::ostream&                 stream) const override
+                {
+                    bool rv = (*this)(problem);
+                    DEBUG_EVAL_CMP(stream, this->type(),
+                                    "prob", problem.useBias(),
+                                    "sol", value, "==", rv);
+                    return rv;
                 }
             };
 
@@ -1744,6 +2023,16 @@ namespace Tensile
                 {
                     return problem.useE() == value;
                 }
+
+                virtual bool debugEval(ContractionProblemGemm const& problem,
+                                       std::ostream&                 stream) const override
+                {
+                    bool rv = (*this)(problem);
+                    DEBUG_EVAL_CMP(stream, this->type(),
+                                    "prob", problem.useE(),
+                                    "sol", value, "==", rv);
+                    return rv;
+                }
             };
 
             struct UseScaleABEqual : public Predicate_CRTP<UseScaleABEqual, ContractionProblemGemm>
@@ -1769,6 +2058,16 @@ namespace Tensile
                 virtual bool operator()(ContractionProblemGemm const& problem) const override
                 {
                     return problem.useScaleAB() == value;
+                }
+
+                virtual bool debugEval(ContractionProblemGemm const& problem,
+                                       std::ostream&                 stream) const override
+                {
+                    bool rv = (*this)(problem);
+                    DEBUG_EVAL_CMP(stream, this->type(),
+                                    "prob", problem.useScaleAB(),
+                                    "sol", value, "==", rv);
+                    return rv;
                 }
             };
 
@@ -1796,6 +2095,16 @@ namespace Tensile
                 {
                     return problem.useScaleCD() == value;
                 }
+
+                virtual bool debugEval(ContractionProblemGemm const& problem,
+                                       std::ostream&                 stream) const override
+                {
+                    bool rv = (*this)(problem);
+                    DEBUG_EVAL_CMP(stream, this->type(),
+                                    "prob", problem.useScaleCD(),
+                                    "sol", value, "==", rv);
+                    return rv;
+                }
             };
 
             struct UseScaleAlphaVecEqual
@@ -1822,6 +2131,16 @@ namespace Tensile
                 virtual bool operator()(ContractionProblemGemm const& problem) const override
                 {
                     return problem.useScaleAlphaVec() == value;
+                }
+
+                virtual bool debugEval(ContractionProblemGemm const& problem,
+                                       std::ostream&                 stream) const override
+                {
+                    bool rv = (*this)(problem);
+                    DEBUG_EVAL_CMP(stream, this->type(),
+                                    "prob", problem.useScaleAlphaVec(),
+                                    "sol", value, "==", rv);
+                    return rv;
                 }
             };
 
@@ -1858,14 +2177,18 @@ namespace Tensile
                     return true;
                 }
 
-                virtual std::string toString() const override
+                virtual bool debugEval(ContractionProblemGemm const& problem,
+                                       std::ostream&                 stream) const override
                 {
+                    bool rv = (*this)(problem);
                     std::string biasString = "";
                     for(size_t i = 0; i < value.size(); i++)
                     {
-                        biasString += ToString(value[i]) + ", ";
+                        biasString += ToString(value[i]);
+                        if (i < value.size() - 1) biasString += ", ";
                     }
-                    return std::string("The supported bias types are: " + biasString);
+                    stream << rv << ": " << this->type() << " (The supported bias types are: " + biasString << ")" << std::endl;
+                    return rv;
                 }
             };
 
@@ -1929,17 +2252,18 @@ namespace Tensile
                     }
                     return std::string("The supported bias source are: " + biasString);
                 }
+
                 virtual bool debugEval(ContractionProblemGemm const& problem,
                                        std::ostream&                 stream) const override
                 {
-                    bool        rv         = (*this)(problem);
+                    bool rv = (*this)(problem);
                     std::string biasString = "";
                     for(size_t i = 0; i < value.size(); i++)
                     {
-                        biasString += ToString(value[i]) + ", ";
+                        biasString += ToString(value[i]);
+                        if (i < value.size() - 1) biasString += ", ";
                     }
-                    stream << this->type() << "(Problem: " << problem.biasSrc()
-                           << ". Solution: " << biasString << "): " << rv;
+                    stream << rv << ": " << this->type() << " (The supported bias source are: " + biasString << ")" << std::endl;
                     return rv;
                 }
             };
@@ -1968,6 +2292,16 @@ namespace Tensile
                 {
                     return problem.sparse() == value;
                 }
+
+                virtual bool debugEval(ContractionProblemGemm const& problem,
+                                       std::ostream&                 stream) const override
+                {
+                    bool rv = (*this)(problem);
+                    DEBUG_EVAL_CMP(stream, this->type(),
+                                   "prob", problem.sparse(),
+                                   "sol", value, "==", rv);
+                    return rv;
+                }
             };
 
             struct F32XdlMathOpEqual
@@ -1994,6 +2328,16 @@ namespace Tensile
                 virtual bool operator()(ContractionProblemGemm const& problem) const override
                 {
                     return problem.f32XdlMathOp() == value;
+                }
+
+                virtual bool debugEval(ContractionProblemGemm const& problem,
+                                       std::ostream&                 stream) const override
+                {
+                    bool rv = (*this)(problem);
+                    DEBUG_EVAL_CMP(stream, this->type(),
+                                    "prob", problem.f32XdlMathOp(),
+                                    "sol", value, "==", rv);
+                    return rv;
                 }
             };
 
@@ -2025,20 +2369,13 @@ namespace Tensile
                     return true;
                 }
 
-                virtual std::string toString() const override
-                {
-                    if(value)
-                        return "The solution supports DeviceUserArguments";
-                    else
-                        return "The solution does not support DeviceUserArguments";
-                }
-
                 virtual bool debugEval(ContractionProblemGemm const& problem,
                                        std::ostream&                 stream) const override
                 {
                     bool rv = (*this)(problem);
-                    stream << this->type() << "(" << problem.getUseDeviceUserArguments()
-                           << " == " << value << "(solution)): " << rv;
+                    DEBUG_EVAL_CMP(stream, this->type(),
+                                    "prob", problem.getUseDeviceUserArguments(),
+                                    "sol", value, "==", rv);
                     return rv;
                 }
             };
