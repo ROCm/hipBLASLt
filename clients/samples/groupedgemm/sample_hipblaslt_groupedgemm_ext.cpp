@@ -136,7 +136,7 @@ void simpleGroupedGemmExt(hipblasLtHandle_t     handle,
 
     if(heuristicResult.empty())
     {
-        std::cerr << "No valid solution found!" << std::endl;
+        std::cerr << "No valid solution found! Please try get_all_algos instead" << std::endl;
         return;
     }
 

@@ -649,6 +649,7 @@ Tests:
   alpha: 1
   beta: [ 0.0, 2.0 ]
   unit_check: 1
+  algo_method: [2]
 
 - name: matmul_groupedgemm
   category: pre_checkin
@@ -662,6 +663,7 @@ Tests:
   alpha: 1
   beta: [ 0.0, 2.0 ]
   unit_check: 1
+  algo_method: [2]
 
 - name: matmul_groupedgemm_zero_n
   category: pre_checkin
@@ -672,6 +674,38 @@ Tests:
   K: [127, 129]
   transA_transB: *transA_transB_range
   grouped_gemm: [1, 7]
+  alpha: 1
+  beta: [ 0.0, 2.0 ]
+  unit_check: 1
+  algo_method: [2]
+
+- name: matmul_extapi_groupedgemm
+  category: pre_checkin
+  function:
+    matmul: *hpa_half_precision
+  M: [127, 129]
+  N: [127, 129]
+  K: [127, 129]
+  transA_transB: *transA_transB_range
+  grouped_gemm: [2]
+  use_ext_setproblem: [0, 1]
+  algo_method: [2]
+  alpha: 1
+  beta: [ 0.0, 2.0 ]
+  unit_check: 1
+
+- name: matmul_extapi_groupedgemm
+  category: pre_checkin
+  function:
+    matmul: *hpa_half_precision
+  M: [127, 129]
+  N: [127, 129]
+  K: [127, 129]
+  transA_transB: *transA_transB_range
+  grouped_gemm: [2]
+  use_ext_setproblem: [1]
+  algo_method: [2]
+  use_user_args: 1
   alpha: 1
   beta: [ 0.0, 2.0 ]
   unit_check: 1
@@ -857,21 +891,6 @@ Tests:
   beta: [ 0.0, 2.0 ]
   unit_check: 1
 
-- name: matmul_extapi_groupedgemm
-  category: pre_checkin
-  function:
-    matmul: *hpa_half_precision
-  M: [127, 129]
-  N: [127, 129]
-  K: [127, 129]
-  transA_transB: *transA_transB_range
-  grouped_gemm: [2]
-  use_ext_setproblem: [0, 1]
-  algo_method: [0, 1, 2]
-  alpha: 1
-  beta: [ 0.0, 2.0 ]
-  unit_check: 1
-
 - name: matmul_gemm_xf32
   category: pre_checkin
   function:
@@ -886,22 +905,6 @@ Tests:
   beta: [ 0.0, 2.0 ]
   unit_check: 1
   gpu_arch: '94?'
-
-- name: matmul_extapi_groupedgemm
-  category: pre_checkin
-  function:
-    matmul: *hpa_half_precision
-  M: [127, 129]
-  N: [127, 129]
-  K: [127, 129]
-  transA_transB: *transA_transB_range
-  grouped_gemm: [2]
-  use_ext_setproblem: [1]
-  algo_method: [0, 1, 2]
-  use_user_args: 1
-  alpha: 1
-  beta: [ 0.0, 2.0 ]
-  unit_check: 1
 
 - name: matmul_gemm_double
   category: pre_checkin

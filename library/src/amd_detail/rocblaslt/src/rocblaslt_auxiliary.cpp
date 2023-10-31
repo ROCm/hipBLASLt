@@ -1382,6 +1382,11 @@ rocblaslt_status
         log_error(__func__, "invalid requested count", requestedAlgoCount);
         return rocblaslt_status_invalid_value;
     }
+    if(gemmType == rocblaslt::RocGemmType::ROCBLASLT_GROUPED_GEMM)
+    {
+        log_api(__func__, "not implement for groupedgemm, please use get_all_algos instead");
+        return rocblaslt_status_success;
+    }
     rocblaslt_status status = rocblaslt_status_success;
     try
     {
