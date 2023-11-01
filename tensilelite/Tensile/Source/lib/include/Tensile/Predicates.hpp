@@ -217,7 +217,8 @@ namespace Tensile
                 stream << this->type() << " {" << std::endl;
                 for(auto const& term : value)
                 {
-                    term->debugEval(obj, stream);
+                    if (!(*term)(obj))
+                        term->debugEval(obj, stream);
                 }
                 stream << "}: " << rv << std::endl;
                 return rv;

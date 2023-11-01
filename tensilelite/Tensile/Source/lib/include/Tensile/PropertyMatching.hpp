@@ -902,9 +902,6 @@ namespace Tensile
 
                         if(T_Debug)
                         {
-                            // if(myDistance <= bestDistance)
-                            //     std::cout << std::endl;
-
                             streamJoin(std::cout, iter->key, ", ");
                             std::cout << ": " << myDistance;
 

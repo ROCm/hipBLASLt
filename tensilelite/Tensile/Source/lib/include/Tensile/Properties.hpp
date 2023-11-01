@@ -50,38 +50,6 @@ namespace Tensile
  */
 
     /**
- * @brief macros to print debugEval msg
- * please refer to Property::debugEval(Object const& object, std::ostream& stream)
- */
-    #define DEBUG_EVAL_CMP(_stream, _type, _prob, _x, _sol, _y, _cmp, _rv) \
-    do { \
-        _stream << _rv << ": " << _type \
-                << " ((" << _prob << " = " << _x << ") " << _cmp << " (" << _sol << " = " << _y <<  "))" \
-                << std::endl; \
-    } while (0)
-
-    #define DEBUG_EVAL_MOD(_stream, _type, _prob, _x, _sol, _y, _rv) \
-    do { \
-        _stream << _rv << ": " << _type \
-                << " ((" << _prob << " = " << _x << ") % (" << _sol << " = " << _y <<  ") == 0)" \
-                << std::endl; \
-    } while (0)
-
-    #define DEBUG_EVAL_CMP_TWO(_stream, _type, \
-                                _prob0, _x0, _sol0, _y0, _cmp0, \
-                                _prob1, _x1, _sol1, _y1, _cmp1, \
-                                _con, _rv) \
-    do { \
-        _stream << _rv << ": " << _type << " " \
-                << "(" \
-                << "((" << _prob0 << " = " << _x0 << ") " << _cmp0 << " (" << _sol0 << " = " << _y0 <<  ")) " \
-                << _con << " " \
-                << "((" << _prob1 << " = " << _x1 << ") " << _cmp1 << " (" << _sol1 << " = " << _y1 <<  "))" \
-                << ")" \
-                << std::endl; \
-    } while (0)
-
-    /**
  * @brief Simplifies implementation of `ToString()` for Property subclasses
  * which may have `index` and/or `value` members.
  */
@@ -154,6 +122,58 @@ namespace Tensile
         {
             Value rv = (*this)(object);
             stream << *this << ": " << rv;
+            return rv;
+        }
+
+        template<typename Tp, typename Tpv, typename Tc, typename Ts, typename Tsv, typename... T>
+        void debugEvalCmp(std::ostream& stream, Tp prob, Tpv prob_val, Tc cmp, Ts sol, Tsv sol_val, T... args) const
+        {
+            if (cmp == "==")
+            {
+                if (prob_val != sol_val)
+                    stream << "((" << prob << "=" << prob_val << ") != (" << sol << "=" << sol_val <<  ")), ";
+            }
+            else if (cmp == ">")
+            {
+                if (prob_val <= sol_val)
+                    stream << "((" << prob << "=" << prob_val << ") <= (" << sol << "=" << sol_val <<  ")), ";
+            }
+            else if (cmp == "<")
+            {
+                if (prob_val >= sol_val)
+                    stream << "((" << prob << "=" << prob_val << ") >= (" << sol << "=" << sol_val <<  ")), ";
+            }
+            else if (cmp == ">=")
+            {
+                if (prob_val < sol_val)
+                    stream << "((" << prob << "=" << prob_val << ") < (" << sol << "=" << sol_val <<  ")), ";
+            }
+            else if (cmp == "<=")
+            {
+                if (prob_val > sol_val)
+                    stream << "((" << prob << "=" << prob_val << ") > (" << sol << "=" << sol_val <<  ")), ";
+            }
+            else if (cmp == "%")
+            {
+                if constexpr (std::is_same<Tpv, size_t>::value)
+                    if (prob_val % sol_val != 0)
+                        stream << "((" << prob << "=" << prob_val << ") % (" << sol << "=" << sol_val <<  ") != 0), ";
+            }
+            else
+            {
+                stream << "(invalid statement), ";
+            }
+            if constexpr (sizeof...(args) > 5)
+                debugEvalCmp(stream, args...);
+        }
+
+        template<typename... T>
+        Value debugEvalCmp(Object const& object, std::ostream& stream, T... args) const
+        {
+            Value rv = (*this)(object);
+            stream << rv << ": " << this->type() << " (";
+            debugEvalCmp(stream, args...);
+            stream << ")" << std::endl;
             return rv;
         }
     };
