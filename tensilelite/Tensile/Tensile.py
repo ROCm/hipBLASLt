@@ -203,7 +203,7 @@ def Tensile(userArgs):
     argParser.add_argument("--alternate-format", dest="AlternateFormat", action="store_true",
             help="Alternate format for config_file(s): first file is alternate config "
             "and optional second file is size list")
-    argParser.add_argument("--no-cache", dest="NoCache", action="store_true",
+    argParser.add_argument("--use-cache", dest="useCache", action="store_true",
             help="Ignore cache; redo parameter forking and solution generation")
     # yapf: enable
 
@@ -212,7 +212,7 @@ def Tensile(userArgs):
 
     configPaths = args.config_file
     altFormat = args.AlternateFormat
-    useCache = not args.NoCache
+    useCache = args.useCache
 
     if altFormat and len(configPaths) > 2:
         printExit("Only 1 or 2 config_files are accepted for the alternate config format: "
