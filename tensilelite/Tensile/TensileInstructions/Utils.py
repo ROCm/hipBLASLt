@@ -237,7 +237,7 @@ def replaceHolder(module, dst):
 
 def getAsmCompileArgs(assemblerPath: str, codeObjectVersion: str, archHasV3: bool, \
     isa: Tuple[int, int, int], wavefrontSize: int, \
-    sourceFileName: str, objectFileName: str, *moreArgs):
+    sourceFileName: str, objectFileName: str, *moreArgs, debug: bool=False):
     launcher = shlex.split(os.environ.get('Tensile_ASM_COMPILER_LAUNCHER', ''))
     rv = launcher + [assemblerPath, '-x', 'assembler', '-target', 'amdgcn-amd-amdhsa']
 
@@ -252,6 +252,10 @@ def getAsmCompileArgs(assemblerPath: str, codeObjectVersion: str, archHasV3: boo
         rv += ['-mno-wavefrontsize64']
 
     rv += moreArgs
+
+    if debug:
+        rv += ['-g',]
+
     rv += ['-c', '-o', objectFileName, sourceFileName]
     return rv
 
