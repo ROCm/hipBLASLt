@@ -83,11 +83,10 @@ namespace Tensile
                 virtual bool debugEval(ContractionProblemGemm const& problem,
                                        std::ostream&                 stream) const override
                 {
-                    bool rv = (*this)(problem);
                     int freeSize = !problem.transposeC01() ? problem.freeSizeA(index)
                                                            : problem.freeSizeB(index);
-                    DEBUG_EVAL_MOD(stream, this->type(), "prob", freeSize, "sol", value, rv);
-                    return rv;
+                    return debugEvalCmp(problem, stream,
+                                        "prob", freeSize, "%", "sol", value);
                 }
             };
 
@@ -125,11 +124,10 @@ namespace Tensile
                 virtual bool debugEval(ContractionProblemGemm const& problem,
                                        std::ostream&                 stream) const override
                 {
-                    bool rv = (*this)(problem);
                     int freeSize = !problem.transposeC01() ? problem.freeSizeB(index)
                                                            : problem.freeSizeA(index);
-                    DEBUG_EVAL_MOD(stream, this->type(), "prob", freeSize, "sol", value, rv);
-                    return rv;
+                    return debugEvalCmp(problem, stream,
+                                        "prob", freeSize, "%", "sol", value);
                 }
             };
 
@@ -164,10 +162,8 @@ namespace Tensile
                 virtual bool debugEval(ContractionProblemGemm const& problem,
                                        std::ostream&                 stream) const override
                 {
-                    bool rv = (*this)(problem);
-                    DEBUG_EVAL_MOD(stream, this->type(),
-                                   "prob", problem.batchSize(index), "sol", value, rv);
-                    return rv;
+                    return debugEvalCmp(problem, stream,
+                                        "prob", problem.batchSize(index), "%", "sol", value);
                 }
             };
 
@@ -201,11 +197,8 @@ namespace Tensile
                 virtual bool debugEval(ContractionProblemGemm const& problem,
                                        std::ostream&                 stream) const override
                 {
-                    bool rv = (*this)(problem);
-                    DEBUG_EVAL_CMP(stream, this->type(),
-                                   "prob", problem.batchSize(index),
-                                   "sol", value, "==", rv);
-                    return rv;
+                    return debugEvalCmp(problem, stream,
+                                        "prob", problem.batchSize(index), "==", "sol", value);
                 }
             };
 
@@ -244,11 +237,9 @@ namespace Tensile
                 virtual bool debugEval(ContractionProblemGemm const& problem,
                                        std::ostream&                 stream) const override
                 {
-                    bool rv = (*this)(problem);
                     int index_mod = index < 0 ? problem.boundIndices().size() + index : index;
-                    DEBUG_EVAL_MOD(stream, this->type(),
-                                   "prob", problem.boundSize(index_mod), "sol", value, rv);
-                    return rv;
+                    return debugEvalCmp(problem, stream,
+                                        "prob", problem.boundSize(index_mod), "%", "sol", value);
                 }
             };
 
@@ -283,11 +274,8 @@ namespace Tensile
                 virtual bool debugEval(ContractionProblemGemm const& problem,
                                        std::ostream&                 stream) const override
                 {
-                    bool rv = (*this)(problem);
-                    DEBUG_EVAL_CMP(stream, this->type(),
-                                   "prob", problem.problemSizes()[index],
-                                   "sol", value, "==", rv);
-                    return rv;
+                    return debugEvalCmp(problem, stream,
+                                        "prob", problem.problemSizes()[index], "==", "sol", value);
                 }
             };
 
@@ -320,11 +308,8 @@ namespace Tensile
                 virtual bool debugEval(ContractionProblemGemm const& problem,
                                        std::ostream&                 stream) const override
                 {
-                    bool rv = (*this)(problem);
-                    DEBUG_EVAL_CMP(stream, this->type(),
-                                   "prob", problem.maxProblemSize(),
-                                   "sol", value, ">", rv);
-                    return rv;
+                    return debugEvalCmp(problem, stream,
+                                        "prob", problem.maxProblemSize(), ">", "sol", value);
                 }
             };
 
@@ -366,13 +351,10 @@ namespace Tensile
                 virtual bool debugEval(ContractionProblemGemm const& problem,
                                        std::ostream&                 stream) const override
                 {
-                    bool rv = (*this)(problem);
                     int size = problem.freeIndicesA().size() ? problem.freeSizeA(0)
                                                              : problem.batchSize(0);
-                    DEBUG_EVAL_CMP(stream, this->type(),
-                                   "prob", size,
-                                   "sol", value, ">=", rv);
-                    return rv;
+                    return debugEvalCmp(problem, stream,
+                                        "prob", size, ">=", "sol", value);
                 }
             };
 
@@ -411,13 +393,10 @@ namespace Tensile
                 virtual bool debugEval(ContractionProblemGemm const& problem,
                                        std::ostream&                 stream) const override
                 {
-                    bool rv = (*this)(problem);
                     int size = problem.freeIndicesB().size() ? problem.freeSizeB(0)
                                                              : problem.batchSize(0);
-                    DEBUG_EVAL_CMP(stream, this->type(),
-                                   "prob", size,
-                                   "sol", value, ">=", rv);
-                    return rv;
+                    return debugEvalCmp(problem, stream,
+                                        "prob", size, ">=", "sol", value);
                 }
             };
 
@@ -451,11 +430,8 @@ namespace Tensile
                 virtual bool debugEval(ContractionProblemGemm const& problem,
                                        std::ostream&                 stream) const override
                 {
-                    bool rv = (*this)(problem);
-                    DEBUG_EVAL_CMP(stream, this->type(),
-                                   "prob", problem.size(index),
-                                   "sol", value, "==", rv);
-                    return rv;
+                    return debugEvalCmp(problem, stream,
+                                        "prob", problem.size(index), "==", "sol", value);
                 }
             };
 
@@ -489,11 +465,8 @@ namespace Tensile
                 virtual bool debugEval(ContractionProblemGemm const& problem,
                                        std::ostream&                 stream) const override
                 {
-                    bool rv = (*this)(problem);
-                    DEBUG_EVAL_CMP(stream, this->type(),
-                                   "prob", problem.size(index),
-                                   "sol", value, ">", rv);
-                    return rv;
+                    return debugEvalCmp(problem, stream,
+                                        "prob", problem.size(index), ">", "sol", value);
                 }
             };
 
@@ -527,11 +500,8 @@ namespace Tensile
                 virtual bool debugEval(ContractionProblemGemm const& problem,
                                        std::ostream&                 stream) const override
                 {
-                    bool rv = (*this)(problem);
-                    DEBUG_EVAL_CMP(stream, this->type(),
-                                   "prob", problem.size(index),
-                                   "sol", value, "<", rv);
-                    return rv;
+                    return debugEvalCmp(problem, stream,
+                                        "prob", problem.size(index), "<", "sol", value);
                 }
             };
 
@@ -565,10 +535,8 @@ namespace Tensile
                 virtual bool debugEval(ContractionProblemGemm const& problem,
                                        std::ostream&                 stream) const override
                 {
-                    bool rv = (*this)(problem);
-                    DEBUG_EVAL_MOD(stream, this->type(),
-                                   "prob", problem.size(index), "sol", value, rv);
-                    return rv;
+                    return debugEvalCmp(problem, stream,
+                                        "prob", problem.size(index), "%", "sol", value);
                 }
             };
 
@@ -613,12 +581,9 @@ namespace Tensile
                 virtual bool debugEval(ContractionProblemGemm const& problem,
                                        std::ostream&                 stream) const override
                 {
-                    bool rv = (*this)(problem);
-                    DEBUG_EVAL_CMP_TWO(stream, this->type(),
-                                       "prob0", problem.size(index), "sol0", value.min, ">=",
-                                       "prob1", problem.size(index), "sol1", value.max, "<",
-                                       "&&", rv);
-                    return rv;
+                    return debugEvalCmp(problem, stream,
+                                        "prob_low", problem.size(index), ">=", "sol_low", value.min,
+                                        "prob_high", problem.size(index), "<", "sol_high", value.max);
                 }
             };
 
@@ -652,11 +617,8 @@ namespace Tensile
                 virtual bool debugEval(ContractionProblemGemm const& problem,
                                        std::ostream&                 stream) const override
                 {
-                    bool rv = (*this)(problem);
-                    DEBUG_EVAL_CMP(stream, this->type(),
-                                   "prob", problem.a().strides()[index],
-                                   "sol", value, "==", rv);
-                    return rv;
+                    return debugEvalCmp(problem, stream,
+                                        "prob", problem.a().strides()[index], "==", "sol", value);
                 }
             };
 
@@ -690,11 +652,8 @@ namespace Tensile
                 virtual bool debugEval(ContractionProblemGemm const& problem,
                                        std::ostream&                 stream) const override
                 {
-                    bool rv = (*this)(problem);
-                    DEBUG_EVAL_CMP(stream, this->type(),
-                                   "prob", problem.b().strides()[index],
-                                   "sol", value, "==", rv);
-                    return rv;
+                    return debugEvalCmp(problem, stream,
+                                        "prob", problem.b().strides()[index], "==", "sol", value);
                 }
             };
 
@@ -728,11 +687,8 @@ namespace Tensile
                 virtual bool debugEval(ContractionProblemGemm const& problem,
                                        std::ostream&                 stream) const override
                 {
-                    bool rv = (*this)(problem);
-                    DEBUG_EVAL_CMP(stream, this->type(),
-                                   "prob", problem.c().strides()[index],
-                                   "sol", value, "==", rv);
-                    return rv;
+                    return debugEvalCmp(problem, stream,
+                                        "prob", problem.c().strides()[index], "==", "sol", value);
                 }
             };
 
@@ -766,11 +722,8 @@ namespace Tensile
                 virtual bool debugEval(ContractionProblemGemm const& problem,
                                        std::ostream&                 stream) const override
                 {
-                    bool rv = (*this)(problem);
-                    DEBUG_EVAL_CMP(stream, this->type(),
-                                   "prob", problem.d().strides()[index],
-                                   "sol", value, "==", rv);
-                    return rv;
+                    return debugEvalCmp(problem, stream,
+                                        "prob", problem.d().strides()[index], "==", "sol", value);
                 }
             };
 
@@ -794,11 +747,9 @@ namespace Tensile
                 virtual bool debugEval(ContractionProblemGemm const& problem,
                                        std::ostream&                 stream) const override
                 {
-                    bool rv = (*this)(problem);
-                    DEBUG_EVAL_CMP(stream, this->type(),
-                                   "ldc", problem.c().strides()[1],
-                                   "ldd", problem.d().strides()[1], "==", rv);
-                    return rv;
+                    return debugEvalCmp(problem, stream,
+                                        "prob_c_stride", problem.c().strides()[1], "==",
+                                        "prob_d_stride", problem.d().strides()[1]);
                 }
             };
 
@@ -822,11 +773,8 @@ namespace Tensile
                 virtual bool debugEval(ContractionProblemGemm const& problem,
                                        std::ostream&                 stream) const override
                 {
-                    bool rv = (*this)(problem);
-                    DEBUG_EVAL_CMP(stream, this->type(),
-                                   "prob", problem.cEqualsD(),
-                                   "sol", true, "==", rv);
-                    return rv;
+                    return debugEvalCmp(problem, stream,
+                                        "prob", problem.cEqualsD(), "==", "sol", true);
                 }
             };
 
@@ -852,11 +800,8 @@ namespace Tensile
                 virtual bool debugEval(ContractionProblemGemm const& problem,
                                        std::ostream&                 stream) const override
                 {
-                    bool rv = (*this)(problem);
-                    DEBUG_EVAL_CMP(stream, this->type(),
-                                   "prob", problem.beta(),
-                                   "sol", 0.0, "==", rv);
-                    return rv;
+                    return debugEvalCmp(problem, stream,
+                                        "prob", problem.beta(), "==", "sol", 0.0);
                 }
             };
 
@@ -882,11 +827,8 @@ namespace Tensile
                 virtual bool debugEval(ContractionProblemGemm const& problem,
                                        std::ostream&                 stream) const override
                 {
-                    bool rv = (*this)(problem);
-                    DEBUG_EVAL_CMP(stream, this->type(),
-                                   "prob", problem.beta(),
-                                   "sol", 1.0, "==", rv);
-                    return rv;
+                    return debugEvalCmp(problem, stream,
+                                        "prob", problem.beta(), "==", "sol", 1.0);
                 }
             };
 
@@ -919,11 +861,8 @@ namespace Tensile
                 virtual bool debugEval(ContractionProblemGemm const& problem,
                                        std::ostream&                 stream) const override
                 {
-                    bool rv = (*this)(problem);
-                    DEBUG_EVAL_CMP(stream, this->type(),
-                                   "prob", problem.highPrecisionAccumulate(),
-                                   "sol", value, "==", rv);
-                    return rv;
+                    return debugEvalCmp(problem, stream,
+                                        "prob", problem.highPrecisionAccumulate(), "==", "sol", value);
                 }
             };
 
@@ -957,12 +896,9 @@ namespace Tensile
                 virtual bool debugEval(ContractionProblemGemm const& problem,
                                        std::ostream&                 stream) const override
                 {
-                    bool rv = (*this)(problem);
-                    DEBUG_EVAL_CMP_TWO(stream, this->type(),
-                                       "prob0", problem.kernelLanguage(), "sol", value, "==",
-                                       "prob1", problem.kernelLanguage(), "sol_any", KernelLanguage::Any, "==",
-                                       "||", rv);
-                    return rv;
+                    return debugEvalCmp(problem, stream,
+                                        "prob", problem.kernelLanguage(), "==", "sol", value,
+                                        "prob", problem.kernelLanguage(), "==", "sol_any", KernelLanguage::Any);
                 }
             };
 
@@ -995,11 +931,8 @@ namespace Tensile
                 virtual bool debugEval(ContractionProblemGemm const& problem,
                                        std::ostream&                 stream) const override
                 {
-                    bool rv = (*this)(problem);
-                    DEBUG_EVAL_CMP(stream, this->type(),
-                                   "prob", problem.deterministicMode(),
-                                   "sol", value, "==", rv);
-                    return rv;
+                    return debugEvalCmp(problem, stream,
+                                        "prob", problem.deterministicMode(), "==", "sol", value);
                 }
             };
 
@@ -1032,12 +965,9 @@ namespace Tensile
                 virtual bool debugEval(ContractionProblemGemm const& problem,
                                        std::ostream&                 stream) const override
                 {
-                    bool rv = (*this)(problem);
-                    DEBUG_EVAL_CMP_TWO(stream, this->type(),
-                                       "prob", problem.alphaRestriction(), "sol", value, "==",
-                                       "sol", value, "sol_any", ScalarValue::Any, "==",
-                                       "||", rv);
-                    return rv;
+                    return debugEvalCmp(problem, stream,
+                                        "prob", problem.alphaRestriction(), "==", "sol", value,
+                                        "sol", value, "==", "sol_any", ScalarValue::Any);
                 }
             };
 
@@ -1070,12 +1000,9 @@ namespace Tensile
                 virtual bool debugEval(ContractionProblemGemm const& problem,
                                        std::ostream&                 stream) const override
                 {
-                    bool rv = (*this)(problem);
-                    DEBUG_EVAL_CMP_TWO(stream, this->type(),
-                                       "prob", problem.betaRestriction(), "sol", value, "==",
-                                       "sol", value, "sol_any", ScalarValue::Any, "==",
-                                       "||", rv);
-                    return rv;
+                    return debugEvalCmp(problem, stream,
+                                        "prob", problem.betaRestriction(), "==", "sol", value,
+                                        "sol", value, "==", "sol_any", ScalarValue::Any);
                 }
             };
 
@@ -1122,16 +1049,12 @@ namespace Tensile
                 virtual bool debugEval(ContractionProblemGemm const& problem,
                                        std::ostream&                 stream) const override
                 {
-                    bool rv = (*this)(problem);
-                    stream << rv << ": " << this->type() << " "
-                           << "("
-                           << "((prob0 = " << problem.a().dataType() << ") == (sol0 = " << value[0] <<  ")) && "
-                           << "((prob1 = " << problem.b().dataType() << ") == (sol1 = " << value[1] <<  ")) && "
-                           << "((prob2 = " << problem.c().dataType() << ") == (sol2 = " << value[2] <<  ")) && "
-                           << "((prob3 = " << problem.d().dataType() << ") == (sol3 = " << value[3] <<  ")) && "
-                           << "((prob4 = " << problem.computeInputType() << ") == (sol4 = " << value[4] <<  "))"
-                           << ")" << std::endl;
-                    return rv;
+                    return debugEvalCmp(problem, stream,
+                                        "prob_a", problem.a().dataType(), "==", "sol_a", value[0],
+                                        "prob_b", problem.b().dataType(), "==", "sol_b", value[1],
+                                        "prob_c", problem.c().dataType(), "==", "sol_c", value[2],
+                                        "prob_d", problem.d().dataType(), "==", "sol_d", value[3],
+                                        "prob_compute", problem.computeInputType(), "==", "sol_compute", value[4]);
                 }
             };
 
@@ -1160,11 +1083,8 @@ namespace Tensile
                 virtual bool debugEval(ContractionProblemGemm const& problem,
                                        std::ostream&                 stream) const override
                 {
-                    bool rv = (*this)(problem);
-                    DEBUG_EVAL_CMP(stream, this->type(),
-                                   "prob", problem.operationIdentifier(),
-                                   "sol", value, "==", rv);
-                    return rv;
+                    return debugEvalCmp(problem, stream,
+                                        "prob", problem.operationIdentifier(), "==", "sol", value);
                 }
             };
 
@@ -1387,17 +1307,14 @@ namespace Tensile
                 virtual bool debugEval(ContractionProblemGemm const& problem,
                                        std::ostream&                 stream) const override
                 {
-                    bool rv = (*this)(problem);
                     size_t rs = reductionSize(problem, value);
                     if(problem.groupedGemm())
-                        DEBUG_EVAL_CMP(stream, this->type(),
-                                       "prob", problem.workspaceSizeGroupedGemm(),
-                                       "max", problem.workspaceSize(), "<=", rv);
-                    else
-                        DEBUG_EVAL_CMP(stream, this->type(),
-                                       "prob", problem.d().totalLogicalElements() * value[0] + rs,
-                                       "max", problem.workspaceSize(), "<=", rv);
-                    return rv;
+                        return debugEvalCmp(problem, stream,
+                                            "prob", problem.workspaceSizeGroupedGemm(), "<=",
+                                            "max", problem.workspaceSize());
+                    return debugEvalCmp(problem, stream,
+                                        "prob", problem.d().totalLogicalElements() * value[0] + rs, "<=",
+                                        "max", problem.workspaceSize());
                 }
             };
 
@@ -1460,11 +1377,8 @@ namespace Tensile
                 virtual bool debugEval(ContractionProblemGemm const& problem,
                                        std::ostream&                 stream) const override
                 {
-                    bool rv = (*this)(problem);
-                    DEBUG_EVAL_CMP(stream, this->type(),
-                                   "prob", problem.boundSize(0),
-                                   "sol", value, ">=", rv);
-                    return rv;
+                    return debugEvalCmp(problem, stream,
+                                        "prob", problem.boundSize(0), ">=", "sol", value);
                 }
             };
 
@@ -1491,22 +1405,8 @@ namespace Tensile
                 virtual bool debugEval(ContractionProblemGemm const& problem,
                                        std::ostream&                 stream) const override
                 {
-                    bool rv = (*this)(problem);
-                    std::string c_strides = "[", d_strides = "[";
-                    for (int i = 0; i < problem.c().strides().size(); i++) {
-                        c_strides += problem.c().strides()[i];
-                        d_strides += problem.d().strides()[i];
-                        if (i < problem.c().strides().size() - 1) {
-                            c_strides += ", ";
-                            d_strides += ", ";
-                        }
-                    }
-                    c_strides += "]";
-                    d_strides += "]";
-                    DEBUG_EVAL_CMP(stream, this->type(),
-                                   "c_stride", c_strides,
-                                   "d_stride", d_strides, "==", rv);
-                    return rv;
+                    return debugEvalCmp(problem, stream,
+                                        "prob_c_stride", problem.c().strides(), "==", "prob_d_stride", problem.d().strides());
                 }
             };
 
@@ -1539,11 +1439,8 @@ namespace Tensile
                 virtual bool debugEval(ContractionProblemGemm const& problem,
                                        std::ostream&                 stream) const override
                 {
-                    bool rv = (*this)(problem);
-                    DEBUG_EVAL_CMP(stream, this->type(),
-                                   "prob", problem.stridedBatched(),
-                                   "sol", value, "==", rv);
-                    return rv;
+                    return debugEvalCmp(problem, stream,
+                                        "prob", problem.stridedBatched(), "==", "sol", value);
                 }
             };
 
@@ -1576,11 +1473,8 @@ namespace Tensile
                 virtual bool debugEval(ContractionProblemGemm const& problem,
                                        std::ostream&                 stream) const override
                 {
-                    bool rv = (*this)(problem);
-                    DEBUG_EVAL_CMP(stream, this->type(),
-                                   "prob", problem.groupedGemm(),
-                                   "sol", value, "==", rv);
-                    return rv;
+                    return debugEvalCmp(problem, stream,
+                                        "prob", problem.groupedGemm(), "==", "sol", value);
                 }
             };
 
@@ -1663,11 +1557,9 @@ namespace Tensile
                 virtual bool debugEval(ContractionProblemGemm const& problem,
                                        std::ostream&                 stream) const override
                 {
-                    bool rv = (*this)(problem);
-                    DEBUG_EVAL_CMP(stream, this->type(),
-                                   "prob", problem.performanceMetric(),
-                                   "sol", PerformanceMetric::Experimental, "==", rv);
-                    return rv;
+                    return debugEvalCmp(problem, stream,
+                                        "prob", problem.performanceMetric(), "==",
+                                        "sol: PerformanceMetric::Experimental", PerformanceMetric::Experimental);
                 }
             };
 
@@ -1789,11 +1681,8 @@ namespace Tensile
                 virtual bool debugEval(ContractionProblemGemm const& problem,
                                        std::ostream&                 stream) const override
                 {
-                    bool rv = (*this)(problem);
-                    DEBUG_EVAL_CMP(stream, this->type(),
-                                   "prob", problem.useGradient(),
-                                   "sol", value, "==", rv);
-                    return rv;
+                    return debugEvalCmp(problem, stream,
+                                        "prob", problem.useGradient(), "==", "sol", value);
                 }
             };
 
@@ -1826,11 +1715,8 @@ namespace Tensile
                 virtual bool debugEval(ContractionProblemGemm const& problem,
                                        std::ostream&                 stream) const override
                 {
-                    bool rv = (*this)(problem);
-                    DEBUG_EVAL_CMP(stream, this->type(),
-                                   "prob", problem.activationType(),
-                                   "sol", value, "==", rv);
-                    return rv;
+                    return debugEvalCmp(problem, stream,
+                                        "prob", problem.activationType(), "==", "sol", value);
                 }
             };
 
@@ -1914,14 +1800,10 @@ namespace Tensile
                                        std::ostream&                 stream) const override
                 {
                     bool rv = (*this)(problem);
-                    if(problem.activationType() == ActivationType::None)
-                        stream << rv << ": " << this->type()
-                               << " (ActivationType::None)"
-                               << std::endl;
-                    else
-                        DEBUG_EVAL_CMP(stream, this->type(),
-                                       "prob", problem.activationComputeType(),
-                                       "sol", value, "==", rv);
+                    if(problem.activationType() != ActivationType::None)
+                        return debugEvalCmp(problem, stream,
+                                            "prob", problem.activationComputeType(), "==",
+                                            "sol", value);
                     return rv;
                 }
             };
@@ -1955,11 +1837,8 @@ namespace Tensile
                 virtual bool debugEval(ContractionProblemGemm const& problem,
                                        std::ostream&                 stream) const override
                 {
-                    bool rv = (*this)(problem);
-                    DEBUG_EVAL_CMP(stream, this->type(),
-                                    "prob", problem.activationNoGuard(),
-                                    "sol", value, "==", rv);
-                    return rv;
+                    return debugEvalCmp(problem, stream,
+                                        "prob", problem.activationNoGuard(), "==", "sol", value);
                 }
             };
 
@@ -1991,11 +1870,8 @@ namespace Tensile
                 virtual bool debugEval(ContractionProblemGemm const& problem,
                                        std::ostream&                 stream) const override
                 {
-                    bool rv = (*this)(problem);
-                    DEBUG_EVAL_CMP(stream, this->type(),
-                                    "prob", problem.useBias(),
-                                    "sol", value, "==", rv);
-                    return rv;
+                    return debugEvalCmp(problem, stream,
+                                        "prob", problem.useBias(), "==", "sol", value);
                 }
             };
 
@@ -2027,11 +1903,8 @@ namespace Tensile
                 virtual bool debugEval(ContractionProblemGemm const& problem,
                                        std::ostream&                 stream) const override
                 {
-                    bool rv = (*this)(problem);
-                    DEBUG_EVAL_CMP(stream, this->type(),
-                                    "prob", problem.useE(),
-                                    "sol", value, "==", rv);
-                    return rv;
+                    return debugEvalCmp(problem, stream,
+                                        "prob", problem.useE(), "==", "sol", value);
                 }
             };
 
@@ -2063,11 +1936,8 @@ namespace Tensile
                 virtual bool debugEval(ContractionProblemGemm const& problem,
                                        std::ostream&                 stream) const override
                 {
-                    bool rv = (*this)(problem);
-                    DEBUG_EVAL_CMP(stream, this->type(),
-                                    "prob", problem.useScaleAB(),
-                                    "sol", value, "==", rv);
-                    return rv;
+                    return debugEvalCmp(problem, stream,
+                                        "prob", problem.useScaleAB(), "==", "sol", value);
                 }
             };
 
@@ -2099,11 +1969,8 @@ namespace Tensile
                 virtual bool debugEval(ContractionProblemGemm const& problem,
                                        std::ostream&                 stream) const override
                 {
-                    bool rv = (*this)(problem);
-                    DEBUG_EVAL_CMP(stream, this->type(),
-                                    "prob", problem.useScaleCD(),
-                                    "sol", value, "==", rv);
-                    return rv;
+                    return debugEvalCmp(problem, stream,
+                                        "prob", problem.useScaleCD(), "==", "sol", value);
                 }
             };
 
@@ -2136,11 +2003,8 @@ namespace Tensile
                 virtual bool debugEval(ContractionProblemGemm const& problem,
                                        std::ostream&                 stream) const override
                 {
-                    bool rv = (*this)(problem);
-                    DEBUG_EVAL_CMP(stream, this->type(),
-                                    "prob", problem.useScaleAlphaVec(),
-                                    "sol", value, "==", rv);
-                    return rv;
+                    return debugEvalCmp(problem, stream,
+                                        "prob", problem.useScaleAlphaVec(), "==", "sol", value);
                 }
             };
 
@@ -2296,11 +2160,8 @@ namespace Tensile
                 virtual bool debugEval(ContractionProblemGemm const& problem,
                                        std::ostream&                 stream) const override
                 {
-                    bool rv = (*this)(problem);
-                    DEBUG_EVAL_CMP(stream, this->type(),
-                                   "prob", problem.sparse(),
-                                   "sol", value, "==", rv);
-                    return rv;
+                    return debugEvalCmp(problem, stream,
+                                        "prob", problem.sparse(), "==", "sol", value);
                 }
             };
 
@@ -2333,11 +2194,8 @@ namespace Tensile
                 virtual bool debugEval(ContractionProblemGemm const& problem,
                                        std::ostream&                 stream) const override
                 {
-                    bool rv = (*this)(problem);
-                    DEBUG_EVAL_CMP(stream, this->type(),
-                                    "prob", problem.f32XdlMathOp(),
-                                    "sol", value, "==", rv);
-                    return rv;
+                    return debugEvalCmp(problem, stream,
+                                        "prob", problem.f32XdlMathOp(), "==", "sol", value);
                 }
             };
 
@@ -2373,9 +2231,10 @@ namespace Tensile
                                        std::ostream&                 stream) const override
                 {
                     bool rv = (*this)(problem);
-                    DEBUG_EVAL_CMP(stream, this->type(),
-                                    "prob", problem.getUseDeviceUserArguments(),
-                                    "sol", value, "==", rv);
+                    if(problem.getUseDeviceUserArguments())
+                        return debugEvalCmp(problem, stream,
+                                            "prob", problem.getUseDeviceUserArguments(), "==",
+                                            "sol", value);
                     return rv;
                 }
             };

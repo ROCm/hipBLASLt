@@ -72,11 +72,7 @@ namespace Tensile
                 virtual bool debugEval(AMDGPU const& gpu,
                                        std::ostream& stream) const override
                 {
-                    bool rv = (*this)(gpu);
-                    DEBUG_EVAL_CMP(stream, this->type(),
-                                   "prob", gpu.processor,
-                                   "sol", value, "==", rv);
-                    return rv;
+                    return debugEvalCmp(gpu, stream, "prob", gpu.processor, "==", "sol", value);
                 }
             };
 
@@ -108,11 +104,7 @@ namespace Tensile
                 virtual bool debugEval(AMDGPU const& gpu,
                                        std::ostream& stream) const override
                 {
-                    bool rv = (*this)(gpu);
-                    DEBUG_EVAL_CMP(stream, this->type(),
-                                   "prob", gpu.computeUnitCount,
-                                   "sol", value, "==", rv);
-                    return rv;
+                    return debugEvalCmp(gpu, stream, "prob", gpu.computeUnitCount, "==", "sol", value);
                 }
             };
 
