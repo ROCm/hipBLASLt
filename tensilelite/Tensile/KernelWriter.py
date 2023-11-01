@@ -4399,7 +4399,8 @@ for codeObjectFileName in codeObjectFileNames:
     base, ext = os.path.splitext(assemblyFileName)
     objectFileName = base + '.o'
 
-    args = self.getCompileArgs(assemblyFileName, objectFileName)
+    debug = globalParameters.get("AsmDebug", False)
+    args = self.getCompileArgs(assemblyFileName, objectFileName, debug=debug)
     if globalParameters["PrintCodeCommands"]:
       print (' '.join(args), " && ")
 
@@ -4508,7 +4509,7 @@ for codeObjectFileName in codeObjectFileNames:
   ##############################################################################
   # Compile Args
   ##############################################################################
-  def getCompileArgs(self, sourceFileName, objectFileName, *moreArgs, isa=None, wavefrontSize=None):
+  def getCompileArgs(self, sourceFileName, objectFileName, *moreArgs, isa=None, wavefrontSize=None, debug=False):
     if isa is None:
       isa = self.states.version
     if wavefrontSize is None:
@@ -4516,7 +4517,7 @@ for codeObjectFileName in codeObjectFileNames:
     return getAsmCompileArgs(globalParameters['AssemblerPath'], \
       globalParameters["CodeObjectVersion"], \
       globalParameters["AsmCaps"][isa]["HasCodeObjectV3"], \
-      isa, wavefrontSize, sourceFileName, objectFileName, *moreArgs)
+      isa, wavefrontSize, sourceFileName, objectFileName, *moreArgs, debug=debug)
 
   def getLinkCodeObjectArgs(self, objectFileNames, coFileName, *moreArgs):
     return getAsmLinkCodeObjectArgs(globalParameters['AssemblerPath'], \
