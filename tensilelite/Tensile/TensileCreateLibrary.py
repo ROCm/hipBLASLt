@@ -368,8 +368,9 @@ def prepAsm(kernelWriterAssembly):
     isa = globalParameters["CurrentISA"]
     assemblerFile.write("h={gfxName}\n".format(gfxName = getGfxName(isa)))
 
-    cArgs32 = kernelWriterAssembly.getCompileArgs("$f.s", "$f.o", isa=isa, wavefrontSize=32)
-    cArgs64 = kernelWriterAssembly.getCompileArgs("$f.s", "$f.o", isa=isa, wavefrontSize=64)
+    debug = globalParameters.get("AsmDebug", False)
+    cArgs32 = kernelWriterAssembly.getCompileArgs("$f.s", "$f.o", isa=isa, wavefrontSize=32, debug=debug)
+    cArgs64 = kernelWriterAssembly.getCompileArgs("$f.s", "$f.o", isa=isa, wavefrontSize=64, debug=debug)
     lArgs = kernelWriterAssembly.getLinkCodeObjectArgs(["$f.o"], "$f.co")
 
     assemblerFile.write("if [ $wave -eq 32 ]; then\n")
@@ -1260,6 +1261,8 @@ def TensileCreateLibrary():
   argParser.add_argument("--global-parameters", nargs="+", type=splitExtraParameters, default=[])
   argParser.add_argument("--generate-solution-table", dest="GenSolTable", action="store_true", default=True,
                          help="Generate solution-yaml matching table")
+  argParser.add_argument("--asm-debug", dest="AsmDebug", action="store_true", default=False,
+                         help="Keep debug information for built code objects")
 
   args = argParser.parse_args()
 
@@ -1300,6 +1303,7 @@ def TensileCreateLibrary():
   arguments["CpuThreads"] = args.CpuThreads
   arguments["PrintLevel"] = args.PrintLevel
   arguments["PrintTiming"] = args.PrintTiming
+  arguments["AsmDebug"] = args.AsmDebug
 
   for key, value in args.global_parameters:
     arguments[key] = value

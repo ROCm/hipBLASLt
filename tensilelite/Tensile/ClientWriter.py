@@ -224,6 +224,9 @@ def getBuildClientLibraryScript(buildPath, libraryLogicPath):
   if globalParameters["GenerateManifestAndExit"]:
     callCreateLibraryCmd += " --generate-manifest-and-exit"
 
+  if globalParameters.get("AsmDebug", False):
+    callCreateLibraryCmd += " --asm-debug"
+
   callCreateLibraryCmd += " --architecture=" + globalParameters["Architecture"]
   callCreateLibraryCmd += " --code-object-version=" + globalParameters["CodeObjectVersion"]
   callCreateLibraryCmd += " --cxx-compiler=" + globalParameters["CxxCompiler"]
