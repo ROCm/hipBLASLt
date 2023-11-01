@@ -367,6 +367,7 @@ tensile_version=
 build_tensile=true
 tensile_msgpack_backend=true
 update_cmake=true
+asm_debug=false
 
 
 rocm_path=/opt/rocm
@@ -414,6 +415,7 @@ while true; do
             shift ;;
         -g|--debug)
             build_release=false
+            asm_debug=true
             shift ;;
         --hip-clang)
             build_hip_clang=true
@@ -427,6 +429,7 @@ while true; do
         -k|--relwithdebinfo)
             build_release=false
             build_release_debug=true
+            asm_debug=true
             shift ;;
         --codecoverage)
             build_codecoverage=true
@@ -705,6 +708,10 @@ pushd .
     tensile_opt="${tensile_opt} -DTensile_LIBRARY_FORMAT=msgpack"
   else
     tensile_opt="${tensile_opt} -DTensile_LIBRARY_FORMAT=yaml"
+  fi
+
+  if [[ "${asm_debug}" == true ]]; then
+    tensile_opt="${tensile_opt} -DTensile_ASM_DEBUG=ON"
   fi
 
   echo $cmake_common_options

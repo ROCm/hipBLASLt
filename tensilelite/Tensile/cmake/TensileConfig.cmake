@@ -184,6 +184,10 @@ function(TensileCreateLibraryFiles
     set(Options ${Options} "--jobs=${Tensile_CPU_THREADS}")
   endif()
 
+  if(Tensile_ASM_DEBUG)
+    set(Options ${Options} "--asm-debug")
+  endif()
+
   if(Tensile_LIBRARY_FORMAT)
     set(Options ${Options} "--library-format=${Tensile_LIBRARY_FORMAT}")
     if(Tensile_LIBRARY_FORMAT MATCHES "yaml")
