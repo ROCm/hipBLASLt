@@ -422,7 +422,6 @@ class ProblemPredicate(Properties.Predicate):
             TLUB = state['ProblemType']['TLUB']
             minFree0 = state['GlobalReadVectorWidthA'] if TLUA else 1
             minFree1 = state['GlobalReadVectorWidthB'] if TLUB else 1
-            minFree1 = 0 if state['ProblemType']['GroupedGemm'] else minFree1
             rv += [cls('LeadingFree0SizesGreaterOrEqual', value=minFree0)]
             rv += [cls('LeadingFree1SizesGreaterOrEqual', value=minFree1)]
 

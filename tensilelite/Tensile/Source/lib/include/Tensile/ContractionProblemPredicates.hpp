@@ -387,6 +387,9 @@ namespace Tensile
                     //   If tensor contains multiple batch dims this may not be true.
                     //   Really should modify Contractions.py to select SizeN >= value, based on
                     //   desired index requirement
+                    if(problem.groupedGemm())
+                        return (problem.freeIndicesB().size() ? problem.freeSizeB(0) >= value || problem.freeSizeB(0) == 0
+                                                            : problem.batchSize(0) >= value || problem.freeSizeB(0) == 0);
                     return (problem.freeIndicesB().size() ? problem.freeSizeB(0) >= value
                                                           : problem.batchSize(0) >= value);
                 }
