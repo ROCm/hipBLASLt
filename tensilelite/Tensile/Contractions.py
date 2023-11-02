@@ -68,7 +68,7 @@ class ProblemType:
                  'useBeta', 'useBias', 'biasSrcWhiteList', 'useE', 'useScaleAB', 'useScaleCD', 'useScaleAlphaVec', 'biasDataTypeWhiteList',
                  'highPrecisionAccumulate', 'useInitialStridesAB', 'useInitialStridesCD', 'stridedBatched', 'groupedGemm',
                  'useGradient', 'activationType', 'activationArgLength', 'activationComputeDataType', 'activationNoGuard',
-                 'sparseA', 'f32XdlMathOp', 'supportDeviceUserArguments']
+                 'sparse', 'f32XdlMathOp', 'supportDeviceUserArguments']
     @classmethod
     def FromOriginalState(cls, d):
         indices = [None]*d['TotalIndices']
@@ -237,9 +237,9 @@ class ProblemType:
         rv.activationNoGuard = False
         if 'ActivationNoGuard' in d:
             rv.activationNoGuard = d["ActivationNoGuard"]
-        rv.sparseA = False
-        if 'SparseA' in d:
-            rv.sparseA = d['SparseA']
+        rv.sparse = 0
+        if 'Sparse' in d:
+            rv.sparse = int(d['Sparse'])
 
         rv.f32XdlMathOp = DataType(d['F32XdlMathOp']) if 'F32XdlMathOp' in d else DataType(0)
 
@@ -358,7 +358,7 @@ class ProblemType:
             predicates.append(ProblemPredicate("UseScaleAB", value=self.useScaleAB))
             predicates.append(ProblemPredicate("UseScaleCD", value=self.useScaleCD))
             predicates.append(ProblemPredicate("UseScaleAlphaVec", value=self.useScaleAlphaVec))
-            predicates.append(ProblemPredicate("SparseA", value=self.sparseA))
+            predicates.append(ProblemPredicate("Sparse", value=self.sparse))
             predicates.append(ProblemPredicate("F32XdlMathOp", value=self.f32XdlMathOp))
             predicates.append(ProblemPredicate("SupportDeviceUserArguments", value=self.supportDeviceUserArguments))
 
@@ -622,3 +622,6 @@ class Solution:
                 raise KeyError("{0} is not a property of Solution.".format(key))
 
             setattr(self, key, value)
+
+    def getSolutionKeys(self):
+        return self.originalSolution.keys()

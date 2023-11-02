@@ -64,9 +64,15 @@ namespace Tensile
                     return "Processor";
                 }
 
-                virtual bool operator()(AMDGPU const& gpu) const
+                virtual bool operator()(AMDGPU const& gpu) const override
                 {
                     return gpu.processor == value;
+                }
+
+                virtual bool debugEval(AMDGPU const& gpu,
+                                       std::ostream& stream) const override
+                {
+                    return debugEvalCmp(gpu, stream, "prob", gpu.processor, "==", "sol", value);
                 }
             };
 
@@ -90,9 +96,15 @@ namespace Tensile
                     return "CUCount";
                 }
 
-                virtual bool operator()(AMDGPU const& gpu) const
+                virtual bool operator()(AMDGPU const& gpu) const override
                 {
                     return gpu.computeUnitCount == value;
+                }
+
+                virtual bool debugEval(AMDGPU const& gpu,
+                                       std::ostream& stream) const override
+                {
+                    return debugEvalCmp(gpu, stream, "prob", gpu.computeUnitCount, "==", "sol", value);
                 }
             };
 
@@ -116,9 +128,17 @@ namespace Tensile
                     return "TargetProcessor";
                 }
 
-                virtual bool operator()(AMDGPU const& gpu) const
+                virtual bool operator()(AMDGPU const& gpu) const override
                 {
                     return gpu.runsKernelTargeting(value);
+                }
+
+                virtual bool debugEval(AMDGPU const& gpu,
+                                       std::ostream& stream) const override
+                {
+                    bool rv = (*this)(gpu);
+                    stream << rv << ": " << this->type() << std::endl;
+                    return rv;
                 }
             };
         } // namespace GPU

@@ -448,7 +448,7 @@ namespace Tensile
             bool                  activationNoGuard         = false;
             std::vector<int>      biasSrcWhiteList;
             std::vector<DataType> biasDataTypeWhiteList;
-            bool                  sparseA                    = false;
+            int                   sparse                     = 0;
             bool                  supportDeviceUserArguments = false;
         };
 

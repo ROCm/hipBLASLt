@@ -68,8 +68,8 @@ def wait(states, kernel, tPA, tPB, skipGlobalRead, skipLocalWrite, \
                    else tPB["nrp"]*tPB["nrc"]*max(tPB["nwcv"],tPB["nwpv"])//tPB["nwcvpi"]
 
             numM = 0
-            if kernel["ProblemType"]["SparseA"] and not kernel["DirectToVgprSparseMetadata"]:
-              tPM = tPA["tpsMetadata"]
+            if kernel["ProblemType"]["Sparse"] and not kernel["DirectToVgprSparseMetadata"]:
+              tPM = tPA["tpsMetadata"] if tPA["is_sparse"] else tPB["tpsMetadata"]
               numM = tPM["nrp"]*tPM["nrc"]*max(tPM["nwcv"],tPM["nwpv"])//tPM["nwcvpi"]
             lgkmcnt += skipLocalWrite * (numA + numB + numM)
         if skipLocalRead > -1:
@@ -81,7 +81,7 @@ def wait(states, kernel, tPA, tPB, skipGlobalRead, skipLocalWrite, \
         numA = kernel["NumLoadsPerpendicularA"] * kernel["NumLoadsCoalescedA"]
         numB = kernel["NumLoadsPerpendicularB"] * kernel["NumLoadsCoalescedB"]
         numM = 0
-        if kernel["ProblemType"]["SparseA"] and not kernel["DirectToVgprSparseMetadata"]:
+        if kernel["ProblemType"]["Sparse"] and not kernel["DirectToVgprSparseMetadata"]:
           numM = kernel["NumLoadsPerpendicularMetadata"] * kernel["NumLoadsCoalescedMetadata"]
         vmcnt += skipGlobalRead * (numA + numB + numM)
 

@@ -103,7 +103,7 @@ def main( config ):
 
   clientParametersPaths = []
   for logicFileName in logicFiles:
-    (scheduleName, _, problemType, _, exactLogic, newLibrary) \
+    (scheduleName, _, problemType, _, exactLogic, newLibrary, _) \
         = LibraryIO.parseLibraryLogicFile(logicFileName)
     if problemType["DataType"].isHalf():
         enableHalf = True
@@ -536,7 +536,7 @@ def writeClientConfigIni(problemSizes, biasTypeArgs, activationArgs, problemType
         if biasTypeArgs:
           for btype in biasTypeArgs.biasTypes:
             param('bias-type-args',  btype.toEnum())
-        param('sparse-a',   problemType.sparseA)
+        param('sparse',   problemType.sparse)
         param('high-precision-accumulate', problemType.highPrecisionAccumulate)
         param('strided-batched', problemType.stridedBatched)
         param('grouped-gemm', problemType.groupedGemm)

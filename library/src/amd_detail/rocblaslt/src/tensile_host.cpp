@@ -606,6 +606,11 @@ namespace
             tensileProblem.setUseScaleAlphaVec(false);
             tensileProblem.setUseE(false);
             tensileProblem.setUseGradient(false);
+            if(a_type == Tensile::DataType::Float8 || a_type == Tensile::DataType::BFloat8
+               || b_type == Tensile::DataType::Float8 || b_type == Tensile::DataType::BFloat8)
+            {
+                tensileProblem.setUseScaleAB(false);
+            }
         }
         else
         {
@@ -1783,16 +1788,19 @@ inline auto getSolutions(
         auto actType          = tensile_prob.activationType();
         auto useScaleAlphaVec = tensile_prob.useScaleAlphaVec();
         auto useE             = tensile_prob.useE();
+        auto useScaleAB       = tensile_prob.useScaleAB();
         tensile_prob.setUseBias(false);
         tensile_prob.setActivationType(Tensile::ActivationType::None);
         tensile_prob.setUseScaleAlphaVec(false);
         tensile_prob.setUseE(false);
+        tensile_prob.setUseScaleAB(false);
         solutions_fallback = library->findTopSolutions(tensile_prob, *hardware, requestedAlgoCount);
         // restore
         tensile_prob.setUseBias(useBias);
         tensile_prob.setActivationType(actType);
         tensile_prob.setUseScaleAlphaVec(useScaleAlphaVec);
         tensile_prob.setUseE(useE);
+        tensile_prob.setUseScaleAB(useScaleAB);
     }
 
     auto solutions = library->findTopSolutions(tensile_prob, *hardware, requestedAlgoCount);
@@ -2015,11 +2023,27 @@ rocblaslt_status isSolutionSupported(rocblaslt_handle       handle,
         tensile_prob.setWorkspaceSize(algo->max_workspace_bytes);
         if(!(*solution->hardwarePredicate)(*hardware))
         {
+            if(get_logger_layer_mode() & rocblaslt_layer_mode_log_info)
+            {
+                std::ostringstream msg;
+                msg << "Hardware match: " << solution->description();
+                solution->hardwarePredicate->debugEval(*hardware, msg);
+                msg << std::endl;
+                log_info(__func__, msg.str());
+            }
             log_error(__func__, "Solution is not supported");
             return rocblaslt_status_invalid_value;
         }
         if(!(*solution->problemPredicate)(tensile_prob))
         {
+            if(get_logger_layer_mode() & rocblaslt_layer_mode_log_info)
+            {
+                std::ostringstream msg;
+                msg << "Software match: " << solution->description();
+                solution->problemPredicate->debugEval(tensile_prob, msg);
+                msg << std::endl;
+                log_info(__func__, msg.str());
+            }
             // Try fallback
             if(scaleAlphaVec == nullptr && bias == nullptr && E == nullptr
                && tensile_prob.activationEnumArg() == Tensile::ActivationType::None)
@@ -2042,6 +2066,14 @@ rocblaslt_status isSolutionSupported(rocblaslt_handle       handle,
                 tensile_prob.setUseE(useE);
                 if(!isSup)
                 {
+                    if(get_logger_layer_mode() & rocblaslt_layer_mode_log_info)
+                    {
+                        std::ostringstream msg;
+                        msg << "Software fallback match: " << solution->description();
+                        solution->problemPredicate->debugEval(tensile_prob, msg);
+                        msg << std::endl;
+                        log_info(__func__, msg.str());
+                    }
                     log_error(__func__, "Solution is not supported");
                     return rocblaslt_status_invalid_value;
                 }
@@ -2070,11 +2102,15 @@ rocblaslt_status isSolutionSupported(rocblaslt_handle       handle,
             if(!((*solution->hardwarePredicate)(*hardware)
                  && (*solution->problemPredicate)(tensile_prob.gemms[i])))
             {
-#if 0
-                std::cout << "Match " << "[" << i << "]: " << solution->description();
-                solution->problemPredicate->debugEval(tensile_prob.gemms[i], std::cout);
-                std::cout << std::endl;
-#endif
+                if(get_logger_layer_mode() & rocblaslt_layer_mode_log_info)
+                {
+                    std::ostringstream msg;
+                    msg << "Match "
+                        << "[" << i << "]: " << solution->description();
+                    solution->problemPredicate->debugEval(tensile_prob.gemms[i], msg);
+                    msg << std::endl;
+                    log_info(__func__, msg.str());
+                }
                 isSupported = false;
                 break;
             }

@@ -164,6 +164,7 @@ def getLocalWriteMFMAEnd(writer, kernel, tensorParametersA, tensorParametersB):
     writer.states.numMfmaForLR = 1
     latencyLeft = writer.states.miLatencyLeft
     miLatencyLeft = writer.states.miLatencyLeft
+    tPM = tensorParametersA["tpsMetadata"] if tensorParametersA["is_sparse"] else tensorParametersB["tpsMetadata"]
     for iui in range(kernel["InnerUnroll"]):
         # ds_read[A][0]
         for i in range(writer.states.numReadsPerUnrollA):
@@ -172,12 +173,12 @@ def getLocalWriteMFMAEnd(writer, kernel, tensorParametersA, tensorParametersB):
                 writer.states.numMfmaForLR += 1
                 latencyLeft = max(miLatencyLeft - tensorParametersA["localReadInstruction"].issueLatency*2,0)
         # ds_read[M][0]
-        if kernel["ProblemType"]["SparseA"] and not kernel["DirectToVgprSparseMetadata"]:
+        if kernel["ProblemType"]["Sparse"] and not kernel["DirectToVgprSparseMetadata"]:
             for i in range(writer.states.numReadsPerUnrollMetadata):
-                latencyLeft -= tensorParametersA["tpsMetadata"]["localReadInstruction"].issueLatency*2
+                latencyLeft -= tPM["localReadInstruction"].issueLatency*2
                 if latencyLeft < 0:
                     writer.states.numMfmaForLR += 1
-                    latencyLeft = max(miLatencyLeft - tensorParametersA["tpsMetadata"]["localReadInstruction"].issueLatency*2,0)
+                    latencyLeft = max(miLatencyLeft - tPM["localReadInstruction"].issueLatency*2,0)
         # ds_read[B][0]
         for i in range(writer.states.numReadsPerUnrollB):
             latencyLeft -= tensorParametersB["localReadInstruction"].issueLatency*2
@@ -191,12 +192,12 @@ def getLocalWriteMFMAEnd(writer, kernel, tensorParametersA, tensorParametersB):
                 writer.states.numMfmaForLR += 1
                 latencyLeft = max(miLatencyLeft - tensorParametersA["localReadInstruction"].issueLatency*2,0)
         # ds_read[M][1:]
-        if kernel["ProblemType"]["SparseA"] and not kernel["DirectToVgprSparseMetadata"]:
+        if kernel["ProblemType"]["Sparse"] and not kernel["DirectToVgprSparseMetadata"]:
             for i in range(writer.states.numReadsPerIterMetadata//kernel["InnerUnroll"] - writer.states.numReadsPerUnrollMetadata):
-                latencyLeft -= tensorParametersA["tpsMetadata"]["localReadInstruction"].issueLatency*2
+                latencyLeft -= tPM["localReadInstruction"].issueLatency*2
                 if latencyLeft < 0:
                     writer.states.numMfmaForLR += 1
-                    latencyLeft = max(miLatencyLeft - tensorParametersA["tpsMetadata"]["localReadInstruction"].issueLatency*2,0)
+                    latencyLeft = max(miLatencyLeft - tPM["localReadInstruction"].issueLatency*2,0)
         # ds_read[B][1:]
         for i in range(writer.states.numReadsPerIterB//kernel["InnerUnroll"] - writer.states.numReadsPerUnrollB):
             latencyLeft -= tensorParametersB["localReadInstruction"].issueLatency*2
@@ -226,6 +227,8 @@ def getLocalWriteMFMAEnd(writer, kernel, tensorParametersA, tensorParametersB):
 
 def getLocalWriteMFMAStart(writer, kernel, tensorParametersA, tensorParametersB, latencyLeft):
     numMfmaPerIter = writer.states.numMfmaPerIter
+
+    tPM = tensorParametersA["tpsMetadata"] if tensorParametersA["is_sparse"] else tensorParametersB["tpsMetadata"]
     #########
     # Get localWriteStart
     #########
@@ -245,7 +248,7 @@ def getLocalWriteMFMAStart(writer, kernel, tensorParametersA, tensorParametersB,
                 doReadA = (u < kernel["LoopIters"] // writer.states.numIterPerCoalescedReadA - writer.states.numItersPLR)
                 doReadB = (u < kernel["LoopIters"] // writer.states.numIterPerCoalescedReadB - writer.states.numItersPLR)
                 doReadM = (u < kernel["LoopIters"] // writer.states.numIterPerCoalescedReadMetadata - writer.states.numItersPLR)
-                doReadM = doReadM and (kernel["ProblemType"]["SparseA"] and not kernel["DirectToVgprSparseMetadata"])
+                doReadM = doReadM and (kernel["ProblemType"]["Sparse"] and not kernel["DirectToVgprSparseMetadata"])
                 for iui in range(kernel["InnerUnroll"]):
                     # ds_read[A][0]
                     for i in range(writer.states.numReadsPerUnrollA * doReadA):
@@ -255,10 +258,10 @@ def getLocalWriteMFMAStart(writer, kernel, tensorParametersA, tensorParametersB,
                             latencyLeft = max(writer.states.miLatencyLeft - tensorParametersA["localReadInstruction"].issueLatency*2,0)
                     # ds_read[M][0]
                     for i in range(writer.states.numReadsPerUnrollMetadata * doReadM):
-                        latencyLeft -= tensorParametersA["tpsMetadata"]["localReadInstruction"].issueLatency*2
+                        latencyLeft -= tPM["localReadInstruction"].issueLatency*2
                         if latencyLeft < 0:
                             numMfmaForCurrentLoopLR += 1
-                            latencyLeft = max(writer.states.miLatencyLeft - tensorParametersA["tpsMetadata"]["localReadInstruction"].issueLatency*2,0)
+                            latencyLeft = max(writer.states.miLatencyLeft - tPM["localReadInstruction"].issueLatency*2,0)
                     # ds_read[B][0]
                     for i in range(writer.states.numReadsPerUnrollB * doReadB):
                         latencyLeft -= tensorParametersB["localReadInstruction"].issueLatency*2
@@ -273,10 +276,10 @@ def getLocalWriteMFMAStart(writer, kernel, tensorParametersA, tensorParametersB,
                             latencyLeft = max(writer.states.miLatencyLeft - tensorParametersA["localReadInstruction"].issueLatency*2,0)
                     # ds_read[M][1:]
                     for i in range((writer.states.numReadsPerIterMetadata - writer.states.numReadsPerUnrollMetadata) * doReadM):
-                        latencyLeft -= tensorParametersA["tpsMetadata"]["localReadInstruction"].issueLatency*2
+                        latencyLeft -= tPM["localReadInstruction"].issueLatency*2
                         if latencyLeft < 0:
                             numMfmaForCurrentLoopLR += 1
-                            latencyLeft = max(writer.states.miLatencyLeft - tensorParametersA["tpsMetadata"]["localReadInstruction"].issueLatency*2,0)
+                            latencyLeft = max(writer.states.miLatencyLeft - tPM["localReadInstruction"].issueLatency*2,0)
                     # ds_read[B][1:]
                     for i in range((writer.states.numReadsPerIterB//kernel["InnerUnroll"]  - writer.states.numReadsPerUnrollB) * doReadB):
                         latencyLeft -= tensorParametersB["localReadInstruction"].issueLatency*2
@@ -308,8 +311,9 @@ def getNumLocalWritePerMfma(writer, kernel, lwStartMfmaIndex):
     numMfmaCanSched = writer.states.lwEndMfmaIndex - lwStartMfmaIndex + 1
     numLoadsA = kernel["DepthU"]*kernel["MacroTileA"]//kernel["GlobalReadVectorWidthA"]//kernel["NumThreads"]
     numLoadsB = kernel["DepthU"]*kernel["MacroTileB"]//kernel["GlobalReadVectorWidthB"]//kernel["NumThreads"]
-    if kernel["ProblemType"]["SparseA"] and not kernel["DirectToVgprSparseMetadata"]:
-        numLoadsM = kernel["DepthU"]*kernel["MacroTileA"]//kernel["GlobalReadVectorWidthMetadata"]//kernel["NumThreads"]
+    if kernel["ProblemType"]["Sparse"] and not kernel["DirectToVgprSparseMetadata"]:
+        macroTile = kernel["MacroTileB"] if kernel["ProblemType"]["Sparse"] == 2 else kernel["MacroTileA"]
+        numLoadsM = kernel["DepthU"]*macroTile//kernel["GlobalReadVectorWidthMetadata"]//kernel["NumThreads"]
     else:
         numLoadsM = 0
     writesToSched = (numLoadsA + numLoadsB + numLoadsM- 1) * PRECISION
@@ -630,7 +634,7 @@ def prepareLWInstToSched(writer, kernel, numLocalWritesPerSched):
     for i in range(len(itemsLWToSched)-1):
         item = itemsLWToSched.pop(0)
         itemsLWToSchedTemp.append(item)
-        skip = kernel["PrefetchGlobalRead"] == 2 and kernel["ProblemType"]["SparseA"] and kernel["DirectToVgprSparseMetadata"] \
+        skip = kernel["PrefetchGlobalRead"] == 2 and kernel["ProblemType"]["Sparse"] and kernel["DirectToVgprSparseMetadata"] \
            and item.name.startswith("MetadataWrite") and item.countType(VMovB32)
         if not skip:
            for j in range(PRECISION-1):
@@ -697,7 +701,7 @@ def schedLocalWrite(writer, kernel, numLocalWriteModPerIter, numLocalWritesPerSc
             imod = Module("LocalWriteMod%u"%u)
             imodNGLL = Module("LocalWriteMod%u"%u)
             writesPerItem = item.countType(LocalWriteInstruction)
-            if kernel["ProblemType"]["SparseA"] and not writesPerItem:
+            if kernel["ProblemType"]["Sparse"] and not writesPerItem:
                 writesPerItem = item.name.startswith("MetadataWrite") and item.countType(VMovB32)
             readsToWaitAdjustForStoreC = 0
             if writesPerItem:
@@ -771,7 +775,7 @@ def schedLocalWrite(writer, kernel, numLocalWriteModPerIter, numLocalWritesPerSc
     # should never run out of items to schedule
     assert not itemsLWToSched # should have scheduled everthing already
 
-    #For the sparseA case, GR and LW are not in paired.
+    #For the sparse case, GR and LW are not in paired.
     #Hence, we must add all the remaining GRs into imod at the end.
     while itemsGRToSchedLater:
       itemGR = itemsGRToSchedLater[0]

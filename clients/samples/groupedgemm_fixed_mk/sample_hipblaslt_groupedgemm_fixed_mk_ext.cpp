@@ -198,7 +198,7 @@ void simpleGroupedGemmFixedMKExt(hipblasLtHandle_t     handle,
         }
     }
 
-    if(heuristicResult.empty())
+    if(validIdx.empty())
     {
         std::cerr << "No valid solution found!" << std::endl;
         return;

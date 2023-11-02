@@ -83,7 +83,7 @@ namespace Tensile
             bool m_useE;
             bool m_useGradient = false;
 
-            bool                             m_aSparse;
+            int                              m_sparse;
             KernelLanguage                   m_kernelLanguage;
             PerformanceMetric                m_performanceMetric;
             bool                             m_fp16AltImpl;

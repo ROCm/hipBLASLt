@@ -1,6 +1,6 @@
 TestParameters:
   marks: [skip-gfx900, skip-gfx906, skip-gfx908, skip-gfx90a, skip-gfx1010, skip-gfx1011, skip-gfx1012, skip-gfx1030] # not supported by arch
-  
+
 GlobalParameters:
   SleepPercent: 50
   CSVExportWinner: 1
@@ -53,11 +53,11 @@ BenchmarkProblems:
       TransposeA: 0
       TransposeB: 0
       UseBeta: True
-      SparseA: True
+      Sparse: 1
       Batched: True
       Activation: True
       ActivationHPA: True
-  
+
     - # BenchmarkProblemSizeGroup - Standard
       InitialSolutionParameters:
       BenchmarkCommonParameters:
@@ -148,11 +148,11 @@ BenchmarkProblems:
       TransposeA: 1
       TransposeB: 0
       UseBeta: True
-      SparseA: True
+      Sparse: 1
       Batched: True
       Activation: True
       ActivationHPA: True
-  
+
     - # BenchmarkProblemSizeGroup - Standard
       InitialSolutionParameters:
       BenchmarkCommonParameters:
@@ -242,11 +242,11 @@ BenchmarkProblems:
       TransposeA: 0
       TransposeB: 1
       UseBeta: True
-      SparseA: True
+      Sparse: 1
       Batched: True
       Activation: True
       ActivationHPA: True
-  
+
     - # BenchmarkProblemSizeGroup - Standard
       InitialSolutionParameters:
       BenchmarkCommonParameters:
@@ -337,11 +337,11 @@ BenchmarkProblems:
       TransposeA: 1
       TransposeB: 1
       UseBeta: True
-      SparseA: True
+      Sparse: 1
       Batched: True
       Activation: True
       ActivationHPA: True
-  
+
     - # BenchmarkProblemSizeGroup - Standard
       InitialSolutionParameters:
       BenchmarkCommonParameters:
@@ -430,11 +430,11 @@ BenchmarkProblems:
       TransposeA: 0
       TransposeB: 0
       UseBeta: True
-      SparseA: True
+      Sparse: 1
       Batched: True
       Activation: True
       ActivationHPA: True
-  
+
     - # BenchmarkProblemSizeGroup - Standard
       InitialSolutionParameters:
       BenchmarkCommonParameters:
@@ -522,11 +522,11 @@ BenchmarkProblems:
       TransposeA: 1
       TransposeB: 0
       UseBeta: True
-      SparseA: True
+      Sparse: 1
       Batched: True
       Activation: True
       ActivationHPA: True
-  
+
     - # BenchmarkProblemSizeGroup - Standard
       InitialSolutionParameters:
       BenchmarkCommonParameters:
@@ -615,11 +615,11 @@ BenchmarkProblems:
       TransposeA: 0
       TransposeB: 1
       UseBeta: True
-      SparseA: True
+      Sparse: 1
       Batched: True
       Activation: True
       ActivationHPA: True
-  
+
     - # BenchmarkProblemSizeGroup - Standard
       InitialSolutionParameters:
       BenchmarkCommonParameters:
@@ -707,11 +707,11 @@ BenchmarkProblems:
       TransposeA: 1
       TransposeB: 1
       UseBeta: True
-      SparseA: True
+      Sparse: 1
       Batched: True
       Activation: True
       ActivationHPA: True
-  
+
     - # BenchmarkProblemSizeGroup - Standard
       InitialSolutionParameters:
       BenchmarkCommonParameters:

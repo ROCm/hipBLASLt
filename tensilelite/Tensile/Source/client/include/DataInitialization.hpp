@@ -135,7 +135,7 @@ namespace Tensile
                 if(auto groupedProblem
                    = dynamic_cast<ContractionProblemGroupedGemm const*>(problem))
                 {
-                    return prepareCPUInputs(groupedProblem->gemms[0]);
+                    return prepareCPUInputs(*groupedProblem);
                 }
                 else if(auto gemmProblem = dynamic_cast<ContractionProblemGemm const*>(problem))
                 {
@@ -146,6 +146,39 @@ namespace Tensile
                     throw std::runtime_error(
                         "[DataInitialization] Failed to cast to any ContractionProblem");
                 }
+            }
+
+            std::shared_ptr<ProblemInputs>
+                prepareCPUInputs(ContractionProblemGroupedGemm const& problem)
+            {
+                if(m_cpuInit && m_curBoundsCheck == BoundsCheckMode::Disable
+                   && !m_problemDependentData)
+                {
+                    std::vector<void**> bPtr;
+                    if(m_elementsToValidate)
+                        resetOutput(m_cpuPtrs,
+                                    bPtr,
+                                    m_maxElements,
+                                    m_groupedOffsets,
+                                    problem.gemms[0],
+                                    hipMemcpyHostToHost);
+                }
+                else
+                {
+                    if(m_problemDependentData)
+                        initializeCPUInputs(problem);
+                    std::vector<void**> bPtr;
+                    copyInputs(m_cpuPtrs,
+                               bPtr,
+                               m_maxElements,
+                               m_groupedOffsets,
+                               problem.gemms[0],
+                               hipMemcpyHostToHost);
+                    m_cpuInit = false;
+                }
+                initializeConstantInputs(problem.gemms[0]);
+
+                return ConvertToProblemInputs(problem.gemms[0], false);
             }
 
             std::shared_ptr<ProblemInputs> prepareCPUInputs(ContractionProblemGemm const& problem)
@@ -190,7 +223,7 @@ namespace Tensile
                 if(auto groupedProblem
                    = dynamic_cast<ContractionProblemGroupedGemm const*>(problem))
                 {
-                    return prepareGPUInputs(groupedProblem->gemms[0]);
+                    return prepareGPUInputs(*groupedProblem);
                 }
                 else if(auto gemmProblem = dynamic_cast<ContractionProblemGemm const*>(problem))
                 {
@@ -198,6 +231,64 @@ namespace Tensile
                 }
                 else
                     throw std::runtime_error("Failed to cast to any ContractionProblem.");
+            }
+
+            std::shared_ptr<ProblemInputs>
+                prepareGPUInputs(ContractionProblemGroupedGemm const& problem)
+            {
+                if(m_numRunsInSolution > 0 && m_curBoundsCheck == BoundsCheckMode::GuardPageFront
+                   && m_boundsCheck == BoundsCheckMode::GuardPageAll)
+                    m_curBoundsCheck = BoundsCheckMode::GuardPageBack;
+
+                hipMemcpyKind kind;
+
+                if(m_keepPristineCopyOnGPU && !m_problemDependentData)
+                {
+                    // use gpu pristine
+                    kind = hipMemcpyDeviceToDevice;
+                }
+                else
+                {
+                    // use cpu pristine
+                    kind = hipMemcpyHostToDevice;
+                }
+
+                if(m_gpuInit && m_curBoundsCheck == BoundsCheckMode::Disable
+                   && !m_problemDependentData)
+                {
+                    if(m_elementsToValidate)
+                    {
+                        resetOutput(m_gpuPtrs,
+                                    m_gpuBatchPtrs,
+                                    m_maxElements,
+                                    m_groupedOffsets,
+                                    problem.gemms[0],
+                                    kind);
+                    }
+                }
+                else
+                {
+                    // Update CPU Inputs if prepareGPUInputs is not called.
+                    if(m_cpuPtrs.empty() && m_problemDependentData)
+                        initializeCPUInputs(problem);
+                    if(m_problemDependentData)
+                        copyValidToGPUBuffer(problem.gemms[0]);
+
+                    // gpu to gpu
+                    copyInputs(m_gpuPtrs,
+                               m_gpuBatchPtrs,
+                               m_maxElements,
+                               m_groupedOffsets,
+                               problem.gemms[0],
+                               hipMemcpyDeviceToDevice);
+                    m_gpuInit = true;
+                }
+                initializeGPUBatchedInputs(problem.gemms[0]);
+
+                if(m_cpuPtrs.empty())
+                    initializeConstantInputs(problem.gemms[0]);
+
+                return ConvertToProblemInputs(problem.gemms[0], true);
             }
 
             std::shared_ptr<ProblemInputs> prepareGPUInputs(ContractionProblemGemm const& problem)
@@ -506,6 +597,7 @@ namespace Tensile
             template <typename T, InitMode Mode>
             void initArray(T* array, size_t elements)
             {
+#pragma omp parallel for
                 for(size_t i = 0; i < elements; i++)
                 {
                     array[i] = getValue<T, Mode>();
@@ -515,6 +607,7 @@ namespace Tensile
             template <typename T>
             void initArrayConvert(T* array, size_t elements)
             {
+#pragma omp parallel for
                 for(size_t i = 0; i < elements; i++)
                 {
                     array[i] = ConvertTo<T>(i);
@@ -531,11 +624,12 @@ namespace Tensile
             template <typename T>
             void initArraySerialIdx(T* array, TensorDescriptor const& tensor)
             {
-                auto const&         sizes = tensor.sizes();
-                auto                count = CoordCount(sizes.begin(), sizes.end());
-                std::vector<size_t> coord(tensor.dimensions(), 0);
+                auto const& sizes = tensor.sizes();
+                auto        count = CoordCount(sizes.begin(), sizes.end());
+#pragma omp parallel for
                 for(size_t idx = 0; idx < count; idx++)
                 {
+                    std::vector<size_t> coord(tensor.dimensions(), 0);
                     CoordNumbered(idx, coord.begin(), coord.end(), sizes.begin(), sizes.end());
                     array[tensor.index(coord)] = static_cast<T>(idx);
                 }
@@ -544,11 +638,12 @@ namespace Tensile
             template <typename T>
             void initArraySerialDim(T* array, int dim, TensorDescriptor const& tensor)
             {
-                auto const&         sizes = tensor.sizes();
-                auto                count = CoordCount(sizes.begin(), sizes.end());
-                std::vector<size_t> coord(tensor.dimensions(), 0);
+                auto const& sizes = tensor.sizes();
+                auto        count = CoordCount(sizes.begin(), sizes.end());
+#pragma omp parallel for
                 for(size_t idx = 0; idx < count; idx++)
                 {
+                    std::vector<size_t> coord(tensor.dimensions(), 0);
                     CoordNumbered(idx, coord.begin(), coord.end(), sizes.begin(), sizes.end());
                     array[tensor.index(coord)] = static_cast<T>(coord[dim]);
                 }
@@ -563,11 +658,12 @@ namespace Tensile
                     Half     value;
                 } x;
 
-                auto const&         sizes = tensor.sizes();
-                auto                count = CoordCount(sizes.begin(), sizes.end());
-                std::vector<size_t> coord(tensor.dimensions(), 0);
+                auto const& sizes = tensor.sizes();
+                auto        count = CoordCount(sizes.begin(), sizes.end());
+#pragma omp parallel for
                 for(size_t idx = 0; idx < count; idx++)
                 {
+                    std::vector<size_t> coord(tensor.dimensions(), 0);
                     CoordNumbered(idx, coord.begin(), coord.end(), sizes.begin(), sizes.end());
                     x.bits                     = static_cast<uint16_t>(coord[dim]);
                     array[tensor.index(coord)] = x.value;
@@ -577,11 +673,12 @@ namespace Tensile
             template <typename T>
             void initArrayIdentity(T* array, TensorDescriptor const& tensor)
             {
-                auto const&         sizes = tensor.sizes();
-                auto                count = CoordCount(sizes.begin(), sizes.end());
-                std::vector<size_t> coord(tensor.dimensions(), 0);
+                auto const& sizes = tensor.sizes();
+                auto        count = CoordCount(sizes.begin(), sizes.end());
+#pragma omp parallel for
                 for(size_t idx = 0; idx < count; idx++)
                 {
+                    std::vector<size_t> coord(tensor.dimensions(), 0);
                     CoordNumbered(idx, coord.begin(), coord.end(), sizes.begin(), sizes.end());
                     array[tensor.index(coord)] = static_cast<T>(coord[0] == coord[1] ? 1 : 0);
                 }
@@ -590,11 +687,12 @@ namespace Tensile
             template <typename T, bool useCos, bool useAbs>
             void initArrayTrig(T* array, TensorDescriptor const& tensor)
             {
-                auto const&         sizes = tensor.sizes();
-                auto                count = CoordCount(sizes.begin(), sizes.end());
-                std::vector<size_t> coord(tensor.dimensions(), 0);
+                auto const& sizes = tensor.sizes();
+                auto        count = CoordCount(sizes.begin(), sizes.end());
+#pragma omp parallel for
                 for(size_t idx = 0; idx < count; idx++)
                 {
+                    std::vector<size_t> coord(tensor.dimensions(), 0);
                     CoordNumbered(idx, coord.begin(), coord.end(), sizes.begin(), sizes.end());
                     array[tensor.index(coord)] = getTrigValue<T>(idx, useCos, useAbs);
                 }
@@ -747,11 +845,11 @@ namespace Tensile
             // Pristine unit for each allocated memory
             struct PristineUnit
             {
-                size_t              maxElements;
-                std::vector<size_t> groupedGemmOffsets;
-                TensorDescriptor    initDescriptor;
-                MemoryInput         cpuInput;
-                MemoryInput         gpuInput;
+                size_t                        maxElements;
+                std::vector<size_t>           groupedGemmOffsets;
+                std::vector<TensorDescriptor> initDescriptor;
+                MemoryInput                   cpuInput;
+                MemoryInput                   gpuInput;
 
                 MemoryInput& getInputByKind(hipMemcpyKind kind)
                 {
@@ -787,6 +885,7 @@ namespace Tensile
 
             void initializeGPUBatchedInputs(ContractionProblemGemm const& problem);
 
+            void initializeCPUInputs(ContractionProblemGroupedGemm const& problem);
             void initializeCPUInputs(ContractionProblemGemm const& problem);
 
             void initializeConstantInputs(ContractionProblemGemm const& problem);
@@ -844,7 +943,7 @@ namespace Tensile
 
             bool m_stridedBatched;
 
-            bool   m_aSparse;
+            int    m_sparse;
             size_t m_aMaxLogicalElements; //for sparse
 
             bool m_cEqualsD;
@@ -1896,7 +1995,6 @@ namespace Tensile
         {
             return std::isinf(static_cast<float>(value));
         }
-
 
         template <>
         inline bool DataInitialization::isBadOutput<BFloat16>(BFloat16 value)
