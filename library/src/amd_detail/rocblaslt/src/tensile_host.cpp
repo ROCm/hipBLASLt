@@ -2072,10 +2072,12 @@ rocblaslt_status isSolutionSupported(rocblaslt_handle       handle,
                 auto actType          = tensile_prob.activationType();
                 auto useScaleAlphaVec = tensile_prob.useScaleAlphaVec();
                 auto useE             = tensile_prob.useE();
+                auto useScaleAB       = tensile_prob.useScaleAB();
                 tensile_prob.setUseBias(false);
                 tensile_prob.setActivationType(Tensile::ActivationType::None);
                 tensile_prob.setUseScaleAlphaVec(false);
                 tensile_prob.setUseE(false);
+                tensile_prob.setUseScaleAB(false);
                 bool isSup = (*solution->hardwarePredicate)(*hardware)
                              && (*solution->problemPredicate)(tensile_prob);
                 if(isSup)
@@ -2084,6 +2086,7 @@ rocblaslt_status isSolutionSupported(rocblaslt_handle       handle,
                 tensile_prob.setActivationType(actType);
                 tensile_prob.setUseScaleAlphaVec(useScaleAlphaVec);
                 tensile_prob.setUseE(useE);
+                tensile_prob.setUseScaleAB(useScaleAB);
                 if(!isSup)
                 {
                     if(get_logger_layer_mode() & rocblaslt_layer_mode_log_info)
