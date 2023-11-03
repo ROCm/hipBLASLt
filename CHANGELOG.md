@@ -1,61 +1,88 @@
-# Change Log for hipBLASLt
+# Changelog for hipBLASLt
+
+Full documentation for hipBLASLt is available at [rocm.docs.amd.com/projects/hipBLASLt](https://rocm.docs.amd.com/projects/hipBLASLt/en/latest/index.html).
 
 ## (Unreleased) hipBLASLt 0.6.0
-### Added
-- Add UserArguments for GroupedGemm
-- Support datatype: fp16 in with fp32 out
-- Add samples
-- Support datatype: Int8 in Int32 out
-- Support platform gfx94x
-- Support fp8/bf8 datatype (only for gfx94x platform)
-- Support Scalar A,B,C,D for fp8/bf8 datatype
-### Changed
-- Replace hipblasDatatype_t with hipblasltDatatype_t
-- Deprecate HIPBLASLT_MATMUL_DESC_D_SCALE_VECTOR_POINTER
+
+### Additions
+
+* New `UserArguments` variable for `GroupedGemm`
+* Support for datatype: fp16 in with fp32 out
+* Support for datatype: Int8 in Int32 out
+* Support for gfx94x platform
+* Support for fp8/bf8 datatype (only for gfx94x platform)
+* Support scalar A,B,C,D for fp8/bf8 datatype
+* Added samples
+
+### Changes
+
+* Replaced `hipblasDatatype_t` with `hipblasltDatatype_t`
+
+### Removals
+
+* Deprecated `HIPBLASLT_MATMUL_DESC_D_SCALE_VECTOR_POINTER`
 
 ## (Unreleased) hipBLASLt 0.3.0
-### Added
-- Add getAllAlgos extension APIs
-- TensileLite support new epilogues: gradient gelu, gradient D, gradient A/B, aux
-- Add sample package including three sample apps
-- Add new C++ GEMM class in hipblaslt extension
-### Changed
-- refactor GroupGemm APIs as C++ class in hipblaslt extension
-- change scaleD vector enum as HIPBLASLT_MATMUL_DESC_D_SCALE_VECTOR_POINTER
-### Fixed
-- Enable norm check validation for CI
+
+### Additions
+
+* Added `getAllAlgos` extension APIs
+* TensileLite support for new epilogues: gradient gelu, gradient D, gradient A/B, aux
+* Added a sample package that includes three sample apps
+* Added a new C++ GEMM class in the hipBLASLt extension
+
+### Changes
+
+* Refactored GroupGemm APIs as C++ class in the hipBLASLt extension
+* Changed the scaleD vector enum to `HIPBLASLT_MATMUL_DESC_D_SCALE_VECTOR_POINTER`
+
+### Fixes
+
+* Enabled norm check validation for CI
+
 ### Optimizations
-- GSU kernel optimization: wider memory, PGR N
-- update logic yaml to improve some FP16 NN sizes
-- GroupGemm support GSU kernel
-- Add grouped gemm tuning for aldebaran
+
+* GSU kernel: wider memory, PGR N
+* Updated logic yaml to improve some FP16 NN sizes
+* GroupGemm support for GSU kernel
+* Added grouped GEMM tuning for aldebaran
 
 ## hipBLASLt 0.2.0
-### Added
-- Added CI tests for tensilelite
-- Initilized extension group gemm APIs (FP16 only)
-- Added group gemm sample app: example_hipblaslt_groupedgemm
-### Fixed
-- Fixed ScaleD kernel incorrect results
+
+### Additions
+
+* Added CI tests for TensileLite
+* Initialized extension group GEMM APIs (FP16 only)
+* Added a group GEMM sample app: `example_hipblaslt_groupedgemm`
+
+### Fixes
+
+* Fixed incorrect results for the ScaleD kernel
+
 ### Optimizations
-- Tuned equality sizes for HHS data type
-- Reduced host side overhead for hipblasLtMatmul()
-- Removed unused kernel arguments
-- Schedule valus setup before first s_waitcnt
-- Refactored tensilelite host codes
-- Optimized building time
+
+* Tuned equality sizes for the HHS data type
+* Reduced host-side overhead for `hipblasLtMatmul()`
+* Removed unused kernel arguments
+* Schedule values setup before first `s_waitcnt`
+* Refactored TensileLite host codes
+* Optimized build time
 
 ## hipBLASLt 0.1.0
-### Added
-- Enable hipBLASLt APIs
-- Support gfx90a
-- Support problem type: fp32, fp16, bf16
-- Support activation: relu, gelu
-- Support bias vector
-- Integreate with tensilelite kernel generator
-- Add Gtest: hipblaslt-test
-- Add full function tool: hipblaslt-bench
-- Add sample app: example_hipblaslt_preference
+
+### Additions
+
+* Enabled hipBLASLt APIs
+* Support for gfx90a
+* Support for problem type: fp32, fp16, bf16
+* Support activation: relu, gelu
+* Support for bias vectors
+* Integrated with TensileLite kernel generator
+* Added Gtest: `hipblaslt-test`
+* Added the full function tool `hipblaslt-bench`
+* Added the sample app `example_hipblaslt_preference`
+
 ### Optimizations
-- Gridbase solution search algorithm for untuned size
-- Tune 10k sizes for each problem type
+
+* gridBase solution search algorithm for untuned size
+* Tuned 10k sizes for each problem type
