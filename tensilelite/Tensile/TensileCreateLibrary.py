@@ -44,6 +44,7 @@ from .SolutionStructs import Solution
 import argparse
 import collections
 import itertools
+import math
 import os
 import re
 import shlex
@@ -128,11 +129,35 @@ def getAssemblyCodeObjectFiles(kernels, kernelWriterAssembly, outputPath):
             args = [globalParameters['AssemblerPath'], '-target', 'amdgcn-amd-amdhsa', '-o', coFile, '@clangArgs.txt']
             subprocess.check_call(args, cwd=asmDir)
           else:
-            args = kernelWriterAssembly.getLinkCodeObjectArgs(objectFiles, coFile)
-            if globalParameters["PrintCodeCommands"]:
-              print(asmDir)
-              print(' '.join(args))
-            subprocess.check_call(args, cwd=asmDir)
+            numOfObjectFiles = len(objectFiles)
+            splitFiles = 10000
+            if numOfObjectFiles > splitFiles:
+              slicedObjectFilesList = [objectFiles[x:x+splitFiles] for x in range(0, numOfObjectFiles, splitFiles)]
+              objectFileBasename = os.path.splitext(coFile)[0]
+              numOfOneSliceOfObjectFiles = int(math.ceil(numOfObjectFiles / splitFiles))
+              newObjectFiles = [ objectFileBasename + "_" + str(i) + ".o" for i in range(0, numOfOneSliceOfObjectFiles)]
+              newObjectFilesOutput = []
+              for slicedObjectFiles, objectFile in zip(slicedObjectFilesList, newObjectFiles):
+                if len(slicedObjectFiles) > 1:
+                  args = [globalParameters["ROCmLdPath"], "-r"] + slicedObjectFiles + [ "-o", objectFile ]
+                  if globalParameters["PrintCodeCommands"]:
+                    print(asmDir)
+                    print(' '.join(args))
+                  subprocess.check_call(args, cwd=asmDir)
+                  newObjectFilesOutput.append(objectFile)
+                else:
+                  newObjectFilesOutput.append(slicedObjectFiles[0])
+              args = kernelWriterAssembly.getLinkCodeObjectArgs(newObjectFilesOutput, coFile)
+              if globalParameters["PrintCodeCommands"]:
+                print(asmDir)
+                print(' '.join(args))
+              subprocess.check_call(args, cwd=asmDir)
+            else:
+              args = kernelWriterAssembly.getLinkCodeObjectArgs(objectFiles, coFile)
+              if globalParameters["PrintCodeCommands"]:
+                print(asmDir)
+                print(' '.join(args))
+              subprocess.check_call(args, cwd=asmDir)
 
           coFiles.append(coFile)
       else:
