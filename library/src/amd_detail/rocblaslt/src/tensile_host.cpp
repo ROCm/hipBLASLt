@@ -2280,8 +2280,9 @@ rocblaslt_status getBestSolutions(rocblaslt_handle       handle,
     if(gemmType == rocblaslt::RocGemmType::ROCBLASLT_GEMM)
     {
         std::shared_ptr<TensileDataGemm> data = std::static_pointer_cast<TensileDataGemm>(gemmData);
-        int                              fallbackSize = 0;
-        auto                             solutions    = getSolutions(data->inputs,
+        data->problem.setWorkspaceSize(workspaceBytes);
+        int  fallbackSize = 0;
+        auto solutions    = getSolutions(data->inputs,
                                       library,
                                       hardware,
                                       data->problem,
