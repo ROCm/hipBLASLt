@@ -381,7 +381,7 @@ fi
 # check if we have a modern version of getopt that can handle whitespace and long parameters
 getopt -T
 if [[ $? -eq 4 ]]; then
-  GETOPT_PARSE=$(getopt --name "${0}" --longoptions help,install,clients,dependencies,debug,hip-clang,static,relocatable,codecoverage,relwithdebinfo,address-sanitizer,merge-files,no-merge-files,no_tensile,no-tensile,msgpack,no-msgpack,logic:,cov:,fork:,branch:,test_local_path:,cpu_ref_lib:,build_dir:,use-custom-version:,architecture: --options hicdgrkalfbnu:t: -- "$@")
+  GETOPT_PARSE=$(getopt --name "${0}" --longoptions help,install,clients,dependencies,debug,hip-clang,static,relocatable,codecoverage,relwithdebinfo,address-sanitizer,merge-files,no-merge-files,no_tensile,no-tensile,msgpack,no-msgpack,logic:,cov:,fork:,branch:,test_local_path:,cpu_ref_lib:,build_dir:,use-custom-version:,architecture: --options hicdgrka:o:l:f:b:nu:t: -- "$@")
 else
   echo "Need a new version of getopt"
   exit 1
@@ -443,7 +443,7 @@ while true; do
         -l|--logic)
             tensile_logic=${2}
             shift 2 ;;
-                -o|--cov)
+        -o|--cov)
             tensile_cov=${2}
             shift 2 ;;
         -f|--fork)
