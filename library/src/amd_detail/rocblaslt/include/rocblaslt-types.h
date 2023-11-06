@@ -340,8 +340,8 @@ typedef enum rocblaslt_matmul_preference_attributes_
  *******************************************************************************/
 typedef struct __attribute__((packed, aligned(8))) _rocblaslt_matmul_algo
 {
-    uint8_t data[8];
-    bool    fallback;
+    uint8_t data[8]             = {0};
+    bool    fallback            = false;
     size_t  max_workspace_bytes = 0;
 } rocblaslt_matmul_algo;
 

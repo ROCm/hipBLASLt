@@ -1872,6 +1872,8 @@ rocblaslt_status getBestSolutions(RocblasltContractionProblem const& prob,
                                  fallbackSize);
     }
 
+    memset(
+        heuristicResultsArray, 0, sizeof(rocblaslt_matmul_heuristic_result) * requestedAlgoCount);
     _convertToHeuristicResultArray(solutions,
                                    requestedAlgoCount,
                                    heuristicResultsArray,
