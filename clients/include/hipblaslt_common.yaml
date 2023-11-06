@@ -1,18 +1,18 @@
 # Data types are defined as either aliases to Python-recognized ctypes,
 # or enums defined with c_int base clases and attributes.
 Datatypes:
-  - hipblasltDatatype_t:
+  - hipDataType:
       bases: [ c_int ]
       attr:
-        default: 151
-        f16_r: 150
-        f32_r: 151
-        f64_r: 152
-        i8_r: 160
-        i32_r: 162
-        bf16_r: 168
-        f8_r: 170
-        bf8_r: 171
+        default: 0
+        f16_r: 2
+        f32_r: 0
+        f64_r: 1
+        i8_r: 3
+        i32_r: 10
+        bf16_r: 14
+        f8_r: 1000
+        bf8_r: 1001
   - hipblasLtComputeType_t:
       bases: [ c_int ]
       attr:
@@ -152,12 +152,12 @@ Arguments:
   - algo: c_uint32
   - solution_index: c_int32
   - requested_solution_num: c_int32
-  - a_type: hipblasltDatatype_t
-  - b_type: hipblasltDatatype_t
-  - c_type: hipblasltDatatype_t
-  - d_type: hipblasltDatatype_t
+  - a_type: hipDataType
+  - b_type: hipDataType
+  - c_type: hipDataType
+  - d_type: hipDataType
   - compute_type: hipblasLtComputeType_t
-  - scale_type: hipblasltDatatype_t
+  - scale_type: hipDataType
   - initialization: hipblaslt_initialization
   - gpu_arch: c_char*4
   - pad: c_uint32
@@ -173,7 +173,7 @@ Arguments:
   - activation_type: hipblaslt_activation_type
   - activation_arg1: c_float
   - activation_arg2: c_float
-  - bias_type: hipblasltDatatype_t
+  - bias_type: hipDataType
   - bias_source: hipblaslt_bias_source
   - bias_vector: c_bool
   - scaleA: c_bool

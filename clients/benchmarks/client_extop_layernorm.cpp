@@ -233,17 +233,8 @@ int main(int argc, char** argv)
     hipStream_t stream{};
     hipErr = hipStreamCreate(&stream);
     //warmup
-    auto hipblasltErr = hipblasltExtLayerNorm(HIPBLASLT_R_32F,
-                                              gpuOutput,
-                                              gpuMean,
-                                              gpuInvvar,
-                                              gpuInput,
-                                              m,
-                                              n,
-                                              1e-05,
-                                              gpuGamma,
-                                              gpuBeta,
-                                              stream);
+    auto hipblasltErr = hipblasltExtLayerNorm(
+        HIP_R_32F, gpuOutput, gpuMean, gpuInvvar, gpuInput, m, n, 1e-05, gpuGamma, gpuBeta, stream);
 
     hipErr = hipMemcpyDtoH(cpuOutput.data(), gpuOutput, numElements * elementNumBytes);
     hipErr = hipMemcpyDtoH(cpuMean.data(), gpuMean, m * elementNumBytes);
@@ -274,7 +265,7 @@ int main(int argc, char** argv)
 
     for(int i = 0; i < numRuns; ++i)
     {
-        hipblasltErr = hipblasltExtLayerNorm(HIPBLASLT_R_32F,
+        hipblasltErr = hipblasltExtLayerNorm(HIP_R_32F,
                                              gpuOutput,
                                              gpuMean,
                                              gpuInvvar,

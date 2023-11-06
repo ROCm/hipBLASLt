@@ -415,11 +415,10 @@ public:
         return os << s.c_str();
     }
 
-    // hipblasltDatatype_t output
-    friend hipblaslt_internal_ostream& operator<<(hipblaslt_internal_ostream& os,
-                                                  hipblasltDatatype_t         d)
+    // hipDataType output
+    friend hipblaslt_internal_ostream& operator<<(hipblaslt_internal_ostream& os, hipDataType d)
     {
-        os.m_os << hipblaslt_datatype_to_string(d);
+        os.m_os << hip_datatype_to_string(d);
         return os;
     }
 
