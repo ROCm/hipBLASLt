@@ -88,6 +88,14 @@ namespace Tensile
                 return "RandomNegPosLimited";
             case InitMode::Free:
                 return "Free";
+            case InitMode::TrigIndSin:
+                return "TrigIndSin";
+            case InitMode::TrigIndCos:
+                return "TrigIndCos";
+            case InitMode::TrigIndAbsSin:
+                return "TrigIndAbsSin";
+            case InitMode::TrigIndAbsCos:
+                return "TrigIndAbsCos";
 
             case InitMode::Count:
                 break;
@@ -151,6 +159,14 @@ namespace Tensile
                 mode = InitMode::DenormMax;
             else if(strValue == ToString(InitMode::RandomNegPosLimited))
                 mode = InitMode::RandomNegPosLimited;
+            else if(strValue == ToString(InitMode::TrigIndSin))
+                mode = InitMode::TrigIndSin;
+            else if(strValue == ToString(InitMode::TrigIndCos))
+                mode = InitMode::TrigIndCos;
+            else if(strValue == ToString(InitMode::TrigIndAbsSin))
+                mode = InitMode::TrigIndAbsSin;
+            else if(strValue == ToString(InitMode::TrigIndAbsCos))
+                mode = InitMode::TrigIndAbsCos;
             else if(std::all_of(strValue.begin(), strValue.end(), isdigit))
             {
                 int value = atoi(strValue.c_str());
