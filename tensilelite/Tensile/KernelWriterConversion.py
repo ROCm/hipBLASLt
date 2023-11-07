@@ -36,7 +36,6 @@ class KernelWriterConversion(KernelWriterBase):
     self.state["ProblemType"] = deepcopy(state["ProblemType"])
     self.state["_GlobalAccumulation"] = state["_GlobalAccumulation"]
     self.state["ActivationFused"] = state["ActivationFused"]
-    self.state["GlobalSplitU"] = state["GlobalSplitU"]
 
     self.actGradientPrefix = ""
     if self.state["ProblemType"]["Gradient"]:
@@ -148,6 +147,8 @@ class KernelWriterConversion(KernelWriterBase):
         kStr += "  unsigned int size%s;%s" % (self.indexChars[i], self.endLine)
       else:
         kStr += "  unsigned int size%s;%s" % (self.indexChars[i], self.endLine)
+
+    kStr += "  unsigned char gsu;%s"%self.endLine
 
     # argument structure end
     kStr += "};" + self.endLine
@@ -265,7 +266,6 @@ class KernelWriterConversion(KernelWriterBase):
     if self.state["ProblemType"]["DestDataType"].isDouble():
       self.num_dword_store = self.num_dword_store // 2
     kStr += "#define NUM_ELEMENT_LOAD %d%s" % ( self.num_elements_load, self.endLine)
-    kStr += "#define NUM_GSU %d%s" % (self.state["GlobalSplitU"], self.endLine)
 
     ########################################
     # multi buffers GSU: Accumulate all GSU buffer
@@ -433,14 +433,14 @@ class KernelWriterConversion(KernelWriterBase):
       biasPtrStr    = self.state["ProblemType"]["BiasDataType"].toDevice(self.language)
       kStr += "  if(%s == 0 && id2 == 0)%s"%(barrier, self.endLine)
       kStr += "  {%s" % self.endLine
-      kStr += "    auto offset = strideW * NUM_GSU;%s"% self.endLine
+      kStr += "    auto offset = strideW * arg.gsu;%s"% self.endLine
       kStr += "    auto strideBias = %s;%s"%(size, self.endLine)
       kStr += "    auto %s = %s + offset;%s"%(biasIdxGsuStr, biasIdxStr, self.endLine)
       biasLoadCount = 1
       if self.num_dword_load != 1 and self.state["ProblemType"]["BiasSrc"] == "A":
         biasLoadCount = self.num_dword_load
       kStr += "    " + intermediateDataType + " biasAccum[%d] = {0};%s" % (biasLoadCount ,self.endLine)
-      kStr += "    for (int i = 0; i < NUM_GSU; i++) {%s" % self.endLine
+      kStr += "    for (int i = 0; i < arg.gsu; i++) {%s" % self.endLine
       for vIdx in range(biasLoadCount):
         kStr += "      biasAccum[%d] += arg.W[%s+%d];%s" % (vIdx, biasIdxGsuStr, vIdx, self.endLine)
       kStr += "      %s  += strideBias;%s" % (biasIdxGsuStr, self.endLine)
@@ -451,23 +451,53 @@ class KernelWriterConversion(KernelWriterBase):
     kStr += self.endLine
 
     #Load GSU D buffer
-    kStr += "  %s temp[NUM_GSU];" % loadTypeStr + self.endLine
-    for gsuIdx in range(self.state["GlobalSplitU"]):
-      # kStr += "  temp[%d] = *((%s*)(arg.W+idxW));%s" % (gsuIdx, loadTypeStr, self.endLine)
-      kStr += "  buffer_load<%s, sizeof(%s), CacheOperation::Kind::Always>(temp[%d], arg.W, idxW * sizeof(%s), 0);%s" % (loadTypeStr, loadTypeStr, gsuIdx, self.datatype, self.endLine)
-      kStr += "  idxW  += strideW;" + self.endLine
-    kStr += self.endLine
+    def add2Accum(num_dword_load, castToIntermidate, pos, indent=""):
+      kStr = ""
+      if num_dword_load == 1:
+        kStr += "%s  accum[0] += %stemp[%d];" % (indent, castToIntermidate, pos) + self.endLine
+      elif num_dword_load >= 2:
+        kStr += "%s  accum[0] += %stemp[%d].x;" % (indent, castToIntermidate, pos) + self.endLine
+        kStr += "%s  accum[1] += %stemp[%d].y;" % (indent, castToIntermidate, pos) + self.endLine
+      if num_dword_load == 4:
+        kStr += "%s  accum[2] += %stemp[%d].z;" % (indent, castToIntermidate, pos) + self.endLine
+        kStr += "%s  accum[3] += %stemp[%d].w;" % (indent, castToIntermidate, pos) + self.endLine
+      return kStr
     castToIntermidate = ("(%s)" % intermediateDataType) if intermediateDataType != self.datatype else ""
-    #Accumlate all D buffer
-    for gsuIdx in range(self.state["GlobalSplitU"]):
-      if self.num_dword_load == 1:
-        kStr += "  accum[0] += %stemp[%d];" % (castToIntermidate, gsuIdx) + self.endLine
-      elif self.num_dword_load >= 2:
-        kStr += "  accum[0] += %stemp[%d].x;" % (castToIntermidate, gsuIdx) + self.endLine
-        kStr += "  accum[1] += %stemp[%d].y;" % (castToIntermidate, gsuIdx) + self.endLine
-      if self.num_dword_load == 4:
-        kStr += "  accum[2] += %stemp[%d].z;" % (castToIntermidate, gsuIdx) + self.endLine
-        kStr += "  accum[3] += %stemp[%d].w;" % (castToIntermidate, gsuIdx) + self.endLine
+    pgr = 2
+    pos = 0
+    kStr += "  %s temp[%d];%s" %(loadTypeStr, pgr, self.endLine)
+    kStr += "  buffer_load<%s, sizeof(%s), CacheOperation::Kind::Always>(temp[%d], arg.W, idxW * sizeof(%s), 0);%s" % (loadTypeStr, loadTypeStr, pos, self.datatype, self.endLine)
+    kStr += "  idxW  += strideW;" + self.endLine
+    kStr += "  auto gsu = arg.gsu - 1;%s"%self.endLine
+    pos = int(not pos)
+    kStr += "  while (gsu >= 2)" + self.endLine
+    kStr += "  {" + self.endLine
+    kStr += "    buffer_load<%s, sizeof(%s), CacheOperation::Kind::Always>(temp[%d], arg.W, idxW * sizeof(%s), 0);%s" % (loadTypeStr, loadTypeStr, pos, self.datatype, self.endLine)
+    kStr += "    idxW  += strideW;" + self.endLine
+    pos = int(not pos)
+    kStr += add2Accum(self.num_dword_load, castToIntermidate, pos, "  ")
+    kStr += "    buffer_load<%s, sizeof(%s), CacheOperation::Kind::Always>(temp[%d], arg.W, idxW * sizeof(%s), 0);%s" % (loadTypeStr, loadTypeStr, pos, self.datatype, self.endLine)
+    kStr += "    idxW  += strideW;" + self.endLine
+    kStr += "    gsu -= 2;" + self.endLine
+    pos = int(not pos)
+    kStr += add2Accum(self.num_dword_load, castToIntermidate, pos, "  ")
+    kStr += "    __builtin_amdgcn_sched_group_barrier(1u << 5,1,1);" + self.endLine
+    kStr += "    __builtin_amdgcn_sched_group_barrier(1u << 1,%d,1);"%(self.num_dword_load + 4) + self.endLine  # cdna = 1, navi = 4, max(1, 4) = 4 for address inc
+    kStr += "  }" + self.endLine
+    kStr += "  if(gsu == 1)" + self.endLine
+    kStr += "  {" + self.endLine
+    kStr += "    buffer_load<%s, sizeof(%s), CacheOperation::Kind::Always>(temp[%d], arg.W, idxW * sizeof(%s), 0);%s" % (loadTypeStr, loadTypeStr, pos, self.datatype, self.endLine)
+    pos = int(not pos)
+    kStr += add2Accum(self.num_dword_load, castToIntermidate, pos, "  ")
+    pos = int(not pos)
+    kStr += add2Accum(self.num_dword_load, castToIntermidate, pos, "  ")
+    kStr += "  }" + self.endLine
+    kStr += "  else" + self.endLine
+    kStr += "  {" + self.endLine
+    pos = int(not pos)
+    kStr += add2Accum(self.num_dword_load, castToIntermidate, pos, "  ")
+    kStr += "  }" + self.endLine
+
     kStr += self.endLine
 
     accumStr = "accum"
@@ -577,7 +607,6 @@ class KernelWriterConversion(KernelWriterBase):
     ########################################
     # end
     kStr += "}%s" % self.endLine
-    kStr += "#undef NUM_GSU" + self.endLine
     kStr += "#undef NUM_ELEMENT_LOAD" + self.endLine
     for i in range(firstStride, lastStrideC):
       kStr += "#undef strideD" + self.indexChars[i] + self.endLine
@@ -636,7 +665,6 @@ class KernelWriterConversion(KernelWriterBase):
     name += "_ScaleAB" if self.state["ProblemType"]["UseScaleAB"] else ""
     name += "_ScaleCD" if self.state["ProblemType"]["UseScaleCD"] else ""
     name += "_ScaleAlphaVec" if self.state["ProblemType"]["UseScaleAlphaVec"] else ""
-    name += "_PostGSU" + str(self.state["GlobalSplitU"])
     if self.num_elements_load != None:
       name += "_VW" + str(self.num_elements_load)
     return name

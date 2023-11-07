@@ -365,8 +365,7 @@ namespace Tensile
 
         std::string outputConversionKernelName(Problem const&           problem,
                                                ContractionInputs const& inputs,
-                                               size_t                   vw,
-                                               size_t                   gsu) const;
+                                               size_t                   vw) const;
 
         template <bool T_Debug>
         KernelInvocation generateActivationOnlyCall(Problem const&           problem,

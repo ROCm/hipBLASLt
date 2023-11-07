@@ -1115,7 +1115,6 @@ class Solution(collections.abc.Mapping):
             state["ProblemType"] = deepcopy(self["ProblemType"])
             state["ProblemType"]["UseBias"] = False
             state["KernelLanguage"] = "Source"
-            state["GlobalSplitU"] = self["GlobalSplitU"]
             state["_GlobalAccumulation"] = self["_GlobalAccumulation"]
             state["ActivationFused"] = self["ActivationFused"]
             self.conversionKernelObjects.append(KernelWriterConversion(state, vw))
@@ -1125,7 +1124,6 @@ class Solution(collections.abc.Mapping):
             state["ProblemType"]["BiasDataTypeList"] = []
             state["ProblemType"]["BiasDataType"] = deepcopy(btype)
             state["KernelLanguage"] = "Source"
-            state["GlobalSplitU"] = self["GlobalSplitU"]
             state["_GlobalAccumulation"] = self["_GlobalAccumulation"]
             state["ActivationFused"] = self["ActivationFused"]
             self.conversionKernelObjects.append(KernelWriterConversion(state, vw))
@@ -1133,7 +1131,6 @@ class Solution(collections.abc.Mapping):
           state = {}
           state["ProblemType"] = deepcopy(self["ProblemType"])
           state["KernelLanguage"] = "Source"
-          state["GlobalSplitU"] = self["GlobalSplitU"]
           state["_GlobalAccumulation"] = self["_GlobalAccumulation"]
           state["ActivationFused"] = self["ActivationFused"]
           self.conversionKernelObjects.append(KernelWriterConversion(state, vw))

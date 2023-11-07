@@ -1276,6 +1276,8 @@ namespace Tensile
             args.template append<uint32_t>(concatenate_if<T_Debug>("size_", i), size);
             i++;
         }
+
+        args.template append<uint8_t>("gsu", sizeMapping.globalSplitU);
     }
 
     template <bool T_Debug>
@@ -1315,7 +1317,7 @@ namespace Tensile
                 vw = 2;
         }
 
-        rv.kernelName = outputConversionKernelName(problem, inputs, vw, sizeMapping.globalSplitU);
+        rv.kernelName = outputConversionKernelName(problem, inputs, vw);
 
         rv.numWorkGroups.x = CeilDivide(wiX * wiY * wiZ, rv.workGroupSize.x * vw);
         rv.numWorkGroups.y = 1;
@@ -1459,8 +1461,7 @@ namespace Tensile
 
         if constexpr(std::is_same<KA, KernelArguments>::value)
         {
-            rv.kernelName = outputConversionKernelName(
-                problems[0], inputs.grouped[0], vw, sizeMapping.globalSplitU);
+            rv.kernelName = outputConversionKernelName(problems[0], inputs.grouped[0], vw);
         }
 
         uint32_t workspaceOffsetInByte
@@ -1516,7 +1517,7 @@ namespace Tensile
 
         // FIXME: No problem and input for kernel name
         // rv.kernelName = outputConversionKernelName(
-        //     problems[0], inputs.grouped[0], vw, sizeMapping.globalSplitU);
+        //     problems[0], inputs.grouped[0], vw);
 
         uint8_t* d_args = (uint8_t*)workspace + previousArgsSpaceOffsetInByte;
         rv.args.append<uint8_t*>("wiTablePtr", d_args);
@@ -1531,8 +1532,7 @@ namespace Tensile
 
     std::string ContractionSolution::outputConversionKernelName(Problem const&           problem,
                                                                 ContractionInputs const& inputs,
-                                                                size_t                   vw,
-                                                                size_t                   gsu) const
+                                                                size_t                   vw) const
     {
         auto inputTypeStr = (problem.a().dataType() == DataType::Int8
                              || problem.a().dataType() == DataType::Int32)
@@ -1626,8 +1626,6 @@ namespace Tensile
         {
             name += ("_ScaleAlphaVec");
         }
-
-        name += "_PostGSU" + std::to_string(gsu);
 
         name += "_VW" + std::to_string(vw);
 
