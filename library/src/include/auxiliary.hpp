@@ -150,6 +150,7 @@ constexpr hipblasltDatatype_t string_to_hipblaslt_datatype(const std::string& va
         value == "f8_r"                ? HIPBLASLT_R_8F_E4M3  :
         value == "bf8_r"                ? HIPBLASLT_R_8F_E5M2  :
         value == "i8_r" || value == "i8" ? HIPBLASLT_R_8I  :
+        value == "i32_r" || value == "i" ? HIPBLASLT_R_32I  :
         static_cast<hipblasltDatatype_t>(0);
 }
 
