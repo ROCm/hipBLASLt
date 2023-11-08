@@ -355,7 +355,9 @@ class KernelWriter(metaclass=abc.ABCMeta):
     self.do["GlobalReadA"] = True
     self.do["GlobalReadB"] = True
     self.do["GlobalInc"]   = True
-    self.do["LocalWrite"]  = True
+    self.do["LocalWriteA"]  = True
+    self.do["LocalWriteB"]  = True
+    self.do["LocalWriteCVT"]  = True
     self.do["LocalReadA"]  = True
     self.do["LocalReadB"]  = True
     self.do["LocalReadMetadata"]  = True
@@ -367,6 +369,10 @@ class KernelWriter(metaclass=abc.ABCMeta):
     self.do["GlobalWrite"] = True
     self.do["EdgeWrite"]   = True
     self.do["KeepDirectToLdsAlloc"] = False  # If true, keep regs used for LDS alloc even if not used
+
+    self.do["executeToInitEnd"] = 0
+    self.do["executeToPrefetchEnd"] = 0
+    self.do["executeToLoopEnd"] = 0
 
     # Various debug flags and modes
     self.db = {}
@@ -1464,6 +1470,9 @@ class KernelWriter(metaclass=abc.ABCMeta):
     module.addComment0("local read addresses: init pointers b")
     module.add(self.localReadInitPointers(kernel, tensorParametersA, tensorParametersB))
 
+    if self.do["executeToInitEnd"]:
+      module.add(self.functionEnd(False))
+
     ####################################
     # prefetch: unrolled loop prefix
     ####################################
@@ -1692,6 +1701,9 @@ class KernelWriter(metaclass=abc.ABCMeta):
 
     # generate no Load Loop Body code
     module.add(self.noLoadLoopBody(kernel, tensorParametersA, tensorParametersB, pack, isOptNLL, isNGLL, NLLfirst, NLLlast))
+
+    if self.do["executeToLoopEnd"] and isOptNLL:
+      module.add(self.functionEnd(False))
 
     # Close code is necessary for both first and last (NGLL case(=NLLfirst) needs label)
     module.add(self.closeSumAtLeastUnroll(kernel, tensorParametersA, tensorParametersB, prefetch=False, isOptNLL=isOptNLL, isNGLL=isNGLL))
@@ -2085,6 +2097,9 @@ class KernelWriter(metaclass=abc.ABCMeta):
 
     module.add(self.setupNewTile(kernel, tensorParametersA, tensorParametersB, isOptNLL=False))
 
+    if self.do["executeToPrefetchEnd"]:
+      module.add(self.functionEnd(False))
+
     pack = [ Module() for i in range (self.states.numVgprBuffer) ]
     self.preLoopLocalWriteCode = None
 
@@ -2420,6 +2435,9 @@ class KernelWriter(metaclass=abc.ABCMeta):
         self.states.lastVgprForReads - self.states.lastValuAB, "address vgpr") # Add as available
       module.addComment1("Tail: remove address/G2L [%u...%u) from pool" % \
                         (self.states.lastValuAB, self.states.lastVgprForReads))
+
+    if self.do["executeToLoopEnd"]:
+      module.add(self.functionEnd(False))
 
     # extra summation loops: global increment and close
     for i in reversed(range(self.states.otherSummationLoops)):
