@@ -1477,6 +1477,7 @@ def assignGlobalParameters( config ):
       globalParameters["AssemblerPath"] = locateExe(os.path.join(globalParameters["ROCmPath"], "llvm/bin"), "clang++")
 
   globalParameters["ROCmSMIPath"] = locateExe(globalParameters["ROCmBinPath"], "rocm-smi")
+  globalParameters["ROCmLdPath"]  = locateExe(os.path.join(globalParameters["ROCmPath"], "llvm/bin"), "ld.lld")
 
   globalParameters["ExtractKernelPath"] = locateExe(os.path.join(globalParameters["ROCmPath"], "hip/bin"), "extractkernel")
 

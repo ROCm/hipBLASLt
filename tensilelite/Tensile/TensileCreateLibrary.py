@@ -44,6 +44,7 @@ from .SolutionStructs import Solution
 import argparse
 import collections
 import itertools
+import math
 import os
 import re
 import shlex
@@ -128,11 +129,35 @@ def getAssemblyCodeObjectFiles(kernels, kernelWriterAssembly, outputPath):
             args = [globalParameters['AssemblerPath'], '-target', 'amdgcn-amd-amdhsa', '-o', coFile, '@clangArgs.txt']
             subprocess.check_call(args, cwd=asmDir)
           else:
-            args = kernelWriterAssembly.getLinkCodeObjectArgs(objectFiles, coFile)
-            if globalParameters["PrintCodeCommands"]:
-              print(asmDir)
-              print(' '.join(args))
-            subprocess.check_call(args, cwd=asmDir)
+            numOfObjectFiles = len(objectFiles)
+            splitFiles = 10000
+            if numOfObjectFiles > splitFiles:
+              slicedObjectFilesList = [objectFiles[x:x+splitFiles] for x in range(0, numOfObjectFiles, splitFiles)]
+              objectFileBasename = os.path.splitext(coFile)[0]
+              numOfOneSliceOfObjectFiles = int(math.ceil(numOfObjectFiles / splitFiles))
+              newObjectFiles = [ objectFileBasename + "_" + str(i) + ".o" for i in range(0, numOfOneSliceOfObjectFiles)]
+              newObjectFilesOutput = []
+              for slicedObjectFiles, objectFile in zip(slicedObjectFilesList, newObjectFiles):
+                if len(slicedObjectFiles) > 1:
+                  args = [globalParameters["ROCmLdPath"], "-r"] + slicedObjectFiles + [ "-o", objectFile ]
+                  if globalParameters["PrintCodeCommands"]:
+                    print(asmDir)
+                    print(' '.join(args))
+                  subprocess.check_call(args, cwd=asmDir)
+                  newObjectFilesOutput.append(objectFile)
+                else:
+                  newObjectFilesOutput.append(slicedObjectFiles[0])
+              args = kernelWriterAssembly.getLinkCodeObjectArgs(newObjectFilesOutput, coFile)
+              if globalParameters["PrintCodeCommands"]:
+                print(asmDir)
+                print(' '.join(args))
+              subprocess.check_call(args, cwd=asmDir)
+            else:
+              args = kernelWriterAssembly.getLinkCodeObjectArgs(objectFiles, coFile)
+              if globalParameters["PrintCodeCommands"]:
+                print(asmDir)
+                print(' '.join(args))
+              subprocess.check_call(args, cwd=asmDir)
 
           coFiles.append(coFile)
       else:
@@ -343,8 +368,9 @@ def prepAsm(kernelWriterAssembly):
     isa = globalParameters["CurrentISA"]
     assemblerFile.write("h={gfxName}\n".format(gfxName = getGfxName(isa)))
 
-    cArgs32 = kernelWriterAssembly.getCompileArgs("$f.s", "$f.o", isa=isa, wavefrontSize=32)
-    cArgs64 = kernelWriterAssembly.getCompileArgs("$f.s", "$f.o", isa=isa, wavefrontSize=64)
+    debug = globalParameters.get("AsmDebug", False)
+    cArgs32 = kernelWriterAssembly.getCompileArgs("$f.s", "$f.o", isa=isa, wavefrontSize=32, debug=debug)
+    cArgs64 = kernelWriterAssembly.getCompileArgs("$f.s", "$f.o", isa=isa, wavefrontSize=64, debug=debug)
     lArgs = kernelWriterAssembly.getLinkCodeObjectArgs(["$f.o"], "$f.co")
 
     assemblerFile.write("if [ $wave -eq 32 ]; then\n")
@@ -1235,6 +1261,8 @@ def TensileCreateLibrary():
   argParser.add_argument("--global-parameters", nargs="+", type=splitExtraParameters, default=[])
   argParser.add_argument("--generate-solution-table", dest="GenSolTable", action="store_true", default=True,
                          help="Generate solution-yaml matching table")
+  argParser.add_argument("--asm-debug", dest="AsmDebug", action="store_true", default=False,
+                         help="Keep debug information for built code objects")
 
   args = argParser.parse_args()
 
@@ -1275,6 +1303,7 @@ def TensileCreateLibrary():
   arguments["CpuThreads"] = args.CpuThreads
   arguments["PrintLevel"] = args.PrintLevel
   arguments["PrintTiming"] = args.PrintTiming
+  arguments["AsmDebug"] = args.AsmDebug
 
   for key, value in args.global_parameters:
     arguments[key] = value

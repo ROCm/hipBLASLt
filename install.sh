@@ -707,6 +707,10 @@ pushd .
     tensile_opt="${tensile_opt} -DTensile_LIBRARY_FORMAT=yaml"
   fi
 
+  if [[ "${build_release}" == false ]]; then
+    tensile_opt="${tensile_opt} -DTensile_ASM_DEBUG=ON"
+  fi
+
   echo $cmake_common_options
   cmake_common_options="${cmake_common_options} ${tensile_opt}"
 
