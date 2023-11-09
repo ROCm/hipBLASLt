@@ -145,11 +145,11 @@ struct Arguments
     bool                  norm_check_assert;
 
     // API related
-    bool use_ext;
-    bool use_ext_setproblem;
-    int  algo_method; // 0 for getheuristic, 1 for get all algos, 2 for algo index
-    bool use_user_args;
-    int32_t block_count;
+    bool    use_ext;
+    bool    use_ext_setproblem;
+    int     algo_method; // 0 for getheuristic, 1 for get all algos, 2 for algo index
+    bool    use_user_args;
+    int32_t rotating;
 
     // print
     bool print_solution_found;
@@ -234,6 +234,7 @@ struct Arguments
     OPER(use_ext_setproblem) SEP     \
     OPER(algo_method) SEP            \
     OPER(use_user_args) SEP          \
+    OPER(rotating) SEP               \
     OPER(print_solution_found) SEP   \
     OPER(print_kernel_info) SEP
 

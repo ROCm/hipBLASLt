@@ -522,9 +522,9 @@ try
          value<bool>(&arg.print_kernel_info)->default_value(false),
          "Print solution, kernel name and solution index.")
 
-        ("block_count",
-         value<int32_t>(&arg.block_count)->default_value(1),
-         "Use rotating memory blocks for each iteration. Only works for api_method = 0.")
+        ("rotating",
+         value<int32_t>(&arg.rotating)->default_value(0),
+         "Use rotating memory blocks for each iteration, size in MB. (Only supports GEMM + api_method c)")
 
         ("help,h", "produces this help message")
 
@@ -581,6 +581,14 @@ try
     else
     {
         hipblaslt_cerr << "Invalid algo method: " << algo_method_str << std::endl;
+        return 1;
+    }
+
+    // Unblock this after rotating supports all modes
+    if((arg.rotating > 0) && (api_method != 0 || arg.grouped_gemm))
+    {
+        hipblaslt_cerr << "Currently rotating buffer only supports GEMM + api_method c."
+                       << std::endl;
         return 1;
     }
 

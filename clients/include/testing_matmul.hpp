@@ -39,8 +39,8 @@
 #include "unit.hpp"
 #include "utility.hpp"
 #include <cstddef>
-#include <hipblaslt/hipblaslt-ext.hpp>
 #include <hipblaslt/hipblaslt-ext-op.h>
+#include <hipblaslt/hipblaslt-ext.hpp>
 #include <hipblaslt/hipblaslt.h>
 #include <omp.h>
 
@@ -380,7 +380,7 @@ void testing_matmul(const Arguments& arg)
 
     bool    do_grouped_gemm = arg.grouped_gemm > 0;
     int32_t gemm_count      = std::max(1, arg.grouped_gemm);
-    int32_t block_count     = arg.block_count;
+    int32_t rotating        = arg.rotating * 1024 * 1024;
 
     std::vector<int64_t> M(gemm_count), N(gemm_count), K(gemm_count), lda(gemm_count),
         ldb(gemm_count), ldc(gemm_count), ldd(gemm_count), lde(gemm_count);
@@ -397,16 +397,18 @@ void testing_matmul(const Arguments& arg)
 
     std::vector<hipblasLtMatrixLayout_t> matA(gemm_count), matB(gemm_count), matC(gemm_count),
         matD(gemm_count);
-    std::vector<hipblasLtMatmulDesc_t> matmul(gemm_count);
-    std::vector<hipblasLtEpilogue_t>   epilogue(gemm_count, HIPBLASLT_EPILOGUE_DEFAULT);
+    std::vector<hipblasLtMatmulDesc_t>              matmul(gemm_count);
+    std::vector<std::vector<hipblasLtMatmulDesc_t>> alt_matmul(gemm_count);
+    std::vector<hipblasLtEpilogue_t> epilogue(gemm_count, HIPBLASLT_EPILOGUE_DEFAULT);
 
-    std::vector<device_vector<TiA>*>    dA(gemm_count), alt_dA(gemm_count);
-    std::vector<device_vector<TiB>*>    dB(gemm_count), alt_dB(gemm_count);
-    std::vector<device_vector<To>*>     dC(gemm_count), alt_dC(gemm_count), dD(gemm_count), dBias(gemm_count);
+    std::vector<device_vector<TiA>*> dA(gemm_count), alt_dA(gemm_count);
+    std::vector<device_vector<TiB>*> dB(gemm_count), alt_dB(gemm_count);
+    std::vector<device_vector<To>*>  dC(gemm_count), alt_dC(gemm_count), dD(gemm_count),
+        alt_dD(gemm_count), dBias(gemm_count), alt_dBias(gemm_count);
     std::vector<device_vector<Talpha>*> dScaleAlphaVec(gemm_count), dBias_C(gemm_count),
-        dScaleA(gemm_count), dScaleB(gemm_count), dScaleC(gemm_count), dScaleD(gemm_count),
-        dScaleE(gemm_count);
-    std::vector<device_vector<To>*> dE(gemm_count);
+        alt_dScaleAlphaVec(gemm_count), alt_dBias_C(gemm_count), dScaleA(gemm_count),
+        dScaleB(gemm_count), dScaleC(gemm_count), dScaleD(gemm_count), dScaleE(gemm_count);
+    std::vector<device_vector<To>*> dE(gemm_count), alt_dE(gemm_count);
 
     std::vector<host_vector<TiA>*> hA(gemm_count);
     std::vector<host_vector<TiB>*> hB(gemm_count);
@@ -419,6 +421,8 @@ void testing_matmul(const Arguments& arg)
     std::vector<host_vector<To>*> hE(gemm_count, nullptr), hE_gold(gemm_count, nullptr);
     std::vector<void*>            alpha_in(gemm_count);
 
+    // Need to split into two for loop to calculate the rotating buffer
+    int64_t totalRotatingSizeNeeded = 0;
     for(int i = 0; i < gemm_count; i++)
     {
         M[i]       = arg.M[i];
@@ -445,6 +449,57 @@ void testing_matmul(const Arguments& arg)
         stride_c[i] = do_batched[i] ? arg.stride_c[i] : ldc[i] * N[i];
         stride_d[i] = do_batched[i] ? arg.stride_c[i] : ldd[i] * N[i];
         stride_e[i] = do_batched[i] ? arg.stride_e[i] : lde[i] * N[i];
+
+        size_A[i]
+            = stride_a[i] == 0 ? lda[i] * A_col[i] * num_batches[i] : stride_a[i] * num_batches[i];
+        size_B[i]
+            = stride_b[i] == 0 ? ldb[i] * B_col[i] * num_batches[i] : stride_b[i] * num_batches[i];
+        size_C[i]
+            = stride_c[i] == 0 ? ldc[i] * N[i] * num_batches[i] : stride_c[i] * num_batches[i];
+        size_D[i]
+            = stride_d[i] == 0 ? ldd[i] * N[i] * num_batches[i] : stride_d[i] * num_batches[i];
+        size_E[i]             = arg.use_e ? (stride_e[i] == 0 ? lde[i] * N[i] * num_batches[i]
+                                                              : stride_e[i] * num_batches[i])
+                                          : 0;
+        size_D_copy[i]        = arg.unit_check || arg.norm_check ? size_D[i] : 0;
+        size_scaleAlphaVec[i] = arg.scaleAlpha_vector ? M[i] : 0;
+        if(arg.bias_vector)
+        {
+            if(arg.bias_source == hipblaslt_bias_source::a
+               || arg.bias_source == hipblaslt_bias_source::d)
+                size_bias[i] = M[i];
+            else if(arg.bias_source == hipblaslt_bias_source::b)
+                size_bias[i] = N[i];
+        }
+        else
+        {
+            size_bias[i] = 0;
+        }
+        auto biasSize
+            = size_bias[i]
+              * ((arg.d_type != arg.scale_type && arg.bias_type == arg.scale_type) ? sizeof(Talpha)
+                                                                                   : sizeof(To));
+        int64_t sizeC = h_beta[i] == 0 ? 0 : size_C[i] * sizeof(To);
+        totalRotatingSizeNeeded += size_A[i] * sizeof(TiA) + size_B[i] * sizeof(TiB) + sizeC
+                                   + size_D[i] * sizeof(To) + size_E[i] * sizeof(To) + biasSize
+                                   + size_scaleAlphaVec[i] * sizeof(Talpha);
+    }
+
+    // Calculating block count
+    int32_t max_iters   = max(arg.cold_iters, arg.iters);
+    int32_t block_count = max(1, min(max_iters, ceil((float)rotating / totalRotatingSizeNeeded)));
+    std::vector<int32_t> block_counts(gemm_count, block_count);
+    if(rotating > 0)
+    {
+        hipblaslt_cout << "Rotating buffer " << rotating
+                       << " bytes. Needed block count: " << block_count
+                       << " (Capped to max iters: " << max_iters << ")" << std::endl;
+    }
+    // Calculating block count end
+
+    for(int i = 0; i < gemm_count; i++)
+    {
+        auto block_count = block_counts[i];
 
         CHECK_HIPBLASLT_ERROR(
             hipblasLtMatrixLayoutCreate(&(matA[i]), arg.a_type, A_row[i], A_col[i], lda[i]));
@@ -591,40 +646,10 @@ void testing_matmul(const Arguments& arg)
             epilogue_on[i] = true;
         }
 
-        size_A[i]
-            = stride_a[i] == 0 ? lda[i] * A_col[i] * num_batches[i] : stride_a[i] * num_batches[i];
-        size_B[i]
-            = stride_b[i] == 0 ? ldb[i] * B_col[i] * num_batches[i] : stride_b[i] * num_batches[i];
-        size_C[i]
-            = stride_c[i] == 0 ? ldc[i] * N[i] * num_batches[i] : stride_c[i] * num_batches[i];
-        size_D[i]
-            = stride_d[i] == 0 ? ldd[i] * N[i] * num_batches[i] : stride_d[i] * num_batches[i];
-        size_E[i]
-            = stride_e[i] == 0 ? lde[i] * N[i] * num_batches[i] : stride_e[i] * num_batches[i];
-        size_D_copy[i]        = arg.unit_check || arg.norm_check ? size_D[i] : 0;
-        size_scaleAlphaVec[i] = arg.scaleAlpha_vector ? M[i] : 1;
-        if(arg.bias_vector)
-        {
-            if(arg.bias_source == hipblaslt_bias_source::a
-               || arg.bias_source == hipblaslt_bias_source::d)
-                size_bias[i] = M[i];
-            else if(arg.bias_source == hipblaslt_bias_source::b)
-                size_bias[i] = N[i];
-        }
-        else
-        {
-            size_bias[i] = 1;
-        }
-
         // allocate memory on device
         dA[i]             = new device_vector<TiA>(size_A[i], 1, HMM);
         dB[i]             = new device_vector<TiB>(size_B[i], 1, HMM);
         dC[i]             = new device_vector<To>(size_C[i], 1, HMM);
-        if (block_count > 1) {  // rotating blocks
-            alt_dA[i]         = new device_vector<TiA>(size_A[i] * (block_count - 1), 1, HMM);
-            alt_dB[i]         = new device_vector<TiB>(size_B[i] * (block_count - 1), 1, HMM);
-            alt_dC[i]         = new device_vector<To>(size_C[i] * (block_count - 1), 1, HMM);
-        }
         dD[i]             = new device_vector<To>(size_D[i], 1, HMM);
         dBias[i]          = new device_vector<To>(size_bias[i], 1, HMM);
         dScaleAlphaVec[i] = new device_vector<Talpha>(size_scaleAlphaVec[i], 1, HMM);
@@ -633,15 +658,44 @@ void testing_matmul(const Arguments& arg)
         CHECK_DEVICE_ALLOCATION(dA[i]->memcheck());
         CHECK_DEVICE_ALLOCATION(dB[i]->memcheck());
         CHECK_DEVICE_ALLOCATION(dC[i]->memcheck());
-        if (block_count > 1) {  // rotating blocks
-            CHECK_DEVICE_ALLOCATION(alt_dA[i]->memcheck());
-            CHECK_DEVICE_ALLOCATION(alt_dB[i]->memcheck());
-            CHECK_DEVICE_ALLOCATION(alt_dC[i]->memcheck());
-        }
         CHECK_DEVICE_ALLOCATION(dD[i]->memcheck());
         CHECK_DEVICE_ALLOCATION(dBias[i]->memcheck());
         CHECK_DEVICE_ALLOCATION(dScaleAlphaVec[i]->memcheck());
         CHECK_DEVICE_ALLOCATION(dBias_C[i]->memcheck());
+        if(arg.use_e)
+        {
+            dE[i] = new device_vector<To>(size_E[i], 1, HMM);
+            CHECK_DEVICE_ALLOCATION(dE[i]->memcheck());
+        }
+        else
+        {
+            dE[i] = nullptr;
+        }
+
+        if(block_count > 1)
+        { // rotating blocks
+            alt_dA[i]      = new device_vector<TiA>(size_A[i] * (block_count - 1), 1, HMM);
+            alt_dB[i]      = new device_vector<TiB>(size_B[i] * (block_count - 1), 1, HMM);
+            alt_dC[i]      = new device_vector<To>(size_C[i] * (block_count - 1), 1, HMM);
+            alt_dD[i]      = new device_vector<To>(size_D[i] * (block_count - 1), 1, HMM);
+            alt_dBias[i]   = new device_vector<To>(size_bias[i] * (block_count - 1), 1, HMM);
+            alt_dBias_C[i] = new device_vector<Talpha>(size_bias[i] * (block_count - 1), 1, HMM);
+            alt_dScaleAlphaVec[i]
+                = new device_vector<Talpha>(size_scaleAlphaVec[i] * (block_count - 1), 1, HMM);
+            CHECK_DEVICE_ALLOCATION(alt_dA[i]->memcheck());
+            CHECK_DEVICE_ALLOCATION(alt_dB[i]->memcheck());
+            CHECK_DEVICE_ALLOCATION(alt_dC[i]->memcheck());
+            CHECK_DEVICE_ALLOCATION(alt_dD[i]->memcheck());
+            CHECK_DEVICE_ALLOCATION(alt_dBias[i]->memcheck());
+            CHECK_DEVICE_ALLOCATION(alt_dBias_C[i]->memcheck());
+            CHECK_DEVICE_ALLOCATION(alt_dScaleAlphaVec[i]->memcheck());
+            if(arg.use_e)
+            {
+                alt_dE[i] = new device_vector<To>(size_E[i] * (block_count - 1), 1, HMM);
+                CHECK_DEVICE_ALLOCATION(alt_dE[i]->memcheck());
+            }
+        }
+
         if(arg.scaleA)
         {
             dScaleA[i] = new device_vector<Talpha>(1, 1, HMM);
@@ -664,18 +718,8 @@ void testing_matmul(const Arguments& arg)
         }
         if(arg.scaleE)
         {
-            dScaleB[i] = new device_vector<Talpha>(1, 1, HMM);
+            dScaleE[i] = new device_vector<Talpha>(1, 1, HMM);
             CHECK_DEVICE_ALLOCATION(dScaleE[i]->memcheck());
-        }
-
-        if(arg.use_e)
-        {
-            dE[i] = new device_vector<To>(size_E[i], 1, HMM);
-            CHECK_DEVICE_ALLOCATION(dE[i]->memcheck());
-        }
-        else
-        {
-            dE[i] = nullptr;
         }
 
         // Naming: dX is in GPU (device) memory. hK is in CPU (host) memory
@@ -822,29 +866,51 @@ void testing_matmul(const Arguments& arg)
         CHECK_HIP_ERROR(dA[i]->transfer_from(*hA[i]));
         CHECK_HIP_ERROR(dB[i]->transfer_from(*hB[i]));
         CHECK_HIP_ERROR(dC[i]->transfer_from(*hC[i]));
-        if (block_count > 1) {  // rotating blocks
-            // hipblaslt_cout << "---- DEBUG: (alt_dA[i]->transfer_from(*hA[i], block_count - 1)\n";
+        if(block_count > 1)
+        { // rotating blocks
             CHECK_HIP_ERROR(alt_dA[i]->transfer_from(*hA[i], block_count - 1));
-            // hipblaslt_cout << "---- DEBUG: (alt_dB[i]->transfer_from(*hB[i], block_count - 1)\n";
             CHECK_HIP_ERROR(alt_dB[i]->transfer_from(*hB[i], block_count - 1));
-            // hipblaslt_cout << "---- DEBUG: (alt_dC[i]->transfer_from(*hC[i], block_count - 1)\n";
             CHECK_HIP_ERROR(alt_dC[i]->transfer_from(*hC[i], block_count - 1));
         }
         if(arg.gradient && arg.use_e)
         {
             CHECK_HIP_ERROR(dE[i]->transfer_from(*hE[i]));
+            if(block_count > 1)
+            {
+                CHECK_HIP_ERROR(alt_dE[i]->transfer_from(*hE[i], block_count - 1));
+            }
         }
         if(!arg.gradient && arg.bias_vector)
         {
             CHECK_HIP_ERROR(dBias[i]->transfer_from(*hBias[i]));
             CHECK_HIP_ERROR(dBias_C[i]->transfer_from(*hBias_C[i]));
+            if(block_count > 1)
+            {
+                CHECK_HIP_ERROR(alt_dBias[i]->transfer_from(*hBias[i], block_count - 1));
+                CHECK_HIP_ERROR(alt_dBias_C[i]->transfer_from(*hBias_C[i], block_count - 1));
+            }
         }
+
+        if(arg.scaleAlpha_vector)
+        {
+            CHECK_HIP_ERROR(dScaleAlphaVec[i]->transfer_from(*hScaleAlphaVec[i]));
+            alpha_in[i] = *(dScaleAlphaVec[i]);
+            h_alpha[i]  = 1.0; // use dScaleAlphaVec instead, original alpha = 1.0 for verify
+            if(block_count > 1)
+            {
+                CHECK_HIP_ERROR(
+                    alt_dScaleAlphaVec[i]->transfer_from(*hScaleAlphaVec[i], block_count - 1));
+            }
+        }
+        else
+            alpha_in[i] = &(h_alpha[i]);
 
         if(arg.scaleA)
         {
-            if (arg.amaxScaleA && (arg.a_type == HIPBLASLT_R_32F || arg.a_type == HIPBLASLT_R_16F))
+            if(arg.amaxScaleA && (arg.a_type == HIPBLASLT_R_32F || arg.a_type == HIPBLASLT_R_16F))
             {
-                CHECK_HIPBLASLT_ERROR(hipblasltExtAMax(arg.a_type, HIPBLASLT_R_32F, *dScaleA[i], *dA[i], A_row[i], A_col[i], stream));
+                CHECK_HIPBLASLT_ERROR(hipblasltExtAMax(
+                    arg.a_type, HIPBLASLT_R_32F, *dScaleA[i], *dA[i], A_row[i], A_col[i], stream));
                 CHECK_HIP_ERROR(hScaleA[i]->transfer_from(*dScaleA[i]));
             }
             else
@@ -853,9 +919,10 @@ void testing_matmul(const Arguments& arg)
 
         if(arg.scaleB)
         {
-            if (arg.amaxScaleB && (arg.b_type == HIPBLASLT_R_32F || arg.b_type == HIPBLASLT_R_16F))
+            if(arg.amaxScaleB && (arg.b_type == HIPBLASLT_R_32F || arg.b_type == HIPBLASLT_R_16F))
             {
-                CHECK_HIPBLASLT_ERROR(hipblasltExtAMax(arg.b_type, HIPBLASLT_R_32F, *dScaleB[i], *dB[i], B_row[i], B_col[i], stream));
+                CHECK_HIPBLASLT_ERROR(hipblasltExtAMax(
+                    arg.b_type, HIPBLASLT_R_32F, *dScaleB[i], *dB[i], B_row[i], B_col[i], stream));
                 CHECK_HIP_ERROR(hScaleB[i]->transfer_from(*dScaleB[i]));
             }
             else
@@ -870,15 +937,7 @@ void testing_matmul(const Arguments& arg)
 
         if(arg.scaleE)
             CHECK_HIP_ERROR(dScaleE[i]->transfer_from(*hScaleE[i]));
-
-        if(arg.scaleAlpha_vector)
-        {
-            CHECK_HIP_ERROR(dScaleAlphaVec[i]->transfer_from(*hScaleAlphaVec[i]));
-            alpha_in[i] = *(dScaleAlphaVec[i]);
-            h_alpha[i]  = 1.0; // use dScaleAlphaVec instead, original alpha = 1.0 for verify
-        }
-        else
-            alpha_in[i] = &(h_alpha[i]);
+        //// copy data from CPU to device end
 
         if(size_D_copy[i])
         {
@@ -987,6 +1046,40 @@ void testing_matmul(const Arguments& arg)
                     matmul[i], HIPBLASLT_MATMUL_DESC_POINTER_MODE, &scale_mode, sizeof(scale_mode)),
                 HIPBLAS_STATUS_SUCCESS);
         }
+
+        if(block_count > 1)
+        {
+            alt_matmul[i].resize(block_count - 1);
+            for(int32_t b = 0; b < alt_matmul[i].size(); b++)
+            {
+                CHECK_HIPBLASLT_ERROR(hipblasLtMatmulDescCreate(
+                    &(alt_matmul[i][b]), arg.compute_type, arg.scale_type));
+                CHECK_HIPBLASLT_ERROR(hipblaslt_ext::copyMatmul(matmul[i], alt_matmul[i][b]));
+                // Update bias, E
+                if(arg.bias_vector)
+                {
+                    const void* bias_addr
+                        = change_bias_type[i]
+                              ? (const void*)((*alt_dBias_C[i]) + (b - 1) * size_bias[0])
+                              : (const void*)((*alt_dBias[i]) + (b - 1) * size_bias[0]);
+                    EXPECT_HIPBLAS_STATUS(
+                        hipblasLtMatmulDescSetAttribute(alt_matmul[i][b],
+                                                        HIPBLASLT_MATMUL_DESC_BIAS_POINTER,
+                                                        &bias_addr,
+                                                        sizeof(void*)),
+                        HIPBLAS_STATUS_SUCCESS);
+                }
+                if(arg.use_e)
+                {
+                    void* e_addr = (*alt_dE[i]) + (b - 1) * size_E[0];
+                    CHECK_HIPBLASLT_ERROR(
+                        hipblasLtMatmulDescSetAttribute(matmul[i],
+                                                        HIPBLASLT_MATMUL_DESC_EPILOGUE_AUX_POINTER,
+                                                        &e_addr,
+                                                        sizeof(void*)));
+                }
+            }
+        }
     }
 
     // set preference
@@ -1087,9 +1180,9 @@ void testing_matmul(const Arguments& arg)
         int algoIndexInc   = 100;
         while(1)
         {
-            std::vector<int> algoIndex;
+            std::vector<int>                              algoIndex;
             std::vector<hipblasLtMatmulHeuristicResult_t> tmpAlgo;
-            bool foundAlgo = false;
+            bool                                          foundAlgo = false;
             if(arg.solution_index == -1)
             {
                 // Get algos by index
@@ -1107,7 +1200,6 @@ void testing_matmul(const Arguments& arg)
             }
             CHECK_HIPBLASLT_ERROR(hipblaslt_ext::getAlgosFromIndex(handle, algoIndex, tmpAlgo));
             returnedAlgoCount = tmpAlgo.size();
-
 
             if(!do_grouped_gemm)
             {
@@ -1924,7 +2016,7 @@ void testing_matmul(const Arguments& arg)
         {
             if(!do_grouped_gemm)
             {
-
+                auto block_count = block_counts[0];
                 if(arg.use_ext)
                 {
                     CHECK_HIPBLASLT_ERROR(gemm.initialize(heuristicResult[sol].algo, *dWorkspace));
@@ -1940,25 +2032,37 @@ void testing_matmul(const Arguments& arg)
                 {
                     for(int i = 0; i < number_cold_calls; i++)
                     {
-                        // hipblaslt_cout << "---- DEBUG: cold_call " << i << "\n";
-                        TiA *ptr_dA = i % block_count ? *(alt_dA[0]) + (i % block_count - 1) * size_A[0] : *(dA[0]);
-                        TiB *ptr_dB = i % block_count ? *(alt_dB[0]) + (i % block_count - 1) * size_B[0] : *(dB[0]);
-                        To *ptr_dC = i % block_count ? *(alt_dC[0]) + (i % block_count - 1) * size_C[0] : *(dC[0]);
-                        // hipblaslt_cout << "          : ptr_dA = " << ptr_dA << ", ptr_dB = " << ptr_dB << ", ptr_dC = " << ptr_dC << "\n";
+                        TiA* ptr_dA = i % block_count
+                                          ? *(alt_dA[0]) + (i % block_count - 1) * size_A[0]
+                                          : *(dA[0]);
+                        TiB* ptr_dB = i % block_count
+                                          ? *(alt_dB[0]) + (i % block_count - 1) * size_B[0]
+                                          : *(dB[0]);
+                        To*  ptr_dC = i % block_count
+                                          ? *(alt_dC[0]) + (i % block_count - 1) * size_C[0]
+                                          : *(dC[0]);
+                        To*  ptr_dD = i % block_count
+                                          ? *(alt_dD[0]) + (i % block_count - 1) * size_D[0]
+                                          : *(dD[0]);
+                        auto ptr_matmul
+                            = i % block_count ? alt_matmul[0][(i % block_count - 1)] : matmul[0];
+                        auto ptr_alpha = arg.scaleAlpha_vector
+                                             ? (i % block_count ? *(alt_dScaleAlphaVec[0])
+                                                                      + (i % block_count - 1)
+                                                                            * size_scaleAlphaVec[0]
+                                                                : alpha_in[0])
+                                             : alpha_in[0];
                         EXPECT_HIPBLAS_STATUS(hipblasLtMatmul(handle,
-                                                              matmul[0],
-                                                              alpha_in[0],
-                                                            //   i % 2 ? *(dA[0]) : *(alt_dA[0]),
+                                                              ptr_matmul,
+                                                              ptr_alpha,
                                                               ptr_dA,
                                                               matA[0],
-                                                            //   i % 2 ? *(dB[0]) : *(alt_dB[0]),
                                                               ptr_dB,
                                                               matB[0],
                                                               &(h_beta[0]),
-                                                            //   i % 2 ? *(dC[0]) : *(alt_dC[0]),
                                                               ptr_dC,
                                                               matC[0],
-                                                              *(dD[0]),
+                                                              ptr_dD,
                                                               matD[0],
                                                               &heuristicResult[sol].algo,
                                                               *dWorkspace,
@@ -1971,25 +2075,37 @@ void testing_matmul(const Arguments& arg)
                     gpu_time_used = get_time_us_sync(stream); // in microseconds
                     for(int i = 0; i < number_hot_calls; i++)
                     {
-                        // hipblaslt_cout << "---- DEBUG: hot_call " << i << "\n";
-                        TiA *ptr_dA = i % block_count ? *(alt_dA[0]) + (i % block_count - 1) * size_A[0] : *(dA[0]);
-                        TiB *ptr_dB = i % block_count ? *(alt_dB[0]) + (i % block_count - 1) * size_B[0] : *(dB[0]);
-                        To *ptr_dC = i % block_count ? *(alt_dC[0]) + (i % block_count - 1) * size_C[0] : *(dC[0]);
-                        // hipblaslt_cout << "          : ptr_dA = " << ptr_dA << ", ptr_dB = " << ptr_dB << ", ptr_dC = " << ptr_dC << "\n";
+                        TiA* ptr_dA = i % block_count
+                                          ? *(alt_dA[0]) + (i % block_count - 1) * size_A[0]
+                                          : *(dA[0]);
+                        TiB* ptr_dB = i % block_count
+                                          ? *(alt_dB[0]) + (i % block_count - 1) * size_B[0]
+                                          : *(dB[0]);
+                        To*  ptr_dC = i % block_count
+                                          ? *(alt_dC[0]) + (i % block_count - 1) * size_C[0]
+                                          : *(dC[0]);
+                        To*  ptr_dD = i % block_count
+                                          ? *(alt_dD[0]) + (i % block_count - 1) * size_D[0]
+                                          : *(dD[0]);
+                        auto ptr_matmul
+                            = i % block_count ? alt_matmul[0][(i % block_count - 1)] : matmul[0];
+                        auto ptr_alpha = arg.scaleAlpha_vector
+                                             ? (i % block_count ? *(alt_dScaleAlphaVec[0])
+                                                                      + (i % block_count - 1)
+                                                                            * size_scaleAlphaVec[0]
+                                                                : alpha_in[0])
+                                             : alpha_in[0];
                         EXPECT_HIPBLAS_STATUS(hipblasLtMatmul(handle,
-                                                              matmul[0],
-                                                              alpha_in[0],
-                                                            //   i % 2 ? *(dA[0]) : *(alt_dA[0]),
+                                                              ptr_matmul,
+                                                              ptr_alpha,
                                                               ptr_dA,
                                                               matA[0],
-                                                            //   i % 2 ? *(dB[0]) : *(alt_dB[0]),
                                                               ptr_dB,
                                                               matB[0],
                                                               &(h_beta[0]),
-                                                            //   i % 2 ? *(dC[0]) : *(alt_dC[0]),
                                                               ptr_dC,
                                                               matC[0],
-                                                              *(dD[0]),
+                                                              ptr_dD,
                                                               matD[0],
                                                               &heuristicResult[sol].algo,
                                                               *dWorkspace,
@@ -2185,13 +2301,20 @@ void testing_matmul(const Arguments& arg)
         delete dA[i];
         delete dB[i];
         delete dC[i];
-        delete alt_dA[i];
-        delete alt_dB[i];
-        delete alt_dC[i];
         delete dD[i];
         delete dBias[i];
         delete dScaleAlphaVec[i];
         delete dBias_C[i];
+        if(block_count > 1)
+        {
+            delete alt_dA[i];
+            delete alt_dB[i];
+            delete alt_dC[i];
+            delete alt_dD[i];
+            delete alt_dBias[i];
+            delete alt_dBias_C[i];
+            delete alt_dScaleAlphaVec[i];
+        }
         if(arg.scaleA)
         {
             delete hScaleA[i];
@@ -2221,6 +2344,8 @@ void testing_matmul(const Arguments& arg)
         {
             delete dE[i];
             delete hE[i];
+            if(block_count > 1)
+                delete alt_dE[i];
         }
     }
 

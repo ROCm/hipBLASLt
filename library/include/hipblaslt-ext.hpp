@@ -923,4 +923,19 @@ namespace hipblaslt_ext
                                           hipblasLtMatrixLayout_t Ddesc,
                                           hipblasLtMatmulAlgo_t&  algo,
                                           size_t&                 workspaceSizeInBytes);
+
+    /*! \ingroup library_module
+     *  \brief Copy the settings from A matmul to B matmul.
+     *
+     *  @param[in]
+     *  src Source matmul.
+     *  @param[out]
+     *  dst Return the copied matmul content.
+     *
+     *  \retval HIPBLAS_STATUS_SUCCESS           If query was successful. The problem is
+     * supported by the algorithm.
+     * results. \retval HIPBLAS_STATUS_NOT_INITIALIZED Source or dest matmul not initialized.
+     */
+    HIPBLASLT_EXPORT
+    hipblasStatus_t copyMatmul(hipblasLtMatmulDesc_t src, hipblasLtMatmulDesc_t dst);
 } // End of namespace hipblasltext

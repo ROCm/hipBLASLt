@@ -160,6 +160,26 @@ struct _rocblaslt_matmul_desc
     hipblasltDatatype_t    scale_type;
 
     std::shared_ptr<void> m_data; // Tensile data
+
+    void copy(const _rocblaslt_matmul_desc& src)
+    {
+        this->op_A         = src.op_A;
+        this->op_B         = src.op_B;
+        this->epilogue     = src.epilogue;
+        this->bias         = src.bias;
+        this->scaleA       = src.scaleA;
+        this->scaleB       = src.scaleB;
+        this->scaleC       = src.scaleC;
+        this->scaleD       = src.scaleD;
+        this->scaleE       = src.scaleE;
+        this->pointermode  = src.pointermode;
+        this->bias_type    = src.bias_type;
+        this->e            = src.e;
+        this->lde          = src.lde;
+        this->stride_e     = src.stride_e;
+        this->compute_type = src.compute_type;
+        this->scale_type   = src.scale_type;
+    }
 };
 
 /********************************************************************************
