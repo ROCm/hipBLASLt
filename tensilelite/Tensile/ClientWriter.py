@@ -612,6 +612,7 @@ def writeClientConfigIni(problemSizes, biasTypeArgs, activationArgs, problemType
         param("library-update-comment",   globalParameters["LibraryUpdateComment"])
 
         param("use-user-args",            globalParameters["UseUserArgs"])
+        param("rotating-buffer-size",     globalParameters["RotatingBufferSize"])
 
 
 def writeClientConfig(forBenchmark, solutions, problemSizes, biasTypeArgs, activationArgs, stepName, stepBaseDir, newLibrary, codeObjectFiles, tileAwareSelection, configBase = "ClientParameters", libraryFile = None):

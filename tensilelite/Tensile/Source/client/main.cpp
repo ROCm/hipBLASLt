@@ -254,6 +254,7 @@ namespace Tensile
                 ("use-e",                     po::value<bool>()->default_value(false), "Use E.")
                 ("use-gradient",              po::value<bool>()->default_value(false), "Use gradient.")
                 ("use-user-args",             po::value<bool>()->default_value(false), "Use user argument structure as kernel input.")
+                ("rotating-buffer-size",      po::value<int32_t>()->default_value(0), "Size of rotating buffer in the unit of MB.")
                 ;
             // clang-format on
 
@@ -588,7 +589,16 @@ int main(int argc, const char* argv[])
                               concatenate(problemIdx, "/", lastProblemIdx));
 
             listeners.preProblem(problem);
+            auto inputs = dataInit->prepareGPUInputs(problem);
 
+            size_t warmupInvocations    = listeners.numWarmupRuns();
+            size_t syncs                = listeners.numSyncs();
+            size_t enq                  = listeners.numEnqueuesPerSync();
+            size_t maxRotatingBufferNum = max(warmupInvocations, syncs * enq);
+
+            auto inputArr
+                = dataInit->prepareRotatingGPUOutput(maxRotatingBufferNum, problem, inputs);
+            bool resetInput = false;
             while(solutionIterator->moreSolutionsInProblem())
             {
                 auto solution = solutionIterator->getSolution();
@@ -602,37 +612,50 @@ int main(int argc, const char* argv[])
                     {
                         while(listeners.needMoreRunsInSolution())
                         {
-                            auto inputs = dataInit->prepareGPUInputs(problem);
+                            if(resetInput)
+                            {
+                                auto inputs = dataInit->prepareGPUInputs(problem);
+                                inputArr[0] = inputs;
+                            }
+                            resetInput = true;
 
-                            auto kernels
-                                = useUserArgs
-                                      ? solution->solveTensileGPU((*problem),
-                                                                  *inputs,
-                                                                  *hardware,
-                                                                  &dUA,
-                                                                  &dUAHost,
-                                                                  nullptr,
-                                                                  0,
-                                                                  stream)
-                                      : solution->solve(
-                                          (*problem), *inputs, *hardware, nullptr, 0, stream);
+                            std::vector<std::vector<KernelInvocation>> kernels;
+                            for(size_t r = 0; r < inputArr.size(); r++)
+                            {
+                                auto kernel = useUserArgs ? solution->solveTensileGPU((*problem),
+                                                                                      *inputArr[r],
+                                                                                      *hardware,
+                                                                                      &dUA,
+                                                                                      &dUAHost,
+                                                                                      nullptr,
+                                                                                      0,
+                                                                                      stream)
+                                                          : solution->solve((*problem),
+                                                                            *inputArr[r],
+                                                                            *hardware,
+                                                                            nullptr,
+                                                                            0,
+                                                                            stream);
+                                kernels.push_back(kernel);
+                            }
 
                             size_t       warmupInvocations = listeners.numWarmupRuns();
-                            size_t       eventCount        = gpuTimer ? kernels.size() : 0;
+                            size_t       eventCount        = gpuTimer ? kernels[0].size() : 0;
                             TimingEvents warmupStartEvents(warmupInvocations, eventCount);
                             TimingEvents warmupStopEvents(warmupInvocations, eventCount);
 
                             for(int i = 0; i < warmupInvocations; i++)
                             {
+                                size_t kIdx = i % kernels.size();
                                 listeners.preWarmup();
                                 if(gpuTimer)
-                                    HIP_CHECK_EXC(adapter.launchKernels(kernels,
+                                    HIP_CHECK_EXC(adapter.launchKernels(kernels[kIdx],
                                                                         stream,
                                                                         warmupStartEvents[i],
                                                                         warmupStopEvents[i]));
                                 else
-                                    HIP_CHECK_EXC(
-                                        adapter.launchKernels(kernels, stream, nullptr, nullptr));
+                                    HIP_CHECK_EXC(adapter.launchKernels(
+                                        kernels[kIdx], stream, nullptr, nullptr));
                                 listeners.postWarmup();
                                 // Do validation after first warmup
                                 if(i == 0)
@@ -654,8 +677,9 @@ int main(int argc, const char* argv[])
 
                                 for(int j = 0; j < enq; j++)
                                 {
-                                    HIP_CHECK_EXC(
-                                        adapter.launchKernels(kernels, stream, nullptr, nullptr));
+                                    size_t kIdx = ((i * enq) + j) % kernels.size();
+                                    HIP_CHECK_EXC(adapter.launchKernels(
+                                        kernels[kIdx], stream, nullptr, nullptr));
                                 }
 
                                 listeners.postEnqueues(startEvents, stopEvents, stream);

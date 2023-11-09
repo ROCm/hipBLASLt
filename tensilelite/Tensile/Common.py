@@ -270,6 +270,8 @@ globalParameters["LazyLibraryLoading"] = False # Load library and code object fi
 
 globalParameters["UseUserArgs"] = False
 
+globalParameters["RotatingBufferSize"] = 0 # Size in MB
+
 # Save a copy - since pytest doesn't re-run this initialization code and YAML files can override global settings - odd things can happen
 defaultGlobalParameters = deepcopy(globalParameters)
 
