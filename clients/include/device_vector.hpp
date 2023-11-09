@@ -130,21 +130,19 @@ public:
     //!
     hipError_t transfer_from(const host_vector<T>& that, const int32_t block_count = 1)
     {
-        for (int32_t i_block = 0; i_block < block_count; i_block ++) {
-            // hipblaslt_cout << "---- DEBUG: hipMemcpy dst = " << m_data + i_block * this->nmemb() / block_count << ", size = " << this->nmemb() * sizeof(T) / block_count << "\n";
-            hipError_t status = hipMemcpy(m_data + i_block * this->nmemb() / block_count,
-                (const T*)that,
-                this->nmemb() * sizeof(T) / block_count,
-                this->use_HMM ? hipMemcpyHostToHost : hipMemcpyHostToDevice);
-            if (status != hipSuccess) {
+        for(int32_t i_block = 0; i_block < block_count; i_block++)
+        {
+            hipError_t status
+                = hipMemcpy(m_data + i_block * this->nmemb() / block_count,
+                            (const T*)that,
+                            this->nmemb() * sizeof(T) / block_count,
+                            this->use_HMM ? hipMemcpyHostToHost : hipMemcpyHostToDevice);
+            if(status != hipSuccess)
+            {
                 return status;
             }
         }
         return hipSuccess;
-        // return hipMemcpy(m_data,
-        //                  (const T*)that,
-        //                  this->nmemb() * sizeof(T),
-        //                  this->use_HMM ? hipMemcpyHostToHost : hipMemcpyHostToDevice);
     }
 
     hipError_t memcheck() const

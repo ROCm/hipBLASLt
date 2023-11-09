@@ -933,4 +933,10 @@ namespace hipblaslt_ext
             (rocblaslt_handle)handle, algoIndex, *results));
     }
 
+    hipblasStatus_t copyMatmul(hipblasLtMatmulDesc_t src, hipblasLtMatmulDesc_t dst)
+    {
+        return RocBlasLtStatusToHIPStatus(
+            rocblaslt_copy_matmul((rocblaslt_matmul_desc)src, (rocblaslt_matmul_desc)dst));
+    }
+
 } // End of namespace hipblasltext
