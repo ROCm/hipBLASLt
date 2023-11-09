@@ -149,7 +149,7 @@ void Arguments::init()
     use_ext_setproblem = false;
     algo_method        = 0;
     use_user_args      = false;
-    block_count        = 1;
+    rotating           = 0;
 
     print_solution_found = false;
 }
