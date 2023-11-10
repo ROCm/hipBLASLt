@@ -28,6 +28,137 @@
 #include <iostream>
 
 #include "helper.h"
+using HipBufferDeleter = hipError_t (*)(void*);
+template <typename T>
+using HipArrayBufferPtr = std::unique_ptr<T, HipBufferDeleter>;
+
+template <typename T>
+HipArrayBufferPtr<T> makeHostHipArrayBufferPtr(std::size_t m)
+{
+    T* ptr{};
+    CHECK_HIP_ERROR(hipHostMalloc(&ptr, m * sizeof(T)));
+    return HipArrayBufferPtr<T>(ptr, &hipFree);
+}
+
+template <typename T>
+HipArrayBufferPtr<T> makeDeviceHipArrayBufferPtr(std::size_t m)
+{
+    T* ptr{};
+    CHECK_HIP_ERROR(hipMalloc(&ptr, m * sizeof(T)));
+    return HipArrayBufferPtr<T>(ptr, &hipFree);
+}
+
+template <size_t NumGroups>
+void multipleGroupsGroupedGemmExt(hipblasLtHandle_t     handle,
+                                  hipblasOperation_t    trans_a,
+                                  hipblasOperation_t    trans_b,
+                                  std::vector<int64_t>& ms,
+                                  std::vector<int64_t>& ns,
+                                  std::vector<int64_t>& ks,
+                                  std::vector<int64_t>& batch_count,
+                                  std::vector<float>&   alphas,
+                                  std::vector<float>&   betas,
+                                  std::vector<void*>&   d_as,
+                                  std::vector<void*>&   d_bs,
+                                  std::vector<void*>&   d_cs,
+                                  std::vector<void*>&   d_ds,
+                                  void*                 d_workspace,
+                                  int64_t               max_workspace_size,
+                                  hipStream_t           stream)
+{
+    // Get all algo doesn't require a gemm instance.
+    std::vector<hipblasLtMatmulHeuristicResult_t> heuristicResult;
+    CHECK_HIPBLASLT_ERROR(
+        hipblaslt_ext::getAllAlgos(handle,
+                                   hipblaslt_ext::GemmType::HIPBLASLT_GROUPED_GEMM,
+                                   trans_a,
+                                   trans_a,
+                                   HIPBLASLT_R_16F,
+                                   HIPBLASLT_R_16F,
+                                   HIPBLASLT_R_16F,
+                                   HIPBLASLT_R_16F,
+                                   HIPBLASLT_COMPUTE_F32,
+                                   heuristicResult));
+
+    hipblaslt_ext::GemmPreference gemmPref;
+    gemmPref.setMaxWorkspaceBytes(max_workspace_size);
+    std::vector<hipblaslt_ext::GroupedGemm>                      groupedGemms;
+    std::vector<HipArrayBufferPtr<hipblaslt_ext::UserArguments>> groupedGemmUserArgs;
+    std::vector<std::vector<std::size_t>>                        validIndices;
+    groupedGemms.reserve(NumGroups);
+
+    for(std::size_t j = 0; j < NumGroups; ++j)
+    {
+        hipblaslt_ext::GroupedGemm groupedgemm(handle,
+                                               trans_a,
+                                               trans_b,
+                                               HIPBLASLT_R_16F,
+                                               HIPBLASLT_R_16F,
+                                               HIPBLASLT_R_16F,
+                                               HIPBLASLT_R_16F,
+                                               HIPBLASLT_COMPUTE_F32);
+
+        std::vector<hipblaslt_ext::GemmEpilogue> epilogue{
+            hipblaslt_ext::
+                GemmEpilogue()}; // No action needed, default is HIPBLASLT_EPILOGUE_DEFAULT. (Gemm only)
+        std::vector<hipblaslt_ext::GemmInputs> inputs(ms.size());
+        for(int i = 0; i < ms.size(); i++)
+        {
+            inputs[i].a     = d_as[i];
+            inputs[i].b     = d_bs[i];
+            inputs[i].c     = d_cs[i];
+            inputs[i].d     = d_ds[i];
+            inputs[i].alpha = &alphas[i];
+            inputs[i].beta  = &betas[i];
+        }
+        // hipblaslt_ext::GemmEpilogue supports broadcasting
+        groupedgemm.setProblem(ms, ns, ks, batch_count, epilogue, inputs);
+
+        uint64_t            workspace_size = 0;
+        std::vector<size_t> validIdx;
+        for(size_t i = 0; i < heuristicResult.size(); i++)
+        {
+            size_t workspaceSizeInBytes = 0;
+            if(groupedgemm.isAlgoSupported(heuristicResult[i].algo, workspaceSizeInBytes)
+               == HIPBLAS_STATUS_SUCCESS)
+            {
+                if(workspaceSizeInBytes <= max_workspace_size)
+                {
+                    workspace_size = max(workspace_size, workspaceSizeInBytes);
+                    validIdx.push_back(i);
+                }
+            }
+        }
+
+        if(validIdx.empty())
+        {
+            std::cerr << "No valid solution found!" << std::endl;
+            return;
+        }
+
+        validIndices.push_back(std::move(validIdx));
+
+        auto userArgs = makeHostHipArrayBufferPtr<hipblaslt_ext::UserArguments>(ms.size());
+        groupedgemm.getDefaultValueForDeviceUserArguments(userArgs.get());
+        auto d_userArgs = makeDeviceHipArrayBufferPtr<hipblaslt_ext::UserArguments>(ms.size());
+        CHECK_HIP_ERROR(hipMemcpy(d_userArgs.get(),
+                                  userArgs.get(),
+                                  ms.size() * sizeof(hipblaslt_ext::UserArguments),
+                                  hipMemcpyHostToDevice));
+        groupedGemms.push_back(std::move(groupedgemm));
+        groupedGemmUserArgs.push_back(std::move(d_userArgs));
+    }
+
+    for(std::size_t i = 0; i < groupedGemms.size(); ++i)
+    {
+        auto& groupedGemm = groupedGemms.at(i);
+        // Make sure to initialize everytime the algo changes
+        // Run first valid solution in this sample
+        CHECK_HIPBLASLT_ERROR(groupedGemm.initialize(
+            heuristicResult[validIndices.at(i).at(i % NumGroups)].algo, d_workspace));
+        CHECK_HIPBLASLT_ERROR(groupedGemm.run(groupedGemmUserArgs.at(i).get(), stream));
+    }
+}
 
 void simpleGroupedGemmExt(hipblasLtHandle_t     handle,
                           hipblasOperation_t    trans_a,
@@ -80,6 +211,25 @@ int main()
                              runner.d_workspace,
                              runner.max_workspace_size,
                              runner.stream);
+    });
+
+    runner.run([&runner] {
+        multipleGroupsGroupedGemmExt<8>(runner.handle,
+                                        HIPBLAS_OP_N,
+                                        HIPBLAS_OP_N,
+                                        runner.m,
+                                        runner.n,
+                                        runner.k,
+                                        runner.batch_count,
+                                        runner.alpha,
+                                        runner.beta,
+                                        runner.d_a,
+                                        runner.d_b,
+                                        runner.d_c,
+                                        runner.d_d,
+                                        runner.d_workspace,
+                                        runner.max_workspace_size,
+                                        runner.stream);
     });
 
     return 0;
