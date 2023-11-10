@@ -2917,9 +2917,9 @@ class Solution(collections.abc.Mapping):
       defaultRemap = max(defaultRemap, state["MacroTile0"]//state["WavefrontSize"])
       ldsRemapPad = max(defaultRemap, state["MIOutputVectorWidth"])
       ldsNumElementsRemapC = (state["MacroTile0"]+ldsRemapPad)* state["MatrixInstN"] * state["MIWaveGroup"][1]
-      if state["_GlobalAccumulation"]:
-        computeBytes = state["ProblemType"]["ComputeDataType"].numBytes()
-        ldsNumElementsRemapC *= (computeBytes / state["ProblemType"]["DestDataType"].numBytes())
+      computeBytes = state["ProblemType"]["ComputeDataType"].numBytes()
+      # max(GlobalAccumulation case, non-GlobalAccumulation)
+      ldsNumElementsRemapC = max(ldsNumElementsRemapC, ldsNumElementsRemapC * (computeBytes / state["ProblemType"]["DestDataType"].numBytes()))
       ldsSize = ldsNumElementsRemapC * state["ProblemType"]["DestDataType"].numBytes()
       if not math.log(state["MacroTile0"],2).is_integer() or \
           ldsSize > globalParameters["MaxLDS"] or \
@@ -3031,11 +3031,12 @@ class Solution(collections.abc.Mapping):
       storeInstMinWidth = 1 # minimum dwordx1
       storeInstMaxWidth = 4 # maximum dwordx4
       srMinVw = max(storeInstMinWidth, int(storeInstMinWidth/state["ProblemType"]["DestDataType"].numRegisters()))
-      numReg  = state["ProblemType"]["DestDataType"].numRegisters()
-      if state["_GlobalAccumulation"]:
-        numReg = state["ProblemType"]["ComputeDataType"].numRegisters()
+      numReg  = max(state["ProblemType"]["DestDataType"].numRegisters(), state["ProblemType"]["ComputeDataType"].numRegisters())
 
       srMaxVw = int(storeInstMaxWidth/numReg)
+      # FIXME: Add StoreRemapVectorWidthGSU and StoreRemapVectorWidthNonGSU
+      while srMaxVw < state["StoreRemapVectorWidth"]:
+        state["StoreRemapVectorWidth"] = state["StoreRemapVectorWidth"] // 2
       if srMinVw > state["StoreRemapVectorWidth"] or srMaxVw < state["StoreRemapVectorWidth"]:
         reject(state, "StoreRemapVectorWidth %u is not allowed for this data type" % state["StoreRemapVectorWidth"])
         return
@@ -3051,17 +3052,20 @@ class Solution(collections.abc.Mapping):
       ldsRemapPad = max(state["StoreRemapVectorWidth"],state["MIOutputVectorWidth"])
       ldsNumElementsRemapC = (state["MacroTile0"]+ldsRemapPad)* state["MatrixInstN"] * state["MIWaveGroup"][1]
 
-      if state["_GlobalAccumulation"]:
-        computeBytes = state["ProblemType"]["ComputeDataType"].numBytes()
-        multiplier = computeBytes // state["ProblemType"]["DataType"].numBytes()
-      elif state["ProblemType"]["DestDataType"].numBytes() > state["ProblemType"]["DataType"].numBytes():
+
+      computeBytes = state["ProblemType"]["ComputeDataType"].numBytes()
+      multiplierGSU = computeBytes // state["ProblemType"]["DataType"].numBytes()
+      if state["ProblemType"]["DestDataType"].numBytes() > state["ProblemType"]["DataType"].numBytes():
         # Determine ratio of output to input element size.
         # SRVW remaps output so we need to scale up resources.
         multiplier = state["ProblemType"]["DestDataType"].numBytes() // state["ProblemType"]["DataType"].numBytes()
       else:
         multiplier = 1
 
-      ldsNumElementsRemapC *= multiplier
+      ldsNumElementsRemapCNonGSU = ldsNumElementsRemapC * multiplier
+      ldsNumElementsRemapCGSU    = ldsNumElementsRemapC * multiplierGSU
+      ldsNumElementsRemapC *= max(multiplier, multiplierGSU)
+
 
       #print("ldsNumElementsRemapC=%u" % ldsNumElementsRemapC)
 
@@ -3076,9 +3080,11 @@ class Solution(collections.abc.Mapping):
 
       ldsNumElements = max(ldsNumElements, ldsNumElementsRemapC)
 
+    state["LdsOffsetBias"] = 0  # TODO: ldsBiasOffset = ldsNumElementsAB
+    state["LdsOffsetBiasNonGSU"] = 0
+    state["LdsOffsetBiasGSU"] = 0
     if state["ProblemType"]["UseBias"]:
       # Currently all offsets starts from 0
-      state["LdsOffsetBias"] = 0  # TODO: ldsBiasOffset = ldsNumElementsAB
       ldsBiasMaxElements = 0
       if state["ProblemType"]["Gradient"]:
         if state["ProblemType"]["BiasSrc"] == "A":
@@ -3095,7 +3101,9 @@ class Solution(collections.abc.Mapping):
           for dataType in state["ProblemType"]["BiasDataTypeList"]:
             ldsBiasMaxElements = max(ldsBiasMaxElements, state["MacroTile%d"%tile01] * maxKId * dataType.numBytes())
       else:
-        if state["StoreRemapVectorWidth"] and state["GlobalSplitU"] == 1:
+        if state["StoreRemapVectorWidth"]:
+          state["LdsOffsetBiasNonGSU"] = ldsNumElementsRemapCNonGSU
+          state["LdsOffsetBiasGSU"] = ldsNumElementsRemapCGSU
           state["LdsOffsetBias"] = ldsNumElementsRemapC
         for dataType in state["ProblemType"]["BiasDataTypeList"]:
           ldsBiasMaxElements = max(ldsBiasMaxElements, state["MacroTile0"] * dataType.numBytes())
@@ -3302,16 +3310,12 @@ class Solution(collections.abc.Mapping):
 
     # Activation
     # Function call is set to false if GSU != 1 or Activation is not fused or ActivationType is not All.
-    if not ((state["GlobalSplitU"] == 1) and state["ActivationFused"] and state["ProblemType"]["ActivationType"] == 'all') \
+    if not (state["ActivationFused"] and state["ProblemType"]["ActivationType"] == 'all') \
       and state["ActivationFuncCall"]:
       state["ActivationFuncCall"] = False
 
     if state["ActivationAlt"]:
-      if state["GlobalSplitU"] > 1:
-        # Turn off ActivationAlt if GSU > 1
-        state["ActivationAlt"] = False
-      if not state["ProblemType"]["Gradient"]:
-        reject(state, "ActivationAlt does not support gradient.")
+      reject(state, "Currently does not accept ActivationAlt.")
 
     # Bias reduction
     if state["ProblemType"]["UseBias"] and state["ProblemType"]["Gradient"]:
@@ -3384,7 +3388,6 @@ class Solution(collections.abc.Mapping):
         else:
           requiredParameters[key] = False
 
-    # FIXME: Remove this when GSU = 1 and GSU > 1 use the same kernel
     requiredParameters["GlobalSplitU"] = True
 
     if "MatrixInstM" in nonCKObjs[0]._state:
@@ -3414,7 +3417,7 @@ class Solution(collections.abc.Mapping):
   @ staticmethod
   def getKeyNoInternalArgs(state):
     state_copy = deepcopy(state)
-    state_copy["GlobalSplitU"] = "M" if state_copy["GlobalSplitU"] > 1 else state_copy["GlobalSplitU"]
+    state_copy["GlobalSplitU"] = "M" # if state_copy["GlobalSplitU"] > 1 else state_copy["GlobalSplitU"]
     return state_copy
 
   @ staticmethod
@@ -3453,7 +3456,7 @@ class Solution(collections.abc.Mapping):
     backup = state["GlobalSplitU"]
 
     if ignoreInternalArgs:
-      state["GlobalSplitU"] = "M" if state["GlobalSplitU"] > 1 else state["GlobalSplitU"]
+      state["GlobalSplitU"] = "M" # if state["GlobalSplitU"] > 1 else state["GlobalSplitU"]
 
     components.append('SN')
     for key in sorted(state.keys()):

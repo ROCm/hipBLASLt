@@ -643,34 +643,24 @@ namespace Tensile
 
         if(problemType.useScaleAB) //kernel input data
         {
-            if(DataTypeInfo::Get(problemType.aType).elementSize
-                   > DataTypeInfo::Get(problemType.computeInputType).elementSize
-               || (sizeMapping.globalSplitU == 1))
-                args.template append<void const*>("scaleA", inputs.scaleA);
-            if(DataTypeInfo::Get(problemType.bType).elementSize
-                   > DataTypeInfo::Get(problemType.computeInputType).elementSize
-               || (sizeMapping.globalSplitU == 1))
-                args.template append<void const*>("scaleB", inputs.scaleB);
+            args.template append<void const*>("scaleA", inputs.scaleA);
+            args.template append<void const*>("scaleB", inputs.scaleB);
         }
-        if(problemType.useScaleCD && (sizeMapping.globalSplitU == 1)) //kernel input data
+        if(problemType.useScaleCD) //kernel input data
         {
             args.template append<void const*>("scaleC", inputs.scaleC);
             args.template append<void const*>("scaleD", inputs.scaleD);
         }
 
-        if(problemType.useScaleAlphaVec
-           && ((sizeMapping.globalSplitU == 1)
-               || (sizeMapping.customKernelName != ""))) //kernel input data
+        if(problemType.useScaleAlphaVec) //kernel input data
         {
             args.template append<void const*>("scaleAlphaVec", inputs.scaleAlphaVec);
         }
 
         bool runActivation = false;
-        if((problemType.activationType != ActivationType::None) && sizeMapping.activationFused
-           && ((sizeMapping.globalSplitU == 1) || (sizeMapping.customKernelName != "")))
+        if((problemType.activationType != ActivationType::None) && sizeMapping.activationFused)
             runActivation = true;
-        if(problemType.useBias
-           && ((sizeMapping.globalSplitU == 1) || (sizeMapping.customKernelName != "")))
+        if(problemType.useBias)
         {
             // We save the bias data in ws_d
             if(problemType.useGradient && problem.biasSrc() == ContractionProblemGemm::TENSOR::D

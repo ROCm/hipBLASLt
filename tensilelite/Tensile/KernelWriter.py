@@ -120,7 +120,8 @@ class StateValues:
   #     this kernel returns a temp buffer with same type as Cinternal.
   #     Later, another kernel will accumulate this buffer
   #     and convert the final result to Cexternal (= DestDataType) as the gemm result
-  bpeCexternal: int = field(init=False)
+  bpeCexternalGSU1: int = field(init=False)
+  bpeCexternal: int     = field(init=False)
   # already covers: dgemm, cgemm, zgemm, sgemm
   #               : hgemm  + !HPA ([H/H/H] compute = internal = f16)
   #               : hgemm  +  HPA ([H/H/S] or [H/S/S] compute = internal = f32)
@@ -1377,16 +1378,39 @@ class KernelWriter(metaclass=abc.ABCMeta):
       module.add(self.graAddresses(kernel, tensorParametersB))
 
     # increments
-    module.addComment1("global read addresses: increments a")
-    for i in reversed(range(kernel["ProblemType"]["NumIndicesSummation"])):
-      module.add(self.graIncrements(kernel, i, tensorParametersA))
-    if kernel["ProblemType"]["Sparse"] and not kernel["DirectToVgprSparseMetadata"]:
-      module.addComment1("global read addresses: increments metadata")
+    def graIncrementsAB():
       for i in reversed(range(kernel["ProblemType"]["NumIndicesSummation"])):
-        module.add(self.graIncrements(kernel, i, tPM))
-    module.addComment1("global read addresses: increments b")
+        module.add(self.graIncrements(kernel, i, tensorParametersA))
+      if kernel["ProblemType"]["Sparse"] and not kernel["DirectToVgprSparseMetadata"]:
+        module.addComment1("global read addresses: increments metadata")
+        for i in reversed(range(kernel["ProblemType"]["NumIndicesSummation"])):
+          module.add(self.graIncrements(kernel, i, tPM))
+      module.addComment1("global read addresses: increments b")
+      for i in reversed(range(kernel["ProblemType"]["NumIndicesSummation"])):
+        module.add(self.graIncrements(kernel, i, tensorParametersB))
+
+    addBranch = False
     for i in reversed(range(kernel["ProblemType"]["NumIndicesSummation"])):
-      module.add(self.graIncrements(kernel, i, tensorParametersB))
+      if i != self.states.unrollIdx:
+        addBranch = True
+        break
+    if addBranch:
+      gsuBackup   = kernel["GlobalSplitU"]
+      gsuLabel    = Label(label=self.labels.getNameInc("GSU"), comment="")
+      gsuLabelEnd = Label(label=self.labels.getNameInc("GSU_End"), comment="")
+      module.add(SCmpEQU32(src0=sgpr("GSU"), src1=1, comment="GSU == 1 ?"))
+      module.add(SCBranchSCC1(labelName=gsuLabel.getLabelName(), comment="branch if GSU == 1"))
+      module.addComment1("global read addresses: increments a")
+      kernel["GlobalSplitU"] = 2
+    graIncrementsAB()
+    if addBranch:
+      module.add(SBranch(gsuLabelEnd.getLabelName()))
+      module.add(gsuLabel)
+      kernel["GlobalSplitU"] = 1
+      graIncrementsAB()
+      kernel["GlobalSplitU"] = gsuBackup
+      module.add(gsuLabelEnd)
+
 
     self.dontAppendCode = self.dontAppendCode or forceNoTileCode
 
@@ -2180,9 +2204,18 @@ class KernelWriter(metaclass=abc.ABCMeta):
     # execute the NLL inside each unroll iteration not just once at the end.
     if kernel["PrefetchGlobalRead"]:
       if not kernel["SuppressNoLoadLoop"]:
+        gsuLabel = Label(label=self.labels.getNameInc("GSU"), comment="")
+        module.add(SCmpEQU32(src0=sgpr("GSU"), src1=1, comment="GSU == 1 ?"))
+        module.add(SCBranchSCC0(labelName=gsuLabel.getLabelName(), comment="branch if GSU != 1"))
+        gsuBackup          = kernel["GlobalSplitU"]
+        gsuAccumBackup     = kernel["_GlobalAccumulation"]
+        bpeCexternalBackup = self.states.bpeCexternal
+        kernel["GlobalSplitU"] = 1
+        kernel["_GlobalAccumulation"] = None
+        self.states.bpeCexternal = self.states.bpeCexternalGSU1
         if kernel["KernelLanguage"] == "Assembly" and kernel["OptNoLoadLoop"] and \
            kernel["BufferLoad"] and kernel["BufferStore"] and self.states.doShadowInit and \
-           kernel["LocalSplitU"]==1 and kernel["GlobalSplitU"] == 1 and \
+           kernel["LocalSplitU"]==1 and \
            self.states.actualSummationLoops==1:
 
           # two different noLoadLoops:
@@ -2195,6 +2228,10 @@ class KernelWriter(metaclass=abc.ABCMeta):
           deepCopyPack = fastdeepcopy(pack)
           module.add(self.noLoadLoop(kernel, tensorParametersA, tensorParametersB, isOptNLL=True, isNGLL=False, pack=deepCopyPack))
           self.restoreLocalPointers(kernel, tensorParametersA, tensorParametersB)
+        kernel["GlobalSplitU"] = gsuBackup
+        kernel["_GlobalAccumulation"] = gsuAccumBackup
+        self.states.bpeCexternal = bpeCexternalBackup
+        module.add(gsuLabel)
         module.add(self.noLoadLoop(kernel, tensorParametersA, tensorParametersB, isOptNLL=False, isNGLL=False, pack=pack))
 
     if self.states.staggerU and self.states.actualSummationLoops>1:
@@ -2836,8 +2873,9 @@ class KernelWriter(metaclass=abc.ABCMeta):
     self.states.bpeE  = int(self.states.bpr * kernel["ProblemType"]["DataTypeE"].numRegisters())
     self.states.bpeCinternal = int(self.states.bpr * kernel["ProblemType"]["ComputeDataType"].numRegisters())
 
+    self.states.bpeCexternalGSU1 = int(self.states.bpr * kernel["ProblemType"]["DestDataType"].numRegisters())
     self.states.bpeCexternal = self.states.bpeCinternal if kernel["_GlobalAccumulation"] else \
-      int(self.states.bpr * kernel["ProblemType"]["DestDataType"].numRegisters())
+      self.states.bpeCexternalGSU1
 
     # special case for wmma h and b
     if (kernel["EnableMatrixInstruction"]
@@ -3464,7 +3502,9 @@ class KernelWriter(metaclass=abc.ABCMeta):
     if self.db["EnableAsserts"]:
       self.defineSgpr("SaveExecMask", 2, 2)
 
-    self.defineSgpr("GSUSumIdx", 2 if kernel["GlobalSplitU"] > 1 else 0)
+    self.defineSgpr("GSUSumIdx", 2, 2)
+    self.defineSgpr("GSULog2BpeC", 1)
+    self.defineSgpr("GSULog2BpeD", 1)
 
     # for packed batches without stride restrictions need to do something different here
     assert sorted(kernel["PackedC0IdxChars"]+kernel["PackedC1IdxChars"]) == \
@@ -3695,14 +3735,14 @@ class KernelWriter(metaclass=abc.ABCMeta):
     self.states.needBiasType = False
     if kernel["ProblemType"]["UseBias"]:
       if kernel["ProblemType"]["Gradient"]:
-        if (kernel["GlobalSplitU"] == 1) and(kernel["ProblemType"]["BiasSrc"] == "D"):
+        if kernel["ProblemType"]["BiasSrc"] == "D":
           self.states.useBias = DataDirection.WRITE
         elif kernel["ProblemType"]["BiasSrc"] == "A" or kernel["ProblemType"]["BiasSrc"] == "B":
           self.states.useBias = DataDirection.WRITE
-      elif kernel["GlobalSplitU"] == 1:
+      else:
         self.states.useBias = DataDirection.READ
       # Need bias type if the kernel supports multiple bias type.
-    if self.states.useBias == DataDirection.READ or (self.states.useBias == DataDirection.WRITE and (kernel["ProblemType"]["BiasSrc"] == "A" or kernel["ProblemType"]["BiasSrc"] == "B") and kernel["GlobalSplitU"] == 1):
+    if self.states.useBias == DataDirection.READ or (self.states.useBias == DataDirection.WRITE and (kernel["ProblemType"]["BiasSrc"] == "A" or kernel["ProblemType"]["BiasSrc"] == "B")):
       self.states.needBiasType = True
     else:
       self.states.needBiasType = False
@@ -4023,7 +4063,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
   # End Summation
   ##############################################################################
   @abc.abstractmethod
-  def endSummation(self, kernel, tPA, tPB, label = None):
+  def endSummation(self, kernel, tPA, tPB, noSkipLoad = True, label = None):
     return ""
 
   ##############################################################################
