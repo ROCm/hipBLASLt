@@ -195,7 +195,7 @@ namespace hipblaslt_ext
 
         ~ConversionHelper() = default;
 
-        ConversionHelper(ConversionHelper& rhs)
+        ConversionHelper(const ConversionHelper& rhs)
         {
             const auto numGemms = rhs.m_auxiliary_conversion_buffers.size();
 
@@ -360,14 +360,16 @@ namespace hipblaslt_ext
 
     GemmInstance& GemmInstance::operator=(const GemmInstance& rhs)
     {
-        m_gemm_type     = rhs.m_gemm_type;
-        m_gemm_count    = rhs.m_gemm_count;
-        m_problem_types = rhs.m_problem_types;
-        m_data          = rhs.m_data;
+        if (this != &rhs) {
+            m_gemm_type     = rhs.m_gemm_type;
+            m_gemm_count    = rhs.m_gemm_count;
+            m_problem_types = rhs.m_problem_types;
+            m_data          = rhs.m_data;
 
-        if(rhs.m_conversion_helper)
-        {
-            m_conversion_helper = std::make_unique<ConversionHelper>(*rhs.m_conversion_helper);
+            if(rhs.m_conversion_helper)
+            {
+                m_conversion_helper = std::make_unique<ConversionHelper>(*rhs.m_conversion_helper);
+            }
         }
 
         return *this;
