@@ -26,7 +26,6 @@
 #include <hip/hip_runtime.h>
 #include <hipblaslt/hipblaslt-ext.hpp>
 #include <iostream>
-#include <vector>
 
 #include "helper.h"
 

@@ -193,57 +193,12 @@ namespace hipblaslt_ext
             }
         }
 
-        ~ConversionHelper() = default;
-
-        ConversionHelper(const ConversionHelper& rhs)
-        {
-            const auto numGemms = rhs.m_auxiliary_conversion_buffers.size();
-
-            if(m_auxiliary_conversion_buffers.size() != numGemms)
-            {
-                m_auxiliary_conversion_buffers.resize(numGemms);
-            }
-
-            for(std::size_t j = 0; j < m_auxiliary_conversion_buffers.size(); ++j)
-            {
-                auto& srcConversions = rhs.m_auxiliary_conversion_buffers.at(j);
-                auto& dstConversions = m_auxiliary_conversion_buffers.at(j);
-                dstConversions.clear();
-
-                //inputs
-                for(std::size_t i = 0; i < 3; ++i)
-                {
-                    auto& srcConversion = srcConversions.at(i);
-                    auto  srcPtr        = std::get<0>(srcConversion).get();
-                    auto  dstNumBytes   = std::get<4>(srcConversion) * 2;
-                    dstConversions.emplace_back(std::make_tuple(
-                        std::move(HipBufferPtr(srcPtr, NullDeleter)),
-                        std::move(makeHipBuffer(dstNumBytes)),
-                        std::get<2>(srcConversion),
-                        std::get<3>(srcConversion),
-                        std::get<4>(srcConversion),
-                        std::move(HipBufferPtr(std::get<5>(srcConversion).get(), NullDeleter))));
-                }
-
-                //outputs
-                for(std::size_t i = 3; i < srcConversions.size(); ++i)
-                {
-                    auto& srcConversion = srcConversions.at(i);
-                    auto  dstPtr        = std::get<1>(srcConversion).get();
-                    auto  srcNumBytes   = std::get<4>(srcConversion) * 2;
-                    dstConversions.emplace_back(std::make_tuple(
-                        std::move(makeHipBuffer(srcNumBytes)),
-                        std::move(HipBufferPtr(dstPtr, NullDeleter)),
-                        std::get<2>(srcConversion),
-                        std::get<3>(srcConversion),
-                        std::get<4>(srcConversion),
-                        std::move(HipBufferPtr(std::get<5>(srcConversion).get(), NullDeleter))));
-                }
-            }
-        }
-
-        //We should not use this internally.
+        ~ConversionHelper()                               = default;
+        ConversionHelper(ConversionHelper&& rhs) noexcept = default;
+        //force move
+        ConversionHelper(const ConversionHelper& rhs)        = delete;
         ConversionHelper& operator=(const ConversionHelper&) = delete;
+        ConversionHelper& operator=(ConversionHelper&&)      = default;
 
         void convertInputs(hipStream_t stream)
         {
@@ -344,39 +299,8 @@ namespace hipblaslt_ext
     }
 
     GemmInstance::~GemmInstance() {}
-
-    GemmInstance::GemmInstance(const GemmInstance& rhs)
-    {
-        m_gemm_type     = rhs.m_gemm_type;
-        m_gemm_count    = rhs.m_gemm_count;
-        m_problem_types = rhs.m_problem_types;
-        m_data          = rhs.m_data;
-
-        if(rhs.m_conversion_helper)
-        {
-            m_conversion_helper = std::make_unique<ConversionHelper>(*rhs.m_conversion_helper);
-        }
-    }
-
-    GemmInstance& GemmInstance::operator=(const GemmInstance& rhs)
-    {
-        if (this != &rhs) {
-            m_gemm_type     = rhs.m_gemm_type;
-            m_gemm_count    = rhs.m_gemm_count;
-            m_problem_types = rhs.m_problem_types;
-            m_data          = rhs.m_data;
-
-            if(rhs.m_conversion_helper)
-            {
-                m_conversion_helper = std::make_unique<ConversionHelper>(*rhs.m_conversion_helper);
-            }
-        }
-
-        return *this;
-    }
-
-    GemmInstance::GemmInstance(GemmInstance&& rhs)            = default;
-    GemmInstance& GemmInstance::operator=(GemmInstance&& rhs) = default;
+    GemmInstance::GemmInstance(GemmInstance&& rhs) noexcept            = default;
+    GemmInstance& GemmInstance::operator=(GemmInstance&& rhs) noexcept = default;
 
     GemmType GemmInstance::getGemmType()
     {
@@ -517,10 +441,8 @@ namespace hipblaslt_ext
         }
     }
 
-    Gemm::Gemm(const Gemm&)            = default;
-    Gemm::Gemm(Gemm&&)                 = default;
-    Gemm& Gemm::operator=(const Gemm&) = default;
-    Gemm& Gemm::operator=(Gemm&&)      = default;
+    Gemm::Gemm(Gemm&&) noexcept            = default;
+    Gemm& Gemm::operator=(Gemm&&) noexcept = default;
 
     hipblasStatus_t Gemm::setProblem(int64_t       m,
                                      int64_t       n,
@@ -718,10 +640,8 @@ namespace hipblaslt_ext
                                 m_data);
     }
 
-    GroupedGemm::GroupedGemm(const GroupedGemm&)            = default;
-    GroupedGemm::GroupedGemm(GroupedGemm&&)                 = default;
-    GroupedGemm& GroupedGemm::operator=(const GroupedGemm&) = default;
-    GroupedGemm& GroupedGemm::operator=(GroupedGemm&&)      = default;
+    GroupedGemm::GroupedGemm(GroupedGemm&&) noexcept            = default;
+    GroupedGemm& GroupedGemm::operator=(GroupedGemm&&) noexcept = default;
 
     HIPBLASLT_EXPORT GroupedGemm::GroupedGemm(hipblasLtHandle_t                     handle,
                                               std::vector<hipblasLtMatmulDesc_t>&   matmul_descr,
