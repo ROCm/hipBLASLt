@@ -1,22 +1,32 @@
 # hipBLASLt
-hipBLASLt is a library that provides general matrix-matrix operations with a flexible API and extends funtionalities beyond traditional BLAS library.
-hipBLASLt is exposed APIs in HIP programming language with an underlying optimized generator as a backend kernel provider.
 
-This library adds flexibility in matrix data layouts, input types, compute types, and also in choosing the algorithmic implementations and heuristics through parameter programmability.
-After a set of options for the intended GEMM operation are identified by the user, these options can be used repeatedly for different inputs.
-The GEMM operation of hipBLASLt is performed by hipblasLtMatmul API.
+hipBLASLt is a library that provides general matrix-matrix operations. It has a flexible API that extends
+functionalities beyond a traditional BLAS library, such as adding flexibility to matrix data layouts, input
+types, compute types, and algorithmic implementations and heuristics.
 
-The equation is as below:
+hipBLASLt uses the HIP programming language with an underlying optimized generator as its backend
+kernel provider.
+
+After you specify a set of options for a matrix-matrix operation, you can reuse these for different
+inputs. The general matrix-multiply (GEMM) operation is performed by the `hipblasLtMatmul` API.
+
+The equation is:
+
 ```math
 D = Activation(alpha \cdot op(A) \cdot op(B) + beta \cdot op(C) + bias)
 ```
-Where op(A)/op(B) refers to in-place operations such as transpose/non-transpose, and alpha, beta are scalars.
-Acitivation function supports Gelu, Relu.
-Bias vector match matrix D rows and broadcast to all D columns.
 
-Here are data type supported list:
+Where *op( )* refers to in-place operations, such as transpose and non-transpose, and *alpha* and
+*beta* are scalars.
+
+The activation function supports GELU and ReLU. the bias vector matches matrix D rows and
+broadcasts to all D columns.
+
+The following table provides data type support. Note that fp8 and bf8 are only supported on the
+gfx94x platform.
+
 | A | B | C | D | Compute(Scale) |
-| :---: | :---: | :---: | :---: | :---: |
+| :--- | :--- | :--- | :--- | :--- |
 | fp32  | fp32  | fp32  | fp32  | fp32  |
 | fp16  | fp16  | fp16  | fp16  | fp32  |
 | fp16  | fp16  | fp16  | fp32  | fp32  |
@@ -25,38 +35,45 @@ Here are data type supported list:
 | fp8   | fp8/bf8  | fp16   | fp16  | fp32  |
 | bf8   | fp8  | fp32  | fp32  | fp32  |
 | bf8   | fp8  | fp16  | fp16  | fp32  |
-(fp8 and bf8 are only supported by gfx94x platform)
 
 ## Documentation
 
+Full documentation for hipBLASLt is available at
+[rocm.docs.amd.com/projects/hipBLASLt](https://rocm.docs.amd.com/projects/hipBLASLt/en/latest/index.html).
+
 Run the steps below to build documentation locally.
 
-```
+```bash
 cd docs
 
 pip3 install -r .sphinx/requirements.txt
 
 python3 -m sphinx -T -E -b html -d _build/doctrees -D language=en . _build/html
 ```
-## Hardware Requirements
+
+## Requirements
+
+To install hipBLASLt, you must meet the following requirements:
+
+Required hardware:
+
 * gfx90a card
 * gfx94x card
 
-## Software Requirements
+Required software:
+
 * Git
 * CMake 3.16.8 or later
 * python3.7 or later
 * python3.7-venv or later
-* AMD [ROCm] 5.5 or later
-
-## Required ROCM library
+* AMD [ROCm](https://github.com/RadeonOpenCompute/ROCm), version 5.5 or later
 * hipBLAS (for the header file)
 
-## Quickstart hipBLASLt build and install
+## Build and install
 
-#### Install script
-You can build hipBLASLt using the *install.sh* script
-```
+You can build hipBLASLt using the `install.sh` script:
+
+```bash
 # Clone hipBLASLt using git
 git clone https://github.com/ROCmSoftwarePlatform/hipBLASLt
 
@@ -74,21 +91,18 @@ cd hipBLASLt
 ```
 
 ## Unit tests
-To build unit tests, hipBLASLt has to be built with --clients.\
-All unit tests are in path build/release/clients/staging/.\
-Please check these links for more information.\
-[hipblaslt-test](clients/gtest/README.md)\
-[hipblaslt-bench](clients/benchmarks/README.md)\
-[example_XXX](clients/samples/README.md)
 
-## Support
-Please use [the issue tracker][] for bugs and feature requests.
+All unit tests are located in `build/release/clients/staging/`. To build these tests, you must build
+hipBLASLt with `--clients`.
 
-## License
-The [license file][] can be found in the main repository.
+You can find more information at the following links:
 
-[ROCm]: https://github.com/RadeonOpenCompute/ROCm
-[HIP]: https://github.com/GPUOpen-ProfessionalCompute-Tools/HIP/
-[GTest]: https://github.com/google/googletest
-[the issue tracker]: TBD
-[license file]: TBD
+* [hipblaslt-test](clients/gtest/README.md)
+* [hipblaslt-bench](clients/benchmarks/README.md)
+
+## Contribute
+
+If you want to submit an issue, you can do so on
+[GitHub](https://github.com/ROCmSoftwarePlatform/hipBLASLt/issues).
+
+To contribute to our repository, you can create a GitHub pull request.
