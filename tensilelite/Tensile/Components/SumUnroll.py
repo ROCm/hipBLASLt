@@ -263,7 +263,7 @@ class SumUnrollMfma(SumUnroll):
         writer.vgprPool.checkIn(dummy)
 
         # Add barrier here to avoid race condition if lds offset starts from 0
-        if kernel["LdsOffsetBias"] == 0:
+        if kernel["LdsOffsetBias"] == 0:  # Compatible for both GSU1 and GSUM
           imod.add(SBarrier(comment="Wait for all wavefronts"))
 
         MIWaveGroupShape = [ kernel["MatrixInstM"] * kernel["MatrixInstBM"] * kernel["MIWaveGroup"][0] * kernel["VectorWidthA"], \

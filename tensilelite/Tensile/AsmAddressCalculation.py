@@ -469,7 +469,7 @@ class AddrCalculation:
                         index = kernel["PackedC1IndicesX"][0] - 1
                         strideW1 = "Size%s" % "I" if index == 0 else ("J" if index == 1 else (kw.states.indexChars[index]))
                         module.add(self.addScaled(vgpr(kw.vgprs.coutRowPtrBias), vgpr(kw.vgprs.coutRowPtrBias), \
-                                  sgpr(strideW1), self.rowInc, tmpS01, "Move coutRowPtrE to next row"))
+                                  sgpr(strideW1), self.rowInc, tmpS01, "Move coutRowPtrBias to next row"))
                 elif len(kernel["PackedC1IndicesX"]) > 1:
                     module.add(kw.extractPackedCoord1ToRowStart(kernel, kernel["PackedC1IndicesX"] , self.coord1Vgpr, 'D'))
 

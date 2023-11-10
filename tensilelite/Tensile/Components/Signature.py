@@ -193,30 +193,28 @@ class SignatureCOV3(Signature):
             signature.addArg(       "gsu",                SVK.SIG_VALUE,               "u32")
 
         if kernel["ProblemType"]["UseScaleAB"]:
-            if (kernel["GlobalSplitU"] == 1) or (kernel["ProblemType"]["DataTypeA"].numRegisters() > kernel["ProblemType"]["DataType"].numRegisters()):
-                signature.addArg("AddressScaleA", SVK.SIG_GLOBALBUFFER, cptValueType, "generic")
-            if (kernel["GlobalSplitU"] == 1) or (kernel["ProblemType"]["DataTypeB"].numRegisters() > kernel["ProblemType"]["DataType"].numRegisters()):
-                signature.addArg("AddressScaleB", SVK.SIG_GLOBALBUFFER, cptValueType, "generic")
+            signature.addArg("AddressScaleA", SVK.SIG_GLOBALBUFFER, cptValueType, "generic")
+            signature.addArg("AddressScaleB", SVK.SIG_GLOBALBUFFER, cptValueType, "generic")
         userArgumentsInfo.scaleASize += 8
         userArgumentsInfo.scaleBSize += 8
-        if kernel["ProblemType"]["UseScaleCD"] and (kernel["GlobalSplitU"] == 1):
+        if kernel["ProblemType"]["UseScaleCD"]:
             signature.addArg("AddressScaleC", SVK.SIG_GLOBALBUFFER, cptValueType, "generic")
             signature.addArg("AddressScaleD", SVK.SIG_GLOBALBUFFER, cptValueType, "generic")
         userArgumentsInfo.scaleCSize += 8
         userArgumentsInfo.scaleDSize += 8
 
-        if kernel["ProblemType"]["UseScaleAlphaVec"] and (kernel["GlobalSplitU"] == 1):
+        if kernel["ProblemType"]["UseScaleAlphaVec"]:
             signature.addArg("AddressScaleAlphaVec", SVK.SIG_GLOBALBUFFER, cptValueType, "generic")
         userArgumentsInfo.scaleAlphaVecSize += 8
 
-        if writer.states.useBias != DataDirection.NONE and (kernel["GlobalSplitU"] == 1):
+        if writer.states.useBias != DataDirection.NONE:
             signature.addArg("bias", SVK.SIG_GLOBALBUFFER, biasValueType, "generic")  # Note: We append the data in ws_d
             if writer.states.needBiasType:
                 signature.addArg("biasType",        SVK.SIG_VALUE,        "u32")
                 signature.addArg("StrideBias",      SVK.SIG_VALUE,        "u32")
         userArgumentsInfo.biasSize += (8 + 4 + 4)
 
-        if kernel["ProblemType"]["UseE"] and (kernel["GlobalSplitU"] == 1):
+        if kernel["ProblemType"]["UseE"]:
             signature.addArg(      "E", SVK.SIG_GLOBALBUFFER, cptValueType, "generic")
             for i in range(0, writer.states.e.numSgprStrides):
                 signature.addArg("StrideE%u"%i,        SVK.SIG_VALUE,        "u32")
@@ -224,8 +222,7 @@ class SignatureCOV3(Signature):
         for i in range(0, writer.states.e.numSgprStrides):
             userArgumentsInfo.eSize += 4
 
-        if ((kernel["ProblemType"]["ActivationType"] != 'none') and (kernel["GlobalSplitU"] == 1) \
-            and kernel["ActivationFused"]):
+        if ((kernel["ProblemType"]["ActivationType"] != 'none') and kernel["ActivationFused"]):
             if kernel["ProblemType"]["ActivationComputeDataType"].isHalf():
                 actValueType = 'pkf16'
             for name in kernel["ProblemType"]["ActivationType"].getAdditionalArgStringList():
