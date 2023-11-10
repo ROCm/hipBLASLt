@@ -190,5 +190,6 @@ void simpleGemm(hipblasLtHandle_t  handle,
                                           d_workspace,
                                           workspace_size,
                                           stream));
+
     return;
 }
