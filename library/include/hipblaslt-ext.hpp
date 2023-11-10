@@ -193,7 +193,11 @@ namespace hipblaslt_ext
     class GemmInstance
     {
     public:
-        virtual ~GemmInstance() {}
+        HIPBLASLT_EXPORT virtual ~GemmInstance();
+        HIPBLASLT_EXPORT GemmInstance(const GemmInstance &rhs);
+        HIPBLASLT_EXPORT GemmInstance& operator=(const GemmInstance &rhs);
+        HIPBLASLT_EXPORT GemmInstance(GemmInstance &&rhs);
+        HIPBLASLT_EXPORT GemmInstance& operator=(GemmInstance &&rhs);
 
         /*! \ingroup library_module
         *  \brief Retrieve the possible algorithms
@@ -303,9 +307,8 @@ namespace hipblaslt_ext
 
         hipblasLtHandle_t     m_handle;
         std::shared_ptr<void> m_data;
-        //                             src           dst           srcType              dstType              numElements  scale
-        using Conversions = std::tuple<HipBufferPtr, HipBufferPtr, hipblasltDatatype_t, hipblasltDatatype_t, std::size_t, HipBufferPtr>;
-        std::vector<std::vector<Conversions>> m_auxiliary_conversion_buffers;
+        struct ConversionHelper;
+        std::unique_ptr<ConversionHelper> m_conversion_helper;
     };
 
     /*! \ingroup types_module
@@ -381,6 +384,11 @@ namespace hipblaslt_ext
                                        hipblasLtMatrixLayout_t matC,
                                        void*                   D,
                                        hipblasLtMatrixLayout_t matD);
+
+        HIPBLASLT_EXPORT Gemm(const Gemm &);
+        HIPBLASLT_EXPORT Gemm(Gemm &&);
+        HIPBLASLT_EXPORT Gemm& operator=(const Gemm &);
+        HIPBLASLT_EXPORT Gemm& operator=(Gemm &&);
 
         /*! \ingroup library_module
         *  \brief Sets the problem for a gemm problem.
@@ -549,6 +557,10 @@ namespace hipblaslt_ext
                                               hipblasltDatatype_t    typeC,
                                               hipblasltDatatype_t    typeD,
                                               hipblasLtComputeType_t typeCompute);
+        HIPBLASLT_EXPORT GroupedGemm(const GroupedGemm &);
+        HIPBLASLT_EXPORT GroupedGemm(GroupedGemm &&);
+        HIPBLASLT_EXPORT GroupedGemm& operator=(const GroupedGemm &);
+        HIPBLASLT_EXPORT GroupedGemm& operator=(GroupedGemm &&);
 
         /*! \ingroup library_module
         *  \brief Constructor that sets the grouped gemm problem from hipblasLt structures
