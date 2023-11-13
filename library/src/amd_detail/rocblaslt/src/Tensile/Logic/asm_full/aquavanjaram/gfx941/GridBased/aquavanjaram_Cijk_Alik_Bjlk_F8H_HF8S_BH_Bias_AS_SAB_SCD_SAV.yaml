@@ -112,7 +112,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bjlk_F8H_HF8S_BH_BiasSHB_AS_SAB_SCD_SAV_MT16x64x16_MI16x16x4_SN_GRVWA4_GRVWB4_GSU1_MIWT1_1_NLCB1_TLDS1
+    KernelNameMin: Cijk_Alik_Bjlk_F8H_HF8S_BH_Bias_AS_SAB_SCD_SAV_MT16x64x16_MI16x16x4_SN_GRVWA4_GRVWB4_GSU1_MIWT1_1_NLCB1_TLDS1
     LSCA: 16
     LSCB: 64
     LSPA: 16
@@ -280,7 +280,7 @@
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 0
-    SolutionNameMin: Cijk_Alik_Bjlk_F8H_HF8S_BH_BiasSHB_AS_SAB_SCD_SAV_MT16x64x16_MI16x16x4_SN_GRVWA4_GRVWB4_GSU1_MIWT1_1_NLCB1_TLDS1
+    SolutionNameMin: Cijk_Alik_Bjlk_F8H_HF8S_BH_Bias_AS_SAB_SCD_SAV_MT16x64x16_MI16x16x4_SN_GRVWA4_GRVWB4_GSU1_MIWT1_1_NLCB1_TLDS1
     SourceSwap: 1
     StaggerU: 32
     StaggerUMapping: 0
@@ -367,7 +367,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bjlk_F8H_HF8S_BH_BiasSHB_AS_SAB_SCD_SAV_MT32x128x16_MI16x16x4_SN_GRVWA1_GRVWB4_GSU1_MIWT2_2_NLCB1_TLDS1
+    KernelNameMin: Cijk_Alik_Bjlk_F8H_HF8S_BH_Bias_AS_SAB_SCD_SAV_MT32x128x16_MI16x16x4_SN_GRVWA1_GRVWB4_GSU1_MIWT2_2_NLCB1_TLDS1
     LSCA: 16
     LSCB: 128
     LSPA: 4
@@ -535,7 +535,7 @@
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 1
-    SolutionNameMin: Cijk_Alik_Bjlk_F8H_HF8S_BH_BiasSHB_AS_SAB_SCD_SAV_MT32x128x16_MI16x16x4_SN_GRVWA1_GRVWB4_GSU1_MIWT2_2_NLCB1_TLDS1
+    SolutionNameMin: Cijk_Alik_Bjlk_F8H_HF8S_BH_Bias_AS_SAB_SCD_SAV_MT32x128x16_MI16x16x4_SN_GRVWA1_GRVWB4_GSU1_MIWT2_2_NLCB1_TLDS1
     SourceSwap: 1
     StaggerU: 32
     StaggerUMapping: 0
@@ -622,7 +622,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bjlk_F8H_HF8S_BH_BiasSHB_AS_SAB_SCD_SAV_MT16x64x32_MI16x16x4_SN_GRVWA1_GRVWB1_GSU1_MIWT1_1_NLCB1_TLDS1
+    KernelNameMin: Cijk_Alik_Bjlk_F8H_HF8S_BH_Bias_AS_SAB_SCD_SAV_MT16x64x32_MI16x16x4_SN_GRVWA1_GRVWB1_GSU1_MIWT1_1_NLCB1_TLDS1
     LSCA: 32
     LSCB: 64
     LSPA: 2
@@ -790,7 +790,7 @@
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 2
-    SolutionNameMin: Cijk_Alik_Bjlk_F8H_HF8S_BH_BiasSHB_AS_SAB_SCD_SAV_MT16x64x32_MI16x16x4_SN_GRVWA1_GRVWB1_GSU1_MIWT1_1_NLCB1_TLDS1
+    SolutionNameMin: Cijk_Alik_Bjlk_F8H_HF8S_BH_Bias_AS_SAB_SCD_SAV_MT16x64x32_MI16x16x4_SN_GRVWA1_GRVWB1_GSU1_MIWT1_1_NLCB1_TLDS1
     SourceSwap: 1
     StaggerU: 32
     StaggerUMapping: 0
@@ -877,7 +877,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bjlk_F8H_HF8S_BH_BiasSHB_AS_SAB_SCD_SAV_MT16x64x32_MI16x16x4_SN_GRVWA4_GRVWB1_GSU1_MIWT1_1_NLCB1_TLDS1
+    KernelNameMin: Cijk_Alik_Bjlk_F8H_HF8S_BH_Bias_AS_SAB_SCD_SAV_MT16x64x32_MI16x16x4_SN_GRVWA4_GRVWB1_GSU1_MIWT1_1_NLCB1_TLDS1
     LSCA: 32
     LSCB: 64
     LSPA: 8
@@ -1045,7 +1045,7 @@
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 3
-    SolutionNameMin: Cijk_Alik_Bjlk_F8H_HF8S_BH_BiasSHB_AS_SAB_SCD_SAV_MT16x64x32_MI16x16x4_SN_GRVWA4_GRVWB1_GSU1_MIWT1_1_NLCB1_TLDS1
+    SolutionNameMin: Cijk_Alik_Bjlk_F8H_HF8S_BH_Bias_AS_SAB_SCD_SAV_MT16x64x32_MI16x16x4_SN_GRVWA4_GRVWB1_GSU1_MIWT1_1_NLCB1_TLDS1
     SourceSwap: 1
     StaggerU: 32
     StaggerUMapping: 0
@@ -1132,7 +1132,7 @@
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Alik_Bjlk_F8H_HF8S_BH_BiasSHB_AS_SAB_SCD_SAV_MT16x64x32_MI16x16x4_SN_GRVWA4_GRVWB4_GSU1_MIWT1_1_NLCB1_TLDS1
+    KernelNameMin: Cijk_Alik_Bjlk_F8H_HF8S_BH_Bias_AS_SAB_SCD_SAV_MT16x64x32_MI16x16x4_SN_GRVWA4_GRVWB4_GSU1_MIWT1_1_NLCB1_TLDS1
     LSCA: 32
     LSCB: 64
     LSPA: 8
@@ -1300,7 +1300,7 @@
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 4
-    SolutionNameMin: Cijk_Alik_Bjlk_F8H_HF8S_BH_BiasSHB_AS_SAB_SCD_SAV_MT16x64x32_MI16x16x4_SN_GRVWA4_GRVWB4_GSU1_MIWT1_1_NLCB1_TLDS1
+    SolutionNameMin: Cijk_Alik_Bjlk_F8H_HF8S_BH_Bias_AS_SAB_SCD_SAV_MT16x64x32_MI16x16x4_SN_GRVWA4_GRVWB4_GSU1_MIWT1_1_NLCB1_TLDS1
     SourceSwap: 1
     StaggerU: 32
     StaggerUMapping: 0
