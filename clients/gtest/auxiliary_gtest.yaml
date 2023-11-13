@@ -99,10 +99,10 @@ Tests:
   function:
     - aux_matmul_pref_init: *real_precisions
 
-- name: aux_matmul_alg_matmul_bad_arg
+- name: aux_matmul_alg_null_matmul
   category: pre_checkin
   function:
-    - aux_matmul_alg_matmul_bad_arg: *real_precisions
+    - aux_matmul_alg_null_matmul: *hpa_half_precision
   matrix_size: *small_matrix_size_range
   transA: N
   transB: N

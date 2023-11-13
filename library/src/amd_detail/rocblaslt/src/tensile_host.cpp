@@ -70,20 +70,6 @@
 
 #define INTERNAL_HIPHOSTMEM_SIZE 32768
 
-#ifndef CHECK_HIP_ERROR
-#define CHECK_HIP_ERROR(error)                    \
-    if(error != hipSuccess)                       \
-    {                                             \
-        fprintf(stderr,                           \
-                "Hip error: '%s'(%d) at %s:%d\n", \
-                hipGetErrorString(error),         \
-                error,                            \
-                __FILE__,                         \
-                __LINE__);                        \
-        exit(EXIT_FAILURE);                       \
-    }
-#endif
-
 namespace
 {
     std::string getHipblasltSoPath()
@@ -1192,7 +1178,7 @@ void initTensileGemmData(rocblaslt_handle       handle,
  ******************************************************************************/
 rocblaslt_status runContractionProblem(rocblaslt_handle                   handle,
                                        const rocblaslt_matmul_algo*       algo,
-                                       RocblasltContractionProblem&       prob,
+                                       const RocblasltContractionProblem& prob,
                                        std::shared_ptr<void>              gemmData)
 {
     rocblaslt_status status = rocblaslt_status_internal_error;
@@ -1206,22 +1192,18 @@ rocblaslt_status runContractionProblem(rocblaslt_handle                   handle
         hardware     = Tensile::hip::GetDevice(*deviceProp);
 
         std::shared_ptr<TensileDataGemm> data = std::static_pointer_cast<TensileDataGemm>(gemmData);
-        int requestedAlgoCount = 1, returnAlgoCount;
-        rocblaslt_matmul_heuristic_result heuristicResultsArray[requestedAlgoCount];
+        rocblaslt_matmul_heuristic_result heuristicResult;
         if (algo == nullptr) {
+            int returnAlgoCount;
             status = getBestSolutions(prob,
                                       handle,
                                       gemmData,
-                                      requestedAlgoCount,
-                                      heuristicResultsArray,
+                                      1,
+                                      &heuristicResult,
                                       &returnAlgoCount,
                                       prob.workspaceSize);
             if (returnAlgoCount == 0) return rocblaslt_status_not_implemented;
-            algo = &heuristicResultsArray[0].algo;
-            if (prob.workspaceSize == 0 || prob.workspace == nullptr) {
-                prob.workspaceSize = heuristicResultsArray[0].workspaceSize;
-                CHECK_HIP_ERROR(hipMalloc(&prob.workspace, prob.workspaceSize));
-            }
+            algo = &heuristicResult.algo;
         }
         updateTensileProblem(algo->fallback, prob, data->problem);
 

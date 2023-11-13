@@ -271,7 +271,7 @@ void initTensileGemmData(rocblaslt_handle       handle,
  *******************************************************************************/
 rocblaslt_status runContractionProblem(rocblaslt_handle                   handle,
                                        const rocblaslt_matmul_algo*       algo,
-                                       RocblasltContractionProblem&       problem,
+                                       RocblasltContractionProblem const& problem,
                                        std::shared_ptr<void>              gemmData);
 
 rocblaslt_status gemmCreate(RocblasltContractionProblem const& problem,

@@ -304,7 +304,7 @@ void testing_aux_matmul_alg_set_attr_bad_arg(const Arguments& arg) {}
 
 void testing_aux_matmul_alg_get_attr_bad_arg(const Arguments& arg) {}
 
-void testing_aux_matmul_alg_matmul_bad_arg(const Arguments& arg)
+void testing_aux_matmul_alg_null_matmul(const Arguments& arg)
 {
     using InTypeA   = hipblasLtHalf;
     using InTypeB   = hipblasLtHalf;
@@ -350,14 +350,14 @@ void testing_aux_matmul_alg_matmul_bad_arg(const Arguments& arg)
         d_c, c, m * n * batch_count * sizeof(OutType), hipMemcpyHostToDevice, stream));
 
     hipblasLtMatrixLayout_t matA, matB, matC, matD;
-    CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutCreate(&matA, HIPBLASLT_R_16F, m, k, m));
-    CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutCreate(&matB, HIPBLASLT_R_16F, k, n, k));
-    CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutCreate(&matC, HIPBLASLT_R_16F, m, n, m));
-    CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutCreate(&matD, HIPBLASLT_R_16F, m, n, m));
+    CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutCreate(&matA, arg.a_type, m, k, m));
+    CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutCreate(&matB, arg.a_type, k, n, k));
+    CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutCreate(&matC, arg.a_type, m, n, m));
+    CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutCreate(&matD, arg.a_type, m, n, m));
 
     hipblasLtMatmulDesc_t matmul;
     CHECK_HIPBLASLT_ERROR(
-        hipblasLtMatmulDescCreate(&matmul, HIPBLASLT_COMPUTE_F32, HIPBLASLT_R_32F));
+        hipblasLtMatmulDescCreate(&matmul, arg.compute_type, arg.scale_type));
     CHECK_HIPBLASLT_ERROR(hipblasLtMatmulDescSetAttribute(
         matmul, HIPBLASLT_MATMUL_DESC_TRANSA, &trans_a, sizeof(int32_t)));
     CHECK_HIPBLASLT_ERROR(hipblasLtMatmulDescSetAttribute(
