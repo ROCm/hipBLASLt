@@ -94,7 +94,7 @@ struct Arguments
     hipDataType            b_type;
     hipDataType            c_type;
     hipDataType            d_type;
-    hipblasLtComputeType_t compute_type;
+    hipblasComputeType_t compute_type;
     hipDataType            scale_type;
 
     hipblaslt_initialization initialization;

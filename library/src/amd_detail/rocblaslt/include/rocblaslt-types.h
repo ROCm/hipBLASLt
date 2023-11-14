@@ -247,12 +247,12 @@ typedef enum rocblaslt_status_
  */
 typedef enum rocblaslt_compute_type_
 {
-    rocblaslt_compute_f32           = 300, /**< 32-bit floating-point precision. */
-    rocblaslt_compute_f32_fast_xf32 = 301, /**< XF32 compute for 32-bit input and output matrices */
-    rocblaslt_compute_f64           = 302, /**< 64-bit floating-point precision. */
-    rocblaslt_compute_i32           = 303, /**< 32-bit integer precision. */
+    rocblaslt_compute_f32 = 2, /**< 32-bit floating-point precision. */
     rocblaslt_compute_f32_fast_f16
-    = 304, /**< F16 compute for 16-bit input and 32-bit output matrices */
+    = 4, /**< F16 compute for 16-bit input and 32-bit output matrices */
+    rocblaslt_compute_f32_fast_xf32 = 6, /**< XF32 compute for 32-bit input and output matrices */
+    rocblaslt_compute_f64           = 7, /**< 64-bit floating-point precision. */
+    rocblaslt_compute_i32           = 9, /**< 32-bit integer precision. */
 } rocblaslt_compute_type;
 
 /*! \ingroup types_module

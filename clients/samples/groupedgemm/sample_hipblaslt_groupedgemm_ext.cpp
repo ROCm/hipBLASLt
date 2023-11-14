@@ -111,7 +111,7 @@ void simpleGroupedGemmExt(hipblasLtHandle_t     handle,
                                            HIP_R_16F,
                                            HIP_R_16F,
                                            HIP_R_16F,
-                                           HIPBLASLT_COMPUTE_F32);
+                                           HIPBLAS_COMPUTE_32F);
 
     std::vector<hipblaslt_ext::GemmEpilogue> epilogue{
         hipblaslt_ext::
