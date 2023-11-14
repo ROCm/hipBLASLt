@@ -483,7 +483,7 @@ namespace
         {
             tensileProblem.setActivationType(Tensile::ActivationType::All);
             tensileProblem.setActivationComputeType(compute_type);
-            tensileProblem.setActivationEnumArg(getTensileActivationType(prob.epilogue));
+            tensileProblem.setParams().setActivationEnum(getTensileActivationType(prob.epilogue));
         }
         else
         {
@@ -685,12 +685,12 @@ namespace
             {
                 tensileProblem.setActivationType(Tensile::ActivationType::All);
                 tensileProblem.setActivationComputeType(compute_type);
-                tensileProblem.setActivationEnumArg(tensileAct);
+                tensileProblem.setParams().setActivationEnum(tensileAct);
             }
             else
             {
                 tensileProblem.setActivationType(Tensile::ActivationType::None);
-                tensileProblem.setActivationEnumArg(Tensile::ActivationType::None);
+                tensileProblem.setParams().setActivationEnum(Tensile::ActivationType::None);
             }
 
             // set E
@@ -1815,7 +1815,7 @@ inline auto getSolutions(
     std::vector<std::shared_ptr<Tensile::ContractionSolution>> solutions_fallback;
     // Fallback to original kernels
     if(!enableEpilogue && scaleAlphaVec == nullptr && bias == nullptr && E == nullptr
-       && tensile_prob.activationEnumArg() == Tensile::ActivationType::None)
+       && tensile_prob.getParams().activationEnum() == Tensile::ActivationType::None)
     {
         auto useBias          = tensile_prob.useBias();
         auto actType          = tensile_prob.activationType();
@@ -2081,7 +2081,7 @@ rocblaslt_status isSolutionSupported(rocblaslt_handle       handle,
             }
             // Try fallback
             if(scaleAlphaVec == nullptr && bias == nullptr && E == nullptr
-               && tensile_prob.activationEnumArg() == Tensile::ActivationType::None)
+               && tensile_prob.getParams().activationEnum() == Tensile::ActivationType::None)
             {
                 auto useBias          = tensile_prob.useBias();
                 auto actType          = tensile_prob.activationType();
@@ -2168,7 +2168,7 @@ rocblaslt_status isSolutionSupported(rocblaslt_handle       handle,
             }
 
             if(scaleAlphaVec != nullptr || bias != nullptr || E != nullptr
-               || tensile_prob.gemms[i].activationEnumArg() != Tensile::ActivationType::None)
+               || tensile_prob.gemms[i].getParams().activationEnum() != Tensile::ActivationType::None)
             {
                 isNormalGemm = false;
                 break;
@@ -2350,7 +2350,7 @@ rocblaslt_status getBestSolutions(rocblaslt_handle       handle,
             {
                 if(data->inputs.grouped[i].scaleAlphaVec != nullptr
                    || data->inputs.grouped[i].bias != nullptr
-                   || data->problem.gemms[i].activationEnumArg() != Tensile::ActivationType::None)
+                   || data->problem.gemms[i].getParams().activationEnum() != Tensile::ActivationType::None)
                 {
                     enableEpilogue = false;
                     break;
