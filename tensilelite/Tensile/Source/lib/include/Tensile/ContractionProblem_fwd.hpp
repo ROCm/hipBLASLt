@@ -28,6 +28,7 @@
 
 namespace Tensile
 {
+    class ContractionProblemParameters;
     class ContractionProblem;
     class ContractionProblemGemm;
     class ContractionProblemGroupedGemm;

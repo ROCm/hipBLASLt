@@ -79,13 +79,13 @@ namespace Tensile
 
             if(problem.useBias())
             {
-                m_reporter->report(ResultKey::BiasType, ToString(problem.biasType()));
+                m_reporter->report(ResultKey::BiasType, ToString(problem.getParams().biasEnum()));
             }
             else
             {
                 m_reporter->report(ResultKey::BiasType, "None");
             }
-            m_reporter->report(ResultKey::ActivationType, ToString(problem.activationEnumArg()));
+            m_reporter->report(ResultKey::ActivationType, ToString(problem.getParams().activationEnum()));
         }
 
         void ProgressListener::preProblem(ContractionProblem* const problem)

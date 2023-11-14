@@ -323,7 +323,7 @@ namespace Tensile
                         }
                         if(j < m_activationEnumArg.size())
                         {
-                            rv.back().setActivationEnumArg(m_activationEnumArg[j]);
+                            rv.back().setParams().setActivationEnum(m_activationEnumArg[j]);
                         }
                         else
                         {

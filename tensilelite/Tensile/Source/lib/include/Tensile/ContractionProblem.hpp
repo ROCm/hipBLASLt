@@ -41,6 +41,54 @@
 namespace Tensile
 {
     /**
+ * \addtogroup User defined parameters
+ * @{
+ */
+    // These are parameters that are used in predicate, and also are kernel arguments.
+    class TENSILE_API ContractionProblemParameters
+    {
+    public:
+        void setGSU(uint8_t gsu)
+        {
+            m_gsu = gsu;
+        }
+
+        int8_t gsu() const
+        {
+            return m_gsu;
+        }
+
+        void setBiasEnum(DataType dataType)
+        {
+            m_biasType = dataType;
+        }
+
+        DataType biasEnum() const
+        {
+            return m_biasType;
+        }
+
+        void setActivationEnum(ActivationType activationEnum)
+        {
+            m_activationType = activationEnum;
+        }
+
+        ActivationType activationEnum() const
+        {
+            return m_activationType;
+        }
+
+        void resetInternalArgs()
+        {
+            m_gsu = 0;
+        }
+    private:
+        uint8_t m_gsu = 0; // default value
+        DataType m_biasType = DataType::None;
+        ActivationType m_activationType = ActivationType::None;
+    };
+
+    /**
  * \addtogroup Problem
  * @{
  */
@@ -580,7 +628,7 @@ namespace Tensile
                      bool                           isOutput = false,
                      ContractionProblemGemm::TENSOR src      = ContractionProblemGemm::TENSOR::D)
         {
-            m_biasType = type;
+            setParams().setBiasEnum(type);
             m_biasSrc  = src;
             if(type != DataType::None && m_useBias)
             {
@@ -607,16 +655,11 @@ namespace Tensile
                 }
                 m_tensors[ContractionProblemGemm::TENSOR::BIAS]
                     = {"bias",
-                       m_biasType,
+                       type,
                        {length, 1, m_tensors[m_biasSrc].sizes()[batchIdx]},
                        {1, length, stride}};
                 m_tensors[ContractionProblemGemm::TENSOR::BIAS].setAsOutput(isOutput);
             }
-        }
-
-        DataType biasType() const
-        {
-            return m_biasType;
         }
 
         ContractionProblemGemm::TENSOR biasSrc() const
@@ -804,14 +847,15 @@ namespace Tensile
             return m_activationNoGuard;
         }
 
-        void setActivationEnumArg(ActivationType activationEnumArg)
+        // Get/set ContractionProblem parameters
+        ContractionProblemParameters& setParams()
         {
-            m_activationEnumArg = activationEnumArg;
+            return m_params;
         }
 
-        ActivationType activationEnumArg() const
+        const ContractionProblemParameters& getParams() const
         {
-            return m_activationEnumArg;
+            return m_params;
         }
 
         /// Largest of the free and bound indices.  Does not include batch size.
@@ -996,6 +1040,8 @@ namespace Tensile
         std::string m_sumNames;
         std::string m_operationIdentifier;
 
+        ContractionProblemParameters m_params;
+
         bool           m_cEqualsD                = false;
         bool           m_stridedBatched          = true;
         bool           m_groupedGemm             = false;
@@ -1010,7 +1056,6 @@ namespace Tensile
         bool           m_useScaleCD              = false;
         bool           m_useScaleAlphaVec        = false;
         ActivationType m_activationType          = ActivationType::None;
-        ActivationType m_activationEnumArg       = ActivationType::None;
         bool           m_activationNoGuard       = false;
         int            m_sparse                  = 0;
 
@@ -1019,7 +1064,6 @@ namespace Tensile
 
         DataType m_alphaType         = DataType::None; // if not assigned, will follow d-type
         DataType m_betaType          = DataType::None; // for bwd-compatible
-        DataType m_biasType          = DataType::None;
         DataType m_scaleAType        = DataType::None; // if not assigned, will follow alpha-type
         DataType m_scaleBType        = DataType::None; // if not assigned, will follow alpha-type
         DataType m_scaleCType        = DataType::None; // if not assigned, will follow beta-type
