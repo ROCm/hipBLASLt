@@ -179,6 +179,7 @@ globalParameters["EnableDebugB"] = False          # Enable / Disable CheckValue1
 globalParameters["EnableDebugC"] = False          # Enable / Disable CheckValueC
 globalParameters["ExpectedValueC"] = 16.0         # Expected C Value when CheckValueC, debug for Alpha*A*B
 globalParameters["ForceCExpectedValue"] = False   # Force C to "DebugExpectedValueC", debug for global write
+globalParameters["SplitGSU"] = False              # Split GSU kernel into GSU1 and GSUM
 
 # Tensor printing controls:
 globalParameters["PrintTensorA"] = 0          # Print TensorA after initialization
