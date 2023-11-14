@@ -1260,10 +1260,10 @@ namespace Tensile
                     HasValue = true
                 };
                 size_t             index;
-                std::array<int, 2> value;
+                std::array<int, 3> value;
 
                 WorkspaceCheck() = default;
-                WorkspaceCheck(size_t index, std::array<int, 2> value)
+                WorkspaceCheck(size_t index, std::array<int, 3> value)
                     : index(index)
                     , value(value)
                 {
@@ -1275,23 +1275,23 @@ namespace Tensile
                 }
 
                 static size_t reductionSize(ContractionProblemGemm const& problem,
-                                            std::array<int, 2>            value)
+                                            int& elemC, int& elemBias)
                 {
                     size_t reductionSize = 0;
                     // 2d reduction
                     if(problem.useGradient() && problem.useBias())
                     {
                         if(problem.biasSrc() == ContractionProblemGemm::TENSOR::D
-                           && (value[0] == 0))
+                           && (elemC == 0))
                             reductionSize += problem.d().totalLogicalElements()
                                              * problem.computeTypeElementSize();
                         else if(problem.biasSrc() == ContractionProblemGemm::TENSOR::A)
                         {
-                            reductionSize += problem.freeSizeA(0) * value[1];
+                            reductionSize += problem.freeSizeA(0) * elemBias;
                         }
                         else if(problem.biasSrc() == ContractionProblemGemm::TENSOR::B)
                         {
-                            reductionSize += problem.freeSizeB(0) * value[1];
+                            reductionSize += problem.freeSizeB(0) * elemBias;
                         }
                     }
                     return reductionSize;
@@ -1299,18 +1299,25 @@ namespace Tensile
 
                 virtual bool operator()(ContractionProblemGemm const& problem) const override
                 {
-                    size_t rs = reductionSize(problem, value);
+                    // TODO: Pass GSU from problem and change value[2] to gsu if gsu != default value
+                    int gsuMultiplier = value[2] > 1 ? value[2] : 0;
+                    int elemC = value[0] * gsuMultiplier;
+                    int elemBias = value[1] * gsuMultiplier;
+                    size_t rs = reductionSize(problem, elemC, elemBias);
                     if(problem.groupedGemm())
                         return problem.workspaceSizeGroupedGemm() <= problem.workspaceSize();
                     else
-                        return problem.d().totalLogicalElements() * value[0] + rs
+                        return problem.d().totalLogicalElements() * elemC + rs
                                <= problem.workspaceSize();
                 }
 
                 virtual bool debugEval(ContractionProblemGemm const& problem,
                                        std::ostream&                 stream) const override
                 {
-                    size_t rs = reductionSize(problem, value);
+                    int gsuMultiplier = value[2] > 1 ? value[2] : 0;
+                    int elemC = value[0] * gsuMultiplier;
+                    int elemBias = value[1] * gsuMultiplier;
+                    size_t rs = reductionSize(problem, elemC, elemBias);
                     if(problem.groupedGemm())
                         return debugEvalCmp(problem, stream,
                                             "prob", problem.workspaceSizeGroupedGemm(), "<=",
