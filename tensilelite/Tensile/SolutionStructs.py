@@ -1863,11 +1863,11 @@ class Solution(collections.abc.Mapping):
         #del state[s]
 
     if ("_GlobalAccumulation" not in state) or ("_WorkspaceSizePerElemC" not in state):
+      computeBytes = state["ProblemType"]["ComputeDataType"].numBytes()
       state["_GlobalAccumulation"] = None
-      state["_WorkspaceSizePerElemC"] = 0
+      state["_WorkspaceSizePerElemC"] = computeBytes
       if state["GlobalSplitU"] > 1:
         computeName  = state["ProblemType"]["ComputeDataType"].toName()
-        computeBytes = state["ProblemType"]["ComputeDataType"].numBytes()
 
         if state["GlobalSplitUAlgorithm"] == 'SingleBuffer':
           if computeName != state["ProblemType"]["DestDataType"].toName():
@@ -1875,24 +1875,13 @@ class Solution(collections.abc.Mapping):
         elif state["GlobalSplitUAlgorithm"] == 'MultipleBuffer':
           state["_GlobalAccumulation"] = 'MultipleBuffer'
 
-        if state["_GlobalAccumulation"] == 'SingleBuffer':
-          state["_WorkspaceSizePerElemC"] = computeBytes
-        elif state["_GlobalAccumulation"] == 'MultipleBuffer':
-          state["_WorkspaceSizePerElemC"] = computeBytes * state["GlobalSplitU"]
-
     if("_WorkspaceSizePerElemBias" not in state):
       state["_WorkspaceSizePerElemBias"] = 0
       if state["ProblemType"]["UseBias"] and state["ProblemType"]["Gradient"]:
         computeBytes = state["ProblemType"]["ComputeDataType"].numBytes()
-        if state["ProblemType"]["BiasSrc"] == "D" and (state["ProblemType"]["ComputeDataType"] != state["ProblemType"]["DestDataType"]):
-          state["_WorkspaceSizePerElemBias"] = computeBytes
-        elif state["GlobalSplitU"] > 1:
-          if state["_GlobalAccumulation"] == 'SingleBuffer':
-            state["_WorkspaceSizePerElemBias"] = computeBytes
-          elif state["_GlobalAccumulation"] == 'MultipleBuffer':
-            state["_WorkspaceSizePerElemBias"] = computeBytes * state["GlobalSplitU"]
+        state["_WorkspaceSizePerElemBias"] = computeBytes
 
-    state["WorkspaceCheck"] = [state["_WorkspaceSizePerElemC"], state["_WorkspaceSizePerElemBias"]]
+    state["WorkspaceCheck"] = [state["_WorkspaceSizePerElemC"], state["_WorkspaceSizePerElemBias"], state["GlobalSplitU"] if state["GlobalSplitUAlgorithm"] == 'MultipleBuffer' else 1]
 
     if state["VectorStore"] == -1:
         state["_VectorStore"] = 1 # default, may be changed if needed to generate a valid kernel

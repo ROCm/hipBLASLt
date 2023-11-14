@@ -2287,23 +2287,25 @@ namespace Tensile
 
     size_t ContractionSolution::requiredWorkspaceSize(Problem const& problem) const
     {
-        size_t size = 0;
+        // TODO: Pass GSU from problem and change value[2] to gsu if gsu != default value
+        size_t size          = 0;
+        size_t gsu           = sizeMapping.globalSplitU;
+        size_t gsuMultiplier = gsu > 1 ? gsu : 0;
 
-        size += problem.d().totalLogicalElements() * sizeMapping.workspaceSizePerElemC;
+        size += problem.d().totalLogicalElements() * sizeMapping.workspaceSizePerElemC * gsuMultiplier;
         if(problemType.useGradient && problemType.useBias)
         {
             if(problem.biasSrc() == ContractionProblemGemm::TENSOR::A)
             {
-                size += problem.freeSizeA(0) * sizeMapping.workspaceSizePerElemBias;
+                size += problem.freeSizeA(0) * sizeMapping.workspaceSizePerElemBias * gsuMultiplier;
             }
             else if(problem.biasSrc() == ContractionProblemGemm::TENSOR::B)
             {
-                size += problem.freeSizeB(0) * sizeMapping.workspaceSizePerElemBias;
+                size += problem.freeSizeB(0) * sizeMapping.workspaceSizePerElemBias * gsuMultiplier;
             }
-            else if(problem.biasSrc() == ContractionProblemGemm::TENSOR::D
-                    && (sizeMapping.workspaceSizePerElemC == 0))
+            else if(problem.biasSrc() == ContractionProblemGemm::TENSOR::D && (gsuMultiplier == 0))
             {
-                size += problem.d().totalLogicalElements() * sizeMapping.workspaceSizePerElemBias;
+                size += problem.d().totalLogicalElements() * sizeMapping.workspaceSizePerElemBias * gsu;
             }
         }
 
