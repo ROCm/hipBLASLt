@@ -133,7 +133,7 @@ def getAssemblyCodeObjectFiles(kernels, kernelWriterAssembly, outputPath):
             splitFiles = 10000
             if numOfObjectFiles > splitFiles:
               slicedObjectFilesList = [objectFiles[x:x+splitFiles] for x in range(0, numOfObjectFiles, splitFiles)]
-              objectFileBasename = os.path.splitext(coFile)[0]
+              objectFileBasename = os.path.split(coFile)[-1].split('.')[0]
               numOfOneSliceOfObjectFiles = int(math.ceil(numOfObjectFiles / splitFiles))
               newObjectFiles = [ objectFileBasename + "_" + str(i) + ".o" for i in range(0, numOfOneSliceOfObjectFiles)]
               newObjectFilesOutput = []
