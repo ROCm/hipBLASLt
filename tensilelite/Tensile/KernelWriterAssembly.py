@@ -8082,7 +8082,7 @@ class KernelWriterAssembly(KernelWriter):
     useBiasBackup      = self.states.useBias
     betasBackup    = betas
     edgesBackup    = edges
-    gsuLimit = 1 if noGSUBranch else 2
+    gsuLimit = 1 if noGSUBranch or globalParameters["SplitGSU"] else 2
     if gsuLimit > 1:
       gsuLabel = Label(label=self.labels.getNameInc("GSU"), comment="")
       module.add(SCmpEQU32(src0=sgpr("GSU"), src1=1, comment="GSU == 1 ?"))
