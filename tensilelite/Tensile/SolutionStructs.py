@@ -3417,7 +3417,10 @@ class Solution(collections.abc.Mapping):
   @ staticmethod
   def getKeyNoInternalArgs(state):
     state_copy = deepcopy(state)
-    state_copy["GlobalSplitU"] = "M" # if state_copy["GlobalSplitU"] > 1 else state_copy["GlobalSplitU"]
+    if globalParameters["SplitGSU"]:
+      state_copy["GlobalSplitU"] = "M" if state_copy["GlobalSplitU"] > 1 else state_copy["GlobalSplitU"]
+    else:
+      state_copy["GlobalSplitU"] = "M"
     return state_copy
 
   @ staticmethod
@@ -3456,7 +3459,10 @@ class Solution(collections.abc.Mapping):
     backup = state["GlobalSplitU"]
 
     if ignoreInternalArgs:
-      state["GlobalSplitU"] = "M" # if state["GlobalSplitU"] > 1 else state["GlobalSplitU"]
+      if globalParameters["SplitGSU"]:
+        state["GlobalSplitU"] = "M" if state["GlobalSplitU"] > 1 else state["GlobalSplitU"]
+      else:
+        requiredParameters["GlobalSplitU"] = False
 
     components.append('SN')
     for key in sorted(state.keys()):
@@ -3465,6 +3471,7 @@ class Solution(collections.abc.Mapping):
           components.append(f'{Solution.getParameterNameAbbreviation(key)}{Solution.getParameterValueAbbreviation(key, state[key])}')
 
     state["GlobalSplitU"] = backup
+    requiredParameters["GlobalSplitU"] = True
 
     return '_'.join(components)
 
