@@ -1299,8 +1299,8 @@ namespace Tensile
 
                 virtual bool operator()(ContractionProblemGemm const& problem) const override
                 {
-                    // TODO: Pass GSU from problem and change value[2] to gsu if gsu != default value
-                    int gsuMultiplier = value[2] > 1 ? value[2] : 0;
+                    int gsu = problem.getParams().gsu() > 0 ? problem.getParams().gsu() : value[2];
+                    int gsuMultiplier = gsu > 1 ? gsu : 0;
                     int elemC = value[0] * gsuMultiplier;
                     int elemBias = value[1] * gsuMultiplier;
                     size_t rs = reductionSize(problem, elemC, elemBias);
@@ -1314,7 +1314,8 @@ namespace Tensile
                 virtual bool debugEval(ContractionProblemGemm const& problem,
                                        std::ostream&                 stream) const override
                 {
-                    int gsuMultiplier = value[2] > 1 ? value[2] : 0;
+                    int gsu = problem.getParams().gsu() > 0 ? problem.getParams().gsu() : value[2];
+                    int gsuMultiplier = gsu > 1 ? gsu : 0;
                     int elemC = value[0] * gsuMultiplier;
                     int elemBias = value[1] * gsuMultiplier;
                     size_t rs = reductionSize(problem, elemC, elemBias);
@@ -1753,7 +1754,7 @@ namespace Tensile
                     {
                         for(size_t i = 0; i < value.size(); i++)
                         {
-                            if(value[i] == problem.activationEnumArg())
+                            if(value[i] == problem.getParams().activationEnum())
                             {
                                 return true;
                             }
@@ -2041,7 +2042,7 @@ namespace Tensile
                     {
                         for(size_t i = 0; i < value.size(); i++)
                         {
-                            if(value[i] == problem.biasType())
+                            if(value[i] == problem.getParams().biasEnum())
                             {
                                 return true;
                             }

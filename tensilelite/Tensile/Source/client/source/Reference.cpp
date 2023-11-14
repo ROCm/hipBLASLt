@@ -868,7 +868,7 @@ namespace Tensile
                     auto        biasIndex = problem.bias().index(biasCoord);
                     int         pos       = int(dNum % problem.d().sizes()[0]) + biasIndex;
                     Accumulator bias
-                        = GetValue<Accumulator>(problem.biasType(), inputs.bias, pos, aConjugate);
+                        = GetValue<Accumulator>(problem.getParams().biasEnum(), inputs.bias, pos, aConjugate);
                     resultD += bias;
                 }
                 // E
@@ -887,7 +887,7 @@ namespace Tensile
                 for(int i = 0; i < inputs.activationArgs.size(); i++)
                     actArgs.push_back(constVariantCast<Accumulator>(inputs.activationArgs[i]));
                 if(problem.useGradient() && problem.activationType() != ActivationType::None
-                   && problem.activationEnumArg() != ActivationType::None)
+                   && problem.getParams().activationEnum() != ActivationType::None)
                 {
                     Accumulator dataE = static_cast<Accumulator>(0);
                     if(problem.useE())
@@ -901,13 +901,13 @@ namespace Tensile
                             aConjugate);
                     }
                     dataE = Activation(
-                        problem.activationType(), dataE, problem.activationEnumArg(), actArgs);
+                        problem.activationType(), dataE, problem.getParams().activationEnum(), actArgs);
                     resultD *= dataE;
                 }
                 else
                 {
                     resultD = Activation(
-                        problem.activationType(), resultD, problem.activationEnumArg(), actArgs);
+                        problem.activationType(), resultD, problem.getParams().activationEnum(), actArgs);
                 }
 
                 if(problem.useScaleCD())
@@ -985,7 +985,7 @@ namespace Tensile
             // retreive alpha/beta type set via setAlpha/BetaType()
             auto alphaType = problem.alphaType();
             auto betaType  = problem.betaType();
-            auto biasType  = problem.biasType();
+            auto biasType  = problem.getParams().biasEnum();
 
             // Backward-compatible: when setAlpha/BetaType() wasn't called, use the old way
             // Could remove after rocBLAS is updated
