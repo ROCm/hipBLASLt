@@ -77,8 +77,8 @@ hipblasLtMatmul supports the following computeType, scaleType, Atype/Btype, Ctyp
 ======================= =================== ============= ==============
 computeType             scaleType/Bias Type Atype/Btype   Ctype/Dtype
 ======================= =================== ============= ==============
-HIPBLASLT_COMPUTE_F32   HIP_R_32F           HIP_R_32F     HIP_R_32F
-HIPBLASLT_COMPUTE_F32   HIP_R_32F           HIP_R_16F     HIP_R_16F
-HIPBLASLT_COMPUTE_F32   HIP_R_32F           HIP_R_16F     HIP_R_32F
-HIPBLASLT_COMPUTE_F32   HIP_R_32F           HIP_R_16BF    HIP_R_16BF
+HIPBLAS_COMPUTE_32F     HIP_R_32F           HIP_R_32F     HIP_R_32F
+HIPBLAS_COMPUTE_32F     HIP_R_32F           HIP_R_16F     HIP_R_16F
+HIPBLAS_COMPUTE_32F     HIP_R_32F           HIP_R_16F     HIP_R_32F
+HIPBLAS_COMPUTE_32F     HIP_R_32F           HIP_R_16BF    HIP_R_16BF
 ======================= =================== ============= ==============

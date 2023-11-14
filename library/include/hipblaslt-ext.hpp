@@ -95,7 +95,7 @@ namespace hipblaslt_ext
         hipDataType            type_b; //!< The B matrix datatype.
         hipDataType            type_c; //!< The C matrix datatype.
         hipDataType            type_d; //!< The D matrix datatype.
-        hipblasLtComputeType_t type_compute; //!< The compute datatype.
+        hipblasComputeType_t type_compute; //!< The compute datatype.
     };
 
     /*! \ingroup types_module
@@ -338,7 +338,7 @@ namespace hipblaslt_ext
                                        hipDataType            typeB,
                                        hipDataType            typeC,
                                        hipDataType            typeD,
-                                       hipblasLtComputeType_t typeCompute);
+                                       hipblasComputeType_t typeCompute);
 
         /*! \ingroup library_module
         *  \brief Constructor that sets the gemm problem from hipblasLt structures
@@ -543,7 +543,7 @@ namespace hipblaslt_ext
                                               hipDataType            typeB,
                                               hipDataType            typeC,
                                               hipDataType            typeD,
-                                              hipblasLtComputeType_t typeCompute);
+                                              hipblasComputeType_t typeCompute);
 
         /*! \ingroup library_module
         *  \brief Constructor that sets the grouped gemm problem from hipblasLt structures
@@ -789,7 +789,7 @@ namespace hipblaslt_ext
                                 hipDataType                                    typeB,
                                 hipDataType                                    typeC,
                                 hipDataType                                    typeD,
-                                hipblasLtComputeType_t                         typeCompute,
+                                hipblasComputeType_t                         typeCompute,
                                 std::vector<hipblasLtMatmulHeuristicResult_t>& heuristicResults);
 
     /*! \ingroup library_module

@@ -422,11 +422,11 @@ public:
         return os;
     }
 
-    // hipblasLtComputeType_t output
+    // hipblasComputeType_t output
     friend hipblaslt_internal_ostream& operator<<(hipblaslt_internal_ostream& os,
-                                                  hipblasLtComputeType_t      d)
+                                                  hipblasComputeType_t      d)
     {
-        os.m_os << hipblaslt_computetype_to_string(d);
+        os.m_os << hipblas_computetype_to_string(d);
         return os;
     }
 
