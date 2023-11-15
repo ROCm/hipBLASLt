@@ -1192,6 +1192,19 @@ rocblaslt_status runContractionProblem(rocblaslt_handle                   handle
         hardware     = Tensile::hip::GetDevice(*deviceProp);
 
         std::shared_ptr<TensileDataGemm> data = std::static_pointer_cast<TensileDataGemm>(gemmData);
+        rocblaslt_matmul_heuristic_result heuristicResult;
+        if (algo == nullptr) {
+            int returnAlgoCount;
+            status = getBestSolutions(prob,
+                                      handle,
+                                      gemmData,
+                                      1,
+                                      &heuristicResult,
+                                      &returnAlgoCount,
+                                      prob.workspaceSize);
+            if (returnAlgoCount == 0) return rocblaslt_status_not_implemented;
+            algo = &heuristicResult.algo;
+        }
         updateTensileProblem(algo->fallback, prob, data->problem);
 
         int* solutionIndex = (int*)algo->data;
