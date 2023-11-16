@@ -242,6 +242,8 @@ def buildSourceCodeObjectFile(CxxCompiler, outputPath, kernelFile):
 
       hipFlags += ['-I', outputPath]
       hipFlags += ['-std=c++17']
+      if globalParameters["SaveTemps"]:
+        hipFlags += ['--save-temps']
 
       launcher = shlex.split(os.environ.get('Tensile_CXX_COMPILER_LAUNCHER', ''))
 
