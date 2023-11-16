@@ -171,6 +171,7 @@ globalParameters["CMakeCXXFlags"] = ""            # pass flags to cmake
 globalParameters["CMakeCFlags"] = ""              # pass flags to cmake
 globalParameters["DebugKernel"] = False           # assembly only, kernel gets buffer for debug "printing"; kernel writes data to memory, gets coppied to host and printed
 globalParameters["LibraryPrintDebug"] = False     # solutions will print enqueue info when enqueueing a kernel
+globalParameters["SaveTemps"] = False             # Generate intermediate results of hip kernels
 
 # debug for assembly
 globalParameters["EnableAsserts"] = False         # Enable assembly debug assert
