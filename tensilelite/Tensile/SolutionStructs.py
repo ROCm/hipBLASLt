@@ -24,7 +24,7 @@
 
 from .Common import assignParameterWithDefault, \
                     defaultProblemType, defaultSolution, \
-                    globalParameters, \
+                    globalParameters, internalParameters, \
                     print2, printExit, printWarning, \
                     validMFMA, validSMFMA, validParameters, \
                     validGEMMTypes, HPATypes, roundUp, validWMMA
@@ -1106,7 +1106,8 @@ class Solution(collections.abc.Mapping):
     self.conversionKernelObjects = []
     load_vector_width = [1, 2] if self["ProblemType"]["DataType"].isDouble() else [1, 2, 4]
     for vw in load_vector_width:
-      if (self["GlobalSplitU"] > 1) and self["_GlobalAccumulation"]:
+      for globalSplitU in [internalParameters["GlobalSplitUPGR"]]:
+        unrollOnly = False if globalSplitU == internalParameters["GlobalSplitUPGR"] else True
         if self["ProblemType"]["UseBias"]:
           typeList = self["ProblemType"]["BiasDataTypeList"]
           if self["ProblemType"]["Gradient"]:
@@ -1115,7 +1116,8 @@ class Solution(collections.abc.Mapping):
             state["ProblemType"] = deepcopy(self["ProblemType"])
             state["ProblemType"]["UseBias"] = False
             state["KernelLanguage"] = "Source"
-            state["GlobalSplitU"] = self["GlobalSplitU"]
+            state["GlobalSplitU"] = globalSplitU
+            state["UnrollOnly"] = unrollOnly
             state["_GlobalAccumulation"] = self["_GlobalAccumulation"]
             state["ActivationFused"] = self["ActivationFused"]
             self.conversionKernelObjects.append(KernelWriterConversion(state, vw))
@@ -1125,7 +1127,8 @@ class Solution(collections.abc.Mapping):
             state["ProblemType"]["BiasDataTypeList"] = []
             state["ProblemType"]["BiasDataType"] = deepcopy(btype)
             state["KernelLanguage"] = "Source"
-            state["GlobalSplitU"] = self["GlobalSplitU"]
+            state["GlobalSplitU"] = globalSplitU
+            state["UnrollOnly"] = unrollOnly
             state["_GlobalAccumulation"] = self["_GlobalAccumulation"]
             state["ActivationFused"] = self["ActivationFused"]
             self.conversionKernelObjects.append(KernelWriterConversion(state, vw))
@@ -1133,7 +1136,8 @@ class Solution(collections.abc.Mapping):
           state = {}
           state["ProblemType"] = deepcopy(self["ProblemType"])
           state["KernelLanguage"] = "Source"
-          state["GlobalSplitU"] = self["GlobalSplitU"]
+          state["GlobalSplitU"] = globalSplitU
+          state["UnrollOnly"] = unrollOnly
           state["_GlobalAccumulation"] = self["_GlobalAccumulation"]
           state["ActivationFused"] = self["ActivationFused"]
           self.conversionKernelObjects.append(KernelWriterConversion(state, vw))
@@ -1148,8 +1152,7 @@ class Solution(collections.abc.Mapping):
 
   def initActivationFunctionObjects(self):
     self.activationFunctionObjects = []
-    if ((self["ProblemType"]["ActivationType"] != 'none') and (self["ProblemType"]["ActivationType"] == 'all') and \
-        ((self["GlobalSplitU"] > 1) or (self["ActivationFused"] == False))) :
+    if ((self["ProblemType"]["ActivationType"] != 'none') and (self["ProblemType"]["ActivationType"] == 'all')) :
       state = {}
       state["ProblemType"] = deepcopy(self["ProblemType"])
       state["KernelLanguage"] = "Source"
@@ -1158,8 +1161,7 @@ class Solution(collections.abc.Mapping):
 
   def initActivationOnlyKernelObjects(self):
     self.activationOnlyKernelObjects = []
-    if (((self["GlobalSplitU"] > 1) and (not self["_GlobalAccumulation"])) or (self["ActivationFused"] == False)) \
-      and (self["ProblemType"]["ActivationType"] != 'none') :
+    if (self["ActivationFused"] == False) and (self["ProblemType"]["ActivationType"] != 'none') :
       state = {}
       state["ProblemType"] = deepcopy(self["ProblemType"])
       state["ProblemType"]["UseBias"] = False
