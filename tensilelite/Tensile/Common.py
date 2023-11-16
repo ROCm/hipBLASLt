@@ -300,6 +300,14 @@ def getArchitectureName(gfxName):
     return None
 
 ################################################################################
+# Tensile internal parameters
+################################################################################
+internalParameters = {
+  # Each universal kernel will generate one PostGSU(GlobalSplitUPGR) kernel
+  "GlobalSplitUPGR": 16
+}
+
+################################################################################
 # Enumerate Valid Solution Parameters
 ################################################################################
 validWorkGroups = []
@@ -1001,7 +1009,10 @@ validParameters = {
     "WorkGroupReduction":          [False],
 
     # 4:2 Structured Sparse A Matrix, 0=Non Sparse, 1=Sparse Matrix A, 2=Sparse Matrix B
-    "Sparse":                      [0, 1, 2]
+    "Sparse":                      [0, 1, 2],
+
+    # Information about user input internal kernel argument support
+    "SupportUserGSU":              [False, True],
     }
 
 
@@ -1091,7 +1102,8 @@ defaultBenchmarkCommonParameters = [
     {"ActivationFused":           [ True  ] },
     {"ActivationFuncCall":        [ True  ] },
     {"ActivationAlt":             [ False ] },
-    {"WorkGroupReduction":        [ False ] }
+    {"WorkGroupReduction":        [ False ] },
+    {"SupportUserGSU":            [ True  ] }
     ]
 
 # dictionary of defaults comprised of default option for each parameter
