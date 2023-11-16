@@ -205,6 +205,8 @@ namespace Tensile
             double K;
         };
 
+        bool checkInternalArgumentsSupport(ContractionProblem const& problem, std::ostream& stream, bool debug = false) const;
+
         /**
    * Calculate required workspace size.
    */
@@ -395,6 +397,7 @@ namespace Tensile
 
             size_t staggerU           = 0;
             size_t depthU             = 0;
+            size_t globalSplitUPGR    = 0;
             size_t globalSplitU       = 0;
             size_t staggerStrideShift = 0;
             int    workGroupMapping   = 0;
@@ -414,6 +417,11 @@ namespace Tensile
             bool activationFused = true;
 
             std::string customKernelName;
+        };
+
+        struct InternalArgsSupport
+        {
+            bool gsu = true;
         };
 
         struct ProblemType
@@ -472,6 +480,8 @@ namespace Tensile
             = std::make_shared<Predicates::True<Hardware>>();
 
         SizeMapping sizeMapping;
+
+        InternalArgsSupport internalArgsSupport;
 
         ProblemType problemType;
 

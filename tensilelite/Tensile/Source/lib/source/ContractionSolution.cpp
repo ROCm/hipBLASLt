@@ -1266,6 +1266,8 @@ namespace Tensile
             args.template append<uint32_t>(concatenate_if<T_Debug>("size_", i), size);
             i++;
         }
+        uint32_t gsu = problem.getParams().gsu() > 0 ? problem.getParams().gsu(): sizeMapping.globalSplitU;
+        args.template append<uint32_t>(concatenate_if<T_Debug>("gsu"), gsu);
     }
 
     template <bool T_Debug>
@@ -1617,7 +1619,7 @@ namespace Tensile
             name += ("_ScaleAlphaVec");
         }
 
-        name += "_PostGSU" + std::to_string(gsu);
+        name += "_PostGSU" + std::to_string(sizeMapping.globalSplitUPGR);
 
         name += "_VW" + std::to_string(vw);
 
@@ -2283,6 +2285,37 @@ namespace Tensile
         spm.memGlobalWrites = spm.memWriteBytesD / dInfo.elementSize;
 
         return spm;
+    }
+
+    bool ContractionSolution::checkInternalArgumentsSupport(ContractionProblem const& problem, std::ostream& stream, bool debug) const
+    {
+        bool pass  = true;
+
+        if(auto gemmProblem = dynamic_cast<ContractionProblemGemm const*>(&problem))
+        {
+            if(!internalArgsSupport.gsu && gemmProblem->getParams().gsu() != 0)
+            {
+                if(debug)
+                {
+                    stream << "This solution does not support custom gsu." << std::endl;
+                }
+                pass = false;
+            }
+        }
+        else if(auto groupedProblem = dynamic_cast<ContractionProblemGroupedGemm const*>(&problem))
+        {
+            if(debug)
+            {
+                stream << "Currently grouped gemm does not support custom arguments tuning." << std::endl;
+            }
+            pass = false;
+        }
+        else
+        {
+            pass = false;
+            throw std::runtime_error("Failed to cast problem type.");
+        }
+        return pass;
     }
 
     size_t ContractionSolution::requiredWorkspaceSize(Problem const& problem) const
