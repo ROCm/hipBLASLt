@@ -151,6 +151,9 @@ struct Arguments
     bool    use_user_args;
     int32_t rotating;
 
+    // tuning
+    uint8_t gsu;
+
     // print
     bool print_solution_found;
     bool print_kernel_info;
@@ -235,6 +238,7 @@ struct Arguments
     OPER(algo_method) SEP            \
     OPER(use_user_args) SEP          \
     OPER(rotating) SEP               \
+    OPER(gsu) SEP                    \
     OPER(print_solution_found) SEP   \
     OPER(print_kernel_info) SEP
 

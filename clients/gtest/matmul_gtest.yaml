@@ -1064,4 +1064,17 @@ Tests:
   bias_type: [f32_r]
   unit_check: 1
   gpu_arch: '94?'
+
+- name: matmul_extapi_algo_method_gemm_tuning
+  category: pre_checkin
+  function:
+    matmul: *hpa_half_precision
+  matrix_size:
+    - { M:  128,   N:  128,    K:  65536 }
+  transA_transB: *transA_transB_range
+  algo_method: [2]
+  gsu: [0, 1, 4, 7, 38]
+  alpha: 1
+  beta: 2.0
+  unit_check: 1
 ...
