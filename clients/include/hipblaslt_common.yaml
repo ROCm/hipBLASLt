@@ -194,6 +194,7 @@ Arguments:
   - algo_method: c_int32
   - use_user_args: c_bool
   - rotating: c_int32
+  - gsu: c_uint8
   - print_solution_found: c_bool
   - print_kernel_info: c_bool
 
@@ -286,5 +287,6 @@ Defaults:
   algo_method: 0
   use_user_args: false
   rotating: 0
+  gsu: 0
   print_solution_found: false
   print_kernel_info: false

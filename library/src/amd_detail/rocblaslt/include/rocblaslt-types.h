@@ -404,6 +404,11 @@ namespace rocblaslt
         int                 aux_stride     = 0;
     };
 
+    struct RocTuning
+    {
+        uint8_t gsu = 0;
+    };
+
     struct RocGemmInputs
     {
         void* a     = nullptr;

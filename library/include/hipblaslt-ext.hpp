@@ -117,6 +117,11 @@ namespace hipblaslt_ext
             = 0; //!< The aux batch stride. Only works if mode is set to aux related epilogues.
     };
 
+    struct GemmTuning
+    {
+        uint8_t splitK = 0; //!< Value of splitK, 0 is off (use the splitK inside the solution).
+    };
+
     /*! \ingroup types_module
      *  \brief hipblasLt extension Inputs for gemm problems.
      *
@@ -247,6 +252,29 @@ namespace hipblaslt_ext
         hipblasStatus_t isAlgoSupported(hipblasLtMatmulAlgo_t& algo, size_t& workspaceSizeInBytes);
 
         /*! \ingroup library_module
+        *  \brief Check if the algorithm supports the problem. (For hipblaslt extension API)
+        *
+        *  \details
+        *  This function updates the problem saved inside the algorithm if the problem is
+        * supported. The required workspaceSizeInBytes is also returned.
+        *
+        *  @param[in]
+        *  algo The algorithm heuristic.
+        *  @param[in]
+        *  tuning The tuning parameters.
+        *  @param[out]
+        *  workspaceSizeInBytes Return the required workspace size.
+        *
+        *  \retval HIPBLAS_STATUS_SUCCESS           If query was successful. The problem is
+        * supported by the algorithm.
+        * results. \retval HIPBLAS_STATUS_INVALID_VALUE     The problem is not supported.
+        */
+        HIPBLASLT_EXPORT
+        hipblasStatus_t isAlgoSupported(hipblasLtMatmulAlgo_t& algo,
+                                        GemmTuning&            tuning,
+                                        size_t& workspaceSizeInBytes);
+
+        /*! \ingroup library_module
         *  \brief Create kernel arguments from a given hipblaslt_ext::GemmInstance.
         *
         *  \details
@@ -274,6 +302,43 @@ namespace hipblaslt_ext
         */
         HIPBLASLT_EXPORT
         hipblasStatus_t initialize(const hipblasLtMatmulAlgo_t& algo,
+                                   void*                        workspace,
+                                   bool                         useUserArgs = true,
+                                   hipStream_t                  stream      = 0);
+
+        /*! \ingroup library_module
+        *  \brief Create kernel arguments from a given hipblaslt_ext::GemmInstance.
+        *
+        *  \details
+        *  This function creates kernel arguments from a given hipblaslt_ext::GemmInstance
+        *  then saves the arguments inside the instance.
+        *
+        *  @param[in]
+        *  algo                    Handle for matrix multiplication algorithm to be
+        * used. See hipblaslt.h::hipblasLtMatmulAlgo_t . When NULL, an implicit heuristics query
+        * with default search preferences will be performed to determine actual
+        * algorithm to use.
+        *  @param[in]
+        *  tuning                  Structure with user tuning parameters. Note that not every algo
+        * supports user tuning parameters. Will return HIPBLAS_STATUS_INVALID_VALUE if not supported.
+        * be 0).
+        *  @param[in]
+        *  workspace               Pointer to the workspace buffer allocated in the GPU
+        * memory. Pointer must be 16B aligned (that is, lowest 4 bits of address must
+        * be 0).
+        *  @param[in]
+        *  useUserArgs                Use user args, this does not affect vanilla gemm.
+        * (May be deprecated in the future)
+        *  @param[in]
+        *  stream                  The HIP stream where all the GPU work will be
+        * submitted. (May be deprecated in the future)
+        *
+        *  \retval HIPBLAS_STATUS_SUCCESS           If the operation completed
+        * successfully. \retval HIPBLAS_STATUS_INVALID_VALUE If the gemm_count = 0.
+        */
+        HIPBLASLT_EXPORT
+        hipblasStatus_t initialize(const hipblasLtMatmulAlgo_t& algo,
+                                   GemmTuning&                  tuning,
                                    void*                        workspace,
                                    bool                         useUserArgs = true,
                                    hipStream_t                  stream      = 0);

@@ -418,7 +418,7 @@ void testing_matmul(const Arguments& arg)
         hScaleD(gemm_count), hScaleE(gemm_count);
     std::vector<host_vector<To>*> hE(gemm_count, nullptr), hE_gold(gemm_count, nullptr);
     std::vector<void*>            alpha_in(gemm_count);
-    hipblaslt_cout << "AAAA" << std::endl;
+
     // Need to split into two for loop to calculate the rotating buffer
     int64_t totalRotatingSizeNeeded = 0;
     for(int i = 0; i < gemm_count; i++)
@@ -1123,6 +1123,8 @@ void testing_matmul(const Arguments& arg)
     hipblaslt_ext::GemmType gemmType = do_grouped_gemm
                                            ? hipblaslt_ext::GemmType::HIPBLASLT_GROUPED_GEMM
                                            : hipblaslt_ext::GemmType::HIPBLASLT_GEMM;
+    hipblaslt_ext::GemmTuning tuning;
+    tuning.splitK = arg.gsu;
 
     if(arg.algo_method == 2)
     {
@@ -1193,7 +1195,7 @@ void testing_matmul(const Arguments& arg)
                     for(int j = 0; j < returnedAlgoCount; j++)
                     {
                         size_t tmpWorkspaceSize = 0;
-                        if(gemm.isAlgoSupported(tmpAlgo[j].algo, tmpWorkspaceSize)
+                        if(gemm.isAlgoSupported(tmpAlgo[j].algo, tuning, tmpWorkspaceSize)
                            == HIPBLAS_STATUS_SUCCESS)
                         {
                             heuristicResult.push_back(tmpAlgo[j]);
@@ -1283,7 +1285,7 @@ void testing_matmul(const Arguments& arg)
                 for(int j = 0; j < returnedAlgoCount; j++)
                 {
                     size_t tmpWorkspaceSize = 0;
-                    if(groupedGemm.isAlgoSupported(tmpAlgo[j].algo, tmpWorkspaceSize)
+                    if(groupedGemm.isAlgoSupported(tmpAlgo[j].algo, tuning, tmpWorkspaceSize)
                        == HIPBLAS_STATUS_SUCCESS)
                     {
                         heuristicResult.push_back(tmpAlgo[j]);
@@ -1361,7 +1363,7 @@ void testing_matmul(const Arguments& arg)
                 for(int j = 0; j < returnedAlgoCount; j++)
                 {
                     size_t tmpWorkspaceSize = 0;
-                    if(gemm.isAlgoSupported(tmpAlgo[j].algo, tmpWorkspaceSize)
+                    if(gemm.isAlgoSupported(tmpAlgo[j].algo, tuning, tmpWorkspaceSize)
                        == HIPBLAS_STATUS_SUCCESS)
                     {
                         requestCount++;
@@ -1447,7 +1449,7 @@ void testing_matmul(const Arguments& arg)
             for(int j = 0; j < returnedAlgoCount; j++)
             {
                 size_t tmpWorkspaceSize = 0;
-                if(groupedGemm.isAlgoSupported(tmpAlgo[j].algo, tmpWorkspaceSize)
+                if(groupedGemm.isAlgoSupported(tmpAlgo[j].algo, tuning, tmpWorkspaceSize)
                    == HIPBLAS_STATUS_SUCCESS)
                 {
                     requestCount++;
@@ -1463,6 +1465,8 @@ void testing_matmul(const Arguments& arg)
     }
     else
     {
+        std::vector<hipblasLtMatmulHeuristicResult_t> tmpAlgo;
+
         if(!do_grouped_gemm)
         {
             if(arg.use_ext)
@@ -1500,7 +1504,17 @@ void testing_matmul(const Arguments& arg)
                                                           matD[0]));
                 }
                 CHECK_HIPBLASLT_ERROR(
-                    gemm.algoGetHeuristic(requestAlgoCount, gemmPref, heuristicResult));
+                    gemm.algoGetHeuristic(requestAlgoCount, gemmPref, tmpAlgo));
+                heuristicResult.clear();
+                for(int j = 0; j < tmpAlgo.size(); j++)
+                {
+                    size_t tmpWorkspaceSize = 0;
+                    if(gemm.isAlgoSupported(tmpAlgo[j].algo, tuning, tmpWorkspaceSize)
+                    == HIPBLAS_STATUS_SUCCESS)
+                    {
+                        heuristicResult.push_back(tmpAlgo[j]);
+                    }
+                }
                 returnedAlgoCount = heuristicResult.size();
             }
             else
@@ -1565,7 +1579,17 @@ void testing_matmul(const Arguments& arg)
             }
 
             CHECK_HIPBLASLT_ERROR(
-                groupedGemm.algoGetHeuristic(requestAlgoCount, gemmPref, heuristicResult));
+                groupedGemm.algoGetHeuristic(requestAlgoCount, gemmPref, tmpAlgo));
+            heuristicResult.clear();
+            for(int j = 0; j < tmpAlgo.size(); j++)
+            {
+                size_t tmpWorkspaceSize = 0;
+                if(gemm.isAlgoSupported(tmpAlgo[j].algo, tuning, tmpWorkspaceSize)
+                == HIPBLAS_STATUS_SUCCESS)
+                {
+                    heuristicResult.push_back(tmpAlgo[j]);
+                }
+            }
             returnedAlgoCount = heuristicResult.size();
 
             workspace_size = max_workspace_size;
@@ -1888,7 +1912,7 @@ void testing_matmul(const Arguments& arg)
         {
             if(arg.use_ext)
             {
-                CHECK_HIPBLASLT_ERROR(gemm.initialize(heuristicResult[0].algo, *dWorkspace));
+                CHECK_HIPBLASLT_ERROR(gemm.initialize(heuristicResult[0].algo, tuning, *dWorkspace));
 
                 CHECK_HIPBLASLT_ERROR(gemm.run(stream));
             }
@@ -1919,7 +1943,7 @@ void testing_matmul(const Arguments& arg)
             if(arg.use_user_args)
             {
                 //grouped gemm
-                CHECK_HIPBLASLT_ERROR(groupedGemm.initialize(heuristicResult[0].algo, *dWorkspace));
+                CHECK_HIPBLASLT_ERROR(groupedGemm.initialize(heuristicResult[0].algo, tuning, *dWorkspace));
                 groupedGemm.getDefaultValueForDeviceUserArguments(userArgs);
                 // Copy them to device memory
                 CHECK_HIP_ERROR(hipMemcpy(d_userArgs,
@@ -1933,7 +1957,7 @@ void testing_matmul(const Arguments& arg)
             {
                 //grouped gemm
                 CHECK_HIPBLASLT_ERROR(
-                    groupedGemm.initialize(heuristicResult[0].algo, *dWorkspace, false, stream));
+                    groupedGemm.initialize(heuristicResult[0].algo, tuning, *dWorkspace, false, stream));
 
                 CHECK_HIPBLASLT_ERROR(groupedGemm.run(stream));
             }
@@ -1981,7 +2005,7 @@ void testing_matmul(const Arguments& arg)
                 auto block_count = block_counts[0];
                 if(arg.use_ext)
                 {
-                    CHECK_HIPBLASLT_ERROR(gemm.initialize(heuristicResult[sol].algo, *dWorkspace));
+                    CHECK_HIPBLASLT_ERROR(gemm.initialize(heuristicResult[sol].algo, tuning, *dWorkspace));
                     for(int i = 0; i < number_cold_calls; i++)
                         CHECK_HIPBLASLT_ERROR(gemm.run(stream));
                     CHECK_HIP_ERROR(hipStreamSynchronize(stream));
@@ -2063,7 +2087,7 @@ void testing_matmul(const Arguments& arg)
                 {
                     //grouped gemm
                     CHECK_HIPBLASLT_ERROR(
-                        groupedGemm.initialize(heuristicResult[sol].algo, *dWorkspace));
+                        groupedGemm.initialize(heuristicResult[sol].algo, tuning, *dWorkspace));
                     groupedGemm.getDefaultValueForDeviceUserArguments(userArgs);
                     // Copy them to device memory
                     CHECK_HIP_ERROR(hipMemcpy(d_userArgs,
@@ -2087,7 +2111,7 @@ void testing_matmul(const Arguments& arg)
                 {
                     //grouped gemm
                     CHECK_HIPBLASLT_ERROR(groupedGemm.initialize(
-                        heuristicResult[sol].algo, *dWorkspace, false, stream));
+                        heuristicResult[sol].algo, tuning, *dWorkspace, false, stream));
 
                     for(int i = 0; i < number_cold_calls; i++)
                         CHECK_HIPBLASLT_ERROR(groupedGemm.run(stream));

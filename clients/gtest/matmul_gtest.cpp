@@ -194,6 +194,8 @@ namespace
                     name << "_APIFindAllAlgo";
                 if(arg.use_user_args)
                     name << "_UserArgs";
+                if(arg.gsu)
+                    name << "_GSU" << (int)arg.gsu;
             }
 
             return std::move(name);
