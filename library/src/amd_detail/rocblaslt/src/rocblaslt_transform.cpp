@@ -113,11 +113,409 @@ namespace
 
         return hipSuccess;
     }
+
+   // Generate combination of MEMORY ORDER and RowMaj{A/B/C} = true/false
+   #define GEN_COMBINATION(_DTYPE, _SCALETYPE, _DType, _ScaleType, \
+                           _NumThreadsM, _NumThreadsN, _VectorWidth) \
+      { \
+         std::make_tuple(_DTYPE, \
+                         _SCALETYPE, \
+                         HIPBLASLT_ORDER_COL, \
+                         HIPBLASLT_ORDER_COL, \
+                         HIPBLASLT_ORDER_COL, \
+                         _VectorWidth), \
+         [](void*       c, \
+            const void* a, \
+            const void* b, \
+            const void* alpha, \
+            const void* beta, \
+            bool        scalarInDevice, \
+            uint32_t    m, \
+            uint32_t    n, \
+            uint32_t    ldA, \
+            uint32_t    ldB, \
+            uint32_t    ldC, \
+            uint32_t    batchSize, \
+            uint32_t    batchStride, \
+            bool        opA, \
+            bool        opB, \
+            hipStream_t stream) { \
+               return launchTransformKernel \
+                      <_DType, \
+                       _ScaleType, \
+                       false, \
+                       false, \
+                       false, \
+                       _NumThreadsM, \
+                       _NumThreadsN, \
+                       _VectorWidth>(static_cast<_DType*>(c), \
+                                     static_cast<const _DType*>(a), \
+                                     static_cast<const _DType*>(b), \
+                                     reinterpret_cast<const _ScaleType*>(alpha), \
+                                     reinterpret_cast<const _ScaleType*>(beta), \
+                                     scalarInDevice, \
+                                     m, \
+                                     n, \
+                                     ldA, \
+                                     ldB, \
+                                     ldC, \
+                                     batchSize, \
+                                     batchStride, \
+                                     opA, \
+                                     opB, \
+                                     stream); \
+         } \
+      }, \
+      { \
+         std::make_tuple(_DTYPE, \
+                         _SCALETYPE, \
+                         HIPBLASLT_ORDER_COL, \
+                         HIPBLASLT_ORDER_COL, \
+                         HIPBLASLT_ORDER_ROW, \
+                         _VectorWidth), \
+         [](void*       c, \
+            const void* a, \
+            const void* b, \
+            const void* alpha, \
+            const void* beta, \
+            bool        scalarInDevice, \
+            uint32_t    m, \
+            uint32_t    n, \
+            uint32_t    ldA, \
+            uint32_t    ldB, \
+            uint32_t    ldC, \
+            uint32_t    batchSize, \
+            uint32_t    batchStride, \
+            bool        opA, \
+            bool        opB, \
+            hipStream_t stream) { \
+               return launchTransformKernel \
+                      <_DType, \
+                       _ScaleType, \
+                       false, \
+                       false, \
+                       true, \
+                       _NumThreadsM, \
+                       _NumThreadsN, \
+                       _VectorWidth>(static_cast<_DType*>(c), \
+                                     static_cast<const _DType*>(a), \
+                                     static_cast<const _DType*>(b), \
+                                     reinterpret_cast<const _ScaleType*>(alpha), \
+                                     reinterpret_cast<const _ScaleType*>(beta), \
+                                     scalarInDevice, \
+                                     m, \
+                                     n, \
+                                     ldA, \
+                                     ldB, \
+                                     ldC, \
+                                     batchSize, \
+                                     batchStride, \
+                                     opA, \
+                                     opB, \
+                                     stream); \
+         } \
+      }, \
+      { \
+         std::make_tuple(_DTYPE, \
+                         _SCALETYPE, \
+                         HIPBLASLT_ORDER_COL, \
+                         HIPBLASLT_ORDER_ROW, \
+                         HIPBLASLT_ORDER_COL, \
+                         _VectorWidth), \
+         [](void*       c, \
+            const void* a, \
+            const void* b, \
+            const void* alpha, \
+            const void* beta, \
+            bool        scalarInDevice, \
+            uint32_t    m, \
+            uint32_t    n, \
+            uint32_t    ldA, \
+            uint32_t    ldB, \
+            uint32_t    ldC, \
+            uint32_t    batchSize, \
+            uint32_t    batchStride, \
+            bool        opA, \
+            bool        opB, \
+            hipStream_t stream) { \
+               return launchTransformKernel \
+                      <_DType, \
+                       _ScaleType, \
+                       false, \
+                       true, \
+                       false, \
+                       _NumThreadsM, \
+                       _NumThreadsN, \
+                       _VectorWidth>(static_cast<_DType*>(c), \
+                                     static_cast<const _DType*>(a), \
+                                     static_cast<const _DType*>(b), \
+                                     reinterpret_cast<const _ScaleType*>(alpha), \
+                                     reinterpret_cast<const _ScaleType*>(beta), \
+                                     scalarInDevice, \
+                                     m, \
+                                     n, \
+                                     ldA, \
+                                     ldB, \
+                                     ldC, \
+                                     batchSize, \
+                                     batchStride, \
+                                     opA, \
+                                     opB, \
+                                     stream); \
+         } \
+      }, \
+      { \
+         std::make_tuple(_DTYPE, \
+                         _SCALETYPE, \
+                         HIPBLASLT_ORDER_COL, \
+                         HIPBLASLT_ORDER_ROW, \
+                         HIPBLASLT_ORDER_ROW, \
+                         _VectorWidth), \
+         [](void*       c, \
+            const void* a, \
+            const void* b, \
+            const void* alpha, \
+            const void* beta, \
+            bool        scalarInDevice, \
+            uint32_t    m, \
+            uint32_t    n, \
+            uint32_t    ldA, \
+            uint32_t    ldB, \
+            uint32_t    ldC, \
+            uint32_t    batchSize, \
+            uint32_t    batchStride, \
+            bool        opA, \
+            bool        opB, \
+            hipStream_t stream) { \
+               return launchTransformKernel \
+                      <_DType, \
+                       _ScaleType, \
+                       false, \
+                       true, \
+                       true, \
+                       _NumThreadsM, \
+                       _NumThreadsN, \
+                       _VectorWidth>(static_cast<_DType*>(c), \
+                                     static_cast<const _DType*>(a), \
+                                     static_cast<const _DType*>(b), \
+                                     reinterpret_cast<const _ScaleType*>(alpha), \
+                                     reinterpret_cast<const _ScaleType*>(beta), \
+                                     scalarInDevice, \
+                                     m, \
+                                     n, \
+                                     ldA, \
+                                     ldB, \
+                                     ldC, \
+                                     batchSize, \
+                                     batchStride, \
+                                     opA, \
+                                     opB, \
+                                     stream); \
+         } \
+      }, \
+      { \
+         std::make_tuple(_DTYPE, \
+                         _SCALETYPE, \
+                         HIPBLASLT_ORDER_ROW, \
+                         HIPBLASLT_ORDER_COL, \
+                         HIPBLASLT_ORDER_COL, \
+                         _VectorWidth), \
+         [](void*       c, \
+            const void* a, \
+            const void* b, \
+            const void* alpha, \
+            const void* beta, \
+            bool        scalarInDevice, \
+            uint32_t    m, \
+            uint32_t    n, \
+            uint32_t    ldA, \
+            uint32_t    ldB, \
+            uint32_t    ldC, \
+            uint32_t    batchSize, \
+            uint32_t    batchStride, \
+            bool        opA, \
+            bool        opB, \
+            hipStream_t stream) { \
+               return launchTransformKernel \
+                      <_DType, \
+                       _ScaleType, \
+                       true, \
+                       false, \
+                       false, \
+                       _NumThreadsM, \
+                       _NumThreadsN, \
+                       _VectorWidth>(static_cast<_DType*>(c), \
+                                     static_cast<const _DType*>(a), \
+                                     static_cast<const _DType*>(b), \
+                                     reinterpret_cast<const _ScaleType*>(alpha), \
+                                     reinterpret_cast<const _ScaleType*>(beta), \
+                                     scalarInDevice, \
+                                     m, \
+                                     n, \
+                                     ldA, \
+                                     ldB, \
+                                     ldC, \
+                                     batchSize, \
+                                     batchStride, \
+                                     opA, \
+                                     opB, \
+                                     stream); \
+         } \
+      }, \
+      { \
+         std::make_tuple(_DTYPE, \
+                         _SCALETYPE, \
+                         HIPBLASLT_ORDER_ROW, \
+                         HIPBLASLT_ORDER_COL, \
+                         HIPBLASLT_ORDER_ROW, \
+                         _VectorWidth), \
+         [](void*       c, \
+            const void* a, \
+            const void* b, \
+            const void* alpha, \
+            const void* beta, \
+            bool        scalarInDevice, \
+            uint32_t    m, \
+            uint32_t    n, \
+            uint32_t    ldA, \
+            uint32_t    ldB, \
+            uint32_t    ldC, \
+            uint32_t    batchSize, \
+            uint32_t    batchStride, \
+            bool        opA, \
+            bool        opB, \
+            hipStream_t stream) { \
+               return launchTransformKernel \
+                      <_DType, \
+                       _ScaleType, \
+                       true, \
+                       false, \
+                       true, \
+                       _NumThreadsM, \
+                       _NumThreadsN, \
+                       _VectorWidth>(static_cast<_DType*>(c), \
+                                     static_cast<const _DType*>(a), \
+                                     static_cast<const _DType*>(b), \
+                                     reinterpret_cast<const _ScaleType*>(alpha), \
+                                     reinterpret_cast<const _ScaleType*>(beta), \
+                                     scalarInDevice, \
+                                     m, \
+                                     n, \
+                                     ldA, \
+                                     ldB, \
+                                     ldC, \
+                                     batchSize, \
+                                     batchStride, \
+                                     opA, \
+                                     opB, \
+                                     stream); \
+         } \
+      }, \
+      { \
+         std::make_tuple(_DTYPE, \
+                         _SCALETYPE, \
+                         HIPBLASLT_ORDER_ROW, \
+                         HIPBLASLT_ORDER_ROW, \
+                         HIPBLASLT_ORDER_COL, \
+                         _VectorWidth), \
+         [](void*       c, \
+            const void* a, \
+            const void* b, \
+            const void* alpha, \
+            const void* beta, \
+            bool        scalarInDevice, \
+            uint32_t    m, \
+            uint32_t    n, \
+            uint32_t    ldA, \
+            uint32_t    ldB, \
+            uint32_t    ldC, \
+            uint32_t    batchSize, \
+            uint32_t    batchStride, \
+            bool        opA, \
+            bool        opB, \
+            hipStream_t stream) { \
+               return launchTransformKernel \
+                      <_DType, \
+                       _ScaleType, \
+                       true, \
+                       true, \
+                       false, \
+                       _NumThreadsM, \
+                       _NumThreadsN, \
+                       _VectorWidth>(static_cast<_DType*>(c), \
+                                     static_cast<const _DType*>(a), \
+                                     static_cast<const _DType*>(b), \
+                                     reinterpret_cast<const _ScaleType*>(alpha), \
+                                     reinterpret_cast<const _ScaleType*>(beta), \
+                                     scalarInDevice, \
+                                     m, \
+                                     n, \
+                                     ldA, \
+                                     ldB, \
+                                     ldC, \
+                                     batchSize, \
+                                     batchStride, \
+                                     opA, \
+                                     opB, \
+                                     stream); \
+         } \
+      }, \
+      { \
+         std::make_tuple(_DTYPE, \
+                         _SCALETYPE, \
+                         HIPBLASLT_ORDER_ROW, \
+                         HIPBLASLT_ORDER_ROW, \
+                         HIPBLASLT_ORDER_ROW, \
+                         _VectorWidth), \
+         [](void*       c, \
+            const void* a, \
+            const void* b, \
+            const void* alpha, \
+            const void* beta, \
+            bool        scalarInDevice, \
+            uint32_t    m, \
+            uint32_t    n, \
+            uint32_t    ldA, \
+            uint32_t    ldB, \
+            uint32_t    ldC, \
+            uint32_t    batchSize, \
+            uint32_t    batchStride, \
+            bool        opA, \
+            bool        opB, \
+            hipStream_t stream) { \
+               return launchTransformKernel \
+                      <_DType, \
+                       _ScaleType, \
+                       true, \
+                       true, \
+                       true, \
+                       _NumThreadsM, \
+                       _NumThreadsN, \
+                       _VectorWidth>(static_cast<_DType*>(c), \
+                                     static_cast<const _DType*>(a), \
+                                     static_cast<const _DType*>(b), \
+                                     reinterpret_cast<const _ScaleType*>(alpha), \
+                                     reinterpret_cast<const _ScaleType*>(beta), \
+                                     scalarInDevice, \
+                                     m, \
+                                     n, \
+                                     ldA, \
+                                     ldB, \
+                                     ldC, \
+                                     batchSize, \
+                                     batchStride, \
+                                     opA, \
+                                     opB, \
+                                     stream); \
+         } \
+      }, \
+
     using MatrixTransformKernelKey = std::tuple<hipblasltDatatype_t,
                                                 hipblasltDatatype_t,
                                                 hipblasLtOrder_t,
                                                 hipblasLtOrder_t,
-                                                hipblasLtOrder_t>;
+                                                hipblasLtOrder_t,
+                                                size_t>;
     using MatrixTransformFunction  = std::function<void(void*,
                                                        const void*,
                                                        const void*,
@@ -137,2169 +535,33 @@ namespace
     std::map<MatrixTransformKernelKey, MatrixTransformFunction> transformKernels
     {
         {
-            {std::make_tuple(HIPBLASLT_R_32F,
-                             HIPBLASLT_R_32F,
-                             HIPBLASLT_ORDER_COL,
-                             HIPBLASLT_ORDER_COL,
-                             HIPBLASLT_ORDER_COL),
-             [](void*       c,
-                const void* a,
-                const void* b,
-                const void* alpha,
-                const void* beta,
-                bool        scalarInDevice,
-                uint32_t    m,
-                uint32_t    n,
-                uint32_t    ldA,
-                uint32_t    ldB,
-                uint32_t    ldC,
-                uint32_t    batchSize,
-                uint32_t    batchStride,
-                bool        opA,
-                bool        opB,
-                hipStream_t stream) {
-                 return launchTransformKernel<hipblasLtFloat,
-                                              hipblasLtFloat,
-                                              false,
-                                              false,
-                                              false,
-                                              16,
-                                              16,
-                                              4>(static_cast<hipblasLtFloat*>(c),
-                                                 static_cast<const hipblasLtFloat*>(a),
-                                                 static_cast<const hipblasLtFloat*>(b),
-                                                 reinterpret_cast<const hipblasLtFloat*>(alpha),
-                                                 reinterpret_cast<const hipblasLtFloat*>(beta),
-                                                 scalarInDevice,
-                                                 m,
-                                                 n,
-                                                 ldA,
-                                                 ldB,
-                                                 ldC,
-                                                 batchSize,
-                                                 batchStride,
-                                                 opA,
-                                                 opB,
-                                                 stream);
-             }},
-                {std::make_tuple(HIPBLASLT_R_32F,
-                                 HIPBLASLT_R_32F,
-                                 HIPBLASLT_ORDER_COL,
-                                 HIPBLASLT_ORDER_COL,
-                                 HIPBLASLT_ORDER_ROW),
-                 [](void*       c,
-                    const void* a,
-                    const void* b,
-                    const void* alpha,
-                    const void* beta,
-                    bool        scalarInDevice,
-                    uint32_t    m,
-                    uint32_t    n,
-                    uint32_t    ldA,
-                    uint32_t    ldB,
-                    uint32_t    ldC,
-                    uint32_t    batchSize,
-                    uint32_t    batchStride,
-                    bool        opA,
-                    bool        opB,
-                    hipStream_t stream) {
-                     return launchTransformKernel<hipblasLtFloat,
-                                                  hipblasLtFloat,
-                                                  false,
-                                                  false,
-                                                  true,
-                                                  16,
-                                                  16,
-                                                  4>(static_cast<hipblasLtFloat*>(c),
-                                                     static_cast<const hipblasLtFloat*>(a),
-                                                     static_cast<const hipblasLtFloat*>(b),
-                                                     reinterpret_cast<const hipblasLtFloat*>(alpha),
-                                                     reinterpret_cast<const hipblasLtFloat*>(beta),
-                                                     scalarInDevice,
-                                                     m,
-                                                     n,
-                                                     ldA,
-                                                     ldB,
-                                                     ldC,
-                                                     batchSize,
-                                                     batchStride,
-                                                     opA,
-                                                     opB,
-                                                     stream);
-                 }},
-                {std::make_tuple(HIPBLASLT_R_32F,
-                                 HIPBLASLT_R_32F,
-                                 HIPBLASLT_ORDER_COL,
-                                 HIPBLASLT_ORDER_ROW,
-                                 HIPBLASLT_ORDER_COL),
-                 [](void*       c,
-                    const void* a,
-                    const void* b,
-                    const void* alpha,
-                    const void* beta,
-                    bool        scalarInDevice,
-                    uint32_t    m,
-                    uint32_t    n,
-                    uint32_t    ldA,
-                    uint32_t    ldB,
-                    uint32_t    ldC,
-                    uint32_t    batchSize,
-                    uint32_t    batchStride,
-                    bool        opA,
-                    bool        opB,
-                    hipStream_t stream) {
-                     return launchTransformKernel<hipblasLtFloat,
-                                                  hipblasLtFloat,
-                                                  false,
-                                                  true,
-                                                  false,
-                                                  16,
-                                                  16,
-                                                  4>(static_cast<hipblasLtFloat*>(c),
-                                                     static_cast<const hipblasLtFloat*>(a),
-                                                     static_cast<const hipblasLtFloat*>(b),
-                                                     reinterpret_cast<const hipblasLtFloat*>(alpha),
-                                                     reinterpret_cast<const hipblasLtFloat*>(beta),
-                                                     scalarInDevice,
-                                                     m,
-                                                     n,
-                                                     ldA,
-                                                     ldB,
-                                                     ldC,
-                                                     batchSize,
-                                                     batchStride,
-                                                     opA,
-                                                     opB,
-                                                     stream);
-                 }},
-                {std::make_tuple(HIPBLASLT_R_32F,
-                                 HIPBLASLT_R_32F,
-                                 HIPBLASLT_ORDER_COL,
-                                 HIPBLASLT_ORDER_ROW,
-                                 HIPBLASLT_ORDER_ROW),
-                 [](void*       c,
-                    const void* a,
-                    const void* b,
-                    const void* alpha,
-                    const void* beta,
-                    bool        scalarInDevice,
-                    uint32_t    m,
-                    uint32_t    n,
-                    uint32_t    ldA,
-                    uint32_t    ldB,
-                    uint32_t    ldC,
-                    uint32_t    batchSize,
-                    uint32_t    batchStride,
-                    bool        opA,
-                    bool        opB,
-                    hipStream_t stream) {
-                     return launchTransformKernel<hipblasLtFloat,
-                                                  hipblasLtFloat,
-                                                  false,
-                                                  true,
-                                                  true,
-                                                  16,
-                                                  16,
-                                                  4>(static_cast<hipblasLtFloat*>(c),
-                                                     static_cast<const hipblasLtFloat*>(a),
-                                                     static_cast<const hipblasLtFloat*>(b),
-                                                     reinterpret_cast<const hipblasLtFloat*>(alpha),
-                                                     reinterpret_cast<const hipblasLtFloat*>(beta),
-                                                     scalarInDevice,
-                                                     m,
-                                                     n,
-                                                     ldA,
-                                                     ldB,
-                                                     ldC,
-                                                     batchSize,
-                                                     batchStride,
-                                                     opA,
-                                                     opB,
-                                                     stream);
-                 }},
-                {std::make_tuple(HIPBLASLT_R_32F,
-                                 HIPBLASLT_R_32F,
-                                 HIPBLASLT_ORDER_ROW,
-                                 HIPBLASLT_ORDER_COL,
-                                 HIPBLASLT_ORDER_COL),
-                 [](void*       c,
-                    const void* a,
-                    const void* b,
-                    const void* alpha,
-                    const void* beta,
-                    bool        scalarInDevice,
-                    uint32_t    m,
-                    uint32_t    n,
-                    uint32_t    ldA,
-                    uint32_t    ldB,
-                    uint32_t    ldC,
-                    uint32_t    batchSize,
-                    uint32_t    batchStride,
-                    bool        opA,
-                    bool        opB,
-                    hipStream_t stream) {
-                     return launchTransformKernel<hipblasLtFloat,
-                                                  hipblasLtFloat,
-                                                  true,
-                                                  false,
-                                                  false,
-                                                  16,
-                                                  16,
-                                                  4>(static_cast<hipblasLtFloat*>(c),
-                                                     static_cast<const hipblasLtFloat*>(a),
-                                                     static_cast<const hipblasLtFloat*>(b),
-                                                     reinterpret_cast<const hipblasLtFloat*>(alpha),
-                                                     reinterpret_cast<const hipblasLtFloat*>(beta),
-                                                     scalarInDevice,
-                                                     m,
-                                                     n,
-                                                     ldA,
-                                                     ldB,
-                                                     ldC,
-                                                     batchSize,
-                                                     batchStride,
-                                                     opA,
-                                                     opB,
-                                                     stream);
-                 }},
-                {std::make_tuple(HIPBLASLT_R_32F,
-                                 HIPBLASLT_R_32F,
-                                 HIPBLASLT_ORDER_ROW,
-                                 HIPBLASLT_ORDER_COL,
-                                 HIPBLASLT_ORDER_ROW),
-                 [](void*       c,
-                    const void* a,
-                    const void* b,
-                    const void* alpha,
-                    const void* beta,
-                    bool        scalarInDevice,
-                    uint32_t    m,
-                    uint32_t    n,
-                    uint32_t    ldA,
-                    uint32_t    ldB,
-                    uint32_t    ldC,
-                    uint32_t    batchSize,
-                    uint32_t    batchStride,
-                    bool        opA,
-                    bool        opB,
-                    hipStream_t stream) {
-                     return launchTransformKernel<hipblasLtFloat,
-                                                  hipblasLtFloat,
-                                                  true,
-                                                  false,
-                                                  true,
-                                                  16,
-                                                  16,
-                                                  4>(static_cast<hipblasLtFloat*>(c),
-                                                     static_cast<const hipblasLtFloat*>(a),
-                                                     static_cast<const hipblasLtFloat*>(b),
-                                                     reinterpret_cast<const hipblasLtFloat*>(alpha),
-                                                     reinterpret_cast<const hipblasLtFloat*>(beta),
-                                                     scalarInDevice,
-                                                     m,
-                                                     n,
-                                                     ldA,
-                                                     ldB,
-                                                     ldC,
-                                                     batchSize,
-                                                     batchStride,
-                                                     opA,
-                                                     opB,
-                                                     stream);
-                 }},
-                {std::make_tuple(HIPBLASLT_R_32F,
-                                 HIPBLASLT_R_32F,
-                                 HIPBLASLT_ORDER_ROW,
-                                 HIPBLASLT_ORDER_ROW,
-                                 HIPBLASLT_ORDER_COL),
-                 [](void*       c,
-                    const void* a,
-                    const void* b,
-                    const void* alpha,
-                    const void* beta,
-                    bool        scalarInDevice,
-                    uint32_t    m,
-                    uint32_t    n,
-                    uint32_t    ldA,
-                    uint32_t    ldB,
-                    uint32_t    ldC,
-                    uint32_t    batchSize,
-                    uint32_t    batchStride,
-                    bool        opA,
-                    bool        opB,
-                    hipStream_t stream) {
-                     return launchTransformKernel<hipblasLtFloat,
-                                                  hipblasLtFloat,
-                                                  true,
-                                                  true,
-                                                  false,
-                                                  16,
-                                                  16,
-                                                  4>(static_cast<hipblasLtFloat*>(c),
-                                                     static_cast<const hipblasLtFloat*>(a),
-                                                     static_cast<const hipblasLtFloat*>(b),
-                                                     reinterpret_cast<const hipblasLtFloat*>(alpha),
-                                                     reinterpret_cast<const hipblasLtFloat*>(beta),
-                                                     scalarInDevice,
-                                                     m,
-                                                     n,
-                                                     ldA,
-                                                     ldB,
-                                                     ldC,
-                                                     batchSize,
-                                                     batchStride,
-                                                     opA,
-                                                     opB,
-                                                     stream);
-                 }},
-                {std::make_tuple(HIPBLASLT_R_32F,
-                                 HIPBLASLT_R_32F,
-                                 HIPBLASLT_ORDER_ROW,
-                                 HIPBLASLT_ORDER_ROW,
-                                 HIPBLASLT_ORDER_ROW),
-                 [](void*       c,
-                    const void* a,
-                    const void* b,
-                    const void* alpha,
-                    const void* beta,
-                    bool        scalarInDevice,
-                    uint32_t    m,
-                    uint32_t    n,
-                    uint32_t    ldA,
-                    uint32_t    ldB,
-                    uint32_t    ldC,
-                    uint32_t    batchSize,
-                    uint32_t    batchStride,
-                    bool        opA,
-                    bool        opB,
-                    hipStream_t stream) {
-                     return launchTransformKernel<hipblasLtFloat,
-                                                  hipblasLtFloat,
-                                                  true,
-                                                  true,
-                                                  true,
-                                                  16,
-                                                  16,
-                                                  4>(static_cast<hipblasLtFloat*>(c),
-                                                     static_cast<const hipblasLtFloat*>(a),
-                                                     static_cast<const hipblasLtFloat*>(b),
-                                                     reinterpret_cast<const hipblasLtFloat*>(alpha),
-                                                     reinterpret_cast<const hipblasLtFloat*>(beta),
-                                                     scalarInDevice,
-                                                     m,
-                                                     n,
-                                                     ldA,
-                                                     ldB,
-                                                     ldC,
-                                                     batchSize,
-                                                     batchStride,
-                                                     opA,
-                                                     opB,
-                                                     stream);
-                 }},
-                {std::make_tuple(HIPBLASLT_R_16F,
-                                 HIPBLASLT_R_16F,
-                                 HIPBLASLT_ORDER_COL,
-                                 HIPBLASLT_ORDER_COL,
-                                 HIPBLASLT_ORDER_COL),
-                 [](void*       c,
-                    const void* a,
-                    const void* b,
-                    const void* alpha,
-                    const void* beta,
-                    bool        scalarInDevice,
-                    uint32_t    m,
-                    uint32_t    n,
-                    uint32_t    ldA,
-                    uint32_t    ldB,
-                    uint32_t    ldC,
-                    uint32_t    batchSize,
-                    uint32_t    batchStride,
-                    bool        opA,
-                    bool        opB,
-                    hipStream_t stream) {
-                     return launchTransformKernel<hipblasLtHalf,
-                                                  hipblasLtHalf,
-                                                  false,
-                                                  false,
-                                                  false,
-                                                  16,
-                                                  16,
-                                                  4>(static_cast<hipblasLtHalf*>(c),
-                                                     static_cast<const hipblasLtHalf*>(a),
-                                                     static_cast<const hipblasLtHalf*>(b),
-                                                     reinterpret_cast<const hipblasLtHalf*>(alpha),
-                                                     reinterpret_cast<const hipblasLtHalf*>(beta),
-                                                     scalarInDevice,
-                                                     m,
-                                                     n,
-                                                     ldA,
-                                                     ldB,
-                                                     ldC,
-                                                     batchSize,
-                                                     batchStride,
-                                                     opA,
-                                                     opB,
-                                                     stream);
-                 }},
-                {std::make_tuple(HIPBLASLT_R_16F,
-                                 HIPBLASLT_R_16F,
-                                 HIPBLASLT_ORDER_COL,
-                                 HIPBLASLT_ORDER_COL,
-                                 HIPBLASLT_ORDER_ROW),
-                 [](void*       c,
-                    const void* a,
-                    const void* b,
-                    const void* alpha,
-                    const void* beta,
-                    bool        scalarInDevice,
-                    uint32_t    m,
-                    uint32_t    n,
-                    uint32_t    ldA,
-                    uint32_t    ldB,
-                    uint32_t    ldC,
-                    uint32_t    batchSize,
-                    uint32_t    batchStride,
-                    bool        opA,
-                    bool        opB,
-                    hipStream_t stream) {
-                     return launchTransformKernel<hipblasLtHalf,
-                                                  hipblasLtHalf,
-                                                  false,
-                                                  false,
-                                                  true,
-                                                  16,
-                                                  16,
-                                                  4>(static_cast<hipblasLtHalf*>(c),
-                                                     static_cast<const hipblasLtHalf*>(a),
-                                                     static_cast<const hipblasLtHalf*>(b),
-                                                     reinterpret_cast<const hipblasLtHalf*>(alpha),
-                                                     reinterpret_cast<const hipblasLtHalf*>(beta),
-                                                     scalarInDevice,
-                                                     m,
-                                                     n,
-                                                     ldA,
-                                                     ldB,
-                                                     ldC,
-                                                     batchSize,
-                                                     batchStride,
-                                                     opA,
-                                                     opB,
-                                                     stream);
-                 }},
-                {std::make_tuple(HIPBLASLT_R_16F,
-                                 HIPBLASLT_R_16F,
-                                 HIPBLASLT_ORDER_COL,
-                                 HIPBLASLT_ORDER_ROW,
-                                 HIPBLASLT_ORDER_COL),
-                 [](void*       c,
-                    const void* a,
-                    const void* b,
-                    const void* alpha,
-                    const void* beta,
-                    bool        scalarInDevice,
-                    uint32_t    m,
-                    uint32_t    n,
-                    uint32_t    ldA,
-                    uint32_t    ldB,
-                    uint32_t    ldC,
-                    uint32_t    batchSize,
-                    uint32_t    batchStride,
-                    bool        opA,
-                    bool        opB,
-                    hipStream_t stream) {
-                     return launchTransformKernel<hipblasLtHalf,
-                                                  hipblasLtHalf,
-                                                  false,
-                                                  true,
-                                                  false,
-                                                  16,
-                                                  16,
-                                                  4>(static_cast<hipblasLtHalf*>(c),
-                                                     static_cast<const hipblasLtHalf*>(a),
-                                                     static_cast<const hipblasLtHalf*>(b),
-                                                     reinterpret_cast<const hipblasLtHalf*>(alpha),
-                                                     reinterpret_cast<const hipblasLtHalf*>(beta),
-                                                     scalarInDevice,
-                                                     m,
-                                                     n,
-                                                     ldA,
-                                                     ldB,
-                                                     ldC,
-                                                     batchSize,
-                                                     batchStride,
-                                                     opA,
-                                                     opB,
-                                                     stream);
-                 }},
-                {std::make_tuple(HIPBLASLT_R_16F,
-                                 HIPBLASLT_R_16F,
-                                 HIPBLASLT_ORDER_COL,
-                                 HIPBLASLT_ORDER_ROW,
-                                 HIPBLASLT_ORDER_ROW),
-                 [](void*       c,
-                    const void* a,
-                    const void* b,
-                    const void* alpha,
-                    const void* beta,
-                    bool        scalarInDevice,
-                    uint32_t    m,
-                    uint32_t    n,
-                    uint32_t    ldA,
-                    uint32_t    ldB,
-                    uint32_t    ldC,
-                    uint32_t    batchSize,
-                    uint32_t    batchStride,
-                    bool        opA,
-                    bool        opB,
-                    hipStream_t stream) {
-                     return launchTransformKernel<hipblasLtHalf,
-                                                  hipblasLtHalf,
-                                                  false,
-                                                  true,
-                                                  true,
-                                                  16,
-                                                  16,
-                                                  4>(static_cast<hipblasLtHalf*>(c),
-                                                     static_cast<const hipblasLtHalf*>(a),
-                                                     static_cast<const hipblasLtHalf*>(b),
-                                                     reinterpret_cast<const hipblasLtHalf*>(alpha),
-                                                     reinterpret_cast<const hipblasLtHalf*>(beta),
-                                                     scalarInDevice,
-                                                     m,
-                                                     n,
-                                                     ldA,
-                                                     ldB,
-                                                     ldC,
-                                                     batchSize,
-                                                     batchStride,
-                                                     opA,
-                                                     opB,
-                                                     stream);
-                 }},
-                {std::make_tuple(HIPBLASLT_R_16F,
-                                 HIPBLASLT_R_16F,
-                                 HIPBLASLT_ORDER_ROW,
-                                 HIPBLASLT_ORDER_COL,
-                                 HIPBLASLT_ORDER_COL),
-                 [](void*       c,
-                    const void* a,
-                    const void* b,
-                    const void* alpha,
-                    const void* beta,
-                    bool        scalarInDevice,
-                    uint32_t    m,
-                    uint32_t    n,
-                    uint32_t    ldA,
-                    uint32_t    ldB,
-                    uint32_t    ldC,
-                    uint32_t    batchSize,
-                    uint32_t    batchStride,
-                    bool        opA,
-                    bool        opB,
-                    hipStream_t stream) {
-                     return launchTransformKernel<hipblasLtHalf,
-                                                  hipblasLtHalf,
-                                                  true,
-                                                  false,
-                                                  false,
-                                                  16,
-                                                  16,
-                                                  4>(static_cast<hipblasLtHalf*>(c),
-                                                     static_cast<const hipblasLtHalf*>(a),
-                                                     static_cast<const hipblasLtHalf*>(b),
-                                                     reinterpret_cast<const hipblasLtHalf*>(alpha),
-                                                     reinterpret_cast<const hipblasLtHalf*>(beta),
-                                                     scalarInDevice,
-                                                     m,
-                                                     n,
-                                                     ldA,
-                                                     ldB,
-                                                     ldC,
-                                                     batchSize,
-                                                     batchStride,
-                                                     opA,
-                                                     opB,
-                                                     stream);
-                 }},
-                {std::make_tuple(HIPBLASLT_R_16F,
-                                 HIPBLASLT_R_16F,
-                                 HIPBLASLT_ORDER_ROW,
-                                 HIPBLASLT_ORDER_COL,
-                                 HIPBLASLT_ORDER_ROW),
-                 [](void*       c,
-                    const void* a,
-                    const void* b,
-                    const void* alpha,
-                    const void* beta,
-                    bool        scalarInDevice,
-                    uint32_t    m,
-                    uint32_t    n,
-                    uint32_t    ldA,
-                    uint32_t    ldB,
-                    uint32_t    ldC,
-                    uint32_t    batchSize,
-                    uint32_t    batchStride,
-                    bool        opA,
-                    bool        opB,
-                    hipStream_t stream) {
-                     return launchTransformKernel<hipblasLtHalf,
-                                                  hipblasLtHalf,
-                                                  true,
-                                                  false,
-                                                  true,
-                                                  16,
-                                                  16,
-                                                  4>(static_cast<hipblasLtHalf*>(c),
-                                                     static_cast<const hipblasLtHalf*>(a),
-                                                     static_cast<const hipblasLtHalf*>(b),
-                                                     reinterpret_cast<const hipblasLtHalf*>(alpha),
-                                                     reinterpret_cast<const hipblasLtHalf*>(beta),
-                                                     scalarInDevice,
-                                                     m,
-                                                     n,
-                                                     ldA,
-                                                     ldB,
-                                                     ldC,
-                                                     batchSize,
-                                                     batchStride,
-                                                     opA,
-                                                     opB,
-                                                     stream);
-                 }},
-                {std::make_tuple(HIPBLASLT_R_16F,
-                                 HIPBLASLT_R_16F,
-                                 HIPBLASLT_ORDER_ROW,
-                                 HIPBLASLT_ORDER_ROW,
-                                 HIPBLASLT_ORDER_COL),
-                 [](void*       c,
-                    const void* a,
-                    const void* b,
-                    const void* alpha,
-                    const void* beta,
-                    bool        scalarInDevice,
-                    uint32_t    m,
-                    uint32_t    n,
-                    uint32_t    ldA,
-                    uint32_t    ldB,
-                    uint32_t    ldC,
-                    uint32_t    batchSize,
-                    uint32_t    batchStride,
-                    bool        opA,
-                    bool        opB,
-                    hipStream_t stream) {
-                     return launchTransformKernel<hipblasLtHalf,
-                                                  hipblasLtHalf,
-                                                  true,
-                                                  true,
-                                                  false,
-                                                  16,
-                                                  16,
-                                                  4>(static_cast<hipblasLtHalf*>(c),
-                                                     static_cast<const hipblasLtHalf*>(a),
-                                                     static_cast<const hipblasLtHalf*>(b),
-                                                     reinterpret_cast<const hipblasLtHalf*>(alpha),
-                                                     reinterpret_cast<const hipblasLtHalf*>(beta),
-                                                     scalarInDevice,
-                                                     m,
-                                                     n,
-                                                     ldA,
-                                                     ldB,
-                                                     ldC,
-                                                     batchSize,
-                                                     batchStride,
-                                                     opA,
-                                                     opB,
-                                                     stream);
-                 }},
-                {std::make_tuple(HIPBLASLT_R_16F,
-                                 HIPBLASLT_R_16F,
-                                 HIPBLASLT_ORDER_ROW,
-                                 HIPBLASLT_ORDER_ROW,
-                                 HIPBLASLT_ORDER_ROW),
-                 [](void*       c,
-                    const void* a,
-                    const void* b,
-                    const void* alpha,
-                    const void* beta,
-                    bool        scalarInDevice,
-                    uint32_t    m,
-                    uint32_t    n,
-                    uint32_t    ldA,
-                    uint32_t    ldB,
-                    uint32_t    ldC,
-                    uint32_t    batchSize,
-                    uint32_t    batchStride,
-                    bool        opA,
-                    bool        opB,
-                    hipStream_t stream) {
-                     return launchTransformKernel<hipblasLtHalf,
-                                                  hipblasLtHalf,
-                                                  true,
-                                                  true,
-                                                  true,
-                                                  16,
-                                                  16,
-                                                  4>(static_cast<hipblasLtHalf*>(c),
-                                                     static_cast<const hipblasLtHalf*>(a),
-                                                     static_cast<const hipblasLtHalf*>(b),
-                                                     reinterpret_cast<const hipblasLtHalf*>(alpha),
-                                                     reinterpret_cast<const hipblasLtHalf*>(beta),
-                                                     scalarInDevice,
-                                                     m,
-                                                     n,
-                                                     ldA,
-                                                     ldB,
-                                                     ldC,
-                                                     batchSize,
-                                                     batchStride,
-                                                     opA,
-                                                     opB,
-                                                     stream);
-                 }},
-                {std::make_tuple(HIPBLASLT_R_16F,
-                                 HIPBLASLT_R_32F,
-                                 HIPBLASLT_ORDER_COL,
-                                 HIPBLASLT_ORDER_COL,
-                                 HIPBLASLT_ORDER_COL),
-                 [](void*       c,
-                    const void* a,
-                    const void* b,
-                    const void* alpha,
-                    const void* beta,
-                    bool        scalarInDevice,
-                    uint32_t    m,
-                    uint32_t    n,
-                    uint32_t    ldA,
-                    uint32_t    ldB,
-                    uint32_t    ldC,
-                    uint32_t    batchSize,
-                    uint32_t    batchStride,
-                    bool        opA,
-                    bool        opB,
-                    hipStream_t stream) {
-                     return launchTransformKernel<hipblasLtHalf,
-                                                  hipblasLtFloat,
-                                                  false,
-                                                  false,
-                                                  false,
-                                                  16,
-                                                  16,
-                                                  4>(static_cast<hipblasLtHalf*>(c),
-                                                     static_cast<const hipblasLtHalf*>(a),
-                                                     static_cast<const hipblasLtHalf*>(b),
-                                                     reinterpret_cast<const hipblasLtFloat*>(alpha),
-                                                     reinterpret_cast<const hipblasLtFloat*>(beta),
-                                                     scalarInDevice,
-                                                     m,
-                                                     n,
-                                                     ldA,
-                                                     ldB,
-                                                     ldC,
-                                                     batchSize,
-                                                     batchStride,
-                                                     opA,
-                                                     opB,
-                                                     stream);
-                 }},
-                {std::make_tuple(HIPBLASLT_R_16F,
-                                 HIPBLASLT_R_32F,
-                                 HIPBLASLT_ORDER_COL,
-                                 HIPBLASLT_ORDER_COL,
-                                 HIPBLASLT_ORDER_ROW),
-                 [](void*       c,
-                    const void* a,
-                    const void* b,
-                    const void* alpha,
-                    const void* beta,
-                    bool        scalarInDevice,
-                    uint32_t    m,
-                    uint32_t    n,
-                    uint32_t    ldA,
-                    uint32_t    ldB,
-                    uint32_t    ldC,
-                    uint32_t    batchSize,
-                    uint32_t    batchStride,
-                    bool        opA,
-                    bool        opB,
-                    hipStream_t stream) {
-                     return launchTransformKernel<hipblasLtHalf,
-                                                  hipblasLtFloat,
-                                                  false,
-                                                  false,
-                                                  true,
-                                                  16,
-                                                  16,
-                                                  4>(static_cast<hipblasLtHalf*>(c),
-                                                     static_cast<const hipblasLtHalf*>(a),
-                                                     static_cast<const hipblasLtHalf*>(b),
-                                                     reinterpret_cast<const hipblasLtFloat*>(alpha),
-                                                     reinterpret_cast<const hipblasLtFloat*>(beta),
-                                                     scalarInDevice,
-                                                     m,
-                                                     n,
-                                                     ldA,
-                                                     ldB,
-                                                     ldC,
-                                                     batchSize,
-                                                     batchStride,
-                                                     opA,
-                                                     opB,
-                                                     stream);
-                 }},
-                {std::make_tuple(HIPBLASLT_R_16F,
-                                 HIPBLASLT_R_32F,
-                                 HIPBLASLT_ORDER_COL,
-                                 HIPBLASLT_ORDER_ROW,
-                                 HIPBLASLT_ORDER_COL),
-                 [](void*       c,
-                    const void* a,
-                    const void* b,
-                    const void* alpha,
-                    const void* beta,
-                    bool        scalarInDevice,
-                    uint32_t    m,
-                    uint32_t    n,
-                    uint32_t    ldA,
-                    uint32_t    ldB,
-                    uint32_t    ldC,
-                    uint32_t    batchSize,
-                    uint32_t    batchStride,
-                    bool        opA,
-                    bool        opB,
-                    hipStream_t stream) {
-                     return launchTransformKernel<hipblasLtHalf,
-                                                  hipblasLtFloat,
-                                                  false,
-                                                  true,
-                                                  false,
-                                                  16,
-                                                  16,
-                                                  4>(static_cast<hipblasLtHalf*>(c),
-                                                     static_cast<const hipblasLtHalf*>(a),
-                                                     static_cast<const hipblasLtHalf*>(b),
-                                                     reinterpret_cast<const hipblasLtFloat*>(alpha),
-                                                     reinterpret_cast<const hipblasLtFloat*>(beta),
-                                                     scalarInDevice,
-                                                     m,
-                                                     n,
-                                                     ldA,
-                                                     ldB,
-                                                     ldC,
-                                                     batchSize,
-                                                     batchStride,
-                                                     opA,
-                                                     opB,
-                                                     stream);
-                 }},
-                {std::make_tuple(HIPBLASLT_R_16F,
-                                 HIPBLASLT_R_32F,
-                                 HIPBLASLT_ORDER_COL,
-                                 HIPBLASLT_ORDER_ROW,
-                                 HIPBLASLT_ORDER_ROW),
-                 [](void*       c,
-                    const void* a,
-                    const void* b,
-                    const void* alpha,
-                    const void* beta,
-                    bool        scalarInDevice,
-                    uint32_t    m,
-                    uint32_t    n,
-                    uint32_t    ldA,
-                    uint32_t    ldB,
-                    uint32_t    ldC,
-                    uint32_t    batchSize,
-                    uint32_t    batchStride,
-                    bool        opA,
-                    bool        opB,
-                    hipStream_t stream) {
-                     return launchTransformKernel<hipblasLtHalf,
-                                                  hipblasLtFloat,
-                                                  false,
-                                                  true,
-                                                  true,
-                                                  16,
-                                                  16,
-                                                  4>(static_cast<hipblasLtHalf*>(c),
-                                                     static_cast<const hipblasLtHalf*>(a),
-                                                     static_cast<const hipblasLtHalf*>(b),
-                                                     reinterpret_cast<const hipblasLtFloat*>(alpha),
-                                                     reinterpret_cast<const hipblasLtFloat*>(beta),
-                                                     scalarInDevice,
-                                                     m,
-                                                     n,
-                                                     ldA,
-                                                     ldB,
-                                                     ldC,
-                                                     batchSize,
-                                                     batchStride,
-                                                     opA,
-                                                     opB,
-                                                     stream);
-                 }},
-                {std::make_tuple(HIPBLASLT_R_16F,
-                                 HIPBLASLT_R_32F,
-                                 HIPBLASLT_ORDER_ROW,
-                                 HIPBLASLT_ORDER_COL,
-                                 HIPBLASLT_ORDER_COL),
-                 [](void*       c,
-                    const void* a,
-                    const void* b,
-                    const void* alpha,
-                    const void* beta,
-                    bool        scalarInDevice,
-                    uint32_t    m,
-                    uint32_t    n,
-                    uint32_t    ldA,
-                    uint32_t    ldB,
-                    uint32_t    ldC,
-                    uint32_t    batchSize,
-                    uint32_t    batchStride,
-                    bool        opA,
-                    bool        opB,
-                    hipStream_t stream) {
-                     return launchTransformKernel<hipblasLtHalf,
-                                                  hipblasLtFloat,
-                                                  true,
-                                                  false,
-                                                  false,
-                                                  16,
-                                                  16,
-                                                  4>(static_cast<hipblasLtHalf*>(c),
-                                                     static_cast<const hipblasLtHalf*>(a),
-                                                     static_cast<const hipblasLtHalf*>(b),
-                                                     reinterpret_cast<const hipblasLtFloat*>(alpha),
-                                                     reinterpret_cast<const hipblasLtFloat*>(beta),
-                                                     scalarInDevice,
-                                                     m,
-                                                     n,
-                                                     ldA,
-                                                     ldB,
-                                                     ldC,
-                                                     batchSize,
-                                                     batchStride,
-                                                     opA,
-                                                     opB,
-                                                     stream);
-                 }},
-                {std::make_tuple(HIPBLASLT_R_16F,
-                                 HIPBLASLT_R_32F,
-                                 HIPBLASLT_ORDER_ROW,
-                                 HIPBLASLT_ORDER_COL,
-                                 HIPBLASLT_ORDER_ROW),
-                 [](void*       c,
-                    const void* a,
-                    const void* b,
-                    const void* alpha,
-                    const void* beta,
-                    bool        scalarInDevice,
-                    uint32_t    m,
-                    uint32_t    n,
-                    uint32_t    ldA,
-                    uint32_t    ldB,
-                    uint32_t    ldC,
-                    uint32_t    batchSize,
-                    uint32_t    batchStride,
-                    bool        opA,
-                    bool        opB,
-                    hipStream_t stream) {
-                     return launchTransformKernel<hipblasLtHalf,
-                                                  hipblasLtFloat,
-                                                  true,
-                                                  false,
-                                                  true,
-                                                  16,
-                                                  16,
-                                                  4>(static_cast<hipblasLtHalf*>(c),
-                                                     static_cast<const hipblasLtHalf*>(a),
-                                                     static_cast<const hipblasLtHalf*>(b),
-                                                     reinterpret_cast<const hipblasLtFloat*>(alpha),
-                                                     reinterpret_cast<const hipblasLtFloat*>(beta),
-                                                     scalarInDevice,
-                                                     m,
-                                                     n,
-                                                     ldA,
-                                                     ldB,
-                                                     ldC,
-                                                     batchSize,
-                                                     batchStride,
-                                                     opA,
-                                                     opB,
-                                                     stream);
-                 }},
-                {std::make_tuple(HIPBLASLT_R_16F,
-                                 HIPBLASLT_R_32F,
-                                 HIPBLASLT_ORDER_ROW,
-                                 HIPBLASLT_ORDER_ROW,
-                                 HIPBLASLT_ORDER_COL),
-                 [](void*       c,
-                    const void* a,
-                    const void* b,
-                    const void* alpha,
-                    const void* beta,
-                    bool        scalarInDevice,
-                    uint32_t    m,
-                    uint32_t    n,
-                    uint32_t    ldA,
-                    uint32_t    ldB,
-                    uint32_t    ldC,
-                    uint32_t    batchSize,
-                    uint32_t    batchStride,
-                    bool        opA,
-                    bool        opB,
-                    hipStream_t stream) {
-                     return launchTransformKernel<hipblasLtHalf,
-                                                  hipblasLtFloat,
-                                                  true,
-                                                  true,
-                                                  false,
-                                                  16,
-                                                  16,
-                                                  4>(static_cast<hipblasLtHalf*>(c),
-                                                     static_cast<const hipblasLtHalf*>(a),
-                                                     static_cast<const hipblasLtHalf*>(b),
-                                                     reinterpret_cast<const hipblasLtFloat*>(alpha),
-                                                     reinterpret_cast<const hipblasLtFloat*>(beta),
-                                                     scalarInDevice,
-                                                     m,
-                                                     n,
-                                                     ldA,
-                                                     ldB,
-                                                     ldC,
-                                                     batchSize,
-                                                     batchStride,
-                                                     opA,
-                                                     opB,
-                                                     stream);
-                 }},
-                {std::make_tuple(HIPBLASLT_R_16F,
-                                 HIPBLASLT_R_32F,
-                                 HIPBLASLT_ORDER_ROW,
-                                 HIPBLASLT_ORDER_ROW,
-                                 HIPBLASLT_ORDER_ROW),
-                 [](void*       c,
-                    const void* a,
-                    const void* b,
-                    const void* alpha,
-                    const void* beta,
-                    bool        scalarInDevice,
-                    uint32_t    m,
-                    uint32_t    n,
-                    uint32_t    ldA,
-                    uint32_t    ldB,
-                    uint32_t    ldC,
-                    uint32_t    batchSize,
-                    uint32_t    batchStride,
-                    bool        opA,
-                    bool        opB,
-                    hipStream_t stream) {
-                     return launchTransformKernel<hipblasLtHalf,
-                                                  hipblasLtFloat,
-                                                  true,
-                                                  true,
-                                                  true,
-                                                  16,
-                                                  16,
-                                                  4>(static_cast<hipblasLtHalf*>(c),
-                                                     static_cast<const hipblasLtHalf*>(a),
-                                                     static_cast<const hipblasLtHalf*>(b),
-                                                     reinterpret_cast<const hipblasLtFloat*>(alpha),
-                                                     reinterpret_cast<const hipblasLtFloat*>(beta),
-                                                     scalarInDevice,
-                                                     m,
-                                                     n,
-                                                     ldA,
-                                                     ldB,
-                                                     ldC,
-                                                     batchSize,
-                                                     batchStride,
-                                                     opA,
-                                                     opB,
-                                                     stream);
-                 }},
-                {std::make_tuple(HIPBLASLT_R_16B,
-                                 HIPBLASLT_R_32F,
-                                 HIPBLASLT_ORDER_COL,
-                                 HIPBLASLT_ORDER_COL,
-                                 HIPBLASLT_ORDER_COL),
-                 [](void*       c,
-                    const void* a,
-                    const void* b,
-                    const void* alpha,
-                    const void* beta,
-                    bool        scalarInDevice,
-                    uint32_t    m,
-                    uint32_t    n,
-                    uint32_t    ldA,
-                    uint32_t    ldB,
-                    uint32_t    ldC,
-                    uint32_t    batchSize,
-                    uint32_t    batchStride,
-                    bool        opA,
-                    bool        opB,
-                    hipStream_t stream) {
-                     return launchTransformKernel<hipblasLtBfloat16,
-                                                  hipblasLtFloat,
-                                                  false,
-                                                  false,
-                                                  false,
-                                                  16,
-                                                  16,
-                                                  4>(static_cast<hipblasLtBfloat16*>(c),
-                                                     static_cast<const hipblasLtBfloat16*>(a),
-                                                     static_cast<const hipblasLtBfloat16*>(b),
-                                                     reinterpret_cast<const hipblasLtFloat*>(alpha),
-                                                     reinterpret_cast<const hipblasLtFloat*>(beta),
-                                                     scalarInDevice,
-                                                     m,
-                                                     n,
-                                                     ldA,
-                                                     ldB,
-                                                     ldC,
-                                                     batchSize,
-                                                     batchStride,
-                                                     opA,
-                                                     opB,
-                                                     stream);
-                 }},
-                {std::make_tuple(HIPBLASLT_R_16B,
-                                 HIPBLASLT_R_32F,
-                                 HIPBLASLT_ORDER_COL,
-                                 HIPBLASLT_ORDER_COL,
-                                 HIPBLASLT_ORDER_ROW),
-                 [](void*       c,
-                    const void* a,
-                    const void* b,
-                    const void* alpha,
-                    const void* beta,
-                    bool        scalarInDevice,
-                    uint32_t    m,
-                    uint32_t    n,
-                    uint32_t    ldA,
-                    uint32_t    ldB,
-                    uint32_t    ldC,
-                    uint32_t    batchSize,
-                    uint32_t    batchStride,
-                    bool        opA,
-                    bool        opB,
-                    hipStream_t stream) {
-                     return launchTransformKernel<hipblasLtBfloat16,
-                                                  hipblasLtFloat,
-                                                  false,
-                                                  false,
-                                                  true,
-                                                  16,
-                                                  16,
-                                                  4>(static_cast<hipblasLtBfloat16*>(c),
-                                                     static_cast<const hipblasLtBfloat16*>(a),
-                                                     static_cast<const hipblasLtBfloat16*>(b),
-                                                     reinterpret_cast<const hipblasLtFloat*>(alpha),
-                                                     reinterpret_cast<const hipblasLtFloat*>(beta),
-                                                     scalarInDevice,
-                                                     m,
-                                                     n,
-                                                     ldA,
-                                                     ldB,
-                                                     ldC,
-                                                     batchSize,
-                                                     batchStride,
-                                                     opA,
-                                                     opB,
-                                                     stream);
-                 }},
-                {std::make_tuple(HIPBLASLT_R_16B,
-                                 HIPBLASLT_R_32F,
-                                 HIPBLASLT_ORDER_COL,
-                                 HIPBLASLT_ORDER_ROW,
-                                 HIPBLASLT_ORDER_COL),
-                 [](void*       c,
-                    const void* a,
-                    const void* b,
-                    const void* alpha,
-                    const void* beta,
-                    bool        scalarInDevice,
-                    uint32_t    m,
-                    uint32_t    n,
-                    uint32_t    ldA,
-                    uint32_t    ldB,
-                    uint32_t    ldC,
-                    uint32_t    batchSize,
-                    uint32_t    batchStride,
-                    bool        opA,
-                    bool        opB,
-                    hipStream_t stream) {
-                     return launchTransformKernel<hipblasLtBfloat16,
-                                                  hipblasLtFloat,
-                                                  false,
-                                                  true,
-                                                  false,
-                                                  16,
-                                                  16,
-                                                  4>(static_cast<hipblasLtBfloat16*>(c),
-                                                     static_cast<const hipblasLtBfloat16*>(a),
-                                                     static_cast<const hipblasLtBfloat16*>(b),
-                                                     reinterpret_cast<const hipblasLtFloat*>(alpha),
-                                                     reinterpret_cast<const hipblasLtFloat*>(beta),
-                                                     scalarInDevice,
-                                                     m,
-                                                     n,
-                                                     ldA,
-                                                     ldB,
-                                                     ldC,
-                                                     batchSize,
-                                                     batchStride,
-                                                     opA,
-                                                     opB,
-                                                     stream);
-                 }},
-                {std::make_tuple(HIPBLASLT_R_16B,
-                                 HIPBLASLT_R_32F,
-                                 HIPBLASLT_ORDER_COL,
-                                 HIPBLASLT_ORDER_ROW,
-                                 HIPBLASLT_ORDER_ROW),
-                 [](void*       c,
-                    const void* a,
-                    const void* b,
-                    const void* alpha,
-                    const void* beta,
-                    bool        scalarInDevice,
-                    uint32_t    m,
-                    uint32_t    n,
-                    uint32_t    ldA,
-                    uint32_t    ldB,
-                    uint32_t    ldC,
-                    uint32_t    batchSize,
-                    uint32_t    batchStride,
-                    bool        opA,
-                    bool        opB,
-                    hipStream_t stream) {
-                     return launchTransformKernel<hipblasLtBfloat16,
-                                                  hipblasLtFloat,
-                                                  false,
-                                                  true,
-                                                  true,
-                                                  16,
-                                                  16,
-                                                  4>(static_cast<hipblasLtBfloat16*>(c),
-                                                     static_cast<const hipblasLtBfloat16*>(a),
-                                                     static_cast<const hipblasLtBfloat16*>(b),
-                                                     reinterpret_cast<const hipblasLtFloat*>(alpha),
-                                                     reinterpret_cast<const hipblasLtFloat*>(beta),
-                                                     scalarInDevice,
-                                                     m,
-                                                     n,
-                                                     ldA,
-                                                     ldB,
-                                                     ldC,
-                                                     batchSize,
-                                                     batchStride,
-                                                     opA,
-                                                     opB,
-                                                     stream);
-                 }},
-                {std::make_tuple(HIPBLASLT_R_16B,
-                                 HIPBLASLT_R_32F,
-                                 HIPBLASLT_ORDER_ROW,
-                                 HIPBLASLT_ORDER_COL,
-                                 HIPBLASLT_ORDER_COL),
-                 [](void*       c,
-                    const void* a,
-                    const void* b,
-                    const void* alpha,
-                    const void* beta,
-                    bool        scalarInDevice,
-                    uint32_t    m,
-                    uint32_t    n,
-                    uint32_t    ldA,
-                    uint32_t    ldB,
-                    uint32_t    ldC,
-                    uint32_t    batchSize,
-                    uint32_t    batchStride,
-                    bool        opA,
-                    bool        opB,
-                    hipStream_t stream) {
-                     return launchTransformKernel<hipblasLtBfloat16,
-                                                  hipblasLtFloat,
-                                                  true,
-                                                  false,
-                                                  false,
-                                                  16,
-                                                  16,
-                                                  4>(static_cast<hipblasLtBfloat16*>(c),
-                                                     static_cast<const hipblasLtBfloat16*>(a),
-                                                     static_cast<const hipblasLtBfloat16*>(b),
-                                                     reinterpret_cast<const hipblasLtFloat*>(alpha),
-                                                     reinterpret_cast<const hipblasLtFloat*>(beta),
-                                                     scalarInDevice,
-                                                     m,
-                                                     n,
-                                                     ldA,
-                                                     ldB,
-                                                     ldC,
-                                                     batchSize,
-                                                     batchStride,
-                                                     opA,
-                                                     opB,
-                                                     stream);
-                 }},
-                {std::make_tuple(HIPBLASLT_R_16B,
-                                 HIPBLASLT_R_32F,
-                                 HIPBLASLT_ORDER_ROW,
-                                 HIPBLASLT_ORDER_COL,
-                                 HIPBLASLT_ORDER_ROW),
-                 [](void*       c,
-                    const void* a,
-                    const void* b,
-                    const void* alpha,
-                    const void* beta,
-                    bool        scalarInDevice,
-                    uint32_t    m,
-                    uint32_t    n,
-                    uint32_t    ldA,
-                    uint32_t    ldB,
-                    uint32_t    ldC,
-                    uint32_t    batchSize,
-                    uint32_t    batchStride,
-                    bool        opA,
-                    bool        opB,
-                    hipStream_t stream) {
-                     return launchTransformKernel<hipblasLtBfloat16,
-                                                  hipblasLtFloat,
-                                                  true,
-                                                  false,
-                                                  true,
-                                                  16,
-                                                  16,
-                                                  4>(static_cast<hipblasLtBfloat16*>(c),
-                                                     static_cast<const hipblasLtBfloat16*>(a),
-                                                     static_cast<const hipblasLtBfloat16*>(b),
-                                                     reinterpret_cast<const hipblasLtFloat*>(alpha),
-                                                     reinterpret_cast<const hipblasLtFloat*>(beta),
-                                                     scalarInDevice,
-                                                     m,
-                                                     n,
-                                                     ldA,
-                                                     ldB,
-                                                     ldC,
-                                                     batchSize,
-                                                     batchStride,
-                                                     opA,
-                                                     opB,
-                                                     stream);
-                 }},
-                {std::make_tuple(HIPBLASLT_R_16B,
-                                 HIPBLASLT_R_32F,
-                                 HIPBLASLT_ORDER_ROW,
-                                 HIPBLASLT_ORDER_ROW,
-                                 HIPBLASLT_ORDER_COL),
-                 [](void*       c,
-                    const void* a,
-                    const void* b,
-                    const void* alpha,
-                    const void* beta,
-                    bool        scalarInDevice,
-                    uint32_t    m,
-                    uint32_t    n,
-                    uint32_t    ldA,
-                    uint32_t    ldB,
-                    uint32_t    ldC,
-                    uint32_t    batchSize,
-                    uint32_t    batchStride,
-                    bool        opA,
-                    bool        opB,
-                    hipStream_t stream) {
-                     return launchTransformKernel<hipblasLtBfloat16,
-                                                  hipblasLtFloat,
-                                                  true,
-                                                  true,
-                                                  false,
-                                                  16,
-                                                  16,
-                                                  4>(static_cast<hipblasLtBfloat16*>(c),
-                                                     static_cast<const hipblasLtBfloat16*>(a),
-                                                     static_cast<const hipblasLtBfloat16*>(b),
-                                                     reinterpret_cast<const hipblasLtFloat*>(alpha),
-                                                     reinterpret_cast<const hipblasLtFloat*>(beta),
-                                                     scalarInDevice,
-                                                     m,
-                                                     n,
-                                                     ldA,
-                                                     ldB,
-                                                     ldC,
-                                                     batchSize,
-                                                     batchStride,
-                                                     opA,
-                                                     opB,
-                                                     stream);
-                 }},
-                {std::make_tuple(HIPBLASLT_R_16B,
-                                 HIPBLASLT_R_32F,
-                                 HIPBLASLT_ORDER_ROW,
-                                 HIPBLASLT_ORDER_ROW,
-                                 HIPBLASLT_ORDER_ROW),
-                 [](void*       c,
-                    const void* a,
-                    const void* b,
-                    const void* alpha,
-                    const void* beta,
-                    bool        scalarInDevice,
-                    uint32_t    m,
-                    uint32_t    n,
-                    uint32_t    ldA,
-                    uint32_t    ldB,
-                    uint32_t    ldC,
-                    uint32_t    batchSize,
-                    uint32_t    batchStride,
-                    bool        opA,
-                    bool        opB,
-                    hipStream_t stream) {
-                     return launchTransformKernel<hipblasLtBfloat16,
-                                                  hipblasLtFloat,
-                                                  true,
-                                                  true,
-                                                  true,
-                                                  16,
-                                                  16,
-                                                  4>(static_cast<hipblasLtBfloat16*>(c),
-                                                     static_cast<const hipblasLtBfloat16*>(a),
-                                                     static_cast<const hipblasLtBfloat16*>(b),
-                                                     reinterpret_cast<const hipblasLtFloat*>(alpha),
-                                                     reinterpret_cast<const hipblasLtFloat*>(beta),
-                                                     scalarInDevice,
-                                                     m,
-                                                     n,
-                                                     ldA,
-                                                     ldB,
-                                                     ldC,
-                                                     batchSize,
-                                                     batchStride,
-                                                     opA,
-                                                     opB,
-                                                     stream);
-                 }},
-                {std::make_tuple(HIPBLASLT_R_8I,
-                                 HIPBLASLT_R_32F,
-                                 HIPBLASLT_ORDER_COL,
-                                 HIPBLASLT_ORDER_COL,
-                                 HIPBLASLT_ORDER_COL),
-                 [](void*       c,
-                    const void* a,
-                    const void* b,
-                    const void* alpha,
-                    const void* beta,
-                    bool        scalarInDevice,
-                    uint32_t    m,
-                    uint32_t    n,
-                    uint32_t    ldA,
-                    uint32_t    ldB,
-                    uint32_t    ldC,
-                    uint32_t    batchSize,
-                    uint32_t    batchStride,
-                    bool        opA,
-                    bool        opB,
-                    hipStream_t stream) {
-                     return launchTransformKernel<int8_t,
-                                                  hipblasLtFloat,
-                                                  false,
-                                                  false,
-                                                  false,
-                                                  16,
-                                                  16,
-                                                  4>(static_cast<int8_t*>(c),
-                                                     static_cast<const int8_t*>(a),
-                                                     static_cast<const int8_t*>(b),
-                                                     reinterpret_cast<const hipblasLtFloat*>(alpha),
-                                                     reinterpret_cast<const hipblasLtFloat*>(beta),
-                                                     scalarInDevice,
-                                                     m,
-                                                     n,
-                                                     ldA,
-                                                     ldB,
-                                                     ldC,
-                                                     batchSize,
-                                                     batchStride,
-                                                     opA,
-                                                     opB,
-                                                     stream);
-                 }},
-                {std::make_tuple(HIPBLASLT_R_8I,
-                                 HIPBLASLT_R_32F,
-                                 HIPBLASLT_ORDER_COL,
-                                 HIPBLASLT_ORDER_COL,
-                                 HIPBLASLT_ORDER_ROW),
-                 [](void*       c,
-                    const void* a,
-                    const void* b,
-                    const void* alpha,
-                    const void* beta,
-                    bool        scalarInDevice,
-                    uint32_t    m,
-                    uint32_t    n,
-                    uint32_t    ldA,
-                    uint32_t    ldB,
-                    uint32_t    ldC,
-                    uint32_t    batchSize,
-                    uint32_t    batchStride,
-                    bool        opA,
-                    bool        opB,
-                    hipStream_t stream) {
-                     return launchTransformKernel<int8_t,
-                                                  hipblasLtFloat,
-                                                  false,
-                                                  false,
-                                                  true,
-                                                  16,
-                                                  16,
-                                                  4>(static_cast<int8_t*>(c),
-                                                     static_cast<const int8_t*>(a),
-                                                     static_cast<const int8_t*>(b),
-                                                     reinterpret_cast<const hipblasLtFloat*>(alpha),
-                                                     reinterpret_cast<const hipblasLtFloat*>(beta),
-                                                     scalarInDevice,
-                                                     m,
-                                                     n,
-                                                     ldA,
-                                                     ldB,
-                                                     ldC,
-                                                     batchSize,
-                                                     batchStride,
-                                                     opA,
-                                                     opB,
-                                                     stream);
-                 }},
-                {std::make_tuple(HIPBLASLT_R_8I,
-                                 HIPBLASLT_R_32F,
-                                 HIPBLASLT_ORDER_COL,
-                                 HIPBLASLT_ORDER_ROW,
-                                 HIPBLASLT_ORDER_COL),
-                 [](void*       c,
-                    const void* a,
-                    const void* b,
-                    const void* alpha,
-                    const void* beta,
-                    bool        scalarInDevice,
-                    uint32_t    m,
-                    uint32_t    n,
-                    uint32_t    ldA,
-                    uint32_t    ldB,
-                    uint32_t    ldC,
-                    uint32_t    batchSize,
-                    uint32_t    batchStride,
-                    bool        opA,
-                    bool        opB,
-                    hipStream_t stream) {
-                     return launchTransformKernel<int8_t,
-                                                  hipblasLtFloat,
-                                                  false,
-                                                  true,
-                                                  false,
-                                                  16,
-                                                  16,
-                                                  4>(static_cast<int8_t*>(c),
-                                                     static_cast<const int8_t*>(a),
-                                                     static_cast<const int8_t*>(b),
-                                                     reinterpret_cast<const hipblasLtFloat*>(alpha),
-                                                     reinterpret_cast<const hipblasLtFloat*>(beta),
-                                                     scalarInDevice,
-                                                     m,
-                                                     n,
-                                                     ldA,
-                                                     ldB,
-                                                     ldC,
-                                                     batchSize,
-                                                     batchStride,
-                                                     opA,
-                                                     opB,
-                                                     stream);
-                 }},
-                {std::make_tuple(HIPBLASLT_R_8I,
-                                 HIPBLASLT_R_32F,
-                                 HIPBLASLT_ORDER_COL,
-                                 HIPBLASLT_ORDER_ROW,
-                                 HIPBLASLT_ORDER_ROW),
-                 [](void*       c,
-                    const void* a,
-                    const void* b,
-                    const void* alpha,
-                    const void* beta,
-                    bool        scalarInDevice,
-                    uint32_t    m,
-                    uint32_t    n,
-                    uint32_t    ldA,
-                    uint32_t    ldB,
-                    uint32_t    ldC,
-                    uint32_t    batchSize,
-                    uint32_t    batchStride,
-                    bool        opA,
-                    bool        opB,
-                    hipStream_t stream) {
-                     return launchTransformKernel<int8_t,
-                                                  hipblasLtFloat,
-                                                  false,
-                                                  true,
-                                                  true,
-                                                  16,
-                                                  16,
-                                                  4>(static_cast<int8_t*>(c),
-                                                     static_cast<const int8_t*>(a),
-                                                     static_cast<const int8_t*>(b),
-                                                     reinterpret_cast<const hipblasLtFloat*>(alpha),
-                                                     reinterpret_cast<const hipblasLtFloat*>(beta),
-                                                     scalarInDevice,
-                                                     m,
-                                                     n,
-                                                     ldA,
-                                                     ldB,
-                                                     ldC,
-                                                     batchSize,
-                                                     batchStride,
-                                                     opA,
-                                                     opB,
-                                                     stream);
-                 }},
-                {std::make_tuple(HIPBLASLT_R_8I,
-                                 HIPBLASLT_R_32F,
-                                 HIPBLASLT_ORDER_ROW,
-                                 HIPBLASLT_ORDER_COL,
-                                 HIPBLASLT_ORDER_COL),
-                 [](void*       c,
-                    const void* a,
-                    const void* b,
-                    const void* alpha,
-                    const void* beta,
-                    bool        scalarInDevice,
-                    uint32_t    m,
-                    uint32_t    n,
-                    uint32_t    ldA,
-                    uint32_t    ldB,
-                    uint32_t    ldC,
-                    uint32_t    batchSize,
-                    uint32_t    batchStride,
-                    bool        opA,
-                    bool        opB,
-                    hipStream_t stream) {
-                     return launchTransformKernel<int8_t,
-                                                  hipblasLtFloat,
-                                                  true,
-                                                  false,
-                                                  false,
-                                                  16,
-                                                  16,
-                                                  4>(static_cast<int8_t*>(c),
-                                                     static_cast<const int8_t*>(a),
-                                                     static_cast<const int8_t*>(b),
-                                                     reinterpret_cast<const hipblasLtFloat*>(alpha),
-                                                     reinterpret_cast<const hipblasLtFloat*>(beta),
-                                                     scalarInDevice,
-                                                     m,
-                                                     n,
-                                                     ldA,
-                                                     ldB,
-                                                     ldC,
-                                                     batchSize,
-                                                     batchStride,
-                                                     opA,
-                                                     opB,
-                                                     stream);
-                 }},
-                {std::make_tuple(HIPBLASLT_R_8I,
-                                 HIPBLASLT_R_32F,
-                                 HIPBLASLT_ORDER_ROW,
-                                 HIPBLASLT_ORDER_COL,
-                                 HIPBLASLT_ORDER_ROW),
-                 [](void*       c,
-                    const void* a,
-                    const void* b,
-                    const void* alpha,
-                    const void* beta,
-                    bool        scalarInDevice,
-                    uint32_t    m,
-                    uint32_t    n,
-                    uint32_t    ldA,
-                    uint32_t    ldB,
-                    uint32_t    ldC,
-                    uint32_t    batchSize,
-                    uint32_t    batchStride,
-                    bool        opA,
-                    bool        opB,
-                    hipStream_t stream) {
-                     return launchTransformKernel<int8_t,
-                                                  hipblasLtFloat,
-                                                  true,
-                                                  false,
-                                                  true,
-                                                  16,
-                                                  16,
-                                                  4>(static_cast<int8_t*>(c),
-                                                     static_cast<const int8_t*>(a),
-                                                     static_cast<const int8_t*>(b),
-                                                     reinterpret_cast<const hipblasLtFloat*>(alpha),
-                                                     reinterpret_cast<const hipblasLtFloat*>(beta),
-                                                     scalarInDevice,
-                                                     m,
-                                                     n,
-                                                     ldA,
-                                                     ldB,
-                                                     ldC,
-                                                     batchSize,
-                                                     batchStride,
-                                                     opA,
-                                                     opB,
-                                                     stream);
-                 }},
-                {std::make_tuple(HIPBLASLT_R_8I,
-                                 HIPBLASLT_R_32F,
-                                 HIPBLASLT_ORDER_ROW,
-                                 HIPBLASLT_ORDER_ROW,
-                                 HIPBLASLT_ORDER_COL),
-                 [](void*       c,
-                    const void* a,
-                    const void* b,
-                    const void* alpha,
-                    const void* beta,
-                    bool        scalarInDevice,
-                    uint32_t    m,
-                    uint32_t    n,
-                    uint32_t    ldA,
-                    uint32_t    ldB,
-                    uint32_t    ldC,
-                    uint32_t    batchSize,
-                    uint32_t    batchStride,
-                    bool        opA,
-                    bool        opB,
-                    hipStream_t stream) {
-                     return launchTransformKernel<int8_t,
-                                                  hipblasLtFloat,
-                                                  true,
-                                                  true,
-                                                  false,
-                                                  16,
-                                                  16,
-                                                  4>(static_cast<int8_t*>(c),
-                                                     static_cast<const int8_t*>(a),
-                                                     static_cast<const int8_t*>(b),
-                                                     reinterpret_cast<const hipblasLtFloat*>(alpha),
-                                                     reinterpret_cast<const hipblasLtFloat*>(beta),
-                                                     scalarInDevice,
-                                                     m,
-                                                     n,
-                                                     ldA,
-                                                     ldB,
-                                                     ldC,
-                                                     batchSize,
-                                                     batchStride,
-                                                     opA,
-                                                     opB,
-                                                     stream);
-                 }},
-                {std::make_tuple(HIPBLASLT_R_8I,
-                                 HIPBLASLT_R_32F,
-                                 HIPBLASLT_ORDER_ROW,
-                                 HIPBLASLT_ORDER_ROW,
-                                 HIPBLASLT_ORDER_ROW),
-                 [](void*       c,
-                    const void* a,
-                    const void* b,
-                    const void* alpha,
-                    const void* beta,
-                    bool        scalarInDevice,
-                    uint32_t    m,
-                    uint32_t    n,
-                    uint32_t    ldA,
-                    uint32_t    ldB,
-                    uint32_t    ldC,
-                    uint32_t    batchSize,
-                    uint32_t    batchStride,
-                    bool        opA,
-                    bool        opB,
-                    hipStream_t stream) {
-                     return launchTransformKernel<int8_t,
-                                                  hipblasLtFloat,
-                                                  true,
-                                                  true,
-                                                  true,
-                                                  16,
-                                                  16,
-                                                  4>(static_cast<int8_t*>(c),
-                                                     static_cast<const int8_t*>(a),
-                                                     static_cast<const int8_t*>(b),
-                                                     reinterpret_cast<const hipblasLtFloat*>(alpha),
-                                                     reinterpret_cast<const hipblasLtFloat*>(beta),
-                                                     scalarInDevice,
-                                                     m,
-                                                     n,
-                                                     ldA,
-                                                     ldB,
-                                                     ldC,
-                                                     batchSize,
-                                                     batchStride,
-                                                     opA,
-                                                     opB,
-                                                     stream);
-                 }},
-                {std::make_tuple(HIPBLASLT_R_32I,
-                                 HIPBLASLT_R_32F,
-                                 HIPBLASLT_ORDER_COL,
-                                 HIPBLASLT_ORDER_COL,
-                                 HIPBLASLT_ORDER_COL),
-                 [](void*       c,
-                    const void* a,
-                    const void* b,
-                    const void* alpha,
-                    const void* beta,
-                    bool        scalarInDevice,
-                    uint32_t    m,
-                    uint32_t    n,
-                    uint32_t    ldA,
-                    uint32_t    ldB,
-                    uint32_t    ldC,
-                    uint32_t    batchSize,
-                    uint32_t    batchStride,
-                    bool        opA,
-                    bool        opB,
-                    hipStream_t stream) {
-                     return launchTransformKernel<int32_t,
-                                                  hipblasLtFloat,
-                                                  false,
-                                                  false,
-                                                  false,
-                                                  16,
-                                                  16,
-                                                  4>(static_cast<int32_t*>(c),
-                                                     static_cast<const int32_t*>(a),
-                                                     static_cast<const int32_t*>(b),
-                                                     reinterpret_cast<const hipblasLtFloat*>(alpha),
-                                                     reinterpret_cast<const hipblasLtFloat*>(beta),
-                                                     scalarInDevice,
-                                                     m,
-                                                     n,
-                                                     ldA,
-                                                     ldB,
-                                                     ldC,
-                                                     batchSize,
-                                                     batchStride,
-                                                     opA,
-                                                     opB,
-                                                     stream);
-                 }},
-                {std::make_tuple(HIPBLASLT_R_32I,
-                                 HIPBLASLT_R_32F,
-                                 HIPBLASLT_ORDER_COL,
-                                 HIPBLASLT_ORDER_COL,
-                                 HIPBLASLT_ORDER_ROW),
-                 [](void*       c,
-                    const void* a,
-                    const void* b,
-                    const void* alpha,
-                    const void* beta,
-                    bool        scalarInDevice,
-                    uint32_t    m,
-                    uint32_t    n,
-                    uint32_t    ldA,
-                    uint32_t    ldB,
-                    uint32_t    ldC,
-                    uint32_t    batchSize,
-                    uint32_t    batchStride,
-                    bool        opA,
-                    bool        opB,
-                    hipStream_t stream) {
-                     return launchTransformKernel<int32_t,
-                                                  hipblasLtFloat,
-                                                  false,
-                                                  false,
-                                                  true,
-                                                  16,
-                                                  16,
-                                                  4>(static_cast<int32_t*>(c),
-                                                     static_cast<const int32_t*>(a),
-                                                     static_cast<const int32_t*>(b),
-                                                     reinterpret_cast<const hipblasLtFloat*>(alpha),
-                                                     reinterpret_cast<const hipblasLtFloat*>(beta),
-                                                     scalarInDevice,
-                                                     m,
-                                                     n,
-                                                     ldA,
-                                                     ldB,
-                                                     ldC,
-                                                     batchSize,
-                                                     batchStride,
-                                                     opA,
-                                                     opB,
-                                                     stream);
-                 }},
-                {std::make_tuple(HIPBLASLT_R_32I,
-                                 HIPBLASLT_R_32F,
-                                 HIPBLASLT_ORDER_COL,
-                                 HIPBLASLT_ORDER_ROW,
-                                 HIPBLASLT_ORDER_COL),
-                 [](void*       c,
-                    const void* a,
-                    const void* b,
-                    const void* alpha,
-                    const void* beta,
-                    bool        scalarInDevice,
-                    uint32_t    m,
-                    uint32_t    n,
-                    uint32_t    ldA,
-                    uint32_t    ldB,
-                    uint32_t    ldC,
-                    uint32_t    batchSize,
-                    uint32_t    batchStride,
-                    bool        opA,
-                    bool        opB,
-                    hipStream_t stream) {
-                     return launchTransformKernel<int32_t,
-                                                  hipblasLtFloat,
-                                                  false,
-                                                  true,
-                                                  false,
-                                                  16,
-                                                  16,
-                                                  4>(static_cast<int32_t*>(c),
-                                                     static_cast<const int32_t*>(a),
-                                                     static_cast<const int32_t*>(b),
-                                                     reinterpret_cast<const hipblasLtFloat*>(alpha),
-                                                     reinterpret_cast<const hipblasLtFloat*>(beta),
-                                                     scalarInDevice,
-                                                     m,
-                                                     n,
-                                                     ldA,
-                                                     ldB,
-                                                     ldC,
-                                                     batchSize,
-                                                     batchStride,
-                                                     opA,
-                                                     opB,
-                                                     stream);
-                 }},
-                {std::make_tuple(HIPBLASLT_R_32I,
-                                 HIPBLASLT_R_32F,
-                                 HIPBLASLT_ORDER_COL,
-                                 HIPBLASLT_ORDER_ROW,
-                                 HIPBLASLT_ORDER_ROW),
-                 [](void*       c,
-                    const void* a,
-                    const void* b,
-                    const void* alpha,
-                    const void* beta,
-                    bool        scalarInDevice,
-                    uint32_t    m,
-                    uint32_t    n,
-                    uint32_t    ldA,
-                    uint32_t    ldB,
-                    uint32_t    ldC,
-                    uint32_t    batchSize,
-                    uint32_t    batchStride,
-                    bool        opA,
-                    bool        opB,
-                    hipStream_t stream) {
-                     return launchTransformKernel<int32_t,
-                                                  hipblasLtFloat,
-                                                  false,
-                                                  true,
-                                                  true,
-                                                  16,
-                                                  16,
-                                                  4>(static_cast<int32_t*>(c),
-                                                     static_cast<const int32_t*>(a),
-                                                     static_cast<const int32_t*>(b),
-                                                     reinterpret_cast<const hipblasLtFloat*>(alpha),
-                                                     reinterpret_cast<const hipblasLtFloat*>(beta),
-                                                     scalarInDevice,
-                                                     m,
-                                                     n,
-                                                     ldA,
-                                                     ldB,
-                                                     ldC,
-                                                     batchSize,
-                                                     batchStride,
-                                                     opA,
-                                                     opB,
-                                                     stream);
-                 }},
-                {std::make_tuple(HIPBLASLT_R_32I,
-                                 HIPBLASLT_R_32F,
-                                 HIPBLASLT_ORDER_ROW,
-                                 HIPBLASLT_ORDER_COL,
-                                 HIPBLASLT_ORDER_COL),
-                 [](void*       c,
-                    const void* a,
-                    const void* b,
-                    const void* alpha,
-                    const void* beta,
-                    bool        scalarInDevice,
-                    uint32_t    m,
-                    uint32_t    n,
-                    uint32_t    ldA,
-                    uint32_t    ldB,
-                    uint32_t    ldC,
-                    uint32_t    batchSize,
-                    uint32_t    batchStride,
-                    bool        opA,
-                    bool        opB,
-                    hipStream_t stream) {
-                     return launchTransformKernel<int32_t,
-                                                  hipblasLtFloat,
-                                                  true,
-                                                  false,
-                                                  false,
-                                                  16,
-                                                  16,
-                                                  4>(static_cast<int32_t*>(c),
-                                                     static_cast<const int32_t*>(a),
-                                                     static_cast<const int32_t*>(b),
-                                                     reinterpret_cast<const hipblasLtFloat*>(alpha),
-                                                     reinterpret_cast<const hipblasLtFloat*>(beta),
-                                                     scalarInDevice,
-                                                     m,
-                                                     n,
-                                                     ldA,
-                                                     ldB,
-                                                     ldC,
-                                                     batchSize,
-                                                     batchStride,
-                                                     opA,
-                                                     opB,
-                                                     stream);
-                 }},
-                {std::make_tuple(HIPBLASLT_R_32I,
-                                 HIPBLASLT_R_32F,
-                                 HIPBLASLT_ORDER_ROW,
-                                 HIPBLASLT_ORDER_COL,
-                                 HIPBLASLT_ORDER_ROW),
-                 [](void*       c,
-                    const void* a,
-                    const void* b,
-                    const void* alpha,
-                    const void* beta,
-                    bool        scalarInDevice,
-                    uint32_t    m,
-                    uint32_t    n,
-                    uint32_t    ldA,
-                    uint32_t    ldB,
-                    uint32_t    ldC,
-                    uint32_t    batchSize,
-                    uint32_t    batchStride,
-                    bool        opA,
-                    bool        opB,
-                    hipStream_t stream) {
-                     return launchTransformKernel<int32_t,
-                                                  hipblasLtFloat,
-                                                  true,
-                                                  false,
-                                                  true,
-                                                  16,
-                                                  16,
-                                                  4>(static_cast<int32_t*>(c),
-                                                     static_cast<const int32_t*>(a),
-                                                     static_cast<const int32_t*>(b),
-                                                     reinterpret_cast<const hipblasLtFloat*>(alpha),
-                                                     reinterpret_cast<const hipblasLtFloat*>(beta),
-                                                     scalarInDevice,
-                                                     m,
-                                                     n,
-                                                     ldA,
-                                                     ldB,
-                                                     ldC,
-                                                     batchSize,
-                                                     batchStride,
-                                                     opA,
-                                                     opB,
-                                                     stream);
-                 }},
-                {std::make_tuple(HIPBLASLT_R_32I,
-                                 HIPBLASLT_R_32F,
-                                 HIPBLASLT_ORDER_ROW,
-                                 HIPBLASLT_ORDER_ROW,
-                                 HIPBLASLT_ORDER_COL),
-                 [](void*       c,
-                    const void* a,
-                    const void* b,
-                    const void* alpha,
-                    const void* beta,
-                    bool        scalarInDevice,
-                    uint32_t    m,
-                    uint32_t    n,
-                    uint32_t    ldA,
-                    uint32_t    ldB,
-                    uint32_t    ldC,
-                    uint32_t    batchSize,
-                    uint32_t    batchStride,
-                    bool        opA,
-                    bool        opB,
-                    hipStream_t stream) {
-                     return launchTransformKernel<int32_t,
-                                                  hipblasLtFloat,
-                                                  true,
-                                                  true,
-                                                  false,
-                                                  16,
-                                                  16,
-                                                  4>(static_cast<int32_t*>(c),
-                                                     static_cast<const int32_t*>(a),
-                                                     static_cast<const int32_t*>(b),
-                                                     reinterpret_cast<const hipblasLtFloat*>(alpha),
-                                                     reinterpret_cast<const hipblasLtFloat*>(beta),
-                                                     scalarInDevice,
-                                                     m,
-                                                     n,
-                                                     ldA,
-                                                     ldB,
-                                                     ldC,
-                                                     batchSize,
-                                                     batchStride,
-                                                     opA,
-                                                     opB,
-                                                     stream);
-                 }},
-            {
-                std::make_tuple(HIPBLASLT_R_32I,
-                                HIPBLASLT_R_32F,
-                                HIPBLASLT_ORDER_ROW,
-                                HIPBLASLT_ORDER_ROW,
-                                HIPBLASLT_ORDER_ROW),
-                    [](void*       c,
-                       const void* a,
-                       const void* b,
-                       const void* alpha,
-                       const void* beta,
-                       bool        scalarInDevice,
-                       uint32_t    m,
-                       uint32_t    n,
-                       uint32_t    ldA,
-                       uint32_t    ldB,
-                       uint32_t    ldC,
-                       uint32_t    batchSize,
-                       uint32_t    batchStride,
-                       bool        opA,
-                       bool        opB,
-                       hipStream_t stream) {
-                        return launchTransformKernel<int32_t,
-                                                     hipblasLtFloat,
-                                                     true,
-                                                     true,
-                                                     true,
-                                                     16,
-                                                     16,
-                                                     4>(
-                            static_cast<int32_t*>(c),
-                            static_cast<const int32_t*>(a),
-                            static_cast<const int32_t*>(b),
-                            reinterpret_cast<const hipblasLtFloat*>(alpha),
-                            reinterpret_cast<const hipblasLtFloat*>(beta),
-                            scalarInDevice,
-                            m,
-                            n,
-                            ldA,
-                            ldB,
-                            ldC,
-                            batchSize,
-                            batchStride,
-                            opA,
-                            opB,
-                            stream);
-                    }
-            }
+            // vector width = 4
+            GEN_COMBINATION(HIPBLASLT_R_32F, HIPBLASLT_R_32F,
+                            hipblasLtFloat, hipblasLtFloat, 16, 16, 4)
+            GEN_COMBINATION(HIPBLASLT_R_16F, HIPBLASLT_R_16F,
+                            hipblasLtHalf, hipblasLtHalf, 16, 16, 4)
+            GEN_COMBINATION(HIPBLASLT_R_16F, HIPBLASLT_R_32F,
+                            hipblasLtHalf, hipblasLtFloat, 16, 16, 4)
+            GEN_COMBINATION(HIPBLASLT_R_16B, HIPBLASLT_R_32F,
+                            hipblasLtBfloat16, hipblasLtFloat, 16, 16, 4)
+            GEN_COMBINATION(HIPBLASLT_R_8I, HIPBLASLT_R_32F,
+                            hipblasLtInt8, hipblasLtFloat, 16, 16, 4)
+            GEN_COMBINATION(HIPBLASLT_R_32I, HIPBLASLT_R_32F,
+                            hipblasLtInt32, hipblasLtFloat, 16, 16, 4)
+
+            // vector width = 1
+            GEN_COMBINATION(HIPBLASLT_R_32F, HIPBLASLT_R_32F,
+                            hipblasLtFloat, hipblasLtFloat, 16, 16, 1)
+            GEN_COMBINATION(HIPBLASLT_R_16F, HIPBLASLT_R_16F,
+                            hipblasLtHalf, hipblasLtHalf, 16, 16, 1)
+            GEN_COMBINATION(HIPBLASLT_R_16F, HIPBLASLT_R_32F,
+                            hipblasLtHalf, hipblasLtFloat, 16, 16, 1)
+            GEN_COMBINATION(HIPBLASLT_R_16B, HIPBLASLT_R_32F,
+                            hipblasLtBfloat16, hipblasLtFloat, 16, 16, 1)
+            GEN_COMBINATION(HIPBLASLT_R_8I, HIPBLASLT_R_32F,
+                            hipblasLtInt8, hipblasLtFloat, 16, 16, 1)
+            GEN_COMBINATION(HIPBLASLT_R_32I, HIPBLASLT_R_32F,
+                            hipblasLtInt32, hipblasLtFloat, 16, 16, 1)
         }
     };
 }
@@ -2335,9 +597,10 @@ rocblaslt_status rocblaslt_matrix_transform(rocblaslt_handle                 han
     {
         layoutB = dummyMatrixLayout();
     }
-
-    auto key = std::make_tuple(
-        layoutA->type, desc->scaleType, layoutA->order, layoutB->order, layoutC->order);
+    
+    size_t vw = layoutC->m < 4 || layoutC->n < 4 ? 1 : 4;
+    auto key = std::make_tuple(layoutA->type, desc->scaleType,
+                               layoutA->order, layoutB->order, layoutC->order, vw);
 
     if(!transformKernels.count(key))
     {
