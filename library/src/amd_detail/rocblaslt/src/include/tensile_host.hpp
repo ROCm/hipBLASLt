@@ -285,6 +285,7 @@ rocblaslt_status groupedGemmCreate(std::vector<RocblasltContractionProblem>& pro
 rocblaslt_status makeArgument(rocblaslt_handle             handle,
                               const rocblaslt::RocGemmType gemmType,
                               const rocblaslt_matmul_algo& algo,
+                              const rocblaslt::RocTuning*  tuning,
                               void*                        workspace,
                               bool                         useUserArgs,
                               hipStream_t                  stream,
@@ -362,6 +363,7 @@ rocblaslt_status isSolutionSupported(rocblaslt_handle              handle,
                                      const rocblaslt::RocGemmType& gemmType,
                                      std::shared_ptr<void>         gemmData,
                                      rocblaslt_matmul_algo&        algo,
+                                     const rocblaslt::RocTuning*   tuning,
                                      size_t&                       workspaceSizeInBytes);
 
 /*******************************************************************************

@@ -200,6 +200,7 @@ rocblaslt_status
 rocblaslt_status rocblaslt_makeArgument_cpp(rocblaslt_handle             handle,
                                             const rocblaslt::RocGemmType gemmType,
                                             const rocblaslt_matmul_algo& algo,
+                                            const rocblaslt::RocTuning*  tuning,
                                             void*                        workspace,
                                             bool                         useUserArgs,
                                             hipStream_t                  stream,

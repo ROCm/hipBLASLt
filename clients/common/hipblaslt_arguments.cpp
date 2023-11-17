@@ -151,6 +151,9 @@ void Arguments::init()
     use_user_args      = false;
     rotating           = 0;
 
+    // tuning
+    gsu = 0;
+
     print_solution_found = false;
 }
 

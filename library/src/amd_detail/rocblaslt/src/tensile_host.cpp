@@ -51,6 +51,7 @@
 #include <complex>
 #include <exception>
 #include <iomanip>
+#include <sstream>
 #include <memory>
 #include <mutex>
 #include <string>
@@ -1404,6 +1405,7 @@ rocblaslt_status groupedGemmCreate(std::vector<RocblasltContractionProblem>& pro
 rocblaslt_status makeArgument(rocblaslt_handle             handle,
                               const rocblaslt::RocGemmType gemmType,
                               const rocblaslt_matmul_algo& algo,
+                              const rocblaslt::RocTuning*  tuning,
                               void*                        workspace,
                               bool                         useUserArgs,
                               hipStream_t                  stream,
@@ -1427,6 +1429,22 @@ rocblaslt_status makeArgument(rocblaslt_handle             handle,
 
             data->algoIndex = *solutionIndex;
             auto solution   = library->getSolutionByIndex(data->problem, *hardware, *solutionIndex);
+
+            if(tuning)
+            {
+                data->problem.setParams().setGSU(tuning->gsu);
+                std::stringstream ss;
+                if(!solution->checkInternalArgumentsSupport(data->problem, ss, true))
+                {
+                    data->problem.setParams().resetInternalArgs();
+                    log_error(__func__, ss.str().c_str());
+                    return rocblaslt_status_invalid_value;
+                }
+            }
+            else
+            {
+                data->problem.setParams().resetInternalArgs();
+            }
 
             data->inputs.ws = workspace;
 
@@ -1456,6 +1474,29 @@ rocblaslt_status makeArgument(rocblaslt_handle             handle,
             data->algoIndex = *solutionIndex;
             auto solution
                 = library->getSolutionByIndex(data->problem.gemms[0], *hardware, *solutionIndex);
+
+            if(tuning)
+            {
+                data->problem.gemms[0].setParams().setGSU(tuning->gsu);
+                std::stringstream ss;
+                if(!solution->checkInternalArgumentsSupport(data->problem.gemms[0], ss, true))
+                {
+                    data->problem.gemms[0].setParams().resetInternalArgs();
+                    log_error(__func__, ss.str().c_str());
+                    return rocblaslt_status_invalid_value;
+                }
+                for(size_t i = 1; i < data->problem.gemms.size(); i++)
+                {
+                    data->problem.gemms[i].setParams().setGSU(tuning->gsu);
+                }
+            }
+            else
+            {
+                for(size_t i = 0; i < data->problem.gemms.size(); i++)
+                {
+                    data->problem.gemms[i].setParams().resetInternalArgs();
+                }
+            }
 
             for(int i = 0; i < data->inputs.grouped.size(); i++)
             {
@@ -2026,6 +2067,7 @@ rocblaslt_status isSolutionSupported(rocblaslt_handle       handle,
                                      MyProblem&             tensile_prob,
                                      Inputs&                inputs,
                                      rocblaslt_matmul_algo* algo,
+                                     const rocblaslt::RocTuning* tuning,
                                      size_t*                workspaceSizeInBytes)
 {
     std::shared_ptr<Tensile::MasterSolutionLibrary<Tensile::ContractionProblemGemm>> library;
@@ -2041,6 +2083,23 @@ rocblaslt_status isSolutionSupported(rocblaslt_handle       handle,
     if constexpr(std::is_same<MyProblem, Tensile::ContractionProblemGemm>::value)
     {
         auto        solution = library->getSolutionByIndex(tensile_prob, *hardware, *solutionIndex);
+
+        if(tuning)
+        {
+            tensile_prob.setParams().setGSU(tuning->gsu);
+            std::stringstream ss;
+            if(!solution->checkInternalArgumentsSupport(tensile_prob, ss, true))
+            {
+                tensile_prob.setParams().resetInternalArgs();
+                log_error(__func__, ss.str().c_str());
+                return rocblaslt_status_invalid_value;
+            }
+        }
+        else
+        {
+            tensile_prob.setParams().resetInternalArgs();
+        }
+
         const void *scaleAlphaVec = nullptr, *bias = nullptr, *E = nullptr;
         if constexpr(std::is_same<Inputs, Tensile::ContractionInputs>::value)
         {
@@ -2132,6 +2191,30 @@ rocblaslt_status isSolutionSupported(rocblaslt_handle       handle,
     {
         auto solution
             = library->getSolutionByIndex(tensile_prob.gemms[0], *hardware, *solutionIndex);
+
+        if(tuning)
+        {
+            tensile_prob.gemms[0].setParams().setGSU(tuning->gsu);
+            std::stringstream ss;
+            if(!solution->checkInternalArgumentsSupport(tensile_prob.gemms[0], ss, true))
+            {
+                tensile_prob.gemms[0].setParams().resetInternalArgs();
+                log_error(__func__, ss.str().c_str());
+                return rocblaslt_status_invalid_value;
+            }
+            for(size_t i = 1; i < tensile_prob.gemms.size(); i++)
+            {
+                tensile_prob.gemms[i].setParams().setGSU(tuning->gsu);
+            }
+        }
+        else
+        {
+            for(size_t i = 0; i < tensile_prob.gemms.size(); i++)
+            {
+                tensile_prob.gemms[i].setParams().resetInternalArgs();
+            }
+        }
+
         bool isSupported  = true;
         bool isNormalGemm = true;
         for(int i = 0; i < tensile_prob.gemms.size(); i++)
@@ -2220,7 +2303,7 @@ rocblaslt_status isSolutionSupported(rocblaslt_handle             handle,
 {
     std::shared_ptr<TensileDataGemm> data = std::static_pointer_cast<TensileDataGemm>(gemmData);
     updateTensileProblem(false, prob, data->problem);
-    return isSolutionSupported(handle, data->problem, prob, algo, workspaceSizeInBytes);
+    return isSolutionSupported(handle, data->problem, prob, algo, nullptr, workspaceSizeInBytes);
 }
 
 template <typename T>
@@ -2234,6 +2317,7 @@ rocblaslt_status isSolutionSupported(rocblaslt_handle              handle,
                                      const rocblaslt::RocGemmType& gemmType,
                                      std::shared_ptr<void>         gemmData,
                                      rocblaslt_matmul_algo&        algo,
+                                     const rocblaslt::RocTuning*   tuning,
                                      size_t&                       workspaceSizeInBytes)
 {
     if(gemmType == rocblaslt::RocGemmType::ROCBLASLT_GEMM)
@@ -2250,7 +2334,7 @@ rocblaslt_status isSolutionSupported(rocblaslt_handle              handle,
             return rocblaslt_status_not_implemented;
         }
         return isSolutionSupported(
-            handle, data->problem, data->inputs, &algo, &workspaceSizeInBytes);
+            handle, data->problem, data->inputs, &algo, tuning, &workspaceSizeInBytes);
     }
     else if(gemmType == rocblaslt::RocGemmType::ROCBLASLT_GROUPED_GEMM)
     {
@@ -2271,7 +2355,7 @@ rocblaslt_status isSolutionSupported(rocblaslt_handle              handle,
             return rocblaslt_status_not_implemented;
         }
         return isSolutionSupported(
-            handle, data->problem, data->inputs, &algo, &workspaceSizeInBytes);
+            handle, data->problem, data->inputs, &algo, tuning, &workspaceSizeInBytes);
     }
     return rocblaslt_status_not_implemented;
 }
