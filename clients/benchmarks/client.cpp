@@ -526,6 +526,10 @@ try
          value<int32_t>(&arg.rotating)->default_value(0),
          "Use rotating memory blocks for each iteration, size in MB. (Only supports GEMM + api_method c)")
 
+        ("splitk",
+         value<uint8_t>(&arg.gsu)->default_value(0),
+         "[Tuning parameter] Set split K for a solution, 0 is use solution's default value. (Only support GEMM + api_method mix or cpp)")
+
         ("help,h", "produces this help message")
 
         ("version", "Prints the version number");
@@ -588,6 +592,13 @@ try
     if((arg.rotating > 0) && (api_method != 0 || arg.grouped_gemm))
     {
         hipblaslt_cerr << "Currently rotating buffer only supports GEMM + api_method c."
+                       << std::endl;
+        return 1;
+    }
+
+    if((arg.gsu != 0) && ((api_method == 0) || arg.grouped_gemm))
+    {
+        hipblaslt_cerr << "Currently split K only supports GEMM + api_method mix or cpp."
                        << std::endl;
         return 1;
     }
