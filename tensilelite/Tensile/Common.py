@@ -302,9 +302,18 @@ def getArchitectureName(gfxName):
 ################################################################################
 # Tensile internal parameters
 ################################################################################
+# These parameters are not adjustable by the config yamls. They change with the
+# generator versions
 internalParameters = {
   # Each universal kernel will generate one PostGSU(GlobalSplitUPGR) kernel
   "GlobalSplitUPGR": 16
+}
+
+# These parameters are used in ContractionSolutions for user arguments support.
+defaultInternalSupportParams = {
+  # Information about user input internal kernel argument support
+  # Change this to False if the CustomKernel does not support.
+  "SupportUserGSU": True
 }
 
 ################################################################################
@@ -1010,9 +1019,6 @@ validParameters = {
 
     # 4:2 Structured Sparse A Matrix, 0=Non Sparse, 1=Sparse Matrix A, 2=Sparse Matrix B
     "Sparse":                      [0, 1, 2],
-
-    # Information about user input internal kernel argument support
-    "SupportUserGSU":              [False, True],
     }
 
 
@@ -1102,8 +1108,7 @@ defaultBenchmarkCommonParameters = [
     {"ActivationFused":           [ True  ] },
     {"ActivationFuncCall":        [ True  ] },
     {"ActivationAlt":             [ False ] },
-    {"WorkGroupReduction":        [ False ] },
-    {"SupportUserGSU":            [ True  ] }
+    {"WorkGroupReduction":        [ False ] }
     ]
 
 # dictionary of defaults comprised of default option for each parameter
