@@ -541,7 +541,7 @@ class InternalArgsSupport:
 
     @classmethod
     def FromOriginalState(cls, d):
-        return cls(gsu = d['SupportUserGSU'])
+        return cls(gsu = d['InternalSupportParams']['SupportUserGSU'])
 
     def __init__(self, **kwargs):
         for (key, value) in list(kwargs.items()):

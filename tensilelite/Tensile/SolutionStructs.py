@@ -24,6 +24,7 @@
 
 from .Common import assignParameterWithDefault, \
                     defaultProblemType, defaultSolution, \
+                    defaultInternalSupportParams, \
                     globalParameters, internalParameters, \
                     print2, printExit, printWarning, \
                     validMFMA, validSMFMA, validParameters, \
@@ -1013,6 +1014,14 @@ class Solution(collections.abc.Mapping):
       self["ProblemType"] = ProblemType(config["ProblemType"])
     else:
       self["ProblemType"] = ProblemType(defaultProblemType)
+
+    if "InternalSupportParams" in config:
+      self["InternalSupportParams"] = {}
+      for key in defaultInternalSupportParams:
+        assignParameterWithDefault(self["InternalSupportParams"], key, config, defaultInternalSupportParams)
+    else:
+      self["InternalSupportParams"] = defaultInternalSupportParams
+
 
     # assign parameters with defaults
     for key in defaultSolution:
