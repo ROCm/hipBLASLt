@@ -21,7 +21,7 @@
 #
 # ########################################################################
 
-# The ROCm platform requires at least Ubuntu 16.04 or Fedora 24, which have cmake 3.5
+# ROCm software requires at least Ubuntu 16.04 or Fedora 24, which have cmake 3.5
 cmake_minimum_required(VERSION 3.5 FATAL_ERROR)
 
 # This will add compile option: -std=c++17
@@ -132,7 +132,7 @@ if(NOT BUILD_CUDA)
             set (CMAKE_CXX_FLAGS_DEBUG "-O1 ${CMAKE_CXX_FLAGS_DEBUG} -gsplit-dwarf -ggdb" )
         endif()
     else()
-        message(FATAL_ERROR "'hipcc' compiler required to compile for ROCm platform.")
+        message(FATAL_ERROR "'hipcc' compiler required to compile for ROCm software.")
     endif()
 endif()
 # Dependencies
