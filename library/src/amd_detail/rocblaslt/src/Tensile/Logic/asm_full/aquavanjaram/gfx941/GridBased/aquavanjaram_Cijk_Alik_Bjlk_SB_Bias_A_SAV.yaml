@@ -58,7 +58,6 @@
   UseInitialStridesCD: false
   UseScaleDVec: false
   UseScaleAlphaVec: true
-  UseScaleAlphaVec: true
 - - 1LDSBuffer: 0
     ActivationFuncCall: true
     ActivationFused: true
