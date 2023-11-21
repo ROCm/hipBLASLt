@@ -1120,9 +1120,9 @@ void testing_matmul(const Arguments& arg)
         extproblemtype.type_compute = arg.compute_type;
     }
 
-    hipblaslt_ext::GemmType gemmType = do_grouped_gemm
-                                           ? hipblaslt_ext::GemmType::HIPBLASLT_GROUPED_GEMM
-                                           : hipblaslt_ext::GemmType::HIPBLASLT_GEMM;
+    hipblaslt_ext::GemmType   gemmType = do_grouped_gemm
+                                             ? hipblaslt_ext::GemmType::HIPBLASLT_GROUPED_GEMM
+                                             : hipblaslt_ext::GemmType::HIPBLASLT_GEMM;
     hipblaslt_ext::GemmTuning tuning;
     tuning.splitK = arg.gsu;
 
@@ -1503,14 +1503,13 @@ void testing_matmul(const Arguments& arg)
                                                           *(dD[0]),
                                                           matD[0]));
                 }
-                CHECK_HIPBLASLT_ERROR(
-                    gemm.algoGetHeuristic(requestAlgoCount, gemmPref, tmpAlgo));
+                CHECK_HIPBLASLT_ERROR(gemm.algoGetHeuristic(requestAlgoCount, gemmPref, tmpAlgo));
                 heuristicResult.clear();
                 for(int j = 0; j < tmpAlgo.size(); j++)
                 {
                     size_t tmpWorkspaceSize = 0;
                     if(gemm.isAlgoSupported(tmpAlgo[j].algo, tuning, tmpWorkspaceSize)
-                    == HIPBLAS_STATUS_SUCCESS)
+                       == HIPBLAS_STATUS_SUCCESS)
                     {
                         heuristicResult.push_back(tmpAlgo[j]);
                     }
@@ -1584,8 +1583,8 @@ void testing_matmul(const Arguments& arg)
             for(int j = 0; j < tmpAlgo.size(); j++)
             {
                 size_t tmpWorkspaceSize = 0;
-                if(gemm.isAlgoSupported(tmpAlgo[j].algo, tuning, tmpWorkspaceSize)
-                == HIPBLAS_STATUS_SUCCESS)
+                if(groupedGemmVec.isAlgoSupported(tmpAlgo[j].algo, tuning, tmpWorkspaceSize)
+                   == HIPBLAS_STATUS_SUCCESS)
                 {
                     heuristicResult.push_back(tmpAlgo[j]);
                 }
@@ -1912,7 +1911,8 @@ void testing_matmul(const Arguments& arg)
         {
             if(arg.use_ext)
             {
-                CHECK_HIPBLASLT_ERROR(gemm.initialize(heuristicResult[0].algo, tuning, *dWorkspace));
+                CHECK_HIPBLASLT_ERROR(
+                    gemm.initialize(heuristicResult[0].algo, tuning, *dWorkspace));
 
                 CHECK_HIPBLASLT_ERROR(gemm.run(stream));
             }
@@ -1943,7 +1943,8 @@ void testing_matmul(const Arguments& arg)
             if(arg.use_user_args)
             {
                 //grouped gemm
-                CHECK_HIPBLASLT_ERROR(groupedGemm.initialize(heuristicResult[0].algo, tuning, *dWorkspace));
+                CHECK_HIPBLASLT_ERROR(
+                    groupedGemm.initialize(heuristicResult[0].algo, tuning, *dWorkspace));
                 groupedGemm.getDefaultValueForDeviceUserArguments(userArgs);
                 // Copy them to device memory
                 CHECK_HIP_ERROR(hipMemcpy(d_userArgs,
@@ -1956,8 +1957,8 @@ void testing_matmul(const Arguments& arg)
             else
             {
                 //grouped gemm
-                CHECK_HIPBLASLT_ERROR(
-                    groupedGemm.initialize(heuristicResult[0].algo, tuning, *dWorkspace, false, stream));
+                CHECK_HIPBLASLT_ERROR(groupedGemm.initialize(
+                    heuristicResult[0].algo, tuning, *dWorkspace, false, stream));
 
                 CHECK_HIPBLASLT_ERROR(groupedGemm.run(stream));
             }
@@ -2005,7 +2006,8 @@ void testing_matmul(const Arguments& arg)
                 auto block_count = block_counts[0];
                 if(arg.use_ext)
                 {
-                    CHECK_HIPBLASLT_ERROR(gemm.initialize(heuristicResult[sol].algo, tuning, *dWorkspace));
+                    CHECK_HIPBLASLT_ERROR(
+                        gemm.initialize(heuristicResult[sol].algo, tuning, *dWorkspace));
                     for(int i = 0; i < number_cold_calls; i++)
                         CHECK_HIPBLASLT_ERROR(gemm.run(stream));
                     CHECK_HIP_ERROR(hipStreamSynchronize(stream));
