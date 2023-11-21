@@ -357,6 +357,12 @@ namespace roc
                     match = argc && sscanf(*argv, " %c", &val) == 1;
                     ptr->actual_value(val);
                 }
+                else if(auto* ptr = dynamic_cast<value<uint8_t>*>(m_val.get()))
+                {
+                    uint8_t val;
+                    match = argc && sscanf(*argv, " %c", &val) == 1;
+                    ptr->actual_value(val);
+                }
                 else if(auto* ptr = dynamic_cast<value<int8_t>*>(m_val.get()))
                 {
                     int8_t val;
