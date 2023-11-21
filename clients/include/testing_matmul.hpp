@@ -486,7 +486,6 @@ void testing_matmul(const Arguments& arg)
     // Calculating block count
     int32_t max_iters   = max(arg.cold_iters, arg.iters);
     int32_t block_count = max(1, min(max_iters, ceil((float)rotating / totalRotatingSizeNeeded)));
-    std::vector<int32_t> block_counts(gemm_count, block_count);
     if(rotating > 0)
     {
         hipblaslt_cout << "Rotating buffer " << rotating
@@ -498,8 +497,6 @@ void testing_matmul(const Arguments& arg)
 
     for(int i = 0; i < gemm_count; i++)
     {
-        auto block_count = block_counts[i];
-
         CHECK_HIPBLASLT_ERROR(
             hipblasLtMatrixLayoutCreate(&(matA[i]), arg.a_type, A_row[i], A_col[i], lda[i]));
         CHECK_HIPBLASLT_ERROR(
@@ -1059,57 +1056,90 @@ void testing_matmul(const Arguments& arg)
     int     returnedAlgoCount = 0;
     std::vector<hipblasLtMatmulHeuristicResult_t> heuristicResult(requestAlgoCount);
 
-    // grouped gemm
+    // Cpp API
     hipblaslt_ext::GemmPreference gemmPref;
     gemmPref.setMaxWorkspaceBytes(max_workspace_size);
-    hipblaslt_ext::Gemm gemm(
-        handle, transA, transB, arg.a_type, arg.b_type, arg.c_type, arg.d_type, arg.compute_type);
-    hipblaslt_ext::GroupedGemm groupedGemm(
-        handle, transA, transB, arg.a_type, arg.b_type, arg.c_type, arg.d_type, arg.compute_type);
-    std::vector<void*> da(gemm_count), db(gemm_count), dc(gemm_count), dd(gemm_count);
+    std::vector<hipblaslt_ext::Gemm>                    gemmVec;
+    std::vector<hipblaslt_ext::GroupedGemm>             groupedGemmVec;
+    std::vector<std::vector<hipblaslt_ext::GemmInputs>> extinputs;
+
+    // C to Cpp API for GG
+    std::vector<std::vector<void*>> da(block_count, std::vector<void*>(gemm_count));
+    std::vector<std::vector<void*>> db(block_count, std::vector<void*>(gemm_count));
+    std::vector<std::vector<void*>> dc(block_count, std::vector<void*>(gemm_count));
+    std::vector<std::vector<void*>> dd(block_count, std::vector<void*>(gemm_count));
+
+    for(int32_t b = 0; b < block_count; b++)
+    {
+        gemmVec.push_back(hipblaslt_ext::Gemm(handle,
+                                              transA,
+                                              transB,
+                                              arg.a_type,
+                                              arg.b_type,
+                                              arg.c_type,
+                                              arg.d_type,
+                                              arg.compute_type));
+        groupedGemmVec.push_back(hipblaslt_ext::GroupedGemm(handle,
+                                                            transA,
+                                                            transB,
+                                                            arg.a_type,
+                                                            arg.b_type,
+                                                            arg.c_type,
+                                                            arg.d_type,
+                                                            arg.compute_type));
+    }
+
     std::vector<hipblaslt_ext::GemmEpilogue> extepilogue;
-    std::vector<hipblaslt_ext::GemmInputs>   extinputs;
     hipblaslt_ext::GemmProblemType           extproblemtype;
     if(arg.use_ext_setproblem)
     {
+        extinputs.resize(block_count, std::vector<hipblaslt_ext::GemmInputs>(gemm_count));
         extepilogue.resize(gemm_count);
-        extinputs.resize(gemm_count);
 
         for(int gemmIdx = 0; gemmIdx < gemm_count; gemmIdx++)
         {
             auto  bias_type = HIPBLASLT_DATATYPE_INVALID;
             void* bias_addr = nullptr;
-            if(arg.bias_vector)
+            for(int32_t b = 0; b < block_count; b++)
             {
-                bias_type = arg.bias_type;
-                if(arg.d_type != arg.scale_type && arg.bias_type == arg.scale_type)
+                if(arg.bias_vector)
                 {
-                    bias_addr = (void*)*dBias_C[gemmIdx];
+                    bias_type = arg.bias_type;
+                    if(arg.d_type != arg.scale_type && arg.bias_type == arg.scale_type)
+                    {
+                        bias_addr = (void*)((*dBias_C[gemmIdx]) + b * size_bias[gemmIdx]);
+                    }
+                    else
+                    {
+                        bias_addr = (void*)((*dBias[gemmIdx]) + b * size_bias[gemmIdx]);
+                    }
                 }
-                else
+                if(b == 0)
                 {
-                    bias_addr = (void*)*dBias[gemmIdx];
+                    extepilogue[gemmIdx].mode           = epilogue[gemmIdx];
+                    extepilogue[gemmIdx].bias_data_type = bias_type;
+                    extepilogue[gemmIdx].aux_ld         = lde[gemmIdx];
+                    extepilogue[gemmIdx].aux_stride     = stride_e[gemmIdx];
                 }
-            }
-            extepilogue[gemmIdx].mode           = epilogue[gemmIdx];
-            extepilogue[gemmIdx].bias_data_type = bias_type;
-            extepilogue[gemmIdx].aux_ld         = lde[gemmIdx];
-            extepilogue[gemmIdx].aux_stride     = stride_e[gemmIdx];
 
-            extinputs[gemmIdx].a        = *dA[gemmIdx];
-            extinputs[gemmIdx].b        = *dB[gemmIdx];
-            extinputs[gemmIdx].c        = *dC[gemmIdx];
-            extinputs[gemmIdx].d        = *dD[gemmIdx];
-            extinputs[gemmIdx].alpha    = &h_alpha[gemmIdx];
-            extinputs[gemmIdx].beta     = &h_beta[gemmIdx];
-            extinputs[gemmIdx].bias     = bias_addr;
-            extinputs[gemmIdx].scaleA   = arg.scaleA ? *dScaleA[gemmIdx] : nullptr;
-            extinputs[gemmIdx].scaleB   = arg.scaleB ? *dScaleB[gemmIdx] : nullptr;
-            extinputs[gemmIdx].scaleC   = arg.scaleC ? *dScaleC[gemmIdx] : nullptr;
-            extinputs[gemmIdx].scaleD   = arg.scaleD ? *dScaleD[gemmIdx] : nullptr;
-            extinputs[gemmIdx].scaleAux = arg.scaleE ? *dScaleE[gemmIdx] : nullptr;
-            if(arg.scaleAlpha_vector)
-                extinputs[gemmIdx].scaleAlphaVec = *dScaleAlphaVec[gemmIdx];
+                extinputs[b][gemmIdx].a        = (void*)((*dA[gemmIdx]) + b * size_A[gemmIdx]);
+                extinputs[b][gemmIdx].b        = (void*)((*dB[gemmIdx]) + b * size_B[gemmIdx]);
+                extinputs[b][gemmIdx].c        = (void*)((*dC[gemmIdx]) + b * size_C[gemmIdx]);
+                extinputs[b][gemmIdx].d        = (void*)((*dD[gemmIdx]) + b * size_D[gemmIdx]);
+                extinputs[b][gemmIdx].alpha    = &h_alpha[gemmIdx];
+                extinputs[b][gemmIdx].beta     = &h_beta[gemmIdx];
+                extinputs[b][gemmIdx].bias     = bias_addr;
+                extinputs[b][gemmIdx].scaleA   = arg.scaleA ? *dScaleA[gemmIdx] : nullptr;
+                extinputs[b][gemmIdx].scaleB   = arg.scaleB ? *dScaleB[gemmIdx] : nullptr;
+                extinputs[b][gemmIdx].scaleC   = arg.scaleC ? *dScaleC[gemmIdx] : nullptr;
+                extinputs[b][gemmIdx].scaleD   = arg.scaleD ? *dScaleD[gemmIdx] : nullptr;
+                extinputs[b][gemmIdx].scaleAux = arg.scaleE ? *dScaleE[gemmIdx] : nullptr;
+                if(arg.use_e)
+                    extinputs[b][gemmIdx].aux = (void*)((*dE[gemmIdx]) + b * size_E[gemmIdx]);
+                if(arg.scaleAlpha_vector)
+                    extinputs[b][gemmIdx].scaleAlphaVec
+                        = (void*)((*dScaleAlphaVec[gemmIdx]) + b * size_scaleAlphaVec[gemmIdx]);
+            }
         }
         extproblemtype.op_a         = transA;
         extproblemtype.op_b         = transB;
@@ -1118,6 +1148,19 @@ void testing_matmul(const Arguments& arg)
         extproblemtype.type_c       = arg.c_type;
         extproblemtype.type_d       = arg.d_type;
         extproblemtype.type_compute = arg.compute_type;
+    }
+    else if(arg.grouped_gemm)
+    {
+        for(int gemmIdx = 0; gemmIdx < gemm_count; gemmIdx++)
+        {
+            for(int32_t b = 0; b < block_count; b++)
+            {
+                da[b][gemmIdx] = (void*)((*dA[gemmIdx]) + b * size_A[gemmIdx]);
+                db[b][gemmIdx] = (void*)((*dB[gemmIdx]) + b * size_B[gemmIdx]);
+                dc[b][gemmIdx] = (void*)((*dC[gemmIdx]) + b * size_C[gemmIdx]);
+                dd[b][gemmIdx] = (void*)((*dD[gemmIdx]) + b * size_D[gemmIdx]);
+            }
+        }
     }
 
     hipblaslt_ext::GemmType   gemmType = do_grouped_gemm
@@ -1162,40 +1205,42 @@ void testing_matmul(const Arguments& arg)
                 {
                     if(arg.use_ext_setproblem)
                     {
-                        CHECK_HIPBLASLT_ERROR(gemm.setProblem(M[0],
-                                                              N[0],
-                                                              K[0],
-                                                              num_batches[0],
-                                                              lda[0],
-                                                              ldb[0],
-                                                              ldc[0],
-                                                              ldd[0],
-                                                              stride_a[0],
-                                                              stride_b[0],
-                                                              stride_c[0],
-                                                              stride_d[0],
-                                                              extepilogue[0],
-                                                              extinputs[0],
-                                                              extproblemtype));
+                        for(int32_t b = 0; b < block_count; b++)
+                            CHECK_HIPBLASLT_ERROR(gemmVec[b].setProblem(M[0],
+                                                                        N[0],
+                                                                        K[0],
+                                                                        num_batches[0],
+                                                                        lda[0],
+                                                                        ldb[0],
+                                                                        ldc[0],
+                                                                        ldd[0],
+                                                                        stride_a[0],
+                                                                        stride_b[0],
+                                                                        stride_c[0],
+                                                                        stride_d[0],
+                                                                        extepilogue[0],
+                                                                        extinputs[b][0],
+                                                                        extproblemtype));
                     }
                     else
                     {
-                        CHECK_HIPBLASLT_ERROR(gemm.setProblem(matmul[0][0],
-                                                              alpha_in[0],
-                                                              *(dA[0]),
-                                                              matA[0],
-                                                              *(dB[0]),
-                                                              matB[0],
-                                                              &h_beta[0],
-                                                              *(dC[0]),
-                                                              matC[0],
-                                                              *(dD[0]),
-                                                              matD[0]));
+                        for(int32_t b = 0; b < block_count; b++)
+                            CHECK_HIPBLASLT_ERROR(gemmVec[b].setProblem(matmul[b][0],
+                                                                        alpha_in[0],
+                                                                        *(dA[0]) + b * size_A[0],
+                                                                        matA[0],
+                                                                        *(dB[0]) + b * size_B[0],
+                                                                        matB[0],
+                                                                        &h_beta[0],
+                                                                        *(dC[0]) + b * size_C[0],
+                                                                        matC[0],
+                                                                        *(dD[0]) + b * size_D[0],
+                                                                        matD[0]));
                     }
                     for(int j = 0; j < returnedAlgoCount; j++)
                     {
                         size_t tmpWorkspaceSize = 0;
-                        if(gemm.isAlgoSupported(tmpAlgo[j].algo, tuning, tmpWorkspaceSize)
+                        if(gemmVec[0].isAlgoSupported(tmpAlgo[j].algo, tuning, tmpWorkspaceSize)
                            == HIPBLAS_STATUS_SUCCESS)
                         {
                             heuristicResult.push_back(tmpAlgo[j]);
@@ -1236,56 +1281,49 @@ void testing_matmul(const Arguments& arg)
                 {
                     auto num_batches_64
                         = std::vector<int64_t>{num_batches.begin(), num_batches.end()};
-                    CHECK_HIPBLASLT_ERROR(groupedGemm.setProblem(M,
-                                                                 N,
-                                                                 K,
-                                                                 num_batches_64,
-                                                                 lda,
-                                                                 ldb,
-                                                                 ldc,
-                                                                 ldd,
-                                                                 stride_a,
-                                                                 stride_b,
-                                                                 stride_c,
-                                                                 stride_d,
-                                                                 extepilogue,
-                                                                 extinputs,
-                                                                 extproblemtype));
+                    for(int32_t b = 0; b < block_count; b++)
+                        CHECK_HIPBLASLT_ERROR(groupedGemmVec[b].setProblem(M,
+                                                                           N,
+                                                                           K,
+                                                                           num_batches_64,
+                                                                           lda,
+                                                                           ldb,
+                                                                           ldc,
+                                                                           ldd,
+                                                                           stride_a,
+                                                                           stride_b,
+                                                                           stride_c,
+                                                                           stride_d,
+                                                                           extepilogue,
+                                                                           extinputs[b],
+                                                                           extproblemtype));
                 }
                 else
                 {
-                    for(int gemmIdx = 0; gemmIdx < gemm_count; gemmIdx++)
-                    {
-                        da[gemmIdx] = *dA[gemmIdx];
-                        db[gemmIdx] = *dB[gemmIdx];
-                        dc[gemmIdx] = *dC[gemmIdx];
-                        dd[gemmIdx] = *dD[gemmIdx];
-                    }
-
                     std::vector<void*> h_alpha_void, h_beta_void;
                     for(size_t i = 0; i < h_alpha.size(); i++)
                     {
                         h_alpha_void.push_back(&h_alpha[i]);
                         h_beta_void.push_back(&h_beta[i]);
                     }
-
-                    CHECK_HIPBLASLT_ERROR(groupedGemm.setProblem(matmul[0],
-                                                                 h_alpha_void,
-                                                                 da,
-                                                                 matA,
-                                                                 db,
-                                                                 matB,
-                                                                 h_beta_void,
-                                                                 dc,
-                                                                 matC,
-                                                                 dd,
-                                                                 matD));
+                    for(int32_t b = 0; b < block_count; b++)
+                        CHECK_HIPBLASLT_ERROR(groupedGemmVec[b].setProblem(matmul[b],
+                                                                           h_alpha_void,
+                                                                           da[b],
+                                                                           matA,
+                                                                           db[b],
+                                                                           matB,
+                                                                           h_beta_void,
+                                                                           dc[b],
+                                                                           matC,
+                                                                           dd[b],
+                                                                           matD));
                 }
 
                 for(int j = 0; j < returnedAlgoCount; j++)
                 {
                     size_t tmpWorkspaceSize = 0;
-                    if(groupedGemm.isAlgoSupported(tmpAlgo[j].algo, tuning, tmpWorkspaceSize)
+                    if(groupedGemmVec[0].isAlgoSupported(tmpAlgo[j].algo, tuning, tmpWorkspaceSize)
                        == HIPBLAS_STATUS_SUCCESS)
                     {
                         heuristicResult.push_back(tmpAlgo[j]);
@@ -1330,40 +1368,42 @@ void testing_matmul(const Arguments& arg)
             {
                 if(arg.use_ext_setproblem)
                 {
-                    CHECK_HIPBLASLT_ERROR(gemm.setProblem(M[0],
-                                                          N[0],
-                                                          K[0],
-                                                          num_batches[0],
-                                                          lda[0],
-                                                          ldb[0],
-                                                          ldc[0],
-                                                          ldd[0],
-                                                          stride_a[0],
-                                                          stride_b[0],
-                                                          stride_c[0],
-                                                          stride_d[0],
-                                                          extepilogue[0],
-                                                          extinputs[0],
-                                                          extproblemtype));
+                    for(int32_t b = 0; b < block_count; b++)
+                        CHECK_HIPBLASLT_ERROR(gemmVec[b].setProblem(M[0],
+                                                                    N[0],
+                                                                    K[0],
+                                                                    num_batches[0],
+                                                                    lda[0],
+                                                                    ldb[0],
+                                                                    ldc[0],
+                                                                    ldd[0],
+                                                                    stride_a[0],
+                                                                    stride_b[0],
+                                                                    stride_c[0],
+                                                                    stride_d[0],
+                                                                    extepilogue[0],
+                                                                    extinputs[b][0],
+                                                                    extproblemtype));
                 }
                 else
                 {
-                    CHECK_HIPBLASLT_ERROR(gemm.setProblem(matmul[0][0],
-                                                          alpha_in[0],
-                                                          *(dA[0]),
-                                                          matA[0],
-                                                          *(dB[0]),
-                                                          matB[0],
-                                                          &h_beta[0],
-                                                          *(dC[0]),
-                                                          matC[0],
-                                                          *(dD[0]),
-                                                          matD[0]));
+                    for(int32_t b = 0; b < block_count; b++)
+                        CHECK_HIPBLASLT_ERROR(gemmVec[b].setProblem(matmul[b][0],
+                                                                    alpha_in[0],
+                                                                    *(dA[0]) + b * size_A[0],
+                                                                    matA[0],
+                                                                    *(dB[0]) + b * size_B[0],
+                                                                    matB[0],
+                                                                    &h_beta[0],
+                                                                    *(dC[0]) + b * size_C[0],
+                                                                    matC[0],
+                                                                    *(dD[0]) + b * size_D[0],
+                                                                    matD[0]));
                 }
                 for(int j = 0; j < returnedAlgoCount; j++)
                 {
                     size_t tmpWorkspaceSize = 0;
-                    if(gemm.isAlgoSupported(tmpAlgo[j].algo, tuning, tmpWorkspaceSize)
+                    if(gemmVec[0].isAlgoSupported(tmpAlgo[j].algo, tuning, tmpWorkspaceSize)
                        == HIPBLAS_STATUS_SUCCESS)
                     {
                         requestCount++;
@@ -1409,32 +1449,25 @@ void testing_matmul(const Arguments& arg)
             if(arg.use_ext_setproblem)
             {
                 auto num_batches_64 = std::vector<int64_t>{num_batches.begin(), num_batches.end()};
-                CHECK_HIPBLASLT_ERROR(groupedGemm.setProblem(M,
-                                                             N,
-                                                             K,
-                                                             num_batches_64,
-                                                             lda,
-                                                             ldb,
-                                                             ldc,
-                                                             ldd,
-                                                             stride_a,
-                                                             stride_b,
-                                                             stride_c,
-                                                             stride_d,
-                                                             extepilogue,
-                                                             extinputs,
-                                                             extproblemtype));
+                for(int32_t b = 0; b < block_count; b++)
+                    CHECK_HIPBLASLT_ERROR(groupedGemmVec[b].setProblem(M,
+                                                                       N,
+                                                                       K,
+                                                                       num_batches_64,
+                                                                       lda,
+                                                                       ldb,
+                                                                       ldc,
+                                                                       ldd,
+                                                                       stride_a,
+                                                                       stride_b,
+                                                                       stride_c,
+                                                                       stride_d,
+                                                                       extepilogue,
+                                                                       extinputs[b],
+                                                                       extproblemtype));
             }
             else
             {
-                for(int gemmIdx = 0; gemmIdx < gemm_count; gemmIdx++)
-                {
-                    da[gemmIdx] = *dA[gemmIdx];
-                    db[gemmIdx] = *dB[gemmIdx];
-                    dc[gemmIdx] = *dC[gemmIdx];
-                    dd[gemmIdx] = *dD[gemmIdx];
-                }
-
                 std::vector<void*> h_alpha_void, h_beta_void;
                 for(size_t i = 0; i < h_alpha.size(); i++)
                 {
@@ -1442,14 +1475,24 @@ void testing_matmul(const Arguments& arg)
                     h_beta_void.push_back(&h_beta[i]);
                 }
 
-                CHECK_HIPBLASLT_ERROR(groupedGemm.setProblem(
-                    matmul[0], h_alpha_void, da, matA, db, matB, h_beta_void, dc, matC, dd, matD));
+                for(int32_t b = 0; b < block_count; b++)
+                    CHECK_HIPBLASLT_ERROR(groupedGemmVec[b].setProblem(matmul[b],
+                                                                       h_alpha_void,
+                                                                       da[b],
+                                                                       matA,
+                                                                       db[b],
+                                                                       matB,
+                                                                       h_beta_void,
+                                                                       dc[b],
+                                                                       matC,
+                                                                       dd[b],
+                                                                       matD));
             }
 
             for(int j = 0; j < returnedAlgoCount; j++)
             {
                 size_t tmpWorkspaceSize = 0;
-                if(groupedGemm.isAlgoSupported(tmpAlgo[j].algo, tuning, tmpWorkspaceSize)
+                if(groupedGemmVec[0].isAlgoSupported(tmpAlgo[j].algo, tuning, tmpWorkspaceSize)
                    == HIPBLAS_STATUS_SUCCESS)
                 {
                     requestCount++;
@@ -1473,42 +1516,45 @@ void testing_matmul(const Arguments& arg)
             {
                 if(arg.use_ext_setproblem)
                 {
-                    CHECK_HIPBLASLT_ERROR(gemm.setProblem(M[0],
-                                                          N[0],
-                                                          K[0],
-                                                          num_batches[0],
-                                                          lda[0],
-                                                          ldb[0],
-                                                          ldc[0],
-                                                          ldd[0],
-                                                          stride_a[0],
-                                                          stride_b[0],
-                                                          stride_c[0],
-                                                          stride_d[0],
-                                                          extepilogue[0],
-                                                          extinputs[0],
-                                                          extproblemtype));
+                    for(int32_t b = 0; b < block_count; b++)
+                        CHECK_HIPBLASLT_ERROR(gemmVec[b].setProblem(M[0],
+                                                                    N[0],
+                                                                    K[0],
+                                                                    num_batches[0],
+                                                                    lda[0],
+                                                                    ldb[0],
+                                                                    ldc[0],
+                                                                    ldd[0],
+                                                                    stride_a[0],
+                                                                    stride_b[0],
+                                                                    stride_c[0],
+                                                                    stride_d[0],
+                                                                    extepilogue[0],
+                                                                    extinputs[b][0],
+                                                                    extproblemtype));
                 }
                 else
                 {
-                    CHECK_HIPBLASLT_ERROR(gemm.setProblem(matmul[0][0],
-                                                          alpha_in[0],
-                                                          *(dA[0]),
-                                                          matA[0],
-                                                          *(dB[0]),
-                                                          matB[0],
-                                                          &h_beta[0],
-                                                          *(dC[0]),
-                                                          matC[0],
-                                                          *(dD[0]),
-                                                          matD[0]));
+                    for(int32_t b = 0; b < block_count; b++)
+                        CHECK_HIPBLASLT_ERROR(gemmVec[b].setProblem(matmul[b][0],
+                                                                    alpha_in[0],
+                                                                    *(dA[0]) + b * size_A[0],
+                                                                    matA[0],
+                                                                    *(dB[0]) + b * size_B[0],
+                                                                    matB[0],
+                                                                    &h_beta[0],
+                                                                    *(dC[0]) + b * size_C[0],
+                                                                    matC[0],
+                                                                    *(dD[0]) + b * size_D[0],
+                                                                    matD[0]));
                 }
-                CHECK_HIPBLASLT_ERROR(gemm.algoGetHeuristic(requestAlgoCount, gemmPref, tmpAlgo));
+                CHECK_HIPBLASLT_ERROR(
+                    gemmVec[0].algoGetHeuristic(requestAlgoCount, gemmPref, tmpAlgo));
                 heuristicResult.clear();
                 for(int j = 0; j < tmpAlgo.size(); j++)
                 {
                     size_t tmpWorkspaceSize = 0;
-                    if(gemm.isAlgoSupported(tmpAlgo[j].algo, tuning, tmpWorkspaceSize)
+                    if(gemmVec[0].isAlgoSupported(tmpAlgo[j].algo, tuning, tmpWorkspaceSize)
                        == HIPBLAS_STATUS_SUCCESS)
                     {
                         heuristicResult.push_back(tmpAlgo[j]);
@@ -1539,51 +1585,52 @@ void testing_matmul(const Arguments& arg)
             if(arg.use_ext_setproblem)
             {
                 auto num_batches_64 = std::vector<int64_t>{num_batches.begin(), num_batches.end()};
-                CHECK_HIPBLASLT_ERROR(groupedGemm.setProblem(M,
-                                                             N,
-                                                             K,
-                                                             num_batches_64,
-                                                             lda,
-                                                             ldb,
-                                                             ldc,
-                                                             ldd,
-                                                             stride_a,
-                                                             stride_b,
-                                                             stride_c,
-                                                             stride_d,
-                                                             extepilogue,
-                                                             extinputs,
-                                                             extproblemtype));
+                for(int32_t b = 0; b < block_count; b++)
+                    CHECK_HIPBLASLT_ERROR(groupedGemmVec[b].setProblem(M,
+                                                                       N,
+                                                                       K,
+                                                                       num_batches_64,
+                                                                       lda,
+                                                                       ldb,
+                                                                       ldc,
+                                                                       ldd,
+                                                                       stride_a,
+                                                                       stride_b,
+                                                                       stride_c,
+                                                                       stride_d,
+                                                                       extepilogue,
+                                                                       extinputs[b],
+                                                                       extproblemtype));
             }
             else
             {
-                // grouped gemm
-                for(int gemmIdx = 0; gemmIdx < gemm_count; gemmIdx++)
-                {
-                    da[gemmIdx] = *dA[gemmIdx];
-                    db[gemmIdx] = *dB[gemmIdx];
-                    dc[gemmIdx] = *dC[gemmIdx];
-                    dd[gemmIdx] = *dD[gemmIdx];
-                }
-
                 std::vector<void*> h_alpha_void, h_beta_void;
                 for(size_t i = 0; i < h_alpha.size(); i++)
                 {
                     h_alpha_void.push_back(&h_alpha[i]);
                     h_beta_void.push_back(&h_beta[i]);
                 }
-
-                CHECK_HIPBLASLT_ERROR(groupedGemm.setProblem(
-                    matmul[0], h_alpha_void, da, matA, db, matB, h_beta_void, dc, matC, dd, matD));
+                for(int32_t b = 0; b < block_count; b++)
+                    CHECK_HIPBLASLT_ERROR(groupedGemmVec[b].setProblem(matmul[b],
+                                                                       h_alpha_void,
+                                                                       da[b],
+                                                                       matA,
+                                                                       db[b],
+                                                                       matB,
+                                                                       h_beta_void,
+                                                                       dc[b],
+                                                                       matC,
+                                                                       dd[b],
+                                                                       matD));
             }
 
             CHECK_HIPBLASLT_ERROR(
-                groupedGemm.algoGetHeuristic(requestAlgoCount, gemmPref, tmpAlgo));
+                groupedGemmVec[0].algoGetHeuristic(requestAlgoCount, gemmPref, tmpAlgo));
             heuristicResult.clear();
             for(int j = 0; j < tmpAlgo.size(); j++)
             {
                 size_t tmpWorkspaceSize = 0;
-                if(groupedGemmVec.isAlgoSupported(tmpAlgo[j].algo, tuning, tmpWorkspaceSize)
+                if(groupedGemmVec[0].isAlgoSupported(tmpAlgo[j].algo, tuning, tmpWorkspaceSize)
                    == HIPBLAS_STATUS_SUCCESS)
                 {
                     heuristicResult.push_back(tmpAlgo[j]);
@@ -1602,7 +1649,8 @@ void testing_matmul(const Arguments& arg)
     {
         CHECK_HIP_ERROR(
             hipHostMalloc(&userArgs, gemm_count * sizeof(hipblaslt_ext::UserArguments)));
-        CHECK_HIP_ERROR(hipMalloc(&d_userArgs, gemm_count * sizeof(hipblaslt_ext::UserArguments)));
+        CHECK_HIP_ERROR(hipMalloc(&d_userArgs,
+                                  block_count * gemm_count * sizeof(hipblaslt_ext::UserArguments)));
     }
 
     CHECK_SOLUTION_FOUND(returnedAlgoCount);
@@ -1912,9 +1960,9 @@ void testing_matmul(const Arguments& arg)
             if(arg.use_ext)
             {
                 CHECK_HIPBLASLT_ERROR(
-                    gemm.initialize(heuristicResult[0].algo, tuning, *dWorkspace));
+                    gemmVec[0].initialize(heuristicResult[0].algo, tuning, *dWorkspace));
 
-                CHECK_HIPBLASLT_ERROR(gemm.run(stream));
+                CHECK_HIPBLASLT_ERROR(gemmVec[0].run(stream));
             }
             else
             {
@@ -1944,23 +1992,23 @@ void testing_matmul(const Arguments& arg)
             {
                 //grouped gemm
                 CHECK_HIPBLASLT_ERROR(
-                    groupedGemm.initialize(heuristicResult[0].algo, tuning, *dWorkspace));
-                groupedGemm.getDefaultValueForDeviceUserArguments(userArgs);
+                    groupedGemmVec[0].initialize(heuristicResult[0].algo, tuning, *dWorkspace));
+                groupedGemmVec[0].getDefaultValueForDeviceUserArguments(userArgs);
                 // Copy them to device memory
                 CHECK_HIP_ERROR(hipMemcpy(d_userArgs,
                                           userArgs,
                                           gemm_count * sizeof(hipblaslt_ext::UserArguments),
                                           hipMemcpyHostToDevice));
 
-                CHECK_HIPBLASLT_ERROR(groupedGemm.run(d_userArgs, stream));
+                CHECK_HIPBLASLT_ERROR(groupedGemmVec[0].run(d_userArgs, stream));
             }
             else
             {
                 //grouped gemm
-                CHECK_HIPBLASLT_ERROR(groupedGemm.initialize(
+                CHECK_HIPBLASLT_ERROR(groupedGemmVec[0].initialize(
                     heuristicResult[0].algo, tuning, *dWorkspace, false, stream));
 
-                CHECK_HIPBLASLT_ERROR(groupedGemm.run(stream));
+                CHECK_HIPBLASLT_ERROR(groupedGemmVec[0].run(stream));
             }
         }
 
@@ -2003,18 +2051,18 @@ void testing_matmul(const Arguments& arg)
         {
             if(!do_grouped_gemm)
             {
-                auto block_count = block_counts[0];
                 if(arg.use_ext)
                 {
-                    CHECK_HIPBLASLT_ERROR(
-                        gemm.initialize(heuristicResult[sol].algo, tuning, *dWorkspace));
+                    for(int32_t b = 0; b < block_count; b++)
+                        CHECK_HIPBLASLT_ERROR(
+                            gemmVec[b].initialize(heuristicResult[sol].algo, tuning, *dWorkspace));
                     for(int i = 0; i < number_cold_calls; i++)
-                        CHECK_HIPBLASLT_ERROR(gemm.run(stream));
+                        CHECK_HIPBLASLT_ERROR(gemmVec[i % block_count].run(stream));
                     CHECK_HIP_ERROR(hipStreamSynchronize(stream));
                     gpu_time_used = get_time_us_sync(stream); // in microseconds
 
                     for(int i = 0; i < number_hot_calls; i++)
-                        CHECK_HIPBLASLT_ERROR(gemm.run(stream));
+                        CHECK_HIPBLASLT_ERROR(gemmVec[i % block_count].run(stream));
                 }
                 else
                 {
@@ -2087,24 +2135,32 @@ void testing_matmul(const Arguments& arg)
             {
                 if(arg.use_user_args)
                 {
+                    std::vector<void*> d_userArgsVec(block_count);
                     //grouped gemm
-                    CHECK_HIPBLASLT_ERROR(
-                        groupedGemm.initialize(heuristicResult[sol].algo, tuning, *dWorkspace));
-                    groupedGemm.getDefaultValueForDeviceUserArguments(userArgs);
-                    // Copy them to device memory
-                    CHECK_HIP_ERROR(hipMemcpy(d_userArgs,
-                                              userArgs,
-                                              gemm_count * sizeof(hipblaslt_ext::UserArguments),
-                                              hipMemcpyHostToDevice));
+                    for(int32_t b = 0; b < block_count; b++)
+                    {
+                        CHECK_HIPBLASLT_ERROR(groupedGemmVec[b].initialize(
+                            heuristicResult[sol].algo, tuning, *dWorkspace));
+                        groupedGemmVec[b].getDefaultValueForDeviceUserArguments(userArgs);
+                        d_userArgsVec[b]
+                            = d_userArgs + b * gemm_count * sizeof(hipblaslt_ext::UserArguments);
+                        // Copy them to device memory
+                        CHECK_HIP_ERROR(hipMemcpy(d_userArgsVec[b],
+                                                  userArgs,
+                                                  gemm_count * sizeof(hipblaslt_ext::UserArguments),
+                                                  hipMemcpyHostToDevice));
+                    }
 
                     for(int i = 0; i < number_cold_calls; i++)
-                        CHECK_HIPBLASLT_ERROR(groupedGemm.run(d_userArgs, stream));
+                        CHECK_HIPBLASLT_ERROR(groupedGemmVec[i % block_count].run(
+                            d_userArgsVec[i % block_count], stream));
 
                     CHECK_HIP_ERROR(hipStreamSynchronize(stream));
                     gpu_time_used = get_time_us_sync(stream); // in microseconds
 
                     for(int i = 0; i < number_hot_calls; i++)
-                        CHECK_HIPBLASLT_ERROR(groupedGemm.run(d_userArgs, stream));
+                        CHECK_HIPBLASLT_ERROR(groupedGemmVec[i % block_count].run(
+                            d_userArgsVec[i % block_count], stream));
 
                     CHECK_HIP_ERROR(hipStreamSynchronize(stream));
                     gpu_time_used = get_time_us_sync(stream) - gpu_time_used;
@@ -2112,17 +2168,18 @@ void testing_matmul(const Arguments& arg)
                 else
                 {
                     //grouped gemm
-                    CHECK_HIPBLASLT_ERROR(groupedGemm.initialize(
-                        heuristicResult[sol].algo, tuning, *dWorkspace, false, stream));
+                    for(int32_t b = 0; b < block_count; b++)
+                        CHECK_HIPBLASLT_ERROR(groupedGemmVec[b].initialize(
+                            heuristicResult[sol].algo, tuning, *dWorkspace, false, stream));
 
                     for(int i = 0; i < number_cold_calls; i++)
-                        CHECK_HIPBLASLT_ERROR(groupedGemm.run(stream));
+                        CHECK_HIPBLASLT_ERROR(groupedGemmVec[i % block_count].run(stream));
 
                     CHECK_HIP_ERROR(hipStreamSynchronize(stream));
                     gpu_time_used = get_time_us_sync(stream); // in microseconds
 
                     for(int i = 0; i < number_hot_calls; i++)
-                        CHECK_HIPBLASLT_ERROR(groupedGemm.run(stream));
+                        CHECK_HIPBLASLT_ERROR(groupedGemmVec[i % block_count].run(stream));
 
                     CHECK_HIP_ERROR(hipStreamSynchronize(stream));
                     gpu_time_used = get_time_us_sync(stream) - gpu_time_used;
