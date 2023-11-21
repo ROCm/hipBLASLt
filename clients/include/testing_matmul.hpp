@@ -43,6 +43,7 @@
 #include <hipblaslt/hipblaslt-ext.hpp>
 #include <hipblaslt/hipblaslt.h>
 #include <omp.h>
+#include <set>
 
 template <typename Ti, typename Tc, typename To, typename Tbias, typename Tact, typename F>
 void epilogue_func(int64_t m,
@@ -1055,6 +1056,7 @@ void testing_matmul(const Arguments& arg)
                                                               : arg.requested_solution_num;
     int     returnedAlgoCount = 0;
     std::vector<hipblasLtMatmulHeuristicResult_t> heuristicResult(requestAlgoCount);
+    std::vector<size_t>                           heuristicTuningIndex;
 
     // Cpp API
     hipblaslt_ext::GemmPreference gemmPref;
@@ -1163,16 +1165,41 @@ void testing_matmul(const Arguments& arg)
         }
     }
 
-    hipblaslt_ext::GemmType   gemmType = do_grouped_gemm
-                                             ? hipblaslt_ext::GemmType::HIPBLASLT_GROUPED_GEMM
-                                             : hipblaslt_ext::GemmType::HIPBLASLT_GEMM;
-    hipblaslt_ext::GemmTuning tuning;
-    tuning.splitK = arg.gsu;
+    hipblaslt_ext::GemmType gemmType = do_grouped_gemm
+                                           ? hipblaslt_ext::GemmType::HIPBLASLT_GROUPED_GEMM
+                                           : hipblaslt_ext::GemmType::HIPBLASLT_GEMM;
+
+    // Remove duplicate
+    std::vector<uint32_t> gsu_vector;
+    for(int32_t i = 0; i < MAX_SUPPORTED_NUM_PROBLEMS; i++)
+    {
+        if(arg.gsu_vector[i] == -1)
+            break;
+        gsu_vector.push_back(arg.gsu_vector[i]);
+    }
+    std::set<uint32_t> remove_duplicate(gsu_vector.begin(), gsu_vector.end());
+    gsu_vector.assign(remove_duplicate.begin(), remove_duplicate.end());
+    std::vector<hipblaslt_ext::GemmTuning> tuningVec;
+    if(arg.use_ext)
+    {
+        for(size_t i = 0; i < gsu_vector.size(); i++)
+        {
+            hipblaslt_ext::GemmTuning tuning;
+            tuning.splitK = gsu_vector[i];
+            tuningVec.push_back(tuning);
+        }
+    }
+    else
+    {
+        // C API does not support
+        tuningVec.push_back(hipblaslt_ext::GemmTuning());
+    }
 
     if(arg.algo_method == 2)
     {
         std::vector<hipblasLtMatmulHeuristicResult_t> tmpAlgo;
         heuristicResult.clear();
+        heuristicTuningIndex.clear();
 
         int algoIndexCount = 0;
         int algoIndexInc   = 100;
@@ -1239,14 +1266,19 @@ void testing_matmul(const Arguments& arg)
                     }
                     for(int j = 0; j < returnedAlgoCount; j++)
                     {
-                        size_t tmpWorkspaceSize = 0;
-                        if(gemmVec[0].isAlgoSupported(tmpAlgo[j].algo, tuning, tmpWorkspaceSize)
-                           == HIPBLAS_STATUS_SUCCESS)
+                        for(size_t t = 0; t < tuningVec.size(); t++)
                         {
-                            heuristicResult.push_back(tmpAlgo[j]);
-                            workspace_size = std::max(workspace_size, tmpWorkspaceSize);
-                            foundAlgo      = true;
-                            break;
+                            size_t tmpWorkspaceSize = 0;
+                            if(gemmVec[0].isAlgoSupported(
+                                   tmpAlgo[j].algo, tuningVec[t], tmpWorkspaceSize)
+                               == HIPBLAS_STATUS_SUCCESS)
+                            {
+                                heuristicResult.push_back(tmpAlgo[j]);
+                                heuristicTuningIndex.push_back(t);
+                                workspace_size = std::max(workspace_size, tmpWorkspaceSize);
+                                foundAlgo      = true;
+                                break;
+                            }
                         }
                     }
                 }
@@ -1254,23 +1286,27 @@ void testing_matmul(const Arguments& arg)
                 {
                     for(int j = 0; j < returnedAlgoCount; j++)
                     {
-                        size_t tmpWorkspaceSize = 0;
-                        if(hipblaslt_ext::matmulIsAlgoSupported(handle,
-                                                                matmul[0][0],
-                                                                alpha_in[0],
-                                                                matA[0],
-                                                                matB[0],
-                                                                &h_beta[0],
-                                                                matC[0],
-                                                                matD[0],
-                                                                tmpAlgo[j].algo,
-                                                                tmpWorkspaceSize)
-                           == HIPBLAS_STATUS_SUCCESS)
+                        for(size_t t = 0; t < 1; t++) // CAPI not supported yet
                         {
-                            heuristicResult.push_back(tmpAlgo[j]);
-                            workspace_size = std::max(workspace_size, tmpWorkspaceSize);
-                            foundAlgo      = true;
-                            break;
+                            size_t tmpWorkspaceSize = 0;
+                            if(hipblaslt_ext::matmulIsAlgoSupported(handle,
+                                                                    matmul[0][0],
+                                                                    alpha_in[0],
+                                                                    matA[0],
+                                                                    matB[0],
+                                                                    &h_beta[0],
+                                                                    matC[0],
+                                                                    matD[0],
+                                                                    tmpAlgo[j].algo,
+                                                                    tmpWorkspaceSize)
+                               == HIPBLAS_STATUS_SUCCESS)
+                            {
+                                heuristicResult.push_back(tmpAlgo[j]);
+                                heuristicTuningIndex.push_back(t);
+                                workspace_size = std::max(workspace_size, tmpWorkspaceSize);
+                                foundAlgo      = true;
+                                break;
+                            }
                         }
                     }
                 }
@@ -1322,14 +1358,19 @@ void testing_matmul(const Arguments& arg)
 
                 for(int j = 0; j < returnedAlgoCount; j++)
                 {
-                    size_t tmpWorkspaceSize = 0;
-                    if(groupedGemmVec[0].isAlgoSupported(tmpAlgo[j].algo, tuning, tmpWorkspaceSize)
-                       == HIPBLAS_STATUS_SUCCESS)
+                    for(size_t t = 0; t < tuningVec.size(); t++)
                     {
-                        heuristicResult.push_back(tmpAlgo[j]);
-                        workspace_size = std::max(workspace_size, tmpWorkspaceSize);
-                        foundAlgo      = true;
-                        break;
+                        size_t tmpWorkspaceSize = 0;
+                        if(groupedGemmVec[0].isAlgoSupported(
+                               tmpAlgo[j].algo, tuningVec[t], tmpWorkspaceSize)
+                           == HIPBLAS_STATUS_SUCCESS)
+                        {
+                            heuristicResult.push_back(tmpAlgo[j]);
+                            heuristicTuningIndex.push_back(t);
+                            workspace_size = std::max(workspace_size, tmpWorkspaceSize);
+                            foundAlgo      = true;
+                            break;
+                        }
                     }
                 }
             }
@@ -1361,6 +1402,7 @@ void testing_matmul(const Arguments& arg)
                               HIPBLAS_STATUS_SUCCESS);
         returnedAlgoCount = tmpAlgo.size();
         heuristicResult.clear();
+        heuristicTuningIndex.clear();
         int requestCount = 0;
         if(!do_grouped_gemm)
         {
@@ -1402,14 +1444,21 @@ void testing_matmul(const Arguments& arg)
                 }
                 for(int j = 0; j < returnedAlgoCount; j++)
                 {
-                    size_t tmpWorkspaceSize = 0;
-                    if(gemmVec[0].isAlgoSupported(tmpAlgo[j].algo, tuning, tmpWorkspaceSize)
-                       == HIPBLAS_STATUS_SUCCESS)
+                    int addRequest = 0;
+                    for(size_t t = 0; t < tuningVec.size(); t++)
                     {
-                        requestCount++;
-                        heuristicResult.push_back(tmpAlgo[j]);
-                        workspace_size = std::max(workspace_size, tmpWorkspaceSize);
+                        size_t tmpWorkspaceSize = 0;
+                        if(gemmVec[0].isAlgoSupported(
+                               tmpAlgo[j].algo, tuningVec[t], tmpWorkspaceSize)
+                           == HIPBLAS_STATUS_SUCCESS)
+                        {
+                            addRequest = 1;
+                            heuristicResult.push_back(tmpAlgo[j]);
+                            heuristicTuningIndex.push_back(t);
+                            workspace_size = std::max(workspace_size, tmpWorkspaceSize);
+                        }
                     }
+                    requestCount += addRequest;
                     if(requestCount >= requestAlgoCount)
                     {
                         break;
@@ -1420,23 +1469,29 @@ void testing_matmul(const Arguments& arg)
             {
                 for(int j = 0; j < returnedAlgoCount; j++)
                 {
-                    size_t tmpWorkspaceSize = 0;
-                    if(hipblaslt_ext::matmulIsAlgoSupported(handle,
-                                                            matmul[0][0],
-                                                            alpha_in[0],
-                                                            matA[0],
-                                                            matB[0],
-                                                            &h_beta[0],
-                                                            matC[0],
-                                                            matD[0],
-                                                            tmpAlgo[j].algo,
-                                                            tmpWorkspaceSize)
-                       == HIPBLAS_STATUS_SUCCESS)
+                    int addRequest = 0;
+                    for(size_t t = 0; t < 1; t++) // C API not supported yet
                     {
-                        requestCount++;
-                        heuristicResult.push_back(tmpAlgo[j]);
-                        workspace_size = std::max(workspace_size, tmpWorkspaceSize);
+                        size_t tmpWorkspaceSize = 0;
+                        if(hipblaslt_ext::matmulIsAlgoSupported(handle,
+                                                                matmul[0][0],
+                                                                alpha_in[0],
+                                                                matA[0],
+                                                                matB[0],
+                                                                &h_beta[0],
+                                                                matC[0],
+                                                                matD[0],
+                                                                tmpAlgo[j].algo,
+                                                                tmpWorkspaceSize)
+                           == HIPBLAS_STATUS_SUCCESS)
+                        {
+                            addRequest = 1;
+                            heuristicResult.push_back(tmpAlgo[j]);
+                            heuristicTuningIndex.push_back(t);
+                            workspace_size = std::max(workspace_size, tmpWorkspaceSize);
+                        }
                     }
+                    requestCount += addRequest;
                     if(requestCount >= requestAlgoCount)
                     {
                         break;
@@ -1491,14 +1546,21 @@ void testing_matmul(const Arguments& arg)
 
             for(int j = 0; j < returnedAlgoCount; j++)
             {
+                int    addRequest       = 0;
                 size_t tmpWorkspaceSize = 0;
-                if(groupedGemmVec[0].isAlgoSupported(tmpAlgo[j].algo, tuning, tmpWorkspaceSize)
-                   == HIPBLAS_STATUS_SUCCESS)
+                for(size_t t = 0; t < tuningVec.size(); t++)
                 {
-                    requestCount++;
-                    heuristicResult.push_back(tmpAlgo[j]);
-                    workspace_size = std::max(workspace_size, tmpWorkspaceSize);
+                    if(groupedGemmVec[0].isAlgoSupported(
+                           tmpAlgo[j].algo, tuningVec[t], tmpWorkspaceSize)
+                       == HIPBLAS_STATUS_SUCCESS)
+                    {
+                        addRequest = 1;
+                        heuristicResult.push_back(tmpAlgo[j]);
+                        heuristicTuningIndex.push_back(t);
+                        workspace_size = std::max(workspace_size, tmpWorkspaceSize);
+                    }
                 }
+                requestCount += addRequest;
                 if(requestCount >= requestAlgoCount)
                 {
                     break;
@@ -1551,16 +1613,22 @@ void testing_matmul(const Arguments& arg)
                 CHECK_HIPBLASLT_ERROR(
                     gemmVec[0].algoGetHeuristic(requestAlgoCount, gemmPref, tmpAlgo));
                 heuristicResult.clear();
+                heuristicTuningIndex.clear();
                 for(int j = 0; j < tmpAlgo.size(); j++)
                 {
-                    size_t tmpWorkspaceSize = 0;
-                    if(gemmVec[0].isAlgoSupported(tmpAlgo[j].algo, tuning, tmpWorkspaceSize)
-                       == HIPBLAS_STATUS_SUCCESS)
+                    for(size_t t = 0; t < tuningVec.size(); t++)
                     {
-                        heuristicResult.push_back(tmpAlgo[j]);
+                        size_t tmpWorkspaceSize = 0;
+                        if(gemmVec[0].isAlgoSupported(
+                               tmpAlgo[j].algo, tuningVec[t], tmpWorkspaceSize)
+                           == HIPBLAS_STATUS_SUCCESS)
+                        {
+                            heuristicResult.push_back(tmpAlgo[j]);
+                            heuristicTuningIndex.push_back(t);
+                        }
                     }
                 }
-                returnedAlgoCount = heuristicResult.size();
+                returnedAlgoCount = tmpAlgo.size();
             }
             else
             {
@@ -1575,6 +1643,7 @@ void testing_matmul(const Arguments& arg)
                                                                        heuristicResult.data(),
                                                                        &returnedAlgoCount)),
                                       HIPBLAS_STATUS_SUCCESS);
+                heuristicTuningIndex.resize(heuristicResult.size(), 0); // C API not supported yet
             }
 
             for(int i = 0; i < returnedAlgoCount; i++)
@@ -1627,13 +1696,19 @@ void testing_matmul(const Arguments& arg)
             CHECK_HIPBLASLT_ERROR(
                 groupedGemmVec[0].algoGetHeuristic(requestAlgoCount, gemmPref, tmpAlgo));
             heuristicResult.clear();
+            heuristicTuningIndex.clear();
             for(int j = 0; j < tmpAlgo.size(); j++)
             {
-                size_t tmpWorkspaceSize = 0;
-                if(groupedGemmVec[0].isAlgoSupported(tmpAlgo[j].algo, tuning, tmpWorkspaceSize)
-                   == HIPBLAS_STATUS_SUCCESS)
+                for(size_t t = 0; t < tuningVec.size(); t++)
                 {
-                    heuristicResult.push_back(tmpAlgo[j]);
+                    size_t tmpWorkspaceSize = 0;
+                    if(groupedGemmVec[0].isAlgoSupported(
+                           tmpAlgo[j].algo, tuningVec[t], tmpWorkspaceSize)
+                       == HIPBLAS_STATUS_SUCCESS)
+                    {
+                        heuristicResult.push_back(tmpAlgo[j]);
+                        heuristicTuningIndex.push_back(t);
+                    }
                 }
             }
             returnedAlgoCount = heuristicResult.size();
@@ -1659,7 +1734,16 @@ void testing_matmul(const Arguments& arg)
 
     if(arg.print_solution_found)
         hipblaslt_cout << "Is supported " << heuristicResult.size()
-                       << " / Total solutions: " << returnedAlgoCount << std::endl;
+                       << " / Total solutions: " << returnedAlgoCount * tuningVec.size()
+                       << std::endl;
+
+    if(heuristicResult.size() != heuristicTuningIndex.size())
+    {
+        hipblaslt_cerr << "Internal error, heuristicResult.size() != heuristicTuningIndex.size() "
+                       << heuristicResult.size() << " != " << heuristicTuningIndex.size()
+                       << std::endl;
+        exit(EXIT_FAILURE);
+    }
 
     // get CPU result
     if(arg.unit_check || arg.norm_check)
@@ -1959,8 +2043,8 @@ void testing_matmul(const Arguments& arg)
         {
             if(arg.use_ext)
             {
-                CHECK_HIPBLASLT_ERROR(
-                    gemmVec[0].initialize(heuristicResult[0].algo, tuning, *dWorkspace));
+                CHECK_HIPBLASLT_ERROR(gemmVec[0].initialize(
+                    heuristicResult[0].algo, tuningVec[heuristicTuningIndex[0]], *dWorkspace));
 
                 CHECK_HIPBLASLT_ERROR(gemmVec[0].run(stream));
             }
@@ -1991,8 +2075,8 @@ void testing_matmul(const Arguments& arg)
             if(arg.use_user_args)
             {
                 //grouped gemm
-                CHECK_HIPBLASLT_ERROR(
-                    groupedGemmVec[0].initialize(heuristicResult[0].algo, tuning, *dWorkspace));
+                CHECK_HIPBLASLT_ERROR(groupedGemmVec[0].initialize(
+                    heuristicResult[0].algo, tuningVec[heuristicTuningIndex[0]], *dWorkspace));
                 groupedGemmVec[0].getDefaultValueForDeviceUserArguments(userArgs);
                 // Copy them to device memory
                 CHECK_HIP_ERROR(hipMemcpy(d_userArgs,
@@ -2005,8 +2089,12 @@ void testing_matmul(const Arguments& arg)
             else
             {
                 //grouped gemm
-                CHECK_HIPBLASLT_ERROR(groupedGemmVec[0].initialize(
-                    heuristicResult[0].algo, tuning, *dWorkspace, false, stream));
+                CHECK_HIPBLASLT_ERROR(
+                    groupedGemmVec[0].initialize(heuristicResult[0].algo,
+                                                 tuningVec[heuristicTuningIndex[0]],
+                                                 *dWorkspace,
+                                                 false,
+                                                 stream));
 
                 CHECK_HIPBLASLT_ERROR(groupedGemmVec[0].run(stream));
             }
@@ -2055,7 +2143,9 @@ void testing_matmul(const Arguments& arg)
                 {
                     for(int32_t b = 0; b < block_count; b++)
                         CHECK_HIPBLASLT_ERROR(
-                            gemmVec[b].initialize(heuristicResult[sol].algo, tuning, *dWorkspace));
+                            gemmVec[b].initialize(heuristicResult[sol].algo,
+                                                  tuningVec[heuristicTuningIndex[sol]],
+                                                  *dWorkspace));
                     for(int i = 0; i < number_cold_calls; i++)
                         CHECK_HIPBLASLT_ERROR(gemmVec[i % block_count].run(stream));
                     CHECK_HIP_ERROR(hipStreamSynchronize(stream));
@@ -2139,8 +2229,10 @@ void testing_matmul(const Arguments& arg)
                     //grouped gemm
                     for(int32_t b = 0; b < block_count; b++)
                     {
-                        CHECK_HIPBLASLT_ERROR(groupedGemmVec[b].initialize(
-                            heuristicResult[sol].algo, tuning, *dWorkspace));
+                        CHECK_HIPBLASLT_ERROR(
+                            groupedGemmVec[b].initialize(heuristicResult[sol].algo,
+                                                         tuningVec[heuristicTuningIndex[sol]],
+                                                         *dWorkspace));
                         groupedGemmVec[b].getDefaultValueForDeviceUserArguments(userArgs);
                         d_userArgsVec[b]
                             = d_userArgs + b * gemm_count * sizeof(hipblaslt_ext::UserArguments);
@@ -2169,8 +2261,12 @@ void testing_matmul(const Arguments& arg)
                 {
                     //grouped gemm
                     for(int32_t b = 0; b < block_count; b++)
-                        CHECK_HIPBLASLT_ERROR(groupedGemmVec[b].initialize(
-                            heuristicResult[sol].algo, tuning, *dWorkspace, false, stream));
+                        CHECK_HIPBLASLT_ERROR(
+                            groupedGemmVec[b].initialize(heuristicResult[sol].algo,
+                                                         tuningVec[heuristicTuningIndex[sol]],
+                                                         *dWorkspace,
+                                                         false,
+                                                         stream));
 
                     for(int i = 0; i < number_cold_calls; i++)
                         CHECK_HIPBLASLT_ERROR(groupedGemmVec[i % block_count].run(stream));
@@ -2233,7 +2329,7 @@ void testing_matmul(const Arguments& arg)
 #define argument_param                                                                             \
     e_transA, e_transB, e_grouped_gemm, e_batch_count, e_M, e_N, e_K, e_alpha, e_lda, e_stride_a,  \
         e_beta, e_ldb, e_stride_b, e_ldc, e_stride_c, e_ldd, e_stride_d, e_d_type, e_compute_type, \
-        e_activation_type, e_bias_vector, e_gsu, e_rotating
+        e_activation_type, e_bias_vector, e_rotating
 
             int32_t     solutionIndex = -1;
             std::string solutionName  = "";
@@ -2246,17 +2342,19 @@ void testing_matmul(const Arguments& arg)
                 kernelName
                     = hipblaslt_ext::getKernelNameFromAlgo(handle, heuristicResult[sol].algo);
             }
-            ArgumentModel<argument_param>{}.log_args<Tc>(hipblaslt_cout,
-                                                         sol,
-                                                         solutionIndex,
-                                                         solutionName,
-                                                         kernelName,
-                                                         arg,
-                                                         gpu_time_used,
-                                                         flops,
-                                                         ArgumentLogging::NA_value,
-                                                         cpu_time_used,
-                                                         hipblaslt_error);
+            ArgumentModel<argument_param>{}.log_args<Tc>(
+                hipblaslt_cout,
+                sol,
+                solutionIndex,
+                solutionName,
+                kernelName,
+                arg,
+                (uint32_t)tuningVec[heuristicTuningIndex[sol]].splitK,
+                gpu_time_used,
+                flops,
+                ArgumentLogging::NA_value,
+                cpu_time_used,
+                hipblaslt_error);
             if(best_gpu_time > gpu_time_used)
             {
                 best_sol      = sol;
@@ -2280,17 +2378,19 @@ void testing_matmul(const Arguments& arg)
             }
 
             hipblaslt_cout << "Winner: " << std::endl;
-            ArgumentModel<argument_param>{}.log_args<Tc>(hipblaslt_cout,
-                                                         best_sol,
-                                                         solutionIndex,
-                                                         solutionName,
-                                                         kernelName,
-                                                         arg,
-                                                         best_gpu_time,
-                                                         best_flops,
-                                                         ArgumentLogging::NA_value,
-                                                         cpu_time_used,
-                                                         0.0);
+            ArgumentModel<argument_param>{}.log_args<Tc>(
+                hipblaslt_cout,
+                best_sol,
+                solutionIndex,
+                solutionName,
+                kernelName,
+                arg,
+                (uint32_t)tuningVec[heuristicTuningIndex[best_sol]].splitK,
+                best_gpu_time,
+                best_flops,
+                ArgumentLogging::NA_value,
+                cpu_time_used,
+                0.0);
         }
     }
 

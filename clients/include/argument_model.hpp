@@ -139,6 +139,7 @@ public:
                   std::string&                solution_name,
                   std::string&                kernel_name,
                   const Arguments&            arg,
+                  uint32_t                    splitK,
                   double                      gpu_us,
                   double                      gflops,
                   double                      gpu_bytes = ArgumentLogging::NA_value,
@@ -175,6 +176,10 @@ public:
         // C++14. TODO: Remove when C++17 is used
         (void)(int[]){(ArgumentsHelper::apply<Args>{}()(print, arg, T{}), 0)...};
 #endif
+
+        // Additional name and value list
+        if(splitK > 0)
+            print("splitK", splitK);
 
         if(arg.timing)
             log_perf(name_list,

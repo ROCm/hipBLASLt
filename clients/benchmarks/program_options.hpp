@@ -383,6 +383,12 @@ namespace roc
                         match = true;
                     }
                 }
+                else if(auto* ptr = dynamic_cast<valueVec<uint32_t>*>(m_val.get()))
+                {
+                    uint32_t val;
+                    match = argc && sscanf(*argv, "%" SCNu32, &val) == 1;
+                    ptr->actual_value(val);
+                }
                 else if(auto* ptr = dynamic_cast<valueVec<int64_t>*>(m_val.get()))
                 {
                     int64_t val;
@@ -569,10 +575,21 @@ namespace roc
                             left << dynamic_cast<const value<double>*>(val)->get_value();
                         else if(dynamic_cast<const value<char>*>(val))
                             left << dynamic_cast<const value<char>*>(val)->get_value();
+                        else if(dynamic_cast<const value<uint8_t>*>(val))
+                            left << dynamic_cast<const value<uint8_t>*>(val)->get_value();
                         else if(dynamic_cast<const value<int8_t>*>(val))
                             left << dynamic_cast<const value<int8_t>*>(val)->get_value();
                         else if(dynamic_cast<const value<std::string>*>(val))
                             left << dynamic_cast<const value<std::string>*>(val)->get_value();
+                        else if(dynamic_cast<const valueVec<uint32_t>*>(val))
+                        {
+                            auto& vec = dynamic_cast<const valueVec<uint32_t>*>(val)->get_value();
+                            left << vec[0];
+                            for(size_t i = 1; i < vec.size(); i++)
+                            {
+                                left << ", " << vec[i];
+                            }
+                        }
                         else if(dynamic_cast<const valueVec<int64_t>*>(val))
                         {
                             auto& vec = dynamic_cast<const valueVec<int64_t>*>(val)->get_value();

@@ -285,10 +285,11 @@ try
 
     bool verify = 0;
 
-    bool                 grouped_gemm;
-    std::vector<int64_t> m, n, k;
-    std::vector<int64_t> lda, ldb, ldc, ldd, lde;
-    std::vector<int64_t> stride_a, stride_b, stride_c, stride_d, stride_e;
+    bool                  grouped_gemm;
+    std::vector<int64_t>  m, n, k;
+    std::vector<int64_t>  lda, ldb, ldc, ldd, lde;
+    std::vector<int64_t>  stride_a, stride_b, stride_c, stride_d, stride_e;
+    std::vector<uint32_t> gsu_vector;
     arg.init(); // set all defaults
 
     options_description desc("hipblaslt-bench command line options");
@@ -527,7 +528,7 @@ try
          "Use rotating memory blocks for each iteration, size in MB.")
 
         ("splitk",
-         value<uint8_t>(&arg.gsu)->default_value(0),
+         valueVec<uint32_t>(&gsu_vector),
          "[Tuning parameter] Set split K for a solution, 0 is use solution's default value. (Only support GEMM + api_method mix or cpp)")
 
         ("help,h", "produces this help message")
@@ -588,7 +589,24 @@ try
         return 1;
     }
 
-    if((arg.gsu != 0) && ((api_method == 0) || arg.grouped_gemm))
+    int max_gsu = 0;
+    if(gsu_vector.size() > MAX_SUPPORTED_NUM_PROBLEMS)
+    {
+        hipblaslt_cerr << "Too many gsu parameters, maximum is: " << MAX_SUPPORTED_NUM_PROBLEMS
+                       << std::endl;
+        return 1;
+    }
+    for(size_t i = 0; i < gsu_vector.size(); i++)
+    {
+        if(gsu_vector[i] < 0 || gsu_vector[i] > 255)
+        {
+            hipblaslt_cerr << "SplitK range is 0~255." << std::endl;
+            return 1;
+        }
+        arg.gsu_vector[i] = gsu_vector[i];
+        max_gsu           = max(max_gsu, arg.gsu_vector[i]);
+    }
+    if((max_gsu > 0) && ((api_method == 0) || arg.grouped_gemm))
     {
         hipblaslt_cerr << "Currently split K only supports GEMM + api_method mix or cpp."
                        << std::endl;

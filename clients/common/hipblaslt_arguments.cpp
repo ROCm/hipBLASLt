@@ -152,7 +152,11 @@ void Arguments::init()
     rotating           = 0;
 
     // tuning
-    gsu = 0;
+    gsu_vector[0] = 0;
+    for(int32_t i = 1; i < MAX_SUPPORTED_NUM_PROBLEMS; i++)
+    {
+        gsu_vector[i] = -1;
+    }
 
     print_solution_found = false;
 }
