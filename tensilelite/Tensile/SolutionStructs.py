@@ -1873,10 +1873,9 @@ class Solution(collections.abc.Mapping):
         state['_'+s] = state[s]
         #del state[s]
 
-    if ("_GlobalAccumulation" not in state) or ("_WorkspaceSizePerElemC" not in state):
+    if ("_GlobalAccumulation" not in state):
       computeBytes = state["ProblemType"]["ComputeDataType"].numBytes()
       state["_GlobalAccumulation"] = None
-      state["_WorkspaceSizePerElemC"] = computeBytes
       if state["GlobalSplitU"] > 1:
         computeName  = state["ProblemType"]["ComputeDataType"].toName()
 
@@ -1886,11 +1885,11 @@ class Solution(collections.abc.Mapping):
         elif state["GlobalSplitUAlgorithm"] == 'MultipleBuffer':
           state["_GlobalAccumulation"] = 'MultipleBuffer'
 
-    if("_WorkspaceSizePerElemBias" not in state):
-      state["_WorkspaceSizePerElemBias"] = 0
-      if state["ProblemType"]["UseBias"] and state["ProblemType"]["Gradient"]:
-        computeBytes = state["ProblemType"]["ComputeDataType"].numBytes()
-        state["_WorkspaceSizePerElemBias"] = computeBytes
+    computeBytes = state["ProblemType"]["ComputeDataType"].numBytes()
+    state["_WorkspaceSizePerElemC"] = computeBytes
+    state["_WorkspaceSizePerElemBias"] = 0
+    if state["ProblemType"]["UseBias"] and state["ProblemType"]["Gradient"]:
+      state["_WorkspaceSizePerElemBias"] = computeBytes
 
     state["WorkspaceCheck"] = [state["_WorkspaceSizePerElemC"], state["_WorkspaceSizePerElemBias"], state["GlobalSplitU"] if state["GlobalSplitUAlgorithm"] == 'MultipleBuffer' else 1]
 
