@@ -2233,7 +2233,7 @@ void testing_matmul(const Arguments& arg)
 #define argument_param                                                                             \
     e_transA, e_transB, e_grouped_gemm, e_batch_count, e_M, e_N, e_K, e_alpha, e_lda, e_stride_a,  \
         e_beta, e_ldb, e_stride_b, e_ldc, e_stride_c, e_ldd, e_stride_d, e_d_type, e_compute_type, \
-        e_activation_type, e_bias_vector
+        e_activation_type, e_bias_vector, e_gsu, e_rotating
 
             int32_t     solutionIndex = -1;
             std::string solutionName  = "";
