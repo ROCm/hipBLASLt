@@ -1073,7 +1073,7 @@ Tests:
     - { M:  128,   N:  128,    K:  65536 }
   transA_transB: *transA_transB_range
   algo_method: [2]
-  gsu: [0, 1, 4, 7, 38]
+  gsu_vector: [[0], [1], [4], [7], [38]]
   alpha: 1
   beta: 2.0
   unit_check: 1
