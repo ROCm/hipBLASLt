@@ -62,7 +62,8 @@ defaultBenchOptions = {"ProblemType": {
     "ComputeInputDataType": "s",
     "ComputeDataType": "s",
     "DataTypeC": "s",
-    "DataTypeD": "s"
+    "DataTypeD": "s",
+    "UseBias": False
 }, "TestConfig": {
     "ColdIter": 20,
     "Iter": 100,
@@ -70,6 +71,9 @@ defaultBenchOptions = {"ProblemType": {
     "RequestedSolutions": 2, # Only works in AlgoMethod heuristic
     "SolutionIndex": None, # Only works in AlgoMethod index
     "ApiMethod": "cpp",
+    "RotatingBuffer": 0,
+}, "TuningParameters": {
+    "SplitK": [0]
 }, "ProblemSizes": []}
 defaultCreateLogicOptions = {}  # Currently unused
 
@@ -141,6 +145,8 @@ def findExact(config):
             config[keyOuter] = defaultBenchOptions[keyOuter]
         else:
             for key in defaultBenchOptions[keyOuter]:
+                if config[keyOuter] == None:
+                    config[keyOuter] = {}
                 if key not in config[keyOuter]:
                     config[keyOuter][key] = defaultBenchOptions[keyOuter][key]
     # Sort and remove duplicated
@@ -191,6 +197,8 @@ def findExact(config):
         gemm_type = "%s%s%s"%(config["ProblemType"]["ComputeInputDataType"],
                               config["ProblemType"]["DataTypeD"],
                               config["ProblemType"]["ComputeDataType"])
+    if config["ProblemType"]["UseBias"]:
+        gemm_type += "_Bias"
 
     execBenchPath = globalParameters["BuildDir"] + "/clients/staging/hipblaslt-bench"
 
@@ -218,6 +226,20 @@ def findExact(config):
                 "-j", str(config["TestConfig"]["ColdIter"]), "-i", str(config["TestConfig"]["Iter"]),
                 "-m", str(size[0]), "-n", str(size[1]), "-k", str(size[2])]
 
+        if config["ProblemType"]["UseBias"]:
+            command.append("--bias_vector")
+
+        if config["TestConfig"]["RotatingBuffer"] > 0:
+            command.append("--rotating")
+            command.append(str(config["TestConfig"]["RotatingBuffer"]))
+
+        if "SplitK" in config["TuningParameters"]:
+            for splitk in config["TuningParameters"]["SplitK"]:
+                if splitk < 0 or splitk > 255:
+                    assert 0 and "splitk's range is 0~255"
+                command.append("--splitk")
+                command.append(str(splitk))
+
         filePath = os.path.abspath(globalParameters["WorkingDir"]["Bench"] + "/" + filename)
         f = open(filePath, "w")
         subprocess.run(command, stdout=f)
@@ -227,6 +249,7 @@ class yamlListInfo:
     problemSizes: List[int] = field(init=False)
     localSolutionIndex: int = -1
     tflops: float = 0.0
+    splitK: int   = 0
 
     def __post_init__(self):
         self.problemSizes = []
@@ -241,9 +264,8 @@ def fetchDataFromLogic(yamlFilePath, infoList):
         str1 = "Library logic file {} is missing required field matching property." \
                 .format(yamlFilePath)
         assert 0 and str1
-    if libraryType == "Equality":
-        return "Equality found for %s, skipping."%yamlFilePath
 
+    str1 = ""
     # index 5: solution
     # index 7: exactLogic
     # index 8: rangeLogic
@@ -251,22 +273,38 @@ def fetchDataFromLogic(yamlFilePath, infoList):
     newSolutionList = []
     local2NewLocalTable = {}
     for info in infoList:
-        if info.localSolutionIndex not in local2NewLocalTable:
+        solution = solutionList[info.localSolutionIndex]
+        if ((solution["GlobalSplitU"] == info.splitK) or (info.splitK == 0)) and (libraryType == "Equality"):
+            str1 += "Equality solution found for %s, skipping.\n"%solution["SolutionNameMin"]
+            continue
+        gsu = solution["GlobalSplitU"] if info.splitK == 0 else info.splitK
+        key = (info.localSolutionIndex, gsu)
+        if key not in local2NewLocalTable:
             newSolutionList.append(solutionList[info.localSolutionIndex])
-            local2NewLocalTable[info.localSolutionIndex] = len(newSolutionList) - 1
+            local2NewLocalTable[key] = len(newSolutionList) - 1
             assert newSolutionList[-1]["SolutionIndex"] == info.localSolutionIndex
-            newSolutionList[-1]["SolutionIndex"] = local2NewLocalTable[info.localSolutionIndex]
+            newSolutionList[-1]["SolutionIndex"] = local2NewLocalTable[key]
+            if newSolutionList[-1]["GlobalSplitU"] != gsu:
+                oldStr = "_GSU" + str(newSolutionList[-1]["GlobalSplitU"])
+                newStr = "_GSU" + str(gsu)
+                if oldStr in newSolutionList[-1]["SolutionNameMin"]:
+                    newSolutionList[-1]["SolutionNameMin"] = newSolutionList[-1]["SolutionNameMin"].replace(oldStr, newStr)
+                newSolutionList[-1]["GlobalSplitU"] = gsu
     data[5] = newSolutionList
     exactLogicList = []
     for info in infoList:
-        exactLogicList.append([info.problemSizes, [local2NewLocalTable[info.localSolutionIndex], info.tflops]])
+        solution = solutionList[info.localSolutionIndex]
+        gsu = solution["GlobalSplitU"] if info.splitK == 0 else info.splitK
+        key = (info.localSolutionIndex, gsu)
+        if key in local2NewLocalTable:
+            exactLogicList.append([info.problemSizes, [local2NewLocalTable[key], info.tflops]])
     data[7] = exactLogicList
     data[8] = None
     data[12] = "Equality"
 
     yamlFileName = os.path.abspath(globalParameters["WorkingDir"]["LogicYaml"] + "/" + os.path.basename(yamlFilePath))
     writeYAML(yamlFileName, data, explicit_start=False, explicit_end=False)
-    return ""
+    return str1
 
 def CreateExact(config):
     print("Creating exact logic")
@@ -305,6 +343,7 @@ def CreateExact(config):
         ldc = int(values[headers.index('ldc')])
         ldd = int(values[headers.index('ldd')])
         tflops = float( values[headers.index('hipblaslt-Gflops')] )
+        splitK = int(values[headers.index('splitK')]) if 'splitK' in headers else 0
 
         data = tableData[solutionIndex]
         yamlFilePath           = data[0]
@@ -313,6 +352,7 @@ def CreateExact(config):
         yli.problemSizes = [m, n, b, k, lda, ldb, ldc, ldd]
         yli.localSolutionIndex = yamlLocalSolutionIndex
         yli.tflops = tflops
+        yli.splitK = splitK
         if yamlFilePath in yamlList:
             yamlList[yamlFilePath].append(yli)
         else:
