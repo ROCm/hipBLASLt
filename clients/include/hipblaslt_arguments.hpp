@@ -152,7 +152,7 @@ struct Arguments
     int32_t rotating;
 
     // tuning
-    uint8_t gsu;
+    int32_t gsu_vector[MAX_SUPPORTED_NUM_PROBLEMS]; // This is for client
 
     // print
     bool print_solution_found;
@@ -238,7 +238,7 @@ struct Arguments
     OPER(algo_method) SEP            \
     OPER(use_user_args) SEP          \
     OPER(rotating) SEP               \
-    OPER(gsu) SEP                    \
+    OPER(gsu_vector) SEP             \
     OPER(print_solution_found) SEP   \
     OPER(print_kernel_info) SEP
 
@@ -379,8 +379,7 @@ namespace ArgumentsHelper
               e_##NAME == e_stride_e ? hipblaslt_argument(-13) :                            \
               e_##NAME == e_alpha ? hipblaslt_argument(-14) :                               \
               e_##NAME == e_beta ? hipblaslt_argument(-15) :                                \
-              e_##NAME == e_gsu ? hipblaslt_argument(-16) :                                 \
-              e_##NAME == e_rotating ? hipblaslt_argument(-17) : e_##NAME> = \
+              e_##NAME == e_rotating ? hipblaslt_argument(-16) : e_##NAME> = \
             [](auto&& func, const Arguments& arg, auto) { func(#NAME, arg.NAME); }
 
     // Specialize apply for each Argument
@@ -658,14 +657,6 @@ namespace ArgumentsHelper
     HIPBLASLT_CLANG_STATIC constexpr auto apply<e_beta> =
         [](auto&& func, const Arguments& arg, auto T) {
             func("beta", arg.get_beta<decltype(T)>());
-        };
-
-    // Specialization for e_gsu
-    template <>
-    HIPBLASLT_CLANG_STATIC constexpr auto apply<e_gsu> =
-        [](auto&& func, const Arguments& arg, auto T) {
-            if(arg.gsu > 0)
-                func("splitk", arg.gsu);
         };
 
     // Specialization for e_rotating

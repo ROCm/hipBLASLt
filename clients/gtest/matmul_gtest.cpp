@@ -145,9 +145,9 @@ namespace
 
                 name << '_' << (char)std::toupper(arg.transA) << (char)std::toupper(arg.transB);
 
-                name << '_' << arg.M[0] << '_' << arg.N[0] << '_' << arg.K[0] << '_' << arg.alpha << '_'
-                     << arg.lda[0] << '_' << arg.ldb[0] << '_' << arg.beta << '_' << arg.ldc[0] << '_'
-                     << arg.ldd[0];
+                name << '_' << arg.M[0] << '_' << arg.N[0] << '_' << arg.K[0] << '_' << arg.alpha
+                     << '_' << arg.lda[0] << '_' << arg.ldb[0] << '_' << arg.beta << '_'
+                     << arg.ldc[0] << '_' << arg.ldd[0];
 
                 if(arg.use_e)
                 {
@@ -194,8 +194,8 @@ namespace
                     name << "_APIFindAllAlgo";
                 if(arg.use_user_args)
                     name << "_UserArgs";
-                if(arg.gsu)
-                    name << "_GSU" << (int)arg.gsu;
+                if(arg.gsu_vector[0])
+                    name << "_GSU" << (int)arg.gsu_vector[0];
             }
 
             return std::move(name);
