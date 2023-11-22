@@ -484,7 +484,7 @@ hipblasStatus_t hipblasLtMatrixLayoutGetAttribute(hipblasLtMatrixLayout_t       
  * created by this function. See \ref hipblasLtMatmulDesc_t .
  *  @param[in]
  *  computeType  Enumerant that specifies the data precision for the matrix
- * multiply descriptor this function creates. See hipblasComputeType_t .
+ * multiply descriptor this function creates. See \ref hipblasComputeType_t .
  *  @param[in]
  *  scaleType  Enumerant that specifies the data precision for the matrix
  * transform descriptor this function creates. See hipDataType.
@@ -494,7 +494,7 @@ hipblasStatus_t hipblasLtMatrixLayoutGetAttribute(hipblasLtMatrixLayout_t       
  */
 HIPBLASLT_EXPORT
 hipblasStatus_t hipblasLtMatmulDescCreate(hipblasLtMatmulDesc_t* matmulDesc,
-                                          hipblasComputeType_t   computeType,
+                                          hipblasComputeType_t computeType,
                                           hipDataType            scaleType);
 
 /*! \ingroup library_module
