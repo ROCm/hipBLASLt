@@ -60,23 +60,23 @@ std::string prefix(const char* layer, const char* caller)
     return std::string(buf.get());
 }
 
-const char* hipDataType_to_string(hipDataType type)
+const char* hipblasltDatatype_to_string(hipblasltDatatype_t type)
 {
     switch(type)
     {
-    case HIP_R_16F:
+    case HIPBLASLT_R_16F:
         return "R_16F";
-    case HIP_R_16BF:
+    case HIPBLASLT_R_16B:
         return "R_16BF";
-    case HIP_R_32F:
+    case HIPBLASLT_R_32F:
         return "R_32F";
-    case HIP_R_64F:
+    case HIPBLASLT_R_64F:
         return "R_64F";
-    case HIP_R_8F_E4M3_FNUZ:
+    case HIPBLASLT_R_8F_E4M3:
         return "R_8F_E4M3";
-    case HIP_R_8F_E5M2_FNUZ:
+    case HIPBLASLT_R_8F_E5M2:
         return "R_8F_E5M2";
-    case HIP_R_8I:
+    case HIPBLASLT_R_8I:
         return "R_8I";
     default:
         return "Invalid";
@@ -233,12 +233,16 @@ std::string rocblaslt_matrix_layout_to_string(rocblaslt_matrix_layout mat)
                                          : "[type=%s rows=%d cols=%d ld=%d batch_count=%d batch_stride=%d]\0";
     std::unique_ptr<char[]> buf(new char[255]);
     if(mat->batch_count <= 1)
-        std::sprintf(
-            buf.get(), format.c_str(), hipDataType_to_string(mat->type), mat->m, mat->n, mat->ld);
+        std::sprintf(buf.get(),
+                     format.c_str(),
+                     hipblasltDatatype_to_string(mat->type),
+                     mat->m,
+                     mat->n,
+                     mat->ld);
     else
         std::sprintf(buf.get(),
                      format.c_str(),
-                     hipDataType_to_string(mat->type),
+                     hipblasltDatatype_to_string(mat->type),
                      mat->m,
                      mat->n,
                      mat->ld,
@@ -248,7 +252,7 @@ std::string rocblaslt_matrix_layout_to_string(rocblaslt_matrix_layout mat)
 }
 std::string rocblaslt_matmul_desc_to_string(rocblaslt_matmul_desc matmul_desc)
 {
-    std::string format = matmul_desc->bias_type == HIPBLASLT_DATATYPE_INVALID
+    std::string format = matmul_desc->bias_type == static_cast<hipblasltDatatype_t>(0)
                              ? "[computeType=%s scaleType=%s transA=%s transB=%s "
                                "epilogue=%s biasPointer=0x%x]\0"
                              : "[computeType=%s scaleType=%s transA=%s transB=%s "
@@ -256,11 +260,11 @@ std::string rocblaslt_matmul_desc_to_string(rocblaslt_matmul_desc matmul_desc)
 
     std::unique_ptr<char[]> buf(new char[255]);
 
-    if(matmul_desc->bias_type == HIPBLASLT_DATATYPE_INVALID)
+    if(matmul_desc->bias_type == static_cast<hipblasltDatatype_t>(0))
         std::sprintf(buf.get(),
                      format.c_str(),
                      rocblaslt_compute_type_to_string(matmul_desc->compute_type),
-                     hipDataType_to_string(matmul_desc->scale_type),
+                     hipblasltDatatype_to_string(matmul_desc->scale_type),
                      hipblasOperation_to_string(matmul_desc->op_A),
                      hipblasOperation_to_string(matmul_desc->op_B),
                      rocblaslt_epilogue_to_string(matmul_desc->epilogue),
@@ -269,11 +273,11 @@ std::string rocblaslt_matmul_desc_to_string(rocblaslt_matmul_desc matmul_desc)
         std::sprintf(buf.get(),
                      format.c_str(),
                      rocblaslt_compute_type_to_string(matmul_desc->compute_type),
-                     hipDataType_to_string(matmul_desc->scale_type),
+                     hipblasltDatatype_to_string(matmul_desc->scale_type),
                      hipblasOperation_to_string(matmul_desc->op_A),
                      hipblasOperation_to_string(matmul_desc->op_B),
                      rocblaslt_epilogue_to_string(matmul_desc->epilogue),
                      matmul_desc->bias,
-                     hipDataType_to_string(matmul_desc->bias_type));
+                     hipblasltDatatype_to_string(matmul_desc->bias_type));
     return std::string(buf.get());
 }

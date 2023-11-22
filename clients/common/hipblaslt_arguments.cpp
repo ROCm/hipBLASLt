@@ -100,12 +100,12 @@ void Arguments::init()
     solution_index         = 0;
     requested_solution_num = 1;
 
-    a_type       = HIP_R_16F;
-    b_type       = HIP_R_16F;
-    c_type       = HIP_R_16F;
-    d_type       = HIP_R_16F;
+    a_type       = HIPBLASLT_R_16F;
+    b_type       = HIPBLASLT_R_16F;
+    c_type       = HIPBLASLT_R_16F;
+    d_type       = HIPBLASLT_R_16F;
     compute_type = HIPBLASLT_COMPUTE_F32;
-    scale_type   = HIP_R_32F;
+    scale_type   = HIPBLASLT_R_32F;
 
     initialization = hipblaslt_initialization::hpl;
 
@@ -129,7 +129,7 @@ void Arguments::init()
     activation_type   = hipblaslt_activation_type::none;
     activation_arg1   = 0.0f;
     activation_arg2   = std::numeric_limits<float>::infinity();
-    bias_type         = HIPBLASLT_DATATYPE_INVALID;
+    bias_type         = static_cast<hipblasltDatatype_t>(-1);
     bias_source       = hipblaslt_bias_source::d;
     bias_vector       = false;
     scaleA            = false;

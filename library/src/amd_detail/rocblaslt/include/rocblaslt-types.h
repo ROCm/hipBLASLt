@@ -134,12 +134,12 @@ typedef struct rocblaslt_half
 typedef struct
 {
     uint8_t data;
-} rocblaslt_f8_fnuz;
+} rocblaslt_f8;
 
 typedef struct
 {
     uint8_t data;
-} rocblaslt_bf8_fnuz;
+} rocblaslt_bf8;
 
 typedef int8_t  rocblasltInt8;
 typedef int32_t rocblasltInt32;
@@ -366,7 +366,7 @@ typedef struct _rocblaslt_solutions
 
 typedef struct _rocblaslt_matrix_transform_desc
 {
-    hipDataType            scaleType;
+    hipblasltDatatype_t    scaleType;
     hipblasLtPointerMode_t pointerMode{HIPBLASLT_POINTER_MODE_HOST};
     hipblasOperation_t     opA{HIPBLAS_OP_N};
     hipblasOperation_t     opB{HIPBLAS_OP_N};
@@ -389,19 +389,19 @@ namespace rocblaslt
     {
         hipblasOperation_t     op_a;
         hipblasOperation_t     op_b;
-        hipDataType            type_a;
-        hipDataType            type_b;
-        hipDataType            type_c;
-        hipDataType            type_d;
+        hipblasltDatatype_t    type_a;
+        hipblasltDatatype_t    type_b;
+        hipblasltDatatype_t    type_c;
+        hipblasltDatatype_t    type_d;
         rocblaslt_compute_type type_compute;
     };
 
     struct RocGemmEpilogue
     {
-        rocblaslt_epilogue mode           = ROCBLASLT_EPILOGUE_DEFAULT;
-        hipDataType        bias_data_type = HIPBLASLT_DATATYPE_INVALID;
-        int                aux_ld         = 0;
-        int                aux_stride     = 0;
+        rocblaslt_epilogue  mode           = ROCBLASLT_EPILOGUE_DEFAULT;
+        hipblasltDatatype_t bias_data_type = static_cast<hipblasltDatatype_t>(0);
+        int                 aux_ld         = 0;
+        int                 aux_stride     = 0;
     };
 
     struct RocGemmInputs

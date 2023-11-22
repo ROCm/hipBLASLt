@@ -74,8 +74,11 @@ namespace
 
         return hipSuccess;
     }
-    using MatrixTransformKernelKey = std::
-        tuple<hipDataType, hipDataType, hipblasLtOrder_t, hipblasLtOrder_t, hipblasLtOrder_t>;
+    using MatrixTransformKernelKey = std::tuple<hipblasltDatatype_t,
+                                                hipblasltDatatype_t,
+                                                hipblasLtOrder_t,
+                                                hipblasLtOrder_t,
+                                                hipblasLtOrder_t>;
     using MatrixTransformFunction = std::function<void(void*,
                                                        const void*,
                                                        const void*,
@@ -92,8 +95,11 @@ namespace
                                                        bool,
                                                        hipStream_t)>;
     std::map<MatrixTransformKernelKey, MatrixTransformFunction> transformKernels{
-        {std::make_tuple(
-             HIP_R_32F, HIP_R_32F, HIPBLASLT_ORDER_COL, HIPBLASLT_ORDER_COL, HIPBLASLT_ORDER_COL),
+        {std::make_tuple(HIPBLASLT_R_32F,
+                         HIPBLASLT_R_32F,
+                         HIPBLASLT_ORDER_COL,
+                         HIPBLASLT_ORDER_COL,
+                         HIPBLASLT_ORDER_COL),
          [](void*       c,
             const void* a,
             const void* b,
@@ -132,8 +138,11 @@ namespace
                                              opB,
                                              stream);
          }},
-        {std::make_tuple(
-             HIP_R_32F, HIP_R_32F, HIPBLASLT_ORDER_COL, HIPBLASLT_ORDER_COL, HIPBLASLT_ORDER_ROW),
+        {std::make_tuple(HIPBLASLT_R_32F,
+                         HIPBLASLT_R_32F,
+                         HIPBLASLT_ORDER_COL,
+                         HIPBLASLT_ORDER_COL,
+                         HIPBLASLT_ORDER_ROW),
          [](void*       c,
             const void* a,
             const void* b,
@@ -172,8 +181,11 @@ namespace
                                              opB,
                                              stream);
          }},
-        {std::make_tuple(
-             HIP_R_32F, HIP_R_32F, HIPBLASLT_ORDER_COL, HIPBLASLT_ORDER_ROW, HIPBLASLT_ORDER_COL),
+        {std::make_tuple(HIPBLASLT_R_32F,
+                         HIPBLASLT_R_32F,
+                         HIPBLASLT_ORDER_COL,
+                         HIPBLASLT_ORDER_ROW,
+                         HIPBLASLT_ORDER_COL),
          [](void*       c,
             const void* a,
             const void* b,
@@ -212,8 +224,11 @@ namespace
                                              opB,
                                              stream);
          }},
-        {std::make_tuple(
-             HIP_R_32F, HIP_R_32F, HIPBLASLT_ORDER_COL, HIPBLASLT_ORDER_ROW, HIPBLASLT_ORDER_ROW),
+        {std::make_tuple(HIPBLASLT_R_32F,
+                         HIPBLASLT_R_32F,
+                         HIPBLASLT_ORDER_COL,
+                         HIPBLASLT_ORDER_ROW,
+                         HIPBLASLT_ORDER_ROW),
          [](void*       c,
             const void* a,
             const void* b,
@@ -252,8 +267,11 @@ namespace
                                              opB,
                                              stream);
          }},
-        {std::make_tuple(
-             HIP_R_32F, HIP_R_32F, HIPBLASLT_ORDER_ROW, HIPBLASLT_ORDER_COL, HIPBLASLT_ORDER_COL),
+        {std::make_tuple(HIPBLASLT_R_32F,
+                         HIPBLASLT_R_32F,
+                         HIPBLASLT_ORDER_ROW,
+                         HIPBLASLT_ORDER_COL,
+                         HIPBLASLT_ORDER_COL),
          [](void*       c,
             const void* a,
             const void* b,
@@ -292,8 +310,11 @@ namespace
                                              opB,
                                              stream);
          }},
-        {std::make_tuple(
-             HIP_R_32F, HIP_R_32F, HIPBLASLT_ORDER_ROW, HIPBLASLT_ORDER_COL, HIPBLASLT_ORDER_ROW),
+        {std::make_tuple(HIPBLASLT_R_32F,
+                         HIPBLASLT_R_32F,
+                         HIPBLASLT_ORDER_ROW,
+                         HIPBLASLT_ORDER_COL,
+                         HIPBLASLT_ORDER_ROW),
          [](void*       c,
             const void* a,
             const void* b,
@@ -332,8 +353,11 @@ namespace
                                              opB,
                                              stream);
          }},
-        {std::make_tuple(
-             HIP_R_32F, HIP_R_32F, HIPBLASLT_ORDER_ROW, HIPBLASLT_ORDER_ROW, HIPBLASLT_ORDER_COL),
+        {std::make_tuple(HIPBLASLT_R_32F,
+                         HIPBLASLT_R_32F,
+                         HIPBLASLT_ORDER_ROW,
+                         HIPBLASLT_ORDER_ROW,
+                         HIPBLASLT_ORDER_COL),
          [](void*       c,
             const void* a,
             const void* b,
@@ -372,8 +396,11 @@ namespace
                                              opB,
                                              stream);
          }},
-        {std::make_tuple(
-             HIP_R_32F, HIP_R_32F, HIPBLASLT_ORDER_ROW, HIPBLASLT_ORDER_ROW, HIPBLASLT_ORDER_ROW),
+        {std::make_tuple(HIPBLASLT_R_32F,
+                         HIPBLASLT_R_32F,
+                         HIPBLASLT_ORDER_ROW,
+                         HIPBLASLT_ORDER_ROW,
+                         HIPBLASLT_ORDER_ROW),
          [](void*       c,
             const void* a,
             const void* b,
@@ -412,8 +439,11 @@ namespace
                                              opB,
                                              stream);
          }},
-        {std::make_tuple(
-             HIP_R_16F, HIP_R_16F, HIPBLASLT_ORDER_COL, HIPBLASLT_ORDER_COL, HIPBLASLT_ORDER_COL),
+        {std::make_tuple(HIPBLASLT_R_16F,
+                         HIPBLASLT_R_16F,
+                         HIPBLASLT_ORDER_COL,
+                         HIPBLASLT_ORDER_COL,
+                         HIPBLASLT_ORDER_COL),
          [](void*       c,
             const void* a,
             const void* b,
@@ -452,8 +482,11 @@ namespace
                                              opB,
                                              stream);
          }},
-        {std::make_tuple(
-             HIP_R_16F, HIP_R_16F, HIPBLASLT_ORDER_COL, HIPBLASLT_ORDER_COL, HIPBLASLT_ORDER_ROW),
+        {std::make_tuple(HIPBLASLT_R_16F,
+                         HIPBLASLT_R_16F,
+                         HIPBLASLT_ORDER_COL,
+                         HIPBLASLT_ORDER_COL,
+                         HIPBLASLT_ORDER_ROW),
          [](void*       c,
             const void* a,
             const void* b,
@@ -492,8 +525,11 @@ namespace
                                              opB,
                                              stream);
          }},
-        {std::make_tuple(
-             HIP_R_16F, HIP_R_16F, HIPBLASLT_ORDER_COL, HIPBLASLT_ORDER_ROW, HIPBLASLT_ORDER_COL),
+        {std::make_tuple(HIPBLASLT_R_16F,
+                         HIPBLASLT_R_16F,
+                         HIPBLASLT_ORDER_COL,
+                         HIPBLASLT_ORDER_ROW,
+                         HIPBLASLT_ORDER_COL),
          [](void*       c,
             const void* a,
             const void* b,
@@ -532,8 +568,11 @@ namespace
                                              opB,
                                              stream);
          }},
-        {std::make_tuple(
-             HIP_R_16F, HIP_R_16F, HIPBLASLT_ORDER_COL, HIPBLASLT_ORDER_ROW, HIPBLASLT_ORDER_ROW),
+        {std::make_tuple(HIPBLASLT_R_16F,
+                         HIPBLASLT_R_16F,
+                         HIPBLASLT_ORDER_COL,
+                         HIPBLASLT_ORDER_ROW,
+                         HIPBLASLT_ORDER_ROW),
          [](void*       c,
             const void* a,
             const void* b,
@@ -572,8 +611,11 @@ namespace
                                              opB,
                                              stream);
          }},
-        {std::make_tuple(
-             HIP_R_16F, HIP_R_16F, HIPBLASLT_ORDER_ROW, HIPBLASLT_ORDER_COL, HIPBLASLT_ORDER_COL),
+        {std::make_tuple(HIPBLASLT_R_16F,
+                         HIPBLASLT_R_16F,
+                         HIPBLASLT_ORDER_ROW,
+                         HIPBLASLT_ORDER_COL,
+                         HIPBLASLT_ORDER_COL),
          [](void*       c,
             const void* a,
             const void* b,
@@ -612,8 +654,11 @@ namespace
                                              opB,
                                              stream);
          }},
-        {std::make_tuple(
-             HIP_R_16F, HIP_R_16F, HIPBLASLT_ORDER_ROW, HIPBLASLT_ORDER_COL, HIPBLASLT_ORDER_ROW),
+        {std::make_tuple(HIPBLASLT_R_16F,
+                         HIPBLASLT_R_16F,
+                         HIPBLASLT_ORDER_ROW,
+                         HIPBLASLT_ORDER_COL,
+                         HIPBLASLT_ORDER_ROW),
          [](void*       c,
             const void* a,
             const void* b,
@@ -652,8 +697,11 @@ namespace
                                              opB,
                                              stream);
          }},
-        {std::make_tuple(
-             HIP_R_16F, HIP_R_16F, HIPBLASLT_ORDER_ROW, HIPBLASLT_ORDER_ROW, HIPBLASLT_ORDER_COL),
+        {std::make_tuple(HIPBLASLT_R_16F,
+                         HIPBLASLT_R_16F,
+                         HIPBLASLT_ORDER_ROW,
+                         HIPBLASLT_ORDER_ROW,
+                         HIPBLASLT_ORDER_COL),
          [](void*       c,
             const void* a,
             const void* b,
@@ -692,8 +740,11 @@ namespace
                                              opB,
                                              stream);
          }},
-        {std::make_tuple(
-             HIP_R_16F, HIP_R_16F, HIPBLASLT_ORDER_ROW, HIPBLASLT_ORDER_ROW, HIPBLASLT_ORDER_ROW),
+        {std::make_tuple(HIPBLASLT_R_16F,
+                         HIPBLASLT_R_16F,
+                         HIPBLASLT_ORDER_ROW,
+                         HIPBLASLT_ORDER_ROW,
+                         HIPBLASLT_ORDER_ROW),
          [](void*       c,
             const void* a,
             const void* b,
@@ -732,8 +783,11 @@ namespace
                                              opB,
                                              stream);
          }},
-        {std::make_tuple(
-             HIP_R_16F, HIP_R_32F, HIPBLASLT_ORDER_COL, HIPBLASLT_ORDER_COL, HIPBLASLT_ORDER_COL),
+        {std::make_tuple(HIPBLASLT_R_16F,
+                         HIPBLASLT_R_32F,
+                         HIPBLASLT_ORDER_COL,
+                         HIPBLASLT_ORDER_COL,
+                         HIPBLASLT_ORDER_COL),
          [](void*       c,
             const void* a,
             const void* b,
@@ -772,8 +826,11 @@ namespace
                                              opB,
                                              stream);
          }},
-        {std::make_tuple(
-             HIP_R_16F, HIP_R_32F, HIPBLASLT_ORDER_COL, HIPBLASLT_ORDER_COL, HIPBLASLT_ORDER_ROW),
+        {std::make_tuple(HIPBLASLT_R_16F,
+                         HIPBLASLT_R_32F,
+                         HIPBLASLT_ORDER_COL,
+                         HIPBLASLT_ORDER_COL,
+                         HIPBLASLT_ORDER_ROW),
          [](void*       c,
             const void* a,
             const void* b,
@@ -812,8 +869,11 @@ namespace
                                              opB,
                                              stream);
          }},
-        {std::make_tuple(
-             HIP_R_16F, HIP_R_32F, HIPBLASLT_ORDER_COL, HIPBLASLT_ORDER_ROW, HIPBLASLT_ORDER_COL),
+        {std::make_tuple(HIPBLASLT_R_16F,
+                         HIPBLASLT_R_32F,
+                         HIPBLASLT_ORDER_COL,
+                         HIPBLASLT_ORDER_ROW,
+                         HIPBLASLT_ORDER_COL),
          [](void*       c,
             const void* a,
             const void* b,
@@ -852,8 +912,11 @@ namespace
                                              opB,
                                              stream);
          }},
-        {std::make_tuple(
-             HIP_R_16F, HIP_R_32F, HIPBLASLT_ORDER_COL, HIPBLASLT_ORDER_ROW, HIPBLASLT_ORDER_ROW),
+        {std::make_tuple(HIPBLASLT_R_16F,
+                         HIPBLASLT_R_32F,
+                         HIPBLASLT_ORDER_COL,
+                         HIPBLASLT_ORDER_ROW,
+                         HIPBLASLT_ORDER_ROW),
          [](void*       c,
             const void* a,
             const void* b,
@@ -892,8 +955,11 @@ namespace
                                              opB,
                                              stream);
          }},
-        {std::make_tuple(
-             HIP_R_16F, HIP_R_32F, HIPBLASLT_ORDER_ROW, HIPBLASLT_ORDER_COL, HIPBLASLT_ORDER_COL),
+        {std::make_tuple(HIPBLASLT_R_16F,
+                         HIPBLASLT_R_32F,
+                         HIPBLASLT_ORDER_ROW,
+                         HIPBLASLT_ORDER_COL,
+                         HIPBLASLT_ORDER_COL),
          [](void*       c,
             const void* a,
             const void* b,
@@ -932,8 +998,11 @@ namespace
                                              opB,
                                              stream);
          }},
-        {std::make_tuple(
-             HIP_R_16F, HIP_R_32F, HIPBLASLT_ORDER_ROW, HIPBLASLT_ORDER_COL, HIPBLASLT_ORDER_ROW),
+        {std::make_tuple(HIPBLASLT_R_16F,
+                         HIPBLASLT_R_32F,
+                         HIPBLASLT_ORDER_ROW,
+                         HIPBLASLT_ORDER_COL,
+                         HIPBLASLT_ORDER_ROW),
          [](void*       c,
             const void* a,
             const void* b,
@@ -972,8 +1041,11 @@ namespace
                                              opB,
                                              stream);
          }},
-        {std::make_tuple(
-             HIP_R_16F, HIP_R_32F, HIPBLASLT_ORDER_ROW, HIPBLASLT_ORDER_ROW, HIPBLASLT_ORDER_COL),
+        {std::make_tuple(HIPBLASLT_R_16F,
+                         HIPBLASLT_R_32F,
+                         HIPBLASLT_ORDER_ROW,
+                         HIPBLASLT_ORDER_ROW,
+                         HIPBLASLT_ORDER_COL),
          [](void*       c,
             const void* a,
             const void* b,
@@ -1012,8 +1084,11 @@ namespace
                                              opB,
                                              stream);
          }},
-        {std::make_tuple(
-             HIP_R_16F, HIP_R_32F, HIPBLASLT_ORDER_ROW, HIPBLASLT_ORDER_ROW, HIPBLASLT_ORDER_ROW),
+        {std::make_tuple(HIPBLASLT_R_16F,
+                         HIPBLASLT_R_32F,
+                         HIPBLASLT_ORDER_ROW,
+                         HIPBLASLT_ORDER_ROW,
+                         HIPBLASLT_ORDER_ROW),
          [](void*       c,
             const void* a,
             const void* b,
@@ -1052,8 +1127,11 @@ namespace
                                              opB,
                                              stream);
          }},
-        {std::make_tuple(
-             HIP_R_16BF, HIP_R_32F, HIPBLASLT_ORDER_COL, HIPBLASLT_ORDER_COL, HIPBLASLT_ORDER_COL),
+        {std::make_tuple(HIPBLASLT_R_16B,
+                         HIPBLASLT_R_32F,
+                         HIPBLASLT_ORDER_COL,
+                         HIPBLASLT_ORDER_COL,
+                         HIPBLASLT_ORDER_COL),
          [](void*       c,
             const void* a,
             const void* b,
@@ -1092,8 +1170,11 @@ namespace
                                              opB,
                                              stream);
          }},
-        {std::make_tuple(
-             HIP_R_16BF, HIP_R_32F, HIPBLASLT_ORDER_COL, HIPBLASLT_ORDER_COL, HIPBLASLT_ORDER_ROW),
+        {std::make_tuple(HIPBLASLT_R_16B,
+                         HIPBLASLT_R_32F,
+                         HIPBLASLT_ORDER_COL,
+                         HIPBLASLT_ORDER_COL,
+                         HIPBLASLT_ORDER_ROW),
          [](void*       c,
             const void* a,
             const void* b,
@@ -1132,8 +1213,11 @@ namespace
                                              opB,
                                              stream);
          }},
-        {std::make_tuple(
-             HIP_R_16BF, HIP_R_32F, HIPBLASLT_ORDER_COL, HIPBLASLT_ORDER_ROW, HIPBLASLT_ORDER_COL),
+        {std::make_tuple(HIPBLASLT_R_16B,
+                         HIPBLASLT_R_32F,
+                         HIPBLASLT_ORDER_COL,
+                         HIPBLASLT_ORDER_ROW,
+                         HIPBLASLT_ORDER_COL),
          [](void*       c,
             const void* a,
             const void* b,
@@ -1172,8 +1256,11 @@ namespace
                                              opB,
                                              stream);
          }},
-        {std::make_tuple(
-             HIP_R_16BF, HIP_R_32F, HIPBLASLT_ORDER_COL, HIPBLASLT_ORDER_ROW, HIPBLASLT_ORDER_ROW),
+        {std::make_tuple(HIPBLASLT_R_16B,
+                         HIPBLASLT_R_32F,
+                         HIPBLASLT_ORDER_COL,
+                         HIPBLASLT_ORDER_ROW,
+                         HIPBLASLT_ORDER_ROW),
          [](void*       c,
             const void* a,
             const void* b,
@@ -1212,8 +1299,11 @@ namespace
                                              opB,
                                              stream);
          }},
-        {std::make_tuple(
-             HIP_R_16BF, HIP_R_32F, HIPBLASLT_ORDER_ROW, HIPBLASLT_ORDER_COL, HIPBLASLT_ORDER_COL),
+        {std::make_tuple(HIPBLASLT_R_16B,
+                         HIPBLASLT_R_32F,
+                         HIPBLASLT_ORDER_ROW,
+                         HIPBLASLT_ORDER_COL,
+                         HIPBLASLT_ORDER_COL),
          [](void*       c,
             const void* a,
             const void* b,
@@ -1252,8 +1342,11 @@ namespace
                                              opB,
                                              stream);
          }},
-        {std::make_tuple(
-             HIP_R_16BF, HIP_R_32F, HIPBLASLT_ORDER_ROW, HIPBLASLT_ORDER_COL, HIPBLASLT_ORDER_ROW),
+        {std::make_tuple(HIPBLASLT_R_16B,
+                         HIPBLASLT_R_32F,
+                         HIPBLASLT_ORDER_ROW,
+                         HIPBLASLT_ORDER_COL,
+                         HIPBLASLT_ORDER_ROW),
          [](void*       c,
             const void* a,
             const void* b,
@@ -1292,8 +1385,11 @@ namespace
                                              opB,
                                              stream);
          }},
-        {std::make_tuple(
-             HIP_R_16BF, HIP_R_32F, HIPBLASLT_ORDER_ROW, HIPBLASLT_ORDER_ROW, HIPBLASLT_ORDER_COL),
+        {std::make_tuple(HIPBLASLT_R_16B,
+                         HIPBLASLT_R_32F,
+                         HIPBLASLT_ORDER_ROW,
+                         HIPBLASLT_ORDER_ROW,
+                         HIPBLASLT_ORDER_COL),
          [](void*       c,
             const void* a,
             const void* b,
@@ -1332,8 +1428,8 @@ namespace
                                              opB,
                                              stream);
          }},
-        {std::make_tuple(HIP_R_16BF,
-                         HIP_R_32F,
+        {std::make_tuple(HIPBLASLT_R_16B,
+                         HIPBLASLT_R_32F,
                          HIPBLASLT_ORDER_ROW,
                          HIPBLASLT_ORDER_ROW,
                          HIPBLASLT_ORDER_ROW),
@@ -1375,8 +1471,11 @@ namespace
                                              opB,
                                              stream);
          }},
-        {std::make_tuple(
-             HIP_R_8I, HIP_R_32F, HIPBLASLT_ORDER_COL, HIPBLASLT_ORDER_COL, HIPBLASLT_ORDER_COL),
+        {std::make_tuple(HIPBLASLT_R_8I,
+                         HIPBLASLT_R_32F,
+                         HIPBLASLT_ORDER_COL,
+                         HIPBLASLT_ORDER_COL,
+                         HIPBLASLT_ORDER_COL),
          [](void*       c,
             const void* a,
             const void* b,
@@ -1409,8 +1508,11 @@ namespace
                  opB,
                  stream);
          }},
-        {std::make_tuple(
-             HIP_R_8I, HIP_R_32F, HIPBLASLT_ORDER_COL, HIPBLASLT_ORDER_COL, HIPBLASLT_ORDER_ROW),
+        {std::make_tuple(HIPBLASLT_R_8I,
+                         HIPBLASLT_R_32F,
+                         HIPBLASLT_ORDER_COL,
+                         HIPBLASLT_ORDER_COL,
+                         HIPBLASLT_ORDER_ROW),
          [](void*       c,
             const void* a,
             const void* b,
@@ -1443,8 +1545,11 @@ namespace
                  opB,
                  stream);
          }},
-        {std::make_tuple(
-             HIP_R_8I, HIP_R_32F, HIPBLASLT_ORDER_COL, HIPBLASLT_ORDER_ROW, HIPBLASLT_ORDER_COL),
+        {std::make_tuple(HIPBLASLT_R_8I,
+                         HIPBLASLT_R_32F,
+                         HIPBLASLT_ORDER_COL,
+                         HIPBLASLT_ORDER_ROW,
+                         HIPBLASLT_ORDER_COL),
          [](void*       c,
             const void* a,
             const void* b,
@@ -1477,8 +1582,11 @@ namespace
                  opB,
                  stream);
          }},
-        {std::make_tuple(
-             HIP_R_8I, HIP_R_32F, HIPBLASLT_ORDER_COL, HIPBLASLT_ORDER_ROW, HIPBLASLT_ORDER_ROW),
+        {std::make_tuple(HIPBLASLT_R_8I,
+                         HIPBLASLT_R_32F,
+                         HIPBLASLT_ORDER_COL,
+                         HIPBLASLT_ORDER_ROW,
+                         HIPBLASLT_ORDER_ROW),
          [](void*       c,
             const void* a,
             const void* b,
@@ -1511,8 +1619,11 @@ namespace
                  opB,
                  stream);
          }},
-        {std::make_tuple(
-             HIP_R_8I, HIP_R_32F, HIPBLASLT_ORDER_ROW, HIPBLASLT_ORDER_COL, HIPBLASLT_ORDER_COL),
+        {std::make_tuple(HIPBLASLT_R_8I,
+                         HIPBLASLT_R_32F,
+                         HIPBLASLT_ORDER_ROW,
+                         HIPBLASLT_ORDER_COL,
+                         HIPBLASLT_ORDER_COL),
          [](void*       c,
             const void* a,
             const void* b,
@@ -1545,8 +1656,11 @@ namespace
                  opB,
                  stream);
          }},
-        {std::make_tuple(
-             HIP_R_8I, HIP_R_32F, HIPBLASLT_ORDER_ROW, HIPBLASLT_ORDER_COL, HIPBLASLT_ORDER_ROW),
+        {std::make_tuple(HIPBLASLT_R_8I,
+                         HIPBLASLT_R_32F,
+                         HIPBLASLT_ORDER_ROW,
+                         HIPBLASLT_ORDER_COL,
+                         HIPBLASLT_ORDER_ROW),
          [](void*       c,
             const void* a,
             const void* b,
@@ -1579,8 +1693,11 @@ namespace
                  opB,
                  stream);
          }},
-        {std::make_tuple(
-             HIP_R_8I, HIP_R_32F, HIPBLASLT_ORDER_ROW, HIPBLASLT_ORDER_ROW, HIPBLASLT_ORDER_COL),
+        {std::make_tuple(HIPBLASLT_R_8I,
+                         HIPBLASLT_R_32F,
+                         HIPBLASLT_ORDER_ROW,
+                         HIPBLASLT_ORDER_ROW,
+                         HIPBLASLT_ORDER_COL),
          [](void*       c,
             const void* a,
             const void* b,
@@ -1613,8 +1730,11 @@ namespace
                  opB,
                  stream);
          }},
-        {std::make_tuple(
-             HIP_R_8I, HIP_R_32F, HIPBLASLT_ORDER_ROW, HIPBLASLT_ORDER_ROW, HIPBLASLT_ORDER_ROW),
+        {std::make_tuple(HIPBLASLT_R_8I,
+                         HIPBLASLT_R_32F,
+                         HIPBLASLT_ORDER_ROW,
+                         HIPBLASLT_ORDER_ROW,
+                         HIPBLASLT_ORDER_ROW),
          [](void*       c,
             const void* a,
             const void* b,
@@ -1647,8 +1767,11 @@ namespace
                  opB,
                  stream);
          }},
-        {std::make_tuple(
-             HIP_R_32I, HIP_R_32F, HIPBLASLT_ORDER_COL, HIPBLASLT_ORDER_COL, HIPBLASLT_ORDER_COL),
+        {std::make_tuple(HIPBLASLT_R_32I,
+                         HIPBLASLT_R_32F,
+                         HIPBLASLT_ORDER_COL,
+                         HIPBLASLT_ORDER_COL,
+                         HIPBLASLT_ORDER_COL),
          [](void*       c,
             const void* a,
             const void* b,
@@ -1681,8 +1804,11 @@ namespace
                  opB,
                  stream);
          }},
-        {std::make_tuple(
-             HIP_R_32I, HIP_R_32F, HIPBLASLT_ORDER_COL, HIPBLASLT_ORDER_COL, HIPBLASLT_ORDER_ROW),
+        {std::make_tuple(HIPBLASLT_R_32I,
+                         HIPBLASLT_R_32F,
+                         HIPBLASLT_ORDER_COL,
+                         HIPBLASLT_ORDER_COL,
+                         HIPBLASLT_ORDER_ROW),
          [](void*       c,
             const void* a,
             const void* b,
@@ -1715,8 +1841,11 @@ namespace
                  opB,
                  stream);
          }},
-        {std::make_tuple(
-             HIP_R_32I, HIP_R_32F, HIPBLASLT_ORDER_COL, HIPBLASLT_ORDER_ROW, HIPBLASLT_ORDER_COL),
+        {std::make_tuple(HIPBLASLT_R_32I,
+                         HIPBLASLT_R_32F,
+                         HIPBLASLT_ORDER_COL,
+                         HIPBLASLT_ORDER_ROW,
+                         HIPBLASLT_ORDER_COL),
          [](void*       c,
             const void* a,
             const void* b,
@@ -1749,8 +1878,11 @@ namespace
                  opB,
                  stream);
          }},
-        {std::make_tuple(
-             HIP_R_32I, HIP_R_32F, HIPBLASLT_ORDER_COL, HIPBLASLT_ORDER_ROW, HIPBLASLT_ORDER_ROW),
+        {std::make_tuple(HIPBLASLT_R_32I,
+                         HIPBLASLT_R_32F,
+                         HIPBLASLT_ORDER_COL,
+                         HIPBLASLT_ORDER_ROW,
+                         HIPBLASLT_ORDER_ROW),
          [](void*       c,
             const void* a,
             const void* b,
@@ -1783,8 +1915,11 @@ namespace
                  opB,
                  stream);
          }},
-        {std::make_tuple(
-             HIP_R_32I, HIP_R_32F, HIPBLASLT_ORDER_ROW, HIPBLASLT_ORDER_COL, HIPBLASLT_ORDER_COL),
+        {std::make_tuple(HIPBLASLT_R_32I,
+                         HIPBLASLT_R_32F,
+                         HIPBLASLT_ORDER_ROW,
+                         HIPBLASLT_ORDER_COL,
+                         HIPBLASLT_ORDER_COL),
          [](void*       c,
             const void* a,
             const void* b,
@@ -1817,8 +1952,11 @@ namespace
                  opB,
                  stream);
          }},
-        {std::make_tuple(
-             HIP_R_32I, HIP_R_32F, HIPBLASLT_ORDER_ROW, HIPBLASLT_ORDER_COL, HIPBLASLT_ORDER_ROW),
+        {std::make_tuple(HIPBLASLT_R_32I,
+                         HIPBLASLT_R_32F,
+                         HIPBLASLT_ORDER_ROW,
+                         HIPBLASLT_ORDER_COL,
+                         HIPBLASLT_ORDER_ROW),
          [](void*       c,
             const void* a,
             const void* b,
@@ -1851,8 +1989,11 @@ namespace
                  opB,
                  stream);
          }},
-        {std::make_tuple(
-             HIP_R_32I, HIP_R_32F, HIPBLASLT_ORDER_ROW, HIPBLASLT_ORDER_ROW, HIPBLASLT_ORDER_COL),
+        {std::make_tuple(HIPBLASLT_R_32I,
+                         HIPBLASLT_R_32F,
+                         HIPBLASLT_ORDER_ROW,
+                         HIPBLASLT_ORDER_ROW,
+                         HIPBLASLT_ORDER_COL),
          [](void*       c,
             const void* a,
             const void* b,
@@ -1885,8 +2026,11 @@ namespace
                  opB,
                  stream);
          }},
-        {std::make_tuple(
-             HIP_R_32I, HIP_R_32F, HIPBLASLT_ORDER_ROW, HIPBLASLT_ORDER_ROW, HIPBLASLT_ORDER_ROW),
+        {std::make_tuple(HIPBLASLT_R_32I,
+                         HIPBLASLT_R_32F,
+                         HIPBLASLT_ORDER_ROW,
+                         HIPBLASLT_ORDER_ROW,
+                         HIPBLASLT_ORDER_ROW),
          [](void*       c,
             const void* a,
             const void* b,

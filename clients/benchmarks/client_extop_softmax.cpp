@@ -76,7 +76,7 @@ int main(int argc, char** argv)
     hipStream_t stream{};
     hipErr = hipStreamCreate(&stream);
     //warmup
-    auto hipblasltErr = hipblasltExtSoftmax(HIP_R_32F, m, n, 1, output, input, stream);
+    auto hipblasltErr = hipblasltExtSoftmax(HIPBLASLT_R_32F, m, n, 1, output, input, stream);
 
     if(hipblasltErr)
     {
@@ -95,7 +95,7 @@ int main(int argc, char** argv)
 
     for(int i = 0; i < numRuns; ++i)
     {
-        hipblasltErr = hipblasltExtSoftmax(HIP_R_32F, m, n, 1, output, input, stream);
+        hipblasltErr = hipblasltExtSoftmax(HIPBLASLT_R_32F, m, n, 1, output, input, stream);
     }
 
     hipErr = hipEventRecord(end, stream);

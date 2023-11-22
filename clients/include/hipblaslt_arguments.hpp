@@ -90,12 +90,12 @@ struct Arguments
     int32_t  solution_index;
     int32_t  requested_solution_num;
 
-    hipDataType            a_type;
-    hipDataType            b_type;
-    hipDataType            c_type;
-    hipDataType            d_type;
+    hipblasltDatatype_t    a_type;
+    hipblasltDatatype_t    b_type;
+    hipblasltDatatype_t    c_type;
+    hipblasltDatatype_t    d_type;
     hipblasLtComputeType_t compute_type;
-    hipDataType            scale_type;
+    hipblasltDatatype_t    scale_type;
 
     hipblaslt_initialization initialization;
 
@@ -125,7 +125,7 @@ struct Arguments
     float                     activation_arg1; // threshold when activation type is relu
     float                     activation_arg2; // upperbound when activation type is relu
 
-    hipDataType           bias_type;
+    hipblasltDatatype_t   bias_type;
     hipblaslt_bias_source bias_source;
     bool                  bias_vector;
     bool                  scaleA;
@@ -249,8 +249,8 @@ struct Arguments
     friend hipblaslt_internal_ostream& operator<<(hipblaslt_internal_ostream& os,
                                                   std::pair<char const*, T>   p);
 
-    friend hipblaslt_internal_ostream& operator<<(hipblaslt_internal_ostream&         os,
-                                                  std::pair<char const*, hipDataType> p);
+    friend hipblaslt_internal_ostream& operator<<(hipblaslt_internal_ostream&                 os,
+                                                  std::pair<char const*, hipblasltDatatype_t> p);
 
     friend hipblaslt_internal_ostream&
         operator<<(hipblaslt_internal_ostream&                      os,

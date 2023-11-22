@@ -143,7 +143,7 @@ class hipblaslt_local_matrix_layout
     static constexpr int    alignment = 16;
 
 public:
-    hipblaslt_local_matrix_layout(int64_t row, int64_t col, int64_t ld, hipDataType type)
+    hipblaslt_local_matrix_layout(int64_t row, int64_t col, int64_t ld, hipblasltDatatype_t type)
     {
         this->m_status = hipblasLtMatrixLayoutCreate(&this->m_descr, type, row, col, ld);
     }
@@ -194,7 +194,7 @@ public:
     hipblaslt_local_matmul_descr(hipblasOperation_t     opA,
                                  hipblasOperation_t     opB,
                                  hipblasLtComputeType_t compute_type,
-                                 hipDataType            scale_type)
+                                 hipblasltDatatype_t    scale_type)
     {
         this->m_status = hipblasLtMatmulDescCreate(&this->m_descr, compute_type, scale_type);
 

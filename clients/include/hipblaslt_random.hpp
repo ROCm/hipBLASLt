@@ -125,24 +125,24 @@ public:
     }
 
     // Single NaN float8...
-    explicit operator hipblaslt_f8_fnuz()
+    explicit operator hipblaslt_f8()
     {
         union
         {
-            uint8_t           bits;
-            hipblaslt_f8_fnuz value;
+            uint8_t      bits;
+            hipblaslt_f8 value;
         } x;
         x.bits = 0x80;
         return x.value;
     }
 
     // Single NaN bfloat8...
-    explicit operator hipblaslt_bf8_fnuz()
+    explicit operator hipblaslt_bf8()
     {
         union
         {
-            uint8_t            bits;
-            hipblaslt_bf8_fnuz value;
+            uint8_t       bits;
+            hipblaslt_bf8 value;
         } x;
         x.bits = 0x80;
         return x.value;

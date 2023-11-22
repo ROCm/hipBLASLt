@@ -96,72 +96,73 @@ private:
 };
 
 using MatrixTransformIOPtr = std::unique_ptr<MatrixTransformIO>;
-MatrixTransformIOPtr makeMatrixTransformIOPtr(hipDataType datatype, int64_t m, int64_t n, int64_t b)
+MatrixTransformIOPtr
+    makeMatrixTransformIOPtr(hipblasltDatatype_t datatype, int64_t m, int64_t n, int64_t b)
 {
-    if(datatype == HIP_R_32F)
+    if(datatype == HIPBLASLT_R_32F)
     {
         return std::make_unique<TypedMatrixTransformIO<hipblasLtFloat>>(m, n, b);
     }
-    else if(datatype == HIP_R_16F)
+    else if(datatype == HIPBLASLT_R_16F)
     {
         return std::make_unique<TypedMatrixTransformIO<hipblasLtHalf>>(m, n, b);
     }
-    else if(datatype == HIP_R_16BF)
+    else if(datatype == HIPBLASLT_R_16B)
     {
         return std::make_unique<TypedMatrixTransformIO<hipblasLtBfloat16>>(m, n, b);
     }
-    else if(datatype == HIP_R_8I)
+    else if(datatype == HIPBLASLT_R_8I)
     {
         return std::make_unique<TypedMatrixTransformIO<int8_t>>(m, n, b);
     }
     return nullptr;
 }
 
-hipDataType str2Datatype(const std::string& typeStr)
+hipblasltDatatype_t str2Datatype(const std::string& typeStr)
 {
     if(typeStr == "fp32")
     {
-        return HIP_R_32F;
+        return HIPBLASLT_R_32F;
     }
     else if(typeStr == "fp16")
     {
-        return HIP_R_16F;
+        return HIPBLASLT_R_16F;
     }
     else if(typeStr == "bf16")
     {
-        return HIP_R_16BF;
+        return HIPBLASLT_R_16B;
     }
     else if(typeStr == "i8")
     {
-        return HIP_R_8I;
+        return HIPBLASLT_R_8I;
     }
     else if(typeStr == "i32")
     {
-        return HIP_R_32I;
+        return HIPBLASLT_R_32I;
     }
 
     return HIPBLASLT_DATATYPE_INVALID;
 }
 
-static int parseArguments(int          argc,
-                          char*        argv[],
-                          hipDataType& datatype,
-                          hipDataType& scaleDatatype,
-                          int64_t&     m,
-                          int64_t&     n,
-                          float&       alpha,
-                          float&       beta,
-                          bool&        transA,
-                          bool&        transB,
-                          uint32_t&    ldA,
-                          uint32_t&    ldB,
-                          uint32_t&    ldC,
-                          bool&        rowMajA,
-                          bool&        rowMajB,
-                          bool&        rowMajC,
-                          int32_t&     batchSize,
-                          int64_t&     batchStride,
-                          bool&        runValidation)
+static int parseArguments(int                  argc,
+                          char*                argv[],
+                          hipblasltDatatype_t& datatype,
+                          hipblasltDatatype_t& scaleDatatype,
+                          int64_t&             m,
+                          int64_t&             n,
+                          float&               alpha,
+                          float&               beta,
+                          bool&                transA,
+                          bool&                transB,
+                          uint32_t&            ldA,
+                          uint32_t&            ldB,
+                          uint32_t&            ldC,
+                          bool&                rowMajA,
+                          bool&                rowMajB,
+                          bool&                rowMajC,
+                          int32_t&             batchSize,
+                          int64_t&             batchStride,
+                          bool&                runValidation)
 {
     if(argc >= 2)
     {
@@ -494,23 +495,23 @@ void validation(void*    c,
 
 int main(int argc, char** argv)
 {
-    int64_t     m         = 2048;
-    int64_t     n         = 2048;
-    int32_t     batchSize = 1;
-    float       alpha     = 1;
-    float       beta      = 1;
-    auto        transA    = false;
-    auto        transB    = false;
-    auto        rowMajA   = false;
-    auto        rowMajB   = false;
-    auto        rowMajC   = false;
-    int64_t     batchStride{};
-    uint32_t    ldA{};
-    uint32_t    ldB{};
-    uint32_t    ldC{};
-    bool        runValidation{};
-    hipDataType datatype{HIP_R_32F};
-    hipDataType scaleDatatype{HIP_R_32F};
+    int64_t             m         = 2048;
+    int64_t             n         = 2048;
+    int32_t             batchSize = 1;
+    float               alpha     = 1;
+    float               beta      = 1;
+    auto                transA    = false;
+    auto                transB    = false;
+    auto                rowMajA   = false;
+    auto                rowMajB   = false;
+    auto                rowMajC   = false;
+    int64_t             batchStride{};
+    uint32_t            ldA{};
+    uint32_t            ldB{};
+    uint32_t            ldC{};
+    bool                runValidation{};
+    hipblasltDatatype_t datatype{HIPBLASLT_R_32F};
+    hipblasltDatatype_t scaleDatatype{HIPBLASLT_R_32F};
     parseArguments(argc,
                    argv,
                    datatype,
@@ -670,7 +671,7 @@ int main(int argc, char** argv)
 
     if(runValidation)
     {
-        if(datatype == HIP_R_32F)
+        if(datatype == HIPBLASLT_R_32F)
         {
             validation<float>(dC,
                               dA,
@@ -690,7 +691,7 @@ int main(int argc, char** argv)
                               transA,
                               transB);
         }
-        else if(datatype == HIP_R_16F)
+        else if(datatype == HIPBLASLT_R_16F)
         {
             validation<hipblasLtHalf>(dC,
                                       dA,
@@ -710,7 +711,7 @@ int main(int argc, char** argv)
                                       transA,
                                       transB);
         }
-        else if(datatype == HIP_R_16BF)
+        else if(datatype == HIPBLASLT_R_16B)
         {
             validation<hipblasLtBfloat16>(dC,
                                           dA,
@@ -730,7 +731,7 @@ int main(int argc, char** argv)
                                           transA,
                                           transB);
         }
-        else if(datatype == HIP_R_8I)
+        else if(datatype == HIPBLASLT_R_8I)
         {
             validation<int8_t>(dC,
                                dA,
@@ -750,7 +751,7 @@ int main(int argc, char** argv)
                                transA,
                                transB);
         }
-        else if(datatype == HIP_R_32I)
+        else if(datatype == HIPBLASLT_R_32I)
         {
             validation<int32_t>(dC,
                                 dA,

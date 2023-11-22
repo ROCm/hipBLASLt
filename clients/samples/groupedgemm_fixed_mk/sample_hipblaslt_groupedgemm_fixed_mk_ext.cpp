@@ -118,10 +118,10 @@ void simpleGroupedGemmFixedMKExt(hipblasLtHandle_t     handle,
     hipblaslt_ext::GroupedGemm groupedgemm(handle,
                                            trans_a,
                                            trans_b,
-                                           HIP_R_16F,
-                                           HIP_R_16F,
-                                           HIP_R_16F,
-                                           HIP_R_16F,
+                                           HIPBLASLT_R_16F,
+                                           HIPBLASLT_R_16F,
+                                           HIPBLASLT_R_16F,
+                                           HIPBLASLT_R_16F,
                                            HIPBLASLT_COMPUTE_F32);
 
     std::vector<hipblaslt_ext::GemmEpilogue> epilogue{

@@ -635,8 +635,8 @@ void testing_matmul(const Arguments& arg)
 
         if(arg.scaleC)
         {
-            if constexpr(std::is_same<To, hipblaslt_f8_fnuz>::value
-                         || std::is_same<To, hipblaslt_bf8_fnuz>::value)
+            if constexpr(std::is_same<To, hipblaslt_f8>::value
+                         || std::is_same<To, hipblaslt_bf8>::value)
             {
                 hipblaslt_init_small<Talpha>(*hScaleC[i], 1, 1, 1);
             }
@@ -648,8 +648,8 @@ void testing_matmul(const Arguments& arg)
 
         if(arg.scaleD)
         {
-            if constexpr(std::is_same<To, hipblaslt_f8_fnuz>::value
-                         || std::is_same<To, hipblaslt_bf8_fnuz>::value)
+            if constexpr(std::is_same<To, hipblaslt_f8>::value
+                         || std::is_same<To, hipblaslt_bf8>::value)
             {
                 hipblaslt_init_small<Talpha>(*hScaleD[i], 1, 1, 1);
             }
@@ -745,7 +745,7 @@ void testing_matmul(const Arguments& arg)
                 hipblasLtMatmulDescSetAttribute(matmul[i],
                                                 HIPBLASLT_MATMUL_DESC_BIAS_DATA_TYPE,
                                                 &arg.bias_type,
-                                                sizeof(hipDataType)),
+                                                sizeof(hipblasltDatatype_t)),
                 HIPBLAS_STATUS_SUCCESS);
             if(arg.d_type != arg.scale_type && arg.bias_type == arg.scale_type)
             {
