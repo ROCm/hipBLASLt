@@ -171,7 +171,7 @@ catch(...)
 }
 
 hipblasStatus_t hipblasLtMatmulDescCreate(hipblasLtMatmulDesc_t* matmulDesc,
-                                          hipblasComputeType_t computeType,
+                                          hipblasLtComputeType_t computeType,
                                           hipDataType            scaleType)
 try
 {

@@ -433,7 +433,7 @@ struct hipblaslt_test_invalid
                        << " b: " << hip_datatype_to_string(arg.b_type)
                        << " c: " << hip_datatype_to_string(arg.c_type)
                        << " d: " << hip_datatype_to_string(arg.d_type)
-                       << " compute:" << hipblas_computetype_to_string(arg.compute_type)
+                       << " compute:" << hipblaslt_computetype_to_string(arg.compute_type)
                        << std::endl;
         hipblaslt_abort();
 #endif

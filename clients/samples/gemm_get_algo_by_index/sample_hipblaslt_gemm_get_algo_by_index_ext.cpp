@@ -106,7 +106,7 @@ void simpleGemmGetAlgoByIndexExt(hipblasLtHandle_t  handle,
                              HIP_R_16F,
                              HIP_R_16F,
                              HIP_R_16F,
-                             HIPBLAS_COMPUTE_32F);
+                             HIPBLASLT_COMPUTE_F32);
 
     hipblaslt_ext::GemmEpilogue
         epilogue; // No action needed, default is HIPBLASLT_EPILOGUE_DEFAULT. (Gemm only)

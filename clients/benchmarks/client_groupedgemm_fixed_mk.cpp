@@ -782,7 +782,7 @@ int test_hipblaslt(hipDataType                 in_datatype,
                                                      in_datatype,
                                                      out_datatype,
                                                      out_datatype,
-                                                     HIPBLAS_COMPUTE_32F,
+                                                     HIPBLASLT_COMPUTE_F32,
                                                      heuristicResult));
 
     std::vector<int> validIdx;
@@ -795,7 +795,7 @@ int test_hipblaslt(hipDataType                 in_datatype,
                                            in_datatype,
                                            out_datatype,
                                            out_datatype,
-                                           HIPBLAS_COMPUTE_32F);
+                                           HIPBLASLT_COMPUTE_F32);
 
     std::cout << "index, transAB, M, N, K, lda, ldb, ldc, stride_a, stride_b, "
                  "stride_c, batch_count, alpha, beta, bias, activationType"
@@ -844,7 +844,7 @@ int test_hipblaslt(hipDataType                 in_datatype,
                                                           in_datatype,
                                                           out_datatype,
                                                           out_datatype,
-                                                          HIPBLAS_COMPUTE_32F};
+                                                          HIPBLASLT_COMPUTE_F32};
 
     // step 1: set problem to {Ms, {sum of N, 1, 1, 1, ...}, Ks}
     CHECK_HIPBLASLT_ERROR(groupedGemm.setProblem(m,

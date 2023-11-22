@@ -83,6 +83,17 @@ typedef enum {
 } hipblasLtEpilogue_t;
 
 /*! \ingroup types_module
+ *  \brief Specify the compute precision modes of the matrix
+ */
+typedef enum {
+  HIPBLASLT_COMPUTE_F32 = 300,     /**<32-bit floating-point precision.*/
+  HIPBLASLT_COMPUTE_F32_FAST_XF32 = 301, /**< XF32 compute for 32-bit input and output matrices */
+  HIPBLASLT_COMPUTE_F64 = 302,     /**<32-bit floating-point precision.*/
+  HIPBLASLT_COMPUTE_I32 = 303,
+  HIPBLASLT_COMPUTE_F32_FAST_F16 = 304, /**< F16 compute for 16-bit input and 32-bit output matrices */
+} hipblasLtComputeType_t;
+
+/*! \ingroup types_module
  *  \brief Specify the attributes that define the details of the matrix.
  */
 typedef enum {
@@ -484,7 +495,7 @@ hipblasStatus_t hipblasLtMatrixLayoutGetAttribute(hipblasLtMatrixLayout_t       
  * created by this function. See \ref hipblasLtMatmulDesc_t .
  *  @param[in]
  *  computeType  Enumerant that specifies the data precision for the matrix
- * multiply descriptor this function creates. See \ref hipblasComputeType_t .
+ * multiply descriptor this function creates. See \ref hipblasLtComputeType_t .
  *  @param[in]
  *  scaleType  Enumerant that specifies the data precision for the matrix
  * transform descriptor this function creates. See hipDataType.
@@ -494,7 +505,7 @@ hipblasStatus_t hipblasLtMatrixLayoutGetAttribute(hipblasLtMatrixLayout_t       
  */
 HIPBLASLT_EXPORT
 hipblasStatus_t hipblasLtMatmulDescCreate(hipblasLtMatmulDesc_t* matmulDesc,
-                                          hipblasComputeType_t computeType,
+                                          hipblasLtComputeType_t computeType,
                                           hipDataType            scaleType);
 
 /*! \ingroup library_module

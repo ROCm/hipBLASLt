@@ -626,11 +626,11 @@ try
     if(arg.d_type == HIPBLASLT_DATATYPE_INVALID)
         throw std::invalid_argument("Invalid value for --d_type " + d_type);
 
-    bool is_f16 = arg.a_type == HIP_R_16F || arg.a_type == HIP_R_16BF;
-    bool is_f32 = arg.a_type == HIP_R_32F;
-    arg.compute_type
-        = compute_type == "" ? (HIPBLAS_COMPUTE_32F) : string_to_hipblas_computetype(compute_type);
-    if(arg.compute_type == static_cast<hipblasComputeType_t>(0))
+    bool is_f16      = arg.a_type == HIP_R_16F || arg.a_type == HIP_R_16BF;
+    bool is_f32      = arg.a_type == HIP_R_32F;
+    arg.compute_type = compute_type == "" ? (HIPBLASLT_COMPUTE_F32)
+                                          : string_to_hipblaslt_computetype(compute_type);
+    if(arg.compute_type == static_cast<hipblasLtComputeType_t>(0))
         throw std::invalid_argument("Invalid value for --compute_type " + compute_type);
 
     if(string_to_hip_datatype(bias_type) == HIPBLASLT_DATATYPE_INVALID && bias_type != ""

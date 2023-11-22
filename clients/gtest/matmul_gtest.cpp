@@ -112,7 +112,7 @@ namespace
             {
                 name << hip_datatype_to_string(arg.a_type) << hip_datatype_to_string(arg.b_type)
                      << hip_datatype_to_string(arg.c_type) << hip_datatype_to_string(arg.d_type)
-                     << hipblas_computetype_to_string(arg.compute_type);
+                     << hipblaslt_computetype_to_string(arg.compute_type);
 
                 if(arg.activation_type != hipblaslt_activation_type::none)
                 {

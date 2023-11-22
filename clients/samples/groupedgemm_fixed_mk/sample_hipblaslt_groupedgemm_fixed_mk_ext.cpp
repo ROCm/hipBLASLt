@@ -122,7 +122,7 @@ void simpleGroupedGemmFixedMKExt(hipblasLtHandle_t     handle,
                                            HIP_R_16F,
                                            HIP_R_16F,
                                            HIP_R_16F,
-                                           HIPBLAS_COMPUTE_32F);
+                                           HIPBLASLT_COMPUTE_F32);
 
     std::vector<hipblaslt_ext::GemmEpilogue> epilogue{
         hipblaslt_ext::

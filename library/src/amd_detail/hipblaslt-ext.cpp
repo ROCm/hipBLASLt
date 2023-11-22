@@ -136,7 +136,7 @@ namespace hipblaslt_ext
                hipDataType            typeB,
                hipDataType            typeC,
                hipDataType            typeD,
-               hipblasComputeType_t typeCompute)
+               hipblasLtComputeType_t typeCompute)
         : GemmInstance(handle, GemmType::HIPBLASLT_GEMM)
     {
         m_problem_types.push_back({opA, opB, typeA, typeB, typeC, typeD, typeCompute});
@@ -295,7 +295,7 @@ namespace hipblaslt_ext
                                               hipDataType            typeB,
                                               hipDataType            typeC,
                                               hipDataType            typeD,
-                                              hipblasComputeType_t typeCompute)
+                                              hipblasLtComputeType_t typeCompute)
         : GemmInstance(handle, GemmType::HIPBLASLT_GROUPED_GEMM)
     {
         m_problem_types.push_back({opA, opB, typeA, typeB, typeC, typeD, typeCompute});
@@ -534,7 +534,7 @@ namespace hipblaslt_ext
                                 hipDataType                                    typeB,
                                 hipDataType                                    typeC,
                                 hipDataType                                    typeD,
-                                hipblasComputeType_t                         typeCompute,
+                                hipblasLtComputeType_t                         typeCompute,
                                 std::vector<hipblasLtMatmulHeuristicResult_t>& heuristicResults)
     try
     {
