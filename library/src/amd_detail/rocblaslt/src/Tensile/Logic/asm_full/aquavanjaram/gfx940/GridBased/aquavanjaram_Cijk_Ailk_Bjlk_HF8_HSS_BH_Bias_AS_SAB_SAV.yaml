@@ -87,7 +87,7 @@
     BufferStore: true
     CUCount: null
     ClusterLocalRead: 0
-    CodeObjectVersion: V3
+    CodeObjectVersion: default
     CustomKernelName: ''
     DepthU: 16
     DirectToLds: false
@@ -342,7 +342,7 @@
     BufferStore: true
     CUCount: null
     ClusterLocalRead: 0
-    CodeObjectVersion: V3
+    CodeObjectVersion: default
     CustomKernelName: ''
     DepthU: 16
     DirectToLds: false
@@ -597,7 +597,7 @@
     BufferStore: true
     CUCount: null
     ClusterLocalRead: 0
-    CodeObjectVersion: V3
+    CodeObjectVersion: default
     CustomKernelName: ''
     DepthU: 16
     DirectToLds: false
@@ -852,7 +852,7 @@
     BufferStore: true
     CUCount: null
     ClusterLocalRead: 0
-    CodeObjectVersion: V3
+    CodeObjectVersion: default
     CustomKernelName: ''
     DepthU: 16
     DirectToLds: false
@@ -1107,7 +1107,7 @@
     BufferStore: true
     CUCount: null
     ClusterLocalRead: 0
-    CodeObjectVersion: V3
+    CodeObjectVersion: default
     CustomKernelName: ''
     DepthU: 32
     DirectToLds: false
