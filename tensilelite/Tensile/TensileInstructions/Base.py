@@ -180,6 +180,13 @@ def getSlcBitName(hasGLCModifier):
     return "slc"
   return "sc1"
 
+def getCOVFromParam(versionString):
+  if versionString == "default" or versionString == "V4":
+    return 4
+  elif versionString == "V5":
+    return 5
+  printExit("Unknown CodeObjectVersion %s" % (versionString))
+
 def _removeIdent(isaDict) -> list:
     ids = [th.ident for th in threading.enumerate()]
     isaDict = [id for id in isaDict if id in ids]
@@ -199,7 +206,6 @@ def _tryAssembler(isaVersion: Tuple[int, int, int], assemblerPath: str, asmStrin
     args = [assemblerPath, '-x', 'assembler',
             '-target', 'amdgcn-amdhsa',
             '-mcpu='+ getGfxName(isaVersion),
-            '-mcode-object-version=3',
             *options,
             '-']
 
@@ -234,7 +240,6 @@ def _initAsmCaps(isaVersion, assemblerPath, isDebug) -> dict:
     rv["HasAddLshl"]        = _tryAssembler(isaVersion, assemblerPath, "v_add_lshl_u32 v47, v36, v34, 0x2", isDebug)
     rv["HasLshlOr"]         = _tryAssembler(isaVersion, assemblerPath, "v_lshl_or_b32 v47, v36, 0x2, v34", isDebug)
     rv["HasSMulHi"]         = _tryAssembler(isaVersion, assemblerPath, "s_mul_hi_u32 s47, s36, s34", isDebug)
-    rv["HasCodeObjectV3"]   = _tryAssembler(isaVersion, assemblerPath, "", isDebug, "-mcode-object-version=2")
 
     rv["HasMFMA_explictB"]  = _tryAssembler(isaVersion, assemblerPath, "v_mfma_f32_32x32x1_2b_f32 a[0:31], v0, v1, a[0:31]", isDebug)
     rv["HasMFMA"]           = _tryAssembler(isaVersion, assemblerPath, "v_mfma_f32_32x32x2bf16 a[0:31], v32, v33, a[0:31]", isDebug) or rv["HasMFMA_explictB"]

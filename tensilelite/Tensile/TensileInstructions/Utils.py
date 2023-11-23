@@ -20,7 +20,7 @@
 # CTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ################################################################################
 
-from .Base import getGfxName
+from .Base import getGfxName, getCOVFromParam
 from .Code import Module
 from .Containers import HolderContainer, RegisterContainer, RegName
 from .DataType import DataType
@@ -235,14 +235,13 @@ def replaceHolder(module, dst):
 
     return module
 
-def getAsmCompileArgs(assemblerPath: str, codeObjectVersion: str, archHasV3: bool, \
+def getAsmCompileArgs(assemblerPath: str, codeObjectVersion: str, \
     isa: Tuple[int, int, int], wavefrontSize: int, \
     sourceFileName: str, objectFileName: str, *moreArgs, debug: bool=False):
     launcher = shlex.split(os.environ.get('Tensile_ASM_COMPILER_LAUNCHER', ''))
     rv = launcher + [assemblerPath, '-x', 'assembler', '-target', 'amdgcn-amd-amdhsa']
 
-    if archHasV3:
-        rv += ['-mcode-object-version=2' if codeObjectVersion == "V2" else '-mcode-object-version=4']
+    rv += ['-mcode-object-version=%s'% getCOVFromParam(codeObjectVersion)]
 
     rv += ['-mcpu=' + getGfxName(isa)]
 

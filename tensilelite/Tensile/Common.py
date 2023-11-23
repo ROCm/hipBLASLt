@@ -239,7 +239,7 @@ if os.name == "nt":
 else:
   globalParameters["RuntimeLanguage"] = "HIP"
 
-globalParameters["CodeObjectVersion"] = "V3"
+globalParameters["CodeObjectVersion"] = "default"
 globalParameters["CxxCompiler"] = "hipcc"
 globalParameters["Architecture"] = "all"
 

@@ -24,7 +24,7 @@
 
 from . import ClientExecutable
 from . import LibraryIO
-from .TensileInstructions import getGfxName, DataType
+from .TensileInstructions import getGfxName, DataType, getCOVFromParam
 from .Common import globalParameters, pushWorkingPath, popWorkingPath, print1, printExit, CHeader, printWarning, listToInitializer, ClientExecutionLock
 from .SolutionStructs import Problem, ProblemType, ProblemSizesMock, ProblemSizesMockDummy, ActivationArgs, BiasTypeArgs
 from .TensileCreateLibrary import copyStaticFiles
@@ -228,7 +228,7 @@ def getBuildClientLibraryScript(buildPath, libraryLogicPath):
     callCreateLibraryCmd += " --asm-debug"
 
   callCreateLibraryCmd += " --architecture=" + globalParameters["Architecture"]
-  callCreateLibraryCmd += " --code-object-version=" + globalParameters["CodeObjectVersion"]
+  callCreateLibraryCmd += " --code-object-version=" + getCOVFromParam(globalParameters["CodeObjectVersion"])
   callCreateLibraryCmd += " --cxx-compiler=" + globalParameters["CxxCompiler"]
   callCreateLibraryCmd += " --library-format=" + globalParameters["LibraryFormat"]
 
