@@ -4556,7 +4556,6 @@ for codeObjectFileName in codeObjectFileNames:
       wavefrontSize = self.states.kernel["WavefrontSize"]
     return getAsmCompileArgs(globalParameters['AssemblerPath'], \
       globalParameters["CodeObjectVersion"], \
-      globalParameters["AsmCaps"][isa]["HasCodeObjectV3"], \
       isa, wavefrontSize, sourceFileName, objectFileName, *moreArgs, debug=debug)
 
   def getLinkCodeObjectArgs(self, objectFileNames, coFileName, *moreArgs):
