@@ -488,11 +488,7 @@ while true; do
 done
 
 if [[ -z $tensile_cov ]]; then
-    if [[ $build_hip_clang == true ]]; then
-        tensile_cov=V3
-    else
-        tensile_cov=V2
-    fi
+    tensile_cov=default
 fi
 
 if [[ "${cpu_ref_lib}" == blis ]]; then
