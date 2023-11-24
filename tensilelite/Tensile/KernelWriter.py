@@ -4413,7 +4413,10 @@ for codeObjectFileName in codeObjectFileNames:
     kernelName = self.getKernelName(kernel)
 
     if isCustomKernelConfig(kernel):
-      return os.path.join(globalParameters["CustomKernelDirectory"], (kernelName + ".s"))
+      for folder, subfolders, files in os.walk(globalParameters["CustomKernelDirectory"]):
+        for fname in files:
+          if fname == (kernelName + ".s"):
+            return os.path.join(folder, fname)
     else: # Replacement kernel
       return ReplacementKernels.Get(kernelName)
 
