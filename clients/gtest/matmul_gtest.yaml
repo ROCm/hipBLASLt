@@ -601,6 +601,21 @@ Tests:
   unit_check: 1
   gpu_arch: '94?'
 
+- name: matmul_f8_dst_f8
+  category: pre_checkin
+  function:
+    matmul: *real_precisions_1b_dst_f8
+  M: [128, 129]
+  N: [128, 129]
+  K: [128, 129]
+  transA_transB: *deepbench_transA_transB_range
+  alpha: 1
+  beta: [ 0.0, 2.0 ]
+  bias_vector: [0, 1]
+  algo_method: [2]
+  bias_type: f32_r
+  unit_check: 1
+  gpu_arch: '94?'
 
 - name: matmul_fallback_equality_NN_batch16
   category: pre_checkin
