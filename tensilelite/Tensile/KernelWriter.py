@@ -774,9 +774,10 @@ class KernelWriter(metaclass=abc.ABCMeta):
         instPerRegPack = 1 / kernel["ProblemType"]["DataType"].numRegisters() - 1
       else:
         instPerRegPack = 1 if (kernel["ProblemType"]["DataType"].numRegisters() == 0.25) else 0
-      instPerPackA    = int(kernel["MIInputPerThreadA"] * kernel["ProblemType"]["DataType"].numRegisters() * instPerRegPack)
-      instPerPackB    = int(kernel["MIInputPerThreadB"] * kernel["ProblemType"]["DataType"].numRegisters() * instPerRegPack)
-      instPerPackM    = 1 #int(kernel["MIInputPerThreadMetadata"])
+      instPerPackA    = int(kernel["MIInputPerThreadA"] * kernel["ProblemType"]["DataType"].numRegisters() * instPerRegPack) if not kernel["UnrollMajorLDSA"] else 0
+      instPerPackB    = int(kernel["MIInputPerThreadB"] * kernel["ProblemType"]["DataType"].numRegisters() * instPerRegPack) if not kernel["UnrollMajorLDSB"] else 0
+      if kernel["ProblemType"]["Sparse"] and not kernel["DirectToVgprSparseMetadata"]:
+        instPerPackM    = 1 if not kernel["UnrollMajorLDSMetadata"]  else 0
       packItems = []
       for iui in range(kernel["InnerUnroll"]):
         packINtems = [ [] for j in range(max(self.states.numReadsIterCoalescedA,self.states.numReadsIterCoalescedB,self.states.numReadsIterCoalescedMetadata)) ]
@@ -1079,7 +1080,6 @@ class KernelWriter(metaclass=abc.ABCMeta):
           # if i % kernel["MIWaveTile"][0]==0, mfma will use new B
           packAIdx += instPerPackA if i//(kernel["MIWaveTileA"]+kernel["MIWaveTileA"]*kernel["MIWaveTileB"]*(i//(kernel["MIWaveTileA"]*kernel["MIWaveTileB"]))) == 0 else 0
           packBIdx += instPerPackB if i % kernel["MIWaveTileA"] == 0 else 0
-          packMIdx = 0
           if kernel["ProblemType"]["Sparse"] and not kernel["DirectToVgprSparseMetadata"]:
             if kernel["ProblemType"]["Sparse"] == 2:
               packMIdx += instPerPackM if i % kernel["MIWaveTileA"] == 0 else 0
@@ -1088,8 +1088,10 @@ class KernelWriter(metaclass=abc.ABCMeta):
           # blockWidth < 1, means 0.5 or 0.25 (BF,H,Int8)
           packAIdx = packAIdx if tPA["bpe"] < 4 and not kernel["UnrollMajorLDSA"] else 0
           packBIdx = packBIdx if tPB["bpe"] < 4 and not kernel["UnrollMajorLDSB"] else 0
-          packMIdx = packMIdx if not kernel["UnrollMajorLDSMetadata"] else 0
-          numPack = (packAIdx + packBIdx+ packMIdx)
+          numPack = (packAIdx + packBIdx)
+          if kernel["ProblemType"]["Sparse"] and not kernel["DirectToVgprSparseMetadata"]:
+            packMIdx = packMIdx if not kernel["UnrollMajorLDSMetadata"] else 0
+            numPack += packMIdx
           if kernel["ProblemType"]["Sparse"] and not kernel["DirectToVgprSparseMetadata"]:
             iterCode.addComment0("pack scheduling: packAIdx:%u, packBIdx:%u, packMIdx:%u" %(packAIdx,packBIdx,packMIdx))
           else:
@@ -1099,10 +1101,11 @@ class KernelWriter(metaclass=abc.ABCMeta):
             if packItems:
               iterCode.add(packItems.pop(0))
               curPackIdx += 1
-          for j in range(instPerPackM):
-            if packItems:
-              iterCode.add(packItems.pop(0))
-              curPackIdx += 1
+          if kernel["ProblemType"]["Sparse"] and not kernel["DirectToVgprSparseMetadata"]:
+            for j in range(instPerPackM):
+              if packItems:
+                iterCode.add(packItems.pop(0))
+                curPackIdx += 1
           for j in range(instPerPackB):
             if packItems:
               iterCode.add(packItems.pop(0))
