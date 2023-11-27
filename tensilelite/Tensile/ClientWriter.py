@@ -228,7 +228,7 @@ def getBuildClientLibraryScript(buildPath, libraryLogicPath):
     callCreateLibraryCmd += " --asm-debug"
 
   callCreateLibraryCmd += " --architecture=" + globalParameters["Architecture"]
-  callCreateLibraryCmd += " --code-object-version=" + getCOVFromParam(globalParameters["CodeObjectVersion"])
+  callCreateLibraryCmd += " --code-object-version=" + globalParameters["CodeObjectVersion"]
   callCreateLibraryCmd += " --cxx-compiler=" + globalParameters["CxxCompiler"]
   callCreateLibraryCmd += " --library-format=" + globalParameters["LibraryFormat"]
 
