@@ -1277,9 +1277,10 @@ void testing_matmul(const Arguments& arg)
                                 heuristicTuningIndex.push_back(t);
                                 workspace_size = std::max(workspace_size, tmpWorkspaceSize);
                                 foundAlgo      = true;
-                                break;
                             }
                         }
+                        if(foundAlgo)
+                            break;
                     }
                 }
                 else
@@ -1369,9 +1370,10 @@ void testing_matmul(const Arguments& arg)
                             heuristicTuningIndex.push_back(t);
                             workspace_size = std::max(workspace_size, tmpWorkspaceSize);
                             foundAlgo      = true;
-                            break;
                         }
                     }
+                    if(foundAlgo)
+                        break;
                 }
             }
 
@@ -1628,7 +1630,6 @@ void testing_matmul(const Arguments& arg)
                         }
                     }
                 }
-                returnedAlgoCount = tmpAlgo.size();
             }
             else
             {
@@ -1711,11 +1712,11 @@ void testing_matmul(const Arguments& arg)
                     }
                 }
             }
-            returnedAlgoCount = heuristicResult.size();
-
             workspace_size = max_workspace_size;
         }
     }
+
+    returnedAlgoCount = heuristicResult.size();
 
     dWorkspace = new device_vector<unsigned char>(workspace_size, 1, HMM);
     CHECK_DEVICE_ALLOCATION(dWorkspace->memcheck());

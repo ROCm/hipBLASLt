@@ -463,8 +463,9 @@ class ProblemPredicate(Properties.Predicate):
         if 'BufferStore' in state and state['BufferStore'] == True:
             rv += [cls('BufferStoreOffsetLimitCheck', value=state['MacroTile1'])]
 
+        # FIXME: Need new logic
         if '_GlobalAccumulation' in state and state['_GlobalAccumulation'] != None:
-            value = globalParameters['MinKForGSU'] * state['GlobalSplitU']
+            value = globalParameters['MinKForGSU']
             rv += [cls('GlobalSplitUCheckMinK', value=value)]
 
         return rv
@@ -500,11 +501,13 @@ class SizeMapping:
 
     @classmethod
     def FromOriginalState(cls, d):
-        globalAccum = 0
-        if d['_GlobalAccumulation'] == 'SingleBuffer':
-            globalAccum = 1
-        if d['_GlobalAccumulation'] == 'MultipleBuffer':
-            globalAccum = 2
+        globalAccum = 2
+        # FIXME: Restore this after the yamls are fixed
+        # globalAccum = 0
+        # if d['GlobalSplitUAlgorithm'] == 'SingleBuffer':
+        #     globalAccum = 1
+        # if d['GlobalSplitUAlgorithm'] == 'MultipleBuffer':
+        #     globalAccum = 2
         return cls(waveNum                  = d['NumThreads'] // d['WavefrontSize'],
                    workGroup                = d['WorkGroup'],
                    macroTile                = cls.ReadOriginalMacroTile(d),
