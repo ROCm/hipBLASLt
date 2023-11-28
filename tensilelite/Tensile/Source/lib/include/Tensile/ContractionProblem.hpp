@@ -53,7 +53,7 @@ namespace Tensile
             m_gsu = gsu;
         }
 
-        int8_t gsu() const
+        uint8_t gsu() const
         {
             return m_gsu;
         }
@@ -82,9 +82,10 @@ namespace Tensile
         {
             m_gsu = 0;
         }
+
     private:
-        uint8_t m_gsu = 0; // default value
-        DataType m_biasType = DataType::None;
+        uint8_t        m_gsu            = 0; // default value
+        DataType       m_biasType       = DataType::None;
         ActivationType m_activationType = ActivationType::None;
     };
 
@@ -629,7 +630,7 @@ namespace Tensile
                      ContractionProblemGemm::TENSOR src      = ContractionProblemGemm::TENSOR::D)
         {
             setParams().setBiasEnum(type);
-            m_biasSrc  = src;
+            m_biasSrc = src;
             if(type != DataType::None && m_useBias)
             {
                 size_t batchIdx = 2;

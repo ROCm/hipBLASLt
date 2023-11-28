@@ -1230,6 +1230,9 @@ class KernelWriterAssembly(KernelWriter):
       else:
         moduleWg.add(SWaitCnt(lgkmcnt=0, comment="wait for %u bytes of kern args" % \
                             (self.argLoader.getOffset() - (self.states.numSgprPreload*4))))
+        # Should move these to preload args after gg and gemm is merged
+        moduleWg.add(SAndB32(dst=sgpr("WGM"), src0=sgpr("GSU"), src1=hex(0xFF00)))
+        moduleWg.add(SAndB32(dst=sgpr("GSU"), src0=sgpr("GSU"), src1=hex(0xFF)))
       moduleWg.addModuleAsFlatItems(moduleScaleAB)
       moduleWg.add(Label(label="stop", comment=""))
       #### calculate numWorkGroup ####
@@ -1318,7 +1321,8 @@ class KernelWriterAssembly(KernelWriter):
             preloadSgprStartIdx = self.states.rpga  #number sgprs of kernel argument buffer address
             #TODO: remove hardcode once destination SGPRs are in-order
             module.add(SMovB32(dst=sgpr(tmpSgprNumGemm), src=sgpr(preloadSgprStartIdx), comment="Grouped Gemm: Load num of Gemms"))
-            module.add(SMovB32(dst=sgpr("GSU"), src=sgpr(preloadSgprStartIdx+6), comment="Load GSU data"))
+            module.add(SAndB32(dst=sgpr("WGM"), src0=sgpr(preloadSgprStartIdx+6), src1=hex(0xFF00), comment="Load WGM data"))
+            module.add(SAndB32(dst=sgpr("GSU"), src0=sgpr(preloadSgprStartIdx+6), src1=hex(0xFF), comment="Load GSU data"))
             module.add(SMovB32(dst=sgpr(tmpSgprSkipWgTableGen), src=sgpr(preloadSgprStartIdx+5)))
             module.add(SMovB32(dst=sgpr("KernArgAddress+1"), src=sgpr(preloadSgprStartIdx+4), comment="Load address of kernel arguments"))
             module.add(SMovB32(dst=sgpr("KernArgAddress"), src=sgpr(preloadSgprStartIdx+3), comment="Load address of kernel arguments"))
@@ -1327,6 +1331,9 @@ class KernelWriterAssembly(KernelWriter):
             for i in range(kernel["ProblemType"]["NumIndicesC"]):
               moduleRegInit.add(SMovB32(dst=sgpr("WorkGroup0+%u"%i), src=sgpr(preloadSgprStartIdx+self.states.numSgprPreload+i), \
                         comment="restore workgroup id"))
+          else:
+            module.add(SAndB32(dst=sgpr("WGM"), src0=sgpr("GSU"), src1=hex(0xFF00)))
+            module.add(SAndB32(dst=sgpr("GSU"), src0=sgpr("GSU"), src1=hex(0xFF)))
 
           module.add(moduleRegInit)
           # FIXME: Need to fix these cause it may cause data hazard
@@ -1938,48 +1945,54 @@ class KernelWriterAssembly(KernelWriter):
 
     ########################################
     # Blocked rows or columns
-    absWgm = abs(kernel["WorkGroupMapping"])
-    if abs(kernel["WorkGroupMapping"]) > 1:
+    # Do branch
+    wgmLabel = Label(label=self.labels.getNameInc("WGM"), comment="")
+    module.add(SCmpLeU32(src0=sgpr("WGM"), src1=1, comment="WGM <= 1 ?"))
+    module.add(SCBranchSCC1(labelName=wgmLabel.getLabelName(), comment="branch if WGM <= 1"))
+    with self.allocTmpSgpr(5) as tmpSgprInfo:
+      tmpSgpr = tmpSgprInfo.idx
+      blockId2  = tmpSgpr+0
+      wgSerial2 = tmpSgpr+1
+      wgmDivisor  = tmpSgpr+2
+      wgmDivisor2 = tmpSgpr+3
+      wgmDivisorMagicNumber = tmpSgpr+4
+
       smallNumMagicShift = 31
-      magicNumberWgm = ((1<<smallNumMagicShift) // absWgm + 1)
+      # magicNumberWgm = ((1<<smallNumMagicShift) // absWgm + 1)
+      tmpVgpr = self.vgprPool.checkOut(2, "div")
+      tmpVgprRes = RegisterPoolResource(idx=tmpVgpr, size=2)
+      module.add(SMovB32(dst=sgpr(blockId2), src=hex(1<<smallNumMagicShift)+'L'))
+      module.add(scalarUInt32DivideAndRemainder(qReg=wgmDivisorMagicNumber, dReg=blockId2, divReg="WGM", rReg=wgSerial2, tmpVgprRes=tmpVgprRes, wavewidth=kernel["WavefrontSize"], doRemainder=False, comment="magic number for WGM"))
+      module.add(SAddU32(dst=sgpr(wgmDivisorMagicNumber), src0=sgpr(wgmDivisorMagicNumber), src1=1))
+      self.vgprPool.checkIn(tmpVgpr)
+      # blockId and serial within block
 
-      with self.allocTmpSgpr(5) as tmpSgprInfo:
-        tmpSgpr = tmpSgprInfo.idx
-        blockId2  = tmpSgpr+0
-        wgSerial2 = tmpSgpr+1
-        wgmDivisor  = tmpSgpr+2
-        wgmDivisor2 = tmpSgpr+3
-        wgmDivisorMagicNumber = tmpSgpr+4
+      # note this overwrites blockId2+1
+      module.add(self.sMagicDivWrapper(dest=blockId2, dividend=sgpr("WorkGroup1"), \
+          magicNumber=sgpr(wgmDivisorMagicNumber), magicShift=smallNumMagicShift))
+      module.add(SMulI32(dst=sgpr(wgSerial2), src0=sgpr(blockId2), src1=sgpr("WGM"), comment="quotient * non-magic divisor"))
+      module.add(SSubU32(dst=sgpr(wgSerial2), src0=sgpr("WorkGroup1"), src1=sgpr(wgSerial2), comment="WorkGroup1=remainder"))
+      module.add(SMulI32(dst=sgpr(wgSerial2), src0=sgpr(wgSerial2), src1=sgpr("NumWorkGroups0"), comment="(wg1 % WGM)*nwg0"))
+      module.add(SAddU32(dst=sgpr(wgSerial2), src0=sgpr(wgSerial2), src1=sgpr("WorkGroup0"), comment="wgSerial = wg0 + (wg1 % WGM)*nwg0"))
 
-        module.add(SMovB32(dst=sgpr(wgmDivisorMagicNumber), src=hex(magicNumberWgm)+'L', \
-            comment="magic number for WGM==%u"%absWgm))
-        # blockId and serial within block
+      module.add(self.sMagicDivWrapper(dest=wgmDivisor, dividend=sgpr("NumWorkGroups1"), magicNumber=sgpr(wgmDivisorMagicNumber), magicShift=smallNumMagicShift))
+      module.add(SMulI32(dst=sgpr(wgmDivisor2), src0=sgpr("WGM"), src1=sgpr(wgmDivisor), comment="quotient * non-magic divisor"))
+      module.add(SSubU32(dst=sgpr(wgmDivisorMagicNumber), src0=sgpr("NumWorkGroups1"), src1=sgpr(wgmDivisor2), comment="WorkGroup1=remainder"))
+      module.add(SCmpEQU32(src0=sgpr(wgmDivisorMagicNumber), src1=0, comment="remainder == 0 ?"))
+      module.add(SCMovB32(dst=sgpr(wgmDivisorMagicNumber), src=sgpr("WGM"), comment="remainder = WGM if remainder == 0"))
+      module.add(SCmpGeU32(src0=sgpr(blockId2), src1=sgpr(wgmDivisor), comment="blockId >= numFullBlocks ?"))
+      module.add(SCSelectB32(dst=sgpr(wgmDivisor), src0=sgpr(wgmDivisorMagicNumber), src1=sgpr("WGM")))
 
-        # note this overwrites blockId2+1
-        module.add(self.sMagicDivWrapper(dest=blockId2, dividend=sgpr("WorkGroup1"), \
-            magicNumber=sgpr(wgmDivisorMagicNumber), magicShift=smallNumMagicShift))
-        module.add(SMulI32(dst=sgpr(wgSerial2), src0=sgpr(blockId2), src1=absWgm, comment="quotient * non-magic divisor"))
-        module.add(SSubU32(dst=sgpr(wgSerial2), src0=sgpr("WorkGroup1"), src1=sgpr(wgSerial2), comment="WorkGroup1=remainder"))
-        module.add(SMulI32(dst=sgpr(wgSerial2), src0=sgpr(wgSerial2), src1=sgpr("NumWorkGroups0"), comment="(wg1 % WGM)*nwg0"))
-        module.add(SAddU32(dst=sgpr(wgSerial2), src0=sgpr(wgSerial2), src1=sgpr("WorkGroup0"), comment="wgSerial = wg0 + (wg1 % WGM)*nwg0"))
-
-        module.add(self.sMagicDivWrapper(dest=wgmDivisor, dividend=sgpr("NumWorkGroups1"), magicNumber=sgpr(wgmDivisorMagicNumber), magicShift=smallNumMagicShift))
-        module.add(SMulI32(dst=sgpr(wgmDivisor2), src0=abs(kernel["WorkGroupMapping"]), src1=sgpr(wgmDivisor), comment="quotient * non-magic divisor"))
-        module.add(SSubU32(dst=sgpr(wgmDivisorMagicNumber), src0=sgpr("NumWorkGroups1"), src1=sgpr(wgmDivisor2), comment="WorkGroup1=remainder"))
-        module.add(SCmpEQU32(src0=sgpr(wgmDivisorMagicNumber), src1=0, comment="remainder == 0 ?"))
-        module.add(SCMovB32(dst=sgpr(wgmDivisorMagicNumber), src=abs(kernel["WorkGroupMapping"]), comment="remainder = WGM if remainder == 0"))
-        module.add(SCmpGeU32(src0=sgpr(blockId2), src1=sgpr(wgmDivisor), comment="blockId >= numFullBlocks ?"))
-        module.add(SCSelectB32(dst=sgpr(wgmDivisor), src0=sgpr(wgmDivisorMagicNumber), src1=absWgm))
-
-        # No longer supported for kernel["WorkGroupMapping"] < 0
-        # WorkGroup0 = wgSerial2 / wgmDivisor
-        # WorkGroup1 = wgSerial2 - (wgmDivisor * WorkGroup0)
-        tmpVgpr = self.vgprPool.checkOut(2, "div")
-        tmpVgprRes = RegisterPoolResource(idx=tmpVgpr, size=2)
-        module.add(scalarUInt32DivideAndRemainder(qReg="WorkGroup0", dReg=wgSerial2, divReg=wgmDivisor, rReg="WorkGroup1", tmpVgprRes=tmpVgprRes, wavewidth=kernel["WavefrontSize"]))
-        self.vgprPool.checkIn(tmpVgpr)
-        module.add(SMulI32(dst=sgpr(blockId2), src0=sgpr(blockId2), src1=abs(kernel["WorkGroupMapping"]), comment="blockId * WGM"))
-        module.add(SAddU32(dst=sgpr("WorkGroup1"), src0=sgpr("WorkGroup1"), src1=sgpr(blockId2), comment="wg1 += blockId * WGM"))
+      # No longer supported for kernel["WorkGroupMapping"] < 0
+      # WorkGroup0 = wgSerial2 / wgmDivisor
+      # WorkGroup1 = wgSerial2 - (wgmDivisor * WorkGroup0)
+      tmpVgpr = self.vgprPool.checkOut(2, "div")
+      tmpVgprRes = RegisterPoolResource(idx=tmpVgpr, size=2)
+      module.add(scalarUInt32DivideAndRemainder(qReg="WorkGroup0", dReg=wgSerial2, divReg=wgmDivisor, rReg="WorkGroup1", tmpVgprRes=tmpVgprRes, wavewidth=kernel["WavefrontSize"]))
+      self.vgprPool.checkIn(tmpVgpr)
+      module.add(SMulI32(dst=sgpr(blockId2), src0=sgpr(blockId2), src1=sgpr("WGM"), comment="blockId * WGM"))
+      module.add(SAddU32(dst=sgpr("WorkGroup1"), src0=sgpr("WorkGroup1"), src1=sgpr(blockId2), comment="wg1 += blockId * WGM"))
+    module.add(wgmLabel)
 
     return module
 
