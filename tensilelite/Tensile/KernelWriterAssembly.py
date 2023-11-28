@@ -4513,10 +4513,8 @@ class KernelWriterAssembly(KernelWriter):
       self.codes.accVgprRead = mapAcctoArchRegs(kernel)
       if kernel["MIArchVgpr"]:
         module.addComment1("Multiply MI out register with Alpha -> C Vgpr register")
-        if kernel["_GlobalAccumulation"] == 'MultipleBuffer':
-          self.codes.mulAlpha = moveMIoutToArch(kernel, self.states.startVgprAlphaTmp)
-        else:
-          self.codes.mulAlpha = mulMIoutAlphaToArch(kernel, self.states.startVgprAlphaTmp)
+        self.codes.mulAlphaMultipleBuffer = moveMIoutToArch(kernel, self.states.startVgprAlphaTmp)
+        self.codes.mulAlphaOther = mulMIoutAlphaToArch(kernel, self.states.startVgprAlphaTmp)
 
     return module
 
@@ -8627,7 +8625,8 @@ class KernelWriterAssembly(KernelWriter):
               actTempSgpr = tmpSgpr # Get sgpr start address, should always be the same
               elementSgprs = tmpSgpr + ss.cfg.numTempSgprPerBatch
               codeAccVgprRead = deepcopy(self.codes.accVgprRead) if self.states.serializedStore else None
-              codeMulAlpha    = deepcopy(self.codes.mulAlpha) if self.states.serializedStore else None
+              mulAlpha = self.codes.mulAlphaMultipleBuffer if kernel["_GlobalAccumulation"] == 'MultipleBuffer' else self.codes.mulAlphaOther
+              codeMulAlpha = deepcopy(mulAlpha) if self.states.serializedStore else None
 
               self.alphaBeforeLoadC = False
               if kernel["MIArchVgpr"] and applyAlpha:
