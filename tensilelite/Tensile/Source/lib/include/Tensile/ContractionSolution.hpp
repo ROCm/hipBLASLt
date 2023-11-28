@@ -205,7 +205,9 @@ namespace Tensile
             double K;
         };
 
-        bool checkInternalArgumentsSupport(ContractionProblem const& problem, std::ostream& stream, bool debug = false) const;
+        bool checkInternalArgumentsSupport(ContractionProblem const& problem,
+                                           std::ostream&             stream,
+                                           bool                      debug = false) const;
 
         /**
    * Calculate required workspace size.
@@ -307,7 +309,7 @@ namespace Tensile
 
         // Kernel related arguments (e.g. MT, GSU...)
         template <bool T_Debug, typename KA>
-        void kernelArgs(KA& args) const;
+        void kernelArgs(KA& args, uint8_t gsu) const;
 
         template <typename KA>
         inline void calculateSingleCallWorkGroupItems(std::vector<Problem> const& problems,
