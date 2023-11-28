@@ -2236,7 +2236,8 @@ class KernelWriter(metaclass=abc.ABCMeta):
         self.states.bpeCexternal = bpeCexternalBackup
 
         if acclen > 16384:
-          module.add(self.longBranchScc0(gsuLabel, posNeg=1, comment="branch if GSU != 1"))
+          with self.allocTmpSgpr(3) as tmpSgprInfo:
+            module.add(self.longBranchScc0(gsuLabel, posNeg=1, tmpSgprInfo=tmpSgprInfo, comment="branch if GSU != 1"))
         else:
           module.add(SCBranchSCC0(labelName=gsuLabel.getLabelName(), comment="branch if GSU != 1"))
 
