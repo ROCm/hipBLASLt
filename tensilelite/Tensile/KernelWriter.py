@@ -3712,7 +3712,8 @@ class KernelWriter(metaclass=abc.ABCMeta):
       if (self.states.version == (9,4,0) or self.states.version == (9,4,1) or self.states.version == (9,4,2)) and kernel["MatrixInstB"] == 1 and \
          (kernel["ProblemType"]["DataType"].isHalf() or \
           kernel["ProblemType"]["DataType"].isBFloat16() or \
-          kernel["ProblemType"]["DataType"].isInt8()):
+          kernel["ProblemType"]["DataType"].isInt8() or \
+          kernel["ProblemType"]["DataType"].is8bitFloat()):
         mi_divisor = 4
         miIssueLatency = 1
 
