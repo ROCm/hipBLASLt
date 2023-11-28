@@ -272,7 +272,7 @@ def setdefaults(test):
 
         if test['batch_count'] > 0:
             test.setdefault('stride_a', [lda * K if test['transA'].upper() == 'N' else lda * M for K, M, lda in zip(Ks, Ms, test['lda'])])
-            test.setdefault('stride_b', 
+            test.setdefault('stride_b',
                             [N * ldb if test['transB'].upper() == 'N' else
                              K * ldb for N, K, ldb in zip(Ns, Ks, test['ldb'])])
             test.setdefault('stride_c', [ldc * N for ldc, N in zip(test['ldc'], Ns)])
@@ -373,6 +373,14 @@ def instantiate(test):
             test['M'] = M
             test['N'] = N
             test['K'] = K
+
+    gsu_vector = [-1 for _ in range(32)]
+    if 'gsu_vector' in test:
+      gsu_vector[0] = test['gsu_vector']
+    else:
+      gsu_vector[0] = 0
+    test['gsu_vector'] = gsu_vector
+
 
     # Any Arguments fields declared as enums (a_type, b_type, etc.)
     enum_args = [decl[0] for decl in param['Arguments']._fields_
