@@ -39,7 +39,6 @@ BenchmarkProblems:
         - KernelLanguage: ["Assembly"]
         - DepthU: [8, 16]
         - GlobalSplitU: [1]
-        - GlobalSplitUAlgorithm: ["SingleBuffer"]
         - ScheduleIterAlg: [3]
         - MatrixInstruction:
           - [4, 4, 4, 4, 1, 1, 1, 1, 1]
