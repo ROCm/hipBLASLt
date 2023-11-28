@@ -316,7 +316,8 @@ class StateVgprs:
 @dataclass
 class CodeModules:
   accVgprRead: Optional[Module]               = None
-  mulAlpha: Optional[Module]                  = None
+  mulAlphaMultipleBuffer: Optional[Module]    = None
+  mulAlphaOther: Optional[Module]             = None
   localWriteA: Optional[Module]               = None
   localWriteB: Optional[Module]               = None
   dtlsM0UpdateA: Optional[Module]             = None
