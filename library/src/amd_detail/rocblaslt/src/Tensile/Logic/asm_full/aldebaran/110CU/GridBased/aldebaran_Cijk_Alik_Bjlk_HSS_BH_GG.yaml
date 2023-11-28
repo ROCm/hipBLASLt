@@ -87,7 +87,7 @@
     GlobalReadVectorWidthA: 1
     GlobalReadVectorWidthB: 1
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: false
     GuaranteeNoPartialA: true

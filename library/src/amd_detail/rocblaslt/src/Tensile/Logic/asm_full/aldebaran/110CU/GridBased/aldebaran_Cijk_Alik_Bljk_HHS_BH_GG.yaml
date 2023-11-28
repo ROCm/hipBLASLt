@@ -87,7 +87,7 @@
     GlobalReadVectorWidthA: 2
     GlobalReadVectorWidthB: 2
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: false
     GuaranteeNoPartialA: true
@@ -305,7 +305,7 @@
     GlobalReadVectorWidthA: 2
     GlobalReadVectorWidthB: 2
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: false
     GuaranteeNoPartialA: true
@@ -523,7 +523,7 @@
     GlobalReadVectorWidthA: 4
     GlobalReadVectorWidthB: 4
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: false
     GuaranteeNoPartialA: true
@@ -741,7 +741,7 @@
     GlobalReadVectorWidthA: 4
     GlobalReadVectorWidthB: 4
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: false
     GuaranteeNoPartialA: true
@@ -959,7 +959,7 @@
     GlobalReadVectorWidthA: 4
     GlobalReadVectorWidthB: 4
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: false
     GuaranteeNoPartialA: true
@@ -1177,7 +1177,7 @@
     GlobalReadVectorWidthA: 4
     GlobalReadVectorWidthB: 4
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: false
     GuaranteeNoPartialA: true
@@ -1395,7 +1395,7 @@
     GlobalReadVectorWidthA: 4
     GlobalReadVectorWidthB: 4
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: false
     GuaranteeNoPartialA: true
@@ -1613,7 +1613,7 @@
     GlobalReadVectorWidthA: 4
     GlobalReadVectorWidthB: 4
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: false
     GuaranteeNoPartialA: true
@@ -1831,7 +1831,7 @@
     GlobalReadVectorWidthA: 4
     GlobalReadVectorWidthB: 4
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: false
     GuaranteeNoPartialA: true
@@ -2049,7 +2049,7 @@
     GlobalReadVectorWidthA: 2
     GlobalReadVectorWidthB: 2
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: false
     GuaranteeNoPartialA: true
@@ -2267,7 +2267,7 @@
     GlobalReadVectorWidthA: 2
     GlobalReadVectorWidthB: 2
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: false
     GuaranteeNoPartialA: true
@@ -2485,7 +2485,7 @@
     GlobalReadVectorWidthA: 2
     GlobalReadVectorWidthB: 2
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: false
     GuaranteeNoPartialA: true
@@ -2703,7 +2703,7 @@
     GlobalReadVectorWidthA: 2
     GlobalReadVectorWidthB: 2
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: false
     GuaranteeNoPartialA: true
@@ -2921,7 +2921,7 @@
     GlobalReadVectorWidthA: 2
     GlobalReadVectorWidthB: 2
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: false
     GuaranteeNoPartialA: true
@@ -3139,7 +3139,7 @@
     GlobalReadVectorWidthA: 4
     GlobalReadVectorWidthB: 4
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: false
     GuaranteeNoPartialA: true
@@ -3357,7 +3357,7 @@
     GlobalReadVectorWidthA: 2
     GlobalReadVectorWidthB: 2
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: false
     GuaranteeNoPartialA: true
@@ -3575,7 +3575,7 @@
     GlobalReadVectorWidthA: 8
     GlobalReadVectorWidthB: 8
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: false
     GuaranteeNoPartialA: true
@@ -3793,7 +3793,7 @@
     GlobalReadVectorWidthA: 2
     GlobalReadVectorWidthB: 2
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: false
     GuaranteeNoPartialA: true
@@ -4011,7 +4011,7 @@
     GlobalReadVectorWidthA: 4
     GlobalReadVectorWidthB: 4
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: false
     GuaranteeNoPartialA: true
@@ -4229,7 +4229,7 @@
     GlobalReadVectorWidthA: 2
     GlobalReadVectorWidthB: 2
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: false
     GuaranteeNoPartialA: true
@@ -4447,7 +4447,7 @@
     GlobalReadVectorWidthA: 8
     GlobalReadVectorWidthB: 8
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: false
     GuaranteeNoPartialA: true
@@ -4665,7 +4665,7 @@
     GlobalReadVectorWidthA: 2
     GlobalReadVectorWidthB: 2
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: false
     GuaranteeNoPartialA: true
@@ -4883,7 +4883,7 @@
     GlobalReadVectorWidthA: 4
     GlobalReadVectorWidthB: 4
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: false
     GuaranteeNoPartialA: true
@@ -5101,7 +5101,7 @@
     GlobalReadVectorWidthA: 2
     GlobalReadVectorWidthB: 2
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: false
     GuaranteeNoPartialA: true
@@ -5319,7 +5319,7 @@
     GlobalReadVectorWidthA: 8
     GlobalReadVectorWidthB: 8
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: false
     GuaranteeNoPartialA: true
@@ -5537,7 +5537,7 @@
     GlobalReadVectorWidthA: 2
     GlobalReadVectorWidthB: 2
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: false
     GuaranteeNoPartialA: true
@@ -5755,7 +5755,7 @@
     GlobalReadVectorWidthA: 4
     GlobalReadVectorWidthB: 4
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: false
     GuaranteeNoPartialA: true
@@ -5973,7 +5973,7 @@
     GlobalReadVectorWidthA: 2
     GlobalReadVectorWidthB: 2
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: false
     GuaranteeNoPartialA: true
@@ -6191,7 +6191,7 @@
     GlobalReadVectorWidthA: 8
     GlobalReadVectorWidthB: 8
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: false
     GuaranteeNoPartialA: true
@@ -6409,7 +6409,7 @@
     GlobalReadVectorWidthA: 2
     GlobalReadVectorWidthB: 2
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: false
     GuaranteeNoPartialA: true
@@ -6627,7 +6627,7 @@
     GlobalReadVectorWidthA: 2
     GlobalReadVectorWidthB: 2
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: false
     GuaranteeNoPartialA: true
@@ -6845,7 +6845,7 @@
     GlobalReadVectorWidthA: 2
     GlobalReadVectorWidthB: 2
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: false
     GuaranteeNoPartialA: true
@@ -7063,7 +7063,7 @@
     GlobalReadVectorWidthA: 2
     GlobalReadVectorWidthB: 2
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: false
     GuaranteeNoPartialA: true
@@ -7281,7 +7281,7 @@
     GlobalReadVectorWidthA: 4
     GlobalReadVectorWidthB: 4
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: false
     GuaranteeNoPartialA: true
@@ -7499,7 +7499,7 @@
     GlobalReadVectorWidthA: 4
     GlobalReadVectorWidthB: 4
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: false
     GuaranteeNoPartialA: true
@@ -7717,7 +7717,7 @@
     GlobalReadVectorWidthA: 4
     GlobalReadVectorWidthB: 4
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: false
     GuaranteeNoPartialA: true
@@ -7935,7 +7935,7 @@
     GlobalReadVectorWidthA: 4
     GlobalReadVectorWidthB: 4
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: false
     GuaranteeNoPartialA: true
@@ -8153,7 +8153,7 @@
     GlobalReadVectorWidthA: 4
     GlobalReadVectorWidthB: 4
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: false
     GuaranteeNoPartialA: true
@@ -8371,7 +8371,7 @@
     GlobalReadVectorWidthA: 4
     GlobalReadVectorWidthB: 4
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: false
     GuaranteeNoPartialA: true
@@ -8589,7 +8589,7 @@
     GlobalReadVectorWidthA: 4
     GlobalReadVectorWidthB: 4
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: false
     GuaranteeNoPartialA: true
@@ -8807,7 +8807,7 @@
     GlobalReadVectorWidthA: 4
     GlobalReadVectorWidthB: 4
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: false
     GuaranteeNoPartialA: true
@@ -9025,7 +9025,7 @@
     GlobalReadVectorWidthA: 2
     GlobalReadVectorWidthB: 2
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: false
     GuaranteeNoPartialA: true
@@ -9243,7 +9243,7 @@
     GlobalReadVectorWidthA: 2
     GlobalReadVectorWidthB: 2
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: false
     GuaranteeNoPartialA: true
@@ -9461,7 +9461,7 @@
     GlobalReadVectorWidthA: 2
     GlobalReadVectorWidthB: 2
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: false
     GuaranteeNoPartialA: true
@@ -9679,7 +9679,7 @@
     GlobalReadVectorWidthA: 2
     GlobalReadVectorWidthB: 2
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: false
     GuaranteeNoPartialA: true
@@ -9897,7 +9897,7 @@
     GlobalReadVectorWidthA: 2
     GlobalReadVectorWidthB: 2
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: false
     GuaranteeNoPartialA: true
@@ -10115,7 +10115,7 @@
     GlobalReadVectorWidthA: 4
     GlobalReadVectorWidthB: 4
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: false
     GuaranteeNoPartialA: true
@@ -10333,7 +10333,7 @@
     GlobalReadVectorWidthA: 2
     GlobalReadVectorWidthB: 2
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: false
     GuaranteeNoPartialA: true
@@ -10551,7 +10551,7 @@
     GlobalReadVectorWidthA: 8
     GlobalReadVectorWidthB: 8
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: false
     GuaranteeNoPartialA: true
@@ -10769,7 +10769,7 @@
     GlobalReadVectorWidthA: 2
     GlobalReadVectorWidthB: 2
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: false
     GuaranteeNoPartialA: true
@@ -10987,7 +10987,7 @@
     GlobalReadVectorWidthA: 4
     GlobalReadVectorWidthB: 4
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: false
     GuaranteeNoPartialA: true
@@ -11205,7 +11205,7 @@
     GlobalReadVectorWidthA: 2
     GlobalReadVectorWidthB: 2
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: false
     GuaranteeNoPartialA: true
@@ -11423,7 +11423,7 @@
     GlobalReadVectorWidthA: 8
     GlobalReadVectorWidthB: 8
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: false
     GuaranteeNoPartialA: true
@@ -11641,7 +11641,7 @@
     GlobalReadVectorWidthA: 2
     GlobalReadVectorWidthB: 2
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: false
     GuaranteeNoPartialA: true
@@ -11859,7 +11859,7 @@
     GlobalReadVectorWidthA: 4
     GlobalReadVectorWidthB: 4
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: false
     GuaranteeNoPartialA: true
@@ -12077,7 +12077,7 @@
     GlobalReadVectorWidthA: 2
     GlobalReadVectorWidthB: 2
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: false
     GuaranteeNoPartialA: true
@@ -12295,7 +12295,7 @@
     GlobalReadVectorWidthA: 8
     GlobalReadVectorWidthB: 8
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: false
     GuaranteeNoPartialA: true
@@ -12513,7 +12513,7 @@
     GlobalReadVectorWidthA: 2
     GlobalReadVectorWidthB: 2
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: false
     GuaranteeNoPartialA: true
@@ -12731,7 +12731,7 @@
     GlobalReadVectorWidthA: 4
     GlobalReadVectorWidthB: 4
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: false
     GuaranteeNoPartialA: true
@@ -12949,7 +12949,7 @@
     GlobalReadVectorWidthA: 2
     GlobalReadVectorWidthB: 2
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: false
     GuaranteeNoPartialA: true
@@ -13167,7 +13167,7 @@
     GlobalReadVectorWidthA: 8
     GlobalReadVectorWidthB: 8
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: false
     GuaranteeNoPartialA: true
@@ -13385,7 +13385,7 @@
     GlobalReadVectorWidthA: 2
     GlobalReadVectorWidthB: 2
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: false
     GuaranteeNoPartialA: true
@@ -13603,7 +13603,7 @@
     GlobalReadVectorWidthA: 2
     GlobalReadVectorWidthB: 2
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: false
     GuaranteeNoPartialA: true
@@ -13821,7 +13821,7 @@
     GlobalReadVectorWidthA: 2
     GlobalReadVectorWidthB: 2
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: false
     GuaranteeNoPartialA: true
@@ -14039,7 +14039,7 @@
     GlobalReadVectorWidthA: 2
     GlobalReadVectorWidthB: 2
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: 0
     GuaranteeNoPartialA: true
@@ -14257,7 +14257,7 @@
     GlobalReadVectorWidthA: 4
     GlobalReadVectorWidthB: 4
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: false
     GuaranteeNoPartialA: true
@@ -14475,7 +14475,7 @@
     GlobalReadVectorWidthA: 4
     GlobalReadVectorWidthB: 4
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: false
     GuaranteeNoPartialA: true
@@ -14693,7 +14693,7 @@
     GlobalReadVectorWidthA: 4
     GlobalReadVectorWidthB: 4
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: false
     GuaranteeNoPartialA: true
@@ -14911,7 +14911,7 @@
     GlobalReadVectorWidthA: 4
     GlobalReadVectorWidthB: 4
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: false
     GuaranteeNoPartialA: true
@@ -15129,7 +15129,7 @@
     GlobalReadVectorWidthA: 4
     GlobalReadVectorWidthB: 4
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: false
     GuaranteeNoPartialA: true
@@ -15347,7 +15347,7 @@
     GlobalReadVectorWidthA: 4
     GlobalReadVectorWidthB: 4
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: false
     GuaranteeNoPartialA: true
@@ -15565,7 +15565,7 @@
     GlobalReadVectorWidthA: 4
     GlobalReadVectorWidthB: 4
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: 0
     GuaranteeNoPartialA: true
@@ -15783,7 +15783,7 @@
     GlobalReadVectorWidthA: 4
     GlobalReadVectorWidthB: 4
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: 0
     GuaranteeNoPartialA: true
@@ -16001,7 +16001,7 @@
     GlobalReadVectorWidthA: 2
     GlobalReadVectorWidthB: 2
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: false
     GuaranteeNoPartialA: true
@@ -16219,7 +16219,7 @@
     GlobalReadVectorWidthA: 2
     GlobalReadVectorWidthB: 2
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: false
     GuaranteeNoPartialA: true
@@ -16437,7 +16437,7 @@
     GlobalReadVectorWidthA: 2
     GlobalReadVectorWidthB: 2
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: 0
     GuaranteeNoPartialA: true
@@ -16655,7 +16655,7 @@
     GlobalReadVectorWidthA: 2
     GlobalReadVectorWidthB: 2
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: 0
     GuaranteeNoPartialA: true
@@ -16873,7 +16873,7 @@
     GlobalReadVectorWidthA: 2
     GlobalReadVectorWidthB: 2
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: false
     GuaranteeNoPartialA: true
@@ -17091,7 +17091,7 @@
     GlobalReadVectorWidthA: 4
     GlobalReadVectorWidthB: 4
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: false
     GuaranteeNoPartialA: true
@@ -17309,7 +17309,7 @@
     GlobalReadVectorWidthA: 2
     GlobalReadVectorWidthB: 2
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: false
     GuaranteeNoPartialA: true
@@ -17527,7 +17527,7 @@
     GlobalReadVectorWidthA: 8
     GlobalReadVectorWidthB: 8
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: false
     GuaranteeNoPartialA: true
@@ -17745,7 +17745,7 @@
     GlobalReadVectorWidthA: 2
     GlobalReadVectorWidthB: 2
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: false
     GuaranteeNoPartialA: true
@@ -17963,7 +17963,7 @@
     GlobalReadVectorWidthA: 4
     GlobalReadVectorWidthB: 4
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: false
     GuaranteeNoPartialA: true
@@ -18181,7 +18181,7 @@
     GlobalReadVectorWidthA: 2
     GlobalReadVectorWidthB: 2
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: false
     GuaranteeNoPartialA: true
@@ -18399,7 +18399,7 @@
     GlobalReadVectorWidthA: 8
     GlobalReadVectorWidthB: 8
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: false
     GuaranteeNoPartialA: true
@@ -18617,7 +18617,7 @@
     GlobalReadVectorWidthA: 2
     GlobalReadVectorWidthB: 2
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: false
     GuaranteeNoPartialA: true
@@ -18835,7 +18835,7 @@
     GlobalReadVectorWidthA: 4
     GlobalReadVectorWidthB: 4
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: false
     GuaranteeNoPartialA: true
@@ -19053,7 +19053,7 @@
     GlobalReadVectorWidthA: 2
     GlobalReadVectorWidthB: 2
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: 0
     GuaranteeNoPartialA: true
@@ -19271,7 +19271,7 @@
     GlobalReadVectorWidthA: 8
     GlobalReadVectorWidthB: 8
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: 0
     GuaranteeNoPartialA: true
@@ -19489,7 +19489,7 @@
     GlobalReadVectorWidthA: 2
     GlobalReadVectorWidthB: 2
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: 0
     GuaranteeNoPartialA: true
@@ -19707,7 +19707,7 @@
     GlobalReadVectorWidthA: 4
     GlobalReadVectorWidthB: 4
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: 0
     GuaranteeNoPartialA: true
@@ -19925,7 +19925,7 @@
     GlobalReadVectorWidthA: 2
     GlobalReadVectorWidthB: 2
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: 0
     GuaranteeNoPartialA: true
@@ -20143,7 +20143,7 @@
     GlobalReadVectorWidthA: 8
     GlobalReadVectorWidthB: 8
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: 0
     GuaranteeNoPartialA: true
@@ -20361,7 +20361,7 @@
     GlobalReadVectorWidthA: 2
     GlobalReadVectorWidthB: 2
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: false
     GuaranteeNoPartialA: true
@@ -20579,7 +20579,7 @@
     GlobalReadVectorWidthA: 2
     GlobalReadVectorWidthB: 2
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: false
     GuaranteeNoPartialA: true
@@ -20797,7 +20797,7 @@
     GlobalReadVectorWidthA: 2
     GlobalReadVectorWidthB: 2
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: 0
     GuaranteeNoPartialA: true
@@ -21015,7 +21015,7 @@
     GlobalReadVectorWidthA: 2
     GlobalReadVectorWidthB: 2
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: 0
     GuaranteeNoPartialA: true
@@ -21233,7 +21233,7 @@
     GlobalReadVectorWidthA: 4
     GlobalReadVectorWidthB: 4
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: false
     GuaranteeNoPartialA: true
@@ -21451,7 +21451,7 @@
     GlobalReadVectorWidthA: 4
     GlobalReadVectorWidthB: 4
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: false
     GuaranteeNoPartialA: true
@@ -21669,7 +21669,7 @@
     GlobalReadVectorWidthA: 4
     GlobalReadVectorWidthB: 4
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: false
     GuaranteeNoPartialA: true
@@ -21887,7 +21887,7 @@
     GlobalReadVectorWidthA: 4
     GlobalReadVectorWidthB: 4
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: 0
     GuaranteeNoPartialA: true
@@ -22105,7 +22105,7 @@
     GlobalReadVectorWidthA: 4
     GlobalReadVectorWidthB: 4
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: 0
     GuaranteeNoPartialA: true
@@ -22323,7 +22323,7 @@
     GlobalReadVectorWidthA: 4
     GlobalReadVectorWidthB: 4
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: 0
     GuaranteeNoPartialA: true
@@ -22541,7 +22541,7 @@
     GlobalReadVectorWidthA: 4
     GlobalReadVectorWidthB: 4
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: 0
     GuaranteeNoPartialA: true
@@ -22759,7 +22759,7 @@
     GlobalReadVectorWidthA: 2
     GlobalReadVectorWidthB: 2
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: false
     GuaranteeNoPartialA: true
@@ -22977,7 +22977,7 @@
     GlobalReadVectorWidthA: 2
     GlobalReadVectorWidthB: 2
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: false
     GuaranteeNoPartialA: true
@@ -23195,7 +23195,7 @@
     GlobalReadVectorWidthA: 2
     GlobalReadVectorWidthB: 2
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: 0
     GuaranteeNoPartialA: true
@@ -23413,7 +23413,7 @@
     GlobalReadVectorWidthA: 2
     GlobalReadVectorWidthB: 2
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: 0
     GuaranteeNoPartialA: true
@@ -23631,7 +23631,7 @@
     GlobalReadVectorWidthA: 4
     GlobalReadVectorWidthB: 4
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: false
     GuaranteeNoPartialA: true
@@ -23849,7 +23849,7 @@
     GlobalReadVectorWidthA: 2
     GlobalReadVectorWidthB: 2
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: false
     GuaranteeNoPartialA: true
@@ -24067,7 +24067,7 @@
     GlobalReadVectorWidthA: 8
     GlobalReadVectorWidthB: 8
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: false
     GuaranteeNoPartialA: true
@@ -24285,7 +24285,7 @@
     GlobalReadVectorWidthA: 2
     GlobalReadVectorWidthB: 2
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: false
     GuaranteeNoPartialA: true
@@ -24503,7 +24503,7 @@
     GlobalReadVectorWidthA: 4
     GlobalReadVectorWidthB: 4
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: false
     GuaranteeNoPartialA: true
@@ -24721,7 +24721,7 @@
     GlobalReadVectorWidthA: 2
     GlobalReadVectorWidthB: 2
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: false
     GuaranteeNoPartialA: true
@@ -24939,7 +24939,7 @@
     GlobalReadVectorWidthA: 8
     GlobalReadVectorWidthB: 8
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: false
     GuaranteeNoPartialA: true
@@ -25157,7 +25157,7 @@
     GlobalReadVectorWidthA: 2
     GlobalReadVectorWidthB: 2
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: 0
     GuaranteeNoPartialA: true
@@ -25375,7 +25375,7 @@
     GlobalReadVectorWidthA: 4
     GlobalReadVectorWidthB: 4
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: 0
     GuaranteeNoPartialA: true
@@ -25593,7 +25593,7 @@
     GlobalReadVectorWidthA: 2
     GlobalReadVectorWidthB: 2
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: 0
     GuaranteeNoPartialA: true
@@ -25811,7 +25811,7 @@
     GlobalReadVectorWidthA: 8
     GlobalReadVectorWidthB: 8
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: 0
     GuaranteeNoPartialA: true
@@ -26029,7 +26029,7 @@
     GlobalReadVectorWidthA: 2
     GlobalReadVectorWidthB: 2
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: 0
     GuaranteeNoPartialA: true
@@ -26247,7 +26247,7 @@
     GlobalReadVectorWidthA: 4
     GlobalReadVectorWidthB: 4
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: 0
     GuaranteeNoPartialA: true
@@ -26465,7 +26465,7 @@
     GlobalReadVectorWidthA: 2
     GlobalReadVectorWidthB: 2
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: 0
     GuaranteeNoPartialA: true
@@ -26683,7 +26683,7 @@
     GlobalReadVectorWidthA: 8
     GlobalReadVectorWidthB: 8
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: 0
     GuaranteeNoPartialA: true
@@ -26901,7 +26901,7 @@
     GlobalReadVectorWidthA: 4
     GlobalReadVectorWidthB: 4
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: false
     GuaranteeNoPartialA: true
@@ -27119,7 +27119,7 @@
     GlobalReadVectorWidthA: 4
     GlobalReadVectorWidthB: 4
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: 0
     GuaranteeNoPartialA: true
@@ -27337,7 +27337,7 @@
     GlobalReadVectorWidthA: 4
     GlobalReadVectorWidthB: 4
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: 0
     GuaranteeNoPartialA: true
@@ -27555,7 +27555,7 @@
     GlobalReadVectorWidthA: 8
     GlobalReadVectorWidthB: 8
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: false
     GuaranteeNoPartialA: true
@@ -27773,7 +27773,7 @@
     GlobalReadVectorWidthA: 8
     GlobalReadVectorWidthB: 8
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: false
     GuaranteeNoPartialA: true
@@ -27991,7 +27991,7 @@
     GlobalReadVectorWidthA: 8
     GlobalReadVectorWidthB: 8
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: false
     GuaranteeNoPartialA: true
@@ -28209,7 +28209,7 @@
     GlobalReadVectorWidthA: 8
     GlobalReadVectorWidthB: 8
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: 0
     GuaranteeNoPartialA: true
@@ -28427,7 +28427,7 @@
     GlobalReadVectorWidthA: 8
     GlobalReadVectorWidthB: 8
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: false
     GuaranteeNoPartialA: true
@@ -28645,7 +28645,7 @@
     GlobalReadVectorWidthA: 8
     GlobalReadVectorWidthB: 8
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: 0
     GuaranteeNoPartialA: true
@@ -28863,7 +28863,7 @@
     GlobalReadVectorWidthA: 8
     GlobalReadVectorWidthB: 8
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: 0
     GuaranteeNoPartialA: true
@@ -29081,7 +29081,7 @@
     GlobalReadVectorWidthA: 8
     GlobalReadVectorWidthB: 8
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: 0
     GuaranteeNoPartialA: true
@@ -29299,7 +29299,7 @@
     GlobalReadVectorWidthA: 4
     GlobalReadVectorWidthB: 4
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: false
     GuaranteeNoPartialA: true
@@ -29517,7 +29517,7 @@
     GlobalReadVectorWidthA: 4
     GlobalReadVectorWidthB: 4
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: false
     GuaranteeNoPartialA: true
@@ -29735,7 +29735,7 @@
     GlobalReadVectorWidthA: 4
     GlobalReadVectorWidthB: 4
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: 0
     GuaranteeNoPartialA: true
@@ -29953,7 +29953,7 @@
     GlobalReadVectorWidthA: 4
     GlobalReadVectorWidthB: 4
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: 0
     GuaranteeNoPartialA: true
@@ -30171,7 +30171,7 @@
     GlobalReadVectorWidthA: 4
     GlobalReadVectorWidthB: 4
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: false
     GuaranteeNoPartialA: true
@@ -30389,7 +30389,7 @@
     GlobalReadVectorWidthA: 8
     GlobalReadVectorWidthB: 8
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: false
     GuaranteeNoPartialA: true
@@ -30607,7 +30607,7 @@
     GlobalReadVectorWidthA: 4
     GlobalReadVectorWidthB: 4
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: false
     GuaranteeNoPartialA: true
@@ -30825,7 +30825,7 @@
     GlobalReadVectorWidthA: 8
     GlobalReadVectorWidthB: 8
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: 0
     GuaranteeNoPartialA: true
@@ -31043,7 +31043,7 @@
     GlobalReadVectorWidthA: 4
     GlobalReadVectorWidthB: 4
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: false
     GuaranteeNoPartialA: true
@@ -31261,7 +31261,7 @@
     GlobalReadVectorWidthA: 8
     GlobalReadVectorWidthB: 8
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: false
     GuaranteeNoPartialA: true
@@ -31479,7 +31479,7 @@
     GlobalReadVectorWidthA: 4
     GlobalReadVectorWidthB: 4
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: false
     GuaranteeNoPartialA: true
@@ -31697,7 +31697,7 @@
     GlobalReadVectorWidthA: 8
     GlobalReadVectorWidthB: 8
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: false
     GuaranteeNoPartialA: true
@@ -31915,7 +31915,7 @@
     GlobalReadVectorWidthA: 4
     GlobalReadVectorWidthB: 4
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: 0
     GuaranteeNoPartialA: true
@@ -32133,7 +32133,7 @@
     GlobalReadVectorWidthA: 8
     GlobalReadVectorWidthB: 8
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: 0
     GuaranteeNoPartialA: true
@@ -32351,7 +32351,7 @@
     GlobalReadVectorWidthA: 4
     GlobalReadVectorWidthB: 4
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: 0
     GuaranteeNoPartialA: true
@@ -32569,7 +32569,7 @@
     GlobalReadVectorWidthA: 8
     GlobalReadVectorWidthB: 8
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: 0
     GuaranteeNoPartialA: true
@@ -32787,7 +32787,7 @@
     GlobalReadVectorWidthA: 4
     GlobalReadVectorWidthB: 4
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: 0
     GuaranteeNoPartialA: true
@@ -33005,7 +33005,7 @@
     GlobalReadVectorWidthA: 8
     GlobalReadVectorWidthB: 8
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: 0
     GuaranteeNoPartialA: true
@@ -33223,7 +33223,7 @@
     GlobalReadVectorWidthA: 4
     GlobalReadVectorWidthB: 4
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: 0
     GuaranteeNoPartialA: true
@@ -33441,7 +33441,7 @@
     GlobalReadVectorWidthA: 8
     GlobalReadVectorWidthB: 8
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: 0
     GuaranteeNoPartialA: true
@@ -33659,7 +33659,7 @@
     GlobalReadVectorWidthA: 4
     GlobalReadVectorWidthB: 4
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: false
     GuaranteeNoPartialA: true
@@ -33877,7 +33877,7 @@
     GlobalReadVectorWidthA: 4
     GlobalReadVectorWidthB: 4
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: 0
     GuaranteeNoPartialA: true
@@ -34095,7 +34095,7 @@
     GlobalReadVectorWidthA: 4
     GlobalReadVectorWidthB: 4
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: 0
     GuaranteeNoPartialA: true
@@ -34313,7 +34313,7 @@
     GlobalReadVectorWidthA: 4
     GlobalReadVectorWidthB: 4
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: 0
     GuaranteeNoPartialA: true
@@ -34531,7 +34531,7 @@
     GlobalReadVectorWidthA: 8
     GlobalReadVectorWidthB: 8
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: false
     GuaranteeNoPartialA: true
@@ -34749,7 +34749,7 @@
     GlobalReadVectorWidthA: 8
     GlobalReadVectorWidthB: 8
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: false
     GuaranteeNoPartialA: true
@@ -34967,7 +34967,7 @@
     GlobalReadVectorWidthA: 8
     GlobalReadVectorWidthB: 8
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: false
     GuaranteeNoPartialA: true
@@ -35185,7 +35185,7 @@
     GlobalReadVectorWidthA: 8
     GlobalReadVectorWidthB: 8
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: false
     GuaranteeNoPartialA: true
@@ -35403,7 +35403,7 @@
     GlobalReadVectorWidthA: 8
     GlobalReadVectorWidthB: 8
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: 0
     GuaranteeNoPartialA: true
@@ -35621,7 +35621,7 @@
     GlobalReadVectorWidthA: 8
     GlobalReadVectorWidthB: 8
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: 0
     GuaranteeNoPartialA: true
@@ -35839,7 +35839,7 @@
     GlobalReadVectorWidthA: 8
     GlobalReadVectorWidthB: 8
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: 0
     GuaranteeNoPartialA: true
@@ -36057,7 +36057,7 @@
     GlobalReadVectorWidthA: 8
     GlobalReadVectorWidthB: 8
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: 0
     GuaranteeNoPartialA: true
@@ -36275,7 +36275,7 @@
     GlobalReadVectorWidthA: 4
     GlobalReadVectorWidthB: 4
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: false
     GuaranteeNoPartialA: true
@@ -36493,7 +36493,7 @@
     GlobalReadVectorWidthA: 4
     GlobalReadVectorWidthB: 4
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: 0
     GuaranteeNoPartialA: true
@@ -36711,7 +36711,7 @@
     GlobalReadVectorWidthA: 4
     GlobalReadVectorWidthB: 4
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: 0
     GuaranteeNoPartialA: true
@@ -36929,7 +36929,7 @@
     GlobalReadVectorWidthA: 4
     GlobalReadVectorWidthB: 4
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: 0
     GuaranteeNoPartialA: true
@@ -37147,7 +37147,7 @@
     GlobalReadVectorWidthA: 4
     GlobalReadVectorWidthB: 4
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: false
     GuaranteeNoPartialA: true
@@ -37365,7 +37365,7 @@
     GlobalReadVectorWidthA: 8
     GlobalReadVectorWidthB: 8
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: 0
     GuaranteeNoPartialA: true
@@ -37583,7 +37583,7 @@
     GlobalReadVectorWidthA: 4
     GlobalReadVectorWidthB: 4
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: false
     GuaranteeNoPartialA: true
@@ -37801,7 +37801,7 @@
     GlobalReadVectorWidthA: 8
     GlobalReadVectorWidthB: 8
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: false
     GuaranteeNoPartialA: true
@@ -38019,7 +38019,7 @@
     GlobalReadVectorWidthA: 4
     GlobalReadVectorWidthB: 4
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: 0
     GuaranteeNoPartialA: true
@@ -38237,7 +38237,7 @@
     GlobalReadVectorWidthA: 8
     GlobalReadVectorWidthB: 8
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: false
     GuaranteeNoPartialA: true
@@ -38455,7 +38455,7 @@
     GlobalReadVectorWidthA: 4
     GlobalReadVectorWidthB: 4
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: 0
     GuaranteeNoPartialA: true
@@ -38673,7 +38673,7 @@
     GlobalReadVectorWidthA: 8
     GlobalReadVectorWidthB: 8
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: 0
     GuaranteeNoPartialA: true
@@ -38891,7 +38891,7 @@
     GlobalReadVectorWidthA: 4
     GlobalReadVectorWidthB: 4
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: 0
     GuaranteeNoPartialA: true
@@ -39109,7 +39109,7 @@
     GlobalReadVectorWidthA: 8
     GlobalReadVectorWidthB: 8
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: 0
     GuaranteeNoPartialA: true
@@ -39327,7 +39327,7 @@
     GlobalReadVectorWidthA: 4
     GlobalReadVectorWidthB: 4
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: 0
     GuaranteeNoPartialA: true
@@ -39545,7 +39545,7 @@
     GlobalReadVectorWidthA: 8
     GlobalReadVectorWidthB: 8
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: 0
     GuaranteeNoPartialA: true
@@ -39763,7 +39763,7 @@
     GlobalReadVectorWidthA: 4
     GlobalReadVectorWidthB: 4
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: 0
     GuaranteeNoPartialA: true
@@ -39981,7 +39981,7 @@
     GlobalReadVectorWidthA: 8
     GlobalReadVectorWidthB: 8
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: 0
     GuaranteeNoPartialA: true
@@ -40199,7 +40199,7 @@
     GlobalReadVectorWidthA: 4
     GlobalReadVectorWidthB: 4
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: 0
     GuaranteeNoPartialA: true
@@ -40417,7 +40417,7 @@
     GlobalReadVectorWidthA: 8
     GlobalReadVectorWidthB: 8
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: 0
     GuaranteeNoPartialA: true
@@ -40635,7 +40635,7 @@
     GlobalReadVectorWidthA: 4
     GlobalReadVectorWidthB: 4
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: 0
     GuaranteeNoPartialA: true
@@ -40853,7 +40853,7 @@
     GlobalReadVectorWidthA: 4
     GlobalReadVectorWidthB: 4
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: 0
     GuaranteeNoPartialA: true
@@ -41071,7 +41071,7 @@
     GlobalReadVectorWidthA: 4
     GlobalReadVectorWidthB: 4
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: 0
     GuaranteeNoPartialA: true
@@ -41289,7 +41289,7 @@
     GlobalReadVectorWidthA: 4
     GlobalReadVectorWidthB: 4
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: 0
     GuaranteeNoPartialA: true
@@ -41507,7 +41507,7 @@
     GlobalReadVectorWidthA: 8
     GlobalReadVectorWidthB: 8
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: false
     GuaranteeNoPartialA: true
@@ -41725,7 +41725,7 @@
     GlobalReadVectorWidthA: 8
     GlobalReadVectorWidthB: 8
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: 0
     GuaranteeNoPartialA: true
@@ -41943,7 +41943,7 @@
     GlobalReadVectorWidthA: 8
     GlobalReadVectorWidthB: 8
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: 0
     GuaranteeNoPartialA: true
@@ -42161,7 +42161,7 @@
     GlobalReadVectorWidthA: 8
     GlobalReadVectorWidthB: 8
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: 0
     GuaranteeNoPartialA: true
@@ -42379,7 +42379,7 @@
     GlobalReadVectorWidthA: 8
     GlobalReadVectorWidthB: 8
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: 0
     GuaranteeNoPartialA: true
@@ -42597,7 +42597,7 @@
     GlobalReadVectorWidthA: 8
     GlobalReadVectorWidthB: 8
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: 0
     GuaranteeNoPartialA: true
@@ -42815,7 +42815,7 @@
     GlobalReadVectorWidthA: 8
     GlobalReadVectorWidthB: 8
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: 0
     GuaranteeNoPartialA: true
@@ -43033,7 +43033,7 @@
     GlobalReadVectorWidthA: 8
     GlobalReadVectorWidthB: 8
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: 0
     GuaranteeNoPartialA: true
@@ -43251,7 +43251,7 @@
     GlobalReadVectorWidthA: 4
     GlobalReadVectorWidthB: 4
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: 0
     GuaranteeNoPartialA: true
@@ -43469,7 +43469,7 @@
     GlobalReadVectorWidthA: 4
     GlobalReadVectorWidthB: 4
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: 0
     GuaranteeNoPartialA: true
@@ -43687,7 +43687,7 @@
     GlobalReadVectorWidthA: 4
     GlobalReadVectorWidthB: 4
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: 0
     GuaranteeNoPartialA: true
@@ -43905,7 +43905,7 @@
     GlobalReadVectorWidthA: 4
     GlobalReadVectorWidthB: 4
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: 0
     GuaranteeNoPartialA: true
@@ -44123,7 +44123,7 @@
     GlobalReadVectorWidthA: 8
     GlobalReadVectorWidthB: 8
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: 0
     GuaranteeNoPartialA: true
@@ -44341,7 +44341,7 @@
     GlobalReadVectorWidthA: 4
     GlobalReadVectorWidthB: 4
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: 0
     GuaranteeNoPartialA: true
@@ -44559,7 +44559,7 @@
     GlobalReadVectorWidthA: 8
     GlobalReadVectorWidthB: 8
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: 0
     GuaranteeNoPartialA: true
@@ -44777,7 +44777,7 @@
     GlobalReadVectorWidthA: 4
     GlobalReadVectorWidthB: 4
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: 0
     GuaranteeNoPartialA: true
@@ -44995,7 +44995,7 @@
     GlobalReadVectorWidthA: 8
     GlobalReadVectorWidthB: 8
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: 0
     GuaranteeNoPartialA: true
@@ -45213,7 +45213,7 @@
     GlobalReadVectorWidthA: 4
     GlobalReadVectorWidthB: 4
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: 0
     GuaranteeNoPartialA: true
@@ -45431,7 +45431,7 @@
     GlobalReadVectorWidthA: 8
     GlobalReadVectorWidthB: 8
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: 0
     GuaranteeNoPartialA: true
@@ -45649,7 +45649,7 @@
     GlobalReadVectorWidthA: 4
     GlobalReadVectorWidthB: 4
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: 0
     GuaranteeNoPartialA: true
@@ -45867,7 +45867,7 @@
     GlobalReadVectorWidthA: 8
     GlobalReadVectorWidthB: 8
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: 0
     GuaranteeNoPartialA: true
@@ -46085,7 +46085,7 @@
     GlobalReadVectorWidthA: 4
     GlobalReadVectorWidthB: 4
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: 0
     GuaranteeNoPartialA: true
@@ -46303,7 +46303,7 @@
     GlobalReadVectorWidthA: 8
     GlobalReadVectorWidthB: 8
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: 0
     GuaranteeNoPartialA: true
@@ -46521,7 +46521,7 @@
     GlobalReadVectorWidthA: 4
     GlobalReadVectorWidthB: 4
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: 0
     GuaranteeNoPartialA: true
@@ -46739,7 +46739,7 @@
     GlobalReadVectorWidthA: 8
     GlobalReadVectorWidthB: 8
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: 0
     GuaranteeNoPartialA: true
@@ -46957,7 +46957,7 @@
     GlobalReadVectorWidthA: 4
     GlobalReadVectorWidthB: 4
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: 0
     GuaranteeNoPartialA: true
@@ -47175,7 +47175,7 @@
     GlobalReadVectorWidthA: 4
     GlobalReadVectorWidthB: 4
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: 0
     GuaranteeNoPartialA: true
@@ -47393,7 +47393,7 @@
     GlobalReadVectorWidthA: 4
     GlobalReadVectorWidthB: 4
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: 0
     GuaranteeNoPartialA: true
@@ -47611,7 +47611,7 @@
     GlobalReadVectorWidthA: 8
     GlobalReadVectorWidthB: 8
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: 0
     GuaranteeNoPartialA: true
@@ -47829,7 +47829,7 @@
     GlobalReadVectorWidthA: 8
     GlobalReadVectorWidthB: 8
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: 0
     GuaranteeNoPartialA: true
@@ -48047,7 +48047,7 @@
     GlobalReadVectorWidthA: 8
     GlobalReadVectorWidthB: 8
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: 0
     GuaranteeNoPartialA: true
@@ -48265,7 +48265,7 @@
     GlobalReadVectorWidthA: 8
     GlobalReadVectorWidthB: 8
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: 0
     GuaranteeNoPartialA: true
@@ -48483,7 +48483,7 @@
     GlobalReadVectorWidthA: 8
     GlobalReadVectorWidthB: 8
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: 0
     GuaranteeNoPartialA: true
@@ -48701,7 +48701,7 @@
     GlobalReadVectorWidthA: 4
     GlobalReadVectorWidthB: 4
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: 0
     GuaranteeNoPartialA: true
@@ -48919,7 +48919,7 @@
     GlobalReadVectorWidthA: 4
     GlobalReadVectorWidthB: 4
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: 0
     GuaranteeNoPartialA: true
@@ -49137,7 +49137,7 @@
     GlobalReadVectorWidthA: 4
     GlobalReadVectorWidthB: 4
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: 0
     GuaranteeNoPartialA: true
@@ -49355,7 +49355,7 @@
     GlobalReadVectorWidthA: 8
     GlobalReadVectorWidthB: 8
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: 0
     GuaranteeNoPartialA: true
@@ -49573,7 +49573,7 @@
     GlobalReadVectorWidthA: 4
     GlobalReadVectorWidthB: 4
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: 0
     GuaranteeNoPartialA: true
@@ -49791,7 +49791,7 @@
     GlobalReadVectorWidthA: 8
     GlobalReadVectorWidthB: 8
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: 0
     GuaranteeNoPartialA: true
@@ -50009,7 +50009,7 @@
     GlobalReadVectorWidthA: 4
     GlobalReadVectorWidthB: 4
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: 0
     GuaranteeNoPartialA: true
@@ -50227,7 +50227,7 @@
     GlobalReadVectorWidthA: 8
     GlobalReadVectorWidthB: 8
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: 0
     GuaranteeNoPartialA: true
@@ -50445,7 +50445,7 @@
     GlobalReadVectorWidthA: 4
     GlobalReadVectorWidthB: 4
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: 0
     GuaranteeNoPartialA: true
@@ -50663,7 +50663,7 @@
     GlobalReadVectorWidthA: 8
     GlobalReadVectorWidthB: 8
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: 0
     GuaranteeNoPartialA: true
@@ -50881,7 +50881,7 @@
     GlobalReadVectorWidthA: 4
     GlobalReadVectorWidthB: 4
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: 0
     GuaranteeNoPartialA: true
@@ -51099,7 +51099,7 @@
     GlobalReadVectorWidthA: 8
     GlobalReadVectorWidthB: 8
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: 0
     GuaranteeNoPartialA: true
@@ -51317,7 +51317,7 @@
     GlobalReadVectorWidthA: 8
     GlobalReadVectorWidthB: 8
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: 0
     GuaranteeNoPartialA: true
@@ -51536,7 +51536,7 @@
     GlobalReadVectorWidthA: 8
     GlobalReadVectorWidthB: 8
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: false
     GuaranteeNoPartialA: true
@@ -51782,7 +51782,7 @@
     GlobalReadVectorWidthA: 4
     GlobalReadVectorWidthB: 4
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 2
     GroupLoadStore: false
     GuaranteeNoPartialA: true
@@ -52028,7 +52028,7 @@
     GlobalReadVectorWidthA: 8
     GlobalReadVectorWidthB: 8
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 2
     GroupLoadStore: false
     GuaranteeNoPartialA: true
@@ -52273,7 +52273,7 @@
     GlobalReadVectorWidthA: 8
     GlobalReadVectorWidthB: 8
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: false
     GuaranteeNoPartialA: true
