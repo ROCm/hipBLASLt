@@ -1018,7 +1018,7 @@ class Solution(collections.abc.Mapping):
     if "InternalSupportParams" in config:
       self["InternalSupportParams"] = {}
       for key in defaultInternalSupportParams:
-        assignParameterWithDefault(self["InternalSupportParams"], key, config, defaultInternalSupportParams)
+        assignParameterWithDefault(self["InternalSupportParams"], key, config["InternalSupportParams"], defaultInternalSupportParams)
     else:
       self["InternalSupportParams"] = defaultInternalSupportParams
 
@@ -1050,7 +1050,7 @@ class Solution(collections.abc.Mapping):
 
     # assign parameters without defaults
     for key in config:
-      if key != "ProblemType" and key not in self._state:
+      if (key != "ProblemType" or key != "InternalSupportParams") and key not in self._state:
         self._state[key] = config[key]
     self["Valid"] = True
     # this could prevent OriginalSolution from re-assigning the parameters, save lots of time
