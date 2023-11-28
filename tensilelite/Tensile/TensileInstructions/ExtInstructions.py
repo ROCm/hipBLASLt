@@ -103,9 +103,14 @@ def SLongBranchPositive(label: Label, tmpSgprRes: RegisterPoolResource, comment=
         module.addComment(comment)
 
     assert tmpSgprRes.size >= 3
-    tmpSgpr = tmpSgprRes.idx
-    module.addModuleAsFlatItems(SGetPositivePCOffset(tmpSgpr, label, RegisterPoolResource(tmpSgpr+2, 1)))
-    module.add(SSetPCB64(src=sgpr(tmpSgpr,2), comment="branch to %s"%labelName))
+    if tmpSgprRes.idx % 2 == 0:
+        tmpSgprX2 = tmpSgprRes.idx
+        tmpSgprX1 = tmpSgprRes.idx+2
+    else:
+        tmpSgprX2 = tmpSgprRes.idx+1
+        tmpSgprX1 = tmpSgprRes.idx
+    module.addModuleAsFlatItems(SGetPositivePCOffset(tmpSgprX2, label, RegisterPoolResource(tmpSgprX1, 1)))
+    module.add(SSetPCB64(src=sgpr(tmpSgprX2,2), comment="branch to %s"%labelName))
     return module
 
 ##############################################################################
@@ -122,15 +127,20 @@ def SLongBranchNegative(label: Label, tmpSgprRes: RegisterPoolResource, comment=
         module.addComment(comment)
 
     assert tmpSgprRes.size >= 3
-    tmpSgpr = tmpSgprRes.idx
-    module.add(SGetPCB64(dst=sgpr(tmpSgpr,2), comment="addr of next instr"))
-    module.add(SAddI32(dst=sgpr(tmpSgpr+2), src0=labelName, src1=hex(4), comment="target branch offset"))
+    if tmpSgprRes.idx % 2 == 0:
+        tmpSgprX2 = tmpSgprRes.idx
+        tmpSgprX1 = tmpSgprRes.idx+2
+    else:
+        tmpSgprX2 = tmpSgprRes.idx+1
+        tmpSgprX1 = tmpSgprRes.idx
+    module.add(SGetPCB64(dst=sgpr(tmpSgprX2,2), comment="addr of next instr"))
+    module.add(SAddI32(dst=sgpr(tmpSgprX1), src0=labelName, src1=hex(4), comment="target branch offset"))
 
     # negative offset
-    module.add(SAbsI32(dst=sgpr(tmpSgpr+2), src=sgpr(tmpSgpr+2), comment="abs offset"))
-    module.add(SSubU32(dst=sgpr(tmpSgpr), src0=sgpr(tmpSgpr), src1=sgpr(tmpSgpr+2), comment="sub target branch offset"))
-    module.add(SSubBU32(dst=sgpr(tmpSgpr+1), src0=sgpr(tmpSgpr+1), src1=0, comment="sub high and carry"))
-    module.add(SSetPCB64(src=sgpr(tmpSgpr,2), comment="branch to %s"%labelName))
+    module.add(SAbsI32(dst=sgpr(tmpSgprX1), src=sgpr(tmpSgprX1), comment="abs offset"))
+    module.add(SSubU32(dst=sgpr(tmpSgprX2), src0=sgpr(tmpSgprX2), src1=sgpr(tmpSgprX1), comment="sub target branch offset"))
+    module.add(SSubBU32(dst=sgpr(tmpSgprX2+1), src0=sgpr(tmpSgprX2+1), src1=0, comment="sub high and carry"))
+    module.add(SSetPCB64(src=sgpr(tmpSgprX2,2), comment="branch to %s"%labelName))
     return module
 
 ##############################################################################
