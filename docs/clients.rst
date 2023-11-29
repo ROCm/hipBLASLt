@@ -76,7 +76,7 @@ For more information:
    --d_type <value>           Precision of matrix D. Options: f32_r,f16_r,bf16_r
    --compute_type <value>     Precision of computation. Options: s,f32_r,x,xf32_r,f64_r,i32_r                     (Default value is: f32_r)
    --scale_type <value>       Precision of scalar. Options: f16_r,bf16_r
-   --initialization <value>   Intialize matrix data.Options: rand_int, trig_float, hpl(floating)                  (Default value is: hpl)
+   --initialization <value>   Initialize matrix data.Options: rand_int, trig_float, hpl(floating)                  (Default value is: hpl)
    --transA <value>           N = no transpose, T = transpose, C = conjugate transpose                            (Default value is: N)
    --transB <value>           N = no transpose, T = transpose, C = conjugate transpose                            (Default value is: N)
    --batch_count <value>      Number of matrices. Only applicable to batched and strided_batched routines         (Default value is: 1)
@@ -96,8 +96,8 @@ For more information:
    --scaleA                   Apply scale for A buffer
    --scaleB                   Apply scale for B buffer
    --scaleAlpha_vector        Apply scaleAlpha vector
-   --amaxScaleA               Apple scale for A buffer by abs max of A bufer
-   --amaxScaleB               Apple scale for B buffer by abs max of B bufer
+   --amaxScaleA               Apple scale for A buffer by abs max of A buffer
+   --amaxScaleB               Apple scale for B buffer by abs max of B buffer
    --use_e                    Apply AUX output/ gradient input
    --gradient                 Enable gradient
    --grouped_gemm             Use grouped_gemm.
@@ -105,7 +105,7 @@ For more information:
    --device <value>           Set default device to be used for subsequent program runs                           (Default value is: 0)
    --c_noalias_d              C and D are stored in separate memory
    --workspace <value>        Set fixed workspace memory size instead of using hipblaslt managed memory           (Default value is: 0)
-   --log_function_name        Function name precedes other itmes.
+   --log_function_name        Function name precedes other items.
    --function_filter <value>  Simple strstr filter on function name only without wildcards
    --api_method <value>       Use extension API. c: C style API. mix: declaration with C hipblasLtMatmul Layout/Desc but set, initialize, and run the problem with C++ extension API. cpp: Using C++ extension API only. Options: c, mix, cpp.  (Default value is: c)
    --print_kernel_info        Print solution, kernel name and solution index.

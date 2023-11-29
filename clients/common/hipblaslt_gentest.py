@@ -236,7 +236,7 @@ def setdefaults(test):
         test.setdefault('ldc', 0)
         test.setdefault('ldd', 0)
         test.setdefault('lde', 0)
-    elif not test['grouped_gemm']: #catered to gemm default behaviour
+    elif not test['grouped_gemm']: #catered to gemm default behavior
         M = test['M'][0] if isinstance(test['M'], list) else test['M']
         N = test['N'][0] if isinstance(test['N'], list) else test['N']
         K = test['K'][0] if isinstance(test['K'], list) else test['K']

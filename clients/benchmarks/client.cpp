@@ -391,7 +391,7 @@ try
 
         ("initialization",
          value<std::string>(&initialization)->default_value("hpl"),
-         "Intialize matrix data."
+         "Initialize matrix data."
          "Options: rand_int, trig_float, hpl(floating)")
 
         ("transA",
@@ -472,11 +472,11 @@ try
 
         ("amaxScaleA",
          bool_switch(&arg.amaxScaleA)->default_value(false),
-         "Apple scale for A buffer by abs max of A bufer")
+         "Apple scale for A buffer by abs max of A buffer")
 
         ("amaxScaleB",
          bool_switch(&arg.amaxScaleB)->default_value(false),
-         "Apple scale for B buffer by abs max of B bufer")
+         "Apple scale for B buffer by abs max of B buffer")
 
         ("use_e",
          bool_switch(&arg.use_e)->default_value(false),
@@ -508,7 +508,7 @@ try
 
         ("log_function_name",
          bool_switch(&log_function_name)->default_value(false),
-         "Function name precedes other itmes.")
+         "Function name precedes other items.")
 
         ("function_filter",
          value<std::string>(&filter),
