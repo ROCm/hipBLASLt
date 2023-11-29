@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022-2023 Advanced Micro Devices, Inc.
+ * Copyright (C) 2022-2024 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -63,13 +63,13 @@ namespace
             (std::is_same<TiA, hipblasLtHalf>{} && std::is_same<TiB, hipblasLtHalf>{})
             || (std::is_same<TiA, hip_bfloat16>{} && std::is_same<TiB, hip_bfloat16>{})
             || (std::is_same<TiA, float>{} && std::is_same<TiB, float>{})
-            || (std::is_same<TiA, hipblaslt_f8>{} && std::is_same<TiB, hipblaslt_f8>{})
-            || (std::is_same<TiA, hipblaslt_f8>{} && std::is_same<TiB, hipblaslt_bf8>{})
-            || (std::is_same<TiA, hipblaslt_bf8>{} && std::is_same<TiB, hipblaslt_f8>{})
+            || (std::is_same<TiA, hipblaslt_f8_fnuz>{} && std::is_same<TiB, hipblaslt_f8_fnuz>{})
+            || (std::is_same<TiA, hipblaslt_f8_fnuz>{} && std::is_same<TiB, hipblaslt_bf8_fnuz>{})
+            || (std::is_same<TiA, hipblaslt_bf8_fnuz>{} && std::is_same<TiB, hipblaslt_f8_fnuz>{})
             || (std::is_same<TiA, double>{} && std::is_same<TiB, double>{})
             || (std::is_same<TiA, hipblasLtInt8>{} && std::is_same<TiB, hipblasLtInt8>{})
-            || (std::is_same<TiA, hipblaslt_f8>{} && std::is_same<TiB, hipblasLtHalf>{})
-            || (std::is_same<TiA, hipblasLtHalf>{} && std::is_same<TiB, hipblaslt_f8>{})>>
+            || (std::is_same<TiA, hipblaslt_f8_fnuz>{} && std::is_same<TiB, hipblasLtHalf>{})
+            || (std::is_same<TiA, hipblasLtHalf>{} && std::is_same<TiB, hipblaslt_f8_fnuz>{})>>
         : hipblaslt_test_valid
     {
         void operator()(const Arguments& arg)
@@ -160,7 +160,7 @@ namespace
         {
             RocBlasLt_TestName<aux_test> name(arg.name);
 
-            name << hipblaslt_datatype_to_string(arg.a_type);
+            name << hip_datatype_to_string(arg.a_type);
 
             return std::move(name);
         }

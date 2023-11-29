@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022-2023 Advanced Micro Devices, Inc.
+ * Copyright (C) 2022-2024 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -43,7 +43,7 @@ extern "C" {
  *  This function computes softmax on given 2D-tensor along specified dimension.
  *
  *  @param[in]
- *  datatype Datatype of input/output tensor, currently support HIPBLASLT_R_32F only.
+ *  datatype Datatype of input/output tensor, currently support HIP_R_32F only.
  *
  *  @param[in]
  *  m The first dimension of input/output tensor.
@@ -65,11 +65,15 @@ extern "C" {
  *
  *  \retval HIPBLAS_STATUS_SUCCESS If it runs successfully.
  *  \retval HIPBLAS_STATUS_INVALID_VALUE If \p n is greater than 256.
- *  \retval HIPBLAS_STATUS_NOT_SUPPORTED If \p dim is not 1 or \p datatype is not HIPBLASLT_R_32F.
+ *  \retval HIPBLAS_STATUS_NOT_SUPPORTED If \p dim is not 1 or \p datatype is not HIP_R_32F.
  */
-    HIPBLASLT_EXPORT hipblasStatus_t hipblasltExtSoftmax(hipblasltDatatype_t datatype, uint32_t m, uint32_t n, uint32_t dim,
-        void *output, void *input, hipStream_t stream);
-
+HIPBLASLT_EXPORT hipblasStatus_t hipblasltExtSoftmax(hipDataType datatype,
+                                                     uint32_t    m,
+                                                     uint32_t    n,
+                                                     uint32_t    dim,
+                                                     void*       output,
+                                                     void*       input,
+                                                     hipStream_t stream);
 
 /*! \ingroup library_module
  *  \brief Perform 2-D layernorm on with source input tensor and result output tensor.
@@ -78,7 +82,7 @@ extern "C" {
  *  This function computes layernorm on given 2D-tensor.
  *
  *  @param[in]
- *  datatype Datatype of input/output tensor, currently support HIPBLASLT_R_32F only.
+ *  datatype Datatype of input/output tensor, currently support HIP_R_32F only.
  *
  *  @param[out]
  *  output output tensor buffer. can't be nullptr.
@@ -113,10 +117,19 @@ extern "C" {
  *
  *  \retval HIPBLAS_STATUS_SUCCESS If it runs successfully.
  *  \retval HIPBLAS_STATUS_INVALID_VALUE If \p m is greater than 4096.
- *  \retval HIPBLAS_STATUS_NOT_SUPPORTED if \p datatype is not HIPBLASLT_R_32F.
+ *  \retval HIPBLAS_STATUS_NOT_SUPPORTED if \p datatype is not HIP_R_32F.
  */
-    HIPBLASLT_EXPORT hipblasStatus_t hipblasltExtLayerNorm(hipblasltDatatype_t datatype, void *output, void* mean, void* invvar,
-        void *input, uint32_t m, uint32_t n, float eps, void *gamma, void *beta, hipStream_t stream);
+HIPBLASLT_EXPORT hipblasStatus_t hipblasltExtLayerNorm(hipDataType datatype,
+                                                       void*       output,
+                                                       void*       mean,
+                                                       void*       invvar,
+                                                       void*       input,
+                                                       uint32_t    m,
+                                                       uint32_t    n,
+                                                       float       eps,
+                                                       void*       gamma,
+                                                       void*       beta,
+                                                       hipStream_t stream);
 
 /*! \ingroup library_module
  *  \brief Perform absmax on given 2-D tensor and output one value absmax(tensor) value.
@@ -125,10 +138,10 @@ extern "C" {
  *  This function computes amax on given 1D-tensor.
  *
  *  @param[in]
- *  datatype Datatype of input/output tensor, currently support HIPBLASLT_R_32F and HIPBLASLT_R_16F only.
+ *  datatype Datatype of input/output tensor, currently support HIP_R_32F and HIP_R_16F only.
  *
  *  @param[in]
- *  outDatatype Datatype of input/output tensor, currently support HIPBLASLT_R_32F and HIPBLASLT_R_16F only.
+ *  outDatatype Datatype of input/output tensor, currently support HIP_R_32F and HIP_R_16F only.
  *
  *  @param[out]
  *  output output tensor buffer. can't be nullptr.
@@ -148,9 +161,15 @@ extern "C" {
  *
  *  \retval HIPBLAS_STATUS_SUCCESS If it runs successfully.
  *  \retval HIPBLAS_STATUS_INVALID_VALUE If \p m is greater than 4096.
- *  \retval HIPBLAS_STATUS_NOT_SUPPORTED if \p datatype is not (HIPBLASLT_R_32F or HIPBLASLT_R_16F).
+ *  \retval HIPBLAS_STATUS_NOT_SUPPORTED if \p datatype is not (HIP_R_32F or HIP_R_16F).
  */
-    HIPBLASLT_EXPORT hipblasStatus_t hipblasltExtAMax(const hipblasltDatatype_t datatype, const hipblasltDatatype_t outDatatype, void *output, void *input, uint32_t m, uint32_t n, hipStream_t stream);
+HIPBLASLT_EXPORT hipblasStatus_t hipblasltExtAMax(const hipDataType datatype,
+                                                  const hipDataType outDatatype,
+                                                  void*             output,
+                                                  void*             input,
+                                                  uint32_t          m,
+                                                  uint32_t          n,
+                                                  hipStream_t       stream);
 #ifdef __cplusplus
 }
 #endif

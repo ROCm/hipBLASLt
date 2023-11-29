@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022-2023 Advanced Micro Devices, Inc.
+ * Copyright (C) 2022-2024 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -47,43 +47,55 @@ void simpleGemmMixPrecisionExt(hipblasLtHandle_t  handle,
                                int64_t            max_workspace_size,
                                hipStream_t        stream);
 
-template<typename TypeA, typename TypeB, typename TypeCD, typename AlphaType, typename BetaType>
-int validate(const Runner<TypeA, TypeB, TypeCD, AlphaType, BetaType> &runner)
+template <typename TypeA, typename TypeB, typename TypeCD, typename AlphaType, typename BetaType>
+int validate(const Runner<TypeA, TypeB, TypeCD, AlphaType, BetaType>& runner)
 {
     std::vector<float> ref(runner.m * runner.n * runner.batch_count, 0);
-    float scaleA{2.f};
+    float              scaleA{2.f};
 
-    for (int64_t b = 0; b < runner.batch_count; ++b) {
-        const auto batchStrideA = runner.m * runner.k;
-        const auto batchStrideB = runner.k * runner.n;
-        const auto batchStrideC = runner.m * runner.n;
-        const auto batchStrideD = runner.m * runner.n;
-        const TypeA *aPtr = reinterpret_cast<const TypeA *>(runner.a);
-        const TypeB *bPtr = reinterpret_cast<const TypeB *>(runner.b);
-        const TypeCD *cPtr = reinterpret_cast<const TypeCD *>(runner.c);
-        for (int64_t i = 0; i < runner.m ; ++i) {
-            for (int64_t j = 0; j < runner.n; ++j) {
-                for (int64_t k = 0; k < runner.k; ++k) {
-                    ref[batchStrideD * b + j * runner.m + i] += scaleA * float(aPtr[batchStrideA * b + runner.m * k + i]) * float(bPtr[batchStrideB * b + runner.k * j + k]);
+    for(int64_t b = 0; b < runner.batch_count; ++b)
+    {
+        const auto    batchStrideA = runner.m * runner.k;
+        const auto    batchStrideB = runner.k * runner.n;
+        const auto    batchStrideC = runner.m * runner.n;
+        const auto    batchStrideD = runner.m * runner.n;
+        const TypeA*  aPtr         = reinterpret_cast<const TypeA*>(runner.a);
+        const TypeB*  bPtr         = reinterpret_cast<const TypeB*>(runner.b);
+        const TypeCD* cPtr         = reinterpret_cast<const TypeCD*>(runner.c);
+        for(int64_t i = 0; i < runner.m; ++i)
+        {
+            for(int64_t j = 0; j < runner.n; ++j)
+            {
+                for(int64_t k = 0; k < runner.k; ++k)
+                {
+                    ref[batchStrideD * b + j * runner.m + i]
+                        += scaleA * float(aPtr[batchStrideA * b + runner.m * k + i])
+                           * float(bPtr[batchStrideB * b + runner.k * j + k]);
                 }
 
                 ref[batchStrideD * b + j * runner.m + i] *= runner.alpha;
-                ref[batchStrideD * b + j * runner.m + i] += runner.beta * cPtr[batchStrideC * b + j * runner.m + i];
+                ref[batchStrideD * b + j * runner.m + i]
+                    += runner.beta * cPtr[batchStrideC * b + j * runner.m + i];
             }
         }
     }
 
     std::vector<TypeCD> gpuResult(runner.m * runner.n * runner.batch_count);
-    hipMemcpyDtoH(gpuResult.data(), runner.d_d, runner.batch_count * runner.m * runner.n * sizeof(TypeCD));
+    hipMemcpyDtoH(
+        gpuResult.data(), runner.d_d, runner.batch_count * runner.m * runner.n * sizeof(TypeCD));
 
-    for (int64_t b = 0; b < runner.batch_count; ++b) {
+    for(int64_t b = 0; b < runner.batch_count; ++b)
+    {
         const auto batchStrideD = runner.m * runner.n;
-        for (int64_t i = 0; i < runner.m ; ++i) {
-            for (int64_t j = 0; j < runner.n; ++j) {
+        for(int64_t i = 0; i < runner.m; ++i)
+        {
+            for(int64_t j = 0; j < runner.n; ++j)
+            {
                 const auto lhs = float(TypeCD(ref[batchStrideD * b + j * runner.m + i]));
                 const auto rhs = float(gpuResult[batchStrideD * b + j * runner.m + i]);
 
-                if (std::abs(lhs - rhs) > 1e-5) {
+                if(std::abs(lhs - rhs) > 1e-5)
+                {
                     std::cout << lhs << " vs " << rhs << '\n';
                     // assert(ref[batchStrideD * b + j * runner.m + i] == float(gpuResult[batchStrideD * b + j * runner.m + i]));
                     return -1;
@@ -103,7 +115,7 @@ int main()
      *  b = (k, n). ldb = k
      *  c = d = (m, n). ldc = ldd = m
      */
-    Runner<hipblaslt_f8, hipblasLtHalf, float, float, float> runner(
+    Runner<hipblaslt_f8_fnuz, hipblasLtHalf, float, float, float> runner(
         1024, 512, 1024, 1, 1.f, 1.f, 32 * 1024 * 1024);
 
     runner.run([&runner] {
@@ -125,7 +137,8 @@ int main()
                                   runner.stream);
     });
 
-    if (validate(runner)) {
+    if(validate(runner))
+    {
         std::cerr << "Validation failed\n";
     }
 
@@ -154,10 +167,10 @@ void simpleGemmMixPrecisionExt(hipblasLtHandle_t  handle,
     hipblaslt_ext::Gemm gemm(handle,
                              trans_a,
                              trans_b,
-                             HIPBLASLT_R_8F_E4M3,
-                             HIPBLASLT_R_16F,
-                             HIPBLASLT_R_32F,
-                             HIPBLASLT_R_32F,
+                             HIP_R_8F_E4M3_FNUZ,
+                             HIP_R_16F,
+                             HIP_R_32F,
+                             HIP_R_32F,
                              HIPBLASLT_COMPUTE_F32_FAST_F16);
 
     // Copy scaleA to device memory
