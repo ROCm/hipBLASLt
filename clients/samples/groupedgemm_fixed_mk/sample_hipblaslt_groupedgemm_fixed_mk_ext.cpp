@@ -122,7 +122,7 @@ void simpleGroupedGemmFixedMKExt(hipblasLtHandle_t     handle,
                                            HIP_R_16F,
                                            HIP_R_16F,
                                            HIP_R_16F,
-                                           HIPBLASLT_COMPUTE_F32_FAST_F16);
+                                           HIPBLAS_COMPUTE_32F_FAST_16F);
 
     std::vector<hipblaslt_ext::GemmEpilogue> epilogue{
         hipblaslt_ext::
@@ -182,7 +182,7 @@ void simpleGroupedGemmFixedMKExt(hipblasLtHandle_t     handle,
                                                      HIP_R_16F,
                                                      HIP_R_16F,
                                                      HIP_R_16F,
-                                                     HIPBLASLT_COMPUTE_F32_FAST_F16,
+                                                     HIPBLAS_COMPUTE_32F_FAST_16F,
                                                      heuristicResult));
 
     std::vector<int> validIdx;
