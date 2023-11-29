@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022-2023 Advanced Micro Devices, Inc.
+ * Copyright (C) 2022-2024 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -809,8 +809,8 @@ void testing_matmul(const Arguments& arg)
 
         if(arg.scaleC)
         {
-            if constexpr(std::is_same<To, hipblaslt_f8>::value
-                         || std::is_same<To, hipblaslt_bf8>::value)
+            if constexpr(std::is_same<To, hipblaslt_f8_fnuz>::value
+                         || std::is_same<To, hipblaslt_bf8_fnuz>::value)
             {
                 hipblaslt_init_small<Talpha>(*hScaleC[i], 1, 1, 1);
             }
@@ -822,8 +822,8 @@ void testing_matmul(const Arguments& arg)
 
         if(arg.scaleD)
         {
-            if constexpr(std::is_same<To, hipblaslt_f8>::value
-                         || std::is_same<To, hipblaslt_bf8>::value)
+            if constexpr(std::is_same<To, hipblaslt_f8_fnuz>::value
+                         || std::is_same<To, hipblaslt_bf8_fnuz>::value)
             {
                 hipblaslt_init_small<Talpha>(*hScaleD[i], 1, 1, 1);
             }
@@ -864,10 +864,10 @@ void testing_matmul(const Arguments& arg)
 
         if(arg.scaleA)
         {
-            if(arg.amaxScaleA && (arg.a_type == HIPBLASLT_R_32F || arg.a_type == HIPBLASLT_R_16F))
+            if(arg.amaxScaleA && (arg.a_type == HIP_R_32F || arg.a_type == HIP_R_16F))
             {
                 CHECK_HIPBLASLT_ERROR(hipblasltExtAMax(
-                    arg.a_type, HIPBLASLT_R_32F, *dScaleA[i], *dA[i], A_row[i], A_col[i], stream));
+                    arg.a_type, HIP_R_32F, *dScaleA[i], *dA[i], A_row[i], A_col[i], stream));
                 CHECK_HIP_ERROR(hScaleA[i]->transfer_from(*dScaleA[i]));
             }
             else
@@ -876,10 +876,10 @@ void testing_matmul(const Arguments& arg)
 
         if(arg.scaleB)
         {
-            if(arg.amaxScaleB && (arg.b_type == HIPBLASLT_R_32F || arg.b_type == HIPBLASLT_R_16F))
+            if(arg.amaxScaleB && (arg.b_type == HIP_R_32F || arg.b_type == HIP_R_16F))
             {
                 CHECK_HIPBLASLT_ERROR(hipblasltExtAMax(
-                    arg.b_type, HIPBLASLT_R_32F, *dScaleB[i], *dB[i], B_row[i], B_col[i], stream));
+                    arg.b_type, HIP_R_32F, *dScaleB[i], *dB[i], B_row[i], B_col[i], stream));
                 CHECK_HIP_ERROR(hScaleB[i]->transfer_from(*dScaleB[i]));
             }
             else
@@ -939,7 +939,7 @@ void testing_matmul(const Arguments& arg)
                 hipblasLtMatmulDescSetAttribute(matmul[0][i],
                                                 HIPBLASLT_MATMUL_DESC_BIAS_DATA_TYPE,
                                                 &arg.bias_type,
-                                                sizeof(hipblasltDatatype_t)),
+                                                sizeof(hipDataType)),
                 HIPBLAS_STATUS_SUCCESS);
             if(arg.d_type != arg.scale_type && arg.bias_type == arg.scale_type)
             {

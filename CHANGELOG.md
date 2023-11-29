@@ -26,7 +26,7 @@ Full documentation for hipBLASLt is available at [rocm.docs.amd.com/projects/hip
 
 ### Changes
 
-* Replaced `hipblasDatatype_t` with `hipblasltDatatype_t`
+* Replaced `hipblasDatatype_t` with `hipDataType`
 
 ### Removals
 

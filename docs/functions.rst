@@ -77,10 +77,10 @@ hipblasLtMatmul supports the following computeType, scaleType, Atype/Btype, Ctyp
 ======================= =================== ============= ==============
 computeType             scaleType/Bias Type Atype/Btype   Ctype/Dtype
 ======================= =================== ============= ==============
-HIPBLASLT_COMPUTE_F32   HIPBLASLT_R_32F       HIPBLASLT_R_32F HIPBLASLT_R_32F
-HIPBLASLT_COMPUTE_F32   HIPBLASLT_R_32F       HIPBLASLT_R_16F HIPBLASLT_R_16F
-HIPBLASLT_COMPUTE_F32   HIPBLASLT_R_32F       HIPBLASLT_R_16F HIPBLASLT_R_32F
-HIPBLASLT_COMPUTE_F32   HIPBLASLT_R_32F       HIPBLASLT_R_16B HIPBLASLT_R_16B
+HIPBLASLT_COMPUTE_F32   HIP_R_32F           HIP_R_32F       HIP_R_32F
+HIPBLASLT_COMPUTE_F32   HIP_R_32F           HIP_R_16F       HIP_R_16F
+HIPBLASLT_COMPUTE_F32   HIP_R_32F           HIP_R_16F       HIP_R_32F
+HIPBLASLT_COMPUTE_F32   HIP_R_32F           HIP_R_16BF      HIP_R_16BF
 ======================= =================== ============= ==============
 
 hipblasLtMatrixTransformDescCreate()
@@ -106,11 +106,11 @@ hipblasLtMatrixTransform()
 hipblasLtMatrixTransform supports the following Atype/Btype/Ctype and scaleType:
 
 ======================= ===================
-Atype/Btype/Ctype       scaleType 
+Atype/Btype/Ctype       scaleType
 ======================= ===================
-HIPBLASLT_R_32F         HIPBLASLT_R_32F
-HIPBLASLT_R_16F         HIPBLASLT_R_32F/HIPBLASLT_R_16F
-HIPBLASLT_R_16B         HIPBLASLT_R_32F    
-HIPBLASLT_R_8I          HIPBLASLT_R_32F    
-HIPBLASLT_R_32I         HIPBLASLT_R_32F    
+HIP_R_32F               HIP_R_32F
+HIP_R_16F               HIP_R_32F/HIP_R_16F
+HIP_R_16BF              HIP_R_32F
+HIP_R_8I                HIP_R_32F
+HIP_R_32I               HIP_R_32F
 ======================= ===================
