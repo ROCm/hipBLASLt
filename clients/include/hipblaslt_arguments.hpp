@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022-2023 Advanced Micro Devices, Inc.
+ * Copyright (C) 2022-2024 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -92,12 +92,12 @@ struct Arguments
     int32_t  solution_index;
     int32_t  requested_solution_num;
 
-    hipblasltDatatype_t    a_type;
-    hipblasltDatatype_t    b_type;
-    hipblasltDatatype_t    c_type;
-    hipblasltDatatype_t    d_type;
+    hipDataType            a_type;
+    hipDataType            b_type;
+    hipDataType            c_type;
+    hipDataType            d_type;
     hipblasLtComputeType_t compute_type;
-    hipblasltDatatype_t    scale_type;
+    hipDataType            scale_type;
 
     hipblaslt_initialization initialization;
 
@@ -127,7 +127,7 @@ struct Arguments
     float                     activation_arg1; // threshold when activation type is relu
     float                     activation_arg2; // upperbound when activation type is relu
 
-    hipblasltDatatype_t   bias_type;
+    hipDataType           bias_type;
     hipblaslt_bias_source bias_source;
     bool                  bias_vector;
     bool                  scaleA;
@@ -150,7 +150,7 @@ struct Arguments
     int     algo_method; // 0 for getheuristic, 1 for get all algos, 2 for algo index
     bool    use_user_args;
     int32_t rotating;
-    bool use_gpu_timer;
+    bool    use_gpu_timer;
 
     // tuning
     int32_t gsu_vector[MAX_SUPPORTED_NUM_PROBLEMS]; // This is for client
@@ -267,8 +267,8 @@ struct Arguments
     friend hipblaslt_internal_ostream& operator<<(hipblaslt_internal_ostream& os,
                                                   std::pair<char const*, T>   p);
 
-    friend hipblaslt_internal_ostream& operator<<(hipblaslt_internal_ostream&                 os,
-                                                  std::pair<char const*, hipblasltDatatype_t> p);
+    friend hipblaslt_internal_ostream& operator<<(hipblaslt_internal_ostream&         os,
+                                                  std::pair<char const*, hipDataType> p);
 
     friend hipblaslt_internal_ostream&
         operator<<(hipblaslt_internal_ostream&                      os,

@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2023 Advanced Micro Devices, Inc.
+ * Copyright (C) 2023-2024 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -25,9 +25,9 @@
  *******************************************************************************/
 #include <algorithm>
 #include <hip/hip_runtime.h>
+#include <hipblaslt/hipblaslt.h>
 #include <hipblaslt_datatype2string.hpp>
 #include <hipblaslt_init.hpp>
-#include <hipblaslt/hipblaslt.h>
 #include <iostream>
 #include <memory>
 #include <numeric>
@@ -110,74 +110,74 @@ private:
 };
 
 using MatrixTransformIOPtr = std::unique_ptr<MatrixTransformIO>;
-MatrixTransformIOPtr
-    makeMatrixTransformIOPtr(hipblasltDatatype_t datatype, int64_t m, int64_t n, int64_t b, hipblaslt_initialization init)
+MatrixTransformIOPtr makeMatrixTransformIOPtr(
+    hipDataType datatype, int64_t m, int64_t n, int64_t b, hipblaslt_initialization init)
 {
-    if(datatype == HIPBLASLT_R_32F)
+    if(datatype == HIP_R_32F)
     {
         return std::make_unique<TypedMatrixTransformIO<hipblasLtFloat>>(m, n, b, init);
     }
-    else if(datatype == HIPBLASLT_R_16F)
+    else if(datatype == HIP_R_16F)
     {
         return std::make_unique<TypedMatrixTransformIO<hipblasLtHalf>>(m, n, b, init);
     }
-    else if(datatype == HIPBLASLT_R_16B)
+    else if(datatype == HIP_R_16BF)
     {
         return std::make_unique<TypedMatrixTransformIO<hipblasLtBfloat16>>(m, n, b, init);
     }
-    else if(datatype == HIPBLASLT_R_8I)
+    else if(datatype == HIP_R_8I)
     {
         return std::make_unique<TypedMatrixTransformIO<int8_t>>(m, n, b, init);
     }
     return nullptr;
 }
 
-hipblasltDatatype_t str2Datatype(const std::string& typeStr)
+hipDataType str2Datatype(const std::string& typeStr)
 {
     if(typeStr == "fp32")
     {
-        return HIPBLASLT_R_32F;
+        return HIP_R_32F;
     }
     else if(typeStr == "fp16")
     {
-        return HIPBLASLT_R_16F;
+        return HIP_R_16F;
     }
     else if(typeStr == "bf16")
     {
-        return HIPBLASLT_R_16B;
+        return HIP_R_16BF;
     }
     else if(typeStr == "i8")
     {
-        return HIPBLASLT_R_8I;
+        return HIP_R_8I;
     }
     else if(typeStr == "i32")
     {
-        return HIPBLASLT_R_32I;
+        return HIP_R_32I;
     }
 
     return HIPBLASLT_DATATYPE_INVALID;
 }
 
-static int parseArguments(int                  argc,
-                          char*                argv[],
-                          hipblasltDatatype_t& datatype,
-                          hipblasltDatatype_t& scaleDatatype,
-                          int64_t&             m,
-                          int64_t&             n,
-                          float&               alpha,
-                          float&               beta,
-                          bool&                transA,
-                          bool&                transB,
-                          uint32_t&            ldA,
-                          uint32_t&            ldB,
-                          uint32_t&            ldC,
-                          bool&                rowMajA,
-                          bool&                rowMajB,
-                          bool&                rowMajC,
-                          int32_t&             batchSize,
-                          int64_t&             batchStride,
-                          bool&                runValidation,
-                          hipblaslt_initialization &init)
+static int parseArguments(int                       argc,
+                          char*                     argv[],
+                          hipDataType&              datatype,
+                          hipDataType&              scaleDatatype,
+                          int64_t&                  m,
+                          int64_t&                  n,
+                          float&                    alpha,
+                          float&                    beta,
+                          bool&                     transA,
+                          bool&                     transB,
+                          uint32_t&                 ldA,
+                          uint32_t&                 ldB,
+                          uint32_t&                 ldC,
+                          bool&                     rowMajA,
+                          bool&                     rowMajB,
+                          bool&                     rowMajC,
+                          int32_t&                  batchSize,
+                          int64_t&                  batchStride,
+                          bool&                     runValidation,
+                          hipblaslt_initialization& init)
 {
     if(argc >= 2)
     {
@@ -522,24 +522,24 @@ void validation(void*    c,
 
 int main(int argc, char** argv)
 {
-    int64_t             m         = 2048;
-    int64_t             n         = 2048;
-    int32_t             batchSize = 1;
-    float               alpha     = 1;
-    float               beta      = 1;
-    auto                transA    = false;
-    auto                transB    = false;
-    auto                rowMajA   = false;
-    auto                rowMajB   = false;
-    auto                rowMajC   = false;
-    int64_t             batchStride{};
-    uint32_t            ldA{};
-    uint32_t            ldB{};
-    uint32_t            ldC{};
-    bool                runValidation{};
+    int64_t                  m         = 2048;
+    int64_t                  n         = 2048;
+    int32_t                  batchSize = 1;
+    float                    alpha     = 1;
+    float                    beta      = 1;
+    auto                     transA    = false;
+    auto                     transB    = false;
+    auto                     rowMajA   = false;
+    auto                     rowMajB   = false;
+    auto                     rowMajC   = false;
+    int64_t                  batchStride{};
+    uint32_t                 ldA{};
+    uint32_t                 ldB{};
+    uint32_t                 ldC{};
+    bool                     runValidation{};
     hipblaslt_initialization init{hipblaslt_initialization::hpl};
-    hipblasltDatatype_t datatype{HIPBLASLT_R_32F};
-    hipblasltDatatype_t scaleDatatype{HIPBLASLT_R_32F};
+    hipDataType              datatype{HIP_R_32F};
+    hipDataType              scaleDatatype{HIP_R_32F};
     parseArguments(argc,
                    argv,
                    datatype,
@@ -700,7 +700,7 @@ int main(int argc, char** argv)
 
     if(runValidation)
     {
-        if(datatype == HIPBLASLT_R_32F)
+        if(datatype == HIP_R_32F)
         {
             validation<float>(dC,
                               dA,
@@ -720,7 +720,7 @@ int main(int argc, char** argv)
                               transA,
                               transB);
         }
-        else if(datatype == HIPBLASLT_R_16F)
+        else if(datatype == HIP_R_16F)
         {
             validation<hipblasLtHalf>(dC,
                                       dA,
@@ -740,7 +740,7 @@ int main(int argc, char** argv)
                                       transA,
                                       transB);
         }
-        else if(datatype == HIPBLASLT_R_16B)
+        else if(datatype == HIP_R_16BF)
         {
             validation<hipblasLtBfloat16>(dC,
                                           dA,
@@ -760,7 +760,7 @@ int main(int argc, char** argv)
                                           transA,
                                           transB);
         }
-        else if(datatype == HIPBLASLT_R_8I)
+        else if(datatype == HIP_R_8I)
         {
             validation<int8_t>(dC,
                                dA,
@@ -780,7 +780,7 @@ int main(int argc, char** argv)
                                transA,
                                transB);
         }
-        else if(datatype == HIPBLASLT_R_32I)
+        else if(datatype == HIP_R_32I)
         {
             validation<int32_t>(dC,
                                 dA,

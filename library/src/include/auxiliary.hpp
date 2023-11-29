@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022-2023 Advanced Micro Devices, Inc.
+ * Copyright (C) 2022-2024 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -90,27 +90,27 @@ constexpr hipblasOperation_t char_to_hipblas_operation(char value)
     }
 }
 
-// return precision string for hipblasltDatatype_t
+// return precision string for hipDataType
 HIPBLASLT_EXPORT
-constexpr const char* hipblaslt_datatype_to_string(hipblasltDatatype_t type)
+constexpr const char* hip_datatype_to_string(hipDataType type)
 {
     switch(type)
     {
-    case HIPBLASLT_R_32F:
+    case HIP_R_32F:
         return "f32_r";
-    case HIPBLASLT_R_64F:
+    case HIP_R_64F:
         return "f64_r";
-    case HIPBLASLT_R_16F:
+    case HIP_R_16F:
         return "f16_r";
-    case HIPBLASLT_R_16B:
+    case HIP_R_16BF:
         return "bf16_r";
-    case HIPBLASLT_R_8I:
+    case HIP_R_8I:
         return "i8_r";
-    case HIPBLASLT_R_32I:
+    case HIP_R_32I:
         return "i32_r";
-    case HIPBLASLT_R_8F_E4M3:
+    case HIP_R_8F_E4M3_FNUZ:
         return "f8_r";
-    case HIPBLASLT_R_8F_E5M2:
+    case HIP_R_8F_E5M2_FNUZ:
         return "bf8_r";
     default:
         return "non-supported type";
@@ -118,7 +118,7 @@ constexpr const char* hipblaslt_datatype_to_string(hipblasltDatatype_t type)
     return "invalid";
 }
 
-// return precision string for hipblasltDatatype_t
+// return precision string for hipDataType
 HIPBLASLT_EXPORT
 constexpr const char* hipblaslt_computetype_to_string(hipblasLtComputeType_t type)
 {
@@ -140,18 +140,18 @@ constexpr const char* hipblaslt_computetype_to_string(hipblasLtComputeType_t typ
 
 // clang-format off
 HIPBLASLT_EXPORT
-constexpr hipblasltDatatype_t string_to_hipblaslt_datatype(const std::string& value)
+constexpr hipDataType string_to_hip_datatype(const std::string& value)
 {
     return
-        value == "f32_r" || value == "s" ? HIPBLASLT_R_32F  :
-        value == "f64_r" || value == "d" ? HIPBLASLT_R_64F  :
-        value == "f16_r" || value == "h" ? HIPBLASLT_R_16F  :
-        value == "bf16_r"                ? HIPBLASLT_R_16B  :
-        value == "f8_r"                ? HIPBLASLT_R_8F_E4M3  :
-        value == "bf8_r"                ? HIPBLASLT_R_8F_E5M2  :
-        value == "i8_r" || value == "i8" ? HIPBLASLT_R_8I  :
-        value == "i32_r" || value == "i" ? HIPBLASLT_R_32I  :
-        static_cast<hipblasltDatatype_t>(0);
+        value == "f32_r" || value == "s" ? HIP_R_32F  :
+        value == "f64_r" || value == "d" ? HIP_R_64F  :
+        value == "f16_r" || value == "h" ? HIP_R_16F  :
+        value == "bf16_r"                ? HIP_R_16BF  :
+        value == "f8_r"                ? HIP_R_8F_E4M3_FNUZ  :
+        value == "bf8_r"                ? HIP_R_8F_E5M2_FNUZ  :
+        value == "i8_r" || value == "i8" ? HIP_R_8I  :
+        value == "i32_r" || value == "i" ? HIP_R_32I  :
+        HIPBLASLT_DATATYPE_INVALID;
 }
 
 HIPBLASLT_EXPORT
@@ -208,7 +208,7 @@ __host__ __device__ inline bool hipblaslt_isnan(hipblasLtHalf arg)
     return (~x.data & 0x7c00) == 0 && (x.data & 0x3ff) != 0;
 }
 
-__host__ __device__ inline bool hipblaslt_isnan(hipblaslt_f8 arg)
+__host__ __device__ inline bool hipblaslt_isnan(hipblaslt_f8_fnuz arg)
 {
     return arg.is_nan();
 }

@@ -2,10 +2,6 @@
 hipBLASLt Datatypes Reference
 *****************************
 
-hipblasltDatatype_t
--------------------
-.. doxygenenum:: hipblasltDatatype_t
-
 hipblasLtEpilogue_t
 -------------------
 .. doxygenenum:: hipblasLtEpilogue_t

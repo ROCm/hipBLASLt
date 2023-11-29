@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022-2023 Advanced Micro Devices, Inc.
+ * Copyright (C) 2022-2024 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -117,7 +117,7 @@ void unit_check_general(
 
 template <>
 inline void unit_check_general(
-    int64_t M, int64_t N, int64_t lda, const hipblaslt_f8* hCPU, const hipblaslt_f8* hGPU)
+    int64_t M, int64_t N, int64_t lda, const hipblaslt_f8_fnuz* hCPU, const hipblaslt_f8_fnuz* hGPU)
 {
     UNIT_CHECK(M, N, lda, 0, hCPU, hGPU, 1, ASSERT_F8_EQ);
 }
@@ -193,13 +193,13 @@ inline void unit_check_general(int64_t             M,
 }
 
 template <>
-inline void unit_check_general(int64_t       M,
-                               int64_t       N,
-                               int64_t       lda,
-                               int64_t    strideA,
-                               const hipblaslt_f8* hCPU,
-                               const hipblaslt_f8* hGPU,
-                               int64_t       batch_count)
+inline void unit_check_general(int64_t                  M,
+                               int64_t                  N,
+                               int64_t                  lda,
+                               int64_t                  strideA,
+                               const hipblaslt_f8_fnuz* hCPU,
+                               const hipblaslt_f8_fnuz* hGPU,
+                               int64_t                  batch_count)
 {
     UNIT_CHECK(M, N, lda, strideA, hCPU, hGPU, batch_count, ASSERT_F8_EQ);
 }

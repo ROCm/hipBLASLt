@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022-2023 Advanced Micro Devices, Inc.
+ * Copyright (C) 2022-2024 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -93,10 +93,10 @@ namespace hipblaslt_ext
     {
         hipblasOperation_t     op_a; //!< The A martix transpose
         hipblasOperation_t     op_b; //!< The B matrix transpose
-        hipblasltDatatype_t    type_a; //!< The A matrix datatype.
-        hipblasltDatatype_t    type_b; //!< The B matrix datatype.
-        hipblasltDatatype_t    type_c; //!< The C matrix datatype.
-        hipblasltDatatype_t    type_d; //!< The D matrix datatype.
+        hipDataType            type_a; //!< The A matrix datatype.
+        hipDataType            type_b; //!< The B matrix datatype.
+        hipDataType            type_c; //!< The C matrix datatype.
+        hipDataType            type_d; //!< The D matrix datatype.
         hipblasLtComputeType_t type_compute; //!< The compute datatype.
     };
 
@@ -109,7 +109,7 @@ namespace hipblaslt_ext
     {
         hipblasLtEpilogue_t mode
             = HIPBLASLT_EPILOGUE_DEFAULT; //!< The mode of epilogue. Default is gemm.
-        hipblasltDatatype_t bias_data_type
+        hipDataType bias_data_type
             = HIPBLASLT_DATATYPE_INVALID; //!< The bias datatype. Only works if mode is set to bias related epilogues.
         int aux_ld
             = 0; //!< The aux leading dimension. Only works if mode is set to aux related epilogues.
@@ -409,10 +409,10 @@ namespace hipblaslt_ext
         HIPBLASLT_EXPORT explicit Gemm(hipblasLtHandle_t      handle,
                                        hipblasOperation_t     opA,
                                        hipblasOperation_t     opB,
-                                       hipblasltDatatype_t    typeA,
-                                       hipblasltDatatype_t    typeB,
-                                       hipblasltDatatype_t    typeC,
-                                       hipblasltDatatype_t    typeD,
+                                       hipDataType            typeA,
+                                       hipDataType            typeB,
+                                       hipDataType            typeC,
+                                       hipDataType            typeD,
                                        hipblasLtComputeType_t typeCompute);
 
         /*! \ingroup library_module
@@ -619,10 +619,10 @@ namespace hipblaslt_ext
         HIPBLASLT_EXPORT explicit GroupedGemm(hipblasLtHandle_t      handle,
                                               hipblasOperation_t     opA,
                                               hipblasOperation_t     opB,
-                                              hipblasltDatatype_t    typeA,
-                                              hipblasltDatatype_t    typeB,
-                                              hipblasltDatatype_t    typeC,
-                                              hipblasltDatatype_t    typeD,
+                                              hipDataType            typeA,
+                                              hipDataType            typeB,
+                                              hipDataType            typeC,
+                                              hipDataType            typeD,
                                               hipblasLtComputeType_t typeCompute);
         HIPBLASLT_EXPORT              GroupedGemm(const GroupedGemm&) = delete;
         HIPBLASLT_EXPORT              GroupedGemm(GroupedGemm&&) noexcept;
@@ -869,10 +869,10 @@ namespace hipblaslt_ext
                                 GemmType                                       typeGemm,
                                 hipblasOperation_t                             opA,
                                 hipblasOperation_t                             opB,
-                                hipblasltDatatype_t                            typeA,
-                                hipblasltDatatype_t                            typeB,
-                                hipblasltDatatype_t                            typeC,
-                                hipblasltDatatype_t                            typeD,
+                                hipDataType                                    typeA,
+                                hipDataType                                    typeB,
+                                hipDataType                                    typeC,
+                                hipDataType                                    typeD,
                                 hipblasLtComputeType_t                         typeCompute,
                                 std::vector<hipblasLtMatmulHeuristicResult_t>& heuristicResults);
 

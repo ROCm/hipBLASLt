@@ -3,7 +3,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022-2023 Advanced Micro Devices, Inc.
+ * Copyright (C) 2022-2024 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -42,19 +42,19 @@ inline bool isAligned(const void* pointer, size_t byte_count)
 }
 
 // return precision string for rocblaslt_datatype
-constexpr const char* rocblaslt_datatype_string(hipblasltDatatype_t type)
+constexpr const char* rocblaslt_datatype_string(hipDataType type)
 {
     switch(type)
     {
-    case HIPBLASLT_R_16F:
+    case HIP_R_16F:
         return "f16_r";
-    case HIPBLASLT_R_32F:
+    case HIP_R_32F:
         return "f32_r";
-    case HIPBLASLT_R_16B:
+    case HIP_R_16BF:
         return "b16_r";
-    case HIPBLASLT_R_32I:
+    case HIP_R_32I:
         return "i32_r";
-    case HIPBLASLT_R_8I:
+    case HIP_R_8I:
         return "i8_r";
     default:
         return "invalidType";
@@ -139,9 +139,9 @@ static constexpr char rocblaslt_precision_string<uint32_t>[] = "u32_r";
 
 std::string prefix(const char* layer, const char* caller);
 
-const char* hipblasltDatatype_to_string(hipblasltDatatype_t type);
+const char* hipDataType_to_string(hipDataType type);
 
-const char* hipblasltDatatype_to_bench_string(hipblasltDatatype_t type);
+const char* hipDataType_to_bench_string(hipDataType type);
 
 const char* rocblaslt_compute_type_to_string(rocblaslt_compute_type type);
 

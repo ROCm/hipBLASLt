@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022-2023 Advanced Micro Devices, Inc.
+ * Copyright (C) 2022-2024 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -166,25 +166,25 @@ namespace
         return false;
     }
 
-    Tensile::DataType hip2TensileType(hipblasltDatatype_t type)
+    Tensile::DataType hip2TensileType(hipDataType type)
     {
         switch(type)
         {
-        case HIPBLASLT_R_32F:
+        case HIP_R_32F:
             return Tensile::DataType::Float;
-        case HIPBLASLT_R_16F:
+        case HIP_R_16F:
             return Tensile::DataType::Half;
-        case HIPBLASLT_R_64F:
+        case HIP_R_64F:
             return Tensile::DataType::Double;
-        case HIPBLASLT_R_16B:
+        case HIP_R_16BF:
             return Tensile::DataType::BFloat16;
-        case HIPBLASLT_R_8F_E4M3:
+        case HIP_R_8F_E4M3_FNUZ:
             return Tensile::DataType::Float8;
-        case HIPBLASLT_R_8F_E5M2:
+        case HIP_R_8F_E5M2_FNUZ:
             return Tensile::DataType::BFloat8;
-        case HIPBLASLT_R_8I:
+        case HIP_R_8I:
             return Tensile::DataType::Int8;
-        case HIPBLASLT_R_32I:
+        case HIP_R_32I:
             return Tensile::DataType::Int32;
         default:
             throw std::runtime_error("Unsupported type.");
@@ -192,30 +192,30 @@ namespace
         return Tensile::DataType::None;
     }
 
-    hipblasltDatatype_t tensile2HipType(Tensile::DataType type)
+    hipDataType tensile2HipType(Tensile::DataType type)
     {
         switch(type)
         {
         case Tensile::DataType::Float:
-            return HIPBLASLT_R_32F;
+            return HIP_R_32F;
         case Tensile::DataType::Half:
-            return HIPBLASLT_R_16F;
+            return HIP_R_16F;
         case Tensile::DataType::Double:
-            return HIPBLASLT_R_64F;
+            return HIP_R_64F;
         case Tensile::DataType::BFloat16:
-            return HIPBLASLT_R_16B;
+            return HIP_R_16BF;
         case Tensile::DataType::Float8:
-            return HIPBLASLT_R_8F_E4M3;
+            return HIP_R_8F_E4M3_FNUZ;
         case Tensile::DataType::BFloat8:
-            return HIPBLASLT_R_8F_E5M2;
+            return HIP_R_8F_E5M2_FNUZ;
         case Tensile::DataType::Int8:
-            return HIPBLASLT_R_8I;
+            return HIP_R_8I;
         case Tensile::DataType::Int32:
-            return HIPBLASLT_R_32I;
+            return HIP_R_32I;
         default:
             throw std::runtime_error("Unsupported type.");
         }
-        return HIPBLASLT_R_32F;
+        return HIP_R_32F;
     }
 
     Tensile::DataType roc2TensileType(rocblaslt_compute_type type)
@@ -279,10 +279,10 @@ namespace
 
     inline auto CreateTensileProblem(hipblasOperation_t     opA,
                                      hipblasOperation_t     opB,
-                                     hipblasltDatatype_t    typeA,
-                                     hipblasltDatatype_t    typeB,
-                                     hipblasltDatatype_t    typeC,
-                                     hipblasltDatatype_t    typeD,
+                                     hipDataType            typeA,
+                                     hipDataType            typeB,
+                                     hipDataType            typeC,
+                                     hipDataType            typeD,
                                      rocblaslt_compute_type typeCompute,
                                      float                  alpha,
                                      float                  beta,
@@ -313,10 +313,10 @@ namespace
  ****************************************************************/
     auto ConstructTensileProblem(const RocblasltContractionProblem& prob)
     {
-        auto a_type       = hipblasltDatatype_to_tensile_type(prob.a_type);
-        auto b_type       = hipblasltDatatype_to_tensile_type(prob.b_type);
-        auto c_type       = hipblasltDatatype_to_tensile_type(prob.c_type);
-        auto d_type       = hipblasltDatatype_to_tensile_type(prob.d_type);
+        auto a_type       = hipDataType_to_tensile_type(prob.a_type);
+        auto b_type       = hipDataType_to_tensile_type(prob.b_type);
+        auto c_type       = hipDataType_to_tensile_type(prob.c_type);
+        auto d_type       = hipDataType_to_tensile_type(prob.d_type);
         auto compute_type = roc2TensileType(prob.compute_type);
 
         // Tensor descriptors for a, b
@@ -482,7 +482,7 @@ namespace
         else
         {
             tensileProblem.setUseBias(true);
-            auto biasType = hipblasltDatatype_to_tensile_type(prob.bias_type);
+            auto biasType = hipDataType_to_tensile_type(prob.bias_type);
             tensileProblem.setBias(biasType, biasSize, 0, prob.gradient, biasSrc);
             tensileProblem.setParams().setBiasEnum(
                 tensileUseBias(prob.epilogue) ? biasType : Tensile::DataType::None);
@@ -538,10 +538,10 @@ namespace
                               const RocblasltContractionProblem& prob,
                               Tensile::ContractionProblemGemm&   tensileProblem)
     {
-        auto a_type       = hipblasltDatatype_to_tensile_type(prob.a_type);
-        auto b_type       = hipblasltDatatype_to_tensile_type(prob.b_type);
-        auto c_type       = hipblasltDatatype_to_tensile_type(prob.c_type);
-        auto d_type       = hipblasltDatatype_to_tensile_type(prob.d_type);
+        auto a_type       = hipDataType_to_tensile_type(prob.a_type);
+        auto b_type       = hipDataType_to_tensile_type(prob.b_type);
+        auto c_type       = hipDataType_to_tensile_type(prob.c_type);
+        auto d_type       = hipDataType_to_tensile_type(prob.d_type);
         auto compute_type = roc2TensileType(prob.compute_type);
 
         // Tensile Indices for contraction problem
@@ -682,7 +682,7 @@ namespace
             else
             {
                 tensileProblem.setUseBias(true);
-                auto biasType = hipblasltDatatype_to_tensile_type(prob.bias_type);
+                auto biasType = hipDataType_to_tensile_type(prob.bias_type);
                 tensileProblem.setBias(biasType, biasSize, 0, prob.gradient, biasSrc);
                 tensileProblem.setParams().setBiasEnum(
                     tensileUseBias(prob.epilogue) ? biasType : Tensile::DataType::None);
@@ -1149,10 +1149,10 @@ void initTensileGemmData(rocblaslt_handle       handle,
                          rocblaslt::RocGemmType gemmType,
                          hipblasOperation_t     opA,
                          hipblasOperation_t     opB,
-                         hipblasltDatatype_t    typeA,
-                         hipblasltDatatype_t    typeB,
-                         hipblasltDatatype_t    typeC,
-                         hipblasltDatatype_t    typeD,
+                         hipDataType            typeA,
+                         hipDataType            typeB,
+                         hipDataType            typeC,
+                         hipDataType            typeD,
                          rocblaslt_compute_type typeCompute,
                          size_t                 maxWorkspaceBytes,
                          std::shared_ptr<void>& gemmData)
@@ -1624,8 +1624,7 @@ rocblaslt_status runKernelFromInvocation(rocblaslt_handle       handle,
         {
             std::shared_ptr<TensileDataGemm> data
                 = std::static_pointer_cast<TensileDataGemm>(gemmData);
-            status = hip2RocStatus(
-                adapter->launchKernels(data->kernels, stream, nullptr, nullptr));
+            status = hip2RocStatus(adapter->launchKernels(data->kernels, stream, nullptr, nullptr));
         }
         else if(gemmType == rocblaslt::RocGemmType::ROCBLASLT_GROUPED_GEMM)
         {
@@ -1637,8 +1636,7 @@ rocblaslt_status runKernelFromInvocation(rocblaslt_handle       handle,
                           "GG is initialized with useUserArgs = true, workspace has no arguments.");
                 return rocblaslt_status_not_initialized;
             }
-            status = hip2RocStatus(
-                adapter->launchKernels(data->kernels, stream, nullptr, nullptr));
+            status = hip2RocStatus(adapter->launchKernels(data->kernels, stream, nullptr, nullptr));
         }
         else
         {
@@ -1746,8 +1744,7 @@ rocblaslt_status runKernelFromNewDeviceUserArguments(rocblaslt_handle       hand
                 uint8_t* arg = it.args.rawdata();
                 memcpy(arg + 4, &deviceUserArgs, sizeof(void*));
             }
-            status = hip2RocStatus(
-                adapter->launchKernels(data->kernels, stream, nullptr, nullptr));
+            status = hip2RocStatus(adapter->launchKernels(data->kernels, stream, nullptr, nullptr));
         }
         else
         {
@@ -1801,8 +1798,7 @@ rocblaslt_status runKernelFromDeviceUserArguments(rocblaslt_handle             h
                 = std::static_pointer_cast<TensileDataGroupedGemm>(gemmData);
             auto kernel = solution->solveGroupedGemmGPU(
                 data->problem.gemms, data->inputs, deviceUserArgs, workspace, stream);
-            status = hip2RocStatus(
-                adapter->launchKernels(kernel, stream, nullptr, nullptr));
+            status = hip2RocStatus(adapter->launchKernels(kernel, stream, nullptr, nullptr));
         }
         else
         {

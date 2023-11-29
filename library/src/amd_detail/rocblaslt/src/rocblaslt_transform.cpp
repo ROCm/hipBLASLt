@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2023 Advanced Micro Devices, Inc.
+ * Copyright (C) 2023-2024 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -114,404 +114,387 @@ namespace
         return hipSuccess;
     }
 
-   // Generate combination of MEMORY ORDER and RowMaj{A/B/C} = true/false
-   #define GEN_COMBINATION(_DTYPE, _SCALETYPE, _DType, _ScaleType, \
-                           _NumThreadsM, _NumThreadsN, _VectorWidth) \
-      { \
-         std::make_tuple(_DTYPE, \
-                         _SCALETYPE, \
-                         HIPBLASLT_ORDER_COL, \
-                         HIPBLASLT_ORDER_COL, \
-                         HIPBLASLT_ORDER_COL, \
-                         _VectorWidth), \
-         [](void*       c, \
-            const void* a, \
-            const void* b, \
-            const void* alpha, \
-            const void* beta, \
-            bool        scalarInDevice, \
-            uint32_t    m, \
-            uint32_t    n, \
-            uint32_t    ldA, \
-            uint32_t    ldB, \
-            uint32_t    ldC, \
-            uint32_t    batchSize, \
-            uint32_t    batchStride, \
-            bool        opA, \
-            bool        opB, \
-            hipStream_t stream) { \
-               return launchTransformKernel \
-                      <_DType, \
-                       _ScaleType, \
-                       false, \
-                       false, \
-                       false, \
-                       _NumThreadsM, \
-                       _NumThreadsN, \
-                       _VectorWidth>(static_cast<_DType*>(c), \
-                                     static_cast<const _DType*>(a), \
-                                     static_cast<const _DType*>(b), \
-                                     reinterpret_cast<const _ScaleType*>(alpha), \
-                                     reinterpret_cast<const _ScaleType*>(beta), \
-                                     scalarInDevice, \
-                                     m, \
-                                     n, \
-                                     ldA, \
-                                     ldB, \
-                                     ldC, \
-                                     batchSize, \
-                                     batchStride, \
-                                     opA, \
-                                     opB, \
-                                     stream); \
-         } \
-      }, \
-      { \
-         std::make_tuple(_DTYPE, \
-                         _SCALETYPE, \
-                         HIPBLASLT_ORDER_COL, \
-                         HIPBLASLT_ORDER_COL, \
-                         HIPBLASLT_ORDER_ROW, \
-                         _VectorWidth), \
-         [](void*       c, \
-            const void* a, \
-            const void* b, \
-            const void* alpha, \
-            const void* beta, \
-            bool        scalarInDevice, \
-            uint32_t    m, \
-            uint32_t    n, \
-            uint32_t    ldA, \
-            uint32_t    ldB, \
-            uint32_t    ldC, \
-            uint32_t    batchSize, \
-            uint32_t    batchStride, \
-            bool        opA, \
-            bool        opB, \
-            hipStream_t stream) { \
-               return launchTransformKernel \
-                      <_DType, \
-                       _ScaleType, \
-                       false, \
-                       false, \
-                       true, \
-                       _NumThreadsM, \
-                       _NumThreadsN, \
-                       _VectorWidth>(static_cast<_DType*>(c), \
-                                     static_cast<const _DType*>(a), \
-                                     static_cast<const _DType*>(b), \
-                                     reinterpret_cast<const _ScaleType*>(alpha), \
-                                     reinterpret_cast<const _ScaleType*>(beta), \
-                                     scalarInDevice, \
-                                     m, \
-                                     n, \
-                                     ldA, \
-                                     ldB, \
-                                     ldC, \
-                                     batchSize, \
-                                     batchStride, \
-                                     opA, \
-                                     opB, \
-                                     stream); \
-         } \
-      }, \
-      { \
-         std::make_tuple(_DTYPE, \
-                         _SCALETYPE, \
-                         HIPBLASLT_ORDER_COL, \
-                         HIPBLASLT_ORDER_ROW, \
-                         HIPBLASLT_ORDER_COL, \
-                         _VectorWidth), \
-         [](void*       c, \
-            const void* a, \
-            const void* b, \
-            const void* alpha, \
-            const void* beta, \
-            bool        scalarInDevice, \
-            uint32_t    m, \
-            uint32_t    n, \
-            uint32_t    ldA, \
-            uint32_t    ldB, \
-            uint32_t    ldC, \
-            uint32_t    batchSize, \
-            uint32_t    batchStride, \
-            bool        opA, \
-            bool        opB, \
-            hipStream_t stream) { \
-               return launchTransformKernel \
-                      <_DType, \
-                       _ScaleType, \
-                       false, \
-                       true, \
-                       false, \
-                       _NumThreadsM, \
-                       _NumThreadsN, \
-                       _VectorWidth>(static_cast<_DType*>(c), \
-                                     static_cast<const _DType*>(a), \
-                                     static_cast<const _DType*>(b), \
-                                     reinterpret_cast<const _ScaleType*>(alpha), \
-                                     reinterpret_cast<const _ScaleType*>(beta), \
-                                     scalarInDevice, \
-                                     m, \
-                                     n, \
-                                     ldA, \
-                                     ldB, \
-                                     ldC, \
-                                     batchSize, \
-                                     batchStride, \
-                                     opA, \
-                                     opB, \
-                                     stream); \
-         } \
-      }, \
-      { \
-         std::make_tuple(_DTYPE, \
-                         _SCALETYPE, \
-                         HIPBLASLT_ORDER_COL, \
-                         HIPBLASLT_ORDER_ROW, \
-                         HIPBLASLT_ORDER_ROW, \
-                         _VectorWidth), \
-         [](void*       c, \
-            const void* a, \
-            const void* b, \
-            const void* alpha, \
-            const void* beta, \
-            bool        scalarInDevice, \
-            uint32_t    m, \
-            uint32_t    n, \
-            uint32_t    ldA, \
-            uint32_t    ldB, \
-            uint32_t    ldC, \
-            uint32_t    batchSize, \
-            uint32_t    batchStride, \
-            bool        opA, \
-            bool        opB, \
-            hipStream_t stream) { \
-               return launchTransformKernel \
-                      <_DType, \
-                       _ScaleType, \
-                       false, \
-                       true, \
-                       true, \
-                       _NumThreadsM, \
-                       _NumThreadsN, \
-                       _VectorWidth>(static_cast<_DType*>(c), \
-                                     static_cast<const _DType*>(a), \
-                                     static_cast<const _DType*>(b), \
-                                     reinterpret_cast<const _ScaleType*>(alpha), \
-                                     reinterpret_cast<const _ScaleType*>(beta), \
-                                     scalarInDevice, \
-                                     m, \
-                                     n, \
-                                     ldA, \
-                                     ldB, \
-                                     ldC, \
-                                     batchSize, \
-                                     batchStride, \
-                                     opA, \
-                                     opB, \
-                                     stream); \
-         } \
-      }, \
-      { \
-         std::make_tuple(_DTYPE, \
-                         _SCALETYPE, \
-                         HIPBLASLT_ORDER_ROW, \
-                         HIPBLASLT_ORDER_COL, \
-                         HIPBLASLT_ORDER_COL, \
-                         _VectorWidth), \
-         [](void*       c, \
-            const void* a, \
-            const void* b, \
-            const void* alpha, \
-            const void* beta, \
-            bool        scalarInDevice, \
-            uint32_t    m, \
-            uint32_t    n, \
-            uint32_t    ldA, \
-            uint32_t    ldB, \
-            uint32_t    ldC, \
-            uint32_t    batchSize, \
-            uint32_t    batchStride, \
-            bool        opA, \
-            bool        opB, \
-            hipStream_t stream) { \
-               return launchTransformKernel \
-                      <_DType, \
-                       _ScaleType, \
-                       true, \
-                       false, \
-                       false, \
-                       _NumThreadsM, \
-                       _NumThreadsN, \
-                       _VectorWidth>(static_cast<_DType*>(c), \
-                                     static_cast<const _DType*>(a), \
-                                     static_cast<const _DType*>(b), \
-                                     reinterpret_cast<const _ScaleType*>(alpha), \
-                                     reinterpret_cast<const _ScaleType*>(beta), \
-                                     scalarInDevice, \
-                                     m, \
-                                     n, \
-                                     ldA, \
-                                     ldB, \
-                                     ldC, \
-                                     batchSize, \
-                                     batchStride, \
-                                     opA, \
-                                     opB, \
-                                     stream); \
-         } \
-      }, \
-      { \
-         std::make_tuple(_DTYPE, \
-                         _SCALETYPE, \
-                         HIPBLASLT_ORDER_ROW, \
-                         HIPBLASLT_ORDER_COL, \
-                         HIPBLASLT_ORDER_ROW, \
-                         _VectorWidth), \
-         [](void*       c, \
-            const void* a, \
-            const void* b, \
-            const void* alpha, \
-            const void* beta, \
-            bool        scalarInDevice, \
-            uint32_t    m, \
-            uint32_t    n, \
-            uint32_t    ldA, \
-            uint32_t    ldB, \
-            uint32_t    ldC, \
-            uint32_t    batchSize, \
-            uint32_t    batchStride, \
-            bool        opA, \
-            bool        opB, \
-            hipStream_t stream) { \
-               return launchTransformKernel \
-                      <_DType, \
-                       _ScaleType, \
-                       true, \
-                       false, \
-                       true, \
-                       _NumThreadsM, \
-                       _NumThreadsN, \
-                       _VectorWidth>(static_cast<_DType*>(c), \
-                                     static_cast<const _DType*>(a), \
-                                     static_cast<const _DType*>(b), \
-                                     reinterpret_cast<const _ScaleType*>(alpha), \
-                                     reinterpret_cast<const _ScaleType*>(beta), \
-                                     scalarInDevice, \
-                                     m, \
-                                     n, \
-                                     ldA, \
-                                     ldB, \
-                                     ldC, \
-                                     batchSize, \
-                                     batchStride, \
-                                     opA, \
-                                     opB, \
-                                     stream); \
-         } \
-      }, \
-      { \
-         std::make_tuple(_DTYPE, \
-                         _SCALETYPE, \
-                         HIPBLASLT_ORDER_ROW, \
-                         HIPBLASLT_ORDER_ROW, \
-                         HIPBLASLT_ORDER_COL, \
-                         _VectorWidth), \
-         [](void*       c, \
-            const void* a, \
-            const void* b, \
-            const void* alpha, \
-            const void* beta, \
-            bool        scalarInDevice, \
-            uint32_t    m, \
-            uint32_t    n, \
-            uint32_t    ldA, \
-            uint32_t    ldB, \
-            uint32_t    ldC, \
-            uint32_t    batchSize, \
-            uint32_t    batchStride, \
-            bool        opA, \
-            bool        opB, \
-            hipStream_t stream) { \
-               return launchTransformKernel \
-                      <_DType, \
-                       _ScaleType, \
-                       true, \
-                       true, \
-                       false, \
-                       _NumThreadsM, \
-                       _NumThreadsN, \
-                       _VectorWidth>(static_cast<_DType*>(c), \
-                                     static_cast<const _DType*>(a), \
-                                     static_cast<const _DType*>(b), \
-                                     reinterpret_cast<const _ScaleType*>(alpha), \
-                                     reinterpret_cast<const _ScaleType*>(beta), \
-                                     scalarInDevice, \
-                                     m, \
-                                     n, \
-                                     ldA, \
-                                     ldB, \
-                                     ldC, \
-                                     batchSize, \
-                                     batchStride, \
-                                     opA, \
-                                     opB, \
-                                     stream); \
-         } \
-      }, \
-      { \
-         std::make_tuple(_DTYPE, \
-                         _SCALETYPE, \
-                         HIPBLASLT_ORDER_ROW, \
-                         HIPBLASLT_ORDER_ROW, \
-                         HIPBLASLT_ORDER_ROW, \
-                         _VectorWidth), \
-         [](void*       c, \
-            const void* a, \
-            const void* b, \
-            const void* alpha, \
-            const void* beta, \
-            bool        scalarInDevice, \
-            uint32_t    m, \
-            uint32_t    n, \
-            uint32_t    ldA, \
-            uint32_t    ldB, \
-            uint32_t    ldC, \
-            uint32_t    batchSize, \
-            uint32_t    batchStride, \
-            bool        opA, \
-            bool        opB, \
-            hipStream_t stream) { \
-               return launchTransformKernel \
-                      <_DType, \
-                       _ScaleType, \
-                       true, \
-                       true, \
-                       true, \
-                       _NumThreadsM, \
-                       _NumThreadsN, \
-                       _VectorWidth>(static_cast<_DType*>(c), \
-                                     static_cast<const _DType*>(a), \
-                                     static_cast<const _DType*>(b), \
-                                     reinterpret_cast<const _ScaleType*>(alpha), \
-                                     reinterpret_cast<const _ScaleType*>(beta), \
-                                     scalarInDevice, \
-                                     m, \
-                                     n, \
-                                     ldA, \
-                                     ldB, \
-                                     ldC, \
-                                     batchSize, \
-                                     batchStride, \
-                                     opA, \
-                                     opB, \
-                                     stream); \
-         } \
-      }, \
+// Generate combination of MEMORY ORDER and RowMaj{A/B/C} = true/false
+#define GEN_COMBINATION(                                                                        \
+    _DTYPE, _SCALETYPE, _DType, _ScaleType, _NumThreadsM, _NumThreadsN, _VectorWidth)           \
+    {std::make_tuple(_DTYPE,                                                                    \
+                     _SCALETYPE,                                                                \
+                     HIPBLASLT_ORDER_COL,                                                       \
+                     HIPBLASLT_ORDER_COL,                                                       \
+                     HIPBLASLT_ORDER_COL,                                                       \
+                     _VectorWidth),                                                             \
+     [](void*       c,                                                                          \
+        const void* a,                                                                          \
+        const void* b,                                                                          \
+        const void* alpha,                                                                      \
+        const void* beta,                                                                       \
+        bool        scalarInDevice,                                                             \
+        uint32_t    m,                                                                          \
+        uint32_t    n,                                                                          \
+        uint32_t    ldA,                                                                        \
+        uint32_t    ldB,                                                                        \
+        uint32_t    ldC,                                                                        \
+        uint32_t    batchSize,                                                                  \
+        uint32_t    batchStride,                                                                \
+        bool        opA,                                                                        \
+        bool        opB,                                                                        \
+        hipStream_t stream) {                                                                   \
+         return launchTransformKernel<_DType,                                                   \
+                                      _ScaleType,                                               \
+                                      false,                                                    \
+                                      false,                                                    \
+                                      false,                                                    \
+                                      _NumThreadsM,                                             \
+                                      _NumThreadsN,                                             \
+                                      _VectorWidth>(static_cast<_DType*>(c),                    \
+                                                    static_cast<const _DType*>(a),              \
+                                                    static_cast<const _DType*>(b),              \
+                                                    reinterpret_cast<const _ScaleType*>(alpha), \
+                                                    reinterpret_cast<const _ScaleType*>(beta),  \
+                                                    scalarInDevice,                             \
+                                                    m,                                          \
+                                                    n,                                          \
+                                                    ldA,                                        \
+                                                    ldB,                                        \
+                                                    ldC,                                        \
+                                                    batchSize,                                  \
+                                                    batchStride,                                \
+                                                    opA,                                        \
+                                                    opB,                                        \
+                                                    stream);                                    \
+     }},                                                                                        \
+        {std::make_tuple(_DTYPE,                                                                \
+                         _SCALETYPE,                                                            \
+                         HIPBLASLT_ORDER_COL,                                                   \
+                         HIPBLASLT_ORDER_COL,                                                   \
+                         HIPBLASLT_ORDER_ROW,                                                   \
+                         _VectorWidth),                                                         \
+         [](void*       c,                                                                      \
+            const void* a,                                                                      \
+            const void* b,                                                                      \
+            const void* alpha,                                                                  \
+            const void* beta,                                                                   \
+            bool        scalarInDevice,                                                         \
+            uint32_t    m,                                                                      \
+            uint32_t    n,                                                                      \
+            uint32_t    ldA,                                                                    \
+            uint32_t    ldB,                                                                    \
+            uint32_t    ldC,                                                                    \
+            uint32_t    batchSize,                                                              \
+            uint32_t    batchStride,                                                            \
+            bool        opA,                                                                    \
+            bool        opB,                                                                    \
+            hipStream_t stream) {                                                               \
+             return launchTransformKernel<_DType,                                               \
+                                          _ScaleType,                                           \
+                                          false,                                                \
+                                          false,                                                \
+                                          true,                                                 \
+                                          _NumThreadsM,                                         \
+                                          _NumThreadsN,                                         \
+                                          _VectorWidth>(                                        \
+                 static_cast<_DType*>(c),                                                       \
+                 static_cast<const _DType*>(a),                                                 \
+                 static_cast<const _DType*>(b),                                                 \
+                 reinterpret_cast<const _ScaleType*>(alpha),                                    \
+                 reinterpret_cast<const _ScaleType*>(beta),                                     \
+                 scalarInDevice,                                                                \
+                 m,                                                                             \
+                 n,                                                                             \
+                 ldA,                                                                           \
+                 ldB,                                                                           \
+                 ldC,                                                                           \
+                 batchSize,                                                                     \
+                 batchStride,                                                                   \
+                 opA,                                                                           \
+                 opB,                                                                           \
+                 stream);                                                                       \
+         }},                                                                                    \
+        {std::make_tuple(_DTYPE,                                                                \
+                         _SCALETYPE,                                                            \
+                         HIPBLASLT_ORDER_COL,                                                   \
+                         HIPBLASLT_ORDER_ROW,                                                   \
+                         HIPBLASLT_ORDER_COL,                                                   \
+                         _VectorWidth),                                                         \
+         [](void*       c,                                                                      \
+            const void* a,                                                                      \
+            const void* b,                                                                      \
+            const void* alpha,                                                                  \
+            const void* beta,                                                                   \
+            bool        scalarInDevice,                                                         \
+            uint32_t    m,                                                                      \
+            uint32_t    n,                                                                      \
+            uint32_t    ldA,                                                                    \
+            uint32_t    ldB,                                                                    \
+            uint32_t    ldC,                                                                    \
+            uint32_t    batchSize,                                                              \
+            uint32_t    batchStride,                                                            \
+            bool        opA,                                                                    \
+            bool        opB,                                                                    \
+            hipStream_t stream) {                                                               \
+             return launchTransformKernel<_DType,                                               \
+                                          _ScaleType,                                           \
+                                          false,                                                \
+                                          true,                                                 \
+                                          false,                                                \
+                                          _NumThreadsM,                                         \
+                                          _NumThreadsN,                                         \
+                                          _VectorWidth>(                                        \
+                 static_cast<_DType*>(c),                                                       \
+                 static_cast<const _DType*>(a),                                                 \
+                 static_cast<const _DType*>(b),                                                 \
+                 reinterpret_cast<const _ScaleType*>(alpha),                                    \
+                 reinterpret_cast<const _ScaleType*>(beta),                                     \
+                 scalarInDevice,                                                                \
+                 m,                                                                             \
+                 n,                                                                             \
+                 ldA,                                                                           \
+                 ldB,                                                                           \
+                 ldC,                                                                           \
+                 batchSize,                                                                     \
+                 batchStride,                                                                   \
+                 opA,                                                                           \
+                 opB,                                                                           \
+                 stream);                                                                       \
+         }},                                                                                    \
+        {std::make_tuple(_DTYPE,                                                                \
+                         _SCALETYPE,                                                            \
+                         HIPBLASLT_ORDER_COL,                                                   \
+                         HIPBLASLT_ORDER_ROW,                                                   \
+                         HIPBLASLT_ORDER_ROW,                                                   \
+                         _VectorWidth),                                                         \
+         [](void*       c,                                                                      \
+            const void* a,                                                                      \
+            const void* b,                                                                      \
+            const void* alpha,                                                                  \
+            const void* beta,                                                                   \
+            bool        scalarInDevice,                                                         \
+            uint32_t    m,                                                                      \
+            uint32_t    n,                                                                      \
+            uint32_t    ldA,                                                                    \
+            uint32_t    ldB,                                                                    \
+            uint32_t    ldC,                                                                    \
+            uint32_t    batchSize,                                                              \
+            uint32_t    batchStride,                                                            \
+            bool        opA,                                                                    \
+            bool        opB,                                                                    \
+            hipStream_t stream) {                                                               \
+             return launchTransformKernel<_DType,                                               \
+                                          _ScaleType,                                           \
+                                          false,                                                \
+                                          true,                                                 \
+                                          true,                                                 \
+                                          _NumThreadsM,                                         \
+                                          _NumThreadsN,                                         \
+                                          _VectorWidth>(                                        \
+                 static_cast<_DType*>(c),                                                       \
+                 static_cast<const _DType*>(a),                                                 \
+                 static_cast<const _DType*>(b),                                                 \
+                 reinterpret_cast<const _ScaleType*>(alpha),                                    \
+                 reinterpret_cast<const _ScaleType*>(beta),                                     \
+                 scalarInDevice,                                                                \
+                 m,                                                                             \
+                 n,                                                                             \
+                 ldA,                                                                           \
+                 ldB,                                                                           \
+                 ldC,                                                                           \
+                 batchSize,                                                                     \
+                 batchStride,                                                                   \
+                 opA,                                                                           \
+                 opB,                                                                           \
+                 stream);                                                                       \
+         }},                                                                                    \
+        {std::make_tuple(_DTYPE,                                                                \
+                         _SCALETYPE,                                                            \
+                         HIPBLASLT_ORDER_ROW,                                                   \
+                         HIPBLASLT_ORDER_COL,                                                   \
+                         HIPBLASLT_ORDER_COL,                                                   \
+                         _VectorWidth),                                                         \
+         [](void*       c,                                                                      \
+            const void* a,                                                                      \
+            const void* b,                                                                      \
+            const void* alpha,                                                                  \
+            const void* beta,                                                                   \
+            bool        scalarInDevice,                                                         \
+            uint32_t    m,                                                                      \
+            uint32_t    n,                                                                      \
+            uint32_t    ldA,                                                                    \
+            uint32_t    ldB,                                                                    \
+            uint32_t    ldC,                                                                    \
+            uint32_t    batchSize,                                                              \
+            uint32_t    batchStride,                                                            \
+            bool        opA,                                                                    \
+            bool        opB,                                                                    \
+            hipStream_t stream) {                                                               \
+             return launchTransformKernel<_DType,                                               \
+                                          _ScaleType,                                           \
+                                          true,                                                 \
+                                          false,                                                \
+                                          false,                                                \
+                                          _NumThreadsM,                                         \
+                                          _NumThreadsN,                                         \
+                                          _VectorWidth>(                                        \
+                 static_cast<_DType*>(c),                                                       \
+                 static_cast<const _DType*>(a),                                                 \
+                 static_cast<const _DType*>(b),                                                 \
+                 reinterpret_cast<const _ScaleType*>(alpha),                                    \
+                 reinterpret_cast<const _ScaleType*>(beta),                                     \
+                 scalarInDevice,                                                                \
+                 m,                                                                             \
+                 n,                                                                             \
+                 ldA,                                                                           \
+                 ldB,                                                                           \
+                 ldC,                                                                           \
+                 batchSize,                                                                     \
+                 batchStride,                                                                   \
+                 opA,                                                                           \
+                 opB,                                                                           \
+                 stream);                                                                       \
+         }},                                                                                    \
+        {std::make_tuple(_DTYPE,                                                                \
+                         _SCALETYPE,                                                            \
+                         HIPBLASLT_ORDER_ROW,                                                   \
+                         HIPBLASLT_ORDER_COL,                                                   \
+                         HIPBLASLT_ORDER_ROW,                                                   \
+                         _VectorWidth),                                                         \
+         [](void*       c,                                                                      \
+            const void* a,                                                                      \
+            const void* b,                                                                      \
+            const void* alpha,                                                                  \
+            const void* beta,                                                                   \
+            bool        scalarInDevice,                                                         \
+            uint32_t    m,                                                                      \
+            uint32_t    n,                                                                      \
+            uint32_t    ldA,                                                                    \
+            uint32_t    ldB,                                                                    \
+            uint32_t    ldC,                                                                    \
+            uint32_t    batchSize,                                                              \
+            uint32_t    batchStride,                                                            \
+            bool        opA,                                                                    \
+            bool        opB,                                                                    \
+            hipStream_t stream) {                                                               \
+             return launchTransformKernel<_DType,                                               \
+                                          _ScaleType,                                           \
+                                          true,                                                 \
+                                          false,                                                \
+                                          true,                                                 \
+                                          _NumThreadsM,                                         \
+                                          _NumThreadsN,                                         \
+                                          _VectorWidth>(                                        \
+                 static_cast<_DType*>(c),                                                       \
+                 static_cast<const _DType*>(a),                                                 \
+                 static_cast<const _DType*>(b),                                                 \
+                 reinterpret_cast<const _ScaleType*>(alpha),                                    \
+                 reinterpret_cast<const _ScaleType*>(beta),                                     \
+                 scalarInDevice,                                                                \
+                 m,                                                                             \
+                 n,                                                                             \
+                 ldA,                                                                           \
+                 ldB,                                                                           \
+                 ldC,                                                                           \
+                 batchSize,                                                                     \
+                 batchStride,                                                                   \
+                 opA,                                                                           \
+                 opB,                                                                           \
+                 stream);                                                                       \
+         }},                                                                                    \
+        {std::make_tuple(_DTYPE,                                                                \
+                         _SCALETYPE,                                                            \
+                         HIPBLASLT_ORDER_ROW,                                                   \
+                         HIPBLASLT_ORDER_ROW,                                                   \
+                         HIPBLASLT_ORDER_COL,                                                   \
+                         _VectorWidth),                                                         \
+         [](void*       c,                                                                      \
+            const void* a,                                                                      \
+            const void* b,                                                                      \
+            const void* alpha,                                                                  \
+            const void* beta,                                                                   \
+            bool        scalarInDevice,                                                         \
+            uint32_t    m,                                                                      \
+            uint32_t    n,                                                                      \
+            uint32_t    ldA,                                                                    \
+            uint32_t    ldB,                                                                    \
+            uint32_t    ldC,                                                                    \
+            uint32_t    batchSize,                                                              \
+            uint32_t    batchStride,                                                            \
+            bool        opA,                                                                    \
+            bool        opB,                                                                    \
+            hipStream_t stream) {                                                               \
+             return launchTransformKernel<_DType,                                               \
+                                          _ScaleType,                                           \
+                                          true,                                                 \
+                                          true,                                                 \
+                                          false,                                                \
+                                          _NumThreadsM,                                         \
+                                          _NumThreadsN,                                         \
+                                          _VectorWidth>(                                        \
+                 static_cast<_DType*>(c),                                                       \
+                 static_cast<const _DType*>(a),                                                 \
+                 static_cast<const _DType*>(b),                                                 \
+                 reinterpret_cast<const _ScaleType*>(alpha),                                    \
+                 reinterpret_cast<const _ScaleType*>(beta),                                     \
+                 scalarInDevice,                                                                \
+                 m,                                                                             \
+                 n,                                                                             \
+                 ldA,                                                                           \
+                 ldB,                                                                           \
+                 ldC,                                                                           \
+                 batchSize,                                                                     \
+                 batchStride,                                                                   \
+                 opA,                                                                           \
+                 opB,                                                                           \
+                 stream);                                                                       \
+         }},                                                                                    \
+        {std::make_tuple(_DTYPE,                                                                \
+                         _SCALETYPE,                                                            \
+                         HIPBLASLT_ORDER_ROW,                                                   \
+                         HIPBLASLT_ORDER_ROW,                                                   \
+                         HIPBLASLT_ORDER_ROW,                                                   \
+                         _VectorWidth),                                                         \
+         [](void*       c,                                                                      \
+            const void* a,                                                                      \
+            const void* b,                                                                      \
+            const void* alpha,                                                                  \
+            const void* beta,                                                                   \
+            bool        scalarInDevice,                                                         \
+            uint32_t    m,                                                                      \
+            uint32_t    n,                                                                      \
+            uint32_t    ldA,                                                                    \
+            uint32_t    ldB,                                                                    \
+            uint32_t    ldC,                                                                    \
+            uint32_t    batchSize,                                                              \
+            uint32_t    batchStride,                                                            \
+            bool        opA,                                                                    \
+            bool        opB,                                                                    \
+            hipStream_t stream) {                                                               \
+             return launchTransformKernel<_DType,                                               \
+                                          _ScaleType,                                           \
+                                          true,                                                 \
+                                          true,                                                 \
+                                          true,                                                 \
+                                          _NumThreadsM,                                         \
+                                          _NumThreadsN,                                         \
+                                          _VectorWidth>(                                        \
+                 static_cast<_DType*>(c),                                                       \
+                 static_cast<const _DType*>(a),                                                 \
+                 static_cast<const _DType*>(b),                                                 \
+                 reinterpret_cast<const _ScaleType*>(alpha),                                    \
+                 reinterpret_cast<const _ScaleType*>(beta),                                     \
+                 scalarInDevice,                                                                \
+                 m,                                                                             \
+                 n,                                                                             \
+                 ldA,                                                                           \
+                 ldB,                                                                           \
+                 ldC,                                                                           \
+                 batchSize,                                                                     \
+                 batchStride,                                                                   \
+                 opA,                                                                           \
+                 opB,                                                                           \
+                 stream);                                                                       \
+         }},
 
-    using MatrixTransformKernelKey = std::tuple<hipblasltDatatype_t,
-                                                hipblasltDatatype_t,
+    using MatrixTransformKernelKey = std::tuple<hipDataType,
+                                                hipDataType,
                                                 hipblasLtOrder_t,
                                                 hipblasLtOrder_t,
                                                 hipblasLtOrder_t,
@@ -532,38 +515,28 @@ namespace
                                                        bool,
                                                        bool,
                                                        hipStream_t)>;
-    std::map<MatrixTransformKernelKey, MatrixTransformFunction> transformKernels
-    {
-        {
-            // vector width = 4
-            GEN_COMBINATION(HIPBLASLT_R_32F, HIPBLASLT_R_32F,
-                            hipblasLtFloat, hipblasLtFloat, 16, 16, 4)
-            GEN_COMBINATION(HIPBLASLT_R_16F, HIPBLASLT_R_16F,
-                            hipblasLtHalf, hipblasLtHalf, 16, 16, 4)
-            GEN_COMBINATION(HIPBLASLT_R_16F, HIPBLASLT_R_32F,
-                            hipblasLtHalf, hipblasLtFloat, 16, 16, 4)
-            GEN_COMBINATION(HIPBLASLT_R_16B, HIPBLASLT_R_32F,
-                            hipblasLtBfloat16, hipblasLtFloat, 16, 16, 4)
-            GEN_COMBINATION(HIPBLASLT_R_8I, HIPBLASLT_R_32F,
-                            hipblasLtInt8, hipblasLtFloat, 16, 16, 4)
-            GEN_COMBINATION(HIPBLASLT_R_32I, HIPBLASLT_R_32F,
-                            hipblasLtInt32, hipblasLtFloat, 16, 16, 4)
+    std::map<MatrixTransformKernelKey, MatrixTransformFunction> transformKernels{
+        {// vector width = 4
+         GEN_COMBINATION(HIP_R_32F, HIP_R_32F, hipblasLtFloat, hipblasLtFloat, 16, 16, 4)
+             GEN_COMBINATION(HIP_R_16F, HIP_R_16F, hipblasLtHalf, hipblasLtHalf, 16, 16, 4)
+                 GEN_COMBINATION(HIP_R_16F, HIP_R_32F, hipblasLtHalf, hipblasLtFloat, 16, 16, 4)
+                     GEN_COMBINATION(
+                         HIP_R_16BF, HIP_R_32F, hipblasLtBfloat16, hipblasLtFloat, 16, 16, 4)
+                         GEN_COMBINATION(
+                             HIP_R_8I, HIP_R_32F, hipblasLtInt8, hipblasLtFloat, 16, 16, 4)
+                             GEN_COMBINATION(
+                                 HIP_R_32I, HIP_R_32F, hipblasLtInt32, hipblasLtFloat, 16, 16, 4)
 
-            // vector width = 1
-            GEN_COMBINATION(HIPBLASLT_R_32F, HIPBLASLT_R_32F,
-                            hipblasLtFloat, hipblasLtFloat, 16, 16, 1)
-            GEN_COMBINATION(HIPBLASLT_R_16F, HIPBLASLT_R_16F,
-                            hipblasLtHalf, hipblasLtHalf, 16, 16, 1)
-            GEN_COMBINATION(HIPBLASLT_R_16F, HIPBLASLT_R_32F,
-                            hipblasLtHalf, hipblasLtFloat, 16, 16, 1)
-            GEN_COMBINATION(HIPBLASLT_R_16B, HIPBLASLT_R_32F,
-                            hipblasLtBfloat16, hipblasLtFloat, 16, 16, 1)
-            GEN_COMBINATION(HIPBLASLT_R_8I, HIPBLASLT_R_32F,
-                            hipblasLtInt8, hipblasLtFloat, 16, 16, 1)
-            GEN_COMBINATION(HIPBLASLT_R_32I, HIPBLASLT_R_32F,
-                            hipblasLtInt32, hipblasLtFloat, 16, 16, 1)
-        }
-    };
+         // vector width = 1
+         GEN_COMBINATION(HIP_R_32F, HIP_R_32F, hipblasLtFloat, hipblasLtFloat, 16, 16, 1)
+             GEN_COMBINATION(HIP_R_16F, HIP_R_16F, hipblasLtHalf, hipblasLtHalf, 16, 16, 1)
+                 GEN_COMBINATION(HIP_R_16F, HIP_R_32F, hipblasLtHalf, hipblasLtFloat, 16, 16, 1)
+                     GEN_COMBINATION(
+                         HIP_R_16BF, HIP_R_32F, hipblasLtBfloat16, hipblasLtFloat, 16, 16, 1)
+                         GEN_COMBINATION(
+                             HIP_R_8I, HIP_R_32F, hipblasLtInt8, hipblasLtFloat, 16, 16, 1)
+                             GEN_COMBINATION(
+                                 HIP_R_32I, HIP_R_32F, hipblasLtInt32, hipblasLtFloat, 16, 16, 1)}};
 }
 
 rocblaslt_status rocblaslt_matrix_transform(rocblaslt_handle                 handle,
@@ -597,10 +570,10 @@ rocblaslt_status rocblaslt_matrix_transform(rocblaslt_handle                 han
     {
         layoutB = dummyMatrixLayout();
     }
-    
-    size_t vw = layoutC->m < 4 || layoutC->n < 4 ? 1 : 4;
-    auto key = std::make_tuple(layoutA->type, desc->scaleType,
-                               layoutA->order, layoutB->order, layoutC->order, vw);
+
+    size_t vw  = layoutC->m < 4 || layoutC->n < 4 ? 1 : 4;
+    auto   key = std::make_tuple(
+        layoutA->type, desc->scaleType, layoutA->order, layoutB->order, layoutC->order, vw);
 
     if(!transformKernels.count(key))
     {
