@@ -191,10 +191,10 @@ class hipblaslt_local_matmul_descr
     hipblasStatus_t       m_status = HIPBLAS_STATUS_NOT_INITIALIZED;
 
 public:
-    hipblaslt_local_matmul_descr(hipblasOperation_t     opA,
-                                 hipblasOperation_t     opB,
-                                 hipblasLtComputeType_t compute_type,
-                                 hipDataType            scale_type)
+    hipblaslt_local_matmul_descr(hipblasOperation_t   opA,
+                                 hipblasOperation_t   opB,
+                                 hipblasComputeType_t compute_type,
+                                 hipDataType          scale_type)
     {
         this->m_status = hipblasLtMatmulDescCreate(&this->m_descr, compute_type, scale_type);
 

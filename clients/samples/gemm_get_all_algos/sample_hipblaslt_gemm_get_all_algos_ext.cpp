@@ -106,19 +106,13 @@ void simpleGemmGetAllAlgosExt(hipblasLtHandle_t  handle,
                                                      HIP_R_16F,
                                                      HIP_R_16F,
                                                      HIP_R_16F,
-                                                     HIPBLASLT_COMPUTE_F32,
+                                                     HIPBLAS_COMPUTE_32F,
                                                      heuristicResult));
 
     hipblaslt_ext::GemmPreference gemmPref;
     gemmPref.setMaxWorkspaceBytes(max_workspace_size);
-    hipblaslt_ext::Gemm gemm(handle,
-                             trans_a,
-                             trans_b,
-                             HIP_R_16F,
-                             HIP_R_16F,
-                             HIP_R_16F,
-                             HIP_R_16F,
-                             HIPBLASLT_COMPUTE_F32);
+    hipblaslt_ext::Gemm gemm(
+        handle, trans_a, trans_b, HIP_R_16F, HIP_R_16F, HIP_R_16F, HIP_R_16F, HIPBLAS_COMPUTE_32F);
 
     hipblaslt_ext::GemmEpilogue
         epilogue; // No action needed, default is HIPBLASLT_EPILOGUE_DEFAULT. (Gemm only)

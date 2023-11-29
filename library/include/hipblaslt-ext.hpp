@@ -91,13 +91,13 @@ namespace hipblaslt_ext
      */
     struct GemmProblemType
     {
-        hipblasOperation_t     op_a; //!< The A martix transpose
-        hipblasOperation_t     op_b; //!< The B matrix transpose
-        hipDataType            type_a; //!< The A matrix datatype.
-        hipDataType            type_b; //!< The B matrix datatype.
-        hipDataType            type_c; //!< The C matrix datatype.
-        hipDataType            type_d; //!< The D matrix datatype.
-        hipblasLtComputeType_t type_compute; //!< The compute datatype.
+        hipblasOperation_t   op_a; //!< The A martix transpose
+        hipblasOperation_t   op_b; //!< The B matrix transpose
+        hipDataType          type_a; //!< The A matrix datatype.
+        hipDataType          type_b; //!< The B matrix datatype.
+        hipDataType          type_c; //!< The C matrix datatype.
+        hipDataType          type_d; //!< The D matrix datatype.
+        hipblasComputeType_t type_compute; //!< The compute datatype.
     };
 
     /*! \ingroup types_module
@@ -406,14 +406,14 @@ namespace hipblaslt_ext
         *  @param[in]
         *  typeCompute                The compute type of the gemm problem
         */
-        HIPBLASLT_EXPORT explicit Gemm(hipblasLtHandle_t      handle,
-                                       hipblasOperation_t     opA,
-                                       hipblasOperation_t     opB,
-                                       hipDataType            typeA,
-                                       hipDataType            typeB,
-                                       hipDataType            typeC,
-                                       hipDataType            typeD,
-                                       hipblasLtComputeType_t typeCompute);
+        HIPBLASLT_EXPORT explicit Gemm(hipblasLtHandle_t    handle,
+                                       hipblasOperation_t   opA,
+                                       hipblasOperation_t   opB,
+                                       hipDataType          typeA,
+                                       hipDataType          typeB,
+                                       hipDataType          typeC,
+                                       hipDataType          typeD,
+                                       hipblasComputeType_t typeCompute);
 
         /*! \ingroup library_module
         *  \brief Constructor that sets the gemm problem from hipblasLt structures
@@ -616,14 +616,14 @@ namespace hipblaslt_ext
         *  @param[in]
         *  typeCompute                The compute type of the gemm problem
         */
-        HIPBLASLT_EXPORT explicit GroupedGemm(hipblasLtHandle_t      handle,
-                                              hipblasOperation_t     opA,
-                                              hipblasOperation_t     opB,
-                                              hipDataType            typeA,
-                                              hipDataType            typeB,
-                                              hipDataType            typeC,
-                                              hipDataType            typeD,
-                                              hipblasLtComputeType_t typeCompute);
+        HIPBLASLT_EXPORT explicit GroupedGemm(hipblasLtHandle_t    handle,
+                                              hipblasOperation_t   opA,
+                                              hipblasOperation_t   opB,
+                                              hipDataType          typeA,
+                                              hipDataType          typeB,
+                                              hipDataType          typeC,
+                                              hipDataType          typeD,
+                                              hipblasComputeType_t typeCompute);
         HIPBLASLT_EXPORT              GroupedGemm(const GroupedGemm&) = delete;
         HIPBLASLT_EXPORT              GroupedGemm(GroupedGemm&&) noexcept;
         HIPBLASLT_EXPORT GroupedGemm& operator=(const GroupedGemm&) = delete;
@@ -873,7 +873,7 @@ namespace hipblaslt_ext
                                 hipDataType                                    typeB,
                                 hipDataType                                    typeC,
                                 hipDataType                                    typeD,
-                                hipblasLtComputeType_t                         typeCompute,
+                                hipblasComputeType_t                           typeCompute,
                                 std::vector<hipblasLtMatmulHeuristicResult_t>& heuristicResults);
 
     /*! \ingroup library_module

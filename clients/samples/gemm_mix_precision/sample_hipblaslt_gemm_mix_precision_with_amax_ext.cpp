@@ -107,7 +107,7 @@ void simpleGemmMixPrecisionExt(hipblasLtHandle_t  handle,
                              HIP_R_16F,
                              HIP_R_32F,
                              HIP_R_32F,
-                             HIPBLASLT_COMPUTE_F32_FAST_F16);
+                             HIPBLAS_COMPUTE_32F_FAST_16F);
 
     // Copy scaleA to device memory
     void* d_scaleA = nullptr;

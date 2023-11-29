@@ -120,20 +120,22 @@ constexpr const char* hip_datatype_to_string(hipDataType type)
 
 // return precision string for hipDataType
 HIPBLASLT_EXPORT
-constexpr const char* hipblaslt_computetype_to_string(hipblasLtComputeType_t type)
+constexpr const char* hipblas_computetype_to_string(hipblasComputeType_t type)
 {
     switch(type)
     {
-    case HIPBLASLT_COMPUTE_F32:
+    case HIPBLAS_COMPUTE_32F:
         return "f32_r";
-    case HIPBLASLT_COMPUTE_F32_FAST_XF32:
+    case HIPBLAS_COMPUTE_32F_FAST_TF32:
         return "xf32_r";
-    case HIPBLASLT_COMPUTE_F64:
+    case HIPBLAS_COMPUTE_64F:
         return "f64_r";
-    case HIPBLASLT_COMPUTE_I32:
+    case HIPBLAS_COMPUTE_32I:
         return "i32_r";
-    case HIPBLASLT_COMPUTE_F32_FAST_F16:
+    case HIPBLAS_COMPUTE_32F_FAST_16F:
         return "f32_f16_r";
+    default:
+        return "non-supported compute type";
     }
     return "invalid";
 }
@@ -155,15 +157,15 @@ constexpr hipDataType string_to_hip_datatype(const std::string& value)
 }
 
 HIPBLASLT_EXPORT
-constexpr hipblasLtComputeType_t string_to_hipblaslt_computetype(const std::string& value)
+constexpr hipblasComputeType_t string_to_hipblas_computetype(const std::string& value)
 {
     return
-        value == "f32_r" || value == "s" ? HIPBLASLT_COMPUTE_F32  :
-        value == "xf32_r" || value == "x" ? HIPBLASLT_COMPUTE_F32_FAST_XF32 :
-        value == "f64_r" || value == "d" ? HIPBLASLT_COMPUTE_F64 :
-        value == "i32_r" || value == "i" ? HIPBLASLT_COMPUTE_I32 :
-        value == "f32_f16_r" ? HIPBLASLT_COMPUTE_F32_FAST_F16 :
-        static_cast<hipblasLtComputeType_t>(0);
+        value == "f32_r" || value == "s" ? HIPBLAS_COMPUTE_32F  :
+        value == "xf32_r" || value == "x" ? HIPBLAS_COMPUTE_32F_FAST_TF32 :
+        value == "f64_r" || value == "d" ? HIPBLAS_COMPUTE_64F :
+        value == "i32_r" || value == "i" ? HIPBLAS_COMPUTE_32I :
+        value == "f32_f16_r" ? HIPBLAS_COMPUTE_32F_FAST_16F :
+        static_cast<hipblasComputeType_t>(0);
 }
 // clang-format on
 
