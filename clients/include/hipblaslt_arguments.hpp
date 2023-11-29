@@ -92,12 +92,12 @@ struct Arguments
     int32_t  solution_index;
     int32_t  requested_solution_num;
 
-    hipDataType            a_type;
-    hipDataType            b_type;
-    hipDataType            c_type;
-    hipDataType            d_type;
-    hipblasLtComputeType_t compute_type;
-    hipDataType            scale_type;
+    hipDataType          a_type;
+    hipDataType          b_type;
+    hipDataType          c_type;
+    hipDataType          d_type;
+    hipblasComputeType_t compute_type;
+    hipDataType          scale_type;
 
     hipblaslt_initialization initialization;
 
