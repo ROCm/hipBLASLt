@@ -152,7 +152,7 @@ void multipleGroupsGroupedGemmExt(hipblasLtHandle_t     handle,
     for(std::size_t i = 0; i < groupedGemms.size(); ++i)
     {
         auto& groupedGemm = groupedGemms.at(i);
-        // Make sure to initialize everytime the algo changes
+        // Make sure to initialize every time when algo changes
         // Run first valid solution in this sample
         CHECK_HIPBLASLT_ERROR(groupedGemm.initialize(
             heuristicResult[validIndices.at(i).at(i % NumGroups)].algo, d_workspace));
@@ -331,7 +331,7 @@ void simpleGroupedGemmExt(hipblasLtHandle_t     handle,
                               m.size() * sizeof(hipblaslt_ext::UserArguments),
                               hipMemcpyHostToDevice));
 
-    // Make sure to initialize everytime the algo changes
+    // Make sure to initialize every time when algo changes
     CHECK_HIPBLASLT_ERROR(groupedgemm.initialize(heuristicResult[validIdx[0]].algo, d_workspace));
     CHECK_HIPBLASLT_ERROR(groupedgemm.run(d_userArgs, stream));
 

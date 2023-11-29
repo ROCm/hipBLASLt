@@ -780,7 +780,7 @@ namespace
         else
         {
             log_error(__func__, "Unsupported compute type");
-            throw std::runtime_error("[GetTensileInputs] Unsupported compute type.");
+            throw std::runtime_error("[GetTensileInputs] unsupported compute type.");
         }
 
         return inputs;
