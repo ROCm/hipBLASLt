@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2023 Advanced Micro Devices, Inc.
+ * Copyright (C) 2023-2024 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -24,81 +24,92 @@
  *
  *******************************************************************************/
 
-#include <numeric>
-#include <iostream>
-#include <vector>
-#include <random>
-#include <type_traits>
 #include <hip/hip_runtime.h>
 #include <hip/hip_runtime_api.h>
-#include <hipblaslt/hipblaslt.h>
 #include <hipblaslt/hipblaslt-ext-op.h>
+#include <hipblaslt/hipblaslt.h>
 #include <hipblaslt_datatype2string.hpp>
 #include <hipblaslt_init.hpp>
+#include <iostream>
+#include <numeric>
+#include <random>
+#include <type_traits>
+#include <vector>
 
-void printUsage(char *programName) {
-    std::cout
-        << "Usage: " << programName << " <options>\n"
-        << "options:\n"
-        << "\t-h, --help\t\t\tShow this help message\n"
-        << "\t-t, --type\t\t\tType of problem, default is S.\n"
-        << "\t-d, --dtype\t\t\tDest Type of problem, default is S.\n"
-        << "\t-m, --m\t\t\t\tSize of dim 0, default is 64\n"
-        << "\t-n, --n\t\t\t\tSize of dim 1, default is 64\n"
-        << "\t--initialization \t\tInitialize matrix data. Options: rand_int, trig_float, "
+void printUsage(char* programName)
+{
+    std::cout << "Usage: " << programName << " <options>\n"
+              << "options:\n"
+              << "\t-h, --help\t\t\tShow this help message\n"
+              << "\t-t, --type\t\t\tType of problem, default is S.\n"
+              << "\t-d, --dtype\t\t\tDest Type of problem, default is S.\n"
+              << "\t-m, --m\t\t\t\tSize of dim 0, default is 64\n"
+              << "\t-n, --n\t\t\t\tSize of dim 1, default is 64\n"
+              << "\t--initialization \t\tInitialize matrix data. Options: rand_int, trig_float, "
                  "hpl(floating). (default is hpl)\n";
 }
 
-template<typename T>
+template <typename T>
 T abs(T a)
 {
-  return (a > 0) ? a : -a;
+    return (a > 0) ? a : -a;
 }
 
-template<typename T>
+template <typename T>
 T max(T a, T b)
 {
     return (a > b) ? a : b;
 }
 
-template<typename Ti, typename To>
-void cpuAMax(To *out, Ti *in, std::uint32_t length)
+template <typename Ti, typename To>
+void cpuAMax(To* out, Ti* in, std::uint32_t length)
 {
     // calculate amax
     Ti m = 0;
-    for(int j=0; j<length; j++) {
+    for(int j = 0; j < length; j++)
+    {
         m = max(m, abs(in[j]));
     }
     out[0] = To(m);
 }
 
-int parseArgs(int argc, char **argv, std::string& type, std::string& dtype, size_t &m, size_t &n, hipblaslt_initialization& init)
+int parseArgs(int                       argc,
+              char**                    argv,
+              std::string&              type,
+              std::string&              dtype,
+              size_t&                   m,
+              size_t&                   n,
+              hipblaslt_initialization& init)
 {
-    if (argc <= 1)
+    if(argc <= 1)
     {
         return EXIT_SUCCESS;
     }
 
-    for (int i = 1; i < argc; ++i)
+    for(int i = 1; i < argc; ++i)
     {
         std::string arg = argv[i];
 
-        if ((arg.at(0) == '-') || ((arg.at(0) == '-') && (arg.at(1) == '-')))
+        if((arg.at(0) == '-') || ((arg.at(0) == '-') && (arg.at(1) == '-')))
         {
             if((arg == "-h") || (arg == "--help"))
             {
                 return EXIT_FAILURE;
             }
-            else if (arg == "-t" || arg == "--type") {
+            else if(arg == "-t" || arg == "--type")
+            {
                 type = argv[++i];
             }
-            else if (arg == "-d" || arg == "--dtype") {
+            else if(arg == "-d" || arg == "--dtype")
+            {
                 dtype = argv[++i];
             }
-            else if (arg == "-m" || arg == "--m") {
+            else if(arg == "-m" || arg == "--m")
+            {
                 n = std::stoul(argv[++i]);
             }
-            else if (arg == "-n" || arg == "--n") {
+            else if(arg == "-n" || arg == "--n")
+            {
                 n = std::stoul(argv[++i]);
             }
             else if(arg == "--initialization" || arg == "--init")
@@ -129,7 +140,8 @@ template <typename Dtype>
 void dumpBuffer(const char* title, Dtype* data, int N)
 {
     std::cout << "----- " << title << "----- " << std::endl;
-    for(int n=0; n<N; n++) {
+    for(int n = 0; n < N; n++)
+    {
         std::cout << float(data[n]) << " ";
     }
     std::cout << std::endl;
@@ -140,8 +152,9 @@ template <typename T>
 void compare(const char* title, const std::vector<T>& cpuOutput, const std::vector<T>& refOutput)
 {
     T maxErr = 0.0;
-    for (int i=0; i<cpuOutput.size(); i++) {
-        T err = abs(refOutput[i] - cpuOutput[i]);
+    for(int i = 0; i < cpuOutput.size(); i++)
+    {
+        T err  = abs(refOutput[i] - cpuOutput[i]);
         maxErr = max(maxErr, err);
     }
 
@@ -170,18 +183,18 @@ void initData(DType* data, std::size_t numElements, hipblaslt_initialization ini
     }
 }
 
-template<typename Ti, typename To>
-int AmaxTest(hipblasltDatatype_t type, hipblasltDatatype_t dtype, int m, int n, hipblaslt_initialization& init)
+template <typename Ti, typename To>
+int AmaxTest(hipDataType type, hipDataType dtype, int m, int n, hipblaslt_initialization& init)
 {
-    int numElements = m * n;
-    std::size_t tiNumBytes = sizeof(Ti);
-    std::size_t toNumBytes = sizeof(To);
+    int         numElements = m * n;
+    std::size_t tiNumBytes  = sizeof(Ti);
+    std::size_t toNumBytes  = sizeof(To);
 
-    To *gpuOutput{nullptr};
-    Ti *gpuInput{nullptr};
+    To* gpuOutput{nullptr};
+    Ti* gpuInput{nullptr};
 
     auto hipErr = hipMalloc(&gpuOutput, toNumBytes);
-    hipErr = hipMalloc(&gpuInput, m * n * tiNumBytes);
+    hipErr      = hipMalloc(&gpuInput, m * n * tiNumBytes);
 
     std::vector<To> cpuOutput(1, 0.f);
     std::vector<Ti> cpuInput(m * n, 0.f);
@@ -207,12 +220,13 @@ int AmaxTest(hipblasltDatatype_t type, hipblasltDatatype_t dtype, int m, int n, 
     compare("Output", cpuOutput, refOutput);
 
     hipEvent_t beg, end;
-    hipErr = hipEventCreate(&beg);
-    hipErr = hipEventCreate(&end);
+    hipErr      = hipEventCreate(&beg);
+    hipErr      = hipEventCreate(&end);
     int numRuns = 200;
-    hipErr = hipEventRecord(beg, stream);
+    hipErr      = hipEventRecord(beg, stream);
 
-    for (int i = 0; i < numRuns; ++i) {
+    for(int i = 0; i < numRuns; ++i)
+    {
         hipblasltErr = hipblasltExtAMax(type, dtype, gpuOutput, gpuInput, m, n, stream);
     }
     hipErr = hipEventRecord(end, stream);
@@ -232,27 +246,28 @@ int AmaxTest(hipblasltDatatype_t type, hipblasltDatatype_t dtype, int m, int n, 
     return 0;
 }
 
-
-int main(int argc, char **argv) {
-    std::string type{"S"};
-    std::string dtype{"S"};
-    std::size_t m{64};
-    std::size_t n{64};
+int main(int argc, char** argv)
+{
+    std::string              type{"S"};
+    std::string              dtype{"S"};
+    std::size_t              m{64};
+    std::size_t              n{64};
     hipblaslt_initialization init{hipblaslt_initialization::hpl};
 
-    if (auto err = parseArgs(argc, argv, type, dtype, m, n, init)) {
+    if(auto err = parseArgs(argc, argv, type, dtype, m, n, init))
+    {
         printUsage(argv[0]);
         return err;
     }
 
-    if ((type == "S" || type == "s") && (type == dtype))
-        return AmaxTest<float, float>(HIPBLASLT_R_32F, HIPBLASLT_R_32F, m, n, init);
-    else if ((type == "S" || type == "s") && (dtype == "H" || dtype == "H"))
-        return AmaxTest<float, hipblasLtHalf>(HIPBLASLT_R_32F, HIPBLASLT_R_16F, m, n, init);
-    else if ((type == "H" || type == "h") && (type == dtype))
-        return AmaxTest<hipblasLtHalf, hipblasLtHalf>(HIPBLASLT_R_16F, HIPBLASLT_R_16F, m, n, init);
-    else if ((type == "H" || type == "h") && (dtype == "S" || dtype == "s"))
-        return AmaxTest<hipblasLtHalf, float>(HIPBLASLT_R_16F, HIPBLASLT_R_32F, m, n, init);
+    if((type == "S" || type == "s") && (type == dtype))
+        return AmaxTest<float, float>(HIP_R_32F, HIP_R_32F, m, n, init);
+    else if((type == "S" || type == "s") && (dtype == "H" || dtype == "H"))
+        return AmaxTest<float, hipblasLtHalf>(HIP_R_32F, HIP_R_16F, m, n, init);
+    else if((type == "H" || type == "h") && (type == dtype))
+        return AmaxTest<hipblasLtHalf, hipblasLtHalf>(HIP_R_16F, HIP_R_16F, m, n, init);
+    else if((type == "H" || type == "h") && (dtype == "S" || dtype == "s"))
+        return AmaxTest<hipblasLtHalf, float>(HIP_R_16F, HIP_R_32F, m, n, init);
     else
         std::cout << "Unsupported data type " << type << std::endl;
 

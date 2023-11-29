@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022-2023 Advanced Micro Devices, Inc.
+ * Copyright (C) 2022-2024 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -128,7 +128,7 @@ hipblasStatus_t hipblasLtCreate(hipblasLtHandle_t* handle)
 try
 {
     // TODO: Synchronizer size pass into predicate SynchronizerSizeCheck
-    // 1K just for small size now, need to cal corner case if support all situations 
+    // 1K just for small size now, need to cal corner case if support all situations
     void* d_Synchronizer = nullptr;
     CHECK_HIP_ERROR(hipMalloc(&d_Synchronizer, 16 * 1024 * sizeof(int)));
     CHECK_HIP_ERROR(hipMemset(d_Synchronizer, 0, sizeof(int) * 16 * 1024));
@@ -172,7 +172,7 @@ catch(...)
 }
 
 hipblasStatus_t hipblasLtMatrixLayoutCreate(hipblasLtMatrixLayout_t* matDescr,
-                                            hipblasltDatatype_t      valueType,
+                                            hipDataType              valueType,
                                             uint64_t                 rows,
                                             uint64_t                 cols,
                                             int64_t                  ld)
@@ -199,7 +199,7 @@ catch(...)
 
 hipblasStatus_t hipblasLtMatmulDescCreate(hipblasLtMatmulDesc_t* matmulDesc,
                                           hipblasLtComputeType_t computeType,
-                                          hipblasltDatatype_t    scaleType)
+                                          hipDataType            scaleType)
 try
 {
     return RocBlasLtStatusToHIPStatus(rocblaslt_matmul_desc_create(
@@ -422,7 +422,7 @@ catch(...)
 }
 
 hipblasStatus_t hipblasLtMatrixTransformDescCreate(hipblasLtMatrixTransformDesc_t* transformDesc,
-                                                   hipblasltDatatype_t             scaleType)
+                                                   hipDataType                     scaleType)
 {
     static_assert(sizeof(rocblaslt_matrix_transform_desc)
                       <= sizeof(hipblasLtMatrixTransformDescOpaque_t),
@@ -463,7 +463,7 @@ hipblasStatus_t
     {
     case HIPBLASLT_MATRIX_TRANSFORM_DESC_SCALE_TYPE:
     {
-        desc->scaleType = static_cast<hipblasltDatatype_t>(value);
+        desc->scaleType = static_cast<hipDataType>(value);
         break;
     }
     case HIPBLASLT_MATRIX_TRANSFORM_DESC_POINTER_MODE:
