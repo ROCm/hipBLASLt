@@ -215,7 +215,7 @@ static void show_usage(char* argv[])
         << "\t-h, --help\t\t\t\tShow this help message\n"
         << "\t-v, --verbose\t\t\t\tVerbose output\n"
         << "\t-V, --validate\t\t\t\tVerify results\n"
-        << "\t--initialization \t\t\t\tIntialize matrix data. Options: rand_int, trig_float, "
+        << "\t--initialization \t\t\t\tInitialize matrix data. Options: rand_int, trig_float, "
            "hpl(floating). (default is hpl)\n"
         << "\t--bench_count\t\t\t\tNumber of benchmark runs (default is 1)\n"
         << "\t--sync_count\t\t\t\tNumber of sync runs (default is 1)\n"

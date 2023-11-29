@@ -335,7 +335,7 @@ hipblaslt_internal_ostream::worker::worker(int fd)
 #endif
         { thread_function(); });
 
-    // Detatch from the worker thread
+    // Detach from the worker thread
     m_thread.detach();
 }
 

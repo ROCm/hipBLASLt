@@ -211,7 +211,7 @@ void simpleGroupedGemmFixedMKExt(hipblasLtHandle_t     handle,
     //     workspace_size = max(workspace_size, heuristicResult[i].workspaceSize);
     // CHECK_HIP_ERRORhipMalloc(&d_workspace, workspace_size));
 
-    // Make sure to initialize everytime the algo changes
+    // Make sure to initialize every time when algo changes
     CHECK_HIPBLASLT_ERROR(groupedgemm.initialize(heuristicResult[validIdx[0]].algo, d_workspace));
 
     // Then you can change the N in the previous kernel to whatever you want, just make sure the sum of N does not exceed the setup.

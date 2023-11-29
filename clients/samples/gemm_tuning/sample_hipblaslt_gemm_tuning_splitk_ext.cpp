@@ -169,7 +169,7 @@ void simpleGemmTuningSplitKExt(hipblasLtHandle_t  handle,
         ws_ptr = d_workspace;
     }
 
-    // Make sure to initialize everytime the algo changes
+    // Make sure to initialize every time when algo changes
     // If tuning is given, the API will not return success if the solution cannot accept an user tuning parameter.
     CHECK_HIPBLASLT_ERROR(gemm.initialize(heuristicResult[validIdx[0]].algo, tuning, ws_ptr));
     CHECK_HIPBLASLT_ERROR(gemm.run(stream));

@@ -148,7 +148,7 @@ extern "C" void hipblaslt_test_signal_handler(int sig)
     int saved_errno = errno; // Save errno
 
     // If the signal handler is disabled, because we're not in the middle of
-    // running a rocBLAS test, restore this signal's disposition to default,
+    // running a hipBLASLt test, restore this signal's disposition to default,
     // and reraise the signal
     if(!t_handler.enabled)
     {

@@ -159,7 +159,7 @@ void simpleGroupedGemmExt(hipblasLtHandle_t     handle,
                               m.size() * sizeof(hipblaslt_ext::UserArguments),
                               hipMemcpyHostToDevice));
 
-    // Make sure to initialize everytime the algo changes
+    // Make sure to initialize every time when algo changes
     CHECK_HIPBLASLT_ERROR(groupedgemm.initialize(heuristicResult[0].algo, d_workspace));
     CHECK_HIPBLASLT_ERROR(groupedgemm.run(d_userArgs, stream));
 

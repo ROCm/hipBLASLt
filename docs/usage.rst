@@ -215,7 +215,7 @@ The user can also importing problems from hipblasLt APIs after the instance is c
                                                 void*                   D,
                                                 hipblasLtMatrixLayout_t matD);
 
-The user can get hueristic and make kernel arguments with the instance. If the properties of the gemm and the inputs don't change, the user can call the run API to launch the kernel directly.
+The user can get heuristic and make kernel arguments with the instance. If the properties of the gemm and the inputs don't change, the user can call the run API to launch the kernel directly.
 
 .. code-block:: c++
 
@@ -240,10 +240,10 @@ The user can get hueristic and make kernel arguments with the instance. If the p
                              HIPBLASLT_R_16F,
                              HIPBLASLT_R_16F,
                              HIPBLASLT_COMPUTE_F32);
-    std::vector<hipblasLtMatmulHeuristicResult_t> hueristic;
+    std::vector<hipblasLtMatmulHeuristicResult_t> heuristic;
     gemm.setProblem(1, 1, 1, 1, epilogue, inputs); // m, n, k, batch
-    gemm.algoGetHeuristic(gemm, pref, hueristic);
-    gemm.initialize(hueristic[0].algo, d_workspace, stream);
+    gemm.algoGetHeuristic(gemm, pref, heuristic);
+    gemm.initialize(heuristic[0].algo, d_workspace, stream);
     for(int i = 0; i < 10; i++)
     {
         gemm.run(stream);
