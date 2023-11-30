@@ -2239,7 +2239,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
           module.add(self.longBranchScc0(gsuLabel, posNeg=1, comment="branch if GSU != 1"))
         else:
           module.add(SCBranchSCC0(labelName=gsuLabel.getLabelName(), comment="branch if GSU != 1"))
-        
+
         if noLoadLoopModules != None:
           module.add(noLoadLoopModules)
         module.add(gsuLabel)
@@ -3488,12 +3488,8 @@ class KernelWriter(metaclass=abc.ABCMeta):
     self.defineSgpr("KernArgAddress", self.states.rpga)
     assert(self.sgprs["KernArgAddress"] ==  0) # kernarg is passed to kernel as SGPR0
 
-    if kernel["WorkGroupMapping"]>=0 :
-      self.defineSgpr("WorkGroup0", 1)
-      self.defineSgpr("WorkGroup1", 1)
-    else:
-      self.defineSgpr("WorkGroup1", 1)
-      self.defineSgpr("WorkGroup0", 1)
+    self.defineSgpr("WorkGroup0", 1)
+    self.defineSgpr("WorkGroup1", 1)
 
     wg=2
 
@@ -3516,6 +3512,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
     self.defineSgpr("GSUSumIdx", 2, 2)
     self.defineSgpr("GSULog2BpeC", 1)
     self.defineSgpr("GSULog2BpeD", 1)
+    self.defineSgpr("WGM", 1)
 
     # for packed batches without stride restrictions need to do something different here
     assert sorted(kernel["PackedC0IdxChars"]+kernel["PackedC1IdxChars"]) == \

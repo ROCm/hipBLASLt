@@ -188,7 +188,7 @@ class SignatureDefault(Signature):
 
         # Kernel related arguments
         if not kernel["ProblemType"]["GroupedGemm"]:
-            signature.addArg(       "gsu",                SVK.SIG_VALUE,               "u32")
+            signature.addArg(       "internalArgs",  SVK.SIG_VALUE,               "u32")
 
         if kernel["ProblemType"]["UseScaleAB"]:
             signature.addArg("AddressScaleA", SVK.SIG_GLOBALBUFFER, cptValueType, "generic")

@@ -746,8 +746,11 @@ namespace Tensile
     template <bool T_Debug, typename KA>
     void ContractionSolution::kernelArgs(KA& args, uint32_t gsu) const
     {
-        // GSU
-        args.template append<uint32_t>("gsu", gsu);
+        const uint32_t mask         = 0xFF;
+        uint32_t       internalArg0 = mask & gsu;
+        uint32_t       wgShift8     = (mask & sizeMapping.workGroupMapping) << 8;
+        internalArg0                = internalArg0 | wgShift8;
+        args.template append<uint32_t>("internalArgs", internalArg0);
     }
 
     template <bool T_Debug>
