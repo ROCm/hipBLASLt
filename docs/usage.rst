@@ -80,6 +80,10 @@ matmulIsAlgoSupported()
 ------------------------------------------
 .. doxygenfunction:: matmulIsAlgoSupported
 
+hipblasltExtSoftmax()
+------------------------------------------
+.. doxygenfunction:: hipblasltExtSoftmax
+
 hipblasLtExt Usage
 ================================
 
