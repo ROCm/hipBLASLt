@@ -25,7 +25,7 @@
 from ..Component import Signature
 from ..Common import globalParameters
 from ..Utils import DataDirection
-from ..TensileInstructions import SignatureBase
+from ..TensileInstructions import SignatureBase, getCOVFromParam
 from ..TensileInstructions import SignatureValueKind as SVK
 from ..Activation import ActivationType
 
@@ -60,7 +60,7 @@ class UserArgumentsInfo:
         self.betaMaxRegisterSize  = self.betaMaxSize // 4
         self.actMaxRegisterSize   = self.actMaxSize // 4
 
-def getSrcValueType(kernel, cov, isTypeA):
+def getSrcValueType(kernel, isTypeA):
     # special cases for F8 datatypes
     if kernel["ProblemType"]["DataType"].isFloat8():
         srcValueType = "FP8"
@@ -73,11 +73,10 @@ def getSrcValueType(kernel, cov, isTypeA):
     else:
         srcValueType = kernel["ProblemType"]["DataType"].toNameAbbrev().upper()
 
-    if cov == "V3":
-        srcValueType = srcValueType.lower()
+    srcValueType = srcValueType.lower()
     return srcValueType
 
-def getDstValueType(kernel, cov):
+def getDstValueType(kernel):
     # special cases for F8 datatypes
     if kernel["ProblemType"]["DataType"].isFloat8():
         dstValueType = "FP8"
@@ -86,12 +85,11 @@ def getDstValueType(kernel, cov):
     else:
         dstValueType = kernel["ProblemType"]["DataType"].toNameAbbrev().upper()
 
-    if cov == "V3":
-        dstValueType = dstValueType.lower()
+    dstValueType = dstValueType.lower()
     return dstValueType
 
-class SignatureCOV3(Signature):
-    kernel = {"CodeObjectVersion": "V3"}
+# Creates kernel header, compatible with code object version 4 and up. V2 and V3 no longer supported.
+class SignatureDefault(Signature):
 
     def __call__(self, writer) -> SignatureBase:
         kernel = writer.states.kernel
@@ -122,15 +120,15 @@ class SignatureCOV3(Signature):
 
         sgprWgZ = 1 if kernel["ProblemType"]["NumIndicesC"] > 2 else 0
         signature = SignatureBase(kernelName=writer.states.kernelName,
-                                    codeObjectVersion="v3",
+                                    codeObjectVersion=getCOVFromParam(kernel["CodeObjectVersion"]),
                                     groupSegmentSize=group_segment_size,
                                     sgprWorkGroup=[1, 1, sgprWgZ],
                                     vgprWorkItem=0,
                                     flatWorkGroupSize=(kernel["NumThreads"]),
                                     preloadKernArgs=kernel["PreloadKernArgs"])
 
-        srcValueTypeA = getSrcValueType(kernel, "V3", True)
-        srcValueTypeB = getSrcValueType(kernel, "V3", False)
+        srcValueTypeA = getSrcValueType(kernel, True)
+        srcValueTypeB = getSrcValueType(kernel, False)
         dstValueType  = kernel["ProblemType"]["DestDataType"].toNameAbbrev()
         cptValueType  = kernel["ProblemType"]["ComputeDataType"].toNameAbbrev()
         biasValueType = "void"

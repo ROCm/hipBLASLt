@@ -41,11 +41,11 @@ void printUsage(char *programName) {
         << "Usage: " << programName << " <options>\n"
         << "options:\n"
         << "\t-h, --help\t\t\tShow this help message\n"
-        << "\t-t, --type\t\t\tType of problame, default is S.\n"
-        << "\t-d, --dtype\t\t\tDest Type of problame, default is S.\n"
+        << "\t-t, --type\t\t\tType of problem, default is S.\n"
+        << "\t-d, --dtype\t\t\tDest Type of problem, default is S.\n"
         << "\t-m, --m\t\t\t\tSize of dim 0, default is 64\n"
         << "\t-n, --n\t\t\t\tSize of dim 1, default is 64\n"
-        << "\t--initialization \t\tIntialize matrix data. Options: rand_int, trig_float, "
+        << "\t--initialization \t\tInitialize matrix data. Options: rand_int, trig_float, "
                  "hpl(floating). (default is hpl)\n";
 }
 
@@ -254,7 +254,7 @@ int main(int argc, char **argv) {
     else if ((type == "H" || type == "h") && (dtype == "S" || dtype == "s"))
         return AmaxTest<hipblasLtHalf, float>(HIPBLASLT_R_16F, HIPBLASLT_R_32F, m, n, init);
     else
-        std::cout << "unsupport data type " << type << std::endl;
+        std::cout << "Unsupported data type " << type << std::endl;
 
     return 0;
 }

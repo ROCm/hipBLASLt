@@ -87,7 +87,7 @@ namespace hipblaslt_ext
     /*! \ingroup types_module
      *  \brief hipblasLt extension ProblemType for gemm problems.
      *
-     * \details This strusture sets the problem type of a gemm problem.
+     * \details This structure sets the problem type of a gemm problem.
      */
     struct GemmProblemType
     {
@@ -103,7 +103,7 @@ namespace hipblaslt_ext
     /*! \ingroup types_module
      *  \brief hipblasLt extension Epilogue for gemm problems.
      *
-     * \details This strusture sets the epilogue of a gemm problem.
+     * \details This structure sets the epilogue of a gemm problem.
      */
     struct GemmEpilogue
     {
@@ -125,7 +125,7 @@ namespace hipblaslt_ext
     /*! \ingroup types_module
      *  \brief hipblasLt extension Inputs for gemm problems.
      *
-     * \details This strusture sets the input pointers of a gemm problem.
+     * \details This structure sets the input pointers of a gemm problem.
      */
     struct GemmInputs
     {
@@ -149,7 +149,7 @@ namespace hipblaslt_ext
     /*! \ingroup types_module
      *  \brief hipblasLt extension GPU inputs for gemm problems.
      *
-     * \details This strusture sets the input gpu pointers of a gemm problem.
+     * \details This structure sets the input gpu pointers of a gemm problem.
      * Only supports solutions loading arguments from global memory.
      */
 
@@ -880,7 +880,7 @@ namespace hipblaslt_ext
      *  @param[in]
      *  algo    The algorithm.
      *
-     *  \retval int The index of the algorithm, can be used to get hueristic
+     *  \retval int The index of the algorithm, can be used to get heuristic
      * results from \ref getAlgosFromIndex. Returns -1 if the index stored
      * in algo < 0. Note that the index may not be valid if the algo struct
      * is not initialized properly.
@@ -897,7 +897,7 @@ namespace hipblaslt_ext
      *  algo    The algorithm.
      *
      *  \retval std::string The solution name of the algorithm, can be used to
-     * get hueristic results from \ref getAlgosFromIndex. Returns "" if the
+     * get heuristic results from \ref getAlgosFromIndex. Returns "" if the
      * index stored in algo < 0. Note that the string may not be valid if the
      * algo struct is not initialized properly.
      */
@@ -914,7 +914,7 @@ namespace hipblaslt_ext
      *  algo    The algorithm.
      *
      *  \retval std::string The kernel name of the algorithm, can be used to
-     * get hueristic results from \ref getAlgosFromIndex. Returns "" if the
+     * get heuristic results from \ref getAlgosFromIndex. Returns "" if the
      * index stored in algo < 0. Note that the string may not be valid if the
      * algo struct is not initialized properly.
      */

@@ -157,7 +157,7 @@ void simpleGemmGetAllAlgosExt(hipblasLtHandle_t  handle,
     // If not, allocate d_workspace here
     // CHECK_HIP_ERRORhipMalloc(&d_workspace, workspace_size));
 
-    // Make sure to initialize everytime the algo changes
+    // Make sure to initialize every time when algo changes
     CHECK_HIPBLASLT_ERROR(gemm.initialize(heuristicResult[validIdx[0]].algo, d_workspace));
     CHECK_HIPBLASLT_ERROR(gemm.run(stream));
     return;

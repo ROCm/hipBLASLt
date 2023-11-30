@@ -24,7 +24,7 @@
 
 from . import ClientExecutable
 from . import LibraryIO
-from .TensileInstructions import getGfxName, DataType
+from .TensileInstructions import getGfxName, DataType, getCOVFromParam
 from .Common import globalParameters, pushWorkingPath, popWorkingPath, print1, printExit, CHeader, printWarning, listToInitializer, ClientExecutionLock
 from .SolutionStructs import Problem, ProblemType, ProblemSizesMock, ProblemSizesMockDummy, ActivationArgs, BiasTypeArgs
 from .TensileCreateLibrary import copyStaticFiles

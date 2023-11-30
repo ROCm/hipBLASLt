@@ -81,7 +81,7 @@
     BufferStore: true
     CUCount: null
     ClusterLocalRead: 0
-    CodeObjectVersion: V3
+    CodeObjectVersion: default
     CustomKernelName: ''
     DepthU: 64
     DirectToLds: false
@@ -96,7 +96,7 @@
     GlobalReadVectorWidthA: 8
     GlobalReadVectorWidthB: 8
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: false
     GuaranteeNoPartialA: true
@@ -327,7 +327,7 @@
     BufferStore: true
     CUCount: null
     ClusterLocalRead: 0
-    CodeObjectVersion: V3
+    CodeObjectVersion: default
     CustomKernelName: ''
     DepthU: 64
     DirectToLds: false
@@ -342,7 +342,7 @@
     GlobalReadVectorWidthA: 8
     GlobalReadVectorWidthB: 8
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: false
     GuaranteeNoPartialA: true
@@ -573,7 +573,7 @@
     BufferStore: true
     CUCount: null
     ClusterLocalRead: 0
-    CodeObjectVersion: V3
+    CodeObjectVersion: default
     CustomKernelName: ''
     DepthU: 64
     DirectToLds: false
@@ -588,7 +588,7 @@
     GlobalReadVectorWidthA: 8
     GlobalReadVectorWidthB: 8
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: false
     GuaranteeNoPartialA: true
@@ -819,7 +819,7 @@
     BufferStore: true
     CUCount: null
     ClusterLocalRead: 0
-    CodeObjectVersion: V3
+    CodeObjectVersion: default
     CustomKernelName: ''
     DepthU: 64
     DirectToLds: false
@@ -834,7 +834,7 @@
     GlobalReadVectorWidthA: 8
     GlobalReadVectorWidthB: 8
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: false
     GuaranteeNoPartialA: true

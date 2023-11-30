@@ -236,7 +236,7 @@ def setdefaults(test):
         test.setdefault('ldc', 0)
         test.setdefault('ldd', 0)
         test.setdefault('lde', 0)
-    elif not test['grouped_gemm']: #catered to gemm default behaviour
+    elif not test['grouped_gemm']: #catered to gemm default behavior
         M = test['M'][0] if isinstance(test['M'], list) else test['M']
         N = test['N'][0] if isinstance(test['N'], list) else test['N']
         K = test['K'][0] if isinstance(test['K'], list) else test['K']
@@ -272,7 +272,7 @@ def setdefaults(test):
 
         if test['batch_count'] > 0:
             test.setdefault('stride_a', [lda * K if test['transA'].upper() == 'N' else lda * M for K, M, lda in zip(Ks, Ms, test['lda'])])
-            test.setdefault('stride_b', 
+            test.setdefault('stride_b',
                             [N * ldb if test['transB'].upper() == 'N' else
                              K * ldb for N, K, ldb in zip(Ns, Ks, test['ldb'])])
             test.setdefault('stride_c', [ldc * N for ldc, N in zip(test['ldc'], Ns)])
@@ -373,6 +373,14 @@ def instantiate(test):
             test['M'] = M
             test['N'] = N
             test['K'] = K
+
+    gsu_vector = [-1 for _ in range(32)]
+    if 'gsu_vector' in test:
+      gsu_vector[0] = test['gsu_vector']
+    else:
+      gsu_vector[0] = 0
+    test['gsu_vector'] = gsu_vector
+
 
     # Any Arguments fields declared as enums (a_type, b_type, etc.)
     enum_args = [decl[0] for decl in param['Arguments']._fields_

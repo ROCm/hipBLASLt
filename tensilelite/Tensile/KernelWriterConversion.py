@@ -418,7 +418,6 @@ class KernelWriterConversion(KernelWriterBase):
       indexChar = self.indexChars[i]
       kStr += " + (arg.size%s - 1) * arg.strideW%s" % (indexChar, indexChar)
     kStr += ";" + self.endLine
-    kStr += "  %s strideWLimit = strideW * arg.gsu * sizeof(%s);"%(self.uint64Str, self.datatype) + self.endLine
 
     kStr += "  " + intermediateDataType + " accum[NUM_ELEMENT_LOAD] = {0};" + self.endLine
     kStr += "  " + destTypeStr + " result[NUM_ELEMENT_LOAD];" + self.endLine
@@ -471,12 +470,13 @@ class KernelWriterConversion(KernelWriterBase):
     kStr += self.endLine
 
     #Load GSU D buffer
+    kStr += "  auto wPtr = arg.W;" + self.endLine
     if self.state["UnrollOnly"]:
       kStr += "  %s temp[NUM_GSU];" % loadTypeStr + self.endLine
       for gsuIdx in range(self.state["GlobalSplitU"]):
         # kStr += "  temp[%d] = *((%s*)(arg.W+idxW));%s" % (gsuIdx, loadTypeStr, self.endLine)
-        kStr += "  buffer_load<%s, sizeof(%s), CacheOperation::Kind::Always>(temp[%d], arg.W, idxW * sizeof(%s), 0, strideWLimit);%s" % (loadTypeStr, loadTypeStr, gsuIdx, self.datatype, self.endLine)
-        kStr += "  idxW  += strideW;" + self.endLine
+        kStr += "  buffer_load<%s, sizeof(%s), CacheOperation::Kind::Always>(temp[%d], wPtr, idxW * sizeof(%s), 0);%s" % (loadTypeStr, loadTypeStr, gsuIdx, self.datatype, self.endLine)
+        kStr += "  wPtr += strideW;" + self.endLine
       kStr += self.endLine
       castToIntermidate = ("(%s)" % intermediateDataType) if intermediateDataType != self.datatype else ""
       #Accumlate all D buffer
@@ -506,12 +506,15 @@ class KernelWriterConversion(KernelWriterBase):
       for arch in canPKF32Arch[1:]:
         defineStr += "|| defined(__%s__)"%getGfxName(arch)
       # PGR=2
+      kStr += "  int gsuRemain = (int)arg.gsu;" + self.endLine
       kStr += "  %s temp[NUM_GSU];" % loadTypeStr + self.endLine
+      kStr += "  memset(temp, 0, NUM_GSU * sizeof(%s));" % loadTypeStr + self.endLine
       for gsuIdx in range(self.state["GlobalSplitU"]):
-        kStr += "  buffer_load<%s, sizeof(%s), CacheOperation::Kind::Always>(temp[%d], arg.W, idxW * sizeof(%s), 0, strideWLimit);%s" % (loadTypeStr, loadTypeStr, gsuIdx, self.datatype, self.endLine)
-        kStr += "  idxW  += strideW;" + self.endLine
+        kStr += "  buffer_load<%s, sizeof(%s), CacheOperation::Kind::Always>(temp[%d], wPtr, idxW * sizeof(%s), 0);%s" % (loadTypeStr, loadTypeStr, gsuIdx, self.datatype, self.endLine)
+        kStr += "  wPtr += strideW;" + self.endLine
+        kStr += "  gsuRemain -= 1;" + self.endLine
+        kStr += "  if(gsuRemain == 0) goto PRELOAD_END;"  + self.endLine
       kStr += self.endLine
-      kStr += "  int gsuRemain = (int)arg.gsu - NUM_GSU;" + self.endLine
       kStr += "  while(gsuRemain >= NUM_GSU)" + self.endLine
       kStr += "  {" + self.endLine
       kStr += "    gsuRemain -= NUM_GSU;" + self.endLine
@@ -529,11 +532,12 @@ class KernelWriterConversion(KernelWriterBase):
             kStr += "  accum[2] += %stemp[%d].z;" % (castToIntermidate, gsuIdx) + self.endLine
             kStr += "  accum[3] += %stemp[%d].w;" % (castToIntermidate, gsuIdx) + self.endLine
         kStr += "    __builtin_amdgcn_sched_barrier(0);" + self.endLine
-        kStr += "    buffer_load<%s, sizeof(%s), CacheOperation::Kind::Always>(temp[%d], arg.W, idxW * sizeof(%s), 0, strideWLimit);%s" % (loadTypeStr, loadTypeStr, gsuIdx, self.datatype, self.endLine)
+        kStr += "    buffer_load<%s, sizeof(%s), CacheOperation::Kind::Always>(temp[%d], wPtr, idxW * sizeof(%s), 0);%s" % (loadTypeStr, loadTypeStr, gsuIdx, self.datatype, self.endLine)
         kStr += "    __builtin_amdgcn_sched_barrier(0);" + self.endLine
-        kStr += "    idxW  += strideW;" + self.endLine
+        kStr += "    wPtr += strideW;" + self.endLine
       kStr += "  }" + self.endLine
       # Switch method
+      kStr += "PRELOAD_END:" + self.endLine
       kStr += "  switch(gsuRemain)" + self.endLine
       kStr += "  {" + self.endLine
       for gsuIdx in reversed(range(self.state["GlobalSplitU"])):
@@ -556,9 +560,9 @@ class KernelWriterConversion(KernelWriterBase):
               kStr += "  accum[3] += %stemp[%d].w;" % (castToIntermidate, gsuIdx2) + self.endLine
           if caseRemain > gsuIdx2:
             kStr += "      __builtin_amdgcn_sched_barrier(0);" + self.endLine
-            kStr += "      buffer_load<%s, sizeof(%s), CacheOperation::Kind::Always>(temp[%d], arg.W, idxW * sizeof(%s), 0, strideWLimit);%s" % (loadTypeStr, loadTypeStr, gsuIdx2, self.datatype, self.endLine)
+            kStr += "      buffer_load<%s, sizeof(%s), CacheOperation::Kind::Always>(temp[%d], wPtr, idxW * sizeof(%s), 0);%s" % (loadTypeStr, loadTypeStr, gsuIdx2, self.datatype, self.endLine)
             kStr += "      __builtin_amdgcn_sched_barrier(0);" + self.endLine
-            kStr += "      idxW  += strideW;" + self.endLine
+            kStr += "      wPtr += strideW;" + self.endLine
         for gsuIdx2 in range(caseRemain):
           castToIntermidate = ("(%s)" % intermediateDataType) if intermediateDataType != self.datatype else ""
           if self.state["ProblemType"]["ComputeDataType"].isSingle():

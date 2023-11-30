@@ -90,7 +90,7 @@ globalParameters["ForceRedoLibraryLogic"] = True      # if False and library log
 globalParameters["ForceRedoLibraryClient"] = True     # if False and library client already built, then building library client will be skipped when tensile is re-run
 
 globalParameters["ShowProgressBar"] = True     # if False and library client already built, then building library client will be skipped when tensile is re-run
-globalParameters["SolutionSelectionAlg"] = 1          # algorithm to detetermine which solutions to keep. 0=removeLeastImportantSolutions, 1=keepWinnerSolutions (faster)
+globalParameters["SolutionSelectionAlg"] = 1          # algorithm to determine which solutions to keep. 0=removeLeastImportantSolutions, 1=keepWinnerSolutions (faster)
 globalParameters["ExpandRanges"] = True          # expand ranges into exact configs before writing logic file.  False ignores ranges.
 globalParameters["ExitAfterKernelGen"] = False     # Exit after generating kernels
 globalParameters["GenerateSourcesAndExit"] = False # Exit after kernel source generation.
@@ -194,7 +194,7 @@ globalParameters["PrintWinnersOnly"] = False      # Only print the solutions whi
 globalParameters["PrintCodeCommands"] = False  # print the commands used to generate the code objects (asm,link,hip-clang, etc)
 globalParameters["DumpTensors"] = False        # If True, dump tensors to binary files instead of printing them.
 
-# If PrintMax* is greater than the dimension, the middle elements will be repaced with "..."
+# If PrintMax* is greater than the dimension, the middle elements will be replaced with "..."
 
 
 # device selection
@@ -239,7 +239,7 @@ if os.name == "nt":
 else:
   globalParameters["RuntimeLanguage"] = "HIP"
 
-globalParameters["CodeObjectVersion"] = "V3"
+globalParameters["CodeObjectVersion"] = "default"
 globalParameters["CxxCompiler"] = "hipcc"
 globalParameters["Architecture"] = "all"
 
@@ -397,24 +397,9 @@ validMatrixInstructions = validMatrixInstructions + validSparseMatrixInstruction
 # The supported typed GEMM, each entry is (Ti, To, Tc).
 # DataType (Ti)        = The data-type of the input matrices: A/B
 # DestDataType (To)    = The data-type of the output matrices: C/D
-# ComputeDataType (Tc) = The data-type of computaiton: alpha/beta:
+# ComputeDataType (Tc) = The data-type of computation: alpha/beta:
 # Cinternal: basically should == ComputeDataType
 
-# Align the supported GEMM type with rocBLAS: [A/B/ C/D/ alpha/beta]
-#   (rocblas/library/include/internal/rocblas_functions.h)
-# GEMM (HPA=F, the data type of input, output, and computation are all the same.)
-#   - HGEMM: [H/H/ H/H/ H/H]
-#   - SGEMM: [S/S/ S/S/ S/S]
-#   - DGEMM: [D/D/ D/D/ D/D]
-#   - CGEMM: [C/C/ C/C/ C/C]
-#   - ZGEMM: [Z/Z/ Z/Z/ Z/Z]
-# GEMM_Ex: (HPA=T, Computation is in a higher precision data-type)
-#   - GEMM_EX (HHS): [H/H/ H/H/ S/S]
-#   - GEMM_EX (HSS): [H/H/ S/S/ S/S]
-#   - GEMM_EX (BBS): [B/B/ B/B/ S/S]
-#   - GEMM_EX (BSS): [B/B/ S/S/ S/S]
-#   - GEMM_EX (I8II): [I8/I8/ I/I/ I/I]
-#   - GEMM_EX (4xi8II): [4xi8/4xi8/ I/I/ I/I], tensile packs 4 i8 to 4xi8 with some restrictions
 # This is used in SolutionStruct.py::checkIfSupportedGEMMType()
 validGEMMTypes = [ ('H','H','H'), ('S','S','S'), ('D','D','D'), ('C','C','C'), ('Z','Z','Z'), \
                    ('H','H','S'), ('H','S','S'), \
@@ -509,7 +494,7 @@ validParameters = {
     "GlobalSplitU":               list(range(1, 1024+1)),
 
     # choose how to do GlobalSplitU
-    # 1: use atomic operation to accumlate on one buffer
+    # 1: use atomic operation to accumulate on one buffer
     # 2: each GSU group write to each own buffer and accumulate by another kernel
     "GlobalSplitUAlgorithm":      ["SingleBuffer", "MultipleBuffer"],
 
@@ -522,7 +507,7 @@ validParameters = {
     # This eliminates 4 vector XOR instructions used for pointer swap
     "ExpandPointerSwap":          [False, True],
 
-    # Schedule global reads and global read incrementsinto LocalRead iterations
+    # Schedule global reads and global read increments into LocalRead iterations
     # Can reduce pressure on local read instruction dispatch queue
     # 0=perform global reads at start of instruction loop
     # 1=schedule into the local read instruction iterations
@@ -550,7 +535,7 @@ validParameters = {
     # the purpose of this parameter is to control density of local write instruction scheduling
     # In PGR1, we want to schedule local write more denser, so we can have more
     #          latency to hide global read
-    # In PGR2, since LW is followed by GR, every LW has same whole loop latecy
+    # In PGR2, since LW is followed by GR, every LW has same whole loop latency
     #          to hide global read. We want to schedule LW less denser, can
     #          avoid full of vmem FIFO.
     # Range from 0.01 to 32
@@ -630,13 +615,13 @@ validParameters = {
     #      - DirectToLds=1
 
     #  converting m0 update from LocalWriteAddrSGpr using  is usually win
-    # -1 attempt to use a hueristic to determine when the tile size will use too many SGPR and fall back to VGPR
+    # -1 attempt to use a heuristic to determine when the tile size will use too many SGPR and fall back to VGPR
     "UseInstOffsetForGRO":              [ -1, 0, 1],
 
 
     # Converting VGPR GRO into SGPR GRO is usually a win
     # However, the mode may exhaust all available SGPR, in particular for large unroll
-    # -1 attempt to use a hueristic to determine when the tile size will use too many SGPR and fall back to VGPR
+    # -1 attempt to use a heuristic to determine when the tile size will use too many SGPR and fall back to VGPR
     "UseSgprForGRO":              [ -1, 0, 1],
 
     # Use a 64-bit shadow limit register to allow buffers larger than 2^32 bytes
@@ -764,7 +749,7 @@ validParameters = {
     # Examples for 2D matrix:
     # WGM=8:  on CU64 machine this is a square box
     # WGM=1:  Short/Fat - this will cover maximum width in I dimension of C.  This matches hardware assigned mapping.
-    # WGM=64: Tall/Skinny - this will cover maximum width in J dimention of C.
+    # WGM=64: Tall/Skinny - this will cover maximum width in J dimension of C.
     #
     # Formula for wgSerial:
     # wgSerial = wg0 + (wg1 % WorkGroupMapping) * nwg0
@@ -806,13 +791,13 @@ validParameters = {
 
     # StoreRemap: Optimize MatrixInstruction store patterns to enhance performance.
     #             MI output data between each threads are along N dims.
-    #             But global memory is along M dim continous.
-    #             That mean global write between each threads are not continous.
+    #             But global memory is along M dim continuous.
+    #             That mean global write between each threads are not continuous.
     #             Therefore, store performance for MI instruction is poor.
     # How StoreRemap works in final store stage:
     #             1. Put all thread output data into LDS.
     #             2. All thread read data from LDS along M dims.
-    #                (match global Memory continous direction)
+    #                (match global Memory continuous direction)
     #             3. All thread write out data into global memory.
     # 0:   Disable StoreRemap (default)
     # 1~8: Enable StoreRemap and set the global write vector width
@@ -934,7 +919,7 @@ validParameters = {
     # -3 : Only allow min(GLVWA,GLVWB) < VW ?
     "DepthU":                     depthUs,
 
-    # integer ammount of padding to put into LDS, in 2016 this didn't seem to help performance, profilers were showing that channel conflicts weren't really hurting
+    # integer amount of padding to put into LDS, in 2016 this didn't seem to help performance, profilers were showing that channel conflicts weren't really hurting
     # performance so this has been deprecated and probably doesn't work
     # -1 means use same padding as the VectorWidth if TLU=0 else 0.  (Padding only helps when transpose is required)
     # With MatrixInstruciton: -1 means max(GRVW,MIInput) if TLU=0
@@ -949,11 +934,11 @@ validParameters = {
     "LdsBlockSizePerPadB":         [-1, 0, 64, 128, 256, 512, 1024],
     "LdsBlockSizePerPadMetadata":  [-1, 0, 64, 128, 256, 512, 1024],
 
-    # Transpose LDS format. Local store in Coalsced dimension , same as optimized global fetch dimension . applicable only in TLU=0 case for miSIMD(s)
+    # Transpose LDS format. Local store in coalesced dimension , same as optimized global fetch dimension . applicable only in TLU=0 case for miSIMD(s)
     # TODO: No code for -1 ?
     "TransposeLDS":                [-1, 1, 0],
 
-    # add gls or slc after global memory read/writes to change cacheing, not cacheing the writes is promising and improved performance a tiny bit
+    # add gls or slc after global memory read/writes to change caching, not caching the writes is promising and improved performance a tiny bit
     # 1: glc, 2: slc, 3: glc+slc
     # For gfx940, sets sc0/sc1 bits
     # 0: none, 1: sc0, 2: sc1, 3: sc0 sc1
@@ -1075,7 +1060,7 @@ defaultBenchmarkCommonParameters = [
     {"StaggerUMapping":           [ 0 ] },    # recommend [0,1]
     {"MagicDivAlg":               [ 2 ] },
     {"GlobalSplitU":              [ 1 ] },
-    {"GlobalSplitUAlgorithm":     [ "SingleBuffer" ] },
+    {"GlobalSplitUAlgorithm":     [ "MultipleBuffer" ] },
     {"Use64bShadowLimit":         [ 1 ] },
     {"NumLoadsCoalescedA":        [ 1 ] },
     {"NumLoadsCoalescedB":        [ 1 ] },
@@ -1122,7 +1107,7 @@ for paramDict in defaultBenchmarkCommonParameters:
 # Default Problem Type
 ################################################################################
 defaultProblemType = {
-    # =GEMM uses TransposeA,B paramters and makes the problem type more readeable for users
+    # =GEMM uses TransposeA,B parameters and makes the problem type more readable for users
     # =TensorContraction  requires specifying
     "OperationType":            "GEMM",           # GEMM, TensorContraction, ConvolutionForward, ConvolutionBackwardData, ConvolutionBackwardWeights
 

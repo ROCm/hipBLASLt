@@ -316,7 +316,8 @@ class StateVgprs:
 @dataclass
 class CodeModules:
   accVgprRead: Optional[Module]               = None
-  mulAlpha: Optional[Module]                  = None
+  mulAlphaMultipleBuffer: Optional[Module]    = None
+  mulAlphaOther: Optional[Module]             = None
   localWriteA: Optional[Module]               = None
   localWriteB: Optional[Module]               = None
   dtlsM0UpdateA: Optional[Module]             = None
@@ -2206,7 +2207,8 @@ class KernelWriter(metaclass=abc.ABCMeta):
       if not kernel["SuppressNoLoadLoop"]:
         gsuLabel = Label(label=self.labels.getNameInc("GSU"), comment="")
         module.add(SCmpEQU32(src0=sgpr("GSU"), src1=1, comment="GSU == 1 ?"))
-        module.add(SCBranchSCC0(labelName=gsuLabel.getLabelName(), comment="branch if GSU != 1"))
+        noLoadLoopModules = None
+        acclen = 0
         gsuBackup          = kernel["GlobalSplitU"]
         gsuAccumBackup     = kernel["_GlobalAccumulation"]
         bpeCexternalBackup = self.states.bpeCexternal
@@ -2226,11 +2228,20 @@ class KernelWriter(metaclass=abc.ABCMeta):
           self.saveLocalPointers(kernel, tensorParametersA, tensorParametersB)
           # deepCopy packCode for OptNLL noLoadLoop
           deepCopyPack = fastdeepcopy(pack)
-          module.add(self.noLoadLoop(kernel, tensorParametersA, tensorParametersB, isOptNLL=True, isNGLL=False, pack=deepCopyPack))
+          noLoadLoopModules = self.noLoadLoop(kernel, tensorParametersA, tensorParametersB, isOptNLL=True, isNGLL=False, pack=deepCopyPack)
+          acclen = noLoadLoopModules.countType(Instruction)
           self.restoreLocalPointers(kernel, tensorParametersA, tensorParametersB)
         kernel["GlobalSplitU"] = gsuBackup
         kernel["_GlobalAccumulation"] = gsuAccumBackup
         self.states.bpeCexternal = bpeCexternalBackup
+
+        if acclen > 16384:
+          module.add(self.longBranchScc0(gsuLabel, posNeg=1, comment="branch if GSU != 1"))
+        else:
+          module.add(SCBranchSCC0(labelName=gsuLabel.getLabelName(), comment="branch if GSU != 1"))
+        
+        if noLoadLoopModules != None:
+          module.add(noLoadLoopModules)
         module.add(gsuLabel)
         module.add(self.noLoadLoop(kernel, tensorParametersA, tensorParametersB, isOptNLL=False, isNGLL=False, pack=pack))
 
@@ -3702,7 +3713,8 @@ class KernelWriter(metaclass=abc.ABCMeta):
       if (self.states.version == (9,4,0) or self.states.version == (9,4,1) or self.states.version == (9,4,2)) and kernel["MatrixInstB"] == 1 and \
          (kernel["ProblemType"]["DataType"].isHalf() or \
           kernel["ProblemType"]["DataType"].isBFloat16() or \
-          kernel["ProblemType"]["DataType"].isInt8()):
+          kernel["ProblemType"]["DataType"].isInt8() or \
+          kernel["ProblemType"]["DataType"].is8bitFloat()):
         mi_divisor = 4
         miIssueLatency = 1
 
@@ -4253,6 +4265,13 @@ class KernelWriter(metaclass=abc.ABCMeta):
     return ""
 
   ##############################################################################
+  # longBranchScc0 - 32 bit offset
+  ##############################################################################
+  @abc.abstractmethod
+  def longBranchScc0(self, label: Label, posNeg: int=0, comment=""):
+    return ""
+
+  ##############################################################################
   # WaitCnt
   ##############################################################################
   def _wait(self, kernel, tPA, tPB, skipGlobalRead, skipLocalWrite, skipLocalRead, comment):
@@ -4556,7 +4575,6 @@ for codeObjectFileName in codeObjectFileNames:
       wavefrontSize = self.states.kernel["WavefrontSize"]
     return getAsmCompileArgs(globalParameters['AssemblerPath'], \
       globalParameters["CodeObjectVersion"], \
-      globalParameters["AsmCaps"][isa]["HasCodeObjectV3"], \
       isa, wavefrontSize, sourceFileName, objectFileName, *moreArgs, debug=debug)
 
   def getLinkCodeObjectArgs(self, objectFileNames, coFileName, *moreArgs):

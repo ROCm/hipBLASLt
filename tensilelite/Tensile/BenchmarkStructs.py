@@ -1,6 +1,6 @@
 ################################################################################
 #
-# Copyright (C) 2022 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -46,6 +46,8 @@ def checkParametersAreValid(param, validParams):
     """Ensures paramaters in params exist and have valid values as specified by validParames"""
     (name, values) = param
     if name == "ProblemSizes":
+        return
+    elif name == "InternalSupportParams":
         return
 
     if name not in validParams:

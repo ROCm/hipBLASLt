@@ -21,7 +21,7 @@
 #
 # ########################################################################
 
-# The ROCm platform requires at least Ubuntu 16.04 or Fedora 24, which have cmake 3.5
+# ROCm software requires at least Ubuntu 16.04 or Fedora 24, which have cmake 3.5
 cmake_minimum_required(VERSION 3.5 FATAL_ERROR)
 
 # This will add compile option: -std=c++17
@@ -132,7 +132,7 @@ if(NOT BUILD_CUDA)
             set (CMAKE_CXX_FLAGS_DEBUG "-O1 ${CMAKE_CXX_FLAGS_DEBUG} -gsplit-dwarf -ggdb" )
         endif()
     else()
-        message(FATAL_ERROR "'hipcc' compiler required to compile for ROCm platform.")
+        message(FATAL_ERROR "'hipcc' compiler required to compile for ROCm software.")
     endif()
 endif()
 # Dependencies
@@ -178,7 +178,7 @@ else()
     set( Tensile_ARCHITECTURE "${AMDGPU_TARGETS}" CACHE STRING "Tensile to use which architecture?" FORCE)
 
     set( Tensile_LOGIC "asm_full" CACHE STRING "Tensile to use which logic?")
-    set( Tensile_CODE_OBJECT_VERSION "V2" CACHE STRING "Tensile code_object_version")
+    set( Tensile_CODE_OBJECT_VERSION "default" CACHE STRING "Tensile code_object_version")
     set( Tensile_COMPILER "hipcc" CACHE STRING "Tensile compiler")
     set( Tensile_LIBRARY_FORMAT "msgpack" CACHE STRING "Tensile library format")
     set( Tensile_CPU_THREADS "" CACHE STRING "Number of threads for Tensile parallel build")
@@ -190,7 +190,7 @@ else()
     set( Tensile_TEST_LOCAL_PATH "" CACHE PATH "Use local Tensile directory instead of fetching a GitHub branch" )
 
     set_property( CACHE Tensile_LOGIC PROPERTY STRINGS aldebaran asm_full asm_lite asm_miopen hip_lite other )
-    set_property( CACHE Tensile_CODE_OBJECT_VERSION PROPERTY STRINGS V2 V3 )
+    set_property( CACHE Tensile_CODE_OBJECT_VERSION PROPERTY STRINGS default V4 V5 )
     set_property( CACHE Tensile_COMPILER PROPERTY STRINGS hcc hipcc)
     set_property( CACHE Tensile_LIBRARY_FORMAT PROPERTY STRINGS msgpack yaml)
 

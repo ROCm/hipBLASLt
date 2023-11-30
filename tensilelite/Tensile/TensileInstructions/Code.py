@@ -602,24 +602,7 @@ class _SignatureArgument(Item):
         elif self.valueKind == SignatureValueKind.SIG_VALUE:
             return "by_value"
 
-class _SignatureArgumentV2(_SignatureArgument):
-    def __init__(self, align, name, valueKind, valueType, addrSpaceQual=None):
-        super().__init__(name, valueKind, valueType, addrSpaceQual)
-        self.align = align
-
-    def __str__(self):
-        signatureIndent = " " * 8
-        kStr = ""
-        kStr += signatureIndent[2:] + "- Name:            %s\n" % self.name
-        kStr += signatureIndent + "Size:            %s\n" % self.size
-        kStr += signatureIndent + "Align:          %s\n" % self.align
-        kStr += signatureIndent + "ValueKind:      %s\n" % self.valueKindToStr()
-        kStr += signatureIndent + "ValueType:      %s\n" % self.valueType
-        if self.addrSpaceQual != None:
-            kStr += signatureIndent + "AddrSpaceQual:   %s\n" % self.addrSpaceQual
-        return kStr
-
-class _SignatureArgumentV3(_SignatureArgument):
+class _SignatureArgument(_SignatureArgument):
     def __init__(self, offset, name, valueKind, valueType, addrSpaceQual=None):
         super().__init__(name, valueKind, valueType, addrSpaceQual)
         self.offset = offset
@@ -636,7 +619,7 @@ class _SignatureArgumentV3(_SignatureArgument):
             kStr += signatureIndent + ".address_space:   %s\n" % self.addrSpaceQual
         return kStr
 
-class _SignatureKernelDescriptorV3(Item):
+class _SignatureKernelDescriptor(Item):
     def __init__(self, name, groupSegSize, sgprWorkGroup, vgprWorkItem, \
         totalVgprs: int=0, totalAgprs: int=0, totalSgprs: int =0, preloadKernArgs: bool=False):
         super().__init__(name)
@@ -714,13 +697,14 @@ class _SignatureKernelDescriptorV3(Item):
         ostream += "%s%s "%(indent, type(self).__name__)
         return ostream
 
-class SignatureCodeMetaV3(Item):
-    def __init__(self, name, groupSegSize, flatWgSize, totalVgprs = 0, totalSgprs=0):
+class SignatureCodeMeta(Item):
+    def __init__(self, name, groupSegSize, flatWgSize, codeObjectVersion, totalVgprs = 0, totalSgprs=0):
         super().__init__(name)
         self.groupSegSize = groupSegSize
+        self.flatWgSize = flatWgSize
+        self.codeObjectVersion = codeObjectVersion
         self.totalVgprs = totalVgprs
         self.totalSgprs = totalSgprs
-        self.flatWgSize = flatWgSize
         self.offset = 0
         self.argList = []
 
@@ -734,7 +718,10 @@ class SignatureCodeMetaV3(Item):
         kStr += "---\n"
         kStr += "amdhsa.version:\n"
         kStr += "  - 1\n"
-        kStr += "  - 0\n"
+        if self.codeObjectVersion == 4:
+            kStr += "  - 1\n"
+        elif self.codeObjectVersion == 5:
+            kStr += "  - 2\n"
         kStr += "amdhsa.kernels:\n"
         kStr += "  - .name: %s\n" % self.name
         kStr += "    .symbol: '%s.kd'\n" % self.name
@@ -762,7 +749,7 @@ class SignatureCodeMetaV3(Item):
         return kStr
 
     def addArg(self, name: str, kind: SignatureValueKind, type: str, addrSpaceQual: Optional[str]=None):
-        sa = _SignatureArgumentV3(self.offset, name, kind, type, addrSpaceQual)
+        sa = _SignatureArgument(self.offset, name, kind, type, addrSpaceQual)
         self.argList.append(sa)
         self.offset += sa.size
 
@@ -776,13 +763,9 @@ class SignatureBase(Item):
         vgprWorkItem, flatWorkGroupSize, totalVgprs: int=0, totalAgprs: int=0, \
         totalSgprs: int=0, preloadKernArgs: bool=False) -> None:
         super().__init__(kernelName)
-        self.codeObjectVersion = codeObjectVersion
 
         # Internal data
-        if self.codeObjectVersion == "v2":
-            printExit("Does not support v2 signatures.")
-        elif self.codeObjectVersion == "v3":
-            self.kernelDescriptor = _SignatureKernelDescriptorV3(name=kernelName,
+        self.kernelDescriptor = _SignatureKernelDescriptor(name=kernelName,
                                                                 totalVgprs=totalVgprs,
                                                                 totalAgprs=totalAgprs,
                                                                 totalSgprs=totalSgprs,
@@ -790,11 +773,12 @@ class SignatureBase(Item):
                                                                 sgprWorkGroup=sgprWorkGroup,
                                                                 vgprWorkItem=vgprWorkItem,
                                                                 preloadKernArgs=preloadKernArgs)
-            self.codeMeta = SignatureCodeMetaV3(name=kernelName,
+        self.codeMeta = SignatureCodeMeta(name=kernelName,
                                                 groupSegSize=groupSegmentSize,
+                                                flatWgSize=flatWorkGroupSize,
+                                                codeObjectVersion=codeObjectVersion,
                                                 totalVgprs=totalVgprs,
-                                                totalSgprs=totalSgprs,
-                                                flatWgSize=flatWorkGroupSize)
+                                                totalSgprs=totalSgprs)
 
         # Comment description
         self.descriptionTopic = None

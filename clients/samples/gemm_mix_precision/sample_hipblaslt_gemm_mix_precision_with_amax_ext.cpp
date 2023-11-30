@@ -143,7 +143,7 @@ void simpleGemmMixPrecisionExt(hipblasLtHandle_t  handle,
     //     workspace_size = max(workspace_size, heuristicResult[i].workspaceSize);
     // CHECK_HIP_ERRORhipMalloc(&d_workspace, workspace_size));
 
-    // Make sure to initialize everytime the algo changes
+    // Make sure to initialize every time when algo changes
     CHECK_HIPBLASLT_ERROR(gemm.initialize(heuristicResult[0].algo, d_workspace));
     CHECK_HIPBLASLT_ERROR(gemm.run(stream));
 

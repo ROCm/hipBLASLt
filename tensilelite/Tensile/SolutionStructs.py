@@ -1018,7 +1018,7 @@ class Solution(collections.abc.Mapping):
     if "InternalSupportParams" in config:
       self["InternalSupportParams"] = {}
       for key in defaultInternalSupportParams:
-        assignParameterWithDefault(self["InternalSupportParams"], key, config, defaultInternalSupportParams)
+        assignParameterWithDefault(self["InternalSupportParams"], key, config["InternalSupportParams"], defaultInternalSupportParams)
     else:
       self["InternalSupportParams"] = defaultInternalSupportParams
 
@@ -1050,7 +1050,7 @@ class Solution(collections.abc.Mapping):
 
     # assign parameters without defaults
     for key in config:
-      if key != "ProblemType" and key not in self._state:
+      if (key != "ProblemType" or key != "InternalSupportParams") and key not in self._state:
         self._state[key] = config[key]
     self["Valid"] = True
     # this could prevent OriginalSolution from re-assigning the parameters, save lots of time
@@ -1876,14 +1876,16 @@ class Solution(collections.abc.Mapping):
     if ("_GlobalAccumulation" not in state):
       computeBytes = state["ProblemType"]["ComputeDataType"].numBytes()
       state["_GlobalAccumulation"] = None
-      if state["GlobalSplitU"] > 1:
-        computeName  = state["ProblemType"]["ComputeDataType"].toName()
-
-        if state["GlobalSplitUAlgorithm"] == 'SingleBuffer':
-          if computeName != state["ProblemType"]["DestDataType"].toName():
-            state["_GlobalAccumulation"] = 'SingleBuffer'
-        elif state["GlobalSplitUAlgorithm"] == 'MultipleBuffer':
-          state["_GlobalAccumulation"] = 'MultipleBuffer'
+      computeName  = state["ProblemType"]["ComputeDataType"].toName()
+      if state["GlobalSplitUAlgorithm"] == 'SingleBuffer':
+        if computeName != state["ProblemType"]["DestDataType"].toName():
+          state["_GlobalAccumulation"] = 'SingleBuffer'
+      elif state["GlobalSplitUAlgorithm"] == 'MultipleBuffer':
+        state["_GlobalAccumulation"] = 'MultipleBuffer'
+    # FIXME: Remove this when all yamls are fixed
+    if state["GlobalSplitU"] == 1 and state["GlobalSplitUAlgorithm"] == 'SingleBuffer':
+      state["GlobalSplitUAlgorithm"] = 'MultipleBuffer'
+      state["_GlobalAccumulation"] = 'MultipleBuffer'
 
     computeBytes = state["ProblemType"]["ComputeDataType"].numBytes()
     state["_WorkspaceSizePerElemC"] = computeBytes
