@@ -239,10 +239,10 @@ struct Arguments
     OPER(algo_method) SEP            \
     OPER(use_user_args) SEP          \
     OPER(rotating) SEP               \
+    OPER(use_gpu_timer) SEP          \
     OPER(gsu_vector) SEP             \
     OPER(print_solution_found) SEP   \
-    OPER(print_kernel_info) SEP      \
-    OPER(use_gpu_timer) SEP
+    OPER(print_kernel_info) SEP
 
     // clang-format on
 
