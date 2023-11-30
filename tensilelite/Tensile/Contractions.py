@@ -463,10 +463,9 @@ class ProblemPredicate(Properties.Predicate):
         if 'BufferStore' in state and state['BufferStore'] == True:
             rv += [cls('BufferStoreOffsetLimitCheck', value=state['MacroTile1'])]
 
-        # FIXME: Need new logic
         if '_GlobalAccumulation' in state and state['_GlobalAccumulation'] != None:
             value = globalParameters['MinKForGSU']
-            rv += [cls('GlobalSplitUCheckMinK', value=value)]
+            rv += [cls('GlobalSplitUCheckMinK', value=[value, state["GlobalSplitU"]])]
 
         return rv
 
