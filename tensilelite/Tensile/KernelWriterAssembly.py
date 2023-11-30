@@ -8097,7 +8097,7 @@ class KernelWriterAssembly(KernelWriter):
           kernel["LdsOffsetBias"] = kernel["LdsOffsetBiasGSU"]
           kernel["ActivationFuncCall"] = False
           kernel["GlobalSplitU"] = 2
-          kernel["_GlobalAccumulation"] = "MultipleBuffer" # kernel["GlobalSplitUAlgorithm"]
+          kernel["_GlobalAccumulation"] = kernel["_GlobalAccumulation"]
         else:
           module.add(gsuLabel)
           self.states.bpeCexternal = self.states.bpeCexternalGSU1

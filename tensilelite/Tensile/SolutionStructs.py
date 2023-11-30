@@ -1873,19 +1873,19 @@ class Solution(collections.abc.Mapping):
         state['_'+s] = state[s]
         #del state[s]
 
-    if ("_GlobalAccumulation" not in state):
-      computeBytes = state["ProblemType"]["ComputeDataType"].numBytes()
-      state["_GlobalAccumulation"] = None
-      computeName  = state["ProblemType"]["ComputeDataType"].toName()
-      if state["GlobalSplitUAlgorithm"] == 'SingleBuffer':
-        if computeName != state["ProblemType"]["DestDataType"].toName():
-          state["_GlobalAccumulation"] = 'SingleBuffer'
-      elif state["GlobalSplitUAlgorithm"] == 'MultipleBuffer':
-        state["_GlobalAccumulation"] = 'MultipleBuffer'
-    # FIXME: Remove this when all yamls are fixed
-    if state["GlobalSplitU"] == 1 and state["GlobalSplitUAlgorithm"] == 'SingleBuffer':
-      state["GlobalSplitUAlgorithm"] = 'MultipleBuffer'
+    # Force update _GlobalAccumulation
+    computeBytes = state["ProblemType"]["ComputeDataType"].numBytes()
+    state["_GlobalAccumulation"] = None
+    computeName  = state["ProblemType"]["ComputeDataType"].toName()
+    if state["GlobalSplitUAlgorithm"] == 'SingleBuffer':
+      if computeName != state["ProblemType"]["DestDataType"].toName():
+        state["_GlobalAccumulation"] = 'SingleBuffer'
+    elif state["GlobalSplitUAlgorithm"] == 'MultipleBuffer':
       state["_GlobalAccumulation"] = 'MultipleBuffer'
+
+    if state["GlobalSplitUAlgorithm"] == 'SingleBuffer':
+      # maxGWVW is not fixed yet, thus can't generate universal singlebuffer kernels.
+      reject("Currently universal kernel does not support SingleBuffer.")
 
     computeBytes = state["ProblemType"]["ComputeDataType"].numBytes()
     state["_WorkspaceSizePerElemC"] = computeBytes
