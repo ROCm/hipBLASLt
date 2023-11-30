@@ -4437,6 +4437,15 @@ for codeObjectFileName in codeObjectFileNames:
         self.initKernel(kernel, tensorParametersA, tensorParametersB )
 
       shutil.copyfile(replacementKernel, assemblyFileName)
+
+      # Temporary remove preload kernel argument for rpk
+      hipccver = globalParameters['HipClangVersion'].split(".")
+      hipccMaj = int(hipccver[0])
+      hipccPatch = int(hipccver[2].split("-")[0])
+      if not (hipccMaj >= 6 and hipccPatch >= 32650):
+        os.system("sed -i '/amdhsa_user_sgpr_kernarg_preload_length/d' %s"%assemblyFileName)
+        os.system("sed -i '/amdhsa_user_sgpr_kernarg_preload_offset/d' %s"%assemblyFileName)
+
       if globalParameters["PrintLevel"] >= 2:
         print(kernelFoundMessage + assemblyFileName)
         print(self.states.kernel)
