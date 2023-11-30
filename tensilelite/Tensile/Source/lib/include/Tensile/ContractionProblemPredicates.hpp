@@ -1434,10 +1434,10 @@ namespace Tensile
                     HasValue = true
                 };
 
-                size_t value;
+                std::array<int, 2> value;
 
                 GlobalSplitUCheckMinK() = default;
-                GlobalSplitUCheckMinK(size_t value)
+                GlobalSplitUCheckMinK(std::array<int, 2> value)
                     : value(value)
                 {
                 }
@@ -1450,7 +1450,10 @@ namespace Tensile
                 virtual bool operator()(ContractionProblemGemm const& problem) const override
                 {
                     size_t minK
-                        = (problem.getParams().gsu() > 1 ? problem.getParams().gsu() : 0) * value;
+                        = (problem.getParams().gsu() > 0 ? problem.getParams().gsu() : value[1]);
+                    if(minK == 1)
+                        minK = 0;
+                    minK *= value[0];
                     return problem.boundSize(0) >= minK;
                 }
 
@@ -1458,7 +1461,10 @@ namespace Tensile
                                        std::ostream&                 stream) const override
                 {
                     size_t minK
-                        = (problem.getParams().gsu() > 1 ? problem.getParams().gsu() : 0) * value;
+                        = (problem.getParams().gsu() > 0 ? problem.getParams().gsu() : value[1]);
+                    if(minK == 1)
+                        minK = 0;
+                    minK *= value[0];
                     return debugEvalCmp(
                         problem, stream, "prob", problem.boundSize(0), ">=", "sol", minK);
                 }
