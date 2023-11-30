@@ -635,8 +635,8 @@ void testing_matmul(const Arguments& arg)
 
         if(arg.scaleC)
         {
-            if constexpr(std::is_same<To, hipblaslt_f8>::value
-                         || std::is_same<To, hipblaslt_bf8>::value)
+            if constexpr(std::is_same<To, hipblaslt_f8_fnuz>::value
+                         || std::is_same<To, hipblaslt_bf8_fnuz>::value)
             {
                 hipblaslt_init_small<Talpha>(*hScaleC[i], 1, 1, 1);
             }
@@ -648,8 +648,8 @@ void testing_matmul(const Arguments& arg)
 
         if(arg.scaleD)
         {
-            if constexpr(std::is_same<To, hipblaslt_f8>::value
-                         || std::is_same<To, hipblaslt_bf8>::value)
+            if constexpr(std::is_same<To, hipblaslt_f8_fnuz>::value
+                         || std::is_same<To, hipblaslt_bf8_fnuz>::value)
             {
                 hipblaslt_init_small<Talpha>(*hScaleD[i], 1, 1, 1);
             }
@@ -745,7 +745,7 @@ void testing_matmul(const Arguments& arg)
                 hipblasLtMatmulDescSetAttribute(matmul[i],
                                                 HIPBLASLT_MATMUL_DESC_BIAS_DATA_TYPE,
                                                 &arg.bias_type,
-                                                sizeof(hipblasltDatatype_t)),
+                                                sizeof(hipDataType)),
                 HIPBLAS_STATUS_SUCCESS);
             if(arg.d_type != arg.scale_type && arg.bias_type == arg.scale_type)
             {
@@ -1407,7 +1407,7 @@ void testing_matmul(const Arguments& arg)
         // For the xf32 xdl math op, cast type of A/B from float to xfloat32 .
         if constexpr(std::is_same<TiA, float>{} && std::is_same<TiB, float>{}
                      && std::is_same<To, float>{} && std::is_same<Tc, float>{})
-            if(arg.compute_type == HIPBLASLT_COMPUTE_F32_FAST_XF32)
+            if(arg.compute_type == HIPBLAS_COMPUTE_32F_FAST_TF32)
             {
                 for(int i = 0; i < gemm_count; i++)
                 {

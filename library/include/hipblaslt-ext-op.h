@@ -51,7 +51,7 @@ extern "C" {
  *  This function computes softmax on given 2D-tensor along specified dimension.
  *
  *  @param[in]
- *  datatype Datatype of input/output tensor, currently support HIPBLASLT_R_32F only.
+ *  datatype Datatype of input/output tensor, currently support HIP_R_32F only.
  *
  *  @param[in]
  *  m The first dimension of input/output tensor.
@@ -73,11 +73,15 @@ extern "C" {
  *
  *  \retval HIPBLAS_STATUS_SUCCESS If it runs successfully.
  *  \retval HIPBLAS_STATUS_INVALID_VALUE If \p n is greater than 256.
- *  \retval HIPBLAS_STATUS_NOT_SUPPORTED If \p dim is not 1 or \p datatype is not HIPBLASLT_R_32F.
+ *  \retval HIPBLAS_STATUS_NOT_SUPPORTED If \p dim is not 1 or \p datatype is not HIP_R_32F.
  */
-    HIPBLASLT_EXPORT hipblasStatus_t hipblasltExtSoftmax(hipblasltDatatype_t datatype, uint32_t m, uint32_t n, uint32_t dim,
-        void *output, void *input, hipStream_t stream);
-
+HIPBLASLT_EXPORT hipblasStatus_t hipblasltExtSoftmax(hipDataType datatype,
+                                                     uint32_t    m,
+                                                     uint32_t    n,
+                                                     uint32_t    dim,
+                                                     void*       output,
+                                                     void*       input,
+                                                     hipStream_t stream);
 
 /*! \ingroup library_module
  *  \brief Perform layernorm on given tensor.
@@ -86,7 +90,7 @@ extern "C" {
  *  This function computes layernorm on given 2D-tensor.
  *
  *  @param[in]
- *  datatype Datatype of input/output tensor, currently support HIPBLASLT_R_32F only.
+ *  datatype Datatype of input/output tensor, currently support HIP_R_32F only.
  *
  *  @param[out]
  *  output output tensor buffer. can't be nullptr.
@@ -121,10 +125,19 @@ extern "C" {
  *
  *  \retval HIPBLAS_STATUS_SUCCESS If it runs successfully.
  *  \retval HIPBLAS_STATUS_INVALID_VALUE If \p m is greater than 4096.
- *  \retval HIPBLAS_STATUS_NOT_SUPPORTED if \p datatype is not HIPBLASLT_R_32F.
+ *  \retval HIPBLAS_STATUS_NOT_SUPPORTED if \p datatype is not HIP_R_32F.
  */
-    HIPBLASLT_EXPORT hipblasStatus_t hipblasltExtLayerNorm(hipblasltDatatype_t datatype, void *output, void* mean, void* invvar,
-        void *input, uint32_t m, uint32_t n, float eps, void *gamma, void *beta, hipStream_t stream);
+HIPBLASLT_EXPORT hipblasStatus_t hipblasltExtLayerNorm(hipDataType datatype,
+                                                       void*       output,
+                                                       void*       mean,
+                                                       void*       invvar,
+                                                       void*       input,
+                                                       uint32_t    m,
+                                                       uint32_t    n,
+                                                       float       eps,
+                                                       void*       gamma,
+                                                       void*       beta,
+                                                       hipStream_t stream);
 #ifdef __cplusplus
 }
 #endif

@@ -74,35 +74,35 @@ struct RocblasltContractionProblem
 
     const void* alpha;
 
-    hipblasltDatatype_t a_type;
-    const void*         A;
-    const void* const*  batch_A;
-    size_t              row_stride_a;
-    size_t              col_stride_a;
-    size_t              batch_stride_a;
+    hipDataType        a_type;
+    const void*        A;
+    const void* const* batch_A;
+    size_t             row_stride_a;
+    size_t             col_stride_a;
+    size_t             batch_stride_a;
 
-    hipblasltDatatype_t b_type;
-    const void*         B;
-    const void* const*  batch_B;
-    size_t              row_stride_b;
-    size_t              col_stride_b;
-    size_t              batch_stride_b;
+    hipDataType        b_type;
+    const void*        B;
+    const void* const* batch_B;
+    size_t             row_stride_b;
+    size_t             col_stride_b;
+    size_t             batch_stride_b;
 
     const void* beta;
 
-    hipblasltDatatype_t c_type;
-    const void*         C;
-    const void* const*  batch_C;
-    size_t              row_stride_c;
-    size_t              col_stride_c;
-    size_t              batch_stride_c;
+    hipDataType        c_type;
+    const void*        C;
+    const void* const* batch_C;
+    size_t             row_stride_c;
+    size_t             col_stride_c;
+    size_t             batch_stride_c;
 
-    hipblasltDatatype_t d_type;
-    void*               D;
-    void* const*        batch_D;
-    size_t              row_stride_d;
-    size_t              col_stride_d;
-    size_t              batch_stride_d;
+    hipDataType  d_type;
+    void*        D;
+    void* const* batch_D;
+    size_t       row_stride_d;
+    size_t       col_stride_d;
+    size_t       batch_stride_d;
 
     void*        E;
     void* const* batch_E;
@@ -117,17 +117,17 @@ struct RocblasltContractionProblem
 
     rocblaslt_compute_type compute_type;
 
-    const void*         bias;
-    const void*         scaleA;
-    const void*         scaleB;
-    const void*         scaleC;
-    const void*         scaleD;
-    const void*         scaleE;
-    const void*         scaleAlphaVec;
-    hipblasltDatatype_t bias_type;
-    rocblaslt_epilogue  epilogue;
-    void*               workspace;
-    size_t              workspaceSize;
+    const void*        bias;
+    const void*        scaleA;
+    const void*        scaleB;
+    const void*        scaleC;
+    const void*        scaleD;
+    const void*        scaleE;
+    const void*        scaleAlphaVec;
+    hipDataType        bias_type;
+    rocblaslt_epilogue epilogue;
+    void*              workspace;
+    size_t             workspaceSize;
 
     hipStream_t stream;
 
@@ -139,23 +139,23 @@ struct RocblasltContractionProblem
                                 int64_t                n,
                                 int64_t                k,
                                 const void*            alpha,
-                                hipblasltDatatype_t    a_type,
+                                hipDataType            a_type,
                                 const void*            A,
                                 const void* const*     batch_A,
                                 int64_t                ld_a,
                                 int64_t                batch_stride_a,
-                                hipblasltDatatype_t    b_type,
+                                hipDataType            b_type,
                                 const void*            B,
                                 const void* const*     batch_B,
                                 int64_t                ld_b,
                                 int64_t                batch_stride_b,
                                 const void*            beta,
-                                hipblasltDatatype_t    c_type,
+                                hipDataType            c_type,
                                 const void*            C,
                                 const void* const*     batch_C,
                                 int64_t                ld_c,
                                 int64_t                batch_stride_c,
-                                hipblasltDatatype_t    d_type,
+                                hipDataType            d_type,
                                 void*                  D,
                                 void* const*           batch_D,
                                 int64_t                ld_d,
@@ -176,7 +176,7 @@ struct RocblasltContractionProblem
                                 const void*            scaleD,
                                 const void*            scaleE,
                                 const void*            scaleAlphaVec,
-                                hipblasltDatatype_t    bias_type,
+                                hipDataType            bias_type,
                                 rocblaslt_epilogue     epilogue,
                                 void*                  workspace,
                                 size_t                 workspaceSize,
@@ -240,11 +240,11 @@ struct RocblasltContractionProblem
             // FIXME: Currently the default bias_type is set to match the yamls' configuration, should add the default type when the yamls are fixed.
             if(this->compute_type == rocblaslt_compute_i32)
             {
-                this->bias_type = HIPBLASLT_R_32F;
+                this->bias_type = HIP_R_32F;
             }
             else if(this->compute_type == rocblaslt_compute_f32_fast_xf32)
             {
-                this->bias_type = HIPBLASLT_R_32F;
+                this->bias_type = HIP_R_32F;
             }
             else
             {
@@ -258,10 +258,10 @@ void initTensileGemmData(rocblaslt_handle       handle,
                          rocblaslt::RocGemmType gemmType,
                          hipblasOperation_t     opA,
                          hipblasOperation_t     opB,
-                         hipblasltDatatype_t    typeA,
-                         hipblasltDatatype_t    typeB,
-                         hipblasltDatatype_t    typeC,
-                         hipblasltDatatype_t    typeD,
+                         hipDataType            typeA,
+                         hipDataType            typeB,
+                         hipDataType            typeC,
+                         hipDataType            typeD,
                          rocblaslt_compute_type typeCompute,
                          size_t                 maxWorkspaceBytes,
                          std::shared_ptr<void>& gemmData);
@@ -381,28 +381,28 @@ rocblaslt_status getBestSolutions(rocblaslt_handle       handle,
 /******************************************************
  * Map a hipblaslt data type to a corresponding Tensile type *
  ******************************************************/
-inline Tensile::DataType hipblasltDatatype_to_tensile_type(hipblasltDatatype_t type)
+inline Tensile::DataType hipDataType_to_tensile_type(hipDataType type)
 {
     switch(type)
     {
-    case HIPBLASLT_R_16F:
+    case HIP_R_16F:
         return Tensile::DataType::Half;
-    case HIPBLASLT_R_32F:
+    case HIP_R_32F:
         return Tensile::DataType::Float;
-    case HIPBLASLT_R_64F:
+    case HIP_R_64F:
         return Tensile::DataType::Double;
-    case HIPBLASLT_R_16B:
+    case HIP_R_16BF:
         return Tensile::DataType::BFloat16;
-    case HIPBLASLT_R_8F_E4M3:
+    case HIP_R_8F_E4M3_FNUZ:
         return Tensile::DataType::Float8;
-    case HIPBLASLT_R_8F_E5M2:
+    case HIP_R_8F_E5M2_FNUZ:
         return Tensile::DataType::BFloat8;
-    case HIPBLASLT_R_8I:
+    case HIP_R_8I:
         return Tensile::DataType::Int8;
-    case HIPBLASLT_R_32I:
+    case HIP_R_32I:
         return Tensile::DataType::Int32;
     default:
-        assert(!"hipblasltDatatype_to_tensile_type: non-supported type");
+        assert(!"hipDataType_to_tensile_type: non-supported type");
         return Tensile::DataType::None;
     }
 }

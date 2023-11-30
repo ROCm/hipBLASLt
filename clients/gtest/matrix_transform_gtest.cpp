@@ -107,25 +107,25 @@ namespace
 
     using MatrixTransformIOPtr = std::unique_ptr<MatrixTransformIO>;
     MatrixTransformIOPtr
-        makeMatrixTransformIOPtr(hipblasltDatatype_t datatype, int64_t m, int64_t n, int64_t b)
+        makeMatrixTransformIOPtr(hipDataType datatype, int64_t m, int64_t n, int64_t b)
     {
-        if(datatype == HIPBLASLT_R_32F)
+        if(datatype == HIP_R_32F)
         {
             return std::make_unique<TypedMatrixTransformIO<hipblasLtFloat>>(m, n, b);
         }
-        else if(datatype == HIPBLASLT_R_16F)
+        else if(datatype == HIP_R_16F)
         {
             return std::make_unique<TypedMatrixTransformIO<hipblasLtHalf>>(m, n, b);
         }
-        else if(datatype == HIPBLASLT_R_16B)
+        else if(datatype == HIP_R_16BF)
         {
             return std::make_unique<TypedMatrixTransformIO<hipblasLtBfloat16>>(m, n, b);
         }
-        else if(datatype == HIPBLASLT_R_8I)
+        else if(datatype == HIP_R_8I)
         {
             return std::make_unique<TypedMatrixTransformIO<int8_t>>(m, n, b);
         }
-        else if(datatype == HIPBLASLT_R_32I)
+        else if(datatype == HIP_R_32I)
         {
             return std::make_unique<TypedMatrixTransformIO<int32_t>>(m, n, b);
         }
@@ -371,8 +371,8 @@ namespace
     }
 }
 
-class MatrixTransformTest : public ::testing::TestWithParam<std::tuple<hipblasltDatatype_t,
-                                                                       hipblasltDatatype_t,
+class MatrixTransformTest : public ::testing::TestWithParam<std::tuple<hipDataType,
+                                                                       hipDataType,
                                                                        hipblasOperation_t,
                                                                        hipblasOperation_t,
                                                                        hipblasLtOrder_t,
@@ -494,7 +494,7 @@ TEST_P(MatrixTransformTest, Basic)
     auto transA  = (opA == HIPBLAS_OP_T);
     auto transB  = (opB == HIPBLAS_OP_T);
 
-    if(datatype == HIPBLASLT_R_32F)
+    if(datatype == HIP_R_32F)
     {
         validation<float>(dC,
                           dA,
@@ -514,7 +514,7 @@ TEST_P(MatrixTransformTest, Basic)
                           transA,
                           transB);
     }
-    else if(datatype == HIPBLASLT_R_16F)
+    else if(datatype == HIP_R_16F)
     {
         validation<hipblasLtHalf>(dC,
                                   dA,
@@ -534,7 +534,7 @@ TEST_P(MatrixTransformTest, Basic)
                                   transA,
                                   transB);
     }
-    else if(datatype == HIPBLASLT_R_16B)
+    else if(datatype == HIP_R_16BF)
     {
         validation<hipblasLtBfloat16>(dC,
                                       dA,
@@ -554,7 +554,7 @@ TEST_P(MatrixTransformTest, Basic)
                                       transA,
                                       transB);
     }
-    else if(datatype == HIPBLASLT_R_8I)
+    else if(datatype == HIP_R_8I)
     {
         validation<int8_t>(dC,
                            dA,
@@ -574,7 +574,7 @@ TEST_P(MatrixTransformTest, Basic)
                            transA,
                            transB);
     }
-    else if(datatype == HIPBLASLT_R_32I)
+    else if(datatype == HIP_R_32I)
     {
         validation<int32_t>(dC,
                             dA,
@@ -605,12 +605,10 @@ TEST_P(MatrixTransformTest, Basic)
 INSTANTIATE_TEST_SUITE_P(
     AllCombinations,
     MatrixTransformTest,
-    ::testing::Combine(
-        ::testing::ValuesIn(
-            {HIPBLASLT_R_32F, HIPBLASLT_R_16F, HIPBLASLT_R_16B, HIPBLASLT_R_8I, HIPBLASLT_R_32I}),
-        ::testing::ValuesIn({HIPBLASLT_R_32F}),
-        ::testing::ValuesIn({HIPBLAS_OP_N, HIPBLAS_OP_T}),
-        ::testing::ValuesIn({HIPBLAS_OP_N, HIPBLAS_OP_T}),
-        ::testing::ValuesIn({HIPBLASLT_ORDER_ROW, HIPBLASLT_ORDER_COL}),
-        ::testing::ValuesIn({HIPBLASLT_ORDER_ROW, HIPBLASLT_ORDER_COL}),
-        ::testing::ValuesIn({HIPBLASLT_ORDER_ROW, HIPBLASLT_ORDER_COL})));
+    ::testing::Combine(::testing::ValuesIn({HIP_R_32F, HIP_R_16F, HIP_R_16BF, HIP_R_8I, HIP_R_32I}),
+                       ::testing::ValuesIn({HIP_R_32F}),
+                       ::testing::ValuesIn({HIPBLAS_OP_N, HIPBLAS_OP_T}),
+                       ::testing::ValuesIn({HIPBLAS_OP_N, HIPBLAS_OP_T}),
+                       ::testing::ValuesIn({HIPBLASLT_ORDER_ROW, HIPBLASLT_ORDER_COL}),
+                       ::testing::ValuesIn({HIPBLASLT_ORDER_ROW, HIPBLASLT_ORDER_COL}),
+                       ::testing::ValuesIn({HIPBLASLT_ORDER_ROW, HIPBLASLT_ORDER_COL})));

@@ -104,18 +104,18 @@ void simpleGemmGetAllAlgos(hipblasLtHandle_t  handle,
                                                      hipblaslt_ext::GemmType::HIPBLASLT_GEMM,
                                                      trans_a,
                                                      trans_a,
-                                                     HIPBLASLT_R_16F,
-                                                     HIPBLASLT_R_16F,
-                                                     HIPBLASLT_R_16F,
-                                                     HIPBLASLT_R_16F,
-                                                     HIPBLASLT_COMPUTE_F32,
+                                                     HIP_R_16F,
+                                                     HIP_R_16F,
+                                                     HIP_R_16F,
+                                                     HIP_R_16F,
+                                                     HIPBLAS_COMPUTE_32F,
                                                      heuristicResult));
 
     hipblasLtMatrixLayout_t matA, matB, matC, matD;
-    CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutCreate(&matA, HIPBLASLT_R_16F, m, k, m));
-    CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutCreate(&matB, HIPBLASLT_R_16F, k, n, k));
-    CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutCreate(&matC, HIPBLASLT_R_16F, m, n, m));
-    CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutCreate(&matD, HIPBLASLT_R_16F, m, n, m));
+    CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutCreate(&matA, HIP_R_16F, m, k, m));
+    CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutCreate(&matB, HIP_R_16F, k, n, k));
+    CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutCreate(&matC, HIP_R_16F, m, n, m));
+    CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutCreate(&matD, HIP_R_16F, m, n, m));
 
     if(batch_count > 1)
     {
@@ -142,8 +142,7 @@ void simpleGemmGetAllAlgos(hipblasLtHandle_t  handle,
     }
 
     hipblasLtMatmulDesc_t matmul;
-    CHECK_HIPBLASLT_ERROR(
-        hipblasLtMatmulDescCreate(&matmul, HIPBLASLT_COMPUTE_F32, HIPBLASLT_R_32F));
+    CHECK_HIPBLASLT_ERROR(hipblasLtMatmulDescCreate(&matmul, HIPBLAS_COMPUTE_32F, HIP_R_32F));
     CHECK_HIPBLASLT_ERROR(hipblasLtMatmulDescSetAttribute(
         matmul, HIPBLASLT_MATMUL_DESC_TRANSA, &trans_a, sizeof(int32_t)));
     CHECK_HIPBLASLT_ERROR(hipblasLtMatmulDescSetAttribute(

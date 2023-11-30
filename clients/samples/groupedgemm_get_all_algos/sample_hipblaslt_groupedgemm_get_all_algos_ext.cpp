@@ -109,11 +109,11 @@ void simpleGroupedGemmExt(hipblasLtHandle_t     handle,
                                    hipblaslt_ext::GemmType::HIPBLASLT_GROUPED_GEMM,
                                    trans_a,
                                    trans_a,
-                                   HIPBLASLT_R_16F,
-                                   HIPBLASLT_R_16F,
-                                   HIPBLASLT_R_16F,
-                                   HIPBLASLT_R_16F,
-                                   HIPBLASLT_COMPUTE_F32,
+                                   HIP_R_16F,
+                                   HIP_R_16F,
+                                   HIP_R_16F,
+                                   HIP_R_16F,
+                                   HIPBLAS_COMPUTE_32F,
                                    heuristicResult));
 
     hipblaslt_ext::GemmPreference gemmPref;
@@ -121,11 +121,11 @@ void simpleGroupedGemmExt(hipblasLtHandle_t     handle,
     hipblaslt_ext::GroupedGemm groupedgemm(handle,
                                            trans_a,
                                            trans_b,
-                                           HIPBLASLT_R_16F,
-                                           HIPBLASLT_R_16F,
-                                           HIPBLASLT_R_16F,
-                                           HIPBLASLT_R_16F,
-                                           HIPBLASLT_COMPUTE_F32);
+                                           HIP_R_16F,
+                                           HIP_R_16F,
+                                           HIP_R_16F,
+                                           HIP_R_16F,
+                                           HIPBLAS_COMPUTE_32F);
 
     std::vector<hipblaslt_ext::GemmEpilogue> epilogue{
         hipblaslt_ext::

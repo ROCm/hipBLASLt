@@ -78,8 +78,8 @@ RocblasltContractionProblem construct_rocblaslt_problem(const rocblaslt_matmul_d
     const void* dummy_ptr = &dummy;
     int64_t     m, n, k, lda, ldb, ldc, ldd, lde, batch_stride_a, batch_stride_b, batch_stride_c,
         batch_stride_d, batch_stride_e;
-    hipblasltDatatype_t    bias_type;
-    hipblasltDatatype_t    a_type, b_type, c_type, d_type;
+    hipDataType            bias_type;
+    hipDataType            a_type, b_type, c_type, d_type;
     rocblaslt_compute_type compute_type;
     void *                 bias = nullptr, *scaleAlphaVec = nullptr, *e = nullptr;
     bool                   gradient = false;
@@ -264,7 +264,7 @@ rocblaslt_status rocblaslt_destroy(const rocblaslt_handle handle)
  * It should be destroyed at the end using rocblaslt_matrix_layout_destory().
  *******************************************************************************/
 rocblaslt_status rocblaslt_matrix_layout_create(rocblaslt_matrix_layout* matDescr,
-                                                hipblasltDatatype_t      valueType,
+                                                hipDataType              valueType,
                                                 uint64_t                 rows,
                                                 uint64_t                 cols,
                                                 int64_t                  ld)
@@ -290,7 +290,7 @@ rocblaslt_status rocblaslt_matrix_layout_create(rocblaslt_matrix_layout* matDesc
                     "matLayout[out]",
                     matDescr,
                     "type",
-                    hipblasltDatatype_to_string(valueType),
+                    hipDataType_to_string(valueType),
                     "rows",
                     rows,
                     "cols",
@@ -481,7 +481,8 @@ rocblaslt_status rocblaslt_matrix_layout_get_attribute(rocblaslt_matrix_layout  
             switch(attr)
             {
             case ROCBLASLT_MATRIX_LAYOUT_BATCH_COUNT:
-                if(sizeWritten) *sizeWritten = sizeof(int32_t);
+                if(sizeWritten)
+                    *sizeWritten = sizeof(int32_t);
                 if(sizeInBytes < sizeof(int32_t))
                 {
                     log_error(__func__, "invalid buf size", sizeInBytes);
@@ -490,7 +491,8 @@ rocblaslt_status rocblaslt_matrix_layout_get_attribute(rocblaslt_matrix_layout  
                 memcpy(buf, &matLayout->batch_count, sizeof(int32_t));
                 break;
             case ROCBLASLT_MATRIX_LAYOUT_STRIDED_BATCH_OFFSET:
-                if(sizeWritten) *sizeWritten = sizeof(int64_t);
+                if(sizeWritten)
+                    *sizeWritten = sizeof(int64_t);
                 if(sizeInBytes < sizeof(int64_t))
                 {
                     log_error(__func__, "invalid buf size", sizeInBytes);
@@ -527,7 +529,7 @@ rocblaslt_status rocblaslt_matrix_layout_get_attribute(rocblaslt_matrix_layout  
  *******************************************************************************/
 rocblaslt_status rocblaslt_matmul_desc_create(rocblaslt_matmul_desc* matmulDesc,
                                               rocblaslt_compute_type computeType,
-                                              hipblasltDatatype_t    scaleType)
+                                              hipDataType            scaleType)
 {
     // Check if matmulDesc is valid
     if(matmulDesc == nullptr)
@@ -554,8 +556,7 @@ rocblaslt_status rocblaslt_matmul_desc_create(rocblaslt_matmul_desc* matmulDesc,
                 throw rocblaslt_status_invalid_value;
             }
 
-            if(scaleType != HIPBLASLT_R_32F && scaleType != HIPBLASLT_R_64F
-               && scaleType != HIPBLASLT_R_32I)
+            if(scaleType != HIP_R_32F && scaleType != HIP_R_64F && scaleType != HIP_R_32I)
             {
                 log_error(__func__, "invalid scale type", scaleType);
                 throw rocblaslt_status_invalid_value;
@@ -567,11 +568,11 @@ rocblaslt_status rocblaslt_matmul_desc_create(rocblaslt_matmul_desc* matmulDesc,
             auto computeTypeInit        = computeType == rocblaslt_compute_f32_fast_xf32
                                               ? rocblaslt_compute_f32
                                               : computeType;
-            auto dataType               = HIPBLASLT_R_32F;
+            auto dataType               = HIP_R_32F;
             if(computeTypeInit == rocblaslt_compute_f64)
-                dataType = HIPBLASLT_R_64F;
+                dataType = HIP_R_64F;
             else if(computeType == rocblaslt_compute_i32)
-                dataType = HIPBLASLT_R_32I;
+                dataType = HIP_R_32I;
 
             initTensileGemmData(nullptr,
                                 rocblaslt::RocGemmType::ROCBLASLT_GEMM,
@@ -591,7 +592,7 @@ rocblaslt_status rocblaslt_matmul_desc_create(rocblaslt_matmul_desc* matmulDesc,
                     "computeType",
                     rocblaslt_compute_type_to_string(computeType),
                     "scaleType",
-                    hipblasltDatatype_to_string(scaleType));
+                    hipDataType_to_string(scaleType));
         }
         catch(const rocblaslt_status& status)
         {
@@ -842,7 +843,8 @@ rocblaslt_status rocblaslt_matmul_desc_get_attribute(rocblaslt_matmul_desc      
             switch(matmulAttr)
             {
             case ROCBLASLT_MATMUL_DESC_TRANSA:
-                if(sizeWritten) *sizeWritten = sizeof(int32_t);
+                if(sizeWritten)
+                    *sizeWritten = sizeof(int32_t);
                 if(sizeInBytes < sizeof(int32_t))
                 {
                     log_error(__func__, "invalid buf size", sizeInBytes);
@@ -851,7 +853,8 @@ rocblaslt_status rocblaslt_matmul_desc_get_attribute(rocblaslt_matmul_desc      
                 memcpy(buf, &matmulDesc->op_A, sizeof(int32_t));
                 break;
             case ROCBLASLT_MATMUL_DESC_TRANSB:
-                if(sizeWritten) *sizeWritten = sizeof(int32_t);
+                if(sizeWritten)
+                    *sizeWritten = sizeof(int32_t);
                 if(sizeInBytes < sizeof(int32_t))
                 {
                     log_error(__func__, "invalid buf size", sizeInBytes);
@@ -860,7 +863,8 @@ rocblaslt_status rocblaslt_matmul_desc_get_attribute(rocblaslt_matmul_desc      
                 memcpy(buf, &matmulDesc->op_B, sizeof(int32_t));
                 break;
             case ROCBLASLT_MATMUL_DESC_EPILOGUE:
-                if(sizeWritten) *sizeWritten = sizeof(int32_t);
+                if(sizeWritten)
+                    *sizeWritten = sizeof(int32_t);
                 if(sizeInBytes < sizeof(int32_t))
                 {
                     log_error(__func__, "invalid buf size", sizeInBytes);
@@ -869,7 +873,8 @@ rocblaslt_status rocblaslt_matmul_desc_get_attribute(rocblaslt_matmul_desc      
                 memcpy(buf, &matmulDesc->epilogue, sizeof(int32_t));
                 break;
             case ROCBLASLT_MATMUL_DESC_BIAS_POINTER:
-                if(sizeWritten) *sizeWritten = sizeof(void*);
+                if(sizeWritten)
+                    *sizeWritten = sizeof(void*);
                 if(sizeInBytes < sizeof(void*))
                 {
                     log_error(__func__, "invalid buf size", sizeInBytes);
@@ -878,7 +883,8 @@ rocblaslt_status rocblaslt_matmul_desc_get_attribute(rocblaslt_matmul_desc      
                 memcpy(buf, &matmulDesc->bias, sizeof(void*));
                 break;
             case ROCBLASLT_MATMUL_DESC_A_SCALE_POINTER:
-                if(sizeWritten) *sizeWritten = sizeof(void*);
+                if(sizeWritten)
+                    *sizeWritten = sizeof(void*);
                 if(sizeInBytes < sizeof(void*))
                 {
                     log_error(__func__, "invalid buf size", sizeInBytes);
@@ -887,7 +893,8 @@ rocblaslt_status rocblaslt_matmul_desc_get_attribute(rocblaslt_matmul_desc      
                 memcpy(buf, &matmulDesc->scaleA, sizeof(void*));
                 break;
             case ROCBLASLT_MATMUL_DESC_B_SCALE_POINTER:
-                if(sizeWritten) *sizeWritten = sizeof(void*);
+                if(sizeWritten)
+                    *sizeWritten = sizeof(void*);
                 if(sizeInBytes < sizeof(void*))
                 {
                     log_error(__func__, "invalid buf size", sizeInBytes);
@@ -896,7 +903,8 @@ rocblaslt_status rocblaslt_matmul_desc_get_attribute(rocblaslt_matmul_desc      
                 memcpy(buf, &matmulDesc->scaleB, sizeof(void*));
                 break;
             case ROCBLASLT_MATMUL_DESC_POINTER_MODE:
-                if(sizeWritten) *sizeWritten = sizeof(int32_t);
+                if(sizeWritten)
+                    *sizeWritten = sizeof(int32_t);
                 if(sizeInBytes < sizeof(int32_t))
                 {
                     log_error(__func__, "invalid buf size", sizeInBytes);
@@ -905,7 +913,8 @@ rocblaslt_status rocblaslt_matmul_desc_get_attribute(rocblaslt_matmul_desc      
                 memcpy(buf, &matmulDesc->pointermode, sizeof(void*));
                 break;
             case ROCBLASLT_MATMUL_DESC_BIAS_DATA_TYPE:
-                if(sizeWritten) *sizeWritten = sizeof(int32_t);
+                if(sizeWritten)
+                    *sizeWritten = sizeof(int32_t);
                 if(sizeInBytes < sizeof(int32_t))
                 {
                     log_error(__func__, "invalid buf size", sizeInBytes);
@@ -1143,10 +1152,10 @@ rocblaslt_status rocblaslt_matmul_is_algo_supported(rocblaslt_handle        hand
     rocblaslt_status status = rocblaslt_status_success;
     try
     {
-        hipblasltDatatype_t    a_type       = matA->type;
-        hipblasltDatatype_t    b_type       = matB->type;
-        hipblasltDatatype_t    c_type       = matC->type;
-        hipblasltDatatype_t    d_type       = matD->type;
+        hipDataType            a_type       = matA->type;
+        hipDataType            b_type       = matB->type;
+        hipDataType            c_type       = matC->type;
+        hipDataType            d_type       = matD->type;
         rocblaslt_compute_type compute_type = matmul_descr->compute_type;
         auto&                  gemmData     = matmul_descr->m_data;
 
@@ -1199,10 +1208,10 @@ rocblaslt_status
     rocblaslt_status status = rocblaslt_status_success;
     try
     {
-        hipblasltDatatype_t    a_type       = matA->type;
-        hipblasltDatatype_t    b_type       = matB->type;
-        hipblasltDatatype_t    c_type       = matC->type;
-        hipblasltDatatype_t    d_type       = matD->type;
+        hipDataType            a_type       = matA->type;
+        hipDataType            b_type       = matB->type;
+        hipDataType            c_type       = matC->type;
+        hipDataType            d_type       = matD->type;
         rocblaslt_compute_type compute_type = matmul_desc->compute_type;
         auto&                  tensile_data = matmul_desc->m_data;
 
@@ -1240,10 +1249,10 @@ void rocblaslt_init_gemmData(rocblaslt_handle       handle,
                              rocblaslt::RocGemmType gemmType,
                              hipblasOperation_t     opA,
                              hipblasOperation_t     opB,
-                             hipblasltDatatype_t    typeA,
-                             hipblasltDatatype_t    typeB,
-                             hipblasltDatatype_t    typeC,
-                             hipblasltDatatype_t    typeD,
+                             hipDataType            typeA,
+                             hipDataType            typeB,
+                             hipDataType            typeC,
+                             hipDataType            typeD,
                              rocblaslt_compute_type typeCompute,
                              size_t                 maxWorkspaceBytes,
                              std::shared_ptr<void>& gemmData)
@@ -1266,10 +1275,10 @@ rocblaslt_status rocblaslt_matmul_get_all_algos_cpp(
     rocblaslt::RocGemmType                          typeGemm,
     hipblasOperation_t                              opA,
     hipblasOperation_t                              opB,
-    hipblasltDatatype_t                             typeA,
-    hipblasltDatatype_t                             typeB,
-    hipblasltDatatype_t                             typeC,
-    hipblasltDatatype_t                             typeD,
+    hipDataType                                     typeA,
+    hipDataType                                     typeB,
+    hipDataType                                     typeC,
+    hipDataType                                     typeD,
     rocblaslt_compute_type                          typeCompute,
     std::vector<rocblaslt_matmul_heuristic_result>& heuristicResults)
 {
@@ -1280,7 +1289,7 @@ rocblaslt_status rocblaslt_matmul_get_all_algos_cpp(
         return rocblaslt_status_invalid_handle;
     }
     // Create dummy
-    auto initMat = [](_rocblaslt_matrix_layout& mat, hipblasltDatatype_t type) {
+    auto initMat = [](_rocblaslt_matrix_layout& mat, hipDataType type) {
         mat.m    = 1;
         mat.n    = 1;
         mat.ld   = 1;

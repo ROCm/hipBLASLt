@@ -132,11 +132,11 @@ namespace hipblaslt_ext
     Gemm::Gemm(hipblasLtHandle_t      handle,
                hipblasOperation_t     opA,
                hipblasOperation_t     opB,
-               hipblasltDatatype_t    typeA,
-               hipblasltDatatype_t    typeB,
-               hipblasltDatatype_t    typeC,
-               hipblasltDatatype_t    typeD,
-               hipblasLtComputeType_t typeCompute)
+               hipDataType            typeA,
+               hipDataType            typeB,
+               hipDataType            typeC,
+               hipDataType            typeD,
+               hipblasComputeType_t typeCompute)
         : GemmInstance(handle, GemmType::HIPBLASLT_GEMM)
     {
         m_problem_types.push_back({opA, opB, typeA, typeB, typeC, typeD, typeCompute});
@@ -291,11 +291,11 @@ namespace hipblaslt_ext
     HIPBLASLT_EXPORT GroupedGemm::GroupedGemm(hipblasLtHandle_t      handle,
                                               hipblasOperation_t     opA,
                                               hipblasOperation_t     opB,
-                                              hipblasltDatatype_t    typeA,
-                                              hipblasltDatatype_t    typeB,
-                                              hipblasltDatatype_t    typeC,
-                                              hipblasltDatatype_t    typeD,
-                                              hipblasLtComputeType_t typeCompute)
+                                              hipDataType            typeA,
+                                              hipDataType            typeB,
+                                              hipDataType            typeC,
+                                              hipDataType            typeD,
+                                              hipblasComputeType_t typeCompute)
         : GemmInstance(handle, GemmType::HIPBLASLT_GROUPED_GEMM)
     {
         m_problem_types.push_back({opA, opB, typeA, typeB, typeC, typeD, typeCompute});
@@ -530,11 +530,11 @@ namespace hipblaslt_ext
                                 GemmType                                       typeGemm,
                                 hipblasOperation_t                             opA,
                                 hipblasOperation_t                             opB,
-                                hipblasltDatatype_t                            typeA,
-                                hipblasltDatatype_t                            typeB,
-                                hipblasltDatatype_t                            typeC,
-                                hipblasltDatatype_t                            typeD,
-                                hipblasLtComputeType_t                         typeCompute,
+                                hipDataType                                    typeA,
+                                hipDataType                                    typeB,
+                                hipDataType                                    typeC,
+                                hipDataType                                    typeD,
+                                hipblasComputeType_t                         typeCompute,
                                 std::vector<hipblasLtMatmulHeuristicResult_t>& heuristicResults)
     try
     {

@@ -65,13 +65,13 @@ namespace
             (std::is_same<TiA, hipblasLtHalf>{} && std::is_same<TiB, hipblasLtHalf>{})
             || (std::is_same<TiA, hip_bfloat16>{} && std::is_same<TiB, hip_bfloat16>{})
             || (std::is_same<TiA, float>{} && std::is_same<TiB, float>{})
-            || (std::is_same<TiA, hipblaslt_f8>{} && std::is_same<TiB, hipblaslt_f8>{})
-            || (std::is_same<TiA, hipblaslt_bf8>{} && std::is_same<TiB, hipblaslt_f8>{})
-            || (std::is_same<TiA, hipblaslt_f8>{} && std::is_same<TiB, hipblaslt_bf8>{})
+            || (std::is_same<TiA, hipblaslt_f8_fnuz>{} && std::is_same<TiB, hipblaslt_f8_fnuz>{})
+            || (std::is_same<TiA, hipblaslt_bf8_fnuz>{} && std::is_same<TiB, hipblaslt_f8_fnuz>{})
+            || (std::is_same<TiA, hipblaslt_f8_fnuz>{} && std::is_same<TiB, hipblaslt_bf8_fnuz>{})
             || (std::is_same<TiA, double>{} && std::is_same<TiB, double>{})
             || (std::is_same<TiA, hipblasLtInt8>{} && std::is_same<TiB, hipblasLtInt8>{})
-            || (std::is_same<TiA, hipblaslt_f8>{} && std::is_same<TiB, hipblasLtHalf>{})
-            || (std::is_same<TiA, hipblasLtHalf>{} && std::is_same<TiB, hipblaslt_f8>{})>>
+            || (std::is_same<TiA, hipblaslt_f8_fnuz>{} && std::is_same<TiB, hipblasLtHalf>{})
+            || (std::is_same<TiA, hipblasLtHalf>{} && std::is_same<TiB, hipblaslt_f8_fnuz>{})>>
         : hipblaslt_test_valid
     {
         void operator()(const Arguments& arg)
@@ -110,11 +110,9 @@ namespace
             }
             else
             {
-                name << hipblaslt_datatype_to_string(arg.a_type)
-                     << hipblaslt_datatype_to_string(arg.b_type)
-                     << hipblaslt_datatype_to_string(arg.c_type)
-                     << hipblaslt_datatype_to_string(arg.d_type)
-                     << hipblaslt_computetype_to_string(arg.compute_type);
+                name << hip_datatype_to_string(arg.a_type) << hip_datatype_to_string(arg.b_type)
+                     << hip_datatype_to_string(arg.c_type) << hip_datatype_to_string(arg.d_type)
+                     << hipblas_computetype_to_string(arg.compute_type);
 
                 if(arg.activation_type != hipblaslt_activation_type::none)
                 {
@@ -125,7 +123,7 @@ namespace
                 {
                     name << "_BIAS" << hipblaslt_bias_source_to_string(arg.bias_source);
                     if(arg.d_type != arg.scale_type && arg.bias_type == arg.scale_type)
-                        name << hipblaslt_datatype_to_string(arg.bias_type);
+                        name << hip_datatype_to_string(arg.bias_type);
                 }
 
                 if(arg.gradient)
@@ -145,9 +143,9 @@ namespace
 
                 name << '_' << (char)std::toupper(arg.transA) << (char)std::toupper(arg.transB);
 
-                name << '_' << arg.M[0] << '_' << arg.N[0] << '_' << arg.K[0] << '_' << arg.alpha << '_'
-                     << arg.lda[0] << '_' << arg.ldb[0] << '_' << arg.beta << '_' << arg.ldc[0] << '_'
-                     << arg.ldd[0];
+                name << '_' << arg.M[0] << '_' << arg.N[0] << '_' << arg.K[0] << '_' << arg.alpha
+                     << '_' << arg.lda[0] << '_' << arg.ldb[0] << '_' << arg.beta << '_'
+                     << arg.ldc[0] << '_' << arg.ldd[0];
 
                 if(arg.use_e)
                 {

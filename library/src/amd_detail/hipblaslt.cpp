@@ -145,7 +145,7 @@ catch(...)
 }
 
 hipblasStatus_t hipblasLtMatrixLayoutCreate(hipblasLtMatrixLayout_t* matDescr,
-                                            hipblasltDatatype_t      valueType,
+                                            hipDataType              valueType,
                                             uint64_t                 rows,
                                             uint64_t                 cols,
                                             int64_t                  ld)
@@ -171,8 +171,8 @@ catch(...)
 }
 
 hipblasStatus_t hipblasLtMatmulDescCreate(hipblasLtMatmulDesc_t* matmulDesc,
-                                          hipblasLtComputeType_t computeType,
-                                          hipblasltDatatype_t    scaleType)
+                                          hipblasComputeType_t computeType,
+                                          hipDataType            scaleType)
 try
 {
     return RocBlasLtStatusToHIPStatus(rocblaslt_matmul_desc_create(
@@ -395,108 +395,125 @@ catch(...)
 }
 
 hipblasStatus_t hipblasLtMatrixTransformDescCreate(hipblasLtMatrixTransformDesc_t* transformDesc,
-                                                   hipblasltDatatype_t scaleType)
+                                                   hipDataType                     scaleType)
 {
-    static_assert(sizeof(rocblaslt_matrix_transform_desc) <= sizeof(hipblasLtMatrixTransformDescOpaque_t),
-        "hipblasLtMatrixTransformDescOpaque_t must have enough space");
+    static_assert(sizeof(rocblaslt_matrix_transform_desc)
+                      <= sizeof(hipblasLtMatrixTransformDescOpaque_t),
+                  "hipblasLtMatrixTransformDescOpaque_t must have enough space");
     rocblaslt_matrix_transform_desc desc;
     desc.scaleType = scaleType;
     *transformDesc = new hipblasLtMatrixTransformDescOpaque_t;
     memcpy((*transformDesc)->data, &desc, sizeof(desc));
-    return HIPBLAS_STATUS_SUCCESS; 
+    return HIPBLAS_STATUS_SUCCESS;
 }
 
 hipblasStatus_t hipblasLtMatrixTransformDescDestroy(hipblasLtMatrixTransformDesc_t transformDesc)
 {
-    if (transformDesc)
+    if(transformDesc)
         delete transformDesc;
-    return HIPBLAS_STATUS_SUCCESS; 
+    return HIPBLAS_STATUS_SUCCESS;
 }
 
-hipblasStatus_t hipblasLtMatrixTransformDescSetAttribute(
-    hipblasLtMatrixTransformDesc_t transformDesc,
-    hipblasLtMatrixTransformDescAttributes_t attr,
-    const void* buf,
-    size_t sizeInBytes)
+hipblasStatus_t
+    hipblasLtMatrixTransformDescSetAttribute(hipblasLtMatrixTransformDesc_t           transformDesc,
+                                             hipblasLtMatrixTransformDescAttributes_t attr,
+                                             const void*                              buf,
+                                             size_t                                   sizeInBytes)
 {
-    if (!buf || sizeInBytes != sizeof(int32_t)) {
+    if(!buf || sizeInBytes != sizeof(int32_t))
+    {
         return HIPBLAS_STATUS_INVALID_VALUE;
     }
 
-    rocblaslt_matrix_transform_desc *desc = reinterpret_cast<rocblaslt_matrix_transform_desc *>(&transformDesc->data[0]);
+    rocblaslt_matrix_transform_desc* desc
+        = reinterpret_cast<rocblaslt_matrix_transform_desc*>(&transformDesc->data[0]);
     // all possible values should be int32_t
     assert(sizeInBytes == sizeof(int32_t));
     int32_t value{};
     memcpy(&value, buf, sizeInBytes);
 
-    switch (attr) {
-        case HIPBLASLT_MATRIX_TRANSFORM_DESC_SCALE_TYPE: {
-            desc->scaleType = static_cast<hipblasltDatatype_t>(value);
-            break;
-        }
-        case HIPBLASLT_MATRIX_TRANSFORM_DESC_POINTER_MODE: {
-            desc->pointerMode = static_cast<hipblasLtPointerMode_t>(value);
-            break;
-        }
-        case HIPBLASLT_MATRIX_TRANSFORM_DESC_TRANSA: {
-            desc->opA = static_cast<hipblasOperation_t>(value);
-            break;
-        }
-        case HIPBLASLT_MATRIX_TRANSFORM_DESC_TRANSB: {
-            desc->opB = static_cast<hipblasOperation_t>(value);
-            break;
-        }
-        default:
-            assert(false && "Unknown attribute");
-            return HIPBLAS_STATUS_INVALID_VALUE;
-            break;
+    switch(attr)
+    {
+    case HIPBLASLT_MATRIX_TRANSFORM_DESC_SCALE_TYPE:
+    {
+        desc->scaleType = static_cast<hipDataType>(value);
+        break;
+    }
+    case HIPBLASLT_MATRIX_TRANSFORM_DESC_POINTER_MODE:
+    {
+        desc->pointerMode = static_cast<hipblasLtPointerMode_t>(value);
+        break;
+    }
+    case HIPBLASLT_MATRIX_TRANSFORM_DESC_TRANSA:
+    {
+        desc->opA = static_cast<hipblasOperation_t>(value);
+        break;
+    }
+    case HIPBLASLT_MATRIX_TRANSFORM_DESC_TRANSB:
+    {
+        desc->opB = static_cast<hipblasOperation_t>(value);
+        break;
+    }
+    default:
+        assert(false && "Unknown attribute");
+        return HIPBLAS_STATUS_INVALID_VALUE;
+        break;
     }
     return HIPBLAS_STATUS_SUCCESS;
 }
 
-hipblasStatus_t hipblasLtMatrixTransformDescGetAttribute(
-    hipblasLtMatrixTransformDesc_t transformDesc,
-    hipblasLtMatrixTransformDescAttributes_t attr,
-    void* buf,
-    size_t sizeInBytes,
-    size_t* sizeWritten)
+hipblasStatus_t
+    hipblasLtMatrixTransformDescGetAttribute(hipblasLtMatrixTransformDesc_t           transformDesc,
+                                             hipblasLtMatrixTransformDescAttributes_t attr,
+                                             void*                                    buf,
+                                             size_t                                   sizeInBytes,
+                                             size_t*                                  sizeWritten)
 {
-    if (!sizeInBytes && !sizeWritten) {
+    if(!sizeInBytes && !sizeWritten)
+    {
         return HIPBLAS_STATUS_INVALID_VALUE;
     }
 
-    if (sizeInBytes && !sizeWritten) {
+    if(sizeInBytes && !sizeWritten)
+    {
         return HIPBLAS_STATUS_INVALID_VALUE;
     }
 
-    if (sizeInBytes != sizeof(int32_t)) {
+    if(sizeInBytes != sizeof(int32_t))
+    {
         return HIPBLAS_STATUS_INVALID_VALUE;
     }
 
-    rocblaslt_matrix_transform_desc *desc = reinterpret_cast<rocblaslt_matrix_transform_desc *>(&transformDesc->data[0]);
+    rocblaslt_matrix_transform_desc* desc
+        = reinterpret_cast<rocblaslt_matrix_transform_desc*>(&transformDesc->data[0]);
     int32_t value{};
 
-    switch (attr) {
-        case HIPBLASLT_MATRIX_TRANSFORM_DESC_SCALE_TYPE: {
-            value = static_cast<int32_t>(desc->scaleType);
-            break;
-        }
-        case HIPBLASLT_MATRIX_TRANSFORM_DESC_POINTER_MODE: {
-            value = static_cast<int32_t>(desc->pointerMode);
-            break;
-        }
-        case HIPBLASLT_MATRIX_TRANSFORM_DESC_TRANSA: {
-            value = static_cast<int32_t>(desc->opA);
-            break;
-        }
-        case HIPBLASLT_MATRIX_TRANSFORM_DESC_TRANSB: {
-            value = static_cast<int32_t>(desc->opB);
-            break;
-        }
-        default:
-            return HIPBLAS_STATUS_INVALID_VALUE;
-            assert(false && "Unknown attribute");
-            break;
+    switch(attr)
+    {
+    case HIPBLASLT_MATRIX_TRANSFORM_DESC_SCALE_TYPE:
+    {
+        value = static_cast<int32_t>(desc->scaleType);
+        break;
+    }
+    case HIPBLASLT_MATRIX_TRANSFORM_DESC_POINTER_MODE:
+    {
+        value = static_cast<int32_t>(desc->pointerMode);
+        break;
+    }
+    case HIPBLASLT_MATRIX_TRANSFORM_DESC_TRANSA:
+    {
+        value = static_cast<int32_t>(desc->opA);
+        break;
+    }
+    case HIPBLASLT_MATRIX_TRANSFORM_DESC_TRANSB:
+    {
+        value = static_cast<int32_t>(desc->opB);
+        break;
+    }
+    default:
+        return HIPBLAS_STATUS_INVALID_VALUE;
+        assert(false && "Unknown attribute");
+        break;
     }
 
     memcpy(buf, &value, sizeInBytes);
@@ -504,29 +521,30 @@ hipblasStatus_t hipblasLtMatrixTransformDescGetAttribute(
     return HIPBLAS_STATUS_SUCCESS;
 }
 
-hipblasStatus_t hipblasLtMatrixTransform(hipblasLtHandle_t lightHandle,
+hipblasStatus_t hipblasLtMatrixTransform(hipblasLtHandle_t              lightHandle,
                                          hipblasLtMatrixTransformDesc_t transformDesc,
-                                         const void* alpha, /* host or device pointer */
-                                         const void* A,
+                                         const void*             alpha, /* host or device pointer */
+                                         const void*             A,
                                          hipblasLtMatrixLayout_t Adesc,
-                                         const void* beta, /* host or device pointer */
-                                         const void* B,
+                                         const void*             beta, /* host or device pointer */
+                                         const void*             B,
                                          hipblasLtMatrixLayout_t Bdesc,
-                                         void* C,
+                                         void*                   C,
                                          hipblasLtMatrixLayout_t Cdesc,
-                                         hipStream_t stream)
+                                         hipStream_t             stream)
 {
-    return RocBlasLtStatusToHIPStatus(rocblaslt_matrix_transform((rocblaslt_handle)lightHandle,
-                                                                reinterpret_cast<rocblaslt_matrix_transform_desc *>(&transformDesc->data[0]),
-                                                                alpha,
-                                                                A,
-                                                                (rocblaslt_matrix_layout)Adesc,
-                                                                beta,
-                                                                B,
-                                                                (rocblaslt_matrix_layout)Bdesc,
-                                                                C,
-                                                                (rocblaslt_matrix_layout)Cdesc,
-                                                                stream));
+    return RocBlasLtStatusToHIPStatus(rocblaslt_matrix_transform(
+        (rocblaslt_handle)lightHandle,
+        reinterpret_cast<rocblaslt_matrix_transform_desc*>(&transformDesc->data[0]),
+        alpha,
+        A,
+        (rocblaslt_matrix_layout)Adesc,
+        beta,
+        B,
+        (rocblaslt_matrix_layout)Bdesc,
+        C,
+        (rocblaslt_matrix_layout)Cdesc,
+        stream));
 }
 
 // Other Utilities

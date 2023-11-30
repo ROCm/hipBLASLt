@@ -10,7 +10,8 @@
 - Support fp8/bf8 datatype (only for gfx94x platform)
 - Support Scalar A,B,C,D for fp8/bf8 datatype
 ### Changed
-- Replace hipblasDatatype_t with hipblasltDatatype_t
+- Replace hipblasDatatype_t with hipDataType
+- Replace hipblasLtComputeType_t with hipblasComputeType_t
 - Deprecate HIPBLASLT_MATMUL_DESC_D_SCALE_VECTOR_POINTER
 
 ## (Unreleased) hipBLASLt 0.3.0
