@@ -142,6 +142,7 @@ namespace Tensile
                 {
                     auto problem = problems[idx];
                     problem.setWorkspaceSizeGroupedGemm(ws);
+                    problem.setGroupedGemmCount(problems.size());
                     if(!(*solution->problemPredicate)(problem))
                         return std::shared_ptr<MySolution>();
                 }
@@ -225,6 +226,7 @@ namespace Tensile
                     {
                         auto problem = problems[idx];
                         problem.setWorkspaceSizeGroupedGemm(ws);
+                        problem.setGroupedGemmCount(problems.size());
                         if(!(*solution->problemPredicate)(problem))
                             useSolution = false;
                     }

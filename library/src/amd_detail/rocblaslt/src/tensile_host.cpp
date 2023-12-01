@@ -756,6 +756,8 @@ namespace
         // Set the GSU workspace
         inputs.ws = prob.workspace;
 
+        inputs.Synchronizer = prob.Synchronizer;
+
         // set bias vector
         inputs.bias          = reinterpret_cast<const void*>(prob.bias);
         inputs.scaleA        = reinterpret_cast<const void*>(prob.scaleA);
@@ -2247,6 +2249,10 @@ rocblaslt_status isSolutionSupported(rocblaslt_handle            handle,
         for(int i = 0; i < tensile_prob.gemms.size(); i++)
         {
             tensile_prob.gemms[i].setWorkspaceSize(algo->max_workspace_bytes);
+            tensile_prob.gemms[i].setGroupedGemmCount(tensile_prob.gemms.size());
+        }
+        for(int i = 0; i < tensile_prob.gemms.size(); i++)
+        {
             if(!((*solution->hardwarePredicate)(*hardware)
                  && (*solution->problemPredicate)(tensile_prob.gemms[i])))
             {
@@ -2457,6 +2463,7 @@ rocblaslt_status getBestSolutions(rocblaslt_handle       handle,
         for(int i = 0; i < data->problem.gemms.size(); i++)
         {
             data->problem.gemms[i].setWorkspaceSize(workspaceBytes);
+            data->problem.gemms[i].setGroupedGemmCount(data->problem.gemms.size());
         }
 
         // Fallback to original kernels

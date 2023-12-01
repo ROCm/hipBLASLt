@@ -235,6 +235,7 @@ namespace Tensile
             SCALED        = 9,
             SCALEALPHAVEC = 10,
             METADATA      = 11,
+            Synchronizer  = 12,
             TENSOR_COUNT
         };
 
@@ -729,6 +730,15 @@ namespace Tensile
             }
         }
 
+        void setSynchronizer(DataType type, size_t length)
+        {
+            if(type != DataType::None)
+            {
+                m_tensors[ContractionProblemGemm::TENSOR::Synchronizer]
+                    = {"Synchronizer", type, {length}, {1, length}};
+            }
+        }
+
         void setBetaRestriction(ScalarValue beta)
         {
             m_betaRestriction = beta;
@@ -752,6 +762,16 @@ namespace Tensile
         void setGroupedGemm(bool value)
         {
             m_groupedGemm = value;
+        }
+
+        void setGroupedGemmCount(int value)
+        {
+            m_groupedGemmCount = value;
+        }
+
+        int groupedGemmCount() const
+        {
+            return m_groupedGemmCount;
         }
 
         bool groupedGemm() const
@@ -1057,6 +1077,7 @@ namespace Tensile
         bool           m_cEqualsD                = false;
         bool           m_stridedBatched          = true;
         bool           m_groupedGemm             = false;
+        int            m_groupedGemmCount        = std::numeric_limits<int>::max();
         bool           m_highPrecisionAccumulate = false;
         bool           m_deterministicMode       = false;
         bool           m_eligibleForPK           = true;
@@ -1165,6 +1186,7 @@ namespace Tensile
                           void const*          _scaleD,
                           void const*          _scaleAlphaVec,
                           void*                _ws,
+                          void*                _Synchronizer,
                           unsigned char const* _metadata);
 
         // TODO: Remove this
@@ -1193,8 +1215,9 @@ namespace Tensile
         std::vector<ConstantVariant> activationArgs;
 
         // Workspace
-        void*                ws       = nullptr;
-        unsigned char const* metadata = nullptr;
+        void*                ws           = nullptr;
+        void*                Synchronizer = nullptr;
+        unsigned char const* metadata     = nullptr;
 
         std::vector<size_t> maxElements;
         size_t              workspaceSize;

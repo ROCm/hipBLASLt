@@ -32,6 +32,7 @@
 #include <Tensile/Predicates.hpp>
 
 #include <array>
+#include <cmath>
 #include <cstddef>
 #include <limits>
 #include <vector>
@@ -197,6 +198,59 @@ namespace Tensile
                 {
                     return debugEvalCmp(
                         problem, stream, "prob", problem.batchSize(index), "==", "sol", value);
+                }
+            };
+
+            struct SynchronizerSizeCheck
+                : public Predicate_CRTP<SynchronizerSizeCheck, ContractionProblemGemm>
+            {
+                enum
+                {
+                    HasIndex = true,
+                    HasValue = true
+                };
+                size_t             index;
+                std::array<int, 5> value;
+
+                SynchronizerSizeCheck() = default;
+                SynchronizerSizeCheck(size_t index, std::array<int, 5> value)
+                    : index(index)
+                    , value(value)
+                {
+                }
+
+                static std::string Type()
+                {
+                    return "SynchronizerSizeCheck";
+                }
+
+                virtual bool operator()(ContractionProblemGemm const& problem) const override
+                {
+                    // WorkGroup numbers x number of global write instruction x Wave numbers
+                    // M/MT0 x N/MT1 x NumElementsPerThread/StoreVectorWidth x x Wavenumbers
+                    bool ret = (std::ceil(static_cast<float>(problem.freeSizeA(0)) / value[0])
+                                * std::ceil(static_cast<float>(problem.freeSizeB(0)) / value[1]))
+                                   * (value[2] / value[3]) * (value[4] / 64)
+                               <= 1024;
+                    if(problem.groupedGemm())
+                        ret = ret && (problem.groupedGemmCount() <= 16);
+
+                    return ret;
+                }
+
+                virtual bool debugEval(ContractionProblemGemm const& problem,
+                                       std::ostream&                 stream) const override
+                {
+                    return debugEvalCmp(
+                        problem,
+                        stream,
+                        "prob",
+                        (std::ceil(static_cast<float>(problem.freeSizeA(0)) / value[0])
+                         * std::ceil(static_cast<float>(problem.freeSizeB(0)) / value[1]))
+                            * (value[2] / value[3]) * (value[4] / 64),
+                        "==",
+                        "sol",
+                        1024);
                 }
             };
 
