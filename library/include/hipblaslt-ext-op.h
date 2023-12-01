@@ -161,7 +161,7 @@ HIPBLASLT_EXPORT hipblasStatus_t hipblasltExtLayerNorm(hipDataType datatype,
  *
  *  \retval HIPBLAS_STATUS_SUCCESS If it runs successfully.
  *  \retval HIPBLAS_STATUS_INVALID_VALUE If \p m is greater than 4096.
- *  \retval HIPBLAS_STATUS_NOT_SUPPORTED if \p datatype is not (HIP_R_32F or HIP_R_16F).
+ *  \retval HIPBLAS_STATUS_NOT_SUPPORTED if \p datatype is not (HIPBLASLT_R_32F or HIPBLASLT_R_16F).
  */
 HIPBLASLT_EXPORT hipblasStatus_t hipblasltExtAMax(const hipDataType datatype,
                                                   const hipDataType outDatatype,
