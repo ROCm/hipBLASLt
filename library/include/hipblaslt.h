@@ -264,7 +264,15 @@ typedef struct {
   uint64_t data[8];
 } hipblasLtMatrixTransformDescOpaque_t;
 
-/*! Opaque descriptor for hipblasLtMatrixTransform() operation details
+/*! \ingroup types_module
+ *  \brief Opaque descriptor for hipblasLtMatrixTransform() operation details
+ *
+ *  \details
+ *  The hipblasLtMatrixTransformDesc_t is a pointer to an opaque structure holding the description of a matrix transformation operation.
+ *  \ref hipblasLtMatrixTransformDescCreate():
+ *  To create one instance of the descriptor.
+ *  \ref hipblasLtMatrixTransformDescDestroy():
+ *  To destroy a previously created descriptor and release the resources.
  */
 typedef hipblasLtMatrixTransformDescOpaque_t* hipblasLtMatrixTransformDesc_t;
 /*! \ingroup types_module
@@ -901,7 +909,7 @@ hipblasStatus_t hipblasLtMatrixTransformDescSetAttribute( //
  * \retval HIPBLAS_STATUS_SUCCESS        if attribute's value was successfully written to user memory
  */
 HIPBLASLT_EXPORT
-hipblasStatus_t hipblasLtMatrixTransformDescGetAttribute( //
+hipblasStatus_t hipblasLtMatrixTransformDescGetAttribute(
     hipblasLtMatrixTransformDesc_t           transformDesc,
     hipblasLtMatrixTransformDescAttributes_t attr,
     void*                                    buf,
