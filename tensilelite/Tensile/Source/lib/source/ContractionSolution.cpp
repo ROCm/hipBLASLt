@@ -541,7 +541,7 @@ namespace Tensile
         if(gsu > 1 && sizeMapping.globalAccumulation)
         {
             args.template append<void const*>("ws_d", (uint8_t*)inputs.ws + workspaceOffsetInByte);
-            if(sizeMapping.customKernelName != "")
+            if(sizeMapping.customKernelName != "" && gsu > 1)
             {
                 args.template append<void const*>("c", inputs.c);
             }
@@ -625,7 +625,7 @@ namespace Tensile
                                                metadata.strides()[i]);
         }
 
-        if((sizeMapping.globalAccumulation == 2) && (sizeMapping.customKernelName != ""))
+        if((sizeMapping.globalAccumulation == 2) && (sizeMapping.customKernelName != "" && gsu > 1))
         {
             args.template append<void const*>("dstD", inputs.d);
         }
@@ -811,7 +811,7 @@ namespace Tensile
 
         singleCallArgs<T_Debug, true>(problem, inputs, 0, rv.args);
 
-        if((sizeMapping.globalAccumulation == 2) && (sizeMapping.customKernelName != ""))
+        if((sizeMapping.globalAccumulation == 2) && (sizeMapping.customKernelName != "" && gsu > 1))
         {
             rv.args.append<uint32_t>("GSUSync", 0);
         }
@@ -988,6 +988,9 @@ namespace Tensile
         rv.numWorkItems.y = rv.workGroupSize.y * rv.numWorkGroups.y;
         rv.numWorkItems.z = rv.workGroupSize.z * rv.numWorkGroups.z;
 
+        uint32_t gsu
+            = problem.getParams().gsu() > 0 ? problem.getParams().gsu() : sizeMapping.globalSplitU;
+
         if(sizeMapping.globalAccumulation)
             rv.args.append<void*>("WS", inputs.ws);
         else if(problemType.stridedBatched)
@@ -1001,7 +1004,7 @@ namespace Tensile
             rv.args.append<void const* const*>("batchC", inputs.batchC);
 
         if(problemType.useBias
-           && (sizeMapping.globalAccumulation == 0 || (sizeMapping.customKernelName != ""))
+           && (sizeMapping.globalAccumulation == 0 || (sizeMapping.customKernelName != "" && gsu > 1))
            && (!problemType.useGradient))
         {
             if(problemType.stridedBatched)
@@ -1020,7 +1023,7 @@ namespace Tensile
             rv.args.append<void const*>("scaleD", inputs.scaleD);
         }
         if(problemType.useScaleAlphaVec
-           && (sizeMapping.globalAccumulation == 0 || (sizeMapping.customKernelName != "")))
+           && (sizeMapping.globalAccumulation == 0 || (sizeMapping.customKernelName != "" && gsu > 1)))
         {
             rv.args.append<void const*>("scaleAlphaVec", inputs.scaleAlphaVec);
         }
@@ -1047,7 +1050,7 @@ namespace Tensile
                                      c.sizes()[i] == 1 ? 0 : c.strides()[i]);
 
         if(problemType.useBias
-           && (sizeMapping.globalAccumulation == 0 || (sizeMapping.customKernelName != ""))
+           && (sizeMapping.globalAccumulation == 0 || (sizeMapping.customKernelName != "" && gsu > 1))
            && (!problemType.useGradient))
         {
             TensorDescriptor const& bias = problem.tensor(ContractionProblemGemm::TENSOR::BIAS);
@@ -1093,6 +1096,8 @@ namespace Tensile
 
     std::string ContractionSolution::betaOnlyKernelName(Problem const& problem) const
     {
+        uint32_t gsu
+            = problem.getParams().gsu() > 0 ? problem.getParams().gsu() : sizeMapping.globalSplitU;
         std::string name = concatenate(
             "C", problem.cNames(), "_", DataTypeInfo::Get(problem.d().dataType()).abbrev);
 
@@ -1106,7 +1111,7 @@ namespace Tensile
         }
 
         if(problemType.useBias
-           && ((sizeMapping.globalAccumulation == 0) || (sizeMapping.customKernelName != ""))
+           && ((sizeMapping.globalAccumulation == 0) || (sizeMapping.customKernelName != "" && gsu > 1))
            && (!problemType.useGradient))
         {
             auto s = TypeAbbrev(problem.getParams().biasEnum());
@@ -2366,7 +2371,7 @@ namespace Tensile
         }
 
         // Custom kernel synchronizer
-        if(sizeMapping.customKernelName != "")
+        if(sizeMapping.customKernelName != "" && gsu > 1)
         {
             size += (int)ceil(problem.d().sizes()[0] / (float)sizeMapping.macroTile.x)
                     * (int)ceil(problem.d().sizes()[1] / (float)sizeMapping.macroTile.y)
