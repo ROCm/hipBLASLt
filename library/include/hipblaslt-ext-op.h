@@ -80,7 +80,7 @@ extern "C" {
 
 
 /*! \ingroup library_module
- *  \brief Perform 2-D layernorm on with srouce input tensor and result output tensor.
+ *  \brief Perform 2-D layernorm on with source input tensor and result output tensor.
  *
  *  \details
  *  This function computes layernorm on given 2D-tensor.
