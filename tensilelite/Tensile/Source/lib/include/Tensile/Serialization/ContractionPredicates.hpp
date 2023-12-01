@@ -60,6 +60,7 @@ namespace Tensile
                     Base::template Pair<Predicates::Contraction::Free1SizeMultiple>(),
                     Base::template Pair<Predicates::Contraction::BatchSizeMultiple>(),
                     Base::template Pair<Predicates::Contraction::BatchSizeEqual>(),
+                    Base::template Pair<Predicates::Contraction::SynchronizerSizeCheck>(),
                     Base::template Pair<Predicates::Contraction::BoundSizeMultiple>(),
                     Base::template Pair<Predicates::Contraction::MaxProblemSizeGreaterThan>(),
                     Base::template Pair<Predicates::Contraction::LeadingFree0SizesGreaterOrEqual>(),
@@ -152,6 +153,12 @@ namespace Tensile
         template <typename IO>
         struct MappingTraits<Predicates::Contraction::BatchSizeEqual, IO>
             : public AutoMappingTraits<Predicates::Contraction::BatchSizeEqual, IO>
+        {
+        };
+
+        template <typename IO>
+        struct MappingTraits<Predicates::Contraction::SynchronizerSizeCheck, IO>
+            : public AutoMappingTraits<Predicates::Contraction::SynchronizerSizeCheck, IO>
         {
         };
 

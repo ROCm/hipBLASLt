@@ -246,6 +246,7 @@ namespace Tensile
                         {
                             auto problem = problems[idx];
                             problem.setWorkspaceSizeGroupedGemm(ws);
+                            problem.setGroupedGemmCount(problems.size());
                             if(!(*row.second->problemPredicate)(problem))
                                 useSolution = false;
                         }
