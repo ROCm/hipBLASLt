@@ -9,4 +9,5 @@ subtrees:
     - file: datatypes
     - file: functions
     - file: usage
+    - file: ext-ops
     - file: clients
