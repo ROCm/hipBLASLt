@@ -2190,7 +2190,10 @@ namespace Tensile
         else
             rv.push_back(generateSingleCallGroupedGemm<false>(problems, inputs, h_args, dUA));
 
-        if(sizeMapping.globalAccumulation)
+        auto gsu = problems[0].getParams().gsu() > 0 ? problems[0].getParams().gsu()
+                                                     : sizeMapping.globalSplitU;
+
+        if(sizeMapping.globalAccumulation && gsu > 1)
         {
             if(debug)
                 rv.push_back(
