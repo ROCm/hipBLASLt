@@ -117,6 +117,7 @@ namespace Tensile
             static void mapping(IO& io, ContractionSolution::InternalArgsSupport& s)
             {
                 iot::mapRequired(io, "gsu", s.gsu);
+                iot::mapRequired(io, "wgm", s.wgm);
             }
 
             const static bool flow = false;

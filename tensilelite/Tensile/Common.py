@@ -313,7 +313,10 @@ internalParameters = {
 defaultInternalSupportParams = {
   # Information about user input internal kernel argument support
   # Change this to False if the CustomKernel does not support.
-  "SupportUserGSU": True
+  "SupportUserGSU": True,
+  # This is a little different from GSU because GSU is already a parameter,
+  # but WGM is not.
+  "SupportCustomWGM": True
 }
 
 ################################################################################

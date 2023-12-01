@@ -309,7 +309,7 @@ namespace Tensile
 
         // Kernel related arguments (e.g. MT, GSU...)
         template <bool T_Debug, typename KA>
-        void kernelArgs(KA& args, uint32_t gsu) const;
+        void kernelArgs(KA& args, const ContractionProblemParameters& param) const;
 
         template <typename KA>
         inline void calculateSingleCallWorkGroupItems(std::vector<Problem> const& problems,
@@ -424,6 +424,7 @@ namespace Tensile
         struct InternalArgsSupport
         {
             bool gsu = true;
+            bool wgm = true;
         };
 
         struct ProblemType
