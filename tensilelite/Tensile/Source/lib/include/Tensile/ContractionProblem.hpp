@@ -58,6 +58,16 @@ namespace Tensile
             return m_gsu;
         }
 
+        void setWgm(uint8_t wgm)
+        {
+            m_wgm = wgm;
+        }
+
+        uint8_t wgm() const
+        {
+            return m_wgm;
+        }
+
         void setBiasEnum(DataType dataType)
         {
             m_biasType = dataType;
@@ -85,6 +95,7 @@ namespace Tensile
 
     private:
         uint8_t        m_gsu            = 0; // default value
+        uint8_t        m_wgm            = 0; // default value
         DataType       m_biasType       = DataType::None;
         ActivationType m_activationType = ActivationType::None;
     };

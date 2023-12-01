@@ -540,11 +540,13 @@ class SizeMapping:
             setattr(self, key, value)
 
 class InternalArgsSupport:
-    StateKeys = ['gsu']
+    StateKeys = ['gsu',
+                 'wgm']
 
     @classmethod
     def FromOriginalState(cls, d):
-        return cls(gsu = d['InternalSupportParams']['SupportUserGSU'])
+        return cls(gsu = d['InternalSupportParams']['SupportUserGSU'],
+                   wgm = d['InternalSupportParams']['SupportCustomWGM'])
 
     def __init__(self, **kwargs):
         for (key, value) in list(kwargs.items()):
