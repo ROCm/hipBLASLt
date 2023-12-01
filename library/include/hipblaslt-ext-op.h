@@ -80,7 +80,7 @@ extern "C" {
 
 
 /*! \ingroup library_module
- *  \brief Perform layernorm on given tensor.
+ *  \brief Perform 2-D layernorm on with srouce input tensor and result output tensor.
  *
  *  \details
  *  This function computes layernorm on given 2D-tensor.
@@ -127,7 +127,7 @@ extern "C" {
         void *input, uint32_t m, uint32_t n, float eps, void *gamma, void *beta, hipStream_t stream);
 
 /*! \ingroup library_module
- *  \brief Perform amax on given tensor.
+ *  \brief Perform absmax on given tensor and output one value absmax(tensor) value.
  *
  *  \details
  *  This function computes amax on given 1D-tensor.
@@ -156,7 +156,7 @@ extern "C" {
  *
  *  \retval HIPBLAS_STATUS_SUCCESS If it runs successfully.
  *  \retval HIPBLAS_STATUS_INVALID_VALUE If \p m is greater than 4096.
- *  \retval HIPBLAS_STATUS_NOT_SUPPORTED if \p datatype is not HIPBLASLT_R_32F.
+ *  \retval HIPBLAS_STATUS_NOT_SUPPORTED if \p datatype is not (HIPBLASLT_R_32F or HIPBLASLT_R_16F).
  */
     HIPBLASLT_EXPORT hipblasStatus_t hipblasltExtAMax(const hipblasltDatatype_t datatype, const hipblasltDatatype_t outDatatype, void *output, void *input, uint32_t m, uint32_t n, hipStream_t stream);
 #ifdef __cplusplus
