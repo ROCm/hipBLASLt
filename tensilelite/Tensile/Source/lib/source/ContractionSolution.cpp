@@ -642,7 +642,7 @@ namespace Tensile
         }
 
         if constexpr(insertKernelArgs)
-            kernelArgs<T_Debug>(args, gsu);
+            kernelArgs<T_Debug>(args, problem.getParams());
 
         if(problemType.useScaleAB) //kernel input data
         {
@@ -744,11 +744,16 @@ namespace Tensile
     }
 
     template <bool T_Debug, typename KA>
-    void ContractionSolution::kernelArgs(KA& args, uint32_t gsu) const
+    void ContractionSolution::kernelArgs(KA& args, const ContractionProblemParameters& param) const
     {
+        uint32_t gsu = param.gsu() > 0 ? param.gsu() : sizeMapping.globalSplitU;
+        uint32_t wgm = param.wgm() > 0 ? param.wgm() : sizeMapping.workGroupMapping;
+        if(!internalArgsSupport.wgm)
+            wgm = 0;
+
         const uint32_t mask         = 0xFF;
         uint32_t       internalArg0 = mask & gsu;
-        uint32_t       wgShift8     = (mask & sizeMapping.workGroupMapping) << 8;
+        uint32_t       wgShift8     = (mask & wgm) << 8;
         internalArg0                = internalArg0 | wgShift8;
         args.template append<uint32_t>("internalArgs", internalArg0);
     }
@@ -944,9 +949,7 @@ namespace Tensile
             rv.args.append<void const*>("DeviceUserArguments", userArgs);
             rv.args.append<void const*>("argsPtr", (void*)inputs.ws);
             rv.args.append<uint32_t>("skipWgTableGen", 0);
-            uint32_t gsu = problems[0].getParams().gsu() > 0 ? problems[0].getParams().gsu()
-                                                             : sizeMapping.globalSplitU;
-            kernelArgs<T_Debug>(rv.args, gsu);
+            kernelArgs<T_Debug>(rv.args, problems[0].getParams());
             rv.codeObjectFile = codeObjectFilename.load();
         }
 
@@ -2328,15 +2331,34 @@ namespace Tensile
                 }
                 pass = false;
             }
+            if(!internalArgsSupport.wgm && gemmProblem->getParams().wgm() != 0)
+            {
+                if(debug)
+                {
+                    stream << "This solution does not support custom wgm." << std::endl;
+                }
+                pass = false;
+            }
         }
         else if(auto groupedProblem = dynamic_cast<ContractionProblemGroupedGemm const*>(&problem))
         {
-            if(debug)
+            if(gemmProblem->getParams().gsu() != 0)
             {
-                stream << "Currently grouped gemm does not support custom arguments tuning."
-                       << std::endl;
+                if(debug)
+                {
+                    stream << "Currently grouped gemm does not support custom arguments tuning."
+                           << std::endl;
+                }
+                pass = false;
             }
-            pass = false;
+            if(!internalArgsSupport.wgm && gemmProblem->getParams().wgm() != 0)
+            {
+                if(debug)
+                {
+                    stream << "This solution does not support custom wgm." << std::endl;
+                }
+                pass = false;
+            }
         }
         else
         {
