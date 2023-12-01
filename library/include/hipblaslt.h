@@ -131,7 +131,7 @@ typedef enum {
    */
   HIPBLASLT_MATRIX_LAYOUT_TYPE = 2,
 
-  /** Memory order of the data, see cublasLtOrder_t.
+  /** Memory order of the data, see hipblasLtOrder_t.
    *
    * int32_t, default: HIPBLASLT_ORDER_COL
    */
@@ -156,7 +156,7 @@ typedef enum {
   /** Matrix leading dimension.
    *
    * For HIPBLASLT_ORDER_COL this is stride (in elements) of matrix column, for more details and documentation for
-   * other memory orders see documentation for cublasLtOrder_t values.
+   * other memory orders see documentation for hipblasLtOrder_t values.
    *
    * Currently only non-negative values are supported, must be large enough so that matrix memory locations are not
    * overlapping (e.g. greater or equal to HIPBLASLT_MATRIX_LAYOUT_ROWS in case of HIPBLASLT_ORDER_COL).
@@ -229,19 +229,19 @@ typedef enum {
    */
   HIPBLASLT_MATRIX_TRANSFORM_DESC_SCALE_TYPE,
 
-  /** Pointer mode of alpha and beta, see cublasLtPointerMode_t.
+  /** Pointer mode of alpha and beta, see hipblasLtPointerMode_t.
    *
    * int32_t, default: HIPBLASLT_POINTER_MODE_HOST
    */
   HIPBLASLT_MATRIX_TRANSFORM_DESC_POINTER_MODE,
 
-  /** Transform of matrix A, see cublasOperation_t.
+  /** Transform of matrix A, see hipblasOperation_t.
    *
    * int32_t, default: HIPBLAS_OP_N
    */
   HIPBLASLT_MATRIX_TRANSFORM_DESC_TRANSA,
 
-  /** Transform of matrix B, see cublasOperation_t.
+  /** Transform of matrix B, see hipblasOperation_t.
    *
    * int32_t, default: HIPBLAS_OP_N
    */
@@ -892,7 +892,7 @@ hipblasStatus_t hipblasLtMatrixTransformDescSetAttribute( //
  * @param[in]  attr           The attribute
  * @param[out] buf            memory address containing the new value
  * @param[in]  sizeInBytes    size of buf buffer for verification (in bytes)
- * @param[out] sizeWritten    only valid when return value is CUBLAS_STATUS_SUCCESS. If sizeInBytes is non-zero: number
+ * @param[out] sizeWritten    only valid when return value is HIPBLAS_STATUS_SUCCESS. If sizeInBytes is non-zero: number
  * of bytes actually written, if sizeInBytes is 0: number of bytes needed to write full contents
  *
  * \retval HIPBLAS_STATUS_INVALID_VALUE  if sizeInBytes is 0 and sizeWritten is NULL, or if  sizeInBytes is non-zero
