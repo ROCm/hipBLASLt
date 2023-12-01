@@ -2,7 +2,7 @@
 hipBLASLtExt Operation Reference
 ********************************
 
-hipBLASLtExt Opertion API Reference
+hipBLASLtExt Operation API Reference
 ================================
 
 hipblasltExtSoftmax()
@@ -29,9 +29,11 @@ Introduction
 hipBLASLt has extension operation APIs which is independent to gemm operation with. These extensions support:
 
 1. hipblasltExtSoftmax
+    | Softmax for 2D-tensor. Currently it performs softmax on second dimension of input tensor and it assumes input is contigious on second dimension.
+    | For sample usage, please refer to clients/benchmarks/client_ext_op_softmax.cpp
 
 2. hipblasltExtLayerNorm
-    | convert a 2D tensor by LayerNorm to generate a new 2D normalized tensor .
+    | Convert a 2D tensor by LayerNorm to generate a new 2D normalized tensor.
     | it is a independent function which can just call and get result.
     | sample code is in clients/samples/ext_op/sample_hipblaslt_ext_op_layernorm.cpp
 
