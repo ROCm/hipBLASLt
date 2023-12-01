@@ -119,7 +119,7 @@ extern "C" {
         void *input, uint32_t m, uint32_t n, float eps, void *gamma, void *beta, hipStream_t stream);
 
 /*! \ingroup library_module
- *  \brief Perform absmax on given tensor and output one value absmax(tensor) value.
+ *  \brief Perform absmax on given 2-D tensor and output one value absmax(tensor) value.
  *
  *  \details
  *  This function computes amax on given 1D-tensor.
