@@ -1171,23 +1171,34 @@ void testing_matmul(const Arguments& arg)
 
     // Remove duplicate
     std::vector<uint32_t> gsu_vector;
+    std::vector<uint32_t> wgm_vector;
     for(int32_t i = 0; i < MAX_SUPPORTED_NUM_PROBLEMS; i++)
     {
         if(arg.gsu_vector[i] == -1)
             break;
         gsu_vector.push_back(arg.gsu_vector[i]);
     }
+    for(int32_t i = 0; i < MAX_SUPPORTED_NUM_PROBLEMS; i++)
+    {
+        if(arg.wgm_vector[i] == -1)
+            break;
+        wgm_vector.push_back(arg.wgm_vector[i]);
+    }
     std::set<uint32_t> remove_duplicate(gsu_vector.begin(), gsu_vector.end());
     gsu_vector.assign(remove_duplicate.begin(), remove_duplicate.end());
+    remove_duplicate = std::set<uint32_t>(wgm_vector.begin(), wgm_vector.end());
+    wgm_vector.assign(remove_duplicate.begin(), remove_duplicate.end());
     std::vector<hipblaslt_ext::GemmTuning> tuningVec;
     if(arg.use_ext)
     {
-        for(size_t i = 0; i < gsu_vector.size(); i++)
-        {
-            hipblaslt_ext::GemmTuning tuning;
-            tuning.splitK = gsu_vector[i];
-            tuningVec.push_back(tuning);
-        }
+        for(size_t wgm = 0; wgm < wgm_vector.size(); wgm++)
+            for(size_t gsu = 0; gsu < gsu_vector.size(); gsu++)
+            {
+                hipblaslt_ext::GemmTuning tuning;
+                tuning.splitK = gsu_vector[gsu];
+                tuning.wgm    = wgm_vector[wgm];
+                tuningVec.push_back(tuning);
+            }
     }
     else
     {
@@ -2351,6 +2362,7 @@ void testing_matmul(const Arguments& arg)
                 kernelName,
                 arg,
                 (uint32_t)tuningVec[heuristicTuningIndex[sol]].splitK,
+                (uint32_t)tuningVec[heuristicTuningIndex[sol]].wgm,
                 gpu_time_used,
                 flops,
                 ArgumentLogging::NA_value,
@@ -2387,6 +2399,7 @@ void testing_matmul(const Arguments& arg)
                 kernelName,
                 arg,
                 (uint32_t)tuningVec[heuristicTuningIndex[best_sol]].splitK,
+                (uint32_t)tuningVec[heuristicTuningIndex[best_sol]].wgm,
                 best_gpu_time,
                 best_flops,
                 ArgumentLogging::NA_value,

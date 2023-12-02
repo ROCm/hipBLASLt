@@ -196,6 +196,8 @@ namespace
                     name << "_UserArgs";
                 if(arg.gsu_vector[0])
                     name << "_GSU" << (int)arg.gsu_vector[0];
+                if(arg.wgm_vector[0])
+                    name << "_WGM" << (int)arg.wgm_vector[0];
             }
 
             return std::move(name);

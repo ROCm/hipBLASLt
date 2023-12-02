@@ -381,6 +381,13 @@ def instantiate(test):
       gsu_vector[0] = 0
     test['gsu_vector'] = gsu_vector
 
+    wgm_vector = [-1 for _ in range(32)]
+    if 'wgm_vector' in test:
+      wgm_vector[0] = test['wgm_vector']
+    else:
+      wgm_vector[0] = 0
+    test['wgm_vector'] = wgm_vector
+
 
     # Any Arguments fields declared as enums (a_type, b_type, etc.)
     enum_args = [decl[0] for decl in param['Arguments']._fields_

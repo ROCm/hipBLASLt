@@ -120,6 +120,8 @@ namespace hipblaslt_ext
     struct GemmTuning
     {
         uint8_t splitK = 0; //!< Value of splitK, 0 is off (use the splitK inside the solution).
+        uint8_t wgm
+            = 0; //!< Value of workgroup mapping, 0 is off (use the workgroup mapping inside the solution).
     };
 
     /*! \ingroup types_module
@@ -272,7 +274,7 @@ namespace hipblaslt_ext
         HIPBLASLT_EXPORT
         hipblasStatus_t isAlgoSupported(hipblasLtMatmulAlgo_t& algo,
                                         GemmTuning&            tuning,
-                                        size_t& workspaceSizeInBytes);
+                                        size_t&                workspaceSizeInBytes);
 
         /*! \ingroup library_module
         *  \brief Create kernel arguments from a given hipblaslt_ext::GemmInstance.
