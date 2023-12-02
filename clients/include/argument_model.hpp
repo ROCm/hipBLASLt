@@ -140,6 +140,7 @@ public:
                   std::string&                kernel_name,
                   const Arguments&            arg,
                   uint32_t                    splitK,
+                  uint32_t                    wgm,
                   double                      gpu_us,
                   double                      gflops,
                   double                      gpu_bytes = ArgumentLogging::NA_value,
@@ -180,6 +181,8 @@ public:
         // Additional name and value list
         if(splitK > 0)
             print("splitK", splitK);
+        if(wgm > 0)
+            print("wgm", wgm);
 
         if(arg.timing)
             log_perf(name_list,

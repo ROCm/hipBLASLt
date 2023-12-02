@@ -289,7 +289,7 @@ try
     std::vector<int64_t>  m, n, k;
     std::vector<int64_t>  lda, ldb, ldc, ldd, lde;
     std::vector<int64_t>  stride_a, stride_b, stride_c, stride_d, stride_e;
-    std::vector<uint32_t> gsu_vector;
+    std::vector<uint32_t> gsu_vector, wgm_vector;
     arg.init(); // set all defaults
 
     options_description desc("hipblaslt-bench command line options");
@@ -531,6 +531,10 @@ try
          valueVec<uint32_t>(&gsu_vector),
          "[Tuning parameter] Set split K for a solution, 0 is use solution's default value. (Only support GEMM + api_method mix or cpp)")
 
+        ("wgm",
+         valueVec<uint32_t>(&wgm_vector),
+         "[Tuning parameter] Set workgroup mapping for a solution, 0 is use solution's default value. (Only support GEMM + api_method mix or cpp)")
+
         ("help,h", "produces this help message")
 
         ("version", "Prints the version number");
@@ -609,6 +613,29 @@ try
     if((max_gsu > 0) && ((api_method == 0) || arg.grouped_gemm))
     {
         hipblaslt_cerr << "Currently split K only supports GEMM + api_method mix or cpp."
+                       << std::endl;
+        return 1;
+    }
+    int max_wgm = 0;
+    if(wgm_vector.size() > MAX_SUPPORTED_NUM_PROBLEMS)
+    {
+        hipblaslt_cerr << "Too many wgm parameters, maximum is: " << MAX_SUPPORTED_NUM_PROBLEMS
+                       << std::endl;
+        return 1;
+    }
+    for(size_t i = 0; i < wgm_vector.size(); i++)
+    {
+        if(wgm_vector[i] < 0 || wgm_vector[i] > 255)
+        {
+            hipblaslt_cerr << "Workgroup mapping range is 0~255." << std::endl;
+            return 1;
+        }
+        arg.wgm_vector[i] = wgm_vector[i];
+        max_wgm           = max(max_wgm, arg.wgm_vector[i]);
+    }
+    if((max_wgm > 0) && (api_method == 0))
+    {
+        hipblaslt_cerr << "Currently workgroup mapping only supports api_method mix or cpp."
                        << std::endl;
         return 1;
     }
