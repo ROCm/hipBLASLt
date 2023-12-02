@@ -82,3 +82,35 @@ HIPBLASLT_COMPUTE_F32   HIPBLASLT_R_32F       HIPBLASLT_R_16F HIPBLASLT_R_16F
 HIPBLASLT_COMPUTE_F32   HIPBLASLT_R_32F       HIPBLASLT_R_16F HIPBLASLT_R_32F
 HIPBLASLT_COMPUTE_F32   HIPBLASLT_R_32F       HIPBLASLT_R_16B HIPBLASLT_R_16B
 ======================= =================== ============= ==============
+
+hipblasLtMatrixTransformDescCreate()
+------------------------------------------
+.. doxygenfunction:: hipblasLtMatrixTransformDescCreate
+
+hipblasLtMatrixTransformDescDestroy()
+------------------------------------------
+.. doxygenfunction:: hipblasLtMatrixTransformDescDestroy
+
+hipblasLtMatrixTransformDescSetAttribute()
+------------------------------------------
+.. doxygenfunction:: hipblasLtMatrixTransformDescSetAttribute
+
+hipblasLtMatrixTransformDescGetAttribute()
+------------------------------------------
+.. doxygenfunction:: hipblasLtMatrixTransformDescGetAttribute
+
+hipblasLtMatrixTransform()
+------------------------------------------
+.. doxygenfunction:: hipblasLtMatrixTransform
+
+hipblasLtMatrixTransform supports the following Atype/Btype/Ctype and scaleType:
+
+======================= ===================
+Atype/Btype/Ctype       scaleType 
+======================= ===================
+HIPBLASLT_R_32F         HIPBLASLT_R_32F
+HIPBLASLT_R_16F         HIPBLASLT_R_32F/HIPBLASLT_R_16F
+HIPBLASLT_R_16B         HIPBLASLT_R_32F    
+HIPBLASLT_R_8I          HIPBLASLT_R_32F    
+HIPBLASLT_R_32I         HIPBLASLT_R_32F    
+======================= ===================
