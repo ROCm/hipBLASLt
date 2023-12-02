@@ -157,6 +157,11 @@ void Arguments::init()
     {
         gsu_vector[i] = -1;
     }
+    wgm_vector[0] = 0;
+    for(int32_t i = 1; i < MAX_SUPPORTED_NUM_PROBLEMS; i++)
+    {
+        wgm_vector[i] = -1;
+    }
 
     print_solution_found = false;
 }

@@ -407,6 +407,7 @@ namespace rocblaslt
     struct RocTuning
     {
         uint8_t gsu = 0;
+        uint8_t wgm = 0;
     };
 
     struct RocGemmInputs
