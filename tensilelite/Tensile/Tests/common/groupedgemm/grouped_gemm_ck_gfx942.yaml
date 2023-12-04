@@ -46,7 +46,7 @@ BenchmarkProblems:
       GroupedGemm: True
       SupportUserArgs: True
     - # BenchmarkProblemSizeGroup - Standard
-      CustomKernels: 
+      CustomKernels:
         [
           "Custom_Cijk_Ailk_Bljk_F8H_HHS_BH_Bias_GG_AS_SAB_SAV_UserArgs_shortname0_gfx942",
           "Custom_Cijk_Ailk_Bljk_F8H_HHS_BH_Bias_GG_AS_SAB_SAV_UserArgs_shortname1_gfx942",
@@ -73,6 +73,9 @@ BenchmarkProblems:
       InitialSolutionParameters:
       BenchmarkCommonParameters:
         - KernelLanguage: ["Assembly"]
+      InternalSupportParams:
+        SupportUserGSU: False
+        SupportCustomWGM: False
       ForkParameters:
         - MatrixInstruction:
           - [16, 16,16, 1,  1,   8, 8,  2,2 ] # 256x256 (Occupancy 1)
@@ -135,7 +138,7 @@ BenchmarkProblems:
       GroupedGemm: True
       SupportUserArgs: True
     - # BenchmarkProblemSizeGroup - Standard
-      CustomKernels: 
+      CustomKernels:
         [
           "Custom_Cijk_Ailk_Bljk_F8H_HSS_BH_Bias_GG_AS_SAB_SAV_UserArgs_shortname0_gfx942",
           "Custom_Cijk_Ailk_Bljk_F8H_HSS_BH_Bias_GG_AS_SAB_SAV_UserArgs_shortname1_gfx942",
@@ -162,6 +165,9 @@ BenchmarkProblems:
       InitialSolutionParameters:
       BenchmarkCommonParameters:
         - KernelLanguage: ["Assembly"]
+      InternalSupportParams:
+        SupportUserGSU: False
+        SupportCustomWGM: False
       ForkParameters:
         - MatrixInstruction:
           - [16, 16,16, 1,  1,   8, 8,  2,2 ] # 256x256 (Occupancy 1)
