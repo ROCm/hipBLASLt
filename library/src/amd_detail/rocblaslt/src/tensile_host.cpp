@@ -2242,7 +2242,6 @@ rocblaslt_status isSolutionSupported(rocblaslt_handle            handle,
                     log_info(__func__, msg.str());
                 }
                 isSupported = false;
-                break;
             }
         }
         for(int i = 0; i < tensile_prob.gemms.size(); i++)
@@ -2283,6 +2282,15 @@ rocblaslt_status isSolutionSupported(rocblaslt_handle            handle,
                 if(!((*solution->hardwarePredicate)(*hardware)
                      && (*solution->problemPredicate)(tensile_prob.gemms[i])))
                 {
+                    if(get_logger_layer_mode() & rocblaslt_layer_mode_log_info)
+                    {
+                        std::ostringstream msg;
+                        msg << "Match "
+                            << "[" << i << "]: " << solution->description();
+                        solution->problemPredicate->debugEval(tensile_prob.gemms[i], msg);
+                        msg << std::endl;
+                        log_info(__func__, msg.str());
+                    }
                     isSupported = false;
                 }
                 tensile_prob.gemms[i].setUseBias(useBias);
