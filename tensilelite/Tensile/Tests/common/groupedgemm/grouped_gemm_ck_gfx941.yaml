@@ -73,9 +73,6 @@ BenchmarkProblems:
       InitialSolutionParameters:
       BenchmarkCommonParameters:
         - KernelLanguage: ["Assembly"]
-      InternalSupportParams:
-        SupportUserGSU: False
-        SupportCustomWGM: False
       ForkParameters:
         - MatrixInstruction:
           - [16, 16,16, 1,  1,   8, 8,  2,2 ] # 256x256 (Occupancy 1)
@@ -165,9 +162,6 @@ BenchmarkProblems:
       InitialSolutionParameters:
       BenchmarkCommonParameters:
         - KernelLanguage: ["Assembly"]
-      InternalSupportParams:
-        SupportUserGSU: False
-        SupportCustomWGM: False
       ForkParameters:
         - MatrixInstruction:
           - [16, 16,16, 1,  1,   8, 8,  2,2 ] # 256x256 (Occupancy 1)

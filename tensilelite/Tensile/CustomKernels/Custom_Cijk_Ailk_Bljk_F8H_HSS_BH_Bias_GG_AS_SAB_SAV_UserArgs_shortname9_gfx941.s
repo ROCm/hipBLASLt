@@ -76,6 +76,9 @@ custom.config:
    GlobalReadVectorWidthB: 4
    AssertFree0ElementMultiple: 1
    AssertSummationElementMultiple: 64
+   InternalSupportParams:
+      SupportUserGSU: False
+      SupportCustomWGM: False
 amdhsa.version:
   - 1
   - 1
