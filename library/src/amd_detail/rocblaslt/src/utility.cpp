@@ -82,6 +82,31 @@ const char* hipblasltDatatype_to_string(hipblasltDatatype_t type)
     }
 }
 
+const char* hipblasltDatatype_to_bench_string(hipblasltDatatype_t type)
+{
+    switch(type)
+    {
+    case HIPBLASLT_R_32F:
+        return "f32_r";
+    case HIPBLASLT_R_64F:
+        return "f64_r";
+    case HIPBLASLT_R_16F:
+        return "f16_r";
+    case HIPBLASLT_R_16B:
+        return "bf16_r";
+    case HIPBLASLT_R_8I:
+        return "i8_r";
+    case HIPBLASLT_R_32I:
+        return "i32_r";
+    case HIPBLASLT_R_8F_E4M3:
+        return "f8_r";
+    case HIPBLASLT_R_8F_E5M2:
+        return "bf8_r";
+    default:
+        return "Invalid";
+    }
+}
+
 const char* rocblaslt_compute_type_to_string(rocblaslt_compute_type type)
 {
     switch(type)
@@ -96,6 +121,25 @@ const char* rocblaslt_compute_type_to_string(rocblaslt_compute_type type)
         return "COMPUTE_32I";
     case rocblaslt_compute_f32_fast_f16:
         return "COMPUTE_32F_16F";
+    default:
+        return "Invalid";
+    }
+}
+
+const char* rocblaslt_compute_type_to_bench_string(rocblaslt_compute_type type)
+{
+    switch(type)
+    {
+    case rocblaslt_compute_f32:
+        return "f32_r";
+    case rocblaslt_compute_f32_fast_xf32:
+        return "xf32_r";
+    case rocblaslt_compute_f64:
+        return "f64_r";
+    case rocblaslt_compute_i32:
+        return "i32_r";
+    case rocblaslt_compute_f32_fast_f16:
+        return "f32_f16_r";
     default:
         return "Invalid";
     }
@@ -156,6 +200,7 @@ const char* rocblaslt_matmul_desc_attributes_to_string(rocblaslt_matmul_desc_att
         return "Invalid";
     }
 }
+
 const char* hipblasOperation_to_string(hipblasOperation_t op)
 {
     switch(op)
@@ -166,6 +211,21 @@ const char* hipblasOperation_to_string(hipblasOperation_t op)
         return "OP_T";
     case HIPBLAS_OP_C:
         return "OP_C";
+    default:
+        return "Invalid";
+    }
+}
+
+const char* hipblasOperation_to_bench_string(hipblasOperation_t op)
+{
+    switch(op)
+    {
+    case HIPBLAS_OP_N:
+        return "N";
+    case HIPBLAS_OP_T:
+        return "T";
+    case HIPBLAS_OP_C:
+        return "C";
     default:
         return "Invalid";
     }
@@ -187,6 +247,8 @@ const char* rocblaslt_layer_mode2string(rocblaslt_layer_mode layer_mode)
         return "Info";
     case rocblaslt_layer_mode_log_api:
         return "Api";
+    case rocblaslt_layer_mode_log_bench:
+        return "Bench";
     default:
         return "Invalid";
     }

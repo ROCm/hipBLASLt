@@ -101,15 +101,16 @@ rocblaslt_status rocblaslt_matmul_impl(const rocblaslt_handle       handle,
         return isValid;
 
     // Internal assign
-    hipblasOperation_t opA           = matmul_descr->op_A;
-    hipblasOperation_t opB           = matmul_descr->op_B;
-    int                num_batches_a = matA->batch_count;
-    rocblaslt_epilogue epilogue      = matmul_descr->epilogue;
-    void*              scaleA        = matmul_descr->scaleA;
-    void*              scaleB        = matmul_descr->scaleB;
-    void*              scaleC        = matmul_descr->scaleC;
-    void*              scaleD        = matmul_descr->scaleD;
-    void*              scaleE        = matmul_descr->scaleE;
+    hipblasOperation_t  opA           = matmul_descr->op_A;
+    hipblasOperation_t  opB           = matmul_descr->op_B;
+    int                 num_batches_a = matA->batch_count;
+    rocblaslt_epilogue  epilogue      = matmul_descr->epilogue;
+    void*               scaleA        = matmul_descr->scaleA;
+    void*               scaleB        = matmul_descr->scaleB;
+    void*               scaleC        = matmul_descr->scaleC;
+    void*               scaleD        = matmul_descr->scaleD;
+    void*               scaleE        = matmul_descr->scaleE;
+    hipblasltDatatype_t scale_type    = matmul_descr->scale_type;
 
     // Others
     bool strided_batch = true;
@@ -195,54 +196,61 @@ rocblaslt_status rocblaslt_matmul_impl(const rocblaslt_handle       handle,
                                         workspace,
                                         workspaceSizeInBytes,
                                         stream};
-    if(get_logger_layer_mode() != rocblaslt_layer_mode_none)
-    {
-        log_trace(__func__,
-                  "transA",
-                  opA == HIPBLAS_OP_N ? "N" : "T",
-                  "transB",
-                  opB == HIPBLAS_OP_N ? "N" : "T",
-                  "batch_count",
-                  num_batches_a,
-                  "m",
+    if (get_logger_layer_mode() & rocblaslt_layer_mode_log_bench) {
+        log_bench(__func__,
+                  "--sizem",
                   m,
-                  "n",
+                  "--sizen",
                   n,
-                  "k",
+                  "--sizek",
                   k,
-                  "alpha",
-                  alpha,
-                  "type_a",
-                  type_a,
-                  "lda",
+                  "--lda",
                   lda,
-                  "batch_stride_a",
-                  batch_stride_a,
-                  "type_b",
-                  type_b,
-                  "ldb",
+                  "--ldb",
                   ldb,
-                  "batch_stride_b",
-                  batch_stride_b,
-                  "beta",
-                  beta,
-                  "type_c",
-                  type_c,
-                  "ldc",
+                  "--ldc",
                   ldc,
-                  "batch_stride_c",
-                  batch_stride_c,
-                  "type_d",
-                  type_d,
-                  "ldd",
+                  "--ldd",
                   ldd,
-                  "grouped_gemm",
+                  "--lde",
+                  lde,
+                  "--stride_a",
+                  batch_stride_a,
+                  "--stride_b",
+                  batch_stride_b,
+                  "--stride_c",
+                  batch_stride_c,
+                  "--stride_d",
+                  batch_stride_d,
+                  "--stride_e",
+                  batch_stride_e,
+                  "--alpha",
+                  *(float*)alpha,
+                  "--beta",
+                  *(float*)beta,
+                  "--a_type",
+                  hipblasltDatatype_to_bench_string(type_a),
+                  "--b_type",
+                  hipblasltDatatype_to_bench_string(type_b),
+                  "--c_type",
+                  hipblasltDatatype_to_bench_string(type_c),
+                  "--d_type",
+                  hipblasltDatatype_to_bench_string(type_d),
+                  "--compute_type",
+                  rocblaslt_compute_type_to_bench_string(compute_type),
+                  "--scale_type",
+                  hipblasltDatatype_to_bench_string(scale_type),
+                  "--transA",
+                  hipblasOperation_to_bench_string(opA),
+                  "--transB",
+                  hipblasOperation_to_bench_string(opB),
+                  "--batch_count",
+                  num_batches_a,
+                  "--bias_type",
+                  hipblasltDatatype_to_bench_string(bias_type),
+                  "--grouped_gemm",
                   grouped_gemm,
-                  "compute_type",
-                  compute_type,
-                  "bias",
-                  bias,
-                  "scaleAlphaVec",
+                  "--scaleAlpha_vector",
                   scaleAlphaVec);
     }
     return runContractionProblem(handle, algo, problem, gemmData);

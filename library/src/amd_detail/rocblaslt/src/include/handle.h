@@ -157,7 +157,7 @@ struct _rocblaslt_matmul_desc
     int64_t stride_e = 0;
     //
     rocblaslt_compute_type compute_type;
-    hipblasltDatatype_t    scale_type;
+    hipblasltDatatype_t    scale_type = HIPBLASLT_DATATYPE_INVALID;
 
     std::shared_ptr<void> m_data; // Tensile data
 

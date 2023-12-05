@@ -50,7 +50,7 @@ HIPBLASLT_LOG_LEVEL=<level> - while level is one of the following levels:
 |"5" - API Trace - API calls will log their parameter and important information                                    |
 +------------------------------------------------------------------------------------------------------------------+
 
-HIPLASLT_LOG_MASK=<mask> - while mask is a combination of the following masks:
+HIPBLASLT_LOG_MASK=<mask> - while mask is a combination of the following masks:
 
 +-----------------+
 |"0" - Off        |
@@ -64,6 +64,8 @@ HIPLASLT_LOG_MASK=<mask> - while mask is a combination of the following masks:
 |"8" - Info       |
 +-----------------+
 |"16" - API Trace |
++-----------------+
+|"32" - Bench     |
 +-----------------+
 
 HIPBLASLT_LOG_FILE=<file_name> - while file name is a path to a logging file. File name may contain %i, that will be replaced with the process ID. For example, "<file_name>_%i.log".

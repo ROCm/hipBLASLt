@@ -196,6 +196,7 @@ typedef enum rocblaslt_layer_mode
     rocblaslt_layer_mode_log_hints = 4, /**< layer is in hints mode. */
     rocblaslt_layer_mode_log_info  = 8, /**< layer is in info mode. */
     rocblaslt_layer_mode_log_api   = 16, /**< layer is in api mode. */
+    rocblaslt_layer_mode_log_bench = 32, /**< layer is in bench mode. */
 } rocblaslt_layer_mode;
 
 /*! \ingroup types_module

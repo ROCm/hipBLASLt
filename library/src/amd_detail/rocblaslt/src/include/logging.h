@@ -291,6 +291,21 @@ void log_arguments(
     log_arg_data(os, separator, xs...);
     os << "\n";
 }
+
+template <typename H, typename T, typename... Ts>
+void log_bench_arguments(std::ostream& os, H head, T& x, Ts&&... xs)
+{
+    if constexpr (std::is_same_v<T, const char*>) {
+        if (x != "Invalid")
+            os << head << " " << x << " " ;
+    }
+    else
+        os << head << " " << x << " " ;
+    if constexpr (sizeof...(xs))
+        log_bench_arguments(os, xs...);
+}
+
+
 /**
  * @brief Logging function
  *
