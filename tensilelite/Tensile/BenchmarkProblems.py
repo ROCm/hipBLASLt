@@ -70,7 +70,12 @@ def generateForkedSolutions(problemType, constantParams, forkPermutations):
 def getCustomKernelSolutionObj(kernelName, internalSupportParams, directory=globalParameters["CustomKernelDirectory"]):
     """Creates the Solution object for a custom kernel"""
     kernelConfig = getCustomKernelConfig(kernelName, directory)
-    kernelConfig["InternalSupportParams"] = internalSupportParams
+    if "InternalSupportParams" not in kernelConfig:
+        kernelConfig["InternalSupportParams"] = internalSupportParams
+    else:
+        for key in internalSupportParams:
+            if key not in kernelConfig["InternalSupportParams"]:
+                kernelConfig["InternalSupportParams"][key] = internalSupportParams[key]
     for k, v in kernelConfig.items():
         if k != "ProblemType":
             checkParametersAreValid((k, [v]), validParameters)
