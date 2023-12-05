@@ -3390,6 +3390,7 @@ class Solution(collections.abc.Mapping):
           requiredParameters[key] = False
 
     requiredParameters["GlobalSplitU"] = True
+    requiredParameters["WorkGroupMapping"] = True
 
     if "MatrixInstM" in nonCKObjs[0]._state:
       # Use MIWaveGroup and MIWaveTile instead of WG and MT
@@ -3422,6 +3423,7 @@ class Solution(collections.abc.Mapping):
       state_copy["GlobalSplitU"] = "M" if state_copy["GlobalSplitU"] > 1 else state_copy["GlobalSplitU"]
     else:
       state_copy["GlobalSplitU"] = "M"
+    state_copy["WorkGroupMapping"] = "M"
     return state_copy
 
   @ staticmethod
@@ -3464,6 +3466,7 @@ class Solution(collections.abc.Mapping):
         state["GlobalSplitU"] = "M" if state["GlobalSplitU"] > 1 else state["GlobalSplitU"]
       else:
         requiredParameters["GlobalSplitU"] = False
+      requiredParameters["WorkGroupMapping"] = False
 
     components.append('SN')
     for key in sorted(state.keys()):
@@ -3473,6 +3476,7 @@ class Solution(collections.abc.Mapping):
 
     state["GlobalSplitU"] = backup
     requiredParameters["GlobalSplitU"] = True
+    requiredParameters["WorkGroupMapping"] = True
 
     return '_'.join(components)
 
