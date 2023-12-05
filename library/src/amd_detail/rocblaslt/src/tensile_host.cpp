@@ -146,6 +146,26 @@ namespace
         return Tensile::ContractionProblemGemm::TENSOR::D;
     }
 
+    inline bool tensileUseBias(rocblaslt_epilogue epilogue)
+    {
+        switch(epilogue)
+        {
+        case ROCBLASLT_EPILOGUE_RELU_BIAS:
+        case ROCBLASLT_EPILOGUE_GELU_BIAS:
+        case ROCBLASLT_EPILOGUE_GELU_AUX_BIAS:
+        case ROCBLASLT_EPILOGUE_DGELU_BGRAD:
+        case ROCBLASLT_EPILOGUE_BIAS:
+        case ROCBLASLT_EPILOGUE_BGRADA:
+        case ROCBLASLT_EPILOGUE_BGRADB:
+            return true;
+            break;
+        default:
+            return false;
+            break;
+        }
+        return false;
+    }
+
     Tensile::DataType hip2TensileType(hipblasltDatatype_t type)
     {
         switch(type)
@@ -447,11 +467,10 @@ namespace
         else
         {
             tensileProblem.setUseBias(true);
-            tensileProblem.setBias(hipblasltDatatype_to_tensile_type(prob.bias_type),
-                                   biasSize,
-                                   0,
-                                   prob.gradient,
-                                   biasSrc);
+            auto biasType = hipblasltDatatype_to_tensile_type(prob.bias_type);
+            tensileProblem.setBias(biasType, biasSize, 0, prob.gradient, biasSrc);
+            tensileProblem.setParams().setBiasEnum(
+                tensileUseBias(prob.epilogue) ? biasType : Tensile::DataType::None);
         }
 
         // ScaleAB is only supported on F8/BF8
@@ -648,11 +667,10 @@ namespace
             else
             {
                 tensileProblem.setUseBias(true);
-                tensileProblem.setBias(hipblasltDatatype_to_tensile_type(prob.bias_type),
-                                       biasSize,
-                                       0,
-                                       prob.gradient,
-                                       biasSrc);
+                auto biasType = hipblasltDatatype_to_tensile_type(prob.bias_type);
+                tensileProblem.setBias(biasType, biasSize, 0, prob.gradient, biasSrc);
+                tensileProblem.setParams().setBiasEnum(
+                    tensileUseBias(prob.epilogue) ? biasType : Tensile::DataType::None);
             }
 
             // ScaleAB is only supported on F8/BF8

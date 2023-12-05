@@ -867,8 +867,8 @@ namespace Tensile
                 {
                     auto        biasIndex = problem.bias().index(biasCoord);
                     int         pos       = int(dNum % problem.d().sizes()[0]) + biasIndex;
-                    Accumulator bias
-                        = GetValue<Accumulator>(problem.getParams().biasEnum(), inputs.bias, pos, aConjugate);
+                    Accumulator bias      = GetValue<Accumulator>(
+                        problem.bias().dataType(), inputs.bias, pos, aConjugate);
                     resultD += bias;
                 }
                 // E
@@ -900,14 +900,18 @@ namespace Tensile
                             eIndex,
                             aConjugate);
                     }
-                    dataE = Activation(
-                        problem.activationType(), dataE, problem.getParams().activationEnum(), actArgs);
+                    dataE = Activation(problem.activationType(),
+                                       dataE,
+                                       problem.getParams().activationEnum(),
+                                       actArgs);
                     resultD *= dataE;
                 }
                 else
                 {
-                    resultD = Activation(
-                        problem.activationType(), resultD, problem.getParams().activationEnum(), actArgs);
+                    resultD = Activation(problem.activationType(),
+                                         resultD,
+                                         problem.getParams().activationEnum(),
+                                         actArgs);
                 }
 
                 if(problem.useScaleCD())
@@ -985,7 +989,6 @@ namespace Tensile
             // retreive alpha/beta type set via setAlpha/BetaType()
             auto alphaType = problem.alphaType();
             auto betaType  = problem.betaType();
-            auto biasType  = problem.getParams().biasEnum();
 
             // Backward-compatible: when setAlpha/BetaType() wasn't called, use the old way
             // Could remove after rocBLAS is updated
@@ -997,10 +1000,6 @@ namespace Tensile
             if(betaType == DataType::None)
             {
                 betaType = alphaType;
-            }
-            if(biasType == DataType::None)
-            {
-                biasType = problem.d().dataType();
             }
 
             if(problem.useE())
