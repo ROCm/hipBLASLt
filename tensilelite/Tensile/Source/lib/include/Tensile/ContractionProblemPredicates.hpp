@@ -1319,6 +1319,7 @@ namespace Tensile
                     HasIndex = true,
                     HasValue = true
                 };
+#define MAX_GSU_WORKSPACE_SIZE 128 * 1024 * 1024
                 size_t             index;
                 std::array<int, 3> value;
 
@@ -1363,6 +1364,9 @@ namespace Tensile
                     int elemC         = value[0] * gsuMultiplier;
                     int elemBias      = value[1] * gsuMultiplier;
                     size_t rs         = reductionSize(problem, elemC, elemBias);
+                    if(problem.d().totalLogicalElements() * elemC > MAX_GSU_WORKSPACE_SIZE)
+                        return 0;
+
                     if(problem.groupedGemm())
                         return problem.workspaceSizeGroupedGemm() <= problem.workspaceSize();
                     else
@@ -1378,6 +1382,16 @@ namespace Tensile
                     int elemC         = value[0] * gsuMultiplier;
                     int elemBias      = value[1] * gsuMultiplier;
                     size_t rs         = reductionSize(problem, elemC, elemBias);
+
+                    if(problem.d().totalLogicalElements() * elemC > MAX_GSU_WORKSPACE_SIZE)
+                        return debugEvalCmp(problem,
+                                            stream,
+                                            "prob",
+                                            problem.d().totalLogicalElements() * elemC,
+                                            "<=",
+                                            "max gsu workspace size",
+                                            MAX_GSU_WORKSPACE_SIZE);
+
                     if(problem.groupedGemm())
                         return debugEvalCmp(problem,
                                             stream,
