@@ -85,7 +85,8 @@ namespace Tensile
             {
                 m_reporter->report(ResultKey::BiasType, "None");
             }
-            m_reporter->report(ResultKey::ActivationType, ToString(problem.getParams().activationEnum()));
+            m_reporter->report(ResultKey::ActivationType,
+                               ToString(problem.getParams().activationEnum()));
         }
 
         void ProgressListener::preProblem(ContractionProblem* const problem)

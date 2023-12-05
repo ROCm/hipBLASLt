@@ -232,7 +232,7 @@ namespace Tensile
             arg.bias          = const_cast<void*>(inputs.grouped[i].bias);
             arg.scaleAlphaVec = const_cast<void*>(inputs.grouped[i].scaleAlphaVec);
             arg.e             = const_cast<void*>(inputs.grouped[i].e);
-            arg.biasType      = (uint32_t)problems[i].getParams().biasEnum();
+            arg.biasType      = (uint32_t)problems[i].bias().dataType();
             if(problems[i].useE())
             {
                 arg.strideE1 = e.strides()[startStrideCD];
@@ -687,8 +687,8 @@ namespace Tensile
                    && (problem.biasSrc() == ContractionProblemGemm::TENSOR::A
                        || problem.biasSrc() == ContractionProblemGemm::TENSOR::B)))
             {
-                args.template append<uint32_t>(
-                    "bias_type", static_cast<uint32_t>(problem.getParams().biasEnum()));
+                args.template append<uint32_t>("bias_type",
+                                               static_cast<uint32_t>(problem.bias().dataType()));
                 args.template append<uint32_t>(
                     "strideBias",
                     static_cast<uint32_t>(bias.strides()[bias.dimensions() - 1])); // reserved
@@ -1010,7 +1010,8 @@ namespace Tensile
             rv.args.append<void const* const*>("batchC", inputs.batchC);
 
         if(problemType.useBias
-           && (sizeMapping.globalAccumulation == 0 || (sizeMapping.customKernelName != "" && gsu > 1))
+           && (sizeMapping.globalAccumulation == 0
+               || (sizeMapping.customKernelName != "" && gsu > 1))
            && (!problemType.useGradient))
         {
             if(problemType.stridedBatched)
@@ -1029,7 +1030,8 @@ namespace Tensile
             rv.args.append<void const*>("scaleD", inputs.scaleD);
         }
         if(problemType.useScaleAlphaVec
-           && (sizeMapping.globalAccumulation == 0 || (sizeMapping.customKernelName != "" && gsu > 1)))
+           && (sizeMapping.globalAccumulation == 0
+               || (sizeMapping.customKernelName != "" && gsu > 1)))
         {
             rv.args.append<void const*>("scaleAlphaVec", inputs.scaleAlphaVec);
         }
@@ -1056,7 +1058,8 @@ namespace Tensile
                                      c.sizes()[i] == 1 ? 0 : c.strides()[i]);
 
         if(problemType.useBias
-           && (sizeMapping.globalAccumulation == 0 || (sizeMapping.customKernelName != "" && gsu > 1))
+           && (sizeMapping.globalAccumulation == 0
+               || (sizeMapping.customKernelName != "" && gsu > 1))
            && (!problemType.useGradient))
         {
             TensorDescriptor const& bias = problem.tensor(ContractionProblemGemm::TENSOR::BIAS);
@@ -1117,10 +1120,11 @@ namespace Tensile
         }
 
         if(problemType.useBias
-           && ((sizeMapping.globalAccumulation == 0) || (sizeMapping.customKernelName != "" && gsu > 1))
+           && ((sizeMapping.globalAccumulation == 0)
+               || (sizeMapping.customKernelName != "" && gsu > 1))
            && (!problemType.useGradient))
         {
-            auto s = TypeAbbrev(problem.getParams().biasEnum());
+            auto s = TypeAbbrev(problem.bias().dataType());
             name += ("_Bias" + s);
         }
 
@@ -1571,7 +1575,7 @@ namespace Tensile
 
         if(problemType.useBias)
         {
-            auto s = TypeAbbrev(problem.getParams().biasEnum());
+            auto s = TypeAbbrev(problem.bias().dataType());
             if(problemType.useGradient)
             {
                 if(problem.biasSrc() == ContractionProblemGemm::TENSOR::D)
@@ -1919,7 +1923,6 @@ namespace Tensile
         // retreive alpha/beta type set via setAlpha/BetaType()
         auto alphaType = problem.alphaType();
         auto betaType  = problem.betaType();
-        auto biasType  = problem.getParams().biasEnum();
 
         // TODO: Some gtests are passing the "problem" without actually defining the
         // alpha/beta type (alphaType and betaType remain None).
@@ -1933,10 +1936,6 @@ namespace Tensile
         if(betaType == DataType::None)
         {
             betaType = alphaType;
-        }
-        if(biasType == DataType::None)
-        {
-            biasType = problemType.dType;
         }
 
         bool debug = Debug::Instance().printKernelArguments() || this->kernelArgsLog;
@@ -2054,7 +2053,6 @@ namespace Tensile
         // retreive alpha/beta type set via setAlpha/BetaType()
         auto alphaType = problems[0].alphaType();
         auto betaType  = problems[0].betaType();
-        auto biasType  = problems[0].getParams().biasEnum();
 
         // TODO: Some gtests are passing the "problem" without actually defining the
         // alpha/beta type (alphaType and betaType remain None).
@@ -2068,10 +2066,6 @@ namespace Tensile
         if(betaType == DataType::None)
         {
             betaType = alphaType;
-        }
-        if(biasType == DataType::None)
-        {
-            biasType = problemType.dType;
         }
 
         bool debug = Debug::Instance().printKernelArguments() || this->kernelArgsLog;
@@ -2378,7 +2372,8 @@ namespace Tensile
 
         size += problem.d().totalLogicalElements() * sizeMapping.workspaceSizePerElemC
                 * gsuMultiplier;
-        if(problemType.useGradient && problemType.useBias)
+        if(problemType.useGradient && problemType.useBias
+           && problem.getParams().biasEnum() != DataType::None)
         {
             if(problem.biasSrc() == ContractionProblemGemm::TENSOR::A)
             {

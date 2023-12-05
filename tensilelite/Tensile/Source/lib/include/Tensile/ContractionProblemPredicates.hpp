@@ -1340,7 +1340,8 @@ namespace Tensile
                 {
                     size_t reductionSize = 0;
                     // 2d reduction
-                    if(problem.useGradient() && problem.useBias())
+                    if(problem.useGradient() && problem.useBias()
+                       && problem.getParams().biasEnum() != DataType::None)
                     {
                         if(problem.biasSrc() == ContractionProblemGemm::TENSOR::D && (elemC == 0))
                             reductionSize += problem.d().totalLogicalElements()
@@ -2149,7 +2150,7 @@ namespace Tensile
                     {
                         for(size_t i = 0; i < value.size(); i++)
                         {
-                            if(value[i] == problem.getParams().biasEnum())
+                            if(value[i] == problem.bias().dataType())
                             {
                                 return true;
                             }
