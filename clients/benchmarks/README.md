@@ -67,6 +67,7 @@ cd hipBLASLt; cd build/release
 --api_method <value>       Use extension API. c: C style API. mix: declaration with C hipblasLtMatmul Layout/Desc but set, initialize, and run the problem with C++ extension API. cpp: Using C++ extension API only. Options: c, mix, cpp.  (Default value is: c)
 --print_kernel_info        Print solution, kernel name and solution index.
 --rotating <value>         Use rotating memory blocks for each iteration, size in MB.                          (Default value is: 0)
+--use_gpu_timer            Use hipEventElapsedTime to profile elapsed time.                                    (Default value is: false)
 --splitk <value>           [Tuning parameter] Set split K for a solution, 0 is use solution's default value. (Only support GEMM + api_method mix or cpp)
 --help |-h                 produces this help message
 --version <value>          Prints the version number

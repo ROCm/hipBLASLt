@@ -529,7 +529,7 @@ try
 
         ("use_gpu_timer",
          value<bool>(&arg.use_gpu_timer)->default_value(false),
-         "Whether to use hipEventElapsedTime or not.")
+         "Use hipEventElapsedTime to profile elapsed time.")
 
         ("splitk",
          valueVec<uint32_t>(&gsu_vector),
