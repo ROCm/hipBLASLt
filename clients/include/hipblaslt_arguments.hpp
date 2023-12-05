@@ -150,6 +150,7 @@ struct Arguments
     int     algo_method; // 0 for getheuristic, 1 for get all algos, 2 for algo index
     bool    use_user_args;
     int32_t rotating;
+    bool use_gpu_timer;
 
     // tuning
     int32_t gsu_vector[MAX_SUPPORTED_NUM_PROBLEMS]; // This is for client
@@ -238,6 +239,7 @@ struct Arguments
     OPER(algo_method) SEP            \
     OPER(use_user_args) SEP          \
     OPER(rotating) SEP               \
+    OPER(use_gpu_timer) SEP          \
     OPER(gsu_vector) SEP             \
     OPER(print_solution_found) SEP   \
     OPER(print_kernel_info) SEP

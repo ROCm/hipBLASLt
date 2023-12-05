@@ -527,6 +527,10 @@ try
          value<int32_t>(&arg.rotating)->default_value(0),
          "Use rotating memory blocks for each iteration, size in MB.")
 
+        ("use_gpu_timer",
+         value<bool>(&arg.use_gpu_timer)->default_value(false),
+         "Whether to use hipEventElapsedTime or not.")
+
         ("splitk",
          valueVec<uint32_t>(&gsu_vector),
          "[Tuning parameter] Set split K for a solution, 0 is use solution's default value. (Only support GEMM + api_method mix or cpp)")

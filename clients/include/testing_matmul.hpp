@@ -374,6 +374,10 @@ void testing_matmul(const Arguments& arg)
     hipStream_t            stream;
     CHECK_HIP_ERROR(hipStreamCreate(&stream));
 
+    hipEvent_t event_gpu_time_start, event_gpu_time_end;
+    CHECK_HIP_ERROR(hipEventCreate(&event_gpu_time_start));
+    CHECK_HIP_ERROR(hipEventCreate(&event_gpu_time_end));
+
     hipblasOperation_t transA(char_to_hipblas_operation(arg.transA));
     hipblasOperation_t transB(char_to_hipblas_operation(arg.transB));
 
@@ -2150,7 +2154,10 @@ void testing_matmul(const Arguments& arg)
                     for(int i = 0; i < number_cold_calls; i++)
                         CHECK_HIPBLASLT_ERROR(gemmVec[i % block_count].run(stream));
                     CHECK_HIP_ERROR(hipStreamSynchronize(stream));
-                    gpu_time_used = get_time_us_sync(stream); // in microseconds
+                    if (arg.use_gpu_timer)
+                        CHECK_HIP_ERROR(hipEventRecord(event_gpu_time_start, stream));
+                    else
+                        gpu_time_used = get_time_us_sync(stream);
 
                     for(int i = 0; i < number_hot_calls; i++)
                         CHECK_HIPBLASLT_ERROR(gemmVec[i % block_count].run(stream));
@@ -2188,7 +2195,10 @@ void testing_matmul(const Arguments& arg)
                     }
 
                     CHECK_HIP_ERROR(hipStreamSynchronize(stream));
-                    gpu_time_used = get_time_us_sync(stream); // in microseconds
+                    if (arg.use_gpu_timer)
+                        CHECK_HIP_ERROR(hipEventRecord(event_gpu_time_start, stream));
+                    else
+                        gpu_time_used = get_time_us_sync(stream);
                     for(int i = 0; i < number_hot_calls; i++)
                     {
                         TiA* ptr_dA     = *(dA[0]) + (i % block_count) * size_A[0];
@@ -2220,7 +2230,18 @@ void testing_matmul(const Arguments& arg)
                     }
                 }
                 CHECK_HIP_ERROR(hipStreamSynchronize(stream));
-                gpu_time_used = get_time_us_sync(stream) - gpu_time_used;
+                if (arg.use_gpu_timer)
+                {
+                    CHECK_HIP_ERROR(hipEventRecord(event_gpu_time_end, stream));
+                    CHECK_HIP_ERROR(hipEventSynchronize(event_gpu_time_end));
+                    float gpu_time_ms;
+                    CHECK_HIP_ERROR(hipEventElapsedTime(&gpu_time_ms,
+                                                        event_gpu_time_start,
+                                                        event_gpu_time_end));
+                    gpu_time_used = gpu_time_ms * 1000; // ms to us
+                }
+                else
+                    gpu_time_used = get_time_us_sync(stream) - gpu_time_used;
             }
             else
             {
@@ -2249,14 +2270,28 @@ void testing_matmul(const Arguments& arg)
                             d_userArgsVec[i % block_count], stream));
 
                     CHECK_HIP_ERROR(hipStreamSynchronize(stream));
-                    gpu_time_used = get_time_us_sync(stream); // in microseconds
+                    if (arg.use_gpu_timer)
+                        CHECK_HIP_ERROR(hipEventRecord(event_gpu_time_start, stream));
+                    else
+                        gpu_time_used = get_time_us_sync(stream);
 
                     for(int i = 0; i < number_hot_calls; i++)
                         CHECK_HIPBLASLT_ERROR(groupedGemmVec[i % block_count].run(
                             d_userArgsVec[i % block_count], stream));
 
                     CHECK_HIP_ERROR(hipStreamSynchronize(stream));
-                    gpu_time_used = get_time_us_sync(stream) - gpu_time_used;
+                    if (arg.use_gpu_timer)
+                    {
+                        CHECK_HIP_ERROR(hipEventRecord(event_gpu_time_end, stream));
+                        CHECK_HIP_ERROR(hipEventSynchronize(event_gpu_time_end));
+                        float gpu_time_ms;
+                        CHECK_HIP_ERROR(hipEventElapsedTime(&gpu_time_ms,
+                                                            event_gpu_time_start,
+                                                            event_gpu_time_end));
+                        gpu_time_used = gpu_time_ms * 1000; // ms to us
+                    }
+                    else
+                        gpu_time_used = get_time_us_sync(stream) - gpu_time_used;
                 }
                 else
                 {
@@ -2273,13 +2308,27 @@ void testing_matmul(const Arguments& arg)
                         CHECK_HIPBLASLT_ERROR(groupedGemmVec[i % block_count].run(stream));
 
                     CHECK_HIP_ERROR(hipStreamSynchronize(stream));
-                    gpu_time_used = get_time_us_sync(stream); // in microseconds
+                    if (arg.use_gpu_timer)
+                        CHECK_HIP_ERROR(hipEventRecord(event_gpu_time_start, stream));
+                    else
+                        gpu_time_used = get_time_us_sync(stream);
 
                     for(int i = 0; i < number_hot_calls; i++)
                         CHECK_HIPBLASLT_ERROR(groupedGemmVec[i % block_count].run(stream));
 
                     CHECK_HIP_ERROR(hipStreamSynchronize(stream));
-                    gpu_time_used = get_time_us_sync(stream) - gpu_time_used;
+                    if (arg.use_gpu_timer)
+                    {
+                        CHECK_HIP_ERROR(hipEventRecord(event_gpu_time_end, stream));
+                        CHECK_HIP_ERROR(hipEventSynchronize(event_gpu_time_end));
+                        float gpu_time_ms;
+                        CHECK_HIP_ERROR(hipEventElapsedTime(&gpu_time_ms,
+                                                            event_gpu_time_start,
+                                                            event_gpu_time_end));
+                        gpu_time_used = gpu_time_ms * 1000; // ms to us
+                    }
+                    else
+                        gpu_time_used = get_time_us_sync(stream) - gpu_time_used;
                 }
             }
 
@@ -2462,4 +2511,6 @@ void testing_matmul(const Arguments& arg)
     }
 
     CHECK_HIP_ERROR(hipStreamDestroy(stream));
+    CHECK_HIP_ERROR(hipEventDestroy(event_gpu_time_start));
+    CHECK_HIP_ERROR(hipEventDestroy(event_gpu_time_end));
 }
