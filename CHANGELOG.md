@@ -2,6 +2,16 @@
 
 Full documentation for hipBLASLt is available at [rocm.docs.amd.com/projects/hipBLASLt](https://rocm.docs.amd.com/projects/hipBLASLt/en/latest/index.html).
 
+## (Unreleased) hipBLASLt 0.7.0
+
+### Additions
+
+* Added `hipblasltExtSoftmax` extension API
+* Added `hipblasltExtLayerNorm` extension API
+* Added `hipblasltExtAMax` extension API
+* Added `GemmTuning` extension parameter to set split-k by user
+* Support for mix precision datatype: fp16/fp8 in with fp16 out
+
 ## (Unreleased) hipBLASLt 0.6.0
 
 ### Additions
@@ -22,7 +32,7 @@ Full documentation for hipBLASLt is available at [rocm.docs.amd.com/projects/hip
 
 * Deprecated `HIPBLASLT_MATMUL_DESC_D_SCALE_VECTOR_POINTER`
 
-## (Unreleased) hipBLASLt 0.3.0
+## hipBLASLt 0.3.0
 
 ### Additions
 
