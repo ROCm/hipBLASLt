@@ -339,7 +339,7 @@ def VCvtBF16toFP32(dst, src, vgprMask, vi):
 # init lds state
 ########################################
 def DSInit(tmpVgprRes: RegisterPoolResource, numThreads: int, \
-            ldsNumElements: int, numBytesPerElement: int, initValue):
+            ldsNumElements: int, initValue):
     assert tmpVgprRes.size > 1
     tmp = tmpVgprRes.idx
     tmpAddr = tmp + 1
@@ -350,7 +350,7 @@ def DSInit(tmpVgprRes: RegisterPoolResource, numThreads: int, \
     module.add(VMovB32(dst=vgpr(tmp), src=hex(initValue), comment="Init value"))
     module.add(VLShiftLeftB32(dst=vgpr(tmpAddr), shiftHex=2, src=vgpr("Serial"), \
                 comment="set per-thread address to init LDS"))
-    writesPerThread = ((ldsNumElements*numBytesPerElement-1)//numThreads//4) + 1
+    writesPerThread = ((ldsNumElements-1)//numThreads//4) + 1
     for i in range(0, writesPerThread):
         module.add(DSStoreB32(dstAddr=vgpr(tmpAddr), src=vgpr(tmp),
                     ds=DSModifiers(offset=(i*numThreads*4)), comment="init lds"))
