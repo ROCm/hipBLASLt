@@ -357,6 +357,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
     self.do["GlobalInc"]   = True
     self.do["LocalWriteA"]  = True
     self.do["LocalWriteB"]  = True
+    self.do["LocalWriteMetadata"]  = True
     self.do["LocalWriteCVT"]  = True
     self.do["LocalReadA"]  = True
     self.do["LocalReadB"]  = True
@@ -734,6 +735,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
       curPackIdx = 0
       packAIdx = 0
       packBIdx = 0
+      packMIdx = 0
 
       #####
       # Prepare localReadCode
