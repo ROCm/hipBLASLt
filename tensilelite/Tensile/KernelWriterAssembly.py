@@ -1969,25 +1969,14 @@ class KernelWriterAssembly(KernelWriter):
         blockId2 = tmpSgprInfo.idx+3
         wgSerial2 = tmpSgprInfo.idx+4
 
-      smallNumMagicShift = 31
-      # magicNumberWgm = ((1<<smallNumMagicShift) // absWgm + 1)
-      tmpVgpr = self.vgprPool.checkOut(2, "div")
-      tmpVgprRes = RegisterPoolResource(idx=tmpVgpr, size=2)
-      module.add(SMovB32(dst=sgpr(blockId2), src=hex(1<<smallNumMagicShift)+'L'))
-      module.add(scalarUInt32DivideAndRemainder(qReg=wgmDivisorMagicNumber, dReg=blockId2, divReg="WGM", rReg=wgSerial2, tmpVgprRes=tmpVgprRes, wavewidth=kernel["WavefrontSize"], doRemainder=False, comment="magic number for WGM"))
-      module.add(SAddU32(dst=sgpr(wgmDivisorMagicNumber), src0=sgpr(wgmDivisorMagicNumber), src1=1))
-      self.vgprPool.checkIn(tmpVgpr)
-      # blockId and serial within block
-
       # note this overwrites blockId2+1
-      module.add(self.sMagicDivWrapper(dest=blockId2, dividend=sgpr("WorkGroup1"), \
-          magicNumber=sgpr(wgmDivisorMagicNumber), magicShift=smallNumMagicShift))
+      module.add(scalarUInt32DivideAndRemainder(qReg=blockId2, dReg="WorkGroup1", divReg="WGM", rReg=wgSerial2, tmpVgprRes=tmpVgprRes, wavewidth=kernel["WavefrontSize"], doRemainder=False, comment="WGM"))
       module.add(SMulI32(dst=sgpr(wgSerial2), src0=sgpr(blockId2), src1=sgpr("WGM"), comment="quotient * non-magic divisor"))
       module.add(SSubU32(dst=sgpr(wgSerial2), src0=sgpr("WorkGroup1"), src1=sgpr(wgSerial2), comment="WorkGroup1=remainder"))
       module.add(SMulI32(dst=sgpr(wgSerial2), src0=sgpr(wgSerial2), src1=sgpr("NumWorkGroups0"), comment="(wg1 % WGM)*nwg0"))
       module.add(SAddU32(dst=sgpr(wgSerial2), src0=sgpr(wgSerial2), src1=sgpr("WorkGroup0"), comment="wgSerial = wg0 + (wg1 % WGM)*nwg0"))
 
-      module.add(self.sMagicDivWrapper(dest=wgmDivisor, dividend=sgpr("NumWorkGroups1"), magicNumber=sgpr(wgmDivisorMagicNumber), magicShift=smallNumMagicShift))
+      module.add(scalarUInt32DivideAndRemainder(qReg=wgmDivisor, dReg="NumWorkGroups1", divReg="WGM", rReg=wgSerial2, tmpVgprRes=tmpVgprRes, wavewidth=kernel["WavefrontSize"], doRemainder=False, comment="WGM"))
       module.add(SMulI32(dst=sgpr(wgmDivisor2), src0=sgpr("WGM"), src1=sgpr(wgmDivisor), comment="quotient * non-magic divisor"))
       module.add(SSubU32(dst=sgpr(wgmDivisorMagicNumber), src0=sgpr("NumWorkGroups1"), src1=sgpr(wgmDivisor2), comment="WorkGroup1=remainder"))
       module.add(SCmpEQU32(src0=sgpr(wgmDivisorMagicNumber), src1=0, comment="remainder == 0 ?"))
