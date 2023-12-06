@@ -2304,7 +2304,7 @@ class Solution(collections.abc.Mapping):
       elif state["GlobalReadVectorWidthA"] == -1:
         curGRVW = 1
         # with UnrollMajorLDS, GRVW need to less or equal than LRVW to have conflict free LDS read with padding.
-        optGRVW = state["LocalReadVectorWidth"] if state["UnrollMajorLDSA"] else 4/state["ProblemType"]["DataTypeA"].numRegisters()
+        optGRVW = state["LocalReadVectorWidth"] if state["UnrollMajorLDSA"] else 4 / state["ProblemType"]["DataTypeA"].numRegisters()
         state["GlobalReadVectorWidthA"] = int(curGRVW)
         while (curGRVW <= optGRVW):
           if (state["MacroTile0"]*state["_DepthUA"]//state["NumThreads"]) % curGRVW == 0:
@@ -2321,7 +2321,7 @@ class Solution(collections.abc.Mapping):
       elif state["GlobalReadVectorWidthB"] == -1:
         curGRVW = 1
         # with UnrollMajorLDS, GRVW need to less or equal than LRVW to have conflict free LDS read with padding.
-        optGRVW = state["LocalReadVectorWidth"] if state["UnrollMajorLDSB"] else 4/state["ProblemType"]["DataTypeB"].numRegisters()
+        optGRVW = state["LocalReadVectorWidth"] if state["UnrollMajorLDSB"] else 4 / state["ProblemType"]["DataTypeB"].numRegisters()
         state["GlobalReadVectorWidthB"] = int(curGRVW)
         while (curGRVW <= optGRVW):
           if (state["MacroTile1"]*state["_DepthUB"]//state["NumThreads"]) % curGRVW == 0:
@@ -2334,7 +2334,7 @@ class Solution(collections.abc.Mapping):
         state["StoreVectorWidth"] = state["VectorWidthA"]
       else:
         state["StoreVectorWidth"] = state["MIOutputVectorWidth"]
-        if state["VectorWidthA"] * state["MIOutputVectorWidth"] <= 4/state["ProblemType"]["DestDataType"].numRegisters():
+        if state["VectorWidthA"] * state["MIOutputVectorWidth"] <= 4 / state["ProblemType"]["DestDataType"].numRegisters():
           state["StoreVectorWidth"] = state["VectorWidthA"] * state["MIOutputVectorWidth"]
 
     if state["EnableMatrixInstruction"]:
@@ -2741,16 +2741,16 @@ class Solution(collections.abc.Mapping):
     if state["EnableMatrixInstruction"]:
       if state["LdsBlockSizePerPadA"]:
         if state["UnrollMajorLDSA"]:
-          if state["LdsBlockSizePerPadA"] % (state["_DepthUA"] * state["ProblemType"]["DataType"].numBytes()) != 0:
-            reject(state, "reject: LdsBlockSizePerPadA %u %% depthU %u x bpe != 0" % (state["LdsBlockSizePerPadA"],state["_DepthUA"]))
+          if state["LdsBlockSizePerPadA"] % (state["_DepthUA"] * state["ProblemType"]["DataTypeA"].numBytes()) != 0:
+            reject(state, "reject: LdsBlockSizePerPadA %u %% depthU %u x bpeA != 0" % (state["LdsBlockSizePerPadA"],state["_DepthUA"]))
           if (state["LdsBlockSizePerPadA"] // (state["_DepthUA"] * state["ProblemType"]["DataType"].numBytes())) % state["LSPA"] != 0 and \
               state["LSPA"] % (state["LdsBlockSizePerPadA"] // (state["_DepthUA"] * state["ProblemType"]["DataType"].numBytes())) != 0:
             reject(state, "can't pad by addrVgpr or instOffset")
 
       if state["LdsBlockSizePerPadB"]:
         if state["UnrollMajorLDSB"]:
-          if state["LdsBlockSizePerPadB"] % state["_DepthUB"] * state["ProblemType"]["DataType"].numBytes() != 0:
-            reject(state, "reject: LdsBlockSizePerPadB %u %% depthU %u x bpe != 0" % (state["LdsBlockSizePerPadB"],state["_DepthUB"]))
+          if state["LdsBlockSizePerPadB"] % state["_DepthUB"] * state["ProblemType"]["DataTypeB"].numBytes() != 0:
+            reject(state, "reject: LdsBlockSizePerPadB %u %% depthU %u x bpeB != 0" % (state["LdsBlockSizePerPadB"],state["_DepthUB"]))
           if (state["LdsBlockSizePerPadB"] // (state["_DepthUB"] * state["ProblemType"]["DataType"].numBytes())) % state["LSPB"] != 0 and \
               state["LSPB"] % (state["LdsBlockSizePerPadB"] // (state["_DepthUB"] * state["ProblemType"]["DataType"].numBytes())) != 0:
             reject(state, "can't pad by addrVgpr or instOffset")
@@ -3023,82 +3023,77 @@ class Solution(collections.abc.Mapping):
     if (state["UnrollMajorLDSA"] or state["UnrollMajorLDSB"]) and (not state["EnableMatrixInstruction"]):
         reject(state, "UnrollMajorLDS Supports only in EnableMatrixInstruction=1")
 
+    bpeA = state["ProblemType"]["DataType"].numBytes()
+    bpeB = state["ProblemType"]["DataType"].numBytes()
     ldsAlign = int(64 / state["ProblemType"]["DataType"].numRegisters())
 
     if state["UnrollMajorLDSA"]:
-      ldsNumElementsA = (state["_DepthUA"] + state["LdsPadA"]) * state["MacroTileA"]
+      ldsNumBytesA = (state["_DepthUA"] + state["LdsPadA"]) * state["MacroTileA"] * bpeA
     else:
-      ldsNumElementsA = state["_DepthUA"] * (state["MacroTileA"] + state["LdsPadA"])
-    padInterval = state["LdsBlockSizePerPadA"] // bpeAB
+      ldsNumBytesA = state["_DepthUA"] * (state["MacroTileA"] + state["LdsPadA"]) * bpeA
+    padInterval = state["LdsBlockSizePerPadA"]
     if padInterval != 0:
-      ldsNumElementsA = int((state["_DepthUA"] * state["MacroTileA"]) / padInterval * (padInterval + state["LdsPadA"]))
-    ldsNumElementsAlignedA = roundUpToNearestMultiple(ldsNumElementsA, ldsAlign)
+      ldsNumBytesA = int((state["_DepthUA"] * state["MacroTileA"] * bpeA) / padInterval * (padInterval + state["LdsPadA"] * bpeA))
+    ldsNumBytesAlignedA = roundUpToNearestMultiple(ldsNumBytesA, ldsAlign)
 
     if state["UnrollMajorLDSB"]:
-      ldsNumElementsB = (state["_DepthUB"] + state["LdsPadB"]) * state["MacroTileB"]
+      ldsNumBytesB = (state["_DepthUB"] + state["LdsPadB"]) * state["MacroTileB"] * bpeB
     else:
-      ldsNumElementsB = state["_DepthUB"] * (state["MacroTileB"] + state["LdsPadB"])
-    padInterval = state["LdsBlockSizePerPadB"] // bpeAB
+      ldsNumBytesB = state["_DepthUB"] * (state["MacroTileB"] + state["LdsPadB"]) * bpeB
+    padInterval = state["LdsBlockSizePerPadB"]
     if padInterval != 0:
-      ldsNumElementsB = int((state["_DepthUB"] * state["MacroTileB"]) / padInterval * (padInterval + state["LdsPadB"]))
-    ldsNumElementsAlignedB = roundUpToNearestMultiple(ldsNumElementsB, ldsAlign)
+      ldsNumBytesB = int((state["_DepthUB"] * state["MacroTileB"] * bpeB) / padInterval * (padInterval + state["LdsPadB"] * bpeB))
+    ldsNumBytesAlignedB = roundUpToNearestMultiple(ldsNumBytesB, ldsAlign)
 
     if state["ProblemType"]["Sparse"] and not state["DirectToVgprSparseMetadata"]:
       if state["UnrollMajorLDSMetadata"]:
-        ldsNumElementsMetadata = (state["_DepthUMetadata"] + state["LdsPadMetadata"]) * state["MacroTileMetadata"]
+        ldsNumBytesMetadata = (state["_DepthUMetadata"] + state["LdsPadMetadata"]) * state["MacroTileMetadata"]
       else:
-        ldsNumElementsMetadata = state["_DepthUMetadata"] * (state["MacroTileMetadata"] + state["LdsPadMetadata"])
-      ldsNumElementsMetadata = roundUp(ldsNumElementsMetadata / bpeAB) # metadata is in byte type. so divide ldsNumElementsMetadata by A,B's bpe
+        ldsNumBytesMetadata = state["_DepthUMetadata"] * (state["MacroTileMetadata"] + state["LdsPadMetadata"])
+      ldsNumBytesMetadata = roundUp(ldsNumBytesMetadata / bpeAB) # metadata is in byte type. so divide ldsNumBytesMetadata by A,B's bpe
       padInterval = state["LdsBlockSizePerPadMetadata"]
       if padInterval != 0:
-        ldsNumElementsMetadata = int(roundUp(state["_DepthUMetadata"] * state["MacroTileMetadata"]/bpeAB) / padInterval * (padInterval + state["LdsPadMetadata"]))
-      ldsNumElementsAlignedMetadata = roundUpToNearestMultiple(ldsNumElementsMetadata, ldsAlign)
+        ldsNumBytesMetadata = int(roundUp(state["_DepthUMetadata"] * state["MacroTileMetadata"] / bpeAB) / padInterval * (padInterval + state["LdsPadMetadata"]))
+      ldsNumBytesAlignedMetadata = roundUpToNearestMultiple(ldsNumBytesMetadata, ldsAlign) * bpeAB
+      ldsNumBytesMetadata = ldsNumBytesMetadata * bpeAB
     else:
-      ldsNumElementsMetadata = 0
-      ldsNumElementsAlignedMetadata = 0
+      ldsNumBytesMetadata = 0
+      ldsNumBytesAlignedMetadata = 0
 
     # todo, can the alignment be a power of 2?
     state["LdsOffsetA"] = 0
     if state["PrefetchGlobalRead"]:
-      state["LdsNumElementsAlignedA"] = ldsNumElementsAlignedA
-      state["LdsNumElementsAlignedB"] = ldsNumElementsAlignedB
-      state["LdsNumElementsAlignedMetadata"] = ldsNumElementsAlignedMetadata
+      state["LdsNumElementsAlignedA"] = ldsNumBytesAlignedA
+      state["LdsNumElementsAlignedB"] = ldsNumBytesAlignedB
+      state["LdsNumElementsAlignedMetadata"] = ldsNumBytesAlignedMetadata
       state["LdsOffsetMetadata"] = state["LdsOffsetA"] + state["LdsNumElementsAlignedA"]
       state["LdsOffsetB"] = state["LdsOffsetMetadata"] + state["LdsNumElementsAlignedMetadata"]
 
-      offsetBlk = state["LdsOffsetB"] +  ldsNumElementsAlignedB
+      offsetBlk = state["LdsOffsetB"] +  ldsNumBytesAlignedB
       offsetBlk = int(2**(math.ceil(math.log(offsetBlk, 2))))
 
       state["LdsOffsetA_Blk"] = offsetBlk
       state["LdsOffsetMetadata_Blk"] = state["LdsOffsetA_Blk"] + state["LdsNumElementsAlignedA"]
       state["LdsOffsetB_Blk"] = state["LdsOffsetMetadata_Blk"] + state["LdsNumElementsAlignedMetadata"]
-      ldsNumElementsAB = state["LdsOffsetB_Blk"]+ ldsNumElementsB
+      ldsNumBytesAB = state["LdsOffsetB_Blk"]+ ldsNumBytesB
     else:
-      state["LdsOffsetMetadata"] = ldsNumElementsAlignedA
-      state["LdsOffsetB"] = state["LdsOffsetMetadata"] + ldsNumElementsAlignedMetadata
-      ldsNumElementsAB = state["LdsOffsetB"] + ldsNumElementsB
+      state["LdsOffsetMetadata"] = ldsNumBytesAlignedA
+      state["LdsOffsetB"] = state["LdsOffsetMetadata"] + ldsNumBytesAlignedMetadata
+      ldsNumBytesAB = state["LdsOffsetB"] + ldsNumBytesB
 
     # lds buffer size for reduction
-    ldsNumElementsReduction = state["LocalSplitU"]*state["MacroTile0"]*state["MacroTile1"] if state["LocalSplitU"] > 1 else 0
+    ldsNumBytesReduction = state["LocalSplitU"] * state["MacroTile0"] * state["MacroTile1"] * state["ProblemType"]["ComputeDataType"].numBytes() if state["LocalSplitU"] > 1 else 0
 
     # lds max occupancy
     ldsSizeOccupancy = globalParameters["DeviceLDS"] // state["MaxOccupancy"]
-    ldsNumElementsOccupancy = ldsSizeOccupancy // state["ProblemType"]["DestDataType"].numBytes()
+    ldsNumBytesOccupancy = ldsSizeOccupancy
 
-    # print("ldsNumElementsA", ldsNumElementsA)
-    # print("ldsNumElementsB", ldsNumElementsB)
-    # print("ldsNumElementsMetadata", ldsNumElementsMetadata)
-    # print("ldsNumElementsAlignedA", ldsNumElementsAlignedA)
-    # print("ldsNumElementsAlignedB", ldsNumElementsAlignedB)
-    # print("ldsNumElementsAlignedMetadata", ldsNumElementsAlignedMetadata)
-    # print("ldsNumElementsAB", ldsNumElementsAB)
-
-    # print("LdsOffsetB", state["LdsOffsetB"])
-    # print("LdsOffsetMetadata", state["LdsOffsetMetadata"])
-    # if state["PrefetchGlobalRead"]:
-    #   print("LdsOffsetA_BLK", state["LdsOffsetA_Blk"])
-    #   print("LdsOffsetB_BLK", state["LdsOffsetB_Blk"])
-    #   print("LdsOffsetMetadata_BLK", state["LdsOffsetMetadata_Blk"])
+    #print("LdsOffsetB", state["LdsOffsetB"])
+    #print("LdsOffsetMetadata", state["LdsOffsetMetadata"])
+    #if state["PrefetchGlobalRead"]:
+    #  print("LdsOffsetA_BLK", state["LdsOffsetA_Blk"])
+    #  print("LdsOffsetB_BLK", state["LdsOffsetB_Blk"])
+    #  print("LdsOffsetMetadata_BLK", state["LdsOffsetMetadata_Blk"])
 
     if state["EnableMatrixInstruction"]:
       if state["DirectToLds"] and state["1LDSBuffer"]:
@@ -3106,9 +3101,9 @@ class Solution(collections.abc.Mapping):
 
     if state["1LDSBuffer"] == -1:
       if state["MIWaveTile"][0] == 1 and state["MIWaveTile"][1] == 1 or \
-          ldsNumElementsAB * state["ProblemType"]["DataType"].numBytes() <= max(ldsSizeOccupancy,32768) or \
+          ldsNumBytesAB  <= max(ldsSizeOccupancy,32768) or \
           (state["ProblemType"]["ComputeDataType"].numBytes() * state["MacroTile0"] * state["MacroTile1"] > 32768*4 and \
-            not (ldsNumElementsAB * state["ProblemType"]["DataType"].numBytes() > globalParameters["DeviceLDS"])):
+            not (ldsNumBytesAB > globalParameters["DeviceLDS"])):
         state["1LDSBuffer"] = 0
       else:
         state["1LDSBuffer"] = 1
@@ -3119,15 +3114,15 @@ class Solution(collections.abc.Mapping):
       # Should be able to support as long as NO scheduleLocalWrite
       if (not state["ScheduleIterAlg"] == 2) and (not state["ScheduleIterAlg"] == 3) and (state["ScheduleLocalWrite"]):
         reject(state, "1LDSBuffer only support SIA2 or SIA3, or SIA1 without SLW")
-      state["LdsOffsetB"] = ldsNumElementsAlignedA
-      state["LdsOffsetMetadata"] = state["LdsOffsetB"] + ldsNumElementsAlignedB
-      ldsNumElementsAB = ldsNumElementsAlignedA + ldsNumElementsAlignedB + ldsNumElementsMetadata
+      state["LdsOffsetB"] = ldsNumBytesAlignedA
+      state["LdsOffsetMetadata"] = state["LdsOffsetB"] + ldsNumBytesAlignedB
+      ldsNumBytesAB = ldsNumBytesAlignedA + ldsNumBytesAlignedB + ldsNumBytesMetadata
 
     # lds size is the greater of the two
-    ldsNumElements = max(ldsNumElementsAB, ldsNumElementsReduction, ldsNumElementsOccupancy)
+    ldsNumBytes = max(ldsNumBytesAB, ldsNumBytesReduction, ldsNumBytesOccupancy)
 
     if state["NumElementsPerBatchStore"] == -1:
-      if ldsNumElements * state["ProblemType"]["DataType"].numBytes() > 32768 or \
+      if ldsNumBytes > 32768 or \
           state["ProblemType"]["ComputeDataType"].numBytes() * state["MacroTile0"] * state["MacroTile1"] > 32768*4:
         state["NumElementsPerBatchStore"] = 0
         state["StorePriorityOpt"] = 0
@@ -3227,7 +3222,7 @@ class Solution(collections.abc.Mapping):
           return
 
     #check not support cases and calculate lds resources
-    ldsNumElementsRemapC = 0
+    ldsNumBytesRemapC = 0
     if state["StoreRemapVectorWidth"]:
       if not state["EnableMatrixInstruction"]:
         reject(state, "storeRemap only support MatrixInstruction kernel")
@@ -3273,37 +3268,37 @@ class Solution(collections.abc.Mapping):
                " Please use smaller StoreRemapVectorWidth.")
         return
       ldsRemapPad = max(state["StoreRemapVectorWidth"],state["MIOutputVectorWidth"])
-      ldsNumElementsRemapC = (state["MacroTile0"]+ldsRemapPad)* state["MatrixInstN"] * state["MIWaveGroup"][1]
+      ldsNumBytesRemapC = (state["MacroTile0"]+ldsRemapPad)* state["MatrixInstN"] * state["MIWaveGroup"][1]
 
 
       computeBytes = state["ProblemType"]["ComputeDataType"].numBytes()
-      multiplierGSU = computeBytes // state["ProblemType"]["DataType"].numBytes()
+      multiplierGSU = computeBytes
       if state["ProblemType"]["DestDataType"].numBytes() > state["ProblemType"]["DataType"].numBytes():
         # Determine ratio of output to input element size.
         # SRVW remaps output so we need to scale up resources.
-        multiplier = state["ProblemType"]["DestDataType"].numBytes() // state["ProblemType"]["DataType"].numBytes()
+        multiplier = state["ProblemType"]["DestDataType"].numBytes()
       else:
-        multiplier = 1
+        multiplier = state["ProblemType"]["DataType"].numBytes()
 
-      ldsNumElementsRemapCNonGSU = ldsNumElementsRemapC * multiplier
-      ldsNumElementsRemapCGSU    = ldsNumElementsRemapC * multiplierGSU
-      ldsNumElementsRemapC *= max(multiplier, multiplierGSU)
+      ldsNumBytesRemapCNonGSU = ldsNumBytesRemapC * multiplier
+      ldsNumBytesRemapCGSU    = ldsNumBytesRemapC * multiplierGSU
+      ldsNumBytesRemapC *= max(multiplier, multiplierGSU)
 
 
-      #print("ldsNumElementsRemapC=%u" % ldsNumElementsRemapC)
+      #print("ldsNumBytesRemapC=%u" % ldsNumBytesRemapC)
 
       # if LDS is bound by RemapC (SRVW), then 1LDSBuffer actually doesn't help in SIA3
       # since LDS usage couldn't be reduced
-      if state["1LDSBuffer"] and (state["ScheduleIterAlg"] == 3) and (ldsNumElements < ldsNumElementsRemapC):
+      if state["1LDSBuffer"] and (state["ScheduleIterAlg"] == 3) and (ldsNumBytes < ldsNumBytesRemapC):
         # TODO- Remove this DataType test condition,
         # Currently we do this test is just because we don't want to affect existing logic in rocBLAS
         if state["ProblemType"]["DataType"].isInt8():
           reject(state, "LDS usage is bound be StoreRemap, thus 1LDSBuffer wouldn't have any help. Skip.")
           return
 
-      ldsNumElements = max(ldsNumElements, ldsNumElementsRemapC)
+      ldsNumBytes = max(ldsNumBytes, ldsNumBytesRemapC)
 
-    state["LdsOffsetBias"] = 0  # TODO: ldsBiasOffset = ldsNumElementsAB
+    state["LdsOffsetBias"] = 0  # TODO: ldsBiasOffset = ldsNumBytesAB
     state["LdsOffsetBiasNonGSU"] = 0
     state["LdsOffsetBiasGSU"] = 0
     if state["ProblemType"]["UseBias"]:
@@ -3325,15 +3320,15 @@ class Solution(collections.abc.Mapping):
             ldsBiasMaxElements = max(ldsBiasMaxElements, state["MacroTile%d"%tile01] * maxKId * dataType.numBytes())
       else:
         if state["StoreRemapVectorWidth"]:
-          state["LdsOffsetBiasNonGSU"] = ldsNumElementsRemapCNonGSU
-          state["LdsOffsetBiasGSU"] = ldsNumElementsRemapCGSU
-          state["LdsOffsetBias"] = ldsNumElementsRemapC
+          state["LdsOffsetBiasNonGSU"] = ldsNumBytesRemapCNonGSU
+          state["LdsOffsetBiasGSU"] = ldsNumBytesRemapCGSU
+          state["LdsOffsetBias"] = ldsNumBytesRemapC
         for dataType in state["ProblemType"]["BiasDataTypeList"]:
           ldsBiasMaxElements = max(ldsBiasMaxElements, state["MacroTile0"] * dataType.numBytes())
-      ldsNumElements = max(ldsNumElements, state["LdsOffsetBias"] + ldsBiasMaxElements)
+      ldsNumBytes = max(ldsNumBytes, state["LdsOffsetBias"] + ldsBiasMaxElements)
 
-    state["LdsNumElements"] = ldsNumElements
-    ldsSize = ldsNumElements * state["ProblemType"]["DataType"].numBytes()
+    state["LdsNumBytes"] = ldsNumBytes
+    ldsSize = ldsNumBytes
     if ldsSize > globalParameters["MaxLDS"]:
       reject(state, "Kernel Uses %u > %u bytes of LDS" % ( ldsSize, globalParameters["MaxLDS"]))
       return
