@@ -150,6 +150,7 @@ void Arguments::init()
     algo_method        = 0;
     use_user_args      = false;
     rotating           = 0;
+    use_gpu_timer      = false;
 
     // tuning
     gsu_vector[0] = 0;
