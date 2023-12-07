@@ -364,7 +364,7 @@ validMFMA["B8"] = validMFMA["F8"]
 validMFMA["F8B8"] = validMFMA["F8"]
 validMFMA["B8F8"] = validMFMA["F8"]
 validWMMA = [[16,16,16,1], ]
-validTT = 16
+validTT = 32
 validMFMA["_format9"] = []
 
 for MFMA in [validMFMA["H"], validMFMA["S"], validMFMA["B"], validMFMA["D"], validMFMA["X"], validMFMA["F8"], validWMMA]:
@@ -670,7 +670,7 @@ validParameters = {
     #   (since C matrix is always coalesced in Free0 index direction and this assertion guarantees the index element multiple)
     #
     # 1 indicates no assertion (since all sizes are multiples of 1)
-    "AssertFree0ElementMultiple" : [1,2,4,8],
+    "AssertFree0ElementMultiple" : [1,2,4,8,16],
 
     # Kernel generator will assume that the FreeIndex[1] size is some multiple of the element size
     # and uses this to optimize the kernel.
@@ -681,7 +681,7 @@ validParameters = {
     #  - See above AssertFree0ElementMultiple "Load optimizations"
 
     # 1 indicates no assertion (since all sizes are multiples of 1)
-    "AssertFree1ElementMultiple" : [1,2,4,8],
+    "AssertFree1ElementMultiple" : [1,2,4,8,16],
 
     # Stagger the start summation position of the tiles.
     # Elements from the summation dimension are loaded at offsets rather than all starting at 0.
@@ -861,8 +861,8 @@ validParameters = {
     # NOTE: for input bpe=32, max GRVW is 4  (to fit dwordx4) (FP32), min GRVW is 1 (dword)
     #                 bpe=16, max GRVW is 8  (to fit dwordx4) (FP16), min GRVW is 2 (dword)
     #                 bpe=8,  max GRVW is 16 (to fit dwordx4) (INT8), min GRVW is 4 (dword)
-    "GlobalReadVectorWidthA":      [ -1, 1, 2, 3, 4, 6, 8, 16 ],
-    "GlobalReadVectorWidthB":      [ -1, 1, 2, 3, 4, 6, 8, 16 ],
+    "GlobalReadVectorWidthA":      [ -2, -1, 1, 2, 3, 4, 6, 8, 16 ],
+    "GlobalReadVectorWidthB":      [ -2, -1, 1, 2, 3, 4, 6, 8, 16 ],
 
     # Controls desired width (#elements) for loads from LDS -> VGPR.
     # -1 : Set LocalReadVectorWidth =  VectorWidth
@@ -926,8 +926,8 @@ validParameters = {
     # performance so this has been deprecated and probably doesn't work
     # -1 means use same padding as the VectorWidth if TLU=0 else 0.  (Padding only helps when transpose is required)
     # With MatrixInstruciton: -1 means max(GRVW,MIInput) if TLU=0
-    "LdsPadA":                     [ -1, 0, 1, 2, 3, 4, 8, 16, 32],
-    "LdsPadB":                     [ -1, 0, 1, 2, 3, 4, 8, 16, 32],
+    "LdsPadA":                     [ -1, 0, 1, 2, 3, 4, 8, 16, 32, 48, 64],
+    "LdsPadB":                     [ -1, 0, 1, 2, 3, 4, 8, 16, 32, 48, 64],
     "LdsPadMetadata":              [ -1, 0, 1, 2, 3, 4, 8],
     # Padding boundary for LDS. defines block-size for pad insertion. for every 'LdsBlockSizePerPad' bytes, LDS padding (pad value from LdsPad parameter)
     # is added (readOffset aware of the pad and adjusts offset value based on this parameter value).
@@ -1014,13 +1014,13 @@ validParameters = {
 defaultBenchmarkCommonParameters = [
     {"InnerUnroll":               [ 1 ] },
     {"KernelLanguage":            [ "Assembly" ] },
-    {"LdsPadA":                   [ 0 ] },
-    {"LdsPadB":                   [ 0 ] },
+    {"LdsPadA":                   [ -1 ] },
+    {"LdsPadB":                   [ -1 ] },
     {"LdsPadMetadata":            [ 0 ] },
-    {"LdsBlockSizePerPadA":       [ 0 ] },
-    {"LdsBlockSizePerPadB":       [ 0 ] },
+    {"LdsBlockSizePerPadA":       [ -1 ] },
+    {"LdsBlockSizePerPadB":       [ -1 ] },
     {"LdsBlockSizePerPadMetadata":[ 0 ] },
-    {"TransposeLDS":              [ 0 ] },
+    {"TransposeLDS":              [ -1 ] },
     {"MaxOccupancy":              [ 40 ] },
     {"VectorWidthA":              [ -1 ] },
     {"VectorWidthB":              [ -1 ] },
@@ -1034,13 +1034,13 @@ defaultBenchmarkCommonParameters = [
     {"WaveSeparateGlobalReadMetadata":   [ 0 ] },
     {"PrefetchGlobalRead":        [ 1 ] },
     {"PrefetchLocalRead":         [ 1 ] },
-    {"ClusterLocalRead":          [ 0 ] },
+    {"ClusterLocalRead":          [ 1 ] },
     {"SuppressNoLoadLoop":        [ False ]},
     {"ExpandPointerSwap":         [ True ]},
 
     {"ScheduleGlobalRead":        [ 1 ] },
     {"ScheduleLocalWrite":        [ 1 ] },
-    {"ScheduleIterAlg":           [ 1 ] },
+    {"ScheduleIterAlg":           [ 3 ] },
 
     {"GlobalReadPerMfma":         [ 1 ] },
     {"LocalWritePerMfma":         [ -1 ] },

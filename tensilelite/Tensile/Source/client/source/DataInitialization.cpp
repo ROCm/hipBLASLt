@@ -1096,15 +1096,6 @@ namespace Tensile
             {
                 m_rotatingPointer = allocNewGPUBuffer<void>("rotating", m_rotatingAllocatedSize);
             }
-
-            // allocate remaining memory to prevend other user use GPU when benchmarking
-            if(Debug::Instance().getBenchmark())
-            {
-                std::stringstream ss;
-                static_cast<void>(benchmarkAllocation(ss));
-                std::cout << ss.str();
-            }
-            return;
         }
 
         void DataInitialization::initializeGPUBatchedInputs(ContractionProblemGemm const& problem)
