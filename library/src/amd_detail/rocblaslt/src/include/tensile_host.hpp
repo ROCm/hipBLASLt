@@ -246,6 +246,12 @@ struct RocblasltContractionProblem
             {
                 this->bias_type = HIPBLASLT_R_32F;
             }
+            else if((this->a_type == HIPBLASLT_R_8F_E4M3 || this->a_type == HIPBLASLT_R_8F_E5M2)
+                    && (this->b_type == HIPBLASLT_R_8F_E4M3 || this->b_type == HIPBLASLT_R_8F_E5M2)
+                    && (this->d_type == HIPBLASLT_R_8F_E4M3 || this->d_type == HIPBLASLT_R_8F_E5M2))
+            {
+                this->bias_type = HIPBLASLT_R_32F;
+            }
             else
             {
                 this->bias_type = this->d_type;
@@ -285,6 +291,7 @@ rocblaslt_status groupedGemmCreate(std::vector<RocblasltContractionProblem>& pro
 rocblaslt_status makeArgument(rocblaslt_handle             handle,
                               const rocblaslt::RocGemmType gemmType,
                               const rocblaslt_matmul_algo& algo,
+                              const rocblaslt::RocTuning*  tuning,
                               void*                        workspace,
                               bool                         useUserArgs,
                               hipStream_t                  stream,
@@ -362,6 +369,7 @@ rocblaslt_status isSolutionSupported(rocblaslt_handle              handle,
                                      const rocblaslt::RocGemmType& gemmType,
                                      std::shared_ptr<void>         gemmData,
                                      rocblaslt_matmul_algo&        algo,
+                                     const rocblaslt::RocTuning*   tuning,
                                      size_t&                       workspaceSizeInBytes);
 
 /*******************************************************************************

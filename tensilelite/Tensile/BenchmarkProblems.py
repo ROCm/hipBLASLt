@@ -67,9 +67,15 @@ def generateForkedSolutions(problemType, constantParams, forkPermutations):
     return solutions
 
 
-def getCustomKernelSolutionObj(kernelName, directory=globalParameters["CustomKernelDirectory"]):
+def getCustomKernelSolutionObj(kernelName, internalSupportParams, directory=globalParameters["CustomKernelDirectory"]):
     """Creates the Solution object for a custom kernel"""
     kernelConfig = getCustomKernelConfig(kernelName, directory)
+    if "InternalSupportParams" not in kernelConfig:
+        kernelConfig["InternalSupportParams"] = internalSupportParams
+    else:
+        for key in internalSupportParams:
+            if key not in kernelConfig["InternalSupportParams"]:
+                kernelConfig["InternalSupportParams"][key] = internalSupportParams[key]
     for k, v in kernelConfig.items():
         if k != "ProblemType":
             checkParametersAreValid((k, [v]), validParameters)
@@ -79,12 +85,12 @@ def getCustomKernelSolutionObj(kernelName, directory=globalParameters["CustomKer
     return Solution(kernelConfig)
 
 
-def generateCustomKernelSolutions(problemType, customKernels, failOnMismatch):
+def generateCustomKernelSolutions(problemType, customKernels, internalSupportParams, failOnMismatch):
     """Creates a list with a Solution object for each name in customKernel"""
     solutions = []
     for kernelName in customKernels:
         print1("# Processing custom kernel {}".format(kernelName))
-        solution = getCustomKernelSolutionObj(kernelName)
+        solution = getCustomKernelSolutionObj(kernelName, internalSupportParams)
         if solution["ProblemType"] != problemType:
             # Raise error if this kernel was specifically requested and problem type doesn't match
             if failOnMismatch:
@@ -238,6 +244,8 @@ def benchmarkProblemType(problemTypeConfig, problemSizeGroupConfig, problemSizeG
         print1("# Fork Parameters:")
         for k, v in benchmarkStep.forkParams.items():
             print1("#     {}: {}".format(k, v))
+        if benchmarkStep.internalSupportParams:
+            print("# InternalSupportParams: {}".format(benchmarkStep.internalSupportParams))
 
         pushWorkingPath(shortName)
         stepBaseDir = globalParameters["WorkingPath"]
@@ -261,6 +269,7 @@ def benchmarkProblemType(problemTypeConfig, problemSizeGroupConfig, problemSizeG
                     c["ForkParams"] == benchmarkStep.forkParams and \
                     c["ParamGroups"] == benchmarkStep.paramGroups and \
                     c["CustomKernels"] == benchmarkStep.customKernels and \
+                    c["InternalSupportParams"] == benchmarkStep.internalSupportParams and \
                     c["CustomKernelWildcard"] == benchmarkStep.customKernelWildcard:
                 cacheValid = True
                 codeObjectFiles = c["CodeObjectFiles"]
@@ -276,7 +285,8 @@ def benchmarkProblemType(problemTypeConfig, problemSizeGroupConfig, problemSizeG
             regSolutions = generateForkedSolutions(benchmarkProcess.problemType, \
                     benchmarkStep.constantParams, forkPermutations)
             kcSolutions = generateCustomKernelSolutions(benchmarkProcess.problemType, \
-                    benchmarkStep.customKernels, not benchmarkStep.customKernelWildcard)
+                    benchmarkStep.customKernels, benchmarkStep.internalSupportParams, \
+                    not benchmarkStep.customKernelWildcard)
 
             maxPossibleSolutions += len(kcSolutions)
             solutions = regSolutions + kcSolutions

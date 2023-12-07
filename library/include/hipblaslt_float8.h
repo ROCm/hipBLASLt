@@ -608,7 +608,7 @@ inline __host__ __device__ bool operator>(hipblaslt_f8 a, hipblaslt_f8 b)
 }
 // ================ Explicit downcasting to support different rounding (RNE, SR) ===============
 // NOTE: we going to remove all assignment operator overloading from other types and enforce
-// this explicit_downcast function to make any roudning behavior default
+// this explicit_downcast function to make any rounding behavior default
 // We have to explicitly call this function with SR flag
 /*
 template <typename T,

@@ -145,10 +145,16 @@ struct Arguments
     bool                  norm_check_assert;
 
     // API related
-    bool use_ext;
-    bool use_ext_setproblem;
-    int  algo_method; // 0 for getheuristic, 1 for get all algos, 2 for algo index
-    bool use_user_args;
+    bool    use_ext;
+    bool    use_ext_setproblem;
+    int     algo_method; // 0 for getheuristic, 1 for get all algos, 2 for algo index
+    bool    use_user_args;
+    int32_t rotating;
+    bool use_gpu_timer;
+
+    // tuning
+    int32_t gsu_vector[MAX_SUPPORTED_NUM_PROBLEMS]; // This is for client
+    int32_t wgm_vector[MAX_SUPPORTED_NUM_PROBLEMS]; // This is for client
 
     // print
     bool print_solution_found;
@@ -233,6 +239,10 @@ struct Arguments
     OPER(use_ext_setproblem) SEP     \
     OPER(algo_method) SEP            \
     OPER(use_user_args) SEP          \
+    OPER(rotating) SEP               \
+    OPER(use_gpu_timer) SEP          \
+    OPER(gsu_vector) SEP             \
+    OPER(wgm_vector) SEP             \
     OPER(print_solution_found) SEP   \
     OPER(print_kernel_info) SEP
 
@@ -372,7 +382,8 @@ namespace ArgumentsHelper
               e_##NAME == e_lde ? hipblaslt_argument(-12) :                                 \
               e_##NAME == e_stride_e ? hipblaslt_argument(-13) :                            \
               e_##NAME == e_alpha ? hipblaslt_argument(-14) :                               \
-              e_##NAME == e_beta ? hipblaslt_argument(-15) : e_##NAME> = \
+              e_##NAME == e_beta ? hipblaslt_argument(-15) :                                \
+              e_##NAME == e_rotating ? hipblaslt_argument(-16) : e_##NAME> = \
             [](auto&& func, const Arguments& arg, auto) { func(#NAME, arg.NAME); }
 
     // Specialize apply for each Argument
@@ -650,6 +661,14 @@ namespace ArgumentsHelper
     HIPBLASLT_CLANG_STATIC constexpr auto apply<e_beta> =
         [](auto&& func, const Arguments& arg, auto T) {
             func("beta", arg.get_beta<decltype(T)>());
+        };
+
+    // Specialization for e_rotating
+    template <>
+    HIPBLASLT_CLANG_STATIC constexpr auto apply<e_rotating> =
+        [](auto&& func, const Arguments& arg, auto T) {
+            if(arg.rotating > 0)
+                func("rotating_buffer", arg.rotating);
         };
 };
 // clang-format on

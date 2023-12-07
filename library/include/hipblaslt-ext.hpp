@@ -45,8 +45,8 @@
 
 namespace hipblaslt_ext
 {
-    using HipBufferDeleter = hipError_t(*)(void *);
-    using HipBufferPtr = std::unique_ptr<void, HipBufferDeleter>;
+    using HipBufferDeleter = hipError_t (*)(void*);
+    using HipBufferPtr     = std::unique_ptr<void, HipBufferDeleter>;
 
     /*! \ingroup types_module
      *  \brief It is an enumerated type used to specific the type of the gemm problem in hipblasLtExt APIs.
@@ -87,7 +87,7 @@ namespace hipblaslt_ext
     /*! \ingroup types_module
      *  \brief hipblasLt extension ProblemType for gemm problems.
      *
-     * \details This strusture sets the problem type of a gemm problem.
+     * \details This structure sets the problem type of a gemm problem.
      */
     struct GemmProblemType
     {
@@ -103,7 +103,7 @@ namespace hipblaslt_ext
     /*! \ingroup types_module
      *  \brief hipblasLt extension Epilogue for gemm problems.
      *
-     * \details This strusture sets the epilogue of a gemm problem.
+     * \details This structure sets the epilogue of a gemm problem.
      */
     struct GemmEpilogue
     {
@@ -117,10 +117,17 @@ namespace hipblaslt_ext
             = 0; //!< The aux batch stride. Only works if mode is set to aux related epilogues.
     };
 
+    struct GemmTuning
+    {
+        uint8_t splitK = 0; //!< Value of splitK, 0 is off (use the splitK inside the solution).
+        uint8_t wgm
+            = 0; //!< Value of workgroup mapping, 0 is off (use the workgroup mapping inside the solution).
+    };
+
     /*! \ingroup types_module
      *  \brief hipblasLt extension Inputs for gemm problems.
      *
-     * \details This strusture sets the input pointers of a gemm problem.
+     * \details This structure sets the input pointers of a gemm problem.
      */
     struct GemmInputs
     {
@@ -144,7 +151,7 @@ namespace hipblaslt_ext
     /*! \ingroup types_module
      *  \brief hipblasLt extension GPU inputs for gemm problems.
      *
-     * \details This strusture sets the input gpu pointers of a gemm problem.
+     * \details This structure sets the input gpu pointers of a gemm problem.
      * Only supports solutions loading arguments from global memory.
      */
 
@@ -193,7 +200,11 @@ namespace hipblaslt_ext
     class GemmInstance
     {
     public:
-        virtual ~GemmInstance() {}
+        HIPBLASLT_EXPORT virtual ~GemmInstance();
+        HIPBLASLT_EXPORT               GemmInstance(const GemmInstance& rhs) = delete;
+        HIPBLASLT_EXPORT GemmInstance& operator=(const GemmInstance& rhs)    = delete;
+        HIPBLASLT_EXPORT               GemmInstance(GemmInstance&& rhs) noexcept;
+        HIPBLASLT_EXPORT GemmInstance& operator=(GemmInstance&& rhs) noexcept;
 
         /*! \ingroup library_module
         *  \brief Retrieve the possible algorithms
@@ -243,6 +254,29 @@ namespace hipblaslt_ext
         hipblasStatus_t isAlgoSupported(hipblasLtMatmulAlgo_t& algo, size_t& workspaceSizeInBytes);
 
         /*! \ingroup library_module
+        *  \brief Check if the algorithm supports the problem. (For hipblaslt extension API)
+        *
+        *  \details
+        *  This function updates the problem saved inside the algorithm if the problem is
+        * supported. The required workspaceSizeInBytes is also returned.
+        *
+        *  @param[in]
+        *  algo The algorithm heuristic.
+        *  @param[in]
+        *  tuning The tuning parameters.
+        *  @param[out]
+        *  workspaceSizeInBytes Return the required workspace size.
+        *
+        *  \retval HIPBLAS_STATUS_SUCCESS           If query was successful. The problem is
+        * supported by the algorithm.
+        * results. \retval HIPBLAS_STATUS_INVALID_VALUE     The problem is not supported.
+        */
+        HIPBLASLT_EXPORT
+        hipblasStatus_t isAlgoSupported(hipblasLtMatmulAlgo_t& algo,
+                                        GemmTuning&            tuning,
+                                        size_t&                workspaceSizeInBytes);
+
+        /*! \ingroup library_module
         *  \brief Create kernel arguments from a given hipblaslt_ext::GemmInstance.
         *
         *  \details
@@ -270,6 +304,43 @@ namespace hipblaslt_ext
         */
         HIPBLASLT_EXPORT
         hipblasStatus_t initialize(const hipblasLtMatmulAlgo_t& algo,
+                                   void*                        workspace,
+                                   bool                         useUserArgs = true,
+                                   hipStream_t                  stream      = 0);
+
+        /*! \ingroup library_module
+        *  \brief Create kernel arguments from a given hipblaslt_ext::GemmInstance.
+        *
+        *  \details
+        *  This function creates kernel arguments from a given hipblaslt_ext::GemmInstance
+        *  then saves the arguments inside the instance.
+        *
+        *  @param[in]
+        *  algo                    Handle for matrix multiplication algorithm to be
+        * used. See hipblaslt.h::hipblasLtMatmulAlgo_t . When NULL, an implicit heuristics query
+        * with default search preferences will be performed to determine actual
+        * algorithm to use.
+        *  @param[in]
+        *  tuning                  Structure with user tuning parameters. Note that not every algo
+        * supports user tuning parameters. Will return HIPBLAS_STATUS_INVALID_VALUE if not supported.
+        * be 0).
+        *  @param[in]
+        *  workspace               Pointer to the workspace buffer allocated in the GPU
+        * memory. Pointer must be 16B aligned (that is, lowest 4 bits of address must
+        * be 0).
+        *  @param[in]
+        *  useUserArgs                Use user args, this does not affect vanilla gemm.
+        * (May be deprecated in the future)
+        *  @param[in]
+        *  stream                  The HIP stream where all the GPU work will be
+        * submitted. (May be deprecated in the future)
+        *
+        *  \retval HIPBLAS_STATUS_SUCCESS           If the operation completed
+        * successfully. \retval HIPBLAS_STATUS_INVALID_VALUE If the gemm_count = 0.
+        */
+        HIPBLASLT_EXPORT
+        hipblasStatus_t initialize(const hipblasLtMatmulAlgo_t& algo,
+                                   GemmTuning&                  tuning,
                                    void*                        workspace,
                                    bool                         useUserArgs = true,
                                    hipStream_t                  stream      = 0);
@@ -303,9 +374,8 @@ namespace hipblaslt_ext
 
         hipblasLtHandle_t     m_handle;
         std::shared_ptr<void> m_data;
-        //                             src           dst           srcType              dstType              numElements  scale
-        using Conversions = std::tuple<HipBufferPtr, HipBufferPtr, hipblasltDatatype_t, hipblasltDatatype_t, std::size_t, HipBufferPtr>;
-        std::vector<std::vector<Conversions>> m_auxiliary_conversion_buffers;
+        struct ConversionHelper;
+        std::unique_ptr<ConversionHelper> m_conversion_helper;
     };
 
     /*! \ingroup types_module
@@ -381,6 +451,11 @@ namespace hipblaslt_ext
                                        hipblasLtMatrixLayout_t matC,
                                        void*                   D,
                                        hipblasLtMatrixLayout_t matD);
+
+        HIPBLASLT_EXPORT       Gemm(const Gemm&) = delete;
+        HIPBLASLT_EXPORT       Gemm(Gemm&&) noexcept;
+        HIPBLASLT_EXPORT Gemm& operator=(const Gemm&) = delete;
+        HIPBLASLT_EXPORT Gemm& operator=(Gemm&&) noexcept;
 
         /*! \ingroup library_module
         *  \brief Sets the problem for a gemm problem.
@@ -549,6 +624,10 @@ namespace hipblaslt_ext
                                               hipblasltDatatype_t    typeC,
                                               hipblasltDatatype_t    typeD,
                                               hipblasLtComputeType_t typeCompute);
+        HIPBLASLT_EXPORT              GroupedGemm(const GroupedGemm&) = delete;
+        HIPBLASLT_EXPORT              GroupedGemm(GroupedGemm&&) noexcept;
+        HIPBLASLT_EXPORT GroupedGemm& operator=(const GroupedGemm&) = delete;
+        HIPBLASLT_EXPORT GroupedGemm& operator=(GroupedGemm&&) noexcept;
 
         /*! \ingroup library_module
         *  \brief Constructor that sets the grouped gemm problem from hipblasLt structures
@@ -803,7 +882,7 @@ namespace hipblaslt_ext
      *  @param[in]
      *  algo    The algorithm.
      *
-     *  \retval int The index of the algorithm, can be used to get hueristic
+     *  \retval int The index of the algorithm, can be used to get heuristic
      * results from \ref getAlgosFromIndex. Returns -1 if the index stored
      * in algo < 0. Note that the index may not be valid if the algo struct
      * is not initialized properly.
@@ -820,7 +899,7 @@ namespace hipblaslt_ext
      *  algo    The algorithm.
      *
      *  \retval std::string The solution name of the algorithm, can be used to
-     * get hueristic results from \ref getAlgosFromIndex. Returns "" if the
+     * get heuristic results from \ref getAlgosFromIndex. Returns "" if the
      * index stored in algo < 0. Note that the string may not be valid if the
      * algo struct is not initialized properly.
      */
@@ -837,7 +916,7 @@ namespace hipblaslt_ext
      *  algo    The algorithm.
      *
      *  \retval std::string The kernel name of the algorithm, can be used to
-     * get hueristic results from \ref getAlgosFromIndex. Returns "" if the
+     * get heuristic results from \ref getAlgosFromIndex. Returns "" if the
      * index stored in algo < 0. Note that the string may not be valid if the
      * algo struct is not initialized properly.
      */
@@ -911,4 +990,19 @@ namespace hipblaslt_ext
                                           hipblasLtMatrixLayout_t Ddesc,
                                           hipblasLtMatmulAlgo_t&  algo,
                                           size_t&                 workspaceSizeInBytes);
+
+    /*! \ingroup library_module
+     *  \brief Copy the settings from A matmul to B matmul.
+     *
+     *  @param[in]
+     *  src Source matmul.
+     *  @param[out]
+     *  dst Return the copied matmul content.
+     *
+     *  \retval HIPBLAS_STATUS_SUCCESS           If query was successful. The problem is
+     * supported by the algorithm.
+     * results. \retval HIPBLAS_STATUS_NOT_INITIALIZED Source or dest matmul not initialized.
+     */
+    HIPBLASLT_EXPORT
+    hipblasStatus_t copyMatmul(hipblasLtMatmulDesc_t src, hipblasLtMatmulDesc_t dst);
 } // End of namespace hipblasltext

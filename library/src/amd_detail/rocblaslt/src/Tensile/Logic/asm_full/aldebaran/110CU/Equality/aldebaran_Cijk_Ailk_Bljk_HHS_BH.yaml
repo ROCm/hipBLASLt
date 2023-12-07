@@ -69,7 +69,7 @@
     BufferLoad: true
     BufferStore: true
     ClusterLocalRead: 1
-    CodeObjectVersion: V3
+    CodeObjectVersion: default
     CustomKernelName: ''
     DepthU: 64
     DepthULdsDivisor: 1
@@ -286,7 +286,7 @@
     BufferLoad: true
     BufferStore: true
     ClusterLocalRead: 1
-    CodeObjectVersion: V3
+    CodeObjectVersion: default
     CustomKernelName: ''
     DepthU: 32
     DepthULdsDivisor: 1
@@ -503,7 +503,7 @@
     BufferLoad: true
     BufferStore: true
     ClusterLocalRead: 1
-    CodeObjectVersion: V3
+    CodeObjectVersion: default
     CustomKernelName: ''
     DepthU: 32
     DepthULdsDivisor: 1
@@ -720,7 +720,7 @@
     BufferLoad: true
     BufferStore: true
     ClusterLocalRead: 1
-    CodeObjectVersion: V3
+    CodeObjectVersion: default
     CustomKernelName: ''
     DepthU: 64
     DepthULdsDivisor: 1
@@ -937,7 +937,7 @@
     BufferLoad: true
     BufferStore: true
     ClusterLocalRead: 1
-    CodeObjectVersion: V3
+    CodeObjectVersion: default
     CustomKernelName: ''
     DepthU: 64
     DepthULdsDivisor: 1
@@ -1154,7 +1154,7 @@
     BufferLoad: true
     BufferStore: true
     ClusterLocalRead: 1
-    CodeObjectVersion: V3
+    CodeObjectVersion: default
     CustomKernelName: ''
     DepthU: 32
     DepthULdsDivisor: 1
@@ -1371,7 +1371,7 @@
     BufferLoad: true
     BufferStore: true
     ClusterLocalRead: 1
-    CodeObjectVersion: V3
+    CodeObjectVersion: default
     CustomKernelName: ''
     DepthU: 32
     DepthULdsDivisor: 1
@@ -1588,7 +1588,7 @@
     BufferLoad: true
     BufferStore: true
     ClusterLocalRead: 1
-    CodeObjectVersion: V3
+    CodeObjectVersion: default
     CustomKernelName: ''
     DepthU: 64
     DepthULdsDivisor: 1
@@ -1805,7 +1805,7 @@
     BufferLoad: true
     BufferStore: true
     ClusterLocalRead: 1
-    CodeObjectVersion: V3
+    CodeObjectVersion: default
     CustomKernelName: ''
     DepthU: 64
     DepthULdsDivisor: 1
@@ -2022,7 +2022,7 @@
     BufferLoad: true
     BufferStore: true
     ClusterLocalRead: 1
-    CodeObjectVersion: V3
+    CodeObjectVersion: default
     CustomKernelName: ''
     DepthU: 64
     DepthULdsDivisor: 1
@@ -2243,7 +2243,7 @@
     CheckDimOverflow: 0
     CheckTensorDimAsserts: false
     ClusterLocalRead: 1
-    CodeObjectVersion: V3
+    CodeObjectVersion: default
     CustomKernelName: ''
     DepthU: 64
     DepthULdsDivisor: 1
@@ -2497,7 +2497,7 @@
     BufferLoad: true
     BufferStore: true
     ClusterLocalRead: 1
-    CodeObjectVersion: V3
+    CodeObjectVersion: default
     CustomKernelName: ''
     DepthU: 64
     DepthULdsDivisor: 1
@@ -2714,7 +2714,7 @@
     BufferLoad: true
     BufferStore: true
     ClusterLocalRead: 1
-    CodeObjectVersion: V3
+    CodeObjectVersion: default
     CustomKernelName: ''
     DepthU: 32
     DepthULdsDivisor: 1
@@ -2931,7 +2931,7 @@
     BufferLoad: true
     BufferStore: true
     ClusterLocalRead: 1
-    CodeObjectVersion: V3
+    CodeObjectVersion: default
     CustomKernelName: ''
     DepthU: 32
     DepthULdsDivisor: 1
@@ -3148,7 +3148,7 @@
     BufferLoad: true
     BufferStore: true
     ClusterLocalRead: 1
-    CodeObjectVersion: V3
+    CodeObjectVersion: default
     CustomKernelName: ''
     DepthU: 64
     DepthULdsDivisor: 1
@@ -3164,7 +3164,7 @@
     GlobalReadVectorWidthA: 8
     GlobalReadVectorWidthB: 8
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 2
     GroupLoadStore: false
     GuaranteeNoPartialA: true
@@ -3365,7 +3365,7 @@
     BufferLoad: true
     BufferStore: true
     ClusterLocalRead: 1
-    CodeObjectVersion: V3
+    CodeObjectVersion: default
     CustomKernelName: ''
     DepthU: 64
     DepthULdsDivisor: 1
@@ -3381,7 +3381,7 @@
     GlobalReadVectorWidthA: 8
     GlobalReadVectorWidthB: 8
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: false
     GuaranteeNoPartialA: true
@@ -3582,7 +3582,7 @@
     BufferLoad: true
     BufferStore: true
     ClusterLocalRead: 1
-    CodeObjectVersion: V3
+    CodeObjectVersion: default
     CustomKernelName: ''
     DepthU: 64
     DepthULdsDivisor: 1
@@ -3598,7 +3598,7 @@
     GlobalReadVectorWidthA: 8
     GlobalReadVectorWidthB: 8
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: false
     GuaranteeNoPartialA: true
@@ -3799,7 +3799,7 @@
     BufferLoad: true
     BufferStore: true
     ClusterLocalRead: 1
-    CodeObjectVersion: V3
+    CodeObjectVersion: default
     CustomKernelName: ''
     DepthU: 64
     DepthULdsDivisor: 1
@@ -3815,7 +3815,7 @@
     GlobalReadVectorWidthA: 8
     GlobalReadVectorWidthB: 8
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: false
     GuaranteeNoPartialA: true
@@ -4016,7 +4016,7 @@
     BufferLoad: true
     BufferStore: true
     ClusterLocalRead: 1
-    CodeObjectVersion: V3
+    CodeObjectVersion: default
     CustomKernelName: ''
     DepthU: 32
     DepthULdsDivisor: 1
@@ -4032,7 +4032,7 @@
     GlobalReadVectorWidthA: 8
     GlobalReadVectorWidthB: 8
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 2
     GroupLoadStore: false
     GuaranteeNoPartialA: true
@@ -4233,7 +4233,7 @@
     BufferLoad: true
     BufferStore: true
     ClusterLocalRead: 1
-    CodeObjectVersion: V3
+    CodeObjectVersion: default
     CustomKernelName: ''
     DepthU: 32
     DepthULdsDivisor: 1
@@ -4249,7 +4249,7 @@
     GlobalReadVectorWidthA: 8
     GlobalReadVectorWidthB: 8
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 8
     GroupLoadStore: false
     GuaranteeNoPartialA: true
@@ -4449,7 +4449,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
-    CodeObjectVersion: V3
+    CodeObjectVersion: default
     CustomKernelName: ''
     DepthU: 32
     DepthULdsDivisor: 1
@@ -4465,7 +4465,7 @@
     GlobalReadVectorWidthA: 8
     GlobalReadVectorWidthB: 8
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 2
     GroupLoadStore: false
     GuaranteeNoPartialA: true
@@ -4665,7 +4665,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
-    CodeObjectVersion: V3
+    CodeObjectVersion: default
     CustomKernelName: ''
     DepthU: 64
     DepthULdsDivisor: 1
@@ -4681,7 +4681,7 @@
     GlobalReadVectorWidthA: 4
     GlobalReadVectorWidthB: 4
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 8
     GroupLoadStore: false
     GuaranteeNoPartialA: true
@@ -4882,7 +4882,7 @@
     BufferLoad: true
     BufferStore: true
     ClusterLocalRead: 1
-    CodeObjectVersion: V3
+    CodeObjectVersion: default
     CustomKernelName: ''
     DepthU: 64
     DepthULdsDivisor: 1
@@ -4898,7 +4898,7 @@
     GlobalReadVectorWidthA: 8
     GlobalReadVectorWidthB: 8
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 2
     GroupLoadStore: false
     GuaranteeNoPartialA: true
@@ -5099,7 +5099,7 @@
     BufferLoad: true
     BufferStore: true
     ClusterLocalRead: 1
-    CodeObjectVersion: V3
+    CodeObjectVersion: default
     CustomKernelName: ''
     DepthU: 64
     DepthULdsDivisor: 1
@@ -5115,7 +5115,7 @@
     GlobalReadVectorWidthA: 8
     GlobalReadVectorWidthB: 8
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 2
     GroupLoadStore: false
     GuaranteeNoPartialA: true
@@ -5316,7 +5316,7 @@
     BufferLoad: true
     BufferStore: true
     ClusterLocalRead: 1
-    CodeObjectVersion: V3
+    CodeObjectVersion: default
     CustomKernelName: ''
     DepthU: 64
     DepthULdsDivisor: 1
@@ -5332,7 +5332,7 @@
     GlobalReadVectorWidthA: 8
     GlobalReadVectorWidthB: 8
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 4
     GroupLoadStore: false
     GuaranteeNoPartialA: true
@@ -5532,7 +5532,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
-    CodeObjectVersion: V3
+    CodeObjectVersion: default
     CustomKernelName: ''
     DepthU: 64
     DepthULdsDivisor: 1
@@ -5548,7 +5548,7 @@
     GlobalReadVectorWidthA: 8
     GlobalReadVectorWidthB: 8
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 4
     GroupLoadStore: false
     GuaranteeNoPartialA: true
@@ -5749,7 +5749,7 @@
     BufferLoad: true
     BufferStore: true
     ClusterLocalRead: 1
-    CodeObjectVersion: V3
+    CodeObjectVersion: default
     CustomKernelName: ''
     DepthU: 64
     DepthULdsDivisor: 1
@@ -5765,7 +5765,7 @@
     GlobalReadVectorWidthA: 8
     GlobalReadVectorWidthB: 8
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 1
     GroupLoadStore: false
     GuaranteeNoPartialA: true
@@ -5965,7 +5965,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
-    CodeObjectVersion: V3
+    CodeObjectVersion: default
     CustomKernelName: ''
     DepthU: 16
     DepthULdsDivisor: 1
@@ -5981,7 +5981,7 @@
     GlobalReadVectorWidthA: 2
     GlobalReadVectorWidthB: 2
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 4
     GroupLoadStore: false
     GuaranteeNoPartialA: true
@@ -6181,7 +6181,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
-    CodeObjectVersion: V3
+    CodeObjectVersion: default
     CustomKernelName: ''
     DepthU: 16
     DepthULdsDivisor: 1
@@ -6197,7 +6197,7 @@
     GlobalReadVectorWidthA: 2
     GlobalReadVectorWidthB: 2
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 2
     GroupLoadStore: false
     GuaranteeNoPartialA: true
@@ -6398,7 +6398,7 @@
     BufferLoad: true
     BufferStore: true
     ClusterLocalRead: 1
-    CodeObjectVersion: V3
+    CodeObjectVersion: default
     CustomKernelName: ''
     DepthU: 64
     DepthULdsDivisor: 1
@@ -6414,7 +6414,7 @@
     GlobalReadVectorWidthA: 8
     GlobalReadVectorWidthB: 8
     GlobalSplitU: 1
-    GlobalSplitUAlgorithm: SingleBuffer
+    GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 8
     GroupLoadStore: false
     GuaranteeNoPartialA: true
@@ -6615,7 +6615,7 @@
     AssignedProblemIndependentDerivedParameters: true
     BufferLoad: true
     BufferStore: true
-    CodeObjectVersion: V3
+    CodeObjectVersion: default
     CustomKernelName: ''
     DepthU: 64
     DepthULdsDivisor: 1
@@ -6840,7 +6840,7 @@
     BufferLoad: true
     BufferStore: true
     ClusterLocalRead: 1
-    CodeObjectVersion: V3
+    CodeObjectVersion: default
     CustomKernelName: ''
     DepthU: 64
     DepthULdsDivisor: 1
@@ -7065,7 +7065,7 @@
     BufferLoad: true
     BufferStore: true
     ClusterLocalRead: 1
-    CodeObjectVersion: V3
+    CodeObjectVersion: default
     CustomKernelName: ''
     DepthU: 64
     DepthULdsDivisor: 1
@@ -7290,7 +7290,7 @@
     BufferLoad: true
     BufferStore: true
     ClusterLocalRead: 1
-    CodeObjectVersion: V3
+    CodeObjectVersion: default
     CustomKernelName: ''
     DepthU: 64
     DepthULdsDivisor: 1
@@ -7515,7 +7515,7 @@
     BufferLoad: true
     BufferStore: true
     ClusterLocalRead: 1
-    CodeObjectVersion: V3
+    CodeObjectVersion: default
     CustomKernelName: ''
     DepthU: 64
     DepthULdsDivisor: 1

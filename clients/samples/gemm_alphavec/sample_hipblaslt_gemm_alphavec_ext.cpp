@@ -145,7 +145,7 @@ void simpleGemmAlphaVecExt(hipblasLtHandle_t  handle,
         return;
     }
 
-    // Make sure to initialize everytime the algo changes
+    // Make sure to initialize every time when algo changes
     CHECK_HIPBLASLT_ERROR(gemm.initialize(heuristicResult[0].algo, d_workspace));
     CHECK_HIPBLASLT_ERROR(gemm.run(stream));
     return;

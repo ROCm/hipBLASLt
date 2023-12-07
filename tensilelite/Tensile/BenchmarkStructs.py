@@ -1,6 +1,6 @@
 ################################################################################
 #
-# Copyright (C) 2022 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -46,6 +46,8 @@ def checkParametersAreValid(param, validParams):
     """Ensures paramaters in params exist and have valid values as specified by validParames"""
     (name, values) = param
     if name == "ProblemSizes":
+        return
+    elif name == "InternalSupportParams":
         return
 
     if name not in validParams:
@@ -147,6 +149,9 @@ class BenchmarkProcess:
                 for x in getNonNoneFromConfig("ForkParameters", [])]))
         self.paramGroups = forkParams.pop("Groups") if "Groups" in forkParams else []
         self.customKernels = getNonNoneFromConfig("CustomKernels", [])
+        self.internalSupportParams = getNonNoneFromConfig("InternalSupportParams", {})
+        if self.customKernels == [] and self.internalSupportParams != {}:
+            printExit("InternalSupportParams only supports Custom Kernels")
 
         activationConf = ""
         biasTypesConf  = ""
@@ -217,6 +222,7 @@ class BenchmarkProcess:
                 self.singleValueParams, \
                 self.paramGroups, \
                 self.customKernels, \
+                self.internalSupportParams, \
                 self.problemSizes, \
                 self.biasTypesArgs, \
                 self.activationArgs, \
@@ -280,12 +286,13 @@ def constructForkPermutations(forkParams, paramGroups):
 class BenchmarkStep:
     """A single benchmark step which consists of constant and fork parameters and a set of sizes"""
 
-    def __init__(self, forkParams, constantParams, paramGroups, customKernels, problemSizes, biasTypeArgs, activationArgs, idx):
+    def __init__(self, forkParams, constantParams, paramGroups, customKernels, internalSupportParams, problemSizes, biasTypeArgs, activationArgs, idx):
         """Basic constructor storing each argument"""
         self.forkParams = forkParams
         self.constantParams = constantParams
         self.paramGroups = paramGroups
         self.customKernels = customKernels
+        self.internalSupportParams = internalSupportParams
         self.problemSizes = problemSizes
         self.biasTypeArgs = biasTypeArgs
         self.activationArgs = activationArgs

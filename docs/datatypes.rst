@@ -49,3 +49,7 @@ hipblasLtMatrixLayout_t
 hipblasLtMatrixLayoutAttribute_t
 --------------------------------
 .. doxygenenum:: hipblasLtMatrixLayoutAttribute_t
+
+hipblasLtMatrixTransformDesc_t
+--------------------------------
+.. doxygentypedef:: hipblasLtMatrixTransformDesc_t

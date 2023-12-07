@@ -65,6 +65,7 @@ namespace Tensile
                 iot::mapOptional(io, "linearModel", s.linearModel);
 
                 iot::mapRequired(io, "sizeMapping", s.sizeMapping);
+                iot::mapRequired(io, "internalArgsSupport", s.internalArgsSupport);
                 iot::mapRequired(io, "problemType", s.problemType);
             }
 
@@ -85,6 +86,7 @@ namespace Tensile
 
                 iot::mapRequired(io, "staggerU", s.staggerU);
                 iot::mapRequired(io, "depthU", s.depthU);
+                iot::mapRequired(io, "globalSplitUPGR", s.globalSplitUPGR);
                 iot::mapRequired(io, "globalSplitU", s.globalSplitU);
                 iot::mapRequired(io, "staggerStrideShift", s.staggerStrideShift);
                 iot::mapRequired(io, "workGroupMapping", s.workGroupMapping);
@@ -103,6 +105,19 @@ namespace Tensile
                 iot::mapOptional(io, "activationFused", s.activationFused);
 
                 iot::mapOptional(io, "CustomKernelName", s.customKernelName);
+            }
+
+            const static bool flow = false;
+        };
+
+        template <typename IO>
+        struct MappingTraits<ContractionSolution::InternalArgsSupport, IO>
+        {
+            using iot = IOTraits<IO>;
+            static void mapping(IO& io, ContractionSolution::InternalArgsSupport& s)
+            {
+                iot::mapRequired(io, "gsu", s.gsu);
+                iot::mapRequired(io, "wgm", s.wgm);
             }
 
             const static bool flow = false;

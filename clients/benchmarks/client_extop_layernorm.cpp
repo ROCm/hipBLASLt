@@ -43,7 +43,7 @@ void printUsage(char* programName)
               << "\t-m, --m\t\t\t\tSize of dim 0, default is 1335\n"
               << "\t-n, --n\t\t\t\tSize of dim 1, default is 16\n"
               << "\t-a, --affine\t\t\t\tEnable Gamma and Beta, default is false\n"
-              << "\t--initialization \t\tIntialize matrix data. Options: rand_int, trig_float, "
+              << "\t--initialization \t\tInitialize matrix data. Options: rand_int, trig_float, "
                  "hpl(floating). (default is hpl)\n";
 }
 

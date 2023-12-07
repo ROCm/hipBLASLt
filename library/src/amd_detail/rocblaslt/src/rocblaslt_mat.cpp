@@ -146,7 +146,7 @@ rocblaslt_status rocblaslt_matmul_impl(const rocblaslt_handle       handle,
     //     return rocblaslt_status_invalid_size;
     // }
 
-    workspaceSizeInBytes = min(workspaceSizeInBytes, algo->max_workspace_bytes);
+    if (algo) workspaceSizeInBytes = min(workspaceSizeInBytes, algo->max_workspace_bytes);
     RocblasltContractionProblem problem{opA,
                                         opB,
                                         m,
@@ -1342,12 +1342,13 @@ rocblaslt_status rocblaslt_get_default_user_args(rocblaslt_handle       handle,
 rocblaslt_status rocblaslt_makeArgument_cpp(rocblaslt_handle             handle,
                                             const rocblaslt::RocGemmType gemmType,
                                             const rocblaslt_matmul_algo& algo,
+                                            const rocblaslt::RocTuning*  tuning,
                                             void*                        workspace,
                                             bool                         useUserArgs,
                                             hipStream_t                  stream,
                                             std::shared_ptr<void>        gemmData)
 {
-    return makeArgument(handle, gemmType, algo, workspace, useUserArgs, stream, gemmData);
+    return makeArgument(handle, gemmType, algo, tuning, workspace, useUserArgs, stream, gemmData);
 }
 
 std::string rocblaslt_get_kernel_name_from_algo(rocblaslt_handle             handle,

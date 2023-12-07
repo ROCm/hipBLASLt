@@ -377,6 +377,7 @@ rocblaslt_status rocblaslt_is_algo_supported_cpp(rocblaslt_handle       handle,
                                                  rocblaslt::RocGemmType gemmType,
                                                  std::shared_ptr<void>  gemmData,
                                                  rocblaslt_matmul_algo& algo,
+                                                 const rocblaslt::RocTuning* tuning,
                                                  size_t&                workspaceSizeInBytes);
 
 rocblaslt_status
@@ -387,15 +388,17 @@ rocblaslt_status
                                      const int              requestedAlgoCount,
                                      std::vector<rocblaslt_matmul_heuristic_result>& results);
 
+rocblaslt_status rocblaslt_copy_matmul(rocblaslt_matmul_desc src, rocblaslt_matmul_desc dst);
+
 // for internal use during testing, fetch arch name
 std::string rocblaslt_internal_get_arch_name();
 
 // for internal use of testing existence of path
-bool rocblaslt_internal_test_path(const std::string &);
+bool rocblaslt_internal_test_path(const std::string&);
 
-std::string rocblaslt_internal_get_so_path(const std::string &keyword);
+std::string rocblaslt_internal_get_so_path(const std::string& keyword);
 
-void rocblaslt_log_error(const char *func, const char *var, const char *msg);
+void rocblaslt_log_error(const char* func, const char* var, const char* msg);
 #endif
 
 #endif /* _ROCBLASLT_AUXILIARY_H_ */

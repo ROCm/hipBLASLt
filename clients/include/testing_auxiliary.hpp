@@ -304,6 +304,94 @@ void testing_aux_matmul_alg_set_attr_bad_arg(const Arguments& arg) {}
 
 void testing_aux_matmul_alg_get_attr_bad_arg(const Arguments& arg) {}
 
+void testing_aux_matmul_alg_null_matmul(const Arguments& arg)
+{
+    using InTypeA   = hipblasLtHalf;
+    using InTypeB   = hipblasLtHalf;
+    using OutType   = hipblasLtHalf;
+    using AlphaType = hipblasLtFloat;
+    using BetaType  = hipblasLtFloat;
+
+    hipStream_t        stream;
+    hipblasLtHandle_t  handle;
+    hipblasOperation_t trans_a = arg.transA == 'N' ? HIPBLAS_OP_N : HIPBLAS_OP_T;
+    hipblasOperation_t trans_b = arg.transB == 'N' ? HIPBLAS_OP_N : HIPBLAS_OP_T;
+    int64_t            m = arg.M[0];
+    int64_t            n = arg.N[0];
+    int64_t            k = arg.K[0];
+    int64_t            batch_count = 1;
+    float              alpha = arg.alpha;
+    float              beta = arg.beta;
+    void*              d_a;
+    void*              d_b;
+    void*              d_c;
+    void*              d_d;
+    void*              a;
+    void*              b;
+    void*              c;
+    void*              d;
+
+    CHECK_HIP_ERROR(hipStreamCreate(&stream));
+    CHECK_HIPBLASLT_ERROR(hipblasLtCreate(&handle));
+    CHECK_HIP_ERROR(hipMalloc(&d_a, m * k * batch_count * sizeof(InTypeA)));
+    CHECK_HIP_ERROR(hipMalloc(&d_b, n * k * batch_count * sizeof(InTypeB)));
+    CHECK_HIP_ERROR(hipMalloc(&d_c, m * n * batch_count * sizeof(OutType)));
+    CHECK_HIP_ERROR(hipMalloc(&d_d, m * n * batch_count * sizeof(OutType)));
+    CHECK_HIP_ERROR(hipHostMalloc(&a, m * k * batch_count * sizeof(InTypeA)));
+    CHECK_HIP_ERROR(hipHostMalloc(&b, n * k * batch_count * sizeof(InTypeB)));
+    CHECK_HIP_ERROR(hipHostMalloc(&c, m * n * batch_count * sizeof(OutType)));
+    CHECK_HIP_ERROR(hipHostMalloc(&d, m * n * batch_count * sizeof(OutType)));
+
+    CHECK_HIP_ERROR(hipMemcpyAsync(
+        d_a, a, m * k * batch_count * sizeof(InTypeA), hipMemcpyHostToDevice, stream));
+    CHECK_HIP_ERROR(hipMemcpyAsync(
+        d_b, b, n * k * batch_count * sizeof(InTypeB), hipMemcpyHostToDevice, stream));
+    CHECK_HIP_ERROR(hipMemcpyAsync(
+        d_c, c, m * n * batch_count * sizeof(OutType), hipMemcpyHostToDevice, stream));
+
+    hipblasLtMatrixLayout_t matA, matB, matC, matD;
+    CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutCreate(&matA, arg.a_type, m, k, m));
+    CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutCreate(&matB, arg.a_type, k, n, k));
+    CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutCreate(&matC, arg.a_type, m, n, m));
+    CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutCreate(&matD, arg.a_type, m, n, m));
+
+    hipblasLtMatmulDesc_t matmul;
+    CHECK_HIPBLASLT_ERROR(
+        hipblasLtMatmulDescCreate(&matmul, arg.compute_type, arg.scale_type));
+    CHECK_HIPBLASLT_ERROR(hipblasLtMatmulDescSetAttribute(
+        matmul, HIPBLASLT_MATMUL_DESC_TRANSA, &trans_a, sizeof(int32_t)));
+    CHECK_HIPBLASLT_ERROR(hipblasLtMatmulDescSetAttribute(
+        matmul, HIPBLASLT_MATMUL_DESC_TRANSB, &trans_b, sizeof(int32_t)));
+
+    CHECK_HIPBLASLT_ERROR(hipblasLtMatmul(handle,
+                                          matmul,
+                                          &alpha,
+                                          d_a,
+                                          matA,
+                                          d_b,
+                                          matB,
+                                          &beta,
+                                          d_c,
+                                          matC,
+                                          d_d,
+                                          matD,
+                                          nullptr,
+                                          nullptr,
+                                          0,
+                                          0));
+
+    CHECK_HIP_ERROR(hipFree(a));
+    CHECK_HIP_ERROR(hipFree(b));
+    CHECK_HIP_ERROR(hipFree(c));
+    CHECK_HIP_ERROR(hipFree(d));
+    CHECK_HIP_ERROR(hipFree(d_a));
+    CHECK_HIP_ERROR(hipFree(d_b));
+    CHECK_HIP_ERROR(hipFree(d_c));
+    CHECK_HIP_ERROR(hipFree(d_d));
+    CHECK_HIPBLASLT_ERROR(hipblasLtDestroy(handle));
+    CHECK_HIP_ERROR(hipStreamDestroy(stream));
+}
+
 void testing_aux_matmul_pref_init_bad_arg(const Arguments& arg)
 {
     hipblasLtMatmulPreference_t pref;

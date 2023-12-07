@@ -24,7 +24,7 @@
 
 from . import ClientExecutable
 from . import LibraryIO
-from .TensileInstructions import getGfxName, DataType
+from .TensileInstructions import getGfxName, DataType, getCOVFromParam
 from .Common import globalParameters, pushWorkingPath, popWorkingPath, print1, printExit, CHeader, printWarning, listToInitializer, ClientExecutionLock
 from .SolutionStructs import Problem, ProblemType, ProblemSizesMock, ProblemSizesMockDummy, ActivationArgs, BiasTypeArgs
 from .TensileCreateLibrary import copyStaticFiles
@@ -612,6 +612,7 @@ def writeClientConfigIni(problemSizes, biasTypeArgs, activationArgs, problemType
         param("library-update-comment",   globalParameters["LibraryUpdateComment"])
 
         param("use-user-args",            globalParameters["UseUserArgs"])
+        param("rotating-buffer-size",     globalParameters["RotatingBufferSize"])
 
 
 def writeClientConfig(forBenchmark, solutions, problemSizes, biasTypeArgs, activationArgs, stepName, stepBaseDir, newLibrary, codeObjectFiles, tileAwareSelection, configBase = "ClientParameters", libraryFile = None):

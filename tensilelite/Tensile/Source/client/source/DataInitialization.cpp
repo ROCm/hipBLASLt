@@ -591,6 +591,8 @@ namespace Tensile
             , m_pruneMode(args["prune-mode"].as<PruneSparseMode>())
 
         {
+            m_rotatingBuffer
+                = args["rotating-buffer-size"].as<int32_t>() * 1024 * 1024; // Change to bytes
             m_boundsCheck    = args["bounds-check"].as<BoundsCheckMode>();
             m_curBoundsCheck = m_boundsCheck;
 
@@ -638,6 +640,7 @@ namespace Tensile
 
             for(auto const& p : problemFactory.problems())
             {
+                int64_t rotatingSize = 0;
                 if(auto ptr = dynamic_cast<ContractionProblemGemm const*>(p.get()))
                 {
                     const ContractionProblemGemm& problem = (*ptr);
@@ -653,6 +656,10 @@ namespace Tensile
                         pristine.initDescriptor.resize(1);
                         pristine.maxElements = std::max(
                             pristine.maxElements, problem.tensors()[i].totalAllocatedElements());
+                        if(m_rotatingBuffer)
+                        {
+                            rotatingSize += problem.tensors()[i].totalAllocatedElements();
+                        }
                         if(m_vdata[i].name.empty())
                         {
                             m_vdata[i].name = problem.tensors()[i].getName();
@@ -664,6 +671,15 @@ namespace Tensile
                                             + " at index " + std::to_string(i) + ".";
                             throw std::runtime_error(s.c_str());
                         }
+                    }
+                    if(m_rotatingBuffer)
+                    {
+                        int64_t neededSize = 0;
+                        while(neededSize < m_rotatingBuffer)
+                        {
+                            neededSize += rotatingSize;
+                        }
+                        m_rotatingAllocatedSize = std::max(m_rotatingAllocatedSize, neededSize);
                     }
                     auto constants = problem.constants();
                     for(size_t i = 0; i < constants.size(); i++)
@@ -717,6 +733,10 @@ namespace Tensile
                                 += problem.tensors()[i].totalAllocatedElements();
                             gElements[i][dataType].offsets.push_back(
                                 problem.tensors()[i].totalAllocatedElements());
+                            if(m_rotatingBuffer)
+                            {
+                                rotatingSize += problem.tensors()[i].totalAllocatedElements();
+                            }
                             if(m_vdata[i].name.empty())
                             {
                                 m_vdata[i].name = problem.tensors()[i].getName();
@@ -750,6 +770,15 @@ namespace Tensile
                         for(size_t i = 0; i < problem.batchIndices().size(); i++)
                             numOfBatch *= problem.batchSize(i);
                         m_maxBatch = std::max(m_maxBatch, numOfBatch);
+                    }
+                    if(m_rotatingBuffer)
+                    {
+                        int64_t neededSize = 0;
+                        while(neededSize < m_rotatingBuffer)
+                        {
+                            neededSize += rotatingSize;
+                        }
+                        m_rotatingAllocatedSize = std::max(m_rotatingAllocatedSize, neededSize);
                     }
 
                     // Update maxElements
@@ -1061,6 +1090,11 @@ namespace Tensile
                             "out of gpu memory while allocating workspace size");
                 }
                 m_workspacePristine = ptr;
+            }
+
+            if(m_rotatingAllocatedSize > 0)
+            {
+                m_rotatingPointer = allocNewGPUBuffer<void>("rotating", m_rotatingAllocatedSize);
             }
 
             // allocate remaining memory to prevend other user use GPU when benchmarking
@@ -1772,6 +1806,187 @@ namespace Tensile
                     std::shared_ptr<ContractionGroupedInputs>(inputs));
             }
             return result;
+        }
+
+        int32_t getRotatingSize(ContractionProblemGemm const& problem,
+                                ContractionInputs const&      inputs)
+        {
+            int32_t rotatingSize = 0;
+            if(inputs.a != nullptr)
+            {
+                rotatingSize += problem.tensors()[ContractionProblemGemm::TENSOR::A]
+                                    .totalAllocatedElements();
+            }
+            if(inputs.b != nullptr)
+            {
+                rotatingSize += problem.tensors()[ContractionProblemGemm::TENSOR::B]
+                                    .totalAllocatedElements();
+            }
+            if(inputs.c != nullptr && problem.beta())
+            {
+                rotatingSize += problem.tensors()[ContractionProblemGemm::TENSOR::C]
+                                    .totalAllocatedElements();
+            }
+            if(inputs.d != nullptr)
+            {
+                rotatingSize += problem.tensors()[ContractionProblemGemm::TENSOR::D]
+                                    .totalAllocatedElements();
+            }
+            if(inputs.e != nullptr)
+            {
+                rotatingSize += problem.tensors()[ContractionProblemGemm::TENSOR::E]
+                                    .totalAllocatedElements();
+            }
+            if(inputs.bias != nullptr)
+            {
+                rotatingSize += problem.tensors()[ContractionProblemGemm::TENSOR::BIAS]
+                                    .totalAllocatedElements();
+            }
+            if(inputs.scaleAlphaVec != nullptr)
+            {
+                rotatingSize += problem.tensors()[ContractionProblemGemm::TENSOR::SCALEALPHAVEC]
+                                    .totalAllocatedElements();
+            }
+            if(inputs.metadata != nullptr)
+            {
+                rotatingSize += problem.tensors()[ContractionProblemGemm::TENSOR::METADATA]
+                                    .totalAllocatedElements();
+            }
+            return rotatingSize;
+        }
+
+        void* copyRotatingInput(const void* src, void* dst, int64_t length, int64_t& dstOffset)
+        {
+            if(src == nullptr)
+                return nullptr;
+            void* dstPos = (void*)((uint8_t*)dst + dstOffset);
+            memcpy(dstPos, src, length);
+            dstOffset += length;
+            return dstPos;
+        }
+
+        ContractionInputs createRotatingInput(ContractionProblemGemm const& problem,
+                                              ContractionInputs const&      inputs,
+                                              void*                         rotatingPtr,
+                                              int64_t&                      offset)
+        {
+            ContractionInputs newInputs = inputs;
+            newInputs.a                 = copyRotatingInput(
+                newInputs.a,
+                rotatingPtr,
+                problem.tensors()[ContractionProblemGemm::TENSOR::A].totalAllocatedElements(),
+                offset);
+            newInputs.b = copyRotatingInput(
+                newInputs.b,
+                rotatingPtr,
+                problem.tensors()[ContractionProblemGemm::TENSOR::B].totalAllocatedElements(),
+                offset);
+            newInputs.c = copyRotatingInput(
+                newInputs.c,
+                rotatingPtr,
+                problem.tensors()[ContractionProblemGemm::TENSOR::C].totalAllocatedElements(),
+                offset);
+            newInputs.d = copyRotatingInput(
+                newInputs.d,
+                rotatingPtr,
+                problem.tensors()[ContractionProblemGemm::TENSOR::D].totalAllocatedElements(),
+                offset);
+            newInputs.e = copyRotatingInput(
+                newInputs.e,
+                rotatingPtr,
+                problem.tensors()[ContractionProblemGemm::TENSOR::E].totalAllocatedElements(),
+                offset);
+            newInputs.bias = copyRotatingInput(
+                newInputs.bias,
+                rotatingPtr,
+                problem.tensors()[ContractionProblemGemm::TENSOR::BIAS].totalAllocatedElements(),
+                offset);
+            newInputs.scaleAlphaVec
+                = copyRotatingInput(newInputs.scaleAlphaVec,
+                                    rotatingPtr,
+                                    problem.tensors()[ContractionProblemGemm::TENSOR::SCALEALPHAVEC]
+                                        .totalAllocatedElements(),
+                                    offset);
+            newInputs.metadata = (unsigned char*)copyRotatingInput(
+                newInputs.metadata,
+                rotatingPtr,
+                problem.tensors()[ContractionProblemGemm::TENSOR::METADATA]
+                    .totalAllocatedElements(),
+                offset);
+            return newInputs;
+        }
+
+        std::vector<std::shared_ptr<ProblemInputs>>
+            DataInitialization::prepareRotatingGPUOutput(int32_t maxRotatingBufferNum,
+                                                         ContractionProblem const*      problem,
+                                                         std::shared_ptr<ProblemInputs> inputs)
+        {
+            std::vector<std::shared_ptr<ProblemInputs>> inputArr;
+            inputArr.push_back(inputs);
+            if(m_rotatingBuffer == 0)
+                return inputArr;
+
+            if(auto gemmProblem = dynamic_cast<ContractionProblemGemm const*>(problem))
+            {
+                auto    castInputs   = static_pointer_cast<ContractionInputs>(inputs);
+                int32_t rotatingSize = getRotatingSize(*gemmProblem, *castInputs);
+                int32_t rotatingNum
+                    = min(maxRotatingBufferNum, ceil((float)m_rotatingBuffer / rotatingSize))
+                      - 1; // Minus the original buffer.
+                int32_t totalRotatingSizeNeeded = rotatingNum * rotatingSize;
+                if(totalRotatingSizeNeeded > m_rotatingAllocatedSize)
+                {
+                    throw std::runtime_error("Insufficient rotating buffer size.");
+                }
+                std::cout << "Rotating buffer set to: " << m_rotatingBuffer
+                          << ". Rotating num: " << rotatingNum << std::endl;
+                int64_t offset = 0;
+                for(size_t i = 0; i < rotatingNum; i++)
+                {
+                    auto newInputs = createRotatingInput(
+                        *gemmProblem, *castInputs, m_rotatingPointer.get(), offset);
+                    inputArr.push_back(static_pointer_cast<ProblemInputs>(
+                        std::make_shared<ContractionInputs>(newInputs)));
+                }
+            }
+            else if(auto groupedProblem
+                    = dynamic_cast<ContractionProblemGroupedGemm const*>(problem))
+            {
+                auto    castInputs   = static_pointer_cast<ContractionGroupedInputs>(inputs);
+                int32_t rotatingSize = 0;
+                for(size_t i = 0; i < castInputs->grouped.size(); i++)
+                {
+                    rotatingSize
+                        += getRotatingSize(groupedProblem->gemms[i], castInputs->grouped[i]);
+                }
+                int32_t rotatingNum
+                    = min(maxRotatingBufferNum, ceil((float)m_rotatingBuffer / rotatingSize))
+                      - 1; // Minus the original buffer.
+                int32_t totalRotatingSizeNeeded = rotatingNum * rotatingSize;
+                if(totalRotatingSizeNeeded > m_rotatingAllocatedSize)
+                {
+                    throw std::runtime_error("Insufficient rotating buffer size.");
+                }
+                std::cout << "Rotating buffer set to: " << m_rotatingBuffer
+                          << ". Rotating num: " << rotatingNum << std::endl;
+                int64_t offset = 0;
+                for(size_t j = 0; j < rotatingNum; j++)
+                {
+                    ContractionGroupedInputs newInputs;
+                    newInputs.ws = castInputs->ws;
+                    for(size_t i = 0; i < castInputs->grouped.size(); i++)
+                    {
+                        auto newSingleInput = createRotatingInput(groupedProblem->gemms[i],
+                                                                  castInputs->grouped[i],
+                                                                  m_rotatingPointer.get(),
+                                                                  offset);
+                        newInputs.grouped.push_back(newSingleInput);
+                    }
+                    inputArr.push_back(static_pointer_cast<ProblemInputs>(
+                        std::make_shared<ContractionGroupedInputs>(newInputs)));
+                }
+            }
+            return inputArr;
         }
 
         DataInitialization::~DataInitialization() {}

@@ -285,10 +285,11 @@ try
 
     bool verify = 0;
 
-    bool                 grouped_gemm;
-    std::vector<int64_t> m, n, k;
-    std::vector<int64_t> lda, ldb, ldc, ldd, lde;
-    std::vector<int64_t> stride_a, stride_b, stride_c, stride_d, stride_e;
+    bool                  grouped_gemm;
+    std::vector<int64_t>  m, n, k;
+    std::vector<int64_t>  lda, ldb, ldc, ldd, lde;
+    std::vector<int64_t>  stride_a, stride_b, stride_c, stride_d, stride_e;
+    std::vector<uint32_t> gsu_vector, wgm_vector;
     arg.init(); // set all defaults
 
     options_description desc("hipblaslt-bench command line options");
@@ -390,7 +391,7 @@ try
 
         ("initialization",
          value<std::string>(&initialization)->default_value("hpl"),
-         "Intialize matrix data."
+         "Initialize matrix data."
          "Options: rand_int, trig_float, hpl(floating)")
 
         ("transA",
@@ -471,11 +472,11 @@ try
 
         ("amaxScaleA",
          bool_switch(&arg.amaxScaleA)->default_value(false),
-         "Apple scale for A buffer by abs max of A bufer")
+         "Apple scale for A buffer by abs max of A buffer")
 
         ("amaxScaleB",
          bool_switch(&arg.amaxScaleB)->default_value(false),
-         "Apple scale for B buffer by abs max of B bufer")
+         "Apple scale for B buffer by abs max of B buffer")
 
         ("use_e",
          bool_switch(&arg.use_e)->default_value(false),
@@ -507,7 +508,7 @@ try
 
         ("log_function_name",
          bool_switch(&log_function_name)->default_value(false),
-         "Function name precedes other itmes.")
+         "Function name precedes other items.")
 
         ("function_filter",
          value<std::string>(&filter),
@@ -521,6 +522,22 @@ try
         ("print_kernel_info",
          value<bool>(&arg.print_kernel_info)->default_value(false),
          "Print solution, kernel name and solution index.")
+
+        ("rotating",
+         value<int32_t>(&arg.rotating)->default_value(0),
+         "Use rotating memory blocks for each iteration, size in MB.")
+
+        ("use_gpu_timer",
+         value<bool>(&arg.use_gpu_timer)->default_value(false),
+         "Use hipEventElapsedTime to profile elapsed time.")
+
+        ("splitk",
+         valueVec<uint32_t>(&gsu_vector),
+         "[Tuning parameter] Set split K for a solution, 0 is use solution's default value. (Only support GEMM + api_method mix or cpp)")
+
+        ("wgm",
+         valueVec<uint32_t>(&wgm_vector),
+         "[Tuning parameter] Set workgroup mapping for a solution, 0 is use solution's default value. (Only support GEMM + api_method mix or cpp)")
 
         ("help,h", "produces this help message")
 
@@ -577,6 +594,53 @@ try
     else
     {
         hipblaslt_cerr << "Invalid algo method: " << algo_method_str << std::endl;
+        return 1;
+    }
+
+    int max_gsu = 0;
+    if(gsu_vector.size() > MAX_SUPPORTED_NUM_PROBLEMS)
+    {
+        hipblaslt_cerr << "Too many gsu parameters, maximum is: " << MAX_SUPPORTED_NUM_PROBLEMS
+                       << std::endl;
+        return 1;
+    }
+    for(size_t i = 0; i < gsu_vector.size(); i++)
+    {
+        if(gsu_vector[i] < 0 || gsu_vector[i] > 255)
+        {
+            hipblaslt_cerr << "SplitK range is 0~255." << std::endl;
+            return 1;
+        }
+        arg.gsu_vector[i] = gsu_vector[i];
+        max_gsu           = max(max_gsu, arg.gsu_vector[i]);
+    }
+    if((max_gsu > 0) && ((api_method == 0) || arg.grouped_gemm))
+    {
+        hipblaslt_cerr << "Currently split K only supports GEMM + api_method mix or cpp."
+                       << std::endl;
+        return 1;
+    }
+    int max_wgm = 0;
+    if(wgm_vector.size() > MAX_SUPPORTED_NUM_PROBLEMS)
+    {
+        hipblaslt_cerr << "Too many wgm parameters, maximum is: " << MAX_SUPPORTED_NUM_PROBLEMS
+                       << std::endl;
+        return 1;
+    }
+    for(size_t i = 0; i < wgm_vector.size(); i++)
+    {
+        if(wgm_vector[i] < 0 || wgm_vector[i] > 255)
+        {
+            hipblaslt_cerr << "Workgroup mapping range is 0~255." << std::endl;
+            return 1;
+        }
+        arg.wgm_vector[i] = wgm_vector[i];
+        max_wgm           = max(max_wgm, arg.wgm_vector[i]);
+    }
+    if((max_wgm > 0) && (api_method == 0))
+    {
+        hipblaslt_cerr << "Currently workgroup mapping only supports api_method mix or cpp."
+                       << std::endl;
         return 1;
     }
 

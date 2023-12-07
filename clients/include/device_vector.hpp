@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022 Advanced Micro Devices, Inc.
+ * Copyright (C) 2022-2023 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -128,12 +128,21 @@ public:
     //! @param that The host vector.
     //! @return the hip error.
     //!
-    hipError_t transfer_from(const host_vector<T>& that)
+    hipError_t transfer_from(const host_vector<T>& that, const int32_t block_count = 1)
     {
-        return hipMemcpy(m_data,
-                         (const T*)that,
-                         this->nmemb() * sizeof(T),
-                         this->use_HMM ? hipMemcpyHostToHost : hipMemcpyHostToDevice);
+        for(int32_t i_block = 0; i_block < block_count; i_block++)
+        {
+            hipError_t status
+                = hipMemcpy(m_data + i_block * this->nmemb() / block_count,
+                            (const T*)that,
+                            this->nmemb() * sizeof(T) / block_count,
+                            this->use_HMM ? hipMemcpyHostToHost : hipMemcpyHostToDevice);
+            if(status != hipSuccess)
+            {
+                return status;
+            }
+        }
+        return hipSuccess;
     }
 
     hipError_t memcheck() const

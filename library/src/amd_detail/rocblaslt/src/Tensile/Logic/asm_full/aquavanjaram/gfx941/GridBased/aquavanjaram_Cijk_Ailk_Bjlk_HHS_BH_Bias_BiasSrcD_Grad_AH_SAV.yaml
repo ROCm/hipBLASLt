@@ -76,7 +76,7 @@
     BufferLoad: true
     BufferStore: true
     ClusterLocalRead: 1
-    CodeObjectVersion: V3
+    CodeObjectVersion: default
     CustomKernelName: ''
     DepthU: 32
     DepthULdsDivisor: 1
@@ -303,7 +303,7 @@
     BufferLoad: true
     BufferStore: true
     ClusterLocalRead: 1
-    CodeObjectVersion: V3
+    CodeObjectVersion: default
     CustomKernelName: ''
     DepthU: 32
     DepthULdsDivisor: 1

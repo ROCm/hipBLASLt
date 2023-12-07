@@ -232,7 +232,7 @@ namespace Tensile
             arg.bias          = const_cast<void*>(inputs.grouped[i].bias);
             arg.scaleAlphaVec = const_cast<void*>(inputs.grouped[i].scaleAlphaVec);
             arg.e             = const_cast<void*>(inputs.grouped[i].e);
-            arg.biasType      = (uint32_t)problems[i].biasType();
+            arg.biasType      = (uint32_t)problems[i].getParams().biasEnum();
             if(problems[i].useE())
             {
                 arg.strideE1 = e.strides()[startStrideCD];
@@ -245,7 +245,7 @@ namespace Tensile
             }
             arg.act0           = (*std::get_if<TAct>(&inputs.grouped[i].activationArgs[0]));
             arg.act1           = (*std::get_if<TAct>(&inputs.grouped[i].activationArgs[1]));
-            arg.activationType = (uint32_t)problems[i].activationEnumArg();
+            arg.activationType = (uint32_t)problems[i].getParams().activationEnum();
         }
 
         bool debug = Debug::Instance().printKernelArguments();
@@ -526,6 +526,9 @@ namespace Tensile
         TensorDescriptor const& compressed = problem.compressed();
         TensorDescriptor const& metadata   = problem.metadata();
 
+        uint32_t gsu
+            = problem.getParams().gsu() > 0 ? problem.getParams().gsu() : sizeMapping.globalSplitU;
+
         {
             int idx = 0;
             for(auto size : problem.problemSizes())
@@ -535,10 +538,10 @@ namespace Tensile
             }
         }
 
-        if(sizeMapping.globalAccumulation)
+        if(gsu > 1 && sizeMapping.globalAccumulation)
         {
             args.template append<void const*>("ws_d", (uint8_t*)inputs.ws + workspaceOffsetInByte);
-            if(sizeMapping.customKernelName != "")
+            if(sizeMapping.customKernelName != "" && gsu > 1)
             {
                 args.template append<void const*>("c", inputs.c);
             }
@@ -576,7 +579,7 @@ namespace Tensile
         size_t startStrideCD = problemType.useInitialStridesCD ? 0 : 1;
         size_t startStrideAB = problemType.useInitialStridesAB ? 0 : 1;
 
-        if(sizeMapping.globalAccumulation)
+        if(gsu > 1 && sizeMapping.globalAccumulation)
         {
             size_t wsStride = startStrideCD ? d.sizes()[0] : 1;
             for(size_t i = startStrideCD; i < d.dimensions(); i++)
@@ -622,7 +625,7 @@ namespace Tensile
                                                metadata.strides()[i]);
         }
 
-        if((sizeMapping.globalAccumulation == 2) && (sizeMapping.customKernelName != ""))
+        if((sizeMapping.globalAccumulation == 2) && (sizeMapping.customKernelName != "" && gsu > 1))
         {
             args.template append<void const*>("dstD", inputs.d);
         }
@@ -639,38 +642,28 @@ namespace Tensile
         }
 
         if constexpr(insertKernelArgs)
-            kernelArgs<T_Debug>(args);
+            kernelArgs<T_Debug>(args, problem.getParams());
 
         if(problemType.useScaleAB) //kernel input data
         {
-            if(DataTypeInfo::Get(problemType.aType).elementSize
-                   > DataTypeInfo::Get(problemType.computeInputType).elementSize
-               || (sizeMapping.globalSplitU == 1))
-                args.template append<void const*>("scaleA", inputs.scaleA);
-            if(DataTypeInfo::Get(problemType.bType).elementSize
-                   > DataTypeInfo::Get(problemType.computeInputType).elementSize
-               || (sizeMapping.globalSplitU == 1))
-                args.template append<void const*>("scaleB", inputs.scaleB);
+            args.template append<void const*>("scaleA", inputs.scaleA);
+            args.template append<void const*>("scaleB", inputs.scaleB);
         }
-        if(problemType.useScaleCD && (sizeMapping.globalSplitU == 1)) //kernel input data
+        if(problemType.useScaleCD) //kernel input data
         {
             args.template append<void const*>("scaleC", inputs.scaleC);
             args.template append<void const*>("scaleD", inputs.scaleD);
         }
 
-        if(problemType.useScaleAlphaVec
-           && ((sizeMapping.globalSplitU == 1)
-               || (sizeMapping.customKernelName != ""))) //kernel input data
+        if(problemType.useScaleAlphaVec) //kernel input data
         {
             args.template append<void const*>("scaleAlphaVec", inputs.scaleAlphaVec);
         }
 
         bool runActivation = false;
-        if((problemType.activationType != ActivationType::None) && sizeMapping.activationFused
-           && ((sizeMapping.globalSplitU == 1) || (sizeMapping.customKernelName != "")))
+        if((problemType.activationType != ActivationType::None) && sizeMapping.activationFused)
             runActivation = true;
-        if(problemType.useBias
-           && ((sizeMapping.globalSplitU == 1) || (sizeMapping.customKernelName != "")))
+        if(problemType.useBias)
         {
             // We save the bias data in ws_d
             if(problemType.useGradient && problem.biasSrc() == ContractionProblemGemm::TENSOR::D
@@ -694,8 +687,8 @@ namespace Tensile
                    && (problem.biasSrc() == ContractionProblemGemm::TENSOR::A
                        || problem.biasSrc() == ContractionProblemGemm::TENSOR::B)))
             {
-                args.template append<uint32_t>("bias_type",
-                                               static_cast<uint32_t>(problem.biasType()));
+                args.template append<uint32_t>(
+                    "bias_type", static_cast<uint32_t>(problem.getParams().biasEnum()));
                 args.template append<uint32_t>(
                     "strideBias",
                     static_cast<uint32_t>(bias.strides()[bias.dimensions() - 1])); // reserved
@@ -744,17 +737,25 @@ namespace Tensile
             }
             if(problemType.activationType == ActivationType::All)
             {
-                args.template append<uint32_t>("activationType",
-                                               static_cast<uint32_t>(problem.activationEnumArg()));
+                args.template append<uint32_t>(
+                    "activationType", static_cast<uint32_t>(problem.getParams().activationEnum()));
             }
         }
     }
 
     template <bool T_Debug, typename KA>
-    void ContractionSolution::kernelArgs(KA& args) const
+    void ContractionSolution::kernelArgs(KA& args, const ContractionProblemParameters& param) const
     {
-        // GSU
-        args.template append<uint32_t>("gsu", sizeMapping.globalSplitU);
+        uint32_t gsu = param.gsu() > 0 ? param.gsu() : sizeMapping.globalSplitU;
+        uint32_t wgm = param.wgm() > 0 ? param.wgm() : sizeMapping.workGroupMapping;
+        if(!internalArgsSupport.wgm)
+            wgm = 0;
+
+        const uint32_t mask         = 0xFF;
+        uint32_t       internalArg0 = mask & gsu;
+        uint32_t       wgShift8     = (mask & wgm) << 8;
+        internalArg0                = internalArg0 | wgShift8;
+        args.template append<uint32_t>("internalArgs", internalArg0);
     }
 
     template <bool T_Debug>
@@ -806,7 +807,9 @@ namespace Tensile
         rv.numWorkGroups.x = CeilDivide(rv.numWorkGroups.x, sizeMapping.macroTile.x);
         rv.numWorkGroups.y = CeilDivide(rv.numWorkGroups.y, sizeMapping.macroTile.y);
 
-        rv.numWorkGroups.y *= sizeMapping.globalSplitU;
+        uint32_t gsu
+            = problem.getParams().gsu() > 0 ? problem.getParams().gsu() : sizeMapping.globalSplitU;
+        rv.numWorkGroups.y *= gsu;
 
         rv.numWorkItems.x = rv.workGroupSize.x * rv.numWorkGroups.x;
         rv.numWorkItems.y = rv.workGroupSize.y * rv.numWorkGroups.y;
@@ -816,7 +819,7 @@ namespace Tensile
 
         singleCallArgs<T_Debug, true>(problem, inputs, 0, rv.args);
 
-        if((sizeMapping.globalAccumulation == 2) && (sizeMapping.customKernelName != ""))
+        if((sizeMapping.globalAccumulation == 2) && (sizeMapping.customKernelName != "" && gsu > 1))
         {
             rv.args.append<uint32_t>("GSUSync", 0);
         }
@@ -874,7 +877,9 @@ namespace Tensile
                 numWorkGroups.x = CeilDivide(numWorkGroups.x, sizeMapping.macroTile.x);
                 numWorkGroups.y = CeilDivide(numWorkGroups.y, sizeMapping.macroTile.y);
 
-                numWorkGroups.y *= sizeMapping.globalSplitU;
+                uint32_t gsu = problem.getParams().gsu() > 0 ? problem.getParams().gsu()
+                                                             : sizeMapping.globalSplitU;
+                numWorkGroups.y *= gsu;
 
                 numWorkItems.x += (workGroupSize.x * numWorkGroups.x * workGroupSize.y
                                    * numWorkGroups.y * workGroupSize.z * numWorkGroups.z);
@@ -944,7 +949,7 @@ namespace Tensile
             rv.args.append<void const*>("DeviceUserArguments", userArgs);
             rv.args.append<void const*>("argsPtr", (void*)inputs.ws);
             rv.args.append<uint32_t>("skipWgTableGen", 0);
-            kernelArgs<T_Debug>(rv.args);
+            kernelArgs<T_Debug>(rv.args, problems[0].getParams());
             rv.codeObjectFile = codeObjectFilename.load();
         }
 
@@ -989,6 +994,9 @@ namespace Tensile
         rv.numWorkItems.y = rv.workGroupSize.y * rv.numWorkGroups.y;
         rv.numWorkItems.z = rv.workGroupSize.z * rv.numWorkGroups.z;
 
+        uint32_t gsu
+            = problem.getParams().gsu() > 0 ? problem.getParams().gsu() : sizeMapping.globalSplitU;
+
         if(sizeMapping.globalAccumulation)
             rv.args.append<void*>("WS", inputs.ws);
         else if(problemType.stridedBatched)
@@ -1002,7 +1010,7 @@ namespace Tensile
             rv.args.append<void const* const*>("batchC", inputs.batchC);
 
         if(problemType.useBias
-           && (sizeMapping.globalAccumulation == 0 || (sizeMapping.customKernelName != ""))
+           && (sizeMapping.globalAccumulation == 0 || (sizeMapping.customKernelName != "" && gsu > 1))
            && (!problemType.useGradient))
         {
             if(problemType.stridedBatched)
@@ -1021,7 +1029,7 @@ namespace Tensile
             rv.args.append<void const*>("scaleD", inputs.scaleD);
         }
         if(problemType.useScaleAlphaVec
-           && (sizeMapping.globalAccumulation == 0 || (sizeMapping.customKernelName != "")))
+           && (sizeMapping.globalAccumulation == 0 || (sizeMapping.customKernelName != "" && gsu > 1)))
         {
             rv.args.append<void const*>("scaleAlphaVec", inputs.scaleAlphaVec);
         }
@@ -1048,7 +1056,7 @@ namespace Tensile
                                      c.sizes()[i] == 1 ? 0 : c.strides()[i]);
 
         if(problemType.useBias
-           && (sizeMapping.globalAccumulation == 0 || (sizeMapping.customKernelName != ""))
+           && (sizeMapping.globalAccumulation == 0 || (sizeMapping.customKernelName != "" && gsu > 1))
            && (!problemType.useGradient))
         {
             TensorDescriptor const& bias = problem.tensor(ContractionProblemGemm::TENSOR::BIAS);
@@ -1094,6 +1102,8 @@ namespace Tensile
 
     std::string ContractionSolution::betaOnlyKernelName(Problem const& problem) const
     {
+        uint32_t gsu
+            = problem.getParams().gsu() > 0 ? problem.getParams().gsu() : sizeMapping.globalSplitU;
         std::string name = concatenate(
             "C", problem.cNames(), "_", DataTypeInfo::Get(problem.d().dataType()).abbrev);
 
@@ -1107,10 +1117,10 @@ namespace Tensile
         }
 
         if(problemType.useBias
-           && ((sizeMapping.globalAccumulation == 0) || (sizeMapping.customKernelName != ""))
+           && ((sizeMapping.globalAccumulation == 0) || (sizeMapping.customKernelName != "" && gsu > 1))
            && (!problemType.useGradient))
         {
-            auto s = TypeAbbrev(problem.biasType());
+            auto s = TypeAbbrev(problem.getParams().biasEnum());
             name += ("_Bias" + s);
         }
 
@@ -1241,8 +1251,8 @@ namespace Tensile
             }
             if(problemType.activationType == ActivationType::All)
             {
-                args.template append<uint32_t>("activationType",
-                                               static_cast<uint32_t>(problem.activationEnumArg()));
+                args.template append<uint32_t>(
+                    "activationType", static_cast<uint32_t>(problem.getParams().activationEnum()));
             }
         }
 
@@ -1276,6 +1286,9 @@ namespace Tensile
             args.template append<uint32_t>(concatenate_if<T_Debug>("size_", i), size);
             i++;
         }
+        uint32_t gsu
+            = problem.getParams().gsu() > 0 ? problem.getParams().gsu() : sizeMapping.globalSplitU;
+        args.template append<uint32_t>(concatenate_if<T_Debug>("gsu"), gsu);
     }
 
     template <bool T_Debug>
@@ -1558,7 +1571,7 @@ namespace Tensile
 
         if(problemType.useBias)
         {
-            auto s = TypeAbbrev(problem.biasType());
+            auto s = TypeAbbrev(problem.getParams().biasEnum());
             if(problemType.useGradient)
             {
                 if(problem.biasSrc() == ContractionProblemGemm::TENSOR::D)
@@ -1627,7 +1640,7 @@ namespace Tensile
             name += ("_ScaleAlphaVec");
         }
 
-        name += "_PostGSU" + std::to_string(gsu);
+        name += "_PostGSU" + std::to_string(sizeMapping.globalSplitUPGR);
 
         name += "_VW" + std::to_string(vw);
 
@@ -1680,8 +1693,8 @@ namespace Tensile
         {
             if(problemType.activationType == ActivationType::All)
             {
-                rv.args.append<uint32_t>("activationType",
-                                         static_cast<uint32_t>(problem.activationEnumArg()));
+                rv.args.append<uint32_t>(
+                    "activationType", static_cast<uint32_t>(problem.getParams().activationEnum()));
             }
             for(int i = 0; i < inputs.activationArgs.size(); i++)
             {
@@ -1906,7 +1919,7 @@ namespace Tensile
         // retreive alpha/beta type set via setAlpha/BetaType()
         auto alphaType = problem.alphaType();
         auto betaType  = problem.betaType();
-        auto biasType  = problem.biasType();
+        auto biasType  = problem.getParams().biasEnum();
 
         // TODO: Some gtests are passing the "problem" without actually defining the
         // alpha/beta type (alphaType and betaType remain None).
@@ -1974,7 +1987,9 @@ namespace Tensile
 
         std::vector<KernelInvocation> rv;
 
-        if(sizeMapping.globalSplitU > 1 && sizeMapping.globalAccumulation != 2)
+        auto gsu
+            = problem.getParams().gsu() > 0 ? problem.getParams().gsu() : sizeMapping.globalSplitU;
+        if(gsu > 1 && sizeMapping.globalAccumulation != 2)
         {
             if(debug)
                 rv.push_back(generateBetaOnlyCall<true>(problem, inputs));
@@ -1987,7 +2002,7 @@ namespace Tensile
         else
             rv.push_back(generateSingleCall<false>(problem, inputs));
 
-        if((sizeMapping.customKernelName == "") && sizeMapping.globalAccumulation)
+        if((sizeMapping.customKernelName == "") && gsu > 1 && sizeMapping.globalAccumulation)
         {
             if(debug)
                 rv.push_back(generateOutputConversionCall<true>(problem, inputs));
@@ -1995,8 +2010,7 @@ namespace Tensile
                 rv.push_back(generateOutputConversionCall<false>(problem, inputs));
         }
 
-        if(((sizeMapping.globalSplitU > 1 && (!sizeMapping.globalAccumulation))
-            || (!sizeMapping.activationFused))
+        if((!sizeMapping.activationFused) && (gsu > 1)
            && (problemType.activationType != ActivationType::None))
         {
             if(debug)
@@ -2040,7 +2054,7 @@ namespace Tensile
         // retreive alpha/beta type set via setAlpha/BetaType()
         auto alphaType = problems[0].alphaType();
         auto betaType  = problems[0].betaType();
-        auto biasType  = problems[0].biasType();
+        auto biasType  = problems[0].getParams().biasEnum();
 
         // TODO: Some gtests are passing the "problem" without actually defining the
         // alpha/beta type (alphaType and betaType remain None).
@@ -2118,6 +2132,9 @@ namespace Tensile
         }
         h_args.reserve(32768, 8192);
 
+        auto gsu = problems[0].getParams().gsu() > 0 ? problems[0].getParams().gsu()
+                                                     : sizeMapping.globalSplitU;
+
         // if(sizeMapping.globalSplitU > 1 && sizeMapping.globalAccumulation != 2)
         // {
         //     if(debug)
@@ -2131,7 +2148,7 @@ namespace Tensile
         else
             rv.push_back(generateSingleCallGroupedGemm<false>(problems, inputs, h_args));
 
-        if((sizeMapping.customKernelName == "") && sizeMapping.globalAccumulation)
+        if((sizeMapping.customKernelName == "") && gsu > 1 && sizeMapping.globalAccumulation)
         {
             if(debug)
                 rv.push_back(
@@ -2184,7 +2201,10 @@ namespace Tensile
         else
             rv.push_back(generateSingleCallGroupedGemm<false>(problems, inputs, h_args, dUA));
 
-        if(sizeMapping.globalAccumulation)
+        auto gsu = problems[0].getParams().gsu() > 0 ? problems[0].getParams().gsu()
+                                                     : sizeMapping.globalSplitU;
+
+        if(sizeMapping.globalAccumulation && gsu > 1)
         {
             if(debug)
                 rv.push_back(
@@ -2295,30 +2315,88 @@ namespace Tensile
         return spm;
     }
 
+    bool ContractionSolution::checkInternalArgumentsSupport(ContractionProblem const& problem,
+                                                            std::ostream&             stream,
+                                                            bool                      debug) const
+    {
+        bool pass = true;
+
+        if(auto gemmProblem = dynamic_cast<ContractionProblemGemm const*>(&problem))
+        {
+            if(!internalArgsSupport.gsu && gemmProblem->getParams().gsu() != 0)
+            {
+                if(debug)
+                {
+                    stream << "This solution does not support custom gsu." << std::endl;
+                }
+                pass = false;
+            }
+            if(!internalArgsSupport.wgm && gemmProblem->getParams().wgm() != 0)
+            {
+                if(debug)
+                {
+                    stream << "This solution does not support custom wgm." << std::endl;
+                }
+                pass = false;
+            }
+        }
+        else if(auto groupedProblem = dynamic_cast<ContractionProblemGroupedGemm const*>(&problem))
+        {
+            if(gemmProblem->getParams().gsu() != 0)
+            {
+                if(debug)
+                {
+                    stream << "Currently grouped gemm does not support custom arguments tuning."
+                           << std::endl;
+                }
+                pass = false;
+            }
+            if(!internalArgsSupport.wgm && gemmProblem->getParams().wgm() != 0)
+            {
+                if(debug)
+                {
+                    stream << "This solution does not support custom wgm." << std::endl;
+                }
+                pass = false;
+            }
+        }
+        else
+        {
+            pass = false;
+            throw std::runtime_error("Failed to cast problem type.");
+        }
+        return pass;
+    }
+
     size_t ContractionSolution::requiredWorkspaceSize(Problem const& problem) const
     {
+        // TODO: Pass GSU from problem and change value[2] to gsu if gsu != default value
         size_t size = 0;
+        size_t gsu
+            = problem.getParams().gsu() > 0 ? problem.getParams().gsu() : sizeMapping.globalSplitU;
+        size_t gsuMultiplier = gsu > 1 ? gsu : 0;
 
-        size += problem.d().totalLogicalElements() * sizeMapping.workspaceSizePerElemC;
+        size += problem.d().totalLogicalElements() * sizeMapping.workspaceSizePerElemC
+                * gsuMultiplier;
         if(problemType.useGradient && problemType.useBias)
         {
             if(problem.biasSrc() == ContractionProblemGemm::TENSOR::A)
             {
-                size += problem.freeSizeA(0) * sizeMapping.workspaceSizePerElemBias;
+                size += problem.freeSizeA(0) * sizeMapping.workspaceSizePerElemBias * gsuMultiplier;
             }
             else if(problem.biasSrc() == ContractionProblemGemm::TENSOR::B)
             {
-                size += problem.freeSizeB(0) * sizeMapping.workspaceSizePerElemBias;
+                size += problem.freeSizeB(0) * sizeMapping.workspaceSizePerElemBias * gsuMultiplier;
             }
-            else if(problem.biasSrc() == ContractionProblemGemm::TENSOR::D
-                    && (sizeMapping.workspaceSizePerElemC == 0))
+            else if(problem.biasSrc() == ContractionProblemGemm::TENSOR::D && (gsuMultiplier == 0))
             {
-                size += problem.d().totalLogicalElements() * sizeMapping.workspaceSizePerElemBias;
+                size += problem.d().totalLogicalElements() * sizeMapping.workspaceSizePerElemBias
+                        * gsu;
             }
         }
 
         // Custom kernel synchronizer
-        if(sizeMapping.customKernelName != "")
+        if(sizeMapping.customKernelName != "" && gsu > 1)
         {
             size += (int)ceil(problem.d().sizes()[0] / (float)sizeMapping.macroTile.x)
                     * (int)ceil(problem.d().sizes()[1] / (float)sizeMapping.macroTile.y)

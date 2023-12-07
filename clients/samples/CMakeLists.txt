@@ -30,6 +30,7 @@ add_executable( sample_hipblaslt_gemm_get_all_algos_ext gemm_get_all_algos/sampl
 add_executable( sample_hipblaslt_gemm_get_algo_by_index_ext gemm_get_algo_by_index/sample_hipblaslt_gemm_get_algo_by_index_ext.cpp)
 add_executable( sample_hipblaslt_gemm_mix_precision_ext gemm_mix_precision/sample_hipblaslt_gemm_mix_precision_ext.cpp)
 add_executable( sample_hipblaslt_gemm_mix_precision_with_amax_ext gemm_mix_precision/sample_hipblaslt_gemm_mix_precision_with_amax_ext.cpp)
+add_executable( sample_hipblaslt_gemm_tuning_splitk_ext gemm_tuning/sample_hipblaslt_gemm_tuning_splitk_ext.cpp)
 add_executable( sample_hipblaslt_groupedgemm_ext groupedgemm/sample_hipblaslt_groupedgemm_ext.cpp)
 add_executable( sample_hipblaslt_groupedgemm_fixed_mk_ext groupedgemm_fixed_mk/sample_hipblaslt_groupedgemm_fixed_mk_ext.cpp)
 add_executable( sample_hipblaslt_groupedgemm_get_all_algos_ext groupedgemm_get_all_algos/sample_hipblaslt_groupedgemm_get_all_algos_ext.cpp)
@@ -44,6 +45,7 @@ set(samples sample_hipblaslt_gemm
             sample_hipblaslt_gemm_get_algo_by_index_ext
             sample_hipblaslt_gemm_mix_precision_ext
             sample_hipblaslt_gemm_mix_precision_with_amax_ext
+            sample_hipblaslt_gemm_tuning_splitk_ext
             sample_hipblaslt_groupedgemm_ext
             sample_hipblaslt_groupedgemm_fixed_mk_ext
             sample_hipblaslt_groupedgemm_get_all_algos_ext

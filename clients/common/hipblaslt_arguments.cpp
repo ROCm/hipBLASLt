@@ -149,6 +149,20 @@ void Arguments::init()
     use_ext_setproblem = false;
     algo_method        = 0;
     use_user_args      = false;
+    rotating           = 0;
+    use_gpu_timer      = false;
+
+    // tuning
+    gsu_vector[0] = 0;
+    for(int32_t i = 1; i < MAX_SUPPORTED_NUM_PROBLEMS; i++)
+    {
+        gsu_vector[i] = -1;
+    }
+    wgm_vector[0] = 0;
+    for(int32_t i = 1; i < MAX_SUPPORTED_NUM_PROBLEMS; i++)
+    {
+        wgm_vector[i] = -1;
+    }
 
     print_solution_found = false;
 }

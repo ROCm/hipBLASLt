@@ -205,6 +205,10 @@ namespace Tensile
             double K;
         };
 
+        bool checkInternalArgumentsSupport(ContractionProblem const& problem,
+                                           std::ostream&             stream,
+                                           bool                      debug = false) const;
+
         /**
    * Calculate required workspace size.
    */
@@ -305,7 +309,7 @@ namespace Tensile
 
         // Kernel related arguments (e.g. MT, GSU...)
         template <bool T_Debug, typename KA>
-        void kernelArgs(KA& args) const;
+        void kernelArgs(KA& args, const ContractionProblemParameters& param) const;
 
         template <typename KA>
         inline void calculateSingleCallWorkGroupItems(std::vector<Problem> const& problems,
@@ -395,6 +399,7 @@ namespace Tensile
 
             size_t staggerU           = 0;
             size_t depthU             = 0;
+            size_t globalSplitUPGR    = 0;
             size_t globalSplitU       = 0;
             size_t staggerStrideShift = 0;
             int    workGroupMapping   = 0;
@@ -414,6 +419,12 @@ namespace Tensile
             bool activationFused = true;
 
             std::string customKernelName;
+        };
+
+        struct InternalArgsSupport
+        {
+            bool gsu = true;
+            bool wgm = true;
         };
 
         struct ProblemType
@@ -472,6 +483,8 @@ namespace Tensile
             = std::make_shared<Predicates::True<Hardware>>();
 
         SizeMapping sizeMapping;
+
+        InternalArgsSupport internalArgsSupport;
 
         ProblemType problemType;
 

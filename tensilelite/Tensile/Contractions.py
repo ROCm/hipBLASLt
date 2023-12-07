@@ -23,7 +23,7 @@
 ################################################################################
 
 from .Activation import ActivationType
-from .Common import printExit
+from .Common import internalParameters, printExit
 from .TensileInstructions import DataType
 from . import Hardware
 from . import Properties
@@ -464,8 +464,8 @@ class ProblemPredicate(Properties.Predicate):
             rv += [cls('BufferStoreOffsetLimitCheck', value=state['MacroTile1'])]
 
         if '_GlobalAccumulation' in state and state['_GlobalAccumulation'] != None:
-            value = globalParameters['MinKForGSU'] * state['GlobalSplitU']
-            rv += [cls('GlobalSplitUCheckMinK', value=value)]
+            value = globalParameters['MinKForGSU']
+            rv += [cls('GlobalSplitUCheckMinK', value=[value, state["GlobalSplitU"]])]
 
         return rv
 
@@ -485,6 +485,7 @@ class SizeMapping:
                  'threadTile',
                  'depthU',
                  'staggerU',
+                 'globalSplitUPGR',
                  'globalSplitU',
                  'staggerStrideShift',
                  'workGroupMapping',
@@ -499,11 +500,13 @@ class SizeMapping:
 
     @classmethod
     def FromOriginalState(cls, d):
-        globalAccum = 0
-        if d['_GlobalAccumulation'] == 'SingleBuffer':
-            globalAccum = 1
-        if d['_GlobalAccumulation'] == 'MultipleBuffer':
-            globalAccum = 2
+        globalAccum = 2
+        # FIXME: Restore this after the yamls are fixed
+        # globalAccum = 0
+        # if d['GlobalSplitUAlgorithm'] == 'SingleBuffer':
+        #     globalAccum = 1
+        # if d['GlobalSplitUAlgorithm'] == 'MultipleBuffer':
+        #     globalAccum = 2
         return cls(waveNum                  = d['NumThreads'] // d['WavefrontSize'],
                    workGroup                = d['WorkGroup'],
                    macroTile                = cls.ReadOriginalMacroTile(d),
@@ -511,6 +514,7 @@ class SizeMapping:
                    workGroupMapping         = d['WorkGroupMapping'],
                    staggerU                 = d['StaggerU'] if 'StaggerU' in d else 0,
                    depthU                   = d['DepthU'],
+                   globalSplitUPGR          = internalParameters["GlobalSplitUPGR"],
                    globalSplitU             = d['GlobalSplitU'],
                    staggerStrideShift       = d['_staggerStrideShift'] if '_staggerStrideShift' in d else 0,
                    packBatchDims            = 0,
@@ -534,6 +538,19 @@ class SizeMapping:
         for (key, value) in list(kwargs.items()):
             setattr(self, key, value)
 
+class InternalArgsSupport:
+    StateKeys = ['gsu',
+                 'wgm']
+
+    @classmethod
+    def FromOriginalState(cls, d):
+        return cls(gsu = d['InternalSupportParams']['SupportUserGSU'],
+                   wgm = d['InternalSupportParams']['SupportCustomWGM'])
+
+    def __init__(self, **kwargs):
+        for (key, value) in list(kwargs.items()):
+            setattr(self, key, value)
+
 class Solution:
     StateKeys = ['name',
                  'kernelName',
@@ -541,6 +558,7 @@ class Solution:
                 'hardwarePredicate',
                 'problemPredicate',
                 'sizeMapping',
+                'internalArgsSupport',
                 'debugKernel',
                 'libraryLogicIndex',
                 'index',
@@ -577,6 +595,9 @@ class Solution:
         rv.libraryLogicIndex = int(info.get("SolutionIndex", -1))
 
         rv.sizeMapping = SizeMapping.FromOriginalState(d)
+
+        rv.internalArgsSupport = InternalArgsSupport.FromOriginalState(d)
+
         if 'Ideals' in d:
             rv.ideals = d['Ideals']
         else:

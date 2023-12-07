@@ -118,8 +118,8 @@ void simpleGroupedGemmFixedMKExt(hipblasLtHandle_t     handle,
     hipblaslt_ext::GroupedGemm groupedgemm(handle,
                                            trans_a,
                                            trans_b,
-                                           HIPBLASLT_R_16F,
                                            HIPBLASLT_R_8F_E4M3,
+                                           HIPBLASLT_R_16F,
                                            HIPBLASLT_R_16F,
                                            HIPBLASLT_R_16F,
                                            HIPBLASLT_COMPUTE_F32_FAST_F16);
@@ -211,15 +211,22 @@ void simpleGroupedGemmFixedMKExt(hipblasLtHandle_t     handle,
     //     workspace_size = max(workspace_size, heuristicResult[i].workspaceSize);
     // CHECK_HIP_ERRORhipMalloc(&d_workspace, workspace_size));
 
-    // Make sure to initialize everytime the algo changes
-    CHECK_HIPBLASLT_ERROR(groupedgemm.initialize(heuristicResult[validIdx[0]].algo, d_workspace));
+    for(int i = 0; i < validIdx.size(); i++)
+    {
+        // Make sure to initialize every time the algo changes
+        CHECK_HIPBLASLT_ERROR(groupedgemm.initialize(heuristicResult[validIdx[i]].algo, d_workspace));
 
-    // Then you can change the N in the previous kernel to whatever you want, just make sure the sum of N does not exceed the setup.
-    int threads = 256;
-    int blocks  = ceil((double)m.size() / threads);
-    hipLaunchKernelGGL(
-        kernelUpdateN, dim3(blocks), dim3(threads), 0, stream, (uint32_t)m.size(), d_userArgs, d_n);
-    CHECK_HIPBLASLT_ERROR(groupedgemm.run(d_userArgs, stream));
+        // Then you can change the N in the previous kernel to whatever you want, just make sure the sum of N does not exceed the setup.
+        int threads = 256;
+        int blocks  = ceil((double)m.size() / threads);
+        // run 10 times
+        for(int j = 0; j < 10 ; j++)
+        {
+            hipLaunchKernelGGL(
+                kernelUpdateN, dim3(blocks), dim3(threads), 0, stream, (uint32_t)m.size(), d_userArgs, d_n);
+            CHECK_HIPBLASLT_ERROR(groupedgemm.run(d_userArgs, stream));
+        }
+    }
 
     CHECK_HIP_ERROR(hipFree(userArgs));
     CHECK_HIP_ERROR(hipFree(d_userArgs));

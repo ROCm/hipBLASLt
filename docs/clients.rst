@@ -76,7 +76,7 @@ For more information:
    --d_type <value>           Precision of matrix D. Options: f32_r,f16_r,bf16_r
    --compute_type <value>     Precision of computation. Options: s,f32_r,x,xf32_r,f64_r,i32_r                     (Default value is: f32_r)
    --scale_type <value>       Precision of scalar. Options: f16_r,bf16_r
-   --initialization <value>   Intialize matrix data.Options: rand_int, trig_float, hpl(floating)                  (Default value is: hpl)
+   --initialization <value>   Initialize matrix data.Options: rand_int, trig_float, hpl(floating)                  (Default value is: hpl)
    --transA <value>           N = no transpose, T = transpose, C = conjugate transpose                            (Default value is: N)
    --transB <value>           N = no transpose, T = transpose, C = conjugate transpose                            (Default value is: N)
    --batch_count <value>      Number of matrices. Only applicable to batched and strided_batched routines         (Default value is: 1)
@@ -84,24 +84,33 @@ For more information:
    --verify |-v               Validate GPU results with CPU?
    --iters |-i <value>        Iterations to run inside timing loop                                                (Default value is: 10)
    --cold_iters |-j <value>   Cold Iterations to run before entering the timing loop                              (Default value is: 2)
-   --algo_method <value>      Use different algorithm search API. 0: Get heuristic, 1: Get all algorithm, 2: Get solutuion by index.Options: 0, 1, 2. (default: 0)  (Default value is: 0)
-   --solution_index <value>   Reserved.                                                                           (Default value is: 0)
-   --requested_solution <value> Requested solution num. Set to -1 to get all solutions. Only valid when algo_method is set to 1.  (Default value is: 1)
+   --algo_method <value>      Use different algorithm search API. Options: heuristic, all, index.                 (Default value is: heuristic)
+   --solution_index <value>   Used with --algo_method 2.  Specify solution index to use in benchmark.             (Default value is: -1)
+   --requested_solution <value> Requested solution num. Set to -1 to get all solutions. Only valid when algo_method is set to heuristic.  (Default value is: 1)
    --activation_type <value>  Options: None, gelu, relu                                                           (Default value is: none)
    --activation_arg1 <value>  Reserved.                                                                           (Default value is: 0)
    --activation_arg2 <value>  Reserved.                                                                           (Default value is: inf)
    --bias_type <value>        Precision of bias vector.Options: f16_r,bf16_r,f32_r,default(same with D type)
    --bias_source <value>      Choose bias source: a, b, d                                                         (Default value is: d)
    --bias_vector              Apply bias vector
+   --scaleA                   Apply scale for A buffer
+   --scaleB                   Apply scale for B buffer
    --scaleAlpha_vector        Apply scaleAlpha vector
+   --amaxScaleA               Apple scale for A buffer by abs max of A buffer
+   --amaxScaleB               Apple scale for B buffer by abs max of B buffer
    --use_e                    Apply AUX output/ gradient input
    --gradient                 Enable gradient
    --grouped_gemm             Use grouped_gemm.
+   --use_user_args            Use UserArguments located in device memory for grouped gemm.
    --device <value>           Set default device to be used for subsequent program runs                           (Default value is: 0)
    --c_noalias_d              C and D are stored in separate memory
    --workspace <value>        Set fixed workspace memory size instead of using hipblaslt managed memory           (Default value is: 0)
-   --log_function_name        Function name precedes other itmes.
+   --log_function_name        Function name precedes other items.
    --function_filter <value>  Simple strstr filter on function name only without wildcards
-   --api_method <value>       Use extension API. 0: C style API. 1: declaration with C hipblasLtMatmul Layout/Desc but set, initialize, and run the problem with C++ extension API. 2: Using C++ extension API only. Options: 0, 1, 2. (default: 0)  (Default value is: 0)
+   --api_method <value>       Use extension API. c: C style API. mix: declaration with C hipblasLtMatmul Layout/Desc but set, initialize, and run the problem with C++ extension API. cpp: Using C++ extension API only. Options: c, mix, cpp.  (Default value is: c)
+   --print_kernel_info        Print solution, kernel name and solution index.
+   --rotating <value>         Use rotating memory blocks for each iteration, size in MB.                          (Default value is: 0)
+   --use_gpu_timer            Use hipEventElapsedTime to profile elapsed time.                                    (Default value is: false)
+   --splitk <value>           [Tuning parameter] Set split K for a solution, 0 is use solution's default value. (Only support GEMM + api_method mix or cpp)
    --help |-h                 produces this help message
    --version <value>          Prints the version number
