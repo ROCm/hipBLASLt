@@ -159,6 +159,8 @@ const char* rocblaslt_layer_mode2string(rocblaslt_layer_mode layer_mode);
 
 const char* rocblaslt_epilogue_to_string(rocblaslt_epilogue epilogue);
 
+const char* rocblaslt_epilogue_to_bench_string(rocblaslt_epilogue epilogue);
+
 std::string rocblaslt_matrix_layout_to_string(rocblaslt_matrix_layout mat);
 
 std::string rocblaslt_matmul_desc_to_string(rocblaslt_matmul_desc matmul_desc);
@@ -253,7 +255,7 @@ void log_bench(const char* func, Ts&&... xs)
 {
     std::ostream* os = get_logger_os();
     *os << "hipblaslt-bench ";
-    log_bench_arguments(*os, std::forward<Ts>(xs)...);
+    log_arguments_bench(*os, std::forward<Ts>(xs)...);
     *os << std::endl;
 }
 // Convert the current C++ exception to rocblaslt_status

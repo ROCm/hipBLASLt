@@ -103,7 +103,7 @@ const char* hipblasltDatatype_to_bench_string(hipblasltDatatype_t type)
     case HIPBLASLT_R_8F_E5M2:
         return "bf8_r";
     default:
-        return "Invalid";
+        return "";
     }
 }
 
@@ -141,7 +141,7 @@ const char* rocblaslt_compute_type_to_bench_string(rocblaslt_compute_type type)
     case rocblaslt_compute_f32_fast_f16:
         return "f32_f16_r";
     default:
-        return "Invalid";
+        return "";
     }
 }
 
@@ -227,7 +227,7 @@ const char* hipblasOperation_to_bench_string(hipblasOperation_t op)
     case HIPBLAS_OP_C:
         return "C";
     default:
-        return "Invalid";
+        return "";
     }
 }
 
@@ -284,6 +284,39 @@ const char* rocblaslt_epilogue_to_string(rocblaslt_epilogue epilogue)
         return "EPILOGUE_DGELU_BGRADB";
     default:
         return "Invalid epilogue";
+    }
+}
+
+const char* rocblaslt_epilogue_to_bench_string(rocblaslt_epilogue epilogue)
+{
+    switch(epilogue)
+    {
+    case ROCBLASLT_EPILOGUE_DEFAULT:
+        return "";
+    case ROCBLASLT_EPILOGUE_RELU:
+        return "--activation_type relu";
+    case ROCBLASLT_EPILOGUE_BIAS:
+        return "--bias_vector";
+    case ROCBLASLT_EPILOGUE_RELU_BIAS:
+        return "--activation_type relu --bias_vector";
+    case ROCBLASLT_EPILOGUE_GELU:
+        return "--activation_type gelu";
+    case ROCBLASLT_EPILOGUE_DGELU:
+        return "--activation_type gelu --gradient";
+    case ROCBLASLT_EPILOGUE_GELU_BIAS:
+        return "--activation_type gelu --bias_vector";
+    case ROCBLASLT_EPILOGUE_GELU_AUX:
+        return "--activation_type gelu --use_e";
+    case ROCBLASLT_EPILOGUE_GELU_AUX_BIAS:
+        return "--activation_type gelu --bias_vector --use_e";
+    case ROCBLASLT_EPILOGUE_DGELU_BGRAD:
+        return "--activation_type gelu --bias_vector --gradient";
+    case ROCBLASLT_EPILOGUE_BGRADA:
+        return "--bias_vector --gradient --bias_source a";
+    case ROCBLASLT_EPILOGUE_BGRADB:
+        return "--bias_vector --gradient --bias_source b";
+    default:
+        return "";
     }
 }
 
