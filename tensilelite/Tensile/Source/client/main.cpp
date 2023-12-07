@@ -49,6 +49,8 @@
 #include "ResultFileReporter.hpp"
 #include "ResultReporter.hpp"
 
+#include "Utility.hpp"
+
 #include <boost/algorithm/string/classification.hpp>
 #include <boost/algorithm/string/split.hpp>
 #include <boost/program_options.hpp>
@@ -575,6 +577,13 @@ int main(int argc, const char* argv[])
     bool  useUserArgs = args["use-user-args"].as<bool>();
     void* dUA         = nullptr;
     void* dUAHost     = nullptr;
+
+    if(Debug::Instance().getBenchmark())
+    {
+        std::stringstream ss;
+        static_cast<void>(benchmarkAllocation(ss));
+        std::cout << ss.str();
+    }
 
     while(listeners.needMoreBenchmarkRuns())
     {
