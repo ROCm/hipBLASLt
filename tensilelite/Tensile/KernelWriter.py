@@ -784,8 +784,10 @@ class KernelWriter(metaclass=abc.ABCMeta):
         instPerRegPack = 1 if (kernel["ProblemType"]["DataType"].numRegisters() == 0.25) else 0
       instPerPackA    = int(kernel["MIInputPerThreadA"] * kernel["ProblemType"]["DataType"].numRegisters() * instPerRegPack) if not kernel["UnrollMajorLDSA"] else 0
       instPerPackB    = int(kernel["MIInputPerThreadB"] * kernel["ProblemType"]["DataType"].numRegisters() * instPerRegPack) if not kernel["UnrollMajorLDSB"] else 0
-      if kernel["ProblemType"]["Sparse"] and not kernel["DirectToVgprSparseMetadata"]:
-        instPerPackM    = 1 if not kernel["UnrollMajorLDSMetadata"]  else 0
+      instPerPackM = 0
+      if kernel["ProblemType"]["Sparse"] and not kernel["DirectToVgprSparseMetadata"] and not kernel["UnrollMajorLDSMetadata"]:
+        instPerPackM = 1.5 if self.states.lrvwTileMetadata > 1 and kernel["MIInputPerThreadMetadata"] == 1 else 1
+
       packItems = []
       for iui in range(kernel["InnerUnroll"]):
         packINtems = [ [] for j in range(max(self.states.numReadsIterCoalescedA,self.states.numReadsIterCoalescedB,self.states.numReadsIterCoalescedMetadata)) ]
@@ -809,10 +811,12 @@ class KernelWriter(metaclass=abc.ABCMeta):
             for n in range(instPerPackA):
               packINtems[j].append(packAItems.pop(0))
         if kernel["ProblemType"]["Sparse"] and not kernel["DirectToVgprSparseMetadata"]:
-          if packMItems:
-            for j in range(self.states.numReadsIterCoalescedMetadata):
-              for n in range(instPerPackM):
+          for j in range(self.states.numReadsIterCoalescedMetadata):
+            for n in range(ceil(instPerPackM)):
+              if packMItems:
                 packINtems[j].append(packMItems.pop(0))
+              else:
+                break
         if packBItems:
           for j in range(self.states.numReadsIterCoalescedB):
             for n in range(instPerPackB):
@@ -821,15 +825,18 @@ class KernelWriter(metaclass=abc.ABCMeta):
           for j in range(self.states.numReadsIterCoalescedA):
             for n in range(instPerPackA):
               packINtems[j].append(packAItems.pop(0))
+        if kernel["ProblemType"]["Sparse"] and not kernel["DirectToVgprSparseMetadata"]:
+          while packMItems:
+            for j in range(self.states.numReadsIterCoalescedMetadata):
+              for n in range(ceil(instPerPackM)):
+                if packMItems:
+                  packINtems[j].append(packMItems.pop(0))
+                else:
+                  break
         while packBItems:
           for j in range(self.states.numReadsIterCoalescedB):
             for n in range(instPerPackB):
               packINtems[j].append(packBItems.pop(0))
-        if kernel["ProblemType"]["Sparse"] and not kernel["DirectToVgprSparseMetadata"]:
-          while packMItems:
-            for j in range(self.states.numReadsIterCoalescedMetadata):
-              for n in range(instPerPackM):
-                packINtems[j].append(packMItems.pop(0))
         for j in range(max(self.states.numReadsIterCoalescedA,self.states.numReadsIterCoalescedB)):
           packItems += packINtems.pop(0)
 
@@ -1110,7 +1117,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
               iterCode.add(packItems.pop(0))
               curPackIdx += 1
           if kernel["ProblemType"]["Sparse"] and not kernel["DirectToVgprSparseMetadata"]:
-            for j in range(instPerPackM):
+            for j in range(ceil(instPerPackM)):
               if packItems:
                 iterCode.add(packItems.pop(0))
                 curPackIdx += 1
