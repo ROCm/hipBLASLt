@@ -1645,6 +1645,7 @@ void testing_matmul(const Arguments& arg)
                         }
                     }
                 }
+                returnedAlgoCount = heuristicResult.size();
             }
             else
             {
