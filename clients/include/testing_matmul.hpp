@@ -1059,7 +1059,7 @@ void testing_matmul(const Arguments& arg)
     int32_t requestAlgoCount = arg.requested_solution_num < 0 ? HIPBLASLT_MAX_REQUESTED_SOLUTION_NUM
                                                               : arg.requested_solution_num;
     int     returnedAlgoCount = 0;
-    std::vector<hipblasLtMatmulHeuristicResult_t> heuristicResult(requestAlgoCount);
+    std::vector<hipblasLtMatmulHeuristicResult_t> heuristicResult;
     std::vector<size_t>                           heuristicTuningIndex;
 
     // Cpp API
@@ -1649,6 +1649,7 @@ void testing_matmul(const Arguments& arg)
             }
             else
             {
+                std::vector<hipblasLtMatmulHeuristicResult_t> tmpAlgo(requestAlgoCount);
                 EXPECT_HIPBLAS_STATUS((hipblasLtMatmulAlgoGetHeuristic(handle,
                                                                        matmul[0][0],
                                                                        matA[0],
@@ -1657,9 +1658,14 @@ void testing_matmul(const Arguments& arg)
                                                                        matD[0],
                                                                        pref,
                                                                        requestAlgoCount,
-                                                                       heuristicResult.data(),
+                                                                       tmpAlgo.data(),
                                                                        &returnedAlgoCount)),
                                       HIPBLAS_STATUS_SUCCESS);
+                heuristicResult.clear();
+                for(int32_t i = 0; i < returnedAlgoCount; i++)
+                {
+                    heuristicResult.push_back(tmpAlgo[i]);
+                }
                 heuristicTuningIndex.resize(heuristicResult.size(), 0); // C API not supported yet
             }
 
