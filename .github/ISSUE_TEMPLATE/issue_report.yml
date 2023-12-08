@@ -1,5 +1,5 @@
 name: Issue Report
-description: File a report for ROCm related issues on Linux and Windows. For issues pertaining to documentation or other, please use the blank issue located below.
+description: File a report for ROCm related issues on Linux and Windows. For issues pertaining to documentation or non-bug related, please open a blank issue located below.
 title: "[Issue]: "
 
 body:
