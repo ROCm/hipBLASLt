@@ -283,8 +283,9 @@ template <typename T, typename... Ts>
 void log_arguments_bench(std::ostream& os, T& x, Ts&&... xs)
 {
     if constexpr (std::is_same_v<T, const char*>) {
-        if (strlen(x)) os << x << " ";
-    } else {
+        if (strlen(x) && strcmp(x, "invalid")) os << x << " ";
+    }
+    else {
         os << x << " ";
     }
     if constexpr (sizeof...(xs)) log_arguments_bench(os, xs...);

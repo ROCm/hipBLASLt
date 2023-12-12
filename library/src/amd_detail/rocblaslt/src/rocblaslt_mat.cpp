@@ -200,7 +200,7 @@ rocblaslt_status rocblaslt_matmul_impl(const rocblaslt_handle       handle,
 
 // To deal with some arguments may be invalid
 #define GEN_BENCH_ARG(_fun, _type_str, _type) \
-    strlen(_fun(_type)) ? _type_str : "", \
+    strlen(_fun(_type)) && strcmp(_fun(_type), "invalid") ? _type_str : "", \
     _fun(_type)
 
         log_bench(__func__,

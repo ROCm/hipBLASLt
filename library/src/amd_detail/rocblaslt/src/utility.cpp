@@ -103,7 +103,7 @@ const char* hipblasltDatatype_to_bench_string(hipblasltDatatype_t type)
     case HIPBLASLT_R_8F_E5M2:
         return "bf8_r";
     default:
-        return "";
+        return "invalid";
     }
 }
 
@@ -141,7 +141,7 @@ const char* rocblaslt_compute_type_to_bench_string(rocblaslt_compute_type type)
     case rocblaslt_compute_f32_fast_f16:
         return "f32_f16_r";
     default:
-        return "";
+        return "invalid";
     }
 }
 
@@ -227,7 +227,7 @@ const char* hipblasOperation_to_bench_string(hipblasOperation_t op)
     case HIPBLAS_OP_C:
         return "C";
     default:
-        return "";
+        return "invalid";
     }
 }
 
@@ -316,7 +316,7 @@ const char* rocblaslt_epilogue_to_bench_string(rocblaslt_epilogue epilogue)
     case ROCBLASLT_EPILOGUE_BGRADB:
         return "--bias_vector --gradient --bias_source b";
     default:
-        return "";
+        return "invalid";
     }
 }
 
