@@ -131,23 +131,38 @@ void simpleGemmTuningWGMExt(hipblasLtHandle_t  handle,
     inputs.beta  = &beta;
     gemm.setProblem(m, n, k, batch_count, epilogue, inputs);
 
-    hipblaslt_ext::GemmTuning tuning;
-    tuning.wgm = 4;
+    std::vector<hipblaslt_ext::GemmTuning> tunings;
+    tunings.resize(2);
+    tunings[1].wgm = 4;
+    // Not all the solutions supports GemmTuning, if you create a
+    // hipblaslt_ext::GemmTuning without changing any default values,
+    // the effect is same as calling API
+    // isAlgoSupported(algo, returnedWorkspaceSize)
 
     uint64_t            workspace_size = 0;
     std::vector<size_t> validIdx;
+    std::vector<size_t> validIdxTuning;
     for(size_t i = 0; i < heuristicResult.size(); i++)
     {
         size_t workspaceSizeInBytes = 0;
         // If tuning is given, the API will not return success if the solution cannot
         // accept an user tuning parameter.
-        if(gemm.isAlgoSupported(heuristicResult[i].algo, tuning, workspaceSizeInBytes)
+        if(gemm.isAlgoSupported(heuristicResult[i].algo, tunings[0], workspaceSizeInBytes)
            == HIPBLAS_STATUS_SUCCESS)
         {
             if(workspaceSizeInBytes <= max_workspace_size)
             {
                 workspace_size = max(workspace_size, workspaceSizeInBytes);
                 validIdx.push_back(i);
+            }
+        }
+        if(gemm.isAlgoSupported(heuristicResult[i].algo, tunings[1], workspaceSizeInBytes)
+           == HIPBLAS_STATUS_SUCCESS)
+        {
+            if(workspaceSizeInBytes <= max_workspace_size)
+            {
+                workspace_size = max(workspace_size, workspaceSizeInBytes);
+                validIdxTuning.push_back(i);
             }
         }
     }
@@ -157,6 +172,13 @@ void simpleGemmTuningWGMExt(hipblasLtHandle_t  handle,
         std::cerr << "No valid solution found!" << std::endl;
         return;
     }
+    if(validIdxTuning.empty())
+    {
+        std::cerr << "No valid tuning solution found!" << std::endl;
+        return;
+    }
+    // Note that different Tuning configurations will get different
+    // amounts of validIdx.
 
     void* ws_ptr = nullptr;
     if(workspace_size > max_workspace_size)
@@ -168,9 +190,13 @@ void simpleGemmTuningWGMExt(hipblasLtHandle_t  handle,
         ws_ptr = d_workspace;
     }
 
+    CHECK_HIPBLASLT_ERROR(gemm.initialize(heuristicResult[validIdx[0]].algo, tunings[0], ws_ptr));
+    CHECK_HIPBLASLT_ERROR(gemm.run(stream));
+
     // Make sure to initialize every time when algo changes
     // If tuning is given, the API will not return success if the solution cannot accept an user tuning parameter.
-    CHECK_HIPBLASLT_ERROR(gemm.initialize(heuristicResult[validIdx[0]].algo, tuning, ws_ptr));
+    CHECK_HIPBLASLT_ERROR(
+        gemm.initialize(heuristicResult[validIdxTuning[0]].algo, tunings[1], ws_ptr));
     CHECK_HIPBLASLT_ERROR(gemm.run(stream));
 
     if(workspace_size > max_workspace_size)
