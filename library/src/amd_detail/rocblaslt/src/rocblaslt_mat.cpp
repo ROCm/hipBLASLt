@@ -101,15 +101,16 @@ rocblaslt_status rocblaslt_matmul_impl(const rocblaslt_handle       handle,
         return isValid;
 
     // Internal assign
-    hipblasOperation_t opA           = matmul_descr->op_A;
-    hipblasOperation_t opB           = matmul_descr->op_B;
-    int                num_batches_a = matA->batch_count;
-    rocblaslt_epilogue epilogue      = matmul_descr->epilogue;
-    void*              scaleA        = matmul_descr->scaleA;
-    void*              scaleB        = matmul_descr->scaleB;
-    void*              scaleC        = matmul_descr->scaleC;
-    void*              scaleD        = matmul_descr->scaleD;
-    void*              scaleE        = matmul_descr->scaleE;
+    hipblasOperation_t  opA           = matmul_descr->op_A;
+    hipblasOperation_t  opB           = matmul_descr->op_B;
+    int                 num_batches_a = matA->batch_count;
+    rocblaslt_epilogue  epilogue      = matmul_descr->epilogue;
+    void*               scaleA        = matmul_descr->scaleA;
+    void*               scaleB        = matmul_descr->scaleB;
+    void*               scaleC        = matmul_descr->scaleC;
+    void*               scaleD        = matmul_descr->scaleD;
+    void*               scaleE        = matmul_descr->scaleE;
+    hipblasltDatatype_t scale_type    = matmul_descr->scale_type;
 
     // Others
     bool strided_batch = true;
@@ -195,55 +196,67 @@ rocblaslt_status rocblaslt_matmul_impl(const rocblaslt_handle       handle,
                                         workspace,
                                         workspaceSizeInBytes,
                                         stream};
-    if(get_logger_layer_mode() != rocblaslt_layer_mode_none)
-    {
-        log_trace(__func__,
-                  "transA",
-                  opA == HIPBLAS_OP_N ? "N" : "T",
-                  "transB",
-                  opB == HIPBLAS_OP_N ? "N" : "T",
-                  "batch_count",
-                  num_batches_a,
-                  "m",
+    if (get_logger_layer_mode() & rocblaslt_layer_mode_log_bench) {
+
+// To deal with some arguments may be invalid
+#define GEN_BENCH_ARG(_fun, _type_str, _type) \
+    strlen(_fun(_type)) && strcmp(_fun(_type), "invalid") ? _type_str : "", \
+    _fun(_type)
+
+        log_bench(__func__,
+                  "-m",
                   m,
-                  "n",
+                  "-n",
                   n,
-                  "k",
+                  "-k",
                   k,
-                  "alpha",
-                  alpha,
-                  "type_a",
-                  type_a,
-                  "lda",
+                  "--lda",
                   lda,
-                  "batch_stride_a",
-                  batch_stride_a,
-                  "type_b",
-                  type_b,
-                  "ldb",
+                  "--ldb",
                   ldb,
-                  "batch_stride_b",
-                  batch_stride_b,
-                  "beta",
-                  beta,
-                  "type_c",
-                  type_c,
-                  "ldc",
+                  "--ldc",
                   ldc,
-                  "batch_stride_c",
-                  batch_stride_c,
-                  "type_d",
-                  type_d,
-                  "ldd",
+                  "--ldd",
                   ldd,
-                  "grouped_gemm",
-                  grouped_gemm,
-                  "compute_type",
-                  compute_type,
-                  "bias",
-                  bias,
-                  "scaleAlphaVec",
-                  scaleAlphaVec);
+                  "--lde",
+                  lde,
+                  "--stride_a",
+                  batch_stride_a,
+                  "--stride_b",
+                  batch_stride_b,
+                  "--stride_c",
+                  batch_stride_c,
+                  "--stride_d",
+                  batch_stride_d,
+                  "--stride_e",
+                  batch_stride_e,
+                  "--alpha",
+                  *(float*)alpha,
+                  "--beta",
+                  *(float*)beta,
+                  "--transA",
+                  hipblasOperation_to_bench_string(opA),
+                  "--transB",
+                  hipblasOperation_to_bench_string(opB),
+                  "--batch_count",
+                  num_batches_a,
+                  grouped_gemm ? "--grouped_gemm" : "",
+                  scaleA ? "--scaleA" : "",
+                  scaleB ? "--scaleB" : "",
+                  scaleC ? "--scaleC" : "",
+                  scaleD ? "--scaleD" : "",
+                  scaleAlphaVec ? "--scaleAlpha_vector" : "",
+                  GEN_BENCH_ARG(hipblasltDatatype_to_bench_string, "--a_type", type_a),
+                  GEN_BENCH_ARG(hipblasltDatatype_to_bench_string, "--b_type", type_b),
+                  GEN_BENCH_ARG(hipblasltDatatype_to_bench_string, "--c_type", type_c),
+                  GEN_BENCH_ARG(hipblasltDatatype_to_bench_string, "--d_type", type_d),
+                  GEN_BENCH_ARG(rocblaslt_compute_type_to_bench_string, "--compute_type", compute_type),
+                  GEN_BENCH_ARG(hipblasltDatatype_to_bench_string, "--scale_type", scale_type),
+                  GEN_BENCH_ARG(hipblasltDatatype_to_bench_string, "--bias_type", bias_type),
+                  rocblaslt_epilogue_to_bench_string(epilogue));
+
+#undef GEN_BENCH_ARG
+
     }
     return runContractionProblem(handle, algo, problem, gemmData);
 }
