@@ -1874,6 +1874,8 @@ inline auto getSolutions(
     std::vector<std::shared_ptr<Tensile::ContractionSolution>> solutions_fallback;
     // Fallback to original kernels
     if(!enableEpilogue && scaleAlphaVec == nullptr && bias == nullptr && E == nullptr
+       && inputs.scaleA == nullptr && inputs.scaleB == nullptr && inputs.scaleC == nullptr
+       && inputs.scaleD == nullptr
        && tensile_prob.getParams().activationEnum() == Tensile::ActivationType::None)
     {
         auto useBias          = tensile_prob.useBias();
@@ -2162,6 +2164,8 @@ rocblaslt_status isSolutionSupported(rocblaslt_handle            handle,
             }
             // Try fallback
             if(scaleAlphaVec == nullptr && bias == nullptr && E == nullptr
+               && inputs.scaleA == nullptr && inputs.scaleB == nullptr && inputs.scaleC == nullptr
+               && inputs.scaleD == nullptr
                && tensile_prob.getParams().activationEnum() == Tensile::ActivationType::None)
             {
                 auto useBias          = tensile_prob.useBias();

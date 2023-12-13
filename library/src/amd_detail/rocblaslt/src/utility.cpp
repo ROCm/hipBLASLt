@@ -26,7 +26,7 @@
 #include "utility.hpp"
 #include <sys/types.h>
 #include <unistd.h>
-std::ostream*   get_logger_os()
+std::ostream* get_logger_os()
 {
     LoggerSingleton& s = LoggerSingleton::getInstance();
     return s.log_os;
@@ -144,6 +144,10 @@ const char* rocblaslt_matmul_desc_attributes_to_string(rocblaslt_matmul_desc_att
         return "MATMUL_DESC_A_SCALE_POINTER";
     case ROCBLASLT_MATMUL_DESC_B_SCALE_POINTER:
         return "MATMUL_DESC_B_SCALE_POINTER";
+    case ROCBLASLT_MATMUL_DESC_C_SCALE_POINTER:
+        return "MATMUL_DESC_C_SCALE_POINTER";
+    case ROCBLASLT_MATMUL_DESC_D_SCALE_POINTER:
+        return "MATMUL_DESC_D_SCALE_POINTER";
     case ROCBLASLT_MATMUL_DESC_EPILOGUE_AUX_POINTER:
         return "MATMUL_DESC_EPILOGUE_AUX_POINTER";
     case ROCBLASLT_MATMUL_DESC_EPILOGUE_AUX_LD:
