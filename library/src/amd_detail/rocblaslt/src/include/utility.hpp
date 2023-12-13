@@ -141,7 +141,11 @@ std::string prefix(const char* layer, const char* caller);
 
 const char* hipblasltDatatype_to_string(hipblasltDatatype_t type);
 
+const char* hipblasltDatatype_to_bench_string(hipblasltDatatype_t type);
+
 const char* rocblaslt_compute_type_to_string(rocblaslt_compute_type type);
+
+const char* rocblaslt_compute_type_to_bench_string(rocblaslt_compute_type type);
 
 const char* rocblaslt_matrix_layout_attributes_to_string(rocblaslt_matrix_layout_attribute_ type);
 
@@ -149,9 +153,13 @@ const char* rocblaslt_matmul_desc_attributes_to_string(rocblaslt_matmul_desc_att
 
 const char* hipblasOperation_to_string(hipblasOperation_t op);
 
+const char* hipblasOperation_to_bench_string(hipblasOperation_t op);
+
 const char* rocblaslt_layer_mode2string(rocblaslt_layer_mode layer_mode);
 
 const char* rocblaslt_epilogue_to_string(rocblaslt_epilogue epilogue);
+
+const char* rocblaslt_epilogue_to_bench_string(rocblaslt_epilogue epilogue);
 
 std::string rocblaslt_matrix_layout_to_string(rocblaslt_matrix_layout mat);
 
@@ -236,29 +244,19 @@ void log_api(const char* func, H head, Ts&&... xs)
 {
     log_base(rocblaslt_layer_mode_log_api, func, head, std::forward<Ts>(xs)...);
 }
+
 // if bench logging is turned on with
 // (handle->layer_mode & rocblaslt_layer_mode_log_bench) == true
 // then
 // log_bench will call log_arguments to log a string that
 // can be input to the executable rocblaslt-bench.
-template <typename H, typename... Ts>
-void log_bench(const char* func, H head, std::string precision, Ts&&... xs)
+template <typename... Ts>
+void log_bench(const char* func, Ts&&... xs)
 {
-    // TODO
-    // if(nullptr != handle && nullptr != handle->log_bench_os)
-    //{
-    //    if(handle->log_bench)
-    //    {
-    //        std::string comma_separator = " ";
-
-    //        std::ostream* os = handle->log_bench_os;
-
-    //        std::string prefix_str = prefix("Bench", func);
-
-    //        log_arguments(*os, comma_separator, prefix_str, head,
-    //        std::forward<Ts>(xs)...);
-    //    }
-    //}
+    std::ostream* os = get_logger_os();
+    *os << "hipblaslt-bench ";
+    log_arguments_bench(*os, std::forward<Ts>(xs)...);
+    *os << std::endl;
 }
 // Convert the current C++ exception to rocblaslt_status
 // This allows extern "C" functions to return this function in a catch(...)

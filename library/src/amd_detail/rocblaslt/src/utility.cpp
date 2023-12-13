@@ -82,6 +82,31 @@ const char* hipblasltDatatype_to_string(hipblasltDatatype_t type)
     }
 }
 
+const char* hipblasltDatatype_to_bench_string(hipblasltDatatype_t type)
+{
+    switch(type)
+    {
+    case HIPBLASLT_R_32F:
+        return "f32_r";
+    case HIPBLASLT_R_64F:
+        return "f64_r";
+    case HIPBLASLT_R_16F:
+        return "f16_r";
+    case HIPBLASLT_R_16B:
+        return "bf16_r";
+    case HIPBLASLT_R_8I:
+        return "i8_r";
+    case HIPBLASLT_R_32I:
+        return "i32_r";
+    case HIPBLASLT_R_8F_E4M3:
+        return "f8_r";
+    case HIPBLASLT_R_8F_E5M2:
+        return "bf8_r";
+    default:
+        return "invalid";
+    }
+}
+
 const char* rocblaslt_compute_type_to_string(rocblaslt_compute_type type)
 {
     switch(type)
@@ -98,6 +123,25 @@ const char* rocblaslt_compute_type_to_string(rocblaslt_compute_type type)
         return "COMPUTE_32F_16F";
     default:
         return "Invalid";
+    }
+}
+
+const char* rocblaslt_compute_type_to_bench_string(rocblaslt_compute_type type)
+{
+    switch(type)
+    {
+    case rocblaslt_compute_f32:
+        return "f32_r";
+    case rocblaslt_compute_f32_fast_xf32:
+        return "xf32_r";
+    case rocblaslt_compute_f64:
+        return "f64_r";
+    case rocblaslt_compute_i32:
+        return "i32_r";
+    case rocblaslt_compute_f32_fast_f16:
+        return "f32_f16_r";
+    default:
+        return "invalid";
     }
 }
 
@@ -156,6 +200,7 @@ const char* rocblaslt_matmul_desc_attributes_to_string(rocblaslt_matmul_desc_att
         return "Invalid";
     }
 }
+
 const char* hipblasOperation_to_string(hipblasOperation_t op)
 {
     switch(op)
@@ -168,6 +213,21 @@ const char* hipblasOperation_to_string(hipblasOperation_t op)
         return "OP_C";
     default:
         return "Invalid";
+    }
+}
+
+const char* hipblasOperation_to_bench_string(hipblasOperation_t op)
+{
+    switch(op)
+    {
+    case HIPBLAS_OP_N:
+        return "N";
+    case HIPBLAS_OP_T:
+        return "T";
+    case HIPBLAS_OP_C:
+        return "C";
+    default:
+        return "invalid";
     }
 }
 
@@ -187,6 +247,8 @@ const char* rocblaslt_layer_mode2string(rocblaslt_layer_mode layer_mode)
         return "Info";
     case rocblaslt_layer_mode_log_api:
         return "Api";
+    case rocblaslt_layer_mode_log_bench:
+        return "Bench";
     default:
         return "Invalid";
     }
@@ -222,6 +284,39 @@ const char* rocblaslt_epilogue_to_string(rocblaslt_epilogue epilogue)
         return "EPILOGUE_DGELU_BGRADB";
     default:
         return "Invalid epilogue";
+    }
+}
+
+const char* rocblaslt_epilogue_to_bench_string(rocblaslt_epilogue epilogue)
+{
+    switch(epilogue)
+    {
+    case ROCBLASLT_EPILOGUE_DEFAULT:
+        return "";
+    case ROCBLASLT_EPILOGUE_RELU:
+        return "--activation_type relu";
+    case ROCBLASLT_EPILOGUE_BIAS:
+        return "--bias_vector";
+    case ROCBLASLT_EPILOGUE_RELU_BIAS:
+        return "--activation_type relu --bias_vector";
+    case ROCBLASLT_EPILOGUE_GELU:
+        return "--activation_type gelu";
+    case ROCBLASLT_EPILOGUE_DGELU:
+        return "--activation_type gelu --gradient";
+    case ROCBLASLT_EPILOGUE_GELU_BIAS:
+        return "--activation_type gelu --bias_vector";
+    case ROCBLASLT_EPILOGUE_GELU_AUX:
+        return "--activation_type gelu --use_e";
+    case ROCBLASLT_EPILOGUE_GELU_AUX_BIAS:
+        return "--activation_type gelu --bias_vector --use_e";
+    case ROCBLASLT_EPILOGUE_DGELU_BGRAD:
+        return "--activation_type gelu --bias_vector --gradient";
+    case ROCBLASLT_EPILOGUE_BGRADA:
+        return "--bias_vector --gradient --bias_source a";
+    case ROCBLASLT_EPILOGUE_BGRADB:
+        return "--bias_vector --gradient --bias_source b";
+    default:
+        return "invalid";
     }
 }
 

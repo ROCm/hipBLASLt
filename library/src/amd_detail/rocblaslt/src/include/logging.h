@@ -255,42 +255,43 @@ private:
 
 template <typename T, typename... Ts>
 inline void log_arg_data(std::ostream& os, std::string& separator, T& x, Ts&&... xs);
-template <typename T, typename... Ts>
-inline void log_arg_head(std::ostream& os, std::string& separator, T& x, Ts&&... xs);
 
-inline void log_arg_data(std::ostream& os, std::string& separator) {}
-inline void log_arg_head(std::ostream& os, std::string& separator) {}
-
-template <typename T>
-inline void log_arg_head(std::ostream& os, std::string& separator, T& x)
-{
-    os << x;
-}
-template <typename T>
-inline void log_arg_data(std::ostream& os, std::string& separator, T& x)
-{
-    os << "=" << x << separator;
-}
 template <typename T, typename... Ts>
 inline void log_arg_head(std::ostream& os, std::string& separator, T& x, Ts&&... xs)
 {
     os << x;
-    log_arg_data(os, separator, xs...);
+    if constexpr (sizeof...(xs)) log_arg_data(os, separator, xs...);
 }
+
 template <typename T, typename... Ts>
 inline void log_arg_data(std::ostream& os, std::string& separator, T& x, Ts&&... xs)
 {
     os << "=" << x << separator;
-    log_arg_head(os, separator, xs...);
+    if constexpr (sizeof...(xs)) log_arg_head(os, separator, xs...);
 }
+
 template <typename H, typename... Ts>
 void log_arguments(
     std::ostream& os, std::string& separator, std::string& prefix, H head, Ts&&... xs)
 {
     os << prefix << " " << head;
-    log_arg_data(os, separator, xs...);
+    if constexpr (sizeof...(xs)) log_arg_data(os, separator, xs...);
     os << "\n";
 }
+
+template <typename T, typename... Ts>
+void log_arguments_bench(std::ostream& os, T& x, Ts&&... xs)
+{
+    if constexpr (std::is_same_v<T, const char*>) {
+        if (strlen(x) && strcmp(x, "invalid")) os << x << " ";
+    }
+    else {
+        os << x << " ";
+    }
+    if constexpr (sizeof...(xs)) log_arguments_bench(os, xs...);
+}
+
+
 /**
  * @brief Logging function
  *
