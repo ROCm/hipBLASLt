@@ -124,14 +124,30 @@ extern "C" {
     }
 #endif
 
-hipblasStatus_t hipblasLtCreate(hipblasLtHandle_t* handle)
+hipblasStatus_t hipblasLtCreate(hipblasLtHandle_t* handle, hipStream_t stream)
 try
 {
     // TODO: Synchronizer size pass into predicate SynchronizerSizeCheck
-    // 1K just for small size now, need to cal corner case if support all situations 
-    void* d_Synchronizer = nullptr;
-    CHECK_HIP_ERROR(hipMalloc(&d_Synchronizer, 16 * 1024 * sizeof(int)));
-    CHECK_HIP_ERROR(hipMemset(d_Synchronizer, 0, sizeof(int) * 16 * 1024));
+    // 1K just for small size now, need to cal corner case if support all situations
+    void*                  d_Synchronizer = nullptr;
+    hipError_t             err            = hipSuccess;
+    hipStreamCaptureStatus capStatus      = hipStreamCaptureStatusNone;
+    if(stream)
+        err = hipStreamIsCapturing(stream, &capStatus);
+    if(err != hipSuccess)
+    {
+        return HIPBLAS_STATUS_INTERNAL_ERROR;
+    }
+    if(capStatus != hipStreamCaptureStatusNone)
+    {
+        CHECK_HIP_ERROR(hipMallocAsync(&d_Synchronizer, 16 * 1024 * sizeof(int), stream));
+        CHECK_HIP_ERROR(hipMemsetAsync(d_Synchronizer, 0, sizeof(int) * 16 * 1024, stream));
+    }
+    else
+    {
+        CHECK_HIP_ERROR(hipMalloc(&d_Synchronizer, 16 * 1024 * sizeof(int)));
+        CHECK_HIP_ERROR(hipMemset(d_Synchronizer, 0, sizeof(int) * 16 * 1024));
+    }
 
     // Check if handle is valid
     if(handle == nullptr)
@@ -140,7 +156,6 @@ try
     }
 
     int             deviceId;
-    hipError_t      err;
     hipblasStatus_t retval = HIPBLAS_STATUS_SUCCESS;
 
     err = hipGetDevice(&deviceId);
@@ -148,6 +163,8 @@ try
     {
         retval = RocBlasLtStatusToHIPStatus(rocblaslt_create((rocblaslt_handle*)handle));
         (*(rocblaslt_handle*)handle)->Synchronizer = d_Synchronizer;
+        (*(rocblaslt_handle*)handle)->is_graph_mode
+            = (bool)(capStatus != hipStreamCaptureStatusNone);
     }
     return retval;
 }
@@ -156,12 +173,19 @@ catch(...)
     return exception_to_hipblas_status();
 }
 
-hipblasStatus_t hipblasLtDestroy(const hipblasLtHandle_t handle)
+hipblasStatus_t hipblasLtDestroy(const hipblasLtHandle_t handle, hipStream_t stream)
 try
 {
     if(handle != nullptr and (*(rocblaslt_handle)handle).Synchronizer != nullptr)
     {
-        CHECK_HIP_ERROR(hipFree((*(rocblaslt_handle)handle).Synchronizer));
+        if((*(rocblaslt_handle)handle).is_graph_mode && stream)
+        {
+            CHECK_HIP_ERROR(hipFreeAsync((*(rocblaslt_handle)handle).Synchronizer, stream));
+        }
+        else
+        {
+            CHECK_HIP_ERROR(hipFree((*(rocblaslt_handle)handle).Synchronizer));
+        }
     }
 
     return RocBlasLtStatusToHIPStatus(rocblaslt_destroy((const rocblaslt_handle)handle));

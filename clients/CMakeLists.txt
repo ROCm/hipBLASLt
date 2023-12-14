@@ -84,6 +84,10 @@ if( BUILD_CLIENTS_SAMPLES )
   add_subdirectory( samples )
 endif( )
 
+if( BUILD_CLIENTS_TESTS )
+  add_subdirectory( tests )
+endif( )
+
 if( BUILD_CLIENTS_BENCHMARKS OR BUILD_CLIENTS_TESTS)
 
   # Linking lapack library requires fortran flags

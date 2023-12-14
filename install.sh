@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # ########################################################################
-# Copyright (C) 2022 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -657,7 +657,7 @@ pushd .
       install_blis
       popd
 
-      cmake_client_options="${cmake_client_options} -DBUILD_CLIENTS_SAMPLES=ON -DBUILD_CLIENTS_TESTS=ON -DLINK_BLIS=${LINK_BLIS} -DBUILD_CLIENTS_BENCHMARKS=ON"
+      cmake_client_options="${cmake_client_options} -DBUILD_CLIENTS_SAMPLES=ON -DBUILD_CLIENTS_TESTS=ON -DBUILD_CLIENTS_TESTS=ON -DLINK_BLIS=${LINK_BLIS} -DBUILD_CLIENTS_BENCHMARKS=ON"
 
       #
       # Add matrices_dir if exists.

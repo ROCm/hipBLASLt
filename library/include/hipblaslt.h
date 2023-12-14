@@ -381,12 +381,14 @@ hipblasStatus_t hipblasLtGetArchName(char** archName);
  *  @param[out]
  *  handle  Pointer to the allocated hipBLASLt handle for the created hipBLASLt
  * context.
+ *  @param[in]
+ *  stream  hipStream used in hipGraph mode.
  *
  *  \retval HIPBLAS_STATUS_SUCCESS The allocation completed successfully.
  *  \retval HIPBLAS_STATUS_INVALID_VALUE \p handle == NULL.
  */
 HIPBLASLT_EXPORT
-hipblasStatus_t hipblasLtCreate(hipblasLtHandle_t* handle);
+hipblasStatus_t hipblasLtCreate(hipblasLtHandle_t* handle, hipStream_t stream = NULL);
 
 /*! \ingroup library_module
  *  \brief Destory a hipblaslt handle
@@ -401,13 +403,15 @@ hipblasStatus_t hipblasLtCreate(hipblasLtHandle_t* handle);
  *
  *  @param[in]
  *  handle  Pointer to the hipBLASLt handle to be destroyed.
+ *  @param[out]
+ *  stream  Must give a stream if using hipGraph mode.
  *
  *  \retval HIPBLAS_STATUS_SUCCESS The hipBLASLt context was successfully
  * destroyed. \retval HIPBLAS_STATUS_NOT_INITIALIZED The hipBLASLt library was
  * not initialized. \retval HIPBLAS_STATUS_INVALID_VALUE \p handle == NULL.
  */
 HIPBLASLT_EXPORT
-hipblasStatus_t hipblasLtDestroy(const hipblasLtHandle_t handle);
+hipblasStatus_t hipblasLtDestroy(const hipblasLtHandle_t handle, hipStream_t stream = NULL);
 
 /*! \ingroup library_module
  *  \brief Create a matrix layout descriptor
@@ -909,16 +913,16 @@ hipblasStatus_t hipblasLtMatrixTransformDescSetAttribute( //
  * \retval HIPBLAS_STATUS_SUCCESS        if attribute's value was successfully written to user memory
  */
 HIPBLASLT_EXPORT
-hipblasStatus_t hipblasLtMatrixTransformDescGetAttribute(
-    hipblasLtMatrixTransformDesc_t           transformDesc,
-    hipblasLtMatrixTransformDescAttributes_t attr,
-    void*                                    buf,
-    size_t                                   sizeInBytes,
-    size_t*                                  sizeWritten);
+hipblasStatus_t
+    hipblasLtMatrixTransformDescGetAttribute(hipblasLtMatrixTransformDesc_t           transformDesc,
+                                             hipblasLtMatrixTransformDescAttributes_t attr,
+                                             void*                                    buf,
+                                             size_t                                   sizeInBytes,
+                                             size_t*                                  sizeWritten);
 
-/*! \ingroup library_module 
+/*! \ingroup library_module
  *  \brief Matrix layout conversion helper
- *  \details 
+ *  \details
  *   Matrix layout conversion helper (C = alpha * op(A) + beta * op(B)),
  * can be used to change memory order of data or to scale and shift the values.
  * @param[in]  lightHandle   Pointer to the allocated hipBLASLt handle for the

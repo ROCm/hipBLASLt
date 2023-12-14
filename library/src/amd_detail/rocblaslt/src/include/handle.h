@@ -92,6 +92,7 @@ struct _rocblaslt_handle
     // asic revision
     int asic_rev;
 
+    bool  is_graph_mode;
     void* Synchronizer = nullptr;
     // pointer mode ; default mode is host
     rocblaslt_pointer_mode pointer_mode = rocblaslt_pointer_mode_host;
