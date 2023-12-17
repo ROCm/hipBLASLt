@@ -85,6 +85,7 @@ namespace Tensile
                 iot::mapRequired(io, "macroTile", s.macroTile);
 
                 iot::mapRequired(io, "staggerU", s.staggerU);
+                iot::mapRequired(io, "staggerUMapping", s.staggerUMapping);
                 iot::mapRequired(io, "depthU", s.depthU);
                 iot::mapRequired(io, "globalSplitUPGR", s.globalSplitUPGR);
                 iot::mapRequired(io, "globalSplitU", s.globalSplitU);
@@ -118,6 +119,7 @@ namespace Tensile
             {
                 iot::mapRequired(io, "gsu", s.gsu);
                 iot::mapRequired(io, "wgm", s.wgm);
+                iot::mapRequired(io, "staggerU", s.staggerU);
             }
 
             const static bool flow = false;

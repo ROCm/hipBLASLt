@@ -756,6 +756,18 @@ namespace Tensile
         uint32_t       internalArg0 = mask & gsu;
         uint32_t       wgShift8     = (mask & wgm) << 8;
         internalArg0                = internalArg0 | wgShift8;
+        // StaggerU
+        if(internalArgsSupport.staggerU)
+        {
+            const uint32_t staggerMask1    = 0x1F00;
+            uint32_t       staggerUMapping = (sizeMapping.staggerUMapping << 13);
+            uint32_t       staggerUShift   = staggerMask1 & ((sizeMapping.staggerStrideShift) << 8);
+            uint32_t       staggerU        = mask & sizeMapping.staggerU;
+            staggerU                       = staggerU | staggerUShift;
+            staggerU                       = staggerU | staggerUMapping;
+            internalArg0                   = internalArg0 | (staggerU << 16);
+        }
+
         args.template append<uint32_t>("internalArgs", internalArg0);
     }
 

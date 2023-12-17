@@ -234,7 +234,7 @@ def getLocalWriteMFMAStart(writer, kernel, tensorParametersA, tensorParametersB,
     #########
     if not kernel["1LDSBuffer"]:
         # TODO: replace here for real number of globalReadIncInst
-        numGRIncInst = 12 if not kernel["StaggerU"] else 18
+        numGRIncInst = 18 # Always on. Original logic: 12 if not kernel["StaggerU"] else 18
         numInstPerMfma = max(roundUp(writer.states.miLatencyLeft/2),1)
         numMfmaToSched = roundUp(numGRIncInst/numInstPerMfma)
         lwStartMfmaIndex = 1 + numMfmaToSched
