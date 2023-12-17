@@ -398,6 +398,7 @@ namespace Tensile
             dim3 macroTile;
 
             size_t staggerU           = 0;
+            size_t staggerUMapping    = 0;
             size_t depthU             = 0;
             size_t globalSplitUPGR    = 0;
             size_t globalSplitU       = 0;
@@ -423,8 +424,9 @@ namespace Tensile
 
         struct InternalArgsSupport
         {
-            bool gsu = true;
-            bool wgm = true;
+            bool gsu      = true;
+            bool wgm      = true;
+            bool staggerU = true;
         };
 
         struct ProblemType

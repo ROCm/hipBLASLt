@@ -390,12 +390,12 @@ class KernelWriterAssembly(KernelWriter):
       if kernel["ProblemType"]["Sparse"]:
         self.defineSgpr("ShadowLimitMetadata", 2, 2)
 
-    if self.states.staggerU:
-      self.defineSgpr("StaggerUIter", 1)  # stagger loop iterations, used for various iter counts in the code
-      self.defineSgpr("WrapUA", 2)  # Bytes to add to SrdA to reset address from N-1 iter to AddressA
-      self.defineSgpr("WrapUB", 2)  # Bytes to add to SrdB to reset address from N-1 iter to AddressB
-      if kernel["ProblemType"]["Sparse"]:
-        self.defineSgpr("WrapUMetadata", 2)  # Bytes to add to SrdMetadata to reset address from N-1 iter to AddressMetadata
+    self.defineSgpr("StaggerU", 1)
+    self.defineSgpr("StaggerUIter", 1)  # stagger loop iterations, used for various iter counts in the code
+    self.defineSgpr("WrapUA", 2)  # Bytes to add to SrdA to reset address from N-1 iter to AddressA
+    self.defineSgpr("WrapUB", 2)  # Bytes to add to SrdB to reset address from N-1 iter to AddressB
+    if kernel["ProblemType"]["Sparse"]:
+      self.defineSgpr("WrapUMetadata", 2)  # Bytes to add to SrdMetadata to reset address from N-1 iter to AddressMetadata
 
     self.defineSgpr("GlobalReadIncsA", self.states.a.numSgprGlobalReadIncs)
     self.defineSgpr("GlobalReadIncsB", self.states.b.numSgprGlobalReadIncs)
@@ -1234,6 +1234,8 @@ class KernelWriterAssembly(KernelWriter):
         if not kernel["ProblemType"]["GroupedGemm"]:
           moduleWg.add(SAndB32(dst=sgpr("WGM"), src0=sgpr("GSU"), src1=hex(0xFF00)))
           moduleWg.add(SLShiftRightB32(dst=sgpr("WGM"), shiftHex=hex(8), src=sgpr("WGM")))
+          moduleWg.add(SAndB32(dst=sgpr("StaggerU"), src0=sgpr("GSU"), src1=hex(0xFFFF0000)))
+          moduleWg.add(SLShiftRightB32(dst=sgpr("StaggerU"), shiftHex=hex(16), src=sgpr("StaggerU")))
           moduleWg.add(SAndB32(dst=sgpr("GSU"), src0=sgpr("GSU"), src1=hex(0xFF)))
       moduleWg.addModuleAsFlatItems(moduleScaleAB)
       moduleWg.add(Label(label="stop", comment=""))
@@ -1334,10 +1336,14 @@ class KernelWriterAssembly(KernelWriter):
                         comment="restore workgroup id"))
             moduleRegInit.add(SAndB32(dst=sgpr("WGM"), src0=sgpr("GSU"), src1=hex(0xFF00), comment="Restore WGM"))
             moduleRegInit.add(SLShiftRightB32(dst=sgpr("WGM"), shiftHex=hex(8), src=sgpr("WGM")))
+            moduleRegInit.add(SAndB32(dst=sgpr("StaggerU"), src0=sgpr("GSU"), src1=hex(0xFFFF0000), comment="Restore StaggerU related vars"))
+            moduleRegInit.add(SLShiftRightB32(dst=sgpr("StaggerU"), shiftHex=hex(16), src=sgpr("StaggerU")))
             moduleRegInit.add(SAndB32(dst=sgpr("GSU"), src0=sgpr("GSU"), src1=hex(0xFF), comment="Restore GSU"))
           else:
             module.add(SAndB32(dst=sgpr("WGM"), src0=sgpr("GSU"), src1=hex(0xFF00)))
             module.add(SLShiftRightB32(dst=sgpr("WGM"), shiftHex=hex(8), src=sgpr("WGM")))
+            module.add(SAndB32(dst=sgpr("StaggerU"), src0=sgpr("GSU"), src1=hex(0xFFFF0000)))
+            module.add(SLShiftRightB32(dst=sgpr("StaggerU"), shiftHex=hex(16), src=sgpr("StaggerU")))
             module.add(SAndB32(dst=sgpr("GSU"), src0=sgpr("GSU"), src1=hex(0xFF)))
 
           module.add(moduleRegInit)
@@ -3565,59 +3571,74 @@ class KernelWriterAssembly(KernelWriter):
   ##############################################################################
   def declareStaggerParms(self, kernel):
     module = Module("declareStaggerParms")
-    if self.states.staggerU:
-      # this could be dynamic?
-      if kernel["StaggerUMapping"] == 0:
-        staggerInput = sgpr("WorkGroup0")
-      elif kernel["StaggerUMapping"] == 1:
-        staggerInput = sgpr("WorkGroup1")
-      elif kernel["StaggerUMapping"] == 2:
-        staggerInput = sgpr("WorkGroup2")
-      elif kernel["StaggerUMapping"] == 3:
-        with self.allocTmpSgpr(2) as tmpSgprInfo:
-          tmpSgpr = tmpSgprInfo.idx
-          # wgSerial = (nwg0*ngw1)*wg2 + (nwg0)*wg1 + wg0
-          wgSerial = tmpSgpr
+    #Calculate StaggerUIter
+    with self.allocTmpSgpr(4) as tmpSgprInfo:
+      beginStaggerUIterLabel = Label("beginStaggerUIter",comment="")
+      endStaggerUIterLabel = Label("endStaggerUIter", comment="")
+      tmpSgpr = tmpSgprInfo.idx
+      currentStaggerU = tmpSgpr
+      shiftedStaggerU = tmpSgpr + 1
+      staggerUMask = tmpSgpr + 1
+      staggerUStrideShift = tmpSgpr + 2
+      staggerUMapping = tmpSgpr + 3
+      module.add(SAndB32(dst=sgpr(staggerUStrideShift), src0=sgpr("StaggerU"), src1=hex(0x1F00)))
+      module.add(SLShiftRightB32(dst=sgpr(staggerUStrideShift), shiftHex=hex(8), src=sgpr(staggerUStrideShift)))
+      module.add(SAndB32(dst=sgpr(staggerUMapping), src0=sgpr("StaggerU"), src1=hex(0xE000)))
+      module.add(SAndB32(dst=sgpr("StaggerU"), src0=sgpr("StaggerU"), src1=hex(0xFF)))
+      module.add(SMovB32(dst=sgpr(currentStaggerU), src=sgpr("StaggerU"), comment="init staggerU"))
+      module.add(beginStaggerUIterLabel)
+      module.add(SLShiftLeftB32(dst=sgpr(shiftedStaggerU), src=sgpr(currentStaggerU), \
+              shiftHex=sgpr(staggerUStrideShift), comment="shift by StaggerUStride"))
+      module.add(SCmpGeU32(src0=sgpr("OrigLoopCounter"), src1=sgpr(shiftedStaggerU), \
+          comment="loopCount >= current shift Count" ))
+      module.add(SCBranchSCC1(labelName=endStaggerUIterLabel.getLabelName(), comment="jump to end"))
+      module.add(SLShiftRightB32(dst=sgpr(currentStaggerU), src=sgpr(currentStaggerU), \
+              shiftHex=1, comment="step down to smaller stagger"))
+      module.add(SBranch(labelName=beginStaggerUIterLabel.getLabelName(), comment="jump to begin"))
+      module.add(endStaggerUIterLabel)
+      module.add(SSubU32(dst=sgpr(staggerUMask), src0=sgpr(currentStaggerU), src1=1, comment="staggerU mask"))
+      module.add(SCmpGeU32(src0=sgpr(currentStaggerU), src1=1, \
+          comment="if current staggerU >= 1" ))
+      module.add(SCSelectB32(dst=sgpr("StaggerUIter"), src0=sgpr(staggerUMask), src1=0, comment="set Mask"))
+
+      staggerInput = tmpSgpr
+      staggerLabel = Label("staggerInputEnd", comment="")
+      for i in range(0, 5):
+        label = Label("StaggerUMapping_%d"%(i + 1), comment="")
+        module.add(SCmpEQU32(src0=sgpr(staggerUMapping), src1=hex(i << 13)))
+        if i != 4:
+          module.add(SCBranchSCC1(labelName=label.getLabelName()))
+        else:
+          module.add(SCBranchSCC1(labelName=staggerLabel.getLabelName()))
+        if i == 0:
+          module.add(SMovB32(dst=sgpr(staggerInput), src=sgpr("WorkGroup0")))
+        elif i == 1:
+          module.add(SMovB32(dst=sgpr(staggerInput), src=sgpr("WorkGroup1")))
+        elif i == 2 and len(kernel["ProblemType"]["IndicesBatch"]) > 2:
+          module.add(SMovB32(dst=sgpr(staggerInput), src=sgpr("WorkGroup2")))
+        elif i == 3:
+          wgSerial = staggerInput
           tmp = tmpSgpr+1
-          module.add(SMulI32(dst=sgpr(wgSerial), src0=sgpr("NumWorkGroups0"), src1=sgpr("NumWorkGroups1"), \
-            comment="wgSerial = (nwg0*ngw1)*wg2 + (nwg0)*wg1 + wg0"))
-          module.add(SMulI32(dst=sgpr(wgSerial), src0=sgpr(wgSerial), src1=sgpr("WorkGroup2")))
+          if len(kernel["ProblemType"]["IndicesBatch"]) > 2:
+            module.add(SMulI32(dst=sgpr(wgSerial), src0=sgpr("NumWorkGroups0"), src1=sgpr("NumWorkGroups1"), \
+              comment="wgSerial = (nwg0*ngw1)*wg2 + (nwg0)*wg1 + wg0"))
+            module.add(SMulI32(dst=sgpr(wgSerial), src0=sgpr(wgSerial), src1=sgpr("WorkGroup2")))
           module.add(SMulI32(dst=sgpr(tmp), src0=sgpr("NumWorkGroups0"), src1=sgpr("WorkGroup1")))
           module.add(SAddU32(dst=sgpr(wgSerial), src0=sgpr(wgSerial), src1=sgpr(tmp)))
           module.add(SAddU32(dst=sgpr(wgSerial), src0=sgpr(wgSerial), src1=sgpr("WorkGroup0")))
-          staggerInput = sgpr(wgSerial)
-      elif kernel["StaggerUMapping"] == 4:
-        staggerInput = -1
-
-      #Calculate StaggerUIter
-      with self.allocTmpSgpr(2) as tmpSgprInfo:
-        beginStaggerUIterLabel = Label("beginStaggerUIter",comment="")
-        endStaggerUIterLabel = Label("endStaggerUIter", comment="")
-        tmpSgpr = tmpSgprInfo.idx
-        currentStaggerU = tmpSgpr
-        shiftedStaggerU = tmpSgpr + 1
-        staggerUMask = tmpSgpr + 1
-        module.add(SMovB32(dst=sgpr(currentStaggerU), src=hex(kernel["StaggerU"]), comment="init staggerU"))
-        module.add(beginStaggerUIterLabel)
-        module.add(SLShiftLeftB32(dst=sgpr(shiftedStaggerU), src=sgpr(currentStaggerU), \
-                shiftHex=kernel["_staggerStrideShift"], comment="shift by StaggerUStride"))
-        module.add(SCmpGeU32(src0=sgpr("OrigLoopCounter"), src1=sgpr(shiftedStaggerU), \
-            comment="loopCount >= current shift Count" ))
-        module.add(SCBranchSCC1(labelName=endStaggerUIterLabel.getLabelName(), comment="jump to end"))
-        module.add(SLShiftRightB32(dst=sgpr(currentStaggerU), src=sgpr(currentStaggerU), \
-                shiftHex=1, comment="step down to smaller stagger"))
-        module.add(SBranch(labelName=beginStaggerUIterLabel.getLabelName(), comment="jump to begin"))
-        module.add(endStaggerUIterLabel)
-        module.add(SSubU32(dst=sgpr(staggerUMask), src0=sgpr(currentStaggerU), src1=1, comment="staggerU mask"))
-        module.add(SCmpGeU32(src0=sgpr(currentStaggerU), src1=1, \
-            comment="if current staggerU >= 1" ))
-        module.add(SCSelectB32(dst=sgpr("StaggerUIter"), src0=sgpr(staggerUMask), src1=0, comment="set Mask"))
+        else:
+          module.add(SMovB32(dst=sgpr(staggerInput), src=hex(-1)))
+        module.add(SBranch(staggerLabel.getLabelName()))
+        if i != 4:
+          module.add(label)
+        else:
+          module.add(staggerLabel)
 
       module.add(SAndB32(dst=sgpr("StaggerUIter"), src0=sgpr("StaggerUIter"), \
-                src1=staggerInput, \
+                src1=sgpr(staggerInput), \
                 comment="Compute actual stagger start for this tile"))
       module.add(SLShiftLeftB32(dst=sgpr("StaggerUIter"), src=sgpr("StaggerUIter"), \
-                shiftHex=kernel["_staggerStrideShift"], comment="shift by StaggerUStride"))
+                shiftHex=sgpr(staggerUStrideShift), comment="shift by StaggerUStride"))
     return module
 
   ##############################################################################
@@ -3627,72 +3648,71 @@ class KernelWriterAssembly(KernelWriter):
     imod = Module("calculateStagger")
     tc = tP["tensorChar"]
 
-    if self.states.staggerU:
-      assert (kernel["BufferLoad"])
+    assert (kernel["BufferLoad"])
 
-      with self.allocTmpSgpr(3) as tmpSgprInfo:
-        staggerTmp    = tmpSgprInfo.idx
-        incSparseSgpr = tmpSgprInfo.idx + 2
+    with self.allocTmpSgpr(3) as tmpSgprInfo:
+      staggerTmp    = tmpSgprInfo.idx
+      incSparseSgpr = tmpSgprInfo.idx + 2
 
-        #---
-        imod.addComment1("SRDs += (StaggerUIter) * GlobalReadIncs%s+%u"% (tc, self.states.unrollIdx))
+      #---
+      imod.addComment1("SRDs += (StaggerUIter) * GlobalReadIncs%s+%u"% (tc, self.states.unrollIdx))
 
-        # Calculate the stagger byte offset
-        imod.addModuleAsFlatItems(self.s_mul_i64_i32(
-                  sgpr(staggerTmp), sgpr(staggerTmp+1), \
-                  sgpr("StaggerUIter"), sgpr("GlobalReadIncs%s+%u"%(tc, self.states.unrollIdx)), \
-                  " stagger byte offset"))
+      # Calculate the stagger byte offset
+      imod.addModuleAsFlatItems(self.s_mul_i64_i32(
+                sgpr(staggerTmp), sgpr(staggerTmp+1), \
+                sgpr("StaggerUIter"), sgpr("GlobalReadIncs%s+%u"%(tc, self.states.unrollIdx)), \
+                " stagger byte offset"))
 
+      # Amount of bytes to add to get back to start.
+      # on the llop iteration which matches StaggerUIter, this offset added instead of GlobalReadInc
+      imod.addModuleAsFlatItems(self.s_mul_i64_i32(sgpr("WrapU%s+0"%tc), sgpr("WrapU%s+1"%tc), \
+                self.loopCounter(kernel, self.states.unrollIdx), sgpr("GlobalReadIncs%s+%u"%(tc,self.states.unrollIdx)), \
+                "Number of bytes accessed by the unroll loop"))
+
+      imod.add(SSubU32(dst=sgpr("WrapU%s+0"%tc),  \
+                src0=sgpr("GlobalReadIncs%s+%u"%(tc,self.states.unrollIdx)), \
+                src1=sgpr("WrapU%s+0"%tc), \
+                comment="remove one iteration"))
+      imod.add(SSubBU32(dst=sgpr("WrapU%s+1"%tc), \
+                src0=0, \
+                src1=sgpr("WrapU%s+1"%tc), \
+                comment="remove one iteration"))
+
+      imod.add(self.incrementSrd(tP, sgpr(staggerTmp), sgpr(staggerTmp+1)))
+
+      if kernel["ProblemType"]["Sparse"] and kernel["DirectToVgprSparseMetadata"] and \
+         ((kernel["ProblemType"]["Sparse"] == 2 and tP["isB"]) or (kernel["ProblemType"]["Sparse"] == 1 and tP["isA"])):
+        imod.addComment1("SRDs += (StaggerUIter) * GlobalReadIncsMetadata")
+
+        tc = "Metadata"
+        if kernel["DirectToVgprSparseMetadata"]:
+          incSparse = incSparseSgpr
+          imod.add(self.calculateIncrementMetadata(kernel, incSparse))
+        else:
+          incSparse = "GlobalReadIncsMetadata+%u"%(self.states.unrollIdx)
+        imod.addModuleAsFlatItems(self.s_mul_i64_i32( \
+                        sgpr(staggerTmp), sgpr(staggerTmp+1), \
+                        sgpr("StaggerUIter"), sgpr(incSparse), " stagger byte offset of metadata"))
         # Amount of bytes to add to get back to start.
         # on the llop iteration which matches StaggerUIter, this offset added instead of GlobalReadInc
-        imod.addModuleAsFlatItems(self.s_mul_i64_i32(sgpr("WrapU%s+0"%tc), sgpr("WrapU%s+1"%tc), \
-                  self.loopCounter(kernel, self.states.unrollIdx), sgpr("GlobalReadIncs%s+%u"%(tc,self.states.unrollIdx)), \
+        imod.addModuleAsFlatItems(self.s_mul_i64_i32( \
+                  sgpr("WrapU%s+0"%tc), sgpr("WrapU%s+1"%tc), \
+                  self.loopCounter(kernel, self.states.unrollIdx), sgpr(incSparse), \
                   "Number of bytes accessed by the unroll loop"))
 
-        imod.add(SSubU32(dst=sgpr("WrapU%s+0"%tc),  \
-                  src0=sgpr("GlobalReadIncs%s+%u"%(tc,self.states.unrollIdx)), \
-                  src1=sgpr("WrapU%s+0"%tc), \
-                  comment="remove one iteration"))
-        imod.add(SSubBU32(dst=sgpr("WrapU%s+1"%tc), \
-                  src0=0, \
-                  src1=sgpr("WrapU%s+1"%tc), \
-                  comment="remove one iteration"))
+        imod.add(SSubU32(sgpr("WrapU%s+0"%tc), sgpr(incSparse), sgpr("WrapU%s+0"%tc), " remove one iteration"))
+        imod.add(SSubBU32(sgpr("WrapU%s+1"%tc), 0, sgpr("WrapU%s+1"%tc), " remove one iteration"))
 
-        imod.add(self.incrementSrd(tP, sgpr(staggerTmp), sgpr(staggerTmp+1)))
+        if kernel["DirectToVgprSparseMetadata"]:
+          imod.add(self.incrementMetadataSrd(sgpr(staggerTmp), sgpr(staggerTmp+1)))
+        else:
+          imod.add(self.incrementSrd(tP["tpsMetadata"], sgpr(staggerTmp), sgpr(staggerTmp+1)))
 
-        if kernel["ProblemType"]["Sparse"] and kernel["DirectToVgprSparseMetadata"] and \
-           ((kernel["ProblemType"]["Sparse"] == 2 and tP["isB"]) or (kernel["ProblemType"]["Sparse"] == 1 and tP["isA"])):
-          imod.addComment1("SRDs += (StaggerUIter) * GlobalReadIncsMetadata")
-
-          tc = "Metadata"
-          if kernel["DirectToVgprSparseMetadata"]:
-            incSparse = incSparseSgpr
-            imod.add(self.calculateIncrementMetadata(kernel, incSparse))
-          else:
-            incSparse = "GlobalReadIncsMetadata+%u"%(self.states.unrollIdx)
-          imod.addModuleAsFlatItems(self.s_mul_i64_i32( \
-                          sgpr(staggerTmp), sgpr(staggerTmp+1), \
-                          sgpr("StaggerUIter"), sgpr(incSparse), " stagger byte offset of metadata"))
-          # Amount of bytes to add to get back to start.
-          # on the llop iteration which matches StaggerUIter, this offset added instead of GlobalReadInc
-          imod.addModuleAsFlatItems(self.s_mul_i64_i32( \
-                    sgpr("WrapU%s+0"%tc), sgpr("WrapU%s+1"%tc), \
-                    self.loopCounter(kernel, self.states.unrollIdx), sgpr(incSparse), \
-                    "Number of bytes accessed by the unroll loop"))
-
-          imod.add(SSubU32(sgpr("WrapU%s+0"%tc), sgpr(incSparse), sgpr("WrapU%s+0"%tc), " remove one iteration"))
-          imod.add(SSubBU32(sgpr("WrapU%s+1"%tc), 0, sgpr("WrapU%s+1"%tc), " remove one iteration"))
-
-          if kernel["DirectToVgprSparseMetadata"]:
-            imod.add(self.incrementMetadataSrd(sgpr(staggerTmp), sgpr(staggerTmp+1)))
-          else:
-            imod.add(self.incrementSrd(tP["tpsMetadata"], sgpr(staggerTmp), sgpr(staggerTmp+1)))
-
-      if tP["isB"]:
-        # Convert passed in S' to S for easy loop comparison.  S=S-(PGR-1)'
-        imod.add(SAddU32(dst=sgpr("StaggerUIter"), src0=sgpr("StaggerUIter"), \
-                src1=(2 if kernel["PrefetchGlobalRead"] else 1), \
-                comment="Subtract (PGR-1); StaggerUIter now contains target iteration to wrap"))
+    if tP["isB"]:
+      # Convert passed in S' to S for easy loop comparison.  S=S-(PGR-1)'
+      imod.add(SAddU32(dst=sgpr("StaggerUIter"), src0=sgpr("StaggerUIter"), \
+              src1=(2 if kernel["PrefetchGlobalRead"] else 1), \
+              comment="Subtract (PGR-1); StaggerUIter now contains target iteration to wrap"))
     return imod
 
   ##############################################################################
@@ -3723,44 +3743,43 @@ class KernelWriterAssembly(KernelWriter):
   ##############################################################################
   def removeStagger(self, kernel, tP):
     imod = Module("removeStagger")
-    if self.states.staggerU:
-      tc = tP["tensorChar"]
-      with self.allocTmpSgpr(3) as tmpSgprInfo:
-        tmp = tmpSgprInfo.idx
-        tmpIncSparse = tmpSgprInfo.idx + 2
+    tc = tP["tensorChar"]
+    with self.allocTmpSgpr(3) as tmpSgprInfo:
+      tmp = tmpSgprInfo.idx
+      tmpIncSparse = tmpSgprInfo.idx + 2
+      # might be able to refactor this to eliminate signed math
+      imod.add(SSubI32(dst=sgpr(tmp), src0=3 if kernel["PrefetchGlobalRead"] else 2, \
+              src1=sgpr("StaggerUIter")))
+      imod.addModuleAsFlatItems(self.s_mul_i64_i32(sgpr(tmp), sgpr(tmp+1), \
+                  sgpr(tmp), sgpr("GlobalReadIncs%s+%u"%(tc,self.states.unrollIdx)), \
+                  "start offset S in bytes"))
+      imod.add(SSubU32(dst=sgpr(tmp), src0=sgpr(tmp), src1=sgpr("WrapU%s"%tc), comment="S - WrapU"))
+      imod.add(SSubBU32(dst=sgpr(tmp+1), src0=sgpr(tmp+1), src1=sgpr("WrapU%s+1"%(tc)), comment="S - WrapU"))
+
+      imod.add(self.incrementSrd(tP, sgpr(tmp), sgpr(tmp+1)))
+
+      if kernel["ProblemType"]["Sparse"] and \
+         ((kernel["ProblemType"]["Sparse"] == 2 and tP["isB"]) or (kernel["ProblemType"]["Sparse"] == 1 and tP["isA"])):
+        tc = "Metadata"
+        if kernel["DirectToVgprSparseMetadata"]:
+          incSparse = tmpIncSparse
+          imod.add(self.calculateIncrementMetadata(kernel, incSparse))
+        else:
+          incSparse = "GlobalReadIncs%s+%u"%(tc,self.states.unrollIdx)
+
         # might be able to refactor this to eliminate signed math
         imod.add(SSubI32(dst=sgpr(tmp), src0=3 if kernel["PrefetchGlobalRead"] else 2, \
                 src1=sgpr("StaggerUIter")))
         imod.addModuleAsFlatItems(self.s_mul_i64_i32(sgpr(tmp), sgpr(tmp+1), \
-                    sgpr(tmp), sgpr("GlobalReadIncs%s+%u"%(tc,self.states.unrollIdx)), \
-                    "start offset S in bytes"))
-        imod.add(SSubU32(dst=sgpr(tmp), src0=sgpr(tmp), src1=sgpr("WrapU%s"%tc), comment="S - WrapU"))
-        imod.add(SSubBU32(dst=sgpr(tmp+1), src0=sgpr(tmp+1), src1=sgpr("WrapU%s+1"%(tc)), comment="S - WrapU"))
+                    sgpr(tmp), sgpr(incSparse), \
+                     "start offset S in bytes"))
+        imod.add(SSubU32(sgpr(tmp), sgpr(tmp), sgpr("WrapU%s"%tc), "S - WrapU"))
+        imod.add(SSubBU32(sgpr(tmp+1), sgpr(tmp+1), sgpr("WrapU%s+1"%(tc)), "S - WrapU"))
 
-        imod.add(self.incrementSrd(tP, sgpr(tmp), sgpr(tmp+1)))
-
-        if kernel["ProblemType"]["Sparse"] and \
-           ((kernel["ProblemType"]["Sparse"] == 2 and tP["isB"]) or (kernel["ProblemType"]["Sparse"] == 1 and tP["isA"])):
-          tc = "Metadata"
-          if kernel["DirectToVgprSparseMetadata"]:
-            incSparse = tmpIncSparse
-            imod.add(self.calculateIncrementMetadata(kernel, incSparse))
-          else:
-            incSparse = "GlobalReadIncs%s+%u"%(tc,self.states.unrollIdx)
-
-          # might be able to refactor this to eliminate signed math
-          imod.add(SSubI32(dst=sgpr(tmp), src0=3 if kernel["PrefetchGlobalRead"] else 2, \
-                  src1=sgpr("StaggerUIter")))
-          imod.addModuleAsFlatItems(self.s_mul_i64_i32(sgpr(tmp), sgpr(tmp+1), \
-                      sgpr(tmp), sgpr(incSparse), \
-                       "start offset S in bytes"))
-          imod.add(SSubU32(sgpr(tmp), sgpr(tmp), sgpr("WrapU%s"%tc), "S - WrapU"))
-          imod.add(SSubBU32(sgpr(tmp+1), sgpr(tmp+1), sgpr("WrapU%s+1"%(tc)), "S - WrapU"))
-
-          if kernel["DirectToVgprSparseMetadata"]:
-            imod.add(self.incrementMetadataSrd(sgpr(tmp), sgpr(tmp+1)))
-          else:
-            imod.add(self.incrementSrd(tP["tpsMetadata"], sgpr(tmp), sgpr(tmp+1)))
+        if kernel["DirectToVgprSparseMetadata"]:
+          imod.add(self.incrementMetadataSrd(sgpr(tmp), sgpr(tmp+1)))
+        else:
+          imod.add(self.incrementSrd(tP["tpsMetadata"], sgpr(tmp), sgpr(tmp+1)))
 
     return imod
 
@@ -4124,10 +4143,18 @@ class KernelWriterAssembly(KernelWriter):
         # No exit case, no code is necessary except for final Loop
 
         # decrement by 2 if PGR=2 and StaggerU is 0, else 1
-        decValue = 2 if kernel["PrefetchGlobalRead"]==2 and kernel["StaggerU"] == 0 else 1
-        decCode = SSubU32(dst=loopCounter, src0=loopCounter, \
-            src1=decValue, \
-            comment="dec counter%s"%(loopChar) )
+        if kernel["PrefetchGlobalRead"]==2:
+          with self.allocTmpSgpr(2) as tmpSgprInfo:
+            tmpSgpr = tmpSgprInfo.idx
+            module.add(SCmpEQU32(dst=sgpr("StaggerU"), src=0))
+            module.add(SCSelectB32(dst=sgpr(tmpSgpr), src0=hex(2), src1=hex(1)))
+            decCode = SSubU32(dst=loopCounter, src0=loopCounter, \
+                src1=sgpr(tmpSgpr), \
+                comment="dec counter%s"%(loopChar) )
+        else:
+          decCode = SSubU32(dst=loopCounter, src0=loopCounter, \
+              src1=1, \
+              comment="dec counter%s"%(loopChar) )
         condCode = SCmpEQI32(src0=loopCounter, \
             src1=hex(endCounter), \
             comment="counter%s==%d"%(loopChar,endCounter) )
@@ -5147,7 +5174,7 @@ class KernelWriterAssembly(KernelWriter):
                         src1=incUpper, \
                         comment="limit -= inc)" ))
       imod.add(SCmpEQU32(src0=sgpr("ShadowLimit%s+1"%tc), src1=0, comment="are we within 2^32?"))
-      if self.states.staggerU:
+      if 1: # self.states.staggerU:
         # staggerU case, need to restore BufferLimit when ShadowLimit goes to negative value
         imod.add(SCSelectB32(dst=sgpr("Srd%s+2"%tc), src0=sgpr("ShadowLimit%s+0"%tc), src1="BufferLimit", comment="Move shadow to real if we are within 2^32"))
       else:
@@ -5183,7 +5210,7 @@ class KernelWriterAssembly(KernelWriter):
                         incSparseUpper, \
                        "limit -= incSparse(uppper)" ))
       imod.add(SCmpEQU32(sgpr("ShadowLimitMetadata+1"), 0, "are we within 2^32?"))
-      if self.states.staggerU:
+      if 1: # self.states.staggerU:
         # staggerU case, need to restore BufferLimit when ShadowLimit goes to negative value
         imod.add(SCSelectB32(dst=sgpr("SrdMetadata+2"), src0=sgpr("ShadowLimitMetadata+0"), src1="BufferLimit", comment="Move shadow to real if we are within 2^32"))
       else:
@@ -5251,7 +5278,7 @@ class KernelWriterAssembly(KernelWriter):
       # TODO - does this handle N-dim tensors correctly?
       #if tP["isB"]:
       #  module.add(SMovB32(dst=sgpr("OffsetB"), src=sgpr("SrdB+0"), comment="hack to save"))
-      if self.states.staggerU and loopIdx == self.states.unrollIdx:
+      if loopIdx == self.states.unrollIdx: # and self.states.staggerU
         # add a wrap increment, if needed:
         with self.allocTmpSgpr(4) as tmpSgprInfo:
           incLower = tmpSgprInfo.idx

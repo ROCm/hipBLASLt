@@ -316,7 +316,8 @@ defaultInternalSupportParams = {
   "SupportUserGSU": True,
   # This is a little different from GSU because GSU is already a parameter,
   # but WGM is not.
-  "SupportCustomWGM": True
+  "SupportCustomWGM": True,
+  "SupportCustomStaggerU": True
 }
 
 ################################################################################

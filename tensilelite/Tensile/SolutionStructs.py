@@ -3479,6 +3479,9 @@ class Solution(collections.abc.Mapping):
     else:
       state_copy["GlobalSplitU"] = "M"
     state_copy["WorkGroupMapping"] = "M"
+    state_copy["StaggerU"] = "M"
+    state_copy["StaggerUStride"] = "M"
+    state_copy["StaggerUMapping"] = "M"
     return state_copy
 
   @ staticmethod
@@ -3522,6 +3525,9 @@ class Solution(collections.abc.Mapping):
       else:
         requiredParameters["GlobalSplitU"] = False
       requiredParameters["WorkGroupMapping"] = False
+      requiredParameters["StaggerU"] = False
+      requiredParameters["StaggerUStride"] = False
+      requiredParameters["StaggerUMapping"] = False
 
     components.append('SN')
     for key in sorted(state.keys()):
@@ -3532,6 +3538,9 @@ class Solution(collections.abc.Mapping):
     state["GlobalSplitU"] = backup
     requiredParameters["GlobalSplitU"] = True
     requiredParameters["WorkGroupMapping"] = True
+    requiredParameters["StaggerU"] = True
+    requiredParameters["StaggerUStride"] = True
+    requiredParameters["StaggerUMapping"] = True
 
     return '_'.join(components)
 

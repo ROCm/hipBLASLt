@@ -132,7 +132,6 @@ class StateValues:
   # KernelWriter
   inTailLoop: bool                       = False
   overflowedResources: int               = 0
-  staggerU: bool                         = False
   ## Schedule
   scheduleGlobalRead: int                = 0
   scheduleLocalWrite: int                = 0
@@ -1462,12 +1461,11 @@ class KernelWriter(metaclass=abc.ABCMeta):
       module.add(self.calculateLoopNumIter(kernel, tensorParametersA, tensorParametersB, self.states.unrollIdx))
 
     if not forceNoTileCode:
-      if self.states.staggerU:
-        module.add(self.declareStaggerParms(kernel))
-        module.add(self.calculateStagger(kernel, tensorParametersA))
-        if kernel["ProblemType"]["Sparse"] and not kernel["DirectToVgprSparseMetadata"]:
-          module.add(self.calculateStagger(kernel,tPM))
-        module.add(self.calculateStagger(kernel, tensorParametersB))
+      module.add(self.declareStaggerParms(kernel))
+      module.add(self.calculateStagger(kernel, tensorParametersA))
+      if kernel["ProblemType"]["Sparse"] and not kernel["DirectToVgprSparseMetadata"]:
+        module.add(self.calculateStagger(kernel,tPM))
+      module.add(self.calculateStagger(kernel, tensorParametersB))
 
     # LRO and LWA as assigned
     # init lds read pointers before each unrolled loop
@@ -2275,7 +2273,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
         module.add(gsuLabel)
         module.add(self.noLoadLoop(kernel, tensorParametersA, tensorParametersB, isOptNLL=False, isNGLL=False, pack=pack))
 
-    if self.states.staggerU and self.states.actualSummationLoops>1:
+    if self.states.actualSummationLoops>1:
       module.addComment1("remove stagger offsets")
       module.add(self.removeStagger(kernel, tensorParametersA))
       module.add(self.removeStagger(kernel, tensorParametersB))
@@ -2309,7 +2307,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
 
       # tail: global read
       module.add(self.calculateLoopNumIter(kernel, tensorParametersA, tensorParametersB, -1))
-      if self.states.staggerU and self.states.actualSummationLoops==1:
+      if self.states.actualSummationLoops==1:
         module.addComment1("remove stagger offsets for tail loop")
         module.add(self.removeStagger(kernel, tensorParametersA))
         module.add(self.removeStagger(kernel, tensorParametersB))
@@ -2578,8 +2576,6 @@ class KernelWriter(metaclass=abc.ABCMeta):
     self.states.archCaps = self.ti.getArchCaps()
 
     self.asmAssert = Assert(self.states.laneSGPRCount, kernel["WavefrontSize"], self.db["EnableAsserts"])
-
-    self.states.staggerU = kernel["StaggerU"] and (kernel["KernelLanguage"]=="Source" or kernel["BufferLoad"])
 
     # Only assembly supports scheduling
     if kernel["KernelLanguage"] == "Assembly":

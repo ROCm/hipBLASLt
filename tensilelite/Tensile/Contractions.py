@@ -494,6 +494,7 @@ class SizeMapping:
                  'threadTile',
                  'depthU',
                  'staggerU',
+                 'staggerUMapping',
                  'globalSplitUPGR',
                  'globalSplitU',
                  'staggerStrideShift',
@@ -524,6 +525,7 @@ class SizeMapping:
                    threadTile               = d['ThreadTile'],
                    workGroupMapping         = d['WorkGroupMapping'],
                    staggerU                 = d['StaggerU'] if 'StaggerU' in d else 0,
+                   staggerUMapping          = d['StaggerUMapping'] if 'StaggerUMapping' in d else 0,
                    depthU                   = d['DepthU'],
                    globalSplitUPGR          = internalParameters["GlobalSplitUPGR"],
                    globalSplitU             = d['GlobalSplitU'],
@@ -551,12 +553,14 @@ class SizeMapping:
 
 class InternalArgsSupport:
     StateKeys = ['gsu',
-                 'wgm']
+                 'wgm',
+                 'staggerU']
 
     @classmethod
     def FromOriginalState(cls, d):
         return cls(gsu = d['InternalSupportParams']['SupportUserGSU'],
-                   wgm = d['InternalSupportParams']['SupportCustomWGM'])
+                   wgm = d['InternalSupportParams']['SupportCustomWGM'],
+                   staggerU = d['InternalSupportParams']['SupportCustomStaggerU'])
 
     def __init__(self, **kwargs):
         for (key, value) in list(kwargs.items()):
