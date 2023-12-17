@@ -658,7 +658,7 @@ namespace Tensile
                             pristine.maxElements, problem.tensors()[i].totalAllocatedElements());
                         if(m_rotatingBuffer)
                         {
-                            rotatingSize += problem.tensors()[i].totalAllocatedElements();
+                            rotatingSize += problem.tensors()[i].totalAllocatedBytes();
                         }
                         if(m_vdata[i].name.empty())
                         {
@@ -735,7 +735,7 @@ namespace Tensile
                                 problem.tensors()[i].totalAllocatedElements());
                             if(m_rotatingBuffer)
                             {
-                                rotatingSize += problem.tensors()[i].totalAllocatedElements();
+                                rotatingSize += problem.tensors()[i].totalAllocatedBytes();
                             }
                             if(m_vdata[i].name.empty())
                             {
@@ -1805,43 +1805,43 @@ namespace Tensile
             int32_t rotatingSize = 0;
             if(inputs.a != nullptr)
             {
-                rotatingSize += problem.tensors()[ContractionProblemGemm::TENSOR::A]
-                                    .totalAllocatedElements();
+                rotatingSize
+                    += problem.tensors()[ContractionProblemGemm::TENSOR::A].totalAllocatedBytes();
             }
             if(inputs.b != nullptr)
             {
-                rotatingSize += problem.tensors()[ContractionProblemGemm::TENSOR::B]
-                                    .totalAllocatedElements();
+                rotatingSize
+                    += problem.tensors()[ContractionProblemGemm::TENSOR::B].totalAllocatedBytes();
             }
             if(inputs.c != nullptr && problem.beta())
             {
-                rotatingSize += problem.tensors()[ContractionProblemGemm::TENSOR::C]
-                                    .totalAllocatedElements();
+                rotatingSize
+                    += problem.tensors()[ContractionProblemGemm::TENSOR::C].totalAllocatedBytes();
             }
             if(inputs.d != nullptr)
             {
-                rotatingSize += problem.tensors()[ContractionProblemGemm::TENSOR::D]
-                                    .totalAllocatedElements();
+                rotatingSize
+                    += problem.tensors()[ContractionProblemGemm::TENSOR::D].totalAllocatedBytes();
             }
             if(inputs.e != nullptr)
             {
-                rotatingSize += problem.tensors()[ContractionProblemGemm::TENSOR::E]
-                                    .totalAllocatedElements();
+                rotatingSize
+                    += problem.tensors()[ContractionProblemGemm::TENSOR::E].totalAllocatedBytes();
             }
             if(inputs.bias != nullptr)
             {
                 rotatingSize += problem.tensors()[ContractionProblemGemm::TENSOR::BIAS]
-                                    .totalAllocatedElements();
+                                    .totalAllocatedBytes();
             }
             if(inputs.scaleAlphaVec != nullptr)
             {
                 rotatingSize += problem.tensors()[ContractionProblemGemm::TENSOR::SCALEALPHAVEC]
-                                    .totalAllocatedElements();
+                                    .totalAllocatedBytes();
             }
             if(inputs.metadata != nullptr)
             {
                 rotatingSize += problem.tensors()[ContractionProblemGemm::TENSOR::METADATA]
-                                    .totalAllocatedElements();
+                                    .totalAllocatedBytes();
             }
             return rotatingSize;
         }
