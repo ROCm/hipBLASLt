@@ -2161,8 +2161,15 @@ class Solution(collections.abc.Mapping):
         state["TransposeLDS"] = 0
       else:
         state["TransposeLDS"] = 1
-    state["UnrollMajorLDSA"]     = state["TransposeLDS"] and (not state["ProblemType"]["TLUA"])
-    state["UnrollMajorLDSB"]     = state["TransposeLDS"] and (not state["ProblemType"]["TLUB"])
+    if state["TransposeLDS"] == 0:
+      state["UnrollMajorLDSA"] = 0
+      state["UnrollMajorLDSB"] = 0
+    elif state["TransposeLDS"] == 1:
+      state["UnrollMajorLDSA"] = not state["ProblemType"]["TLUA"]
+      state["UnrollMajorLDSB"] = not state["ProblemType"]["TLUB"]
+    elif state["TransposeLDS"] == 2:
+      state["UnrollMajorLDSA"] = 1
+      state["UnrollMajorLDSB"] = 1
 
     if state["VectorWidthA"] == -1:
       regPerElem = state["ProblemType"]["DataType"].numRegisters()
