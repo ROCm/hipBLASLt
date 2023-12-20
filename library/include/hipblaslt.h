@@ -114,7 +114,7 @@ typedef enum {
 typedef enum {
   HIPBLASLT_COMPUTE_F32 = 300,     /**<32-bit floating-point precision.*/
   HIPBLASLT_COMPUTE_F32_FAST_XF32 = 301, /**< XF32 compute for 32-bit input and output matrices */
-  HIPBLASLT_COMPUTE_F64 = 302,     /**<32-bit floating-point precision.*/
+  HIPBLASLT_COMPUTE_F64 = 302,     /**<64-bit floating-point precision.*/
   HIPBLASLT_COMPUTE_I32 = 303,
   HIPBLASLT_COMPUTE_F32_FAST_F16 = 304, /**< F16 compute for 16-bit input and 32-bit output matrices */
 } hipblasLtComputeType_t;
@@ -916,9 +916,9 @@ hipblasStatus_t hipblasLtMatrixTransformDescGetAttribute(
     size_t                                   sizeInBytes,
     size_t*                                  sizeWritten);
 
-/*! \ingroup library_module 
+/*! \ingroup library_module
  *  \brief Matrix layout conversion helper
- *  \details 
+ *  \details
  *   Matrix layout conversion helper (C = alpha * op(A) + beta * op(B)),
  * can be used to change memory order of data or to scale and shift the values.
  * @param[in]  lightHandle   Pointer to the allocated hipBLASLt handle for the

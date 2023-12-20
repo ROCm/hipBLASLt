@@ -1162,6 +1162,11 @@ namespace Tensile
                 return ReferenceSolution<TypedGemm_F8_H_S, float>::SolveCPU(
                     problem, inputs, elementsToValidate);
             }
+            case TypedGemm_F8_B_S::TypeId():
+            {
+                return ReferenceSolution<TypedGemm_F8_B_S, float>::SolveCPU(
+                    problem, inputs, elementsToValidate);
+            }
             case TypedGemm_F8_F8_S::TypeId():
             {
                 return ReferenceSolution<TypedGemm_F8_F8_S, float>::SolveCPU(
@@ -1186,6 +1191,11 @@ namespace Tensile
             case TypedGemm_F8B8_H_S::TypeId():
             {
                 return ReferenceSolution<TypedGemm_F8B8_H_S, float>::SolveCPU(
+                    problem, inputs, elementsToValidate);
+            }
+            case TypedGemm_F8B8_B_S::TypeId():
+            {
+                return ReferenceSolution<TypedGemm_F8B8_B_S, float>::SolveCPU(
                     problem, inputs, elementsToValidate);
             }
             case TypedGemm_F8B8_F8_S::TypeId():
