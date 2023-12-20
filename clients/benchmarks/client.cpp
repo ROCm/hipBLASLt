@@ -472,11 +472,11 @@ try
 
         ("amaxScaleA",
          bool_switch(&arg.amaxScaleA)->default_value(false),
-         "Apple scale for A buffer by abs max of A buffer")
+         "Apply scale for A buffer by abs max of A buffer")
 
         ("amaxScaleB",
          bool_switch(&arg.amaxScaleB)->default_value(false),
-         "Apple scale for B buffer by abs max of B buffer")
+         "Apply scale for B buffer by abs max of B buffer")
 
         ("use_e",
          bool_switch(&arg.use_e)->default_value(false),
