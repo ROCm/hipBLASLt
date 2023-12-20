@@ -139,6 +139,11 @@ auto hipblaslt_matmul_dispatch(const Arguments& arg)
         {
             return TEST<hipblaslt_f8, hipblaslt_f8, hipblasLtHalf, float>{}(arg);
         }
+        else if(TiA == HIPBLASLT_R_8F_E4M3 && TiB == HIPBLASLT_R_8F_E4M3 && To == HIPBLASLT_R_16B
+                && Tc == HIPBLASLT_COMPUTE_F32)
+        {
+            return TEST<hipblaslt_f8, hipblaslt_f8, hipblasLtBfloat16, float>{}(arg);
+        }
         else if(TiA == HIPBLASLT_R_8F_E4M3 && TiB == HIPBLASLT_R_8F_E4M3
                 && To == HIPBLASLT_R_8F_E4M3 && Tc == HIPBLASLT_COMPUTE_F32)
         {
@@ -153,6 +158,11 @@ auto hipblaslt_matmul_dispatch(const Arguments& arg)
                 && Tc == HIPBLASLT_COMPUTE_F32)
         {
             return TEST<hipblaslt_f8, hipblaslt_bf8, hipblasLtHalf, float>{}(arg);
+        }
+        else if(TiA == HIPBLASLT_R_8F_E4M3 && TiB == HIPBLASLT_R_8F_E5M2 && To == HIPBLASLT_R_16B
+                && Tc == HIPBLASLT_COMPUTE_F32)
+        {
+            return TEST<hipblaslt_f8, hipblaslt_bf8, hipblasLtBfloat16, float>{}(arg);
         }
         /*
         else if(Ti == HIPBLASLT_R_8I && To == HIPBLASLT_R_8I && Tc == HIPBLASLT_COMPUTE_I32)
