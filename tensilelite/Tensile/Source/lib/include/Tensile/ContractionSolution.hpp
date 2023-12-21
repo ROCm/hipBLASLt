@@ -461,6 +461,7 @@ namespace Tensile
             std::vector<DataType> biasDataTypeWhiteList;
             int                   sparse                     = 0;
             bool                  supportDeviceUserArguments = false;
+            int                   debugBreakPoints           = 0;
         };
 
         struct LinearModel

@@ -51,6 +51,9 @@ if( BUILD_WITH_TENSILE )
   if(PACKAGE_TENSILE_LIBRARY)
     set(Tensile_Options ${Tensile_Options} GENERATE_PACKAGE)
   endif()
+  if(Tensile_ENABLE_DBP)
+    set(Tensile_Options ${Tensile_Options} ENABLE_DBP)
+  endif()
 
   # Add a build target for Tensile kernel library
   # Runtime language is HIP by default

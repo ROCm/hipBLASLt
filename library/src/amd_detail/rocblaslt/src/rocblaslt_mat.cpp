@@ -197,7 +197,8 @@ rocblaslt_status rocblaslt_matmul_impl(const rocblaslt_handle       handle,
                                         workspace,
                                         workspaceSizeInBytes,
                                         stream,
-                                        handle->Synchronizer};
+                                        handle->Synchronizer,
+                                        handle->debug_break_points};
     if (get_logger_layer_mode() & rocblaslt_layer_mode_log_bench) {
 
 // To deal with some arguments may be invalid
@@ -400,7 +401,8 @@ rocblaslt_status rocblaslt_gemm_create_cpp_impl(const rocblaslt_handle         h
                                         nullptr,
                                         0,
                                         0,
-                                        handle->Synchronizer};
+                                        handle->Synchronizer,
+                                        handle->debug_break_points};
     return gemmCreate(problem, gemmData, gemmCount);
 }
 
@@ -556,7 +558,8 @@ rocblaslt_status rocblaslt_gemm_create_cpp_impl_2(const rocblaslt_handle        
                                         nullptr,
                                         0,
                                         0,
-                                        handle->Synchronizer};
+                                        handle->Synchronizer,
+                                        handle->debug_break_points};
     return gemmCreate(problem, gemmData, gemmCount);
 }
 
@@ -819,7 +822,8 @@ rocblaslt_status
                                                        nullptr,
                                                        0,
                                                        0,
-                                                       handle->Synchronizer});
+                                                       handle->Synchronizer,
+                                                       handle->debug_break_points});
     }
     return groupedGemmCreate(problems, gemmData, gemmCount);
 }
@@ -1011,7 +1015,8 @@ rocblaslt_status
                                                        nullptr,
                                                        0,
                                                        0,
-                                                       handle->Synchronizer});
+                                                       handle->Synchronizer,
+                                                       handle->debug_break_points});
     }
     return groupedGemmCreate(problems, gemmData, gemmCount);
 }

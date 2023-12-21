@@ -87,6 +87,7 @@ function(TensileCreateLibraryFiles
        GENERATE_PACKAGE
        SEPARATE_ARCHITECTURES
        LAZY_LIBRARY_LOADING
+       ENABLE_DBP
        )
 
   # Single value settings
@@ -199,6 +200,10 @@ function(TensileCreateLibraryFiles
     string (REPLACE ";" "_" archString "${Tensile_ARCHITECTURE}")
     # uses _ separator to avoid cmake ; list interpretation, either ; or _ decoded in TensileCreateLibrary
     set(Options ${Options} "--architecture=${archString}")
+  endif()
+
+  if(Tensile_ENABLE_DBP)
+    set(Options ${Options} "--enable-dbp")
   endif()
 
   if (WIN32)

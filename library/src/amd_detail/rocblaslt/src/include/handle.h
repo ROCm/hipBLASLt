@@ -95,6 +95,8 @@ struct _rocblaslt_handle
     void* Synchronizer = nullptr;
     // pointer mode ; default mode is host
     rocblaslt_pointer_mode pointer_mode = rocblaslt_pointer_mode_host;
+
+    int debug_break_points = -1;
 };
 
 /********************************************************************************

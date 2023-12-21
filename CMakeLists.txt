@@ -202,6 +202,8 @@ else()
       option(TENSILE_USE_MSGPACK   "Use msgpack for parsing config files." ON)
     endif()
 
+    option(Tensile_ENABLE_DBP "Tensile enable debug break points." OFF)
+
     if (WIN32)
       set( Tensile_ROOT "${CMAKE_BINARY_DIR}/virtualenv/Lib/site-packages/Tensile" )
     endif()

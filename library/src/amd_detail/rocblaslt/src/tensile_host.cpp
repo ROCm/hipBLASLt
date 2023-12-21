@@ -530,7 +530,10 @@ namespace
 
         if(prob.compute_type == rocblaslt_compute_f32_fast_xf32)
             tensileProblem.setF32XdlMathOp(Tensile::DataType::XFloat32);
-
+#ifdef TENSILE_ENABLE_DBP
+        if(prob.debugBreakPoints != -1)
+            tensileProblem.setDebugBreakPoints(prob.debugBreakPoints);
+#endif
         return tensileProblem;
     }
 
@@ -744,6 +747,11 @@ namespace
 
         if(prob.compute_type == rocblaslt_compute_f32_fast_xf32)
             tensileProblem.setF32XdlMathOp(Tensile::DataType::XFloat32);
+#ifdef TENSILE_ENABLE_DBP
+        
+        if(prob.debugBreakPoints != -1)
+            tensileProblem.setDebugBreakPoints(prob.debugBreakPoints);
+#endif
     }
 
     /***************************************************************
@@ -1477,7 +1485,11 @@ rocblaslt_status makeArgument(rocblaslt_handle             handle,
             {
                 data->problem.setParams().resetInternalArgs();
             }
+#ifdef TENSILE_ENABLE_DBP
+            if(handle->debug_break_points != -1)
+                data->problem.setDebugBreakPoints(handle->debug_break_points);
 
+#endif
             data->inputs.ws = workspace;
 
             // Backup and restore settings
@@ -2137,7 +2149,10 @@ rocblaslt_status isSolutionSupported(rocblaslt_handle            handle,
         {
             tensile_prob.setParams().resetInternalArgs();
         }
-
+#ifdef TENSILE_ENABLE_DBP
+        if(handle->debug_break_points != -1)
+            tensile_prob.setDebugBreakPoints(handle->debug_break_points);
+#endif
         const void *scaleAlphaVec = nullptr, *bias = nullptr, *E = nullptr;
         if constexpr(std::is_same<Inputs, Tensile::ContractionInputs>::value)
         {

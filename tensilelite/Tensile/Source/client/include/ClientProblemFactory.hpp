@@ -97,6 +97,7 @@ namespace Tensile
             DataType                         m_activationComputeType;
             std::vector<std::vector<size_t>> m_problemSizes;
             bool                             m_useUserArgs;
+            int                              m_debugBreakPoints;
         };
 
     } // namespace Client

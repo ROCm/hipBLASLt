@@ -166,3 +166,8 @@ foreach (_variableName ${_variableNames})
     message(STATUS "${_variableName}=${${_variableName}}")
 endforeach()
 endif()
+
+if(Tensile_ENABLE_DBP)
+    message(STATUS "Tensile_ENABLE_DBP = ${Tensile_ENABLE_DBP}")
+    target_compile_definitions(TensileHost PUBLIC TENSILE_ENABLE_DBP )
+endif()
