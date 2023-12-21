@@ -367,6 +367,7 @@ tensile_version=
 build_tensile=true
 tensile_msgpack_backend=true
 update_cmake=true
+tensile_dbp=false
 
 
 rocm_path=/opt/rocm
@@ -381,7 +382,7 @@ fi
 # check if we have a modern version of getopt that can handle whitespace and long parameters
 getopt -T
 if [[ $? -eq 4 ]]; then
-  GETOPT_PARSE=$(getopt --name "${0}" --longoptions help,install,clients,dependencies,debug,hip-clang,static,relocatable,codecoverage,relwithdebinfo,address-sanitizer,merge-files,no-merge-files,no_tensile,no-tensile,msgpack,no-msgpack,logic:,cov:,fork:,branch:,test_local_path:,cpu_ref_lib:,build_dir:,use-custom-version:,architecture: --options hicdgrka:o:l:f:b:nu:t: -- "$@")
+  GETOPT_PARSE=$(getopt --name "${0}" --longoptions help,install,clients,dependencies,debug,hip-clang,static,relocatable,codecoverage,relwithdebinfo,address-sanitizer,merge-files,no-merge-files,no_tensile,no-tensile,msgpack,no-msgpack,dbp,logic:,cov:,fork:,branch:,test_local_path:,cpu_ref_lib:,build_dir:,use-custom-version:,architecture: --options hicdgrka:o:l:f:b:nu:t: -- "$@")
 else
   echo "Need a new version of getopt"
   exit 1
@@ -479,6 +480,9 @@ while true; do
             shift ;;
         --cmake_install)
             update_cmake=true
+            shift ;;
+        --dbp)
+            tensile_dbp=true
             shift ;;
         --) shift ; break ;;
         *)  echo "Unexpected command line parameter received: '${1}'; aborting";
@@ -705,6 +709,10 @@ pushd .
 
   if [[ "${build_release}" == false ]]; then
     tensile_opt="${tensile_opt} -DTensile_ASM_DEBUG=ON"
+  fi
+
+  if [[ "${tensile_dbp}" == true ]]; then
+    tensile_opt="${tensile_opt} -DTensile_ENABLE_DBP=ON"
   fi
 
   echo $cmake_common_options

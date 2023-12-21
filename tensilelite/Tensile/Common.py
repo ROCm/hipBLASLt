@@ -1235,6 +1235,16 @@ defaultAnalysisParameters = {
     "SolutionImportanceMin":      0.01, # = 0.01=1% total time saved by keeping this solution
     }
 
+################################################################################
+# Debug break points
+################################################################################
+debugBreakPointsParameters = {
+    "None": 0,
+    "ExecuteToInitEnd": 1,
+    "ExecuteToPrefetchEnd": 2,
+    "ExecuteToLoopEnd": 3,
+    "ExecuteToLoopEndWaitBufferLoad": 4,
+}
 
 ################################################################################
 # Searching Nested Lists / Dictionaries

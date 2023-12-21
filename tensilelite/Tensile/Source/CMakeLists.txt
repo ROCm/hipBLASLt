@@ -38,6 +38,7 @@ else()
 endif()
 set(TENSILE_USE_OPENMP   ON CACHE BOOL "Use OpenMP to improve performance.")
 set(TENSILE_STATIC_ONLY  ON CACHE BOOL "Disable exposing Tensile symbols in a shared library.")
+set(Tensile_ENABLE_DBP   OFF CACHE BOOL "Enable debug break points.")
 
 if(NOT DEFINED CXX_VERSION_STRING)
     if(CMAKE_CXX_COMPILER MATCHES ".*/hipcc$")

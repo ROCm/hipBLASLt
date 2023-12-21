@@ -51,6 +51,7 @@ namespace Tensile
             , m_f32XdlMathOp(DataType::Float)
             , m_activationComputeType(DataType::Float)
             , m_useUserArgs(false)
+            , m_debugBreakPoints(args["debug-break-points"].as<int>())
         {
             std::vector<bool> isComplex;
             if(args.count("problem-identifier"))
@@ -183,6 +184,11 @@ namespace Tensile
             if(args.count("use-user-args"))
             {
                 m_useUserArgs = args["use-user-args"].as<bool>();
+            }
+
+            if(args.count("debug-break-points"))
+            {
+                m_debugBreakPoints = args["debug-break-points"].as<int>();
             }
 
             if(m_groupedGemm)
@@ -355,6 +361,7 @@ namespace Tensile
                         rv.back().setF32XdlMathOp(m_f32XdlMathOp);
                         rv.back().setActivationComputeType(m_activationComputeType);
                         rv.back().setUseDeviceUserArguments(m_useUserArgs);
+                        rv.back().setDebugBreakPoints(m_debugBreakPoints);
                     }
                 }
             }

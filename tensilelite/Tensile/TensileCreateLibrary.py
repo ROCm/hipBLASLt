@@ -36,7 +36,7 @@ from . import Utils
 from .TensileInstructions import getGfxName, TensileInstructions
 from .Common import globalParameters, HR, print1, print2, printExit, ensurePath, \
                     CHeader, CMakeHeader, assignGlobalParameters, \
-                    architectureMap
+                    architectureMap, debugBreakPointsParameters
 from .KernelWriterAssembly import KernelWriterAssembly
 from .SolutionLibrary import MasterSolutionLibrary
 from .SolutionStructs import Solution
@@ -1070,7 +1070,19 @@ def generateLogicDataAndSolutions(logicFiles, args):
   else:
     archs = args.Architecture.split("_") # workaround for cmake list in list issue
 
-  fIter = zip(logicFiles, itertools.repeat(archs))
+  if args.EnableDBP:
+    dbps = []
+    lfs_count = len(logicFiles)
+    origin_lfs = deepcopy(logicFiles)
+    for dbp in debugBreakPointsParameters.values():
+        dbp_list = list(itertools.repeat(dbp, lfs_count))
+        dbps += dbp_list
+        if dbp != 0:
+          logicFiles += deepcopy(origin_lfs)
+    fIter = zip(logicFiles, itertools.repeat(archs), dbps)
+  else:
+    fIter = zip(logicFiles, itertools.repeat(archs), itertools.repeat(-1))
+
   libraries = Common.ParallelMap(LibraryIO.parseLibraryLogicFile, fIter, "Reading logic files", method=lambda x: x.starmap)
 
   solutions = []
@@ -1268,6 +1280,8 @@ def TensileCreateLibrary():
                          help="Generate solution-yaml matching table")
   argParser.add_argument("--asm-debug", dest="AsmDebug", action="store_true", default=False,
                          help="Keep debug information for built code objects")
+  argParser.add_argument("--enable-dbp", dest="EnableDBP", action="store_true", default=False,
+                         help="Enable debug break points")
 
   args = argParser.parse_args()
 
@@ -1309,6 +1323,7 @@ def TensileCreateLibrary():
   arguments["PrintLevel"] = args.PrintLevel
   arguments["PrintTiming"] = args.PrintTiming
   arguments["AsmDebug"] = args.AsmDebug
+  arguments["EnableDBP"] = args.EnableDBP
 
   for key, value in args.global_parameters:
     arguments[key] = value
@@ -1319,6 +1334,7 @@ def TensileCreateLibrary():
   print1("# CxxCompiler       from TensileCreateLibrary: %s" % CxxCompiler)
   print1("# Architecture      from TensileCreateLibrary: %s" % arguments["Architecture"])
   print1("# LibraryFormat     from TensileCreateLibrary: %s" % libraryFormat)
+  print1("# EnableDBP         from TensileCreateLibrary: %s" % arguments["EnableDBP"])
 
   if not os.path.exists(logicPath):
     printExit("LogicPath %s doesn't exist" % logicPath)

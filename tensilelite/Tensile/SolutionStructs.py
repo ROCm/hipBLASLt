@@ -269,6 +269,9 @@ class ProblemType(Mapping):
         if (not self["Gradient"]):
           printWarning("ActivationNoGuard is set to False cause Gradient is off.")
           self["ActivationNoGuard"] = False
+    
+    if "DebugBreakPoints" in config and config["DebugBreakPoints"] != -1:
+      self["DebugBreakPoints"] = config["DebugBreakPoints"]
 
   ################################################################################
    # Function checkIfSupportedGEMMType:
@@ -528,6 +531,9 @@ class ProblemType(Mapping):
     if self["UseScaleAlphaVec"]: name += "_SAV"
 
     if self["SupportUserArgs"]: name += "_UserArgs"
+
+    if "DebugBreakPoints" in self and self["DebugBreakPoints"] > 0 :
+       name += (f'_{Solution.getParameterNameAbbreviation("DebugBreakPoints")}{self["DebugBreakPoints"]}')
 
     return name
 

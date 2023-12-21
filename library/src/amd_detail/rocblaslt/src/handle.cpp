@@ -50,6 +50,15 @@ _rocblaslt_handle::_rocblaslt_handle()
 #else
     asic_rev = 0;
 #endif
+
+#ifdef TENSILE_ENABLE_DBP
+    char* str_dbp;
+    if((str_dbp = getenv("DEBUG_BREAK_POINTS")) != NULL)
+    {
+        debug_break_points = atoi(str_dbp);
+    }
+#endif
+
 }
 
 /*******************************************************************************
