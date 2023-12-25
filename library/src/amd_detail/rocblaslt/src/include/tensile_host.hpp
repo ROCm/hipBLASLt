@@ -132,8 +132,6 @@ struct RocblasltContractionProblem
     hipStream_t stream;
     void*       Synchronizer;
 
-    int         debugBreakPoints;
-
     // gemm_ex
     // gemm_strided_batched_ex
     RocblasltContractionProblem(hipblasOperation_t     trans_a,
@@ -184,8 +182,7 @@ struct RocblasltContractionProblem
                                 void*                  workspace,
                                 size_t                 workspaceSize,
                                 hipStream_t            stream,
-                                void*                  Synchronizer,
-                                int                    debugBreakPoints)
+                                void*                  Synchronizer)
         : trans_a(trans_a)
         , trans_b(trans_b)
         , m(m)
@@ -240,7 +237,6 @@ struct RocblasltContractionProblem
         , workspaceSize(workspaceSize)
         , stream(stream)
         , Synchronizer(Synchronizer)
-        , debugBreakPoints(debugBreakPoints)
     {
         if(this->bias_type == HIPBLASLT_DATATYPE_INVALID)
         {

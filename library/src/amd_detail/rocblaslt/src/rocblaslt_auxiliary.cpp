@@ -194,8 +194,7 @@ RocblasltContractionProblem construct_rocblaslt_problem(rocblaslt_handle        
                                         nullptr,
                                         maxWorkSpaceBytes,
                                         nullptr,
-                                        handle->Synchronizer,
-                                        handle->debug_break_points};
+                                        handle->Synchronizer};
 
     return problem;
 }
