@@ -2799,8 +2799,8 @@ class Solution(collections.abc.Mapping):
           state["LdsPadA"] = 0
           if state["MatrixInstB"] == 1 and state["MatrixInstM"] == 16:
             state["LdsPadA"] = ((16 * state["VectorWidthA"] * state["ProblemType"]["DataType"].numBytes() + state["MacroTile0"] * state["ProblemType"]["DataType"].numBytes() * state["LocalReadVectorWidth"]) % 128) // state["ProblemType"]["DataType"].numBytes()
-          if state["GlobalReadVectorWidthA"] * state["ProblemType"]["DataTypeA"].numBytes() == 16 and state["LdsPadA"] == 0:
-            state["LdsPadA"] = 8 // state["ProblemType"]["DataTypeA"].numBytes()
+          if state["GlobalReadVectorWidthA"] * state["ProblemType"]["DataType"].numBytes() == 32 and state["LdsPadA"] == 0:
+            state["LdsPadA"] = 16 // state["ProblemType"]["DataType"].numBytes()
             if auto_LdsBlockSizePerPadA_for_mix:
               state["LdsBlockSizePerPadA"] = 128
 
@@ -2817,8 +2817,8 @@ class Solution(collections.abc.Mapping):
           state["LdsPadB"] = 0
           if state["MatrixInstB"] == 1 and state["MatrixInstM"] == 16:
             state["LdsPadB"] = ((16 * state["VectorWidthB"] * state["ProblemType"]["DataType"].numBytes() + state["MacroTile1"] * state["ProblemType"]["DataType"].numBytes() * state["LocalReadVectorWidth"]) % 128) // state["ProblemType"]["DataType"].numBytes()
-          if state["GlobalReadVectorWidthB"] * state["ProblemType"]["DataTypeB"].numBytes() == 16 and state["LdsPadB"] == 0:
-            state["LdsPadB"] = 8 // state["ProblemType"]["DataTypeB"].numBytes()
+          if state["GlobalReadVectorWidthB"] * state["ProblemType"]["DataType"].numBytes() == 32 and state["LdsPadB"] == 0:
+            state["LdsPadB"] = 16 // state["ProblemType"]["DataType"].numBytes()
             if auto_LdsBlockSizePerPadB_for_mix:
               state["LdsBlockSizePerPadB"] = 128
       else:
