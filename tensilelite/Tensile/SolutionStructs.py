@@ -2683,6 +2683,26 @@ class Solution(collections.abc.Mapping):
     if state["LdsBlockSizePerPadMetadata"] == -1:
       state["LdsBlockSizePerPadMetadata"] = state["LdsBlockSizePerPadA"]
 
+    if state["LdsBlockSizePerPadA"] != 0 :
+      for miwt in range(0, state["MIWaveTile"][0]):
+        if int(state["MacroTile0"] / state["LdsBlockSizePerPadA"]) + int((state["LSCA"] * miwt) / state["LdsBlockSizePerPadA"]) != int((state["MacroTile0"] +  (state["LSCA"] * miwt)) / state["LdsBlockSizePerPadA"]):
+          if auto_LdsBlockSizePerPadA_for_mix:
+            print("Padded address is inconisstent, set LdsBlockSizePerPadA=0.")
+            state["LdsBlockSizePerPadA"] = 0
+            break
+          else:
+            reject(state, "A's padded address is inconisstent")
+
+    if state["LdsBlockSizePerPadB"] != 0:
+      for miwt in range(0, state["MIWaveTile"][1]):
+        if int(state["MacroTile1"] / state["LdsBlockSizePerPadB"]) + int((state["LSCB"] * miwt) / state["LdsBlockSizePerPadB"]) != int((state["MacroTile1"] +  (state["LSCB"] * miwt)) / state["LdsBlockSizePerPadB"]):
+          if auto_LdsBlockSizePerPadB_for_mix:
+            print("Padded address is inconisstent, set LdsBlockSizePerPadB=0.")
+            state["LdsBlockSizePerPadB"] = 0
+            break
+          else:
+            reject(state, "B's padded address is inconisstent")
+
     if state["EnableMatrixInstruction"]:
       if state["LdsBlockSizePerPadA"]:
         if state["UnrollMajorLDSA"]:
