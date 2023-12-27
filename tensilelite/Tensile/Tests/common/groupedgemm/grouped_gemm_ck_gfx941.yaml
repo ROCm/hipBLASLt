@@ -8,8 +8,8 @@ GlobalParameters:
   NumBenchmarks: 1
   SyncsPerBenchmark: 1
   EnqueuesPerSync: 1
-  DataInitTypeA: 12
-  DataInitTypeB: 13
+  DataInitTypeA: 3
+  DataInitTypeB: 3
   DataInitTypeBeta: 0
   DataInitTypeAlpha: 1
   # DataInitTypeBias: 0
