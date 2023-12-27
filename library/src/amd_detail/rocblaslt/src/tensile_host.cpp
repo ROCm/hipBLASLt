@@ -951,6 +951,12 @@ namespace
                 dbp = atoi(str_dbp);
                 if(!(dbp == -1 || dbp == 0))
                     dbpTag = "_dbp" + std::to_string(dbp);
+                adapter.setDebugBreakPoints(dbp);
+            }
+            if((str_dbp = getenv("DEBUG_SKIP_POST_KERNEL")) != NULL)
+            {
+                dbp = atoi(str_dbp);
+                adapter.setDebugSkipPostKernel(dbp!=0);
             }
             auto dir = path + "/*" + processor + "*" +dbpTag + "*co";
 #else

@@ -127,6 +127,7 @@ namespace Tensile
         dim3   numWorkGroups;
         dim3   numWorkItems;
         size_t sharedMemBytes = 0;
+        bool   isPost = false;
 
         KernelArguments args;
     };
