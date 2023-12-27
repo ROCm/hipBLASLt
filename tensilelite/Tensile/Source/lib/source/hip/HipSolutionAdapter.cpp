@@ -48,12 +48,14 @@ namespace Tensile
             : m_debug(Debug::Instance().printKernelArguments())
             , m_debugSkipLaunch(Debug::Instance().skipKernelLaunch())
         {
+            m_debugSkipPostKernel = Debug::Instance().skipPostKernel();
         }
 
         SolutionAdapter::SolutionAdapter(bool debug)
             : m_debug(debug)
         {
             m_debug = debug || Debug::Instance().printKernelArguments();
+            m_debugSkipPostKernel = Debug::Instance().skipPostKernel();
         }
 
         SolutionAdapter::SolutionAdapter(bool debug, std::string const& name)
@@ -61,6 +63,7 @@ namespace Tensile
             , m_name(name)
         {
             m_debug = debug || Debug::Instance().printKernelArguments();
+            m_debugSkipPostKernel = Debug::Instance().skipPostKernel();
         }
 
         SolutionAdapter::~SolutionAdapter()
@@ -398,26 +401,6 @@ namespace Tensile
                 HIP_CHECK_RETURN(launchKernel(kernels[i], stream, startEvents[i], stopEvents[i]));
             }
             return hipSuccess;
-        }
-
-        void SolutionAdapter::setDebugBreakPoints(int value)
-        {
-            m_debugBreakPoints = value;
-        }
-
-        int SolutionAdapter::debugBreakPoints()
-        {
-            return m_debugBreakPoints;
-        }
-
-        void SolutionAdapter::setDebugSkipPostKernel(bool skip)
-        {
-            m_debugSkipPostKernel= skip;
-        }
-
-        bool SolutionAdapter::debugSkipPostKernel()
-        {
-            return m_debugSkipPostKernel;
         }
 
         std::ostream& operator<<(std::ostream& stream, SolutionAdapter const& adapter)

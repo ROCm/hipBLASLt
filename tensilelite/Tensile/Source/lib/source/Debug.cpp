@@ -145,6 +145,16 @@ namespace Tensile
         return m_gridbasedTopSols;
     }
 
+    bool Debug::skipPostKernel() const
+    {
+        return m_skipPostKernel;
+    }
+
+    int Debug::getDebugBreakPoints() const
+    {
+        return m_debugBreakPoints;
+    }
+
     Debug::Debug()
         : m_value(DEBUG_SM)
         , m_value2(DEBUG_SM2)
@@ -184,6 +194,14 @@ namespace Tensile
         const char* tensile_benchmark = std::getenv("TENSILE_BENCHMARK");
         if(tensile_benchmark)
             m_benchmark = strtol(tensile_benchmark, nullptr, 0) != 0;
+
+        const char *skip_post_kernel = std::getenv("DEBUG_SKIP_POST_KERNEL");
+        if(skip_post_kernel)
+            m_skipPostKernel = strtol(skip_post_kernel, nullptr, 0) != 0;
+
+        const char *debug_break_points = std::getenv("DEBUG_BREAK_POINTS");
+        if(debug_break_points)
+            m_debugBreakPoints = strtol(debug_break_points, nullptr, 0);
     }
 
 } // namespace Tensile
