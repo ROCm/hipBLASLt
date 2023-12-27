@@ -298,9 +298,15 @@ namespace Tensile
                           << kernel.numWorkItems << std::endl;
                 std::cout << kernel.args;
             }
-            if(m_debugSkipLaunch)
+
+            if(m_debugSkipLaunch || (m_debugSkipPostKernel && kernel.isPost))
             {
-                std::cout << "DEBUG: Skip kernel execution" << std::endl;
+
+                if(m_debugSkipLaunch || (m_debugSkipPostKernel && m_debug))
+                {
+                    std::cout << "DEBUG: Skip " << (kernel.isPost?"post":"") << " kernel execution" << std::endl;
+                }
+
                 if(startEvent != nullptr)
                     HIP_CHECK_RETURN(hipEventRecord(startEvent, stream));
                 if(stopEvent != nullptr)
@@ -367,8 +373,8 @@ namespace Tensile
                     kStart = startEvent;
                 if(iter == last)
                     kStop = stopEvent;
-
                 HIP_CHECK_RETURN(launchKernel(*iter, stream, kStart, kStop));
+
             }
             return hipSuccess;
         }
@@ -392,6 +398,26 @@ namespace Tensile
                 HIP_CHECK_RETURN(launchKernel(kernels[i], stream, startEvents[i], stopEvents[i]));
             }
             return hipSuccess;
+        }
+
+        void SolutionAdapter::setDebugBreakPoints(int value)
+        {
+            m_debugBreakPoints = value;
+        }
+
+        int SolutionAdapter::debugBreakPoints()
+        {
+            return m_debugBreakPoints;
+        }
+
+        void SolutionAdapter::setDebugSkipPostKernel(bool skip)
+        {
+            m_debugSkipPostKernel= skip;
+        }
+
+        bool SolutionAdapter::debugSkipPostKernel()
+        {
+            return m_debugSkipPostKernel;
         }
 
         std::ostream& operator<<(std::ostream& stream, SolutionAdapter const& adapter)
