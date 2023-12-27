@@ -101,7 +101,6 @@ namespace Tensile
 
             std::vector<std::string>        m_loadedModuleNames;
             std::unordered_set<std::string> m_loadedCOFiles;
-            int                             m_debugBreakPoints = -1;
             bool                            m_debugSkipPostKernel = false;
             friend std::ostream& operator<<(std::ostream& stream, SolutionAdapter const& adapter);
         };

@@ -80,6 +80,10 @@ namespace Tensile
 
         int getGridbasedTopSols() const;
 
+        bool skipPostKernel() const;
+
+        int getDebugBreakPoints() const;
+
     private:
         friend LazySingleton<Debug>;
 
@@ -92,6 +96,8 @@ namespace Tensile
         std::string m_metric              = "";
         int         m_gridbasedTopSols    = 1;
         bool        m_benchmark           = false;
+        bool        m_skipPostKernel      = false;
+        int         m_debugBreakPoints    = -1;
 
         Debug();
     };

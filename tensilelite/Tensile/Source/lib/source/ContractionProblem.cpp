@@ -44,13 +44,7 @@ namespace Tensile
         m_names.resize(size);
 
 #ifdef TENSILE_ENABLE_DBP
-    char* str_dbp;
-    if((str_dbp = getenv("DEBUG_BREAK_POINTS")) != NULL)
-    {
-        int dbp = atoi(str_dbp);
-        if(dbp != -1)
-           m_debugBreakPoints = dbp;
-    }
+        m_debugBreakPoints = Debug::Instance().getDebugBreakPoints();
 #endif
 
     }
