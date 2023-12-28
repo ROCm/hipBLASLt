@@ -3,7 +3,7 @@ hipBLASLtExt Operation Reference
 ********************************
 
 hipBLASLtExt Operation API Reference
-================================
+====================================
 
 hipblasltExtSoftmax()
 ------------------------------------------
