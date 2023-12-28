@@ -7,7 +7,7 @@ hipblasLtEpilogue_t
 .. doxygenenum:: hipblasLtEpilogue_t
 
 hipblasLtPointerMode_t
--------------------
+----------------------
 .. doxygenenum:: hipblasLtPointerMode_t
 
 hipblasLtHandle_t

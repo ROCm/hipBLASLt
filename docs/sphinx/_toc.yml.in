@@ -11,3 +11,6 @@ subtrees:
     - file: usage
     - file: ext-ops
     - file: clients
+  - caption: About
+    entries:
+    - file: license
