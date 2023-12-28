@@ -476,7 +476,7 @@ The following is a simple example of how this API works.
     }
 
 The base class (GemmInstance)
---------------
+-----------------------------
 
 This is the base class of class Gemm and GroupedGemm.
 
@@ -497,7 +497,7 @@ This is the base class of class Gemm and GroupedGemm.
     HIPBLASLT_EXPORT hipblasStatus_t run(hipStream_t stream);
 
 Get all algorithms
---------------
+------------------
 
 Get all algorithms lets users to get all the algorithms of a specific problem type. It requires the transpose of A, B, the data type of the inputs, and the compute type.
 
@@ -708,7 +708,7 @@ Grouped gemm
     }
 
 Algorithm Index
---------------
+---------------
 
 The extension API lets user to get the algorithm index from hipblasLtMatmulAlgo_t.
 
@@ -731,6 +731,7 @@ Example code
 ^^^^^^^^^^^^
 
 .. code-block:: c++
+
     int index = hipblaslt_ext::getIndexFromAlgo(testResults[i].algo);
     // Save the index to disk or somewhere else for later use.
 
@@ -739,9 +740,8 @@ Example code
     std::vector<hipblasLtMatmulHeuristicResult_t> heuristicResults;
     CHECK_HIPBLASLT_ERROR(hipblaslt_ext::getAlgosFromIndex(handle, algoIndex, heuristicResults));
 
-
 [Grouped Gemm] Fixed MK
---------------
+-----------------------
 
 hipBLASLt extension supports changing the sizes (m, n, k, batch) from the device memory "UserArguments", but the setup is a bit different from the normal routing.
 
@@ -751,6 +751,7 @@ Sum of n
 A sum of N is required to use as an input for the grouped gemm instance.
 
 .. code-block:: c++
+
     {1000, 1, 1, 1}; // The array of N, the first element is the sum of N
 
     // Below is the values stored in "UserArguments"
