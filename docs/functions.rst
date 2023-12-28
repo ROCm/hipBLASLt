@@ -74,14 +74,14 @@ Datatypes Supported:
 
 hipblasLtMatmul supports the following computeType, scaleType, Atype/Btype, Ctype/Dtype and Bias Type:
 
-======================= =================== ============= ==============
-computeType             scaleType/Bias Type Atype/Btype   Ctype/Dtype
-======================= =================== ============= ==============
-HIPBLASLT_COMPUTE_F32   HIPBLASLT_R_32F       HIPBLASLT_R_32F HIPBLASLT_R_32F
-HIPBLASLT_COMPUTE_F32   HIPBLASLT_R_32F       HIPBLASLT_R_16F HIPBLASLT_R_16F
-HIPBLASLT_COMPUTE_F32   HIPBLASLT_R_32F       HIPBLASLT_R_16F HIPBLASLT_R_32F
-HIPBLASLT_COMPUTE_F32   HIPBLASLT_R_32F       HIPBLASLT_R_16B HIPBLASLT_R_16B
-======================= =================== ============= ==============
+======================= =================== =============== ===============
+computeType             scaleType/Bias Type Atype/Btype     Ctype/Dtype
+======================= =================== =============== ===============
+HIPBLASLT_COMPUTE_F32   HIPBLASLT_R_32F     HIPBLASLT_R_32F HIPBLASLT_R_32F
+HIPBLASLT_COMPUTE_F32   HIPBLASLT_R_32F     HIPBLASLT_R_16F HIPBLASLT_R_16F
+HIPBLASLT_COMPUTE_F32   HIPBLASLT_R_32F     HIPBLASLT_R_16F HIPBLASLT_R_32F
+HIPBLASLT_COMPUTE_F32   HIPBLASLT_R_32F     HIPBLASLT_R_16B HIPBLASLT_R_16B
+======================= =================== =============== ===============
 
 hipblasLtMatrixTransformDescCreate()
 ------------------------------------------

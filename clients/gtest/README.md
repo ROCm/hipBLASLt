@@ -1,7 +1,8 @@
 # Gtest
+
 hipblaslt-test is the main regression gtest for hipBLASLt. All test items should pass.
 
-```
+```shell
 # Go to hipBLASLt build directory
 cd hipBLASLt; cd build/release
 
@@ -13,5 +14,4 @@ cd hipBLASLt; cd build/release
 
 # Demo: gtest tests with filter
 ./clients/staging/hipblaslt-test --gtest_filter=*quick*
-
 ```
