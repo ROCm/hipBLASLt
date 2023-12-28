@@ -33,7 +33,7 @@ cd hipBLASLt; cd build/release
 --d_type <value>           Precision of matrix D. Options: f32_r,f16_r,bf16_r
 --compute_type <value>     Precision of computation. Options: s,f32_r,x,xf32_r,f64_r,i32_r                     (Default value is: f32_r)
 --scale_type <value>       Precision of scalar. Options: f16_r,bf16_r
---initialization <value>   Initialize matrix data.Options: rand_int, trig_float, hpl(floating)                  (Default value is: hpl)
+--initialization <value>   Initialize matrix data.Options: rand_int, trig_float, hpl(floating), special, zero  (Default value is: hpl)
 --transA <value>           N = no transpose, T = transpose, C = conjugate transpose                            (Default value is: N)
 --transB <value>           N = no transpose, T = transpose, C = conjugate transpose                            (Default value is: N)
 --batch_count <value>      Number of matrices. Only applicable to batched and strided_batched routines         (Default value is: 1)

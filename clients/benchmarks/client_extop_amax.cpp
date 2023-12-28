@@ -46,7 +46,7 @@ void printUsage(char *programName) {
         << "\t-m, --m\t\t\t\tSize of dim 0, default is 64\n"
         << "\t-n, --n\t\t\t\tSize of dim 1, default is 64\n"
         << "\t--initialization \t\tInitialize matrix data. Options: rand_int, trig_float, "
-                 "hpl(floating). (default is hpl)\n";
+                 "hpl(floating), special, zero. (default is hpl)\n";
 }
 
 template<typename T>
@@ -105,7 +105,7 @@ int parseArgs(int argc, char **argv, std::string& type, std::string& dtype, size
             {
                 const std::string initStr{argv[++i]};
 
-                if(initStr != "rand_int" && initStr != "trig_float" && initStr != "hpl")
+                if(initStr != "rand_int" && initStr != "trig_float" && initStr != "hpl" && initStr != "special" && initStr != "zero")
                 {
                     std::cerr << "Invalid initialization type: " << initStr << '\n';
                     return EXIT_FAILURE;
@@ -164,6 +164,9 @@ void initData(DType* data, std::size_t numElements, hipblaslt_initialization ini
         break;
     case hipblaslt_initialization::special:
         hipblaslt_init_alt_impl_big<DType>(data, numElements, 1, 1);
+        break;
+    case hipblaslt_initialization::zero:
+        hipblaslt_init_zero<DType>(data, numElements, 1, 1);
         break;
     default:
         break;
