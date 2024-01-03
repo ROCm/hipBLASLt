@@ -6,7 +6,7 @@ GlobalParameters:
   MergeFiles: False
   SleepPercent: 50
   NumElementsToValidate: -1
-  DataInitTypeBias: 0
+  DataInitTypeBias: 3 # rand
   DataInitTypeBeta: 1
   DataInitTypeAlpha: 1
   DataInitTypeScaleA: 2

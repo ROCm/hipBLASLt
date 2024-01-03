@@ -617,7 +617,7 @@ Tests:
   bias_vector: [0, 1]
   bias_type: bf16_r
   unit_check: 1
-  gpu_arch: ['941', '942']
+  gpu_arch: '94?'
 
 - name: matmul_f8_dst_f8
   category: pre_checkin
