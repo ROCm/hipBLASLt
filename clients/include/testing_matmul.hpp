@@ -385,7 +385,7 @@ void testing_matmul(const Arguments& arg)
 
     bool    do_grouped_gemm = arg.grouped_gemm > 0;
     int32_t gemm_count      = std::max(1, arg.grouped_gemm);
-    int32_t rotating        = arg.rotating * 1024 * 1024;
+    int64_t rotating        = arg.rotating * 1024 * 1024;
 
     std::vector<int64_t> M(gemm_count), N(gemm_count), K(gemm_count), lda(gemm_count),
         ldb(gemm_count), ldc(gemm_count), ldd(gemm_count), lde(gemm_count);
@@ -490,11 +490,14 @@ void testing_matmul(const Arguments& arg)
 
     // Calculating block count
     int32_t max_iters   = max(arg.cold_iters, arg.iters);
+    rotating /= (1024*1024);
+    totalRotatingSizeNeeded /= (1024*1024);
     int32_t block_count = max(1, min(max_iters, ceil((float)rotating / totalRotatingSizeNeeded)));
     if(rotating > 0)
     {
-        hipblaslt_cout << "Rotating buffer " << rotating
-                       << " bytes. Needed block count: " << block_count
+        hipblaslt_cout << "Rotating buffer " << rotating << " MiB. "
+                       << "Needed Size: " << totalRotatingSizeNeeded << " MiB. "
+                       << "Needed block count: " << block_count
                        << " (Capped to max iters: " << max_iters << ")" << std::endl;
     }
     // Calculating block count end
@@ -1740,7 +1743,7 @@ void testing_matmul(const Arguments& arg)
 
     returnedAlgoCount = heuristicResult.size();
 
-    dWorkspace = new device_vector<unsigned char>(workspace_size, 1, HMM);
+    dWorkspace = new device_vector<unsigned char>(workspace_size * block_count, 1, HMM);
     CHECK_DEVICE_ALLOCATION(dWorkspace->memcheck());
 
     if(arg.use_user_args)
@@ -2270,17 +2273,17 @@ void testing_matmul(const Arguments& arg)
             {
                 if(arg.use_user_args)
                 {
-                    std::vector<void*> d_userArgsVec(block_count);
+                    std::vector<unsigned char*> d_userArgsVec(block_count);
                     //grouped gemm
                     for(int32_t b = 0; b < block_count; b++)
                     {
                         CHECK_HIPBLASLT_ERROR(
                             groupedGemmVec[b].initialize(heuristicResult[sol].algo,
                                                          tuningVec[heuristicTuningIndex[sol]],
-                                                         *dWorkspace));
+                                                         ((unsigned char*)(*dWorkspace) + b * workspace_size)));
                         groupedGemmVec[b].getDefaultValueForDeviceUserArguments(userArgs);
                         d_userArgsVec[b]
-                            = d_userArgs + b * gemm_count * sizeof(hipblaslt_ext::UserArguments);
+                            = (unsigned char*)d_userArgs + b * gemm_count * sizeof(hipblaslt_ext::UserArguments);
                         // Copy them to device memory
                         CHECK_HIP_ERROR(hipMemcpy(d_userArgsVec[b],
                                                   userArgs,
@@ -2326,7 +2329,7 @@ void testing_matmul(const Arguments& arg)
                         CHECK_HIPBLASLT_ERROR(
                             groupedGemmVec[b].initialize(heuristicResult[sol].algo,
                                                          tuningVec[heuristicTuningIndex[sol]],
-                                                         *dWorkspace,
+                                                         ((unsigned char*)(*dWorkspace) + b * workspace_size),
                                                          false,
                                                          stream));
 
