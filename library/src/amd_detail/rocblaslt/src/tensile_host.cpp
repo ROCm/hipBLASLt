@@ -262,6 +262,21 @@ namespace
                    : typeB;
     }
 
+    rocblaslt_status hip2RocStatus(hipError_t status)
+    {
+        switch(status)
+        {
+        case hipSuccess:
+            return rocblaslt_status_success;
+        case hipErrorUnknown:
+        case hipErrorRuntimeOther:
+        case hipErrorInvalidDevice:
+            return rocblaslt_status_internal_error;
+        default:
+            return rocblaslt_status_not_implemented;
+        }
+    }
+
     inline auto CreateTensileProblem(hipblasOperation_t     opA,
                                      hipblasOperation_t     opB,
                                      hipblasltDatatype_t    typeA,
@@ -1239,12 +1254,11 @@ rocblaslt_status runContractionProblem(rocblaslt_handle                   handle
         }
         else
         {
-            static_cast<void>(adapter->launchKernels(
+            status = hip2RocStatus(adapter->launchKernels(
                 solution->solve(data->problem, GetTensileInputs(prob), *hardware),
                 prob.stream,
                 nullptr,
                 nullptr));
-            status = rocblaslt_status_success;
         }
     }
     catch(const std::exception& e)
@@ -1610,7 +1624,8 @@ rocblaslt_status runKernelFromInvocation(rocblaslt_handle       handle,
         {
             std::shared_ptr<TensileDataGemm> data
                 = std::static_pointer_cast<TensileDataGemm>(gemmData);
-            static_cast<void>(adapter->launchKernels(data->kernels, stream, nullptr, nullptr));
+            status = hip2RocStatus(
+                adapter->launchKernels(data->kernels, stream, nullptr, nullptr));
         }
         else if(gemmType == rocblaslt::RocGemmType::ROCBLASLT_GROUPED_GEMM)
         {
@@ -1622,14 +1637,13 @@ rocblaslt_status runKernelFromInvocation(rocblaslt_handle       handle,
                           "GG is initialized with useUserArgs = true, workspace has no arguments.");
                 return rocblaslt_status_not_initialized;
             }
-            static_cast<void>(adapter->launchKernels(data->kernels, stream, nullptr, nullptr));
+            status = hip2RocStatus(
+                adapter->launchKernels(data->kernels, stream, nullptr, nullptr));
         }
         else
         {
             return rocblaslt_status_invalid_value;
         }
-
-        status = rocblaslt_status_success;
     }
     catch(const std::exception& e)
     {
@@ -1732,14 +1746,13 @@ rocblaslt_status runKernelFromNewDeviceUserArguments(rocblaslt_handle       hand
                 uint8_t* arg = it.args.rawdata();
                 memcpy(arg + 4, &deviceUserArgs, sizeof(void*));
             }
-            static_cast<void>(adapter->launchKernels(data->kernels, stream, nullptr, nullptr));
+            status = hip2RocStatus(
+                adapter->launchKernels(data->kernels, stream, nullptr, nullptr));
         }
         else
         {
             return rocblaslt_status_not_implemented;
         }
-
-        status = rocblaslt_status_success;
     }
     catch(const std::exception& e)
     {
@@ -1788,14 +1801,13 @@ rocblaslt_status runKernelFromDeviceUserArguments(rocblaslt_handle             h
                 = std::static_pointer_cast<TensileDataGroupedGemm>(gemmData);
             auto kernel = solution->solveGroupedGemmGPU(
                 data->problem.gemms, data->inputs, deviceUserArgs, workspace, stream);
-            static_cast<void>(adapter->launchKernels(kernel, stream, nullptr, nullptr));
+            status = hip2RocStatus(
+                adapter->launchKernels(kernel, stream, nullptr, nullptr));
         }
         else
         {
             return rocblaslt_status_not_implemented;
         }
-
-        status = rocblaslt_status_success;
     }
     catch(const std::exception& e)
     {
