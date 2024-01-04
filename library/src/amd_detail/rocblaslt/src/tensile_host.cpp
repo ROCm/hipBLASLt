@@ -262,6 +262,21 @@ namespace
                    : typeB;
     }
 
+    rocblaslt_status hip2RocStatus(hipError_t status)
+    {
+        switch(status)
+        {
+        case hipSuccess:
+            return rocblaslt_status_success;
+        case hipErrorUnknown:
+        case hipErrorRuntimeOther:
+        case hipErrorInvalidDevice:
+            return rocblaslt_status_internal_error;
+        default:
+            return rocblaslt_status_not_implemented;
+        }
+    }
+
     inline auto CreateTensileProblem(hipblasOperation_t     opA,
                                      hipblasOperation_t     opB,
                                      hipblasltDatatype_t    typeA,
@@ -756,6 +771,8 @@ namespace
         // Set the GSU workspace
         inputs.ws = prob.workspace;
 
+        inputs.Synchronizer = prob.Synchronizer;
+
         // set bias vector
         inputs.bias          = reinterpret_cast<const void*>(prob.bias);
         inputs.scaleA        = reinterpret_cast<const void*>(prob.scaleA);
@@ -1237,12 +1254,11 @@ rocblaslt_status runContractionProblem(rocblaslt_handle                   handle
         }
         else
         {
-            static_cast<void>(adapter->launchKernels(
+            status = hip2RocStatus(adapter->launchKernels(
                 solution->solve(data->problem, GetTensileInputs(prob), *hardware),
                 prob.stream,
                 nullptr,
                 nullptr));
-            status = rocblaslt_status_success;
         }
     }
     catch(const std::exception& e)
@@ -1608,7 +1624,8 @@ rocblaslt_status runKernelFromInvocation(rocblaslt_handle       handle,
         {
             std::shared_ptr<TensileDataGemm> data
                 = std::static_pointer_cast<TensileDataGemm>(gemmData);
-            static_cast<void>(adapter->launchKernels(data->kernels, stream, nullptr, nullptr));
+            status = hip2RocStatus(
+                adapter->launchKernels(data->kernels, stream, nullptr, nullptr));
         }
         else if(gemmType == rocblaslt::RocGemmType::ROCBLASLT_GROUPED_GEMM)
         {
@@ -1620,14 +1637,13 @@ rocblaslt_status runKernelFromInvocation(rocblaslt_handle       handle,
                           "GG is initialized with useUserArgs = true, workspace has no arguments.");
                 return rocblaslt_status_not_initialized;
             }
-            static_cast<void>(adapter->launchKernels(data->kernels, stream, nullptr, nullptr));
+            status = hip2RocStatus(
+                adapter->launchKernels(data->kernels, stream, nullptr, nullptr));
         }
         else
         {
             return rocblaslt_status_invalid_value;
         }
-
-        status = rocblaslt_status_success;
     }
     catch(const std::exception& e)
     {
@@ -1730,14 +1746,13 @@ rocblaslt_status runKernelFromNewDeviceUserArguments(rocblaslt_handle       hand
                 uint8_t* arg = it.args.rawdata();
                 memcpy(arg + 4, &deviceUserArgs, sizeof(void*));
             }
-            static_cast<void>(adapter->launchKernels(data->kernels, stream, nullptr, nullptr));
+            status = hip2RocStatus(
+                adapter->launchKernels(data->kernels, stream, nullptr, nullptr));
         }
         else
         {
             return rocblaslt_status_not_implemented;
         }
-
-        status = rocblaslt_status_success;
     }
     catch(const std::exception& e)
     {
@@ -1786,14 +1801,13 @@ rocblaslt_status runKernelFromDeviceUserArguments(rocblaslt_handle             h
                 = std::static_pointer_cast<TensileDataGroupedGemm>(gemmData);
             auto kernel = solution->solveGroupedGemmGPU(
                 data->problem.gemms, data->inputs, deviceUserArgs, workspace, stream);
-            static_cast<void>(adapter->launchKernels(kernel, stream, nullptr, nullptr));
+            status = hip2RocStatus(
+                adapter->launchKernels(kernel, stream, nullptr, nullptr));
         }
         else
         {
             return rocblaslt_status_not_implemented;
         }
-
-        status = rocblaslt_status_success;
     }
     catch(const std::exception& e)
     {
@@ -1874,6 +1888,8 @@ inline auto getSolutions(
     std::vector<std::shared_ptr<Tensile::ContractionSolution>> solutions_fallback;
     // Fallback to original kernels
     if(!enableEpilogue && scaleAlphaVec == nullptr && bias == nullptr && E == nullptr
+       && inputs.scaleA == nullptr && inputs.scaleB == nullptr && inputs.scaleC == nullptr
+       && inputs.scaleD == nullptr
        && tensile_prob.getParams().activationEnum() == Tensile::ActivationType::None)
     {
         auto useBias          = tensile_prob.useBias();
@@ -2162,6 +2178,8 @@ rocblaslt_status isSolutionSupported(rocblaslt_handle            handle,
             }
             // Try fallback
             if(scaleAlphaVec == nullptr && bias == nullptr && E == nullptr
+               && inputs.scaleA == nullptr && inputs.scaleB == nullptr && inputs.scaleC == nullptr
+               && inputs.scaleD == nullptr
                && tensile_prob.getParams().activationEnum() == Tensile::ActivationType::None)
             {
                 auto useBias          = tensile_prob.useBias();
@@ -2247,6 +2265,10 @@ rocblaslt_status isSolutionSupported(rocblaslt_handle            handle,
         for(int i = 0; i < tensile_prob.gemms.size(); i++)
         {
             tensile_prob.gemms[i].setWorkspaceSize(algo->max_workspace_bytes);
+            tensile_prob.gemms[i].setGroupedGemmCount(tensile_prob.gemms.size());
+        }
+        for(int i = 0; i < tensile_prob.gemms.size(); i++)
+        {
             if(!((*solution->hardwarePredicate)(*hardware)
                  && (*solution->problemPredicate)(tensile_prob.gemms[i])))
             {
@@ -2457,6 +2479,7 @@ rocblaslt_status getBestSolutions(rocblaslt_handle       handle,
         for(int i = 0; i < data->problem.gemms.size(); i++)
         {
             data->problem.gemms[i].setWorkspaceSize(workspaceBytes);
+            data->problem.gemms[i].setGroupedGemmCount(data->problem.gemms.size());
         }
 
         // Fallback to original kernels
