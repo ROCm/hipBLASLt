@@ -120,16 +120,22 @@ class AddrCalculation:
                 if not kernel["BufferStore"] or updateCoord1:
                     if self.rowInc== 0:
                         None
-                    elif self.rowInc <= 64:
+                    elif self.rowInc <= 64 and self.rowInc > 0:
                         # rowInc fits in instruction:
                         module.add(VAddCOU32(dst=vgpr(self.coord1Vgpr), dst1=VCC(), \
                                   src0=vgpr(self.kernelWriter.vgprs.coord1), src1=self.rowInc, \
                                   comment="coord1.1: coord1Vgpr += d1*sg1*VW + vc1"))
-                    else:
+                    elif self.rowInc > 0:
                         module.add(SMovB32(dst=sgpr(tmpS01), src=self.rowInc, comment="rowInc d1=%u vc1=%u"%(d0, vc0)))
                         module.add(VAddCOU32(dst=vgpr(self.coord1Vgpr), dst1=VCC(), \
                                   src0=vgpr(self.kernelWriter.vgprs.coord1), src1=sgpr(tmpS01), \
                                   comment="coord1.2: coord1 += d1*sg1*VW + vc1"))
+                    else:
+                        # rowInc < 0
+                        module.add(SMovB32(dst=sgpr(tmpS01), src=self.rowInc, comment="rowInc d1=%u vc1=%u"%(d0, vc0)))
+                        module.add(VAddI32(dst=vgpr(self.coord1Vgpr), \
+                                  src0=vgpr(self.kernelWriter.vgprs.coord1), src1=sgpr(tmpS01), \
+                                  comment="coord1.3: coord1 += d1*sg1*VW + vc1"))
         return module
 
     def getRowPtr(self, kw, tc):
@@ -605,7 +611,7 @@ class AddrCalculation:
                     strideCD1 = "Size%s" % "I" if index == 0 else ("J" if index == 1 else (self.kernelWriter.states.indexChars[index]))
                 else:
                     strideCD1 = "Stride%s%s"%(tc,self.kernelWriter.states.indexChars[packedC1[0]])
-                if numRows > 1:
+                if numRows > 1 or numRows < 0:
                     module.add(SMulI32(dst=sgpr(stmp), \
                                 src0=sgpr(strideCD1), \
                                 src1=numRows*tmpBpe, \
@@ -616,15 +622,24 @@ class AddrCalculation:
                                 shiftHex=log2(tmpBpe), \
                                 comment="incToNextRow: Scale by BPE"))
 
-                module.add(SAddU32(dst=sgpr("Srd%s+0"%(tc)), \
-                                    src0=sgpr("Srd%s+0"%(tc)), \
-                                    src1=sgpr(stmp), \
-                                    comment="incToNextRow: gra SRD += inc(lower)" ))
-                module.add(SAddCU32(dst=sgpr("Srd%s+1"%(tc)), \
-                                    src0=sgpr("Srd%s+1"%(tc)), \
-                                    src1=0, \
-                                    comment="incToNextRow: gra SRD += inc(upper)" ))
-
+                if numRows >= 0:
+                    module.add(SAddU32(dst=sgpr("Srd%s+0"%(tc)), \
+                                        src0=sgpr("Srd%s+0"%(tc)), \
+                                        src1=sgpr(stmp), \
+                                        comment="incToNextRow: gra SRD += inc(lower)" ))
+                    module.add(SAddCU32(dst=sgpr("Srd%s+1"%(tc)), \
+                                        src0=sgpr("Srd%s+1"%(tc)), \
+                                        src1=0, \
+                                        comment="incToNextRow: gra SRD += inc(upper)" ))
+                else: # numRows < 0
+                    module.add(SSubU32(dst=sgpr("Srd%s+0"%(tc)), \
+                                        src0=sgpr("Srd%s+0"%(tc)), \
+                                        src1=sgpr(stmp), \
+                                        comment="incToNextRow: gra SRD -= inc(lower)" ))
+                    module.add(SSubBU32(dst=sgpr("Srd%s+1"%(tc)), \
+                                        src0=sgpr("Srd%s+1"%(tc)), \
+                                        src1=0, \
+                                        comment="incToNextRow: gra SRD -= inc(upper)" ))
             None
 
         return module
