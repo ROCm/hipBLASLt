@@ -1079,11 +1079,8 @@ def generateLogicDataAndSolutions(logicFiles, args, debugBreakPoint):
   fullMasterLibrary = None
 
   nextSolIndex = 0
-  id = 0
   for logic in filter(lambda i: i[1] != "", Utils.tqdm(libraries, "Processing logic data")):
     (_, architectureName, _, _, _, newLibrary, srcFile) = logic
-    assert logicFiles[id] == srcFile
-    id += 1
     if globalParameters["PackageLibrary"]:
       if architectureName in masterLibraries:
         masterLibraries[architectureName].merge(newLibrary)
