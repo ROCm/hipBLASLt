@@ -2696,26 +2696,6 @@ class Solution(collections.abc.Mapping):
     if state["LdsBlockSizePerPadMetadata"] == -1:
       state["LdsBlockSizePerPadMetadata"] = state["LdsBlockSizePerPadA"]
 
-    if state["LdsBlockSizePerPadA"] != 0 :
-      for miwt in range(0, state["MIWaveTile"][0]):
-        if int(state["MacroTile0"] / state["LdsBlockSizePerPadA"]) + int((state["LSCA"] * miwt) / state["LdsBlockSizePerPadA"]) != int((state["MacroTile0"] +  (state["LSCA"] * miwt)) / state["LdsBlockSizePerPadA"]):
-          if auto_LdsBlockSizePerPadA_for_mix:
-            print("Padded address is inconisstent, set LdsBlockSizePerPadA=0.")
-            state["LdsBlockSizePerPadA"] = 0
-            break
-          else:
-            reject(state, "A's padded address is inconisstent")
-
-    if state["LdsBlockSizePerPadB"] != 0:
-      for miwt in range(0, state["MIWaveTile"][1]):
-        if int(state["MacroTile1"] / state["LdsBlockSizePerPadB"]) + int((state["LSCB"] * miwt) / state["LdsBlockSizePerPadB"]) != int((state["MacroTile1"] +  (state["LSCB"] * miwt)) / state["LdsBlockSizePerPadB"]):
-          if auto_LdsBlockSizePerPadB_for_mix:
-            print("Padded address is inconisstent, set LdsBlockSizePerPadB=0.")
-            state["LdsBlockSizePerPadB"] = 0
-            break
-          else:
-            reject(state, "B's padded address is inconisstent")
-
     if state["EnableMatrixInstruction"]:
       if state["LdsBlockSizePerPadA"]:
         if state["UnrollMajorLDSA"]:
@@ -2737,6 +2717,160 @@ class Solution(collections.abc.Mapping):
         reject(state, "didn't support UnrollMajorLDS in VALU mode yet")
       if state["LdsBlockSizePerPadA"] != 0 or state["LdsBlockSizePerPadB"] != 0:
         reject(state, "didn't support LdsBlockSizePerPad in VALU mode yet")
+
+    def checkLdsBlockSizePerPad(tc):
+      """
+        Simulated to calculate the local write address and local write offset, to check the pad will be added correctly or not.
+
+          Expected: (address + offset) // lbspp == (address // lbspp + offset // lbspp)
+
+          # offset is an array, the amount is 'NLP x NLC x (grvw / width of ds write instruction)'
+          # Assumed Wave ID is zero
+
+        refer KernelWriterAssembly.lwaFirstOffset and KernelWriterAssembly.lwaTileAssignment  to come out the address (local write address).
+        refer KereelWriterAssembly.localWriteDo and KereelWriteAssembly.calculateLdsWriteOffset to come out the offset (local write offset).
+      """
+
+      def caculateLdsWriteOffset(perp, para, sPerp, sPara, tlu, uMLds, bpe, tc, idx):
+        mask = 0
+        #print "tc ", tc, " perp ", perp, " para ", para, " sPerp ", sPerp, " sPara ", sPara
+        lscaOffset = para * state["LSC%s"%tc]
+        perp_masked = perp
+        perp_rem = 0
+        lspaOffset = perp_masked * state["LSP%s"%tc]
+        rem = 0
+
+        # Add component offset to interleave from different regs
+        # and compute mysterious "i"
+        assert(sPerp==0 or sPara==0)
+
+        if tlu != uMLds:
+          lspaOffset += sPerp & mask
+          lscaOffset += sPara
+          rem = (sPerp & ~mask)
+        else:
+          lscaOffset += sPara
+          lspaOffset += sPerp
+          rem = 0
+
+        lds_stride = state["_DepthU%s"%tc] if uMLds else state["MacroTile%d"%idx]
+        if tlu != uMLds:
+          lspaOffset *= lds_stride
+          lspaOffset += rem + perp_rem
+        else:
+          lscaOffset *= lds_stride
+          lscaOffset += rem
+
+        offsetElements = (lspaOffset + lscaOffset)
+        offsetBytes = offsetElements * bpe
+        return offsetBytes
+
+      def caculateLdsWriteAddress(tc, idx, serial, tlu, uMLds, grvw, bpe):
+        id = serial
+        if state["WaveSeparateGlobalRead%s"%tc]:
+          id = id % state["WavefrontSize"]
+
+        q = id // state["LVC%s"%tc]
+        r = id % state["LVC%s"%tc]
+
+        #assumed wave id = 0
+        if state["WaveSeparateGlobalRead%s"%tc] == 2:
+          q *= state["NumLoadsPerpendicular%s"%tc]*state["NumThreads"]//state["WavefrontSize"]
+
+        if tlu:
+          t = r
+          u = q
+          t *= grvw
+        else:
+          t = q
+          u = r
+          u *= grvw
+
+        address = 0
+        if uMLds:
+          address = (state["_DepthU%s"%tc] * t + u) * bpe
+        else:
+          address = (state["MacroTile%s"%tc] * u + t) * bpe
+
+        return address
+
+      def findValidWriteBlockWidth(nwcv, bpe, bpr):
+        localWriteWidth = nwcv * bpe // bpr
+        if localWriteWidth < 1:
+          localWriteWidth = (1.0* nwcv * bpe )/bpr
+        blockWidth = 0
+        for bw in [8, 4, 2, 1, 0.5, 0.25]:
+          if localWriteWidth >= bw:
+            blockWidth = bw
+            break
+        if blockWidth == 0:
+          reject(state, "invalid local write block width")
+
+        return blockWidth
+
+      def subCheckLdsBlockSizePerPad(tc, idx):
+        lbspp = state["LdsBlockSizePerPad%s"%tc]
+        bpe = state["ProblemType"]["DataType"].numBytes()
+        bpr = 4
+        vw = state["GlobalReadVectorWidth%s"%tc]
+        tlu = state["ProblemType"]["TLU%s"%tc]
+        uMLds = state["UnrollMajorLDS%s"%tc]
+        if tlu != uMLds: # NT no transpose
+          wtc = False # Vector
+          # writeCoal indicates writes should be done in the coal dim or else perp
+          nwcv = vw
+          nwpv = 1
+        else: # TN yes transpose
+          wtc = True
+          nwcv = 1
+          nwpv = vw
+
+        blockWidth = findValidWriteBlockWidth(nwcv, bpe, bpr)
+        nwcvpi = int(blockWidth * bpr / bpe)
+
+        serials = []
+        if tlu != uMLds:
+          serials = range(0, state["LVC%s"%tc])
+        else:
+          serials = [state["LVC%s"%tc] * q for q in range(0, max(1, state["NumThreads"] // state["LVC%s"%tc]))]
+
+        for serial in serials:
+          address = caculateLdsWriteAddress(tc, idx, serial, tlu, uMLds, vw, bpe)
+          for perp in range(0, state["NumLoadsPerpendicular%s"%tc]):
+            for para in range(0, state["NumLoadsCoalesced%s"%tc]):
+              sPerp = 0
+              sPara = 0
+              for s in range(0, vw // nwcvpi):
+                if tlu != uMLds:
+                  if wtc:
+                    sPerp = s
+                else:
+                  if wtc:
+                    sPara = s
+                offset = caculateLdsWriteOffset(perp, para, sPerp, sPara, tlu, uMLds, bpe, tc, idx)
+                lLdsBlocks = (address + offset) // lbspp
+                rLdsBlocks = address // lbspp + offset // lbspp
+                if 0: #Debug
+                  pad = state["LdsPad%s"%tc]
+                  print(tc, serial, state["UnrollMajorLDS%s"%tc], perp, para, bpe, lbspp, address, offset, address // lbspp * pad * bpe, offset // lbspp * pad * bpe, lLdsBlocks, rLdsBlocks, address + offset + lLdsBlocks * pad * bpe, address + offset + rLdsBlocks * pad * bpe)
+                if lLdsBlocks != rLdsBlocks:
+                  return False
+        return True
+
+      if state["LdsBlockSizePerPad%s"%tc] != 0 and state["LdsPad%s"%tc] != 0:
+        idx = 0 if tc == "A" else 1
+        auto_LdsBlockSizePerPad_for_mix = auto_LdsBlockSizePerPadA_for_mix if tc == "A" else auto_LdsBlockSizePerPadB_for_mix
+
+        if not subCheckLdsBlockSizePerPad(tc, idx):
+          if auto_LdsBlockSizePerPad_for_mix:
+            printWarning("Padded address is inconisstent, set LdsBlockSizePerPad%s=0."%tc)
+            state["LdsBlockSizePerPad%s"%tc] = 0
+          else:
+            reject(state, "%s's padded address is inconisstent"%tc)
+
+    if(not (state["CustomKernelName"] and state["CustomKernelName"] != "")): #don't check the custom kernel.
+      checkLdsBlockSizePerPad("A")
+      checkLdsBlockSizePerPad("B")
 
     # Determine if we can load directly-to-LDS.
     # Transpose requires a trip through registers to perform the transpose so can't use DirectToLdsA
