@@ -1,6 +1,6 @@
 ################################################################################
 #
-# Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -1118,7 +1118,6 @@ class KernelWriterAssembly(KernelWriter):
   ##############################################################################
   def defineAndResources(self, kernel, tPA, tPB, lralwaCode):
     module = Module("allocateResources")
-    self.defineVariableSgprs(kernel)
     module.add(self.macroAndSet(kernel, tPA, tPB))
 
     module.addComment2("Allocate Resources")
