@@ -1,6 +1,6 @@
 ################################################################################
 #
-# Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -2026,6 +2026,8 @@ class KernelWriter(metaclass=abc.ABCMeta):
     fs = self.functionSignature()
     moduleKernelBody.addSignature(fs)
 
+    self.defineVariableSgprs(kernel)
+
     ####################################
     # Local Read Addresses
     ####################################
@@ -3814,6 +3816,10 @@ class KernelWriter(metaclass=abc.ABCMeta):
   ##############################################################################
   # Allocate Resources
   ##############################################################################
+  @abc.abstractmethod
+  def defineVariableSgprs(self, kernel):
+    return ""
+
   @abc.abstractmethod
   def defineAndResources(self, kernel, tPA, tPB, lralwaCode):
     return ""
