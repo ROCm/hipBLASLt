@@ -22,7 +22,7 @@
 #
 ################################################################################
 
-from .Common import printExit, printWarning, versionIsCompatible
+from .Common import printExit, printWarning, versionIsCompatible, debugBreakPointsParameters
 from .SolutionStructs import Solution, ProblemSizes, ProblemType
 from . import __version__
 from . import Common
@@ -199,12 +199,12 @@ class LibraryLogic(NamedTuple):
     srcFile: str
 
 
-def parseLibraryLogicFile(filename, archs=None):
+def parseLibraryLogicFile(filename, archs=None, debugBreakPoints=0):
     """Wrapper function to read and parse a library logic file."""
-    return parseLibraryLogicData(readYAML(filename), filename, archs)
+    return parseLibraryLogicData(readYAML(filename), filename, archs, debugBreakPoints)
 
 
-def parseLibraryLogicData(data, srcFile="?", archs=None):
+def parseLibraryLogicData(data, srcFile="?", archs=None, debugBreakPoints=0):
     """Parses the data of a library logic file."""
     if isinstance(data, List):
         data = parseLibraryLogicList(data, srcFile)
@@ -230,10 +230,14 @@ def parseLibraryLogicData(data, srcFile="?", archs=None):
                 .format(srcFile, data["MinimumRequiredVersion"], __version__) )
 
     # unpack problemType
+
+    if debugBreakPoints != -1:
+        data["ProblemType"]["DebugBreakPoints"] = debugBreakPoints
+
     problemType = ProblemType(data["ProblemType"])
 
     # unpack solution
-    def solutionStateToSolution(solutionState) -> Solution:
+    def solutionStateToSolution(solutionState, debugBreakPoints) -> Solution:
         if solutionState["KernelLanguage"] == "Assembly":
             solutionState["ISA"] = Common.gfxArch(data["ArchitectureName"])
         else:
@@ -242,12 +246,17 @@ def parseLibraryLogicData(data, srcFile="?", archs=None):
         # force redo the deriving of parameters, make sure old version logic yamls can be validated
         solutionState["AssignedProblemIndependentDerivedParameters"] = False
         solutionState["AssignedDerivedParameters"] = False
+
+        if debugBreakPoints != -1:
+            solutionState["ProblemType"]["DebugBreakPoints"] = debugBreakPoints
+            solutionState["DebugBreakPoints"] = debugBreakPoints
+
         solutionObject = Solution(solutionState)
         if solutionObject["ProblemType"] != problemType:
             printExit(f"ProblemType in library logic file {srcFile} doesn't match solution: {problemType} != {solutionObject['ProblemType']}")
         return solutionObject
 
-    solutions = [solutionStateToSolution(solutionState) for solutionState in data["Solutions"]]
+    solutions = [solutionStateToSolution(solutionState, debugBreakPoints) for solutionState in data["Solutions"]]
 
     newLibrary = SolutionLibrary.MasterSolutionLibrary.FromOriginalState(data, solutions)
 

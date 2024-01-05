@@ -1366,6 +1366,7 @@ namespace Tensile
         //@TODO determine if this is needed, may not end up in the same code object file
         rv.codeObjectFile = codeObjectFilename.load();
 
+        rv.isPost = true;
         return rv;
     }
 
@@ -1520,7 +1521,7 @@ namespace Tensile
             rv.args.append<uint32_t>("gemm_count", problems.size());
             rv.codeObjectFile = codeObjectFilename.load();
         }
-
+        rv.isPost = true;
         return rv;
     }
 

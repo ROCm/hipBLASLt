@@ -48,12 +48,14 @@ namespace Tensile
             : m_debug(Debug::Instance().printKernelArguments())
             , m_debugSkipLaunch(Debug::Instance().skipKernelLaunch())
         {
+            m_debugSkipPostKernel = Debug::Instance().skipPostKernel();
         }
 
         SolutionAdapter::SolutionAdapter(bool debug)
             : m_debug(debug)
         {
             m_debug = debug || Debug::Instance().printKernelArguments();
+            m_debugSkipPostKernel = Debug::Instance().skipPostKernel();
         }
 
         SolutionAdapter::SolutionAdapter(bool debug, std::string const& name)
@@ -61,6 +63,7 @@ namespace Tensile
             , m_name(name)
         {
             m_debug = debug || Debug::Instance().printKernelArguments();
+            m_debugSkipPostKernel = Debug::Instance().skipPostKernel();
         }
 
         SolutionAdapter::~SolutionAdapter()
@@ -298,9 +301,15 @@ namespace Tensile
                           << kernel.numWorkItems << std::endl;
                 std::cout << kernel.args;
             }
-            if(m_debugSkipLaunch)
+
+            if(m_debugSkipLaunch || (m_debugSkipPostKernel && kernel.isPost))
             {
-                std::cout << "DEBUG: Skip kernel execution" << std::endl;
+
+                if(m_debugSkipLaunch || (m_debugSkipPostKernel && m_debug))
+                {
+                    std::cout << "DEBUG: Skip " << (kernel.isPost?"post":"") << " kernel execution" << std::endl;
+                }
+
                 if(startEvent != nullptr)
                     HIP_CHECK_RETURN(hipEventRecord(startEvent, stream));
                 if(stopEvent != nullptr)
@@ -367,8 +376,8 @@ namespace Tensile
                     kStart = startEvent;
                 if(iter == last)
                     kStop = stopEvent;
-
                 HIP_CHECK_RETURN(launchKernel(*iter, stream, kStart, kStop));
+
             }
             return hipSuccess;
         }

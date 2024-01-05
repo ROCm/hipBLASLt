@@ -42,6 +42,11 @@ namespace Tensile
     {
         m_tensors.resize(size);
         m_names.resize(size);
+
+#ifdef TENSILE_ENABLE_DBP
+        m_debugBreakPoints = Debug::Instance().getDebugBreakPoints();
+#endif
+
     }
 
     ContractionProblemGemm ContractionProblemGemm::GEMM_Strides(bool     transA,

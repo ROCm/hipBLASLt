@@ -30,7 +30,7 @@ from .TensileInstructions import Item, TensileInstructions, slash50, replaceHold
 from .TensileInstructions.Instructions import *
 from .KernelWriterModules import *
 from .TensilePass import TensilePass, TensilePassOptions
-from .Common import globalParameters, CHeader, roundUp, Backup, print2, printExit
+from .Common import globalParameters, CHeader, roundUp, Backup, print2, printExit, debugBreakPointsParameters
 from .Component import Component, LraTileProperties
 from .Components.Signature import UserArgumentsInfo
 from .CustomKernels import isCustomKernelConfig
@@ -369,10 +369,6 @@ class KernelWriter(metaclass=abc.ABCMeta):
     self.do["GlobalWrite"] = True
     self.do["EdgeWrite"]   = True
     self.do["KeepDirectToLdsAlloc"] = False  # If true, keep regs used for LDS alloc even if not used
-
-    self.do["executeToInitEnd"] = 0
-    self.do["executeToPrefetchEnd"] = 0
-    self.do["executeToLoopEnd"] = 0
 
     # Various debug flags and modes
     self.db = {}
@@ -1477,7 +1473,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
     module.addComment0("local read addresses: init pointers b")
     module.add(self.localReadInitPointers(kernel, tensorParametersA, tensorParametersB))
 
-    if self.do["executeToInitEnd"]:
+    if "DebugBreakPoints" in kernel["ProblemType"] and kernel["ProblemType"]["DebugBreakPoints"] == debugBreakPointsParameters["ExecuteToInitEnd"]:
       module.add(self.functionEnd(False))
 
     ####################################
@@ -1709,8 +1705,13 @@ class KernelWriter(metaclass=abc.ABCMeta):
     # generate no Load Loop Body code
     module.add(self.noLoadLoopBody(kernel, tensorParametersA, tensorParametersB, pack, isOptNLL, isNGLL, NLLfirst, NLLlast))
 
-    if self.do["executeToLoopEnd"] and isOptNLL:
-      module.add(self.functionEnd(False))
+    if "DebugBreakPoints" in kernel["ProblemType"] and isOptNLL :
+      if kernel["ProblemType"]["DebugBreakPoints"] == debugBreakPointsParameters["ExecuteToLoopEndWaitBufferLoad"]:
+        module.add(SWaitCnt(vmcnt=0))
+        module.add(SWaitCnt(lgkmcnt=0))
+      if kernel["ProblemType"]["DebugBreakPoints"] == debugBreakPointsParameters["ExecuteToLoopEnd"] or \
+         kernel["ProblemType"]["DebugBreakPoints"] == debugBreakPointsParameters["ExecuteToLoopEndWaitBufferLoad"] :
+        module.add(self.functionEnd(False))
 
     # Close code is necessary for both first and last (NGLL case(=NLLfirst) needs label)
     module.add(self.closeSumAtLeastUnroll(kernel, tensorParametersA, tensorParametersB, prefetch=False, isOptNLL=isOptNLL, isNGLL=isNGLL))
@@ -2106,7 +2107,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
 
     module.add(self.setupNewTile(kernel, tensorParametersA, tensorParametersB, isOptNLL=False))
 
-    if self.do["executeToPrefetchEnd"]:
+    if "DebugBreakPoints" in kernel["ProblemType"] and kernel["ProblemType"]["DebugBreakPoints"] == debugBreakPointsParameters["ExecuteToPrefetchEnd"]:
       module.add(self.functionEnd(False))
 
     pack = [ Module() for i in range (self.states.numVgprBuffer) ]
@@ -2445,8 +2446,13 @@ class KernelWriter(metaclass=abc.ABCMeta):
       module.addComment1("Tail: remove address/G2L [%u...%u) from pool" % \
                         (self.states.lastValuAB, self.states.lastVgprForReads))
 
-    if self.do["executeToLoopEnd"]:
-      module.add(self.functionEnd(False))
+    if "DebugBreakPoints" in kernel["ProblemType"]:
+      if kernel["ProblemType"]["DebugBreakPoints"] == debugBreakPointsParameters["ExecuteToLoopEndWaitBufferLoad"]:
+        module.add(SWaitCnt(vmcnt=0))
+        module.add(SWaitCnt(lgkmcnt=0))
+      if kernel["ProblemType"]["DebugBreakPoints"] == debugBreakPointsParameters["ExecuteToLoopEnd"] or \
+         kernel["ProblemType"]["DebugBreakPoints"] == debugBreakPointsParameters["ExecuteToLoopEndWaitBufferLoad"] :
+        module.add(self.functionEnd(False))
 
     # extra summation loops: global increment and close
     for i in reversed(range(self.states.otherSummationLoops)):

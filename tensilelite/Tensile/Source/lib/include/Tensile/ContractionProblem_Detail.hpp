@@ -137,7 +137,9 @@ namespace Tensile
                                         lhs.useScaleAlphaVec(),
                                         rhs.useScaleAlphaVec(),
                                         lhs.f32XdlMathOp(),
-                                        rhs.f32XdlMathOp());
+                                        rhs.f32XdlMathOp(),
+                                        lhs.debugBreakPoints(),
+                                        rhs.debugBreakPoints());
         }
     };
 } // namespace Tensile
@@ -173,7 +175,8 @@ namespace std
                                          problem.useScaleAB(),
                                          problem.useScaleCD(),
                                          problem.useScaleAlphaVec(),
-                                         problem.f32XdlMathOp());
+                                         problem.f32XdlMathOp(),
+                                         problem.debugBreakPoints());
         }
     };
 
@@ -210,7 +213,8 @@ namespace std
                                               problem.useScaleAB(),
                                               problem.useScaleCD(),
                                               problem.useScaleAlphaVec(),
-                                              problem.f32XdlMathOp());
+                                              problem.f32XdlMathOp(),
+                                              problem.debugBreakPoints());
             }
             return hash;
         }

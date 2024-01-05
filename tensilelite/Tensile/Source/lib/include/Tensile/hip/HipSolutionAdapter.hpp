@@ -81,6 +81,12 @@ namespace Tensile
 
             hipError_t initKernel(std::string const& name);
 
+            void setDebugBreakPoints(int value);
+            int debugBreakPoints();
+
+            void setDebugSkipPostKernel(bool skip);
+            bool debugSkipPostKernel();
+
         private:
             hipError_t getKernel(hipFunction_t& rv, std::string const& name);
 
@@ -95,7 +101,7 @@ namespace Tensile
 
             std::vector<std::string>        m_loadedModuleNames;
             std::unordered_set<std::string> m_loadedCOFiles;
-
+            bool                            m_debugSkipPostKernel = false;
             friend std::ostream& operator<<(std::ostream& stream, SolutionAdapter const& adapter);
         };
 

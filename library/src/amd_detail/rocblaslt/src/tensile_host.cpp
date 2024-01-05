@@ -942,8 +942,18 @@ namespace
                     path += "/" + processor;
             }
 
-            // only load modules for the current architecture
+            std::string dbpTag = "";
+#ifdef TENSILE_ENABLE_DBP
+            int dbp = Tensile::Debug::Instance().getDebugBreakPoints();
+            if(!(dbp == -1 || dbp == 0))
+                dbpTag = "_dbp" + std::to_string(dbp);
+            auto dir = path + "/*" + processor + "*" +dbpTag + "*co";
+#else
             auto dir = path + "/*" + processor + "*co";
+#endif
+
+            // only load modules for the current architecture
+            
 
             bool no_match = false;
 #ifdef WIN32
@@ -1006,9 +1016,9 @@ namespace
             // complete.
             static int once = [&] {
 #ifdef TENSILE_YAML
-                path += "/TensileLibrary.yaml";
+                path += "/TensileLibrary" + dbpTag + ".yaml";
 #else
-                path += "/TensileLibrary.dat";
+                path += "/TensileLibrary" + dbpTag + ".dat";
 #endif
                 if(!TestPath(path))
                 {

@@ -246,6 +246,13 @@ class ProblemType:
         rv.supportDeviceUserArguments = False
         if 'SupportUserArgs' in d:
             rv.supportDeviceUserArguments = d['SupportUserArgs']
+
+        rv.debugBreakPoints = -1
+        if 'DebugBreakPoints' in d and int(d['DebugBreakPoints']) != -1:
+            if 'debugBreakPoints' not in ProblemType.StateKeys:
+                ProblemType.StateKeys.append('debugBreakPoints')
+            rv.debugBreakPoints = int(d['DebugBreakPoints'])
+
         return rv
 
     def __init__(self, freeIndices=None, batchIndices=None, boundIndices=None, aDims=None, bDims=None, cDims=None, dDims=None):
@@ -361,7 +368,8 @@ class ProblemType:
             predicates.append(ProblemPredicate("Sparse", value=self.sparse))
             predicates.append(ProblemPredicate("F32XdlMathOp", value=self.f32XdlMathOp))
             predicates.append(ProblemPredicate("SupportDeviceUserArguments", value=self.supportDeviceUserArguments))
-
+            if self.debugBreakPoints != -1:
+                predicates.append(ProblemPredicate("DebugBreakPoints", value=self.debugBreakPoints))
         return predicates
 
 def extractDimPredicate(cls, key, value, predicateName):

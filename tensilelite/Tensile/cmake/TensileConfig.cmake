@@ -87,6 +87,7 @@ function(TensileCreateLibraryFiles
        GENERATE_PACKAGE
        SEPARATE_ARCHITECTURES
        LAZY_LIBRARY_LOADING
+       ENABLE_DBP
        )
 
   # Single value settings
@@ -201,13 +202,6 @@ function(TensileCreateLibraryFiles
     set(Options ${Options} "--architecture=${archString}")
   endif()
 
-  if (WIN32)
-    set(CommandLine ${VIRTUALENV_BIN_DIR}/${VIRTUALENV_PYTHON_EXENAME} ${Script} ${Options} ${Tensile_LOGIC_PATH} ${Tensile_OUTPUT_PATH} HIP)
-  else()
-    set(CommandLine ${Script} ${Options} ${Tensile_LOGIC_PATH} ${Tensile_OUTPUT_PATH} HIP)
-  endif()
-  message(STATUS "Tensile_CREATE_COMMAND: ${CommandLine}")
-
   if(Tensile_EMBED_LIBRARY)
       set(Tensile_EMBED_LIBRARY_SOURCE "${Tensile_OUTPUT_PATH}/library/${Tensile_EMBED_LIBRARY}.cpp")
   endif()
@@ -220,9 +214,6 @@ function(TensileCreateLibraryFiles
           set(Tensile_VAR_PREFIX TENSILE)
       endif()
 
-      set(Tensile_MANIFEST_FILE_PATH "${Tensile_OUTPUT_PATH}/library/TensileManifest.txt")
-      message(STATUS "Tensile_MANIFEST_FILE_PATH: ${Tensile_MANIFEST_FILE_PATH}")
-
       if($ENV{ENABLE_ADDRESS_SANITIZER})
         # Must populate LD_PRELOAD with ASAN runtime if ASAN is being used.
         # Find the ASAN RT with compiler and update env for Tensile call.
@@ -231,19 +222,71 @@ function(TensileCreateLibraryFiles
           OUTPUT_VARIABLE ASAN_LIB_PATH
           COMMAND_ECHO STDOUT)
         string(STRIP ${ASAN_LIB_PATH} ASAN_LIB_PATH)
-        set(CommandLine env LD_PRELOAD=${ASAN_LIB_PATH} ${CommandLine})
       endif()
 
-      add_custom_command(
-        COMMENT "Generating Tensile Libraries"
-        OUTPUT ${Tensile_EMBED_LIBRARY_SOURCE};${Tensile_MANIFEST_FILE_PATH}
-        COMMAND ${CommandLine}
-      )
+      if(Tensile_ENABLE_DBP)
+        set(Tensile_DBP 0 1 2 3 4)
+      else()
+        set(Tensile_DBP -1)
+      endif()
+      
+      set(Tensile_MANIFEST_FILE_PATH_Last "")
+
+      foreach(dbp IN LISTS Tensile_DBP)
+
+        if((${dbp} EQUAL -1) OR (${dbp} EQUAL 0))
+          set(Tensile_MANIFEST_FILE_PATH "${Tensile_OUTPUT_PATH}/library/TensileManifest.txt")
+          set(Options_ ${Options})
+        else()
+          set(Tensile_MANIFEST_FILE_PATH "${Tensile_OUTPUT_PATH}/library/TensileManifest_dbp${dbp}.txt")
+          set(Options_ ${Options} "--enable-dbp;--dbp=${dbp}")
+        endif()
+        message(STATUS "Tensile_MANIFEST_FILE_PATH: ${Tensile_MANIFEST_FILE_PATH}")
+
+        if (WIN32)
+          set(CommandLine ${VIRTUALENV_BIN_DIR}/${VIRTUALENV_PYTHON_EXENAME} ${Script} ${Options_} ${Tensile_LOGIC_PATH} ${Tensile_OUTPUT_PATH} HIP)
+        else()
+          set(CommandLine ${Script} ${Options_} ${Tensile_LOGIC_PATH} ${Tensile_OUTPUT_PATH} HIP)
+        endif()
+        
+        message(STATUS "Tensile_CREATE_COMMAND: ${CommandLine}")
+
+        if($ENV{ENABLE_ADDRESS_SANITIZER})
+          set(CommandLine env LD_PRELOAD=${ASAN_LIB_PATH} ${CommandLine})
+        endif()
+
+        if(Tensile_MANIFEST_FILE_PATH_Last STREQUAL "" )
+          add_custom_command(
+            COMMENT "Generating Tensile Libraries ${Tensile_MANIFEST_FILE_PATH}"
+            OUTPUT ${Tensile_EMBED_LIBRARY_SOURCE};${Tensile_MANIFEST_FILE_PATH}
+            COMMAND ${CommandLine}
+          )
+        else()
+          message(STATUS "Tensile_MANIFEST_FILE_PATH_Last: ${Tensile_MANIFEST_FILE_PATH_Last}")
+          add_custom_command(
+            COMMENT "Generating Tensile Libraries ${Tensile_MANIFEST_FILE_PATH}"
+            OUTPUT ${Tensile_MANIFEST_FILE_PATH}
+            COMMAND ${CommandLine}
+            DEPENDS ${Tensile_MANIFEST_FILE_PATH_Last}
+          )
+        endif()
+            
+        if(NOT (Tensile_MANIFEST_FILE_PATH_Last STREQUAL "" ))
+          set(Tensile_MANIFEST_TASK  TensileManifest_dbp${dbp})
+          add_custom_target(
+            ${Tensile_MANIFEST_TASK} ALL
+            COMMENT "Generating TensileManifest ${Tensile_MANIFEST_FILE_PATH}"
+            COMMAND ${CMAKE_COMMAND} -E cat ${Tensile_MANIFEST_FILE_PATH} >> ${Tensile_OUTPUT_PATH}/library/TensileManifest.txt
+            DEPENDS "${Tensile_VAR_PREFIX}_LIBRARY_TARGET"
+          )
+        endif()
+        set(Tensile_MANIFEST_FILE_PATH_Last ${Tensile_MANIFEST_FILE_PATH})
+      endforeach(dbp)
 
       add_custom_target(
         "${Tensile_VAR_PREFIX}_LIBRARY_TARGET" ALL
         COMMENT "${Tensile_VAR_PREFIX}_LIBRARY_TARGET"
-        DEPENDS ${Tensile_MANIFEST_FILE_PATH}
+        DEPENDS ${Tensile_MANIFEST_FILE_PATH_Last}
       )
 
   endif()

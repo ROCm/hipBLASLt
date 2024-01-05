@@ -2419,6 +2419,40 @@ namespace Tensile
                     return rv;
                 }
             };
+
+            struct DebugBreakPoints
+                : public Predicate_CRTP<DebugBreakPoints, ContractionProblemGemm>
+            {
+                enum
+                {
+                    HasIndex = false,
+                    HasValue = true
+                };
+                int value;
+
+                DebugBreakPoints() = default;
+                DebugBreakPoints(int value)
+                    : value(value)
+                {
+                }
+
+                static std::string Type()
+                {
+                    return "DebugBreakPoints";
+                }
+
+                virtual bool operator()(ContractionProblemGemm const& problem) const override
+                {
+                    return problem.debugBreakPoints() == value || (problem.debugBreakPoints() == -1 && value == 0);
+                }
+
+                virtual bool debugEval(ContractionProblemGemm const& problem,
+                                       std::ostream&                 stream) const override
+                {
+                    return debugEvalCmp(
+                        problem, stream, "prob", problem.debugBreakPoints(), "==", "sol", value);
+                }
+            };
         } // namespace Contraction
 
         /**

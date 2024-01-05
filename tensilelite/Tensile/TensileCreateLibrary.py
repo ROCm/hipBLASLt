@@ -36,7 +36,7 @@ from . import Utils
 from .TensileInstructions import getGfxName, TensileInstructions
 from .Common import globalParameters, HR, print1, print2, printExit, ensurePath, \
                     CHeader, CMakeHeader, assignGlobalParameters, \
-                    architectureMap
+                    architectureMap, debugBreakPointsParameters
 from .KernelWriterAssembly import KernelWriterAssembly
 from .SolutionLibrary import MasterSolutionLibrary
 from .SolutionStructs import Solution
@@ -86,7 +86,7 @@ def processKernelSource(kernel, kernelWriterAssembly, ti):
 
     return (err, src, header, kernelName, filename)
 
-def getAssemblyCodeObjectFiles(kernels, kernelWriterAssembly, outputPath):
+def getAssemblyCodeObjectFiles(kernels, kernelWriterAssembly, outputPath, dbpTag):
     destDir = ensurePath(os.path.join(outputPath, 'library'))
     asmDir = kernelWriterAssembly.getAssemblyDirectory()
     archs = collections.defaultdict(list)
@@ -108,7 +108,7 @@ def getAssemblyCodeObjectFiles(kernels, kernelWriterAssembly, outputPath):
         #Group kernels from placeholder libraries
         coFileMap = collections.defaultdict(list)
         if len(objectFiles):
-          coFileMap[os.path.join(destDir, "TensileLibrary_"+archName+".co")] = objectFiles
+          coFileMap[os.path.join(destDir, "TensileLibrary_"+archName+dbpTag+".co")] = objectFiles
 
         for kernel in archKernels:
           coName = kernel.get("codeObjectFile", None)
@@ -222,7 +222,7 @@ def splitArchs():
       cmdlineArchs += [arch]
   return archs, cmdlineArchs
 
-def buildSourceCodeObjectFile(CxxCompiler, outputPath, kernelFile):
+def buildSourceCodeObjectFile(CxxCompiler, outputPath, kernelFile, dbpTag):
     buildPath = ensurePath(os.path.join(globalParameters['WorkingPath'], 'code_object_tmp'))
     destDir = ensurePath(os.path.join(outputPath, 'library'))
     (_, filename) = os.path.split(kernelFile)
@@ -280,16 +280,16 @@ def buildSourceCodeObjectFile(CxxCompiler, outputPath, kernelFile):
           if matched:
             arch = re.sub(":", "-", matched.group())
             if "TensileLibrary" in base and "fallback" in base:
-              outfile = os.path.join(buildPath, "{0}_{1}.hsaco".format(base, arch))
+              outfile = os.path.join(buildPath, "{0}_{1}{2}.hsaco".format(base, arch, dbpTag))
             elif "TensileLibrary" in base:
               variant = [t for t in ["", "xnack-", "xnack+"] if t in target][-1]
               baseVariant = base+"-"+variant if variant else base
               if arch in baseVariant:
-                outfile = os.path.join(buildPath, baseVariant+".hsaco")
+                outfile = os.path.join(buildPath, baseVariant+dbpTag+".hsaco")
               else:
                 outfile = None
             else:
-              outfile = os.path.join(buildPath, "{0}-000-{1}.hsaco".format(soFilename, arch))
+              outfile = os.path.join(buildPath, "{0}-000-{1}{2}.hsaco".format(soFilename, arch, dbpTag))
 
             #Compilation
             if outfile:
@@ -303,7 +303,7 @@ def buildSourceCodeObjectFile(CxxCompiler, outputPath, kernelFile):
 
       except subprocess.CalledProcessError:
         for i in range(len(archs)):
-          outfile = os.path.join(buildPath, "{0}-000-{1}.hsaco".format(soFilename, archs[i]))
+          outfile = os.path.join(buildPath, "{0}-000-{1}{2}.hsaco".format(soFilename, archs[i], dbpTag))
           coFilenames.append(os.path.split(outfile)[1])
           #bundlerArgs = [globalParameters["ClangOffloadBundlerPath"], "-type=o", "-targets=hip-amdgcn-amd-amdhsa--%s" % cmdlineArchs[i], "-inputs=%s" % infile, "-outputs=%s" % outfile, "-unbundle"]
           bundlerArgs = [globalParameters["ClangOffloadBundlerPath"], "-type=o", "-targets=hip-amdgcn-amd-amdhsa--%s" % cmdlineArchs[i],
@@ -337,8 +337,8 @@ def buildSourceCodeObjectFile(CxxCompiler, outputPath, kernelFile):
 
     return destCosList
 
-def buildSourceCodeObjectFiles(CxxCompiler, kernelFiles, outputPath):
-    args    = zip(itertools.repeat(CxxCompiler), itertools.repeat(outputPath), kernelFiles)
+def buildSourceCodeObjectFiles(CxxCompiler, kernelFiles, outputPath, dbpTag):
+    args    = zip(itertools.repeat(CxxCompiler), itertools.repeat(outputPath), kernelFiles, itertools.repeat(dbpTag))
     coFiles = Common.ParallelMap(buildSourceCodeObjectFile, args, "Compiling source kernels", method=lambda x: x.starmap)
 
     return itertools.chain.from_iterable(coFiles)
@@ -485,7 +485,7 @@ def buildKernelSourceAndHeaderFiles(results, outputPath, kernelsWithBuildErrs):
 ################################################################################
 @timing
 def writeSolutionsAndKernels(outputPath, CxxCompiler, problemTypes, solutions, kernels, kernelHelperObjs, \
-    kernelWriterAssembly, errorTolerant=False):
+    kernelWriterAssembly, dbpTag="", errorTolerant=False):
 
   codeObjectFiles = []
 
@@ -626,8 +626,8 @@ def writeSolutionsAndKernels(outputPath, CxxCompiler, problemTypes, solutions, k
       kernelHeaderFile.close()
 
   if not globalParameters["GenerateSourcesAndExit"]:
-    codeObjectFiles += buildSourceCodeObjectFiles(CxxCompiler, kernelFiles, outputPath)
-    codeObjectFiles += getAssemblyCodeObjectFiles(kernelsToBuild, kernelWriterAssembly, outputPath)
+    codeObjectFiles += buildSourceCodeObjectFiles(CxxCompiler, kernelFiles, outputPath, dbpTag)
+    codeObjectFiles += getAssemblyCodeObjectFiles(kernelsToBuild, kernelWriterAssembly, outputPath, dbpTag)
 
   Common.popWorkingPath() # build_tmp
   Common.popWorkingPath() # workingDir
@@ -808,7 +808,7 @@ def copyStaticFiles(outputPath=None):
   return libraryStaticFiles
 
 @timing
-def buildObjectFileNames(kernelWriterAssembly, kernels, kernelHelperObjs):
+def buildObjectFileNames(kernelWriterAssembly, kernels, kernelHelperObjs, dbpTag):
 
   # Build lists of output object names
   sourceKernelNames = []
@@ -874,23 +874,23 @@ def buildObjectFileNames(kernelWriterAssembly, kernels, kernelHelperObjs):
 
     for kernelName in (allSources):
       if (cxxCompiler == 'hipcc'):
-        sourceLibFiles += ["%s.so-000-%s.hsaco" % (kernelName, arch) for arch in sourceArchs]
+        sourceLibFiles += ["%s.so-000-%s%s.hsaco" % (kernelName, arch, dbpTag) for arch in sourceArchs]
       else:
         raise RuntimeError("Unknown compiler {}".format(cxxCompiler))
   elif globalParameters["NumMergedFiles"] > 1:
     if (cxxCompiler == 'hipcc'):
       for kernelIndex in range(0, globalParameters["NumMergedFiles"]):
-        sourceLibFiles += ["Kernels%d.so-000-%s.hsaco" % (kernelIndex, arch) for arch in sourceArchs]
+        sourceLibFiles += ["Kernels%d.so-000-%s%s.hsaco" % (kernelIndex, arch, dbpTag) for arch in sourceArchs]
     else:
       raise RuntimeError("Unknown compiler {}".format(cxxCompiler))
   elif globalParameters["LazyLibraryLoading"]:
     fallbackLibs = list(set([kernel._state["codeObjectFile"] for kernel in kernels if "fallback" in kernel._state.get('codeObjectFile', "")]))
     sourceLibFiles += ["{0}_{1}.hsaco".format(name, arch) for name, arch in itertools.product(fallbackLibs, sourceArchs)]
     if (cxxCompiler == 'hipcc'):
-      sourceLibFiles += ["Kernels.so-000-%s.hsaco" % (arch) for arch in sourceArchs]
+      sourceLibFiles += ["Kernels.so-000-%s%s.hsaco" % (arch, dbpTag) for arch in sourceArchs]
   else: # Merge
     if (cxxCompiler == 'hipcc'):
-      sourceLibFiles += ["Kernels.so-000-%s.hsaco" % (arch) for arch in sourceArchs]
+      sourceLibFiles += ["Kernels.so-000-%s%s.hsaco" % (arch, dbpTag) for arch in sourceArchs]
     else:
       raise RuntimeError("Unknown compiler {}".format(cxxCompiler))
 
@@ -911,7 +911,7 @@ def buildObjectFileNames(kernelWriterAssembly, kernels, kernelHelperObjs):
                        and k._state['KernelLanguage'] == "Assembly"
 
 
-    asmLibFiles += list(set([kernel._state["codeObjectFile"]+".co" for kernel in kernels if cond(kernel)]))
+    asmLibFiles += list(set([kernel._state["codeObjectFile"]+"%s.co" % (dbpTag) for kernel in kernels if cond(kernel)]))
 
     # If architecture specific source kernel with codeObjectFile specified
     cond = lambda k : "codeObjectFile" in k._state                     \
@@ -925,16 +925,16 @@ def buildObjectFileNames(kernelWriterAssembly, kernels, kernelHelperObjs):
   elif globalParameters["MergeFiles"]:
     # Find all unique arch values for current asm kernels
     uniqueArchs = set(itertools.chain(*asmArchs.values()))
-    asmLibFiles += ["TensileLibrary_%s.co" % (arch) for arch in uniqueArchs]
+    asmLibFiles += ["TensileLibrary_%s%s.co" % (arch, dbpTag) for arch in uniqueArchs]
 
   else:
     for asmKernelName, archs in asmArchs.items():
-      asmLibFiles += ["%s_%s.co" % (asmKernelName, str(arch)) for arch in archs]
+      asmLibFiles += ["%s_%s%s.co" % (asmKernelName, str(arch), dbpTag) for arch in archs]
 
   return (solutionFiles, sourceKernelFiles, asmKernelFiles, sourceLibFiles, asmLibFiles)
 
 @timing
-def buildObjectFilePaths(prefixDir, solutionFiles, sourceKernelFiles, asmKernelFiles, sourceLibFiles, asmLibFiles, masterLibraries):
+def buildObjectFilePaths(prefixDir, solutionFiles, sourceKernelFiles, asmKernelFiles, sourceLibFiles, asmLibFiles, masterLibraries, dbpTag):
   solutionPaths = []
   sourceKernelPaths = []
   asmKernelPaths = []
@@ -963,7 +963,7 @@ def buildObjectFilePaths(prefixDir, solutionFiles, sourceKernelFiles, asmKernelF
 
   libraryExt = ".yaml" if globalParameters["LibraryFormat"] == "yaml" else ".dat"
   if not globalParameters["SeparateArchitectures"] and not globalParameters["LazyLibraryLoading"]:
-    libMetadataPaths = [ os.path.join(libDir, "TensileLibrary"+libraryExt) ]
+    libMetadataPaths = [ os.path.join(libDir, "TensileLibrary"+dbpTag+libraryExt) ]
 
   for sourceLibFile in sourceLibFiles:
     sourceLibPaths += [ os.path.join(libDir, sourceLibFile) ]
@@ -972,9 +972,9 @@ def buildObjectFilePaths(prefixDir, solutionFiles, sourceKernelFiles, asmKernelF
   newMetadataPaths = set()
   for arch, lib in masterLibraries.items():
     if globalParameters["LazyLibraryLoading"]:
-      newMetadataPaths.add(os.path.join(libDir, "TensileLibrary_lazy_"+arch+libraryExt))
+      newMetadataPaths.add(os.path.join(libDir, "TensileLibrary_lazy_"+arch+dbpTag+libraryExt))
     else:
-      newMetadataPaths.add(os.path.join(libDir, "TensileLibrary_"+arch+libraryExt))
+      newMetadataPaths.add(os.path.join(libDir, "TensileLibrary_"+arch+dbpTag+libraryExt))
     for name, placeholder in lib.lazyLibraries.items():
       newMetadataPaths.add(os.path.join(libDir, name+libraryExt))
 
@@ -1000,13 +1000,13 @@ def buildObjectFilePaths(prefixDir, solutionFiles, sourceKernelFiles, asmKernelF
 # Write CMake
 ################################################################################
 @timing
-def writeCMake(outputPath, solutionFiles, kernelFiles, libraryStaticFiles, masterLibraries):
+def writeCMake(outputPath, solutionFiles, kernelFiles, libraryStaticFiles, masterLibraries, dbpTag):
   print1("# Writing Custom CMake")
 
   # Build output file paths, using relative CMake symbol
   cmakeSrcDir = "${CMAKE_SOURCE_DIR}"
   (solutionPaths, sourceKernelPaths, asmKernelPaths, sourceLibPaths, asmLibPaths, _) = \
-    buildObjectFilePaths(cmakeSrcDir, solutionFiles, kernelFiles, [], [], [], masterLibraries)
+    buildObjectFilePaths(cmakeSrcDir, solutionFiles, kernelFiles, [], [], [], masterLibraries, dbpTag)
 
   # Build full paths the static library files
   staticFilePaths = []
@@ -1062,7 +1062,7 @@ def generateKernelObjectsFromSolutions(solutions):
 # Generate Logic Data and Solutions
 ################################################################################
 @timing
-def generateLogicDataAndSolutions(logicFiles, args):
+def generateLogicDataAndSolutions(logicFiles, args, debugBreakPoint):
 
   # skip the logic which architectureName is not in the build target.
   if ";" in args.Architecture:
@@ -1070,18 +1070,17 @@ def generateLogicDataAndSolutions(logicFiles, args):
   else:
     archs = args.Architecture.split("_") # workaround for cmake list in list issue
 
-  fIter = zip(logicFiles, itertools.repeat(archs))
-  libraries = Common.ParallelMap(LibraryIO.parseLibraryLogicFile, fIter, "Reading logic files", method=lambda x: x.starmap)
+  fIter = zip(logicFiles, itertools.repeat(archs), itertools.repeat(debugBreakPoint))
+
+  libraries = Common.ParallelMap(LibraryIO.parseLibraryLogicFile, fIter, "Reading logic files", enable=True, method=lambda x: x.starmap)
 
   solutions = []
   masterLibraries = {}
   fullMasterLibrary = None
 
   nextSolIndex = 0
-
   for logic in filter(lambda i: i[1] != "", Utils.tqdm(libraries, "Processing logic data")):
-    (_, architectureName, _, _, _, newLibrary, _) = logic
-
+    (_, architectureName, _, _, _, newLibrary, srcFile) = logic
     if globalParameters["PackageLibrary"]:
       if architectureName in masterLibraries:
         masterLibraries[architectureName].merge(newLibrary)
@@ -1159,7 +1158,7 @@ def writeBenchmarkClientFiles(libraryWorkingPath, tensileSourcePath, solutions, 
   problemType = solutions[0]["ProblemType"]
   codeObjectFiles = writeSolutionsAndKernels( \
     libraryWorkingPath, cxxCompiler, [problemType], solutions, kernels, kernelsBetaOnly, \
-    kernelWriterAssembly, errorTolerant=True )
+    kernelWriterAssembly, dbpTag, errorTolerant=True)
 
   newLibraryDir = ensurePath(os.path.join(libraryWorkingPath, 'library'))
   newLibraryFile = os.path.join(newLibraryDir, "TensileLibrary.yaml")
@@ -1268,6 +1267,10 @@ def TensileCreateLibrary():
                          help="Generate solution-yaml matching table")
   argParser.add_argument("--asm-debug", dest="AsmDebug", action="store_true", default=False,
                          help="Keep debug information for built code objects")
+  argParser.add_argument("--enable-dbp", dest="EnableDBP", action="store_true", default=False,
+                         help="Enable debug break points")
+  argParser.add_argument("--dbp", dest="DBP", type=int, default=-1,
+                         help="Value of debug breakpoint")
 
   args = argParser.parse_args()
 
@@ -1319,6 +1322,9 @@ def TensileCreateLibrary():
   print1("# CxxCompiler       from TensileCreateLibrary: %s" % CxxCompiler)
   print1("# Architecture      from TensileCreateLibrary: %s" % arguments["Architecture"])
   print1("# LibraryFormat     from TensileCreateLibrary: %s" % libraryFormat)
+  if args.EnableDBP:
+    print1("# EnableDBP         from TensileCreateLibrary: %s" % args.EnableDBP)
+    print1("# DebugBreakPoints  from TensileCreateLibrary: %s" % args.DBP)
 
   if not os.path.exists(logicPath):
     printExit("LogicPath %s doesn't exist" % logicPath)
@@ -1345,6 +1351,7 @@ def TensileCreateLibrary():
                        and (any(logicArch in os.path.splitext(f)[0] for logicArch in logicArchs) \
                        or "hip" in os.path.splitext(f)[0]) ]
 
+  logicFiles.sort() #sort logic files.
   print1("# LibraryLogicFiles:" % logicFiles)
   for logicFile in logicFiles:
     print1("#   %s" % logicFile)
@@ -1353,8 +1360,13 @@ def TensileCreateLibrary():
   # Parse config files
   ##############################################################################
 
+  dbp = -1
+  if args.EnableDBP:
+    dbp = args.DBP
+  dbpTag = f"_dbp{dbp}" if not (dbp == -1 or dbp == 0) else ""
+
   # Parse logicData, solutions, and masterLibraries from logic files
-  solutions, masterLibraries, fullMasterLibrary = generateLogicDataAndSolutions(logicFiles, args)
+  solutions, masterLibraries, fullMasterLibrary = generateLogicDataAndSolutions(logicFiles, args, dbp)
 
   kernels, kernelHelperObjs, _ = generateKernelObjectsFromSolutions(solutions)
 
@@ -1368,7 +1380,7 @@ def TensileCreateLibrary():
    sourceKernelFiles,
    asmKernelFiles,
    sourceLibFiles,
-   asmLibFiles) = buildObjectFileNames(kernelWriterAssembly, kernels, kernelHelperObjs)
+   asmLibFiles) = buildObjectFileNames(kernelWriterAssembly, kernels, kernelHelperObjs, dbpTag)
 
   (_,
    _,
@@ -1376,12 +1388,12 @@ def TensileCreateLibrary():
    sourceLibPaths,
    asmLibPaths,
    libMetadataPaths) = buildObjectFilePaths(outputPath, solutionFiles, sourceKernelFiles, \
-    asmKernelFiles, sourceLibFiles, asmLibFiles, masterLibraries)
+    asmKernelFiles, sourceLibFiles, asmLibFiles, masterLibraries, dbpTag)
 
   # Generate manifest file
   libraryPath = os.path.join(outputPath, "library")
   ensurePath(libraryPath)
-  generatedFile = open(os.path.join(libraryPath, "TensileManifest.txt"), "w")
+  generatedFile = open(os.path.join(libraryPath, f"TensileManifest{dbpTag}.txt"), "w")
 
   # Manifest file contains YAML file, output library paths and cpp source for embedding.
   for filePath in libMetadataPaths + sourceLibPaths + asmLibPaths:
@@ -1393,7 +1405,7 @@ def TensileCreateLibrary():
 
   # generate cmake for the source kernels,
   if not arguments["GenerateSourcesAndExit"]:
-    writeCMake(outputPath, solutionFiles, sourceKernelFiles, staticFiles, masterLibraries)
+    writeCMake(outputPath, solutionFiles, sourceKernelFiles, staticFiles, masterLibraries, dbpTag)
 
   # Make sure to copy the library static files.
   for fileName in staticFiles:
@@ -1402,7 +1414,7 @@ def TensileCreateLibrary():
 
   # write solutions and kernels
   codeObjectFiles = writeSolutionsAndKernels(outputPath, CxxCompiler, None, solutions,
-                                             kernels, kernelHelperObjs, kernelWriterAssembly)
+                                            kernels, kernelHelperObjs, kernelWriterAssembly, dbpTag)
 
   bothLibSet = set(sourceLibPaths + asmLibPaths)
   setA = set( map( os.path.normcase, set(codeObjectFiles) ) )
@@ -1434,9 +1446,9 @@ def TensileCreateLibrary():
     for archName, newMasterLibrary in masterLibraries.items():
       if archName in archs:
         if globalParameters["LazyLibraryLoading"]:
-          masterFile = os.path.join(newLibraryDir, "TensileLibrary_lazy_"+archName)
+          masterFile = os.path.join(newLibraryDir, "TensileLibrary_lazy_"+archName+dbpTag)
         else:
-          masterFile = os.path.join(newLibraryDir, "TensileLibrary_"+archName)
+          masterFile = os.path.join(newLibraryDir, "TensileLibrary_"+archName+dbpTag)
         newMasterLibrary.applyNaming(kernelMinNaming)
         LibraryIO.write(masterFile, Utils.state(newMasterLibrary), args.LibraryFormat)
 
@@ -1447,7 +1459,7 @@ def TensileCreateLibrary():
           LibraryIO.write(filename, Utils.state(lib), args.LibraryFormat)
 
   else:
-    masterFile = os.path.join(newLibraryDir, "TensileLibrary")
+    masterFile = os.path.join(newLibraryDir, "TensileLibrary"+dbpTag)
     fullMasterLibrary.applyNaming = timing(fullMasterLibrary.applyNaming)
     fullMasterLibrary.applyNaming(kernelMinNaming)
     LibraryIO.write(masterFile, Utils.state(fullMasterLibrary), args.LibraryFormat)

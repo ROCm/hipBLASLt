@@ -217,6 +217,7 @@ hipblasStatus_t hipblasltSoftmaxRun(hipblasltDatatype_t datatype, uint32_t m, ui
         {numWorkgroups, 1, 1},
         {numWorkgroups * WORKGROUP_SIZE, 1, 1},
         getLdsUsageByte(datatype, tileM, tileN),
+        false,
         kArgs
     };
 

@@ -257,6 +257,7 @@ namespace Tensile
                 ("use-gradient",              po::value<bool>()->default_value(false), "Use gradient.")
                 ("use-user-args",             po::value<bool>()->default_value(false), "Use user argument structure as kernel input.")
                 ("rotating-buffer-size",      po::value<int32_t>()->default_value(0), "Size of rotating buffer in the unit of MB.")
+                ("debug-break-points",        po::value<int32_t>()->default_value(0), "Debug break points")
                 ;
             // clang-format on
 

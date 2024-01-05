@@ -50,11 +50,14 @@ def generateForkedSolutions(problemType, constantParams, forkPermutations):
 
     solutions = []
     solutionSet = set()
+
+    debugBreakPoints = int(os.environ.get("DEBUG_BREAK_POINTS", -1))
     for perm in forkPermutations:
         solution = {"ProblemType": deepcopy(problemType.state)}
         solution.update(constantParams)
         solution.update(perm)
-
+        if debugBreakPoints > 0:
+            solution["ProblemType"]["DebugBreakPoints"] = debugBreakPoints
         # TODO check if solution matches problem size for exact tile kernels
         solutionObject = Solution(solution)
         if solutionObject["Valid"]:

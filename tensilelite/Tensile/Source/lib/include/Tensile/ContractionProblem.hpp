@@ -198,6 +198,16 @@ namespace Tensile
             return m_useDeviceUserArguments;
         }
 
+        void setDebugBreakPoints(int value)
+        {
+            m_debugBreakPoints = value;
+        }
+
+        int debugBreakPoints() const
+        {
+            return m_debugBreakPoints;
+        }
+
     protected:
         friend class ContractionProblemGemm;
         std::vector<TensorDescriptor> m_tensors;
@@ -210,6 +220,7 @@ namespace Tensile
         DataType m_computeInputType;
 
         bool m_useDeviceUserArguments = false;
+        int m_debugBreakPoints = -1;
     };
 
     /**
