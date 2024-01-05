@@ -238,7 +238,7 @@ hipblasStatus_t hipblasltSoftmaxRun(hipDataType datatype,
     const auto archName   = trimArchName(gpu->archName());
     auto       &masterLib = getExtOpMasterLibrary();
     const auto &lib       = masterLib.getLibrary(archName, SoftmaxSolutionLibrary::opName)->as<SoftmaxSolutionLibrary>();
-    auto       sol        = lib.findBestSolution(SoftmaxProblem(m, n, hipblasltDatatype_to_tensile_type(datatype)), *gpu);
+    auto       sol        = lib.findBestSolution(SoftmaxProblem(m, n, hipDataType_to_tensile_type(datatype)), *gpu);
     const auto kernelName = sol->name();
     err                   = adapter->initKernel(kernelName);
     Tensile::KernelArguments kArgs(false);
@@ -293,7 +293,7 @@ hipblasStatus_t hipblasltLayerNormRun(hipDataType datatype,
     const auto archName = trimArchName(gpu->archName());
     auto &masterLib = getExtOpMasterLibrary();
     const auto &lib = masterLib.getLibrary(archName, LayerNormSolutionLibrary::opName)->as<LayerNormSolutionLibrary>();
-    auto sol = lib.findBestSolution(LayerNormProblem(m, n, hipblasltDatatype_to_tensile_type(datatype)), *gpu);
+    auto sol = lib.findBestSolution(LayerNormProblem(m, n, hipDataType_to_tensile_type(datatype)), *gpu);
     const auto kernelName = sol->name();
     err = adapter->initKernel(kernelName);
     const auto numWorkgroups = m;
