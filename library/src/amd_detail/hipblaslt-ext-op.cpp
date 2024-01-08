@@ -145,35 +145,35 @@ namespace {
         return lib;
     }
 
-    std::vector<std::unique_ptr<Tensile::hip::SolutionAdapter>> &extOpLibraries() {
-        static std::vector<std::unique_ptr<Tensile::hip::SolutionAdapter>> adapters;
+    static auto& getExtOpLibraries() {
+        static auto extOpLibraries = []() {
+            static std::vector<std::unique_ptr<Tensile::hip::SolutionAdapter>> adapters;
 
-        if (adapters.size()) {
-            return adapters;
-        }
+            int numDevices{};
+            auto err = hipGetDeviceCount(&numDevices);
 
-        int numDevices{};
-        auto err = hipGetDeviceCount(&numDevices);
-
-        for (std::size_t i = 0; i < numDevices; ++i) {
-            adapters.emplace_back(std::make_unique<Tensile::hip::SolutionAdapter>());
-        }
-
-        int currentDevice{};
-        err = hipGetDevice(&currentDevice);
-
-        try {
-            auto &lib = getExtOpMasterLibrary();
-
-            for (auto &adapter : adapters) {
-                //setup code object root only, ignore the error
-                err = adapter->initializeLazyLoading("", lib.getLibraryFolder());
+            for (std::size_t i = 0; i < numDevices; ++i) {
+                adapters.emplace_back(std::make_unique<Tensile::hip::SolutionAdapter>());
             }
-        } catch (const std::runtime_error& e) {
-            rocblaslt_log_error("extOpLibraries", "ExtOpLibPath", getExtOpLibraryPath().c_str());
-        }
 
-        return adapters;
+            int currentDevice{};
+            err = hipGetDevice(&currentDevice);
+
+            try {
+                auto &lib = getExtOpMasterLibrary();
+
+                for (auto &adapter : adapters) {
+                    //setup code object root only, ignore the error
+                    err = adapter->initializeLazyLoading("", lib.getLibraryFolder());
+                }
+            } catch (const std::runtime_error& e) {
+                rocblaslt_log_error("getExtOpLibraries", "ExtOpLibPath", getExtOpLibraryPath().c_str());
+            }
+
+            return adapters;
+        }();
+
+        return extOpLibraries;
     }
 }
 
@@ -196,7 +196,7 @@ hipblasStatus_t hipblasltSoftmaxRun(hipblasltDatatype_t datatype, uint32_t m, ui
 
     int currentDeviceId{};
     auto err = hipGetDevice(&currentDeviceId);
-    auto &adapter = extOpLibraries().at(currentDeviceId);
+    auto &adapter = getExtOpLibraries().at(currentDeviceId);
     auto gpu = Tensile::hip::GetCurrentDevice();
     const auto archName = trimArchName(gpu->archName());
     auto &masterLib = getExtOpMasterLibrary();
@@ -241,7 +241,7 @@ hipblasStatus_t hipblasltLayerNormRun(hipblasltDatatype_t datatype, void *output
 
     int currentDeviceId{};
     auto err = hipGetDevice(&currentDeviceId);
-    auto &adapter = extOpLibraries().at(currentDeviceId);
+    auto &adapter = getExtOpLibraries().at(currentDeviceId);
     auto gpu = Tensile::hip::GetCurrentDevice();
     const auto archName = trimArchName(gpu->archName());
     auto &masterLib = getExtOpMasterLibrary();
@@ -298,7 +298,7 @@ hipblasStatus_t hipblasltAMaxRun(const hipblasltDatatype_t datatype, const hipbl
     uint32_t len = m * n;
     int currentDeviceId{};
     auto err = hipGetDevice(&currentDeviceId);
-    auto &adapter = extOpLibraries().at(currentDeviceId);
+    auto &adapter = getExtOpLibraries().at(currentDeviceId);
     auto gpu = Tensile::hip::GetCurrentDevice();
     const auto archName = trimArchName(gpu->archName());
     auto &masterLib = getExtOpMasterLibrary();
