@@ -1,6 +1,6 @@
 ################################################################################
 #
-# Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -1399,6 +1399,25 @@ def printTable(rows):
       pad = ' ' * (width - len(cell))
       print(pad, cell, sep='', end=' ')
     print()
+
+def checkParametersAreValid(param, validParams):
+    """Ensures paramaters in params exist and have valid values as specified by validParames"""
+    (name, values) = param
+    if name == "ProblemSizes":
+        return
+    elif name == "InternalSupportParams":
+        return
+
+    if name not in validParams:
+        printExit("Invalid parameter name: {}\nValid parameters are {}." \
+                .format(name, sorted(validParameters.keys())))
+
+    for value in values:
+        if validParams[name] != -1 and value not in validParams[name]:
+            msgBase = "Invalid parameter value: {} = {}\nValid values for {} are {}{}."
+            msgExt = " (only first 32 combos printed)\nRefer to Common.py for more info" \
+                    if len(validParams[name])>32 else ""
+            printExit(msgBase.format(name, value, name, validParams[name][:32], msgExt))
 
 def printCapTable(parameters):
   import itertools

@@ -1,6 +1,6 @@
 ################################################################################
 #
-# Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -33,7 +33,7 @@ from . import ClientExecutable
 from . import SolutionLibrary
 from . import LibraryIO
 from . import Utils
-from .BenchmarkStructs import BenchmarkProcess, checkParametersAreValid, constructForkPermutations
+from .BenchmarkStructs import BenchmarkProcess, constructForkPermutations
 from .Contractions import ProblemType as ContractionsProblemType
 from .ClientWriter import runClient, writeClientConfig, writeClientConfigIni
 from .Common import globalParameters, HR, pushWorkingPath, popWorkingPath, print1, print2, \
@@ -69,20 +69,7 @@ def generateForkedSolutions(problemType, constantParams, forkPermutations):
 
 def getCustomKernelSolutionObj(kernelName, internalSupportParams, directory=globalParameters["CustomKernelDirectory"]):
     """Creates the Solution object for a custom kernel"""
-    kernelConfig = getCustomKernelConfig(kernelName, directory)
-    if "InternalSupportParams" not in kernelConfig:
-        kernelConfig["InternalSupportParams"] = internalSupportParams
-    else:
-        for key in internalSupportParams:
-            if key not in kernelConfig["InternalSupportParams"]:
-                kernelConfig["InternalSupportParams"][key] = internalSupportParams[key]
-    for k, v in kernelConfig.items():
-        if k != "ProblemType":
-            checkParametersAreValid((k, [v]), validParameters)
-    kernelConfig["KernelLanguage"] = "Assembly"
-    kernelConfig["CustomKernelName"] = kernelName
-
-    return Solution(kernelConfig)
+    return Solution(getCustomKernelConfig(kernelName, internalSupportParams, directory))
 
 
 def generateCustomKernelSolutions(problemType, customKernels, internalSupportParams, failOnMismatch):

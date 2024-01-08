@@ -1,6 +1,6 @@
 ################################################################################
 #
-# Copyright (C) 2022 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -22,7 +22,7 @@
 #
 ################################################################################
 
-from .Common import globalParameters
+from .Common import globalParameters, checkParametersAreValid, validParameters
 
 import yaml
 
@@ -57,9 +57,25 @@ def getCustomKernelConfigAndAssembly(name, directory=globalParameters["CustomKer
 
     return (config, assembly)
 
-def getCustomKernelConfig(name, directory=globalParameters["CustomKernelDirectory"]):
+def readCustomKernelConfig(name, directory=globalParameters["CustomKernelDirectory"]):
     rawConfig, _ = getCustomKernelConfigAndAssembly(name, directory)
     try:
         return yaml.safe_load(rawConfig)["custom.config"]
     except yaml.scanner.ScannerError as e:
         raise RuntimeError("Failed to read configuration for custom kernel: {0}\nDetails:\n{1}".format(name, e))
+
+def getCustomKernelConfig(kernelName, internalSupportParams, directory=globalParameters["CustomKernelDirectory"]):
+    kernelConfig = readCustomKernelConfig(kernelName, directory)
+    if "InternalSupportParams" not in kernelConfig:
+        kernelConfig["InternalSupportParams"] = internalSupportParams
+    else:
+        for key in internalSupportParams:
+            if key not in kernelConfig["InternalSupportParams"]:
+                kernelConfig["InternalSupportParams"][key] = internalSupportParams[key]
+    for k, v in kernelConfig.items():
+        if k != "ProblemType":
+            checkParametersAreValid((k, [v]), validParameters)
+    kernelConfig["KernelLanguage"] = "Assembly"
+    kernelConfig["CustomKernelName"] = kernelName
+
+    return kernelConfig
