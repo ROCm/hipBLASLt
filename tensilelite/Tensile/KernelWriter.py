@@ -781,8 +781,33 @@ class KernelWriter(metaclass=abc.ABCMeta):
         instPerRegPack = 1 / kernel["ProblemType"]["DataType"].numRegisters() - 1
       else:
         instPerRegPack = 1 if (kernel["ProblemType"]["DataType"].numRegisters() == 0.25) else 0
-      instPerPackA    = (6 if kernel["ConvertAfterDS"] else 0) if kernel["UnrollMajorLDSA"] else int(kernel["MIInputPerThreadA"] * kernel["ProblemType"]["DataType"].numRegisters() * instPerRegPack)
-      instPerPackB    = (6 if kernel["ConvertAfterDS"] else 0) if kernel["UnrollMajorLDSB"] else int(kernel["MIInputPerThreadB"] * kernel["ProblemType"]["DataType"].numRegisters() * instPerRegPack)
+      instPerPackA    = 0 if kernel["UnrollMajorLDSA"] else int(kernel["MIInputPerThreadA"] * kernel["ProblemType"]["DataType"].numRegisters() * instPerRegPack)
+      instPerPackB    = 0 if kernel["UnrollMajorLDSB"] else int(kernel["MIInputPerThreadB"] * kernel["ProblemType"]["DataType"].numRegisters() * instPerRegPack)
+      if kernel["ConvertAfterDS"]:
+         if kernel["ProblemType"]["DataTypeA"].isFloat8():
+             if kernel["UnrollMajorLDSA"]:
+                 instPerPackA = 6
+             elif self.states.lrvwTileA == 1:
+                 instPerPackA = 8
+             elif self.states.lrvwTileA == 2:
+                 instPerPackA = 16
+             elif self.states.lrvwTileA == 4:
+                 instPerPackA = 36
+             elif self.states.lrvwTileA == 8:
+                 instPerPackA = 76
+
+         if kernel["ProblemType"]["DataTypeB"].isFloat8():
+             if kernel["UnrollMajorLDSB"]:
+                 instPerPackB = 6
+             elif self.states.lrvwTileB == 1:
+                 instPerPackB = 8
+             elif self.states.lrvwTileB == 2:
+                 instPerPackB = 16
+             elif self.states.lrvwTileB == 4:
+                 instPerPackB = 36
+             elif self.states.lrvwTileB == 8:
+                 instPerPackB = 76
+
       instPerPackM = 0
       if kernel["ProblemType"]["Sparse"] and not kernel["DirectToVgprSparseMetadata"] and not kernel["UnrollMajorLDSMetadata"]:
         instPerPackM = 1.5 if self.states.lrvwTileMetadata > 1 and kernel["MIInputPerThreadMetadata"] == 1 else 1
@@ -1131,8 +1156,9 @@ class KernelWriter(metaclass=abc.ABCMeta):
               iterCode.add(packItems.pop(0))
               curPackIdx += 1
             else:
-              iterCode.add(SNop(waitState=0, comment="VALU packing writes to be consumed by matrix instruction"))
+              iterCode.add(SNop(waitState=1, comment="VALU packing writes to be consumed by matrix instruction"))
               curPackIdx += 1
+              break
         if i == numMfmaPerIter - 1:
           while packItems:
             iterCode.add(packItems.pop(0))
@@ -3267,7 +3293,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
       if self.states.lrvwTileA > 1:
         numVgprValuPackA = ceil(kernel["VectorWidthA"] * tensorParametersA["bpe"] / self.states.bpr) * kernel["MIWaveTileA"] // kernel["VectorWidthA"] * kernel["InnerUnroll"] * self.states.numVgprBuffer * kernel["MIInputPerThreadA"]
       else:
-        numVgprValuPackA = self.states.a.numVgprValuPerBlock * kernel["InnerUnroll"] * self.states.numVgprBufferPackA * (int(4/tensorParametersA["bpe"]) - 1)
+        numVgprValuPackA = self.states.a.numVgprValuPerBlock * kernel["InnerUnroll"] * self.states.numVgprBufferPackA * (int(4/tensorParametersA["bpeDS"]) - 1)
     vgprIdx += numVgprValuPackA
     self.states.a.startVgprG2L = None
     if not kernel["DirectToLdsA"] or self.do["KeepDirectToLdsAlloc"]:
@@ -3290,7 +3316,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
       if self.states.lrvwTileB > 1:
         numVgprValuPackB = ceil(kernel["VectorWidthB"] * tensorParametersB["bpe"] / self.states.bpr) * kernel["MIWaveTileB"] // kernel["VectorWidthB"] * kernel["InnerUnroll"] * self.states.numVgprBuffer * kernel["MIInputPerThreadB"]
       else:
-        numVgprValuPackB = self.states.b.numVgprValuPerBlock * kernel["InnerUnroll"] * self.states.numVgprBufferPackB * (int(4/tensorParametersB["bpe"]) - 1)
+        numVgprValuPackB = self.states.b.numVgprValuPerBlock * kernel["InnerUnroll"] * self.states.numVgprBufferPackB * (int(4/tensorParametersB["bpeDS"]) - 1)
     vgprIdx += numVgprValuPackB
     self.states.b.startVgprG2L = None
     if not kernel["DirectToLdsB"] or self.do["KeepDirectToLdsAlloc"]:

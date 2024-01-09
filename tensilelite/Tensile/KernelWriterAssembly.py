@@ -321,8 +321,7 @@ class KernelWriterAssembly(KernelWriter):
 
     #localReadStridePerpendicular = 0
     localRead2Perpendicular = False
-    localReadStrideCoalesced = \
-        kernel[tP["tt"]] * tP["bpeDS"]//bpr
+    localReadStrideCoalesced = kernel[tP["tt"]] * tP["bpeDS"] // bpr
     localRead2Coalesced = False
     localReadInstructionIdx = self.selectMemoryInstruction("LocalRead", localReadWidth, \
                               False, \
@@ -559,7 +558,7 @@ class KernelWriterAssembly(KernelWriter):
             ri += self.states.a.numVgprValuPerBlock
         ri = 0
         if tPA["bpe"] < 4 and not kernel["UnrollMajorLDSA"]:
-          for data in range(1,int(self.states.bpr/tPA["bpe"])):
+          for data in range(1,int(self.states.bpr/tPA["bpeDS"])):
             for bi in range(0,PLR): # buffer indices
               if bi % self.states.numVgprBufferPackA == 0:
                 ri = (data-1) * kernel["InnerUnroll"] * self.states.numVgprBufferPackA * self.states.a.numVgprValuPerBlock
@@ -590,7 +589,7 @@ class KernelWriterAssembly(KernelWriter):
             ri += self.states.b.numVgprValuPerBlock
         ri = 0
         if tPB["bpe"] < 4 and not kernel["UnrollMajorLDSB"]:
-          for data in range(1,int(self.states.bpr/tPB["bpe"])):
+          for data in range(1,int(self.states.bpr/tPB["bpeDS"])):
             for bi in range(0,PLR): # buffer indices
               if bi % self.states.numVgprBufferPackB == 0:
                 ri = (data-1) * kernel["InnerUnroll"] * self.states.numVgprBufferPackB * self.states.b.numVgprValuPerBlock
@@ -6172,8 +6171,7 @@ class KernelWriterAssembly(KernelWriter):
             False, \
             tPB["localRead2Coalesced"], localRead2Perpendicular,
             [tPB["localReadStrideCoalesced"]] )
-          tPB["localReadInstruction"] = instructions["LocalRead"][ \
-            localReadInstructionIdxB]
+          tPB["localReadInstruction"] = instructions["LocalRead"][localReadInstructionIdxB]
 
         if kernel["ProblemType"]["Sparse"] and not kernel["DirectToVgprSparseMetadata"]:
           localReadWidth = tPM["bpe"] / self.states.bpr
@@ -6276,12 +6274,12 @@ class KernelWriterAssembly(KernelWriter):
             if tP["glvw"] <= 2:
               g2lIdx = i * blockWidth
               if isBpeInputLarger:
-                g2lIdx *= (tP["bpeGR"]// tP["bpe"])
+                g2lIdx *= (tP["bpeGR"]// tP["bpeDS"])
               g2lIdx = int(g2lIdx)
             else:
               g2lIdx = int(i * blockWidth)
               if isBpeInputLarger:
-                g2lIdx *= (tP["bpeGR"]// tP["bpe"])
+                g2lIdx *= (tP["bpeGR"]// tP["bpeDS"])
 
             graIdx = i * self.states.rpgo if kernel["BufferLoad"] else i * self.states.rpga
 
@@ -6302,7 +6300,7 @@ class KernelWriterAssembly(KernelWriter):
               numVgprG2L = self.states.a.numVgprG2L if tc == 'A' else self.states.b.numVgprG2L if tc == 'B' else self.states.m.numVgprG2L
               eccinstHi = instHi
               # FIXME: Workaround, unique pattern in 8bit + glvw == 2...
-              if tP["bpe"] == tP["bpeGR"] and (tP["globalReadInstruction"].totalWidth) == 0.5 and (blockWidth == 0.25) and not tP["isM"]:
+              if tP["bpeDS"] == tP["bpeGR"] and (tP["globalReadInstruction"].totalWidth) == 0.5 and (blockWidth == 0.25) and not tP["isM"]:
                 eccinstHi = i // 2
               eccOffset = _getEccOffset(tP["globalReadInstruction"].totalWidth, bpr=self.states.bpr, bpe=tP["bpeDS"], \
                 glvw=tP["glvw"], idx=eccinstHi, numVgprG2L=numVgprG2L)
@@ -6313,7 +6311,7 @@ class KernelWriterAssembly(KernelWriter):
             if (blockWidth == 0.25) and ((s % 4) == 0) and (not tP["isM"] or needToSplitMetadata):
                 src = "G2L%s+%u" % (tc, g2lIdx + eccOffset)
                 dst = "G2L%s+%u+%u" % (tc, tmpVgprOffset, g2lIdx)
-                if tP["bpe"] != tP["bpeGR"]:
+                if tP["bpeDS"] != tP["bpeGR"]:
                   if kernel["ProblemType"]["DataType%s"%tc].isHalf():
                     if tP["glvw"] > 1:
                       dst = "G2L%s+%u+%u" % (tc, tmpVgprOffset, g2lIdx // 2)
@@ -6338,7 +6336,7 @@ class KernelWriterAssembly(KernelWriter):
                 paramList.append(vgpr("G2L%s+%u"%(tc, g2lIdx)))
                 numsOfRegister.append(1)
               elif blockWidth == 0.25 and ((s % 2) == 1): # Int8, s = 1 or 3 (high8Bits)
-                if tP["bpe"] != tP["bpeGR"] and tmpVgprOffset != 0:
+                if tP["bpeDS"] != tP["bpeGR"] and tmpVgprOffset != 0:
                   paramList.append(vgpr("G2L%s+%u+%u"%(tc, tmpVgprOffset, g2lIdx // 2)))
                 else:
                   paramList.append(vgpr("G2L%s+%u+%u"%(tc, tmpVgprOffset, g2lIdx)))
@@ -6372,7 +6370,10 @@ class KernelWriterAssembly(KernelWriter):
             #comment = "Reg -> L %u_%u_%u_%u"%(para, sPara, perp, sPerp)
             isHigh16Bits = False
             isCvtHighBits = False
-            if (kernel["ProblemType"]["DataType"].isHalf() or kernel["ProblemType"]["DataType"].isBFloat16()) and not tP["isM"]:
+            if (kernel["ConvertAfterDS"] and kernel["ProblemType"]["DataType%s"%tc].isFloat8() and blockWidth == 0.25):
+              if ((s//2) % 2 == 1):
+                isHigh16Bits = True
+            elif (kernel["ProblemType"]["DataType"].isHalf() or kernel["ProblemType"]["DataType"].isBFloat16()) and not tP["isM"]:
               if s%2==1:
                 isHigh16Bits = True
               if (blockWidth == 0.5) and (instHi % 2 == 1):
