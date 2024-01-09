@@ -147,7 +147,7 @@ namespace {
 
     static auto& getExtOpLibraries() {
         static auto extOpLibraries = []() {
-            static std::vector<std::unique_ptr<Tensile::hip::SolutionAdapter>> adapters;
+            std::vector<std::unique_ptr<Tensile::hip::SolutionAdapter>> adapters;
 
             int numDevices{};
             auto err = hipGetDeviceCount(&numDevices);
