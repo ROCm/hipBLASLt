@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # ########################################################################
-# Copyright (C) 2022 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -359,6 +359,7 @@ matrices_dir_install=
 gpu_architecture=all
 cpu_ref_lib=blis
 tensile_cov=
+tensile_threads=
 tensile_fork=
 tensile_merge_files=
 tensile_tag=
@@ -381,7 +382,7 @@ fi
 # check if we have a modern version of getopt that can handle whitespace and long parameters
 getopt -T
 if [[ $? -eq 4 ]]; then
-  GETOPT_PARSE=$(getopt --name "${0}" --longoptions help,install,clients,dependencies,debug,hip-clang,static,relocatable,codecoverage,relwithdebinfo,address-sanitizer,merge-files,no-merge-files,no_tensile,no-tensile,msgpack,no-msgpack,logic:,cov:,fork:,branch:,test_local_path:,cpu_ref_lib:,build_dir:,use-custom-version:,architecture: --options hicdgrka:o:l:f:b:nu:t: -- "$@")
+  GETOPT_PARSE=$(getopt --name "${0}" --longoptions help,install,clients,dependencies,debug,hip-clang,static,relocatable,codecoverage,relwithdebinfo,address-sanitizer,merge-files,no-merge-files,no_tensile,no-tensile,msgpack,no-msgpack,logic:,cov:,fork:,branch:,test_local_path:,cpu_ref_lib:,build_dir:,use-custom-version:,architecture: --options hicdgrka:j:o:l:f:b:nu:t: -- "$@")
 else
   echo "Need a new version of getopt"
   exit 1
@@ -449,6 +450,9 @@ while true; do
         -f|--fork)
             tensile_fork=${2}
             shift 2 ;;
+        -j)
+            tensile_threads=${2}
+            shift 2;;
         -b|--branch)
             tensile_tag=${2}
             shift 2 ;;
@@ -667,7 +671,11 @@ pushd .
       fi
   fi
 
- if [[ -n "${tensile_fork}" ]]; then
+  if [[ -n "${tensile_threads}" ]]; then
+    cmake_common_options="${cmake_common_options} -DTensile_CPU_THREADS=${tensile_threads}"
+  fi
+
+  if [[ -n "${tensile_fork}" ]]; then
     cmake_common_options="${cmake_common_options} -Dtensile_fork=${tensile_fork}"
   fi
 
