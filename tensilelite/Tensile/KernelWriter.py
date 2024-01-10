@@ -3530,8 +3530,8 @@ class KernelWriter(metaclass=abc.ABCMeta):
     # SGPR above are user SGPR which are set by GPU hardware when the kernel is launched
     self.states.firstInitSgpr = self.sgprPool.size()
 
-    if kernel["ProblemType"]["GroupedGemm"]:
-        self.defineSgpr("ExternalArgAddress", self.states.rpga, align=2)
+    if kernel["ProblemType"]["SupportUserArgs"]:
+      self.defineSgpr("ExternalArgAddress", self.states.rpga, align=2)
 
     # To avoid corrupting tmp sgprs that may be used around the assert,
     # reserve some sgprs to save/restore the execmask
@@ -3624,11 +3624,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
       self.defineSgpr("Beta", numSgprBeta, numSgprBeta)
       self.states.numSgprBeta = numSgprBeta
 
-    self.defineSgpr("GSU", 1)
-    self.states.numSgprGSU = 0
-    if not kernel["ProblemType"]["GroupedGemm"]:
-      self.states.numSgprGSU = 1
-
+    self.defineSgpr("GSU", 1)  # FIXME: Move to the front when multi gemm arg selection sgprs are fixed
 
     # Calculate numSgpr preload
     self.states.numSgprPreload = 0
@@ -3665,7 +3661,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
       numSgprAddressD + numSgprAddressC + numSgprAddressA + numSgprAddressB + numSgprAlpha + numSgprAddressMetadata + \
       (numSgprBeta if kernel["ProblemType"]["UseBeta"] else 0) + \
       self.states.d.numSgprStrides + self.states.c.numSgprStrides + self.states.a.numSgprStrides + self.states.b.numSgprStrides + self.states.m.numSgprStrides + \
-      len(kernel["PackedC0IdxChars"][:-1])*2 + len(kernel["PackedC1IdxChars"][:-1])*2 + self.states.numSgprGSU
+      len(kernel["PackedC0IdxChars"][:-1])*2 + len(kernel["PackedC1IdxChars"][:-1])*2
     # Get kernel argument end here
     ###################################
 

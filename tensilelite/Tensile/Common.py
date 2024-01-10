@@ -317,7 +317,9 @@ defaultInternalSupportParams = {
   # This is a little different from GSU because GSU is already a parameter,
   # but WGM is not.
   "SupportCustomWGM": True,
-  "SupportCustomStaggerU": True
+  "SupportCustomStaggerU": True,
+  # Use GG as G's backend
+  "UseUniversalArgs": True
 }
 
 ################################################################################

@@ -1,6 +1,6 @@
 ################################################################################
 #
-# Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -25,7 +25,7 @@ from .Code import Module
 from .Containers import HolderContainer, RegisterContainer, RegName
 from .DataType import DataType
 from .Enums import InstType
-from .Formatting import printExit
+from .Formatting import printAssert, printExit
 from .Instructions import Instruction, SWaitCnt
 
 from functools import lru_cache
@@ -62,7 +62,7 @@ def _gpr(*args):
         elif len(args) == 2:
             return RegisterContainer(gprType, name, None, args[1])
     else:
-        printExit("Unknown %sgpr name or index"%gprType)
+        printAssert("Unknown %sgpr name or index"%gprType)
 
 def vgpr(*args):
     return _gpr("v", args)

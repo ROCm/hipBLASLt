@@ -1126,16 +1126,33 @@ class KernelWriterAssembly(KernelWriter):
 
     tPM = tPA["tpsMetadata"] if tPA["is_sparse"] else tPB["tpsMetadata"]
 
-    common_kern_entry  = Label(label="common_kernel_entry", comment="for both preload/non-preload common code")
     if self.do["PreLoop"]:
-      ########################################
-      # load kernel args
+      ### temp sgpr for groupedgemm ###
+      # can be start from sgpr_preload_end
+      if self.states.numSgprPreload > 0:
+        tempSgprForGG = 16
+      else:
+        tempSgprForGG = self.sgprs["WGM"] + 1
+      sgprNumsOfGemm = tempSgprForGG
+
       self.kernArgOffset = 0
       self.argLoader = ArgumentLoader()
       self.externalArgLoader = ArgumentLoader()
-      moduleArgs.addComment1("Load Kernel Args")
+      ########################################
+      # Common parameters
+      sgprArgType = self.sgprs["SizesFree"] - 1
+      commonArgs = Module("load arguments")
+      commonArgs.addComment1("Load num of Gemms")
+      commonArgs.add(self.argLoader.loadKernArg(sgprNumsOfGemm, "KernArgAddress", hex(0), dword=1))
+      commonArgs.addComment1("Load GSU data")
+      commonArgs.add(self.argLoader.loadKernArg("GSU", "KernArgAddress", hex(4), dword=1))
+      loadedCommonArgs = 8 # TODO: Need to make this automatically calculated
+      ########################################
+      # load kernel args
+      kernelArgs = Module("load arguments")
+      kernelArgs.addComment1("Load Kernel Args")
       if globalParameters["DebugKernel"]:
-        moduleArgs.add(self.argLoader.loadKernArg("AddressDbg", "KernArgAddress", dword=2))
+        kernelArgs.add(self.argLoader.loadKernArg("AddressDbg", "KernArgAddress", dword=2))
 
       load = self.states.numSgprToLoad
       sgprStart = self.sgprs["SizesFree"]
@@ -1147,30 +1164,90 @@ class KernelWriterAssembly(KernelWriter):
             moduleLoadAllKernArg.add(self.argLoader.loadKernArg("AddressScale%s"%name, "KernArgAddress", sgprOffset=hex(sgprOffset), dword=2))
           sgprOffset += (self.states.rpga * self.states.bpr)
 
-      moduleArgs.addModuleAsFlatItems(moduleLoadAllKernArg)
+      kernelArgs.addModuleAsFlatItems(moduleLoadAllKernArg)
+
+      ########################################
+      # load ws/ user args
+      hbmArgs = Module("load HBM arguments")
+      if (self.states.kernel["WorkGroupMappingXCC"] > 1):
+        tmpSgprNumWorkGroups = tempSgprForGG+1
+        hbmArgs.add(self.argLoader.loadKernArg(tmpSgprNumWorkGroups, "KernArgAddress", hex(20), dword=1))
+      if kernel["ProblemType"]["SupportUserArgs"]:
+        hbmArgs.addComment1("Load address of external kernel arguments")
+        hbmArgs.add(self.argLoader.loadKernArg("ExternalArgAddress", "KernArgAddress", hex(8), dword=2))
+      hbmArgs.addComment1("Load address of kernel arguments")
+      hbmArgs.add(self.argLoader.loadKernArg("KernArgAddress", "KernArgAddress", hex(16), dword=2))
+
+      moduleArgs.addModuleAsFlatItems(fastdeepcopy(commonArgs))
+      moduleArgs.add(SWaitCnt(0))
+      moduleArgs.add(SLShiftRightB32(dst=sgpr(sgprArgType), shiftHex=hex(30), src=sgpr(sgprNumsOfGemm), comment="Get arg type"))
+      moduleArgs.add(SAndB32(dst=sgpr(sgprNumsOfGemm), src0=hex(0x3FFFFFFF), src1=sgpr(sgprNumsOfGemm), comment="Get nums of gemm"))
+      moduleArgs.add(SCmpEQU32(src0=sgpr(sgprArgType), src1=(0), comment="Is kernel args"))
+      labelHBM = Label("HBMArgs", comment="")
+      labelLoadEnd = Label("LoadArgsEnd", comment="")
+      moduleArgs.add(SCBranchSCC0(labelName=labelHBM.getLabelName()))
+      moduleArgs.add(SAddU32(dst=sgpr("KernArgAddress"), src0=sgpr("KernArgAddress"), src1=hex(loadedCommonArgs), comment="Shift common args"))
+      moduleArgs.add(SAddCU32(dst=sgpr("KernArgAddress+1"), src0=sgpr("KernArgAddress+1"), src1=hex(0)))
+      moduleArgs.addModuleAsFlatItems(fastdeepcopy(kernelArgs))
+      if kernel["ProblemType"]["SupportUserArgs"]:
+        moduleArgs.add(SMovB64(dst=sgpr("ExternalArgAddress", 2),src=0))
+      moduleArgs.add(SBranch(labelName=labelLoadEnd.getLabelName()))
+      moduleArgs.add(labelHBM)
+      moduleArgs.addModuleAsFlatItems(fastdeepcopy(hbmArgs))
+      moduleArgs.add(labelLoadEnd)
+
       if self.states.numSgprPreload > 0:
-        # add common kern entry label in the begining of common reg init code
-        moduleRegInit.add(common_kern_entry)
+        common_kern_entry  = Label(label="common_kernel_entry", comment="for both preload/non-preload common code")
+
 
         #For groupgemm, the preload happened prior to this stage
-        if not kernel["ProblemType"]["GroupedGemm"]:
-          # Handle backward compability path first
-          moduleArgs.add(SBranch(common_kern_entry.getLabelName())) # jump to common path
-          sload_inst_dwords = moduleLoadAllKernArg.count() * 2
-          sbranch_inst_dwords = 1 * 1
-          total_inst_dwords = sload_inst_dwords + sbranch_inst_dwords
-          moduleArgs.addComment1("pad %u snops to satisfy 0x100 code size for Preload Backward Compatibility Prologue" % (64 - total_inst_dwords))
-          for i in range(64 - total_inst_dwords):
-            moduleArgs.add(SNop(waitState=0, comment=""))
-          #handle preload path started from code size 0x100
-          self.argLoader.resetOffset()
-          moduleArgs.addModuleAsFlatItems(self.argLoader.loadAllKernArg(sgprStart, "KernArgAddress", load, self.states.numSgprPreload))
-          preloadSgprStartIdx = self.states.rpga  #number sgprs of kernel argument buffer address
-          for i in range(self.states.numSgprPreload):
-            moduleArgs.add(SMovB32(dst=sgpr(sgprStart+i), src=sgpr(preloadSgprStartIdx+i), comment="move preload data to correct sgpr"))
-          for i in range(kernel["ProblemType"]["NumIndicesC"]):
-            moduleRegInit.add(SMovB32(dst=sgpr("WorkGroup0+%u"%i), src=sgpr(preloadSgprStartIdx+self.states.numSgprPreload+i), \
-                        comment="restore workgroup id"))
+        moduleArgs.add(SBranch(common_kern_entry.getLabelName())) # jump to common path
+        total_inst_dwords = 0
+        for inst in moduleArgs.items():
+          if isinstance(inst, BranchInstruction):
+            total_inst_dwords = total_inst_dwords + 1
+          elif isinstance(inst, CommonInstruction):
+            total_inst_dwords = total_inst_dwords + 2
+        assert total_inst_dwords <= 64
+        moduleArgs.addComment1("pad %u snops to satisfy 0x100 code size for Preload Backward Compatibility Prologue" % (64 - total_inst_dwords))
+        for i in range(64 - total_inst_dwords):
+          moduleArgs.add(SNop(waitState=0, comment=""))
+        # Common args preload
+        preloadSgprStartIdx = self.states.rpga
+        moduleArgs.add(SAndB32(dst=sgpr(sgprNumsOfGemm), src0=hex(0x3FFFFFFF), src1=sgpr(preloadSgprStartIdx), comment="Get nums of gemm"))
+        moduleArgs.add(SLShiftRightB32(dst=sgpr(sgprArgType), shiftHex=hex(30), src=sgpr(preloadSgprStartIdx), comment="Get arg type"))
+        moduleArgs.add(SMovB32(dst=sgpr("GSU"), src=sgpr(preloadSgprStartIdx+1), comment="Preload internal args"))
+        moduleArgs.add(SCmpEQU32(src0=sgpr(sgprArgType), src1=(0), comment="Is kernel args"))
+        preloadLabelHBM = Label("Preload_HBMArgs", comment="")
+        perloadLabelLoadEnd = Label("Preload_LoadArgsEnd", comment="")
+        moduleArgs.add(SCBranchSCC0(labelName=preloadLabelHBM.getLabelName()))
+        moduleArgs.add(SAddU32(dst=sgpr("KernArgAddress"), src0=sgpr("KernArgAddress"), src1=hex(loadedCommonArgs), comment="Shift common args"))
+        moduleArgs.add(SAddCU32(dst=sgpr("KernArgAddress+1"), src0=sgpr("KernArgAddress+1"), src1=hex(0)))
+        commonArgNum = 2
+        self.argLoader.resetOffset()
+        moduleArgs.addModuleAsFlatItems(self.argLoader.loadAllKernArg(sgprStart, "KernArgAddress", load, self.states.numSgprPreload - commonArgNum))
+        for i in range(2, self.states.numSgprPreload):
+          moduleArgs.add(SMovB32(dst=sgpr(sgprStart+i-commonArgNum), src=sgpr(preloadSgprStartIdx+i), comment="move preload data to correct sgpr"))
+        if kernel["ProblemType"]["SupportUserArgs"]:
+          moduleArgs.add(SMovB64(dst=sgpr("ExternalArgAddress", 2),src=0))
+        moduleArgs.add(SBranch(labelName=perloadLabelLoadEnd.getLabelName()))
+        moduleArgs.add(preloadLabelHBM)
+        if (self.states.kernel["WorkGroupMappingXCC"] > 1):
+          moduleArgs.add(SMovB32(dst=sgpr(tmpSgprNumWorkGroups), src=sgpr(preloadSgprStartIdx+6)))
+        moduleArgs.add(SMovB64(dst=sgpr("KernArgAddress", 2), src=sgpr(preloadSgprStartIdx+4, 2), comment="Load address of kernel arguments"))
+        if kernel["ProblemType"]["SupportUserArgs"]:
+          moduleArgs.add(SMovB64(dst=sgpr("ExternalArgAddress", 2), src=sgpr(preloadSgprStartIdx+2, 2), comment="Load address of external kernel arguments"))
+        moduleArgs.add(perloadLabelLoadEnd)
+        # add common kern entry label
+        moduleRegInit.add(common_kern_entry)
+        for i in range(kernel["ProblemType"]["NumIndicesC"]):
+          moduleRegInit.add(SMovB32(dst=sgpr("WorkGroup0+%u"%i), src=sgpr(preloadSgprStartIdx+self.states.numSgprPreload+i), \
+                      comment="restore workgroup id"))
+      moduleRegInit.add(SAndB32(dst=sgpr("WGM"), src0=sgpr("GSU"), src1=hex(0xFF00), comment="Restore WGM"))
+      moduleRegInit.add(SLShiftRightB32(dst=sgpr("WGM"), shiftHex=hex(8), src=sgpr("WGM")))
+      moduleRegInit.add(SAndB32(dst=sgpr("StaggerU"), src0=sgpr("GSU"), src1=hex(0xFFFF0000), comment="Restore StaggerU related vars"))
+      moduleRegInit.add(SLShiftRightB32(dst=sgpr("StaggerU"), shiftHex=hex(16), src=sgpr("StaggerU")))
+      moduleRegInit.add(SAndB32(dst=sgpr("GSU"), src0=sgpr("GSU"), src1=hex(0xFF), comment="Restore GSU"))
 
     if self.states.lrvwTileA > 1 or self.states.lrvwTileB > 1 or self.states.lrvwTileMetadata > 1:
       if kernel["ProblemType"]["DataType"].isHalf() or kernel["ProblemType"]["DataType"].isBFloat16():
@@ -1230,15 +1307,7 @@ class KernelWriterAssembly(KernelWriter):
       else:
         moduleWg.add(SWaitCnt(lgkmcnt=0, comment="wait for %u bytes of kern args" % \
                             (self.argLoader.getOffset() - (self.states.numSgprPreload*4))))
-        # Should move these to preload args after gg and gemm is merged
-        if not kernel["ProblemType"]["GroupedGemm"]:
-          moduleWg.add(SAndB32(dst=sgpr("WGM"), src0=sgpr("GSU"), src1=hex(0xFF00)))
-          moduleWg.add(SLShiftRightB32(dst=sgpr("WGM"), shiftHex=hex(8), src=sgpr("WGM")))
-          moduleWg.add(SAndB32(dst=sgpr("StaggerU"), src0=sgpr("GSU"), src1=hex(0xFFFF0000)))
-          moduleWg.add(SLShiftRightB32(dst=sgpr("StaggerU"), shiftHex=hex(16), src=sgpr("StaggerU")))
-          moduleWg.add(SAndB32(dst=sgpr("GSU"), src0=sgpr("GSU"), src1=hex(0xFF)))
       moduleWg.addModuleAsFlatItems(moduleScaleAB)
-      moduleWg.add(Label(label="stop", comment=""))
       #### calculate numWorkGroup ####
       qReg = self.vgprPool.checkOut(4)
       dReg = qReg + 1
@@ -1283,266 +1352,231 @@ class KernelWriterAssembly(KernelWriter):
         if newAlphaVgpr != None:
           self.vgprPool.checkIn(newAlphaVgpr)
 
-      if not kernel["ProblemType"]["GroupedGemm"]:
-        ###### SingleGemm  ############
-        module.add(moduleArgs)
-        module.add(moduleRegInit)
-        module.add(moduleWg)
-      else:
-        ### temp sgpr for groupedgemm ###
-        # can be start from sgpr_preload_end
-        if self.states.numSgprPreload > 0:
-          tempSgprForGG = 16
-        else:
-          tempSgprForGG = self.sgprs["LoopCounterL"]
+      labelMultiGemm = Label(label="MultiGemm", comment="")
+      labelMultiGemmEnd = Label(label="MultiGemmEnd", comment="")
+      module.add(moduleArgs)
+      module.add(moduleRegInit)
+      module.add(SCmpEQU32(src0=sgpr(sgprArgType), src1=0))
+      sgprArgType = None # Cannot be used after this point
+      module.add(SCBranchSCC0(labelName=labelMultiGemm.getLabelName()))
+      module.add(fastdeepcopy(moduleWg))
+      module.add(SBranch(labelName=labelMultiGemmEnd.getLabelName()))
+      module.add(labelMultiGemm)
 
-        numStoreSgprToLoad = self.states.numStoreSgprToLoad
-        if kernel["ProblemType"]["UseScaleAB"]:
-          if self.states.preloadScaleA:
-            numStoreSgprToLoad += 2
-          if self.states.preloadScaleB:
-            numStoreSgprToLoad += 2
-        ###### GroupedGemm  ############
-        ######
-        # linear search
-        ######
-        tmpSgprNumGemm = tempSgprForGG+0
-        module.addComment1("Grouped Gemm: Load num of Gemms")
-        module.add(self.argLoader.loadKernArg(tmpSgprNumGemm, "KernArgAddress", hex(0), dword=1))
-        if (self.states.kernel["WorkGroupMappingXCC"] > 1):
-          tmpSgprNumWorkGroups = tempSgprForGG+1
-          module.add(self.argLoader.loadKernArg(tmpSgprNumWorkGroups, "KernArgAddress", hex(20), dword=1))
-        module.addComment1("Grouped Gemm: Load GSU data")
-        module.add(self.argLoader.loadKernArg("GSU", "KernArgAddress", hex(24), dword=1))
-        module.addComment1("Grouped Gemm: Load address of external kernel arguments")
-        module.add(self.argLoader.loadKernArg("ExternalArgAddress", "KernArgAddress", hex(4), dword=2))
-        module.addComment1("Grouped Gemm: Load address of kernel arguments")
-        module.add(self.argLoader.loadKernArg("KernArgAddress", "KernArgAddress", hex(12), dword=2))
-        #### if remove any loadKernArg() from above, please also modify sload_inst_dwords variable,###
-        module.add(SWaitCnt(lgkmcnt=0))
+      numStoreSgprToLoad = self.states.numStoreSgprToLoad
+      if kernel["ProblemType"]["UseScaleAB"]:
+        if self.states.preloadScaleA:
+          numStoreSgprToLoad += 2
+        if self.states.preloadScaleB:
+          numStoreSgprToLoad += 2
+      ###### GroupedGemm  ############
+      ######
+      # linear search
+      ######
 
-        if self.states.numSgprPreload > 0:
-          ## backward compability path###
-          module.add(SBranch(common_kern_entry.getLabelName()))
-          sload_inst_dwords = 4 * 2
-          swait_branch_inst_dwords = 2 * 1
-          total_inst_dwords = sload_inst_dwords + swait_branch_inst_dwords
-          module.addComment1("pad %u snops to satisfy 0x100 code size for Preload Backward Compatibility Prologue" % (64 - total_inst_dwords))
-          for i in range(64 - total_inst_dwords):
-            module.add(SNop(waitState=0, comment=""))
-          ##### Preload path #####
-          preloadSgprStartIdx = self.states.rpga  #number sgprs of kernel argument buffer address
-          #TODO: remove hardcode once destination SGPRs are in-order
-          module.add(SMovB32(dst=sgpr(tmpSgprNumGemm), src=sgpr(preloadSgprStartIdx), comment="Grouped Gemm: Load num of Gemms"))
-          module.add(SMovB32(dst=sgpr("GSU"), src=sgpr(preloadSgprStartIdx+6), comment="Load GSU data"))
-          if (self.states.kernel["WorkGroupMappingXCC"] > 1):
-            module.add(SMovB32(dst=sgpr(tmpSgprNumWorkGroups), src=sgpr(preloadSgprStartIdx+5)))
-          module.add(SMovB32(dst=sgpr("KernArgAddress+1"), src=sgpr(preloadSgprStartIdx+4), comment="Load address of kernel arguments"))
-          module.add(SMovB32(dst=sgpr("KernArgAddress"), src=sgpr(preloadSgprStartIdx+3), comment="Load address of kernel arguments"))
-          module.add(SMovB32(dst=sgpr("ExternalArgAddress+1"), src=sgpr(preloadSgprStartIdx+2), comment="Load address of external kernel arguments"))
-          module.add(SMovB32(dst=sgpr("ExternalArgAddress"), src=sgpr(preloadSgprStartIdx+1), comment="Load address of external kernel arguments"))
-          for i in range(kernel["ProblemType"]["NumIndicesC"]):
-            moduleRegInit.add(SMovB32(dst=sgpr("WorkGroup0+%u"%i), src=sgpr(preloadSgprStartIdx+self.states.numSgprPreload+i), \
-                      comment="restore workgroup id"))
-          moduleRegInit.add(SAndB32(dst=sgpr("WGM"), src0=sgpr("GSU"), src1=hex(0xFF00), comment="Restore WGM"))
-          moduleRegInit.add(SLShiftRightB32(dst=sgpr("WGM"), shiftHex=hex(8), src=sgpr("WGM")))
-          moduleRegInit.add(SAndB32(dst=sgpr("StaggerU"), src0=sgpr("GSU"), src1=hex(0xFFFF0000), comment="Restore StaggerU related vars"))
-          moduleRegInit.add(SLShiftRightB32(dst=sgpr("StaggerU"), shiftHex=hex(16), src=sgpr("StaggerU")))
-          moduleRegInit.add(SAndB32(dst=sgpr("GSU"), src0=sgpr("GSU"), src1=hex(0xFF), comment="Restore GSU"))
-        else:
-          module.add(SAndB32(dst=sgpr("WGM"), src0=sgpr("GSU"), src1=hex(0xFF00)))
-          module.add(SLShiftRightB32(dst=sgpr("WGM"), shiftHex=hex(8), src=sgpr("WGM")))
-          module.add(SAndB32(dst=sgpr("StaggerU"), src0=sgpr("GSU"), src1=hex(0xFFFF0000), comment="Restore StaggerU related vars"))
-          module.add(SLShiftRightB32(dst=sgpr("StaggerU"), shiftHex=hex(16), src=sgpr("StaggerU")))
-          module.add(SAndB32(dst=sgpr("GSU"), src0=sgpr("GSU"), src1=hex(0xFF)))
-
-        module.add(moduleRegInit)
-
-        if (self.states.kernel["WorkGroupMappingXCC"] > 1):
-          module.addComment1("remap workgroup to XCCs")
-          tmpSgpr0 = roundUp((tmpSgprNumWorkGroups+1)/2)*2
-          tmpSgpr1 = tmpSgpr0+1
-          tmpSgpr2 = tmpSgpr1+1
-          tmpSgprRes0 = tmpSgpr2+2
-          tmpSgprRes1 = tmpSgprRes0+1
-          tmpSgprRes2 = tmpSgprRes1+1
-          tmpSgprRes = RegisterPoolResource(idx=tmpSgprRes0, size=3)
-          WGMXCC = self.states.kernel["WorkGroupMappingXCC"]
-          label_skipWGMXCC = Label(label="skip_WGMXCC", comment="skip WGMXCC if no enough WGs to remap")
-          module.addComment0("only remap WGs in the range")
-          module.add(scalarStaticDivideAndRemainder(qReg=sgpr(tmpSgpr0), rReg=None, dReg=sgpr("WorkGroup0"), divisor=pow(WGMXCC,2), tmpSgprRes=tmpSgprRes, doRemainder=0))
-          module.add(SMulI32(dst=sgpr(tmpSgpr0), src0=sgpr(tmpSgpr0), src1=pow(WGMXCC,2)))
-          module.add(SCmpGeU32(src0=sgpr("WorkGroup0"), src1=sgpr(tmpSgpr0)))
-          module.add(SCBranchSCC1(label_skipWGMXCC.getLabelName()))
-          module.addComment0("temp0 = (wg*%u)%%%u"%(WGMXCC,pow(WGMXCC,2)))
-          module.add(SMulI32(dst=sgpr(tmpSgpr0), src0=sgpr("WorkGroup0"), src1=WGMXCC))
-          module.add(scalarStaticRemainder(qReg=tmpSgprRes0, rReg=tmpSgpr0, dReg=tmpSgpr0, divisor=pow(WGMXCC,2), tmpSgprRes=tmpSgprRes))
-          module.addComment0("temp1 = (wg%%%u)//%u"%(pow(WGMXCC,2), WGMXCC))
-          module.add(scalarStaticRemainder(qReg=tmpSgprRes0, rReg=tmpSgpr1, dReg="WorkGroup0", divisor=pow(WGMXCC,2), tmpSgprRes=tmpSgprRes))
-          module.add(scalarStaticDivideAndRemainder(qReg=sgpr(tmpSgpr1), rReg=None, dReg=sgpr(tmpSgpr1), divisor=WGMXCC, tmpSgprRes=tmpSgprRes, doRemainder=0))
-          module.addComment0("temp2 = (wg//%u)*%u"%(pow(WGMXCC,2), pow(WGMXCC,2)))
-          module.add(scalarStaticDivideAndRemainder(qReg=sgpr(tmpSgpr2), rReg=None, dReg=sgpr("WorkGroup0"), divisor=pow(WGMXCC,2), tmpSgprRes=tmpSgprRes, doRemainder=0))
-          module.add(SMulI32(dst=sgpr(tmpSgpr2), src0=sgpr(tmpSgpr2), src1=pow(WGMXCC,2)))
-          module.addComment0("WorkGroup0 = temp0 + temp1 + temp2")
-          module.add(SAddU32(dst=sgpr("WorkGroup0"), src0=sgpr(tmpSgpr0), src1=sgpr(tmpSgpr1)))
-          module.add(SAddU32(dst=sgpr("WorkGroup0"), src0=sgpr("WorkGroup0"), src1=sgpr(tmpSgpr2)))
-          module.add(label_skipWGMXCC)
-
-        # FIXME: Need to fix these cause it may cause data hazard
-        tmpSgprM = roundUp((tmpSgprNumGemm+1)/4)*4
-        tmpSgprN = tmpSgprM+1
-        tmpSgprB = tmpSgprN+1
-        tmpSgprK = tmpSgprB+1
-        tmpSgprArgAddress0 = tmpSgprK+1
-        tmpSgprArgAddress1 = tmpSgprArgAddress0+1
-        tmpSgpr0 = tmpSgprArgAddress1+1
+      if (self.states.kernel["WorkGroupMappingXCC"] > 1):
+        module.addComment1("remap workgroup to XCCs")
+        tmpSgpr0 = roundUp((tmpSgprNumWorkGroups+1)/2)*2
         tmpSgpr1 = tmpSgpr0+1
-        tmpSgprNumWG0 = tmpSgpr1+1
-        tmpSgprNumWG1 = tmpSgprNumWG0+1
-        tmpSgprAddrM = tmpSgprNumWG1+1
-        tmpSgprAccumTiles = tmpSgprAddrM+1
-        tmpSgprLoopCounter = tmpSgprAccumTiles+1
-        tmpSgprArgOffsett = tmpSgprLoopCounter+1
+        tmpSgpr2 = tmpSgpr1+1
+        tmpSgprRes0 = tmpSgpr2+2
+        tmpSgprRes1 = tmpSgprRes0+1
+        tmpSgprRes2 = tmpSgprRes1+1
+        tmpSgprRes = RegisterPoolResource(idx=tmpSgprRes0, size=3)
+        WGMXCC = self.states.kernel["WorkGroupMappingXCC"]
+        label_skipWGMXCC = Label(label="skip_WGMXCC", comment="skip WGMXCC if no enough WGs to remap")
+        module.addComment0("only remap WGs in the range")
+        module.add(scalarStaticDivideAndRemainder(qReg=sgpr(tmpSgpr0), rReg=None, dReg=sgpr("WorkGroup0"), divisor=pow(WGMXCC,2), tmpSgprRes=tmpSgprRes, doRemainder=0))
+        module.add(SMulI32(dst=sgpr(tmpSgpr0), src0=sgpr(tmpSgpr0), src1=pow(WGMXCC,2)))
+        module.add(SCmpGeU32(src0=sgpr("WorkGroup0"), src1=sgpr(tmpSgpr0)))
+        module.add(SCBranchSCC1(label_skipWGMXCC.getLabelName()))
+        module.addComment0("temp0 = (wg*%u)%%%u"%(WGMXCC,pow(WGMXCC,2)))
+        module.add(SMulI32(dst=sgpr(tmpSgpr0), src0=sgpr("WorkGroup0"), src1=WGMXCC))
+        module.add(scalarStaticRemainder(qReg=tmpSgprRes0, rReg=tmpSgpr0, dReg=tmpSgpr0, divisor=pow(WGMXCC,2), tmpSgprRes=tmpSgprRes))
+        module.addComment0("temp1 = (wg%%%u)//%u"%(pow(WGMXCC,2), WGMXCC))
+        module.add(scalarStaticRemainder(qReg=tmpSgprRes0, rReg=tmpSgpr1, dReg="WorkGroup0", divisor=pow(WGMXCC,2), tmpSgprRes=tmpSgprRes))
+        module.add(scalarStaticDivideAndRemainder(qReg=sgpr(tmpSgpr1), rReg=None, dReg=sgpr(tmpSgpr1), divisor=WGMXCC, tmpSgprRes=tmpSgprRes, doRemainder=0))
+        module.addComment0("temp2 = (wg//%u)*%u"%(pow(WGMXCC,2), pow(WGMXCC,2)))
+        module.add(scalarStaticDivideAndRemainder(qReg=sgpr(tmpSgpr2), rReg=None, dReg=sgpr("WorkGroup0"), divisor=pow(WGMXCC,2), tmpSgprRes=tmpSgprRes, doRemainder=0))
+        module.add(SMulI32(dst=sgpr(tmpSgpr2), src0=sgpr(tmpSgpr2), src1=pow(WGMXCC,2)))
+        module.addComment0("WorkGroup0 = temp0 + temp1 + temp2")
+        module.add(SAddU32(dst=sgpr("WorkGroup0"), src0=sgpr(tmpSgpr0), src1=sgpr(tmpSgpr1)))
+        module.add(SAddU32(dst=sgpr("WorkGroup0"), src0=sgpr("WorkGroup0"), src1=sgpr(tmpSgpr2)))
+        module.add(label_skipWGMXCC)
 
-        # offset KernArgAddress to address of M
-        extValidLabel    = Label(label="IsExternalValid", comment="")
-        extValidLabelEnd = Label(label="IsExternalValidEnd", comment="")
-        if kernel["ProblemType"]["SupportUserArgs"]:
-          module.addComment1("Check if custom structure pointer is null")
-          module.add(SBranchIfNotZero("ExternalArgAddress", DataType('int64'), extValidLabel))
-          module.add(SMovB32(dst=sgpr(tmpSgprArgOffsett), src=(self.argLoader.getOffset() + (numStoreSgprToLoad * 4))))
-          module.add(SMulI32(dst=sgpr(tmpSgprAddrM), src0=sgpr(tmpSgprNumGemm), src1=4)) # offset wgTable
-          module.add(SMovB64(dst=sgpr(tmpSgprArgAddress0,2), src=sgpr("KernArgAddress",2)))
-          module.add(SBranch(extValidLabelEnd.getLabelName()))
-          module.add(extValidLabel)
-          module.add(SMovB32(dst=sgpr(tmpSgprArgOffsett), src=self.states.userArgsInfo.totalSize))
-          module.add(SMovB32(dst=sgpr(tmpSgprAddrM), src=hex(0)))
-          module.add(SMovB64(dst=sgpr(tmpSgprArgAddress0,2), src=sgpr("ExternalArgAddress",2)))
-          module.add(extValidLabelEnd)
-        else:
-          module.add(SMovB32(dst=sgpr(tmpSgprArgOffsett), src=(self.argLoader.getOffset() + (numStoreSgprToLoad * 4))))
-          module.add(SMulI32(dst=sgpr(tmpSgprAddrM), src0=sgpr(tmpSgprNumGemm), src1=4)) # offset wgTable
-          module.add(SMovB64(dst=sgpr(tmpSgprArgAddress0,2), src=sgpr("KernArgAddress",2)))
+      # FIXME: Need to fix these cause it may cause data hazard
+      tmpSgprM = roundUp((sgprNumsOfGemm+1)/4)*4
+      tmpSgprN = tmpSgprM+1
+      tmpSgprB = tmpSgprN+1
+      tmpSgprK = tmpSgprB+1
+      tmpSgprArgAddress0 = tmpSgprK+1
+      tmpSgprArgAddress1 = tmpSgprArgAddress0+1
+      tmpSgpr0 = tmpSgprArgAddress1+1
+      tmpSgpr1 = tmpSgpr0+1
+      tmpSgprNumWG0 = tmpSgpr1+1
+      tmpSgprNumWG1 = tmpSgprNumWG0+1
+      tmpSgprAddrM = tmpSgprNumWG1+1
+      tmpSgprAccumTiles = tmpSgprAddrM+1
+      tmpSgprLoopCounter = tmpSgprAccumTiles+1
+      tmpSgprArgOffsett = tmpSgprLoopCounter+1
 
-        # prefetch 1 arg load
-        module.addComment1("Grouped Gemm:: prefetch 1 arg load")
-        module.add(SMovB32(dst=sgpr(tmpSgprLoopCounter), src=1))
-        module.add(SMovB32(dst=sgpr(tmpSgprAccumTiles), src=0))
-        module.add(self.argLoader.loadKernArg(tmpSgprM, tmpSgprArgAddress0, sgpr(tmpSgprAddrM), dword=4))
-        module.add(SCmpKEQU32(src=sgpr(tmpSgprNumGemm), simm16=1, comment="if gemm_count is 1?"))
-        label_noLoadLoop = Label("wgTable_noLoadLoop", "")
-        module.add(SCBranchSCC1(labelName=label_noLoadLoop.getLabelName()))
+      # offset KernArgAddress to address of M
+      extValidLabel    = Label(label="IsExternalValid", comment="")
+      extValidLabelEnd = Label(label="IsExternalValidEnd", comment="")
+      if kernel["ProblemType"]["SupportUserArgs"]:
+        module.addComment1("Check if custom structure pointer is null")
+        module.add(SBranchIfNotZero("ExternalArgAddress", DataType('int64'), extValidLabel))
+        module.add(SMovB32(dst=sgpr(tmpSgprArgOffsett), src=(self.argLoader.getOffset() + (numStoreSgprToLoad * 4))))
+        module.add(SMulI32(dst=sgpr(tmpSgprAddrM), src0=sgpr(sgprNumsOfGemm), src1=4)) # offset wgTable
+        module.add(SMovB64(dst=sgpr(tmpSgprArgAddress0,2), src=sgpr("KernArgAddress",2)))
+        module.add(SBranch(extValidLabelEnd.getLabelName()))
+        module.add(extValidLabel)
+        module.add(SMovB32(dst=sgpr(tmpSgprArgOffsett), src=self.states.userArgsInfo.totalSize))
+        module.add(SMovB32(dst=sgpr(tmpSgprAddrM), src=hex(0)))
+        module.add(SMovB64(dst=sgpr(tmpSgprArgAddress0,2), src=sgpr("ExternalArgAddress",2)))
+        module.add(extValidLabelEnd)
+      else:
+        module.add(SMovB32(dst=sgpr(tmpSgprArgOffsett), src=(self.argLoader.getOffset() + (numStoreSgprToLoad * 4))))
+        module.add(SMulI32(dst=sgpr(tmpSgprAddrM), src0=sgpr(sgprNumsOfGemm), src1=4)) # offset wgTable
+        module.add(SMovB64(dst=sgpr(tmpSgprArgAddress0,2), src=sgpr("KernArgAddress",2)))
 
-        # Start to search
-        module.addComment1("Grouped Gemm:: accumulate numTiles for each gemm")
-        module.addComment0("Grouped Gemm:: loop start")
-        label_Loop_gemm_count = Label("Loop_GemmCount", "")
-        module.add(label_Loop_gemm_count)
-        module.add(SWaitCnt(lgkmcnt=0))
-        # calculate numTiles
-        regStateRes = RegisterPoolResource(idx=tmpSgpr0, size=2)
-        module.add(scalarStaticCeilDivide(qReg=sgpr(tmpSgprNumWG0), dReg=sgpr(tmpSgprM), divisor=kernel["MacroTile0"], tmpSgprRes=regStateRes))
-        module.add(scalarStaticCeilDivide(qReg=sgpr(tmpSgprNumWG1), dReg=sgpr(tmpSgprN), divisor=kernel["MacroTile1"], tmpSgprRes=regStateRes))
-        # accumulate tiles of each gemm
-        module.add(SMulI32(dst=sgpr(tmpSgprNumWG0), src0=sgpr(tmpSgprNumWG0), src1=sgpr(tmpSgprNumWG1)))
-        module.add(SMulI32(dst=sgpr(tmpSgprNumWG0), src0=sgpr(tmpSgprNumWG0), src1=sgpr(tmpSgprB)))
-        module.add(SMulI32(dst=sgpr(tmpSgprNumWG0), src0=sgpr(tmpSgprNumWG0), src1=sgpr("GSU")))
-        module.add(SAddU32(dst=sgpr(tmpSgprAccumTiles), src0=sgpr(tmpSgprAccumTiles), src1=sgpr(tmpSgprNumWG0)))
-        # check wgIndex >= AccumTiles?
-        module.add(SCmpLtU32(src0=sgpr("WorkGroup0"), src1=sgpr(tmpSgprAccumTiles)))
-        label_FOUND = Label("FOUND", "")
-        module.add(SCBranchSCC1(labelName=label_FOUND.getLabelName()))
-        module.add(SAddU32(dst=sgpr(tmpSgprAddrM), src0=sgpr(tmpSgprAddrM), src1=sgpr(tmpSgprArgOffsett)))
-        module.add(self.argLoader.loadKernArg(tmpSgprM, tmpSgprArgAddress0, sgpr(tmpSgprAddrM), dword=4))
-        module.add(SAddU32(dst=sgpr(tmpSgprLoopCounter), src0=sgpr(tmpSgprLoopCounter), src1=1))
-        # loop gemm count
-        module.add(SCmpLtU32(src0=sgpr(tmpSgprLoopCounter), src1=sgpr(tmpSgprNumGemm)))
-        module.add(SCBranchSCC1(labelName=label_Loop_gemm_count.getLabelName()))
+      # prefetch 1 arg load
+      module.addComment1("Grouped Gemm:: prefetch 1 arg load")
+      module.add(SMovB32(dst=sgpr(tmpSgprLoopCounter), src=1))
+      module.add(SMovB32(dst=sgpr(tmpSgprAccumTiles), src=0))
+      module.add(self.argLoader.loadKernArg(tmpSgprM, tmpSgprArgAddress0, sgpr(tmpSgprAddrM), dword=4))
+      module.add(SCmpKEQU32(src=sgpr(sgprNumsOfGemm), simm16=1, comment="if gemm_count is 1?"))
+      label_noLoadLoop = Label("wgTable_noLoadLoop", "")
+      module.add(SCBranchSCC1(labelName=label_noLoadLoop.getLabelName()))
 
-        # noLoadLoop
-        module.addComment1("Grouped Gemm:: noLoadLoop")
-        module.add(label_noLoadLoop)
-        module.add(SWaitCnt(lgkmcnt=0))
-        # calculate numTiles
-        regStateRes = RegisterPoolResource(idx=tmpSgpr0, size=2)
-        module.add(scalarStaticCeilDivide(qReg=sgpr(tmpSgprNumWG0), dReg=sgpr(tmpSgprM), divisor=kernel["MacroTile0"], tmpSgprRes=regStateRes))
-        module.add(scalarStaticCeilDivide(qReg=sgpr(tmpSgprNumWG1), dReg=sgpr(tmpSgprN), divisor=kernel["MacroTile1"], tmpSgprRes=regStateRes))
-        # accumulate tiles of each gemm
-        module.add(SMulI32(dst=sgpr(tmpSgprNumWG0), src0=sgpr(tmpSgprNumWG0), src1=sgpr(tmpSgprNumWG1)))
-        module.add(SMulI32(dst=sgpr(tmpSgprNumWG0), src0=sgpr(tmpSgprNumWG0), src1=sgpr(tmpSgprB)))
-        module.add(SMulI32(dst=sgpr(tmpSgprNumWG0), src0=sgpr(tmpSgprNumWG0), src1=sgpr("GSU")))
-        module.add(SAddU32(dst=sgpr(tmpSgprAccumTiles), src0=sgpr(tmpSgprAccumTiles), src1=sgpr(tmpSgprNumWG0)))
+      # Start to search
+      module.addComment1("Grouped Gemm:: accumulate numTiles for each gemm")
+      module.addComment0("Grouped Gemm:: loop start")
+      label_Loop_gemm_count = Label("Loop_GemmCount", "")
+      module.add(label_Loop_gemm_count)
+      module.add(SWaitCnt(lgkmcnt=0))
+      # calculate numTiles
+      regStateRes = RegisterPoolResource(idx=tmpSgpr0, size=2)
+      module.add(scalarStaticCeilDivide(qReg=sgpr(tmpSgprNumWG0), dReg=sgpr(tmpSgprM), divisor=kernel["MacroTile0"], tmpSgprRes=regStateRes))
+      module.add(scalarStaticCeilDivide(qReg=sgpr(tmpSgprNumWG1), dReg=sgpr(tmpSgprN), divisor=kernel["MacroTile1"], tmpSgprRes=regStateRes))
+      # accumulate tiles of each gemm
+      module.add(SMulI32(dst=sgpr(tmpSgprNumWG0), src0=sgpr(tmpSgprNumWG0), src1=sgpr(tmpSgprNumWG1)))
+      module.add(SMulI32(dst=sgpr(tmpSgprNumWG0), src0=sgpr(tmpSgprNumWG0), src1=sgpr(tmpSgprB)))
+      module.add(SMulI32(dst=sgpr(tmpSgprNumWG0), src0=sgpr(tmpSgprNumWG0), src1=sgpr("GSU")))
+      module.add(SAddU32(dst=sgpr(tmpSgprAccumTiles), src0=sgpr(tmpSgprAccumTiles), src1=sgpr(tmpSgprNumWG0)))
+      # check wgIndex >= AccumTiles?
+      module.add(SCmpLtU32(src0=sgpr("WorkGroup0"), src1=sgpr(tmpSgprAccumTiles)))
+      label_FOUND = Label("FOUND", "")
+      module.add(SCBranchSCC1(labelName=label_FOUND.getLabelName()))
+      module.add(SAddU32(dst=sgpr(tmpSgprAddrM), src0=sgpr(tmpSgprAddrM), src1=sgpr(tmpSgprArgOffsett)))
+      module.add(self.argLoader.loadKernArg(tmpSgprM, tmpSgprArgAddress0, sgpr(tmpSgprAddrM), dword=4))
+      module.add(SAddU32(dst=sgpr(tmpSgprLoopCounter), src0=sgpr(tmpSgprLoopCounter), src1=1))
+      # loop gemm count
+      module.add(SCmpLtU32(src0=sgpr(tmpSgprLoopCounter), src1=sgpr(sgprNumsOfGemm)))
+      module.add(SCBranchSCC1(labelName=label_Loop_gemm_count.getLabelName()))
 
-        # gemmIndex found
-        tmpSgprWgLeft = tmpSgprNumGemm+1
-        tmpSgprGemmIdxLeft = tmpSgprNumGemm+2
-        module.addComment1("Grouped Gemm:: gemmIndex found")
-        module.add(label_FOUND)
-        module.add(SSubU32(dst=sgpr(tmpSgprGemmIdxLeft), src0=sgpr(tmpSgprLoopCounter), src1=1))
-        module.add(SSubU32(dst=sgpr(tmpSgprWgLeft), src0=sgpr(tmpSgprAccumTiles), src1=sgpr(tmpSgprNumWG0)))
+      # noLoadLoop
+      module.addComment1("Grouped Gemm:: noLoadLoop")
+      module.add(label_noLoadLoop)
+      module.add(SWaitCnt(lgkmcnt=0))
+      # calculate numTiles
+      regStateRes = RegisterPoolResource(idx=tmpSgpr0, size=2)
+      module.add(scalarStaticCeilDivide(qReg=sgpr(tmpSgprNumWG0), dReg=sgpr(tmpSgprM), divisor=kernel["MacroTile0"], tmpSgprRes=regStateRes))
+      module.add(scalarStaticCeilDivide(qReg=sgpr(tmpSgprNumWG1), dReg=sgpr(tmpSgprN), divisor=kernel["MacroTile1"], tmpSgprRes=regStateRes))
+      # accumulate tiles of each gemm
+      module.add(SMulI32(dst=sgpr(tmpSgprNumWG0), src0=sgpr(tmpSgprNumWG0), src1=sgpr(tmpSgprNumWG1)))
+      module.add(SMulI32(dst=sgpr(tmpSgprNumWG0), src0=sgpr(tmpSgprNumWG0), src1=sgpr(tmpSgprB)))
+      module.add(SMulI32(dst=sgpr(tmpSgprNumWG0), src0=sgpr(tmpSgprNumWG0), src1=sgpr("GSU")))
+      module.add(SAddU32(dst=sgpr(tmpSgprAccumTiles), src0=sgpr(tmpSgprAccumTiles), src1=sgpr(tmpSgprNumWG0)))
 
-        ########
-        # load arguments of gemm
-        ########
-        module.add(SSubU32(dst=sgpr("WorkGroup0"), src0=sgpr("WorkGroup0"), src1=sgpr(tmpSgprWgLeft)))
-        extLabel    = Label(label="LoadExternalStruct", comment="")
-        extLabelEnd = Label(label="LoadExternalStructEnd", comment="")
-        if kernel["ProblemType"]["SupportUserArgs"]:
-          module.addComment0("Check if custom structure pointer is null")
-          module.add(SBranchIfNotZero("ExternalArgAddress", DataType('int64'), extLabel))
-        module.addComment1("Grouped Gemm: offset argument address to gemm")
-        module.addComment0("Grouped Gemm: offset address from wg_table_start to args_start")
-        module.add(SLShiftLeft2AddU32(dst=sgpr("KernArgAddress"), src0=sgpr(tmpSgprNumGemm), src1=sgpr("KernArgAddress")))
-        module.add(SAddCU32(dst=sgpr("KernArgAddress+1"), src0=sgpr("KernArgAddress+1"), src1=hex(0)))
+      # gemmIndex found
+      tmpSgprWgLeft = sgprNumsOfGemm+1
+      tmpSgprGemmIdxLeft = sgprNumsOfGemm+2
+      module.addComment1("Grouped Gemm:: gemmIndex found")
+      module.add(label_FOUND)
+      module.add(SSubU32(dst=sgpr(tmpSgprGemmIdxLeft), src0=sgpr(tmpSgprLoopCounter), src1=1))
+      module.add(SSubU32(dst=sgpr(tmpSgprWgLeft), src0=sgpr(tmpSgprAccumTiles), src1=sgpr(tmpSgprNumWG0)))
+
+      ########
+      # load arguments of gemm
+      ########
+      module.add(SSubU32(dst=sgpr("WorkGroup0"), src0=sgpr("WorkGroup0"), src1=sgpr(tmpSgprWgLeft)))
+      extLabel    = Label(label="LoadExternalStruct", comment="")
+      extLabelEnd = Label(label="LoadExternalStructEnd", comment="")
+      if kernel["ProblemType"]["SupportUserArgs"]:
+        module.addComment0("Check if custom structure pointer is null")
+        module.add(SBranchIfNotZero("ExternalArgAddress", DataType('int64'), extLabel))
+      module.addComment1("Grouped Gemm: offset argument address to gemm")
+      module.addComment0("Grouped Gemm: offset address from wg_table_start to args_start")
+      module.add(SLShiftLeft2AddU32(dst=sgpr("KernArgAddress"), src0=sgpr(sgprNumsOfGemm), src1=sgpr("KernArgAddress")))
+      module.add(SAddCU32(dst=sgpr("KernArgAddress+1"), src0=sgpr("KernArgAddress+1"), src1=hex(0)))
+      module.addComment0("Grouped Gemm: offset address from args_start to gemm_start")
+      module.add(SMulI32(dst=sgpr(tmpSgprGemmIdxLeft), src0=sgpr(tmpSgprGemmIdxLeft),\
+                         src1=(self.argLoader.getOffset() + (numStoreSgprToLoad * 4))))
+      module.add(SAddU32(dst=sgpr("KernArgAddress"), src0=sgpr("KernArgAddress"), src1=sgpr(tmpSgprGemmIdxLeft)))
+      module.add(SAddCU32(dst=sgpr("KernArgAddress+1"), src0=sgpr("KernArgAddress+1"), src1=hex(0)))
+      module.add(kernelArgs)
+      if kernel["ProblemType"]["SupportUserArgs"]:
+        module.add(SBranch(extLabelEnd.getLabelName()))
+        module.add(extLabel)
         module.addComment0("Grouped Gemm: offset address from args_start to gemm_start")
-        module.add(SMulI32(dst=sgpr(tmpSgprGemmIdxLeft), src0=sgpr(tmpSgprGemmIdxLeft),\
-                           src1=(self.argLoader.getOffset() + (numStoreSgprToLoad * 4))))
-        module.add(SAddU32(dst=sgpr("KernArgAddress"), src0=sgpr("KernArgAddress"), src1=sgpr(tmpSgprGemmIdxLeft)))
-        module.add(SAddCU32(dst=sgpr("KernArgAddress+1"), src0=sgpr("KernArgAddress+1"), src1=hex(0)))
-        module.add(moduleArgs)
-        if kernel["ProblemType"]["SupportUserArgs"]:
-          module.add(SBranch(extLabelEnd.getLabelName()))
-          module.add(extLabel)
-          module.addComment0("Grouped Gemm: offset address from args_start to gemm_start")
-          # Currently a magic number cause the structure is fixed, should the structure gen by python so we can know the size?
-          module.add(SMulI32(dst=sgpr(tmpSgprGemmIdxLeft), src0=sgpr(tmpSgprGemmIdxLeft),src1=self.states.userArgsInfo.totalSize))
-          module.add(SAddU32(dst=sgpr("ExternalArgAddress"), src0=sgpr("ExternalArgAddress"), src1=sgpr(tmpSgprGemmIdxLeft)))
-          module.add(SAddCU32(dst=sgpr("ExternalArgAddress+1"), src0=sgpr("ExternalArgAddress+1"), src1=hex(0)))
-          moduleExternalArgs = Module("Load external Arguments")
-        # Here alpha and beta in user args are fixed sizes, so we need to exclude beta and read it with a different offset
-          load = load - self.states.numSgprBeta
-          moduleExternalArgs.addModuleAsFlatItems(self.externalArgLoader.loadAllKernArg(sgprStart, "ExternalArgAddress", load))
-          offset = self.externalArgLoader.getOffset() + self.states.bpr * (self.states.userArgsInfo.alphaMaxRegisterSize - self.states.numSgprAlpha)
-          self.externalArgLoader.setOffset(offset)
-          moduleExternalArgs.addComment("Read Beta")
-          moduleExternalArgs.addModuleAsFlatItems(self.externalArgLoader.loadAllKernArg(self.sgprs["Beta"], "ExternalArgAddress", self.states.numSgprBeta))
-          offset = self.externalArgLoader.getOffset() + self.states.bpr * (self.states.userArgsInfo.betaMaxRegisterSize - self.states.numSgprBeta)
-          if kernel["ProblemType"]["UseScaleAB"]:
-            sgprOffset = self.externalArgLoader.getOffset()
-            for preloadScale, name in zip([self.states.preloadScaleA, self.states.preloadScaleB], ['A','B']):
-              if preloadScale:
-                moduleExternalArgs.add(self.externalArgLoader.loadKernArg("AddressScale%s"%name, "ExternalArgAddress", sgprOffset=hex(sgprOffset), dword=2))
-              sgprOffset += self.states.userArgsInfo.scaleASize
-          self.externalArgLoader.setOffset(offset)
-          module.add(moduleExternalArgs)
-          module.add(extLabelEnd)
+        # Currently a magic number cause the structure is fixed, should the structure gen by python so we can know the size?
+        module.add(SMulI32(dst=sgpr(tmpSgprGemmIdxLeft), src0=sgpr(tmpSgprGemmIdxLeft),src1=self.states.userArgsInfo.totalSize))
+        module.add(SAddU32(dst=sgpr("ExternalArgAddress"), src0=sgpr("ExternalArgAddress"), src1=sgpr(tmpSgprGemmIdxLeft)))
+        module.add(SAddCU32(dst=sgpr("ExternalArgAddress+1"), src0=sgpr("ExternalArgAddress+1"), src1=hex(0)))
+        moduleExternalArgs = Module("Load external Arguments")
+      # Here alpha and beta in user args are fixed sizes, so we need to exclude beta and read it with a different offset
+        load = load - self.states.numSgprBeta
+        moduleExternalArgs.addModuleAsFlatItems(self.externalArgLoader.loadAllKernArg(sgprStart, "ExternalArgAddress", load))
+        offset = self.externalArgLoader.getOffset() + self.states.bpr * (self.states.userArgsInfo.alphaMaxRegisterSize - self.states.numSgprAlpha)
+        self.externalArgLoader.setOffset(offset)
+        moduleExternalArgs.addComment("Read Beta")
+        moduleExternalArgs.addModuleAsFlatItems(self.externalArgLoader.loadAllKernArg(self.sgprs["Beta"], "ExternalArgAddress", self.states.numSgprBeta))
+        offset = self.externalArgLoader.getOffset() + self.states.bpr * (self.states.userArgsInfo.betaMaxRegisterSize - self.states.numSgprBeta)
+        if kernel["ProblemType"]["UseScaleAB"]:
+          sgprOffset = self.externalArgLoader.getOffset()
+          for preloadScale, name in zip([self.states.preloadScaleA, self.states.preloadScaleB], ['A','B']):
+            if preloadScale:
+              moduleExternalArgs.add(self.externalArgLoader.loadKernArg("AddressScale%s"%name, "ExternalArgAddress", sgprOffset=hex(sgprOffset), dword=2))
+            sgprOffset += self.states.userArgsInfo.scaleASize
+        self.externalArgLoader.setOffset(offset)
+        module.add(moduleExternalArgs)
+        module.add(extLabelEnd)
 
-        module.add(moduleWg)
+      # Update label
+      labels = []
+      for inst in moduleWg.items():
+        if isinstance(inst, Label):
+          self.labels.getNameInc(inst.label)
+          labels.append([inst.label, self.labels.getNameInc(inst.label)])
+          inst.label = labels[-1][1]
+      for inst in moduleWg.items():
+        if isinstance(inst, BranchInstruction):
+          removeIdx = -1
+          for idx, label in enumerate(labels):
+            if inst.labelName == Label(label=label[0],comment="").getLabelName():
+              inst.labelName = Label(label=label[1],comment="").getLabelName()
+              removeIdx = idx
+          if removeIdx != -1:
+            del labels[removeIdx]
+      module.add(moduleWg)
 
-        earlyReturnModule = Module("Early stop if N(SizeFreeJ) == 0")
-        earlyReturnModule.addComment1("Early stop if N(SizeFreeJ) == 0")
-        earlyReturnModule.add(SCmpEQU32(sgpr("SizeJ"), hex(0)))
-        earlyReturnLabel = Label("EarlyStop_if_N_is_0", "")
-        noEarlyReturnLabel = Label("NoEarlyStop_N0", "")
-        earlyReturnModule.add(SCBranchSCC0(noEarlyReturnLabel.getLabelName()))
-        earlyReturnModule.add(earlyReturnLabel)
-        earlyReturnModule.add(SEndpgm())
-        earlyReturnModule.add(noEarlyReturnLabel)
-        module.add(earlyReturnModule)
+      earlyReturnModule = Module("Early stop if N(SizeFreeJ) == 0")
+      earlyReturnModule.addComment1("Early stop if N(SizeFreeJ) == 0")
+      earlyReturnModule.add(SCmpEQU32(sgpr("SizeJ"), hex(0)))
+      earlyReturnLabel = Label("EarlyStop_if_N_is_0", "")
+      noEarlyReturnLabel = Label("NoEarlyStop_N0", "")
+      earlyReturnModule.add(SCBranchSCC0(noEarlyReturnLabel.getLabelName()))
+      earlyReturnModule.add(earlyReturnLabel)
+      earlyReturnModule.add(SEndpgm())
+      earlyReturnModule.add(noEarlyReturnLabel)
+      module.add(earlyReturnModule)
 
-        ########
-        # remap wg serial to wg0,wg1,wg2
-        ########
+      ########
+      # remap wg serial to wg0,wg1,wg2
+      ########
+      # FIXME: Here does not support UseBatch: False
+      if "WorkGroup2" in self.sgprs:
         with self.allocTmpSgpr(2) as tmpSgpr:
           module.addComment1("Grouped Gemm: remap wg from 1D(idxWG012) to 3D(wg2,wg1,wg0)")
           module.addComment0("wg2 = idxWG012 * smallMagicNumber(1/(numWG0*numWG1))")
@@ -1552,7 +1586,7 @@ class KernelWriterAssembly(KernelWriter):
           module.add(SMulI32(dst=sgpr(tmpSgpr.idx), src0=sgpr("NumWorkGroups0"), src1=sgpr("NumWorkGroups1")))
           module.add(SMulI32(dst=sgpr(tmpSgpr.idx), src0=sgpr(tmpSgpr.idx), src1=sgpr("GSU")))
           module.add(scalarUInt32DivideAndRemainder(qReg=tmpSgpr.idx, dReg="WorkGroup0", divReg=tmpSgpr.idx, rReg=tmpSgpr.idx+1,\
-                                           tmpVgprRes=tmpVgprRes, wavewidth=kernel["WavefrontSize"], doRemainder=False))
+                                          tmpVgprRes=tmpVgprRes, wavewidth=kernel["WavefrontSize"], doRemainder=False))
           module.add(SMovB32(dst=sgpr("WorkGroup2"), src=sgpr(tmpSgpr.idx)))
           module.addComment0("idxWG01 = idxWG012 - wg2 * numWG0 * numWG1")
           module.add(SMulI32(dst=sgpr(tmpSgpr.idx), src0=sgpr("NumWorkGroups1"), src1=sgpr("NumWorkGroups0")))
@@ -1561,7 +1595,7 @@ class KernelWriterAssembly(KernelWriter):
           module.add(SSubU32(dst=sgpr("WorkGroup0"), src0=sgpr("WorkGroup0"), src1=sgpr(tmpSgpr.idx)))
           module.addComment0("wg1 = idxWG01 * smallMagicNumber(1/numWG0)")
           module.add(scalarUInt32DivideAndRemainder(qReg=tmpSgpr.idx, dReg="WorkGroup0", divReg="NumWorkGroups0", rReg=tmpSgpr.idx+1,\
-                                           tmpVgprRes=tmpVgprRes, wavewidth=kernel["WavefrontSize"], doRemainder=False))
+                                          tmpVgprRes=tmpVgprRes, wavewidth=kernel["WavefrontSize"], doRemainder=False))
           self.vgprPool.checkIn(tmpVgpr)
           module.add(SMovB32(dst=sgpr("WorkGroup1"), src=sgpr(tmpSgpr.idx)))
           module.addComment0("wg0 = idxWG01 - wg1 * numWG0")
@@ -1578,9 +1612,8 @@ class KernelWriterAssembly(KernelWriter):
         module.add(SEndpgm())
         module.add(label_nonEarlyStop)
 
-        module.addSpaceLine()
-    else:
-      module.add(ValueIf(0))
+      module.addSpaceLine()
+      module.add(labelMultiGemmEnd)
 
     # self.states.groOffsetInMacroTile == 1 case, subtract pre-pad here
     if self.states.groOffsetInMacroTile:

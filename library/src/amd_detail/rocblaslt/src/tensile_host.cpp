@@ -1741,8 +1741,14 @@ rocblaslt_status runKernelFromNewDeviceUserArguments(rocblaslt_handle       hand
                 = std::static_pointer_cast<TensileDataGroupedGemm>(gemmData);
             for(auto& it : data->kernels)
             {
-                uint8_t* arg = it.args.rawdata();
-                memcpy(arg + 4, &deviceUserArgs, sizeof(void*));
+                uint8_t* arg      = it.args.rawdata();
+                auto     solution = library->getSolutionByIndex(data->algoIndex);
+                if(solution->internalArgsSupport.useUniversalArgs)
+                    memcpy(arg + 8, &deviceUserArgs, sizeof(void*));
+                else
+                {
+                    memcpy(arg + 4, &deviceUserArgs, sizeof(void*));
+                }
             }
             status = hip2RocStatus(adapter->launchKernels(data->kernels, stream, nullptr, nullptr));
         }
