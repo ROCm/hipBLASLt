@@ -1,6 +1,6 @@
 ################################################################################
 #
-# Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -3527,12 +3527,9 @@ class Solution(collections.abc.Mapping):
       # TODO: support ONLL if necessary
       state["OptNoLoadLoop"] = 0
 
-    if not state["ProblemType"]["GroupedGemm"]:
-      if state["ProblemType"]["SupportUserArgs"]:
-        reject(state, "Currently only grouped gemm supports SupportUserArgs.")
-    if state["GlobalSplitU"] > 1:
-      if state["ProblemType"]["SupportUserArgs"] and state["_GlobalAccumulation"] != 'MultipleBufferSingleKernel':
-        reject(state, "Currently SupportUserArgs does not support GSU > 1.")
+    # if state["GlobalSplitU"] > 1:
+    #   if state["ProblemType"]["SupportUserArgs"] and state["_GlobalAccumulation"] != 'MultipleBufferSingleKernel':
+    #     reject(state, "Currently SupportUserArgs does not support GSU > 1.")
 
     #Need to force disabling PreloadKernArgs if compiler does not support
     #Can not just reject the solution since the user library may find any solutions
