@@ -50,6 +50,7 @@ custom.config:
       SupportUserGSU: True
       SupportCustomWGM: True
       SupportCustomStaggerU: False
+      UseUniversalArgs: False
 amdhsa.version:
   - 1
   - 1
