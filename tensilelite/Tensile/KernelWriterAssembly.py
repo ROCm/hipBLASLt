@@ -1311,6 +1311,7 @@ class KernelWriterAssembly(KernelWriter):
         module.add(self.argLoader.loadKernArg(tmpSgprNumGemm, "KernArgAddress", hex(0), dword=1))
         if (self.states.kernel["WorkGroupMappingXCC"] > 1):
           tmpSgprNumWorkGroups = tempSgprForGG+1
+          module.addComment1("Grouped Gemm: Load num of WGs")
           module.add(self.argLoader.loadKernArg(tmpSgprNumWorkGroups, "KernArgAddress", hex(20), dword=1))
         module.addComment1("Grouped Gemm: Load GSU data")
         module.add(self.argLoader.loadKernArg("GSU", "KernArgAddress", hex(24), dword=1))
@@ -1324,7 +1325,7 @@ class KernelWriterAssembly(KernelWriter):
         if self.states.numSgprPreload > 0:
           ## backward compability path###
           module.add(SBranch(common_kern_entry.getLabelName()))
-          sload_inst_dwords = 4 * 2
+          sload_inst_dwords = (4 + (1 if self.states.kernel["WorkGroupMappingXCC"] > 1 else 0)) * 2
           swait_branch_inst_dwords = 2 * 1
           total_inst_dwords = sload_inst_dwords + swait_branch_inst_dwords
           module.addComment1("pad %u snops to satisfy 0x100 code size for Preload Backward Compatibility Prologue" % (64 - total_inst_dwords))
@@ -1334,9 +1335,9 @@ class KernelWriterAssembly(KernelWriter):
           preloadSgprStartIdx = self.states.rpga  #number sgprs of kernel argument buffer address
           #TODO: remove hardcode once destination SGPRs are in-order
           module.add(SMovB32(dst=sgpr(tmpSgprNumGemm), src=sgpr(preloadSgprStartIdx), comment="Grouped Gemm: Load num of Gemms"))
-          module.add(SMovB32(dst=sgpr("GSU"), src=sgpr(preloadSgprStartIdx+6), comment="Load GSU data"))
           if (self.states.kernel["WorkGroupMappingXCC"] > 1):
-            module.add(SMovB32(dst=sgpr(tmpSgprNumWorkGroups), src=sgpr(preloadSgprStartIdx+5)))
+            module.add(SMovB32(dst=sgpr(tmpSgprNumWorkGroups), src=sgpr(preloadSgprStartIdx+5), comment="Grouped Gemm: Load num of WGs"))
+          module.add(SMovB32(dst=sgpr("GSU"), src=sgpr(preloadSgprStartIdx+6), comment="Load GSU data"))
           module.add(SMovB32(dst=sgpr("KernArgAddress+1"), src=sgpr(preloadSgprStartIdx+4), comment="Load address of kernel arguments"))
           module.add(SMovB32(dst=sgpr("KernArgAddress"), src=sgpr(preloadSgprStartIdx+3), comment="Load address of kernel arguments"))
           module.add(SMovB32(dst=sgpr("ExternalArgAddress+1"), src=sgpr(preloadSgprStartIdx+2), comment="Load address of external kernel arguments"))
@@ -1370,7 +1371,7 @@ class KernelWriterAssembly(KernelWriter):
           WGMXCC = self.states.kernel["WorkGroupMappingXCC"]
           label_skipWGMXCC = Label(label="skip_WGMXCC", comment="skip WGMXCC if no enough WGs to remap")
           module.addComment0("only remap WGs in the range")
-          module.add(scalarStaticDivideAndRemainder(qReg=sgpr(tmpSgpr0), rReg=None, dReg=sgpr("WorkGroup0"), divisor=pow(WGMXCC,2), tmpSgprRes=tmpSgprRes, doRemainder=0))
+          module.add(scalarStaticDivideAndRemainder(qReg=sgpr(tmpSgpr0), rReg=None, dReg=sgpr(tmpSgprNumWorkGroups), divisor=pow(WGMXCC,2), tmpSgprRes=tmpSgprRes, doRemainder=0))
           module.add(SMulI32(dst=sgpr(tmpSgpr0), src0=sgpr(tmpSgpr0), src1=pow(WGMXCC,2)))
           module.add(SCmpGeU32(src0=sgpr("WorkGroup0"), src1=sgpr(tmpSgpr0)))
           module.add(SCBranchSCC1(label_skipWGMXCC.getLabelName()))
