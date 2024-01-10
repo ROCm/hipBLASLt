@@ -189,12 +189,16 @@ namespace
 
             int currentDevice{};
             err       = hipGetDevice(&currentDevice);
-            auto& lib = getExtOpMasterLibrary();
+            try {
+                auto& lib = getExtOpMasterLibrary();
 
-            for(auto& adapter : adapters)
-            {
-                //setup code object root only, ignore the error
-                err = adapter->initializeLazyLoading("", lib.getLibraryFolder());
+                for(auto& adapter : adapters)
+                {
+                    //setup code object root only, ignore the error
+                    err = adapter->initializeLazyLoading("", lib.getLibraryFolder());
+                }
+            } catch (const std::runtime_error& e) {
+                rocblaslt_log_error("extOpLibraries", "ExtOpLibPath", getExtOpLibraryPath().c_str());
             }
 
             return adapters;

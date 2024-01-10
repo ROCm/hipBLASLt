@@ -394,6 +394,8 @@ std::string rocblaslt_internal_get_arch_name();
 bool rocblaslt_internal_test_path(const std::string&);
 
 std::string rocblaslt_internal_get_so_path(const std::string& keyword);
+
+void rocblaslt_log_error(const char* func, const char* var, const char* msg);
 #endif
 
 #endif /* _ROCBLASLT_AUXILIARY_H_ */
