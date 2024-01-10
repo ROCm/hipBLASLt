@@ -1171,6 +1171,7 @@ class KernelWriterAssembly(KernelWriter):
       hbmArgs = Module("load HBM arguments")
       if (self.states.kernel["WorkGroupMappingXCC"] > 1):
         tmpSgprNumWorkGroups = tempSgprForGG+1
+        hbmArgs.addComment1("Grouped Gemm: Load num of WGs")
         hbmArgs.add(self.argLoader.loadKernArg(tmpSgprNumWorkGroups, "KernArgAddress", hex(20), dword=1))
       if kernel["ProblemType"]["SupportUserArgs"]:
         hbmArgs.addComment1("Load address of external kernel arguments")
@@ -1233,7 +1234,7 @@ class KernelWriterAssembly(KernelWriter):
         moduleArgs.add(SBranch(labelName=perloadLabelLoadEnd.getLabelName()))
         moduleArgs.add(preloadLabelHBM)
         if (self.states.kernel["WorkGroupMappingXCC"] > 1):
-          moduleArgs.add(SMovB32(dst=sgpr(tmpSgprNumWorkGroups), src=sgpr(preloadSgprStartIdx+6)))
+          moduleArgs.add(SMovB32(dst=sgpr(tmpSgprNumWorkGroups), src=sgpr(preloadSgprStartIdx+6), comment="Grouped Gemm: Load num of WGs"))
         moduleArgs.add(SMovB64(dst=sgpr("KernArgAddress", 2), src=sgpr(preloadSgprStartIdx+4, 2), comment="Load address of kernel arguments"))
         if kernel["ProblemType"]["SupportUserArgs"]:
           moduleArgs.add(SMovB64(dst=sgpr("ExternalArgAddress", 2), src=sgpr(preloadSgprStartIdx+2, 2), comment="Load address of external kernel arguments"))
@@ -1386,7 +1387,7 @@ class KernelWriterAssembly(KernelWriter):
         WGMXCC = self.states.kernel["WorkGroupMappingXCC"]
         label_skipWGMXCC = Label(label="skip_WGMXCC", comment="skip WGMXCC if no enough WGs to remap")
         module.addComment0("only remap WGs in the range")
-        module.add(scalarStaticDivideAndRemainder(qReg=sgpr(tmpSgpr0), rReg=None, dReg=sgpr("WorkGroup0"), divisor=pow(WGMXCC,2), tmpSgprRes=tmpSgprRes, doRemainder=0))
+        module.add(scalarStaticDivideAndRemainder(qReg=sgpr(tmpSgpr0), rReg=None, dReg=sgpr(tmpSgprNumWorkGroups), divisor=pow(WGMXCC,2), tmpSgprRes=tmpSgprRes, doRemainder=0))
         module.add(SMulI32(dst=sgpr(tmpSgpr0), src0=sgpr(tmpSgpr0), src1=pow(WGMXCC,2)))
         module.add(SCmpGeU32(src0=sgpr("WorkGroup0"), src1=sgpr(tmpSgpr0)))
         module.add(SCBranchSCC1(label_skipWGMXCC.getLabelName()))
