@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
+ * Copyright (C) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -542,7 +542,8 @@ namespace Tensile
                || (sizeMapping.globalAccumulation == 3 && !problemType.groupedGemm)))
         {
             args.template append<void const*>("ws_d", (uint8_t*)inputs.ws + workspaceOffsetInByte);
-            if((sizeMapping.customKernelName != "" && gsu > 1) || (sizeMapping.globalAccumulation == 3))
+            if((sizeMapping.customKernelName != "" && gsu > 1)
+               || (sizeMapping.globalAccumulation == 3))
             {
                 args.template append<void const*>("c", inputs.c);
             }
@@ -643,7 +644,8 @@ namespace Tensile
         }
 
         if constexpr(insertKernelArgs)
-            kernelArgs<T_Debug>(args, problem.getParams());
+            if(!internalArgsSupport.useUniversalArgs)
+                kernelArgs<T_Debug, true>(0, 0, args, problem.getParams());
 
         if(problemType.useScaleAB) //kernel input data
         {
@@ -744,9 +746,19 @@ namespace Tensile
         }
     }
 
-    template <bool T_Debug, typename KA>
-    void ContractionSolution::kernelArgs(KA& args, const ContractionProblemParameters& param) const
+    template <bool T_Debug, bool Legacy, typename KA>
+    void ContractionSolution::kernelArgs(uint32_t                            gemmCount,
+                                         uint32_t                            argType,
+                                         KA&                                 args,
+                                         const ContractionProblemParameters& param) const
     {
+        if constexpr(!Legacy)
+        {
+            gemmCount = gemmCount & 0x3FFFFFFF;
+            gemmCount = gemmCount | (argType << 30);
+            args.template append<uint32_t>("gemm_count", gemmCount);
+        }
+
         uint32_t gsu = param.gsu() > 0 ? param.gsu() : sizeMapping.globalSplitU;
         uint32_t wgm = param.wgm() > 0 ? param.wgm() : sizeMapping.workGroupMapping;
         if(!internalArgsSupport.wgm)
@@ -830,9 +842,12 @@ namespace Tensile
 
         rv.sharedMemBytes = 0;
 
+        if(internalArgsSupport.useUniversalArgs)
+            kernelArgs<T_Debug, false>(1, 0, rv.args, problem.getParams());
         singleCallArgs<T_Debug, true>(problem, inputs, 0, rv.args);
 
-        if(((sizeMapping.globalAccumulation == 2) && (sizeMapping.customKernelName != "" && gsu > 1))
+        if(((sizeMapping.globalAccumulation == 2)
+            && (sizeMapping.customKernelName != "" && gsu > 1))
            || (sizeMapping.globalAccumulation == 3))
         {
             if(sizeMapping.globalAccumulation == 3)
@@ -963,12 +978,27 @@ namespace Tensile
 
         if constexpr(!std::is_same<KA, KernelArgumentsCounter>::value)
         {
-            rv.args.append<uint32_t>("gemm_count", problems.size());
-            // For user input
-            rv.args.append<void const*>("DeviceUserArguments", userArgs);
-            rv.args.append<void const*>("argsPtr", (void*)inputs.ws);
-            rv.args.append<uint32_t>("numWorkGroups", rv.numWorkItems.x / rv.workGroupSize.x / rv.workGroupSize.y / rv.workGroupSize.z);
-            kernelArgs<T_Debug>(rv.args, problems[0].getParams());
+            if(internalArgsSupport.useUniversalArgs)
+            {
+                kernelArgs<T_Debug, false>(problems.size(), 1, rv.args, problems[0].getParams());
+                // For user input
+                rv.args.append<void const*>("DeviceUserArguments", userArgs);
+                rv.args.append<void const*>("argsPtr", (void*)inputs.ws);
+                rv.args.append<uint32_t>("numWorkGroups",
+                                         rv.numWorkItems.x / rv.workGroupSize.x / rv.workGroupSize.y
+                                             / rv.workGroupSize.z);
+            }
+            else
+            {
+                rv.args.append<uint32_t>("gemm_count", problems.size());
+                // For user input
+                rv.args.append<void const*>("DeviceUserArguments", userArgs);
+                rv.args.append<void const*>("argsPtr", (void*)inputs.ws);
+                rv.args.append<uint32_t>("numWorkGroups",
+                                         rv.numWorkItems.x / rv.workGroupSize.x / rv.workGroupSize.y
+                                             / rv.workGroupSize.z);
+                kernelArgs<T_Debug, true>(0, 0, rv.args, problems[0].getParams());
+            }
             rv.args.append<void const*>(
                 "Workspace",
                 (uint8_t*)inputs.ws + this->requiredHostWorkspaceSizePerProblem * problems.size());
@@ -1033,7 +1063,9 @@ namespace Tensile
             rv.args.append<void const* const*>("batchC", inputs.batchC);
 
         if(problemType.useBias
-           && (sizeMapping.globalAccumulation == 0 || (sizeMapping.customKernelName != "" && gsu > 1)  || (sizeMapping.globalAccumulation == 3))
+           && (sizeMapping.globalAccumulation == 0
+               || (sizeMapping.customKernelName != "" && gsu > 1)
+               || (sizeMapping.globalAccumulation == 3))
            && (!problemType.useGradient))
         {
             if(problemType.stridedBatched)
@@ -1052,7 +1084,9 @@ namespace Tensile
             rv.args.append<void const*>("scaleD", inputs.scaleD);
         }
         if(problemType.useScaleAlphaVec
-           && (sizeMapping.globalAccumulation == 0 || (sizeMapping.customKernelName != "" && gsu > 1) || (sizeMapping.globalAccumulation == 3)))
+           && (sizeMapping.globalAccumulation == 0
+               || (sizeMapping.customKernelName != "" && gsu > 1)
+               || (sizeMapping.globalAccumulation == 3)))
         {
             rv.args.append<void const*>("scaleAlphaVec", inputs.scaleAlphaVec);
         }
@@ -1079,7 +1113,9 @@ namespace Tensile
                                      c.sizes()[i] == 1 ? 0 : c.strides()[i]);
 
         if(problemType.useBias
-           && (sizeMapping.globalAccumulation == 0 || (sizeMapping.customKernelName != "" && gsu > 1) || (sizeMapping.globalAccumulation == 3))
+           && (sizeMapping.globalAccumulation == 0
+               || (sizeMapping.customKernelName != "" && gsu > 1)
+               || (sizeMapping.globalAccumulation == 3))
            && (!problemType.useGradient))
         {
             TensorDescriptor const& bias = problem.tensor(ContractionProblemGemm::TENSOR::BIAS);
@@ -1140,7 +1176,9 @@ namespace Tensile
         }
 
         if(problemType.useBias
-           && ((sizeMapping.globalAccumulation == 0) || (sizeMapping.customKernelName != "" && gsu > 1) || (sizeMapping.globalAccumulation == 3) )
+           && ((sizeMapping.globalAccumulation == 0)
+               || (sizeMapping.customKernelName != "" && gsu > 1)
+               || (sizeMapping.globalAccumulation == 3))
            && (!problemType.useGradient))
         {
             auto s = TypeAbbrev(problem.bias().dataType());
@@ -1912,6 +1950,25 @@ namespace Tensile
                                              size_t                    hipHostMemorySize,
                                              hipStream_t               stream) const
     {
+        // Since we now use universal args, we block globalSplitU here if using UserArgs
+        if(sizeMapping.globalSplitU > 1 && sizeMapping.globalAccumulation != 3)
+        {
+            KernelInvocation dummyrv;
+            dummyrv.kernelName = "";
+
+            dummyrv.args = KernelArguments(false);
+
+            dummyrv.workGroupSize.x = 1;
+            dummyrv.workGroupSize.y = 1;
+            dummyrv.workGroupSize.z = 1;
+
+            dummyrv.numWorkItems.x = 1;
+            dummyrv.numWorkItems.y = 1;
+            dummyrv.numWorkItems.z = 1;
+
+            dummyrv.sharedMemBytes = 0;
+            return {dummyrv};
+        }
         if(auto groupedProblem = dynamic_cast<ContractionProblemGroupedGemm const*>(&problem))
         {
             auto& gemms         = groupedProblem->gemms;

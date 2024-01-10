@@ -1,6 +1,6 @@
 ################################################################################
 #
-# Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -557,13 +557,15 @@ class SizeMapping:
 class InternalArgsSupport:
     StateKeys = ['gsu',
                  'wgm',
-                 'staggerU']
+                 'staggerU',
+                 'useUniversalArgs']
 
     @classmethod
     def FromOriginalState(cls, d):
         return cls(gsu = d['InternalSupportParams']['SupportUserGSU'],
                    wgm = d['InternalSupportParams']['SupportCustomWGM'],
-                   staggerU = d['InternalSupportParams']['SupportCustomStaggerU'])
+                   staggerU = d['InternalSupportParams']['SupportCustomStaggerU'],
+                   useUniversalArgs = d['InternalSupportParams']['UseUniversalArgs'])
 
     def __init__(self, **kwargs):
         for (key, value) in list(kwargs.items()):
