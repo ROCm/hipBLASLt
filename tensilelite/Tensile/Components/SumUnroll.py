@@ -1,6 +1,6 @@
 ################################################################################
 #
-# Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -24,6 +24,7 @@
 
 from ..Component import SumUnroll
 from ..Common import printExit
+from ..TensileInstructions.ExtInstructions import VCvtBF16toFP32
 from ..TensileInstructions import Module, VDot2F32F16, SMovB32, VAddU32, VCmpXEqU32, \
     VLShiftLeftB32, VMovB32, VAddF32, SBarrier, SDWAModifiers, SelectBit, VCvtPkFP8toF32, VCvtPkBF8toF32, \
     staticMultiply, vectorStaticDivide, vectorStaticRemainder, \
@@ -88,6 +89,10 @@ class SumUnrollMfma(SumUnroll):
         vgprBuffer_new = (m//numIterPerCoalescedRead)*numIterPerCoalescedRead
         vgprBuffer_new_offset = m%numIterPerCoalescedRead*kernel["InnerUnroll"]*vgprPerInput
 
+        if kernel["ProblemType"]["DataType"].isBFloat16():
+            hiBitsMaskVgpr = writer.vgprPool.checkOut(1)
+            imod.add(VMovB32(dst=vgpr(hiBitsMaskVgpr), src=hex(0xffff0000), comment="mask 0xffff0000 for pack two bfloat16 element to 32bit"))
+
         for iui in range(0, innerUnroll):
             iui_new = (iui//numReadsIterCoalesced)*numReadsIterCoalesced
             iui_new_offset = iui%numReadsIterCoalesced*vgprPerInput
@@ -109,6 +114,18 @@ class SumUnrollMfma(SumUnroll):
                     while inputIdx < vgprPerInput:
                         imod.add(VAddF32(dst=vgpr(valuSumStr), src0=vgpr("%s+%s"%(valuStr, iui_new_offset + inputIdx)), src1=vgpr(valuSumStr), comment="sum K"))
                         inputIdx += 1
+                elif kernel["ProblemType"]["DataType"].isBFloat16():
+                    # BF16 BiasSrcA,B
+                    tmpVgpr = writer.vgprPool.checkOutAligned(2,2)
+                    if vgprPerInput > 1 and (vgprPerInput % 2 == 0):
+                        for inputIdx in range(0, vgprPerInput):
+                            imod.add(VCvtBF16toFP32(dst=(tmpVgpr), src=("%s+%s"%(valuStr, iui_new_offset + inputIdx)), vgprMask=None, vi=0))
+                            imod.add(VCvtBF16toFP32(dst=(tmpVgpr+1), src=("%s+%s"%(valuStr, iui_new_offset + inputIdx)), vgprMask=hiBitsMaskVgpr, vi=1))
+                            imod.add(VAddF32(dst=vgpr(valuSumStr), src0=vgpr(tmpVgpr), src1=vgpr(valuSumStr), comment="sum K"))
+                            imod.add(VAddF32(dst=vgpr(valuSumStr), src0=vgpr(tmpVgpr+1), src1=vgpr(valuSumStr), comment="sum K"))
+                    else:
+                        printExit("Currently unsupported vgprPerInput %u"%vgprPerInput)
+                    writer.vgprPool.checkIn(tmpVgpr)
                 elif (kernel["ProblemType"]["DataType"].isFloat8A() and tc == "A") or \
                      (kernel["ProblemType"]["DataType"].isFloat8B() and tc == "B") :
                     #FP8
@@ -145,6 +162,9 @@ class SumUnrollMfma(SumUnroll):
                     writer.vgprPool.checkIn(tmpVgpr)
                 else:
                     printExit("Currently unsupported data type")
+
+        if kernel["ProblemType"]["DataType"].isBFloat16():
+            writer.vgprPool.checkIn(hiBitsMaskVgpr)
 
         return imod
 
