@@ -2279,14 +2279,15 @@ class Solution(collections.abc.Mapping):
           state["LocalReadVectorWidth"] //= 2
 
     if state["ConvertAfterDS"]:
-        if state["ProblemType"]["DataTypeA"].isFloat8() and state["UnrollMajorLDSA"] == False:
-            reject(state, "ConvertAfterDS only support UnrollMajorLDSA True")
+        if (state["ProblemType"]["DataType"].isHalf() == False):
+            reject(state, "ConvertAfterDS only support DataType half")
             return
-        if state["ProblemType"]["DataTypeB"].isFloat8() and state["UnrollMajorLDSB"] == False:
-            reject(state, "ConvertAfterDS only support UnrollMajorLDSB True")
+        if (state["ProblemType"]["DataTypeA"].isFloat8() == False) and (state["ProblemType"]["DataTypeB"].isFloat8() == False):
+            reject(state, "one of DataTypeA or DataTypeB need to be float8")
             return
         if state["LocalReadVectorWidth"] != state["MIInputPerThread"]:
             reject(state, "LocalReadVectorWidth only support equal to MIInputPerThread")
+            return
 
     # Default GlobalReadVectorWidthA
     if state["GlobalReadVectorWidthA"] < 0:

@@ -321,8 +321,7 @@ class KernelWriterAssembly(KernelWriter):
 
     #localReadStridePerpendicular = 0
     localRead2Perpendicular = False
-    localReadStrideCoalesced = \
-        kernel[tP["tt"]] * tP["bpeDS"]//bpr
+    localReadStrideCoalesced = kernel[tP["tt"]] * tP["bpeDS"] // bpr
     localRead2Coalesced = False
     localReadInstructionIdx = self.selectMemoryInstruction("LocalRead", localReadWidth, \
                               False, \
@@ -559,7 +558,7 @@ class KernelWriterAssembly(KernelWriter):
             ri += self.states.a.numVgprValuPerBlock
         ri = 0
         if tPA["bpe"] < 4 and not kernel["UnrollMajorLDSA"]:
-          for data in range(1,int(self.states.bpr/tPA["bpe"])):
+          for data in range(1,int(self.states.bpr/tPA["bpeDS"])):
             for bi in range(0,PLR): # buffer indices
               if bi % self.states.numVgprBufferPackA == 0:
                 ri = (data-1) * kernel["InnerUnroll"] * self.states.numVgprBufferPackA * self.states.a.numVgprValuPerBlock
@@ -590,7 +589,7 @@ class KernelWriterAssembly(KernelWriter):
             ri += self.states.b.numVgprValuPerBlock
         ri = 0
         if tPB["bpe"] < 4 and not kernel["UnrollMajorLDSB"]:
-          for data in range(1,int(self.states.bpr/tPB["bpe"])):
+          for data in range(1,int(self.states.bpr/tPB["bpeDS"])):
             for bi in range(0,PLR): # buffer indices
               if bi % self.states.numVgprBufferPackB == 0:
                 ri = (data-1) * kernel["InnerUnroll"] * self.states.numVgprBufferPackB * self.states.b.numVgprValuPerBlock
@@ -6175,8 +6174,7 @@ class KernelWriterAssembly(KernelWriter):
             False, \
             tPB["localRead2Coalesced"], localRead2Perpendicular,
             [tPB["localReadStrideCoalesced"]] )
-          tPB["localReadInstruction"] = instructions["LocalRead"][ \
-            localReadInstructionIdxB]
+          tPB["localReadInstruction"] = instructions["LocalRead"][localReadInstructionIdxB]
 
         if kernel["ProblemType"]["Sparse"] and not kernel["DirectToVgprSparseMetadata"]:
           localReadWidth = tPM["bpe"] / self.states.bpr
