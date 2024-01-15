@@ -79,6 +79,8 @@ class ComputeStoreVgprsMFMA(ComputeStoreVgprs):
 
             # coord 1 : wave part
             module.add(vectorStaticDivide(wave_id, "Serial", writer.states.kernel["WavefrontSize"], tmpVgpr1Res))
+            if kernel["LocalSplitU"] > 1:
+                module.add(vectorStaticDivide(wave_id, wave_id, kernel["LocalSplitU"], tmpVgpr1Res, comment="LSU"))
             module.add(vectorStaticDivide(tid1, wave_id, kernel["MIWaveGroup"][0], tmpVgpr1Res))
             module.add(VMulLOU32(dst=vgpr(tid1), src0=hex(MIBShape1), src1=vgpr(tid1), comment="wave coordination offset 1"))
 
@@ -189,6 +191,8 @@ class ComputeStoreVgprsMFMASwap(ComputeStoreVgprs):
 
             # coord 1 : wave part
             module.add(vectorStaticDivide(wave_id, "Serial", writer.states.kernel["WavefrontSize"], tmpVgpr1Res))
+            if kernel["LocalSplitU"] > 1:
+                module.add(vectorStaticDivide(wave_id, wave_id, kernel["LocalSplitU"], tmpVgpr1Res, comment="LSU"))
             module.add(vectorStaticDivide(tmpVgpr0, wave_id, kernel["MIWaveGroup"][0], tmpVgpr1Res))
             module.add(VMulLOU32(dst=vgpr(tmpVgpr0), src0=hex(MIBShape1), src1=vgpr(tmpVgpr0), comment="wave coordination offset 1"))
 

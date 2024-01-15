@@ -3543,6 +3543,9 @@ class KernelWriter(metaclass=abc.ABCMeta):
     self.defineSgpr("GSULog2BpeD", 1)
     self.defineSgpr("WGM", 1)
 
+    if kernel["LocalSplitU"] > 1:
+      self.defineSgpr("LSUTailLoopOffset", 1)
+
     # for packed batches without stride restrictions need to do something different here
     assert sorted(kernel["PackedC0IdxChars"]+kernel["PackedC1IdxChars"]) == \
            sorted(set(kernel["PackedC0IdxChars"]+kernel["PackedC1IdxChars"]))

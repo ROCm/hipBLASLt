@@ -41,6 +41,7 @@ class StoreState:
     class StoreConstConfig:
         def __init__(self, kernelWriter, kernel, ss, gwvw, edge, beta, atomic):
             self.gwvw = gwvw
+            self.lsu = kernel["LocalSplitU"]
 
             if ss.optSingleColVgpr:
                 # use one vgpr (allocated in ss.sharedColDVgprs) for all addressing
@@ -103,6 +104,7 @@ class StoreState:
     def __init__(self, kernelWriter, kernel, gwvw, edge, beta, atomic, elements):
         self.kernelWriter = kernelWriter
         self.kernel = kernel
+        self.lsu = kernel["LocalSplitU"]
 
         self.isReset = False
         #--
@@ -328,6 +330,14 @@ class StoreState:
                 coordOffset1 += wtIdex * matrixInstN *  matrixInstBN * kernel["MIWaveGroup"][1]
                 coordOffset1  = coordOffset1 * vectorWidth + vc1
 
+                # LSU part
+                if kernel["LocalSplitU"] == 2 and kernel["SourceSwap"]:
+                    # if LSU==4, we have exact 4 group per MI output. Hence, no offset needed.
+                    if kernel["NumGlobalWriteVectorsPerThread"] >= kernel["LocalSplitU"]:
+                        lsu_d1 = d1 // (kernel["NumGlobalWriteVectorsPerThread"] // kernel["LocalSplitU"])
+                        lsuStep = OutputsPerMIMN // kernel["LocalSplitU"]
+                        coordOffset1 += lsu_d1 * lsuStep
+
             newCoord1 = (self.firstBatch and elementIdx==0) or (coordOffset1 != self.lastCoordOffset1)
 
             # gpr and offset assignments for element
@@ -348,6 +358,14 @@ class StoreState:
                 coordOffset0 += bIdx0 * matrixInstM
                 coordOffset0 += wtIdex * matrixInstM * matrixInstBM * kernel["MIWaveGroup"][0]
                 coordOffset0  = coordOffset0 * vectorWidth + vc0
+
+                # LSU part
+                if kernel["LocalSplitU"] == 2 and not kernel["SourceSwap"]:
+                    # if LSU==4, we have exact 4 group per MI output. Hence, no offset needed.
+                    if kernel["NumGlobalWriteVectorsPerThread"] >= kernel["LocalSplitU"]:
+                        lsu_d1 = d0 // (kernel["NumGlobalWriteVectorsPerThread"] // kernel["LocalSplitU"])
+                        lsuStep = OutputsPerMIMN // kernel["LocalSplitU"]
+                        coordOffset0 += lsu_d1 * lsuStep
 
             if self.optSingleColVgpr:
                 # use same address vgpr for all
@@ -379,6 +397,7 @@ class StoreState:
                     addrScaleAlphaVecVgpr = self.sharedColScaleAlphaVecVgprs+elementCol
                 else:
                     addrScaleAlphaVecVgpr = None
+
             else:
                 # allocate new VGPR for each element:
                 addrDVgpr = kw.vgprPool.checkOutAligned(self.cfg.numVgprsPerAddr, \
@@ -404,7 +423,6 @@ class StoreState:
                         int(ceil(self.cfg.numVgprsPerAddr)), "loadScaleAlphaVecBatch-addr for ei=%u"%(elementIdx), preventOverflow=not isOptNLL)
                 else:
                     addrScaleAlphaVecVgpr = None
-
             self.elementAddr.append(AddrCalculation(kw, self, addrCVgpr, addrDVgpr, addrEVgpr, addrBiasVgpr, addrScaleAlphaVecVgpr, element, coordOffset0, \
               self.kernelWriter.vgprs.coord1, coordOffset1, coordOffset1 - self.lastCoordOffset1, newCoord1))
             # if numVgprsPerDataPerVI == 0.5, then two consecutive elements
@@ -506,7 +524,7 @@ class StoreState:
         if self.kernelWriter.states.serializedStore is False:
             return # early exit; currently only serializedStore==True checks out C-tile from register pool
 
-        if len(self.elementSumIdx) > 0:
+        if len(self.elementSumIdx) > 0 and self.lsu == 1:
             for i in self.elementSumIdx:
                 self.kernelWriter.vgprPool.checkIn(i * self.cfg.numVgprPerValuC)
                 # print("checked in vgpr %u"%i)
@@ -532,14 +550,18 @@ class StoreState:
 
         if (self.sharedColEVgprs != None):
             self.kernelWriter.vgprPool.checkIn(self.sharedColEVgprs)
+            self.sharedColEVgprs = None
         if (self.sharedColDVgprs != None):
             self.kernelWriter.vgprPool.checkIn(self.sharedColDVgprs)
-            if (self.sharedColCVgprs != self.sharedColDVgprs):
+            if (self.sharedColCVgprs != self.sharedColDVgprs and self.sharedColCVgprs != None):
                 self.kernelWriter.vgprPool.checkIn(self.sharedColCVgprs)
+                self.sharedColCVgprs = None
+            self.sharedColDVgprs = None
         if (self.sharedColBiasVgprs != None):
             self.kernelWriter.vgprPool.checkIn(self.sharedColBiasVgprs)
-
+            self.sharedColBiasVgprs = None
         if (self.sharedColScaleAlphaVecVgprs != None):
             self.kernelWriter.vgprPool.checkIn(self.sharedColScaleAlphaVecVgprs)
+            self.sharedColScaleAlphaVecVgprs = None
         self.checkInTempVgprC()
         self.resetState()

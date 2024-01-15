@@ -1125,6 +1125,24 @@ class SAbsI32(CommonInstruction):
         super().__init__(InstType.INST_I32, dst, [src], None, None, comment)
         self.setInst("s_abs_i32")
 
+# Min Max
+class SMaxI32(CommonInstruction):
+    def __init__(self, dst, src0, src1, comment="") -> None:
+        super().__init__(InstType.INST_I32, dst, [src0, src1], None, None, comment)
+        self.setInst("s_max_i32")
+class SMaxU32(CommonInstruction):
+    def __init__(self, dst, src0, src1, comment="") -> None:
+        super().__init__(InstType.INST_I32, dst, [src0, src1], None, None, comment)
+        self.setInst("s_max_u32")
+class SMinI32(CommonInstruction):
+    def __init__(self, dst, src0, src1, comment="") -> None:
+        super().__init__(InstType.INST_I32, dst, [src0, src1], None, None, comment)
+        self.setInst("s_min_i32")
+class SMinU32(CommonInstruction):
+    def __init__(self, dst, src0, src1, comment="") -> None:
+        super().__init__(InstType.INST_I32, dst, [src0, src1], None, None, comment)
+        self.setInst("s_min_u32")
+
 # Arithmetic
 class SAddI32(CommonInstruction):
     def __init__(self, dst, src0, src1, comment="") -> None:
