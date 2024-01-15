@@ -2030,7 +2030,10 @@ rocblaslt_status getAllSolutions(MyProblem&                                     
         heuristicResults[i].algo.max_workspace_bytes = maxWorkSpaceBytes;
         heuristicResults[i].algo.fallback            = false;
         heuristicResults[i].state                    = rocblaslt_status_success;
-        heuristicResults[i].workspaceSize            = 0;
+        if constexpr(std::is_same<MyProblem, Tensile::ContractionProblemGemm>::value)
+            heuristicResults[i].workspaceSize = solution->requiredWorkspaceSize(prob);
+        else
+            heuristicResults[i].workspaceSize = 0;
         i++;
     }
 
