@@ -1195,6 +1195,7 @@ class KernelWriterAssembly(KernelWriter):
       moduleArgs.add(SBranch(labelName=labelLoadEnd.getLabelName()))
       moduleArgs.add(labelHBM)
       moduleArgs.addModuleAsFlatItems(fastdeepcopy(hbmArgs))
+      moduleArgs.add(SWaitCnt(lgkmcnt=0, comment="wait for args to load"))
       moduleArgs.add(labelLoadEnd)
 
       if self.states.numSgprPreload > 0:
