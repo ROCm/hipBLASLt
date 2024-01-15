@@ -634,7 +634,7 @@ Tests:
   scaleB: [0, 1]
   scaleC: [0, 1]
   scaleD: [0, 1]
-  algo_method: [2]
+  algo_method: [0]
   bias_type: f32_r
   unit_check: 1
   gpu_arch: '94?'

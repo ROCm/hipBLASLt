@@ -1232,6 +1232,50 @@ rocblaslt_status
                                   pref->max_workspace_bytes);
 
         log_api(__func__, "returnAlogCount", *returnAlgoCount);
+
+        //Try to get size independent solutions from getAllSolutions()
+        if(requestedAlgoCount > *returnAlgoCount)
+        {
+            std::vector<rocblaslt_matmul_heuristic_result> allSolutionsResults;
+            if(rocblaslt_status_success
+               == getAllSolutions(prob, handle, allSolutionsResults, pref->max_workspace_bytes))
+            {
+                int oriReturnAlgoCount = *returnAlgoCount;
+                for(int i = 0;
+                    *returnAlgoCount < requestedAlgoCount && i < allSolutionsResults.size();
+                    i++)
+                {
+                    bool duplicated_sol = false;
+                    for(int j = 0; j < oriReturnAlgoCount; j++)
+                        if(*(int*)(heuristicResultsArray[j].algo.data)
+                           == *(int*)(allSolutionsResults[i].algo.data)) //solution index
+                            duplicated_sol = true;
+
+                    if(duplicated_sol == true
+                       || rocblaslt_status_success
+                              != isSolutionSupported(handle,
+                                                     prob,
+                                                     tensile_data,
+                                                     &allSolutionsResults[i].algo,
+                                                     &pref->max_workspace_bytes))
+                        continue;
+                    //append sol to heuristpicResultsArray
+                    memcpy(heuristicResultsArray[*returnAlgoCount].algo.data,
+                           allSolutionsResults[i].algo.data,
+                           sizeof(heuristicResultsArray[i].algo.data));
+                    heuristicResultsArray[*returnAlgoCount].algo.max_workspace_bytes
+                        = pref->max_workspace_bytes;
+                    heuristicResultsArray[*returnAlgoCount].algo.fallback = false;
+                    heuristicResultsArray[*returnAlgoCount].state = rocblaslt_status_success;
+                    heuristicResultsArray[*returnAlgoCount].workspaceSize
+                        = allSolutionsResults[i].workspaceSize;
+                    (*returnAlgoCount)++;
+                }
+
+                log_api(__func__, "final returnAlogCount", *returnAlgoCount);
+            }
+        }
+
         if(status != rocblaslt_status_success)
         {
             throw status;
