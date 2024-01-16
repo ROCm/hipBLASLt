@@ -1,6 +1,6 @@
 ################################################################################
 #
-# Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -28,7 +28,8 @@ from .Common import print1, print2, hasParam, printExit, \
         defaultBenchmarkCommonParameters, validParameters, globalParameters, \
         defaultBatchedBenchmarkFinalProblemSizes, defaultBenchmarkFinalProblemSizes
 from .CustomKernels import getAllCustomKernelNames
-from .SolutionStructs import ProblemType, ProblemSizes, ActivationArgs, BiasTypeArgs
+from .SolutionStructs import ProblemType, ProblemSizes, ActivationArgs, BiasTypeArgs, \
+        BiasDimArgs
 
 
 def getDefaultsForMissingParameters(paramList, defaultParams):
@@ -155,6 +156,7 @@ class BenchmarkProcess:
 
         activationConf = ""
         biasTypesConf  = ""
+        biasDimConf  = ""
         if "BenchmarkFinalParameters" in config:
             sizes          = config["BenchmarkFinalParameters"][0]["ProblemSizes"]
             for bfp in config["BenchmarkFinalParameters"][1:]:
@@ -166,6 +168,10 @@ class BenchmarkProcess:
                   if biasTypesConf:
                     printExit("Duplicated BiasTypeArgs.")
                   biasTypesConf = bfp["BiasTypeArgs"]
+                if "BiasDimArgs" in bfp:
+                  if biasDimConf:
+                    printExit("Duplicated BiasDimArgs.")
+                  biasDimConf = bfp["BiasDimArgs"]
         else:
             sizes = defaultBatchedBenchmarkFinalProblemSizes if isbatched \
                 else defaultBenchmarkFinalProblemSizes
@@ -175,6 +181,7 @@ class BenchmarkProcess:
 
         self.biasTypesArgs  = BiasTypeArgs(self.problemType, biasTypesConf)
         self.activationArgs = ActivationArgs(self.problemType, activationConf)
+        self.biasDimArgs  = BiasDimArgs(self.problemType, biasDimConf)
 
         # validate parameter values
         configParams = {**benchmarkCommonParams, **forkParams}
@@ -225,6 +232,7 @@ class BenchmarkProcess:
                 self.internalSupportParams, \
                 self.problemSizes, \
                 self.biasTypesArgs, \
+                self.biasDimArgs, \
                 self.activationArgs, \
                 self.benchmarkStepIdx)
         self.benchmarkSteps.append(benchmarkStep)
@@ -286,7 +294,7 @@ def constructForkPermutations(forkParams, paramGroups):
 class BenchmarkStep:
     """A single benchmark step which consists of constant and fork parameters and a set of sizes"""
 
-    def __init__(self, forkParams, constantParams, paramGroups, customKernels, internalSupportParams, problemSizes, biasTypeArgs, activationArgs, idx):
+    def __init__(self, forkParams, constantParams, paramGroups, customKernels, internalSupportParams, problemSizes, biasTypeArgs, biasDimArgs, activationArgs, idx):
         """Basic constructor storing each argument"""
         self.forkParams = forkParams
         self.constantParams = constantParams
@@ -295,6 +303,7 @@ class BenchmarkStep:
         self.internalSupportParams = internalSupportParams
         self.problemSizes = problemSizes
         self.biasTypeArgs = biasTypeArgs
+        self.biasDimArgs = biasDimArgs
         self.activationArgs = activationArgs
         self.stepIdx = idx
 

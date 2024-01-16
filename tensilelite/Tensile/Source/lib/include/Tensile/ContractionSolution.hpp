@@ -452,7 +452,7 @@ namespace Tensile
             bool                  highPrecisionAccumulate   = false;
             bool                  useBeta                   = true;
             bool                  useGradient               = false;
-            bool                  useBias                   = false;
+            int                   useBias                   = 0;
             bool                  useE                      = false;
             bool                  useScaleAB                = false;
             bool                  useScaleCD                = false;
