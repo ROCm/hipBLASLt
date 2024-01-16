@@ -30,23 +30,24 @@
 
 #include "helper.h"
 
-void simpleGemmExtEpilogue(hipblasLtHandle_t   handle,
-                           hipblasOperation_t  trans_a,
-                           hipblasOperation_t  trans_b,
-                           hipblasLtEpilogue_t epilogue,
-                           int64_t             m,
-                           int64_t             n,
-                           int64_t             k,
-                           int64_t             batch_count,
-                           float&              alpha,
-                           float&              beta,
-                           void*               d_a,
-                           void*               d_b,
-                           void*               d_c,
-                           void*               d_d,
-                           void*               d_workspace,
-                           int64_t             max_workspace_size,
-                           hipStream_t         stream);
+void simpleGemmEpilogueBiasVecExt(hipblasLtHandle_t   handle,
+                                  hipblasOperation_t  trans_a,
+                                  hipblasOperation_t  trans_b,
+                                  hipblasLtEpilogue_t epilogue,
+                                  int64_t             m,
+                                  int64_t             n,
+                                  int64_t             k,
+                                  int64_t             batch_count,
+                                  float&              alpha,
+                                  float&              beta,
+                                  void*               d_a,
+                                  void*               d_b,
+                                  void*               d_c,
+                                  void*               d_d,
+                                  void*               d_biasVec,
+                                  void*               d_workspace,
+                                  int64_t             max_workspace_size,
+                                  hipStream_t         stream);
 
 int main()
 {
@@ -57,46 +58,50 @@ int main()
     Runner<hipblasLtBfloat16, hipblasLtBfloat16, hipblasLtBfloat16, float, float> runner(
         1024, 512, 1024, 1, 1.f, 1.f, 32 * 1024 * 1024);
 
+    runner.setBiasInfo(true, 'B');
+
     runner.run([&runner] {
-        simpleGemmExtEpilogue(runner.handle,
-                              HIPBLAS_OP_N,
-                              HIPBLAS_OP_T,
-                              HIPBLASLT_EPILOGUE_BGRADB,
-                              runner.m,
-                              runner.n,
-                              runner.k,
-                              runner.batch_count,
-                              runner.alpha,
-                              runner.beta,
-                              runner.d_a,
-                              runner.d_b,
-                              runner.d_c,
-                              runner.d_d,
-                              runner.d_workspace,
-                              runner.max_workspace_size,
-                              runner.stream);
+        simpleGemmEpilogueBiasVecExt(runner.handle,
+                                     HIPBLAS_OP_N,
+                                     HIPBLAS_OP_T,
+                                     HIPBLASLT_EPILOGUE_BGRADB,
+                                     runner.m,
+                                     runner.n,
+                                     runner.k,
+                                     runner.batch_count,
+                                     runner.alpha,
+                                     runner.beta,
+                                     runner.d_a,
+                                     runner.d_b,
+                                     runner.d_c,
+                                     runner.d_d,
+                                     runner.d_biasVec,
+                                     runner.d_workspace,
+                                     runner.max_workspace_size,
+                                     runner.stream);
     });
 
     return 0;
 }
 
-void simpleGemmExtEpilogue(hipblasLtHandle_t   handle,
-                           hipblasOperation_t  trans_a,
-                           hipblasOperation_t  trans_b,
-                           hipblasLtEpilogue_t epilogue,
-                           int64_t             m,
-                           int64_t             n,
-                           int64_t             k,
-                           int64_t             batch_count,
-                           float&              alpha,
-                           float&              beta,
-                           void*               d_a,
-                           void*               d_b,
-                           void*               d_c,
-                           void*               d_d,
-                           void*               d_workspace,
-                           int64_t             max_workspace_size,
-                           hipStream_t         stream)
+void simpleGemmEpilogueBiasVecExt(hipblasLtHandle_t   handle,
+                                  hipblasOperation_t  trans_a,
+                                  hipblasOperation_t  trans_b,
+                                  hipblasLtEpilogue_t epilogue,
+                                  int64_t             m,
+                                  int64_t             n,
+                                  int64_t             k,
+                                  int64_t             batch_count,
+                                  float&              alpha,
+                                  float&              beta,
+                                  void*               d_a,
+                                  void*               d_b,
+                                  void*               d_c,
+                                  void*               d_d,
+                                  void*               d_biasVec,
+                                  void*               d_workspace,
+                                  int64_t             max_workspace_size,
+                                  hipStream_t         stream)
 {
     hipblaslt_ext::GemmPreference gemmPref;
     gemmPref.setMaxWorkspaceBytes(max_workspace_size);
@@ -118,6 +123,7 @@ void simpleGemmExtEpilogue(hipblasLtHandle_t   handle,
     inputs.b     = d_b;
     inputs.c     = d_c;
     inputs.d     = d_d;
+    inputs.bias  = d_biasVec;
     inputs.alpha = &alpha;
     inputs.beta  = &beta;
     gemm.setProblem(m, n, k, batch_count, gemmEpilogue, inputs);
