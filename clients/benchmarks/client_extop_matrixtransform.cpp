@@ -96,6 +96,9 @@ private:
         case hipblaslt_initialization::special:
             hipblaslt_init_alt_impl_big<DType>(ref.data(), ref.size(), 1, 1);
             break;
+        case hipblaslt_initialization::zero:
+            hipblaslt_init_zero<DType>(ref.data(), ref.size(), 1, 1);
+            break;
         default:
             break;
         }
@@ -259,7 +262,7 @@ static int parseArguments(int                       argc,
                 {
                     const std::string initStr{argv[++i]};
 
-                    if(initStr != "rand_int" && initStr != "trig_float" && initStr != "hpl")
+                    if(initStr != "rand_int" && initStr != "trig_float" && initStr != "hpl" && initStr != "special" && initStr != "zero")
                     {
                         std::cerr << "Invalid initialization type: " << initStr << '\n';
                         return EXIT_FAILURE;
