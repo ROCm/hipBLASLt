@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022-2023 Advanced Micro Devices, Inc.
+ * Copyright (C) 2022-2024 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -102,10 +102,11 @@ void m_axpy(size_t* N, T* alpha, T* x, int* incx, T* y, int* incy)
 /*! \brief compare the norm error of two matrices hCPU & hGPU */
 
 // Real
-template <
-    typename T,
-    std::enable_if_t<!(std::is_same<T, hipblaslt_f8>{} || std::is_same<T, hipblaslt_f8>{}), int>
-    = 0>
+template <typename T,
+          std::enable_if_t<!(std::is_same<T, hipblaslt_f8_fnuz>{}
+                             || std::is_same<T, hipblaslt_f8_fnuz>{}),
+                           int>
+          = 0>
 double norm_check_general(char norm_type, int64_t M, int64_t N, int64_t lda, T* hCPU, T* hGPU)
 {
     if(M * N == 0)
@@ -145,7 +146,9 @@ double norm_check_general(char norm_type, int64_t M, int64_t N, int64_t lda, T* 
 
 template <
     typename T,
-    std::enable_if_t<(std::is_same<T, hipblaslt_f8>{} || std::is_same<T, hipblaslt_f8>{}), int> = 0>
+    std::enable_if_t<(std::is_same<T, hipblaslt_f8_fnuz>{} || std::is_same<T, hipblaslt_f8_fnuz>{}),
+                     int>
+    = 0>
 double norm_check_general(char norm_type, int64_t M, int64_t N, int64_t lda, T* hCPU, T* hGPU)
 {
     if(M * N == 0)

@@ -6,27 +6,29 @@ Full documentation for hipBLASLt is available at [rocm.docs.amd.com/projects/hip
 
 ### Additions
 
-* Added `hipblasltExtSoftmax` extension API
-* Added `hipblasltExtLayerNorm` extension API
-* Added `hipblasltExtAMax` extension API
-* Added `GemmTuning` extension parameter to set split-k by user
-* Support for mix precision datatype: fp16/fp8 in with fp16 out
+* Extension APIs:
+  * `hipblasltExtSoftmax`
+  * `hipblasltExtLayerNorm`
+  * `hipblasltExtAMax`
+* `GemmTuning` extension parameter to set split-k by user
+* Support for mixed-precision datatype: FP16/FP8 in with FP16 out
 
-## (Unreleased) hipBLASLt 0.6.0
+## hipBLASLt 0.6.0
 
 ### Additions
 
 * New `UserArguments` variable for `GroupedGemm`
-* Support for datatype: fp16 in with fp32 out
+* Support for datatype: FP16 in with FP32 out
 * Support for datatype: Int8 in Int32 out
 * Support for gfx94x platform
-* Support for fp8/bf8 datatype (only for gfx94x platform)
-* Support scalar A,B,C,D for fp8/bf8 datatype
+* Support for FP8/BF8 datatype (only for gfx94x platform)
+* Support scalar A,B,C,D for FP8/BF8 datatype
 * Added samples
 
 ### Changes
 
-* Replaced `hipblasDatatype_t` with `hipblasltDatatype_t`
+* Replaced `hipblasDatatype_t` with `hipDataType`
+* Replaced `hipblasLtComputeType_t` with `hipblasComputeType_t`
 
 ### Removals
 
@@ -84,7 +86,7 @@ Full documentation for hipBLASLt is available at [rocm.docs.amd.com/projects/hip
 
 * Enabled hipBLASLt APIs
 * Support for gfx90a
-* Support for problem type: fp32, fp16, bf16
+* Support for problem type: FP32, FP16, BF16
 * Support activation: relu, gelu
 * Support for bias vectors
 * Integrated with TensileLite kernel generator

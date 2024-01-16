@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022-2023 Advanced Micro Devices, Inc.
+ * Copyright (C) 2022-2024 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -58,8 +58,8 @@ rocblaslt_status rocblaslt_matmul_impl(const rocblaslt_handle       handle,
 {
     int64_t m, n, k, lda, ldb, ldc, ldd, lde, batch_stride_a, batch_stride_b, batch_stride_c,
         batch_stride_d, batch_stride_e;
-    hipblasltDatatype_t    bias_type;
-    hipblasltDatatype_t    type_a, type_b, type_c, type_d;
+    hipDataType            bias_type;
+    hipDataType            type_a, type_b, type_c, type_d;
     rocblaslt_compute_type compute_type;
     void *                 bias = nullptr, *scaleAlphaVec = nullptr, *E = nullptr;
     bool                   gradient = false;
@@ -101,16 +101,16 @@ rocblaslt_status rocblaslt_matmul_impl(const rocblaslt_handle       handle,
         return isValid;
 
     // Internal assign
-    hipblasOperation_t  opA           = matmul_descr->op_A;
-    hipblasOperation_t  opB           = matmul_descr->op_B;
-    int                 num_batches_a = matA->batch_count;
-    rocblaslt_epilogue  epilogue      = matmul_descr->epilogue;
-    void*               scaleA        = matmul_descr->scaleA;
-    void*               scaleB        = matmul_descr->scaleB;
-    void*               scaleC        = matmul_descr->scaleC;
-    void*               scaleD        = matmul_descr->scaleD;
-    void*               scaleE        = matmul_descr->scaleE;
-    hipblasltDatatype_t scale_type    = matmul_descr->scale_type;
+    hipblasOperation_t opA           = matmul_descr->op_A;
+    hipblasOperation_t opB           = matmul_descr->op_B;
+    int                num_batches_a = matA->batch_count;
+    rocblaslt_epilogue epilogue      = matmul_descr->epilogue;
+    void*              scaleA        = matmul_descr->scaleA;
+    void*              scaleB        = matmul_descr->scaleB;
+    void*              scaleC        = matmul_descr->scaleC;
+    void*              scaleD        = matmul_descr->scaleD;
+    void*              scaleE        = matmul_descr->scaleE;
+    hipDataType        scale_type    = matmul_descr->scale_type;
 
     // Others
     bool strided_batch = true;
@@ -198,67 +198,67 @@ rocblaslt_status rocblaslt_matmul_impl(const rocblaslt_handle       handle,
                                         workspaceSizeInBytes,
                                         stream,
                                         handle->Synchronizer};
-    if (get_logger_layer_mode() & rocblaslt_layer_mode_log_bench) {
+    if(get_logger_layer_mode() & rocblaslt_layer_mode_log_bench)
+    {
 
 // To deal with some arguments may be invalid
 #define GEN_BENCH_ARG(_fun, _type_str, _type) \
-    strlen(_fun(_type)) && strcmp(_fun(_type), "invalid") ? _type_str : "", \
-    _fun(_type)
+    strlen(_fun(_type)) && strcmp(_fun(_type), "invalid") ? _type_str : "", _fun(_type)
 
-        log_bench(__func__,
-                  "-m",
-                  m,
-                  "-n",
-                  n,
-                  "-k",
-                  k,
-                  "--lda",
-                  lda,
-                  "--ldb",
-                  ldb,
-                  "--ldc",
-                  ldc,
-                  "--ldd",
-                  ldd,
-                  "--lde",
-                  lde,
-                  "--stride_a",
-                  batch_stride_a,
-                  "--stride_b",
-                  batch_stride_b,
-                  "--stride_c",
-                  batch_stride_c,
-                  "--stride_d",
-                  batch_stride_d,
-                  "--stride_e",
-                  batch_stride_e,
-                  "--alpha",
-                  *(float*)alpha,
-                  "--beta",
-                  *(float*)beta,
-                  "--transA",
-                  hipblasOperation_to_bench_string(opA),
-                  "--transB",
-                  hipblasOperation_to_bench_string(opB),
-                  "--batch_count",
-                  num_batches_a,
-                  grouped_gemm ? "--grouped_gemm" : "",
-                  scaleA ? "--scaleA" : "",
-                  scaleB ? "--scaleB" : "",
-                  scaleC ? "--scaleC" : "",
-                  scaleD ? "--scaleD" : "",
-                  scaleAlphaVec ? "--scaleAlpha_vector" : "",
-                  GEN_BENCH_ARG(hipblasltDatatype_to_bench_string, "--a_type", type_a),
-                  GEN_BENCH_ARG(hipblasltDatatype_to_bench_string, "--b_type", type_b),
-                  GEN_BENCH_ARG(hipblasltDatatype_to_bench_string, "--c_type", type_c),
-                  GEN_BENCH_ARG(hipblasltDatatype_to_bench_string, "--d_type", type_d),
-                  GEN_BENCH_ARG(rocblaslt_compute_type_to_bench_string, "--compute_type", compute_type),
-                  GEN_BENCH_ARG(hipblasltDatatype_to_bench_string, "--scale_type", scale_type),
-                  GEN_BENCH_ARG(hipblasltDatatype_to_bench_string, "--bias_type", bias_type),
-                  rocblaslt_epilogue_to_bench_string(epilogue));
+        log_bench(
+            __func__,
+            "-m",
+            m,
+            "-n",
+            n,
+            "-k",
+            k,
+            "--lda",
+            lda,
+            "--ldb",
+            ldb,
+            "--ldc",
+            ldc,
+            "--ldd",
+            ldd,
+            "--lde",
+            lde,
+            "--stride_a",
+            batch_stride_a,
+            "--stride_b",
+            batch_stride_b,
+            "--stride_c",
+            batch_stride_c,
+            "--stride_d",
+            batch_stride_d,
+            "--stride_e",
+            batch_stride_e,
+            "--alpha",
+            *(float*)alpha,
+            "--beta",
+            *(float*)beta,
+            "--transA",
+            hipblasOperation_to_bench_string(opA),
+            "--transB",
+            hipblasOperation_to_bench_string(opB),
+            "--batch_count",
+            num_batches_a,
+            grouped_gemm ? "--grouped_gemm" : "",
+            scaleA ? "--scaleA" : "",
+            scaleB ? "--scaleB" : "",
+            scaleC ? "--scaleC" : "",
+            scaleD ? "--scaleD" : "",
+            scaleAlphaVec ? "--scaleAlpha_vector" : "",
+            GEN_BENCH_ARG(hipDataType_to_bench_string, "--a_type", type_a),
+            GEN_BENCH_ARG(hipDataType_to_bench_string, "--b_type", type_b),
+            GEN_BENCH_ARG(hipDataType_to_bench_string, "--c_type", type_c),
+            GEN_BENCH_ARG(hipDataType_to_bench_string, "--d_type", type_d),
+            GEN_BENCH_ARG(rocblaslt_compute_type_to_bench_string, "--compute_type", compute_type),
+            GEN_BENCH_ARG(hipDataType_to_bench_string, "--scale_type", scale_type),
+            GEN_BENCH_ARG(hipDataType_to_bench_string, "--bias_type", bias_type),
+            rocblaslt_epilogue_to_bench_string(epilogue));
 
 #undef GEN_BENCH_ARG
-
     }
     return runContractionProblem(handle, algo, problem, gemmData);
 }
@@ -281,8 +281,8 @@ rocblaslt_status rocblaslt_gemm_create_cpp_impl(const rocblaslt_handle         h
 {
     int64_t m, n, k, lda, ldb, ldc, ldd, lde, batch_stride_a, batch_stride_b, batch_stride_c,
         batch_stride_d, batch_stride_e;
-    hipblasltDatatype_t    bias_type;
-    hipblasltDatatype_t    type_a, type_b, type_c, type_d;
+    hipDataType            bias_type;
+    hipDataType            type_a, type_b, type_c, type_d;
     rocblaslt_compute_type compute_type;
     void *                 bias = nullptr, *scaleAlphaVec = nullptr, *E = nullptr;
     bool                   gradient = false;
@@ -441,10 +441,10 @@ rocblaslt_status rocblaslt_gemm_create_cpp_impl_2(const rocblaslt_handle        
                                      batch_stride_c,
                                      batch_stride_d);
 
-    void *              bias = nullptr, *scaleAlphaVec = nullptr, *E = nullptr;
-    int64_t             lde = 0, batch_stride_e = 0;
-    hipblasltDatatype_t bias_type = static_cast<hipblasltDatatype_t>(0);
-    bool                gradient  = false;
+    void *      bias = nullptr, *scaleAlphaVec = nullptr, *E = nullptr;
+    int64_t     lde = 0, batch_stride_e = 0;
+    hipDataType bias_type = HIPBLASLT_DATATYPE_INVALID;
+    bool        gradient  = false;
 
     if(status == rocblaslt_status_continue)
         status = rocblaslt_epilogue_valid_args(rocEpilogue.mode,
@@ -482,10 +482,10 @@ rocblaslt_status rocblaslt_gemm_create_cpp_impl_2(const rocblaslt_handle        
     void*                   scaleE        = inputs.scaleE;
     hipblasOperation_t&     opA           = problemtype.op_a;
     hipblasOperation_t&     opB           = problemtype.op_b;
-    hipblasltDatatype_t&    type_a        = problemtype.type_a;
-    hipblasltDatatype_t&    type_b        = problemtype.type_b;
-    hipblasltDatatype_t&    type_c        = problemtype.type_c;
-    hipblasltDatatype_t&    type_d        = problemtype.type_d;
+    hipDataType&            type_a        = problemtype.type_a;
+    hipDataType&            type_b        = problemtype.type_b;
+    hipDataType&            type_c        = problemtype.type_c;
+    hipDataType&            type_d        = problemtype.type_d;
     int                     num_batches_a = b;
     rocblaslt_compute_type& compute_type  = problemtype.type_compute;
     rocblaslt_epilogue&     epilogue      = rocEpilogue.mode;
@@ -580,29 +580,29 @@ rocblaslt_status
     hipblasOperation_t     opA          = matmul_descr[0]->op_A;
     hipblasOperation_t     opB          = matmul_descr[0]->op_B;
     rocblaslt_compute_type compute_type = matmul_descr[0]->compute_type;
-    hipblasltDatatype_t    type_a       = matA[0]->type;
-    hipblasltDatatype_t    type_b       = matB[0]->type;
-    hipblasltDatatype_t    type_c       = matC[0]->type;
-    hipblasltDatatype_t    type_d       = matD[0]->type;
+    hipDataType            type_a       = matA[0]->type;
+    hipDataType            type_b       = matB[0]->type;
+    hipDataType            type_c       = matC[0]->type;
+    hipDataType            type_d       = matD[0]->type;
 
-    std::vector<const void*>         A_vec, B_vec, C_vec, alpha_vec, beta_vec;
-    std::vector<void*>               D_vec, E_vec;
-    std::vector<const void*>         bias_vec;
-    std::vector<const void*>         scaleA_vec;
-    std::vector<const void*>         scaleB_vec;
-    std::vector<const void*>         scaleC_vec;
-    std::vector<const void*>         scaleD_vec;
-    std::vector<const void*>         scaleE_vec;
-    std::vector<const void*>         scaleAlpha_vec;
-    std::vector<hipblasltDatatype_t> bias_type_vec;
-    std::vector<rocblaslt_epilogue>  epilogue_vec;
-    std::vector<int64_t>             m_vec, n_vec, k_vec;
-    std::vector<int64_t>             lda_vec, batch_stride_a_vec, num_batches_a_vec;
-    std::vector<int64_t>             ldb_vec, batch_stride_b_vec, num_batches_b_vec;
-    std::vector<int64_t>             ldc_vec, batch_stride_c_vec, num_batches_c_vec;
-    std::vector<int64_t>             ldd_vec, batch_stride_d_vec, num_batches_d_vec;
-    std::vector<int64_t>             lde_vec, batch_stride_e_vec, num_batches_e_vec;
-    std::vector<int8_t[16]>          alpha_1(matmul_descr.size());
+    std::vector<const void*>        A_vec, B_vec, C_vec, alpha_vec, beta_vec;
+    std::vector<void*>              D_vec, E_vec;
+    std::vector<const void*>        bias_vec;
+    std::vector<const void*>        scaleA_vec;
+    std::vector<const void*>        scaleB_vec;
+    std::vector<const void*>        scaleC_vec;
+    std::vector<const void*>        scaleD_vec;
+    std::vector<const void*>        scaleE_vec;
+    std::vector<const void*>        scaleAlpha_vec;
+    std::vector<hipDataType>        bias_type_vec;
+    std::vector<rocblaslt_epilogue> epilogue_vec;
+    std::vector<int64_t>            m_vec, n_vec, k_vec;
+    std::vector<int64_t>            lda_vec, batch_stride_a_vec, num_batches_a_vec;
+    std::vector<int64_t>            ldb_vec, batch_stride_b_vec, num_batches_b_vec;
+    std::vector<int64_t>            ldc_vec, batch_stride_c_vec, num_batches_c_vec;
+    std::vector<int64_t>            ldd_vec, batch_stride_d_vec, num_batches_d_vec;
+    std::vector<int64_t>            lde_vec, batch_stride_e_vec, num_batches_e_vec;
+    std::vector<int8_t[16]>         alpha_1(matmul_descr.size());
 
     std::vector<bool> gradient_vec;
 
@@ -661,14 +661,14 @@ rocblaslt_status
         if(validArgs == rocblaslt_status_success)
             continue;
 
-        void*               bias = nullptr;
-        hipblasltDatatype_t bias_type;
-        void*               scaleAlphaVec = nullptr;
-        void*               E             = nullptr;
-        int64_t             lde, batch_stride_e;
-        bool                gradient;
-        rocblaslt_epilogue  epilogue    = matmul_descr[i]->epilogue;
-        const void*         alphaVecPtr = matmul_descr[i]->pointermode ? alpha[i] : nullptr;
+        void*              bias = nullptr;
+        hipDataType        bias_type;
+        void*              scaleAlphaVec = nullptr;
+        void*              E             = nullptr;
+        int64_t            lde, batch_stride_e;
+        bool               gradient;
+        rocblaslt_epilogue epilogue    = matmul_descr[i]->epilogue;
+        const void*        alphaVecPtr = matmul_descr[i]->pointermode ? alpha[i] : nullptr;
         if(validArgs == rocblaslt_status_continue)
             validArgs = rocblaslt_epilogue_valid_args(epilogue, // add alpha
                                                       num_rows_d,
@@ -847,22 +847,22 @@ rocblaslt_status
     hipblasOperation_t     opA          = problemtype[0].op_a;
     hipblasOperation_t     opB          = problemtype[0].op_b;
     rocblaslt_compute_type compute_type = problemtype[0].type_compute;
-    hipblasltDatatype_t    type_a       = problemtype[0].type_a;
-    hipblasltDatatype_t    type_b       = problemtype[0].type_b;
-    hipblasltDatatype_t    type_c       = problemtype[0].type_c;
-    hipblasltDatatype_t    type_d       = problemtype[0].type_d;
+    hipDataType            type_a       = problemtype[0].type_a;
+    hipDataType            type_b       = problemtype[0].type_b;
+    hipDataType            type_c       = problemtype[0].type_c;
+    hipDataType            type_d       = problemtype[0].type_d;
 
-    std::vector<const void*>         A_vec, B_vec, C_vec, alpha_vec, beta_vec;
-    std::vector<void*>               D_vec, E_vec;
-    std::vector<const void*>         bias_vec;
-    std::vector<const void*>         scaleA_vec;
-    std::vector<const void*>         scaleB_vec;
-    std::vector<const void*>         scaleC_vec;
-    std::vector<const void*>         scaleD_vec;
-    std::vector<const void*>         scaleE_vec;
-    std::vector<const void*>         scaleAlpha_vec;
-    std::vector<hipblasltDatatype_t> bias_type_vec;
-    std::vector<rocblaslt_epilogue>  epilogue_vec;
+    std::vector<const void*>        A_vec, B_vec, C_vec, alpha_vec, beta_vec;
+    std::vector<void*>              D_vec, E_vec;
+    std::vector<const void*>        bias_vec;
+    std::vector<const void*>        scaleA_vec;
+    std::vector<const void*>        scaleB_vec;
+    std::vector<const void*>        scaleC_vec;
+    std::vector<const void*>        scaleD_vec;
+    std::vector<const void*>        scaleE_vec;
+    std::vector<const void*>        scaleAlpha_vec;
+    std::vector<hipDataType>        bias_type_vec;
+    std::vector<rocblaslt_epilogue> epilogue_vec;
 
     std::vector<int64_t> lde_vec, batch_stride_e_vec, num_batches_e_vec;
     std::vector<bool>    gradient_vec;
@@ -891,12 +891,12 @@ rocblaslt_status
         if(validArgs == rocblaslt_status_success)
             continue;
 
-        void*               bias = nullptr;
-        hipblasltDatatype_t bias_type;
-        void*               scaleAlphaVec = nullptr;
-        void*               E             = nullptr;
-        int64_t             lde, batch_stride_e;
-        bool                gradient;
+        void*       bias = nullptr;
+        hipDataType bias_type;
+        void*       scaleAlphaVec = nullptr;
+        void*       E             = nullptr;
+        int64_t     lde, batch_stride_e;
+        bool        gradient;
 
         int                iIdx     = (rocEpilogue.size() <= i) ? rocEpilogue.size() - 1 : i;
         int                iIdx2    = (problemtype.size() <= i) ? problemtype.size() - 1 : i;

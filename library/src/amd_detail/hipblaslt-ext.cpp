@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022-2023 Advanced Micro Devices, Inc.
+ * Copyright (C) 2022-2024 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -106,14 +106,14 @@ namespace hipblaslt_ext
     {
         using Conversions = std::tuple<HipBufferPtr, //src
                                        HipBufferPtr, //dst
-                                       hipblasltDatatype_t, //srcType
-                                       hipblasltDatatype_t, //dstType
+                                       hipDataType, //srcType
+                                       hipDataType, //dstType
                                        std::size_t, //numElements
                                        HipBufferPtr>; //scale
         std::vector<std::vector<Conversions>> m_auxiliary_conversion_buffers;
         ConversionHelper(const std::vector<GemmProblemType>& problemTypes,
                          GemmInputs&                         inputs,
-                         hipblasltDatatype_t                 conversionDType,
+                         hipDataType                         conversionDType,
                          int64_t                             batchSize,
                          int64_t                             strideA,
                          int64_t                             strideB,
@@ -133,7 +133,7 @@ namespace hipblaslt_ext
                 const std::vector<void*>        scales{inputs.scaleA, inputs.scaleB, inputs.scaleC};
                 auto&                           conversions = m_auxiliary_conversion_buffers.at(j);
                 auto&                           problem     = problemTypes.at(j);
-                const std::vector<hipblasltDatatype_t> dtypes{
+                const std::vector<hipDataType>  dtypes{
                     problem.type_a, problem.type_b, problem.type_c};
 
                 //a, b and c
@@ -142,7 +142,7 @@ namespace hipblaslt_ext
                     auto       dtype       = dtypes.at(i);
                     const auto numElements = sizes.at(i);
 
-                    if(dtype == HIPBLASLT_R_8F_E4M3 || dtype == HIPBLASLT_R_8F_E5M2)
+                    if(dtype == HIP_R_8F_E4M3_FNUZ || dtype == HIP_R_8F_E5M2_FNUZ)
                     {
                         const auto numBytes = numElements * 2;
                         conversions.emplace_back(
@@ -169,7 +169,7 @@ namespace hipblaslt_ext
                 auto       output      = inputs.d;
                 const auto numElements = strideD * batchSize;
 
-                if(problem.type_d == HIPBLASLT_R_8F_E4M3 || problem.type_d == HIPBLASLT_R_8F_E5M2)
+                if(problem.type_d == HIP_R_8F_E4M3_FNUZ || problem.type_d == HIP_R_8F_E5M2_FNUZ)
                 {
                     auto numBytes = numElements * 2;
                     conversions.emplace_back(
@@ -222,20 +222,20 @@ namespace hipblaslt_ext
                             const auto     numWg             = (numElements / numWorkitemsPerWg)
                                                + !!(numElements % numWorkitemsPerWg);
 
-                            if(srcType == HIPBLASLT_R_8F_E4M3)
+                            if(srcType == HIP_R_8F_E4M3_FNUZ)
                             {
-                                datatypeConversion<hipblaslt_f8, hipblasLtHalf>
+                                datatypeConversion<hipblaslt_f8_fnuz, hipblasLtHalf>
                                     <<<numWg, numWorkitemsPerWg, 0, stream>>>(
-                                        (const hipblaslt_f8*)src.get(),
+                                        (const hipblaslt_f8_fnuz*)src.get(),
                                         (hipblasLtHalf*)dst.get(),
                                         (const float*)scale.get(),
                                         numElements);
                             }
-                            else if(srcType == HIPBLASLT_R_8F_E5M2)
+                            else if(srcType == HIP_R_8F_E5M2_FNUZ)
                             {
-                                datatypeConversion<hipblaslt_bf8, hipblasLtHalf>
+                                datatypeConversion<hipblaslt_bf8_fnuz, hipblasLtHalf>
                                     <<<numWg, numWorkitemsPerWg, 0, stream>>>(
-                                        (const hipblaslt_bf8*)src.get(),
+                                        (const hipblaslt_bf8_fnuz*)src.get(),
                                         (hipblasLtHalf*)dst.get(),
                                         (const float*)scale.get(),
                                         numElements);
@@ -267,21 +267,21 @@ namespace hipblaslt_ext
                         //indicates d needs datatype conversion
                         if(src && dst)
                         {
-                            if(dstType == HIPBLASLT_R_8F_E4M3)
+                            if(dstType == HIP_R_8F_E4M3_FNUZ)
                             {
-                                datatypeConversion<hipblasLtHalf, hipblaslt_f8>
+                                datatypeConversion<hipblasLtHalf, hipblaslt_f8_fnuz>
                                     <<<numWg, numWorkitemsPerWg, 0, stream>>>(
                                         (const hipblasLtHalf*)src.get(),
-                                        (hipblaslt_f8*)dst.get(),
+                                        (hipblaslt_f8_fnuz*)dst.get(),
                                         (const float*)scale.get(),
                                         numElements);
                             }
-                            else if(dstType == HIPBLASLT_R_8F_E5M2)
+                            else if(dstType == HIP_R_8F_E5M2_FNUZ)
                             {
-                                datatypeConversion<hipblasLtHalf, hipblaslt_bf8>
+                                datatypeConversion<hipblasLtHalf, hipblaslt_bf8_fnuz>
                                     <<<numWg, numWorkitemsPerWg, 0, stream>>>(
                                         (const hipblasLtHalf*)src.get(),
-                                        (hipblaslt_bf8*)dst.get(),
+                                        (hipblaslt_bf8_fnuz*)dst.get(),
                                         (const float*)scale.get(),
                                         numElements);
                             }
@@ -444,14 +444,14 @@ namespace hipblaslt_ext
         return exception_to_hipblas_status();
     }
 
-    Gemm::Gemm(hipblasLtHandle_t      handle,
-               hipblasOperation_t     opA,
-               hipblasOperation_t     opB,
-               hipblasltDatatype_t    typeA,
-               hipblasltDatatype_t    typeB,
-               hipblasltDatatype_t    typeC,
-               hipblasltDatatype_t    typeD,
-               hipblasLtComputeType_t typeCompute)
+    Gemm::Gemm(hipblasLtHandle_t    handle,
+               hipblasOperation_t   opA,
+               hipblasOperation_t   opB,
+               hipDataType          typeA,
+               hipDataType          typeB,
+               hipDataType          typeC,
+               hipDataType          typeD,
+               hipblasComputeType_t typeCompute)
         : GemmInstance(handle, GemmType::HIPBLASLT_GEMM)
     {
         m_problem_types.push_back({opA, opB, typeA, typeB, typeC, typeD, typeCompute});
@@ -543,7 +543,7 @@ namespace hipblaslt_ext
                                      GemmInputs&      inputs,
                                      GemmProblemType& problemtype)
     {
-        constexpr auto conversionDType = HIPBLASLT_R_16F;
+        constexpr auto conversionDType = HIP_R_16F;
         auto           needConversion  = [&problemtype]() -> bool {
             using std::begin;
             using std::end;
@@ -667,14 +667,14 @@ namespace hipblaslt_ext
         return m_problem_types[0];
     }
 
-    HIPBLASLT_EXPORT GroupedGemm::GroupedGemm(hipblasLtHandle_t      handle,
-                                              hipblasOperation_t     opA,
-                                              hipblasOperation_t     opB,
-                                              hipblasltDatatype_t    typeA,
-                                              hipblasltDatatype_t    typeB,
-                                              hipblasltDatatype_t    typeC,
-                                              hipblasltDatatype_t    typeD,
-                                              hipblasLtComputeType_t typeCompute)
+    HIPBLASLT_EXPORT GroupedGemm::GroupedGemm(hipblasLtHandle_t    handle,
+                                              hipblasOperation_t   opA,
+                                              hipblasOperation_t   opB,
+                                              hipDataType          typeA,
+                                              hipDataType          typeB,
+                                              hipDataType          typeC,
+                                              hipDataType          typeD,
+                                              hipblasComputeType_t typeCompute)
         : GemmInstance(handle, GemmType::HIPBLASLT_GROUPED_GEMM)
     {
         m_problem_types.push_back({opA, opB, typeA, typeB, typeC, typeD, typeCompute});
@@ -915,11 +915,11 @@ namespace hipblaslt_ext
                                 GemmType                                       typeGemm,
                                 hipblasOperation_t                             opA,
                                 hipblasOperation_t                             opB,
-                                hipblasltDatatype_t                            typeA,
-                                hipblasltDatatype_t                            typeB,
-                                hipblasltDatatype_t                            typeC,
-                                hipblasltDatatype_t                            typeD,
-                                hipblasLtComputeType_t                         typeCompute,
+                                hipDataType                                    typeA,
+                                hipDataType                                    typeB,
+                                hipDataType                                    typeC,
+                                hipDataType                                    typeD,
+                                hipblasComputeType_t                           typeCompute,
                                 std::vector<hipblasLtMatmulHeuristicResult_t>& heuristicResults)
     try
     {

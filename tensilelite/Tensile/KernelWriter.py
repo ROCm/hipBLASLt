@@ -1,6 +1,6 @@
 ################################################################################
 #
-# Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -132,7 +132,6 @@ class StateValues:
   # KernelWriter
   inTailLoop: bool                       = False
   overflowedResources: int               = 0
-  staggerU: bool                         = False
   ## Schedule
   scheduleGlobalRead: int                = 0
   scheduleLocalWrite: int                = 0
@@ -1462,12 +1461,11 @@ class KernelWriter(metaclass=abc.ABCMeta):
       module.add(self.calculateLoopNumIter(kernel, tensorParametersA, tensorParametersB, self.states.unrollIdx))
 
     if not forceNoTileCode:
-      if self.states.staggerU:
-        module.add(self.declareStaggerParms(kernel))
-        module.add(self.calculateStagger(kernel, tensorParametersA))
-        if kernel["ProblemType"]["Sparse"] and not kernel["DirectToVgprSparseMetadata"]:
-          module.add(self.calculateStagger(kernel,tPM))
-        module.add(self.calculateStagger(kernel, tensorParametersB))
+      module.add(self.declareStaggerParms(kernel))
+      module.add(self.calculateStagger(kernel, tensorParametersA))
+      if kernel["ProblemType"]["Sparse"] and not kernel["DirectToVgprSparseMetadata"]:
+        module.add(self.calculateStagger(kernel,tPM))
+      module.add(self.calculateStagger(kernel, tensorParametersB))
 
     # LRO and LWA as assigned
     # init lds read pointers before each unrolled loop
@@ -2026,6 +2024,8 @@ class KernelWriter(metaclass=abc.ABCMeta):
     fs = self.functionSignature()
     moduleKernelBody.addSignature(fs)
 
+    self.defineVariableSgprs(kernel)
+
     ####################################
     # Local Read Addresses
     ####################################
@@ -2273,7 +2273,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
         module.add(gsuLabel)
         module.add(self.noLoadLoop(kernel, tensorParametersA, tensorParametersB, isOptNLL=False, isNGLL=False, pack=pack))
 
-    if self.states.staggerU and self.states.actualSummationLoops>1:
+    if self.states.actualSummationLoops>1:
       module.addComment1("remove stagger offsets")
       module.add(self.removeStagger(kernel, tensorParametersA))
       module.add(self.removeStagger(kernel, tensorParametersB))
@@ -2307,7 +2307,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
 
       # tail: global read
       module.add(self.calculateLoopNumIter(kernel, tensorParametersA, tensorParametersB, -1))
-      if self.states.staggerU and self.states.actualSummationLoops==1:
+      if self.states.actualSummationLoops==1:
         module.addComment1("remove stagger offsets for tail loop")
         module.add(self.removeStagger(kernel, tensorParametersA))
         module.add(self.removeStagger(kernel, tensorParametersB))
@@ -2576,8 +2576,6 @@ class KernelWriter(metaclass=abc.ABCMeta):
     self.states.archCaps = self.ti.getArchCaps()
 
     self.asmAssert = Assert(self.states.laneSGPRCount, kernel["WavefrontSize"], self.db["EnableAsserts"])
-
-    self.states.staggerU = kernel["StaggerU"] and (kernel["KernelLanguage"]=="Source" or kernel["BufferLoad"])
 
     # Only assembly supports scheduling
     if kernel["KernelLanguage"] == "Assembly":
@@ -3532,8 +3530,8 @@ class KernelWriter(metaclass=abc.ABCMeta):
     # SGPR above are user SGPR which are set by GPU hardware when the kernel is launched
     self.states.firstInitSgpr = self.sgprPool.size()
 
-    if kernel["ProblemType"]["GroupedGemm"]:
-        self.defineSgpr("ExternalArgAddress", self.states.rpga, align=2)
+    if kernel["ProblemType"]["SupportUserArgs"]:
+      self.defineSgpr("ExternalArgAddress", self.states.rpga, align=2)
 
     # To avoid corrupting tmp sgprs that may be used around the assert,
     # reserve some sgprs to save/restore the execmask
@@ -3544,6 +3542,9 @@ class KernelWriter(metaclass=abc.ABCMeta):
     self.defineSgpr("GSULog2BpeC", 1)
     self.defineSgpr("GSULog2BpeD", 1)
     self.defineSgpr("WGM", 1)
+
+    if kernel["LocalSplitU"] > 1:
+      self.defineSgpr("LSUTailLoopOffset", 1)
 
     # for packed batches without stride restrictions need to do something different here
     assert sorted(kernel["PackedC0IdxChars"]+kernel["PackedC1IdxChars"]) == \
@@ -3623,11 +3624,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
       self.defineSgpr("Beta", numSgprBeta, numSgprBeta)
       self.states.numSgprBeta = numSgprBeta
 
-    self.defineSgpr("GSU", 1)
-    self.states.numSgprGSU = 0
-    if not kernel["ProblemType"]["GroupedGemm"]:
-      self.states.numSgprGSU = 1
-
+    self.defineSgpr("GSU", 1)  # FIXME: Move to the front when multi gemm arg selection sgprs are fixed
 
     # Calculate numSgpr preload
     self.states.numSgprPreload = 0
@@ -3664,7 +3661,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
       numSgprAddressD + numSgprAddressC + numSgprAddressA + numSgprAddressB + numSgprAlpha + numSgprAddressMetadata + \
       (numSgprBeta if kernel["ProblemType"]["UseBeta"] else 0) + \
       self.states.d.numSgprStrides + self.states.c.numSgprStrides + self.states.a.numSgprStrides + self.states.b.numSgprStrides + self.states.m.numSgprStrides + \
-      len(kernel["PackedC0IdxChars"][:-1])*2 + len(kernel["PackedC1IdxChars"][:-1])*2 + self.states.numSgprGSU
+      len(kernel["PackedC0IdxChars"][:-1])*2 + len(kernel["PackedC1IdxChars"][:-1])*2
     # Get kernel argument end here
     ###################################
 
@@ -3814,6 +3811,10 @@ class KernelWriter(metaclass=abc.ABCMeta):
   ##############################################################################
   # Allocate Resources
   ##############################################################################
+  @abc.abstractmethod
+  def defineVariableSgprs(self, kernel):
+    return ""
+
   @abc.abstractmethod
   def defineAndResources(self, kernel, tPA, tPB, lralwaCode):
     return ""

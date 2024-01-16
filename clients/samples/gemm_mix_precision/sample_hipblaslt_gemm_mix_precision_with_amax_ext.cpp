@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022-2023 Advanced Micro Devices, Inc.
+ * Copyright (C) 2022-2024 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -25,8 +25,8 @@
  *******************************************************************************/
 
 #include <hip/hip_runtime.h>
-#include <hipblaslt/hipblaslt-ext.hpp>
 #include <hipblaslt/hipblaslt-ext-op.h>
+#include <hipblaslt/hipblaslt-ext.hpp>
 #include <iostream>
 
 #include "helper.h"
@@ -56,7 +56,7 @@ int main()
      *  b = (k, n). ldb = k
      *  c = d = (m, n). ldc = ldd = m
      */
-    Runner<hipblasLtHalf, hipblaslt_f8, float, float, float> runner(
+    Runner<hipblasLtHalf, hipblaslt_f8_fnuz, float, float, float> runner(
         1024, 512, 1024, 1, 1.f, 1.f, 32 * 1024 * 1024);
 
     runner.run([&runner] {
@@ -103,19 +103,19 @@ void simpleGemmMixPrecisionExt(hipblasLtHandle_t  handle,
     hipblaslt_ext::Gemm gemm(handle,
                              trans_a,
                              trans_b,
-                             HIPBLASLT_R_8F_E4M3,
-                             HIPBLASLT_R_16F,
-                             HIPBLASLT_R_32F,
-                             HIPBLASLT_R_32F,
-                             HIPBLASLT_COMPUTE_F32_FAST_F16);
+                             HIP_R_8F_E4M3_FNUZ,
+                             HIP_R_16F,
+                             HIP_R_32F,
+                             HIP_R_32F,
+                             HIPBLAS_COMPUTE_32F_FAST_16F);
 
     // Copy scaleA to device memory
     void* d_scaleA = nullptr;
     CHECK_HIP_ERROR(hipMalloc(&d_scaleA, sizeof(float)));
-    CHECK_HIPBLASLT_ERROR(hipblasltExtAMax(HIPBLASLT_R_16F, HIPBLASLT_R_32F, d_scaleA, d_a, k, n, stream));
+    CHECK_HIPBLASLT_ERROR(hipblasltExtAMax(HIP_R_16F, HIP_R_32F, d_scaleA, d_a, k, n, stream));
 
     hipblaslt_ext::GemmEpilogue epilogue;
-    hipblaslt_ext::GemmInputs inputs;
+    hipblaslt_ext::GemmInputs   inputs;
     inputs.a      = d_a;
     inputs.b      = d_b;
     inputs.c      = d_c;

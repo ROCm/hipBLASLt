@@ -1,6 +1,6 @@
 ################################################################################
 #
-# Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -494,6 +494,7 @@ class SizeMapping:
                  'threadTile',
                  'depthU',
                  'staggerU',
+                 'staggerUMapping',
                  'globalSplitUPGR',
                  'globalSplitU',
                  'staggerStrideShift',
@@ -504,7 +505,9 @@ class SizeMapping:
                  'globalAccumulation',
                  'workspaceSizePerElemC',
                  'workspaceSizePerElemBias',
-                 'activationFused', 'CustomKernelName'
+                 'activationFused',
+                 'CustomKernelName',
+                 'workGroupMappingXCC'
                  ]
 
     @classmethod
@@ -524,6 +527,7 @@ class SizeMapping:
                    threadTile               = d['ThreadTile'],
                    workGroupMapping         = d['WorkGroupMapping'],
                    staggerU                 = d['StaggerU'] if 'StaggerU' in d else 0,
+                   staggerUMapping          = d['StaggerUMapping'] if 'StaggerUMapping' in d else 0,
                    depthU                   = d['DepthU'],
                    globalSplitUPGR          = internalParameters["GlobalSplitUPGR"],
                    globalSplitU             = d['GlobalSplitU'],
@@ -535,7 +539,8 @@ class SizeMapping:
                    workspaceSizePerElemC    = d['_WorkspaceSizePerElemC'],
                    workspaceSizePerElemBias = d['_WorkspaceSizePerElemBias'],
                    activationFused          = d['ActivationFused'],
-                   CustomKernelName         = d['CustomKernelName']
+                   CustomKernelName         = d['CustomKernelName'],
+                   workGroupMappingXCC      = d['WorkGroupMappingXCC']
                    )
 
     @classmethod
@@ -551,12 +556,16 @@ class SizeMapping:
 
 class InternalArgsSupport:
     StateKeys = ['gsu',
-                 'wgm']
+                 'wgm',
+                 'staggerU',
+                 'useUniversalArgs']
 
     @classmethod
     def FromOriginalState(cls, d):
         return cls(gsu = d['InternalSupportParams']['SupportUserGSU'],
-                   wgm = d['InternalSupportParams']['SupportCustomWGM'])
+                   wgm = d['InternalSupportParams']['SupportCustomWGM'],
+                   staggerU = d['InternalSupportParams']['SupportCustomStaggerU'],
+                   useUniversalArgs = d['InternalSupportParams']['UseUniversalArgs'])
 
     def __init__(self, **kwargs):
         for (key, value) in list(kwargs.items()):

@@ -1,6 +1,6 @@
 ################################################################################
 #
-# Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -316,7 +316,10 @@ defaultInternalSupportParams = {
   "SupportUserGSU": True,
   # This is a little different from GSU because GSU is already a parameter,
   # but WGM is not.
-  "SupportCustomWGM": True
+  "SupportCustomWGM": True,
+  "SupportCustomStaggerU": True,
+  # Use GG as G's backend
+  "UseUniversalArgs": True
 }
 
 ################################################################################
@@ -343,7 +346,7 @@ validMacroTileSides = [1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 6, 12, 24, 4
 validMacroTiles = []
 validISA = [(0,0,0)]
 validISA.extend(globalParameters["SupportedISA"])
-depthUs = list(range(2,512+1,1))
+depthUs = list(range(2,1024+1,1))
 for i in validMacroTileSides:
   for j in validMacroTileSides:
     validMacroTiles.append([i, j])
@@ -414,18 +417,19 @@ validGEMMTypes = [ ('H','H','H'), ('S','S','S'), ('D','D','D'), ('C','C','C'), (
                    ('F8','F8','S'), ('B8','B8','S'), \
                    ('F8B8','B8','S'), ('B8F8', 'B8', 'S'), \
                    ('F8','H','S'), ('B8','H','S'), \
-                   ('F8B8','H','S'), ('B8F8','H','S'),
-                   ('H','F8','S') ]
+                   ('F8B8','H','S'), ('B8F8','H','S'), \
+                   ('H','F8','S'), ('F8','B','S'), ('F8B8','B','S') ]
 
 # All HPA types are listed here (HPA=T). The name of the library logic files for these types is:
-# *_TiToTc_BH*.yaml where Ti, Tc, and To are the data types of A/B, C/D, and computation, respectively.
+# *_TiToTc_BH*.yaml where Ti, To, and Tc are the data types of A/B, C/D, and computation, respectively.
 # The name of the library logic files for non-HPA (HPA=F) types is: *_TiB*.yaml.
 HPATypes = [ ('H','S','S'), ('H','H','S'), ('B','B','S'), ('B','S','S'), ('I8','I','I'), \
              ('4xi8','I','I'), ('I8','I','S'), ('I8','I8','S'), ('I8', 'H', 'S'), \
              ('F8','S','S'), ('B8','S','S'), ('F8B8','S','S'), ('B8F8', 'S', 'S'), \
              ('F8B8','B8','S'), ('B8F8', 'B8', 'S'), \
              ('F8','H','S'), ('B8','H','S'), ('F8B8','H','S'), ('B8F8','H','S'), \
-             ('F8','F8', 'S'), ('B8', 'B8', 'S'), ('H','F8','S') ]
+             ('F8','F8','S'), ('B8','B8','S'), ('H','F8','S'), \
+             ('F8','B','S'), ('F8B8','B','S') ]
 
 validParameters = {
     # 0: Global read is along parallel direction in thread level,
@@ -715,7 +719,7 @@ validParameters = {
     # StaggerUStride will be internally increased so it is an integer multiple of DepthU*BpeAB.
     # (the implementation requires this - the unroll iteration accesses data in steps of
     # DepthU*BPE
-    "StaggerUStride":               [16,32,64,128,256,512,1024],
+    "StaggerUStride":               [16,32,64,128,256,512,1024,2048],
 
     # How the tile assignment (wg0, wg1, wg2) controls the initial StaggerU offset:
     # 0: Use wg0
@@ -759,6 +763,7 @@ validParameters = {
     "WorkGroupMapping":           list(range(0,1024+1)),  # change a workgroup's id so that the all the workgroups on the gpu at a time are hitting L2 cache the best
     "MaxOccupancy":               list(range(1, 40+1)),       # wg / CU; if cache thrashing is hurting performance, this allocates extra lds to artificially limit occupancy
     "WorkGroup":                  validWorkGroups,      # ( wg0 x wg1 x LocalSplitU ) dimensions of the workgroup which will operate on a tile and share lds
+    "WorkGroupMappingXCC":        list(range(1,1024+1)),  # change a workgroup's id so that the all the workgroups on the gpu at a time are hitting L2 cache the best
 
     #ThreadTile: ( tt0 x tt1 ) dimensions of the C tile that each thread works on,
     # TT=4 and VW=4 means a thread will work on a tight 4x4 tile of C, where VW=1 means the tile will work on 16 spread out values
@@ -1074,6 +1079,7 @@ defaultBenchmarkCommonParameters = [
     {"NumLoadsCoalescedB":        [ 1 ] },
     {"WorkGroup":                 [ [16,16,1]] },
     {"WorkGroupMapping":          [ 8 ] },
+    {"WorkGroupMappingXCC":       [ 1 ] },
     {"ThreadTile":                [ [4,4] ] },
     {"WavefrontSize":             [ 64 ]},
     {"MatrixInstruction":         [ [] ] },
@@ -1397,6 +1403,25 @@ def printTable(rows):
       pad = ' ' * (width - len(cell))
       print(pad, cell, sep='', end=' ')
     print()
+
+def checkParametersAreValid(param, validParams):
+    """Ensures paramaters in params exist and have valid values as specified by validParames"""
+    (name, values) = param
+    if name == "ProblemSizes":
+        return
+    elif name == "InternalSupportParams":
+        return
+
+    if name not in validParams:
+        printExit("Invalid parameter name: {}\nValid parameters are {}." \
+                .format(name, sorted(validParameters.keys())))
+
+    for value in values:
+        if validParams[name] != -1 and value not in validParams[name]:
+            msgBase = "Invalid parameter value: {} = {}\nValid values for {} are {}{}."
+            msgExt = " (only first 32 combos printed)\nRefer to Common.py for more info" \
+                    if len(validParams[name])>32 else ""
+            printExit(msgBase.format(name, value, name, validParams[name][:32], msgExt))
 
 def printCapTable(parameters):
   import itertools

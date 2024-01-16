@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022-2023 Advanced Micro Devices, Inc.
+ * Copyright (C) 2022-2024 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -278,13 +278,15 @@ void cblas_gemm(hipblasOperation_t     transA,
 
 CREATEFUNCTION(hip_bfloat16, hip_bfloat16, hip_bfloat16, float, hip_bfloat16)
 CREATEFUNCTION(hip_bfloat16, hip_bfloat16, float, float, hip_bfloat16)
-CREATEFUNCTION(hipblaslt_f8, hipblaslt_f8, float, float, hipblaslt_f8)
-CREATEFUNCTION(hipblaslt_bf8, hipblaslt_f8, float, float, hipblaslt_bf8)
-CREATEFUNCTION(hipblaslt_f8, hipblaslt_bf8, float, float, hipblaslt_f8)
-CREATEFUNCTION(hipblaslt_f8, hipblaslt_f8, hipblasLtHalf, float, hipblaslt_f8)
-CREATEFUNCTION(hipblaslt_f8, hipblaslt_f8, hipblaslt_f8, float, hipblaslt_f8)
-CREATEFUNCTION(hipblaslt_bf8, hipblaslt_f8, hipblasLtHalf, float, hipblaslt_bf8)
-CREATEFUNCTION(hipblaslt_f8, hipblaslt_bf8, hipblasLtHalf, float, hipblaslt_f8)
+CREATEFUNCTION(hipblaslt_f8_fnuz, hipblaslt_f8_fnuz, float, float, hipblaslt_f8_fnuz)
+CREATEFUNCTION(hipblaslt_bf8_fnuz, hipblaslt_f8_fnuz, float, float, hipblaslt_bf8_fnuz)
+CREATEFUNCTION(hipblaslt_f8_fnuz, hipblaslt_bf8_fnuz, float, float, hipblaslt_f8_fnuz)
+CREATEFUNCTION(hipblaslt_f8_fnuz, hipblaslt_f8_fnuz, hipblasLtHalf, float, hipblaslt_f8_fnuz)
+CREATEFUNCTION(hipblaslt_f8_fnuz, hipblaslt_f8_fnuz, hipblaslt_f8_fnuz, float, hipblaslt_f8_fnuz)
+CREATEFUNCTION(hipblaslt_f8_fnuz, hipblaslt_f8_fnuz, hip_bfloat16, float, hipblaslt_f8_fnuz)
+CREATEFUNCTION(hipblaslt_bf8_fnuz, hipblaslt_f8_fnuz, hipblasLtHalf, float, hipblaslt_bf8_fnuz)
+CREATEFUNCTION(hipblaslt_f8_fnuz, hipblaslt_bf8_fnuz, hipblasLtHalf, float, hipblaslt_f8_fnuz)
+CREATEFUNCTION(hipblaslt_f8_fnuz, hipblaslt_bf8_fnuz, hip_bfloat16, float, hipblaslt_f8_fnuz)
 CREATEFUNCTION(hipblasLtHalf, hipblasLtHalf, hipblasLtHalf, float, hipblasLtHalf)
 CREATEFUNCTION(hipblasLtHalf, hipblasLtHalf, float, float, hipblasLtHalf)
 CREATEFUNCTION(float, float, float, float, float)
@@ -292,17 +294,17 @@ CREATEFUNCTION(double, double, double, double, double)
 CREATEFUNCTION(int8_t, int8_t, int32_t, int32_t, int8_t)
 // Mix precision
 // FP16FP8 mix FP16 in MFMA
-CREATEFUNCTION(hipblasLtHalf, hipblaslt_f8, hipblaslt_f8, float, hipblasLtHalf)
-CREATEFUNCTION(hipblaslt_f8, hipblasLtHalf, hipblaslt_f8, float, hipblasLtHalf)
-CREATEFUNCTION(hipblasLtHalf, hipblaslt_f8, hipblasLtHalf, float, hipblasLtHalf)
-CREATEFUNCTION(hipblaslt_f8, hipblasLtHalf, hipblasLtHalf, float, hipblasLtHalf)
-CREATEFUNCTION(hipblasLtHalf, hipblaslt_f8, float, float, hipblasLtHalf)
-CREATEFUNCTION(hipblaslt_f8, hipblasLtHalf, float, float, hipblasLtHalf)
+CREATEFUNCTION(hipblasLtHalf, hipblaslt_f8_fnuz, hipblaslt_f8_fnuz, float, hipblasLtHalf)
+CREATEFUNCTION(hipblaslt_f8_fnuz, hipblasLtHalf, hipblaslt_f8_fnuz, float, hipblasLtHalf)
+CREATEFUNCTION(hipblasLtHalf, hipblaslt_f8_fnuz, hipblasLtHalf, float, hipblasLtHalf)
+CREATEFUNCTION(hipblaslt_f8_fnuz, hipblasLtHalf, hipblasLtHalf, float, hipblasLtHalf)
+CREATEFUNCTION(hipblasLtHalf, hipblaslt_f8_fnuz, float, float, hipblasLtHalf)
+CREATEFUNCTION(hipblaslt_f8_fnuz, hipblasLtHalf, float, float, hipblasLtHalf)
 // Mix precision
 // FP16FP8 mix FP8 in MFMA
-CREATEFUNCTION(hipblasLtHalf, hipblaslt_f8, hipblaslt_f8, float, hipblaslt_f8)
-CREATEFUNCTION(hipblaslt_f8, hipblasLtHalf, hipblaslt_f8, float, hipblaslt_f8)
-CREATEFUNCTION(hipblasLtHalf, hipblaslt_f8, hipblasLtHalf, float, hipblaslt_f8)
-CREATEFUNCTION(hipblaslt_f8, hipblasLtHalf, hipblasLtHalf, float, hipblaslt_f8)
-CREATEFUNCTION(hipblasLtHalf, hipblaslt_f8, float, float, hipblaslt_f8)
-CREATEFUNCTION(hipblaslt_f8, hipblasLtHalf, float, float, hipblaslt_f8)
+CREATEFUNCTION(hipblasLtHalf, hipblaslt_f8_fnuz, hipblaslt_f8_fnuz, float, hipblaslt_f8_fnuz)
+CREATEFUNCTION(hipblaslt_f8_fnuz, hipblasLtHalf, hipblaslt_f8_fnuz, float, hipblaslt_f8_fnuz)
+CREATEFUNCTION(hipblasLtHalf, hipblaslt_f8_fnuz, hipblasLtHalf, float, hipblaslt_f8_fnuz)
+CREATEFUNCTION(hipblaslt_f8_fnuz, hipblasLtHalf, hipblasLtHalf, float, hipblaslt_f8_fnuz)
+CREATEFUNCTION(hipblasLtHalf, hipblaslt_f8_fnuz, float, float, hipblaslt_f8_fnuz)
+CREATEFUNCTION(hipblaslt_f8_fnuz, hipblasLtHalf, float, float, hipblaslt_f8_fnuz)

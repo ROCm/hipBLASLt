@@ -42,6 +42,12 @@
 /* UseSgprForGRO=1 */
 .amdgpu_metadata
 ---
+custom.config:
+   InternalSupportParams:
+      SupportUserGSU: True
+      SupportCustomWGM: True
+      SupportCustomStaggerU: False
+      UseUniversalArgs: False
 amdhsa.version:
   - 1
   - 1

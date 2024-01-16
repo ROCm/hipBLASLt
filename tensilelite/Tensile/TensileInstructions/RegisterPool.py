@@ -97,11 +97,11 @@ class RegisterPool:
         self.pool[i].status = RegisterPool.Status.Available
         self.pool[i].tag = tag
       elif self.pool[i].status == RegisterPool.Status.Available:
-        printWarning("RegisterPool::add(%u,%u) pool[%u](%s) already available" % (start, size, i, self.pool[i].tag))
+        printWarning("RegisterPool::add(%u,%u) pool[%u](%s) already available" % (start, start+size-1, i, self.pool[i].tag))
       elif self.pool[i].status == RegisterPool.Status.InUse:
-        printWarning("RegisterPool::add(%u,%u) pool[%u](%s) already in use" % (start, size, i, self.pool[i].tag))
+        printWarning("RegisterPool::add(%u,%u) pool[%u](%s) already in use" % (start, start+size-1, i, self.pool[i].tag))
       else:
-        raise RuntimeError("RegisterPool::add(%u,%u) pool[%u](%s) = %s" % (start, size, i, self.pool[i].tag, self.pool[i].status))
+        raise RuntimeError("RegisterPool::add(%u,%u) pool[%u](%s) = %s" % (start, start+size-1, i, self.pool[i].tag, self.pool[i].status))
     if self.printRP:
       print(self.state())
   ########################################
@@ -109,22 +109,22 @@ class RegisterPool:
   # Removes registers from the pool so they cannot be subsequently allocated for tmps
   def remove(self, start, size, tag=""):
     if self.printRP:
-      print("RP::remove(%u..%u) for %s"%(start,size-1,tag))
+      print("RP::remove(%u..%u) for %s"%(start,start+size-1,tag))
     # reserve space
     newSize = start + size
     oldSize = len(self.pool)
     if newSize > oldSize:
-      printWarning("RegisterPool::remove(%u,%u) but poolSize=%u" % (start, size, oldSize))
+      printWarning("RegisterPool::remove(%u,%u) but poolSize=%u" % (start, start+size-1, oldSize))
     # mark as unavailable
     for i in range(start, start+size):
       if  self.pool[i].status == RegisterPool.Status.Available:
         self.pool[i].status = RegisterPool.Status.Unavailable
       elif self.pool[i].status == RegisterPool.Status.Unavailable:
-        printWarning("RegisterPool::remove(%u,%u) pool[%u](%s) already unavailable" % (start, size, i, self.pool[i].tag))
+        printWarning("RegisterPool::remove(%u,%u) pool[%u](%s) already unavailable" % (start, start+size-1, i, self.pool[i].tag))
       elif  self.pool[i].status == RegisterPool.Status.InUse:
-        printWarning("RegisterPool::remove(%u,%u) pool[%u](%s) still in use" % (start, size, i, self.pool[i].tag))
+        printWarning("RegisterPool::remove(%u,%u) pool[%u](%s) still in use" % (start, start+size-1, i, self.pool[i].tag))
       else:
-        printExit("RegisterPool::remove(%u,%u) pool[%u](%s) = %s" % (start, size, i, self.pool[i].tag, self.pool[i].status))
+        printExit("RegisterPool::remove(%u,%u) pool[%u](%s) = %s" % (start, start+size-1, i, self.pool[i].tag, self.pool[i].status))
 
   ########################################
   # Check Out

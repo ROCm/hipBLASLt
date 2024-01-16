@@ -1,6 +1,6 @@
 ################################################################################
 #
-# Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -23,6 +23,7 @@
 ################################################################################
 
 from .Common import printExit, printWarning, versionIsCompatible
+from .CustomKernels import getCustomKernelConfig
 from .SolutionStructs import Solution, ProblemSizes, ProblemType
 from . import __version__
 from . import Common
@@ -242,6 +243,13 @@ def parseLibraryLogicData(data, srcFile="?", archs=None):
         # force redo the deriving of parameters, make sure old version logic yamls can be validated
         solutionState["AssignedProblemIndependentDerivedParameters"] = False
         solutionState["AssignedDerivedParameters"] = False
+        if solutionState["CustomKernelName"]:
+            isp = {}
+            if "InternalSupportParams" in solutionState:
+                isp = solutionState["InternalSupportParams"]
+            customConfig = getCustomKernelConfig(solutionState["CustomKernelName"], isp)
+            for key, value in customConfig.items():
+                solutionState[key] = value
         solutionObject = Solution(solutionState)
         if solutionObject["ProblemType"] != problemType:
             printExit(f"ProblemType in library logic file {srcFile} doesn't match solution: {problemType} != {solutionObject['ProblemType']}")

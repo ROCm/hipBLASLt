@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
+ * Copyright (C) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -307,9 +307,12 @@ namespace Tensile
                             uint32_t const&          workspaceOffsetInByte,
                             KA&                      args) const;
 
-        // Kernel related arguments (e.g. MT, GSU...)
-        template <bool T_Debug, typename KA>
-        void kernelArgs(KA& args, const ContractionProblemParameters& param) const;
+        // Common kernel related arguments (e.g. gemm_count, arg type, MT, GSU...)
+        template <bool T_Debug, bool Legacy, typename KA>
+        void kernelArgs(uint32_t                            gemmCount,
+                        uint32_t                            argType,
+                        KA&                                 args,
+                        const ContractionProblemParameters& param) const;
 
         template <typename KA>
         inline void calculateSingleCallWorkGroupItems(std::vector<Problem> const& problems,
@@ -398,6 +401,7 @@ namespace Tensile
             dim3 macroTile;
 
             size_t staggerU           = 0;
+            size_t staggerUMapping    = 0;
             size_t depthU             = 0;
             size_t globalSplitUPGR    = 0;
             size_t globalSplitU       = 0;
@@ -419,12 +423,16 @@ namespace Tensile
             bool activationFused = true;
 
             std::string customKernelName;
+
+            int workGroupMappingXCC = 1;
         };
 
         struct InternalArgsSupport
         {
-            bool gsu = true;
-            bool wgm = true;
+            bool gsu              = true;
+            bool wgm              = true;
+            bool staggerU         = true;
+            bool useUniversalArgs = true;
         };
 
         struct ProblemType

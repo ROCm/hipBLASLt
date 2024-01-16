@@ -74,7 +74,11 @@ custom.config:
    AssertFree0ElementMultiple: 4
    AssertSummationElementMultiple: 1
    NoReject: 1
-   InternalSupportParams: {SupportCustomWGM: false, SupportUserGSU: false}
+   InternalSupportParams:
+      SupportUserGSU: False
+      SupportCustomWGM: False
+      SupportCustomStaggerU: False
+      UseUniversalArgs: False
 amdhsa.version:
   - 1
   - 1

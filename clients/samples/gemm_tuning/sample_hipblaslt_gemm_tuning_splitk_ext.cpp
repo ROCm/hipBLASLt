@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022-2023 Advanced Micro Devices, Inc.
+ * Copyright (C) 2022-2024 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -102,23 +102,17 @@ void simpleGemmTuningSplitKExt(hipblasLtHandle_t  handle,
                                                      hipblaslt_ext::GemmType::HIPBLASLT_GEMM,
                                                      trans_a,
                                                      trans_a,
-                                                     HIPBLASLT_R_16F,
-                                                     HIPBLASLT_R_16F,
-                                                     HIPBLASLT_R_16F,
-                                                     HIPBLASLT_R_16F,
-                                                     HIPBLASLT_COMPUTE_F32,
+                                                     HIP_R_16F,
+                                                     HIP_R_16F,
+                                                     HIP_R_16F,
+                                                     HIP_R_16F,
+                                                     HIPBLAS_COMPUTE_32F,
                                                      heuristicResult));
 
     hipblaslt_ext::GemmPreference gemmPref;
     gemmPref.setMaxWorkspaceBytes(max_workspace_size);
-    hipblaslt_ext::Gemm gemm(handle,
-                             trans_a,
-                             trans_b,
-                             HIPBLASLT_R_16F,
-                             HIPBLASLT_R_16F,
-                             HIPBLASLT_R_16F,
-                             HIPBLASLT_R_16F,
-                             HIPBLASLT_COMPUTE_F32);
+    hipblaslt_ext::Gemm gemm(
+        handle, trans_a, trans_b, HIP_R_16F, HIP_R_16F, HIP_R_16F, HIP_R_16F, HIPBLAS_COMPUTE_32F);
 
     hipblaslt_ext::GemmEpilogue
         epilogue; // No action needed, default is HIPBLASLT_EPILOGUE_DEFAULT. (Gemm only)
@@ -131,23 +125,38 @@ void simpleGemmTuningSplitKExt(hipblasLtHandle_t  handle,
     inputs.beta  = &beta;
     gemm.setProblem(m, n, k, batch_count, epilogue, inputs);
 
-    hipblaslt_ext::GemmTuning tuning;
-    tuning.splitK = 8;
+    std::vector<hipblaslt_ext::GemmTuning> tunings;
+    tunings.resize(2);
+    tunings[1].splitK = 8;
+    // Not all the solutions supports GemmTuning, if you create a
+    // hipblaslt_ext::GemmTuning without changing any default values,
+    // the effect is same as calling API
+    // isAlgoSupported(algo, returnedWorkspaceSize)
 
     uint64_t            workspace_size = 0;
     std::vector<size_t> validIdx;
+    std::vector<size_t> validIdxTuning;
     for(size_t i = 0; i < heuristicResult.size(); i++)
     {
         size_t workspaceSizeInBytes = 0;
         // If tuning is given, the API will not return success if the solution cannot
         // accept an user tuning parameter.
-        if(gemm.isAlgoSupported(heuristicResult[i].algo, tuning, workspaceSizeInBytes)
+        if(gemm.isAlgoSupported(heuristicResult[i].algo, tunings[0], workspaceSizeInBytes)
            == HIPBLAS_STATUS_SUCCESS)
         {
             if(workspaceSizeInBytes <= max_workspace_size)
             {
                 workspace_size = max(workspace_size, workspaceSizeInBytes);
                 validIdx.push_back(i);
+            }
+        }
+        if(gemm.isAlgoSupported(heuristicResult[i].algo, tunings[1], workspaceSizeInBytes)
+           == HIPBLAS_STATUS_SUCCESS)
+        {
+            if(workspaceSizeInBytes <= max_workspace_size)
+            {
+                workspace_size = max(workspace_size, workspaceSizeInBytes);
+                validIdxTuning.push_back(i);
             }
         }
     }
@@ -157,6 +166,13 @@ void simpleGemmTuningSplitKExt(hipblasLtHandle_t  handle,
         std::cerr << "No valid solution found!" << std::endl;
         return;
     }
+    if(validIdxTuning.empty())
+    {
+        std::cerr << "No valid tuning solution found!" << std::endl;
+        return;
+    }
+    // Note that different Tuning configurations will get different
+    // amounts of validIdx.
 
     void* ws_ptr = nullptr;
     // Changing GSU might require more workspace_size.
@@ -169,9 +185,13 @@ void simpleGemmTuningSplitKExt(hipblasLtHandle_t  handle,
         ws_ptr = d_workspace;
     }
 
+    CHECK_HIPBLASLT_ERROR(gemm.initialize(heuristicResult[validIdx[0]].algo, tunings[0], ws_ptr));
+    CHECK_HIPBLASLT_ERROR(gemm.run(stream));
+
     // Make sure to initialize every time when algo changes
     // If tuning is given, the API will not return success if the solution cannot accept an user tuning parameter.
-    CHECK_HIPBLASLT_ERROR(gemm.initialize(heuristicResult[validIdx[0]].algo, tuning, ws_ptr));
+    CHECK_HIPBLASLT_ERROR(
+        gemm.initialize(heuristicResult[validIdxTuning[0]].algo, tunings[1], ws_ptr));
     CHECK_HIPBLASLT_ERROR(gemm.run(stream));
 
     if(workspace_size > max_workspace_size)

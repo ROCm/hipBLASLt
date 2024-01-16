@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022-2023 Advanced Micro Devices, Inc.
+ * Copyright (C) 2022-2024 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -63,32 +63,7 @@
 /* Opaque structures holding information */
 // clang-format off
 
-// Workaround: define hipblaslt data type here until hipblas or hip runtime has FP8/BF8
-/*! \ingroup types_module
- *  \brief Indicates the precision width of data stored in a blas type.
- */
-typedef enum
-{
-    HIPBLASLT_R_16F            = 150, /**< 16 bit floating point, real */
-    HIPBLASLT_R_32F            = 151, /**< 32 bit floating point, real */
-    HIPBLASLT_R_64F            = 152, /**< 64 bit floating point, real */
-    HIPBLASLT_C_16F            = 153, /**< 16 bit floating point, complex */
-    HIPBLASLT_C_32F            = 154, /**< 32 bit floating point, complex */
-    HIPBLASLT_C_64F            = 155, /**< 64 bit floating point, complex */
-    HIPBLASLT_R_8I             = 160, /**<  8 bit signed integer, real */
-    HIPBLASLT_R_8U             = 161, /**<  8 bit unsigned integer, real */
-    HIPBLASLT_R_32I            = 162, /**< 32 bit signed integer, real */
-    HIPBLASLT_R_32U            = 163, /**< 32 bit unsigned integer, real */
-    HIPBLASLT_C_8I             = 164, /**<  8 bit signed integer, complex */
-    HIPBLASLT_C_8U             = 165, /**<  8 bit unsigned integer, complex */
-    HIPBLASLT_C_32I            = 166, /**< 32 bit signed integer, complex */
-    HIPBLASLT_C_32U            = 167, /**< 32 bit unsigned integer, complex */
-    HIPBLASLT_R_16B            = 168, /**< 16 bit bfloat, real */
-    HIPBLASLT_C_16B            = 169, /**< 16 bit bfloat, complex */
-    HIPBLASLT_R_8F_E4M3        = 170, /**< 8 bit floating point in E4M3 format, real */
-    HIPBLASLT_R_8F_E5M2        = 171, /**< 8 bit floating point in E5M2 format, real */
-    HIPBLASLT_DATATYPE_INVALID = 255, /**< Invalid datatype value, do not use */
-} hipblasltDatatype_t;
+#define HIPBLASLT_DATATYPE_INVALID static_cast<hipDataType>(255)
 
 /*! \ingroup types_module
  *  \brief Specify the enum type to set the postprocessing options for the epilogue.
@@ -109,23 +84,12 @@ typedef enum {
 } hipblasLtEpilogue_t;
 
 /*! \ingroup types_module
- *  \brief Specify the compute precision modes of the matrix
- */
-typedef enum {
-  HIPBLASLT_COMPUTE_F32 = 300,     /**<32-bit floating-point precision.*/
-  HIPBLASLT_COMPUTE_F32_FAST_XF32 = 301, /**< XF32 compute for 32-bit input and output matrices */
-  HIPBLASLT_COMPUTE_F64 = 302,     /**<32-bit floating-point precision.*/
-  HIPBLASLT_COMPUTE_I32 = 303,
-  HIPBLASLT_COMPUTE_F32_FAST_F16 = 304, /**< F16 compute for 16-bit input and 32-bit output matrices */
-} hipblasLtComputeType_t;
-
-/*! \ingroup types_module
  *  \brief Specify the attributes that define the details of the matrix.
  */
 typedef enum {
   HIPBLASLT_MATRIX_LAYOUT_BATCH_COUNT = 0,         /**<Number of batch of this matrix. Default value is 1. Data Type: int32_t*/
   HIPBLASLT_MATRIX_LAYOUT_STRIDED_BATCH_OFFSET = 1, /**<Stride (in elements) to the next matrix for the strided batch operation. Default value is 0. Data Type: int64_t*/
-  /** Data type, see hipblasltDataType_t.
+  /** Data type, see hipDataType.
    *
    * uint32_t
    */
@@ -183,7 +147,7 @@ typedef enum {
   HIPBLASLT_MATMUL_DESC_TRANSB = 1,                     /**<Specifies the type of transformation operation that should be performed on matrix B. Default value is HIPBLAS_OP_N (for example, non-transpose operation). See hipblasOperation_t. Data Type:int32_t*/
   HIPBLASLT_MATMUL_DESC_EPILOGUE = 2,                   /**<Epilogue function. See hipblasLtEpilogue_t. Default value is: HIPBLASLT_EPILOGUE_DEFAULT. Data Type: uint32_t*/
   HIPBLASLT_MATMUL_DESC_BIAS_POINTER = 3,               /**<Bias or Bias gradient vector pointer in the device memory. Data Type:void* /const void* */
-  HIPBLASLT_MATMUL_DESC_BIAS_DATA_TYPE = 4,             /**<Type of the bias vector in the device memory. Can be set same as D matrix type or Scale type. Bias case: see HIPBLASLT_EPILOGUE_BIAS. Data Type:int32_t based on hipblasltDatatype_t*/
+  HIPBLASLT_MATMUL_DESC_BIAS_DATA_TYPE = 4,             /**<Type of the bias vector in the device memory. Can be set same as D matrix type or Scale type. Bias case: see HIPBLASLT_EPILOGUE_BIAS. Data Type:int32_t based on hipDataType*/
   HIPBLASLT_MATMUL_DESC_A_SCALE_POINTER = 5,            /**<Device pointer to the scale factor value that converts data in matrix A to the compute data type range. The scaling factor must have the same type as the compute type. If not specified, or set to NULL, the scaling factor is assumed to be 1. If set for an unsupported matrix data, scale, and compute type combination, calling hipblasLtMatmul() will return HIPBLAS_INVALID_VALUE. Default value: NULL Data Type: void* /const void* */
   HIPBLASLT_MATMUL_DESC_B_SCALE_POINTER = 6,            /**<Equivalent to HIPBLASLT_MATMUL_DESC_A_SCALE_POINTER for matrix B. Default value: NULL Type: void* /const void* */
   HIPBLASLT_MATMUL_DESC_C_SCALE_POINTER = 7,            /**<Equivalent to HIPBLASLT_MATMUL_DESC_A_SCALE_POINTER for matrix C. Default value: NULL Type: void* /const void* */
@@ -421,7 +385,7 @@ hipblasStatus_t hipblasLtDestroy(const hipblasLtHandle_t handle);
  * created by this function. see \ref hipblasLtMatrixLayout_t .
  *  @param[in]
  *  type Enumerant that specifies the data precision for the matrix layout
- * descriptor this function creates. See hipblasltDatatype_t.
+ * descriptor this function creates. See hipDataType.
  *  @param[in]
  *  rows Number of rows of the matrix.
  *  @param[in]
@@ -435,11 +399,8 @@ hipblasStatus_t hipblasLtDestroy(const hipblasLtHandle_t handle);
  *  \retval HIPBLAS_STATUS_ALLOC_FAILED If the memory could not be allocated.
  */
 HIPBLASLT_EXPORT
-hipblasStatus_t hipblasLtMatrixLayoutCreate(hipblasLtMatrixLayout_t* matLayout,
-                                            hipblasltDatatype_t      type,
-                                            uint64_t                 rows,
-                                            uint64_t                 cols,
-                                            int64_t                  ld);
+hipblasStatus_t hipblasLtMatrixLayoutCreate(
+    hipblasLtMatrixLayout_t* matLayout, hipDataType type, uint64_t rows, uint64_t cols, int64_t ld);
 
 /*! \ingroup library_module
  *  \brief Destory a matrix layout descriptor
@@ -533,18 +494,18 @@ hipblasStatus_t hipblasLtMatrixLayoutGetAttribute(hipblasLtMatrixLayout_t       
  * created by this function. See \ref hipblasLtMatmulDesc_t .
  *  @param[in]
  *  computeType  Enumerant that specifies the data precision for the matrix
- * multiply descriptor this function creates. See \ref hipblasLtComputeType_t .
+ * multiply descriptor this function creates. See hipblasComputeType_t .
  *  @param[in]
  *  scaleType  Enumerant that specifies the data precision for the matrix
- * transform descriptor this function creates. See hipblasltDatatype_t.
+ * transform descriptor this function creates. See hipDataType.
  *
  *  \retval HIPBLAS_STATUS_SUCCESS If the descriptor was created successfully.
  *  \retval HIPBLAS_STATUS_ALLOC_FAILED If the memory could not be allocated.
  */
 HIPBLASLT_EXPORT
 hipblasStatus_t hipblasLtMatmulDescCreate(hipblasLtMatmulDesc_t* matmulDesc,
-                                          hipblasLtComputeType_t computeType,
-                                          hipblasltDatatype_t    scaleType);
+                                          hipblasComputeType_t   computeType,
+                                          hipDataType            scaleType);
 
 /*! \ingroup library_module
  *  \brief Destory a matrix multiply descriptor
@@ -865,7 +826,7 @@ hipblasStatus_t hipblasLtMatmul(hipblasLtHandle_t            handle,
  */
 HIPBLASLT_EXPORT
 hipblasStatus_t hipblasLtMatrixTransformDescCreate(hipblasLtMatrixTransformDesc_t* transformDesc,
-                                                   hipblasltDatatype_t             scaleType);
+                                                   hipDataType                     scaleType);
 
 /** Destroy matrix transform operation descriptor.
  *
@@ -909,16 +870,16 @@ hipblasStatus_t hipblasLtMatrixTransformDescSetAttribute( //
  * \retval HIPBLAS_STATUS_SUCCESS        if attribute's value was successfully written to user memory
  */
 HIPBLASLT_EXPORT
-hipblasStatus_t hipblasLtMatrixTransformDescGetAttribute(
-    hipblasLtMatrixTransformDesc_t           transformDesc,
-    hipblasLtMatrixTransformDescAttributes_t attr,
-    void*                                    buf,
-    size_t                                   sizeInBytes,
-    size_t*                                  sizeWritten);
+hipblasStatus_t
+    hipblasLtMatrixTransformDescGetAttribute(hipblasLtMatrixTransformDesc_t           transformDesc,
+                                             hipblasLtMatrixTransformDescAttributes_t attr,
+                                             void*                                    buf,
+                                             size_t                                   sizeInBytes,
+                                             size_t*                                  sizeWritten);
 
-/*! \ingroup library_module 
+/*! \ingroup library_module
  *  \brief Matrix layout conversion helper
- *  \details 
+ *  \details
  *   Matrix layout conversion helper (C = alpha * op(A) + beta * op(B)),
  * can be used to change memory order of data or to scale and shift the values.
  * @param[in]  lightHandle   Pointer to the allocated hipBLASLt handle for the

@@ -79,6 +79,8 @@ custom.config:
    InternalSupportParams:
       SupportUserGSU: False
       SupportCustomWGM: False
+      SupportCustomStaggerU: False
+      UseUniversalArgs: False
 amdhsa.version:
   - 1
   - 1

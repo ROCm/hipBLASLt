@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022-2023 Advanced Micro Devices, Inc.
+ * Copyright (C) 2022-2024 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -118,11 +118,11 @@ void simpleGroupedGemmFixedMKExt(hipblasLtHandle_t     handle,
     hipblaslt_ext::GroupedGemm groupedgemm(handle,
                                            trans_a,
                                            trans_b,
-                                           HIPBLASLT_R_8F_E4M3,
-                                           HIPBLASLT_R_16F,
-                                           HIPBLASLT_R_16F,
-                                           HIPBLASLT_R_16F,
-                                           HIPBLASLT_COMPUTE_F32_FAST_F16);
+                                           HIP_R_8F_E4M3_FNUZ,
+                                           HIP_R_16F,
+                                           HIP_R_16F,
+                                           HIP_R_16F,
+                                           HIPBLAS_COMPUTE_32F_FAST_16F);
 
     std::vector<hipblaslt_ext::GemmEpilogue> epilogue{
         hipblaslt_ext::
@@ -178,11 +178,11 @@ void simpleGroupedGemmFixedMKExt(hipblasLtHandle_t     handle,
                                                      gemmType,
                                                      trans_a,
                                                      trans_b,
-                                                     HIPBLASLT_R_8F_E4M3,
-                                                     HIPBLASLT_R_16F,
-                                                     HIPBLASLT_R_16F,
-                                                     HIPBLASLT_R_16F,
-                                                     HIPBLASLT_COMPUTE_F32_FAST_F16,
+                                                     HIP_R_8F_E4M3_FNUZ,
+                                                     HIP_R_16F,
+                                                     HIP_R_16F,
+                                                     HIP_R_16F,
+                                                     HIPBLAS_COMPUTE_32F_FAST_16F,
                                                      heuristicResult));
 
     std::vector<int> validIdx;
@@ -214,16 +214,23 @@ void simpleGroupedGemmFixedMKExt(hipblasLtHandle_t     handle,
     for(int i = 0; i < validIdx.size(); i++)
     {
         // Make sure to initialize every time the algo changes
-        CHECK_HIPBLASLT_ERROR(groupedgemm.initialize(heuristicResult[validIdx[i]].algo, d_workspace));
+        CHECK_HIPBLASLT_ERROR(
+            groupedgemm.initialize(heuristicResult[validIdx[i]].algo, d_workspace));
 
         // Then you can change the N in the previous kernel to whatever you want, just make sure the sum of N does not exceed the setup.
         int threads = 256;
         int blocks  = ceil((double)m.size() / threads);
         // run 10 times
-        for(int j = 0; j < 10 ; j++)
+        for(int j = 0; j < 10; j++)
         {
-            hipLaunchKernelGGL(
-                kernelUpdateN, dim3(blocks), dim3(threads), 0, stream, (uint32_t)m.size(), d_userArgs, d_n);
+            hipLaunchKernelGGL(kernelUpdateN,
+                               dim3(blocks),
+                               dim3(threads),
+                               0,
+                               stream,
+                               (uint32_t)m.size(),
+                               d_userArgs,
+                               d_n);
             CHECK_HIPBLASLT_ERROR(groupedgemm.run(d_userArgs, stream));
         }
     }

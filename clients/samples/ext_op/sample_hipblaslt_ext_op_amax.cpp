@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022-2023 Advanced Micro Devices, Inc.
+ * Copyright (C) 2022-2024 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -25,20 +25,20 @@
  *******************************************************************************/
 
 #include <hip/hip_runtime.h>
-#include <hipblaslt/hipblaslt.h>
 #include <hipblaslt-ext-op.h>
+#include <hipblaslt/hipblaslt.h>
 #include <iostream>
 
 #include "helper.h"
 
-void simpleAMax(hipblasltDatatype_t type,
-                hipblasltDatatype_t dtype,
-                void*               d_out,
-                void*               d_in,
-                int64_t             m,
-                int64_t             n,
-                hipStream_t         stream);
-int main()
+void simpleAMax(hipDataType type,
+                hipDataType dtype,
+                void*       d_out,
+                void*       d_in,
+                int64_t     m,
+                int64_t     n,
+                hipStream_t stream);
+int  main()
 {
     /** This is a amax example
      *  in  = (m, n). lda = m
@@ -47,8 +47,8 @@ int main()
     OptAMaxRunner<float> runnerF32(135, 345);
 
     runnerF32.run([&runnerF32] {
-        simpleAMax(HIPBLASLT_R_32F,
-                   HIPBLASLT_R_32F,
+        simpleAMax(HIP_R_32F,
+                   HIP_R_32F,
                    runnerF32.d_out,
                    runnerF32.d_in,
                    runnerF32.m,
@@ -59,8 +59,8 @@ int main()
     OptAMaxRunner<hipblasLtHalf> runnerF16(135, 345);
 
     runnerF16.run([&runnerF16] {
-        simpleAMax(HIPBLASLT_R_16F,
-                   HIPBLASLT_R_16F,
+        simpleAMax(HIP_R_16F,
+                   HIP_R_16F,
                    runnerF16.d_out,
                    runnerF16.d_in,
                    runnerF16.m,
@@ -71,14 +71,13 @@ int main()
     return 0;
 }
 
-void simpleAMax(hipblasltDatatype_t type,
-                hipblasltDatatype_t dtype,
-                void*               d_out,
-                void*               d_in,
-                int64_t             m,
-                int64_t             n,
-                hipStream_t         stream)
+void simpleAMax(hipDataType type,
+                hipDataType dtype,
+                void*       d_out,
+                void*       d_in,
+                int64_t     m,
+                int64_t     n,
+                hipStream_t stream)
 {
-     CHECK_HIPBLASLT_ERROR(hipblasltExtAMax(type, dtype, d_out, d_in, m, n, stream));
+    CHECK_HIPBLASLT_ERROR(hipblasltExtAMax(type, dtype, d_out, d_in, m, n, stream));
 }
-

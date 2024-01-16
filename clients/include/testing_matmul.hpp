@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022-2023 Advanced Micro Devices, Inc.
+ * Copyright (C) 2022-2024 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -385,7 +385,7 @@ void testing_matmul(const Arguments& arg)
 
     bool    do_grouped_gemm = arg.grouped_gemm > 0;
     int32_t gemm_count      = std::max(1, arg.grouped_gemm);
-    int32_t rotating        = arg.rotating * 1024 * 1024;
+    int64_t rotating        = arg.rotating * 1024 * 1024;
 
     std::vector<int64_t> M(gemm_count), N(gemm_count), K(gemm_count), lda(gemm_count),
         ldb(gemm_count), ldc(gemm_count), ldd(gemm_count), lde(gemm_count);
@@ -489,12 +489,15 @@ void testing_matmul(const Arguments& arg)
     }
 
     // Calculating block count
-    int32_t max_iters   = max(arg.cold_iters, arg.iters);
+    int32_t max_iters = max(arg.cold_iters, arg.iters);
+    rotating /= (1024 * 1024);
+    totalRotatingSizeNeeded /= (1024 * 1024);
     int32_t block_count = max(1, min(max_iters, ceil((float)rotating / totalRotatingSizeNeeded)));
     if(rotating > 0)
     {
-        hipblaslt_cout << "Rotating buffer " << rotating
-                       << " bytes. Needed block count: " << block_count
+        hipblaslt_cout << "Rotating buffer " << rotating << " MiB. "
+                       << "Needed Size: " << totalRotatingSizeNeeded << " MiB. "
+                       << "Needed block count: " << block_count
                        << " (Capped to max iters: " << max_iters << ")" << std::endl;
     }
     // Calculating block count end
@@ -818,8 +821,8 @@ void testing_matmul(const Arguments& arg)
 
         if(arg.scaleC)
         {
-            if constexpr(std::is_same<To, hipblaslt_f8>::value
-                         || std::is_same<To, hipblaslt_bf8>::value)
+            if constexpr(std::is_same<To, hipblaslt_f8_fnuz>::value
+                         || std::is_same<To, hipblaslt_bf8_fnuz>::value)
             {
                 hipblaslt_init_small<Talpha>(*hScaleC[i], 1, 1, 1);
             }
@@ -831,8 +834,8 @@ void testing_matmul(const Arguments& arg)
 
         if(arg.scaleD)
         {
-            if constexpr(std::is_same<To, hipblaslt_f8>::value
-                         || std::is_same<To, hipblaslt_bf8>::value)
+            if constexpr(std::is_same<To, hipblaslt_f8_fnuz>::value
+                         || std::is_same<To, hipblaslt_bf8_fnuz>::value)
             {
                 hipblaslt_init_small<Talpha>(*hScaleD[i], 1, 1, 1);
             }
@@ -873,10 +876,10 @@ void testing_matmul(const Arguments& arg)
 
         if(arg.scaleA)
         {
-            if(arg.amaxScaleA && (arg.a_type == HIPBLASLT_R_32F || arg.a_type == HIPBLASLT_R_16F))
+            if(arg.amaxScaleA && (arg.a_type == HIP_R_32F || arg.a_type == HIP_R_16F))
             {
                 CHECK_HIPBLASLT_ERROR(hipblasltExtAMax(
-                    arg.a_type, HIPBLASLT_R_32F, *dScaleA[i], *dA[i], A_row[i], A_col[i], stream));
+                    arg.a_type, HIP_R_32F, *dScaleA[i], *dA[i], A_row[i], A_col[i], stream));
                 CHECK_HIP_ERROR(hScaleA[i]->transfer_from(*dScaleA[i]));
             }
             else
@@ -885,10 +888,10 @@ void testing_matmul(const Arguments& arg)
 
         if(arg.scaleB)
         {
-            if(arg.amaxScaleB && (arg.b_type == HIPBLASLT_R_32F || arg.b_type == HIPBLASLT_R_16F))
+            if(arg.amaxScaleB && (arg.b_type == HIP_R_32F || arg.b_type == HIP_R_16F))
             {
                 CHECK_HIPBLASLT_ERROR(hipblasltExtAMax(
-                    arg.b_type, HIPBLASLT_R_32F, *dScaleB[i], *dB[i], B_row[i], B_col[i], stream));
+                    arg.b_type, HIP_R_32F, *dScaleB[i], *dB[i], B_row[i], B_col[i], stream));
                 CHECK_HIP_ERROR(hScaleB[i]->transfer_from(*dScaleB[i]));
             }
             else
@@ -948,7 +951,7 @@ void testing_matmul(const Arguments& arg)
                 hipblasLtMatmulDescSetAttribute(matmul[0][i],
                                                 HIPBLASLT_MATMUL_DESC_BIAS_DATA_TYPE,
                                                 &arg.bias_type,
-                                                sizeof(hipblasltDatatype_t)),
+                                                sizeof(hipDataType)),
                 HIPBLAS_STATUS_SUCCESS);
             if(arg.d_type != arg.scale_type && arg.bias_type == arg.scale_type)
             {
@@ -1749,7 +1752,7 @@ void testing_matmul(const Arguments& arg)
 
     returnedAlgoCount = heuristicResult.size();
 
-    dWorkspace = new device_vector<unsigned char>(workspace_size, 1, HMM);
+    dWorkspace = new device_vector<unsigned char>(workspace_size * block_count, 1, HMM);
     CHECK_DEVICE_ALLOCATION(dWorkspace->memcheck());
 
     if(arg.use_user_args)
@@ -1788,7 +1791,7 @@ void testing_matmul(const Arguments& arg)
         // For the xf32 xdl math op, cast type of A/B from float to xfloat32 .
         if constexpr(std::is_same<TiA, float>{} && std::is_same<TiB, float>{}
                      && std::is_same<To, float>{} && std::is_same<Tc, float>{})
-            if(arg.compute_type == HIPBLASLT_COMPUTE_F32_FAST_XF32)
+            if(arg.compute_type == HIPBLAS_COMPUTE_32F_FAST_TF32)
             {
                 for(int i = 0; i < gemm_count; i++)
                 {
@@ -2279,17 +2282,17 @@ void testing_matmul(const Arguments& arg)
             {
                 if(arg.use_user_args)
                 {
-                    std::vector<void*> d_userArgsVec(block_count);
+                    std::vector<unsigned char*> d_userArgsVec(block_count);
                     //grouped gemm
                     for(int32_t b = 0; b < block_count; b++)
                     {
-                        CHECK_HIPBLASLT_ERROR(
-                            groupedGemmVec[b].initialize(heuristicResult[sol].algo,
-                                                         tuningVec[heuristicTuningIndex[sol]],
-                                                         *dWorkspace));
+                        CHECK_HIPBLASLT_ERROR(groupedGemmVec[b].initialize(
+                            heuristicResult[sol].algo,
+                            tuningVec[heuristicTuningIndex[sol]],
+                            ((unsigned char*)(*dWorkspace) + b * workspace_size)));
                         groupedGemmVec[b].getDefaultValueForDeviceUserArguments(userArgs);
-                        d_userArgsVec[b]
-                            = d_userArgs + b * gemm_count * sizeof(hipblaslt_ext::UserArguments);
+                        d_userArgsVec[b] = (unsigned char*)d_userArgs
+                                           + b * gemm_count * sizeof(hipblaslt_ext::UserArguments);
                         // Copy them to device memory
                         CHECK_HIP_ERROR(hipMemcpy(d_userArgsVec[b],
                                                   userArgs,
@@ -2332,12 +2335,12 @@ void testing_matmul(const Arguments& arg)
                 {
                     //grouped gemm
                     for(int32_t b = 0; b < block_count; b++)
-                        CHECK_HIPBLASLT_ERROR(
-                            groupedGemmVec[b].initialize(heuristicResult[sol].algo,
-                                                         tuningVec[heuristicTuningIndex[sol]],
-                                                         *dWorkspace,
-                                                         false,
-                                                         stream));
+                        CHECK_HIPBLASLT_ERROR(groupedGemmVec[b].initialize(
+                            heuristicResult[sol].algo,
+                            tuningVec[heuristicTuningIndex[sol]],
+                            ((unsigned char*)(*dWorkspace) + b * workspace_size),
+                            false,
+                            stream));
 
                     for(int i = 0; i < number_cold_calls; i++)
                         CHECK_HIPBLASLT_ERROR(groupedGemmVec[i % block_count].run(stream));

@@ -106,11 +106,11 @@ The user must assign the problem type when construct or import the problem from 
     HIPBLASLT_EXPORT explicit Gemm(hipblasLtHandle_t      handle,
                                    hipblasOperation_t     opA,
                                    hipblasOperation_t     opB,
-                                   hipblasltDatatype_t      typeA,
-                                   hipblasltDatatype_t      typeB,
-                                   hipblasltDatatype_t      typeC,
-                                   hipblasltDatatype_t      typeD,
-                                   hipblasLtComputeType_t typeCompute);
+                                   hipDataType      typeA,
+                                   hipDataType      typeB,
+                                   hipDataType      typeC,
+                                   hipDataType      typeD,
+                                   hipblasComputeType_t typeCompute);
 
     HIPBLASLT_EXPORT explicit Gemm(hipblasLtHandle_t       handle,
                                    hipblasLtMatmulDesc_t   matmul_descr,
@@ -136,11 +136,11 @@ GemmProblemType lets user able to change the problem type after the instance is 
     {
         hipblasOperation_t     op_a;
         hipblasOperation_t     op_b;
-        hipblasltDatatype_t      type_a;
-        hipblasltDatatype_t      type_b;
-        hipblasltDatatype_t      type_c;
-        hipblasltDatatype_t      type_d;
-        hipblasLtComputeType_t type_compute;
+        hipDataType      type_a;
+        hipDataType      type_b;
+        hipDataType      type_c;
+        hipDataType      type_d;
+        hipblasComputeType_t type_compute;
     };
 
 GemmEpilogue lets user to control the epilogue of the problem.
@@ -150,7 +150,7 @@ GemmEpilogue lets user to control the epilogue of the problem.
     struct GemmEpilogue
     {
         hipblasLtEpilogue_t mode = HIPBLASLT_EPILOGUE_DEFAULT;
-        hipblasltDatatype_t   bias_data_type;
+        hipDataType   bias_data_type;
         int                 aux_ld;
         int                 aux_stride;
     };
@@ -235,11 +235,11 @@ The user can get heuristic and make kernel arguments with the instance. If the p
     hipblaslt_ext::Gemm gemm(handle,
                              HIPBLAS_OP_N,
                              HIPBLAS_OP_N,
-                             HIPBLASLT_R_16F,
-                             HIPBLASLT_R_16F,
-                             HIPBLASLT_R_16F,
-                             HIPBLASLT_R_16F,
-                             HIPBLASLT_COMPUTE_F32);
+                             HIP_R_16F,
+                             HIP_R_16F,
+                             HIP_R_16F,
+                             HIP_R_16F,
+                             HIPBLAS_COMPUTE_32F);
     std::vector<hipblasLtMatmulHeuristicResult_t> heuristic;
     gemm.setProblem(1, 1, 1, 1, epilogue, inputs); // m, n, k, batch
     gemm.algoGetHeuristic(gemm, pref, heuristic);
@@ -403,7 +403,7 @@ The following is a simple example of how this API works.
                                                      in_out_datatype,
                                                      in_out_datatype,
                                                      in_out_datatype,
-                                                     HIPBLASLT_COMPUTE_F32,
+                                                     HIPBLAS_COMPUTE_32F,
                                                      heuristicResult));
 
     hipblaslt_ext::GemmPreference pref;
@@ -434,11 +434,11 @@ The following is a simple example of how this API works.
     hipblaslt_ext::GroupedGemm groupedGemm(handle,
                                            HIPBLAS_OP_N,
                                            HIPBLAS_OP_N,
-                                           HIPBLASLT_R_16F,
-                                           HIPBLASLT_R_16F,
-                                           HIPBLASLT_R_16F,
-                                           HIPBLASLT_R_16F,
-                                           HIPBLASLT_COMPUTE_F32);
+                                           HIP_R_16F,
+                                           HIP_R_16F,
+                                           HIP_R_16F,
+                                           HIP_R_16F,
+                                           HIPBLAS_COMPUTE_32F);
 
     // Step 4: Set problem
     groupedGemm.setProblem(m, n, k, batch_count, epilogue, inputs); // m, n, k, batch
@@ -476,7 +476,7 @@ The following is a simple example of how this API works.
     }
 
 The base class (GemmInstance)
---------------
+-----------------------------
 
 This is the base class of class Gemm and GroupedGemm.
 
@@ -497,7 +497,7 @@ This is the base class of class Gemm and GroupedGemm.
     HIPBLASLT_EXPORT hipblasStatus_t run(hipStream_t stream);
 
 Get all algorithms
---------------
+------------------
 
 Get all algorithms lets users to get all the algorithms of a specific problem type. It requires the transpose of A, B, the data type of the inputs, and the compute type.
 
@@ -508,11 +508,11 @@ Get all algorithms lets users to get all the algorithms of a specific problem ty
                                                hipblasLtExtGemmTypeEnum_t                     typeGemm,
                                                hipblasOperation_t                             opA,
                                                hipblasOperation_t                             opB,
-                                               hipblasltDatatype_t                              typeA,
-                                               hipblasltDatatype_t                              typeB,
-                                               hipblasltDatatype_t                              typeC,
-                                               hipblasltDatatype_t                              typeD,
-                                               hipblasLtComputeType_t                         typeCompute,
+                                               hipDataType                              typeA,
+                                               hipDataType                              typeB,
+                                               hipDataType                              typeC,
+                                               hipDataType                              typeD,
+                                               hipblasComputeType_t                         typeCompute,
                                                std::vector<hipblasLtMatmulHeuristicResult_t>& heuristicResults);
 
 This API does not require any problem size or epilogue as input, but will use another API "isAlgoSupported" to check if the algorithm supports a problem.
@@ -535,7 +535,7 @@ The API will return the required workspace size in bytes if success.
                                                      in_out_datatype,
                                                      in_out_datatype,
                                                      in_out_datatype,
-                                                     HIPBLASLT_COMPUTE_F32,
+                                                     HIPBLAS_COMPUTE_32F,
                                                      heuristicResult));
 
     validIdx.clear();
@@ -581,7 +581,7 @@ Gemm
                                                      in_out_datatype,
                                                      in_out_datatype,
                                                      in_out_datatype,
-                                                     HIPBLASLT_COMPUTE_F32,
+                                                     HIPBLAS_COMPUTE_32F,
                                                      heuristicResult));
 
     hipblaslt_ext::GemmPreference pref;
@@ -599,11 +599,11 @@ Gemm
     hipblaslt_ext::Gemm gemm(handle,
                              HIPBLAS_OP_N,
                              HIPBLAS_OP_N,
-                             HIPBLASLT_R_16F,
-                             HIPBLASLT_R_16F,
-                             HIPBLASLT_R_16F,
-                             HIPBLASLT_R_16F,
-                             HIPBLASLT_COMPUTE_F32);
+                             HIP_R_16F,
+                             HIP_R_16F,
+                             HIP_R_16F,
+                             HIP_R_16F,
+                             HIPBLAS_COMPUTE_32F);
 
     gemm.setProblem(1, 1, 1, 1, epilogue, inputs); // m, n, k, batch
 
@@ -648,7 +648,7 @@ Grouped gemm
                                                      in_out_datatype,
                                                      in_out_datatype,
                                                      in_out_datatype,
-                                                     HIPBLASLT_COMPUTE_F32,
+                                                     HIPBLAS_COMPUTE_32F,
                                                      heuristicResult));
 
     hipblaslt_ext::GemmPreference pref;
@@ -679,11 +679,11 @@ Grouped gemm
     hipblaslt_ext::GroupedGemm groupedGemm(handle,
                                            HIPBLAS_OP_N,
                                            HIPBLAS_OP_N,
-                                           HIPBLASLT_R_16F,
-                                           HIPBLASLT_R_16F,
-                                           HIPBLASLT_R_16F,
-                                           HIPBLASLT_R_16F,
-                                           HIPBLASLT_COMPUTE_F32);
+                                           HIP_R_16F,
+                                           HIP_R_16F,
+                                           HIP_R_16F,
+                                           HIP_R_16F,
+                                           HIPBLAS_COMPUTE_32F);
 
     groupedGemm.setProblem(m, n, k, batch_count, epilogue, inputs); // m, n, k, batch
 
@@ -708,7 +708,7 @@ Grouped gemm
     }
 
 Algorithm Index
---------------
+---------------
 
 The extension API lets user to get the algorithm index from hipblasLtMatmulAlgo_t.
 
@@ -731,6 +731,7 @@ Example code
 ^^^^^^^^^^^^
 
 .. code-block:: c++
+
     int index = hipblaslt_ext::getIndexFromAlgo(testResults[i].algo);
     // Save the index to disk or somewhere else for later use.
 
@@ -739,9 +740,8 @@ Example code
     std::vector<hipblasLtMatmulHeuristicResult_t> heuristicResults;
     CHECK_HIPBLASLT_ERROR(hipblaslt_ext::getAlgosFromIndex(handle, algoIndex, heuristicResults));
 
-
 [Grouped Gemm] Fixed MK
---------------
+-----------------------
 
 hipBLASLt extension supports changing the sizes (m, n, k, batch) from the device memory "UserArguments", but the setup is a bit different from the normal routing.
 
@@ -751,6 +751,7 @@ Sum of n
 A sum of N is required to use as an input for the grouped gemm instance.
 
 .. code-block:: c++
+
     {1000, 1, 1, 1}; // The array of N, the first element is the sum of N
 
     // Below is the values stored in "UserArguments"
@@ -772,7 +773,7 @@ For example, we have a grouped gemm with gemm_count = 4. The sum of N must not e
                                                      in_out_datatype,
                                                      in_out_datatype,
                                                      in_out_datatype,
-                                                     HIPBLASLT_COMPUTE_F32,
+                                                     HIPBLAS_COMPUTE_32F,
                                                      heuristicResult));
 
     hipblaslt_ext::GemmPreference pref;
@@ -814,11 +815,11 @@ For example, we have a grouped gemm with gemm_count = 4. The sum of N must not e
     hipblaslt_ext::GroupedGemm groupedGemm(handle,
                                            HIPBLAS_OP_N,
                                            HIPBLAS_OP_N,
-                                           HIPBLASLT_R_16F,
-                                           HIPBLASLT_R_16F,
-                                           HIPBLASLT_R_16F,
-                                           HIPBLASLT_R_16F,
-                                           HIPBLASLT_COMPUTE_F32);
+                                           HIP_R_16F,
+                                           HIP_R_16F,
+                                           HIP_R_16F,
+                                           HIP_R_16F,
+                                           HIPBLAS_COMPUTE_32F);
 
     // Step 4: Set problem
     groupedGemm.setProblem(m, n, k, batch_count, epilogue, inputs); // m, n, k, batch

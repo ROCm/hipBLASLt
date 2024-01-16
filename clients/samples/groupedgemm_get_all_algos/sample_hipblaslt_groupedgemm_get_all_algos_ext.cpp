@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022-2023 Advanced Micro Devices, Inc.
+ * Copyright (C) 2022-2024 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -73,11 +73,11 @@ void multipleGroupsGroupedGemmExt(hipblasLtHandle_t     handle,
                                    hipblaslt_ext::GemmType::HIPBLASLT_GROUPED_GEMM,
                                    trans_a,
                                    trans_a,
-                                   HIPBLASLT_R_16F,
-                                   HIPBLASLT_R_16F,
-                                   HIPBLASLT_R_16F,
-                                   HIPBLASLT_R_16F,
-                                   HIPBLASLT_COMPUTE_F32,
+                                   HIP_R_16F,
+                                   HIP_R_16F,
+                                   HIP_R_16F,
+                                   HIP_R_16F,
+                                   HIPBLAS_COMPUTE_32F,
                                    heuristicResult));
 
     hipblaslt_ext::GemmPreference gemmPref;
@@ -92,11 +92,11 @@ void multipleGroupsGroupedGemmExt(hipblasLtHandle_t     handle,
         hipblaslt_ext::GroupedGemm groupedgemm(handle,
                                                trans_a,
                                                trans_b,
-                                               HIPBLASLT_R_16F,
-                                               HIPBLASLT_R_16F,
-                                               HIPBLASLT_R_16F,
-                                               HIPBLASLT_R_16F,
-                                               HIPBLASLT_COMPUTE_F32);
+                                               HIP_R_16F,
+                                               HIP_R_16F,
+                                               HIP_R_16F,
+                                               HIP_R_16F,
+                                               HIPBLAS_COMPUTE_32F);
 
         std::vector<hipblaslt_ext::GemmEpilogue> epilogue{
             hipblaslt_ext::
@@ -259,23 +259,17 @@ void simpleGroupedGemmExt(hipblasLtHandle_t     handle,
                                    hipblaslt_ext::GemmType::HIPBLASLT_GROUPED_GEMM,
                                    trans_a,
                                    trans_a,
-                                   HIPBLASLT_R_16F,
-                                   HIPBLASLT_R_16F,
-                                   HIPBLASLT_R_16F,
-                                   HIPBLASLT_R_16F,
-                                   HIPBLASLT_COMPUTE_F32,
+                                   HIP_R_16F,
+                                   HIP_R_16F,
+                                   HIP_R_16F,
+                                   HIP_R_16F,
+                                   HIPBLAS_COMPUTE_32F,
                                    heuristicResult));
 
     hipblaslt_ext::GemmPreference gemmPref;
     gemmPref.setMaxWorkspaceBytes(max_workspace_size);
-    hipblaslt_ext::GroupedGemm groupedgemm(handle,
-                                           trans_a,
-                                           trans_b,
-                                           HIPBLASLT_R_16F,
-                                           HIPBLASLT_R_16F,
-                                           HIPBLASLT_R_16F,
-                                           HIPBLASLT_R_16F,
-                                           HIPBLASLT_COMPUTE_F32);
+    hipblaslt_ext::GroupedGemm groupedgemm(
+        handle, trans_a, trans_b, HIP_R_16F, HIP_R_16F, HIP_R_16F, HIP_R_16F, HIPBLAS_COMPUTE_32F);
 
     std::vector<hipblaslt_ext::GemmEpilogue> epilogue{
         hipblaslt_ext::
