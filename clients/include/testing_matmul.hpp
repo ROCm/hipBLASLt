@@ -775,6 +775,13 @@ void testing_matmul(const Arguments& arg)
                 hipblaslt_init_alt_impl_small<TiB>(
                     *hB[i], B_row[i], B_col[i], ldb[i], num_batches[i]);
             }
+            else if(arg.initialization == hipblaslt_initialization::zero)
+            {
+                hipblaslt_init_zero<TiA>(
+                    *hA[i], A_row[i], A_col[i], lda[i], stride_a[i], num_batches[i]);
+                hipblaslt_init_zero<TiB>(
+                    *hB[i], B_row[i], B_col[i], ldb[i], stride_b[i], num_batches[i]);
+            }
         }
 
         if(arg.beta_isnan<Tc>())
@@ -791,6 +798,8 @@ void testing_matmul(const Arguments& arg)
                 hipblaslt_init_hpl<To>(*hC[i], M[i], N[i], ldc[i], stride_c[i], num_batches[i]);
             else if(arg.initialization == hipblaslt_initialization::special)
                 hipblaslt_init<To>(*hC[i], M[i], N[i], ldc[i], stride_c[i], num_batches[i]);
+            else if(arg.initialization == hipblaslt_initialization::zero)
+                hipblaslt_init_zero<To>(*hC[i], M[i], N[i], ldc[i], stride_c[i], num_batches[i]);
         }
 
         if(arg.gradient && arg.use_e)
