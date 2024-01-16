@@ -1993,10 +1993,10 @@ namespace Tensile
                     HasIndex = false,
                     HasValue = true
                 };
-                bool value;
+                int value;
 
                 UseBiasEqual() = default;
-                UseBiasEqual(bool value)
+                UseBiasEqual(int value)
                     : value(value)
                 {
                 }
@@ -2237,7 +2237,16 @@ namespace Tensile
                                 if(problem.biasSrc() == ContractionProblemGemm::TENSOR::A
                                    || problem.biasSrc() == ContractionProblemGemm::TENSOR::D)
                                 {
-                                    if(length != problem.d().sizes()[0])
+                                    auto eLength = (problem.useBias() == 1 || problem.biasSrc() != ContractionProblemGemm::TENSOR::D) 
+                                                     ? problem.d().sizes()[0]
+                                                     : (problem.useBias() == 2) 
+                                                     ? problem.d().sizes()[1]
+                                                     : (problem.useBias() == 3)
+                                                     ? (problem.getParams().biasDim() == 1)
+                                                     ? problem.d().sizes()[1] 
+                                                     : problem.d().sizes()[0]
+                                                     : -1;
+                                    if(length < eLength)
                                         return false;
                                 }
                                 else if(problem.biasSrc() == ContractionProblemGemm::TENSOR::B)

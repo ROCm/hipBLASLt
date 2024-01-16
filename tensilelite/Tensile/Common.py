@@ -1137,7 +1137,7 @@ defaultProblemType = {
     "UseBeta":                  True,             # =True use beta parameter (asm will check for B=0 and optimize the write for that), =False don't use beta parameter
     "UseE":                     False,            # =True use output E to output gemm results before activation
     "Gradient":                 False,            # =True set globalWriteElements to gradient mode
-    "UseBias":                  False,            # =True use bias vector
+    "UseBias":                  0,                # =1 support bias vector on M direction, =2 support bias vector on N direction, =3 support bias vector on both M,N direction
     "BiasSrc":                  "D",              # This parameter is used in gradient + bias. Support A, B, D.
     "UseScaleAB":               False,            # =True use scaleA, scaleB
     "UseScaleCD":               False,            # =True use scaleC, scaleD
