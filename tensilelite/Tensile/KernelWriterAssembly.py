@@ -4782,7 +4782,7 @@ class KernelWriterAssembly(KernelWriter):
       skipOptNLL = Label("OptNLL_End", "")
       with self.allocTmpSgpr(4) as tmpSgprInfo:
         tmpSgpr = tmpSgprInfo.idx
-        module.add(self.checkIsBetaZero(kernel, tmpSgprInfo, skipOptNLL, isLongBranch=isLongBranch, posNeg=1))
+        module.add(self.checkIsBetaZero(kernel, tmpSgprInfo, skipOptNLL, isLongBranch=isLongBranch, placeHolder="skipOptNLL_placeholder", posNeg=1))
 
         # check alpha
         if self.do["ApplyAlpha"]:
@@ -4819,18 +4819,19 @@ class KernelWriterAssembly(KernelWriter):
             module.add(SMovB32(dst=sgpr(tmpSgpr+0), src=hex(0x00000000), comment="lsb of real part of 1.0"))
             module.add(SMovB32(dst=sgpr(tmpSgpr+1), src=hex(0x3ff00000), comment="msb of real part of 1.0"))
             module.add(SCmpEQU64(src0=sgpr("Alpha",2), src1=sgpr(tmpSgpr,2), comment="Alpha.real == 1.0 ?"))
-            module.add(SCBranchSCC0(labelName=skipOptNLL.getLabelName(), comment="branch if alpha.real != 1"))
+            skipOptNLLModule = Module("skipOptNLL_placeholder")
+            skipOptNLLModule.addComment1("branch if alpha.real != 1")
+            module.add(skipOptNLLModule)
             module.add(SMovB32(dst=sgpr(tmpSgpr+0), src=hex(0x00000000), comment="lsb of imag part of 0.0"))
             module.add(SMovB32(dst=sgpr(tmpSgpr+1), src=hex(0x00000000), comment="msb of imag part of 0.0"))
             module.add(SCmpEQU64(src0=sgpr("Alpha+2",2), src1=sgpr(tmpSgpr,2), comment="Alpha.imag == 0.0 ?"))
 
-          if isLongBranch:
-            module.add(self.longBranchScc0(skipOptNLL, posNeg=1, tmpSgprInfo=tmpSgprInfo, comment="branch if alpha != 1"))
-          else:
-            module.add(SCBranchSCC0(labelName=skipOptNLL.getLabelName(), comment="branch if alpha != 1"))
+          skipOptNLLModule = Module("skipOptNLL_placeholder")
+          skipOptNLLModule.addComment1("branch if alpha != 1")
+          module.add(skipOptNLLModule)
           module.addSpaceLine()
 
-        module.add(self.checkIsEdge(kernel, tmpSgprInfo, skipOptNLL, isLongBranch=isLongBranch))
+        module.add(self.checkIsEdge(kernel, tmpSgprInfo, skipOptNLL, isLongBranch=isLongBranch, placeHolder="skipOptNLL_scc1_placeholder"))
         module.addSpaceLine()
 
         # Check tail loop required:
@@ -4841,10 +4842,9 @@ class KernelWriterAssembly(KernelWriter):
           module.add(scalarStaticDivideAndRemainder(tmpSgpr, tmpSgpr+1, "SizesSum+%u"%self.states.unrollIdx, \
                     kernel["DepthU"], RegisterPoolResource(tmpSgpr+2, 2), 2))
           module.add(SCmpEQU32(src0=sgpr(tmpSgpr+1), src1=hex(0), comment="numIter%s == 0"%loopChar ))
-          if isLongBranch:
-            module.add(self.longBranchScc0(skipOptNLL, posNeg=1, tmpSgprInfo=tmpSgprInfo, comment="skip if tail loop required"))
-          else:
-            module.add(SCBranchSCC0(labelName=skipOptNLL.getLabelName(), comment="skip if tail loop required"))
+          skipOptNLLModule = Module("skipOptNLL_placeholder")
+          skipOptNLLModule.addComment1("skip if tail loop required")
+          module.add(skipOptNLLModule)
 
       # save the vgprPool for generating the normal path.
       # dump the 'dirty' pool upon s_endpgm and swap back the 'clean' pool
@@ -7819,7 +7819,7 @@ class KernelWriterAssembly(KernelWriter):
   # tmpSgpr is one temp sgpr
   # betaLabel is label to branch to if beta != 0
   ##############################################################################
-  def checkIsBetaZero(self, kernel, tmpSgprInfo, betaLabel, isLongBranch=False, posNeg: int=0):
+  def checkIsBetaZero(self, kernel, tmpSgprInfo, betaLabel, isLongBranch=False, placeHolder=None, posNeg: int=0):
     module = Module("checkIsBetaZero label %s"%betaLabel)
     assert(isinstance(betaLabel, Label))
     betaLabelName = betaLabel.getLabelName()
@@ -7831,10 +7831,15 @@ class KernelWriterAssembly(KernelWriter):
         for i in range(1, self.states.bpeCinternal//self.states.bpr):
           module.add(SOrB32(dst=sgpr(tmpSgprInfo.idx), src0=sgpr("Beta+%u"%i), src1=sgpr(tmpSgprInfo.idx), comment="tmp |= Beta[%u] " % i))
         module.add(SCmpKEQU32(src=sgpr(tmpSgprInfo.idx), simm16=hex(0), comment="Beta == 0"))
-      if isLongBranch:
-        module.add(self.longBranchScc0(betaLabel, posNeg, tmpSgprInfo))
+      if placeHolder == None:
+        if isLongBranch:
+          module.add(self.longBranchScc0(betaLabel, posNeg, tmpSgprInfo))
+        else:
+          module.add(SCBranchSCC0(labelName=betaLabelName, comment="Branch if Beta is not zero"))
       else:
-        module.add(SCBranchSCC0(labelName=betaLabelName, comment="Branch if Beta is not zero"))
+        placeHolderModule = Module(placeHolder)
+        module.add(placeHolderModule)
+  
     module.addSpaceLine()
     return module
 
@@ -7843,7 +7848,7 @@ class KernelWriterAssembly(KernelWriter):
   # tmpSgpr must have at least 6 free SGPR
   # isEdgeTarget is the branch target if edges are required
   ##############################################################################
-  def checkIsEdge(self, kernel, tmpSgprInfo, isEdgeTarget, isLongBranch=False):
+  def checkIsEdge(self, kernel, tmpSgprInfo, isEdgeTarget, isLongBranch=False, placeHolder=None):
     assert(isinstance(isEdgeTarget, Label))
     isEdgeTargetLabel = isEdgeTarget.getLabelName()
     module = Module("checkIsEdge")
@@ -7878,10 +7883,15 @@ class KernelWriterAssembly(KernelWriter):
       module.add(SCmpKGtU32(src=sgpr(tmpS0), simm16=hex(0), comment="rMT0 > 0"))
       if self.db["ForceEdgeStores"]:
         module.add(SCmpEQU32(src0=sgpr(tmpS0), src1=sgpr(tmpS0), comment="ForceEdgeStores!"))
-      if isLongBranch:
-        module.add(self.longBranchScc1(isEdgeTarget, posNeg=1, tmpSgprInfo=tmpSgprInfo, comment="jump if edges required"))
+      if placeHolder == None:
+        if isLongBranch:
+          module.add(self.longBranchScc1(isEdgeTarget, posNeg=1, tmpSgprInfo=tmpSgprInfo, comment="jump if edges required"))
+        else:
+          module.add(SCBranchSCC1(labelName=isEdgeTargetLabel, comment="jump if edges required"))
       else:
-        module.add(SCBranchSCC1(labelName=isEdgeTargetLabel, comment="jump if edges required"))
+        placeHolderModule = Module(placeHolder)
+        placeHolderModule.addComment1("jump if edges required")
+        module.add(placeHolderModule)
 
     # check edge1 ###
     # TODO-packed - this only needs to change to handle packing into C1 index
@@ -7901,11 +7911,15 @@ class KernelWriterAssembly(KernelWriter):
     # if rMT1 > 0 goto label_B?_E1
     if self.do["EdgeWrite"]:
       module.add(SCmpKGtU32(src=sgpr(tmpS0), simm16=hex(0), comment="rMT1 > 0"))
-      if isLongBranch:
-        module.add(self.longBranchScc1(isEdgeTarget, posNeg=1, tmpSgprInfo=tmpSgprInfo, comment="jump if edges required"))
+      if placeHolder == None:
+        if isLongBranch:
+          module.add(self.longBranchScc1(isEdgeTarget, posNeg=1, tmpSgprInfo=tmpSgprInfo, comment="jump if edges required"))
+        else:
+          module.add(SCBranchSCC1(labelName=isEdgeTargetLabel, comment="jump if edges required"))
       else:
-        module.add(SCBranchSCC1(labelName=isEdgeTargetLabel, comment="jump if edges required"))
-
+        placeHolderModule = Module(placeHolder)
+        placeHolderModule.addComment1("jump if edges required")
+        module.add(placeHolderModule)
     return module
 
   ##############################################################################
@@ -8558,11 +8572,8 @@ class KernelWriterAssembly(KernelWriter):
           if len(actLoopLabelModules) > 1:
             edgeModule.add(actLoopEndLabel)
 
-          if currentInstLength >= 16384:
-            with self.allocTmpSgpr(3) as tmpSgprInfo:
-              edgeModule.add(SLongBranchPositive(endLabel, tmpSgprInfo, comment="jump to end"))
-          else:
-            edgeModule.add(SBranch(labelName=endLabel.getLabelName(), comment="jump to end"))
+          end_placeholder = Module("end_placeholder")
+          edgeModule.add(end_placeholder)
           currentInstLength += edgeModule.countType(Instruction)
           betaModule.add(edgeModule, pos=mod_pos)
           del ss
@@ -8626,6 +8637,7 @@ class KernelWriterAssembly(KernelWriter):
 
       # End label
       module.add(endLabel)
+      self.updateBranchPlaceHolder(module, ["end_placeholder"], [endLabel.label], ["SBranch"])
       self.vgprPool.checkIn(tmpVgpr)
       if cvtVgpr is not None:
         self.vgprPool.checkIn(cvtVgpr)

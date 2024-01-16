@@ -26,7 +26,8 @@ from . import Common
 from .TensileInstructions import Item, TensileInstructions, slash50, replaceHolder, \
                           KernelBody, Module, StructuredModule, TextBlock, Dump, LabelManager, \
                           RegisterPool, Assert, fastdeepcopy, TensileInstructionsPassOptions, \
-                          TensileInstructionsPass, getAsmCompileArgs, getAsmLinkCodeObjectArgs
+                          TensileInstructionsPass, getAsmCompileArgs, getAsmLinkCodeObjectArgs, \
+                          SLongBranchPositive, SBranch, SCBranchSCC0, SCBranchSCC1
 from .TensileInstructions.Instructions import *
 from .KernelWriterModules import *
 from .TensilePass import TensilePass, TensilePassOptions
@@ -1715,6 +1716,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
     # Close code is necessary for both first and last (NGLL case(=NLLfirst) needs label)
     module.add(self.closeSumAtLeastUnroll(kernel, tensorParametersA, tensorParametersB, prefetch=False, isOptNLL=isOptNLL, isNGLL=isNGLL))
 
+    self.updateBranchPlaceHolder(module, ["skipOptNLL_placeholder", "skipOptNLL_scc1_placeholder"] , ["OptNLL_End", "OptNLL_End"], ["SCBranchSCC0", "SCBranchSCC1"])
     return module
 
   ##############################################################################
@@ -4621,3 +4623,51 @@ for codeObjectFileName in codeObjectFileNames:
 
   def setTensileInstructions(self, ti):
     self.ti = ti
+
+  def updateBranchPlaceHolder(self, module, placeholders, targets, operations):
+    phs = [ ph for ph in placeholders ]
+    found_phs = {}
+
+    def findInstByName(module, names, count):
+      for inst in module.items():
+        if isinstance(inst, Module):
+          if inst.name in phs:
+            found_phs[count] = inst
+            count += 1
+          else:
+            count = findInstByName(inst, names, count)
+        elif (not isinstance(inst, TextBlock)):
+          count += 1
+      return count
+
+    currentInstLength = findInstByName(module, phs, 0)
+    if len(found_phs) == 0:
+      return
+
+    for count in reversed(found_phs.keys()):
+      _placeholder = found_phs[count]
+      ph_idx = placeholders.index(_placeholder.name)
+
+      _target = Label(targets[ph_idx], "")
+      _operation = operations[ph_idx]
+
+      _placeholder.name = "Branch_%s"%_target.getLabelName()
+      if _operation == "SCBranchSCC0":
+        if currentInstLength - count + 1 >= 16384:
+          with self.allocTmpSgpr(3) as tmpSgprInfo:
+              _placeholder.add(self.longBranchScc0(_target, 1, tmpSgprInfo))
+        else:
+          _placeholder.add(SCBranchSCC0(labelName=_target.getLabelName()))
+      elif _operation == "SCBranchSCC1":
+        if currentInstLength - count + 1 >= 16384:
+          with self.allocTmpSgpr(3) as tmpSgprInfo:
+              _placeholder.add(self.longBranchScc1(_target, 1, tmpSgprInfo))
+        else:
+          _placeholder.add(SCBranchSCC1(labelName=_target.getLabelName()))
+      elif _operation == "SBranch":
+        if currentInstLength - count + 1 >= 16384:
+          with self.allocTmpSgpr(3) as tmpSgprInfo:
+            _placeholder.add(SLongBranchPositive(_target, tmpSgprInfo))
+        else:
+          _placeholder.add(SBranch(labelName=_target.getLabelName()))
+      currentInstLength += _placeholder.countType(Instruction)
