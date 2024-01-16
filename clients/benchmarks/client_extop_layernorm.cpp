@@ -44,7 +44,7 @@ void printUsage(char* programName)
               << "\t-n, --n\t\t\t\tSize of dim 1, default is 16\n"
               << "\t-a, --affine\t\t\t\tEnable Gamma and Beta, default is false\n"
               << "\t--initialization \t\tInitialize matrix data. Options: rand_int, trig_float, "
-                 "hpl(floating). (default is hpl)\n";
+                 "hpl(floating), special, zero. (default is hpl)\n";
 }
 
 void cpuLayerNorm(float*        out,
@@ -123,7 +123,7 @@ int parseArgs(
             {
                 const std::string initStr{argv[++i]};
 
-                if(initStr != "rand_int" && initStr != "trig_float" && initStr != "hpl")
+                if(initStr != "rand_int" && initStr != "trig_float" && initStr != "hpl" && initStr != "special" && initStr != "zero")
                 {
                     std::cerr << "Invalid initialization type: " << initStr << '\n';
                     return EXIT_FAILURE;
@@ -216,6 +216,9 @@ void initData(DType* data, std::size_t numElements, hipblaslt_initialization ini
         break;
     case hipblaslt_initialization::special:
         hipblaslt_init_alt_impl_big<DType>(data, numElements, 1, 1);
+        break;
+    case hipblaslt_initialization::zero:
+        hipblaslt_init_zero<DType>(data, numElements, 1, 1);
         break;
     default:
         break;

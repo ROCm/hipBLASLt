@@ -216,7 +216,7 @@ static void show_usage(char* argv[])
         << "\t-v, --verbose\t\t\t\tVerbose output\n"
         << "\t-V, --validate\t\t\t\tVerify results\n"
         << "\t--initialization \t\t\t\tInitialize matrix data. Options: rand_int, trig_float, "
-           "hpl(floating). (default is hpl)\n"
+           "hpl(floating), special, zero. (default is hpl)\n"
         << "\t--bench_count\t\t\t\tNumber of benchmark runs (default is 1)\n"
         << "\t--sync_count\t\t\t\tNumber of sync runs (default is 1)\n"
         << "\t--in_datatype \t\tdatatype \tGEMM_STRIDED argument in: fp32, fp16, bf16 (default is "
@@ -601,6 +601,13 @@ void initialize_a_b_c_bias(std::vector<TiA>&        ha,
         hipblaslt_init_alt_impl_small<TiB>(hb, size_b);
         hipblaslt_init_hpl<Tout>(hc, size_c);
         hipblaslt_init_hpl<float>(h_bias, size_bias);
+    }
+    else if(initialization == hipblaslt_initialization::zero)
+    {
+        hipblaslt_init_zero<TiA>(ha, size_a);
+        hipblaslt_init_zero<TiB>(hb, size_b);
+        hipblaslt_init_zero<Tout>(hc, size_c);
+        hipblaslt_init_zero<float>(h_bias, size_bias);
     }
 }
 

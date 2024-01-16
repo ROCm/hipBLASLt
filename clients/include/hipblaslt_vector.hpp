@@ -172,6 +172,14 @@ inline void hipblaslt_init_alt_impl_small(std::vector<T>& that, bool seedReset =
     hipblaslt_init_alt_impl_small(that, that.size(), 1, 1);
 }
 
+template <typename T>
+inline void hipblaslt_init_zero(std::vector<T>& that, bool seedReset = false)
+{
+    if(seedReset)
+        hipblaslt_seedrand();
+    hipblaslt_init_zero(that, that.size(), 1, 1);
+}
+
 //!
 //! @brief Initialize a host_vector.
 //! @param hx The host_vector.
@@ -226,6 +234,10 @@ inline void hipblaslt_init_vector(host_vector<T>&          hx,
             hipblaslt_init_cos(hx, 1, N, incx, stride_x, batch_count);
         else
             hipblaslt_init_sin(hx, 1, N, incx, stride_x, batch_count);
+    }
+    else if(arg.initialization == hipblaslt_initialization::zero)
+    {
+        hipblaslt_init_zero(hx, 1, N, incx, stride_x, batch_count);
     }
 }
 
@@ -285,5 +297,9 @@ inline void hipblaslt_init_matrix(host_vector<T>&          hA,
             hipblaslt_init_cos(hA, M, N, lda, stride_A, batch_count);
         else
             hipblaslt_init_sin(hA, M, N, lda, stride_A, batch_count);
+    }
+    else if(arg.initialization == hipblaslt_initialization::zero)
+    {
+        hipblaslt_init_zero(hA, M, N, lda, stride_A, batch_count);
     }
 }

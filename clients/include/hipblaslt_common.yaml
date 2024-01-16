@@ -29,6 +29,7 @@ Datatypes:
         trig_float: 222
         hpl: 333
         special: 444
+        zero: 555
   - hipblaslt_activation_type:
       bases: [ c_int ]
       attr:
