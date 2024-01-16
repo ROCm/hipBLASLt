@@ -1,6 +1,6 @@
 ################################################################################
 #
-# Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -274,7 +274,7 @@ class StoreState:
     #
     # Also create an AddrCalc for each memory operation.
     ##############################################################################
-    def setupStoreElementsForBatch(self, kernel, gwvw, batchElements, batchElementSgprs, isOptNLL):
+    def setupStoreElementsForBatch(self, kernel, gwvw, batchElements, batchElementSgprs, isOptNLL, biasDim):
 
         self.elementAddr     = []
         self.elementDataE    = []
@@ -459,13 +459,14 @@ class StoreState:
             self.elementData.append(data)
 
             if self.useBias == DataDirection.READ:
-                if coordOffset0 in biasVgprMap:
-                    dataBias = biasVgprMap[coordOffset0]
+                coordOffset = coordOffset0 if biasDim == 0 else coordOffset1
+                if coordOffset in biasVgprMap:
+                    dataBias = biasVgprMap[coordOffset]
                 else:
                     numVgprs = int(ceil(kernel["ProblemType"]["ComputeDataType"].numRegisters()))
                     dataBias = kw.vgprPool.checkOutAligned(int(numVgprs*self.cfg.gwvw), \
-                                  int(ceil(numVgprs*self.cfg.gwvw)), "bias data for ei=%u"%elementIdx, preventOverflow=False)
-                    biasVgprMap[coordOffset0] = dataBias
+                                int(ceil(numVgprs*self.cfg.gwvw)), "bias data for ei=%u"%elementIdx, preventOverflow=False)
+                    biasVgprMap[coordOffset] = dataBias
             else:
                 dataBias = 0
             self.elementDataBias.append(dataBias)

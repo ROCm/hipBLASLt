@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
+ * Copyright (C) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -75,7 +75,7 @@ namespace Tensile
             bool m_highPrecisionAccumulate;
             bool m_deterministicMode;
             bool m_cEqualsD;
-            bool m_useBias;
+            int  m_useBias;
             int  m_biasSrc;
             bool m_useScaleAB;
             bool m_useScaleCD;
@@ -88,6 +88,7 @@ namespace Tensile
             PerformanceMetric                m_performanceMetric;
             ActivationType                   m_activationType;
             std::vector<DataType>            m_biasTypeArgs;
+            std::vector<int>                 m_biasDimArgs;
             bool                             m_activationNoGuard;
             std::vector<ActivationType>      m_activationEnumArg;
             size_t                           m_maxWorkspaceSize = 0;

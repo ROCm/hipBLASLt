@@ -213,6 +213,9 @@ class SignatureDefault(Signature):
             if writer.states.needBiasType:
                 signature.addArg("biasType",        SVK.SIG_VALUE,        "u32")
                 signature.addArg("StrideBias",      SVK.SIG_VALUE,        "u32")
+                if kernel["ProblemType"]["UseBias"] == 3:
+                    signature.addArg("biasDim",     SVK.SIG_VALUE,        "u32")
+                    userArgumentsInfo.biasSize += 4
         userArgumentsInfo.biasSize += (8 + 4 + 4)
 
         if kernel["ProblemType"]["UseE"]:

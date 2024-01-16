@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
+ * Copyright (C) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -44,6 +44,7 @@ namespace Tensile
             , m_deterministicMode(args["deterministic-mode"].as<bool>())
             , m_cEqualsD(args["c-equal-d"].as<bool>())
             , m_biasTypeArgs(std::vector<DataType>(1, DataType::Float))
+            , m_biasDimArgs(std::vector<int>(1, 0))
             , m_activationType(ActivationType::None)
             , m_activationNoGuard(false)
             , m_activationEnumArg(std::vector<ActivationType>(1, ActivationType::None))
@@ -149,7 +150,8 @@ namespace Tensile
 
             if(args.count("bias-type-args"))
                 m_biasTypeArgs = args["bias-type-args"].as<std::vector<DataType>>();
-
+            if(args.count("bias-dim-args"))
+                m_biasDimArgs = args["bias-dim-args"].as<std::vector<int>>();
             if(args.count("activation-type"))
                 m_activationType = args["activation-type"].as<ActivationType>();
             if(args.count("activation-no-guard"))
@@ -158,7 +160,7 @@ namespace Tensile
                 m_activationEnumArg
                     = args["activation-enum-args"].as<std::vector<ActivationType>>();
             if(args.count("use-bias"))
-                m_useBias = args["use-bias"].as<bool>();
+                m_useBias = args["use-bias"].as<int>();
             if(args.count("bias-source"))
                 m_biasSrc = args["bias-source"].as<int>();
             if(args.count("use-scaleAB"))
@@ -217,7 +219,8 @@ namespace Tensile
             rv.clear();
             int biasSize       = std::max(1, (int)m_biasTypeArgs.size());
             int activationSize = std::max(1, (int)m_activationEnumArg.size());
-            rv.reserve(m_problemSizes.size() * activationSize * biasSize);
+            int biasDimSize    = std::max(1, m_useBias == 3 ? (int)m_biasDimArgs.size() : 1);
+            rv.reserve(m_problemSizes.size() * activationSize * biasSize * biasDimSize);
 
             std::vector<size_t> aStrides, bStrides, cStrides, dStrides, eStrides, biasStrides;
 
@@ -234,126 +237,136 @@ namespace Tensile
             if(m_tensorStrides[ContractionProblemGemm::TENSOR::BIAS].size() == 1)
                 biasStrides = m_tensorStrides[ContractionProblemGemm::TENSOR::BIAS][0];
 
-            for(int k = 0; k < biasSize; k++)
+            for(int l = 0; l < biasDimSize; l++)
             {
-                for(int j = 0; j < activationSize; j++)
+                for(int k = 0; k < biasSize; k++)
                 {
-                    for(int i = 0; i < m_problemSizes.size(); i++)
+                    for(int j = 0; j < activationSize; j++)
                     {
-                        if(m_tensorStrides[ContractionProblemGemm::TENSOR::A].size()
-                           == m_problemSizes.size())
-                            aStrides = m_tensorStrides[ContractionProblemGemm::TENSOR::A][i];
-                        if(m_tensorStrides[ContractionProblemGemm::TENSOR::B].size()
-                           == m_problemSizes.size())
-                            bStrides = m_tensorStrides[ContractionProblemGemm::TENSOR::B][i];
-                        if(m_tensorStrides[ContractionProblemGemm::TENSOR::C].size()
-                           == m_problemSizes.size())
-                            cStrides = m_tensorStrides[ContractionProblemGemm::TENSOR::C][i];
-                        if(m_tensorStrides[ContractionProblemGemm::TENSOR::D].size()
-                           == m_problemSizes.size())
-                            dStrides = m_tensorStrides[ContractionProblemGemm::TENSOR::D][i];
-                        if(m_tensorStrides[ContractionProblemGemm::TENSOR::E].size()
-                           == m_problemSizes.size())
-                            eStrides = m_tensorStrides[ContractionProblemGemm::TENSOR::E][i];
-                        if(m_tensorStrides[ContractionProblemGemm::TENSOR::BIAS].size()
-                           == m_problemSizes.size())
-                            biasStrides = m_tensorStrides[ContractionProblemGemm::TENSOR::BIAS][i];
+                        for(int i = 0; i < m_problemSizes.size(); i++)
+                        {
+                            if(m_tensorStrides[ContractionProblemGemm::TENSOR::A].size()
+                            == m_problemSizes.size())
+                                aStrides = m_tensorStrides[ContractionProblemGemm::TENSOR::A][i];
+                            if(m_tensorStrides[ContractionProblemGemm::TENSOR::B].size()
+                            == m_problemSizes.size())
+                                bStrides = m_tensorStrides[ContractionProblemGemm::TENSOR::B][i];
+                            if(m_tensorStrides[ContractionProblemGemm::TENSOR::C].size()
+                            == m_problemSizes.size())
+                                cStrides = m_tensorStrides[ContractionProblemGemm::TENSOR::C][i];
+                            if(m_tensorStrides[ContractionProblemGemm::TENSOR::D].size()
+                            == m_problemSizes.size())
+                                dStrides = m_tensorStrides[ContractionProblemGemm::TENSOR::D][i];
+                            if(m_tensorStrides[ContractionProblemGemm::TENSOR::E].size()
+                            == m_problemSizes.size())
+                                eStrides = m_tensorStrides[ContractionProblemGemm::TENSOR::E][i];
+                            if(m_tensorStrides[ContractionProblemGemm::TENSOR::BIAS].size()
+                            == m_problemSizes.size())
+                                biasStrides = m_tensorStrides[ContractionProblemGemm::TENSOR::BIAS][i];
 
-                        rv.push_back(ContractionProblemGemm::FromIndexSizes(
-                            m_freeIndices,
-                            m_batchIndices,
-                            m_boundIndices,
-                            m_problemSizes[i],
-                            m_tensorTypes[ContractionProblemGemm::TENSOR::A],
-                            aStrides,
-                            m_tensorTypes[ContractionProblemGemm::TENSOR::B],
-                            bStrides,
-                            m_tensorTypes[ContractionProblemGemm::TENSOR::C],
-                            cStrides,
-                            m_tensorTypes[ContractionProblemGemm::TENSOR::D],
-                            dStrides,
-                            m_constantValues[ContractionProblemGemm::CONST::BETA]));
+                            rv.push_back(ContractionProblemGemm::FromIndexSizes(
+                                m_freeIndices,
+                                m_batchIndices,
+                                m_boundIndices,
+                                m_problemSizes[i],
+                                m_tensorTypes[ContractionProblemGemm::TENSOR::A],
+                                aStrides,
+                                m_tensorTypes[ContractionProblemGemm::TENSOR::B],
+                                bStrides,
+                                m_tensorTypes[ContractionProblemGemm::TENSOR::C],
+                                cStrides,
+                                m_tensorTypes[ContractionProblemGemm::TENSOR::D],
+                                dStrides,
+                                m_constantValues[ContractionProblemGemm::CONST::BETA]));
 
-                        rv.back().setComputeInputType(m_computeInputType);
-                        rv.back().setAlphaRestriction(toScalarValueEnum(
-                            m_constantValues[ContractionProblemGemm::CONST::ALPHA]));
-                        rv.back().setCEqualsD(m_cEqualsD);
-                        rv.back().setAlphaType(
-                            m_constantTypes[ContractionProblemGemm::CONST::ALPHA]);
-                        rv.back().setBetaType(m_constantTypes[ContractionProblemGemm::CONST::BETA]);
-                        rv.back().setStridedBatched(m_stridedBatched);
-                        rv.back().setHighPrecisionAccumulate(m_highPrecisionAccumulate);
-                        rv.back().setUseGradient(m_useGradient);
-                        rv.back().setUseBias(m_useBias);
-                        rv.back().setUseE(m_useE);
-                        rv.back().setKernelLanguage(m_kernelLanguage);
-                        rv.back().setPerformanceMetric(m_performanceMetric);
-                        rv.back().setDeterministicMode(m_deterministicMode);
-                        rv.back().setSparse(m_sparse);
-                        rv.back().setActivationType(m_activationType);
-                        rv.back().setWorkspaceSize(m_maxWorkspaceSize);
-                        if(k < m_biasTypeArgs.size())
-                        {
-                            auto length       = (m_biasSrc == ContractionProblemGemm::TENSOR::B)
-                                                    ? rv.back().d().sizes()[1]
-                                                    : rv.back().d().sizes()[0];
-                            bool isBiasOutput = m_useGradient ? true : false;
-                            auto biasStride   = biasStrides.size() < 2 ? 0 : biasStrides[2];
-                            rv.back().setBias(
-                                m_biasTypeArgs[k],
-                                length,
-                                biasStride,
-                                isBiasOutput,
-                                static_cast<ContractionProblemGemm::TENSOR>(m_biasSrc));
-                        }
-                        else
-                        {
-                            rv.back().setBias(DataType::None, 0, 0);
-                        }
-                        if(m_useE)
-                        {
-                            bool isEOutput = true;
-                            if(m_useGradient)
-                                isEOutput = false;
-                            rv.back().setE(m_tensorTypes[ContractionProblemGemm::TENSOR::E],
-                                           rv.back().d().sizes(),
-                                           eStrides,
-                                           isEOutput);
-                        }
-                        if(j < m_activationEnumArg.size())
-                        {
-                            rv.back().setParams().setActivationEnum(m_activationEnumArg[j]);
-                        }
-                        else
-                        {
+                            rv.back().setComputeInputType(m_computeInputType);
+                            rv.back().setAlphaRestriction(toScalarValueEnum(
+                                m_constantValues[ContractionProblemGemm::CONST::ALPHA]));
+                            rv.back().setCEqualsD(m_cEqualsD);
+                            rv.back().setAlphaType(
+                                m_constantTypes[ContractionProblemGemm::CONST::ALPHA]);
+                            rv.back().setBetaType(m_constantTypes[ContractionProblemGemm::CONST::BETA]);
+                            rv.back().setStridedBatched(m_stridedBatched);
+                            rv.back().setHighPrecisionAccumulate(m_highPrecisionAccumulate);
+                            rv.back().setUseGradient(m_useGradient);
+                            rv.back().setUseBias(m_useBias);
+                            rv.back().setUseE(m_useE);
+                            rv.back().setKernelLanguage(m_kernelLanguage);
+                            rv.back().setPerformanceMetric(m_performanceMetric);
+                            rv.back().setDeterministicMode(m_deterministicMode);
+                            rv.back().setSparse(m_sparse);
                             rv.back().setActivationType(m_activationType);
-                        }
-                        rv.back().setActivationNoGuard(m_activationNoGuard);
-                        rv.back().setUseScaleAB(m_useScaleAB);
-                        if(m_useScaleAB)
-                        {
-                            rv.back().setScaleA(
-                                m_constantTypes[ContractionProblemGemm::CONST::ALPHA]);
-                            rv.back().setScaleB(
-                                m_constantTypes[ContractionProblemGemm::CONST::ALPHA]);
-                        }
-                        rv.back().setUseScaleCD(m_useScaleCD);
-                        if(m_useScaleCD)
-                        {
-                            rv.back().setScaleC(
-                                m_constantTypes[ContractionProblemGemm::CONST::BETA]);
-                            rv.back().setScaleD(
-                                m_constantTypes[ContractionProblemGemm::CONST::BETA]);
-                        }
-                        rv.back().setUseScaleAlphaVec(m_useScaleAlphaVec);
-                        rv.back().setScaleAlphaVec(
-                            m_constantTypes[ContractionProblemGemm::CONST::ALPHA],
-                            rv.back().d().sizes()[0]);
+                            rv.back().setWorkspaceSize(m_maxWorkspaceSize);
+                            if(k < m_biasTypeArgs.size())
+                            {
+                                auto length       = (m_biasSrc == ContractionProblemGemm::TENSOR::B)
+                                                        ? rv.back().d().sizes()[1]
+                                                        : (m_useBias == 1 || (m_biasSrc != ContractionProblemGemm::TENSOR::D))
+                                                        ? rv.back().d().sizes()[0]
+                                                        : (m_useBias == 2)
+                                                        ? rv.back().d().sizes()[1]
+                                                        : (m_useBias == 3)
+                                                        ? rv.back().d().sizes()[m_biasDimArgs[l]]
+                                                        : rv.back().d().sizes()[0];
+                                bool isBiasOutput = m_useGradient ? true : false;
+                                auto biasStride   = biasStrides.size() < 2 ? 0 : biasStrides[2];
+                                rv.back().setBias(
+                                    m_biasTypeArgs[k],
+                                    length,
+                                    biasStride,
+                                    isBiasOutput,
+                                    static_cast<ContractionProblemGemm::TENSOR>(m_biasSrc),
+                                    m_useBias == 1 ? 0 : m_useBias == 2 ? 1 : m_biasDimArgs[l]);
+                            }
+                            else
+                            {
+                                rv.back().setBias(DataType::None, 0, 0);
+                            }
+                            if(m_useE)
+                            {
+                                bool isEOutput = true;
+                                if(m_useGradient)
+                                    isEOutput = false;
+                                rv.back().setE(m_tensorTypes[ContractionProblemGemm::TENSOR::E],
+                                               rv.back().d().sizes(),
+                                               eStrides,
+                                               isEOutput);
+                            }
+                            if(j < m_activationEnumArg.size())
+                            {
+                                rv.back().setParams().setActivationEnum(m_activationEnumArg[j]);
+                            }
+                            else
+                            {
+                                rv.back().setActivationType(m_activationType);
+                            }
+                            rv.back().setActivationNoGuard(m_activationNoGuard);
+                            rv.back().setUseScaleAB(m_useScaleAB);
+                            if(m_useScaleAB)
+                            {
+                                rv.back().setScaleA(
+                                    m_constantTypes[ContractionProblemGemm::CONST::ALPHA]);
+                                rv.back().setScaleB(
+                                    m_constantTypes[ContractionProblemGemm::CONST::ALPHA]);
+                            }
+                            rv.back().setUseScaleCD(m_useScaleCD);
+                            if(m_useScaleCD)
+                            {
+                                rv.back().setScaleC(
+                                    m_constantTypes[ContractionProblemGemm::CONST::BETA]);
+                                rv.back().setScaleD(
+                                    m_constantTypes[ContractionProblemGemm::CONST::BETA]);
+                            }
+                            rv.back().setUseScaleAlphaVec(m_useScaleAlphaVec);
+                            rv.back().setScaleAlphaVec(
+                                m_constantTypes[ContractionProblemGemm::CONST::ALPHA],
+                                rv.back().d().sizes()[0]);
 
-                        rv.back().setGroupedGemm(m_groupedGemm);
-                        rv.back().setF32XdlMathOp(m_f32XdlMathOp);
-                        rv.back().setActivationComputeType(m_activationComputeType);
-                        rv.back().setUseDeviceUserArguments(m_useUserArgs);
+                            rv.back().setGroupedGemm(m_groupedGemm);
+                            rv.back().setF32XdlMathOp(m_f32XdlMathOp);
+                            rv.back().setActivationComputeType(m_activationComputeType);
+                            rv.back().setUseDeviceUserArguments(m_useUserArgs);
+                        }
                     }
                 }
             }
