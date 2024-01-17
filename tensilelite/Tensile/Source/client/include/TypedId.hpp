@@ -108,6 +108,7 @@ namespace Tensile
 #ifdef TENSILE_USE_BF16
     using TypedGemm_B_B_S = TypedGemm<BFloat16, BFloat16, BFloat16, BFloat16, float, float>;
     using TypedGemm_B_S_S = TypedGemm<BFloat16, BFloat16, float, float>;
+    using TypedGemm_H_B_H_S = TypedGemm<Half, Half, Half, Half, float, float, BFloat16>;
 #endif // TENSILE_USE_BF16
 #ifdef TENSILE_USE_FP8_BF8
     using TypedGemm_F8_F8_S = TypedGemm<Float8, Float8, Float8, Float8, float, float>;

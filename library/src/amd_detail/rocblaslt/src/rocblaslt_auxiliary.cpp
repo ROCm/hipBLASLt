@@ -552,6 +552,7 @@ rocblaslt_status rocblaslt_matmul_desc_create(rocblaslt_matmul_desc* matmulDesc,
             case rocblaslt_compute_f64:
             case rocblaslt_compute_i32:
             case rocblaslt_compute_f32_fast_f16:
+            case rocblaslt_compute_f32_fast_bf16:
                 break;
             default:
                 log_error(__func__, "invalid compute type", computeType);

@@ -1156,6 +1156,19 @@ namespace Tensile
                 return ReferenceSolution<TypedGemm_B_S_S>::SolveCPU(
                     problem, inputs, elementsToValidate);
             }
+            case TypedGemm_H_B_H_S::TypeId():
+            {
+                if(isHPA)
+                {
+                    return ReferenceSolution<TypedGemm_H_B_H_S, float>::SolveCPU(
+                        problem, inputs, elementsToValidate);
+                }
+                else
+                {
+                    return ReferenceSolution<TypedGemm_H_B_H_S>::SolveCPU(
+                        problem, inputs, elementsToValidate);
+                }
+            }
 #endif // TENSILE_USE_BF16
 #ifdef TENSILE_USE_FP8_BF8
             case TypedGemm_F8_S_S::TypeId():

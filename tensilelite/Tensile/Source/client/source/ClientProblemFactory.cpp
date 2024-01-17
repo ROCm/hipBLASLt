@@ -290,7 +290,6 @@ namespace Tensile
                         rv.back().setPerformanceMetric(m_performanceMetric);
                         rv.back().setDeterministicMode(m_deterministicMode);
                         rv.back().setSparse(m_sparse);
-                        rv.back().setFp16AltImpl(m_fp16AltImpl);
                         rv.back().setActivationType(m_activationType);
                         rv.back().setWorkspaceSize(m_maxWorkspaceSize);
                         if(k < m_biasTypeArgs.size())

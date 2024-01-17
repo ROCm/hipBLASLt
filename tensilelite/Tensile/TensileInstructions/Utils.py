@@ -128,8 +128,8 @@ def dataTypeNameAbbrevToInstType(abbrev: str, sourceSwap: bool = False) -> InstT
         assert("Unsupported data type.")
     return InstType.INST_NOTYPE
 
-def dataTypeToMfmaInstTypePair(dataType: DataType, Fp16AltImpl: bool, sourceSwap: bool) -> Tuple[InstType, InstType]:
-    miInTypeStr      = "bf16" if Fp16AltImpl else dataType.toNameAbbrev()
+def dataTypeToMfmaInstTypePair(dataType: DataType, sourceSwap: bool) -> Tuple[InstType, InstType]:
+    miInTypeStr  = dataType.toNameAbbrev()
     miInInstType = dataTypeNameAbbrevToInstType(miInTypeStr, sourceSwap) # v_mfma_[...xK]<InType>
     miOutInstType = dataTypeNameAbbrevToInstType(dataType.MIOutputTypeNameAbbrev()) # v_mfma_<OutType>..
     return miInInstType, miOutInstType

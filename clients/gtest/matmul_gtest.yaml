@@ -82,17 +82,6 @@ Tests:
   alpha_beta: *alpha_beta_range
   batch_count: 10
 
-#TODO: enable it after enable fp16altimpl
-#- name: matmul_medium_alt
-#  category: pre_checkin
-#  function:
-#    matmul: *hpa_half_precision
-#  matrix_size: *medium_matrix_size_range
-#  transA_transB: *transA_transB_range
-#  alpha: 1
-#  beta: 0
-#  initialization: special
-
 - name: matmul_medium_HMM
   category: HMM
   function:
@@ -121,18 +110,6 @@ Tests:
   alpha_beta: *deepbench_alpha_beta_range
   transA_transB: *deepbench_transA_transB_range
 
-#TODO: enable it after enable fp16altimpl
-#- name: matmul_deepbench_alt
-#  category: nightly
-#  function:
-#    matmul: *hpa_half_precision
-#  matrix_size: *deepbench_sizes
-#  alpha: 1
-#  beta: 0
-#  flags: 4
-#  initialization: special
-#  transA_transB: *deepbench_transA_transB_range
-
 - name: resnet50_fwd
   category: nightly
   function:
@@ -142,18 +119,6 @@ Tests:
   matrix_size: *resnet50_fwd_sizes
   alpha: 1
   beta: 0
-
-#TODO: enable it after enable fp16altimpl
-#- name: resnet50_fwd_alt
-#  category: nightly
-#  function:
-#    matmul: *hpa_half_precision
-#  transA: N
-#  transB: N
-#  matrix_size: *resnet50_fwd_sizes
-#  alpha: 1
-#  beta: 0
-#  initialization: special
 
 - name: resnet50_bwdwrw
   category: nightly
@@ -583,6 +548,32 @@ Tests:
   bias_type: f32_r
   unit_check: 1
   gpu_arch: '94?'
+
+- name: matmul_input_fp16_computeIn_bf16
+  category: pre_checkin
+  function:
+    matmul: *hpa_half_fp16dst_bf16computeIn_precision
+  matrix_size:
+    - { M: 1, N: 1, K: 1 }
+    - { M: 1, N: 1, K: 512 }
+    - { M: 1, N: 1024, K: 512 }
+    - { M: 1024, N: 1, K: 512 }
+    - { M:  128, N:  128, K:  128 }
+    - { M:  128, N:  128, K:  129 }
+    - { M:  128, N:  129, K:  128 }
+    - { M:  128, N:  129, K:  129 }
+    - { M:  129, N:  128, K:  128 }
+    - { M:  129, N:  128, K:  129 }
+    - { M:  129, N:  129, K:  128 }
+    - { M:  129, N:  129, K:  129 }
+  transA_transB: *transA_transB_range
+  alpha: 1
+  beta: [ 0, 2 ]
+  bias_vector: [0, 1]
+  scaleAlpha_vector: [0, 1]
+  bias_type: [f16_r, f32_r]
+  unit_check: 1
+  gpu_arch: '90a'
 
 - name: matmul_f8_bf8_dst_fp16
   category: pre_checkin

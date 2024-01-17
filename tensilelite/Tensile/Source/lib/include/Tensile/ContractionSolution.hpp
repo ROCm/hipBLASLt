@@ -461,7 +461,6 @@ namespace Tensile
             bool                  useInitialStridesCD       = false;
             bool                  stridedBatched            = true;
             bool                  groupedGemm               = false;
-            bool                  fp16AltImpl               = false;
             ActivationType        activationType            = ActivationType::None;
             int                   activationArgLength       = 0;
             bool                  activationNoGuard         = false;

@@ -301,6 +301,8 @@ CREATEFUNCTION(hipblaslt_bf8_fnuz, hipblaslt_bf8_fnuz, hipblasLtHalf, float, hip
 CREATEFUNCTION(hipblaslt_bf8_fnuz, hipblaslt_bf8_fnuz, hip_bfloat16, float, hipblaslt_bf8_fnuz)
 CREATEFUNCTION(hipblaslt_bf8_fnuz, hipblaslt_f8_fnuz, hip_bfloat16, float, hipblaslt_bf8_fnuz)
 CREATEFUNCTION(hipblasLtHalf, hipblasLtHalf, hipblasLtHalf, float, hipblasLtHalf)
+CREATEFUNCTION(hipblasLtHalf, hipblasLtHalf, hipblasLtHalf, float, hip_bfloat16)
+CREATEFUNCTION(hipblasLtHalf, hipblasLtHalf, float, float, hip_bfloat16)
 CREATEFUNCTION(hipblasLtHalf, hipblasLtHalf, float, float, hipblasLtHalf)
 CREATEFUNCTION(float, float, float, float, float)
 CREATEFUNCTION(double, double, double, double, double)

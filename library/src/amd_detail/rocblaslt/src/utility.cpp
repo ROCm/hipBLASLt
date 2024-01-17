@@ -121,6 +121,8 @@ const char* rocblaslt_compute_type_to_string(rocblaslt_compute_type type)
         return "COMPUTE_32I";
     case rocblaslt_compute_f32_fast_f16:
         return "COMPUTE_32F_16F";
+    case rocblaslt_compute_f32_fast_bf16:
+        return "COMPUTE_32F_16BF";
     default:
         return "Invalid";
     }
@@ -140,6 +142,8 @@ const char* rocblaslt_compute_type_to_bench_string(rocblaslt_compute_type type)
         return "i32_r";
     case rocblaslt_compute_f32_fast_f16:
         return "f32_f16_r";
+    case rocblaslt_compute_f32_fast_bf16:
+        return "f32_bf16_r";
     default:
         return "invalid";
     }

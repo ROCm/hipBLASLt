@@ -131,7 +131,10 @@ def computeType2Bench(dataTypeA, dataTypeB, computeInputDataType, computeDataTyp
         needCvt = True
     if computeDataType == "S":
         if needCvt:
-            return "f32_f16_r"
+            if computeInputDataType == "B":
+                return "f32_bf16_r"
+            else:
+                return "f32_f16_r"
         else:
             return "f32_r"
     else:

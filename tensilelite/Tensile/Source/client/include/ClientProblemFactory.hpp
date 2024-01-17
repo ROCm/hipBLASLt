@@ -86,7 +86,6 @@ namespace Tensile
             int                              m_sparse;
             KernelLanguage                   m_kernelLanguage;
             PerformanceMetric                m_performanceMetric;
-            bool                             m_fp16AltImpl;
             ActivationType                   m_activationType;
             std::vector<DataType>            m_biasTypeArgs;
             bool                             m_activationNoGuard;

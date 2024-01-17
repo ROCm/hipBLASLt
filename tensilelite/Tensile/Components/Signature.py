@@ -71,7 +71,10 @@ def getSrcValueType(kernel, isTypeA):
     elif kernel["ProblemType"]["DataType"].isBFloat8Float8():
         srcValueType = "BF8" if isTypeA else "FP8"
     else:
-        srcValueType = kernel["ProblemType"]["DataType"].toNameAbbrev().upper()
+        if isTypeA:
+            srcValueType = kernel["ProblemType"]["DataTypeA"].toNameAbbrev().upper()
+        else:
+            srcValueType = kernel["ProblemType"]["DataTypeB"].toNameAbbrev().upper()
 
     srcValueType = srcValueType.lower()
     return srcValueType

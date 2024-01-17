@@ -134,6 +134,8 @@ constexpr const char* hipblas_computetype_to_string(hipblasComputeType_t type)
         return "i32_r";
     case HIPBLAS_COMPUTE_32F_FAST_16F:
         return "f32_f16_r";
+    case HIPBLAS_COMPUTE_32F_FAST_16BF:
+        return "f32_bf16_r";
     default:
         return "non-supported compute type";
     }
@@ -165,6 +167,7 @@ constexpr hipblasComputeType_t string_to_hipblas_computetype(const std::string& 
         value == "f64_r" || value == "d" ? HIPBLAS_COMPUTE_64F :
         value == "i32_r" || value == "i" ? HIPBLAS_COMPUTE_32I :
         value == "f32_f16_r" ? HIPBLAS_COMPUTE_32F_FAST_16F :
+        value == "f32_bf16_r" ? HIPBLAS_COMPUTE_32F_FAST_16BF :
         static_cast<hipblasComputeType_t>(0);
 }
 // clang-format on

@@ -225,6 +225,7 @@ namespace
         case rocblaslt_compute_f32:
         case rocblaslt_compute_f32_fast_xf32:
         case rocblaslt_compute_f32_fast_f16:
+        case rocblaslt_compute_f32_fast_bf16:
             return Tensile::DataType::Float;
         case rocblaslt_compute_f64:
             return Tensile::DataType::Double;
@@ -245,6 +246,8 @@ namespace
         {
         case rocblaslt_compute_f32_fast_f16:
             return Tensile::DataType::Half;
+        case rocblaslt_compute_f32_fast_bf16:
+            return Tensile::DataType::BFloat16;
         default:;
         }
 
