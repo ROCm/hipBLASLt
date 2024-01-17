@@ -409,7 +409,7 @@ validMatrixInstructions = validMatrixInstructions + validSparseMatrixInstruction
 # This is used in SolutionStruct.py::checkIfSupportedGEMMType()
 validGEMMTypes = [ ('H','H','H'), ('S','S','S'), ('D','D','D'), ('C','C','C'), ('Z','Z','Z'), \
                    ('H','H','S'), ('H','S','S'), \
-                   ('B','B','S'), ('B','S','S'), \
+                   ('B','B','S'), ('B','S','S'), ('B','H','S'), \
                    ('I8','I','I'), ('4xi8','I','I'), ('I8','I8','I'), \
                    ('I8','I','S'), ('I8','I8','S'), ('I8', 'H', 'S'), \
                    ('F8','S','S'), ('B8','S','S'), \
@@ -426,7 +426,7 @@ validGEMMTypes = [ ('H','H','H'), ('S','S','S'), ('D','D','D'), ('C','C','C'), (
 # All HPA types are listed here (HPA=T). The name of the library logic files for these types is:
 # *_TiToTc_BH*.yaml where Ti, To, and Tc are the data types of A/B, C/D, and computation, respectively.
 # The name of the library logic files for non-HPA (HPA=F) types is: *_TiB*.yaml.
-HPATypes = [ ('H','S','S'), ('H','H','S'), ('B','B','S'), ('B','S','S'), ('I8','I','I'), \
+HPATypes = [ ('H','S','S'), ('H','H','S'), ('B','B','S'), ('B','S','S'), ('B','H','S'), ('I8','I','I'), \
              ('4xi8','I','I'), ('I8','I','S'), ('I8','I8','S'), ('I8', 'H', 'S'), \
              ('F8','S','S'), ('B8','S','S'), ('F8B8','S','S'), ('B8F8', 'S', 'S'), \
              ('F8','H','S'), ('B8','H','S'), ('F8B8','H','S'), ('B8F8','H','S'), \
@@ -861,9 +861,6 @@ validParameters = {
     # Only support for kernel whose totalVgpr counts less than 256 and gcn that has control bit ACC_CD.
     "MIArchVgpr":               [False, True],
 
-    # alternate implementation for fp16 HPA MFMA
-    "Fp16AltImpl": [False, True],
-
     # Controls desired width (#elements) for loads from global memory -> LDS.
     # and eliminates the pointer unshift logic
     # -1 : Set GlobalReadVectorWidth =  VectorWidth
@@ -1212,9 +1209,6 @@ defaultProblemType = {
 
     # Tile aware solution selection
     "TileAwareSelection":       False,
-
-    # FP16 Alternate Implementation
-    "Fp16AltImpl":              False,
 
     # Activation
     "Activation":               False,

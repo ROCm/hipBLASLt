@@ -2881,9 +2881,6 @@ class KernelWriter(metaclass=abc.ABCMeta):
       if kernel["MFMA_BF16_1K"] and not self.states.asmCaps["HasMFMA_bf16_1k"]:
         raise RuntimeError("BF16_1k MatrixInstruction not supported for {0}".format(self.states.version))
 
-      if kernel["ProblemType"]["Fp16AltImpl"] and not self.states.asmCaps["HasMFMA_bf16_1k"]:
-        raise RuntimeError("Fp16AltImpl not supported for {0}".format(self.states.version))
-
       if kernel["ProblemType"]["Sparse"] and not self.states.asmCaps["HasSMFMA"]:
         raise RuntimeError("Sparse MatrixInstruction not supported for {0}".format(self.states.version))
 

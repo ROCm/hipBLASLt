@@ -829,16 +829,6 @@ namespace Tensile
             return m_deterministicMode;
         }
 
-        void setFp16AltImpl(bool value)
-        {
-            m_fp16AltImpl = value;
-        }
-
-        bool fp16AltImpl() const
-        {
-            return m_fp16AltImpl;
-        }
-
         void setUseGradient(bool value)
         {
             m_useGradient = value;
@@ -1081,7 +1071,6 @@ namespace Tensile
         bool           m_highPrecisionAccumulate = false;
         bool           m_deterministicMode       = false;
         bool           m_eligibleForPK           = true;
-        bool           m_fp16AltImpl             = false;
         bool           m_useGradient             = false;
         bool           m_useE                    = false;
         bool           m_useBias                 = false;

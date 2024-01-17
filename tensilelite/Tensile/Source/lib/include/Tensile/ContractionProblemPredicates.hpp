@@ -1730,35 +1730,6 @@ namespace Tensile
                 }
             };
 
-            struct Fp16AltImpl : public Predicate_CRTP<Fp16AltImpl, ContractionProblemGemm>
-            {
-                enum
-                {
-                    HasIndex = false,
-                    HasValue = false
-                };
-
-                Fp16AltImpl() = default;
-
-                static std::string Type()
-                {
-                    return "Fp16AltImpl";
-                }
-
-                virtual bool operator()(ContractionProblemGemm const& problem) const override
-                {
-                    return problem.fp16AltImpl();
-                }
-
-                virtual bool debugEval(ContractionProblemGemm const& problem,
-                                       std::ostream&                 stream) const override
-                {
-                    bool rv = (*this)(problem);
-                    stream << rv << ": " << this->type() << std::endl;
-                    return rv;
-                }
-            };
-
             struct EqualityMatching
                 : public Predicate_CRTP<EqualityMatching, ContractionProblemGemm>
             {

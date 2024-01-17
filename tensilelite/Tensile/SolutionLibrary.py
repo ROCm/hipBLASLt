@@ -334,19 +334,6 @@ class MasterSolutionLibrary:
 
             return newLib, placeholderName
 
-        def fp16AltImpl(d, problemType, solutions, library, placeholderName):
-            if d.get("Fp16AltImpl"):
-                predicate = Properties.Predicate(tag="Fp16AltImpl")
-            else:
-                predicate = Properties.Predicate(tag="TruePred")
-            newLib = PredicateLibrary(tag="Problem")
-            newLib.rows.append({"predicate": predicate, "library": library})
-
-            if lazyLibrary and predicate.tag != "TruePred":
-                placeholderName += "_Fp16Alt"
-
-            return newLib, placeholderName
-
         def predicates(d, problemType, solutions, library, placeholderName):
             predicates = problemType.predicates(includeBatch=True, includeType=True)
             predicate = Contractions.ProblemPredicate.And(predicates)
@@ -402,12 +389,12 @@ class MasterSolutionLibrary:
         if libraryOrder is None:
             if Common.globalParameters["LazyLibraryLoading"]:
                 libraryOrder = [
-                    hardware, operationIdentifier, performanceMetric, fp16AltImpl, predicates,
+                    hardware, operationIdentifier, performanceMetric, predicates,
                     placeholder, selection
                 ]
             else:
                 libraryOrder = [
-                    hardware, operationIdentifier, performanceMetric, fp16AltImpl, predicates,
+                    hardware, operationIdentifier, performanceMetric, predicates,
                     selection
                 ]
         #assert libraryOrder[-1] == selection
