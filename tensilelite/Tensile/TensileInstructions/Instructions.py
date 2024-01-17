@@ -2359,6 +2359,11 @@ class VCvtPkF32toFP8(VCvtInstruction):
         super().__init__(CvtType.CVT_PK_F32_to_FP8, dst, [src0, src1], vop3, comment)
         self.setInst("v_cvt_pk_fp8_f32")
 
+class VCvtPkF32toBF8(VCvtInstruction):
+    def __init__(self, dst, src0, src1, vop3: Optional[VOP3PModifiers] = None, comment="") -> None:
+        super().__init__(CvtType.CVT_PK_F32_to_BF8, dst, [src0, src1], vop3, comment)
+        self.setInst("v_cvt_pk_bf8_f32")
+
 # V Mask
 class VCndMaskB32(CommonInstruction):
     def __init__(self, dst, src0, src1, src2 = VCC(), sdwa: Optional[SDWAModifiers] = None, comment="") -> None:

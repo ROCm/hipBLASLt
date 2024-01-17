@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
+ * Copyright (C) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -1172,6 +1172,11 @@ namespace Tensile
                 return ReferenceSolution<TypedGemm_F8_F8_S, float>::SolveCPU(
                     problem, inputs, elementsToValidate);
             }
+            case TypedGemm_F8_B8_S::TypeId():
+            {
+                return ReferenceSolution<TypedGemm_F8_B8_S, float>::SolveCPU(
+                    problem, inputs, elementsToValidate);
+            }
             case TypedGemm_B8_S_S::TypeId():
             {
                 return ReferenceSolution<TypedGemm_B8_S_S, float>::SolveCPU(
@@ -1213,6 +1218,11 @@ namespace Tensile
                 return ReferenceSolution<TypedGemm_F8B8_F8_S, float>::SolveCPU(
                     problem, inputs, elementsToValidate);
             }
+            case TypedGemm_F8B8_B8_S::TypeId():
+            {
+                return ReferenceSolution<TypedGemm_F8B8_B8_S, float>::SolveCPU(
+                    problem, inputs, elementsToValidate);
+            }
             case TypedGemm_B8F8_S_S::TypeId():
             {
                 return ReferenceSolution<TypedGemm_B8F8_S_S, float>::SolveCPU(
@@ -1230,17 +1240,12 @@ namespace Tensile
             }
             case TypedGemm_B8F8_B8_S::TypeId():
             {
-                return ReferenceSolution<TypedGemm_B8F8_B8_S, float>::SolveCPU(
-                    problem, inputs, elementsToValidate);
-            }
-            case TypedGemm_F8B8_B8_S::TypeId():
-            {
-                return ReferenceSolution<TypedGemm_F8B8_B8_S, float>::SolveCPU(
-                    problem, inputs, elementsToValidate);
-            }
-            case TypedGemm_B8F8_F8_S::TypeId():
-            {
                 return ReferenceSolution<TypedGemm_B8F8_F8_S, float>::SolveCPU(
+                    problem, inputs, elementsToValidate);
+            }
+            case TypedGemm_B8F8_B8_S::TypeId():
+            {
+                return ReferenceSolution<TypedGemm_B8F8_B8_S, float>::SolveCPU(
                     problem, inputs, elementsToValidate);
             }
 #ifdef TENSILE_USE_HALF
