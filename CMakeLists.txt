@@ -1,5 +1,5 @@
 # ########################################################################
-# Copyright (C) 2022-2023 Advanced Micro Devices, Inc.
+# Copyright (C) 2022-2024 Advanced Micro Devices, Inc.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -31,6 +31,30 @@ set(CMAKE_CXX_EXTENSIONS OFF )
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 enable_testing()
+
+# Get ROCm version
+if(WIN32)
+  # Currently not support
+  set(ROCmMajorVersion "")
+else()
+  execute_process(COMMAND apt-cache show rocm OUTPUT_VARIABLE ROCmVersion)
+  if(ROCmVersion)
+    string(REGEX MATCH "\\([0-9]).([0-9]).[0-9]-crdnnh" _ ${ROCmVersion})
+  else()
+    execute_process(COMMAND ls -l /etc/alternatives/rocm OUTPUT_VARIABLE ROCmVersion)
+    string(REGEX MATCH "\\/opt/rocm-([0-9])\.([0-9])\.[0-9]" _ ${ROCmVersion})
+  endif()
+  set(ROCmMajorVersion ${CMAKE_MATCH_1})
+  set(ROCmMinorVersion ${CMAKE_MATCH_2})
+endif()
+
+if(ROCmMajorVersion)
+  if(ROCmMajorVersion EQUAL 6 AND ROCmMinorVersion EQUAL 0)
+    add_compile_definitions(HIP_TYPE_BACKWARD_COMPATIBILITY)
+  elseif(ROCmMajorVersion LESS 6)
+    add_compile_definitions(HIP_TYPE_BACKWARD_COMPATIBILITY)
+  endif()
+endif()
 
 # Consider removing this in the future
 # This should appear before the project command, because it does not use FORCE

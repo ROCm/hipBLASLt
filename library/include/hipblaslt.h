@@ -62,8 +62,14 @@
 
 /* Opaque structures holding information */
 // clang-format off
+#ifdef HIP_TYPE_BACKWARD_COMPATIBILITY
+  #define HIP_R_8F_E4M3_FNUZ static_cast<hipDataType>(29)
+  #define HIP_R_8F_E5M2_FNUZ static_cast<hipDataType>(30)
+  #define HIPBLASLT_DATATYPE_INVALID static_cast<hipDataType>(31)
+#else
+  #define HIPBLASLT_DATATYPE_INVALID static_cast<hipDataType>(255)
+#endif
 
-#define HIPBLASLT_DATATYPE_INVALID static_cast<hipDataType>(255)
 
 /*! \ingroup types_module
  *  \brief Specify the enum type to set the postprocessing options for the epilogue.
