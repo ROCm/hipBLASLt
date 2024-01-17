@@ -223,9 +223,6 @@ def parseLibraryLogicData(data, srcFile="?", archs=None):
     if "CUCount" not in data:
         data["CUCount"] = None
 
-    if "Fp16AltImpl" not in data:
-        data["Fp16AltImpl"] = False
-
     if not versionIsCompatible(data["MinimumRequiredVersion"]):
         printWarning("Version = {} in library logic file {} does not match Tensile version = {}" \
                 .format(srcFile, data["MinimumRequiredVersion"], __version__) )
@@ -291,13 +288,10 @@ def parseLibraryLogicList(data, srcFile="?"):
     if len(data) > 10 and data[10]:
         rv["PerfMetric"] = data[10]
 
-    if len(data) > 11 and data[11]:
-        rv["Fp16AltImpl"] = True
-
     # library logic fields
     libraryType = None
-    if len(data) > 12 and data[12]:
-        libraryType = data[12]
+    if len(data) > 11 and data[11]:
+        libraryType = data[11]
     else:
         printExit("Library logic file {} is missing required field matching property." \
                 .format(srcFile))
@@ -464,6 +458,5 @@ def createLibraryLogic(schedulePrefix, architectureName, deviceNames, libraryTyp
         data.append(None)
 
     data.append(logicTuple[7]) # PerfMetric
-    data.append(logicTuple[8]) # Fp16AltImpl
     data.append(libraryType) # LibraryType
     return data

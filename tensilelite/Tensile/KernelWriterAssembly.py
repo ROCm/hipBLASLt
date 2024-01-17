@@ -4391,8 +4391,7 @@ class KernelWriterAssembly(KernelWriter):
     numMIInputA      = kernel["MIInputPerThreadA"]
     numMIInputB      = kernel["MIInputPerThreadB"]
     numMIInput       = max(numMIInputA,numMIInputB)
-    miInInstType, miOutInstType = dataTypeToMfmaInstTypePair(miInputType, \
-      kernel["ProblemType"]["Fp16AltImpl"], kernel["SourceSwap"])
+    miInInstType, miOutInstType = dataTypeToMfmaInstTypePair(miInputType, kernel["SourceSwap"])
     neg_flag         = True if ((not is_mfma) and (miInInstType == InstType.INST_I8)) else False
     miInInstType     = InstType.INST_U8 if ((not is_mfma) and miInInstType == InstType.INST_I8) else miInInstType
     miOutInstType    = miOutInstType if is_mfma else dataTypeNameAbbrevToInstType(kernel["ProblemType"]["ComputeDataType"].toNameAbbrev())
@@ -4404,7 +4403,7 @@ class KernelWriterAssembly(KernelWriter):
     s_nop            = 0
     gprfunc          = accvgpr if not kernel["MIArchVgpr"] else vgpr
     accumRegType     = "acc" if not kernel["MIArchVgpr"] else "v"
-    mfma_1k          = True if (kernel["MFMA_BF16_1K"] or kernel["ProblemType"]["Fp16AltImpl"]) else False
+    mfma_1k          = True if kernel["MFMA_BF16_1K"] else False
     accStoreCIdx     = 0
 
     # alloc vgpr
@@ -6259,7 +6258,7 @@ class KernelWriterAssembly(KernelWriter):
 
       # if transposing, positions of sPerp and sPara are transposed
       instructionCnt = 0
-      fp16AltMap = {}
+      Hcvt2BMap = {}
       g2lIdxDict = {}
       regTmpVgprBlock = None
       for perp in range(0, tP["nrp"]):
@@ -6363,19 +6362,20 @@ class KernelWriterAssembly(KernelWriter):
                 numsOfRegister.append(blockWidth)
               if self.db["ForceInputValue%s"%tc]:
                 localWriteCVTCode.add(VMovB32(dst=vgpr("G2L%s+%u"%(tc, g2lIdx)), src=self.db["ForceValue%s"], comment="ForceInputValue"))
-              if kernel["ProblemType"]["Fp16AltImpl"] and not tP["isM"]:
+              if (kernel["ProblemType"]["DataType"].isBFloat16() and kernel["ProblemType"]["DataType%s"%tc].isHalf()) and not tP["isM"]:            
                 numIters = 1 if blockWidth <= 1 else blockWidth
                 vgprTmp = self.vgprPool.checkOut(2)
                 for iter in range(0, numIters):
                   f16Tobf16Idx = g2lIdx + iter
-                  if f16Tobf16Idx in fp16AltMap:
-                    fp16AltMap[f16Tobf16Idx] += 1
-                    continue
-                  fp16AltMap[f16Tobf16Idx] = 1
+                  if f16Tobf16Idx in Hcvt2BMap:
+                    Hcvt2BMap[f16Tobf16Idx] += 2
+                  else:
+                    Hcvt2BMap[f16Tobf16Idx] = 0
+                  f16Tobf16Idx += Hcvt2BMap[f16Tobf16Idx]
                   sdwa = SDWAModifiers(src0_sel=SelectBit.WORD_1)
-                  localWriteCVTCode.add(VCvtF16toF32(dst=vgpr(vgprTmp), src=vgpr("G2L%s+%u"%(tc, f16Tobf16Idx))))
-                  localWriteCVTCode.add(VCvtF16toF32(dst=vgpr(vgprTmp+1), src=vgpr("G2L%s+%u"%(tc, f16Tobf16Idx)),sdwa=sdwa))
-                  localWriteCVTCode.add(VPackF16toB32(dst=vgpr("G2L%s+%u"%(tc, f16Tobf16Idx)), src0=vgpr(vgprTmp), src1=vgpr(vgprTmp+1),
+                  localWriteCVTCode.add(VCvtF16toF32(dst=vgpr(vgprTmp+f16Tobf16Idx), src=vgpr("G2L%s+%u"%(tc, f16Tobf16Idx))))
+                  localWriteCVTCode.add(VCvtF16toF32(dst=vgpr(vgprTmp+1+f16Tobf16Idx), src=vgpr("G2L%s+%u"%(tc, f16Tobf16Idx)),sdwa=sdwa))
+                  localWriteCVTCode.add(VPackF16toB32(dst=vgpr("G2L%s+%u"%(tc, f16Tobf16Idx)), src0=vgpr(vgprTmp+f16Tobf16Idx), src1=vgpr(vgprTmp+1+f16Tobf16Idx),
                                     vop3=VOP3PModifiers(op_sel=[1,1,0])))
                 self.vgprPool.checkIn(vgprTmp)
 
