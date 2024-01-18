@@ -1882,16 +1882,10 @@ class Solution(collections.abc.Mapping):
         state["_GlobalAccumulation"] = 'SingleBuffer'
     elif state["GlobalSplitUAlgorithm"] == 'MultipleBuffer':
       state["_GlobalAccumulation"] = 'MultipleBuffer'
-    elif state["GlobalSplitU"] > 1 and state["GlobalSplitUAlgorithm"] == 'MultipleBufferSingleKernel':
-          state["_GlobalAccumulation"] = 'MultipleBufferSingleKernel'
 
     if state["GlobalSplitUAlgorithm"] == 'SingleBuffer':
       # maxGWVW is not fixed yet, thus can't generate universal singlebuffer kernels.
       reject("Currently universal kernel does not support SingleBuffer.")
-
-    if state["_GlobalAccumulation"] == 'MultipleBufferSingleKernel':
-      state["SynchronizerSizeCheck"] = 1
-    #   state["BatchSizeEqual"] = 1
 
     computeBytes = state["ProblemType"]["ComputeDataType"].numBytes()
     state["_WorkspaceSizePerElemC"] = computeBytes
@@ -1899,7 +1893,7 @@ class Solution(collections.abc.Mapping):
     if state["ProblemType"]["UseBias"] and state["ProblemType"]["Gradient"]:
       state["_WorkspaceSizePerElemBias"] = computeBytes
 
-    state["WorkspaceCheck"] = [state["_WorkspaceSizePerElemC"], state["_WorkspaceSizePerElemBias"], state["GlobalSplitU"] if (state["GlobalSplitUAlgorithm"] == 'MultipleBuffer' or state["_GlobalAccumulation"] == 'MultipleBufferSingleKernel') else 1]
+    state["WorkspaceCheck"] = [state["_WorkspaceSizePerElemC"], state["_WorkspaceSizePerElemBias"], state["GlobalSplitU"] if state["GlobalSplitUAlgorithm"] == 'MultipleBuffer' else 1]
 
     if state["VectorStore"] == -1:
         state["_VectorStore"] = 1 # default, may be changed if needed to generate a valid kernel
@@ -2161,15 +2155,8 @@ class Solution(collections.abc.Mapping):
         state["TransposeLDS"] = 0
       else:
         state["TransposeLDS"] = 1
-    if state["TransposeLDS"] == 0:
-      state["UnrollMajorLDSA"] = 0
-      state["UnrollMajorLDSB"] = 0
-    elif state["TransposeLDS"] == 1:
-      state["UnrollMajorLDSA"] = not state["ProblemType"]["TLUA"]
-      state["UnrollMajorLDSB"] = not state["ProblemType"]["TLUB"]
-    elif state["TransposeLDS"] == 2:
-      state["UnrollMajorLDSA"] = 1
-      state["UnrollMajorLDSB"] = 1
+    state["UnrollMajorLDSA"]     = state["TransposeLDS"] and (not state["ProblemType"]["TLUA"])
+    state["UnrollMajorLDSB"]     = state["TransposeLDS"] and (not state["ProblemType"]["TLUB"])
 
     if state["VectorWidthA"] == -1:
       regPerElem = state["ProblemType"]["DataType"].numRegisters()
@@ -2207,10 +2194,10 @@ class Solution(collections.abc.Mapping):
     # TT0,1 both must be multiples of VW, b/c of rC, rA, rB
     if state["EnableMatrixInstruction"]:
       if (state["MIWaveTile"][0] % state["VectorWidthA"]) != 0:
-        reject(state, "MIWaveTile0(%u) should be multiple of VectorWidthA(%u)" % (state["MIWaveTile"][0], state["VectorWidthA"]))
+        reject(state, "MIWaveTile0(%u) should be multiple of VectorWidth(%u)" % (state["MIWaveTile"][0], state["VectorWidthA"]))
         return
       if (state["MIWaveTile"][1] % state["VectorWidthB"]) != 0:
-        reject(state, "MIWaveTile0(%u) should be multiple of VectorWidthB(%u)" % (state["MIWaveTile"][1], state["VectorWidthB"]))
+        reject(state, "MIWaveTile0(%u) should be multiple of VectorWidth(%u)" % (state["MIWaveTile"][0], state["VectorWidthB"]))
         return
 
     if len(problemType["IndicesSummation"]) > 1:
@@ -2799,8 +2786,8 @@ class Solution(collections.abc.Mapping):
           state["LdsPadA"] = 0
           if state["MatrixInstB"] == 1 and state["MatrixInstM"] == 16:
             state["LdsPadA"] = ((16 * state["VectorWidthA"] * state["ProblemType"]["DataType"].numBytes() + state["MacroTile0"] * state["ProblemType"]["DataType"].numBytes() * state["LocalReadVectorWidth"]) % 128) // state["ProblemType"]["DataType"].numBytes()
-          if state["GlobalReadVectorWidthA"] * state["ProblemType"]["DataType"].numBytes() == 32 and state["LdsPadA"] == 0:
-            state["LdsPadA"] = 16 // state["ProblemType"]["DataType"].numBytes()
+          if state["GlobalReadVectorWidthA"] * state["ProblemType"]["DataTypeA"].numBytes() == 16 and state["LdsPadA"] == 0:
+            state["LdsPadA"] = 8 // state["ProblemType"]["DataTypeA"].numBytes()
             if auto_LdsBlockSizePerPadA_for_mix:
               state["LdsBlockSizePerPadA"] = 128
 
@@ -2817,8 +2804,8 @@ class Solution(collections.abc.Mapping):
           state["LdsPadB"] = 0
           if state["MatrixInstB"] == 1 and state["MatrixInstM"] == 16:
             state["LdsPadB"] = ((16 * state["VectorWidthB"] * state["ProblemType"]["DataType"].numBytes() + state["MacroTile1"] * state["ProblemType"]["DataType"].numBytes() * state["LocalReadVectorWidth"]) % 128) // state["ProblemType"]["DataType"].numBytes()
-          if state["GlobalReadVectorWidthB"] * state["ProblemType"]["DataType"].numBytes() == 32 and state["LdsPadB"] == 0:
-            state["LdsPadB"] = 16 // state["ProblemType"]["DataType"].numBytes()
+          if state["GlobalReadVectorWidthB"] * state["ProblemType"]["DataTypeB"].numBytes() == 16 and state["LdsPadB"] == 0:
+            state["LdsPadB"] = 8 // state["ProblemType"]["DataTypeB"].numBytes()
             if auto_LdsBlockSizePerPadB_for_mix:
               state["LdsBlockSizePerPadB"] = 128
       else:
@@ -3063,7 +3050,7 @@ class Solution(collections.abc.Mapping):
       if not state["EnableMatrixInstruction"]:
         reject(state, "storeRemap only support MatrixInstruction kernel")
         return
-      if (state["GlobalSplitU"] > 1) and (state["_GlobalAccumulation"] != 'MultipleBuffer' and state["_GlobalAccumulation"] != 'MultipleBufferSingleKernel'):
+      if (state["GlobalSplitU"] > 1) and (state["_GlobalAccumulation"] != 'MultipleBuffer'):
         reject(state, "storeRemap doesn't support GlobalSplitU yet, except GSU algorithm 2")
         return
       if packedC0 or packedC1:
@@ -3396,7 +3383,7 @@ class Solution(collections.abc.Mapping):
       if state["ProblemType"]["SupportUserArgs"]:
         reject(state, "Currently only grouped gemm supports SupportUserArgs.")
     if state["GlobalSplitU"] > 1:
-      if state["ProblemType"]["SupportUserArgs"] and state["_GlobalAccumulation"] != 'MultipleBufferSingleKernel':
+      if state["ProblemType"]["SupportUserArgs"]:
         reject(state, "Currently SupportUserArgs does not support GSU > 1.")
 
     #Need to force disabling PreloadKernArgs if compiler does not support
@@ -3473,9 +3460,8 @@ class Solution(collections.abc.Mapping):
   @ staticmethod
   def getKeyNoInternalArgs(state):
     state_copy = deepcopy(state)
-
     if globalParameters["SplitGSU"]:
-      state_copy["GlobalSplitU"] = "M" if (state_copy["GlobalSplitU"] > 1 and state["GlobalSplitUAlgorithm"] != 'MultipleBufferSingleKernel') else state_copy["GlobalSplitU"]
+      state_copy["GlobalSplitU"] = "M" if state_copy["GlobalSplitU"] > 1 else state_copy["GlobalSplitU"]
     else:
       state_copy["GlobalSplitU"] = "M"
     state_copy["WorkGroupMapping"] = "M"
@@ -3518,7 +3504,7 @@ class Solution(collections.abc.Mapping):
 
     if ignoreInternalArgs:
       if globalParameters["SplitGSU"]:
-        state["GlobalSplitU"] = "M" if (state["GlobalSplitU"] > 1 and state["GlobalSplitUAlgorithm"] != 'MultipleBufferSingleKernel') else state["GlobalSplitU"]
+        state["GlobalSplitU"] = "M" if state["GlobalSplitU"] > 1 else state["GlobalSplitU"]
       else:
         requiredParameters["GlobalSplitU"] = False
       requiredParameters["WorkGroupMapping"] = False

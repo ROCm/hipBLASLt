@@ -416,15 +416,6 @@ class ProblemPredicate(Properties.Predicate):
         if "BatchSizeEqual" in state:
             rv += [cls('BatchSizeEqual', index=0, value=state["BatchSizeEqual"])]
 
-        if "SynchronizerSizeCheck" in state:
-            valuepredicates = [];
-            valuepredicates.append(state["MacroTile0"])
-            valuepredicates.append(state["MacroTile1"])
-            valuepredicates.append(state["NumElementsPerThread"])
-            valuepredicates.append(state["StoreVectorWidth"])
-            valuepredicates.append(state["NumThreads"])
-            rv += [cls('SynchronizerSizeCheck', index=0, value=valuepredicates)]
-
         if not problemType.aType.isInt8x4():
             # calculate the minimum supported free dimension size
             TLUA = state['ProblemType']['TLUA']
@@ -516,8 +507,6 @@ class SizeMapping:
         #     globalAccum = 1
         # if d['GlobalSplitUAlgorithm'] == 'MultipleBuffer':
         #     globalAccum = 2
-        if d['_GlobalAccumulation'] == 'MultipleBufferSingleKernel':
-            globalAccum = 3
         return cls(waveNum                  = d['NumThreads'] // d['WavefrontSize'],
                    workGroup                = d['WorkGroup'],
                    macroTile                = cls.ReadOriginalMacroTile(d),

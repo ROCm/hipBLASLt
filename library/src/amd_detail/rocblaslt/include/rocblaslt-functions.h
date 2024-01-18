@@ -129,8 +129,7 @@ rocblaslt_status rocblaslt_matrix_transform(rocblaslt_handle                 han
 #ifdef __cplusplus
 }
 
-rocblaslt_status rocblaslt_gemm_create_cpp(rocblaslt_handle               handle,
-                                           int64_t                        m,
+rocblaslt_status rocblaslt_gemm_create_cpp(int64_t                        m,
                                            int64_t                        n,
                                            int64_t                        b,
                                            int64_t                        k,
@@ -148,8 +147,7 @@ rocblaslt_status rocblaslt_gemm_create_cpp(rocblaslt_handle               handle
                                            std::shared_ptr<void>&         gemmData,
                                            size_t&                        gemmCount);
 
-rocblaslt_status rocblaslt_gemm_create_cpp(rocblaslt_handle               handle,
-                                           rocblaslt_matmul_desc          matmul_descr,
+rocblaslt_status rocblaslt_gemm_create_cpp(rocblaslt_matmul_desc          matmul_descr,
                                            const void*                    alpha,
                                            const void*                    A,
                                            rocblaslt_matrix_layout        matA,
@@ -165,8 +163,7 @@ rocblaslt_status rocblaslt_gemm_create_cpp(rocblaslt_handle               handle
                                            size_t&                        gemmCount);
 
 rocblaslt_status
-    rocblaslt_groupedgemm_create_cpp(const rocblaslt_handle                      handle,
-                                     std::vector<int64_t>&                       m,
+    rocblaslt_groupedgemm_create_cpp(std::vector<int64_t>&                       m,
                                      std::vector<int64_t>&                       n,
                                      std::vector<int64_t>&                       b,
                                      std::vector<int64_t>&                       k,
@@ -185,8 +182,7 @@ rocblaslt_status
                                      size_t&                                     gemmCount);
 
 rocblaslt_status
-    rocblaslt_groupedgemm_create_cpp(const rocblaslt_handle                      handle,
-                                     std::vector<rocblaslt_matmul_desc>&         matmul_descr,
+    rocblaslt_groupedgemm_create_cpp(std::vector<rocblaslt_matmul_desc>&         matmul_descr,
                                      std::vector<const void*>&                   alpha,
                                      std::vector<const void*>&                   A,
                                      std::vector<rocblaslt_matrix_layout>&       matA,

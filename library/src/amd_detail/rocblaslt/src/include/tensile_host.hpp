@@ -130,7 +130,6 @@ struct RocblasltContractionProblem
     size_t             workspaceSize;
 
     hipStream_t stream;
-    void*       Synchronizer;
 
     // gemm_ex
     // gemm_strided_batched_ex
@@ -181,8 +180,7 @@ struct RocblasltContractionProblem
                                 rocblaslt_epilogue     epilogue,
                                 void*                  workspace,
                                 size_t                 workspaceSize,
-                                hipStream_t            stream,
-                                void*                  Synchronizer)
+                                hipStream_t            stream)
         : trans_a(trans_a)
         , trans_b(trans_b)
         , m(m)
@@ -236,7 +234,6 @@ struct RocblasltContractionProblem
         , workspace(workspace)
         , workspaceSize(workspaceSize)
         , stream(stream)
-        , Synchronizer(Synchronizer)
     {
         if(this->bias_type == HIPBLASLT_DATATYPE_INVALID)
         {

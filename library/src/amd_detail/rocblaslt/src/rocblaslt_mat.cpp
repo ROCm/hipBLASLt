@@ -147,8 +147,7 @@ rocblaslt_status rocblaslt_matmul_impl(const rocblaslt_handle       handle,
     //     return rocblaslt_status_invalid_size;
     // }
 
-    if(algo)
-        workspaceSizeInBytes = min(workspaceSizeInBytes, algo->max_workspace_bytes);
+    if (algo) workspaceSizeInBytes = min(workspaceSizeInBytes, algo->max_workspace_bytes);
     RocblasltContractionProblem problem{opA,
                                         opB,
                                         m,
@@ -198,8 +197,7 @@ rocblaslt_status rocblaslt_matmul_impl(const rocblaslt_handle       handle,
                                         workspaceSizeInBytes,
                                         stream,
                                         handle->Synchronizer};
-    if(get_logger_layer_mode() & rocblaslt_layer_mode_log_bench)
-    {
+    if(get_logger_layer_mode() & rocblaslt_layer_mode_log_bench) {
 
 // To deal with some arguments may be invalid
 #define GEN_BENCH_ARG(_fun, _type_str, _type) \
@@ -263,8 +261,7 @@ rocblaslt_status rocblaslt_matmul_impl(const rocblaslt_handle       handle,
     return runContractionProblem(handle, algo, problem, gemmData);
 }
 
-rocblaslt_status rocblaslt_gemm_create_cpp_impl(const rocblaslt_handle         handle,
-                                                rocblaslt_matmul_desc          matmul_descr,
+rocblaslt_status rocblaslt_gemm_create_cpp_impl(rocblaslt_matmul_desc          matmul_descr,
                                                 const void*                    A,
                                                 const void*                    B,
                                                 const void*                    C,
@@ -399,13 +396,11 @@ rocblaslt_status rocblaslt_gemm_create_cpp_impl(const rocblaslt_handle         h
                                         epilogue,
                                         nullptr,
                                         0,
-                                        0,
-                                        handle->Synchronizer};
+                                        0};
     return gemmCreate(problem, gemmData, gemmCount);
 }
 
-rocblaslt_status rocblaslt_gemm_create_cpp_impl_2(const rocblaslt_handle         handle,
-                                                  int64_t                        m,
+rocblaslt_status rocblaslt_gemm_create_cpp_impl_2(int64_t                        m,
                                                   int64_t                        n,
                                                   int64_t                        b,
                                                   int64_t                        k,
@@ -555,14 +550,12 @@ rocblaslt_status rocblaslt_gemm_create_cpp_impl_2(const rocblaslt_handle        
                                         epilogue,
                                         nullptr,
                                         0,
-                                        0,
-                                        handle->Synchronizer};
+                                        0};
     return gemmCreate(problem, gemmData, gemmCount);
 }
 
 rocblaslt_status
-    rocblaslt_groupedgemm_create_cpp_impl(const rocblaslt_handle                      handle,
-                                          std::vector<rocblaslt_matmul_desc>&         matmul_descr,
+    rocblaslt_groupedgemm_create_cpp_impl(std::vector<rocblaslt_matmul_desc>&         matmul_descr,
                                           std::vector<const void*>&                   A,
                                           std::vector<const void*>&                   B,
                                           std::vector<const void*>&                   C,
@@ -818,15 +811,13 @@ rocblaslt_status
                                                        epilogue_vec[i],
                                                        nullptr,
                                                        0,
-                                                       0,
-                                                       handle->Synchronizer});
+                                                       0});
     }
     return groupedGemmCreate(problems, gemmData, gemmCount);
 }
 
 rocblaslt_status
-    rocblaslt_groupedgemm_create_cpp_impl_2(const rocblaslt_handle                      handle,
-                                            std::vector<int64_t>&                       m,
+    rocblaslt_groupedgemm_create_cpp_impl_2(std::vector<int64_t>&                       m,
                                             std::vector<int64_t>&                       n,
                                             std::vector<int64_t>&                       b,
                                             std::vector<int64_t>&                       k,
@@ -1010,8 +1001,7 @@ rocblaslt_status
                                                        epilogue_vec[i],
                                                        nullptr,
                                                        0,
-                                                       0,
-                                                       handle->Synchronizer});
+                                                       0});
     }
     return groupedGemmCreate(problems, gemmData, gemmCount);
 }
@@ -1148,8 +1138,7 @@ rocblaslt_status rocblaslt_matmul(rocblaslt_handle             handle,
 }
 #endif
 
-rocblaslt_status rocblaslt_gemm_create_cpp(const rocblaslt_handle         handle,
-                                           int64_t                        m,
+rocblaslt_status rocblaslt_gemm_create_cpp(int64_t                        m,
                                            int64_t                        n,
                                            int64_t                        b,
                                            int64_t                        k,
@@ -1167,8 +1156,7 @@ rocblaslt_status rocblaslt_gemm_create_cpp(const rocblaslt_handle         handle
                                            std::shared_ptr<void>&         gemmData,
                                            size_t&                        gemmCount)
 {
-    return rocblaslt_gemm_create_cpp_impl_2(handle,
-                                            m,
+    return rocblaslt_gemm_create_cpp_impl_2(m,
                                             n,
                                             b,
                                             k,
@@ -1187,8 +1175,7 @@ rocblaslt_status rocblaslt_gemm_create_cpp(const rocblaslt_handle         handle
                                             gemmCount);
 }
 
-rocblaslt_status rocblaslt_gemm_create_cpp(const rocblaslt_handle         handle,
-                                           rocblaslt_matmul_desc          matmul_descr,
+rocblaslt_status rocblaslt_gemm_create_cpp(rocblaslt_matmul_desc          matmul_descr,
                                            const void*                    alpha,
                                            const void*                    A,
                                            rocblaslt_matrix_layout        matA,
@@ -1217,8 +1204,7 @@ rocblaslt_status rocblaslt_gemm_create_cpp(const rocblaslt_handle         handle
         return rocblaslt_status_type_mismatch;
     }
 
-    return rocblaslt_gemm_create_cpp_impl(handle,
-                                          matmul_descr,
+    return rocblaslt_gemm_create_cpp_impl(matmul_descr,
                                           A,
                                           B,
                                           C,
@@ -1235,8 +1221,7 @@ rocblaslt_status rocblaslt_gemm_create_cpp(const rocblaslt_handle         handle
 }
 
 rocblaslt_status
-    rocblaslt_groupedgemm_create_cpp(const rocblaslt_handle                      handle,
-                                     std::vector<int64_t>&                       m,
+    rocblaslt_groupedgemm_create_cpp(std::vector<int64_t>&                       m,
                                      std::vector<int64_t>&                       n,
                                      std::vector<int64_t>&                       b,
                                      std::vector<int64_t>&                       k,
@@ -1259,8 +1244,7 @@ rocblaslt_status
         log_error(__func__, "Currently only supports same problem type for grouped gemm.");
         return rocblaslt_status_invalid_value;
     }
-    return rocblaslt_groupedgemm_create_cpp_impl_2(handle,
-                                                   m,
+    return rocblaslt_groupedgemm_create_cpp_impl_2(m,
                                                    n,
                                                    b,
                                                    k,
@@ -1280,8 +1264,7 @@ rocblaslt_status
 }
 
 rocblaslt_status
-    rocblaslt_groupedgemm_create_cpp(const rocblaslt_handle                      handle,
-                                     std::vector<rocblaslt_matmul_desc>&         matmul_descr,
+    rocblaslt_groupedgemm_create_cpp(std::vector<rocblaslt_matmul_desc>&         matmul_descr,
                                      std::vector<const void*>&                   alpha,
                                      std::vector<const void*>&                   A,
                                      std::vector<rocblaslt_matrix_layout>&       matA,
@@ -1314,8 +1297,7 @@ rocblaslt_status
         }
     }
 
-    return rocblaslt_groupedgemm_create_cpp_impl(handle,
-                                                 matmul_descr,
+    return rocblaslt_groupedgemm_create_cpp_impl(matmul_descr,
                                                  A,
                                                  B,
                                                  C,

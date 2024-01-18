@@ -938,13 +938,8 @@ validParameters = {
     "LdsBlockSizePerPadMetadata":  [-1, 0, 64, 128, 256, 512, 1024],
 
     # Transpose LDS format. Local store in coalesced dimension , same as optimized global fetch dimension . applicable only in TLU=0 case for miSIMD(s)
-    # -1 : keep LDS layout same as global fetch dimension for both A and B
-    #      set TLDS = 1 for NN,TN,TT
-    #      set TLDS = 0 for NT
-    # 0  : coalesced dimension of lds is tile dimension
-    # 1  : keep LDS layout same as global fetch dimension for both A and B for NN,TN,TT, but NT would be rejected
-    # 2  : coalesced dimension of lds is unroll dimension for both A and B
-    "TransposeLDS":                [-1, 1, 0, 2],
+    # TODO: No code for -1 ?
+    "TransposeLDS":                [-1, 1, 0],
 
     # add gls or slc after global memory read/writes to change caching, not caching the writes is promising and improved performance a tiny bit
     # 1: glc, 2: slc, 3: glc+slc

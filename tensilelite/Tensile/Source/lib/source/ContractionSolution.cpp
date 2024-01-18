@@ -537,12 +537,11 @@ namespace Tensile
                 idx++;
             }
         }
-        if(gsu > 1
-           && ((sizeMapping.globalAccumulation == 2)
-               || (sizeMapping.globalAccumulation == 3 && !problemType.groupedGemm)))
+
+        if(gsu > 1 && sizeMapping.globalAccumulation)
         {
             args.template append<void const*>("ws_d", (uint8_t*)inputs.ws + workspaceOffsetInByte);
-            if((sizeMapping.customKernelName != "" && gsu > 1) || (sizeMapping.globalAccumulation == 3))
+            if(sizeMapping.customKernelName != "" && gsu > 1)
             {
                 args.template append<void const*>("c", inputs.c);
             }
@@ -820,14 +819,8 @@ namespace Tensile
 
         singleCallArgs<T_Debug, true>(problem, inputs, 0, rv.args);
 
-        if(((sizeMapping.globalAccumulation == 2) && (sizeMapping.customKernelName != "" && gsu > 1))
-           || (sizeMapping.globalAccumulation == 3))
+        if((sizeMapping.globalAccumulation == 2) && (sizeMapping.customKernelName != "" && gsu > 1))
         {
-            if(sizeMapping.globalAccumulation == 3)
-            {
-                rv.args.append<void const*>("dstD", inputs.d);
-                rv.args.append<void const*>("Synchronizer", inputs.Synchronizer);
-            }
             rv.args.append<uint32_t>("GSUSync", 0);
         }
 
@@ -957,10 +950,6 @@ namespace Tensile
             rv.args.append<void const*>("argsPtr", (void*)inputs.ws);
             rv.args.append<uint32_t>("skipWgTableGen", 0);
             kernelArgs<T_Debug>(rv.args, problems[0].getParams());
-            rv.args.append<void const*>(
-                "Workspace",
-                (uint8_t*)inputs.ws + this->requiredHostWorkspaceSizePerProblem * problems.size());
-            rv.args.append<void const*>("Synchronizer", (void*)inputs.grouped[0].Synchronizer);
             rv.codeObjectFile = codeObjectFilename.load();
         }
 
@@ -1021,7 +1010,8 @@ namespace Tensile
             rv.args.append<void const* const*>("batchC", inputs.batchC);
 
         if(problemType.useBias
-           && (sizeMapping.globalAccumulation == 0 || (sizeMapping.customKernelName != "" && gsu > 1)  || (sizeMapping.globalAccumulation == 3))
+           && (sizeMapping.globalAccumulation == 0
+               || (sizeMapping.customKernelName != "" && gsu > 1))
            && (!problemType.useGradient))
         {
             if(problemType.stridedBatched)
@@ -1040,7 +1030,8 @@ namespace Tensile
             rv.args.append<void const*>("scaleD", inputs.scaleD);
         }
         if(problemType.useScaleAlphaVec
-           && (sizeMapping.globalAccumulation == 0 || (sizeMapping.customKernelName != "" && gsu > 1) || (sizeMapping.globalAccumulation == 3)))
+           && (sizeMapping.globalAccumulation == 0
+               || (sizeMapping.customKernelName != "" && gsu > 1)))
         {
             rv.args.append<void const*>("scaleAlphaVec", inputs.scaleAlphaVec);
         }
@@ -1067,7 +1058,8 @@ namespace Tensile
                                      c.sizes()[i] == 1 ? 0 : c.strides()[i]);
 
         if(problemType.useBias
-           && (sizeMapping.globalAccumulation == 0 || (sizeMapping.customKernelName != "" && gsu > 1) || (sizeMapping.globalAccumulation == 3))
+           && (sizeMapping.globalAccumulation == 0
+               || (sizeMapping.customKernelName != "" && gsu > 1))
            && (!problemType.useGradient))
         {
             TensorDescriptor const& bias = problem.tensor(ContractionProblemGemm::TENSOR::BIAS);
@@ -1128,7 +1120,8 @@ namespace Tensile
         }
 
         if(problemType.useBias
-           && ((sizeMapping.globalAccumulation == 0) || (sizeMapping.customKernelName != "" && gsu > 1) || (sizeMapping.globalAccumulation == 3) )
+           && ((sizeMapping.globalAccumulation == 0)
+               || (sizeMapping.customKernelName != "" && gsu > 1))
            && (!problemType.useGradient))
         {
             auto s = TypeAbbrev(problem.bias().dataType());
@@ -1995,7 +1988,7 @@ namespace Tensile
 
         auto gsu
             = problem.getParams().gsu() > 0 ? problem.getParams().gsu() : sizeMapping.globalSplitU;
-        if(gsu > 1 && sizeMapping.globalAccumulation != 2 && sizeMapping.globalAccumulation != 3)
+        if(gsu > 1 && sizeMapping.globalAccumulation != 2)
         {
             if(debug)
                 rv.push_back(generateBetaOnlyCall<true>(problem, inputs));
@@ -2008,8 +2001,7 @@ namespace Tensile
         else
             rv.push_back(generateSingleCall<false>(problem, inputs));
 
-        if((sizeMapping.customKernelName == "" && (sizeMapping.globalAccumulation != 3)) && gsu > 1
-           && sizeMapping.globalAccumulation)
+        if((sizeMapping.customKernelName == "") && gsu > 1 && sizeMapping.globalAccumulation)
         {
             if(debug)
                 rv.push_back(generateOutputConversionCall<true>(problem, inputs));
@@ -2150,8 +2142,7 @@ namespace Tensile
         else
             rv.push_back(generateSingleCallGroupedGemm<false>(problems, inputs, h_args));
 
-        if((sizeMapping.customKernelName == "" && (sizeMapping.globalAccumulation != 3)) && gsu > 1
-           && sizeMapping.globalAccumulation)
+        if((sizeMapping.customKernelName == "") && gsu > 1 && sizeMapping.globalAccumulation)
         {
             if(debug)
                 rv.push_back(
@@ -2176,7 +2167,6 @@ namespace Tensile
 
         uint8_t*    d_args = (uint8_t*)inputs.ws;
         const void* tmpMem = hipHostMemory ? hipHostMemory : h_args.data();
-
         HIP_CHECK_EXC(hipMemcpyAsync(
             d_args, tmpMem, h_args.size() * sizeof(uint8_t), hipMemcpyHostToDevice, stream));
 
@@ -2208,7 +2198,7 @@ namespace Tensile
         auto gsu = problems[0].getParams().gsu() > 0 ? problems[0].getParams().gsu()
                                                      : sizeMapping.globalSplitU;
 
-        if((sizeMapping.globalAccumulation && gsu > 1) && (sizeMapping.globalAccumulation != 3))
+        if(sizeMapping.globalAccumulation && gsu > 1)
         {
             if(debug)
                 rv.push_back(
@@ -2401,7 +2391,7 @@ namespace Tensile
         }
 
         // Custom kernel synchronizer
-        if((sizeMapping.customKernelName != "" && gsu > 1) || sizeMapping.globalAccumulation == 3)
+        if(sizeMapping.customKernelName != "" && gsu > 1)
         {
             size += (int)ceil(problem.d().sizes()[0] / (float)sizeMapping.macroTile.x)
                     * (int)ceil(problem.d().sizes()[1] / (float)sizeMapping.macroTile.y)
@@ -2432,6 +2422,7 @@ namespace Tensile
         if(sizeMapping.globalAccumulation)
             generateOutputConversionCallGroupedGemm<false>(problems, inputs, h_args);
         sizeInByte += h_args.size();
+
         return sizeInByte;
     }
 

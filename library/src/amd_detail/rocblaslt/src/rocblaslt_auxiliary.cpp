@@ -65,8 +65,7 @@ inline void assignAlphaBeta1(const rocblaslt_compute_type& compute_type, void* a
  * construct_rocblaslt_problem creates RocblasltContractionProblem from mat    *
  * layout and descriptor for Tensile's findTopSolutions.                      *
  ******************************************************************************/
-RocblasltContractionProblem construct_rocblaslt_problem(rocblaslt_handle            handle,
-                                                        const rocblaslt_matmul_desc matmul_descr,
+RocblasltContractionProblem construct_rocblaslt_problem(const rocblaslt_matmul_desc matmul_descr,
                                                         rocblaslt_matrix_layout     matA,
                                                         rocblaslt_matrix_layout     matB,
                                                         rocblaslt_matrix_layout     matC,
@@ -193,8 +192,7 @@ RocblasltContractionProblem construct_rocblaslt_problem(rocblaslt_handle        
                                         epilogue,
                                         nullptr,
                                         maxWorkSpaceBytes,
-                                        nullptr,
-                                        handle->Synchronizer};
+                                        nullptr};
 
     return problem;
 }
@@ -1164,7 +1162,7 @@ rocblaslt_status rocblaslt_matmul_is_algo_supported(rocblaslt_handle        hand
         void* alphaf = (void*)alpha;
         void* betaf  = (void*)beta;
         auto  prob   = construct_rocblaslt_problem(
-            handle, matmul_descr, matA, matB, matC, matD, alphaf, betaf, algo->max_workspace_bytes);
+            matmul_descr, matA, matB, matC, matD, alphaf, betaf, algo->max_workspace_bytes);
         status = isSolutionSupported(handle, prob, gemmData, algo, workspaceSizeInBytes);
 
         if(status != rocblaslt_status_success)
@@ -1222,7 +1220,7 @@ rocblaslt_status
         assignAlphaBeta1(compute_type, (void*)alpha, (void*)beta);
 
         auto prob = construct_rocblaslt_problem(
-            handle, matmul_desc, matA, matB, matC, matD, &alpha, &beta, pref->max_workspace_bytes);
+            matmul_desc, matA, matB, matC, matD, &alpha, &beta, pref->max_workspace_bytes);
         status = getBestSolutions(prob,
                                   handle,
                                   tensile_data,
@@ -1319,7 +1317,7 @@ rocblaslt_status rocblaslt_matmul_get_all_algos_cpp(
         assignAlphaBeta1(matmul_desc.compute_type, (void*)alpha, (void*)beta);
 
         auto prob = construct_rocblaslt_problem(
-            handle, &matmul_desc, &matA, &matB, &matC, &matD, &alpha, &beta, maxWorkspaceSize);
+            &matmul_desc, &matA, &matB, &matC, &matD, &alpha, &beta, maxWorkspaceSize);
         if(typeGemm == rocblaslt::RocGemmType::ROCBLASLT_GEMM)
         {
             status = getAllSolutions(prob, handle, heuristicResults, maxWorkspaceSize);
@@ -1371,12 +1369,12 @@ rocblaslt_status rocblaslt_matmul_get_algos_from_index_cpp(
     return rocblaslt_status_success;
 }
 
-rocblaslt_status rocblaslt_is_algo_supported_cpp(rocblaslt_handle            handle,
-                                                 rocblaslt::RocGemmType      gemmType,
-                                                 std::shared_ptr<void>       gemmData,
-                                                 rocblaslt_matmul_algo&      algo,
+rocblaslt_status rocblaslt_is_algo_supported_cpp(rocblaslt_handle       handle,
+                                                 rocblaslt::RocGemmType gemmType,
+                                                 std::shared_ptr<void>  gemmData,
+                                                 rocblaslt_matmul_algo& algo,
                                                  const rocblaslt::RocTuning* tuning,
-                                                 size_t&                     workspaceSizeInBytes)
+                                                 size_t&                workspaceSizeInBytes)
 {
     return isSolutionSupported(handle, gemmType, gemmData, algo, tuning, workspaceSizeInBytes);
 }

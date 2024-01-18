@@ -612,10 +612,6 @@ Tests:
   alpha: 1
   beta: [ 0.0, 2.0 ]
   bias_vector: [0, 1]
-  scaleA: [0, 1]
-  scaleB: [0, 1]
-  scaleC: [0, 1]
-  scaleD: [0, 1]
   algo_method: [2]
   bias_type: f32_r
   unit_check: 1

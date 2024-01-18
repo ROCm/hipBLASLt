@@ -1423,7 +1423,6 @@ namespace Tensile
                                          void const*          _scaleD,
                                          void const*          _scaleAlphaVec,
                                          void*                _ws,
-                                         void*                _Synchronizer,
                                          unsigned char const* _metadata)
         : a(_a)
         , b(_b)
@@ -1441,7 +1440,6 @@ namespace Tensile
         , scaleD(_scaleD)
         , scaleAlphaVec(_scaleAlphaVec)
         , ws(_ws)
-        , Synchronizer(_Synchronizer)
         , metadata(_metadata)
     {
     }

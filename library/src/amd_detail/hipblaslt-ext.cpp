@@ -354,13 +354,8 @@ namespace hipblaslt_ext
         auto gemmType  = static_cast<rocblaslt::RocGemmType>(m_gemm_type);
         auto rocalgo   = reinterpret_cast<rocblaslt_matmul_algo*>(&algo);
         auto roctuning = reinterpret_cast<rocblaslt::RocTuning*>(&tuning);
-        return RocBlasLtStatusToHIPStatus(
-            rocblaslt_is_algo_supported_cpp((rocblaslt_handle)m_handle,
-                                            gemmType,
-                                            m_data,
-                                            *rocalgo,
-                                            roctuning,
-                                            workspaceSizeInBytes));
+        return RocBlasLtStatusToHIPStatus(rocblaslt_is_algo_supported_cpp(
+            (rocblaslt_handle)m_handle, gemmType, m_data, *rocalgo, roctuning, workspaceSizeInBytes));
     }
     catch(...)
     {
@@ -604,25 +599,23 @@ namespace hipblaslt_ext
         auto rocepilogue    = reinterpret_cast<rocblaslt::RocGemmEpilogue*>(&epilogue);
         auto rocepinputs    = reinterpret_cast<rocblaslt::RocGemmInputs*>(&gemmInputs);
         auto rocproblemtype = reinterpret_cast<rocblaslt::RocGemmProblemType*>(&gemmProblemType);
-        auto status
-            = RocBlasLtStatusToHIPStatus(rocblaslt_gemm_create_cpp((rocblaslt_handle)m_handle,
-                                                                   m,
-                                                                   n,
-                                                                   batch_count,
-                                                                   k,
-                                                                   lda,
-                                                                   ldb,
-                                                                   ldc,
-                                                                   ldd,
-                                                                   strideA,
-                                                                   strideB,
-                                                                   strideC,
-                                                                   strideD,
-                                                                   *rocepilogue,
-                                                                   *rocepinputs,
-                                                                   *rocproblemtype,
-                                                                   m_data,
-                                                                   m_gemm_count));
+        auto status         = RocBlasLtStatusToHIPStatus(rocblaslt_gemm_create_cpp(m,
+                                                                           n,
+                                                                           batch_count,
+                                                                           k,
+                                                                           lda,
+                                                                           ldb,
+                                                                           ldc,
+                                                                           ldd,
+                                                                           strideA,
+                                                                           strideB,
+                                                                           strideC,
+                                                                           strideD,
+                                                                           *rocepilogue,
+                                                                           *rocepinputs,
+                                                                           *rocproblemtype,
+                                                                           m_data,
+                                                                           m_gemm_count));
         if(status == HIPBLAS_STATUS_SUCCESS)
         {
             m_problem_types[0] = problemtype;
@@ -645,8 +638,7 @@ namespace hipblaslt_ext
         auto rocproblemtypes
             = reinterpret_cast<std::vector<rocblaslt::RocGemmProblemType>*>(&m_problem_types);
         return RocBlasLtStatusToHIPStatus(
-            rocblaslt_gemm_create_cpp((rocblaslt_handle)m_handle,
-                                      (rocblaslt_matmul_desc)matmul_descr,
+            rocblaslt_gemm_create_cpp((rocblaslt_matmul_desc)matmul_descr,
                                       alpha,
                                       A,
                                       (rocblaslt_matrix_layout)matA,
@@ -780,25 +772,23 @@ namespace hipblaslt_ext
         std::vector<GemmProblemType> tmptype = {problemtype};
         auto                         rocproblemtype
             = reinterpret_cast<std::vector<rocblaslt::RocGemmProblemType>*>(&tmptype);
-        auto status = RocBlasLtStatusToHIPStatus(
-            rocblaslt_groupedgemm_create_cpp((rocblaslt_handle)m_handle,
-                                             m,
-                                             n,
-                                             batch_count,
-                                             k,
-                                             lda,
-                                             ldb,
-                                             ldc,
-                                             ldd,
-                                             strideA,
-                                             strideB,
-                                             strideC,
-                                             strideD,
-                                             *rocepilogue,
-                                             *rocinputs,
-                                             *rocproblemtype,
-                                             m_data,
-                                             m_gemm_count));
+        auto status = RocBlasLtStatusToHIPStatus(rocblaslt_groupedgemm_create_cpp(m,
+                                                                                  n,
+                                                                                  batch_count,
+                                                                                  k,
+                                                                                  lda,
+                                                                                  ldb,
+                                                                                  ldc,
+                                                                                  ldd,
+                                                                                  strideA,
+                                                                                  strideB,
+                                                                                  strideC,
+                                                                                  strideD,
+                                                                                  *rocepilogue,
+                                                                                  *rocinputs,
+                                                                                  *rocproblemtype,
+                                                                                  m_data,
+                                                                                  m_gemm_count));
         if(status == HIPBLAS_STATUS_SUCCESS)
         {
             m_problem_types = tmptype;
@@ -832,8 +822,7 @@ namespace hipblaslt_ext
         auto rocproblemtypes
             = reinterpret_cast<std::vector<rocblaslt::RocGemmProblemType>*>(&m_problem_types);
         return RocBlasLtStatusToHIPStatus(
-            rocblaslt_groupedgemm_create_cpp((rocblaslt_handle)m_handle,
-                                             *matmul_descr_groupedGemm,
+            rocblaslt_groupedgemm_create_cpp(*matmul_descr_groupedGemm,
                                              *alpha_groupedGemm,
                                              *A_groupedGemm,
                                              *matA_groupedGemm,
