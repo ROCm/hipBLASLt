@@ -28,7 +28,7 @@ BenchmarkProblems:
       TransposeA: 0
       TransposeB: 0
       UseBeta: True
-      UseBias: True
+      UseBias: 1
       Batched: True
       Activation: True
       ActivationHPA: True
@@ -93,7 +93,7 @@ BenchmarkProblems:
       TransposeA: 1
       TransposeB: 0
       UseBeta: True
-      UseBias: True
+      UseBias: 1
       Batched: True
       Activation: True
       ActivationHPA: True
@@ -158,7 +158,7 @@ BenchmarkProblems:
       TransposeA: 0
       TransposeB: 0
       UseBeta: True
-      UseBias: True
+      UseBias: 1
       Batched: True
       Activation: True
       ActivationHPA: True
@@ -223,7 +223,7 @@ BenchmarkProblems:
       TransposeA: 1
       TransposeB: 0
       UseBeta: True
-      UseBias: True
+      UseBias: 1
       Batched: True
       Activation: True
       ActivationHPA: True
@@ -288,7 +288,7 @@ BenchmarkProblems:
       TransposeA: 0
       TransposeB: 0
       UseBeta: True
-      UseBias: True
+      UseBias: 1
       Batched: True
       Activation: True
       ActivationHPA: True
@@ -353,7 +353,7 @@ BenchmarkProblems:
       TransposeA: 1
       TransposeB: 0
       UseBeta: True
-      UseBias: True
+      UseBias: 1
       Batched: True
       Activation: True
       ActivationHPA: True
@@ -418,7 +418,7 @@ BenchmarkProblems:
       TransposeA: 0
       TransposeB: 0
       UseBeta: True
-      UseBias: True
+      UseBias: 1
       Batched: True
       Activation: True
       ActivationHPA: True
@@ -483,7 +483,7 @@ BenchmarkProblems:
       TransposeA: 1
       TransposeB: 0
       UseBeta: True
-      UseBias: True
+      UseBias: 1
       Batched: True
       Activation: True
       ActivationHPA: True
@@ -549,7 +549,7 @@ BenchmarkProblems:
       TransposeA: 0
       TransposeB: 0
       UseBeta: True
-      UseBias: True
+      UseBias: 1
       Batched: True
       Activation: True
       ActivationHPA: True
@@ -615,7 +615,7 @@ BenchmarkProblems:
       TransposeA: 1
       TransposeB: 0
       UseBeta: True
-      UseBias: True
+      UseBias: 1
       Batched: True
       Activation: True
       ActivationHPA: True

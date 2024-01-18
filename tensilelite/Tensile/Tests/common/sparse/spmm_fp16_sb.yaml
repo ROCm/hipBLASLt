@@ -28,11 +28,12 @@ BenchmarkProblems:
       TransposeA: False
       TransposeB: False
       UseBeta: True
-      UseBias: True
+      UseBias: 3
       Sparse: 2
       Batched: True
       Activation: True
       ActivationHPA: True
+      UseBias: 3
 
     - # BenchmarkProblemSizeGroup - Standard
       InitialSolutionParameters:
@@ -51,7 +52,7 @@ BenchmarkProblems:
         - VectorWidthA: [1,2,4]
         - VectorWidthB: [1,2,4]
         - DepthU: [32,64]
-        - TransposeLDS: [0,1]
+        - TransposeLDS: [-1]
         - LdsPadA: [-1]
         - LdsPadB: [-1]
         - LdsPadMetadata: [-1]
@@ -74,42 +75,25 @@ BenchmarkProblems:
       BenchmarkJoinParameters:
       BenchmarkFinalParameters:
         - ProblemSizes:
-          - Exact: [15, 15, 1, 16] # classic format
-          - Exact: [15, 15, 1, 32] # classic format
-          - Exact: [15, 15, 1, 64] # classic format
-          - Exact: [15, 15, 1, 96] # classic format
-          - Exact: [15, 15, 1, 128] # classic format
-          - Exact: [15, 15, 1, 136] # classic format
-          - Exact: [15, 15, 1, 256] # classic format
-          - Exact: [15, 15, 1, 264] # classic format
           - Exact: [16, 16, 1, 16] # classic format
           - Exact: [16, 16, 1, 32] # classic format
           - Exact: [16, 16, 1, 64] # classic format
           - Exact: [16, 16, 1, 96] # classic format
           - Exact: [16, 16, 1, 128] # classic format
-          - Exact: [16, 16, 1, 136] # classic format
-          - Exact: [16, 16, 1, 256] # classic format
-          - Exact: [16, 16, 1, 264] # classic format
           - Exact: [256, 256, 1, 16] # classic format
-          - Exact: [256, 256, 1, 24] # classic format
           - Exact: [256, 256, 1, 32] # classic format
           - Exact: [256, 256, 1, 64] # classic format
           - Exact: [256, 256, 1, 96] # classic format
           - Exact: [256, 256, 1, 128] # classic format
-          - Exact: [256, 256, 1, 136] # classic format
-          - Exact: [256, 256, 1, 256] # classic format
           - Exact: [384, 384, 1, 16] # classic format
-          - Exact: [384, 384, 1, 24] # classic format
           - Exact: [384, 384, 1, 32] # classic format
           - Exact: [384, 384, 1, 64] # classic format
           - Exact: [384, 384, 1, 96] # classic format
           - Exact: [384, 384, 1, 128] # classic format
-          - Exact: [384, 384, 1, 136] # classic format
-          - Exact: [384, 384, 1, 256] # classic format
-        - BiasTypeArgs: ['b', 's']
+        - BiasTypeArgs: ['s', 'h']
+        - BiasDimArgs: [0, 1]
         - ActivationArgs:
           - [Enum: none]
-          - [Enum: tanh]
 
   #########################################
   ## TN - standard
@@ -124,11 +108,12 @@ BenchmarkProblems:
       TransposeA: True
       TransposeB: False
       UseBeta: True
-      UseBias: True
+      UseBias: 3
       Sparse: 2
       Batched: True
       Activation: True
       ActivationHPA: True
+      UseBias: 3
 
     - # BenchmarkProblemSizeGroup - Standard
       InitialSolutionParameters:
@@ -147,7 +132,7 @@ BenchmarkProblems:
         - VectorWidthA: [1,2,4]
         - VectorWidthB: [1,2,4]
         - DepthU: [32,64]
-        - TransposeLDS: [0,1]
+        - TransposeLDS: [-1]
         - LdsPadA: [-1]
         - LdsPadB: [-1]
         - LdsPadMetadata: [-1]
@@ -170,42 +155,25 @@ BenchmarkProblems:
       BenchmarkJoinParameters:
       BenchmarkFinalParameters:
         - ProblemSizes:
-          - Exact: [15, 15, 1, 16] # classic format
-          - Exact: [15, 15, 1, 32] # classic format
-          - Exact: [15, 15, 1, 64] # classic format
-          - Exact: [15, 15, 1, 96] # classic format
-          - Exact: [15, 15, 1, 128] # classic format
-          - Exact: [15, 15, 1, 136] # classic format
-          - Exact: [15, 15, 1, 256] # classic format
-          - Exact: [15, 15, 1, 264] # classic format
           - Exact: [16, 16, 1, 16] # classic format
           - Exact: [16, 16, 1, 32] # classic format
           - Exact: [16, 16, 1, 64] # classic format
           - Exact: [16, 16, 1, 96] # classic format
           - Exact: [16, 16, 1, 128] # classic format
-          - Exact: [16, 16, 1, 136] # classic format
-          - Exact: [16, 16, 1, 256] # classic format
-          - Exact: [16, 16, 1, 264] # classic format
           - Exact: [256, 256, 1, 16] # classic format
-          - Exact: [256, 256, 1, 24] # classic format
           - Exact: [256, 256, 1, 32] # classic format
           - Exact: [256, 256, 1, 64] # classic format
           - Exact: [256, 256, 1, 96] # classic format
           - Exact: [256, 256, 1, 128] # classic format
-          - Exact: [256, 256, 1, 136] # classic format
-          - Exact: [256, 256, 1, 256] # classic format
           - Exact: [384, 384, 1, 16] # classic format
-          - Exact: [384, 384, 1, 24] # classic format
           - Exact: [384, 384, 1, 32] # classic format
           - Exact: [384, 384, 1, 64] # classic format
           - Exact: [384, 384, 1, 96] # classic format
           - Exact: [384, 384, 1, 128] # classic format
-          - Exact: [384, 384, 1, 136] # classic format
-          - Exact: [384, 384, 1, 256] # classic format
-        - BiasTypeArgs: ['b', 's']
+        - BiasTypeArgs: ['s', 'h']
+        - BiasDimArgs: [0, 1]
         - ActivationArgs:
           - [Enum: none]
-          - [Enum: tanh]
 
   #######################################
   # NT - standard
@@ -220,11 +188,12 @@ BenchmarkProblems:
       TransposeA: False
       TransposeB: True
       UseBeta: True
-      UseBias: True
+      UseBias: 3
       Sparse: 2
       Batched: True
       Activation: True
       ActivationHPA: True
+      UseBias: 3
 
     - # BenchmarkProblemSizeGroup - Standard
       InitialSolutionParameters:
@@ -243,7 +212,7 @@ BenchmarkProblems:
         - VectorWidthA: [1,2,4]
         - VectorWidthB: [1,2,4]
         - DepthU: [32,64]
-        - TransposeLDS: [0,1]
+        - TransposeLDS: [-1]
         - LdsPadA: [-1]
         - LdsPadB: [-1]
         - LdsPadMetadata: [-1]
@@ -266,42 +235,25 @@ BenchmarkProblems:
       BenchmarkJoinParameters:
       BenchmarkFinalParameters:
         - ProblemSizes:
-          - Exact: [15, 15, 1, 16] # classic format
-          - Exact: [15, 15, 1, 32] # classic format
-          - Exact: [15, 15, 1, 64] # classic format
-          - Exact: [15, 15, 1, 96] # classic format
-          - Exact: [15, 15, 1, 128] # classic format
-          - Exact: [15, 15, 1, 136] # classic format
-          - Exact: [15, 15, 1, 256] # classic format
-          - Exact: [15, 15, 1, 264] # classic format
           - Exact: [16, 16, 1, 16] # classic format
           - Exact: [16, 16, 1, 32] # classic format
           - Exact: [16, 16, 1, 64] # classic format
           - Exact: [16, 16, 1, 96] # classic format
           - Exact: [16, 16, 1, 128] # classic format
-          - Exact: [16, 16, 1, 136] # classic format
-          - Exact: [16, 16, 1, 256] # classic format
-          - Exact: [16, 16, 1, 264] # classic format
           - Exact: [256, 256, 1, 16] # classic format
-          - Exact: [256, 256, 1, 24] # classic format
           - Exact: [256, 256, 1, 32] # classic format
           - Exact: [256, 256, 1, 64] # classic format
           - Exact: [256, 256, 1, 96] # classic format
           - Exact: [256, 256, 1, 128] # classic format
-          - Exact: [256, 256, 1, 136] # classic format
-          - Exact: [256, 256, 1, 256] # classic format
           - Exact: [384, 384, 1, 16] # classic format
-          - Exact: [384, 384, 1, 24] # classic format
           - Exact: [384, 384, 1, 32] # classic format
           - Exact: [384, 384, 1, 64] # classic format
           - Exact: [384, 384, 1, 96] # classic format
           - Exact: [384, 384, 1, 128] # classic format
-          - Exact: [384, 384, 1, 136] # classic format
-          - Exact: [384, 384, 1, 256] # classic format
-        - BiasTypeArgs: ['b', 's']
+        - BiasTypeArgs: ['s', 'h']
+        - BiasDimArgs: [0, 1]
         - ActivationArgs:
           - [Enum: none]
-          - [Enum: tanh]
 
   #######################################
   # TT - standard
@@ -316,11 +268,12 @@ BenchmarkProblems:
       TransposeA: True
       TransposeB: True
       UseBeta: True
-      UseBias: True
+      UseBias: 3
       Sparse: 2
       Batched: True
       Activation: True
       ActivationHPA: True
+      UseBias: 3
 
     - # BenchmarkProblemSizeGroup - Standard
       InitialSolutionParameters:
@@ -339,7 +292,7 @@ BenchmarkProblems:
         - VectorWidthA: [1,2,4]
         - VectorWidthB: [1,2,4]
         - DepthU: [32,64]
-        - TransposeLDS: [0,1]
+        - TransposeLDS: [-1]
         - LdsPadA: [-1]
         - LdsPadB: [-1]
         - LdsPadMetadata: [-1]
@@ -362,39 +315,22 @@ BenchmarkProblems:
       BenchmarkJoinParameters:
       BenchmarkFinalParameters:
         - ProblemSizes:
-          - Exact: [15, 15, 1, 16] # classic format
-          - Exact: [15, 15, 1, 32] # classic format
-          - Exact: [15, 15, 1, 64] # classic format
-          - Exact: [15, 15, 1, 96] # classic format
-          - Exact: [15, 15, 1, 128] # classic format
-          - Exact: [15, 15, 1, 136] # classic format
-          - Exact: [15, 15, 1, 256] # classic format
-          - Exact: [15, 15, 1, 264] # classic format
           - Exact: [16, 16, 1, 16] # classic format
           - Exact: [16, 16, 1, 32] # classic format
           - Exact: [16, 16, 1, 64] # classic format
           - Exact: [16, 16, 1, 96] # classic format
           - Exact: [16, 16, 1, 128] # classic format
-          - Exact: [16, 16, 1, 136] # classic format
-          - Exact: [16, 16, 1, 256] # classic format
-          - Exact: [16, 16, 1, 264] # classic format
           - Exact: [256, 256, 1, 16] # classic format
-          - Exact: [256, 256, 1, 24] # classic format
           - Exact: [256, 256, 1, 32] # classic format
           - Exact: [256, 256, 1, 64] # classic format
           - Exact: [256, 256, 1, 96] # classic format
           - Exact: [256, 256, 1, 128] # classic format
-          - Exact: [256, 256, 1, 136] # classic format
-          - Exact: [256, 256, 1, 256] # classic format
           - Exact: [384, 384, 1, 16] # classic format
-          - Exact: [384, 384, 1, 24] # classic format
           - Exact: [384, 384, 1, 32] # classic format
           - Exact: [384, 384, 1, 64] # classic format
           - Exact: [384, 384, 1, 96] # classic format
           - Exact: [384, 384, 1, 128] # classic format
-          - Exact: [384, 384, 1, 136] # classic format
-          - Exact: [384, 384, 1, 256] # classic format
-        - BiasTypeArgs: ['b', 's']
+        - BiasTypeArgs: ['s', 'h']
+        - BiasDimArgs: [0, 1]
         - ActivationArgs:
           - [Enum: none]
-          - [Enum: tanh]

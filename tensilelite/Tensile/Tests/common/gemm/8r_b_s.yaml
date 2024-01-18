@@ -35,7 +35,7 @@ BenchmarkProblems:
       Activation: True
       UseScaleAB: True
       UseScaleAlphaVec: True
-      UseBias: True
+      UseBias: 1
       BiasDataTypeList: ['b']
     - # BenchmarkProblemSizeGroup - Standard
       InitialSolutionParameters:
@@ -97,7 +97,7 @@ BenchmarkProblems:
       Activation: True
       UseScaleAB: True
       UseScaleAlphaVec: True
-      UseBias: True
+      UseBias: 1
       BiasDataTypeList: ['b']
     - # BenchmarkProblemSizeGroup - Standard
       InitialSolutionParameters:
