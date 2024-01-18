@@ -1,6 +1,6 @@
 ################################################################################
 #
-# Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -775,9 +775,12 @@ class KernelWriterConversion(KernelWriterBase):
                                                                       self.state["ProblemType"]["ActivationType"])
       fileString += "\n"
 
-    fileString += self.functionArgument()
-    fileString += self.functionSignature()
-    fileString += ";\n"
+    for toggle in [True, False]:
+      self.state["ProblemType"]["GroupedGemm"] = toggle
+      self.kernelName = self.getKernelName()
+      fileString += self.functionArgument()
+      fileString += self.functionSignature()
+      fileString += ";\n"
 
     return fileString
 
@@ -789,8 +792,11 @@ class KernelWriterConversion(KernelWriterBase):
       fileString += "#include \"%s.h\"\n" % self.kernelName
       fileString += "\n"
 
-    fileString += self.functionSignature()
-    fileString += self.kernelBody()
+    for toggle in [True, False]:
+      self.state["ProblemType"]["GroupedGemm"] = toggle
+      self.kernelName = self.getKernelName()
+      fileString += self.functionSignature()
+      fileString += self.kernelBody()
 
     return (0, fileString)
 
