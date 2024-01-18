@@ -1,6 +1,6 @@
 ################################################################################
 #
-# Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -243,7 +243,7 @@ class KernelWriterBetaOnly(KernelWriterBase):
 
     biasStr = ""
     if self.state["ProblemType"]["BetaOnlyUseBias"]:
-  
+
       if problemType["NumIndicesC"] > 2:
         biasStr = " + ((" + self.datatype + ")(Bias == 0 ? 0 : GLOBAL_BIAS((%s)id0, id2)))"% (self.uint64Str)
       else:
@@ -299,8 +299,11 @@ class KernelWriterBetaOnly(KernelWriterBase):
       fileString += "#include \"%s.h\"\n" % self.kernelName
       fileString += "\n"
 
-    fileString += self.functionSignature()
-    fileString += self.kernelBodyBetaOnly()
+    for toggle in [True, False]:
+      self.state["ProblemType"]["GroupedGemm"] = toggle
+      self.kernelName = self.getKernelName()
+      fileString += self.functionSignature()
+      fileString += self.kernelBodyBetaOnly()
 
     return (0, fileString)
 
@@ -315,7 +318,10 @@ class KernelWriterBetaOnly(KernelWriterBase):
       fileString += "#include <hip/hip_fp16.h>\n"
       fileString += "\n"
 
-    fileString += self.functionSignature()
-    fileString += ";\n"
+    for toggle in [True, False]:
+      self.state["ProblemType"]["GroupedGemm"] = toggle
+      self.kernelName = self.getKernelName()
+      fileString += self.functionSignature()
+      fileString += ";\n"
 
     return fileString
