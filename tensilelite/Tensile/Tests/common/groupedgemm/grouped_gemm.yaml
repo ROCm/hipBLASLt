@@ -25,7 +25,7 @@ BenchmarkProblems:
       TransposeB: 0
       UseBeta: True
       Batched: True
-      UseBias:       True
+      UseBias:       1
       Activation:    True
       ActivationHPA: True
       GroupedGemm:   True
@@ -76,7 +76,7 @@ BenchmarkProblems:
       TransposeB: 0
       UseBeta: True
       Batched: True
-      UseBias:       True
+      UseBias:       1
       Activation:    True
       ActivationHPA: True
       GroupedGemm:   True
@@ -126,7 +126,7 @@ BenchmarkProblems:
       TransposeB: 1
       UseBeta: True
       Batched: True
-      UseBias:       True
+      UseBias:       1
       Activation:    True
       ActivationHPA: True
       GroupedGemm:   True
@@ -176,7 +176,7 @@ BenchmarkProblems:
       TransposeB: 1
       UseBeta: True
       Batched: True
-      UseBias:       True
+      UseBias:       1
       Activation:    True
       ActivationHPA: True
       GroupedGemm:   True

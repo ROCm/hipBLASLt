@@ -33,7 +33,7 @@ BenchmarkProblems:
       UseScaleAB: True
       UseScaleCD: False
       UseScaleAlphaVec: False
-      UseBias: False
+      UseBias: 0
       BiasDataTypeList: [s,b,h]
     - # BenchmarkProblemSizeGroup - Standard
       InitialSolutionParameters:
@@ -101,7 +101,7 @@ BenchmarkProblems:
       UseScaleAB: True
       UseScaleCD: False
       UseScaleAlphaVec: False
-      UseBias: False
+      UseBias: 0
       BiasDataTypeList: [s,b,h]
     - # BenchmarkProblemSizeGroup - Standard
       InitialSolutionParameters:
@@ -168,7 +168,7 @@ BenchmarkProblems:
       UseScaleAB: True
       UseScaleCD: False
       UseScaleAlphaVec: False
-      UseBias: False
+      UseBias: 0
       BiasDataTypeList: [s,b,h]
     - # BenchmarkProblemSizeGroup - Standard
       InitialSolutionParameters:
@@ -236,7 +236,7 @@ BenchmarkProblems:
       UseScaleAB: True
       UseScaleCD: False
       UseScaleAlphaVec: False
-      UseBias: False
+      UseBias: 0
       BiasDataTypeList: [s,b,h]
     - # BenchmarkProblemSizeGroup - Standard
       InitialSolutionParameters:
@@ -308,7 +308,7 @@ BenchmarkProblems:
       UseScaleAB: True
       UseScaleCD: False
       UseScaleAlphaVec: True
-      UseBias: True
+      UseBias: 1
       BiasDataTypeList: [s,b]
     - # BenchmarkProblemSizeGroup - Standard
       InitialSolutionParameters:
@@ -545,7 +545,7 @@ BenchmarkProblems:
       UseScaleAB: True
       UseScaleCD: False
       UseScaleAlphaVec: True
-      UseBias: True
+      UseBias: 1
       BiasDataTypeList: [s,b]
     - # BenchmarkProblemSizeGroup - Standard
       InitialSolutionParameters:
