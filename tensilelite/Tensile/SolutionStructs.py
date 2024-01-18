@@ -1096,6 +1096,7 @@ class Solution(collections.abc.Mapping):
         for btype in self["ProblemType"]["BiasDataTypeList"]:
           state = {}
           state["ProblemType"] = deepcopy(self["ProblemType"])
+          state["ProblemType"]["GroupedGemm"] = False
           state["ProblemType"]["BiasDataTypeList"] = []
           state["ProblemType"]["BiasDataType"] = deepcopy(btype)
           state["KernelLanguage"] = "Source"
@@ -1104,6 +1105,7 @@ class Solution(collections.abc.Mapping):
       else:
         state = {}
         state["ProblemType"] = deepcopy(self["ProblemType"])
+        state["ProblemType"]["GroupedGemm"] = False
         state["KernelLanguage"] = "Source"
         state["_GlobalAccumulation"] = self["_GlobalAccumulation"]
         self.betaOnlyKernelObjects.append(KernelWriterBetaOnly(state))
@@ -1123,6 +1125,7 @@ class Solution(collections.abc.Mapping):
             # If gradient + bias D, generates a normal GSU kernel for bias D = nullptr case
             state = {}
             state["ProblemType"] = deepcopy(self["ProblemType"])
+            state["ProblemType"]["GroupedGemm"] = False
             state["ProblemType"]["UseBias"] = False
             state["KernelLanguage"] = "Source"
             state["GlobalSplitU"] = globalSplitU
@@ -1133,6 +1136,7 @@ class Solution(collections.abc.Mapping):
           for btype in typeList:
             state = {}
             state["ProblemType"] = deepcopy(self["ProblemType"])
+            state["ProblemType"]["GroupedGemm"] = False
             state["ProblemType"]["BiasDataTypeList"] = []
             state["ProblemType"]["BiasDataType"] = deepcopy(btype)
             state["KernelLanguage"] = "Source"
@@ -1144,6 +1148,7 @@ class Solution(collections.abc.Mapping):
         else:
           state = {}
           state["ProblemType"] = deepcopy(self["ProblemType"])
+          state["ProblemType"]["GroupedGemm"] = False
           state["KernelLanguage"] = "Source"
           state["GlobalSplitU"] = globalSplitU
           state["UnrollOnly"] = unrollOnly
@@ -1156,6 +1161,7 @@ class Solution(collections.abc.Mapping):
     if ((self["ProblemType"]["ActivationType"] != 'none') and (self["ProblemType"]["ActivationType"] == 'all')) :
       state = {}
       state["ProblemType"] = deepcopy(self["ProblemType"])
+      state["ProblemType"]["GroupedGemm"] = False
       state["KernelLanguage"] = "Source"
       self.activationEnumHeaderObjects.append(KernelWriterActivationEnumHeader(state))
 
@@ -1164,6 +1170,7 @@ class Solution(collections.abc.Mapping):
     if ((self["ProblemType"]["ActivationType"] != 'none') and (self["ProblemType"]["ActivationType"] == 'all')) :
       state = {}
       state["ProblemType"] = deepcopy(self["ProblemType"])
+      state["ProblemType"]["GroupedGemm"] = False
       state["KernelLanguage"] = "Source"
       state["Kernel"] = {"WavefrontSize": self["WavefrontSize"], "ISA": tuple(self["ISA"])}
       self.activationFunctionObjects.append(KernelWriterActivationFunction(state))
@@ -1173,6 +1180,7 @@ class Solution(collections.abc.Mapping):
     if (self["ActivationFused"] == False) and (self["ProblemType"]["ActivationType"] != 'none') :
       state = {}
       state["ProblemType"] = deepcopy(self["ProblemType"])
+      state["ProblemType"]["GroupedGemm"] = False
       state["ProblemType"]["UseBias"] = False
       state["ProblemType"]["BiasDataTypeList"] = []
       state["KernelLanguage"] = "Source"
@@ -1186,6 +1194,7 @@ class Solution(collections.abc.Mapping):
       for btype in self["ProblemType"]["BiasDataTypeList"]:
         state = {}
         state["ProblemType"] = deepcopy(self["ProblemType"])
+        state["ProblemType"]["GroupedGemm"] = False
         state["ProblemType"]["BiasDataTypeList"] = []
         state["ProblemType"]["BiasDataType"] = deepcopy(btype)
         self.reductionKernelObjects.append(KernelWriterReduction(state))
@@ -3620,6 +3629,8 @@ class Solution(collections.abc.Mapping):
   def getKeyNoInternalArgs(state):
     state_copy = deepcopy(state)
 
+    state_copy["ProblemType"]["GroupedGemm"] = False
+
     if globalParameters["SplitGSU"]:
       state_copy["GlobalSplitU"] = "M" if (state_copy["GlobalSplitU"] > 1 and state["GlobalSplitUAlgorithm"] != 'MultipleBufferSingleKernel') else state_copy["GlobalSplitU"]
     else:
@@ -3651,9 +3662,16 @@ class Solution(collections.abc.Mapping):
 
     components = []
 
+    backup = state["ProblemType"]["GroupedGemm"]
+    if ignoreInternalArgs:
+      state["ProblemType"]["GroupedGemm"] = False
+
     if "ProblemType" in state:
       components.append(f'{str(state["ProblemType"])}')
       # name += str(state["ProblemType"]) + "_"
+
+    if ignoreInternalArgs:
+      state["ProblemType"]["GroupedGemm"] = backup
 
     if "MacroTile0" in state \
         and "MacroTile1" in state \
