@@ -262,9 +262,9 @@ class KernelWriterAssembly(KernelWriter):
     # localWrite instruction
     # for local, tile->para, unroll->perp
     # wtc = writeTileDimComponents
-    localWriteWidth = tP["nwcv"]*tP["bpe"]//bpr
+    localWriteWidth = tP["nwcv"]*tP["bpeDS"]//bpr
     if localWriteWidth < 1:
-      localWriteWidth = (1.0*tP["nwcv"]*tP["bpe"])/bpr
+      localWriteWidth = (1.0*tP["nwcv"]*tP["bpeDS"])/bpr
     localWrite2Coalesced = tP["nrc"]>1 or tP["wtc"]
     localWrite2Perpendicular = tP["nrp"]>1
     # localWrite stride tile
@@ -275,7 +275,7 @@ class KernelWriterAssembly(KernelWriter):
         localWriteStrideTile = kernel[tP["lsc"]]
     else:
       localWriteStrideTile = kernel[tP["lsp"]]
-    localWriteStrideTile = localWriteStrideTile*tP["bpe"]//bpr
+    localWriteStrideTile = localWriteStrideTile*tP["bpeDS"]//bpr
     # localWrite stride unroll
     if tP["tlu"]:
       localWriteStrideUnroll = kernel[tP["lsc"]]*kernel[tP["mt"]]
@@ -285,7 +285,7 @@ class KernelWriterAssembly(KernelWriter):
       else:
         localWriteStrideUnroll = kernel[tP["lsc"]]*kernel[tP["mt"]]
     localWriteStrideUnroll = \
-        (localWriteStrideUnroll*tP["bpe"])//bpr
+        (localWriteStrideUnroll*tP["bpeDS"])//bpr
     localWriteInstructionIdx = self.selectMemoryInstruction("LocalWrite", localWriteWidth, \
                                 False, \
                                 localWrite2Coalesced, localWrite2Perpendicular,
@@ -302,18 +302,18 @@ class KernelWriterAssembly(KernelWriter):
     tChar = "A" if tP["isA"] else "B" if tP["isB"] else "Metadata"
     if kernel["UnrollMajorLDS%s"%tChar]:
       if tChar == "A":
-        localReadWidth = (self.states.lrvwUnrollA * tP["bpe"]) / bpr
+        localReadWidth = (self.states.lrvwUnrollA * tP["bpeDS"]) / bpr
       if tChar == "B":
-        localReadWidth = (self.states.lrvwUnrollB * tP["bpe"]) / bpr
+        localReadWidth = (self.states.lrvwUnrollB * tP["bpeDS"]) / bpr
       if tChar == "Metadata":
-        localReadWidth = (self.states.lrvwUnrollMetadata * tP["bpe"]) / bpr
+        localReadWidth = (self.states.lrvwUnrollMetadata * tP["bpeDS"]) / bpr
     else:
       if tChar == "A":
-        localReadWidth = (self.states.lrvwTileA * tP["bpe"]) / bpr
+        localReadWidth = (self.states.lrvwTileA * tP["bpeDS"]) / bpr
       if tChar == "B":
-        localReadWidth = (self.states.lrvwTileB * tP["bpe"]) / bpr
+        localReadWidth = (self.states.lrvwTileB * tP["bpeDS"]) / bpr
       if tChar == "Metadata":
-        localReadWidth = (self.states.lrvwTileMetadata * tP["bpe"]) / bpr
+        localReadWidth = (self.states.lrvwTileMetadata * tP["bpeDS"]) / bpr
 
     # for directToLds x2/x4 support
     if kernel["DirectToLds%s"%tChar]:
@@ -322,7 +322,7 @@ class KernelWriterAssembly(KernelWriter):
     #localReadStridePerpendicular = 0
     localRead2Perpendicular = False
     localReadStrideCoalesced = \
-        kernel[tP["tt"]] * tP["bpe"]//bpr
+        kernel[tP["tt"]] * tP["bpeDS"]//bpr
     localRead2Coalesced = False
     localReadInstructionIdx = self.selectMemoryInstruction("LocalRead", localReadWidth, \
                               False, \
@@ -597,6 +597,11 @@ class KernelWriterAssembly(KernelWriter):
               for iui in range(0, kernel["InnerUnroll"]):
                 module.add(RegSet("v", "vgprValuB_X%u_I%u_D%u"%(bi,iui,data), self.states.b.startVgprValuPack+ri))
                 ri += self.states.b.numVgprValuPerBlock
+
+    if kernel["ConvertAfterDS"]:
+      cvtTemp = max(self.states.a.startVgprValuCvtTemp, self.states.b.startVgprValuCvtTemp)
+      if (cvtTemp != -1):
+         module.add(RegSet("v", "vgprCvtTemp", cvtTemp))
 
     if kernel["ProblemType"]["Gradient"] and kernel["ProblemType"]["UseBias"] and (kernel["ProblemType"]["BiasSrc"] == "A" or kernel["ProblemType"]["BiasSrc"] == "B"):
       module.add(RegSet("v", "vgprValuSum", self.states.bias.startVgprValu))
@@ -2672,7 +2677,7 @@ class KernelWriterAssembly(KernelWriter):
       # maxAddrSgpr = size[n] * stride[n-1]
       module.addComment0("max read offset = size[n] * stride[n-1]")
 
-      module.add(self.computeLoadSrd(kernel, tP, tc, kernel["ProblemType"]["IndexAssignments%s"%tc], tP["bpe"]))
+      module.add(self.computeLoadSrd(kernel, tP, tc, kernel["ProblemType"]["IndexAssignments%s"%tc], tP["bpeGR"]))
 
       if kernel["ProblemType"]["Sparse"] and kernel["DirectToVgprSparseMetadata"]:
         if (kernel["ProblemType"]["Sparse"] == 2 and tP["isB"]) or (kernel["ProblemType"]["Sparse"] == 1 and tP["isA"]):
@@ -2857,7 +2862,7 @@ class KernelWriterAssembly(KernelWriter):
             dst=sgpr(graInc), \
             src=sgpr(graInc), \
             shiftHex="BpeGR%sLog2"%tc,
-            comment="<- scale by bpe"))
+            comment="<- scale by bpeDS"))
 
         if 0 and tP["isB"] and loopIdx==0:
           module.add(self.getBomb())
@@ -2978,34 +2983,34 @@ class KernelWriterAssembly(KernelWriter):
       lds_stride = kernel["_DepthU%s"%tc] + LdsPad
       module.add(VMulU32U24(dst=vgpr(destVgpr), src0=hex(lds_stride), src1=vgpr(tP["gpr"]["lwoT"]), \
           comment="lw%s%s**(DepthU_Compute + PAD)"%(tc, self.states.unrollChar)))
-      if log2(tP["bpe"]) > 0:
-        module.add(VAddLShiftLeftU32(dst=vgpr(destVgpr), src0=vgpr(uReg), src1=vgpr(destVgpr), shiftHex=hex(log2(tP["bpe"])), \
-            comment="lwFO%s = (lw%s%s + lw%s%s*(DepthU+PAD))*bpe" % (tc, tc, tc, tc, self.states.unrollChar) ))
+      if log2(tP["bpeDS"]) > 0:
+        module.add(VAddLShiftLeftU32(dst=vgpr(destVgpr), src0=vgpr(uReg), src1=vgpr(destVgpr), shiftHex=hex(log2(tP["bpeDS"])), \
+            comment="lwFO%s = (lw%s%s + lw%s%s*(DepthU+PAD))*bpeDS" % (tc, tc, tc, tc, self.states.unrollChar) ))
       else:
         module.add(VAddU32(dst=vgpr(destVgpr), src0=vgpr(uReg), src1=vgpr(destVgpr), \
-            comment="lwFO%s = (lw%s%s + lw%s%s*(DepthU+PAD))*bpe(1)" % (tc, tc, tc, tc, self.states.unrollChar) ))
+            comment="lwFO%s = (lw%s%s + lw%s%s*(DepthU+PAD))*bpeDS(1)" % (tc, tc, tc, tc, self.states.unrollChar) ))
     else:
       lds_stride = kernel["MacroTile%s"%tc] + LdsPad
       module.add(VMulU32U24(dst=vgpr(destVgpr), src0=hex(lds_stride), src1=vgpr(uReg), \
           comment="lw%s%s**(MT%s + PAD)"%(tc, self.states.unrollChar, tc)))
-      if log2(tP["bpe"]) > 0:
-        module.add(VAddLShiftLeftU32(dst=vgpr(destVgpr), src0=vgpr(tP["gpr"]["lwoT"]), src1=vgpr(destVgpr), shiftHex=hex(log2(tP["bpe"])), \
-            comment="lwFO%s = (lw%s%s + lw%s%s*(MT%s+PAD))*bpe" % (tc, tc, tc, tc, self.states.unrollChar, tP["tileChar"]) ))
+      if log2(tP["bpeDS"]) > 0:
+        module.add(VAddLShiftLeftU32(dst=vgpr(destVgpr), src0=vgpr(tP["gpr"]["lwoT"]), src1=vgpr(destVgpr), shiftHex=hex(log2(tP["bpeDS"])), \
+            comment="lwFO%s = (lw%s%s + lw%s%s*(MT%s+PAD))*bpeDS" % (tc, tc, tc, tc, self.states.unrollChar, tP["tileChar"]) ))
       else:
         module.add(VAddU32(dst=vgpr(destVgpr), src0=vgpr(tP["gpr"]["lwoT"]), src1=vgpr(destVgpr), \
-            comment="lwFO%s = (lw%s%s + lw%s%s*(MT%s+PAD))*bpe(1)" % (tc, tc, tc, tc, self.states.unrollChar, tP["tileChar"]) ))
+            comment="lwFO%s = (lw%s%s + lw%s%s*(MT%s+PAD))*bpeDS(1)" % (tc, tc, tc, tc, self.states.unrollChar, tP["tileChar"]) ))
 
     # LdsBlockSizePerPad: add padding
     if kernel["LdsBlockSizePerPad%s"%tc] != 0 and kernel["LdsPad%s"%tc] != 0:
       tmpVgpr = self.vgprPool.checkOut(1)
       tmpVgprRes = RegisterPoolResource(tmpVgpr, 2)
       module.add(vectorStaticDivide(tmpVgpr, destVgpr, kernel["LdsBlockSizePerPad%s"%tc], tmpVgprRes, \
-        "padding %u per block %u" % (kernel["LdsPad%s"%tc] * tP["bpe"], kernel["LdsBlockSizePerPad%s"%tc])))
+        "padding %u per block %u" % (kernel["LdsPad%s"%tc] * tP["bpeDS"], kernel["LdsBlockSizePerPad%s"%tc])))
       with self.allocTmpSgpr(1) as tmpSgprInfo:
-        module.add(staticMultiply(vgpr(tmpVgpr), vgpr(tmpVgpr), kernel["LdsPad%s"%tc] * tP["bpe"], tmpSgprInfo, \
-          "padding %u per block %u" % (kernel["LdsPad%s"%tc] * tP["bpe"], kernel["LdsBlockSizePerPad%s"%tc])))
+        module.add(staticMultiply(vgpr(tmpVgpr), vgpr(tmpVgpr), kernel["LdsPad%s"%tc] * tP["bpeDS"], tmpSgprInfo, \
+          "padding %u per block %u" % (kernel["LdsPad%s"%tc] * tP["bpeDS"], kernel["LdsBlockSizePerPad%s"%tc])))
       module.add(VAddU32(dst=vgpr(destVgpr), src0=vgpr(tmpVgpr), src1=vgpr(destVgpr), \
-        comment="add padding %u per block %u" % (kernel["LdsPad%s"%tc] * tP["bpe"], kernel["LdsBlockSizePerPad%s"%tc])))
+        comment="add padding %u per block %u" % (kernel["LdsPad%s"%tc] * tP["bpeDS"], kernel["LdsBlockSizePerPad%s"%tc])))
       self.vgprPool.checkIn(tmpVgpr)
 
     if tP["isB"]:
@@ -3188,22 +3193,22 @@ class KernelWriterAssembly(KernelWriter):
       self.vgprPool.checkIn(tmp1)
       self.vgprPool.checkIn(tmp2)
     else:
-      if log2(tP["bpe"]) > 0:
-        module.add(VAddLShiftLeftU32(dst=finalVgpr, src0=vgpr(sgid), src1=vgpr(tP["gpr"]["lro"]), shiftHex=hex(log2(tP["bpe"])), \
-          comment="Final Offset: offset = (lro%s*VW+lsuoffset)*bpe" % tile01 ))
+      if log2(tP["bpeDS"]) > 0:
+        module.add(VAddLShiftLeftU32(dst=finalVgpr, src0=vgpr(sgid), src1=vgpr(tP["gpr"]["lro"]), shiftHex=hex(log2(tP["bpeDS"])), \
+          comment="Final Offset: offset = (lro%s*VW+lsuoffset)*bpeDS" % tile01 ))
       else:
         module.add(VAddU32(dst=finalVgpr, src0=vgpr(sgid), src1=vgpr(tP["gpr"]["lro"]), \
-          comment="Final Offset: offset = (lro%s*VW+lsuoffset)*bpe(1)" % tile01 ))
+          comment="Final Offset: offset = (lro%s*VW+lsuoffset)*bpeDS(1)" % tile01 ))
 
     # LdsBlockSizePerPad: add padding
     if kernel["LdsBlockSizePerPad%s"%tc] != 0 and kernel["LdsPad%s"%tc] !=0:
       module.add(vectorStaticDivide(rReg, "LocalReadAddr%s"%tc, kernel["LdsBlockSizePerPad%s"%tc], tmpVgprRes, \
-        "Final Offset: padding %u per block %u" % (kernel["LdsPad%s"%tc] * tP["bpe"], kernel["LdsBlockSizePerPad%s"%tc])))
+        "Final Offset: padding %u per block %u" % (kernel["LdsPad%s"%tc] * tP["bpeDS"], kernel["LdsBlockSizePerPad%s"%tc])))
       with self.allocTmpSgpr(1) as tmpSgprInfo:
-        module.add(staticMultiply(vgpr(rReg), vgpr(rReg), kernel["LdsPad%s"%tc] * tP["bpe"], tmpSgprInfo, \
-          "Final Offset: padding %u per block %u" % (kernel["LdsPad%s"%tc] * tP["bpe"], kernel["LdsBlockSizePerPad%s"%tc])))
+        module.add(staticMultiply(vgpr(rReg), vgpr(rReg), kernel["LdsPad%s"%tc] * tP["bpeDS"], tmpSgprInfo, \
+          "Final Offset: padding %u per block %u" % (kernel["LdsPad%s"%tc] * tP["bpeDS"], kernel["LdsBlockSizePerPad%s"%tc])))
       module.add(VAddU32(dst=vgpr("LocalReadAddr%s"%tc), src0=vgpr(rReg), src1=vgpr("LocalReadAddr%s"%tc), \
-        comment="Final Offset: add padding %u per block %u" % (kernel["LdsPad%s"%tc] * tP["bpe"], kernel["LdsBlockSizePerPad%s"%tc])))
+        comment="Final Offset: add padding %u per block %u" % (kernel["LdsPad%s"%tc] * tP["bpeDS"], kernel["LdsBlockSizePerPad%s"%tc])))
 
     # release resources
     self.vgprPool.checkIn(tmpVgpr)
@@ -4077,13 +4082,13 @@ class KernelWriterAssembly(KernelWriter):
 
           for tP in tPList:
             tc     = tP["tensorChar"]
-            LdsPad = kernel["LdsPad%s" % tc] if kernel["LdsBlockSizePerPad%s"%tc] == 0 else 0
-            inc    = kernel["LocalSplitU"]*(kernel["MacroTile%s"%tc]+LdsPad)*tP["bpe"]
+            LdsPad = kernel["LdsPad%s" % tc] * tP["bpeDS"] if kernel["LdsBlockSizePerPad%s"%tc] == 0 else 0
+            inc    = kernel["LocalSplitU"] * (kernel["MacroTile%s"%tc] + LdsPad) * tP["bpeDS"]
 
             # aligned with localReadInc
             if kernel["EnableMatrixInstruction"]:
               if kernel["UnrollMajorLDS%s" % tP["tensorChar"]]:
-                inc = kernel["LocalSplitU"] * tP["bpe"]
+                inc = kernel["LocalSplitU"] * tP["bpeDS"]
               # No need to *= K, because LoopCounter is increased by K each time
               # inc *= kernel["MatrixInstK"]
 
@@ -4404,6 +4409,9 @@ class KernelWriterAssembly(KernelWriter):
     dummy   = None
 
     if (numRegistersIn < 1) and ((kernel["UnrollMajorLDSA"] == False) or (kernel["UnrollMajorLDSB"] == False)):
+      s_nop = 2
+
+    if kernel["ConvertAfterDS"] and (numRegistersIn < 1) and ((tPA["bpe"] > tPA["bpeDS"]) or (tPB["bpe"] > tPB["bpeDS"])):
       s_nop = 2
 
     # here we remap index to where it read for wider local read
@@ -5218,9 +5226,9 @@ class KernelWriterAssembly(KernelWriter):
                     sgpr("Sizes%s+%u"%("Sum" if sizeIdxIsSum else "Free", sizeIdx)),  \
                     sgpr("Stride%s%s"%(tc, self.states.indexChars[tP['ia'][-1]])), \
                     "64b tensor%s size in elements"%tc))
-        if log2(tP["bpe"]) > 0:
+        if log2(tP["bpeGR"]) > 0:
           module.add(SLShiftLeftB64(dst=sgpr(maxAddrSgpr,2), src=sgpr(maxAddrSgpr,2), \
-            shiftHex=hex(log2(tP["bpe"])), comment="<- tensor%s size in bytes"%tc))
+            shiftHex=hex(log2(tP["bpeGR"])), comment="<- tensor%s size in bytes"%tc))
         else:
           module.addCommentAlign("<- tensor%s size in bytes (byte is 1, do nothing)")
         module.add(SAddU32(
@@ -5246,7 +5254,7 @@ class KernelWriterAssembly(KernelWriter):
         SMovBX     = SMovB32 if (waveSize == 32) else SMovB64
         module.add(SMovBX(dst=sgpr(fullExec,sgprCnt), src=activeMask, comment="to restore all threads active"))
         bpeVgpr = self.vgprPool.checkOut(1, "bpeVgpr")
-        module.add(VMovB32(dst=vgpr(bpeVgpr), src=hex(tP["bpe"]), comment="bpe"))
+        module.add(VMovB32(dst=vgpr(bpeVgpr), src=hex(tP["bpeGR"]), comment="bpeGR"))
 
         # can remove this?
         zeroVgpr = self.vgprPool.checkOut(1,"zeroVgpr")
@@ -5319,7 +5327,7 @@ class KernelWriterAssembly(KernelWriter):
                   regIdx = r // 4
                   if (tP["localWriteInstruction"].blockWidth <= 0.5) and (r%2 == 0) and not tP["isM"]:
                       numVgprG2L = self.states.a.numVgprG2L if tc == 'A' else self.states.b.numVgprG2L
-                      eccOffset = _getEccOffset(tP["globalReadInstruction"].totalWidth, bpr=self.states.bpr, bpe=max(tP["bpeGR"], tP["bpe"]), \
+                      eccOffset = _getEccOffset(tP["globalReadInstruction"].totalWidth, bpr=self.states.bpr, bpe=tP["bpeDS"], \
                         glvw=tP["glvw"], idx=loopCnt, numVgprG2L=numVgprG2L)
                 elif dataType.isHalf() or dataType.isBFloat16():
                   if tP["glvw"]>1 and kernel["AssertSummationElementMultiple"] % 2 == 0:
@@ -5331,7 +5339,7 @@ class KernelWriterAssembly(KernelWriter):
                     # then pack 2 registers into one
                     if (tP["localWriteInstruction"].blockWidth == 0.5) and (r%2 == 0):
                       numVgprG2L = self.states.a.numVgprG2L if tc == 'A' else self.states.b.numVgprG2L
-                      eccOffset = _getEccOffset(tP["globalReadInstruction"].totalWidth, bpr=self.states.bpr, bpe=max(tP["bpeGR"], tP["bpe"]), \
+                      eccOffset = _getEccOffset(tP["globalReadInstruction"].totalWidth, bpr=self.states.bpr, bpe=tP["bpeDS"], \
                         glvw=tP["glvw"], idx=loopCnt, numVgprG2L=numVgprG2L)
                     else:
                       destVgprHi = self.vgprPool.checkOut(1, 'destVgprHi')
@@ -5723,7 +5731,7 @@ class KernelWriterAssembly(KernelWriter):
 
               if self.states.archCaps["HasEccHalf"] and not tP["isM"]:
                 numVgprG2L = self.states.a.numVgprG2L if tc == 'A' else self.states.b.numVgprG2L if tc =='B' else self.states.m.numVgprG2L
-                eccOffset = _getEccOffset(loadWidth, bpr=self.states.bpr, bpe=max(tP["bpe"], tP["bpeGR"]), \
+                eccOffset = _getEccOffset(loadWidth, bpr=self.states.bpr, bpe=tP["bpeDS"], \
                   glvw=tP["glvw"], idx=i, numVgprG2L=numVgprG2L)
               else:
                 eccOffset = 0
@@ -6061,10 +6069,10 @@ class KernelWriterAssembly(KernelWriter):
     # print("2lscaOffset", lscaOffset)
     offsetElements = (lspaOffset + lscaOffset)
     # print("offsetElements", offsetElements)
-    offsetBytes   = offsetElements*tP["bpe"]
+    offsetBytes   = offsetElements*tP["bpeDS"]
 
     if kernel["LdsBlockSizePerPad%s"%tc] != 0 and kernel["LdsPad%s"%tc] != 0:
-      offsetBytes   = offsetBytes + (offsetBytes // kernel["LdsBlockSizePerPad%s"%tc]) * kernel["LdsPad%s"%tc] * tP["bpe"]
+      offsetBytes   = offsetBytes + (offsetBytes // kernel["LdsBlockSizePerPad%s"%tc]) * kernel["LdsPad%s"%tc] * tP["bpeDS"]
 
     offsetBytes += tP["localWriteSwapByteOffset"]
 
@@ -6296,7 +6304,7 @@ class KernelWriterAssembly(KernelWriter):
               # FIXME: Workaround, unique pattern in 8bit + glvw == 2...
               if tP["bpe"] == tP["bpeGR"] and (tP["globalReadInstruction"].totalWidth) == 0.5 and (blockWidth == 0.25) and not tP["isM"]:
                 eccinstHi = i // 2
-              eccOffset = _getEccOffset(tP["globalReadInstruction"].totalWidth, bpr=self.states.bpr, bpe=max(tP["bpeGR"], tP["bpe"]), \
+              eccOffset = _getEccOffset(tP["globalReadInstruction"].totalWidth, bpr=self.states.bpr, bpe=tP["bpeDS"], \
                 glvw=tP["glvw"], idx=eccinstHi, numVgprG2L=numVgprG2L)
             else:
               eccOffset = 0
@@ -6367,7 +6375,7 @@ class KernelWriterAssembly(KernelWriter):
             if (kernel["ProblemType"]["DataType"].isHalf() or kernel["ProblemType"]["DataType"].isBFloat16()) and not tP["isM"]:
               if s%2==1:
                 isHigh16Bits = True
-              if tP["glvw"]==1 and instHi%2==1:
+              if (blockWidth == 0.5) and (instHi % 2 == 1):
                 isHigh16Bits = True
               if kernel["ProblemType"]["DataType%s"%tc].isFloat8():
                 if g2lIdx%2 == 1:
@@ -6386,7 +6394,7 @@ class KernelWriterAssembly(KernelWriter):
               #   isHigh16Bits = True
 
             # Need cvt
-            if tP["bpe"] != tP["bpeGR"]:
+            if tP["bpeDS"] != tP["bpeGR"]:
               assert numBlocks == 1
               if (kernel["ProblemType"]["DataType%s"%tc].isSingle() and kernel["ProblemType"]["DataType"].isHalf()):
                 newBlockWidth = (tP["bpeGR"] / tP["bpe"]) * blockWidth
@@ -6651,8 +6659,8 @@ class KernelWriterAssembly(KernelWriter):
     LdsPad = kernel["LdsPad%s"%tc] if kernel["LdsBlockSizePerPad%s"%tc] == 0 else 0
 
     if self.states.inTailLoop:
-      inc = kernel["LocalSplitU"] * (kernel["MacroTile%s" % tP["tensorChar"]] + LdsPad) * tP["bpe"]
-      comment = " (LSU*(MT+PAD)*bpe)"
+      inc = kernel["LocalSplitU"] * (kernel["MacroTile%s" % tP["tensorChar"]] + LdsPad) * tP["bpeDS"]
+      comment = " (LSU*(MT+PAD)*bpeDS)"
       if kernel["EnableMatrixInstruction"]:
         matrixInstK = kernel["MatrixInstK"]
         if kernel["UnrollMajorLDS%s" % tc]:
@@ -6669,8 +6677,8 @@ class KernelWriterAssembly(KernelWriter):
             matrixInstK = 1 # multiplying matrixInstK is not necessary
             comment = ""
           else:
-            inc = kernel["LocalSplitU"] * tP["bpe"]
-            comment = " (LSU*bpe)"
+            inc = kernel["LocalSplitU"] * tP["bpeDS"]
+            comment = " (LSU*bpeDS)"
         inc *= matrixInstK
         if kernel["ProblemType"]["Sparse"]:
           if (kernel["ProblemType"]["Sparse"] == 2 and tc == "B") or (kernel["ProblemType"]["Sparse"] == 1 and tc == "A"):
@@ -6679,7 +6687,7 @@ class KernelWriterAssembly(KernelWriter):
             inc //= 8
 
       if (kernel["LdsBlockSizePerPad%s"%tc] != 0) and (kernel["LdsPad%s"%tc] != 0):
-        inc = inc + (inc // kernel["LdsBlockSizePerPad%s"%tc]) * kernel["LdsPad%s"%tc] * tP["bpe"]
+        inc = inc + (inc // kernel["LdsBlockSizePerPad%s"%tc]) * kernel["LdsPad%s"%tc] * tP["bpeDS"]
 
       with self.allocTmpSgpr(1) as tmpSgprInfo:
         tmpSgpr = tmpSgprInfo.idx

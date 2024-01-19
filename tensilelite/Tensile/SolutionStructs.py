@@ -2241,6 +2241,8 @@ class Solution(collections.abc.Mapping):
       if ((state["DirectToLdsA"] and state["ProblemType"]["TLUA"]) or \
           (state["DirectToLdsB"] and state["ProblemType"]["TLUB"])):
             state["LocalReadVectorWidth"] = 1 if (state["ProblemType"]["DataType"].numBytes() >= 4) else state["LocalReadVectorWidth"]
+      if state["ConvertAfterDS"]:
+          state["LocalReadVectorWidth"] = state["MIInputPerThread"]
     else:
       # support LocalReadVectorWidth < miInputPerThread for directToLdsX2/X4
       if state["LocalReadVectorWidth"] < state["MIInputPerThread"] and not (state["DirectToLdsA"] or state["DirectToLdsB"]):
@@ -2264,6 +2266,16 @@ class Solution(collections.abc.Mapping):
             (((128 + pad * state["ProblemType"]["DataType"].numBytes()) / 128) if state["UnrollMajorLDSB"] else 1)) \
             > globalParameters["MaxLDS"]:
           state["LocalReadVectorWidth"] //= 2
+
+    if state["ConvertAfterDS"]:
+        if state["ProblemType"]["DataTypeA"].isFloat8() and state["UnrollMajorLDSA"] == False:
+            reject(state, "ConvertAfterDS only support UnrollMajorLDSA True")
+            return
+        if state["ProblemType"]["DataTypeB"].isFloat8() and state["UnrollMajorLDSB"] == False:
+            reject(state, "ConvertAfterDS only support UnrollMajorLDSB True")
+            return
+        if state["LocalReadVectorWidth"] != state["MIInputPerThread"]:
+            reject(state, "LocalReadVectorWidth only support equal to MIInputPerThread")
 
     # Default GlobalReadVectorWidthA
     if state["GlobalReadVectorWidthA"] < 0:
@@ -2669,28 +2681,30 @@ class Solution(collections.abc.Mapping):
       state["UnrollMajorLDSMetadata"] = state["TransposeLDSMetadata"] and (not state["ProblemType"]["TLUMetadata"])
 
     auto_LdsBlockSizePerPadA_for_mix = 0
+    tmpBpe = state["ProblemType"]["DataTypeA"].numBytes() if state["ConvertAfterDS"] else state["ProblemType"]["DataType"].numBytes()
     if state["LdsBlockSizePerPadA"] == -1:
       auto_LdsBlockSizePerPadA_for_mix = 1
       if state["UnrollMajorLDSA"]:
-        state["LdsBlockSizePerPadA"] = roundUpToNearestMultiple(state["_DepthUA"] * state["ProblemType"]["DataType"].numBytes(), 128)
-        if state["_DepthUA"] * state["ProblemType"]["DataType"].numBytes() * state["VectorWidthA"] > 128:
-          state["LdsBlockSizePerPadA"] = roundUpToNearestMultiple(state["_DepthUA"] * state["ProblemType"]["DataType"].numBytes() * state["VectorWidthA"], 128)
+        state["LdsBlockSizePerPadA"] = roundUpToNearestMultiple(state["_DepthUA"] * tmpBpe, 128)
+        if state["_DepthUA"] * tmpBpe * state["VectorWidthA"] > 128:
+          state["LdsBlockSizePerPadA"] = roundUpToNearestMultiple(state["_DepthUA"] * tmpBpe * state["VectorWidthA"], 128)
       else:
         if state["MatrixInstB"] == 1 and state["MatrixInstM"] == 16:
-          state["LdsBlockSizePerPadA"] = state["MacroTile0"] * state["ProblemType"]["DataType"].numBytes() * state["LocalReadVectorWidth"]
+          state["LdsBlockSizePerPadA"] = state["MacroTile0"] * tmpBpe * state["LocalReadVectorWidth"]
         else:
           state["LdsBlockSizePerPadA"] = 0
 
     auto_LdsBlockSizePerPadB_for_mix = 0
+    tmpBpe = state["ProblemType"]["DataTypeB"].numBytes() if state["ConvertAfterDS"] else state["ProblemType"]["DataType"].numBytes()
     if state["LdsBlockSizePerPadB"] == -1:
       auto_LdsBlockSizePerPadB_for_mix = 1
       if state["UnrollMajorLDSB"]:
-        state["LdsBlockSizePerPadB"] = roundUpToNearestMultiple(state["_DepthUB"] * state["ProblemType"]["DataType"].numBytes(), 128)
-        if state["_DepthUB"] * state["ProblemType"]["DataType"].numBytes() * state["VectorWidthB"] > 128:
-          state["LdsBlockSizePerPadB"] = roundUpToNearestMultiple(state["_DepthUB"] * state["ProblemType"]["DataType"].numBytes() * state["VectorWidthB"], 128)
+        state["LdsBlockSizePerPadB"] = roundUpToNearestMultiple(state["_DepthUB"] * tmpBpe, 128)
+        if state["_DepthUB"] * tmpBpe * state["VectorWidthB"] > 128:
+          state["LdsBlockSizePerPadB"] = roundUpToNearestMultiple(state["_DepthUB"] * tmpBpe * state["VectorWidthB"], 128)
       else:
         if state["MatrixInstB"] == 1 and state["MatrixInstM"] == 16:
-          state["LdsBlockSizePerPadB"] = state["MacroTile1"] * state["ProblemType"]["DataType"].numBytes() * state["LocalReadVectorWidth"]
+          state["LdsBlockSizePerPadB"] = state["MacroTile1"] * tmpBpe * state["LocalReadVectorWidth"]
         else:
           state["LdsBlockSizePerPadB"] = 0
 
@@ -2982,8 +2996,8 @@ class Solution(collections.abc.Mapping):
     if (state["UnrollMajorLDSA"] or state["UnrollMajorLDSB"]) and (not state["EnableMatrixInstruction"]):
         reject(state, "UnrollMajorLDS Supports only in EnableMatrixInstruction=1")
 
-    bpeA = state["ProblemType"]["DataType"].numBytes()
-    bpeB = state["ProblemType"]["DataType"].numBytes()
+    bpeA = state["ProblemType"]["DataTypeA"].numBytes() if state["ConvertAfterDS"] else state["ProblemType"]["DataType"].numBytes()
+    bpeB = state["ProblemType"]["DataTypeB"].numBytes() if state["ConvertAfterDS"] else state["ProblemType"]["DataType"].numBytes()
     ldsAlign = int(64 / state["ProblemType"]["DataType"].numRegisters())
 
     if state["UnrollMajorLDSA"]:
