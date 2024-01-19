@@ -1022,6 +1022,9 @@ validParameters = {
 
     # 4:2 Structured Sparse A Matrix, 0=Non Sparse, 1=Sparse Matrix A, 2=Sparse Matrix B
     "Sparse":                      [0, 1, 2],
+
+    # in mix mode F8 need to convert to F16, do this before(0) ds or after(1) ds
+    "ConvertAfterDS":              [False, True],
     }
 
 
@@ -1112,8 +1115,9 @@ defaultBenchmarkCommonParameters = [
     {"ActivationFused":           [ True  ] },
     {"ActivationFuncCall":        [ True  ] },
     {"ActivationAlt":             [ False ] },
-    {"WorkGroupReduction":        [ False ] }
-    ]
+    {"WorkGroupReduction":        [ False ] },
+    {"ConvertAfterDS":            [ False ] }
+]
 
 # dictionary of defaults comprised of default option for each parameter
 defaultSolution = {}
