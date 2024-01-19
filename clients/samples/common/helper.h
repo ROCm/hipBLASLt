@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022-2023 Advanced Micro Devices, Inc.
+ * Copyright (C) 2022-2024 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -82,12 +82,14 @@ struct Runner
         CHECK_HIP_ERROR(hipMalloc(&d_c, m * n * batch_count * sizeof(OutType)));
         CHECK_HIP_ERROR(hipMalloc(&d_d, m * n * batch_count * sizeof(OutType)));
         CHECK_HIP_ERROR(hipMalloc(&d_alphaVec, m * batch_count * sizeof(float)));
+        CHECK_HIP_ERROR(hipMalloc(&d_bias, m * batch_count * sizeof(float)));
 
         CHECK_HIP_ERROR(hipHostMalloc(&a, m * k * batch_count * sizeof(InTypeA)));
         CHECK_HIP_ERROR(hipHostMalloc(&b, n * k * batch_count * sizeof(InTypeB)));
         CHECK_HIP_ERROR(hipHostMalloc(&c, m * n * batch_count * sizeof(OutType)));
         CHECK_HIP_ERROR(hipHostMalloc(&d, m * n * batch_count * sizeof(OutType)));
         CHECK_HIP_ERROR(hipHostMalloc(&alphaVec, m * batch_count * sizeof(float)));
+        CHECK_HIP_ERROR(hipHostMalloc(&bias, m * batch_count * sizeof(float)));
 
         if(max_workspace_size > 0)
             CHECK_HIP_ERROR(hipMalloc(&d_workspace, max_workspace_size));
@@ -100,6 +102,8 @@ struct Runner
             ((OutType*)c)[i] = static_cast<OutType>((rand() % 7) - 3);
         for(int i = 0; i < m * batch_count; ++i)
             ((float*)alphaVec)[i] = static_cast<float>((rand() % 7) - 3);
+        for(int i = 0; i < m * batch_count; ++i)
+            ((float*)bias)[i] = static_cast<float>((rand() % 7) - 3);
     }
 
     ~Runner()
@@ -110,11 +114,13 @@ struct Runner
         CHECK_HIP_ERROR(hipFree(c));
         CHECK_HIP_ERROR(hipFree(d));
         CHECK_HIP_ERROR(hipFree(alphaVec));
+        CHECK_HIP_ERROR(hipFree(bias));
         CHECK_HIP_ERROR(hipFree(d_a));
         CHECK_HIP_ERROR(hipFree(d_b));
         CHECK_HIP_ERROR(hipFree(d_c));
         CHECK_HIP_ERROR(hipFree(d_d));
         CHECK_HIP_ERROR(hipFree(d_alphaVec));
+        CHECK_HIP_ERROR(hipFree(d_bias));
         CHECK_HIPBLASLT_ERROR(hipblasLtDestroy(handle));
         CHECK_HIP_ERROR(hipStreamDestroy(stream));
     }
@@ -129,6 +135,8 @@ struct Runner
             d_c, c, m * n * batch_count * sizeof(OutType), hipMemcpyHostToDevice, stream));
         CHECK_HIP_ERROR(hipMemcpyAsync(
             d_alphaVec, alphaVec, m * batch_count * sizeof(float), hipMemcpyHostToDevice, stream));
+        CHECK_HIP_ERROR(hipMemcpyAsync(
+            d_bias, bias, m * batch_count * sizeof(float), hipMemcpyHostToDevice, stream));
     }
 
     void deviceToHost()
@@ -154,8 +162,8 @@ struct Runner
     AlphaType alpha;
     BetaType  beta;
 
-    void *a, *b, *c, *d, *alphaVec; // host
-    void *d_a, *d_b, *d_c, *d_d, *d_alphaVec; // device
+    void *a, *b, *c, *d, *alphaVec, *bias; // host
+    void *d_a, *d_b, *d_c, *d_d, *d_alphaVec, *d_bias; // device
 
     void*   d_workspace;
     int64_t max_workspace_size;
@@ -315,24 +323,25 @@ template <typename Type>
 struct LayerNormRunner
 {
     LayerNormRunner(int64_t m, int64_t n)
-        : m(m), n(n)
+        : m(m)
+        , n(n)
     {
         CHECK_HIP_ERROR(hipStreamCreate(&stream));
         CHECK_HIPBLASLT_ERROR(hipblasLtCreate(&handle));
 
-        CHECK_HIP_ERROR(hipMalloc(&d_out,    m * n * sizeof(Type)));
-        CHECK_HIP_ERROR(hipMalloc(&d_mean,   m * sizeof(Type)));
+        CHECK_HIP_ERROR(hipMalloc(&d_out, m * n * sizeof(Type)));
+        CHECK_HIP_ERROR(hipMalloc(&d_mean, m * sizeof(Type)));
         CHECK_HIP_ERROR(hipMalloc(&d_invvar, m * sizeof(Type)));
-        CHECK_HIP_ERROR(hipMalloc(&d_in,     m * n * sizeof(Type)));
-        CHECK_HIP_ERROR(hipMalloc(&d_gamma,  n * sizeof(Type)));
-        CHECK_HIP_ERROR(hipMalloc(&d_beta,   n * sizeof(Type)));
+        CHECK_HIP_ERROR(hipMalloc(&d_in, m * n * sizeof(Type)));
+        CHECK_HIP_ERROR(hipMalloc(&d_gamma, n * sizeof(Type)));
+        CHECK_HIP_ERROR(hipMalloc(&d_beta, n * sizeof(Type)));
 
-        CHECK_HIP_ERROR(hipHostMalloc(&out,    m * n * sizeof(Type)));
-        CHECK_HIP_ERROR(hipHostMalloc(&mean,   m * sizeof(Type)));
+        CHECK_HIP_ERROR(hipHostMalloc(&out, m * n * sizeof(Type)));
+        CHECK_HIP_ERROR(hipHostMalloc(&mean, m * sizeof(Type)));
         CHECK_HIP_ERROR(hipHostMalloc(&invvar, m * sizeof(Type)));
-        CHECK_HIP_ERROR(hipHostMalloc(&in,     m * n * sizeof(Type)));
-        CHECK_HIP_ERROR(hipHostMalloc(&gamma,  n * sizeof(Type)));
-        CHECK_HIP_ERROR(hipHostMalloc(&beta,   n * sizeof(Type)));
+        CHECK_HIP_ERROR(hipHostMalloc(&in, m * n * sizeof(Type)));
+        CHECK_HIP_ERROR(hipHostMalloc(&gamma, n * sizeof(Type)));
+        CHECK_HIP_ERROR(hipHostMalloc(&beta, n * sizeof(Type)));
 
         for(int i = 0; i < m * n; i++)
             ((Type*)in)[i] = static_cast<Type>((rand() % 7) - 3);
@@ -364,22 +373,22 @@ struct LayerNormRunner
 
     void hostToDevice()
     {
-        CHECK_HIP_ERROR(hipMemcpyAsync(
-            d_in, in, m * n * sizeof(Type), hipMemcpyHostToDevice, stream));
-        CHECK_HIP_ERROR(hipMemcpyAsync(
-            d_gamma, gamma, n * sizeof(Type), hipMemcpyHostToDevice, stream));
-        CHECK_HIP_ERROR(hipMemcpyAsync(
-            d_beta, beta, n * sizeof(Type), hipMemcpyHostToDevice, stream));
+        CHECK_HIP_ERROR(
+            hipMemcpyAsync(d_in, in, m * n * sizeof(Type), hipMemcpyHostToDevice, stream));
+        CHECK_HIP_ERROR(
+            hipMemcpyAsync(d_gamma, gamma, n * sizeof(Type), hipMemcpyHostToDevice, stream));
+        CHECK_HIP_ERROR(
+            hipMemcpyAsync(d_beta, beta, n * sizeof(Type), hipMemcpyHostToDevice, stream));
     }
 
     void deviceToHost()
     {
-        CHECK_HIP_ERROR(hipMemcpyAsync(
-            out, d_out, m * n * sizeof(Type), hipMemcpyDeviceToHost, stream));
-        CHECK_HIP_ERROR(hipMemcpyAsync(
-            mean, d_mean, m * sizeof(Type), hipMemcpyDeviceToHost, stream));
-        CHECK_HIP_ERROR(hipMemcpyAsync(
-            invvar, d_invvar, m * sizeof(Type), hipMemcpyDeviceToHost, stream));
+        CHECK_HIP_ERROR(
+            hipMemcpyAsync(out, d_out, m * n * sizeof(Type), hipMemcpyDeviceToHost, stream));
+        CHECK_HIP_ERROR(
+            hipMemcpyAsync(mean, d_mean, m * sizeof(Type), hipMemcpyDeviceToHost, stream));
+        CHECK_HIP_ERROR(
+            hipMemcpyAsync(invvar, d_invvar, m * sizeof(Type), hipMemcpyDeviceToHost, stream));
     }
 
     void run(const std::function<void()>& func)
@@ -392,8 +401,8 @@ struct LayerNormRunner
         hipStreamSynchronize(stream);
     }
 
-    int64_t   m;
-    int64_t   n;
+    int64_t m;
+    int64_t n;
 
     void *out, *mean, *invvar, *in, *gamma, *beta; // host
     void *d_out, *d_mean, *d_invvar, *d_in, *d_gamma, *d_beta; // host
@@ -406,7 +415,8 @@ template <typename Type>
 struct OptAMaxRunner
 {
     OptAMaxRunner(int64_t m, int64_t n)
-        : m(m), n(n)
+        : m(m)
+        , n(n)
     {
         CHECK_HIP_ERROR(hipStreamCreate(&stream));
         CHECK_HIPBLASLT_ERROR(hipblasLtCreate(&handle));
@@ -435,14 +445,13 @@ struct OptAMaxRunner
 
     void hostToDevice()
     {
-        CHECK_HIP_ERROR(hipMemcpyAsync(
-            d_in, in, m * n * sizeof(Type), hipMemcpyHostToDevice, stream));
+        CHECK_HIP_ERROR(
+            hipMemcpyAsync(d_in, in, m * n * sizeof(Type), hipMemcpyHostToDevice, stream));
     }
 
     void deviceToHost()
     {
-        CHECK_HIP_ERROR(hipMemcpyAsync(
-            out, d_out, sizeof(Type), hipMemcpyDeviceToHost, stream));
+        CHECK_HIP_ERROR(hipMemcpyAsync(out, d_out, sizeof(Type), hipMemcpyDeviceToHost, stream));
     }
 
     void run(const std::function<void()>& func)
@@ -455,8 +464,8 @@ struct OptAMaxRunner
         hipStreamSynchronize(stream);
     }
 
-    int64_t   m;
-    int64_t   n;
+    int64_t m;
+    int64_t n;
 
     void *in, *out; // host
     void *d_in, *d_out; // device

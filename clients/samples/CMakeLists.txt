@@ -1,5 +1,5 @@
 # ########################################################################
-# Copyright (C) 2022-2023 Advanced Micro Devices, Inc.
+# Copyright (C) 2022-2024 Advanced Micro Devices, Inc.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -30,6 +30,7 @@ add_executable( sample_hipblaslt_gemm_get_all_algos_ext gemm_get_all_algos/sampl
 add_executable( sample_hipblaslt_gemm_get_algo_by_index_ext gemm_get_algo_by_index/sample_hipblaslt_gemm_get_algo_by_index_ext.cpp)
 add_executable( sample_hipblaslt_gemm_mix_precision_ext gemm_mix_precision/sample_hipblaslt_gemm_mix_precision_ext.cpp)
 add_executable( sample_hipblaslt_gemm_mix_precision_with_amax_ext gemm_mix_precision/sample_hipblaslt_gemm_mix_precision_with_amax_ext.cpp)
+add_executable( sample_hipblaslt_gemm_simple_tuning_ext gemm_tuning/sample_hipblaslt_gemm_simple_tuning_ext.cpp)
 add_executable( sample_hipblaslt_gemm_tuning_splitk_ext gemm_tuning/sample_hipblaslt_gemm_tuning_splitk_ext.cpp)
 add_executable( sample_hipblaslt_gemm_tuning_wgm_ext gemm_tuning/sample_hipblaslt_gemm_tuning_wgm_ext.cpp)
 add_executable( sample_hipblaslt_groupedgemm_ext groupedgemm/sample_hipblaslt_groupedgemm_ext.cpp)
@@ -46,6 +47,7 @@ set(samples sample_hipblaslt_gemm
             sample_hipblaslt_gemm_get_algo_by_index_ext
             sample_hipblaslt_gemm_mix_precision_ext
             sample_hipblaslt_gemm_mix_precision_with_amax_ext
+            sample_hipblaslt_gemm_simple_tuning_ext
             sample_hipblaslt_gemm_tuning_splitk_ext
             sample_hipblaslt_gemm_tuning_wgm_ext
             sample_hipblaslt_groupedgemm_ext
