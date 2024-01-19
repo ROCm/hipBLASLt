@@ -3541,6 +3541,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
     self.defineSgpr("GSUSumIdx", 2, 2)
     self.defineSgpr("GSULog2BpeC", 1)
     self.defineSgpr("GSULog2BpeD", 1)
+    self.defineSgpr("StaggerU", 1)
     self.defineSgpr("WGM", 1)
 
     if kernel["LocalSplitU"] > 1:
@@ -3624,7 +3625,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
       self.defineSgpr("Beta", numSgprBeta, numSgprBeta)
       self.states.numSgprBeta = numSgprBeta
 
-    self.defineSgpr("GSU", 1)  # FIXME: Move to the front when multi gemm arg selection sgprs are fixed
+    self.defineSgpr("GSU", 1)  # Can't move to the front because of the preload arguments
 
     # Calculate numSgpr preload
     self.states.numSgprPreload = 0
