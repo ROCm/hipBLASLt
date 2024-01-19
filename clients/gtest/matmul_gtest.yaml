@@ -551,6 +551,20 @@ Tests:
   bias_vector: [0, 1]
   scaleAlpha_vector: [0, 1]
 
+- name: matmul_bf16_Custom_Equality
+  category: pre_checkin
+  transA: T
+  transB: N
+  function:
+    matmul: *real_precisions
+  matrix_size:
+    - { M: 7168, N: 2, K: 8192 }
+    - { M: 3584, N: 2, K: 8192 }
+    - { M: 1280, N: 2, K: 8192 }
+    - { M: 1280, N: 2, K: 8192 }
+  alpha: 1
+  beta: [ 0.0, 2.0 ]
+
 - name: matmul_bias_vector_dst_fp16_32
   category: pre_checkin
   function:
