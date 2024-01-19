@@ -1,6 +1,6 @@
 ################################################################################
 #
-# Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -1957,6 +1957,12 @@ class VDot2F32F16(CommonInstruction):
     def __init__(self, dst, src0, src1, src2, vop3: Optional[VOP3PModifiers] = None, comment="") -> None:
         super().__init__(InstType.INST_F32, dst, [src0, src1, src2], None, vop3, comment)
         self.setInst("v_dot2_f32_f16")
+
+# TODO- enable this for available GPU
+class VDot2F32BF16(CommonInstruction):
+    def __init__(self, dst, src0, src1, src2, vop3: Optional[VOP3PModifiers] = None, comment="") -> None:
+        super().__init__(InstType.INST_F32, dst, [src0, src1, src2], None, vop3, comment)
+        self.setInst("v_dot2_f32_bf16")
 
 # Fma
 class VFmaF16(CommonInstruction):

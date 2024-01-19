@@ -1,6 +1,6 @@
 ################################################################################
 #
-# Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -329,11 +329,11 @@ def VSaturateCastInt(sumIdxV, tmpVgpr, tmpSgpr, lowerBound, upperBound, type=Sat
 # Cvt
 ########################################
 
-def VCvtBF16toFP32(dst, src, vgprMask, vi):
+def VCvtBF16toFP32(dst, src, vgprMask, vi, additionalCmts=""):
     if (vi % 2) == 1:
-        return VAndB32(dst=vgpr(dst), src0=vgpr(src), src1=vgpr(vgprMask), comment="convert bf16 to fp32") # mask = hex(0xffff0000)
+        return VAndB32(dst=vgpr(dst), src0=vgpr(src), src1=vgpr(vgprMask), comment="cvt bf16 to fp32. " + additionalCmts) # mask = hex(0xffff0000)
     else:
-        return VLShiftLeftB32(dst=vgpr(dst), shiftHex=16, src=vgpr(src), comment="convert bf16 to fp32")
+        return VLShiftLeftB32(dst=vgpr(dst), shiftHex=16, src=vgpr(src), comment="cvt bf16 to fp32. " + additionalCmts)
 
 ########################################
 # init lds state
