@@ -1116,6 +1116,21 @@ class KernelWriterAssembly(KernelWriter):
     return module
 
   ##############################################################################
+  def getKernelArgLoadModule(self, kernel, sgprStartIdx, numsOfLoad, preloadNum):
+    kernelArgs = Module("load arguments")
+    kernelArgs.addComment1("Load Kernel Args")
+    if globalParameters["DebugKernel"]:
+      kernelArgs.add(self.argLoader.loadKernArg("AddressDbg", "KernArgAddress", dword=2))
+    self.argLoader.resetOffset()
+    kernelArgs.addModuleAsFlatItems(self.argLoader.loadAllKernArg(sgprStartIdx, "KernArgAddress", numsOfLoad, preloadNum))
+    if kernel["ProblemType"]["UseScaleAB"]:
+      sgprOffset = self.argLoader.getOffset()
+      for preloadScale, name in zip([self.states.preloadScaleA, self.states.preloadScaleB], ['A','B']):
+        if preloadScale:
+          kernelArgs.add(self.argLoader.loadKernArg("AddressScale%s"%name, "KernArgAddress", sgprOffset=hex(sgprOffset), dword=2))
+        sgprOffset += (self.states.rpga * self.states.bpr)
+    return kernelArgs
+
   def defineAndResources(self, kernel, tPA, tPB, lralwaCode):
     module = Module("allocateResources")
     module.add(self.macroAndSet(kernel, tPA, tPB))
@@ -1149,22 +1164,9 @@ class KernelWriterAssembly(KernelWriter):
       loadedCommonArgs = 8 # TODO: Need to make this automatically calculated
       ########################################
       # load kernel args
-      kernelArgs = Module("load arguments")
-      kernelArgs.addComment1("Load Kernel Args")
-      if globalParameters["DebugKernel"]:
-        kernelArgs.add(self.argLoader.loadKernArg("AddressDbg", "KernArgAddress", dword=2))
-
       load = self.states.numSgprToLoad
       sgprStart = self.sgprs["SizesFree"]
-      moduleLoadAllKernArg = self.argLoader.loadAllKernArg(sgprStart, "KernArgAddress", load, 0)
-      if kernel["ProblemType"]["UseScaleAB"]:
-        sgprOffset = self.argLoader.getOffset()
-        for preloadScale, name in zip([self.states.preloadScaleA, self.states.preloadScaleB], ['A','B']):
-          if preloadScale:
-            moduleLoadAllKernArg.add(self.argLoader.loadKernArg("AddressScale%s"%name, "KernArgAddress", sgprOffset=hex(sgprOffset), dword=2))
-          sgprOffset += (self.states.rpga * self.states.bpr)
-
-      kernelArgs.addModuleAsFlatItems(moduleLoadAllKernArg)
+      kernelArgs = self.getKernelArgLoadModule(kernel, sgprStart, load, 0)
 
       ########################################
       # load ws/ user args
@@ -1227,7 +1229,7 @@ class KernelWriterAssembly(KernelWriter):
         moduleArgs.add(SAddCU32(dst=sgpr("KernArgAddress+1"), src0=sgpr("KernArgAddress+1"), src1=hex(0)))
         commonArgNum = 2
         self.argLoader.resetOffset()
-        moduleArgs.addModuleAsFlatItems(self.argLoader.loadAllKernArg(sgprStart, "KernArgAddress", load, self.states.numSgprPreload - commonArgNum))
+        moduleArgs.addModuleAsFlatItems(self.getKernelArgLoadModule(kernel, sgprStart, load, self.states.numSgprPreload - commonArgNum))
         for i in range(2, self.states.numSgprPreload):
           moduleArgs.add(SMovB32(dst=sgpr(sgprStart+i-commonArgNum), src=sgpr(preloadSgprStartIdx+i), comment="move preload data to correct sgpr"))
         if kernel["ProblemType"]["SupportUserArgs"]:
