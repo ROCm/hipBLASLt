@@ -211,10 +211,13 @@ inline rocblaslt_status rocblaslt_epilogue_valid_args(const rocblaslt_epilogue& 
     bias_type = original_bias_type; // == HIPBLASLT_DATATYPE_INVALID ? d_type : original_bias_type;
     gradient  = is_grad_enabled(epilogue);
 
+    bias = nullptr;
     if(is_bias_enabled(epilogue))
+    {
+        if(original_bias == nullptr)
+            status = rocblaslt_status_invalid_pointer;
         bias = (void*)original_bias;
-    else
-        bias = nullptr;
+    }
 
     if(original_scaleAlphaVec)
         scaleAlphaVec = (void*)original_scaleAlphaVec; //pointer mode alpha vector pass by alpha

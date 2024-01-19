@@ -1,6 +1,6 @@
 ################################################################################
 #
-# Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -64,7 +64,7 @@ class PackData_F16(PackData):
 
 class PackData_BF16(PackData):
     kernel = {"ProblemType": {"ComputeDataType": DataType(DataType.single), "DestDataType": DataType(DataType.bfloat16)}}
-    def __call__(self, gwvw, destIdx, elementSumIdx, bf16CVTVgprStruct, tmpS01, laneSGPRC, inputPrefix="", prefixOffset=0):
+    def __call__(self, gwvw, destIdx, elementSumIdx, bf16CVTVgprStruct, tmpS01, laneSGPRC, tmpVgpr=None, inputPrefix="", prefixOffset=0):
         vgprBf16Temp = bf16CVTVgprStruct.vgprBf16Temp
         vgprBf16Inc = bf16CVTVgprStruct.vgprBf16Inc
         vgprFp32Nan = bf16CVTVgprStruct.vgprFp32Nan
@@ -77,22 +77,29 @@ class PackData_BF16(PackData):
             module.add(VBfeU32(dst=vgpr(vgprBf16Temp), src0=vgpr(formatVgpr), src1=16, src2=1, comment="Non-Nan case: store lsb of bf16" ))
             module.add(VAdd3U32(dst=vgpr(vgprBf16Temp), src0=vgpr(formatVgpr), src1=vgpr(vgprBf16Temp), src2=vgpr(vgprBf16Inc), comment="Non-Nan case: add lsb and the increment for rounding" ))
             module.add(VCndMaskB32(dst=vgpr(formatVgpr), src0=vgpr(vgprBf16Temp), src1=vgpr(vgprFp32Nan), src2=sgpr(tmpS01,laneSGPRC)))
-            module.add(VLShiftRightB32(dst=vgpr(formatVgpr), shiftHex=16, src=vgpr(formatVgpr), comment="convert C to bf16"))
+            module.add(VLShiftRightB32(dst=vgpr(destIdx), shiftHex=16, src=vgpr(formatVgpr), comment="convert C to bf16"))
             return module
 
         assert (gwvw % 2 == 0)
         for vi in range(0, gwvw):
             sumIdxV = elementSumIdx + vi
             formatVgpr = formatting(sumIdxV, inputPrefix, prefixOffset)
+            if tmpVgpr:
+                tmpDst   = tmpVgpr + vi
+                tmpDst_1 = tmpVgpr + vi - 1
+            else:
+                tmpDst   = formatVgpr
+                tmpDst_1 = formatting(sumIdxV-1, inputPrefix, prefixOffset)
+
             module.add(VCmpUF32(dst=sgpr(tmpS01,laneSGPRC), src0=vgpr(formatVgpr), src1=vgpr(formatVgpr), comment="check Nan"))
             module.add(VBfeU32(dst=vgpr(vgprBf16Temp), src0=vgpr(formatVgpr), src1=16, src2=1, comment="Non-Nan case: store lsb of bf16" ))
             module.add(VAdd3U32(dst=vgpr(vgprBf16Temp), src0=vgpr(formatVgpr), src1=vgpr(vgprBf16Temp), src2=vgpr(vgprBf16Inc), comment="Non-Nan case: add lsb and the increment for rounding" ))
-            module.add(VCndMaskB32(dst=vgpr(formatVgpr), src0=vgpr(vgprBf16Temp), src1=vgpr(vgprFp32Nan), src2=sgpr(tmpS01,laneSGPRC)))
+            module.add(VCndMaskB32(dst=vgpr(tmpDst), src0=vgpr(vgprBf16Temp), src1=vgpr(vgprFp32Nan), src2=sgpr(tmpS01,laneSGPRC)))
             if vi%2 == 0:
-                module.add(VLShiftRightB32(dst=vgpr(formatVgpr), shiftHex=16, src=vgpr(formatVgpr), comment="convert C to bf16"))
+                module.add(VLShiftRightB32(dst=vgpr(tmpDst), shiftHex=16, src=vgpr(tmpDst), comment="convert C to bf16"))
             elif vi%2 == 1:
                 d = destIdx + vi//2
-                module.add(VAndOrB32(dst=vgpr(d), src0=vgpr(formatVgpr), src1=vgpr(vgprBf16Mask), src2=vgpr(formatting(sumIdxV-1, inputPrefix, prefixOffset)), comment="pack two bf16 to dword"))
+                module.add(VAndOrB32(dst=vgpr(d), src0=vgpr(tmpDst), src1=vgpr(vgprBf16Mask), src2=vgpr(tmpDst_1), comment="pack two bf16 to dword"))
         return module
 
 class PackData_FLOAT8(PackData):

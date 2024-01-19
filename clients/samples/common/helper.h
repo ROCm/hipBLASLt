@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022-2023 Advanced Micro Devices, Inc.
+ * Copyright (C) 2022-2024 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -57,7 +57,8 @@ template <typename InTypeA,
           typename InTypeB,
           typename OutType,
           typename AlphaType,
-          typename BetaType>
+          typename BetaType,
+          typename BiasType = OutType>
 struct Runner
 {
     Runner(int64_t   m,
@@ -117,6 +118,40 @@ struct Runner
         CHECK_HIP_ERROR(hipFree(d_alphaVec));
         CHECK_HIPBLASLT_ERROR(hipblasLtDestroy(handle));
         CHECK_HIP_ERROR(hipStreamDestroy(stream));
+
+        if(biasVec)
+        {
+            CHECK_HIP_ERROR(hipFree(biasVec));
+            CHECK_HIP_ERROR(hipFree(d_biasVec));
+        }
+    }
+
+    void setBiasInfo(bool useBias, char biasSrc)
+    {
+        biasElems = 0;
+        if(useBias)
+        {
+            if(biasSrc == 'B' || biasSrc == 'b')
+                biasElems = n;
+            else if(biasSrc == 'A' || biasSrc == 'a' || biasSrc == 'D' || biasSrc == 'd')
+                biasElems = m;
+            // else, biasElems = 0
+        }
+
+        // alloc bias if use bias
+        if(biasElems > 0)
+        {
+            if(biasVec)
+            {
+                CHECK_HIP_ERROR(hipFree(biasVec));
+                CHECK_HIP_ERROR(hipFree(d_biasVec));
+            }
+
+            CHECK_HIP_ERROR(hipMalloc(&d_biasVec, biasElems * sizeof(BiasType)));
+            CHECK_HIP_ERROR(hipHostMalloc(&biasVec, biasElems * sizeof(BiasType)));
+            for(int i = 0; i < biasElems; ++i)
+                ((BiasType*)biasVec)[i] = static_cast<BiasType>((rand() % 7) - 3);
+        }
     }
 
     void hostToDevice()
@@ -129,6 +164,10 @@ struct Runner
             d_c, c, m * n * batch_count * sizeof(OutType), hipMemcpyHostToDevice, stream));
         CHECK_HIP_ERROR(hipMemcpyAsync(
             d_alphaVec, alphaVec, m * batch_count * sizeof(float), hipMemcpyHostToDevice, stream));
+
+        // cpy bias if needed
+        if(biasVec)
+            CHECK_HIP_ERROR(hipMemcpyAsync(d_biasVec, biasVec, biasElems * sizeof(BiasType), hipMemcpyHostToDevice, stream));
     }
 
     void deviceToHost()
@@ -159,6 +198,10 @@ struct Runner
 
     void*   d_workspace;
     int64_t max_workspace_size;
+
+    int64_t biasElems = 0;
+    void*   biasVec   = nullptr; // host
+    void*   d_biasVec = nullptr; // device
 
     hipStream_t       stream;
     hipblasLtHandle_t handle;

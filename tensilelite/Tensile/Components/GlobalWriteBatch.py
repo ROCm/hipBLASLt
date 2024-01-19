@@ -1,6 +1,6 @@
 ################################################################################
 #
-# Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -31,7 +31,7 @@ from ..TensileInstructions import Label, Module, EXEC, SDWAModifiers, VCC, Selec
                             DataType, CvtType, RoundType
 from ..TensileInstructions.Instructions import *
 from ..AsmAddressCalculation import AddrCalculation
-from ..Components.PackData import formatting, PackData_F16
+from ..Components.PackData import formatting, PackData_F16, PackData_BF16
 
 from math import ceil
 
@@ -796,6 +796,11 @@ class GlobalWriteBatchWriter:
             packdata = PackData_F16()
             module.add(packdata(self.gwvw, tmpVgpr, vgprDst, tmpVgpr=tmpVgpr, inputPrefix=prefixStr, prefixOffset=prefixOffset))
             vgprDst = tmpVgpr
+          elif self.kernel["ProblemType"]["DataTypeE"].isBFloat16():
+            packdata = PackData_BF16()
+            module.add(packdata(self.gwvw, tmpVgpr, vgprDst, self.cvtVgprStruct, self.tmpS01, self.laneSGPRC,
+                                tmpVgpr=tmpVgpr, inputPrefix=prefixStr, prefixOffset=prefixOffset))
+            vgprDst = tmpVgpr
           elif self.kernel["ProblemType"]["DataTypeE"].isSingle():
             if not mergeActFuncCall:
               vgprDst = "ValuC+%d" % vgprDst
@@ -818,6 +823,12 @@ class GlobalWriteBatchWriter:
               dataEV2 = dataE + vi // 2
               selectbit = SelectBit.WORD_0 if (self.gwvw != 1 and vi % 2 == 0) or (self.gwvw == 1 and elementIdx % 2 == 0) else SelectBit.WORD_1
               gradientCvtModule.add(VCvtF16toF32(dst=vgpr(dataEV), src=vgpr(dataEV2+loadOffset), sdwa=SDWAModifiers(src0_sel=selectbit), comment="gwvw %d, elementIdx %d"%(self.gwvw, elementIdx)))
+          elif activationCDataType.isSingle() and self.kernel["ProblemType"]["DataTypeE"].isBFloat16():
+            for vi in range(0, self.gwvw):
+              dataEV  = dataE + vi
+              dataEV2 = dataE + vi // 2
+              selectWord = 0 if (self.gwvw != 1 and vi % 2 == 0) or (self.gwvw == 1 and elementIdx % 2 == 0) else 1
+              module.add(VCvtBF16toFP32(dst=(dataEV), src=(dataEV2+loadOffset), vgprMask=(self.cvtVgprStruct.vgprBf16Mask), vi=(selectWord), additionalCmts="gwvw %d, elementIdx %d"%(self.gwvw, elementIdx)))
           else:
             printExit("[Gradient input] Unsupported conversion.")
 
@@ -1418,10 +1429,7 @@ class GlobalWriteBatchWriter:
           # src1 = dataV = f16.lo = opsel 10 or 11 depending on even/odd
           # src2 = sumIdxV = f32 = opsel 00
           dataCExternal = ss.elementData[elementIdx] + vi//2
-          if (vi%2) == 1:
-            module.add(VAndB32(dst=vgpr(tmpVgpr), src0=vgpr(dataCExternal), src1=vgpr(cvtVgprStruct.vgprBf16Mask), comment="convert bf16 to fp32"))
-          else:
-            module.add(VLShiftLeftB32(dst=vgpr(tmpVgpr), shiftHex=16, src=vgpr(dataCExternal), comment="convert bf16 to fp32" ))
+          module.add(VCvtBF16toFP32(dst=(tmpVgpr), src=(dataCExternal), vgprMask=(cvtVgprStruct.vgprBf16Mask), vi=(vi)))
           newSumIdxV = sumIdxV - self.parentWriter.states.c.startVgprValu
           module.add(VMacF32(dst=vgpr("ValuC+%u"%newSumIdxV), src0=vgpr(tmpVgpr), src1=sgpr("Beta"), \
               comment="finalSum = sum*alpha + C*beta"))
