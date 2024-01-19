@@ -390,7 +390,6 @@ class KernelWriterAssembly(KernelWriter):
       if kernel["ProblemType"]["Sparse"]:
         self.defineSgpr("ShadowLimitMetadata", 2, 2)
 
-    self.defineSgpr("StaggerU", 1)
     self.defineSgpr("StaggerUIter", 1)  # stagger loop iterations, used for various iter counts in the code
     self.defineSgpr("WrapUA", 2)  # Bytes to add to SrdA to reset address from N-1 iter to AddressA
     self.defineSgpr("WrapUB", 2)  # Bytes to add to SrdB to reset address from N-1 iter to AddressB
@@ -1144,11 +1143,7 @@ class KernelWriterAssembly(KernelWriter):
     if self.do["PreLoop"]:
       ### temp sgpr for groupedgemm ###
       # can be start from sgpr_preload_end
-      if self.states.numSgprPreload > 0:
-        tempSgprForGG = 16
-      else:
-        tempSgprForGG = self.sgprs["WGM"] + 1
-      sgprNumsOfGemm = tempSgprForGG
+      sgprNumsOfGemm = self.sgprs["ShadowLimitA"]
 
       self.kernArgOffset = 0
       self.argLoader = ArgumentLoader()
@@ -1172,7 +1167,7 @@ class KernelWriterAssembly(KernelWriter):
       # load ws/ user args
       hbmArgs = Module("load HBM arguments")
       if (self.states.kernel["WorkGroupMappingXCC"] > 1):
-        tmpSgprNumWorkGroups = tempSgprForGG+1
+        tmpSgprNumWorkGroups = self.sgprs["SrdA"] + 3
         hbmArgs.addComment1("Grouped Gemm: Load num of WGs")
         hbmArgs.add(self.argLoader.loadKernArg(tmpSgprNumWorkGroups, "KernArgAddress", hex(20), dword=1))
       if kernel["ProblemType"]["SupportUserArgs"]:
@@ -1380,12 +1375,10 @@ class KernelWriterAssembly(KernelWriter):
 
       if (self.states.kernel["WorkGroupMappingXCC"] > 1):
         module.addComment1("remap workgroup to XCCs")
-        tmpSgpr0 = roundUp((tmpSgprNumWorkGroups+1)/2)*2
+        tmpSgpr0 = self.sgprs["SrdA"]
         tmpSgpr1 = tmpSgpr0+1
         tmpSgpr2 = tmpSgpr1+1
-        tmpSgprRes0 = tmpSgpr2+2
-        tmpSgprRes1 = tmpSgprRes0+1
-        tmpSgprRes2 = tmpSgprRes1+1
+        tmpSgprRes0 = self.sgprs["SrdB"]
         tmpSgprRes = RegisterPoolResource(idx=tmpSgprRes0, size=3)
         WGMXCC = self.states.kernel["WorkGroupMappingXCC"]
         label_skipWGMXCC = Label(label="skip_WGMXCC", comment="skip WGMXCC if no enough WGs to remap")
@@ -1409,20 +1402,17 @@ class KernelWriterAssembly(KernelWriter):
         module.add(label_skipWGMXCC)
 
       # FIXME: Need to fix these cause it may cause data hazard
-      tmpSgprM = roundUp((sgprNumsOfGemm+1)/4)*4
+      tmpSgprM = self.sgprs["SizesFree"]
       tmpSgprN = tmpSgprM+1
       tmpSgprB = tmpSgprN+1
-      tmpSgprK = tmpSgprB+1
-      tmpSgprArgAddress0 = tmpSgprK+1
-      tmpSgprArgAddress1 = tmpSgprArgAddress0+1
-      tmpSgpr0 = tmpSgprArgAddress1+1
-      tmpSgpr1 = tmpSgpr0+1
-      tmpSgprNumWG0 = tmpSgpr1+1
-      tmpSgprNumWG1 = tmpSgprNumWG0+1
-      tmpSgprAddrM = tmpSgprNumWG1+1
-      tmpSgprAccumTiles = tmpSgprAddrM+1
-      tmpSgprLoopCounter = tmpSgprAccumTiles+1
-      tmpSgprArgOffsett = tmpSgprLoopCounter+1
+      tmpSgprArgAddress0 = self.sgprs["SrdA"]
+      tmpSgpr0 = self.sgprs["SrdA"] + 2
+      tmpSgprNumWG0 = self.sgprs["SrdB"]
+      tmpSgprNumWG1 = tmpSgprNumWG0 + 1
+      tmpSgprAddrM = tmpSgprNumWG1 + 2
+      tmpSgprAccumTiles = tmpSgprAddrM + 3
+      tmpSgprLoopCounter = self.sgprs["NumWorkGroups0"]
+      tmpSgprArgOffsett = self.sgprs["NumWorkGroups1"]
 
       # offset KernArgAddress to address of M
       extValidLabel    = Label(label="IsExternalValid", comment="")
@@ -1494,8 +1484,8 @@ class KernelWriterAssembly(KernelWriter):
       module.add(SAddU32(dst=sgpr(tmpSgprAccumTiles), src0=sgpr(tmpSgprAccumTiles), src1=sgpr(tmpSgprNumWG0)))
 
       # gemmIndex found
-      tmpSgprWgLeft = sgprNumsOfGemm+1
-      tmpSgprGemmIdxLeft = sgprNumsOfGemm+2
+      tmpSgprWgLeft = self.sgprs["SrdA"]
+      tmpSgprGemmIdxLeft = tmpSgprWgLeft + 1
       module.addComment1("Grouped Gemm:: gemmIndex found")
       module.add(label_FOUND)
       module.add(SSubU32(dst=sgpr(tmpSgprGemmIdxLeft), src0=sgpr(tmpSgprLoopCounter), src1=1))
@@ -1519,7 +1509,7 @@ class KernelWriterAssembly(KernelWriter):
                          src1=(self.argLoader.getOffset() + (numStoreSgprToLoad * 4))))
       module.add(SAddU32(dst=sgpr("KernArgAddress"), src0=sgpr("KernArgAddress"), src1=sgpr(tmpSgprGemmIdxLeft)))
       module.add(SAddCU32(dst=sgpr("KernArgAddress+1"), src0=sgpr("KernArgAddress+1"), src1=hex(0)))
-      module.add(kernelArgs)
+      module.add(self.getKernelArgLoadModule(kernel, sgprStart, load, 4))
       if kernel["ProblemType"]["SupportUserArgs"]:
         module.add(SBranch(extLabelEnd.getLabelName()))
         module.add(extLabel)
@@ -1531,7 +1521,7 @@ class KernelWriterAssembly(KernelWriter):
         moduleExternalArgs = Module("Load external Arguments")
       # Here alpha and beta in user args are fixed sizes, so we need to exclude beta and read it with a different offset
         load = load - self.states.numSgprBeta
-        moduleExternalArgs.addModuleAsFlatItems(self.externalArgLoader.loadAllKernArg(sgprStart, "ExternalArgAddress", load))
+        moduleExternalArgs.addModuleAsFlatItems(self.externalArgLoader.loadAllKernArg(sgprStart, "ExternalArgAddress", load, 4))
         offset = self.externalArgLoader.getOffset() + self.states.bpr * (self.states.userArgsInfo.alphaMaxRegisterSize - self.states.numSgprAlpha)
         self.externalArgLoader.setOffset(offset)
         moduleExternalArgs.addComment("Read Beta")
