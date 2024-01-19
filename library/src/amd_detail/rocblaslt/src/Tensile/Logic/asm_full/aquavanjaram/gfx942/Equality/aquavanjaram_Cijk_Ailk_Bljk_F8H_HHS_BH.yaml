@@ -12012,7 +12012,7 @@
     CUCount: null
     ClusterLocalRead: 1
     CodeObjectVersion: default
-    ConvertAfterDS: true
+    ConvertAfterDS: false
     CustomKernelName: ''
     DepthU: 128
     DirectToLds: false
@@ -12024,13 +12024,13 @@
     EnableMatrixInstruction: true
     ExpandPointerSwap: 0
     GlobalReadPerMfma: 1
-    GlobalReadVectorWidthA: 16
+    GlobalReadVectorWidthA: 8
     GlobalReadVectorWidthB: 8
     GlobalSplitU: 17
     GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 2
     GroupLoadStore: false
-    GuaranteeNoPartialA: false
+    GuaranteeNoPartialA: true
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
     ISA: [9, 4, 2]
@@ -12038,36 +12038,36 @@
     InterleaveAlpha: 0
     InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true}
     KernelLanguage: Assembly
-    KernelNameMin: Cijk_Ailk_Bljk_F8H_HHS_BH_MT128x32x128_MI16x16x1_SN_GRVWA16_GRVWB8_LPB8_MIWT2_2_SS0_SVW8
+    KernelNameMin: Cijk_Ailk_Bljk_F8H_HHS_BH_MT128x32x128_MI16x16x1_SN_GRVWA8_GRVWB8_MIWT2_2_SS1_SVW2
     LSCA: 128
     LSCB: 128
     LSPA: 4
     LSPB: 4
-    LVCA: 8
+    LVCA: 16
     LVCB: 16
     LVPA: 1
     LVPB: 1
-    LdsBlockSizePerPadA: 512
+    LdsBlockSizePerPadA: 2048
     LdsBlockSizePerPadB: 256
     LdsBlockSizePerPadMetadata: 0
     LdsInitCVgprs: false
-    LdsNumBytes: 26112
-    LdsNumElementsAlignedA: 17408
-    LdsNumElementsAlignedB: 8704
+    LdsNumBytes: 43008
+    LdsNumElementsAlignedA: 33792
+    LdsNumElementsAlignedB: 9216
     LdsNumElementsAlignedMetadata: 0
     LdsOffsetA: 0
-    LdsOffsetA_Blk: 32768
-    LdsOffsetB: 17408
-    LdsOffsetB_Blk: 50176
+    LdsOffsetA_Blk: 65536
+    LdsOffsetB: 33792
+    LdsOffsetB_Blk: 99328
     LdsOffsetBias: 0
     LdsOffsetBiasGSU: 0
     LdsOffsetBiasNonGSU: 0
-    LdsOffsetMetadata: 26112
-    LdsOffsetMetadata_Blk: 50176
+    LdsOffsetMetadata: 43008
+    LdsOffsetMetadata_Blk: 99328
     LdsPadA: 32
-    LdsPadB: 8
+    LdsPadB: 16
     LdsPadMetadata: 0
-    LocalReadVectorWidth: 4
+    LocalReadVectorWidth: 8
     LocalSplitU: 1
     LocalWritePerMfma: -1
     LocalWriteUseSgprA: false
@@ -12116,11 +12116,11 @@
     NumElementsPerBatchStore: 0
     NumElementsPerThread: 16
     NumGlobalWriteVectorsPerThread: 8
-    NumLoadsA: 4
+    NumLoadsA: 8
     NumLoadsB: 2
     NumLoadsCoalescedA: 1
     NumLoadsCoalescedB: 1
-    NumLoadsPerpendicularA: 4
+    NumLoadsPerpendicularA: 8
     NumLoadsPerpendicularB: 2
     NumThreads: 256
     OptNoLoadLoop: 1
@@ -12207,16 +12207,16 @@
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 50
-    SolutionNameMin: Cijk_Ailk_Bljk_F8H_HHS_BH_MT128x32x128_MI16x16x1_SN_GRVWA16_GRVWB8_GSU17_LPB8_MIWT2_2_SS0_SU4_SUM1_SUS512_SVW8_WGM1
-    SourceSwap: 0
+    SolutionIndex: 0
+    SolutionNameMin: Cijk_Ailk_Bljk_F8H_HHS_BH_MT128x32x128_MI16x16x1_SN_GRVWA8_GRVWB8_GSU17_MIWT2_2_SS1_SU4_SUM1_SUS512_SVW2_WGM8
+    SourceSwap: 1
     StaggerU: 4
     StaggerUMapping: 1
     StaggerUStride: 512
     StorePriorityOpt: false
     StoreRemapVectorWidth: 0
     StoreSyncOpt: 0
-    StoreVectorWidth: 8
+    StoreVectorWidth: 2
     SubGroup0: 16
     SubGroup1: 16
     SubGroupA: 16
@@ -12244,7 +12244,7 @@
     WaveSeparateGlobalReadMetadata: 0
     WavefrontSize: 64
     WorkGroup: [64, 4, 1]
-    WorkGroupMapping: 1
+    WorkGroupMapping: 8
     WorkGroupMappingXCC: 1
     WorkGroupReduction: false
     WorkspaceCheck: [4, 0, 17]
@@ -12253,7 +12253,7 @@
     _DepthUB: 128
     _DepthUMetadata: 128
     _GlobalAccumulation: MultipleBuffer
-    _UseSgprForGRO: false
+    _UseSgprForGRO: 1
     _VectorStore: 1
     _WorkspaceSizePerElemBias: 0
     _WorkspaceSizePerElemC: 4
