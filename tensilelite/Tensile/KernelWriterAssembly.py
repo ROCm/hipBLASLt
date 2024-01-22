@@ -1778,19 +1778,19 @@ class KernelWriterAssembly(KernelWriter):
     wgmLabel = Label(label=self.labels.getNameInc("WGM"), comment="")
     module.add(SCmpLeU32(src0=sgpr("WGM"), src1=1, comment="WGM <= 1 ?"))
     module.add(SCBranchSCC1(labelName=wgmLabel.getLabelName(), comment="branch if WGM <= 1"))
-    with self.allocTmpSgpr(5, alignment=1) as tmpSgprInfo:
+    with self.allocTmpSgpr(4, alignment=1) as tmpSgprInfo:
       if tmpSgprInfo.idx % 2 == 0:
         wgmDivisor = tmpSgprInfo.idx+0
         wgmDivisor2 = tmpSgprInfo.idx+1
         blockId2 = tmpSgprInfo.idx+2
         wgSerial2 = tmpSgprInfo.idx+3
-        wgmDivisorMagicNumber = tmpSgprInfo.idx+4
+        wgmDivisorMagicNumber = tmpSgprInfo.idx+1
       else:
-        wgmDivisorMagicNumber = tmpSgprInfo.idx+0
         wgmDivisor = tmpSgprInfo.idx+1
         wgmDivisor2 = tmpSgprInfo.idx+2
         blockId2 = tmpSgprInfo.idx+3
-        wgSerial2 = tmpSgprInfo.idx+4
+        wgSerial2 = tmpSgprInfo.idx+0
+        wgmDivisorMagicNumber = tmpSgprInfo.idx+2
 
       # note this overwrites blockId2+1
       module.add(scalarUInt32DivideAndRemainder(qReg=blockId2, dReg="WorkGroup1", divReg="WGM", rReg=wgSerial2, tmpVgprRes=tmpVgprRes, wavewidth=kernel["WavefrontSize"], doRemainder=False, comment="WGM"))
@@ -7110,27 +7110,25 @@ class KernelWriterAssembly(KernelWriter):
       module.add(SCmpEQU32(src0=sgpr("GSU"), src1=1, comment="GSU == 1 ?"))
       module.add(SCBranchSCC1(labelName=gsuLabel.getLabelName(), comment="branch if GSU == 1"))
       # GSU algorithm 2: adjust output buffer address to per GSU buffer
-      with self.allocTmpSgpr(5, alignment=1) as tmpSgprInfo:
+      with self.allocTmpSgpr(4, alignment=1) as tmpSgprInfo:
         if tmpSgprInfo.idx % 2 == 0:
           tmpSgprX2 = tmpSgprInfo.idx+0
           tmpSgpr0 = tmpSgprInfo.idx+0
           tmpSgpr1 = tmpSgprInfo.idx+1
           tmpSgpr2 = tmpSgprInfo.idx+2
           tmpSgpr3 = tmpSgprInfo.idx+3
-          tmpSgpr4 = tmpSgprInfo.idx+4
         else:
           tmpSgprX2 = tmpSgprInfo.idx+1
           tmpSgpr0 = tmpSgprInfo.idx+1
           tmpSgpr1 = tmpSgprInfo.idx+2
           tmpSgpr2 = tmpSgprInfo.idx+0
           tmpSgpr3 = tmpSgprInfo.idx+3
-          tmpSgpr4 = tmpSgprInfo.idx+4
         module.addComment("GSU Output Buffer offset: Free0 + (Free1-1)*StrideC1J + (Free2-1)*StrideCK * GSUIdx * bpe%s")
         module.addModuleAsFlatItems(self.s_mul_u64_u32(sgpr(tmpSgpr0), sgpr(tmpSgpr1), sgpr("SizesFree+0"), sgpr("GSUSumIdx"), "Free0"))
         for i in range(1, numDim):
-          module.add(SSubU32(dst=sgpr(tmpSgpr4), src0=sgpr("SizesFree+%u"%i), src1=1, comment="Free%u" % i))
-          module.add(SMulI32(dst=sgpr(tmpSgpr4), src0=sgpr(tmpSgpr4), src1=sgpr("GSUSumIdx"), comment="Free%u" % i))
-          module.addModuleAsFlatItems(self.s_mul_u64_u32(sgpr(tmpSgpr2), sgpr(tmpSgpr3), sgpr(tmpSgpr4), sgpr("StrideC%s"%self.states.indexChars[i]), "Free%u" % i))
+          module.add(SSubU32(dst=sgpr(tmpSgpr2), src0=sgpr("SizesFree+%u"%i), src1=1, comment="Free%u" % i))
+          module.add(SMulI32(dst=sgpr(tmpSgpr2), src0=sgpr(tmpSgpr2), src1=sgpr("GSUSumIdx"), comment="Free%u" % i))
+          module.addModuleAsFlatItems(self.s_mul_u64_u32(sgpr(tmpSgpr2), sgpr(tmpSgpr3), sgpr(tmpSgpr2), sgpr("StrideC%s"%self.states.indexChars[i]), "Free%u" % i))
           module.add(SAddU32(dst=sgpr(tmpSgpr0), src0=sgpr(tmpSgpr0), src1=sgpr(tmpSgpr2), comment="Free%u" % i))
           module.add(SAddCU32(dst=sgpr(tmpSgpr1), src0=sgpr(tmpSgpr1), src1=sgpr(tmpSgpr3), comment="Free%u" % i))
         module.add(SLShiftLeftB64(dst=sgpr(tmpSgprX2,2), src=sgpr(tmpSgprX2,2), shiftHex=log2(self.states.bpeCinternal), comment="scale by bpe"))
