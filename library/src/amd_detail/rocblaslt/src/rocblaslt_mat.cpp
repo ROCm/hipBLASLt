@@ -1382,6 +1382,20 @@ rocblaslt_status rocblaslt_makeArgument_cpp(rocblaslt_handle             handle,
     return makeArgument(handle, gemmType, algo, tuning, workspace, useUserArgs, stream, gemmData);
 }
 
+std::string rocblaslt_get_kernel_name_from_data_cpp(rocblaslt_handle             handle,
+                                                    const rocblaslt::RocGemmType gemmType,
+                                                    std::shared_ptr<void>        gemmData)
+{
+    return getKernelNameFromData(handle, gemmType, gemmData);
+}
+
+std::string rocblaslt_get_solution_name_from_data_cpp(rocblaslt_handle             handle,
+                                                      const rocblaslt::RocGemmType gemmType,
+                                                      std::shared_ptr<void>        gemmData)
+{
+    return getSolutionNameFromData(handle, gemmType, gemmData);
+}
+
 std::string rocblaslt_get_kernel_name_from_algo(rocblaslt_handle             handle,
                                                 const rocblaslt_matmul_algo& algo)
 {
