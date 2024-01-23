@@ -4174,6 +4174,24 @@ class KernelWriterAssembly(KernelWriter):
     # Define sgprs for kernel args
     runActivation = True if ((kernel["ProblemType"]["ActivationType"] != 'none') \
         and kernel["ActivationFused"]) else False
+
+    def fixPreloadOffset(offset, sgpxIdxVec, numStoreSgprToLoad):
+      item = None
+      startVgprName = sgpxIdxVec[0]
+      if kernel["ProblemType"]["UseScaleAB"]:
+        if (kernel["ProblemType"]["DataTypeA"].numRegisters() > kernel["ProblemType"]["DataType"].numRegisters()) and (kernel["ProblemType"]["DataTypeB"].numRegisters() > kernel["ProblemType"]["DataType"].numRegisters()):
+          self.argLoader.setOffset(offset + ((self.states.rpga * self.states.bpr) * 2))
+        elif kernel["ProblemType"]["DataTypeA"].numRegisters() > kernel["ProblemType"]["DataType"].numRegisters():
+          assert sgpxIdxVec[0] == self.sgprs["AddressScaleB"]
+          self.argLoader.setOffset(offset + (self.states.rpga * self.states.bpr))
+        elif kernel["ProblemType"]["DataTypeB"].numRegisters() > kernel["ProblemType"]["DataType"].numRegisters():
+          assert sgpxIdxVec[0] == self.sgprs["AddressScaleA"]
+          item = self.argLoader.loadKernArg(self.sgprs["AddressScaleA"], "KernArgAddress", dword=2)
+          startVgprName = sgpxIdxVec[1]
+          numStoreSgprToLoad -= self.states.rpga
+          self.argLoader.setOffset(offset + ((self.states.rpga * self.states.bpr) * 2))
+      return (item, startVgprName, numStoreSgprToLoad)
+
     if self.states.numStoreSgprToLoad:
       sgpxIdxVec = self.defineMultiSgprs(self.states.numStoreSgprNames, self.states.numStoreSgprNameSizes, align=4)
       for name in self.states.numStoreSgprNames:
@@ -4188,7 +4206,11 @@ class KernelWriterAssembly(KernelWriter):
         module.addComment0("Check if custom structure pointer is null")
         module.add(SBranchIfNotZero("ExternalArgAddress", DataType('int64'), extReadEpilogueLabel))
         argOffset = self.argLoader.getOffset() # Backup offset
-        loadModule = module.addModuleAsFlatItems(self.argLoader.loadAllKernArg(sgpxIdxVec[0], "KernArgAddress", self.states.numStoreSgprToLoad))
+        numStoreSgprToLoad = self.states.numStoreSgprToLoad
+        (item, startVgprName, numStoreSgprToLoad) = fixPreloadOffset(argOffset, sgpxIdxVec, numStoreSgprToLoad)
+        if item:
+          module.add(item)
+        loadModule = module.addModuleAsFlatItems(self.argLoader.loadAllKernArg(startVgprName, "KernArgAddress", numStoreSgprToLoad))
         self.states.numStoreSgprInst = loadModule.countType(SMemLoadInstruction)
         self.argLoader.setOffset(argOffset) # Restore offset
         module.add(SBranch(extReadEpilogueLabelEnd.getLabelName()))
@@ -4268,20 +4290,10 @@ class KernelWriterAssembly(KernelWriter):
         module.add(extReadEpilogueLabelEnd)
       else:
         argOffset = self.argLoader.getOffset() # Backup offset
-        startVgprName = sgpxIdxVec[0]
         numStoreSgprToLoad = self.states.numStoreSgprToLoad
-        if kernel["ProblemType"]["UseScaleAB"]:
-          if (kernel["ProblemType"]["DataTypeA"].numRegisters() > kernel["ProblemType"]["DataType"].numRegisters()) and (kernel["ProblemType"]["DataTypeB"].numRegisters() > kernel["ProblemType"]["DataType"].numRegisters()):
-            self.argLoader.setOffset(argOffset + ((self.states.rpga * self.states.bpr) * 2))
-          elif kernel["ProblemType"]["DataTypeA"].numRegisters() > kernel["ProblemType"]["DataType"].numRegisters():
-            assert sgpxIdxVec[0] == self.sgprs["AddressScaleB"]
-            self.argLoader.setOffset(argOffset + (self.states.rpga * self.states.bpr))
-          elif kernel["ProblemType"]["DataTypeB"].numRegisters() > kernel["ProblemType"]["DataType"].numRegisters():
-            assert sgpxIdxVec[0] == self.sgprs["AddressScaleA"]
-            module.add(self.argLoader.loadKernArg(self.sgprs["AddressScaleA"], "KernArgAddress", dword=2))
-            startVgprName = sgpxIdxVec[1]
-            numStoreSgprToLoad -= self.states.rpga
-            self.argLoader.setOffset(argOffset + ((self.states.rpga * self.states.bpr) * 2))
+        (item, startVgprName, numStoreSgprToLoad) = fixPreloadOffset(argOffset, sgpxIdxVec, numStoreSgprToLoad)
+        if item:
+          module.add(item)
         loadModule = module.addModuleAsFlatItems(self.argLoader.loadAllKernArg(startVgprName, "KernArgAddress", numStoreSgprToLoad))
         self.states.numStoreSgprInst = loadModule.countType(SMemLoadInstruction)
         self.argLoader.setOffset(argOffset) # Restore offset
