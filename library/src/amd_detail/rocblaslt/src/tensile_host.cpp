@@ -2548,6 +2548,92 @@ rocblaslt_status getBestSolutions(rocblaslt_handle       handle,
     return rocblaslt_status_success;
 }
 
+std::string getKernelNameFromData(rocblaslt_handle             handle,
+                                  const rocblaslt::RocGemmType gemmType,
+                                  std::shared_ptr<void>        gemmData)
+{
+    std::shared_ptr<Tensile::MasterSolutionLibrary<Tensile::ContractionProblemGemm>> library;
+    std::shared_ptr<hipDeviceProp_t>                                                 deviceProp;
+
+    auto adapter = get_library_and_adapter(&library, &deviceProp, handle->device);
+    int  gsu     = 0;
+    int  wgm     = 0;
+    std::vector<Tensile::KernelInvocation> kernels;
+
+    if(gemmType == rocblaslt::RocGemmType::ROCBLASLT_GEMM)
+    {
+        std::shared_ptr<TensileDataGemm> data = std::static_pointer_cast<TensileDataGemm>(gemmData);
+        kernels                               = data->kernels;
+        gsu                                   = data->problem.getParams().gsu();
+        wgm                                   = data->problem.getParams().wgm();
+    }
+    else if(gemmType == rocblaslt::RocGemmType::ROCBLASLT_GROUPED_GEMM)
+    {
+        std::shared_ptr<TensileDataGroupedGemm> data
+            = std::static_pointer_cast<TensileDataGroupedGemm>(gemmData);
+        kernels = data->kernels;
+        gsu     = data->problem.gemms[0].getParams().gsu();
+        wgm     = data->problem.gemms[0].getParams().wgm();
+    }
+    std::string kernelName = "";
+    if(kernels.empty())
+        return kernelName;
+    kernelName += kernels[0].kernelName;
+    for(size_t i = 1; i < kernels.size(); i++)
+    {
+        kernelName += "; " + kernels[i].kernelName;
+    }
+    return kernelName;
+}
+
+std::string getSolutionNameFromData(rocblaslt_handle             handle,
+                                    const rocblaslt::RocGemmType gemmType,
+                                    std::shared_ptr<void>        gemmData)
+{
+    std::shared_ptr<Tensile::MasterSolutionLibrary<Tensile::ContractionProblemGemm>> library;
+    std::shared_ptr<hipDeviceProp_t>                                                 deviceProp;
+
+    auto adapter       = get_library_and_adapter(&library, &deviceProp, handle->device);
+    int  gsu           = 0;
+    int  wgm           = 0;
+    int  solutionIndex = -1;
+
+    if(gemmType == rocblaslt::RocGemmType::ROCBLASLT_GEMM)
+    {
+        std::shared_ptr<TensileDataGemm> data = std::static_pointer_cast<TensileDataGemm>(gemmData);
+        solutionIndex                         = data->algoIndex;
+        gsu                                   = data->problem.getParams().gsu();
+        wgm                                   = data->problem.getParams().wgm();
+    }
+    else if(gemmType == rocblaslt::RocGemmType::ROCBLASLT_GROUPED_GEMM)
+    {
+        std::shared_ptr<TensileDataGroupedGemm> data
+            = std::static_pointer_cast<TensileDataGroupedGemm>(gemmData);
+        solutionIndex = data->algoIndex;
+        gsu           = data->problem.gemms[0].getParams().gsu();
+        wgm           = data->problem.gemms[0].getParams().wgm();
+    }
+    if(solutionIndex == -1)
+        return "";
+    auto        solution       = library->getSolutionByIndex(solutionIndex);
+    std::string modifiedString = "";
+    if(gsu != solution->sizeMapping.globalSplitU && gsu != 0)
+    {
+        modifiedString += "GSU: " + std::to_string(gsu);
+    }
+
+    if(wgm != solution->sizeMapping.workGroupMapping && wgm != 0)
+    {
+        if(modifiedString != "")
+            modifiedString += ", ";
+        modifiedString += "WGM: " + std::to_string(wgm);
+    }
+    auto solutionName = solution->solutionName;
+    if(modifiedString != "")
+        solutionName += " (Custom tuning: " + modifiedString + ")";
+    return solutionName;
+}
+
 std::string getKernelNameFromAlgoIndex(rocblaslt_handle handle, const rocblaslt_matmul_algo& algo)
 {
     std::shared_ptr<Tensile::MasterSolutionLibrary<Tensile::ContractionProblemGemm>> library;

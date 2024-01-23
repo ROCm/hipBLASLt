@@ -361,6 +361,9 @@ namespace hipblaslt_ext
         HIPBLASLT_EXPORT GemmType getGemmType();
         HIPBLASLT_EXPORT size_t   getGemmCount();
 
+        HIPBLASLT_EXPORT std::string getSolutionName();
+        HIPBLASLT_EXPORT std::string getKernelName();
+
     protected:
         /*! \ingroup library_module
         *  \brief Constructor of GemmInstance.

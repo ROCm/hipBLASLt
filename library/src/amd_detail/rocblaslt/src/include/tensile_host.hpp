@@ -326,6 +326,14 @@ rocblaslt_status runKernelFromDeviceUserArguments(rocblaslt_handle             h
                                                   void*                        workspace,
                                                   hipStream_t                  stream);
 
+std::string getKernelNameFromData(rocblaslt_handle             handle,
+                                  const rocblaslt::RocGemmType gemmType,
+                                  std::shared_ptr<void>        gemmData);
+
+std::string getSolutionNameFromData(rocblaslt_handle             handle,
+                                    const rocblaslt::RocGemmType gemmType,
+                                    std::shared_ptr<void>        gemmData);
+
 std::string getKernelNameFromAlgoIndex(rocblaslt_handle handle, const rocblaslt_matmul_algo& algo);
 
 std::string getSolutionNameFromAlgoIndex(rocblaslt_handle             handle,

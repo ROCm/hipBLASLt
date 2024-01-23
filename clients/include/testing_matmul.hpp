@@ -2164,11 +2164,13 @@ void testing_matmul(const Arguments& arg)
     }
     else
     {
-        size_t best_sol          = -1;
-        double best_flops        = 0.0;
-        double best_gpu_time     = std::numeric_limits<double>::max();
-        int    number_cold_calls = arg.cold_iters;
-        int    number_hot_calls  = arg.iters;
+        size_t      best_sol          = -1;
+        double      best_flops        = 0.0;
+        double      best_gpu_time     = std::numeric_limits<double>::max();
+        std::string best_s_name       = "";
+        std::string best_k_name       = "";
+        int         number_cold_calls = arg.cold_iters;
+        int         number_hot_calls  = arg.iters;
 
         for(size_t sol = 0; sol < heuristicResult.size(); sol++)
         {
@@ -2427,11 +2429,27 @@ void testing_matmul(const Arguments& arg)
             std::string kernelName    = "";
             if(arg.print_kernel_info)
             {
+                if(arg.use_ext)
+                {
+                    if(!do_grouped_gemm)
+                    {
+                        solutionName = gemmVec[0].getSolutionName();
+                        kernelName   = gemmVec[0].getKernelName();
+                    }
+                    else
+                    {
+                        solutionName = groupedGemmVec[0].getSolutionName();
+                        kernelName   = groupedGemmVec[0].getKernelName();
+                    }
+                }
+                else
+                {
+                    solutionName
+                        = hipblaslt_ext::getSolutionNameFromAlgo(handle, heuristicResult[sol].algo);
+                    kernelName
+                        = hipblaslt_ext::getKernelNameFromAlgo(handle, heuristicResult[sol].algo);
+                }
                 solutionIndex = hipblaslt_ext::getIndexFromAlgo(heuristicResult[sol].algo);
-                solutionName
-                    = hipblaslt_ext::getSolutionNameFromAlgo(handle, heuristicResult[sol].algo);
-                kernelName
-                    = hipblaslt_ext::getKernelNameFromAlgo(handle, heuristicResult[sol].algo);
             }
             ArgumentModel<argument_param>{}.log_args<Tc>(
                 hipblaslt_cout,
@@ -2452,6 +2470,8 @@ void testing_matmul(const Arguments& arg)
                 best_sol      = sol;
                 best_flops    = flops;
                 best_gpu_time = gpu_time_used;
+                best_s_name   = solutionName;
+                best_k_name   = kernelName;
             }
         }
 
@@ -2463,10 +2483,8 @@ void testing_matmul(const Arguments& arg)
             if(arg.print_kernel_info)
             {
                 solutionIndex = hipblaslt_ext::getIndexFromAlgo(heuristicResult[best_sol].algo);
-                solutionName  = hipblaslt_ext::getSolutionNameFromAlgo(
-                    handle, heuristicResult[best_sol].algo);
-                kernelName
-                    = hipblaslt_ext::getKernelNameFromAlgo(handle, heuristicResult[best_sol].algo);
+                solutionName  = best_s_name;
+                kernelName    = best_k_name;
             }
 
             hipblaslt_cout << "Winner: " << std::endl;
