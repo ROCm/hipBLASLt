@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022-2023 Advanced Micro Devices, Inc.
+ * Copyright (C) 2022-2024 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -442,6 +442,20 @@ namespace hipblaslt_ext
     catch(...)
     {
         return exception_to_hipblas_status();
+    }
+
+    std::string GemmInstance::getSolutionName()
+    {
+        auto gemmType = static_cast<rocblaslt::RocGemmType>(m_gemm_type);
+        return rocblaslt_get_solution_name_from_data_cpp(
+            (rocblaslt_handle)m_handle, gemmType, m_data);
+    }
+
+    std::string GemmInstance::getKernelName()
+    {
+        auto gemmType = static_cast<rocblaslt::RocGemmType>(m_gemm_type);
+        return rocblaslt_get_kernel_name_from_data_cpp(
+            (rocblaslt_handle)m_handle, gemmType, m_data);
     }
 
     Gemm::Gemm(hipblasLtHandle_t      handle,

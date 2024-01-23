@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022-2023 Advanced Micro Devices, Inc.
+ * Copyright (C) 2022-2024 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -198,67 +198,67 @@ rocblaslt_status rocblaslt_matmul_impl(const rocblaslt_handle       handle,
                                         workspaceSizeInBytes,
                                         stream,
                                         handle->Synchronizer};
-    if (get_logger_layer_mode() & rocblaslt_layer_mode_log_bench) {
+    if(get_logger_layer_mode() & rocblaslt_layer_mode_log_bench)
+    {
 
 // To deal with some arguments may be invalid
 #define GEN_BENCH_ARG(_fun, _type_str, _type) \
-    strlen(_fun(_type)) && strcmp(_fun(_type), "invalid") ? _type_str : "", \
-    _fun(_type)
+    strlen(_fun(_type)) && strcmp(_fun(_type), "invalid") ? _type_str : "", _fun(_type)
 
-        log_bench(__func__,
-                  "-m",
-                  m,
-                  "-n",
-                  n,
-                  "-k",
-                  k,
-                  "--lda",
-                  lda,
-                  "--ldb",
-                  ldb,
-                  "--ldc",
-                  ldc,
-                  "--ldd",
-                  ldd,
-                  "--lde",
-                  lde,
-                  "--stride_a",
-                  batch_stride_a,
-                  "--stride_b",
-                  batch_stride_b,
-                  "--stride_c",
-                  batch_stride_c,
-                  "--stride_d",
-                  batch_stride_d,
-                  "--stride_e",
-                  batch_stride_e,
-                  "--alpha",
-                  *(float*)alpha,
-                  "--beta",
-                  *(float*)beta,
-                  "--transA",
-                  hipblasOperation_to_bench_string(opA),
-                  "--transB",
-                  hipblasOperation_to_bench_string(opB),
-                  "--batch_count",
-                  num_batches_a,
-                  grouped_gemm ? "--grouped_gemm" : "",
-                  scaleA ? "--scaleA" : "",
-                  scaleB ? "--scaleB" : "",
-                  scaleC ? "--scaleC" : "",
-                  scaleD ? "--scaleD" : "",
-                  scaleAlphaVec ? "--scaleAlpha_vector" : "",
-                  GEN_BENCH_ARG(hipblasltDatatype_to_bench_string, "--a_type", type_a),
-                  GEN_BENCH_ARG(hipblasltDatatype_to_bench_string, "--b_type", type_b),
-                  GEN_BENCH_ARG(hipblasltDatatype_to_bench_string, "--c_type", type_c),
-                  GEN_BENCH_ARG(hipblasltDatatype_to_bench_string, "--d_type", type_d),
-                  GEN_BENCH_ARG(rocblaslt_compute_type_to_bench_string, "--compute_type", compute_type),
-                  GEN_BENCH_ARG(hipblasltDatatype_to_bench_string, "--scale_type", scale_type),
-                  GEN_BENCH_ARG(hipblasltDatatype_to_bench_string, "--bias_type", bias_type),
-                  rocblaslt_epilogue_to_bench_string(epilogue));
+        log_bench(
+            __func__,
+            "-m",
+            m,
+            "-n",
+            n,
+            "-k",
+            k,
+            "--lda",
+            lda,
+            "--ldb",
+            ldb,
+            "--ldc",
+            ldc,
+            "--ldd",
+            ldd,
+            "--lde",
+            lde,
+            "--stride_a",
+            batch_stride_a,
+            "--stride_b",
+            batch_stride_b,
+            "--stride_c",
+            batch_stride_c,
+            "--stride_d",
+            batch_stride_d,
+            "--stride_e",
+            batch_stride_e,
+            "--alpha",
+            *(float*)alpha,
+            "--beta",
+            *(float*)beta,
+            "--transA",
+            hipblasOperation_to_bench_string(opA),
+            "--transB",
+            hipblasOperation_to_bench_string(opB),
+            "--batch_count",
+            num_batches_a,
+            grouped_gemm ? "--grouped_gemm" : "",
+            scaleA ? "--scaleA" : "",
+            scaleB ? "--scaleB" : "",
+            scaleC ? "--scaleC" : "",
+            scaleD ? "--scaleD" : "",
+            scaleAlphaVec ? "--scaleAlpha_vector" : "",
+            GEN_BENCH_ARG(hipblasltDatatype_to_bench_string, "--a_type", type_a),
+            GEN_BENCH_ARG(hipblasltDatatype_to_bench_string, "--b_type", type_b),
+            GEN_BENCH_ARG(hipblasltDatatype_to_bench_string, "--c_type", type_c),
+            GEN_BENCH_ARG(hipblasltDatatype_to_bench_string, "--d_type", type_d),
+            GEN_BENCH_ARG(rocblaslt_compute_type_to_bench_string, "--compute_type", compute_type),
+            GEN_BENCH_ARG(hipblasltDatatype_to_bench_string, "--scale_type", scale_type),
+            GEN_BENCH_ARG(hipblasltDatatype_to_bench_string, "--bias_type", bias_type),
+            rocblaslt_epilogue_to_bench_string(epilogue));
 
 #undef GEN_BENCH_ARG
-
     }
     return runContractionProblem(handle, algo, problem, gemmData);
 }
@@ -1380,6 +1380,20 @@ rocblaslt_status rocblaslt_makeArgument_cpp(rocblaslt_handle             handle,
                                             std::shared_ptr<void>        gemmData)
 {
     return makeArgument(handle, gemmType, algo, tuning, workspace, useUserArgs, stream, gemmData);
+}
+
+std::string rocblaslt_get_kernel_name_from_data_cpp(rocblaslt_handle             handle,
+                                                    const rocblaslt::RocGemmType gemmType,
+                                                    std::shared_ptr<void>        gemmData)
+{
+    return getKernelNameFromData(handle, gemmType, gemmData);
+}
+
+std::string rocblaslt_get_solution_name_from_data_cpp(rocblaslt_handle             handle,
+                                                      const rocblaslt::RocGemmType gemmType,
+                                                      std::shared_ptr<void>        gemmData)
+{
+    return getSolutionNameFromData(handle, gemmType, gemmData);
 }
 
 std::string rocblaslt_get_kernel_name_from_algo(rocblaslt_handle             handle,
