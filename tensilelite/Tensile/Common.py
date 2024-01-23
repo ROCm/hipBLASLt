@@ -1092,7 +1092,7 @@ defaultBenchmarkCommonParameters = [
     {"NonTemporalB":              [ 0 ] },
     {"NonTemporalMetadata":       [ 0 ] },
     {"NonTemporal":               [ -1 ] },
-    {"PreloadKernArgs":           [ False ] },
+    {"PreloadKernArgs":           [ True ] },
     {"CustomKernelName":          [ "" ] },
     {"NoReject":                  [ False ]},
     {"MinVgprNumber":             [0]},
