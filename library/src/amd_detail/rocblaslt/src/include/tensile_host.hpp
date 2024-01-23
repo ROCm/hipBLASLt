@@ -3,7 +3,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022-2023 Advanced Micro Devices, Inc.
+ * Copyright (C) 2022-2024 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -325,6 +325,14 @@ rocblaslt_status runKernelFromDeviceUserArguments(rocblaslt_handle             h
                                                   void*                        deviceUserArgs,
                                                   void*                        workspace,
                                                   hipStream_t                  stream);
+
+std::string getKernelNameFromData(rocblaslt_handle             handle,
+                                  const rocblaslt::RocGemmType gemmType,
+                                  std::shared_ptr<void>        gemmData);
+
+std::string getSolutionNameFromData(rocblaslt_handle             handle,
+                                    const rocblaslt::RocGemmType gemmType,
+                                    std::shared_ptr<void>        gemmData);
 
 std::string getKernelNameFromAlgoIndex(rocblaslt_handle handle, const rocblaslt_matmul_algo& algo);
 

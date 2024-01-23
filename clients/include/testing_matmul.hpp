@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022-2023 Advanced Micro Devices, Inc.
+ * Copyright (C) 2022-2024 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -489,9 +489,9 @@ void testing_matmul(const Arguments& arg)
     }
 
     // Calculating block count
-    int32_t max_iters   = max(arg.cold_iters, arg.iters);
-    rotating /= (1024*1024);
-    totalRotatingSizeNeeded /= (1024*1024);
+    int32_t max_iters = max(arg.cold_iters, arg.iters);
+    rotating /= (1024 * 1024);
+    totalRotatingSizeNeeded /= (1024 * 1024);
     int32_t block_count = max(1, min(max_iters, ceil((float)rotating / totalRotatingSizeNeeded)));
     if(rotating > 0)
     {
@@ -2155,11 +2155,13 @@ void testing_matmul(const Arguments& arg)
     }
     else
     {
-        size_t best_sol          = -1;
-        double best_flops        = 0.0;
-        double best_gpu_time     = std::numeric_limits<double>::max();
-        int    number_cold_calls = arg.cold_iters;
-        int    number_hot_calls  = arg.iters;
+        size_t      best_sol          = -1;
+        double      best_flops        = 0.0;
+        double      best_gpu_time     = std::numeric_limits<double>::max();
+        std::string best_s_name       = "";
+        std::string best_k_name       = "";
+        int         number_cold_calls = arg.cold_iters;
+        int         number_hot_calls  = arg.iters;
 
         for(size_t sol = 0; sol < heuristicResult.size(); sol++)
         {
@@ -2277,13 +2279,13 @@ void testing_matmul(const Arguments& arg)
                     //grouped gemm
                     for(int32_t b = 0; b < block_count; b++)
                     {
-                        CHECK_HIPBLASLT_ERROR(
-                            groupedGemmVec[b].initialize(heuristicResult[sol].algo,
-                                                         tuningVec[heuristicTuningIndex[sol]],
-                                                         ((unsigned char*)(*dWorkspace) + b * workspace_size)));
+                        CHECK_HIPBLASLT_ERROR(groupedGemmVec[b].initialize(
+                            heuristicResult[sol].algo,
+                            tuningVec[heuristicTuningIndex[sol]],
+                            ((unsigned char*)(*dWorkspace) + b * workspace_size)));
                         groupedGemmVec[b].getDefaultValueForDeviceUserArguments(userArgs);
-                        d_userArgsVec[b]
-                            = (unsigned char*)d_userArgs + b * gemm_count * sizeof(hipblaslt_ext::UserArguments);
+                        d_userArgsVec[b] = (unsigned char*)d_userArgs
+                                           + b * gemm_count * sizeof(hipblaslt_ext::UserArguments);
                         // Copy them to device memory
                         CHECK_HIP_ERROR(hipMemcpy(d_userArgsVec[b],
                                                   userArgs,
@@ -2326,12 +2328,12 @@ void testing_matmul(const Arguments& arg)
                 {
                     //grouped gemm
                     for(int32_t b = 0; b < block_count; b++)
-                        CHECK_HIPBLASLT_ERROR(
-                            groupedGemmVec[b].initialize(heuristicResult[sol].algo,
-                                                         tuningVec[heuristicTuningIndex[sol]],
-                                                         ((unsigned char*)(*dWorkspace) + b * workspace_size),
-                                                         false,
-                                                         stream));
+                        CHECK_HIPBLASLT_ERROR(groupedGemmVec[b].initialize(
+                            heuristicResult[sol].algo,
+                            tuningVec[heuristicTuningIndex[sol]],
+                            ((unsigned char*)(*dWorkspace) + b * workspace_size),
+                            false,
+                            stream));
 
                     for(int i = 0; i < number_cold_calls; i++)
                         CHECK_HIPBLASLT_ERROR(groupedGemmVec[i % block_count].run(stream));
@@ -2418,11 +2420,27 @@ void testing_matmul(const Arguments& arg)
             std::string kernelName    = "";
             if(arg.print_kernel_info)
             {
+                if(arg.use_ext)
+                {
+                    if(!do_grouped_gemm)
+                    {
+                        solutionName = gemmVec[0].getSolutionName();
+                        kernelName   = gemmVec[0].getKernelName();
+                    }
+                    else
+                    {
+                        solutionName = groupedGemmVec[0].getSolutionName();
+                        kernelName   = groupedGemmVec[0].getKernelName();
+                    }
+                }
+                else
+                {
+                    solutionName
+                        = hipblaslt_ext::getSolutionNameFromAlgo(handle, heuristicResult[sol].algo);
+                    kernelName
+                        = hipblaslt_ext::getKernelNameFromAlgo(handle, heuristicResult[sol].algo);
+                }
                 solutionIndex = hipblaslt_ext::getIndexFromAlgo(heuristicResult[sol].algo);
-                solutionName
-                    = hipblaslt_ext::getSolutionNameFromAlgo(handle, heuristicResult[sol].algo);
-                kernelName
-                    = hipblaslt_ext::getKernelNameFromAlgo(handle, heuristicResult[sol].algo);
             }
             ArgumentModel<argument_param>{}.log_args<Tc>(
                 hipblaslt_cout,
@@ -2443,6 +2461,8 @@ void testing_matmul(const Arguments& arg)
                 best_sol      = sol;
                 best_flops    = flops;
                 best_gpu_time = gpu_time_used;
+                best_s_name   = solutionName;
+                best_k_name   = kernelName;
             }
         }
 
@@ -2454,10 +2474,8 @@ void testing_matmul(const Arguments& arg)
             if(arg.print_kernel_info)
             {
                 solutionIndex = hipblaslt_ext::getIndexFromAlgo(heuristicResult[best_sol].algo);
-                solutionName  = hipblaslt_ext::getSolutionNameFromAlgo(
-                    handle, heuristicResult[best_sol].algo);
-                kernelName
-                    = hipblaslt_ext::getKernelNameFromAlgo(handle, heuristicResult[best_sol].algo);
+                solutionName  = best_s_name;
+                kernelName    = best_k_name;
             }
 
             hipblaslt_cout << "Winner: " << std::endl;

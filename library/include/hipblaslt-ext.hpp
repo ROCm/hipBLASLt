@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022-2023 Advanced Micro Devices, Inc.
+ * Copyright (C) 2022-2024 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -360,6 +360,9 @@ namespace hipblaslt_ext
 
         HIPBLASLT_EXPORT GemmType getGemmType();
         HIPBLASLT_EXPORT size_t   getGemmCount();
+
+        HIPBLASLT_EXPORT std::string getSolutionName();
+        HIPBLASLT_EXPORT std::string getKernelName();
 
     protected:
         /*! \ingroup library_module
