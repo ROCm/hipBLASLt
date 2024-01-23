@@ -1158,10 +1158,9 @@ class KernelWriterAssembly(KernelWriter):
       commonArgs.add(self.argLoader.loadKernArg("GSU", "KernArgAddress", hex(4), dword=1))
       loadedCommonArgs = 8 # TODO: Need to make this automatically calculated
       ########################################
-      # load kernel args
+      # kernel args parameters
       load = self.states.numSgprToLoad
       sgprStart = self.sgprs["SizesFree"]
-      kernelArgs = self.getKernelArgLoadModule(kernel, sgprStart, load, 0)
 
       ########################################
       # load ws/ user args
@@ -1186,7 +1185,9 @@ class KernelWriterAssembly(KernelWriter):
       moduleArgs.add(SCBranchSCC0(labelName=labelHBM.getLabelName()))
       moduleArgs.add(SAddU32(dst=sgpr("KernArgAddress"), src0=sgpr("KernArgAddress"), src1=hex(loadedCommonArgs), comment="Shift common args"))
       moduleArgs.add(SAddCU32(dst=sgpr("KernArgAddress+1"), src0=sgpr("KernArgAddress+1"), src1=hex(0)))
-      moduleArgs.addModuleAsFlatItems(fastdeepcopy(kernelArgs))
+      moduleArgs.addModuleAsFlatItems(self.getKernelArgLoadModule(kernel, sgprStart, load, 0))
+      if self.states.numSgprPreload > 0:
+        moduleArgs.add(SWaitCnt(0))
       if kernel["ProblemType"]["SupportUserArgs"]:
         moduleArgs.add(SMovB64(dst=sgpr("ExternalArgAddress", 2),src=0))
       moduleArgs.add(SBranch(labelName=labelLoadEnd.getLabelName()))
@@ -1300,29 +1301,41 @@ class KernelWriterAssembly(KernelWriter):
 
       moduleWg = Module("Calculate Workgroup")
       moduleWg.addModuleAsFlatItems(lralwaCode)
-      if kernel["ProblemType"]["SupportUserArgs"]:
-        moduleWg.add(SWaitCnt(lgkmcnt=0, comment="wait for %u/%u bytes of kern args" % \
-                       (self.argLoader.getOffset() - (self.states.numSgprPreload*4), self.externalArgLoader.getOffset())))
+
+      def waitForArgsToLoad():
+        if kernel["ProblemType"]["SupportUserArgs"]:
+          moduleWg.add(SWaitCnt(lgkmcnt=0, comment="wait for %u/%u bytes of kern args" % \
+                        (self.argLoader.getOffset() - (self.states.numSgprPreload*4), self.externalArgLoader.getOffset())))
+        else:
+          moduleWg.add(SWaitCnt(lgkmcnt=0, comment="wait for %u bytes of kern args" % \
+                              (self.argLoader.getOffset() - (self.states.numSgprPreload*4))))
+        moduleWg.addModuleAsFlatItems(moduleScaleAB)
+
+      def calculateWG():
+        #### calculate numWorkGroup ####
+        qReg = self.vgprPool.checkOut(4)
+        dReg = qReg + 1
+        divReg = qReg + 2
+        rReg = qReg + 3
+        moduleWg.add(VMovB32(dst=vgpr(divReg), src="MT0", comment="set MT0 into sgpr"))
+        moduleWg.add(VMovB32(dst=vgpr(dReg), src=sgpr("SizesFree+0"), comment="set Free0 size"))
+        moduleWg.add(vectorUInt32CeilDivideAndRemainder(qReg=qReg, dReg=dReg, divReg=divReg, rReg=rReg, doRemainder=False))
+        moduleWg.add(VMovB32(dst=vgpr(divReg), src="MT1", comment="set MT1 into sgpr"))
+        moduleWg.add(VMovB32(dst=vgpr(dReg), src=sgpr("SizesFree+1"), comment="set Free1 size"))
+        moduleWg.add(VReadfirstlaneB32(dst=sgpr("NumWorkGroups0"), src=vgpr(qReg), comment="set back to numWorkGroup0"))
+        moduleWg.add(vectorUInt32CeilDivideAndRemainder(qReg=qReg, dReg=dReg, divReg=divReg, rReg=rReg, doRemainder=False))
+        if self.states.archCaps["TransOpWait"]:
+          moduleWg.add(SNop(waitState=0, comment="1 wait states"))
+        moduleWg.add(VReadfirstlaneB32(dst=sgpr("NumWorkGroups1"), src=vgpr(qReg), comment="set back to numWorkGroup1"))
+        self.vgprPool.checkIn(qReg)
+
+      if self.states.numSgprPreload > 0:
+        calculateWG()
+        waitForArgsToLoad()
       else:
-        moduleWg.add(SWaitCnt(lgkmcnt=0, comment="wait for %u bytes of kern args" % \
-                            (self.argLoader.getOffset() - (self.states.numSgprPreload*4))))
-      moduleWg.addModuleAsFlatItems(moduleScaleAB)
-      #### calculate numWorkGroup ####
-      qReg = self.vgprPool.checkOut(4)
-      dReg = qReg + 1
-      divReg = qReg + 2
-      rReg = qReg + 3
-      moduleWg.add(VMovB32(dst=vgpr(divReg), src="MT0", comment="set MT0 into sgpr"))
-      moduleWg.add(VMovB32(dst=vgpr(dReg), src=sgpr("SizesFree+0"), comment="set Free0 size"))
-      moduleWg.add(vectorUInt32CeilDivideAndRemainder(qReg=qReg, dReg=dReg, divReg=divReg, rReg=rReg, doRemainder=False))
-      moduleWg.add(VMovB32(dst=vgpr(divReg), src="MT1", comment="set MT1 into sgpr"))
-      moduleWg.add(VMovB32(dst=vgpr(dReg), src=sgpr("SizesFree+1"), comment="set Free1 size"))
-      moduleWg.add(VReadfirstlaneB32(dst=sgpr("NumWorkGroups0"), src=vgpr(qReg), comment="set back to numWorkGroup0"))
-      moduleWg.add(vectorUInt32CeilDivideAndRemainder(qReg=qReg, dReg=dReg, divReg=divReg, rReg=rReg, doRemainder=False))
-      if self.states.archCaps["TransOpWait"]:
-        moduleWg.add(SNop(waitState=0, comment="1 wait states"))
-      moduleWg.add(VReadfirstlaneB32(dst=sgpr("NumWorkGroups1"), src=vgpr(qReg), comment="set back to numWorkGroup1"))
-      self.vgprPool.checkIn(qReg)
+        waitForArgsToLoad()
+        calculateWG()
+
 
       if not kernel["ProblemType"]["StridedBatched"]:
         with self.allocTmpSgpr(self.states.laneSGPRCount) as tmpSgpr:
