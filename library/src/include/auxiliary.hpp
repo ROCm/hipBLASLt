@@ -215,6 +215,11 @@ __host__ __device__ inline bool hipblaslt_isnan(hipblaslt_f8_fnuz arg)
     return arg.is_nan();
 }
 
+__host__ __device__ inline bool hipblaslt_isnan(hipblaslt_bf8_fnuz arg)
+{
+    return arg.is_nan();
+}
+
 /*******************************************************************************
  * \brief  returns true if arg is Infinity
  ********************************************************************************/

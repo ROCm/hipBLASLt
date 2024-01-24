@@ -507,6 +507,7 @@ namespace
         else
         {
             tensileProblem.setUseScaleAB(false);
+            tensileProblem.setUseScaleCD(false);
             // set ScaleAlphaVec mode
             tensileProblem.setUseScaleAlphaVec(true);
             tensileProblem.setScaleAlphaVec(compute_type, d.sizes()[0]);

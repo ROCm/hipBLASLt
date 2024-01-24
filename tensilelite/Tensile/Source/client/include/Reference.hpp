@@ -75,7 +75,7 @@ namespace Tensile
             BFloat8 absB    = (b > static_cast<BFloat8>(0.0f)) ? b : static_cast<BFloat8>(0.0f) - b;
             BFloat8 absDiff = (a - b > static_cast<BFloat8>(0.0f)) ? a - b : b - a;
             return absDiff / (absA + absB + static_cast<BFloat8>(1.0f)) < static_cast<BFloat8>(
-                       0.125f); // tolerance * eps = 2 * 0.0625; 2*eps needed for SR
+                       0.25f); // tolerance * epsilon = 2 * 0.125; 2*eps needed for SR
         }
 
         template <>

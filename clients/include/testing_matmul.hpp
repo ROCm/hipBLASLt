@@ -478,6 +478,7 @@ void testing_matmul(const Arguments& arg)
         {
             size_bias[i] = 0;
         }
+        // NB: Need to force bias to scale type for FP8 out ?
         auto biasSize
             = size_bias[i]
               * ((arg.d_type != arg.scale_type && arg.bias_type == arg.scale_type) ? sizeof(Talpha)
@@ -953,6 +954,7 @@ void testing_matmul(const Arguments& arg)
                                                 &arg.bias_type,
                                                 sizeof(hipDataType)),
                 HIPBLAS_STATUS_SUCCESS);
+            // NB: Need to force bias to scale type for FP8 out ?
             if(arg.d_type != arg.scale_type && arg.bias_type == arg.scale_type)
             {
                 bias_addr           = *dBias_C[i];
