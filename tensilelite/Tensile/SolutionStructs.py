@@ -3556,8 +3556,6 @@ class Solution(collections.abc.Mapping):
 
     #Need to force disabling PreloadKernArgs if compiler does not support
     #Can not just reject the solution since the user library may find any solutions
-    #Force all kernels to use preload.
-    state["PreloadKernArgs"] = True
     if state["PreloadKernArgs"]:
       hipccver = globalParameters['HipClangVersion'].split(".")
       hipccMaj = int(hipccver[0])
