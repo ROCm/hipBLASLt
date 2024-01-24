@@ -140,6 +140,7 @@ class ActivationType:
                           ('tanh',        ActivationTypeRegister('tanh', False, 2,        True,  True, False,   False, False, False, False)), \
                           ('dgelu',       ActivationTypeRegister('dgelu', True, 0,       False,  True, False,   False, False, False, False)), \
                           ('geluscaling', ActivationTypeRegister('geluscaling', False, 1, True,  True, False,   False, False, False, False)), \
+                          ('silu',        ActivationTypeRegister('silu', False, 0,        True,  True, False,   False, False, False, False)), \
                           ('all',         ActivationTypeRegister('all', False, 0)) ])
 
     def __init__(self, value):
@@ -311,6 +312,8 @@ class ActivationModule:
             module = self.getTanhModule(cDataType, vgprIn, vgprOut, "activationAlpha", "activationBeta")
         elif (activationType == 'dgelu'):
             module = self.getDGeluModule(cDataType, vgprIn, vgprOut)
+        elif (activationType == 'silu'):
+            module = self.getSiluModule(cDataType, vgprIn, vgprOut)
         elif (activationType == 'none'):
             return Module("No activation")
         else:
@@ -761,6 +764,44 @@ class ActivationModule:
             module.add(VMulF32(dst=self.vgprPrefix(vgprOut), src0=hex(coef.u), src1=self.vgprPrefix(vgprOut), comment="out = 4 * out"))
             module.add(VFmaF32(dst=self.vgprPrefix(vgprOut), src0=self.vgprPrefix(vgprOut), src1=vgpr(Holder(idx=vgprTemp2)), src2=vgpr(Holder(idx=vgprTemp1)), comment="out = out * tmp2 + tmp1"))
             module.add(VAddF32(dst=self.vgprPrefix(vgprOut), src0=0.5, src1=self.vgprPrefix(vgprOut), comment="out = out + 0.5"))
+        else:
+            raise RuntimeError("Unsupported data type %s."%cDataType.toDevice("HIP"))
+        return module
+
+    def getSiluModule(self, cDataType, vgprIn, vgprOut):
+        ti = TensileInstructions()
+        self.needCombine = True
+        module = Module("Silu")
+        if cDataType.isHalf():
+            if self.usePK:
+                module.add(VMulPKF16(dst=self.vgprPrefix(vgprOut), src0=-1.0, src1=self.vgprPrefix(vgprIn), comment=" x = -x"))
+                module.add(self.getExpModule(cDataType, vgprOut, vgprOut))
+                module.add(VAddPKF16(dst=self.vgprPrefix(vgprOut), src0=1.0, src1=self.vgprPrefix(vgprOut), \
+                                     vop3=VOP3PModifiers(op_sel_hi=[0,1,1]), comment="1 + exp(-x)"))
+                for i in range(0, 2):
+                    select_bit = SelectBit.WORD_0 if i == 0 else SelectBit.WORD_1
+                    module.add(VRcpF16(dst=self.vgprPrefix(vgprOut), src=self.vgprPrefix(vgprOut), \
+                                       sdwa=SDWAModifiers(dst_sel=select_bit, dst_unused=UnusedBit.UNUSED_PRESERVE, src0_sel=select_bit), \
+                                       comment="1 / (1 + exp(-x))"))
+                    module.add(VMulPKF16(dst=self.vgprPrefix(vgprOut), src0=self.vgprPrefix(vgprIn), src1=self.vgprPrefix(vgprOut), comment="x / (1 + exp(-x))"))
+                if ti.getArchCaps()["TransOpWait"]:
+                    module.add(SNop(waitState=0, comment="1 wait states"))
+            else:
+                module.add(VMulF16(dst=self.vgprPrefix(vgprOut), src0=-1.0, src1=self.vgprPrefix(vgprIn), comment=" x = -x"))
+                module.add(self.getExpModule(cDataType, vgprOut, vgprOut))
+                module.add(VAddF16(dst=self.vgprPrefix(vgprOut), src0=1.0, src1=self.vgprPrefix(vgprOut), comment="1 + exp(-x)"))
+                module.add(VRcpF16(dst=self.vgprPrefix(vgprOut), src=self.vgprPrefix(vgprOut), comment="1 / (1 + exp(-x))"))
+                module.add(VMulF32(dst=self.vgprPrefix(vgprOut), src0=self.vgprPrefix(vgprIn), src1=self.vgprPrefix(vgprOut), comment="x / (1 + exp(-x))"))
+                if ti.getArchCaps()["TransOpWait"]:
+                    module.add(SNop(waitState=0, comment="1 wait states"))
+        elif cDataType.isSingle():
+            module.add(VMulF32(dst=self.vgprPrefix(vgprOut), src0=-1.0, src1=self.vgprPrefix(vgprIn), comment=" x = -x"))
+            module.add(self.getExpModule(cDataType, vgprOut, vgprOut))
+            module.add(VAddF32(dst=self.vgprPrefix(vgprOut), src0=1.0, src1=self.vgprPrefix(vgprOut), comment="1 + exp(-x)" ))
+            module.add(VRcpF32(dst=self.vgprPrefix(vgprOut), src=self.vgprPrefix(vgprOut), comment="1 / (1 + exp(-x))" ))
+            module.add(VMulF32(dst=self.vgprPrefix(vgprOut), src0=self.vgprPrefix(vgprIn), src1=self.vgprPrefix(vgprOut), comment="x / (1 + exp(-x))"))
+            if ti.getArchCaps()["TransOpWait"]:
+                module.add(SNop(waitState=0, comment="1 wait states"))
         else:
             raise RuntimeError("Unsupported data type %s."%cDataType.toDevice("HIP"))
         return module
@@ -1246,6 +1287,12 @@ class ActivationInline:
       kStr += addSpace(asm, ": \"+v\"(value) : \n")
       needExec = True if self.enableGuard else False
       kStr += self.getRequiredRegStr(asm, activation.vgprCounter, activation.sgprCounter, needExec=needExec)
+    elif (activationType == 'silu'):
+      kStr += (asm + " // Silu\n")
+      module = activation.getSiluModule(self.dataType, 0, 0)
+      kStr += self.getActivationAsmStr(activation, module, (len(asm) * " "))
+      kStr += addSpace(asm, ": \"+v\"(value) : \n")
+      kStr += self.getRequiredRegStr(asm, activation.vgprCounter, activation.sgprCounter)
     else:
       if (activationType != 'none'):
         raise RuntimeError("Unrecognized type %s."%activationType)

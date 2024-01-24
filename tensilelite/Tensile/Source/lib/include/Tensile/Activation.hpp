@@ -62,6 +62,7 @@ namespace Tensile
         Tanh,
         DGelu,
         Geluscaling,
+        Silu,
         All,
         Exp, // Verification use only.
         Count

@@ -53,6 +53,8 @@ namespace Tensile
             return "Tanh";
         case ActivationType::DGelu:
             return "Dgelu";
+        case ActivationType::Silu:
+            return "Silu";
         case ActivationType::All:
             return "All";
         case ActivationType::None:
@@ -110,6 +112,10 @@ namespace Tensile
         else if(strValue == ToString(ActivationType::DGelu))
         {
             t = ActivationType::DGelu;
+        }
+        else if(strValue == ToString(ActivationType::Silu))
+        {
+            t = ActivationType::Silu;
         }
         else if(strValue == ToString(ActivationType::All))
         {
