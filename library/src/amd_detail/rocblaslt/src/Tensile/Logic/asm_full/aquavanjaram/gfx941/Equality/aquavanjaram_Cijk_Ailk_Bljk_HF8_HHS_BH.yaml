@@ -8770,7 +8770,7 @@
     PackedC1IndicesX: [1]
     PrefetchGlobalRead: 2
     PrefetchLocalRead: 1
-    PreloadKernArgs: false
+    PreloadKernArgs: true
     ProblemType:
       Activation: false
       ActivationComputeDataType: 0
@@ -9022,7 +9022,7 @@
     PackedC1IndicesX: [1]
     PrefetchGlobalRead: 2
     PrefetchLocalRead: 1
-    PreloadKernArgs: false
+    PreloadKernArgs: true
     ProblemType:
       Activation: false
       ActivationComputeDataType: 0
@@ -9279,7 +9279,7 @@
     PackedC1IndicesX: [1]
     PrefetchGlobalRead: 2
     PrefetchLocalRead: 1
-    PreloadKernArgs: false
+    PreloadKernArgs: true
     ProblemType:
       Activation: false
       ActivationComputeDataType: 0
@@ -9536,7 +9536,7 @@
     PackedC1IndicesX: [1]
     PrefetchGlobalRead: 2
     PrefetchLocalRead: 1
-    PreloadKernArgs: false
+    PreloadKernArgs: true
     ProblemType:
       Activation: false
       ActivationComputeDataType: 0
@@ -9793,7 +9793,7 @@
     PackedC1IndicesX: [1]
     PrefetchGlobalRead: 2
     PrefetchLocalRead: 1
-    PreloadKernArgs: false
+    PreloadKernArgs: true
     ProblemType:
       Activation: false
       ActivationComputeDataType: 0
@@ -10050,7 +10050,7 @@
     PackedC1IndicesX: [1]
     PrefetchGlobalRead: 2
     PrefetchLocalRead: 1
-    PreloadKernArgs: false
+    PreloadKernArgs: true
     ProblemType:
       Activation: false
       ActivationComputeDataType: 0
@@ -10307,7 +10307,7 @@
     PackedC1IndicesX: [1]
     PrefetchGlobalRead: 2
     PrefetchLocalRead: 1
-    PreloadKernArgs: false
+    PreloadKernArgs: true
     ProblemType:
       Activation: false
       ActivationComputeDataType: 0
@@ -10564,7 +10564,7 @@
     PackedC1IndicesX: [1]
     PrefetchGlobalRead: 2
     PrefetchLocalRead: 1
-    PreloadKernArgs: false
+    PreloadKernArgs: true
     ProblemType:
       Activation: false
       ActivationComputeDataType: 0
@@ -10821,7 +10821,7 @@
     PackedC1IndicesX: [1]
     PrefetchGlobalRead: 2
     PrefetchLocalRead: 1
-    PreloadKernArgs: false
+    PreloadKernArgs: true
     ProblemType:
       Activation: false
       ActivationComputeDataType: 0
@@ -11078,7 +11078,7 @@
     PackedC1IndicesX: [1]
     PrefetchGlobalRead: 2
     PrefetchLocalRead: 1
-    PreloadKernArgs: false
+    PreloadKernArgs: true
     ProblemType:
       Activation: false
       ActivationComputeDataType: 0
@@ -11335,7 +11335,7 @@
     PackedC1IndicesX: [1]
     PrefetchGlobalRead: 2
     PrefetchLocalRead: 1
-    PreloadKernArgs: false
+    PreloadKernArgs: true
     ProblemType:
       Activation: false
       ActivationComputeDataType: 0
@@ -11592,7 +11592,7 @@
     PackedC1IndicesX: [1]
     PrefetchGlobalRead: 2
     PrefetchLocalRead: 1
-    PreloadKernArgs: false
+    PreloadKernArgs: true
     ProblemType:
       Activation: false
       ActivationComputeDataType: 0
@@ -11849,7 +11849,7 @@
     PackedC1IndicesX: [1]
     PrefetchGlobalRead: 2
     PrefetchLocalRead: 1
-    PreloadKernArgs: false
+    PreloadKernArgs: true
     ProblemType:
       Activation: false
       ActivationComputeDataType: 0
@@ -12106,7 +12106,7 @@
     PackedC1IndicesX: [1]
     PrefetchGlobalRead: 2
     PrefetchLocalRead: 1
-    PreloadKernArgs: false
+    PreloadKernArgs: true
     ProblemType:
       Activation: false
       ActivationComputeDataType: 0
@@ -12363,7 +12363,7 @@
     PackedC1IndicesX: [1]
     PrefetchGlobalRead: 2
     PrefetchLocalRead: 1
-    PreloadKernArgs: false
+    PreloadKernArgs: true
     ProblemType:
       Activation: false
       ActivationComputeDataType: 0
@@ -12620,7 +12620,7 @@
     PackedC1IndicesX: [1]
     PrefetchGlobalRead: 2
     PrefetchLocalRead: 1
-    PreloadKernArgs: false
+    PreloadKernArgs: true
     ProblemType:
       Activation: false
       ActivationComputeDataType: 0
@@ -12877,7 +12877,7 @@
     PackedC1IndicesX: [1]
     PrefetchGlobalRead: 2
     PrefetchLocalRead: 1
-    PreloadKernArgs: false
+    PreloadKernArgs: true
     ProblemType:
       Activation: false
       ActivationComputeDataType: 0
@@ -13134,7 +13134,7 @@
     PackedC1IndicesX: [1]
     PrefetchGlobalRead: 2
     PrefetchLocalRead: 1
-    PreloadKernArgs: false
+    PreloadKernArgs: true
     ProblemType:
       Activation: false
       ActivationComputeDataType: 0
