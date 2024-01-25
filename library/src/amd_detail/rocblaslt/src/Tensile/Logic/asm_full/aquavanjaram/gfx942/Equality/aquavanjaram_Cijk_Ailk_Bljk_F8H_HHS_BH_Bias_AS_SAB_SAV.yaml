@@ -12394,7 +12394,7 @@
     GlobalReadPerMfma: 1
     GlobalReadVectorWidthA: 16
     GlobalReadVectorWidthB: 8
-    GlobalSplitU: 19
+    GlobalSplitU: 18
     GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 4
     GroupLoadStore: false
@@ -12576,7 +12576,7 @@
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 51
-    SolutionNameMin: Cijk_Ailk_Bljk_F8H_HHS_BH_Bias_AS_SAB_SAV_MT128x32x64_MI16x16x1_SN_LDSB1_GRVWB8_GSU19_LBSPPA128_LPA8_LPB16_LRVW8_MIWT4_1_NLCA1_SU0_SUM0_SUS0_SVW4_VWA4_WG32_8_1_WGM8
+    SolutionNameMin: Cijk_Ailk_Bljk_F8H_HHS_BH_Bias_AS_SAB_SAV_MT128x32x64_MI16x16x1_SN_LDSB1_GRVWB8_GSU18_LBSPPA128_LPA8_LPB16_LRVW8_MIWT4_1_NLCA1_SU0_SUM0_SUS0_SVW4_VWA4_WG32_8_1_WGM8
     SourceSwap: 1
     StaggerU: 0
     StaggerUMapping: 0
@@ -12615,7 +12615,7 @@
     WorkGroupMapping: 8
     WorkGroupMappingXCC: 1
     WorkGroupReduction: false
-    WorkspaceCheck: [4, 0, 19]
+    WorkspaceCheck: [4, 0, 18]
     _DepthU: 64
     _DepthUA: 64
     _DepthUB: 64
@@ -13266,11 +13266,11 @@
   - - [16384, 32, 1, 4096]
     - [40, 0.0]
   # - - [16384, 16, 1, 4096]
-  #   - [53, 0.0]
+  #   - [52, 0.0]
   - - [2048, 16, 1, 16384]
     - [50, 0.0]
-  # - - [4096, 32, 1, 16384]
-  #   - [52, 0.0]
+  - - [4096, 32, 1, 16384]
+    - [51, 0.0]
 - null
 - null
 - DeviceEfficiency

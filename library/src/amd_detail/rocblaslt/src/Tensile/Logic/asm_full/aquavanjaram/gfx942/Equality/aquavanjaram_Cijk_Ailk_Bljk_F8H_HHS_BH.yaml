@@ -10993,7 +10993,7 @@
     GlobalReadPerMfma: 1
     GlobalReadVectorWidthA: 8
     GlobalReadVectorWidthB: 8
-    GlobalSplitU: 18
+    GlobalSplitU: 19
     GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 2
     GroupLoadStore: false
@@ -11175,7 +11175,7 @@
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 46
-    SolutionNameMin: Cijk_Ailk_Bljk_F8H_HHS_BH_MT128x16x128_MI16x16x1_SN_LDSB1_GRVWA8_GRVWB8_GSU18_GSUAMB_LBSPPA2048_LBSPPB256_LPA32_MIWT2_1_NLCA1_SS1_SUS256_SVW2_VWA2_WSGRA2_WG64_4_1_WGM1
+    SolutionNameMin: Cijk_Ailk_Bljk_F8H_HHS_BH_MT128x16x128_MI16x16x1_SN_LDSB1_GRVWA8_GRVWB8_GSU19_GSUAMB_LBSPPA2048_LBSPPB256_LPA32_MIWT2_1_NLCA1_SS1_SUS256_SVW2_VWA2_WSGRA2_WG64_4_1_WGM1
     SourceSwap: 1
     StaggerU: 4
     StaggerUMapping: 1
@@ -11213,7 +11213,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 1
     WorkGroupReduction: false
-    WorkspaceCheck: [4, 0, 18]
+    WorkspaceCheck: [4, 0, 19]
     _DepthU: 128
     _DepthUA: 128
     _DepthUB: 128
@@ -11509,7 +11509,7 @@
     GlobalReadPerMfma: 1
     GlobalReadVectorWidthA: 8
     GlobalReadVectorWidthB: 8
-    GlobalSplitU: 12
+    GlobalSplitU: 16
     GlobalSplitUAlgorithm: MultipleBuffer
     GlobalWriteVectorWidth: 2
     GroupLoadStore: false
@@ -11691,7 +11691,7 @@
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
     SolutionIndex: 48
-    SolutionNameMin: Cijk_Ailk_Bljk_F8H_HHS_BH_MT128x16x128_MI16x16x1_SN_LDSB1_GRVWA8_GRVWB8_GSU12_GSUAMB_LBSPPA2048_LBSPPB256_LPA32_MIWT2_1_NLCA1_SS1_SUS256_SVW2_VWA2_WSGRA2_WG64_4_1_WGM1
+    SolutionNameMin: Cijk_Ailk_Bljk_F8H_HHS_BH_MT128x16x128_MI16x16x1_SN_LDSB1_GRVWA8_GRVWB8_GSU16_GSUAMB_LBSPPA2048_LBSPPB256_LPA32_MIWT2_1_NLCA1_SS1_SUS256_SVW2_VWA2_WSGRA2_WG64_4_1_WGM1
     SourceSwap: 1
     StaggerU: 4
     StaggerUMapping: 1
@@ -11729,7 +11729,7 @@
     WorkGroup: [64, 4, 1]
     WorkGroupMapping: 1
     WorkGroupReduction: false
-    WorkspaceCheck: [4, 0, 12]
+    WorkspaceCheck: [4, 0, 16]
     _DepthU: 128
     _DepthUA: 128
     _DepthUB: 128
@@ -12344,7 +12344,7 @@
   - - [2048, 16, 1, 8192]
     - [46, 0.0]
   - - [2048, 16, 1, 65536]
-    - [47, 0.0]
+    - [46, 0.0]
   - - [2048, 2048, 1, 1024]
     - [40, 0.0]
   - - [2048, 2048, 1, 8192]
