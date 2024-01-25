@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
+ * Copyright (C) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -2399,7 +2399,8 @@ namespace Tensile
 
                 virtual bool operator()(ContractionProblemGemm const& problem) const override
                 {
-                    if(problem.getUseDeviceUserArguments())
+                    // Currently some solutions in gemm cannot enable this feature because lack of sgpr.
+                    if(problem.getUseDeviceUserArguments() && problem.groupedGemm())
                         return problem.getUseDeviceUserArguments() == value;
                     return true;
                 }

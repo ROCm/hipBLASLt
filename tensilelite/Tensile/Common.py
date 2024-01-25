@@ -1216,7 +1216,7 @@ defaultProblemType = {
     "Activation":               False,
     "ActivationNoGuard":        False,
     # For kernels putting arguments in workspaces instead of kernel arguments, they can choose to support user arguments input instead.
-    "SupportUserArgs":          False
+    "SupportUserArgs":          True
     }
 
 defaultProblemSizes = [{"Range": [ [2880], 0, 0 ]}]
