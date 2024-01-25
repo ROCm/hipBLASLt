@@ -350,7 +350,9 @@ namespace hipblaslt_ext
         *
         *  @param[in]
         *  stream                  The HIP stream where all the GPU work will be
+        *  @param[in]
         *  start                   The HIP event which will record the start of the kernel
+        *  @param[in]
         *  stop                    The HIP event which will record the end of the kernel
         * submitted.
         *
