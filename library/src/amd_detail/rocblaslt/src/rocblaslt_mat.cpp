@@ -1334,9 +1334,11 @@ rocblaslt_status
 rocblaslt_status rocblaslt_run_cpp(rocblaslt_handle       handle,
                                    rocblaslt::RocGemmType gemmType,
                                    std::shared_ptr<void>  gemmData,
-                                   hipStream_t            stream)
+                                   hipStream_t            stream,
+                                   hipEvent_t             start,
+                                   hipEvent_t             stop)
 {
-    return runKernelFromInvocation(handle, gemmType, gemmData, stream);
+    return runKernelFromInvocation(handle, gemmType, gemmData, stream, start, stop);
 }
 
 rocblaslt_status rocblaslt_run_user_args_cpp(rocblaslt_handle       handle,

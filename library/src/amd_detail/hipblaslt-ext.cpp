@@ -417,7 +417,9 @@ namespace hipblaslt_ext
         return exception_to_hipblas_status();
     }
 
-    hipblasStatus_t GemmInstance::run(hipStream_t stream)
+    hipblasStatus_t GemmInstance::run(hipStream_t stream,
+                                      hipEvent_t  start,
+                                      hipEvent_t  stop)
     try
     {
         if(m_gemm_count == 0)
@@ -430,7 +432,7 @@ namespace hipblaslt_ext
 
         auto gemmType = static_cast<rocblaslt::RocGemmType>(m_gemm_type);
         auto status   = RocBlasLtStatusToHIPStatus(
-            rocblaslt_run_cpp((rocblaslt_handle)m_handle, gemmType, m_data, stream));
+            rocblaslt_run_cpp((rocblaslt_handle)m_handle, gemmType, m_data, stream, start, stop));
 
         if(m_conversion_helper)
         {

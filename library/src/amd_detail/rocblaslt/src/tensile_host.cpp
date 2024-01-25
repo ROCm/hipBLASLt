@@ -1609,7 +1609,9 @@ rocblaslt_status makeArgument(rocblaslt_handle             handle,
 rocblaslt_status runKernelFromInvocation(rocblaslt_handle       handle,
                                          rocblaslt::RocGemmType gemmType,
                                          std::shared_ptr<void>  gemmData,
-                                         hipStream_t            stream)
+                                         hipStream_t            stream,
+                                         hipEvent_t             start,
+                                         hipEvent_t             stop)
 {
     rocblaslt_status status = rocblaslt_status_internal_error;
     try
@@ -1624,7 +1626,7 @@ rocblaslt_status runKernelFromInvocation(rocblaslt_handle       handle,
         {
             std::shared_ptr<TensileDataGemm> data
                 = std::static_pointer_cast<TensileDataGemm>(gemmData);
-            status = hip2RocStatus(adapter->launchKernels(data->kernels, stream, nullptr, nullptr));
+            status = hip2RocStatus(adapter->launchKernels(data->kernels, stream, start, stop));
         }
         else if(gemmType == rocblaslt::RocGemmType::ROCBLASLT_GROUPED_GEMM)
         {
@@ -1636,7 +1638,7 @@ rocblaslt_status runKernelFromInvocation(rocblaslt_handle       handle,
                           "GG is initialized with useUserArgs = true, workspace has no arguments.");
                 return rocblaslt_status_not_initialized;
             }
-            status = hip2RocStatus(adapter->launchKernels(data->kernels, stream, nullptr, nullptr));
+            status = hip2RocStatus(adapter->launchKernels(data->kernels, stream, start, stop));
         }
         else
         {

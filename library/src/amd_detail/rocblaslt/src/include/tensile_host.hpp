@@ -304,7 +304,9 @@ rocblaslt_status makeArgument(rocblaslt_handle             handle,
 rocblaslt_status runKernelFromInvocation(rocblaslt_handle       handle,
                                          rocblaslt::RocGemmType gemmType,
                                          std::shared_ptr<void>  gemmData,
-                                         hipStream_t            stream);
+                                         hipStream_t            stream,
+                                         hipEvent_t             start = nullptr,
+                                         hipEvent_t             stop = nullptr);
 
 rocblaslt_status getDeviceUserArgumentsValuesFromContractionProblem(rocblaslt_handle       handle,
                                                                     rocblaslt::RocGemmType gemmType,
