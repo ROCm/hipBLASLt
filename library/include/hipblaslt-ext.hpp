@@ -350,13 +350,17 @@ namespace hipblaslt_ext
         *
         *  @param[in]
         *  stream                  The HIP stream where all the GPU work will be
+        *  start                   The HIP event which will record the start of the kernel
+        *  stop                    The HIP event which will record the end of the kernel
         * submitted.
         *
         *  \retval HIPBLAS_STATUS_SUCCESS           If the operation completed
         * successfully.
         */
         HIPBLASLT_EXPORT
-        hipblasStatus_t run(hipStream_t stream);
+        hipblasStatus_t run(hipStream_t stream,
+                            hipEvent_t  start = nullptr,
+                            hipEvent_t  stop = nullptr);
 
         HIPBLASLT_EXPORT GemmType getGemmType();
         HIPBLASLT_EXPORT size_t   getGemmCount();
