@@ -218,7 +218,9 @@ rocblaslt_status rocblaslt_get_default_user_args(rocblaslt_handle       handle,
 rocblaslt_status rocblaslt_run_cpp(rocblaslt_handle       handle,
                                    rocblaslt::RocGemmType gemmType,
                                    std::shared_ptr<void>  gemmData,
-                                   hipStream_t            stream);
+                                   hipStream_t            stream,
+                                   hipEvent_t             start,
+                                   hipEvent_t             stop);
 
 rocblaslt_status rocblaslt_run_user_args_cpp(rocblaslt_handle       handle,
                                              rocblaslt::RocGemmType gemmType,
