@@ -12207,7 +12207,7 @@
     ScheduleGlobalRead: 1
     ScheduleIterAlg: 3
     ScheduleLocalWrite: 1
-    SolutionIndex: 0
+    SolutionIndex: 50
     SolutionNameMin: Cijk_Ailk_Bljk_F8H_HHS_BH_MT128x32x128_MI16x16x1_SN_GRVWA8_GRVWB8_GSU17_MIWT2_2_SS1_SU4_SUM1_SUS512_SVW2_WGM8
     SourceSwap: 1
     StaggerU: 4
