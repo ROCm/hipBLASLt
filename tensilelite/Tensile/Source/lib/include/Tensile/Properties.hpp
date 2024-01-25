@@ -163,7 +163,7 @@ namespace Tensile
             {
                 stream << "(invalid statement), ";
             }
-            if constexpr (sizeof...(args) > 5)
+            if constexpr (sizeof...(args) >= 5)
                 debugEvalCmp(stream, args...);
         }
 
