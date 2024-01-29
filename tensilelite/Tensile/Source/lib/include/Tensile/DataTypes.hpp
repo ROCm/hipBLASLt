@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
+ * Copyright (C) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -71,9 +71,10 @@ namespace Tensile
         Int32,
         BFloat16,
         Int8,
+        //Int64,
+        XFloat32 = 10,
         Float8,
         BFloat8,
-        XFloat32,
         Float8BFloat8,
         BFloat8Float8,
         Count,
