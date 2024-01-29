@@ -1238,7 +1238,7 @@ namespace Tensile
                 return ReferenceSolution<TypedGemm_B8F8_B_S, float>::SolveCPU(
                     problem, inputs, elementsToValidate);
             }
-            case TypedGemm_B8F8_B8_S::TypeId():
+            case TypedGemm_B8F8_F8_S::TypeId():
             {
                 return ReferenceSolution<TypedGemm_B8F8_F8_S, float>::SolveCPU(
                     problem, inputs, elementsToValidate);

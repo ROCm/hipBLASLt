@@ -238,8 +238,6 @@ struct RocblasltContractionProblem
         , stream(stream)
         , Synchronizer(Synchronizer)
     {
-        // NB: when bias_type is invalid (255) means unset, need to align with the behaviors in testing_matmul.hpp
-        //     otherwise the bias size allocated there will mismatch the type here
         if(this->bias_type == HIPBLASLT_DATATYPE_INVALID)
         {
             // FIXME: Currently the default bias_type is set to match the yamls' configuration, should add the default type when the yamls are fixed.

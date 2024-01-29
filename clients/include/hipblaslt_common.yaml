@@ -63,12 +63,12 @@ Real precisions: &real_precisions
 Real precisions 1 bytes: &real_precisions_1b
   - &f8_precision_dst_fp32
     { a_type: f8_r, b_type: f8_r, c_type: f32_r, d_type: f32_r, compute_type: c_f32_r, scale_type: f32_r}
+  - &bf8_precision_dst_fp32
+    { a_type: bf8_r, b_type: bf8_r, c_type: f32_r, d_type: f32_r, compute_type: c_f32_r, scale_type: f32_r}
   - &bf8f8_precision_dst_fp32
     { a_type: bf8_r, b_type: f8_r, c_type: f32_r, d_type: f32_r, compute_type: c_f32_r, scale_type: f32_r}
   - &f8bf8_precision_dst_fp32
-    { a_type: f8_r, b_type: bf8_r, c_type: f32_r, d_type: f32_r, compute_type: c_f32_r, scale_type: f32_r}
-  - &bf8bf8_precision_dst_fp32
-    { a_type: bf8_r, b_type: bf8_r, c_type: f32_r, d_type: f32_r, compute_type: c_f32_r, scale_type: f32_r}
+    { a_type: f8_r, b_type: bf8_r, c_type: f32_r, d_type: f32_r, compute_type: c_f32_r, scale_type: f32_r}  
   - &f8_precision_dst_fp16
     { a_type: f8_r, b_type: f8_r, c_type: f16_r, d_type: f16_r, compute_type: c_f32_r, scale_type: f32_r}
   - &bf8_precision_dst_fp16
@@ -107,7 +107,7 @@ Real precisions 1 bytes dst fp32: &real_precisions_1b_dst_f32
   - *f8_precision_dst_fp32
   - *bf8f8_precision_dst_fp32
   - *f8bf8_precision_dst_fp32
-  # - *bf8f8_precision_dst_fp32 # TODO
+  # - *bf8_precision_dst_fp32 # TODO
 
 Real precisions 1 bytes dst fp16: &real_precisions_1b_dst_f16
   - *f8_precision_dst_fp16
