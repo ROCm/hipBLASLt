@@ -769,41 +769,19 @@ class ActivationModule:
         return module
 
     def getSiluModule(self, cDataType, vgprIn, vgprOut):
-        ti = TensileInstructions()
         self.needCombine = True
         module = Module("Silu")
+        module.addModuleAsFlatItem(self.getSigmoidModule(cDataType, vgprIn, vgprOut))
         if cDataType.isHalf():
             if self.usePK:
-                module.add(VMulPKF16(dst=self.vgprPrefix(vgprOut), src0=-1.0, src1=self.vgprPrefix(vgprIn), comment=" x = -x"))
-                module.add(self.getExpModule(cDataType, vgprOut, vgprOut))
-                module.add(VAddPKF16(dst=self.vgprPrefix(vgprOut), src0=1.0, src1=self.vgprPrefix(vgprOut), \
-                                     vop3=VOP3PModifiers(op_sel_hi=[0,1,1]), comment="1 + exp(-x)"))
-                for i in range(0, 2):
-                    select_bit = SelectBit.WORD_0 if i == 0 else SelectBit.WORD_1
-                    module.add(VRcpF16(dst=self.vgprPrefix(vgprOut), src=self.vgprPrefix(vgprOut), \
-                                       sdwa=SDWAModifiers(dst_sel=select_bit, dst_unused=UnusedBit.UNUSED_PRESERVE, src0_sel=select_bit), \
-                                       comment="1 / (1 + exp(-x))"))
-                    module.add(VMulPKF16(dst=self.vgprPrefix(vgprOut), src0=self.vgprPrefix(vgprIn), src1=self.vgprPrefix(vgprOut), comment="x / (1 + exp(-x))"))
-                if ti.getArchCaps()["TransOpWait"]:
-                    module.add(SNop(waitState=0, comment="1 wait states"))
+                mulFunction = VMulPKF16
             else:
-                module.add(VMulF16(dst=self.vgprPrefix(vgprOut), src0=-1.0, src1=self.vgprPrefix(vgprIn), comment=" x = -x"))
-                module.add(self.getExpModule(cDataType, vgprOut, vgprOut))
-                module.add(VAddF16(dst=self.vgprPrefix(vgprOut), src0=1.0, src1=self.vgprPrefix(vgprOut), comment="1 + exp(-x)"))
-                module.add(VRcpF16(dst=self.vgprPrefix(vgprOut), src=self.vgprPrefix(vgprOut), comment="1 / (1 + exp(-x))"))
-                module.add(VMulF32(dst=self.vgprPrefix(vgprOut), src0=self.vgprPrefix(vgprIn), src1=self.vgprPrefix(vgprOut), comment="x / (1 + exp(-x))"))
-                if ti.getArchCaps()["TransOpWait"]:
-                    module.add(SNop(waitState=0, comment="1 wait states"))
+                mulFunction = VMulF16
         elif cDataType.isSingle():
-            module.add(VMulF32(dst=self.vgprPrefix(vgprOut), src0=-1.0, src1=self.vgprPrefix(vgprIn), comment=" x = -x"))
-            module.add(self.getExpModule(cDataType, vgprOut, vgprOut))
-            module.add(VAddF32(dst=self.vgprPrefix(vgprOut), src0=1.0, src1=self.vgprPrefix(vgprOut), comment="1 + exp(-x)" ))
-            module.add(VRcpF32(dst=self.vgprPrefix(vgprOut), src=self.vgprPrefix(vgprOut), comment="1 / (1 + exp(-x))" ))
-            module.add(VMulF32(dst=self.vgprPrefix(vgprOut), src0=self.vgprPrefix(vgprIn), src1=self.vgprPrefix(vgprOut), comment="x / (1 + exp(-x))"))
-            if ti.getArchCaps()["TransOpWait"]:
-                module.add(SNop(waitState=0, comment="1 wait states"))
+            mulFunction = VMulF32
         else:
             raise RuntimeError("Unsupported data type %s."%cDataType.toDevice("HIP"))
+        module.add(mulFunction(dst=self.vgprPrefix(vgprOut), src0=self.vgprPrefix(vgprIn), src1=self.vgprPrefix(vgprOut), comment="x / (1 + exp(-x))"))
         return module
 
     ################################################################################
