@@ -771,7 +771,7 @@ class ActivationModule:
     def getSiluModule(self, cDataType, vgprIn, vgprOut):
         self.needCombine = True
         module = Module("Silu")
-        module.addModuleAsFlatItem(self.getSigmoidModule(cDataType, vgprIn, vgprOut))
+        module.addModuleAsFlatItems(self.getSigmoidModule(cDataType, vgprIn, vgprOut))
         if cDataType.isHalf():
             if self.usePK:
                 mulFunction = VMulPKF16
