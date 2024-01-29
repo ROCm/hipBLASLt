@@ -558,22 +558,22 @@ if [[ "${install_dependencies}" == true ]]; then
   install_packages
 
   CMAKE_VERSION=$(cmake --version | grep -oP '(?<=version )[^ ]*' )
-  if [ -z "$CMAKE_VERSION" ] || $(dpkg --compare-versions $CMAKE_VERSION lt 3.16.8); then
+  if [ -z "$CMAKE_VERSION" ] || $(dpkg --compare-versions $CMAKE_VERSION lt 3.25.2); then
       if $update_cmake == true; then
         pushd
         printf "\033[32mBuilding \033[33mcmake\033[32m from source; installing into \033[33m/usr/local\033[0m\n"
-        CMAKE_REPO="https://github.com/Kitware/CMake/releases/download/v3.16.8/"
+        CMAKE_REPO="https://github.com/Kitware/CMake/releases/download/v3.25.2/"
         mkdir -p ${build_dir}/deps && cd ${build_dir}/deps
-        wget -nv ${CMAKE_REPO}/cmake-3.16.8.tar.gz
-        tar -xvf cmake-3.16.8.tar.gz
-        rm cmake-3.16.8.tar.gz
-        cd cmake-3.16.8
+        wget -nv ${CMAKE_REPO}/cmake-3.25.2.tar.gz
+        tar -xvf cmake-3.25.2.tar.gz
+        rm cmake-3.25.2.tar.gz
+        cd cmake-3.25.2
         ./bootstrap --no-system-curl --parallel=16
         make -j16
         sudo make install
         popd
       else
-          echo "hipBLASLt requires CMake version >= 3.16.8 and CMake version ${CMAKE_VERSION} is installed. Run install.sh again with --cmake_install flag and CMake version 3.16.8 will be installed to /usr/local"
+          echo "hipBLASLt requires CMake version >= 3.25.2 and CMake version ${CMAKE_VERSION} is installed. Run install.sh again with --cmake_install flag and CMake version 3.16.8 will be installed to /usr/local"
           exit 2
       fi
   fi
