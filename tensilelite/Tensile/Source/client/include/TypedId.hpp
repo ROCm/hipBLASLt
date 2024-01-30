@@ -116,6 +116,8 @@ namespace Tensile
     using TypedGemm_F8_S_S  = TypedGemm<Float8, Float8, float, float>;
     using TypedGemm_B8_B8_S = TypedGemm<BFloat8, BFloat8, BFloat8, BFloat8, float, float>;
     using TypedGemm_B8_S_S  = TypedGemm<BFloat8, BFloat8, float, float>;
+    using TypedGemm_B8_H_S  = TypedGemm<BFloat8, BFloat8, Half, Half, float, float>;
+    using TypedGemm_B8_B_S  = TypedGemm<BFloat8, BFloat8, BFloat16, BFloat16, float, float>;
     // hybrid
     using TypedGemm_F8B8_F8_S
         = TypedGemm<Float8, BFloat8, Float8, Float8, float, float, Float8BFloat8>;
@@ -127,6 +129,7 @@ namespace Tensile
     using TypedGemm_B8F8_F8_S
         = TypedGemm<BFloat8, Float8, Float8, Float8, float, float, BFloat8Float8>;
     using TypedGemm_B8F8_H_S = TypedGemm<BFloat8, Float8, Half, Half, float, float, BFloat8Float8>;
+    using TypedGemm_B8F8_B_S = TypedGemm<BFloat8, Float8, BFloat16, BFloat16, float, float, BFloat8Float8>;
     using TypedGemm_B8F8_S_S
         = TypedGemm<BFloat8, Float8, float, float, float, float, BFloat8Float8>;
     using TypedGemm_F8B8_B8_S
