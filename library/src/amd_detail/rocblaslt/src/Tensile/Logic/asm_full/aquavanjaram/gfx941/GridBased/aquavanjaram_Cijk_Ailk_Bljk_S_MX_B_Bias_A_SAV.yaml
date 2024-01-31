@@ -19,7 +19,6 @@
   DataType: 0
   DestDataType: 0
   F32XdlMathOp: 10
-  Fp16AltImpl: false
   Gradient: false
   GroupedGemm: false
   HighPrecisionAccumulate: false
@@ -214,7 +213,6 @@
       DataType: 0
       DestDataType: 0
       F32XdlMathOp: 10
-      Fp16AltImpl: false
       Gradient: false
       GroupedGemm: false
       HighPrecisionAccumulate: false
@@ -464,7 +462,6 @@
       DataType: 0
       DestDataType: 0
       F32XdlMathOp: 10
-      Fp16AltImpl: false
       Gradient: false
       GroupedGemm: false
       HighPrecisionAccumulate: false
@@ -714,7 +711,6 @@
       DataType: 0
       DestDataType: 0
       F32XdlMathOp: 10
-      Fp16AltImpl: false
       Gradient: false
       GroupedGemm: false
       HighPrecisionAccumulate: false
@@ -965,7 +961,6 @@
       DataType: 0
       DestDataType: 0
       F32XdlMathOp: 10
-      Fp16AltImpl: false
       Gradient: false
       GroupedGemm: false
       HighPrecisionAccumulate: false
@@ -1082,5 +1077,4 @@
 - null
 - null
 - DeviceEfficiency
-- null
 - GridBased
