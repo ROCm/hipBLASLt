@@ -1,5 +1,5 @@
 # ########################################################################
-# Copyright (C) 2022-2023 Advanced Micro Devices, Inc.
+# Copyright (C) 2022-2024 Advanced Micro Devices, Inc.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -21,8 +21,7 @@
 #
 # ########################################################################
 
-# ROCm software requires at least Ubuntu 16.04 or Fedora 24, which have cmake 3.5
-cmake_minimum_required(VERSION 3.5 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.25.2 FATAL_ERROR)
 
 # This will add compile option: -std=c++17
 set(CMAKE_CXX_STANDARD 20 )
