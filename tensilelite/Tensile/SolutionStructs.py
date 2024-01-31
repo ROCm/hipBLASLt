@@ -1297,6 +1297,8 @@ class Solution(collections.abc.Mapping):
       state["SubGroup1"]   = state["WorkGroup"][1]
       state["LocalSplitU"] = state["WorkGroup"][2]
 
+    state["LocalSplitU"] = state["WorkGroup"][2]
+
     if "SubGroup0" in state and "SubGroup1" in state and "LocalSplitU" in state:
       state["NumThreads"]  = state["SubGroup0"] * state["SubGroup1"] * state["LocalSplitU"]
       if (state["NumThreads"] % state['WavefrontSize']) != 0:
@@ -2354,6 +2356,18 @@ class Solution(collections.abc.Mapping):
 
     # LocalSplitU but can't NumThreads%MacroTile doesn't support sideways store
     if state["LocalSplitU"] > 1:
+      if state["GlobalSplitU"] > 1:
+        reject(state, "TODO: LSU doesn't support GSU>1.")
+      if state["LocalSplitU"] != 4:
+        reject(state, "TODO: LSU doesn't support LSU!=4.")
+      if not state["SourceSwap"]:
+        reject(state, "TODO: LSU doesn't support SourceSwap=0.")
+      if state["TransposeLDS"] != 2:
+        reject(state, "TODO: LSU doesn't support TLDS!=2.")
+      if state["MIWaveGroup"][0]*state["MIWaveGroup"][1]*state["LocalSplitU"] != 4:
+        reject(state, "LSU only support 4 waves per workgroup.")
+      if not state["ProblemType"]["ComputeDataType"].isSingle():
+        reject(state, "TODO: LSU doesn't support ComputeDataType!=single.")
       if state["NumThreads"] % state["MacroTile0"] != 0:
         reject(state, "LocalSplitU but NumThreads=%u not divisible by MT0=%u for sideways store" \
             % (state["NumThreads"], state["MacroTile0"]))
@@ -3044,20 +3058,20 @@ class Solution(collections.abc.Mapping):
     ldsSizeOccupancy = globalParameters["DeviceLDS"] // state["MaxOccupancy"]
     ldsNumElementsOccupancy = ldsSizeOccupancy // state["ProblemType"]["DestDataType"].numBytes()
 
-    #print("ldsNumElementsA", ldsNumElementsA)
-    #print("ldsNumElementsB", ldsNumElementsB)
-    #print("ldsNumElementsMetadata", ldsNumElementsMetadata)
-    #print("ldsNumElementsAlignedA", ldsNumElementsAlignedA)
-    #print("ldsNumElementsAlignedB", ldsNumElementsAlignedB)
-    #print("ldsNumElementsAlignedMetadata", ldsNumElementsAlignedMetadata)
-    #print("ldsNumElementsAB", ldsNumElementsAB)
-#
-    #print("LdsOffsetB", state["LdsOffsetB"])
-    #print("LdsOffsetMetadata", state["LdsOffsetMetadata"])
-    #if state["PrefetchGlobalRead"]:
-    #  print("LdsOffsetA_BLK", state["LdsOffsetA_Blk"])
-    #  print("LdsOffsetB_BLK", state["LdsOffsetB_Blk"])
-    #  print("LdsOffsetMetadata_BLK", state["LdsOffsetMetadata_Blk"])
+    # print("ldsNumElementsA", ldsNumElementsA)
+    # print("ldsNumElementsB", ldsNumElementsB)
+    # print("ldsNumElementsMetadata", ldsNumElementsMetadata)
+    # print("ldsNumElementsAlignedA", ldsNumElementsAlignedA)
+    # print("ldsNumElementsAlignedB", ldsNumElementsAlignedB)
+    # print("ldsNumElementsAlignedMetadata", ldsNumElementsAlignedMetadata)
+    # print("ldsNumElementsAB", ldsNumElementsAB)
+
+    # print("LdsOffsetB", state["LdsOffsetB"])
+    # print("LdsOffsetMetadata", state["LdsOffsetMetadata"])
+    # if state["PrefetchGlobalRead"]:
+    #   print("LdsOffsetA_BLK", state["LdsOffsetA_Blk"])
+    #   print("LdsOffsetB_BLK", state["LdsOffsetB_Blk"])
+    #   print("LdsOffsetMetadata_BLK", state["LdsOffsetMetadata_Blk"])
 
     if state["EnableMatrixInstruction"]:
       if state["DirectToLds"] and state["1LDSBuffer"]:
