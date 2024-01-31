@@ -20,7 +20,6 @@
   DataType: 1
   DestDataType: 1
   F32XdlMathOp: 0
-  Fp16AltImpl: false
   Gradient: false
   GroupedGemm: false
   HighPrecisionAccumulate: false
@@ -216,7 +215,6 @@
       DataType: 1
       DestDataType: 1
       F32XdlMathOp: 0
-      Fp16AltImpl: false
       Gradient: false
       GroupedGemm: false
       HighPrecisionAccumulate: false
@@ -465,7 +463,6 @@
       DataType: 1
       DestDataType: 1
       F32XdlMathOp: 0
-      Fp16AltImpl: false
       Gradient: false
       GroupedGemm: false
       HighPrecisionAccumulate: false
@@ -579,5 +576,4 @@
 - null
 - null
 - DeviceEfficiency
-- null
 - GridBased

@@ -16,7 +16,6 @@
   ComputeDataType: 0
   DataType: 0
   DestDataType: 0
-  Fp16AltImpl: false
   HighPrecisionAccumulate: false
   Index0: 0
   Index01A: 0
@@ -186,7 +185,6 @@
       ComputeDataType: 0
       DataType: 0
       DestDataType: 0
-      Fp16AltImpl: false
       HighPrecisionAccumulate: false
       Index0: 0
       Index01A: 0
@@ -403,7 +401,6 @@
       ComputeDataType: 0
       DataType: 0
       DestDataType: 0
-      Fp16AltImpl: false
       HighPrecisionAccumulate: false
       Index0: 0
       Index01A: 0
@@ -620,7 +617,6 @@
       ComputeDataType: 0
       DataType: 0
       DestDataType: 0
-      Fp16AltImpl: false
       HighPrecisionAccumulate: false
       Index0: 0
       Index01A: 0
@@ -837,7 +833,6 @@
       ComputeDataType: 0
       DataType: 0
       DestDataType: 0
-      Fp16AltImpl: false
       HighPrecisionAccumulate: false
       Index0: 0
       Index01A: 0
@@ -1054,7 +1049,6 @@
       ComputeDataType: 0
       DataType: 0
       DestDataType: 0
-      Fp16AltImpl: false
       HighPrecisionAccumulate: false
       Index0: 0
       Index01A: 0
@@ -1271,7 +1265,6 @@
       ComputeDataType: 0
       DataType: 0
       DestDataType: 0
-      Fp16AltImpl: false
       HighPrecisionAccumulate: false
       Index0: 0
       Index01A: 0
@@ -1488,7 +1481,6 @@
       ComputeDataType: 0
       DataType: 0
       DestDataType: 0
-      Fp16AltImpl: false
       HighPrecisionAccumulate: false
       Index0: 0
       Index01A: 0
@@ -1705,7 +1697,6 @@
       ComputeDataType: 0
       DataType: 0
       DestDataType: 0
-      Fp16AltImpl: false
       HighPrecisionAccumulate: false
       Index0: 0
       Index01A: 0
@@ -1922,7 +1913,6 @@
       ComputeDataType: 0
       DataType: 0
       DestDataType: 0
-      Fp16AltImpl: false
       HighPrecisionAccumulate: false
       Index0: 0
       Index01A: 0
@@ -2139,7 +2129,6 @@
       ComputeDataType: 0
       DataType: 0
       DestDataType: 0
-      Fp16AltImpl: false
       HighPrecisionAccumulate: false
       Index0: 0
       Index01A: 0
@@ -2356,7 +2345,6 @@
       ComputeDataType: 0
       DataType: 0
       DestDataType: 0
-      Fp16AltImpl: false
       HighPrecisionAccumulate: false
       Index0: 0
       Index01A: 0
@@ -2573,7 +2561,6 @@
       ComputeDataType: 0
       DataType: 0
       DestDataType: 0
-      Fp16AltImpl: false
       HighPrecisionAccumulate: false
       Index0: 0
       Index01A: 0
@@ -2790,7 +2777,6 @@
       ComputeDataType: 0
       DataType: 0
       DestDataType: 0
-      Fp16AltImpl: false
       HighPrecisionAccumulate: false
       Index0: 0
       Index01A: 0
@@ -3007,7 +2993,6 @@
       ComputeDataType: 0
       DataType: 0
       DestDataType: 0
-      Fp16AltImpl: false
       HighPrecisionAccumulate: false
       Index0: 0
       Index01A: 0
@@ -3224,7 +3209,6 @@
       ComputeDataType: 0
       DataType: 0
       DestDataType: 0
-      Fp16AltImpl: false
       HighPrecisionAccumulate: false
       Index0: 0
       Index01A: 0
@@ -3441,7 +3425,6 @@
       ComputeDataType: 0
       DataType: 0
       DestDataType: 0
-      Fp16AltImpl: false
       HighPrecisionAccumulate: false
       Index0: 0
       Index01A: 0
@@ -3658,7 +3641,6 @@
       ComputeDataType: 0
       DataType: 0
       DestDataType: 0
-      Fp16AltImpl: false
       HighPrecisionAccumulate: false
       Index0: 0
       Index01A: 0
@@ -3875,7 +3857,6 @@
       ComputeDataType: 0
       DataType: 0
       DestDataType: 0
-      Fp16AltImpl: false
       HighPrecisionAccumulate: false
       Index0: 0
       Index01A: 0
@@ -4092,7 +4073,6 @@
       ComputeDataType: 0
       DataType: 0
       DestDataType: 0
-      Fp16AltImpl: false
       HighPrecisionAccumulate: false
       Index0: 0
       Index01A: 0
@@ -4309,7 +4289,6 @@
       ComputeDataType: 0
       DataType: 0
       DestDataType: 0
-      Fp16AltImpl: false
       HighPrecisionAccumulate: false
       Index0: 0
       Index01A: 0
@@ -4526,7 +4505,6 @@
       ComputeDataType: 0
       DataType: 0
       DestDataType: 0
-      Fp16AltImpl: false
       HighPrecisionAccumulate: false
       Index0: 0
       Index01A: 0
@@ -4743,7 +4721,6 @@
       ComputeDataType: 0
       DataType: 0
       DestDataType: 0
-      Fp16AltImpl: false
       HighPrecisionAccumulate: false
       Index0: 0
       Index01A: 0
@@ -4960,7 +4937,6 @@
       ComputeDataType: 0
       DataType: 0
       DestDataType: 0
-      Fp16AltImpl: false
       HighPrecisionAccumulate: false
       Index0: 0
       Index01A: 0
@@ -5177,7 +5153,6 @@
       ComputeDataType: 0
       DataType: 0
       DestDataType: 0
-      Fp16AltImpl: false
       HighPrecisionAccumulate: false
       Index0: 0
       Index01A: 0
@@ -5394,7 +5369,6 @@
       ComputeDataType: 0
       DataType: 0
       DestDataType: 0
-      Fp16AltImpl: false
       HighPrecisionAccumulate: false
       Index0: 0
       Index01A: 0
@@ -5611,7 +5585,6 @@
       ComputeDataType: 0
       DataType: 0
       DestDataType: 0
-      Fp16AltImpl: false
       HighPrecisionAccumulate: false
       Index0: 0
       Index01A: 0
@@ -5828,7 +5801,6 @@
       ComputeDataType: 0
       DataType: 0
       DestDataType: 0
-      Fp16AltImpl: false
       HighPrecisionAccumulate: false
       Index0: 0
       Index01A: 0
@@ -6045,7 +6017,6 @@
       ComputeDataType: 0
       DataType: 0
       DestDataType: 0
-      Fp16AltImpl: false
       HighPrecisionAccumulate: false
       Index0: 0
       Index01A: 0
@@ -6262,7 +6233,6 @@
       ComputeDataType: 0
       DataType: 0
       DestDataType: 0
-      Fp16AltImpl: false
       HighPrecisionAccumulate: false
       Index0: 0
       Index01A: 0
@@ -6479,7 +6449,6 @@
       ComputeDataType: 0
       DataType: 0
       DestDataType: 0
-      Fp16AltImpl: false
       HighPrecisionAccumulate: false
       Index0: 0
       Index01A: 0
@@ -6696,7 +6665,6 @@
       ComputeDataType: 0
       DataType: 0
       DestDataType: 0
-      Fp16AltImpl: false
       HighPrecisionAccumulate: false
       Index0: 0
       Index01A: 0
@@ -6913,7 +6881,6 @@
       ComputeDataType: 0
       DataType: 0
       DestDataType: 0
-      Fp16AltImpl: false
       HighPrecisionAccumulate: false
       Index0: 0
       Index01A: 0
@@ -7130,7 +7097,6 @@
       ComputeDataType: 0
       DataType: 0
       DestDataType: 0
-      Fp16AltImpl: false
       HighPrecisionAccumulate: false
       Index0: 0
       Index01A: 0
@@ -7347,7 +7313,6 @@
       ComputeDataType: 0
       DataType: 0
       DestDataType: 0
-      Fp16AltImpl: false
       HighPrecisionAccumulate: false
       Index0: 0
       Index01A: 0
@@ -7564,7 +7529,6 @@
       ComputeDataType: 0
       DataType: 0
       DestDataType: 0
-      Fp16AltImpl: false
       HighPrecisionAccumulate: false
       Index0: 0
       Index01A: 0
@@ -7781,7 +7745,6 @@
       ComputeDataType: 0
       DataType: 0
       DestDataType: 0
-      Fp16AltImpl: false
       HighPrecisionAccumulate: false
       Index0: 0
       Index01A: 0
@@ -7998,7 +7961,6 @@
       ComputeDataType: 0
       DataType: 0
       DestDataType: 0
-      Fp16AltImpl: false
       HighPrecisionAccumulate: false
       Index0: 0
       Index01A: 0
@@ -8215,7 +8177,6 @@
       ComputeDataType: 0
       DataType: 0
       DestDataType: 0
-      Fp16AltImpl: false
       HighPrecisionAccumulate: false
       Index0: 0
       Index01A: 0
@@ -8432,7 +8393,6 @@
       ComputeDataType: 0
       DataType: 0
       DestDataType: 0
-      Fp16AltImpl: false
       HighPrecisionAccumulate: false
       Index0: 0
       Index01A: 0
@@ -8649,7 +8609,6 @@
       ComputeDataType: 0
       DataType: 0
       DestDataType: 0
-      Fp16AltImpl: false
       HighPrecisionAccumulate: false
       Index0: 0
       Index01A: 0
@@ -8866,7 +8825,6 @@
       ComputeDataType: 0
       DataType: 0
       DestDataType: 0
-      Fp16AltImpl: false
       HighPrecisionAccumulate: false
       Index0: 0
       Index01A: 0
@@ -9083,7 +9041,6 @@
       ComputeDataType: 0
       DataType: 0
       DestDataType: 0
-      Fp16AltImpl: false
       HighPrecisionAccumulate: false
       Index0: 0
       Index01A: 0
@@ -9300,7 +9257,6 @@
       ComputeDataType: 0
       DataType: 0
       DestDataType: 0
-      Fp16AltImpl: false
       HighPrecisionAccumulate: false
       Index0: 0
       Index01A: 0
@@ -9517,7 +9473,6 @@
       ComputeDataType: 0
       DataType: 0
       DestDataType: 0
-      Fp16AltImpl: false
       HighPrecisionAccumulate: false
       Index0: 0
       Index01A: 0
@@ -9734,7 +9689,6 @@
       ComputeDataType: 0
       DataType: 0
       DestDataType: 0
-      Fp16AltImpl: false
       HighPrecisionAccumulate: false
       Index0: 0
       Index01A: 0
@@ -9951,7 +9905,6 @@
       ComputeDataType: 0
       DataType: 0
       DestDataType: 0
-      Fp16AltImpl: false
       HighPrecisionAccumulate: false
       Index0: 0
       Index01A: 0
@@ -10168,7 +10121,6 @@
       ComputeDataType: 0
       DataType: 0
       DestDataType: 0
-      Fp16AltImpl: false
       HighPrecisionAccumulate: false
       Index0: 0
       Index01A: 0
@@ -10385,7 +10337,6 @@
       ComputeDataType: 0
       DataType: 0
       DestDataType: 0
-      Fp16AltImpl: false
       HighPrecisionAccumulate: false
       Index0: 0
       Index01A: 0
@@ -10602,7 +10553,6 @@
       ComputeDataType: 0
       DataType: 0
       DestDataType: 0
-      Fp16AltImpl: false
       HighPrecisionAccumulate: false
       Index0: 0
       Index01A: 0
@@ -10819,7 +10769,6 @@
       ComputeDataType: 0
       DataType: 0
       DestDataType: 0
-      Fp16AltImpl: false
       HighPrecisionAccumulate: false
       Index0: 0
       Index01A: 0
@@ -11036,7 +10985,6 @@
       ComputeDataType: 0
       DataType: 0
       DestDataType: 0
-      Fp16AltImpl: false
       HighPrecisionAccumulate: false
       Index0: 0
       Index01A: 0
@@ -11253,7 +11201,6 @@
       ComputeDataType: 0
       DataType: 0
       DestDataType: 0
-      Fp16AltImpl: false
       HighPrecisionAccumulate: false
       Index0: 0
       Index01A: 0
@@ -11470,7 +11417,6 @@
       ComputeDataType: 0
       DataType: 0
       DestDataType: 0
-      Fp16AltImpl: false
       HighPrecisionAccumulate: false
       Index0: 0
       Index01A: 0
@@ -11687,7 +11633,6 @@
       ComputeDataType: 0
       DataType: 0
       DestDataType: 0
-      Fp16AltImpl: false
       HighPrecisionAccumulate: false
       Index0: 0
       Index01A: 0
@@ -11904,7 +11849,6 @@
       ComputeDataType: 0
       DataType: 0
       DestDataType: 0
-      Fp16AltImpl: false
       HighPrecisionAccumulate: false
       Index0: 0
       Index01A: 0
@@ -12121,7 +12065,6 @@
       ComputeDataType: 0
       DataType: 0
       DestDataType: 0
-      Fp16AltImpl: false
       HighPrecisionAccumulate: false
       Index0: 0
       Index01A: 0
@@ -12338,7 +12281,6 @@
       ComputeDataType: 0
       DataType: 0
       DestDataType: 0
-      Fp16AltImpl: false
       HighPrecisionAccumulate: false
       Index0: 0
       Index01A: 0
@@ -12555,7 +12497,6 @@
       ComputeDataType: 0
       DataType: 0
       DestDataType: 0
-      Fp16AltImpl: false
       HighPrecisionAccumulate: false
       Index0: 0
       Index01A: 0
@@ -12772,7 +12713,6 @@
       ComputeDataType: 0
       DataType: 0
       DestDataType: 0
-      Fp16AltImpl: false
       HighPrecisionAccumulate: false
       Index0: 0
       Index01A: 0
@@ -12989,7 +12929,6 @@
       ComputeDataType: 0
       DataType: 0
       DestDataType: 0
-      Fp16AltImpl: false
       HighPrecisionAccumulate: false
       Index0: 0
       Index01A: 0
@@ -13206,7 +13145,6 @@
       ComputeDataType: 0
       DataType: 0
       DestDataType: 0
-      Fp16AltImpl: false
       HighPrecisionAccumulate: false
       Index0: 0
       Index01A: 0
@@ -13423,7 +13361,6 @@
       ComputeDataType: 0
       DataType: 0
       DestDataType: 0
-      Fp16AltImpl: false
       HighPrecisionAccumulate: false
       Index0: 0
       Index01A: 0
@@ -13640,7 +13577,6 @@
       ComputeDataType: 0
       DataType: 0
       DestDataType: 0
-      Fp16AltImpl: false
       HighPrecisionAccumulate: false
       Index0: 0
       Index01A: 0
@@ -13857,7 +13793,6 @@
       ComputeDataType: 0
       DataType: 0
       DestDataType: 0
-      Fp16AltImpl: false
       HighPrecisionAccumulate: false
       Index0: 0
       Index01A: 0
@@ -14074,7 +14009,6 @@
       ComputeDataType: 0
       DataType: 0
       DestDataType: 0
-      Fp16AltImpl: false
       HighPrecisionAccumulate: false
       Index0: 0
       Index01A: 0
@@ -14332,5 +14266,4 @@
 - null
 - null
 - DeviceEfficiency
-- null
 - Equality

@@ -16,7 +16,6 @@
   ComputeDataType: 0
   DataType: 4
   DestDataType: 4
-  Fp16AltImpl: false
   GroupedGemm: true
   SupportUserArgs: true
   HighPrecisionAccumulate: true
@@ -187,7 +186,6 @@
       ComputeDataType: 0
       DataType: 4
       DestDataType: 4
-      Fp16AltImpl: false
       GroupedGemm: true
       SupportUserArgs: true
       HighPrecisionAccumulate: true
@@ -284,5 +282,4 @@
 - null
 - null
 - DeviceEfficiency
-- null
 - GridBased

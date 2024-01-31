@@ -15,7 +15,6 @@
   ComputeDataType: 0
   DataType: 4
   DestDataType: 0
-  Fp16AltImpl: false
   HighPrecisionAccumulate: true
   Index0: 0
   Index01A: 0
@@ -184,7 +183,6 @@
       ComputeDataType: 0
       DataType: 4
       DestDataType: 0
-      Fp16AltImpl: false
       GroupedGemm: false
       HighPrecisionAccumulate: true
       Index0: 0
@@ -401,7 +399,6 @@
       ComputeDataType: 0
       DataType: 4
       DestDataType: 0
-      Fp16AltImpl: false
       GroupedGemm: false
       HighPrecisionAccumulate: true
       Index0: 0
@@ -618,7 +615,6 @@
       ComputeDataType: 0
       DataType: 4
       DestDataType: 0
-      Fp16AltImpl: false
       GroupedGemm: false
       HighPrecisionAccumulate: true
       Index0: 0
@@ -835,7 +831,6 @@
       ComputeDataType: 0
       DataType: 4
       DestDataType: 0
-      Fp16AltImpl: false
       GroupedGemm: false
       HighPrecisionAccumulate: true
       Index0: 0
@@ -1052,7 +1047,6 @@
       ComputeDataType: 0
       DataType: 4
       DestDataType: 0
-      Fp16AltImpl: false
       GroupedGemm: false
       HighPrecisionAccumulate: true
       Index0: 0
@@ -1269,7 +1263,6 @@
       ComputeDataType: 0
       DataType: 4
       DestDataType: 0
-      Fp16AltImpl: false
       GroupedGemm: false
       HighPrecisionAccumulate: true
       Index0: 0
@@ -1486,7 +1479,6 @@
       ComputeDataType: 0
       DataType: 4
       DestDataType: 0
-      Fp16AltImpl: false
       GroupedGemm: false
       HighPrecisionAccumulate: true
       Index0: 0
@@ -1703,7 +1695,6 @@
       ComputeDataType: 0
       DataType: 4
       DestDataType: 0
-      Fp16AltImpl: false
       GroupedGemm: false
       HighPrecisionAccumulate: true
       Index0: 0
@@ -1920,7 +1911,6 @@
       ComputeDataType: 0
       DataType: 4
       DestDataType: 0
-      Fp16AltImpl: false
       GroupedGemm: false
       HighPrecisionAccumulate: true
       Index0: 0
@@ -2137,7 +2127,6 @@
       ComputeDataType: 0
       DataType: 4
       DestDataType: 0
-      Fp16AltImpl: false
       GroupedGemm: false
       HighPrecisionAccumulate: true
       Index0: 0
@@ -2354,7 +2343,6 @@
       ComputeDataType: 0
       DataType: 4
       DestDataType: 0
-      Fp16AltImpl: false
       GroupedGemm: false
       HighPrecisionAccumulate: true
       Index0: 0
@@ -2571,7 +2559,6 @@
       ComputeDataType: 0
       DataType: 4
       DestDataType: 0
-      Fp16AltImpl: false
       GroupedGemm: false
       HighPrecisionAccumulate: true
       Index0: 0
@@ -2788,7 +2775,6 @@
       ComputeDataType: 0
       DataType: 4
       DestDataType: 0
-      Fp16AltImpl: false
       GroupedGemm: false
       HighPrecisionAccumulate: true
       Index0: 0
@@ -3005,7 +2991,6 @@
       ComputeDataType: 0
       DataType: 4
       DestDataType: 0
-      Fp16AltImpl: false
       GroupedGemm: false
       HighPrecisionAccumulate: true
       Index0: 0
@@ -3222,7 +3207,6 @@
       ComputeDataType: 0
       DataType: 4
       DestDataType: 0
-      Fp16AltImpl: false
       GroupedGemm: false
       HighPrecisionAccumulate: true
       Index0: 0
@@ -3473,7 +3457,6 @@
       ConvolutionConfig: []
       DataType: 4
       DestDataType: 0
-      Fp16AltImpl: false
       HighPrecisionAccumulate: true
       Index0: 0
       Index01A: 0
@@ -3697,7 +3680,6 @@
       ComputeDataType: 0
       DataType: 4
       DestDataType: 0
-      Fp16AltImpl: false
       GroupedGemm: false
       HighPrecisionAccumulate: true
       Index0: 0
@@ -3914,7 +3896,6 @@
       ComputeDataType: 0
       DataType: 4
       DestDataType: 0
-      Fp16AltImpl: false
       GroupedGemm: false
       HighPrecisionAccumulate: true
       Index0: 0
@@ -4131,7 +4112,6 @@
       ComputeDataType: 0
       DataType: 4
       DestDataType: 0
-      Fp16AltImpl: false
       GroupedGemm: false
       HighPrecisionAccumulate: true
       Index0: 0
@@ -4359,7 +4339,6 @@
       ComputeDataType: 0
       DataType: 4
       DestDataType: 0
-      Fp16AltImpl: false
       GroupedGemm: false
       HighPrecisionAccumulate: true
       Index0: 0
@@ -4597,7 +4576,6 @@
       ComputeDataType: 0
       DataType: 4
       DestDataType: 0
-      Fp16AltImpl: false
       GroupedGemm: false
       HighPrecisionAccumulate: true
       Index0: 0
@@ -4835,7 +4813,6 @@
       ComputeDataType: 0
       DataType: 4
       DestDataType: 0
-      Fp16AltImpl: false
       GroupedGemm: false
       HighPrecisionAccumulate: true
       Index0: 0
@@ -5073,7 +5050,6 @@
       ComputeDataType: 0
       DataType: 4
       DestDataType: 0
-      Fp16AltImpl: false
       GroupedGemm: false
       HighPrecisionAccumulate: true
       Index0: 0
@@ -5311,7 +5287,6 @@
       ComputeDataType: 0
       DataType: 4
       DestDataType: 0
-      Fp16AltImpl: false
       GroupedGemm: false
       HighPrecisionAccumulate: true
       Index0: 0
@@ -5549,7 +5524,6 @@
       ComputeDataType: 0
       DataType: 4
       DestDataType: 0
-      Fp16AltImpl: false
       GroupedGemm: false
       HighPrecisionAccumulate: true
       Index0: 0
@@ -5787,7 +5761,6 @@
       ComputeDataType: 0
       DataType: 4
       DestDataType: 0
-      Fp16AltImpl: false
       GroupedGemm: false
       HighPrecisionAccumulate: true
       Index0: 0
@@ -6025,7 +5998,6 @@
       ComputeDataType: 0
       DataType: 4
       DestDataType: 0
-      Fp16AltImpl: false
       GroupedGemm: false
       HighPrecisionAccumulate: true
       Index0: 0
@@ -6267,7 +6239,6 @@
       ComputeDataType: 0
       DataType: 4
       DestDataType: 0
-      Fp16AltImpl: false
       Gradient: false
       GroupedGemm: false
       HighPrecisionAccumulate: true
@@ -6512,7 +6483,6 @@
       ComputeDataType: 0
       DataType: 4
       DestDataType: 0
-      Fp16AltImpl: false
       Gradient: false
       GroupedGemm: false
       HighPrecisionAccumulate: true
@@ -6757,7 +6727,6 @@
       ComputeDataType: 0
       DataType: 4
       DestDataType: 0
-      Fp16AltImpl: false
       Gradient: false
       GroupedGemm: false
       HighPrecisionAccumulate: true
@@ -7002,7 +6971,6 @@
       ComputeDataType: 0
       DataType: 4
       DestDataType: 0
-      Fp16AltImpl: false
       Gradient: false
       GroupedGemm: false
       HighPrecisionAccumulate: true
@@ -7247,7 +7215,6 @@
       ComputeDataType: 0
       DataType: 4
       DestDataType: 0
-      Fp16AltImpl: false
       Gradient: false
       GroupedGemm: false
       HighPrecisionAccumulate: true
@@ -7492,7 +7459,6 @@
       ComputeDataType: 0
       DataType: 4
       DestDataType: 0
-      Fp16AltImpl: false
       Gradient: false
       GroupedGemm: false
       HighPrecisionAccumulate: true
@@ -7733,7 +7699,6 @@
       ComputeDataType: 0
       DataType: 4
       DestDataType: 0
-      Fp16AltImpl: false
       GroupedGemm: false
       HighPrecisionAccumulate: true
       Index0: 0
@@ -7975,7 +7940,6 @@
       ComputeDataType: 0
       DataType: 4
       DestDataType: 0
-      Fp16AltImpl: false
       Gradient: false
       GroupedGemm: false
       HighPrecisionAccumulate: true
@@ -8220,7 +8184,6 @@
       ComputeDataType: 0
       DataType: 4
       DestDataType: 0
-      Fp16AltImpl: false
       Gradient: false
       GroupedGemm: false
       HighPrecisionAccumulate: true
@@ -8465,7 +8428,6 @@
       ComputeDataType: 0
       DataType: 4
       DestDataType: 0
-      Fp16AltImpl: false
       Gradient: false
       GroupedGemm: false
       HighPrecisionAccumulate: true
@@ -8652,5 +8614,4 @@
 - null
 - null
 - DeviceEfficiency
-- null
 - Equality
