@@ -1,5 +1,5 @@
 # ########################################################################
-# Copyright (C) 2022-2023 Advanced Micro Devices, Inc.
+# Copyright (C) 2022-2024 Advanced Micro Devices, Inc.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -21,7 +21,7 @@
 #
 # ########################################################################
 
-cmake_minimum_required( VERSION 3.16.8 )
+cmake_minimum_required( VERSION 3.25.2 )
 
 #add_definitions(-D_HIPBLASLT_INTERNAL_BFLOAT16_)
 
