@@ -216,7 +216,7 @@ class StateValues:
   numSgprAddressDbg: int                 = 0
 
   firstInitSgpr: int                     = -1
-  lastPostLoopSgpr: int                  = 0
+  nonPostLoopSgpr: List[str]             = field(init=False)
   userArgsInfo: UserArgumentsInfo        = field(default_factory=UserArgumentsInfo)
   numSgprToLoad: int                     = 0 # For kernel args
   numSgprPreload: int                    = 0 # For kernel args
@@ -280,6 +280,8 @@ class StateValues:
 
     self.numStoreSgprNames = []
     self.numStoreSgprNameSizes = []
+
+    self.nonPostLoopSgpr = []
 
 @dataclass
 class StateVgprs:
@@ -3639,7 +3641,17 @@ class KernelWriter(metaclass=abc.ABCMeta):
     # (we reclaim them to use as temps, typically for execmasks)
     # Mostly impacts flat kernels and GSU edge since these need SGPR
     # for conditionals
-    self.states.lastPostLoopSgpr = self.sgprPool.size()
+    for key, _ in self.sgprs.items():
+      self.states.nonPostLoopSgpr.append(key)
+    # Manually remove some additional unused sgpr
+    self.states.nonPostLoopSgpr.remove("WGM")
+    for i in range(kernel["ProblemType"]["NumIndicesSummation"]):
+      self.states.nonPostLoopSgpr.remove(self.loopCounterName(kernel,i))
+    self.states.nonPostLoopSgpr.remove("OrigLoopCounter")
+    self.states.nonPostLoopSgpr.remove("AddressA")
+    self.states.nonPostLoopSgpr.remove("AddressB")
+    self.states.nonPostLoopSgpr.remove("StridesA")
+    self.states.nonPostLoopSgpr.remove("StridesB")
 
     self.states.preloadScaleA = False
     self.states.preloadScaleB = False
