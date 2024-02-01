@@ -376,7 +376,6 @@ class KernelWriterAssembly(KernelWriter):
     # (we reclaim them to use as temps, typically for execmasks)
     # Mostly impacts flat kernels and GSU edge since these need SGPR
     # for conditionals
-    # self.states.lastPostLoopSgpr = self.sgprPool.size()
     if kernel["BufferLoad"]:
        # resource descriptor (SRD) A and B, must be aligned on 4-SGPR boundary
       self.defineSgpr("SrdA", 4, 4)
@@ -4152,11 +4151,11 @@ class KernelWriterAssembly(KernelWriter):
                       (vbegin, vbegin+vsize))
 
     lastRegTag=None
-    for i in range(self.states.lastPostLoopSgpr, self.sgprPool.size()):
+    for i in range(0, self.sgprPool.size()):
       regTag = self.sgprPool.pool[i].tag
       if regTag != lastRegTag:
         lastRegTag = regTag
-        if self.sgprPool.pool[i].status == RegisterPool.Status.InUse:
+        if (lastRegTag not in self.states.nonPostLoopSgpr) and (self.sgprPool.pool[i].status == RegisterPool.Status.InUse):
           if label == "Summation_End_OptNLL":
             self.undefineSgpr(regTag)
           else:
@@ -4168,7 +4167,7 @@ class KernelWriterAssembly(KernelWriter):
       for i in range(0,16+1):
          module.add(VMovB32(dst=vgpr(21), src=vgpr(21), comment="hack tmp in pool"))
 
-    # this doesn't seem to do anything - not being aggressive with lastPostLoopSgpr
+    # this doesn't seem to do anything
     if self.db["InitSgpr"] & 0x2:
       module.add(self.sgprPool.initTmps(self.consts.initSgprValue))
 
