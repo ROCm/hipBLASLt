@@ -2624,6 +2624,8 @@ std::string getSolutionNameFromData(rocblaslt_handle             handle,
     auto solutionName = solution->solutionName;
     if(modifiedString != "")
         solutionName += " (Custom tuning: " + modifiedString + ")";
+    else
+        solutionName += " (Original GSU: " + std::to_string(solution->sizeMapping.globalSplitU) + ")";
     return solutionName;
 }
 
