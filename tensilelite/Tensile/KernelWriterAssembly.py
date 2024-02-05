@@ -1203,9 +1203,9 @@ class KernelWriterAssembly(KernelWriter):
         moduleArgs.add(SBranch(common_kern_entry.getLabelName())) # jump to common path
         total_inst_dwords = 0
         for inst in moduleArgs.items():
-          if isinstance(inst, BranchInstruction):
+          if isinstance(inst, (BranchInstruction, SWaitCnt, CommonInstruction)):
             total_inst_dwords = total_inst_dwords + 1
-          elif isinstance(inst, CommonInstruction):
+          elif isinstance(inst, (SMemLoadInstruction)):
             total_inst_dwords = total_inst_dwords + 2
         assert total_inst_dwords <= 64
         moduleArgs.addComment1("pad %u snops to satisfy 0x100 code size for Preload Backward Compatibility Prologue" % (64 - total_inst_dwords))
