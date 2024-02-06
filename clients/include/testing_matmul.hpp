@@ -44,6 +44,9 @@
 #include <hipblaslt/hipblaslt.h>
 #include <omp.h>
 #include <set>
+#include <map>
+#include <variant>
+
 
 template <typename Ti, typename Tc, typename To, typename Tbias, typename Tact, typename F>
 void epilogue_func(int64_t m,
@@ -364,6 +367,80 @@ void check(hipStream_t                          stream,
     }
 }
 
+template <typename To, typename Talpha, typename TBias>
+size_t check_bias_type_temp(const Arguments& arg)
+{
+    if constexpr (std::is_same<TBias, unsigned int>{}())
+        hipblaslt_cout << "unsigned_int\n";        
+    else if constexpr (std::is_same<TBias, hipblasLtHalf>{}())
+        hipblaslt_cout << "hipblasLtHalf\n";
+    else if constexpr (std::is_same<TBias, hip_bfloat16>{}())
+        hipblaslt_cout << "hip_bfloat16\n";
+    else if constexpr (std::is_same<TBias, float>{}())
+        hipblaslt_cout << "float\n";
+    else if constexpr (std::is_same<TBias, hipblaslt_f8_fnuz>{}())
+        hipblaslt_cout << "hipblaslt_f8_fnuz\n";
+    else if constexpr (std::is_same<TBias, hipblaslt_bf8_fnuz>{}())
+        hipblaslt_cout << "hipblaslt_bf8_fnuz\n";
+    else if constexpr (std::is_same<TBias, int32_t>{}())
+        hipblaslt_cout << "int32_t\n";
+    else if constexpr (std::is_same<TBias, hipblasLtInt8>{}())
+        hipblaslt_cout << "hipblasLtInt8\n";
+    else if constexpr (std::is_same<TBias, double>{}())
+        hipblaslt_cout << "double\n";
+
+    return sizeof(TBias);
+}
+
+using ArgDataTypes = std::variant<hipblasLtHalf,
+                                  hip_bfloat16,
+                                  float,
+                                  hipblaslt_f8_fnuz,
+                                  hipblaslt_bf8_fnuz,
+                                  int32_t,
+                                  hipblasLtInt8,
+                                  double,
+                                  unsigned int>;
+
+ArgDataTypes get_blaslt_type_size(hipDataType hiptype)
+{
+    static const std::map<hipDataType, ArgDataTypes> typeMap 
+      = {{HIP_R_16F, static_cast<hipblasLtHalf>(0)}, {HIP_R_16BF, static_cast<hip_bfloat16>(0)},
+         {HIP_R_32F, static_cast<float>(0)}, {HIP_R_8F_E4M3_FNUZ, static_cast<hipblaslt_f8_fnuz>(0)},
+         {HIP_R_8F_E5M2_FNUZ, static_cast<hipblaslt_bf8_fnuz>(0)}, {HIP_R_32I, static_cast<int32_t>(0)},
+         {HIP_R_8I, static_cast<hipblasLtInt8>(0)}, {HIP_R_64F, static_cast<double>(0)},
+         {HIPBLASLT_DATATYPE_INVALID, static_cast<uint32_t>(0)}};
+
+    ArgDataTypes ret = typeMap.at(hiptype);
+    return ret;
+}
+
+// a function to determing the default bias_type if bias is applied
+hipDataType derive_unset_bias_type(const Arguments& arg)
+{
+    hipDataType real_bias_type = arg.bias_type;
+    // when bias type is unset.
+    if(arg.bias_type == HIPBLASLT_DATATYPE_INVALID)
+    {
+        if((arg.a_type == HIP_R_8F_E4M3_FNUZ || arg.a_type == HIP_R_8F_E5M2_FNUZ)
+            && (arg.b_type == HIP_R_8F_E4M3_FNUZ || arg.b_type == HIP_R_8F_E5M2_FNUZ))
+        {
+            if(arg.d_type == HIP_R_32F || arg.d_type == HIP_R_16BF)
+                real_bias_type = HIP_R_16BF;
+            else if(arg.d_type == HIP_R_16F)
+                real_bias_type = HIP_R_16F;
+            else //more default cases once support C != D
+                real_bias_type = HIP_R_16F;
+        }
+        else
+        {
+            real_bias_type = arg.d_type;
+        }
+    } // else, remain bias type
+
+    return real_bias_type;
+}
+
 template <typename TiA, typename TiB, typename To, typename Tc, typename Tci>
 void testing_matmul(const Arguments& arg)
 {
@@ -478,11 +555,17 @@ void testing_matmul(const Arguments& arg)
         {
             size_bias[i] = 0;
         }
-        // TODO: need to support other bias types other than To/Talpha from -bench and -test
-        auto biasSize
-            = size_bias[i]
-              * ((arg.d_type != arg.scale_type && arg.bias_type == arg.scale_type) ? sizeof(Talpha)
-                                                                                   : sizeof(To));
+
+        // after this, real bias type (should not be invalid)
+        hipDataType real_bias_type = derive_unset_bias_type(arg);
+        ArgDataTypes bias_type_variant = get_blaslt_type_size(real_bias_type);
+        auto bias_type_size = check_bias_type_temp<To, Talpha, decltype(bias_type_variant)>(arg);
+        auto biasSize = size_bias[i] * sizeof(decltype(bias_type_variant));
+        //
+        // auto biasSize
+        //     = size_bias[i]
+        //       * ((arg.d_type != arg.scale_type && arg.bias_type == arg.scale_type) ? sizeof(Talpha)
+        //                                                                            : sizeof(To));
         int64_t sizeC = h_beta[i] == 0 ? 0 : size_C[i] * sizeof(To);
         totalRotatingSizeNeeded += size_A[i] * sizeof(TiA) + size_B[i] * sizeof(TiB) + sizeC
                                    + size_D[i] * sizeof(To) + size_E[i] * sizeof(To) + biasSize
