@@ -445,6 +445,12 @@ namespace Tensile
                 float tmp  = 0.5 * tanh(xx) + x1 * x2 + 0.5;
                 return static_cast<T>(tmp);
             }
+            else if(new_type == ActivationType::Silu)
+            {
+                auto castedVal = static_cast<castT>(val);
+                return static_cast<T>(castedVal
+                                      / (1.f + static_cast<castT>(exp(-castedVal))));
+            }
             return val;
         }
 

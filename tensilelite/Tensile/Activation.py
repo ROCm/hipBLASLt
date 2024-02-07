@@ -1,6 +1,6 @@
 ################################################################################
 #
-# Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -140,6 +140,7 @@ class ActivationType:
                           ('tanh',        ActivationTypeRegister('tanh', False, 2,        True,  True, False,   False, False, False, False)), \
                           ('dgelu',       ActivationTypeRegister('dgelu', True, 0,       False,  True, False,   False, False, False, False)), \
                           ('geluscaling', ActivationTypeRegister('geluscaling', False, 1, True,  True, False,   False, False, False, False)), \
+                          ('silu',        ActivationTypeRegister('silu', False, 0,        True,  True, False,   False, False, False, False)), \
                           ('all',         ActivationTypeRegister('all', False, 0)) ])
 
     def __init__(self, value):
@@ -311,6 +312,8 @@ class ActivationModule:
             module = self.getTanhModule(cDataType, vgprIn, vgprOut, "activationAlpha", "activationBeta")
         elif (activationType == 'dgelu'):
             module = self.getDGeluModule(cDataType, vgprIn, vgprOut)
+        elif (activationType == 'silu'):
+            module = self.getSiluModule(cDataType, vgprIn, vgprOut)
         elif (activationType == 'none'):
             return Module("No activation")
         else:
@@ -763,6 +766,22 @@ class ActivationModule:
             module.add(VAddF32(dst=self.vgprPrefix(vgprOut), src0=0.5, src1=self.vgprPrefix(vgprOut), comment="out = out + 0.5"))
         else:
             raise RuntimeError("Unsupported data type %s."%cDataType.toDevice("HIP"))
+        return module
+
+    def getSiluModule(self, cDataType, vgprIn, vgprOut):
+        self.needCombine = True
+        module = Module("Silu")
+        module.addModuleAsFlatItems(self.getSigmoidModule(cDataType, vgprIn, vgprOut))
+        if cDataType.isHalf():
+            if self.usePK:
+                mulFunction = VMulPKF16
+            else:
+                mulFunction = VMulF16
+        elif cDataType.isSingle():
+            mulFunction = VMulF32
+        else:
+            raise RuntimeError("Unsupported data type %s."%cDataType.toDevice("HIP"))
+        module.add(mulFunction(dst=self.vgprPrefix(vgprOut), src0=self.vgprPrefix(vgprIn), src1=self.vgprPrefix(vgprOut), comment="x / (1 + exp(-x))"))
         return module
 
     ################################################################################
@@ -1246,6 +1265,12 @@ class ActivationInline:
       kStr += addSpace(asm, ": \"+v\"(value) : \n")
       needExec = True if self.enableGuard else False
       kStr += self.getRequiredRegStr(asm, activation.vgprCounter, activation.sgprCounter, needExec=needExec)
+    elif (activationType == 'silu'):
+      kStr += (asm + " // Silu\n")
+      module = activation.getSiluModule(self.dataType, 0, 0)
+      kStr += self.getActivationAsmStr(activation, module, (len(asm) * " "))
+      kStr += addSpace(asm, ": \"+v\"(value) : \n")
+      kStr += self.getRequiredRegStr(asm, activation.vgprCounter, activation.sgprCounter)
     else:
       if (activationType != 'none'):
         raise RuntimeError("Unrecognized type %s."%activationType)
