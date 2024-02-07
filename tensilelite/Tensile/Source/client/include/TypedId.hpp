@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2023 Advanced Micro Devices, Inc. All rights reserved.
+ * Copyright (C) 2023-2024 Advanced Micro Devices, Inc. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -111,9 +111,11 @@ namespace Tensile
 #endif // TENSILE_USE_BF16
 #ifdef TENSILE_USE_FP8_BF8
     using TypedGemm_F8_F8_S = TypedGemm<Float8, Float8, Float8, Float8, float, float>;
+    using TypedGemm_F8_B8_S = TypedGemm<Float8, Float8, BFloat8, BFloat8, float, float>;
     using TypedGemm_F8_H_S  = TypedGemm<Float8, Float8, Half, Half, float, float>;
     using TypedGemm_F8_B_S  = TypedGemm<Float8, Float8, BFloat16, BFloat16, float, float>;
     using TypedGemm_F8_S_S  = TypedGemm<Float8, Float8, float, float>;
+    using TypedGemm_B8_F8_S = TypedGemm<BFloat8, BFloat8, Float8, Float8, float, float>;
     using TypedGemm_B8_B8_S = TypedGemm<BFloat8, BFloat8, BFloat8, BFloat8, float, float>;
     using TypedGemm_B8_S_S  = TypedGemm<BFloat8, BFloat8, float, float>;
     using TypedGemm_B8_H_S  = TypedGemm<BFloat8, BFloat8, Half, Half, float, float>;

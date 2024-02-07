@@ -104,7 +104,7 @@ void m_axpy(size_t* N, T* alpha, T* x, int* incx, T* y, int* incy)
 // Real
 template <typename T,
           std::enable_if_t<!(std::is_same<T, hipblaslt_f8_fnuz>{}
-                             || std::is_same<T, hipblaslt_f8_fnuz>{}),
+                             || std::is_same<T, hipblaslt_bf8_fnuz>{}),
                            int>
           = 0>
 double norm_check_general(char norm_type, int64_t M, int64_t N, int64_t lda, T* hCPU, T* hGPU)
@@ -146,7 +146,7 @@ double norm_check_general(char norm_type, int64_t M, int64_t N, int64_t lda, T* 
 
 template <
     typename T,
-    std::enable_if_t<(std::is_same<T, hipblaslt_f8_fnuz>{} || std::is_same<T, hipblaslt_f8_fnuz>{}),
+    std::enable_if_t<(std::is_same<T, hipblaslt_f8_fnuz>{} || std::is_same<T, hipblaslt_bf8_fnuz>{}),
                      int>
     = 0>
 double norm_check_general(char norm_type, int64_t M, int64_t N, int64_t lda, T* hCPU, T* hGPU)

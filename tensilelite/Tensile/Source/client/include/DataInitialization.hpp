@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
+ * Copyright (C) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -2001,6 +2001,12 @@ namespace Tensile
 
         template <>
         inline bool DataInitialization::isBadOutput<Float8>(Float8 value)
+        {
+            return std::isinf(static_cast<float>(value));
+        }
+
+        template <>
+        inline bool DataInitialization::isBadOutput<BFloat8>(BFloat8 value)
         {
             return std::isinf(static_cast<float>(value));
         }

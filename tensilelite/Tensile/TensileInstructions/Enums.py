@@ -1,6 +1,6 @@
 ################################################################################
 #
-# Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -93,6 +93,7 @@ class CvtType(Enum):
     CVT_PK_FP8_to_F32 =  9
     CVT_PK_BF8_to_F32 = 10
     CVT_PK_F32_to_FP8 = 11
+    CVT_PK_F32_to_BF8 = 12
 
 class RoundType(Enum):
     ROUND_UP = 0
