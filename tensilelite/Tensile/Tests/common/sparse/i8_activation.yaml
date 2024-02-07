@@ -79,6 +79,7 @@ BenchmarkProblems:
           - [Enum: relu]
           - [Enum: sigmoid]
           - [Enum: tanh]
+          - [Enum: silu]
 
   #########################################
   ## TN - standard
@@ -144,6 +145,7 @@ BenchmarkProblems:
           - [Enum: relu]
           - [Enum: sigmoid]
           - [Enum: tanh]
+          - [Enum: silu]
 
   #######################################
   # NT - standard
@@ -208,6 +210,7 @@ BenchmarkProblems:
           - [Enum: relu]
           - [Enum: sigmoid]
           - [Enum: tanh]
+          - [Enum: silu]
 
   #######################################
   # TT - standard
@@ -273,3 +276,4 @@ BenchmarkProblems:
           - [Enum: relu]
           - [Enum: sigmoid]
           - [Enum: tanh]
+          - [Enum: silu]
