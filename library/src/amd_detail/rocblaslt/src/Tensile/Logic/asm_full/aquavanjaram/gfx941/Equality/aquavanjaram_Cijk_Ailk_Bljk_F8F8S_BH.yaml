@@ -108,7 +108,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4 ,1]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     InternalSupportParams: {SupportUserGSU: true}
@@ -366,7 +366,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4 ,1]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     InternalSupportParams: {SupportUserGSU: true}
@@ -624,7 +624,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4 ,1]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     InternalSupportParams: {SupportUserGSU: true}
@@ -882,7 +882,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4 ,1]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     InternalSupportParams: {SupportUserGSU: true}
@@ -1140,7 +1140,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4 ,1]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     InternalSupportParams: {SupportUserGSU: true}
@@ -1398,7 +1398,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4 ,1]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     InternalSupportParams: {SupportUserGSU: true}
@@ -1656,7 +1656,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4 ,1]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     InternalSupportParams: {SupportUserGSU: true}
