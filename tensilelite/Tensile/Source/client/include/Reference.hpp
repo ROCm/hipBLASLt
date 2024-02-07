@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
+ * Copyright (C) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -66,6 +66,16 @@ namespace Tensile
             Float8 absDiff = (a - b > static_cast<Float8>(0.0f)) ? a - b : b - a;
             return absDiff / (absA + absB + static_cast<Float8>(1.0f)) < static_cast<Float8>(
                        0.125f); // tolerance * eps = 2 * 0.0625; 2*eps needed for SR
+        }
+
+        template <>
+        inline bool AlmostEqual(BFloat8 a, BFloat8 b)
+        {
+            BFloat8 absA    = (a > static_cast<BFloat8>(0.0f)) ? a : static_cast<BFloat8>(0.0f) - a;
+            BFloat8 absB    = (b > static_cast<BFloat8>(0.0f)) ? b : static_cast<BFloat8>(0.0f) - b;
+            BFloat8 absDiff = (a - b > static_cast<BFloat8>(0.0f)) ? a - b : b - a;
+            return absDiff / (absA + absB + static_cast<BFloat8>(1.0f)) < static_cast<BFloat8>(
+                       0.25f); // tolerance * epsilon = 2 * 0.125; 2*eps needed for SR
         }
 
         template <>

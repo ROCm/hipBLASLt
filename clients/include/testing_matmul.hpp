@@ -478,6 +478,7 @@ void testing_matmul(const Arguments& arg)
         {
             size_bias[i] = 0;
         }
+        // TODO: need to support other bias types other than To/Talpha from -bench and -test
         auto biasSize
             = size_bias[i]
               * ((arg.d_type != arg.scale_type && arg.bias_type == arg.scale_type) ? sizeof(Talpha)

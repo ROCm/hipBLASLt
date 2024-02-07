@@ -7939,6 +7939,12 @@ class KernelWriterAssembly(KernelWriter):
     vgprFp8Min: int    = -1
     vgprFp8Max: int    = -1
 
+  class BF8CVTVgprStruct(NamedTuple):
+    vgprBF8NanInf: int = -1
+    vgprBF8Temp: int   = -1
+    vgprBF8Min: int    = -1
+    vgprBF8Max: int    = -1
+
   class ActivationSetPCStruct(NamedTuple):
     sgprOffsetActivation: int = -1
     sgprOffsetBack: int = -1
@@ -8269,7 +8275,9 @@ class KernelWriterAssembly(KernelWriter):
         cvtVgprStruct = self.FP8CVTVgprStruct(vgprFp8Temp=cvtVgpr, vgprFp8NanInf=(cvtVgpr+1), \
                                               vgprFp8Min=(cvtVgpr+2), vgprFp8Max=(cvtVgpr+3))
       elif kernel["ProblemType"]["DestDataType"].isBFloat8():
-        assert(0) #TODO
+        cvtVgpr = self.vgprPool.checkOut(4)
+        cvtVgprStruct = self.BF8CVTVgprStruct(vgprBF8Temp=cvtVgpr, vgprBF8NanInf=(cvtVgpr+1), \
+                                              vgprBF8Min=(cvtVgpr+2), vgprBF8Max=(cvtVgpr+3))
 
       activationSetPCStruct = None
       activationLabelList = None

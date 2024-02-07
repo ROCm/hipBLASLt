@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
+ * Copyright (C) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -224,6 +224,16 @@ namespace Tensile
                 rv = checkResultsTyped(tensor,
                                        (Float8 const*)refPtr,
                                        (Float8 const*)resPtr,
+                                       maxElements,
+                                       isgpu,
+                                       validationStride);
+            }
+            break;
+            case DataType::BFloat8:
+            {
+                rv = checkResultsTyped(tensor,
+                                       (BFloat8 const*)refPtr,
+                                       (BFloat8 const*)resPtr,
                                        maxElements,
                                        isgpu,
                                        validationStride);
