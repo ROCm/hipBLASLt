@@ -108,7 +108,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -364,7 +364,7 @@
     GuaranteeNoPartialA: true
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -620,7 +620,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -876,7 +876,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -1132,7 +1132,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -1388,7 +1388,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -1644,7 +1644,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -1900,7 +1900,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -2156,7 +2156,7 @@
     GuaranteeNoPartialA: true
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -2412,7 +2412,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -2668,7 +2668,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -2924,7 +2924,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -3180,7 +3180,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -3436,7 +3436,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -3692,7 +3692,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -3948,7 +3948,7 @@
     GuaranteeNoPartialA: true
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -4204,7 +4204,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -4460,7 +4460,7 @@
     GuaranteeNoPartialA: true
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -4716,7 +4716,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -4972,7 +4972,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -5228,7 +5228,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -5484,7 +5484,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -5740,7 +5740,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -5996,7 +5996,7 @@
     GuaranteeNoPartialA: true
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -6252,7 +6252,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -6508,7 +6508,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -6764,7 +6764,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -7020,7 +7020,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -7276,7 +7276,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -7532,7 +7532,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -7788,7 +7788,7 @@
     GuaranteeNoPartialA: true
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -8044,7 +8044,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -8300,7 +8300,7 @@
     GuaranteeNoPartialA: true
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -8556,7 +8556,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -8812,7 +8812,7 @@
     GuaranteeNoPartialA: true
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -9068,7 +9068,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -9324,7 +9324,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -9580,7 +9580,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -9836,7 +9836,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -10092,7 +10092,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -10348,7 +10348,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -10604,7 +10604,7 @@
     GuaranteeNoPartialA: true
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -10860,7 +10860,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -11116,7 +11116,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -11372,7 +11372,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -11628,7 +11628,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -11884,7 +11884,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -12140,7 +12140,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -12396,7 +12396,7 @@
     GuaranteeNoPartialA: true
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -12652,7 +12652,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -12908,7 +12908,7 @@
     GuaranteeNoPartialA: true
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -13164,7 +13164,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -13420,7 +13420,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -13676,7 +13676,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -13932,7 +13932,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -14188,7 +14188,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -14444,7 +14444,7 @@
     GuaranteeNoPartialA: true
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -14700,7 +14700,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -14956,7 +14956,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -15212,7 +15212,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -15468,7 +15468,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -15724,7 +15724,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -15980,7 +15980,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -16236,7 +16236,7 @@
     GuaranteeNoPartialA: true
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -16492,7 +16492,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -16748,7 +16748,7 @@
     GuaranteeNoPartialA: true
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -17004,7 +17004,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -17260,7 +17260,7 @@
     GuaranteeNoPartialA: true
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -17516,7 +17516,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -17772,7 +17772,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -18028,7 +18028,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -18284,7 +18284,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -18540,7 +18540,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -18796,7 +18796,7 @@
     GuaranteeNoPartialA: true
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -19052,7 +19052,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -19308,7 +19308,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -19564,7 +19564,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -19820,7 +19820,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -20076,7 +20076,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -20332,7 +20332,7 @@
     GuaranteeNoPartialA: true
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -20588,7 +20588,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -20844,7 +20844,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -21100,7 +21100,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -21356,7 +21356,7 @@
     GuaranteeNoPartialA: true
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -21612,7 +21612,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -21868,7 +21868,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -22124,7 +22124,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -22380,7 +22380,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -22636,7 +22636,7 @@
     GuaranteeNoPartialA: true
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -22892,7 +22892,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -23148,7 +23148,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -23404,7 +23404,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -23660,7 +23660,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -23916,7 +23916,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -24172,7 +24172,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -24428,7 +24428,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -24684,7 +24684,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -24940,7 +24940,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -25196,7 +25196,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -25452,7 +25452,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -25708,7 +25708,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -25964,7 +25964,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -26220,7 +26220,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -26476,7 +26476,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -26732,7 +26732,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -26988,7 +26988,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -27244,7 +27244,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -27500,7 +27500,7 @@
     GuaranteeNoPartialA: true
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -27756,7 +27756,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -28012,7 +28012,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -28268,7 +28268,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -28524,7 +28524,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -28780,7 +28780,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -29036,7 +29036,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -29292,7 +29292,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -29548,7 +29548,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -29804,7 +29804,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -30060,7 +30060,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -30316,7 +30316,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -30572,7 +30572,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -30828,7 +30828,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -31084,7 +31084,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -31340,7 +31340,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -31596,7 +31596,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -31852,7 +31852,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -32108,7 +32108,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -32364,7 +32364,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -32620,7 +32620,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -32876,7 +32876,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -33132,7 +33132,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -33388,7 +33388,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -33644,7 +33644,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -33900,7 +33900,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -34156,7 +34156,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -34412,7 +34412,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -34668,7 +34668,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -34924,7 +34924,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -35180,7 +35180,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -35436,7 +35436,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -35692,7 +35692,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -35948,7 +35948,7 @@
     GuaranteeNoPartialA: true
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -36204,7 +36204,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -36460,7 +36460,7 @@
     GuaranteeNoPartialA: true
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -36716,7 +36716,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -36972,7 +36972,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -37228,7 +37228,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -37484,7 +37484,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -37740,7 +37740,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -37996,7 +37996,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -38252,7 +38252,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -38508,7 +38508,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -38764,7 +38764,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -39020,7 +39020,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -39276,7 +39276,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -39532,7 +39532,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -39788,7 +39788,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -40044,7 +40044,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -40300,7 +40300,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -40556,7 +40556,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -40812,7 +40812,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -41068,7 +41068,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -41324,7 +41324,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -41580,7 +41580,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -41836,7 +41836,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -42092,7 +42092,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -42348,7 +42348,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -42604,7 +42604,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -42860,7 +42860,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -43116,7 +43116,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -43372,7 +43372,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -43628,7 +43628,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -43884,7 +43884,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -44140,7 +44140,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -44396,7 +44396,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -44652,7 +44652,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -44908,7 +44908,7 @@
     GuaranteeNoPartialA: true
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -45164,7 +45164,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -45420,7 +45420,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -45676,7 +45676,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -45932,7 +45932,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -46188,7 +46188,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -46444,7 +46444,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -46700,7 +46700,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -46956,7 +46956,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -47212,7 +47212,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -47468,7 +47468,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -47724,7 +47724,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -47980,7 +47980,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -48236,7 +48236,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -48492,7 +48492,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -48748,7 +48748,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -49004,7 +49004,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -49260,7 +49260,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -49516,7 +49516,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -49772,7 +49772,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -50028,7 +50028,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -50284,7 +50284,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -50540,7 +50540,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -50796,7 +50796,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -51052,7 +51052,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -51308,7 +51308,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -51564,7 +51564,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -51820,7 +51820,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -52076,7 +52076,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -52332,7 +52332,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -52588,7 +52588,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -52844,7 +52844,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -53100,7 +53100,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -53356,7 +53356,7 @@
     GuaranteeNoPartialA: true
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -53612,7 +53612,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -53868,7 +53868,7 @@
     GuaranteeNoPartialA: true
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -54124,7 +54124,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -54380,7 +54380,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -54636,7 +54636,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -54892,7 +54892,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -55148,7 +55148,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -55404,7 +55404,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -55660,7 +55660,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -55916,7 +55916,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -56172,7 +56172,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -56428,7 +56428,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -56684,7 +56684,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -56940,7 +56940,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -57196,7 +57196,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -57452,7 +57452,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -57708,7 +57708,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -57964,7 +57964,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -58220,7 +58220,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -58476,7 +58476,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -58732,7 +58732,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -58988,7 +58988,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -59244,7 +59244,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -59500,7 +59500,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -59756,7 +59756,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -60012,7 +60012,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -60268,7 +60268,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -60524,7 +60524,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -60780,7 +60780,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -61036,7 +61036,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -61292,7 +61292,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -61548,7 +61548,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -61804,7 +61804,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -62060,7 +62060,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -62316,7 +62316,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -62572,7 +62572,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -62828,7 +62828,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -63084,7 +63084,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -63340,7 +63340,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -63596,7 +63596,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -63852,7 +63852,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -64108,7 +64108,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -64364,7 +64364,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -64620,7 +64620,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -64876,7 +64876,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -65132,7 +65132,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -65388,7 +65388,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -65644,7 +65644,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -65900,7 +65900,7 @@
     GuaranteeNoPartialA: true
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -66156,7 +66156,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -66412,7 +66412,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -66668,7 +66668,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -66924,7 +66924,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -67180,7 +67180,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -67436,7 +67436,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -67692,7 +67692,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -67948,7 +67948,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -68204,7 +68204,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -68460,7 +68460,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -68716,7 +68716,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -68972,7 +68972,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -69228,7 +69228,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -69484,7 +69484,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -69740,7 +69740,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -69996,7 +69996,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -70252,7 +70252,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -70508,7 +70508,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -70764,7 +70764,7 @@
     GuaranteeNoPartialA: true
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -71020,7 +71020,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -71276,7 +71276,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -71532,7 +71532,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -71788,7 +71788,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -72044,7 +72044,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -72300,7 +72300,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -72556,7 +72556,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -72812,7 +72812,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -73068,7 +73068,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -73324,7 +73324,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -73580,7 +73580,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -73836,7 +73836,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -74092,7 +74092,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -74348,7 +74348,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -74604,7 +74604,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -74860,7 +74860,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -75116,7 +75116,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -75372,7 +75372,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -75628,7 +75628,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -75884,7 +75884,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -76140,7 +76140,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -76396,7 +76396,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -76652,7 +76652,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -76908,7 +76908,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -77164,7 +77164,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -77420,7 +77420,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -77676,7 +77676,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -77932,7 +77932,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -78188,7 +78188,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -78444,7 +78444,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -78700,7 +78700,7 @@
     GuaranteeNoPartialA: true
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -78956,7 +78956,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -79212,7 +79212,7 @@
     GuaranteeNoPartialA: true
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -79468,7 +79468,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -79724,7 +79724,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -79980,7 +79980,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -80236,7 +80236,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -80492,7 +80492,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -80748,7 +80748,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -81004,7 +81004,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -81260,7 +81260,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -81516,7 +81516,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -81772,7 +81772,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -82028,7 +82028,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -82284,7 +82284,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -82540,7 +82540,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -82796,7 +82796,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -83052,7 +83052,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -83308,7 +83308,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -83564,7 +83564,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -83820,7 +83820,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -84076,7 +84076,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -84332,7 +84332,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -84588,7 +84588,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -84844,7 +84844,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -85100,7 +85100,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -85356,7 +85356,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -85612,7 +85612,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -85868,7 +85868,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -86124,7 +86124,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -86380,7 +86380,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -86636,7 +86636,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -86892,7 +86892,7 @@
     GuaranteeNoPartialA: true
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -87148,7 +87148,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -87404,7 +87404,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -87660,7 +87660,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -87916,7 +87916,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -88172,7 +88172,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -88428,7 +88428,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -88684,7 +88684,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -88940,7 +88940,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -89196,7 +89196,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -89452,7 +89452,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -89708,7 +89708,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -89964,7 +89964,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -90220,7 +90220,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -90476,7 +90476,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -90732,7 +90732,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -90988,7 +90988,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -91244,7 +91244,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -91500,7 +91500,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -91756,7 +91756,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -92012,7 +92012,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -92268,7 +92268,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -92524,7 +92524,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -92780,7 +92780,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -93036,7 +93036,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -93292,7 +93292,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -93548,7 +93548,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -93804,7 +93804,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -94060,7 +94060,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -94316,7 +94316,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -94572,7 +94572,7 @@
     GuaranteeNoPartialA: true
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -94828,7 +94828,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -95084,7 +95084,7 @@
     GuaranteeNoPartialA: true
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -95340,7 +95340,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -95596,7 +95596,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -95852,7 +95852,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -96108,7 +96108,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -96364,7 +96364,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -96620,7 +96620,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -96876,7 +96876,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -97132,7 +97132,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -97388,7 +97388,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -97644,7 +97644,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -97900,7 +97900,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -98156,7 +98156,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -98412,7 +98412,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -98668,7 +98668,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -98924,7 +98924,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -99180,7 +99180,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -99436,7 +99436,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -99692,7 +99692,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -99948,7 +99948,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -100204,7 +100204,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -100460,7 +100460,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -100716,7 +100716,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -100972,7 +100972,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -101228,7 +101228,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -101484,7 +101484,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -101740,7 +101740,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -101996,7 +101996,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -102252,7 +102252,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -102508,7 +102508,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -102764,7 +102764,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -103020,7 +103020,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -103276,7 +103276,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -103532,7 +103532,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -103788,7 +103788,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -104044,7 +104044,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -104300,7 +104300,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -104556,7 +104556,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -104812,7 +104812,7 @@
     GuaranteeNoPartialA: true
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -105068,7 +105068,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -105324,7 +105324,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -105580,7 +105580,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -105836,7 +105836,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -106092,7 +106092,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -106348,7 +106348,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -106604,7 +106604,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -106860,7 +106860,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -107116,7 +107116,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -107372,7 +107372,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -107628,7 +107628,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -107884,7 +107884,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -108140,7 +108140,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -108396,7 +108396,7 @@
     GuaranteeNoPartialA: true
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -108652,7 +108652,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -108908,7 +108908,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -109164,7 +109164,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -109420,7 +109420,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -109676,7 +109676,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -109932,7 +109932,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -110188,7 +110188,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -110444,7 +110444,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -110700,7 +110700,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -110956,7 +110956,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -111212,7 +111212,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -111468,7 +111468,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -111724,7 +111724,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -111980,7 +111980,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -112236,7 +112236,7 @@
     GuaranteeNoPartialA: true
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -112492,7 +112492,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -112748,7 +112748,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -113004,7 +113004,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -113260,7 +113260,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -113516,7 +113516,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -113772,7 +113772,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -114028,7 +114028,7 @@
     GuaranteeNoPartialA: true
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -114284,7 +114284,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -114540,7 +114540,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -114796,7 +114796,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -115052,7 +115052,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -115308,7 +115308,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -115564,7 +115564,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -115820,7 +115820,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -116076,7 +116076,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -116332,7 +116332,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -116588,7 +116588,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -116844,7 +116844,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -117100,7 +117100,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -117356,7 +117356,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -117612,7 +117612,7 @@
     GuaranteeNoPartialA: false
     GuaranteeNoPartialB: true
     GuaranteeNoPartialMetadata: true
-    ISA: [9, 4, 2]
+    ISA: [9, 4, 1]
     InnerUnroll: 1
     InterleaveAlpha: 0
     KernelLanguage: Assembly
@@ -117833,6 +117833,783 @@
     _VectorStore: 1
     _WorkspaceSizePerElemBias: 0
     _WorkspaceSizePerElemC: 0
+    _staggerStrideShift: 0
+  - 1LDSBuffer: 1
+    ActivationAlt: false
+    ActivationFuncCall: true
+    ActivationFused: true
+    AssertFree0ElementMultiple: 2
+    AssertFree1ElementMultiple: 1
+    AssertSummationElementMultiple: 1
+    AssignedDerivedParameters: true
+    AssignedProblemIndependentDerivedParameters: true
+    BufferLoad: true
+    BufferStore: true
+    CUCount: null
+    ClusterLocalRead: 1
+    CodeObjectVersion: default
+    CustomKernelName: ''
+    DepthU: 64
+    DirectToLds: false
+    DirectToLdsA: false
+    DirectToLdsB: false
+    DirectToVgprSparseMetadata: false
+    EdgeType: ShiftPtr
+    EnableF32XdlMathOp: false
+    EnableMatrixInstruction: true
+    ExpandPointerSwap: 0
+    GlobalReadPerMfma: 1
+    GlobalReadVectorWidthA: 8
+    GlobalReadVectorWidthB: 8
+    GlobalSplitU: 1
+    GlobalSplitUAlgorithm: MultipleBuffer
+    GlobalWriteVectorWidth: 2
+    GroupLoadStore: false
+    GuaranteeNoPartialA: false
+    GuaranteeNoPartialB: true
+    GuaranteeNoPartialMetadata: true
+    ISA: [9, 4, 1]
+    InnerUnroll: 1
+    InterleaveAlpha: 0
+    InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true}
+    KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_F8H_HHS_BH_Bias_AS_SAB_SAV_MT192x192x64_MI16x16x1_SN_GRVWA8_LBSPPA3072_LPB16_LRVW8_LWPMn1_MIWT6_6_WSGRA0_WSGRB0
+    LSCA: 64
+    LSCB: 64
+    LSPA: 32
+    LSPB: 32
+    LVCA: 8
+    LVCB: 8
+    LVPA: 4
+    LVPB: 4
+    LdsBlockSizePerPadA: 3072
+    LdsBlockSizePerPadB: 128
+    LdsBlockSizePerPadMetadata: 0
+    LdsInitCVgprs: false
+    LdsNumElements: 27904
+    LdsNumElementsAlignedA: 12544
+    LdsNumElementsAlignedB: 15360
+    LdsNumElementsAlignedMetadata: 0
+    LdsOffsetA: 0
+    LdsOffsetA_Blk: 32768
+    LdsOffsetB: 12544
+    LdsOffsetB_Blk: 45312
+    LdsOffsetBias: 0
+    LdsOffsetBiasGSU: 0
+    LdsOffsetBiasNonGSU: 0
+    LdsOffsetMetadata: 27904
+    LdsOffsetMetadata_Blk: 45312
+    LdsPadA: 32
+    LdsPadB: 16
+    LdsPadMetadata: 0
+    LocalReadVectorWidth: 8
+    LocalSplitU: 1
+    LocalWritePerMfma: -1
+    LocalWriteUseSgprA: false
+    LocalWriteUseSgprB: false
+    LoopIters: 4
+    LoopUnroll: 64
+    MFMA_BF16_1K: false
+    MIArchVgpr: 0
+    MIBlock: [16, 16, 16, 1, 1, 1]
+    MIInputPerThread: 4
+    MIInputPerThreadA: 4
+    MIInputPerThreadB: 4
+    MIInputPerThreadMetadata: 4
+    MIOutputVectorWidth: 4
+    MIRegPerOut: 1
+    MIWaveGroup: [2, 2]
+    MIWaveTile: [6, 6]
+    MIWaveTileA: 6
+    MIWaveTileB: 6
+    MIWaveTileMetadata: 0
+    MacroTile0: 192
+    MacroTile1: 192
+    MacroTileA: 192
+    MacroTileB: 192
+    MagicDivAlg: 2
+    MatrixInstB: 1
+    MatrixInstBM: 1
+    MatrixInstBN: 1
+    MatrixInstK: 16
+    MatrixInstM: 16
+    MatrixInstN: 16
+    MatrixInstruction: [16, 16, 16, 1]
+    MaxOccupancy: 40
+    MaxVgprNumber: 256
+    MinVgprNumber: 0
+    NoLdsWriteCode: false
+    NoReject: false
+    NoTailLoop: false
+    NonTemporal: -1
+    NonTemporalA: 0
+    NonTemporalB: 0
+    NonTemporalC: 0
+    NonTemporalD: 0
+    NonTemporalE: 0
+    NonTemporalMetadata: 0
+    NumElementsPerBatchStore: 0
+    NumElementsPerThread: 144
+    NumGlobalWriteVectorsPerThread: 72
+    NumLoadsA: 6
+    NumLoadsB: 6
+    NumLoadsCoalescedA: 3
+    NumLoadsCoalescedB: 1
+    NumLoadsPerpendicularA: 2
+    NumLoadsPerpendicularB: 6
+    NumThreads: 256
+    OptNoLoadLoop: 0
+    PackedC0IdxChars: [I]
+    PackedC0IndicesX: [0]
+    PackedC1IdxChars: [J]
+    PackedC1IndicesX: [1]
+    PrefetchGlobalRead: 2
+    PrefetchLocalRead: 1
+    PreloadKernArgs: 1
+    ProblemType:
+      Activation: true
+      ActivationComputeDataType: 0
+      ActivationNoGuard: false
+      ActivationType: all
+      AllowNoFreeDims: false
+      AssignedDerivedParameters: true
+      Batched: true
+      BetaOnlyUseBias: false
+      BiasDataTypeList: [0, 4]
+      BiasSrc: D
+      ComplexConjugateA: false
+      ComplexConjugateB: false
+      ComputeDataType: 0
+      DataType: 4
+      DataTypeA: 11
+      DataTypeB: 4
+      DataTypeE: 4
+      DestDataType: 4
+      F32XdlMathOp: 0
+      Fp16AltImpl: false
+      Gradient: false
+      GroupedGemm: false
+      HighPrecisionAccumulate: true
+      Index0: 0
+      Index01A: 0
+      Index01B: 1
+      Index1: 1
+      IndexAssignmentsA: [0, 3, 2]
+      IndexAssignmentsB: [3, 1, 2]
+      IndexAssignmentsLD: [4, 5, 6, 7]
+      IndexAssignmentsMetadata: [3, 0, 2]
+      IndexUnroll: 3
+      IndexUnrollA: 1
+      IndexUnrollB: 0
+      IndexUnrollM: 0
+      IndicesBatch: [2]
+      IndicesFree: [0, 1]
+      IndicesSummation: [3]
+      MirrorDimsA: []
+      MirrorDimsB: []
+      MirrorDimsMetadata: []
+      NumIndicesBatch: 1
+      NumIndicesC: 3
+      NumIndicesFree: 2
+      NumIndicesLD: 4
+      NumIndicesSummation: 1
+      OperationType: GEMM
+      SetConstStrideA: []
+      SetConstStrideB: []
+      SetConstStrideBias: []
+      SilentHighPrecisionAccumulate: false
+      Sparse: 0
+      StridedBatched: true
+      SupportUserArgs: false
+      TLUA: true
+      TLUB: false
+      Tensor0: 0
+      Tensor1: 1
+      TileA: 0
+      TileAwareSelection: false
+      TileB: 1
+      TotalIndices: 4
+      TransposeA: 0
+      TransposeB: 0
+      UseBeta: true
+      UseBias: true
+      UseE: false
+      UseInitialStridesAB: false
+      UseInitialStridesCD: false
+      UseScaleAB: true
+      UseScaleAlphaVec: true
+      UseScaleCD: false
+    ScheduleGlobalRead: 1
+    ScheduleIterAlg: 3
+    ScheduleLocalWrite: 1
+    SolutionIndex: 0
+    SolutionNameMin: Cijk_Ailk_Bljk_F8H_HHS_BH_Bias_AS_SAB_SAV_MT192x192x64_MI16x16x1_SN_GRVWA8_GSU1_LBSPPA3072_LPB16_LRVW8_LWPMn1_MIWT6_6_SU0_SUM0_SUS0_WSGRA0_WSGRB0_WGM1
+    SourceSwap: 1
+    StaggerU: 0
+    StaggerUMapping: 0
+    StaggerUStride: 0
+    StorePriorityOpt: 0
+    StoreRemapVectorWidth: 0
+    StoreSyncOpt: 0
+    StoreVectorWidth: 2
+    SubGroup0: 8
+    SubGroup1: 32
+    SubGroupA: 8
+    SubGroupB: 32
+    SuppressNoLoadLoop: false
+    ThreadTile: [1, 1]
+    ThreadTile0: 24
+    ThreadTile1: 6
+    ThreadTileA: 24
+    ThreadTileB: 6
+    TransposeLDS: 1
+    TransposeLDSMetadata: true
+    UnrollMajorLDSA: false
+    UnrollMajorLDSB: true
+    UnrollMajorLDSMetadata: true
+    Use64bShadowLimit: 1
+    UseInstOffsetForGRO: 0
+    UseSgprForGRO: -1
+    Valid: true
+    VectorStore: -1
+    VectorWidthA: 2
+    VectorWidthB: 1
+    WaveSeparateGlobalReadA: 0
+    WaveSeparateGlobalReadB: 0
+    WaveSeparateGlobalReadMetadata: 0
+    WavefrontSize: 64
+    WorkGroup: [32, 8, 1]
+    WorkGroupMapping: 1
+    WorkGroupMappingXCC: 1
+    WorkGroupReduction: false
+    WorkspaceCheck: [4, 0, 1]
+    _DepthU: 64
+    _DepthUA: 64
+    _DepthUB: 64
+    _DepthUMetadata: 64
+    _GlobalAccumulation: MultipleBuffer
+    _UseSgprForGRO: false
+    _VectorStore: 1
+    _WorkspaceSizePerElemBias: 0
+    _WorkspaceSizePerElemC: 4
+    _staggerStrideShift: 0
+  - 1LDSBuffer: 1
+    ActivationAlt: false
+    ActivationFuncCall: true
+    ActivationFused: true
+    AssertFree0ElementMultiple: 8
+    AssertFree1ElementMultiple: 1
+    AssertSummationElementMultiple: 1
+    AssignedDerivedParameters: true
+    AssignedProblemIndependentDerivedParameters: true
+    BufferLoad: true
+    BufferStore: true
+    CUCount: null
+    ClusterLocalRead: 1
+    CodeObjectVersion: default
+    CustomKernelName: ''
+    DepthU: 32
+    DirectToLds: false
+    DirectToLdsA: false
+    DirectToLdsB: false
+    DirectToVgprSparseMetadata: false
+    EdgeType: ShiftPtr
+    EnableF32XdlMathOp: false
+    EnableMatrixInstruction: true
+    ExpandPointerSwap: 0
+    GlobalReadPerMfma: 1
+    GlobalReadVectorWidthA: 8
+    GlobalReadVectorWidthB: 2
+    GlobalSplitU: 1
+    GlobalSplitUAlgorithm: MultipleBuffer
+    GlobalWriteVectorWidth: 4
+    GroupLoadStore: false
+    GuaranteeNoPartialA: true
+    GuaranteeNoPartialB: true
+    GuaranteeNoPartialMetadata: true
+    ISA: [9, 4, 1]
+    InnerUnroll: 1
+    InterleaveAlpha: 0
+    InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true}
+    KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_F8H_HHS_BH_Bias_AS_SAB_SAV_MT256x112x32_MI16x16x1_SN_LWPMn1_MIWT4_7_NTA0_WSGRA2_WSGRB0
+    LSCA: 256
+    LSCB: 32
+    LSPA: 4
+    LSPB: 16
+    LVCA: 32
+    LVCB: 16
+    LVPA: 1
+    LVPB: 8
+    LdsBlockSizePerPadA: 2048
+    LdsBlockSizePerPadB: 128
+    LdsBlockSizePerPadMetadata: 0
+    LdsInitCVgprs: false
+    LdsNumElements: 12032
+    LdsNumElementsAlignedA: 8192
+    LdsNumElementsAlignedB: 3840
+    LdsNumElementsAlignedMetadata: 0
+    LdsOffsetA: 0
+    LdsOffsetA_Blk: 16384
+    LdsOffsetB: 8192
+    LdsOffsetB_Blk: 24576
+    LdsOffsetBias: 0
+    LdsOffsetBiasGSU: 0
+    LdsOffsetBiasNonGSU: 0
+    LdsOffsetMetadata: 12032
+    LdsOffsetMetadata_Blk: 24576
+    LdsPadA: 0
+    LdsPadB: 4
+    LdsPadMetadata: 0
+    LocalReadVectorWidth: 4
+    LocalSplitU: 1
+    LocalWritePerMfma: -1
+    LocalWriteUseSgprA: false
+    LocalWriteUseSgprB: false
+    LoopIters: 2
+    LoopUnroll: 32
+    MFMA_BF16_1K: false
+    MIArchVgpr: 0
+    MIBlock: [16, 16, 16, 1, 1, 1]
+    MIInputPerThread: 4
+    MIInputPerThreadA: 4
+    MIInputPerThreadB: 4
+    MIInputPerThreadMetadata: 4
+    MIOutputVectorWidth: 4
+    MIRegPerOut: 1
+    MIWaveGroup: [4, 1]
+    MIWaveTile: [4, 7]
+    MIWaveTileA: 4
+    MIWaveTileB: 7
+    MIWaveTileMetadata: 0
+    MacroTile0: 256
+    MacroTile1: 112
+    MacroTileA: 256
+    MacroTileB: 112
+    MagicDivAlg: 2
+    MatrixInstB: 1
+    MatrixInstBM: 1
+    MatrixInstBN: 1
+    MatrixInstK: 16
+    MatrixInstM: 16
+    MatrixInstN: 16
+    MatrixInstruction: [16, 16, 16, 1]
+    MaxOccupancy: 40
+    MaxVgprNumber: 256
+    MinVgprNumber: 0
+    NoLdsWriteCode: false
+    NoReject: false
+    NoTailLoop: false
+    NonTemporal: -1
+    NonTemporalA: 0
+    NonTemporalB: 0
+    NonTemporalC: 0
+    NonTemporalD: 0
+    NonTemporalE: 0
+    NonTemporalMetadata: 0
+    NumElementsPerBatchStore: 0
+    NumElementsPerThread: 112
+    NumGlobalWriteVectorsPerThread: 28
+    NumLoadsA: 4
+    NumLoadsB: 7
+    NumLoadsCoalescedA: 1
+    NumLoadsCoalescedB: 1
+    NumLoadsPerpendicularA: 4
+    NumLoadsPerpendicularB: 7
+    NumThreads: 256
+    OptNoLoadLoop: 0
+    PackedC0IdxChars: [I]
+    PackedC0IndicesX: [0]
+    PackedC1IdxChars: [J]
+    PackedC1IndicesX: [1]
+    PrefetchGlobalRead: 2
+    PrefetchLocalRead: 1
+    PreloadKernArgs: 1
+    ProblemType:
+      Activation: true
+      ActivationComputeDataType: 0
+      ActivationNoGuard: false
+      ActivationType: all
+      AllowNoFreeDims: false
+      AssignedDerivedParameters: true
+      Batched: true
+      BetaOnlyUseBias: false
+      BiasDataTypeList: [0, 4]
+      BiasSrc: D
+      ComplexConjugateA: false
+      ComplexConjugateB: false
+      ComputeDataType: 0
+      DataType: 4
+      DataTypeA: 11
+      DataTypeB: 4
+      DataTypeE: 4
+      DestDataType: 4
+      F32XdlMathOp: 0
+      Fp16AltImpl: false
+      Gradient: false
+      GroupedGemm: false
+      HighPrecisionAccumulate: true
+      Index0: 0
+      Index01A: 0
+      Index01B: 1
+      Index1: 1
+      IndexAssignmentsA: [0, 3, 2]
+      IndexAssignmentsB: [3, 1, 2]
+      IndexAssignmentsLD: [4, 5, 6, 7]
+      IndexAssignmentsMetadata: [3, 0, 2]
+      IndexUnroll: 3
+      IndexUnrollA: 1
+      IndexUnrollB: 0
+      IndexUnrollM: 0
+      IndicesBatch: [2]
+      IndicesFree: [0, 1]
+      IndicesSummation: [3]
+      MirrorDimsA: []
+      MirrorDimsB: []
+      MirrorDimsMetadata: []
+      NumIndicesBatch: 1
+      NumIndicesC: 3
+      NumIndicesFree: 2
+      NumIndicesLD: 4
+      NumIndicesSummation: 1
+      OperationType: GEMM
+      SetConstStrideA: []
+      SetConstStrideB: []
+      SetConstStrideBias: []
+      SilentHighPrecisionAccumulate: false
+      Sparse: 0
+      StridedBatched: true
+      SupportUserArgs: false
+      TLUA: true
+      TLUB: false
+      Tensor0: 0
+      Tensor1: 1
+      TileA: 0
+      TileAwareSelection: false
+      TileB: 1
+      TotalIndices: 4
+      TransposeA: 0
+      TransposeB: 0
+      UseBeta: true
+      UseBias: true
+      UseE: false
+      UseInitialStridesAB: false
+      UseInitialStridesCD: false
+      UseScaleAB: true
+      UseScaleAlphaVec: true
+      UseScaleCD: false
+    ScheduleGlobalRead: 1
+    ScheduleIterAlg: 3
+    ScheduleLocalWrite: 1
+    SolutionIndex: 0
+    SolutionNameMin: Cijk_Ailk_Bljk_F8H_HHS_BH_Bias_AS_SAB_SAV_MT256x112x32_MI16x16x1_SN_GSU1_LWPMn1_MIWT4_7_NTA0_SU0_SUM0_SUS0_WSGRA2_WSGRB0_WGM1
+    SourceSwap: 1
+    StaggerU: 0
+    StaggerUMapping: 0
+    StaggerUStride: 0
+    StorePriorityOpt: 0
+    StoreRemapVectorWidth: 0
+    StoreSyncOpt: 0
+    StoreVectorWidth: 4
+    SubGroup0: 16
+    SubGroup1: 16
+    SubGroupA: 16
+    SubGroupB: 16
+    SuppressNoLoadLoop: false
+    ThreadTile: [1, 1]
+    ThreadTile0: 16
+    ThreadTile1: 7
+    ThreadTileA: 16
+    ThreadTileB: 7
+    TransposeLDS: 1
+    TransposeLDSMetadata: true
+    UnrollMajorLDSA: false
+    UnrollMajorLDSB: true
+    UnrollMajorLDSMetadata: true
+    Use64bShadowLimit: 1
+    UseInstOffsetForGRO: 0
+    UseSgprForGRO: -1
+    Valid: true
+    VectorStore: -1
+    VectorWidthA: 4
+    VectorWidthB: 1
+    WaveSeparateGlobalReadA: 2
+    WaveSeparateGlobalReadB: 0
+    WaveSeparateGlobalReadMetadata: 0
+    WavefrontSize: 64
+    WorkGroup: [64, 4, 1]
+    WorkGroupMapping: 1
+    WorkGroupMappingXCC: 1
+    WorkGroupReduction: false
+    WorkspaceCheck: [4, 0, 1]
+    _DepthU: 32
+    _DepthUA: 32
+    _DepthUB: 32
+    _DepthUMetadata: 32
+    _GlobalAccumulation: MultipleBuffer
+    _UseSgprForGRO: 1
+    _VectorStore: 1
+    _WorkspaceSizePerElemBias: 0
+    _WorkspaceSizePerElemC: 4
+    _staggerStrideShift: 0
+  - 1LDSBuffer: 1
+    ActivationAlt: false
+    ActivationFuncCall: true
+    ActivationFused: true
+    AssertFree0ElementMultiple: 4
+    AssertFree1ElementMultiple: 1
+    AssertSummationElementMultiple: 1
+    AssignedDerivedParameters: true
+    AssignedProblemIndependentDerivedParameters: true
+    BufferLoad: true
+    BufferStore: true
+    CUCount: null
+    ClusterLocalRead: 1
+    CodeObjectVersion: default
+    CustomKernelName: ''
+    DepthU: 64
+    DirectToLds: false
+    DirectToLdsA: false
+    DirectToLdsB: false
+    DirectToVgprSparseMetadata: false
+    EdgeType: ShiftPtr
+    EnableF32XdlMathOp: false
+    EnableMatrixInstruction: true
+    ExpandPointerSwap: 0
+    GlobalReadPerMfma: 1
+    GlobalReadVectorWidthA: 8
+    GlobalReadVectorWidthB: 4
+    GlobalSplitU: 1
+    GlobalSplitUAlgorithm: MultipleBuffer
+    GlobalWriteVectorWidth: 4
+    GroupLoadStore: false
+    GuaranteeNoPartialA: false
+    GuaranteeNoPartialB: true
+    GuaranteeNoPartialMetadata: true
+    ISA: [9, 4, 1]
+    InnerUnroll: 1
+    InterleaveAlpha: 0
+    InternalSupportParams: {SupportCustomStaggerU: true, SupportCustomWGM: true, SupportUserGSU: true}
+    KernelLanguage: Assembly
+    KernelNameMin: Cijk_Ailk_Bljk_F8H_HHS_BH_Bias_AS_SAB_SAV_MT256x144x64_MI16x16x1_SN_LBSPPA2048_LPB4_LRVW4_MIWT4_9_NTD0_WSGRA0_WSGRB0
+    LSCA: 256
+    LSCB: 64
+    LSPA: 8
+    LSPB: 16
+    LVCA: 32
+    LVCB: 16
+    LVPA: 1
+    LVPB: 4
+    LdsBlockSizePerPadA: 2048
+    LdsBlockSizePerPadB: 128
+    LdsBlockSizePerPadMetadata: 0
+    LdsInitCVgprs: false
+    LdsNumElements: 26240
+    LdsNumElementsAlignedA: 16384
+    LdsNumElementsAlignedB: 9856
+    LdsNumElementsAlignedMetadata: 0
+    LdsOffsetA: 0
+    LdsOffsetA_Blk: 32768
+    LdsOffsetB: 16384
+    LdsOffsetB_Blk: 49152
+    LdsOffsetBias: 0
+    LdsOffsetBiasGSU: 0
+    LdsOffsetBiasNonGSU: 0
+    LdsOffsetMetadata: 26240
+    LdsOffsetMetadata_Blk: 49152
+    LdsPadA: 0
+    LdsPadB: 4
+    LdsPadMetadata: 0
+    LocalReadVectorWidth: 4
+    LocalSplitU: 1
+    LocalWritePerMfma: -1
+    LocalWriteUseSgprA: false
+    LocalWriteUseSgprB: false
+    LoopIters: 4
+    LoopUnroll: 64
+    MFMA_BF16_1K: false
+    MIArchVgpr: 0
+    MIBlock: [16, 16, 16, 1, 1, 1]
+    MIInputPerThread: 4
+    MIInputPerThreadA: 4
+    MIInputPerThreadB: 4
+    MIInputPerThreadMetadata: 4
+    MIOutputVectorWidth: 4
+    MIRegPerOut: 1
+    MIWaveGroup: [4, 1]
+    MIWaveTile: [4, 9]
+    MIWaveTileA: 4
+    MIWaveTileB: 9
+    MIWaveTileMetadata: 0
+    MacroTile0: 256
+    MacroTile1: 144
+    MacroTileA: 256
+    MacroTileB: 144
+    MagicDivAlg: 2
+    MatrixInstB: 1
+    MatrixInstBM: 1
+    MatrixInstBN: 1
+    MatrixInstK: 16
+    MatrixInstM: 16
+    MatrixInstN: 16
+    MatrixInstruction: [16, 16, 16, 1]
+    MaxOccupancy: 40
+    MaxVgprNumber: 256
+    MinVgprNumber: 0
+    NoLdsWriteCode: false
+    NoReject: false
+    NoTailLoop: false
+    NonTemporal: -1
+    NonTemporalA: 0
+    NonTemporalB: 0
+    NonTemporalC: 0
+    NonTemporalD: 0
+    NonTemporalE: 0
+    NonTemporalMetadata: 0
+    NumElementsPerBatchStore: 0
+    NumElementsPerThread: 144
+    NumGlobalWriteVectorsPerThread: 36
+    NumLoadsA: 8
+    NumLoadsB: 9
+    NumLoadsCoalescedA: 1
+    NumLoadsCoalescedB: 1
+    NumLoadsPerpendicularA: 8
+    NumLoadsPerpendicularB: 9
+    NumThreads: 256
+    OptNoLoadLoop: 0
+    PackedC0IdxChars: [I]
+    PackedC0IndicesX: [0]
+    PackedC1IdxChars: [J]
+    PackedC1IndicesX: [1]
+    PrefetchGlobalRead: 2
+    PrefetchLocalRead: 1
+    PreloadKernArgs: 1
+    ProblemType:
+      Activation: true
+      ActivationComputeDataType: 0
+      ActivationNoGuard: false
+      ActivationType: all
+      AllowNoFreeDims: false
+      AssignedDerivedParameters: true
+      Batched: true
+      BetaOnlyUseBias: false
+      BiasDataTypeList: [0, 4]
+      BiasSrc: D
+      ComplexConjugateA: false
+      ComplexConjugateB: false
+      ComputeDataType: 0
+      DataType: 4
+      DataTypeA: 11
+      DataTypeB: 4
+      DataTypeE: 4
+      DestDataType: 4
+      F32XdlMathOp: 0
+      Fp16AltImpl: false
+      Gradient: false
+      GroupedGemm: false
+      HighPrecisionAccumulate: true
+      Index0: 0
+      Index01A: 0
+      Index01B: 1
+      Index1: 1
+      IndexAssignmentsA: [0, 3, 2]
+      IndexAssignmentsB: [3, 1, 2]
+      IndexAssignmentsLD: [4, 5, 6, 7]
+      IndexAssignmentsMetadata: [3, 0, 2]
+      IndexUnroll: 3
+      IndexUnrollA: 1
+      IndexUnrollB: 0
+      IndexUnrollM: 0
+      IndicesBatch: [2]
+      IndicesFree: [0, 1]
+      IndicesSummation: [3]
+      MirrorDimsA: []
+      MirrorDimsB: []
+      MirrorDimsMetadata: []
+      NumIndicesBatch: 1
+      NumIndicesC: 3
+      NumIndicesFree: 2
+      NumIndicesLD: 4
+      NumIndicesSummation: 1
+      OperationType: GEMM
+      SetConstStrideA: []
+      SetConstStrideB: []
+      SetConstStrideBias: []
+      SilentHighPrecisionAccumulate: false
+      Sparse: 0
+      StridedBatched: true
+      SupportUserArgs: false
+      TLUA: true
+      TLUB: false
+      Tensor0: 0
+      Tensor1: 1
+      TileA: 0
+      TileAwareSelection: false
+      TileB: 1
+      TotalIndices: 4
+      TransposeA: 0
+      TransposeB: 0
+      UseBeta: true
+      UseBias: true
+      UseE: false
+      UseInitialStridesAB: false
+      UseInitialStridesCD: false
+      UseScaleAB: true
+      UseScaleAlphaVec: true
+      UseScaleCD: false
+    ScheduleGlobalRead: 1
+    ScheduleIterAlg: 3
+    ScheduleLocalWrite: 1
+    SolutionIndex: 0
+    SolutionNameMin: Cijk_Ailk_Bljk_F8H_HHS_BH_Bias_AS_SAB_SAV_MT256x144x64_MI16x16x1_SN_GSU1_LBSPPA2048_LPB4_LRVW4_MIWT4_9_NTD0_SU4_SUM2_SUS128_WSGRA0_WSGRB0_WGM2
+    SourceSwap: 1
+    StaggerU: 4
+    StaggerUMapping: 2
+    StaggerUStride: 128
+    StorePriorityOpt: 0
+    StoreRemapVectorWidth: 0
+    StoreSyncOpt: 0
+    StoreVectorWidth: 4
+    SubGroup0: 16
+    SubGroup1: 16
+    SubGroupA: 16
+    SubGroupB: 16
+    SuppressNoLoadLoop: false
+    ThreadTile: [1, 1]
+    ThreadTile0: 16
+    ThreadTile1: 9
+    ThreadTileA: 16
+    ThreadTileB: 9
+    TransposeLDS: 1
+    TransposeLDSMetadata: true
+    UnrollMajorLDSA: false
+    UnrollMajorLDSB: true
+    UnrollMajorLDSMetadata: true
+    Use64bShadowLimit: 1
+    UseInstOffsetForGRO: 0
+    UseSgprForGRO: -1
+    Valid: true
+    VectorStore: -1
+    VectorWidthA: 4
+    VectorWidthB: 1
+    WaveSeparateGlobalReadA: 0
+    WaveSeparateGlobalReadB: 0
+    WaveSeparateGlobalReadMetadata: 0
+    WavefrontSize: 64
+    WorkGroup: [64, 4, 1]
+    WorkGroupMapping: 2
+    WorkGroupMappingXCC: 1
+    WorkGroupReduction: false
+    WorkspaceCheck: [4, 0, 1]
+    _DepthU: 64
+    _DepthUA: 64
+    _DepthUB: 64
+    _DepthUMetadata: 64
+    _GlobalAccumulation: MultipleBuffer
+    _UseSgprForGRO: false
+    _VectorStore: 1
+    _WorkspaceSizePerElemBias: 0
+    _WorkspaceSizePerElemC: 4
     _staggerStrideShift: 0
 - null
 - null
