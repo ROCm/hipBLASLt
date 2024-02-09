@@ -4471,7 +4471,7 @@
     CUCount: null
     ClusterLocalRead: 1
     CodeObjectVersion: default
-    CustomKernelName: 'Custom_Cijk_Alik_Bljk_BBS_BH_MT128x16x128_MI16x16x1_SN_GSUM_K1_MIWT2_1_01'
+    CustomKernelName: 'Custom_Cijk_Alik_Bljk_BBS_BH_MT128x16x128_MI16x16x1_SN_GSUM_K1_MIWT2_1_01_gfx941'
     DepthU: 128
     DirectToLds: false
     DirectToLdsA: false
@@ -4730,7 +4730,7 @@
     CUCount: null
     ClusterLocalRead: 1
     CodeObjectVersion: default
-    CustomKernelName: 'Custom_Cijk_Alik_Bljk_BBS_BH_MT16x16x128_MI16x16x1_SN_GSUM_K1_MIWT1_1_2'
+    CustomKernelName: 'Custom_Cijk_Alik_Bljk_BBS_BH_MT16x16x128_MI16x16x1_SN_GSUM_K1_MIWT1_1_2_gfx941'
     DepthU: 128
     DirectToLds: false
     DirectToLdsA: false
@@ -4989,7 +4989,7 @@
     CUCount: null
     ClusterLocalRead: 1
     CodeObjectVersion: default
-    CustomKernelName: 'Custom_Cijk_Alik_Bljk_BBS_BH_MT16x16x128_MI16x16x1_SN_GSUM_K1_MIWT1_1_3'
+    CustomKernelName: 'Custom_Cijk_Alik_Bljk_BBS_BH_MT16x16x128_MI16x16x1_SN_GSUM_K1_MIWT1_1_3_gfx941'
     DepthU: 128
     DirectToLds: false
     DirectToLdsA: false
