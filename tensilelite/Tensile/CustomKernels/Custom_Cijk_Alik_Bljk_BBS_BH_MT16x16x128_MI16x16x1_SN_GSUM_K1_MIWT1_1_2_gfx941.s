@@ -2,15 +2,15 @@
 /******************************************/
 /* Begin Kernel                           */
 /******************************************/
-.amdgcn_target "amdgcn-amd-amdhsa--gfx942"
+.amdgcn_target "amdgcn-amd-amdhsa--gfx941"
 .text
-.protected Custom_Cijk_Alik_Bljk_BBS_BH_MT16x16x128_MI16x16x1_SN_GSUM_K1_MIWT1_1_3
-.globl Custom_Cijk_Alik_Bljk_BBS_BH_MT16x16x128_MI16x16x1_SN_GSUM_K1_MIWT1_1_3
+.protected Custom_Cijk_Alik_Bljk_BBS_BH_MT16x16x128_MI16x16x1_SN_GSUM_K1_MIWT1_1_2_gfx941
+.globl Custom_Cijk_Alik_Bljk_BBS_BH_MT16x16x128_MI16x16x1_SN_GSUM_K1_MIWT1_1_2_gfx941
 .p2align 8
-.type Custom_Cijk_Alik_Bljk_BBS_BH_MT16x16x128_MI16x16x1_SN_GSUM_K1_MIWT1_1_3,@function
+.type Custom_Cijk_Alik_Bljk_BBS_BH_MT16x16x128_MI16x16x1_SN_GSUM_K1_MIWT1_1_2_gfx941,@function
 .section .rodata,#alloc
 .p2align 6
-.amdhsa_kernel Custom_Cijk_Alik_Bljk_BBS_BH_MT16x16x128_MI16x16x1_SN_GSUM_K1_MIWT1_1_3
+.amdhsa_kernel Custom_Cijk_Alik_Bljk_BBS_BH_MT16x16x128_MI16x16x1_SN_GSUM_K1_MIWT1_1_2_gfx941
   .amdhsa_user_sgpr_kernarg_segment_ptr 1
   .amdhsa_accum_offset 256 // accvgpr offset
   .amdhsa_next_free_vgpr 260 // vgprs
@@ -51,8 +51,8 @@ amdhsa.version:
   - 1
   - 1
 amdhsa.kernels:
-  - .name: Custom_Cijk_Alik_Bljk_BBS_BH_MT16x16x128_MI16x16x1_SN_GSUM_K1_MIWT1_1_3
-    .symbol: 'Custom_Cijk_Alik_Bljk_BBS_BH_MT16x16x128_MI16x16x1_SN_GSUM_K1_MIWT1_1_3.kd'
+  - .name: Custom_Cijk_Alik_Bljk_BBS_BH_MT16x16x128_MI16x16x1_SN_GSUM_K1_MIWT1_1_2_gfx941
+    .symbol: 'Custom_Cijk_Alik_Bljk_BBS_BH_MT16x16x128_MI16x16x1_SN_GSUM_K1_MIWT1_1_2_gfx941.kd'
     .language:                   OpenCL C
     .language_version:
       - 2
@@ -186,12 +186,11 @@ amdhsa.kernels:
     .wavefront_size:             64
 ...
 .end_amdgpu_metadata
-Custom_Cijk_Alik_Bljk_BBS_BH_MT16x16x128_MI16x16x1_SN_GSUM_K1_MIWT1_1_3:
+Custom_Cijk_Alik_Bljk_BBS_BH_MT16x16x128_MI16x16x1_SN_GSUM_K1_MIWT1_1_2_gfx941:
 .long 0xC0120700, 0x00000000
 .long 0xC00A0B00, 0x00000040
 .long 0xC0060C00, 0x00000050
 .long 0xC0020C80, 0x00000058
-.long 0xBF8F0003
 .long 0xBEFC00FF, 0x00006400
 .long 0x7E8C0300
 .long 0x26028CBF
@@ -516,7 +515,6 @@ Custom_Cijk_Alik_Bljk_BBS_BH_MT16x16x128_MI16x16x1_SN_GSUM_K1_MIWT1_1_3:
 .long 0x853AC13E
 .long 0x80338233
 .long 0xBF06800A
-.long 0xBF8F0000
 .long 0xBF850024
 .long 0xE05C1000, 0x800D2422
 .long 0xE05C1000, 0x460D2822
@@ -603,7 +601,7 @@ Custom_Cijk_Alik_Bljk_BBS_BH_MT16x16x128_MI16x16x1_SN_GSUM_K1_MIWT1_1_3:
 .long 0xBF06800A
 .long 0xBF840006
 .long 0xBECC1C00
-.long 0x814E84FF, 0x00001DC0
+.long 0x814E84FF, 0x00001D94
 .long 0x804C4E4C
 .long 0x824D804D
 .long 0xBE801D4C
@@ -632,9 +630,9 @@ Custom_Cijk_Alik_Bljk_BBS_BH_MT16x16x128_MI16x16x1_SN_GSUM_K1_MIWT1_1_3:
 .long 0xD9FE0000, 0x00000044
 .long 0xD9FE0000, 0x10000045
 .long 0xBF06810A
-.long 0xBF8500D1
+.long 0xBF8500CB
 .long 0xBF0B820A
-.long 0xBF850071
+.long 0xBF85006E
 .long 0xD9FE0040, 0x04000044
 .long 0xD9FE0040, 0x14000045
 .long 0xBF06330A
@@ -650,26 +648,23 @@ Custom_Cijk_Alik_Bljk_BBS_BH_MT16x16x128_MI16x16x1_SN_GSUM_K1_MIWT1_1_3:
 .long 0x854C4542
 .long 0x854D8043
 .long 0x80384C38
+.long 0x82394D39
 .long 0xBF8CC27F
 .long 0xD3E18000, 0x04022100
 .long 0xD9FE0080, 0x08000044
 .long 0xD9FE0080, 0x18000045
-.long 0x82394D39
+.long 0x80BE4C3E
 .long 0xBF8CC47F
 .long 0xD3E18000, 0x04022502
 .long 0xD9FE00C0, 0x0C000044
 .long 0xD9FE00C0, 0x1C000045
-.long 0x80BE4C3E
-.long 0xBF8CC47F
-.long 0xD3E18000, 0x04022904
 .long 0x82BF4D3F
 .long 0xBF8CC47F
-.long 0xD3E18000, 0x04022D06
+.long 0xD3E18000, 0x04022904
 .long 0xBF06803F
-.long 0xBF8CC27F
-.long 0xD3E18000, 0x04023108
+.long 0xBF8CC47F
+.long 0xD3E18000, 0x04022D06
 .long 0x853AC13E
-.long 0xBF8F0003
 .long 0xBF8C0F77
 .long 0xD9BE0000, 0x00002420
 .long 0xE05C1000, 0x800D2422
@@ -697,21 +692,21 @@ Custom_Cijk_Alik_Bljk_BBS_BH_MT16x16x128_MI16x16x1_SN_GSUM_K1_MIWT1_1_3:
 .long 0x2A4040FF, 0x00004000
 .long 0x2A4242FF, 0x00004000
 .long 0xBF8CCA7F
+.long 0xD3E18000, 0x04023108
+.long 0xBF8CCA7F
 .long 0xD3E18000, 0x0402350A
 .long 0x2A8888FF, 0x00004000
 .long 0x2A8A8AFF, 0x00004000
 .long 0xBF8CC87F
 .long 0xD3E18000, 0x0402390C
-.long 0xBF8F0000
 .long 0xBF8CC07F
 .long 0xD9FE0000, 0x00000044
 .long 0xD9FE0000, 0x10000045
 .long 0xBF8CCA7F
 .long 0xD3E18000, 0x04023D0E
-.long 0xBF8F0000
 .long 0x808A810A
 .long 0xBF00820A
-.long 0xBF84FF8F
+.long 0xBF84FF92
 .long 0xD9FE0040, 0x04000044
 .long 0xD9FE0040, 0x14000045
 .long 0xBF06330A
@@ -727,26 +722,23 @@ Custom_Cijk_Alik_Bljk_BBS_BH_MT16x16x128_MI16x16x1_SN_GSUM_K1_MIWT1_1_3:
 .long 0x854C4542
 .long 0x854D8043
 .long 0x80384C38
+.long 0x82394D39
 .long 0xBF8CC27F
 .long 0xD3E18000, 0x04022100
 .long 0xD9FE0080, 0x08000044
 .long 0xD9FE0080, 0x18000045
-.long 0x82394D39
+.long 0x80BE4C3E
 .long 0xBF8CC47F
 .long 0xD3E18000, 0x04022502
 .long 0xD9FE00C0, 0x0C000044
 .long 0xD9FE00C0, 0x1C000045
-.long 0x80BE4C3E
-.long 0xBF8CC47F
-.long 0xD3E18000, 0x04022904
 .long 0x82BF4D3F
 .long 0xBF8CC47F
-.long 0xD3E18000, 0x04022D06
+.long 0xD3E18000, 0x04022904
 .long 0xBF06803F
-.long 0xBF8CC27F
-.long 0xD3E18000, 0x04023108
+.long 0xBF8CC47F
+.long 0xD3E18000, 0x04022D06
 .long 0x853AC13E
-.long 0xBF8F0003
 .long 0xBF8C0F77
 .long 0xD9BE0000, 0x00002420
 .long 0xBF8C0F76
@@ -766,39 +758,39 @@ Custom_Cijk_Alik_Bljk_BBS_BH_MT16x16x128_MI16x16x1_SN_GSUM_K1_MIWT1_1_3:
 .long 0x2A4040FF, 0x00004000
 .long 0x2A4242FF, 0x00004000
 .long 0xBF8CCA7F
+.long 0xD3E18000, 0x04023108
+.long 0xBF8CCA7F
 .long 0xD3E18000, 0x0402350A
 .long 0x2A8888FF, 0x00004000
 .long 0x2A8A8AFF, 0x00004000
 .long 0xBF8CC87F
 .long 0xD3E18000, 0x0402390C
-.long 0xBF8F0000
 .long 0xBF8CC07F
 .long 0xD9FE0000, 0x00000044
 .long 0xD9FE0000, 0x10000045
 .long 0xBF8CCA7F
 .long 0xD3E18000, 0x04023D0E
-.long 0xBF8F0000
 .long 0xBF068132
-.long 0xBF840645
+.long 0xBF840642
 .long 0xB4310000
-.long 0xBF840643
+.long 0xBF840640
 .long 0xBF06F230
-.long 0xBF840641
+.long 0xBF84063E
 .long 0x864C1C8F
 .long 0x804D14C1
 .long 0xBF094D02
 .long 0x854C804C
 .long 0xB54C0000
-.long 0xBF85063B
+.long 0xBF850638
 .long 0x864C1D8F
 .long 0x804D15C1
 .long 0xBF094D03
 .long 0x854C804C
 .long 0xB54C0000
-.long 0xBF850635
+.long 0xBF850632
 .long 0x864D1FFF, 0x0000007F
 .long 0xBF06804D
-.long 0xBF840631
+.long 0xBF84062E
 .long 0xD9FE0040, 0x04000044
 .long 0xD9FE0040, 0x14000045
 .long 0xBF8CC27F
@@ -815,15 +807,12 @@ Custom_Cijk_Alik_Bljk_BBS_BH_MT16x16x128_MI16x16x1_SN_GSUM_K1_MIWT1_1_3:
 .long 0xD3E18000, 0x04022D06
 .long 0xBF8CC27F
 .long 0xD3E18000, 0x04023108
-.long 0xBF8F0003
 .long 0xBF8CC27F
 .long 0xD3E18000, 0x0402350A
 .long 0xBF8CC07F
 .long 0xD3E18000, 0x0402390C
-.long 0xBF8F0000
 .long 0xBF8CC07F
 .long 0xD3E18000, 0x04023D0E
-.long 0xBF8F0000
 .long 0xC00A0D00, 0x0000005C
 .long 0x20088C86
 .long 0x20020880
@@ -1985,12 +1974,10 @@ Custom_Cijk_Alik_Bljk_BBS_BH_MT16x16x128_MI16x16x1_SN_GSUM_K1_MIWT1_1_3:
 .long 0xD3E18000, 0x04022D06
 .long 0xBF8CC27F
 .long 0xD3E18000, 0x04023108
-.long 0xBF8F0003
 .long 0xBF8CC27F
 .long 0xD3E18000, 0x0402350A
 .long 0xBF8CC07F
 .long 0xD3E18000, 0x0402390C
-.long 0xBF8F0000
 .long 0xBF8CC07F
 .long 0xD3E18000, 0x04023D0E
 .long 0x264040FF, 0x00F03FFF
@@ -2123,7 +2110,6 @@ Custom_Cijk_Alik_Bljk_BBS_BH_MT16x16x128_MI16x16x1_SN_GSUM_K1_MIWT1_1_3:
 .long 0x800B900B
 .long 0xBF05800A
 .long 0xBF84FFE4
-.long 0xBF8F0000
 .long 0xC00A0D00, 0x0000005C
 .long 0x20088C86
 .long 0x20020880

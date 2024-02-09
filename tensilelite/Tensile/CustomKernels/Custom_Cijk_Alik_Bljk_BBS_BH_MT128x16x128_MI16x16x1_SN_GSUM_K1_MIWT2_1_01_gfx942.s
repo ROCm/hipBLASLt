@@ -4,13 +4,13 @@
 /******************************************/
 .amdgcn_target "amdgcn-amd-amdhsa--gfx942"
 .text
-.protected Custom_Cijk_Alik_Bljk_BBS_BH_MT128x16x128_MI16x16x1_SN_GSUM_K1_MIWT2_1_01
-.globl Custom_Cijk_Alik_Bljk_BBS_BH_MT128x16x128_MI16x16x1_SN_GSUM_K1_MIWT2_1_01
+.protected Custom_Cijk_Alik_Bljk_BBS_BH_MT128x16x128_MI16x16x1_SN_GSUM_K1_MIWT2_1_01_gfx942
+.globl Custom_Cijk_Alik_Bljk_BBS_BH_MT128x16x128_MI16x16x1_SN_GSUM_K1_MIWT2_1_01_gfx942
 .p2align 8
-.type Custom_Cijk_Alik_Bljk_BBS_BH_MT128x16x128_MI16x16x1_SN_GSUM_K1_MIWT2_1_01,@function
+.type Custom_Cijk_Alik_Bljk_BBS_BH_MT128x16x128_MI16x16x1_SN_GSUM_K1_MIWT2_1_01_gfx942,@function
 .section .rodata,#alloc
 .p2align 6
-.amdhsa_kernel Custom_Cijk_Alik_Bljk_BBS_BH_MT128x16x128_MI16x16x1_SN_GSUM_K1_MIWT2_1_01
+.amdhsa_kernel Custom_Cijk_Alik_Bljk_BBS_BH_MT128x16x128_MI16x16x1_SN_GSUM_K1_MIWT2_1_01_gfx942
   .amdhsa_user_sgpr_kernarg_segment_ptr 1
   .amdhsa_accum_offset 256 // accvgpr offset
   .amdhsa_next_free_vgpr 264 // vgprs
@@ -51,8 +51,8 @@ amdhsa.version:
   - 1
   - 1
 amdhsa.kernels:
-  - .name: Custom_Cijk_Alik_Bljk_BBS_BH_MT128x16x128_MI16x16x1_SN_GSUM_K1_MIWT2_1_01
-    .symbol: 'Custom_Cijk_Alik_Bljk_BBS_BH_MT128x16x128_MI16x16x1_SN_GSUM_K1_MIWT2_1_01.kd'
+  - .name: Custom_Cijk_Alik_Bljk_BBS_BH_MT128x16x128_MI16x16x1_SN_GSUM_K1_MIWT2_1_01_gfx942
+    .symbol: 'Custom_Cijk_Alik_Bljk_BBS_BH_MT128x16x128_MI16x16x1_SN_GSUM_K1_MIWT2_1_01_gfx942.kd'
     .language:                   OpenCL C
     .language_version:
       - 2
@@ -186,7 +186,7 @@ amdhsa.kernels:
     .wavefront_size:             64
 ...
 .end_amdgpu_metadata
-Custom_Cijk_Alik_Bljk_BBS_BH_MT128x16x128_MI16x16x1_SN_GSUM_K1_MIWT2_1_01:
+Custom_Cijk_Alik_Bljk_BBS_BH_MT128x16x128_MI16x16x1_SN_GSUM_K1_MIWT2_1_01_gfx942:
 .long 0xC0120700, 0x00000000
 .long 0xC00A0B00, 0x00000040
 .long 0xC0060C00, 0x00000050
