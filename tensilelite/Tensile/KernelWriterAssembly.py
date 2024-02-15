@@ -5231,8 +5231,9 @@ class KernelWriterAssembly(KernelWriter):
       g2lIdx = 0
       loadWidth = tP["globalReadInstruction"].totalWidth
 
-      isGlc = True if tP["NonTemporal"]%2==1 else False
-      isSlc = True if tP["NonTemporal"]//2==1 else False
+      isGlc = tP["NonTemporal"] & 0x1
+      isSlc = tP["NonTemporal"] & 0x2
+      isNT  = tP["NonTemporal"] & 0x4
       isLds = True if kernel["DirectToLds%s"%tc] else False
 
       directToLdsLoads = 0
@@ -5430,7 +5431,7 @@ class KernelWriterAssembly(KernelWriter):
                             bpl, destVgpr=loadVgpr, \
                             addr0=vgpr(offsetVgpr), addr1=sgpr("Srd%s"%tc, 4), \
                             soffset=soffset, offset=offset, \
-                            glc=isGlc, slc=isSlc, lds=isLds, \
+                            glc=isGlc, slc=isSlc, nt=isNT, lds=isLds, \
                             hi16=hi16, \
                             comment=comment))
 
@@ -5456,7 +5457,7 @@ class KernelWriterAssembly(KernelWriter):
                             tP["bpeGR"], destVgpr=destVgprHi if (hi16 and destVgprHi != None) else destVgpr, \
                             addr0=vgpr("GlobalReadAddr%s+%u"%(tc,graIdx),2), addr1="", \
                             soffset=0, offset=0, \
-                            glc=isGlc, slc=isSlc, lds=isLds, \
+                            glc=isGlc, slc=isSlc, nt=isNT, lds=isLds, \
                             hi16=hi16, \
                             comment="load one flat value"))
 
@@ -5554,7 +5555,7 @@ class KernelWriterAssembly(KernelWriter):
                           destVgpr=destVgpr, \
                           addr0=vgpr(offsetVgpr), addr1=sgpr("SrdMetadata",4), \
                           soffset=0, offset=constOffset, \
-                          glc=isGlc, slc=isSlc, lds=isLds, \
+                          glc=isGlc, slc=isSlc, nt=isNT, lds=isLds, \
                           hi16=0, \
                           comment="G -> Reg ValuMetadata"))
               if bpl == 2: #pack 2bytes
@@ -5671,8 +5672,9 @@ class KernelWriterAssembly(KernelWriter):
       bpe = tP["bpeGR"] if not tP["isM"] else tP["bpe"]
       bpl = bpe * tP["glvw"]  # bytes per load
 
-      isGlc = True if tP["NonTemporal"]%2==1 else False
-      isSlc = True if tP["NonTemporal"]//2==1 else False
+      isGlc = tP["NonTemporal"] & 0x1
+      isSlc = tP["NonTemporal"] & 0x2
+      isNT  = tP["NonTemporal"] & 0x4
       isLds = True if kernel["DirectToLds%s"%tc] else False
 
       directToLdsLoads = 0
@@ -5770,7 +5772,7 @@ class KernelWriterAssembly(KernelWriter):
                           bpl, destVgpr=destVgpr, \
                           addr0=vgpr(offsetVgpr), addr1=sgpr("Srd%s"%tc, 4), \
                           soffset=soffset, offset=instOffset, \
-                          glc=isGlc, slc=isSlc, lds=isLds, \
+                          glc=isGlc, slc=isSlc, nt=isNT, lds=isLds, \
                           hi16=isHigh16Bits , \
                           comment="G -> Reg %u_%u_%u_%u"%(para, sPara, perp, sPerp)))
 
@@ -5790,7 +5792,7 @@ class KernelWriterAssembly(KernelWriter):
                           destVgpr=destVgpr, \
                           addr0=vgpr("GlobalReadAddr%s+%u"%(tc,graIdx),2), addr1="", \
                           soffset=0, offset=0, \
-                          glc=isGlc, slc=isSlc, lds=isLds, \
+                          glc=isGlc, slc=isSlc, nt=isNT, lds=isLds, \
                           hi16=(kernel["ProblemType"]["DataType"].isHalf() or kernel["ProblemType"]["DataType"].isBFloat16()) and loopCnt%2==1, \
                           comment="G -> Reg %u_%u_%u_%u"%(para, sPara, perp, sPerp )))
 
@@ -5815,7 +5817,7 @@ class KernelWriterAssembly(KernelWriter):
                         destVgpr="ValuMetadata+%u+%u"%(offsetBlk, (wtIdx*kernel["LoopIters"]+unrollIdx)), \
                         addr0=vgpr(offsetVgpr), addr1=sgpr("SrdMetadata",4), \
                         soffset=0, offset=constOffset, \
-                        glc=isGlc, slc=isSlc, lds=isLds, \
+                        glc=isGlc, slc=isSlc, nt=isNT, lds=isLds, \
                         hi16=0, \
                         comment="G -> Reg ValuMetadata"))
     globalReadBody(tP)
@@ -7480,11 +7482,14 @@ class KernelWriterAssembly(KernelWriter):
     #Store SC1 WA for gfx940/gfx941
     ntStr = ""
 
-    if kernel["NonTemporalD"]%2==1 or self.states.archCaps["ForceStoreSC1"]:
+    if kernel["NonTemporalD"] & 0x1 or self.states.archCaps["ForceStoreSC1"]:
       ntStr += " " + getGlcBitName(self.states.asmCaps["HasGLCModifier"])
 
-    if kernel["NonTemporalD"]//2==1 or self.states.archCaps["ForceStoreSC1"]:
+    if kernel["NonTemporalD"] & 0x2 or self.states.archCaps["ForceStoreSC1"]:
       ntStr += " " + getSlcBitName(self.states.asmCaps["HasGLCModifier"])
+
+    if kernel["NonTemporalD"] & 0x4:
+      ntStr += " nt"
 
     addr1 = sgpr("SrdD", 4)
     packedD1 = kernel["PackedC1IndicesX"]
@@ -8611,14 +8616,14 @@ class KernelWriterAssembly(KernelWriter):
   ##############################################################################
   def chooseGlobalRead(self, useBuffer, bpl, destVgpr, \
                        addr0, addr1, soffset, offset, \
-                       glc=False, slc=False, lds=False, \
+                       glc=False, slc=False, nt=False, lds=False, \
                        hi16=0, comment="load C"):
   # rpv = regs per vector
     rpv = bpl/4.0
 
     if useBuffer:
       rv = Module("Global Read")
-      mubuf = MUBUFModifiers(offen=True, offset12=offset, glc=glc, slc=slc, lds=lds)
+      mubuf = MUBUFModifiers(offen=True, offset12=offset, glc=glc, slc=slc, nt=nt, lds=lds)
 
       # Nested buffer load implementation function for easy branching for soffset
       def bufferLoadImpl(soffset):
@@ -8656,7 +8661,7 @@ class KernelWriterAssembly(KernelWriter):
           rv = Module("emulated _buffer_load_b256")
           rv.add(BufferLoadB128(dst=vgpr(destVgpr, rpv//2), vaddr=addr0, saddr=addr1, \
                                 soffset=soffset, mubuf=mubuf, comment=comment))
-          mubuf2 = MUBUFModifiers(offen=True, offset12=offset+bpl/2, glc=glc, slc=slc, lds=lds)
+          mubuf2 = MUBUFModifiers(offen=True, offset12=offset+bpl/2, glc=glc, slc=slc, nt=nt, lds=lds)
           if isinstance(destVgpr, str):
             dst2 = destVgpr + "+" + str(int(rpv//2))
           elif isinstance(destVgpr, int):
@@ -8698,7 +8703,7 @@ class KernelWriterAssembly(KernelWriter):
 
   ##############################################################################
   def chooseGlobalWrite(self, useBuffer, bps, srcVgpr, rpv, \
-                        addr0, addr1, offset, glc=False, slc=False, hi16=0, comment="store"):
+                        addr0, addr1, offset, glc=False, slc=False, nt=False, hi16=0, comment="store"):
     """
     create the store instruction for requested vector width and other parms
     rpv = regs per vector
@@ -8738,7 +8743,7 @@ class KernelWriterAssembly(KernelWriter):
                                   saddr=addr1, soffset=tmpSgpr, mubuf=mubuf, comment=comment))
         for i in range(1, rounds):
           offset2 = offset+shiftByte*i
-          mubuf2 = MUBUFModifiers(offen=True, offset12=offset2, glc=glc, slc=slc, isStore=True)
+          mubuf2 = MUBUFModifiers(offen=True, offset12=offset2, glc=glc, slc=slc, nt=nt, isStore=True)
           if offset2 >= 4096:
             mubuf2.offen = False
             mubuf2.offset12 = 0
@@ -8750,7 +8755,7 @@ class KernelWriterAssembly(KernelWriter):
         assert 0, "bad bps"
 
     if useBuffer:
-      mubuf = MUBUFModifiers(offen=True, offset12=offset, glc=glc, slc=slc, isStore=True)
+      mubuf = MUBUFModifiers(offen=True, offset12=offset, glc=glc, slc=slc, nt=nt, isStore=True)
       # buffer_load offset field is 12-bit.
       # if offset >= 4096, use soffset instead
       maxShift = max(bps - 16, 0) #if bps = 32 or bps = 64
@@ -8885,12 +8890,12 @@ class KernelWriterAssembly(KernelWriter):
       # implement wider stores
       isGlc = False
       isSlc = False
+      isNT = False
 
       if tc == 'D':
-        if kernel["NonTemporalD"]%2==1:
-          isGlc = True
-        if kernel["NonTemporalD"]//2==1:
-          isSlc = True
+        isGlc = kernel["NonTemporalD"] & 0x1
+        isSlc = kernel["NonTemporalD"] & 0x2
+        isNT  = kernel["NonTemporalD"] & 0x4
 
         bps = self.states.bpeCexternal * ss.cfg.gwvw
         rpv = self.states.bpeCexternal * ss.cfg.gwvw / self.states.bpr
@@ -8942,30 +8947,30 @@ class KernelWriterAssembly(KernelWriter):
           # (H,H,H,H,H,H), internal H
           if self.states.asmCaps["HasWMMA"] and kernel["EnableMatrixInstruction"]:
             module.add(self.chooseGlobalWrite(useBuffer, bps, sumIdx, rpv, \
-                           addr0, addr1, globalOffset, isGlc, isSlc, hi16=0, comment=comment))
+                           addr0, addr1, globalOffset, isGlc, isSlc, isNT, hi16=0, comment=comment))
           else:
             module.add(self.chooseGlobalWrite(useBuffer, bps, sumIdx//2, rpv, \
-                           addr0, addr1, globalOffset, isGlc, isSlc, hi16=sumIdx%2, comment=comment))
+                           addr0, addr1, globalOffset, isGlc, isSlc, isNT, hi16=sumIdx%2, comment=comment))
         else:
           # (B,B,B,B,S,S), internal S
           # (H,H,H,H,H,H), internal S
           # (H,H,H,H,S,S), internal S
           module.add(self.chooseGlobalWrite(useBuffer, bps, sumIdx, rpv, \
-                         addr0, addr1, globalOffset, isGlc, isSlc, hi16=0, comment=comment))
+                         addr0, addr1, globalOffset, isGlc, isSlc, isNT, hi16=0, comment=comment))
       elif dataType.isInt32() or dataType.isSingle():
         module.add(self.chooseGlobalWrite(useBuffer, bps, sumIdx, rpv, \
-                       addr0, addr1, globalOffset, isGlc, isSlc, comment=comment))
+                       addr0, addr1, globalOffset, isGlc, isSlc, isNT, comment=comment))
       elif dataType.isDouble() or dataType.isSingleComplex():
         module.add(self.chooseGlobalWrite(useBuffer, bps, sumIdx*2, rpv, \
-                       addr0, addr1, globalOffset, isGlc, isSlc, comment=comment))
+                       addr0, addr1, globalOffset, isGlc, isSlc, isNT, comment=comment))
       elif dataType.isDoubleComplex():
         rps = dataType.numRegisters()
         module.add(self.chooseGlobalWrite(useBuffer, bps, sumIdx*rps, rpv, \
-                       addr0, addr1, globalOffset, isGlc, isSlc, comment=comment))
+                       addr0, addr1, globalOffset, isGlc, isSlc, isNT, comment=comment))
       elif dataType.isInt8() or dataType.isFloat8() or dataType.isBFloat8():
         if kernel["ProblemType"]["HighPrecisionAccumulate"]:
           module.add(self.chooseGlobalWrite(useBuffer, bps, sumIdx, rpv, \
-                         addr0, addr1, globalOffset, isGlc, isSlc, comment=comment))
+                         addr0, addr1, globalOffset, isGlc, isSlc, isNT, comment=comment))
     return module
 
   ##############################################################################
@@ -8983,8 +8988,9 @@ class KernelWriterAssembly(KernelWriter):
       addr0 = vgpr(addr,2)
       addr1 = ""
 
-    isGlc = True if kernel["NonTemporal%s"%tc]%2==1 else False
-    isSlc = True if kernel["NonTemporal%s"%tc]//2==1 else False
+    isGlc = kernel["NonTemporal%s"%tc] & 0x1
+    isSlc = kernel["NonTemporal%s"%tc] & 0x2
+    isNT  = kernel["NonTemporal%s"%tc] & 0x4
 
     if tc == 'E':
         globalOffset = addrCalc.globalOffsetE
@@ -9006,13 +9012,13 @@ class KernelWriterAssembly(KernelWriter):
       hi16 = 0 if self.states.HHH_WMMA else (vc0 % 2)
       module.add(self.chooseGlobalRead(useBuffer, bps, data, \
                 addr0, addr1, soffset=0, offset=globalOffset, \
-                glc=isGlc, slc=isSlc, lds=False,
+                glc=isGlc, slc=isSlc, nt=isNT, lds=False,
                 hi16=hi16,
                 comment="load %s"%tc))
     elif dataType.isInt8() or dataType.is8bitFloat():
      module.add(self.chooseGlobalRead(useBuffer, bps, data, \
                 addr0, addr1, soffset=0, offset=globalOffset, \
-                glc=isGlc, slc=isSlc, lds=False, \
+                glc=isGlc, slc=isSlc, nt=isNT, lds=False, \
                 #hi16=vc0 % 4,
                 comment="load %s"%tc))
     elif dataType.isBFloat16() or \
@@ -9023,7 +9029,7 @@ class KernelWriterAssembly(KernelWriter):
          dataType.isDoubleComplex():
       module.add(self.chooseGlobalRead(useBuffer, bps, data, \
                 addr0, addr1, soffset=0, offset=globalOffset, \
-                glc=isGlc, slc=isSlc, lds=False, \
+                glc=isGlc, slc=isSlc, nt=isNT, lds=False, \
                 comment="load %s"%tc))
 
     return module

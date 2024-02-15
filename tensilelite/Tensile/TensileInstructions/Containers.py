@@ -96,6 +96,7 @@ class MUBUFModifiers(Container):
     offset12: int  = 0
     glc:      bool = False
     slc:      bool = False
+    nt:       bool = False
     lds:      bool = False
     isStore:  bool = False
 
@@ -118,6 +119,8 @@ class MUBUFModifiers(Container):
             kStr += " " + getGlcBitName(hasGLCModifier)
         if self.slc or forceStoreSC1:
             kStr += " " + getSlcBitName(hasGLCModifier)
+        if self.nt:
+            kStr += " nt"
         if self.lds:
             kStr += " lds"
         return kStr

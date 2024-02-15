@@ -950,16 +950,16 @@ validParameters = {
     "TransposeLDS":                [-1, 1, 0, 2],
 
     # add gls or slc after global memory read/writes to change caching, not caching the writes is promising and improved performance a tiny bit
-    # 1: glc, 2: slc, 3: glc+slc
+    # 0: none, 1: glc, 2: slc, 3: glc slc
     # For gfx940, sets sc0/sc1 bits
-    # 0: none, 1: sc0, 2: sc1, 3: sc0 sc1
-    "NonTemporalE":               list(range(0,4)),
-    "NonTemporalD":               list(range(0,4)),
-    "NonTemporalC":               list(range(0,4)),
-    "NonTemporalA":               list(range(0,4)),
-    "NonTemporalB":               list(range(0,4)),
-    "NonTemporalMetadata":        list(range(0,4)),
-    "NonTemporal":                list(range(-1,4)),
+    # 0: none, 1: sc0, 2: sc1, 3: sc0 sc1, 4: nt, 5: nt sc0, 6: nt sc1, 7: nt sc0 sc1
+    "NonTemporalE":               list(range(0,8)),
+    "NonTemporalD":               list(range(0,8)),
+    "NonTemporalC":               list(range(0,8)),
+    "NonTemporalA":               list(range(0,8)),
+    "NonTemporalB":               list(range(0,8)),
+    "NonTemporalMetadata":        list(range(0,8)),
+    "NonTemporal":                list(range(-1,8)),
 
     # Group together unroll iterations inside the unroll loop.
     # For example, InnerUnroll=2 will fetch LDS for two unroll iterations
