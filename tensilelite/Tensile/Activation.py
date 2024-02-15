@@ -772,7 +772,7 @@ class ActivationModule:
         self.needCombine = True
         module = Module("Silu")
         vgprTemp = self.getVgpr(1)
-        module.addModuleAsFlatItems(self.getSigmoidModule(cDataType, vgprIn, vgprTemp))
+        module.addModuleAsFlatItems(self.getSigmoidModule(cDataType, vgprIn, Holder(idx=vgprTemp)))
         if cDataType.isHalf():
             if self.usePK:
                 mulFunction = VMulPKF16
@@ -782,7 +782,7 @@ class ActivationModule:
             mulFunction = VMulF32
         else:
             raise RuntimeError("Unsupported data type %s."%cDataType.toDevice("HIP"))
-        module.add(mulFunction(dst=self.vgprPrefix(vgprOut), src0=self.vgprPrefix(vgprIn), src1=self.vgprPrefix(vgprTemp), comment="x / (1 + exp(-x))"))
+        module.add(mulFunction(dst=self.vgprPrefix(vgprOut), src0=self.vgprPrefix(vgprIn), src1=self.vgprPrefix(Holder(idx=vgprTemp)), comment="x / (1 + exp(-x))"))
         return module
 
     ################################################################################
