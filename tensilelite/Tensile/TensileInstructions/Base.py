@@ -283,6 +283,8 @@ def _initAsmCaps(isaVersion, assemblerPath, isDebug) -> dict:
 
     rv["HasGLCModifier"]    = _tryAssembler(isaVersion, assemblerPath, "buffer_load_dwordx4 v[10:13], v[0], s[0:3], 0, offen offset:0, glc", isDebug)
 
+    rv["HasNTModifier"]    = _tryAssembler(isaVersion, assemblerPath, "buffer_load_dwordx4 v[10:13], v[0], s[0:3], 0, offen offset:0, nt", isDebug)
+
     if _tryAssembler(isaVersion, assemblerPath, "s_waitcnt vmcnt(63)", isDebug):
         rv["MaxVmcnt"] = 63
     elif _tryAssembler(isaVersion, assemblerPath, "s_waitcnt vmcnt(15)", isDebug):
