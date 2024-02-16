@@ -38,6 +38,7 @@ add_executable( sample_hipblaslt_groupedgemm_fixed_mk_ext groupedgemm_fixed_mk/s
 add_executable( sample_hipblaslt_groupedgemm_get_all_algos_ext groupedgemm_get_all_algos/sample_hipblaslt_groupedgemm_get_all_algos_ext.cpp)
 add_executable( sample_hipblaslt_ext_op_layernorm ext_op/sample_hipblaslt_ext_op_layernorm.cpp)
 add_executable( sample_hipblaslt_ext_op_amax ext_op/sample_hipblaslt_ext_op_amax.cpp)
+add_executable( sample_hipblaslt_ext_op_softmax ext_op/sample_hipblaslt_ext_op_softmax.cpp ../common/hipblaslt_random.cpp)
 
 set(samples sample_hipblaslt_gemm
             sample_hipblaslt_gemm_ext
@@ -54,7 +55,8 @@ set(samples sample_hipblaslt_gemm
             sample_hipblaslt_groupedgemm_fixed_mk_ext
             sample_hipblaslt_groupedgemm_get_all_algos_ext
             sample_hipblaslt_ext_op_layernorm
-            sample_hipblaslt_ext_op_amax)
+            sample_hipblaslt_ext_op_amax
+            sample_hipblaslt_ext_op_softmax)
 
 set( sample_list_all ${samples})
 
@@ -77,6 +79,7 @@ foreach( exe ${sample_list_all} )
       $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../include>
       $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/common>
       $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../../library/include>
+      $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../../library/src/include>
       )
 
   target_include_directories( ${exe}

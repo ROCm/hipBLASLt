@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2023-2024 Advanced Micro Devices, Inc.
+ * Copyright (C) 2024 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -119,6 +119,19 @@ void initData(DType* data, std::size_t numElements, hipblaslt_initialization ini
     }
 }
 
+template<typename DType>
+void printMatrix(std::size_t m, std::size_t n, const DType *data) {
+    std::cout << "[\n";
+    for (std::size_t i = 0; i < m; ++i) {
+        std::cout << "[\n";
+        for (std::size_t j = 0; j < n; ++j) {
+            std::cout << data[n * i + j] << ", ";
+        }
+        std::cout << "\n], \n";
+    }
+    std::cout << "\n]\n";
+}
+
 int main(int argc, char** argv)
 {
     std::size_t              m{1335};
@@ -142,6 +155,7 @@ int main(int argc, char** argv)
     hipErr = hipMemcpyHtoD(input, data.data(), numElements * elementNumBytes);
     hipStream_t stream{};
     hipErr = hipStreamCreate(&stream);
+
     auto hipblasltErr = hipblasltExtSoftmax(HIP_R_32F, m, n, 1, output, input, stream);
 
     if(hipblasltErr)
@@ -153,27 +167,12 @@ int main(int argc, char** argv)
         return EXIT_FAILURE;
     }
 
-    hipEvent_t beg, end;
-    hipErr      = hipEventCreate(&beg);
-    hipErr      = hipEventCreate(&end);
-    int numRuns = 50;
-    hipErr      = hipEventRecord(beg, stream);
-
-    for(int i = 0; i < numRuns; ++i)
-    {
-        hipblasltErr = hipblasltExtSoftmax(HIP_R_32F, m, n, 1, output, input, stream);
-    }
-
-    hipErr = hipEventRecord(end, stream);
-    hipErr = hipEventSynchronize(end);
-    hipErr = hipStreamSynchronize(stream);
-    float dur{};
-    hipErr = hipEventElapsedTime(&dur, beg, end);
-    std::cout << "Time elapsed: " << std::to_string(dur / numRuns) << " ms\n";
     std::vector<float> gpuOutput(numElements, 0.f);
-    hipErr = hipEventDestroy(beg);
-    hipErr = hipEventDestroy(end);
     hipErr = hipMemcpyDtoH(gpuOutput.data(), output, numElements * elementNumBytes);
+    std::cout << "Input:\n";
+    printMatrix(m, n, data.data());
+    std::cout << "Output:\n";
+    printMatrix(m, n, gpuOutput.data());
     hipErr = hipStreamDestroy(stream);
     hipErr = hipFree(input);
     hipErr = hipFree(output);
