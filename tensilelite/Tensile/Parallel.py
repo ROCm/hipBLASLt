@@ -42,7 +42,7 @@ def CPUThreadCount(enable=True):
       cpu_count = len(os.sched_getaffinity(0))
     cpuThreads = globalParameters["CpuThreads"]
     if cpuThreads < 1:
-        return min(cpu_count, 32)  # Temporarily hack to fix oom issue, remove this after jenkin is fixed.
+        return min(cpu_count, 64)  # Temporarily hack to fix oom issue, remove this after jenkin is fixed.
     return min(cpu_count, cpuThreads)
 
 def OverwriteGlobalParameters(newGlobalParameters):
