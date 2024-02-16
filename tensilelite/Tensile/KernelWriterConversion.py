@@ -502,9 +502,12 @@ class KernelWriterConversion(KernelWriterBase):
         if globalParameters["AsmCaps"][archTuple]['v_pk_add_f32']:
           canPKF32Arch.append(arch)
       defineStr = []
-      defineStr = "#if defined(__%s__)"%getGfxName(canPKF32Arch[0])
-      for arch in canPKF32Arch[1:]:
-        defineStr += "|| defined(__%s__)"%getGfxName(arch)
+      if len(canPKF32Arch) > 0:
+        defineStr = "#if defined(__%s__)"%getGfxName(canPKF32Arch[0])
+        for arch in canPKF32Arch[1:]:
+          defineStr += "|| defined(__%s__)"%getGfxName(arch)
+      else:
+        defineStr = "#if 0"
       # PGR=2
       kStr += "  %s temp[NUM_GSU];" % loadTypeStr + self.endLine
       for gsuIdx in range(self.state["GlobalSplitU"]):
