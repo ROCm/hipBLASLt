@@ -7480,23 +7480,19 @@ class KernelWriterAssembly(KernelWriter):
 
     # Global Write
     #Store SC1 WA for gfx940/gfx941
-    ntStr = ""
-
-    if kernel["NonTemporalD"] & 0x1 or self.states.archCaps["ForceStoreSC1"]:
-      ntStr += " " + getGlcBitName(self.states.asmCaps["HasGLCModifier"])
-
-    if kernel["NonTemporalD"] & 0x2 or self.states.archCaps["ForceStoreSC1"]:
-      ntStr += " " + getSlcBitName(self.states.asmCaps["HasGLCModifier"])
-
-    if kernel["NonTemporalD"] & 0x4:
-      ntStr += " nt"
-
     addr1 = sgpr("SrdD", 4)
     packedD1 = kernel["PackedC1IndicesX"]
     strideD1 = "StrideD%s" % (self.states.indexChars[packedD1[0]])
 
     vTmp = self.vgprPool.checkOut(1, "SR Store temp addr0")
     addr0 = vgpr(vTmp)
+
+    isGlc = kernel["NonTemporalD"] & 0x1 or self.states.archCaps["ForceStoreSC1"]
+    isSlc = kernel["NonTemporalD"] & 0x2 or self.states.archCaps["ForceStoreSC1"]
+    isNT  = kernel["NonTemporalD"] & 0x4
+    if kernel["GlobalSplitUAlgorithm"] == "MultipleBufferSingleKernel":
+      isGlc = True
+      isSlc = True
 
     if not edge:
       for rIdx, i in enumerate(range(0, nElements, gwvw)):
@@ -7514,7 +7510,7 @@ class KernelWriterAssembly(KernelWriter):
 
         numStoreInst += 1
 
-        module.add(self.chooseGlobalWrite(True, bps, storeRegs[rIdx], rpv, addr0, addr1, 0, ntStr, comment="store D"))
+        module.add(self.chooseGlobalWrite(True, bps, storeRegs[rIdx], rpv, addr0, addr1, 0, glc=isGlc, slc=isSlc, nt=isNT, comment="store D StoreRemapVectorWidth"))
 
     else:
       tmpS23 = tmpS01+self.states.laneSGPRCount
@@ -7562,9 +7558,9 @@ class KernelWriterAssembly(KernelWriter):
           sumIdx = storeRegs[rIdx] + int(vi*rpe)
           numStoreInst += 1
           if bps == 2:
-            module.add(self.chooseGlobalWrite(True, bpe, sumIdx, rpe, addr0, addr1, 0, ntStr, hi16=vi%2, comment="store D"))
+            module.add(self.chooseGlobalWrite(True, bpe, sumIdx, rpe, addr0, addr1, 0, glc=isGlc, slc=isSlc, nt=isNT, hi16=vi%2, comment="store D StoreRemapVectorWidth"))
           else:
-            module.add(self.chooseGlobalWrite(True, bps, sumIdx, rpv, addr0, addr1, 0, ntStr, comment="store D"))
+            module.add(self.chooseGlobalWrite(True, bps, sumIdx, rpv, addr0, addr1, 0, glc=isGlc, slc=isSlc, nt=isNT, comment="store D StoreRemapVectorWidth"))
 
           if bps == 1:
             module.add(VAShiftRightI32(dst=vgpr("ValuC+%u"%sumIdx), shiftHex=8, src=vgpr("ValuC+%u"%sumIdx), comment=" shift 1 byte" ))
