@@ -144,6 +144,9 @@ class ProblemType(Mapping):
           printExit("NO compute data type, or dest data type, or data type specified")
           self["DataType"] = DataType(0)
 
+    if self["Sparse"]:
+      self["DataTypeMetadata"] = DataType("I8")
+
     if "F32XdlMathOp" in config:
         self["F32XdlMathOp"] = DataType(config["F32XdlMathOp"])
     else:
