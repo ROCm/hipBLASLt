@@ -53,7 +53,7 @@
   TransposeA: 1
   TransposeB: 1
   UseBeta: true
-  UseBias: true
+  UseBias: 1
   UseInitialStridesAB: false
   UseInitialStridesCD: false
   UseScaleDVec: false
@@ -222,7 +222,7 @@
       TransposeA: 1
       TransposeB: 1
       UseBeta: true
-      UseBias: true
+      UseBias: 1
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleDVec: false
