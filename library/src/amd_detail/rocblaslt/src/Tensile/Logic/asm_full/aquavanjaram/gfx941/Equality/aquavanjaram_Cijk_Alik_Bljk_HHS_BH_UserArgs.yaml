@@ -66,7 +66,7 @@
   TransposeA: 1
   TransposeB: 0
   UseBeta: true
-  UseBias: false
+  UseBias: 0
   UseE: false
   UseInitialStridesAB: false
   UseInitialStridesCD: false
@@ -269,7 +269,7 @@
       TransposeA: 1
       TransposeB: 0
       UseBeta: true
-      UseBias: false
+      UseBias: 0
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
@@ -525,7 +525,7 @@
       TransposeA: 1
       TransposeB: 0
       UseBeta: true
-      UseBias: false
+      UseBias: 0
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
@@ -781,7 +781,7 @@
       TransposeA: 1
       TransposeB: 0
       UseBeta: true
-      UseBias: false
+      UseBias: 0
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
@@ -1037,7 +1037,7 @@
       TransposeA: 1
       TransposeB: 0
       UseBeta: true
-      UseBias: false
+      UseBias: 0
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
@@ -1293,7 +1293,7 @@
       TransposeA: 1
       TransposeB: 0
       UseBeta: true
-      UseBias: false
+      UseBias: 0
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
@@ -1549,7 +1549,7 @@
       TransposeA: 1
       TransposeB: 0
       UseBeta: true
-      UseBias: false
+      UseBias: 0
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
@@ -1805,7 +1805,7 @@
       TransposeA: 1
       TransposeB: 0
       UseBeta: true
-      UseBias: false
+      UseBias: 0
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
@@ -2061,7 +2061,7 @@
       TransposeA: 1
       TransposeB: 0
       UseBeta: true
-      UseBias: false
+      UseBias: 0
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
@@ -2317,7 +2317,7 @@
       TransposeA: 1
       TransposeB: 0
       UseBeta: true
-      UseBias: false
+      UseBias: 0
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
@@ -2574,7 +2574,7 @@
       TransposeA: 1
       TransposeB: 0
       UseBeta: true
-      UseBias: false
+      UseBias: 0
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
