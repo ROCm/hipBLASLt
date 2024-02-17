@@ -64,7 +64,7 @@
   TransposeA: true
   TransposeB: true
   UseBeta: true
-  UseBias: false
+  UseBias: 0
   UseE: false
   UseInitialStridesAB: false
   UseInitialStridesCD: false
@@ -259,7 +259,7 @@
       TransposeA: true
       TransposeB: true
       UseBeta: true
-      UseBias: false
+      UseBias: 0
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
@@ -507,7 +507,7 @@
       TransposeA: true
       TransposeB: true
       UseBeta: true
-      UseBias: false
+      UseBias: 0
       UseE: false
       UseInitialStridesAB: false
       UseInitialStridesCD: false
