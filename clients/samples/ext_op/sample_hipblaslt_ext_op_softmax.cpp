@@ -74,7 +74,8 @@ int parseArgs(int argc, char** argv, size_t* m, size_t* n, hipblaslt_initializat
             {
                 const std::string initStr{argv[++i]};
 
-                if(initStr != "rand_int" && initStr != "trig_float" && initStr != "hpl" && initStr != "special" && initStr != "zero")
+                if(initStr != "rand_int" && initStr != "trig_float" && initStr != "hpl"
+                   && initStr != "special" && initStr != "zero")
                 {
                     std::cerr << "Invalid initialization type: " << initStr << '\n';
                     return EXIT_FAILURE;
@@ -119,12 +120,15 @@ void initData(DType* data, std::size_t numElements, hipblaslt_initialization ini
     }
 }
 
-template<typename DType>
-void printMatrix(std::size_t m, std::size_t n, const DType *data) {
+template <typename DType>
+void printMatrix(std::size_t m, std::size_t n, const DType* data)
+{
     std::cout << "[\n";
-    for (std::size_t i = 0; i < m; ++i) {
+    for(std::size_t i = 0; i < m; ++i)
+    {
         std::cout << "[\n";
-        for (std::size_t j = 0; j < n; ++j) {
+        for(std::size_t j = 0; j < n; ++j)
+        {
             std::cout << data[n * i + j] << ", ";
         }
         std::cout << "\n], \n";

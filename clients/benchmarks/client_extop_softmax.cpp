@@ -74,7 +74,8 @@ int parseArgs(int argc, char** argv, size_t* m, size_t* n, hipblaslt_initializat
             {
                 const std::string initStr{argv[++i]};
 
-                if(initStr != "rand_int" && initStr != "trig_float" && initStr != "hpl" && initStr != "special" && initStr != "zero")
+                if(initStr != "rand_int" && initStr != "trig_float" && initStr != "hpl"
+                   && initStr != "special" && initStr != "zero")
                 {
                     std::cerr << "Invalid initialization type: " << initStr << '\n';
                     return EXIT_FAILURE;
@@ -141,7 +142,7 @@ int main(int argc, char** argv)
     initData(data.data(), numElements, init);
     hipErr = hipMemcpyHtoD(input, data.data(), numElements * elementNumBytes);
     hipStream_t stream{};
-    hipErr = hipStreamCreate(&stream);
+    hipErr            = hipStreamCreate(&stream);
     auto hipblasltErr = hipblasltExtSoftmax(HIP_R_32F, m, n, 1, output, input, stream);
 
     if(hipblasltErr)
