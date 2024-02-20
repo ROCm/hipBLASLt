@@ -32,153 +32,20 @@
 #include <iostream>
 #include <numeric>
 #include <vector>
+#include "../common/helper.h"
 
-void printUsage(char* programName)
+void simpleSoftmaxF32(void *in, void *out, std::size_t m, std::size_t n, hipStream_t stream)
 {
-    std::cout << "Usage: " << programName << " <options>\n"
-              << "options:\n"
-              << "\t-h, --help\t\t\tShow this help message\n"
-              << "\t-m, --m\t\t\t\tSize of dim 0, default is 1335\n"
-              << "\t-n, --n\t\t\t\tSize of dim 1, default is 16\n"
-              << "\t--initialization \t\tInitialize matrix data. Options: rand_int, trig_float, "
-                 "hpl(floating), special, zero. (default is hpl)\n";
-}
-
-int parseArgs(int argc, char** argv, size_t* m, size_t* n, hipblaslt_initialization* init)
-{
-    if(argc <= 1)
-    {
-        return EXIT_SUCCESS;
-    }
-
-    for(int i = 1; i < argc; ++i)
-    {
-        std::string arg = argv[i];
-
-        if((arg.at(0) == '-') || ((arg.at(0) == '-') && (arg.at(1) == '-')))
-        {
-            if((arg == "-h") || (arg == "--help"))
-            {
-                return EXIT_FAILURE;
-            }
-
-            if(arg == "-m" || arg == "--m")
-            {
-                *m = std::stoul(argv[++i]);
-            }
-            else if(arg == "-n" || arg == "--n")
-            {
-                *n = std::stoul(argv[++i]);
-            }
-            else if(arg == "--initialization" || arg == "--init")
-            {
-                const std::string initStr{argv[++i]};
-
-                if(initStr != "rand_int" && initStr != "trig_float" && initStr != "hpl"
-                   && initStr != "special" && initStr != "zero")
-                {
-                    std::cerr << "Invalid initialization type: " << initStr << '\n';
-                    return EXIT_FAILURE;
-                }
-
-                *init = string2hipblaslt_initialization(initStr);
-            }
-        }
-        else
-        {
-            std::cerr << "error with " << arg << std::endl;
-            std::cerr << "option must start with - or --" << std::endl << std::endl;
-            return EXIT_FAILURE;
-        }
-    }
-
-    return EXIT_SUCCESS;
-}
-
-template <typename DType>
-void initData(DType* data, std::size_t numElements, hipblaslt_initialization initMethod)
-{
-    switch(initMethod)
-    {
-    case hipblaslt_initialization::rand_int:
-        hipblaslt_init<DType>(data, numElements, 1, 1);
-        break;
-    case hipblaslt_initialization::trig_float:
-        hipblaslt_init_cos<DType>(data, numElements, 1, 1);
-        break;
-    case hipblaslt_initialization::hpl:
-        hipblaslt_init_hpl<DType>(data, numElements, 1, 1);
-        break;
-    case hipblaslt_initialization::special:
-        hipblaslt_init_alt_impl_big<DType>(data, numElements, 1, 1);
-        break;
-    case hipblaslt_initialization::zero:
-        hipblaslt_init_zero<DType>(data, numElements, 1, 1);
-        break;
-    default:
-        break;
-    }
-}
-
-template <typename DType>
-void printMatrix(std::size_t m, std::size_t n, const DType* data)
-{
-    std::cout << "[\n";
-    for(std::size_t i = 0; i < m; ++i)
-    {
-        std::cout << "[\n";
-        for(std::size_t j = 0; j < n; ++j)
-        {
-            std::cout << data[n * i + j] << ", ";
-        }
-        std::cout << "\n], \n";
-    }
-    std::cout << "\n]\n";
+    CHECK_HIPBLASLT_ERROR(hipblasltExtSoftmax(HIP_R_32F, m, n, 1, out, in, stream));
 }
 
 int main(int argc, char** argv)
 {
     std::size_t              m{1335};
     std::size_t              n{16};
-    hipblaslt_initialization init{hipblaslt_initialization::hpl};
-
-    if(auto err = parseArgs(argc, argv, &m, &n, &init))
-    {
-        printUsage(argv[0]);
-        return err;
-    }
-
-    std::size_t numElements     = m * n;
-    std::size_t elementNumBytes = sizeof(float);
-    float*      input{};
-    float*      output{};
-    auto        hipErr = hipMalloc(&input, numElements * elementNumBytes);
-    hipErr             = hipMalloc(&output, numElements * elementNumBytes);
-    std::vector<float> data(numElements, 0.f);
-    initData(data.data(), numElements, init);
-    hipErr = hipMemcpyHtoD(input, data.data(), numElements * elementNumBytes);
-    hipStream_t stream{};
-    hipErr = hipStreamCreate(&stream);
-
-    auto hipblasltErr = hipblasltExtSoftmax(HIP_R_32F, m, n, 1, output, input, stream);
-
-    if(hipblasltErr)
-    {
-        std::cerr << "Invalid shape (" << m << ", " << n << "), currently support n <= 256\n";
-        hipFree(input);
-        hipFree(output);
-        hipStreamDestroy(stream);
-        return EXIT_FAILURE;
-    }
-
-    std::vector<float> gpuOutput(numElements, 0.f);
-    hipErr = hipMemcpyDtoH(gpuOutput.data(), output, numElements * elementNumBytes);
-    std::cout << "Input:\n";
-    printMatrix(m, n, data.data());
-    std::cout << "Output:\n";
-    printMatrix(m, n, gpuOutput.data());
-    hipErr = hipStreamDestroy(stream);
-    hipErr = hipFree(input);
-    hipErr = hipFree(output);
-    return 0;
+    OptSoftmaxRunner<float> runner(m, n);
+    runner.run([&runner]() {
+        simpleSoftmaxF32(runner.d_out, runner.d_in, runner.m, runner.n, runner.stream);
+    });
+    return EXIT_SUCCESS;
 }
