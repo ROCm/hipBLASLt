@@ -1750,7 +1750,17 @@ rocblaslt_status runKernelFromNewDeviceUserArguments(rocblaslt_handle       hand
                 uint8_t* arg      = it.args.rawdata();
                 auto     solution = library->getSolutionByIndex(data->algoIndex);
                 if(solution->internalArgsSupport.useUniversalArgs)
+                {
+                    if(deviceUserArgs != nullptr)
+                    {
+                        int gemmCount = 0;
+                        memcpy(&gemmCount, arg, sizeof(int));
+                        gemmCount = gemmCount & 0x3FFFFFFF;
+                        gemmCount = gemmCount | (2 << 30);
+                        memcpy(arg, &gemmCount, sizeof(int));
+                    }
                     memcpy(arg + 8, &deviceUserArgs, sizeof(void*));
+                }
                 else
                 {
                     memcpy(arg + 4, &deviceUserArgs, sizeof(void*));
