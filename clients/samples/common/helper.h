@@ -507,3 +507,86 @@ struct OptAMaxRunner
     hipStream_t       stream;
     hipblasLtHandle_t handle;
 };
+
+template <typename DType>
+struct OptMatrixTransformRunner
+{
+    OptMatrixTransformRunner(
+        int64_t m, int64_t n, bool transA, bool transB, bool rowMajA, bool rowMajB, bool rowMajC)
+        : m(m)
+        , n(n)
+        , rowMajA(rowMajA)
+        , rowMajB(rowMajB)
+        , rowMajC(rowMajC)
+        , transA(transA)
+        , transB(transB)
+    {
+        CHECK_HIP_ERROR(hipStreamCreate(&stream));
+        CHECK_HIPBLASLT_ERROR(hipblasLtCreate(&handle));
+
+        CHECK_HIP_ERROR(hipMalloc(&da, m * n * sizeof(DType)));
+        CHECK_HIP_ERROR(hipMalloc(&db, m * n * sizeof(DType)));
+        CHECK_HIP_ERROR(hipMalloc(&dc, m * n * sizeof(DType)));
+
+        CHECK_HIP_ERROR(hipHostMalloc(&ha, m * n * sizeof(DType)));
+        CHECK_HIP_ERROR(hipHostMalloc(&hb, m * n * sizeof(DType)));
+        CHECK_HIP_ERROR(hipHostMalloc(&hc, m * n * sizeof(DType)));
+
+        for(int i = 0; i < m * n; i++)
+        {
+            ha[i] = static_cast<DType>((rand() % 7) - 3);
+            hb[i] = static_cast<DType>((rand() % 7) - 3);
+        }
+    }
+
+    ~OptMatrixTransformRunner()
+    {
+        CHECK_HIP_ERROR(hipFree(da));
+        CHECK_HIP_ERROR(hipFree(db));
+        CHECK_HIP_ERROR(hipFree(dc));
+        CHECK_HIP_ERROR(hipFree(ha));
+        CHECK_HIP_ERROR(hipFree(hb));
+        CHECK_HIP_ERROR(hipFree(hc));
+        CHECK_HIPBLASLT_ERROR(hipblasLtDestroy(handle));
+        CHECK_HIP_ERROR(hipStreamDestroy(stream));
+    }
+
+    void hostToDevice()
+    {
+        CHECK_HIP_ERROR(
+            hipMemcpyAsync(da, ha, m * n * sizeof(DType), hipMemcpyHostToDevice, stream));
+        CHECK_HIP_ERROR(
+            hipMemcpyAsync(db, hb, m * n * sizeof(DType), hipMemcpyHostToDevice, stream));
+    }
+
+    void deviceToHost()
+    {
+        CHECK_HIP_ERROR(hipMemcpyAsync(hc, dc, sizeof(DType), hipMemcpyDeviceToHost, stream));
+    }
+
+    void run(const std::function<void()>& func)
+    {
+        hostToDevice();
+
+        static_cast<void>(func());
+
+        deviceToHost();
+        hipStreamSynchronize(stream);
+    }
+
+    int64_t           m{};
+    int64_t           n{};
+    bool              rowMajA{};
+    bool              rowMajB{};
+    bool              rowMajC{};
+    bool              transA{};
+    bool              transB{};
+    DType*            da{};
+    DType*            db{};
+    DType*            dc{};
+    DType*            ha{};
+    DType*            hb{};
+    DType*            hc{};
+    hipStream_t       stream;
+    hipblasLtHandle_t handle;
+};

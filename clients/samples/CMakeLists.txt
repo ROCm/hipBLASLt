@@ -38,7 +38,7 @@ add_executable( sample_hipblaslt_groupedgemm_fixed_mk_ext groupedgemm_fixed_mk/s
 add_executable( sample_hipblaslt_groupedgemm_get_all_algos_ext groupedgemm_get_all_algos/sample_hipblaslt_groupedgemm_get_all_algos_ext.cpp)
 add_executable( sample_hipblaslt_ext_op_layernorm ext_op/sample_hipblaslt_ext_op_layernorm.cpp)
 add_executable( sample_hipblaslt_ext_op_amax ext_op/sample_hipblaslt_ext_op_amax.cpp)
-add_executable( sample_hipblaslt_ext_op_matrixtransform ext_op/sample_hipblaslt_ext_op_matrixtransform.cpp ../common/hipblaslt_random.cpp)
+add_executable( sample_hipblaslt_ext_op_matrixtransform ext_op/sample_hipblaslt_ext_op_matrixtransform.cpp)
 
 set(samples sample_hipblaslt_gemm
             sample_hipblaslt_gemm_ext
