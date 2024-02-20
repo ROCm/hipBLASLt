@@ -80,30 +80,21 @@ void simpleTransformF32(int64_t           m,
 
     auto ldA = rowMajA ? getLeadingDimSize<true>(shapeA.first, shapeA.second)
                        : getLeadingDimSize<false>(shapeA.first, shapeA.second);
-    auto ldB = rowMajB ? getLeadingDimSize<true>(shapeB.first, shapeB.second)
-                       : getLeadingDimSize<false>(shapeB.first, shapeB.second);
     auto ldC = rowMajC ? getLeadingDimSize<true>(m, n) : getLeadingDimSize<false>(m, n);
 
     CHECK_HIPBLASLT_ERROR(hipblasLtMatrixTransformDescSetAttribute(
         desc, HIPBLASLT_MATRIX_TRANSFORM_DESC_TRANSA, &tA, sizeof(tA)));
-    CHECK_HIPBLASLT_ERROR(hipblasLtMatrixTransformDescSetAttribute(
-        desc, HIPBLASLT_MATRIX_TRANSFORM_DESC_TRANSB, &tB, sizeof(tB)));
-    hipblasLtMatrixLayout_t layoutA, layoutB, layoutC;
+    hipblasLtMatrixLayout_t layoutA{};
+    hipblasLtMatrixLayout_t layoutC{};
     CHECK_HIPBLASLT_ERROR(
         hipblasLtMatrixLayoutCreate(&layoutA, datatype, shapeA.first, shapeA.second, ldA));
     CHECK_HIPBLASLT_ERROR(
-        hipblasLtMatrixLayoutCreate(&layoutB, datatype, shapeB.first, shapeB.second, ldB));
-    CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutCreate(&layoutC, datatype, m, n, ldC));
+        hipblasLtMatrixLayoutCreate(&layoutC, datatype, m, n, ldC));
     CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutSetAttribute(
         layoutA,
         hipblasLtMatrixLayoutAttribute_t::HIPBLASLT_MATRIX_LAYOUT_ORDER,
         &orderA,
         sizeof(orderA)));
-    CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutSetAttribute(
-        layoutB,
-        hipblasLtMatrixLayoutAttribute_t::HIPBLASLT_MATRIX_LAYOUT_ORDER,
-        &orderB,
-        sizeof(orderB)));
     CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutSetAttribute(
         layoutC,
         hipblasLtMatrixLayoutAttribute_t::HIPBLASLT_MATRIX_LAYOUT_ORDER,
@@ -115,11 +106,6 @@ void simpleTransformF32(int64_t           m,
         &batchSize,
         sizeof(batchSize)));
     CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutSetAttribute(
-        layoutB,
-        hipblasLtMatrixLayoutAttribute_t::HIPBLASLT_MATRIX_LAYOUT_BATCH_COUNT,
-        &batchSize,
-        sizeof(batchSize)));
-    CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutSetAttribute(
         layoutC,
         hipblasLtMatrixLayoutAttribute_t::HIPBLASLT_MATRIX_LAYOUT_BATCH_COUNT,
         &batchSize,
@@ -130,22 +116,16 @@ void simpleTransformF32(int64_t           m,
         &batchStride,
         sizeof(batchStride)));
     CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutSetAttribute(
-        layoutB,
-        hipblasLtMatrixLayoutAttribute_t::HIPBLASLT_MATRIX_LAYOUT_STRIDED_BATCH_OFFSET,
-        &batchStride,
-        sizeof(batchStride)));
-    CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutSetAttribute(
         layoutC,
         hipblasLtMatrixLayoutAttribute_t::HIPBLASLT_MATRIX_LAYOUT_STRIDED_BATCH_OFFSET,
         &batchStride,
         sizeof(batchStride)));
 
     CHECK_HIPBLASLT_ERROR(hipblasLtMatrixTransform(
-        handle, desc, &alpha, a, layoutA, &beta, b, layoutB, c, layoutC, stream));
+        handle, desc, &alpha, a, layoutA, &beta, nullptr, nullptr, c, layoutC, stream));
 
     CHECK_HIPBLASLT_ERROR(hipblasLtMatrixTransformDescDestroy(desc));
     CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutDestroy(layoutA));
-    CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutDestroy(layoutB));
     CHECK_HIPBLASLT_ERROR(hipblasLtMatrixLayoutDestroy(layoutC));
 }
 
