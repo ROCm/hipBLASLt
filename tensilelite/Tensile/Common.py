@@ -936,9 +936,9 @@ validParameters = {
     # is added (readOffset aware of the pad and adjusts offset value based on this parameter value).
     # Only support LdsBlockSizePerPad >= unrollDepth * BPE
     # 0 means disable LdsBlockSizePerPad
-    "LdsBlockSizePerPadA":         [-1, 0, 64, 128, 256, 512, 1024],
-    "LdsBlockSizePerPadB":         [-1, 0, 64, 128, 256, 512, 1024],
-    "LdsBlockSizePerPadMetadata":  [-1, 0, 64, 128, 256, 512, 1024],
+    "LdsBlockSizePerPadA":         [-1, 0, 64, 128, 256, 512, 1024, 2048],
+    "LdsBlockSizePerPadB":         [-1, 0, 64, 128, 256, 512, 1024, 2048],
+    "LdsBlockSizePerPadMetadata":  [-1, 0, 64, 128, 256, 512, 1024, 2048],
 
     # Transpose LDS format. Local store in coalesced dimension , same as optimized global fetch dimension . applicable only in TLU=0 case for miSIMD(s)
     # -1 : keep LDS layout same as global fetch dimension for both A and B
