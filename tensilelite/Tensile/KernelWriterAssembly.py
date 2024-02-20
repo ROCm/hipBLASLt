@@ -1171,12 +1171,9 @@ class KernelWriterAssembly(KernelWriter):
       if (self.states.kernel["WorkGroupMappingXCC"] > 1):
         tmpSgprNumWorkGroups = self.sgprs["SrdA"] + 3
         hbmArgs.addComment1("Grouped Gemm: Load num of WGs")
-        hbmArgs.add(self.argLoader.loadKernArg(tmpSgprNumWorkGroups, "KernArgAddress", hex(20), dword=1))
-      if kernel["ProblemType"]["SupportUserArgs"]:
-        hbmArgs.addComment1("Load address of external kernel arguments")
-        hbmArgs.add(self.argLoader.loadKernArg("ExternalArgAddress", "KernArgAddress", hex(8), dword=2))
+        hbmArgs.add(self.argLoader.loadKernArg(tmpSgprNumWorkGroups, "KernArgAddress", hex(16), dword=1))
       hbmArgs.addComment1("Load address of kernel arguments")
-      hbmArgs.add(self.argLoader.loadKernArg("KernArgAddress", "KernArgAddress", hex(16), dword=2))
+      hbmArgs.add(self.argLoader.loadKernArg("KernArgAddress", "KernArgAddress", hex(8), dword=2))
 
       moduleArgs.addModuleAsFlatItems(fastdeepcopy(commonArgs))
       moduleArgs.add(SWaitCnt(0))
@@ -1191,8 +1188,6 @@ class KernelWriterAssembly(KernelWriter):
       moduleArgs.addModuleAsFlatItems(self.getKernelArgLoadModule(kernel, sgprStart, load, 0))
       if self.states.numSgprPreload > 0:
         moduleArgs.add(SWaitCnt(0))
-      if kernel["ProblemType"]["SupportUserArgs"]:
-        moduleArgs.add(SMovB64(dst=sgpr("ExternalArgAddress", 2),src=0))
       moduleArgs.add(SBranch(labelName=labelLoadEnd.getLabelName()))
       moduleArgs.add(labelHBM)
       moduleArgs.addModuleAsFlatItems(fastdeepcopy(hbmArgs))
@@ -1231,15 +1226,11 @@ class KernelWriterAssembly(KernelWriter):
         moduleArgs.addModuleAsFlatItems(self.getKernelArgLoadModule(kernel, sgprStart, load, self.states.numSgprPreload - commonArgNum))
         for i in range(2, self.states.numSgprPreload):
           moduleArgs.add(SMovB32(dst=sgpr(sgprStart+i-commonArgNum), src=sgpr(preloadSgprStartIdx+i), comment="move preload data to correct sgpr"))
-        if kernel["ProblemType"]["SupportUserArgs"]:
-          moduleArgs.add(SMovB64(dst=sgpr("ExternalArgAddress", 2),src=0))
         moduleArgs.add(SBranch(labelName=perloadLabelLoadEnd.getLabelName()))
         moduleArgs.add(preloadLabelHBM)
         if (self.states.kernel["WorkGroupMappingXCC"] > 1):
           moduleArgs.add(SMovB32(dst=sgpr(tmpSgprNumWorkGroups), src=sgpr(preloadSgprStartIdx+6), comment="Grouped Gemm: Load num of WGs"))
-        moduleArgs.add(SMovB64(dst=sgpr("KernArgAddress", 2), src=sgpr(preloadSgprStartIdx+4, 2), comment="Load address of kernel arguments"))
-        if kernel["ProblemType"]["SupportUserArgs"]:
-          moduleArgs.add(SMovB64(dst=sgpr("ExternalArgAddress", 2), src=sgpr(preloadSgprStartIdx+2, 2), comment="Load address of external kernel arguments"))
+        moduleArgs.add(SMovB64(dst=sgpr("KernArgAddress", 2), src=sgpr(preloadSgprStartIdx+2, 2), comment="Load address of kernel arguments"))
         moduleArgs.add(perloadLabelLoadEnd)
         # add common kern entry label
         moduleRegInit.add(common_kern_entry)
@@ -1251,6 +1242,8 @@ class KernelWriterAssembly(KernelWriter):
       moduleRegInit.add(SAndB32(dst=sgpr("StaggerU"), src0=sgpr("GSU"), src1=hex(0xFFFF0000), comment="Restore StaggerU related vars"))
       moduleRegInit.add(SLShiftRightB32(dst=sgpr("StaggerU"), shiftHex=hex(16), src=sgpr("StaggerU")))
       moduleRegInit.add(SAndB32(dst=sgpr("GSU"), src0=sgpr("GSU"), src1=hex(0xFF), comment="Restore GSU"))
+      if kernel["ProblemType"]["SupportUserArgs"]:
+        moduleRegInit.add(SMovB32(dst=sgpr("ArgType"),src=sgpr(sgprArgType)))
 
     if self.states.lrvwTileA > 1 or self.states.lrvwTileB > 1 or self.states.lrvwTileMetadata > 1:
       if kernel["ProblemType"]["DataType"].isHalf() or kernel["ProblemType"]["DataType"].isBFloat16():
@@ -1435,7 +1428,8 @@ class KernelWriterAssembly(KernelWriter):
       extValidLabelEnd = Label(label="IsExternalValidEnd", comment="")
       if kernel["ProblemType"]["SupportUserArgs"]:
         module.addComment1("Check if custom structure pointer is null")
-        module.add(SBranchIfNotZero("ExternalArgAddress", DataType('int64'), extValidLabel))
+        module.add(SCmpEQU32(src0=sgpr("ArgType"), src1=2, comment="ArgType == 2 ?"))
+        module.add(SCBranchSCC1(labelName=extValidLabel.getLabelName(), comment="branch if ArgType == 2"))
         module.add(SMovB32(dst=sgpr(tmpSgprArgOffsett), src=(self.argLoader.getOffset() + (numStoreSgprToLoad * 4))))
         module.add(SMulI32(dst=sgpr(tmpSgprAddrM), src0=sgpr(sgprNumsOfGemm), src1=4)) # offset wgTable
         module.add(SMovB64(dst=sgpr(tmpSgprArgAddress0,2), src=sgpr("KernArgAddress",2)))
@@ -1443,7 +1437,7 @@ class KernelWriterAssembly(KernelWriter):
         module.add(extValidLabel)
         module.add(SMovB32(dst=sgpr(tmpSgprArgOffsett), src=self.states.userArgsInfo.totalSize))
         module.add(SMovB32(dst=sgpr(tmpSgprAddrM), src=hex(0)))
-        module.add(SMovB64(dst=sgpr(tmpSgprArgAddress0,2), src=sgpr("ExternalArgAddress",2)))
+        module.add(SMovB64(dst=sgpr(tmpSgprArgAddress0,2), src=sgpr("KernArgAddress",2)))
         module.add(extValidLabelEnd)
       else:
         module.add(SMovB32(dst=sgpr(tmpSgprArgOffsett), src=(self.argLoader.getOffset() + (numStoreSgprToLoad * 4))))
@@ -1515,7 +1509,8 @@ class KernelWriterAssembly(KernelWriter):
       extLabelEnd = Label(label="LoadExternalStructEnd", comment="")
       if kernel["ProblemType"]["SupportUserArgs"]:
         module.addComment0("Check if custom structure pointer is null")
-        module.add(SBranchIfNotZero("ExternalArgAddress", DataType('int64'), extLabel))
+        module.add(SCmpEQU32(src0=sgpr("ArgType"), src1=2, comment="ArgType == 2 ?"))
+        module.add(SCBranchSCC1(labelName=extLabel.getLabelName(), comment="branch if ArgType == 2"))
       module.addComment1("Grouped Gemm: offset argument address to gemm")
       module.addComment0("Grouped Gemm: offset address from wg_table_start to args_start")
       module.add(SLShiftLeft2AddU32(dst=sgpr("KernArgAddress"), src0=sgpr(sgprNumsOfGemm), src1=sgpr("KernArgAddress")))
@@ -1532,22 +1527,22 @@ class KernelWriterAssembly(KernelWriter):
         module.addComment0("Grouped Gemm: offset address from args_start to gemm_start")
         # Currently a magic number cause the structure is fixed, should the structure gen by python so we can know the size?
         module.add(SMulI32(dst=sgpr(tmpSgprGemmIdxLeft), src0=sgpr(tmpSgprGemmIdxLeft),src1=self.states.userArgsInfo.totalSize))
-        module.add(SAddU32(dst=sgpr("ExternalArgAddress"), src0=sgpr("ExternalArgAddress"), src1=sgpr(tmpSgprGemmIdxLeft)))
-        module.add(SAddCU32(dst=sgpr("ExternalArgAddress+1"), src0=sgpr("ExternalArgAddress+1"), src1=hex(0)))
+        module.add(SAddU32(dst=sgpr("KernArgAddress"), src0=sgpr("KernArgAddress"), src1=sgpr(tmpSgprGemmIdxLeft)))
+        module.add(SAddCU32(dst=sgpr("KernArgAddress+1"), src0=sgpr("KernArgAddress+1"), src1=hex(0)))
         moduleExternalArgs = Module("Load external Arguments")
       # Here alpha and beta in user args are fixed sizes, so we need to exclude beta and read it with a different offset
         load = load - self.states.numSgprBeta
-        moduleExternalArgs.addModuleAsFlatItems(self.externalArgLoader.loadAllKernArg(sgprStart, "ExternalArgAddress", load, 4))
+        moduleExternalArgs.addModuleAsFlatItems(self.externalArgLoader.loadAllKernArg(sgprStart, "KernArgAddress", load, 4))
         offset = self.externalArgLoader.getOffset() + self.states.bpr * (self.states.userArgsInfo.alphaMaxRegisterSize - self.states.numSgprAlpha)
         self.externalArgLoader.setOffset(offset)
         moduleExternalArgs.addComment("Read Beta")
-        moduleExternalArgs.addModuleAsFlatItems(self.externalArgLoader.loadAllKernArg(self.sgprs["Beta"], "ExternalArgAddress", self.states.numSgprBeta))
+        moduleExternalArgs.addModuleAsFlatItems(self.externalArgLoader.loadAllKernArg(self.sgprs["Beta"], "KernArgAddress", self.states.numSgprBeta))
         offset = self.externalArgLoader.getOffset() + self.states.bpr * (self.states.userArgsInfo.betaMaxRegisterSize - self.states.numSgprBeta)
         if kernel["ProblemType"]["UseScaleAB"]:
           sgprOffset = self.externalArgLoader.getOffset()
           for preloadScale, name in zip([self.states.preloadScaleA, self.states.preloadScaleB], ['A','B']):
             if preloadScale:
-              moduleExternalArgs.add(self.externalArgLoader.loadKernArg("AddressScale%s"%name, "ExternalArgAddress", sgprOffset=hex(sgprOffset), dword=2))
+              moduleExternalArgs.add(self.externalArgLoader.loadKernArg("AddressScale%s"%name, "KernArgAddress", sgprOffset=hex(sgprOffset), dword=2))
             sgprOffset += self.states.userArgsInfo.scaleASize
         self.externalArgLoader.setOffset(offset)
         module.add(moduleExternalArgs)
@@ -4220,7 +4215,8 @@ class KernelWriterAssembly(KernelWriter):
         extReadEpilogueLabel    = Label(label=self.labels.getNameInc("LoadExternalEpilogueStruct"), comment="")
         extReadEpilogueLabelEnd = Label(label=self.labels.getNameInc("LoadExternalEpilogueStructEnd"), comment="")
         module.addComment0("Check if custom structure pointer is null")
-        module.add(SBranchIfNotZero("ExternalArgAddress", DataType('int64'), extReadEpilogueLabel))
+        module.add(SCmpEQU32(src0=sgpr("ArgType"), src1=2, comment="ArgType == 2 ?"))
+        module.add(SCBranchSCC1(labelName=extReadEpilogueLabel.getLabelName(), comment="branch if ArgType == 2"))
         argOffset = self.argLoader.getOffset() # Backup offset
         numStoreSgprToLoad = self.states.numStoreSgprToLoad
         (item, startVgprName, numStoreSgprToLoad) = fixPreloadOffset(argOffset, sgpxIdxVec, numStoreSgprToLoad)
@@ -4300,7 +4296,7 @@ class KernelWriterAssembly(KernelWriter):
             continue
           dwordLen = loadInfo[1] // 4
           self.externalArgLoader.setOffset(loadInfo[2])
-          loadModuleExt.addModuleAsFlatItems(module.addModuleAsFlatItems(self.externalArgLoader.loadAllKernArg(loadInfo[0], "ExternalArgAddress", dwordLen)))
+          loadModuleExt.addModuleAsFlatItems(module.addModuleAsFlatItems(self.externalArgLoader.loadAllKernArg(loadInfo[0], "KernArgAddress", dwordLen)))
         self.states.numStoreSgprInstExt = loadModuleExt.countType(SMemLoadInstruction)
         self.externalArgLoader.setOffset(backupExtArgOffset)
         module.add(extReadEpilogueLabelEnd)

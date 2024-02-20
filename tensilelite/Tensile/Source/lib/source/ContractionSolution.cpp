@@ -42,6 +42,13 @@
 
 namespace Tensile
 {
+    enum class KERNELARGTYPE
+    {
+        NORMAL   = 0,
+        HBM      = 1,
+        USERARGS = 2
+    };
+
     void setVariantToBuffer(ConstantVariant const& value,
                             void*                  buffer,
                             size_t                 bufferLength,
@@ -645,7 +652,8 @@ namespace Tensile
 
         if constexpr(insertKernelArgs)
             if(!internalArgsSupport.useUniversalArgs)
-                kernelArgs<T_Debug, true>(0, 0, args, problem.getParams());
+                kernelArgs<T_Debug, true>(
+                    0, (uint32_t)KERNELARGTYPE::NORMAL, args, problem.getParams());
 
         if(problemType.useScaleAB) //kernel input data
         {
@@ -986,10 +994,22 @@ namespace Tensile
         {
             if(internalArgsSupport.useUniversalArgs)
             {
-                kernelArgs<T_Debug, false>(problems.size(), 1, rv.args, problems[0].getParams());
+                KERNELARGTYPE argType = KERNELARGTYPE::HBM;
+                if(userArgs != nullptr)
+                {
+                    argType = KERNELARGTYPE::USERARGS;
+                }
+                kernelArgs<T_Debug, false>(
+                    problems.size(), (uint32_t)argType, rv.args, problems[0].getParams());
                 // For user input
-                rv.args.append<void const*>("DeviceUserArguments", userArgs);
-                rv.args.append<void const*>("argsPtr", (void*)inputs.ws);
+                if(argType == KERNELARGTYPE::USERARGS)
+                {
+                    rv.args.append<void const*>("DeviceUserArguments", userArgs);
+                }
+                else
+                {
+                    rv.args.append<void const*>("argsPtr", (void*)inputs.ws);
+                }
                 rv.args.append<uint32_t>("numWorkGroups",
                                          rv.numWorkItems.x / rv.workGroupSize.x / rv.workGroupSize.y
                                              / rv.workGroupSize.z);
@@ -1003,7 +1023,8 @@ namespace Tensile
                 rv.args.append<uint32_t>("numWorkGroups",
                                          rv.numWorkItems.x / rv.workGroupSize.x / rv.workGroupSize.y
                                              / rv.workGroupSize.z);
-                kernelArgs<T_Debug, true>(0, 0, rv.args, problems[0].getParams());
+                kernelArgs<T_Debug, true>(
+                    0, (uint32_t)KERNELARGTYPE::NORMAL, rv.args, problems[0].getParams());
             }
             rv.args.append<void const*>(
                 "Workspace",

@@ -3534,7 +3534,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
     self.states.firstInitSgpr = self.sgprPool.size()
 
     if kernel["ProblemType"]["SupportUserArgs"]:
-      self.defineSgpr("ExternalArgAddress", self.states.rpga, align=2)
+      self.defineSgpr("ArgType", 1)  # 0: normal, 1: hbm, 2: user args
 
     # To avoid corrupting tmp sgprs that may be used around the assert,
     # reserve some sgprs to save/restore the execmask
