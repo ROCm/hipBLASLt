@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
+ * Copyright (C) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -78,6 +78,7 @@ namespace Tensile
             const std::string ProblemSizes = "problem-sizes";
 
             const std::string BiasType       = "bias-type";
+            const std::string BiasDim        = "bias-dim";
             const std::string ActivationType = "activation-type";
 
             // Solution information

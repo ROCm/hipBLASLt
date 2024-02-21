@@ -39,7 +39,7 @@ BenchmarkProblems:
       UseBeta: True
       Batched: True
 
-      UseBias: True
+      UseBias: 1
       Activation: True
       UseScaleAlphaVec: True
 
@@ -128,7 +128,7 @@ BenchmarkProblems:
       UseBeta: True
       Batched: True
 
-      UseBias: True
+      UseBias: 1
       Activation: True
       UseScaleAlphaVec: True
 
@@ -213,7 +213,7 @@ BenchmarkProblems:
       UseBeta: True
       Batched: True
 
-      UseBias: True
+      UseBias: 1
       Activation: True
       UseScaleAlphaVec: True
 
@@ -297,7 +297,7 @@ BenchmarkProblems:
       UseBeta: True
       Batched: True
 
-      UseBias: True
+      UseBias: 1
       Activation: True
       UseScaleAlphaVec: True
 

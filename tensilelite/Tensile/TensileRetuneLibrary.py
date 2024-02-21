@@ -1,6 +1,6 @@
 ###############################################################################
 #
-# Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -88,7 +88,7 @@ def runBenchmarking(solutions, problemSizes, outPath, update):
 
     pushWorkingPath(shortName)
     pushWorkingPath("source")
-    BenchmarkProblems.writeBenchmarkFiles(benchmarkDir, solutions, problemSizes , "", shortName, [])
+    BenchmarkProblems.writeBenchmarkFiles(benchmarkDir, solutions, problemSizes , "", "", shortName, [])
     popWorkingPath() # source
 
     libraryLogicPath = None

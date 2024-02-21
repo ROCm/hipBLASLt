@@ -29,7 +29,7 @@ BenchmarkProblems:
       Batched: True
       Gradient: True
       UseE: True
-      UseBias: True
+      UseBias: 1
       BiasSrc: "D"
       Activation: True
       ActivationHPA: True
@@ -98,7 +98,7 @@ BenchmarkProblems:
       Batched: True
       Gradient: True
       UseE: False
-      UseBias: True
+      UseBias: 1
       BiasSrc: "A"
       Activation: False
       ActivationHPA: False
@@ -168,7 +168,7 @@ BenchmarkProblems:
       Batched: True
       Gradient: True
       UseE: False
-      UseBias: True
+      UseBias: 1
       BiasSrc: "A"
       Activation: False
       ActivationHPA: False
@@ -241,7 +241,7 @@ BenchmarkProblems:
       Batched: True
       Gradient: True
       UseE: False
-      UseBias: True
+      UseBias: 1
       BiasSrc: "A"
       Activation: False
       ActivationHPA: False
@@ -312,7 +312,7 @@ BenchmarkProblems:
       Batched: True
       Gradient: True
       UseE: False
-      UseBias: True
+      UseBias: 1
       BiasSrc: "B"
       Activation: False
       ActivationHPA: False
@@ -386,7 +386,7 @@ BenchmarkProblems:
       Batched: True
       Gradient: True
       UseE: False
-      UseBias: True
+      UseBias: 1
       BiasSrc: "B"
       Activation: False
       ActivationHPA: False

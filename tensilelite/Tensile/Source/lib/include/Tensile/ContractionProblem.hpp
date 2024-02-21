@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
+ * Copyright (C) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -78,6 +78,15 @@ namespace Tensile
             return m_biasType;
         }
 
+        void setBiasDim(int biasDim)
+        {
+            m_biasDim = biasDim;
+        }
+
+        int biasDim() const
+        {
+            return m_biasDim;
+        } 
         void setActivationEnum(ActivationType activationEnum)
         {
             m_activationType = activationEnum;
@@ -97,6 +106,7 @@ namespace Tensile
         uint8_t        m_gsu            = 0; // default value
         uint8_t        m_wgm            = 0; // default value
         DataType       m_biasType       = DataType::None;
+        int            m_biasDim        = 0;
         ActivationType m_activationType = ActivationType::None;
     };
 
@@ -576,7 +586,7 @@ namespace Tensile
             m_useE = useE;
         }
 
-        void setUseBias(bool useBias)
+        void setUseBias(int useBias)
         {
             m_useBias = useBias;
         }
@@ -601,7 +611,7 @@ namespace Tensile
             return m_useE;
         }
 
-        bool useBias() const
+        int useBias() const
         {
             return m_useBias;
         }
@@ -639,9 +649,11 @@ namespace Tensile
                      size_t                         length,
                      size_t                         stride,
                      bool                           isOutput = false,
-                     ContractionProblemGemm::TENSOR src      = ContractionProblemGemm::TENSOR::D)
+                     ContractionProblemGemm::TENSOR src      = ContractionProblemGemm::TENSOR::D,
+                     int                            biasDim  = 0)
         {
             setParams().setBiasEnum(type);
+            setParams().setBiasDim(biasDim);
             m_biasSrc = src;
             if(type != DataType::None && m_useBias)
             {
@@ -1073,7 +1085,7 @@ namespace Tensile
         bool           m_eligibleForPK           = true;
         bool           m_useGradient             = false;
         bool           m_useE                    = false;
-        bool           m_useBias                 = false;
+        int            m_useBias                 = 0;
         bool           m_useScaleAB              = false;
         bool           m_useScaleCD              = false;
         bool           m_useScaleAlphaVec        = false;

@@ -32,7 +32,7 @@ BenchmarkProblems:
       TransposeB: 0
       UseBeta: True
       Batched: True
-      UseBias: True
+      UseBias: 1
       BiasDataTypeList: [s,b]
       UseScaleAB: True
       Activation:    True
@@ -105,7 +105,7 @@ BenchmarkProblems:
       TransposeB: 1
       UseBeta: True
       Batched: True
-      UseBias: True
+      UseBias: 1
       BiasDataTypeList: [s,b]
       UseScaleAB: True
       Activation:    True

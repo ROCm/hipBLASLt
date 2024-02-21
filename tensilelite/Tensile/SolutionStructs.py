@@ -498,6 +498,8 @@ class ProblemType(Mapping):
           name += i.toChar()
       if self["BiasSrc"] and self["Gradient"]: # Show bias src if gradient = True
         name += "_BiasSrc%s"%self["BiasSrc"]
+      if self["UseBias"] > 1:
+        name += "_BD%s"%("N" if self["UseBias"] == 2 else "MN")
     if self["UseE"]:
       if self["Gradient"]:
         name += "_Grad%s"%self["DataTypeE"].toChar()
@@ -949,6 +951,24 @@ class BiasTypeArgs:
     s = "BiasTypesArgs\n"
     return s
 
+class BiasDimArgs:
+
+  ########################################
+  def __init__(self, problemType, config):
+    self.biasDims = []
+    self.totalProblemSizes = 0
+    if problemType["UseBias"]:
+      for bdim in config:
+        dim = int(bdim)
+        if dim not in [0, 1]:
+          printWarning("Bias Dim: must be 0 or 1, current is %s."%(dim))
+        self.biasDims.append(dim)
+      self.totalProblemSizes = len(self.biasDims)
+
+  def __str__(self):
+    s = "BiasDimArgs\n"
+    return s
+
 ################################################################################
 # Activation
 ################################################################################
@@ -1128,7 +1148,7 @@ class Solution(collections.abc.Mapping):
             state = {}
             state["ProblemType"] = deepcopy(self["ProblemType"])
             state["ProblemType"]["GroupedGemm"] = False
-            state["ProblemType"]["UseBias"] = False
+            state["ProblemType"]["UseBias"] = 0
             state["KernelLanguage"] = "Source"
             state["GlobalSplitU"] = globalSplitU
             state["UnrollOnly"] = unrollOnly
@@ -1183,7 +1203,7 @@ class Solution(collections.abc.Mapping):
       state = {}
       state["ProblemType"] = deepcopy(self["ProblemType"])
       state["ProblemType"]["GroupedGemm"] = False
-      state["ProblemType"]["UseBias"] = False
+      state["ProblemType"]["UseBias"] = 0
       state["ProblemType"]["BiasDataTypeList"] = []
       state["KernelLanguage"] = "Source"
       state["_GlobalAccumulation"] = self["_GlobalAccumulation"]

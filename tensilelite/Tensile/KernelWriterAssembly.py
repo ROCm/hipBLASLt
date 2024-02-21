@@ -484,7 +484,11 @@ class KernelWriterAssembly(KernelWriter):
         self.states.numStoreSgprNameSizes.append(self.states.BiasType)
         self.states.numStoreSgprNames.append("BiasStride")
         self.states.numStoreSgprNameSizes.append(self.states.BiasStride)
-      storeSgprLoad += self.states.numSgprAddressBias + self.states.BiasType + self.states.BiasStride
+        self.states.BiasDim = kernel["ProblemType"]["UseBias"]
+        if self.states.BiasDim == 3:
+          self.states.numStoreSgprNames.append("BiasDim")
+          self.states.numStoreSgprNameSizes.append(1)
+      storeSgprLoad += self.states.numSgprAddressBias + self.states.BiasType + self.states.BiasStride + (1 if self.states.BiasDim == 3 else 0)
     if kernel["ProblemType"]["UseE"]:
       storeSgprLoad += self.states.rpga + self.states.e.numSgprStrides
       self.states.numStoreSgprNames.append("AddressE")
@@ -1203,9 +1207,9 @@ class KernelWriterAssembly(KernelWriter):
         moduleArgs.add(SBranch(common_kern_entry.getLabelName())) # jump to common path
         total_inst_dwords = 0
         for inst in moduleArgs.items():
-          if isinstance(inst, BranchInstruction):
+          if isinstance(inst, (BranchInstruction, SWaitCnt, CommonInstruction)):
             total_inst_dwords = total_inst_dwords + 1
-          elif isinstance(inst, CommonInstruction):
+          elif isinstance(inst, (SMemLoadInstruction)):
             total_inst_dwords = total_inst_dwords + 2
         assert total_inst_dwords <= 64
         moduleArgs.addComment1("pad %u snops to satisfy 0x100 code size for Preload Backward Compatibility Prologue" % (64 - total_inst_dwords))
@@ -4260,7 +4264,7 @@ class KernelWriterAssembly(KernelWriter):
           loadList.append([-1, 0, extArgOffset])  # Need to start a new loadAllKernArg cause the argument is not consecutively anymore.
         extArgOffset += self.states.userArgsInfo.biasSize
         if self.states.numSgprAddressBias:
-          biasLoadSize = (self.states.numSgprAddressBias + self.states.BiasType + self.states.BiasStride) * 4
+          biasLoadSize = (self.states.numSgprAddressBias + self.states.BiasType + self.states.BiasStride + (1 if self.states.BiasDim == 3 else 0)) * 4
           if loadList[-1][0] == -1:
             loadList[-1][0] = self.sgprs["AddressBias"]
           loadList[-1][1] += biasLoadSize
@@ -4797,7 +4801,8 @@ class KernelWriterAssembly(KernelWriter):
       skipOptNLL = Label("OptNLL_End", "")
       with self.allocTmpSgpr(4) as tmpSgprInfo:
         tmpSgpr = tmpSgprInfo.idx
-        module.add(self.checkIsBetaZero(kernel, tmpSgprInfo, skipOptNLL, isLongBranch=isLongBranch, posNeg=1))
+        placeHolder="skipOptNLL_placeholder" if self.states.BiasDim == 3 else None
+        module.add(self.checkIsBetaZero(kernel, tmpSgprInfo, skipOptNLL, isLongBranch=isLongBranch, placeHolder=placeHolder, posNeg=1))
 
         # check alpha
         if self.do["ApplyAlpha"]:
@@ -4834,18 +4839,29 @@ class KernelWriterAssembly(KernelWriter):
             module.add(SMovB32(dst=sgpr(tmpSgpr+0), src=hex(0x00000000), comment="lsb of real part of 1.0"))
             module.add(SMovB32(dst=sgpr(tmpSgpr+1), src=hex(0x3ff00000), comment="msb of real part of 1.0"))
             module.add(SCmpEQU64(src0=sgpr("Alpha",2), src1=sgpr(tmpSgpr,2), comment="Alpha.real == 1.0 ?"))
-            module.add(SCBranchSCC0(labelName=skipOptNLL.getLabelName(), comment="branch if alpha.real != 1"))
+            if placeHolder == None:
+              module.add(SCBranchSCC0(labelName=skipOptNLL.getLabelName(), comment="branch if alpha.real != 1"))
+            else:
+              skipOptNLLModule = Module("skipOptNLL_placeholder")
+              skipOptNLLModule.addComment1("branch if alpha.real != 1")
+              module.add(skipOptNLLModule)
             module.add(SMovB32(dst=sgpr(tmpSgpr+0), src=hex(0x00000000), comment="lsb of imag part of 0.0"))
             module.add(SMovB32(dst=sgpr(tmpSgpr+1), src=hex(0x00000000), comment="msb of imag part of 0.0"))
             module.add(SCmpEQU64(src0=sgpr("Alpha+2",2), src1=sgpr(tmpSgpr,2), comment="Alpha.imag == 0.0 ?"))
 
-          if isLongBranch:
-            module.add(self.longBranchScc0(skipOptNLL, posNeg=1, tmpSgprInfo=tmpSgprInfo, comment="branch if alpha != 1"))
+          if placeHolder == None:
+            if isLongBranch:
+              module.add(self.longBranchScc0(skipOptNLL, posNeg=1, tmpSgprInfo=tmpSgprInfo, comment="branch if alpha != 1"))
+            else:
+              module.add(SCBranchSCC0(labelName=skipOptNLL.getLabelName(), comment="branch if alpha != 1"))
           else:
-            module.add(SCBranchSCC0(labelName=skipOptNLL.getLabelName(), comment="branch if alpha != 1"))
+            skipOptNLLModule = Module("skipOptNLL_placeholder")
+            skipOptNLLModule.addComment1("branch if alpha != 1")
+            module.add(skipOptNLLModule)
           module.addSpaceLine()
 
-        module.add(self.checkIsEdge(kernel, tmpSgprInfo, skipOptNLL, isLongBranch=isLongBranch))
+        placeHolder = "skipOptNLL_scc1_placeholder" if self.states.BiasDim == 3 else None
+        module.add(self.checkIsEdge(kernel, tmpSgprInfo, skipOptNLL, isLongBranch=isLongBranch, placeHolder=placeHolder))
         module.addSpaceLine()
 
         # Check tail loop required:
@@ -4856,10 +4872,15 @@ class KernelWriterAssembly(KernelWriter):
           module.add(scalarStaticDivideAndRemainder(tmpSgpr, tmpSgpr+1, "SizesSum+%u"%self.states.unrollIdx, \
                     kernel["DepthU"], RegisterPoolResource(tmpSgpr+2, 2), 2))
           module.add(SCmpEQU32(src0=sgpr(tmpSgpr+1), src1=hex(0), comment="numIter%s == 0"%loopChar ))
-          if isLongBranch:
-            module.add(self.longBranchScc0(skipOptNLL, posNeg=1, tmpSgprInfo=tmpSgprInfo, comment="skip if tail loop required"))
+          if placeHolder == None:
+            if isLongBranch:
+              module.add(self.longBranchScc0(skipOptNLL, posNeg=1, tmpSgprInfo=tmpSgprInfo, comment="skip if tail loop required"))
+            else:
+              module.add(SCBranchSCC0(labelName=skipOptNLL.getLabelName(), comment="skip if tail loop required"))
           else:
-            module.add(SCBranchSCC0(labelName=skipOptNLL.getLabelName(), comment="skip if tail loop required"))
+            skipOptNLLModule = Module("skipOptNLL_placeholder")
+            skipOptNLLModule.addComment1("skip if tail loop required")
+            module.add(skipOptNLLModule)
 
       # save the vgprPool for generating the normal path.
       # dump the 'dirty' pool upon s_endpgm and swap back the 'clean' pool
@@ -6363,7 +6384,7 @@ class KernelWriterAssembly(KernelWriter):
                 numsOfRegister.append(blockWidth)
               if self.db["ForceInputValue%s"%tc]:
                 localWriteCVTCode.add(VMovB32(dst=vgpr("G2L%s+%u"%(tc, g2lIdx)), src=self.db["ForceValue%s"], comment="ForceInputValue"))
-              if (kernel["ProblemType"]["DataType"].isBFloat16() and kernel["ProblemType"]["DataType%s"%tc].isHalf()) and not tP["isM"]:            
+              if (kernel["ProblemType"]["DataType"].isBFloat16() and kernel["ProblemType"]["DataType%s"%tc].isHalf()) and not tP["isM"]:
                 numIters = 1 if blockWidth <= 1 else blockWidth
                 vgprTmp = self.vgprPool.checkOut(2)
                 for iter in range(0, numIters):
@@ -7834,7 +7855,7 @@ class KernelWriterAssembly(KernelWriter):
   # tmpSgpr is one temp sgpr
   # betaLabel is label to branch to if beta != 0
   ##############################################################################
-  def checkIsBetaZero(self, kernel, tmpSgprInfo, betaLabel, isLongBranch=False, posNeg: int=0):
+  def checkIsBetaZero(self, kernel, tmpSgprInfo, betaLabel, isLongBranch=False, placeHolder=None, posNeg: int=0):
     module = Module("checkIsBetaZero label %s"%betaLabel)
     assert(isinstance(betaLabel, Label))
     betaLabelName = betaLabel.getLabelName()
@@ -7846,10 +7867,14 @@ class KernelWriterAssembly(KernelWriter):
         for i in range(1, self.states.bpeCinternal//self.states.bpr):
           module.add(SOrB32(dst=sgpr(tmpSgprInfo.idx), src0=sgpr("Beta+%u"%i), src1=sgpr(tmpSgprInfo.idx), comment="tmp |= Beta[%u] " % i))
         module.add(SCmpKEQU32(src=sgpr(tmpSgprInfo.idx), simm16=hex(0), comment="Beta == 0"))
-      if isLongBranch:
-        module.add(self.longBranchScc0(betaLabel, posNeg, tmpSgprInfo))
+      if placeHolder == None:
+        if isLongBranch:
+          module.add(self.longBranchScc0(betaLabel, posNeg, tmpSgprInfo))
+        else:
+          module.add(SCBranchSCC0(labelName=betaLabelName, comment="Branch if Beta is not zero"))
       else:
-        module.add(SCBranchSCC0(labelName=betaLabelName, comment="Branch if Beta is not zero"))
+        placeHolderModule = Module(placeHolder)
+        module.add(placeHolderModule)
     module.addSpaceLine()
     return module
 
@@ -7858,7 +7883,7 @@ class KernelWriterAssembly(KernelWriter):
   # tmpSgpr must have at least 6 free SGPR
   # isEdgeTarget is the branch target if edges are required
   ##############################################################################
-  def checkIsEdge(self, kernel, tmpSgprInfo, isEdgeTarget, isLongBranch=False):
+  def checkIsEdge(self, kernel, tmpSgprInfo, isEdgeTarget, isLongBranch=False, placeHolder=None):
     assert(isinstance(isEdgeTarget, Label))
     isEdgeTargetLabel = isEdgeTarget.getLabelName()
     module = Module("checkIsEdge")
@@ -7893,10 +7918,15 @@ class KernelWriterAssembly(KernelWriter):
       module.add(SCmpKGtU32(src=sgpr(tmpS0), simm16=hex(0), comment="rMT0 > 0"))
       if self.db["ForceEdgeStores"]:
         module.add(SCmpEQU32(src0=sgpr(tmpS0), src1=sgpr(tmpS0), comment="ForceEdgeStores!"))
-      if isLongBranch:
-        module.add(self.longBranchScc1(isEdgeTarget, posNeg=1, tmpSgprInfo=tmpSgprInfo, comment="jump if edges required"))
+      if placeHolder == None:
+        if isLongBranch:
+          module.add(self.longBranchScc1(isEdgeTarget, posNeg=1, tmpSgprInfo=tmpSgprInfo, comment="jump if edges required"))
+        else:
+          module.add(SCBranchSCC1(labelName=isEdgeTargetLabel, comment="jump if edges required"))
       else:
-        module.add(SCBranchSCC1(labelName=isEdgeTargetLabel, comment="jump if edges required"))
+        placeHolderModule = Module(placeHolder)
+        placeHolderModule.addComment1("jump if edges required")
+        module.add(placeHolderModule)
 
     # check edge1 ###
     # TODO-packed - this only needs to change to handle packing into C1 index
@@ -7916,11 +7946,39 @@ class KernelWriterAssembly(KernelWriter):
     # if rMT1 > 0 goto label_B?_E1
     if self.do["EdgeWrite"]:
       module.add(SCmpKGtU32(src=sgpr(tmpS0), simm16=hex(0), comment="rMT1 > 0"))
-      if isLongBranch:
-        module.add(self.longBranchScc1(isEdgeTarget, posNeg=1, tmpSgprInfo=tmpSgprInfo, comment="jump if edges required"))
+      if placeHolder == None:
+        if isLongBranch:
+          module.add(self.longBranchScc1(isEdgeTarget, posNeg=1, tmpSgprInfo=tmpSgprInfo, comment="jump if edges required"))
+        else:
+          module.add(SCBranchSCC1(labelName=isEdgeTargetLabel, comment="jump if edges required"))
       else:
-        module.add(SCBranchSCC1(labelName=isEdgeTargetLabel, comment="jump if edges required"))
+        placeHolderModule = Module(placeHolder)
+        placeHolderModule.addComment1("jump if edges required")
+        module.add(placeHolderModule)
+    return module
 
+  ##############################################################################
+  # checkIsBiasDimZero
+  # tmpSgpr is one temp sgpr
+  # biasDimLabel is label to branch to if biasDim != 0
+  ##############################################################################
+  def checkIsBiasDimZero(self, kernel, tmpSgprInfo, biasDimLabel, isLongBranch=False, posNeg: int=0):
+    module = Module("checkIsBiasDimZero label %s"%biasDimLabel)
+    assert(isinstance(biasDimLabel, Label))
+    biasDimLabelName = biasDimLabel.getLabelName()
+    if kernel["ProblemType"]["UseBias"]:
+      if self.states.bpeCinternal <= self.states.bpr: # 1 register to check for Beta==0
+        module.add(SCmpKEQU32(src=sgpr("BiasDim"), simm16=hex(0), comment="BiasDim == 0"))
+      else: # multiple registers to check for Beta==0
+        module.add(SMovB32(dst=sgpr(tmpSgprInfo.idx), src=sgpr("BiasDim+0"), comment="tmp = BiasDim[0]"))
+        for i in range(1, self.states.bpeCinternal//self.states.bpr):
+          module.add(SOrB32(dst=sgpr(tmpSgprInfo.idx), src0=sgpr("BiasDim+%u"%i), src1=sgpr(tmpSgprInfo.idx), comment="tmp |= BiasDim[%u] " % i))
+        module.add(SCmpKEQU32(src=sgpr(tmpSgprInfo.idx), simm16=hex(0), comment="BiasDim == 0"))
+      if isLongBranch:
+        module.add(self.longBranchScc0(biasDimLabel, posNeg, tmpSgprInfo))
+      else:
+        module.add(SCBranchSCC0(labelName=biasDimLabelName, comment="Branch if BiasDim is not zero"))
+    module.addSpaceLine()
     return module
 
   ##############################################################################
@@ -7954,7 +8012,8 @@ class KernelWriterAssembly(KernelWriter):
                           noGSUBranch=False,
                           applyAlpha=True, # defaults to generating *=alpha codes
                           betas=None, # if left unspecified, then let global parameter decide
-                          edges=None):
+                          edges=None,
+                          biasDims=None):
     if not self.do["PostLoop"]: return Module("GlobalWriteElements (Empty)")
     module = Module("GlobalWriteElements")
     module.addComment2("Global Write Elements")
@@ -7968,6 +8027,7 @@ class KernelWriterAssembly(KernelWriter):
     useBiasBackup      = self.states.useBias
     betasBackup    = betas
     edgesBackup    = edges
+    biasDimsBackup = biasDims
     gsuLimit = 1 if noGSUBranch or globalParameters["SplitGSU"] else 2
     if gsuLimit > 1:
       gsuLabel = Label(label=self.labels.getNameInc("GSU"), comment="")
@@ -7977,6 +8037,7 @@ class KernelWriterAssembly(KernelWriter):
       if gsuLimit > 1:
         betas = betasBackup
         edges = edgesBackup
+        biasDims = biasDimsBackup
         if gsuLimitIdx == 0:
           self.states.bpeCexternal = self.states.bpeCinternal
           self.states.useBias = self.states.useBias if self.states.useBias == DataDirection.WRITE else DataDirection.NONE
@@ -8053,32 +8114,63 @@ class KernelWriterAssembly(KernelWriter):
         # Init bias Srd
         labelStr = self.labels.getNameInc("Bias")
         with self.allocTmpSgpr(1,1) as tmpSgprRes:
+          set_bs_label = Label(self.labels.getNameInc("Dont_Set_BiasStride"), "")
           tmpSgpr = tmpSgprRes.idx
           module.add(SAddU32(dst=sgpr(tmpSgpr), src0=sgpr("WorkGroup2"), src1=hex(1)))
           module.add(SMulI32(dst=sgpr(tmpSgpr), src0=sgpr("BiasStride"), src1=sgpr(tmpSgpr), comment="stride * (wg+1)"))
           module.add(SCmpEQU32(sgpr(tmpSgpr), hex(0), comment="bias stride = 0?"))
-          module.add(SCSelectB32(dst=sgpr(tmpSgpr), src0=sgpr("SizeI"), src1=sgpr(tmpSgpr)))
-          module.add(allocPostLoopSrdSuppress("Bias", labelStr, sgprLength=sgpr(tmpSgpr)))
-        multiBiasTypeLabel = []
-        for i in kernel["ProblemType"]["BiasDataTypeList"]:
-          name = self.labels.getNameInc("Load_Bias%s"%i.toNameAbbrev())
-          multiBiasTypeLabel.append(Label(name, ""))
-        loadBiasEndLabel = Label(self.labels.getNameInc("Load_Bias_End"), "")
-        multiBiasTypeLabel.append(loadBiasEndLabel)
-        offsetVgpr  = self.vgprPool.checkOut(1, 1)
-        with self.allocTmpSgpr(1, 1) as tmpSgprRes:
-          if len(kernel["ProblemType"]["BiasDataTypeList"]) == 1:
-            module.add(self.readBiasToLDS(kernel["ProblemType"]["BiasDataTypeList"][0], kernel, 1, offsetVgpr, tmpSgprRes.idx, tmpVgprRes))
+          if self.states.BiasDim == 3:
+            module.add(SCBranchSCC0(set_bs_label.getLabelName()))
+            module.add(SCmpKEQU32(src=sgpr("BiasDim"), simm16=hex(0), comment="BiasDim == 0"))
+            module.add(SCSelectB32(dst=sgpr(tmpSgpr), src0=sgpr("SizeI"), src1=sgpr("SizeJ")))
+            module.add(set_bs_label)
+          elif self.states.BiasDim == 2:
+            module.add(SCSelectB32(dst=sgpr(tmpSgpr), src0=sgpr("SizeJ"), src1=sgpr(tmpSgpr)))
           else:
-            for i, label in enumerate(multiBiasTypeLabel[1:]):
-              typeValue = kernel["ProblemType"]["BiasDataTypeList"][i].value
-              module.add(multiBiasTypeLabel[i])
-              module.add(SCmpKLGU32(sgpr("BiasType"), typeValue, "BiasType != %u"%typeValue))
-              module.add(SCBranchSCC1(label.getLabelName(), "Branch if true"))
-              module.add(self.readBiasToLDS(kernel["ProblemType"]["BiasDataTypeList"][i], kernel, 1, offsetVgpr, tmpSgprRes.idx, tmpVgprRes))
-              module.add(SBranch(labelName=loadBiasEndLabel.getLabelName(), comment="Branch to load bias end"))
-            module.add(loadBiasEndLabel)
-        self.vgprPool.checkIn(offsetVgpr)
+            module.add(SCSelectB32(dst=sgpr(tmpSgpr), src0=sgpr("SizeI"), src1=sgpr(tmpSgpr)))
+          module.add(allocPostLoopSrdSuppress("Bias", labelStr, sgprLength=sgpr(tmpSgpr)))
+
+        name = self.labels.getNameInc("Load_BiasDim_%u"%(0))
+        biasDim0Label = Label(self.labels.getNameInc("Load_BiasDim_0"), "")
+        biasDim1Label = Label(self.labels.getNameInc("Load_BiasDim_1"), "")
+        loadBiasEndLabel = Label(self.labels.getNameInc("Load_Bias_End"), "")
+        biasDims = [0]
+        if self.states.BiasDim == 3:
+          module.add(biasDim0Label)
+          module.add(SCmpKLGU32(sgpr("BiasDim"), 0, "BiasDim != 0"))
+          module.add(SCBranchSCC1(biasDim1Label.getLabelName(), "Branch if true"))
+          biasDims.append(1)
+        elif self.states.BiasDim == 2:
+          biasDims = [1]
+
+        for d in range(len(biasDims)):
+          if d == 1:
+            module.add(biasDim1Label)
+          multiBiasTypeLabel = []
+          for i in kernel["ProblemType"]["BiasDataTypeList"]:
+            name = self.labels.getNameInc("Load_Bias%s_%u"%(i.toNameAbbrev(), biasDims[d]))
+            multiBiasTypeLabel.append(Label(name, ""))
+          multiBiasTypeLabel.append(loadBiasEndLabel)
+          offsetVgpr  = self.vgprPool.checkOut(1, 1)
+          with self.allocTmpSgpr(1, 1) as tmpSgprRes:
+            if len(kernel["ProblemType"]["BiasDataTypeList"]) == 1:
+              module.add(self.readBiasToLDS(kernel["ProblemType"]["BiasDataTypeList"][0], kernel, 1, offsetVgpr, tmpSgprRes.idx, tmpVgprRes, biasDims[d]))
+              if len(biasDims) == 2:
+                if d == 0:
+                  module.add(SBranch(labelName=loadBiasEndLabel.getLabelName(), comment="Branch to load bias end"))
+                else:
+                  module.add(loadBiasEndLabel)
+            else:
+              for i, label in enumerate(multiBiasTypeLabel[1:]):
+                typeValue = kernel["ProblemType"]["BiasDataTypeList"][i].value
+                module.add(multiBiasTypeLabel[i])
+                module.add(SCmpKLGU32(sgpr("BiasType"), typeValue, "BiasType != %u"%typeValue))
+                module.add(SCBranchSCC1(label.getLabelName(), "Branch if true"))
+                module.add(self.readBiasToLDS(kernel["ProblemType"]["BiasDataTypeList"][i], kernel, 1, offsetVgpr, tmpSgprRes.idx, tmpVgprRes,  biasDims[d]))
+                module.add(SBranch(labelName=loadBiasEndLabel.getLabelName(), comment="Branch to load bias end"))
+              if d == len(biasDims) -1:
+                module.add(loadBiasEndLabel)
+          self.vgprPool.checkIn(offsetVgpr)
         self.vgprPool.checkIn(tmpVgpr)
       elif self.states.useBias == DataDirection.WRITE:
         labelStr = self.labels.getNameInc("Bias")
@@ -8200,31 +8292,54 @@ class KernelWriterAssembly(KernelWriter):
         betas = [False, True] if hasBeta else [False]
       if edges is None:
         edges = [False, True] if self.do["EdgeWrite"] else [False]
+      if biasDims is None:
+        biasDims = [0, 1] if self.states.BiasDim == 3 else [1] if self.states.BiasDim == 2 else [0]
       writeLabels = {}
       for beta in betas:
         writeLabels[beta] = {}
         for edge in edges:
           writeLabels[beta]["EdgeCheck0"] = Label(self.labels.getNameInc("GW_B%u_E%u_EdgeCheck0" % ( 1 if beta else 0, 1 if edge else 0) ), "")
           writeLabels[beta]["EdgeCheck1"] = Label(self.labels.getNameInc("GW_B%u_E%u_EdgeCheck1" % ( 1 if beta else 0, 1 if edge else 0) ), "")
-          writeLabels[beta][edge] = Label(self.labels.getNameInc("GW_B%u_E%u" % ( 1 if beta else 0, 1 if edge else 0) ), "")
+          writeLabels[beta][edge] = {}
+          if len(biasDims) == 1:
+             writeLabels[beta][edge][biasDims[0]] = Label(self.labels.getNameInc("GW_B%u_E%u" % ( 1 if beta else 0, 1 if edge else 0) ), "")
+          else:
+            for biasDim in biasDims:
+              writeLabels[beta][edge][biasDim] = Label(self.labels.getNameInc("GW_B%u_E%u_BD%u" % ( 1 if beta else 0, 1 if edge else 0, biasDim) ), "")
       endLabel = Label(self.labels.getNameInc("GW_End"), "")
 
       # Layout
       """
       if B1 goto label_B1
-      if E1 goto label_B0_E1
-      label_B0_E0:
+      if E1 goto label_B0_E1_BD0
+      if BD1 goto label_B0_E0_BD1
+      label_B0_E0_BD0:
       writes
       goto label_End
-      label_B0_E1:
+      label_B0_E0_BD1:
+      writes
+      goto label_End
+      label_B0_E1_BD0:
+      if BD1 goto label_B0_E1_BD1
+      writes
+      goto label_End
+      label_B0_E1_BD1:
       writes
       goto label_End
       label_B1:
-      if E1 goto label_B1_E1
-      label_B1_E0:
+      if E1 goto label_B1_E1_BD0
+      if BD1 goto label_B1_E0_BD1
+      label_B1_E0_BD0:
       writes
       goto label_End
-      label_B1_E1:
+      label_B1_E0_BD1:
+      writes
+      goto label_End
+      label_B1_E1_BD0:
+      if BD1 goto label_B1_E1_BD1
+      writes
+      goto label_End
+      label_B1_E1_BD1:
       writes
       goto label_End
       label_End
@@ -8323,279 +8438,38 @@ class KernelWriterAssembly(KernelWriter):
         # start B1
         if beta:
           betaModule.add(betaLabel)
-
         mod_pos = len(betaModule.items())
         # by now we either jumped to E1 or stayed at E0
         for idx1 in reversed(range(len(edges))):
           edge = edges[idx1]
           edgeModule = Module("edge_%u"%idx1)
-          edgeModule.add(writeLabels[beta][edge])
 
-          # for storeRemap edge case, non-beta still can enable vector stores
-          if kernel["StoreRemapVectorWidth"] and not beta:
-            edgeI = False
-          else:
-            edgeI = edge
-          #edgeI = True  # set to True to disable vector stores
-          gwvw = vectorWidths[edgeI]
+          edge_mode_pos = 0
+          for idx2 in range(len(biasDims)):
+            edge_mode_pos, currentInstLength, activationTypeStr = \
+                self.globalWriteElementBatch(kernel, tPA, tPB, activation,
+                                             applyAlpha, beta, edge, atomic,
+                                             vectorWidths, elements, activationLabelList,
+                                             tmpVgpr, cvtVgprStruct, activationSetPCStruct, activationEnumStrList,
+                                             actPCMaxTempSgpr, isInsertActFunctionCallAddrCalc, toActModuleList,
+                                             edgeModule, writeLabels, endLabel,
+                                             edge_mode_pos, currentInstLength,
+                                             idx0, idx1, idx2, biasDims)
+          if len(biasDims) == 2:
+           isLongBranch = True if currentInstLength >= 16384 else False
+           with self.allocTmpSgpr(3) as tmpSgprInfo:
+             checkIsBiasDimZero = edgeModule.add(self.checkIsBiasDimZero(kernel, tmpSgprInfo, \
+               writeLabels[beta][edge][biasDims[1]], isLongBranch=isLongBranch), pos=edge_mode_pos)
+             currentInstLength += checkIsBiasDimZero.countType(Instruction)
 
-          #print "globalWriteElements: edge=", edge, "beta=", beta, "atomic=", atomic
-
-          ########################################
-          # Calculate Vgprs for Write Batching
-          ########################################
-
-          ss = StoreState(self, kernel, gwvw, edge, beta, atomic, elements[edgeI])
-
-          # how many vgprs are needed for zero elements
-          # 2 for addressC in vgpr for addition - already checked out
-          # 2 for coord0,1 of thread - already checked out
-          # 2 for tmp - already checked out
-
-          # 5 = how many vgprs are needed per element (flat)
-          #  - 2 for addr
-          #  - 3 for GLOBAL_OFFSET_C calculation (can overlap below, therefore max)
-          #  - if beta gwvw*rpe for new value
-          #  - if atomic 2*rpe for old and cmp values
-
-          #print self.vgprPool.state()
-          # Use VGPR up to next occupancy threshold:
-          maxVgprs = self.getMaxRegsForOccupancy(kernel["NumThreads"], self.vgprPool.size(), \
-                                                self.getLdsSize(kernel), self.agprPool.size(), self.states.doubleVgpr)
-          if self.states.serializedStore: # get aggressive when serializedStore is on; not necessarily exclusive to this parameter
-            _growPool(self.vgprPool, self.vgprPool.size()-self.vgprPool.available(), maxVgprs, 1, \
-              "grow-pool up to next occupancy for GlobalWrite")
-          # Get numVgprAvailable
-          numVgprAvailable = self.vgprPool.availableBlock(ss.numVgprsPerElement, ss.align)
-
-          # Grow the register pool if needed - we need enough regs for at least one element
-          # Unfortunate since this means the write logic is setting the VGPR requirement
-          # for the entire kernel but at least we have a functional kernel.
-          # Before growing the pool, see if we can shrink the write vector width instead?
-          # TODO : the vgprSerial is needed for-ever and if we grow here will split the
-          # range of the tmps.  Maybe want to move vgprSerial to first vgpr?
-
-          # TODO: Minimum elems for StoreRemap
-          # TODO: Which of DataType or DestDataType is in a better sense? 0114: Check Using DestDataType + HSS
-          minElements = 2 if (kernel["ProblemType"]["DataType"].isHalf() or kernel["ProblemType"]["DataType"].isBFloat16()) else 1
-          minNeeded = minElements * ss.numVgprsPerElement
-          shrinkDb = 0
-          if shrinkDb:
-            print("numVgprAvailable=", numVgprAvailable, "minElements=", minElements, "minNeeded=", minNeeded)
-          if numVgprAvailable < minNeeded:
-            gwvwOrig = gwvw
-            currentOccupancy = self.getOccupancy(kernel["NumThreads"], self.getLdsSize(kernel), \
-                self.vgprPool.size(), self.agprPool.size(), self.states.doubleVgpr)
-            futureOccupancy = self.getOccupancy(kernel["NumThreads"], self.getLdsSize(kernel), \
-                self.vgprPool.size() - numVgprAvailable + minNeeded, self.agprPool.size(), self.states.doubleVgpr)
-
-            if shrinkDb:
-              print("currentOccupancy=%u futureOccupancy=%u VGPRs=%u numVgprAvail=%u vgprPerElem=%u" \
-                  % (currentOccupancy, futureOccupancy, self.vgprPool.size(), \
-                    numVgprAvailable, minElements*ss.numVgprsPerElement))
-            if futureOccupancy > currentOccupancy:
-              if shrinkDb:
-                print("warning: %s growing VGPR for GlobalWrite batching - this may bloat VGPR usage" % \
-                      (self.states.kernelName))
-                print("   numVgprAvailable=", numVgprAvailable, \
-                      "numVgprsPerElement=", ss.numVgprsPerElement, "atomic=", atomic, \
-                      "beta=", beta, "gwvw=", gwvw)
-            elif gwvw != gwvwOrig:
-              ss.cfg.gwvw = gwvw # make both representations consistent
-              if shrinkDb:
-                print2("info: %s shrank gwvw from %u to %u but kept occupancy same=%u." \
-                    % (self.states.kernelName, gwvwOrig, gwvw, currentOccupancy))
-
-            if numVgprAvailable < minElements*ss.numVgprsPerElement:
-              print2("info: growing pool += %d * %d for GlobalWrite\n" \
-                  % (minElements,ss.numVgprsPerElement))
-              print2(self.vgprPool.state())
-              _growPool(self.vgprPool, 0, minElements, ss.numVgprsPerElement, \
-                "grow-pool for GlobalWrite")
-              numVgprAvailable = self.vgprPool.available()
-              print2(self.vgprPool.state())
-
-          # set atomicW after we potentially resize GWVW
-          atomicW = min(gwvw, self.getVectorAtomicWidth(kernel))
-
-          # print("NumVgprAvailable", numVgprAvailable)
-          if ss.numVgprsPerElement:
-            numElementsPerBatch = numVgprAvailable // ss.numVgprsPerElement
-          else:
-            numElementsPerBatch = len(elements[edgeI]) # max, do 'em all
-
-          assert(self.states.c.numVgprValu % gwvw == 0) # sanity check
-
-          numElementsPerBatch = numElementsPerBatch if not kernel["NumElementsPerBatchStore"] else min(kernel["NumElementsPerBatchStore"],numElementsPerBatch)
-
-          if shrinkDb:
-            print("NumElementsPerBatch=", numElementsPerBatch, "LimitedBySgprs=", ss.cfg.numElementsPerBatchLimitedBySgprs, \
-                "WARNING" if ss.cfg.numElementsPerBatchLimitedBySgprs < numElementsPerBatch else "okay")
-          if ss.cfg.numElementsPerBatchLimitedBySgprs < numElementsPerBatch:
-            numElementsPerBatch = ss.cfg.numElementsPerBatchLimitedBySgprs
-
-          # TODO: Which of DataType or DestDataType is in a better sense? 0114: Check Using DestDataType + HSS
-          if (kernel["ProblemType"]["DataType"].isHalf() or kernel["ProblemType"]["DataType"].isBFloat16()):
-            # only do an even number of halves - since these share hi/lo pieces of some registers?
-            if numElementsPerBatch > 1:
-              numElementsPerBatch = int(numElementsPerBatch/2)*2
-            elif not kernel["EnableMatrixInstruction"]:
-              # The globalWriteBatch routine below can't handle odd elements per batch
-              # and 0 elements per batch is illegal.
-              # so if we don't have *GPR resources to handle a larger batch then need
-              # to mark overflowedResources rather than generate a kernel that won't work.
-              # It might be possible to fix globalWriteBatch to handle this case but these
-              # are likely to be low-performing so likely not worth optimizing.
-              if shrinkDb:
-                print("WARNING: half requires at least two elements per batch")
-              self.states.overflowedResources = 3
-
-          assert numElementsPerBatch > 0, "numElementsPerBatch=0 for %s"%self.states.kernelName
-
-          #numElementsPerBatch=min(2,numElementsPerBatch) # hack to control number of batches
-          if atomic and (ss.optSingleColVgpr or ss.optSharedColVgpr):
-            # hack to avoid re-using address vgpr across rows
-            # atomics need to perform several memory operations
-            # if the batch spans multiple rows, need multiple address vgpr
-            # which is not currently supported in the two opt*ColVgpr modes
-            firstRow = [e for e in elements[edgeI] if e[0]==0 and e[2]==0]
-            numElementsPerBatch=min(len(firstRow),numElementsPerBatch)
-
-          # check best numElementsPerBatch to handle a column block
-          # elements of column block must be multiple size of numElementsPerBatch
-          if kernel["StoreRemapVectorWidth"]:
-            firstRow = [e for e in elements[edgeI] if e[0]==0 and e[2]==0] # format for element = (tt1, tt0, vc1, vc0)
-            # find the largest factor and smaller than numElementPerBatch
-            nBatchesPerRow = 1
-            for d in range(1, len(firstRow)+1):
-              largestFactor = len(firstRow)//d
-              if len(firstRow)%d == 0 and largestFactor <= numElementsPerBatch:
-                numElementsPerBatch = largestFactor
-                nBatchesPerRow = d
-                break
-
-          # if no atomics and no edge, then write whole vectors
-          #if not atomic and not edge:
-          #  numVectorsPerBatch = numElementsPerBatch / kernel["GlobalWriteVectorWidth"]
-          #  #print "  NumVectorsPerBatch", numVectorsPerBatch
-          #  numElementsPerBatch = numVectorsPerBatch * kernel["GlobalWriteVectorWidth"]
-          numBatches = max(1, ceilDivide(len(elements[edgeI]),numElementsPerBatch))
-
-          numSgprs = ss.cfg.numTempSgprPerBatch + ss.cfg.numMaskSgprPerBatch + ss.cfg.numMaskSgprPerElement * numElementsPerBatch
-
-          if activationLabelList and isInsertActFunctionCallAddrCalc:
-            assert activationSetPCStruct, activationEnumStrList and activationLabelList and toActModuleList
-            numSgprs = max(actPCMaxTempSgpr, numSgprs)
-            edgeModule.add(self.insertActFunctionCallAddrCalc(activationSetPCStruct.sgprOffsetActivation, \
-              gwvw, toActModuleList, activationEnumStrList, activationLabelList, \
-              idx0, idx1))
-
-          if self.db["PrintStoreRegisterDb"]:
-            print("edgeI", edgeI, "NumBatches", numBatches, "NumElementsPerBatch", numElementsPerBatch, "numVgprsPerElement", ss.numVgprsPerElement, "len(elements[edgeI])", len(elements[edgeI]))
-            print ("numSgprs=", numSgprs, "sgprPool.size()=", self.sgprPool.size(), "numTempSgprPerBatch=", ss.cfg.numTempSgprPerBatch,
-                  "numMaskSgprPerBatch=", ss.cfg.numMaskSgprPerBatch, "numMaskSgprPerElement=", ss.cfg.numMaskSgprPerElement)
-            print(self.sgprPool.state())
-          edgeModule.addComment1("edge=%d, allocate %u sgpr. perBatchTmpS=%u perBatchMaskS=%u perElementMaskS=%u elementsPerBatch=%u" %
-              (edgeI, numSgprs, ss.cfg.numTempSgprPerBatch, ss.cfg.numMaskSgprPerBatch, ss.cfg.numMaskSgprPerElement, numElementsPerBatch))
-          #edgeModule.addComment("storeStats, %d, %d, %d"% (edgeI, numSgprs, numElementsPerBatch))
-          # so if we don't have *GPR resources to handle a larger batch then need
-          # to mark overflowedResources rather than generate a kernel that won't work.
-          # Activation
-          actLoopEndLabel, actLoopLabelModules, actLoopEnumStrList = self.initActivationLoop(kernel, beta, edge)
-          actLoopModuleList = []
-          actLoopModuleCodeLength = []
-          with self.allocTmpSgpr(numSgprs, 2) as tmpSgprRes:
-            for index, activationLabelModule in enumerate(actLoopLabelModules):
-              actLoopModule = Module("Activation Loop %s"%index)
-              activationTypeStr = actLoopEnumStrList[index]
-              if activationLabelModule:
-                actLoopModule.add(activationLabelModule)
-
-              tmpSgpr = tmpSgprRes.idx
-              actTempSgpr = tmpSgpr # Get sgpr start address, should always be the same
-              elementSgprs = tmpSgpr + ss.cfg.numTempSgprPerBatch
-              codeAccVgprRead = deepcopy(self.codes.accVgprRead) if self.states.serializedStore else None
-              mulAlpha = self.codes.mulAlphaMultipleBuffer if kernel["_GlobalAccumulation"] == 'MultipleBuffer' else self.codes.mulAlphaOther
-              codeMulAlpha = deepcopy(mulAlpha) if self.states.serializedStore else None
-
-              self.alphaBeforeLoadC = False
-              if kernel["MIArchVgpr"] and applyAlpha:
-                codeAccVgprRead = None
-
-                #Only apply when 2 wave optimization features are enabled
-                if (kernel["StorePriorityOpt"] or kernel["StoreSyncOpt"]) and beta:
-                  self.alphaBeforeLoadC = True
-              else:
-                codeMulAlpha = None
-
-              biasLocalBarrierInit = False
-              for batchIdx in range(0, numBatches):
-                elementStartIdx = batchIdx * numElementsPerBatch
-                elementStopIdx = min( elementStartIdx + numElementsPerBatch, len(elements[edgeI]) )
-                elementsThisBatch = elements[edgeI][elementStartIdx:elementStopIdx]
-                #print("BATCH[%u/%u]: elements[edgeI][%u:%u] VGPRs=%u" % (batchIdx, numBatches, elementStartIdx, elementStopIdx,ss.numVgprsPerElement ))
-                # elementVgprs can be large and should be perfectly tuned to the number of available
-                # VGPRS.  We do not want to accidentally overflow and grow the pool here:
-
-                if kernel["StoreRemapVectorWidth"]:
-                  #Indication if this batch is last batch for this column block shape
-                  self.StoreRemapLastBatch = 1 if (batchIdx+1) % nBatchesPerRow == 0 else 0
-
-                actLoopModule.add(self.globalWriteBatch(kernel, tPA, tPB, activation, ss, batchIdx, \
-                    applyAlpha, beta, edge, atomic, gwvw, atomicW, \
-                    elementsThisBatch, self.vgprs.addrE, self.vgprs.addrD, self.vgprs.addrC, self.vgprs.addrBias, self.vgprs.addrScaleAlphaVec, \
-                    biasLocalBarrierInit, tmpVgpr, cvtVgprStruct, activationSetPCStruct, \
-                    activationTypeStr, elementSgprs, tmpSgpr, codeAccVgprRead, codeMulAlpha))
-                biasLocalBarrierInit = True
-
-              ss.resetState()
-              actLoopModuleList.append(actLoopModule)
-              actLoopModuleCodeLength.append(actLoopModule.countType(Instruction))
-
-          if len(actLoopLabelModules) > 1:
-            actInstCounter = 0
-            # Add activation branch
-            for index, actLoopLabelModule in enumerate(actLoopLabelModules):
-              enumIndex = ActivationType.getEnumIndex(actLoopEnumStrList[index])
-              edgeModule.add(SCmpKEQU32(sgpr("ActivationType"), enumIndex, "activationType == %u"%enumIndex))
-              if actInstCounter >= 16384:
-                edgeModule.add(self.longBranchScc1(actLoopLabelModule, posNeg=1, comment="Branch if true"))
-              else:
-                edgeModule.add(SCBranchSCC1(actLoopLabelModule.getLabelName(), "Branch if true"))
-              actInstCounter += actLoopModuleCodeLength[index]
-            # Add jump to activation end
-            for index, _ in enumerate(actLoopLabelModules):
-              actLoopModule = actLoopModuleList[index]
-              if (index < (len(actLoopLabelModules) - 1)):
-                if actInstCounter >= 16384:
-                  with self.allocTmpSgpr(3) as tmpSgprInfo:
-                    actLoopModule.add(SLongBranchPositive(actLoopEndLabel, tmpSgprInfo))
-                else:
-                  actLoopModule.add(SBranch(labelName=actLoopEndLabel.getLabelName()))
-              actInstCounter -= actLoopModuleCodeLength[index]
-
-          # Append to edgeModule
-          for actLoopModule in actLoopModuleList:
-            edgeModule.appendModule(actLoopModule)
-          # Add actLoopEndLabel if needed
-          if len(actLoopLabelModules) > 1:
-            edgeModule.add(actLoopEndLabel)
-
-          if currentInstLength >= 16384:
-            with self.allocTmpSgpr(3) as tmpSgprInfo:
-              edgeModule.add(SLongBranchPositive(endLabel, tmpSgprInfo, comment="jump to end"))
-          else:
-            edgeModule.add(SBranch(labelName=endLabel.getLabelName(), comment="jump to end"))
-          currentInstLength += edgeModule.countType(Instruction)
           betaModule.add(edgeModule, pos=mod_pos)
-          del ss
         ########################################
         # branch if Edge0 or Edge1
         if False in edges and True in edges:
           isLongBranch = True if currentInstLength >= 16384 else False
           with self.allocTmpSgpr(4) as tmpSgprInfo:
             checkIsEdge = betaModule.add(self.checkIsEdge(kernel, tmpSgprInfo, \
-              writeLabels[beta][True], isLongBranch=isLongBranch), pos=mod_pos)
+              writeLabels[beta][True][biasDims[0]], isLongBranch=isLongBranch), pos=mod_pos)
             currentInstLength += checkIsEdge.countType(Instruction)
         betaModules.add(betaModule, pos=0)
 
@@ -8649,6 +8523,8 @@ class KernelWriterAssembly(KernelWriter):
 
       # End label
       module.add(endLabel)
+      if self.states.BiasDim == 3:
+        self.updateBranchPlaceHolder(module, ["end_placeholder"], [endLabel.label], ["SBranch"])
       self.vgprPool.checkIn(tmpVgpr)
       if cvtVgpr is not None:
         self.vgprPool.checkIn(cvtVgpr)
@@ -8659,6 +8535,286 @@ class KernelWriterAssembly(KernelWriter):
     kernel["_GlobalAccumulation"] = gsuAccumBackup
     self.states.bpeCexternal = bpeCexternalBackup
     return module
+
+  ##############################################################################
+  # globalWriteElementBatch :
+  ##############################################################################
+  def globalWriteElementBatch(self, kernel, tPA, tPB, activation, \
+                              applyAlpha, beta, edge, atomic, \
+                              vectorWidths, elements, activationLabelList, \
+                              tmpVgpr, cvtVgprStruct, activationSetPCStruct, activationEnumStrList, \
+                              actPCMaxTempSgpr, isInsertActFunctionCallAddrCalc, toActModuleList, \
+                              edgeModule, writeLabels, endLabel, \
+                              edge_mode_pos, currentInstLength, \
+                              idx0, idx1, idx2, biasDims):
+    biasDim = biasDims[idx2]
+    edgeModule.add(writeLabels[beta][edge][biasDim])
+    if idx2 == 0:
+      edge_mode_pos = len(edgeModule.items())
+
+    # for storeRemap edge case, non-beta still can enable vector stores
+    if kernel["StoreRemapVectorWidth"] and not beta:
+      edgeI = False
+    else:
+      edgeI = edge
+    #edgeI = True  # set to True to disable vector stores
+    gwvw = vectorWidths[edgeI]
+
+    #print "globalWriteElements: edge=", edge, "beta=", beta, "atomic=", atomic
+
+    ########################################
+    # Calculate Vgprs for Write Batching
+    ########################################
+
+    ss = StoreState(self, kernel, gwvw, edge, beta, atomic, elements[edgeI])
+
+    # how many vgprs are needed for zero elements
+    # 2 for addressC in vgpr for addition - already checked out
+    # 2 for coord0,1 of thread - already checked out
+    # 2 for tmp - already checked out
+
+    # 5 = how many vgprs are needed per element (flat)
+    #  - 2 for addr
+    #  - 3 for GLOBAL_OFFSET_C calculation (can overlap below, therefore max)
+    #  - if beta gwvw*rpe for new value
+    #  - if atomic 2*rpe for old and cmp values
+
+    #print self.vgprPool.state()
+    # Use VGPR up to next occupancy threshold:
+    maxVgprs = self.getMaxRegsForOccupancy(kernel["NumThreads"], self.vgprPool.size(), \
+                                          self.getLdsSize(kernel), self.agprPool.size(), self.states.doubleVgpr)
+    if self.states.serializedStore: # get aggressive when serializedStore is on; not necessarily exclusive to this parameter
+      _growPool(self.vgprPool, self.vgprPool.size()-self.vgprPool.available(), maxVgprs, 1, \
+        "grow-pool up to next occupancy for GlobalWrite")
+    # Get numVgprAvailable
+    numVgprAvailable = self.vgprPool.availableBlock(ss.numVgprsPerElement, ss.align)
+
+    # Grow the register pool if needed - we need enough regs for at least one element
+    # Unfortunate since this means the write logic is setting the VGPR requirement
+    # for the entire kernel but at least we have a functional kernel.
+    # Before growing the pool, see if we can shrink the write vector width instead?
+    # TODO : the vgprSerial is needed for-ever and if we grow here will split the
+    # range of the tmps.  Maybe want to move vgprSerial to first vgpr?
+
+    # TODO: Minimum elems for StoreRemap
+    # TODO: Which of DataType or DestDataType is in a better sense? 0114: Check Using DestDataType + HSS
+    minElements = 2 if (kernel["ProblemType"]["DataType"].isHalf() or kernel["ProblemType"]["DataType"].isBFloat16()) else 1
+    minNeeded = minElements * ss.numVgprsPerElement
+    shrinkDb = 0
+    if shrinkDb:
+      print("numVgprAvailable=", numVgprAvailable, "minElements=", minElements, "minNeeded=", minNeeded)
+    if numVgprAvailable < minNeeded:
+      gwvwOrig = gwvw
+      currentOccupancy = self.getOccupancy(kernel["NumThreads"], self.getLdsSize(kernel), \
+          self.vgprPool.size(), self.agprPool.size(), self.states.doubleVgpr)
+      futureOccupancy = self.getOccupancy(kernel["NumThreads"], self.getLdsSize(kernel), \
+          self.vgprPool.size() - numVgprAvailable + minNeeded, self.agprPool.size(), self.states.doubleVgpr)
+
+      if shrinkDb:
+        print("currentOccupancy=%u futureOccupancy=%u VGPRs=%u numVgprAvail=%u vgprPerElem=%u" \
+            % (currentOccupancy, futureOccupancy, self.vgprPool.size(), \
+              numVgprAvailable, minElements*ss.numVgprsPerElement))
+      if futureOccupancy > currentOccupancy:
+        if shrinkDb:
+          print("warning: %s growing VGPR for GlobalWrite batching - this may bloat VGPR usage" % \
+                (self.states.kernelName))
+          print("   numVgprAvailable=", numVgprAvailable, \
+                "numVgprsPerElement=", ss.numVgprsPerElement, "atomic=", atomic, \
+                "beta=", beta, "gwvw=", gwvw)
+      elif gwvw != gwvwOrig:
+        ss.cfg.gwvw = gwvw # make both representations consistent
+        if shrinkDb:
+          print2("info: %s shrank gwvw from %u to %u but kept occupancy same=%u." \
+              % (self.states.kernelName, gwvwOrig, gwvw, currentOccupancy))
+
+      if numVgprAvailable < minElements*ss.numVgprsPerElement:
+        print2("info: growing pool += %d * %d for GlobalWrite\n" \
+            % (minElements,ss.numVgprsPerElement))
+        print2(self.vgprPool.state())
+        _growPool(self.vgprPool, 0, minElements, ss.numVgprsPerElement, \
+          "grow-pool for GlobalWrite")
+        numVgprAvailable = self.vgprPool.available()
+        print2(self.vgprPool.state())
+
+    # set atomicW after we potentially resize GWVW
+    atomicW = min(gwvw, self.getVectorAtomicWidth(kernel))
+
+    # print("NumVgprAvailable", numVgprAvailable)
+    if ss.numVgprsPerElement:
+      numElementsPerBatch = numVgprAvailable // ss.numVgprsPerElement
+    else:
+      numElementsPerBatch = len(elements[edgeI]) # max, do 'em all
+
+    assert(self.states.c.numVgprValu % gwvw == 0) # sanity check
+
+    numElementsPerBatch = numElementsPerBatch if not kernel["NumElementsPerBatchStore"] else min(kernel["NumElementsPerBatchStore"],numElementsPerBatch)
+
+    if shrinkDb:
+      print("NumElementsPerBatch=", numElementsPerBatch, "LimitedBySgprs=", ss.cfg.numElementsPerBatchLimitedBySgprs, \
+          "WARNING" if ss.cfg.numElementsPerBatchLimitedBySgprs < numElementsPerBatch else "okay")
+    if ss.cfg.numElementsPerBatchLimitedBySgprs < numElementsPerBatch:
+      numElementsPerBatch = ss.cfg.numElementsPerBatchLimitedBySgprs
+
+    # TODO: Which of DataType or DestDataType is in a better sense? 0114: Check Using DestDataType + HSS
+    if (kernel["ProblemType"]["DataType"].isHalf() or kernel["ProblemType"]["DataType"].isBFloat16()):
+      # only do an even number of halves - since these share hi/lo pieces of some registers?
+      if numElementsPerBatch > 1:
+        numElementsPerBatch = int(numElementsPerBatch/2)*2
+      elif not kernel["EnableMatrixInstruction"]:
+        # The globalWriteBatch routine below can't handle odd elements per batch
+        # and 0 elements per batch is illegal.
+        # so if we don't have *GPR resources to handle a larger batch then need
+        # to mark overflowedResources rather than generate a kernel that won't work.
+        # It might be possible to fix globalWriteBatch to handle this case but these
+        # are likely to be low-performing so likely not worth optimizing.
+        if shrinkDb:
+          print("WARNING: half requires at least two elements per batch")
+        self.states.overflowedResources = 3
+
+    assert numElementsPerBatch > 0, "numElementsPerBatch=0 for %s"%self.states.kernelName
+
+    #numElementsPerBatch=min(2,numElementsPerBatch) # hack to control number of batches
+    if atomic and (ss.optSingleColVgpr or ss.optSharedColVgpr):
+      # hack to avoid re-using address vgpr across rows
+      # atomics need to perform several memory operations
+      # if the batch spans multiple rows, need multiple address vgpr
+      # which is not currently supported in the two opt*ColVgpr modes
+      firstRow = [e for e in elements[edgeI] if e[0]==0 and e[2]==0]
+      numElementsPerBatch=min(len(firstRow),numElementsPerBatch)
+
+    # check best numElementsPerBatch to handle a column block
+    # elements of column block must be multiple size of numElementsPerBatch
+    if kernel["StoreRemapVectorWidth"]:
+      firstRow = [e for e in elements[edgeI] if e[0]==0 and e[2]==0] # format for element = (tt1, tt0, vc1, vc0)
+      # find the largest factor and smaller than numElementPerBatch
+      nBatchesPerRow = 1
+      for d in range(1, len(firstRow)+1):
+        largestFactor = len(firstRow)//d
+        if len(firstRow)%d == 0 and largestFactor <= numElementsPerBatch:
+          numElementsPerBatch = largestFactor
+          nBatchesPerRow = d
+          break
+
+    # if no atomics and no edge, then write whole vectors
+    #if not atomic and not edge:
+    #  numVectorsPerBatch = numElementsPerBatch / kernel["GlobalWriteVectorWidth"]
+    #  #print "  NumVectorsPerBatch", numVectorsPerBatch
+    #  numElementsPerBatch = numVectorsPerBatch * kernel["GlobalWriteVectorWidth"]
+    numBatches = max(1, ceilDivide(len(elements[edgeI]),numElementsPerBatch))
+
+    numSgprs = ss.cfg.numTempSgprPerBatch + ss.cfg.numMaskSgprPerBatch + ss.cfg.numMaskSgprPerElement * numElementsPerBatch
+
+    if activationLabelList and isInsertActFunctionCallAddrCalc:
+      assert activationSetPCStruct, activationEnumStrList and activationLabelList and toActModuleList
+      numSgprs = max(actPCMaxTempSgpr, numSgprs)
+      edgeModule.add(self.insertActFunctionCallAddrCalc(activationSetPCStruct.sgprOffsetActivation, \
+        gwvw, toActModuleList, activationEnumStrList, activationLabelList, \
+        idx0, idx1))
+
+    if self.db["PrintStoreRegisterDb"]:
+      print("edgeI", edgeI, "NumBatches", numBatches, "NumElementsPerBatch", numElementsPerBatch, "numVgprsPerElement", ss.numVgprsPerElement, "len(elements[edgeI])", len(elements[edgeI]))
+      print ("numSgprs=", numSgprs, "sgprPool.size()=", self.sgprPool.size(), "numTempSgprPerBatch=", ss.cfg.numTempSgprPerBatch,
+            "numMaskSgprPerBatch=", ss.cfg.numMaskSgprPerBatch, "numMaskSgprPerElement=", ss.cfg.numMaskSgprPerElement)
+      print(self.sgprPool.state())
+    edgeModule.addComment1("edge=%d, allocate %u sgpr. perBatchTmpS=%u perBatchMaskS=%u perElementMaskS=%u elementsPerBatch=%u" %
+        (edgeI, numSgprs, ss.cfg.numTempSgprPerBatch, ss.cfg.numMaskSgprPerBatch, ss.cfg.numMaskSgprPerElement, numElementsPerBatch))
+    #edgeModule.addComment("storeStats, %d, %d, %d"% (edgeI, numSgprs, numElementsPerBatch))
+    # so if we don't have *GPR resources to handle a larger batch then need
+    # to mark overflowedResources rather than generate a kernel that won't work.
+    # Activation
+    actLoopEndLabel, actLoopLabelModules, actLoopEnumStrList = self.initActivationLoop(kernel, beta, edge)
+    actLoopModuleList = []
+    actLoopModuleCodeLength = []
+    with self.allocTmpSgpr(numSgprs, 2) as tmpSgprRes:
+      for index, activationLabelModule in enumerate(actLoopLabelModules):
+        actLoopModule = Module("Activation Loop %s"%index)
+        activationTypeStr = actLoopEnumStrList[index]
+        if activationLabelModule:
+          actLoopModule.add(activationLabelModule)
+
+        tmpSgpr = tmpSgprRes.idx
+        actTempSgpr = tmpSgpr # Get sgpr start address, should always be the same
+        elementSgprs = tmpSgpr + ss.cfg.numTempSgprPerBatch
+        codeAccVgprRead = deepcopy(self.codes.accVgprRead) if self.states.serializedStore else None
+        mulAlpha = self.codes.mulAlphaMultipleBuffer if kernel["_GlobalAccumulation"] == 'MultipleBuffer' else self.codes.mulAlphaOther
+        codeMulAlpha = deepcopy(mulAlpha) if self.states.serializedStore else None
+
+        self.alphaBeforeLoadC = False
+        if kernel["MIArchVgpr"] and applyAlpha:
+          codeAccVgprRead = None
+
+          #Only apply when 2 wave optimization features are enabled
+          if (kernel["StorePriorityOpt"] or kernel["StoreSyncOpt"]) and beta:
+            self.alphaBeforeLoadC = True
+        else:
+          codeMulAlpha = None
+
+        biasLocalBarrierInit = False
+        for batchIdx in range(0, numBatches):
+          elementStartIdx = batchIdx * numElementsPerBatch
+          elementStopIdx = min( elementStartIdx + numElementsPerBatch, len(elements[edgeI]) )
+          elementsThisBatch = elements[edgeI][elementStartIdx:elementStopIdx]
+          #print("BATCH[%u/%u]: elements[edgeI][%u:%u] VGPRs=%u" % (batchIdx, numBatches, elementStartIdx, elementStopIdx,ss.numVgprsPerElement ))
+          # elementVgprs can be large and should be perfectly tuned to the number of available
+          # VGPRS.  We do not want to accidentally overflow and grow the pool here:
+
+          if kernel["StoreRemapVectorWidth"]:
+            #Indication if this batch is last batch for this column block shape
+            self.StoreRemapLastBatch = 1 if (batchIdx+1) % nBatchesPerRow == 0 else 0
+
+          actLoopModule.add(self.globalWriteBatch(kernel, tPA, tPB, activation, ss, batchIdx, \
+              applyAlpha, beta, edge, atomic, gwvw, atomicW, \
+              elementsThisBatch, self.vgprs.addrE, self.vgprs.addrD, self.vgprs.addrC, self.vgprs.addrBias, self.vgprs.addrScaleAlphaVec, \
+              biasLocalBarrierInit, tmpVgpr, cvtVgprStruct, activationSetPCStruct, \
+              activationTypeStr, elementSgprs, tmpSgpr, codeAccVgprRead, codeMulAlpha, biasDim))
+          biasLocalBarrierInit = True
+
+        ss.resetState()
+        actLoopModuleList.append(actLoopModule)
+        actLoopModuleCodeLength.append(actLoopModule.countType(Instruction))
+
+    if len(actLoopLabelModules) > 1:
+      actInstCounter = 0
+      # Add activation branch
+      for index, actLoopLabelModule in enumerate(actLoopLabelModules):
+        enumIndex = ActivationType.getEnumIndex(actLoopEnumStrList[index])
+        edgeModule.add(SCmpKEQU32(sgpr("ActivationType"), enumIndex, "activationType == %u"%enumIndex))
+        if actInstCounter >= 16384:
+          edgeModule.add(self.longBranchScc1(actLoopLabelModule, posNeg=1, comment="Branch if true"))
+        else:
+          edgeModule.add(SCBranchSCC1(actLoopLabelModule.getLabelName(), "Branch if true"))
+        actInstCounter += actLoopModuleCodeLength[index]
+      # Add jump to activation end
+      for index, _ in enumerate(actLoopLabelModules):
+        actLoopModule = actLoopModuleList[index]
+        if (index < (len(actLoopLabelModules) - 1)):
+          if actInstCounter >= 16384:
+            with self.allocTmpSgpr(3) as tmpSgprInfo:
+              actLoopModule.add(SLongBranchPositive(actLoopEndLabel, tmpSgprInfo))
+          else:
+            actLoopModule.add(SBranch(labelName=actLoopEndLabel.getLabelName()))
+        actInstCounter -= actLoopModuleCodeLength[index]
+
+    # Append to edgeModule
+    for actLoopModule in actLoopModuleList:
+      edgeModule.appendModule(actLoopModule)
+    # Add actLoopEndLabel if needed
+    if len(actLoopLabelModules) > 1:
+      edgeModule.add(actLoopEndLabel)
+
+    if len(biasDims) == 1:
+      if currentInstLength >= 16384:
+        with self.allocTmpSgpr(3) as tmpSgprInfo:
+          edgeModule.add(SLongBranchPositive(endLabel, tmpSgprInfo, comment="jump to end"))
+      else:
+        edgeModule.add(SBranch(labelName=endLabel.getLabelName(), comment="jump to end"))
+    else:
+      end_placeholder = Module("end_placeholder")
+      edgeModule.add(end_placeholder)
+    currentInstLength += edgeModule.countType(Instruction)
+    del ss
+
+    return edge_mode_pos, currentInstLength, activationTypeStr
 
   ##############################################################################
   # chooseGlobalRead :
@@ -8895,13 +9051,13 @@ class KernelWriterAssembly(KernelWriter):
 
     return module
 
-  def addBiasLoad(self, dataType, kernel, ss, addrCalc, biasVgpr, isLocal=False):
+  def addBiasLoad(self, dataType, kernel, gwvw, addrCalc, biasVgpr, biasDim, isLocal=False):
     if isLocal and (self.states.useBias == DataDirection.READ):
       module = Module("addBias")
       dst = vgpr(biasVgpr)
       src = vgpr(addrCalc.addrBiasVgpr)
-      ds = DSModifiers(offset=addrCalc.biasOffset)
-      bpl = dataType.numBytes() * ss.cfg.gwvw
+      ds = DSModifiers(offset=addrCalc.biasOffset[biasDim])
+      bpl = dataType.numBytes() * gwvw
       if bpl==2:
         module.add(DSLoadU16(dst=dst, src=src, ds=ds, comment="load bias"))
       elif bpl==4:
@@ -8912,7 +9068,7 @@ class KernelWriterAssembly(KernelWriter):
         module.add(DSLoadB128(dst=vgpr(biasVgpr, 4), src=src, ds=ds, comment="load bias"))
       elif bpl==32:
         module.add(DSLoadB128(dst=vgpr(biasVgpr, 4), src=src, ds=ds, comment="load bias"))
-        ds = DSModifiers(offset=addrCalc.biasOffset+bpl/2)
+        ds = DSModifiers(offset=addrCalc.biasOffset[biasDim]+bpl/2)
         module.add(DSLoadB128(dst=vgpr(biasVgpr+4, 4), src=src, ds=ds, comment="load bias"))
       else:
         assert 0, "bad bpl"
@@ -8928,7 +9084,7 @@ class KernelWriterAssembly(KernelWriter):
     else:
       addr0 = ""
       addr1 = ""
-    return self.addBiasGlobalLoad(dataType, kernel, biasVgpr, addr0, addr1, addrCalc.biasOffset, ss.cfg.gwvw)
+    return self.addBiasGlobalLoad(dataType, kernel, biasVgpr, addr0, addr1, addrCalc.biasOffset[biasDim], gwvw)
 
   ##############################################################################
   def addStore(self, kernel, ss, tc: str, addrCalc, sumIdx, tmpS01, edge, comment):
@@ -9094,14 +9250,14 @@ class KernelWriterAssembly(KernelWriter):
       applyAlpha, beta, edge, atomic, gwvw, atomicW, \
       batchElements, addrE, addrD, addrC, addrBias, addrScaleAlphaVec, biasLocalBarrierInit: bool, \
       tmpVgpr, cvtVgprStruct, activationSetPCStruct, activationTypeStr, \
-      batchElementSgprs, tmpSgpr, codeAccVgprRead, codeMulAlpha) -> Module:
+      batchElementSgprs, tmpSgpr, codeAccVgprRead, codeMulAlpha, biasDim) -> Module:
       packdata = Component.PackData.find(self)
       gwriter  = Component.GlobalWriteComponents.find(self)
       return gwriter(kernel, tPA, tPB, activation, ss, \
         batchIdx, applyAlpha, beta, edge, atomic, gwvw, atomicW, \
         batchElements, addrE, addrD, addrC, addrBias, addrScaleAlphaVec, biasLocalBarrierInit, \
         tmpVgpr, cvtVgprStruct, activationSetPCStruct, activationTypeStr, \
-        batchElementSgprs, tmpSgpr, codeAccVgprRead, codeMulAlpha, packdata, self)
+        batchElementSgprs, tmpSgpr, codeAccVgprRead, codeMulAlpha, packdata, self, biasDim)
 
   ##############################################################################
   def openPrefetchGlobalRead2(self, kernel):
@@ -9121,7 +9277,7 @@ class KernelWriterAssembly(KernelWriter):
   ########################################
   # Bias related
   ########################################
-  def readBiasToLDS(self, biasDataType, kernel, gwvw, offsetVgpr, tmpSgpr, tmpVgpr1Res: RegisterPoolResource):
+  def readBiasToLDS(self, biasDataType, kernel, gwvw, offsetVgpr, tmpSgpr, tmpVgpr1Res: RegisterPoolResource, dim):
     assert gwvw == 1
     assert tmpVgpr1Res.size >= gwvw * kernel["ProblemType"]["ComputeDataType"].numRegisters()
     # Params
@@ -9131,10 +9287,10 @@ class KernelWriterAssembly(KernelWriter):
     # Recalculate bias length
     module.add(SMulI32(dst=sgpr("SrdBias+2"), src0=hex(biasBpe), src1=sgpr("SrdBias+2"), comment="scaled by BPE"))
     # Calculate global offset- macro tile 0 part
-    module.add(SMulI32(dst=sgpr(tmpSgpr), src0=kernel["MacroTile0"], src1=sgpr("WorkGroup0"), comment="wgp0 * MT0"))
-    module.add(VAddU32(dst=vgpr(offsetVgpr), src0=sgpr(tmpSgpr), src1=vgpr("Serial"), comment="coord 0 = wgp0 * MT0 + thread offset"))
+    module.add(SMulI32(dst=sgpr(tmpSgpr), src0=kernel["MacroTile%d"%dim], src1=sgpr("WorkGroup%d"%dim), comment="wgp%d * MT%d"%(dim, dim)))
+    module.add(VAddU32(dst=vgpr(offsetVgpr), src0=sgpr(tmpSgpr), src1=vgpr("Serial"), comment="coord %d = wgp%d * MT%d + thread offset"%(dim, dim, dim)))
     module.add(SMulI32(dst=sgpr(tmpSgpr), src0=sgpr("BiasStride"), src1=sgpr("WorkGroup2"), comment="Stride * WG"))
-    module.add(VAddU32(dst=vgpr(offsetVgpr), src0=sgpr(tmpSgpr), src1=vgpr(offsetVgpr), comment="coord 0 = wgp0 * MT0 + thread offset + Stride * WG"))
+    module.add(VAddU32(dst=vgpr(offsetVgpr), src0=sgpr(tmpSgpr), src1=vgpr(offsetVgpr), comment="coord %d = wgp%d * MT%d + thread offset + Stride * WG"%(dim, dim, dim)))
     module.add(VLShiftLeftB32(dst=vgpr(offsetVgpr), \
                               shiftHex=hex(log2(biasBpe)), \
                               src=vgpr(offsetVgpr), \
@@ -9149,7 +9305,7 @@ class KernelWriterAssembly(KernelWriter):
     addr0 = vgpr(offsetVgpr)
     addr1 = sgpr("SrdBias", 4)
     divisor = kernel["SubGroup0"] * kernel["SubGroup1"]
-    turn    = ceil(kernel["MacroTile0"] / (divisor * gwvw))
+    turn    = ceil(kernel["MacroTile%d"%dim] / (divisor * gwvw))
     offset  = (divisor * gwvw) * biasBpe
     tmpVgprN = tmpVgpr1
     for i in range(turn):
