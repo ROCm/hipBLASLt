@@ -190,10 +190,11 @@ class ProblemType:
         if 'UseBeta' in d:
             rv.useBeta = d['UseBeta']
 
-        rv.useBias               = False
+        rv.useBias               = 0
         rv.biasDataTypeWhiteList = []
         rv.biasSrcWhiteList = []
         rv.setConstStrideBias = []
+
         if 'UseBias' in d:
             rv.useBias = d['UseBias']
             if 'BiasDataTypeList' in d:

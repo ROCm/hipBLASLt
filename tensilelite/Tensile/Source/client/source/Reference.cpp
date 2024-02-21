@@ -872,7 +872,11 @@ namespace Tensile
                 if(problem.useBias() && inputs.bias && !problem.useGradient())
                 {
                     auto        biasIndex = problem.bias().index(biasCoord);
-                    int         pos       = int(dNum % problem.d().sizes()[0]) + biasIndex;
+                    int         pos       = 0;
+                    if(problem.getParams().biasDim())
+                        pos = int(dNum / problem.d().sizes()[0]) + biasIndex;
+                    else
+                        pos = int(dNum % problem.d().sizes()[0]) + biasIndex;
                     Accumulator bias      = GetValue<Accumulator>(
                         problem.bias().dataType(), inputs.bias, pos, aConjugate);
                     resultD += bias;

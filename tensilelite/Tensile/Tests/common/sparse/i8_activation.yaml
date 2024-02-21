@@ -64,11 +64,10 @@ BenchmarkProblems:
       BenchmarkJoinParameters:
       BenchmarkFinalParameters:
         - ProblemSizes:
-          - Exact: [15, 15, 1, 16] # classic format
-          - Exact: [15, 15, 1, 256] # classic format
-          - Exact: [15, 15, 1, 264] # classic format
+          - Exact: [16, 16, 1, 16] # classic format
+          - Exact: [16, 16, 1, 64] # classic format
           - Exact: [256, 256, 1, 16] # classic format
-          - Exact: [256, 256, 1, 256] # classic format
+          - Exact: [256, 256, 1, 64] # classic format
         - ActivationArgs:
           - [Enum: none]
           - [Enum: abs]
@@ -130,11 +129,10 @@ BenchmarkProblems:
       BenchmarkJoinParameters:
       BenchmarkFinalParameters:
         - ProblemSizes:
-          - Exact: [15, 15, 1, 16] # classic format
-          - Exact: [15, 15, 1, 256] # classic format
-          - Exact: [15, 15, 1, 264] # classic format
+          - Exact: [16, 16, 1, 16] # classic format
+          - Exact: [16, 16, 1, 64] # classic format
           - Exact: [256, 256, 1, 16] # classic format
-          - Exact: [256, 256, 1, 256] # classic format
+          - Exact: [256, 256, 1, 64] # classic format
         - ActivationArgs:
           - [Enum: none]
           - [Enum: abs]
@@ -196,10 +194,10 @@ BenchmarkProblems:
       BenchmarkJoinParameters:
       BenchmarkFinalParameters:
         - ProblemSizes:
-          - Exact: [15, 15, 1, 16] # classic format
-          - Exact: [15, 15, 1, 264] # classic format
+          - Exact: [16, 16, 1, 16] # classic format
+          - Exact: [16, 16, 1, 64] # classic format
           - Exact: [256, 256, 1, 16] # classic format
-          - Exact: [256, 256, 1, 256] # classic format
+          - Exact: [256, 256, 1, 64] # classic format
         - ActivationArgs:
           - [Enum: none]
           - [Enum: abs]
@@ -261,11 +259,10 @@ BenchmarkProblems:
       BenchmarkJoinParameters:
       BenchmarkFinalParameters:
         - ProblemSizes:
-          - Exact: [15, 15, 1, 16] # classic format
-          - Exact: [15, 15, 1, 256] # classic format
-          - Exact: [15, 15, 1, 264] # classic format
+          - Exact: [16, 16, 1, 16] # classic format
+          - Exact: [16, 16, 1, 64] # classic format
           - Exact: [256, 256, 1, 16] # classic format
-          - Exact: [256, 256, 1, 256] # classic format
+          - Exact: [256, 256, 1, 64] # classic format
         - ActivationArgs:
           - [Enum: none]
           - [Enum: abs]

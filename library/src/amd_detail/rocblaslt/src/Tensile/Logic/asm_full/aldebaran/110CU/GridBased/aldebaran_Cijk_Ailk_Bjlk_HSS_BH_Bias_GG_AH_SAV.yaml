@@ -56,7 +56,7 @@
   TransposeA: 0
   TransposeB: 1
   UseBeta: true
-  UseBias: true
+  UseBias: 1
   UseInitialStridesAB: false
   UseInitialStridesCD: false
   UseScaleDVec: false
@@ -228,7 +228,7 @@
       TransposeA: 0
       TransposeB: 1
       UseBeta: true
-      UseBias: true
+      UseBias: 1
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleDVec: false
@@ -447,7 +447,7 @@
       TransposeA: 0
       TransposeB: 1
       UseBeta: true
-      UseBias: true
+      UseBias: 1
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleDVec: false
@@ -666,7 +666,7 @@
       TransposeA: 0
       TransposeB: 1
       UseBeta: true
-      UseBias: true
+      UseBias: 1
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleDVec: false
@@ -885,7 +885,7 @@
       TransposeA: 0
       TransposeB: 1
       UseBeta: true
-      UseBias: true
+      UseBias: 1
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleDVec: false
@@ -1104,7 +1104,7 @@
       TransposeA: 0
       TransposeB: 1
       UseBeta: true
-      UseBias: true
+      UseBias: 1
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleDVec: false
@@ -1323,7 +1323,7 @@
       TransposeA: 0
       TransposeB: 1
       UseBeta: true
-      UseBias: true
+      UseBias: 1
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleDVec: false
@@ -1542,7 +1542,7 @@
       TransposeA: 0
       TransposeB: 1
       UseBeta: true
-      UseBias: true
+      UseBias: 1
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleDVec: false
@@ -1761,7 +1761,7 @@
       TransposeA: 0
       TransposeB: 1
       UseBeta: true
-      UseBias: true
+      UseBias: 1
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleDVec: false
@@ -1980,7 +1980,7 @@
       TransposeA: 0
       TransposeB: 1
       UseBeta: true
-      UseBias: true
+      UseBias: 1
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleDVec: false
@@ -2199,7 +2199,7 @@
       TransposeA: 0
       TransposeB: 1
       UseBeta: true
-      UseBias: true
+      UseBias: 1
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleDVec: false
@@ -2418,7 +2418,7 @@
       TransposeA: 0
       TransposeB: 1
       UseBeta: true
-      UseBias: true
+      UseBias: 1
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleDVec: false
@@ -2637,7 +2637,7 @@
       TransposeA: 0
       TransposeB: 1
       UseBeta: true
-      UseBias: true
+      UseBias: 1
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleDVec: false
@@ -2856,7 +2856,7 @@
       TransposeA: 0
       TransposeB: 1
       UseBeta: true
-      UseBias: true
+      UseBias: 1
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleDVec: false
@@ -3075,7 +3075,7 @@
       TransposeA: 0
       TransposeB: 1
       UseBeta: true
-      UseBias: true
+      UseBias: 1
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleDVec: false
@@ -3294,7 +3294,7 @@
       TransposeA: 0
       TransposeB: 1
       UseBeta: true
-      UseBias: true
+      UseBias: 1
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleDVec: false
@@ -3513,7 +3513,7 @@
       TransposeA: 0
       TransposeB: 1
       UseBeta: true
-      UseBias: true
+      UseBias: 1
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleDVec: false
@@ -3732,7 +3732,7 @@
       TransposeA: 0
       TransposeB: 1
       UseBeta: true
-      UseBias: true
+      UseBias: 1
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleDVec: false
@@ -3951,7 +3951,7 @@
       TransposeA: 0
       TransposeB: 1
       UseBeta: true
-      UseBias: true
+      UseBias: 1
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleDVec: false
@@ -4170,7 +4170,7 @@
       TransposeA: 0
       TransposeB: 1
       UseBeta: true
-      UseBias: true
+      UseBias: 1
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleDVec: false
@@ -4389,7 +4389,7 @@
       TransposeA: 0
       TransposeB: 1
       UseBeta: true
-      UseBias: true
+      UseBias: 1
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleDVec: false
@@ -4608,7 +4608,7 @@
       TransposeA: 0
       TransposeB: 1
       UseBeta: true
-      UseBias: true
+      UseBias: 1
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleDVec: false
@@ -4827,7 +4827,7 @@
       TransposeA: 0
       TransposeB: 1
       UseBeta: true
-      UseBias: true
+      UseBias: 1
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleDVec: false
@@ -5046,7 +5046,7 @@
       TransposeA: 0
       TransposeB: 1
       UseBeta: true
-      UseBias: true
+      UseBias: 1
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleDVec: false
@@ -5265,7 +5265,7 @@
       TransposeA: 0
       TransposeB: 1
       UseBeta: true
-      UseBias: true
+      UseBias: 1
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleDVec: false
@@ -5484,7 +5484,7 @@
       TransposeA: 0
       TransposeB: 1
       UseBeta: true
-      UseBias: true
+      UseBias: 1
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleDVec: false
@@ -5703,7 +5703,7 @@
       TransposeA: 0
       TransposeB: 1
       UseBeta: true
-      UseBias: true
+      UseBias: 1
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleDVec: false
@@ -5922,7 +5922,7 @@
       TransposeA: 0
       TransposeB: 1
       UseBeta: true
-      UseBias: true
+      UseBias: 1
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleDVec: false
@@ -6141,7 +6141,7 @@
       TransposeA: 0
       TransposeB: 1
       UseBeta: true
-      UseBias: true
+      UseBias: 1
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleDVec: false
@@ -6360,7 +6360,7 @@
       TransposeA: 0
       TransposeB: 1
       UseBeta: true
-      UseBias: true
+      UseBias: 1
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleDVec: false
@@ -6579,7 +6579,7 @@
       TransposeA: 0
       TransposeB: 1
       UseBeta: true
-      UseBias: true
+      UseBias: 1
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleDVec: false
@@ -6798,7 +6798,7 @@
       TransposeA: 0
       TransposeB: 1
       UseBeta: true
-      UseBias: true
+      UseBias: 1
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleDVec: false
@@ -7017,7 +7017,7 @@
       TransposeA: 0
       TransposeB: 1
       UseBeta: true
-      UseBias: true
+      UseBias: 1
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleDVec: false
@@ -7236,7 +7236,7 @@
       TransposeA: 0
       TransposeB: 1
       UseBeta: true
-      UseBias: true
+      UseBias: 1
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleDVec: false
@@ -7455,7 +7455,7 @@
       TransposeA: 0
       TransposeB: 1
       UseBeta: true
-      UseBias: true
+      UseBias: 1
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleDVec: false
@@ -7674,7 +7674,7 @@
       TransposeA: 0
       TransposeB: 1
       UseBeta: true
-      UseBias: true
+      UseBias: 1
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleDVec: false
@@ -7893,7 +7893,7 @@
       TransposeA: 0
       TransposeB: 1
       UseBeta: true
-      UseBias: true
+      UseBias: 1
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleDVec: false
@@ -8112,7 +8112,7 @@
       TransposeA: 0
       TransposeB: 1
       UseBeta: true
-      UseBias: true
+      UseBias: 1
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleDVec: false
@@ -8331,7 +8331,7 @@
       TransposeA: 0
       TransposeB: 1
       UseBeta: true
-      UseBias: true
+      UseBias: 1
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleDVec: false
@@ -8550,7 +8550,7 @@
       TransposeA: 0
       TransposeB: 1
       UseBeta: true
-      UseBias: true
+      UseBias: 1
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleDVec: false
@@ -8769,7 +8769,7 @@
       TransposeA: 0
       TransposeB: 1
       UseBeta: true
-      UseBias: true
+      UseBias: 1
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleDVec: false
@@ -8988,7 +8988,7 @@
       TransposeA: 0
       TransposeB: 1
       UseBeta: true
-      UseBias: true
+      UseBias: 1
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleDVec: false
@@ -9207,7 +9207,7 @@
       TransposeA: 0
       TransposeB: 1
       UseBeta: true
-      UseBias: true
+      UseBias: 1
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleDVec: false
@@ -9426,7 +9426,7 @@
       TransposeA: 0
       TransposeB: 1
       UseBeta: true
-      UseBias: true
+      UseBias: 1
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleDVec: false
@@ -9645,7 +9645,7 @@
       TransposeA: 0
       TransposeB: 1
       UseBeta: true
-      UseBias: true
+      UseBias: 1
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleDVec: false
@@ -9864,7 +9864,7 @@
       TransposeA: 0
       TransposeB: 1
       UseBeta: true
-      UseBias: true
+      UseBias: 1
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleDVec: false
@@ -10083,7 +10083,7 @@
       TransposeA: 0
       TransposeB: 1
       UseBeta: true
-      UseBias: true
+      UseBias: 1
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleDVec: false
@@ -10302,7 +10302,7 @@
       TransposeA: 0
       TransposeB: 1
       UseBeta: true
-      UseBias: true
+      UseBias: 1
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleDVec: false
@@ -10521,7 +10521,7 @@
       TransposeA: 0
       TransposeB: 1
       UseBeta: true
-      UseBias: true
+      UseBias: 1
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleDVec: false
@@ -10740,7 +10740,7 @@
       TransposeA: 0
       TransposeB: 1
       UseBeta: true
-      UseBias: true
+      UseBias: 1
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleDVec: false
@@ -10959,7 +10959,7 @@
       TransposeA: 0
       TransposeB: 1
       UseBeta: true
-      UseBias: true
+      UseBias: 1
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleDVec: false
@@ -11178,7 +11178,7 @@
       TransposeA: 0
       TransposeB: 1
       UseBeta: true
-      UseBias: true
+      UseBias: 1
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleDVec: false
@@ -11397,7 +11397,7 @@
       TransposeA: 0
       TransposeB: 1
       UseBeta: true
-      UseBias: true
+      UseBias: 1
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleDVec: false
@@ -11616,7 +11616,7 @@
       TransposeA: 0
       TransposeB: 1
       UseBeta: true
-      UseBias: true
+      UseBias: 1
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleDVec: false
@@ -11835,7 +11835,7 @@
       TransposeA: 0
       TransposeB: 1
       UseBeta: true
-      UseBias: true
+      UseBias: 1
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleDVec: false
@@ -12054,7 +12054,7 @@
       TransposeA: 0
       TransposeB: 1
       UseBeta: true
-      UseBias: true
+      UseBias: 1
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleDVec: false
@@ -12273,7 +12273,7 @@
       TransposeA: 0
       TransposeB: 1
       UseBeta: true
-      UseBias: true
+      UseBias: 1
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleDVec: false
@@ -12492,7 +12492,7 @@
       TransposeA: 0
       TransposeB: 1
       UseBeta: true
-      UseBias: true
+      UseBias: 1
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleDVec: false
@@ -12711,7 +12711,7 @@
       TransposeA: 0
       TransposeB: 1
       UseBeta: true
-      UseBias: true
+      UseBias: 1
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleDVec: false
@@ -12930,7 +12930,7 @@
       TransposeA: 0
       TransposeB: 1
       UseBeta: true
-      UseBias: true
+      UseBias: 1
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleDVec: false
@@ -13149,7 +13149,7 @@
       TransposeA: 0
       TransposeB: 1
       UseBeta: true
-      UseBias: true
+      UseBias: 1
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleDVec: false
@@ -13368,7 +13368,7 @@
       TransposeA: 0
       TransposeB: 1
       UseBeta: true
-      UseBias: true
+      UseBias: 1
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleDVec: false
@@ -13587,7 +13587,7 @@
       TransposeA: 0
       TransposeB: 1
       UseBeta: true
-      UseBias: true
+      UseBias: 1
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleDVec: false
@@ -13806,7 +13806,7 @@
       TransposeA: 0
       TransposeB: 1
       UseBeta: true
-      UseBias: true
+      UseBias: 1
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleDVec: false
@@ -14025,7 +14025,7 @@
       TransposeA: 0
       TransposeB: 1
       UseBeta: true
-      UseBias: true
+      UseBias: 1
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleDVec: false
@@ -14244,7 +14244,7 @@
       TransposeA: 0
       TransposeB: 1
       UseBeta: true
-      UseBias: true
+      UseBias: 1
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleDVec: false
@@ -14463,7 +14463,7 @@
       TransposeA: 0
       TransposeB: 1
       UseBeta: true
-      UseBias: true
+      UseBias: 1
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleDVec: false
@@ -14682,7 +14682,7 @@
       TransposeA: 0
       TransposeB: 1
       UseBeta: true
-      UseBias: true
+      UseBias: 1
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleDVec: false
@@ -14901,7 +14901,7 @@
       TransposeA: 0
       TransposeB: 1
       UseBeta: true
-      UseBias: true
+      UseBias: 1
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleDVec: false
@@ -15120,7 +15120,7 @@
       TransposeA: 0
       TransposeB: 1
       UseBeta: true
-      UseBias: true
+      UseBias: 1
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleDVec: false
@@ -15339,7 +15339,7 @@
       TransposeA: 0
       TransposeB: 1
       UseBeta: true
-      UseBias: true
+      UseBias: 1
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleDVec: false
@@ -15558,7 +15558,7 @@
       TransposeA: 0
       TransposeB: 1
       UseBeta: true
-      UseBias: true
+      UseBias: 1
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleDVec: false
@@ -15777,7 +15777,7 @@
       TransposeA: 0
       TransposeB: 1
       UseBeta: true
-      UseBias: true
+      UseBias: 1
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleDVec: false
@@ -15996,7 +15996,7 @@
       TransposeA: 0
       TransposeB: 1
       UseBeta: true
-      UseBias: true
+      UseBias: 1
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleDVec: false
@@ -16215,7 +16215,7 @@
       TransposeA: 0
       TransposeB: 1
       UseBeta: true
-      UseBias: true
+      UseBias: 1
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleDVec: false
@@ -16434,7 +16434,7 @@
       TransposeA: 0
       TransposeB: 1
       UseBeta: true
-      UseBias: true
+      UseBias: 1
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleDVec: false
@@ -16653,7 +16653,7 @@
       TransposeA: 0
       TransposeB: 1
       UseBeta: true
-      UseBias: true
+      UseBias: 1
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleDVec: false
@@ -16872,7 +16872,7 @@
       TransposeA: 0
       TransposeB: 1
       UseBeta: true
-      UseBias: true
+      UseBias: 1
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleDVec: false
@@ -17091,7 +17091,7 @@
       TransposeA: 0
       TransposeB: 1
       UseBeta: true
-      UseBias: true
+      UseBias: 1
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleDVec: false
@@ -17310,7 +17310,7 @@
       TransposeA: 0
       TransposeB: 1
       UseBeta: true
-      UseBias: true
+      UseBias: 1
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleDVec: false
@@ -17529,7 +17529,7 @@
       TransposeA: 0
       TransposeB: 1
       UseBeta: true
-      UseBias: true
+      UseBias: 1
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleDVec: false
@@ -17748,7 +17748,7 @@
       TransposeA: 0
       TransposeB: 1
       UseBeta: true
-      UseBias: true
+      UseBias: 1
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleDVec: false
@@ -17967,7 +17967,7 @@
       TransposeA: 0
       TransposeB: 1
       UseBeta: true
-      UseBias: true
+      UseBias: 1
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleDVec: false
@@ -18186,7 +18186,7 @@
       TransposeA: 0
       TransposeB: 1
       UseBeta: true
-      UseBias: true
+      UseBias: 1
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleDVec: false
@@ -18405,7 +18405,7 @@
       TransposeA: 0
       TransposeB: 1
       UseBeta: true
-      UseBias: true
+      UseBias: 1
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleDVec: false
@@ -18624,7 +18624,7 @@
       TransposeA: 0
       TransposeB: 1
       UseBeta: true
-      UseBias: true
+      UseBias: 1
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleDVec: false
@@ -18843,7 +18843,7 @@
       TransposeA: 0
       TransposeB: 1
       UseBeta: true
-      UseBias: true
+      UseBias: 1
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleDVec: false
@@ -19062,7 +19062,7 @@
       TransposeA: 0
       TransposeB: 1
       UseBeta: true
-      UseBias: true
+      UseBias: 1
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleDVec: false
@@ -19281,7 +19281,7 @@
       TransposeA: 0
       TransposeB: 1
       UseBeta: true
-      UseBias: true
+      UseBias: 1
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleDVec: false
@@ -19500,7 +19500,7 @@
       TransposeA: 0
       TransposeB: 1
       UseBeta: true
-      UseBias: true
+      UseBias: 1
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleDVec: false
@@ -19719,7 +19719,7 @@
       TransposeA: 0
       TransposeB: 1
       UseBeta: true
-      UseBias: true
+      UseBias: 1
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleDVec: false
@@ -19938,7 +19938,7 @@
       TransposeA: 0
       TransposeB: 1
       UseBeta: true
-      UseBias: true
+      UseBias: 1
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleDVec: false
@@ -20157,7 +20157,7 @@
       TransposeA: 0
       TransposeB: 1
       UseBeta: true
-      UseBias: true
+      UseBias: 1
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleDVec: false
@@ -20376,7 +20376,7 @@
       TransposeA: 0
       TransposeB: 1
       UseBeta: true
-      UseBias: true
+      UseBias: 1
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleDVec: false
@@ -20595,7 +20595,7 @@
       TransposeA: 0
       TransposeB: 1
       UseBeta: true
-      UseBias: true
+      UseBias: 1
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleDVec: false
@@ -20814,7 +20814,7 @@
       TransposeA: 0
       TransposeB: 1
       UseBeta: true
-      UseBias: true
+      UseBias: 1
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleDVec: false
@@ -21033,7 +21033,7 @@
       TransposeA: 0
       TransposeB: 1
       UseBeta: true
-      UseBias: true
+      UseBias: 1
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleDVec: false
@@ -21252,7 +21252,7 @@
       TransposeA: 0
       TransposeB: 1
       UseBeta: true
-      UseBias: true
+      UseBias: 1
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleDVec: false
@@ -21471,7 +21471,7 @@
       TransposeA: 0
       TransposeB: 1
       UseBeta: true
-      UseBias: true
+      UseBias: 1
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleDVec: false
@@ -21690,7 +21690,7 @@
       TransposeA: 0
       TransposeB: 1
       UseBeta: true
-      UseBias: true
+      UseBias: 1
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleDVec: false
@@ -21909,7 +21909,7 @@
       TransposeA: 0
       TransposeB: 1
       UseBeta: true
-      UseBias: true
+      UseBias: 1
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleDVec: false
@@ -22128,7 +22128,7 @@
       TransposeA: 0
       TransposeB: 1
       UseBeta: true
-      UseBias: true
+      UseBias: 1
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleDVec: false
@@ -22347,7 +22347,7 @@
       TransposeA: 0
       TransposeB: 1
       UseBeta: true
-      UseBias: true
+      UseBias: 1
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleDVec: false
@@ -22566,7 +22566,7 @@
       TransposeA: 0
       TransposeB: 1
       UseBeta: true
-      UseBias: true
+      UseBias: 1
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleDVec: false
@@ -22785,7 +22785,7 @@
       TransposeA: 0
       TransposeB: 1
       UseBeta: true
-      UseBias: true
+      UseBias: 1
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleDVec: false
@@ -23004,7 +23004,7 @@
       TransposeA: 0
       TransposeB: 1
       UseBeta: true
-      UseBias: true
+      UseBias: 1
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleDVec: false
@@ -23223,7 +23223,7 @@
       TransposeA: 0
       TransposeB: 1
       UseBeta: true
-      UseBias: true
+      UseBias: 1
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleDVec: false
@@ -23442,7 +23442,7 @@
       TransposeA: 0
       TransposeB: 1
       UseBeta: true
-      UseBias: true
+      UseBias: 1
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleDVec: false
@@ -23661,7 +23661,7 @@
       TransposeA: 0
       TransposeB: 1
       UseBeta: true
-      UseBias: true
+      UseBias: 1
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleDVec: false
@@ -23880,7 +23880,7 @@
       TransposeA: 0
       TransposeB: 1
       UseBeta: true
-      UseBias: true
+      UseBias: 1
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleDVec: false
@@ -24099,7 +24099,7 @@
       TransposeA: 0
       TransposeB: 1
       UseBeta: true
-      UseBias: true
+      UseBias: 1
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleDVec: false
@@ -24318,7 +24318,7 @@
       TransposeA: 0
       TransposeB: 1
       UseBeta: true
-      UseBias: true
+      UseBias: 1
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleDVec: false
@@ -24537,7 +24537,7 @@
       TransposeA: 0
       TransposeB: 1
       UseBeta: true
-      UseBias: true
+      UseBias: 1
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleDVec: false
@@ -24756,7 +24756,7 @@
       TransposeA: 0
       TransposeB: 1
       UseBeta: true
-      UseBias: true
+      UseBias: 1
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleDVec: false
@@ -24975,7 +24975,7 @@
       TransposeA: 0
       TransposeB: 1
       UseBeta: true
-      UseBias: true
+      UseBias: 1
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleDVec: false
@@ -25194,7 +25194,7 @@
       TransposeA: 0
       TransposeB: 1
       UseBeta: true
-      UseBias: true
+      UseBias: 1
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleDVec: false
@@ -25413,7 +25413,7 @@
       TransposeA: 0
       TransposeB: 1
       UseBeta: true
-      UseBias: true
+      UseBias: 1
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleDVec: false
@@ -25632,7 +25632,7 @@
       TransposeA: 0
       TransposeB: 1
       UseBeta: true
-      UseBias: true
+      UseBias: 1
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleDVec: false
@@ -25851,7 +25851,7 @@
       TransposeA: 0
       TransposeB: 1
       UseBeta: true
-      UseBias: true
+      UseBias: 1
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleDVec: false
@@ -26070,7 +26070,7 @@
       TransposeA: 0
       TransposeB: 1
       UseBeta: true
-      UseBias: true
+      UseBias: 1
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleDVec: false
@@ -26289,7 +26289,7 @@
       TransposeA: 0
       TransposeB: 1
       UseBeta: true
-      UseBias: true
+      UseBias: 1
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleDVec: false
@@ -26508,7 +26508,7 @@
       TransposeA: 0
       TransposeB: 1
       UseBeta: true
-      UseBias: true
+      UseBias: 1
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleDVec: false
@@ -26727,7 +26727,7 @@
       TransposeA: 0
       TransposeB: 1
       UseBeta: true
-      UseBias: true
+      UseBias: 1
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleDVec: false
@@ -26946,7 +26946,7 @@
       TransposeA: 0
       TransposeB: 1
       UseBeta: true
-      UseBias: true
+      UseBias: 1
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleDVec: false
@@ -27165,7 +27165,7 @@
       TransposeA: 0
       TransposeB: 1
       UseBeta: true
-      UseBias: true
+      UseBias: 1
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleDVec: false
@@ -27384,7 +27384,7 @@
       TransposeA: 0
       TransposeB: 1
       UseBeta: true
-      UseBias: true
+      UseBias: 1
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleDVec: false
@@ -27603,7 +27603,7 @@
       TransposeA: 0
       TransposeB: 1
       UseBeta: true
-      UseBias: true
+      UseBias: 1
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleDVec: false
@@ -27822,7 +27822,7 @@
       TransposeA: 0
       TransposeB: 1
       UseBeta: true
-      UseBias: true
+      UseBias: 1
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleDVec: false
@@ -28041,7 +28041,7 @@
       TransposeA: 0
       TransposeB: 1
       UseBeta: true
-      UseBias: true
+      UseBias: 1
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleDVec: false
@@ -28260,7 +28260,7 @@
       TransposeA: 0
       TransposeB: 1
       UseBeta: true
-      UseBias: true
+      UseBias: 1
       UseInitialStridesAB: false
       UseInitialStridesCD: false
       UseScaleDVec: false

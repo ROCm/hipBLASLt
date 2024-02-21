@@ -491,13 +491,11 @@ void testing_matmul(const Arguments& arg)
 
     // Calculating block count
     int32_t max_iters = max(arg.cold_iters, arg.iters);
-    rotating /= (1024 * 1024);
-    totalRotatingSizeNeeded /= (1024 * 1024);
     int32_t block_count = max(1, min(max_iters, ceil((float)rotating / totalRotatingSizeNeeded)));
     if(rotating > 0)
     {
-        hipblaslt_cout << "Rotating buffer " << rotating << " MiB. "
-                       << "Needed Size: " << totalRotatingSizeNeeded << " MiB. "
+        hipblaslt_cout << "Rotating buffer " << rotating/(1024 * 1024) << " MiB. "
+                       << "Needed Size: " << totalRotatingSizeNeeded/(1024 * 1024) << " MiB. "
                        << "Needed block count: " << block_count
                        << " (Capped to max iters: " << max_iters << ")" << std::endl;
     }

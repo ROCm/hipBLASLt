@@ -530,7 +530,7 @@ Tests:
   bias_vector: [0, 1]
   scaleAlpha_vector: [0, 1]
 
-# TODO: Complete all types other than TN, change bias to bf16_r
+# TODO: change bias to bf16_r
 - name: matmul_f8_bf8_dst_fp32
   category: pre_checkin
   function:
@@ -538,8 +538,7 @@ Tests:
   M: [128, 129]
   N: [128, 129]
   K: [128, 129]
-  transA: T
-  transB: N
+  transA_transB: *transA_transB_range
   alpha: 1
   beta: [ 0.0, 2.0 ]
   scaleA: [ 0, 1]
@@ -806,7 +805,6 @@ Tests:
   unit_check: 0
   norm_check: 1
 
-# TODO: Complete all types other than TN
 - name: matmul_bgradb_f8_bf8_dst_fp32
   category: pre_checkin
   function:
@@ -814,8 +812,7 @@ Tests:
   M: [128, 129]
   N: [128, 129]
   K: [128, 129]
-  transA: T
-  transB: N
+  transA_transB: *transA_transB_range
   alpha: 1
   beta: [ 0.0, 2.0 ]
   gradient: 1

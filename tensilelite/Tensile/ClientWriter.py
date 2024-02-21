@@ -1,6 +1,6 @@
 ################################################################################
 #
-# Copyright (C) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
+# Copyright (C) 2022-2024 Advanced Micro Devices, Inc. All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -26,7 +26,7 @@ from . import ClientExecutable
 from . import LibraryIO
 from .TensileInstructions import getGfxName, DataType, getCOVFromParam
 from .Common import globalParameters, pushWorkingPath, popWorkingPath, print1, printExit, CHeader, printWarning, listToInitializer, ClientExecutionLock
-from .SolutionStructs import Problem, ProblemType, ProblemSizesMock, ProblemSizesMockDummy, ActivationArgs, BiasTypeArgs
+from .SolutionStructs import Problem, ProblemType, ProblemSizesMock, ProblemSizesMockDummy, ActivationArgs, BiasTypeArgs, BiasDimArgs
 from .TensileCreateLibrary import copyStaticFiles
 
 import os
@@ -129,12 +129,16 @@ def main( config ):
         if "ActivationArgs" in lc:
           activationEnums = lc["ActivationArgs"]
           break
+        if "BiasDimArgs" in lc:
+          biasDimEnums = lc["BiasDimArgs"]
     activationArgs = ActivationArgs(problemType, activationEnums) if problemType["ActivationType"] == 'all' else ""
+    biasDimArgs = BiasDimArgs(problemType, biasDimEnums)
     clientParametersPaths.append(writeClientConfig(
                                   forBenchmark=False,
                                   solutions=None,
                                   problemSizes=problemSizes,
                                   biasTypeArgs=biasTypeArgs,
+                                  biasDimArgs=biasDimArgs,
                                   activationArgs=activationArgs,
                                   stepName=str(ProblemType(problemType)),
                                   stepBaseDir=globalParameters["WorkingPath"],
@@ -355,7 +359,7 @@ def checkConstStride(constStrideMap, keyIdx):
   return finalVal
 
 
-def problemSizeParams(problemType, problem):
+def problemSizeParams(problemType, problem, biasDim):
 
     numIndices = len(problemType.indices)
     rv = []
@@ -434,16 +438,25 @@ def problemSizeParams(problemType, problem):
       if problemType.useE:
           rv.append(('e-strides', ",".join(map(str, dstrides))))
     if problemType.useBias:
-      biasstrides = [1, problem.sizes[0], 0]
+      length = problem.sizes[0]
+      err_str = "M"
+      if problemType.sparse:
+        if len(biasDim) > 1:
+          length = max(problem.sizes[0], problem.sizes[1])
+          err_str = "max(M,N)"
+        elif 1 in biasDim:
+          length = problem.sizes[1]
+          err_str = "N"
+      biasstrides = [1, length, 0]
       for sc in problemType.setConstStrideBias:
         index = problemType.indices[sc[0]]
         if type(index) == BatchIndex:
             biasstrides[2] = sc[1]
       if biasstrides[2] == -1:
-        biasstrides[2] = problem.sizes[0]
-      elif biasstrides[2] != 0 and biasstrides[2] < problem.sizes[0]:
-        raise RuntimeError("problem-specified bias stride(%u) must >= M (%u)" % \
-              (biasstrides[2], problem.sizes[0]))
+        biasstrides[2] = length
+      elif biasstrides[2] != 0 and biasstrides[2] < length:
+        raise RuntimeError("problem-specified bias stride(%u) must >= %s (%u)" % \
+              (biasstrides[2], err_str, length))
       rv.append(('bias-strides', ",".join(map(str, biasstrides))))
 
     return rv
@@ -499,7 +512,7 @@ def pruneModeName(mode):
     if mode == 5: return 'Prune0X0X'
     if mode == 6: return 'Prune00XX'
 
-def writeClientConfigIni(problemSizes, biasTypeArgs, activationArgs, problemType, sourceDir, codeObjectFiles, resultsFileName, parametersFilePath, libraryFile=None):
+def writeClientConfigIni(problemSizes, biasTypeArgs, biasDimArgs, activationArgs, problemType, sourceDir, codeObjectFiles, resultsFileName, parametersFilePath, libraryFile=None):
 
     with open(parametersFilePath, "w") as f:
         def param(key, value):
@@ -539,13 +552,16 @@ def writeClientConfigIni(problemSizes, biasTypeArgs, activationArgs, problemType
         if biasTypeArgs:
           for btype in biasTypeArgs.biasTypes:
             param('bias-type-args',  btype.toEnum())
+        if biasDimArgs:
+          for bdim in biasDimArgs.biasDims:
+            param('bias-dim-args', bdim)
         param('sparse',   problemType.sparse)
         param('high-precision-accumulate', problemType.highPrecisionAccumulate)
         param('strided-batched', problemType.stridedBatched)
         param('grouped-gemm', problemType.groupedGemm)
 
         for problem in problemSizes.problems:
-            for key,value in problemSizeParams(problemType, problem):
+            for key,value in problemSizeParams(problemType, problem, biasDimArgs.biasDims):
                 param(key,value)
 
         if activationArgs:
@@ -615,7 +631,7 @@ def writeClientConfigIni(problemSizes, biasTypeArgs, activationArgs, problemType
         param("rotating-buffer-size",     globalParameters["RotatingBufferSize"])
 
 
-def writeClientConfig(forBenchmark, solutions, problemSizes, biasTypeArgs, activationArgs, stepName, stepBaseDir, newLibrary, codeObjectFiles, tileAwareSelection, configBase = "ClientParameters", libraryFile = None):
+def writeClientConfig(forBenchmark, solutions, problemSizes, biasTypeArgs, biasDimArgs, activationArgs, stepName, stepBaseDir, newLibrary, codeObjectFiles, tileAwareSelection, configBase = "ClientParameters", libraryFile = None):
 
     if tileAwareSelection:
       filename = os.path.join(globalParameters["WorkingPath"], "%s_Granularity.ini"%configBase)
@@ -633,7 +649,7 @@ def writeClientConfig(forBenchmark, solutions, problemSizes, biasTypeArgs, activ
 
     newSolution = next(iter(newLibrary.solutions.values()))
     sourceDir = os.path.join(stepBaseDir, "source")
-    writeClientConfigIni(problemSizes, biasTypeArgs, activationArgs, newSolution.problemType, sourceDir, codeObjectFiles, resultsFileName, filename, libraryFile)
+    writeClientConfigIni(problemSizes, biasTypeArgs, biasDimArgs, activationArgs, newSolution.problemType, sourceDir, codeObjectFiles, resultsFileName, filename, libraryFile)
 
     return filename
 
@@ -654,7 +670,7 @@ def CreateBenchmarkClientParametersForSizes(libraryRootPath, problemSizes, dataF
       problemTypeDict = metaData["ProblemType"]
       problemType = ContractionsProblemType.FromOriginalState(problemTypeDict)
 
-    writeClientConfigIni(problemSizes, "", problemType, libraryRootPath, codeObjectFiles, dataFilePath, configFile)
+    writeClientConfigIni(problemSizes, "", "", problemType, libraryRootPath, codeObjectFiles, dataFilePath, configFile)
 
 
 ################################################################################

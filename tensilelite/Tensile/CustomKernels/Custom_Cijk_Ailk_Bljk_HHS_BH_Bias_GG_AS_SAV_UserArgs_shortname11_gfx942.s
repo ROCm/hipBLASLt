@@ -54,7 +54,7 @@ custom.config:
       HighPrecisionAccumulate: True
       TransposeA: False
       TransposeB: False
-      UseBias: True
+      UseBias: 1
       Activation: True
       UseScaleAlphaVec: True
       UseBeta: True

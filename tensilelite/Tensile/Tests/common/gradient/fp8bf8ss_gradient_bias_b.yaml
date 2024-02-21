@@ -33,7 +33,7 @@ BenchmarkProblems:
       UseBeta: True
       Batched: True
       Gradient: True
-      UseBias: True
+      UseBias: 1
       BiasSrc: "B"
       BiasDataTypeList: [s,b]
       UseScaleAB: True
@@ -103,7 +103,7 @@ BenchmarkProblems:
       UseBeta: True
       Batched: True
       Gradient: True
-      UseBias: True
+      UseBias: 1
       BiasSrc: "B"
       BiasDataTypeList: [s,b]
       UseScaleAB: True
