@@ -5,7 +5,7 @@ Building and Installing
 Prerequisites
 =============
 
-* A ROCm enabled platform, more information `ROCm Documentation <https://docs.amd.com/>`_.
+* A ROCm enabled platform, more information `ROCm Documentation <https://rocm.docs.amd.com/>`_.
 * A compatible version of hipBLAS
 
 Installing pre-built packages
