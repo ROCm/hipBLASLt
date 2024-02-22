@@ -45,6 +45,28 @@
 #include <omp.h>
 #include <set>
 
+extern "C" __global__ void flush_icache()
+{
+    asm __volatile__("s_icache_inv \n\t"
+                     "s_nop 0 \n\t"
+                     "s_nop 0 \n\t"
+                     "s_nop 0 \n\t"
+                     "s_nop 0 \n\t"
+                     "s_nop 0 \n\t"
+                     "s_nop 0 \n\t"
+                     "s_nop 0 \n\t"
+                     "s_nop 0 \n\t"
+                     "s_nop 0 \n\t"
+                     "s_nop 0 \n\t"
+                     "s_nop 0 \n\t"
+                     "s_nop 0 \n\t"
+                     "s_nop 0 \n\t"
+                     "s_nop 0 \n\t"
+                     "s_nop 0 \n\t"
+                     "s_nop 0 \n\t" ::
+                         :);
+}
+
 template <typename Ti, typename Tc, typename To, typename Tbias, typename Tact, typename F>
 void epilogue_func(int64_t m,
                    int64_t n,
@@ -489,12 +511,12 @@ void testing_matmul(const Arguments& arg)
     }
 
     // Calculating block count
-    int32_t max_iters = max(arg.cold_iters, arg.iters);
+    int32_t max_iters   = max(arg.cold_iters, arg.iters);
     int32_t block_count = max(1, min(max_iters, ceil((float)rotating / totalRotatingSizeNeeded)));
     if(rotating > 0)
     {
-        hipblaslt_cout << "Rotating buffer " << rotating/(1024 * 1024) << " MiB. "
-                       << "Needed Size: " << totalRotatingSizeNeeded/(1024 * 1024) << " MiB. "
+        hipblaslt_cout << "Rotating buffer " << rotating / (1024 * 1024) << " MiB. "
+                       << "Needed Size: " << totalRotatingSizeNeeded / (1024 * 1024) << " MiB. "
                        << "Needed block count: " << block_count
                        << " (Capped to max iters: " << max_iters << ")" << std::endl;
     }
@@ -2170,6 +2192,39 @@ void testing_matmul(const Arguments& arg)
         int         number_cold_calls = arg.cold_iters;
         int         number_hot_calls  = arg.iters;
 
+        int    flush_iter      = 100000;
+        double flush_time_used = 0;
+        if(arg.flush)
+        {
+            for(int i = 0; i < flush_iter; i++)
+                hipLaunchKernelGGL(flush_icache, dim3(1024), dim3(1), 0, stream);
+
+            if(arg.use_gpu_timer)
+                CHECK_HIP_ERROR(hipEventRecord(event_gpu_time_start, stream));
+            else
+            {
+                CHECK_HIP_ERROR(hipStreamSynchronize(stream));
+                flush_time_used = get_time_us_sync(stream);
+            }
+            for(int i = 0; i < flush_iter; i++)
+                hipLaunchKernelGGL(flush_icache, dim3(1024), dim3(1), 0, stream);
+            if(arg.use_gpu_timer)
+            {
+                CHECK_HIP_ERROR(hipEventRecord(event_gpu_time_end, stream));
+                CHECK_HIP_ERROR(hipEventSynchronize(event_gpu_time_end));
+                float gpu_time_ms;
+                CHECK_HIP_ERROR(
+                    hipEventElapsedTime(&gpu_time_ms, event_gpu_time_start, event_gpu_time_end));
+                flush_time_used = gpu_time_ms * 1000; // ms to us
+            }
+            else
+            {
+                CHECK_HIP_ERROR(hipStreamSynchronize(stream));
+                flush_time_used = get_time_us_sync(stream) - flush_time_used;
+            }
+            flush_time_used /= flush_iter;
+        }
+
         for(size_t sol = 0; sol < heuristicResult.size(); sol++)
         {
             if(!do_grouped_gemm)
@@ -2192,7 +2247,11 @@ void testing_matmul(const Arguments& arg)
                     }
 
                     for(int i = 0; i < number_hot_calls; i++)
+                    {
                         CHECK_HIPBLASLT_ERROR(gemmVec[i % block_count].run(stream));
+                        if(arg.flush)
+                            hipLaunchKernelGGL(flush_icache, dim3(1024), dim3(1), 0, stream);
+                    }
                 }
                 else
                 {
@@ -2261,6 +2320,8 @@ void testing_matmul(const Arguments& arg)
                                                               workspace_size,
                                                               stream),
                                               HIPBLAS_STATUS_SUCCESS);
+                        if(arg.flush)
+                            hipLaunchKernelGGL(flush_icache, dim3(1024), dim3(1), 0, stream);
                     }
                 }
                 if(arg.use_gpu_timer)
@@ -2459,6 +2520,7 @@ void testing_matmul(const Arguments& arg)
                 (uint32_t)tuningVec[heuristicTuningIndex[sol]].splitK,
                 (uint32_t)tuningVec[heuristicTuningIndex[sol]].wgm,
                 gpu_time_used,
+                flush_time_used,
                 flops,
                 ArgumentLogging::NA_value,
                 cpu_time_used,
@@ -2496,6 +2558,7 @@ void testing_matmul(const Arguments& arg)
                 (uint32_t)tuningVec[heuristicTuningIndex[best_sol]].splitK,
                 (uint32_t)tuningVec[heuristicTuningIndex[best_sol]].wgm,
                 best_gpu_time,
+                flush_time_used,
                 best_flops,
                 ArgumentLogging::NA_value,
                 cpu_time_used,

@@ -539,6 +539,10 @@ try
          valueVec<uint32_t>(&wgm_vector),
          "[Tuning parameter] Set workgroup mapping for a solution, 0 is use solution's default value. (Only support GEMM + api_method mix or cpp)")
 
+        ("flush",
+        value<bool>(&arg.flush)->default_value(false),
+        "Flush icache, only works for gemm.")
+
         ("help,h", "produces this help message")
 
         ("version", "Prints the version number");
