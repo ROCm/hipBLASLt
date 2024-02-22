@@ -165,6 +165,7 @@ void Arguments::init()
     }
 
     print_solution_found = false;
+    flush                = false;
 }
 
 // Function to print Arguments out to stream in YAML format

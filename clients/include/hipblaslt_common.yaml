@@ -74,7 +74,7 @@ Real precisions 1 bytes: &real_precisions_1b
   - &bf8f8_precision_dst_fp32
     { a_type: bf8_r, b_type: f8_r, c_type: f32_r, d_type: f32_r, compute_type: c_f32_r, scale_type: f32_r}
   - &f8bf8_precision_dst_fp32
-    { a_type: f8_r, b_type: bf8_r, c_type: f32_r, d_type: f32_r, compute_type: c_f32_r, scale_type: f32_r}  
+    { a_type: f8_r, b_type: bf8_r, c_type: f32_r, d_type: f32_r, compute_type: c_f32_r, scale_type: f32_r}
   - &f8_precision_dst_fp16
     { a_type: f8_r, b_type: f8_r, c_type: f16_r, d_type: f16_r, compute_type: c_f32_r, scale_type: f32_r}
   - &bf8_precision_dst_fp16
@@ -259,6 +259,7 @@ Arguments:
   - wgm_vector: c_int32*32
   - print_solution_found: c_bool
   - print_kernel_info: c_bool
+  - flush: c_bool
 
 # These named dictionary lists [ {dict1}, {dict2}, etc. ] supply subsets of
 # test arguments in a structured way. The dictionaries are applied to the test
@@ -354,3 +355,4 @@ Defaults:
   wgm_vector: 0
   print_solution_found: false
   print_kernel_info: false
+  flush: false

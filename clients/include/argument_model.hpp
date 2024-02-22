@@ -2,7 +2,7 @@
  *
  * MIT License
  *
- * Copyright (C) 2022-2023 Advanced Micro Devices, Inc.
+ * Copyright (C) 2022-2024 Advanced Micro Devices, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -55,6 +55,7 @@ public:
                   hipblaslt_internal_ostream& val_line,
                   const Arguments&            arg,
                   double                      gpu_us,
+                  double                      flush_us,
                   double                      gflops,
                   double                      gbytes,
                   double                      cpu_us,
@@ -70,6 +71,11 @@ public:
         // gpu time is total cumulative over hot calls, cpu is not
         if(hot_calls > 1)
             gpu_us /= hot_calls;
+
+        if(flush_us > 0)
+        {
+            gpu_us -= flush_us;
+        }
 
         // per/us to per/sec *10^6
         double hipblaslt_gflops = gflops * batch_count / gpu_us * 1e6;
@@ -142,6 +148,7 @@ public:
                   uint32_t                    splitK,
                   uint32_t                    wgm,
                   double                      gpu_us,
+                  double                      flush_us,
                   double                      gflops,
                   double                      gpu_bytes = ArgumentLogging::NA_value,
                   double                      cpu_us    = ArgumentLogging::NA_value,
@@ -189,6 +196,7 @@ public:
                      value_list,
                      arg,
                      gpu_us,
+                     flush_us,
                      gflops,
                      gpu_bytes,
                      cpu_us,

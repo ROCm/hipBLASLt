@@ -42,9 +42,31 @@
 #include <hipblaslt/hipblaslt-ext-op.h>
 #include <hipblaslt/hipblaslt-ext.hpp>
 #include <hipblaslt/hipblaslt.h>
+#include <map>
 #include <omp.h>
 #include <set>
-#include <map>
+
+extern "C" __global__ void flush_icache()
+{
+    asm __volatile__("s_icache_inv \n\t"
+                     "s_nop 0 \n\t"
+                     "s_nop 0 \n\t"
+                     "s_nop 0 \n\t"
+                     "s_nop 0 \n\t"
+                     "s_nop 0 \n\t"
+                     "s_nop 0 \n\t"
+                     "s_nop 0 \n\t"
+                     "s_nop 0 \n\t"
+                     "s_nop 0 \n\t"
+                     "s_nop 0 \n\t"
+                     "s_nop 0 \n\t"
+                     "s_nop 0 \n\t"
+                     "s_nop 0 \n\t"
+                     "s_nop 0 \n\t"
+                     "s_nop 0 \n\t"
+                     "s_nop 0 \n\t" ::
+                         :);
+}
 
 template <typename Ti, typename Tc, typename To, typename Tbias, typename Tact, typename F>
 void epilogue_func(int64_t m,
@@ -224,27 +246,27 @@ void testing_matmul_bad_arg(const Arguments& arg)
 }
 
 template <typename To, typename Tbias>
-void check(hipStream_t                          stream,
-           const Arguments&                     arg,
-           const uint32_t&                      gemm_count,
-           const std::vector<int64_t>&          M,
-           const std::vector<int64_t>&          N,
-           const std::vector<int64_t>&          ldd,
-           const std::vector<int64_t>&          lde,
-           const std::vector<int64_t>&          stride_d,
-           const std::vector<int64_t>&          stride_e,
-           const std::vector<int>&              num_batches,
-           const std::vector<size_t>&           size_bias,
-           std::vector<host_vector<To>*>&       hD_gold,
-           std::vector<host_vector<To>*>&       hD_1,
-           std::vector<device_vector<To>*>&     dD,
-           std::vector<host_vector<To>*>&       hE_gold,
-           std::vector<host_vector<To>*>&       hE,
-           std::vector<device_vector<To>*>&     dE,
-           std::vector<host_vector<Tbias>*>&    hBias_gold,
-           std::vector<host_vector<Tbias>*>&    hBias,
-           std::vector<device_vector<Tbias>*>&  dBias,
-           double&                              hipblaslt_error)
+void check(hipStream_t                         stream,
+           const Arguments&                    arg,
+           const uint32_t&                     gemm_count,
+           const std::vector<int64_t>&         M,
+           const std::vector<int64_t>&         N,
+           const std::vector<int64_t>&         ldd,
+           const std::vector<int64_t>&         lde,
+           const std::vector<int64_t>&         stride_d,
+           const std::vector<int64_t>&         stride_e,
+           const std::vector<int>&             num_batches,
+           const std::vector<size_t>&          size_bias,
+           std::vector<host_vector<To>*>&      hD_gold,
+           std::vector<host_vector<To>*>&      hD_1,
+           std::vector<device_vector<To>*>&    dD,
+           std::vector<host_vector<To>*>&      hE_gold,
+           std::vector<host_vector<To>*>&      hE,
+           std::vector<device_vector<To>*>&    dE,
+           std::vector<host_vector<Tbias>*>&   hBias_gold,
+           std::vector<host_vector<Tbias>*>&   hBias,
+           std::vector<device_vector<Tbias>*>& dBias,
+           double&                             hipblaslt_error)
 {
     // fetch GPU
     CHECK_HIP_ERROR(hipStreamSynchronize(stream));
@@ -318,13 +340,13 @@ void check(hipStream_t                          stream,
             if(arg.gradient && arg.bias_vector)
             {
                 double norm_error = std::abs(norm_check_general<Tbias>('F',
-                                                                        M[gemmIdx],
-                                                                        1,
-                                                                        M[gemmIdx],
-                                                                        M[gemmIdx],
-                                                                        *(hBias_gold[gemmIdx]),
-                                                                        *(hBias[gemmIdx]),
-                                                                        num_batches[gemmIdx]));
+                                                                       M[gemmIdx],
+                                                                       1,
+                                                                       M[gemmIdx],
+                                                                       M[gemmIdx],
+                                                                       *(hBias_gold[gemmIdx]),
+                                                                       *(hBias[gemmIdx]),
+                                                                       num_batches[gemmIdx]));
                 hipblaslt_error += norm_error;
                 if(arg.norm_check_assert)
                     CHECK_SUCCESS(norm_check<Tbias>(norm_error));
@@ -345,12 +367,13 @@ hipDataType derive_unset_bias_type(const Arguments& arg)
     // when bias type is unset.
     if(arg.bias_type == HIPBLASLT_DATATYPE_INVALID)
     {
-        if(arg.compute_type == HIPBLAS_COMPUTE_32I || arg.compute_type == HIPBLAS_COMPUTE_32F_FAST_TF32)
+        if(arg.compute_type == HIPBLAS_COMPUTE_32I
+           || arg.compute_type == HIPBLAS_COMPUTE_32F_FAST_TF32)
         {
             real_bias_type = HIP_R_32F;
         }
         else if((arg.a_type == HIP_R_8F_E4M3_FNUZ || arg.a_type == HIP_R_8F_E5M2_FNUZ)
-            && (arg.b_type == HIP_R_8F_E4M3_FNUZ || arg.b_type == HIP_R_8F_E5M2_FNUZ))
+                && (arg.b_type == HIP_R_8F_E4M3_FNUZ || arg.b_type == HIP_R_8F_E5M2_FNUZ))
         {
             if(arg.d_type == HIP_R_32F || arg.d_type == HIP_R_16BF)
                 real_bias_type = HIP_R_16BF;
@@ -366,7 +389,8 @@ hipDataType derive_unset_bias_type(const Arguments& arg)
     }
 
     if(supported_bias_types.count(real_bias_type) == 0)
-        throw std::invalid_argument("Invalid bias type " + std::string(hip_datatype_to_string(real_bias_type)));
+        throw std::invalid_argument("Invalid bias type "
+                                    + std::string(hip_datatype_to_string(real_bias_type)));
 
     return real_bias_type;
 }
@@ -447,9 +471,9 @@ void testing_matmul_with_bias(const Arguments& arg)
     std::vector<device_vector<To>*>    dE(gemm_count);
     std::vector<device_vector<Tbias>*> dBias(gemm_count);
 
-    std::vector<host_vector<TiA>*> hA(gemm_count);
-    std::vector<host_vector<TiB>*> hB(gemm_count);
-    std::vector<host_vector<To>*>  hC(gemm_count), hD_gold(gemm_count), hD_1(gemm_count);
+    std::vector<host_vector<TiA>*>    hA(gemm_count);
+    std::vector<host_vector<TiB>*>    hB(gemm_count);
+    std::vector<host_vector<To>*>     hC(gemm_count), hD_gold(gemm_count), hD_1(gemm_count);
     std::vector<host_vector<Talpha>*> hD_gold_epl(gemm_count), hScaleAlphaVec(gemm_count),
         hD_gold_ScaleAlpha(gemm_count), hBias_gold_epl(gemm_count), hScaleA(gemm_count),
         hScaleB(gemm_count), hScaleC(gemm_count), hScaleD(gemm_count), hScaleE(gemm_count);
@@ -511,20 +535,20 @@ void testing_matmul_with_bias(const Arguments& arg)
         {
             size_bias[i] = 0;
         }
-        auto biasSize = size_bias[i] * sizeof(Tbias);
-        int64_t sizeC = h_beta[i] == 0 ? 0 : size_C[i] * sizeof(To);
+        auto    biasSize = size_bias[i] * sizeof(Tbias);
+        int64_t sizeC    = h_beta[i] == 0 ? 0 : size_C[i] * sizeof(To);
         totalRotatingSizeNeeded += size_A[i] * sizeof(TiA) + size_B[i] * sizeof(TiB) + sizeC
                                    + size_D[i] * sizeof(To) + size_E[i] * sizeof(To) + biasSize
                                    + size_scaleAlphaVec[i] * sizeof(Talpha);
     }
 
     // Calculating block count
-    int32_t max_iters = max(arg.cold_iters, arg.iters);
+    int32_t max_iters   = max(arg.cold_iters, arg.iters);
     int32_t block_count = max(1, min(max_iters, ceil((float)rotating / totalRotatingSizeNeeded)));
     if(rotating > 0)
     {
-        hipblaslt_cout << "Rotating buffer " << rotating/(1024 * 1024) << " MiB. "
-                       << "Needed Size: " << totalRotatingSizeNeeded/(1024 * 1024) << " MiB. "
+        hipblaslt_cout << "Rotating buffer " << rotating / (1024 * 1024) << " MiB. "
+                       << "Needed Size: " << totalRotatingSizeNeeded / (1024 * 1024) << " MiB. "
                        << "Needed block count: " << block_count
                        << " (Capped to max iters: " << max_iters << ")" << std::endl;
     }
@@ -2095,6 +2119,11 @@ void testing_matmul_with_bias(const Arguments& arg)
     }
     else
     {
+        // Get device information
+        hipDeviceProp_t deviceProps;
+        CHECK_HIP_ERROR(hipGetDeviceProperties(&deviceProps, 0));
+        int32_t gpu_block3 = deviceProps.multiProcessorCount * 60;
+
         size_t      best_sol          = -1;
         double      best_flops        = 0.0;
         double      best_gpu_time     = std::numeric_limits<double>::max();
@@ -2102,6 +2131,39 @@ void testing_matmul_with_bias(const Arguments& arg)
         std::string best_k_name       = "";
         int         number_cold_calls = arg.cold_iters;
         int         number_hot_calls  = arg.iters;
+
+        int    flush_iter      = 100000;
+        double flush_time_used = 0;
+        if(arg.flush)
+        {
+            for(int i = 0; i < flush_iter; i++)
+                hipLaunchKernelGGL(flush_icache, dim3(gpu_block3), dim3(64), 0, stream);
+
+            if(arg.use_gpu_timer)
+                CHECK_HIP_ERROR(hipEventRecord(event_gpu_time_start, stream));
+            else
+            {
+                CHECK_HIP_ERROR(hipStreamSynchronize(stream));
+                flush_time_used = get_time_us_sync(stream);
+            }
+            for(int i = 0; i < flush_iter; i++)
+                hipLaunchKernelGGL(flush_icache, dim3(gpu_block3), dim3(64), 0, stream);
+            if(arg.use_gpu_timer)
+            {
+                CHECK_HIP_ERROR(hipEventRecord(event_gpu_time_end, stream));
+                CHECK_HIP_ERROR(hipEventSynchronize(event_gpu_time_end));
+                float gpu_time_ms;
+                CHECK_HIP_ERROR(
+                    hipEventElapsedTime(&gpu_time_ms, event_gpu_time_start, event_gpu_time_end));
+                flush_time_used = gpu_time_ms * 1000; // ms to us
+            }
+            else
+            {
+                CHECK_HIP_ERROR(hipStreamSynchronize(stream));
+                flush_time_used = get_time_us_sync(stream) - flush_time_used;
+            }
+            flush_time_used /= flush_iter;
+        }
 
         for(size_t sol = 0; sol < heuristicResult.size(); sol++)
         {
@@ -2125,7 +2187,11 @@ void testing_matmul_with_bias(const Arguments& arg)
                     }
 
                     for(int i = 0; i < number_hot_calls; i++)
+                    {
                         CHECK_HIPBLASLT_ERROR(gemmVec[i % block_count].run(stream));
+                        if(arg.flush)
+                            hipLaunchKernelGGL(flush_icache, dim3(gpu_block3), dim3(64), 0, stream);
+                    }
                 }
                 else
                 {
@@ -2194,6 +2260,8 @@ void testing_matmul_with_bias(const Arguments& arg)
                                                               workspace_size,
                                                               stream),
                                               HIPBLAS_STATUS_SUCCESS);
+                        if(arg.flush)
+                            hipLaunchKernelGGL(flush_icache, dim3(gpu_block3), dim3(64), 0, stream);
                     }
                 }
                 if(arg.use_gpu_timer)
@@ -2389,6 +2457,7 @@ void testing_matmul_with_bias(const Arguments& arg)
                 (uint32_t)tuningVec[heuristicTuningIndex[sol]].splitK,
                 (uint32_t)tuningVec[heuristicTuningIndex[sol]].wgm,
                 gpu_time_used,
+                flush_time_used,
                 flops,
                 ArgumentLogging::NA_value,
                 cpu_time_used,
@@ -2426,6 +2495,7 @@ void testing_matmul_with_bias(const Arguments& arg)
                 (uint32_t)tuningVec[heuristicTuningIndex[best_sol]].splitK,
                 (uint32_t)tuningVec[heuristicTuningIndex[best_sol]].wgm,
                 best_gpu_time,
+                flush_time_used,
                 best_flops,
                 ArgumentLogging::NA_value,
                 cpu_time_used,

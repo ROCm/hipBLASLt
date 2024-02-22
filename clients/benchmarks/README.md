@@ -70,6 +70,7 @@ cd hipBLASLt; cd build/release
 --use_gpu_timer            Use hipEventElapsedTime to profile elapsed time.                                    (Default value is: false)
 --splitk <value>           [Tuning parameter] Set split K for a solution, 0 is use solution's default value. (Only support GEMM + api_method mix or cpp)
 --wgm <value>              [Tuning parameter] Set workgroup mapping for a solution, 0 is use solution's default value. (Only support GEMM + api_method mix or cpp)
+--flush                    Flush icache
 --help |-h                 produces this help message
 --version <value>          Prints the version number
 ```
