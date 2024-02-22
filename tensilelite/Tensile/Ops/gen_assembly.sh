@@ -63,7 +63,7 @@ for arch in "${archs[@]}"; do
         objs+=($o)
     done
     wait
-    ${toolchain} -target amdgcn-amdhsa -o $dst/extop_$arch.co ${objs[@]}
+    ${toolchain} -target amdgcn-amdhsa -Xlinker --build-id -o $dst/extop_$arch.co ${objs[@]}
     python3 ./ExtOpCreateLibrary.py --src=$dst --co=$dst/extop_$arch.co --output=$dst --arch=$arch
 done
 

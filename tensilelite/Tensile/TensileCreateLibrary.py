@@ -244,6 +244,7 @@ def buildSourceCodeObjectFile(CxxCompiler, outputPath, kernelFile):
       hipFlags = ["--genco", "-D__HIP_HCC_COMPAT_MODE__=1"] #needs to be fixed when Maneesh's change is made available
 
       hipFlags += ['-I', outputPath]
+      hipFlags += ["-Xoffload-linker", "--build-id"]
       hipFlags += ['-std=c++17']
       if globalParameters["SaveTemps"]:
         hipFlags += ['--save-temps']
