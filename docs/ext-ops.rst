@@ -19,6 +19,10 @@ hipblasltExtAMax()
 ------------------------------------------
 .. doxygenfunction:: hipblasltExtAMax
 
+hipblasltExtAMaxWithScale()
+------------------------------------------
+.. doxygenfunction:: hipblasltExtAMaxWithScale
+
 
 hipblasLtExt Operation Usage
 ================================
@@ -42,3 +46,7 @@ hipBLASLt has extension operation APIs which is independent to gemm operation wi
     | it is a independent function which can just call and get result.
     | sample code is in clients/samples/ext_op/sample_hipblaslt_ext_op_amax.cpp
 
+4. hipblasltExtAMaxWithScale
+    | Abs Maximum value and scaled output of a 2D tensor.
+    | it is a independent function which can just call and get result.
+    | sample code is in clients/samples/ext_op/sample_hipblaslt_ext_op_amax_with_scale.cpp

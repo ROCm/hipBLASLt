@@ -135,33 +135,33 @@ HIPBLASLT_EXPORT hipblasStatus_t hipblasltExtLayerNorm(hipDataType datatype,
  *  \brief Perform absmax on given 2-D tensor and output one value absmax(tensor) value.
  *
  *  \details
- *  This function computes amax on given 1D-tensor.
+ *  This function computes amax on given 2D-tensor.
  *
  *  @param[in]
- *  datatype Datatype of input/output tensor, currently support HIP_R_32F and HIP_R_16F only.
+ *  datatype Datatype of input tensor, currently support HIP_R_32F and HIP_R_16F only.
  *
  *  @param[in]
- *  outDatatype Datatype of input/output tensor, currently support HIP_R_32F and HIP_R_16F only.
+ *  outDatatype Datatype of output tensor, currently support HIP_R_32F and HIP_R_16F only.
  *
  *  @param[out]
- *  output output tensor buffer. can't be nullptr.
+ *  output Amax tensor buffer. can't be nullptr.
  *
  *  @param[in]
- *  input tensor buffer. can't be nullptr.
+ *  input 2-D tensor buffer. can't be nullptr.
  *
  *  @param[in]
  *  m The first dimension of input/output tensor.
  *
  *  @param[in]
- *  n The first dimension of input/output tensor.
+ *  n The second dimension of input/output tensor.
  *
  *  @param[in]
  *  stream The HIP stream where all the GPU work will be submitted.
  *
  *
  *  \retval HIPBLAS_STATUS_SUCCESS If it runs successfully.
- *  \retval HIPBLAS_STATUS_INVALID_VALUE If \p m is greater than 4096.
- *  \retval HIPBLAS_STATUS_NOT_SUPPORTED if \p datatype is not (HIP_R_32F or HIP_R_16F).
+ *  \retval HIPBLAS_STATUS_INVALID_VALUE If \p m or n is 0, or input or output is nullptr.
+ *  \retval HIPBLAS_STATUS_NOT_SUPPORTED If \p datatype is not (HIP_R_32F or HIP_R_16F).
  */
 HIPBLASLT_EXPORT hipblasStatus_t hipblasltExtAMax(const hipDataType datatype,
                                                   const hipDataType outDatatype,
@@ -170,6 +170,58 @@ HIPBLASLT_EXPORT hipblasStatus_t hipblasltExtAMax(const hipDataType datatype,
                                                   uint32_t          m,
                                                   uint32_t          n,
                                                   hipStream_t       stream);
+
+/*! \ingroup library_module
+ *  \brief Perform absmax and scaling on given 2-D tensor. Generate one absmax value and scaled 2-D tensor output.
+ *
+ *  \details
+ *  This function computes amax and scaling on given 2D-tensor.
+ *
+ *  @param[in]
+ *  datatype Datatype of input tensor, currently support HIP_R_32F only.
+ *
+ *  @param[in]
+ *  outDatatype Datatype of output tensor, currently support HIP_R_32F and HIP_R_16F only.
+ *
+ *  @param[in]
+ *  scaleDatatype Datatype of outputD tensor, currently support HIP_R_8F_E4M3_FNUZ and HIP_R_8F_E5M2_FNUZ only.
+ *
+ *  @param[out]
+ *  output Amax tensor buffer. can't be nullptr.
+ *
+ *  @param[out]
+ *  outputD scaled 2-D tensor buffer. can't be nullptr.
+ *
+ *  @param[in]
+ *  input 2-D tensor buffer. can't be nullptr.
+ *
+ *  @param[in]
+ *  inputScale 1-D tensor buffer. can't be nullptr. only support float.
+ *
+ *  @param[in]
+ *  m The first dimension of input/output tensor.
+ *
+ *  @param[in]
+ *  n The second dimension of input/output tensor.
+ *
+ *  @param[in]
+ *  stream The HIP stream where all the GPU work will be submitted.
+ *
+ *
+ *  \retval HIPBLAS_STATUS_SUCCESS If it runs successfully.
+ *  \retval HIPBLAS_STATUS_INVALID_VALUE If \p m or n is 0, or input, inputScale, output, or outputD is nullptr.
+ *  \retval HIPBLAS_STATUS_NOT_SUPPORTED If \p datatype is not HIP_R_32F, or scaleDatatype is not HIP_R_8F_E4M3_FNUZ or HIP_R_8F_E5M2_FNUZ.
+ */
+HIPBLASLT_EXPORT hipblasStatus_t hipblasltExtAMaxWithScale(const hipDataType datatype,
+                                                           const hipDataType outDatatype,
+                                                           const hipDataType scaleDatatype,
+                                                           void*             output,
+                                                           void*             outputD,
+                                                           void*             input,
+                                                           void*             inputScale,
+                                                           uint32_t          m,
+                                                           uint32_t          n,
+                                                           hipStream_t       stream);
 #ifdef __cplusplus
 }
 #endif

@@ -9,6 +9,8 @@
 #include <numeric>
 #include <vector>
 
+#include "hipblaslt_arguments.hpp"
+
 namespace
 {
     template <typename DType>
@@ -99,12 +101,34 @@ namespace
         }
         out[0] = To(m);
     }
+
+    template <typename Ti, typename To, typename Ts>
+    void cpuAMaxWithScale(To* out, Ts* outD, Ti* in, float* in_scale, std::uint32_t length)
+    {
+        // calculate amax
+        Ti m = 0;
+        for(int j = 0; j < length; j++)
+        {
+            m       = max(m, abs(in[j]));
+            outD[j] = static_cast<Ts>(in[j] * in_scale[0]);
+        }
+        out[0] = To(m);
+    }
 }
 
 struct AMaxTestData
 {
     hipDataType type;
     hipDataType dtype;
+    uint32_t    m;
+    uint32_t    n;
+};
+
+struct AMaxWithScaleTestData
+{
+    hipDataType type;
+    hipDataType dtype;
+    hipDataType scaleType;
     uint32_t    m;
     uint32_t    n;
 };
@@ -124,6 +148,9 @@ class ExtOpLayerNormUnsupportedDatatypeTest : public testing::TestWithParam<hipD
 };
 
 class ExtOpAMaxTest : public testing::TestWithParam<AMaxTestData>
+{
+};
+class ExtOpAMaxWithScaleTest : public testing::TestWithParam<AMaxWithScaleTestData>
 {
 };
 class ExtOpAMaxUnsupportedDatatypeTest : public testing::TestWithParam<hipDataType>
@@ -247,7 +274,6 @@ TEST_P(ExtOpLayerNormTest, layernormSuccess)
 template <typename Ti, typename To>
 void AMaxTest(hipDataType type, hipDataType dtype, std::size_t m, std::size_t n)
 {
-
     std::size_t numElements = m * n;
     std::size_t inNumBytes  = sizeof(Ti);
     std::size_t outNumBytes = sizeof(To);
@@ -267,8 +293,7 @@ void AMaxTest(hipDataType type, hipDataType dtype, std::size_t m, std::size_t n)
     hipErr = hipMemcpyHtoD(gpuInput, cpuInput.data(), m * n * inNumBytes);
 
     hipStream_t stream{};
-    hipErr = hipStreamCreate(&stream);
-
+    hipErr            = hipStreamCreate(&stream);
     auto hipblasltErr = hipblasltExtAMax(type, dtype, gpuOutput, gpuInput, m, n, stream);
 
     hipErr = hipMemcpyDtoH(cpuOutput.data(), gpuOutput, outNumBytes);
@@ -282,18 +307,116 @@ void AMaxTest(hipDataType type, hipDataType dtype, std::size_t m, std::size_t n)
     hipErr = hipFree(gpuInput);
 }
 
+template <typename Ti, typename To, typename Ts>
+void AMaxTestWithScale(
+    hipDataType type, hipDataType dtype, hipDataType scaleType, std::size_t m, std::size_t n)
+{
+    int             deviceId;
+    hipDeviceProp_t deviceProperties;
+    static_cast<void>(hipGetDevice(&deviceId));
+    static_cast<void>(hipGetDeviceProperties(&deviceProperties, deviceId));
+    if(!gpu_arch_match(deviceProperties.gcnArchName, "94?"))
+        return;
+
+    std::size_t numElements   = m * n;
+    std::size_t inNumBytes    = sizeof(Ti);
+    std::size_t outNumBytes   = sizeof(To);
+    std::size_t scaleNumBytes = sizeof(Ts);
+
+    To*    gpuOutput{nullptr};
+    Ti*    gpuInput{nullptr};
+    Ts*    gpuOutputD;
+    float* gpuInputScale;
+
+    auto hipErr = hipMalloc(&gpuOutput, outNumBytes);
+    hipErr      = hipMalloc(&gpuInput, m * n * inNumBytes);
+    hipErr      = hipMalloc(&gpuOutputD, m * n);
+    hipErr      = hipMalloc(&gpuInputScale, 1 * sizeof(float));
+
+    std::vector<To>    cpuOutput(1, 0.f);
+    std::vector<Ti>    cpuInput(m * n, 0.f);
+    std::vector<To>    refOutput(1, 0.f);
+    std::vector<Ts>    cpuOutputD(m * n);
+    std::vector<float> cpuInputScale(1);
+    std::vector<Ts>    refOutputD(m * n);
+
+    hipblaslt_init_hpl(cpuInput, m * n, 1, m * n);
+    cpuInputScale[0] = (float)0.317;
+
+    hipErr = hipMemcpyHtoD(gpuInput, cpuInput.data(), m * n * inNumBytes);
+    hipErr = hipMemcpyHtoD(gpuInputScale, cpuInputScale.data(), 1 * sizeof(float));
+
+    hipStream_t stream{};
+    hipErr            = hipStreamCreate(&stream);
+    auto hipblasltErr = hipblasltExtAMaxWithScale(
+        type, dtype, scaleType, gpuOutput, gpuOutputD, gpuInput, gpuInputScale, m, n, stream);
+
+    hipErr = hipMemcpyDtoH(cpuOutput.data(), gpuOutput, outNumBytes);
+    hipErr = hipMemcpyDtoH(cpuOutputD.data(), gpuOutputD, m * n * scaleNumBytes);
+
+    cpuAMaxWithScale(
+        refOutput.data(), refOutputD.data(), cpuInput.data(), cpuInputScale.data(), m * n);
+
+    EXPECT_NEAR(float(refOutput[0]), float(cpuOutput[0]), 1e-5);
+    for(int i = 0; i < m * n; i++)
+        EXPECT_NEAR(float(refOutputD[i]), float(cpuOutputD[i]), 1e-5);
+
+    hipErr = hipStreamDestroy(stream);
+    hipErr = hipFree(gpuOutput);
+    hipErr = hipFree(gpuInput);
+    hipErr = hipFree(gpuOutputD);
+    hipErr = hipFree(gpuInputScale);
+}
+
 TEST_P(ExtOpAMaxTest, amaxSuccess)
 {
     AMaxTestData testdata = GetParam();
     if(testdata.type == HIP_R_32F && testdata.dtype == HIP_R_32F)
+    {
         AMaxTest<float, float>(testdata.type, testdata.dtype, testdata.m, testdata.n);
+    }
     else if(testdata.type == HIP_R_32F && testdata.dtype == HIP_R_16F)
+    {
         AMaxTest<float, hipblasLtHalf>(testdata.type, testdata.dtype, testdata.m, testdata.n);
+    }
     else if(testdata.type == HIP_R_16F && testdata.dtype == HIP_R_32F)
+    {
         AMaxTest<hipblasLtHalf, float>(testdata.type, testdata.dtype, testdata.m, testdata.n);
+    }
     else if(testdata.type == HIP_R_16F && testdata.dtype == HIP_R_16F)
+    {
         AMaxTest<hipblasLtHalf, hipblasLtHalf>(
             testdata.type, testdata.dtype, testdata.m, testdata.n);
+    }
+}
+
+TEST_P(ExtOpAMaxWithScaleTest, amaxSuccess)
+{
+    AMaxWithScaleTestData testdata = GetParam();
+    if(testdata.type == HIP_R_32F && testdata.dtype == HIP_R_32F
+       && testdata.scaleType == HIP_R_8F_E4M3_FNUZ)
+    {
+        AMaxTestWithScale<float, float, hipblaslt_f8_fnuz>(
+            testdata.type, testdata.dtype, testdata.scaleType, testdata.m, testdata.n);
+    }
+    else if(testdata.type == HIP_R_32F && testdata.dtype == HIP_R_32F
+            && testdata.scaleType == HIP_R_8F_E5M2_FNUZ)
+    {
+        AMaxTestWithScale<float, float, hipblaslt_bf8_fnuz>(
+            testdata.type, testdata.dtype, testdata.scaleType, testdata.m, testdata.n);
+    }
+    else if(testdata.type == HIP_R_32F && testdata.dtype == HIP_R_16F
+            && testdata.scaleType == HIP_R_8F_E4M3_FNUZ)
+    {
+        AMaxTestWithScale<float, hipblasLtHalf, hipblaslt_f8_fnuz>(
+            testdata.type, testdata.dtype, testdata.scaleType, testdata.m, testdata.n);
+    }
+    else if(testdata.type == HIP_R_32F && testdata.dtype == HIP_R_16F
+            && testdata.scaleType == HIP_R_8F_E5M2_FNUZ)
+    {
+        AMaxTestWithScale<float, hipblasLtHalf, hipblaslt_bf8_fnuz>(
+            testdata.type, testdata.dtype, testdata.scaleType, testdata.m, testdata.n);
+    }
 }
 
 TEST_P(ExtOpSoftmaxUnsupportedDatatypeTest, softmaxFailureUnsupportedDatatype)
@@ -366,3 +489,20 @@ INSTANTIATE_TEST_SUITE_P(
 INSTANTIATE_TEST_SUITE_P(ExtOpTest,
                          ExtOpAMaxUnsupportedDatatypeTest,
                          testing::Values<hipDataType>(HIP_R_16BF));
+
+INSTANTIATE_TEST_SUITE_P(
+    ExtOpTest,
+    ExtOpAMaxWithScaleTest,
+    testing::Values<AMaxWithScaleTestData>(
+        AMaxWithScaleTestData{HIP_R_32F, HIP_R_32F, HIP_R_8F_E4M3_FNUZ, 1, 1},
+        AMaxWithScaleTestData{HIP_R_32F, HIP_R_32F, HIP_R_8F_E5M2_FNUZ, 1, 1},
+        AMaxWithScaleTestData{HIP_R_32F, HIP_R_32F, HIP_R_8F_E4M3_FNUZ, 16, 16},
+        AMaxWithScaleTestData{HIP_R_32F, HIP_R_32F, HIP_R_8F_E5M2_FNUZ, 16, 16},
+        AMaxWithScaleTestData{HIP_R_32F, HIP_R_32F, HIP_R_8F_E4M3_FNUZ, 1335, 666},
+        AMaxWithScaleTestData{HIP_R_32F, HIP_R_32F, HIP_R_8F_E5M2_FNUZ, 1335, 666},
+        AMaxWithScaleTestData{HIP_R_32F, HIP_R_16F, HIP_R_8F_E4M3_FNUZ, 1, 1},
+        AMaxWithScaleTestData{HIP_R_32F, HIP_R_16F, HIP_R_8F_E5M2_FNUZ, 1, 1},
+        AMaxWithScaleTestData{HIP_R_32F, HIP_R_16F, HIP_R_8F_E4M3_FNUZ, 16, 16},
+        AMaxWithScaleTestData{HIP_R_32F, HIP_R_16F, HIP_R_8F_E5M2_FNUZ, 16, 16},
+        AMaxWithScaleTestData{HIP_R_32F, HIP_R_16F, HIP_R_8F_E4M3_FNUZ, 1335, 666},
+        AMaxWithScaleTestData{HIP_R_32F, HIP_R_16F, HIP_R_8F_E5M2_FNUZ, 1335, 666}));
