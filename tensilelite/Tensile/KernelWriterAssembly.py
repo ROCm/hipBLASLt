@@ -3893,7 +3893,7 @@ class KernelWriterAssembly(KernelWriter):
         if kernel["PrefetchGlobalRead"]==2:
           with self.allocTmpSgpr(2) as tmpSgprInfo:
             tmpSgpr = tmpSgprInfo.idx
-            module.add(SCmpEQU32(dst=sgpr("StaggerU"), src=0))
+            module.add(SCmpEQU32(src0=sgpr("StaggerU"), src1=0))
             module.add(SCSelectB32(dst=sgpr(tmpSgpr), src0=hex(2), src1=hex(1)))
             decCode = SSubU32(dst=loopCounter, src0=loopCounter, \
                 src1=sgpr(tmpSgpr), \
@@ -5279,6 +5279,8 @@ class KernelWriterAssembly(KernelWriter):
                 # FIXME: Don't know why for grvw == 1, need further investigate
                 glvwWorkaround = 8 * kernel["ProblemType"]["DataType"].numRegisters()
                 dataType = kernel["ProblemType"]["DataType"] if tP["glvw"] < glvwWorkaround else kernel["ProblemType"]["DataType%s"%tcDataType]
+                if kernel["ConvertAfterDS"]:
+                    dataType = kernel["ProblemType"]["DataType%s"%tcDataType]
                 if dataType.isInt8() or dataType.is8bitFloat() or tP["isM"]:
                   # TODO-Int8, Check this:
                   # if tP["glvw"]>1 and kernel["AssertSummationElementMultiple"] % 2 == 0:
@@ -5295,7 +5297,8 @@ class KernelWriterAssembly(KernelWriter):
                   regIdx = r // 4
                   if (tP["localWriteInstruction"].blockWidth <= 0.5) and (r%2 == 0) and not tP["isM"]:
                       numVgprG2L = self.states.a.numVgprG2L if tc == 'A' else self.states.b.numVgprG2L
-                      eccOffset = _getEccOffset(tP["globalReadInstruction"].totalWidth, bpr=self.states.bpr, bpe=max(tP["bpeGR"], tP["bpe"]), \
+                      eccBpe = tP["bpeDS"] if kernel["ConvertAfterDS"] else max(tP["bpeGR"], tP["bpe"])
+                      eccOffset = _getEccOffset(tP["globalReadInstruction"].totalWidth, bpr=self.states.bpr, bpe=eccBpe, \
                         glvw=tP["glvw"], idx=loopCnt, numVgprG2L=numVgprG2L)
                 elif dataType.isHalf() or dataType.isBFloat16():
                   if tP["glvw"]>1 and kernel["AssertSummationElementMultiple"] % 2 == 0:
@@ -5307,7 +5310,8 @@ class KernelWriterAssembly(KernelWriter):
                     # then pack 2 registers into one
                     if (tP["localWriteInstruction"].blockWidth == 0.5) and (r%2 == 0):
                       numVgprG2L = self.states.a.numVgprG2L if tc == 'A' else self.states.b.numVgprG2L
-                      eccOffset = _getEccOffset(tP["globalReadInstruction"].totalWidth, bpr=self.states.bpr, bpe=max(tP["bpeGR"], tP["bpe"]), \
+                      eccBpe = tP["bpeDS"] if kernel["ConvertAfterDS"] else max(tP["bpeGR"], tP["bpe"])
+                      eccOffset = _getEccOffset(tP["globalReadInstruction"].totalWidth, bpr=self.states.bpr, bpe=eccBpe, \
                         glvw=tP["glvw"], idx=loopCnt, numVgprG2L=numVgprG2L)
                     else:
                       destVgprHi = self.vgprPool.checkOut(1, 'destVgprHi')
@@ -5700,7 +5704,8 @@ class KernelWriterAssembly(KernelWriter):
 
               if self.states.archCaps["HasEccHalf"] and not tP["isM"]:
                 numVgprG2L = self.states.a.numVgprG2L if tc == 'A' else self.states.b.numVgprG2L if tc =='B' else self.states.m.numVgprG2L
-                eccOffset = _getEccOffset(loadWidth, bpr=self.states.bpr, bpe=max(tP["bpeGR"], tP["bpe"]), \
+                eccBpe = tP["bpeDS"] if kernel["ConvertAfterDS"] else max(tP["bpeGR"], tP["bpe"])
+                eccOffset = _getEccOffset(loadWidth, bpr=self.states.bpr, bpe=eccBpe, \
                   glvw=tP["glvw"], idx=i, numVgprG2L=numVgprG2L)
               else:
                 eccOffset = 0
@@ -5771,7 +5776,8 @@ class KernelWriterAssembly(KernelWriter):
                     assert(graIdx <= self.states.m.numVgprG2LAllocated)
 
                 # TODO: is it possible to load only hi16 when no in tail? (need to check INT8 too)
-                isHigh16Bits = (kernel["ProblemType"]["DataType"].isHalf() or kernel["ProblemType"]["DataType"].isBFloat16()) and loopCnt%2==1 if not tP["isM"] else False
+                datatype = kernel["ProblemType"]["DataType%s"%tc] if kernel["ConvertAfterDS"] else kernel["ProblemType"]["DataType"]
+                isHigh16Bits = (datatype.isHalf() or datatype.isBFloat16()) and loopCnt%2==1 if not tP["isM"] else False
                 loadModule.add( self.chooseGlobalRead(kernel["BufferLoad"], \
                           bpl, destVgpr=destVgpr, \
                           addr0=vgpr(offsetVgpr), addr1=sgpr("Srd%s"%tc, 4), \
@@ -6125,7 +6131,7 @@ class KernelWriterAssembly(KernelWriter):
         instructions = self.memoryInstructions
 
         if kernel["UnrollMajorLDSA"]:
-          localReadWidth = (kernel["MIInputPerThreadA"] * tPA["bpe"]) // self.states.bpr
+          localReadWidth = (kernel["MIInputPerThreadA"] * tPA["bpeDS"]) // self.states.bpr
           localReadInstructionIdxA = \
             self.selectMemoryInstruction("LocalRead", localReadWidth, \
             False, \
@@ -6135,7 +6141,7 @@ class KernelWriterAssembly(KernelWriter):
 
 
         if kernel["UnrollMajorLDSB"]:
-          localReadWidth = (kernel["MIInputPerThreadB"] * tPB["bpe"]) // self.states.bpr
+          localReadWidth = (kernel["MIInputPerThreadB"] * tPB["bpeDS"]) // self.states.bpr
           localReadInstructionIdxB = \
             self.selectMemoryInstruction("LocalRead", localReadWidth, \
             False, \
@@ -6144,9 +6150,9 @@ class KernelWriterAssembly(KernelWriter):
           tPB["localReadInstruction"] = instructions["LocalRead"][localReadInstructionIdxB]
 
         if kernel["ProblemType"]["Sparse"] and not kernel["DirectToVgprSparseMetadata"]:
-          localReadWidth = tPM["bpe"] / self.states.bpr
+          localReadWidth = tPM["bpeDS"] / self.states.bpr
           if kernel["UnrollMajorLDSMetadata"]:
-            localReadWidth = (kernel["MIInputPerThreadMetadata"] * tPM["bpe"]) // self.states.bpr
+            localReadWidth = (kernel["MIInputPerThreadMetadata"] * tPM["bpeDS"]) // self.states.bpr
 
           localReadInstructionIdxM = \
             self.selectMemoryInstruction("LocalRead", localReadWidth, \
@@ -6272,7 +6278,8 @@ class KernelWriterAssembly(KernelWriter):
               # FIXME: Workaround, unique pattern in 8bit + glvw == 2...
               if tP["bpeDS"] == tP["bpeGR"] and (tP["globalReadInstruction"].totalWidth) == 0.5 and (blockWidth == 0.25) and not tP["isM"]:
                 eccinstHi = i // 2
-              eccOffset = _getEccOffset(tP["globalReadInstruction"].totalWidth, bpr=self.states.bpr, bpe=max(tP["bpeGR"], tP["bpe"]), \
+              eccBpe = tP["bpeDS"] if kernel["ConvertAfterDS"] else max(tP["bpeGR"], tP["bpe"])
+              eccOffset = _getEccOffset(tP["globalReadInstruction"].totalWidth, bpr=self.states.bpr, bpe=eccBpe, \
                 glvw=tP["glvw"], idx=eccinstHi, numVgprG2L=numVgprG2L)
             else:
               eccOffset = 0
@@ -6340,10 +6347,8 @@ class KernelWriterAssembly(KernelWriter):
             #comment = "Reg -> L %u_%u_%u_%u"%(para, sPara, perp, sPerp)
             isHigh16Bits = False
             isCvtHighBits = False
-            if (kernel["ConvertAfterDS"] and kernel["ProblemType"]["DataType%s"%tc].isFloat8() and blockWidth == 0.25):
-              if ((s//2) % 2 == 1):
-                isHigh16Bits = True
-            elif (kernel["ProblemType"]["DataType"].isHalf() or kernel["ProblemType"]["DataType"].isBFloat16()) and not tP["isM"]:
+            datatype = kernel["ProblemType"]["DataType%s"%tc] if kernel["ConvertAfterDS"] else kernel["ProblemType"]["DataType"]
+            if (datatype.isHalf() or datatype.isBFloat16()) and not tP["isM"]:
               if s%2==1:
                 isHigh16Bits = True
               if (blockWidth == 0.5) and (instHi % 2 == 1):
@@ -6358,7 +6363,7 @@ class KernelWriterAssembly(KernelWriter):
             #############################################
             # VGPR: |---w4---|---w3---|---w2---|---w1---| -> b8_d16: get w1 / _b8_d16_hi: get w3
             # LSHR: |--------|---w4---|--------|---w2---| -> b8_d16: get w2 / _b8_d16_hi: get w4
-            elif kernel["ProblemType"]["DataType"].isInt8() or kernel["ProblemType"]["DataType"].is8bitFloat() or tP["isM"]:
+            elif datatype.isInt8() or datatype.is8bitFloat() or tP["isM"]:
               isHigh16Bits = (s % 4) > 1 # 2,3
               # TODO
               # if tP["glvw"]==1 and instructionCnt%2==1:

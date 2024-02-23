@@ -2274,12 +2274,6 @@ class Solution(collections.abc.Mapping):
         if (state["ProblemType"]["DataTypeA"].isFloat8() == False) and (state["ProblemType"]["DataTypeB"].isFloat8() == False):
             reject(state, "one of DataTypeA or DataTypeB need to be float8")
             return
-        if state["ProblemType"]["TLUA"] != True or state["ProblemType"]["TLUB"] != False:
-            reject(state, "ConvertAfterDS only support NN")
-            return
-        if state["TransposeLDS"] == 2:
-            reject(state, "ConvertAfterDS only support TransposeLDS == 1")
-            return
 
     # Default GlobalReadVectorWidthA
     if state["GlobalReadVectorWidthA"] < 0:
@@ -3039,11 +3033,12 @@ class Solution(collections.abc.Mapping):
         ldsNumBytesMetadata = (state["_DepthUMetadata"] + state["LdsPadMetadata"]) * state["MacroTileMetadata"]
       else:
         ldsNumBytesMetadata = state["_DepthUMetadata"] * (state["MacroTileMetadata"] + state["LdsPadMetadata"])
-      ldsNumBytesMetadata = roundUp(ldsNumBytesMetadata) # metadata is in byte type. so divide ldsNumBytesMetadata by A,B's bpe
+      ldsNumBytesMetadata = roundUp(ldsNumBytesMetadata / bpeAB) # metadata is in byte type. so divide ldsNumBytesMetadata by A,B's bpe
       padInterval = state["LdsBlockSizePerPadMetadata"]
       if padInterval != 0:
-        ldsNumBytesMetadata = int(roundUp(state["_DepthUMetadata"] * state["MacroTileMetadata"]) / padInterval * (padInterval + state["LdsPadMetadata"]))
-      ldsNumBytesAlignedMetadata = roundUpToNearestMultiple(ldsNumBytesMetadata, ldsAlign)
+        ldsNumBytesMetadata = int(roundUp(state["_DepthUMetadata"] * state["MacroTileMetadata"] / bpeAB) / padInterval * (padInterval + state["LdsPadMetadata"]))
+      ldsNumBytesAlignedMetadata = roundUpToNearestMultiple(ldsNumBytesMetadata, ldsAlign) * bpeAB
+      ldsNumBytesMetadata = ldsNumBytesMetadata * bpeAB
     else:
       ldsNumBytesMetadata = 0
       ldsNumBytesAlignedMetadata = 0
@@ -3124,11 +3119,11 @@ class Solution(collections.abc.Mapping):
       defaultRemap = 8 // state["ProblemType"]["DestDataType"].numBytes()
       defaultRemap = max(defaultRemap, state["MacroTile0"]//state["WavefrontSize"])
       ldsRemapPad = max(defaultRemap, state["MIOutputVectorWidth"])
-      ldsNumBytesRemapC = (state["MacroTile0"]+ldsRemapPad) * state["MatrixInstN"] * state["MIWaveGroup"][1]
+      ldsNumElementsRemapC = (state["MacroTile0"]+ldsRemapPad)* state["MatrixInstN"] * state["MIWaveGroup"][1]
       computeBytes = state["ProblemType"]["ComputeDataType"].numBytes()
       # max(GlobalAccumulation case, non-GlobalAccumulation)
-      ldsNumBytesRemapC = max(ldsNumBytesRemapC, ldsNumBytesRemapC * computeBytes)
-      ldsSize = ldsNumBytesRemapC
+      ldsNumElementsRemapC = max(ldsNumElementsRemapC, ldsNumElementsRemapC * (computeBytes / state["ProblemType"]["DestDataType"].numBytes()))
+      ldsSize = ldsNumElementsRemapC * state["ProblemType"]["DestDataType"].numBytes()
       if not math.log(state["MacroTile0"],2).is_integer() or \
           ldsSize > globalParameters["MaxLDS"] or \
           state["SourceSwap"] or \
@@ -3267,13 +3262,13 @@ class Solution(collections.abc.Mapping):
 
 
       computeBytes = state["ProblemType"]["ComputeDataType"].numBytes()
-      multiplierGSU = computeBytes // state["ProblemType"]["DataType"].numBytes()
+      multiplierGSU = computeBytes
       if state["ProblemType"]["DestDataType"].numBytes() > state["ProblemType"]["DataType"].numBytes():
         # Determine ratio of output to input element size.
         # SRVW remaps output so we need to scale up resources.
-        multiplier = state["ProblemType"]["DestDataType"].numBytes() // state["ProblemType"]["DataType"].numBytes()
+        multiplier = state["ProblemType"]["DestDataType"].numBytes()
       else:
-        multiplier = 1
+        multiplier = state["ProblemType"]["DataType"].numBytes()
 
       ldsNumBytesRemapCNonGSU = ldsNumBytesRemapC * multiplier
       ldsNumBytesRemapCGSU    = ldsNumBytesRemapC * multiplierGSU
