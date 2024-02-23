@@ -786,7 +786,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
       if kernel["ConvertAfterDS"]:
          if kernel["ProblemType"]["DataTypeA"].isFloat8():
              if kernel["UnrollMajorLDSA"]:
-                 instPerPackA = 6
+                 instPerPackA = 6 if (self.states.numReadsIterCoalescedA == 1) else 6 * kernel["MIWaveTile"][0]
              elif self.states.lrvwTileA == 1:
                  instPerPackA = 8
              elif self.states.lrvwTileA == 2:
@@ -798,7 +798,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
 
          if kernel["ProblemType"]["DataTypeB"].isFloat8():
              if kernel["UnrollMajorLDSB"]:
-                 instPerPackB = 6
+                 instPerPackB = 6 if (self.states.numReadsIterCoalescedB == 1) else 6 * kernel["MIWaveTile"][1]
              elif self.states.lrvwTileB == 1:
                  instPerPackB = 8
              elif self.states.lrvwTileB == 2:
@@ -830,6 +830,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
         if not packM:
           packM = Module()
         packMItems = packM.flatitems()
+
         if packAItems:
           for j in range(self.states.numReadsIterCoalescedA):
             for n in range(instPerPackA):
@@ -1117,8 +1118,8 @@ class KernelWriter(metaclass=abc.ABCMeta):
           # calculate the data index of this mfma used for A and B
           # if i // kernel["MIWaveTile"][0]==0, mfma will use new A (need to take iu into account)
           # if i % kernel["MIWaveTile"][0]==0, mfma will use new B
-          packAIdx += instPerPackA if i//(kernel["MIWaveTileA"]+kernel["MIWaveTileA"]*kernel["MIWaveTileB"]*(i//(kernel["MIWaveTileA"]*kernel["MIWaveTileB"]))) == 0 else 0
-          packBIdx += instPerPackB if i % kernel["MIWaveTileA"] == 0 else 0
+          packAIdx += instPerPackA * self.states.numReadsIterCoalescedA if i//(kernel["MIWaveTileA"]+kernel["MIWaveTileA"]*kernel["MIWaveTileB"]*(i//(kernel["MIWaveTileA"]*kernel["MIWaveTileB"]))) == 0 else 0
+          packBIdx += instPerPackB * self.states.numReadsIterCoalescedB if i % kernel["MIWaveTileA"] == 0 else 0
           if kernel["ProblemType"]["Sparse"] and not kernel["DirectToVgprSparseMetadata"]:
             if kernel["ProblemType"]["Sparse"] == 2:
               packMIdx += instPerPackM if i % kernel["MIWaveTileA"] == 0 else 0
@@ -1136,7 +1137,8 @@ class KernelWriter(metaclass=abc.ABCMeta):
           else:
             iterCode.addComment0("pack scheduling: packAIdx:%u, packBIdx:%u" %(packAIdx,packBIdx))
           # we put 2 pack in each mfma
-          for j in range(instPerPackA):
+          multipier = self.states.numReadsIterCoalescedA if kernel["ConvertAfterDS"] else 1
+          for j in range(instPerPackA * multipier):
             if packItems:
               iterCode.add(packItems.pop(0))
               curPackIdx += 1
@@ -1145,7 +1147,8 @@ class KernelWriter(metaclass=abc.ABCMeta):
               if packItems:
                 iterCode.add(packItems.pop(0))
                 curPackIdx += 1
-          for j in range(instPerPackB):
+          multipier = self.states.numReadsIterCoalescedB if kernel["ConvertAfterDS"] else 1
+          for j in range(instPerPackB * multipier):
             if packItems:
               iterCode.add(packItems.pop(0))
               curPackIdx += 1
@@ -3126,7 +3129,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
     numVgprG2Local = 0
     numVgprG2LAllocatedLocal = 0
     if not kernel["DirectToLdsA"] or self.do["KeepDirectToLdsAlloc"]:
-      bpeMax = max(tensorParametersA["bpeGR"], tensorParametersA["bpe"])
+      bpeMax = tensorParametersA["bpeDS"] if kernel["ConvertAfterDS"] else max(tensorParametersA["bpeGR"], tensorParametersA["bpe"])
       self.states.a.numVgprG2L = roundUp((kernel["NumLoadsCoalescedA"] * kernel["NumLoadsPerpendicularA"] * \
         kernel["GlobalReadVectorWidthA"] * bpeMax) / (float)(self.states.bpr))
       numVgprG2Local = roundUp((kernel["NumLoadsCoalescedA"] * kernel["NumLoadsPerpendicularA"] * \
@@ -3149,7 +3152,7 @@ class KernelWriter(metaclass=abc.ABCMeta):
     numVgprG2Local = 0
     numVgprG2LAllocatedLocal = 0
     if not kernel["DirectToLdsB"] or self.do["KeepDirectToLdsAlloc"]:
-      bpeMax = max(tensorParametersB["bpeGR"], tensorParametersB["bpe"])
+      bpeMax = tensorParametersB["bpeDS"] if kernel["ConvertAfterDS"] else max(tensorParametersB["bpeGR"], tensorParametersB["bpe"])
       self.states.b.numVgprG2L = roundUp((kernel["NumLoadsCoalescedB"] * kernel["NumLoadsPerpendicularB"] * \
         kernel["GlobalReadVectorWidthB"] * bpeMax) / (float)(self.states.bpr))
       numVgprG2Local = roundUp((kernel["NumLoadsCoalescedB"] * kernel["NumLoadsPerpendicularB"] * \
@@ -3887,17 +3890,19 @@ class KernelWriter(metaclass=abc.ABCMeta):
       tP["tensorIdx"] = 1
       tP["tileChar"] = self.states.tileChar0 if (kernel["ProblemType"]["Tensor0"]==1) \
         else self.states.tileChar1
-    bpe = int(kernel["ProblemType"]["DataType"].numBytes())
-    bpetc = int(kernel["ProblemType"]["DataType%s"%cM].numBytes())
-    bpeA = int(kernel["ProblemType"]["DataTypeA"].numBytes())
 
     tP["isA"] = (cM == "A")                                      # is this tensor A
     tP["isB"] = (cM == "B")                                      # is this tensor B
     tP["isM"] = (cM == "Metadata")                               # is this tensor Metadata
-    tP["bpe"] = bpe if not tP["isM"] else 1
-    tP["bpeA"]  = (bpeA if kernel["ConvertAfterDS"] else bpe) if not tP["isM"] else 1
-    tP["bpeGR"] = bpetc if not tP["isM"] else 1
-    tP["bpeDS"] = (bpetc if kernel["ConvertAfterDS"] else bpe) if not tP["isM"] else 1
+
+    bpe = int(kernel["ProblemType"]["DataType"].numBytes()) if not tP["isM"] else 1
+    bpetc = int(kernel["ProblemType"]["DataType%s"%cM].numBytes()) if not tP["isM"] else 1
+    bpeA = int(kernel["ProblemType"]["DataTypeA"].numBytes()) if not tP["isM"] else 1
+
+    tP["bpe"] = bpe
+    tP["bpeA"]  = (bpeA if kernel["ConvertAfterDS"] else bpe)
+    tP["bpeGR"] = bpetc
+    tP["bpeDS"] = (bpetc if kernel["ConvertAfterDS"] else bpe)
     tP["tensorChar"] = cM                                        # tensor character A/B
     tP["tileIdx"] = kernel["ProblemType"]["Index01%s"%cM]        # is the tile dimension of A the 0th or 1th index, i.e. Aki, tileIdx=0
     tP["tile01Idx"] = 1 if tP["tileIdx"] else 0
