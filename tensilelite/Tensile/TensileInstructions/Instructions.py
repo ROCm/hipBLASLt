@@ -448,6 +448,8 @@ class ReadWriteInstruction(Instruction):
                 kStr = "ushort" if self.kernel.isa[0] < 11 else "u16"
             elif self.instType == InstType.INST_B8:
                 kStr = "byte" if self.kernel.isa[0] < 11 else "b8"
+            elif self.instType == InstType.INST_U8:
+                kStr = "ubyte" if self.kernel.isa[0] < 11 else "u8"
             elif self.instType == InstType.INST_B16:
                 kStr = "short" if self.kernel.isa[0] < 11 else "b16"
             elif self.instType == InstType.INST_B32:
@@ -763,6 +765,10 @@ class DSStoreInstruction(LocalWriteInstruction):
 ################################################################################
 
 ## Buffer load
+class BufferLoadU8(MUBUFReadInstruction):
+    def __init__(self, dst, vaddr, saddr, soffset, mubuf: Optional[MUBUFModifiers] = None, comment="") -> None:
+        super().__init__(InstType.INST_U8, dst, vaddr, saddr, soffset, mubuf, comment)
+
 class BufferLoadD16HIU8(MUBUFReadInstruction):
     def __init__(self, dst, vaddr, saddr, soffset, mubuf: Optional[MUBUFModifiers] = None, comment="") -> None:
         super().__init__(InstType.INST_D16_HI_U8, dst, vaddr, saddr, soffset, mubuf, comment)
