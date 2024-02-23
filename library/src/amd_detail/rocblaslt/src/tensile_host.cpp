@@ -33,6 +33,7 @@
  * or reference Tensile identifiers. tensile_host.hpp defines the interface. *
  *****************************************************************************/
 
+#include "kernels/gemm_default.hpp"
 #include "rocblaslt-types.h"
 #include "rocblaslt_mat_utils.hpp"
 #include "tensile_host.hpp"
@@ -1128,27 +1129,6 @@ namespace
 #endif
 } // namespace
 
-struct TensileDataGemm
-{
-    bool                                   enableEpilogue = true;
-    Tensile::ContractionProblemGemm        problem;
-    Tensile::ContractionInputs             inputs;
-    std::vector<Tensile::KernelInvocation> kernels;
-    int                                    algoIndex = std::numeric_limits<int>::max();
-};
-
-struct TensileDataGroupedGemm
-{
-    bool                                   enableEpilogue = true;
-    Tensile::ContractionProblemGroupedGemm problem;
-    Tensile::ContractionGroupedInputs      inputs;
-    std::vector<Tensile::KernelInvocation> kernels;
-    int                                    algoIndex = std::numeric_limits<int>::max();
-    std::shared_ptr<void>                  hipHostMemory;
-    size_t                                 hipHostMemorySize;
-    bool                                   useUserArgs = false;
-};
-
 void initTensileGemmData(rocblaslt_handle       handle,
                          rocblaslt::RocGemmType gemmType,
                          hipblasOperation_t     opA,
@@ -1283,6 +1263,56 @@ rocblaslt_status runContractionProblem(rocblaslt_handle                   handle
     }
 
     return status;
+}
+
+rocblaslt_status runGemmDefault(const rocblaslt_handle       handle,
+                                const rocblaslt_matmul_desc  matmul_descr,
+                                const void*                  A,
+                                const void*                  B,
+                                const void*                  C,
+                                void*                        D,
+                                rocblaslt_matrix_layout      matA,
+                                rocblaslt_matrix_layout      matB,
+                                rocblaslt_matrix_layout      matC,
+                                rocblaslt_matrix_layout      matD,
+                                const void*                  alpha,
+                                const void*                  beta,
+                                const rocblaslt_matmul_algo* algo,
+                                void*                        workspace,
+                                size_t                       workspaceSizeInBytes,
+                                hipStream_t                  stream)
+{
+    auto key = std::make_tuple(matA->type,
+                               matB->type,
+                               matC->type,
+                               matD->type,
+                               matmul_descr->compute_type,
+                               matmul_descr->op_A == HIPBLAS_OP_N,
+                               matmul_descr->op_B == HIPBLAS_OP_N);
+    if(!gemm_default_kernels_map.count(key))
+    {
+        return rocblaslt_status_internal_error;
+    }
+    gemm_default_kernels_map.at(key)(D,
+                                     A,
+                                     B,
+                                     C,
+                                     alpha,
+                                     beta,
+                                     matC->batch_count,
+                                     matC->m,
+                                     matC->n,
+                                     matmul_descr->op_A == HIPBLAS_OP_N ? matA->n : matA->m,
+                                     matA->ld,
+                                     matB->ld,
+                                     matC->ld,
+                                     matD->ld,
+                                     matA->batch_stride,
+                                     matB->batch_stride,
+                                     matC->batch_stride,
+                                     matD->batch_stride,
+                                     stream);
+    return rocblaslt_status_success;
 }
 
 rocblaslt_status gemmCreate(RocblasltContractionProblem const& problem,
@@ -1457,6 +1487,8 @@ rocblaslt_status makeArgument(rocblaslt_handle             handle,
         hardware     = Tensile::hip::GetDevice(*deviceProp);
 
         int* solutionIndex = (int*)algo.data;
+        if(*solutionIndex == -1)
+            return rocblaslt_status_success;
         if(gemmType == rocblaslt::RocGemmType::ROCBLASLT_GEMM)
         {
             std::shared_ptr<TensileDataGemm> data
@@ -1483,6 +1515,8 @@ rocblaslt_status makeArgument(rocblaslt_handle             handle,
             }
 
             data->inputs.ws = workspace;
+            // auto solution   = library->getSolutionByIndex(data->problem, *hardware, *solutionIndex);
+            // if (!solution) return rocblaslt_status_success;
 
             // Backup and restore settings
             int                     useBias          = data->problem.useBias();
@@ -1667,6 +1701,51 @@ rocblaslt_status runKernelFromInvocation(rocblaslt_handle       handle,
     }
 
     return status;
+}
+
+rocblaslt_status runGemmDefaultExt(rocblaslt_handle       handle,
+                                   rocblaslt::RocGemmType gemmType,
+                                   std::shared_ptr<void>  gemmData,
+                                   hipStream_t            stream)
+{
+    auto data    = std::static_pointer_cast<TensileDataGemm>(gemmData);
+    auto problem = data->problem;
+    auto inputs  = data->inputs;
+    auto key     = std::make_tuple(tensile_type_to_hipDatatype(problem.a().dataType()),
+                               tensile_type_to_hipDatatype(problem.b().dataType()),
+                               tensile_type_to_hipDatatype(problem.c().dataType()),
+                               tensile_type_to_hipDatatype(problem.d().dataType()),
+                               tensile_type_to_rocblaslt_compute_type(problem.computeType()),
+                               !problem.transA(),
+                               !problem.transB());
+    if(!gemm_default_kernels_map.count(key))
+    {
+        return rocblaslt_status_internal_error;
+    }
+    uint32_t num_batch = problem.d().sizes()[2];
+    uint32_t m         = problem.d().sizes()[0];
+    uint32_t n         = problem.d().sizes()[1];
+    uint32_t k         = problem.transA() ? problem.a().sizes()[0] : problem.a().sizes()[1];
+    gemm_default_kernels_map.at(key)(inputs.d,
+                                     inputs.a,
+                                     inputs.b,
+                                     inputs.c,
+                                     &inputs.alpha,
+                                     &inputs.beta,
+                                     num_batch,
+                                     m,
+                                     n,
+                                     k,
+                                     problem.a().strides()[1],
+                                     problem.b().strides()[1],
+                                     problem.c().strides()[1],
+                                     problem.d().strides()[1],
+                                     m * k,
+                                     k * n,
+                                     m * n,
+                                     m * n,
+                                     stream);
+    return rocblaslt_status_success;
 }
 
 rocblaslt_status getDeviceUserArgumentsValuesFromContractionProblem(rocblaslt_handle       handle,
@@ -1879,6 +1958,28 @@ void _convertToHeuristicResultArray(
     }
 }
 
+void _fillHeuristicResultArrayWithDefaultGemm(
+    int                               requestedAlgoCount,
+    rocblaslt_matmul_heuristic_result heuristicResultsArray[],
+    int*                              returnAlgoCount,
+    size_t                            maxWorkSpaceBytes)
+{
+    *returnAlgoCount = 1;
+    // i = 0, default gemm solution
+    {
+        int* solutionIndex = (int*)(heuristicResultsArray[0].algo.data);
+        *solutionIndex     = -1;
+        heuristicResultsArray[0].algo.max_workspace_bytes = maxWorkSpaceBytes;
+        heuristicResultsArray[0].algo.fallback            = true;
+        heuristicResultsArray[0].state                    = rocblaslt_status_success;
+        heuristicResultsArray[0].workspaceSize            = maxWorkSpaceBytes;
+    }
+    for(int i = 1; i < requestedAlgoCount; i++)
+    {
+        heuristicResultsArray[i].state = rocblaslt_status_invalid_value;
+    }
+}
+
 template <typename T>
 inline auto getSolutions(
     const T&                                                                                inputs,
@@ -1981,15 +2082,25 @@ rocblaslt_status getBestSolutions(RocblasltContractionProblem const& prob,
                                  fallbackSize);
     }
 
-    memset(
-        heuristicResultsArray, 0, sizeof(rocblaslt_matmul_heuristic_result) * requestedAlgoCount);
-    _convertToHeuristicResultArray(solutions,
-                                   requestedAlgoCount,
-                                   heuristicResultsArray,
-                                   returnAlgoCount,
-                                   maxWorkSpaceBytes,
-                                   data->problem,
-                                   fallbackSize);
+    char* is_fallback = getenv("HIPBLASLT_TEST_FALLBACK");
+    if(is_fallback || solutions.empty())
+    {
+        _fillHeuristicResultArrayWithDefaultGemm(
+            requestedAlgoCount, heuristicResultsArray, returnAlgoCount, maxWorkSpaceBytes);
+    }
+    else
+    {
+        memset(heuristicResultsArray,
+               0,
+               sizeof(rocblaslt_matmul_heuristic_result) * requestedAlgoCount);
+        _convertToHeuristicResultArray(solutions,
+                                       requestedAlgoCount,
+                                       heuristicResultsArray,
+                                       returnAlgoCount,
+                                       maxWorkSpaceBytes,
+                                       data->problem,
+                                       fallbackSize);
+    }
 
     return rocblaslt_status_success;
 }
@@ -2101,18 +2212,28 @@ rocblaslt_status
     int i = 0;
     for(auto index : solutionIndex)
     {
-        auto solution = library->getSolutionByIndex(index);
-        if(!solution)
-            continue;
+        auto                              solution = library->getSolutionByIndex(index);
         rocblaslt_matmul_heuristic_result result;
         memset(&result, 0, sizeof(rocblaslt_matmul_heuristic_result));
         memset(result.algo.data, 0, sizeof(result.algo.data));
-        int* solutionIndex              = (int*)(result.algo.data);
-        *solutionIndex                  = solution->index;
-        result.algo.max_workspace_bytes = maxWorkSpaceBytes;
-        result.algo.fallback            = false;
-        result.state                    = rocblaslt_status_success;
-        result.workspaceSize            = 0;
+        if(!solution)
+        {
+            int* solutionIndex              = (int*)(result.algo.data);
+            *solutionIndex                  = -1;
+            result.algo.max_workspace_bytes = maxWorkSpaceBytes;
+            result.algo.fallback            = true;
+            result.state                    = rocblaslt_status_success;
+            result.workspaceSize            = maxWorkSpaceBytes;
+        }
+        else
+        {
+            int* solutionIndex              = (int*)(result.algo.data);
+            *solutionIndex                  = solution->index;
+            result.algo.max_workspace_bytes = maxWorkSpaceBytes;
+            result.algo.fallback            = false;
+            result.state                    = rocblaslt_status_success;
+            result.workspaceSize            = 0;
+        }
         i++;
         heuristicResults.push_back(result);
     }
@@ -2137,6 +2258,8 @@ rocblaslt_status isSolutionSupported(rocblaslt_handle            handle,
     *workspaceSizeInBytes = 0;
 
     int* solutionIndex = (int*)algo->data;
+    if(*solutionIndex == -1)
+        return rocblaslt_status_success;
     // don't overwrite data->algoIndex = *solutionIndex; here
     if constexpr(std::is_same<MyProblem, Tensile::ContractionProblemGemm>::value)
     {
@@ -2481,17 +2604,29 @@ rocblaslt_status getBestSolutions(rocblaslt_handle       handle,
                                      fallbackSize);
         }
 
-        auto algoCount       = min(requestedAlgoCount, solutions.size());
-        int  returnAlgoCount = 0;
-        heuristicResults.clear();
-        heuristicResults.resize(algoCount);
-        _convertToHeuristicResultArray(solutions,
-                                       algoCount,
-                                       heuristicResults.data(),
-                                       &returnAlgoCount,
-                                       workspaceBytes,
-                                       data->problem,
-                                       fallbackSize);
+        char* is_fallback = getenv("HIPBLASLT_TEST_FALLBACK");
+        if(is_fallback || solutions.empty())
+        {
+            int returnAlgoCount = 0;
+            heuristicResults.clear();
+            heuristicResults.resize(requestedAlgoCount);
+            _fillHeuristicResultArrayWithDefaultGemm(
+                requestedAlgoCount, heuristicResults.data(), &returnAlgoCount, workspaceBytes);
+        }
+        else
+        {
+            auto algoCount       = min(requestedAlgoCount, solutions.size());
+            int  returnAlgoCount = 0;
+            heuristicResults.clear();
+            heuristicResults.resize(algoCount);
+            _convertToHeuristicResultArray(solutions,
+                                           algoCount,
+                                           heuristicResults.data(),
+                                           &returnAlgoCount,
+                                           workspaceBytes,
+                                           data->problem,
+                                           fallbackSize);
+        }
     }
     else if(gemmType == rocblaslt::RocGemmType::ROCBLASLT_GROUPED_GEMM)
     {

@@ -1127,6 +1127,25 @@ rocblaslt_status rocblaslt_matmul(rocblaslt_handle             handle,
                   "stream",
                   stream);
     }
+    if(algo && *(int*)algo->data == -1)
+    {
+        return runGemmDefault(handle,
+                              matmul_descr,
+                              A,
+                              B,
+                              C,
+                              D,
+                              matA,
+                              matB,
+                              matC,
+                              matD,
+                              alpha,
+                              beta,
+                              algo,
+                              workspace,
+                              workspaceSizeInBytes,
+                              stream);
+    }
     return rocblaslt_matmul_impl(handle,
                                  matmul_descr,
                                  A,
@@ -1338,6 +1357,11 @@ rocblaslt_status rocblaslt_run_cpp(rocblaslt_handle       handle,
                                    hipEvent_t             start,
                                    hipEvent_t             stop)
 {
+    std::shared_ptr<TensileDataGemm> data = std::static_pointer_cast<TensileDataGemm>(gemmData);
+    if(data->algoIndex == -1)
+    {
+        return runGemmDefaultExt(handle, gemmType, gemmData, stream);
+    }
     return runKernelFromInvocation(handle, gemmType, gemmData, stream, start, stop);
 }
 
