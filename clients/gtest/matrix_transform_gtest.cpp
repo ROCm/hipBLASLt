@@ -385,7 +385,9 @@ namespace
     }
 }
 
-class MatrixTransformTest : public ::testing::TestWithParam<std::tuple<hipDataType,
+class MatrixTransformTest : public ::testing::TestWithParam<std::tuple<int64_t,
+                                                                       int64_t,
+                                                                       hipDataType,
                                                                        hipDataType,
                                                                        hipblasOperation_t,
                                                                        hipblasOperation_t,
@@ -397,16 +399,16 @@ class MatrixTransformTest : public ::testing::TestWithParam<std::tuple<hipDataTy
 
 TEST_P(MatrixTransformTest, Basic)
 {
-    int64_t                     m             = 1024;
-    int64_t                     n             = 1024;
+    int64_t                     m             = std::get<0>(GetParam());
+    int64_t                     n             = std::get<1>(GetParam());
     int32_t                     batchSize     = 1;
-    auto                        datatype      = std::get<0>(GetParam());
-    auto                        scaleDatatype = std::get<1>(GetParam());
-    auto                        opA           = std::get<2>(GetParam());
-    auto                        opB           = std::get<3>(GetParam());
-    auto                        orderA        = std::get<4>(GetParam());
-    auto                        orderB        = std::get<5>(GetParam());
-    auto                        orderC        = std::get<6>(GetParam());
+    auto                        datatype      = std::get<2>(GetParam());
+    auto                        scaleDatatype = std::get<3>(GetParam());
+    auto                        opA           = std::get<4>(GetParam());
+    auto                        opB           = std::get<5>(GetParam());
+    auto                        orderA        = std::get<6>(GetParam());
+    auto                        orderB        = std::get<7>(GetParam());
+    auto                        orderC        = std::get<8>(GetParam());
     float                       alpha         = 1;
     float                       beta          = 1;
     int64_t                     batchStride   = m * n;
@@ -1183,7 +1185,9 @@ TEST(MatrixTransformTest, ScalarsOnDevice)
 INSTANTIATE_TEST_SUITE_P(
     AllCombinations,
     MatrixTransformTest,
-    ::testing::Combine(::testing::ValuesIn({HIP_R_32F, HIP_R_16F, HIP_R_16BF, HIP_R_8I, HIP_R_32I}),
+    ::testing::Combine(::testing::ValuesIn({int64_t(1), int64_t(127), int64_t(1024)}),
+                       ::testing::ValuesIn({int64_t(1), int64_t(127), int64_t(1024)}),
+                       ::testing::ValuesIn({HIP_R_32F, HIP_R_16F, HIP_R_16BF, HIP_R_8I, HIP_R_32I}),
                        ::testing::ValuesIn({HIP_R_32F}),
                        ::testing::ValuesIn({HIPBLAS_OP_N, HIPBLAS_OP_T}),
                        ::testing::ValuesIn({HIPBLAS_OP_N, HIPBLAS_OP_T}),

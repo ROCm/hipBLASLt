@@ -142,27 +142,24 @@ namespace amd_detail
             beta = *betaPtr;
         }
 
-        if(row >= numRows || col >= numCols)
-        {
-            return;
-        }
-
         const auto batchOffset = batchIdx * batchStride;
 
         if constexpr(VectorWidth == 1)
         {
-            const auto offsetA
-                = (transA ? getOffset<RowMajA>(col, row, ldA) : getOffset<RowMajA>(row, col, ldA))
-                  + batchOffset;
-            const auto offsetB
-                = (transB ? getOffset<RowMajB>(col, row, ldB) : getOffset<RowMajB>(row, col, ldB))
-                  + batchOffset;
-            const ScaleType aData = a ? static_cast<ScaleType>(a[offsetA]) : 0;
-            const ScaleType bData = b ? static_cast<ScaleType>(b[offsetB]) : 0;
-            const DType     cData = static_cast<DType>(aData * alpha + bData * beta);
-            const auto      offsetC
-                = getOffset<RowMajC>(tRow + blockRow, tCol + blockCol, ldC) + batchOffset;
-            c[offsetC] = cData;
+            if(row < numRows && col < numCols) {
+                const auto offsetA
+                    = (transA ? getOffset<RowMajA>(col, row, ldA) : getOffset<RowMajA>(row, col, ldA))
+                    + batchOffset;
+                const auto offsetB
+                    = (transB ? getOffset<RowMajB>(col, row, ldB) : getOffset<RowMajB>(row, col, ldB))
+                    + batchOffset;
+                const ScaleType aData = a ? static_cast<ScaleType>(a[offsetA]) : 0;
+                const ScaleType bData = b ? static_cast<ScaleType>(b[offsetB]) : 0;
+                const DType     cData = static_cast<DType>(aData * alpha + bData * beta);
+                const auto      offsetC
+                    = getOffset<RowMajC>(tRow + blockRow, tCol + blockCol, ldC) + batchOffset;
+                c[offsetC] = cData;
+            }
         }
         else
         {
@@ -174,6 +171,18 @@ namespace amd_detail
                                                 : 0;
             ScaleType  aData[VectorWidth] = {};
             ScaleType  bData[VectorWidth] = {};
+
+            if constexpr(RowMajC) {
+                if (row >= numRows) {
+                    return;
+                }
+            }
+
+            if constexpr(!RowMajC) {
+                if (col >= numCols) {
+                    return;
+                }
+            }
 
 #pragma unroll
             for(uint32_t i = 0; i < VectorWidth; ++i)
