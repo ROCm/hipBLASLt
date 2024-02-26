@@ -116,7 +116,7 @@ def main( config ):
       biasTypeArgs = ""
 
     activationEnums = [[{'Enum': 'relu'}]]
-
+    biasDimEnums = [0]
     # Reading the activation args from the LibraryClient section in the config YAML.
     # Example: enable relu and gelu activation and using none to run without activation
     #    LibraryClient:
@@ -543,7 +543,10 @@ def writeClientConfigIni(problemSizes, biasTypeArgs, biasDimArgs, activationArgs
         param('f32-xdl-math-op', problemType.f32XdlMathOp.toEnum())
         param('activation-compute-type', problemType.activationComputeDataType.toEnum())
         param('use-gradient', problemType.useGradient)
-        param('use-bias',   problemType.useBias)
+        if isinstance(problemType.useBias, bool):
+          param('use-bias',   1 if problemType.useBias else 0)
+        else:
+          param('use-bias',   problemType.useBias)
         param('bias-source',   problemType.biasSrcWhiteList[0])
         param('use-e', problemType.useE)
         param('use-scaleAB',   problemType.useScaleAB)

@@ -160,7 +160,16 @@ namespace Tensile
                 m_activationEnumArg
                     = args["activation-enum-args"].as<std::vector<ActivationType>>();
             if(args.count("use-bias"))
-                m_useBias = args["use-bias"].as<int>();
+            {
+                try
+                {
+                    m_useBias = args["use-bias"].as<int>();
+                }
+                catch(const std::exception& e)
+                {
+                    m_useBias = args["use-bias"].as<bool>();
+                }
+            }
             if(args.count("bias-source"))
                 m_biasSrc = args["bias-source"].as<int>();
             if(args.count("use-scaleAB"))
@@ -246,23 +255,24 @@ namespace Tensile
                         for(int i = 0; i < m_problemSizes.size(); i++)
                         {
                             if(m_tensorStrides[ContractionProblemGemm::TENSOR::A].size()
-                            == m_problemSizes.size())
+                               == m_problemSizes.size())
                                 aStrides = m_tensorStrides[ContractionProblemGemm::TENSOR::A][i];
                             if(m_tensorStrides[ContractionProblemGemm::TENSOR::B].size()
-                            == m_problemSizes.size())
+                               == m_problemSizes.size())
                                 bStrides = m_tensorStrides[ContractionProblemGemm::TENSOR::B][i];
                             if(m_tensorStrides[ContractionProblemGemm::TENSOR::C].size()
-                            == m_problemSizes.size())
+                               == m_problemSizes.size())
                                 cStrides = m_tensorStrides[ContractionProblemGemm::TENSOR::C][i];
                             if(m_tensorStrides[ContractionProblemGemm::TENSOR::D].size()
-                            == m_problemSizes.size())
+                               == m_problemSizes.size())
                                 dStrides = m_tensorStrides[ContractionProblemGemm::TENSOR::D][i];
                             if(m_tensorStrides[ContractionProblemGemm::TENSOR::E].size()
-                            == m_problemSizes.size())
+                               == m_problemSizes.size())
                                 eStrides = m_tensorStrides[ContractionProblemGemm::TENSOR::E][i];
                             if(m_tensorStrides[ContractionProblemGemm::TENSOR::BIAS].size()
-                            == m_problemSizes.size())
-                                biasStrides = m_tensorStrides[ContractionProblemGemm::TENSOR::BIAS][i];
+                               == m_problemSizes.size())
+                                biasStrides
+                                    = m_tensorStrides[ContractionProblemGemm::TENSOR::BIAS][i];
 
                             rv.push_back(ContractionProblemGemm::FromIndexSizes(
                                 m_freeIndices,
@@ -285,7 +295,8 @@ namespace Tensile
                             rv.back().setCEqualsD(m_cEqualsD);
                             rv.back().setAlphaType(
                                 m_constantTypes[ContractionProblemGemm::CONST::ALPHA]);
-                            rv.back().setBetaType(m_constantTypes[ContractionProblemGemm::CONST::BETA]);
+                            rv.back().setBetaType(
+                                m_constantTypes[ContractionProblemGemm::CONST::BETA]);
                             rv.back().setStridedBatched(m_stridedBatched);
                             rv.back().setHighPrecisionAccumulate(m_highPrecisionAccumulate);
                             rv.back().setUseGradient(m_useGradient);
@@ -299,15 +310,15 @@ namespace Tensile
                             rv.back().setWorkspaceSize(m_maxWorkspaceSize);
                             if(k < m_biasTypeArgs.size())
                             {
-                                auto length       = (m_biasSrc == ContractionProblemGemm::TENSOR::B)
-                                                        ? rv.back().d().sizes()[1]
-                                                        : (m_useBias == 1 || (m_biasSrc != ContractionProblemGemm::TENSOR::D))
-                                                        ? rv.back().d().sizes()[0]
-                                                        : (m_useBias == 2)
-                                                        ? rv.back().d().sizes()[1]
-                                                        : (m_useBias == 3)
-                                                        ? rv.back().d().sizes()[m_biasDimArgs[l]]
-                                                        : rv.back().d().sizes()[0];
+                                auto length
+                                    = (m_biasSrc == ContractionProblemGemm::TENSOR::B)
+                                          ? rv.back().d().sizes()[1]
+                                      : (m_useBias == 1
+                                         || (m_biasSrc != ContractionProblemGemm::TENSOR::D))
+                                          ? rv.back().d().sizes()[0]
+                                      : (m_useBias == 2) ? rv.back().d().sizes()[1]
+                                      : (m_useBias == 3) ? rv.back().d().sizes()[m_biasDimArgs[l]]
+                                                         : rv.back().d().sizes()[0];
                                 bool isBiasOutput = m_useGradient ? true : false;
                                 auto biasStride   = biasStrides.size() < 2 ? 0 : biasStrides[2];
                                 rv.back().setBias(
@@ -316,7 +327,9 @@ namespace Tensile
                                     biasStride,
                                     isBiasOutput,
                                     static_cast<ContractionProblemGemm::TENSOR>(m_biasSrc),
-                                    m_useBias == 1 ? 0 : m_useBias == 2 ? 1 : m_biasDimArgs[l]);
+                                    m_useBias == 1   ? 0
+                                    : m_useBias == 2 ? 1
+                                                     : m_biasDimArgs[l]);
                             }
                             else
                             {

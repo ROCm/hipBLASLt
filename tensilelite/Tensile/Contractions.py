@@ -196,7 +196,7 @@ class ProblemType:
         rv.setConstStrideBias = []
 
         if 'UseBias' in d:
-            rv.useBias = d['UseBias']
+            rv.useBias = d['UseBias'] if not isinstance(d['UseBias'], bool) else 1 if d['UseBias'] else 0
             if 'BiasDataTypeList' in d:
                 d["BiasDataTypeList"].sort()  # Sort to make sure names are unique
                 rv.biasDataTypeWhiteList = d['BiasDataTypeList']
