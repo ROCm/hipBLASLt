@@ -116,7 +116,7 @@ def main( config ):
       biasTypeArgs = ""
 
     activationEnums = [[{'Enum': 'relu'}]]
-
+    biasDimEnums = [0]
     # Reading the activation args from the LibraryClient section in the config YAML.
     # Example: enable relu and gelu activation and using none to run without activation
     #    LibraryClient:
