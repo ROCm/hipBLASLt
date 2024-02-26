@@ -530,7 +530,6 @@ Tests:
   bias_vector: [0, 1]
   scaleAlpha_vector: [0, 1]
 
-# TODO: change bias to bf16_r
 - name: matmul_f8_bf8_dst_fp32
   category: pre_checkin
   function:
