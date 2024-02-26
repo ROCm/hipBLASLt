@@ -333,17 +333,22 @@ void check(hipStream_t                          stream,
     }
 }
 
-// a function to determing the default bias_type if bias is applied
+// A function to determing the default bias_type
 hipDataType derive_unset_bias_type(const Arguments& arg)
 {
     static const std::set<hipDataType> supported_bias_types
         = {HIP_R_32F, HIP_R_64F, HIP_R_16F, HIP_R_16BF, HIP_R_32I};
 
     hipDataType real_bias_type = arg.bias_type;
+    
     // when bias type is unset.
     if(arg.bias_type == HIPBLASLT_DATATYPE_INVALID)
     {
-        if((arg.a_type == HIP_R_8F_E4M3_FNUZ || arg.a_type == HIP_R_8F_E5M2_FNUZ)
+        if(arg.compute_type == HIPBLAS_COMPUTE_32I || arg.compute_type == HIPBLAS_COMPUTE_32F_FAST_TF32)
+        {
+            real_bias_type = HIP_R_32F;
+        }
+        else if((arg.a_type == HIP_R_8F_E4M3_FNUZ || arg.a_type == HIP_R_8F_E5M2_FNUZ)
             && (arg.b_type == HIP_R_8F_E4M3_FNUZ || arg.b_type == HIP_R_8F_E5M2_FNUZ))
         {
             if(arg.d_type == HIP_R_32F || arg.d_type == HIP_R_16BF)
@@ -357,7 +362,7 @@ hipDataType derive_unset_bias_type(const Arguments& arg)
         {
             real_bias_type = arg.d_type;
         }
-    } // else, remain bias type
+    }
 
     if(supported_bias_types.count(real_bias_type) == 0)
         throw std::invalid_argument("Invalid bias type " + std::string(hip_datatype_to_string(real_bias_type)));
