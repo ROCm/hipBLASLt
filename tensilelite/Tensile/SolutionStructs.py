@@ -189,7 +189,7 @@ class ProblemType(Mapping):
       if self["ComputeDataType"] != self["DestDataType"]:
         self["BetaOnlyUseBias"] = False
       else:
-        self["BetaOnlyUseBias"] = self["UseBias"]
+        self["BetaOnlyUseBias"] = True if self["UseBias"] > 0 else False
       if "BiasDataTypeList" in config:
         self["BiasDataTypeList"] = [DataType(btype) for btype in config["BiasDataTypeList"]]
         self["BiasDataTypeList"].sort() # Make name unique
