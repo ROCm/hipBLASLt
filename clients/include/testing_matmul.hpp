@@ -336,11 +336,12 @@ void check(hipStream_t                          stream,
 // A function to determing the default bias_type
 hipDataType derive_unset_bias_type(const Arguments& arg)
 {
+    // TODO: confirm if HIP_R_64F, HIP_R_32I are neccessary for biastype
     static const std::set<hipDataType> supported_bias_types
-        = {HIP_R_32F, HIP_R_64F, HIP_R_16F, HIP_R_16BF, HIP_R_32I};
+        = {HIP_R_32F, HIP_R_16F, HIP_R_16BF, HIP_R_64F, HIP_R_32I};
 
     hipDataType real_bias_type = arg.bias_type;
-    
+
     // when bias type is unset.
     if(arg.bias_type == HIPBLASLT_DATATYPE_INVALID)
     {
